@@ -1,0 +1,1748 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Administration > Development"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Administration > Development > Script Konsole"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Suchausdruck"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Administration > Development > Script Konsole > Editor"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+				<value><![CDATA[{
+  // Test data: two lists with equal length
+  testLists = list(
+    list("A", "B", "C"),
+    list(1, 2, 3)
+  );
+  
+  // Execute transpose
+  result = $testLists.transpose();
+  
+  $result.flatten();
+}]]></value>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+			command-label="Script ausführen"
+			command-name="executeSearchConsole"
+			component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+			component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-label="Result"
+			>
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Script Konsole > Ergebnis"
+					/>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+					displayed-row-index="0"
+				/>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="A"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-label="Result"
+			>
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Script Konsole > Ergebnis"
+					/>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+					displayed-row-index="1"
+				/>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+				value="1.0"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-label="Result"
+			>
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Script Konsole > Ergebnis"
+					/>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+					displayed-row-index="2"
+				/>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="B"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-label="Result"
+			>
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Script Konsole > Ergebnis"
+					/>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+					displayed-row-index="3"
+				/>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+				value="2.0"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-label="Result"
+			>
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Script Konsole > Ergebnis"
+					/>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+					displayed-row-index="4"
+				/>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="C"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-label="Result"
+			>
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Script Konsole > Ergebnis"
+					/>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+					displayed-row-index="5"
+				/>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+				value="3.0"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Suchausdruck"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Administration > Development > Script Konsole > Editor"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+				<value><![CDATA[{
+  // Test data: two lists of strings
+  testLists = list(
+    list("Hello", "Good", "See"),
+    list("World", "Day", "You")
+  );
+  
+  // Execute transpose with combination function
+  result = $testLists.transpose(first -> second -> 
+    toString($first, " ", $second, "!")
+  );
+  
+  $result;
+}]]></value>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+			command-label="Script ausführen"
+			command-name="executeSearchConsole"
+			component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+			component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-label="Result"
+			>
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Script Konsole > Ergebnis"
+					/>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+					displayed-row-index="0"
+				/>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="Hello World!"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-label="Result"
+			>
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Script Konsole > Ergebnis"
+					/>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+					displayed-row-index="1"
+				/>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="Good Day!"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-label="Result"
+			>
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Script Konsole > Ergebnis"
+					/>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+					displayed-row-index="2"
+				/>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="See You!"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Suchausdruck"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Administration > Development > Script Konsole > Editor"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+				<value><![CDATA[{
+  // Test data: lists of different lengths
+  testLists = list(
+    list(10, 20, 30, 40, 50),
+    list(1, 2, 3)
+  );
+  
+  // Execute transpose with null-safe addition
+  result = $testLists.transpose(a -> b -> 
+    if($b == null, $a, $a + $b)
+  );
+  
+  $result;
+}]]></value>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+			command-label="Script ausführen"
+			command-name="executeSearchConsole"
+			component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+			component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-label="Result"
+			>
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Script Konsole > Ergebnis"
+					/>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+					displayed-row-index="0"
+				/>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+				value="11.0"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-label="Result"
+			>
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Script Konsole > Ergebnis"
+					/>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+					displayed-row-index="1"
+				/>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+				value="22.0"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-label="Result"
+			>
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Script Konsole > Ergebnis"
+					/>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+					displayed-row-index="2"
+				/>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+				value="33.0"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-label="Result"
+			>
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Script Konsole > Ergebnis"
+					/>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+					displayed-row-index="3"
+				/>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+				value="40.0"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-label="Result"
+			>
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Script Konsole > Ergebnis"
+					/>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+					displayed-row-index="4"
+				/>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+				value="50.0"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Suchausdruck"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Administration > Development > Script Konsole > Editor"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+				<value><![CDATA[{
+  // Test data: collection with only one list
+  testLists = list(
+    list("Alpha", "Beta", "Gamma")
+  );
+  
+  // Execute transpose without function
+  result = $testLists.transpose();
+  
+  $result
+}]]></value>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+			command-label="Script ausführen"
+			command-name="executeSearchConsole"
+			component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+			component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-label="Result"
+			>
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Script Konsole > Ergebnis"
+					/>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+					displayed-row-index="0"
+				/>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="Alpha"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-label="Result"
+			>
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Script Konsole > Ergebnis"
+					/>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+					displayed-row-index="1"
+				/>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="Beta"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-label="Result"
+			>
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Script Konsole > Ergebnis"
+					/>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+					displayed-row-index="2"
+				/>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="Gamma"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Suchausdruck"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Administration > Development > Script Konsole > Editor"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+				<value><![CDATA[{
+  // Test data: one empty list and one with elements
+  testLists = list(
+    list(),
+    list("X", "Y", "Z")
+  );
+  
+  // Execute transpose with string concatenation function
+  result = $testLists.transpose(first -> second -> 
+    toString(
+      if($first == null, "EMPTY", $first), 
+      "-", 
+      if($second == null, "NULL", $second)
+    )
+  );
+
+  $result;
+}]]></value>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+			command-label="Script ausführen"
+			command-name="executeSearchConsole"
+			component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+			component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-label="Result"
+			>
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Script Konsole > Ergebnis"
+					/>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+					displayed-row-index="0"
+				/>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="EMPTY-X"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-label="Result"
+			>
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Script Konsole > Ergebnis"
+					/>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+					displayed-row-index="1"
+				/>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="EMPTY-Y"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-label="Result"
+			>
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Script Konsole > Ergebnis"
+					/>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+					displayed-row-index="2"
+				/>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="EMPTY-Z"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Suchausdruck"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Administration > Development > Script Konsole > Editor"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+				<value><![CDATA[{
+  // Test data: lists with mixed data types
+  testLists = list(
+    list("product1", "product2", "product3"),
+    list(100, 250, 175)
+  );
+  
+  // Execute transpose creating structured objects
+  result = $testLists.transpose(name -> price -> {
+    "productName": $name,
+    "price": $price,
+    "category": if($price > 200, "Premium", "Standard"),
+    "displayText": toString($name, " ($", $price, ")")
+  });
+  
+  $result;
+}]]></value>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+			command-label="Script ausführen"
+			command-name="executeSearchConsole"
+			component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+			component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-label="Result"
+			>
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Script Konsole > Ergebnis"
+					/>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+					displayed-row-index="0"
+				/>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+				<values>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="productName"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="product1"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="price"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+							value="100.0"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="category"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="Standard"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="displayText"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="product1 ($100)"
+						/>
+					</value>
+				</values>
+			</expected-value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-label="Result"
+			>
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Script Konsole > Ergebnis"
+					/>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+					displayed-row-index="1"
+				/>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+				<values>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="productName"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="product2"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="price"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+							value="250.0"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="category"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="Premium"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="displayText"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="product2 ($250)"
+						/>
+					</value>
+				</values>
+			</expected-value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-label="Result"
+			>
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Script Konsole > Ergebnis"
+					/>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+					displayed-row-index="2"
+				/>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+				<values>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="productName"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="product3"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="price"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+							value="175.0"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="category"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="Standard"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="displayText"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="product3 ($175)"
+						/>
+					</value>
+				</values>
+			</expected-value>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Suchausdruck"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Administration > Development > Script Konsole > Editor"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+				<value><![CDATA[{
+  // Test data: student names and their test scores
+  testLists = list(
+    list("Alice", "Bob", "Charlie", "Diana", "Eve", "Frank"),
+    list(95, 67, null, 88, 45, 92)
+  );
+  
+  // Execute transpose with comprehensive student analysis
+  result = $testLists.transpose(studentName -> score -> {
+    // Validate inputs
+    validName = if($studentName == null, 
+                   throw("Student name cannot be null"), 
+                   $studentName);
+    
+    // Handle missing scores
+    validScore = if($score == null, 0, $score);
+    
+    // Calculate letter grade
+    letterGrade = if($validScore >= 90, "A",
+                    if($validScore >= 80, "B",
+                      if($validScore >= 70, "C",
+                        if($validScore >= 60, "D", "F"))));
+    
+    // Determine performance category
+    performanceLevel = if($validScore >= 85, "Excellent",
+                         if($validScore >= 75, "Good",
+                           if($validScore >= 65, "Average",
+                             if($validScore >= 50, "Below Average", "Poor"))));
+    
+    // Calculate points for GPA (4.0 scale)
+    gpaPoints = if($letterGrade == "A", 4.0,
+                  if($letterGrade == "B", 3.0,
+                    if($letterGrade == "C", 2.0,
+                      if($letterGrade == "D", 1.0, 0.0))));
+    
+    // Create comprehensive student record
+    {
+      "studentName": $validName,
+      "rawScore": $score,
+      "adjustedScore": $validScore,
+      "letterGrade": $letterGrade,
+      "gpaPoints": $gpaPoints,
+      "performanceLevel": $performanceLevel,
+      "needsHelp": $validScore < 70,
+      "isHonorRoll": $validScore >= 90,
+      "status": if($score == null, "INCOMPLETE", 
+                  if($validScore < 60, "FAILING", "PASSING")),
+      "feedback": toString($validName, " scored ", 
+                          if($score == null, "INCOMPLETE", toString($validScore)), 
+                          " (", $letterGrade, ") - ", $performanceLevel),
+      "metadata": {
+        "processed": true,
+        "hasOriginalScore": $score != null,
+        "scoreCategory": if($validScore >= 80, "high", 
+                           if($validScore >= 60, "medium", "low"))
+      }
+    };
+  });
+  
+  $result;
+}]]></value>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+			command-label="Script ausführen"
+			command-name="executeSearchConsole"
+			component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+			component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-label="Result"
+			>
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Script Konsole > Ergebnis"
+					/>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+					displayed-row-index="0"
+				/>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+				<values>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="studentName"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="Alice"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="rawScore"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+							value="95.0"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="adjustedScore"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+							value="95.0"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="letterGrade"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="A"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="gpaPoints"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+							value="4.0"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="performanceLevel"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="Excellent"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="needsHelp"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+							value="false"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="isHonorRoll"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+							value="true"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="status"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="PASSING"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="feedback"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="Alice scored 95 (A) - Excellent"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="metadata"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+							<values>
+								<value>
+									<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="processed"
+									/>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+										value="true"
+									/>
+								</value>
+								<value>
+									<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="hasOriginalScore"
+									/>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+										value="true"
+									/>
+								</value>
+								<value>
+									<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="scoreCategory"
+									/>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="high"
+									/>
+								</value>
+							</values>
+						</value>
+					</value>
+				</values>
+			</expected-value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-label="Result"
+			>
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Script Konsole > Ergebnis"
+					/>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+					displayed-row-index="1"
+				/>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+				<values>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="studentName"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="Bob"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="rawScore"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+							value="67.0"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="adjustedScore"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+							value="67.0"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="letterGrade"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="D"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="gpaPoints"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+							value="1.0"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="performanceLevel"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="Average"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="needsHelp"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+							value="true"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="isHonorRoll"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+							value="false"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="status"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="PASSING"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="feedback"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="Bob scored 67 (D) - Average"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="metadata"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+							<values>
+								<value>
+									<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="processed"
+									/>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+										value="true"
+									/>
+								</value>
+								<value>
+									<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="hasOriginalScore"
+									/>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+										value="true"
+									/>
+								</value>
+								<value>
+									<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="scoreCategory"
+									/>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="medium"
+									/>
+								</value>
+							</values>
+						</value>
+					</value>
+				</values>
+			</expected-value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-label="Result"
+			>
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Script Konsole > Ergebnis"
+					/>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+					displayed-row-index="2"
+				/>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+				<values>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="studentName"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="Charlie"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="rawScore"
+						/>
+						<value config:interface=""/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="adjustedScore"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+							value="0.0"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="letterGrade"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="F"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="gpaPoints"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+							value="0.0"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="performanceLevel"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="Poor"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="needsHelp"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+							value="true"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="isHonorRoll"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+							value="false"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="status"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="INCOMPLETE"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="feedback"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="Charlie scored INCOMPLETE (F) - Poor"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="metadata"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+							<values>
+								<value>
+									<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="processed"
+									/>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+										value="true"
+									/>
+								</value>
+								<value>
+									<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="hasOriginalScore"
+									/>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+										value="false"
+									/>
+								</value>
+								<value>
+									<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="scoreCategory"
+									/>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="low"
+									/>
+								</value>
+							</values>
+						</value>
+					</value>
+				</values>
+			</expected-value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-label="Result"
+			>
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Script Konsole > Ergebnis"
+					/>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+					displayed-row-index="3"
+				/>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+				<values>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="studentName"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="Diana"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="rawScore"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+							value="88.0"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="adjustedScore"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+							value="88.0"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="letterGrade"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="B"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="gpaPoints"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+							value="3.0"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="performanceLevel"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="Excellent"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="needsHelp"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+							value="false"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="isHonorRoll"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+							value="false"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="status"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="PASSING"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="feedback"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="Diana scored 88 (B) - Excellent"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="metadata"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+							<values>
+								<value>
+									<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="processed"
+									/>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+										value="true"
+									/>
+								</value>
+								<value>
+									<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="hasOriginalScore"
+									/>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+										value="true"
+									/>
+								</value>
+								<value>
+									<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="scoreCategory"
+									/>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="high"
+									/>
+								</value>
+							</values>
+						</value>
+					</value>
+				</values>
+			</expected-value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-label="Result"
+			>
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Script Konsole > Ergebnis"
+					/>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+					displayed-row-index="4"
+				/>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+				<values>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="studentName"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="Eve"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="rawScore"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+							value="45.0"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="adjustedScore"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+							value="45.0"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="letterGrade"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="F"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="gpaPoints"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+							value="0.0"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="performanceLevel"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="Poor"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="needsHelp"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+							value="true"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="isHonorRoll"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+							value="false"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="status"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="FAILING"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="feedback"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="Eve scored 45 (F) - Poor"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="metadata"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+							<values>
+								<value>
+									<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="processed"
+									/>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+										value="true"
+									/>
+								</value>
+								<value>
+									<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="hasOriginalScore"
+									/>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+										value="true"
+									/>
+								</value>
+								<value>
+									<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="scoreCategory"
+									/>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="low"
+									/>
+								</value>
+							</values>
+						</value>
+					</value>
+				</values>
+			</expected-value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-label="Result"
+			>
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Script Konsole > Ergebnis"
+					/>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+					displayed-row-index="5"
+				/>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+				<values>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="studentName"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="Frank"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="rawScore"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+							value="92.0"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="adjustedScore"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+							value="92.0"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="letterGrade"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="A"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="gpaPoints"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+							value="4.0"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="performanceLevel"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="Excellent"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="needsHelp"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+							value="false"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="isHonorRoll"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+							value="true"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="status"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="PASSING"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="feedback"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="Frank scored 92 (A) - Excellent"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="metadata"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+							<values>
+								<value>
+									<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="processed"
+									/>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+										value="true"
+									/>
+								</value>
+								<value>
+									<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="hasOriginalScore"
+									/>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+										value="true"
+									/>
+								</value>
+								<value>
+									<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="scoreCategory"
+									/>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="high"
+									/>
+								</value>
+							</values>
+						</value>
+					</value>
+				</values>
+			</expected-value>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Suchausdruck"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Administration > Development > Script Konsole > Editor"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value=""
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Administration > Development > Modell Editor"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Strukturen"
+			/>
+		</action>
+	</actions>
+</action>

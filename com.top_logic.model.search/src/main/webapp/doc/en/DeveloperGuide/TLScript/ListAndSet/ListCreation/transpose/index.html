@@ -1,0 +1,90 @@
+<h2>Syntax</h2>
+
+<pre>
+	<code>$collection.transpose()
+
+$collection.transpose($fun)</code>
+</pre>
+
+<h2>Description</h2>
+
+<p>Transposes a collection of lists by combining elements at corresponding positions.</p>
+
+<p>The function accepts a collection, which can contain any number of lists, and combines their elements at the corresponding positions. If a transposition function<code class="hljs inlineCode">fun</code>is provided, this is used to combine the elements. Otherwise, tuples of the combined elements are returned.</p>
+
+<p>If the two lists have different lengths, the shorter list is filled with <code class="hljs inlineCode">null</code> values.</p>
+
+<h2>Parameters</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Parameter name</th>
+			<th>Type</th>
+			<th>Type Description</th>
+			<th>Mandatory</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>Collection</td>
+			<td>Enumeration</td>
+			<td>A collection that contains any number of lists. The lists are combined element by element. If there is only one list, it is processed unchanged. Empty collections produce an empty result.</td>
+			<td>yes</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>fun</td>
+			<td>Function</td>
+			<td>
+			<p>An optional function that is used to combine the corresponding elements from the two lists. The function receives as many parameters as there are lists in the collection. If not specified, tuple lists are created.</p>
+			</td>
+			<td>no</td>
+			<td>
+			<p>Tuple creation</p>
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Return value</h2>
+
+<p><strong>Type:</strong> List</p>
+
+<p>A list of the combined elements. If no transposition function has been specified, the list contains tuples in the form of lists. Each tuple list contains the elements at the corresponding position from the input lists. If a function has been specified, the list contains the results of this function for each element tuple. The length of the result corresponds to the longest input list.</p>
+
+<h2>Examples</h2>
+
+<h3>Simple transposition without function</h3>
+
+<pre>
+	<code>list(
+    list("A", "B", "C"),
+    list(1, 2, 3)
+).transpose()</code>
+</pre>
+
+<p><strong>Output: </strong> A list of tuple objects: <code class="hljs inlineCode">[["A", 1], ["B", 2], ["C", 3]]</code></p>
+
+<h3>Transposition with combination function</h3>
+
+<pre>
+	<code>list(
+    list("Hallo", "Guten", "Auf"),
+    list("Welt", "Tag", "Wiedersehen"),
+    list(null, "!", "?")
+).transpose(first -&gt; second -&gt; third -&gt; $first + " " + $second + $third)</code>
+</pre>
+
+<p><strong>Output: </strong> A list of combined strings: <code class="hljs inlineCode">[Hallo Welt, Guten Tag!, Auf Wiedersehen?]</code></p>
+
+<h3>Transposition with different list lengths</h3>
+
+<pre>
+<code>list(
+    list(10, 20, 30, 40),
+    list(1, 2, 3)
+).transpose(a -&gt; b -&gt; if($b != null, $a + $b, $a))</code></pre>
+
+<p><strong>Output: </strong>A list with sums: <code class="hljs inlineCode">[11, 22, 33, 40]</code>. The fourth element remains unchanged, as the second list is shorter.</p>

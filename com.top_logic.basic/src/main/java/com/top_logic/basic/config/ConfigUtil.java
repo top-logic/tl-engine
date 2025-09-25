@@ -1662,21 +1662,12 @@ public class ConfigUtil {
 	private static <T extends Enum<?>> String enumOptions(Class<? extends T> enumClass) {
 		final Enum<?>[] enumConstants = enumClass.getEnumConstants();
 		StringBuilder options = new StringBuilder();
-		if (ExternallyNamed.class.isAssignableFrom(enumClass)) {
-			for (Enum<?> enumConstant : enumConstants) {
-				if (options.length() > 0) {
-					options.append(", ");
-				}
-				options.append(((ExternallyNamed) enumConstant).getExternalName());
+		for (Enum<?> enumConstant : enumConstants) {
+			if (options.length() > 0) {
+				options.append(", ");
 			}
-		} else {
-			for (Enum<?> enumConstant : enumConstants) {
-				if (options.length() > 0) {
-					options.append(", ");
-				}
 
-				options.append(getEnumExternalName(enumConstant));
-			}
+			options.append(getEnumExternalName(enumConstant));
 		}
 		return options.toString();
 	}
@@ -1690,6 +1681,12 @@ public class ConfigUtil {
 	 * @see #getEnumConstant(Class, String)
 	 */
 	public static <T extends Enum<?>> String getEnumExternalName(Enum<?> enumConstant) {
+		if (enumConstant instanceof ExternallyNamed named) {
+			return named.getExternalName();
+		}
+		if (enumConstant instanceof ProtocolEnum named) {
+			return named.protocolName();
+		}
 		String javaName = enumConstant.name();
 		try {
 			Name annotation = enumConstant.getDeclaringClass().getField(javaName).getAnnotation(Name.class);

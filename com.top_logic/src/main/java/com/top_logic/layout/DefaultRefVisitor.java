@@ -59,7 +59,8 @@ public class DefaultRefVisitor implements RefVisitor<LayoutComponent, LayoutComp
 	 * Resolves the given {@link ComponentRef} in context of the given component.
 	 * 
 	 * @param ref
-	 *        The {@link ComponentRef} to resolve.
+	 *        The {@link ComponentRef} to resolve. If the value is <code>null</code>, the context
+	 *        component is returned.
 	 * @param contextComponent
 	 *        The context component. This component is used to resolve relative paths. If
 	 *        <code>null</code> is given, the {@link MainLayout} of the current sub-session is used.
@@ -70,7 +71,7 @@ public class DefaultRefVisitor implements RefVisitor<LayoutComponent, LayoutComp
 		LayoutComponent component = contextComponent == null
 			? DefaultDisplayContext.getDisplayContext().getSubSessionContext().getLayoutContext().getMainLayout()
 			: contextComponent;
-		return ref.visit(DefaultRefVisitor.INSTANCE, component);
+		return ref == null ? component : ref.visit(DefaultRefVisitor.INSTANCE, component);
 	}
 
 	@Override

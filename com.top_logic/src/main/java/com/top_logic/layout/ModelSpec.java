@@ -295,21 +295,27 @@ public interface ModelSpec extends PolymorphicConfiguration<ChannelLinking>, Con
 			String componentName = "[^\\s\\(\\)]+";
 			String className = "[a-zA-Z\\$_][a-zA-Z\\$_0-9\\.]*";
 			String methodName = "[a-zA-Z\\$_][a-zA-Z\\$_0-9]*";
-			String relationSpec = group(RELATION_NAME_GROUP, relationName) + "\\(" + S + "\\)";
-			String nameSpec = group(COMPONENT_NAME_GROUP, componentName);
-			String refSpec = "(?:" + relationSpec + "|" + nameSpec + "|" + /* empty */")";
-			String channelName = name;
-			String relation = group(CHANNEL_NAME_GROUP, channelName) + S + "\\(" + S + refSpec + S + "\\)";
-			String nullSpec = group(NULL_GROUP, "null") + S + "\\(" + S + "\\)";
-			String trueSpec = group(TRUE_GROUP, "true");
-			String falseSpec = group(FALSE_GROUP, "false");
+
 			String provider = "provider" + S + "\\(" + S
 				+ group(CLASS_NAME_GROUP, className)
 				+ "(?:" + "#" + group(METHOD_NAME_GROUP, methodName) + "(?:" + "\\(\\)" + ")?" + ")?"
 				+ S + "\\)";
+			String nullSpec = group(NULL_GROUP, "null") + S + "\\(" + S + "\\)";
+			String trueSpec = group(TRUE_GROUP, "true");
+			String falseSpec = group(FALSE_GROUP, "false");
+			String relation;
+			{
+				String channelSpec = group(CHANNEL_NAME_GROUP, name);
+				String relationSpec = group(RELATION_NAME_GROUP, relationName) + "\\(" + S + "\\)";
+				String nameSpec = group(COMPONENT_NAME_GROUP, componentName);
+				String refSpec = "(?:" + relationSpec + "|" + nameSpec + "|" + /* empty */")";
+
+				relation = channelSpec + S + "\\(" + S + refSpec + S + "\\)";
+			}
+			String commaSpec = group(COMMA_GROUP, "," + S);
+
 			return Pattern.compile(S + "(?:" + provider + "|" + nullSpec + "|" + trueSpec + "|" + falseSpec + "|"
-				+ relation + ")" + S + group(COMMA_GROUP, "," + S)
-				+ "?");
+				+ relation + ")" + S + commaSpec + "?");
 		}
 	
 		/**

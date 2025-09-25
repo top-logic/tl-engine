@@ -20,6 +20,7 @@ import com.top_logic.dob.meta.MOClassImpl;
 import com.top_logic.dob.meta.MOStructure;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.db2.PersistentObject;
+import com.top_logic.layout.component.ComponentUtil;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
@@ -100,7 +101,37 @@ public class TransientTLObjectImpl extends TransientObject {
 				}
 			}
 		}
-		return _values.get(part.getDefinition());
+
+		Object storedValue = _values.get(part.getDefinition());
+		if (storedValue instanceof Collection<?> coll) {
+			if (containsInvalid(coll)) {
+				// Filter out invalid entries.
+				Collection<Object> copy = storedValue instanceof Set ? new HashSet<>() : new ArrayList<>();
+				for (Object entry : coll) {
+					if (ComponentUtil.isValid(storedValue)) {
+						copy.add(entry);
+					}
+				}
+				storedValue = copy;
+				_values.put(part, storedValue);
+			}
+		} else {
+			if (!ComponentUtil.isValid(storedValue)) {
+				storedValue = null;
+				_values.put(part, storedValue);
+			}
+		}
+
+		return storedValue;
+	}
+
+	private static boolean containsInvalid(Collection<?> coll) {
+		for (Object test : coll) {
+			if (!ComponentUtil.isValid(test)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	@Override

@@ -5,12 +5,18 @@
  */
 package com.top_logic.basic.col;
 
+import com.top_logic.basic.config.ConfigUtil;
 import com.top_logic.basic.config.ExternallyNamed;
+import com.top_logic.basic.config.annotation.Name;
+
+import de.haumacher.msgbuf.data.ProtocolEnum;
 
 /**
- * Mapping of {@link Enum} values to their {@link Enum#name() names}. If the
- * given input is marked as {@link ExternallyNamed} its
- * {@link ExternallyNamed#getExternalName() external name} returned.
+ * Mapping of {@link Enum} values to their {@link Enum#name() names}.
+ * 
+ * <p>
+ * Considers {@link Name} annotations, {@link ExternallyNamed} and {@link ProtocolEnum}.
+ * </p>
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -27,10 +33,7 @@ public final class EnumerationNameMapping implements Mapping<Enum<?>, String> {
 
 	@Override
 	public String map(Enum<?> input) {
-		if (input instanceof ExternallyNamed) {
-			return ((ExternallyNamed) input).getExternalName();
-		}
-		return input.name();
+		return ConfigUtil.getEnumExternalName(input);
 	}
 
 }

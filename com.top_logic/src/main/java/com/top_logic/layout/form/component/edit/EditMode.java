@@ -39,6 +39,16 @@ import com.top_logic.tool.boundsec.CommandHandler;
 public interface EditMode extends IComponent {
 
 	/**
+	 * See EditorMode#VIEW_MODE
+	 */
+	String VIEW_MODE_NAME = "view-mode";
+
+	/**
+	 * See EditorMode#EDIT_MODE
+	 */
+	String EDIT_MODE_NAME = "edit-mode";
+
+	/**
 	 * The mode in which an {@link Editor} can be.
 	 */
 	public enum EditorMode {
@@ -48,14 +58,31 @@ public interface EditMode extends IComponent {
 		 * 
 		 * @see Editor#isInViewMode()
 		 */
-		VIEW_MODE,
+		@Name(VIEW_MODE_NAME)
+		VIEW_MODE() {
+			@Override
+			public void apply(EditMode editor) {
+				editor.setViewMode();
+			}
+		},
 
 		/**
 		 * The {@link Editor} is in edit-mode.
 		 * 
 		 * @see Editor#isInEditMode()
 		 */
-		EDIT_MODE;
+		@Name(EDIT_MODE_NAME)
+		EDIT_MODE() {
+			@Override
+			public void apply(EditMode editor) {
+				editor.setEditMode();
+			}
+		};
+
+		/**
+		 * Sets this mode in the given editor.
+		 */
+		public abstract void apply(EditMode editor);
 	}
 
 	/**

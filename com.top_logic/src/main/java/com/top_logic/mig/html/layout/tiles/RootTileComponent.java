@@ -45,6 +45,7 @@ import com.top_logic.mig.html.layout.LayoutContainer;
 import com.top_logic.mig.html.layout.SingleLayoutContainer;
 import com.top_logic.mig.html.layout.tiles.ContextTileComponent.ContentComponentChangedListener;
 import com.top_logic.mig.html.layout.tiles.ContextTileComponent.ContentDisplayedListener;
+import com.top_logic.mig.html.layout.tiles.breadcrumb.RootTileBreadcrumbControlProvider;
 import com.top_logic.mig.html.layout.tiles.component.InlinedTileComponent;
 import com.top_logic.mig.html.layout.tiles.control.RootTileControlProvider;
 import com.top_logic.tool.boundsec.BoundChecker;
@@ -69,6 +70,7 @@ import com.top_logic.tool.boundsec.BoundCheckerDelegate;
  * 
  * @see GroupTileComponent
  * @see ContextTileComponent
+ * @see RootTileBreadcrumbControlProvider
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
@@ -269,14 +271,18 @@ public class RootTileComponent extends SingleLayoutContainer implements BoundChe
 
 	private void clearDisplayedPathFrom(boolean deselectDisplayedComponent, int firstRemovedIndex) {
 		assert firstRemovedIndex <= _displayedPath.size();
-		if (deselectDisplayedComponent) {
-			deselect(displayedPathSubList(firstRemovedIndex - 1));
-		} else {
+
+		// Note: Do not resuse sublist, because de-selecting may drop elements from display path.
+		deselect(displayedPathSubList(firstRemovedIndex));
+
+		if (deselectDisplayedComponent && firstRemovedIndex > 0 && firstRemovedIndex <= _displayedPath.size()) {
 			// Deselect the now displayed component to ensure possibility of re-select.
-			deselect(displayedPathSubList(firstRemovedIndex));
+			LayoutComponent newDisplayedComponent = _displayedPath.get(firstRemovedIndex - 1);
+			deselectDisplayedComponent(newDisplayedComponent);
 		}
-		// De-selecting may drop elements from display path.
+
 		if (firstRemovedIndex == _displayedPath.size()) {
+			// De-selecting has dropped elements from display path.
 			return;
 		}
 
@@ -615,7 +621,52 @@ public class RootTileComponent extends SingleLayoutContainer implements BoundChe
 
 	}
 
-	private void deselect(List<LayoutComponent> displayedComponents) {
+	private void deselectDisplayedComponent(LayoutComponent displayedComponent) {
+		class Collector extends DefaultDescendingLayoutVisitor {
+
+			Selectable _foundComponent = null;
+
+			@Override
+			public boolean visitLayoutComponent(LayoutComponent aComponent) {
+				if (aComponent instanceof InlinedTileComponent) {
+					// InlinedTileComponent must *not* be deselected, because it is displayed iff it
+					// has a selection, i.e. clearing selection removes the InlinedTileComponent
+					// from displayed path. Instead, the content must be deselected which happens in
+					// super.visitLayoutComponent(...).
+					return super.visitLayoutComponent(aComponent);
+				}
+				if (aComponent instanceof GroupTileComponent) {
+					_foundComponent = (GroupTileComponent) aComponent;
+					return false;
+				}
+				if (aComponent instanceof ContextTileComponent) {
+					Selectable contextSelection = ((ContextTileComponent) aComponent).getContextSelection();
+					if (contextSelection != null) {
+						_foundComponent = contextSelection;
+					} else {
+						Logger.error(aComponent + " without context selector.", RootTileComponent.class);
+					}
+					return false;
+				}
+				return super.visitLayoutComponent(aComponent);
+			}
+
+			Selectable searchSelectable(LayoutComponent component) {
+				component.acceptVisitorRecursively(this);
+				return _foundComponent;
+			}
+		}
+
+		Selectable selectable = new Collector().searchSelectable(displayedComponent);
+		if (selectable != null) {
+			selectable.clearSelection();
+		}
+	}
+
+	private void deselect(List<LayoutComponent> components) {
+		if (components.isEmpty()) {
+			return;
+		}
 		List<Selectable> componentsToDeselect = new ArrayList<>();
 		DefaultDescendingLayoutVisitor selectableCollector = new DefaultDescendingLayoutVisitor() {
 
@@ -641,8 +692,8 @@ public class RootTileComponent extends SingleLayoutContainer implements BoundChe
 				return super.visitLayoutComponent(aComponent);
 			}
 		};
-		for (int index = displayedComponents.size() - 1; index >= 0; index--) {
-			displayedComponents.get(index).acceptVisitorRecursively(selectableCollector);
+		for (int index = components.size() - 1; index >= 0; index--) {
+			components.get(index).acceptVisitorRecursively(selectableCollector);
 		}
 		componentsToDeselect.forEach(Selectable::clearSelection);
 	}

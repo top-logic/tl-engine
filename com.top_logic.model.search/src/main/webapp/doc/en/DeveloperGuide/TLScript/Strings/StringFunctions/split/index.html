@@ -1,12 +1,12 @@
 <h2>Syntax</h2>
 
 <pre>
-	<code>$input.split(separator: ",", trim: true)</code>
+	<code>$input.split(separator: ",", trim: true, limit: 0)</code>
 </pre>
 
 <h2>Description</h2>
 
-<p>Splits an input string into a list of strings using a given separator. All occurrences of the separator string are searched for in the input string and the character strings between the separators are returned as a list.</p>
+<p>Splits an input string into a list of strings using a given separator. Every occurrence of the separator string is searched for in the input string and the character strings between the separators are returned as a list.</p>
 
 <h2>Parameters</h2>
 
@@ -41,6 +41,13 @@
 			<td>Whether to remove spaces at the beginning and end of the result entries.</td>
 			<td>no</td>
 			<td><code class="hljs inlineCode">true</code></td>
+		</tr>
+		<tr>
+			<td><code class="hljs inlineCode">limit</code></td>
+			<td>Integer</td>
+			<td>Maximum number of separations. At <code class="hljs inlineCode">0</code> the character string is completely split.</td>
+			<td>no</td>
+			<td><code class="hljs inlineCode">0</code></td>
 		</tr>
 	</tbody>
 </table>
@@ -95,6 +102,12 @@
 
 <p>Exactly the character strings between the separators. There is a space before each of the characters <code class="hljs inlineCode">b</code> and <code class="hljs inlineCode">c</code>.</p>
 
-<p> </p>
+<h3>Without trimming</h3>
 
-<p> </p>
+<pre>
+	<code>"a, b, c".split(limit:1)</code>
+</pre>
+
+<p><strong>Output:</strong> <code class="hljs inlineCode">["a", "b, c"]</code></p>
+
+<p>The character string is only separated once.</p>

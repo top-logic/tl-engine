@@ -1,7 +1,7 @@
 <h2>Syntax</h2>
 
 <pre>
-	<code>$input.split(separator: ",", trim: true)</code>
+	<code>$input.split(separator: ",", trim: true, limit: 0)</code>
 </pre>
 
 <h2>Beschreibung</h2>
@@ -41,6 +41,13 @@
 			<td>Ob Leerzeichen am Anfang und Ende von den Ergebniseinträgen entfernt werden soll.</td>
 			<td>nein</td>
 			<td><code class="hljs inlineCode">true</code></td>
+		</tr>
+		<tr>
+			<td><code class="hljs inlineCode">limit</code></td>
+			<td>Ganzzahl</td>
+			<td>Maximale Anzahl der Trennungen. Bei <code class="hljs inlineCode">0</code> wird die Zeichenkette vollständig zerlegt.</td>
+			<td>nein</td>
+			<td><code class="hljs inlineCode">0</code></td>
 		</tr>
 	</tbody>
 </table>
@@ -95,6 +102,12 @@
 
 <p>Genau die Zeichenketten zwischen den Separatoren. Hier befindet sich jeweils noch ein Leerzeichen vor den Zeichen <code class="hljs inlineCode">b</code> und <code class="hljs inlineCode">c</code>.</p>
 
-<p> </p>
+<h3>Ohne Beschneiden</h3>
 
-<p> </p>
+<pre>
+	<code>"a, b, c".split(limit:1)</code>
+</pre>
+
+<p><strong>Ausgabe:</strong> <code class="hljs inlineCode">["a", "b, c"]</code></p>
+
+<p>Die Zeichenkette wird nur einmal getrennt.</p>

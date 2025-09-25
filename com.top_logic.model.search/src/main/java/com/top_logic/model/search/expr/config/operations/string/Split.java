@@ -7,7 +7,6 @@ package com.top_logic.model.search.expr.config.operations.string;
 
 import java.util.List;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
@@ -49,6 +48,7 @@ public class Split extends GenericMethod {
 		String input = asString(arguments[0]);
 		Object separator = arguments[1];
 		boolean trim = asBoolean(arguments[2]);
+		int limit = asInt(arguments[3]);
 
 		if (separator == null) {
 			return input;
@@ -63,11 +63,14 @@ public class Split extends GenericMethod {
 			pattern = Pattern.compile(patternSrc);
 		}
 
-		Stream<String> result = pattern.splitAsStream(input);
+		int splitLimit = limit > 0 ? limit + 1 : 0;
+		String[] parts = pattern.split(input, splitLimit);
+		List<String> result = List.of(parts);
 		if (trim) {
-			result = result.map(String::strip);
+			result = result.stream().map(String::strip).toList();
 		}
-		return result.toList();
+
+		return result;
 	}
 
 	/**
@@ -79,6 +82,7 @@ public class Split extends GenericMethod {
 			.mandatory("input")
 			.optional("separator", ",")
 			.optional("trim", true)
+			.optional("limit", 0)
 			.build();
 
 		/**

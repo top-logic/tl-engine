@@ -74,7 +74,11 @@ public class ArgumentDescriptorBuilderImpl implements ArgumentDescriptorBuilder 
 
 	@Override
 	public ArgumentDescriptorBuilder optional(String name, Provider<SearchExpression> defaultProvider) {
-		addArg(name);
+		if (name == null) {
+			_argCnt++;
+		} else {
+			addArg(name);
+		}
 		_defaultProvider.add(defaultProvider);
 		return this;
 	}

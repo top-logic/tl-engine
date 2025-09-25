@@ -14,7 +14,6 @@ import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
-import com.top_logic.util.error.TopLogicException;
 
 /**
  * {@link GenericMethod} creating a list of consecutive integer values.
@@ -52,10 +51,6 @@ public class Count extends GenericMethod {
 
 	@Override
 	protected Object eval(Object[] arguments, EvalContext definitions) {
-		if (arguments[0] == null && arguments[1] == null && arguments[2] == null) {
-			throw new TopLogicException(I18NConstants.ERROR_AT_LEAST_ONE_ARGUMENT_EXPECTED__EXPR.fill(getName()));
-		}
-		
 		int start;
 		int stop;
 		int step;
@@ -69,7 +64,7 @@ public class Count extends GenericMethod {
 			start = asInt(arguments[0]);
 			stop = asInt(arguments[1]);
 		}
-		
+
 		step = asInt(arguments[2]);
 		if (step == 0) {
 			// For safety reasons.
@@ -95,8 +90,8 @@ public class Count extends GenericMethod {
 	public static final class Builder extends AbstractSimpleMethodBuilder<Count> {
 		/** Description of parameters for a {@link Count}. */
 		public static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
-			.optional("start")
-			.optional("stop")
+			.optional(null)
+			.optional(null)
 			.optional("step")
 			.build();
 

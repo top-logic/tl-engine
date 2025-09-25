@@ -5,7 +5,7 @@
 	groups="commons,tiles"
 	usable-in-context="com.top_logic.mig.html.layout.tiles.IsInTileContext"
 >
-	<properties extends="com.top_logic.mig.html.layout.tiles.TileComponentName">
+	<properties extends="com.top_logic.mig.html.layout.tiles.TileComponentName, com.top_logic.layout.editor.config.DialogTemplateParameters">
 		<property name="name"
 			type="ResKey"
 		>
@@ -26,12 +26,12 @@
 
 	<component class="com.top_logic.mig.html.layout.tiles.GroupTileComponent"
 		components="${components}"
+		dialogs="${dialogs}"
 		name="GroupTile"
 		titleKey="${name}"
 	>
 		<buttons>
-			<reference command-id="editComponentCommand"/>
-			<reference command-id="deleteComponentCommand"/>
+			<include name="templates/editComponentCommands.xml"/>
 		</buttons>
 	</component>
 </config:template>

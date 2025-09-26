@@ -197,7 +197,7 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 
 	@Override
 	public TLStructuredType getType() {
-		return _overlay.getType();
+		return _overlay.tType();
 	}
 
 	/**

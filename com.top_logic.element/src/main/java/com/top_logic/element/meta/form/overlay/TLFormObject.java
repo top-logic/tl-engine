@@ -16,7 +16,6 @@ import com.top_logic.layout.form.FormContainer;
 import com.top_logic.mig.html.Media;
 import com.top_logic.model.TLFormObjectBase;
 import com.top_logic.model.TLObject;
-import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 
 /**
@@ -33,11 +32,6 @@ public interface TLFormObject extends TLFormObjectBase, UpdateFactory {
 	 * Whether this is a create overlay for a new object.
 	 */
 	boolean isCreate();
-
-	/**
-	 * The type of the overlay object.
-	 */
-	TLStructuredType getType();
 
 	/**
 	 * The underlying base object, if this is an edit overlay.

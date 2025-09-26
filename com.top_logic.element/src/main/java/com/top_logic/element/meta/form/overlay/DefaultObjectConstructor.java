@@ -20,7 +20,7 @@ public abstract class DefaultObjectConstructor implements ObjectConstructor {
 
 	@Override
 	public TLObject newInstance(TLFormObject overlay) {
-		return factory().createObject((TLClass) overlay.getType(), overlay.tContainer());
+		return factory().createObject((TLClass) overlay.tType(), overlay.tContainer());
 	}
 
 	/**

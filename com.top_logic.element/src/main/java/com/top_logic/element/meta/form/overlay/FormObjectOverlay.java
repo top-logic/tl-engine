@@ -82,11 +82,6 @@ public abstract class FormObjectOverlay extends TransientObject implements TLFor
 	}
 
 	@Override
-	public TLStructuredType getType() {
-		return _type;
-	}
-
-	@Override
 	public Media getOutputMedia() {
 		return _scope.getOutputMedia();
 	}

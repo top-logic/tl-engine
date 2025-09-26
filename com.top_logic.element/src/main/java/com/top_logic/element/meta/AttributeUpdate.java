@@ -197,7 +197,7 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 
 	@Override
 	public TLStructuredType getType() {
-		return _overlay.getType();
+		return _overlay.tType();
 	}
 
 	/**
@@ -245,7 +245,7 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 	 */
 	@FrameworkInternal
 	public void initField(FormMember field) {
-		assert _field == null : "Must not create multiple fields for the same update.";
+		assert _field == null : "Must not create multiple fields for the same update: " + _field + " vs. " + field;
 		_field = field;
 		if (_fieldInitializer != null) {
 			_fieldInitializer.accept(_field);

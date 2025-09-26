@@ -1628,7 +1628,7 @@ public class GridComponent extends EditComponent implements
 		TLObject object = toAttributed(rowObject);
 		TLFormObject overlay = updateContainer.getOverlay(object, null);
 		if (overlay != null) {
-			TLClass type = (TLClass) overlay.getType();
+			TLClass type = (TLClass) overlay.tType();
 			modifier.clear(this, type, object, updateContainer, formGroup);
 		}
 		updateContainer.clear();

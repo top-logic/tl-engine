@@ -256,9 +256,9 @@ if [[ "$CREATE_ONLY" == "true" ]]; then
 fi
 
 if [[ "$SKIP_CONTAINER" != "true" ]] ; then
-	echo
-	echo "=== Log-in to docker registry ==="
-	$DRY_RUN $RUN login docker.top-logic.com -u guest -p guest
+#	echo
+#	echo "=== Log-in to docker registry ==="
+#	$DRY_RUN $RUN login docker.top-logic.com -u guest -p guest
 	
 	echo
 	echo "=== Pulling base image ==="
@@ -267,7 +267,7 @@ if [[ "$SKIP_CONTAINER" != "true" ]] ; then
 		sudo chown :$USER /root/.docker/config.json
 		sudo chmod g+r /root/.docker/config.json
 	fi
-	$DRY_RUN $RUN pull docker.top-logic.com/tomcat:10.1-jdk17-openjdk
+	$DRY_RUN $RUN pull tomcat:10.1-jre17
 	
 	echo
 	echo "=== Building docker image ==="

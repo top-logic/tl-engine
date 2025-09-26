@@ -5,6 +5,9 @@
  */
 package com.top_logic.mig.html.layout.tiles.component;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -22,8 +25,10 @@ import com.top_logic.mig.html.layout.SingleLayoutContainer;
 import com.top_logic.mig.html.layout.tiles.InlinedTileFactory;
 import com.top_logic.mig.html.layout.tiles.TileFactory;
 import com.top_logic.mig.html.layout.tiles.TileInfo;
+import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCheckerDelegate;
+import com.top_logic.tool.boundsec.CommandHandler;
 
 /**
  * {@link SingleLayoutContainer} that offers tiles for multiple business objects in the "parent
@@ -46,7 +51,7 @@ public class InlinedTileComponent extends SingleLayoutContainer implements Selec
 	 * 
 	 * @author <a href="mailto:dbu@top-logic.com">dbu</a>
 	 */
-	public interface Config extends SingleLayoutContainer.Config {
+	public interface Config extends SingleLayoutContainer.Config, TileListComponent.ContextMenuButtons {
 
 		/**
 		 * Configuration element for setting a {@link #getModelBuilder()}.
@@ -91,6 +96,8 @@ public class InlinedTileComponent extends SingleLayoutContainer implements Selec
 
 	private final BoundChecker _boundCheckerDelegate = new LayoutContainerBoundChecker<>(this);
 
+	private final List<CommandHandler> _contextMenuButtons;
+
 	/**
 	 * Create a {@link InlinedTileComponent}.
 	 * 
@@ -102,6 +109,17 @@ public class InlinedTileComponent extends SingleLayoutContainer implements Selec
 	public InlinedTileComponent(InstantiationContext context, Config config) throws ConfigurationException {
 		super(context, config);
 		_builder = context.getInstance(config.getModelBuilder());
+		_contextMenuButtons = config.getContextMenuButtons()
+			.stream()
+			.map(buttonConf -> AbstractCommandHandler.getInstance(context, buttonConf))
+			.collect(Collectors.toList());
+	}
+
+	/**
+	 * Commands to show in the context menu.
+	 */
+	public List<CommandHandler> getContextMenuButtons() {
+		return _contextMenuButtons;
 	}
 
 	/**

@@ -63,8 +63,7 @@ public class Split extends GenericMethod {
 			pattern = Pattern.compile(patternSrc);
 		}
 
-		int splitLimit = limit > 0 ? limit + 1 : 0;
-		String[] parts = pattern.split(input, splitLimit);
+		String[] parts = pattern.split(input, limit);
 		List<String> result = List.of(parts);
 		if (trim) {
 			result = result.stream().map(String::strip).toList();

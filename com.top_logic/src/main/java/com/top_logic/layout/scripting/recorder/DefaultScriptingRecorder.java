@@ -310,9 +310,9 @@ public class DefaultScriptingRecorder extends ScriptingRecorder {
 			Map<String, Object> arguments) {
 		CommandAction commandAction;
 		if (command instanceof GotoHandler) {
-			commandAction = ActionFactory.gotoAction(component.getName(), command.getID(), arguments);
+			commandAction = ActionFactory.gotoAction(component, command.getID(), arguments);
 		} else {
-			commandAction = ActionFactory.commandAction(component.getName(), command.getID(), arguments);
+			commandAction = ActionFactory.commandAction(component, command.getID(), arguments);
 			commandAction.setCommandLabel(Resources.getInstance().getString(command.getResourceKey(component), null));
 		}
 

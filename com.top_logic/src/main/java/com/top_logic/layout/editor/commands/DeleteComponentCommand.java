@@ -136,7 +136,7 @@ public class DeleteComponentCommand extends ConfirmCommandHandler {
 		CommandActionWithIdentifiers action = ActionFactory.newApplicationAction(CommandActionWithIdentifiers.class,
 			CommandActionOpWithIdentifiers.class);
 		Map<String, Boolean> singletonMap = Collections.singletonMap(CONFIRMED_KEY, Boolean.TRUE);
-		ActionFactory.setCommandParameters(action, component.getName(), getID(), singletonMap);
+		ActionFactory.setCommandParameters(action, component, getID(), singletonMap);
 		action.setIdentifiers(newIdentifiers);
 		ScriptingRecorder.recordAction(action);
 	}

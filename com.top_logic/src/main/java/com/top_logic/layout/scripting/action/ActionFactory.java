@@ -262,9 +262,9 @@ public class ActionFactory {
 	/**
 	 * Create an {@link ApplicationAction} that executes the given command.
 	 */
-	public static CommandAction commandAction(ComponentName componentName, String commandName, Map<String, ?> arguments) {
+	public static CommandAction commandAction(LayoutComponent component, String commandName, Map<String, ?> arguments) {
 		CommandAction config = ActionFactory.newApplicationAction(CommandAction.class, CommandActionOp.class);
-		setCommandParameters(config, componentName, commandName, arguments);
+		setCommandParameters(config, component, commandName, arguments);
 		return config;
 	}
 
@@ -298,22 +298,22 @@ public class ActionFactory {
 	/**
 	 * Creates a {@link GotoAction} for the specified jump.
 	 */
-	public static GotoAction gotoAction(ComponentName componentName, String commandName, Map<String, ?> arguments) {
+	public static GotoAction gotoAction(LayoutComponent component, String commandName, Map<String, ?> arguments) {
 		GotoAction config = ActionFactory.newApplicationAction(GotoAction.class, GotoActionOp.class);
-		setCommandParameters(config, componentName, commandName, arguments);
+		setCommandParameters(config, component, commandName, arguments);
 		return config;
 	}
 
 	/**
 	 * Fills given {@link CommandAction} with informations from given arguments.
 	 */
-	public static void setCommandParameters(CommandAction config, ComponentName componentName, String commandName,
+	public static void setCommandParameters(CommandAction config, LayoutComponent component, String commandName,
 			Map<String, ?> arguments) {
-		config.setComponentName(componentName);
+		config.setComponentName(component.getName());
 		if (!UUIDInitializer.ID_PATTERN.matcher(commandName).matches()) {
 			config.setCommandName(commandName);
 		}
-		config.setArguments(ReferenceFactory.attributeValues(arguments));
+		config.setArguments(ReferenceFactory.attributeValues(component, arguments));
 	}
 	
 	/**

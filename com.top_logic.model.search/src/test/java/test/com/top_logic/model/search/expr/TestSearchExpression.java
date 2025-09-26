@@ -1985,10 +1985,12 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		assertEquals(list(3.0, 4.0, 5.0), execute(search("count(3, 6)")));
 		assertEquals(list(3.0, 4.0, 5.0), execute(search("count(3, 6, 0)")));
 		assertEquals(list(), execute(search("count(3, 3)")));
-		assertEquals(list(), execute(search("count(3, 2)")));
+		assertEquals(list(3.0), execute(search("count(3, 2)")));
 		assertEquals(list(3.0), execute(search("count(3, 4)")));
 		assertEquals(list(3.0, 7.0, 11.0), execute(search("count(3, 15, 4)")));
 		assertEquals(list(11.0, 7.0, 3.0), execute(search("count(11, 2, -4)")));
+		assertEquals(list(5.0, 4.0, 3.0), execute(search("count(5, 2)")));
+		assertEquals(list(0.0, 1.0, 2.0), execute(search("count(3)")));
 	}
 
 	public void testToList() throws ParseException {

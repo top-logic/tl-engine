@@ -68,7 +68,7 @@ public class Count extends GenericMethod {
 		step = asInt(arguments[2]);
 		if (step == 0) {
 			// For safety reasons.
-			step = 1;
+			step = (start < stop) ? 1 : -1;
 		}
 
 		ArrayList<Double> result = new ArrayList<>(Math.max(0, stop - start));

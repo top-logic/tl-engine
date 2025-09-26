@@ -3,6 +3,8 @@
 <pre>
 	<code>count($stop)
 
+count($start, $stop)
+
 count($start, $stop, $step)
 </code>
 </pre>
@@ -27,23 +29,23 @@ count($start, $stop, $step)
 		<tr>
 			<td>start</td>
 			<td>Zahl</td>
-			<td>Der Startwert der Zählung. Die Zahl wird in die Liste mit inbegriffen.</td>
+			<td>Der Startwert der Zählung. Die Zahl wird in die Liste aufgenommen.</td>
 			<td>nein</td>
 			<td>0</td>
 		</tr>
 		<tr>
 			<td>stop</td>
 			<td>Zahl</td>
-			<td>Der Endwert der Zählung. Die Zahl wird in die Liste nicht mit inbegriffen.</td>
+			<td>Der Endwert der Zählung. Die Zahl wird nicht in die Liste aufgenommen.</td>
 			<td>ja</td>
 			<td> </td>
 		</tr>
 		<tr>
 			<td>step</td>
 			<td>Zahl</td>
-			<td>Das Inkrement, mit dem hochgezählt werden soll. Es sind nur ganze Zahlen erlaubt., wobei diese auch negativ sein können.</td>
+			<td>Das Inkrement, mit dem hochgezählt werden soll. Es sind nur ganze Zahlen erlaubt, wobei diese auch negativ sein können.</td>
 			<td>nein</td>
-			<td>1</td>
+			<td>1 (start &lt; stop), -1 (start &gt; stop)</td>
 		</tr>
 	</tbody>
 </table>
@@ -81,10 +83,10 @@ count($start, $stop, $step)
 
 <p><strong><span style="color:#3498db">Ausgabe:</span> </strong> Eine Liste mit den Elementen [10, 8, 6, 4, 2].</p>
 
-<h3>Ungültige Zählung</h3>
+<h3>Absteigende Zählung</h3>
 
 <pre>
 <code>count(10, 0)
 </code></pre>
 
-<p><span style="color:#3498db"><strong>Ausgabe: </strong></span>Erzeugt eine leere Liste.</p>
+<p><span style="color:#3498db"><strong>Ausgabe: </strong></span>Eine Liste mit den Elemeten [10, 9, 8, 7, 6, 5, 4, 3, 2, 1].</p>

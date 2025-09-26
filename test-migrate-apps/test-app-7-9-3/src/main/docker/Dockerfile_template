@@ -1,5 +1,4 @@
-FROM docker.top-logic.com/tomcat:10.1-jdk17-openjdk
-MAINTAINER support@top-logic.com
+FROM tomcat:10.1-jre17
 USER root
 RUN apt update
 {dbLibrary}

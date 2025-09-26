@@ -252,7 +252,7 @@ public class GuiEngine {
 		if (resultPerson != null) {
 			Person currentResultPerson = WrapperHistoryUtils.getCurrent(resultPerson);
 			return currentResultPerson == accountToCheck
-				|| currentResultPerson.getRepresentativeGroup().containsPerson(accountToCheck);
+				|| (currentResultPerson != null && currentResultPerson.getRepresentativeGroup().containsPerson(accountToCheck));
 		}
 		if (actor instanceof Group) {
 			return ((Group) actor).containsPerson(accountToCheck);

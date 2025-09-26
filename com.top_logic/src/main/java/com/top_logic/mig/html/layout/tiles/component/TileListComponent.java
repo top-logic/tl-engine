@@ -20,6 +20,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.annotation.Abstract;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.config.annotation.defaults.ListDefault;
@@ -27,6 +28,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.contextmenu.component.factory.ContextMenuUtil;
 import com.top_logic.layout.basic.contextmenu.menu.Menu;
 import com.top_logic.layout.form.values.edit.InAppImplementations;
+import com.top_logic.layout.form.values.edit.annotation.AcceptableClassifiers;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.scripting.action.SelectAction.SelectionChangeKind;
 import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
@@ -59,10 +61,12 @@ public class TileListComponent extends SelectableBuilderComponent {
 		String CONTEXT_MENU_BUTTONS = "contextMenuButtons";
 
 		/**
-		 * All buttons on this component.
+		 * These commands are displayed in the burger menu of the tiles.
 		 */
 		@Options(fun = InAppImplementations.class)
+		@AcceptableClassifiers({ "list", "commons" })
 		@Name(CONTEXT_MENU_BUTTONS)
+		@Label("Tile context menu commands")
 		List<CommandHandler.ConfigBase<? extends CommandHandler>> getContextMenuButtons();
 
 	}

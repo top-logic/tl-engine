@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import com.top_logic.basic.col.Provider;
 import com.top_logic.basic.util.ResKey;
@@ -81,17 +82,22 @@ public abstract class BOComponentTile extends AbstractComponentTile {
 	 *        this component.
 	 * @param targetComponent
 	 *        The component represented by the tile that gets the {@link Menu}.
+	 * @param modifier
+	 *        Optional modifier for the menu. May be <code>null</code>.
 	 * 
 	 * @return A {@link Provider} delivering the {@link Menu}.
 	 */
 	public static Provider<Menu> getTileCommands(LayoutComponent invocationComponent,
-			LayoutComponent targetComponent) {
+			LayoutComponent targetComponent, Consumer<Menu> modifier) {
 		return () -> {
 			ArrayList<CommandModel> commands = new ArrayList<>(2);
 			addEditCommand(commands, invocationComponent, targetComponent);
 			removeCommand(commands, invocationComponent, targetComponent);
 			Menu menu = new Menu();
 			commands.forEach(menu::add);
+			if (modifier != null) {
+				modifier.accept(menu);
+			}
 			return menu;
 		};
 	}

@@ -46,6 +46,7 @@ import com.top_logic.mig.html.layout.DialogSupport;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutUtils;
 import com.top_logic.mig.html.layout.MainLayout;
+import com.top_logic.model.TLFormObjectBase;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
@@ -317,6 +318,10 @@ public class GotoHandler extends AbstractCommandHandler {
 	 *         <code>null</code> if the goto does not succeeded.
 	 */
 	public LayoutComponent gotoLayout(LayoutComponent contextComponent, Object targetObject, ComponentName targetComponentName) {
+		targetObject = unwrapOverlay(targetObject);
+		if (targetObject == null) {
+			return null;
+		}
 		LayoutComponent theResult = null;
 		boolean isProcessed = false;
 		MainLayout theMain = contextComponent.getMainLayout();
@@ -637,6 +642,7 @@ public class GotoHandler extends AbstractCommandHandler {
 	}
 
 	public static boolean canShow(Object anObject) {
+		anObject = unwrapOverlay(anObject);
 		if (anObject instanceof TLObject) {
             BoundHelper theHelper = BoundHelper.getInstance();
 			return theHelper.allowView((TLObject) anObject, theHelper.getRootChecker());
@@ -646,6 +652,23 @@ public class GotoHandler extends AbstractCommandHandler {
         }
 	}
     
+	/**
+	 * GOTO to an {@link TLFormObjectBase} makes no sense. Therefore find the "real"
+	 * {@link TLObject}.
+	 * 
+	 * @param object
+	 *        The object to check for being a {@link TLFormObjectBase} and to unwrap. May be
+	 *        <code>null</code>.
+	 */
+	private static Object unwrapOverlay(Object object) {
+		if (object instanceof TLFormObjectBase overlay) {
+			/* The overlay may also be wrapped in another overlay. */
+			return unwrapOverlay(overlay.getEditedObject());
+		} else {
+			return object;
+		}
+	}
+
     /**
      * Writes the end of the goto link.
      * @param aWriter           an TagWriter to generate the needed HTML.

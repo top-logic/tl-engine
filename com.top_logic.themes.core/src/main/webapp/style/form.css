@@ -2531,9 +2531,12 @@ td.tl-table__cell .cDataItem li {
 	justify-content: center;
 	width: var(--form-line-height);
 	height: var(--form-line-height);
+	color: var(--button-fg, var(--icon-primary));
+}
+
+.cImgUpload .fClear.inset {
 	transform: translate(-100%, 0);
 	border-bottom-left-radius: var(--spacing-02);
-	color: var(--button-fg, var(--icon-primary));
 }
 
 .cImgUpload .fClear:hover {
@@ -2548,9 +2551,7 @@ td.tl-table__cell .cDataItem li {
 }
 
 .cImgUpload img.annotatedMaxW {
-	width: stretch;
-	width: -moz-available;
-	width: -webkit-fill-available;
+	width: fit-content;
 }
 
 .cImgUpload label {

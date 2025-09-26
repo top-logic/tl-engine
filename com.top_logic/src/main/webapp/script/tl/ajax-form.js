@@ -4183,6 +4183,15 @@ services.form = {
 				controlCommand : "uploadPerformed",
 				controlID : controlID
 			});
+		},
+		
+		setInOrOut: function(img) {
+			const clearButton = img.parentElement.querySelector(".fClear");
+			if (clearButton != null) {
+				if (img.clientWidth < clearButton.clientWidth * 2) {
+					clearButton.classList.remove("inset");
+				}
+			}
 		}
 	},
 

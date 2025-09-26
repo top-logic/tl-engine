@@ -3,6 +3,8 @@
 <pre>
 	<code>count($stop)
 
+count($start, $stop)
+
 count($start, $stop, $step)
 </code>
 </pre>
@@ -27,14 +29,14 @@ count($start, $stop, $step)
 		<tr>
 			<td>start</td>
 			<td>Number</td>
-			<td>The start value of the count. The number is included in the list.</td>
+			<td>The start value of the count. The number will be added to the list.</td>
 			<td>no</td>
 			<td>0</td>
 		</tr>
 		<tr>
 			<td>stop</td>
 			<td>Number</td>
-			<td>The end value of the count. The number is not included in the list.</td>
+			<td>The end value of the count. The number won't be added to the list.</td>
 			<td>yes</td>
 			<td> </td>
 		</tr>
@@ -43,7 +45,7 @@ count($start, $stop, $step)
 			<td>Number</td>
 			<td>The increment to be used for counting up. Only whole numbers are permitted, although these can also be negative.</td>
 			<td>no</td>
-			<td>1</td>
+			<td>1 (start &lt; stop), -1 (start &gt; stop)</td>
 		</tr>
 	</tbody>
 </table>
@@ -81,10 +83,10 @@ count($start, $stop, $step)
 
 <p><strong><span style="color:#3498db">Output:</span> </strong> A list with the elements [10, 8, 6, 4, 2].</p>
 
-<h3>Invalid count</h3>
+<h3>Descending count</h3>
 
 <pre>
 <code>count(10, 0)
 </code></pre>
 
-<p><span style="color:#3498db"><strong>Output: </strong></span>Generates an empty list.</p>
+<p><span style="color:#3498db"><strong>Output: </strong></span>A list with the elements [10, 9, 8, 7, 6, 5, 4, 3, 2, 1].</p>

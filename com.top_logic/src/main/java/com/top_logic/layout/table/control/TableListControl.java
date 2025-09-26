@@ -5,12 +5,14 @@
  */
 package com.top_logic.layout.table.control;
 
+import java.util.Collections;
 import java.util.Map;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.ControlCommand;
+import com.top_logic.layout.component.model.MultiSelectionEvent;
 import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.form.control.ButtonControl;
 import com.top_logic.layout.form.control.ImageButtonRenderer;
@@ -236,6 +238,19 @@ public class TableListControl extends TableControl {
         }
     }
 
+	/**
+	 * Triggers a selection changed notification, to use when a row was moved.
+	 * 
+	 * This is necessary because when moving a row the selection index changes but not the selected
+	 * object. Thus no notify is triggered when moving a row. Therefore it has to be triggered
+	 * manually.
+	 */
+	public void notifyRowMoved() {
+		SelectionModel selectionModel = getSelectionModel();
+		notifySelectionChanged(selectionModel,
+			new MultiSelectionEvent(selectionModel, Collections.emptySet(), selectionModel.getSelection()));
+	}
+
 	@Override
 	public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
 		super.notifySelectionChanged(model, event);
@@ -408,6 +423,7 @@ public class TableListControl extends TableControl {
             if (theSelectedRow < 1) return HandlerResult.DEFAULT_RESULT;
             theTableModel.moveRowUp(theSelectedRow);
             aTable.setSelectedRow(theSelectedRow - 1);
+			((TableListControl) aTable).notifyRowMoved();
             return HandlerResult.DEFAULT_RESULT;
         }
 
@@ -442,6 +458,7 @@ public class TableListControl extends TableControl {
             if (theSelectedRow < 0 || theSelectedRow > theTableModel.getRowCount() - 2) return HandlerResult.DEFAULT_RESULT;
             theTableModel.moveRowDown(theSelectedRow);
             aTable.setSelectedRow(theSelectedRow + 1);
+			((TableListControl) aTable).notifyRowMoved();
             return HandlerResult.DEFAULT_RESULT;
         }
 
@@ -476,6 +493,7 @@ public class TableListControl extends TableControl {
             if (theSelectedRow < 1) return HandlerResult.DEFAULT_RESULT;
             theTableModel.moveRowToTop(theSelectedRow);
             aTable.setSelectedRow(0);
+			((TableListControl) aTable).notifyRowMoved();
             return HandlerResult.DEFAULT_RESULT;
         }
 
@@ -510,6 +528,7 @@ public class TableListControl extends TableControl {
             if (theSelectedRow < 0 || theSelectedRow > theTableModel.getRowCount() - 2) return HandlerResult.DEFAULT_RESULT;
             theTableModel.moveRowToBottom(theSelectedRow);
             aTable.setSelectedRow(theTableModel.getRowCount() - 1);
+			((TableListControl) aTable).notifyRowMoved();
             return HandlerResult.DEFAULT_RESULT;
         }
 

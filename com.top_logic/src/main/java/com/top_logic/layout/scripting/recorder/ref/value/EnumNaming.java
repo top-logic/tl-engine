@@ -5,7 +5,7 @@
  */
 package com.top_logic.layout.scripting.recorder.ref.value;
 
-import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
+import com.top_logic.layout.scripting.recorder.ref.AbstractGlobalModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
 import com.top_logic.layout.scripting.runtime.ActionContext;
@@ -15,7 +15,7 @@ import com.top_logic.layout.scripting.runtime.ActionContext;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class EnumNaming extends AbstractModelNamingScheme<Enum<?>, EnumNaming.Name> {
+public class EnumNaming extends AbstractGlobalModelNamingScheme<Enum<?>, EnumNaming.Name> {
 
 	/**
 	 * {@link ModelName} of {@link EnumNaming}.

@@ -18,7 +18,7 @@ import com.top_logic.bpe.bpml.model.Process;
 import com.top_logic.bpe.execution.model.ProcessExecution;
 import com.top_logic.bpe.execution.model.Token;
 import com.top_logic.element.meta.MetaElementUtil;
-import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
+import com.top_logic.layout.scripting.recorder.ref.AbstractGlobalModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ui.BreadcrumbStrings;
@@ -33,7 +33,7 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  * 
  * @author <a href="mailto:fma@top-logic.com">fma</a>
  */
-public class TokenNaming extends AbstractModelNamingScheme<Token, TokenNaming.TokenName> {
+public class TokenNaming extends AbstractGlobalModelNamingScheme<Token, TokenNaming.TokenName> {
 
 	/**
 	 * {@link ModelName} of the {@link BPMLObjectNaming}.

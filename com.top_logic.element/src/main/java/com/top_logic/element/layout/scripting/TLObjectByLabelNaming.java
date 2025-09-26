@@ -16,7 +16,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.layout.provider.MetaLabelProvider;
-import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
+import com.top_logic.layout.scripting.recorder.ref.AbstractGlobalModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
 import com.top_logic.layout.scripting.runtime.ActionContext;
@@ -32,7 +32,7 @@ import com.top_logic.model.util.TLModelUtil;
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
 public class TLObjectByLabelNaming
-		extends AbstractModelNamingScheme<TLObject, TLObjectByLabelNaming.TLObjectByLabelName> {
+		extends AbstractGlobalModelNamingScheme<TLObject, TLObjectByLabelNaming.TLObjectByLabelName> {
 
 	/** {@link ModelName} for the {@link TLObjectByLabelNaming}. */
 	public interface TLObjectByLabelName extends ModelName {

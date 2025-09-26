@@ -18,7 +18,7 @@ import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.component.AbstractApplyCommandHandler;
 import com.top_logic.layout.form.component.EditComponent;
 import com.top_logic.layout.form.model.FormGroup;
-import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
+import com.top_logic.layout.scripting.recorder.ref.AbstractGlobalModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
@@ -185,7 +185,7 @@ public class OpenDetailDialog extends AbstractCommandModel {
 	 * 
 	 * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
 	 */
-	public static class Naming extends AbstractModelNamingScheme<OpenDetailDialog, Naming.Name> {
+	public static class Naming extends AbstractGlobalModelNamingScheme<OpenDetailDialog, Naming.Name> {
 		
 		/**
 		 * {@link ModelName} for {@link OpenDetailDialog} commands in the {@link Naming} scheme.

@@ -12,7 +12,7 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
-import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
+import com.top_logic.layout.scripting.recorder.ref.AbstractGlobalModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.NamedModel;
@@ -27,7 +27,7 @@ import com.top_logic.mig.html.layout.QualifiedComponentNameConstraint;
  * {@link ModelNamingScheme} for UI models that are contained in {@link LayoutComponent}s.
  */
 public abstract class ComponentBasedNamingScheme<M extends NamedModel, N extends ComponentBasedNamingScheme.ComponentBasedName>
-		extends AbstractModelNamingScheme<M, N> implements LayoutComponentResolver {
+		extends AbstractGlobalModelNamingScheme<M, N> implements LayoutComponentResolver {
 
 	/**
 	 * Identifier for a {@link LayoutComponent}
@@ -83,7 +83,7 @@ public abstract class ComponentBasedNamingScheme<M extends NamedModel, N extends
 	/**
 	 * Creates a new {@link ComponentBasedNamingScheme}.
 	 * 
-	 * @see AbstractModelNamingScheme#AbstractModelNamingScheme(Class, Class)
+	 * @see AbstractGlobalModelNamingScheme#AbstractGlobalModelNamingScheme(Class, Class)
 	 */
 	protected ComponentBasedNamingScheme(Class<M> modelClass, Class<? extends N> nameClass) {
 		super(modelClass, nameClass);

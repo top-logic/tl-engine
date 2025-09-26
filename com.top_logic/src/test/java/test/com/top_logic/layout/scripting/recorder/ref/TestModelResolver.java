@@ -23,7 +23,7 @@ import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.reflect.TypeIndex;
-import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
+import com.top_logic.layout.scripting.recorder.ref.AbstractGlobalModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
@@ -78,7 +78,7 @@ public class TestModelResolver extends TestCase {
 	}
 
 	/** An {@link ModelNamingScheme} for tests. */
-	public static class InstructableModelNamingScheme extends AbstractModelNamingScheme<Object, InstructableModelNamingScheme.InstructableModelName> {
+	public static class InstructableModelNamingScheme extends AbstractGlobalModelNamingScheme<Object, InstructableModelNamingScheme.InstructableModelName> {
 
 		/** {@link ModelName} for the {@link InstructableModelNamingScheme}. */
 		public interface InstructableModelName extends ModelName {
@@ -120,7 +120,7 @@ public class TestModelResolver extends TestCase {
 
 	/** A {@link ModelNamingScheme} that identified only a singleton value: {@link #MODEL} */
 	public static class SingletonNamingSchemeA extends
-			AbstractModelNamingScheme<Object, SingletonNamingSchemeA.SingletonModelNameA> {
+			AbstractGlobalModelNamingScheme<Object, SingletonNamingSchemeA.SingletonModelNameA> {
 
 		/** {@link ModelName} for the {@link SingletonNamingSchemeA}. */
 		public interface SingletonModelNameA extends ModelName {
@@ -159,7 +159,7 @@ public class TestModelResolver extends TestCase {
 
 	/** A {@link ModelNamingScheme} that identified only a singleton value: {@link #MODEL} */
 	public static class SingletonNamingSchemeB extends
-			AbstractModelNamingScheme<Object, SingletonNamingSchemeB.SingletonModelNameB> {
+			AbstractGlobalModelNamingScheme<Object, SingletonNamingSchemeB.SingletonModelNameB> {
 
 		/** {@link ModelName} for the {@link SingletonNamingSchemeA}. */
 		public interface SingletonModelNameB extends ModelName {

@@ -13,7 +13,7 @@ import com.top_logic.basic.config.ConfigUtil;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.XmlDateTimeFormat;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
-import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
+import com.top_logic.layout.scripting.recorder.ref.AbstractGlobalModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
 import com.top_logic.layout.scripting.runtime.ActionContext;
@@ -24,7 +24,7 @@ import com.top_logic.layout.scripting.runtime.action.ApplicationAssertions;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class DateNaming extends AbstractModelNamingScheme<Date, DateNaming.Name> {
+public class DateNaming extends AbstractGlobalModelNamingScheme<Date, DateNaming.Name> {
 
 	/**
 	 * {@link ModelName} of {@link DateNaming}.

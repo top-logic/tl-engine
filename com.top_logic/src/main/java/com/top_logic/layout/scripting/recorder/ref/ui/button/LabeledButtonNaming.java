@@ -27,7 +27,7 @@ import com.top_logic.layout.basic.contextmenu.menu.Menu;
 import com.top_logic.layout.form.control.ButtonControl;
 import com.top_logic.layout.form.control.PopupMenuButtonControl;
 import com.top_logic.layout.form.popupmenu.MenuButtonRenderer;
-import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
+import com.top_logic.layout.scripting.recorder.ref.AbstractGlobalModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
 import com.top_logic.layout.scripting.runtime.ActionContext;
@@ -45,7 +45,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
 public class LabeledButtonNaming
-		extends AbstractModelNamingScheme<CommandModel, LabeledButtonNaming.LabeledButtonName> {
+		extends AbstractGlobalModelNamingScheme<CommandModel, LabeledButtonNaming.LabeledButtonName> {
 
 	/**
 	 * {@link ModelName} of the {@link LabeledButtonNaming}.

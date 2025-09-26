@@ -33,7 +33,7 @@ import com.top_logic.layout.form.control.ButtonControl;
 import com.top_logic.layout.form.control.ButtonRenderer;
 import com.top_logic.layout.form.values.edit.annotation.AcceptableClassifiers;
 import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
-import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
+import com.top_logic.layout.scripting.recorder.ref.AbstractGlobalModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
@@ -193,7 +193,7 @@ public class ButtonColumnProvider
 	 * {@link ModelNamingScheme} for resolving {@link CommandHandler}s defined in tabel columns.
 	 */
 	public static class CommandInTableRowNaming
-			extends AbstractModelNamingScheme<CommandHandler, CommandInTableRowNaming.Name> {
+			extends AbstractGlobalModelNamingScheme<CommandHandler, CommandInTableRowNaming.Name> {
 
 		/**
 		 * {@link ModelName} for a {@link CommandHandler} defined in a table column.

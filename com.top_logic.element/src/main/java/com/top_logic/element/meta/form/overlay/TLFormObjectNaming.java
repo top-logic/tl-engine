@@ -11,7 +11,7 @@ import java.util.List;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.element.meta.AttributeUpdateContainer;
 import com.top_logic.element.meta.form.AttributeFormContext;
-import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
+import com.top_logic.layout.scripting.recorder.ref.AbstractGlobalModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
@@ -24,7 +24,7 @@ import com.top_logic.model.TLObject;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class TLFormObjectNaming extends AbstractModelNamingScheme<TLFormObject, TLFormObjectNaming.Name> {
+public class TLFormObjectNaming extends AbstractGlobalModelNamingScheme<TLFormObject, TLFormObjectNaming.Name> {
 
 	/**
 	 * {@link ModelName} for {@link TLFormObjectNaming}.

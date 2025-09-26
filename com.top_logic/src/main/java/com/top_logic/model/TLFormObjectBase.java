@@ -13,6 +13,31 @@ import com.top_logic.layout.form.FormMember;
 public interface TLFormObjectBase extends TLObject {
 
 	/**
+	 * Whether this is a create overlay for a new object.
+	 */
+	boolean isCreate();
+
+	/**
+	 * The underlying base object, if this is an edit overlay. <code>null</code> if this is
+	 * {@link #isCreate() create} overlay.
+	 * 
+	 * @see #isCreate()
+	 */
+	TLObject getEditedObject();
+
+	/**
+	 * The name of the created object, if this is a {@link #isCreate() create overlay}.
+	 * 
+	 * <p>
+	 * Legal values are <code>null</code> for the default/initial object creation, or any other
+	 * string except the string value <code>"null"</code>.
+	 * </p>
+	 * 
+	 * @see #isCreate()
+	 */
+	String getDomain();
+
+	/**
 	 * The value entered in the form field displayed for the given attribute.
 	 *
 	 * @param attribute

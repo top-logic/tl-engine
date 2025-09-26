@@ -29,30 +29,6 @@ import com.top_logic.model.TLStructuredTypePart;
 public interface TLFormObject extends TLFormObjectBase, UpdateFactory {
 
 	/**
-	 * Whether this is a create overlay for a new object.
-	 */
-	boolean isCreate();
-
-	/**
-	 * The underlying base object, if this is an edit overlay.
-	 * 
-	 * @see #isCreate()
-	 */
-	TLObject getEditedObject();
-
-	/**
-	 * The name of the created object, if this is a {@link #isCreate() create overlay}.
-	 * 
-	 * <p>
-	 * Legal values are <code>null</code> for the default/initial object creation, or any other
-	 * string except the string value <code>"null"</code>.
-	 * </p>
-	 * 
-	 * @see #isCreate()
-	 */
-	String getDomain();
-
-	/**
 	 * The {@link AttributeUpdateContainer} with all current edit operations.
 	 */
 	AttributeUpdateContainer getScope();

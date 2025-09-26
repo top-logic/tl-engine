@@ -337,6 +337,10 @@
 					<method name="stringEndsWith" class="com.top_logic.model.search.expr.config.operations.StringEndsWithBuilder"/>
 					<method name="with" class="com.top_logic.model.search.expr.config.operations.With$Builder"/>
 					<method name="transpose" class="com.top_logic.model.search.expr.config.operations.Transpose$Builder"/>
+					<method name="abs" class="com.top_logic.model.search.expr.config.operations.arithmetic.Abs$Builder"/>
+					<method name="sqrt" class="com.top_logic.model.search.expr.config.operations.arithmetic.Sqrt$Builder"/>
+					<method name="random" class="com.top_logic.model.search.expr.config.operations.arithmetic.Random$Builder"/>
+					<method name="pow" class="com.top_logic.model.search.expr.config.operations.arithmetic.Pow$Builder"/>
 					
 					<method name="subString" class="com.top_logic.model.search.expr.config.operations.string.SubString$Builder"/>
 					<method name="toLowerCase" class="com.top_logic.model.search.expr.config.operations.string.ToLowerCase$Builder"/>

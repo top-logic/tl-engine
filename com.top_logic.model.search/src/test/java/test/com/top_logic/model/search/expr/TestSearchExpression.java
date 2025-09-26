@@ -2118,6 +2118,53 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		assertEquals("", eval("resolveAlias('')"));
 	}
 
+	public void testMathFunctions() throws ParseException {
+		// Test abs function
+		assertEquals(5.0, execute(search("abs(-5)")));
+		assertEquals(5.0, execute(search("abs(5)")));
+		assertEquals(0.0, execute(search("abs(0)")));
+		assertEquals(3.14, execute(search("abs(3.14)")));
+		assertEquals(3.14, execute(search("abs(-3.14)")));
+
+		// Test pow function
+		assertEquals(8.0, execute(search("pow(2, 3)")));
+		assertEquals(1.0, execute(search("pow(5, 0)")));
+		assertEquals(25.0, execute(search("pow(5, 2)")));
+		assertEquals(0.25, execute(search("pow(2, -2)")));
+		assertEquals(2.0, execute(search("pow(4, 0.5)")));
+
+		// Test sqrt function
+		assertEquals(4.0, execute(search("sqrt(16)")));
+		assertEquals(0.0, execute(search("sqrt(0)")));
+		assertEquals(1.0, execute(search("sqrt(1)")));
+		assertEquals(2.0, execute(search("sqrt(4)")));
+		assertEquals(3.0, execute(search("sqrt(9)")));
+
+		// Test that sqrt returns NaN for negative inputs
+		assertEquals("NaN", execute(search("sqrt(-1)")).toString());
+
+		// Test random function by testing that it returns a value in the expected range
+		Object randomValue = execute(search("random()"));
+		assertNotNull(randomValue);
+		assertTrue(randomValue instanceof Double);
+		double rand = (Double) randomValue;
+		assertTrue(rand >= 0.0 && rand < 1.0);
+
+		// Test that random can be used in expressions
+		Object scaledRandom = execute(search("random() * 100"));
+		assertNotNull(scaledRandom);
+		assertTrue(scaledRandom instanceof Double);
+		double scaled = (Double) scaledRandom;
+		assertTrue(scaled >= 0.0 && scaled < 100.0);
+
+		// Test random with offset
+		Object offsetRandom = execute(search("random() * 50 + 25"));
+		assertNotNull(offsetRandom);
+		assertTrue(offsetRandom instanceof Double);
+		double offset = (Double) offsetRandom;
+		assertTrue(offset >= 25.0 && offset < 75.0);
+	}
+
 	@FunctionalInterface
 	interface TestFun {
 		void accept(XMLInstanceImporter scenario) throws Exception;

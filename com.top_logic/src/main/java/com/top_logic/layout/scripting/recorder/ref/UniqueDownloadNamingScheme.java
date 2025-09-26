@@ -16,7 +16,7 @@ import com.top_logic.layout.structure.BrowserWindowControl;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class UniqueDownloadNamingScheme extends AbstractModelNamingScheme<BinaryDataSource, UniqueDownload> {
+public class UniqueDownloadNamingScheme extends AbstractGlobalModelNamingScheme<BinaryDataSource, UniqueDownload> {
 
 	@Override
 	protected void initName(UniqueDownload name, BinaryDataSource model) {

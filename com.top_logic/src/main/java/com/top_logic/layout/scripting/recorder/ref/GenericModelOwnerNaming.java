@@ -24,7 +24,7 @@ import com.top_logic.layout.scripting.runtime.ActionContext;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public abstract class GenericModelOwnerNaming<T, M extends GenericModelOwner<T>, N extends GenericModelOwnerNaming.GenericModelName<T>>
-		extends AbstractModelNamingScheme<M, N> {
+		extends AbstractGlobalModelNamingScheme<M, N> {
 
 	/**
 	 * {@link ModelName} for a {@link GenericModelOwner}.

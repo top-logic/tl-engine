@@ -13,26 +13,26 @@ import com.top_logic.basic.col.Maybe;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public abstract class AbstractModelNamingScheme<M, N extends ModelName> extends GlobalModelNamingScheme<M, N> {
+public abstract class AbstractGlobalModelNamingScheme<M, N extends ModelName> extends GlobalModelNamingScheme<M, N> {
 
 	/**
-	 * Creates a {@link AbstractModelNamingScheme}.
+	 * Creates a {@link AbstractGlobalModelNamingScheme}.
 	 * 
 	 * See {@link ModelNamingScheme#ModelNamingScheme(Class, Class, Class)} for details.
 	 */
-	protected AbstractModelNamingScheme(Class<M> modelClass, Class<? extends N> nameClass) {
+	protected AbstractGlobalModelNamingScheme(Class<M> modelClass, Class<? extends N> nameClass) {
 		super(modelClass, nameClass);
 	}
 
 	/**
-	 * Creates a {@link AbstractModelNamingScheme}.
+	 * Creates a {@link AbstractGlobalModelNamingScheme}.
 	 * 
 	 * See {@link ModelNamingScheme#ModelNamingScheme()} for details.
 	 * 
-	 * @deprecated Use {@link #AbstractModelNamingScheme(Class, Class)}
+	 * @deprecated Use {@link #AbstractGlobalModelNamingScheme(Class, Class)}
 	 */
 	@Deprecated
-	protected AbstractModelNamingScheme() {
+	protected AbstractGlobalModelNamingScheme() {
 		this(null, null);
 	}
 

@@ -12,7 +12,7 @@ import com.top_logic.element.comment.wrap.Comment;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Revision;
-import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
+import com.top_logic.layout.scripting.recorder.ref.AbstractGlobalModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
@@ -24,7 +24,7 @@ import com.top_logic.layout.scripting.runtime.action.ApplicationAssertions;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class CommentNamingScheme extends AbstractModelNamingScheme<Comment, CommentNamingScheme.CommentName> {
+public class CommentNamingScheme extends AbstractGlobalModelNamingScheme<Comment, CommentNamingScheme.CommentName> {
 
 	/**
 	 * {@link ModelName} for a {@link Comment}.

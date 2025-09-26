@@ -18,7 +18,7 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.util.Utils;
 import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.layout.provider.MetaLabelProvider;
-import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
+import com.top_logic.layout.scripting.recorder.ref.AbstractGlobalModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
@@ -35,7 +35,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
  * A {@link ModelNamingScheme} for identifying a row in the tree component by the label path to it.
  */
 public abstract class TreeTableNodeLabelNaming<N extends AbstractTreeTableNode<N>, NAME extends TreeTableNodeLabelNaming.Name, C>
-		extends AbstractModelNamingScheme<N, NAME> {
+		extends AbstractGlobalModelNamingScheme<N, NAME> {
 
 	/**
 	 * {@link ModelName} for the {@link TreeTableNodeLabelNaming}.

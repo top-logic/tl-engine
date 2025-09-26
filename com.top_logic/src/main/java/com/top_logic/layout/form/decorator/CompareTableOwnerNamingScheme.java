@@ -6,7 +6,7 @@
 package com.top_logic.layout.form.decorator;
 
 import com.top_logic.layout.form.FormMember;
-import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
+import com.top_logic.layout.scripting.recorder.ref.AbstractGlobalModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
@@ -20,7 +20,7 @@ import com.top_logic.layout.table.TableDataOwner;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class CompareTableOwnerNamingScheme extends
-		AbstractModelNamingScheme<CompareTableOwner, CompareTableOwnerNamingScheme.Name> {
+		AbstractGlobalModelNamingScheme<CompareTableOwner, CompareTableOwnerNamingScheme.Name> {
 
 	/**
 	 * {@link ModelName} for {@link CompareTableOwnerNamingScheme}.

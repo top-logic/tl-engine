@@ -19,7 +19,7 @@ import com.top_logic.layout.scripting.runtime.action.ApplicationAssertions;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class SingletonNaming extends AbstractModelNamingScheme<Object, SingletonNaming.Name> {
+public class SingletonNaming extends AbstractGlobalModelNamingScheme<Object, SingletonNaming.Name> {
 
 	/**
 	 * {@link ModelName} of the {@link SingletonNaming}.

@@ -8,7 +8,7 @@ package com.top_logic.element.layout.scripting;
 import com.top_logic.basic.StringServices;
 import com.top_logic.element.layout.scripting.ChildNamingScheme.ChildName;
 import com.top_logic.element.structured.StructuredElement;
-import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
+import com.top_logic.layout.scripting.recorder.ref.AbstractGlobalModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
@@ -26,7 +26,7 @@ import com.top_logic.layout.scripting.runtime.ActionContext;
  * 
  * @author <a href="mailto:Jan Stolzenburg@top-logic.com">Jan Stolzenburg</a>
  */
-public class ChildNamingScheme extends AbstractModelNamingScheme<StructuredElement, ChildName> {
+public class ChildNamingScheme extends AbstractGlobalModelNamingScheme<StructuredElement, ChildName> {
 
 	/** @see ChildNamingScheme */
 	public interface ChildName extends NamedModelName {

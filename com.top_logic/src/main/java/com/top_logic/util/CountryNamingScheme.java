@@ -5,7 +5,7 @@
  */
 package com.top_logic.util;
 
-import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
+import com.top_logic.layout.scripting.recorder.ref.AbstractGlobalModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.runtime.ActionContext;
 import com.top_logic.util.CountryNamingScheme.CountryName;
@@ -15,7 +15,7 @@ import com.top_logic.util.CountryNamingScheme.CountryName;
  * 
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
-public final class CountryNamingScheme extends AbstractModelNamingScheme<Country, CountryName> {
+public final class CountryNamingScheme extends AbstractGlobalModelNamingScheme<Country, CountryName> {
 
 	/** @see CountryNamingScheme */
 	public interface CountryName extends ModelName {

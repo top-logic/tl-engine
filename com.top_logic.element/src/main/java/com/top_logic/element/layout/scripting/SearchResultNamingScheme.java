@@ -15,7 +15,7 @@ import java.util.Set;
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.element.layout.meta.search.AttributedSearchResultSet;
-import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
+import com.top_logic.layout.scripting.recorder.ref.AbstractGlobalModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
 import com.top_logic.layout.scripting.runtime.ActionContext;
@@ -23,12 +23,12 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 
 /**
- * {@link AbstractModelNamingScheme} for {@link AttributedSearchResultSet}.
+ * {@link AbstractGlobalModelNamingScheme} for {@link AttributedSearchResultSet}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class SearchResultNamingScheme
-		extends AbstractModelNamingScheme<AttributedSearchResultSet, SearchResultNamingScheme.Name> {
+		extends AbstractGlobalModelNamingScheme<AttributedSearchResultSet, SearchResultNamingScheme.Name> {
 
 	/**
 	 * {@link Name} for an {@link AttributedSearchResultSet}.

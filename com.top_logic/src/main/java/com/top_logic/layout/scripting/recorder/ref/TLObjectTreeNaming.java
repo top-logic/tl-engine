@@ -22,7 +22,6 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
-import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.col.search.SearchResult;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.ApplicationConfig;
@@ -61,7 +60,8 @@ import com.top_logic.util.error.TopLogicException;
  * 
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
-public class TLObjectTreeNaming extends ModelNamingScheme<Object, TLObject, TLObjectTreeNaming.TLObjectTreeName> {
+public class TLObjectTreeNaming
+		extends AbstractModelNamingScheme<TLObject, TLObjectTreeNaming.TLObjectTreeName, Object> {
 
 	/** {@link ModelName} for the {@link TLObjectTreeNaming}. */
 	public interface TLObjectTreeName extends ModelName {
@@ -167,24 +167,15 @@ public class TLObjectTreeNaming extends ModelNamingScheme<Object, TLObject, TLOb
 	}
 
 	@Override
-	public Maybe<TLObjectTreeName> buildName(Object valueContext, TLObject model) {
-		if (isCompatibleModel(model)) {
-			TLObjectTreeName name = createName();
-			initName(name, valueContext, model);
-			return Maybe.some(name);
-		} else {
-			return Maybe.none();
-		}
-	}
-
-	private boolean isCompatibleModel(TLObject model) {
+	protected boolean isCompatibleModel(Object valueContext, TLObject model) {
 		if (model.tType().getModelKind() != ModelKind.CLASS) {
 			return false;
 		}
 		return model.tContainer() != null;
 	}
 
-	private void initName(TLObjectTreeName name, Object valueContext, TLObject model) {
+	@Override
+	protected void initName(Object valueContext, TLObjectTreeName name, TLObject model) {
 		List<TLObjectTreeStep> path = list();
 
 		TLObject node = model;
@@ -198,7 +189,7 @@ public class TLObjectTreeNaming extends ModelNamingScheme<Object, TLObject, TLOb
 			if (parent == null) {
 				// Hit the top of the hierarchy.
 				TLObject root = node;
-				name.setRoot(ModelResolver.buildModelName(root));
+				name.setRoot(ModelResolver.buildModelName(valueContext, root));
 				break;
 			}
 
@@ -283,7 +274,7 @@ public class TLObjectTreeNaming extends ModelNamingScheme<Object, TLObject, TLOb
 			ContextResolver resolver = TypedConfigUtil.createInstance(localName);
 			root = (TLObject) resolver.resolve(this::getLabel, valueContext);
 		} else {
-			root = (TLObject) context.resolve(rootName);
+			root = (TLObject) context.resolve(rootName, valueContext);
 		}
 
 		TLObject node = root;

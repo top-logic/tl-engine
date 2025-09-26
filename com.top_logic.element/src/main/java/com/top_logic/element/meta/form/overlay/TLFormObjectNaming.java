@@ -11,7 +11,7 @@ import java.util.List;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.element.meta.AttributeUpdateContainer;
 import com.top_logic.element.meta.form.AttributeFormContext;
-import com.top_logic.layout.scripting.recorder.ref.AbstractGlobalModelNamingScheme;
+import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
@@ -24,7 +24,7 @@ import com.top_logic.model.TLObject;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class TLFormObjectNaming extends AbstractGlobalModelNamingScheme<TLFormObject, TLFormObjectNaming.Name> {
+public class TLFormObjectNaming extends AbstractModelNamingScheme<TLFormObject, TLFormObjectNaming.Name, Object> {
 
 	/**
 	 * {@link ModelName} for {@link TLFormObjectNaming}.
@@ -67,21 +67,21 @@ public class TLFormObjectNaming extends AbstractGlobalModelNamingScheme<TLFormOb
 	 * Creates a {@link TLFormObjectNaming}.
 	 */
 	public TLFormObjectNaming() {
-		super(TLFormObject.class, Name.class);
+		super(TLFormObject.class, Name.class, Object.class);
 	}
 
 	@Override
-	protected void initName(Name name, TLFormObject model) {
-		name.setFormContext(ModelResolver.buildModelName(model.getScope().getFormContext()));
-		name.setEditedObject(ModelResolver.buildModelName(model.getEditedObject()));
+	protected void initName(Object valueContext, Name name, TLFormObject model) {
+		name.setFormContext(ModelResolver.buildModelName(valueContext, model.getScope().getFormContext()));
+		name.setEditedObject(ModelResolver.buildModelName(valueContext, model.getEditedObject()));
 		name.setDomain(model.getDomain());
 	}
 
 	@Override
-	public TLFormObject locateModel(ActionContext context, Name name) {
+	public TLFormObject locateModel(ActionContext context, Object valueContext, Name name) {
 		AttributeFormContext formContext =
-			(AttributeFormContext) ModelResolver.locateModel(context, name.getFormContext());
-		TLObject editedObject = (TLObject) ModelResolver.locateModel(context, name.getEditedObject());
+			(AttributeFormContext) ModelResolver.locateModel(context, valueContext, name.getFormContext());
+		TLObject editedObject = (TLObject) ModelResolver.locateModel(context, valueContext, name.getEditedObject());
 		String domain = name.getDomain();
 		AttributeUpdateContainer updateContainer = formContext.getAttributeUpdateContainer();
 		TLFormObject result = updateContainer.getOverlay(editedObject, domain);

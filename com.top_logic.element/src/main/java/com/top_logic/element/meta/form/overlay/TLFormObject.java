@@ -16,7 +16,6 @@ import com.top_logic.layout.form.FormContainer;
 import com.top_logic.mig.html.Media;
 import com.top_logic.model.TLFormObjectBase;
 import com.top_logic.model.TLObject;
-import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 
 /**
@@ -28,35 +27,6 @@ import com.top_logic.model.TLStructuredTypePart;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public interface TLFormObject extends TLFormObjectBase, UpdateFactory {
-
-	/**
-	 * Whether this is a create overlay for a new object.
-	 */
-	boolean isCreate();
-
-	/**
-	 * The type of the overlay object.
-	 */
-	TLStructuredType getType();
-
-	/**
-	 * The underlying base object, if this is an edit overlay.
-	 * 
-	 * @see #isCreate()
-	 */
-	TLObject getEditedObject();
-
-	/**
-	 * The name of the created object, if this is a {@link #isCreate() create overlay}.
-	 * 
-	 * <p>
-	 * Legal values are <code>null</code> for the default/initial object creation, or any other
-	 * string except the string value <code>"null"</code>.
-	 * </p>
-	 * 
-	 * @see #isCreate()
-	 */
-	String getDomain();
 
 	/**
 	 * The {@link AttributeUpdateContainer} with all current edit operations.

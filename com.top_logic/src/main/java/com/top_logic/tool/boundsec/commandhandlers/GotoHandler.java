@@ -46,6 +46,7 @@ import com.top_logic.mig.html.layout.DialogSupport;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutUtils;
 import com.top_logic.mig.html.layout.MainLayout;
+import com.top_logic.model.TLFormObjectBase;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
@@ -310,13 +311,18 @@ public class GotoHandler extends AbstractCommandHandler {
 	 * @param contextComponent
 	 *        The component to goto, must not be <code>null</code>
 	 * @param targetObject
-	 *        The model to be set to the component, must not be <code>null</code>.
+	 *        The model to be set to the component, may be <code>null</code>.
 	 * @param targetComponentName
 	 *        The name of the component to be used for displaying, may be <code>null</code>.
 	 * @return The LayoutComponent which is used as target for the goto and the goto succeeded;
 	 *         <code>null</code> if the goto does not succeeded.
 	 */
 	public LayoutComponent gotoLayout(LayoutComponent contextComponent, Object targetObject, ComponentName targetComponentName) {
+		targetObject = unwrapOverlay(targetObject);
+		if (targetComponentName == null && targetObject == null) {
+			// Neither a component nor an object is given, nothing to display.
+			return null;
+		}
 		LayoutComponent theResult = null;
 		boolean isProcessed = false;
 		MainLayout theMain = contextComponent.getMainLayout();
@@ -637,6 +643,7 @@ public class GotoHandler extends AbstractCommandHandler {
 	}
 
 	public static boolean canShow(Object anObject) {
+		anObject = unwrapOverlay(anObject);
 		if (anObject instanceof TLObject) {
             BoundHelper theHelper = BoundHelper.getInstance();
 			return theHelper.allowView((TLObject) anObject, theHelper.getRootChecker());
@@ -646,6 +653,23 @@ public class GotoHandler extends AbstractCommandHandler {
         }
 	}
     
+	/**
+	 * GOTO to an {@link TLFormObjectBase} makes no sense. Therefore find the "real"
+	 * {@link TLObject}.
+	 * 
+	 * @param object
+	 *        The object to check for being a {@link TLFormObjectBase} and to unwrap. May be
+	 *        <code>null</code>.
+	 */
+	private static Object unwrapOverlay(Object object) {
+		if (object instanceof TLFormObjectBase overlay) {
+			/* The overlay may also be wrapped in another overlay. */
+			return unwrapOverlay(overlay.getEditedObject());
+		} else {
+			return object;
+		}
+	}
+
     /**
      * Writes the end of the goto link.
      * @param aWriter           an TagWriter to generate the needed HTML.

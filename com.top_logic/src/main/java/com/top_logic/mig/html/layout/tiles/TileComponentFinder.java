@@ -72,7 +72,7 @@ public class TileComponentFinder extends DisplayedTilesVisitor {
 			return (T) root;
 		}
 		TileComponentFinder visitor = new TileComponentFinder(expectedType::isInstance);
-		root.visitChildrenRecursively(visitor);
+		root.acceptVisitorRecursively(visitor);
 		return (T) visitor.result();
 	}
 

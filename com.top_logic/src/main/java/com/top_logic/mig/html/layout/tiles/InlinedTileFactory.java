@@ -8,11 +8,14 @@ package com.top_logic.mig.html.layout.tiles;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.col.Provider;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.layout.basic.contextmenu.component.factory.ContextMenuUtil;
 import com.top_logic.layout.basic.contextmenu.menu.Menu;
 import com.top_logic.layout.scripting.action.SelectAction.SelectionChangeKind;
 import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
@@ -23,6 +26,8 @@ import com.top_logic.mig.html.layout.tiles.component.ComponentTile;
 import com.top_logic.mig.html.layout.tiles.component.InlinedTileComponent;
 import com.top_logic.mig.html.layout.tiles.component.TilePreview;
 import com.top_logic.mig.html.layout.tiles.scripting.InlinedTileComponentNaming;
+import com.top_logic.tool.boundsec.CommandHandler;
+import com.top_logic.util.Resources;
 
 /**
  * {@link TileFactory} that creates for each element in {@link InlinedTileComponent#getGUIModel()}
@@ -50,10 +55,11 @@ public class InlinedTileFactory implements TileFactory {
 		}
 
 		TilePreview preview = TypedConfigUtil.createInstance(component.getConfig().getTileInfo().getPreview());
+		List<CommandHandler> contextButtons = itemProvider.getContextMenuButtons();
 
 		return toList(itemProvider.getGUIModel())
 			.stream()
-			.map(bo -> newComponentTile(bo, itemProvider, preview))
+			.map(bo -> newComponentTile(bo, itemProvider, preview, contextButtons))
 			.collect(Collectors.toList());
 	}
 
@@ -73,7 +79,8 @@ public class InlinedTileFactory implements TileFactory {
 		return CollectionUtil.singletonOrEmptyList(guiModel);
 	}
 
-	private BOComponentTile newComponentTile(Object guiElement, InlinedTileComponent inlined, TilePreview preview) {
+	private BOComponentTile newComponentTile(Object guiElement, InlinedTileComponent inlined, TilePreview preview,
+			List<CommandHandler> buttons) {
 		return new BOComponentTile(inlined, inlined, guiElement) {
 
 			@Override
@@ -96,7 +103,20 @@ public class InlinedTileFactory implements TileFactory {
 
 			@Override
 			public Provider<Menu> getBurgerMenu() {
-				return BOComponentTile.getTileCommands(inlined(), inlined());
+				Consumer<Menu> modifier;
+				if (buttons.isEmpty()) {
+					modifier = null;
+				} else {
+					Resources resources = Resources.getInstance();
+					Object targetObject = getBusinessObject();
+					Map<String, Object> args = ContextMenuUtil.createArguments(targetObject);
+					modifier = menu -> {
+						for (CommandHandler command : buttons) {
+							menu.add(inlined().createCommandModel(resources, command, args));
+						}
+					};
+				}
+				return BOComponentTile.getTileCommands(inlined(), inlined(), modifier);
 			}
 
 			private InlinedTileComponent inlined() {

@@ -4,7 +4,22 @@
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 	groups="tile"
 >
-	<properties>
+	<properties extends="com.top_logic.mig.html.layout.tiles.component.TileListComponent$ContextMenuButtons, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig">
+		<annotations>
+			<display-inherited value="APPEND"/>
+			<display-order>
+				<value>
+					<property name="name"/>
+					<property name="model"/>
+					<property name="modelBuilder"/>
+					<property name="preview"/>
+					<property name="securityDomain"/>
+					<property name="securityObject"/>
+					<property name="contextMenuButtons"/>
+				</value>
+			</display-order>
+		</annotations>
+
 		<property name="name"
 			type="ResKey"
 		>
@@ -74,6 +89,7 @@
 		/>
 		<component class="com.top_logic.mig.html.layout.tiles.component.InlinedTileComponent"
 			component="${component}"
+			contextMenuButtons="${contextMenuButtons}"
 			model="${model}"
 			modelBuilder="${modelBuilder}"
 			name="Objects"

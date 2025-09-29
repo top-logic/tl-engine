@@ -150,7 +150,7 @@ public class BufferingI18NLog implements I18NLog {
 	 */
 	public boolean hasEntries(Level level) {
 		for (Entry entry : _entries) {
-			if (entry.getLevel().ordinal() >= level.ordinal()) {
+			if (entry.getLevel().is(level)) {
 				return true;
 			}
 		}

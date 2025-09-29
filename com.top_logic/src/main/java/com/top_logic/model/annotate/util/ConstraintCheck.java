@@ -6,6 +6,8 @@
 package com.top_logic.model.annotate.util;
 
 import com.top_logic.basic.col.Sink;
+import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.model.TLObject;
@@ -22,6 +24,26 @@ import com.top_logic.model.util.Pointer;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public interface ConstraintCheck {
+
+	/**
+	 * Classification for a {@link Constraint} whether it should only display a warning or prevent
+	 * saving.
+	 */
+	public enum ConstraintType {
+
+		/**
+		 * Type of {@link Constraint} that should be reported as failure and prevent storing the
+		 * value.
+		 */
+		@Name("error")
+		ERROR,
+		/**
+		 * Type of {@link Constraint} that should be reported as warning in the GUI and do not
+		 * prevent storing the value.
+		 */
+		@Name("warning")
+		WARNING
+	}
 
 	/**
 	 * Performs a constraint check on the given {@link TLObject}.
@@ -68,4 +90,12 @@ public interface ConstraintCheck {
 	 */
 	void traceDependencies(TLObject object, TLStructuredTypePart attribute, Sink<Pointer> trace,
 			FormContext formContext);
+
+	/**
+	 * The type of constraint. Whether it should be reported as an error or as a warning. Errors
+	 * prevent storing the value, warnings are only displayed in the GUI.
+	 */
+	default ConstraintType type() {
+		return ConstraintType.ERROR;
+	}
 }

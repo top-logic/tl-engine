@@ -13,6 +13,7 @@ import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.form.format.ThemeImageFormat;
@@ -81,6 +82,9 @@ public class ImageContentProvider extends AbstractPreviewContent<ImageContentPro
 		}
 		if (image instanceof GalleryImage) {
 			return GalleryPreview.createGalleryContent((GalleryImage) image);
+		}
+		if (image instanceof BinaryDataSource imageData) {
+			return GalleryPreview.createImageContent(imageData);
 		}
 		ThemeImage themeImage;
 		if (image instanceof ThemeImage) {

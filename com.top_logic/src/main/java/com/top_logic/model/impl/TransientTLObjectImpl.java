@@ -20,6 +20,7 @@ import com.top_logic.dob.meta.MOClassImpl;
 import com.top_logic.dob.meta.MOStructure;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.db2.PersistentObject;
+import com.top_logic.layout.component.ComponentUtil;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.StorageDetail;
 import com.top_logic.model.TLObject;
@@ -106,7 +107,41 @@ public class TransientTLObjectImpl extends TransientObject {
 				}
 			}
 		}
-		return _values.get(part.getDefinition());
+
+		Object storedValue = _values.get(part.getDefinition());
+		if (storedValue instanceof Collection<?> coll) {
+			if (containsInvalid(coll)) {
+				storedValue = removeInvalids(coll);
+				_values.put(part, storedValue);
+			}
+		} else {
+			if (!ComponentUtil.isValid(storedValue)) {
+				storedValue = null;
+				_values.put(part, storedValue);
+			}
+		}
+
+		return storedValue;
+	}
+
+	private static <T> Collection<T> removeInvalids(Collection<? extends T> coll) {
+		// Filter out invalid entries.
+		Collection<T> copy = coll instanceof Set ? new HashSet<>() : new ArrayList<>();
+		for (T entry : coll) {
+			if (ComponentUtil.isValid(entry)) {
+				copy.add(entry);
+			}
+		}
+		return copy;
+	}
+
+	private static boolean containsInvalid(Collection<?> coll) {
+		for (Object test : coll) {
+			if (!ComponentUtil.isValid(test)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	@Override
@@ -146,10 +181,17 @@ public class TransientTLObjectImpl extends TransientObject {
 
 	@Override
 	public Set<? extends TLObject> tReferers(TLReference ref) {
-		Set<TLObject> result = _referers.get(ref.getDefinition());
+		TLStructuredTypePart definition = ref.getDefinition();
+		Set<TLObject> result = _referers.get(definition);
 		if (result == null) {
 			return Collections.emptySet();
 		}
+
+		if (containsInvalid(result)) {
+			result = (Set<TLObject>) removeInvalids(result);
+			_referers.put(definition, result);
+		}
+
 		return Collections.unmodifiableSet(result);
 	}
 

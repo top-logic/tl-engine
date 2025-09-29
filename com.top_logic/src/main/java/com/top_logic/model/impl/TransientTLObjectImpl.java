@@ -111,14 +111,7 @@ public class TransientTLObjectImpl extends TransientObject {
 		Object storedValue = _values.get(part.getDefinition());
 		if (storedValue instanceof Collection<?> coll) {
 			if (containsInvalid(coll)) {
-				// Filter out invalid entries.
-				Collection<Object> copy = storedValue instanceof Set ? new HashSet<>() : new ArrayList<>();
-				for (Object entry : coll) {
-					if (ComponentUtil.isValid(storedValue)) {
-						copy.add(entry);
-					}
-				}
-				storedValue = copy;
+				storedValue = removeInvalids(coll);
 				_values.put(part, storedValue);
 			}
 		} else {
@@ -129,6 +122,17 @@ public class TransientTLObjectImpl extends TransientObject {
 		}
 
 		return storedValue;
+	}
+
+	private static <T> Collection<T> removeInvalids(Collection<? extends T> coll) {
+		// Filter out invalid entries.
+		Collection<T> copy = coll instanceof Set ? new HashSet<>() : new ArrayList<>();
+		for (T entry : coll) {
+			if (ComponentUtil.isValid(entry)) {
+				copy.add(entry);
+			}
+		}
+		return copy;
 	}
 
 	private static boolean containsInvalid(Collection<?> coll) {
@@ -177,10 +181,17 @@ public class TransientTLObjectImpl extends TransientObject {
 
 	@Override
 	public Set<? extends TLObject> tReferers(TLReference ref) {
-		Set<TLObject> result = _referers.get(ref.getDefinition());
+		TLStructuredTypePart definition = ref.getDefinition();
+		Set<TLObject> result = _referers.get(definition);
 		if (result == null) {
 			return Collections.emptySet();
 		}
+
+		if (containsInvalid(result)) {
+			result = (Set<TLObject>) removeInvalids(result);
+			_referers.put(definition, result);
+		}
+
 		return Collections.unmodifiableSet(result);
 	}
 

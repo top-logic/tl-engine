@@ -1,0 +1,79 @@
+<h2>Syntax</h2>
+
+<pre>
+	<code>sessionRevision()</code>
+</pre>
+
+<h2>Beschreibung</h2>
+
+<p>Liefert die zuletzt persistierte Revision der aktuellen Session. Dies entspricht genau dem Ergebnis von <code class="hljs inlineCode">revisionAt(now())</code>.</p>
+
+<h2>Parameter</h2>
+
+<p>Diese Funktion hat keine Parameter.</p>
+
+<h2>Rückgabewert</h2>
+
+<p><strong>Typ:</strong> Revision</p>
+
+<p>Die Revision des letzten Commits in der aktuellen Session.</p>
+
+<h2>Beispiele</h2>
+
+<h3>Beispiel 1</h3>
+
+<pre>
+	<code>sessionRevision()</code>
+</pre>
+
+<p><strong>Ausgabe:</strong></p>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Revision</th>
+			<th>Datum</th>
+			<th>Autor</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>32</td>
+			<td>29.09.2025, 10:40:15</td>
+			<td>Super, Administrator</td>
+		</tr>
+	</tbody>
+</table>
+
+<p>Gibt die aktuelle Session-Revision zurück.</p>
+
+<h3>Beispiel 2</h3>
+
+<pre>
+	<code>$obj.inRevision(sessionRevision())</code>
+</pre>
+
+<p><strong>Ausgabe:</strong></p>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Revision</th>
+			<th>Datum</th>
+			<th>Autor</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>6.004</td>
+			<td>27.09.2023, 14:56:54</td>
+			<td>Super, Administrator</td>
+		</tr>
+	</tbody>
+</table>
+
+<p>Zugriff auf den ursprünglichen Zustand des Objekts in der Session-Revision, bevor Änderungen vorgenommen wurden.</p>
+
+<p> </p>
+
+<p>​</p>

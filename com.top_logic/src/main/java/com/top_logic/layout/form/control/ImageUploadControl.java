@@ -342,14 +342,15 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 		out.writeAttribute(ALT_ATTR, image.getName());
 		out.writeAttribute(SRC_ATTR,
 			getURLContext().getURL(context, imageHandler).appendParameter("itemVersion", _urlSuffix).getURL());
+		out.writeAttribute(ONLOAD_ATTR, IMAGEUPLOAD_CONTROL_CLASS + ".setInOrOut(this)");
 		out.endEmptyTag();
 		if (editable) {
-			renderClearImage(context, out, !editable);
+			renderClearButton(context, out, !editable);
 		}
 	}
 
 	/**
-	 * Renders the image whose command {@link ClearCommand clears} the content of the field.
+	 * Renders the button whose command {@link ClearCommand clears} the content of the field.
 	 * 
 	 * @param context
 	 *        the context in which rendering occurs
@@ -360,13 +361,13 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 	 * @throws IOException
 	 *         iff the given {@link TagWriter} throws some
 	 */
-	void renderClearImage(DisplayContext context, TagWriter out, boolean disabled)
+	void renderClearButton(DisplayContext context, TagWriter out, boolean disabled)
 			throws IOException {
 		ButtonWriter buttonWriter =
 			new ButtonWriter(this, com.top_logic.layout.form.tag.Icons.DELETE_BUTTON,
 				com.top_logic.layout.form.tag.Icons.DELETE_BUTTON_DISABLED, ClearCommand.INSTANCE);
 		buttonWriter.setID(getClearID());
-		buttonWriter.setCss(FormConstants.CLEAR_BUTTON_CSS_CLASS);
+		buttonWriter.setCss(FormConstants.CLEAR_BUTTON_CSS_CLASS + " inset");
 
 		if (disabled) {
 			buttonWriter.writeDisabledButton(context, out);

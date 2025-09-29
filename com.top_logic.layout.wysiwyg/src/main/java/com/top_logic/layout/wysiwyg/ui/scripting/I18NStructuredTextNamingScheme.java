@@ -14,7 +14,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.util.ResourcesModule;
-import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
+import com.top_logic.layout.scripting.recorder.ref.AbstractGlobalModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ContextDependent;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
@@ -28,7 +28,7 @@ import com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText;
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
 public class I18NStructuredTextNamingScheme
-		extends AbstractModelNamingScheme<I18NStructuredText, I18NStructuredTextNamingScheme.Name> {
+		extends AbstractGlobalModelNamingScheme<I18NStructuredText, I18NStructuredTextNamingScheme.Name> {
 
 	/**
 	 * {@link ModelName} of {@link I18NStructuredTextNamingScheme}.

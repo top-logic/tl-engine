@@ -5,7 +5,7 @@
  */
 package com.top_logic.layout.table;
 
-import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
+import com.top_logic.layout.scripting.recorder.ref.AbstractGlobalModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
 import com.top_logic.layout.scripting.runtime.ActionContext;
@@ -18,7 +18,7 @@ import com.top_logic.layout.table.component.DefaultTableDataName;
  * 
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
-public class DefaultTableDataNamingScheme extends AbstractModelNamingScheme<DefaultTableData, DefaultTableDataName> {
+public class DefaultTableDataNamingScheme extends AbstractGlobalModelNamingScheme<DefaultTableData, DefaultTableDataName> {
 
 	/**
 	 * The instance of the {@link DefaultTableDataNamingScheme}. This is not a

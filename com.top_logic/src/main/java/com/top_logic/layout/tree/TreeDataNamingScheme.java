@@ -5,7 +5,7 @@
  */
 package com.top_logic.layout.tree;
 
-import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
+import com.top_logic.layout.scripting.recorder.ref.AbstractGlobalModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
 import com.top_logic.layout.scripting.runtime.ActionContext;
@@ -16,7 +16,7 @@ import com.top_logic.layout.scripting.runtime.ActionContext;
  * 
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
-public class TreeDataNamingScheme extends AbstractModelNamingScheme<TreeData, TreeDataName> {
+public class TreeDataNamingScheme extends AbstractGlobalModelNamingScheme<TreeData, TreeDataName> {
 
 	/**
 	 * The instance of the {@link TreeDataNamingScheme}. This is not a

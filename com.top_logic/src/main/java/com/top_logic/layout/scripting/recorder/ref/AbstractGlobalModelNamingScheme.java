@@ -13,23 +13,34 @@ import com.top_logic.basic.col.Maybe;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public abstract class AbstractModelNamingScheme<M, N extends ModelName, C> extends ModelNamingScheme<C, M, N> {
+public abstract class AbstractGlobalModelNamingScheme<M, N extends ModelName> extends GlobalModelNamingScheme<M, N> {
 
 	/**
-	 * Creates a {@link AbstractModelNamingScheme}.
+	 * Creates a {@link AbstractGlobalModelNamingScheme}.
 	 * 
 	 * See {@link ModelNamingScheme#ModelNamingScheme(Class, Class, Class)} for details.
 	 */
-	protected AbstractModelNamingScheme(Class<M> modelClass, Class<? extends N> nameClass,
-			Class<C> contextType) {
-		super(modelClass, nameClass, contextType);
+	protected AbstractGlobalModelNamingScheme(Class<M> modelClass, Class<? extends N> nameClass) {
+		super(modelClass, nameClass);
+	}
+
+	/**
+	 * Creates a {@link AbstractGlobalModelNamingScheme}.
+	 * 
+	 * See {@link ModelNamingScheme#ModelNamingScheme()} for details.
+	 * 
+	 * @deprecated Use {@link #AbstractGlobalModelNamingScheme(Class, Class)}
+	 */
+	@Deprecated
+	protected AbstractGlobalModelNamingScheme() {
+		this(null, null);
 	}
 
 	@Override
-	public final Maybe<N> buildName(C valueContext, M model) {
-		if (isCompatibleModel(valueContext, model)) {
+	public final Maybe<N> buildName(M model) {
+		if (isCompatibleModel(model)) {
 			N name = createName();
-			initName(valueContext, name, model);
+			initName(name, model);
 			return Maybe.some(name);
 		} else {
 			return Maybe.none();
@@ -44,20 +55,18 @@ public abstract class AbstractModelNamingScheme<M, N extends ModelName, C> exten
 	 * @param model
 	 *        The model that should be identified by the given {@link ModelName}.
 	 */
-	protected abstract void initName(C valueContext, N name, M model);
+	protected abstract void initName(N name, M model);
 
 	/**
 	 * Checks whether the model has any problems that would prevent the {@link ModelNamingScheme}
 	 * from identifying it. Subclasses should override this method if they need their models to
 	 * fulfill certain preconditions. If not overridden, returns always true.
 	 * 
-	 * @param valueContext
-	 *        The context in which the name is build.
 	 * @param model
 	 *        The model to be checked.
 	 * @return Is the model compatible?
 	 */
-	protected boolean isCompatibleModel(C valueContext, M model) {
+	protected boolean isCompatibleModel(M model) {
 		return true;
 	}
 

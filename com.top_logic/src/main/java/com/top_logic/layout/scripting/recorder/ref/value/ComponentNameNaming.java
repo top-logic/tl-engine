@@ -6,18 +6,18 @@
 package com.top_logic.layout.scripting.recorder.ref.value;
 
 import com.top_logic.basic.config.constraint.annotation.Constraint;
-import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
+import com.top_logic.layout.scripting.recorder.ref.AbstractGlobalModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.runtime.ActionContext;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.QualifiedComponentNameConstraint;
 
 /**
- * {@link AbstractModelNamingScheme} for {@link ComponentName}.
+ * {@link AbstractGlobalModelNamingScheme} for {@link ComponentName}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class ComponentNameNaming extends AbstractModelNamingScheme<ComponentName, ComponentNameNaming.Name> {
+public class ComponentNameNaming extends AbstractGlobalModelNamingScheme<ComponentName, ComponentNameNaming.Name> {
 
 	/**
 	 * {@link ModelName} of {@link ComponentName}.

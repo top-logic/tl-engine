@@ -6,7 +6,7 @@
 package com.top_logic.layout.image.gallery.scripting;
 
 import com.top_logic.layout.image.gallery.GalleryModel;
-import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
+import com.top_logic.layout.scripting.recorder.ref.AbstractGlobalModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
@@ -18,7 +18,7 @@ import com.top_logic.layout.table.control.FilterFormOwner;
  * 
  * @author <a href="mailto:sts@top-logic.com">Stefan Steinert</a>
  */
-public class GalleryNamingScheme extends AbstractModelNamingScheme<GalleryDialogHandler, GalleryNamingScheme.Name> {
+public class GalleryNamingScheme extends AbstractGlobalModelNamingScheme<GalleryDialogHandler, GalleryNamingScheme.Name> {
 
 	/**
 	 * {@link ModelName} for {@link GalleryDialogHandler}.

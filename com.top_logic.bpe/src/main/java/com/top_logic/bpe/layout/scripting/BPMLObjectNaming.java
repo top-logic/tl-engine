@@ -24,7 +24,7 @@ import com.top_logic.bpe.bpml.model.Node;
 import com.top_logic.bpe.bpml.model.Participant;
 import com.top_logic.bpe.bpml.model.SequenceFlow;
 import com.top_logic.bpe.bpml.model.TlBpeBpmlFactory;
-import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
+import com.top_logic.layout.scripting.recorder.ref.AbstractGlobalModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ui.BreadcrumbStrings;
 import com.top_logic.layout.scripting.runtime.ActionContext;
@@ -33,7 +33,7 @@ import com.top_logic.layout.scripting.runtime.action.ApplicationAssertions;
 /**
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
-public class BPMLObjectNaming extends AbstractModelNamingScheme<Named, BPMLObjectNaming.BPMLObjectName> {
+public class BPMLObjectNaming extends AbstractGlobalModelNamingScheme<Named, BPMLObjectNaming.BPMLObjectName> {
 
 	/**
 	 * {@link ModelName} of the {@link BPMLObjectNaming}.

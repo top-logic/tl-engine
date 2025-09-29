@@ -5,7 +5,7 @@
  */
 package com.top_logic.layout.component.model;
 
-import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
+import com.top_logic.layout.scripting.recorder.ref.AbstractGlobalModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
 import com.top_logic.layout.scripting.runtime.ActionContext;
@@ -16,7 +16,7 @@ import com.top_logic.layout.scripting.runtime.ActionContext;
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
 public class NoSelectionModelNaming extends
-		AbstractModelNamingScheme<NoSelectionModel, NoSelectionModelNaming.NoSelectionModelName> {
+		AbstractGlobalModelNamingScheme<NoSelectionModel, NoSelectionModelNaming.NoSelectionModelName> {
 
 	/**
 	 * {@link ModelName} of the {@link NoSelectionModel},

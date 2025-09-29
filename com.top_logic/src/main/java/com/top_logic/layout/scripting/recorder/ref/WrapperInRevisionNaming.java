@@ -24,7 +24,7 @@ import com.top_logic.util.Utils;
  * 
  * @author <a href=mailto:jst@top-logic.com>Jan Stolzenburg</a>
  */
-public class WrapperInRevisionNaming extends AbstractModelNamingScheme<Wrapper, WrapperInRevisionNaming.WrapperInRevisionName> {
+public class WrapperInRevisionNaming extends AbstractGlobalModelNamingScheme<Wrapper, WrapperInRevisionNaming.WrapperInRevisionName> {
 
 	/**
 	 * The {@link ModelName} for the {@link WrapperInRevisionNaming}.

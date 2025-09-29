@@ -7,7 +7,7 @@ package test.com.top_logic.layout.scripting.recorder.ref;
 
 import test.com.top_logic.layout.scripting.recorder.ref.FakeModelNamingScheme.FakeModelName;
 
-import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
+import com.top_logic.layout.scripting.recorder.ref.AbstractGlobalModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
 import com.top_logic.layout.scripting.runtime.ActionContext;
@@ -22,7 +22,7 @@ import com.top_logic.util.Utils;
  * 
  * @author <a href="mailto:Jan Stolzenburg@top-logic.com">Jan Stolzenburg</a>
  */
-public class FakeModelNamingScheme extends AbstractModelNamingScheme<Object, FakeModelName> {
+public class FakeModelNamingScheme extends AbstractGlobalModelNamingScheme<Object, FakeModelName> {
 
 	/** The {@link ModelName} for the {@link FakeModelNamingScheme}. */
 	public interface FakeModelName extends ModelName {

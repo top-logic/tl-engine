@@ -6,7 +6,7 @@
 package com.top_logic.layout.component;
 
 import com.top_logic.layout.component.ComponentModelNamingScheme.ComponentModelName;
-import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
+import com.top_logic.layout.scripting.recorder.ref.AbstractGlobalModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
 import com.top_logic.layout.scripting.runtime.ActionContext;
@@ -21,7 +21,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
  * 
  * @author <a href="mailto:fsc@top-logic.com">fsc</a>
  */
-public class ComponentModelNamingScheme extends AbstractModelNamingScheme<Object, ComponentModelName> {
+public class ComponentModelNamingScheme extends AbstractGlobalModelNamingScheme<Object, ComponentModelName> {
 
 	@Override
 	public Class<Object> getModelClass() {

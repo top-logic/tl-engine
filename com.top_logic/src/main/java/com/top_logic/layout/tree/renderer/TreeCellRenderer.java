@@ -32,7 +32,7 @@ import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.form.control.AbstractButtonRenderer;
 import com.top_logic.layout.form.control.ButtonControl;
 import com.top_logic.layout.form.control.ImageButtonRenderer;
-import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
+import com.top_logic.layout.scripting.recorder.ref.AbstractGlobalModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
@@ -142,7 +142,7 @@ public class TreeCellRenderer extends RowTypeCellRenderer {
 	 * 
 	 * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
 	 */
-	public static class ToggleNaming extends AbstractModelNamingScheme<Toggle, ToggleNaming.ToggleName> {
+	public static class ToggleNaming extends AbstractGlobalModelNamingScheme<Toggle, ToggleNaming.ToggleName> {
 
 		/**
 		 * {@link ModelName} of {@link Toggle tree node toggle} commands.

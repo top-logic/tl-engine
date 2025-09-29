@@ -335,9 +335,7 @@ public class EditableTableControl extends TableControl implements ModeModelListe
 		}
 
 		// Ensure initial  consistency.
-		SelectionModel selectionModel = getSelectionModel();
-		_selectionListener.notifySelectionChanged(selectionModel,
-			new MultiSelectionEvent(selectionModel, Collections.emptySet(), selectionModel.getSelection()));
+		notifyRowMoved();
 
 		requestRepaint();
 	}
@@ -412,6 +410,19 @@ public class EditableTableControl extends TableControl implements ModeModelListe
 	}
 	
 	/**
+	 * Triggers a selection changed notification, to use when a row was moved.
+	 * 
+	 * This is necessary because when moving a row the selection index changes but not the selected
+	 * object. Thus no notify is triggered when moving a row. Therefore it has to be triggered
+	 * manually.
+	 */
+	public void notifyRowMoved() {
+		SelectionModel selectionModel = getSelectionModel();
+		_selectionListener.notifySelectionChanged(selectionModel,
+			new MultiSelectionEvent(selectionModel, Collections.emptySet(), selectionModel.getSelection()));
+	}
+
+	/**
 	 * Removes the selected row. 
 	 */
 	public static class RemoveRowAction extends TableCommand {
@@ -477,6 +488,7 @@ public class EditableTableControl extends TableControl implements ModeModelListe
 			// Execute the move.
 			applicationModel.moveRowToTop(viewModel.getApplicationModelRow(theRowID));
 			TableUtil.selectRow(table.getTableData(), 0);
+			((EditableTableControl) table).notifyRowMoved();
 			return HandlerResult.DEFAULT_RESULT;
 		}
 		
@@ -517,6 +529,7 @@ public class EditableTableControl extends TableControl implements ModeModelListe
 				theRowID = (theRowID - 1 >= 0) ? (theRowID - 1) : 0;
 				TableUtil.selectRow(table.getTableData(), theRowID);
 			}
+			((EditableTableControl) table).notifyRowMoved();
             return HandlerResult.DEFAULT_RESULT;
 		}
 		
@@ -557,6 +570,7 @@ public class EditableTableControl extends TableControl implements ModeModelListe
 				theRowID = ((theRowID + 1) < theMax) ? (theRowID + 1) : theRowID;
 				TableUtil.selectRow(table.getTableData(), theRowID);
 			}
+			((EditableTableControl) table).notifyRowMoved();
             return HandlerResult.DEFAULT_RESULT;
 		}
 		
@@ -594,6 +608,7 @@ public class EditableTableControl extends TableControl implements ModeModelListe
 			// Execute the move.
 			applicationModel.moveRowToBottom(viewModel.getApplicationModelRow(theRowID));
 			TableUtil.selectRow(table.getTableData(), viewModel.getRowCount() - 1);
+			((EditableTableControl) table).notifyRowMoved();
 			return HandlerResult.DEFAULT_RESULT;
 		}
 		

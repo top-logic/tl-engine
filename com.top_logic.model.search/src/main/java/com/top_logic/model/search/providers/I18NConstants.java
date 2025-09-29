@@ -77,7 +77,7 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 SCRIPT_TASK__TASK;
 
 	/**
-	 * @en Multiple instances of type {0} with value "{1}" in key attribute {2}: {3} and {4}
+	 * @en Multiple instances of type {0} with value "{2}" in key attribute {1}: {3} and {4}
 	 */
 	public static ResKey5 NON_UNIQUE_KEY__TYPE_ATTR_KEY_OBJ1_OBJ2;
 

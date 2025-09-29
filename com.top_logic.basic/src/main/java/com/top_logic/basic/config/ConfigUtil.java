@@ -18,12 +18,16 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.UnreachableAssertion;
+import com.top_logic.basic.col.MapUtil;
+import com.top_logic.basic.config.annotation.Name;
 
 import de.haumacher.msgbuf.data.ProtocolEnum;
 
@@ -1592,15 +1596,16 @@ public class ConfigUtil {
 	}
 
 	/**
-	 * Parses a configured {@link Enum} value configured with its
-	 * {@link Enum#name()} or, if it is {@link ExternallyNamed}, by its
-	 * {@link ExternallyNamed#getExternalName() external name}.
+	 * Parses a configured {@link Enum} value.
+	 * 
+	 * <p>
+	 * Considers {@link Name} annotations, {@link ExternallyNamed} and {@link ProtocolEnum}.
+	 * </p>
 	 * 
 	 * @return the configured value.
 	 * 
 	 * @throws ConfigurationException
-	 *         If no configuration was given, or there is no enum
-	 *         constant with the configured name.
+	 *         If no configuration was given, or there is no enum constant with the configured name.
 	 */
 	public static <T extends Enum<T>> T getEnumValueMandatory(String propertyName, CharSequence enumName, Class<T> enumClass) throws ConfigurationException {
 		checkNotEmpty(propertyName, enumName);
@@ -1609,12 +1614,13 @@ public class ConfigUtil {
 	}
 
 	/**
-	 * Parses a configured {@link Enum} value configured with its
-	 * {@link Enum#name()} or, if it is {@link ExternallyNamed}, by its
-	 * {@link ExternallyNamed#getExternalName() external name}.
+	 * Parses a configured {@link Enum} value.
 	 * 
-	 * @return the configured value, or the given default value, if no
-	 *         configuration is given.
+	 * <p>
+	 * Considers {@link Name} annotations, {@link ExternallyNamed} and {@link ProtocolEnum}.
+	 * </p>
+	 * 
+	 * @return the configured value, or the given default value, if no configuration is given.
 	 * 
 	 * @throws ConfigurationException
 	 *         If there is no enum constant with the configured name.
@@ -1624,12 +1630,13 @@ public class ConfigUtil {
 	}
 	
 	/**
-	 * Parses a configured {@link Enum} value configured with its
-	 * {@link Enum#name()} or, if it is {@link ExternallyNamed}, by its
-	 * {@link ExternallyNamed#getExternalName() external name}.
+	 * Parses a configured {@link Enum} value.
 	 * 
-	 * @return the configured value, or the given default value, if no
-	 *         configuration is given.
+	 * <p>
+	 * Considers {@link Name} annotations, {@link ExternallyNamed} and {@link ProtocolEnum}.
+	 * </p>
+	 * 
+	 * @return the configured value, or the given default value, if no configuration is given.
 	 * 
 	 * @throws ConfigurationException
 	 *         If there is no enum constant with the configured name.
@@ -1655,23 +1662,41 @@ public class ConfigUtil {
 	private static <T extends Enum<?>> String enumOptions(Class<? extends T> enumClass) {
 		final Enum<?>[] enumConstants = enumClass.getEnumConstants();
 		StringBuilder options = new StringBuilder();
-		if (ExternallyNamed.class.isAssignableFrom(enumClass)) {
-			for (Enum<?> enumConstant : enumConstants) {
-				if (options.length() > 0) {
-					options.append(", ");
-				}
-				options.append(((ExternallyNamed) enumConstant).getExternalName());
+		for (Enum<?> enumConstant : enumConstants) {
+			if (options.length() > 0) {
+				options.append(", ");
 			}
-		} else {
-			for (Enum<?> enumConstant : enumConstants) {
-				if (options.length() > 0) {
-					options.append(", ");
-				}
-				options.append(enumConstant.name());
-			}
+
+			options.append(getEnumExternalName(enumConstant));
 		}
-		String enumOptions = options.toString();
-		return enumOptions;
+		return options.toString();
+	}
+
+	/**
+	 * The name of an enum constant when it is used in a serialized form, e.g. in XML or JSON.
+	 * 
+	 * @param enumConstant
+	 *        The {@link Enum} literal.
+	 * 
+	 * @see #getEnumConstant(Class, String)
+	 */
+	public static <T extends Enum<?>> String getEnumExternalName(Enum<?> enumConstant) {
+		if (enumConstant instanceof ExternallyNamed named) {
+			return named.getExternalName();
+		}
+		if (enumConstant instanceof ProtocolEnum named) {
+			return named.protocolName();
+		}
+		String javaName = enumConstant.name();
+		try {
+			Name annotation = enumConstant.getDeclaringClass().getField(javaName).getAnnotation(Name.class);
+			if (annotation != null) {
+				return annotation.value();
+			}
+		} catch (NoSuchFieldException ex) {
+			// Should ever happen.
+		}
+		return javaName;
 	}
 	
 	// Implementation helpers. 
@@ -2132,15 +2157,10 @@ public class ConfigUtil {
 	}
 
 	/**
-	 * Returns the constant of the given {@link Enum} class with the given name.
+	 * Returns the constant of the given {@link Enum} class with the given external name.
 	 * 
 	 * <p>
-	 * If the given class implements {@link ExternallyNamed} the constant with the same
-	 * {@link ExternallyNamed#getExternalName()} is returned.
-	 * </p>
-	 * <p>
-	 * If the given class implements {@link ProtocolEnum} the constant with the same
-	 * {@link ProtocolEnum#protocolName()} is returned.
+	 * Considers {@link Name} annotations, {@link ExternallyNamed} and {@link ProtocolEnum}.
 	 * </p>
 	 * 
 	 * @param enumType
@@ -2167,46 +2187,72 @@ public class ConfigUtil {
 
 	/**
 	 * Returns the constant of the given {@link Enum} class with the given name.
-	 * If the given class implements {@link ExternallyNamed} the constant with
-	 * the same {@link ExternallyNamed#getExternalName()} is returned.
+	 * 
+	 * <p>
+	 * Considers {@link Name} annotations, {@link ExternallyNamed} and {@link ProtocolEnum}.
+	 * </p>
 	 * 
 	 * @param enumType
 	 *        the enum class to check
 	 * @param externalName
 	 *        the external name to resolve
 	 * 
-	 * @return the enum with the given external name (if it is
-	 *         {@link ExternallyNamed}) or the given name, or <code>null</code> if none was found
+	 * @return the enum with the given external name (if it is {@link ExternallyNamed}) or the given
+	 *         name, or <code>null</code> if none was found
 	 * 
+	 * @see #getEnumExternalName(Enum)
 	 */	
-	private static <T extends Enum<T>> T getEnumConstant(Class<T> enumType, String externalName) {
-		T result = null;
-		if (ExternallyNamed.class.isAssignableFrom(enumType)) {
-			for (T constant : enumType.getEnumConstants()) {
-				String name = ((ExternallyNamed) constant).getExternalName();
-				if (externalName.equals(name)) {
-					result = constant;
-					break;
-				}
-			}
-		} else if (ProtocolEnum.class.isAssignableFrom(enumType)) {
-			for (T constant : enumType.getEnumConstants()) {
-				String name = ((ProtocolEnum) constant).protocolName();
-				if (externalName.equals(name)) {
-					result = constant;
-					break;
-				}
-			}
-		} else {
-			try {
-				result = Enum.valueOf(enumType, externalName);
-			} catch (NullPointerException | IllegalArgumentException ex) {
-				result = null;
-			}
-		}
+	public static <T extends Enum<T>> T getEnumConstant(Class<T> enumType, String externalName) {
+		Map<String, Enum<?>> table = lookupEnumTable(enumType);
+		@SuppressWarnings("unchecked")
+		T result = (T) table.get(externalName);
 		return result;
 	}
 
+	private static final ConcurrentHashMap<Class<? extends Enum<?>>, Map<String, Enum<?>>> ENUMS =
+		new ConcurrentHashMap<>();
+
+	private static Map<String, Enum<?>> lookupEnumTable(Class<? extends Enum<?>> enumType) {
+		Map<String, Enum<?>> result = ENUMS.get(enumType);
+		if (result == null) {
+			result = new HashMap<>();
+
+			// Default for backwards compatibility, when the enum is upgraded later on.
+			for (Enum<?> constant : enumType.getEnumConstants()) {
+				String name = constant.name();
+				result.put(name, constant);
+			}
+
+			if (ExternallyNamed.class.isAssignableFrom(enumType)) {
+				for (Enum<?> constant : enumType.getEnumConstants()) {
+					String name = ((ExternallyNamed) constant).getExternalName();
+					result.put(name, constant);
+				}
+			} else if (ProtocolEnum.class.isAssignableFrom(enumType)) {
+				for (Enum<?> constant : enumType.getEnumConstants()) {
+					String name = ((ProtocolEnum) constant).protocolName();
+					result.put(name, constant);
+				}
+			} else {
+				// Annotated names.
+				for (Enum<?> constant : enumType.getEnumConstants()) {
+					String javaName = constant.name();
+					try {
+						Name annotation = enumType.getField(javaName).getAnnotation(Name.class);
+						if (annotation != null) {
+							result.put(annotation.value(), constant);
+						}
+					} catch (NoSuchFieldException ex) {
+						throw new UnreachableAssertion(
+							"Cannot lookup enum constant '" + constant + "' in '" + enumType + "'.");
+					}
+				}
+			}
+
+			result = MapUtil.putIfAbsent(ENUMS, enumType, result);
+		}
+		return result;
+	}
 
 	/**
 	 * Returns the constant in the given {@link Enum} type with the given index

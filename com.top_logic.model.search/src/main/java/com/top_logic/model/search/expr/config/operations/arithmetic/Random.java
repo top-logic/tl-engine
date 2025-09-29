@@ -46,6 +46,16 @@ public class Random extends GenericMethod {
 		return Math.random();
 	}
 
+	@Override
+	public boolean canEvaluateAtCompileTime(Object[] arguments) {
+		return false;
+	}
+
+	@Override
+	public boolean isSideEffectFree() {
+		return false;
+	}
+
 	/**
 	 * {@link AbstractSimpleMethodBuilder} creating an {@link Random} function.
 	 */

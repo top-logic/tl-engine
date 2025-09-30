@@ -2878,6 +2878,16 @@ img.ddwttItemIcon {
 	margin-right: var(--spacing-02);
 	margin-bottom: var(--spacing-02);
 	gap: var(--spacing-02);
+	overflow: hidden;
+	background: var(--background);
+}
+
+.ddwttContainer:has(.ddwttTag .ddwttItemLabel:hover) {
+	overflow: visible;
+}
+
+.ddwttTag:has(.ddwttItemLabel:hover) {
+	overflow: visible;
 }
 
 .ddwttTagX {
@@ -2952,7 +2962,7 @@ img.ddwttItemIcon {
 }
 
 .ddwttTooltipContent :is(h1, h2, h3, h4, h5, h6) {
-    clear: both;
+	clear: both;
 	margin-bottom: var(--spacing-01);
 }
 

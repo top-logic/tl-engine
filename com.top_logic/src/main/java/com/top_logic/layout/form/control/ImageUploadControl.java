@@ -1,0 +1,735 @@
+/*
+ * SPDX-FileCopyrightText: 2025 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * 
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.layout.form.control;
+
+import static com.top_logic.basic.shared.string.StringServicesShared.*;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.Part;
+
+import com.top_logic.base.services.simpleajax.JSSnipplet;
+import com.top_logic.basic.Logger;
+import com.top_logic.basic.col.IDBuilder;
+import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.io.binary.BinaryDataFactory;
+import com.top_logic.basic.io.binary.BinaryDataSource;
+import com.top_logic.basic.listener.EventType.Bubble;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.Utils;
+import com.top_logic.basic.xml.TagUtil;
+import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.dsa.util.MimeTypes;
+import com.top_logic.event.infoservice.InfoService;
+import com.top_logic.knowledge.gui.layout.upload.DefaultDataItem;
+import com.top_logic.layout.AbstractDisplayValue;
+import com.top_logic.layout.ContentHandler;
+import com.top_logic.layout.Control;
+import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.DisplayDimension;
+import com.top_logic.layout.FrameScope;
+import com.top_logic.layout.URLBuilder;
+import com.top_logic.layout.URLParser;
+import com.top_logic.layout.VetoException;
+import com.top_logic.layout.basic.Command;
+import com.top_logic.layout.basic.ControlCommand;
+import com.top_logic.layout.form.CheckException;
+import com.top_logic.layout.form.FormConstants;
+import com.top_logic.layout.form.FormField;
+import com.top_logic.layout.form.FormMember;
+import com.top_logic.layout.form.model.AbstractFormField;
+import com.top_logic.layout.form.model.DataField;
+import com.top_logic.layout.form.model.FormFieldInternals;
+import com.top_logic.layout.form.model.ReadOnlyListener;
+import com.top_logic.layout.image.gallery.ImageDataUtil;
+import com.top_logic.layout.renderers.ButtonComponentButtonRenderer;
+import com.top_logic.layout.tooltip.OverlibTooltipFragmentGenerator;
+import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.css.CssUtil;
+
+/**
+ * Control for an image upload view of a {@link DataField} model.
+ * 
+ * <p>
+ * An image upload can upload images either via file selection or via drop. If an image is uploaded
+ * it will be displayed and can be removed or replaced via drop.
+ * </p>
+ * 
+ * @author <a href="mailto:sha@top-logic.com">Simon Haneke</a>
+ */
+public class ImageUploadControl extends AbstractFormFieldControl implements ContentHandler, IDownloadControl,
+		ReadOnlyListener {
+
+	/**
+	 * Uploaded Image.
+	 */
+	private BinaryDataSource _uploadedImage = null;
+
+	/**
+	 * Variable to store problems during "post" of the upload.
+	 */
+	final List<ResKey> _uploadErrors = new ArrayList<>();
+
+	/** {@link IDBuilder} to get GUI identifier for the single data items. */
+	private final IDBuilder _idBuilder = new IDBuilder();
+
+	private final DeliverContentHandler imageHandler;
+
+	private int _urlSuffix = 0;
+
+	private boolean _defaultLabelAbove = true;
+
+	private String _maxWidth = "", _maxHeight = "", _dims = "";
+
+	private static final Map<String, ? extends ControlCommand> DATA_ITEM_COMMANDS_WITHOUT_DOWNLOAD =
+		createCommandMap(new ControlCommand[] {
+			ImageUpdateCommand.INSTANCE, UploadPerformedCommand.INSTANCE, ClearCommand.INSTANCE, FieldInspector.INSTANCE });
+
+	private static final Map<String, ? extends ControlCommand> DATA_ITEM_COMMANDS_WITH_DOWNLOAD =
+		createCommandMap(DATA_ITEM_COMMANDS_WITHOUT_DOWNLOAD, new ControlCommand[] {
+			DownloadCommand.INSTANCE });
+
+	/**
+	 * Java-script class of an {@link ImageUploadControl}.
+	 */
+	public static final String IMAGEUPLOAD_CONTROL_CLASS = FormConstants.FORM_PACKAGE + ".ImageUploadControl";
+
+	private String getJsSetCtrlID() {
+		return IMAGEUPLOAD_CONTROL_CLASS + ".controlID = '" + getID() + "'; ";
+	}
+
+	/**
+	 * Creates a {@link ImageUploadControl}.
+	 * 
+	 * @param model
+	 *        The {@link DataField} model.
+	 */
+	public ImageUploadControl(DataField model) {
+		super(model, commands(model));
+		this.imageHandler = new DeliverContentHandler();
+		if (!model.getDataItems().isEmpty()) {
+			imageHandler.setData(model.getDataItem());
+		}
+	}
+
+	/**
+	 * Creates a {@link ImageUploadControl}.
+	 * 
+	 * @param model
+	 *        The {@link DataField} model.
+	 * @param hasLabelPosAnnotation
+	 *        If the field has a specified annotation for the label position.
+	 */
+	public ImageUploadControl(DataField model, boolean hasLabelPosAnnotation) {
+		this(model);
+		if (hasLabelPosAnnotation) {
+			deactivateDefaultLabelAbove();
+		}
+	}
+
+	private static Map<String, ? extends ControlCommand> commands(DataField model) {
+		return model.isDownload() ? DATA_ITEM_COMMANDS_WITH_DOWNLOAD : DATA_ITEM_COMMANDS_WITHOUT_DOWNLOAD;
+	}
+
+	@Override
+	protected String getTypeCssClass() {
+		return "cImgUpload";
+	}
+	
+	/**
+	 * Turns off the default above positioning of the label.
+	 */
+	public void deactivateDefaultLabelAbove() {
+		_defaultLabelAbove = false;
+	}
+
+	/**
+	 * Getter for the current state of the default label positioning.
+	 *
+	 * @return if the default label above is active (no annoted position)
+	 */
+	public boolean isDefaultLabelAbove() {
+		return _defaultLabelAbove;
+	}
+
+	/**
+	 * Sets the maximum dimension the displayed image is allowed to have.
+	 * 
+	 * @implNote: The given values may have no effect since there may be stricter or smaller
+	 *            limitations.
+	 */
+	public void setMaxDimensions(DisplayDimension maxWidth, DisplayDimension maxHeight) {
+		if (maxWidth != null) {
+			_maxWidth = maxWidth.toString();
+			if (!_maxWidth.isBlank()) {
+				_dims = "max-width: " + _maxWidth + "; ";
+			}
+		}
+		if (maxHeight != null) {
+			_maxHeight = maxHeight.toString();
+			if (!_maxHeight.isBlank()) {
+				_dims = _dims + "max-height: " + _maxHeight + ";";
+			}
+		}
+	}
+
+	/**
+	 * type safe getter for the model of this control, i.e. actually calls {@link #getModel()}
+	 * 
+	 * @see #getModel()
+	 */
+	public final DataField getDataField() {
+		return (DataField) getModel();
+	}
+
+	void resetTempData() {
+		_uploadedImage = null;
+		_uploadErrors.clear();
+	}
+
+	@Override
+	protected void writeEditable(DisplayContext context, TagWriter out) throws IOException {
+		final DataField dataField = getDataField();
+		final BinaryData image = dataField.getDataItem();
+		final boolean editable = !(dataField.isImmutable() || dataField.isDisabled() || dataField.isReadOnly());
+
+		dataField.setAcceptedTypes("image/*");
+
+		out.beginBeginTag(DIV);
+		writeControlAttributes(context, out);
+		if (editable) {
+			writeOnDropImage(out);
+			writeOnPasteOverImage(out);
+		}
+		out.endBeginTag();
+		{
+			writeUploadInput(context, out, editable);
+			if (image == null) {
+				// in case there is currently no image in the field an
+				// upload box is rendered
+				writeUploadButtonLabel(context, out, editable);
+			} else {
+				renderImage(context, out, image, editable);
+			}
+		}
+		out.endTag(DIV);
+	}
+
+	private void writeOnDropImage(TagWriter out) {
+		out.writeAttribute(ONDRAGOVER_ATTR, "event.preventDefault();");
+		out.writeAttribute(ONDRAGENTER_ATTR, "this.classList.add('dragHover');");
+		out.writeAttribute(ONDRAGLEAVE_ATTR, "this.classList.remove('dragHover');");
+		out.writeAttribute(ONDROP_ATTR, getJsSetCtrlID() + IMAGEUPLOAD_CONTROL_CLASS + ".dropToUpload(event);");
+	}
+
+	private void writeOnPasteOverImage(TagWriter out) {
+		out.writeAttribute(ONMOUSEENTER_ATTR, getJsSetCtrlID() + IMAGEUPLOAD_CONTROL_CLASS + ".addPaste()");
+		out.writeAttribute(ONMOUSELEAVE_ATTR, getJsSetCtrlID() + IMAGEUPLOAD_CONTROL_CLASS + ".removePaste()");
+	}
+
+	boolean isPictureOrNull(Object value) {
+		BinaryData bdata = (BinaryData) value;
+
+		return bdata == null || ImageDataUtil.isSupportedImageFilename(bdata.getName());
+	}
+
+	/**
+	 * Writes the button for selecting files to upload.
+	 */
+	private void writeUploadInput(DisplayContext context, TagWriter out, boolean editable) throws IOException {
+		if (!editable)
+			return;
+		out.beginBeginTag(INPUT);
+		out.writeAttribute(TYPE_ATTR, FILE_TYPE_VALUE);
+		out.writeAttribute(ID_ATTR, uploadId());
+		out.writeAttribute(CLASS_ATTR, FormConstants.IS_UPLOAD_CSS_CLASS);
+
+		// Prevent a click that opens the file chooser to also select a table row (if displayed
+		// in a table cell). Otherwise the row might get redrawn an the underlying control
+		// removed. Note: This hack must be done at the label element forwarding the event to
+		// the
+		// file input and the file input itself to "really" prevent the event from bubbling.
+		out.writeAttribute(ONCLICK_ATTR, "var e = BAL.getEvent(event); e.stopPropagation(); return true;");
+
+		if (!getModel().isActive()) {
+			out.writeAttribute(DISABLED_ATTR, DISABLED_DISABLED_VALUE);
+		}
+		writeOnPasteFocusImage(out);
+		writeOnFileInputChange(out);
+		writeAcceptedFileTypes(out);
+		out.endEmptyTag();
+	}
+
+	private void writeOnPasteFocusImage(TagWriter out) {
+		out.writeAttribute(ONFOCUS_ATTR, getJsSetCtrlID() + IMAGEUPLOAD_CONTROL_CLASS + ".addPaste()");
+		out.writeAttribute(ONBLUR_ATTR, getJsSetCtrlID() + IMAGEUPLOAD_CONTROL_CLASS + ".removePaste()");
+		out.writeAttribute(ONPASTE_ATTR, getJsSetCtrlID() + IMAGEUPLOAD_CONTROL_CLASS + ".dropToUpload(event);");
+	}
+
+	private void writeOnFileInputChange(TagWriter out) throws IOException {
+		out.beginAttribute(ONCHANGE_ATTR);
+		out.append(IMAGEUPLOAD_CONTROL_CLASS + ".updateImage(");
+		out.append(IMAGEUPLOAD_CONTROL_CLASS);// getID());
+		out.append(", this.files)");
+		out.endAttribute();
+	}
+
+	private void writeAcceptedFileTypes(TagWriter out) {
+		String acceptedFileTypes = getDataField().getAcceptedTypes();
+		if (!isEmpty(acceptedFileTypes)) {
+			out.writeAttribute(ACCEPT_ATTR, acceptedFileTypes);
+		}
+	}
+
+	private void writeUploadButtonLabel(DisplayContext context, TagWriter out, boolean editable) throws IOException {
+		if (!editable)
+			return;
+		out.beginBeginTag(LABEL);
+		out.writeAttribute(FOR_ATTR, uploadId());
+
+		// Prevent a click that opens the file chooser to also select a table row (if displayed
+		// in a table cell). Otherwise the row might get redrawn an the underlying control
+		// removed. Note: This hack must be done at the label element forwarding the event to the
+		// file input and the file input itself to "really" prevent the event from bubbling.
+		out.writeAttribute(ONCLICK_ATTR, "var e = BAL.getEvent(event); e.stopPropagation(); return true;");
+
+		OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out,
+			context.getResources().getString(I18NConstants.UPLOAD_IMAGE_LABEL.tooltip()));
+
+		String lClass1 = FormConstants.IS_UPLOAD_CSS_CLASS;
+		String lClass2 = getModel().isActive() ? ButtonComponentButtonRenderer.CSS_CLASS_ENABLED_BUTTON
+			: ButtonComponentButtonRenderer.CSS_CLASS_DISABLED_BUTTON;
+		String lClass3 = !_maxWidth.isBlank() ? "annotatedMaxW" : "";
+		CssUtil.writeCombinedCssClasses(out, lClass1, lClass2, lClass3);
+
+		if (!_dims.isBlank()) {
+			out.writeAttribute(STYLE_ATTR, _dims);
+		}
+
+		out.endBeginTag();
+		Icons.UPLOAD_ICON.writeWithCss(context, out, ButtonComponentButtonRenderer.CSS_CLASS_IMAGE);
+		out.beginBeginTag(SPAN);
+		out.writeAttribute(CLASS_ATTR, ButtonComponentButtonRenderer.CSS_CLASS_LABEL);
+		out.endBeginTag();
+		String label = context.getResources().getString(I18NConstants.UPLOAD_IMAGE_LABEL);
+		final BinaryData image = getDataField().getDataItem();
+		if (image != null) {
+			label = image.getName();
+		}
+		out.writeText(label);
+		out.endTag(SPAN);
+		out.endTag(LABEL);
+	}
+
+	private void renderImage(DisplayContext context, TagWriter out, BinaryDataSource image, boolean editable)
+			throws IOException {
+		out.beginBeginTag(IMG);
+		if (!_dims.isBlank()) {
+			if (!_maxWidth.isBlank()) {
+				out.writeAttribute(CLASS_ATTR, "annotatedMaxW");
+			}
+			out.writeAttribute(STYLE_ATTR, _dims);
+		}
+		out.writeAttribute(ALT_ATTR, image.getName());
+		out.writeAttribute(SRC_ATTR,
+			getURLContext().getURL(context, imageHandler).appendParameter("itemVersion", _urlSuffix).getURL());
+		out.writeAttribute(ONLOAD_ATTR, IMAGEUPLOAD_CONTROL_CLASS + ".setInOrOut(this)");
+		out.endEmptyTag();
+		if (editable) {
+			renderClearButton(context, out, !editable);
+		}
+	}
+
+	/**
+	 * Renders the button whose command {@link ClearCommand clears} the content of the field.
+	 * 
+	 * @param context
+	 *        the context in which rendering occurs
+	 * @param out
+	 *        the stream to write to
+	 * @param disabled
+	 *        whether the command should be disabled
+	 * @throws IOException
+	 *         iff the given {@link TagWriter} throws some
+	 */
+	void renderClearButton(DisplayContext context, TagWriter out, boolean disabled)
+			throws IOException {
+		ButtonWriter buttonWriter =
+			new ButtonWriter(this, com.top_logic.layout.form.tag.Icons.DELETE_BUTTON,
+				com.top_logic.layout.form.tag.Icons.DELETE_BUTTON_DISABLED, ClearCommand.INSTANCE);
+		buttonWriter.setID(getClearID());
+		buttonWriter.setCss(FormConstants.CLEAR_BUTTON_CSS_CLASS + " inset");
+
+		if (disabled) {
+			buttonWriter.writeDisabledButton(context, out);
+		} else {
+			buttonWriter.writeButton(context, out);
+		}
+	}
+
+	@Override
+	protected void writeImmutable(DisplayContext context, TagWriter out) throws IOException {
+		final DataField dataField = getDataField();
+		final BinaryData image = dataField.getDataItem();
+
+		out.beginBeginTag(DIV);
+		writeControlAttributes(context, out);
+		out.endBeginTag();
+		{
+			if (image != null) {
+				renderImage(context, out, image, false);
+			}
+		}
+		out.endTag(DIV);
+	}
+
+	@Override
+	protected void internalHandleValueChanged(FormField field, Object oldValue, Object newValue) {
+		if (Utils.equals(oldValue, newValue)) {
+			return;
+		}
+		requestRepaint();
+	}
+
+	private static String toFileName(String pathName) {
+		for (int index = pathName.length() - 1; index >= 0; index--) {
+			final char potentialSeparator = pathName.charAt(index);
+			if ('/' == potentialSeparator || '\\' == potentialSeparator) {
+				return pathName.substring(index + 1);
+			}
+		}
+		return pathName;
+	}
+
+	@Override
+	public Bubble handleReadOnlyChanged(DataField sender, Boolean wasReadOnly, Boolean isReadOnly) {
+		return repaintOnEvent(sender);
+	}
+
+	@Override
+	public BinaryDataSource dataItem() {
+		return _uploadedImage;
+	}
+
+	@Override
+	public ResKey noValueKey() {
+		final ResKey noValueResKey = getDataField().get(DataField.NO_VALUE_I18N_KEY_PROPERTY);
+		if (noValueResKey != null) {
+			return noValueResKey;
+		} else {
+			return I18NConstants.NO_DOWNLOAD_AVAILABLE;
+		}
+	}
+
+	@Override
+	public boolean downloadInline() {
+		return false;
+	}
+
+	private String uploadId() {
+		return getID() + "-upload";
+	}
+
+	String getClearID() {
+		return getID() + "-clear";
+	}
+
+	private URLBuilder uploadURL(DisplayContext context) {
+		return getURLContext().getURL(context, this);
+	}
+
+	@Override
+	protected void internalAttach() {
+		super.internalAttach();
+		final FrameScope urlContext = getURLContext();
+		urlContext.registerContentHandler(null, this);
+		urlContext.registerContentHandler(urlContext.createNewID(), imageHandler);
+	}
+
+	@Override
+	protected void detachInvalidated() {
+		resetTempData();
+		_idBuilder.clear();
+		super.detachInvalidated();
+	}
+
+	@Override
+	protected void internalDetach() {
+		getURLContext().deregisterContentHandler(this);
+		getURLContext().deregisterContentHandler(imageHandler);
+		// Control is detached
+		super.internalDetach();
+	}
+
+	private FrameScope getURLContext() {
+		return getScope().getFrameScope();
+	}
+
+	/**
+	 * Command function invoked by the client, whenever files are selected.
+	 * 
+	 * @param fileName
+	 *        the names of the files to upload.
+	 * @param fileSize
+	 *        The file sizes of the files with the corresponding names.
+	 * 
+	 * @see DataField#checkFileName(String)
+	 */
+	void notifyImageChanged(final String fileName, Number fileSize) {
+		Function<String, ResKey> nameChecker = nameChecker();
+		List<ResKey> errors = new ArrayList<>();
+		boolean valid = false;
+
+		// Check files.
+		long maxUploadSize = getDataField().getMaxUploadSize();
+		ResKey error = nameChecker.apply(fileName);
+		if (error == null) {
+			long size = fileSize.longValue();
+			if (size == 0) {
+				errors.add(I18NConstants.ERROR_UPLOAD_EMPTY_FILE__NAME.fill(fileName));
+			} else {
+				if (maxUploadSize > 0 && size > maxUploadSize) {
+					errors.add(I18NConstants.ERROR_UPLOAD_SIZE_EXCEEDED__NAME_LIMIT.fill(fileName, maxUploadSize));
+				} else {
+					valid = true;
+				}
+			}
+		} else {
+			errors.add(error);
+		}
+
+		if (!errors.isEmpty()) {
+			InfoService.showWarningList(errors);
+		}
+
+		// If everything is OK, trigger upload.
+		if (valid) {
+			addUpdate(new JSSnipplet(new AbstractDisplayValue() {
+				@Override
+				public void append(DisplayContext context, Appendable out) throws IOException {
+					out.append(IMAGEUPLOAD_CONTROL_CLASS + ".submit(");
+					TagUtil.writeJsString(out, getID());
+					out.append(",");
+					TagUtil.writeJsString(out, uploadURL(context).getURL());
+					out.append(");");
+				}
+			}));
+		}
+	}
+
+	/**
+	 * Performs the actual upload. It takes informations about the uploaded image from the given
+	 * {@link HttpServletRequest} and stores it into the local variable {@link #_uploadedImage}.
+	 * That item is stored into the field when the ajax callback is performed.
+	 */
+	@Override
+	public void handleContent(DisplayContext context, String id, URLParser url) throws IOException, ServletException {
+		final HttpServletRequest request = context.asRequest();
+
+		uploadImage(nameChecker(), (Part) request.getParts().toArray()[0]);
+	}
+
+	private void uploadImage(Function<String, ResKey> nameChecker, Part image)
+			throws IllegalArgumentException, IOException {
+		final String name = image.getSubmittedFileName();
+		assert name != null : "File must have a non-null name.";
+		String fileName = toFileName(name);
+
+		if (Logger.isDebugEnabled(DataItemControl.class)) {
+			Logger.debug("File uploaded: " + fileName, DataItemControl.class);
+		}
+
+		long maxUploadSize = getDataField().getMaxUploadSize();
+		if (maxUploadSize > 0 && image.getSize() > maxUploadSize) {
+			_uploadErrors.add(I18NConstants.ERROR_UPLOAD_SIZE_EXCEEDED__NAME_LIMIT.fill(fileName, maxUploadSize));
+			return;
+		}
+
+		ResKey error = nameChecker.apply(fileName);
+		if (error != null) {
+			_uploadErrors.add(error);
+			return;
+		}
+
+		BinaryData data = BinaryDataFactory.createUploadData(image);
+		String contentType = image.getContentType();
+
+		if (BinaryDataSource.CONTENT_TYPE_OCTET_STREAM.equals(contentType)) {
+			contentType = MimeTypes.getInstance().getMimeType(fileName);
+		}
+
+		_uploadedImage = new DefaultDataItem(fileName, data, contentType);
+		imageHandler.setData(_uploadedImage);
+		_urlSuffix++;
+	}
+
+	/**
+	 * Callback invoked when the upload completes.
+	 */
+	final void uploadPerformed() {
+		if (!_uploadErrors.isEmpty()) {
+			InfoService.showWarningList(_uploadErrors);
+		}
+
+		if (_uploadedImage != null) {
+			BinaryDataSource newImage = null;
+			newImage = _uploadedImage;
+			updateField(newImage);
+		}
+	}
+
+	private void updateField(BinaryDataSource newImage) {
+		final FormField field = getFieldModel();
+
+		try {
+			FormFieldInternals.updateFieldNoClientUpdate(field, newImage);
+		} catch (VetoException ex) {
+			ex.setContinuationCommand(new Command() {
+
+				@Override
+				public HandlerResult executeCommand(DisplayContext context) {
+					try {
+						Object parsedValue =
+							FormFieldInternals.parseRawValue((AbstractFormField) field, newImage);
+						field.setValue(parsedValue);
+					} catch (CheckException checkEx) {
+						// Ignore
+					}
+
+					return HandlerResult.DEFAULT_RESULT;
+				}
+			});
+			ex.process(getWindowScope());
+		}
+		requestRepaint();
+	}
+
+	@Override
+	protected void internalHandleDisabledEvent(FormMember sender, Boolean oldValue, Boolean newValue) {
+		requestRepaint();
+	}
+
+	private Function<String, ResKey> nameChecker() {
+		return (fileName) -> {
+			try {
+				getDataField().checkFileName(fileName);
+			} catch (CheckException ex) {
+				return ResKey.text(ex.getMessage());
+			}
+			return null;
+		};
+	}
+
+	/**
+	 * Simple abstract superclass of {@link ControlCommand}s used within a
+	 * {@link ImageUploadControl}
+	 */
+	private static abstract class ImageUploadCommand extends ControlCommand {
+
+		protected ImageUploadCommand(String id) {
+			super(id);
+		}
+
+		@Override
+		protected final HandlerResult execute(DisplayContext commandContext, Control control,
+				Map<String, Object> arguments) {
+			return exec(commandContext, (ImageUploadControl) control, arguments);
+		}
+
+		protected abstract HandlerResult exec(DisplayContext commandContext, ImageUploadControl control,
+				Map<String, Object> arguments);
+
+	}
+
+	/**
+	 * Command which is executed if a new file is selected on the client.
+	 */
+	private static class ImageUpdateCommand extends ImageUploadCommand {
+
+		private static final String FILENAME_ATTR = "value";
+
+		private static final String FILESIZE_ATTR = "size";
+
+		public static final ImageUpdateCommand INSTANCE = new ImageUpdateCommand("imageUpdate");
+
+		protected ImageUpdateCommand(String id) {
+			super(id);
+		}
+
+		@Override
+		protected HandlerResult exec(DisplayContext commandContext, ImageUploadControl control,
+				Map<String, Object> arguments) {
+			final String fileName = (String) arguments.get(FILENAME_ATTR);
+			final Number fileSize = (Number) arguments.get(FILESIZE_ATTR);
+			control.notifyImageChanged(fileName, fileSize);
+			return HandlerResult.DEFAULT_RESULT;
+		}
+
+		@Override
+		public ResKey getI18NKey() {
+			return I18NConstants.UPDATE_IMAGE_COMMAND;
+		}
+	}
+
+	/**
+	 * AJAX callback which is triggered when a file was successfully submitted to the server.
+	 */
+	private static class UploadPerformedCommand extends ImageUploadCommand {
+		/**
+		 * Singleton {@link DataItemControl.UploadPerformedCommand} instance.
+		 */
+		public static final UploadPerformedCommand INSTANCE = new UploadPerformedCommand();
+
+		/**
+		 * Creates a {@link UploadPerformedCommand}.
+		 */
+		protected UploadPerformedCommand() {
+			super("uploadPerformed");
+		}
+
+		@Override
+		protected HandlerResult exec(DisplayContext commandContext, ImageUploadControl control,
+				Map<String, Object> arguments) {
+			control.uploadPerformed();
+			return HandlerResult.DEFAULT_RESULT;
+		}
+
+		@Override
+		public ResKey getI18NKey() {
+			return I18NConstants.UPLOAD_COMPLETED_COMMAND;
+		}
+	}
+
+	/**
+	 * Command which is executed, when the delete button is pressed.
+	 */
+	private static class ClearCommand extends ImageUploadCommand {
+
+		public static final ClearCommand INSTANCE = new ClearCommand("clear");
+
+		protected ClearCommand(String id) {
+			super(id);
+		}
+
+		@Override
+		protected HandlerResult exec(DisplayContext commandContext, ImageUploadControl control,
+				Map<String, Object> arguments) {
+			control.updateField(null);
+			return HandlerResult.DEFAULT_RESULT;
+		}
+
+		@Override
+		public ResKey getI18NKey() {
+			return I18NConstants.CLEAR_IMAGE;
+		}
+	}
+}

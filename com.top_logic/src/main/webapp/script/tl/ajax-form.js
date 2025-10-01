@@ -4115,6 +4115,85 @@ services.form = {
 		}
 
 	},
+	
+	ImageUploadControl: {
+		controlID: null,
+		image: null,
+		
+		addPaste: function() {
+			window.addEventListener("paste", this.dropToUpload);
+		},
+		
+		removePaste: function() {
+			window.removeEventListener("paste", this.dropToUpload);
+		},
+		
+		dropToUpload: function(event) {
+			event.preventDefault();
+			let dropFiles;
+			if (event.type == "paste") {
+				dropFiles = event.clipboardData.files;
+			} else {
+				dropFiles = event.dataTransfer.files;
+			}
+			
+			if (dropFiles.length != 0 && dropFiles[0].type.match("image.*")) {
+				const imageUpload = document.querySelector("input#" + services.form.ImageUploadControl.controlID + "-upload");
+				if (!imageUpload) return;
+				imageUpload.files = dropFiles;
+				
+				const changeEvent = new Event("change");
+				imageUpload.dispatchEvent(changeEvent);
+			}
+		},
+		
+		updateImage: function(jsImgUpCtrl, files) {
+			let imageName = files[0].name;
+			let imageSize = files[0].size;
+			let imageType = files[0].type;
+			
+			jsImgUpCtrl.image = new File([files[0]], imageName, {type: imageType});
+			
+			services.ajax.execute("dispatchControlCommand", {
+				controlCommand : "imageUpdate",
+				controlID : jsImgUpCtrl.controlID,
+				value: imageName,
+				size: imageSize
+			});
+		},
+		
+		submit: function(controlID, uploadUrl) {
+			services.ajax.showWaitPane();
+			
+			const self = services.form.ImageUploadControl;
+			
+			const formData = new FormData();
+			formData.append("file", self.image);
+			
+			fetch(uploadUrl, {
+				method: "POST", 
+				body: formData
+			}).then((response) => self.uploadPerformed(controlID));
+		},
+		
+		uploadPerformed: function(controlID) {
+			services.ajax.hideWaitPane();
+			
+			services.ajax.execute("dispatchControlCommand", {
+				controlCommand : "uploadPerformed",
+				controlID : controlID
+			});
+		},
+		
+		setInOrOut: function(img) {
+			const clearButton = img.parentElement.querySelector(".fClear");
+			if (clearButton != null) {
+				if (img.clientWidth < clearButton.clientWidth * 2) {
+					clearButton.classList.remove("inset");
+				}
+			}
+		}
+	},
 
 	ListControl : {
 		

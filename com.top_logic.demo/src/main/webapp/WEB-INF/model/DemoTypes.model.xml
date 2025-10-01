@@ -1162,6 +1162,14 @@
 						</format>
 					</annotations>
 				</property>
+				<property name="binary2"
+					type="tl.core:Binary"
+				>
+					<annotations>
+						<binary-display presentation="image-upload"/>
+						<dimensions height="200px"/>
+					</annotations>
+				</property>
 			</attributes>
 		</interface>
 		<class name="A">

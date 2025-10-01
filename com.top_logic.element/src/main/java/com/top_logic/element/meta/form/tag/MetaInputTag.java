@@ -26,6 +26,8 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.AnnotationContainer;
 import com.top_logic.model.annotate.AnnotationLookup;
 import com.top_logic.model.annotate.TLAnnotation;
+import com.top_logic.model.annotate.ui.BinaryDisplay;
+import com.top_logic.model.annotate.ui.BinaryDisplay.BinaryPresentation;
 import com.top_logic.model.annotate.ui.BooleanDisplay;
 import com.top_logic.model.annotate.ui.BooleanPresentation;
 import com.top_logic.model.annotate.ui.ClassificationDisplay;
@@ -327,6 +329,13 @@ public class MetaInputTag extends AbstractMetaTag implements AnnotationLookup {
 	 */
 	public void setClassificationDisplay(ClassificationPresentation presentation) {
 		_localAnnotations = _localAnnotations.with(ClassificationDisplay.display(presentation));
+	}
+
+	/**
+	 * Sets the presentation of binary attributes.
+	 */
+	public void setBinaryDisplay(BinaryPresentation presentation) {
+		_localAnnotations = _localAnnotations.with(BinaryDisplay.display(presentation));
 	}
 
 	/**

@@ -320,7 +320,7 @@ public class ComponentTreeModel {
 				return;
 			}
 			int selectedIndex = _tabBarModel.getSelectedIndex();
-			if (selectedIndex != -1) {
+			if (selectedIndex != -1 && _node.getChildCount() > 0) {
 				changeSelection(_node.getChildAt(selectedIndex));
 			}
 		}

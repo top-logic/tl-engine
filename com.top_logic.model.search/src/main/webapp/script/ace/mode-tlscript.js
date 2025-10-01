@@ -141,13 +141,13 @@ ace.define('ace/mode/tlscript_highlight_rules', function(require, exports, modul
 					// Single quoted strings
 					// 'text'
 					token: "string.single",
-					regex: /'\w*'/
+					regex: /'(?:[^'\\]|\\.)*'/
 				},
 				{
 					// Double quoted strings
 					// "text"
 					token: "string.single",
-					regex: /"\w*"/
+					regex: /"(?:[^"\\]|\\.)*"/
 				},
 				{
 					// Arithmetic operators

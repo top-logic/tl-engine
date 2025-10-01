@@ -38,6 +38,8 @@ public class ConstraintCheckByExpression<C extends ConstraintCheckByExpression.C
 
 	private final ScriptTracer _checkAnalyzer;
 
+	private ConstraintType _type;
+
 	/**
 	 * Configuration options for {@link ConstraintCheckByExpression}.
 	 */
@@ -65,6 +67,12 @@ public class ConstraintCheckByExpression<C extends ConstraintCheckByExpression.C
 		 */
 		Expr getCheck();
 
+		/**
+		 * The type of constraint to decide whether it should be reported as an error and saving
+		 * should be prevented, or only a warning should be displayed in the GUI.
+		 */
+		ConstraintType getType();
+
 	}
 
 	/**
@@ -81,6 +89,7 @@ public class ConstraintCheckByExpression<C extends ConstraintCheckByExpression.C
 
 		_check = QueryExecutor.compile(config.getCheck());
 		_checkAnalyzer = ScriptTracer.compile(model(), config.getCheck());
+		_type = config.getType();
 	}
 
 	private static TLModel model() {
@@ -112,6 +121,11 @@ public class ConstraintCheckByExpression<C extends ConstraintCheckByExpression.C
 		} else {
 			return I18NConstants.ERROR_INVALID_VALUE;
 		}
+	}
+
+	@Override
+	public ConstraintType type() {
+		return _type;
 	}
 
 }

@@ -229,7 +229,14 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 					List<ConstraintCheck> checks = TypedConfiguration.getInstanceList(
 						SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, annotation.getConstraints());
 					for (ConstraintCheck check : checks) {
-						field.addConstraint(toFormConstraint(update, updateContainer, field, check));
+						switch (check.type()) {
+							case WARNING: {
+								field.addWarningConstraint(toFormConstraint(update, updateContainer, field, check));
+								break;
+							}
+							default:
+								field.addConstraint(toFormConstraint(update, updateContainer, field, check));
+						}
 					}
 				}
 

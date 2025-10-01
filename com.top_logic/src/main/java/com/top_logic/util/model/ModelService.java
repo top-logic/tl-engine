@@ -76,6 +76,7 @@ import com.top_logic.model.annotate.TLSize;
 import com.top_logic.model.annotate.TLUpdateMode;
 import com.top_logic.model.annotate.util.AttributeSettings;
 import com.top_logic.model.annotate.util.ConstraintCheck;
+import com.top_logic.model.annotate.util.ConstraintCheck.ConstraintType;
 import com.top_logic.model.cache.TLModelCacheService;
 import com.top_logic.model.cache.TLModelOperations;
 import com.top_logic.model.config.EnumConfig;
@@ -522,7 +523,9 @@ public class ModelService extends ConfiguredManagedClass<ModelService.Config<?>>
 					.getConstraints()) {
 					ConstraintCheck check =
 						SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(checkConfig);
-					checks.add(new AttributeChecker(check, attribute));
+					if (check.type() == ConstraintType.ERROR) {
+						checks.add(new AttributeChecker(check, attribute));
+					}
 				}
 			}
 		}

@@ -3886,7 +3886,11 @@ services.form = {
 		},
 
 		selectItem: function(item) {
-			const ddBox = item.parentElement.parentElement;
+			const ddBox = this.getDDBox() || document.body.firstElementChild.querySelector(":scope ." + this.containerCl + ":has(#" + item.id + ") ." + this.boxCl);
+			if (!ddBox) {
+				console.log("No item container (DDBox) found!");
+				return;
+			}
 			const button = this.getButton(ddBox);
 			let ctrlID = ddBox.dataset.ctrlid;
 			

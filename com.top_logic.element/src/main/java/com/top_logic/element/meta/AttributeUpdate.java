@@ -244,9 +244,16 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 	 * Remembers the {@link FormMember} that was built to display this {@link AttributeUpdate}.
 	 */
 	@FrameworkInternal
-	public void initField(FormMember field) {
-		assert _field == null : "Must not create multiple fields for the same update: " + _field + " vs. " + field;
-		_field = field;
+	public void initField(FormMember member) {
+		assert _field == null : "Must not create multiple fields for the same update: " + _field + " vs. " + member;
+		_field = member;
+
+		if (member instanceof FormField field) {
+			// Bring field in sync with current state of update. The value of the update may have
+			// been set by a default provider before the field was initialized.
+			AttributeFormFactory.initFieldValue(this, field);
+		}
+
 		if (_fieldInitializer != null) {
 			_fieldInitializer.accept(_field);
 			_fieldInitializer = null;

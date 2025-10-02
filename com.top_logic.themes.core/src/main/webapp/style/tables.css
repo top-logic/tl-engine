@@ -923,6 +923,10 @@ table td .ddwttContainer {
 	width: 100%;
 }
 
+table td .ddwttContainer .ddwttTag {
+	margin-bottom: auto;
+}
+
 table td .cDecoratedCell,
 table td span.cPopupSelect,
 table td span.cTextSelect,

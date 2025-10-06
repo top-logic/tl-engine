@@ -1881,7 +1881,84 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 			"	\"\"\""
 		));
 	}
+
+	public void testToJson() throws ParseException {
+		assertEquals(true, eval(
+			"{" +
+				"  testMap = {'name': 'John', 'city': 'New York'};" +
+				"  json = $testMap.toJson();" +
+				"  parsed = parseJson($json);" +
+				"  $parsed['name'] == 'John' && $parsed['city'] == 'New York';" +
+				"}"));
+
+		assertEquals(true, eval(
+			"{" +
+				"  testMap = {" +
+				"    'person': {" +
+				"      'name': 'Alice'," +
+				"      'details': {" +
+				"        'age': 28," +
+				"        'address': {" +
+				"          'street': '123 Main St'," +
+				"          'city': 'Boston'" +
+				"        }" +
+				"      }" +
+				"    }" +
+				"  };" +
+				"  json = $testMap.toJson();" +
+				"  parsed = parseJson($json);" +
+				"  $parsed['person']['details']['address']['city'] == 'Boston';" +
+				"}"));
+
+		assertEquals(true, eval(
+			"{" +
+				"  testMap = {" +
+				"    'fruits': ['apple', 'banana', 'orange']," +
+				"    'numbers': [1, 2, 3, 4, 5]" +
+				"  };" +
+				"  json = $testMap.toJson();" +
+				"  parsed = parseJson($json);" +
+				"  $parsed['fruits'][2] == 'orange' && $parsed['numbers'][3] == 4;" +
+				"}"));
+
+		assertEquals(null, eval(
+			"{" +
+				"  testMap = null;" +
+				"  $testMap.toJson();" +
+				"}"));
+
+		assertEquals(true, eval(
+			"{" +
+				"  testMap = null;" +
+				"  json = $testMap.toJson();" +
+				"  parsed = parseJson($json);" +
+				"  $parsed == null;" +
+				"}"));
+
+		assertEquals(true, eval(
+			"{" +
+				"  people = [" +
+				"    {'name': 'Alice', 'age': 28}," +
+				"    {'name': 'Bob', 'age': 32}," +
+				"    {'name': 'Charlie', 'age': 25}" +
+				"  ];" +
+				"  peopleByName = $people.indexBy(person -> $person['name']);" +
+				"  json = $peopleByName.toJson();" +
+				"  parsed = parseJson($json);" +
+				"  $parsed['Charlie']['age'] == 25 && $parsed['Alice']['age'] == 28;" +
+				"}"));
 	
+		assertEquals("\"Wert\"", eval(
+			"{" +
+				"  'Wert'.toJson();" +
+				"}"));
+
+		assertEquals("42", eval(
+			"{" +
+				"  42.toJson();" +
+				"}"));
+	}
+
 	public void testSubString() throws ParseException {
 		assertEquals("Bar", eval("'FooBar'.subString(3)"));
 		assertEquals("Bar", eval("'FooBar'.subString(from: 3)"));

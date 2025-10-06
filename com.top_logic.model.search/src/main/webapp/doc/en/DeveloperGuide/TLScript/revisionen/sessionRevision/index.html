@@ -6,7 +6,7 @@
 
 <h2>Description</h2>
 
-<p>Returns the last persisted revision of the current session. This corresponds exactly to the result of <code class="hljs inlineCode">revisionAt(now())</code>.</p>
+<p>Returns the base revision of the current session. This is the revision on which the current session is based and which defines the state of all objects at the start of the current interaction/transaction.</p>
 
 <h2>Parameters</h2>
 
@@ -16,7 +16,7 @@
 
 <p><strong>Type:</strong> Revision</p>
 
-<p>The revision of the last commit in the current session.</p>
+<p>The revision on which the current session is based and which defines the initial state of the objects in this session.</p>
 
 <h2>Examples</h2>
 
@@ -45,35 +45,23 @@
 	</tbody>
 </table>
 
-<p>Returns the current session revision.</p>
+<p>Returns the base revision of the current session.</p>
 
 <h3>Example 2</h3>
 
 <pre>
-	<code>$obj.inRevision(sessionRevision())</code>
+	<code>{
+    // Assuming $order has the status “Processing” in the base revision.
+    // The status is changed in the current transaction.
+    $order.set(`xxx:xxx#status`, "Canceled");
+
+    currentStatus = $order.get(`xxx:xxx#status`);
+    previousStatus = $order.inRevision(sessionRevision()).get(`xxx:xxx#status`);
+    
+   "Before: " + $previousStatus + ", After: " + $currentStatus
+}</code>
 </pre>
 
 <p><strong>Output:</strong></p>
 
-<table class="tlDocTable">
-	<thead>
-		<tr>
-			<th>Revision</th>
-			<th>Revision date</th>
-			<th>Author</th>
-		</tr>
-	</thead>
-	<tbody>
-		<tr>
-			<td>6.004</td>
-			<td>27.09.2023, 14:56:54</td>
-			<td>Great, Administrator</td>
-		</tr>
-	</tbody>
-</table>
-
-<p>Access to the original state of the object in the session revision before changes were made.</p>
-
-<p> </p>
-
-<p></p>
+<p><code class="hljs inlineCode">Before: Processing, After: Canceled</code></p>

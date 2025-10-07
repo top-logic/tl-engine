@@ -2023,6 +2023,10 @@ input[type="checkbox"]:indeterminate::after {
 	row-gap: var(--spacing-02);
 }
 
+.cChoice {
+	width: 100%;
+}
+
 .tl-table__cell-container :is(.cBooleanChoice,.cChoice) {
     flex-wrap: nowrap;
 }
@@ -2051,6 +2055,8 @@ span.bcc-option {
 .cChoice-option {
     align-items: center;
     text-wrap: nowrap;
+	display: inline-flex;
+	max-width: 100%;
 }
 
 .cChoice-option label {
@@ -2058,6 +2064,8 @@ span.bcc-option {
 	cursor: pointer;
 	margin-left: var(--spacing-02);
 	padding: 0; /* Remove the space between the label and a potential option separator */
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 .cChoice-horizontal.disabled label,
@@ -2732,9 +2740,6 @@ img.ddwttItemIcon {
 	overflow: visible;
 }
 
-.ddwttTag:has(.ddwttItemLabel:hover) {
-	overflow: visible;
-}
 
 .ddwttTagX {
 	width: .875rem;

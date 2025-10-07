@@ -19,8 +19,10 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.ValueInitializer;
+import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.func.Function1;
@@ -79,6 +81,8 @@ public class DynamicColumnProviderByExpression
 		Config.COLUMNS,
 		Config.COLUMN_LABEL,
 		Config.COLUMN_TYPE,
+		Config.COLUMN_MANDATORY,
+		Config.COLUMN_MULTIPLICITY,
 		Config.COLUMN_VISIBILITY,
 		Config.ACCESSOR,
 		Config.UPDATER,
@@ -108,6 +112,16 @@ public class DynamicColumnProviderByExpression
 		 * @see #getColumnType()
 		 */
 		String COLUMN_TYPE = "columnType";
+
+		/**
+		 * @see #getColumnMandatory()
+		 */
+		String COLUMN_MANDATORY = "columnMandatory";
+
+		/**
+		 * @see #getColumnMultiplicity()
+		 */
+		String COLUMN_MULTIPLICITY = "columnMultiplicity";
 
 		/**
 		 * @see #getColumnVisibility()
@@ -230,6 +244,42 @@ public class DynamicColumnProviderByExpression
 		Expr getColumnType();
 
 		/**
+		 * Whether the column must contain a value.
+		 * 
+		 * <p>
+		 * The type function expects two arguments. The first argument is one of the column objects
+		 * as returned by the {@link #getColumns()} function. The second argument is the component's
+		 * model.
+		 * </p>
+		 * 
+		 * <pre>
+		 * <code>column -> model -> ...</code>
+		 * </pre>
+		 */
+		@Name(COLUMN_MANDATORY)
+		@FormattedDefault("false")
+		@NonNullable
+		Expr getColumnMandatory();
+
+		/**
+		 * Whether the column can contain multiple values.
+		 * 
+		 * <p>
+		 * The type function expects two arguments. The first argument is one of the column objects
+		 * as returned by the {@link #getColumns()} function. The second argument is the component's
+		 * model.
+		 * </p>
+		 * 
+		 * <pre>
+		 * <code>column -> model -> ...</code>
+		 * </pre>
+		 */
+		@Name(COLUMN_MULTIPLICITY)
+		@FormattedDefault("false")
+		@NonNullable
+		Expr getColumnMultiplicity();
+
+		/**
 		 * Function retrieving the column's value.
 		 * 
 		 * <p>
@@ -349,6 +399,10 @@ public class DynamicColumnProviderByExpression
 
 	private final QueryExecutor _canUpdate;
 
+	private final QueryExecutor _columnMandatory;
+
+	private final QueryExecutor _columnMultiplicity;
+
 	/**
 	 * Creates a {@link DynamicColumnProviderByExpression} from configuration.
 	 * 
@@ -368,6 +422,8 @@ public class DynamicColumnProviderByExpression
 		_updater = config.getUpdater() == null ? null : QueryExecutor.compile(config.getUpdater());
 		_canUpdate = QueryExecutor.compileOptional(config.getCanUpdate());
 		_columnType = QueryExecutor.compile(config.getColumnType());
+		_columnMandatory = QueryExecutor.compile(config.getColumnMandatory());
+		_columnMultiplicity = QueryExecutor.compile(config.getColumnMultiplicity());
 	}
 
 	@Override
@@ -410,7 +466,10 @@ public class DynamicColumnProviderByExpression
 				labelKey = ResKey.text(MetaLabelProvider.INSTANCE.getLabel(label));
 			}
 
-			TLTypeContext baseType = new ConcreteTypeContext((TLType) _columnType.execute(columnModel, model));
+			boolean mandatory = SearchExpression.asBoolean(_columnMandatory.execute(columnModel, model));
+			boolean multiple = SearchExpression.asBoolean(_columnMultiplicity.execute(columnModel, model));
+			TLTypeContext baseType =
+				new ConcreteTypeContext((TLType) _columnType.execute(columnModel, model), mandatory, multiple);
 			if (!getConfig().getAnnotations().isEmpty()) {
 				baseType = new AnnotatedTypeContext(baseType, getConfig());
 			}

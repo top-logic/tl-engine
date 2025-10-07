@@ -1,0 +1,483 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Model setup"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.model.importer.XMIModelImportHandler"
+					command-label="Modell importieren."
+					command-name="importModel"
+					component-implementation-comment="com.top_logic.layout.table.tree.TreeTableComponent"
+					component-name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Model-Definition"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.Base64Value"
+								base64data="PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiID8-Cgo8bW9kZWwgeG1sbnM9Imh0dHA6Ly93d3cudG9wLWxvZ2ljLmNvbS9ucy9keW5hbWljLXR5cGVzLzYuMCI-Cgk8bW9kdWxlIG5hbWU9InRlc3QuaGlkZGVuRGVmYXVsdCI-CgkJPGNsYXNzIG5hbWU9IlUiPgoJCQk8Z2VuZXJhbGl6YXRpb25zPgoJCQkJPGdlbmVyYWxpemF0aW9uIHR5cGU9InRsLm1vZGVsOlRMT2JqZWN0Ii8-CgkJCTwvZ2VuZXJhbGl6YXRpb25zPgoJCQk8YW5ub3RhdGlvbnM-CgkJCQk8Zm9ybS1kZWZpbml0aW9uPgoJCQkJCTxmb3JtPgoJCQkJCQk8ZmllbGQKCQkJCQkJCWF0dHJpYnV0ZT0idiIKCQkJCQkJCWZ1bGxRdWFsaWZpZWROYW1lPSJ0ZXN0LmhpZGRlbkRlZmF1bHQ6VSN2IgoJCQkJCQkJdHlwZT0idGVzdC5oaWRkZW5EZWZhdWx0OlYiCgkJCQkJCS8-CgkJCQkJCTxmaWVsZAoJCQkJCQkJYXR0cmlidXRlPSJ4IgoJCQkJCQkJZnVsbFF1YWxpZmllZE5hbWU9InRlc3QuaGlkZGVuRGVmYXVsdDpVI3giCgkJCQkJCQl0eXBlPSJ0ZXN0LmhpZGRlbkRlZmF1bHQ6WCIKCQkJCQkJLz4KCQkJCQk8L2Zvcm0-CgkJCQk8L2Zvcm0tZGVmaW5pdGlvbj4KCQkJPC9hbm5vdGF0aW9ucz4KCQkJPGF0dHJpYnV0ZXM-CgkJCQk8cmVmZXJlbmNlIG5hbWU9InYiCgkJCQkJa2luZD0iZm9yd2FyZHMiCgkJCQkJbWFuZGF0b3J5PSJ0cnVlIgoJCQkJCW5hdmlnYXRlPSJ0cnVlIgoJCQkJCXR5cGU9IlYiCgkJCQk-CgkJCQkJPGFubm90YXRpb25zPgoJCQkJCQk8ZGVmYXVsdC12YWx1ZT4KCQkJCQkJCTxkZWZhdWx0LWJ5LWV4cHJlc3Npb24-CgkJCQkJCQkJPHZhbHVlPjwhW0NEQVRBW2FsbChgdGVzdC5oaWRkZW5EZWZhdWx0OlZgKQoud2l0aCh2YWx1ZXMgLT4gJHZhbHVlcy5zaXplKCkgPT0gMQogICAgPyAkdmFsdWVzLnNpbmdsZUVsZW1lbnQoKQogICAgOiBudWxsKV1dPjwvdmFsdWU-CgkJCQkJCQk8L2RlZmF1bHQtYnktZXhwcmVzc2lvbj4KCQkJCQkJPC9kZWZhdWx0LXZhbHVlPgoJCQkJCQk8ZHluYW1pYy12aXNpYmlsaXR5PgoJCQkJCQkJPG1vZGUtc2VsZWN0b3IgY2xhc3M9ImNvbS50b3BfbG9naWMubW9kZWwuc2VhcmNoLnByb3ZpZGVycy5Nb2RlU2VsZWN0b3JCeUV4cHJlc3Npb24iPgoJCQkJCQkJCTxmdW5jdGlvbj48IVtDREFUQVthbGwoYHRlc3QuaGlkZGVuRGVmYXVsdDpWYCkKLndpdGgodmFsdWVzIC0-ICR2YWx1ZXMuc2l6ZSgpID09IDEKICAgID8gImhpZGRlbiIKICAgIDogIm1hbmRhdG9yeSIpXV0-PC9mdW5jdGlvbj4KCQkJCQkJCTwvbW9kZS1zZWxlY3Rvcj4KCQkJCQkJPC9keW5hbWljLXZpc2liaWxpdHk-CgkJCQkJPC9hbm5vdGF0aW9ucz4KCQkJCTwvcmVmZXJlbmNlPgoJCQkJPHJlZmVyZW5jZSBuYW1lPSJ4IgoJCQkJCWtpbmQ9ImZvcndhcmRzIgoJCQkJCW1hbmRhdG9yeT0idHJ1ZSIKCQkJCQluYXZpZ2F0ZT0idHJ1ZSIKCQkJCQl0eXBlPSJYIgoJCQkJPgoJCQkJCTxhbm5vdGF0aW9ucz4KCQkJCQkJPG9wdGlvbnM-CgkJCQkJCQk8b3B0aW9ucy1ieS1leHByZXNzaW9uPgoJCQkJCQkJCTxmdW5jdGlvbj48IVtDREFUQVt1IC0-ICR1LmdldChgdGVzdC5oaWRkZW5EZWZhdWx0OlUjdmApCi5nZXQoYHRlc3QuaGlkZGVuRGVmYXVsdDpWI3hzYCldXT48L2Z1bmN0aW9uPgoJCQkJCQkJPC9vcHRpb25zLWJ5LWV4cHJlc3Npb24-CgkJCQkJCTwvb3B0aW9ucz4KCQkJCQkJPHJlZmVyZW5jZS1kaXNwbGF5IHZhbHVlPSJkcm9wLWRvd24iLz4KCQkJCQk8L2Fubm90YXRpb25zPgoJCQkJPC9yZWZlcmVuY2U-CgkJCTwvYXR0cmlidXRlcz4KCQk8L2NsYXNzPgoJCTxjbGFzcyBuYW1lPSJWIj4KCQkJPGdlbmVyYWxpemF0aW9ucz4KCQkJCTxnZW5lcmFsaXphdGlvbiB0eXBlPSJ0bC5tb2RlbDpUTE9iamVjdCIvPgoJCQk8L2dlbmVyYWxpemF0aW9ucz4KCQkJPGF0dHJpYnV0ZXM-CgkJCQk8cHJvcGVydHkgbmFtZT0ibmFtZSIKCQkJCQltYW5kYXRvcnk9InRydWUiCgkJCQkJdHlwZT0idGwuY29yZTpTdHJpbmciCgkJCQkvPgoJCQkJPHJlZmVyZW5jZSBuYW1lPSJ4cyIKCQkJCQljb21wb3NpdGU9InRydWUiCgkJCQkJa2luZD0iZm9yd2FyZHMiCgkJCQkJbXVsdGlwbGU9InRydWUiCgkJCQkJbmF2aWdhdGU9InRydWUiCgkJCQkJdHlwZT0iWCIKCQkJCS8-CgkJCTwvYXR0cmlidXRlcz4KCQk8L2NsYXNzPgoJCTxjbGFzcyBuYW1lPSJYIj4KCQkJPGdlbmVyYWxpemF0aW9ucz4KCQkJCTxnZW5lcmFsaXphdGlvbiB0eXBlPSJ0bC5tb2RlbDpUTE9iamVjdCIvPgoJCQk8L2dlbmVyYWxpemF0aW9ucz4KCQkJPGF0dHJpYnV0ZXM-CgkJCQk8cHJvcGVydHkgbmFtZT0ibmFtZSIKCQkJCQltYW5kYXRvcnk9InRydWUiCgkJCQkJdHlwZT0idGwuY29yZTpTdHJpbmciCgkJCQkvPgoJCQk8L2F0dHJpYnV0ZXM-CgkJPC9jbGFzcz4KCTwvbW9kdWxlPgo8L21vZGVsPg"
+								content-type="text/xml"
+								name="test.hiddenDefault.model.xml"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Partieller Import"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+						value="false"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Ok"
+					user-id="root"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Ok"
+					user-id="root"
+				/>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Data setup"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+							path="Test"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+							path="Test > Hidden default"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+							path="Test > Hidden default > U"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Modell Editor > Instanzen"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+							path="Test > Hidden default > V"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.instances.CreateInstanceHandler"
+					command-label="Neue Instanz anlegen."
+					command-name="newInstance"
+					component-implementation-comment="com.top_logic.element.layout.instances.InstanceBrowserGrid"
+					component-name="com.top_logic.element/admin/model/modelEditor/instanceBrowser.layout.xml#Instances"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Name"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Modell Editor > Instanzen > Instanzen"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="V1"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+					failure-expected="false"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.basic.CommandModelNaming$CommandModelName">
+						<owner config:interface="com.top_logic.layout.basic.GenericCommandModelNaming$GenericCommandModelName">
+							<algorithm class="com.top_logic.layout.basic.GenericCommandModelOwner$AnnotatedCommandModelMapping"/>
+							<reference config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Xs"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Development > Modell Editor > Instanzen > Instanzen"
+								/>
+							</reference>
+						</owner>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Zeile hinzufügen"
+					user-id="root"
+				>
+					<business-object config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Tabelle in Xs"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Modell Editor > Instanzen > Instanzen"
+						/>
+					</business-object>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Modell Editor > Instanzen > Instanzen"
+						/>
+						<path>
+							<object>
+								<business-object config:interface="com.top_logic.element.layout.scripting.GridNewObjectNaming$GridNewObjectName"/>
+							</object>
+							<labeled-member label="Xs"/>
+							<named-member name="rows"/>
+							<named-member name="create_2"/>
+							<labeled-member label="Name"/>
+						</path>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="x1"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Zeile hinzufügen"
+					user-id="root"
+				>
+					<business-object config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Tabelle in Xs"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Modell Editor > Instanzen > Instanzen"
+						/>
+					</business-object>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Modell Editor > Instanzen > Instanzen"
+						/>
+						<path>
+							<object>
+								<business-object config:interface="com.top_logic.element.layout.scripting.GridNewObjectNaming$GridNewObjectName"/>
+							</object>
+							<labeled-member label="Xs"/>
+							<named-member name="rows"/>
+							<named-member name="create_3"/>
+							<labeled-member label="Name"/>
+						</path>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="x2"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Ok"
+					user-id="root"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.grid.DefaultGridSaveCommandHandler"
+					command-label="Speichern"
+					command-name="gridSave"
+					component-implementation-comment="com.top_logic.element.layout.instances.InstanceBrowserGrid"
+					component-name="com.top_logic.element/admin/model/modelEditor/instanceBrowser.layout.xml#Instances"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Test hidden default value"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+							path="Test > Hidden default > U"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.instances.CreateInstanceHandler"
+					command-label="Neue Instanz anlegen."
+					command-name="newInstance"
+					component-implementation-comment="com.top_logic.element.layout.instances.InstanceBrowserGrid"
+					component-name="com.top_logic.element/admin/model/modelEditor/instanceBrowser.layout.xml#Instances"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="X"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Modell Editor > Instanzen > Instanzen"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+								label="x1"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="X"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Modell Editor > Instanzen > Instanzen"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+								label="x2"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.grid.DefaultGridSaveCommandHandler"
+					command-label="Speichern"
+					command-name="gridSave"
+					component-implementation-comment="com.top_logic.element.layout.instances.InstanceBrowserGrid"
+					component-name="com.top_logic.element/admin/model/modelEditor/instanceBrowser.layout.xml#Instances"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+						column-label="V"
+					>
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Modell Editor > Instanzen > Instanzen"
+							/>
+							<path>
+								<named-member name="fieldTable"/>
+							</path>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name">
+							<name>Unbenanntes Objekt vom Typ "U"</name>
+						</row-object>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+						<model-name config:interface="com.top_logic.element.layout.scripting.TLObjectByLabelNaming$TLObjectByLabelName"
+							class-name="test.hiddenDefault:V"
+							object-label="V1"
+						/>
+					</expected-value>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Tear down"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name">
+							<name>Unbenanntes Objekt vom Typ "U"</name>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Modell Editor > Instanzen > Instanzen"
+						/>
+						<path>
+							<named-member name="fieldTable"/>
+						</path>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.component.GenericDeleteCommandHandler"
+					command-label="Löschen..."
+					command-name="deleteInstance"
+					component-implementation-comment="com.top_logic.element.layout.instances.InstanceBrowserGrid"
+					component-name="com.top_logic.element/admin/model/modelEditor/instanceBrowser.layout.xml#Instances"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+							path="Test > Hidden default > V"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="V1"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Modell Editor > Instanzen > Instanzen"
+						/>
+						<path>
+							<named-member name="fieldTable"/>
+						</path>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.component.GenericDeleteCommandHandler"
+					command-label="Löschen..."
+					command-name="deleteInstance"
+					component-implementation-comment="com.top_logic.element.layout.instances.InstanceBrowserGrid"
+					component-name="com.top_logic.element/admin/model/modelEditor/instanceBrowser.layout.xml#Instances"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+							path="Test > Hidden default"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.meta.TLModelPartDeleteHandler"
+					command-label="Löschen..."
+					command-name="deleteTLModelPart"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="com.top_logic.element/admin/model/modelEditor/moduleEditor.layout.xml#Editor"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

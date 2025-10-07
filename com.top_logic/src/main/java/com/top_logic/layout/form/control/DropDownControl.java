@@ -386,8 +386,13 @@ public class DropDownControl extends AbstractSelectControl {
 		LabelProvider lprovider = SelectFieldUtils.getOptionLabelProvider(dropdown);
 		ResourceProvider rprovider = LabelResourceProvider.toResourceProvider(lprovider);
 		String tooltip = item == SelectField.NO_OPTION ? null : rprovider.getTooltip(item);
-		if (tooltip == null) {
-			return;
+		if (tooltip == null || tooltip.isEmpty()) {
+			String label = rprovider.getLabel(item);
+			if (label.length() > 0) {
+				tooltip = label;
+			} else {
+				return;
+			}
 		}
 		HTMLUtil.writeImageTooltipHtml(context, out, tooltip);
 	}

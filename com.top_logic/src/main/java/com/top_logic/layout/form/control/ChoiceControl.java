@@ -311,13 +311,16 @@ public class ChoiceControl extends AbstractSelectControl implements OptionModelL
 		out.writeAttribute(FOR_ATTR, widgetID);
 		LabelProvider theProvider = field.getOptionLabelProvider();
 		if (theProvider instanceof ResourceProvider) {
-		    String theTool = ((ResourceProvider) theProvider).getTooltip(option);
-		    if (! StringServices.isEmpty(theTool)) {
+			String theTool = ((ResourceProvider) theProvider).getTooltip(option);
+			if (StringServices.isEmpty(theTool)) {
+				theTool = field.getOptionLabel(option);
+			}
+			if (!StringServices.isEmpty(theTool)) {
 				OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, theTool);
-		    }	    
+			}
 		}
 		if (this.isFixed(field, option) || field.isDisabled()) {
-		    out.writeAttribute(CLASS_ATTR, "disabled");
+			out.writeAttribute(CLASS_ATTR, "disabled");
 		}
 		out.endBeginTag();
 		{

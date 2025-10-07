@@ -376,6 +376,7 @@
 					<method name="instanceExport" class="com.top_logic.model.search.expr.config.operations.binary.InstanceExport$Builder"/>
 					<method name="instanceImport" class="com.top_logic.model.search.expr.config.operations.binary.InstanceImport$Builder"/>
 					<method name="toConfig" class="com.top_logic.model.search.expr.config.operations.struct.ToConfig$Builder"/>
+					<method name="toJson" class="com.top_logic.model.search.expr.config.operations.binary.ToJson$Builder"/>
 					
 					<method name="regex" class="com.top_logic.model.search.expr.config.operations.regex.Regex$Builder"/>
 					<method name="regexSearch" class="com.top_logic.model.search.expr.config.operations.regex.RegexSearch$Builder"/>

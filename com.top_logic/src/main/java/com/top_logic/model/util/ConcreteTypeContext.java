@@ -15,13 +15,19 @@ import com.top_logic.model.annotate.TLAnnotation;
  */
 public class ConcreteTypeContext implements TLTypeContext {
 
-	private TLType _type;
+	private final TLType _type;
+
+	private final boolean _mandatory;
+
+	private final boolean _multiple;
 
 	/**
 	 * Creates a {@link ConcreteTypeContext}.
 	 */
-	public ConcreteTypeContext(TLType type) {
+	public ConcreteTypeContext(TLType type, boolean mandatory, boolean multiple) {
 		_type = type;
+		_mandatory = mandatory;
+		_multiple = multiple;
 	}
 
 	@Override
@@ -36,12 +42,12 @@ public class ConcreteTypeContext implements TLTypeContext {
 
 	@Override
 	public boolean isMultiple() {
-		return false;
+		return _multiple;
 	}
 
 	@Override
 	public boolean isMandatory() {
-		return false;
+		return _mandatory;
 	}
 
 	@Override

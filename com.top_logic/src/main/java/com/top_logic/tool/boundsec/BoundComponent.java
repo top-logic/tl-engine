@@ -296,7 +296,7 @@ public abstract class BoundComponent extends AJAXComponent implements BoundCheck
 	 */
 	protected final ResKey securityReason(Object potentialModel) {
 		BoundCommandGroup group = getDefaultCommandGroup();
-		if (!allow(group, getCurrentObject(group, potentialModel))) {
+		if (!allow(group, this.getSecurityObject(group, potentialModel))) {
 			return com.top_logic.tool.execution.I18NConstants.ERROR_NO_PERMISSION;
 		}
 
@@ -460,11 +460,6 @@ public abstract class BoundComponent extends AJAXComponent implements BoundCheck
             return false;
 
         return true; // All Tests pass, let's go
-    }
-
-    @Override
-	public final BoundObject getCurrentObject(BoundCommandGroup aBCG, Object potentialModel) {
-		return getSecurityObject(aBCG, potentialModel);
     }
 
 	@Override

@@ -34,7 +34,7 @@ public class ExcelPersonContactImportProgress extends ProgressComponent {
 
 	static Mandator findMandator(LayoutComponent aComponent) {
 		CompoundSecurityLayout checker = CompoundSecurityProjectLayout.getNearestCompoundLayout(aComponent);
-		return (Mandator) checker.getCurrentObject(checker.getDefaultCommandGroup(), checker.getModel());
+		return (Mandator) checker.getSecurityObject(checker.getDefaultCommandGroup(), checker.getModel());
 	}
 
 }

@@ -50,11 +50,6 @@ public interface BoundCheckerDelegate extends BoundCheckerComponent {
 	}
 
 	@Override
-	default BoundObject getCurrentObject(BoundCommandGroup aBCG, Object potentialModel) {
-		return getDelegate().getCurrentObject(aBCG, potentialModel);
-	}
-
-	@Override
 	default BoundObject getSecurityObject(BoundCommandGroup commandGroup, Object potentialModel) {
 		return getDelegate().getSecurityObject(commandGroup, potentialModel);
 	}

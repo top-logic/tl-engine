@@ -258,31 +258,32 @@ public class CompoundSecurityLayout extends BoundLayout {
 	}
 
     /**
-	 * Return the current Security object to derive the security from.
+	 * Return the current security object to derive the security from.
 	 *
 	 * When useDefaultChecker is set the getDefaultObject from {@link BoundHelper} will be used.
 	 *
 	 * Otherwise first {@link LayoutComponent#getMaster()} is checked and when it is a
-	 * BoundComponent its {@link BoundComponent#getCurrentObject(BoundCommandGroup aBCG, Object potentialModel)} is used.
+	 * BoundComponent its {@link BoundComponent#getSecurityObject(BoundCommandGroup, Object)} is
+	 * used.
 	 *
 	 * As last resort we use our next parent CompoundSecurityLayout.
 	 *
 	 * When all this fails we return null.
 	 */
     @Override
-	public BoundObject getCurrentObject(BoundCommandGroup aBCG, Object potentialModel) {
+	public BoundObject getSecurityObject(BoundCommandGroup commandGroup, Object potentialModel) {
         if (useDefaultChecker) {
             return BoundHelper.getInstance().getDefaultObject();
         }
 
         LayoutComponent theMaster = this.getMaster();
         if (theMaster instanceof BoundComponent) {
-			return ((BoundComponent) theMaster).getCurrentObject(aBCG, potentialModel);
+			return ((BoundComponent) theMaster).getSecurityObject(commandGroup, potentialModel);
         }
 
         CompoundSecurityLayout thePL = CompoundSecurityLayout.getNearestCompoundLayout(this);
         if (thePL != null) {
-			return thePL.getCurrentObject(aBCG, potentialModel);
+			return thePL.getSecurityObject(commandGroup, potentialModel);
         }
         return null;
     }

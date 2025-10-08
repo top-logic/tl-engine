@@ -1,0 +1,137 @@
+<h2>Syntax</h2>
+
+<pre>
+	<code>excelCell(row: 0, col: 0, content: $content, style: $cellStyle)</code>
+</pre>
+
+<h2>Description</h2>
+
+<p>Creates a single cell with specific position, content and formatting. This function is used within excelSheet() to gain precise control over the placement and appearance of cells.</p>
+
+<p>The function supports different content types (text, numbers, boolean, formulas) and extensive formatting options such as fonts, colors, borders, alignment and number formats.</p>
+
+<h2>Parameters</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Cell name</th>
+			<th>Type</th>
+			<th>Type Description</th>
+			<th>Mandatory</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>row</td>
+			<td>Character string</td>
+			<td>The row number of the cell (0-based).</td>
+			<td>yes</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>col</td>
+			<td>object</td>
+			<td>The column number of the cell (0-based).</td>
+			<td>yes</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>content</td>
+			<td>object</td>
+			<td>The content of the cell. This can be text, numbers, Boolean values or an Excel formula (created with excelFormula()).</td>
+			<td>yes</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>style</td>
+			<td>map</td>
+			<td>A map with formatting properties for the cell.</td>
+			<td>no</td>
+			<td>null</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Return value</h2>
+
+<p><strong>Type:</strong> Map</p>
+
+<p>A map object containing the cell information for processing by excelSheet().</p>
+
+<h2>Examples</h2>
+
+<h3>Simple cell with text content</h3>
+
+<pre>
+	<code>excelCell(row: 0, col: 0, content: "Hello World")</code>
+</pre>
+
+<p><strong>Output: </strong>Cell in row 0, column 0 with the text "Hello World".</p>
+
+<h3>Cell with number formatting</h3>
+
+<pre>
+	<code>excelCell(row: 1, col: 1, content: 1250.50,
+           style: {"numberFormat": "$#,##0.00", "align": "right"})</code>
+</pre>
+
+<p><strong>Output: </strong>Cell with currency format: "$1,250.50", right-aligned.</p>
+
+<p></p>
+
+<h3>Cell with comprehensive formatting</h3>
+
+<pre>
+	<code>excelCell(row: 3, col: 0, content: "Wichtiger Hinweis",
+	style: {
+		"bold": true,
+		"italic": true,
+		"color": "#DC3545",
+		"background": "#F8D7DA",
+		"fontSize": 12,
+		"borderTop": "medium",
+		"borderBottom": "medium",
+		"borderLeft": "medium",
+		"borderRight": "medium",
+		"align": "center",
+		"valign": "center"
+	})</code>
+</pre>
+
+<p><strong>Output: </strong>Red, bold italic font on a light red background with frame and centered alignment.</p>
+
+<p></p>
+
+<h3>Cell with Excel formula</h3>
+
+<pre>
+	<code>excelCell(row: 5, col: 2, content: excelFormula("SUM(A5:A10)"),
+    style: {"numberFormat": "$#,##0.00", "bold": true, "background": "#E8F5E8"})</code>
+</pre>
+
+<p><strong>Output: </strong>Cell with Excel formula that calculates the sum of cells A5 to A10, with currency format and green background.</p>
+
+<p></p>
+
+<h3>Reusable styles</h3>
+
+<pre>
+	<code>// Stildefinition
+$headerStyle = {
+  "bold": true,
+  "background": "#007BFF",
+  "color": "white",
+  "align": "center",
+  "borderBottom": "thick"
+}
+
+// Anwendung des Stils
+excelCell(row: 0, col: 0, content: "Produkt", style: $headerStyle)
+excelCell(row: 0, col: 1, content: "Preis", style: $headerStyle)
+excelCell(row: 0, col: 2, content: "Bestand", style: $headerStyle)
+</code>
+</pre>
+
+<p><strong>Output: </strong>Three header cells with uniform blue header style.</p>

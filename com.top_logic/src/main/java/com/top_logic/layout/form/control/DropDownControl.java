@@ -15,6 +15,7 @@ import java.util.Map;
 import com.top_logic.base.services.simpleajax.ElementReplacement;
 import com.top_logic.base.services.simpleajax.JSFunctionCall;
 import com.top_logic.basic.CollectionUtil;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.IDBuilder;
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.util.ResKey;
@@ -386,15 +387,13 @@ public class DropDownControl extends AbstractSelectControl {
 		LabelProvider lprovider = SelectFieldUtils.getOptionLabelProvider(dropdown);
 		ResourceProvider rprovider = LabelResourceProvider.toResourceProvider(lprovider);
 		String tooltip = item == SelectField.NO_OPTION ? null : rprovider.getTooltip(item);
-		if (tooltip == null || tooltip.isEmpty()) {
+		if (StringServices.isEmpty(tooltip)) {
 			String label = rprovider.getLabel(item);
-			if (label.length() > 0) {
-				tooltip = label;
-			} else {
-				return;
-			}
+			tooltip = label;
 		}
-		HTMLUtil.writeImageTooltipHtml(context, out, tooltip);
+		if (!StringServices.isEmpty(tooltip)) {
+			HTMLUtil.writeImageTooltipHtml(context, out, tooltip);
+		}
 	}
 
 	private void renderTags(DisplayContext context, TagWriter out) throws IOException {

@@ -7,6 +7,7 @@ package com.top_logic.tool.boundsec.wrap;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Set;
 
 import com.top_logic.basic.TLID;
 import com.top_logic.knowledge.objects.KnowledgeObject;
@@ -35,7 +36,7 @@ public abstract class AbstractBoundWrapper extends AbstractWrapper implements Bo
     }
 
     @Override
-	public final Collection<BoundRole> getRoles(Person aPerson) {
+	public final Set<BoundRole> getRoles(Person aPerson) {
 		return BoundedRole.getRoles(this, toGroup(aPerson));
     }
 
@@ -44,17 +45,17 @@ public abstract class AbstractBoundWrapper extends AbstractWrapper implements Bo
 	}
 
 	@Override
-	public final Collection<BoundRole> getRoles(Group aGroup) {
+	public final Set<BoundRole> getRoles(Group aGroup) {
 		return BoundedRole.getRoles(this, aGroup);
     }
 
     @Override
-	public final Collection<BoundRole> getLocalAndGlobalRoles(Person aPerson) {
+	public final Set<BoundRole> getLocalAndGlobalRoles(Person aPerson) {
 		return BoundedRole.getLocalAndGlobalRoles(this, aPerson);
     }
 
     @Override
-	public final Collection<BoundRole> getLocalAndGlobalAndGroupRoles(Person aPerson) {
+	public final Set<BoundRole> getLocalAndGlobalAndGroupRoles(Person aPerson) {
 		return BoundedRole.getLocalAndGlobalAndGroupRoles(this, aPerson);
     }
 
@@ -64,7 +65,7 @@ public abstract class AbstractBoundWrapper extends AbstractWrapper implements Bo
     }
 
     @Override
-	public final Collection<BoundRole> getRoles() {
+	public final Set<BoundRole> getRoles() {
 		return BoundedRole.getRoles(this, null);
     }
 

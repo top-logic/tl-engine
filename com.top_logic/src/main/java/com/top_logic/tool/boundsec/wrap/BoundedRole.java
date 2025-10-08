@@ -455,7 +455,7 @@ public class BoundedRole extends AbstractBoundWrapper implements BoundRole {
 	 *        The {@link Person} to get the roles for.
 	 * @return The roles available for the given person.
 	 */
-	public static Collection<BoundRole> getLocalAndGlobalAndGroupRoles(TLObject context, Person person) {
+	public static Set<BoundRole> getLocalAndGlobalAndGroupRoles(TLObject context, Person person) {
 		Set<BoundRole> result = new HashSet<>();
 		result.addAll(person.getGlobalRoles());
 

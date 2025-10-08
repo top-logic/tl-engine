@@ -134,7 +134,7 @@ public class FallbackAccessManager extends StorageAccessManager {
     }
     
     @Override
-	public boolean hasRole(Person aPerson, BoundObject aBO, Collection<BoundedRole> aSomeRoles) {
+	public boolean hasRole(Person aPerson, BoundObject aBO, Collection<? extends BoundRole> aSomeRoles) {
         if (doLog) {
             getRoles(aPerson, aBO); // just for debugging
         }

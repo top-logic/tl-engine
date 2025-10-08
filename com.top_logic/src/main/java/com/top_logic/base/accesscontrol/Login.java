@@ -34,11 +34,11 @@ import com.top_logic.mig.html.layout.QualifiedComponentNameConstraint;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.BoundObject;
+import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
-import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.tool.boundsec.wrap.Group;
 import com.top_logic.tool.boundsec.wrap.PersBoundComp;
 import com.top_logic.tool.boundsec.wrap.SecurityComponentCache;
@@ -464,7 +464,7 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 
 		AccessManager accessManager = AccessManager.getInstance();
 		BoundObject securityRoot = BoundHelper.getInstance().getDefaultObject();
-		Set<BoundedRole> roles = securityComponent.rolesForCommandGroup(_commandGroupLeavingMaintenanceMode);
+		Set<? extends BoundRole> roles = securityComponent.rolesForCommandGroup(_commandGroupLeavingMaintenanceMode);
 		return accessManager.hasRole(aPerson, securityRoot, roles);
 	}
 

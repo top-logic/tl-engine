@@ -919,7 +919,7 @@ public class BoundHelper extends ManagedClass {
      * @param c1 may be null
      * @param c2 may be null
      */
-	public static final <T> Collection<T> merge(Collection<T> c1, Collection<T> c2) {
+	public static final <T> Set<T> merge(Set<T> c1, Set<T> c2) {
         if (c1 == null || c1.isEmpty())
             return c2;
         if (c2 == null || c2.isEmpty())

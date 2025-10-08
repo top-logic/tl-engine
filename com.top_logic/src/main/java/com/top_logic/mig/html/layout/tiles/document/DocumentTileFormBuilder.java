@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import com.top_logic.base.roles.Role;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.Named;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
@@ -48,6 +47,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundObject;
+import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper;
@@ -234,7 +234,7 @@ public class DocumentTileFormBuilder extends AbstractConfiguredInstance<Document
 	}
 
 	private ExecutableState getExecutablility(BoundObject context) {
-		Collection<Role> someRoles =
+		Collection<? extends BoundRole> someRoles =
 			getRolesForPersBoundComp(getConfig().getUploadComponentName(), SimpleBoundCommandGroup.CREATE);
 		boolean hasRole = AccessManager.getInstance().hasRole(context, someRoles);
 		if (hasRole) {
@@ -251,7 +251,8 @@ public class DocumentTileFormBuilder extends AbstractConfiguredInstance<Document
 	 *        the requested permission
 	 * @return all roles that grant the given permission on the given persBoundComp
 	 */
-	private Collection<Role> getRolesForPersBoundComp(ComponentName securityID, BoundCommandGroup cmdGroup) {
+	private Collection<? extends BoundRole> getRolesForPersBoundComp(ComponentName securityID,
+			BoundCommandGroup cmdGroup) {
 		try {
 			PersBoundComp myPers = SecurityComponentCache.getSecurityComponent(securityID);
 			if (myPers == null) {

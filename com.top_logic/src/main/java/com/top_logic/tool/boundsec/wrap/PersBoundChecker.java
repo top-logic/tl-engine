@@ -6,12 +6,14 @@
 package com.top_logic.tool.boundsec.wrap;
 
 import java.util.Collection;
+import java.util.Set;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundObject;
+import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.simple.AbstractBoundChecker;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
@@ -72,7 +74,7 @@ public class PersBoundChecker extends AbstractBoundChecker {
      * @return The Roles for CommandGroups are configured using the PersBoundComp.
      */
     @Override
-	public Collection getRolesForCommandGroup(BoundCommandGroup aCommand) {
+	public Set<? extends BoundRole> getRolesForCommandGroup(BoundCommandGroup aCommand) {
 		ComponentName theSecID = getSecurityId();
         try {
             PersBoundComp myPers = SecurityComponentCache.getSecurityComponent(theSecID);

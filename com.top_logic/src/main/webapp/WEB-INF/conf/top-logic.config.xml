@@ -43,6 +43,7 @@
 			       <module key="com.top_logic.tool.export.ExportQueueManager$Module" value="true"/>
 			       <module key="com.top_logic.tool.export.ExportRegistryFactory$Module" value="true"/>
 			       <module key="com.top_logic.base.services.InitialGroupManager$Module" value="true" />
+			       <module key="com.top_logic.tool.boundsec.config.AccessConfigurationSetupService$Module" value="true" />
 			       <module key="com.top_logic.base.administration.MaintenanceWindowManager$Module" value="true"/>
 			       <module key="com.top_logic.event.bus.Bus$Module" value="true" />
 			       <module key="com.top_logic.base.accesscontrol.SessionService$Module" value="true"/>

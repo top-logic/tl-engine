@@ -441,7 +441,7 @@ public class ExportTableComponent extends FormComponent {
 		@Override
 		protected BoundObject getBoundObject(LayoutComponent aComponent, Object model, Map<String, Object> someValues) {
 			if (aComponent instanceof BoundChecker) {
-				return ((BoundChecker) aComponent).getCurrentObject(this.getCommandGroup(), model);
+				return ((BoundChecker) aComponent).getSecurityObject(this.getCommandGroup(), model);
 			}
 			return null;
 		}

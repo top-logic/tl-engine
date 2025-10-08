@@ -132,7 +132,7 @@ public class TestBoundComponent extends BasicTestCase {
 		cmp.setModel(guest);
 		assertNotNull(cmp.hideReason());
 
-		assertSame(guest, cmp.getCurrentObject(SimpleBoundCommandGroup.READ, cmp.getModel()));
+		assertSame(guest, cmp.getSecurityObject(SimpleBoundCommandGroup.READ, cmp.getModel()));
 
 		CommandHandler cmd =
 			cmp.getCommandById(TestLayoutComponent.ComponentWithIntrinsicCommand.INTRINSIC_COMMAND_NAME);

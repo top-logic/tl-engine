@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.TimeZone;
 
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
@@ -48,6 +49,7 @@ import com.top_logic.model.provider.DefaultCountryDefault;
 import com.top_logic.model.provider.DefaultLocaleDefault;
 import com.top_logic.model.provider.UserTimeZoneDefault;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.tool.boundsec.wrap.Group;
@@ -116,8 +118,7 @@ public class Person extends AbstractBoundWrapper implements Author, GroupMember 
     protected static final String GLOBAL_ROLE_KA = "hasGlobalRole";
     
 	private static final AssociationSetQuery<KnowledgeAssociation> GLOBAL_ROLES_ATTR = AssociationQuery
-		.createOutgoingQuery("globalRoles",
-		Person.GLOBAL_ROLE_KA);
+		.createOutgoingQuery("globalRoles", Person.GLOBAL_ROLE_KA);
     
     /**
      * Caches the representative group for this person.
@@ -412,8 +413,8 @@ public class Person extends AbstractBoundWrapper implements Author, GroupMember 
      * 
      * @return the global roles. May be empty but not <code>null</code>.
      */
-	public Collection getGlobalRoles() {
-        return resolveWrappers(GLOBAL_ROLES_ATTR);
+	public Set<BoundRole> getGlobalRoles() {
+		return (Set<BoundRole>) resolveWrappers(GLOBAL_ROLES_ATTR);
     }
     
     /**
@@ -422,13 +423,13 @@ public class Person extends AbstractBoundWrapper implements Author, GroupMember 
      * @param aGlobalRole    the global role. May be <code>null</code> (code has no effect then).
      * @throws DataObjectException if creation of the KA fails
      */
-	public void addGlobalRole(BoundedRole aGlobalRole) throws DataObjectException {
+	public void addGlobalRole(BoundRole aGlobalRole) throws DataObjectException {
         if (aGlobalRole == null) {
             return;
         }
         
         KnowledgeObject      theSource = this.tHandle();
-        KnowledgeObject      theDest   = aGlobalRole.tHandle();
+		KnowledgeObject theDest = ((BoundedRole) aGlobalRole).tHandle();
 		theSource.getKnowledgeBase().createAssociation(theSource, theDest, Person.GLOBAL_ROLE_KA);
     }
     
@@ -438,11 +439,12 @@ public class Person extends AbstractBoundWrapper implements Author, GroupMember 
      * @param aGlobalRole    the global role. May be <code>null</code> (code has no effect then).
      * @throws DataObjectException if removal of the KA fails
      */
-	public void removeGlobalRole(BoundedRole aGlobalRole) throws DataObjectException {
+	public void removeGlobalRole(BoundRole aGlobalRole) throws DataObjectException {
         if (aGlobalRole == null) {
             return;
         }
-		KBUtils.deleteAllKI(tHandle().getOutgoingAssociations(Person.GLOBAL_ROLE_KA, aGlobalRole.tHandle()));
+		KBUtils.deleteAllKI(
+			tHandle().getOutgoingAssociations(Person.GLOBAL_ROLE_KA, ((BoundedRole) aGlobalRole).tHandle()));
     }
     
     /**

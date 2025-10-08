@@ -15,6 +15,7 @@ import com.top_logic.mig.html.layout.LayoutConstants;
 import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundComponent;
+import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.assistent.BoundAssistentComponent;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.tool.boundsec.wrap.PersBoundComp;
@@ -86,21 +87,21 @@ public class CompoundSecurityLayoutCommandGroupDistributor extends CompoundSecur
             BoundCommandGroup theCommandGroup = theIt.next();
             try {
                 // remove all old roles on this command group
-                Collection<BoundedRole> theRoles = theBC.getRolesForCommandGroup(theCommandGroup);
+				Collection<? extends BoundRole> theRoles = theBC.getRolesForCommandGroup(theCommandGroup);
                 if (theRoles != null) {
-                    Iterator<BoundedRole>  theRolesIt = theRoles.iterator();
+					Iterator<? extends BoundRole> theRolesIt = theRoles.iterator();
                     while (theRolesIt.hasNext()) {
-                        BoundedRole theRole = theRolesIt.next();
-                        pbc.removeAccess(theCommandGroup, theRole);
+						BoundRole theRole = theRolesIt.next();
+						pbc.removeAccess(theCommandGroup, (BoundedRole) theRole);
                     }
                 }
                 // add the roles registered on the parent project layout
                 theRoles = base.getRolesForCommandGroup(theCommandGroup);
                 if (theRoles != null) {
-                    Iterator<BoundedRole> theRolesIt = theRoles.iterator();
+					Iterator<? extends BoundRole> theRolesIt = theRoles.iterator();
                     while (theRolesIt.hasNext()) {
-                        BoundedRole theRole = theRolesIt.next();
-                        pbc.addAccess(theCommandGroup, theRole);
+						BoundRole theRole = theRolesIt.next();
+						pbc.addAccess(theCommandGroup, (BoundedRole) theRole);
                     }
                 }
             }

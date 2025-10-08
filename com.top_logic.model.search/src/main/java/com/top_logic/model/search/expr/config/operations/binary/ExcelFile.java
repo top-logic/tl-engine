@@ -384,7 +384,7 @@ public class ExcelFile extends GenericMethod {
 			return null;
 		}
 
-		// Convert common color names to IndexedColors
+		// Convert common color names to indexed colors
 		switch (colorName.toLowerCase()) {
 			case "black": return IndexedColors.BLACK;
 			case "white": return IndexedColors.WHITE;

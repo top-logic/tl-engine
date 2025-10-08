@@ -25,7 +25,7 @@ import com.top_logic.model.util.TLModelUtil;
 /**
  * {@link GenericMethod} for creating Excel sheets in TL-Script.
  * 
- * Used within excelFile() to define individual sheets with their content.
+ * Used within {@link ExcelFile} to define individual sheets with their content.
  * 
  * @author <a href="mailto:jhu@top-logic.com">Jonathan Hüsing</a>
  */

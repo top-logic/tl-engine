@@ -26,7 +26,7 @@ public class AssistantSecurityObjectProvider implements SecurityObjectProvider {
 	public BoundObject getSecurityObject(BoundChecker aChecker, Object model, BoundCommandGroup aCommandGroup) {
         AssistentComponent theAssistant = AssistentComponent.getEnclosingAssistentComponent((LayoutComponent)aChecker);
 		return theAssistant instanceof BoundChecker
-			? ((BoundChecker) theAssistant).getCurrentObject(aCommandGroup, model)
+			? ((BoundChecker) theAssistant).getSecurityObject(aCommandGroup, model)
 			: null;
     }
 

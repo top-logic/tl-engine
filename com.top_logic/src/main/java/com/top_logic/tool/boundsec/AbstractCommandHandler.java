@@ -438,7 +438,7 @@ public abstract class AbstractCommandHandler implements CommandHandler {
 				return _securityObjectProvider.getSecurityObject(boundChecker, model, getCommandGroup());
 			} else {
 				Object securityBaseModel = operatesOn(ModelChannel.NAME) ? model : aComponent.getModel();
-				return boundChecker.getCurrentObject(this.getCommandGroup(), securityBaseModel);
+				return boundChecker.getSecurityObject(this.getCommandGroup(), securityBaseModel);
 			}
     	}
     	

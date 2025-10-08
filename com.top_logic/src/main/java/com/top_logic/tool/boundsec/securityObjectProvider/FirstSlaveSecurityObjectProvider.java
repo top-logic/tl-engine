@@ -39,7 +39,7 @@ public class FirstSlaveSecurityObjectProvider implements SecurityObjectProvider 
 		}
 		
 		return (firstSlaveComponent instanceof BoundChecker
-			? ((BoundChecker) firstSlaveComponent).getCurrentObject(commandGroup, model)
+			? ((BoundChecker) firstSlaveComponent).getSecurityObject(commandGroup, model)
 			: null);
 	}
 

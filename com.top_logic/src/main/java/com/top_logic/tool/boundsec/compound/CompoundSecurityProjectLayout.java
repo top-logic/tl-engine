@@ -137,7 +137,7 @@ public class CompoundSecurityProjectLayout extends CompoundSecurityLayout {
      * @return the selected object in the primary checker
      */
     @Override
-	public BoundObject getCurrentObject(BoundCommandGroup aBCG, Object potentialModel) {
+	public BoundObject getSecurityObject(BoundCommandGroup commandGroup, Object potentialModel) {
         Object theSelected = this.getPrimaryChecker().getSelected();
 
         return (theSelected instanceof BoundObject) ? (BoundObject) theSelected : null;

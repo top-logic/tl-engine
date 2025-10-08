@@ -25,7 +25,7 @@ import com.top_logic.util.TLContext;
  */
 public interface BoundChecker {
     
-    /**
+	/**
      * Get the unique Id for this BoundChecker
      * 
      * @return the Id for this BoundChecker, 
@@ -149,14 +149,6 @@ public interface BoundChecker {
 	default boolean allow(BoundObject anObject) {
 		return allow(getDefaultCommandGroup(), anObject);
 	}
-
-    /**
-	 * Get the object to use to check the given command group
-	 * 
-	 * @param potentialModel
-	 *        See {@link #hideReason(Object)}.
-	 */
-    public BoundObject getCurrentObject(BoundCommandGroup aBCG, Object potentialModel);
 
 	/**
 	 * Determines the object to check for security when the given model is a

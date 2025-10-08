@@ -16,7 +16,6 @@ import java.util.Set;
 
 import com.top_logic.base.cluster.ClusterManager;
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.col.TypedAnnotatable;
@@ -38,7 +37,6 @@ import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
-import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.tool.boundsec.wrap.Group;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.Utils;
@@ -310,47 +308,40 @@ public class StorageAccessManager extends ElementAccessManager {
     }
 
     @Override
-	public boolean hasRole(Person aPerson, BoundObject aBO, Collection<BoundedRole> someRoles) {
-        if (isSuperUser(aPerson)) return true;
+	protected boolean internalHasRole(Person aPerson, BoundObject aBO, Collection<? extends BoundRole> accessRoles) {
         if (securityStorage.isRebuilding()) {
 			switch (rebuildStrategy()) {
 				case BLOCK:
 					waitForRebuilding();
 					break;
 				case COMPUTE:
-					return super.hasRole(aPerson, aBO, someRoles);
+					return super.hasRole(aPerson, aBO, accessRoles);
 				case DENY:
 					return false;
 				default:
 					break;
 			}
         }
-		return getRoleComputation(aPerson).hasRole(aBO, someRoles);
+		return getRoleComputation(aPerson).hasRole(aBO, accessRoles);
     }
 
     @Override
-	public <T extends BoundObject> Collection<T> getAllowedBusinessObjects(Person aPerson,
-			Collection<BoundedRole> someRoles, Collection<T> someObjects) {
-		if (isSuperUser(aPerson)) {
-			return someObjects;
-		}
-		if (CollectionUtil.isEmptyOrNull(someRoles)) {
-			return Collections.emptyList();
-		}
+	protected <T extends BoundObject> Collection<T> internalAllowedBusinessObjects(Person user,
+			Collection<? extends BoundRole> someRoles, Collection<T> objects) {
         if (securityStorage.isRebuilding()) {
 			switch (rebuildStrategy()) {
 				case BLOCK:
 					waitForRebuilding();
 					break;
 				case COMPUTE:
-					return super.getAllowedBusinessObjects(aPerson, someRoles, someObjects);
+					return super.getAllowedBusinessObjects(user, someRoles, objects);
 				case DENY:
 					return new ArrayList<>(0);
 				default:
 					break;
 			}
         }
-		return getRoleComputation(aPerson).getAllowedBusinessObjects(someRoles, someObjects);
+		return getRoleComputation(user).getAllowedBusinessObjects(someRoles, objects);
     }
 
 	/**

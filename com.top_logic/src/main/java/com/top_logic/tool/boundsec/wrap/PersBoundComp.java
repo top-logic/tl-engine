@@ -247,7 +247,7 @@ public class PersBoundComp extends AbstractWrapper {
      *
      * @param   aGroup      The CommandGroups that will require the roles.
      */
-    public Set rolesForCommandGroup(BoundCommandGroup aGroup) {
+	public Set<? extends BoundedRole> rolesForCommandGroup(BoundCommandGroup aGroup) {
     	String grpId = aGroup.getID();
 		AssociationSetQuery<KnowledgeAssociation> theQuery;
     	synchronized (NEEDS_ROLE_QUERY_BY_GROUP_ID) {
@@ -261,7 +261,7 @@ public class PersBoundComp extends AbstractWrapper {
     		}
     	}
 
-    	return resolveWrappers(theQuery);
+		return (Set<? extends BoundedRole>) resolveWrappers(theQuery);
     }
 
     /**

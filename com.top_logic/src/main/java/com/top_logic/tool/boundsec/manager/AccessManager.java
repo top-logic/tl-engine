@@ -8,8 +8,6 @@ package com.top_logic.tool.boundsec.manager;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -33,9 +31,9 @@ import com.top_logic.knowledge.service.CommitHandler;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.layout.component.ComponentUtil;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
-import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.util.TLContext;
 
 /**
@@ -99,36 +97,42 @@ public class AccessManager extends ConfiguredManagedClass<AccessManager.Config> 
      * @return Set of BoundRoles, never <code>null</code>; empty in case aPerson or aBO is
      *         <code>null</code>
      */
-    public Set<BoundRole> getRoles(Person aPerson, BoundObject aBO) {
-        if (aBO == null || aPerson == null) {
-            return new HashSet<>();
+	public Set<BoundRole> getRoles(Person aPerson, BoundObject aBO) {
+		if (aBO == null || aPerson == null || !ComponentUtil.isValid(aBO)) {
+			return Collections.emptySet();
         }
-        Collection<BoundRole> theResult = aBO.getLocalAndGlobalAndGroupRoles(aPerson);
-        if (CollectionUtil.isEmptyOrNull(theResult)) {
-            theResult = new HashSet<>();
-        } else if (!(theResult instanceof Set<?>)) {
-            theResult = new HashSet<>(theResult);
-        }
-        return (Set<BoundRole>)theResult;
+		return aBO.getLocalAndGlobalAndGroupRoles(aPerson);
     }
 
     /**
-     * Check if the given person has one of the given roles at the given bound object.
-     *
-     * @param aPerson
-     *            the person to check
-     * @param aBO
-     *            the bound object to check
-     * @param someRoles
-     *            a collection of BoundRoles
-     * @return <code>true</code>, if the given person has one of the given roles at the
-     *         given bound object, <code>false</code> otherwise
-     */
-    public boolean hasRole(Person aPerson, BoundObject aBO, Collection<BoundedRole> someRoles) {
-        if (isSuperUser(aPerson)) return true;
-        Collection theRoles = this.getRoles(aPerson, aBO);
-        return CollectionUtil.containsAny(theRoles, someRoles);
-    }
+	 * Check if the given person has one of the given roles at the given bound object.
+	 *
+	 * @param user
+	 *        The user that wants to access an object.
+	 * @param aBO
+	 *        The object that should be accessed.
+	 * @param accessRoles
+	 *        Roles that allow access to the given object.
+	 * @return Whether the given user has one of the given roles on the given object.
+	 */
+	public boolean hasRole(Person user, BoundObject aBO, Collection<? extends BoundRole> accessRoles) {
+		if (user == null) {
+			return false;
+		}
+		if (user.isAdmin()) {
+			return true;
+		}
+		return internalHasRole(user, aBO, accessRoles);
+	}
+
+	/**
+	 * Whether the given user has one of the given roles on the given object without (again checking
+	 * for admin access).
+	 */
+	protected boolean internalHasRole(Person aPerson, BoundObject aBO, Collection<? extends BoundRole> accessRoles) {
+		Set<BoundRole> assignedRoles = this.getRoles(aPerson, aBO);
+		return CollectionUtil.containsAny(assignedRoles, accessRoles);
+	}
 
     /**
      * Check if the current person has one of the given roles at the given bound object.
@@ -140,52 +144,56 @@ public class AccessManager extends ConfiguredManagedClass<AccessManager.Config> 
      * @return <code>true</code>, if the given person has one of the given roles at the
      *         given bound object, <code>false</code> otherwise
      */
-    public boolean hasRole(BoundObject aBO, Collection someRoles) {
-        TLContext theContext = TLContext.getContext();
-        return hasRole(theContext == null ? null : theContext.getCurrentPersonWrapper(), aBO, someRoles);
+	public boolean hasRole(BoundObject aBO, Collection<? extends BoundRole> someRoles) {
+		TLContext context = TLContext.getContext();
+		if (context == null) {
+			return false;
+		}
+
+		return hasRole(context.getPerson(), aBO, someRoles);
     }
 
     /**
-     * Checks the given collection of BoundObjects and returns only these objects, on which
-     * the given person has on of the given roles.
-     *
-     * @param aPerson
-     *        the person to check
-     * @param someRoles
-     *        a collection of BoundRoles
-     * @param someObjects
-     *        the collection of BoundObjects to check
-     * @return a collection containing only the allowed BoundObjects of the given collection
-     *         someObjects; may be empty but not <code>null</code>
-     */
-	public <T extends BoundObject> Collection<T> getAllowedBusinessObjects(Person aPerson,
-			Collection<BoundedRole> someRoles, Collection<T> someObjects) {
-        if (isSuperUser(aPerson)) return someObjects;
+	 * Checks the given collection of BoundObjects and returns only these objects, on which the
+	 * given person has on of the given roles.
+	 *
+	 * @param user
+	 *        the person to check
+	 * @param someRoles
+	 *        a collection of BoundRoles
+	 * @param objects
+	 *        the collection of BoundObjects to check
+	 * @return a collection containing only the allowed BoundObjects of the given collection
+	 *         someObjects; may be empty but not <code>null</code>
+	 */
+	public final <T extends BoundObject> Collection<T> getAllowedBusinessObjects(Person user,
+			Collection<? extends BoundRole> someRoles, Collection<T> objects) {
+		if (user == null) {
+			return Collections.emptyList();
+		}
+		if (user.isAdmin()) {
+			return objects;
+		}
 		if (CollectionUtil.isEmptyOrNull(someRoles)) {
 			return Collections.emptyList();
 		}
-		List<T> theResult = new ArrayList<>(someObjects.size());
-		Iterator<T> it = someObjects.iterator();
-        while (it.hasNext()) {
-			T theBO = it.next();
-			if (hasRole(aPerson, theBO, someRoles)) {
-                theResult.add(theBO);
+
+		return internalAllowedBusinessObjects(user, someRoles, objects);
+	}
+
+	/**
+	 * Implementation of {@link #getAllowedBusinessObjects(Person, Collection, Collection)}
+	 */
+	protected <T extends BoundObject> Collection<T> internalAllowedBusinessObjects(Person user,
+			Collection<? extends BoundRole> someRoles, Collection<T> objects) {
+		List<T> result = new ArrayList<>(objects.size());
+		for (T obj : objects) {
+			if (internalHasRole(user, obj, someRoles)) {
+				result.add(obj);
             }
         }
-        return theResult;
-    }
-
-    /**
-     * Checks whether the given Person is super user and should be allowed always.
-     *
-     * @param aPerson
-     *        the person to check
-     * @return <code>true</code>, if the given person is a super user, <code>false</code>
-     *         otherwise
-     */
-    protected boolean isSuperUser(Person aPerson) {
-		return aPerson != null && Person.isAdmin(aPerson);
-    }
+		return result;
+	}
 
 	public Collection<String> getStructureNames() {
 		return _structureNames;

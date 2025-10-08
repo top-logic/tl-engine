@@ -57,7 +57,6 @@ import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.ObjectNotFound;
-import com.top_logic.tool.boundsec.compound.CompoundSecurityLayout;
 import com.top_logic.util.ReferenceManager;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.Utils;
@@ -363,10 +362,6 @@ public class GotoHandler extends AbstractCommandHandler {
 		if (targetComponentName != null) {
 			if (layout != null) {
 				isProcessed = true;
-				if ((layout instanceof CompoundSecurityLayout) && (targetObject instanceof BoundObject)) {
-					// Compatibility with incomprehensible legacy quirks.
-					((CompoundSecurityLayout) layout).setCurrentObject((BoundObject) targetObject);
-				}
 				{
 					if (layout instanceof Selectable) {
 						Selectable selectable = (Selectable) layout;

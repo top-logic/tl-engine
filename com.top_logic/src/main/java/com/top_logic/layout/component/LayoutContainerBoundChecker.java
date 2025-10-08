@@ -16,6 +16,7 @@ import com.top_logic.tool.boundsec.BoundCheckerComponent;
 import com.top_logic.tool.boundsec.BoundCheckerMixin;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundObject;
+import com.top_logic.tool.boundsec.wrap.PersBoundComp;
 
 /**
  * {@link BoundCheckerComponent} that is a container for other components.
@@ -132,6 +133,19 @@ public interface LayoutContainerBoundChecker extends BoundCheckerComponent {
 	@Override
 	default Collection<BoundChecker> getChildCheckers() {
 		return BoundCheckerMixin.getChildCheckers(getChildList(), getDialogs());
+	}
+
+	@Override
+	default void initPersBoundComp(PersBoundComp persBoundComp) {
+		// Store.
+		BoundCheckerComponent.super.initPersBoundComp(persBoundComp);
+
+		// Distribute.
+		for (LayoutComponent theChild : getChildList()) {
+			if (theChild instanceof BoundCheckerComponent childChecker) {
+				childChecker.initPersBoundComp(persBoundComp);
+			}
+		}
 	}
 
 }

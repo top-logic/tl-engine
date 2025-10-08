@@ -11,7 +11,6 @@ import java.util.Set;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.mig.html.layout.ComponentName;
-import com.top_logic.tool.boundsec.wrap.PersBoundComp;
 
 /**
  * {@link BoundChecker} that delegates all methods to another {@link BoundChecker}.
@@ -88,11 +87,6 @@ public interface BoundCheckerDelegate extends BoundCheckerComponent {
 	@Override
 	default boolean allowPotentialModel(Object potentialModel) {
 		return getDelegate().allowPotentialModel(potentialModel);
-	}
-
-	@Override
-	default PersBoundComp getPersBoundComp() {
-		return getDelegate().getPersBoundComp();
 	}
 
 	/**

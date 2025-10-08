@@ -16,7 +16,6 @@ import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
-import com.top_logic.util.TLContextManager;
 
 /**
  * {@link BoundChecker} as delegate for a {@link LayoutComponent} allow nothing.
@@ -38,11 +37,6 @@ public class AllowNoneChecker extends AbstractBoundChecker {
 	 */
 	public AllowNoneChecker(ComponentName componentName) {
 		super(componentName);
-	}
-
-	@Override
-	public boolean allow(BoundCommandGroup aGroup, BoundObject anObject) {
-		return allow(TLContextManager.getSubSession().getPerson(), anObject, aGroup);
 	}
 
 	@Override

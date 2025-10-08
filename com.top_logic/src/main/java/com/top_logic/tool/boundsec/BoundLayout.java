@@ -24,7 +24,7 @@ import com.top_logic.tool.boundsec.wrap.SecurityComponentCache;
  *
  * @author    <a href="mailto:kha@top-logic.com">kha</a>
  */
-public class BoundLayout extends Layout implements LayoutContainerBoundChecker, SecurityMasterBoundChecker {
+public class BoundLayout extends Layout implements LayoutContainerBoundChecker {
 
 	/**
 	 * Configuration options for {@link BoundLayout}.
@@ -43,14 +43,11 @@ public class BoundLayout extends Layout implements LayoutContainerBoundChecker, 
 
 	}
 
-    /** Cached first child that is {@link BoundCheckerComponent#isSecurityMaster()}. */
-    private BoundCheckerComponent securityMaster;
-
-    /** Sticky flag if securityMaster is valid (even if null). */
-    private boolean validSecurityMaster;
+	/** The component to delegate access checks to. */
+	private BoundCheckerComponent securityMaster;
 
     /** Construct a BoundLayout from (XML-)Attributes. */
-     public BoundLayout(InstantiationContext context, Config atts) throws ConfigurationException {
+	public BoundLayout(InstantiationContext context, Config atts) throws ConfigurationException {
         super(context, atts);
     }
 
@@ -72,76 +69,32 @@ public class BoundLayout extends Layout implements LayoutContainerBoundChecker, 
      
 	@Override
 	public ResKey hideReason() {
+		if (securityMaster != null) {
+			return securityMaster.hideReason();
+        }
+
 		return hideReason(internalModel());
 	}
 
-    /**
-     * Fetch {@link #securityMaster} from my children.
-     */
-    protected void findSecurityMaster() {
-        int count = getChildCount();
-        for (int i=0; i < count; i++) {
-            LayoutComponent theCurrent = getChild(i);
+	/**
+	 * Initializes the child component that is responsible for for checking access rights.
+	 * 
+	 * <p>
+	 * This method must be called from components with a {@link WithSecurityMaster} configuration on
+	 * their parent component.
+	 * </p>
+	 */
+	public void initSecurityMaster(BoundCheckerComponent masterComponent) {
+		if (securityMaster != null && !securityMaster.getName().equals(masterComponent.getName())) {
+			Logger.warn("Non-unique security master components in layout '" + getName() + "': "
+				+ securityMaster.getName() + " and " + masterComponent.getName(), BoundLayout.class);
+		}
+		securityMaster = masterComponent;
 
-            if (theCurrent instanceof BoundCheckerComponent) {
-                BoundCheckerComponent theBoundComp = (BoundCheckerComponent) theCurrent;
+		// Forward to ancestors.
+		if (getParent() instanceof BoundLayout layout) {
+			layout.initSecurityMaster(masterComponent);
+		}
+	}
 
-                if (theBoundComp.isSecurityMaster()) {
-                    if (securityMaster != null) {
-                        Logger.warn("More than one SecurityMaster " + securityMaster + "|?|" + theBoundComp , this);
-                    }
-                    else {
-                        securityMaster = theBoundComp;
-                    }
-                }
-            }
-        }
-        validSecurityMaster = true;
-    }
-
-
-    @Override
-	public boolean allowBySecurityMaster(BoundObject anObject, boolean useDefaultChecker) {
-        if (!validSecurityMaster) {
-            findSecurityMaster();
-        }
-        if (securityMaster != null) {
-			if (!((useDefaultChecker || ((LayoutComponent) securityMaster).supportsModel(anObject))
-				&& securityMaster.allow(anObject))) {
-                return false;
-            }
-        }
-        int count = getChildCount();
-		for (LayoutComponent theCurrent : getChildList()) {
-            if (theCurrent instanceof SecurityMasterBoundChecker) {
-                if (!((SecurityMasterBoundChecker)theCurrent).allowBySecurityMaster(anObject, useDefaultChecker)) {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
-    @Override
-	public ResKey hideReasonMaster() {
-        if (!validSecurityMaster) {
-            findSecurityMaster();
-        }
-		if (securityMaster != null) {
-			ResKey masterReason = securityMaster.hideReason();
-			if (masterReason != null) {
-				return masterReason;
-			}
-        }
-		for (LayoutComponent theCurrent : getChildList()) {
-            if (theCurrent instanceof SecurityMasterBoundChecker) {
-                ResKey masterReason = ((SecurityMasterBoundChecker)theCurrent).hideReasonMaster();
-				if (masterReason != null) {
-					return masterReason;
-                }
-            }
-        }
-		return null;
-    }
-    
 }

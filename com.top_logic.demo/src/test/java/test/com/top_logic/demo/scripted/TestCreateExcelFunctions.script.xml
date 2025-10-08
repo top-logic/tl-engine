@@ -1,0 +1,956 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Administration > Development"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Administration > Development > Script Konsole"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Suchausdruck"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Administration > Development > Script Konsole > Editor"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+				<value><![CDATA[{
+	// Define common styles for reuse
+	headerStyle = {
+	  "bold": true, 
+	  "background": "#2C3E50", 
+	  "color": "white", 
+	  "align": "center",
+	  "borderTop": "thick",
+	  "borderBottom": "thick",
+	  "borderLeft": "thick",
+	  "borderRight": "thick"
+	};
+
+	sectionHeaderStyle = {
+	  "bold": true, 
+	  "background": "#34495E", 
+	  "color": "white", 
+	  "align": "left",
+	  "borderBottom": "medium"
+	};
+
+	formulaStyle = {
+	  "background": "#E8F4FD", 
+	  "border": "thin",
+	  "fontFamily": "Courier New"
+	};
+
+	resultStyle = {
+	  "background": "#E8F5E8", 
+	  "border": "thin",
+	  "numberFormat": "#,##0.00",
+	  "align": "right"
+	};
+
+	textResultStyle = {
+	  "background": "#FFF3CD", 
+	  "border": "thin",
+	  "align": "center"
+	};
+
+	errorStyle = {
+	  "background": "#F8D7DA", 
+	  "border": "thin",
+	  "color": "red",
+	  "align": "center"
+	};
+
+	// Create the comprehensive test Excel file
+	test = excelFile(
+	  name: "excel-formula-test.xlsx",
+	  content: [
+		// Sheet 1: Basic Math and Statistics
+		excelSheet(
+		  name: "Basic Math & Statistics",
+		  content: [
+			// Title
+			excelCell(row: 0, col: 0, content: "Basic Mathematical and Statistical Formulas", 
+					 style: {
+					   "bold": true, 
+					   "fontSize": 16, 
+					   "background": "#2C3E50", 
+					   "color": "white",
+					   "colspan": 4,
+					   "align": "center"
+					 }),
+			
+			// Headers
+			excelCell(row: 2, col: 0, content: "Description", style: $headerStyle),
+			excelCell(row: 2, col: 1, content: "Formula", style: $headerStyle),
+			excelCell(row: 2, col: 2, content: "Result", style: $headerStyle),
+			excelCell(row: 2, col: 3, content: "Notes", style: $headerStyle),
+			
+			// Test data
+			excelCell(row: 3, col: 0, content: "Test Data Values"),
+			excelCell(row: 3, col: 1, content: 10),
+			excelCell(row: 3, col: 2, content: 20),
+			excelCell(row: 3, col: 3, content: 30),
+			
+			excelCell(row: 4, col: 0, content: "Test Data Values 2"),
+			excelCell(row: 4, col: 1, content: 15),
+			excelCell(row: 4, col: 2, content: 25),
+			excelCell(row: 4, col: 3, content: 35),
+			
+			// Basic Math
+			excelCell(row: 6, col: 0, content: "SUM", style: $sectionHeaderStyle),
+			excelCell(row: 7, col: 0, content: "Basic Sum"),
+			excelCell(row: 7, col: 1, content: excelFormula("SUM(B4:D4)"), style: $formulaStyle),
+			excelCell(row: 7, col: 2, content: excelFormula("SUM(B4:D4)"), style: $resultStyle),
+			excelCell(row: 7, col: 3, content: "Sum of row 4"),
+			
+			excelCell(row: 8, col: 0, content: "Sum with multiple ranges"),
+			excelCell(row: 8, col: 1, content: excelFormula("SUM(B4:D4,B5:D5)"), style: $formulaStyle),
+			excelCell(row: 8, col: 2, content: excelFormula("SUM(B4:D4,B5:D5)"), style: $resultStyle),
+			excelCell(row: 8, col: 3, content: "Sum of multiple ranges"),
+			
+			excelCell(row: 9, col: 0, content: "AVERAGE"),
+			excelCell(row: 9, col: 1, content: excelFormula("AVERAGE(B4:D4)"), style: $formulaStyle),
+			excelCell(row: 9, col: 2, content: excelFormula("AVERAGE(B4:D4)"), style: $resultStyle),
+			excelCell(row: 9, col: 3, content: "Average of row 4"),
+			
+			excelCell(row: 10, col: 0, content: "COUNT"),
+			excelCell(row: 10, col: 1, content: excelFormula("COUNT(B4:D5)"), style: $formulaStyle),
+			excelCell(row: 10, col: 2, content: excelFormula("COUNT(B4:D5)"), style: $resultStyle),
+			excelCell(row: 10, col: 3, content: "Count of numeric values"),
+			
+			excelCell(row: 11, col: 0, content: "COUNTA"),
+			excelCell(row: 11, col: 1, content: excelFormula("COUNTA(A7:A11)"), style: $formulaStyle),
+			excelCell(row: 11, col: 2, content: excelFormula("COUNTA(A7:A11)"), style: $resultStyle),
+			excelCell(row: 11, col: 3, content: "Count of non-empty cells"),
+			
+			// Statistical functions
+			excelCell(row: 13, col: 0, content: "Statistical Functions", style: $sectionHeaderStyle),
+			excelCell(row: 14, col: 0, content: "MIN"),
+			excelCell(row: 14, col: 1, content: excelFormula("MIN(B4:D5)"), style: $formulaStyle),
+			excelCell(row: 14, col: 2, content: excelFormula("MIN(B4:D5)"), style: $resultStyle),
+			excelCell(row: 14, col: 3, content: "Minimum value"),
+			
+			excelCell(row: 15, col: 0, content: "MAX"),
+			excelCell(row: 15, col: 1, content: excelFormula("MAX(B4:D5)"), style: $formulaStyle),
+			excelCell(row: 15, col: 2, content: excelFormula("MAX(B4:D5)"), style: $resultStyle),
+			excelCell(row: 15, col: 3, content: "Maximum value"),
+			
+			excelCell(row: 16, col: 0, content: "MEDIAN"),
+			excelCell(row: 16, col: 1, content: excelFormula("MEDIAN(B4:D5)"), style: $formulaStyle),
+			excelCell(row: 16, col: 2, content: excelFormula("MEDIAN(B4:D5)"), style: $resultStyle),
+			excelCell(row: 16, col: 3, content: "Median value"),
+			
+			excelCell(row: 17, col: 0, content: "STDEV"),
+			excelCell(row: 17, col: 1, content: excelFormula("STDEVP(B4:D5)"), style: $formulaStyle),
+			excelCell(row: 17, col: 2, content: excelFormula("STDEVP(B4:D5)"), style: $resultStyle),
+			excelCell(row: 17, col: 3, content: "Standard deviation"),
+			
+			excelCell(row: 18, col: 0, content: "VAR"),
+			excelCell(row: 18, col: 1, content: excelFormula("VARP(B4:D5)"), style: $formulaStyle),
+			excelCell(row: 18, col: 2, content: excelFormula("VARP(B4:D5)"), style: $resultStyle),
+			excelCell(row: 18, col: 3, content: "Variance"),
+			
+			// Advanced Math
+			excelCell(row: 20, col: 0, content: "Advanced Math", style: $sectionHeaderStyle),
+			excelCell(row: 21, col: 0, content: "POWER"),
+			excelCell(row: 21, col: 1, content: excelFormula("POWER(B4,2)"), style: $formulaStyle),
+			excelCell(row: 21, col: 2, content: excelFormula("POWER(B4,2)"), style: $resultStyle),
+			excelCell(row: 21, col: 3, content: "B4 raised to power of 2"),
+			
+			excelCell(row: 22, col: 0, content: "SQRT"),
+			excelCell(row: 22, col: 1, content: excelFormula("SQRT(B4)"), style: $formulaStyle),
+			excelCell(row: 22, col: 2, content: excelFormula("SQRT(B4)"), style: $resultStyle),
+			excelCell(row: 22, col: 3, content: "Square root of B4"),
+			
+			excelCell(row: 23, col: 0, content: "ABS"),
+			excelCell(row: 23, col: 1, content: excelFormula("ABS(B4-C4)"), style: $formulaStyle),
+			excelCell(row: 23, col: 2, content: excelFormula("ABS(B4-C4)"), style: $resultStyle),
+			excelCell(row: 23, col: 3, content: "Absolute value"),
+			
+			excelCell(row: 24, col: 0, content: "ROUND"),
+			excelCell(row: 24, col: 1, content: excelFormula("ROUND(B4/C4,2)"), style: $formulaStyle),
+			excelCell(row: 24, col: 2, content: excelFormula("ROUND(B4/C4,2)"), style: $resultStyle),
+			excelCell(row: 24, col: 3, content: "Rounded to 2 decimal places"),
+			
+			excelCell(row: 25, col: 0, content: "CEILING"),
+			excelCell(row: 25, col: 1, content: excelFormula("CEILING(B4,5)"), style: $formulaStyle),
+			excelCell(row: 25, col: 2, content: excelFormula("CEILING(B4,5)"), style: $resultStyle),
+			excelCell(row: 25, col: 3, content: "Round up to nearest multiple of 5"),
+			
+			excelCell(row: 26, col: 0, content: "FLOOR"),
+			excelCell(row: 26, col: 1, content: excelFormula("FLOOR(B4,5)"), style: $formulaStyle),
+			excelCell(row: 26, col: 2, content: excelFormula("FLOOR(B4,5)"), style: $resultStyle),
+			excelCell(row: 26, col: 3, content: "Round down to nearest multiple of 5")
+		  ]
+		),
+		
+		// Sheet 2: Logical and Text Functions
+		excelSheet(
+		  name: "Logical & Text Functions",
+		  content: [
+			// Title
+			excelCell(row: 0, col: 0, content: "Logical and Text Functions", 
+					 style: {
+					   "bold": true, 
+					   "fontSize": 16, 
+					   "background": "#8E44AD", 
+					   "color": "white",
+					   "colspan": 4,
+					   "align": "center"
+					 }),
+			
+			// Headers
+			excelCell(row: 2, col: 0, content: "Description", style: $headerStyle),
+			excelCell(row: 2, col: 1, content: "Test Data", style: $headerStyle),
+			excelCell(row: 2, col: 2, content: "Formula", style: $headerStyle),
+			excelCell(row: 2, col: 3, content: "Result", style: $headerStyle),
+			
+			// Test data
+			excelCell(row: 3, col: 0, content: "Number 1"),
+			excelCell(row: 3, col: 1, content: 100),
+			
+			excelCell(row: 4, col: 0, content: "Number 2"),
+			excelCell(row: 4, col: 1, content: 50),
+			
+			excelCell(row: 5, col: 0, content: "Text Value"),
+			excelCell(row: 5, col: 1, content: "Hello World"),
+			
+			excelCell(row: 6, col: 0, content: "Empty Cell"),
+			excelCell(row: 6, col: 1, content: ""),
+			
+			// Logical functions
+			excelCell(row: 8, col: 0, content: "Logical Functions", style: $sectionHeaderStyle),
+			excelCell(row: 9, col: 0, content: "IF - Basic"),
+			excelCell(row: 9, col: 2, content: excelFormula("IF(B4>75,\"High\",\"Low\")"), style: $formulaStyle),
+			excelCell(row: 9, col: 3, content: excelFormula("IF(B4>75,\"High\",\"Low\")"), style: $textResultStyle),
+			
+			excelCell(row: 10, col: 0, content: "IF - Nested"),
+			excelCell(row: 10, col: 2, content: excelFormula("IF(B4>100,\"Excellent\",IF(B4>75,\"Good\",\"Average\"))"), style: $formulaStyle),
+			excelCell(row: 10, col: 3, content: excelFormula("IF(B4>100,\"Excellent\",IF(B4>75,\"Good\",\"Average\"))"), style: $textResultStyle),
+			
+			excelCell(row: 11, col: 0, content: "AND"),
+			excelCell(row: 11, col: 2, content: excelFormula("AND(B4>50,B5>25)"), style: $formulaStyle),
+			excelCell(row: 11, col: 3, content: excelFormula("AND(B4>50,B5>25)"), style: $textResultStyle),
+			
+			excelCell(row: 12, col: 0, content: "OR"),
+			excelCell(row: 12, col: 2, content: excelFormula("OR(B4>150,B5>75)"), style: $formulaStyle),
+			excelCell(row: 12, col: 3, content: excelFormula("OR(B4>150,B5>75)"), style: $textResultStyle),
+			
+			excelCell(row: 13, col: 0, content: "NOT"),
+			excelCell(row: 13, col: 2, content: excelFormula("NOT(B4<50)"), style: $formulaStyle),
+			excelCell(row: 13, col: 3, content: excelFormula("NOT(B4<50)"), style: $textResultStyle),
+			
+			excelCell(row: 14, col: 0, content: "WENNS"),
+			excelCell(row: 14, col: 2, content: excelFormula("WENNS(B4>100,\"A\",B4>75,\"B\",B4>50,\"C\",TRUE,\"D\")"), style: $formulaStyle),
+			excelCell(row: 14, col: 3, content: excelFormula("WENNS(B4>100,\"A\",B4>75,\"B\",B4>50,\"C\",TRUE,\"D\")"), style: $textResultStyle),
+						
+			// Text functions
+			excelCell(row: 17, col: 0, content: "Text Functions", style: $sectionHeaderStyle),
+			excelCell(row: 18, col: 0, content: "CONCATENATE"),
+			excelCell(row: 18, col: 2, content: excelFormula("CONCATENATE(\"Value: \",B4)"), style: $formulaStyle),
+			excelCell(row: 18, col: 3, content: excelFormula("CONCATENATE(\"Value: \",B4)"), style: $textResultStyle),
+			
+			excelCell(row: 19, col: 0, content: "LEN"),
+			excelCell(row: 19, col: 2, content: excelFormula("LEN(B6)"), style: $formulaStyle),
+			excelCell(row: 19, col: 3, content: excelFormula("LEN(B6)"), style: $resultStyle),
+			
+			excelCell(row: 20, col: 0, content: "LEFT"),
+			excelCell(row: 20, col: 2, content: excelFormula("LEFT(B6,5)"), style: $formulaStyle),
+			excelCell(row: 20, col: 3, content: excelFormula("LEFT(B6,5)"), style: $textResultStyle),
+			
+			excelCell(row: 21, col: 0, content: "RIGHT"),
+			excelCell(row: 21, col: 2, content: excelFormula("RIGHT(B6,5)"), style: $formulaStyle),
+			excelCell(row: 21, col: 3, content: excelFormula("RIGHT(B6,5)"), style: $textResultStyle),
+			
+			excelCell(row: 22, col: 0, content: "MID"),
+			excelCell(row: 22, col: 2, content: excelFormula("MID(B6,7,5)"), style: $formulaStyle),
+			excelCell(row: 22, col: 3, content: excelFormula("MID(B6,7,5)"), style: $textResultStyle),
+			
+			excelCell(row: 23, col: 0, content: "FIND"),
+			excelCell(row: 23, col: 2, content: excelFormula("FIND(\"World\",B6)"), style: $formulaStyle),
+			excelCell(row: 23, col: 3, content: excelFormula("FIND(\"World\",B6)"), style: $resultStyle),
+			
+			excelCell(row: 24, col: 0, content: "SEARCH"),
+			excelCell(row: 24, col: 2, content: excelFormula("SEARCH(\"world\",B6)"), style: $formulaStyle),
+			excelCell(row: 24, col: 3, content: excelFormula("SEARCH(\"world\",B6)"), style: $resultStyle),
+			
+			excelCell(row: 25, col: 0, content: "UPPER"),
+			excelCell(row: 25, col: 2, content: excelFormula("UPPER(B6)"), style: $formulaStyle),
+			excelCell(row: 25, col: 3, content: excelFormula("UPPER(B6)"), style: $textResultStyle),
+			
+			excelCell(row: 26, col: 0, content: "LOWER"),
+			excelCell(row: 26, col: 2, content: excelFormula("LOWER(B6)"), style: $formulaStyle),
+			excelCell(row: 26, col: 3, content: excelFormula("LOWER(B6)"), style: $textResultStyle),
+			
+			excelCell(row: 27, col: 0, content: "PROPER"),
+			excelCell(row: 27, col: 2, content: excelFormula("PROPER(B6)"), style: $formulaStyle),
+			excelCell(row: 27, col: 3, content: excelFormula("PROPER(B6)"), style: $textResultStyle),
+			
+			excelCell(row: 28, col: 0, content: "TRIM"),
+			excelCell(row: 28, col: 2, content: excelFormula("TRIM(\"  Hello  World  \")"), style: $formulaStyle),
+			excelCell(row: 28, col: 3, content: excelFormula("TRIM(\"  Hello  World  \")"), style: $textResultStyle),
+			
+			excelCell(row: 29, col: 0, content: "SUBSTITUTE"),
+			excelCell(row: 29, col: 2, content: excelFormula("SUBSTITUTE(B6,\"World\",\"Excel\")"), style: $formulaStyle),
+			excelCell(row: 29, col: 3, content: excelFormula("SUBSTITUTE(B6,\"World\",\"Excel\")"), style: $textResultStyle),
+			
+			excelCell(row: 30, col: 0, content: "REPLACE"),
+			excelCell(row: 30, col: 2, content: excelFormula("REPLACE(B6,7,5,\"Excel\")"), style: $formulaStyle),
+			excelCell(row: 30, col: 3, content: excelFormula("REPLACE(B6,7,5,\"Excel\")"), style: $textResultStyle),
+			
+			excelCell(row: 31, col: 0, content: "TEXT"),
+			excelCell(row: 31, col: 2, content: excelFormula("TEXT(B4,\"$#,##0.00\")"), style: $formulaStyle),
+			excelCell(row: 31, col: 3, content: excelFormula("TEXT(B4,\"$#,##0.00\")"), style: $textResultStyle),
+			
+			excelCell(row: 32, col: 0, content: "VALUE"),
+			excelCell(row: 32, col: 2, content: excelFormula("VALUE(\"123\")"), style: $formulaStyle),
+			excelCell(row: 32, col: 3, content: excelFormula("VALUE(\"123\")"), style: $resultStyle)
+		  ]
+		),
+		
+		// Sheet 3: Date and Time Functions
+		excelSheet(
+		  name: "Date & Time Functions",
+		  content: [
+			// Title
+			excelCell(row: 0, col: 0, content: "Date and Time Functions", 
+					 style: {
+					   "bold": true, 
+					   "fontSize": 16, 
+					   "background": "#27AE60", 
+					   "color": "white",
+					   "colspan": 4,
+					   "align": "center"
+					 }),
+			
+			// Headers
+			excelCell(row: 2, col: 0, content: "Description", style: $headerStyle),
+			excelCell(row: 2, col: 1, content: "Formula", style: $headerStyle),
+			excelCell(row: 2, col: 2, content: "Result", style: $headerStyle),
+			excelCell(row: 2, col: 3, content: "Format", style: $headerStyle),
+			
+			// Current date/time functions
+			excelCell(row: 4, col: 0, content: "Current Date/Time", style: $sectionHeaderStyle),
+			excelCell(row: 5, col: 0, content: "TODAY"),
+			excelCell(row: 5, col: 1, content: excelFormula("TODAY()"), style: $formulaStyle),
+			excelCell(row: 5, col: 2, content: excelFormula("TODAY()"), style: {"numberFormat": "DD.MM.YYYY", "border": "thin"}),
+			excelCell(row: 5, col: 3, content: "Date only"),
+			
+			excelCell(row: 6, col: 0, content: "NOW"),
+			excelCell(row: 6, col: 1, content: excelFormula("NOW()"), style: $formulaStyle),
+			excelCell(row: 6, col: 2, content: excelFormula("NOW()"), style: {"numberFormat": "DD.MM.YYYY HH:MM:SS", "border": "thin"}),
+			excelCell(row: 6, col: 3, content: "Date and time"),
+			
+			// Date creation functions
+			excelCell(row: 8, col: 0, content: "Date Creation", style: $sectionHeaderStyle),
+			excelCell(row: 9, col: 0, content: "DATE"),
+			excelCell(row: 9, col: 1, content: excelFormula("DATE(2024,12,25)"), style: $formulaStyle),
+			excelCell(row: 9, col: 2, content: excelFormula("DATE(2024,12,25)"), style: {"numberFormat": "DD.MM.YYYY", "border": "thin"}),
+			excelCell(row: 9, col: 3, content: "Christmas 2024"),
+			
+			excelCell(row: 10, col: 0, content: "TIME"),
+			excelCell(row: 10, col: 1, content: excelFormula("TIME(14,30,0)"), style: $formulaStyle),
+			excelCell(row: 10, col: 2, content: excelFormula("TIME(14,30,0)"), style: {"numberFormat": "HH:MM:SS", "border": "thin"}),
+			excelCell(row: 10, col: 3, content: "2:30 PM"),
+			
+			excelCell(row: 11, col: 0, content: "DATEVALUE"),
+			excelCell(row: 11, col: 1, content: excelFormula("DATEVALUE(\"25.12.2024\")"), style: $formulaStyle),
+			excelCell(row: 11, col: 2, content: excelFormula("DATEVALUE(\"25.12.2024\")"), style: {"numberFormat": "DD.MM.YYYY", "border": "thin"}),
+			excelCell(row: 11, col: 3, content: "Text to date"),
+			
+			excelCell(row: 12, col: 0, content: "TIMEVALUE"),
+			excelCell(row: 12, col: 1, content: excelFormula("TIMEVALUE(\"14:30\")"), style: $formulaStyle),
+			excelCell(row: 12, col: 2, content: excelFormula("TIMEVALUE(\"14:30\")"), style: {"numberFormat": "HH:MM:SS", "border": "thin"}),
+			excelCell(row: 12, col: 3, content: "Text to time"),
+			
+			// Date component functions
+			excelCell(row: 14, col: 0, content: "Date Components", style: $sectionHeaderStyle),
+			excelCell(row: 15, col: 0, content: "YEAR"),
+			excelCell(row: 15, col: 1, content: excelFormula("YEAR(TODAY())"), style: $formulaStyle),
+			excelCell(row: 15, col: 2, content: excelFormula("YEAR(TODAY())"), style: $resultStyle),
+			excelCell(row: 15, col: 3, content: "Current year"),
+			
+			excelCell(row: 16, col: 0, content: "MONTH"),
+			excelCell(row: 16, col: 1, content: excelFormula("MONTH(TODAY())"), style: $formulaStyle),
+			excelCell(row: 16, col: 2, content: excelFormula("MONTH(TODAY())"), style: $resultStyle),
+			excelCell(row: 16, col: 3, content: "Current month"),
+			
+			excelCell(row: 17, col: 0, content: "DAY"),
+			excelCell(row: 17, col: 1, content: excelFormula("DAY(TODAY())"), style: $formulaStyle),
+			excelCell(row: 17, col: 2, content: excelFormula("DAY(TODAY())"), style: $resultStyle),
+			excelCell(row: 17, col: 3, content: "Current day"),
+			
+			excelCell(row: 18, col: 0, content: "HOUR"),
+			excelCell(row: 18, col: 1, content: excelFormula("HOUR(NOW())"), style: $formulaStyle),
+			excelCell(row: 18, col: 2, content: excelFormula("HOUR(NOW())"), style: $resultStyle),
+			excelCell(row: 18, col: 3, content: "Current hour"),
+			
+			excelCell(row: 19, col: 0, content: "MINUTE"),
+			excelCell(row: 19, col: 1, content: excelFormula("MINUTE(NOW())"), style: $formulaStyle),
+			excelCell(row: 19, col: 2, content: excelFormula("MINUTE(NOW())"), style: $resultStyle),
+			excelCell(row: 19, col: 3, content: "Current minute"),
+			
+			excelCell(row: 20, col: 0, content: "SECOND"),
+			excelCell(row: 20, col: 1, content: excelFormula("SECOND(NOW())"), style: $formulaStyle),
+			excelCell(row: 20, col: 2, content: excelFormula("SECOND(NOW())"), style: $resultStyle),
+			excelCell(row: 20, col: 3, content: "Current second"),
+			
+			excelCell(row: 21, col: 0, content: "WEEKDAY"),
+			excelCell(row: 21, col: 1, content: excelFormula("WEEKDAY(TODAY(),2)"), style: $formulaStyle),
+			excelCell(row: 21, col: 2, content: excelFormula("WEEKDAY(TODAY(),2)"), style: $resultStyle),
+			excelCell(row: 21, col: 3, content: "Day of week (1=Monday)"),
+			
+			excelCell(row: 22, col: 0, content: "WEEKNUM"),
+			excelCell(row: 22, col: 1, content: excelFormula("WEEKNUM(TODAY(),2)"), style: $formulaStyle),
+			excelCell(row: 22, col: 2, content: excelFormula("WEEKNUM(TODAY(),2)"), style: $resultStyle),
+			excelCell(row: 22, col: 3, content: "Week number"),
+			
+			// Date calculation functions
+			excelCell(row: 24, col: 0, content: "Date Calculations", style: $sectionHeaderStyle),
+			excelCell(row: 25, col: 0, content: "EDATE"),
+			excelCell(row: 25, col: 1, content: excelFormula("EDATE(TODAY(),3)"), style: $formulaStyle),
+			excelCell(row: 25, col: 2, content: excelFormula("EDATE(TODAY(),3)"), style: {"numberFormat": "DD.MM.YYYY", "border": "thin"}),
+			excelCell(row: 25, col: 3, content: "3 months from today"),
+			
+			excelCell(row: 26, col: 0, content: "EOMONTH"),
+			excelCell(row: 26, col: 1, content: excelFormula("EOMONTH(TODAY(),1)"), style: $formulaStyle),
+			excelCell(row: 26, col: 2, content: excelFormula("EOMONTH(TODAY(),1)"), style: {"numberFormat": "DD.MM.YYYY", "border": "thin"}),
+			excelCell(row: 26, col: 3, content: "End of next month"),
+			
+			excelCell(row: 27, col: 0, content: "WORKDAY"),
+			excelCell(row: 27, col: 1, content: excelFormula("WORKDAY(TODAY(),10)"), style: $formulaStyle),
+			excelCell(row: 27, col: 2, content: excelFormula("WORKDAY(TODAY(),10)"), style: {"numberFormat": "DD.MM.YYYY", "border": "thin"}),
+			excelCell(row: 27, col: 3, content: "10 workdays from today"),
+			
+			excelCell(row: 28, col: 0, content: "NETWORKDAYS"),
+			excelCell(row: 28, col: 1, content: excelFormula("NETWORKDAYS(TODAY(),EDATE(TODAY(),1))"), style: $formulaStyle),
+			excelCell(row: 28, col: 2, content: excelFormula("NETWORKDAYS(TODAY(),EDATE(TODAY(),1))"), style: $resultStyle),
+			excelCell(row: 28, col: 3, content: "Workdays between dates"),
+			
+			excelCell(row: 29, col: 0, content: "TAGE"),
+			excelCell(row: 29, col: 1, content: excelFormula("TAGE(DATE(2024,12,31),DATE(2024,1,1))"), style: $formulaStyle),
+			excelCell(row: 29, col: 2, content: excelFormula("TAGE(DATE(2024,12,31),DATE(2024,1,1))"), style: $resultStyle),
+			excelCell(row: 29, col: 3, content: "Days between dates"),
+			
+			excelCell(row: 30, col: 0, content: "DAYS360"),
+			excelCell(row: 30, col: 1, content: excelFormula("DAYS360(DATE(2024,1,1),DATE(2024,12,31))"), style: $formulaStyle),
+			excelCell(row: 30, col: 2, content: excelFormula("DAYS360(DATE(2024,1,1),DATE(2024,12,31))"), style: $resultStyle),
+			excelCell(row: 30, col: 3, content: "360-day year days"),
+			
+			excelCell(row: 31, col: 0, content: "YEARFRAC"),
+			excelCell(row: 31, col: 1, content: excelFormula("YEARFRAC(DATE(2024,1,1),DATE(2024,12,31))"), style: $formulaStyle),
+			excelCell(row: 31, col: 2, content: excelFormula("YEARFRAC(DATE(2024,1,1),DATE(2024,12,31))"), style: $resultStyle),
+			excelCell(row: 31, col: 3, content: "Fraction of year"),
+			
+			excelCell(row: 32, col: 0, content: "DATEDIF"),
+			excelCell(row: 32, col: 1, content: excelFormula("DATEDIF(DATE(2024,1,1),TODAY(),\"D\")"), style: $formulaStyle),
+			excelCell(row: 32, col: 2, content: excelFormula("DATEDIF(DATE(2024,1,1),TODAY(),\"D\")"), style: $resultStyle),
+			excelCell(row: 32, col: 3, content: "Days since start of year")
+		  ]
+		),
+		
+		// Sheet 4: Financial and Statistical Functions
+		excelSheet(
+		  name: "Financial & Statistical",
+		  content: [
+			// Title
+			excelCell(row: 0, col: 0, content: "Financial and Statistical Functions", 
+					 style: {
+					   "bold": true, 
+					   "fontSize": 16, 
+					   "background": "#C0392B", 
+					   "color": "white",
+					   "colspan": 5,
+					   "align": "center"
+					 }),
+			
+			// Financial test data
+			excelCell(row: 2, col: 0, content: "Financial Functions", style: $sectionHeaderStyle),
+			excelCell(row: 3, col: 0, content: "Description", style: $headerStyle),
+			excelCell(row: 3, col: 1, content: "Parameters", style: $headerStyle),
+			excelCell(row: 3, col: 2, content: "Formula", style: $headerStyle),
+			excelCell(row: 3, col: 3, content: "Result", style: $headerStyle),
+			excelCell(row: 3, col: 4, content: "Notes", style: $headerStyle),
+			
+			excelCell(row: 4, col: 0, content: "PV - Present Value"),
+			excelCell(row: 4, col: 1, content: "Rate: 5%, Periods: 10, Payment: -1000"),
+			excelCell(row: 4, col: 2, content: excelFormula("PV(0.05,10,-1000)"), style: $formulaStyle),
+			excelCell(row: 4, col: 3, content: excelFormula("PV(0.05,10,-1000)"), style: {"numberFormat": "$#,##0.00", "border": "thin"}),
+			excelCell(row: 4, col: 4, content: "Present value of investment"),
+			
+			excelCell(row: 5, col: 0, content: "FV - Future Value"),
+			excelCell(row: 5, col: 1, content: "Rate: 5%, Periods: 10, Payment: -1000"),
+			excelCell(row: 5, col: 2, content: excelFormula("FV(0.05,10,-1000)"), style: $formulaStyle),
+			excelCell(row: 5, col: 3, content: excelFormula("FV(0.05,10,-1000)"), style: {"numberFormat": "$#,##0.00", "border": "thin"}),
+			excelCell(row: 5, col: 4, content: "Future value of investment"),
+			
+			excelCell(row: 6, col: 0, content: "PMT - Payment"),
+			excelCell(row: 6, col: 1, content: "Rate: 5%, Periods: 30, PV: 200000"),
+			excelCell(row: 6, col: 2, content: excelFormula("PMT(0.05/12,30*12,200000)"), style: $formulaStyle),
+			excelCell(row: 6, col: 3, content: excelFormula("PMT(0.05/12,30*12,200000)"), style: {"numberFormat": "$#,##0.00", "border": "thin"}),
+			excelCell(row: 6, col: 4, content: "Monthly mortgage payment"),
+			
+			excelCell(row: 7, col: 0, content: "RATE - Interest Rate"),
+			excelCell(row: 7, col: 1, content: "Periods: 60, Payment: -200, PV: 10000"),
+			excelCell(row: 7, col: 2, content: excelFormula("RATE(60,-200,10000)*12"), style: $formulaStyle),
+			excelCell(row: 7, col: 3, content: excelFormula("RATE(60,-200,10000)*12"), style: {"numberFormat": "0.00%", "border": "thin"}),
+			excelCell(row: 7, col: 4, content: "Annual interest rate"),
+			
+			excelCell(row: 8, col: 0, content: "NPER - Number of Periods"),
+			excelCell(row: 8, col: 1, content: "Rate: 5%, Payment: -200, PV: 10000"),
+			excelCell(row: 8, col: 2, content: excelFormula("NPER(0.05/12,-200,10000)"), style: $formulaStyle),
+			excelCell(row: 8, col: 3, content: excelFormula("NPER(0.05/12,-200,10000)"), style: $resultStyle),
+			excelCell(row: 8, col: 4, content: "Number of payments"),
+			
+			excelCell(row: 9, col: 0, content: "NPV - Net Present Value"),
+			excelCell(row: 9, col: 1, content: "Rate: 10%, Cash Flows: -1000, 300, 400, 500, 600"),
+			excelCell(row: 9, col: 2, content: excelFormula("NPV(0.1,-1000,300,400,500,600)"), style: $formulaStyle),
+			excelCell(row: 9, col: 3, content: excelFormula("NPV(0.1,-1000,300,400,500,600)"), style: {"numberFormat": "$#,##0.00", "border": "thin"}),
+			excelCell(row: 9, col: 4, content: "Net present value"),
+			
+			excelCell(row: 10, col: 0, content: "IRR - Internal Rate of Return"),
+			excelCell(row: 10, col: 1, content: "Cash Flows: -100000, 25000, 30000, 35000, 40000"),
+			excelCell(row: 10, col: 2, content: excelFormula("IRR({-100000,25000,30000,35000,40000})"), style: $formulaStyle),
+			excelCell(row: 10, col: 3, content: excelFormula("IRR({-100000,25000,30000,35000,40000})"), style: {"numberFormat": "0.00%", "border": "thin"}),
+			excelCell(row: 10, col: 4, content: "Internal rate of return"),
+			
+			excelCell(row: 11, col: 0, content: "SLN - Straight Line Depreciation"),
+			excelCell(row: 11, col: 1, content: "Cost: 10000, Salvage: 1000, Life: 10"),
+			excelCell(row: 11, col: 2, content: excelFormula("SLN(10000,1000,10)"), style: $formulaStyle),
+			excelCell(row: 11, col: 3, content: excelFormula("SLN(10000,1000,10)"), style: {"numberFormat": "$#,##0.00", "border": "thin"}),
+			excelCell(row: 11, col: 4, content: "Annual depreciation"),
+			
+			// Advanced statistical functions
+			excelCell(row: 13, col: 0, content: "Advanced Statistical", style: $sectionHeaderStyle),
+			
+			// Statistical test data
+			excelCell(row: 14, col: 0, content: "Test Data Set"),
+			excelCell(row: 14, col: 1, content: 12),
+			excelCell(row: 14, col: 2, content: 15),
+			excelCell(row: 14, col: 3, content: 18),
+			excelCell(row: 14, col: 4, content: 22),
+			
+			excelCell(row: 15, col: 0, content: "Test Data Set 2"),
+			excelCell(row: 15, col: 1, content: 8),
+			excelCell(row: 15, col: 2, content: 14),
+			excelCell(row: 15, col: 3, content: 16),
+			excelCell(row: 15, col: 4, content: 20),
+			
+			excelCell(row: 16, col: 0, content: "CORREL - Correlation"),
+			excelCell(row: 16, col: 2, content: excelFormula("CORREL(B15:E15,B16:E16)"), style: $formulaStyle),
+			excelCell(row: 16, col: 3, content: excelFormula("CORREL(B15:E15,B16:E16)"), style: $resultStyle),
+			excelCell(row: 16, col: 4, content: "Correlation coefficient"),
+			
+			excelCell(row: 17, col: 0, content: "COVAR - Covariance"),
+			excelCell(row: 17, col: 2, content: excelFormula("COVAR(B15:E15,B16:E16)"), style: $formulaStyle),
+			excelCell(row: 17, col: 3, content: excelFormula("COVAR(B15:E15,B16:E16)"), style: $resultStyle),
+			excelCell(row: 17, col: 4, content: "Population covariance"),
+			
+			excelCell(row: 18, col: 0, content: "FORECAST - Linear Forecast"),
+			excelCell(row: 18, col: 1, content: "X: 25"),
+			excelCell(row: 18, col: 2, content: excelFormula("FORECAST(25,B15:E15,{1,2,3,4})"), style: $formulaStyle),
+			excelCell(row: 18, col: 3, content: excelFormula("FORECAST(25,B15:E15,{1,2,3,4})"), style: $resultStyle),
+			excelCell(row: 18, col: 4, content: "Linear forecast"),
+			
+			excelCell(row: 19, col: 0, content: "TREND - Linear Trend"),
+			excelCell(row: 19, col: 2, content: excelFormula("TREND(B15:E15,{1,2,3,4},{5})"), style: $formulaStyle),
+			excelCell(row: 19, col: 3, content: excelFormula("TREND(B15:E15,{1,2,3,4},{5})"), style: $resultStyle),
+			excelCell(row: 19, col: 4, content: "Linear trend projection"),
+			
+			excelCell(row: 20, col: 0, content: "GROWTH - Exponential Growth"),
+			excelCell(row: 20, col: 2, content: excelFormula("GROWTH(B15:E15,{1,2,3,4},{5})"), style: $formulaStyle),
+			excelCell(row: 20, col: 3, content: excelFormula("GROWTH(B15:E15,{1,2,3,4},{5})"), style: $resultStyle),
+			excelCell(row: 20, col: 4, content: "Exponential growth projection"),
+			
+			excelCell(row: 21, col: 0, content: "LINEST - Linear Regression"),
+			excelCell(row: 21, col: 2, content: excelFormula("LINEST(B15:E15,{1,2,3,4},TRUE,TRUE)"), style: $formulaStyle),
+			excelCell(row: 21, col: 3, content: excelFormula("LINEST(B15:E15,{1,2,3,4},TRUE,TRUE)"), style: $resultStyle),
+			excelCell(row: 21, col: 4, content: "Linear regression parameters"),
+			
+			excelCell(row: 22, col: 0, content: "LOGEST - Exponential Regression"),
+			excelCell(row: 22, col: 2, content: excelFormula("LOGEST(B15:E15,{1,2,3,4},TRUE,TRUE)"), style: $formulaStyle),
+			excelCell(row: 22, col: 3, content: excelFormula("LOGEST(B15:E15,{1,2,3,4},TRUE,TRUE)"), style: $resultStyle),
+			excelCell(row: 22, col: 4, content: "Exponential regression parameters"),
+			
+			excelCell(row: 23, col: 0, content: "SLOPE - Linear Slope"),
+			excelCell(row: 23, col: 2, content: excelFormula("SLOPE(B15:E15,{1,2,3,4})"), style: $formulaStyle),
+			excelCell(row: 23, col: 3, content: excelFormula("SLOPE(B15:E15,{1,2,3,4})"), style: $resultStyle),
+			excelCell(row: 23, col: 4, content: "Slope of linear regression"),
+			
+			excelCell(row: 24, col: 0, content: "INTERCEPT - Y-Intercept"),
+			excelCell(row: 24, col: 2, content: excelFormula("INTERCEPT(B15:E15,{1,2,3,4})"), style: $formulaStyle),
+			excelCell(row: 24, col: 3, content: excelFormula("INTERCEPT(B15:E15,{1,2,3,4})"), style: $resultStyle),
+			excelCell(row: 24, col: 4, content: "Y-intercept of linear regression"),
+			
+			excelCell(row: 25, col: 0, content: "RSQ - R-Squared"),
+			excelCell(row: 25, col: 2, content: excelFormula("RSQ(B15:E15,{1,2,3,4})"), style: $formulaStyle),
+			excelCell(row: 25, col: 3, content: excelFormula("RSQ(B15:E15,{1,2,3,4})"), style: $resultStyle),
+			excelCell(row: 25, col: 4, content: "Coefficient of determination"),
+			
+			excelCell(row: 26, col: 0, content: "STEYX - Standard Error"),
+			excelCell(row: 26, col: 2, content: excelFormula("STEYX(B15:E15,{1,2,3,4})"), style: $formulaStyle),
+			excelCell(row: 26, col: 3, content: excelFormula("STEYX(B15:E15,{1,2,3,4})"), style: $resultStyle),
+			excelCell(row: 26, col: 4, content: "Standard error of predicted y-value"),
+			
+			// Database functions
+			excelCell(row: 28, col: 0, content: "Database Functions", style: $sectionHeaderStyle),
+			
+			// Database test data
+			excelCell(row: 29, col: 0, content: "Region"),
+			excelCell(row: 29, col: 1, content: "Sales"),
+			excelCell(row: 29, col: 2, content: "Quarter"),
+			excelCell(row: 29, col: 3, content: "Rep"),
+			
+			excelCell(row: 30, col: 0, content: "North"),
+			excelCell(row: 30, col: 1, content: 15000),
+			excelCell(row: 30, col: 2, content: "Q1"),
+			excelCell(row: 30, col: 3, content: "John"),
+			
+			excelCell(row: 31, col: 0, content: "South"),
+			excelCell(row: 31, col: 1, content: 18000),
+			excelCell(row: 31, col: 2, content: "Q1"),
+			excelCell(row: 31, col: 3, content: "Jane"),
+			
+			excelCell(row: 32, col: 0, content: "North"),
+			excelCell(row: 32, col: 1, content: 22000),
+			excelCell(row: 32, col: 2, content: "Q2"),
+			excelCell(row: 32, col: 3, content: "John"),
+			
+			excelCell(row: 33, col: 0, content: "South"),
+			excelCell(row: 33, col: 1, content: 25000),
+			excelCell(row: 33, col: 2, content: "Q2"),
+			excelCell(row: 33, col: 3, content: "Jane"),
+			
+			excelCell(row: 34, col: 0, content: "DSUM - Database Sum"),
+			excelCell(row: 34, col: 2, content: excelFormula("DSUM(A30:D33,\"Sales\",A30:A31)"), style: $formulaStyle),
+			excelCell(row: 34, col: 3, content: excelFormula("DSUM(A30:D33,\"Sales\",A30:A31)"), style: $resultStyle),
+			excelCell(row: 34, col: 4, content: "Sum of North region sales"),
+			
+			excelCell(row: 35, col: 0, content: "DAVERAGE - Database Average"),
+			excelCell(row: 35, col: 2, content: excelFormula("DAVERAGE(A30:D33,\"Sales\",A30:A31)"), style: $formulaStyle),
+			excelCell(row: 35, col: 3, content: excelFormula("DAVERAGE(A30:D33,\"Sales\",A30:A31)"), style: $resultStyle),
+			excelCell(row: 35, col: 4, content: "Average of North region sales"),
+			
+			excelCell(row: 36, col: 0, content: "DCOUNT - Database Count"),
+			excelCell(row: 36, col: 2, content: excelFormula("DCOUNT(A30:D33,\"Sales\",A30:A31)"), style: $formulaStyle),
+			excelCell(row: 36, col: 3, content: excelFormula("DCOUNT(A30:D33,\"Sales\",A30:A31)"), style: $resultStyle),
+			excelCell(row: 36, col: 4, content: "Count of North region records"),
+			
+			excelCell(row: 37, col: 0, content: "DMAX - Database Maximum"),
+			excelCell(row: 37, col: 2, content: excelFormula("DMAX(A30:D33,\"Sales\",A30:A31)"), style: $formulaStyle),
+			excelCell(row: 37, col: 3, content: excelFormula("DMAX(A30:D33,\"Sales\",A30:A31)"), style: $resultStyle),
+			excelCell(row: 37, col: 4, content: "Maximum North region sales"),
+			
+			excelCell(row: 38, col: 0, content: "DMIN - Database Minimum"),
+			excelCell(row: 38, col: 2, content: excelFormula("DMIN(A30:D33,\"Sales\",A30:A31)"), style: $formulaStyle),
+			excelCell(row: 38, col: 3, content: excelFormula("DMIN(A30:D33,\"Sales\",A30:A31)"), style: $resultStyle),
+			excelCell(row: 38, col: 4, content: "Minimum North region sales")
+		  ]
+		),
+		
+		// Sheet 5: Conditional and Array Functions
+		excelSheet(
+		  name: "Conditional & Array",
+		  content: [
+			// Title
+			excelCell(row: 0, col: 0, content: "Conditional and Array Functions", 
+					 style: {
+					   "bold": true, 
+					   "fontSize": 16, 
+					   "background": "#16A085", 
+					   "color": "white",
+					   "colspan": 5,
+					   "align": "center"
+					 }),
+			
+			// Test data
+			excelCell(row: 2, col: 0, content: "Test Data", style: $sectionHeaderStyle),
+			excelCell(row: 3, col: 0, content: "Score", style: $headerStyle),
+			excelCell(row: 3, col: 1, content: "Grade", style: $headerStyle),
+			excelCell(row: 3, col: 2, content: "Pass/Fail", style: $headerStyle),
+			
+			excelCell(row: 4, col: 0, content: 95),
+			excelCell(row: 4, col: 1, content: "A"),
+			excelCell(row: 4, col: 2, content: "Pass"),
+			
+			excelCell(row: 5, col: 0, content: 85),
+			excelCell(row: 5, col: 1, content: "B"),
+			excelCell(row: 5, col: 2, content: "Pass"),
+			
+			excelCell(row: 6, col: 0, content: 75),
+			excelCell(row: 6, col: 1, content: "C"),
+			excelCell(row: 6, col: 2, content: "Pass"),
+			
+			excelCell(row: 7, col: 0, content: 65),
+			excelCell(row: 7, col: 1, content: "D"),
+			excelCell(row: 7, col: 2, content: "Pass"),
+			
+			excelCell(row: 8, col: 0, content: 55),
+			excelCell(row: 8, col: 1, content: "F"),
+			excelCell(row: 8, col: 2, content: "Fail"),
+			
+			// Conditional functions
+			excelCell(row: 10, col: 0, content: "Conditional Functions", style: $sectionHeaderStyle),
+			excelCell(row: 11, col: 0, content: "Description", style: $headerStyle),
+			excelCell(row: 11, col: 1, content: "Formula", style: $headerStyle),
+			excelCell(row: 11, col: 2, content: "Result", style: $headerStyle),
+			excelCell(row: 11, col: 3, content: "Notes", style: $headerStyle),
+			
+			excelCell(row: 12, col: 0, content: "SUMIF - Single Condition"),
+			excelCell(row: 12, col: 1, content: excelFormula("SUMIF(C5:C9,\"Pass\",A5:A9)"), style: $formulaStyle),
+			excelCell(row: 12, col: 2, content: excelFormula("SUMIF(C5:C9,\"Pass\",A5:A9)"), style: $resultStyle),
+			excelCell(row: 12, col: 3, content: "Sum scores for passing students"),
+			
+			excelCell(row: 13, col: 0, content: "COUNTIF - Count with Condition"),
+			excelCell(row: 13, col: 1, content: excelFormula("COUNTIF(B5:B9,\"A\")"), style: $formulaStyle),
+			excelCell(row: 13, col: 2, content: excelFormula("COUNTIF(B5:B9,\"A\")"), style: $resultStyle),
+			excelCell(row: 13, col: 3, content: "Count A grades"),
+			
+			excelCell(row: 14, col: 0, content: "AVERAGEIF - Average with Condition"),
+			excelCell(row: 14, col: 1, content: excelFormula("AVERAGEIF(B5:B9,\"A\",A5:A9)"), style: $formulaStyle),
+			excelCell(row: 14, col: 2, content: excelFormula("AVERAGEIF(B5:B9,\"A\",A5:A9)"), style: $resultStyle),
+			excelCell(row: 14, col: 3, content: "Average score for A grades"),
+			
+			excelCell(row: 15, col: 0, content: "SUMIFS - Multiple Conditions"),
+			excelCell(row: 15, col: 1, content: excelFormula("SUMIFS(A5:A9,B5:B9,\"A\",C5:C9,\"Pass\")"), style: $formulaStyle),
+			excelCell(row: 15, col: 2, content: excelFormula("SUMIFS(A5:A9,B5:B9,\"A\",C5:C9,\"Pass\")"), style: $resultStyle),
+			excelCell(row: 15, col: 3, content: "Sum scores for A grades that pass"),
+			
+			excelCell(row: 16, col: 0, content: "COUNTIFS - Count Multiple Conditions"),
+			excelCell(row: 16, col: 1, content: excelFormula("COUNTIFS(A5:A9,\">80\",B5:B9,\"<C\")"), style: $formulaStyle),
+			excelCell(row: 16, col: 2, content: excelFormula("COUNTIFS(A5:A9,\">80\",B5:B9,\"<C\")"), style: $resultStyle),
+			excelCell(row: 16, col: 3, content: "Count scores >80 with grade <C"),
+			
+			excelCell(row: 17, col: 0, content: "AVERAGEIFS - Average Multiple Conditions"),
+			excelCell(row: 17, col: 1, content: excelFormula("AVERAGEIFS(A5:A9,B5:B9,\"A\",C5:C9,\"Pass\")"), style: $formulaStyle),
+			excelCell(row: 17, col: 2, content: excelFormula("AVERAGEIFS(A5:A9,B5:B9,\"A\",C5:C9,\"Pass\")"), style: $resultStyle),
+			excelCell(row: 17, col: 3, content: "Average score for A grades that pass"),
+			
+			excelCell(row: 18, col: 0, content: "MAXWENNS - Max with Conditions"),
+			excelCell(row: 18, col: 1, content: excelFormula("MAXWENNS(A5:A9,B5:B9,\"A\")"), style: $formulaStyle),
+			excelCell(row: 18, col: 2, content: excelFormula("MAXWENNS(A5:A9,B5:B9,\"A\")"), style: $resultStyle),
+			excelCell(row: 18, col: 3, content: "Maximum score for A grades"),
+			
+			excelCell(row: 19, col: 0, content: "MINWENNS - Min with Conditions"),
+			excelCell(row: 19, col: 1, content: excelFormula("MINWENNS(A5:A9,B5:B9,\"A\")"), style: $formulaStyle),
+			excelCell(row: 19, col: 2, content: excelFormula("MINWENNS(A5:A9,B5:B9,\"A\")"), style: $resultStyle),
+			excelCell(row: 19, col: 3, content: "Minimum score for A grades"),
+			
+			// Array functions
+			excelCell(row: 21, col: 0, content: "Array Functions", style: $sectionHeaderStyle),
+			excelCell(row: 22, col: 0, content: "Description", style: $headerStyle),
+			excelCell(row: 22, col: 1, content: "Formula", style: $headerStyle),
+			excelCell(row: 22, col: 2, content: "Result", style: $headerStyle),
+			excelCell(row: 22, col: 3, content: "Notes", style: $headerStyle),
+			
+			excelCell(row: 23, col: 0, content: "SUMPRODUCT - Sum of Products"),
+			excelCell(row: 23, col: 1, content: excelFormula("SUMPRODUCT(A5:A9,B5:B9)"), style: $formulaStyle),
+			excelCell(row: 23, col: 2, content: excelFormula("SUMPRODUCT(A5:A9,B5:B9)"), style: $resultStyle),
+			excelCell(row: 23, col: 3, content: "Sum of score*grade product"),
+						
+			excelCell(row: 25, col: 0, content: "MMULT - Matrix Multiplication"),
+			excelCell(row: 25, col: 1, content: excelFormula("MMULT({1,2;3,4},{5,6;7,8})"), style: $formulaStyle),
+			excelCell(row: 25, col: 2, content: excelFormula("MMULT({1,2;3,4},{5,6;7,8})"), style: $resultStyle),
+			excelCell(row: 25, col: 3, content: "Matrix multiplication result"),
+			
+			excelCell(row: 26, col: 0, content: "MDETERM - Matrix Determinant"),
+			excelCell(row: 26, col: 1, content: excelFormula("MDETERM({1,2;3,4})"), style: $formulaStyle),
+			excelCell(row: 26, col: 2, content: excelFormula("MDETERM({1,2;3,4})"), style: $resultStyle),
+			excelCell(row: 26, col: 3, content: "Matrix determinant"),
+			
+			excelCell(row: 27, col: 0, content: "MINVERSE - Matrix Inverse"),
+			excelCell(row: 27, col: 1, content: excelFormula("MINVERSE({1,2;3,4})"), style: $formulaStyle),
+			excelCell(row: 27, col: 2, content: excelFormula("MINVERSE({1,2;3,4})"), style: $resultStyle),
+			excelCell(row: 27, col: 3, content: "Matrix inverse (array formula)"),
+			
+			excelCell(row: 28, col: 0, content: "FREQUENCY - Frequency Distribution"),
+			excelCell(row: 28, col: 1, content: excelFormula("FREQUENCY(A5:A9,{70,80,90})"), style: $formulaStyle),
+			excelCell(row: 28, col: 2, content: excelFormula("FREQUENCY(A5:A9,{70,80,90})"), style: $resultStyle),
+			excelCell(row: 28, col: 3, content: "Frequency distribution (array formula)"),
+			
+			
+			// Error handling functions
+			excelCell(row: 33, col: 0, content: "Error Handling", style: $sectionHeaderStyle),
+			excelCell(row: 34, col: 0, content: "Description", style: $headerStyle),
+			excelCell(row: 34, col: 1, content: "Formula", style: $headerStyle),
+			excelCell(row: 34, col: 2, content: "Result", style: $headerStyle),
+			excelCell(row: 34, col: 3, content: "Notes", style: $headerStyle),
+			
+			excelCell(row: 35, col: 0, content: "IFERROR - Handle Division by Zero"),
+			excelCell(row: 35, col: 1, content: excelFormula("IFERROR(10/0,\"Error: Division by zero\")"), style: $formulaStyle),
+			excelCell(row: 35, col: 2, content: excelFormula("IFERROR(10/0,\"Error: Division by zero\")"), style: $textResultStyle),
+			excelCell(row: 35, col: 3, content: "Graceful error handling"),
+			
+			excelCell(row: 36, col: 0, content: "WENNNV - Handle #N/A Errors"),
+			excelCell(row: 36, col: 1, content: excelFormula("WENNNV(VLOOKUP(\"X\",A5:A9,2,FALSE),\"Not found\")"), style: $formulaStyle),
+			excelCell(row: 36, col: 2, content: excelFormula("WENNNV(VLOOKUP(\"X\",A5:A9,2,FALSE),\"Not found\")"), style: $textResultStyle),
+			excelCell(row: 36, col: 3, content: "Handle #N/A specifically"),
+			
+			excelCell(row: 37, col: 0, content: "ERROR.TYPE - Error Type"),
+			excelCell(row: 37, col: 1, content: excelFormula("ERROR.TYPE(10/0)"), style: $formulaStyle),
+			excelCell(row: 37, col: 2, content: excelFormula("ERROR.TYPE(10/0)"), style: $resultStyle),
+			excelCell(row: 37, col: 3, content: "Get error type number"),
+			
+			excelCell(row: 38, col: 0, content: "ISERROR - Check for Error"),
+			excelCell(row: 38, col: 1, content: excelFormula("ISERROR(10/0)"), style: $formulaStyle),
+			excelCell(row: 38, col: 2, content: excelFormula("ISERROR(10/0)"), style: $textResultStyle),
+			excelCell(row: 38, col: 3, content: "Check if value is error"),
+			
+			excelCell(row: 39, col: 0, content: "ISERR - Check for Error (excluding #N/A)"),
+			excelCell(row: 39, col: 1, content: excelFormula("ISERR(10/0)"), style: $formulaStyle),
+			excelCell(row: 39, col: 2, content: excelFormula("ISERR(10/0)"), style: $textResultStyle),
+			excelCell(row: 39, col: 3, content: "Check if error (not #N/A)"),
+			
+			excelCell(row: 40, col: 0, content: "ISNA - Check for #N/A"),
+			excelCell(row: 40, col: 1, content: excelFormula("ISNA(VLOOKUP(\"X\",A5:A9,2,FALSE))"), style: $formulaStyle),
+			excelCell(row: 40, col: 2, content: excelFormula("ISNA(VLOOKUP(\"X\",A5:A9,2,FALSE))"), style: $textResultStyle),
+			excelCell(row: 40, col: 3, content: "Check for #N/A error"),
+			
+			excelCell(row: 41, col: 0, content: "ISBLANK - Check for Blank"),
+			excelCell(row: 41, col: 1, content: excelFormula("ISBLANK(A1)"), style: $formulaStyle),
+			excelCell(row: 41, col: 2, content: excelFormula("ISBLANK(A1)"), style: $textResultStyle),
+			excelCell(row: 41, col: 3, content: "Check if cell is blank"),
+			
+			excelCell(row: 42, col: 0, content: "ISNUMBER - Check for Number"),
+			excelCell(row: 42, col: 1, content: excelFormula("ISNUMBER(123)"), style: $formulaStyle),
+			excelCell(row: 42, col: 2, content: excelFormula("ISNUMBER(123)"), style: $textResultStyle),
+			excelCell(row: 42, col: 3, content: "Check if value is number"),
+			
+			excelCell(row: 43, col: 0, content: "ISTEXT - Check for Text"),
+			excelCell(row: 43, col: 1, content: excelFormula("ISTEXT(\"Hello\")"), style: $formulaStyle),
+			excelCell(row: 43, col: 2, content: excelFormula("ISTEXT(\"Hello\")"), style: $textResultStyle),
+			excelCell(row: 43, col: 3, content: "Check if value is text"),
+			
+			excelCell(row: 44, col: 0, content: "ISLOGICAL - Check for Logical"),
+			excelCell(row: 44, col: 1, content: excelFormula("ISLOGICAL(TRUE)"), style: $formulaStyle),
+			excelCell(row: 44, col: 2, content: excelFormula("ISLOGICAL(TRUE)"), style: $textResultStyle),
+			excelCell(row: 44, col: 3, content: "Check if value is logical"),
+			
+			excelCell(row: 45, col: 0, content: "ISREF - Check for Reference"),
+			excelCell(row: 45, col: 1, content: excelFormula("ISREF(A1)"), style: $formulaStyle),
+			excelCell(row: 45, col: 2, content: excelFormula("ISREF(A1)"), style: $textResultStyle),
+			excelCell(row: 45, col: 3, content: "Check if value is reference"),
+			
+			excelCell(row: 46, col: 0, content: "ISTFORMEL - Check for Formula"),
+			excelCell(row: 46, col: 1, content: excelFormula("ISTFORMEL(C35)"), style: $formulaStyle),
+			excelCell(row: 46, col: 2, content: excelFormula("ISTFORMEL(C35)"), style: $textResultStyle),
+			excelCell(row: 46, col: 3, content: "Check if cell contains formula")
+		  ]
+		)
+	  ]
+	);
+	
+	$test.parseExcel()
+}]]></value>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+			command-label="Script ausführen"
+			command-name="executeSearchConsole"
+			component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+			component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-label="Result"
+			>
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Script Konsole > Ergebnis"
+					/>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+					displayed-row-index="0"
+				/>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+				<values>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="A"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="Basic Mathematical and Statistical Formulas"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="B"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value=""
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="C"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value=""
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="D"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value=""
+						/>
+					</value>
+				</values>
+			</expected-value>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Suchausdruck"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Administration > Development > Script Konsole > Editor"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value=""
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Administration > Development > Modell Editor"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Strukturen"
+			/>
+		</action>
+	</actions>
+</action>

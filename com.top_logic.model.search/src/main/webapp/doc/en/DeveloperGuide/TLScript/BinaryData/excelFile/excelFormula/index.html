@@ -1,0 +1,103 @@
+<h2>Syntax</h2>
+
+<pre>
+	<code>excelFormula($formula)</code>
+</pre>
+
+<h2>Description</h2>
+
+<p>Creates an Excel formula that can be used in a cell. The function takes an Excel formula as a string and wraps it in a special format that is recognized and processed by the Excel creator. Formulas enable the creation of dynamic and interactive Excel tables in which values are automatically calculated based on other cell contents.</p>
+
+<h2>Parameters</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Formula name</th>
+			<th>Type</th>
+			<th>Type Description</th>
+			<th>Mandatory</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>formula</td>
+			<td>Character string</td>
+			<td>The Excel formula as a string (without leading equals sign).</td>
+			<td>yes</td>
+			<td> </td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Return value</h2>
+
+<p><strong>Type:</strong> Map</p>
+
+<p>A special map object that contains the formula information for processing by excelCell().</p>
+
+<h2>Examples</h2>
+
+<h3>Simple summation formula</h3>
+
+<pre>
+	<code>excelCell(row: 5, col: 3, content: excelFormula("SUM(B3:D3)"))</code>
+</pre>
+
+<p><strong>Output: </strong>Cell with formula that calculates the sum of cells B3 to D3.</p>
+
+<h3>Conditional formula</h3>
+
+<pre>
+	<code>excelCell(row: 2, col: 4, content:
+    excelFormula("IF(B2&gt;1000, \"Überschritten\", \"Im Rahmen\")"),
+    style: {"color": "blue"})</code>
+</pre>
+
+<p><strong>Output: </strong>Cell with conditional formula that displays "Exceeded" if B2 &gt; 1000, otherwise "In range".</p>
+
+<p></p>
+
+<h3>Complex calculations</h3>
+
+<pre>
+	<code>excelCell(row: 10, col: 5, content:
+    excelFormula("AVERAGEIFS(D2:D100, B2:B100, \"&gt;=2024-01-01\", C2:C100, \"Marketing\")"),
+    style: {"numberFormat": "0.00"})</code>
+</pre>
+
+<p><strong>Output: </strong>Two cells with the current date and time, suitably formatted.</p>
+
+<p></p>
+
+<h3>Date and time formulas</h3>
+
+<pre>
+	<code>excelCell(row: 0, col: 0, content: excelFormula("TODAY()"),
+    style: {"numberFormat": "DD.MM.YYYY"})
+
+excelCell(row: 0, col: 1, content: excelFormula("NOW()"),
+    style: {"numberFormat": "DD.MM.YYYY HH:MM"})</code>
+</pre>
+
+<p><strong>Output: </strong>Cell with Excel formula that calculates the sum of cells A5 to A10, with currency format and green background.</p>
+
+<p></p>
+
+<h3>Statistical formulas</h3>
+
+<pre>
+	<code>excelCell(row: 15, col: 2, content: excelFormula("COUNTIF(A2:A100, \"&gt;1000\")"),
+    style: {"background": "#FFF3CD"})
+
+excelCell(row: 16, col: 2, content: excelFormula("MAX(C2:C50)"),
+    style: {"background": "#D4EDDA"})
+
+excelCell(row: 17, col: 2, content: excelFormula("MIN(C2:C50)"),
+    style: {"background": "#F8D7DA"})</code>
+</pre>
+
+<p><strong>Output: </strong>Three cells with statistical calculations (number, maximum, minimum) and color highlighting.</p>
+
+<p></p>

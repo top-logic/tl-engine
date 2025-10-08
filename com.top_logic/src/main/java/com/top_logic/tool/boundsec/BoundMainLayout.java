@@ -35,7 +35,7 @@ import com.top_logic.util.TLContext;
  * 
  * @author    <a href="mailto:kha@top-logic.com">kha</a>
  */
-public abstract class BoundMainLayout extends MainLayout implements BoundCheckerDelegate {
+public abstract class BoundMainLayout extends MainLayout implements LayoutContainerBoundChecker {
 
 	/**
 	 * Configuration for the {@link BoundMainLayout}.
@@ -53,8 +53,6 @@ public abstract class BoundMainLayout extends MainLayout implements BoundChecker
     
     /** Constant for putting the BoundMainLayout into TLContext. */
 	public static final Property<BoundChecker> ROOT_CHECKER = TypedAnnotatable.property(BoundChecker.class, "_root_checker_");
-
-	private BoundChecker _boundCheckerDelegate = new LayoutContainerBoundChecker<>(this);
 
     /** Construct a BoundMainLayout from (XML-)Attributes. */
     public BoundMainLayout(InstantiationContext context, Config atts) throws ConfigurationException {
@@ -80,11 +78,6 @@ public abstract class BoundMainLayout extends MainLayout implements BoundChecker
     	super.componentsResolved(context);
     }
     
-    @Override
-	public BoundChecker getDelegate() {
-		return _boundCheckerDelegate;
-    }
-
 	@Override
 	public ResKey hideReason() {
 		return hideReason(internalModel());

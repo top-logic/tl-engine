@@ -8,6 +8,7 @@ package com.top_logic.tool.boundsec.compound;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.Set;
 
 import com.top_logic.base.security.SecurityConfiguration;
 import com.top_logic.basic.Logger;
@@ -35,6 +36,7 @@ import com.top_logic.tool.boundsec.BoundComponent;
 import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.BoundLayout;
 import com.top_logic.tool.boundsec.BoundObject;
+import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.tool.boundsec.wrap.PersBoundComp;
@@ -244,7 +246,7 @@ public class CompoundSecurityLayout extends BoundLayout {
      * The Roles for CommandGroups are configured using the PersBoundComp.
      */
     @Override
-	public Collection getRolesForCommandGroup(BoundCommandGroup aCommand) {
+	public Set<? extends BoundRole> getRolesForCommandGroup(BoundCommandGroup aCommand) {
 		PersBoundComp persBoundComp = getPersBoundComp();
 		if (persBoundComp == null) {
 			return Collections.emptySet();

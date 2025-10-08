@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.StringServices;
@@ -24,15 +25,16 @@ import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.ThemeImage;
+import com.top_logic.layout.component.LayoutContainerBoundChecker;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.ModelEventListener;
 import com.top_logic.mig.html.layout.SubComponentConfig;
-import com.top_logic.tool.boundsec.BoundCheckerComponent;
 import com.top_logic.tool.boundsec.BoundCheckerLayoutConfig;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundComponent;
 import com.top_logic.tool.boundsec.BoundObject;
+import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.SecurityObjectProvider;
 import com.top_logic.tool.boundsec.SecurityObjectProviderManager;
 import com.top_logic.tool.boundsec.WithSecurityMaster;
@@ -50,7 +52,7 @@ import com.top_logic.util.TLContext;
  *
  * @author <a href="mailto:mga@top-logic.com">Michael G&auml;nsler</a>
  */
-public class BoundAssistentComponent extends AssistentComponent implements BoundCheckerComponent, HTMLConstants {
+public class BoundAssistentComponent extends AssistentComponent implements LayoutContainerBoundChecker, HTMLConstants {
 
 	/**
 	 * Configuration options for {@link BoundAssistentComponent}.
@@ -212,7 +214,7 @@ public class BoundAssistentComponent extends AssistentComponent implements Bound
     }
 
     @Override
-	public Collection getRolesForCommandGroup(BoundCommandGroup aCommand) {
+	public Set<? extends BoundRole> getRolesForCommandGroup(BoundCommandGroup aCommand) {
         PersBoundComp persBoundComp = getPersBoundComp();
 		if (persBoundComp == null) {
 			return Collections.emptySet();

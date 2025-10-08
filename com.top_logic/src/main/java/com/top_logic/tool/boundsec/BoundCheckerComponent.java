@@ -5,15 +5,21 @@
  */
 package com.top_logic.tool.boundsec;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Set;
+
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.exceptions.WrapperRuntimeException;
+import com.top_logic.layout.component.IComponent;
+import com.top_logic.mig.html.layout.ComponentName;
 
 /**
  * Common interface for bound components to identify the security master for BoundLayout.
  * 
  * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
-public interface BoundCheckerComponent extends BoundChecker {
+public interface BoundCheckerComponent extends BoundChecker, IComponent {
 
     /**
      * Flag for identifying a security master (needed for a {@link BoundLayout} to find the
@@ -32,11 +38,6 @@ public interface BoundCheckerComponent extends BoundChecker {
 	 *         {@link #allow()} should be <code>true</code>.
 	 */
 	abstract ResKey hideReason();
-
-	/**
-	 * The current model of this component.
-	 */
-	Object getModel();
 
 	/**
 	 * Check if <em>default</em> {@link com.top_logic.tool.boundsec.BoundCommandGroup} is allowed
@@ -92,6 +93,43 @@ public interface BoundCheckerComponent extends BoundChecker {
 	 */
 	default boolean allow(BoundCommand aCommand) {
 		return allow(aCommand.getCommandGroup());
+	}
+
+	/**
+	 * Our SecurityID is the name of the Component.
+	 */
+	@Override
+	default ComponentName getSecurityId() {
+		return getName();
+	}
+
+	@Override
+	default BoundObject getCurrentObject(BoundCommandGroup aBCG, Object potentialModel) {
+		return getSecurityObject(aBCG, getModel());
+	}
+
+	@Override
+	default BoundObject getSecurityObject(BoundCommandGroup commandGroup, Object potentialModel) {
+		return null;
+	}
+
+	@Override
+	default Collection<BoundCommandGroup> getCommandGroups() {
+		return null;
+	}
+
+	@Override
+	default Set<? extends BoundRole> getRolesForCommandGroup(BoundCommandGroup aCommand) {
+		return Collections.emptySet();
+	}
+
+	/**
+	 * @see com.top_logic.tool.boundsec.BoundChecker#isDefaultCheckerFor(java.lang.String,
+	 *      com.top_logic.tool.boundsec.BoundCommandGroup)
+	 */
+	@Override
+	default boolean isDefaultCheckerFor(String type, BoundCommandGroup aBCG) {
+		return isDefaultFor(type);
 	}
 
 }

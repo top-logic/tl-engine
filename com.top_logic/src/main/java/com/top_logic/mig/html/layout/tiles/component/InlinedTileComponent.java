@@ -22,8 +22,6 @@ import com.top_logic.mig.html.layout.SingleLayoutContainer;
 import com.top_logic.mig.html.layout.tiles.InlinedTileFactory;
 import com.top_logic.mig.html.layout.tiles.TileFactory;
 import com.top_logic.mig.html.layout.tiles.TileInfo;
-import com.top_logic.tool.boundsec.BoundChecker;
-import com.top_logic.tool.boundsec.BoundCheckerDelegate;
 
 /**
  * {@link SingleLayoutContainer} that offers tiles for multiple business objects in the "parent
@@ -39,7 +37,7 @@ import com.top_logic.tool.boundsec.BoundCheckerDelegate;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class InlinedTileComponent extends SingleLayoutContainer implements Selectable, BoundCheckerDelegate {
+public class InlinedTileComponent extends SingleLayoutContainer implements Selectable, LayoutContainerBoundChecker {
 
 	/**
 	 * Typed configuration interface definition for {@link InlinedTileComponent}.
@@ -89,8 +87,6 @@ public class InlinedTileComponent extends SingleLayoutContainer implements Selec
 
 	private ModelBuilder _builder;
 
-	private final BoundChecker _boundCheckerDelegate = new LayoutContainerBoundChecker<>(this);
-
 	/**
 	 * Create a {@link InlinedTileComponent}.
 	 * 
@@ -124,11 +120,6 @@ public class InlinedTileComponent extends SingleLayoutContainer implements Selec
 	 */
 	public Object getGUIModel() {
 		return _builder.getModel(getModel(), this);
-	}
-
-	@Override
-	public BoundChecker getDelegate() {
-		return _boundCheckerDelegate;
 	}
 
 	@Override

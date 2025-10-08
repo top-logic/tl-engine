@@ -60,7 +60,7 @@ public interface BoundCheckerComponent extends BoundChecker, IComponent {
 	default boolean allow(BoundCommandGroup aGroup) {
 		BoundObject currentObject = null;
 		try {
-			currentObject = getCurrentObject(aGroup, getModel());
+			currentObject = this.getSecurityObject(aGroup, getModel());
 		} catch (WrapperRuntimeException e) {
 			// Note: This is a workaround for model events arriving in inappropriate
 			// order, resulting in invalid wrapper models. E.g. an object was deleted,
@@ -98,11 +98,6 @@ public interface BoundCheckerComponent extends BoundChecker, IComponent {
 	@Override
 	default ComponentName getSecurityId() {
 		return getName();
-	}
-
-	@Override
-	default BoundObject getCurrentObject(BoundCommandGroup aBCG, Object potentialModel) {
-		return getSecurityObject(aBCG, getModel());
 	}
 
 	@Override

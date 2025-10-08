@@ -74,7 +74,7 @@ public class SecuredTypeTableComponent extends TableComponent {
         // that the table has only entries if the current user is allowed to
         // see at least one object
 		BoundCommandGroup group = SimpleBoundCommandGroup.CREATE;
-		if (getTableModel().getRowCount() == 0 && !allow(group, getCurrentObject(group, potentialModel))) {
+		if (getTableModel().getRowCount() == 0 && !allow(group, this.getSecurityObject(group, potentialModel))) {
 			return I18NConstants.ERROR_NO_PERMISSION;
 		}
 		return null;

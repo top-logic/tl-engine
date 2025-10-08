@@ -160,7 +160,7 @@ public class BoundAssistentComponent extends AssistentComponent implements Layou
 	 */
 	protected final ResKey securityReason(Object potentialModel) {
 		BoundCommandGroup group = this.getDefaultCommandGroup();
-		if (!allow(group, getCurrentObject(group, potentialModel))) {
+		if (!allow(group, this.getSecurityObject(group, potentialModel))) {
 			return I18NConstants.ERROR_NO_PERMISSION;
 		}
 		return null;
@@ -198,11 +198,6 @@ public class BoundAssistentComponent extends AssistentComponent implements Layou
             return false;
 
         return checkAccess(theContext, anObject , aCmdGroup);
-    }
-
-    @Override
-	public final BoundObject getCurrentObject(BoundCommandGroup aBCG, Object potentialModel) {
-		return getSecurityObject(aBCG, getModel());
     }
 
 	@Override

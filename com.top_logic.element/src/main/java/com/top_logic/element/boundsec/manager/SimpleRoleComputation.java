@@ -15,7 +15,6 @@ import com.top_logic.knowledge.service.StorageException;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
-import com.top_logic.tool.boundsec.wrap.BoundedRole;
 
 /**
  * {@link RoleComputation} computing values on the fly.
@@ -37,7 +36,7 @@ public class SimpleRoleComputation extends RoleComputation {
 	}
 
 	@Override
-	public boolean hasRole(BoundObject boundObject, Collection<BoundedRole> someRoles) {
+	public boolean hasRole(BoundObject boundObject, Collection<? extends BoundRole> someRoles) {
 		try {
 			return hasRole(boundObject, someRoles, getGroupIDs(_person));
 		} catch (StorageException ex) {
@@ -59,7 +58,7 @@ public class SimpleRoleComputation extends RoleComputation {
 	}
 
 	@Override
-	public <T extends BoundObject> Collection<T> getAllowedBusinessObjects(Collection<BoundedRole> someRoles,
+	public <T extends BoundObject> Collection<T> getAllowedBusinessObjects(Collection<? extends BoundRole> someRoles,
 			Collection<T> someObjects) {
 		try {
 			return findAllowedBusinessObjects(someRoles, getGroupIDs(_person), someObjects);

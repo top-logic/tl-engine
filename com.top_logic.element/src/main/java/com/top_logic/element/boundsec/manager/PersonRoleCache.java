@@ -20,7 +20,6 @@ import com.top_logic.knowledge.service.StorageException;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
-import com.top_logic.tool.boundsec.wrap.BoundedRole;
 
 /**
  * {@link RoleComputation} caching the groups of the person and the roles.
@@ -50,7 +49,7 @@ public class PersonRoleCache extends RoleComputation {
 	}
 
 	@Override
-	public boolean hasRole(BoundObject boundObject, Collection<BoundedRole> someRoles) {
+	public boolean hasRole(BoundObject boundObject, Collection<? extends BoundRole> someRoles) {
 		if (CollectionUtil.isEmptyOrNull(someRoles)) {
 			return false;
 		}
@@ -81,7 +80,7 @@ public class PersonRoleCache extends RoleComputation {
 	}
 
 	@Override
-	public <T extends BoundObject> Collection<T> getAllowedBusinessObjects(Collection<BoundedRole> someRoles,
+	public <T extends BoundObject> Collection<T> getAllowedBusinessObjects(Collection<? extends BoundRole> someRoles,
 			Collection<T> someObjects) {
 		try {
 			return findAllowedBusinessObjects(someRoles, _groupIDs, someObjects);

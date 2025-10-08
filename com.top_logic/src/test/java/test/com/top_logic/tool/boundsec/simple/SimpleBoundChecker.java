@@ -41,13 +41,13 @@ public class SimpleBoundChecker extends AbstractBoundChecker {
 	protected List<BoundChecker> children;
 
     /** The List of {@link com.top_logic.tool.boundsec.BoundCommandGroup}s we support */
-    protected List          commandGroups; 
+	protected List<BoundCommandGroup> commandGroups;
 
     /** 
      * A Map of Sets of {@link com.top_logic.tool.boundsec.BoundRole}s indexed 
      * by {@link com.top_logic.tool.boundsec.BoundCommandGroup}s. 
      */
-    protected Map           rolesForCommandGroup;
+	protected Map<BoundCommandGroup, Set<BoundRole>> rolesForCommandGroup;
     /**
      * Construct a new SimpleBoundChecker,
      * 
@@ -136,7 +136,7 @@ public class SimpleBoundChecker extends AbstractBoundChecker {
      */
     public void addCommandGroup(BoundCommandGroup aGroup) {
         if (commandGroups == null)
-            commandGroups = new ArrayList();
+			commandGroups = new ArrayList<>();
         commandGroups.add(aGroup);
     }
 
@@ -149,10 +149,10 @@ public class SimpleBoundChecker extends AbstractBoundChecker {
      * @return the roles for the given command group
      */
     @Override
-	public Collection getRolesForCommandGroup(BoundCommandGroup aGroup) {
-        Collection result = null;
+	public Set<? extends BoundRole> getRolesForCommandGroup(BoundCommandGroup aGroup) {
+		Set<? extends BoundRole> result = null;
         if (rolesForCommandGroup != null) {
-            result = (Collection) rolesForCommandGroup.get(aGroup);
+			result = rolesForCommandGroup.get(aGroup);
         } 
         return result;
     }
@@ -166,11 +166,11 @@ public class SimpleBoundChecker extends AbstractBoundChecker {
     public void addRoleForCommandGroup(BoundCommandGroup aGroup, BoundRole aRole) {
 
         if (rolesForCommandGroup == null) 
-            rolesForCommandGroup = new HashMap();
+			rolesForCommandGroup = new HashMap<>();
 
-        Set roles = (Set) rolesForCommandGroup.get(aGroup);
+		Set<BoundRole> roles = rolesForCommandGroup.get(aGroup);
         if (roles == null) {
-            roles = new HashSet();
+			roles = new HashSet<>();
             rolesForCommandGroup.put(aGroup, roles);
         }
         roles.add(aRole);

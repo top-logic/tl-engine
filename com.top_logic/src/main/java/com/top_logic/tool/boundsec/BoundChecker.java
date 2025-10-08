@@ -15,7 +15,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutComponent.Config;
 import com.top_logic.mig.html.layout.LayoutContainer;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
-import com.top_logic.tool.boundsec.wrap.PersBoundComp;
+import com.top_logic.util.TLContext;
 
 /**
  * Helper interface for performing security checks on (contained) 
@@ -104,7 +104,19 @@ public interface BoundChecker {
      * @param   aGroup    The CommandGroup to check
      * @return true, if given CommandGroup is allowed to be performed
      */ 
-    public boolean allow(BoundCommandGroup aGroup, BoundObject anObject);
+	default boolean allow(BoundCommandGroup aGroup, BoundObject anObject) {
+		TLContext context = TLContext.getContext();
+		if (context == null) {
+			return false;
+		}
+
+		Person user = context.getCurrentPersonWrapper();
+		if (user == null) {
+			return false;
+		}
+
+		return this.allow(user, anObject, aGroup);
+	}
 
     /** 
      * Check if the given {@link com.top_logic.tool.boundsec.BoundCommandGroup} 
@@ -220,11 +232,5 @@ public interface BoundChecker {
      */
     public boolean isDefaultCheckerFor(String aType, BoundCommandGroup aBCG);
     
-	/**
-	 * The persistent security object for this {@link PersBoundComp}.
-	 * 
-	 * @return May be <code>null</code>, when there is no persistent security object.
-	 */
-	PersBoundComp getPersBoundComp();
 
 }

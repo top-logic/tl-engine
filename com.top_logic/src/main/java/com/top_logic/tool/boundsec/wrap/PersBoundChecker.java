@@ -17,7 +17,6 @@ import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.simple.AbstractBoundChecker;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
-import com.top_logic.util.TLContext;
 
 /**
  * A BoundChcker that relies on the {@link PersBoundComp}.
@@ -91,20 +90,6 @@ public class PersBoundChecker extends AbstractBoundChecker {
     }
     
     // all other functions not implemented 
-
-    /**
-     * @see com.top_logic.tool.boundsec.BoundChecker#allow(com.top_logic.tool.boundsec.BoundCommandGroup, com.top_logic.tool.boundsec.BoundObject)
-     */
-    @Override
-	public boolean allow(BoundCommandGroup aGroup, BoundObject anObject) {
-        
-        Person theCurrent = TLContext.getContext().getCurrentPersonWrapper();
-        if (theCurrent == null) {
-            return false;
-        }
-        return this.allow(theCurrent, anObject, aGroup);
-//        throw new IllegalStateException("PersBoundChecker has no current Object or Person");
-    }
 
 	@Override
 	public BoundObject getSecurityObject(BoundCommandGroup commandGroup, Object potentialModel) {

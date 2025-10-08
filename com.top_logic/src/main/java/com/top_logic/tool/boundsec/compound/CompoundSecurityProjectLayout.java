@@ -10,6 +10,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.BoundChecker;
@@ -114,24 +115,9 @@ public class CompoundSecurityProjectLayout extends CompoundSecurityLayout {
 		return getPrimaryChecker().hideReason(potentialModel);
     }
     
-    /** 
-     * Delegate to primary checker
-     *
-     * @see com.top_logic.tool.boundsec.BoundLayout#allow(com.top_logic.tool.boundsec.BoundCommandGroup, com.top_logic.tool.boundsec.BoundObject)
-     */
     @Override
-	public boolean allow(BoundCommandGroup aGroup, BoundObject anObject) {
-        return getPrimaryChecker().allow(aGroup, anObject);
-    }
-    
-    /** 
-     * Delegate to primary checker
-     *
-     * @see com.top_logic.tool.boundsec.BoundLayout#allow(com.top_logic.tool.boundsec.BoundCommandGroup, com.top_logic.tool.boundsec.BoundObject)
-     */
-    @Override
-	public boolean allow(BoundObject anObject) {
-        return getPrimaryChecker().allow(anObject);
+	public boolean allow(Person aPerson, BoundObject aModel, BoundCommandGroup aCmdGroup) {
+		return getPrimaryChecker().allow(aPerson, aModel, aCmdGroup);
     }
     
     /** 

@@ -9,10 +9,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
+import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.exceptions.WrapperRuntimeException;
 import com.top_logic.layout.component.IComponent;
 import com.top_logic.mig.html.layout.ComponentName;
+import com.top_logic.tool.boundsec.wrap.PersBoundComp;
 
 /**
  * Common interface for bound components to identify the security master for BoundLayout.
@@ -21,15 +23,10 @@ import com.top_logic.mig.html.layout.ComponentName;
  */
 public interface BoundCheckerComponent extends BoundChecker, IComponent {
 
-    /**
-     * Flag for identifying a security master (needed for a {@link BoundLayout} to find the
-     * correct security master to ask for allow).
-     *
-     * @return    <code>true</code>, if this component is the security master.
-     */
-	default boolean isSecurityMaster() {
-		return false;
-	}
+	/**
+	 * Component property to store the access configuration.
+	 */
+	Property<PersBoundComp> PERS_BOUND_COMP = TypedAnnotatable.property(PersBoundComp.class, "persBoundComp");
 
 	/**
 	 * A user-readable reason, why {@link #allow()} is <code>false</code>.
@@ -130,6 +127,23 @@ public interface BoundCheckerComponent extends BoundChecker, IComponent {
 	@Override
 	default boolean isDefaultCheckerFor(String type, BoundCommandGroup aBCG) {
 		return isDefaultFor(type);
+	}
+
+	/**
+	 * The persistent security configuration for this checker.
+	 * 
+	 * @return May be <code>null</code>, when there is no persistent security configuration.
+	 */
+	default PersBoundComp getPersBoundComp() {
+		return get(PERS_BOUND_COMP);
+	}
+
+	/**
+	 * Receives and stores the access rights configuration from the parent for later lookup in
+	 * {@link #getPersBoundComp()}.
+	 */
+	default void initPersBoundComp(PersBoundComp persBoundComp) {
+		set(PERS_BOUND_COMP, persBoundComp);
 	}
 
 }

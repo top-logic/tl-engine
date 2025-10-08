@@ -113,9 +113,6 @@ public abstract class BoundComponent extends AJAXComponent implements BoundCheck
     /** Optional Map of Boolean indexed by a CompoundKey of CommandGroupd and Object */
 	protected transient Map<Tuple, Boolean> _allowCache;
     
-    /** Our persistent representation for the security */
-	private final PersBoundComp _persBoundComp;
-
     /**
      * Will be incremented on every call to allow.
      *
@@ -146,7 +143,6 @@ public abstract class BoundComponent extends AJAXComponent implements BoundCheck
         super(context, atts);
 
 		isSecurityMaster = atts.getIsSecurityMaster();
-		_persBoundComp = SecurityComponentCache.lookupPersBoundComp(this);
         try {
 			_securityObjectProvider = initSecurityObjectProvider(context, atts);
 		} catch (ConfigurationException ex) {
@@ -215,6 +211,12 @@ public abstract class BoundComponent extends AJAXComponent implements BoundCheck
     	super.componentsResolved(context);
     	
     	this.initCommandGroups();
+
+		if (isSecurityMaster) {
+			if (getParent() instanceof BoundLayout layout) {
+				layout.initSecurityMaster(this);
+			}
+		}
     }
     
     /**
@@ -300,11 +302,6 @@ public abstract class BoundComponent extends AJAXComponent implements BoundCheck
 
 		return null;
 	}
-
-    @Override
-	public boolean isSecurityMaster() {
-        return (this.isSecurityMaster);
-    }
 
     /**
      * Handles the allowCache and calls unCachedAllow meanwhile.
@@ -538,11 +535,6 @@ public abstract class BoundComponent extends AJAXComponent implements BoundCheck
             }
         }
         return null;
-    }
-
-	@Override
-	public PersBoundComp getPersBoundComp() {
-		return _persBoundComp;
     }
 
 	/**

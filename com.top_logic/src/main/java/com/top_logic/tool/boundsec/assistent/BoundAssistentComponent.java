@@ -33,6 +33,7 @@ import com.top_logic.mig.html.layout.SubComponentConfig;
 import com.top_logic.tool.boundsec.BoundCheckerLayoutConfig;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundComponent;
+import com.top_logic.tool.boundsec.BoundLayout;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.SecurityObjectProvider;
@@ -41,7 +42,6 @@ import com.top_logic.tool.boundsec.WithSecurityMaster;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.boundsec.wrap.PersBoundComp;
-import com.top_logic.tool.boundsec.wrap.SecurityComponentCache;
 import com.top_logic.tool.execution.I18NConstants;
 import com.top_logic.tool.execution.service.CommandApprovalService;
 import com.top_logic.util.Resources;
@@ -82,9 +82,6 @@ public class BoundAssistentComponent extends AssistentComponent implements Layou
     /** Saves whether a SecurityProviderClass was configured in the layout xml. */
     protected boolean securityProviderConfigured;
     
-    /** Our persisent representation for the security */
-	private final PersBoundComp _persBoundComp;
-
     /**
      * Saves the configured {@link SecurityObjectProvider}.<br/>
      * This will override useDefaultChecker flag if set.
@@ -103,13 +100,23 @@ public class BoundAssistentComponent extends AssistentComponent implements Layou
 		if (commandGroups.isEmpty()) {
 			commandGroups = SimpleBoundCommandGroup.READ_SET;
         }
-		_persBoundComp = SecurityComponentCache.lookupPersBoundComp(this);
         try {
 			initSecurityObjectProvider(context, someAttr);
 		} catch (ConfigurationException ex) {
 			throw new ConfigurationError("Initializing the security object provider failed.", ex);
 		}
     }
+
+	@Override
+	protected void componentsResolved(InstantiationContext context) {
+		super.componentsResolved(context);
+
+		if (isSecurityMaster) {
+			if (getParent() instanceof BoundLayout layout) {
+				layout.initSecurityMaster(this);
+			}
+		}
+	}
 
 	/**
 	 * Fetch the {@link #securityObjectProvider} from XML and set {@link #securityProviderConfigured}
@@ -136,11 +143,6 @@ public class BoundAssistentComponent extends AssistentComponent implements Layou
 	 */
     protected SecurityObjectProvider getDefaultSecurityObjectProvider() {
 		return SecurityObjectProviderManager.getInstance().getDefaultSecurityObjectProvider();
-    }
-
-	@Override
-	public PersBoundComp getPersBoundComp() {
-		return _persBoundComp;
     }
 
 	@Override
@@ -288,11 +290,6 @@ public class BoundAssistentComponent extends AssistentComponent implements Layou
 	public boolean allow(Person aPerson, BoundObject aModel,
             BoundCommandGroup aCmdGroup) {
         return AccessManager.getInstance().hasRole(aPerson, aModel, getRolesForCommandGroup(aCmdGroup));
-    }
-
-    @Override
-	public boolean isSecurityMaster() {
-        return (this.isSecurityMaster);
     }
 
     public List getProgressRelevantChildren() {

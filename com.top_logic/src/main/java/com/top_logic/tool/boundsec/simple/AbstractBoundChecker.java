@@ -12,7 +12,6 @@ import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundObject;
-import com.top_logic.tool.boundsec.wrap.PersBoundComp;
 import com.top_logic.tool.execution.I18NConstants;
 
 /**
@@ -57,11 +56,6 @@ public abstract class AbstractBoundChecker implements BoundChecker {
 	@Override
 	public BoundObject getCurrentObject(BoundCommandGroup aBCG, Object potentialModel) {
 		return getSecurityObject(aBCG, potentialModel);
-	}
-
-	@Override
-	public PersBoundComp getPersBoundComp() {
-		return null;
 	}
 
 	@Override

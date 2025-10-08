@@ -11,6 +11,7 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.form.component.AbstractApplyCommandHandler;
 import com.top_logic.layout.form.component.AbstractDeleteCommandHandler;
@@ -76,7 +77,7 @@ public abstract class DummyEditComponent extends EditComponent {
 	 * @see BoundComponent#allow(BoundCommandGroup, BoundObject)
 	 */
 	@Override
-	public boolean allow(BoundCommandGroup aCmdGroup, BoundObject anObject) {
+	public boolean allow(Person aPerson, BoundObject aModel, BoundCommandGroup aCmdGroup) {
 		return true;
 	}
 

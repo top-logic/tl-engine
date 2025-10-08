@@ -6,6 +6,7 @@
 package com.top_logic.tool.boundsec.simple;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Set;
 
 import com.top_logic.knowledge.wrap.person.Person;
@@ -35,11 +36,6 @@ public class AllowAllChecker extends AbstractBoundChecker {
 	public AllowAllChecker(ComponentName componentName) {
 		super(componentName);
 	}
-
-    @Override
-	public boolean allow(BoundCommandGroup aGroup, BoundObject anObject) {
-        return true;
-    }
  
     @Override
 	public boolean allow(Person aPerson, BoundObject aModel, BoundCommandGroup aCmdGroup) {
@@ -58,7 +54,7 @@ public class AllowAllChecker extends AbstractBoundChecker {
 
     @Override
 	public Set<? extends BoundRole> getRolesForCommandGroup(BoundCommandGroup aCommand) {
-        return null;
+		return Collections.emptySet();
     }
 
     @Override

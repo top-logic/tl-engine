@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -463,7 +462,7 @@ public abstract class AbstractWrapper extends PersistentObject implements Wrappe
 	 * 
 	 * @return a valid Wrapper if possible (cf. above)
 	 */
-	public Wrapper revalidate () {
+	public Wrapper revalidate() {
 		if (this.tValid()) {
 			// If this is valid just return this
 			return this;    
@@ -790,7 +789,7 @@ public abstract class AbstractWrapper extends PersistentObject implements Wrappe
 	 *        The name of the reference attribute.
 	 * @return The referenced object, or <code>null</code>, if the reference is empty.
 	 */
-	public static <T> T getReference(Wrapper self, Class<T> dynamicType, String attributeName) {
+	public static <T> T getReference(TLObject self, Class<T> dynamicType, String attributeName) {
 		return self.tGetDataReference(dynamicType, attributeName);
 	}
 
@@ -858,7 +857,7 @@ public abstract class AbstractWrapper extends PersistentObject implements Wrappe
 	 * @return The resulting set of opposite objects.
 	 * 
 	 * @throws IllegalStateException
-	 *         if the given {@link Wrapper} was deleted before
+	 *         if the given {@link TLObject} was deleted before
 	 */
 	public static <C extends Collection<KnowledgeAssociation>, T extends TLObject> Set<T> resolveWrappersTyped(
 			TLObject object, AbstractAssociationQuery<? extends KnowledgeAssociation, C> query, Class<T> wrapperType) {
@@ -1133,65 +1132,39 @@ public abstract class AbstractWrapper extends PersistentObject implements Wrappe
 	}
 
 	/**
-	 * Resolve {@link Wrapper}s for all {@link KnowledgeItem}s returned from the given iterator.
+	 * Resolve {@link TLObject}s for all {@link KnowledgeItem}s returned from the given iterator.
 	 * 
 	 * @param iterator
 	 *        The {@link Iterator} to retrieve {@link KnowledgeItem}s from.
-	 * @return The list of resolved {@link Wrapper}s.
+	 * @return The list of resolved {@link TLObject}s.
 	 * 
 	 * @see #getWrappersFromIterator(Class, Iterator) for a typed result.
 	 */
-	protected static List<Wrapper> getWrappersFromIterator(Iterator<? extends KnowledgeItem> iterator) {
-	    ArrayList<Wrapper> result = new ArrayList<>();
+	protected static <T extends TLObject> List<T> getWrappersFromIterator(Iterator<? extends KnowledgeItem> iterator) {
+		ArrayList<T> result = new ArrayList<>();
 	    while (iterator.hasNext()) {
-			Wrapper wrapper = WrapperFactory.getWrapper((KnowledgeItem) iterator.next());
+			T wrapper = WrapperFactory.getWrapper((KnowledgeItem) iterator.next());
 			result.add(wrapper);
 	    }
 	    return result;
 	}
 	
 	/**
-	 * Resolve {@link Wrapper}s for all {@link KnowledgeItem}s returned from the given iterator.
+	 * Resolve {@link TLObject}s for all {@link KnowledgeItem}s returned from the given iterator.
 	 * 
 	 * @param expectedType
-	 *        The type of {@link Wrapper}s expected.
+	 *        The type of {@link TLObject}s expected.
 	 * @param iterator
 	 *        The {@link Iterator} to retrieve {@link KnowledgeItem}s from.
-	 * @return The list of resolved {@link Wrapper}s.
+	 * @return The list of resolved {@link TLObject}s.
 	 * 
 	 * @see #getWrappersFromIterator(Iterator) for a generic lookup.
 	 */
-	protected static <T> List<T> getWrappersFromIterator(Class<T> expectedType, Iterator<? extends KnowledgeItem> iterator) {
+	protected static <T extends TLObject> List<T> getWrappersFromIterator(Class<T> expectedType, Iterator<? extends KnowledgeItem> iterator) {
 	    ArrayList<T> result = new ArrayList<>();
 	    while (iterator.hasNext()) {
-			Wrapper wrapper = WrapperFactory.getWrapper((KnowledgeItem) iterator.next());
+			TLObject wrapper = WrapperFactory.getWrapper((KnowledgeItem) iterator.next());
 			result.add(CollectionUtil.dynamicCast(expectedType, wrapper));
-	    }
-	    return result;
-	}
-
-	/**
-	 * Map given Collection of Wrappers by theire name.
-	 * 
-	 * Is similar to {@link CollectionUtil#toMap(Collection, com.top_logic.basic.col.Mapping) } with
-	 * {@link Wrapper#NAME_MAPPING} but always returns a modifieable map.
-	 *
-	 * @param aCol an arbitrary Collection of Wrappers, must not be null.
-	 *
-	 * @return A modifiable map of Wrappers indexed by name.
-	 */
-	public static Map mapWrappersByName(Collection aCol) {
-	    int size   = aCol != null ? aCol.size() : 0; 
-	    Map result = new HashMap(size);
-	    if (aCol instanceof RandomAccess) {
-	        List theList = (List) aCol;
-	        for (int i=0; i < size; i++) {
-	            Wrapper theWrapper =  (Wrapper) theList.get(i);
-	            result.put (theWrapper.getName(), theWrapper);
-	        }
-	    } else if (aCol != null) for (Iterator i=aCol.iterator(); i.hasNext(); ) {
-	        Wrapper theWrapper =  (Wrapper) i.next();
-	        result.put (theWrapper.getName(), theWrapper);
 	    }
 	    return result;
 	}
@@ -1205,7 +1178,7 @@ public abstract class AbstractWrapper extends PersistentObject implements Wrappe
 	 * @return A modifiable Set of {@link KBUtils#getWrappedObjectName(TLObject)} of objects in the
 	 *         given collection.
 	 */
-	public static Set<TLID> idSet(Collection<? extends Wrapper> aCol) {
+	public static Set<TLID> idSet(Collection<? extends TLObject> aCol) {
 	    if (aCol == null) {
 	        return null;
 	    }
@@ -1214,12 +1187,12 @@ public abstract class AbstractWrapper extends PersistentObject implements Wrappe
 	    if (aCol instanceof RandomAccess) {
 			List<?> theList = (List<?>) aCol;
 	        for (int i = 0; i < size; i++) {
-	            Wrapper theWrapper = (Wrapper)theList.get(i);
+				TLObject theWrapper = (TLObject) theList.get(i);
 				result.add(KBUtils.getWrappedObjectName(theWrapper));
 	        }
 		} else
 			for (Iterator<?> it = aCol.iterator(); it.hasNext();) {
-				Wrapper theWrapper = (Wrapper) it.next();
+				TLObject theWrapper = (TLObject) it.next();
 				result.add(KBUtils.getWrappedObjectName(theWrapper));
 	    }
 	    return result;
@@ -1233,7 +1206,7 @@ public abstract class AbstractWrapper extends PersistentObject implements Wrappe
 	 *
 	 * @return An array of {@link KBUtils#getWrappedObjectName(TLObject)} of the given collection.
 	 */
-	public static TLID[] idArray(Collection<? extends Wrapper> aCol) {
+	public static TLID[] idArray(Collection<? extends TLObject> aCol) {
 	    if (aCol == null) {
 	        return null;
 	    }
@@ -1241,12 +1214,13 @@ public abstract class AbstractWrapper extends PersistentObject implements Wrappe
 		TLID[] result = new TLID[size];
 	    int      i      = 0;
 	    if (aCol instanceof RandomAccess) {
-	        List<? extends Wrapper> theList = (List<? extends Wrapper>)aCol;
+			List<? extends TLObject> theList = (List<? extends TLObject>) aCol;
 	        for (; i < size; i++) {
-	            Wrapper theWrapper = theList.get(i);
+				TLObject theWrapper = theList.get(i);
 				result[i] = KBUtils.getWrappedObjectName(theWrapper);
 	        }
-	    } else for (Wrapper theWrapper : aCol) {
+		} else
+			for (TLObject theWrapper : aCol) {
 				result[i++] = KBUtils.getWrappedObjectName(theWrapper);
 	    }
 	    return result;
@@ -1268,7 +1242,7 @@ public abstract class AbstractWrapper extends PersistentObject implements Wrappe
 	 * Returns a mapping contains all values of this wrapper.
 	 * 
 	 * <p>
-	 * The mapping maps the name of an attribute to its value in this {@link Wrapper}.
+	 * The mapping maps the name of an attribute to its value in this {@link TLObject}.
 	 * </p>
 	 * 
 	 * @return A map containing all values of this wrapper.

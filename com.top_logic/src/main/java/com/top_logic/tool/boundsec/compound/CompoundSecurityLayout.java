@@ -287,20 +287,6 @@ public class CompoundSecurityLayout extends BoundLayout {
         return null;
     }
 
-
-
-    /**
-     * Set the current BoundObject in the nearest CompoundSecurityLayout.
-     *
-     * @param anObject the BoundObject
-     */
-    public void setCurrentObject(BoundObject anObject){
-        CompoundSecurityLayout thePL = CompoundSecurityLayout.getNearestCompoundLayout(this);
-        if (thePL != null) {
-            thePL.setCurrentObject(anObject);
-        }
-    }
-
     /**
      * Find the nearest {@link CompoundSecurityLayout} above the given component.
      *

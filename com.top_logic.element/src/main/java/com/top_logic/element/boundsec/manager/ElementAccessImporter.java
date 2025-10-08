@@ -125,7 +125,7 @@ public class ElementAccessImporter extends DispatchingHandler {
                             if (this.roleProvider.getRole(theRoleName) == null) {
 								addProblem(
 									I18NConstants.AUTHORIZATION_PROBLEM_UNKNOWN_ROLE.fill(
-									this.name, theRoleName));
+										this.name, theRoleName, theRoleNames));
                                 theRolesIt.remove();
                             } else {
                                 if ( ! this.roleProvider.isUniqueRoleRole(theRoleName) ) {
@@ -251,7 +251,7 @@ public class ElementAccessImporter extends DispatchingHandler {
     }
     
     public static class ApplicationRoleHolder {
-        private Map availableRoles;
+		private Map<String, BoundedRole> availableRoles;
         private Set duplicateRoles;
         
         public ApplicationRoleHolder(ElementAccessManager accessManager) {
@@ -275,6 +275,13 @@ public class ElementAccessImporter extends DispatchingHandler {
             return ! this.duplicateRoles.contains(aRoleName);
         }
         
+		/**
+		 * All available role names.
+		 */
+		public Set<String> getAvailableRoles() {
+			return availableRoles.keySet();
+		}
+
     }
 
 }

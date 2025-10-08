@@ -11,6 +11,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResKey;
@@ -41,11 +43,6 @@ import com.top_logic.util.error.TopLogicException;
  * @author    <a href="mailto:tsa@top-logic.com">tsa</a>
  */
 public class RoleRulesImporter {
-
-	/**
-	 * Message key used when a configured role is unknown.
-	 */
-	static final ResKey1 UNKNOWN_ROLE = I18NConstants.ROLE_RULES_PROBLEM_UNKNOWN_ROLE;
 
 	/**
 	 * Message key used when the source {@link TLClass} of a rule is abstract.
@@ -334,6 +331,7 @@ public class RoleRulesImporter {
 		for (String roleName : roleNames) {
 			BoundedRole role = _roleProvider.getRole(roleName);
 
+			Set<String> availableRoles = Collections.emptySet();
 			if (role == null) {
 				role = BoundedRole.getRoleByName(_kb, roleName);
 			}
@@ -341,7 +339,10 @@ public class RoleRulesImporter {
 			if (role != null) {
 				result.add(role);
 			} else {
-				addProblem(UNKNOWN_ROLE.fill(roleName));
+				addProblem(I18NConstants.ROLE_RULES_PROBLEM_UNKNOWN_ROLE
+					.fill(roleName,
+						availableRoles.stream().collect(Collectors.joining(", ")),
+						BoundedRole.getAll().stream().map(x -> x.getName()).collect(Collectors.joining(", "))));
 			}
 
 		}

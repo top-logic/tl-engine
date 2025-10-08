@@ -33,8 +33,10 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 AUTHORIZATION_PROBLEM_UNKNOWN_CLASSIFIER =
 		legacyKey1("admin.security.import.authorization.problem.unknownClassifier");
 
-	public static ResKey2 AUTHORIZATION_PROBLEM_UNKNOWN_ROLE =
-		legacyKey2("admin.security.import.authorization.problem.unknownRole");
+	/**
+	 * @en Role {1} for classification {0} not found (available roles: {2}). The rule is not used.
+	 */
+	public static ResKey3 AUTHORIZATION_PROBLEM_UNKNOWN_ROLE;
 
 	public static ResKey3 CLASSIFICATIONS_PROBLEM_UNKNOWN_CLASSIFIER =
 		legacyKey3("admin.security.import.classifications.problem.unknownClassifier");
@@ -55,8 +57,11 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey NO_ATTRIBUTE_OR_ASSOCIATION = legacyKey("admin.security.import.roleRules.problem.noAttributeOrAssociation");
 
-	public static ResKey1 ROLE_RULES_PROBLEM_UNKNOWN_ROLE =
-		legacyKey1("admin.security.import.roleRules.problem.unknownRole");
+	/**
+	 * @en The role {0} does not exist. Available application roles are {1}, available global roles
+	 *     are {2}. The corresponding rule is ignored.
+	 */
+	public static ResKey3 ROLE_RULES_PROBLEM_UNKNOWN_ROLE;
 
 	public static ResKey2 UNKNOWN_ATTRIBUTE = legacyKey2("admin.security.import.roleRules.problem.unknownAttribute");
 

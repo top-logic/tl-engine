@@ -1,0 +1,103 @@
+<h2>Syntax</h2>
+
+<pre>
+	<code>excelSheet(name: $sheetName, content: $content)</code>
+</pre>
+
+<h2>Beschreibung</h2>
+
+<p>Erstellt ein Arbeitsblatt für eine Excel-Datei. Diese Funktion wird innerhalb von excelFile() verwendet, um einzelne Arbeitsblätter mit Namen und Inhalten zu definieren.</p>
+
+<p>Ein Arbeitsblatt kann entweder im Matrix-Format (eine Liste von Listen, wobei jede innere Liste eine Zeile repräsentiert) oder im Zellen-Format (eine Liste von excelCell()) vorliegen.</p>
+
+<h2>Parameter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Typ</th>
+			<th>Beschreibung</th>
+			<th>Pflicht</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>name</td>
+			<td>Zeichenkette</td>
+			<td>Der Name des Arbeitsblatts, der in der Excel-Registerkarte angezeigt wird.</td>
+			<td>ja</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>content</td>
+			<td>Objekt</td>
+			<td>Der Inhalt des Arbeitsblatts. Dies kann eine Liste von Listen (Matrix-Format) oder eine Liste von excelCell() sein.</td>
+			<td>ja</td>
+			<td> </td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Rückgabewert</h2>
+
+<p><strong>Typ:</strong> Map</p>
+
+<p>Ein Map-Objekt, das die Arbeitsblatt-Informationen für die Verarbeitung durch excelFile() enthält.</p>
+
+<h2>Beispiele</h2>
+
+<h3>Arbeitsblatt im Matrix-Format</h3>
+
+<pre>
+	<code>excelSheet(
+    name: "Mitarbeiterdaten",
+    content: [
+      ["Name", "Position", "Gehalt", "Eintrittsdatum"],
+      ["Max Mustermann", "Entwickler", 65000, "2023-01-15"],
+      ["Anna Schmidt", "Designerin", 58000, "2023-03-20"],
+      ["Tom Weber", "Manager", 75000, "2022-11-10"]
+    ]
+  )</code>
+</pre>
+
+<p><strong>Ausgabe: </strong>Arbeitsblatt mit tabellarischen Daten in einem einfachen Rasterformat.</p>
+
+<h3>Arbeitsblatt mit Zellformatierung und Formeln</h3>
+
+<pre>
+	<code>excelSheet(
+    name: "Berechnungen",
+    content: [
+      // Titelzeile
+      excelCell(row: 0, col: 0, content: "Budgetübersicht 2024",
+               style: {"bold": true, "fontSize": 14, "background": "#4472C4", "color": "white", "colspan": 3}),
+
+      // Spaltenüberschriften
+      excelCell(row: 2, col: 0, content: "Kategorie", style: {"bold": true, "background": "#D9E1F2"}),
+      excelCell(row: 2, col: 1, content: "Geplant", style: {"bold": true, "background": "#D9E1F2"}),
+      excelCell(row: 2, col: 2, content: "Tatsächlich", style: {"bold": true, "background": "#D9E1F2"}),
+
+      // Datenzeilen
+      excelCell(row: 3, col: 0, content: "Marketing"),
+      excelCell(row: 3, col: 1, content: 50000, style: {"numberFormat": "$#,##0"}),
+      excelCell(row: 3, col: 2, content: 52000, style: {"numberFormat": "$#,##0"}),
+
+      excelCell(row: 4, col: 0, content: "Entwicklung"),
+      excelCell(row: 4, col: 1, content: 80000, style: {"numberFormat": "$#,##0"}),
+      excelCell(row: 4, col: 2, content: 75000, style: {"numberFormat": "$#,##0", "color": "red"}),
+
+      // Summenzeile
+      excelCell(row: 5, col: 0, content: "Gesamt", style: {"bold": true, "borderTop": "double"}),
+      excelCell(row: 5, col: 1, content: excelFormula("SUM(B4:B5)"), style: {"numberFormat": "$#,##0", "bold": true}),
+      excelCell(row: 5, col: 2, content: excelFormula("SUM(C4:C5)"), style: {"numberFormat": "$#,##0", "bold": true})
+    ]
+  )</code>
+</pre>
+
+<p><strong>Ausgabe: </strong>Arbeitsblatt mit formatierten Zellen, verschiedenen Datentypen und Excel-Formeln.</p>
+
+<p>​</p>
+
+<p>​</p>

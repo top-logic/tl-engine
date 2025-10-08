@@ -1,0 +1,103 @@
+<h2>Syntax</h2>
+
+<pre>
+	<code>excelSheet(name: $sheetName, content: $content)</code>
+</pre>
+
+<h2>Description</h2>
+
+<p>Creates a worksheet for an Excel file. This function is used within excelFile() to define individual worksheets with names and contents.</p>
+
+<p>A worksheet can either be in matrix format (a list of lists, where each inner list represents a row) or in cell format (a list of excelCell()).</p>
+
+<h2>Parameters</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>name</th>
+			<th>Type</th>
+			<th>Type Description</th>
+			<th>Mandatory</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>name</td>
+			<td>Character string</td>
+			<td>The name of the worksheet that is displayed in the Excel tab.</td>
+			<td>yes</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>content</td>
+			<td>object</td>
+			<td>The content of the worksheet. This can be a list of lists (matrix format) or a list of excelCell().</td>
+			<td>yes</td>
+			<td> </td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Return value</h2>
+
+<p><strong>Type:</strong> Map</p>
+
+<p>A map object containing the worksheet information for processing by excelFile().</p>
+
+<h2>Examples</h2>
+
+<h3>Worksheet in matrix format</h3>
+
+<pre>
+	<code>excelSheet(
+    name: "Mitarbeiterdaten",
+    content: [
+      ["Name", "Position", "Gehalt", "Eintrittsdatum"],
+      ["Max Mustermann", "Entwickler", 65000, "2023-01-15"],
+      ["Anna Schmidt", "Designerin", 58000, "2023-03-20"],
+      ["Tom Weber", "Manager", 75000, "2022-11-10"]
+    ]
+  )</code>
+</pre>
+
+<p><strong>Output: </strong>Worksheet with tabular data in a simple grid format.</p>
+
+<h3>Worksheet with cell formatting and formulas</h3>
+
+<pre>
+	<code>excelSheet(
+    name: "Berechnungen",
+    content: [
+      // Titelzeile
+      excelCell(row: 0, col: 0, content: "Budgetübersicht 2024",
+               style: {"bold": true, "fontSize": 14, "background": "#4472C4", "color": "white", "colspan": 3}),
+
+      // Spaltenüberschriften
+      excelCell(row: 2, col: 0, content: "Kategorie", style: {"bold": true, "background": "#D9E1F2"}),
+      excelCell(row: 2, col: 1, content: "Geplant", style: {"bold": true, "background": "#D9E1F2"}),
+      excelCell(row: 2, col: 2, content: "Tatsächlich", style: {"bold": true, "background": "#D9E1F2"}),
+
+      // Datenzeilen
+      excelCell(row: 3, col: 0, content: "Marketing"),
+      excelCell(row: 3, col: 1, content: 50000, style: {"numberFormat": "$#,##0"}),
+      excelCell(row: 3, col: 2, content: 52000, style: {"numberFormat": "$#,##0"}),
+
+      excelCell(row: 4, col: 0, content: "Entwicklung"),
+      excelCell(row: 4, col: 1, content: 80000, style: {"numberFormat": "$#,##0"}),
+      excelCell(row: 4, col: 2, content: 75000, style: {"numberFormat": "$#,##0", "color": "red"}),
+
+      // Summenzeile
+      excelCell(row: 5, col: 0, content: "Gesamt", style: {"bold": true, "borderTop": "double"}),
+      excelCell(row: 5, col: 1, content: excelFormula("SUM(B4:B5)"), style: {"numberFormat": "$#,##0", "bold": true}),
+      excelCell(row: 5, col: 2, content: excelFormula("SUM(C4:C5)"), style: {"numberFormat": "$#,##0", "bold": true})
+    ]
+  )</code>
+</pre>
+
+<p><strong>Output: </strong>Worksheet with formatted cells, various data types and Excel formulas.</p>
+
+<p></p>
+
+<p></p>

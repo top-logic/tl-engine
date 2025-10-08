@@ -1,0 +1,102 @@
+<h2>Syntax</h2>
+
+<pre>
+	<code>excelFile(name: $fileName, content: $content)</code>
+</pre>
+
+<h2>Beschreibung</h2>
+
+<p>Erstellt eine Excel-Datei mit dem angegebenen Namen und Inhalt. Die Funktion generiert eine vollständige Excel-Datei (.xlsx-Format) mit einer oder mehreren Arbeitsblättern, Zellinhalten, Formeln und Formatierungen. Die Funktion gibt die erzeugte Excel-Datei als BinaryData-Objekt zurück, das für den Download oder die weitere Verarbeitung verwendet werden kann.</p>
+
+<h2>Parameter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Typ</th>
+			<th>Beschreibung</th>
+			<th>Pflicht</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>name</td>
+			<td>Zeichenkette</td>
+			<td>Der Dateiname der zu erzeugenden Excel-Datei (z.B. "bericht.xlsx").</td>
+			<td>ja</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>content</td>
+			<td>Liste</td>
+			<td>Eine Liste von Arbeitsblättern, die in der Excel-Datei erstellt werden sollen. Typischerweise erstellt mit excelSheet().</td>
+			<td>ja</td>
+			<td> </td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Rückgabewert</h2>
+
+<p><strong>Typ:</strong> BinaryData</p>
+
+<p>Die erzeugte Excel-Datei als BinaryData-Objekt, das heruntergeladen oder weiterverarbeitet werden kann.</p>
+
+<h2>Beispiele</h2>
+
+<h3>Einfache Excel-Datei mit einem Arbeitsblatt</h3>
+
+<pre>
+	<code>excelFile(
+    name: "verkaufsbericht.xlsx",
+    content: [
+      excelSheet(
+        name: "Q1 2024",
+        content: [
+          ["Produkt", "Januar", "Februar", "März"],
+          ["Widget A", 1000, 1500, 1200],
+          ["Widget B", 800, 900, 1100]
+        ]
+      )
+    ]
+  )</code>
+</pre>
+
+<p><strong>Ausgabe: </strong>Excel-Datei mit einem Arbeitsblatt "Q1 2024" und Verkaufsdaten.</p>
+
+<h3>Excel-Datei mit mehreren Arbeitsblättern und Zellformatierung</h3>
+
+<pre>
+	<code>excelFile(
+    name: "komplexer_bericht.xlsx",
+    content: [
+      excelSheet(
+        name: "Zusammenfassung",
+        content: [
+          excelCell(row: 0, col: 0, content: "Monatsbericht",
+                   style: {"bold": true, "fontSize": 16, "background": "#2C3E50", "color": "white"}),
+          excelCell(row: 2, col: 0, content: "Gesamtumsatz", style: {"bold": true}),
+          excelCell(row: 2, col: 1, content: excelFormula("SUM(Details!B2:B4)"),
+                   style: {"numberFormat": "$#,##0.00", "background": "#E8F6F3"})
+        ]
+      ),
+      excelSheet(
+        name: "Details",
+        content: [
+          ["Monat", "Umsatz", "Kosten"],
+          ["Januar", 50000, 35000],
+          ["Februar", 55000, 38000],
+          ["März", 60000, 40000]
+        ]
+      )
+    ]
+  )</code>
+</pre>
+
+<p><strong>Ausgabe</strong>: Excel-Datei mit zwei Arbeitsblättern, formatierten Zellen und Formeln.</p>
+
+<p> </p>
+
+<p>​</p>

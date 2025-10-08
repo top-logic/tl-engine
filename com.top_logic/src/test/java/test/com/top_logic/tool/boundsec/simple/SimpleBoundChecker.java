@@ -14,9 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
@@ -25,7 +23,6 @@ import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.simple.AbstractBoundChecker;
 import com.top_logic.tool.execution.service.CommandApprovalService;
-import com.top_logic.util.TLContext;
 
 /**
  * Simple implementation of the {@link com.top_logic.tool.boundsec.BoundChecker} interface.
@@ -66,31 +63,19 @@ public class SimpleBoundChecker extends AbstractBoundChecker {
 		this(ComponentName.newName(anID), aCurrentObject);
 	}
 
-    /** 
-     * Check if the given command group for the current person is allowed.
-     * 
-     * @return true, if the given command group is allowed for current person
-     */ 
-    @Override
-	public boolean allow(BoundCommandGroup aGroup, BoundObject anObject) {
-		if (!CommandApprovalService.canExecute(aGroup, anObject)) {
-            return false;
-        }
-        
-        if (ThreadContext.isAdmin())
-            return true;
-		PersonManager r = PersonManager.getManager();    // allow all
-        
-		Person currentPerson = TLContext.currentUser();
-        return allow(currentPerson, anObject, aGroup);
-    }
-
 	/** 
      * Check if given Person has access to aModel in this class fo given CommandGroup
      */
     @Override
-	public boolean allow(Person aPerson, BoundObject aModel,
-            BoundCommandGroup aCmdGroup) {
+	public boolean allow(Person aPerson, BoundObject aModel, BoundCommandGroup aCmdGroup) {
+		if (aCmdGroup.isSystemGroup()) {
+			return true;
+		}
+
+		if (!CommandApprovalService.canExecute(aCmdGroup, aModel)) {
+			return false;
+		}
+
         if (AccessManager.getInstance().hasRole(aPerson, aModel, getRolesForCommandGroup(aCmdGroup))) {
 			Collection<? extends BoundChecker> theChildCheckers = this.getChildCheckers();
             if (theChildCheckers == null) {

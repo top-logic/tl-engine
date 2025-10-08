@@ -7,6 +7,7 @@ package com.top_logic.tool.boundsec.simple;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Set;
 
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.mig.html.layout.ComponentName;
@@ -14,6 +15,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundObject;
+import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.util.TLContextManager;
 
 /**
@@ -59,7 +61,7 @@ public class AllowNoneChecker extends AbstractBoundChecker {
 	}
 
 	@Override
-	public Collection getRolesForCommandGroup(BoundCommandGroup aCommand) {
+	public Set<? extends BoundRole> getRolesForCommandGroup(BoundCommandGroup aCommand) {
 		return Collections.emptySet();
 	}
 

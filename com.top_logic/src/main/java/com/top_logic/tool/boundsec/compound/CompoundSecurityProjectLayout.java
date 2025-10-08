@@ -143,24 +143,4 @@ public class CompoundSecurityProjectLayout extends CompoundSecurityLayout {
         return (theSelected instanceof BoundObject) ? (BoundObject) theSelected : null;
     }
     
-    /**
-     * Overriden to foreward anObject to primary checker.
-     */
-    @Override
-	public void setCurrentObject(BoundObject anObject){
-        CompoundSecurityBoundChecker primaryChecker = this.getPrimaryChecker();
-        
-        // If the primary checker is a layout component (e.g. a tree) then the component
-        // must have a change to initialize the model. Maybe it is better to make this
-        // in setSelected but this would be changed the current behavior. 
-        // The code here hasn't so strong consequences.
-        if (primaryChecker instanceof LayoutComponent) {
-			LayoutComponent layoutComponent = (LayoutComponent) primaryChecker;
-			layoutComponent.getModel();
-		}
-        
-		primaryChecker.setSelected(anObject);
-        super.setCurrentObject(anObject);
-    }
-    
 }

@@ -63,7 +63,7 @@ public final class DefaultExcelCellRenderer extends AbstractExcelCellRenderer {
 			for (Iterator<?> it = collection.iterator(); it.hasNext();) {
 				buffer.append(resourceProvider.getLabel(it.next()));
 				if (it.hasNext()) {
-					buffer.append(", ");
+					buffer.append("; ");
 				}
 			}
 			return buffer.toString();

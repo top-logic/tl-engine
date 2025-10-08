@@ -29,8 +29,6 @@ import com.top_logic.mig.html.layout.Layout;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutList;
 import com.top_logic.mig.html.layout.tiles.control.GroupTileControlProvider;
-import com.top_logic.tool.boundsec.BoundChecker;
-import com.top_logic.tool.boundsec.BoundCheckerDelegate;
 
 /**
  * {@link Layout} in a tile context.
@@ -47,7 +45,7 @@ import com.top_logic.tool.boundsec.BoundCheckerDelegate;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 @Label("Group of tiles")
-public class GroupTileComponent extends LayoutList implements Selectable, BoundCheckerDelegate {
+public class GroupTileComponent extends LayoutList implements Selectable, LayoutContainerBoundChecker {
 
 	/**
 	 * Configuration of a {@link GroupTileComponent}.
@@ -72,8 +70,6 @@ public class GroupTileComponent extends LayoutList implements Selectable, BoundC
 		}
 
 	}
-
-	private final BoundChecker _boundCheckerDelegate = new LayoutContainerBoundChecker<>(this);
 
 	/**
 	 * Creates a new {@link GroupTileComponent}.
@@ -175,11 +171,6 @@ public class GroupTileComponent extends LayoutList implements Selectable, BoundC
 	@Override
 	public boolean isOuterFrameset() {
 		return false;
-	}
-
-	@Override
-	public BoundChecker getDelegate() {
-		return _boundCheckerDelegate;
 	}
 
 	@Override

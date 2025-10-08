@@ -73,7 +73,6 @@ import com.top_logic.mig.html.layout.decoratedTabBar.DecorationValueListener;
 import com.top_logic.mig.html.layout.decoratedTabBar.DecorationValueProvider;
 import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCheckerComponent;
-import com.top_logic.tool.boundsec.BoundCheckerDelegate;
 import com.top_logic.tool.boundsec.BoundCheckerLayoutConfig;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.Utils;
@@ -84,7 +83,7 @@ import com.top_logic.util.error.TopLogicException;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public final class TabComponent extends LayoutList implements BoundCheckerDelegate, TabBarListener,
+public final class TabComponent extends LayoutList implements LayoutContainerBoundChecker, TabBarListener,
 		DecorationValueListener {
     
 	/**
@@ -176,8 +175,6 @@ public final class TabComponent extends LayoutList implements BoundCheckerDelega
 
 	private final TabComponentTabBarModel _tabBar = new TabComponentTabBarModel(Collections.emptyList(),
 		Collections.emptySet());
-
-	private final BoundChecker _boundCheckerDelegate = new LayoutContainerBoundChecker<>(this);
 
 	private boolean _onChangeSelectFirstTab;
 
@@ -643,11 +640,6 @@ public final class TabComponent extends LayoutList implements BoundCheckerDelega
 	@Override
 	protected boolean supportsInternalModel(Object anObject) {
 		return anObject == null;
-	}
-
-	@Override
-	public BoundChecker getDelegate() {
-		return _boundCheckerDelegate;
 	}
 
 	/**

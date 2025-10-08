@@ -24,7 +24,7 @@ import com.top_logic.tool.boundsec.wrap.SecurityComponentCache;
  *
  * @author    <a href="mailto:kha@top-logic.com">kha</a>
  */
-public class BoundLayout extends Layout implements BoundCheckerDelegate, SecurityMasterBoundChecker {
+public class BoundLayout extends Layout implements LayoutContainerBoundChecker, SecurityMasterBoundChecker {
 
 	/**
 	 * Configuration options for {@link BoundLayout}.
@@ -49,8 +49,6 @@ public class BoundLayout extends Layout implements BoundCheckerDelegate, Securit
     /** Sticky flag if securityMaster is valid (even if null). */
     private boolean validSecurityMaster;
 
-	private final BoundChecker _boundCheckerDelegate = new LayoutContainerBoundChecker<>(this);
-
     /** Construct a BoundLayout from (XML-)Attributes. */
      public BoundLayout(InstantiationContext context, Config atts) throws ConfigurationException {
         super(context, atts);
@@ -72,11 +70,6 @@ public class BoundLayout extends Layout implements BoundCheckerDelegate, Securit
          return null;
      }
      
-    @Override
-	public BoundChecker getDelegate() {
-		return _boundCheckerDelegate;
-    }
-
 	@Override
 	public ResKey hideReason() {
 		return hideReason(internalModel());

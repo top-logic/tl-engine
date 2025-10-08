@@ -520,7 +520,7 @@ public abstract class BoundComponent extends AJAXComponent implements BoundCheck
      * @return The Roles for CommandGroups are configured using the PersBoundComp.
      */
     @Override
-	public Collection getRolesForCommandGroup(BoundCommandGroup aCommand) {
+	public Set<? extends BoundRole> getRolesForCommandGroup(BoundCommandGroup aCommand) {
 		WindowComponent enclosingWindow = this.getEnclosingWindow();
 		if (enclosingWindow != null) {
 			LayoutComponent windowOpener = enclosingWindow.getOpener();

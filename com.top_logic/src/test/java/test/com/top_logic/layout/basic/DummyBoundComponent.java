@@ -25,7 +25,7 @@ public class DummyBoundComponent extends LayoutComponent implements BoundChecker
 
 	private boolean isVisibleAndAllowsAll;
 
-	private BoundChecker _delegate;;
+	private BoundChecker _delegate;
 
 	DummyBoundComponent() throws ConfigurationException {
 		super(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, TypedConfiguration

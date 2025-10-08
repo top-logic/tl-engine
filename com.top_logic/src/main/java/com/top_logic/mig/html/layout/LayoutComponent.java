@@ -1246,10 +1246,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		return emptySet();
 	}
 
-    /**
-     * Accessor to the parent.
-     * @return LayoutComponent, null if we are the root of the layout hierarchy
-     */
+	@Override
 	public final LayoutComponent getParent() {
 		return _parent;
     }
@@ -1304,9 +1301,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		return _dialog;
 	}
 
-    /**
-	 * All dialogs of this component.
-	 */
+	@Override
 	public List<? extends LayoutComponent> getDialogs() {
 		return _dialogs;
     }
@@ -1959,6 +1954,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	 *
 	 * If nothing is configured a (unique) synthetic name is returned.
 	 */
+	@Override
 	public final ComponentName getName() {
 		return getConfig().getName();
     }
@@ -2098,17 +2094,8 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		return getMainLayout().getComponentByName(aName);
     }
 
-    /**
-	 * Check if this component handles the given type.
-	 *
-	 * The type may either be a classname or (in TopLogic) some other meta-type. When this function
-	 * returns true, supports Objects shoud be true, too.
-	 * 
-	 * @param type
-	 *        the type. If <code>null</code> or empty false is returned
-	 * @return true if the component handles the type
-	 */
-    public final boolean isDefaultFor(String type) {
+	@Override
+	public final boolean isDefaultFor(String type) {
 		return getDefaultForTypes().contains(type);
     }
     

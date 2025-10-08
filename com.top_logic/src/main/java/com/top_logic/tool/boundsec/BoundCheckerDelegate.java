@@ -6,6 +6,7 @@
 package com.top_logic.tool.boundsec;
 
 import java.util.Collection;
+import java.util.Set;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -70,7 +71,7 @@ public interface BoundCheckerDelegate extends BoundCheckerComponent {
 	}
 
 	@Override
-	default Collection getRolesForCommandGroup(BoundCommandGroup aCommand) {
+	default Set<? extends BoundRole> getRolesForCommandGroup(BoundCommandGroup aCommand) {
 		return getDelegate().getRolesForCommandGroup(aCommand);
 	}
 

@@ -24,7 +24,7 @@ import com.top_logic.model.util.TLModelUtil;
 /**
  * {@link GenericMethod} for creating Excel cells with styling in TL-Script.
  * 
- * Used within excelSheet() to define individual cells with their content and styling.
+ * Used within {@link ExcelSheet} to define individual cells with their content and styling.
  * 
  * @author <a href="mailto:jhu@top-logic.com">Jonathan Hüsing</a>
  */

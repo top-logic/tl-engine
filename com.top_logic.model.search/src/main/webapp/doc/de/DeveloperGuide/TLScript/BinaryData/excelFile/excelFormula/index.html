@@ -1,0 +1,103 @@
+<h2>Syntax</h2>
+
+<pre>
+	<code>excelFormula($formula)</code>
+</pre>
+
+<h2>Beschreibung</h2>
+
+<p>Erstellt eine Excel-Formel, die in einer Zelle verwendet werden kann. Die Funktion nimmt eine Excel-Formel als String entgegen und verpackt sie in ein spezielles Format, das von der Excel-Erstellung erkannt und verarbeitet wird. Formeln ermöglichen die Erstellung von dynamischen und interaktiven Excel-Tabellen, bei denen Werte automatisch basierend auf anderen Zelleninhalten berechnet werden.</p>
+
+<h2>Parameter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Typ</th>
+			<th>Beschreibung</th>
+			<th>Pflicht</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>formula</td>
+			<td>Zeichenkette</td>
+			<td>Die Excel-Formel als String (ohne führendes Gleichheitszeichen).</td>
+			<td>ja</td>
+			<td> </td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Rückgabewert</h2>
+
+<p><strong>Typ:</strong> Map</p>
+
+<p>Ein spezielles Map-Objekt, das die Formelinformationen für die Verarbeitung durch excelCell() enthält.</p>
+
+<h2>Beispiele</h2>
+
+<h3>Einfache Summenformel</h3>
+
+<pre>
+	<code>excelCell(row: 5, col: 3, content: excelFormula("SUM(B3:D3)"))</code>
+</pre>
+
+<p><strong>Ausgabe: </strong>Zelle mit Formel, die die Summe der Zellen B3 bis D3 berechnet.</p>
+
+<h3>Bedingte Formel</h3>
+
+<pre>
+	<code>excelCell(row: 2, col: 4, content:
+    excelFormula("IF(B2&gt;1000, \"Überschritten\", \"Im Rahmen\")"),
+    style: {"color": "blue"})</code>
+</pre>
+
+<p><strong>Ausgabe: </strong>Zelle mit bedingter Formel, die "Überschritten" anzeigt, wenn B2 &gt; 1000, sonst "Im Rahmen".</p>
+
+<p>​</p>
+
+<h3>Komplexe Berechnungen</h3>
+
+<pre>
+	<code>excelCell(row: 10, col: 5, content:
+    excelFormula("AVERAGEIFS(D2:D100, B2:B100, \"&gt;=2024-01-01\", C2:C100, \"Marketing\")"),
+    style: {"numberFormat": "0.00"})</code>
+</pre>
+
+<p><strong>Ausgabe: </strong>Zwei Zellen mit dem aktuellen Datum und der aktuellen Uhrzeit, passend formatiert.</p>
+
+<p>​​</p>
+
+<h3>Datum- und Zeitformeln</h3>
+
+<pre>
+	<code>excelCell(row: 0, col: 0, content: excelFormula("TODAY()"),
+    style: {"numberFormat": "DD.MM.YYYY"})
+
+excelCell(row: 0, col: 1, content: excelFormula("NOW()"),
+    style: {"numberFormat": "DD.MM.YYYY HH:MM"})</code>
+</pre>
+
+<p><strong>Ausgabe: </strong>Zelle mit Excel-Formel, die die Summe von Zellen A5 bis A10 berechnet, mit Währungsformat und grünem Hintergrund.</p>
+
+<p>​</p>
+
+<h3>Statistische Formeln</h3>
+
+<pre>
+	<code>excelCell(row: 15, col: 2, content: excelFormula("COUNTIF(A2:A100, \"&gt;1000\")"),
+    style: {"background": "#FFF3CD"})
+
+excelCell(row: 16, col: 2, content: excelFormula("MAX(C2:C50)"),
+    style: {"background": "#D4EDDA"})
+
+excelCell(row: 17, col: 2, content: excelFormula("MIN(C2:C50)"),
+    style: {"background": "#F8D7DA"})</code>
+</pre>
+
+<p><strong>Ausgabe: </strong>Drei Zellen mit statistischen Berechnungen (Anzahl, Maximum, Minimum) und farblicher Hervorhebung.</p>
+
+<p>​</p>

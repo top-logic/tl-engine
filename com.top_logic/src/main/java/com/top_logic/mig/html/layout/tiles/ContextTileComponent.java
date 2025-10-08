@@ -32,8 +32,6 @@ import com.top_logic.mig.html.layout.ComponentInstantiationContext;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutContainer;
 import com.top_logic.mig.html.layout.tiles.control.ContextTileControlProvider;
-import com.top_logic.tool.boundsec.BoundChecker;
-import com.top_logic.tool.boundsec.BoundCheckerDelegate;
 
 /**
  * {@link LayoutContainer} representing a {@link Selectable selector} and {@link LayoutComponent
@@ -58,7 +56,7 @@ import com.top_logic.tool.boundsec.BoundCheckerDelegate;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class ContextTileComponent extends LayoutContainer implements BoundCheckerDelegate {
+public class ContextTileComponent extends LayoutContainer implements LayoutContainerBoundChecker {
 
 	/**
 	 * Configuration of a {@link ContextTileComponent}.
@@ -203,9 +201,6 @@ public class ContextTileComponent extends LayoutContainer implements BoundChecke
 	private LayoutComponent _selector;
 
 	private List<LayoutComponent> _children = Collections.emptyList();
-
-	private final BoundChecker _boundCheckerDelegate =
-		new LayoutContainerBoundChecker<>(this, ContextTileComponent::selectorAsList);
 
 	/**
 	 * Creates a new {@link ContextTileComponent}.
@@ -421,11 +416,6 @@ public class ContextTileComponent extends LayoutContainer implements BoundChecke
 	@Override
 	public int getChildCount() {
 		return getChildList().size();
-	}
-
-	@Override
-	public BoundChecker getDelegate() {
-		return _boundCheckerDelegate;
 	}
 
 	@Override

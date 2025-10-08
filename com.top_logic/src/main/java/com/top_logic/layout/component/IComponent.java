@@ -7,6 +7,7 @@ package com.top_logic.layout.component;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
+import java.util.List;
 
 import com.top_logic.basic.Log;
 import com.top_logic.basic.col.TypedAnnotatable;
@@ -14,6 +15,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ConfiguredInstance;
 import com.top_logic.layout.channel.ComponentChannel;
 import com.top_logic.mig.html.layout.CommandRegistry;
+import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.tool.boundsec.CommandHandler;
@@ -51,6 +53,15 @@ public interface IComponent extends TypedAnnotatable, ConfiguredInstance<LayoutC
 		}
 
 	}
+
+	/**
+	 * The name of this component.
+	 *
+	 * <p>
+	 * If nothing is configured a (unique) synthetic name is returned.
+	 * </p>
+	 */
+	ComponentName getName();
 
 	/** The root component of this layout. */
 	MainLayout getMainLayout();
@@ -130,4 +141,31 @@ public interface IComponent extends TypedAnnotatable, ConfiguredInstance<LayoutC
 	 * </p>
 	 */
 	void closeDialog();
+
+	/**
+	 * Check if this component handles the given type.
+	 *
+	 * The type may either be a classname or (in TopLogic) some other meta-type. When this function
+	 * returns true, supports Objects shoud be true, too.
+	 * 
+	 * @param type
+	 *        the type. If <code>null</code> or empty false is returned
+	 * @return true if the component handles the type
+	 */
+	boolean isDefaultFor(String type);
+
+	/**
+	 * The container, this component is part of.
+	 * 
+	 * <p>
+	 * The top-level component is of type {@link MainLayout} and has no parent.
+	 * </p>
+	 */
+	IComponent getParent();
+
+	/**
+	 * The dialogs registered at this component.
+	 */
+	List<? extends IComponent> getDialogs();
+
 }

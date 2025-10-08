@@ -48,8 +48,6 @@ import com.top_logic.mig.html.layout.tiles.ContextTileComponent.ContentDisplayed
 import com.top_logic.mig.html.layout.tiles.breadcrumb.RootTileBreadcrumbControlProvider;
 import com.top_logic.mig.html.layout.tiles.component.InlinedTileComponent;
 import com.top_logic.mig.html.layout.tiles.control.RootTileControlProvider;
-import com.top_logic.tool.boundsec.BoundChecker;
-import com.top_logic.tool.boundsec.BoundCheckerDelegate;
 
 /**
  * A {@link RootTileComponent} is the main entry point to configure tiles in app.
@@ -74,7 +72,7 @@ import com.top_logic.tool.boundsec.BoundCheckerDelegate;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class RootTileComponent extends SingleLayoutContainer implements BoundCheckerDelegate {
+public class RootTileComponent extends SingleLayoutContainer implements LayoutContainerBoundChecker {
 
 	/**
 	 * Property annotated to the components that are displayed in the path of the
@@ -183,8 +181,6 @@ public class RootTileComponent extends SingleLayoutContainer implements BoundChe
 	final ChannelListener _inlinedTileSelectionListener = this::handleInlinedTileSelectionChanged;
 
 	private TitleProvider _titleProvider;
-
-	private final BoundChecker _boundCheckerDelegate = new LayoutContainerBoundChecker<>(this);
 
 	/**
 	 * Creates a new {@link RootTileComponent}.
@@ -738,11 +734,6 @@ public class RootTileComponent extends SingleLayoutContainer implements BoundChe
 			component = component.getParent();
 		} while (component != null);
 		return null;
-	}
-
-	@Override
-	public BoundChecker getDelegate() {
-		return _boundCheckerDelegate;
 	}
 
 	@Override

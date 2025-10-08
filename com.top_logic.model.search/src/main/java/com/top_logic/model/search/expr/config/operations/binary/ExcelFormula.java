@@ -24,7 +24,7 @@ import com.top_logic.model.util.TLModelUtil;
 /**
  * {@link GenericMethod} for creating Excel formulas in TL-Script.
  * 
- * Used within excelCell() to define formula expressions for cells.
+ * Used within {@link ExcelCell} to define formula expressions for cells.
  * 
  * @author <a href="mailto:jhu@top-logic.com">Jonathan Hüsing</a>
  */

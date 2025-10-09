@@ -2197,6 +2197,195 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		assertEquals("", eval("resolveAlias('')"));
 	}
 
+	public void testMathFunctions() throws ParseException {
+		// Test mathAbs function
+		assertEquals(5.0, execute(search("mathAbs(-5)")));
+		assertEquals(5.0, execute(search("mathAbs(5)")));
+		assertEquals(0.0, execute(search("mathAbs(0)")));
+		assertEquals(3.14, execute(search("mathAbs(3.14)")));
+		assertEquals(3.14, execute(search("mathAbs(-3.14)")));
+
+		// Test mathAcos function
+		assertEquals(0.0, execute(search("mathAcos(1)")));
+		assertEquals(Math.PI, execute(search("mathAcos(-1)")));
+		assertEquals(Math.PI / 2, execute(search("mathAcos(0)")));
+
+		// Test mathAsin function
+		assertEquals(0.0, execute(search("mathAsin(0)")));
+		assertEquals(Math.PI / 2, execute(search("mathAsin(1)")));
+		assertEquals(-Math.PI / 2, execute(search("mathAsin(-1)")));
+
+		// Test mathAtan function
+		assertEquals(0.0, execute(search("mathAtan(0)")));
+		assertEquals(Math.PI / 4, (double) execute(search("mathAtan(1)")), 0.0001);
+		assertEquals(-Math.PI / 4, (double) execute(search("mathAtan(-1)")), 0.0001);
+
+		// Test mathAtan2 function
+		assertEquals(Math.PI / 4, (double) execute(search("mathAtan2(1, 1)")), 0.0001);
+		assertEquals(Math.PI / 2, execute(search("mathAtan2(1, 0)")));
+		assertEquals(0.0, execute(search("mathAtan2(0, 1)")));
+
+		// Test mathCbrt function
+		assertEquals(2.0, execute(search("mathCbrt(8)")));
+		assertEquals(3.0, execute(search("mathCbrt(27)")));
+		assertEquals(-2.0, execute(search("mathCbrt(-8)")));
+
+		// Test mathCopySign function
+		assertEquals(5.0, execute(search("mathCopySign(5, 1)")));
+		assertEquals(-5.0, execute(search("mathCopySign(5, -1)")));
+		assertEquals(-5.0, execute(search("mathCopySign(-5, -1)")));
+		assertEquals(5.0, execute(search("mathCopySign(-5, 1)")));
+
+		// Test mathCos function
+		assertEquals(1.0, execute(search("mathCos(0)")));
+		assertEquals(-1.0, (double) execute(search("mathCos(" + Math.PI + ")")), 0.0001);
+		assertEquals(0.0, (double) execute(search("mathCos(" + (Math.PI / 2) + ")")), 0.0001);
+
+		// Test mathCosh function
+		assertEquals(1.0, execute(search("mathCosh(0)")));
+		assertEquals(Math.cosh(1), execute(search("mathCosh(1)")));
+		assertEquals(Math.cosh(2), execute(search("mathCosh(2)")));
+
+		// Test mathExp function
+		assertEquals(1.0, execute(search("mathExp(0)")));
+		assertEquals(Math.E, execute(search("mathExp(1)")));
+		assertEquals(Math.exp(2), execute(search("mathExp(2)")));
+
+		// Test mathExpm1 function
+		assertEquals(0.0, execute(search("mathExpm1(0)")));
+		assertEquals(Math.E - 1, execute(search("mathExpm1(1)")));
+		assertEquals(Math.expm1(0.1), execute(search("mathExpm1(0.1)")));
+
+		// Test mathGetExponent function
+		assertEquals(3.0, execute(search("mathGetExponent(8)")));
+		assertEquals(4.0, execute(search("mathGetExponent(16)")));
+		assertEquals(0.0, execute(search("mathGetExponent(1)")));
+
+		// Test mathHypot function
+		assertEquals(5.0, execute(search("mathHypot(3, 4)")));
+		assertEquals(13.0, execute(search("mathHypot(5, 12)")));
+		assertEquals(0.0, execute(search("mathHypot(0, 0)")));
+
+		// Test mathIEEEremainder function
+		assertEquals(1.0, execute(search("mathIEEEremainder(5, 2)")));
+		assertEquals(0.0, execute(search("mathIEEEremainder(10, 5)")));
+		assertEquals(Math.IEEEremainder(7, 3), execute(search("mathIEEEremainder(7, 3)")));
+
+		// Test mathLog function
+		assertEquals(0.0, execute(search("mathLog(1)")));
+		assertEquals(1.0, execute(search("mathLog(" + Math.E + ")")));
+		assertEquals(Math.log(10), execute(search("mathLog(10)")));
+
+		// Test mathLog10 function
+		assertEquals(0.0, execute(search("mathLog10(1)")));
+		assertEquals(1.0, execute(search("mathLog10(10)")));
+		assertEquals(2.0, execute(search("mathLog10(100)")));
+
+		// Test mathLog1p function
+		assertEquals(0.0, execute(search("mathLog1p(0)")));
+		assertEquals(Math.log1p(0.1), execute(search("mathLog1p(0.1)")));
+		assertEquals(Math.log1p(1), execute(search("mathLog1p(1)")));
+
+		// Test mathNextAfter function
+		assertEquals(Math.nextAfter(1.0, 2.0), execute(search("mathNextAfter(1, 2)")));
+		assertEquals(Math.nextAfter(1.0, 0.0), execute(search("mathNextAfter(1, 0)")));
+
+		// Test mathNextUp function
+		assertEquals(Math.nextUp(1.0), execute(search("mathNextUp(1)")));
+		assertEquals(Math.nextUp(0.0), execute(search("mathNextUp(0)")));
+
+		// Test mathNextDown function
+		assertEquals(Math.nextDown(1.0), execute(search("mathNextDown(1)")));
+		assertEquals(Math.nextDown(0.0), execute(search("mathNextDown(0)")));
+
+		// Test mathPow function
+		assertEquals(8.0, execute(search("mathPow(2, 3)")));
+		assertEquals(1.0, execute(search("mathPow(5, 0)")));
+		assertEquals(25.0, execute(search("mathPow(5, 2)")));
+		assertEquals(0.25, execute(search("mathPow(2, -2)")));
+		assertEquals(2.0, execute(search("mathPow(4, 0.5)")));
+
+		// Test mathRandom function by testing that it returns a value in the expected range
+		Object randomValue = execute(search("mathRandom()"));
+		assertNotNull(randomValue);
+		assertTrue(randomValue instanceof Double);
+		double rand = (Double) randomValue;
+		assertTrue(rand >= 0.0 && rand < 1.0);
+		// Test that random can be used in expressions
+		Object scaledRandom = execute(search("mathRandom() * 100"));
+		assertNotNull(scaledRandom);
+		assertTrue(scaledRandom instanceof Double);
+		double scaled = (Double) scaledRandom;
+		assertTrue(scaled >= 0.0 && scaled < 100.0);
+		// Test random with offset
+		Object offsetRandom = execute(search("mathRandom() * 50 + 25"));
+		assertNotNull(offsetRandom);
+		assertTrue(offsetRandom instanceof Double);
+		double offset = (Double) offsetRandom;
+		assertTrue(offset >= 25.0 && offset < 75.0);
+
+		// Test mathRint function
+		assertEquals(2.0, execute(search("mathRint(2.3)")));
+		assertEquals(3.0, execute(search("mathRint(2.7)")));
+		assertEquals(2.0, execute(search("mathRint(2.5)")));
+		assertEquals(-2.0, execute(search("mathRint(-2.5)")));
+
+		// Test mathSignum function
+		assertEquals(1.0, execute(search("mathSignum(5)")));
+		assertEquals(-1.0, execute(search("mathSignum(-5)")));
+		assertEquals(0.0, execute(search("mathSignum(0)")));
+
+		// Test mathSin function
+		assertEquals(0.0, execute(search("mathSin(0)")));
+		assertEquals(1.0, (double) execute(search("mathSin(" + (Math.PI / 2) + ")")), 0.0001);
+		assertEquals(0.0, (double) execute(search("mathSin(" + Math.PI + ")")), 0.0001);
+
+		// Test mathSinh function
+		assertEquals(0.0, execute(search("mathSinh(0)")));
+		assertEquals(Math.sinh(1), execute(search("mathSinh(1)")));
+		assertEquals(Math.sinh(2), execute(search("mathSinh(2)")));
+
+		// Test mathSqrt function
+		assertEquals(4.0, execute(search("mathSqrt(16)")));
+		assertEquals(0.0, execute(search("mathSqrt(0)")));
+		assertEquals(1.0, execute(search("mathSqrt(1)")));
+		assertEquals(2.0, execute(search("mathSqrt(4)")));
+		assertEquals(3.0, execute(search("mathSqrt(9)")));
+		// Test that sqrt returns NaN for negative inputs
+		assertEquals("NaN", execute(search("mathSqrt(-1)")).toString());
+
+		// Test mathTan function
+		assertEquals(0.0, execute(search("mathTan(0)")));
+		assertEquals(1.0, (double) execute(search("mathTan(" + (Math.PI / 4) + ")")), 0.0001);
+		assertEquals(0.0, (double) execute(search("mathTan(" + Math.PI + ")")), 0.0001);
+
+		// Test mathTanh function
+		assertEquals(0.0, execute(search("mathTanh(0)")));
+		assertEquals(Math.tanh(1), execute(search("mathTanh(1)")));
+		assertEquals(Math.tanh(2), execute(search("mathTanh(2)")));
+
+		// Test mathToDegrees function
+		assertEquals(0.0, execute(search("mathToDegrees(0)")));
+		assertEquals(180.0, (double) execute(search("mathToDegrees(" + Math.PI + ")")), 0.0001);
+		assertEquals(90.0, (double) execute(search("mathToDegrees(" + (Math.PI / 2) + ")")), 0.0001);
+
+		// Test mathToRadians function
+		assertEquals(0.0, execute(search("mathToRadians(0)")));
+		assertEquals(Math.PI, (double) execute(search("mathToRadians(180)")), 0.0001);
+		assertEquals(Math.PI / 2, (double) execute(search("mathToRadians(90)")), 0.0001);
+
+		// Test mathUlp function
+		assertEquals(Math.ulp(1.0), execute(search("mathUlp(1)")));
+		assertEquals(Math.ulp(10.0), execute(search("mathUlp(10)")));
+		assertEquals(Math.ulp(0.0), execute(search("mathUlp(0)")));
+
+		// Test mathPi function
+		assertEquals(Math.PI, execute(search("mathPi()")));
+
+		// Test mathE function
+		assertEquals(Math.E, execute(search("mathE()")));
+	}
+
 	@FunctionalInterface
 	interface TestFun {
 		void accept(XMLInstanceImporter scenario) throws Exception;

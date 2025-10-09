@@ -1332,6 +1332,9 @@
 				<configuration>
 					<useIncrementalCompilation>false</useIncrementalCompilation>
 					<forceJavacCompilerUse>true</forceJavacCompilerUse>
+					<compilerArgs>
+	                    <arg>-parameters</arg>
+	                </compilerArgs>
 				</configuration>
 			</plugin>
 

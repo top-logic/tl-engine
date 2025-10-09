@@ -1,0 +1,67 @@
+<h2>Syntax</h2>
+
+<pre>
+	<code>sessionRevision()</code>
+</pre>
+
+<h2>Beschreibung</h2>
+
+<p>Liefert die Basis-Revision der aktuellen Session. Dies ist die Revision, auf der die aktuelle Session aufsetzt und die den Zustand aller Objekte zu Beginn der aktuellen Interaktion/Transaktion definiert.</p>
+
+<h2>Parameter</h2>
+
+<p>Diese Funktion hat keine Parameter.</p>
+
+<h2>Rückgabewert</h2>
+
+<p><strong>Typ:</strong> Revision</p>
+
+<p>Die Revision, auf der die aktuelle Session aufsetzt und die den anfänglichen Zustand der Objekte in dieser Session definiert.</p>
+
+<h2>Beispiele</h2>
+
+<h3>Beispiel 1</h3>
+
+<pre>
+	<code>sessionRevision()</code>
+</pre>
+
+<p><strong>Ausgabe:</strong></p>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Revision</th>
+			<th>Datum</th>
+			<th>Autor</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>32</td>
+			<td>29.09.2025, 10:40:15</td>
+			<td>Super, Administrator</td>
+		</tr>
+	</tbody>
+</table>
+
+<p>Gibt die Basis-Revision der aktuellen Session zurück.</p>
+
+<h3>Beispiel 2</h3>
+
+<pre>
+	<code>{
+    // Angenommen, $order hat in der Basis-Revision den Status "Processing"
+    // Der Status wird in der aktuellen Transaktion geändert
+    $order.set(`xxx:xxx#status`, "Canceled");
+
+    currentStatus = $order.get(`xxx:xxx#status`);
+    previousStatus = $order.inRevision(sessionRevision()).get(`xxx:xxx#status`);
+    
+   "Vorher: " + $previousStatus + ", Nachher: " + $currentStatus
+}</code>
+</pre>
+
+<p><strong>Ausgabe:</strong></p>
+
+<p><code class="hljs inlineCode">Vorher: Processing, Nachher: Canceled</code></p>

@@ -333,7 +333,7 @@ public class BoundHelper extends ManagedClass {
             // if size>1 return the first checker that allows the object
             while (theIter.hasNext()) {
                 theChecker = theIter.next();
-                boolean allow = (aBCG == null) ? theChecker.allow(anObject) : theChecker.allow(aBCG, anObject);
+                boolean allow = (aBCG == null) ? BoundChecker.allowShowSecurityObject(theChecker, anObject) : BoundChecker.allowCommandOnSecurityObject(theChecker, aBCG, anObject);
                 if (allow) {
                     return theChecker;
                 }
@@ -724,7 +724,7 @@ public class BoundHelper extends ManagedClass {
         boolean allow = false;
         while (!allow && theCheckers.hasNext()) {
 			BoundChecker theChecker = theCheckers.next();
-			allow = ((LayoutComponent) theChecker).supportsModel(anObject) && theChecker.allowPotentialModel(anObject);
+			allow = ((LayoutComponent) theChecker).supportsModel(anObject) && BoundChecker.allowShowModel(theChecker, anObject);
         }
 
         return allow;
@@ -763,7 +763,7 @@ public class BoundHelper extends ManagedClass {
 
             for (Iterator checkerIter = boundCheckers.iterator(); checkerIter.hasNext();) {
                 BoundChecker boundChecker = (BoundChecker) checkerIter.next();
-                if (boundChecker.allow(boundObject)) {
+                if (BoundChecker.allowShowSecurityObject(boundChecker, boundObject)) {
                     allowed = true;
                     break;
                 }
@@ -794,7 +794,7 @@ public class BoundHelper extends ManagedClass {
 
         boolean allow = false;
         while (!allow && theCheckers.hasNext()) {
-			allow = theCheckers.next().allow(aCmdGrp, anObject);
+			allow = BoundChecker.allowCommandOnSecurityObject(theCheckers.next(), aCmdGrp, anObject);
         }
 
         return allow;

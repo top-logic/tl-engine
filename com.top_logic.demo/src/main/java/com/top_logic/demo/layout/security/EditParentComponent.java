@@ -49,7 +49,7 @@ public class EditParentComponent extends AdminElementComponent {
 			if (model instanceof StructuredElement) {
 				BoundObject parent = (BoundObject) ((StructuredElement) model).getParent();
 				BoundChecker boundChecker = getBoundChecker((BoundChecker) component, parent, someValues);
-				return boundChecker.allow(getCommandGroup(), parent);
+				return BoundChecker.allowCommandOnSecurityObject(boundChecker, getCommandGroup(), parent);
 			}
 			return false;
 		}

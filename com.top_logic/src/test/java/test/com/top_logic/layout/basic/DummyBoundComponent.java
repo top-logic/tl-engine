@@ -8,7 +8,6 @@ package test.com.top_logic.layout.basic;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCheckerDelegate;
@@ -56,11 +55,6 @@ public class DummyBoundComponent extends LayoutComponent implements BoundChecker
 	@Override
 	public BoundChecker getDelegate() {
 		return _delegate;
-	}
-
-	@Override
-	public ResKey hideReason() {
-		return hideReason(internalModel());
 	}
 
 }

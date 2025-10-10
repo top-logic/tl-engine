@@ -196,7 +196,7 @@ public class OpenModalDialogCommandHandler extends AbstractCommandHandler implem
 
 		private boolean allow(BoundComponent securityComponent, Object model) {
 			BoundCommandGroup handlerGroup = _handler.getCommandGroup();
-			return securityComponent.allowPotentialModel(handlerGroup, model);
+			return BoundChecker.allowCommand(securityComponent, handlerGroup, model);
 		}
 
 		private BoundComponent getSecurityComponent(LayoutComponent targetComponent) {

@@ -451,7 +451,7 @@ public abstract class AbstractCommandHandler implements CommandHandler {
     
 	@Override
 	public boolean checkSecurity(LayoutComponent component, Object model, Map<String, Object> someValues) {
-		return ((BoundChecker) component).allow(getCommandGroup(), getBoundObject(component, model, someValues));
+		return BoundChecker.allowCommandOnSecurityObject(((BoundChecker) component), getCommandGroup(), getBoundObject(component, model, someValues));
 	}
 
 	/**

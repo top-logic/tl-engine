@@ -2539,7 +2539,7 @@ public class GridComponent extends EditComponent implements
 		BoundObject securityObject = getRowSecurityProvider().getSecurityObject(this, rowObject);
         if (executable && securityObject != null) {
 			BoundChecker theChecker = BoundHelper.getInstance().getDefaultChecker(getMainLayout(), securityObject);
-            return theChecker != null ? theChecker.allow(SimpleBoundCommandGroup.WRITE, securityObject) : true;
+            return theChecker != null ? BoundChecker.allowCommandOnSecurityObject(theChecker, SimpleBoundCommandGroup.WRITE, securityObject) : true;
         }
         else {
         	return executable;

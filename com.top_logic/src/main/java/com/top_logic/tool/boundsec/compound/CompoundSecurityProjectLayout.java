@@ -9,7 +9,6 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
@@ -103,16 +102,6 @@ public class CompoundSecurityProjectLayout extends CompoundSecurityLayout {
             secondaryChecker = (BoundChecker) checker;
         }
         return secondaryChecker;
-    }
-    
-    /** 
-     * Delegate to primary checker
-     *
-     * @see com.top_logic.tool.boundsec.BoundLayout#hideReason(Object)
-     */
-    @Override
-	public ResKey hideReason(Object potentialModel) {
-		return getPrimaryChecker().hideReason(potentialModel);
     }
     
     @Override

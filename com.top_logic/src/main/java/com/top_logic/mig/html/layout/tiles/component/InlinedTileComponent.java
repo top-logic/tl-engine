@@ -15,7 +15,6 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.component.LayoutContainerBoundChecker;
 import com.top_logic.layout.component.Selectable;
 import com.top_logic.layout.structure.LayoutControlProvider;
@@ -138,11 +137,6 @@ public class InlinedTileComponent extends SingleLayoutContainer implements Selec
 	 */
 	public Object getGUIModel() {
 		return _builder.getModel(getModel(), this);
-	}
-
-	@Override
-	public ResKey hideReason() {
-		return hideReason(internalModel());
 	}
 
 }

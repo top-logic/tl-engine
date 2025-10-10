@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.meta.TypeSpec;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.EvalContext;
@@ -21,27 +20,35 @@ import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBui
 import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
 import com.top_logic.model.util.TLModelUtil;
-import com.top_logic.util.error.TopLogicException;
 
 /**
- * {@link GenericMethod} for creating Excel cells with styling in TL-Script.
+ * {@link GenericMethod} for creating Excel style objects in TL-Script.
  * 
- * Used within {@link ExcelSheet} to define individual cells with their content and styling.
+ * Creates reusable style objects that can be used with {@link ExcelCell}.
  * 
  * @author <a href="mailto:jhu@top-logic.com">Jonathan Hüsing</a>
  */
-public class ExcelCell extends GenericMethod {
+public class ExcelStyle extends GenericMethod {
 
 	/**
-	 * Creates a {@link ExcelCell}.
+	 * Property names in the same order as the descriptor
 	 */
-	public ExcelCell(String name, SearchExpression[] arguments) {
+	private static final String[] STYLE_PROPERTIES = {
+		"color", "background", "bold", "italic", "fontSize", "fontFamily",
+		"borderTop", "borderBottom", "borderLeft", "borderRight", "align",
+		"valign", "numberFormat", "rowSpan", "colSpan"
+	};
+
+	/**
+	 * Creates a {@link ExcelStyle}.
+	 */
+	public ExcelStyle(String name, SearchExpression[] arguments) {
 		super(name, arguments);
 	}
 
 	@Override
 	public GenericMethod copy(SearchExpression[] arguments) {
-		return new ExcelCell(getName(), arguments);
+		return new ExcelStyle(getName(), arguments);
 	}
 
 	@Override
@@ -49,45 +56,41 @@ public class ExcelCell extends GenericMethod {
 		return TLModelUtil.findType(TypeSpec.OBJECT_TYPE);
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	protected Object eval(Object[] arguments, EvalContext definitions) {
-		Object content = arguments[0];
+		// Return a map representing the style
+		Map<String, Object> style = new HashMap<>();
 
-		// -1 indicates that no row was specified
-		Integer row = asInt(arguments[1], -1);
-		Integer col = asInt(arguments[2], -1);
-
-		Map<String, Object> styleProps = null;
-		if (arguments[3] != null) {
-			if (arguments[3] instanceof Map) {
-				styleProps = (Map<String, Object>) arguments[3];
-			} else {
-				throw new TopLogicException(ResKey.text("Invalid style attribute."));
+		for (int i = 0; i < STYLE_PROPERTIES.length; i++) {
+			if (arguments[i] != null) {
+				style.put(STYLE_PROPERTIES[i], arguments[i]);
 			}
 		}
 
-		// Return a map representing the cell
-		Map<String, Object> cell = new HashMap<>();
-		cell.put("content", content);
-		cell.put("row", row);
-		cell.put("col", col);
-		if (styleProps != null) {
-			cell.putAll(styleProps);
-		}
-		return cell;
+		return style;
 	}
 
 	/**
-	 * {@link MethodBuilder} for {@link ExcelCell}.
+	 * {@link MethodBuilder} for {@link ExcelStyle}.
 	 */
-	public static class Builder extends AbstractSimpleMethodBuilder<ExcelCell> {
+	public static class Builder extends AbstractSimpleMethodBuilder<ExcelStyle> {
 
 		private static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
-			.mandatory("content")
-			.optional("row")
-			.optional("col")
-			.optional("style")
+			.optional("color")
+			.optional("background")
+			.optional("bold")
+			.optional("italic")
+			.optional("fontSize")
+			.optional("fontFamily")
+			.optional("borderTop")
+			.optional("borderBottom")
+			.optional("borderLeft")
+			.optional("borderRight")
+			.optional("align")
+			.optional("valign")
+			.optional("numberFormat")
+			.optional("rowSpan", -1)
+			.optional("colSpan", -1)
 			.build();
 
 		/**
@@ -103,8 +106,8 @@ public class ExcelCell extends GenericMethod {
 		}
 
 		@Override
-		public ExcelCell build(Expr expr, SearchExpression[] args) {
-			return new ExcelCell(getName(), args);
+		public ExcelStyle build(Expr expr, SearchExpression[] args) {
+			return new ExcelStyle(getName(), args);
 		}
 
 	}

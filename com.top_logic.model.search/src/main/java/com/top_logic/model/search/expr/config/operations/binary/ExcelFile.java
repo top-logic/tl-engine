@@ -24,6 +24,8 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.VerticalAlignment;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.ss.util.CellReference;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFColor;
 import org.apache.poi.xssf.usermodel.XSSFFont;
@@ -32,7 +34,9 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.meta.TypeSpec;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
@@ -42,6 +46,7 @@ import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBui
 import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * {@link GenericMethod} for generating Excel files in TL-Script.
@@ -57,6 +62,10 @@ public class ExcelFile extends GenericMethod {
 	 */
 	private static final String PROP_SHEET_NAME = "name";
 	private static final String PROP_SHEET_CONTENT = "content";
+	private static final String PROP_COL_WIDTHS = "colWidths";
+	private static final String PROP_ROW_HEIGHTS = "rowHeights";
+
+	private static final String PROP_AUTO_GENERATE_NAME = "autoGenerateName";
 
 	/**
 	 * Cell content property keys
@@ -96,6 +105,81 @@ public class ExcelFile extends GenericMethod {
 	private static final String PROP_NUMBER_FORMAT = "numberFormat";
 
 	/**
+	 * Span property keys
+	 */
+	private static final String PROP_ROW_SPAN = "rowSpan";
+
+	private static final String PROP_COL_SPAN = "colSpan";
+
+	/**
+	 * Track merged regions for collision detection
+	 */
+	private static class MergedRegionTracker {
+		private final List<CellRangeAddress> regions = new ArrayList<>();
+
+		public void addRegion(CellRangeAddress region) {
+			regions.add(region);
+		}
+
+		public void checkCellPosition(int row, int col) {
+			for (CellRangeAddress existing : regions) {
+				if(existing.isInRange(row, col)) {
+					throw new TopLogicException(
+						ResKey.text("Cannot create cell at " + CellReference.convertNumToColString(col) + (row + 1)
+							+ " - it is within existing merged region " + existing.formatAsString()));
+				}
+			}
+		}
+
+	}
+
+	/**
+	 * Cache for CellStyle objects to avoid creating duplicate styles
+	 */
+	private static class StyleCache {
+		private final Map<String, CellStyle> styleMap = new HashMap<>();
+
+		private final Workbook workbook;
+
+		private final ExcelFile excelFile;
+
+		public StyleCache(Workbook workbook, ExcelFile excelFile) {
+			this.workbook = workbook;
+			this.excelFile = excelFile;
+		}
+
+		public CellStyle getOrCreateStyle(Map<String, Object> styleProps) {
+			if (styleProps == null || styleProps.isEmpty()) {
+				return null;
+			}
+
+			// Create a cache key from the style properties
+			String cacheKey = createCacheKey(styleProps);
+
+			// Return cached style if it exists
+			if (styleMap.containsKey(cacheKey)) {
+				return styleMap.get(cacheKey);
+			}
+
+			// Create new style and cache it
+			CellStyle newStyle = excelFile.createCellStyle(workbook, styleProps);
+			styleMap.put(cacheKey, newStyle);
+			return newStyle;
+		}
+
+		private String createCacheKey(Map<String, Object> styleProps) {
+			StringBuilder key = new StringBuilder();
+			// Sort the properties to ensure consistent keys
+			styleProps.entrySet().stream()
+				.sorted(Map.Entry.comparingByKey())
+				.forEach(entry -> {
+					key.append(entry.getKey()).append("=").append(entry.getValue()).append(";");
+				});
+			return key.toString();
+		}
+	}
+
+	/**
 	 * Creates a {@link ExcelFile}.
 	 */
 	public ExcelFile(String name, SearchExpression[] arguments) {
@@ -114,15 +198,12 @@ public class ExcelFile extends GenericMethod {
 
 	@Override
 	protected Object eval(Object[] arguments, EvalContext definitions) {
-		String fileName = asString(arguments[0]);
-		if (fileName == null) {
-			fileName = "export.xlsx";
-		}
-
-		Object content = arguments[1];
+		Object content = arguments[0];
 		if (content == null) {
 			content = new ArrayList<>();
 		}
+
+		String fileName = asString(arguments[1]);
 
 		try {
 			byte[] excelData = createExcelFile(content);
@@ -140,8 +221,8 @@ public class ExcelFile extends GenericMethod {
 			for (Object sheetObj : sheets) {
 				Map<String, Object> sheetMap = (Map<String, Object>) asMap(sheetObj);
 				String sheetName = (String) sheetMap.get(PROP_SHEET_NAME);
-				if (sheetName == null) {
-					sheetName = "Sheet" + (workbook.getNumberOfSheets() + 1);
+				if (asBoolean(sheetMap.get(PROP_AUTO_GENERATE_NAME))) {
+					sheetName = "Sheet " + (workbook.getNumberOfSheets() + 1);
 				}
 
 				Sheet sheet = workbook.createSheet(sheetName);
@@ -149,6 +230,37 @@ public class ExcelFile extends GenericMethod {
 
 				if (sheetContent != null) {
 					processSheetContent(workbook, sheet, sheetContent);
+				}
+
+				// Apply column widths if specified
+				Map<String, Object> colWidths = (Map<String, Object>) sheetMap.get(PROP_COL_WIDTHS);
+				if (colWidths != null) {
+					for (Map.Entry<String, Object> entry : colWidths.entrySet()) {
+						Integer colIndex = asInt(entry.getKey());
+						Double width = asDouble(entry.getValue());
+						if (colIndex >= 0 && width >= 0) {
+							sheet.setColumnWidth(colIndex, (int) (width * 256)); // POI uses 1/256
+																					// of a
+																					// character
+																					// width
+						}
+					}
+				}
+
+				// Apply row heights if specified
+				Map<String, Object> rowHeights = (Map<String, Object>) sheetMap.get(PROP_ROW_HEIGHTS);
+				if (rowHeights != null) {
+					for (Map.Entry<String, Object> entry : rowHeights.entrySet()) {
+						Integer rowIndex = asInt(entry.getKey());
+						Double height = asDouble(entry.getValue());
+						if (rowIndex >= 0 && height >= 0) {
+							Row row = sheet.getRow(rowIndex);
+							if (row == null) {
+								row = sheet.createRow(rowIndex);
+							}
+							row.setHeightInPoints((float) (double) height);
+						}
+					}
 				}
 			}
 
@@ -185,7 +297,7 @@ public class ExcelFile extends GenericMethod {
 		for (Object item : contentList) {
 			if (item instanceof Map) {
 				Map<String, Object> itemMap = (Map<String, Object>) item;
-				if (itemMap.containsKey(PROP_CELL_ROW) && itemMap.containsKey(PROP_CELL_COL)) {
+				if (asInt(itemMap.get(PROP_CELL_ROW)) != -1 && asInt(itemMap.get(PROP_CELL_COL)) != -1) {
 					return false;
 				}
 			}
@@ -196,54 +308,158 @@ public class ExcelFile extends GenericMethod {
 
 	@SuppressWarnings("unchecked")
 	private void processMatrixFormat(Workbook workbook, Sheet sheet, List<Object> contentList) {
-		for (int rowNum = 0; rowNum < contentList.size(); rowNum++) {
-			Object rowObj = contentList.get(rowNum);
-			List<Object> rowList = (List<Object>) asList(rowObj);
+		// Track current cursor position
+		int currentRow = 0;
+		int currentCol = 0;
+		
+		// Track merged regions for collision detection
+		MergedRegionTracker regionTracker = new MergedRegionTracker();
 
-			Row row = sheet.createRow(rowNum);
-			for (int colNum = 0; colNum < rowList.size(); colNum++) {
-				Object cellValue = rowList.get(colNum);
-				createCell(workbook, row, colNum, cellValue, null);
+		// Cache styles to avoid creating duplicates
+		StyleCache styleCache = new StyleCache(workbook, this);
+
+		// Process each row in the matrix
+		for (int matrixRow = 0; matrixRow < contentList.size(); matrixRow++) {
+			Object rowObj = contentList.get(matrixRow);
+			List<Object> rowList = (List<Object>) asList(rowObj);
+			
+			// Reset column position at the start of each row
+			currentCol = 0;
+			
+			// Process each cell in the row
+			for (int matrixCol = 0; matrixCol < rowList.size(); matrixCol++) {
+				Object cellValue = rowList.get(matrixCol);
+				
+				// Check if the cell value is an excelCell map
+				if (cellValue instanceof Map) {
+					Map<String, Object> cellMap = (Map<String, Object>) cellValue;
+					if (cellMap.containsKey("content")) {
+						// This is an excelCell object
+						Object content = cellMap.get("content");
+						Map<String, Object> styleProps = new HashMap<>();
+						
+						// Extract styling properties
+						for (Map.Entry<String, Object> entry : cellMap.entrySet()) {
+							String key = entry.getKey();
+							if (!key.equals("content") && !key.equals("row") && !key.equals("col")) {
+								styleProps.put(key, entry.getValue());
+							}
+						}
+						
+						// Use cursor position if row/col not specified
+						Integer cellRow = asInt(cellMap.get("row"));
+						Integer cellCol = asInt(cellMap.get("col"));
+						
+						int targetRow = (cellRow != -1) ? cellRow : currentRow;
+						int targetCol = (cellCol != -1) ? cellCol : currentCol;
+						
+						// Ensure we have the correct row
+						Row targetExcelRow = sheet.getRow(targetRow);
+						if (targetExcelRow == null) {
+							targetExcelRow = sheet.createRow(targetRow);
+						}
+						
+						createCell(workbook, sheet, targetExcelRow, targetCol, content, styleProps, regionTracker,
+							styleCache);
+
+					}
+				} else {
+				
+				// Regular cell value (not an excelCell) - create at current cursor position
+				Row excelRow = sheet.getRow(currentRow);
+				if (excelRow == null) {
+					excelRow = sheet.createRow(currentRow);
+				}
+				
+				createCell(workbook, sheet, excelRow, currentCol, cellValue, null, regionTracker, styleCache);
 			}
+				// Advance cursor position
+				currentCol++;
+
+			}
+			
+			// Advance to next row after processing all columns
+			currentRow++;
 		}
 	}
 
 	@SuppressWarnings("unchecked")
 	private void processCellFormat(Workbook workbook, Sheet sheet, List<Object> contentList) {
+		// Track current cursor position for sequential cell placement
+		int currentRow = 0;
+		int currentCol = 0;
+
+		// Track merged regions for collision detection
+		MergedRegionTracker regionTracker = new MergedRegionTracker();
+
+		// Cache styles to avoid creating duplicates
+		StyleCache styleCache = new StyleCache(workbook, this);
+
 		for (Object cellObj : contentList) {
 			Map<String, Object> cellMap = (Map<String, Object>) asMap(cellObj);
 			Integer row = asInt(cellMap.get(PROP_CELL_ROW));
 			Integer col = asInt(cellMap.get(PROP_CELL_COL));
 			Object content = cellMap.get(PROP_CELL_CONTENT);
 
-			if (row != null && col != null && content != null) {
-				Row excelRow = sheet.getRow(row);
-				if (excelRow == null) {
-					excelRow = sheet.createRow(row);
-				}
+			// Determine target position using cursor if row/col not specified
+			int targetRow = (row != -1) ? row : currentRow;
+			int targetCol = (col != -1) ? col : currentCol;
 
-				// Extract styling properties
-				Map<String, Object> styleProps = new HashMap<>();
-				for (Map.Entry<String, Object> entry : cellMap.entrySet()) {
-					String key = entry.getKey();
-					if (!key.equals(PROP_CELL_CONTENT) && !key.equals(PROP_CELL_ROW) && !key.equals(PROP_CELL_COL)) {
-						styleProps.put(key, entry.getValue());
-					}
-				}
-
-				createCell(workbook, excelRow, col, content, styleProps);
+			Row excelRow = sheet.getRow(targetRow);
+			if (excelRow == null) {
+				excelRow = sheet.createRow(targetRow);
 			}
+
+			// Extract styling properties
+			Map<String, Object> styleProps = new HashMap<>();
+			for (Map.Entry<String, Object> entry : cellMap.entrySet()) {
+				String key = entry.getKey();
+				if (!key.equals(PROP_CELL_CONTENT) && !key.equals(PROP_CELL_ROW) && !key.equals(PROP_CELL_COL)) {
+					styleProps.put(key, entry.getValue());
+				}
+			}
+
+			createCell(workbook, sheet, excelRow, targetCol, content, styleProps, regionTracker, styleCache);
+
+			if (row != -1) {
+				currentRow = row;
+			}
+			if (col != -1) {
+				currentCol = col;
+			}
+			currentCol++;
 		}
 	}
 
 	@SuppressWarnings("unchecked")
-	private void createCell(Workbook workbook, Row row, int colNum, Object value, Map<String, Object> styleProps) {
+	private void createCell(Workbook workbook, Sheet sheet, Row row, int colNum, Object value,
+			Map<String, Object> styleProps, MergedRegionTracker regionTracker, StyleCache styleCache) {
+		// Check if this cell position conflicts with existing merged regions
+		regionTracker.checkCellPosition(row.getRowNum(), colNum);
+
 		Cell cell = row.createCell(colNum);
 
 		// Apply styling if provided
-		CellStyle cellStyle = createCellStyle(workbook, styleProps);
+		CellStyle cellStyle = styleCache.getOrCreateStyle(styleProps);
 		if (cellStyle != null) {
 			cell.setCellStyle(cellStyle);
+		}
+
+		// Handle optional cell merging
+		if (styleProps != null) {
+			Integer rowSpan = asInt(styleProps.get(PROP_ROW_SPAN));
+			Integer colSpan = asInt(styleProps.get(PROP_COL_SPAN));
+
+			if (rowSpan > 1 || colSpan > 1) {
+				int firstRow = row.getRowNum();
+				int firstCol = colNum;
+				int lastRow = firstRow + ((rowSpan > 1) ? rowSpan - 1 : 0);
+				int lastCol = firstCol + ((colSpan > 1) ? colSpan - 1 : 0);
+
+				CellRangeAddress region = new CellRangeAddress(firstRow, lastRow, firstCol, lastCol);
+				sheet.addMergedRegion(region); // apache will throw error if conflict
+				regionTracker.addRegion(region);
+			}
 		}
 
 		// Set cell value based on type
@@ -257,18 +473,14 @@ public class ExcelFile extends GenericMethod {
 				}
 			} else {
 				// Default to string
-				cell.setCellValue(value.toString());
+				cell.setCellValue(MetaLabelProvider.INSTANCE.getLabel(value));
 			}
 		} else if (value instanceof Number) {
 			cell.setCellValue(((Number) value).doubleValue());
 		} else if (value instanceof Boolean) {
 			cell.setCellValue((Boolean) value);
-		} else if (value instanceof String) {
-			cell.setCellValue((String) value);
-		} else if (value != null) {
-			cell.setCellValue(value.toString());
 		} else {
-			cell.setCellValue("");
+			cell.setCellValue(MetaLabelProvider.INSTANCE.getLabel(value));
 		}
 	}
 
@@ -553,8 +765,8 @@ public class ExcelFile extends GenericMethod {
 	public static class Builder extends AbstractSimpleMethodBuilder<ExcelFile> {
 
 		private static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
-			.mandatory("name")
 			.mandatory("content")
+			.optional("name", "data")
 			.build();
 
 		/**

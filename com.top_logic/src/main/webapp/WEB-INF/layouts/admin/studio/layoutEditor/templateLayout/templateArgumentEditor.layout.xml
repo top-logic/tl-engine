@@ -2,7 +2,7 @@
 
 <editor name="TemplateArgumentEditor"
 	applyCommand="storeTemplateArgument"
-	securityProviderClass="securityRoot"
+	securityObject="securityRoot"
 	titleKey="tl.layouteditor.templateArgumentEditor.title"
 >
 	<model class="com.top_logic.layout.editor.KeyToLayoutTransformLinking"

@@ -53,7 +53,7 @@
 				name="personContactEdit"
 				page="${jSPPage}"
 				resPrefix="layouts.contact.EditPersonContactDetail.personContactEdit."
-				securityProviderClass="${editSecurityProvider}"
+				securityObject="ref:${editSecurityProvider}"
 			>
 				<dialogs>
 					<layout name="addPersonContactDialog">
@@ -73,7 +73,7 @@
 								name="addPersonContact"
 								page="${createJSP}"
 								resPrefix="layouts.contact.EditPersonContactDetail.addPersonContact."
-								securityProviderClass="${createSecurityProvider}"
+								securityObject="ref:${createSecurityProvider}"
 							/>
 						</components>
 					</layout>

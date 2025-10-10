@@ -15,6 +15,8 @@ import com.top_logic.tool.boundsec.BoundCheckerComponent;
 import com.top_logic.tool.boundsec.BoundCheckerMixin;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundObject;
+import com.top_logic.tool.boundsec.SecurityObjectProvider;
+import com.top_logic.tool.boundsec.securityObjectProvider.NullSecurityObjectProvider;
 import com.top_logic.tool.boundsec.wrap.PersBoundComp;
 
 /**
@@ -59,6 +61,11 @@ public interface LayoutContainerBoundChecker extends BoundCheckerComponent {
 				childChecker.initPersBoundComp(persBoundComp);
 			}
 		}
+	}
+
+	@Override
+	default SecurityObjectProvider getSecurityObjectProvider() {
+		return NullSecurityObjectProvider.INSTANCE;
 	}
 
 }

@@ -24,7 +24,7 @@
 				model="provider(com.top_logic.layout.scripting.template.gui.selector.ScriptSelectorBuilder)"
 				name="${namePrefix}Table"
 				resPrefix="tl.scripting.recorder.scriptSelector."
-				securityProviderClass="securityRoot"
+				securityObject="securityRoot"
 			>
 				<layoutInfo size="100%"/>
 				<modelBuilder class="com.top_logic.layout.scripting.template.gui.selector.ScriptSelectorBuilder"/>

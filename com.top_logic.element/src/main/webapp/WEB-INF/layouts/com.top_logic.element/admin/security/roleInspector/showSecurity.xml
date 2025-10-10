@@ -6,7 +6,7 @@
 		name="ShowSecurityComponent"
 		page="/jsp/layout/admin/security/showSecurityComponent.jsp"
 		resPrefix="main.admin.showSecurity.component."
-		securityProviderClass="securityRoot"
+		securityObject="securityRoot"
 		tableName="field_result"
 	>
 		<layoutInfo size="165px"/>

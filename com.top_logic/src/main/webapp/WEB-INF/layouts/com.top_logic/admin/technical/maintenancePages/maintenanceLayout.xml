@@ -13,7 +13,7 @@
 			<tableView name="${namePrefix}_List"
 				isSecurityMaster="true"
 				resPrefix="admin.maintenance.table."
-				securityProviderClass="securityRoot"
+				securityObject="securityRoot"
 			>
 				<layoutInfo size="280"/>
 				<modelBuilder class="com.top_logic.util.maintenance.MaintenanceTableModelBuilder"
@@ -40,7 +40,7 @@
 						model="selection(${namePrefix}_List)"
 						name="${namePrefix}_Content"
 						resPrefix="admin.maintenance.page."
-						securityProviderClass="securityRoot"
+						securityObject="securityRoot"
 					>
 						<!-- Must be rendered with IFRAME to allow maintenance pages to use direct HTTP request processing. -->
 						<componentControlProvider class="com.top_logic.layout.structure.IFrameLayoutControlProvider"/>

@@ -52,7 +52,7 @@
 				page="/jsp/layout/scripting/TemplateEditContent.jsp"
 				resPrefix="tl.scripting.recorder.templates.templateEdit."
 				resetInvisible="true"
-				securityProviderClass="securityRoot"
+				securityObject="securityRoot"
 				toolbar="false"
 			>
 				<layoutInfo size="100%"/>

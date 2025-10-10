@@ -19,6 +19,15 @@ import com.top_logic.tool.boundsec.SecurityObjectProviderManager;
 public class NullSecurityObjectProvider implements SecurityObjectProvider {
 
 	/**
+	 * Singleton {@link NullSecurityObjectProvider} instance.
+	 */
+	public static final NullSecurityObjectProvider INSTANCE = new NullSecurityObjectProvider();
+
+	private NullSecurityObjectProvider() {
+		// Singleton constructor.
+	}
+
+	/**
 	 * Name that is used to configure the {@link NullSecurityObjectProvider} in
 	 * {@link SecurityObjectProviderManager}.
 	 * 

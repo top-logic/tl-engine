@@ -10,7 +10,7 @@
 		name="${namePrefix}templates"
 		resPrefix="tl.scripting.recorder.templates."
 		rootVisible="false"
-		securityProviderClass="securityRoot"
+		securityObject="securityRoot"
 		titleKey="tl.scripting.recorder.templates.title"
 	>
 		<layoutInfo size="300px"/>
@@ -45,7 +45,7 @@
 						name="${namePrefix}parameters"
 						page="/jsp/layout/scripting/TemplateParameters.jsp"
 						resPrefix="tl.scripting.recorder.instantiation.parameters."
-						securityProviderClass="securityRoot"
+						securityObject="securityRoot"
 					>
 						<layoutInfo size="100%"/>
 						<componentControlProvider class="com.top_logic.layout.structure.InlineLayoutControlProvider"/>

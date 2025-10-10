@@ -4,5 +4,5 @@
 	name="TestImageTag"
 	page="/jsp/test/taglibs/TestImageTag.jsp"
 	resPrefix="layouts.layoutdemo.TestImageTag.TestImageTag."
-	securityProviderClass="securityRoot"
+	securityObject="securityRoot"
 />

@@ -92,7 +92,7 @@
 						model="rows(${namePrefix}ChartTable)"
 						namePrefix="${namePrefix}ChartTable"
 						resPrefix="layouts.reporting.flex.chart.cockpit."
-						securityProvider="path:component(${namePrefix}ChartTable).currentobject"
+						securityObject="path:component(${namePrefix}ChartTable).currentobject"
 						types="${type}"
 					>
 						<chartDataSource>${chartDataSource}</chartDataSource>

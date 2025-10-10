@@ -12,7 +12,7 @@
 			name="${componentName}"
 			page="/jsp/test/layout/renderingRobustness/FaultyJSP.jsp"
 			resPrefix="layouts.layoutdemo.${componentName}.main."
-			securityProviderClass="securityRoot"
+			securityObject="securityRoot"
 		/>
 	</layout>
 </template>

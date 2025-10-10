@@ -34,6 +34,11 @@ public interface BoundCheckerDelegate extends BoundCheckerComponent {
 	}
 
 	@Override
+	default SecurityObjectProvider getSecurityObjectProvider() {
+		throw new UnsupportedOperationException("Not available in a delegat.");
+	}
+
+	@Override
 	default Collection<BoundCommandGroup> getCommandGroups() {
 		return getDelegate().getCommandGroups();
 	}

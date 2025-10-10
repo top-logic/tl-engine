@@ -13,7 +13,7 @@
 					model="provider(com.top_logic.util.sched.Scheduler#getSchedulerInstance)"
 					name="sysSchedulerTable"
 					resPrefix="admin.sys.scheduler."
-					securityProviderClass="securityRoot"
+					securityObject="securityRoot"
 					showMaximize="true"
 					treeBuilder="com.top_logic.util.sched.layout.table.TaskTreeTableBuilder"
 				>
@@ -280,7 +280,7 @@
 					name="sysEditTask"
 					page="/jsp/layout/sched/EditTask.jsp"
 					resPrefix="admin.sys.scheduler.task."
-					securityProviderClass="securityRoot"
+					securityObject="securityRoot"
 					showMaximize="true"
 				>
 					<dialogs>
@@ -298,7 +298,7 @@
 									model="provider(com.top_logic.util.sched.Scheduler#getSchedulerInstance)"
 									name="failedTaskResultsTable"
 									resPrefix="admin.sys.scheduler.failed."
-									securityProviderClass="securityRoot"
+									securityObject="securityRoot"
 								>
 									<table
 										defaultColumns="taskName, result, exception, warnings, message, startDate, duration, endDate, clusterNode, logFile"
@@ -394,7 +394,7 @@
 					name="sysTaskResultInfo"
 					page="/jsp/layout/sched/TaskResultInfo.jsp"
 					resPrefix="admin.sys.scheduler.taskResult."
-					securityProviderClass="securityRoot"
+					securityObject="securityRoot"
 					showMaximize="true"
 				/>
 			</components>

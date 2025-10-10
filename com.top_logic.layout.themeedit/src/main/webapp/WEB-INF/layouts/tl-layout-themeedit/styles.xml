@@ -17,7 +17,7 @@
 
 		<tableView name="${namePrefix}StylesTable"
 			model="selection(${namePrefix}ThemeTable)"
-			securityProviderClass="securityRoot"
+			securityObject="securityRoot"
 			titleKey="${resPrefix}.styles.table.title"
 		>
 			<modelBuilder class="com.top_logic.layout.themeedit.browser.providers.StyleSheetListModelBuilder"/>
@@ -59,7 +59,7 @@
 			<editor name="${namePrefix}StylesEditor"
 				applyCommand="storeStyleSheet"
 				model="selection(${namePrefix}StylesTable)"
-				securityProviderClass="securityRoot"
+				securityObject="securityRoot"
 				showMaximize="true"
 				titleKey="${resPrefix}.styles.editor.title"
 			>

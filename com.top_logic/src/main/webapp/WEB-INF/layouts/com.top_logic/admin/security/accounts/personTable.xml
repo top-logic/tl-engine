@@ -24,7 +24,7 @@
 		<param name="exportDownloadNameKey"
 			value="admin.person.export.file.name"
 		/>
-		<param name="securityProviderClass"
+		<param name="securityObject"
 			value="securityRoot"
 		/>
 		<param name="isSecurityMaster"
@@ -45,7 +45,7 @@
 		objectType="tl.accounts:Person"
 		partnerGroup="UserTableGroup"
 		resPrefix="admin.person.edit.table."
-		securityProviderClass="${securityProviderClass}"
+		securityObject="${securityObject}"
 		selectable="true"
 		useChangeHandling="false"
 	>

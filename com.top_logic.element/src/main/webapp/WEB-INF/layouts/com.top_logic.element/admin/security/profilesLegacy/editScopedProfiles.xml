@@ -21,7 +21,7 @@
 					page="/jsp/administration/EditRolesProfileTree.jsp"
 					resPrefix="admin.roles.checker."
 					saveScrollPosition="true"
-					securityProviderClass="securityRoot"
+					securityObject="securityRoot"
 				>
 					<buttons>
 						<button id="importRolesProfiles"

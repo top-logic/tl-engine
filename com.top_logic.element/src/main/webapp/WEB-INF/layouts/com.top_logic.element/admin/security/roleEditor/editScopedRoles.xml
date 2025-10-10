@@ -18,7 +18,7 @@
 					page="/jsp/layout/admin/roles/EditRole.jsp"
 					resPrefix="admin.role.edit."
 					saveScrollPosition="true"
-					securityProviderClass="securityRoot"
+					securityObject="securityRoot"
 				>
 					<dialogs>
 						<layout name="newRoleDialog">
@@ -36,7 +36,7 @@
 									name="NewRole"
 									page="/jsp/layout/admin/roles/NewRole.jsp"
 									resPrefix="admin.role.edit.new."
-									securityProviderClass="securityRoot"
+									securityObject="securityRoot"
 								/>
 							</components>
 						</layout>

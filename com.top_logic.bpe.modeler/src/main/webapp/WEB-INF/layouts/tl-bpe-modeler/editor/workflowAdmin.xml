@@ -20,7 +20,7 @@
 			isSecurityMaster="true"
 			objectType="tl.bpe.bpml:Collaboration"
 			resPrefix="${resPrefix}Tree"
-			securityProviderClass="securityRoot"
+			securityObject="securityRoot"
 		>
 			<layoutInfo
 				minSize="100"
@@ -186,7 +186,7 @@
 					<form name="${namePrefix}CopyForm"
 						buttonbar="true"
 						model="selection(${namePrefix}Table)"
-						securityProviderClass="securityRoot"
+						securityObject="securityRoot"
 					>
 						<modelBuilder class="com.top_logic.bpe.modeler.copy.CopyFormBuilder"/>
 
@@ -208,7 +208,7 @@
 
 		<bpmlEditor name="${namePrefix}Editor"
 			model="selection(${namePrefix}Table)"
-			securityProviderClass="securityRoot"
+			securityObject="securityRoot"
 			showMaximize="true"
 			titleKey="${resPrefix}Graph"
 		/>
@@ -218,7 +218,7 @@
 			maximizeRoot="${namePrefix}Properties"
 			model="selection(${namePrefix}Editor)"
 			resPrefix="${resPrefix}Properties"
-			securityProviderClass="securityRoot"
+			securityObject="securityRoot"
 			showMaximize="true"
 		>
 			<layoutInfo

@@ -9,7 +9,7 @@
 			name="TestLayoutProblems"
 			page="/jsp/test/layout/TestLayoutProblems.jsp"
 			resPrefix="layouts.layoutdemo.TestLayoutProblems.TestLayoutProblems."
-			securityProviderClass="securityRoot"
+			securityObject="securityRoot"
 		>
 			<buttons>
 				<button id="Ticket2725_Confirm_Progress"

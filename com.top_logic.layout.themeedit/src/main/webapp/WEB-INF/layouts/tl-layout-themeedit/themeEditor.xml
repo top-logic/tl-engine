@@ -14,7 +14,7 @@
 		horizontal="true"
 	>
 		<tableView name="${namePrefix}ThemeTable"
-			securityProviderClass="securityRoot"
+			securityObject="securityRoot"
 			titleKey="${resPrefix}.themes.table.title"
 		>
 			<layoutInfo size="350px"/>
@@ -52,7 +52,7 @@
 						<form name="${namePrefix}CreateTheme"
 							buttonbar="true"
 							resetInvisible="true"
-							securityProviderClass="securityRoot"
+							securityObject="securityRoot"
 						>
 							<modelBuilder class="com.top_logic.layout.themeedit.browser.providers.theme.ThemeFormBuilder"
 								create="true"

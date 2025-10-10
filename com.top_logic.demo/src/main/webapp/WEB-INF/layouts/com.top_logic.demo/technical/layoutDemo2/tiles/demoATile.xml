@@ -13,7 +13,7 @@
 				page="/jsp/demo/EditStructuredElement.jsp"
 				resPrefix="element.structure.edit."
 				securityId="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
-				securityProviderClass="default"
+				securityObject="model"
 				structure="DemoTypes"
 			>
 				<model config:interface="com.top_logic.layout.channel.linking.Provider">

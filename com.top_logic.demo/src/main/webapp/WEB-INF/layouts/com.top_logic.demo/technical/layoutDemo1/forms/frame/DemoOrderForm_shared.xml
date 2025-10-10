@@ -17,7 +17,7 @@
 				page="/jsp/test/layout/DemoOrderForm.jsp"
 				resPrefix="layouts.layoutdemo.DemoOrderForm_shared.main."
 				saveScrollPosition="true"
-				securityProviderClass="securityRoot"
+				securityObject="securityRoot"
 			/>
 		</components>
 	</layout>

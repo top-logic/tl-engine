@@ -2,7 +2,7 @@
 
 <tableView name="StatementMonitorTable"
 	resPrefix="util.monitor.db.layout."
-	securityProviderClass="securityRoot"
+	securityObject="securityRoot"
 >
 	<modelBuilder class="com.top_logic.mig.html.IdentityListModelBuilder"/>
 

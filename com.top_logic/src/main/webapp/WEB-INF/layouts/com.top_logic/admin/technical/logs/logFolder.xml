@@ -5,7 +5,7 @@
 	modelBuilder="com.top_logic.util.log.LogFilesBuilder"
 	name="basicFileLogView"
 	resPrefix="admin.filelog.view."
-	securityProviderClass="securityRoot"
+	securityObject="securityRoot"
 >
 	<tabInfo label="admin.logs.files"/>
 </component>

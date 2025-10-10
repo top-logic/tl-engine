@@ -5,5 +5,5 @@
 	name="TestDynamicToolbarTitle"
 	page="/jsp/test/layout/TestDynamicToolbarTitle.jsp"
 	resPrefix="layouts.layoutdemo.test.TestDynamicToolbarTitle.TestDynamicToolbarTitle."
-	securityProviderClass="securityRoot"
+	securityObject="securityRoot"
 />

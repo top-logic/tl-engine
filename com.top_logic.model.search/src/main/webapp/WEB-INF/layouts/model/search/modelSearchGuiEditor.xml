@@ -5,7 +5,7 @@
 	name="GUISearchExpressionEditor"
 	resPrefix="layouts.model.search.modelSearch.SearchComponent."
 	searchName="developer"
-	securityProviderClass="securityRoot"
+	securityObject="securityRoot"
 	toolbar="false"
 >
 	<tabInfo label="gui.search.tab"/>

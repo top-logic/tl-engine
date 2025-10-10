@@ -21,7 +21,7 @@
 		<param name="showMarkerFields"
 			optional="true"
 		/>
-		<param name="securityProviderClass"
+		<param name="securityObject"
 			optional="true"
 		/>
 		<param name="rowSecurityProviderClass"
@@ -127,7 +127,7 @@
 						resPrefix="${resPrefix}"
 						rowSecurityProviderClass="${rowSecurityProviderClass}"
 						saveClosesDialog="${saveClosesDialog}"
-						securityProviderClass="${securityProviderClass}"
+						securityObject="${securityObject}"
 						showMarkerFields="${showMarkerFields}"
 					>
 						<layoutInfo size="40%"/>
@@ -152,7 +152,7 @@
 						model="rows(${namePrefix}ChartGrid)"
 						namePrefix="${namePrefix}Chart"
 						resPrefix="layouts.reporting.flex.chart.cockpit."
-						securityProvider="path:component(${namePrefix}ChartGrid).currentobject"
+						securityObject="path:component(${namePrefix}ChartGrid).currentobject"
 						types="${types}"
 					>
 						<chartDataSource>${chartDataSource}</chartDataSource>

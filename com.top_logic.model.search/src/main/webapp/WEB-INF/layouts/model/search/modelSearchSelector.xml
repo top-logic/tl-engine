@@ -5,7 +5,7 @@
 	page="/jsp/element/expression/selectExpression.jsp"
 	reportComponent="layouts_model_search_modelSearch_reports_Configurator"
 	resPrefix="layouts.model.search.modelSearch.SearchSelectorComponent."
-	securityProviderClass="com.top_logic.model.search.ui.selector.ModelSearchSelectorSecurityObjectProvider"
+	securityObject="ref:com.top_logic.model.search.ui.selector.ModelSearchSelectorSecurityObjectProvider"
 	toolbar="false"
 >
 	<layoutInfo size="50"/>
@@ -28,7 +28,7 @@
 					name="SaveSearchAsForm"
 					page="/jsp/model/search/SaveSearchAs.jsp"
 					resPrefix="layouts.model.search.modelSearch.SaveSearchAsForm."
-					securityProviderClass="securityRoot"
+					securityObject="securityRoot"
 				/>
 			</components>
 		</layout>

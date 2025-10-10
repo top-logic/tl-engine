@@ -24,7 +24,7 @@
 				name="${namePrefix}LogEntryFilterComponent"
 				page="/jsp/layout/event/logEntryFilter.jsp"
 				resPrefix="logentry.conf.filter."
-				securityProviderClass="securityRoot"
+				securityObject="securityRoot"
 				tableName="LogEntryTable"
 				toolbar="false"
 			>

@@ -52,7 +52,7 @@
 						page="/jsp/layout/image/chart.jsp"
 						post-preparation-handler="com.top_logic.reporting.flex.search.SearchResultPostPreparationHandler"
 						resPrefix="${resPrefix}Chart."
-						securityProviderClass="securityRoot"
+						securityObject="securityRoot"
 						showMaximize="${showMaximize}"
 					>
 						<export-manager class="com.top_logic.reporting.flex.chart.component.export.ConfiguredChartExportManager"

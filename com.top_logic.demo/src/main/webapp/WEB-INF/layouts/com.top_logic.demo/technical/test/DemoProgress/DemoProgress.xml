@@ -8,7 +8,7 @@
 			name="demoOpenProgressComponent"
 			page="/jsp/layout/demo/DemoProgressOpenerComponent.jsp"
 			resPrefix="layouts.layoutdemo.DemoProgress.demoOpenProgressComponent."
-			securityProviderClass="securityRoot"
+			securityObject="securityRoot"
 		>
 			<buttons>
 				<reference command-id="demoProgressCommand"/>
@@ -29,7 +29,7 @@
 							name="demoProgress"
 							page="/jsp/layout/misc/refreshProgress.jsp"
 							resPrefix="layouts.layoutdemo.DemoProgress.demoProgress."
-							securityProviderClass="securityRoot"
+							securityObject="securityRoot"
 						/>
 					</components>
 				</layout>

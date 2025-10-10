@@ -42,8 +42,8 @@
 		<param name="additionalResultColumnOptions"
 			value=""
 		/>
-		<param name="securityProvider"
-			value="searchSecurityObjectProvider"
+		<param name="securityObject"
+			value="ref:searchSecurityObjectProvider"
 		/>
 		<param name="securityProviderCreate"
 			value="searchSecurityObjectProvider"
@@ -78,7 +78,7 @@
 				resultColumns="${columns}"
 				search-result-component="${searchResultComponent}"
 				searchFilterSupportClass="${searchFilterSupportClass}"
-				securityProviderClass="${securityProvider}"
+				securityObject="${securityObject}"
 			>
 				<dialogs>
 					<layout name="${namePrefix}NewStoredQueryDialog">
@@ -99,7 +99,7 @@
 								name="${namePrefix}NewStoredQuery"
 								page="/jsp/element/metaattributes/PublishableNewStoredQuery.jsp"
 								resPrefix="element.meta.search.create."
-								securityProviderClass="${securityProviderCreate}"
+								securityObject="ref:${securityProviderCreate}"
 							/>
 						</components>
 					</layout>

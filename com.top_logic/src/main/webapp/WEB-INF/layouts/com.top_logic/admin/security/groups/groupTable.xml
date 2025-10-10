@@ -18,7 +18,7 @@
 		<param name="sortKeyProvider"
 			value="com.top_logic.layout.LabelMapping"
 		/>
-		<param name="securityProviderClass"
+		<param name="securityObject"
 			value="securityRoot"
 		/>
 		<param name="isSecurityMaster"
@@ -33,7 +33,7 @@
 		objectType="tl.accounts:Group"
 		partnerGroup="GroupTableGroup"
 		resPrefix="admin.group.table."
-		securityProviderClass="${securityProviderClass}"
+		securityObject="${securityObject}"
 		selectable="true"
 		useChangeHandling="false"
 	>

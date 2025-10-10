@@ -15,7 +15,7 @@
 		<param name="sortKeyProvider"
 			value="com.top_logic.layout.LabelMapping"
 		/>
-		<param name="securityProviderClass"
+		<param name="securityObject"
 			value="securityRoot"
 		/>
 		<param name="isSecurityMaster"
@@ -36,7 +36,7 @@
 		objectType="tl.accounts:Role"
 		partnerGroup="RoleTableGroup"
 		resPrefix="admin.roles.checker.table."
-		securityProviderClass="${securityProviderClass}"
+		securityObject="${securityObject}"
 		selectable="true"
 	>
 		<table

@@ -52,7 +52,7 @@
 							name="${namePrefix}CreateReport"
 							page="/jsp/model/search/SaveSearchAs.jsp"
 							resPrefix="reporting.flex.chart.create."
-							securityProviderClass="securityRoot"
+							securityObject="securityRoot"
 						/>
 					</components>
 				</layout>

@@ -75,7 +75,7 @@
 				name="companyContactTable"
 				objectType="me:Contact.Company"
 				resPrefix="layouts.contact.EditCompanyContacts_shared.companyContactTable."
-				securityProviderClass="${tableSecurityProvider}"
+				securityObject="ref:${tableSecurityProvider}"
 				selectable="true"
 			>
 				<layoutInfo size="413"/>
@@ -111,7 +111,7 @@
 				page="${jSPPage}"
 				resPrefix="layouts.contact.EditCompanyContacts_shared.companyContactEdit."
 				resetInvisible="true"
-				securityProviderClass="${editSecurityProvider}"
+				securityObject="ref:${editSecurityProvider}"
 			>
 				<dialogs>
 					<layout name="addCompanyContactDialog">
@@ -132,7 +132,7 @@
 								name="addCompanyContact"
 								page="${createJSP}"
 								resPrefix="layouts.contact.EditCompanyContacts_shared.addCompanyContact."
-								securityProviderClass="${createSecurityProvider}"
+								securityObject="ref:${createSecurityProvider}"
 							/>
 						</components>
 					</layout>

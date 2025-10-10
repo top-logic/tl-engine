@@ -30,8 +30,8 @@ import com.top_logic.layout.scripting.runtime.action.SimpleActionOp;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.tool.boundsec.BoundChecker;
+import com.top_logic.tool.boundsec.BoundCheckerComponent;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
-import com.top_logic.tool.boundsec.BoundComponent;
 import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.BoundMainLayout;
 import com.top_logic.tool.boundsec.compound.CompoundSecurityLayout;
@@ -389,8 +389,8 @@ public class TestLayoutBasedSecurity extends BasicTestCase {
      * @param recursive     ir true add/remove the access to/from all child checkers of aChecker
      */
     private static void setAccess(BoundedRole aRole, BoundChecker aChecker, BoundCommandGroup aCmdGrp,  boolean isAllowed, boolean recursive) {
-        if (aChecker instanceof BoundComponent ) {
-			PersBoundComp persBoundComp = ((BoundComponent) aChecker).getPersBoundComp();
+		if (aChecker instanceof BoundCheckerComponent checker) {
+			PersBoundComp persBoundComp = checker.getPersBoundComp();
             if (isAllowed) {
 				persBoundComp.addAccess(aCmdGrp, aRole);
             }

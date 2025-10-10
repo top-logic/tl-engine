@@ -5,7 +5,7 @@
 		<param name="namePrefix"/>
 		<param name="masterComponent"/>
 		<param name="extension"/>
-		<param name="securityProvider"
+		<param name="securityObject"
 			value="default"
 		/>
 		<param name="controller">
@@ -61,7 +61,7 @@
 				isSecurityMaster="true"
 				model="selection(${masterComponent})"
 				resPrefix="${resPrefix}"
-				securityProviderClass="${securityProvider}"
+				securityObject="${securityObject}"
 			>
 				${controller}
 				<!-- assistent steps -->
@@ -71,7 +71,7 @@
 					name="${namePrefix}InputStep"
 					page="${inputJSP}"
 					resPrefix="${resPrefix}uploadFile."
-					securityProviderClass="assistant"
+					securityObject="ref:assistant"
 					toolbar="${showStepsToolbar}"
 				>
 					<assistantInfo/>
@@ -81,7 +81,7 @@
 					name="${namePrefix}ProcessStep"
 					page="${processJSP}"
 					resPrefix="${resPrefix}overview."
-					securityProviderClass="assistant"
+					securityObject="ref:assistant"
 					toolbar="${showStepsToolbar}"
 				>
 					<assistantInfo/>
@@ -93,7 +93,7 @@
 					progressComponentHeight="${processHeight}"
 					progressComponentWidth="${processWidth}"
 					resPrefix="${resPrefix}import."
-					securityProviderClass="assistant"
+					securityObject="ref:assistant"
 					toolbar="${showStepsToolbar}"
 				>
 					<assistantInfo/>
@@ -103,7 +103,7 @@
 					name="${namePrefix}ErrorStep"
 					page="${errorJSP}"
 					resPrefix="${resPrefix}error."
-					securityProviderClass="assistant"
+					securityObject="ref:assistant"
 					toolbar="${showStepsToolbar}"
 				>
 					<assistantInfo/>

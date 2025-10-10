@@ -4,7 +4,7 @@
 	name="TestBoxesFilterNoDisplay"
 	page="/jsp/test/boxes/TestBoxesFilterNoDisplay.jsp"
 	resPrefix="layouts.layoutdemo.boxes.demoFilter.TestBoxesFilter."
-	securityProviderClass="securityRoot"
+	securityObject="securityRoot"
 >
 	<commands>
 		<reference command-id="invalidate"/>

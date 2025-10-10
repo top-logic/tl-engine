@@ -4,5 +4,5 @@
 	name="errorPage"
 	page="/jsp/test/layout/ErrorPage.jsp"
 	resPrefix="layouts.layoutdemo.error.error.errorPage."
-	securityProviderClass="securityRoot"
+	securityObject="securityRoot"
 />

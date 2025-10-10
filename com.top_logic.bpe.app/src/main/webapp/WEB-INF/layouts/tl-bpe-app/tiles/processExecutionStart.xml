@@ -25,7 +25,7 @@
 				newModelAction="set-parent-model"
 				page="/jsp/processExecution/StartProcess.jsp"
 				resPrefix="layouts.tl-bpe-app.tiles.processExecutionStart.createProcessExecution"
-				securityProviderClass="securityRoot"
+				securityObject="securityRoot"
 				structure=""
 				type="tl.bpe.execution:ProcessExecution"
 			>

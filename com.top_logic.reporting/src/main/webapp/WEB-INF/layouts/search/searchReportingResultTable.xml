@@ -38,7 +38,7 @@
 		<param name="resourcePrefix"
 			value="layouts.search.searchReportingResultTable.main."
 		/>
-		<param name="securityProvider"
+		<param name="securityObject"
 			value="securityRoot"
 		/>
 		<param name="tableFilterProvider"
@@ -60,7 +60,7 @@
 				model="provider(com.top_logic.element.layout.meta.search.EmptySearchResultModelProvider)"
 				name="${namePrefix}AttributedSearchResultTable"
 				resPrefix="${resourcePrefix}"
-				securityProviderClass="${securityProvider}"
+				securityObject="${securityObject}"
 				selectable="${selectable}"
 			>
 				<table

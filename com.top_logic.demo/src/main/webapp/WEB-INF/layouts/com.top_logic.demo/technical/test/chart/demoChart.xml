@@ -10,7 +10,7 @@
 			name="DemoChartDisplay"
 			page="/jsp/layout/image/chart.jsp"
 			resPrefix="layouts.demo.chart.demoChart.DemoChartDisplay."
-			securityProviderClass="securityRoot"
+			securityObject="securityRoot"
 		/>
 	</components>
 </layout>

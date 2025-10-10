@@ -7,7 +7,7 @@
 			modelBuilder="com.top_logic.layout.table.UnitTableModelBuilder"
 			objectType="tl.units:Unit"
 			resPrefix="admin.unit.edit.table."
-			securityProviderClass="securityRoot"
+			securityObject="securityRoot"
 		>
 			<layoutInfo size="413"/>
 			<table
@@ -38,7 +38,7 @@
 			name="EditUnit"
 			page="/jsp/unit/EditUnit.jsp"
 			resPrefix="admin.unit.edit."
-			securityProviderClass="master"
+			securityObject="ref:master"
 		>
 			<dialogs>
 				<layout name="newUnitDialog">
@@ -57,7 +57,7 @@
 							name="NewUnit"
 							page="/jsp/unit/NewUnit.jsp"
 							resPrefix="admin.unit.edit.new."
-							securityProviderClass="dialogParent"
+							securityObject="ref:dialogParent"
 						/>
 					</components>
 				</layout>

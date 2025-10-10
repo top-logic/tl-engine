@@ -7,7 +7,7 @@
 				importerNames="personExcel, personCSV"
 				masterComponent="personContactFilterTable"
 				namePrefix="DemoPersonImport"
-				securityProvider="securityRoot"
+				securityObject="securityRoot"
 			/>
 		</dialogs>
 	</component>

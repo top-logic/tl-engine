@@ -75,13 +75,6 @@
 		>
 			<options fun="com.top_logic.layout.form.values.edit.AllInAppImplementations"/>
 		</property>
-		<property name="securityProviderClass"
-			default="securityRoot"
-			type="String"
-		>
-			<options fun="com.top_logic.layout.form.values.edit.DefaultSecurityProviderKeys"/>
-			<hidden/>
-		</property>
 	</properties>
 
 	<layout name="Dialog">
@@ -100,7 +93,6 @@
 		<include name="com.top_logic.element/create/genericCreate.xml"
 			dialogName="Layout"
 			securityObject="${securityObject}"
-			securityProvider="${securityProviderClass}"
 		>
 			<modelBuilder class="com.top_logic.model.search.providers.PolymorphicCreateFormBuilderByExpression"
 				header="${header}"

@@ -3,7 +3,7 @@
 <tableView name="EventMonitorTable"
 	modelBuilder="com.top_logic.layout.admin.component.EventModelBuilder"
 	resPrefix="admin.event.monitor."
-	securityProviderClass="securityRoot"
+	securityObject="securityRoot"
 >
 	<table
 		defaultColumns="date,channel,user,source,message,type"

@@ -38,8 +38,8 @@
 		<param name="executabilityRule"
 			value="InViewMode"
 		/>
-		<param name="securityProvider"
-			value="default"
+		<param name="securityObject"
+			value="model"
 		/>
 		<param name="securityDomain"
 			optional="true"
@@ -105,7 +105,7 @@
 				newModelAction="${newModelAction}"
 				page="${page}"
 				resPrefix="${resPrefix}"
-				securityProviderClass="${securityProvider}"
+				securityObject="${securityObject}"
 				structure="${structure}"
 				type="${type}"
 			>${createAttributedParameters}</component>

@@ -16,7 +16,7 @@
 		model="selection(sessionSearch)"
 		modelBuilder="com.top_logic.monitoring.session.FailedLoginTableComponent$FailedLoginsModelBuilder"
 		resPrefix="admin.sys.failedLogins."
-		securityProviderClass="securityRoot"
+		securityObject="securityRoot"
 		selectable="false"
 	>
 		<tabInfo label="admin.sys.failedLogins.tab"/>

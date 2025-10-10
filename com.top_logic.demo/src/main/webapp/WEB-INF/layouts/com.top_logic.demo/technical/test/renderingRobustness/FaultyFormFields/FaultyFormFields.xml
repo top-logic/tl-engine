@@ -15,7 +15,7 @@
 				name="${componentName}"
 				page="/jsp/test/layout/renderingRobustness/FaultyFormFields.jsp"
 				resPrefix="layouts.layoutdemo.${componentName}.main."
-				securityProviderClass="securityRoot"
+				securityObject="securityRoot"
 			/>
 		</components>
 	</layout>

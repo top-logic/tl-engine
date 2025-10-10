@@ -15,7 +15,7 @@
 				isSecurityMaster="true"
 				modelBuilder="com.top_logic.monitoring.schema.StaticTypesBuilder"
 				resPrefix="layouts.monitoring.schema.schemaMonitor.types."
-				securityProviderClass="securityRoot"
+				securityObject="securityRoot"
 				selectable="true"
 				showMaximize="true"
 			>
@@ -61,7 +61,7 @@
 				model="selection(${namePrefix}Types)"
 				modelBuilder="com.top_logic.monitoring.schema.StaticAttribtesBuilder"
 				resPrefix="layouts.monitoring.schema.schemaMonitor.attributes."
-				securityProviderClass="securityRoot"
+				securityObject="securityRoot"
 				selectable="false"
 			>
 				<table

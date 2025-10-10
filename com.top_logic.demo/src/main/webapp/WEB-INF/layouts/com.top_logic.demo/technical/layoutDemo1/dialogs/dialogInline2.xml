@@ -13,7 +13,7 @@
 					name="infoDialogInline2_1"
 					page="/jsp/test/layout/dialog/DemoDialogContent.jsp"
 					resPrefix="layouts.layoutdemo.dialog.dialogInline2.infoDialogInline21."
-					securityProviderClass="securityRoot"
+					securityObject="securityRoot"
 				>
 					<componentControlProvider class="com.top_logic.layout.structure.InlineLayoutControlProvider"/>
 				</component>
@@ -21,7 +21,7 @@
 					name="infoDialogInline2_2"
 					page="/jsp/test/layout/dialog/DemoDialogContent.jsp"
 					resPrefix="layouts.layoutdemo.dialog.dialogInline2.infoDialogInline22."
-					securityProviderClass="securityRoot"
+					securityObject="securityRoot"
 				>
 					<componentControlProvider class="com.top_logic.layout.structure.InlineLayoutControlProvider"/>
 				</component>

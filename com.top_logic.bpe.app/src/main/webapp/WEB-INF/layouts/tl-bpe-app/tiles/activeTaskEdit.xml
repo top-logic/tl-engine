@@ -16,7 +16,7 @@
 		model="selection(${tokenTable})"
 		namePrefix="EditActiveTask"
 		page="/jsp/processExecution/EditTask.jsp"
-		securityProvider="securityRoot"
+		securityObject="securityRoot"
 	>
 		<subConfiguration>
 			<buttons>

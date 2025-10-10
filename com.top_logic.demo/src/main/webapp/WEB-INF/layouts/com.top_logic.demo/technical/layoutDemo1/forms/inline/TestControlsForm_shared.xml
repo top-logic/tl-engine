@@ -18,7 +18,7 @@
 				name="${componentName}"
 				page="/jsp/test/layout/TestControlsForm.jsp"
 				resPrefix="layouts.layoutdemo.TestControlsForm_shared.main."
-				securityProviderClass="securityRoot"
+				securityObject="securityRoot"
 				webFolder="demoWebfolder"
 			>
 				<buttons>
@@ -82,7 +82,7 @@
 						name="${componentName}_gotoPerson"
 						page="/jsp/test/layout/TestControlsFormGotoPerson.jsp"
 						resPrefix="layouts.layoutdemo.TestControlsForm_shared.gotoPerson."
-						securityProviderClass="securityRoot"
+						securityObject="securityRoot"
 					>
 						<dialogInfo
 							height="400"

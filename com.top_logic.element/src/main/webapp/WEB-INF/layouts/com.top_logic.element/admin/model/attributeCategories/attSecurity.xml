@@ -14,7 +14,7 @@
 			objectType="tl.model:TLClass"
 			partnerGroup="AttributeCategoryGroup"
 			resPrefix="attSec.meta.element.table."
-			securityProviderClass="securityRoot"
+			securityObject="securityRoot"
 		>
 			<layoutInfo size="413"/>
 			<table
@@ -43,7 +43,7 @@
 			name="editAttSecurity"
 			page="/jsp/layout/admin/security/classification.jsp"
 			resPrefix="admin.security.attSec."
-			securityProviderClass="securityRoot"
+			securityObject="securityRoot"
 		/>
 	</components>
 </layout>

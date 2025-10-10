@@ -8,7 +8,7 @@
 			name="DemoButtonComponent"
 			page="/jsp/test/layout/demoButtonComponent.jsp"
 			resPrefix="layouts.layoutdemo.DemoButtonComponent.DemoButtonComponent."
-			securityProviderClass="securityRoot"
+			securityObject="securityRoot"
 		/>
 	</components>
 </layout>

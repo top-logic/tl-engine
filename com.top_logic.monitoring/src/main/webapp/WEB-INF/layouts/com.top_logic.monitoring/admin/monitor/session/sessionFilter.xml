@@ -5,7 +5,7 @@
 	name="sessionSearch"
 	page="/jsp/monitoring/session/sessionSearchForm.jsp"
 	resPrefix="layouts.monitoring.session.sessionFilter.sessionSearch."
-	securityProviderClass="securityRoot"
+	securityObject="securityRoot"
 	toolbar="false"
 >
 	<commands>

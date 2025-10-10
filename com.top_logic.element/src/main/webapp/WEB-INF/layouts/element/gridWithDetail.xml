@@ -102,7 +102,7 @@
 		<param name="editAttributedParameters"
 			optional="true"
 		/>
-		<param name="securityProviderClass"
+		<param name="securityObject"
 			optional="true"
 		/>
 		<param name="rowSecurityProviderClass"
@@ -118,7 +118,7 @@
 			<include name="element/editAttributedDetail.xml"
 				metaElementName="${types}"
 				namePrefix="${namePrefix}"
-				securityProvider="${editSecurityProvider}"
+				securityObject="ref:${editSecurityProvider}"
 			>
 				<subConfiguration>${editAttributedParameters}</subConfiguration>
 				<inject>
@@ -159,7 +159,7 @@
 		rowSecurityProviderClass="${rowSecurityProviderClass}"
 		saveClosesDialog="${saveClosesDialog}"
 		saveCommand="${saveCommand}"
-		securityProviderClass="${securityProviderClass}"
+		securityObject="${securityObject}"
 		showMarkerFields="${showMarkerFields}"
 		types="${types}"
 	>

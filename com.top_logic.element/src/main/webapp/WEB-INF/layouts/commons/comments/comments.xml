@@ -16,7 +16,7 @@
 		<param name="commentsAttribute"
 			value="comments"
 		/>
-		<param name="securityProviderClass"
+		<param name="securityObject"
 			optional="true"
 		/>
 		<param name="rendererClass"
@@ -58,7 +58,7 @@
 				name="${namePrefix}CommentTable"
 				quoteCommentComponentName="new${namePrefix}QuoteComment"
 				resPrefix="element.comments.commentTable."
-				securityProviderClass="${securityProviderClass}"
+				securityObject="${securityObject}"
 				selectable="false"
 			>
 				<table

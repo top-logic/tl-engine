@@ -20,7 +20,7 @@
 					modelBuilder="com.top_logic.demo.layout.demo.LRMDemoTreeModelBuilder"
 					resPrefix="layouts.layoutdemo.SeparateWindowDemo.SWTreeA."
 					resource-provider="com.top_logic.demo.layout.demo.DemoTreeNodeModel$LP"
-					securityProviderClass="securityRoot"
+					securityObject="securityRoot"
 				>
 					<layoutInfo size="25%"/>
 					<windows>
@@ -49,7 +49,7 @@
 							name="SWDemoFormInputA1"
 							page="/jsp/test/layout/LRMDemoMasterTest.jsp"
 							resPrefix="layouts.layoutdemo.SeparateWindowDemo.SWDemoFormInputA1."
-							securityProviderClass="securityRoot"
+							securityObject="securityRoot"
 						/>
 						<component class="com.top_logic.mig.html.layout.SimpleComponent"
 							content="This inputfield will be the slave of the respective tree in every opened separate window. The inputfield displays the tree's selected node"
@@ -60,7 +60,7 @@
 							name="SWDemoFormInputB2"
 							page="/jsp/test/layout/LRMDemoMasterTest.jsp"
 							resPrefix="layouts.layoutdemo.SeparateWindowDemo.SWDemoFormInputB2."
-							securityProviderClass="securityRoot"
+							securityObject="securityRoot"
 						>
 							<!-- The Master-Attribute of this component will be dynamically set by the referenced component... -->
 						</component>
@@ -81,7 +81,7 @@
 					name="SWPartnerTestComp1"
 					page="/jsp/test/layout/SeparateWindowPartnerTest.jsp"
 					resPrefix="layouts.layoutdemo.SeparateWindowDemo.SWPartnerTestComp1."
-					securityProviderClass="securityRoot"
+					securityObject="securityRoot"
 				>
 					<windows>
 						<window template="com.top_logic.demo/technical/test/separatewindow/sepWin2.xml">

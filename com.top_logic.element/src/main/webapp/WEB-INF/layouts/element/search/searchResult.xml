@@ -32,8 +32,8 @@
 		<param name="downloadNameKey"
 			value="element.search.table.export.file.name"
 		/>
-		<param name="securityProvider"
-			value="default"
+		<param name="securityObject"
+			value="model"
 		/>
 		<param name="selectable"
 			optional="true"
@@ -48,7 +48,7 @@
 				metaElementBuilder="${builderClass}"
 				name="${namePrefix}AttributedSearchResultTable"
 				resPrefix="${resourcePrefix}"
-				securityProviderClass="${securityProvider}"
+				securityObject="${securityObject}"
 				selectable="${selectable}"
 			>
 				<table

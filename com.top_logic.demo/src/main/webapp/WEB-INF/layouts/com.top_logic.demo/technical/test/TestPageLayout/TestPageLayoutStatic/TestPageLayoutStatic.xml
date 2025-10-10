@@ -7,7 +7,7 @@
 			name="TestPageLayoutStatic"
 			page="/jsp/layout/test/TestPageLayoutStatic.jsp"
 			resPrefix="layouts.layoutdemo.test.TestPageLayoutStatic.TestPageLayoutStatic."
-			securityProviderClass="securityRoot"
+			securityObject="securityRoot"
 		/>
 	</components>
 </layout>

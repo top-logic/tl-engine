@@ -52,7 +52,7 @@
 				name="${namePrefix}LoginMessagesTable"
 				resPrefix="LoginMessage.table."
 				rowSecurityProviderClass="${rowSecurityProviderClass}"
-				securityProviderClass="securityRoot"
+				securityObject="securityRoot"
 				showClipboardCommands="false"
 				showMarkerFields="false"
 				structureName="LoginMessages"

@@ -58,7 +58,7 @@
 		<param name="additionalValuesTemplateProvider"
 			value=""
 		/>
-		<param name="securityProvider"
+		<param name="securityObject"
 			value=""
 		/>
 		<param name="dialogWidth"
@@ -118,7 +118,7 @@
 		name="${namePrefix}Chart"
 		page="/jsp/layout/image/chart.jsp"
 		resPrefix="${resPrefix}Chart."
-		securityProviderClass="${securityProvider}"
+		securityObject="${securityObject}"
 		toolbar="${toolbar}"
 	>
 		${exportManager}
@@ -142,7 +142,7 @@
 						name="${namePrefix}ChartDetail"
 						objectType="${objectType}"
 						resPrefix="${resPrefix}Details"
-						securityProviderClass="dialogParent"
+						securityObject="ref:dialogParent"
 						selectable="false"
 					>
 						${tableConfig}

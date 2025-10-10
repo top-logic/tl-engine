@@ -38,7 +38,7 @@
 		<param name="tableFilterProvider"
 			value=""
 		/>
-		<param name="securityProvider"
+		<param name="securityObject"
 			value="securityRoot"
 		/>
 	</params>
@@ -52,7 +52,7 @@
 				model="selection(${masters})"
 				name="${namePrefix}ReportingSearchResultChartDetails"
 				resPrefix="${resourcePrefix}"
-				securityProviderClass="${securityProvider}"
+				securityObject="${securityObject}"
 				selectable="false"
 			>
 				<table

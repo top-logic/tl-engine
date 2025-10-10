@@ -17,7 +17,7 @@
 			graphDrop="com.top_logic.graph.diagramjs.server.TLTypeDrop"
 			isSecurityMaster="true"
 			name="Viewer"
-			securityProviderClass="securityRoot"
+			securityObject="securityRoot"
 			showMinimize="false"
 			titleKey="model.graph.viewer.title"
 			toolbar="true"
@@ -138,7 +138,7 @@
 						defaultFor="tl.model:TLClass"
 						model="selection(Viewer)"
 						resPrefix="model.graph.type.editor"
-						securityProviderClass="securityRoot"
+						securityObject="securityRoot"
 						toolbar="false"
 					>
 						<layoutInfo size="300px"/>
@@ -195,7 +195,7 @@
 						applyCommand="applyTLStructuredTypePart"
 						model="selection(Viewer)"
 						resPrefix="model.graph.attribute.editor"
-						securityProviderClass="securityRoot"
+						securityObject="securityRoot"
 						toolbar="false"
 					>
 						<tabInfo label="element.meta.ReferenceTab"/>
@@ -273,7 +273,7 @@
 						applyCommand="applyTLModule"
 						model="selection(Viewer)"
 						resPrefix="model.graph.module.editor"
-						securityProviderClass="securityRoot"
+						securityObject="securityRoot"
 						toolbar="false"
 					>
 						<tabInfo label="element.meta.ModuleTab"/>
@@ -315,7 +315,7 @@
 						applyCommand="applyTLEnumeration"
 						model="selection(Viewer)"
 						resPrefix="model.graph.enumeration.editor"
-						securityProviderClass="securityRoot"
+						securityObject="securityRoot"
 						toolbar="false"
 					>
 						<tabInfo label="element.meta.EnumerationTab"/>
@@ -360,7 +360,7 @@
 					<editor name="InheritanceEditor"
 						model="selection(Viewer)"
 						resPrefix="model.graph.inheritance.editor"
-						securityProviderClass="securityRoot"
+						securityObject="securityRoot"
 						toolbar="false"
 					>
 						<tabInfo label="element.meta.InheritanceTab"/>

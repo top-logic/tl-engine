@@ -7,7 +7,7 @@
 -->
 <tableView name="externalLibs"
 	resPrefix="external.library"
-	securityProviderClass="path:opener.currentobject"
+	securityObject="path:opener.currentobject"
 	selectable="true"
 	titleKey="util.maintenance.displayDialog_externalLibs.title"
 >

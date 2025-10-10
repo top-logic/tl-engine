@@ -18,14 +18,10 @@ import jakarta.servlet.ServletContext;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.Logger;
-import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.TupleFactory.Tuple;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.basic.component.AJAXComponent;
@@ -66,16 +62,6 @@ public abstract class BoundComponent extends AJAXComponent implements BoundCheck
 		/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
 		Lookup LOOKUP = MethodHandles.lookup();
 
-		/**
-		 * The name of the {@link SecurityObjectProvider} which defines on which object the security
-		 * will be checked.
-		 * 
-		 * @deprecated Use {@link #getSecurityObject()}.
-		 */
-		@Name(XML_ATTRIBUTE_SECURITY_PROVIDER_CLASS)
-		@Deprecated
-		String getSecurityProviderClass();
-
 		@Override
 		default void modifyIntrinsicCommands(CommandRegistry registry) {
 			AJAXComponent.Config.super.modifyIntrinsicCommands(registry);
@@ -83,10 +69,6 @@ public abstract class BoundComponent extends AJAXComponent implements BoundCheck
 		}
 
 	}
-
-
-    /** SecurityProviderClass which defines on which object the security will be checked. */
-    public static final String XML_ATTRIBUTE_SECURITY_PROVIDER_CLASS = "securityProviderClass";
 
     /** {@link ThreadLocal} for accessing the allow cache */
 	private static final ThreadLocal<Map<Tuple, Boolean>> SECURITY_REQUEST_CACHE = new ThreadLocal<>();
@@ -117,15 +99,11 @@ public abstract class BoundComponent extends AJAXComponent implements BoundCheck
     /**
 	 * Construct a bound component from configuration.
 	 */
-    public BoundComponent(InstantiationContext context, Config atts) throws ConfigurationException {
-        super(context, atts);
+	public BoundComponent(InstantiationContext context, Config config) throws ConfigurationException {
+		super(context, config);
 
-		isSecurityMaster = atts.getIsSecurityMaster();
-        try {
-			_securityObjectProvider = initSecurityObjectProvider(context, atts);
-		} catch (ConfigurationException ex) {
-			throw new ConfigurationError(I18NConstants.INVALID_SECURITY_OBJECT_PROVIDER_CONFIG, ex);
-		}
+		isSecurityMaster = config.getIsSecurityMaster();
+		_securityObjectProvider = SecurityObjectProvider.fromConfiguration(context, config.getSecurityObject());
     }
     
     /**
@@ -144,41 +122,7 @@ public abstract class BoundComponent extends AJAXComponent implements BoundCheck
         return null;
     }
     
-	/**
-	 * Instantiates the configured {@link Config#getSecurityObject() provider}, or, if none
-	 * is configured, tries to resolve the configured {@link Config#getSecurityProviderClass()
-	 * provider name}, or, if that fails too, falls back to the
-	 * {@link #getDefaultSecurityObjectProvider() default provider}.
-	 * 
-	 * @throws ConfigurationException
-	 *         If the configured {@link SecurityObjectProvider} cannot be instantiated.
-	 */
-	protected SecurityObjectProvider initSecurityObjectProvider(InstantiationContext context, Config atts)
-			throws ConfigurationException {
-		PolymorphicConfiguration<? extends SecurityObjectProvider> providerConfig = atts.getSecurityObject();
-		if (providerConfig != null) {
-			return context.getInstance(providerConfig);
-		} else {
-			String providerName = StringServices.nonEmpty(atts.getSecurityProviderClass());
-			if (!StringServices.isEmpty(providerName)) {
-				return SecurityObjectProviderManager.getInstance().getSecurityObjectProvider(providerName);
-			} else {
-				return getDefaultSecurityObjectProvider();
-			}
-		}
-    }
-
-    /**
-	 * Gets the default SecurityObjectProvider which gets used if no one is configured in layout
-	 * xml. Subclasses may override this method if necessary
-	 * 
-	 * @return {@link SecurityObjectProviderManager#getDefaultSecurityObjectProvider()}
-	 */
-    protected SecurityObjectProvider getDefaultSecurityObjectProvider() {
-		return SecurityObjectProviderManager.getInstance().getDefaultSecurityObjectProvider();
-    }
-
-    @Override
+	@Override
 	public Config getConfig() {
 		return (Config) super.getConfig();
 	}
@@ -243,11 +187,6 @@ public abstract class BoundComponent extends AJAXComponent implements BoundCheck
     
 	private static Map<Tuple, Boolean> getSecurityRequestCache() {
 		return SECURITY_REQUEST_CACHE.get();
-	}
-
-	@Override
-	public BoundObject getSecurityObject(BoundCommandGroup commandGroup, Object potentialModel) {
-		return getSecurityObjectProvider().getSecurityObject(this, potentialModel, commandGroup);
 	}
 
     /**
@@ -412,9 +351,7 @@ public abstract class BoundComponent extends AJAXComponent implements BoundCheck
 		return supportsInternalModel(potentialModel) && BoundChecker.allowShowModel(this, potentialModel);
     }
 
-	/**
-	 * Gets the configured {@link SecurityObjectProvider}.
-	 */
+	@Override
 	public SecurityObjectProvider getSecurityObjectProvider() {
 		return _securityObjectProvider;
 	}

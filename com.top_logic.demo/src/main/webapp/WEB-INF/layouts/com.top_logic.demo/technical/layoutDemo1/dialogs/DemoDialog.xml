@@ -7,7 +7,7 @@
 			name="demoDialog1"
 			page="/jsp/test/layout/dialog/DemoDialog.jsp"
 			resPrefix="layouts.layoutdemo.dialog.DemoDialog.demoDialog1."
-			securityProviderClass="securityRoot"
+			securityObject="securityRoot"
 		>
 			<dialogs>
 				<include name="com.top_logic.demo/technical/layoutDemo1/dialogs/dynamicLayoutDemo.xml">

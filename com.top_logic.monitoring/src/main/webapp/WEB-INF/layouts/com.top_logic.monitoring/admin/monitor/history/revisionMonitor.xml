@@ -11,7 +11,7 @@
 			name="revisionFilterComponent"
 			page="/jsp/monitoring/revision/revisionMonitor.jsp"
 			resPrefix="admin.monitor.revisionMonitor.filter"
-			securityProviderClass="securityRoot"
+			securityObject="securityRoot"
 			toolbar="false"
 		>
 			<layoutInfo size="50px"/>
@@ -24,7 +24,7 @@
 		</component>
 		<tree-table name="revisionTable"
 			model="selection(revisionFilterComponent)"
-			securityProviderClass="securityRoot"
+			securityObject="securityRoot"
 			toolbar="false"
 		>
 			<treeBuilder class="com.top_logic.monitoring.revision.ChangeSetTreeBuilder"/>

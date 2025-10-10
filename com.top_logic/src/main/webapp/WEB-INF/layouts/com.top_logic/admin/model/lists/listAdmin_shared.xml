@@ -55,7 +55,7 @@
 				modelBuilder="${modelBuilder}"
 				objectType="tl.model:TLEnumeration"
 				resPrefix="${resPrefix}.table."
-				securityProviderClass="securityRoot"
+				securityObject="securityRoot"
 			>
 				<layoutInfo size="${tableWidth}"/>
 				<table
@@ -89,7 +89,7 @@
 				name="${namePrefix}editListComponent"
 				page="/jsp/layout/admin/list/EditListComponent.jsp"
 				resPrefix="main.admin.list.edit."
-				securityProviderClass="securityRoot"
+				securityObject="securityRoot"
 			>
 				<tables>
 					<table name="field_tablelist">
@@ -115,7 +115,7 @@
 								name="${namePrefix}newListComponent"
 								page="/jsp/layout/admin/list/NewListComponent.jsp"
 								resPrefix="${resPrefix}.edit.new."
-								securityProviderClass="securityRoot"
+								securityObject="securityRoot"
 							/>
 						</components>
 					</layout>

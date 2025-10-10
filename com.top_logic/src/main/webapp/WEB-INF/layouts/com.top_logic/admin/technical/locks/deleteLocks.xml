@@ -12,7 +12,7 @@
 
 	<tree-table name="${namePrefix}Tree"
 		resPrefix="${resPrefix}.table"
-		securityProviderClass="securityRoot"
+		securityObject="securityRoot"
 		titleKey="${resPrefix}.title"
 		treeBuilder="com.top_logic.base.locking.ui.LocksTreeBuilder"
 	>

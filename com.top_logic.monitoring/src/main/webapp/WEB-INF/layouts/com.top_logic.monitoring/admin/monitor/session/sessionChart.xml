@@ -34,7 +34,7 @@
 			namePrefix="UserSessionChart"
 			objectType=""
 			resPrefix="reporting.userSession.chart."
-			securityProvider="securityRoot"
+			securityObject="securityRoot"
 		/>
 	</components>
 </layout>

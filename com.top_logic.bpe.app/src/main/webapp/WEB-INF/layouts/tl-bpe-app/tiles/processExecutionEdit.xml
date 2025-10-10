@@ -15,7 +15,7 @@
 		model="${model}"
 		namePrefix="EditProcessExecution"
 		page="/jsp/processExecution/ProcessExecution.jsp"
-		securityProvider="securityRoot"
+		securityObject="securityRoot"
 	>
 		<subConfiguration>
 			<buttons>

@@ -80,7 +80,7 @@
 												name="DialogGotoParent"
 												page="/jsp/layout/security/GotoParent.jsp"
 												resPrefix="layouts.demo.editSecurityStructureWithExport.DialogGotoParent."
-												securityProviderClass="default"
+												securityObject="model"
 											/>
 										</components>
 									</layout>
@@ -100,7 +100,7 @@
 													name="demoFirstStepSecurity"
 													page="/jsp/layout/security/DialogA.jsp"
 													resPrefix="layouts.demo.editSecurityStructureWithExport.demoFirstStepSecurity."
-													securityProviderClass="securityRoot"
+													securityObject="securityRoot"
 												>
 													<assistantInfo/>
 												</component>
@@ -109,7 +109,7 @@
 													name="demoSecondStepSecurity"
 													page="/jsp/layout/security/DialogB.jsp"
 													resPrefix="layouts.demo.editSecurityStructureWithExport.demoSecondStepSecurity."
-													securityProviderClass="securityRoot"
+													securityObject="securityRoot"
 												>
 													<assistantInfo/>
 												</component>
@@ -189,7 +189,7 @@
 										name="EditParentComponent"
 										page="/jsp/layout/security/DisplayParent.jsp"
 										resPrefix="layouts.demo.editSecurityStructureWithExport.EditParentComponent."
-										securityProviderClass="default"
+										securityObject="model"
 										structure="${structure}"
 									/>
 								</components>

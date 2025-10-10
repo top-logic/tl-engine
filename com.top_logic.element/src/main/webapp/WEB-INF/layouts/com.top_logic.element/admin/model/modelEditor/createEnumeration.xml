@@ -31,7 +31,7 @@
 				model="${ownerModel}"
 				resPrefix="element.meta.createStructuredType.Form."
 				resetInvisible="true"
-				securityProviderClass="dialogParent"
+				securityObject="ref:dialogParent"
 			>
 				<modelBuilder class="com.top_logic.element.layout.meta.TLEnumerationFormBuilder"
 					contextOptional="true"

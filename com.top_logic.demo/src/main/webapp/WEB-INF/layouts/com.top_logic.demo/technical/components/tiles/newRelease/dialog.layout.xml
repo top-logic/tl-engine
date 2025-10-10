@@ -11,7 +11,7 @@
 		helpID=""
 		openMaximized="false"
 		resizable="true"
-		securityProviderClass="securityRoot"
+		securityObject="securityRoot"
 		width="800px"
 	>
 		<open-handler id="ID_73c6d913_c286_41ca_b41f_1c8f1f7c05b4"

@@ -7,7 +7,7 @@
 			name="TestPageLayoutEdit"
 			page="/jsp/layout/test/TestPageLayoutEdit.jsp"
 			resPrefix="layouts.layoutdemo.test.TestPageLayoutEdit.TestPageLayoutEdit."
-			securityProviderClass="securityRoot"
+			securityObject="securityRoot"
 		/>
 	</components>
 </layout>

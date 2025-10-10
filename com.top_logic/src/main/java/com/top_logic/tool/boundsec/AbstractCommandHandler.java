@@ -26,11 +26,11 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.Branch;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.service.Revision;
-import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.ResPrefix;
@@ -39,13 +39,13 @@ import com.top_logic.layout.basic.ComponentCommand;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.basic.check.CheckScopeProvider;
 import com.top_logic.layout.basic.check.NoCheckScopeProvider;
-import com.top_logic.layout.channel.ModelChannel;
 import com.top_logic.layout.channel.linking.impl.ChannelLinking;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.DisplayMinimized;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.model.TLObject;
 import com.top_logic.tool.boundsec.conditional.PreconditionCommandHandler;
 import com.top_logic.tool.boundsec.confirm.CommandConfirmation;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
@@ -72,6 +72,7 @@ public abstract class AbstractCommandHandler implements CommandHandler {
 		@Override
 		@Options(fun = AllInAppImplementations.class)
 		@DisplayMinimized
+		@NullDefault // Only an override, no default implementation.
 		PolymorphicConfiguration<? extends SecurityObjectProvider> getSecurityObject();
 
 	}
@@ -94,7 +95,7 @@ public abstract class AbstractCommandHandler implements CommandHandler {
     public static final String REVISION = "revision";
 
     /** The group this command belongs to. */
-    protected BoundCommandGroup commandGroup;
+	private final BoundCommandGroup _commandGroup;
 
 	private String _clique;
 
@@ -129,7 +130,7 @@ public abstract class AbstractCommandHandler implements CommandHandler {
 
 	private final Config _config;
 
-	private final SecurityObjectProvider _securityObjectProvider;
+	private final SecurityObjectProvider _securityObjectProviderOverride;
 
 	private final ChannelLinking _target;
 
@@ -147,7 +148,7 @@ public abstract class AbstractCommandHandler implements CommandHandler {
 	public AbstractCommandHandler(InstantiationContext context, Config config) {
 		_config = config;
 		this.commandID = id(config);
-		this.commandGroup = group(context, config);
+		_commandGroup = group(context, config);
 		_clique = config.getClique();
 		_confirmation = confirmation(context, config);
 		_image = config.getImage();
@@ -156,7 +157,8 @@ public abstract class AbstractCommandHandler implements CommandHandler {
 		_cssClasses = config.getCssClasses();
 		_rule = rule(context, config);
 		_checkScopeProvider = checkScopeProvider(context, config);
-		_securityObjectProvider = context.getInstance(config.getSecurityObject());
+		_securityObjectProviderOverride =
+			SecurityObjectProvider.fromConfigurationOptional(context, config.getSecurityObject());
 		_target = context.getInstance(config.getTarget());
 
 		assert _rule != null : "No executablity rule in handler '" + getID() + "'.";
@@ -235,7 +237,7 @@ public abstract class AbstractCommandHandler implements CommandHandler {
     
     @Override
 	public final BoundCommandGroup getCommandGroup() {
-        return (this.commandGroup);
+		return _commandGroup;
     }
 
 	@Override
@@ -340,7 +342,7 @@ public abstract class AbstractCommandHandler implements CommandHandler {
 	public String toString() {
         return (this.getClass().getName() + " [" +
                 "command: '" + this.getID() +
-                ", group: " + this.commandGroup +
+			", group: " + _commandGroup +
                 ']');
     }
 
@@ -412,7 +414,7 @@ public abstract class AbstractCommandHandler implements CommandHandler {
 	 * Get the {@link BoundObject} this command operates on. In general this will be be the
 	 * model/bound object of the layout.
 	 * 
-	 * @param aComponent
+	 * @param checker
 	 *        The component asking for the command, must not be <code>null</code>.
 	 * @param model
 	 *        See {@link #handleCommand(DisplayContext, LayoutComponent, Object, Map)}.
@@ -421,37 +423,45 @@ public abstract class AbstractCommandHandler implements CommandHandler {
 	 *        <code>null</code>.
 	 * @return The {@link BoundObject}, may be <code>null</code>.
 	 */
-	protected BoundObject getBoundObject(LayoutComponent aComponent, Object model, Map<String, Object> arguments) {
-		Object theBO = (arguments != null) ? arguments.get(BOUND_OBJECT) : null;
-    	if (theBO instanceof BoundObject) {
-    		return (BoundObject) theBO;
-    	}
-    	
-		Object theObj = this.getObject(arguments);
-    	if (theObj instanceof BoundObject) {
-    		return (BoundObject) theObj;
-    	}
-    	
-    	if (aComponent instanceof BoundChecker) {
-			BoundChecker boundChecker = (BoundChecker) aComponent;
-			if (_securityObjectProvider != null) {
-				return _securityObjectProvider.getSecurityObject(boundChecker, model, getCommandGroup());
-			} else {
-				Object securityBaseModel = operatesOn(ModelChannel.NAME) ? model : aComponent.getModel();
-				return boundChecker.getSecurityObject(this.getCommandGroup(), securityBaseModel);
+	protected BoundObject getBoundObject(BoundChecker checker, Object model, Map<String, Object> arguments) {
+		if (arguments != null) {
+			BoundObject result = (BoundObject) arguments.get(BOUND_OBJECT);
+			if (result != null) {
+				return result;
 			}
-    	}
-    	
-		if (model instanceof BoundObject) {
-			return (BoundObject) model;
 		}
-
-    	return null;
+    	
+		Object targetObject = this.getObject(arguments);
+		if (targetObject == null) {
+			targetObject = model;
+		}
+    	
+		if (_securityObjectProviderOverride != null) {
+			return _securityObjectProviderOverride.getSecurityObject(checker, targetObject, getCommandGroup());
+		} else {
+			return checker.getSecurityObject(this.getCommandGroup(), targetObject);
+    	}
     }
     
 	@Override
-	public boolean checkSecurity(LayoutComponent component, Object model, Map<String, Object> someValues) {
-		return BoundChecker.allowCommandOnSecurityObject(((BoundChecker) component), getCommandGroup(), getBoundObject(component, model, someValues));
+	public boolean checkSecurity(LayoutComponent component, Object model, Map<String, Object> arguments) {
+		BoundChecker checker = getChecker(component, arguments);
+		BoundCommandGroup commandGroup = getCommandGroup();
+		BoundObject checkContext = getBoundObject(checker, model, arguments);
+
+		return BoundChecker.allowCommandOnSecurityObject(checker, commandGroup, checkContext);
+	}
+
+	/**
+	 * The check context for access rights.
+	 * 
+	 * @param component
+	 *        The component on which the command is executed.
+	 * @param arguments
+	 *        The arguments with which the command was invoked.
+	 */
+	protected BoundChecker getChecker(LayoutComponent component, Map<String, Object> arguments) {
+		return (BoundChecker) component;
 	}
 
 	/**
@@ -502,16 +512,16 @@ public abstract class AbstractCommandHandler implements CommandHandler {
 		Revision theRevision =
 			StringServices.isEmpty(theRevisionStr) ? null : HistoryUtils.getRevision(Long.parseLong(theRevisionStr));
 
-        Wrapper  theWrapper     = null;
-        
-        if (theId != null && theType != null) {
-			theWrapper = WrapperFactory.getWrapper(theBranch, theRevision, theId, theType);
-			if (theWrapper == null) {
+		if (theId != null && theType != null) {
+			TLObject result = WrapperFactory.getWrapper(theBranch, theRevision, theId, theType);
+			if (result == null) {
 				throw new ObjectNotFound(I18NConstants.OBJECT_NOT_FOUND);
+			} else {
+				return result;
 			}
         }
 
-        return theWrapper;
+		return null;
 	}
 
 	private static String id(CommandHandler.Config config) {

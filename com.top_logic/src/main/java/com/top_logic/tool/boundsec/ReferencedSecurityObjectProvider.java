@@ -5,7 +5,6 @@
  */
 package com.top_logic.tool.boundsec;
 
-import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -68,11 +67,7 @@ public final class ReferencedSecurityObjectProvider implements SecurityObjectPro
 
 	void resolveReference(InstantiationContext context, SecurityObjectProviderManager manager) {
 		if (manager.hasSecurityObjectProvider(_reference)) {
-			try {
-				_delegate = manager.getSecurityObjectProvider(_reference);
-			} catch (ConfigurationException ex) {
-				throw new ConfigurationError("Unable to get provider for '" + _reference + "'.", ex);
-			}
+			_delegate = manager.getSecurityObjectProvider(_reference);
 		} else {
 			context.error("Unknown reference '" + _reference + "' in SecurityObjectProviderManager.");
 		}

@@ -11,15 +11,12 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
-import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.form.component.AbstractApplyCommandHandler;
 import com.top_logic.layout.form.component.AbstractDeleteCommandHandler;
 import com.top_logic.layout.form.component.EditComponent;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.tool.boundsec.BoundCommandGroup;
-import com.top_logic.tool.boundsec.BoundObject;
 
 /**
  * {@link EditComponent} that provides mode switch buttons without actually saving any changes.
@@ -66,15 +63,6 @@ public abstract class DummyEditComponent extends EditComponent {
 
 	@Override
 	protected boolean supportsInternalModel(Object anObject) {
-		return true;
-	}
-
-	/**
-	 * Allow anything as we don't have a bound object as model. That seems the only way to avoid
-	 * security
-	 */
-	@Override
-	public boolean allow(Person aPerson, BoundObject aModel, BoundCommandGroup aCmdGroup) {
 		return true;
 	}
 

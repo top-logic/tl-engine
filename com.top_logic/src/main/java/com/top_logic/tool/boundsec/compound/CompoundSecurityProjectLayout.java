@@ -9,7 +9,6 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.BoundChecker;
@@ -67,19 +66,6 @@ public class CompoundSecurityProjectLayout extends CompoundSecurityLayout {
      * @return the primary checker.
      */
     public CompoundSecurityBoundChecker getPrimaryChecker() {
-        // initialize if not present yet
-        if (primaryChecker == null) {
-            // try my Children first
-            LayoutComponent checker = this.getComponentByName(this.primaryCheckerName);
-            if (checker == null) {
-                checker =  getMainLayout().getComponentByName(this.primaryCheckerName);
-            }
-            if (checker == null) {
-                throw new NullPointerException("No Primary Checker named '" 
-                        + this.primaryCheckerName + "'");
-            }
-            primaryChecker = (CompoundSecurityBoundChecker) checker;
-        }
         return primaryChecker;
     }
     
@@ -104,11 +90,6 @@ public class CompoundSecurityProjectLayout extends CompoundSecurityLayout {
         return secondaryChecker;
     }
     
-    @Override
-	public boolean allow(Person aPerson, BoundObject aModel, BoundCommandGroup aCmdGroup) {
-		return getPrimaryChecker().allow(aPerson, aModel, aCmdGroup);
-    }
-    
     /** 
      * Set the secondary checker as deledation destination in the primary checker.
      *
@@ -117,7 +98,20 @@ public class CompoundSecurityProjectLayout extends CompoundSecurityLayout {
     @Override
 	protected void componentsResolved(InstantiationContext context) {
         super.componentsResolved(context);
-        this.getPrimaryChecker().setDelegationDestination(this.getSecondaryChecker());
+
+		// try my Children first
+		LayoutComponent checker = this.getComponentByName(this.primaryCheckerName);
+		if (checker == null) {
+			checker = getMainLayout().getComponentByName(this.primaryCheckerName);
+		}
+		if (checker == null) {
+			throw new NullPointerException("No Primary Checker named '"
+				+ this.primaryCheckerName + "'");
+		}
+		primaryChecker = (CompoundSecurityBoundChecker) checker;
+		primaryChecker.setDelegationDestination(this.getSecondaryChecker());
+
+		initSecurityMaster(primaryChecker);
     }
     
     /** 

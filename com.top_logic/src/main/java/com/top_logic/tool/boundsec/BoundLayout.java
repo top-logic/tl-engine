@@ -82,7 +82,12 @@ public class BoundLayout extends Layout implements LayoutContainerBoundChecker {
 			return securityMaster.hideReason();
         }
 
-		return super.hideReason();
+		ResKey technicalReason = super.hideReason();
+		if (technicalReason != null) {
+			return technicalReason;
+		}
+
+		return BoundChecker.hideReasonForSecurity(this, internalModel());
 	}
 
 	/**

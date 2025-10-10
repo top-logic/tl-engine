@@ -7,6 +7,7 @@ package com.top_logic.tool.boundsec.compound;
 
 import com.top_logic.layout.component.Selectable;
 import com.top_logic.tool.boundsec.BoundChecker;
+import com.top_logic.tool.boundsec.BoundCheckerComponent;
 
 /**
  * Provides a setter so the Delegating component can set the the secondary checker.
@@ -14,7 +15,7 @@ import com.top_logic.tool.boundsec.BoundChecker;
  * @author    <a href="mailto:tsa@top-logic.com">Theo Sattler</a>
  * 
  */
-public interface CompoundSecurityBoundChecker extends BoundChecker, Selectable {
+public interface CompoundSecurityBoundChecker extends BoundCheckerComponent, Selectable {
 
     /** 
      * Set the checker to which the allow methods are delegated.

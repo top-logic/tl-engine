@@ -20,7 +20,6 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
-import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.component.LayoutContainerBoundChecker;
@@ -37,7 +36,6 @@ import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.SecurityObjectProvider;
 import com.top_logic.tool.boundsec.SecurityObjectProviderConfig;
 import com.top_logic.tool.boundsec.WithSecurityMaster;
-import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.boundsec.wrap.PersBoundComp;
 import com.top_logic.util.Resources;
@@ -141,15 +139,6 @@ public class BoundAssistentComponent extends AssistentComponent implements Layou
         return this.supportsInternalModel(null);
     }
     
-    /** 
-     * Check if given Person has access to aModel in this class for given command group
-     */
-    @Override
-	public boolean allow(Person aPerson, BoundObject aModel,
-            BoundCommandGroup aCmdGroup) {
-        return AccessManager.getInstance().hasRole(aPerson, aModel, getRolesForCommandGroup(aCmdGroup));
-    }
-
     public List getProgressRelevantChildren() {
 		List progressChilds = new ArrayList(getChildList());
 		

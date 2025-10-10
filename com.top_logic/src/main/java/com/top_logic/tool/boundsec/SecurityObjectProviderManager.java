@@ -8,6 +8,7 @@ package com.top_logic.tool.boundsec;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.MapUtil;
 import com.top_logic.basic.config.AbstractConfigurationValueProvider;
@@ -156,11 +157,8 @@ public class SecurityObjectProviderManager extends ManagedClass {
 	 * @param key
 	 *        The name of the security object provider to get (may be an alias)
 	 * @return The requested security object provider. Never <code>null</code>.
-	 * 
-	 * @throws ConfigurationException
-	 *         If the configured provider cannot be instantiated.
 	 */
-	public SecurityObjectProvider getSecurityObjectProvider(String key) throws ConfigurationException {
+	public SecurityObjectProvider getSecurityObjectProvider(String key) {
 		SecurityObjectProvider existingProvider = _providers.get(key);
 		if (existingProvider != null) {
 			return existingProvider;
@@ -168,10 +166,14 @@ public class SecurityObjectProviderManager extends ManagedClass {
 		return MapUtil.putIfAbsent(_providers, key, newProvider(key));
     }
 
-	private SecurityObjectProvider newProvider(String key) throws ConfigurationException {
-		PolymorphicConfiguration<? extends SecurityObjectProvider> config =
-			SecurityObjectProviderFormat.INSTANCE.getValue(key, key);
-		return SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(config);
+	private SecurityObjectProvider newProvider(String key) {
+		try {
+			PolymorphicConfiguration<? extends SecurityObjectProvider> config =
+				SecurityObjectProviderFormat.INSTANCE.getValue(key, key);
+			return SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(config);
+		} catch (ConfigurationException ex) {
+			throw new ConfigurationError(ex);
+		}
 	}
 
 	boolean hasSecurityObjectProvider(String key) {

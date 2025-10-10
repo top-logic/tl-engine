@@ -11,7 +11,9 @@ import java.util.Set;
 
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.layout.component.IComponent;
+import com.top_logic.layout.window.WindowComponent;
 import com.top_logic.mig.html.layout.ComponentName;
+import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.wrap.PersBoundComp;
 
 /**
@@ -51,7 +53,19 @@ public interface BoundCheckerComponent extends BoundChecker, IComponent {
 
 	@Override
 	default Set<? extends BoundRole> getRolesForCommandGroup(BoundCommandGroup aCommand) {
-		return Collections.emptySet();
+		WindowComponent enclosingWindow = this.getEnclosingWindow();
+		if (enclosingWindow != null) {
+			LayoutComponent windowOpener = enclosingWindow.getOpener();
+			if (windowOpener instanceof BoundChecker) {
+				return ((BoundChecker) windowOpener).getRolesForCommandGroup(aCommand);
+			}
+		}
+
+		PersBoundComp accessConfig = getPersBoundComp();
+		if (accessConfig == null) {
+			return Collections.emptySet();
+		}
+		return accessConfig.rolesForCommandGroup(aCommand);
 	}
 
 	/**

@@ -1005,6 +1005,36 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		return true;
 	}
 
+	@Override
+	public ResKey hideReason() {
+		Object internalModel = internalModel();
+		if (!ComponentUtil.isValid(internalModel)) {
+			return com.top_logic.tool.execution.I18NConstants.ERROR_INVALID_MODEL;
+		}
+
+		if (hideOnUnsupportedModel() && !supportsModel(internalModel)) {
+			return com.top_logic.tool.execution.I18NConstants.ERROR_MODEL_NOT_SUPPORTED;
+		}
+		
+		return null;
+	}
+
+	/**
+	 * Whether the component should be hidden, if an unsupported model is set.
+	 * 
+	 * <p>
+	 * If the component is show for an unsupported, model, <code>null</code> is displayed instead.
+	 * </p>
+	 */
+	protected boolean hideOnUnsupportedModel() {
+		return true;
+	}
+
+	@Override
+	public final boolean canShow() {
+		return hideReason() == null;
+	}
+
     /**
      * the top dialog component knows its creation component.
      */

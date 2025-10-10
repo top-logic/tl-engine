@@ -13,6 +13,7 @@ import com.top_logic.basic.Log;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ConfiguredInstance;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.channel.ComponentChannel;
 import com.top_logic.mig.html.layout.CommandRegistry;
 import com.top_logic.mig.html.layout.ComponentName;
@@ -24,7 +25,7 @@ import com.top_logic.tool.boundsec.CommandHandlerFactory;
 /**
  * Common interface of components for composing <i>TopLogic</i> applications.
  *
- * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
+ * @see LayoutComponent
  */
 public interface IComponent extends TypedAnnotatable, ConfiguredInstance<LayoutComponent.Config> {
 
@@ -62,6 +63,25 @@ public interface IComponent extends TypedAnnotatable, ConfiguredInstance<LayoutC
 	 * </p>
 	 */
 	ComponentName getName();
+
+	/**
+	 * A user-readable reason, why {@link #canShow()} is <code>false</code>.
+	 * 
+	 * @return A reason why {@link #canShow()} is <code>false</code>, or <code>null</code> if
+	 *         {@link #canShow()} should be <code>true</code>.
+	 */
+	ResKey hideReason();
+
+	/**
+	 * Check if <em>default</em> {@link com.top_logic.tool.boundsec.BoundCommandGroup} is allowed
+	 * for the current {@link com.top_logic.knowledge.wrap.person.Person}.
+	 * 
+	 * This will usually check sub checkers too.
+	 * 
+	 * @return false, if default command cannot be performed on this object. The default command is
+	 *         usually "VIEW"
+	 */
+	boolean canShow();
 
 	/** The root component of this layout. */
 	MainLayout getMainLayout();

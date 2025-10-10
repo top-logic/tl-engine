@@ -90,7 +90,7 @@ public class BoundSecurityFilter implements Filter {
     /** Check that the given Object is allowed to execute the commandGroup */ 
     protected boolean acceptSecurity(AbstractBoundWrapper anObject) {
         if (isSuperUser) return true;
-        if (checker != null) return checker.allow(commandGroup, anObject);
+        if (checker != null) return BoundChecker.allowCommandOnSecurityObject(checker, commandGroup, anObject);
         if (person != null) return !AccessManager.getInstance().getRoles(person, anObject).isEmpty();
         return false;
     }

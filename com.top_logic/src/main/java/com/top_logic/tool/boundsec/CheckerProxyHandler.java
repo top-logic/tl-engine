@@ -126,7 +126,7 @@ public final class CheckerProxyHandler extends CommandHandlerProxy {
 		// In these cases, the command's target model is not used and therefore must not be used for
 		// computing the base model for security checks.
 		BoundObject currentObject = _checker.getSecurityObject(getCommandGroup(), _checker.getModel());
-		return _checker.allow(getCommandGroup(), currentObject);
+		return BoundChecker.allowCommandOnSecurityObject(_checker, getCommandGroup(), currentObject);
 	}
 
 	@Override

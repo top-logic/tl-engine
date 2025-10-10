@@ -343,11 +343,11 @@ public class TestLayoutBasedSecurity extends BasicTestCase {
 			if (false) {
 				/* Does not work because checker is DelegateStructureHTMLTree which does not
 				 * invalidates cache. */
-				assertTrue(thePLD.allow(theProject));
+				assertTrue(BoundChecker.allowShowSecurityObject(thePLD, theProject));
 			}
-			assertTrue(thePL1.allow(theProject));
-			assertFalse(thePL2.allow(theProject));
-			assertFalse(thePL3.allow(theProject));
+			assertTrue(BoundChecker.allowShowSecurityObject(thePL1, theProject));
+			assertFalse(BoundChecker.allowShowSecurityObject(thePL2, theProject));
+			assertFalse(BoundChecker.allowShowSecurityObject(thePL3, theProject));
 
 			// test handles and defaultFor
 

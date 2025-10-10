@@ -15,7 +15,6 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.channel.ComponentChannel;
 import com.top_logic.layout.channel.ComponentChannel.ChannelListener;
 import com.top_logic.layout.component.LayoutContainerBoundChecker;
@@ -171,11 +170,6 @@ public class GroupTileComponent extends LayoutList implements Selectable, Layout
 	@Override
 	public boolean isOuterFrameset() {
 		return false;
-	}
-
-	@Override
-	public ResKey hideReason() {
-		return hideReason(internalModel());
 	}
 
 }

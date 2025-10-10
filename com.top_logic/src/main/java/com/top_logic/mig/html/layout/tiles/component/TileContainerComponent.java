@@ -1270,9 +1270,4 @@ public class TileContainerComponent extends LayoutContainer implements BoundChec
 		return layout.visit(COMPONENT_TILE_CREATOR, this);
 	}
 
-	@Override
-	public ResKey hideReason() {
-		return hideReason(internalModel());
-	}
-
 }

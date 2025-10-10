@@ -148,7 +148,7 @@ public class PathSecurityObjectProvider extends AbstractConfiguredInstance<PathS
 				Object theElt = theIt.next();
 				if (theElt instanceof BoundObject) {
 					theBO = (BoundObject) theElt;
-					if (checker.allow(commandGroup, theBO)) {
+					if (BoundChecker.allowCommandOnSecurityObject(checker, commandGroup, theBO)) {
 						return theBO;
 					}
 				}

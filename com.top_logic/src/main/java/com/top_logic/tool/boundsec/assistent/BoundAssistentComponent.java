@@ -21,7 +21,6 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
-import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.ThemeImage;
@@ -30,6 +29,7 @@ import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.ModelEventListener;
 import com.top_logic.mig.html.layout.SubComponentConfig;
+import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCheckerLayoutConfig;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundComponent;
@@ -42,10 +42,7 @@ import com.top_logic.tool.boundsec.WithSecurityMaster;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.boundsec.wrap.PersBoundComp;
-import com.top_logic.tool.execution.I18NConstants;
-import com.top_logic.tool.execution.service.CommandApprovalService;
 import com.top_logic.util.Resources;
-import com.top_logic.util.TLContext;
 
 /**
  * Extension of AssistentComponent making it security aware.
@@ -147,58 +144,8 @@ public class BoundAssistentComponent extends AssistentComponent implements Layou
 
 	@Override
 	public ResKey hideReason() {
-		return hideReason(internalModel());
+		return BoundChecker.hideReasonForSecurity(this, internalModel());
 	}
-
-    @Override
-	public ResKey hideReason(Object potentialModel) {
-		return securityReason(potentialModel);
-    }
-
-	/**
-	 * Utility to compute {@link #hideReason(Object)} based on access restrictions.
-	 */
-	protected final ResKey securityReason(Object potentialModel) {
-		BoundCommandGroup group = this.getDefaultCommandGroup();
-		if (!allow(group, this.getSecurityObject(group, potentialModel))) {
-			return I18NConstants.ERROR_NO_PERMISSION;
-		}
-		return null;
-	}
-
-    /** 
-      * Check if the given {@link com.top_logic.tool.boundsec.BoundCommandGroup} 
-      * for the current 
-      * {@link com.top_logic.knowledge.wrap.person.Person} is allowed on the given Object.
-      * 
-      * @see com.top_logic.tool.boundsec.BoundChecker#allow(com.top_logic.tool.boundsec.BoundCommandGroup, com.top_logic.tool.boundsec.BoundObject)
-     */
-    @Override
-	public boolean allow(BoundCommandGroup aCmdGroup, BoundObject anObject) {
-        TLContext theContext = TLContext.getContext();
-        if (theContext == null)
-            return false;
-
-        if (aCmdGroup == null) {
-            aCmdGroup = getDefaultCommandGroup();
-        }
-
-		if (!CommandApprovalService.canExecute(this, aCmdGroup, anObject))
-            return false;
-
-
-        // special object dependent security:
-        if (anObject == null)
-            return allowNullModel(aCmdGroup);
-
-        
-        if (!checkAccess(theContext, (Object) anObject , aCmdGroup))
-            return false;
-        if (anObject instanceof Wrapper && !checkAccess(theContext, (Wrapper) anObject , aCmdGroup))
-            return false;
-
-        return checkAccess(theContext, anObject , aCmdGroup);
-    }
 
 	@Override
 	public BoundObject getSecurityObject(BoundCommandGroup commandGroup, Object potentialModel) {
@@ -232,50 +179,6 @@ public class BoundAssistentComponent extends AssistentComponent implements Layou
      */
     protected boolean allowNullModel(BoundCommandGroup aCmdGroup) {
         return this.supportsInternalModel(null);
-    }
-
-    /**
-     * Check Access based on arbitrary Object.
-     * 
-     * @param context   The current TLContext (to get user data etc.)
-     * @param model     The model of this component.
-     * @param aCmdGroup The command group to check against.
-     * 
-     * @return always true here but you may do otherwise
-     */
-    protected boolean checkAccess(TLContext context, Object model, BoundCommandGroup aCmdGroup) {
-        return true;
-    }
-
-    /**
-     * Check KnowledgeObject access right to given model.
-     * 
-     * @return true always true - remains as a hook for subclasses
-     */
-    protected boolean checkAccess(TLContext context, Wrapper model, BoundCommandGroup aCmdGroup) {
-        return true;
-    }
-
-    /**
-     * Check Access based on BoundObject .
-     * 
-     * @param context   The current TLContext (to get user data etc.)
-     * @param model     The model of this component.
-     * @param aCmdGroup The command group to check against.
-     * 
-     * @return true when the intersection of roles for the commandGroups
-     *              and roles of the current Person on the BoundObject
-     *              is not empty.
-     */
-    protected boolean checkAccess(TLContext context, BoundObject model, BoundCommandGroup aCmdGroup) {
-		if (TLContext.isAdmin()) {
-            return true;    // bypass bound security for SuperUsers
-        }
-		Person currentPerson = context.getPerson();
-        if (currentPerson == null)
-            return false;   // Don't know how to check this
-        
-        return allow(currentPerson, model, aCmdGroup);
     }
     
     /** 
@@ -342,7 +245,7 @@ public class BoundAssistentComponent extends AssistentComponent implements Layou
      * @see      #fireSecurityChanged(BoundObject)
      */
     protected boolean allowVisibility(BoundObject anObject) {
-		return this.supportsInternalModel(anObject) && this.allow(anObject);
+		return this.supportsInternalModel(anObject) && BoundChecker.allowShowSecurityObject(this, anObject);
     }
 
     /**

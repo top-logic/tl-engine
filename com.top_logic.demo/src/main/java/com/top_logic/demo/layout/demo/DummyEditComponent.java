@@ -19,7 +19,6 @@ import com.top_logic.layout.form.component.EditComponent;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
-import com.top_logic.tool.boundsec.BoundComponent;
 import com.top_logic.tool.boundsec.BoundObject;
 
 /**
@@ -73,8 +72,6 @@ public abstract class DummyEditComponent extends EditComponent {
 	/**
 	 * Allow anything as we don't have a bound object as model. That seems the only way to avoid
 	 * security
-	 * 
-	 * @see BoundComponent#allow(BoundCommandGroup, BoundObject)
 	 */
 	@Override
 	public boolean allow(Person aPerson, BoundObject aModel, BoundCommandGroup aCmdGroup) {

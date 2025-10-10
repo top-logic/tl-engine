@@ -23,7 +23,6 @@ import com.top_logic.basic.col.TupleFactory.Tuple;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.basic.component.AJAXComponent;
 import com.top_logic.layout.window.WindowComponent;
 import com.top_logic.mig.html.layout.CommandRegistry;
@@ -32,7 +31,6 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutConstants;
 import com.top_logic.mig.html.layout.ModelEventListener;
 import com.top_logic.tool.boundsec.commandhandlers.GotoHandler;
-import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.boundsec.wrap.PersBoundComp;
@@ -142,9 +140,9 @@ public abstract class BoundComponent extends AJAXComponent implements BoundCheck
 
 	@Override
 	public ResKey hideReason() {
-		ResKey hideReason = super.hideReason();
-		if (hideReason != null) {
-			return hideReason;
+		ResKey technicalReason = super.hideReason();
+		if (technicalReason != null) {
+			return technicalReason;
 		}
 
 		return BoundChecker.hideReasonForSecurity(this, internalModel());
@@ -287,21 +285,6 @@ public abstract class BoundComponent extends AJAXComponent implements BoundCheck
 	 */
     protected static final boolean isReadOrSystem(BoundCommandGroup cmdGroup) {
 		return cmdGroup.isSystemGroup() || cmdGroup.isReadGroup();
-    }
-
-    /**
-     * Check if given Person has access to aModel in this class for given CommandGroup
-     */
-    @Override
-	public boolean allow(Person aPerson, BoundObject aModel, BoundCommandGroup aCmdGroup) {
-		boolean isSystem = aCmdGroup.isSystemGroup();
-		if (isSystem) {
-			return true;
-		}
-		if (!SimpleBoundCommandGroup.isAllowedCommandGroup(aPerson, aCmdGroup)) {
-        	return false;
-        }
-        return AccessManager.getInstance().hasRole(aPerson, aModel, getRolesForCommandGroup(aCmdGroup));
     }
 
     @Override

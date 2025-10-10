@@ -14,6 +14,7 @@ import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutComponent.Config;
 import com.top_logic.mig.html.layout.LayoutContainer;
+import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.execution.I18NConstants;
 import com.top_logic.util.TLContext;
@@ -124,11 +125,38 @@ public interface BoundChecker {
 	 * Check if the given {@link com.top_logic.tool.boundsec.BoundCommandGroup} for the given
 	 * {@link com.top_logic.knowledge.wrap.person.Person} is allowed on the given Object.
 	 * 
-	 * @param aGroup
+	 * @param cmdGroup
 	 *        The CommandGroup to check
 	 * @return true, if given CommandGroup is allowed to be performed
 	 */ 
-    public boolean allow(Person aPerson, BoundObject anObject, BoundCommandGroup aGroup);
+	default boolean allow(Person user, BoundObject context, BoundCommandGroup cmdGroup) {
+		if (context == null) {
+			// Means a technical view without access checks.
+			return true;
+		}
+		if (user == null) {
+			// Without user, no access rights.
+			return false;
+		}
+		if (cmdGroup.isSystemGroup()) {
+			// A command without the need for access check.
+			return true;
+		}
+		if (user.isAdmin()) {
+			// Technical super user that bypasses access checks.
+			return true;
+		}
+		if (!SimpleBoundCommandGroup.isAllowedCommandGroup(user, cmdGroup)) {
+			// A restricted user.
+			return false;
+		}
+		Set<? extends BoundRole> accessRoles = getRolesForCommandGroup(cmdGroup);
+		if (accessRoles == null || accessRoles.isEmpty()) {
+			// No roles may execute this command group.
+			return false;
+		}
+		return AccessManager.getInstance().hasRole(user, context, accessRoles);
+	}
 
 	/**
 	 * Determines the object to check for security when the given model is a

@@ -29,9 +29,7 @@ import com.top_logic.mig.html.layout.LayoutContainer;
 import com.top_logic.mig.html.layout.SubComponentConfig;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundComponent;
-import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.BoundLayout;
-import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.tool.boundsec.wrap.PersBoundComp;
@@ -66,6 +64,7 @@ public class CompoundSecurityLayout extends BoundLayout {
 
 		@Name(ATT_USE_DEFAULT_CHECKER)
 		@BooleanDefault(false)
+		// TODO: DELETE
 		boolean getUseDefaultChecker();
 
 		@Name(ATT_SECURITY_DOMAIN)
@@ -256,37 +255,6 @@ public class CompoundSecurityLayout extends BoundLayout {
 		}
 		return persBoundComp.rolesForCommandGroup(aCommand);
 	}
-
-    /**
-	 * Return the current security object to derive the security from.
-	 *
-	 * When useDefaultChecker is set the getDefaultObject from {@link BoundHelper} will be used.
-	 *
-	 * Otherwise first {@link LayoutComponent#getMaster()} is checked and when it is a
-	 * BoundComponent its {@link BoundComponent#getSecurityObject(BoundCommandGroup, Object)} is
-	 * used.
-	 *
-	 * As last resort we use our next parent CompoundSecurityLayout.
-	 *
-	 * When all this fails we return null.
-	 */
-    @Override
-	public BoundObject getSecurityObject(BoundCommandGroup commandGroup, Object potentialModel) {
-        if (useDefaultChecker) {
-            return BoundHelper.getInstance().getDefaultObject();
-        }
-
-        LayoutComponent theMaster = this.getMaster();
-        if (theMaster instanceof BoundComponent) {
-			return ((BoundComponent) theMaster).getSecurityObject(commandGroup, potentialModel);
-        }
-
-        CompoundSecurityLayout thePL = CompoundSecurityLayout.getNearestCompoundLayout(this);
-        if (thePL != null) {
-			return thePL.getSecurityObject(commandGroup, potentialModel);
-        }
-        return null;
-    }
 
     /**
      * Find the nearest {@link CompoundSecurityLayout} above the given component.

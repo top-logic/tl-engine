@@ -582,7 +582,6 @@
 			<instance class="com.top_logic.tool.boundsec.SecurityObjectProviderManager">
 				<providers>
 					<provider name="assistant" impl="com.top_logic.tool.boundsec.securityObjectProvider.AssistantSecurityObjectProvider" />
-					<provider name="default" impl="path:model" />
 					<provider name="dialogParent" impl="path:opener.currentobject" />
 					<provider name="dialogParentModel" impl="path:opener.model" />
 					<provider name="dialogParentSelection" impl="path:opener.selection" />

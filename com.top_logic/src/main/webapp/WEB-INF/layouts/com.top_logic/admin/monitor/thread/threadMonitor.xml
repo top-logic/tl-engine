@@ -6,7 +6,7 @@
 		<tableView name="threadList"
 			modelBuilder="com.top_logic.util.monitor.thread.ThreadListModelBuilder"
 			resPrefix="layouts.admin.technical.monitor.thread.threadMonitor.threadList."
-			securityProviderClass="securityRoot"
+			securityObject="securityRoot"
 		>
 			<layoutInfo size="485px"/>
 			<table
@@ -53,7 +53,7 @@
 			name="threadDetail"
 			page="/jsp/util/monitor/thread/ThreadDetail.jsp"
 			resPrefix="layouts.admin.technical.monitor.thread.threadMonitor.threadDetail."
-			securityProviderClass="securityRoot"
+			securityObject="securityRoot"
 		/>
 	</components>
 </layout>

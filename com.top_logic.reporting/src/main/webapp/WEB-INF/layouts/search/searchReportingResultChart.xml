@@ -18,8 +18,8 @@
 		<param name="resourcePrefix"
 			value="reporting.chart."
 		/>
-		<param name="securityProvider"
-			value="searchSecurityObjectProvider"
+		<param name="securityObject"
+			value="ref:searchSecurityObjectProvider"
 		/>
 		<param name="chartConfigurationComponentClass"
 			value="com.top_logic.reporting.layout.flexreporting.component.ChartConfigurationComponent"
@@ -35,7 +35,7 @@
 				name="${namePrefix}ReportQuerySelector"
 				page="/jsp/reporting/reportQuerySelector.jsp"
 				resPrefix="${resourcePrefix}"
-				securityProviderClass="${securityProvider}"
+				securityObject="${securityObject}"
 				toolbar="false"
 			>
 				<layoutInfo size="40px"/>
@@ -57,7 +57,7 @@
 								name="${namePrefix}ChartConfigurationComponent"
 								page="/jsp/reporting/reportChart.jsp"
 								resPrefix="${resourcePrefix}"
-								securityProviderClass="${securityProvider}"
+								securityObject="${securityObject}"
 							>
 								<dialogs>
 									<layout name="${namePrefix}NewStoredReportDialog">
@@ -78,7 +78,7 @@
 												name="${namePrefix}NewStoredReport"
 												page="/jsp/flexibleReporting/PublishableNewStoredReport.jsp"
 												resPrefix="reporting.chart.create."
-												securityProviderClass="${securityProvider}"
+												securityObject="${securityObject}"
 											/>
 										</components>
 									</layout>
@@ -96,7 +96,7 @@
 								name="${namePrefix}ChartComponent"
 								page="/jsp/layout/image/chart.jsp"
 								resPrefix="layouts.search.searchReportingResultChart.ChartComponent."
-								securityProviderClass="${securityProvider}"
+								securityObject="${securityObject}"
 								templateFile="${templateFile}"
 							>
 								<dialogs>

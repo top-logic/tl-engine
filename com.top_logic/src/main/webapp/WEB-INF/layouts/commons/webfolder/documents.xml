@@ -16,8 +16,8 @@
 		<param name="componentResPrefix"
 			value="class.com.top_logic.common.webfolder.ui.I18NConstants.TABLE."
 		/>
-		<param name="securityProviderClass"
-			value="default"
+		<param name="securityObject"
+			value="model"
 		/>
 		<param name="defaultFor"
 			value=""
@@ -54,7 +54,7 @@
 				model="${model}"
 				name="${namePrefix}Folder"
 				resPrefix="${componentResPrefix}"
-				securityProviderClass="${securityProviderClass}"
+				securityObject="${securityObject}"
 			>${modelBuilder}</component>
 		</components>
 	</layout>

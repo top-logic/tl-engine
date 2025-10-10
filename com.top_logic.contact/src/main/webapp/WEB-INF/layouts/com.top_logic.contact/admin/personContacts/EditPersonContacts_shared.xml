@@ -78,7 +78,7 @@
 				name="personContactFilterTable"
 				objectType="me:Contact.Person"
 				resPrefix="layouts.contact.EditPersonContacts_shared.personContactFilterTable."
-				securityProviderClass="${tableSecurityProvider}"
+				securityObject="ref:${tableSecurityProvider}"
 				selectable="true"
 			>
 				<layoutInfo size="413"/>

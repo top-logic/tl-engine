@@ -8,7 +8,7 @@
 			name="PersonAjaxForm"
 			page="/jsp/layout/test/PersonAjaxForm.jsp"
 			resPrefix="layouts.layoutdemo.test.PersonAjaxForm.PersonAjaxForm."
-			securityProviderClass="securityRoot"
+			securityObject="securityRoot"
 		>
 			<goto-targets>
 				<goto-target

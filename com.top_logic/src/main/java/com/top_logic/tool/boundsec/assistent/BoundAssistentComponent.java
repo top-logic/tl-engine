@@ -12,13 +12,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import com.top_logic.basic.ConfigurationError;
-import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -32,12 +31,11 @@ import com.top_logic.mig.html.layout.SubComponentConfig;
 import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCheckerLayoutConfig;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
-import com.top_logic.tool.boundsec.BoundComponent;
 import com.top_logic.tool.boundsec.BoundLayout;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.SecurityObjectProvider;
-import com.top_logic.tool.boundsec.SecurityObjectProviderManager;
+import com.top_logic.tool.boundsec.SecurityObjectProviderConfig;
 import com.top_logic.tool.boundsec.WithSecurityMaster;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
@@ -55,7 +53,8 @@ public class BoundAssistentComponent extends AssistentComponent implements Layou
 	 * Configuration options for {@link BoundAssistentComponent}.
 	 */
 	@TagName(Config.TAG_NAME)
-	public interface Config extends AssistentComponent.Config, BoundCheckerLayoutConfig, WithSecurityMaster {
+	public interface Config extends AssistentComponent.Config, BoundCheckerLayoutConfig, SecurityObjectProviderConfig,
+			WithSecurityMaster {
 
 		/**
 		 * @see SubComponentConfig#getComponents()
@@ -66,8 +65,9 @@ public class BoundAssistentComponent extends AssistentComponent implements Layou
 		@ClassDefault(BoundAssistentComponent.class)
 		public Class<? extends LayoutComponent> getImplementationClass();
 
-		@Name(BoundComponent.XML_ATTRIBUTE_SECURITY_PROVIDER_CLASS)
-		String getSecurityProviderClass();
+		@Override
+		@FormattedDefault("model")
+		PolymorphicConfiguration<? extends SecurityObjectProvider> getSecurityObject();
 	}
 
 	private Collection<BoundCommandGroup> commandGroups;
@@ -76,32 +76,19 @@ public class BoundAssistentComponent extends AssistentComponent implements Layou
 
     private boolean isSecurityMaster;
 
-    /** Saves whether a SecurityProviderClass was configured in the layout xml. */
-    protected boolean securityProviderConfigured;
-    
-    /**
-     * Saves the configured {@link SecurityObjectProvider}.<br/>
-     * This will override useDefaultChecker flag if set.
-     */
-    protected SecurityObjectProvider securityObjectProvider;
-	/** Saves the config to write is back. */
-	protected String securityProviderConfigContent;
+	private final SecurityObjectProvider _securityProvider;
 
 
-    public BoundAssistentComponent(InstantiationContext context, Config someAttr) throws ConfigurationException {
-        super(context, someAttr);
+	public BoundAssistentComponent(InstantiationContext context, Config config) throws ConfigurationException {
+		super(context, config);
 
-        this.isSecurityMaster = someAttr.getIsSecurityMaster();
+		this.isSecurityMaster = config.getIsSecurityMaster();
 
-		this.commandGroups = someAttr.getCommandGroups();
+		this.commandGroups = config.getCommandGroups();
 		if (commandGroups.isEmpty()) {
 			commandGroups = SimpleBoundCommandGroup.READ_SET;
         }
-        try {
-			initSecurityObjectProvider(context, someAttr);
-		} catch (ConfigurationException ex) {
-			throw new ConfigurationError("Initializing the security object provider failed.", ex);
-		}
+		_securityProvider = SecurityObjectProvider.fromConfiguration(context, config.getSecurityObject());
     }
 
 	@Override
@@ -115,41 +102,14 @@ public class BoundAssistentComponent extends AssistentComponent implements Layou
 		}
 	}
 
-	/**
-	 * Fetch the {@link #securityObjectProvider} from XML and set {@link #securityProviderConfigured}
-	 * 
-	 * @throws ConfigurationException
-	 *         If the configured {@link SecurityObjectProvider} cannot be
-	 *         instantiated.
-	 */
-    protected void initSecurityObjectProvider(InstantiationContext context, Config atts) throws ConfigurationException {
-    	securityProviderConfigContent = StringServices.nonEmpty(atts.getSecurityProviderClass());
-        securityProviderConfigured = !StringServices.isEmpty(securityProviderConfigContent);
-        if (securityProviderConfigured) {
-            securityObjectProvider = SecurityObjectProviderManager.getInstance().getSecurityObjectProvider(securityProviderConfigContent);
-        } else {
-            securityObjectProvider = getDefaultSecurityObjectProvider();
-        }
-    }
-
-    /**
-	 * Gets the default SecurityObjectProvider which gets used if no one is configured in layout
-	 * xml. Subclasses may override this method if necessary
-	 * 
-	 * @return {@link SecurityObjectProviderManager#getDefaultSecurityObjectProvider()}
-	 */
-    protected SecurityObjectProvider getDefaultSecurityObjectProvider() {
-		return SecurityObjectProviderManager.getInstance().getDefaultSecurityObjectProvider();
-    }
-
 	@Override
 	public ResKey hideReason() {
 		return BoundChecker.hideReasonForSecurity(this, internalModel());
 	}
 
 	@Override
-	public BoundObject getSecurityObject(BoundCommandGroup commandGroup, Object potentialModel) {
-		return this.securityObjectProvider.getSecurityObject(this, potentialModel, commandGroup);
+	public SecurityObjectProvider getSecurityObjectProvider() {
+		return _securityProvider;
 	}
 
     @Override

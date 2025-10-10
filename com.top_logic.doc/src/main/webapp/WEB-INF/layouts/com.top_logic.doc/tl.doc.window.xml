@@ -44,7 +44,7 @@
 						name="${namePrefix}Tree"
 						resPrefix="%LAYOUT_RESPREFIX%Tree."
 						rootVisible="false"
-						securityProviderClass="securityRoot"
+						securityObject="securityRoot"
 					>
 						<layoutInfo size="400"/>
 						<modelBuilder class="com.top_logic.element.layout.structured.DefaultStructuredElementTreeModelBuilder"

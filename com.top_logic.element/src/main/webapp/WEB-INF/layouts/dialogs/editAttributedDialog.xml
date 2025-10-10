@@ -39,7 +39,7 @@
 		<param name="editDialogs"
 			optional="true"
 		/>
-		<param name="securityProvider"
+		<param name="securityObject"
 			optional="true"
 		/>
 		<param name="modifier"
@@ -85,7 +85,7 @@
 				namePrefix="${namePrefix}"
 				page="${page}"
 				resPrefix="${resPrefix}"
-				securityProvider="${securityProvider}"
+				securityObject="${securityObject}"
 				title="${title}"
 				toolbar="${toolbar}"
 			>

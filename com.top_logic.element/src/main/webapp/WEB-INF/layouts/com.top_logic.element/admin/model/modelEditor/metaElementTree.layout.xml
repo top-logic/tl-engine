@@ -7,7 +7,7 @@
 	partnerGroup="AttributeTreeGroup"
 	resPrefix="layouts.element.meta.metaElementTree."
 	rootVisible="false"
-	securityProviderClass="securityRoot"
+	securityObject="securityRoot"
 	showMaximize="true"
 >
 	<treeBuilder class="com.top_logic.layout.table.tree.TreeBuilderAdaptor"

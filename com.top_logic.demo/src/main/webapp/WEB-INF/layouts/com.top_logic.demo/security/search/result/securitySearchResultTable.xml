@@ -4,7 +4,7 @@
 	accessorClass="com.top_logic.knowledge.wrap.WrapperAccessor"
 	metaElement="DemoSecurity.A,DemoSecurity.B"
 	namePrefix="SecuritySearch"
-	securityProvider="com.top_logic.demo.layout.security.DomainAwareSecurityObjectProvider"
+	securityObject="ref:com.top_logic.demo.layout.security.DomainAwareSecurityObjectProvider"
 >
 	<columnDefinitions>
 		<columns>

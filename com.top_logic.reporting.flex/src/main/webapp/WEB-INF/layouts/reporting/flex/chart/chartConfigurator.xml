@@ -19,7 +19,7 @@
 		<param name="options">
 			<!-- No options. -->
 		</param>
-		<param name="securityProviderClass"
+		<param name="securityObject"
 			value="securityRoot"
 		/>
 		<param name="toolbar"
@@ -47,7 +47,7 @@
 		name="${componentName}"
 		page="/jsp/reporting/flex/chart/chartConfigBuilder.jsp"
 		resPrefix="${resPrefix}"
-		securityProviderClass="${securityProviderClass}"
+		securityObject="${securityObject}"
 		toolbar="${toolbar}"
 	>
 		<toolbar-groups>

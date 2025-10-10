@@ -13,7 +13,7 @@
 			modelBuilder="com.top_logic.element.layout.meta.MetaAttributeTableListModelBuilder"
 			objectType="tl.model:TLProperty, tl.model:TLReference"
 			resPrefix="element.meta.attribute.table."
-			securityProviderClass="master"
+			securityObject="ref:master"
 			showMaximize="true"
 		>
 			<layoutInfo size="365"/>
@@ -162,7 +162,7 @@
 					maximizeRoot="metaElementAttributes"
 					model="selection(metaAttributeTable)"
 					resPrefix="element.meta.attribute.edit."
-					securityProviderClass="master"
+					securityObject="ref:master"
 					showMaximize="true"
 				>
 					<include name="com.top_logic.element/admin/model/modelEditor/TypePartForm.xml"

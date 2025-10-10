@@ -80,8 +80,13 @@ public interface BoundCheckerComponent extends BoundChecker, IComponent {
 
 	@Override
 	default BoundObject getSecurityObject(BoundCommandGroup commandGroup, Object potentialModel) {
-		return null;
+		return getSecurityObjectProvider().getSecurityObject(this, potentialModel, commandGroup);
 	}
+
+	/**
+	 * The {@link SecurityObjectProvider} to use for transforming models into security contexts.
+	 */
+	SecurityObjectProvider getSecurityObjectProvider();
 
 	@Override
 	default Collection<BoundCommandGroup> getCommandGroups() {

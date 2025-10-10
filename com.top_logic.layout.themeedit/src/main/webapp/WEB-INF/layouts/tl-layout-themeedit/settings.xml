@@ -16,7 +16,7 @@
 		<editor name="${namePrefix}SettingsForm"
 			applyCommand="applyThemeConfig"
 			model="selection(${namePrefix}ThemeTable)"
-			securityProviderClass="securityRoot"
+			securityObject="securityRoot"
 			titleKey="${resPrefix}.settings.title"
 		>
 			<modelBuilder class="com.top_logic.layout.form.declarative.DefaultDeclarativeFormBuilder"

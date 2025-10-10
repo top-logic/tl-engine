@@ -27,7 +27,7 @@
 				model="${ownerModel}"
 				resPrefix="${resPrefix}"
 				resetInvisible="true"
-				securityProviderClass="dialogParent"
+				securityObject="ref:dialogParent"
 			>
 				<include name="com.top_logic.element/admin/model/modelEditor/TypePartForm.xml"
 					create="true"

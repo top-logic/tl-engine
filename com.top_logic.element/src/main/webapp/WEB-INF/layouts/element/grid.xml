@@ -26,7 +26,7 @@
 		<param name="showTechnicalColumn"
 			optional="true"
 		/>
-		<param name="securityProviderClass"
+		<param name="securityObject"
 			optional="true"
 		/>
 		<param name="rowSecurityProviderClass"
@@ -154,7 +154,7 @@
 				rowSecurityProviderClass="${rowSecurityProviderClass}"
 				saveClosesDialog="${saveClosesDialog}"
 				saveCommand="${saveCommand}"
-				securityProviderClass="${securityProviderClass}"
+				securityObject="${securityObject}"
 				showMarkerFields="${showMarkerFields}"
 				showTechnicalColumn="${showTechnicalColumn}"
 				titleKey="${titleKey}"

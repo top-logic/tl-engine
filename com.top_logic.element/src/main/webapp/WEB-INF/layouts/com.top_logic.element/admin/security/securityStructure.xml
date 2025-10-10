@@ -11,7 +11,7 @@
 		name="com.top_logic.element/admin/security/securityStructure.xml#adminRolesView_navigationTree"
 		page="/jsp/element/StructureSelector.jsp"
 		resPrefix="admin.roles.filter."
-		securityProviderClass="securityRoot"
+		securityObject="securityRoot"
 		toolbar="${toolbar}"
 	>
 		<layoutInfo size="%FILTER_SINGLE_LINE_HEIGHT%"/>

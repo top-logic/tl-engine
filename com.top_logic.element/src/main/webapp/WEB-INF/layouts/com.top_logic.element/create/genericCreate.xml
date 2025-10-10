@@ -41,9 +41,6 @@
 		<param name="createCommandGroups"
 			optional="true"
 		/>
-		<param name="securityProvider"
-			value="default"
-		/>
 		<param name="securityObject"
 			value="model"
 		/>
@@ -87,7 +84,6 @@
 			page="/jsp/element/create/GenericCreate.jsp"
 			resPrefix="${resPrefix}"
 			securityObject="${securityObject}"
-			securityProviderClass="${securityProvider}"
 			setParentToEdit="${z_legacy_setParentToEdit}"
 			titleKey="${titleKey}"
 		>

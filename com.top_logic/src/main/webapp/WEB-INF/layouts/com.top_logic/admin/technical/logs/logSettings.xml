@@ -5,7 +5,7 @@
 	name="logConfig"
 	page="/jsp/administration/configureLogging.jsp"
 	resPrefix="layouts.admin.technical.logging.details."
-	securityProviderClass="securityRoot"
+	securityObject="securityRoot"
 >
 	<tabInfo label="admin.logs.config"/>
 	<buttons>

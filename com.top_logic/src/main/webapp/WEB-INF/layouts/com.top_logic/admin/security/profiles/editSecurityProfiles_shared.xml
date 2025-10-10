@@ -31,7 +31,7 @@
 		model="${model}"
 		name="${namePrefix}EditSecurityComponent"
 		resPrefix="main.admin.editSecurityProfiles.component."
-		securityProviderClass="securityRoot"
+		securityObject="securityRoot"
 	>
 		<componentControlProvider class="com.top_logic.layout.structure.ControlRepresentableCP"/>
 		<tables>

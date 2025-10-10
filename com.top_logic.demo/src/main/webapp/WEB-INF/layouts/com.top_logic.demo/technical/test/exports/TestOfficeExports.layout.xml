@@ -6,7 +6,7 @@
 			name="testExports"
 			page="/empty.jsp"
 			resPrefix="%LAYOUT_RESPREFIX%"
-			securityProviderClass="securityRoot"
+			securityObject="securityRoot"
 		>
 			<buttons>
 				<button id="testFixedTable1"

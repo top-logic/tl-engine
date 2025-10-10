@@ -7,7 +7,7 @@
 	<components>
 		<include name="com.top_logic.doc/tl.doc.view.xml"
 			defaultFor="tl.doc:Page"
-			securityProvider="documentationRoot"
+			securityObject="ref:documentationRoot"
 		>
 			<treeButtons>
 				<button id="importDialog"

@@ -15,7 +15,7 @@
 				name="infoDialog${n}"
 				page="/jsp/test/layout/dialog/DemoDialogContent.jsp"
 				resPrefix="layouts.layoutdemo.dialog.dialogn.infoDialog."
-				securityProviderClass="dialogParent"
+				securityObject="ref:dialogParent"
 			/>
 		</components>
 	</layout>

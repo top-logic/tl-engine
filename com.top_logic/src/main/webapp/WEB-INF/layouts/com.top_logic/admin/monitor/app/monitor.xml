@@ -8,7 +8,7 @@
 			name="applMonitor"
 			page="/jsp/layout/monitor/ApplicationMonitor.jsp"
 			resPrefix="util.maintenance."
-			securityProviderClass="securityRoot"
+			securityObject="securityRoot"
 		>
 			<buttons>
 				<include name="com.top_logic/license/license-buttons.xml"/>

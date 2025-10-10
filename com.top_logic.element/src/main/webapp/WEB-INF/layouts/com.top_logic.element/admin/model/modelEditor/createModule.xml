@@ -31,7 +31,7 @@
 				model="${ownerModel}"
 				resPrefix="element.meta.createModule.Form."
 				resetInvisible="true"
-				securityProviderClass="dialogParent"
+				securityObject="ref:dialogParent"
 			>
 				<modelBuilder class="com.top_logic.element.layout.meta.TLModuleFormBuilder"
 					contextOptional="true"

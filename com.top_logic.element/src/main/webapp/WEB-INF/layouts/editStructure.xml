@@ -21,8 +21,8 @@
 		<param name="openCreateCommandGroup"
 			value="Create"
 		/>
-		<param name="securityProvider"
-			value="default"
+		<param name="securityObject"
+			value="model"
 		/>
 		<param name="modifier"
 			value=""
@@ -63,7 +63,7 @@
 				modifier="${modifier}"
 				openCreateCommandGroup="${openCreateCommandGroup}"
 				page="${page}"
-				securityProvider="${securityProvider}"
+				securityObject="${securityObject}"
 				showNoModel="${showNoModel}"
 				structure="${structure}"
 			>

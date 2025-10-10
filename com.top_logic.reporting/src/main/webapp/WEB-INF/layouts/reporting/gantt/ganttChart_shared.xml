@@ -78,7 +78,7 @@
 						name="${namePrefix}GanttFilter"
 						page="${filterJSP}"
 						resPrefix="reporting.chart.gantt.filter."
-						securityProviderClass="model"
+						securityObject="model"
 						updateAutamaticallyOnNewModel="${updateAutamaticallyOnNewModel}"
 					>
 						<toolbar-groups>
@@ -106,7 +106,7 @@
 						page="${pageJSP}"
 						resPrefix="reporting.chart.gantt.display."
 						rowsPerPage="${rowsPerPage}"
-						securityProviderClass="master"
+						securityObject="ref:master"
 					>
 						<toolbar-groups>
 							<toolbar-group name="exportButtons">

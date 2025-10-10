@@ -51,8 +51,8 @@
 		<param name="openCreateLabel"
 			value="element.structure.edit.layout.openAsDialog"
 		/>
-		<param name="securityProvider"
-			value="default"
+		<param name="securityObject"
+			value="model"
 		/>
 		<param name="modifier"
 			value=""
@@ -84,7 +84,7 @@
 				name="${namePrefixComposed}Edit"
 				page="${page}"
 				resPrefix="element.structure.edit."
-				securityProviderClass="${securityProvider}"
+				securityObject="${securityObject}"
 				showNoModel="${showNoModel}"
 				structure="${structure}"
 				titleKey="layouts.element.editStructureDetail.editTitle.${structure}"
@@ -97,7 +97,7 @@
 						forms="${createForms}"
 						namePrefix="${namePrefixComposed}"
 						newModelAction="set-parent-model"
-						securityProvider="${securityProvider}"
+						securityObject="${securityObject}"
 						setParentToEdit="true"
 					>
 						<inject>

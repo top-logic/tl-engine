@@ -22,7 +22,7 @@
 								name="Historic${namePrefix}Edit"
 								page="/jsp/element/EditStructuredElement.jsp"
 								resPrefix="element.structure.edit."
-								securityProviderClass="default"
+								securityObject="model"
 								structure="${structure}"
 								titleKey="layouts.demo.history.historyDialogWithContent.HistoricEdit.title"
 							>

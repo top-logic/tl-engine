@@ -4,7 +4,7 @@
 	<params>
 		<param name="namePrefix"/>
 		<param name="masterComponent"/>
-		<param name="securityProvider"
+		<param name="securityObject"
 			value="default"
 		/>
 		<param name="extension"
@@ -70,7 +70,7 @@
 		processJSP="${processJSP}"
 		processWidth="${processWidth}"
 		resPrefix="${resPrefix}"
-		securityProvider="${securityProvider}"
+		securityObject="${securityObject}"
 		showStepsToolbar="${showStepsToolbar}"
 		titleKey="${titleKey}"
 		uploadComponent="${uploadComponent}"

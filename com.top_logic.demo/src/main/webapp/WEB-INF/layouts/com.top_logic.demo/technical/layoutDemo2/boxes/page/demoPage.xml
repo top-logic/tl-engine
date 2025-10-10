@@ -4,5 +4,5 @@
 	name="TestBoxesPage"
 	page="/jsp/test/boxes/TestBoxesPage.jsp"
 	resPrefix="layouts.layoutdemo.boxes.demoPage.TestBoxesPage."
-	securityProviderClass="securityRoot"
+	securityObject="securityRoot"
 />

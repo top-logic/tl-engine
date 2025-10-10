@@ -14,10 +14,11 @@ import com.top_logic.base.chart.component.JFreeChartComponent;
 import com.top_logic.base.chart.util.ChartConstants;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
-import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.component.Selectable;
 import com.top_logic.mig.html.layout.LayoutComponent;
@@ -27,7 +28,7 @@ import com.top_logic.reporting.report.control.post.NoOpPostCreationHandler;
 import com.top_logic.reporting.report.control.post.PostChartCreationHandler;
 import com.top_logic.reporting.report.control.producer.ChartContext;
 import com.top_logic.reporting.report.model.FilterVO;
-import com.top_logic.tool.boundsec.securityObjectProvider.NullSecurityObjectProvider;
+import com.top_logic.tool.boundsec.SecurityObjectProvider;
 
 /**
  * This abstract chart component works together with the {@link AbstractFilterComponent}.
@@ -52,8 +53,8 @@ public abstract class AbstractFilterChartComponent extends JFreeChartComponent i
 		PostChartCreationHandler getPostCreationClassName();
 
 		@Override
-		@StringDefault(NullSecurityObjectProvider.ALIAS_NAME)
-		String getSecurityProviderClass();
+		@NullDefault
+		PolymorphicConfiguration<? extends SecurityObjectProvider> getSecurityObject();
 
 	}
 

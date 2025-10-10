@@ -36,13 +36,6 @@
 			instance-type="com.top_logic.tool.boundsec.SecurityObjectProvider"
 			type="com.top_logic.basic.config.PolymorphicConfiguration"
 		/>
-		<property name="securityProviderClass"
-			default="dialogParent"
-			type="String"
-		>
-			<options fun="com.top_logic.layout.form.values.edit.DefaultSecurityProviderKeys"/>
-			<hidden/>
-		</property>
 	</properties>
 
 	<layout name="Dialog">
@@ -63,7 +56,6 @@
 			cancelAction="cancelCreate"
 			resetInvisible="true"
 			securityObject="${securityObject}"
-			securityProviderClass="${securityProviderClass}"
 			titleKey="layout.com.top_logic.element.transaction.template.Form"
 		>
 			<modelBuilder class="com.top_logic.model.search.providers.MonomorphicCreateFormBuilderByExpression"

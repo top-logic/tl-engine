@@ -14,13 +14,13 @@
 							<component class="test.com.top_logic.demo.tool.boundsec.commandhandler.TestGotoHandler$Component"
 								name="tab1"
 								page="/empty.jsp"
-								securityProviderClass="securityRoot"
+								securityObject="securityRoot"
 							>
 								<dialogs>
 									<component class="test.com.top_logic.demo.tool.boundsec.commandhandler.TestGotoHandler$Component"
 										name="dialog1"
 										page="/empty.jsp"
-										securityProviderClass="securityRoot"
+										securityObject="securityRoot"
 									>
 										<!-- quirks openHandlerName #2128 -->
 										<dialogInfo openHandlerName="displayDialog_dialog1"/>
@@ -28,7 +28,7 @@
 											<component class="test.com.top_logic.demo.tool.boundsec.commandhandler.TestGotoHandler$Component"
 												name="dialog1.1"
 												page="/empty.jsp"
-												securityProviderClass="securityRoot"
+												securityObject="securityRoot"
 											>
 												<!-- quirks openHandlerName #2128 -->
 												<dialogInfo openHandlerName="displayDialog_dialog1_1"/>
@@ -36,7 +36,7 @@
 											<component class="test.com.top_logic.demo.tool.boundsec.commandhandler.TestGotoHandler$Component"
 												name="dialog1.2"
 												page="/empty.jsp"
-												securityProviderClass="securityRoot"
+												securityObject="securityRoot"
 											>
 												<!-- quirks openHandlerName #2128 -->
 												<dialogInfo openHandlerName="displayDialog_dialog1_2"/>
@@ -48,21 +48,21 @@
 							<component class="test.com.top_logic.demo.tool.boundsec.commandhandler.TestGotoHandler$Component"
 								name="tab1.1"
 								page="/empty.jsp"
-								securityProviderClass="securityRoot"
+								securityObject="securityRoot"
 							/>
 						</components>
 					</layout>
 					<component class="test.com.top_logic.demo.tool.boundsec.commandhandler.TestGotoHandler$Component"
 						name="tab2"
 						page="/empty.jsp"
-						securityProviderClass="securityRoot"
+						securityObject="securityRoot"
 					>
 				<tabInfo  label="tab2" />
 						<dialogs>
 							<component class="test.com.top_logic.demo.tool.boundsec.commandhandler.TestGotoHandler$Component"
 								name="dialog2"
 								page="/empty.jsp"
-								securityProviderClass="securityRoot"
+								securityObject="securityRoot"
 							>
 								<!-- quirks openHandlerName #2128 -->
 								<dialogInfo openHandlerName="displayDialog_dialog2"/>
@@ -70,7 +70,7 @@
 									<component class="test.com.top_logic.demo.tool.boundsec.commandhandler.TestGotoHandler$Component"
 										name="dialog2.1"
 										page="/empty.jsp"
-										securityProviderClass="securityRoot"
+										securityObject="securityRoot"
 									>
 										<!-- quirks openHandlerName #2128 -->
 										<dialogInfo openHandlerName="displayDialog_dialog2_1"/>

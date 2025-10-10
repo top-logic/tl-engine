@@ -31,13 +31,6 @@
 			instance-type="com.top_logic.tool.boundsec.SecurityObjectProvider"
 			type="com.top_logic.basic.config.PolymorphicConfiguration"
 		/>
-		<property name="securityProviderClass"
-			default="securityRoot"
-			type="String"
-		>
-			<options fun="com.top_logic.layout.form.values.edit.DefaultSecurityProviderKeys"/>
-			<hidden/>
-		</property>
 		<property name="buttons"
 			element-type="com.top_logic.tool.boundsec.CommandHandler$ConfigBase"
 			instance-type="com.top_logic.tool.boundsec.CommandHandler"
@@ -60,7 +53,6 @@
 		resetInvisible="${resetInvisible}"
 		saveClosesDialog="${saveClosesDialog}"
 		securityObject="${securityObject}"
-		securityProviderClass="${securityProviderClass}"
 		showMaximize="${showMaximize}"
 		showMinimize="${showMinimize}"
 		showPopOut="${showPopOut}"

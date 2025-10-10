@@ -19,7 +19,7 @@
 		<param name="newJSP"
 			value="/jsp/layout/admin/group/NewDGroup.jsp"
 		/>
-		<param name="securityProviderClass"
+		<param name="securityObject"
 			value="securityRoot"
 		/>
 		<param name="isSecurityMaster"
@@ -32,7 +32,7 @@
 			<include name="com.top_logic/admin/security/groups/groupTable.xml"
 				isSecurityMaster="${isSecurityMaster}"
 				namePrefix="${namePrefix}EditGroup"
-				securityProviderClass="${securityProviderClass}"
+				securityObject="${securityObject}"
 			>
 				<inject>
 					<layoutInfo size="413px"/>
@@ -47,7 +47,7 @@
 						page="${editJSP}"
 						permitEditSystemFlag="${permitEditSystemFlag}"
 						resPrefix="admin.group.edit."
-						securityProviderClass="${securityProviderClass}"
+						securityObject="${securityObject}"
 					>
 						<dialogs>
 							<layout name="${namePrefix}NewGroupDialog">
@@ -65,7 +65,7 @@
 										name="${namePrefix}NewGroup"
 										page="${newJSP}"
 										resPrefix="admin.group.edit.new."
-										securityProviderClass="${securityProviderClass}"
+										securityObject="${securityObject}"
 									/>
 								</components>
 							</layout>

@@ -22,7 +22,7 @@
 				name="${namePrefix}InspectorControl"
 				page="/jsp/layout/admin/technical/Inspector.jsp"
 				resPrefix="tl.admin.sys.inspector."
-				securityProviderClass="securityRoot"
+				securityObject="securityRoot"
 				toolbar="false"
 			>
 				<layoutInfo
@@ -68,7 +68,7 @@
 				model="selection(${namePrefix}InspectorControl)"
 				name="${namePrefix}InspectorTree"
 				resPrefix="tl.admin.sys.inspector."
-				securityProviderClass="securityRoot"
+				securityObject="securityRoot"
 				toolbar="false"
 				treeBuilder="${treeBuilder}"
 			>

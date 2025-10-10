@@ -29,8 +29,8 @@
 		<param name="resPrefix"
 			value="export.table.component."
 		/>
-		<param name="securityProviderClass"
-			value="dialogParent"
+		<param name="securityObject"
+			value="ref:dialogParent"
 		/>
 		<param name="refreshInterval"
 			value="5"
@@ -68,7 +68,7 @@
 				page="${page}"
 				refreshInterval="${refreshInterval}"
 				resPrefix="${resPrefix}"
-				securityProviderClass="${securityProviderClass}"
+				securityObject="${securityObject}"
 			/>
 		</components>
 	</layout>

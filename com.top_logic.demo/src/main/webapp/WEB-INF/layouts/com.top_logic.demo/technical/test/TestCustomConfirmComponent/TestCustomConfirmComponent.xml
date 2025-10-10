@@ -8,7 +8,7 @@
 			name="TestCustomConfirmComponent"
 			page="/jsp/test/layout/TestCustomConfirmComponent.jsp"
 			resPrefix="layouts.layoutdemo.test.TestCustomConfirmComponent.TestCustomConfirmComponent."
-			securityProviderClass="securityRoot"
+			securityObject="securityRoot"
 		/>
 	</components>
 </layout>

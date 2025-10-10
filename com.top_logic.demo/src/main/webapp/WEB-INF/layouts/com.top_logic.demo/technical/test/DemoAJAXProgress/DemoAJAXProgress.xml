@@ -14,7 +14,7 @@
 			refreshInterval="1"
 			resPrefix="layouts.layoutdemo.DemoAJAXProgress.ajaxProgress."
 			scrollUp="false"
-			securityProviderClass="securityRoot"
+			securityObject="securityRoot"
 			useIntervallFromProgressProvider="false"
 		/>
 	</components>

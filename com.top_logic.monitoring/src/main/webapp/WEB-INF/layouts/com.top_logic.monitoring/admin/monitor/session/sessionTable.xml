@@ -5,7 +5,7 @@
 	model="selection(sessionSearch)"
 	modelBuilder="com.top_logic.monitoring.session.UserMonitorListModelBuilder"
 	resPrefix="admin.sys.session."
-	securityProviderClass="securityRoot"
+	securityObject="securityRoot"
 	selectable="false"
 	toolbar="true"
 >

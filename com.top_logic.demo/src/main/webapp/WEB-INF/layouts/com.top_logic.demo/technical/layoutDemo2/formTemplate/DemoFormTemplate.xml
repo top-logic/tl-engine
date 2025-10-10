@@ -7,7 +7,7 @@
 			name="DemoFormTemplate"
 			page="/jsp/test/layout/demoFormTemplate.jsp"
 			resPrefix="layouts.layoutdemo.DemoFormTemplate.DemoFormTemplate."
-			securityProviderClass="securityRoot"
+			securityObject="securityRoot"
 		/>
 		<!--
 			component class="com.top_logic.knowledge.gui.layout.ButtonComponent"

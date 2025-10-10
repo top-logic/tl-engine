@@ -4,7 +4,7 @@
 	<params>
 		<param name="namePrefix"/>
 		<param name="importerClass"/>
-		<param name="securityProvderClass"
+		<param name="securityObject"
 			value="securityRoot"
 		/>
 		<param name="assistantClass"
@@ -62,7 +62,7 @@
 				name="${namePrefix}DataImportStatus"
 				page="${statusJSP}"
 				resPrefix="layout.dataimport.status."
-				securityProviderClass="${securityProvderClass}"
+				securityObject="${securityObject}"
 			>
 				<dialogs>
 					<layout name="${namePrefix}DataImportDialog">
@@ -80,14 +80,14 @@
 								importerClass="${importerClass}"
 								name="${namePrefix}DataImportAssistant"
 								resPrefix="layout.dataimport.assistant."
-								securityProviderClass="${securityProvderClass}"
+								securityObject="${securityObject}"
 							>
 								${assistantController}
 								<component class="${startStepComponentClass}"
 									name="${namePrefix}DataImportStartStep"
 									page="${startStepJSP}"
 									resPrefix="layout.dataimport.start."
-									securityProviderClass="assistant"
+									securityObject="ref:assistant"
 								>
 									<assistantInfo labelKeySuffix="DataImportStartStep"/>
 								</component>
@@ -100,7 +100,7 @@
 									refreshInterval="1"
 									resPrefix="layout.dataimport.parse."
 									scrollUp="true"
-									securityProviderClass="assistant"
+									securityObject="ref:assistant"
 								>
 									<assistantInfo labelKeySuffix="DataImportParseStep"/>
 								</component>
@@ -109,7 +109,7 @@
 									name="${namePrefix}DataImportResultStep"
 									page="${resultStepJSP}"
 									resPrefix="layout.dataimport.result."
-									securityProviderClass="assistant"
+									securityObject="ref:assistant"
 								>
 									<assistantInfo labelKeySuffix="DataImportResultStep"/>
 								</component>
@@ -122,7 +122,7 @@
 									refreshInterval="1"
 									resPrefix="layout.dataimport.commit."
 									scrollUp="true"
-									securityProviderClass="assistant"
+									securityObject="ref:assistant"
 								>
 									<assistantInfo labelKeySuffix="DataImportCommitStep"/>
 								</component>
@@ -131,7 +131,7 @@
 									name="${namePrefix}DataImportEndStep"
 									page="${endStepJSP}"
 									resPrefix="layout.dataimport.end."
-									securityProviderClass="assistant"
+									securityObject="ref:assistant"
 								>
 									<assistantInfo labelKeySuffix="DataImportEndStep"/>
 								</component>

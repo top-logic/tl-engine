@@ -17,7 +17,7 @@
 					page="/jsp/admin/persons/editPersonOrGroupRoles.jsp"
 					resPrefix="admin.group.roles."
 					securityModule="selection(com.top_logic.element/admin/security/securityStructure.xml#adminRolesView_navigationTree)"
-					securityProviderClass="securityRoot"
+					securityObject="securityRoot"
 				/>
 			</components>
 		</layout>

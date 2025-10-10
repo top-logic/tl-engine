@@ -14,7 +14,7 @@
 			modelBuilder="com.top_logic.element.layout.instances.DirectInstances"
 			name="Instances"
 			resPrefix="layouts.element.meta.InstanceBrowser.table"
-			securityProviderClass="securityRoot"
+			securityObject="securityRoot"
 			showDetailOpener="false"
 			showMaximize="true"
 		>

@@ -10,7 +10,7 @@
 			applyCommand="applyTLModule"
 			model="selection(com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree)"
 			resPrefix="element.meta.ModuleEditor."
-			securityProviderClass="securityRoot"
+			securityObject="securityRoot"
 		>
 			<include name="com.top_logic.element/admin/model/modelEditor/ModuleForm.xml"
 				showNoModel="false"

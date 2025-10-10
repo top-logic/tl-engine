@@ -36,8 +36,8 @@
 		<param name="chartSizeManipulatorClass"
 			value="com.top_logic.reporting.report.control.size.NoChangeManipulator"
 		/>
-		<param name="securityProvider"
-			value="master"
+		<param name="securityObject"
+			value="ref:master"
 		/>
 		<param name="dialogWidth"
 			value="500"
@@ -86,7 +86,7 @@
 		name="${namePrefix}ChartGraphicsComponent"
 		page="${chartPage}"
 		resPrefix="${resPrefix}chart."
-		securityProviderClass="${securityProvider}"
+		securityObject="${securityObject}"
 		templateFile="${templateFile}"
 		toolbar="${toolbar}"
 	>
@@ -109,7 +109,7 @@
 						name="${namePrefix}ChartDetail"
 						objectType="${objectType}"
 						resPrefix="${tablePrefix}"
-						securityProviderClass="dialogParent"
+						securityObject="ref:dialogParent"
 						selectable="false"
 					>${table}</component>
 				</components>

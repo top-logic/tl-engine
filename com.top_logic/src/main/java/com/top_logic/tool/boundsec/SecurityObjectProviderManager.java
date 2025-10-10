@@ -8,7 +8,6 @@ package com.top_logic.tool.boundsec;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.MapUtil;
 import com.top_logic.basic.config.AbstractConfigurationValueProvider;
@@ -33,7 +32,6 @@ import com.top_logic.tool.boundsec.securityObjectProvider.SecurityObjectProvider
  */
 public class SecurityObjectProviderManager extends ManagedClass {
 
-	private static final String DEFAULT_PROVIDER_ALIAS = "default";
 	/** Prefix to denote path in SecurityObjectProvider configuration. */
     public static final String PATH_SECURITY_OBJECT_PROVIDER = "path:";
     
@@ -135,10 +133,6 @@ public class SecurityObjectProviderManager extends ManagedClass {
 			}
 			providers.put(provider.getName(), securityObjectProvider);
 		}
-		if (!providers.containsKey(DEFAULT_PROVIDER_ALIAS)) {
-			context.error(
-				"No default SecurityObjectProvider configured: Missing configuration '" + DEFAULT_PROVIDER_ALIAS + "'");
-		}
 		return providers;
 	}
 
@@ -150,17 +144,6 @@ public class SecurityObjectProviderManager extends ManagedClass {
     public static SecurityObjectProviderManager getInstance() {
 		return Module.INSTANCE.getImplementationInstance();
     }
-
-	/**
-	 * Returns the "default" {@link SecurityObjectProvider}.
-	 */
-	public final SecurityObjectProvider getDefaultSecurityObjectProvider() {
-		try {
-			return getSecurityObjectProvider(DEFAULT_PROVIDER_ALIAS);
-		} catch (ConfigurationException ex) {
-			throw new ConfigurationError("No default SecurityObjectProvider configured.");
-		}
-	}
 
     /**
 	 * Gets the (default) instance of the given security object provider.

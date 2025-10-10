@@ -30,7 +30,7 @@ public class BoundLayout extends Layout implements LayoutContainerBoundChecker {
 	 * Configuration options for {@link BoundLayout}.
 	 */
 	@TagName(Config.TAG_NAME)
-	public interface Config extends Layout.Config, BoundCheckerLayoutConfig {
+	public interface Config extends Layout.Config, BoundCheckerLayoutConfig, SecurityObjectProviderConfig {
 
 		/**
 		 * Short-cut name for {@link BoundLayout} in XML configuration.
@@ -46,10 +46,19 @@ public class BoundLayout extends Layout implements LayoutContainerBoundChecker {
 	/** The component to delegate access checks to. */
 	private BoundCheckerComponent securityMaster;
 
+	private SecurityObjectProvider _securityObjectProvider;
+
     /** Construct a BoundLayout from (XML-)Attributes. */
 	public BoundLayout(InstantiationContext context, Config atts) throws ConfigurationException {
         super(context, atts);
+
+		_securityObjectProvider = SecurityObjectProvider.fromConfiguration(context, atts.getSecurityObject());
     }
+
+	@Override
+	public SecurityObjectProvider getSecurityObjectProvider() {
+		return _securityObjectProvider;
+	}
 
      /**
       * Search for {@link PersBoundComp} in the KBase based on {@link #getSecurityId()}.

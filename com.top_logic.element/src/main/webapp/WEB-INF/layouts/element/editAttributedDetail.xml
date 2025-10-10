@@ -39,8 +39,8 @@
 		<param name="editDialogs">
 			<!-- Empty by default. -->
 		</param>
-		<param name="securityProvider"
-			value="default"
+		<param name="securityObject"
+			value="model"
 		/>
 		<param name="modifier"
 			optional="true"
@@ -75,7 +75,7 @@
 				name="${namePrefix}Edit"
 				page="${page}"
 				resPrefix="${resPrefix}"
-				securityProviderClass="${securityProvider}"
+				securityObject="${securityObject}"
 				title="${title}"
 				toolbar="${toolbar}"
 			>

@@ -93,14 +93,6 @@
 			<!-- Note: Required to produce format compatible with CommandHandler.Config#executability. -->
 			<entry-tag value="rule"/>
 		</property>
-		<!-- Note: Only for legacy usages of this template. Use `securityObject` instead. -->
-		<property name="securityProviderClass"
-			default="securityRoot"
-			type="String"
-		>
-			<options fun="com.top_logic.layout.form.values.edit.DefaultSecurityProviderKeys"/>
-			<hidden/>
-		</property>
 		<property name="fixedColumns"
 			default="2"
 			type="Integer"
@@ -161,7 +153,6 @@
 		resPrefix="layout.element.grid.Grid."
 		rootVisible="${rootVisible}"
 		securityObject="${securityObject}"
-		securityProviderClass="${securityProviderClass}"
 		selection="${selection}"
 		showDetailOpener="${showDetailOpener}"
 		showMaximize="${showMaximize}"

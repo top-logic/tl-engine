@@ -17,6 +17,7 @@ import com.top_logic.layout.ResourceProvider;
 import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.mig.html.layout.ComponentName;
+import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLObject;
 import com.top_logic.tool.boundsec.BoundComponent;
 import com.top_logic.tool.boundsec.commandhandlers.BookmarkFactory;
@@ -116,7 +117,7 @@ public class BookmarkRenderer extends ResourceRenderer<ResourceRenderer.Config<B
 	 * 
 	 * @see BookmarkFactory#getBookmarkURL(DisplayContext, TLObject, ComponentName)
 	 */
-	public static String getBookmarkURL(DisplayContext context, Object model, BoundComponent targetComponent) {
+	public static String getBookmarkURL(DisplayContext context, Object model, LayoutComponent targetComponent) {
 		ComponentName componentName;
 		if (targetComponent == null) {
 			componentName = null;
@@ -126,7 +127,7 @@ public class BookmarkRenderer extends ResourceRenderer<ResourceRenderer.Config<B
 		return BookmarkFactory.getBookmarkURL(context, (TLObject) model, componentName);
 	}
 
-	private static String getBookmarkLabel(DisplayContext context, String label, BoundComponent targetComponent) {
+	private static String getBookmarkLabel(DisplayContext context, String label, LayoutComponent targetComponent) {
 		return StringServices.isEmpty(label) ? context.getResources().getString(targetComponent.getTitleKey()) : label;
 	}
 

@@ -28,6 +28,7 @@ import com.top_logic.layout.table.component.TableComponent;
 import com.top_logic.mig.html.I18NResourceProvider;
 import com.top_logic.mig.html.layout.CommandRegistry;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.export.ExcelExportHandler;
 
@@ -113,9 +114,10 @@ public class ExportModalDialogComponent extends FormComponent{
 	 * Returns the List of export options
 	 */
 	public List<String> getDialogOptions() {
+		TableComponent r = getOpener();
 		return config().getExportOptions()
 			.stream()
-			.filter(configuredGroup -> getOpener().allow(configuredGroup.getGroup()))
+			.filter(configuredGroup -> BoundChecker.allowCommand(r, configuredGroup.getGroup(), r.getModel()))
 			.map(ExportOption::getName)
 			.collect(Collectors.toList());
 	}

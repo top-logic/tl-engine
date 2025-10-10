@@ -5,6 +5,7 @@
  */
 package com.top_logic.element.layout.meta.search;
 
+import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCheckerComponent;
 import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
 import com.top_logic.tool.execution.CombinedExecutabilityRule;
@@ -36,8 +37,8 @@ public class QueryUtils {
 	 * Whether {@link #PUBLISH_NAME} and {@link #OWNER_WRITE_NAME} are allowed.
 	 */
 	public static boolean allowWriteAndPublish(BoundCheckerComponent checker) {
-		return checker.allow(CommandGroupRegistry.resolve(OWNER_WRITE_NAME))
-			&& checker.allow(CommandGroupRegistry.resolve(PUBLISH_NAME));
+		return BoundChecker.allowCommand(checker, CommandGroupRegistry.resolve(OWNER_WRITE_NAME), checker.getModel())
+			&& BoundChecker.allowCommand(checker, CommandGroupRegistry.resolve(PUBLISH_NAME), checker.getModel());
 	}
 
 }

@@ -37,6 +37,7 @@ import com.top_logic.reporting.report.model.RevisedReport;
 import com.top_logic.reporting.report.util.ReportConstants;
 import com.top_logic.reporting.report.wrap.StoredReport;
 import com.top_logic.reporting.report.xmlutilities.ReportWriter;
+import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
@@ -101,7 +102,7 @@ public class PublishableNewStoredReportComponent extends AbstractCreateComponent
 	
 	@Override
 	public boolean isExpanded() {
-		return allow(CommandGroupRegistry.resolve(QueryUtils.PUBLISH_NAME));
+		return BoundChecker.allowCommand(this, CommandGroupRegistry.resolve(QueryUtils.PUBLISH_NAME), getModel());
 	}
 	
     @Override

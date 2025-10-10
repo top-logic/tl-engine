@@ -15,6 +15,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ConfiguredInstance;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.channel.ComponentChannel;
+import com.top_logic.layout.window.WindowComponent;
 import com.top_logic.mig.html.layout.CommandRegistry;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
@@ -173,6 +174,15 @@ public interface IComponent extends TypedAnnotatable, ConfiguredInstance<LayoutC
 	 * @return true if the component handles the type
 	 */
 	boolean isDefaultFor(String type);
+
+	/**
+	 * Searches the enclosing window, where this component resides in. If this component is a window
+	 * itself, this method returns this component.
+	 * 
+	 * @return enclosing window, where this component resides in, or <code>null</code>, if this
+	 *         component is part of the main component tree.
+	 */
+	WindowComponent getEnclosingWindow();
 
 	/**
 	 * The container, this component is part of.

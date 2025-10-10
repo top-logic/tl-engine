@@ -24,10 +24,8 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.component.AJAXComponent;
-import com.top_logic.layout.window.WindowComponent;
 import com.top_logic.mig.html.layout.CommandRegistry;
 import com.top_logic.mig.html.layout.ComponentName;
-import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutConstants;
 import com.top_logic.mig.html.layout.ModelEventListener;
 import com.top_logic.tool.boundsec.commandhandlers.GotoHandler;
@@ -223,43 +221,6 @@ public abstract class BoundComponent extends AJAXComponent implements BoundCheck
      */
     public final BoundCommandGroup resolveCommandGroup(String aBCGId) {
     	return CommandGroupRegistry.resolve(aBCGId);
-    }
-
-    /**
-     * The Roles for CommandGroups are configured using the PersBoundComp.
-     *
-     * @param aCommand the command group
-     * @return The Roles for CommandGroups are configured using the PersBoundComp.
-     */
-    @Override
-	public Set<? extends BoundRole> getRolesForCommandGroup(BoundCommandGroup aCommand) {
-		WindowComponent enclosingWindow = this.getEnclosingWindow();
-		if (enclosingWindow != null) {
-			LayoutComponent windowOpener = enclosingWindow.getOpener();
-			if (windowOpener instanceof BoundChecker) {
-				return ((BoundChecker) windowOpener).getRolesForCommandGroup(aCommand);
-    		}
-    	}
-        if (this.usePersBoundComponent()) { // Prevent allocating persistent view objects for anonymous components.
-            try {
-                PersBoundComp myView = getPersBoundComp();
-                return myView.rolesForCommandGroup(aCommand);
-            }
-            catch (Exception e) {
-                Logger.error("failed to getRolesForCommandGroup " + aCommand , e, this);
-            }
-        }
-        return null;
-    }
-
-	/**
-     * This method indicates whether the persistence via {@link PersBoundComp} should be used.
-     * Override this method in case your component has other criteria.
-     *
-     * @return <code>true</code> to indicate the usage of PersBoundComp
-     */
-    protected boolean usePersBoundComponent() {
-		return getPersBoundComp() != null;
     }
 
     /**

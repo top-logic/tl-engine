@@ -8,9 +8,7 @@ package com.top_logic.tool.boundsec.assistent;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
@@ -32,12 +30,10 @@ import com.top_logic.tool.boundsec.BoundCheckerLayoutConfig;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundLayout;
 import com.top_logic.tool.boundsec.BoundObject;
-import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.SecurityObjectProvider;
 import com.top_logic.tool.boundsec.SecurityObjectProviderConfig;
 import com.top_logic.tool.boundsec.WithSecurityMaster;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
-import com.top_logic.tool.boundsec.wrap.PersBoundComp;
 import com.top_logic.util.Resources;
 
 /**
@@ -113,15 +109,6 @@ public class BoundAssistentComponent extends AssistentComponent implements Layou
     @Override
 	public Collection<BoundCommandGroup> getCommandGroups() {
         return this.commandGroups;
-    }
-
-    @Override
-	public Set<? extends BoundRole> getRolesForCommandGroup(BoundCommandGroup aCommand) {
-        PersBoundComp persBoundComp = getPersBoundComp();
-		if (persBoundComp == null) {
-			return Collections.emptySet();
-		}
-		return persBoundComp.rolesForCommandGroup(aCommand);
     }
 
     @Override

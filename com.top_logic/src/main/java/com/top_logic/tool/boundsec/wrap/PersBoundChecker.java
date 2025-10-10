@@ -9,12 +9,10 @@ import java.util.Collection;
 import java.util.Set;
 
 import com.top_logic.basic.Logger;
-import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
-import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.simple.AbstractBoundChecker;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 
@@ -41,21 +39,6 @@ public class PersBoundChecker extends AbstractBoundChecker {
         this.defaultFor = aDefaultForType;
     }
     
-    /** 
-     * Check if given Person has access to aModel in this class fo given CommandGroup
-     */
-    @Override
-	public boolean allow(Person aPerson, BoundObject aModel,
-            BoundCommandGroup aCmdGroup) {
-		{
-            // Always allow root and such users ...
-			if (Person.isAdmin(aPerson)) {
-                return true;
-            }
-        }
-        return AccessManager.getInstance().hasRole(aPerson, aModel, getRolesForCommandGroup(aCmdGroup));
-    }
-
     /**
      * Use a Read commandgroups as default.
      * 

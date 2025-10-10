@@ -52,13 +52,14 @@
 						/>
 					</component>
 				</layout>
-				<component class="com.top_logic.doc.component.ExternalWindowDocViewerComponent"
+				<component class="com.top_logic.element.layout.structured.AdminElementComponent"
 					applyCommand=""
 					deleteCommand=""
 					model="selection(${namePrefix}Tree)"
 					name="${namePrefix}Detail"
 					page="/jsp/tl.doc/tl.doc.page.edit.jsp"
 					resPrefix="%LAYOUT_RESPREFIX%Detail."
+					securityObject=""
 				>
 					<goto-targets>
 						<goto-target

@@ -46,6 +46,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutUtils;
 import com.top_logic.mig.html.layout.SubComponentConfig;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
+import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCommand;
 import com.top_logic.tool.boundsec.ChangeCheckDialogCloser;
 import com.top_logic.tool.boundsec.CommandGroupReference;
@@ -325,7 +326,10 @@ public class EditComponent extends FormComponent implements Editor, CanLock {
 
 			// Note: If the handler is null, the component only acts as slave of another edit mode
 			// handler.
-			if (handler != null && !allow(handler)) {
+			if (handler != null &&
+				!BoundChecker.allowCommand(this,
+					handler.getCommandGroup(),
+					handler.getTargetModel(this, Collections.emptyMap()))) {
 				return false;
 			}
 		}

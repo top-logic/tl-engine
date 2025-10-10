@@ -17,8 +17,8 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.MainLayout;
+import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
-import com.top_logic.tool.boundsec.BoundComponent;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 
 /**
@@ -49,12 +49,12 @@ public class AccessControlTag extends TagSupport {
 			LayoutComponent component = MainLayout.getComponent(pageContext);
 			TagWriter out = MainLayout.getTagWriter(pageContext);
 
-			if (!(component instanceof BoundComponent)) {
+			if (!(component instanceof BoundChecker)) {
 				return accessRefused(out);
 			}
 
-			BoundComponent check = (BoundComponent) component;
-			if (!check.allow(_commandGroup)) {
+			BoundChecker check = (BoundChecker) component;
+			if (!BoundChecker.allowCommand(check, _commandGroup, component.getModel())) {
 				return accessRefused(out);
 			}
 

@@ -143,7 +143,7 @@ public class PersonGroupComponent extends EditComponent {
             // Check allowance on the boundobject of the group if available
             boolean allowed = true;
             if (theBO == null) {
-                allowed = this.allow(SimpleBoundCommandGroup.WRITE);
+                allowed = BoundChecker.allowCommand(this, SimpleBoundCommandGroup.WRITE, this.getModel());
             }
             else {
                 allowed = BoundChecker.allowCommandOnSecurityObject(this, SimpleBoundCommandGroup.WRITE, theBO);

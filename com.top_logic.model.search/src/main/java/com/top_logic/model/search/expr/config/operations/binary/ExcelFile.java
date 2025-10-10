@@ -16,6 +16,7 @@ import java.util.Map;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
@@ -262,6 +263,8 @@ public class ExcelFile extends GenericMethod {
 						}
 					}
 				}
+				// Auto-size all columns to fit content, respecting user-specific widths
+				autoSizeSheetColumns(sheet, colWidths);
 			}
 
 			ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -692,6 +695,61 @@ public class ExcelFile extends GenericMethod {
 		}
 
 		return style;
+	}
+
+	/**
+	 * Auto-sizes all columns in the sheet to fit their content. Respects user-specified column
+	 * widths and only auto-sizes columns without explicit widths.
+	 */
+	private void autoSizeSheetColumns(Sheet sheet, Map<String, Object> userSpecifiedWidths) {
+		// Find the maximum number of columns used in the sheet
+		int maxCols = 0;
+		for (int rowNum = 0; rowNum <= sheet.getLastRowNum(); rowNum++) {
+			Row row = sheet.getRow(rowNum);
+			if (row != null) {
+				maxCols = Math.max(maxCols, row.getLastCellNum() + 1);
+			}
+		}
+
+		// Auto-size each column that contains content, respecting user specifications
+		for (int colNum = 0; colNum < maxCols; colNum++) {
+			// Skip if user has specified a width for this column
+			if (userSpecifiedWidths != null && userSpecifiedWidths.containsKey(String.valueOf(colNum))) {
+				continue; // User already set this column's width
+			}
+
+			boolean hasContent = false;
+
+			// Check if this column has any content
+			for (int rowNum = 0; rowNum <= sheet.getLastRowNum(); rowNum++) {
+				Row row = sheet.getRow(rowNum);
+				if (row != null) {
+					Cell cell = row.getCell(colNum);
+					if (cell != null && cell.getCellType() != CellType.BLANK) {
+						hasContent = true;
+						break;
+					}
+				}
+			}
+
+			// Only auto-size columns that have content and no user-specified width
+			if (hasContent) {
+				try {
+					sheet.autoSizeColumn(colNum);
+
+					// Set a reasonable maximum width to prevent extremely wide columns
+					int currentWidth = sheet.getColumnWidth(colNum);
+					int maxWidth = 100 * 256; // 100 characters maximum
+					if (currentWidth > maxWidth) {
+						sheet.setColumnWidth(colNum, maxWidth);
+					}
+				} catch (Exception e) {
+					// Ignore auto-size errors (can happen with very large content)
+					// Fall back to a reasonable default width
+					sheet.setColumnWidth(colNum, 50 * 256); // 50 characters width
+				}
+			}
+		}
 	}
 
 	private IndexedColors parseColor(String colorName) {

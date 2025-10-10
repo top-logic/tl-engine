@@ -434,6 +434,14 @@ public class ExcelFile extends GenericMethod {
 	@SuppressWarnings("unchecked")
 	private void createCell(Workbook workbook, Sheet sheet, Row row, int colNum, Object value,
 			Map<String, Object> styleProps, MergedRegionTracker regionTracker, StyleCache styleCache) {
+		// Check if content is a list/matrix (nested excel Cell)
+		if (value instanceof List) {
+			List<Object> nestedContent = (List<Object>) value;
+			processNestedContent(workbook, sheet, nestedContent, row.getRowNum(), colNum, styleProps, regionTracker,
+				styleCache);
+			return;
+		}
+
 		// Check if this cell position conflicts with existing merged regions
 		regionTracker.checkCellPosition(row.getRowNum(), colNum);
 
@@ -484,6 +492,101 @@ public class ExcelFile extends GenericMethod {
 		}
 	}
 
+	/**
+	 * Processes a nested content within an excelCell. This enables positioning entire inner lists
+	 * of excel cells at specific locations with inherited styling.
+	 */
+	@SuppressWarnings("unchecked")
+	private void processNestedContent(Workbook workbook, Sheet sheet, List<Object> nestedContent,
+			int startRow, int startCol, Map<String, Object> containerStyle,
+			MergedRegionTracker regionTracker, StyleCache styleCache) {
+
+		// Process each row in the nested table
+		for (int rowOffset = 0; rowOffset < nestedContent.size(); rowOffset++) {
+			Object rowObj = nestedContent.get(rowOffset);
+			List<Object> rowList = (List<Object>) asList(rowObj);
+
+			// Process each cell in the row
+			for (int colOffset = 0; colOffset < rowList.size(); colOffset++) {
+				Object cellValue = rowList.get(colOffset);
+				int targetRow = startRow + rowOffset;
+				int targetCol = startCol + colOffset;
+
+				// Handle nested excelCell objects with relative positioning
+				if (cellValue instanceof Map) {
+					Map<String, Object> cellMap = (Map<String, Object>) cellValue;
+					if (cellMap.containsKey("content")) {
+						// This is an excelCell - process with relative positioning
+						processNestedExcelCell(workbook, sheet, cellMap, targetRow, targetCol,
+							containerStyle, regionTracker, styleCache);
+					}
+				} else {
+					// Regular cell value with inherited container style
+					Row excelRow = sheet.getRow(targetRow);
+					if (excelRow == null) {
+						excelRow = sheet.createRow(targetRow);
+					}
+					createCell(workbook, sheet, excelRow, targetCol, cellValue, containerStyle, regionTracker,
+						styleCache);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Processes an excelCell within a nested content with relative positioning and style
+	 * inheritance.
+	 */
+	@SuppressWarnings("unchecked")
+	private void processNestedExcelCell(Workbook workbook, Sheet sheet, Map<String, Object> cellMap,
+			int baseRow, int baseCol, Map<String, Object> containerStyle,
+			MergedRegionTracker regionTracker, StyleCache styleCache) {
+
+		Object content = cellMap.get("content");
+		Integer rowOffset = asInt(cellMap.get("row"));
+		Integer colOffset = asInt(cellMap.get("col"));
+
+		// Calculate final position (base + relative offset)
+		int targetRow = (rowOffset != -1) ? (baseRow + rowOffset) : baseRow;
+		int targetCol = (colOffset != -1) ? (baseCol + colOffset) : baseCol;
+
+		// Extract and merge styles (cell styles override container styles)
+		Map<String, Object> mergedStyle = mergeStyles(containerStyle, cellMap);
+
+		// Create the cell
+		Row excelRow = sheet.getRow(targetRow);
+		if (excelRow == null) {
+			excelRow = sheet.createRow(targetRow);
+		}
+
+		createCell(workbook, sheet, excelRow, targetCol, content, mergedStyle, regionTracker, styleCache);
+	}
+
+	/**
+	 * Merges container styles with cell-specific styles. Cell styles take precedence over container
+	 * styles.
+	 */
+	private Map<String, Object> mergeStyles(Map<String, Object> containerStyle, Map<String, Object> cellStyle) {
+		Map<String, Object> mergedStyle = new HashMap<>();
+
+		// Start with container style
+		if (containerStyle != null) {
+			mergedStyle.putAll(containerStyle);
+		}
+
+		// Add cell-specific properties, overriding container ones
+		if (cellStyle != null) {
+			for (Map.Entry<String, Object> entry : cellStyle.entrySet()) {
+				String key = entry.getKey();
+				// Skip special properties that aren't styles
+				if (!key.equals("content") && !key.equals("row") && !key.equals("col")) {
+					mergedStyle.put(key, entry.getValue());
+				}
+			}
+		}
+
+		return mergedStyle;
+	}
 	private CellStyle createCellStyle(Workbook workbook, Map<String, Object> styleProps) {
 		if (styleProps == null || styleProps.isEmpty()) {
 			return null;

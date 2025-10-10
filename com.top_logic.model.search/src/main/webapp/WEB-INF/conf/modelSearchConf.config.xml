@@ -380,7 +380,8 @@
 					<method name="excelSheet" class="com.top_logic.model.search.expr.config.operations.binary.ExcelSheet$Builder"/>
 					<method name="excelCell" class="com.top_logic.model.search.expr.config.operations.binary.ExcelCell$Builder"/>
 					<method name="excelFormula" class="com.top_logic.model.search.expr.config.operations.binary.ExcelFormula$Builder"/>
-					
+					<method name="excelStyle" class="com.top_logic.model.search.expr.config.operations.binary.ExcelStyle$Builder"/>
+				
 					<method name="regex" class="com.top_logic.model.search.expr.config.operations.regex.Regex$Builder"/>
 					<method name="regexSearch" class="com.top_logic.model.search.expr.config.operations.regex.RegexSearch$Builder"/>
 					<method name="regexReplace" class="com.top_logic.model.search.expr.config.operations.regex.RegexReplace$Builder"/>

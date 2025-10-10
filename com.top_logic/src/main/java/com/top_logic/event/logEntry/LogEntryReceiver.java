@@ -174,7 +174,7 @@ public class LogEntryReceiver extends AbstractReceiver {
                 Person thePers = (Person) res.get(i);
 				boolean anyCheckerAllows = false;
 				for (BoundChecker checker : securityCheckers) {
-					if (checker.allow(thePers, theModel)) {
+					if (BoundChecker.allowShowSecurityObjectFor(checker, thePers, theModel)) {
 						anyCheckerAllows = true;
 						break;
 					}

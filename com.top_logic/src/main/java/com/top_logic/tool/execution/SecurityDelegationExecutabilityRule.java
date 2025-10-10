@@ -61,13 +61,9 @@ public class SecurityDelegationExecutabilityRule<C extends SecurityDelegationExe
 		 * </p>
 		 * 
 		 * <p>
-		 * This rule allows execution, if the referenced component
-		 * {@link BoundChecker#allow(com.top_logic.tool.boundsec.BoundCommandGroup, BoundObject)
-		 * permits access} to the command's base model using the configured {@link #getGroup()
-		 * command group}.
+		 * This rule allows execution, if the referenced component permits access to the command's
+		 * base model using the configured {@link #getGroup() command group}.
 		 * </p>
-		 * 
-		 * @see BoundChecker#allow(com.top_logic.tool.boundsec.BoundCommandGroup, BoundObject)
 		 */
 		@Mandatory
 		ComponentName getSecurityComponent();
@@ -107,7 +103,7 @@ public class SecurityDelegationExecutabilityRule<C extends SecurityDelegationExe
 	@Override
 	public ExecutableState isExecutable(LayoutComponent aComponent, Object model, Map<String, Object> someValues) {
 		if (model instanceof BoundObject) {
-			boolean allow = _checker.allow(_group, (BoundObject) model);
+			boolean allow = BoundChecker.allowCommandOnSecurityObject(_checker, _group, (BoundObject) model);
 			if (!allow) {
 				return ExecutableState.NO_EXEC_PERMISSION;
 			}

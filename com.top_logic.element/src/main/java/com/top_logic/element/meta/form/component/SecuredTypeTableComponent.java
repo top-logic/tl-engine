@@ -69,15 +69,12 @@ public class SecuredTypeTableComponent extends TableComponent {
     }
 
     @Override
-	public ResKey hideReason(Object potentialModel) {
-        // This code assumes that a security filter is set for the table so
-        // that the table has only entries if the current user is allowed to
-        // see at least one object
-		BoundCommandGroup group = SimpleBoundCommandGroup.CREATE;
-		if (getTableModel().getRowCount() == 0 && !allow(group, this.getSecurityObject(group, potentialModel))) {
+	public ResKey hideReason() {
+		if (getTableModel().getRowCount() == 0) {
 			return I18NConstants.ERROR_NO_PERMISSION;
 		}
-		return null;
+
+		return super.hideReason();
     }
 
 

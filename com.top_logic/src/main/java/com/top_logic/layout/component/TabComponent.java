@@ -71,7 +71,6 @@ import com.top_logic.mig.html.layout.ModelEventListener;
 import com.top_logic.mig.html.layout.SubComponentConfig;
 import com.top_logic.mig.html.layout.decoratedTabBar.DecorationValueListener;
 import com.top_logic.mig.html.layout.decoratedTabBar.DecorationValueProvider;
-import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCheckerComponent;
 import com.top_logic.tool.boundsec.BoundCheckerLayoutConfig;
 import com.top_logic.util.TLContext;
@@ -537,8 +536,7 @@ public final class TabComponent extends LayoutList implements LayoutContainerBou
 	}
 	
 	/**
-	 * This method inspects all cards and updates the inactive state due to the new
-	 * {@link BoundChecker#hideReason(Object)} value
+	 * This method inspects all cards and updates the inactive state.
 	 */
 	private static void updateAllowness(DefaultTabBarModel aDefaultTabBarModel) {
 		List allCards = aDefaultTabBarModel.getAllCards();
@@ -547,7 +545,7 @@ public final class TabComponent extends LayoutList implements LayoutContainerBou
 			LayoutComponent layoutComponent = tabbedLayoutComponent.getContent();
 			if (layoutComponent instanceof BoundCheckerComponent) {
 				BoundCheckerComponent checker = (BoundCheckerComponent) layoutComponent;
-				boolean allow = checker.allow();
+				boolean allow = checker.canShow();
                 boolean      inactive = aDefaultTabBarModel.isInactive(tabbedLayoutComponent);
                 if (allow && inactive) {
 					aDefaultTabBarModel.removeInactiveCard(tabbedLayoutComponent);
@@ -651,7 +649,7 @@ public final class TabComponent extends LayoutList implements LayoutContainerBou
 	public boolean canBeVisible(LayoutComponent aChild) {
 		if (aChild instanceof BoundCheckerComponent) {
 			// long start = System.currentTimeMillis();
-			boolean result = ((BoundCheckerComponent) aChild).allow();
+			boolean result = ((BoundCheckerComponent) aChild).canShow();
 			/*
 			 * long delta = System.currentTimeMillis() - start; if (delta > 1000) Logger.warn
 			 * ("allow needed " + DebugHelper.getTime (delta) + " for " + aChild , this);
@@ -862,7 +860,10 @@ public final class TabComponent extends LayoutList implements LayoutContainerBou
 
 	@Override
 	public ResKey hideReason() {
-		return hideReason(internalModel());
+		if (this.getTabBar().getSingleSelection() == null && !getCards().isEmpty()) {
+			return I18NConstants.NO_CARDS_VISIBLE;
+		}
+		return super.hideReason();
 	}
 
 	/**

@@ -117,7 +117,6 @@ public class TestBoundComponent extends BasicTestCase {
 	protected void check(TestedBoundComponent cmp, Person guest, ComponentName componentName) {
 		assertEquals(componentName, cmp.getSecurityId());
 
-		cmp.resetAllowCache();
 		cmp.setModel(guest);
 		assertNotNull("Must fail since PersBoundComp has no roles, yet", cmp.hideReason());
 
@@ -128,7 +127,6 @@ public class TestBoundComponent extends BasicTestCase {
 		cmp.setModel(null);
 		assertNull(cmp.hideReason()); // null model is allowed by default
 
-		cmp.resetAllowCache();
 		cmp.setModel(guest);
 		assertNotNull(cmp.hideReason());
 
@@ -136,7 +134,6 @@ public class TestBoundComponent extends BasicTestCase {
 
 		CommandHandler cmd =
 			cmp.getCommandById(TestLayoutComponent.ComponentWithIntrinsicCommand.INTRINSIC_COMMAND_NAME);
-		cmp.resetAllowCache();
 		assertNotNull(cmp.hideReason());
 
 		BoundedRole role;
@@ -154,7 +151,6 @@ public class TestBoundComponent extends BasicTestCase {
 
 		((StorageAccessManager) AccessManager.getInstance()).reload();
 
-		cmp.resetAllowCache();
 		assertNull(cmp.hideReason());
 
 		assertNotNull(cmp.getCommandGroups());

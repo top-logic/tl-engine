@@ -16,6 +16,7 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundComponent;
 import com.top_logic.tool.execution.ExecutabilityRule;
@@ -89,7 +90,7 @@ public class ExportTableOpenRule extends AbstractConfiguredInstance<ExportTableO
 			
 			// check the security of the handler
 			for (BoundCommandGroup theGroup : theGroups) {
-				if (theComp.allowPotentialModel(theGroup, model)) {
+				if (BoundChecker.allowCommand(theComp, theGroup, model)) {
 					// first match is enough
 					return ExecutableState.EXECUTABLE;
 				}

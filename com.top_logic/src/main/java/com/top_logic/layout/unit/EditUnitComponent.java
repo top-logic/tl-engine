@@ -40,7 +40,6 @@ import com.top_logic.mig.html.HTMLFormatter;
 import com.top_logic.mig.html.NoImageResourceProvider;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
-import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.util.Resources;
 import com.top_logic.util.resource.I18NConstants;
@@ -279,14 +278,6 @@ public class EditUnitComponent extends EditComponent {
 	private static String getObjectIdentifier(Wrapper model, String uniqueAttribute) {
 		return (String) model.getValue(uniqueAttribute);
 	}
-
-	@Override
-	public boolean allow(BoundObject aObject) {
-        if (!supportsInternalModel(aObject)) {
-            return false;
-        }
-        return super.allow(aObject);
-    }
 
 	@Override
 	protected boolean supportsInternalModel(Object anObject) {

@@ -25,6 +25,7 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.tree.model.BoundObjectTreeModel;
+import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
@@ -141,12 +142,8 @@ public class TestBoundSecurity extends BasicTestCase {
             assertTrue(rootO.getRoles().contains(readOnly)); // for Person C
             assertTrue(rootO.getRoles().size()==4);
     
-			assertNull(rootV.hideReason(null));
-			assertFalse(rootV.allow(SimpleBoundCommandGroup.WRITE, null));
+			assertFalse(BoundChecker.allowCommandOnSecurityObject(rootV, SimpleBoundCommandGroup.WRITE, null));
             context.setCurrentPerson(personB);
-			assertNotNull(rootV.hideReason(null)); // -> Person B has not the role for default
-													// command
-												// in rootV
             
 			Collection<?> theCommands = rootV.getCommandGroups();
             assertTrue(theCommands.size()==2);      // READ and WRITE

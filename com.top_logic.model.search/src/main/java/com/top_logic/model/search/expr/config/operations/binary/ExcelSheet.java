@@ -50,21 +50,30 @@ public class ExcelSheet extends GenericMethod {
 
 	@Override
 	protected Object eval(Object[] arguments, EvalContext definitions) {
-		String sheetName = asString(arguments[0]);
-		if (sheetName == null) {
-			sheetName = "Sheet";
-		}
-
-		Object content = arguments[1];
+		Object content = arguments[0];
 		if (content == null) {
 			content = new ArrayList<>();
 		}
+		String sheetName = asString(arguments[1]);
 
 		// Return a map representing the sheet
 		Map<String, Object> sheet = new HashMap<>();
-		sheet.put("name", sheetName);
+
+		if (sheetName.isEmpty()) {
+			sheet.put("autoGenerateName", true);
+		} else {
+			sheet.put("name", sheetName);
+		}
+
 		sheet.put("content", asList(content));
 		
+		if (arguments[2] != null) {
+			sheet.put("colWidths", asMap(arguments[2]));
+		}
+		if (arguments[3] != null) {
+			sheet.put("rowHeights", asMap(arguments[3]));
+		}
+
 		return sheet;
 	}
 
@@ -74,8 +83,10 @@ public class ExcelSheet extends GenericMethod {
 	public static class Builder extends AbstractSimpleMethodBuilder<ExcelSheet> {
 
 		private static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
-			.mandatory("name")
 			.mandatory("content")
+			.optional("name")
+			.optional("colWidths")
+			.optional("rowHeights")
 			.build();
 
 		/**

@@ -234,8 +234,6 @@ public class GotoHandler extends AbstractCommandHandler {
 	/**
 	 * Computes the {@link BoundChecker} that is responsible for answering the
 	 * {@link #checkSecurity(LayoutComponent, Object, Map)} question for a potential model.
-	 * 
-	 * @see BoundChecker#allowPotentialModel(com.top_logic.tool.boundsec.BoundCommandGroup, Object)
 	 */
 	protected BoundChecker getBoundChecker(BoundChecker aChecker, BoundObject aBoundObject,
 			Map<String, Object> someArguments) {
@@ -297,7 +295,7 @@ public class GotoHandler extends AbstractCommandHandler {
 		if (gotoObject instanceof BoundObject && component instanceof BoundChecker) {
 			BoundChecker securityChecker =
 				getBoundChecker((BoundChecker) component, (BoundObject) gotoObject, someValues);
-    		return securityChecker.allowPotentialModel(getCommandGroup(), gotoObject);
+    		return BoundChecker.allowCommand(securityChecker, getCommandGroup(), gotoObject);
 		} else {
 			return super.checkSecurity(component, model, someValues);
 		}
@@ -558,7 +556,7 @@ public class GotoHandler extends AbstractCommandHandler {
 			|| (aComp instanceof LayoutComponent && ((LayoutComponent) aComp).supportsModel(aModel));
 		if (aModel instanceof BoundObject) {
 			// Check that user has right to see the given model.
-			return canShow && aComp.allowPotentialModel(aModel);
+			return canShow && BoundChecker.allowShowModel(aComp, aModel);
 		} else {
 			return canShow;
         }

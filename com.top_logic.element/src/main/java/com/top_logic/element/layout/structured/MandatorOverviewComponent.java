@@ -5,10 +5,6 @@
  */
 package com.top_logic.element.layout.structured;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import com.top_logic.basic.col.TupleFactory.Tuple;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
@@ -36,14 +32,6 @@ public class MandatorOverviewComponent extends EditAttributedComponent {
 	public MandatorOverviewComponent(InstantiationContext context, Config someAttrs) throws ConfigurationException {
 		super(context, someAttrs);
 	}
-
-    /** 
-     * We must cache the securtiy since we are used by the ContractTable.
-     */
-    @Override
-	protected Map<Tuple, Boolean> createAllowCache() {
-		return new HashMap<>(64);
-    }
 
 	/**
 	 * We support {@link Mandator}s what did you expect.

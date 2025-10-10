@@ -56,7 +56,7 @@ public class BoundObjectVisitor extends AllElementVisitor {
         if (anElement instanceof BoundObject) {
             BoundObject theObject = (BoundObject) anElement;
 
-            if (this.checker.allow(this.commandGroup, theObject)) {
+            if (BoundChecker.allowCommandOnSecurityObject(this.checker, this.commandGroup, theObject)) {
                 super.onVisit(anElement, aDepth);
             }
 

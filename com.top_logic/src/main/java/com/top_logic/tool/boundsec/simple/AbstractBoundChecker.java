@@ -7,11 +7,8 @@ package com.top_logic.tool.boundsec.simple;
 
 import java.util.Objects;
 
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.tool.boundsec.BoundChecker;
-import com.top_logic.tool.boundsec.BoundCommandGroup;
-import com.top_logic.tool.execution.I18NConstants;
 
 /**
  * Abstract implementation of {@link BoundChecker} implementing convenience methods.
@@ -34,22 +31,6 @@ public abstract class AbstractBoundChecker implements BoundChecker {
 	@Override
 	public ComponentName getSecurityId() {
 		return _securityId;
-	}
-
-	@Override
-	public ResKey hideReason(Object potentialModel) {
-		return securityReason(potentialModel);
-	}
-
-	/**
-	 * Utility to compute {@link #hideReason(Object)} based on access restrictions.
-	 */
-	protected final ResKey securityReason(Object potentialModel) {
-		BoundCommandGroup group = getDefaultCommandGroup();
-		if (!this.allow(group, this.getSecurityObject(group, potentialModel))) {
-			return I18NConstants.ERROR_NO_PERMISSION;
-		}
-		return null;
 	}
 
 	@Override

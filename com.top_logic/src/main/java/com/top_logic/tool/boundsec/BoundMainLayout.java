@@ -80,7 +80,8 @@ public abstract class BoundMainLayout extends MainLayout implements LayoutContai
     
 	@Override
 	public ResKey hideReason() {
-		return hideReason(internalModel());
+		// The top-level component cannot be hidden.
+		return null;
 	}
 
     /**

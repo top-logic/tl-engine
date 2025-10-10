@@ -276,12 +276,12 @@ public class TileUtils {
 	 * @param component
 	 *        The component to check.
 	 * @return <code>true</code> iff the {@link LayoutComponent} is a {@link BoundChecker} and
-	 *         {@link BoundCheckerComponent#allow()}, or it is not a {@link BoundChecker}.
+	 *         {@link BoundCheckerComponent#canShow()}, or it is not a {@link BoundChecker}.
 	 */
 	public static boolean componentAllowed(LayoutComponent component) {
 		boolean childAllowed;
 		if (component instanceof BoundCheckerComponent) {
-			childAllowed = ((BoundCheckerComponent) component).allow();
+			childAllowed = ((BoundCheckerComponent) component).canShow();
 		} else {
 			childAllowed = true;
 		}

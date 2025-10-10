@@ -15,6 +15,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutComponent.Config;
 import com.top_logic.mig.html.layout.LayoutContainer;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
+import com.top_logic.tool.execution.I18NConstants;
 import com.top_logic.util.TLContext;
 
 /**
@@ -26,11 +27,70 @@ import com.top_logic.util.TLContext;
 public interface BoundChecker {
     
 	/**
-     * Get the unique Id for this BoundChecker
-     * 
-     * @return the Id for this BoundChecker, 
-     *         <code>null</code> if ID could not be retrieved
-     */
+	 * Whether the given checker allows the given user to access a view that uses the given security
+	 * object.
+	 * 
+	 * <p>
+	 * A security object for a view is a potential delegate for the view's model on which role
+	 * assignments can be checked.
+	 * </p>
+	 * 
+	 * @see #getSecurityObject(BoundCommandGroup, Object)
+	 */
+	static boolean allowShowSecurityObject(BoundChecker boundChecker, BoundObject anObject) {
+		return BoundChecker.allowCommandOnSecurityObject(boundChecker, boundChecker.getDefaultCommandGroup(), anObject);
+	}
+
+	/**
+	 * Whether the given checker allows to display the given model object for the current user.
+	 */
+	static boolean allowShowModel(BoundChecker boundChecker, Object potentialModel) {
+		return BoundChecker.allowCommand(boundChecker, boundChecker.getDefaultCommandGroup(), potentialModel);
+	}
+
+	/**
+	 * Whether the given checker allows to show the given object for the given user.
+	 * 
+	 * <p>
+	 * A security object for a view is a potential delegate for the view's model on which role
+	 * assignments can be checked.
+	 * </p>
+	 * 
+	 * @see #getSecurityObject(BoundCommandGroup, Object)
+	 */
+	static boolean allowShowSecurityObjectFor(BoundChecker boundChecker, Person aPerson, BoundObject aModel) {
+		return boundChecker.allow(aPerson, aModel, boundChecker.getDefaultCommandGroup());
+	}
+
+	/**
+	 * Whether the given checker allows to execute command with the given command group on the given
+	 * model for the current user.
+	 */
+	static boolean allowCommand(BoundChecker boundChecker, BoundCommandGroup commandGroup, Object potentialModel) {
+		return BoundChecker.allowCommandOnSecurityObject(boundChecker, commandGroup, boundChecker.getSecurityObject(commandGroup, potentialModel));
+	}
+
+	/**
+	 * Whether the given checker allows to execute command with the given command group in the
+	 * context of the given security object for the current user.
+	 * 
+	 * <p>
+	 * A security object for a command is a potential delegate for the command's target model on
+	 * which role assignments can be checked.
+	 * </p>
+	 * 
+	 * @see #getSecurityObject(BoundCommandGroup, Object)
+	 */
+	static boolean allowCommandOnSecurityObject(BoundChecker boundChecker, BoundCommandGroup aGroup,
+			BoundObject anObject) {
+		return boundChecker.allow(TLContext.currentUser(), anObject, aGroup);
+	}
+
+	/**
+	 * Get the unique Id for this BoundChecker
+	 * 
+	 * @return the Id for this BoundChecker, <code>null</code> if ID could not be retrieved
+	 */
 	default ComponentName getSecurityId() {
 		if (this instanceof LayoutComponent) {
 			LayoutComponent _this = (LayoutComponent) this;
@@ -47,108 +107,28 @@ public interface BoundChecker {
 	}
 
 	/**
-	 * Checks whether the given model is allowed for the {@link #getDefaultCommandGroup() default
-	 * command group}.
+	 * A user-readable reason, why the given model cannot be displayed.
 	 * 
 	 * @param potentialModel
-	 *        An appropriate model for the component.
-	 * 
-	 * @return Whether the {@link #getDefaultCommandGroup() default command group} is allowed on the
-	 *         component when the given model is the model of the component.
-	 * 
-	 * @see #allowPotentialModel(BoundCommandGroup, Object)
+	 *        The model to display in the context of the given checker.
 	 */
-	default boolean allowPotentialModel(Object potentialModel) {
-		return allowPotentialModel(getDefaultCommandGroup(), potentialModel);
+	static ResKey hideReasonForSecurity(BoundChecker self, Object potentialModel) {
+		if (BoundChecker.allowShowModel(self, potentialModel)) {
+			return null;
+		}
+
+		return I18NConstants.ERROR_NO_PERMISSION;
 	}
 
 	/**
-	 * Checks whether the given command group for the current
-	 * {@link com.top_logic.knowledge.wrap.person.Person} is allowed, when the component has the
-	 * given model.
+	 * Check if the given {@link com.top_logic.tool.boundsec.BoundCommandGroup} for the given
+	 * {@link com.top_logic.knowledge.wrap.person.Person} is allowed on the given Object.
 	 * 
-	 * <p>
-	 * The default implementation just checks whether the given object is {@link #allow(BoundObject)
-	 * allowed}, but an implementation may not use its model as security object, but a different
-	 * one.
-	 * </p>
-	 * 
-	 * @param potentialModel
-	 *        An appropriate model for the component.
-	 * 
-	 * @return Whether the given command group is allowed on the component when the given model is
-	 *         the model of the component.
-	 * 
-	 * @see SecurityObjectProvider
-	 */
-	default boolean allowPotentialModel(BoundCommandGroup commandGroup, Object potentialModel) {
-		return allow(commandGroup, getSecurityObject(commandGroup, potentialModel));
-	}
-    
-	/**
-	 * A user-readable reason, why {@link #allow(BoundObject)} is <code>false</code>.
-	 * 
-	 * @param potentialModel
-	 *        The model for which to display this component.
-	 * 
-	 * @return A reason why {@link #allow(BoundObject)} is <code>false</code>, or <code>null</code>
-	 *         if {@link #allow(BoundObject)} should be <code>true</code>.
-	 */
-    public ResKey hideReason(Object potentialModel);
-    
-    /** 
-     * Check if the given {@link com.top_logic.tool.boundsec.BoundCommandGroup} 
-     * for the current 
-     * {@link com.top_logic.knowledge.wrap.person.Person} is allowed on the given Object.
-     * 
-     * @param   aGroup    The CommandGroup to check
-     * @return true, if given CommandGroup is allowed to be performed
-     */ 
-	default boolean allow(BoundCommandGroup aGroup, BoundObject anObject) {
-		TLContext context = TLContext.getContext();
-		if (context == null) {
-			return false;
-		}
-
-		Person user = context.getCurrentPersonWrapper();
-		if (user == null) {
-			return false;
-		}
-
-		return this.allow(user, anObject, aGroup);
-	}
-
-    /** 
-     * Check if the given {@link com.top_logic.tool.boundsec.BoundCommandGroup} 
-     * for the given
-     * {@link com.top_logic.knowledge.wrap.person.Person} is allowed on the given Object.
-     * 
-     * @param   aGroup    The CommandGroup to check
-     * @return true, if given CommandGroup is allowed to be performed
-     */ 
+	 * @param aGroup
+	 *        The CommandGroup to check
+	 * @return true, if given CommandGroup is allowed to be performed
+	 */ 
     public boolean allow(Person aPerson, BoundObject anObject, BoundCommandGroup aGroup);
-
-    /** 
-     * Check if given Person has access to aModel in this class for {@link #getDefaultCommandGroup()}.
-     */
-    default boolean allow(Person aPerson, BoundObject aModel) {
-		return allow(aPerson, aModel, getDefaultCommandGroup());
-    }
-
-    /**
-	 * Check if the given default command group for the current
-	 * {@link com.top_logic.knowledge.wrap.person.Person} is allowed on this Object. This should
-	 * fall back to allow(getDefaultCommandGroup(), anObject) but depending on additional
-	 * circumstances may return false.
-	 * 
-	 * @param anObject
-	 *        the object to check
-	 * 
-	 * @see BoundCheckerComponent#allow(com.top_logic.tool.boundsec.BoundCommandGroup)
-	 */
-	default boolean allow(BoundObject anObject) {
-		return allow(getDefaultCommandGroup(), anObject);
-	}
 
 	/**
 	 * Determines the object to check for security when the given model is a

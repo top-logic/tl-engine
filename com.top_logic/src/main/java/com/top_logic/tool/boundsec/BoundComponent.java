@@ -5,7 +5,6 @@
  */
 package com.top_logic.tool.boundsec;
 
-import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.util.Collection;
@@ -22,19 +21,14 @@ import jakarta.servlet.http.HttpServletResponse;
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
-import com.top_logic.basic.col.TupleFactory;
 import com.top_logic.basic.col.TupleFactory.Tuple;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.knowledge.wrap.Wrapper;
-import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.basic.component.AJAXComponent;
-import com.top_logic.layout.component.ComponentUtil;
 import com.top_logic.layout.window.WindowComponent;
 import com.top_logic.mig.html.layout.CommandRegistry;
 import com.top_logic.mig.html.layout.ComponentName;
@@ -47,16 +41,10 @@ import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.boundsec.wrap.PersBoundComp;
 import com.top_logic.tool.boundsec.wrap.SecurityComponentCache;
-import com.top_logic.tool.execution.service.CommandApprovalService;
-import com.top_logic.util.TLContext;
 
 /**
  * A {@link com.top_logic.mig.html.layout.LayoutComponent} implementing the
  * {@link com.top_logic.tool.boundsec.BoundChecker} interface.
- *
- * This implementation allows caching of the Security
- * {@link #allow(BoundCommandGroup, BoundObject)}, be aware that this will be correct only if the
- * {@link Person} / {@link TLContext} is always the same.
  *
  * @author    <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>
  * @author    Dieter Rothbächer
@@ -110,16 +98,6 @@ public abstract class BoundComponent extends AJAXComponent implements BoundCheck
      */
     private   Collection<BoundCommandGroup> commandGroups;
     
-    /** Optional Map of Boolean indexed by a CompoundKey of CommandGroupd and Object */
-	protected transient Map<Tuple, Boolean> _allowCache;
-    
-    /**
-     * Will be incremented on every call to allow.
-     *
-     * TODO MGA remove again ?
-     */
-    public int allowCount;
-
 	/**
 	 * Saves the configured {@link SecurityObjectProvider}.
 	 */
@@ -148,7 +126,6 @@ public abstract class BoundComponent extends AJAXComponent implements BoundCheck
 		} catch (ConfigurationException ex) {
 			throw new ConfigurationError(I18NConstants.INVALID_SECURITY_OBJECT_PROVIDER_CONFIG, ex);
 		}
-		_allowCache = createAllowCache();
     }
     
     /**
@@ -218,146 +195,16 @@ public abstract class BoundComponent extends AJAXComponent implements BoundCheck
 			}
 		}
     }
-    
-    /**
-     * Is called by CTor to setup the (optional) allow Cache.
-     * 
-     * Override to create a cache with reasonable size. Think about using LRU- or Weak-Maps.
-     * 
-     * @return always null here.
-     * @deprecated Since new SecurityStorage, caching the security is not necessary anymore;
-     *             in addition if caching is active, the component will not get actualized
-     *             when changes in security are done.
-     */
-    @Deprecated
-	protected Map<Tuple, Boolean> createAllowCache() {
-        return null; // return new HashMap() , new HashMapWeak(), new LRUMaAp()
-    }
-
-    /**
-     * Allow resetting Security (if cached).
-     */
-    public void resetAllowCache() {
-		if (_allowCache != null) {
-			_allowCache.clear();
-       }
-    }
-
-    /**
-     * Implemented to (re-) <code>createAllowCache()</code> after deserialization.
-     */
-    private void readObject(java.io.ObjectInputStream aStream) throws IOException, ClassNotFoundException {
-        aStream.defaultReadObject();
-		_allowCache = this.createAllowCache();
-    }
-
-    /**
-     * Return size (if existing) of allowCache
-     */
-    public final int getAllowSize() {
-		return _allowCache != null ? _allowCache.size() : 0;
-    }
-
-	/**
-	 * Whether the component can be displayed.
-	 * 
-	 * <p>
-	 * Override {@link #hideReason(Object)} for customizations.
-	 * </p>
-	 */
-	@Override
-	public final boolean allow() {
-		return BoundCheckerComponent.super.allow();
-	}
 
 	@Override
 	public ResKey hideReason() {
-		return hideReason(internalModel());
-	}
-
-    @Override
-	public ResKey hideReason(Object potentialModel) {
-		if (!ComponentUtil.isValid(potentialModel)) {
-			return com.top_logic.tool.execution.I18NConstants.ERROR_INVALID_MODEL;
+		ResKey hideReason = super.hideReason();
+		if (hideReason != null) {
+			return hideReason;
 		}
 
-		if (!supportsInternalModel(potentialModel)) {
-			return com.top_logic.tool.execution.I18NConstants.ERROR_MODEL_NOT_SUPPORTED;
-		}
-
-		return securityReason(potentialModel);
+		return BoundChecker.hideReasonForSecurity(this, internalModel());
 	}
-
-	/**
-	 * Utility to compute {@link #hideReason(Object)} based on access restrictions.
-	 * 
-	 * @param potentialModel
-	 *        See {@link #hideReason(Object)}.
-	 */
-	protected final ResKey securityReason(Object potentialModel) {
-		BoundCommandGroup group = getDefaultCommandGroup();
-		if (!allow(group, this.getSecurityObject(group, potentialModel))) {
-			return com.top_logic.tool.execution.I18NConstants.ERROR_NO_PERMISSION;
-		}
-
-		return null;
-	}
-
-    /**
-     * Handles the allowCache and calls unCachedAllow meanwhile.
-     *
-     * @param   aCmdGroup   The CommandGroup to check
-     * @param   anObject    Object for which the security should be checked.
-     *
-     * @return true, if given CommandGroup is allowed to be performed
-     *
-     * @see com.top_logic.tool.boundsec.BoundChecker#allow(com.top_logic.tool.boundsec.BoundCommandGroup, com.top_logic.tool.boundsec.BoundObject)
-     */
-    @Override
-	public boolean allow(BoundCommandGroup aCmdGroup, BoundObject anObject) {
-        allowCount ++;
-
-        // Check, whether model is valid. 
-        //
-        // Note: This is a workaround for model events arriving in inappropriate
-        // order. E.g. an object was deleted, component A fires model deleted
-        // event E1. Component B receives this event and re-sets its model and in
-        // response fires a security changed event E2. Component C receives E2
-        // before E1, because events are delivered synchronously. Component C
-        // now queries its subcomponent D, whether it is still allowed with its
-        // now invalid model. D did not yet receive the event E1 and had no
-        // chance to update its state.
-        if (!ComponentUtil.isValid(anObject)) {
-            // Logger.info("Tried to check security on an invalid object.", BoundComponent.class);
-            return false;
-        }
-        
-		Map<Tuple, Boolean> allowCache = _allowCache;
-		Tuple cacheKey;
-
-		if (allowCache == null) {
-			allowCache = getSecurityRequestCache();
-
-			if (allowCache == null) {
-				// No caching, exit early.
-				return unCachedAllow(aCmdGroup, anObject);
-            }
-
-			// Note: In the global cache, the component is required as additional part of the key.
-			cacheKey = TupleFactory.newTuple(this, anObject, aCmdGroup);
-		} else {
-			cacheKey = TupleFactory.newTuple(anObject, aCmdGroup);
-        }
-
-		Boolean allow = allowCache.get(cacheKey);
-		if (allow == null) {
-			allow = Boolean.valueOf(unCachedAllow(aCmdGroup, anObject));
-
-			allowCache.put(cacheKey, allow);
-        }
-
-		return allow.booleanValue();
-    }
     
     public static boolean useSecurityRequestCache(BoundCommand aCommand) {
 		return aCommand.getCommandGroup().isReadGroup();
@@ -397,70 +244,6 @@ public abstract class BoundComponent extends AJAXComponent implements BoundCheck
 	private static Map<Tuple, Boolean> getSecurityRequestCache() {
 		return SECURITY_REQUEST_CACHE.get();
 	}
-
-    /**
-     * Clear allowCache if {@link #isCacheRelevant(Object)} returns <code>true</code>.
-     *
-     * @param    aChangedBy    The object sending the event.
-     * @return   <code>true</code>, if calling this method changed the internal state.
-     *
-     * @see com.top_logic.mig.html.layout.LayoutComponent#receiveModelSecurityChangedEvent(java.lang.Object)
-     */
-    @Override
-	protected boolean receiveModelSecurityChangedEvent(Object aChangedBy) {
-        if (this.isCacheRelevant(aChangedBy)) {
-            resetAllowCache();
-        }
-
-        return super.receiveModelSecurityChangedEvent(aChangedBy);
-    }
-
-    /**
-     * The allow allowCache will be reset when this method says so.
-     *
-     * @param    aChangedBy    The object sending the event.
-     * @return   <code>true</code> if the event is security relevant and allowCache != null.
-     * @see      #receiveModelSecurityChangedEvent(Object)
-     */
-    protected boolean isCacheRelevant(Object aChangedBy) {
-		return (_allowCache != null);
-    }
-
-    /**
-      * Check if the given {@link com.top_logic.tool.boundsec.BoundCommandGroup}
-      * for the current
-      * {@link com.top_logic.knowledge.wrap.person.Person} is allowed on the given Object.
-      *
-      * This is called by the normal allow and eventually cached.
-     */
-    public boolean unCachedAllow(BoundCommandGroup aCmdGroup, BoundObject anObject) {
-        TLContext theContext = TLContext.getContext();
-        if (theContext == null)
-            return false;
-
-        if (aCmdGroup == null) {
-            aCmdGroup = getDefaultCommandGroup();
-        }
-
-		if (!CommandApprovalService.canExecute(this, aCmdGroup, anObject))
-            return false;
-
-
-        // special object dependent security:
-		if (anObject == null) {
-			return supportsInternalModel(null);
-		}
-
-        if (!checkAccess(theContext, (Object) anObject , aCmdGroup))
-            return false;
-        if (anObject instanceof Wrapper && !checkAccess(theContext, (Wrapper) anObject , aCmdGroup))
-            return false;
-
-        if (!checkAccess(theContext, anObject , aCmdGroup))
-            return false;
-
-        return true; // All Tests pass, let's go
-    }
 
 	@Override
 	public BoundObject getSecurityObject(BoundCommandGroup commandGroup, Object potentialModel) {
@@ -556,37 +339,6 @@ public abstract class BoundComponent extends AJAXComponent implements BoundCheck
     }
 
     /**
-     * Check Access based on arbitrary Object.
-     *
-     * @param context   The current TLContext (to get user data etc.)
-     * @param model     The model of this component.
-     * @param aCmdGroup The command group to check against.
-     *
-     * @return always true here but you may do otherwise
-     */
-    @Deprecated
-	protected final boolean checkAccess(TLContext context, Object model, BoundCommandGroup aCmdGroup) {
-        return true;
-    }
-
-    /**
-     * Check Wrapper / KnowledgeObject access right to given model.
-     *
-     * @param context   The current TLContext (to get user data etc.)
-     * @param model     The Wrapper we actually care for
-     * @param aCmdGroup The command group to check against.
-     *
-     * @return false for historic wrappers and !{@link #isReadOrSystem(BoundCommandGroup)}
-     */
-    protected boolean checkAccess(TLContext context, Wrapper model, BoundCommandGroup aCmdGroup) {
-    	if (!isReadOrSystem(aCmdGroup)) {
-    		return WrapperHistoryUtils.getRevision(model).isCurrent();
-    	}
-    	
-        return true; // Don't know ... lets say its OK
-    }
-    
-    /**
 	 * Checks whether the given command group is 'read' or 'system'.
 	 * 
 	 * @param cmdGroup
@@ -599,40 +351,17 @@ public abstract class BoundComponent extends AJAXComponent implements BoundCheck
     }
 
     /**
-     * Check Access based on BoundObject .
-     *
-     * @param context   The current TLContext (to get user data etc.)
-     * @param model     The model of this component.
-     * @param aCmdGroup The command group to check against.
-     *
-     * @return true when the intersection of roles for the commandGroups
-     *              and roles of the current Person on the BoundObject
-     *              is not empty.
-     */
-    protected boolean checkAccess(TLContext context, BoundObject model, BoundCommandGroup aCmdGroup) {
-        if (ThreadContext.isAdmin()) {
-            return true;    // bypass bound security for SuperUsers
-        }
-
-        Person currentPerson = context.getCurrentPersonWrapper();
-        if (currentPerson == null)
-            return false;   // Don't know how to check this
-
-        return allow(currentPerson, model, aCmdGroup);
-    }
-
-    /**
      * Check if given Person has access to aModel in this class for given CommandGroup
      */
     @Override
 	public boolean allow(Person aPerson, BoundObject aModel, BoundCommandGroup aCmdGroup) {
-		if (!SimpleBoundCommandGroup.isAllowedCommandGroup(aPerson, aCmdGroup)) {
-        	return false;
-        }
 		boolean isSystem = aCmdGroup.isSystemGroup();
 		if (isSystem) {
 			return true;
 		}
+		if (!SimpleBoundCommandGroup.isAllowedCommandGroup(aPerson, aCmdGroup)) {
+        	return false;
+        }
         return AccessManager.getInstance().hasRole(aPerson, aModel, getRolesForCommandGroup(aCmdGroup));
     }
 
@@ -680,7 +409,7 @@ public abstract class BoundComponent extends AJAXComponent implements BoundCheck
 	 * @return <code>true</code>, if the object can be displayed.
 	 */
 	private boolean canShow(Object potentialModel) {
-		return supportsInternalModel(potentialModel) && allowPotentialModel(potentialModel);
+		return supportsInternalModel(potentialModel) && BoundChecker.allowShowModel(this, potentialModel);
     }
 
 	/**

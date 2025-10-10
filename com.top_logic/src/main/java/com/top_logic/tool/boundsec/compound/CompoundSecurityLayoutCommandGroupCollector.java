@@ -11,8 +11,6 @@ import java.util.HashSet;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
-import com.top_logic.tool.boundsec.BoundComponent;
-import com.top_logic.tool.boundsec.assistent.BoundAssistentComponent;
 
 /**
  * Collect the command groups under a CompoundSecurityLayout
@@ -34,9 +32,8 @@ public class CompoundSecurityLayoutCommandGroupCollector extends
      */
     @Override
 	protected void doVisit(LayoutComponent aComponent) {
-        if (aComponent instanceof BoundComponent 
-         || aComponent instanceof BoundAssistentComponent) {
-			Collection<BoundCommandGroup> theCGs = ((BoundChecker) aComponent).getCommandGroups();
+		if (aComponent instanceof BoundChecker checker) {
+			Collection<BoundCommandGroup> theCGs = checker.getCommandGroups();
             if (theCGs != null) {
                 commandGroups.addAll(theCGs);
             }

@@ -1778,15 +1778,8 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		return ThemeFactory.getTheme();
 	}
 
-	/**
-	 * Searches the enclosing window, where this component resides in. If this
-	 * component is a window itself, this method returns this component.
-	 * 
-	 * @return enclosing window, where this component resides in, or
-	 *         <code>null</code>, if this component is part of the main
-	 *         component tree.
-	 */
-    public final WindowComponent getEnclosingWindow() {
+	@Override
+	public final WindowComponent getEnclosingWindow() {
         LayoutComponent theAncestor = this;
         while ((theAncestor != null) && (! (theAncestor instanceof WindowComponent))) {
 			if (theAncestor.openedAsDialog()) {

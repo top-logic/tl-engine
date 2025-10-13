@@ -1,7 +1,7 @@
 <h2>Syntax</h2>
 
 <pre>
-	<code>excelCell(row: 0, col: 0, content: $content, style: $cellStyle)</code>
+	<code>excelCell(content: $content, row: $row, col: $col, style: $cellStyle)</code>
 </pre>
 
 <h2>Beschreibung</h2>
@@ -24,30 +24,30 @@
 	</thead>
 	<tbody>
 		<tr>
-			<td>row</td>
-			<td>Zeichenkette</td>
-			<td>Die Zeilennummer der Zelle (0-basiert).</td>
+			<td>content</td>
+			<td>Objekt</td>
+			<td>Der Inhalt der Zelle. Dies kann Text, Zahlen, Boolean-Werte, eine Excel-Formel (erzeugt mit excelFormula()) oder eine verschachtelte Liste von Zellen sein.</td>
 			<td>ja</td>
 			<td> </td>
+		</tr>
+		<tr>
+			<td>row</td>
+			<td>Zahl</td>
+			<td>Die Zeilennummer der Zelle (0-basiert). Wenn nicht angegeben, wird die aktuelle Cursor-Position verwendet.</td>
+			<td>nein</td>
+			<td>null</td>
 		</tr>
 		<tr>
 			<td>col</td>
-			<td>Objekt</td>
-			<td>Die Spaltennummer der Zelle (0-basiert).</td>
-			<td>ja</td>
-			<td> </td>
-		</tr>
-		<tr>
-			<td>content</td>
-			<td>Objekt</td>
-			<td>Der Inhalt der Zelle. Dies kann Text, Zahlen, Boolean-Werte oder eine Excel-Formel (erzeugt mit excelFormula()) sein.</td>
-			<td>ja</td>
-			<td> </td>
+			<td>Zahl</td>
+			<td>Die Spaltennummer der Zelle (0-basiert). Wenn nicht angegeben, wird die aktuelle Cursor-Position verwendet.</td>
+			<td>nein</td>
+			<td>null</td>
 		</tr>
 		<tr>
 			<td>style</td>
-			<td>Map</td>
-			<td>Ein Map mit Formatierungseigenschaften für die Zelle.</td>
+			<td>ExcelStyle</td>
+			<td>Ein mit excelStyle() erstelltes Stilobjekt.</td>
 			<td>nein</td>
 			<td>null</td>
 		</tr>
@@ -68,13 +68,13 @@
 	<code>excelCell(row: 0, col: 0, content: "Hello World")</code>
 </pre>
 
-<p><strong>Ausgabe: </strong>Zelle in Zeile 0, Spalte 0 mit dem Text "Hello World".</p>
+<p><strong>Ausgabe: </strong>Zelle in Zeile 0, Spalte 0 mit dem Text "Hello World". Die aktuelle Cursor-Position nach diesem Ausdruck wäre: <code class="hljs inlineCode">Row 0, Col 1.</code></p>
 
 <h3>Zelle mit Zahlenformatierung</h3>
 
 <pre>
 	<code>excelCell(row: 1, col: 1, content: 1250.50,
-           style: {"numberFormat": "$#,##0.00", "align": "right"})</code>
+          style: excelStyle(numberFormat: "$#,##0.00", align: "right"))</code>
 </pre>
 
 <p><strong>Ausgabe: </strong>Zelle mit Währungsformat: "$1,250.50", rechtsbündig ausgerichtet.</p>
@@ -108,7 +108,7 @@
 
 <pre>
 	<code>excelCell(row: 5, col: 2, content: excelFormula("SUM(A5:A10)"),
-    style: {"numberFormat": "$#,##0.00", "bold": true, "background": "#E8F5E8"})</code>
+          style: excelStyle(numberFormat: "$#,##0.00", bold: true, background: "#E8F5E8"))</code>
 </pre>
 
 <p><strong>Ausgabe: </strong>Zelle mit Excel-Formel, die die Summe von Zellen A5 bis A10 berechnet, mit Währungsformat und grünem Hintergrund.</p>
@@ -119,19 +119,71 @@
 
 <pre>
 	<code>// Stildefinition
-$headerStyle = {
-  "bold": true,
-  "background": "#007BFF",
-  "color": "white",
-  "align": "center",
-  "borderBottom": "thick"
-}
+headerStyle = excelStyle(
+  bold: true,
+  background: "#007BFF",
+  color: "white",
+  align: "center",
+  borderBottom: "thick"
+);
 
 // Anwendung des Stils
 excelCell(row: 0, col: 0, content: "Produkt", style: $headerStyle)
 excelCell(row: 0, col: 1, content: "Preis", style: $headerStyle)
-excelCell(row: 0, col: 2, content: "Bestand", style: $headerStyle)
-</code>
+excelCell(row: 0, col: 2, content: "Bestand", style: $headerStyle)</code>
 </pre>
 
 <p><strong>Ausgabe: </strong>Drei Kopfzellen mit einheitlichem blauen Header-Stil.</p>
+
+<h3>Zellen mit Cursor-basierter Positionierung</h3>
+
+<pre>
+	<code>// Zellen werden automatisch platziert (Cursor-Modus)
+excelCell(content: "Produkt")           // row: 0, col: 0
+excelCell(content: "Preis")             // row: 0, col: 1
+excelCell(content: "Bestand")           // row: 0, col: 2
+
+excelCell(content: "Widget A")          // row: 1, col: 0
+excelCell(content: 29.99)               // row: 1, col: 1
+excelCell(content: 150)                 // row: 1, col: 2
+
+// Manuelle Positionierung für Überschrift
+excelCell(row: 3, col: 0, content: "Gesamtsumme", style: excelStyle(bold: true))
+excelCell(row: 3, col: 1, content: excelFormula("SUM(B2:B4)"), style: excelStyle(numberFormat: "$#,##0.00"))
+</code>
+</pre>
+
+<p><strong>Ausgabe: </strong>Tabelle mit automatischer Platzierung für Datenzellen und manueller Positionierung für die Summenzeile.</p>
+
+<h3>Verschachtelte Tabellen (excelCell als Inhalt)</h3>
+
+<pre>
+	<code>// Hauptzelle mit verschachtelter Tabelle
+excelCell(
+  row: 0,
+  col: 0,
+  content: [
+    ["Detail A", "Detail B", "Detail C"],
+    [100, 200, 300],
+    [150, 250, 350]
+  ],
+  style: excelStyle(
+    borderTop: "thick",
+    borderBottom: "thick",
+    borderLeft: "thick",
+    borderRight: "thick"
+  )
+)
+
+// Zelle mit verschachtelten, formatierten Zellen
+excelCell(
+  row: 5,
+  col: 0,
+  content: [
+    excelCell(content: "Header", style: excelStyle(bold: true, background: "#E8F5E8")),
+    excelCell(content: "Value", style: excelStyle(numberFormat: "#,##0.00", align: "right"))
+  ]
+)</code>
+</pre>
+
+<p><strong>Ausgabe: </strong>Zellen, die selbst kleine Tabellen oder formatierte Zellgruppen enthalten.</p>

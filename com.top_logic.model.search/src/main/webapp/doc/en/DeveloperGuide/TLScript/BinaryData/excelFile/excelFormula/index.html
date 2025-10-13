@@ -64,40 +64,68 @@
 <pre>
 	<code>excelCell(row: 10, col: 5, content:
     excelFormula("AVERAGEIFS(D2:D100, B2:B100, \"&gt;=2024-01-01\", C2:C100, \"Marketing\")"),
-    style: {"numberFormat": "0.00"})</code>
+    style: excelStyle(numberFormat: "0.00"))</code>
 </pre>
 
 <p><strong>Output: </strong>Two cells with the current date and time, suitably formatted.</p>
 
-<p></p>
-
-<h3>Date and time formulas</h3>
+<h3>Statistical formulas</h3>
 
 <pre>
 	<code>excelCell(row: 0, col: 0, content: excelFormula("TODAY()"),
-    style: {"numberFormat": "DD.MM.YYYY"})
+    style: excelStyle(numberFormat: "DD.MM.YYYY"))
 
 excelCell(row: 0, col: 1, content: excelFormula("NOW()"),
-    style: {"numberFormat": "DD.MM.YYYY HH:MM"})</code>
+    style: excelStyle(numberFormat: "DD.MM.YYYY HH:MM"))</code>
 </pre>
 
-<p><strong>Output: </strong>Cell with Excel formula that calculates the sum of cells A5 to A10, with currency format and green background.</p>
+<p><strong>Output: </strong>Cell with conditional formula that displays "Exceeded" if B2 &gt; 1000, otherwise "Within range".</p>
 
-<p></p>
+<h3>Complex calculations</h3>
+
+<pre>
+	<code>excelCell(row: 10, col: 5, content:
+    excelFormula("AVERAGEIFS(D2:D100, B2:B100, \"&gt;=2024-01-01\", C2:C100, \"Marketing\")"),
+    style: excelStyle(numberFormat: "0.00"))
+</code>
+</pre>
+
+<p><strong>Output: </strong>Cell with complex calculation of the average value based on several conditions.</p>
 
 <h3>Statistical formulas</h3>
 
 <pre>
 	<code>excelCell(row: 15, col: 2, content: excelFormula("COUNTIF(A2:A100, \"&gt;1000\")"),
-    style: {"background": "#FFF3CD"})
+    style: excelStyle(background: "#FFF3CD"))
 
 excelCell(row: 16, col: 2, content: excelFormula("MAX(C2:C50)"),
-    style: {"background": "#D4EDDA"})
+    style: excelStyle(background: "#D4EDDA"))
 
 excelCell(row: 17, col: 2, content: excelFormula("MIN(C2:C50)"),
-    style: {"background": "#F8D7DA"})</code>
+    style: excelStyle(background: "#F8D7DA"))</code>
 </pre>
 
 <p><strong>Output: </strong>Three cells with statistical calculations (number, maximum, minimum) and color highlighting.</p>
+
+<h2>Notes on use</h2>
+
+<ul>
+	<li><strong>No equals sign:</strong> The formula should be specified without a leading "=" (e.g. "SUM(A1:A10)" instead of "=SUM(A1:A10)")</li>
+	<li><strong>Excel syntax:</strong> Use the standard Excel formula syntax with English function names</li>
+	<li><strong>Cell references:</strong> Cell references are specified as usual in Excel (e.g. "A1", "B2:C5")</li>
+	<li><strong>Text in formulas:</strong> Text values in formulas must be enclosed in double quotation marks (e.g. "Hello")</li>
+	<li><strong>Combination with styles:</strong> Formulas can be combined with all available styles</li>
+</ul>
+
+<h2>Supported formula types</h2>
+
+<ul>
+	<li><strong>Mathematical functions:</strong> SUM, AVERAGE, COUNT, MAX, MIN, ROUND, etc.</li>
+	<li><strong>Logical functions:</strong> IF, AND, OR, NOT, etc.</li>
+	<li><strong>Text functions:</strong> CONCATENATE, LEFT, RIGHT, MID, UPPER, LOWER, etc.</li>
+	<li><strong>Date and time functions:</strong> TODAY, NOW, DATE, YEAR, MONTH, DAY, etc.</li>
+	<li><strong>Search and reference functions:</strong> VLOOKUP, HLOOKUP, INDEX, MATCH, etc.</li>
+	<li><strong>Statistical functions:</strong> AVERAGEIFS, COUNTIFS, SUMIFS, etc.</li>
+</ul>
 
 <p></p>

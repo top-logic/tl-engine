@@ -1,7 +1,7 @@
 <h2>Syntax</h2>
 
 <pre>
-	<code>excelSheet(name: $sheetName, content: $content)</code>
+	<code>excelSheet(content: $content, name: $sheetName, colWidths: $colWidths, rowHeights: $rowHeights)</code>
 </pre>
 
 <h2>Beschreibung</h2>
@@ -24,18 +24,32 @@
 	</thead>
 	<tbody>
 		<tr>
-			<td>name</td>
-			<td>Zeichenkette</td>
-			<td>Der Name des Arbeitsblatts, der in der Excel-Registerkarte angezeigt wird.</td>
-			<td>ja</td>
-			<td> </td>
-		</tr>
-		<tr>
 			<td>content</td>
 			<td>Objekt</td>
 			<td>Der Inhalt des Arbeitsblatts. Dies kann eine Liste von Listen (Matrix-Format) oder eine Liste von excelCell() sein.</td>
 			<td>ja</td>
 			<td> </td>
+		</tr>
+		<tr>
+			<td>name</td>
+			<td>Zeichenkette</td>
+			<td>Der Name des Arbeitsblatts, der in der Excel-Registerkarte angezeigt wird. Bei leerem String wird automatisch ein Name generiert.</td>
+			<td>nein</td>
+			<td>""</td>
+		</tr>
+		<tr>
+			<td>colWidths</td>
+			<td>Map</td>
+			<td>Map mit Spaltennummern als Schlüssel und Spaltenbreiten als Werte. Die Breiten werden in Zeichen angegeben (z.B. {"0": 15, "1": 20}).</td>
+			<td>nein</td>
+			<td>null</td>
+		</tr>
+		<tr>
+			<td>rowHeights</td>
+			<td>Map</td>
+			<td>Map mit Zeilennummern als Schlüssel und Zeilenhöhen als Werte. Die Höhen werden in Punkten angegeben (z.B. {"0": 25, "1": 30}).</td>
+			<td>nein</td>
+			<td>null</td>
 		</tr>
 	</tbody>
 </table>
@@ -72,32 +86,68 @@
     content: [
       // Titelzeile
       excelCell(row: 0, col: 0, content: "Budgetübersicht 2024",
-               style: {"bold": true, "fontSize": 14, "background": "#4472C4", "color": "white", "colspan": 3}),
+                style: excelStyle(bold: true, fontSize: 14, background: "#4472C4", color: "white", colSpan: 3)),
 
       // Spaltenüberschriften
-      excelCell(row: 2, col: 0, content: "Kategorie", style: {"bold": true, "background": "#D9E1F2"}),
-      excelCell(row: 2, col: 1, content: "Geplant", style: {"bold": true, "background": "#D9E1F2"}),
-      excelCell(row: 2, col: 2, content: "Tatsächlich", style: {"bold": true, "background": "#D9E1F2"}),
+      excelCell(row: 2, col: 0, content: "Kategorie", style: excelStyle(bold: true, background: "#D9E1F2")),
+      excelCell(row: 2, col: 1, content: "Geplant", style: excelStyle(bold: true, background: "#D9E1F2")),
+      excelCell(row: 2, col: 2, content: "Tatsächlich", style: excelStyle(bold: true, background: "#D9E1F2")),
 
       // Datenzeilen
       excelCell(row: 3, col: 0, content: "Marketing"),
-      excelCell(row: 3, col: 1, content: 50000, style: {"numberFormat": "$#,##0"}),
-      excelCell(row: 3, col: 2, content: 52000, style: {"numberFormat": "$#,##0"}),
+      excelCell(row: 3, col: 1, content: 50000, style: excelStyle(numberFormat: "$#,##0")),
+      excelCell(row: 3, col: 2, content: 52000, style: excelStyle(numberFormat: "$#,##0")),
 
       excelCell(row: 4, col: 0, content: "Entwicklung"),
-      excelCell(row: 4, col: 1, content: 80000, style: {"numberFormat": "$#,##0"}),
-      excelCell(row: 4, col: 2, content: 75000, style: {"numberFormat": "$#,##0", "color": "red"}),
+      excelCell(row: 4, col: 1, content: 80000, style: excelStyle(numberFormat: "$#,##0")),
+      excelCell(row: 4, col: 2, content: 75000, style: excelStyle(numberFormat: "$#,##0", color: "red")),
 
       // Summenzeile
-      excelCell(row: 5, col: 0, content: "Gesamt", style: {"bold": true, "borderTop": "double"}),
-      excelCell(row: 5, col: 1, content: excelFormula("SUM(B4:B5)"), style: {"numberFormat": "$#,##0", "bold": true}),
-      excelCell(row: 5, col: 2, content: excelFormula("SUM(C4:C5)"), style: {"numberFormat": "$#,##0", "bold": true})
+      excelCell(row: 5, col: 0, content: "Gesamt", style: excelStyle(bold: true, borderTop: "double")),
+      excelCell(row: 5, col: 1, content: excelFormula("SUM(B4:B5)"), style: excelStyle(numberFormat: "$#,##0", bold: true)),
+      excelCell(row: 5, col: 2, content: excelFormula("SUM(C4:C5)"), style: excelStyle(numberFormat: "$#,##0", bold: true))
     ]
-  )</code>
+)</code>
 </pre>
 
 <p><strong>Ausgabe: </strong>Arbeitsblatt mit formatierten Zellen, verschiedenen Datentypen und Excel-Formeln.</p>
 
-<p>​</p>
+<h3>Arbeitsblatt mit benutzerdefinierten Spaltenbreiten und Zeilenhöhen</h3>
+
+<pre>
+	<code>excelSheet(
+    name: "Produktliste",
+    content: [
+      ["Produktname", "Beschreibung", "Preis", "Lagerbestand"],
+      ["Widget Pro", "Hochwertiges Widget", 299.99, 150],
+      ["Widget Basic", "Einfaches Widget", 99.99, 300],
+      ["Widget Premium", "Premium Widget mit allen Funktionen", 499.99, 75]
+    ],
+    colWidths: {
+      "0": 25, 
+      "1": 40, 
+      "2": 12,
+      "3": 15 
+    },
+    rowHeights: {
+      "0": 30
+    }
+  )</code>
+</pre>
+
+<p><strong>Ausgabe: </strong>Arbeitsblatt mit angepassten Spaltenbreiten für bessere Lesbarkeit und erhöhter Header-Zeile.</p>
+
+<h3>Arbeitsblatt mit automatischer Namensgenerierung</h3>
+
+<pre>
+	<code>excelSheet([
+      ["Daten", "Wert"],
+      ["Temperatur", 23.5],
+      ["Luftfeuchtigkeit", 65]
+    ]
+  )</code>
+</pre>
+
+<p><strong>Ausgabe: </strong>Arbeitsblatt mit automatisch generiertem Namen wie "Sheet 1", "Sheet 2", etc.</p>
 
 <p>​</p>

@@ -35,7 +35,6 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.meta.TypeSpec;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.TLType;
@@ -54,9 +53,17 @@ import com.top_logic.util.error.TopLogicException;
  * 
  * Supports both matrix and cell-based content creation with styling and formulas.
  * 
- * @author <a href="mailto:jhu@top-logic.com">Jonathan Hüsing</a>
+ * @author <a href="mailto:jhu@top-logic.com">Jonathan Hï¿½sing</a>
  */
 public class ExcelFile extends GenericMethod {
+
+	/**
+	 * Constants for Excel calculations
+	 */
+	private static final int COLUMN_WIDTH_MULTIPLIER = 256;
+	private static final int DEFAULT_AUTO_SIZE_MAX_WIDTH = 100 * COLUMN_WIDTH_MULTIPLIER;
+	private static final int DEFAULT_AUTO_SIZE_FALLBACK_WIDTH = 50 * COLUMN_WIDTH_MULTIPLIER;
+	private static final int UNDEFINED_POSITION = -1;
 
 	/**
 	 * Sheet content property keys
@@ -126,8 +133,8 @@ public class ExcelFile extends GenericMethod {
 			for (CellRangeAddress existing : regions) {
 				if(existing.isInRange(row, col)) {
 					throw new TopLogicException(
-						ResKey.text("Cannot create cell at " + CellReference.convertNumToColString(col) + (row + 1)
-							+ " - it is within existing merged region " + existing.formatAsString()));
+						I18NConstants.ERROR_CELL_CONFLICT.fill(CellReference.convertNumToColString(col) + (row + 1),
+							existing.formatAsString()));
 				}
 			}
 		}
@@ -240,10 +247,7 @@ public class ExcelFile extends GenericMethod {
 						Integer colIndex = asInt(entry.getKey());
 						Double width = asDouble(entry.getValue());
 						if (colIndex >= 0 && width >= 0) {
-							sheet.setColumnWidth(colIndex, (int) (width * 256)); // POI uses 1/256
-																					// of a
-																					// character
-																					// width
+							sheet.setColumnWidth(colIndex, (int) (width * COLUMN_WIDTH_MULTIPLIER)); // POI uses 1/256 of a character width
 						}
 					}
 				}
@@ -300,7 +304,7 @@ public class ExcelFile extends GenericMethod {
 		for (Object item : contentList) {
 			if (item instanceof Map) {
 				Map<String, Object> itemMap = (Map<String, Object>) item;
-				if (asInt(itemMap.get(PROP_CELL_ROW)) != -1 && asInt(itemMap.get(PROP_CELL_COL)) != -1) {
+				if (asInt(itemMap.get(PROP_CELL_ROW)) != UNDEFINED_POSITION && asInt(itemMap.get(PROP_CELL_COL)) != UNDEFINED_POSITION) {
 					return false;
 				}
 			}
@@ -353,8 +357,8 @@ public class ExcelFile extends GenericMethod {
 						Integer cellRow = asInt(cellMap.get("row"));
 						Integer cellCol = asInt(cellMap.get("col"));
 						
-						int targetRow = (cellRow != -1) ? cellRow : currentRow;
-						int targetCol = (cellCol != -1) ? cellCol : currentCol;
+						int targetRow = (cellRow != UNDEFINED_POSITION) ? cellRow : currentRow;
+						int targetCol = (cellCol != UNDEFINED_POSITION) ? cellCol : currentCol;
 						
 						// Ensure we have the correct row
 						Row targetExcelRow = sheet.getRow(targetRow);
@@ -405,8 +409,8 @@ public class ExcelFile extends GenericMethod {
 			Object content = cellMap.get(PROP_CELL_CONTENT);
 
 			// Determine target position using cursor if row/col not specified
-			int targetRow = (row != -1) ? row : currentRow;
-			int targetCol = (col != -1) ? col : currentCol;
+			int targetRow = (row != UNDEFINED_POSITION) ? row : currentRow;
+			int targetCol = (col != UNDEFINED_POSITION) ? col : currentCol;
 
 			Row excelRow = sheet.getRow(targetRow);
 			if (excelRow == null) {
@@ -424,10 +428,10 @@ public class ExcelFile extends GenericMethod {
 
 			createCell(workbook, sheet, excelRow, targetCol, content, styleProps, regionTracker, styleCache);
 
-			if (row != -1) {
+			if (row != UNDEFINED_POSITION) {
 				currentRow = row;
 			}
-			if (col != -1) {
+			if (col != UNDEFINED_POSITION) {
 				currentCol = col;
 			}
 			currentCol++;
@@ -540,7 +544,6 @@ public class ExcelFile extends GenericMethod {
 	 * Processes an excelCell within a nested content with relative positioning and style
 	 * inheritance.
 	 */
-	@SuppressWarnings("unchecked")
 	private void processNestedExcelCell(Workbook workbook, Sheet sheet, Map<String, Object> cellMap,
 			int baseRow, int baseCol, Map<String, Object> containerStyle,
 			MergedRegionTracker regionTracker, StyleCache styleCache) {
@@ -550,8 +553,8 @@ public class ExcelFile extends GenericMethod {
 		Integer colOffset = asInt(cellMap.get("col"));
 
 		// Calculate final position (base + relative offset)
-		int targetRow = (rowOffset != -1) ? (baseRow + rowOffset) : baseRow;
-		int targetCol = (colOffset != -1) ? (baseCol + colOffset) : baseCol;
+		int targetRow = (rowOffset != UNDEFINED_POSITION) ? (baseRow + rowOffset) : baseRow;
+		int targetCol = (colOffset != UNDEFINED_POSITION) ? (baseCol + colOffset) : baseCol;
 
 		// Extract and merge styles (cell styles override container styles)
 		Map<String, Object> mergedStyle = mergeStyles(containerStyle, cellMap);
@@ -608,15 +611,15 @@ public class ExcelFile extends GenericMethod {
 		}
 
 		if (styleProps.containsKey(PROP_FONT_SIZE)) {
-			Double fontSize = asDouble(styleProps.get(PROP_FONT_SIZE));
-			if (fontSize != null) {
+			Double fontSize = asDouble(styleProps.get(PROP_FONT_SIZE), -1);
+			if (fontSize != UNDEFINED_POSITION) {
 				font.setFontHeightInPoints(fontSize.shortValue());
 			}
 		}
 
 		if (styleProps.containsKey(PROP_FONT_FAMILY)) {
 			String fontFamily = asString(styleProps.get(PROP_FONT_FAMILY));
-			if (fontFamily != null) {
+			if (!fontFamily.isEmpty()) {
 				font.setFontName(fontFamily);
 			}
 		}
@@ -624,7 +627,7 @@ public class ExcelFile extends GenericMethod {
 		// Font color
 		if (styleProps.containsKey(PROP_COLOR)) {
 			String color = asString(styleProps.get(PROP_COLOR));
-			if (color != null) {
+			if (!color.isEmpty()) {
 				if (workbook instanceof XSSFWorkbook && font instanceof XSSFFont) {
 					XSSFColor xssfColor = parseColorXSSF(color);
 					if (xssfColor != null) {
@@ -645,7 +648,7 @@ public class ExcelFile extends GenericMethod {
 		// Background color
 		if (styleProps.containsKey(PROP_BACKGROUND)) {
 			String backgroundColor = asString(styleProps.get(PROP_BACKGROUND));
-			if (backgroundColor != null) {
+			if (!backgroundColor.isEmpty()) {
 				if (workbook instanceof XSSFWorkbook) {
 					XSSFColor xssfColor = parseColorXSSF(backgroundColor);
 					if (xssfColor != null) {
@@ -666,30 +669,48 @@ public class ExcelFile extends GenericMethod {
 
 		// Border styling
 		if (styleProps.containsKey(PROP_BORDER_TOP)) {
-			style.setBorderTop(parseBorderStyle(asString(styleProps.get(PROP_BORDER_TOP))));
+			String borderTop = asString(styleProps.get(PROP_BORDER_TOP));
+			if (!borderTop.isEmpty()) {
+				style.setBorderTop(parseBorderStyle(borderTop));
+			}
 		}
 		if (styleProps.containsKey(PROP_BORDER_BOTTOM)) {
-			style.setBorderBottom(parseBorderStyle(asString(styleProps.get(PROP_BORDER_BOTTOM))));
+			String borderBottom = asString(styleProps.get(PROP_BORDER_BOTTOM));
+			if (!borderBottom.isEmpty()) {
+				style.setBorderBottom(parseBorderStyle(borderBottom));
+			}
 		}
 		if (styleProps.containsKey(PROP_BORDER_LEFT)) {
-			style.setBorderLeft(parseBorderStyle(asString(styleProps.get(PROP_BORDER_LEFT))));
+			String borderLeft = asString(styleProps.get(PROP_BORDER_LEFT));
+			if (!borderLeft.isEmpty()) {
+				style.setBorderLeft(parseBorderStyle(borderLeft));
+			}
 		}
 		if (styleProps.containsKey(PROP_BORDER_RIGHT)) {
-			style.setBorderRight(parseBorderStyle(asString(styleProps.get(PROP_BORDER_RIGHT))));
+			String borderRight = asString(styleProps.get(PROP_BORDER_RIGHT));
+			if (!borderRight.isEmpty()) {
+				style.setBorderRight(parseBorderStyle(borderRight));
+			}
 		}
 
 		// Alignment
 		if (styleProps.containsKey(PROP_ALIGN)) {
-			style.setAlignment(parseHorizontalAlignment(asString(styleProps.get(PROP_ALIGN))));
+			String align = asString(styleProps.get(PROP_ALIGN));
+			if (!align.isEmpty()) {
+				style.setAlignment(parseHorizontalAlignment(align));
+			}
 		}
 		if (styleProps.containsKey(PROP_VALIGN)) {
-			style.setVerticalAlignment(parseVerticalAlignment(asString(styleProps.get(PROP_VALIGN))));
+			String valign = asString(styleProps.get(PROP_VALIGN));
+			if (!valign.isEmpty()) {
+				style.setVerticalAlignment(parseVerticalAlignment(valign));
+			}
 		}
 
 		// Number format
 		if (styleProps.containsKey(PROP_NUMBER_FORMAT)) {
 			String numberFormat = asString(styleProps.get(PROP_NUMBER_FORMAT));
-			if (numberFormat != null) {
+			if (!numberFormat.isEmpty()) {
 				style.setDataFormat(workbook.createDataFormat().getFormat(numberFormat));
 			}
 		}
@@ -739,14 +760,13 @@ public class ExcelFile extends GenericMethod {
 
 					// Set a reasonable maximum width to prevent extremely wide columns
 					int currentWidth = sheet.getColumnWidth(colNum);
-					int maxWidth = 100 * 256; // 100 characters maximum
-					if (currentWidth > maxWidth) {
-						sheet.setColumnWidth(colNum, maxWidth);
+					if (currentWidth > DEFAULT_AUTO_SIZE_MAX_WIDTH) {
+						sheet.setColumnWidth(colNum, DEFAULT_AUTO_SIZE_MAX_WIDTH);
 					}
 				} catch (Exception e) {
 					// Ignore auto-size errors (can happen with very large content)
 					// Fall back to a reasonable default width
-					sheet.setColumnWidth(colNum, 50 * 256); // 50 characters width
+					sheet.setColumnWidth(colNum, DEFAULT_AUTO_SIZE_FALLBACK_WIDTH); // 50 characters width
 				}
 			}
 		}

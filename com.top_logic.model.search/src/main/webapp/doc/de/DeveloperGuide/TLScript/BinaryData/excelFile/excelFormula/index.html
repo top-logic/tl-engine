@@ -64,40 +64,68 @@
 <pre>
 	<code>excelCell(row: 10, col: 5, content:
     excelFormula("AVERAGEIFS(D2:D100, B2:B100, \"&gt;=2024-01-01\", C2:C100, \"Marketing\")"),
-    style: {"numberFormat": "0.00"})</code>
+    style: excelStyle(numberFormat: "0.00"))</code>
 </pre>
 
 <p><strong>Ausgabe: </strong>Zwei Zellen mit dem aktuellen Datum und der aktuellen Uhrzeit, passend formatiert.</p>
 
-<p>​​</p>
-
-<h3>Datum- und Zeitformeln</h3>
+<h3>Statistische Formeln</h3>
 
 <pre>
 	<code>excelCell(row: 0, col: 0, content: excelFormula("TODAY()"),
-    style: {"numberFormat": "DD.MM.YYYY"})
+    style: excelStyle(numberFormat: "DD.MM.YYYY"))
 
 excelCell(row: 0, col: 1, content: excelFormula("NOW()"),
-    style: {"numberFormat": "DD.MM.YYYY HH:MM"})</code>
+    style: excelStyle(numberFormat: "DD.MM.YYYY HH:MM"))</code>
 </pre>
 
-<p><strong>Ausgabe: </strong>Zelle mit Excel-Formel, die die Summe von Zellen A5 bis A10 berechnet, mit Währungsformat und grünem Hintergrund.</p>
+<p><strong>Ausgabe: </strong>Zelle mit bedingter Formel, die "Überschritten" anzeigt, wenn B2 &gt; 1000, sonst "Im Rahmen".</p>
 
-<p>​</p>
+<h3>Komplexe Berechnungen</h3>
+
+<pre>
+	<code>excelCell(row: 10, col: 5, content:
+    excelFormula("AVERAGEIFS(D2:D100, B2:B100, \"&gt;=2024-01-01\", C2:C100, \"Marketing\")"),
+    style: excelStyle(numberFormat: "0.00"))
+</code>
+</pre>
+
+<p><strong>Ausgabe: </strong>Zelle mit komplexer Berechnung des Durchschnittswerts basierend auf mehreren Bedingungen.</p>
 
 <h3>Statistische Formeln</h3>
 
 <pre>
 	<code>excelCell(row: 15, col: 2, content: excelFormula("COUNTIF(A2:A100, \"&gt;1000\")"),
-    style: {"background": "#FFF3CD"})
+    style: excelStyle(background: "#FFF3CD"))
 
 excelCell(row: 16, col: 2, content: excelFormula("MAX(C2:C50)"),
-    style: {"background": "#D4EDDA"})
+    style: excelStyle(background: "#D4EDDA"))
 
 excelCell(row: 17, col: 2, content: excelFormula("MIN(C2:C50)"),
-    style: {"background": "#F8D7DA"})</code>
+    style: excelStyle(background: "#F8D7DA"))</code>
 </pre>
 
 <p><strong>Ausgabe: </strong>Drei Zellen mit statistischen Berechnungen (Anzahl, Maximum, Minimum) und farblicher Hervorhebung.</p>
+
+<h2>Hinweise zur Verwendung</h2>
+
+<ul>
+	<li><strong>Kein Gleichheitszeichen:</strong> Die Formel sollte ohne führendes "=" angegeben werden (z.B. "SUM(A1:A10)" statt "=SUM(A1:A10)")</li>
+	<li><strong>Excel-Syntax:</strong> Verwenden Sie die standardmäßige Excel-Formelsyntax mit englischen Funktionsnamen</li>
+	<li><strong>Zellbezüge:</strong> Zellbezüge werden wie in Excel üblich angegeben (z.B. "A1", "B2:C5")</li>
+	<li><strong>Text in Formeln:</strong> Textwerte in Formeln müssen in doppelte Anführungszeichen gesetzt werden (z.B. "Hello")</li>
+	<li><strong>Kombination mit Stilen:</strong> Formeln können mit allen verfügbaren Stilen kombiniert werden</li>
+</ul>
+
+<h2>Unterstützte Formeltypen</h2>
+
+<ul>
+	<li><strong>Mathematische Funktionen:</strong> SUM, AVERAGE, COUNT, MAX, MIN, ROUND, etc.</li>
+	<li><strong>Logische Funktionen:</strong> IF, AND, OR, NOT, etc.</li>
+	<li><strong>Textfunktionen:</strong> CONCATENATE, LEFT, RIGHT, MID, UPPER, LOWER, etc.</li>
+	<li><strong>Datums- und Zeitfunktionen:</strong> TODAY, NOW, DATE, YEAR, MONTH, DAY, etc.</li>
+	<li><strong>Such- und Verweisfunktionen:</strong> VLOOKUP, HLOOKUP, INDEX, MATCH, etc.</li>
+	<li><strong>Statistische Funktionen:</strong> AVERAGEIFS, COUNTIFS, SUMIFS, etc.</li>
+</ul>
 
 <p>​</p>

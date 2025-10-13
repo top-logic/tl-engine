@@ -1532,7 +1532,7 @@ public class TestElementAccessManager extends BasicTestCase {
 
 
     private void assertRoles(AccessManager anAM, Person aPerson, StructuredElementWrapper aProject, Object[] roles) {
-		Collection<BoundRole> theRoles = anAM.getRoles(aPerson, aProject);
+		Collection<? extends BoundRole> theRoles = anAM.getRoles(aPerson, aProject);
 		Collection<String> theRoleNames = new ArrayList<>(theRoles.size());
 		CollectionUtil.map(theRoles.iterator(), theRoleNames, boundRoleToName());
 		Collection<String> theExpectedNames = new ArrayList<>(roles.length);
@@ -1570,7 +1570,7 @@ public class TestElementAccessManager extends BasicTestCase {
     }
 
     private void assertHasRole(AccessManager anAM, Person aPerson, StructuredElementWrapper aProject, String aRole) {
-		Collection<BoundRole> theRoles = anAM.getRoles(aPerson, aProject);
+		Collection<? extends BoundRole> theRoles = anAM.getRoles(aPerson, aProject);
 		Collection<String> theRoleNames = new ArrayList<>(theRoles.size());
 		CollectionUtil.map(theRoles.iterator(), theRoleNames, boundRoleToName());
 		assertTrue(
@@ -1596,7 +1596,7 @@ public class TestElementAccessManager extends BasicTestCase {
     }
 
     private void assertNotHasRole(AccessManager anAM, Person aPerson, StructuredElementWrapper aProject, String aRole) {
-		Collection<BoundRole> theRoles = anAM.getRoles(aPerson, aProject);
+		Collection<? extends BoundRole> theRoles = anAM.getRoles(aPerson, aProject);
 		Collection<String> theRoleNames = new ArrayList<>(theRoles.size());
 		CollectionUtil.map(theRoles.iterator(), theRoleNames, boundRoleToName());
 		assertFalse("Expected that person " + aPerson.getName() + " has NOT the role '" + aRole + "' on object "

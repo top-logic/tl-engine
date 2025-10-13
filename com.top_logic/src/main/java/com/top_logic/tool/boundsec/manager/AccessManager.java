@@ -97,7 +97,7 @@ public class AccessManager extends ConfiguredManagedClass<AccessManager.Config> 
      * @return Set of BoundRoles, never <code>null</code>; empty in case aPerson or aBO is
      *         <code>null</code>
      */
-	public Set<BoundRole> getRoles(Person aPerson, BoundObject aBO) {
+	public Set<? extends BoundRole> getRoles(Person aPerson, BoundObject aBO) {
 		if (aBO == null || aPerson == null || !ComponentUtil.isValid(aBO)) {
 			return Collections.emptySet();
         }
@@ -130,7 +130,7 @@ public class AccessManager extends ConfiguredManagedClass<AccessManager.Config> 
 	 * for admin access).
 	 */
 	protected boolean internalHasRole(Person aPerson, BoundObject aBO, Collection<? extends BoundRole> accessRoles) {
-		Set<BoundRole> assignedRoles = this.getRoles(aPerson, aBO);
+		Set<? extends BoundRole> assignedRoles = this.getRoles(aPerson, aBO);
 		return CollectionUtil.containsAny(assignedRoles, accessRoles);
 	}
 

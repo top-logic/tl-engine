@@ -1193,7 +1193,8 @@ public class AttributeOperations {
 	 *        the roles to consider, may be null
 	 * @return the set of access right ids, never null
 	 */
-	public static Set<BoundCommandGroup> getAccess(TLStructuredTypePart attribute, Collection<BoundRole> roles) {
+	public static Set<BoundCommandGroup> getAccess(TLStructuredTypePart attribute,
+			Collection<? extends BoundRole> roles) {
 		if (roles == null || roles.isEmpty()) {
 			return Collections.emptySet();
 		}

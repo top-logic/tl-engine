@@ -139,7 +139,7 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 			    Person        thePerson = TLContext.getContext().getCurrentPersonWrapper();
 				TLObject theAttrib = update.getObject();
 			    if (theAttrib instanceof BoundObject) {
-					Collection<BoundRole> theRoles = theAM.getRoles(thePerson, (BoundObject) theAttrib);
+					Collection<? extends BoundRole> theRoles = theAM.getRoles(thePerson, (BoundObject) theAttrib);
 					Collection<BoundCommandGroup> theAccess = AttributeOperations.getAccess(theMA, theRoles);
                     if ( ! theAccess.contains(SimpleBoundCommandGroup.READ)) {
                         resultField.setBlocked(true);

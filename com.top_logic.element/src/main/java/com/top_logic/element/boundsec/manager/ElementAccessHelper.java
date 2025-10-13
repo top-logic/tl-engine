@@ -197,7 +197,7 @@ public class ElementAccessHelper {
 		}
 	}
 
-    public static List<BoundRole> getAvailableRoles(TLClass aME, ElementAccessManager accessManager) {
+	public static List<? extends BoundRole> getAvailableRoles(TLClass aME, ElementAccessManager accessManager) {
         List<BoundRole> theList = new ArrayList<>();
         if (aME != null) {
             theList.addAll(accessManager.getRolesForMetaElement(aME));
@@ -207,7 +207,7 @@ public class ElementAccessHelper {
                 TLClass theME = theIt.next();
                 theRoles.addAll(getAvailableRoles(theME, accessManager));
             }
-			Collection<BoundRole> theElementRoles = accessManager.getSecurityRoot().getRoles();
+			Collection<? extends BoundRole> theElementRoles = accessManager.getSecurityRoot().getRoles();
             if (theElementRoles != null) {
             	theRoles.addAll(theElementRoles);
             }

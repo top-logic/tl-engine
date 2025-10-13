@@ -138,12 +138,12 @@ public abstract class KBBasedMetaAttribute extends PersistentStructuredTypePart 
 		if (!(object instanceof BoundObject)) {
 			return LiberalAccessChecker.ALL_RIGHTS;
 		}
-		Collection<BoundRole> roles = getRoles((BoundObject) object);
+		Collection<? extends BoundRole> roles = getRoles((BoundObject) object);
 		
 		return AttributeOperations.getAccess(this, roles);
 	}
 
-	private Collection<BoundRole> getRoles(BoundObject boundObject) {
+	private Collection<? extends BoundRole> getRoles(BoundObject boundObject) {
 		AccessManager accessManager = AccessManager.getInstance();
 		Person currentPerson = TLContext.getContext().getCurrentPersonWrapper();
 		return accessManager.getRoles(currentPerson, boundObject);
@@ -154,7 +154,7 @@ public abstract class KBBasedMetaAttribute extends PersistentStructuredTypePart 
 		if (!(object instanceof BoundObject)) {
 			return true;
 		}
-		Collection<BoundRole> roles = getRoles((BoundObject) object);
+		Collection<? extends BoundRole> roles = getRoles((BoundObject) object);
 		if (roles.isEmpty()) {
 			return false;
 		}

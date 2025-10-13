@@ -54,7 +54,7 @@ public interface BoundObject extends TLObject {
      * @return a collection of roles the given person has in/for this Object,
      *         <code>null</code> or empty collection in case there are no roles
      */
-	public Set<BoundRole> getRoles(Person aPerson);
+	public Set<? extends BoundRole> getRoles(Person aPerson);
     
     /** 
      * Get the roles available for the wrapped 
@@ -66,7 +66,7 @@ public interface BoundObject extends TLObject {
      * @return the roles available for the object and the given person,
      *         <code>null</code> if an error occurs
      */
-	public Set<BoundRole> getLocalAndGlobalRoles(Person aPerson);
+	public Set<? extends BoundRole> getLocalAndGlobalRoles(Person aPerson);
     
     /**
      * Get the roles the given Group has on
@@ -76,7 +76,7 @@ public interface BoundObject extends TLObject {
      * @return the roles available for the object and the given group,
      *         <code>null</code> if an error occurs
      */
-	public Set<BoundRole> getRoles(Group aGroup);
+	public Set<? extends BoundRole> getRoles(Group aGroup);
     
     /** 
      * Get the roles available for the wrapped 
@@ -89,7 +89,7 @@ public interface BoundObject extends TLObject {
      * @return the roles available for the object and the given person,
      *         <code>null</code> if an error occurs
      */
-	public Set<BoundRole> getLocalAndGlobalAndGroupRoles(Person aPerson);
+	public Set<? extends BoundRole> getLocalAndGlobalAndGroupRoles(Person aPerson);
 
     /**
 	 * Get all {@link com.top_logic.tool.boundsec.BoundRole}s for this object.
@@ -99,7 +99,7 @@ public interface BoundObject extends TLObject {
 	 * @return a collection of roles for this object,
      *         <code>null</code> or empty collection in case there are no roles
 	 */
-	public Set<BoundRole> getRoles();
+	public Set<? extends BoundRole> getRoles();
     
     /**
      * Check if the given Person has any role ot this object.

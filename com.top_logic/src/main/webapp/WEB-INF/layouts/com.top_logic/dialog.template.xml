@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <config:template xmlns:config="http://www.top-logic.com/ns/config/6.0">
-	<properties extends="com.top_logic.mig.html.layout.DialogInfo, com.top_logic.layout.structure.ButtonbarOptions, com.top_logic.mig.html.layout.WithSecurityConfiguration, com.top_logic.mig.html.layout.WithDefaultFor, com.top_logic.layout.editor.config.ButtonTemplateParameters">
+	<properties extends="com.top_logic.mig.html.layout.DialogInfo, com.top_logic.layout.structure.ButtonbarOptions, com.top_logic.mig.html.layout.WithSecurityConfiguration, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.mig.html.layout.WithDefaultFor, com.top_logic.layout.editor.config.ButtonTemplateParameters">
 		<annotations>
 			<display-inherited value="APPEND"/>
 			<display-order>
@@ -19,6 +19,7 @@
 					<property name="closableUsingX"/>
 					<property name="createOpenerButtons"/>
 					<property name="with-security-configuration"/>
+					<property name="securityObject"/>
 					<property name="security-label"/>
 
 					<property name="open-handler"/>
@@ -68,6 +69,7 @@
 		components="${components}"
 		defaultFor="${defaultFor}"
 		name="Dialog"
+		securityObject="${securityObject}"
 		titleKey="${security-label}"
 	>
 		<dialogInfo

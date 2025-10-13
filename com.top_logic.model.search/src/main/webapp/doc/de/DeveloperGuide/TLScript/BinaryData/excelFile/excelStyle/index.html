@@ -1,0 +1,223 @@
+<h2>Syntax</h2>
+
+<pre>
+	<code>excelStyle(style: $value)</code>
+</pre>
+
+<h2>Beschreibung</h2>
+
+<p>Erstellt ein Stilobjekt, das zur Formatierung von Excel-Zellen verwendet werden kann. Diese Funktion ermöglicht es, Formatierungen zu definieren und sie auf mehrere Zellen anzuwenden. Durch die Verwendung von excelStyle() können Sie Formatierungen zentral definieren und wiederverwenden.</p>
+
+<h2>Parameter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Typ</th>
+			<th>Beschreibung</th>
+			<th>Pflicht</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>color</td>
+			<td>Zeichenkette</td>
+			<td>Schriftfarbe der Zelle. Unterstützt Farbnamen (z.B. "red", "blue") oder Hex-Codes (z.B. "#FF0000").</td>
+			<td>nein</td>
+			<td>null</td>
+		</tr>
+		<tr>
+			<td>background</td>
+			<td>Zeichenkette</td>
+			<td>Hintergrundfarbe der Zelle. Unterstützt Farbnamen oder Hex-Codes.</td>
+			<td>nein</td>
+			<td>null</td>
+		</tr>
+		<tr>
+			<td>bold</td>
+			<td>Boolean</td>
+			<td>Bestimmt, ob der Text fett dargestellt werden soll.</td>
+			<td>nein</td>
+			<td>null</td>
+		</tr>
+		<tr>
+			<td>italic</td>
+			<td>Boolean</td>
+			<td>Bestimmt, ob der Text kursiv dargestellt werden soll.</td>
+			<td>nein</td>
+			<td>null</td>
+		</tr>
+		<tr>
+			<td>fontSize</td>
+			<td>Zahl</td>
+			<td>Schriftgröße in Punkten.</td>
+			<td>nein</td>
+			<td>null</td>
+		</tr>
+		<tr>
+			<td>fontFamily</td>
+			<td>Zeichenkette</td>
+			<td>Schriftartname (z.B. "Arial", "Calibri", "Times New Roman").</td>
+			<td>nein</td>
+			<td>null</td>
+		</tr>
+		<tr>
+			<td>borderTop</td>
+			<td>Zeichenkette</td>
+			<td>Oberer Rahmenstil. Unterstützt Werte wie "thin", "medium", "thick", "double", "dashed", "dotted".</td>
+			<td>nein</td>
+			<td>null</td>
+		</tr>
+		<tr>
+			<td>borderBottom</td>
+			<td>Zeichenkette</td>
+			<td>Unterer Rahmenstil.</td>
+			<td>nein</td>
+			<td>null</td>
+		</tr>
+		<tr>
+			<td>borderLeft</td>
+			<td>Zeichenkette</td>
+			<td>Linker Rahmenstil.</td>
+			<td>nein</td>
+			<td>null</td>
+		</tr>
+		<tr>
+			<td>borderRight</td>
+			<td>Zeichenkette</td>
+			<td>Rechter Rahmenstil.</td>
+			<td>nein</td>
+			<td>null</td>
+		</tr>
+		<tr>
+			<td>align</td>
+			<td>Zeichenkette</td>
+			<td>Horizontale Ausrichtung. Unterstützt "left", "center", "right", "fill", "justify".</td>
+			<td>nein</td>
+			<td>null</td>
+		</tr>
+		<tr>
+			<td>valign</td>
+			<td>Zeichenkette</td>
+			<td>Vertikale Ausrichtung. Unterstützt "top", "center", "bottom".</td>
+			<td>nein</td>
+			<td>null</td>
+		</tr>
+		<tr>
+			<td>numberFormat</td>
+			<td>Zeichenkette</td>
+			<td>Zahlenformat für die Zelle (z.B. "$#,##0.00", "0.00%", "DD.MM.YYYY").</td>
+			<td>nein</td>
+			<td>null</td>
+		</tr>
+		<tr>
+			<td>rowSpan</td>
+			<td>Zahl</td>
+			<td>Anzahl der Zeilen, über die sich die Zelle erstrecken soll (Zellenverschmelzung).</td>
+			<td>nein</td>
+			<td>null</td>
+		</tr>
+		<tr>
+			<td>colSpan</td>
+			<td>Zahl</td>
+			<td>Anzahl der Spalten, über die sich die Zelle erstrecken soll (Zellenverschmelzung).</td>
+			<td>nein</td>
+			<td>null</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Rückgabewert</h2>
+
+<p><strong>Typ:</strong> Map</p>
+
+<p>Ein Map-Objekt, das die Stilinformationen für die Verwendung in excelCell() enthält.</p>
+
+<h2>Beispiele</h2>
+
+<h3>Einfacher Header-Stil</h3>
+
+<pre>
+	<code>// Header-Stil definieren
+headerStyle = excelStyle(
+  bold: true,
+  background: "#4472C4",
+  color: "white",
+  align: "center",
+  borderBottom: "thick"
+)
+
+// Anwendung in Zellen
+excelCell(row: 0, col: 0, content: "Produkt", style: $headerStyle)
+excelCell(row: 0, col: 1, content: "Preis", style: $headerStyle)
+excelCell(row: 0, col: 2, content: "Bestand", style: $headerStyle)</code>
+</pre>
+
+<p><strong>Ausgabe: </strong>Drei Kopfzellen mit einheitlichem blauen Header-Stil und fett weißer Schrift.</p>
+
+<h3>Währungsformat-Stil</h3>
+
+<pre>
+	<code>// Währungsformat-Stil
+currencyStyle = excelStyle(
+  numberFormat: "$#,##0.00",
+  align: "right",
+  bold: true
+)
+
+// Anwendung
+excelCell(row: 5, col: 1, content: 1250.50, style: $currencyStyle)
+excelCell(row: 6, col: 1, content: 899.99, style: $currencyStyle)</code>
+</pre>
+
+<p><strong>Ausgabe: </strong>Zwei Zellen mit Währungsformat: "$1,250.50" und "$899.99", rechtsbündig und fett.</p>
+
+<h3>Kompletter Tabellen-Stil</h3>
+
+<pre>
+	<code>// Definition verschiedener Stile für eine Tabelle
+headerStyle = excelStyle(
+  bold: true,
+  background: "#2C3E50",
+  color: "white",
+  align: "center",
+  borderBottom: "double",
+  borderTop: "double",
+  borderLeft: "thin",
+  borderRight: "thin"
+)
+
+dataStyle = excelStyle(
+  align: "right",
+  numberFormat: "#,##0.00",
+  borderLeft: "thin",
+  borderRight: "thin"
+)
+
+highlightStyle = excelStyle(
+  background: "#FFF3CD",
+  bold: true,
+  color: "#856404",
+  borderLeft: "thin",
+  borderRight: "thin"
+)
+
+// Anwendung in einer Tabelle
+excelCell(row: 0, col: 0, content: "Monat", style: $headerStyle)
+excelCell(row: 0, col: 1, content: "Umsatz", style: $headerStyle)
+excelCell(row: 0, col: 2, content: "Kosten", style: $headerStyle)
+
+excelCell(row: 1, col: 0, content: "Januar", style: $dataStyle)
+excelCell(row: 1, col: 1, content: 50000, style: $dataStyle)
+excelCell(row: 1, col: 2, content: 35000, style: $dataStyle)
+
+excelCell(row: 2, col: 0, content: "Februar", style: $dataStyle)
+excelCell(row: 2, col: 1, content: 55000, style: $highlightStyle)
+excelCell(row: 2, col: 2, content: 38000, style: $dataStyle)</code>
+</pre>
+
+<p><strong>Ausgabe: </strong>Vollständig formatierte Tabelle mit verschiedenen Stilen für Header, Daten und hervorgehobene Werte.</p>
+
+<p>​</p>

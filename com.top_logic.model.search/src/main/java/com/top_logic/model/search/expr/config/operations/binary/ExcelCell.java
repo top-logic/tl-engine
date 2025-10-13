@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.meta.TypeSpec;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.EvalContext;
@@ -63,7 +62,7 @@ public class ExcelCell extends GenericMethod {
 			if (arguments[3] instanceof Map) {
 				styleProps = (Map<String, Object>) arguments[3];
 			} else {
-				throw new TopLogicException(ResKey.text("Invalid style attribute."));
+				throw new TopLogicException(I18NConstants.ERROR_INVALID_STYLE_ATTRIBUTE);
 			}
 		}
 

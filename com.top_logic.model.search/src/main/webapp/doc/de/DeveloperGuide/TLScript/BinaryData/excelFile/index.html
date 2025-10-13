@@ -1,7 +1,7 @@
 <h2>Syntax</h2>
 
 <pre>
-	<code>excelFile(name: $fileName, content: $content)</code>
+	<code>excelFile(content: $content, name: $fileName)</code>
 </pre>
 
 <h2>Beschreibung</h2>
@@ -22,18 +22,18 @@
 	</thead>
 	<tbody>
 		<tr>
-			<td>name</td>
-			<td>Zeichenkette</td>
-			<td>Der Dateiname der zu erzeugenden Excel-Datei (z.B. "bericht.xlsx").</td>
-			<td>ja</td>
-			<td> </td>
-		</tr>
-		<tr>
 			<td>content</td>
 			<td>Liste</td>
 			<td>Eine Liste von Arbeitsblättern, die in der Excel-Datei erstellt werden sollen. Typischerweise erstellt mit excelSheet().</td>
 			<td>ja</td>
 			<td> </td>
+		</tr>
+		<tr>
+			<td>name</td>
+			<td>Zeichenkette</td>
+			<td>Der Dateiname der zu erzeugenden Excel-Datei (z.B. "bericht").</td>
+			<td>nein</td>
+			<td>"data"</td>
 		</tr>
 	</tbody>
 </table>
@@ -50,7 +50,7 @@
 
 <pre>
 	<code>excelFile(
-    name: "verkaufsbericht.xlsx",
+    name: "verkaufsbericht",
     content: [
       excelSheet(
         name: "Q1 2024",
@@ -70,27 +70,27 @@
 
 <pre>
 	<code>excelFile(
-    name: "komplexer_bericht.xlsx",
+    name: "komplexer_bericht",
     content: [
-      excelSheet(
-        name: "Zusammenfassung",
-        content: [
-          excelCell(row: 0, col: 0, content: "Monatsbericht",
-                   style: {"bold": true, "fontSize": 16, "background": "#2C3E50", "color": "white"}),
-          excelCell(row: 2, col: 0, content: "Gesamtumsatz", style: {"bold": true}),
-          excelCell(row: 2, col: 1, content: excelFormula("SUM(Details!B2:B4)"),
-                   style: {"numberFormat": "$#,##0.00", "background": "#E8F6F3"})
-        ]
-      ),
-      excelSheet(
-        name: "Details",
-        content: [
-          ["Monat", "Umsatz", "Kosten"],
-          ["Januar", 50000, 35000],
-          ["Februar", 55000, 38000],
-          ["März", 60000, 40000]
-        ]
-      )
+        excelSheet(
+            name: "Zusammenfassung",
+            content: [
+                excelCell(row: 0, col: 0, content: "Monatsbericht",
+                    style: excelStyle(bold: true, fontSize: 16, background: "#2C3E50", color: "white")),
+                excelCell(row: 2, col: 0, content: "Gesamtumsatz", style: excelStyle(bold: true)),
+                excelCell(row: 2, col: 1, content: excelFormula("SUM(Details!B2:B4)"),
+                    style: excelStyle(numberFormat: "$#,##0.00", background: "#E8F6F3"))
+            ]
+        ),
+        excelSheet(
+            name: "Details",
+            content: [
+                ["Monat", "Umsatz", "Kosten"],
+                ["Januar", 50000, 35000],
+                ["Februar", 55000, 38000],
+                ["März", 60000, 40000]
+            ]
+        )
     ]
   )</code>
 </pre>

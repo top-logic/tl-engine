@@ -92,6 +92,13 @@ public interface BoundCheckerComponent extends BoundChecker, IComponent {
 	 */
 	default void initPersBoundComp(PersBoundComp persBoundComp) {
 		set(PERS_BOUND_COMP, persBoundComp);
+
+		// Distribute.
+		for (IComponent theChild : getDialogs()) {
+			if (theChild instanceof BoundCheckerComponent childChecker) {
+				childChecker.initPersBoundComp(persBoundComp);
+			}
+		}
 	}
 
 }

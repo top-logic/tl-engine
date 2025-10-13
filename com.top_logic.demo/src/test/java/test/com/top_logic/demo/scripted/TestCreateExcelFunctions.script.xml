@@ -31,50 +31,46 @@
 			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
 				<value><![CDATA[{
 	// Define common styles for reuse
-	headerStyle = {
-	  "bold": true, 
-	  "background": "#2C3E50", 
-	  "color": "white", 
-	  "align": "center",
-	  "borderTop": "thick",
-	  "borderBottom": "thick",
-	  "borderLeft": "thick",
-	  "borderRight": "thick"
-	};
+	headerStyle = excelStyle(
+	  bold: true,
+	  background: "#2C3E50",
+	  color: "white",
+	  align: "center",
+	  borderTop: "thick",
+	  borderBottom: "thick",
+	  borderLeft: "thick",
+	  borderRight: "thick"
+	);
 
-	sectionHeaderStyle = {
-	  "bold": true, 
-	  "background": "#34495E", 
-	  "color": "white", 
-	  "align": "left",
-	  "borderBottom": "medium"
-	};
+	sectionHeaderStyle = excelStyle(
+	  bold: true,
+	  background: "#34495E",
+	  color: "white",
+	  align: "left",
+	  borderBottom: "medium"
+	);
 
-	formulaStyle = {
-	  "background": "#E8F4FD", 
-	  "border": "thin",
-	  "fontFamily": "Courier New"
-	};
+	formulaStyle = excelStyle(
+	  background: "#E8F4FD",
+	  fontFamily: "Courier New"
+	);
 
-	resultStyle = {
-	  "background": "#E8F5E8", 
-	  "border": "thin",
-	  "numberFormat": "#,##0.00",
-	  "align": "right"
-	};
+	resultStyle = excelStyle(
+	  background: "#E8F5E8",
+	  numberFormat: "#,##0.00",
+	  align: "right"
+	);
 
-	textResultStyle = {
-	  "background": "#FFF3CD", 
-	  "border": "thin",
-	  "align": "center"
-	};
+	textResultStyle = excelStyle(
+	  background: "#FFF3CD",
+	  align: "center"
+	);
 
-	errorStyle = {
-	  "background": "#F8D7DA", 
-	  "border": "thin",
-	  "color": "red",
-	  "align": "center"
-	};
+	errorStyle = excelStyle(
+	  background: "#F8D7DA",
+	  color: "red",
+	  align: "center"
+	);
 
 	// Create the comprehensive test Excel file
 	test = excelFile(
@@ -916,6 +912,265 @@
 					<value>
 						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
 							value="D"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value=""
+						/>
+					</value>
+				</values>
+			</expected-value>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Suchausdruck"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Administration > Development > Script Konsole > Editor"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+				<value><![CDATA[{
+    // Define comprehensive styles for the report
+	reportHeaderStyle = excelStyle(
+	  bold: true,
+	  fontSize: 20,
+	  background: "#2C3E50",
+	  color: "white",
+	  align: "center",
+	  valign: "center",
+	  rowSpan: 1,
+	  colSpan: 6
+	);
+
+	sectionHeaderStyle = excelStyle(
+	  bold: true,
+	  fontSize: 14,
+	  background: "#34495E",
+	  color: "white",
+	  align: "left"
+	);
+
+	 columnHeaderStyle = excelStyle(
+	  bold: true,
+	  background: "#3498DB",
+	  color: "white",
+	  align: "center",
+	  borderTop: "thin",
+	  borderBottom: "thin",
+	  borderLeft: "thin",
+	  borderRight: "thin"
+	);
+
+	dataStyle = excelStyle(
+	  align: "right",
+	  borderLeft: "thin",
+	  borderRight: "thin",
+	  borderBottom: "thin"
+	);
+	currencyStyle = excelStyle(
+	  numberFormat: "$#,##0.00",
+	  align: "right",
+	  borderLeft: "thin",
+	  borderRight: "thin",
+	  borderBottom: "thin"
+	);
+
+	percentageStyle = excelStyle(
+	  numberFormat: "0.00%",
+	  align: "right",
+	  borderLeft: "thin",
+	  borderRight: "thin",
+	  borderBottom: "thin"
+	);
+
+	summaryStyle = excelStyle(
+	  bold: true,
+	  background: "#E8F5E8",
+	  borderTop: "double",
+	  borderBottom: "double",
+	  borderLeft: "thin",
+	  borderRight: "thin"
+	);
+
+	// Create the comprehensive report
+	test = excelFile(
+	  content: [
+		excelSheet(
+		  name: "Sales Report 2024",
+		  content: [
+			// Report header
+			excelCell(row: 0, col: 0, content: "Annual Sales Report 2024", style: $reportHeaderStyle),
+			
+			// Company info
+			excelCell(row: 1, col: 0, content: "Company: ABC Corporation"),
+			excelCell(row: 1, col: 2, content: "Generated: " + excelFormula("TODAY()")),
+			
+			// Regional sales section
+			excelCell(row: 3, col: 0, content: "Regional Sales Performance", style: $sectionHeaderStyle),
+			
+			// Headers
+			excelCell(row: 4, col: 0, content: "Region", style: $columnHeaderStyle),
+			excelCell(row: 4, col: 1, content: "Q1", style: $columnHeaderStyle),
+			excelCell(row: 4, col: 2, content: "Q2", style: $columnHeaderStyle),
+			excelCell(row: 4, col: 3, content: "Q3", style: $columnHeaderStyle),
+			excelCell(row: 4, col: 4, content: "Q4", style: $columnHeaderStyle),
+			excelCell(row: 4, col: 5, content: "Total", style: $columnHeaderStyle),
+			
+			// Regional data
+			excelCell(row: 5, col: 0, content: "North", style: $dataStyle),
+			excelCell(row: 5, col: 1, content: 450000, style: $currencyStyle),
+			excelCell(row: 5, col: 2, content: 480000, style: $currencyStyle),
+			excelCell(row: 5, col: 3, content: 520000, style: $currencyStyle),
+			excelCell(row: 5, col: 4, content: 550000, style: $currencyStyle),
+			excelCell(row: 5, col: 5, content: excelFormula("SUM(B6:E6)"), style: $currencyStyle),
+			
+			excelCell(row: 6, col: 0, content: "South", style: $dataStyle),
+			excelCell(row: 6, col: 1, content: 380000, style: $currencyStyle),
+			excelCell(row: 6, col: 2, content: 420000, style: $currencyStyle),
+			excelCell(row: 6, col: 3, content: 450000, style: $currencyStyle),
+			excelCell(row: 6, col: 4, content: 480000, style: $currencyStyle),
+			excelCell(row: 6, col: 5, content: excelFormula("SUM(B7:E7)"), style: $currencyStyle),
+			
+			excelCell(row: 7, col: 0, content: "East", style: $dataStyle),
+			excelCell(row: 7, col: 1, content: 520000, style: $currencyStyle),
+			excelCell(row: 7, col: 2, content: 550000, style: $currencyStyle),
+			excelCell(row: 7, col: 3, content: 580000, style: $currencyStyle),
+			excelCell(row: 7, col: 4, content: 620000, style: $currencyStyle),
+			excelCell(row: 7, col: 5, content: excelFormula("SUM(B8:E8)"), style: $currencyStyle),
+			
+			excelCell(row: 8, col: 0, content: "West", style: $dataStyle),
+			excelCell(row: 8, col: 1, content: 320000, style: $currencyStyle),
+			excelCell(row: 8, col: 2, content: 350000, style: $currencyStyle),
+			excelCell(row: 8, col: 3, content: 380000, style: $currencyStyle),
+			excelCell(row: 8, col: 4, content: 400000, style: $currencyStyle),
+			excelCell(row: 8, col: 5, content: excelFormula("SUM(B9:E9)"), style: $currencyStyle),
+			
+			// Summary row
+			excelCell(row: 9, col: 0, content: "Total", style: $summaryStyle),
+			excelCell(row: 9, col: 1, content: excelFormula("SUM(B6:B9)"), style: $summaryStyle),
+			excelCell(row: 9, col: 2, content: excelFormula("SUM(C6:C9)"), style: $summaryStyle),
+			excelCell(row: 9, col: 3, content: excelFormula("SUM(D6:D9)"), style: $summaryStyle),
+			excelCell(row: 9, col: 4, content: excelFormula("SUM(E6:E9)"), style: $summaryStyle),
+			excelCell(row: 9, col: 5, content: excelFormula("SUM(F6:F9)"), style: $summaryStyle),
+			
+			// Growth analysis section
+			excelCell(row: 11, col: 0, content: "Growth Analysis", style: $sectionHeaderStyle),
+			
+			excelCell(row: 12, col: 0, content: "Metric", style: $columnHeaderStyle),
+			excelCell(row: 12, col: 1, content: "Value", style: $columnHeaderStyle),
+			
+			excelCell(row: 13, col: 0, content: "YoY Growth", style: $dataStyle),
+			excelCell(row: 13, col: 1, content: excelFormula("(F10-F10*0.9)/(F10*0.9)"), style: $percentageStyle),
+			
+			excelCell(row: 14, col: 0, content: "Best Quarter", style: $dataStyle),
+			excelCell(row: 14, col: 1, content: excelFormula("INDEX(B5:E5,1,MATCH(MAX(B10:E10),B10:E10,0))"), style: $dataStyle),
+			
+			excelCell(row: 15, col: 0, content: "Best Region", style: $dataStyle),
+			excelCell(row: 15, col: 1, content: excelFormula("INDEX(A6:A9,MATCH(MAX(F6:F9),F6:F9,0))"), style: $dataStyle),
+			
+			
+			// Notes section
+			excelCell(row: 18, col: 0, content: "Notes:", style: {"bold": true}),
+			excelCell(row: 19, col: 0, content: "• All figures in USD", style: {"color": "#6C757D"}),
+			excelCell(row: 20, col: 0, content: "• Growth calculated vs. previous year", style: {"color": "#6C757D"}),
+			excelCell(row: 21, col: 0, content: "• Report generated automatically", style: {"color": "#6C757D"})
+		  ],
+		  colWidths: {
+			"0": 15,  // Region/Metric
+			"1": 15,  // Q1
+			"2": 15,  // Q2
+			"3": 15,  // Q3
+			"4": 15,  // Q4
+			"5": 25   // Total
+		  },
+		  rowHeights: {
+			"0": 30,  // Header row
+			"4": 25,  // Column headers
+			"12": 25  // Section headers
+		  }
+		)
+	  ],
+	  name: "comprehensive_sales_report"
+	);
+	
+	$test.parseExcel()
+}]]></value>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+			command-label="Script ausführen"
+			command-name="executeSearchConsole"
+			component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+			component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-label="Result"
+			>
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Script Konsole > Ergebnis"
+					/>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+					displayed-row-index="0"
+				/>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+				<values>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="A"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="Annual Sales Report 2024"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="B"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value=""
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="C"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value=""
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="D"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value=""
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="E"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value=""
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="F"
 						/>
 						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
 							value=""

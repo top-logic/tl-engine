@@ -413,8 +413,10 @@ public class Person extends AbstractBoundWrapper implements Author, GroupMember 
      * 
      * @return the global roles. May be empty but not <code>null</code>.
      */
-	public Set<BoundRole> getGlobalRoles() {
-		return (Set<BoundRole>) resolveWrappers(GLOBAL_ROLES_ATTR);
+	public Set<? extends BoundRole> getGlobalRoles() {
+		@SuppressWarnings("unchecked")
+		Set<? extends BoundRole> result = (Set<? extends BoundRole>) resolveWrappers(GLOBAL_ROLES_ATTR);
+		return result;
     }
     
     /**

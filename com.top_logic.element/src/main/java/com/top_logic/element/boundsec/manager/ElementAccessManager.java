@@ -698,34 +698,24 @@ public class ElementAccessManager extends AccessManager {
     }
 
     @Override
-    public Set<BoundRole> getRoles(Person aPerson, BoundObject aBO) {
-        Set<BoundRole> theResult = super.getRoles(aPerson, aBO);
+	public Set<? extends BoundRole> getRoles(Person aPerson, BoundObject context) {
+		Set<BoundRole> result = new HashSet<>(super.getRoles(aPerson, context));
         Collection<Group> theGroups = getGroups(aPerson);
-        while (aBO != null) {
-            if (aBO instanceof Wrapper) {
-                addRoleProviderRoles(
-					this.getRules((TLClass) ((Wrapper) aBO).tType()),
-                        theGroups, aBO, theResult);
-            }
-            if (aBO instanceof Wrapper) {
-                addRoleProviderRoles(
-                        this.getRules(((Wrapper)aBO).tTable()), 
-                        theGroups, aBO, theResult);
-            }
+		while (context != null) {
+			addRoleProviderRoles(getRules((TLClass) context.tType()), theGroups, context, result);
+			addRoleProviderRoles(getRules(context.tTable()), theGroups, context, result);
             
             // handle external role providers
-            {
-                addRoleProviderRoles(
-					new FilteredIterable<>(
-                                new ExternalRoleProviderFilter(aBO), 
-                                this.externalRoleProviders.values()),                   
-                        theGroups, aBO, theResult);
-            }
-            aBO = aBO.getSecurityParent();
-        }
-        return theResult;
-    }
+			addRoleProviderRoles(
+				new FilteredIterable<>(
+					new ExternalRoleProviderFilter(context),
+					this.externalRoleProviders.values()),
+				theGroups, context, result);
 
+			context = context.getSecurityParent();
+        }
+		return result;
+    }
 
     public Collection<Group> getGroups(BoundObject aBO, BoundRole aRole) {
 		Object getGroupCacheKey;

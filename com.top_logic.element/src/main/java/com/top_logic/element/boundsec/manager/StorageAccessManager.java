@@ -290,7 +290,7 @@ public class StorageAccessManager extends ElementAccessManager {
 
 
     @Override
-    public Set<BoundRole> getRoles(Person aPerson, BoundObject aBO) {
+	public Set<? extends BoundRole> getRoles(Person aPerson, BoundObject aBO) {
         if (securityStorage.isRebuilding()) {
 			switch (rebuildStrategy()) {
 				case BLOCK:

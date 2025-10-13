@@ -1,0 +1,114 @@
+<h2>Syntax</h2>
+
+<pre>
+<code>$object.remove(`$attr`, $value)</code></pre>
+
+<h2>​Beschreibung</h2>
+
+<p>Entfernt einen Wert <code>value</code> aus einem mengenwertigen Attribut <code>attr</code> des Objekts <code>object</code>.</p>
+
+<h2>Parameter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Typ</th>
+			<th>Beschreibung</th>
+			<th>Pflicht</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>object</td>
+			<td>Fachobjekt</td>
+			<td>
+			<p>Das Objekt, aus dem ein Wert aus einem Attribut entfernt werden soll.</p>
+			</td>
+			<td>ja</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>attr</td>
+			<td>Zeichenkette</td>
+			<td>
+			<p>Das Attribut-Literal des Attributs, aus dem ein Wert entfernt werden soll.</p>
+			</td>
+			<td>ja</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>value</td>
+			<td>Zahl/Zeichenkette/Wahrheitswert/Fachobjekt/Menge</td>
+			<td>
+			<p>Der Wert oder die Menge von Werten, die aus dem Attribut des Objekts entfernt werden sollen. Wenn eine Menge angegeben wird, werden alle enthaltenen Werte entfernt.</p>
+			</td>
+			<td>ja</td>
+			<td> </td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Beispiele</h2>
+
+<h3>Einzelnen Wert entfernen</h3>
+
+<pre>
+	<code>{
+   obj = new(`my.module:MyType`);
+   $obj.add(`my.module:MyType#items`, 'item1');
+   $obj.add(`my.module:MyType#items`, 'item2');
+   $obj.add(`my.module:MyType#items`, 'item3');
+   $obj.remove(`my.module:MyType#items`, 'item2');
+   $obj.get(`my.module:MyType#items`);
+}</code>
+</pre>
+
+<p><strong>Ausgabe:</strong> Eine Liste mit den Elementen <code class="hljs inlineCode">['item1', 'item3']</code>.</p>
+
+<p>Nachdem ein Objekt mit drei Werten erstellt wurde, wurde der Wert 'item2' aus der Liste entfernt.</p>
+
+<h3>Mehrere Werte gleichzeitig entfernen</h3>
+
+<pre>
+	<code>{
+   obj = new(`my.module:MyType`);
+   $obj.add(`my.module:MyType#tags`, 'important');
+   $obj.add(`my.module:MyType#tags`, 'urgent');
+   $obj.add(`my.module:MyType#tags`, 'review');
+   $obj.add(`my.module:MyType#tags`, 'pending');
+   $obj.remove(`my.module:MyType#tags`, ['urgent', 'pending']);
+   $obj.get(`my.module:MyType#tags`);
+}</code>
+</pre>
+
+<p><strong>Ausgabe: </strong>Eine Liste mit den Elementen <code class="hljs inlineCode">['important', 'review']</code>.</p>
+
+<p>Die Werte 'urgent' und 'pending' wurden gleichzeitig aus der Liste entfernt.</p>
+
+<h3>Nicht existierenden Wert entfernen</h3>
+
+<pre>
+	<code>{
+   obj = new(`my.module:MyType`);
+   $obj.add(`my.module:MyType#items`, 'item1');
+   $obj.add(`my.module:MyType#items`, 'item2');
+   $obj.remove(`my.module:MyType#items`, 'nonexistent');
+   $obj.get(`my.module:MyType#items`);
+}</code>
+</pre>
+
+<p><strong>Ausgabe: </strong>Eine Liste mit den Elementen <code class="hljs inlineCode">['item1', 'item2']</code>.</p>
+
+<div style="width:auto">
+<div>
+<div>
+<div>
+<div>
+<p>Der Versuch, einen nicht existierenden Wert zu entfernen, ändert die Liste nicht und erzeugt keinen Fehler.</p>
+</div>
+</div>
+</div>
+</div>
+</div>

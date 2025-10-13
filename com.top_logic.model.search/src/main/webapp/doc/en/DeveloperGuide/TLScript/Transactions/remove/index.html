@@ -1,0 +1,114 @@
+<h2>Syntax</h2>
+
+<pre>
+<code>$object.remove(`$attr`, $value)</code></pre>
+
+<h2>Description</h2>
+
+<p>Removes a value <code>value</code> from a quantity-valued attribute <code>attr</code> of the object <code>object</code>.</p>
+
+<h2>Parameters</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>object name</th>
+			<th>Type</th>
+			<th>Type Description</th>
+			<th>Mandatory</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>object</td>
+			<td>Subject object</td>
+			<td>
+			<p>The object from which a value is to be removed from an attribute.</p>
+			</td>
+			<td>yes</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>attr</td>
+			<td>Character string</td>
+			<td>
+			<p>The attribute literal of the attribute from which a value is to be removed.</p>
+			</td>
+			<td>yes</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>value</td>
+			<td>Number/character string/truth value/object/quantity</td>
+			<td>
+			<p>The value or the set of values to be removed from the attribute of the object. If a set is specified, all contained values are removed.</p>
+			</td>
+			<td>yes</td>
+			<td> </td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Examples</h2>
+
+<h3>Remove individual value</h3>
+
+<pre>
+	<code>{
+   obj = new(`my.module:MyType`);
+   $obj.add(`my.module:MyType#items`, 'item1');
+   $obj.add(`my.module:MyType#items`, 'item2');
+   $obj.add(`my.module:MyType#items`, 'item3');
+   $obj.remove(`my.module:MyType#items`, 'item2');
+   $obj.get(`my.module:MyType#items`);
+}</code>
+</pre>
+
+<p><strong>Output:</strong> A list with the elements <code class="hljs inlineCode">['item1', 'item3']</code>.</p>
+
+<p>After an object with three values was created, the value 'item2' was removed from the list.</p>
+
+<h3>Remove multiple values at the same time</h3>
+
+<pre>
+	<code>{
+   obj = new(`my.module:MyType`);
+   $obj.add(`my.module:MyType#tags`, 'important');
+   $obj.add(`my.module:MyType#tags`, 'urgent');
+   $obj.add(`my.module:MyType#tags`, 'review');
+   $obj.add(`my.module:MyType#tags`, 'pending');
+   $obj.remove(`my.module:MyType#tags`, ['urgent', 'pending']);
+   $obj.get(`my.module:MyType#tags`);
+}</code>
+</pre>
+
+<p><strong>Output: </strong>A list with the elements <code class="hljs inlineCode">['important', 'review']</code>.</p>
+
+<p>The values 'urgent' and 'pending' were removed from the list at the same time.</p>
+
+<h3>Remove non-existent value</h3>
+
+<pre>
+	<code>{
+   obj = new(`my.module:MyType`);
+   $obj.add(`my.module:MyType#items`, 'item1');
+   $obj.add(`my.module:MyType#items`, 'item2');
+   $obj.remove(`my.module:MyType#items`, 'nonexistent');
+   $obj.get(`my.module:MyType#items`);
+}</code>
+</pre>
+
+<p><strong>Output: </strong>A list with the elements <code class="hljs inlineCode">['item1', 'item2']</code>.</p>
+
+<div style="width:auto">
+<div>
+<div>
+<div>
+<div>
+<p>The attempt to remove a non-existent value does not change the list and does not generate an error.</p>
+</div>
+</div>
+</div>
+</div>
+</div>

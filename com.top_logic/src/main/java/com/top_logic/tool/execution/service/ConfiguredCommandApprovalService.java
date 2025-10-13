@@ -5,6 +5,7 @@
  */
 package com.top_logic.tool.execution.service;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -135,17 +136,31 @@ public class ConfiguredCommandApprovalService extends CommandApprovalService {
 	@Override
 	public ExecutableState isExecutable(LayoutComponent component, BoundCommandGroup commandGroup, String commandId,
 			Object model, Map<String, Object> arguments) {
+		return checkModel(component, commandGroup, commandId, model, arguments);
+	}
+
+	private ExecutableState checkModel(LayoutComponent component, BoundCommandGroup commandGroup, String commandId,
+			Object model, Map<String, Object> arguments) {
 		if (model == null) {
 			return ExecutableState.EXECUTABLE;
 		}
-		if (!(model instanceof TLObject)) {
-			return ExecutableState.EXECUTABLE;
+
+		if (model instanceof Collection<?> coll) {
+			for (Object element : coll) {
+				ExecutableState check = checkModel(component, commandGroup, commandId, element, arguments);
+				if (!check.isExecutable()) {
+					return check;
+				}
+			}
+		} else {
+			if (model instanceof TLObject obj) {
+				TLStructuredType type = obj.tType();
+				if (type != null) {
+					return checker(type).isExecutable(component, commandGroup, commandId, model, arguments);
+				}
+			}
 		}
-		TLStructuredType type = ((TLObject) model).tType();
-		if (type == null) {
-			return ExecutableState.EXECUTABLE;
-		}
-		return checker(type).isExecutable(component, commandGroup, commandId, model, arguments);
+		return ExecutableState.EXECUTABLE;
 	}
 
 	private CommandApprovalRule checker(TLStructuredType type) {

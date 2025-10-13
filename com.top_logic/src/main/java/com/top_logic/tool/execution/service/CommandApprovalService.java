@@ -8,6 +8,7 @@ package com.top_logic.tool.execution.service;
 import java.util.Collections;
 import java.util.Map;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
@@ -50,6 +51,12 @@ public abstract class CommandApprovalService extends ManagedClass {
 			return ExecutableState.EXECUTABLE;
 		}
 	};
+
+	/**
+	 * Classifier for {@link InApp} annotations of {@link ExecutabilityRule}s that are useful in
+	 * {@link CommandApprovalService} configurations.
+	 */
+	public static final String APPROVAL_SERVICE_CLASSIFIER = "approval-service";
 
 	/**
 	 * Creates a {@link CommandApprovalService}.

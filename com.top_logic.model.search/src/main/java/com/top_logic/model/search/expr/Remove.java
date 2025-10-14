@@ -7,7 +7,9 @@ package com.top_logic.model.search.expr;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.model.TLObject;
@@ -15,6 +17,7 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
+import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
 
 /**
@@ -50,16 +53,10 @@ public class Remove extends GenericMethod {
 		Collection<?> toRemove = asCollection(arguments[2]);
 
 		if (!toRemove.isEmpty()) {
+			Set<Object> removeSet = new HashSet<>(toRemove);
 			List<Object> newValue = new ArrayList<>(oldValue.size());
 			for (Object item : oldValue) {
-				boolean shouldRemove = false;
-				for (Object removeItem : toRemove) {
-					if (item.equals(removeItem)) {
-						shouldRemove = true;
-						break;
-					}
-				}
-				if (!shouldRemove) {
+				if (!removeSet.contains(item)) {
 					newValue.add(item);
 				}
 			}
@@ -78,11 +75,24 @@ public class Remove extends GenericMethod {
 	 * {@link MethodBuilder} creating {@link Remove}.
 	 */
 	public static final class Builder extends AbstractSimpleMethodBuilder<Remove> {
+
+		/** Description of parameters for a {@link Remove}. */
+		public static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
+			.mandatory("object")
+			.mandatory("property")
+			.mandatory("toRemove")
+			.build();
+
 		/**
 		 * Creates a {@link Builder}.
 		 */
 		public Builder(InstantiationContext context, Config<?> config) {
 			super(context, config);
+		}
+
+		@Override
+		public ArgumentDescriptor descriptor() {
+			return DESCRIPTOR;
 		}
 
 		@Override

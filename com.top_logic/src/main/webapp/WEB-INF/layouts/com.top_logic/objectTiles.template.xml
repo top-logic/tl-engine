@@ -96,8 +96,15 @@
 			titleKey="${name}"
 		>
 			<buttons>
-				<reference command-id="editComponentCommand"/>
-				<reference command-id="deleteComponentCommand"/>
+				<!--
+					These commands are displayed in the burger menu of the tiles, because theres is no component
+					representation on the UI. When the commands are defined here, they are also displayed in the
+					toolbar of the "next" tile component, so that there are commands for both, the inline component
+					and the child component.
+					
+					<reference command-id="editComponentCommand"/>
+					<reference command-id="deleteComponentCommand"/>
+				-->
 			</buttons>
 		</component>
 	</securityLayout>

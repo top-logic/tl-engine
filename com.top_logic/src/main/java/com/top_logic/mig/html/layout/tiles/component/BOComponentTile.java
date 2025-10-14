@@ -24,6 +24,7 @@ import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.tiles.I18NConstants;
 import com.top_logic.tool.boundsec.CommandHandler;
+import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.util.Resources;
 
 /**
@@ -104,7 +105,8 @@ public abstract class BOComponentTile extends AbstractComponentTile {
 
 	private static void addEditCommand(Collection<CommandModel> commands, LayoutComponent invocationComponent,
 			LayoutComponent toEdit) {
-		CommandHandler editCommmand = invocationComponent.getCommandById(EditComponentCommand.DEFAULT_COMMAND_ID);
+		CommandHandler editCommmand =
+			CommandHandlerFactory.getInstance().getHandler(EditComponentCommand.DEFAULT_COMMAND_ID);
 		if (editCommmand == null) {
 			return;
 		}
@@ -117,7 +119,8 @@ public abstract class BOComponentTile extends AbstractComponentTile {
 
 	private static void removeCommand(Collection<CommandModel> commands, LayoutComponent invocationComponent,
 			LayoutComponent toRemove) {
-		CommandHandler deleteCommmand = invocationComponent.getCommandById(DeleteComponentCommand.DEFAULT_COMMAND_ID);
+		CommandHandler deleteCommmand =
+			CommandHandlerFactory.getInstance().getHandler(DeleteComponentCommand.DEFAULT_COMMAND_ID);
 		if (deleteCommmand == null) {
 			return;
 		}

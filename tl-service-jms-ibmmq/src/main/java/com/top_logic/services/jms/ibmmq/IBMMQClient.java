@@ -20,7 +20,7 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
-import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.config.annotation.defaults.LongDefault;
 import com.top_logic.basic.config.format.MillisFormat;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.services.jms.JMSClient;
@@ -129,7 +129,7 @@ public class IBMMQClient extends JMSClient {
 		 * The time in {@link MillisFormat} that the IBM auto-reconnect tries to reconnect for.
 		 */
 		@Name(RECONNECT_TIMEOUT)
-		@StringDefault("4min")
+		@LongDefault(240000)
 		@Format(MillisFormat.class)
 		long getReconnectTimeout();
 

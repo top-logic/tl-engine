@@ -674,19 +674,26 @@ public class RootTileComponent extends SingleLayoutContainer implements BoundChe
 			public boolean visitLayoutComponent(LayoutComponent aComponent) {
 				if (aComponent instanceof InlinedTileComponent) {
 					componentsToDeselect.add((InlinedTileComponent) aComponent);
+					return true;
+				}
+				if (aComponent instanceof GroupTileComponent group) {
+					LayoutComponent selected = group.selectedComponent();
+					if (selected != null) {
+						componentsToDeselect.add(group);
+						selected.acceptVisitorRecursively(this);
+					}
+					// Visit only selected component.
 					return false;
 				}
-				if (aComponent instanceof GroupTileComponent) {
-					componentsToDeselect.add((GroupTileComponent) aComponent);
-					return false;
-				}
-				if (aComponent instanceof ContextTileComponent) {
-					Selectable contextSelection = ((ContextTileComponent) aComponent).getContextSelection();
+				if (aComponent instanceof ContextTileComponent context) {
+					Selectable contextSelection = context.getContextSelection();
 					if (contextSelection != null) {
 						componentsToDeselect.add(contextSelection);
+						((LayoutComponent) contextSelection).acceptVisitorRecursively(this);
 					} else {
 						Logger.error(aComponent + " without context selector.", RootTileComponent.class);
 					}
+					// Visit only selected component.
 					return false;
 				}
 				return super.visitLayoutComponent(aComponent);

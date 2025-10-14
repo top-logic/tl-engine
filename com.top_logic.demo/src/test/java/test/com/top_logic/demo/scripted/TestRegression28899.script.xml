@@ -835,8 +835,8 @@
 							command-implementation-comment="com.top_logic.layout.editor.commands.EditComponentCommand"
 							command-label="Sicht bearbeiten"
 							command-name="editComponentCommand"
-							component-implementation-comment="com.top_logic.mig.html.layout.tiles.component.InlinedTileComponent"
-							component-name="52c7b7e9-b48c-4f2d-9bd0-2b176eba5d36.layout.xml#Objects"
+							component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+							component-name="5b6d8d0d-1380-4599-9536-e3bda0f48176.layout.xml#Table"
 							user-id="root"
 						>
 							<arguments/>

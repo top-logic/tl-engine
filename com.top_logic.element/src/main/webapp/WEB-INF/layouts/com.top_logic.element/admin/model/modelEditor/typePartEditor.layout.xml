@@ -9,6 +9,7 @@
 		<!-- table with MetaAttributes -->
 		<!-- Button component is only necessary for invalidation if model changes. -->
 		<tableView name="metaAttributeTable"
+			isSecurityMaster="true"
 			model="selection(com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree)"
 			modelBuilder="com.top_logic.element.layout.meta.MetaAttributeTableListModelBuilder"
 			objectType="tl.model:TLProperty, tl.model:TLReference"

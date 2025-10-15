@@ -38,7 +38,6 @@ import com.top_logic.model.annotate.TLAnnotation;
 import com.top_logic.model.config.annotation.TableName;
 import com.top_logic.model.instance.exporter.ResolverByColumnAttribute;
 import com.top_logic.model.instance.importer.resolver.InstanceResolver;
-import com.top_logic.model.search.expr.parser.ParseException;
 import com.top_logic.model.util.TLModelPartRef;
 
 /**
@@ -117,7 +116,7 @@ public class InstanceResolverByAttribute extends AbstractConfiguredInstance<Inst
 		}
 	}
 
-	private final InstanceResolver _resolver;
+	private InstanceResolver _resolver;
 
 	/**
 	 * Creates a {@link InstanceResolverByIndex} from configuration.
@@ -128,17 +127,8 @@ public class InstanceResolverByAttribute extends AbstractConfiguredInstance<Inst
 	 *        The configuration.
 	 */
 	@CalledByReflection
-	public InstanceResolverByAttribute(InstantiationContext context, Config<?> config) throws ParseException {
+	public InstanceResolverByAttribute(InstantiationContext context, Config<?> config) {
 		super(context, config);
-
-		TLStructuredTypePart part = (TLStructuredTypePart) config.getAttribute().resolvePart();
-
-		TLStructuredType type = part.getOwner();
-		InstanceResolver resolver = idColumnResolver(type, part);
-		if (resolver == null) {
-			resolver = new InstanceResolverByIndex(type, part);
-		}
-		_resolver = resolver;
 	}
 
 	@Override
@@ -149,6 +139,19 @@ public class InstanceResolverByAttribute extends AbstractConfiguredInstance<Inst
 	@Override
 	public String buildId(TLObject obj) {
 		return _resolver.buildId(obj);
+	}
+
+	@Override
+	public void initType(TLStructuredType type) {
+		TLStructuredTypePart part = (TLStructuredTypePart) getConfig().getAttribute().resolvePart();
+
+		InstanceResolver resolver = idColumnResolver(type, part);
+		if (resolver == null) {
+			resolver = new InstanceResolverByIndex(part);
+		}
+		resolver.initType(type);
+
+		_resolver = resolver;
 	}
 
 	/**

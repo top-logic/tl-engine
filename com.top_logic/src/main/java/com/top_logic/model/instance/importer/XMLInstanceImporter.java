@@ -437,7 +437,10 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 		try {
 			String kind = ref.getKind();
 			TLObject result = resolver(kind).resolve(_log, kind, ref.getId());
-			if (result != null) {
+			if (result == null) {
+				_log.error(
+					I18NConstants.FAILED_TO_RESOLVE_OBJECT__TYPE_ID.fill(ref.getKind(), ref.getId()));
+			} else {
 				String localId = ref.getLocalId();
 				if (localId != null) {
 					// Remember for later use without resolving the global reference again.

@@ -38,6 +38,7 @@
 		<module>../com.top_logic.ajax.client</module>
 		<module>../com.top_logic.client.diagramjs</module>
 		<module>../com.top_logic.graph.diagramjs.client</module>
+		<module>../com.top_logic.graphic.blocks.client</module>
 
 		<!-- TopLogic -->
 		<module>../com.top_logic</module>
@@ -73,6 +74,8 @@
 		<module>../com.top_logic.graph.diagramjs.server</module>
 		<module>../com.top_logic.graph.layouter</module>
 		<module>../com.top_logic.graph.server</module>
+		<module>../com.top_logic.graphic.blocks</module>
+		<module>../com.top_logic.graphic.blocks.server</module>
 		<module>../com.top_logic.ide.jetty</module>
 		<module>../com.top_logic.importer</module>
 		<module>../com.top_logic.kafka</module>

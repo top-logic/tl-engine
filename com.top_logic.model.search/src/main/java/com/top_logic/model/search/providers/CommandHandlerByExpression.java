@@ -53,13 +53,11 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @InApp
-public class CommandHandlerByExpression extends AbstractCommandHandler {
+public class CommandHandlerByExpression extends AbstractCommandHandler implements WithTransaction {
 
 	private QueryExecutor _operation;
 
 	private List<PostCreateAction> _actions;
-
-	private boolean _transaction;
 
 	/**
 	 * Configuration options for {@link CommandHandlerByExpression}.
@@ -81,7 +79,8 @@ public class CommandHandlerByExpression extends AbstractCommandHandler {
 		Config.CONFIRMATION,
 		Config.SECURITY_OBJECT,
 	})
-	public interface Config extends AbstractCommandHandler.Config, WithPostCreateActions.Config, WithCommitMessage {
+	public interface Config extends AbstractCommandHandler.Config, WithPostCreateActions.Config, WithCommitMessage,
+			WithTransaction.Config {
 
 		/**
 		 * @see #getFormApply()
@@ -92,11 +91,6 @@ public class CommandHandlerByExpression extends AbstractCommandHandler {
 		 * @see #getOperation()
 		 */
 		String OPERATION = "operation";
-
-		/**
-		 * @see #isInTransaction()
-		 */
-		String TRANSACTION = "transaction";
 
 		/**
 		 * @see #getCloseDialog()
@@ -130,19 +124,6 @@ public class CommandHandlerByExpression extends AbstractCommandHandler {
 		@Name(OPERATION)
 		Expr getOperation();
 
-		/**
-		 * Whether to perform the operation in a transaction.
-		 * 
-		 * <p>
-		 * Note: Creating, modifying, or deleting persistent objects require a transaction.
-		 * Modification of transient objects or pure service operations do not require a transaction
-		 * context.
-		 * </p>
-		 */
-		@Name(TRANSACTION)
-		@BooleanDefault(true)
-		boolean isInTransaction();
-
 		@Override
 		@DynamicMode(fun = VisibleIf.class, args = @Ref(TRANSACTION))
 		ResKey1 getCommitMessage();
@@ -171,7 +152,6 @@ public class CommandHandlerByExpression extends AbstractCommandHandler {
 
 		Expr operation = config.getOperation();
 		_operation = QueryExecutor.compileOptional(operation);
-		_transaction = config.isInTransaction();
 		_actions = TypedConfigUtil.createInstanceList(config.getPostCreateActions());
 	}
 
@@ -211,8 +191,9 @@ public class CommandHandlerByExpression extends AbstractCommandHandler {
 
 	private Transaction beginTransaction(LayoutComponent component, Object model) {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		if (_transaction) {
-			ResKey message = ((Config) getConfig()).buildCommandMessage(component, this, model);
+		Config config = (Config) getConfig();
+		if (config.isInTransaction()) {
+			ResKey message = config.buildCommandMessage(component, this, model);
 			return kb.beginTransaction(message);
 		} else {
 			return new NoTransaction(kb);

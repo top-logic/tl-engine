@@ -1153,6 +1153,13 @@ services.AJAXServiceClass = function() {
 	};
 	
 	/**
+	 * Removes the lazy request with the given ID
+	 */
+	this.dropLazyRequest = function(requestID) {
+		this.mainLayout.services.ajax.lazyRequests.remove(requestID);
+	};
+	
+	/**
 	 * Checks whether a lazy request with the given ID exists.
 	 */
 	this.containsLazyRequest = function(requestID) {

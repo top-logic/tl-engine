@@ -59,6 +59,12 @@ public class DBKnowledgeAssociation extends StaticKnowledgeItem implements Knowl
     	return KnowledgeAssociationImpl.getDestinationObject(this);
     }
 
+	@Override
+	public String toString() {
+		return super.toString() + "(" + KnowledgeAssociationImpl.getSourceIdentityOrNull(this) + "->"
+				+ KnowledgeAssociationImpl.getDestinationIdentityOrNull(this) + ")";
+	}
+
 	public static void clearDestinationAndRemoveLink(KnowledgeAssociation ka) throws DataObjectException {
 		clearReferenceAndRemoveLink(ka, REFERENCE_DEST_NAME);
 	}

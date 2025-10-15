@@ -17,6 +17,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.tools.NameBuilder;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.identifier.ObjectKey;
@@ -469,7 +470,11 @@ public class EventBuilder {
 		ModelChangeEvent change = new ModelChangeEventImpl(typeIndex, _updates.keySet());
 
 		for (ModelListener listener : listeners) {
-			listener.notifyChange(change);
+			try {
+				listener.notifyChange(change);
+			} catch (Exception ex) {
+				Logger.error("Failed to deliver change event to listener: " + listener, ex, EventBuilder.class);
+			}
 		}
 	}
 

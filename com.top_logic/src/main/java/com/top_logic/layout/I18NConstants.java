@@ -7,6 +7,7 @@ package com.top_logic.layout;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey2;
+import com.top_logic.basic.util.ResKey3;
 
 /**
  * Messages for package.
@@ -31,7 +32,11 @@ public class I18NConstants extends I18NConstantsBase {
 	@SuppressWarnings("deprecation")
 	public static ResKey APPLICATION_TITLE = legacyKey("tl.title");
 
-	public static ResKey ERROR_TARGET_CONTROL_NOT_FOUND;
+	/**
+	 * @en The target control {0} was not found while delivering the command "{1}" with the
+	 *     following arguments: {2}.
+	 */
+	public static ResKey3 ERROR_TARGET_CONTROL_NOT_FOUND__ID_CMD_ARGS;
 
 	public static ResKey DRAG_AND_DROP;
 

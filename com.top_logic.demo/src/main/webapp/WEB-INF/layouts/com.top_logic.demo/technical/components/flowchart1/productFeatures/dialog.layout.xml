@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/dialog.template.xml"
+>
+	<arguments
+		createOpenerButtons="false"
+		helpID="ID_90e98407_0e76_4966_b418_63b4ab45aef3"
+	>
+		<title>
+			<title key="dynamic.f6e71164-62a7-4124-acc0-adabeb7c9bde">
+				<en>Product features</en>
+				<de>Produkteigenschaften</de>
+			</title>
+		</title>
+		<open-handler id="ID_8735b27d_f333_4b0e_ba8c_28b478449e24"
+			config:interface="com.top_logic.layout.editor.config.DialogOpenHandlerConfig"
+		>
+			<resourceKey key="dynamic.f6e71164-62a7-4124-acc0-adabeb7c9bde">
+				<en>Product features</en>
+				<de>Produkteigenschaften</de>
+			</resourceKey>
+		</open-handler>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/flowchart1/productFeatures/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

@@ -41,7 +41,7 @@ import com.top_logic.model.util.TLObjectProxy;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class TransientTLObjectNaming extends AbstractModelNamingScheme<TLObject, TransientTLObjectNaming.Name> {
+public class TransientTLObjectNaming extends AbstractGlobalModelNamingScheme<TLObject, TransientTLObjectNaming.Name> {
 
 	/** {@link Property} to hold already created names to detect cycles. */
 	private static final Property<Map<Object, Name>> BUILT_NAMES =

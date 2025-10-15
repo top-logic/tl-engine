@@ -838,11 +838,13 @@ public class ReferenceFactory {
 	}
 
 	/**
+	 * @param valueContext
+	 *        The context that is used to create model names.
 	 * @param arguments
 	 *        Must not be <code>null</code>.
 	 * @return Is never <code>null</code>.
 	 */
-	public static Map<String, AttributeValue> attributeValues(Map<String, ?> arguments) {
+	public static Map<String, AttributeValue> attributeValues(Object valueContext, Map<String, ?> arguments) {
 		Map<String, AttributeValue> attributeValues = MapUtil.newMap(arguments.size());
 		for (Map.Entry<String, ?> entry : arguments.entrySet()) {
 			String name = entry.getKey();
@@ -850,7 +852,7 @@ public class ReferenceFactory {
 				continue;
 			}
 			Object value = entry.getValue();
-			ModelName valueRef = ModelResolver.buildModelName(value);
+			ModelName valueRef = ModelResolver.buildModelName(valueContext, value);
 
 			AttributeValue attributeValue = ReferenceInstantiator.attributeValue(name, valueRef);
 			attributeValues.put(name, attributeValue);

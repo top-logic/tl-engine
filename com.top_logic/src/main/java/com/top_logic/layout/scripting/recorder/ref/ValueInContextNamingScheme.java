@@ -13,7 +13,7 @@ import com.top_logic.layout.scripting.runtime.ActionContext;
  * @author <a href=mailto:jst@top-logic.com>Jan Stolzenburg</a>
  */
 public class ValueInContextNamingScheme extends
-		AbstractModelNamingScheme<Object, ValueInContextNamingScheme.ValueInContextName> {
+		AbstractGlobalModelNamingScheme<Object, ValueInContextNamingScheme.ValueInContextName> {
 
 	/**
 	 * {@link ModelName} for {@link ValueInContextNamingScheme}.

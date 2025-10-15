@@ -180,7 +180,7 @@ public class ButtonInspector extends GuiInspectorCommand<ButtonControl, ButtonCo
 		private GuiAssertion newDefaultCommandModelAssertion(ComponentCommandModel command) {
 			CheckExecutability result = TypedConfiguration.newConfigItem(CheckExecutability.class);
 			result.setImplementationClass(CheckExecutabilityOp.class);
-			result.setArguments(ReferenceFactory.attributeValues(command.getArguments()));
+			result.setArguments(ReferenceFactory.attributeValues(command.getComponent(), command.getArguments()));
 			CommandHandler commandHandler = command.getCommandHandler();
 			result.setCommandImplementationComment(commandHandler.getClass().getName());
 			result.setCommandLabel(command.getLabel());

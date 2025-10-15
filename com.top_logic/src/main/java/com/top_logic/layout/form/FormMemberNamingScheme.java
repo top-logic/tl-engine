@@ -7,7 +7,7 @@ package com.top_logic.layout.form;
 
 import com.top_logic.layout.form.component.FormComponent;
 import com.top_logic.layout.form.model.FormContext;
-import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
+import com.top_logic.layout.scripting.recorder.ref.AbstractGlobalModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.FieldResolver;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
@@ -26,7 +26,7 @@ import com.top_logic.layout.scripting.runtime.action.ApplicationAssertions;
  * @author <a href="mailto:Jan.Stolzenburg@top-logic.com">Jan Stolzenburg</a>
  */
 @Deprecated
-public class FormMemberNamingScheme extends AbstractModelNamingScheme<FormMember, FormMemberBasedName> {
+public class FormMemberNamingScheme extends AbstractGlobalModelNamingScheme<FormMember, FormMemberBasedName> {
 
 	/**
 	 * Singleton {@link FormMemberNamingScheme} instance.

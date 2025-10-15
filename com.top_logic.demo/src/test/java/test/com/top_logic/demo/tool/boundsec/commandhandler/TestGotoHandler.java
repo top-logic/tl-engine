@@ -13,6 +13,7 @@ import junit.framework.Test;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.demo.DemoSetup;
 import test.com.top_logic.layout.scripting.ApplicationTestSetup;
+import test.com.top_logic.layout.scripting.runtime.TestedApplicationSession;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
@@ -22,6 +23,7 @@ import com.top_logic.layout.scripting.action.ActionFactory;
 import com.top_logic.layout.scripting.runtime.ApplicationSession;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.tool.boundsec.commandhandlers.GotoHandler;
 
 /**
@@ -198,7 +200,10 @@ public class TestGotoHandler extends BasicTestCase {
 	}
 
 	private void goTo(String sourceCompName, String targetCompName) {
-		session.process(ActionFactory.commandAction(newComponentName(sourceCompName), "gotoCmd", getGotoArgs(targetCompName)));
+		MainLayout ml = ((TestedApplicationSession) session).getMasterFrame();
+		LayoutComponent sourceComponent = ml.getComponentByName(newComponentName(sourceCompName));
+		assertNotNull(sourceComponent);
+		session.process(ActionFactory.commandAction(sourceComponent, "gotoCmd", getGotoArgs(targetCompName)));
 	}
 
 	private static Map<String, ?> getGotoArgs(String componentName) {

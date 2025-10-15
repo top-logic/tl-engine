@@ -15,7 +15,7 @@ import com.top_logic.layout.scripting.runtime.ActionContext;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class BranchNamingScheme extends AbstractModelNamingScheme<Branch, BranchName> {
+public class BranchNamingScheme extends AbstractGlobalModelNamingScheme<Branch, BranchName> {
 
 	@Override
 	public Class<BranchName> getNameClass() {

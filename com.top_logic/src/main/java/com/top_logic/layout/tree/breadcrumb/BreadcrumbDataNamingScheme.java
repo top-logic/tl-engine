@@ -5,7 +5,7 @@
  */
 package com.top_logic.layout.tree.breadcrumb;
 
-import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
+import com.top_logic.layout.scripting.recorder.ref.AbstractGlobalModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
 import com.top_logic.layout.scripting.runtime.ActionContext;
@@ -16,7 +16,7 @@ import com.top_logic.layout.scripting.runtime.ActionContext;
  * 
  * @author <a href="mailto:Jan.Stolzenburg@top-logic.com">Jan.Stolzenburg</a>
  */
-public class BreadcrumbDataNamingScheme extends AbstractModelNamingScheme<BreadcrumbData, BreadcrumbDataName> {
+public class BreadcrumbDataNamingScheme extends AbstractGlobalModelNamingScheme<BreadcrumbData, BreadcrumbDataName> {
 	/**
 	 * The instance of the {@link BreadcrumbDataNamingScheme}. This is not a singleton, as
 	 * (potential) subclasses can create further instances.

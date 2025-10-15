@@ -11,7 +11,7 @@
 	
 	<artifactId>tl-service-jms-activemq</artifactId>
 	<properties>
-	  <netty.version>4.1.127.Final</netty.version>
+	  <netty.version>4.1.128.Final</netty.version>
 	</properties>
 	<dependencies>
 		<!-- TopLogic JMS Service -->

@@ -835,8 +835,8 @@
 							command-implementation-comment="com.top_logic.layout.editor.commands.EditComponentCommand"
 							command-label="Sicht bearbeiten"
 							command-name="editComponentCommand"
-							component-implementation-comment="com.top_logic.mig.html.layout.tiles.component.InlinedTileComponent"
-							component-name="52c7b7e9-b48c-4f2d-9bd0-2b176eba5d36.layout.xml#Objects"
+							component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+							component-name="5b6d8d0d-1380-4599-9536-e3bda0f48176.layout.xml#Table"
 							user-id="root"
 						>
 							<arguments/>
@@ -1113,6 +1113,60 @@
 					user-id="root"
 					visible="false"
 				/>
+				<action class="com.top_logic.mig.html.layout.tiles.scripting.SelectTileActionOp"
+					tile-label="Statische Kachel"
+					user-id="root"
+				>
+					<group config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+						component-implementation-comment="com.top_logic.mig.html.layout.tiles.GroupTileComponent"
+						component-name="1063bc66-e24c-4a8d-ac51-826bc76d8508.layout.xml#GroupTile"
+						require-visible="true"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CheckVisibilityOp"
+					component-name="aad4cbd6-c2fa-4d6a-855c-a6e4ca4c0576.layout.xml#placeholder"
+					user-id="root"
+					visible="true"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path=""
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.breadcrumb.BreadcrumbDataName">
+						<breadcrumb-data-owner config:interface="com.top_logic.layout.tree.breadcrumb.GenericBreadcrumbDataOwnerNaming$GenericBreadcrumbDataName">
+							<algorithm class="com.top_logic.layout.tree.breadcrumb.GenericBreadcrumbDataOwner$AnnotatedModel"/>
+							<reference config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="5705c6e2-46c8-4e9a-a21c-90681077f674.layout.xml#RootTile"
+								tab-path="Strukturen > Regression 28899"
+							/>
+						</breadcrumb-data-owner>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
+							path="28999_root > A0_28899"
+							singleton="ROOT"
+							singleton-label="ROOT"
+							structure="DemoTypes"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.mig.html.layout.tiles.scripting.InlinedTileComponentNaming$InlinedTileName"
+						component-implementation-comment="com.top_logic.mig.html.layout.tiles.component.InlinedTileComponent"
+						component-name="e63036d6-8805-4165-9cfc-a104ab654fd3.layout.xml#Objects"
+						require-visible="true"
+					/>
+				</action>
 				<action class="com.top_logic.mig.html.layout.tiles.scripting.SelectTileActionOp"
 					tile-label="Statische Kachel"
 					user-id="root"

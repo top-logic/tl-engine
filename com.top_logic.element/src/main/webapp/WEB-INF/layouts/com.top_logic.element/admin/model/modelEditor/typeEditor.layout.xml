@@ -9,6 +9,7 @@
 		<editor name="Editor"
 			applyCommand="apply"
 			defaultFor="tl.model:TLClass"
+			isSecurityMaster="true"
 			model="selection(com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree)"
 			resPrefix="element.meta.StructuredTypeEditor."
 			securityObject="ref:master"

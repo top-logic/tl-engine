@@ -8,6 +8,7 @@
 	<components>
 		<editor name="Editor"
 			applyCommand="applyTLEnumeration"
+			isSecurityMaster="true"
 			model="selection(com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree)"
 			resPrefix="element.meta.EnumerationEditor."
 			securityObject="securityRoot"

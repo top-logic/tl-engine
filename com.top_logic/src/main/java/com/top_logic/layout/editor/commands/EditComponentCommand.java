@@ -32,7 +32,6 @@ import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.CombinedExecutabilityRule;
 import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.InDesignModeExecutable;
-import com.top_logic.tool.execution.UniqueToolbarCommandRule;
 
 /**
  * Opens a dialog with configuration options for the current view.
@@ -125,7 +124,7 @@ public class EditComponentCommand extends AbstractCommandHandler {
 
 	@Override
 	protected ExecutabilityRule intrinsicExecutability() {
-		return CombinedExecutabilityRule.combine(InDesignModeExecutable.INSTANCE, new UniqueToolbarCommandRule(this),
+		return CombinedExecutabilityRule.combine(InDesignModeExecutable.INSTANCE,
 			EditableComponentExecutability.INSTANCE, super.intrinsicExecutability());
 	}
 

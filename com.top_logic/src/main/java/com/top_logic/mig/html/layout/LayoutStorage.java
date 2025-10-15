@@ -761,6 +761,9 @@ public class LayoutStorage extends KBBasedManagedClass<LayoutStorage.Config> {
 			}
 		}
 
+		if (invalidLayoutKeys.isEmpty()) {
+			return;
+		}
 		loadLayoutsForAllThemes(invalidLayoutKeys, choosableThemes);
 	}
 

@@ -43,7 +43,6 @@ import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.CombinedExecutabilityRule;
 import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.InDesignModeExecutable;
-import com.top_logic.tool.execution.UniqueToolbarCommandRule;
 import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 
@@ -233,8 +232,8 @@ public class DeleteComponentCommand extends ConfirmCommandHandler {
 
 	@Override
 	protected ExecutabilityRule intrinsicExecutability() {
-		return CombinedExecutabilityRule.combine(InDesignModeExecutable.INSTANCE, new UniqueToolbarCommandRule(this),
-			EditableComponentExecutability.INSTANCE);
+		return CombinedExecutabilityRule.combine(InDesignModeExecutable.INSTANCE,
+			EditableComponentExecutability.INSTANCE, super.intrinsicExecutability());
 	}
 
 	@Override

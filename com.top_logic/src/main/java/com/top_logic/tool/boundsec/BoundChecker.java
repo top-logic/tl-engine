@@ -12,7 +12,6 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.mig.html.layout.LayoutComponent.Config;
 import com.top_logic.mig.html.layout.LayoutContainer;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
@@ -88,24 +87,12 @@ public interface BoundChecker {
 	}
 
 	/**
-	 * Get the unique Id for this BoundChecker
+	 * Get the unique ID for this {@link BoundChecker} that is used to find configured security
+	 * settings.
 	 * 
-	 * @return the Id for this BoundChecker, <code>null</code> if ID could not be retrieved
+	 * @return The ID for this {@link BoundChecker}, <code>null</code> if ID could not be retrieved.
 	 */
-	default ComponentName getSecurityId() {
-		if (this instanceof LayoutComponent) {
-			LayoutComponent _this = (LayoutComponent) this;
-			Config myConfig = _this.getConfig();
-			if (myConfig instanceof SecurityConfiguration) {
-				ComponentName configuredSecurityId = ((SecurityConfiguration) myConfig).getSecurityId();
-				if (configuredSecurityId != null) {
-					return configuredSecurityId;
-				}
-			}
-			return _this.getName();
-		}
-		return null;
-	}
+	ComponentName getSecurityId();
 
 	/**
 	 * A user-readable reason, why the given model cannot be displayed.

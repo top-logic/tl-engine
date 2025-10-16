@@ -14,12 +14,12 @@ import junit.framework.TestSuite;
 
 import org.xml.sax.Attributes;
 
+import test.com.top_logic.ComponentTestUtils;
 import test.com.top_logic.PersonManagerSetup;
 import test.com.top_logic.TestPersonSetup;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
-import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.listener.GenericPropertyListener;
@@ -35,6 +35,7 @@ import com.top_logic.layout.tabbar.TabSwitchCommandModel;
 import com.top_logic.mig.html.layout.Card;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.ModelEventListener;
+import com.top_logic.mig.html.layout.SimpleComponent;
 import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.SecurityObjectProviderManager;
@@ -83,12 +84,7 @@ public class TestTabSwitchCommandModel extends BasicTestCase {
 
 	private Card createTab(TabComponent tabComponent, ResKey tabId) {
 		TabInfo tabInfo = TabInfo.newTabInfo(tabId);
-		try {
-			return new TabbedLayoutComponent(
-				new DummyBoundComponent(), tabInfo);
-		} catch (ConfigurationException ex) {
-			throw fail("Cannot instantiate component.", ex);
-		}
+		return new TabbedLayoutComponent(ComponentTestUtils.newSimpleComponent("Header", "Content"), tabInfo);
 	}
 
 	private void createTabSwitchCommandModelsForTabs(TabComponent tabComponent) {
@@ -161,8 +157,8 @@ public class TestTabSwitchCommandModel extends BasicTestCase {
 		TabSwitchCommandModel beforeActiveCommandModel = secondTabSwitchCommandModel;
 		assertTrue("Active card must be visible!", beforeActiveCommandModel.isVisible());
 
-		DummyBoundComponent componentSecondTab = (DummyBoundComponent) secondTab.getContent();
-		componentSecondTab.setInvisibleAndDisallowsAll();
+		SimpleComponent componentSecondTab = (SimpleComponent) secondTab.getContent();
+		componentSecondTab.setHideReason(ResKey.forTest("testCardIsInvisibleAfterHasBeenMadeInactive"));
 		revalidateTabComponent(componentSecondTab);
 
 		assertFalse("Inactive card must be invisible!", beforeActiveCommandModel.isVisible());
@@ -172,36 +168,36 @@ public class TestTabSwitchCommandModel extends BasicTestCase {
 		TabSwitchCommandModel beforeActiveCommandModel = secondTabSwitchCommandModel;
 		assertTrue("Active card must be executable!", beforeActiveCommandModel.isExecutable());
 
-		DummyBoundComponent componentSecondTab = (DummyBoundComponent) secondTab.getContent();
-		componentSecondTab.setInvisibleAndDisallowsAll();
+		SimpleComponent componentSecondTab = (SimpleComponent) secondTab.getContent();
+		componentSecondTab.setHideReason(ResKey.forTest("testCardIsNotExecutableAfterHasBeenMadeInactive"));
 		revalidateTabComponent(componentSecondTab);
 
 		assertFalse("Inactive card must be executable!", beforeActiveCommandModel.isExecutable());
 	}
 
 	public void testCardIsVisibleAfterHasBeenMadeActive() {
-		DummyBoundComponent componentSecondTab = (DummyBoundComponent) secondTab.getContent();
-		componentSecondTab.setInvisibleAndDisallowsAll();
+		SimpleComponent componentSecondTab = (SimpleComponent) secondTab.getContent();
+		componentSecondTab.setHideReason(ResKey.forTest("testCardIsVisibleAfterHasBeenMadeActive"));
 		revalidateTabComponent(componentSecondTab);
 
 		TabSwitchCommandModel afterActiveCommandModel = secondTabSwitchCommandModel;
 		assertFalse("Inactive card must not be visible!", afterActiveCommandModel.isVisible());
 
-		componentSecondTab.setVisibleAndAllowsAll();
+		componentSecondTab.setHideReason(null);
 		revalidateTabComponent(componentSecondTab);
 
 		assertTrue("Active card must be visible!", afterActiveCommandModel.isVisible());
 	}
 
 	public void testCardIsExecutableAfterHasBeenMadeActive() {
-		DummyBoundComponent componentSecondTab = (DummyBoundComponent) secondTab.getContent();
-		componentSecondTab.setInvisibleAndDisallowsAll();
+		SimpleComponent componentSecondTab = (SimpleComponent) secondTab.getContent();
+		componentSecondTab.setHideReason(ResKey.forTest("testCardIsExecutableAfterHasBeenMadeActive"));
 		revalidateTabComponent(componentSecondTab);
 
 		TabSwitchCommandModel afterActiveCommandModel = secondTabSwitchCommandModel;
 		assertFalse("Inactive card must not be executable!", afterActiveCommandModel.isExecutable());
 
-		componentSecondTab.setVisibleAndAllowsAll();
+		componentSecondTab.setHideReason(null);
 		revalidateTabComponent(componentSecondTab);
 
 		assertTrue("Active card must be executable!", afterActiveCommandModel.isExecutable());

@@ -74,7 +74,7 @@ public interface SecurityObjectProviderConfig extends ConfigurationItem {
 				.compile("(?:"
 					+ group(MODEL) + "|"
 					+ group(SECURITY_ROOT) + "|"
-					+ group(SecurityObjectProviderManager.PATH_SECURITY_OBJECT_PROVIDER + "[\\w\\.]*") + "|"
+					+ group(SecurityObjectProviderManager.PATH_SECURITY_OBJECT_PROVIDER + ".*") + "|"
 					+ REFERENCE_PREFIX + group("[\\w_\\.]+") + "|"
 					+ group(ModelSpec.Format.MODEL_PATTERN.pattern()) +
 					")");

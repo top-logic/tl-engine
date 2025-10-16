@@ -16,6 +16,7 @@
 				<de>Profil bearbeiten</de>
 			</title>
 		</title>
+		<securityObject class="com.top_logic.tool.boundsec.securityObjectProvider.NullSecurityObjectProvider"/>
 		<open-handler id="showCurrentPersonDialog"
 			config:interface="com.top_logic.layout.editor.config.DialogOpenHandlerConfig"
 			image="theme:IMAGE_BUTTONS_PERSONAL_SETTINGS22"

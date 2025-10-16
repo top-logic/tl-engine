@@ -71,7 +71,6 @@ import com.top_logic.mig.html.layout.ModelEventListener;
 import com.top_logic.mig.html.layout.SubComponentConfig;
 import com.top_logic.mig.html.layout.decoratedTabBar.DecorationValueListener;
 import com.top_logic.mig.html.layout.decoratedTabBar.DecorationValueProvider;
-import com.top_logic.tool.boundsec.BoundCheckerComponent;
 import com.top_logic.tool.boundsec.BoundCheckerLayoutConfig;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.Utils;
@@ -542,16 +541,12 @@ public final class TabComponent extends LayoutList implements LayoutContainerBou
 		List allCards = aDefaultTabBarModel.getAllCards();
 		for (int index = 0, size = allCards.size(); index < size; index++) {
 			TabbedLayoutComponent tabbedLayoutComponent = (TabbedLayoutComponent) allCards.get(index);
-			LayoutComponent layoutComponent = tabbedLayoutComponent.getContent();
-			if (layoutComponent instanceof BoundCheckerComponent) {
-				BoundCheckerComponent checker = (BoundCheckerComponent) layoutComponent;
-				boolean allow = checker.canShow();
-                boolean      inactive = aDefaultTabBarModel.isInactive(tabbedLayoutComponent);
-                if (allow && inactive) {
-					aDefaultTabBarModel.removeInactiveCard(tabbedLayoutComponent);
-				} else if (!allow && !inactive) {
-					aDefaultTabBarModel.addInactiveCard(tabbedLayoutComponent);
-				}
+			boolean allow = tabbedLayoutComponent.getContent().canShow();
+			boolean inactive = aDefaultTabBarModel.isInactive(tabbedLayoutComponent);
+			if (allow && inactive) {
+				aDefaultTabBarModel.removeInactiveCard(tabbedLayoutComponent);
+			} else if (!allow && !inactive) {
+				aDefaultTabBarModel.addInactiveCard(tabbedLayoutComponent);
 			}
 		}
 	}
@@ -641,23 +636,12 @@ public final class TabComponent extends LayoutList implements LayoutContainerBou
 	}
 
 	/**
-	 * Apply the BoundSecurity by supressing disallowed children Return true when tabber with given
-	 * index shoud be drawn.
+	 * Checks whether the given child can be shown.
 	 * 
-	 * @return ask the BoundChecker child for allow().
+	 * @see LayoutComponent#canShow()
 	 */
 	public boolean canBeVisible(LayoutComponent aChild) {
-		if (aChild instanceof BoundCheckerComponent) {
-			// long start = System.currentTimeMillis();
-			boolean result = ((BoundCheckerComponent) aChild).canShow();
-			/*
-			 * long delta = System.currentTimeMillis() - start; if (delta > 1000) Logger.warn
-			 * ("allow needed " + DebugHelper.getTime (delta) + " for " + aChild , this);
-			 */
-			return result;
-		}
-		// else
-		return true;
+		return aChild.canShow();
 	}
 
 	public void setTabs(List<Card> tabs) {

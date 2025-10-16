@@ -27,10 +27,6 @@
 		<property name="resetInvisible"
 			type="boolean"
 		/>
-		<property name="securityObject"
-			instance-type="com.top_logic.tool.boundsec.SecurityObjectProvider"
-			type="com.top_logic.basic.config.PolymorphicConfiguration"
-		/>
 		<property name="buttons"
 			element-type="com.top_logic.tool.boundsec.CommandHandler$ConfigBase"
 			instance-type="com.top_logic.tool.boundsec.CommandHandler"

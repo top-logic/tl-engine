@@ -32,10 +32,6 @@
 				value="customTransaction"
 			/>
 		</property>
-		<property name="securityObject"
-			instance-type="com.top_logic.tool.boundsec.SecurityObjectProvider"
-			type="com.top_logic.basic.config.PolymorphicConfiguration"
-		/>
 	</properties>
 
 	<layout name="Dialog">

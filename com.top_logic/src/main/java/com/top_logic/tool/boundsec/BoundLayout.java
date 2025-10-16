@@ -82,12 +82,26 @@ public class BoundLayout extends Layout implements LayoutContainerBoundChecker {
 			return securityMaster.hideReason();
         }
 
+		if (getChildCount() == 1) {
+			/* When there is only one child, treat it as security master. */
+			LayoutComponent child = getChild(0);
+			if (child instanceof BoundCheckerComponent) {
+				// Only BoundCheckerComponent can be "security master".
+				return child.hideReason();
+			}
+		}
+
 		ResKey technicalReason = super.hideReason();
 		if (technicalReason != null) {
 			return technicalReason;
 		}
 
-		return BoundChecker.hideReasonForSecurity(this, internalModel());
+		ResKey securityReason = BoundChecker.hideReasonForSecurity(this, internalModel());
+		if (securityReason != null) {
+			return securityReason;
+		}
+
+		return null;
 	}
 
 	/**

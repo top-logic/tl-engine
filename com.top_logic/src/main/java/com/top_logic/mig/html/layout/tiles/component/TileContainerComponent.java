@@ -81,7 +81,6 @@ import com.top_logic.mig.html.layout.tiles.breadcrumb.TileBreadcrumbControlProvi
 import com.top_logic.mig.html.layout.tiles.control.TileContainerControlProvider;
 import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCheckerDelegate;
-import com.top_logic.tool.boundsec.BoundCheckerLayoutConfig;
 import com.top_logic.tool.boundsec.simple.AllowAllChecker;
 import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
@@ -98,7 +97,7 @@ public class TileContainerComponent extends LayoutContainer implements BoundChec
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
-	public interface Config extends LayoutContainer.Config, BoundCheckerLayoutConfig, TileDefinitionContainer {
+	public interface Config extends LayoutContainer.Config, TileDefinitionContainer {
 
 		/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
 		Lookup LOOKUP = MethodHandles.lookup();

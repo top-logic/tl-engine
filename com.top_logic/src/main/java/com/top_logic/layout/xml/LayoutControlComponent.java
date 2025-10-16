@@ -31,7 +31,6 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCheckerDelegate;
-import com.top_logic.tool.boundsec.BoundCheckerLayoutConfig;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.simple.AllowNoneChecker;
 
@@ -55,7 +54,7 @@ public final class LayoutControlComponent extends LayoutComponent implements Bou
 	 * Configuration options for {@link LayoutControlComponent}.
 	 */
 	@TagName(Config.TAG_NAME)
-	public interface Config extends LayoutComponent.Config, BoundCheckerLayoutConfig {
+	public interface Config extends LayoutComponent.Config {
 
 		/** Standard tag name to configure {@link LayoutControlComponent}. */
 		String TAG_NAME = "layoutControl";

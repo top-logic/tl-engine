@@ -2635,6 +2635,19 @@ services.form = {
 			}
 		}
 	},
+	
+	DisplayPDFControl : {
+		hideToolbar : function(iframe) {
+			if (iframe.closest(".card") == null) return;
+			console.log(iframe.contentDocument);
+			let css = document.createElement("style");
+			css.type = "text/css";
+			css.append("#mainContainer{min-width: unset}");
+			css.append(".toolbar{display: none}");
+			css.append("#viewerContainer{position: unset}");
+			iframe.contentDocument.head.appendChild(css);
+		}
+	},
 
 	SelectionControl : {
 		outermostWindow : services.ajax.topWindow,

@@ -312,8 +312,6 @@ div.documentTile {
 	display: flex;
 	flex-direction: column;
 	box-sizing: border-box;
-	padding: var(--spacing-02) var(--spacing-03) 0 var(--spacing-03);
-    margin: 0;
 }
 
 div.documentTile {

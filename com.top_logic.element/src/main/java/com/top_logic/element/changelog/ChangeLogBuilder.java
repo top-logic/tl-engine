@@ -616,7 +616,7 @@ public class ChangeLogBuilder {
 					if (partKI == null) {
 						/* Part is deleted in the meanwhile. It is possible to display the
 						 * change, but not to revert it. */
-						partKI = _kb.resolveObjectKey(inRevision(partId, revision));
+						partKI = _kb.resolveObjectKey(inRevision(partId, revision - 1));
 					}
 					TLStructuredTypePart part = partKI.getWrapper();
 					if (isPersistentCacheAttribute(part)) {

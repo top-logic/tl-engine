@@ -417,11 +417,7 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 	}
 
 	protected void initFormMember(AttributeUpdate aAttributeUpdate, FormMember result) {
-		ResKey resKey = aAttributeUpdate.getLabelKey();
-		Resources resources = Resources.getInstance();
-		result.setLabel(resources.getString(resKey));
-		result.setTooltip(resources.getString(resKey.tooltipOptional()));
-		result.setTooltipCaption(resources.getString(resKey.suffix(FormMember.TOOLTIP_CAPTION_SUFFIX), null));
+		initLabel(result, aAttributeUpdate);
 		
 		if (AttributeOperations.isReadOnly(aAttributeUpdate.getAttribute())) {
 			/* The value for the attribute can not be updated. Therefore a constraint is not useful,
@@ -430,6 +426,17 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 			result.clearConstraints();
 		}
 		AttributeFormFactory.setAttributeUpdate(result, aAttributeUpdate);
+	}
+
+	/**
+	 * Initializes label and tooltip of the given field.
+	 */
+	public static void initLabel(FormMember result, EditContext editContext) {
+		ResKey resKey = editContext.getLabelKey();
+		Resources resources = Resources.getInstance();
+		result.setLabel(resources.getString(resKey));
+		result.setTooltip(resources.getString(resKey.tooltipOptional()));
+		result.setTooltipCaption(resources.getString(resKey.suffix(FormMember.TOOLTIP_CAPTION_SUFFIX), null));
 	}
 
 	protected Object createExampleValue(AttributeUpdate aAttributeUpdate) {

@@ -844,9 +844,26 @@ public final class TabComponent extends LayoutList implements LayoutContainerBou
 
 	@Override
 	public ResKey hideReason() {
-		if (this.getTabBar().getSingleSelection() == null && !getCards().isEmpty()) {
-			return I18NConstants.NO_CARDS_VISIBLE;
+		List<Card> cards = getCards();
+		if (!cards.isEmpty()) {
+			if (isModelValid()) {
+				if (this.getTabBar().getSingleSelection() == null) {
+					return I18NConstants.NO_CARDS_VISIBLE;
+				}
+			} else {
+				boolean canAnyBeShown = cards.stream()
+					.map(TabbedLayoutComponent.class::cast)
+					.map(TabbedLayoutComponent::getContent)
+					.anyMatch(LayoutComponent::canShow);
+				if (!canAnyBeShown) {
+					return I18NConstants.NO_CARDS_VISIBLE;
+				}
+			}
+		} else {
+			/* Do not hide tab when no cards exists, because otherwise it is InApp not possible to
+			 * create first a tab and then the cards. */
 		}
+
 		return super.hideReason();
 	}
 

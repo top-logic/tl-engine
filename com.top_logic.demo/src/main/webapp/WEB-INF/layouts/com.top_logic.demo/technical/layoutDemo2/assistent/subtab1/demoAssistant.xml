@@ -7,9 +7,9 @@
 
 	<layout buttonbar="true">
 		<components>
-			<component class="com.top_logic.tool.boundsec.assistent.AssistentComponent"
-				name="${namePrefix}testAssistent"
+			<assistent name="${namePrefix}testAssistent"
 				resPrefix="layouts.layoutdemo.assistent.demoAssistant.testAssistent."
+				securityObject="securityRoot"
 			>
 				<controller class="com.top_logic.demo.tool.boundsec.assistent.demo.DemoAssistentController">
 					<steps>
@@ -53,7 +53,7 @@
 				>
 					<assistantInfo labelKeySuffix="step4"/>
 				</component>
-			</component>
+			</assistent>
 		</components>
 	</layout>
 </template>

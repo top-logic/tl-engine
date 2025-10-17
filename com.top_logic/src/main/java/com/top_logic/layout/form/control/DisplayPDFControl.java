@@ -174,6 +174,9 @@ public class DisplayPDFControl extends ConstantControl<BinaryDataSource> {
 		if (contentType != null && contentType.toLowerCase().equals(PDF_CONTENT_TYPE)) {
 			out.beginBeginTag(IFRAME);
 			writeControlAttributes(context, out);
+			out.beginAttribute(ONLOAD_ATTR);
+			out.write("services.form.DisplayPDFControl.hideToolbar(this)");
+			out.endAttribute();
 			String pdfURL = _display.getPdfURL(context);
 			out.writeAttribute(SRC_ATTR, displayPdfURL(context, pdfURL).getURL());
 			out.writeAttribute(WIDTH_ATTR, "100%");

@@ -2915,6 +2915,11 @@ img.ddwttItemIcon {
 	overflow: visible;
 }
 
+.ddwttTag.ddwttOverflow img.ddwttItemIcon,
+.ddwttTag.ddwttOverflow .ddwttTagX {
+	align-self: start;
+	margin-top: var(--spacing-02);
+}
 
 .ddwttTagX {
 	width: .875rem;

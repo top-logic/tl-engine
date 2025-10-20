@@ -410,6 +410,16 @@ public class DropDownControl extends AbstractSelectControl {
 				out.writeAttribute(ID, itemID + "-tag");
 				out.writeAttribute(CLASS_ATTR, "ddwttTag");
 				renderTooltip(context, out, dropdown, selectedItem);
+				out.beginAttribute(ONMOUSEENTER_ATTR);
+				addJSFunction(out, "enterTag", "this");
+				out.endAttribute();
+				out.beginAttribute(ONMOUSELEAVE_ATTR);
+				addJSFunction(out, "leaveTag", "this");
+				out.endAttribute();
+				out.endBeginTag();
+
+				out.beginBeginTag(DIV);
+				out.writeAttribute(CLASS_ATTR, "ddwttTagContent");
 				out.endBeginTag();
 				{
 					renderItemIcon(context, out, dropdown, selectedItem, Flavor.DEFAULT);
@@ -417,6 +427,7 @@ public class DropDownControl extends AbstractSelectControl {
 
 					renderXButton(context, out, itemID);
 				}
+				out.endTag(DIV);
 				out.endTag(SPAN);
 			}
 		}

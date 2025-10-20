@@ -2877,20 +2877,41 @@ img.ddwttItemIcon {
 .ddwttTag {
 	display: inline-flex;
 	width: fit-content;
-	align-items: center;
-	justify-content: center;
 	height: var(--form-line-height);
-	border: 1px solid var(--border-subtle);
-	box-sizing: border-box;
-	padding: 0 var(--spacing-02);
 	margin-right: var(--spacing-02);
 	margin-bottom: var(--spacing-02);
-	gap: var(--spacing-02);
 	overflow: hidden;
-	background: var(--background);
 }
 
-.ddwttContainer:has(.ddwttTag .ddwttItemLabel:hover) {
+.ddwttTag.ddwttOverflow {
+	width: 100%;
+}
+
+.ddwttTagContent {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--spacing-02);
+	box-sizing: border-box;
+	padding: 0 var(--spacing-02);
+	background: var(--background);
+	border: 1px solid var(--border-subtle);
+	overflow: hidden;
+}
+
+.ddwttTag.ddwttOverflow .ddwttTagContent {
+	z-index: 100;
+	position: absolute;
+	margin-right: var(--spacing-02);
+	margin-bottom: var(--spacing-02);
+}
+
+.ddwttTag.ddwttOverflow .ddwttTagContent .ddwttItemLabel {
+	white-space: normal;
+	overflow-wrap: anywhere;
+}
+
+.ddwttContainer:has(.ddwttTag.ddwttOverflow) {
 	overflow: visible;
 }
 

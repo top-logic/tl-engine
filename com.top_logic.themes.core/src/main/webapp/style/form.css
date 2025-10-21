@@ -85,10 +85,12 @@ div.fptPage {
 
 div.fptBody {
 	margin-top: var(--spacing-02);
+	flex: auto;
 }
 
 div.fptBodyContent {
 	padding: 0 var(--spacing-03);
+	height: 100%;
 }
 
 div.fptTitle {

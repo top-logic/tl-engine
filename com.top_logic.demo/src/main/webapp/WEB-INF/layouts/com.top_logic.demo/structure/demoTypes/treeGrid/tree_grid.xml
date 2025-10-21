@@ -4,6 +4,9 @@
 	<params>
 		<param name="namePrefix"/>
 		<param name="modelBuilder"/>
+		<param name="securityObject"
+			optional="true"
+		/>
 		<param name="model"
 			optional="true"
 		/>
@@ -59,6 +62,7 @@
 				partnerGroup="${partnerGroup}"
 				resPrefix="layouts.demo.table.tree_grid.treeGrid."
 				resetInvisible="true"
+				securityObject="${securityObject}"
 				showMinimize="false"
 				titleKey="${titleKey}"
 			>

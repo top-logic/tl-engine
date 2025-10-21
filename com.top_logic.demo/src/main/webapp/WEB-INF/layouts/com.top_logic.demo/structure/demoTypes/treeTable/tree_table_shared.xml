@@ -2,6 +2,9 @@
 
 <template>
 	<params>
+		<param name="securityObject"
+			optional="true"
+		/>
 		<param name="namePrefix"/>
 		<param name="model"/>
 		<param name="treeBuilder">
@@ -22,10 +25,12 @@
 			<component class="com.top_logic.demo.table.DemoTreeTableEditComponent"
 				componentControlProvider="${componentControlProvider}"
 				defaultSelection="${defaultSelection}"
+				isSecurityMaster="true"
 				model="${model}"
 				name="${namePrefix}DemoTypesTreeTable"
 				objectType="me:DemoTypes.All"
 				resPrefix="layouts.demo.table.demoTreeTable.DemoTypesTreeTable."
+				securityObject="${securityObject}"
 				treeBuilder="${treeBuilder}"
 			>
 				<!-- The name of the component and the name of the table has to be equal. -->

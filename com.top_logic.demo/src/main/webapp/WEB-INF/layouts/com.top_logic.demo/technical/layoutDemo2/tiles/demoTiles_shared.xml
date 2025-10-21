@@ -84,6 +84,7 @@
 							<include name="com.top_logic.demo/structure/demoTypes/detail/editStructureDetail.xml"
 								master="${namePrefix}DemoTypesTreeTable"
 								namePrefix="${namePrefix}"
+								securityObject="model"
 								structure="DemoTypes"
 							/>
 						</component>

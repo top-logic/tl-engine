@@ -3,6 +3,7 @@
 <template>
 	<params>
 		<param name="namePrefix"/>
+		<param name="securityObject"/>
 		<param name="structure"/>
 		<param name="elements"/>
 		<param name="model"/>
@@ -41,6 +42,7 @@
 				openInEdit="${openInEdit}"
 				page=""
 				resPrefix="${resPrefix}"
+				securityObject="${securityObject}"
 				structureName="${structure}"
 				titleKey="${titleKey}"
 			>

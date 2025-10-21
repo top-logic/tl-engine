@@ -3,6 +3,7 @@
 <include name="cockpit/chartCockpit.xml"
 	model="selection(DemoTypesVersionSelector)"
 	namePrefix="DemoChartCockpit"
+	securityObject="model"
 	types="DemoTypes:DemoTypes.A, DemoTypes:A"
 >
 	<modelBuilder class="com.top_logic.element.layout.structured.StructuredElementListModelBuilder"/>

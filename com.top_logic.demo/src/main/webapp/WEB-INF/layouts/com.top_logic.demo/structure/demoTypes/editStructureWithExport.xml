@@ -3,6 +3,7 @@
 <template>
 	<params>
 		<param name="structure"/>
+		<param name="securityObject"/>
 		<param name="namePrefix"
 			value="${structure}"
 		/>
@@ -22,8 +23,10 @@
 	>
 		<components>
 			<treeView name="${namePrefix}Tree"
+				isSecurityMaster="true"
 				partnerGroup="gridGroup"
 				resPrefix="${resPrefix}Tree."
+				securityObject="${securityObject}"
 				show-only-selectable-nodes="true"
 			>
 				<layoutInfo
@@ -97,6 +100,7 @@
 									<include name="com.top_logic.demo/structure/demoTypes/detail/editStructureDetail.xml"
 										defaultFor="${defaultFor}"
 										master="${namePrefix}VersionSelector"
+										securityObject="${securityObject}"
 										structure="${structure}"
 									>
 										<exportDialogs>
@@ -112,6 +116,7 @@
 								elements="A,B,C"
 								model="selection(${namePrefix}VersionSelector)"
 								namePrefix="${namePrefix}"
+								securityObject="${securityObject}"
 								structure="${structure}"
 							>
 								<inject>
@@ -166,6 +171,7 @@
 							<include name="com.top_logic.demo/structure/demoTypes/treeGrid/tree_grid.xml"
 								model="selection(${namePrefix}VersionSelector)"
 								namePrefix="${namePrefix}"
+								securityObject="model"
 							>
 								<inject>
 									<tabInfo label="${resPrefix}demoStructureDemoTypesTreeGrid.tab"/>
@@ -181,6 +187,7 @@
 								model="selection(${namePrefix}VersionSelector)"
 								namePrefix="TypedSetOrdered"
 								openInEdit="true"
+								securityObject="${securityObject}"
 								structure="${structure}"
 								titleKey="layouts.demo.grid.AttributeGrid.title"
 							>
@@ -205,6 +212,7 @@
 								model="selection(${namePrefix}VersionSelector)"
 								namePrefix="CumulativeTypedSetOrdered"
 								openInEdit="true"
+								securityObject="${securityObject}"
 								structure="${structure}"
 								titleKey="layouts.demo.grid.CumulativeAttributeGrid.title"
 							>
@@ -220,6 +228,7 @@
 								model="selection(${namePrefix}VersionSelector)"
 								objectType="me:DemoTypes.All"
 								resPrefix="layouts.demo.table.editStructureWithExport.DemoTypesSelectedTable."
+								securityObject="${securityObject}"
 							>
 								<tabInfo label="layouts.demo.table.editStructureWithExport.DemoTypesSelectedTable.tab"/>
 								<modelBuilder class="com.top_logic.element.layout.structured.StructuredElementListModelBuilder"/>
@@ -237,6 +246,7 @@
 								defaultSelection="true"
 								model="selection(${namePrefix}VersionSelector)"
 								namePrefix="StructureEdit"
+								securityObject="${securityObject}"
 							>
 								<inject>
 									<tabInfo label="${resPrefix}demoStructureDemoTypesTreeTable.tab"/>
@@ -255,6 +265,7 @@
 								expandAll="true"
 								model="selection(${namePrefix}VersionSelector)"
 								namePrefix="${namePrefix}"
+								securityObject="${securityObject}"
 							>
 								<inject>
 									<tabInfo label="${resPrefix}demoStructureDemoTypesStructureEdit.tab"/>
@@ -273,6 +284,7 @@
 							<include name="commons/webfolder/documents.xml"
 								model="selection(${namePrefix}VersionSelector)"
 								namePrefix="demoTypesDocuments"
+								securityObject="${securityObject}"
 							>
 								<inject>
 									<tabInfo
@@ -285,6 +297,7 @@
 								manual-locking="true"
 								model="selection(${namePrefix}VersionSelector)"
 								namePrefix="demoTypesDocumentsManualLocking"
+								securityObject="${securityObject}"
 							>
 								<inject>
 									<tabInfo
@@ -296,6 +309,7 @@
 							<include name="mail/mailFolder/mailFolder_aliased.xml"
 								masterComponent="${namePrefix}VersionSelector"
 								namePrefix="mailFolder"
+								securityObject="${securityObject}"
 							>
 								<inject>
 									<tabInfo
@@ -307,6 +321,7 @@
 							<include name="commons/comments/comments.xml"
 								model="selection(${namePrefix}VersionSelector)"
 								namePrefix="demoTypesComments"
+								securityObject="${securityObject}"
 							>
 								<inject>
 									<tabInfo
@@ -318,6 +333,7 @@
 							</include>
 							<include name="com.top_logic.demo/structure/demoTypes/gantt/demoGantt.xml"
 								model="selection(${namePrefix}VersionSelector)"
+								securityObject="${securityObject}"
 							>
 								<inject>
 									<tabInfo label="${resPrefix}demoStructureDemoTypesGantt.tab"/>

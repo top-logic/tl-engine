@@ -24,6 +24,7 @@
 				defaultFor="DemoTypes:DemoTypes.A,DemoTypes:DemoTypes.B,DemoTypes:DemoTypes.C.All,DemoTypes:DemoTypes.L"
 				master=""
 				namePrefix="globalDialog"
+				securityObject="model"
 				structure="DemoTypes"
 			/>
 		</components>

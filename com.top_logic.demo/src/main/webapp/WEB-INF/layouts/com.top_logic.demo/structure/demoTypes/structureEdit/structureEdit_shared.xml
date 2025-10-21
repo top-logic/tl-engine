@@ -2,6 +2,9 @@
 
 <template>
 	<params>
+		<param name="securityObject"
+			optional="true"
+		/>
 		<param name="namePrefix"/>
 		<param name="model"/>
 		<param name="expandAll"
@@ -25,6 +28,7 @@
 				resPrefix="layouts.demo.table.structureEdit.DemoStructureEditComponent."
 				rootVisible="true"
 				saveScrollPosition="true"
+				securityObject="${securityObject}"
 				showSelectionColumn="true"
 				viewModeFixedColumns="3"
 			>

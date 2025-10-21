@@ -2059,6 +2059,10 @@ input[type="checkbox"]:checked.tl-treeSelect__someChildren::after {
 	row-gap: var(--spacing-02);
 }
 
+.cChoice {
+	width: 100%;
+}
+
 .tl-table__cell-container :is(.cBooleanChoice,.cChoice) {
     flex-wrap: nowrap;
 }
@@ -2087,6 +2091,8 @@ span.bcc-option {
 .cChoice-option {
     align-items: center;
     text-wrap: nowrap;
+	display: inline-flex;
+	max-width: 100%;
 }
 
 .cChoice-option label {
@@ -2094,6 +2100,8 @@ span.bcc-option {
 	cursor: pointer;
 	margin-left: var(--spacing-02);
 	padding: 0; /* Remove the space between the label and a potential option separator */
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 .cChoice-horizontal.disabled label,
@@ -2869,15 +2877,48 @@ img.ddwttItemIcon {
 .ddwttTag {
 	display: inline-flex;
 	width: fit-content;
-	align-items: center;
-	justify-content: center;
 	height: var(--form-line-height);
-	border: 1px solid var(--border-subtle);
-	box-sizing: border-box;
-	padding: 0 var(--spacing-02);
 	margin-right: var(--spacing-02);
 	margin-bottom: var(--spacing-02);
+	overflow: hidden;
+}
+
+.ddwttTag.ddwttOverflow {
+	width: 100%;
+}
+
+.ddwttTagContent {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
 	gap: var(--spacing-02);
+	box-sizing: border-box;
+	padding: 0 var(--spacing-02);
+	background: var(--background);
+	border: 1px solid var(--border-subtle);
+	overflow: hidden;
+}
+
+.ddwttTag.ddwttOverflow .ddwttTagContent {
+	z-index: 100;
+	position: absolute;
+	margin-right: var(--spacing-02);
+	margin-bottom: var(--spacing-02);
+}
+
+.ddwttTag.ddwttOverflow .ddwttTagContent .ddwttItemLabel {
+	white-space: normal;
+	overflow-wrap: anywhere;
+}
+
+.ddwttContainer:has(.ddwttTag.ddwttOverflow) {
+	overflow: visible;
+}
+
+.ddwttTag.ddwttOverflow img.ddwttItemIcon,
+.ddwttTag.ddwttOverflow .ddwttTagX {
+	align-self: start;
+	margin-top: var(--spacing-02);
 }
 
 .ddwttTagX {
@@ -2952,7 +2993,7 @@ img.ddwttItemIcon {
 }
 
 .ddwttTooltipContent :is(h1, h2, h3, h4, h5, h6) {
-    clear: both;
+	clear: both;
 	margin-bottom: var(--spacing-01);
 }
 

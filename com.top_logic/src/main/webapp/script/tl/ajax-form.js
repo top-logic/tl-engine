@@ -3360,6 +3360,7 @@ services.form = {
 		selItemCl: "ddwttSelectedItem",
 		actItemCl: "ddwttActiveItem",
 		itemLabelCl: "ddwttItemLabel",
+		overflowCl: "ddwttOverflow",
 		mutObserver: null,
 
 		buttonDrop: function(event, button) {
@@ -3906,6 +3907,19 @@ services.form = {
 
 		setSelectedLabel: function(button, selection) {
 			button.firstElementChild.textContent = selection;
+		},
+		
+		enterTag: function(tag) {
+			let label = tag.querySelector(":scope .ddwttItemLabel");
+			console.log("Client width: " + label.clientWidth);
+			console.log("Scroll width: " + label.scrollWidth);
+			if (label.clientWidth < label.scrollWidth) { // !tag.classList.contains(this.overflowCl)
+				tag.classList.add(this.overflowCl);
+			}
+		},
+		
+		leaveTag: function(tag) {
+			tag.classList.remove(this.overflowCl);
 		},
 
 		removeTag: function(tag, itemID) {

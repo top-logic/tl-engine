@@ -93,6 +93,7 @@
 			model="${model}"
 			modelBuilder="${modelBuilder}"
 			name="Objects"
+			securityObject="${securityObject}"
 			titleKey="${name}"
 		>
 			<buttons>

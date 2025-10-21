@@ -58,6 +58,9 @@
 		<param name="rowsPerPage"
 			value="100"
 		/>
+		<param name="securityObject"
+			value="model"
+		/>
 	</params>
 
 	<layout horizontal="true">
@@ -78,7 +81,7 @@
 						name="${namePrefix}GanttFilter"
 						page="${filterJSP}"
 						resPrefix="reporting.chart.gantt.filter."
-						securityObject="model"
+						securityObject="${securityObject}"
 						updateAutamaticallyOnNewModel="${updateAutamaticallyOnNewModel}"
 					>
 						<toolbar-groups>

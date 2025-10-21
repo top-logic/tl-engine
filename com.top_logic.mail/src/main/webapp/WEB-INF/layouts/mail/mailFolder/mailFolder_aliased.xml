@@ -8,6 +8,9 @@
 		<param name="tableComponent"
 			value="com.top_logic.mail.layout.MailFolderTableComponent"
 		/>
+		<param name="securityObject"
+			optional="true"
+		/>
 		<param name="downloadNameKey"
 			value="mails.folder.export.name"
 		/>
@@ -73,6 +76,7 @@
 				name="${namePrefix}Mail_List"
 				objectType="${objectType}"
 				resPrefix="mails.folder.table."
+				securityObject="${securityObject}"
 				selectable="true"
 			>
 				<layoutInfo size="${tableSize}"/>

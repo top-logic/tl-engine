@@ -40,6 +40,10 @@
 				default="root"
 				type="string"
 			/>
+			<t:parameter name="isAdmin"
+				default="false"
+				type="string"
+			/>
 		</t:parameters>
 	</t:head>
 	<t:body>
@@ -106,6 +110,54 @@
 				>
 					<arguments/>
 				</action>
+				<t:if condition=" #equals($isAdmin, &quot;true&quot;)">
+					<t:then>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp">
+							<actual-value config:interface="com.top_logic.layout.component.ComponentModelNamingScheme$ComponentModelName">
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
+								/>
+							</actual-value>
+							<constraints>
+								<constraint class="com.top_logic.layout.scripting.check.EqualsCheck">
+									<expected-value config:interface="com.top_logic.contact.layout.scripting.ContactByAccountNamingScheme$Name"
+										name="${$Loginname}"
+									/>
+								</constraint>
+							</constraints>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+							command-label="Bearbeiten"
+							command-name="customEdit"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="admin/security/accounts/detailsForm.layout.xml#Form"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op">
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Administrator"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="true"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+							command-label="Speichern"
+							command-name="defaultSave"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="admin/security/accounts/detailsForm.layout.xml#Form"
+						>
+							<arguments/>
+						</action>
+					</t:then>
+				</t:if>
 				<t:invoke template="script:Variable/Action-Variable-Zuweisen.xml">
 					<t:parameter name="Tester"
 						value="${$Tester}"

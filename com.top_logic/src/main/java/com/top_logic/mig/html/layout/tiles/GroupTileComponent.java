@@ -15,6 +15,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.channel.ComponentChannel;
 import com.top_logic.layout.channel.ComponentChannel.ChannelListener;
 import com.top_logic.layout.component.LayoutContainerBoundChecker;
@@ -28,6 +29,9 @@ import com.top_logic.mig.html.layout.Layout;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutList;
 import com.top_logic.mig.html.layout.tiles.control.GroupTileControlProvider;
+import com.top_logic.tool.boundsec.BoundChecker;
+import com.top_logic.tool.boundsec.SecurityObjectProvider;
+import com.top_logic.tool.boundsec.SecurityObjectProviderConfig;
 
 /**
  * {@link Layout} in a tile context.
@@ -51,7 +55,7 @@ public class GroupTileComponent extends LayoutList implements Selectable, Layout
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
-	public interface Config extends Layout.Config {
+	public interface Config extends Layout.Config, SecurityObjectProviderConfig {
 
 		/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
 		Lookup LOOKUP = MethodHandles.lookup();
@@ -70,11 +74,34 @@ public class GroupTileComponent extends LayoutList implements Selectable, Layout
 
 	}
 
+	private final SecurityObjectProvider _securityObjectProvider;
+
 	/**
 	 * Creates a new {@link GroupTileComponent}.
 	 */
-	public GroupTileComponent(InstantiationContext context, Config atts) throws ConfigurationException {
-		super(context, atts);
+	public GroupTileComponent(InstantiationContext context, Config config) throws ConfigurationException {
+		super(context, config);
+		_securityObjectProvider = SecurityObjectProvider.fromConfiguration(context, config.getSecurityObject());
+	}
+
+	@Override
+	public SecurityObjectProvider getSecurityObjectProvider() {
+		return _securityObjectProvider;
+	}
+
+	@Override
+	public ResKey hideReason() {
+		ResKey technicalReason = super.hideReason();
+		if (technicalReason != null) {
+			return technicalReason;
+		}
+
+		ResKey securityReason = BoundChecker.hideReasonForSecurity(this, internalModel());
+		if (securityReason != null) {
+			return securityReason;
+		}
+
+		return null;
 	}
 
 	/**

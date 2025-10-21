@@ -22,6 +22,7 @@ import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.func.Function2;
 import com.top_logic.basic.listener.EventType;
 import com.top_logic.basic.listener.PropertyListener;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.channel.ComponentChannel;
 import com.top_logic.layout.channel.ComponentChannel.ChannelListener;
 import com.top_logic.layout.component.LayoutContainerBoundChecker;
@@ -206,6 +207,29 @@ public class ContextTileComponent extends LayoutContainer implements LayoutConta
 	 */
 	public ContextTileComponent(InstantiationContext context, Config config) throws ConfigurationException {
 		super(context, config);
+	}
+
+	@Override
+	public ResKey hideReason() {
+		LayoutComponent selector = getSelector();
+		LayoutComponent content = getContent();
+
+		if (content == null || selector == null) {
+			// Not completely initialized
+			return null;
+		}
+
+		ResKey selectorReason = selector.hideReason();
+		if (selectorReason != null) {
+			return selectorReason;
+		}
+
+		ResKey contentReason = content.hideReason();
+		if (contentReason != null) {
+			return contentReason;
+		}
+
+		return null;
 	}
 
 	/**

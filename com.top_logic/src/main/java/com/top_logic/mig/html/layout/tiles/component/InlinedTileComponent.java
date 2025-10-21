@@ -15,6 +15,7 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.component.LayoutContainerBoundChecker;
 import com.top_logic.layout.component.Selectable;
 import com.top_logic.layout.structure.LayoutControlProvider;
@@ -25,7 +26,10 @@ import com.top_logic.mig.html.layout.tiles.InlinedTileFactory;
 import com.top_logic.mig.html.layout.tiles.TileFactory;
 import com.top_logic.mig.html.layout.tiles.TileInfo;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
+import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.CommandHandler;
+import com.top_logic.tool.boundsec.SecurityObjectProvider;
+import com.top_logic.tool.boundsec.SecurityObjectProviderConfig;
 
 /**
  * {@link SingleLayoutContainer} that offers tiles for multiple business objects in the "parent
@@ -48,7 +52,8 @@ public class InlinedTileComponent extends SingleLayoutContainer implements Selec
 	 * 
 	 * @author <a href="mailto:dbu@top-logic.com">dbu</a>
 	 */
-	public interface Config extends SingleLayoutContainer.Config, TileListComponent.ContextMenuButtons {
+	public interface Config
+			extends SingleLayoutContainer.Config, TileListComponent.ContextMenuButtons, SecurityObjectProviderConfig {
 
 		/**
 		 * Configuration element for setting a {@link #getModelBuilder()}.
@@ -93,6 +98,8 @@ public class InlinedTileComponent extends SingleLayoutContainer implements Selec
 
 	private final List<CommandHandler> _contextMenuButtons;
 
+	private final SecurityObjectProvider _securityObjectProvider;
+
 	/**
 	 * Create a {@link InlinedTileComponent}.
 	 * 
@@ -108,6 +115,27 @@ public class InlinedTileComponent extends SingleLayoutContainer implements Selec
 			.stream()
 			.map(buttonConf -> AbstractCommandHandler.getInstance(context, buttonConf))
 			.collect(Collectors.toList());
+		_securityObjectProvider = SecurityObjectProvider.fromConfiguration(context, config.getSecurityObject());
+	}
+
+	@Override
+	public SecurityObjectProvider getSecurityObjectProvider() {
+		return _securityObjectProvider;
+	}
+
+	@Override
+	public ResKey hideReason() {
+		ResKey technicalReason = super.hideReason();
+		if (technicalReason != null) {
+			return technicalReason;
+		}
+
+		ResKey securityReason = BoundChecker.hideReasonForSecurity(this, internalModel());
+		if (securityReason != null) {
+			return securityReason;
+		}
+
+		return null;
 	}
 
 	/**

@@ -28,6 +28,7 @@ import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.listener.EventType;
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.listener.PropertyListener;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.Utils;
 import com.top_logic.layout.channel.ComponentChannel;
 import com.top_logic.layout.channel.ComponentChannel.ChannelListener;
@@ -187,6 +188,15 @@ public class RootTileComponent extends SingleLayoutContainer implements LayoutCo
 	public RootTileComponent(InstantiationContext context, Config atts) throws ConfigurationException {
 		super(context, atts);
 		_titleProvider = context.getInstance(getConfig().getTitle());
+	}
+
+	@Override
+	public ResKey hideReason() {
+		LayoutComponent child = getChild();
+		if (child != null) {
+			return child.hideReason();
+		}
+		return super.hideReason();
 	}
 
 	@Override

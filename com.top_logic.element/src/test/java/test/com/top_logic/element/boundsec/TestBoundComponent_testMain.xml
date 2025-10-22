@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
-<component class="test.com.top_logic.element.boundsec.TestBoundComponent$TestedBoundComponent"
-	name="SchuhComponent"
-/>
+<securityLayout name="sl">
+	<component class="test.com.top_logic.element.boundsec.TestBoundComponent$TestedBoundComponent"
+		name="SchuhComponent"
+		securityObject="model"
+	/>
+</securityLayout>

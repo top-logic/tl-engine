@@ -35,7 +35,6 @@ import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.BoundMainLayout;
 import com.top_logic.tool.boundsec.compound.CompoundSecurityLayout;
-import com.top_logic.tool.boundsec.compound.CompoundSecurityLayoutCommandGroupDistributor;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.tool.boundsec.wrap.PersBoundComp;
@@ -374,8 +373,6 @@ public class TestLayoutBasedSecurity extends BasicTestCase {
             return;
         }
         setAccess(aRole, aChecker, aGroup, isAllowed, true);
-        aChecker.acceptVisitorRecursively(new CompoundSecurityLayoutCommandGroupDistributor());
-
     }
 
     /**
@@ -391,14 +388,6 @@ public class TestLayoutBasedSecurity extends BasicTestCase {
     private static void setAccess(BoundedRole aRole, BoundChecker aChecker, BoundCommandGroup aCmdGrp,  boolean isAllowed, boolean recursive) {
 		if (aChecker instanceof BoundCheckerComponent checker) {
 			PersBoundComp persBoundComp = checker.getPersBoundComp();
-            if (isAllowed) {
-				persBoundComp.addAccess(aCmdGrp, aRole);
-            }
-            else {
-				persBoundComp.removeAccess(aCmdGrp, aRole);
-            }
-        } else if (aChecker instanceof CompoundSecurityLayout ) {
-			PersBoundComp persBoundComp = ((CompoundSecurityLayout) aChecker).getPersBoundComp();
             if (isAllowed) {
 				persBoundComp.addAccess(aCmdGrp, aRole);
             }

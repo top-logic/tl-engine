@@ -192,16 +192,16 @@ public class CompoundSecurityLayout extends BoundLayout {
     }
 
     /**
-     * Remove access to the Component using a CommandGroup for a given BoundRole.
-     *
-     * Keep in mind to visit this layout with a
-     * {@link CompoundSecurityLayoutCommandGroupDistributor}
-     * after invoking this method to restore a consistent security.
-     *
-     * @param aGroup    the BoundCommandGroup. If <code>null</code> remove any access for the role
-     * @param aRole     the BoundedRole
-     * @return true if something was actually removed.
-     */
+	 * Remove access to this component using the given {@link BoundCommandGroup} for a given
+	 * {@link BoundedRole}.
+	 *
+	 * @param aGroup
+	 *        The group to remove access for. If <code>null</code>, then any access for the role is
+	 *        removed.
+	 * @param aRole
+	 *        The role to remove access for.
+	 * @return true if something was actually removed.
+	 */
     public boolean removeAccess (BoundCommandGroup aGroup, BoundedRole aRole) {
 		PersBoundComp persBoundComp = getPersBoundComp();
 		if (persBoundComp == null) {
@@ -212,10 +212,6 @@ public class CompoundSecurityLayout extends BoundLayout {
 
     /**
      * Remove all access on this component.
-     *
-     * Keep in mind to visit this layout with a
-     * {@link CompoundSecurityLayoutCommandGroupDistributor}
-     * after invoking this method to restore a consistent security.
      *
      * @return true when something was actually removed.
      */
@@ -228,11 +224,9 @@ public class CompoundSecurityLayout extends BoundLayout {
     }
 
     /**
-     * Add access to the Component using a CommandGroup for a given BoundRole.
-     *
-     * @param aGroup    the BoundCommandGroup
-     * @param aRole     the BoundedRole
-     */
+	 * Add access to this component using the given {@link BoundCommandGroup} for a given
+	 * {@link BoundedRole}.
+	 */
     public void addAccess (BoundCommandGroup aGroup, BoundedRole aRole) {
         PersBoundComp persBoundComp = getPersBoundComp();
  		if (persBoundComp == null) {

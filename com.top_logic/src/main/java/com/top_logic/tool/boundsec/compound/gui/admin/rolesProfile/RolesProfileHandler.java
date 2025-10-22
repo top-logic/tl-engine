@@ -29,7 +29,6 @@ import javax.xml.parsers.SAXParser;
 
 import org.xml.sax.SAXException;
 
-import com.top_logic.basic.CalledFromJSP;
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.Settings;
@@ -61,7 +60,6 @@ import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.compound.CompoundSecurityLayout;
-import com.top_logic.tool.boundsec.compound.CompoundSecurityLayoutCommandGroupDistributor;
 import com.top_logic.tool.boundsec.compound.gui.admin.rolesProfile.SecurityConfig.RoleProfileConfig;
 import com.top_logic.tool.boundsec.compound.gui.admin.rolesProfile.SecurityConfig.ViewConfig;
 import com.top_logic.tool.boundsec.gui.profile.CommandGroupCollector;
@@ -492,47 +490,9 @@ public class RolesProfileHandler {
             ThreadContext.popSuperUser();
         }
 
-        // distribute the imported security
-        aMainLayout.acceptVisitorRecursively(new ProjectLayoutSecurityPostImportVisitor());
-
         return parsingOK;
     }
 
-	/**
-	 * This method visits every {@link LayoutComponent} and reloads the security(roles)-profiles if
-	 * it is a {@link CompoundSecurityLayout}.
-	 * 
-	 * @param aMainLayout
-	 *        The {@link MainLayout} for which the reload should be applied.
-	 */
-	@CalledFromJSP
-	public static void reloadSecurityProfiles(MainLayout aMainLayout) {
-		ProjectLayoutSecurityPostImportVisitor visitor = new ProjectLayoutSecurityPostImportVisitor();
-		aMainLayout.acceptVisitorRecursively(visitor);
-	}
-
-
-    /**
-     * This visitor distributes the profiles set at the project layouts during the import
-     * to the components contained in the project layouts.
-     */
-	protected static class ProjectLayoutSecurityPostImportVisitor extends DefaultDescendingLayoutVisitor {
-
-        /**
-         * Distribute the access set on the Project Layout
-         *
-         * @see com.top_logic.mig.html.layout.LayoutComponentVisitor#visitLayoutComponent(com.top_logic.mig.html.layout.LayoutComponent)
-         */
-        @Override
-		public boolean visitLayoutComponent(LayoutComponent aComponent) {
-            if (aComponent instanceof CompoundSecurityLayout) {
-                CompoundSecurityLayout thePL = (CompoundSecurityLayout) aComponent;
-                thePL.acceptVisitorRecursively(new CompoundSecurityLayoutCommandGroupDistributor());
-            }
-
-            return true;
-        }
-    }
     /**
      * This visitor removes the existing roles profiles form the
      * project layouts so the import can work on a clean layout.

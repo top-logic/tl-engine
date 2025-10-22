@@ -316,7 +316,8 @@ public abstract class ExpressionSelectorComponent<W extends Wrapper> extends For
 			newOptions.removeAll(models);
 			field.setOptions(newOptions);
 			if (models.contains(currentSelection)) {
-				field.setAsSingleSelection(currentSelection);
+				// selection is invalid now. reset it.
+				field.setAsSingleSelection(null);
 			}
 			setActive(true);
 		}

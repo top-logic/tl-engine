@@ -14,6 +14,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -32,6 +33,7 @@ import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.boundsec.manager.ElementAccessImporter;
 import com.top_logic.element.boundsec.manager.ElementAccessManager;
+import com.top_logic.element.boundsec.manager.I18NConstants;
 import com.top_logic.element.boundsec.manager.RoleRulesImporter;
 import com.top_logic.element.boundsec.manager.rule.PathElement;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider;
@@ -102,61 +104,55 @@ public class TestElementAccessImporter extends BasicTestCase {
 
 
     public void testInvalidMetaElementRules() throws Exception {
-        this.singleProblemTest(
+		this.multiProblemTest(
                 ROLE_RULES_INVALID_META_ELEMENT,
-                "admin.security.import.roleRules.problem.unknownMetaElement/sunknown"
+			I18NConstants.UNKNOWN_META_ELEMENT.fill("unknown")
         );
     }
 
     public void testInvalidRoleRules() throws Exception {
-        this.singleProblemTest(
+		this.multiProblemTest(
                 ROLE_RULES_INVALID_ROLE,
-                "admin.security.import.roleRules.problem.unknownRole/sunknown"
+			I18NConstants.ROLE_RULES_PROBLEM_UNKNOWN_ROLE.fill("unknown", "",
+				BoundedRole.getAll()
+					.stream()
+					.map(x -> x.getName())
+					.collect(Collectors.joining(", ")))
         );
     }
 
     public void testInvalidPathMetaElementRules() throws Exception {
         this.multiProblemTest(
                 ROLE_RULES_INVALID_PATH_META_ELEMENT,
-                new String[] {
-                        "admin.security.import.roleRules.problem.unknownMetaElement/sunknown"
-                       // ,"admin.security.import.roleRules.problem.invalidPath/sprojElement.All/stestRole"
-                }
+			I18NConstants.UNKNOWN_META_ELEMENT.fill("unknown")
         );
     }
 
     public void testInvalidPathMetaElement2Rules() throws Exception {
-        this.singleProblemTest(
+		this.multiProblemTest(
                 ROLE_RULES_INVALID_PATH_META_ELEMENT_2,
-			"admin.security.import.roleRules.problem.illegalMetaElement/sprojElement&#58;ROOT&#58;projElement.Project/sprojElement.All"
+			I18NConstants.ILLEGAL_META_ELEMENT.fill("projElement:ROOT:projElement.Project", "projElement.All")
         );
     }
 
     public void testInvalidAttributeRules() throws Exception {
         this.multiProblemTest(
                 ROLE_RULES_INVALID_ATTRIBUTE,
-                new String[] {
-				"admin.security.import.roleRules.problem.unknownAttribute/sprojElement&#58;projElement.ProjectRoot/sMitarbeiter"
-                       // ,"admin.security.import.roleRules.problem.invalidPath/sprojElement.All/stestRole"
-                }
+			I18NConstants.UNKNOWN_ATTRIBUTE.fill("projElement:projElement.ProjectRoot", "Mitarbeiter")
         );
     }
 
     /**
      * Compare problems found when parsing anInput with expectedProblems.
      */
-    public void multiProblemTest(String anInput, String[] expectedProblems) throws Exception {
+	public void multiProblemTest(String anInput, ResKey... expectedProblems) throws Exception {
 		RoleRulesConfig roleRulesConfig = getRoleRulesConfig(anInput);
 		RoleRulesImporter importer = RoleRulesImporter.loadRules(elementAccessManager(), roleRulesConfig);
 		List<ResKey> theProblems = importer.getProblems();
         assertEquals(Arrays.asList(expectedProblems) + " != " + theProblems, expectedProblems.length, theProblems.size());
         for (int i = 0; i < expectedProblems.length; i++) {
-			assertEquals(expectedProblems[i], ResKey.encode(theProblems.get(i)));
+			assertEquals(expectedProblems[i], theProblems.get(i));
         }
-    }
-
-    public void singleProblemTest(String anInput, String aProblem) throws Exception {
-        this.multiProblemTest(anInput, new String[] { aProblem } );
     }
 
     public void testVaildRules() throws Exception {

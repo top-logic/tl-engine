@@ -5286,8 +5286,6 @@ com.top_logic.tool.boundsec.compound.CompoundSecurityLayout.java: Missing docume
 com.top_logic.tool.boundsec.compound.CompoundSecurityLayout.java: Missing documentation: com.top_logic.tool.boundsec.compound.CompoundSecurityLayout.getSecurityDomain
 com.top_logic.tool.boundsec.compound.CompoundSecurityLayoutCommandGroupCollector.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.tool.boundsec.compound.CompoundSecurityLayoutCommandGroupCollector
 com.top_logic.tool.boundsec.compound.CompoundSecurityLayoutCommandGroupCollector.java: Invalid camel case word 'CompoundSecurityLayout', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.tool.boundsec.compound.CompoundSecurityLayoutCommandGroupDistributor.java: Invalid camel case word 'CompoundSecurityLayout', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.tool.boundsec.compound.CompoundSecurityLayoutCommandGroupDistributor.java: Invalid camel case word 'commandGroup', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.tool.boundsec.compound.CompoundSecurityProjectLayout.java: Invalid camel case word 'BoundObject', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.tool.boundsec.compound.CompoundSecurityProjectLayout.java: Invalid camel case word 'anObject', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.tool.boundsec.compound.CompoundSecurityProjectLayout.java: Invalid camel case word 'primaryChecker', this may only be used within JavaDoc links or HTML code tags.

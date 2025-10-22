@@ -8,6 +8,7 @@ package com.top_logic.tool.boundsec;
 import java.util.Collection;
 import java.util.Set;
 
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.mig.html.layout.ComponentName;
@@ -129,7 +130,7 @@ public interface BoundChecker {
 			// A command without the need for access check.
 			return true;
 		}
-		if (user.isAdmin()) {
+		if (ThreadContext.isAdmin()) {
 			// Technical super user that bypasses access checks.
 			return true;
 		}

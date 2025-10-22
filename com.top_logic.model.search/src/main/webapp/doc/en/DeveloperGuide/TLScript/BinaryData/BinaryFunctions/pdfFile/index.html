@@ -1,0 +1,260 @@
+<h2>Syntax</h2>
+
+<pre>
+	<code>pdfFile(html: $htmlContent, name: $filename, pageWidth: $width, pageHeight: $height,
+          resolution: $dpi, marginLeft: $ml, marginRight: $mr, marginTop: $mt, marginBottom: $mb)</code>
+</pre>
+
+<h2>Description</h2>
+
+<p>Converts HTML content into a PDF document. The HTML is rendered as a PDF using the Flying Saucer library, which produces high-quality PDF output from well-formed XHTML.</p>
+
+<p>This function accepts two types of input:</p>
+<ul>
+	<li><strong>String:</strong> Plain HTML as a multi-line string literal (using triple quotes <code>"""..."""</code>)</li>
+	<li><strong>HTMLFragment:</strong> HTML with embedded TLScript expressions (using HTML literal syntax with triple braces <code>{{{...}}}</code>)</li>
+</ul>
+
+<p>This function is particularly useful for generating reports, invoices, or any document that needs to be created dynamically from HTML templates and exported as PDF.</p>
+
+<p><strong>Important:</strong> The HTML must be well-formed XHTML. All tags must be properly closed, and self-closing tags should use XHTML syntax (e.g., <code>&lt;br/&gt;</code> instead of <code>&lt;br&gt;</code>).</p>
+
+<h2>Parameters</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Type</th>
+			<th>Description</th>
+			<th>Mandatory</th>
+			<th>Default</th>
+		</tr>
+		<tr>
+			<td>html</td>
+			<td>String or HTMLFragment</td>
+			<td>The HTML content to convert to PDF. Can be either a plain string (using triple quotes <code>"""..."""</code>) or an HTMLFragment (using triple braces <code>{{{...}}}</code> syntax with embedded TLScript expressions). Must be well-formed XHTML with all tags properly closed.</td>
+			<td>yes</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>name</td>
+			<td>String</td>
+			<td>The filename for the generated PDF. The .pdf extension is added automatically if not present.</td>
+			<td>no</td>
+			<td>document.pdf</td>
+		</tr>
+		<tr>
+			<td>pageWidth</td>
+			<td>Number</td>
+			<td>The page width in pixels.</td>
+			<td>no</td>
+			<td>1240 (A4 width at 150 DPI)</td>
+		</tr>
+		<tr>
+			<td>pageHeight</td>
+			<td>Number</td>
+			<td>The page height in pixels.</td>
+			<td>no</td>
+			<td>1754 (A4 height at 150 DPI)</td>
+		</tr>
+		<tr>
+			<td>resolution</td>
+			<td>Number</td>
+			<td>The rendering resolution in DPI (dots per inch). Higher values produce better quality but larger files.</td>
+			<td>no</td>
+			<td>150</td>
+		</tr>
+		<tr>
+			<td>marginLeft</td>
+			<td>Number</td>
+			<td>The left margin in pixels.</td>
+			<td>no</td>
+			<td>88 (15mm at 150 DPI)</td>
+		</tr>
+		<tr>
+			<td>marginRight</td>
+			<td>Number</td>
+			<td>The right margin in pixels.</td>
+			<td>no</td>
+			<td>88 (15mm at 150 DPI)</td>
+		</tr>
+		<tr>
+			<td>marginTop</td>
+			<td>Number</td>
+			<td>The top margin in pixels.</td>
+			<td>no</td>
+			<td>88 (15mm at 150 DPI)</td>
+		</tr>
+		<tr>
+			<td>marginBottom</td>
+			<td>Number</td>
+			<td>The bottom margin in pixels.</td>
+			<td>no</td>
+			<td>59 (10mm at 150 DPI)</td>
+		</tr>
+	</thead>
+</table>
+
+<h2> </h2>
+
+<h2>Return Value</h2>
+
+<p><strong>Type:</strong> BinaryData</p>
+
+<p>Returns a binary data object containing the generated PDF with content type <code>application/pdf</code>. Returns <code>null</code> if the HTML input is null or empty.</p>
+
+<p>If PDF generation fails, a <code>RuntimeException</code> is thrown with details about the error.</p>
+
+<h2>Examples</h2>
+
+<h3>Simple PDF with String Literal</h3>
+
+<pre>
+	<code>pdfFile("""
+  &lt;html&gt;
+    &lt;body&gt;
+      &lt;h1&gt;Hello World&lt;/h1&gt;
+      &lt;p&gt;This is a PDF generated from HTML.&lt;/p&gt;
+    &lt;/body&gt;
+  &lt;/html&gt;
+""")</code>
+</pre>
+
+<p><strong>Output:</strong> A PDF document named "document.pdf" containing "Hello World" as a heading and a paragraph of text.</p>
+
+<h3>PDF with HTMLFragment and Dynamic Content</h3>
+
+<pre>
+	<code>pdfFile({{{
+  &lt;html&gt;
+    &lt;body&gt;
+      &lt;h1&gt;Invoice for ${$customer.get('name')}&lt;/h1&gt;
+      &lt;p&gt;Date: ${format(now(), 'yyyy-MM-dd')}&lt;/p&gt;
+      &lt;p&gt;Amount: ${$invoice.get('amount')}&lt;/p&gt;
+    &lt;/body&gt;
+  &lt;/html&gt;
+}}}, "invoice-" + $invoice.get('number'))</code>
+</pre>
+
+<p><strong>Output:</strong> A PDF with dynamically generated content. The <code>{{{...}}}</code> syntax allows embedding TLScript expressions directly in the HTML, which are evaluated and safely HTML-escaped before PDF generation.</p>
+
+<h3>PDF with Custom Filename</h3>
+
+<pre>
+	<code>pdfFile("""
+  &lt;html&gt;
+    &lt;body&gt;
+      &lt;h1&gt;Invoice&lt;/h1&gt;
+      &lt;p&gt;Invoice #12345&lt;/p&gt;
+    &lt;/body&gt;
+  &lt;/html&gt;
+""", "invoice-12345")</code>
+</pre>
+
+<p><strong>Output:</strong> A PDF document named "invoice-12345.pdf". The .pdf extension is added automatically.</p>
+
+<h3>Styled Report with Dynamic Filename</h3>
+
+<pre>
+	<code>pdfFile({{{
+  &lt;html&gt;
+    &lt;head&gt;
+      &lt;style&gt;
+        body { font-family: Arial, sans-serif; }
+        h1 { color: #333366; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 8px; }
+        th { background-color: #4CAF50; color: white; }
+      &lt;/style&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+      &lt;h1&gt;Sales Report&lt;/h1&gt;
+      &lt;p&gt;Generated on: ${format(now(), 'yyyy-MM-dd')}&lt;/p&gt;
+      &lt;table&gt;
+        &lt;tr&gt;
+          &lt;th&gt;Product&lt;/th&gt;
+          &lt;th&gt;Quantity&lt;/th&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+          &lt;td&gt;Widget A&lt;/td&gt;
+          &lt;td&gt;150&lt;/td&gt;
+        &lt;/tr&gt;
+      &lt;/table&gt;
+    &lt;/body&gt;
+  &lt;/html&gt;
+}}}, "sales-report-" + format(now(), 'yyyy-MM-dd'))</code>
+</pre>
+
+<p><strong>Output:</strong> A styled PDF report named "sales-report-2025-10-22.pdf" with a table, including embedded CSS styles and dynamic date.</p>
+
+<h3>Dynamic Content with Iteration</h3>
+
+<pre>
+	<code>pdfFile({{{
+  &lt;html&gt;
+    &lt;body&gt;
+      &lt;h1&gt;Invoice Items&lt;/h1&gt;
+      &lt;ul&gt;
+        ${$items.map(item -> {{{
+          &lt;li&gt;${item.get('name')} - ${item.get('price')}&lt;/li&gt;
+        }}})}
+      &lt;/ul&gt;
+    &lt;/body&gt;
+  &lt;/html&gt;
+}}})</code>
+</pre>
+
+<p><strong>Output:</strong> A PDF with a dynamically generated list of invoice items.</p>
+
+<h3>Custom Page Size and Resolution</h3>
+
+<pre>
+	<code>// US Letter size at 200 DPI with custom margins
+pdfFile("""
+  &lt;html&gt;
+    &lt;body&gt;
+      &lt;h1&gt;High Quality Report&lt;/h1&gt;
+      &lt;p&gt;This document is rendered at higher resolution.&lt;/p&gt;
+    &lt;/body&gt;
+  &lt;/html&gt;
+""", "report.pdf", 1700, 2200, 200, 100, 100, 100, 100)</code>
+</pre>
+
+<p><strong>Output:</strong> A PDF with US Letter page size (8.5" x 11" = 1700x2200 px at 200 DPI) and 100-pixel margins on all sides.</p>
+
+<h3>Minimal Margins for Maximum Content</h3>
+
+<pre>
+	<code>// A4 with minimal margins
+pdfFile({{{
+  &lt;html&gt;
+    &lt;body&gt;
+      &lt;h1&gt;Full Page Content&lt;/h1&gt;
+      &lt;p&gt;This uses minimal margins to maximize content area.&lt;/p&gt;
+    &lt;/body&gt;
+  &lt;/html&gt;
+}}}, "full-page.pdf", 1240, 1754, 150, 20, 20, 20, 20)</code>
+</pre>
+
+<p><strong>Output:</strong> A PDF with A4 page size and minimal 20-pixel margins (approximately 3.4mm at 150 DPI).</p>
+
+<h2>Technical Notes</h2>
+
+<ul>
+	<li><strong>Default Settings:</strong> Default page size is A4 (1240x1754 pixels at 150 DPI = 210mm x 297mm)</li>
+	<li><strong>Resolution:</strong> Default resolution is 150 DPI, suitable for most print and screen viewing. Higher values (e.g., 300 DPI) produce better quality but larger files</li>
+	<li><strong>Margins:</strong> Default margins are 15mm (left, right, top) and 10mm (bottom). Margins are specified in pixels at the chosen resolution</li>
+	<li><strong>Page Size Calculations:</strong>
+		<ul>
+			<li>A4 at 150 DPI: 1240 x 1754 pixels</li>
+			<li>US Letter at 150 DPI: 1275 x 1650 pixels</li>
+			<li>A4 at 300 DPI: 2480 x 3508 pixels</li>
+			<li>Formula: pixels = (millimeters / 25.4) × DPI</li>
+		</ul>
+	</li>
+	<li><strong>CSS Support:</strong> Basic CSS2 styles are supported. Complex CSS3 features may not render correctly</li>
+	<li><strong>Images:</strong> External images require accessible URLs. Base64-encoded images are supported</li>
+	<li><strong>Fonts:</strong> Standard fonts are available. Custom fonts may require additional configuration</li>
+	<li><strong>Parameter Order:</strong> All parameters after <code>html</code> are optional and positional. To specify a later parameter, you must provide values (or null) for all earlier parameters</li>
+</ul>

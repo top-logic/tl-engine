@@ -21,6 +21,7 @@ import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.CommandModelFactory;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.control.ButtonControl;
+import com.top_logic.layout.table.model.Column;
 import com.top_logic.layout.table.renderer.DefaultRowClassProvider;
 import com.top_logic.layout.table.renderer.DefaultTableRenderer;
 import com.top_logic.mig.html.HTMLConstants;
@@ -45,11 +46,13 @@ public class CommentTableRenderer extends DefaultTableRenderer {
 		super(context, config);
 	}
 
-    @Override
-	public void writeColumns(DisplayContext context, TagWriter anOut, RenderState state, boolean aIsSelected, int aDisplayedRow, int aRow) throws IOException {
-		{
-            Comment    theComment = (Comment) state.getModel().getValueAt(aRow, 0);
-            TagWriter theWriter  = (TagWriter) anOut;
+	@Override
+	public void writeColumn(TagWriter out, DisplayContext context, RenderState state, boolean isSelected,
+			int columnIndex, int displayedRowIndex, int rowIndex, int leftOffset) throws IOException {
+		Column col = state.getColumn(columnIndex);
+		if (Comment.NAME_ATTRIBUTE.equals(col.getName())) {
+			Comment theComment = (Comment) state.getModel().getValueAt(rowIndex, 0);
+			TagWriter theWriter = out;
             
             // Empty start row for one comment.
             theWriter.beginBeginTag(HTMLConstants.TD);
@@ -99,7 +102,9 @@ public class CommentTableRenderer extends DefaultTableRenderer {
                     theWriter.endTag(HTMLConstants.TR);
                 theWriter.endTag(HTMLConstants.TABLE);
             theWriter.endTag(HTMLConstants.TD);
-        }
+		} else {
+			super.writeColumn(out, context, state, isSelected, columnIndex, displayedRowIndex, rowIndex, leftOffset);
+		}
     }
 
 	protected void writeCommentCreator(TagWriter aWriter, Comment aComment) throws IOException {

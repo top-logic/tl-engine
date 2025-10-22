@@ -43,6 +43,7 @@
 											commandGroups="Read,Write"
 											defaultFor="compoundSecurity:CompoundSecurityChild1ME"
 											name="boundInPL1"
+											securityObject="model"
 										/>
 									</components>
 								</securityLayout>
@@ -56,6 +57,7 @@
 											commandGroups="Read,Write"
 											defaultFor="compoundSecurity:CompoundSecurityChild1ME,compoundSecurity:CompoundSecurityChild3ME"
 											name="boundInPL2"
+											securityObject="model"
 										/>
 									</components>
 								</securityLayout>
@@ -75,6 +77,7 @@
 							commandGroups="Read,Write"
 							defaultFor="compoundSecurity:CompoundSecurityChild3ME"
 							name="boundInPL3"
+							securityObject="model"
 						/>
 					</components>
 				</securityLayout>

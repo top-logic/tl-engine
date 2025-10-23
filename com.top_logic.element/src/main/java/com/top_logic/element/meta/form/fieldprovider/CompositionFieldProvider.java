@@ -53,7 +53,6 @@ import com.top_logic.knowledge.service.event.Modification;
 import com.top_logic.layout.Accessor;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.ReadOnlyAccessor;
 import com.top_logic.layout.Renderer;
 import com.top_logic.layout.ResPrefix;
@@ -61,7 +60,6 @@ import com.top_logic.layout.ResourceView;
 import com.top_logic.layout.VetoException;
 import com.top_logic.layout.basic.AbstractCommandModel;
 import com.top_logic.layout.basic.CommandModel;
-import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.form.FormContainer;
@@ -72,17 +70,14 @@ import com.top_logic.layout.form.control.ButtonControl;
 import com.top_logic.layout.form.control.ErrorControl;
 import com.top_logic.layout.form.control.ImageButtonRenderer;
 import com.top_logic.layout.form.model.CompositeField;
-import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.FormGroup;
-import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.form.model.TableField;
 import com.top_logic.layout.form.tag.TableTag;
 import com.top_logic.layout.form.template.AbstractFormFieldControlProvider;
 import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.layout.messagebox.MessageBox;
 import com.top_logic.layout.messagebox.MessageBox.ButtonType;
-import com.top_logic.layout.messagebox.SimpleFormDialog;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.scripting.recorder.ref.GlobalModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
@@ -122,7 +117,6 @@ import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.annotate.ui.TLRowObject;
 import com.top_logic.model.form.implementation.FormEditorContext;
 import com.top_logic.model.form.implementation.FormMode;
-import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 
@@ -257,12 +251,12 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 					RowObjectRemover remover = null;
 					boolean isSortable = isOrdered;
 					if (rowObjectAnnotation == null || rowObjectAnnotation.isCreatable()) {
-						creator = new RowCreator(update, result.getContentGroup(), obj,
+						creator = new CompositionRowCreator(update, result.getContentGroup(), obj,
 							(TLClass) update.getValueType(),
 							update.isMultiple(), labelKey);
 					}
 					if (rowObjectAnnotation == null || rowObjectAnnotation.isDeletable()) {
-						remover = new RowRemover(updateContainer, update.isMultiple());
+						remover = new CompositionRowRemover(updateContainer, update.isMultiple());
 					}
 					if (rowObjectAnnotation != null) {
 						isSortable = isSortable && rowObjectAnnotation.isSortable();
@@ -898,166 +892,6 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 			return _tableField;
 		}
 
-	}
-
-	/**
-	 * {@link RowObjectRemover} to remove existing rows.
-	 * 
-	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
-	 */
-	private final class RowRemover implements RowObjectRemover {
-
-		private final AttributeUpdateContainer _updateContainer;
-
-		private final boolean _multiple;
-
-		/**
-		 * Creates a new {@link RowRemover}.
-		 * 
-		 * @param updateContainer
-		 *        The {@link AttributeUpdateContainer} of the form.
-		 * @param multiple
-		 *        Whether table contain multiple values.
-		 */
-		RowRemover(AttributeUpdateContainer updateContainer, boolean multiple) {
-			_updateContainer = updateContainer;
-			_multiple = multiple;
-		}
-
-		@Override
-		public void removeRow(Object rowObject, Control aControl) {
-			TableField table = (TableField) ((TableControl) aControl).getModel();
-			TLFormObject row = (TLFormObject) rowObject;
-
-			// Remove updates from update container.
-			_updateContainer.removeOverlay(row);
-
-			// Remember deletion of persistent object.
-			TLObject editedObject = row.getEditedObject();
-			if (editedObject != null) {
-				table.mkSet(DELETED).add(editedObject);
-			}
-
-			// Remove from table field value.
-			removeValue(table, row);
-		}
-
-		private void removeValue(TableField table, TLObject row) {
-			if (_multiple) {
-				Collection<Object> value = new ArrayList<>((Collection<?>) table.getValue());
-				value.remove(row);
-				table.setValue(value);
-			} else {
-				table.setValue(null);
-			}
-		}
-	}
-
-	/**
-	 * {@link RowObjectCreator} to create row for new objects.
-	 * 
-	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
-	 */
-	private final class RowCreator implements RowObjectCreator {
-
-		private final EditContext _context;
-
-		private final FormContainer _contentGroup;
-
-		private final TLObject _owner;
-
-		private final boolean _multiple;
-
-		private final ResKey _labelKey;
-
-		private Set<TLClass> _rowTypes;
-
-		/**
-		 * Creates a new {@link RowCreator}.
-		 * @param owner
-		 *        The owner of the newly created object.
-		 * @param valueType
-		 *        The type of objects being created.
-		 * @param multiple
-		 *        Whether multiple objects can be created.
-		 * @param labelKey
-		 *        The label of the edit context.
-		 */
-		RowCreator(EditContext context, FormContainer contentGroup, TLObject owner,
-				TLClass valueType, boolean multiple, ResKey labelKey) {
-			_context = context;
-			_contentGroup = contentGroup;
-			_owner = owner;
-			_rowTypes = TLModelUtil.getConcreteReflexiveTransitiveSpecializations(valueType);
-			_multiple = multiple;
-			_labelKey = labelKey;
-		}
-
-		@Override
-		public Object createNewRow(Control aControl) {
-			TLClass valueType;
-			Set<TLClass> rowTypes = _rowTypes;
-			if (rowTypes.size() == 1) {
-				valueType = rowTypes.iterator().next();
-
-				return createRow(aControl, valueType);
-			} else {
-				SimpleFormDialog dialog =
-					new SimpleFormDialog(I18NConstants.CREATE_COMPOSITION_ROW, DisplayDimension.px(350),
-						DisplayDimension.px(280)) {
-						private SelectField _selectField;
-
-						@Override
-						protected void fillFormContext(FormContext context) {
-							_selectField = FormFactory.newSelectField(INPUT_FIELD, rowTypes);
-							_selectField.setMandatory(true);
-							context.addMember(_selectField);
-						}
-
-						@Override
-						protected void fillButtons(List<CommandModel> buttons) {
-							addCancel(buttons);
-							buttons.add(MessageBox.button(ButtonType.OK, context -> {
-								TLClass selection = (TLClass) _selectField.getSingleSelection();
-								TLObject newRow = createRow(aControl, selection);
-								((TableListControl) aControl).addNewRow(newRow);
-								getDialogModel().getCloseAction().executeCommand(context);
-								return HandlerResult.DEFAULT_RESULT;
-							}));
-						}
-					};
-				dialog.open(DefaultDisplayContext.getDisplayContext());
-				return null;
-			}
-		}
-
-		final TLObject createRow(Control aControl, TLClass valueType) {
-			TableField tableField = (TableField) ((TableControl) aControl).getModel();
-			TLObject newRow = mkCreateContext(_context, _contentGroup, _owner, valueType, lookupConstructor(_owner));
-			addValue(tableField, newRow);
-			return newRow;
-		}
-
-
-		private void addValue(TableField table, TLObject row) {
-			Collection<?> currentValue = (Collection<?>) table.getValue();
-			ArrayList<Object> value;
-			if (currentValue == null) {
-				value = new ArrayList<>();
-			} else {
-				value = new ArrayList<>(currentValue);
-			}
-			value.add(row);
-			table.setValue(value);
-		}
-
-		@Override
-		public ResKey allowCreateNewRow(int row, TableData data, Control control) {
-			if (!_multiple && !data.getViewModel().getAllRows().isEmpty()) {
-				return I18NConstants.NEW_ROW_DISABLED_NOT_MULTIPLE__ATTRIBUTE.fill(_labelKey);
-			}
-			return RowObjectCreator.super.allowCreateNewRow(row, data, control);
-		}
 	}
 
 	private static final class UnwrapFormTester implements CellExistenceTester {

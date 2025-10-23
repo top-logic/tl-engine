@@ -32,6 +32,7 @@ import com.top_logic.graphic.flow.data.Widget;
 import com.top_logic.graphic.flow.server.control.DiagramControl;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.ModelSpec;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.DirtyHandling;
 import com.top_logic.layout.basic.check.ChangeHandler;
@@ -41,8 +42,7 @@ import com.top_logic.layout.basic.contextmenu.component.factory.SelectableContex
 import com.top_logic.layout.channel.ChannelSPI;
 import com.top_logic.layout.channel.ComponentChannel;
 import com.top_logic.layout.channel.ComponentChannel.ChannelListener;
-import com.top_logic.layout.component.ChannelLinking;
-import com.top_logic.layout.component.ModelSpec;
+import com.top_logic.layout.channel.linking.impl.ChannelLinking;
 import com.top_logic.layout.component.Selectable;
 import com.top_logic.layout.component.SelectableWithSelectionModel;
 import com.top_logic.layout.component.model.SelectionEvent;
@@ -67,6 +67,14 @@ import de.haumacher.msgbuf.observer.Observable;
  */
 public class FlowChartComponent extends BuilderComponent
 		implements SelectableWithSelectionModel, ControlRepresentable {
+
+	/**
+	 * Channels provided by {@link FlowChartComponent}.
+	 */
+	public static final Map<String, ChannelSPI> FLOWCHART_CHANNELS =
+		LayoutComponent.channels(
+			Selectable.MODEL_AND_SELECTION_CHANNEL,
+			DiagramChannel.INSTANCE);
 
 	private DiagramControl _control = new DiagramControl();
 
@@ -369,11 +377,8 @@ public class FlowChartComponent extends BuilderComponent
 	}
 
 	@Override
-	public Map<String, ChannelSPI> channels() {
-		return LayoutComponent.channels(
-			LayoutComponent.MODEL_CHANNEL,
-			Selectable.SelectionChannel.INSTANCE,
-			DiagramChannel.INSTANCE);
+	protected Map<String, ChannelSPI> declareChannels() {
+		return FLOWCHART_CHANNELS;
 	}
 
 	@Override

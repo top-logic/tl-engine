@@ -27,6 +27,7 @@ import com.top_logic.element.meta.TypeSpec;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DummyControlScope;
 import com.top_logic.layout.basic.DummyDisplayContext;
+import com.top_logic.layout.formeditor.export.pdf.SVGReplacedElementFactory;
 import com.top_logic.mig.html.Media;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.EvalContext;
@@ -218,8 +219,14 @@ public class PdfFile extends GenericMethod {
 				// Plain text needs to be wrapped in proper HTML structure
 				String plainText = StreamUtilities.readAllFromStream(binaryData);
 				return "<html><body><pre>" + TagUtilShared.encodeXML(plainText) + "</pre></body></html>";
+			} else if (contentType != null && contentType.startsWith("image/svg")) {
+				// SVG content needs to be embedded in HTML as an img tag with data URI
+				String svgContent = StreamUtilities.readAllFromStream(binaryData);
+				String base64Svg = java.util.Base64.getEncoder().encodeToString(svgContent.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+				String dataUri = "data:image/svg+xml;base64," + base64Svg;
+				return "<html><body><img src=\"" + dataUri + "\" style=\"display:block;\"/></body></html>";
 			} else {
-				throw new RuntimeException("BinaryDataSource must have content type 'text/html' or 'text/plain', but got: " + contentType);
+				throw new RuntimeException("BinaryDataSource must have content type 'text/html', 'text/plain', or 'image/svg+xml', but got: " + contentType);
 			}
 		} else {
 			// Try to convert to string as fallback
@@ -299,6 +306,9 @@ public class PdfFile extends GenericMethod {
 			// Factor converts DPI to points: resolution DPI / 72 points per inch
 			float resolutionFactor = resolution / DPI_TO_POINTS_FACTOR;
 			ITextRenderer renderer = new ITextRenderer(resolutionFactor, ANTI_ALIASING_PASSES);
+
+			// Configure SVG support for rendering SVG images in HTML
+			renderer.getSharedContext().setReplacedElementFactory(new SVGReplacedElementFactory());
 
 			// Inject page size and margins into HTML if not already present
 			String htmlWithPageStyles = injectPageStyles(html, pageWidth, pageHeight,

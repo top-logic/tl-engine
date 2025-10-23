@@ -148,10 +148,14 @@ public class PdfFile extends GenericMethod {
 		int marginTop = asInt(arguments[7]);
 		int marginBottom = asInt(arguments[8]);
 
-		// Convert to HTML string (SVG needs page dimensions for img tag sizing)
+		// Calculate content area dimensions (page minus margins)
+		int contentWidth = pageWidth - marginLeft - marginRight;
+		int contentHeight = pageHeight - marginTop - marginBottom;
+
+		// Convert to HTML string (SVG needs content area dimensions for img tag sizing)
 		String html;
 		try {
-			html = toHtmlString(htmlArg, pageWidth, pageHeight);
+			html = toHtmlString(htmlArg, contentWidth, contentHeight);
 		} catch (IOException ex) {
 			throw new RuntimeException("Failed to render HTML content: " + ex.getMessage(), ex);
 		}
@@ -195,15 +199,15 @@ public class PdfFile extends GenericMethod {
 	 *
 	 * @param htmlArg
 	 *        Either a String, an HTMLFragment, or a BinaryDataSource.
-	 * @param pageWidth
-	 *        The page width for sizing embedded images.
-	 * @param pageHeight
-	 *        The page height for sizing embedded images.
+	 * @param contentWidth
+	 *        The content area width in pixels (page width minus left and right margins).
+	 * @param contentHeight
+	 *        The content area height in pixels (page height minus top and bottom margins).
 	 * @return The HTML content as a string.
 	 * @throws IOException
 	 *         If rendering the HTMLFragment or reading the BinaryDataSource fails.
 	 */
-	private String toHtmlString(Object htmlArg, int pageWidth, int pageHeight) throws IOException {
+	private String toHtmlString(Object htmlArg, int contentWidth, int contentHeight) throws IOException {
 		if (htmlArg instanceof String) {
 			// Direct string input
 			return (String) htmlArg;
@@ -228,9 +232,9 @@ public class PdfFile extends GenericMethod {
 				String base64Svg = java.util.Base64.getEncoder().encodeToString(svgContent.getBytes(java.nio.charset.StandardCharsets.UTF_8));
 				String dataUri = "data:image/svg+xml;base64," + base64Svg;
 
-				// Use full page dimensions for the image since it's the only content
-				return "<html><body><img src=\"" + dataUri + "\" width=\"" + pageWidth
-					+ "\" height=\"" + pageHeight + "\" style=\"display:block;\"/></body></html>";
+				// Use content area dimensions for the image
+				return "<html><body><img src=\"" + dataUri + "\" width=\"" + contentWidth
+					+ "\" height=\"" + contentHeight + "\" style=\"display:block;\"/></body></html>";
 			} else {
 				throw new RuntimeException("BinaryDataSource must have content type 'text/html', 'text/plain', or 'image/svg+xml', but got: " + contentType);
 			}

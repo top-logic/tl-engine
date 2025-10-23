@@ -29,6 +29,7 @@
 		<component class="com.top_logic.doc.component.DocumentationTreeComponent"
 			defaultSelection="false"
 			dragSource="com.top_logic.layout.tree.dnd.DefaultTreeDrag"
+			isSecurityMaster="true"
 			name="${namePrefix}Tree"
 			rootVisible="false"
 			securityObject="${securityObject}"

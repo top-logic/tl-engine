@@ -221,6 +221,45 @@ Types are defined in XML files (`*.model.xml`):
 </model>
 ```
 
+### Exception Handling
+
+TopLogic uses **`TopLogicException`** for user-visible errors that should be displayed with internationalized messages:
+
+```java
+import com.top_logic.util.error.TopLogicException;
+
+// Define I18N constants in I18NConstants.java
+public class I18NConstants extends I18NConstantsBase {
+    /**
+     * @en Failed to generate PDF: {0}
+     */
+    public static ResKey1 ERROR_PDF_GENERATION_FAILED__MSG;
+
+    static {
+        initConstants(I18NConstants.class);
+    }
+}
+
+// Use TopLogicException with I18N constants
+throw new TopLogicException(I18NConstants.ERROR_PDF_GENERATION_FAILED__MSG.fill(ex.getMessage()), ex);
+```
+
+**When to use TopLogicException:**
+- User-visible errors that should be displayed in the UI
+- Errors that need internationalization support
+- Validation failures that users need to understand
+
+**When to use RuntimeException:**
+- Internal programming errors that should not occur in production
+- Errors that indicate bugs rather than user mistakes
+- Low-level technical failures that users cannot act upon
+
+**I18N Constant Naming Convention:**
+- Format: `ERROR_<DESCRIPTION>__<PARAM1>_<PARAM2>`
+- Example: `ERROR_INVALID_PAGE_SIZE__VALUE_VALID` (takes value and valid options as parameters)
+- Use `ResKey` (no params), `ResKey1` (1 param), `ResKey2` (2 params), etc.
+- JavaDoc comment must start with `@en` for English default text
+
 ## Testing Conventions
 
 - Test classes use the `test.` package prefix (e.g., `test.com.top_logic.basic.GenericTest`)

@@ -147,12 +147,12 @@ public class PdfFile extends GenericMethod {
 		/** US Tabloid (279 x 432 mm / 11 x 17 inches) */
 		TABLOID(279, 432);
 
-		private final int widthMm;
-		private final int heightMm;
+		private final int _widthMm;
+		private final int _heightMm;
 
 		PageSize(int widthMm, int heightMm) {
-			this.widthMm = widthMm;
-			this.heightMm = heightMm;
+			_widthMm = widthMm;
+			_heightMm = heightMm;
 		}
 
 		/**
@@ -163,7 +163,7 @@ public class PdfFile extends GenericMethod {
 		 * @return The width in pixels
 		 */
 		public int getWidth(float resolution) {
-			return toPixel(widthMm, resolution);
+			return toPixel(_widthMm, resolution);
 		}
 
 		/**
@@ -174,7 +174,7 @@ public class PdfFile extends GenericMethod {
 		 * @return The height in pixels
 		 */
 		public int getHeight(float resolution) {
-			return toPixel(heightMm, resolution);
+			return toPixel(_heightMm, resolution);
 		}
 	}
 

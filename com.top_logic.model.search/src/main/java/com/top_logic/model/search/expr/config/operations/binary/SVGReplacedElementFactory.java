@@ -9,6 +9,11 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.print.PageFormat;
 import java.awt.print.Paper;
+import java.io.ByteArrayInputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
 import org.apache.batik.transcoder.TranscoderInput;
 import org.apache.batik.transcoder.print.PrintTranscoder;
@@ -52,8 +57,16 @@ public class SVGReplacedElementFactory implements ReplacedElementFactory {
 			return null;
 		}
 
-		ImageResource imageResource = uac.getImageResource(sourceAttr);
-		return new SVGReplacedElement(imageResource, cssWidth, cssHeight);
+		// Decode data URI to reusable byte array, or keep URI string for file references
+		if (isSvgDataUri(sourceAttr)) {
+			// Decode data URI to byte array (can be reused multiple times for page wrapping)
+			byte[] svgData = decodeSvgDataUri(sourceAttr);
+			return new SVGReplacedElement(svgData, cssWidth, cssHeight);
+		} else {
+			// Use URI string for file references (can be read multiple times)
+			ImageResource imageResource = uac.getImageResource(sourceAttr);
+			return new SVGReplacedElement(imageResource.getImageUri(), cssWidth, cssHeight);
+		}
 	}
 
 	/**
@@ -65,6 +78,32 @@ public class SVGReplacedElementFactory implements ReplacedElementFactory {
 	 */
 	private boolean isSvgDataUri(String sourceAttr) {
 		return sourceAttr.startsWith("data:image/svg");
+	}
+
+	/**
+	 * Decodes an SVG data URI to a byte array.
+	 *
+	 * @param dataUri
+	 *        The data URI (either base64-encoded or URL-encoded)
+	 * @return A byte array containing the decoded SVG content
+	 */
+	private byte[] decodeSvgDataUri(String dataUri) {
+		if (dataUri.startsWith("data:image/svg+xml;base64,")) {
+			// Decode base64 data URI
+			String base64Data = dataUri.substring("data:image/svg+xml;base64,".length());
+			return Base64.getDecoder().decode(base64Data);
+		} else if (dataUri.startsWith("data:image/svg+xml,")) {
+			// Handle non-base64 data URI (URL-encoded)
+			String svgData = dataUri.substring("data:image/svg+xml,".length());
+			try {
+				String decoded = URLDecoder.decode(svgData, "UTF-8");
+				return decoded.getBytes(StandardCharsets.UTF_8);
+			} catch (UnsupportedEncodingException e) {
+				throw new RuntimeException("Failed to decode SVG data URI", e);
+			}
+		} else {
+			throw new IllegalArgumentException("Unsupported data URI format: " + dataUri);
+		}
 	}
 
 	@Override
@@ -84,7 +123,7 @@ public class SVGReplacedElementFactory implements ReplacedElementFactory {
 
 	/**
 	 * {@link ITextReplacedElement} rendering an SVG document.
-	 * 
+	 *
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
 	public static class SVGReplacedElement implements ITextReplacedElement {
@@ -95,15 +134,40 @@ public class SVGReplacedElementFactory implements ReplacedElementFactory {
 
 		private int cssHeight;
 
-		private ImageResource _svg;
+		private byte[] _svgData;
+
+		private String _svgUri;
 
 		/**
-		 * Creates a new {@link SVGReplacedElement}.
+		 * Creates a new {@link SVGReplacedElement} from byte array data.
+		 *
+		 * @param svgData
+		 *        The SVG content as byte array (can be reused for multiple paint calls)
+		 * @param cssWidth
+		 *        The width in CSS pixels
+		 * @param cssHeight
+		 *        The height in CSS pixels
 		 */
-		public SVGReplacedElement(ImageResource svg, int cssWidth, int cssHeight) {
+		public SVGReplacedElement(byte[] svgData, int cssWidth, int cssHeight) {
 			this.cssWidth = cssWidth;
 			this.cssHeight = cssHeight;
-			_svg = svg;
+			_svgData = svgData;
+		}
+
+		/**
+		 * Creates a new {@link SVGReplacedElement} from a URI.
+		 *
+		 * @param svgUri
+		 *        The URI to the SVG file (can be re-read for multiple paint calls)
+		 * @param cssWidth
+		 *        The width in CSS pixels
+		 * @param cssHeight
+		 *        The height in CSS pixels
+		 */
+		public SVGReplacedElement(String svgUri, int cssWidth, int cssHeight) {
+			this.cssWidth = cssWidth;
+			this.cssHeight = cssHeight;
+			_svgUri = svgUri;
 		}
 
 		@Override
@@ -157,8 +221,18 @@ public class SVGReplacedElementFactory implements ReplacedElementFactory {
 			PdfTemplate template = cb.createTemplate(width, height);
 			Graphics2D g2d = template.createGraphics(width, height);
 			PrintTranscoder prm = new PrintTranscoder();
-			TranscoderInput ti = new TranscoderInput(_svg.getImageUri());
-			prm.transcode(ti, null);
+
+			// Create a fresh TranscoderInput from stored data (supports multiple paint calls)
+			TranscoderInput transcoderInput;
+			if (_svgData != null) {
+				// Create new InputStream from byte array (data URI case)
+				transcoderInput = new TranscoderInput(new ByteArrayInputStream(_svgData));
+			} else {
+				// Create new TranscoderInput from URI (file reference case)
+				transcoderInput = new TranscoderInput(_svgUri);
+			}
+			prm.transcode(transcoderInput, null);
+
 			PageFormat pg = new PageFormat();
 			Paper pp = new Paper();
 			pp.setSize(width, height);

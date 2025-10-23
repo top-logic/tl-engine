@@ -5,10 +5,6 @@
  */
 package com.top_logic.util;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
-
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
@@ -83,11 +79,10 @@ public class LayoutBasedSecurity extends KBBasedManagedClass<LayoutBasedSecurity
 	/**
 	 * Initialises the {@link PersBoundComp}s within a new {@link Transaction}.
 	 */
-	protected final List<LayoutComponent.Config> initPersBoundComps() {
+	protected final void initPersBoundComps() {
 		try (Transaction tx = kb().beginTransaction(I18NConstants.INITIALIZING_LAYOUT_BASED_SECURITY)) {
-			List<LayoutComponent.Config> result = initPersBoundComps(tx);
+			initPersBoundComps(tx);
 			tx.commit();
-			return result;
 		}
 	}
 
@@ -97,14 +92,10 @@ public class LayoutBasedSecurity extends KBBasedManagedClass<LayoutBasedSecurity
 	 * @param tx
 	 *        The current transaction.
 	 */
-	protected List<LayoutComponent.Config> initPersBoundComps(Transaction tx) {
+	protected void initPersBoundComps(Transaction tx) {
 		SecurityComponentCache.setupCache();
 
-		return LayoutConfig.getAvailableLayouts()
-			.stream()
-			.map(name -> this.initComponent(name))
-			.filter(Objects::nonNull)
-			.collect(Collectors.toList());
+		LayoutConfig.getAvailableLayouts().forEach(this::initComponent);
 	}
 
 	/**
@@ -113,36 +104,26 @@ public class LayoutBasedSecurity extends KBBasedManagedClass<LayoutBasedSecurity
 	 * @param layoutName
 	 *        Identifier for the {@link Layout}
 	 */
-	protected LayoutComponent.Config initComponent(String layoutName) {
-		int existingSecurityComponentsBefore = SecurityComponentCache.getAllSecurityComponents().size();
+	protected void initComponent(String layoutName) {
 
 		LayoutComponent.Config layout;
 		try {
 			layout = loadLayout(layoutName);
 		} catch (ConfigurationException ex) {
 			Logger.error("Loading layout '" + layoutName + "' failed.", ex, LayoutBasedSecurity.class);
-			return null;
+			return;
 		}
 
 		if (layout == null) {
 			// Error has already been reported.
-			return null;
+			return;
 		}
 
 		int count = BoundMainLayout.initPersBoundComp(kb(), layout);
 		if (count > 0) {
 			SecurityComponentCache.setupCache();
 			Logger.info("Created " + count + " objects.", LayoutBasedSecurity.class);
-
-			boolean initialSetup = existingSecurityComponentsBefore == 0;
-			if (initialSetup) {
-				// Quirks: Initial setup.
-				return layout;
-			}
 		}
-
-		// Quirks: Not the initial setup.
-		return null;
 	}
 
 	private LayoutComponent.Config loadLayout(String layoutName) throws ConfigurationException {

@@ -21,6 +21,7 @@ import com.top_logic.basic.Log;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
@@ -37,8 +38,11 @@ import com.top_logic.layout.basic.check.ChangeHandler;
 import com.top_logic.layout.basic.check.MasterSlaveCheckProvider;
 import com.top_logic.layout.basic.contextmenu.component.ContextMenuFactory;
 import com.top_logic.layout.basic.contextmenu.component.factory.SelectableContextMenuFactory;
+import com.top_logic.layout.channel.ChannelSPI;
 import com.top_logic.layout.channel.ComponentChannel;
 import com.top_logic.layout.channel.ComponentChannel.ChannelListener;
+import com.top_logic.layout.component.ChannelLinking;
+import com.top_logic.layout.component.ModelSpec;
 import com.top_logic.layout.component.Selectable;
 import com.top_logic.layout.component.SelectableWithSelectionModel;
 import com.top_logic.layout.component.model.SelectionEvent;
@@ -227,6 +231,9 @@ public class FlowChartComponent extends BuilderComponent
 	@TagName("flowChart")
 	public interface Config extends BuilderComponent.Config, Selectable.SelectableConfig, SelectionModelConfig {
 
+		/** Configuration name for the diagram channel. */
+		String DIAGRAM = "diagram";
+
 		@Override
 		PolymorphicConfiguration<? extends FlowChartBuilder> getModelBuilder();
 
@@ -236,6 +243,12 @@ public class FlowChartComponent extends BuilderComponent
 		@ItemDefault(SelectableContextMenuFactory.class)
 		@ImplementationClassDefault(SelectableContextMenuFactory.class)
 		PolymorphicConfiguration<? extends ContextMenuFactory> getContextMenuFactory();
+
+		/**
+		 * Channel containing the {@link Diagram} description.
+		 */
+		@Name(DIAGRAM)
+		ModelSpec getDiagram();
 
 		@Override
 		@ClassDefault(FlowChartComponent.class)
@@ -338,6 +351,9 @@ public class FlowChartComponent extends BuilderComponent
 		}
 
 		_control.setModel(diagram);
+
+		// Update the diagram channel
+		diagramChannel().set(diagram);
 	}
 
 	@Override
@@ -345,13 +361,41 @@ public class FlowChartComponent extends BuilderComponent
 		return _control;
 	}
 
+	/**
+	 * The {@link ComponentChannel} that contains the {@link Diagram} description.
+	 */
+	public ComponentChannel diagramChannel() {
+		return getChannel(DiagramChannel.NAME);
+	}
+
+	@Override
+	public Map<String, ChannelSPI> channels() {
+		return LayoutComponent.channels(
+			LayoutComponent.MODEL_CHANNEL,
+			Selectable.SelectionChannel.INSTANCE,
+			DiagramChannel.INSTANCE);
+	}
+
 	@Override
 	public void linkChannels(Log log) {
 		super.linkChannels(log);
 
 		linkSelectionChannel(log);
+		linkDiagramChannel(log);
 
 		selectionChannel().addListener(_processChannelSelection);
+	}
+
+	/**
+	 * Links the {@link #diagramChannel()} to configured sources.
+	 */
+	protected void linkDiagramChannel(Log log) {
+		Config config = (Config) getConfig();
+		ModelSpec diagram = config.getDiagram();
+		if (diagram != null) {
+			ChannelLinking channelLinking = getChannelLinking(diagram);
+			diagramChannel().linkChannel(log, this, channelLinking);
+		}
 	}
 
 	@Override

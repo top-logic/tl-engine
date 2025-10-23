@@ -286,3 +286,4 @@ mvn exec:java@migrate-ticket28336
 - **Tutorial**: https://dev.top-logic.com/tl/content/docs/Tutorial/
 - **Discord Server**: https://discord.gg/XsNq9JXTe9
 - **Organization**: Business Operation Systems GmbH (https://top-logic.com)
+- Git commit messages start with the ticket number and have the format "Ticket #1234: Description of the change."

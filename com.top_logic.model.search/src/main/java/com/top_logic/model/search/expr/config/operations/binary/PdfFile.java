@@ -21,6 +21,7 @@ import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.module.services.ServletContextService;
+import com.top_logic.basic.shared.html.TagUtilShared;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.element.meta.TypeSpec;
 import com.top_logic.layout.DisplayContext;
@@ -210,9 +211,13 @@ public class PdfFile extends GenericMethod {
 			BinaryDataSource binaryData = (BinaryDataSource) htmlArg;
 			String contentType = binaryData.getContentType();
 
-			// Accept text/html or text/plain content types
-			if (contentType != null && (contentType.startsWith("text/html") || contentType.startsWith("text/plain"))) {
+			if (contentType != null && contentType.startsWith("text/html")) {
+				// HTML content can be used directly
 				return StreamUtilities.readAllFromStream(binaryData);
+			} else if (contentType != null && contentType.startsWith("text/plain")) {
+				// Plain text needs to be wrapped in proper HTML structure
+				String plainText = StreamUtilities.readAllFromStream(binaryData);
+				return "<html><body><pre>" + TagUtilShared.encodeXML(plainText) + "</pre></body></html>";
 			} else {
 				throw new RuntimeException("BinaryDataSource must have content type 'text/html' or 'text/plain', but got: " + contentType);
 			}

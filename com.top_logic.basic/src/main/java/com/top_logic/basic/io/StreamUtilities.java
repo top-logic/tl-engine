@@ -29,6 +29,7 @@ import java.util.stream.Stream;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.equal.CustomEqualitySpecification;
 import com.top_logic.basic.col.equal.EqualityRedirect;
+import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.io.binary.ByteArrayStream;
 
@@ -206,6 +207,30 @@ public abstract class StreamUtilities {
 		try (InputStream in = content.getStream()) {
 			return readAllFromStream(in, encoding);
 		}
+	}
+
+	/**
+	 * Reads the content from a {@link BinaryData} with {@link #ENCODING ISO} encoding.
+	 *
+	 * <p>
+	 * This overload resolves ambiguity between {@link BinaryContent} and {@link BinaryDataSource}
+	 * methods for {@link BinaryData} which implements both interfaces.
+	 * </p>
+	 */
+	public static String readAllFromStream(BinaryData data) throws IOException {
+		return readAllFromStream((BinaryContent) data, ENCODING);
+	}
+
+	/**
+	 * Reads the content from a {@link BinaryData} with the given character encoding.
+	 *
+	 * <p>
+	 * This overload resolves ambiguity between {@link BinaryContent} and {@link BinaryDataSource}
+	 * methods for {@link BinaryData} which implements both interfaces.
+	 * </p>
+	 */
+	public static String readAllFromStream(BinaryData data, String encoding) throws IOException {
+		return readAllFromStream((BinaryContent) data, encoding);
 	}
 
 	/**

@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.layout.formeditor.export.pdf;
+package com.top_logic.model.search.expr.config.operations.binary;
 
 import java.awt.Graphics2D;
 import java.awt.Point;

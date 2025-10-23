@@ -213,6 +213,18 @@ public abstract class StreamUtilities {
 	}
 
 	/**
+	 * Reads the content from a {@link BinaryData} with the given character encoding.
+	 *
+	 * <p>
+	 * This overload resolves ambiguity between {@link BinaryContent} and {@link BinaryDataSource}
+	 * methods for {@link BinaryData} which implements both interfaces.
+	 * </p>
+	 */
+	public static String readAllFromStream(BinaryData data, String encoding) throws IOException {
+		return readAllFromStream((BinaryContent) data, encoding);
+	}
+
+	/**
 	 * Reads the content from a {@link BinaryData} with encoding specified in content type (using
 	 * {@link #ENCODING ISO} as default).
 	 */

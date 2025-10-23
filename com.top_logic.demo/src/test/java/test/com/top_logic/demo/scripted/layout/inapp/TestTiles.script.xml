@@ -574,7 +574,7 @@
 					<constraints>
 						<constraint class="com.top_logic.layout.scripting.check.EqualsCheck">
 							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
-								<value><![CDATA[Name der neuen Komponente. Dieser Name wird in der Navigationsleiste angezeigt. <br/> Der Name wird parametrisiert mit dem Kontextmodell der Komponente angezeigt. Das Kontextmodell wird an der Stelle '{0}' im Namen angezeigt.]]></value>
+								<value><![CDATA[Name der neuen Komponente. <p> Der Name wird in der Navigationsleiste angezeigt. Er wird parametrisiert mit dem Kontextmodell der Komponente angezeigt. Das Kontext-Modell wird an der Position '{0}' im Namen angezeigt. </p>]]></value>
 							</expected-value>
 						</constraint>
 					</constraints>

@@ -9,8 +9,6 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.tiles.RootTileComponent;
 import com.top_logic.mig.html.layout.tiles.StepOutCommand;
-import com.top_logic.mig.html.layout.tiles.component.StepOutTileCommand;
-import com.top_logic.mig.html.layout.tiles.component.TileContainerComponent;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
 
@@ -23,20 +21,16 @@ public class StepOutHelper {
 
 	private LayoutComponent _container;
 
-	private CommandHandler _legacyHandler;
-
 	private CommandHandler _handler;
 
 	public StepOutHelper(LayoutComponent component) {
 		_container = findContainer(component);
-		_legacyHandler = CommandHandlerFactory.getInstance().getHandler(StepOutTileCommand.COMMAND_ID);
 		_handler = CommandHandlerFactory.getInstance().getHandler(StepOutCommand.COMMAND_ID);
 	}
 
 	private LayoutComponent findContainer(LayoutComponent component) {
 		LayoutComponent container = component;
-		while (container != null && !(container instanceof TileContainerComponent)
-			&& !(container instanceof RootTileComponent)) {
+		while (container != null && !(container instanceof RootTileComponent)) {
 			container = container.getParent();
 		}
 		if (container == null) {
@@ -48,8 +42,6 @@ public class StepOutHelper {
 	public void stepOut(DisplayContext aContext) {
 		if (_container instanceof RootTileComponent) {
 			_handler.handleCommand(aContext, _container, null, null);
-		} else {
-			_legacyHandler.handleCommand(aContext, _container, null, null);
 		}
 	}
 

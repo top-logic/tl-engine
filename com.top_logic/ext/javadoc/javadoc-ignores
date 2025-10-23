@@ -4939,9 +4939,6 @@ com.top_logic.mig.html.layout.tag.LayoutHtml.java: Invalid camel case word 'Layo
 com.top_logic.mig.html.layout.tag.LayoutHtml.java: Invalid camel case word 'PageContext', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.mig.html.layout.tag.LayoutHtml.java: Invalid camel case word 'RumtimeException', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.mig.html.layout.tag.LayoutHtml.java: Missing documentation: com.top_logic.mig.html.layout.tag.LayoutHtml.contentsOnly
-com.top_logic.mig.html.layout.tiles.component.SingleTileProvider.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.mig.html.layout.tiles.component.SingleTileProvider.Config
-com.top_logic.mig.html.layout.tiles.component.TileContainerComponent.java: Invalid camel case word 'tileLayout', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.mig.html.layout.tiles.scripting.TileInspectCommand.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.mig.html.layout.tiles.scripting.TileInspectCommand
 com.top_logic.mig.sap.SAPConnectionException.java: Invalid camel case word 'MetaObject', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.mig.sap.SAPConnectionException.java: Invalid camel case word 'SAPConnectionException', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.mig.sap.SAPConst.java: Invalid camel case word 'getObjectEntry', this may only be used within JavaDoc links or HTML code tags.

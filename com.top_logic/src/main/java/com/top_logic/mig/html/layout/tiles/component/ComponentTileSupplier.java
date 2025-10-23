@@ -28,8 +28,7 @@ public interface ComponentTileSupplier extends Supplier<List<ComponentTile>> {
 	 * Returns the root {@link LayoutComponent} of the tile hierarchy to which this
 	 * {@link ComponentTileSupplier} belongs.
 	 * 
-	 * @apiNote Currently this is either a {@link RootTileComponent} or a
-	 *          {@link TileContainerComponent}.
+	 * @apiNote Currently this is a {@link RootTileComponent}.
 	 */
 	LayoutComponent getRootComponent();
 

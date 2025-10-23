@@ -264,7 +264,7 @@
 					
 					<provider kind="CODE" type="com.top_logic.tool.boundsec.gui.profile.SecurityNode" implementation="com.top_logic.tool.boundsec.gui.profile.SecurityNodeResources" />
 		            <provider kind="CODE" type="com.top_logic.layout.component.TabComponent$TabbedLayoutComponent" implementation="com.top_logic.layout.tabbar.TabbedLayoutComponentResourceProvider" />
-		            <provider kind="CODE" type="com.top_logic.mig.html.layout.tiles.component.ContainerComponentTile" implementation="com.top_logic.mig.html.layout.tiles.component.ComponentTileResourceProvider" />
+		            <provider kind="CODE" type="com.top_logic.mig.html.layout.tiles.component.ComponentTile" implementation="com.top_logic.mig.html.layout.tiles.component.ComponentTileResourceProvider" />
 		            <provider kind="CODE" type="com.top_logic.basic.module.BasicRuntimeModule" implementation="com.top_logic.layout.admin.component.TLServiceResourceProvider" />
 				</resource-providers>
 				
@@ -1450,26 +1450,6 @@
 						resourceKey="debug.button.toggleShowAllCommands"
 					/>
 
-					<handler id="configureTileGroup" class="com.top_logic.mig.html.layout.tiles.component.ConfigureGroupCommand"
-						clique="tile-settings"
-						image="theme:TILES_CONFIGURE_GROUP_ICON"
-					/>
-					<handler id="stepOutTile" class="com.top_logic.mig.html.layout.tiles.component.StepOutTileCommand"
-						clique="tile-navigation"
-						image="theme:TILES_STEP_OUT_TILE_ICON"
-					/>
-					<handler id="stepIntoTile" class="com.top_logic.mig.html.layout.tiles.component.StepIntoContextTile"
-						clique="tile-settings"
-						image="theme:TILES_STEP_INTO_CONTEXT_ICON"
-					/>
-					<handler id="addTileGroup" class="com.top_logic.mig.html.layout.tiles.component.AddGroupCommand"
-						clique="tile-settings"
-						image="theme:TILES_ADD_GROUP_ICON"
-					/>
-					<handler id="addComponent" class="com.top_logic.mig.html.layout.tiles.component.AddComponentCommand"
-						clique="tile-settings"
-						image="theme:TILES_ADD_VIEW_ICON"
-					/>
 		            <handler id="toggleDesignModeCommand" class="com.top_logic.layout.editor.commands.ToggleDesignModeCommand"
 		            	clique="layout-editor-reset"
 						image="theme:layouts.themes.default.toolrow.designModeButton.ToggleDesignModeCommand"
@@ -1839,7 +1819,6 @@
 					<scheme class="com.top_logic.layout.component.SelectableSelectionNaming"/>
 					<scheme class="com.top_logic.mig.html.GenericSelectionModelNaming" />
 					<scheme class="com.top_logic.mig.html.SelectionNaming" />
-					<scheme class="com.top_logic.mig.html.layout.tiles.scripting.TileLayoutNaming" />
 					<scheme class="com.top_logic.mig.html.layout.tiles.scripting.InlinedTileComponentNaming" priority="resolve-only"/>
 					<scheme class="com.top_logic.layout.basic.CommandModelNaming" />
 					<scheme class="com.top_logic.layout.form.popupmenu.PopupCommandNaming" priority="preferred"/>

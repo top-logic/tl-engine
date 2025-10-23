@@ -395,20 +395,8 @@
 	<icon name="com.top_logic.knowledge.gui.layout.tree.Icons.PS"
 		expr="%com.top_logic.layout.tree.renderer.Icons.TREE_COLLAPSED%"
 	/>
-	<icon name="TILES_CONFIGURE_GROUP_ICON"
-		expr="%ICONS_GEAR%"
-	/>
 	<icon name="TILES_STEP_OUT_TILE_ICON"
 		expr="%ICONS_BUTTON_BACKWARD%"
-	/>
-	<icon name="TILES_STEP_INTO_CONTEXT_ICON"
-		value="css:fa-solid fa-arrow-right-to-bracket"
-	/>
-	<icon name="TILES_ADD_GROUP_ICON"
-		value="css:fa-solid fa-layer-group"
-	/>
-	<icon name="TILES_ADD_VIEW_ICON"
-		expr="%ICONS_CANCEL_BUTTON%"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.BOX_EXPANDED"
 		expr="%com.top_logic.layout.table.control.Icons.ICONS_MOVE_ROW_UP%"

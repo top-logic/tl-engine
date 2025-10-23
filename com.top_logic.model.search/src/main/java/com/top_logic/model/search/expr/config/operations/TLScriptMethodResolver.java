@@ -14,7 +14,6 @@ import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -108,9 +107,11 @@ public class TLScriptMethodResolver extends AbstractConfiguredInstance<TLScriptM
 			}
 		}
 		_buildersByName = buildersByName;
-		_factories = _buildersByName.entrySet()
+		_factories = _buildersByName.values()
 			.stream()
-			.collect(Collectors.toMap(Entry::getKey, e -> new SearchBuilder.BuilderFactory(e.getValue())));
+			.collect(Collectors.toMap(
+				builder -> builder.getId(),
+				builder -> new SearchBuilder.BuilderFactory(builder)));
 	}
 
 	private String prefixLocalName(String scriptPrefix, String localScriptName) {

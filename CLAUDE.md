@@ -279,6 +279,15 @@ mvn exec:java@migrate-ticket28336
 - **bos-settings/** - Build settings and configuration
 - **tl-doc/** - Documentation and JavaDoc output
 
+## Git Commit Message Convention
+
+Commit messages in this project must follow a specific format:
+
+- **Format**: `Ticket #<number>: <description>`
+- **Example**: `Ticket #28934: Add data URI SVG support to SVGReplacedElementFactory.`
+- **Important**: Do NOT include "Generated with Claude Code", "Co-Authored-By: Claude", or any AI-generation attribution lines
+- Keep the message plain and focused on describing the change
+
 ## Additional Resources
 
 - **Main Repository**: https://github.com/top-logic/tl-engine
@@ -286,4 +295,3 @@ mvn exec:java@migrate-ticket28336
 - **Tutorial**: https://dev.top-logic.com/tl/content/docs/Tutorial/
 - **Discord Server**: https://discord.gg/XsNq9JXTe9
 - **Organization**: Business Operation Systems GmbH (https://top-logic.com)
-- Git commit messages start with the ticket number and have the format "Ticket #1234: Description of the change."

@@ -344,13 +344,14 @@ public class PdfFile extends GenericMethod {
 			return html.replace("</head>", pageStyle + "</head>");
 		}
 
-		// Otherwise inject after <html> or at the beginning
+		// Otherwise inject after <html> if present
 		if (html.contains("<html>")) {
 			return html.replace("<html>", "<html>" + pageStyle);
 		}
 
-		// As a fallback, prepend the style
-		return pageStyle + html;
+		// As a fallback, construct valid HTML from content-only input
+		// This happens when the user provides only content without HTML structure
+		return "<html><head>" + pageStyle + "</head><body>" + html + "</body></html>";
 	}
 
 	@Override

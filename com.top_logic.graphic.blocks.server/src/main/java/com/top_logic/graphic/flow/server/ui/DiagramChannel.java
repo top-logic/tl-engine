@@ -5,8 +5,6 @@
  */
 package com.top_logic.graphic.flow.server.ui;
 
-import java.util.Collections;
-
 import com.top_logic.graphic.flow.data.Diagram;
 import com.top_logic.layout.channel.ChannelSPI;
 import com.top_logic.layout.channel.DefaultChannelSPI;
@@ -30,6 +28,6 @@ public final class DiagramChannel {
 	/**
 	 * Singleton {@link DiagramChannel} instance.
 	 */
-	public static final ChannelSPI INSTANCE = new DefaultChannelSPI(NAME, null, Collections.emptySet());
+	public static final ChannelSPI INSTANCE = new DefaultChannelSPI(NAME, null);
 
 }

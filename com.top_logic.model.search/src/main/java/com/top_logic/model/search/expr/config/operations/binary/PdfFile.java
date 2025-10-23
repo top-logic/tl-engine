@@ -149,11 +149,8 @@ public class PdfFile extends GenericMethod {
 			return null;
 		}
 
-		// Extract the optional filename from the second argument, default to "document.pdf"
+		// Extract the optional filename from the second argument
 		String filename = asString(arguments[1]);
-		if (filename == null || filename.trim().isEmpty()) {
-			filename = "document.pdf";
-		}
 
 		// Ensure the filename has .pdf extension
 		if (!filename.toLowerCase().endsWith(".pdf")) {
@@ -161,13 +158,13 @@ public class PdfFile extends GenericMethod {
 		}
 
 		// Extract optional rendering parameters
-		int pageWidth = asInt(arguments[2], DEFAULT_PAGE_WIDTH);
-		int pageHeight = asInt(arguments[3], DEFAULT_PAGE_HEIGHT);
-		float resolution = asFloat(arguments[4], DEFAULT_PDF_RESOLUTION);
-		int marginLeft = asInt(arguments[5], toPixel(DEFAULT_MARGIN_MM, resolution));
-		int marginRight = asInt(arguments[6], toPixel(DEFAULT_MARGIN_MM, resolution));
-		int marginTop = asInt(arguments[7], toPixel(DEFAULT_MARGIN_MM, resolution));
-		int marginBottom = asInt(arguments[8], toPixel(10, resolution)); // Default bottom margin is 10mm
+		int pageWidth = asInt(arguments[2]);
+		int pageHeight = asInt(arguments[3]);
+		float resolution = asFloat(arguments[4]);
+		int marginLeft = asInt(arguments[5]);
+		int marginRight = asInt(arguments[6]);
+		int marginTop = asInt(arguments[7]);
+		int marginBottom = asInt(arguments[8]);
 
 		try {
 			// Convert HTML to PDF with specified parameters and return as binary data
@@ -368,14 +365,14 @@ public class PdfFile extends GenericMethod {
 		/** Description of parameters for a {@link PdfFile}. */
 		public static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
 			.mandatory("html")
-			.optional("name")
-			.optional("pageWidth")
-			.optional("pageHeight")
-			.optional("resolution")
-			.optional("marginLeft")
-			.optional("marginRight")
-			.optional("marginTop")
-			.optional("marginBottom")
+			.optional("name", "document.pdf")
+			.optional("pageWidth", DEFAULT_PAGE_WIDTH)
+			.optional("pageHeight", DEFAULT_PAGE_HEIGHT)
+			.optional("resolution", DEFAULT_PDF_RESOLUTION)
+			.optional("marginLeft", toPixel(DEFAULT_MARGIN_MM, DEFAULT_PDF_RESOLUTION))
+			.optional("marginRight", toPixel(DEFAULT_MARGIN_MM, DEFAULT_PDF_RESOLUTION))
+			.optional("marginTop", toPixel(DEFAULT_MARGIN_MM, DEFAULT_PDF_RESOLUTION))
+			.optional("marginBottom", toPixel(10, DEFAULT_PDF_RESOLUTION))
 			.build();
 
 		/**

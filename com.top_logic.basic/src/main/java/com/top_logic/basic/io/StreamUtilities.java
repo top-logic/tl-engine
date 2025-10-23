@@ -29,6 +29,7 @@ import java.util.stream.Stream;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.equal.CustomEqualitySpecification;
 import com.top_logic.basic.col.equal.EqualityRedirect;
+import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.io.binary.ByteArrayStream;
 
 /**
@@ -205,6 +206,32 @@ public abstract class StreamUtilities {
 		try (InputStream in = content.getStream()) {
 			return readAllFromStream(in, encoding);
 		}
+	}
+
+	/**
+	 * Reads the content from a {@link BinaryDataSource} with {@link #ENCODING ISO} encoding.
+	 *
+	 * <p>
+	 * This method efficiently reads from {@link BinaryDataSource} without converting to
+	 * {@link com.top_logic.basic.io.binary.BinaryData} first.
+	 * </p>
+	 */
+	public static String readAllFromStream(BinaryDataSource source) throws IOException {
+		return readAllFromStream(source, ENCODING);
+	}
+
+	/**
+	 * Reads the content from a {@link BinaryDataSource} with the given character encoding.
+	 *
+	 * <p>
+	 * This method efficiently reads from {@link BinaryDataSource} without converting to
+	 * {@link com.top_logic.basic.io.binary.BinaryData} first.
+	 * </p>
+	 */
+	public static String readAllFromStream(BinaryDataSource source, String encoding) throws IOException {
+		ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+		source.deliverTo(buffer);
+		return buffer.toString(encoding);
 	}
 
 	/**

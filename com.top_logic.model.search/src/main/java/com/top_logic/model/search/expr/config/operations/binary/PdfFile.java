@@ -27,7 +27,6 @@ import com.top_logic.element.meta.TypeSpec;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DummyControlScope;
 import com.top_logic.layout.basic.DummyDisplayContext;
-import com.top_logic.layout.formeditor.export.pdf.SVGReplacedElementFactory;
 import com.top_logic.mig.html.Media;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.EvalContext;

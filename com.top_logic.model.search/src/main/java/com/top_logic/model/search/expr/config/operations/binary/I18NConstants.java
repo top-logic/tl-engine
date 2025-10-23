@@ -60,7 +60,7 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_HTML_RENDER_FAILED__MSG;
 
 	/**
-	 * @en Failed to generate PDF from HTML: {0}
+	 * @en Failed to generate PDF: {0}
 	 */
 	public static ResKey1 ERROR_PDF_GENERATION_FAILED__MSG;
 
@@ -70,7 +70,8 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey2 ERROR_INVALID_PAGE_SIZE__VALUE_VALID;
 
 	/**
-	 * @en BinaryDataSource must have content type 'text/html', 'text/plain', or 'image/svg+xml', but got: {0}
+	 * @en Binary data must have content type 'text/html', 'text/plain', or 'image/svg+xml', but
+	 *     got: {0}
 	 */
 	public static ResKey1 ERROR_INVALID_BINARY_CONTENT_TYPE__TYPE;
 

@@ -113,6 +113,71 @@ public class PdfFile extends GenericMethod {
 	private static final float INCH_MILLIES_FACTOR = 25.4F;
 
 	/**
+	 * Standard paper sizes with dimensions in millimeters.
+	 */
+	public enum PageSize {
+		/** A0 paper size (841 x 1189 mm) */
+		A0(841, 1189),
+
+		/** A1 paper size (594 x 841 mm) */
+		A1(594, 841),
+
+		/** A2 paper size (420 x 594 mm) */
+		A2(420, 594),
+
+		/** A3 paper size (297 x 420 mm) */
+		A3(297, 420),
+
+		/** A4 paper size (210 x 297 mm) - most common */
+		A4(210, 297),
+
+		/** A5 paper size (148 x 210 mm) */
+		A5(148, 210),
+
+		/** A6 paper size (105 x 148 mm) */
+		A6(105, 148),
+
+		/** US Letter (216 x 279 mm / 8.5 x 11 inches) */
+		LETTER(216, 279),
+
+		/** US Legal (216 x 356 mm / 8.5 x 14 inches) */
+		LEGAL(216, 356),
+
+		/** US Tabloid (279 x 432 mm / 11 x 17 inches) */
+		TABLOID(279, 432);
+
+		private final int widthMm;
+		private final int heightMm;
+
+		PageSize(int widthMm, int heightMm) {
+			this.widthMm = widthMm;
+			this.heightMm = heightMm;
+		}
+
+		/**
+		 * Get the width in pixels for the given resolution.
+		 *
+		 * @param resolution
+		 *        The resolution in DPI
+		 * @return The width in pixels
+		 */
+		public int getWidth(float resolution) {
+			return toPixel(widthMm, resolution);
+		}
+
+		/**
+		 * Get the height in pixels for the given resolution.
+		 *
+		 * @param resolution
+		 *        The resolution in DPI
+		 * @return The height in pixels
+		 */
+		public int getHeight(float resolution) {
+			return toPixel(heightMm, resolution);
+		}
+	}
+
+	/**
 	 * Creates a {@link PdfFile} expression.
 	 */
 	protected PdfFile(String name, SearchExpression[] arguments) {
@@ -140,13 +205,41 @@ public class PdfFile extends GenericMethod {
 		}
 
 		// Extract optional rendering parameters
-		int pageWidth = asInt(arguments[2]);
-		int pageHeight = asInt(arguments[3]);
-		float resolution = asFloat(arguments[4]);
-		int marginLeft = asInt(arguments[5]);
-		int marginRight = asInt(arguments[6]);
-		int marginTop = asInt(arguments[7]);
-		int marginBottom = asInt(arguments[8]);
+		PageSize pageSize = asPageSize(arguments[2]);
+		boolean landscape = asBoolean(arguments[3]);
+		int pageWidthAdjust = asInt(arguments[4]);
+		int pageHeightAdjust = asInt(arguments[5]);
+		float resolution = asFloat(arguments[6]);
+		int marginLeft = asInt(arguments[7]);
+		int marginRight = asInt(arguments[8]);
+		int marginTop = asInt(arguments[9]);
+		int marginBottom = asInt(arguments[10]);
+
+		// Determine page dimensions: start with pageSize if given, then apply adjustments
+		int pageWidth;
+		int pageHeight;
+		if (pageSize != null) {
+			// Use standard page size
+			if (landscape) {
+				// Swap width and height for landscape
+				pageWidth = pageSize.getHeight(resolution);
+				pageHeight = pageSize.getWidth(resolution);
+			} else {
+				pageWidth = pageSize.getWidth(resolution);
+				pageHeight = pageSize.getHeight(resolution);
+			}
+			// Apply adjustments if provided
+			if (pageWidthAdjust != 0) {
+				pageWidth = pageWidthAdjust;
+			}
+			if (pageHeightAdjust != 0) {
+				pageHeight = pageHeightAdjust;
+			}
+		} else {
+			// Use explicit dimensions or defaults
+			pageWidth = pageWidthAdjust != 0 ? pageWidthAdjust : DEFAULT_PAGE_WIDTH;
+			pageHeight = pageHeightAdjust != 0 ? pageHeightAdjust : DEFAULT_PAGE_HEIGHT;
+		}
 
 		// Calculate content area dimensions (page minus margins)
 		int contentWidth = pageWidth - marginLeft - marginRight;
@@ -192,6 +285,37 @@ public class PdfFile extends GenericMethod {
 	 */
 	private static int toPixel(int millimeter, float resolution) {
 		return (int) (millimeter * (resolution / INCH_MILLIES_FACTOR));
+	}
+
+	/**
+	 * Converts an argument to a {@link PageSize} enum value.
+	 *
+	 * @param arg
+	 *        The argument (can be String, PageSize, or null)
+	 * @return The PageSize enum value, or null if not provided
+	 */
+	private PageSize asPageSize(Object arg) {
+		if (arg == null) {
+			return null;
+		}
+		if (arg instanceof PageSize) {
+			return (PageSize) arg;
+		}
+		if (arg instanceof String) {
+			String str = (String) arg;
+			if (str.isEmpty()) {
+				return null;
+			}
+			try {
+				return PageSize.valueOf(str.toUpperCase());
+			} catch (IllegalArgumentException e) {
+				throw new RuntimeException("Invalid page size: " + str + ". Valid values are: " +
+					String.join(", ", java.util.Arrays.stream(PageSize.values())
+						.map(Enum::name)
+						.toArray(String[]::new)));
+			}
+		}
+		throw new RuntimeException("Invalid page size argument type: " + arg.getClass().getName());
 	}
 
 	/**
@@ -404,8 +528,10 @@ public class PdfFile extends GenericMethod {
 		public static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
 			.mandatory("html")
 			.optional("name", "document.pdf")
-			.optional("pageWidth", DEFAULT_PAGE_WIDTH)
-			.optional("pageHeight", DEFAULT_PAGE_HEIGHT)
+			.optional("pageSize")
+			.optional("landscape", false)
+			.optional("pageWidth", 0)
+			.optional("pageHeight", 0)
 			.optional("resolution", DEFAULT_PDF_RESOLUTION)
 			.optional("marginLeft", toPixel(DEFAULT_MARGIN_MM, DEFAULT_PDF_RESOLUTION))
 			.optional("marginRight", toPixel(DEFAULT_MARGIN_MM, DEFAULT_PDF_RESOLUTION))

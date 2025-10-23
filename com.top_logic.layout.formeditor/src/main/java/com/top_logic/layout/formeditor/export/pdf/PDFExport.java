@@ -61,6 +61,7 @@ import com.top_logic.mig.html.Media;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.form.implementation.FormEditorContext;
 import com.top_logic.model.form.implementation.FormElementTemplateProvider;
+import com.top_logic.model.search.expr.config.operations.binary.SVGReplacedElementFactory;
 import com.top_logic.util.TLContext;
 
 /**

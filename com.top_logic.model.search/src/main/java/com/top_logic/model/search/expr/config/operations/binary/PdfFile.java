@@ -17,7 +17,9 @@ import com.lowagie.text.DocumentException;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
+import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.module.services.ServletContextService;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.element.meta.TypeSpec;
@@ -39,9 +41,9 @@ import com.top_logic.util.TLContext;
  * A {@link GenericMethod} implementation that generates a PDF from HTML content.
  *
  * <p>
- * This function converts HTML content (either as String or HTMLFragment) into PDF binary data
- * using the Flying Saucer library (ITextRenderer). The HTML must be well-formed XHTML for proper
- * PDF generation.
+ * This function converts HTML content (as String, HTMLFragment, or BinaryDataSource) into PDF
+ * binary data using the Flying Saucer library (ITextRenderer). The HTML must be well-formed XHTML
+ * for proper PDF generation.
  * </p>
  *
  * <p>
@@ -191,10 +193,10 @@ public class PdfFile extends GenericMethod {
 	 * Converts the input argument to an HTML string.
 	 *
 	 * @param htmlArg
-	 *        Either a String or an HTMLFragment.
+	 *        Either a String, an HTMLFragment, or a BinaryDataSource.
 	 * @return The HTML content as a string.
 	 * @throws IOException
-	 *         If rendering the HTMLFragment fails.
+	 *         If rendering the HTMLFragment or reading the BinaryDataSource fails.
 	 */
 	private String toHtmlString(Object htmlArg) throws IOException {
 		if (htmlArg instanceof String) {
@@ -203,6 +205,17 @@ public class PdfFile extends GenericMethod {
 		} else if (htmlArg instanceof HTMLFragment) {
 			// Render HTMLFragment to string
 			return renderFragmentToString((HTMLFragment) htmlArg);
+		} else if (htmlArg instanceof BinaryDataSource) {
+			// Read HTML from BinaryDataSource (check content type)
+			BinaryDataSource binaryData = (BinaryDataSource) htmlArg;
+			String contentType = binaryData.getContentType();
+
+			// Accept text/html or text/plain content types
+			if (contentType != null && (contentType.startsWith("text/html") || contentType.startsWith("text/plain"))) {
+				return StreamUtilities.readAllFromStream(binaryData);
+			} else {
+				throw new RuntimeException("BinaryDataSource must have content type 'text/html' or 'text/plain', but got: " + contentType);
+			}
 		} else {
 			// Try to convert to string as fallback
 			return asString(htmlArg);

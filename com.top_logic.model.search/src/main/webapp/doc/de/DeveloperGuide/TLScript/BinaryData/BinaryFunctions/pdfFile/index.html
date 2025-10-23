@@ -9,10 +9,11 @@
 
 <p>Konvertiert HTML-Inhalte in ein PDF-Dokument. Das HTML wird als PDF gerendert, wobei die Flying Saucer-Bibliothek verwendet wird, die hochwertige PDF-Ausgaben aus wohlgeformtem XHTML erzeugt.</p>
 
-<p>Diese Funktion akzeptiert zwei Arten von Eingaben:</p>
+<p>Diese Funktion akzeptiert drei Arten von Eingaben:</p>
 <ul>
 	<li><strong>String:</strong> Einfaches HTML als mehrzeiliges String-Literal (mit dreifachen Anführungszeichen <code>"""..."""</code>)</li>
 	<li><strong>HTMLFragment:</strong> HTML mit eingebetteten TLScript-Ausdrücken (mit HTML-Literal-Syntax mit dreifachen geschweiften Klammern <code>{{{...}}}</code>)</li>
+	<li><strong>BinaryDataSource:</strong> Binärdaten mit Content-Type <code>text/html</code> oder <code>text/plain</code>, die HTML-Markup enthalten</li>
 </ul>
 
 <p>Diese Funktion ist besonders nützlich für die Erstellung von Berichten, Rechnungen oder anderen Dokumenten, die dynamisch aus HTML-Vorlagen generiert und als PDF exportiert werden müssen.</p>
@@ -32,8 +33,8 @@
 		</tr>
 		<tr>
 			<td>html</td>
-			<td>String oder HTMLFragment</td>
-			<td>Der HTML-Inhalt, der in PDF konvertiert werden soll. Kann entweder ein einfacher String (mit dreifachen Anführungszeichen <code>"""..."""</code>) oder ein HTMLFragment (mit dreifachen geschweiften Klammern <code>{{{...}}}</code> Syntax mit eingebetteten TLScript-Ausdrücken) sein. Muss wohlgeformtes XHTML sein, bei dem alle Tags ordnungsgemäß geschlossen sind.</td>
+			<td>String, HTMLFragment oder BinaryDataSource</td>
+			<td>Der HTML-Inhalt, der in PDF konvertiert werden soll. Kann ein einfacher String (mit dreifachen Anführungszeichen <code>"""..."""</code>), ein HTMLFragment (mit dreifachen geschweiften Klammern <code>{{{...}}}</code> Syntax mit eingebetteten TLScript-Ausdrücken) oder eine BinaryDataSource mit Content-Type <code>text/html</code> oder <code>text/plain</code> sein. Muss wohlgeformtes XHTML sein, bei dem alle Tags ordnungsgemäß geschlossen sind.</td>
 			<td>ja</td>
 			<td> </td>
 		</tr>

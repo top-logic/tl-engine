@@ -9,10 +9,11 @@
 
 <p>Converts HTML content into a PDF document. The HTML is rendered as a PDF using the Flying Saucer library, which produces high-quality PDF output from well-formed XHTML.</p>
 
-<p>This function accepts two types of input:</p>
+<p>This function accepts three types of input:</p>
 <ul>
 	<li><strong>String:</strong> Plain HTML as a multi-line string literal (using triple quotes <code>"""..."""</code>)</li>
 	<li><strong>HTMLFragment:</strong> HTML with embedded TLScript expressions (using HTML literal syntax with triple braces <code>{{{...}}}</code>)</li>
+	<li><strong>BinaryDataSource:</strong> Binary data with content type <code>text/html</code> or <code>text/plain</code> containing HTML markup</li>
 </ul>
 
 <p>This function is particularly useful for generating reports, invoices, or any document that needs to be created dynamically from HTML templates and exported as PDF.</p>
@@ -32,8 +33,8 @@
 		</tr>
 		<tr>
 			<td>html</td>
-			<td>String or HTMLFragment</td>
-			<td>The HTML content to convert to PDF. Can be either a plain string (using triple quotes <code>"""..."""</code>) or an HTMLFragment (using triple braces <code>{{{...}}}</code> syntax with embedded TLScript expressions). Must be well-formed XHTML with all tags properly closed.</td>
+			<td>String, HTMLFragment, or BinaryDataSource</td>
+			<td>The HTML content to convert to PDF. Can be a plain string (using triple quotes <code>"""..."""</code>), an HTMLFragment (using triple braces <code>{{{...}}}</code> syntax with embedded TLScript expressions), or a BinaryDataSource with content type <code>text/html</code> or <code>text/plain</code>. Must be well-formed XHTML with all tags properly closed.</td>
 			<td>yes</td>
 			<td> </td>
 		</tr>

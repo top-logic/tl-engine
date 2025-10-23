@@ -743,6 +743,49 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 	}
 
 	/**
+	 * Converts the given value to a <code>float</code> value.
+	 */
+	public static float asFloat(SearchExpression context, Object value) {
+		return asFloat(context, value, 0.0f);
+	}
+
+	/**
+	 * Converts the given value to a <code>float</code> value with a given default value for
+	 * <code>null</code>.
+	 */
+	public static float asFloat(SearchExpression context, Object value, float defaultValue) {
+		value = asSingleElement(context, value);
+		if (value == null) {
+			return defaultValue;
+		} else if (value instanceof Number) {
+			return ((Number) value).floatValue();
+		} else if (value instanceof String) {
+			try {
+				return Float.parseFloat((String) value);
+			} catch (NumberFormatException ex) {
+				throw new TopLogicException(I18NConstants.ERROR_NUMBER_REQUIRED__VALUE_EXPR.fill(value, context), ex);
+			}
+		} else {
+			throw new TopLogicException(I18NConstants.ERROR_NUMBER_REQUIRED__VALUE_EXPR.fill(value, context));
+		}
+	}
+
+	/**
+	 * Converts the given value to a <code>float</code> value.
+	 */
+	public float asFloat(Object value) {
+		return asFloat(this, value, 0.0f);
+	}
+
+	/**
+	 * Converts the given value to a <code>float</code> value with a given default value for
+	 * <code>null</code>.
+	 */
+	public float asFloat(Object value, float defaultValue) {
+		return asFloat(this, value, defaultValue);
+	}
+
+	/**
 	 * Converts the given value to an <code>Boolean</code> value in the most fuzzy sense.
 	 */
 	public static Boolean asBoolean(Object value) {

@@ -161,13 +161,13 @@ public class PdfFile extends GenericMethod {
 		}
 
 		// Extract optional rendering parameters
-		int pageWidth = extractIntParameter(arguments, 2, DEFAULT_PAGE_WIDTH);
-		int pageHeight = extractIntParameter(arguments, 3, DEFAULT_PAGE_HEIGHT);
-		float resolution = extractFloatParameter(arguments, 4, DEFAULT_PDF_RESOLUTION);
-		int marginLeft = extractIntParameter(arguments, 5, toPixel(DEFAULT_MARGIN_MM, resolution));
-		int marginRight = extractIntParameter(arguments, 6, toPixel(DEFAULT_MARGIN_MM, resolution));
-		int marginTop = extractIntParameter(arguments, 7, toPixel(DEFAULT_MARGIN_MM, resolution));
-		int marginBottom = extractIntParameter(arguments, 8, toPixel(10, resolution)); // Default bottom margin is 10mm
+		int pageWidth = asInt(arguments.length > 2 ? arguments[2] : null, DEFAULT_PAGE_WIDTH);
+		int pageHeight = asInt(arguments.length > 3 ? arguments[3] : null, DEFAULT_PAGE_HEIGHT);
+		float resolution = asFloat(arguments.length > 4 ? arguments[4] : null, DEFAULT_PDF_RESOLUTION);
+		int marginLeft = asInt(arguments.length > 5 ? arguments[5] : null, toPixel(DEFAULT_MARGIN_MM, resolution));
+		int marginRight = asInt(arguments.length > 6 ? arguments[6] : null, toPixel(DEFAULT_MARGIN_MM, resolution));
+		int marginTop = asInt(arguments.length > 7 ? arguments[7] : null, toPixel(DEFAULT_MARGIN_MM, resolution));
+		int marginBottom = asInt(arguments.length > 8 ? arguments[8] : null, toPixel(10, resolution)); // Default bottom margin is 10mm
 
 		try {
 			// Convert HTML to PDF with specified parameters and return as binary data
@@ -181,42 +181,6 @@ public class PdfFile extends GenericMethod {
 			// Log error and return null on conversion failure
 			throw new RuntimeException("Failed to generate PDF from HTML: " + ex.getMessage(), ex);
 		}
-	}
-
-	/**
-	 * Extracts an integer parameter from the arguments array, using a default value if not
-	 * provided or null.
-	 */
-	private int extractIntParameter(Object[] arguments, int index, int defaultValue) {
-		if (index >= arguments.length) {
-			return defaultValue;
-		}
-		Object value = arguments[index];
-		if (value == null) {
-			return defaultValue;
-		}
-		if (value instanceof Number) {
-			return ((Number) value).intValue();
-		}
-		return defaultValue;
-	}
-
-	/**
-	 * Extracts a float parameter from the arguments array, using a default value if not provided
-	 * or null.
-	 */
-	private float extractFloatParameter(Object[] arguments, int index, float defaultValue) {
-		if (index >= arguments.length) {
-			return defaultValue;
-		}
-		Object value = arguments[index];
-		if (value == null) {
-			return defaultValue;
-		}
-		if (value instanceof Number) {
-			return ((Number) value).floatValue();
-		}
-		return defaultValue;
 	}
 
 	/**

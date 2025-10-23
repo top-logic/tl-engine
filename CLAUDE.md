@@ -164,6 +164,28 @@ Application modules (compose features)
 
 ## Development Patterns
 
+### Coding Conventions
+
+**Member Variable Naming:**
+- All member variables (instance fields) must start with an underscore `_` prefix
+- This convention makes using `this.` unnecessary and clearly distinguishes member variables from local variables and parameters
+
+```java
+public class MyClass {
+    private final int _widthMm;
+    private String _name;
+
+    public MyClass(int widthMm, String name) {
+        _widthMm = widthMm;  // No need for this.widthMm
+        _name = name;         // No need for this.name
+    }
+
+    public int getWidth() {
+        return _widthMm;      // Clearly a member variable
+    }
+}
+```
+
 ### Configuration Framework
 
 TopLogic uses a sophisticated typed configuration system. Configuration classes use annotations:

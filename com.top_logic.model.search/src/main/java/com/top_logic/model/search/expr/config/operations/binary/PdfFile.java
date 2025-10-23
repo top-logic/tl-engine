@@ -37,6 +37,7 @@ import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBui
 import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.TLContext;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * A {@link GenericMethod} implementation that generates a PDF from HTML content.
@@ -250,7 +251,7 @@ public class PdfFile extends GenericMethod {
 		try {
 			html = toHtmlString(htmlArg, contentWidth, contentHeight);
 		} catch (IOException ex) {
-			throw new RuntimeException("Failed to render HTML content: " + ex.getMessage(), ex);
+			throw new TopLogicException(I18NConstants.ERROR_HTML_RENDER_FAILED__MSG.fill(ex.getMessage()), ex);
 		}
 
 		// Return null if HTML is empty after conversion
@@ -276,7 +277,7 @@ public class PdfFile extends GenericMethod {
 
 		} catch (DocumentException | IOException ex) {
 			// Log error and return null on conversion failure
-			throw new RuntimeException("Failed to generate PDF from HTML: " + ex.getMessage(), ex);
+			throw new TopLogicException(I18NConstants.ERROR_PDF_GENERATION_FAILED__MSG.fill(ex.getMessage()), ex);
 		}
 	}
 
@@ -309,13 +310,14 @@ public class PdfFile extends GenericMethod {
 			try {
 				return PageSize.valueOf(str.toUpperCase());
 			} catch (IllegalArgumentException e) {
-				throw new RuntimeException("Invalid page size: " + str + ". Valid values are: " +
-					String.join(", ", java.util.Arrays.stream(PageSize.values())
-						.map(Enum::name)
-						.toArray(String[]::new)));
+				String validValues = String.join(", ", java.util.Arrays.stream(PageSize.values())
+					.map(Enum::name)
+					.toArray(String[]::new));
+				throw new TopLogicException(I18NConstants.ERROR_INVALID_PAGE_SIZE__VALUE_VALID.fill(str, validValues));
 			}
 		}
-		throw new RuntimeException("Invalid page size argument type: " + arg.getClass().getName());
+		throw new TopLogicException(I18NConstants.ERROR_INVALID_PAGE_SIZE__VALUE_VALID.fill(
+			arg.getClass().getName(), "String or PageSize"));
 	}
 
 	/**
@@ -360,7 +362,7 @@ public class PdfFile extends GenericMethod {
 				return "<html><body><img src=\"" + dataUri + "\" width=\"" + contentWidth
 					+ "\" height=\"" + contentHeight + "\" style=\"display:block;\"/></body></html>";
 			} else {
-				throw new RuntimeException("BinaryDataSource must have content type 'text/html', 'text/plain', or 'image/svg+xml', but got: " + contentType);
+				throw new TopLogicException(I18NConstants.ERROR_INVALID_BINARY_CONTENT_TYPE__TYPE.fill(contentType));
 			}
 		} else {
 			// Try to convert to string as fallback

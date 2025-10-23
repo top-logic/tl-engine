@@ -377,7 +377,7 @@ public class FlowChartComponent extends BuilderComponent
 	}
 
 	@Override
-	protected Map<String, ChannelSPI> declareChannels() {
+	protected Map<String, ChannelSPI> programmaticChannels() {
 		return FLOWCHART_CHANNELS;
 	}
 

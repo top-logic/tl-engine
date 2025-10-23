@@ -23,7 +23,6 @@ import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
-import com.top_logic.basic.config.annotation.defaults.ListDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.contextmenu.component.factory.ContextMenuUtil;
 import com.top_logic.layout.basic.contextmenu.menu.Menu;
@@ -35,7 +34,6 @@ import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
 import com.top_logic.layout.structure.LayoutControlProvider;
 import com.top_logic.layout.table.component.SelectableBuilderComponent;
 import com.top_logic.mig.html.ModelBuilder;
-import com.top_logic.mig.html.layout.ComponentResolver;
 import com.top_logic.model.TLObject;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.CommandHandler;
@@ -102,10 +100,6 @@ public class TileListComponent extends SelectableBuilderComponent {
 		 */
 		@Name(NO_CARD_KEY)
 		ResKey getNoCardKey();
-
-		@Override
-		@ListDefault(SelectableContextTileResolver.class)
-		List<PolymorphicConfiguration<ComponentResolver>> getComponentResolvers();
 
 	}
 
@@ -188,8 +182,6 @@ public class TileListComponent extends SelectableBuilderComponent {
 			/**
 			 * Selects {@link #getBusinessObject()}. The {@link TileListComponent} has listener which steps
 			 * into the tile.
-			 * 
-			 * @see UpdateTileLayoutSelectionListener
 			 */
 			@Override
 			public void displayTile() {

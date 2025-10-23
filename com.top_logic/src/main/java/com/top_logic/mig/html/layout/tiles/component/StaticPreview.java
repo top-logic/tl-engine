@@ -14,7 +14,6 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.ThemeImage;
-import com.top_logic.mig.html.layout.tiles.TileLayout;
 
 /**
  * {@link LabelBasedPreview} with an additional {@link ResKey} that is displayed as description.
@@ -35,7 +34,7 @@ public class StaticPreview<C extends StaticPreview.Config> extends LabelBasedPre
 		String DESCRIPTION = "description";
 
 		/**
-		 * A more specific description of the {@link TileLayout}.
+		 * A more specific description of the tile.
 		 * 
 		 * @return May be <code>null</code>.
 		 */

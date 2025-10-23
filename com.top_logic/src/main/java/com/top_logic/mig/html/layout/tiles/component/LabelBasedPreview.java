@@ -25,12 +25,10 @@ import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.form.control.PopupMenuButtonControl;
 import com.top_logic.layout.toolbar.DefaultToolBar;
 import com.top_logic.mig.html.HTMLConstants;
-import com.top_logic.mig.html.layout.tiles.TileLayout;
 import com.top_logic.util.css.CssUtil;
 
 /**
- * {@link ConfiguredTilePreview} that displays an optional icon and the label of a
- * {@link TileLayout}.
+ * {@link ConfiguredTilePreview} that displays an optional icon and the label of a tile.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
@@ -58,7 +56,7 @@ public class LabelBasedPreview<C extends LabelBasedPreview.Config<?>> extends Co
 		String ICON = "icon";
 
 		/**
-		 * A static icon for the {@link TileLayout}.
+		 * A static icon for the tile.
 		 * 
 		 * @return May be <code>null</code>.
 		 */

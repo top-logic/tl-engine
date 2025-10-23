@@ -7,6 +7,8 @@ package com.top_logic.graphic.flow.server.script;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -27,7 +29,10 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.DoubleDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.io.StreamUtilities;
+import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.io.binary.BinaryDataSource;
+import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.graphic.flow.callback.ClickHandler;
 import com.top_logic.graphic.flow.data.Align;
 import com.top_logic.graphic.flow.data.Alignment;
@@ -66,6 +71,8 @@ import com.top_logic.graphic.flow.data.TreeConnection;
 import com.top_logic.graphic.flow.data.TreeConnector;
 import com.top_logic.graphic.flow.data.TreeLayout;
 import com.top_logic.graphic.flow.data.VerticalLayout;
+import com.top_logic.graphic.blocks.server.svg.SvgTagWriter;
+import com.top_logic.graphic.flow.server.ui.AWTContext;
 import com.top_logic.graphic.flow.server.ui.handler.ServerDropHandler;
 import com.top_logic.model.search.expr.ToString;
 import com.top_logic.model.search.expr.config.operations.ScriptConversion;
@@ -1233,7 +1240,7 @@ public class FlowFactory extends TLScriptFunctions {
 
 	/**
 	 * A {@link Box} whose contents are cut off when they become to large.
-	 * 
+	 *
 	 * @param content
 	 *        The contents to clip.
 	 * @param cssClass
@@ -1253,6 +1260,104 @@ public class FlowFactory extends TLScriptFunctions {
 			.setUserObject(userObject)
 			.setClientId(cssClass)
 			.setCssClass(cssClass);
+	}
+
+	/**
+	 * Converts a flow chart diagram to SVG binary data.
+	 *
+	 * <p>
+	 * This function performs layout calculation using AWT font metrics and renders the diagram to
+	 * a standalone SVG document. The resulting SVG can be saved, displayed, or converted to other
+	 * formats (e.g., PDF using {@code pdfFile()}).
+	 * </p>
+	 *
+	 * <p>
+	 * Usage examples:
+	 * </p>
+	 *
+	 * <pre>
+	 * // Basic usage with default settings
+	 * flowSvg(flowChart(flowText("Hello")))
+	 *
+	 * // With custom filename and text size
+	 * flowSvg(
+	 *     flowChart(flowVbox(flowText("Header"), flowText("Content"))),
+	 *     filename: "my-chart.svg",
+	 *     textSize: 14.0
+	 * )
+	 *
+	 * // With fixed dimensions
+	 * flowSvg($myDiagram, width: 800.0, height: 600.0)
+	 *
+	 * // Combined with PDF generation
+	 * pdfFile(flowSvg($diagram), "chart.pdf")
+	 * </pre>
+	 *
+	 * @param diagram
+	 *        The diagram to render. Must not be null.
+	 * @param filename
+	 *        The filename for the resulting SVG file. Defaults to "diagram.svg".
+	 * @param textSize
+	 *        The font size in points used for text measurement during layout. Defaults to 12.0.
+	 * @param width
+	 *        The fixed width of the SVG viewBox, or null for auto-sizing based on content.
+	 * @param height
+	 *        The fixed height of the SVG viewBox, or null for auto-sizing based on content.
+	 * @return BinaryData containing the SVG document with content type "image/svg+xml".
+	 */
+	@SideEffectFree
+	@Label("Export as SVG")
+	public static BinaryData svg(
+			@Mandatory Diagram diagram,
+			@StringDefault("diagram.svg") String filename,
+			@DoubleDefault(12.0) double textSize,
+			Double width,
+			Double height) {
+		// Ensure .svg extension
+		if (!filename.toLowerCase().endsWith(".svg")) {
+			filename = filename + ".svg";
+		}
+
+		// Create render context for text measurement
+		AWTContext context = new AWTContext((float) textSize);
+
+		// Perform layout calculation
+		diagram.layout(context);
+
+		// Set viewBox dimensions
+		Box root = diagram.getRoot();
+		if (width != null && height != null) {
+			diagram.setViewBoxWidth(width);
+			diagram.setViewBoxHeight(height);
+		} else if (width != null) {
+			diagram.setViewBoxWidth(width);
+			diagram.setViewBoxHeight(root.getHeight());
+		} else if (height != null) {
+			diagram.setViewBoxWidth(root.getWidth());
+			diagram.setViewBoxHeight(height);
+		} else {
+			diagram.setViewBoxWidth(root.getWidth());
+			diagram.setViewBoxHeight(root.getHeight());
+		}
+
+		// Ensure viewBox origin is set
+		if (diagram.getViewBoxX() == 0 && diagram.getViewBoxY() == 0) {
+			diagram.setViewBoxX(0);
+			diagram.setViewBoxY(0);
+		}
+
+		// Render to SVG
+		StringWriter buffer = new StringWriter();
+		try (TagWriter tagWriter = new TagWriter(buffer);
+				SvgTagWriter svgWriter = new SvgTagWriter(tagWriter)) {
+			diagram.draw(svgWriter);
+		} catch (IOException ex) {
+			throw new RuntimeException("Failed to generate SVG: " + ex.getMessage(), ex);
+		}
+
+		// Convert to binary data
+		byte[] svgBytes = buffer.toString().getBytes(StandardCharsets.UTF_8);
+		return BinaryDataFactory.createBinaryData(svgBytes, "image/svg+xml", filename);
 	}
 
 }

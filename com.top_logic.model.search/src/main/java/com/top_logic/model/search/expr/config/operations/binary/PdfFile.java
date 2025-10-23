@@ -139,10 +139,19 @@ public class PdfFile extends GenericMethod {
 			return null;
 		}
 
-		// Convert to HTML string
+		// Extract optional rendering parameters
+		int pageWidth = asInt(arguments[2]);
+		int pageHeight = asInt(arguments[3]);
+		float resolution = asFloat(arguments[4]);
+		int marginLeft = asInt(arguments[5]);
+		int marginRight = asInt(arguments[6]);
+		int marginTop = asInt(arguments[7]);
+		int marginBottom = asInt(arguments[8]);
+
+		// Convert to HTML string (SVG needs page dimensions for img tag sizing)
 		String html;
 		try {
-			html = toHtmlString(htmlArg);
+			html = toHtmlString(htmlArg, pageWidth, pageHeight);
 		} catch (IOException ex) {
 			throw new RuntimeException("Failed to render HTML content: " + ex.getMessage(), ex);
 		}
@@ -159,15 +168,6 @@ public class PdfFile extends GenericMethod {
 		if (!filename.toLowerCase().endsWith(".pdf")) {
 			filename = filename + ".pdf";
 		}
-
-		// Extract optional rendering parameters
-		int pageWidth = asInt(arguments[2]);
-		int pageHeight = asInt(arguments[3]);
-		float resolution = asFloat(arguments[4]);
-		int marginLeft = asInt(arguments[5]);
-		int marginRight = asInt(arguments[6]);
-		int marginTop = asInt(arguments[7]);
-		int marginBottom = asInt(arguments[8]);
 
 		try {
 			// Convert HTML to PDF with specified parameters and return as binary data
@@ -195,11 +195,15 @@ public class PdfFile extends GenericMethod {
 	 *
 	 * @param htmlArg
 	 *        Either a String, an HTMLFragment, or a BinaryDataSource.
+	 * @param pageWidth
+	 *        The page width for sizing embedded images.
+	 * @param pageHeight
+	 *        The page height for sizing embedded images.
 	 * @return The HTML content as a string.
 	 * @throws IOException
 	 *         If rendering the HTMLFragment or reading the BinaryDataSource fails.
 	 */
-	private String toHtmlString(Object htmlArg) throws IOException {
+	private String toHtmlString(Object htmlArg, int pageWidth, int pageHeight) throws IOException {
 		if (htmlArg instanceof String) {
 			// Direct string input
 			return (String) htmlArg;
@@ -223,7 +227,10 @@ public class PdfFile extends GenericMethod {
 				String svgContent = StreamUtilities.readAllFromStream(binaryData);
 				String base64Svg = java.util.Base64.getEncoder().encodeToString(svgContent.getBytes(java.nio.charset.StandardCharsets.UTF_8));
 				String dataUri = "data:image/svg+xml;base64," + base64Svg;
-				return "<html><body><img src=\"" + dataUri + "\" style=\"display:block;\"/></body></html>";
+
+				// Use full page dimensions for the image since it's the only content
+				return "<html><body><img src=\"" + dataUri + "\" width=\"" + pageWidth
+					+ "\" height=\"" + pageHeight + "\" style=\"display:block;\"/></body></html>";
 			} else {
 				throw new RuntimeException("BinaryDataSource must have content type 'text/html', 'text/plain', or 'image/svg+xml', but got: " + contentType);
 			}

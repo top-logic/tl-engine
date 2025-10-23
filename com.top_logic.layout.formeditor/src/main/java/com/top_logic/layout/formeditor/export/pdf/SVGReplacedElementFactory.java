@@ -47,12 +47,24 @@ public class SVGReplacedElementFactory implements ReplacedElementFactory {
 			return null;
 		}
 		String sourceAttr = element.getAttribute(HTMLConstants.SRC_ATTR);
-		if (!sourceAttr.endsWith(".svg")) {
+		// Support both .svg file references and data URI SVG images
+		if (!sourceAttr.endsWith(".svg") && !isSvgDataUri(sourceAttr)) {
 			return null;
 		}
 
 		ImageResource imageResource = uac.getImageResource(sourceAttr);
 		return new SVGReplacedElement(imageResource, cssWidth, cssHeight);
+	}
+
+	/**
+	 * Checks if the given source attribute is an SVG data URI.
+	 *
+	 * @param sourceAttr
+	 *        The source attribute to check
+	 * @return <code>true</code> if the source is an SVG data URI, <code>false</code> otherwise
+	 */
+	private boolean isSvgDataUri(String sourceAttr) {
+		return sourceAttr.startsWith("data:image/svg");
 	}
 
 	@Override

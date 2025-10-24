@@ -7,6 +7,9 @@
 		<param name="securityModel"
 			optional="true"
 		/>
+		<param name="securityId"
+			optional="true"
+		/>
 		<param name="domain"
 			value=""
 		/>
@@ -46,6 +49,7 @@
 		horizontal="false"
 		model="${securityModel}"
 		securityDomain="${domain}"
+		securityId="${securityId}"
 		titleKey="${z_legacy_tabLabel}"
 	>
 		<tabInfo id="${z_legacy_tabId}"

@@ -18,21 +18,16 @@ import jakarta.servlet.ServletContext;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.TupleFactory.Tuple;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.component.AJAXComponent;
 import com.top_logic.mig.html.layout.CommandRegistry;
-import com.top_logic.mig.html.layout.ComponentName;
-import com.top_logic.mig.html.layout.LayoutConstants;
 import com.top_logic.mig.html.layout.ModelEventListener;
 import com.top_logic.tool.boundsec.commandhandlers.GotoHandler;
 import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
-import com.top_logic.tool.boundsec.wrap.PersBoundComp;
-import com.top_logic.tool.boundsec.wrap.SecurityComponentCache;
 
 /**
  * A {@link com.top_logic.mig.html.layout.LayoutComponent} implementing the
@@ -100,22 +95,6 @@ public abstract class BoundComponent extends AJAXComponent implements BoundCheck
 
 		isSecurityMaster = config.getIsSecurityMaster();
 		_securityObjectProvider = SecurityObjectProvider.fromConfiguration(context, config.getSecurityObject());
-    }
-    
-    /**
-     * Search for {@link PersBoundComp} in the KBase based on {@link #getSecurityId()}.
-     */
-    protected final PersBoundComp lookupPersBoundComp()  {
-		ComponentName theSecID = this.getSecurityId();
-		if (theSecID != null && !LayoutConstants.isSyntheticName(theSecID)) {
-            try {
-                return SecurityComponentCache.getSecurityComponent(theSecID);
-            }
-            catch (Exception e) {
-                Logger.error("failed to setupPersBoundComp '" + theSecID + "'", e, this);
-            }
-        }
-        return null;
     }
     
 	@Override

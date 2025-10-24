@@ -67,7 +67,7 @@ public class GridContextMenuFactory<C extends GridContextMenuFactory.Config<?>>
 		protected List<CommandModel> createButtons(Object directTarget, Object model, Map<String, Object> arguments) {
 			List<CommandModel> buttons = super.createButtons(directTarget, model, arguments);
 
-			Map<String, Object> treeArgs = createArguments(directTarget);
+			Map<String, Object> treeArgs = createArguments(directTarget, directTarget);
 
 			LayoutComponent component = getComponent();
 			if (component instanceof TableDataOwner table) {

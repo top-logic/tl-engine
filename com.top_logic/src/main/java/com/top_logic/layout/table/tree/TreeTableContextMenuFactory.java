@@ -5,8 +5,6 @@
  */
 package com.top_logic.layout.table.tree;
 
-import static com.top_logic.layout.basic.contextmenu.component.factory.ContextMenuUtil.*;
-
 import java.util.List;
 import java.util.Map;
 
@@ -26,6 +24,9 @@ import com.top_logic.tool.boundsec.CommandHandlerFactory;
 /**
  * {@link SelectableContextMenuFactory} mapping node objects to their respective business objects.
  * 
+ * @implNote This factory is used by default to create the context menu of a
+ *           {@link TreeTableComponent}.
+ * @see TreeTableContextMenuProvider.Config#getContextMenuFactory()
  * @see TLTreeNode#getBusinessObject()
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
@@ -62,26 +63,24 @@ public class TreeTableContextMenuFactory<C extends TreeTableContextMenuFactory.C
 		protected List<CommandModel> createButtons(Object directTarget, Object model, Map<String, Object> arguments) {
 			List<CommandModel> buttons = super.createButtons(directTarget, model, arguments);
 
-			Map<String, Object> treeArgs = createArguments(directTarget);
-
 			LayoutComponent component = getComponent();
 			if (component instanceof TableDataOwner table) {
 				SelectionModel<?> selectionModel = table.getTableData().getSelectionModel();
-				if (selectionModel instanceof TreeSelectionModel treeSelect) {
-					addTreeButton(buttons, component, treeArgs, SelectSubtree.SELECT_SUBTREE_ID);
-					addTreeButton(buttons, component, treeArgs, SelectSubtree.DESELECT_SUBTREE_ID);
+				if (selectionModel instanceof TreeSelectionModel) {
+					addTreeButton(buttons, component, arguments, SelectSubtree.SELECT_SUBTREE_ID);
+					addTreeButton(buttons, component, arguments, SelectSubtree.DESELECT_SUBTREE_ID);
 				}
 			}
 
 			return buttons;
 		}
 
-		private void addTreeButton(List<CommandModel> buttons, LayoutComponent component,
-				Map<String, Object> treeArgs, String id) {
+		private void addTreeButton(List<CommandModel> buttons, LayoutComponent component, Map<String, Object> arguments,
+				String id) {
 			CommandHandler handler =
 				CommandHandlerFactory.getInstance().getHandler(id);
 			if (handler != null) {
-				CommandModel commandModel = CommandModelFactory.commandModel(handler, component, treeArgs);
+				CommandModel commandModel = CommandModelFactory.commandModel(handler, component, arguments);
 				buttons.add(commandModel);
 			}
 		}

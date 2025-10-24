@@ -172,7 +172,7 @@ public class ForeignObjectsTemplateProvider extends AbstractFormElementProvider<
 		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext();
 		LayoutComponent component = MainLayout.getComponent(displayContext);
 
-		Map<String, Object> args = ContextMenuUtil.createArguments(targetModel);
+		Map<String, Object> args = ContextMenuUtil.createSingleObjectArguments(targetModel);
 		Stream<CommandModel> buttonsStream = ContextMenuUtil.toButtonsStream(component, args, buttons);
 		Menu menu;
 		if (designMode) {

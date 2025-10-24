@@ -79,7 +79,7 @@ public class MenuVariable extends AbstractVariableDefinition<MenuVariable.Config
 
 	@Override
 	public Object eval(LayoutComponent component, FormEditorContext editorContext, Object model) {
-		Map<String, Object> args = ContextMenuUtil.createArguments(model);
+		Map<String, Object> args = ContextMenuUtil.createSingleObjectArguments(model);
 		Stream<CommandModel> buttonsStream = ContextMenuUtil.toButtonsStream(component, args, _commands);
 		Menu menu = ContextMenuUtil.toContextMenu(buttonsStream);
 		return new PopupMenuButtonControl(new DefaultPopupMenuModel(Icons.BUTTON_BURGER_MENU, menu));

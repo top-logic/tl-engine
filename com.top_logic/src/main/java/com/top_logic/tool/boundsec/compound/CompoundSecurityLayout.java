@@ -9,7 +9,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 
-import com.top_logic.base.security.SecurityConfiguration;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationException;
@@ -29,6 +28,7 @@ import com.top_logic.mig.html.layout.SubComponentConfig;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundComponent;
 import com.top_logic.tool.boundsec.BoundLayout;
+import com.top_logic.tool.boundsec.SecurityConfiguration;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.tool.boundsec.wrap.PersBoundComp;
 import com.top_logic.tool.boundsec.wrap.SecurityComponentCache;
@@ -49,7 +49,7 @@ public class CompoundSecurityLayout extends BoundLayout {
 	 * Configuration options for {@link CompoundSecurityLayout}.
 	 */
 	@TagName(Config.TAG_NAME)
-    public interface Config extends BoundLayout.Config {
+	public interface Config extends BoundLayout.Config, SecurityConfiguration {
 
 		/**
 		 * @see SubComponentConfig#getComponents()
@@ -177,8 +177,8 @@ public class CompoundSecurityLayout extends BoundLayout {
      * Create a Visitor as configured by "security.layout.collector.name"
      */
     protected static synchronized CompoundSecurityLayoutCommandGroupCollector createCommandgroupCollector() throws ClassNotFoundException, InstantiationException, IllegalAccessException {
-		SecurityConfiguration securityConfiguration =
-			ApplicationConfig.getInstance().getConfig(SecurityConfiguration.class);
+		com.top_logic.base.security.SecurityConfiguration securityConfiguration =
+			ApplicationConfig.getInstance().getConfig(com.top_logic.base.security.SecurityConfiguration.class);
 		PolymorphicConfiguration<? extends CompoundSecurityLayoutCommandGroupCollector> commandGroupCollector =
 			securityConfiguration.getLayout().getCommandGroupCollector();
 		return SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(commandGroupCollector);
@@ -188,7 +188,8 @@ public class CompoundSecurityLayout extends BoundLayout {
      * Create a Visitor as configured by "security.layout.collector.name"
      */
     public static com.top_logic.basic.col.Mapping getSecurityDomainMapper() {
-		return ApplicationConfig.getInstance().getConfig(SecurityConfiguration.class).getLayout().getDomainMapper();
+		return ApplicationConfig.getInstance().getConfig(com.top_logic.base.security.SecurityConfiguration.class)
+			.getLayout().getDomainMapper();
     }
 
     /**

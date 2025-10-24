@@ -12,6 +12,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.basic.contextmenu.component.factory.ContextMenuUtil;
 import com.top_logic.layout.table.TableDataOwner;
 import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.mig.html.TreeSelectionModel;
@@ -80,14 +81,16 @@ public class SelectSubtree extends AbstractCommandHandler {
 	public HandlerResult handleCommand(DisplayContext aContext, LayoutComponent component, Object model,
 			Map<String, Object> someArguments) {
 
+		Object directTarget = someArguments.get(ContextMenuUtil.DIRECT_TARGET);
+
 		if (component instanceof TableDataOwner table) {
 			SelectionModel<Object> selectionModel = table.getTableData().getSelectionModel();
 			if (selectionModel instanceof TreeSelectionModel<Object> treeSelection) {
 				int levels = levels();
 				if (levels == 0) {
-					treeSelection.setSelectedSubtree(model, select());
+					treeSelection.setSelectedSubtree(directTarget, select());
 				} else {
-					selectLevels(treeSelection, model, levels);
+					selectLevels(treeSelection, directTarget, levels);
 				}
 			}
 		}
@@ -95,22 +98,22 @@ public class SelectSubtree extends AbstractCommandHandler {
 		return HandlerResult.DEFAULT_RESULT;
 	}
 
-	private void selectLevels(TreeSelectionModel<Object> treeSelection, Object model, int levels) {
+	private void selectLevels(TreeSelectionModel<Object> treeSelection, Object directTarget, int levels) {
 		Object update = treeSelection.startBulkUpdate();
 		try {
-			selectLevel(treeSelection, model, levels);
+			selectLevel(treeSelection, directTarget, levels);
 		} finally {
 			treeSelection.completeBulkUpdate(update);
 		}
 	}
 
-	private void selectLevel(TreeSelectionModel<Object> treeSelection, Object model, int levels) {
-		treeSelection.setSelected(model, select());
+	private void selectLevel(TreeSelectionModel<Object> treeSelection, Object directTarget, int levels) {
+		treeSelection.setSelected(directTarget, select());
 
 		if (levels > 0) {
 			int childLevels = levels - 1;
 
-			for (Object child : treeSelection.getTreeModel().getChildren(model)) {
+			for (Object child : treeSelection.getTreeModel().getChildren(directTarget)) {
 				selectLevel(treeSelection, child, childLevels);
 			}
 		}
@@ -138,18 +141,18 @@ public class SelectSubtree extends AbstractCommandHandler {
 
 	@Override
 	protected ExecutabilityRule intrinsicExecutability() {
-		return (component, model, args) -> executableState(component, model);
+		return (component, model, args) -> executableState(component, args.get(ContextMenuUtil.DIRECT_TARGET));
 	}
 
-	private ExecutableState executableState(LayoutComponent component, Object model) {
-		if (model == null || model instanceof Collection<?>) {
+	private ExecutableState executableState(LayoutComponent component, Object directTarget) {
+		if (directTarget == null || directTarget instanceof Collection<?>) {
 			return ExecutableState.NOT_EXEC_HIDDEN;
 		}
 
 		if (component instanceof TableDataOwner table) {
 			SelectionModel<Object> selectionModel = table.getTableData().getSelectionModel();
 			if (selectionModel instanceof TreeSelectionModel<Object> treeSelection) {
-				if (levels() == 0 && treeSelection.getNodeSelectionState(model) == disabledState()) {
+				if (levels() == 0 && treeSelection.getNodeSelectionState(directTarget) == disabledState()) {
 					return select() ? NO_EXEC_FULL : NO_EXEC_NONE;
 				}
 

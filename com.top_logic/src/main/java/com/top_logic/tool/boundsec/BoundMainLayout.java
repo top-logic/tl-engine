@@ -13,7 +13,6 @@ import java.util.Map;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.LogProtocol;
 import com.top_logic.basic.Protocol;
-import com.top_logic.basic.col.DescendantDFSIterator;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
@@ -26,6 +25,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutConfigTreeView;
 import com.top_logic.mig.html.layout.LayoutConstants;
 import com.top_logic.mig.html.layout.MainLayout;
+import com.top_logic.tool.boundsec.compound.CompoundSecurityLayout;
 import com.top_logic.tool.boundsec.wrap.PersBoundComp;
 import com.top_logic.tool.boundsec.wrap.SecurityComponentCache;
 import com.top_logic.util.TLContext;
@@ -114,21 +114,37 @@ public abstract class BoundMainLayout extends MainLayout implements LayoutContai
 
 		private final Map<String, LayoutComponent.Config> _configById = new HashMap<>();
 
-		private final Iterator<LayoutComponent.Config> _configs;
-
 		private int _count;
 
 		private final Location _rootLocation;
 
+		private CompoundSecurityLayout.Config _nextSecurityParent;
+
+		private LayoutComponent.Config _root;
+
 		public InitPersBoundCompVisitor(KnowledgeBase kBase, LayoutComponent.Config root) {
 			_kb = kBase;
+			_root = root;
 			_rootLocation = root.location();
-			_configs = new DescendantDFSIterator<>(LayoutConfigTreeView.INSTANCE, root, true);
 		}
 
 		public void visit(Log log) {
-			while (_configs.hasNext()) {
-				doWork(log, _configs.next());
+			visit(log, _root);
+		}
+
+		private void visit(Log log, LayoutComponent.Config config) {
+			CompoundSecurityLayout.Config before = _nextSecurityParent;
+			if (isSecurityConfig(config)) {
+				_nextSecurityParent = (CompoundSecurityLayout.Config) config;
+			}
+			try {
+				doWork(log, config);
+				for (Iterator<? extends LayoutComponent.Config> it =
+					LayoutConfigTreeView.INSTANCE.getChildIterator(config); it.hasNext();) {
+					visit(log, it.next());
+				}
+			} finally {
+				_nextSecurityParent = before;
 			}
 		}
 
@@ -141,11 +157,6 @@ public abstract class BoundMainLayout extends MainLayout implements LayoutContai
 				return;
 			}
 			ComponentName componentName = config.getName();
-			if (LayoutConstants.isSyntheticName(componentName)) {
-				// No real security here
-				return;
-			}
-
 			String lowercaseId = componentName.qualifiedName().toLowerCase();
 			LayoutComponent.Config prevComp = _configById.get(lowercaseId);
 			if (_configById.containsKey(lowercaseId)) {
@@ -154,12 +165,21 @@ public abstract class BoundMainLayout extends MainLayout implements LayoutContai
 			}
 			_configById.put(lowercaseId, config);
 			
-			if (SecurityComponentCache.getSecurityComponent(componentName) == null) {
-				PersBoundComp.createInstance(_kb, componentName);
-				_count++;
+			if (isSecurityConfig(config)) {
+				/* Security is only configured for CompoundSecurityLayout's. Therefore
+				 * PersBoundComp's must only be created for those components. */
+				if (SecurityComponentCache.getSecurityComponent(componentName) == null) {
+					PersBoundComp.createInstance(_kb, componentName);
+					_count++;
+				}
 			}
-			registerDefaultTypes(config, componentName);
 
+			registerDefaultTypes(log, config);
+		}
+
+		private boolean isSecurityConfig(LayoutComponent.Config config) {
+			return config instanceof CompoundSecurityLayout.Config
+					&& !LayoutConstants.isSyntheticName(config.getName());
 		}
 
 		private static void logDuplicateComponent(Log log, LayoutComponent.Config formerConfig,
@@ -181,17 +201,30 @@ public abstract class BoundMainLayout extends MainLayout implements LayoutContai
 		}
 
 		/**
-		 * check the defaultFor config and register the component as defaultFor for the found ko/me
-		 * types in the BoundHelper
+		 * Check the "defaultFor" config and register the surrounding security layout as
+		 * "defaultFor" for the found ko/me types in the {@link BoundHelper}
 		 * 
 		 * @see BoundHelper#getDefaultChecker(MainLayout rootLayout, BoundObject anObject)
 		 */
-		private void registerDefaultTypes(LayoutComponent.Config config, ComponentName id) {
-			List<String> theDefaultForTypes = config.getDefaultFor();
-			for (int i = 0; i < theDefaultForTypes.size(); i++) {
-				String theType = theDefaultForTypes.get(i);
-				BoundHelper.getInstance().registerPersBoundCheckerFor(_rootLocation, id, theType);
+		private void registerDefaultTypes(Log log, LayoutComponent.Config config) {
+			List<String> defaultForTypes = config.getDefaultFor();
+			if (defaultForTypes.isEmpty()) {
+				return;
 			}
+			if (_nextSecurityParent == null) {
+				StringBuilder errMsg = new StringBuilder();
+				errMsg.append("No security layout found for '");
+				errMsg.append(config.getName());
+				errMsg.append("' in ");
+				errMsg.append(config.location());
+				errMsg.append(". Can not register defaultFor for types: ");
+				errMsg.append(defaultForTypes);
+				log.error(errMsg.toString());
+				return;
+			}
+			ComponentName id = _nextSecurityParent.getName();
+			defaultForTypes
+				.forEach(type -> BoundHelper.getInstance().registerPersBoundCheckerFor(_rootLocation, id, type));
 		}
 
 	}

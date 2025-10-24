@@ -12,12 +12,8 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.component.LayoutContainerBoundChecker;
-import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.Layout;
 import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.mig.html.layout.LayoutConstants;
-import com.top_logic.tool.boundsec.wrap.PersBoundComp;
-import com.top_logic.tool.boundsec.wrap.SecurityComponentCache;
 
 /**
  * A Layout that that will care for Bound security.
@@ -60,22 +56,6 @@ public class BoundLayout extends Layout implements LayoutContainerBoundChecker {
 		return _securityObjectProvider;
 	}
 
-     /**
-      * Search for {@link PersBoundComp} in the KBase based on {@link #getSecurityId()}.
-      */
-     protected final PersBoundComp lookupPersBoundComp()  {
-		ComponentName theSecID = this.getSecurityId();
-		if (theSecID != null && !LayoutConstants.isSyntheticName(theSecID)) {
-             try {
-                 return SecurityComponentCache.getSecurityComponent(theSecID);
-             }
-             catch (Exception e) {
-                 Logger.error("failed to setupPersBoundComp '" + theSecID + "'", e, this);
-             }
-         }
-         return null;
-     }
-     
 	@Override
 	public ResKey hideReason() {
 		if (securityMaster != null) {

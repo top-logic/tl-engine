@@ -1809,6 +1809,18 @@ input.is-checkbox[disabled] {
 	color: var(--text-placeholder);
 }
 
+.content:has(.cTextInput, .cError) {
+	display: flex;
+}
+
+.content:has(.cError) .cTextInput {
+	flex: auto;
+}
+
+.content:has(.cTextInput) .cError {
+	margin: auto;
+}
+
 .cError .error i,
 .cError .error-annotation i,
 .error {

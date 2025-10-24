@@ -4,7 +4,20 @@
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 	groups="tile"
 >
-	<properties>
+	<properties extends="com.top_logic.tool.boundsec.InAppSecurityLayoutConfig">
+		<annotations>
+			<display-inherited value="APPEND"/>
+
+			<display-order>
+				<value>
+					<property name="tileLabel"/>
+					<property name="preview"/>
+					<property name="securityDomain"/>
+					<property name="helpID"/>
+				</value>
+			</display-order>
+		</annotations>
+
 		<property name="tileLabel"
 			type="ResKey"
 		>
@@ -33,22 +46,6 @@
 			<hidden/>
 			<complex-default value="com.top_logic.layout.editor.annotation.LayoutTemplatesDefault"/>
 			<layout-templates value="com.top_logic/contentLayout.template.xml"/>
-		</property>
-		<property name="securityDomain"
-			default="SecurityStructure"
-			type="String"
-		>
-			<nullable/>
-			<options
-				fun="com.top_logic.tool.boundsec.manager.SecurityStructures"
-				mapping="com.top_logic.model.config.TLModelPartMapping"
-			/>
-		</property>
-		<property name="helpID"
-			type="String"
-		>
-			<property-editor value="com.top_logic.layout.help.UseHelpEditor"/>
-			<value-initializer value="com.top_logic.layout.form.values.edit.initializer.UUIDInitializer"/>
 		</property>
 	</properties>
 

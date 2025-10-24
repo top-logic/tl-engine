@@ -13,6 +13,11 @@ import com.top_logic.layout.form.component.FormTableConfig;
 
 /**
  * {@link FormTableConfig} choosing {@link TreeTableContextMenuProvider} by default.
+ * 
+ * @implNote This configuration interface is used to configure the table for a
+ *           {@link TreeTableComponent}
+ * 
+ * @see TreeTableComponent.Config#getTable()
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

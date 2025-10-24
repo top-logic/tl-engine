@@ -216,7 +216,7 @@ public class TileListComponent extends SelectableBuilderComponent {
 				}
 				Resources resources = Resources.getInstance();
 				Object targetObject = getBusinessObject();
-				Map<String, Object> args = ContextMenuUtil.createArguments(targetObject);
+				Map<String, Object> args = ContextMenuUtil.createSingleObjectArguments(targetObject);
 				return () -> {
 					Menu menu = new Menu();
 					for (CommandHandler command : buttons) {

@@ -113,6 +113,19 @@ public class CompoundSecurityLayout extends BoundLayout {
         return this.securityDomain;
     }
 
+	@Override
+	public ComponentName getSecurityId() {
+		ComponentName configuredSecurityId = config().getSecurityId();
+		if (configuredSecurityId != null) {
+			return configuredSecurityId;
+		}
+		return super.getSecurityId();
+	}
+
+	private Config config() {
+		return (Config) getConfig();
+	}
+
     /**
      * This method looks up a command group by its id.
      * Only command groups registered at this component are taken into account.
@@ -134,15 +147,23 @@ public class CompoundSecurityLayout extends BoundLayout {
 
     /**
      * Initialize the command groups with all the command groups of your children.
-     *
-     * @see com.top_logic.mig.html.layout.LayoutContainer#componentsResolved(InstantiationContext)
      */
     @Override
 	protected void componentsResolved(InstantiationContext context) {
         super.componentsResolved(context);
 
+		PersBoundComp persBoundComp = SecurityComponentCache.lookupPersBoundComp(this);
+		if (persBoundComp == null && config().getSecurityId() != null) {
+			/* A configured security ID means, that the security is not checked on this component
+			 * but on the configured. When there is no PersBoundComp, something may be
+			 * misconfigured. */
+			Logger.warn(
+				"No PersBoundComp found for configured security id '" + config().getSecurityId() + "' in " + this,
+				CompoundSecurityLayout.class);
+		}
+
         // Note: Must call super to explicitly store and distribute value.
-		super.initPersBoundComp(SecurityComponentCache.lookupPersBoundComp(this));
+		super.initPersBoundComp(persBoundComp);
 
         try {
             CompoundSecurityLayoutCommandGroupCollector theVisitor = createCommandgroupCollector();
@@ -160,7 +181,7 @@ public class CompoundSecurityLayout extends BoundLayout {
             }
         }
         catch (Exception e) {
-            Logger.error("...", e, this);
+			Logger.error("Unable to collect collect command groups.", e, CompoundSecurityLayout.class);
         }
 
         if (Logger.isDebugEnabled(this)) {

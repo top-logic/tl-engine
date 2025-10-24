@@ -14,7 +14,6 @@ import com.top_logic.layout.component.IComponent;
 import com.top_logic.layout.window.WindowComponent;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.mig.html.layout.LayoutComponent.Config;
 import com.top_logic.tool.boundsec.wrap.PersBoundComp;
 
 /**
@@ -34,13 +33,6 @@ public interface BoundCheckerComponent extends BoundChecker, IComponent {
 	 */
 	@Override
 	default ComponentName getSecurityId() {
-		Config myConfig = getConfig();
-		if (myConfig instanceof SecurityConfiguration securityConfig) {
-			ComponentName configuredSecurityId = securityConfig.getSecurityId();
-			if (configuredSecurityId != null) {
-				return configuredSecurityId;
-			}
-		}
 		return getName();
 	}
 

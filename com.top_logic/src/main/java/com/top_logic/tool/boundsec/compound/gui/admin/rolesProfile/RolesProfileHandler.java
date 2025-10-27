@@ -63,7 +63,6 @@ import com.top_logic.tool.boundsec.compound.CompoundSecurityLayout;
 import com.top_logic.tool.boundsec.compound.gui.admin.rolesProfile.SecurityConfig.RoleProfileConfig;
 import com.top_logic.tool.boundsec.compound.gui.admin.rolesProfile.SecurityConfig.ViewConfig;
 import com.top_logic.tool.boundsec.gui.profile.CommandGroupCollector;
-import com.top_logic.tool.boundsec.gui.profile.CommandGroupDistributor;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.tool.boundsec.wrap.PersBoundComp;
 import com.top_logic.util.error.TopLogicException;
@@ -381,10 +380,6 @@ public class RolesProfileHandler {
 		DescendantDFSIterator<LayoutConfigTreeNode> allNodes = new DescendantDFSIterator<>(tree, tree.getRoot());
 		while (allNodes.hasNext()) {
 			importProfiles(allNodes.next(), profiles, roleByName, allConfiguredViews);
-		}
-		allNodes = new DescendantDFSIterator<>(tree, tree.getRoot());
-		while (allNodes.hasNext()) {
-			CommandGroupDistributor.distributeNeededRolesToChildren(allNodes.next());
 		}
 	}
 

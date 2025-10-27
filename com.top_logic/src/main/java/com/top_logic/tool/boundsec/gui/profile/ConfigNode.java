@@ -79,11 +79,7 @@ public class ConfigNode extends SecurityNode {
 		if (secComp == null) {
 			return;
 		}
-		boolean changes = storeLocalRights(secComp, roles, group, hasRight);
-		if (changes) {
-			CommandGroupDistributor.distributeNeededRolesToChildren(layoutNode());
-		}
-
+		storeLocalRights(secComp, roles, group, hasRight);
 	}
 
 	private boolean storeLocalRights(PersBoundComp persBoundComp, Set<BoundedRole> roles, BoundCommandGroup group,

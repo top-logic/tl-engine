@@ -6,9 +6,11 @@
 package com.top_logic.mig.html.layout;
 
 import com.top_logic.basic.col.Filter;
+import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.col.filter.FilterFactory;
 import com.top_logic.layout.tree.model.AbstractTLTreeNodeModel;
 import com.top_logic.mig.html.layout.LayoutComponent.Config;
+import com.top_logic.tool.boundsec.compound.CompoundSecurityLayout;
 
 /**
  * {@link AbstractTLTreeNodeModel} based on {@link LayoutConfigTreeNode}.
@@ -20,6 +22,9 @@ public class LayoutConfigTree extends AbstractTLTreeNodeModel<LayoutConfigTreeNo
 	private LayoutConfigTreeNode _root;
 
 	final Filter<? super Config> _filter;
+
+	private Mapping<CompoundSecurityLayout.Config, CompoundSecurityLayout.Config> _securityDefiningLayouts =
+		name -> name;
 
 	/**
 	 * Creates a new {@link LayoutConfigTree}.
@@ -54,6 +59,25 @@ public class LayoutConfigTree extends AbstractTLTreeNodeModel<LayoutConfigTreeNo
 	@Override
 	public boolean isFinite() {
 		return true;
+	}
+
+	/**
+	 * Determine the {@link com.top_logic.tool.boundsec.compound.CompoundSecurityLayout.Config} for
+	 * the given {@link com.top_logic.tool.boundsec.compound.CompoundSecurityLayout.Config} the
+	 * actually defines the security. name.
+	 */
+	public CompoundSecurityLayout.Config getSecurityDefiningLayout(CompoundSecurityLayout.Config name) {
+		return _securityDefiningLayouts.map(name);
+	}
+
+	/**
+	 * Sets the mapping for
+	 * {@link #getSecurityDefiningLayout(com.top_logic.tool.boundsec.compound.CompoundSecurityLayout.Config)}.
+	 */
+	public void setSecurityDefiningLayouts(
+			Mapping<CompoundSecurityLayout.Config, CompoundSecurityLayout.Config> mapping) {
+		_securityDefiningLayouts = mapping;
+		
 	}
 
 	private static final class LayoutConfigRootNode extends LayoutConfigTreeNode {

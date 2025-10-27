@@ -5,6 +5,9 @@
  */
 package com.top_logic.util;
 
+import java.util.List;
+import java.util.Objects;
+
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
@@ -15,7 +18,6 @@ import com.top_logic.basic.util.ComputationEx;
 import com.top_logic.knowledge.gui.layout.LayoutConfig;
 import com.top_logic.knowledge.service.KBBasedManagedClass;
 import com.top_logic.knowledge.service.Transaction;
-import com.top_logic.layout.structure.MediaQueryControl.Layout;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutStorage;
 import com.top_logic.mig.html.layout.LayoutUtils;
@@ -95,34 +97,26 @@ public class LayoutBasedSecurity extends KBBasedManagedClass<LayoutBasedSecurity
 	protected void initPersBoundComps(Transaction tx) {
 		SecurityComponentCache.setupCache();
 
-		LayoutConfig.getAvailableLayouts().forEach(this::initComponent);
-	}
+		List<LayoutComponent.Config> layouts = LayoutConfig.getAvailableLayouts()
+			.stream()
+			.map(this::loadLayoutSafe)
+			.filter(Objects::nonNull)
+			.toList();
 
-	/**
-	 * Initialised the component with the given <code>layoutName</code>.
-	 * 
-	 * @param layoutName
-	 *        Identifier for the {@link Layout}
-	 */
-	protected void initComponent(String layoutName) {
-
-		LayoutComponent.Config layout;
-		try {
-			layout = loadLayout(layoutName);
-		} catch (ConfigurationException ex) {
-			Logger.error("Loading layout '" + layoutName + "' failed.", ex, LayoutBasedSecurity.class);
-			return;
-		}
-
-		if (layout == null) {
-			// Error has already been reported.
-			return;
-		}
-
-		int count = BoundMainLayout.initPersBoundComp(kb(), layout);
+		int count = BoundMainLayout.initPersBoundComps(kb(), layouts);
 		if (count > 0) {
 			SecurityComponentCache.setupCache();
 			Logger.info("Created " + count + " objects.", LayoutBasedSecurity.class);
+		}
+	}
+
+
+	private LayoutComponent.Config loadLayoutSafe(String layoutName) {
+		try {
+			return loadLayout(layoutName);
+		} catch (ConfigurationException ex) {
+			Logger.error("Loading layout '" + layoutName + "' failed.", ex, LayoutBasedSecurity.class);
+			return null;
 		}
 	}
 

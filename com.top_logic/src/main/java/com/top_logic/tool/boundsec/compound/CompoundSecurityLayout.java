@@ -152,18 +152,8 @@ public class CompoundSecurityLayout extends BoundLayout {
 	protected void componentsResolved(InstantiationContext context) {
         super.componentsResolved(context);
 
-		PersBoundComp persBoundComp = SecurityComponentCache.lookupPersBoundComp(this);
-		if (persBoundComp == null && config().getSecurityId() != null) {
-			/* A configured security ID means, that the security is not checked on this component
-			 * but on the configured. When there is no PersBoundComp, something may be
-			 * misconfigured. */
-			Logger.warn(
-				"No PersBoundComp found for configured security id '" + config().getSecurityId() + "' in " + this,
-				CompoundSecurityLayout.class);
-		}
-
         // Note: Must call super to explicitly store and distribute value.
-		super.initPersBoundComp(persBoundComp);
+		super.initPersBoundComp(SecurityComponentCache.lookupPersBoundComp(this));
 
         try {
             CompoundSecurityLayoutCommandGroupCollector theVisitor = createCommandgroupCollector();

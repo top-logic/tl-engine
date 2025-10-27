@@ -113,10 +113,26 @@ public class SecurityComponentCache extends KBBasedManagedClass<SecurityComponen
 	public static PersBoundComp lookupPersBoundComp(CompoundSecurityLayout securityLayout) {
 		ComponentName theSecID = securityLayout.getSecurityId();
 		if (theSecID != null && !LayoutConstants.isSyntheticName(theSecID)) {
+			PersBoundComp persBoundComp;
 			try {
-				return getSecurityComponent(theSecID);
+				persBoundComp = getSecurityComponent(theSecID);
 			} catch (Exception e) {
 				Logger.error("failed to setupPersBoundComp '" + theSecID + "'", e, SecurityComponentCache.class);
+				return null;
+			}
+			if (persBoundComp != null) {
+				return persBoundComp;
+			}
+			ComponentName delegateID = ((CompoundSecurityLayout.Config) securityLayout.getConfig()).getSecurityId();
+			if (delegateID != null) {
+				/* The component to delegate to may delegate itself to a different component. */
+				LayoutComponent delegateComponent = securityLayout.getMainLayout().getComponentByName(delegateID);
+				if (delegateComponent instanceof CompoundSecurityLayout delegateSecurityLayout) {
+					return lookupPersBoundComp(delegateSecurityLayout);
+				}
+				Logger.error("Component to delegate to is no " + CompoundSecurityLayout.class.getSimpleName() + ": '"
+						+ delegateComponent + "'",
+					SecurityComponentCache.class);
 			}
 		}
 		return null;

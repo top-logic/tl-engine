@@ -639,6 +639,7 @@
 							</actions>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="SecurityStructure.MaintenanceView"
 							failure-message=""
 							user-id="root"
 						>
@@ -1033,43 +1034,39 @@
 			</actions>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-			comment="Rolle MaintenanceView an Nutzer testMaintenance3 vergeben"
-			failure-message=""
-			user-id="root"
+			comment="Rolle MaintenanceView an Gruppe maintenanceMode vergeben"
 		>
 			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Berechtigungen > Gruppenrechte"
+					/>
+				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
-					comment=""
-					failure-message=""
+					change-kind="ABSOLUTE"
 					user-id="root"
 				>
 					<selection>
-						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
-							table-name="Person"
-						>
-							<key-values>
-								<attribute name="name">
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-										string="testMaintenance3"
-									/>
-								</attribute>
-							</key-values>
-						</selectee>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="Maintenance-Mode-Nutzer"
+						/>
 						<selection-state boolean="true"/>
 					</selection>
-					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name="com.top_logic.element/admin/security/roleAssignment/adminPersonsRolesView.layout.xml#RolesPersonTable"
-						tab-path="Administration > Berechtigungen > Benutzerrechte"
-					/>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.element/admin/security/groupRoles/adminGroupRolesView.layout.xml#rolesGroup_Table"
+							tab-path="Administration > Berechtigungen > Gruppenrechte"
+						/>
+					</selection-model-name>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
 					command-label="Bearbeiten"
 					command-name="switchToAJAXEdit"
-					comment=""
 					component-implementation-comment="com.top_logic.element.layout.person.EditPersonOrGroupRolesMultiComponent"
-					component-name="com.top_logic.element/admin/security/roleAssignment/adminPersonsRolesView.layout.xml#EditPersonRoles"
-					failure-message=""
+					component-name="com.top_logic.element/admin/security/groupRoles/adminGroupRolesView.layout.xml#EditGroupRoles"
 					user-id="root"
 				>
 					<arguments/>
@@ -1081,7 +1078,7 @@
 						label="SecurityRoot"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Berechtigungen > Benutzerrechte > Nutzerrechte auf Strukturen pflegen"
+							tab-path="Administration > Berechtigungen > Gruppenrechte > Gruppenrechte auf Strukturen pflegen"
 						/>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
@@ -1096,10 +1093,8 @@
 					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
 					command-label="Speichern"
 					command-name="defaultSave"
-					comment=""
 					component-implementation-comment="com.top_logic.element.layout.person.EditPersonOrGroupRolesMultiComponent"
-					component-name="com.top_logic.element/admin/security/roleAssignment/adminPersonsRolesView.layout.xml#EditPersonRoles"
-					failure-message=""
+					component-name="com.top_logic.element/admin/security/groupRoles/adminGroupRolesView.layout.xml#EditGroupRoles"
 					user-id="root"
 				>
 					<arguments/>
@@ -1199,338 +1194,471 @@
 				</action>
 			</actions>
 		</action>
-		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
-			template="script:/Nutzer/Nutzer anmelden.xml"
-			template-name-comment="Nutzer anmelden"
-		>
-			<parameters>
-				<parameter name="Username"
-					value="testMaintenance1"
-				/>
-				<parameter name="ProcessId"
-					value="testMaintenance1"
-				/>
-			</parameters>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-			comment="Wartungsmodus abbrechen vor Aktivierung (als testMaintenance1)"
-			failure-message=""
-			user-id="testMaintenance1"
-		>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
 			<actions>
-				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-					comment=""
-					failure-message=""
-					user-id="testMaintenance1"
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Nutzer anmelden.xml"
+					template-name-comment="Nutzer anmelden"
 				>
-					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name=""
-						tab-path="Administration > Tech. Administration"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-					comment=""
-					failure-message=""
-					user-id="testMaintenance1"
-				>
-					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name=""
-						tab-path="Administration > Tech. Administration > Wartungsfenster"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
-					command-label="Wartungsmodus aktivieren..."
-					command-name="displayDialog_enterMaintenanceWindowDialog"
-					comment=""
-					component-implementation-comment="com.top_logic.layout.admin.component.MaintenanceWindowComponent"
-					component-name="com.top_logic/admin/technical/maintenanceMode/maintenanceWindow.layout.xml#maintenanceWindowComponent"
-					failure-message=""
-					user-id="testMaintenance1"
-				>
-					<arguments/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.layout.admin.component.MaintenanceWindowComponent$EnterMaintenanceWindowDelayedCommandHandler"
-					command-label="Wartungsmodus aktivieren"
-					command-name="EnterMaintenanceWindowDelayed"
-					comment=""
-					component-implementation-comment="com.top_logic.layout.admin.component.MaintenanceWindowComponent$EnterMaintenanceWindowDialog"
-					component-name="com.top_logic/admin/technical/maintenanceMode/maintenanceWindow.layout.xml#enterMaintenanceWindow"
-					failure-message=""
-					user-id="testMaintenance1"
-				>
-					<arguments/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.layout.admin.component.MaintenanceWindowComponent$AbortEnteringMaintenanceWindowCommandHandler"
-					command-label="Wartungsmodus abbrechen..."
-					command-name="AbortEnteringMaintenanceWindow"
-					comment=""
-					component-implementation-comment="com.top_logic.layout.admin.component.MaintenanceWindowComponent"
-					component-name="com.top_logic/admin/technical/maintenanceMode/maintenanceWindow.layout.xml#maintenanceWindowComponent"
-					failure-message=""
-					user-id="testMaintenance1"
-				>
-					<arguments/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.LogoutActionOp"
-					comment=""
-					failure-message=""
-					user-id="testMaintenance1"
-				/>
-			</actions>
-		</action>
-		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
-			template="script:/Nutzer/Nutzer anmelden.xml"
-			template-name-comment="Nutzer anmelden"
-		>
-			<parameters>
-				<parameter name="Username"
-					value="testMaintenance1"
-				/>
-				<parameter name="ProcessId"
-					value="testMaintenance1"
-				/>
-			</parameters>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-			comment="Wartungsmodus abschalten nach Aktivierung  (als testMaintenance1)"
-			failure-message=""
-			user-id="testMaintenance1"
-		>
-			<actions>
-				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-					comment=""
-					failure-message=""
-					user-id="testMaintenance1"
-				>
-					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name=""
-						tab-path="Administration > Tech. Administration"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-					comment=""
-					failure-message=""
-					user-id="testMaintenance1"
-				>
-					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name=""
-						tab-path="Administration > Tech. Administration > Wartungsfenster"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
-					command-label="Wartungsmodus aktivieren..."
-					command-name="displayDialog_enterMaintenanceWindowDialog"
-					comment=""
-					component-implementation-comment="com.top_logic.layout.admin.component.MaintenanceWindowComponent"
-					component-name="com.top_logic/admin/technical/maintenanceMode/maintenanceWindow.layout.xml#maintenanceWindowComponent"
-					failure-message=""
-					user-id="testMaintenance1"
-				>
-					<arguments/>
-				</action>
-				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-					user-id="testMaintenance1"
-				>
-					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic/admin/technical/maintenanceMode/maintenanceWindow.layout.xml#enterMaintenanceWindow"
-							tab-path=""
+					<parameters>
+						<parameter name="Username"
+							value="testMaintenance1"
 						/>
-						<path>
-							<named-member name="min_field"/>
-						</path>
-					</field>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="0"
-					/>
+						<parameter name="ProcessId"
+							value="testMaintenance1"
+						/>
+					</parameters>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.layout.admin.component.MaintenanceWindowComponent$EnterMaintenanceWindowDelayedCommandHandler"
-					command-label="Wartungsmodus aktivieren"
-					command-name="EnterMaintenanceWindowDelayed"
-					comment=""
-					component-implementation-comment="com.top_logic.layout.admin.component.MaintenanceWindowComponent$EnterMaintenanceWindowDialog"
-					component-name="com.top_logic/admin/technical/maintenanceMode/maintenanceWindow.layout.xml#enterMaintenanceWindow"
-					failure-message=""
-					user-id="testMaintenance1"
-				>
-					<arguments/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.WaitForMaintenanceModeActionOp"
-					failure-message=""
-					max-sleep="10000"
-					state="0"
-					user-id="testMaintenance1"
-				/>
 				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-					comment="Wartungsmodus abschalten"
-					failure-message="Ticket #21793: Maintenance mode must be deactivatable."
+					comment="Wartungsmodus abbrechen vor Aktivierung (als testMaintenance1)"
+					failure-message=""
+					user-id="testMaintenance1"
 				>
 					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Administration > Tech. Administration"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Administration > Tech. Administration > Wartungsfenster"
+							/>
+						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-							command-implementation-comment="com.top_logic.tool.boundsec.CheckerProxyHandler"
-							command-label="Wartungsmodus abschalten..."
-							command-name="displayDialog_exitMaintenanceWindowDialog"
+							command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+							command-label="Wartungsmodus aktivieren..."
+							command-name="displayDialog_enterMaintenanceWindowDialog"
+							comment=""
 							component-implementation-comment="com.top_logic.layout.admin.component.MaintenanceWindowComponent"
 							component-name="com.top_logic/admin/technical/maintenanceMode/maintenanceWindow.layout.xml#maintenanceWindowComponent"
-							user-id="testMaintenance1"
+							failure-message=""
 						>
 							<arguments/>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-							command-implementation-comment="com.top_logic.layout.admin.component.MaintenanceWindowComponent$LeaveMaintenanceWindowCommandHandler"
-							command-label="Wartungsmodus beenden"
-							command-name="LeaveMaintenanceWindow"
-							component-implementation-comment="com.top_logic.mig.html.layout.SimpleBoundComponent"
-							component-name="com.top_logic/admin/technical/maintenanceMode/maintenanceWindow.layout.xml#exitMaintenanceWindow"
-							user-id="testMaintenance1"
+							command-implementation-comment="com.top_logic.layout.admin.component.MaintenanceWindowComponent$EnterMaintenanceWindowDelayedCommandHandler"
+							command-label="Wartungsmodus aktivieren"
+							command-name="EnterMaintenanceWindowDelayed"
+							comment=""
+							component-implementation-comment="com.top_logic.layout.admin.component.MaintenanceWindowComponent$EnterMaintenanceWindowDialog"
+							component-name="com.top_logic/admin/technical/maintenanceMode/maintenanceWindow.layout.xml#enterMaintenanceWindow"
+							failure-message=""
 						>
 							<arguments/>
 						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.admin.component.MaintenanceWindowComponent$AbortEnteringMaintenanceWindowCommandHandler"
+							command-label="Wartungsmodus abbrechen..."
+							command-name="AbortEnteringMaintenanceWindow"
+							comment=""
+							component-implementation-comment="com.top_logic.layout.admin.component.MaintenanceWindowComponent"
+							component-name="com.top_logic/admin/technical/maintenanceMode/maintenanceWindow.layout.xml#maintenanceWindowComponent"
+							failure-message=""
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.LogoutActionOp"
+							comment=""
+							failure-message=""
+						/>
 					</actions>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.LogoutActionOp"
-					comment=""
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Nutzer anmelden.xml"
+					template-name-comment="Nutzer anmelden"
+				>
+					<parameters>
+						<parameter name="Username"
+							value="testMaintenance1"
+						/>
+						<parameter name="ProcessId"
+							value="testMaintenance1"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Wartungsmodus abschalten nach Aktivierung  (als testMaintenance1)"
 					failure-message=""
 					user-id="testMaintenance1"
-				/>
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Administration > Tech. Administration"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Administration > Tech. Administration > Wartungsfenster"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+							command-label="Wartungsmodus aktivieren..."
+							command-name="displayDialog_enterMaintenanceWindowDialog"
+							comment=""
+							component-implementation-comment="com.top_logic.layout.admin.component.MaintenanceWindowComponent"
+							component-name="com.top_logic/admin/technical/maintenanceMode/maintenanceWindow.layout.xml#maintenanceWindowComponent"
+							failure-message=""
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op">
+							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic/admin/technical/maintenanceMode/maintenanceWindow.layout.xml#enterMaintenanceWindow"
+									tab-path=""
+								/>
+								<path>
+									<named-member name="min_field"/>
+								</path>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="0"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.admin.component.MaintenanceWindowComponent$EnterMaintenanceWindowDelayedCommandHandler"
+							command-label="Wartungsmodus aktivieren"
+							command-name="EnterMaintenanceWindowDelayed"
+							comment=""
+							component-implementation-comment="com.top_logic.layout.admin.component.MaintenanceWindowComponent$EnterMaintenanceWindowDialog"
+							component-name="com.top_logic/admin/technical/maintenanceMode/maintenanceWindow.layout.xml#enterMaintenanceWindow"
+							failure-message=""
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.WaitForMaintenanceModeActionOp"
+							failure-message=""
+							max-sleep="10000"
+							state="0"
+						/>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="Wartungsmodus abschalten"
+							failure-message="Ticket #21793: Maintenance mode must be deactivatable."
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.tool.boundsec.CheckerProxyHandler"
+									command-label="Wartungsmodus abschalten..."
+									command-name="displayDialog_exitMaintenanceWindowDialog"
+									component-implementation-comment="com.top_logic.layout.admin.component.MaintenanceWindowComponent"
+									component-name="com.top_logic/admin/technical/maintenanceMode/maintenanceWindow.layout.xml#maintenanceWindowComponent"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.layout.admin.component.MaintenanceWindowComponent$LeaveMaintenanceWindowCommandHandler"
+									command-label="Wartungsmodus beenden"
+									command-name="LeaveMaintenanceWindow"
+									component-implementation-comment="com.top_logic.mig.html.layout.SimpleBoundComponent"
+									component-name="com.top_logic/admin/technical/maintenanceMode/maintenanceWindow.layout.xml#exitMaintenanceWindow"
+								>
+									<arguments/>
+								</action>
+							</actions>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.LogoutActionOp"
+							comment=""
+							failure-message=""
+						/>
+					</actions>
+				</action>
 			</actions>
 		</action>
-		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
-			template="script:/Nutzer/Nutzer anmelden.xml"
-			template-name-comment="Nutzer anmelden"
-		>
-			<parameters>
-				<parameter name="Username"
-					value="testMaintenance2"
-				/>
-				<parameter name="ProcessId"
-					value="testMaintenance2"
-				/>
-			</parameters>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-			comment="Wartungsmodus abbrechen vor Aktivierung  (als testMaintenance2)"
-			failure-message=""
-			user-id="testMaintenance2"
-		>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
 			<actions>
-				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-					comment=""
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Nutzer anmelden.xml"
+					template-name-comment="Nutzer anmelden"
+				>
+					<parameters>
+						<parameter name="Username"
+							value="testMaintenance2"
+						/>
+						<parameter name="ProcessId"
+							value="testMaintenance2"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Wartungsmodus abbrechen vor Aktivierung  (als testMaintenance2)"
 					failure-message=""
 					user-id="testMaintenance2"
 				>
-					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name=""
-						tab-path="Administration > Tech. Administration"
-					/>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Administration > Tech. Administration"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Administration > Tech. Administration > Wartungsfenster"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+							command-label="Wartungsmodus aktivieren..."
+							command-name="displayDialog_enterMaintenanceWindowDialog"
+							comment=""
+							component-implementation-comment="com.top_logic.layout.admin.component.MaintenanceWindowComponent"
+							component-name="com.top_logic/admin/technical/maintenanceMode/maintenanceWindow.layout.xml#maintenanceWindowComponent"
+							failure-message=""
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.admin.component.MaintenanceWindowComponent$EnterMaintenanceWindowDelayedCommandHandler"
+							command-label="Wartungsmodus aktivieren"
+							command-name="EnterMaintenanceWindowDelayed"
+							comment=""
+							component-implementation-comment="com.top_logic.layout.admin.component.MaintenanceWindowComponent$EnterMaintenanceWindowDialog"
+							component-name="com.top_logic/admin/technical/maintenanceMode/maintenanceWindow.layout.xml#enterMaintenanceWindow"
+							failure-message=""
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.admin.component.MaintenanceWindowComponent$AbortEnteringMaintenanceWindowCommandHandler"
+							command-label="Wartungsmodus abbrechen..."
+							command-name="AbortEnteringMaintenanceWindow"
+							comment=""
+							component-implementation-comment="com.top_logic.layout.admin.component.MaintenanceWindowComponent"
+							component-name="com.top_logic/admin/technical/maintenanceMode/maintenanceWindow.layout.xml#maintenanceWindowComponent"
+							failure-message=""
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.LogoutActionOp"
+							comment=""
+							failure-message=""
+						/>
+					</actions>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-					comment=""
-					failure-message=""
-					user-id="testMaintenance2"
-				>
-					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name=""
-						tab-path="Administration > Tech. Administration > Wartungsfenster"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
-					command-label="Wartungsmodus aktivieren..."
-					command-name="displayDialog_enterMaintenanceWindowDialog"
-					comment=""
-					component-implementation-comment="com.top_logic.layout.admin.component.MaintenanceWindowComponent"
-					component-name="com.top_logic/admin/technical/maintenanceMode/maintenanceWindow.layout.xml#maintenanceWindowComponent"
-					failure-message=""
-					user-id="testMaintenance2"
-				>
-					<arguments/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.layout.admin.component.MaintenanceWindowComponent$EnterMaintenanceWindowDelayedCommandHandler"
-					command-label="Wartungsmodus aktivieren"
-					command-name="EnterMaintenanceWindowDelayed"
-					comment=""
-					component-implementation-comment="com.top_logic.layout.admin.component.MaintenanceWindowComponent$EnterMaintenanceWindowDialog"
-					component-name="com.top_logic/admin/technical/maintenanceMode/maintenanceWindow.layout.xml#enterMaintenanceWindow"
-					failure-message=""
-					user-id="testMaintenance2"
-				>
-					<arguments/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.layout.admin.component.MaintenanceWindowComponent$AbortEnteringMaintenanceWindowCommandHandler"
-					command-label="Wartungsmodus abbrechen..."
-					command-name="AbortEnteringMaintenanceWindow"
-					comment=""
-					component-implementation-comment="com.top_logic.layout.admin.component.MaintenanceWindowComponent"
-					component-name="com.top_logic/admin/technical/maintenanceMode/maintenanceWindow.layout.xml#maintenanceWindowComponent"
-					failure-message=""
-					user-id="testMaintenance2"
-				>
-					<arguments/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.LogoutActionOp"
-					comment=""
-					failure-message=""
-					user-id="testMaintenance2"
-				/>
 			</actions>
 		</action>
-		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
-			template="script:/Nutzer/Nutzer anmelden.xml"
-			template-name-comment="Nutzer anmelden"
-		>
-			<parameters>
-				<parameter name="Username"
-					value="testMaintenance3"
-				/>
-				<parameter name="ProcessId"
-					value="testMaintenance3"
-				/>
-			</parameters>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-			comment="Wartungsmodus prüfen (als testMaintenance3)"
-			failure-message=""
-			user-id="testMaintenance3"
-		>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
 			<actions>
-				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-					comment=""
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Nutzer anmelden.xml"
+					template-name-comment="Nutzer anmelden"
+				>
+					<parameters>
+						<parameter name="Username"
+							value="testMaintenance3"
+						/>
+						<parameter name="ProcessId"
+							value="testMaintenance3"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Wartungsmodus prüfen (als testMaintenance3)"
 					failure-message=""
 					user-id="testMaintenance3"
 				>
-					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name=""
-						tab-path="Administration > Tech. Administration > Wartungsfenster"
-					/>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Administration > Tech. Administration > Wartungsfenster"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CheckExecutabilityOp"
+							command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+							command-label="Wartungsmodus aktivieren..."
+							command-name="displayDialog_enterMaintenanceWindowDialog"
+							comment=""
+							component-implementation-comment="com.top_logic.layout.admin.component.MaintenanceWindowComponent"
+							component-name="com.top_logic/admin/technical/maintenanceMode/maintenanceWindow.layout.xml#maintenanceWindowComponent"
+							contained-keys=""
+							failure-message=""
+							reason-key="tl.executable.not.allowed"
+							reason-keys=""
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.LogoutActionOp"
+							comment=""
+							failure-message=""
+						/>
+					</actions>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CheckExecutabilityOp"
-					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
-					command-label="Wartungsmodus aktivieren..."
-					command-name="displayDialog_enterMaintenanceWindowDialog"
-					comment=""
-					component-implementation-comment="com.top_logic.layout.admin.component.MaintenanceWindowComponent"
-					component-name="com.top_logic/admin/technical/maintenanceMode/maintenanceWindow.layout.xml#maintenanceWindowComponent"
-					contained-keys=""
-					failure-message=""
-					reason-key="tl.executable.not.allowed"
-					reason-keys=""
-					user-id="testMaintenance3"
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Nutzer anmelden.xml"
+					template-name-comment="Nutzer anmelden"
 				>
-					<arguments/>
+					<parameters>
+						<parameter name="Username"
+							value="testMaintenance2"
+						/>
+						<parameter name="ProcessId"
+							value="testMaintenance2"
+						/>
+					</parameters>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.LogoutActionOp"
-					comment=""
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Wartungsmodus aktivieren (als testMaintenance2)"
 					failure-message=""
-					user-id="testMaintenance3"
-				/>
+					user-id="testMaintenance2"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Administration > Tech. Administration"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Administration > Tech. Administration > Wartungsfenster"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+							command-label="Wartungsmodus aktivieren..."
+							command-name="displayDialog_enterMaintenanceWindowDialog"
+							comment=""
+							component-implementation-comment="com.top_logic.layout.admin.component.MaintenanceWindowComponent"
+							component-name="com.top_logic/admin/technical/maintenanceMode/maintenanceWindow.layout.xml#maintenanceWindowComponent"
+							failure-message=""
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op">
+							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic/admin/technical/maintenanceMode/maintenanceWindow.layout.xml#enterMaintenanceWindow"
+									tab-path=""
+								/>
+								<path>
+									<named-member name="min_field"/>
+								</path>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="0"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.admin.component.MaintenanceWindowComponent$EnterMaintenanceWindowDelayedCommandHandler"
+							command-label="Wartungsmodus aktivieren"
+							command-name="EnterMaintenanceWindowDelayed"
+							comment=""
+							component-implementation-comment="com.top_logic.layout.admin.component.MaintenanceWindowComponent$EnterMaintenanceWindowDialog"
+							component-name="com.top_logic/admin/technical/maintenanceMode/maintenanceWindow.layout.xml#enterMaintenanceWindow"
+							failure-message=""
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.WaitForMaintenanceModeActionOp"
+							failure-message=""
+							max-sleep="10000"
+							state="0"
+						/>
+						<action class="com.top_logic.layout.scripting.runtime.action.LogoutActionOp"
+							comment=""
+							failure-message=""
+						/>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Nutzer anmelden.xml"
+					template-name-comment="Nutzer anmelden"
+				>
+					<parameters>
+						<parameter name="Username"
+							value="testMaintenance1"
+						/>
+						<parameter name="ProcessId"
+							value="testMaintenance1"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Aktiven Wartungsmodus abschalten nach Login  (als testMaintenance1)"
+					user-id="testMaintenance1"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Tech. Administration"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="Wartungsmodus abschalten"
+							failure-message="Ticket #21793: Maintenance mode must be deactivatable."
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.tool.boundsec.CheckerProxyHandler"
+									command-label="Wartungsmodus abschalten..."
+									command-name="displayDialog_exitMaintenanceWindowDialog"
+									component-implementation-comment="com.top_logic.layout.admin.component.MaintenanceWindowComponent"
+									component-name="com.top_logic/admin/technical/maintenanceMode/maintenanceWindow.layout.xml#maintenanceWindowComponent"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.layout.admin.component.MaintenanceWindowComponent$LeaveMaintenanceWindowCommandHandler"
+									command-label="Wartungsmodus beenden"
+									command-name="LeaveMaintenanceWindow"
+									component-implementation-comment="com.top_logic.mig.html.layout.SimpleBoundComponent"
+									component-name="com.top_logic/admin/technical/maintenanceMode/maintenanceWindow.layout.xml#exitMaintenanceWindow"
+								>
+									<arguments/>
+								</action>
+							</actions>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.LogoutActionOp"
+							comment=""
+							failure-message=""
+						/>
+					</actions>
+				</action>
 			</actions>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"

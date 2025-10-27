@@ -754,7 +754,7 @@
 			<instance class="com.top_logic.base.accesscontrol.Login">
 				<log-failed-logins>true</log-failed-logins>
 				
-				<component-leaving-maintenance-mode>com.top_logic/admin/technical/maintenanceMode/maintenanceWindow.layout.xml#exitMaintenanceWindow</component-leaving-maintenance-mode>
+				<component-leaving-maintenance-mode>com.top_logic/admin/technical/maintenanceMode/maintenanceWindow.layout.xml#exitMaintenanceWindowDialog</component-leaving-maintenance-mode>
 				<command-group-leaving-maintenance-mode>Write</command-group-leaving-maintenance-mode>
 				<password-hashing default-algorithm="argon2" automatic-rehash="true">
 					<algorithm name="argon2">

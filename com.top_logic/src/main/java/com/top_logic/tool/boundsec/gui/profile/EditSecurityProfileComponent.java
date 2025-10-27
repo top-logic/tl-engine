@@ -23,6 +23,7 @@ import com.top_logic.basic.Environment;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.Filter;
+import com.top_logic.basic.col.TupleFactory;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.config.CommaSeparatedStringSet;
 import com.top_logic.basic.config.ConfigurationException;
@@ -77,11 +78,13 @@ import com.top_logic.layout.tree.model.TreeTableModel;
 import com.top_logic.layout.tree.model.TreeUIModel;
 import com.top_logic.layout.tree.model.TreeUIModelUtil;
 import com.top_logic.mig.html.layout.ComponentInstantiationContext;
+import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutConfigTree;
 import com.top_logic.mig.html.layout.LayoutUtils;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
+import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.compound.CompoundSecurityLayout;
 import com.top_logic.tool.boundsec.securityObjectProvider.SecurityRootObjectProvider;
@@ -298,35 +301,93 @@ public class EditSecurityProfileComponent extends EditComponent
 
 		private final Map<String, Set<BoundedRole>> _rolesByLocalName;
 
+		private final Map<Object, BooleanField> _fields = new HashMap<>();
+
+		private final Map<Object, List<BooleanField>> _delegatesToResolve = new HashMap<>();
+
 		public CommandGroupFieldProvider(TableConfiguration config, Map<String, Set<BoundedRole>> map) {
 			_config = config;
 			_rolesByLocalName = map;
 		}
 
 		@Override
-		public FormMember createField(Object aModel, Accessor anAccessor, String aProperty) {
-			String fieldName = getFieldName(aModel, anAccessor, aProperty);
+		public FormMember createField(Object aModel, Accessor anAccessor, String property) {
+			String fieldName = getFieldName(aModel, anAccessor, property);
 			if (!(aModel instanceof CommandNode)) {
 				return notRelevant(fieldName);
 			}
 			CommandNode node = (CommandNode) aModel;
 			ConfigNode config = node.configNode();
-			Set<BoundedRole> colRoles = _rolesByLocalName.get(aProperty);
+			Set<BoundedRole> colRoles = _rolesByLocalName.get(property);
 			if (!config.needsCheckBox(colRoles)) {
 				return notRelevant(fieldName);
 			}
 			Boolean hasRight = Boolean.valueOf(node.hasRight(colRoles));
-			BooleanField field = FormFactory.newBooleanField(fieldName, hasRight, !FormFactory.IMMUTABLE);
+			boolean immutable;
+			CompoundSecurityLayout.Config securityLayout = config.securityLayout();
+			if (securityLayout != config.config()) {
+				/* Node represents a security layout which delegates its security to a different
+				 * one. The values must not be changed. */
+				immutable = FormFactory.IMMUTABLE;
+			} else {
+				immutable = !FormFactory.IMMUTABLE;
+			}
+			BooleanField field = FormFactory.newBooleanField(fieldName, hasRight, immutable);
 			field.setLabel(fieldName + ": " + ExportNameLabels.INSTANCE.getLabel(node));
-			field.setTooltipCaption(_config.getDeclaredColumn(aProperty).getColumnLabel());
+			field.setTooltipCaption(_config.getDeclaredColumn(property).getColumnLabel());
 			field.setTooltip(node.getRoleNamesAsTooltip(colRoles));
 			field.setControlProvider(DefaultTooltipControlProvider.INSTANCE);
+			field.setTransient(immutable);
 			field.set(COMMAND_NODE, node);
+
+			connectWithSecuritySource(field, securityLayout, node, property);
 			return field;
+		}
+
+		private void connectWithSecuritySource(BooleanField field, CompoundSecurityLayout.Config securityLayout,
+				CommandNode node, String property) {
+			LayoutComponent.Config nodeConfig = node.configNode().config();
+			ComponentName name = nodeConfig.getName();
+			BoundCommandGroup group = node.group();
+			Object fieldKey = key(name, group, property);
+			_fields.put(fieldKey, field);
+			if (securityLayout != nodeConfig) {
+				// Security delegated.
+				Object delegateKey = key(securityLayout.getName(), group, property);
+				BooleanField sourceField = _fields.get(delegateKey);
+				if (sourceField != null) {
+					connect(sourceField, field);
+				} else {
+					// Delegate target not yet create. Store for later.
+					_delegatesToResolve
+						.computeIfAbsent(delegateKey, k -> new ArrayList<>())
+						.add(field);
+				}
+
+			} else {
+				// Check whether delegate target was created before
+				_delegatesToResolve
+					.getOrDefault(fieldKey, Collections.emptyList())
+					.forEach(delegate -> connect(field, delegate));
+			}
+		}
+
+		private void connect(BooleanField source, BooleanField target) {
+			source.addValueListener(new ValueListener() {
+
+				@Override
+				public void valueChanged(FormField field, Object oldValue, Object newValue) {
+					target.setValue(newValue);
+				}
+			});
 		}
 
 		private StringField notRelevant(String fieldName) {
 			return FormFactory.newStringField(fieldName, StringServices.EMPTY_STRING, true);
+		}
+
+		private static Object key(ComponentName name, BoundCommandGroup group, String property) {
+			return TupleFactory.newTuple(name, group, property);
 		}
 
 	}

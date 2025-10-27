@@ -16,6 +16,7 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.Utils;
 import com.top_logic.layout.tree.model.AbstractMutableTLTreeModel;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.mig.html.layout.LayoutComponent.Config;
 import com.top_logic.mig.html.layout.LayoutConfigTreeNode;
 import com.top_logic.model.TLModule;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
@@ -55,6 +56,14 @@ public class ConfigNode extends SecurityNode {
 	@Override
 	public ConfigNode getParent() {
 		return (ConfigNode) super.getParent();
+	}
+
+	CompoundSecurityLayout.Config securityLayout() {
+		Config layoutConf = config();
+		if (layoutConf instanceof CompoundSecurityLayout.Config securityLayout) {
+			return layoutNode().getModel().getSecurityDefiningLayout(securityLayout);
+		}
+		return null;
 	}
 
 	LayoutComponent.Config config() {

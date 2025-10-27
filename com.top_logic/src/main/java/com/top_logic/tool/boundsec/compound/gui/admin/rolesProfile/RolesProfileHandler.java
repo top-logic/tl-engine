@@ -294,6 +294,10 @@ public class RolesProfileHandler {
 		if (secComp == null) {
 			return;
 		}
+		if (!node.getConfig().getName().qualifiedName().equals(secComp.getName())) {
+			/*Component delegates to another PersBoundComp. Ignore it.*/
+			return;
+		}
 		ViewConfig viewConfig = null;
 		for (BoundCommandGroup cg : sortedCopy(allCommandGroups)) {
 			Collection theRoles = secComp.rolesForCommandGroup(cg);

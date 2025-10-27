@@ -5,6 +5,7 @@
  */
 package com.top_logic.tool.boundsec;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -13,6 +14,7 @@ import java.util.Map;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.LogProtocol;
 import com.top_logic.basic.Protocol;
+import com.top_logic.basic.col.DescendantDFSIterator;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
@@ -91,7 +93,7 @@ public abstract class BoundMainLayout extends MainLayout implements LayoutContai
      *         you must commit the given Knlwoedgebase.
      */
     public int initBoundComponents(KnowledgeBase kBase) {
-		return initPersBoundComp(kBase, getConfig());
+		return initPersBoundComps(kBase, Collections.singletonList(getConfig()));
     }
 
 	/**
@@ -100,9 +102,9 @@ public abstract class BoundMainLayout extends MainLayout implements LayoutContai
 	 * @return The number of newly initialised components; anything &gt; 0 implies that you must
 	 *         commit the given {@link KnowledgeBase}.
 	 */
-	public static int initPersBoundComp(KnowledgeBase kb, LayoutComponent.Config config) {
+	public static int initPersBoundComps(KnowledgeBase kb, List<LayoutComponent.Config> configs) {
 		Protocol protocol = new LogProtocol(BoundMainLayout.class);
-		InitPersBoundCompVisitor visitor = new InitPersBoundCompVisitor(kb, config);
+		InitPersBoundCompVisitor visitor = new InitPersBoundCompVisitor(kb, configs);
 		visitor.visit(protocol);
 		protocol.checkErrors();
 		return visitor.getCount();
@@ -114,28 +116,77 @@ public abstract class BoundMainLayout extends MainLayout implements LayoutContai
 
 		private final Map<String, LayoutComponent.Config> _configById = new HashMap<>();
 
+		private final Map<ComponentName, CompoundSecurityLayout.Config> _securityLayoutByName = new HashMap<>();
+
 		private int _count;
 
-		private final Location _rootLocation;
+		private Location _rootLocation;
 
-		private CompoundSecurityLayout.Config _nextSecurityParent;
+		private ComponentName _nextSecurityParent;
 
-		private LayoutComponent.Config _root;
+		private List<LayoutComponent.Config> _roots;
 
-		public InitPersBoundCompVisitor(KnowledgeBase kBase, LayoutComponent.Config root) {
+		public InitPersBoundCompVisitor(KnowledgeBase kBase, List<LayoutComponent.Config> roots) {
 			_kb = kBase;
-			_root = root;
-			_rootLocation = root.location();
+			_roots = roots;
 		}
 
 		public void visit(Log log) {
-			visit(log, _root);
+			_roots.forEach(this::collectSecurityLayouts);
+			createPersBoundComps(log);
+			for (LayoutComponent.Config root : _roots) {
+				_rootLocation = root.location();
+				_configById.clear();
+				visit(log, root);
+			}
+		}
+
+		private void createPersBoundComps(Log log) {
+			/* Security is only configured for CompoundSecurityLayout's. Therefore PersBoundComp's
+			 * must only be created for those components. */
+			for (CompoundSecurityLayout.Config conf : _securityLayoutByName.values()) {
+				ComponentName persBoundCompName = persBoundCompId(log, conf);
+				if (!conf.getName().equals(persBoundCompName)) {
+					/* Security is delegated to different component. Do not create PersBoundComp. */
+					continue;
+				}
+				if (SecurityComponentCache.getSecurityComponent(persBoundCompName) == null) {
+					PersBoundComp.createInstance(_kb, persBoundCompName);
+					_count++;
+				}
+
+			}
+		}
+
+		private ComponentName persBoundCompId(Log log, CompoundSecurityLayout.Config secLayout) {
+			ComponentName securityId = secLayout.getSecurityId();
+			if (securityId == null) {
+				return secLayout.getName();
+			}
+			CompoundSecurityLayout.Config delegateConf = _securityLayoutByName.get(securityId);
+			if (delegateConf == null) {
+				log.error("No security layout with id '" + securityId + "' found in '" + secLayout + "'.");
+				return null;
+			}
+			return persBoundCompId(log, delegateConf);
+		}
+
+		private void collectSecurityLayouts(LayoutComponent.Config root) {
+			DescendantDFSIterator<LayoutComponent.Config> it =
+				new DescendantDFSIterator<>(LayoutConfigTreeView.INSTANCE, root, true);
+			while(it.hasNext()) {
+				LayoutComponent.Config next = it.next();
+				if (isSecurityConfig(next) ) {
+					_securityLayoutByName.put(next.getName(), (CompoundSecurityLayout.Config) next);
+				}
+			}
+
 		}
 
 		private void visit(Log log, LayoutComponent.Config config) {
-			CompoundSecurityLayout.Config before = _nextSecurityParent;
+			ComponentName before = _nextSecurityParent;
 			if (isSecurityConfig(config)) {
-				_nextSecurityParent = (CompoundSecurityLayout.Config) config;
+				_nextSecurityParent = persBoundCompId(log, (CompoundSecurityLayout.Config) config);
 			}
 			try {
 				doWork(log, config);
@@ -165,15 +216,6 @@ public abstract class BoundMainLayout extends MainLayout implements LayoutContai
 			}
 			_configById.put(lowercaseId, config);
 			
-			if (isSecurityConfig(config)) {
-				/* Security is only configured for CompoundSecurityLayout's. Therefore
-				 * PersBoundComp's must only be created for those components. */
-				if (SecurityComponentCache.getSecurityComponent(componentName) == null) {
-					PersBoundComp.createInstance(_kb, componentName);
-					_count++;
-				}
-			}
-
 			registerDefaultTypes(log, config);
 		}
 
@@ -222,9 +264,8 @@ public abstract class BoundMainLayout extends MainLayout implements LayoutContai
 				log.error(errMsg.toString());
 				return;
 			}
-			ComponentName id = _nextSecurityParent.getName();
-			defaultForTypes
-				.forEach(type -> BoundHelper.getInstance().registerPersBoundCheckerFor(_rootLocation, id, type));
+			defaultForTypes.forEach(type -> BoundHelper.getInstance()
+				.registerPersBoundCheckerFor(_rootLocation, _nextSecurityParent, type));
 		}
 
 	}

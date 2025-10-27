@@ -164,7 +164,7 @@ public class LogEntryReceiver extends AbstractReceiver {
             } 
             
             BoundObject theModel = (BoundObject) theSource;
-			Collection<BoundChecker> securityCheckers = boundHelper.getDefaultCheckers(theModel, null);
+			Collection<? extends BoundChecker> securityCheckers = boundHelper.getDefaultCheckers(theModel, null);
 			if (securityCheckers.isEmpty()) {
                 Logger.warn("No bound checker found for "+theModel+", allowing root access only.",this);
                 return Collections.singletonList(personManager.getRoot()); 

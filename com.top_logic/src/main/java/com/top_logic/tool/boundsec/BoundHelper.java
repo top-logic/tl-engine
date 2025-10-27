@@ -103,7 +103,7 @@ public class BoundHelper extends ManagedClass {
     /** The default {@link com.top_logic.tool.boundsec.BoundObject} */
 	private BoundObject defaultObject;
 
-	private Map<Location, Map<String, Collection<BoundChecker>>> defaultPersBoundCheckers;
+	private Map<Location, Map<String, Collection<PersBoundChecker>>> defaultPersBoundCheckers;
 
 	private Map<Location, Map<String, Collection<ComponentName>>> boundCheckerCache;
     
@@ -142,12 +142,12 @@ public class BoundHelper extends ManagedClass {
     }
 
 	public final boolean registerPersBoundCheckerFor(Location rootLocation, ComponentName aPersBoundID, String aType) {
-		Map<String, Collection<BoundChecker>> checkerForType = defaultPersBoundCheckers.get(rootLocation);
+		Map<String, Collection<PersBoundChecker>> checkerForType = defaultPersBoundCheckers.get(rootLocation);
 		if (checkerForType == null) {
 			checkerForType = Collections.synchronizedMap(new HashMap<>());
 			defaultPersBoundCheckers.put(rootLocation, checkerForType);
 		}
-		Collection<BoundChecker> theCheckers = checkerForType.get(aType);
+		Collection<PersBoundChecker> theCheckers = checkerForType.get(aType);
         if (theCheckers == null) {
 			theCheckers = CollectionUtil.newSet(1);
         }
@@ -162,7 +162,7 @@ public class BoundHelper extends ManagedClass {
         return true;
     }
 
-	private Collection<ComponentName> asIDs(Collection<? extends BoundChecker> someCheckers) {
+	private Collection<ComponentName> asIDs(Collection<? extends PersBoundChecker> someCheckers) {
 		ArrayList<ComponentName> theIds = new ArrayList<>(someCheckers.size());
 		for (BoundChecker theChecker : someCheckers) {
 			theIds.add(theChecker.getSecurityId());
@@ -211,7 +211,7 @@ public class BoundHelper extends ManagedClass {
 		if (o == null || o instanceof BoundObject) {
 			return getDefaultChecker(rootLayout, (BoundObject) o, commandGroup);
 		} else {
-			Collection<BoundChecker> checkersForType = getDefaultCheckers(o, commandGroup);
+			Collection<? extends BoundChecker> checkersForType = getDefaultCheckers(o, commandGroup);
 			if (checkersForType.isEmpty()) {
 				return null;
 			} else {
@@ -229,20 +229,17 @@ public class BoundHelper extends ManagedClass {
 	 *        the command group to be checked on the object. May be <code>null</code>.
 	 * @return the default {@link com.top_logic.tool.boundsec.BoundChecker}s
 	 */
-	public Collection<BoundChecker> getDefaultCheckers(Object o, BoundCommandGroup commandGroup) {
+	public Collection<? extends BoundChecker> getDefaultCheckers(Object o, BoundCommandGroup commandGroup) {
 		List<String> types = getBoundCheckerDefaultTypes(o);
-		Collection<BoundChecker> checkersForType;
 		switch(types.size()) {
 			case 0:
-				checkersForType = Collections.emptyList();
-				break;
+				return Collections.emptyList();
 			case 1: 
-				checkersForType = getDefaultCheckers(types.get(0), commandGroup);
-				break;
+				return getDefaultCheckers(types.get(0), commandGroup);
 			default:
-				checkersForType = Collections.emptySet();
+				Collection<BoundChecker> checkersForType = Collections.emptySet();
 				for (String type : types) {
-					Collection<BoundChecker> defaultCheckers = getDefaultCheckers(type, commandGroup);
+					Collection<? extends BoundChecker> defaultCheckers = getDefaultCheckers(type, commandGroup);
 					if (defaultCheckers.isEmpty()) {
 						continue;
 					}
@@ -251,8 +248,8 @@ public class BoundHelper extends ManagedClass {
 					}
 					checkersForType.addAll(defaultCheckers);
 				}
+				return checkersForType;
 		}
-		return checkersForType;
 	}
 
 	/**
@@ -261,7 +258,7 @@ public class BoundHelper extends ManagedClass {
 	 *
 	 * @see #getDefaultCheckersForType(TLClass, BoundCommandGroup)
 	 */
-	public final Collection<BoundChecker> getDefaultCheckersForType(TLClass type) {
+	public final Collection<? extends BoundChecker> getDefaultCheckersForType(TLClass type) {
 		return getDefaultCheckers(getCheckerTypeForType(type), SimpleBoundCommandGroup.READ);
 	}
 
@@ -274,11 +271,11 @@ public class BoundHelper extends ManagedClass {
 	 *        The {@link BoundCommandGroup command group} to be checked on the object
 	 * @return the default {@link com.top_logic.tool.boundsec.BoundChecker}s.
 	 */
-	public Collection<BoundChecker> getDefaultCheckersForType(TLClass type, BoundCommandGroup aBCG) {
+	public Collection<? extends BoundChecker> getDefaultCheckersForType(TLClass type, BoundCommandGroup aBCG) {
 		return getDefaultCheckers(getCheckerTypeForType(type), aBCG);
 	}
 
-	private Collection<BoundChecker> getDefaultCheckers(String aType, BoundCommandGroup aBCG) {
+	private Collection<? extends BoundChecker> getDefaultCheckers(String aType, BoundCommandGroup aBCG) {
     	
     	BoundChecker theRoot    = getRootChecker();
     	

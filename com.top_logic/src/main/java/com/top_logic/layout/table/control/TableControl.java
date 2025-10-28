@@ -1337,10 +1337,19 @@ public class TableControl extends AbstractControl implements TableModelListener,
 
 	/**
 	 * {@link ControlCommandModel} for this {@link TableControl} and given {@link ControlCommand}.
+	 * 
+	 * @see #newTableCommandModel(TableControl, ControlCommand)
 	 */
 	protected ControlCommandModel newTableCommandModel(ControlCommand command) {
-		ControlCommandModel result = new ControlCommandModel(command, this);
-		TableData table = getTableData();
+		return newTableCommandModel(this, command);
+	}
+
+	/**
+	 * {@link ControlCommandModel} for the given {@link TableControl} and {@link ControlCommand}.
+	 */
+	public static ControlCommandModel newTableCommandModel(TableControl control, ControlCommand command) {
+		ControlCommandModel result = new ControlCommandModel(command, control);
+		TableData table = control.getTableData();
 		if (table.getOwner() != NoTableDataOwner.INSTANCE) {
 			result.set(LabeledButtonNaming.BUSINESS_OBJECT, table);
 		}

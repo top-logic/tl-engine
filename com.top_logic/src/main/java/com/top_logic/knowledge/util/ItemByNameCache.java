@@ -16,6 +16,8 @@ import com.top_logic.basic.util.Utils;
 import com.top_logic.knowledge.event.ChangeSet;
 import com.top_logic.knowledge.event.ItemDeletion;
 import com.top_logic.knowledge.event.ItemEvent;
+import com.top_logic.knowledge.event.ItemUpdate;
+import com.top_logic.knowledge.event.ObjectCreation;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.UpdateEvent;
@@ -54,25 +56,38 @@ public class ItemByNameCache<K> extends SimpleKBCache<Map<K, KnowledgeItem>> {
 			throws InvalidCacheException {
 		boolean copied = false;
 		ChangeSet changes = event.getChanges();
-		for (KnowledgeItem created : event.getCreatedObjects().values()) {
+		for (ObjectCreation created : changes.getCreations()) {
 			if (!isRelevant(created)) {
 				continue;
 			}
+			KnowledgeItem createdItem = event.getCreatedObjects().get(created.getObjectId().toCurrentObjectKey());
+			if (createdItem == null) {
+				// Maybe not yet loaded?
+				throw new InvalidCacheException();
+			}
 			if (copyOnChange && !copied) {
 				cacheValue = copy(cacheValue);
 				copied = true;
 			}
-			addToCache(cacheValue, created);
+			Object newName = created.getValues().get(_keyAttribute);
+			addToCache(cacheValue, createdItem, newName);
 		}
-		for (KnowledgeItem update : event.getUpdatedObjects().values()) {
+		for (ItemUpdate update : changes.getUpdates()) {
 			if (!isRelevant(update)) {
 				continue;
 			}
+			KnowledgeItem updatedItem = event.getUpdatedObjects().get(update.getObjectId().toCurrentObjectKey());
+			if (updatedItem == null) {
+				// Maybe not yet loaded?
+				throw new InvalidCacheException();
+			}
 			if (copyOnChange && !copied) {
 				cacheValue = copy(cacheValue);
 				copied = true;
 			}
-			handleItemUpdate(cacheValue, update);
+			Object oldName = update.getOldValue(_keyAttribute);
+			Object newName = update.getValues().get(_keyAttribute);
+			handleItemUpdate(cacheValue, updatedItem, oldName, newName);
 		}
 		for (ItemDeletion deletion : changes.getDeletions()) {
 			if (!isRelevant(deletion)) {
@@ -103,12 +118,17 @@ public class ItemByNameCache<K> extends SimpleKBCache<Map<K, KnowledgeItem>> {
 
 	private void handleItemUpdate(Map<K, KnowledgeItem> cacheValue, KnowledgeItem item) {
 		Object oldName = item.getGlobalAttributeValue(_keyAttribute);
-		K newName = keyAttrValue(item);
+		Object newName = item.getAttributeValue(_keyAttribute);
+		handleItemUpdate(cacheValue, item, oldName, newName);
+	}
+
+	private void handleItemUpdate(Map<K, KnowledgeItem> cacheValue, KnowledgeItem item, Object oldName,
+			Object newName) {
 		if (Utils.equals(oldName, newName)) {
 			return;
 		}
 		cacheValue.remove(oldName);
-		addToCache(cacheValue, newName, item);
+		addToCache(cacheValue, cast(newName), item);
 	}
 
 	@Override
@@ -176,7 +196,11 @@ public class ItemByNameCache<K> extends SimpleKBCache<Map<K, KnowledgeItem>> {
 	}
 
 	private void addToCache(Map<K, KnowledgeItem> cache, KnowledgeItem item) {
-		K keyAttrValue = keyAttrValue(item);
+		addToCache(cache, item, item.getAttributeValue(_keyAttribute));
+	}
+
+	private void addToCache(Map<K, KnowledgeItem> cache, KnowledgeItem item, Object newName) {
+		K keyAttrValue = cast(newName);
 		if (keyAttrValue == null) {
 			return;
 		}
@@ -189,10 +213,6 @@ public class ItemByNameCache<K> extends SimpleKBCache<Map<K, KnowledgeItem>> {
 			throw new IllegalStateException("Multiple items in table '" + _table + "' with the same key attribute '"
 					+ _keyAttribute + "': '" + item + "' vs. '" + clash + "'");
 		}
-	}
-
-	private K keyAttrValue(KnowledgeItem item) {
-		return cast(item.getAttributeValue(_keyAttribute));
 	}
 
 	private K cast(Object attributeValue) {

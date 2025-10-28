@@ -22,9 +22,10 @@ import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.form.model.TableField;
+import com.top_logic.layout.messagebox.AbstractDialog;
 import com.top_logic.layout.messagebox.MessageBox;
-import com.top_logic.layout.messagebox.SimpleFormDialog;
 import com.top_logic.layout.messagebox.MessageBox.ButtonType;
+import com.top_logic.layout.messagebox.SimpleTemplateDialog;
 import com.top_logic.layout.table.RowObjectCreator;
 import com.top_logic.layout.table.TableData;
 import com.top_logic.layout.table.control.TableControl;
@@ -83,9 +84,13 @@ class CompositionRowCreator implements RowObjectCreator {
 
 			return createRow(aControl, valueType);
 		} else {
-			SimpleFormDialog dialog =
-				new SimpleFormDialog(I18NConstants.CREATE_COMPOSITION_ROW, DisplayDimension.px(350),
-					DisplayDimension.px(280)) {
+			AbstractDialog dialog =
+				new SimpleTemplateDialog(
+					I18NConstants.CREATE_COMPOSITION_ROW_TITLE,
+					I18NConstants.CREATE_COMPOSITION_ROW_HEADER,
+					I18NConstants.CREATE_COMPOSITION_ROW_MESSAGE,
+					DisplayDimension.px(350), DisplayDimension.px(280)) {
+
 					private SelectField _selectField;
 
 					@Override

@@ -30,6 +30,7 @@ import com.top_logic.layout.table.ITableRenderer;
 import com.top_logic.layout.table.RowObjectCreator;
 import com.top_logic.layout.table.RowObjectRemover;
 import com.top_logic.layout.table.TableData;
+import com.top_logic.layout.table.TableDataListener;
 import com.top_logic.layout.table.TableModel;
 import com.top_logic.layout.table.TableViewModel;
 import com.top_logic.layout.table.model.EditableRowTableModel;
@@ -225,16 +226,46 @@ public class TableListControl extends TableControl {
 					updateButton(button, table);
 				}
 			};
+			TableDataListener tableDataListener = new TableDataListener() {
+
+				@Override
+				public void notifyTableViewModelChanged(TableData source, TableViewModel oldValue,
+						TableViewModel newValue) {
+					updateButton(button, table);
+				}
+
+				@Override
+				public void notifySelectionModelChanged(TableData source, SelectionModel oldValue,
+						SelectionModel newValue) {
+					if (oldValue != null) {
+						oldValue.removeSelectionListener(modelUpdater);
+					}
+					if (newValue != null) {
+						newValue.addSelectionListener(modelUpdater);
+					}
+					updateButton(button, table);
+				}
+			};
 			button.addListener(AbstractControlBase.ATTACHED_PROPERTY, new AttachedPropertyListener() {
 
 				@Override
 				public void handleAttachEvent(AbstractControlBase sender, Boolean oldValue, Boolean newValue) {
-					SelectionModel selectionModel = table.getSelectionModel();
+					TableData data = table.getModel();
+
+					SelectionModel selectionModel = data.getSelectionModel();
 					if (newValue) {
-						selectionModel.addSelectionListener(modelUpdater);
+						data.addListener(TableData.SELECTION_MODEL_PROPERTY, tableDataListener);
+						data.addListener(TableData.VIEW_MODEL_PROPERTY, tableDataListener);
+						if (selectionModel != null) {
+							selectionModel.addSelectionListener(modelUpdater);
+						}
 						updateButton(button, table);
 					} else {
-						selectionModel.removeSelectionListener(modelUpdater);
+						if (selectionModel != null) {
+							selectionModel.removeSelectionListener(modelUpdater);
+						}
+						data.removeListener(TableData.VIEW_MODEL_PROPERTY, tableDataListener);
+						data.removeListener(TableData.SELECTION_MODEL_PROPERTY, tableDataListener);
 					}
 				}
 
@@ -251,7 +282,7 @@ public class TableListControl extends TableControl {
 		protected abstract C createButton(TableListControl table);
 
 		/**
-		 * Updates the button when the selection changes.
+		 * Updates the button when the selection or view model of the table changes.
 		 * 
 		 * @param button
 		 *        The button to update when selection changes.
@@ -310,6 +341,11 @@ public class TableListControl extends TableControl {
 		@Override
 		protected void updateButton(ButtonControl button, TableListControl table) {
 			TableData tableData = table.getTableData();
+			if (tableData.getSelectionModel() == null || tableData.getViewModel() == null) {
+				button.disable(com.top_logic.tool.execution.I18NConstants.ERROR_NO_MODEL);
+				return;
+			}
+
 			int selected = TableUtil.getSingleSelectedRow(tableData);
 			ResKey disabledReason = _creator.allowCreateNewRow(selected, tableData, table);
 			if (disabledReason == null) {
@@ -389,22 +425,62 @@ public class TableListControl extends TableControl {
 				}
 				
 			}
+			ModelUpdater modelUpdater = new ModelUpdater();
+			TableDataListener tableDataListener = new TableDataListener() {
+
+				@Override
+				public void notifyTableViewModelChanged(TableData source, TableViewModel oldValue,
+						TableViewModel newValue) {
+					if (oldValue != null) {
+						oldValue.removeTableModelListener(modelUpdater);
+					}
+					if (newValue != null) {
+						newValue.addTableModelListener(modelUpdater);
+					}
+					updateButtons(table, rowTop, rowUp, rowDown, rowBottom);
+				}
+
+				@Override
+				public void notifySelectionModelChanged(TableData source, SelectionModel oldValue,
+						SelectionModel newValue) {
+					if (oldValue != null) {
+						oldValue.removeSelectionListener(modelUpdater);
+					}
+					if (newValue != null) {
+						newValue.addSelectionListener(modelUpdater);
+					}
+					updateButtons(table, rowTop, rowUp, rowDown, rowBottom);
+				}
+			};
 			
 			AttachedPropertyListener attachedListener = new AttachedPropertyListener() {
 				
-				ModelUpdater _updater = new ModelUpdater();
 
 				@Override
 				public void handleAttachEvent(AbstractControlBase sender, Boolean oldValue, Boolean newValue) {
-					TableModel tableModel = table.getApplicationModel();
-					SelectionModel selectionModel = table.getSelectionModel();
+					TableData data = table.getModel();
+
+					TableModel tableModel = data.getTableModel();
+					SelectionModel selectionModel = data.getSelectionModel();
 					if (newValue) {
-						tableModel.addTableModelListener(_updater);
-						selectionModel.addSelectionListener(_updater);
+						data.addListener(TableData.SELECTION_MODEL_PROPERTY, tableDataListener);
+						data.addListener(TableData.VIEW_MODEL_PROPERTY, tableDataListener);
+						if (tableModel != null) {
+							tableModel.addTableModelListener(modelUpdater);
+						}
+						if (selectionModel != null) {
+							selectionModel.addSelectionListener(modelUpdater);
+						}
 						updateButtons(table, rowTop, rowUp, rowDown, rowBottom);
 					} else {
-						selectionModel.removeSelectionListener(_updater);
-						tableModel.removeTableModelListener(_updater);
+						if (selectionModel != null) {
+							selectionModel.removeSelectionListener(modelUpdater);
+						}
+						if (tableModel != null) {
+							tableModel.removeTableModelListener(modelUpdater);
+						}
+						data.removeListener(TableData.VIEW_MODEL_PROPERTY, tableDataListener);
+						data.removeListener(TableData.SELECTION_MODEL_PROPERTY, tableDataListener);
 					}
 				}
 
@@ -466,6 +542,14 @@ public class TableListControl extends TableControl {
 				ButtonControl down,
 				ButtonControl bottom) {
 			TableData tableData = table.getTableData();
+			if (tableData.getSelectionModel() == null || tableData.getViewModel() == null) {
+				top.disable(com.top_logic.tool.execution.I18NConstants.ERROR_NO_MODEL);
+				up.disable(com.top_logic.tool.execution.I18NConstants.ERROR_NO_MODEL);
+				down.disable(com.top_logic.tool.execution.I18NConstants.ERROR_NO_MODEL);
+				bottom.disable(com.top_logic.tool.execution.I18NConstants.ERROR_NO_MODEL);
+				return;
+			}
+
 			int selected = TableUtil.getSingleSelectedRow(tableData);
 			int size = table.getViewModel().getRowCount();
 
@@ -699,6 +783,11 @@ public class TableListControl extends TableControl {
 		@Override
 		protected void updateButton(ButtonControl button, TableListControl table) {
 			TableData tableData = table.getTableData();
+			if (tableData.getSelectionModel() == null || tableData.getViewModel() == null) {
+				button.disable(com.top_logic.tool.execution.I18NConstants.ERROR_NO_MODEL);
+				return;
+			}
+
 			int selected = TableUtil.getSingleSelectedRow(tableData);
 			boolean nothingSelected = selected < 0;
 			if (nothingSelected) {

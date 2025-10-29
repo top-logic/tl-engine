@@ -98,6 +98,10 @@ import com.top_logic.layout.table.TableViewModel;
 import com.top_logic.layout.table.control.ColumnDescription;
 import com.top_logic.layout.table.control.TableControl;
 import com.top_logic.layout.table.control.TableListControl;
+import com.top_logic.layout.table.control.TableListControl.AddRowFragment;
+import com.top_logic.layout.table.control.TableListControl.MoveRowsFragment;
+import com.top_logic.layout.table.control.TableListControl.RemoveRowFragment;
+import com.top_logic.layout.table.control.TableListControl.ToolbarFragment;
 import com.top_logic.layout.table.filter.AllCellsExist;
 import com.top_logic.layout.table.filter.CellExistenceTester;
 import com.top_logic.layout.table.model.ColumnConfiguration;
@@ -247,22 +251,33 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 					return TableTag.createTableControl(table);
 				} else {
 					TLRowObject rowObjectAnnotation = update.getAnnotation(TLRowObject.class);
-					RowObjectCreator creator = null;
-					RowObjectRemover remover = null;
 					boolean isSortable = isOrdered;
-					if (rowObjectAnnotation == null || rowObjectAnnotation.isCreatable()) {
-						creator = new CompositionRowCreator(update, result.getContentGroup(), obj,
-							(TLClass) update.getValueType(),
-							update.isMultiple(), labelKey);
-					}
-					if (rowObjectAnnotation == null || rowObjectAnnotation.isDeletable()) {
-						remover = new CompositionRowRemover(updateContainer, update.isMultiple());
-					}
 					if (rowObjectAnnotation != null) {
 						isSortable = isSortable && rowObjectAnnotation.isSortable();
 					}
-					TableListControl tableControl = TableListControl.createTableListControl(tableField,
-						DefaultTableRenderer.newInstance(), creator, remover, true, true, !isSortable);
+					List<ToolbarFragment> buttons = new ArrayList<>();
+					if (rowObjectAnnotation == null || rowObjectAnnotation.isCreatable()) {
+						RowObjectCreator creator = new CompositionRowCreator(update, result.getContentGroup(), obj,
+							(TLClass) update.getValueType(),
+							update.isMultiple(), labelKey);
+						buttons.add(new AddRowFragment(creator));
+					}
+					if (rowObjectAnnotation == null || rowObjectAnnotation.isCopyable()) {
+						RowObjectCreator copier = new CompositionRowCopier(update, result.getContentGroup(), obj,
+							update.isMultiple(), labelKey);
+						buttons.add(new AddRowFragment(copier)
+							.setImages(Icons.COPY_ROW, Icons.COPY_ROW_DISABLED)
+							.setLabel(I18NConstants.COPY_COMPOSITION_ROW_LABEL));
+					}
+					if (isSortable) {
+						buttons.add(new MoveRowsFragment());
+					}
+					if (rowObjectAnnotation == null || rowObjectAnnotation.isDeletable()) {
+						RowObjectRemover remover = new CompositionRowRemover(updateContainer, update.isMultiple());
+						buttons.add(new RemoveRowFragment(remover));
+					}
+					TableListControl tableControl =
+						new TableListControl(tableField, DefaultTableRenderer.newInstance(), !isSortable, buttons);
 					tableControl.addFocusListener(tableField);
 					return tableControl;
 				}

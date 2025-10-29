@@ -268,7 +268,7 @@ public class TableControl extends AbstractControl implements TableModelListener,
 
 	private boolean visible = true;
     
-	private TableData tableData;
+	private final TableData tableData;
 
 	private TableUpdateAccumulator updateAccumulator;
 	

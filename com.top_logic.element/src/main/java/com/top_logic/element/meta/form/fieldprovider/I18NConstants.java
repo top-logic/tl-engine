@@ -28,6 +28,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey COMPOSITE_FIELD_INNER_FIELD_WARNING;
 
 	/**
+	 * @en Copy row
+	 */
+	public static ResKey COPY_COMPOSITION_ROW_LABEL;
+
+	/**
 	 * @en Create new element
 	 */
 	public static ResKey CREATE_COMPOSITION_ROW_HEADER;

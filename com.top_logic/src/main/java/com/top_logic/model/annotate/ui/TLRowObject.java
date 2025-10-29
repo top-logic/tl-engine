@@ -16,8 +16,8 @@ import com.top_logic.model.annotate.TargetType;
 
 /**
  * {@link TLAttributeAnnotation} that determines whether an add button to create new objects, a
- * remove button to delete object or a button to adjust the order of the rows is added to the table
- * that represents a {@link TLReference reference}.
+ * remove button to delete object, a copy button to copy selected object or a button to adjust the
+ * order of the rows is added to the table that represents a {@link TLReference reference}.
  * 
  * @author <a href="mailto:sfo@top-logic.com">sfo</a>
  */
@@ -32,21 +32,27 @@ public interface TLRowObject extends TLAttributeAnnotation {
 	String ROW_OBJECT = "row-object";
 	
 	/**
-	 * True if an add button to create new row objects is added to the table.
+	 * Whether an add button to create new row objects is added to the table.
 	 */
 	@BooleanDefault(true)
 	boolean isCreatable();
 
 	/**
-	 * True if a remove button to delete existing row objects is added to the table.
+	 * Whether a remove button to delete existing row objects is added to the table.
 	 */
 	@BooleanDefault(true)
 	boolean isDeletable();
 
 	/**
-	 * True if a button to adjust the order of the rows is added to the table.
+	 * Whether a button to adjust the order of the rows is added to the table.
 	 */
 	@BooleanDefault(true)
 	boolean isSortable();
+
+	/**
+	 * Whether a button to copy an selected row object is added to the table.
+	 */
+	@BooleanDefault(true)
+	boolean isCopyable();
 
 }

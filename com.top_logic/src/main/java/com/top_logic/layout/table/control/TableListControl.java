@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.util.ResKey;
@@ -17,6 +18,7 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.AbstractControlBase;
 import com.top_logic.layout.basic.AttachedPropertyListener;
 import com.top_logic.layout.basic.CommandModel;
+import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.component.model.MultiSelectionEvent;
 import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
@@ -267,7 +269,11 @@ public class TableListControl extends TableControl {
 	 */
 	public static class AddRowFragment extends SelectionObservingFragment<ButtonControl> {
 
-		private RowObjectCreator _creator;
+		private final RowObjectCreator _creator;
+
+		private ThemeImage _image = Icons.ADD_ROW, _disabledImage = Icons.ADD_ROW_DISABLED;
+
+		private ResKey _label = I18NConstants.ADD_ROW;
 
 		/**
 		 * Creates a new {@link AddRowFragment}.
@@ -276,11 +282,28 @@ public class TableListControl extends TableControl {
 			_creator = creator;
 		}
 
+		/**
+		 * Sets images for the button.
+		 */
+		public AddRowFragment setImages(ThemeImage image, ThemeImage disabledImage) {
+			_image = Objects.requireNonNull(image);
+			_disabledImage = Objects.requireNonNull(disabledImage);
+			return this;
+		}
+
+		/**
+		 * Sets the label for the button.
+		 */
+		public AddRowFragment setLabel(ResKey label) {
+			_label = Objects.requireNonNull(label);
+			return this;
+		}
+
 		@Override
 		protected ButtonControl createButton(TableListControl table) {
-			CommandModel addRowCommandModel = newTableCommandModel(table, new AddRowCommand(_creator));
-			addRowCommandModel.setImage(Icons.ADD_ROW);
-			addRowCommandModel.setNotExecutableImage(Icons.ADD_ROW_DISABLED);
+			CommandModel addRowCommandModel = newTableCommandModel(table, new AddRowCommand(_creator, _label));
+			addRowCommandModel.setImage(_image);
+			addRowCommandModel.setNotExecutableImage(_disabledImage);
 			return new ButtonControl(addRowCommandModel);
 		}
 
@@ -309,12 +332,15 @@ public class TableListControl extends TableControl {
 
 		private final RowObjectCreator _creator;
 
+		private final ResKey _label;
+
         /**
          * Creates a {@link AddRowCommand}.
          */
-		public AddRowCommand(RowObjectCreator creator) {
+		public AddRowCommand(RowObjectCreator creator, ResKey label) {
 			super(COMMAND_ID);
 			_creator = creator;
+			_label = label;
         }
 
         @Override
@@ -331,7 +357,7 @@ public class TableListControl extends TableControl {
 
 		@Override
 		public ResKey getI18NKey() {
-            return I18NConstants.ADD_ROW;
+			return _label;
         }
 
     }

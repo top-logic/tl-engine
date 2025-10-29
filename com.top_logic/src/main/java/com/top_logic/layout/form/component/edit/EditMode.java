@@ -39,12 +39,12 @@ import com.top_logic.tool.boundsec.CommandHandler;
 public interface EditMode extends IComponent {
 
 	/**
-	 * See EditorMode#VIEW_MODE
+	 * Configuration name for value {@link EditorMode#VIEW_MODE}.
 	 */
 	String VIEW_MODE_NAME = "view-mode";
 
 	/**
-	 * See EditorMode#EDIT_MODE
+	 * Configuration name for value {@link EditorMode#EDIT_MODE}.
 	 */
 	String EDIT_MODE_NAME = "edit-mode";
 

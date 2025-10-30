@@ -543,7 +543,7 @@ services.AJAXServiceClass = function() {
 			// whose content has not been retrieved until yet.
 		}
 		
-		services.ajax.mainLayout.services.ajax.afterRendering(errors);
+		errors = services.ajax.mainLayout.services.ajax.afterRendering(errors);
 		
 		if (errors != null) {
 			services.log.error("Problems during AJAX event execution.", errors);
@@ -1594,6 +1594,7 @@ services.AJAXServiceClass = function() {
 			}
 		}
 		services.ajax.mainLayout.services.ajax.cleanupQueuedFunctions();
+		return errors;
 	};
 	
 	this.cleanupQueuedFunctions = function() {

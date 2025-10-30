@@ -325,7 +325,7 @@ public class ConstantFolding {
 		@Override
 		protected SearchExpression composeIsEmpty(IsEmpty expr, Void arg, SearchExpression argumentResult) {
 			if (isLiteral(argumentResult)) {
-				return literal(expr.compute(literalValue(argumentResult)));
+				return literal(IsEmpty.compute(literalValue(argumentResult)));
 			}
 			return super.composeIsEmpty(expr, arg, argumentResult);
 		}

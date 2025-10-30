@@ -412,9 +412,15 @@ public class ColumnDescription extends ColumnConfiguration {
 	}
 
 	private boolean useResourceProviderAsFullTextProvider() {
+		// If fullTextProvider is explicitly set to null, don't use fallback
+		if (fullTextProvider == null && fullTextProviderExplicitlySet) {
+			return false;
+		}
+		// If fullTextProvider is null but not explicitly set, use fallback
 		if (fullTextProvider == null) {
 			return true;
 		}
+		// If fullTextProvider is not null, check if it was explicitly set
 		return !fullTextProviderExplicitlySet;
 	}
 
@@ -437,7 +443,18 @@ public class ColumnDescription extends ColumnConfiguration {
 			copyFullTextProvider(fullTextProvider);
 		}
 	}
-    
+
+	@Override
+	protected void setFullTextProviderExplicitlySet(boolean explicitlySet) {
+		checkFrozen();
+		this.fullTextProviderExplicitlySet = explicitlySet;
+	}
+
+	@Override
+	protected boolean isFullTextProviderExplicitlySet() {
+		return fullTextProviderExplicitlySet;
+	}
+
     @Override
 	public ControlProvider getHeadControlProvider() {
         return (this.headControlProvider);

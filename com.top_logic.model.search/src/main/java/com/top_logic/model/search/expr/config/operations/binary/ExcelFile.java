@@ -300,17 +300,29 @@ public class ExcelFile extends GenericMethod {
 			return true;
 		}
 
-		// Check if all items are maps with row/col properties
+		// Check if all items are excelCell objects
+		boolean hasCellObjects = false;
+		boolean hasNonCellItems = false;
+
 		for (Object item : contentList) {
 			if (item instanceof Map) {
 				Map<String, Object> itemMap = (Map<String, Object>) item;
-				if (asInt(itemMap.get(PROP_CELL_ROW)) != UNDEFINED_POSITION && asInt(itemMap.get(PROP_CELL_COL)) != UNDEFINED_POSITION) {
-					return false;
+				if (itemMap.containsKey("content")) {
+					// This is an excelCell object
+					hasCellObjects = true;
+				} else {
+					hasNonCellItems = true;
 				}
+			} else {
+				hasNonCellItems = true;
 			}
 		}
 
-		return true;
+		// If all items are excelCell objects, treat as cell format
+		// Otherwise, treat as matrix format
+		boolean result = !(hasCellObjects && !hasNonCellItems);
+
+		return result;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -344,7 +356,7 @@ public class ExcelFile extends GenericMethod {
 						// This is an excelCell object
 						Object content = cellMap.get("content");
 						Map<String, Object> styleProps = new HashMap<>();
-						
+
 						// Extract styling properties
 						for (Map.Entry<String, Object> entry : cellMap.entrySet()) {
 							String key = entry.getKey();
@@ -352,36 +364,70 @@ public class ExcelFile extends GenericMethod {
 								styleProps.put(key, entry.getValue());
 							}
 						}
-						
+
 						// Use cursor position if row/col not specified
 						Integer cellRow = asInt(cellMap.get("row"));
 						Integer cellCol = asInt(cellMap.get("col"));
-						
+
 						int targetRow = (cellRow != UNDEFINED_POSITION) ? cellRow : currentRow;
 						int targetCol = (cellCol != UNDEFINED_POSITION) ? cellCol : currentCol;
-						
+
 						// Ensure we have the correct row
 						Row targetExcelRow = sheet.getRow(targetRow);
 						if (targetExcelRow == null) {
 							targetExcelRow = sheet.createRow(targetRow);
 						}
-						
-						createCell(workbook, sheet, targetExcelRow, targetCol, content, styleProps, regionTracker,
-							styleCache);
+
+						// Check if content is nested (List/Matrix) to handle cursor advancement properly
+						boolean isNestedContent = content instanceof List;
+
+						if (isNestedContent && cellRow == UNDEFINED_POSITION && cellCol == UNDEFINED_POSITION) {
+							// For nested content at cursor position, process it directly without creating a container cell
+							List<Object> nestedList = (List<Object>) content;
+							if (!nestedList.isEmpty() && nestedList.get(0) instanceof List) {
+								// It's a matrix - process directly at current cursor position
+								processNestedContent(workbook, sheet, nestedList, currentRow, currentCol, styleProps, regionTracker,
+									styleCache);
+								// Advance cursor by the dimensions of the processed matrix
+								List<Object> firstRow = (List<Object>) nestedList.get(0);
+								currentCol += firstRow.size();
+							} else {
+								// It's a single row - process each element
+								for (int i = 0; i < nestedList.size(); i++) {
+									Row excelRow = sheet.getRow(currentRow);
+									if (excelRow == null) {
+										excelRow = sheet.createRow(currentRow);
+									}
+									createCell(workbook, sheet, excelRow, currentCol, nestedList.get(i), styleProps, regionTracker,
+										styleCache);
+									currentCol++;
+								}
+							}
+						} else {
+							// Regular cell creation (explicitly positioned or non-nested content)
+							createCell(workbook, sheet, targetExcelRow, targetCol, content, styleProps, regionTracker,
+								styleCache);
+
+							// Advance cursor only for non-explicitly positioned cells
+							if (cellRow == UNDEFINED_POSITION && cellCol == UNDEFINED_POSITION) {
+								currentCol++;
+							}
+						}
 
 					}
 				} else {
-				
+
 				// Regular cell value (not an excelCell) - create at current cursor position
 				Row excelRow = sheet.getRow(currentRow);
 				if (excelRow == null) {
 					excelRow = sheet.createRow(currentRow);
 				}
-				
+
 				createCell(workbook, sheet, excelRow, currentCol, cellValue, null, regionTracker, styleCache);
-			}
+
 				// Advance cursor position
 				currentCol++;
+				}
 
 			}
 			
@@ -402,7 +448,9 @@ public class ExcelFile extends GenericMethod {
 		// Cache styles to avoid creating duplicates
 		StyleCache styleCache = new StyleCache(workbook, this);
 
-		for (Object cellObj : contentList) {
+		
+		for (int i = 0; i < contentList.size(); i++) {
+			Object cellObj = contentList.get(i);
 			Map<String, Object> cellMap = (Map<String, Object>) asMap(cellObj);
 			Integer row = asInt(cellMap.get(PROP_CELL_ROW));
 			Integer col = asInt(cellMap.get(PROP_CELL_COL));
@@ -412,6 +460,7 @@ public class ExcelFile extends GenericMethod {
 			int targetRow = (row != UNDEFINED_POSITION) ? row : currentRow;
 			int targetCol = (col != UNDEFINED_POSITION) ? col : currentCol;
 
+			
 			Row excelRow = sheet.getRow(targetRow);
 			if (excelRow == null) {
 				excelRow = sheet.createRow(targetRow);
@@ -426,15 +475,38 @@ public class ExcelFile extends GenericMethod {
 				}
 			}
 
-			createCell(workbook, sheet, excelRow, targetCol, content, styleProps, regionTracker, styleCache);
+			// Check if content is nested and handle cursor advancement accordingly
+			if (content instanceof List && row == UNDEFINED_POSITION && col == UNDEFINED_POSITION) {
+				// Nested content at cursor position - process directly without creating container cell
+				List<Object> nestedList = (List<Object>) content;
+				if (!nestedList.isEmpty() && nestedList.get(0) instanceof List) {
+					// It's a matrix - process directly at current cursor position
+					List<Object> firstRow = (List<Object>) nestedList.get(0);
+					
+					processNestedContent(workbook, sheet, nestedList, currentRow, currentCol, styleProps, regionTracker, styleCache);
 
-			if (row != UNDEFINED_POSITION) {
-				currentRow = row;
+					// Advance cursor by the dimensions of the processed content
+					currentCol += firstRow.size();
+									} else {
+					// It's a single row - process each element directly
+					for (int ix = 0; ix < nestedList.size(); ix++) {
+						createCell(workbook, sheet, excelRow, currentCol, nestedList.get(ix), styleProps, regionTracker,
+							styleCache);
+						currentCol++;
+					}
+				}
+			} else {
+				// Regular cell or explicitly positioned content
+				createCell(workbook, sheet, excelRow, targetCol, content, styleProps, regionTracker, styleCache);
+
+				if (row != UNDEFINED_POSITION) {
+					currentRow = row;
+				}
+				if (col != UNDEFINED_POSITION) {
+					currentCol = col;
+				}
+				currentCol++;
 			}
-			if (col != UNDEFINED_POSITION) {
-				currentCol = col;
-			}
-			currentCol++;
 		}
 	}
 
@@ -478,7 +550,10 @@ public class ExcelFile extends GenericMethod {
 		}
 
 		// Set cell value based on type
-		if (value instanceof Map) {
+		if (value == null) {
+			// Null value should create empty cell, not "----"
+			// Cell is already created with BLANK type by default, no action needed
+		} else if (value instanceof Map) {
 			Map<String, Object> valueMap = (Map<String, Object>) value;
 			if (valueMap.containsKey(PROP_CELL_FORMULA)) {
 				// Formula cell

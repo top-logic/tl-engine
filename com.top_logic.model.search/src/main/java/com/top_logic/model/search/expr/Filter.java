@@ -80,10 +80,10 @@ public class Filter extends SearchExpression {
 
 	@Override
 	public Object internalEval(EvalContext definitions, Args args) {
-		Collection<?> base = asCollection(_base.evalWith(definitions, args));
+		Collection<?> base = asCollection(getBase().evalWith(definitions, args));
 		List<Object> result = new ArrayList<>();
 		for (Object value : base) {
-			boolean decision = isTrue(_function.evalWith(definitions, Args.some(value)));
+			boolean decision = isTrue(getFunction().evalWith(definitions, Args.some(value)));
 			if (decision) {
 				result.add(value);
 			}

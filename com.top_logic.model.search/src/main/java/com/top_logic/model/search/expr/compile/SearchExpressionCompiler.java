@@ -18,6 +18,7 @@ import com.top_logic.model.search.expr.compile.transform.CreateTableAccess;
 import com.top_logic.model.search.expr.compile.transform.FilterCompiler;
 import com.top_logic.model.search.expr.compile.transform.HasSideEffects;
 import com.top_logic.model.search.expr.config.SearchBuilder;
+import com.top_logic.model.search.expr.interpreter.AbbreviationExpander;
 import com.top_logic.model.search.expr.interpreter.ConstantFolding;
 import com.top_logic.model.search.expr.interpreter.DefResolver;
 import com.top_logic.model.search.expr.interpreter.transform.Transformations;
@@ -93,6 +94,9 @@ public class SearchExpressionCompiler {
 	 *         {@link QueryExecutor#interpret(KnowledgeBase, TLModel, SearchExpression)}.
 	 */
 	public SearchExpression compile(SearchExpression expr) {
+		// Replace abbreviations
+		expr = AbbreviationExpander.transform(expr);
+
 		expr.visit(new DefResolver(), null);
 
 		// Generate queries for type instance access.

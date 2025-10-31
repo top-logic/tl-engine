@@ -242,7 +242,7 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 	 * Converts the given value to a {@link Set} with optimization for single-element collections.
 	 * <p>
 	 * If the value is already a Set, it's returned directly. If it's a Collection, it's converted
-	 * to a HashSet. For single non-null values, an singleton set is created.
+	 * to a {@link HashSet}. For single non-null values, an singleton set is created.
 	 * </p>
 	 */
 	public static Set<?> asSet(Object value) {

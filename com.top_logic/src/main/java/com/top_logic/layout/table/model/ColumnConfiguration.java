@@ -657,13 +657,13 @@ public abstract class ColumnConfiguration extends ColumnBase
 	protected abstract void setFullTextProviderAsDefault(LabelProvider fullTextProvider);
 
 	/**
-	 * Internal method to set the fullTextProviderExplicitlySet flag.
+	 * Internal method to set the explicitly set flag.
 	 * This method is for internal property system use only.
 	 */
 	protected abstract void setFullTextProviderExplicitlySet(boolean explicitlySet);
 
 	/**
-	 * Internal method to get the fullTextProviderExplicitlySet flag.
+	 * Internal method to get the explicitly set flag.
 	 * This method is for internal property system use only.
 	 */
 	protected abstract boolean isFullTextProviderExplicitlySet();

@@ -412,15 +412,15 @@ public class ColumnDescription extends ColumnConfiguration {
 	}
 
 	private boolean useResourceProviderAsFullTextProvider() {
-		// If fullTextProvider is explicitly set to null, don't use fallback
+		// If the full text provider is explicitly set to null, don't use fallback
 		if (fullTextProvider == null && fullTextProviderExplicitlySet) {
 			return false;
 		}
-		// If fullTextProvider is null but not explicitly set, use fallback
+		// If the full text provider is null but not explicitly set, use fallback
 		if (fullTextProvider == null) {
 			return true;
 		}
-		// If fullTextProvider is not null, check if it was explicitly set
+		// If the full text provider is not null, check if it was explicitly set
 		return !fullTextProviderExplicitlySet;
 	}
 

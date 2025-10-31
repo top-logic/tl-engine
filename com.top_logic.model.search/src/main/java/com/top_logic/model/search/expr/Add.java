@@ -7,7 +7,9 @@ package com.top_logic.model.search.expr;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
@@ -63,11 +65,26 @@ public class Add extends GenericMethod {
 
 		int insertLength = insertion.size();
 		if (insertLength > 0) {
-			List<Object> newValue = new ArrayList<>(oldSize + insertLength);
-			newValue.addAll(oldValue.subList(0, index));
-			newValue.addAll(insertion);
-			newValue.addAll(oldValue.subList(index, oldSize));
-			obj.tUpdate(part, newValue);
+			// Create a set of existing elements for efficient duplicate checking
+			Set<Object> existingElements = new HashSet<>(oldValue);
+
+			// Filter out duplicates from insertion collection
+			List<Object> filteredInsertion = new ArrayList<>();
+			for (Object item : insertion) {
+				if (!existingElements.contains(item)) {
+					filteredInsertion.add(item);
+					existingElements.add(item);
+				}
+			}
+
+			// Only proceed if there are non-duplicate elements to add
+			if (!filteredInsertion.isEmpty()) {
+				List<Object> newValue = new ArrayList<>(oldSize + filteredInsertion.size());
+				newValue.addAll(oldValue.subList(0, index));
+				newValue.addAll(filteredInsertion);
+				newValue.addAll(oldValue.subList(index, oldSize));
+				obj.tUpdate(part, newValue);
+			}
 		}
 
 		return null;

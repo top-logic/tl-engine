@@ -15,6 +15,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -234,6 +235,40 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 			return Arrays.asList((Object[]) value);
 		} else {
 			return Collections.singletonList(value);
+		}
+	}
+
+	/**
+	 * Converts the given value to a {@link Set} with optimization for single-element collections.
+	 * <p>
+	 * If the value is already a Set, it's returned directly. If it's a Collection, it's converted
+	 * to a HashSet. For single non-null values, an singleton set is created.
+	 * </p>
+	 */
+	public static Set<?> asSet(Object value) {
+		if (value instanceof Set<?>) {
+			return (Set<?>) value;
+		} else if (value instanceof Collection<?>) {
+			Collection<?> collection = (Collection<?>) value;
+			if (collection.size() == 1) {
+				Object element = collection.iterator().next();
+				return Collections.singleton(element);
+			} else {
+				return new HashSet<>(collection);
+			}
+		} else if (value instanceof Map<?, ?>) {
+			return new HashSet<>(((Map<?, ?>) value).entrySet());
+		} else if (value == null) {
+			return Collections.emptySet();
+		} else if (value.getClass().isArray()) {
+			Object[] array = (Object[]) value;
+			if (array.length == 1) {
+				return Collections.singleton(array[0]);
+			} else {
+				return new HashSet<>(Arrays.asList(array));
+			}
+		} else {
+			return Collections.singleton(value);
 		}
 	}
 

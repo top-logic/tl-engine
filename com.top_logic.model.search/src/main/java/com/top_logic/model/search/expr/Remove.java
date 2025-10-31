@@ -6,8 +6,6 @@
 package com.top_logic.model.search.expr;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -50,10 +48,9 @@ public class Remove extends GenericMethod {
 		TLStructuredTypePart part = asTypePart(getArguments()[1], arguments[1]);
 
 		List<?> oldValue = asList(obj.tValue(part));
-		Collection<?> toRemove = asCollection(arguments[2]);
+		Set<?> removeSet = asSet(arguments[2]);
 
-		if (!toRemove.isEmpty()) {
-			Set<Object> removeSet = new HashSet<>(toRemove);
+		if (!removeSet.isEmpty()) {
 			List<Object> newValue = new ArrayList<>(oldValue.size());
 			for (Object item : oldValue) {
 				if (!removeSet.contains(item)) {

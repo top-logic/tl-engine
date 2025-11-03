@@ -20,6 +20,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringID;
 import com.top_logic.basic.TLID;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.TransientObject;
 import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.BoundObject;
@@ -41,13 +42,13 @@ public class SimpleBoundObject extends TransientObject implements BoundObject {
     protected int           flags; 
 
     /** The children of this object, may be null */
-    protected List          children;
+	protected List<BoundObject> children;
 
     /** The parent of this object, may be null */
     protected BoundObject   parent;
 
-    /** Map of Set of Roles a specific Person may have */
-    protected Map           rolesForPersons;
+	/** {@link Set} of {@link BoundRole}s for a specific {@link Person} or {@link Group}. */
+	protected Map<TLObject, Set<BoundRole>> rolesForPersons;
 
     /** Create a default SimpleBoundObject */
 	public SimpleBoundObject(String anID) {
@@ -96,7 +97,7 @@ public class SimpleBoundObject extends TransientObject implements BoundObject {
     /** Add a new Child to the List of Children */
     public void addChild(BoundObject aChild) {
         if (children == null)
-            children = new ArrayList();
+			children = new ArrayList<>();
         children.add(aChild);
         if (aChild instanceof SimpleBoundObject)
             ((SimpleBoundObject) aChild).setParent(this);
@@ -130,27 +131,24 @@ public class SimpleBoundObject extends TransientObject implements BoundObject {
      * @return a collection of roles the given person has in/for this Object.
      */
     @Override
-	public Collection<BoundRole> getRoles(Person aPerson) {
-        Collection result = null;
+	public Set<? extends BoundRole> getRoles(Person aPerson) {
+		Set<? extends BoundRole> result = null;
         if (rolesForPersons != null) {
-            result = (Collection) rolesForPersons.get(aPerson);
+			result = rolesForPersons.get(aPerson);
         }
         if (0 != (flags & BoundHelper.INHERIT_ROLES)) {
-            BoundObject parent = getSecurityParent();
-            if (parent != null) {
-                result = BoundHelper.merge(result, parent.getRoles(aPerson));
+			BoundObject myParent = getSecurityParent();
+			if (myParent != null) {
+				result = BoundHelper.merge(result, myParent.getRoles(aPerson));
             }
         }
         
         return result;
     }
     
-    /**
-     * @see com.top_logic.tool.boundsec.BoundObject#getLocalAndGlobalRoles(com.top_logic.knowledge.wrap.person.Person)
-     */
     @Override
-	public Collection<BoundRole> getLocalAndGlobalRoles(Person aPerson) {
-        Collection result = this.getRoles(aPerson);
+	public Set<? extends BoundRole> getLocalAndGlobalRoles(Person aPerson) {
+		Set<? extends BoundRole> result = this.getRoles(aPerson);
 		result = BoundHelper.merge(result, aPerson.getGlobalRoles());
         return result;
     }
@@ -164,22 +162,22 @@ public class SimpleBoundObject extends TransientObject implements BoundObject {
      * @return true when <code>getRoles(aPerson)</code> == null (or empty)
      */
    @Override
-public boolean hasAnyRole(Person aPerson) {
-       Collection coll = null;
-       if (rolesForPersons != null) {
-           coll = (Collection) rolesForPersons.get(aPerson);
-       }
-       if (0 != (flags & BoundHelper.INHERIT_ROLES)) {
-           BoundObject parent = getSecurityParent();
-           if (parent != null) {
-               coll = BoundHelper.merge(coll, parent.getRoles(aPerson));
-           }
-       }
-       
+	public boolean hasAnyRole(Person aPerson) {
+		Set<? extends BoundRole> coll = null;
+		if (rolesForPersons != null) {
+			coll = rolesForPersons.get(aPerson);
+		}
+		if (0 != (flags & BoundHelper.INHERIT_ROLES)) {
+			BoundObject myParent = getSecurityParent();
+			if (myParent != null) {
+				coll = BoundHelper.merge(coll, myParent.getRoles(aPerson));
+			}
+		}
+
 		coll = BoundHelper.merge(coll, aPerson.getGlobalRoles());
-       
-       return coll != null && coll.size() > 0;
-   }
+
+		return coll != null && coll.size() > 0;
+	}
 
    /**
      * Make the given person have the given Role for this Objects
@@ -191,11 +189,11 @@ public boolean hasAnyRole(Person aPerson) {
     public void addRoleForPerson(Person aPerson, BoundRole aRole) {
 
         if (rolesForPersons == null) 
-            rolesForPersons = new HashMap();
+			rolesForPersons = new HashMap<>();
         
-        Set personRoles = (Set) rolesForPersons.get(aPerson);
+		Set<BoundRole> personRoles = rolesForPersons.get(aPerson);
         if (personRoles == null) {
-            personRoles = new HashSet();
+			personRoles = new HashSet<>();
             rolesForPersons.put(aPerson, personRoles);
         }
         personRoles.add(aRole);
@@ -211,44 +209,37 @@ public boolean hasAnyRole(Person aPerson) {
     public void removeRoleForPerson(Person aPerson, BoundRole aRole) {
 
         if (rolesForPersons == null) 
-            rolesForPersons = new HashMap();
+			rolesForPersons = new HashMap<>();
         
-        Set personRoles = (Set) rolesForPersons.get(aPerson);
+		Set<BoundRole> personRoles = rolesForPersons.get(aPerson);
         if (personRoles == null) {
-            personRoles = new HashSet();
+			personRoles = new HashSet<>();
         }
         
         personRoles.remove(aRole);
     }
     
-	/**
-	 * @see com.top_logic.tool.boundsec.BoundObject#getRoles()
-	 */
 	@Override
-	public Collection<BoundRole> getRoles() {
-        Collection result = new HashSet();
+	public Set<? extends BoundRole> getRoles() {
+		Set<BoundRole> result = new HashSet<>();
         if (rolesForPersons != null) {
-            Iterator allRoles = rolesForPersons.values().iterator();
+			Iterator<Set<BoundRole>> allRoles = rolesForPersons.values().iterator();
             while (allRoles.hasNext()) {
-                Set personRoles = (Set) allRoles.next();
-                result.addAll(personRoles);
+				result.addAll(allRoles.next());
             }
         }
         if (0 != (flags & BoundHelper.INHERIT_ROLES)) {
-            BoundObject parent = getSecurityParent();
-            if (parent != null) {
-                result = BoundHelper.merge(result, parent.getRoles());
+			BoundObject myParent = getSecurityParent();
+			if (myParent != null) {
+				return BoundHelper.merge(result, myParent.getRoles());
             }
         }
         return result;
 	}
     
-    /**
-     * @see com.top_logic.tool.boundsec.BoundObject#getLocalAndGlobalAndGroupRoles(com.top_logic.knowledge.wrap.person.Person)
-     */
     @Override
-	public Collection<BoundRole> getLocalAndGlobalAndGroupRoles(Person aPerson) {
-        Collection thePersonRoles = null;
+	public Set<? extends BoundRole> getLocalAndGlobalAndGroupRoles(Person aPerson) {
+		Set<? extends BoundRole> thePersonRoles = null;
         try {
             thePersonRoles = this.getLocalAndGlobalRoles(aPerson);
             
@@ -257,7 +248,7 @@ public boolean hasAnyRole(Person aPerson) {
 				Iterator<Group> theGroupIt = theGroups.iterator();
                 while (theGroupIt.hasNext()) {
 					Group theGroup = theGroupIt.next();
-                    Collection theGroupRoles = this.getRoles(theGroup);
+					Set<? extends BoundRole> theGroupRoles = this.getRoles(theGroup);
                     thePersonRoles = BoundHelper.merge(thePersonRoles, theGroupRoles);
                 }
             }
@@ -270,19 +261,16 @@ public boolean hasAnyRole(Person aPerson) {
         return thePersonRoles;
     }
     
-    /**
-     * @see com.top_logic.tool.boundsec.BoundObject#getRoles(Group)
-     */
     @Override
-	public Collection<BoundRole> getRoles(Group aGroup) {
-        Collection result = null;
+	public Set<? extends BoundRole> getRoles(Group aGroup) {
+		Set<? extends BoundRole> result = null;
         if (rolesForPersons != null) {
-            result = (Collection) rolesForPersons.get(aGroup);
+			result = rolesForPersons.get(aGroup);
         }
         if (0 != (flags & BoundHelper.INHERIT_ROLES)) {
-            BoundObject parent = getSecurityParent();
-            if (parent != null) {
-                result = BoundHelper.merge(result, parent.getRoles(aGroup));
+			BoundObject myParent = getSecurityParent();
+			if (myParent != null) {
+				result = BoundHelper.merge(result, myParent.getRoles(aGroup));
             }
         }
         
@@ -303,11 +291,11 @@ public boolean hasAnyRole(Person aPerson) {
      */
     public void addRoleForGroup(IGroup aGroup, BoundRole aRole) {
         if (rolesForPersons == null) 
-            rolesForPersons = new HashMap();
+			rolesForPersons = new HashMap<>();
         
-        Set personRoles = (Set) rolesForPersons.get(aGroup);
+		Set<BoundRole> personRoles = rolesForPersons.get(aGroup);
         if (personRoles == null) {
-            personRoles = new HashSet();
+			personRoles = new HashSet<>();
             rolesForPersons.put(aGroup, personRoles);
         }
         personRoles.add(aRole);
@@ -322,11 +310,11 @@ public boolean hasAnyRole(Person aPerson) {
      */
     public void removeRoleForGroup(IGroup aGroup, BoundRole aRole) {
         if (rolesForPersons == null) 
-            rolesForPersons = new HashMap();
+			rolesForPersons = new HashMap<>();
         
-        Set personRoles = (Set) rolesForPersons.get(aGroup);
+		Set<BoundRole> personRoles = rolesForPersons.get(aGroup);
         if (personRoles == null) {
-            personRoles = new HashSet();
+			personRoles = new HashSet<>();
         }
         
         personRoles.remove(aGroup);

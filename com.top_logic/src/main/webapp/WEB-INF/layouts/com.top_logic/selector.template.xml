@@ -49,18 +49,6 @@
 		>
 			<acceptable-classifiers value="selector"/>
 		</property>
-		<property name="securityObject"
-			instance-type="com.top_logic.tool.boundsec.SecurityObjectProvider"
-			type="com.top_logic.basic.config.PolymorphicConfiguration"
-		/>
-		<!-- Note: Only for compatibility with legacy uses of this template. -->
-		<property name="securityProviderClass"
-			default="securityRoot"
-			type="String"
-		>
-			<options fun="com.top_logic.layout.form.values.edit.DefaultSecurityProviderKeys"/>
-			<hidden/>
-		</property>
 		<property name="onSelectionChange"
 			instance-type="com.top_logic.layout.component.OnSelectionChangeHandler"
 		/>
@@ -80,7 +68,6 @@
 		partnerGroup="${partnerGroup}"
 		presentation="${presentation}"
 		securityObject="${securityObject}"
-		securityProviderClass="${securityProviderClass}"
 		selection="${selection}"
 		selectionOnModelChange="${selectionOnModelChange}"
 		showMaximize="${showMaximize}"

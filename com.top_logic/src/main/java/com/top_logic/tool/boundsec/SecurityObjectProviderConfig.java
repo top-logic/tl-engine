@@ -17,6 +17,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.layout.ModelSpec;
 import com.top_logic.tool.boundsec.securityObjectProvider.ConfiguredModelSecurityProvider;
 import com.top_logic.tool.boundsec.securityObjectProvider.ModelSecurityObjectProvider;
@@ -40,6 +41,7 @@ public interface SecurityObjectProviderConfig extends ConfigurationItem {
 	 * the security is checked.
 	 */
 	@Name(SECURITY_OBJECT)
+	@FormattedDefault(CompactSecurityObjectProviderFormat.SECURITY_ROOT)
 	@Format(CompactSecurityObjectProviderFormat.class)
 	PolymorphicConfiguration<? extends SecurityObjectProvider> getSecurityObject();
 
@@ -54,6 +56,8 @@ public interface SecurityObjectProviderConfig extends ConfigurationItem {
 		static final String SECURITY_ROOT = "securityRoot";
 
 		static final String MODEL = "model";
+
+		private static final String REFERENCE_PREFIX = "ref:";
 
 		/** {@link Pattern} for allowed values. */
 		public static final Pattern PATTERN = pattern();
@@ -70,7 +74,8 @@ public interface SecurityObjectProviderConfig extends ConfigurationItem {
 				.compile("(?:"
 					+ group(MODEL) + "|"
 					+ group(SECURITY_ROOT) + "|"
-					+ group(SecurityObjectProviderManager.PATH_SECURITY_OBJECT_PROVIDER + "[\\w\\.]*") + "|"
+					+ group(SecurityObjectProviderManager.PATH_SECURITY_OBJECT_PROVIDER + ".*") + "|"
+					+ REFERENCE_PREFIX + group("[\\w_\\.]+") + "|"
 					+ group(ModelSpec.Format.MODEL_PATTERN.pattern()) +
 					")");
 		}
@@ -91,10 +96,15 @@ public interface SecurityObjectProviderConfig extends ConfigurationItem {
 				} else if (matcher.group(3) != null) {
 					return SecurityObjectProviderFormat.INSTANCE.getValue(propertyName, matcher.group(3));
 				} else if (matcher.group(4) != null) {
+					ReferencedSecurityObjectProvider.Config result =
+						TypedConfiguration.newConfigItem(ReferencedSecurityObjectProvider.Config.class);
+					result.setReference(matcher.group(4));
+					return result;
+				} else if (matcher.group(5) != null) {
 					ConfiguredModelSecurityProvider.Config result =
 						TypedConfiguration.newConfigItem(ConfiguredModelSecurityProvider.Config.class);
 					ModelSpec modelSpec = ModelSpec.Format.INSTANCE
-						.getValue(ConfiguredModelSecurityProvider.Config.MODEL, matcher.group(4));
+						.getValue(ConfiguredModelSecurityProvider.Config.MODEL, matcher.group(5));
 					result.setModel(modelSpec);
 					return result;
 				} else {
@@ -118,9 +128,11 @@ public interface SecurityObjectProviderConfig extends ConfigurationItem {
 			if (configValue instanceof PathSecurityObjectProvider.Config) {
 				return SecurityObjectProviderFormat.INSTANCE.getSpecification(configValue);
 			}
-			if (configValue instanceof ConfiguredModelSecurityProvider.Config) {
-				return ModelSpec.Format.INSTANCE
-					.getSpecification(((ConfiguredModelSecurityProvider.Config) configValue).getModel());
+			if (configValue instanceof ReferencedSecurityObjectProvider.Config ref) {
+				return REFERENCE_PREFIX + ref.getReference();
+			}
+			if (configValue instanceof ConfiguredModelSecurityProvider.Config modelRef) {
+				return ModelSpec.Format.INSTANCE.getSpecification(modelRef.getModel());
 			}
 			throw new IllegalArgumentException();
 		}
@@ -136,6 +148,7 @@ public interface SecurityObjectProviderConfig extends ConfigurationItem {
 			return (value instanceof ConfiguredModelSecurityProvider.Config
 				&& ModelSpec.Format.INSTANCE.isLegalValue(((ConfiguredModelSecurityProvider.Config) value).getModel()))
 				|| value instanceof PathSecurityObjectProvider.Config
+				|| value instanceof ReferencedSecurityObjectProvider.Config
 				|| isSecurityRootObjectProvider((PolymorphicConfiguration<?>) value)
 				|| isModelSecurityObjectProvider((PolymorphicConfiguration<?>) value);
 		}

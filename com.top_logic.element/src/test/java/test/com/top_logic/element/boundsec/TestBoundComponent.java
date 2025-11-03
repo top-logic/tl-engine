@@ -36,6 +36,7 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.mig.html.layout.CommandRegistry;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.mig.html.layout.LayoutContainer;
 import com.top_logic.mig.html.layout.LayoutStorage;
 import com.top_logic.tool.boundsec.BoundComponent;
 import com.top_logic.tool.boundsec.BoundHelper;
@@ -82,6 +83,7 @@ public class TestBoundComponent extends BasicTestCase {
      */
     public void testMain() throws Exception {
 		File layout = ComponentTestUtils.getLayoutFile(TestBoundComponent.class, "testMain.xml");
+		ComponentName securityLayoutName = ComponentTestUtils.newComponentName(layout, "sl");
 		ComponentName componentName = ComponentTestUtils.newComponentName(layout, "SchuhComponent");
         try {
             Person guest = Person.byName("guest_de");
@@ -89,7 +91,7 @@ public class TestBoundComponent extends BasicTestCase {
             TLContext context = TLContext.getContext();
             context.setCurrentPerson(guest);
             
-			checkPBC(componentName);
+			checkPBC(securityLayoutName);
 
 			TestedBoundComponent cmp = newTestedBoundComponent(componentName, layout);
             assertNotNull(cmp.getPersBoundComp());
@@ -97,7 +99,7 @@ public class TestBoundComponent extends BasicTestCase {
 			check(cmp, guest, componentName);
         }
         finally { // remove the PersBoundComp eventually created by checkPBC
-			PersBoundComp schuView = SecurityComponentCache.getSecurityComponent(componentName);
+			PersBoundComp schuView = SecurityComponentCache.getSecurityComponent(securityLayoutName);
             if (schuView != null)
                 schuView.tDelete();
         }
@@ -105,7 +107,9 @@ public class TestBoundComponent extends BasicTestCase {
 
 	private TestedBoundComponent newTestedBoundComponent(ComponentName componentName, File layout)
 			throws ConfigurationException, IOException {
-		LayoutComponent comp = ComponentTestUtils.createComponent(layout);
+		LayoutContainer securityLayout = (LayoutContainer) ComponentTestUtils.createComponent(layout);
+		assertEquals(1, securityLayout.getChildCount());
+		LayoutComponent comp = securityLayout.getChildList().get(0);
 		assertTrue(comp instanceof TestedBoundComponent);
 		assertEquals(componentName, comp.getName());
 		return (TestedBoundComponent) comp;
@@ -117,7 +121,6 @@ public class TestBoundComponent extends BasicTestCase {
 	protected void check(TestedBoundComponent cmp, Person guest, ComponentName componentName) {
 		assertEquals(componentName, cmp.getSecurityId());
 
-		cmp.resetAllowCache();
 		cmp.setModel(guest);
 		assertNotNull("Must fail since PersBoundComp has no roles, yet", cmp.hideReason());
 
@@ -128,15 +131,13 @@ public class TestBoundComponent extends BasicTestCase {
 		cmp.setModel(null);
 		assertNull(cmp.hideReason()); // null model is allowed by default
 
-		cmp.resetAllowCache();
 		cmp.setModel(guest);
 		assertNotNull(cmp.hideReason());
 
-		assertSame(guest, cmp.getCurrentObject(SimpleBoundCommandGroup.READ, cmp.getModel()));
+		assertSame(guest, cmp.getSecurityObject(SimpleBoundCommandGroup.READ, cmp.getModel()));
 
 		CommandHandler cmd =
 			cmp.getCommandById(TestLayoutComponent.ComponentWithIntrinsicCommand.INTRINSIC_COMMAND_NAME);
-		cmp.resetAllowCache();
 		assertNotNull(cmp.hideReason());
 
 		BoundedRole role;
@@ -154,7 +155,6 @@ public class TestBoundComponent extends BasicTestCase {
 
 		((StorageAccessManager) AccessManager.getInstance()).reload();
 
-		cmp.resetAllowCache();
 		assertNull(cmp.hideReason());
 
 		assertNotNull(cmp.getCommandGroups());

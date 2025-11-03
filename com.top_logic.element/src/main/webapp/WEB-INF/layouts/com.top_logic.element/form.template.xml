@@ -4,7 +4,7 @@
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 	groups="form,commons"
 >
-	<properties extends="com.top_logic.element.layout.formeditor.builder.EditFormBuilder$UIOptions, com.top_logic.layout.structure.OptionalToolbarOptions, com.top_logic.layout.structure.ButtonbarOptions, com.top_logic.mig.html.layout.WithDefaultFor, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.element.layout.formeditor.builder.FormsTemplateParameter, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.layout.form.component.Editor$UIOptions, com.top_logic.layout.form.component.EditComponent$UIOptions, com.top_logic.layout.form.component.edit.CanLock$Config, com.top_logic.mig.html.layout.WithGotoConfiguration, com.top_logic.mig.html.layout.WithChannelConfigs">
+	<properties extends="com.top_logic.element.layout.formeditor.builder.EditFormBuilder$UIOptions, com.top_logic.layout.structure.OptionalToolbarOptions, com.top_logic.layout.structure.ButtonbarOptions, com.top_logic.mig.html.layout.WithDefaultFor, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.element.layout.formeditor.builder.FormsTemplateParameter, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.tool.boundsec.WithSecurityMaster, com.top_logic.layout.form.component.Editor$UIOptions, com.top_logic.layout.form.component.EditComponent$UIOptions, com.top_logic.layout.form.component.edit.CanLock$Config, com.top_logic.mig.html.layout.WithGotoConfiguration, com.top_logic.mig.html.layout.WithChannelConfigs">
 		<annotations>
 			<display-inherited value="APPEND"/>
 		</annotations>
@@ -27,17 +27,6 @@
 		<property name="resetInvisible"
 			type="boolean"
 		/>
-		<property name="securityObject"
-			instance-type="com.top_logic.tool.boundsec.SecurityObjectProvider"
-			type="com.top_logic.basic.config.PolymorphicConfiguration"
-		/>
-		<property name="securityProviderClass"
-			default="securityRoot"
-			type="String"
-		>
-			<options fun="com.top_logic.layout.form.values.edit.DefaultSecurityProviderKeys"/>
-			<hidden/>
-		</property>
 		<property name="buttons"
 			element-type="com.top_logic.tool.boundsec.CommandHandler$ConfigBase"
 			instance-type="com.top_logic.tool.boundsec.CommandHandler"
@@ -54,13 +43,13 @@
 		dialogs="${dialogs}"
 		editCommand="customEdit"
 		editMode="${editMode}"
+		isSecurityMaster="${isSecurityMaster}"
 		lockHandler="${lockHandler}"
 		lockOperation="${lockOperation}"
 		model="${model}"
 		resetInvisible="${resetInvisible}"
 		saveClosesDialog="${saveClosesDialog}"
 		securityObject="${securityObject}"
-		securityProviderClass="${securityProviderClass}"
 		showMaximize="${showMaximize}"
 		showMinimize="${showMinimize}"
 		showPopOut="${showPopOut}"

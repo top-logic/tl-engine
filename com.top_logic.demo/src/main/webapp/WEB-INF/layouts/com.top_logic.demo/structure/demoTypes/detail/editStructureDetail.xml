@@ -3,6 +3,7 @@
 <template>
 	<params>
 		<param name="structure"/>
+		<param name="securityObject"/>
 		<param name="defaultFor"
 			value=""
 		/>
@@ -28,6 +29,7 @@
 		modifier="com.top_logic.demo.edit.DemoFormContextModificator"
 		namePrefix="${namePrefix}"
 		page="/jsp/demo/EditStructuredElement.jsp"
+		securityObject="${securityObject}"
 		structure="${structure}"
 	>
 		<createForms>

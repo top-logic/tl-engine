@@ -15,7 +15,6 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.check.CheckScopeProvider;
 import com.top_logic.layout.basic.check.ChildrenCheckScopeProvider;
 import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.mig.html.layout.tiles.component.StepOutTileCommand;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.conditional.CommandStep;
 import com.top_logic.tool.boundsec.conditional.Hide;
@@ -49,7 +48,7 @@ public class StepOutCommand extends PreconditionCommandHandler {
 	public static final String COMMAND_ID = "stepOutTileCommand";
 
 	/**
-	 * Creates a new {@link StepOutTileCommand}.
+	 * Creates a new {@link StepOutCommand}.
 	 */
 	public StepOutCommand(InstantiationContext context, Config config) {
 		super(context, config);

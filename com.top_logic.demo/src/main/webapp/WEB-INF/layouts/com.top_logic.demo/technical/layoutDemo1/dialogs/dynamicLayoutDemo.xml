@@ -9,7 +9,7 @@
 			name="layoutSelectDemo"
 			page="/jsp/layout/demo/dynamicLayoutDemo.jsp"
 			resPrefix="layouts.layoutdemo.dynamicLayout.dynamicLayoutDemo.layoutSelectDemo."
-			securityProviderClass="securityRoot"
+			securityObject="securityRoot"
 			toolbar="false"
 		>
 			<layouts>

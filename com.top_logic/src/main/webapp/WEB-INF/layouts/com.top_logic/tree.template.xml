@@ -62,18 +62,6 @@
 			default="false"
 			type="boolean"
 		/>
-		<property name="securityObject"
-			instance-type="com.top_logic.tool.boundsec.SecurityObjectProvider"
-			type="com.top_logic.basic.config.PolymorphicConfiguration"
-		/>
-		<!-- Only for compatibility with legacy usages of this template. -->
-		<property name="securityProviderClass"
-			default="securityRoot"
-			type="String"
-		>
-			<options fun="com.top_logic.layout.form.values.edit.DefaultSecurityProviderKeys"/>
-			<hidden/>
-		</property>
 		<property name="buttons"
 			element-type="com.top_logic.tool.boundsec.CommandHandler$ConfigBase"
 			instance-type="com.top_logic.tool.boundsec.CommandHandler"
@@ -119,7 +107,6 @@
 		partnerGroup="${partnerGroup}"
 		rootVisible="${rootVisible}"
 		securityObject="${securityObject}"
-		securityProviderClass="${securityProviderClass}"
 		selection="${selection}"
 		selection-filter="${selectionFilter}"
 		show-only-selectable-nodes="${showOnlySelectableNodes}"

@@ -8,7 +8,7 @@
 		defaultFor=""
 		model="model(com.top_logic.demo/technical/components/tiles/productProperties/dialog.layout.xml#Dialog)"
 		saveClosesDialog="true"
-		securityProviderClass="securityRoot"
+		securityObject="securityRoot"
 		type=""
 	>
 		<name key="dynamic.cb5de766-c042-4745-9ab9-2a458430a230">

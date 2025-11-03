@@ -42,6 +42,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 DELETED_OBJECT__OBJ;
 
+	/**
+	 * @en No cards visible.
+	 */
+	public static ResKey NO_CARDS_VISIBLE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

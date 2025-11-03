@@ -62,17 +62,6 @@
 }]]></value>
 			</formatted-default>
 		</property>
-		<property name="securityObject"
-			instance-type="com.top_logic.tool.boundsec.SecurityObjectProvider"
-			type="com.top_logic.basic.config.PolymorphicConfiguration"
-		/>
-		<property name="securityProviderClass"
-			default="securityRoot"
-			type="String"
-		>
-			<options fun="com.top_logic.layout.form.values.edit.DefaultSecurityProviderKeys"/>
-			<hidden/>
-		</property>
 	</properties>
 
 	<chartjs name="Chart"
@@ -80,7 +69,6 @@
 		dialogs="${dialogs}"
 		model="${model}"
 		securityObject="${securityObject}"
-		securityProviderClass="${securityProviderClass}"
 		showMaximize="${showMaximize}"
 		showMinimize="${showMinimize}"
 		showPopOut="${showPopOut}"

@@ -15,7 +15,7 @@
 		<param name="pageButtons"
 			value=""
 		/>
-		<param name="securityProvider"
+		<param name="securityObject"
 			value="securityRoot"
 		/>
 		<param name="page"
@@ -29,9 +29,10 @@
 		<component class="com.top_logic.doc.component.DocumentationTreeComponent"
 			defaultSelection="false"
 			dragSource="com.top_logic.layout.tree.dnd.DefaultTreeDrag"
+			isSecurityMaster="true"
 			name="${namePrefix}Tree"
 			rootVisible="false"
-			securityProviderClass="${securityProvider}"
+			securityObject="${securityObject}"
 			titleKey="tl.doc.tree.title"
 		>
 			<dropTargets>
@@ -130,7 +131,7 @@
 			master="${namePrefix}Tree"
 			namePrefix="${namePrefix}Detail"
 			page="${page}"
-			securityProvider="${securityProvider}"
+			securityObject="${securityObject}"
 			structure="tl.doc"
 		>
 			<modifier class="com.top_logic.element.layout.meta.FormContextModificatorComposite">

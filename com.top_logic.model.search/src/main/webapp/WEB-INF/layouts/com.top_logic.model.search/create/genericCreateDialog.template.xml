@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <config:template xmlns:config="http://www.top-logic.com/ns/config/6.0">
-	<properties extends="com.top_logic.mig.html.layout.DialogInfo, com.top_logic.element.layout.formeditor.builder.FormsTemplateParameter, com.top_logic.model.search.providers.MonomorphicCreateFormBuilderByExpression$WithInitialization, com.top_logic.element.layout.create.CreateFormBuilder$UIOptions">
+	<properties extends="com.top_logic.mig.html.layout.DialogInfo, com.top_logic.element.layout.formeditor.builder.FormsTemplateParameter, com.top_logic.model.search.providers.MonomorphicCreateFormBuilderByExpression$WithInitialization, com.top_logic.element.layout.create.CreateFormBuilder$UIOptions, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig">
 		<annotations>
 			<display-order>
 				<value>
@@ -69,19 +69,6 @@
 			<nullable/>
 			<property-editor value="com.top_logic.layout.help.UseHelpEditor"/>
 		</property>
-		<property name="securityObject"
-			instance-type="com.top_logic.tool.boundsec.SecurityObjectProvider"
-			type="com.top_logic.basic.config.PolymorphicConfiguration"
-		>
-			<options fun="com.top_logic.layout.form.values.edit.AllInAppImplementations"/>
-		</property>
-		<property name="securityProviderClass"
-			default="securityRoot"
-			type="String"
-		>
-			<options fun="com.top_logic.layout.form.values.edit.DefaultSecurityProviderKeys"/>
-			<hidden/>
-		</property>
 	</properties>
 
 	<layout name="Dialog">
@@ -100,7 +87,6 @@
 		<include name="com.top_logic.element/create/genericCreate.xml"
 			dialogName="Layout"
 			securityObject="${securityObject}"
-			securityProvider="${securityProviderClass}"
 		>
 			<modelBuilder class="com.top_logic.model.search.providers.PolymorphicCreateFormBuilderByExpression"
 				header="${header}"

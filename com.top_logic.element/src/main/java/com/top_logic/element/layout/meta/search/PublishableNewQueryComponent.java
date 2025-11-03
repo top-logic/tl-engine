@@ -18,6 +18,7 @@ import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.component.FormComponent;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
 import com.top_logic.tool.execution.ExecutabilityRule;
@@ -66,7 +67,7 @@ public class PublishableNewQueryComponent extends NewQueryComponent {
 	
     @Override
 	public boolean isExpanded() {
-		return allow(CommandGroupRegistry.resolve(QueryUtils.PUBLISH_NAME));
+		return BoundChecker.allowCommand(this, CommandGroupRegistry.resolve(QueryUtils.PUBLISH_NAME), getModel());
     }
 
     public static class PublishableNewQueryCommandHandler extends NewQueryCommandHandler {

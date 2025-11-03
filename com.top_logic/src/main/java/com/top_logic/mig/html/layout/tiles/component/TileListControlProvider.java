@@ -17,7 +17,6 @@ import com.top_logic.layout.structure.LayoutControlProvider;
 import com.top_logic.layout.structure.SimpleDecoratingLayoutControlProvider;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.tiles.RootTileComponent;
-import com.top_logic.mig.html.layout.tiles.TileUtils;
 import com.top_logic.mig.html.layout.tiles.control.CompositeTileControl;
 
 /**
@@ -54,7 +53,7 @@ public class TileListControlProvider extends SimpleDecoratingLayoutControlProvid
 
 	@Override
 	public LayoutControl mkLayout(Strategy strategy, LayoutComponent component) {
-		LayoutComponent container = container(component);
+		LayoutComponent container = RootTileComponent.getRootTile(component);
 		TileListComponent tileListComponent = (TileListComponent) component;
 		TileListComponentTile rootTile = new TileListComponentTile(container, tileListComponent);
 		Control content;
@@ -70,15 +69,6 @@ public class TileListControlProvider extends SimpleDecoratingLayoutControlProvid
 		 * screen. */
 		control.setConstraint(DefaultLayoutData.DEFAULT_CONSTRAINT);
 		return control;
-	}
-
-	private LayoutComponent container(LayoutComponent component) {
-		LayoutComponent enclosingContainer = RootTileComponent.getRootTile(component);
-		if (enclosingContainer == null) {
-			// Legacy tile container
-			enclosingContainer = TileUtils.enclosingTileContainer(component);
-		}
-		return enclosingContainer;
 	}
 
 }

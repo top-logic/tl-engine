@@ -76,7 +76,7 @@ public class SecuritySearchFilterSupport extends SearchFilterSupport {
 	 * Return {@link SecurityFilter} with default checker for objects of {@link TLClass}-type
 	 */
 	public static SecurityFilter<?> getSecurityFilter(MainLayout rootLayout, TLClass type) {
-		Collection<BoundChecker> defaultCheckers = BoundHelper.getInstance().getDefaultCheckersForType(type);
+		Collection<? extends BoundChecker> defaultCheckers = BoundHelper.getInstance().getDefaultCheckersForType(type);
 		BoundChecker checker = CollectionUtil.getFirst(defaultCheckers);
 
 		return (checker != null) ? new SecurityFilter<>(checker) : null;

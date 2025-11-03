@@ -15,7 +15,7 @@
 				model="provider(com.top_logic.layout.scripting.template.gui.ScriptRecorderTreeModelProvider)"
 				name="${namePrefix}ScriptRecorderTree"
 				resPrefix="tl.scripting.recorder."
-				securityProviderClass="securityRoot"
+				securityObject="securityRoot"
 				showMaximize="true"
 				toolbar="true"
 			>
@@ -140,7 +140,7 @@
 								name="${namePrefix}ScriptUploadForm"
 								page="/jsp/layout/scripting/ScriptUploadComponent.jsp"
 								resPrefix="tl.scripting.recorder.scriptUpload."
-								securityProviderClass="securityRoot"
+								securityObject="securityRoot"
 								toolbar="false"
 							>
 								<buttons>
@@ -198,7 +198,7 @@
 				name="${namePrefix}ScriptRecorderComponent"
 				page="/jsp/layout/scripting/ScriptRecorderComponent.jsp"
 				resPrefix="tl.scripting.recorder."
-				securityProviderClass="securityRoot"
+				securityObject="securityRoot"
 				titleKey="tl.scripting.recorder.details.title"
 			>
 				<layoutInfo size="60%"/>

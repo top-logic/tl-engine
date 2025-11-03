@@ -23,7 +23,7 @@
 				model="provider(com.top_logic.layout.scripting.template.gui.selector.ScriptSelectorBuilder)"
 				name="${namePrefix}FolderSelector"
 				resPrefix="tl.scripting.recorder.saveScriptAs.folderSelector."
-				securityProviderClass="securityRoot"
+				securityObject="securityRoot"
 			>
 				<modelBuilder class="com.top_logic.layout.scripting.template.gui.selector.ScriptSelectorBuilder"/>
 				<treeBuilder>
@@ -44,7 +44,7 @@
 				page="/jsp/layout/scripting/SaveScriptAs.jsp"
 				resPrefix="tl.scripting.recorder.saveScriptAs.form."
 				resetInvisible="true"
-				securityProviderClass="securityRoot"
+				securityObject="securityRoot"
 				toolbar="false"
 			>
 				<layoutInfo size="140px"/>

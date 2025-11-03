@@ -27,8 +27,9 @@ import com.top_logic.mig.html.layout.tiles.TileFactory;
 import com.top_logic.mig.html.layout.tiles.TileInfo;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.BoundChecker;
-import com.top_logic.tool.boundsec.BoundCheckerDelegate;
 import com.top_logic.tool.boundsec.CommandHandler;
+import com.top_logic.tool.boundsec.SecurityObjectProvider;
+import com.top_logic.tool.boundsec.SecurityObjectProviderConfig;
 
 /**
  * {@link SingleLayoutContainer} that offers tiles for multiple business objects in the "parent
@@ -44,14 +45,15 @@ import com.top_logic.tool.boundsec.CommandHandler;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class InlinedTileComponent extends SingleLayoutContainer implements Selectable, BoundCheckerDelegate {
+public class InlinedTileComponent extends SingleLayoutContainer implements Selectable, LayoutContainerBoundChecker {
 
 	/**
 	 * Typed configuration interface definition for {@link InlinedTileComponent}.
 	 * 
 	 * @author <a href="mailto:dbu@top-logic.com">dbu</a>
 	 */
-	public interface Config extends SingleLayoutContainer.Config, TileListComponent.ContextMenuButtons {
+	public interface Config
+			extends SingleLayoutContainer.Config, TileListComponent.ContextMenuButtons, SecurityObjectProviderConfig {
 
 		/**
 		 * Configuration element for setting a {@link #getModelBuilder()}.
@@ -94,9 +96,9 @@ public class InlinedTileComponent extends SingleLayoutContainer implements Selec
 
 	private ModelBuilder _builder;
 
-	private final BoundChecker _boundCheckerDelegate = new LayoutContainerBoundChecker<>(this);
-
 	private final List<CommandHandler> _contextMenuButtons;
+
+	private final SecurityObjectProvider _securityObjectProvider;
 
 	/**
 	 * Create a {@link InlinedTileComponent}.
@@ -113,6 +115,27 @@ public class InlinedTileComponent extends SingleLayoutContainer implements Selec
 			.stream()
 			.map(buttonConf -> AbstractCommandHandler.getInstance(context, buttonConf))
 			.collect(Collectors.toList());
+		_securityObjectProvider = SecurityObjectProvider.fromConfiguration(context, config.getSecurityObject());
+	}
+
+	@Override
+	public SecurityObjectProvider getSecurityObjectProvider() {
+		return _securityObjectProvider;
+	}
+
+	@Override
+	public ResKey hideReason() {
+		ResKey technicalReason = super.hideReason();
+		if (technicalReason != null) {
+			return technicalReason;
+		}
+
+		ResKey securityReason = BoundChecker.hideReasonForSecurity(this, internalModel());
+		if (securityReason != null) {
+			return securityReason;
+		}
+
+		return null;
 	}
 
 	/**
@@ -142,16 +165,6 @@ public class InlinedTileComponent extends SingleLayoutContainer implements Selec
 	 */
 	public Object getGUIModel() {
 		return _builder.getModel(getModel(), this);
-	}
-
-	@Override
-	public BoundChecker getDelegate() {
-		return _boundCheckerDelegate;
-	}
-
-	@Override
-	public ResKey hideReason() {
-		return hideReason(internalModel());
 	}
 
 }

@@ -9,7 +9,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 
-import com.top_logic.base.security.SecurityConfiguration;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationException;
@@ -22,23 +21,17 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
-import com.top_logic.basic.thread.ThreadContext;
-import com.top_logic.basic.util.ResKey;
-import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutContainer;
 import com.top_logic.mig.html.layout.SubComponentConfig;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundComponent;
-import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.BoundLayout;
-import com.top_logic.tool.boundsec.BoundObject;
-import com.top_logic.tool.boundsec.manager.AccessManager;
+import com.top_logic.tool.boundsec.SecurityConfiguration;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.tool.boundsec.wrap.PersBoundComp;
-import com.top_logic.util.TLContext;
+import com.top_logic.tool.boundsec.wrap.SecurityComponentCache;
 
 /**
  * A CompoundSecurityLayout provides a logical representation of a technical view.
@@ -56,7 +49,7 @@ public class CompoundSecurityLayout extends BoundLayout {
 	 * Configuration options for {@link CompoundSecurityLayout}.
 	 */
 	@TagName(Config.TAG_NAME)
-    public interface Config extends BoundLayout.Config {
+	public interface Config extends BoundLayout.Config, SecurityConfiguration {
 
 		/**
 		 * @see SubComponentConfig#getComponents()
@@ -69,6 +62,7 @@ public class CompoundSecurityLayout extends BoundLayout {
 
 		@Name(ATT_USE_DEFAULT_CHECKER)
 		@BooleanDefault(false)
+		// TODO: DELETE
 		boolean getUseDefaultChecker();
 
 		@Name(ATT_SECURITY_DOMAIN)
@@ -119,6 +113,19 @@ public class CompoundSecurityLayout extends BoundLayout {
         return this.securityDomain;
     }
 
+	@Override
+	public ComponentName getSecurityId() {
+		ComponentName configuredSecurityId = config().getSecurityId();
+		if (configuredSecurityId != null) {
+			return configuredSecurityId;
+		}
+		return super.getSecurityId();
+	}
+
+	private Config config() {
+		return (Config) getConfig();
+	}
+
     /**
      * This method looks up a command group by its id.
      * Only command groups registered at this component are taken into account.
@@ -140,12 +147,13 @@ public class CompoundSecurityLayout extends BoundLayout {
 
     /**
      * Initialize the command groups with all the command groups of your children.
-     *
-     * @see com.top_logic.mig.html.layout.LayoutContainer#componentsResolved(InstantiationContext)
      */
     @Override
 	protected void componentsResolved(InstantiationContext context) {
         super.componentsResolved(context);
+
+        // Note: Must call super to explicitly store and distribute value.
+		super.initPersBoundComp(SecurityComponentCache.lookupPersBoundComp(this));
 
         try {
             CompoundSecurityLayoutCommandGroupCollector theVisitor = createCommandgroupCollector();
@@ -160,11 +168,10 @@ public class CompoundSecurityLayout extends BoundLayout {
                         useDefaultChecker = thePL.useDefaultChecker;
                     }
                 }
-
             }
         }
         catch (Exception e) {
-            Logger.error("...", e, this);
+			Logger.error("Unable to collect collect command groups.", e, CompoundSecurityLayout.class);
         }
 
         if (Logger.isDebugEnabled(this)) {
@@ -172,12 +179,17 @@ public class CompoundSecurityLayout extends BoundLayout {
         }
     }
 
+	@Override
+	public void initPersBoundComp(PersBoundComp persBoundComp) {
+		// Drop ancestor configuration.
+	}
+
     /**
      * Create a Visitor as configured by "security.layout.collector.name"
      */
     protected static synchronized CompoundSecurityLayoutCommandGroupCollector createCommandgroupCollector() throws ClassNotFoundException, InstantiationException, IllegalAccessException {
-		SecurityConfiguration securityConfiguration =
-			ApplicationConfig.getInstance().getConfig(SecurityConfiguration.class);
+		com.top_logic.base.security.SecurityConfiguration securityConfiguration =
+			ApplicationConfig.getInstance().getConfig(com.top_logic.base.security.SecurityConfiguration.class);
 		PolymorphicConfiguration<? extends CompoundSecurityLayoutCommandGroupCollector> commandGroupCollector =
 			securityConfiguration.getLayout().getCommandGroupCollector();
 		return SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(commandGroupCollector);
@@ -187,20 +199,21 @@ public class CompoundSecurityLayout extends BoundLayout {
      * Create a Visitor as configured by "security.layout.collector.name"
      */
     public static com.top_logic.basic.col.Mapping getSecurityDomainMapper() {
-		return ApplicationConfig.getInstance().getConfig(SecurityConfiguration.class).getLayout().getDomainMapper();
+		return ApplicationConfig.getInstance().getConfig(com.top_logic.base.security.SecurityConfiguration.class)
+			.getLayout().getDomainMapper();
     }
 
     /**
-     * Remove access to the Component using a CommandGroup for a given BoundRole.
-     *
-     * Keep in mind to visit this layout with a
-     * {@link CompoundSecurityLayoutCommandGroupDistributor}
-     * after invoking this method to restore a consistent security.
-     *
-     * @param aGroup    the BoundCommandGroup. If <code>null</code> remove any access for the role
-     * @param aRole     the BoundedRole
-     * @return true if something was actually removed.
-     */
+	 * Remove access to this component using the given {@link BoundCommandGroup} for a given
+	 * {@link BoundedRole}.
+	 *
+	 * @param aGroup
+	 *        The group to remove access for. If <code>null</code>, then any access for the role is
+	 *        removed.
+	 * @param aRole
+	 *        The role to remove access for.
+	 * @return true if something was actually removed.
+	 */
     public boolean removeAccess (BoundCommandGroup aGroup, BoundedRole aRole) {
 		PersBoundComp persBoundComp = getPersBoundComp();
 		if (persBoundComp == null) {
@@ -211,10 +224,6 @@ public class CompoundSecurityLayout extends BoundLayout {
 
     /**
      * Remove all access on this component.
-     *
-     * Keep in mind to visit this layout with a
-     * {@link CompoundSecurityLayoutCommandGroupDistributor}
-     * after invoking this method to restore a consistent security.
      *
      * @return true when something was actually removed.
      */
@@ -227,144 +236,15 @@ public class CompoundSecurityLayout extends BoundLayout {
     }
 
     /**
-     * Add access to the Component using a CommandGroup for a given BoundRole.
-     *
-     * @param aGroup    the BoundCommandGroup
-     * @param aRole     the BoundedRole
-     */
+	 * Add access to this component using the given {@link BoundCommandGroup} for a given
+	 * {@link BoundedRole}.
+	 */
     public void addAccess (BoundCommandGroup aGroup, BoundedRole aRole) {
         PersBoundComp persBoundComp = getPersBoundComp();
  		if (persBoundComp == null) {
 			return;
  		}
 		persBoundComp.addAccess(aGroup, aRole);
-    }
-
-    /**
-     * The Roles for CommandGroups are configured using the PersBoundComp.
-     */
-    @Override
-	public Collection getRolesForCommandGroup(BoundCommandGroup aCommand) {
-		PersBoundComp persBoundComp = getPersBoundComp();
-		if (persBoundComp == null) {
-			return Collections.emptySet();
-		}
-		return persBoundComp.rolesForCommandGroup(aCommand);
-	}
-
-    /**
-	 * Return the current Security object to derive the security from.
-	 *
-	 * When useDefaultChecker is set the getDefaultObject from {@link BoundHelper} will be used.
-	 *
-	 * Otherwise first {@link LayoutComponent#getMaster()} is checked and when it is a
-	 * BoundComponent its {@link BoundComponent#getCurrentObject(BoundCommandGroup aBCG, Object potentialModel)} is used.
-	 *
-	 * As last resort we use our next parent CompoundSecurityLayout.
-	 *
-	 * When all this fails we return null.
-	 */
-    @Override
-	public BoundObject getCurrentObject(BoundCommandGroup aBCG, Object potentialModel) {
-        if (useDefaultChecker) {
-            return BoundHelper.getInstance().getDefaultObject();
-        }
-
-        LayoutComponent theMaster = this.getMaster();
-        if (theMaster instanceof BoundComponent) {
-			return ((BoundComponent) theMaster).getCurrentObject(aBCG, potentialModel);
-        }
-
-        CompoundSecurityLayout thePL = CompoundSecurityLayout.getNearestCompoundLayout(this);
-        if (thePL != null) {
-			return thePL.getCurrentObject(aBCG, potentialModel);
-        }
-        return null;
-    }
-
-
-
-    /**
-     * Set the current BoundObject in the nearest CompoundSecurityLayout.
-     *
-     * @param anObject the BoundObject
-     */
-    public void setCurrentObject(BoundObject anObject){
-        CompoundSecurityLayout thePL = CompoundSecurityLayout.getNearestCompoundLayout(this);
-        if (thePL != null) {
-            thePL.setCurrentObject(anObject);
-        }
-    }
-
-    /**
-     * If there is a model for this view, only show view if current user has default command group.
-     *
-     * @see com.top_logic.tool.boundsec.BoundLayout#hideReason(Object)
-     */
-    @Override
-	public ResKey hideReason(Object potentialModel) {
-		ResKey masterReason = hideReasonMaster();
-		if (masterReason != null) {
-			return masterReason;
-        }
-		return super.hideReason(potentialModel);
-
-// TODO TSA: this code does not work properly with inner components using default security
-//             Test the new behavior in top level!!!!
-//             Changes became necessary in the context of COMS
-//        if (theBO != null) {
-//            TLContext         theContext = TLContext.getContext();
-//            BoundCommandGroup theBC      = this.getDefaultCommandGroup();
-//
-//            if (!this.checkAccess(theContext, theBO, theBC)) {
-//                return false;
-//            }
-//        }
-
-    }
-
-
-    @Override
-	public boolean allow(BoundObject anObject) {
-
-        if (!this.allowBySecurityMaster(anObject, this.useDefaultChecker)) {
-            return (false);
-        }
-
-        if (anObject != null) {
-            TLContext         theContext = TLContext.getContext();
-            BoundCommandGroup theBC      = this.getDefaultCommandGroup();
-
-            if (!this.checkAccess(theContext, anObject, theBC)) {
-                return false;
-            }
-        }
-        return super.allow(anObject);
-    }
-
-    /**
-     * Check Access based on BoundObject .
-     * TODO MGA introduce cache if necessary
-     *
-     * @param aContext  The context to check (i.e. to get the current Person)
-     * @param aModel     The model of this component.
-     * @param aCmdGroup The command group to check against.
-     *
-     * @return true when the intersection of roles for the commandGroups
-     *              and roles of the current Person on the BoundObject
-     *              is not empty.
-     */
-    protected boolean checkAccess(TLContext aContext, BoundObject aModel, BoundCommandGroup aCmdGroup) {
-		if (ThreadContext.isAdmin()) {
-            return true;    // bypass bound security for all for SuperUsers
-        }
-		PersonManager r = PersonManager.getManager();
-
-		Person currentPerson = TLContext.currentUser();
-        if (currentPerson == null)
-            return false;   // Don't know how to check this
-
-        return AccessManager.getInstance().hasRole(currentPerson, aModel, getRolesForCommandGroup(aCmdGroup));
     }
 
     /**

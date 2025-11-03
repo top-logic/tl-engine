@@ -120,7 +120,7 @@ public class SecurityFilter<C extends BoundObject> extends BasicCollectionFilter
 			BoundCommandGroup theCommand = this.getCommandGroup();
 
 			for (C theElement : aCollection) {
-				if (this.getChecker(theElement, theCommand).allow(theCommand, theElement)) {
+				if (BoundChecker.allowCommandOnSecurityObject(this.getChecker(theElement, theCommand), theCommand, theElement)) {
 					theResult.add(theElement);
 				}
 			}

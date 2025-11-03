@@ -30,7 +30,7 @@
 				model="selection(${namePrefix}RevisionCompareTreeAdapter)"
 				name="${namePrefix}RevisionCompareTree"
 				resPrefix="${resPrefix}"
-				securityProviderClass="modelOrSecRoot"
+				securityObject="ref:modelOrSecRoot"
 			/>
 		</components>
 	</securityLayout>

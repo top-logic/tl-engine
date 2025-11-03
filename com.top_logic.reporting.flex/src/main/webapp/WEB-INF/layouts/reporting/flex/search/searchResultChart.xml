@@ -28,7 +28,7 @@
 				resPrefix="${resPrefix}QuerySelector."
 				result-table="${searchResultTable}"
 				search-input-component="${searchInputComponent}"
-				securityProviderClass="searchReportSecurityObjectProvider"
+				securityObject="ref:searchReportSecurityObjectProvider"
 				toolbar="false"
 			>
 				<layoutInfo size="%FILTER_SINGLE_LINE_HEIGHT%"/>

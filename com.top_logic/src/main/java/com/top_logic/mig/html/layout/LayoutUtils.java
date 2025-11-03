@@ -36,6 +36,8 @@ import com.top_logic.basic.Log;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.UnreachableAssertion;
+import com.top_logic.basic.col.DescendantDFSIterator;
+import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.basic.config.ConfigurationDescriptor;
@@ -85,6 +87,7 @@ import com.top_logic.layout.processor.LayoutModelConstants;
 import com.top_logic.layout.structure.PopupDialogControl;
 import com.top_logic.layout.structure.PopupDialogModel;
 import com.top_logic.layout.tabbar.TabInfo.TabConfig;
+import com.top_logic.mig.html.layout.LayoutComponent.Config;
 import com.top_logic.mig.html.layout.WithGotoConfiguration.GotoTarget;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLType;
@@ -96,6 +99,7 @@ import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.CommandHandler.ExecutabilityConfig;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.OpenModalDialogCommandHandler;
+import com.top_logic.tool.boundsec.compound.CompoundSecurityLayout;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLResKeyUtil;
 import com.top_logic.util.error.TopLogicException;
@@ -1068,7 +1072,42 @@ public class LayoutUtils {
 				}
 			}
 		}
+		Mapping<CompoundSecurityLayout.Config, CompoundSecurityLayout.Config> securityLayoutMapping =
+			createSecurityLayoutMapping(layoutTrees.values());
+		layoutTrees.values().forEach(tree -> tree.setSecurityDefiningLayouts(securityLayoutMapping));
 		return layoutTrees;
+	}
+
+	private static Mapping<CompoundSecurityLayout.Config, CompoundSecurityLayout.Config> createSecurityLayoutMapping(
+			Collection<LayoutConfigTree> values) {
+		Map<ComponentName, CompoundSecurityLayout.Config> securityLayouts = new HashMap<>();
+		for (LayoutConfigTree tree : values) {
+			DescendantDFSIterator<LayoutConfigTreeNode> descendantIter = new DescendantDFSIterator<>(tree, tree.getRoot(), true);
+			while (descendantIter.hasNext()) {
+				LayoutConfigTreeNode node = descendantIter.next();
+				Config componentConf = node.getConfig();
+				if (componentConf instanceof CompoundSecurityLayout.Config secLayout) {
+					securityLayouts.put(secLayout.getName(), secLayout);
+				}
+			}
+		}
+		return new Mapping<>() {
+
+			@Override
+			public CompoundSecurityLayout.Config map(CompoundSecurityLayout.Config secLayout) {
+				ComponentName securityId = secLayout.getSecurityId();
+				if (securityId == null) {
+					return secLayout;
+				}
+				CompoundSecurityLayout.Config delegateConf = securityLayouts.get(securityId);
+				if (delegateConf == null) {
+					Logger.error("No security layout with id '" + securityId + "' found in '" + secLayout + "'.",
+						LayoutUtils.class);
+					return secLayout;
+				}
+				return map(delegateConf);
+			}
+		};
 	}
 
 	private static LayoutConfigTree createLayoutTree(InstantiationContext context, String resource) {

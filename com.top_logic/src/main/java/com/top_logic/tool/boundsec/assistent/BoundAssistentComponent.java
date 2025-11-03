@@ -8,55 +8,47 @@ package com.top_logic.tool.boundsec.assistent;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
-import com.top_logic.basic.ConfigurationError;
-import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
-import com.top_logic.knowledge.wrap.Wrapper;
-import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.ThemeImage;
+import com.top_logic.layout.component.LayoutContainerBoundChecker;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.ModelEventListener;
 import com.top_logic.mig.html.layout.SubComponentConfig;
-import com.top_logic.tool.boundsec.BoundCheckerComponent;
+import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCheckerLayoutConfig;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
-import com.top_logic.tool.boundsec.BoundComponent;
+import com.top_logic.tool.boundsec.BoundLayout;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.SecurityObjectProvider;
-import com.top_logic.tool.boundsec.SecurityObjectProviderManager;
+import com.top_logic.tool.boundsec.SecurityObjectProviderConfig;
 import com.top_logic.tool.boundsec.WithSecurityMaster;
-import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
-import com.top_logic.tool.boundsec.wrap.PersBoundComp;
-import com.top_logic.tool.boundsec.wrap.SecurityComponentCache;
-import com.top_logic.tool.execution.I18NConstants;
-import com.top_logic.tool.execution.service.CommandApprovalService;
 import com.top_logic.util.Resources;
-import com.top_logic.util.TLContext;
 
 /**
  * Extension of AssistentComponent making it security aware.
  *
  * @author <a href="mailto:mga@top-logic.com">Michael G&auml;nsler</a>
  */
-public class BoundAssistentComponent extends AssistentComponent implements BoundCheckerComponent, HTMLConstants {
+public class BoundAssistentComponent extends AssistentComponent implements LayoutContainerBoundChecker, HTMLConstants {
 
 	/**
 	 * Configuration options for {@link BoundAssistentComponent}.
 	 */
 	@TagName(Config.TAG_NAME)
-	public interface Config extends AssistentComponent.Config, BoundCheckerLayoutConfig, WithSecurityMaster {
+	public interface Config extends AssistentComponent.Config, BoundCheckerLayoutConfig, SecurityObjectProviderConfig,
+			WithSecurityMaster {
 
 		/**
 		 * @see SubComponentConfig#getComponents()
@@ -67,8 +59,9 @@ public class BoundAssistentComponent extends AssistentComponent implements Bound
 		@ClassDefault(BoundAssistentComponent.class)
 		public Class<? extends LayoutComponent> getImplementationClass();
 
-		@Name(BoundComponent.XML_ATTRIBUTE_SECURITY_PROVIDER_CLASS)
-		String getSecurityProviderClass();
+		@Override
+		@FormattedDefault("model")
+		PolymorphicConfiguration<? extends SecurityObjectProvider> getSecurityObject();
 	}
 
 	private Collection<BoundCommandGroup> commandGroups;
@@ -77,147 +70,45 @@ public class BoundAssistentComponent extends AssistentComponent implements Bound
 
     private boolean isSecurityMaster;
 
-    /** Saves whether a SecurityProviderClass was configured in the layout xml. */
-    protected boolean securityProviderConfigured;
-    
-    /** Our persisent representation for the security */
-	private final PersBoundComp _persBoundComp;
-
-    /**
-     * Saves the configured {@link SecurityObjectProvider}.<br/>
-     * This will override useDefaultChecker flag if set.
-     */
-    protected SecurityObjectProvider securityObjectProvider;
-	/** Saves the config to write is back. */
-	protected String securityProviderConfigContent;
+	private final SecurityObjectProvider _securityProvider;
 
 
-    public BoundAssistentComponent(InstantiationContext context, Config someAttr) throws ConfigurationException {
-        super(context, someAttr);
+	public BoundAssistentComponent(InstantiationContext context, Config config) throws ConfigurationException {
+		super(context, config);
 
-        this.isSecurityMaster = someAttr.getIsSecurityMaster();
+		this.isSecurityMaster = config.getIsSecurityMaster();
 
-		this.commandGroups = someAttr.getCommandGroups();
+		this.commandGroups = config.getCommandGroups();
 		if (commandGroups.isEmpty()) {
 			commandGroups = SimpleBoundCommandGroup.READ_SET;
         }
-		_persBoundComp = SecurityComponentCache.lookupPersBoundComp(this);
-        try {
-			initSecurityObjectProvider(context, someAttr);
-		} catch (ConfigurationException ex) {
-			throw new ConfigurationError("Initializing the security object provider failed.", ex);
-		}
-    }
-
-	/**
-	 * Fetch the {@link #securityObjectProvider} from XML and set {@link #securityProviderConfigured}
-	 * 
-	 * @throws ConfigurationException
-	 *         If the configured {@link SecurityObjectProvider} cannot be
-	 *         instantiated.
-	 */
-    protected void initSecurityObjectProvider(InstantiationContext context, Config atts) throws ConfigurationException {
-    	securityProviderConfigContent = StringServices.nonEmpty(atts.getSecurityProviderClass());
-        securityProviderConfigured = !StringServices.isEmpty(securityProviderConfigContent);
-        if (securityProviderConfigured) {
-            securityObjectProvider = SecurityObjectProviderManager.getInstance().getSecurityObjectProvider(securityProviderConfigContent);
-        } else {
-            securityObjectProvider = getDefaultSecurityObjectProvider();
-        }
-    }
-
-    /**
-	 * Gets the default SecurityObjectProvider which gets used if no one is configured in layout
-	 * xml. Subclasses may override this method if necessary
-	 * 
-	 * @return {@link SecurityObjectProviderManager#getDefaultSecurityObjectProvider()}
-	 */
-    protected SecurityObjectProvider getDefaultSecurityObjectProvider() {
-		return SecurityObjectProviderManager.getInstance().getDefaultSecurityObjectProvider();
+		_securityProvider = SecurityObjectProvider.fromConfiguration(context, config.getSecurityObject());
     }
 
 	@Override
-	public PersBoundComp getPersBoundComp() {
-		return _persBoundComp;
-    }
+	protected void componentsResolved(InstantiationContext context) {
+		super.componentsResolved(context);
+
+		if (isSecurityMaster) {
+			if (getParent() instanceof BoundLayout layout) {
+				layout.initSecurityMaster(this);
+			}
+		}
+	}
 
 	@Override
 	public ResKey hideReason() {
-		return hideReason(internalModel());
+		return BoundChecker.hideReasonForSecurity(this, internalModel());
 	}
-
-    @Override
-	public ResKey hideReason(Object potentialModel) {
-		return securityReason(potentialModel);
-    }
-
-	/**
-	 * Utility to compute {@link #hideReason(Object)} based on access restrictions.
-	 */
-	protected final ResKey securityReason(Object potentialModel) {
-		BoundCommandGroup group = this.getDefaultCommandGroup();
-		if (!allow(group, getCurrentObject(group, potentialModel))) {
-			return I18NConstants.ERROR_NO_PERMISSION;
-		}
-		return null;
-	}
-
-    /** 
-      * Check if the given {@link com.top_logic.tool.boundsec.BoundCommandGroup} 
-      * for the current 
-      * {@link com.top_logic.knowledge.wrap.person.Person} is allowed on the given Object.
-      * 
-      * @see com.top_logic.tool.boundsec.BoundChecker#allow(com.top_logic.tool.boundsec.BoundCommandGroup, com.top_logic.tool.boundsec.BoundObject)
-     */
-    @Override
-	public boolean allow(BoundCommandGroup aCmdGroup, BoundObject anObject) {
-        TLContext theContext = TLContext.getContext();
-        if (theContext == null)
-            return false;
-
-        if (aCmdGroup == null) {
-            aCmdGroup = getDefaultCommandGroup();
-        }
-
-		if (!CommandApprovalService.canExecute(this, aCmdGroup, anObject))
-            return false;
-
-
-        // special object dependent security:
-        if (anObject == null)
-            return allowNullModel(aCmdGroup);
-
-        
-        if (!checkAccess(theContext, (Object) anObject , aCmdGroup))
-            return false;
-        if (anObject instanceof Wrapper && !checkAccess(theContext, (Wrapper) anObject , aCmdGroup))
-            return false;
-
-        return checkAccess(theContext, anObject , aCmdGroup);
-    }
-
-    @Override
-	public final BoundObject getCurrentObject(BoundCommandGroup aBCG, Object potentialModel) {
-		return getSecurityObject(aBCG, getModel());
-    }
 
 	@Override
-	public BoundObject getSecurityObject(BoundCommandGroup commandGroup, Object potentialModel) {
-		return this.securityObjectProvider.getSecurityObject(this, potentialModel, commandGroup);
+	public SecurityObjectProvider getSecurityObjectProvider() {
+		return _securityProvider;
 	}
 
     @Override
 	public Collection<BoundCommandGroup> getCommandGroups() {
         return this.commandGroups;
-    }
-
-    @Override
-	public Collection getRolesForCommandGroup(BoundCommandGroup aCommand) {
-        PersBoundComp persBoundComp = getPersBoundComp();
-		if (persBoundComp == null) {
-			return Collections.emptySet();
-		}
-		return persBoundComp.rolesForCommandGroup(aCommand);
     }
 
     @Override
@@ -234,65 +125,7 @@ public class BoundAssistentComponent extends AssistentComponent implements Bound
     protected boolean allowNullModel(BoundCommandGroup aCmdGroup) {
         return this.supportsInternalModel(null);
     }
-
-    /**
-     * Check Access based on arbitrary Object.
-     * 
-     * @param context   The current TLContext (to get user data etc.)
-     * @param model     The model of this component.
-     * @param aCmdGroup The command group to check against.
-     * 
-     * @return always true here but you may do otherwise
-     */
-    protected boolean checkAccess(TLContext context, Object model, BoundCommandGroup aCmdGroup) {
-        return true;
-    }
-
-    /**
-     * Check KnowledgeObject access right to given model.
-     * 
-     * @return true always true - remains as a hook for subclasses
-     */
-    protected boolean checkAccess(TLContext context, Wrapper model, BoundCommandGroup aCmdGroup) {
-        return true;
-    }
-
-    /**
-     * Check Access based on BoundObject .
-     * 
-     * @param context   The current TLContext (to get user data etc.)
-     * @param model     The model of this component.
-     * @param aCmdGroup The command group to check against.
-     * 
-     * @return true when the intersection of roles for the commandGroups
-     *              and roles of the current Person on the BoundObject
-     *              is not empty.
-     */
-    protected boolean checkAccess(TLContext context, BoundObject model, BoundCommandGroup aCmdGroup) {
-		if (TLContext.isAdmin()) {
-            return true;    // bypass bound security for SuperUsers
-        }
-		Person currentPerson = context.getPerson();
-        if (currentPerson == null)
-            return false;   // Don't know how to check this
-        
-        return allow(currentPerson, model, aCmdGroup);
-    }
     
-    /** 
-     * Check if given Person has access to aModel in this class for given command group
-     */
-    @Override
-	public boolean allow(Person aPerson, BoundObject aModel,
-            BoundCommandGroup aCmdGroup) {
-        return AccessManager.getInstance().hasRole(aPerson, aModel, getRolesForCommandGroup(aCmdGroup));
-    }
-
-    @Override
-	public boolean isSecurityMaster() {
-        return (this.isSecurityMaster);
-    }
-
     public List getProgressRelevantChildren() {
 		List progressChilds = new ArrayList(getChildList());
 		
@@ -348,7 +181,7 @@ public class BoundAssistentComponent extends AssistentComponent implements Bound
      * @see      #fireSecurityChanged(BoundObject)
      */
     protected boolean allowVisibility(BoundObject anObject) {
-		return this.supportsInternalModel(anObject) && this.allow(anObject);
+		return this.supportsInternalModel(anObject) && BoundChecker.allowShowSecurityObject(this, anObject);
     }
 
     /**

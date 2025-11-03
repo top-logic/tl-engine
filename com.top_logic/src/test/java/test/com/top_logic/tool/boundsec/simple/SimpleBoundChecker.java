@@ -14,9 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
@@ -25,7 +23,6 @@ import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.simple.AbstractBoundChecker;
 import com.top_logic.tool.execution.service.CommandApprovalService;
-import com.top_logic.util.TLContext;
 
 /**
  * Simple implementation of the {@link com.top_logic.tool.boundsec.BoundChecker} interface.
@@ -41,13 +38,13 @@ public class SimpleBoundChecker extends AbstractBoundChecker {
 	protected List<BoundChecker> children;
 
     /** The List of {@link com.top_logic.tool.boundsec.BoundCommandGroup}s we support */
-    protected List          commandGroups; 
+	protected List<BoundCommandGroup> commandGroups;
 
     /** 
      * A Map of Sets of {@link com.top_logic.tool.boundsec.BoundRole}s indexed 
      * by {@link com.top_logic.tool.boundsec.BoundCommandGroup}s. 
      */
-    protected Map           rolesForCommandGroup;
+	protected Map<BoundCommandGroup, Set<BoundRole>> rolesForCommandGroup;
     /**
      * Construct a new SimpleBoundChecker,
      * 
@@ -66,31 +63,19 @@ public class SimpleBoundChecker extends AbstractBoundChecker {
 		this(ComponentName.newName(anID), aCurrentObject);
 	}
 
-    /** 
-     * Check if the given command group for the current person is allowed.
-     * 
-     * @return true, if the given command group is allowed for current person
-     */ 
-    @Override
-	public boolean allow(BoundCommandGroup aGroup, BoundObject anObject) {
-		if (!CommandApprovalService.canExecute(aGroup, anObject)) {
-            return false;
-        }
-        
-        if (ThreadContext.isAdmin())
-            return true;
-		PersonManager r = PersonManager.getManager();    // allow all
-        
-		Person currentPerson = TLContext.currentUser();
-        return allow(currentPerson, anObject, aGroup);
-    }
-
 	/** 
      * Check if given Person has access to aModel in this class fo given CommandGroup
      */
     @Override
-	public boolean allow(Person aPerson, BoundObject aModel,
-            BoundCommandGroup aCmdGroup) {
+	public boolean allow(Person aPerson, BoundObject aModel, BoundCommandGroup aCmdGroup) {
+		if (aCmdGroup.isSystemGroup()) {
+			return true;
+		}
+
+		if (!CommandApprovalService.canExecute(aCmdGroup, aModel)) {
+			return false;
+		}
+
         if (AccessManager.getInstance().hasRole(aPerson, aModel, getRolesForCommandGroup(aCmdGroup))) {
 			Collection<? extends BoundChecker> theChildCheckers = this.getChildCheckers();
             if (theChildCheckers == null) {
@@ -136,7 +121,7 @@ public class SimpleBoundChecker extends AbstractBoundChecker {
      */
     public void addCommandGroup(BoundCommandGroup aGroup) {
         if (commandGroups == null)
-            commandGroups = new ArrayList();
+			commandGroups = new ArrayList<>();
         commandGroups.add(aGroup);
     }
 
@@ -149,10 +134,10 @@ public class SimpleBoundChecker extends AbstractBoundChecker {
      * @return the roles for the given command group
      */
     @Override
-	public Collection getRolesForCommandGroup(BoundCommandGroup aGroup) {
-        Collection result = null;
+	public Set<? extends BoundRole> getRolesForCommandGroup(BoundCommandGroup aGroup) {
+		Set<? extends BoundRole> result = null;
         if (rolesForCommandGroup != null) {
-            result = (Collection) rolesForCommandGroup.get(aGroup);
+			result = rolesForCommandGroup.get(aGroup);
         } 
         return result;
     }
@@ -166,11 +151,11 @@ public class SimpleBoundChecker extends AbstractBoundChecker {
     public void addRoleForCommandGroup(BoundCommandGroup aGroup, BoundRole aRole) {
 
         if (rolesForCommandGroup == null) 
-            rolesForCommandGroup = new HashMap();
+			rolesForCommandGroup = new HashMap<>();
 
-        Set roles = (Set) rolesForCommandGroup.get(aGroup);
+		Set<BoundRole> roles = rolesForCommandGroup.get(aGroup);
         if (roles == null) {
-            roles = new HashSet();
+			roles = new HashSet<>();
             rolesForCommandGroup.put(aGroup, roles);
         }
         roles.add(aRole);

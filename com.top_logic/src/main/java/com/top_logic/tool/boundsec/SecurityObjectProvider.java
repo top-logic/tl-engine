@@ -7,6 +7,10 @@ package com.top_logic.tool.boundsec;
 
 import java.io.Serializable;
 
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.tool.boundsec.securityObjectProvider.NullSecurityObjectProvider;
+
 /**
  * The DefaultSecurityObjectProvider provides the object at which the security should be
  * checked.
@@ -32,5 +36,32 @@ public interface SecurityObjectProvider extends Serializable {
 	 * @return the object on which the security should be checked
 	 */
 	BoundObject getSecurityObject(BoundChecker aChecker, Object model, BoundCommandGroup aCommandGroup);
+
+	/**
+	 * Instantiates the given {@link SecurityObjectProvider} configuration, never null.
+	 */
+	static SecurityObjectProvider fromConfiguration(InstantiationContext context,
+			PolymorphicConfiguration<? extends SecurityObjectProvider> config) {
+		SecurityObjectProvider result = fromConfigurationOptional(context, config);
+		if (result == null) {
+			return NullSecurityObjectProvider.INSTANCE;
+		}
+		return result;
+	}
+
+	/**
+	 * Instantiates the given {@link SecurityObjectProvider} configuration.
+	 */
+	static SecurityObjectProvider fromConfigurationOptional(InstantiationContext context,
+			PolymorphicConfiguration<? extends SecurityObjectProvider> config) {
+		if (config instanceof ReferencedSecurityObjectProvider.Config ref) {
+			// Short-cut.
+			return SecurityObjectProviderManager.getInstance().getSecurityObjectProvider(ref.getReference());
+		} else if (config != null) {
+			return context.getInstance(config);
+		} else {
+			return null;
+		}
+	}
 
 }

@@ -21,7 +21,7 @@
 		<param name="openCreateCommandGroup"
 			optional="true"
 		/>
-		<param name="securityProvider"
+		<param name="securityObject"
 			optional="true"
 		/>
 		<param name="modifier"
@@ -45,7 +45,7 @@
 		openCreateCommandGroup="${openCreateCommandGroup}"
 		page="${page}"
 		rootVisible="false"
-		securityProvider="${securityProvider}"
+		securityObject="${securityObject}"
 		showNoModel="true"
 		structure="${structure}"
 		subConfiguration="${subConfiguration}"

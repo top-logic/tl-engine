@@ -7,9 +7,9 @@
 
 	<layout buttonbar="true">
 		<components>
-			<component class="com.top_logic.tool.boundsec.assistent.AssistentComponent"
-				name="${namePrefix}testAssistent"
+			<assistent name="${namePrefix}testAssistent"
 				resPrefix="layouts.layoutdemo.assistent.demoAssistant.testAssistent."
+				securityObject="securityRoot"
 			>
 				<controller class="com.top_logic.demo.tool.boundsec.assistent.demo.DemoAssistentController">
 					<steps>
@@ -23,7 +23,7 @@
 					name="${namePrefix}demoFirstStep"
 					page="/jsp/layout/test/TestNameInput.jsp"
 					resPrefix="layouts.layoutdemo.assistent.demoAssistant.demoFirstStep."
-					securityProviderClass="securityRoot"
+					securityObject="securityRoot"
 				>
 					<assistantInfo labelKeySuffix="step1"/>
 				</component>
@@ -31,7 +31,7 @@
 				<component class="com.top_logic.demo.tool.boundsec.assistent.demo.DemoFileUploadComponent"
 					name="${namePrefix}demoUploadStep"
 					resPrefix="layouts.layoutdemo.assistent.demoAssistant.demoUploadStep."
-					securityProviderClass="securityRoot"
+					securityObject="securityRoot"
 				>
 					<assistantInfo labelKeySuffix="step2"/>
 				</component>
@@ -40,7 +40,7 @@
 					name="${namePrefix}demoAssistentUpload"
 					page="/jsp/layout/assistant/assistantMulitFileUploadPage.jsp"
 					resPrefix="layouts.layoutdemo.assistent.demoAssistant.demoAssistentUpload."
-					securityProviderClass="securityRoot"
+					securityObject="securityRoot"
 				>
 					<assistantInfo labelKeySuffix="step3"/>
 				</component>
@@ -49,11 +49,11 @@
 					name="${namePrefix}demoNameInput"
 					page="/jsp/layout/test/TestNameInput.jsp"
 					resPrefix="layouts.layoutdemo.assistent.demoAssistant.demoNameInput."
-					securityProviderClass="securityRoot"
+					securityObject="securityRoot"
 				>
 					<assistantInfo labelKeySuffix="step4"/>
 				</component>
-			</component>
+			</assistent>
 		</components>
 	</layout>
 </template>

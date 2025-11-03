@@ -11,6 +11,10 @@ import com.top_logic.basic.config.annotation.Name;
 
 /**
  * Mix-in interface for configurations with a "security master" property.
+ * 
+ * @implNote When the configuration of a component implements this interface,
+ *           {@link BoundLayout#initSecurityMaster(BoundCheckerComponent)} must be called on the
+ *           parent layout, if the component is marked as security master.
  */
 @Abstract
 public interface WithSecurityMaster extends ConfigurationItem {

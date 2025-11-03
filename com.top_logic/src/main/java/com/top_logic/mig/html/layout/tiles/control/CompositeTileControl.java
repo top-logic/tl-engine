@@ -16,15 +16,10 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.scripting.recorder.gui.inspector.GuiInspectorPluginFactory;
 import com.top_logic.layout.scripting.recorder.gui.inspector.InspectorModel;
 import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.mig.html.layout.tiles.PersonalizedTile;
 import com.top_logic.mig.html.layout.tiles.RootTileComponent;
 import com.top_logic.mig.html.layout.tiles.component.ComponentTile;
 import com.top_logic.mig.html.layout.tiles.component.ComponentTileSupplier;
-import com.top_logic.mig.html.layout.tiles.component.ContainerComponentTile;
-import com.top_logic.mig.html.layout.tiles.component.TileContainerComponent;
 import com.top_logic.mig.html.layout.tiles.scripting.DisplayedPathAssertion;
-import com.top_logic.mig.html.layout.tiles.scripting.TilePathAssertion;
-import com.top_logic.mig.html.layout.tiles.scripting.TilePathInfoPlugin;
 import com.top_logic.tool.execution.ExecutableState;
 
 /**
@@ -99,28 +94,15 @@ public class CompositeTileControl extends AbstractTileControl<Supplier<List<Comp
 		if (!tile.isAllowed()) {
 			return true;
 		}
-		if (tile.getBusinessObject() instanceof PersonalizedTile) {
-			if (((PersonalizedTile) tile.getBusinessObject()).isHidden()) {
-				return true;
-			}
-		}
 		return false;
 	}
 
 	@Override
 	public void buildInspector(InspectorModel inspector) {
 		Object model = getModel();
-		if (model instanceof ContainerComponentTile) {
-			ContainerComponentTile containerModel = (ContainerComponentTile) model;
-			inspector.add(new TilePathAssertion(containerModel.container()));
-			inspector.add(new TilePathInfoPlugin(containerModel));
-		} else if (model instanceof ComponentTileSupplier) {
+		if (model instanceof ComponentTileSupplier) {
 			LayoutComponent tileContainer = ((ComponentTileSupplier) model).getRootComponent();
-			if (tileContainer instanceof TileContainerComponent) {
-				inspector.add(new TilePathAssertion((TileContainerComponent) tileContainer));
-			} else {
-				inspector.add(new DisplayedPathAssertion((RootTileComponent) tileContainer));
-			}
+			inspector.add(new DisplayedPathAssertion((RootTileComponent) tileContainer));
 		}
 		if (model instanceof ComponentTile) {
 			LayoutComponent component = ((ComponentTile) model).getTileComponent();

@@ -15,7 +15,6 @@ import com.top_logic.layout.form.model.FormTree;
 import com.top_logic.layout.tree.model.TreeUIModel;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.compound.CompoundSecurityLayout;
-import com.top_logic.tool.boundsec.compound.CompoundSecurityLayoutCommandGroupDistributor;
 import com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.ColumnProvider;
 import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
@@ -45,11 +44,6 @@ public class RolesProfileColumnProvider extends ColumnProvider {
 
         this.applyProfile(aField, theRoot, aModel);
 
-//        if (theRoot instanceof LayoutComponent) {
-//            ((LayoutComponent) theRoot)
-//                    .acceptVisitorRecursively(new CompoundSecurityLayoutCommandGroupDistributor());
-//        }
-
         return super.applyRolesProfile(aModel, aField);
     }
 
@@ -77,8 +71,6 @@ public class RolesProfileColumnProvider extends ColumnProvider {
                     }
                 }
                 
-                theLayout.acceptVisitorRecursively(new CompoundSecurityLayoutCommandGroupDistributor());
-
                 this.applyProfile(aTree, theLayout, aModel);
             }
         }

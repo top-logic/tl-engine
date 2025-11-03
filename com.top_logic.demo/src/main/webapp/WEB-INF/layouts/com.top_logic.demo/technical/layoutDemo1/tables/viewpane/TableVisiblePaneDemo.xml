@@ -6,7 +6,7 @@
 	resPrefix="layouts.layoutdemo.table.TableVisiblePaneDemo.TestTableViewPane."
 	resetInvisible="true"
 	rowBuilder="com.top_logic.demo.layout.demo.table.DemoLargeTableModelBuilder"
-	securityProviderClass="securityRoot"
+	securityObject="securityRoot"
 >
 	<tables>
 		<table name="demoTable"

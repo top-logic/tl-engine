@@ -15,8 +15,8 @@ import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.securityObjectProvider.PathSecurityObjectProvider;
 
 /**
- * {@link LeafPath} returning the {@link BoundChecker#getCurrentObject(BoundCommandGroup, Object)} of the
- * given component.
+ * {@link LeafPath} returning the {@link BoundChecker#getSecurityObject(BoundCommandGroup, Object)}
+ * of the given component.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
@@ -44,7 +44,7 @@ public final class CurrentObject extends LeafPath {
 	@Override
 	public Object getModel(LayoutComponent component, Object model, BoundCommandGroup group, int pathIndex, int size) {
 		if (component instanceof BoundChecker) {
-			return ((BoundChecker) component).getCurrentObject(group, component.getModel());
+			return ((BoundChecker) component).getSecurityObject(group, component.getModel());
 		} else {
 			return null;
 		}

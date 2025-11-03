@@ -22,7 +22,6 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.func.Function0;
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.component.configuration.ViewConfiguration;
 import com.top_logic.layout.structure.LayoutControl;
 import com.top_logic.layout.structure.LayoutControlProvider;
@@ -32,7 +31,6 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCheckerDelegate;
-import com.top_logic.tool.boundsec.BoundCheckerLayoutConfig;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.simple.AllowNoneChecker;
 
@@ -56,7 +54,7 @@ public final class LayoutControlComponent extends LayoutComponent implements Bou
 	 * Configuration options for {@link LayoutControlComponent}.
 	 */
 	@TagName(Config.TAG_NAME)
-	public interface Config extends LayoutComponent.Config, BoundCheckerLayoutConfig {
+	public interface Config extends LayoutComponent.Config {
 
 		/** Standard tag name to configure {@link LayoutControlComponent}. */
 		String TAG_NAME = "layoutControl";
@@ -250,16 +248,6 @@ public final class LayoutControlComponent extends LayoutComponent implements Bou
 	@Override
 	public Collection<BoundChecker> getChildCheckers() {
 		return Collections.emptyList();
-	}
-
-	@Override
-	protected boolean supportsInternalModel(Object object) {
-		return false;
-	}
-
-	@Override
-	public ResKey hideReason() {
-		return hideReason(internalModel());
 	}
 
 }

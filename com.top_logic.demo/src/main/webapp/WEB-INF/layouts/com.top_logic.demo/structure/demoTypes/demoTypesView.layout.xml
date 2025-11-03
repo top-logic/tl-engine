@@ -8,6 +8,7 @@
 >
 	<components>
 		<include name="com.top_logic.demo/structure/demoTypes/editStructureWithExport.xml"
+			securityObject="model"
 			structure="DemoTypes"
 		/>
 	</components>

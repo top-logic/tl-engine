@@ -9,11 +9,10 @@ import java.util.Map;
 
 import com.top_logic.layout.scripting.recorder.gui.inspector.GuiInspectorCommand;
 import com.top_logic.layout.scripting.recorder.gui.inspector.InspectorModel;
-import com.top_logic.mig.html.layout.tiles.TileLayout;
 import com.top_logic.mig.html.layout.tiles.control.AbstractTileControl;
 
 /**
- * {@link GuiInspectorCommand} for inspection of {@link TileLayout}
+ * {@link GuiInspectorCommand} for inspection of tile.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

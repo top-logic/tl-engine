@@ -9,9 +9,10 @@
 		<editor name="Editor"
 			applyCommand="apply"
 			defaultFor="tl.model:TLClass"
+			isSecurityMaster="true"
 			model="selection(com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree)"
 			resPrefix="element.meta.StructuredTypeEditor."
-			securityProviderClass="master"
+			securityObject="ref:master"
 		>
 			<include name="com.top_logic.element/admin/model/modelEditor/StructuredTypeForm.xml"
 				showNoModel="false"

@@ -32,8 +32,6 @@ import com.top_logic.mig.html.layout.ComponentInstantiationContext;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutContainer;
 import com.top_logic.mig.html.layout.tiles.control.ContextTileControlProvider;
-import com.top_logic.tool.boundsec.BoundChecker;
-import com.top_logic.tool.boundsec.BoundCheckerDelegate;
 
 /**
  * {@link LayoutContainer} representing a {@link Selectable selector} and {@link LayoutComponent
@@ -58,7 +56,7 @@ import com.top_logic.tool.boundsec.BoundCheckerDelegate;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class ContextTileComponent extends LayoutContainer implements BoundCheckerDelegate {
+public class ContextTileComponent extends LayoutContainer implements LayoutContainerBoundChecker {
 
 	/**
 	 * Configuration of a {@link ContextTileComponent}.
@@ -204,14 +202,34 @@ public class ContextTileComponent extends LayoutContainer implements BoundChecke
 
 	private List<LayoutComponent> _children = Collections.emptyList();
 
-	private final BoundChecker _boundCheckerDelegate =
-		new LayoutContainerBoundChecker<>(this, ContextTileComponent::selectorAsList);
-
 	/**
 	 * Creates a new {@link ContextTileComponent}.
 	 */
 	public ContextTileComponent(InstantiationContext context, Config config) throws ConfigurationException {
 		super(context, config);
+	}
+
+	@Override
+	public ResKey hideReason() {
+		LayoutComponent selector = getSelector();
+		LayoutComponent content = getContent();
+
+		if (content == null || selector == null) {
+			// Not completely initialized
+			return null;
+		}
+
+		ResKey selectorReason = selector.hideReason();
+		if (selectorReason != null) {
+			return selectorReason;
+		}
+
+		ResKey contentReason = content.hideReason();
+		if (contentReason != null) {
+			return contentReason;
+		}
+
+		return null;
 	}
 
 	/**
@@ -421,16 +439,6 @@ public class ContextTileComponent extends LayoutContainer implements BoundChecke
 	@Override
 	public int getChildCount() {
 		return getChildList().size();
-	}
-
-	@Override
-	public BoundChecker getDelegate() {
-		return _boundCheckerDelegate;
-	}
-
-	@Override
-	public ResKey hideReason() {
-		return hideReason(internalModel());
 	}
 
 }

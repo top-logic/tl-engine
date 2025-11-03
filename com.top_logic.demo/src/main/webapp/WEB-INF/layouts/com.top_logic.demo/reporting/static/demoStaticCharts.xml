@@ -20,7 +20,7 @@
 				name="${namePrefix}Selector"
 				page="/jsp/demo/reporting/flex/demoChartSelector.jsp"
 				resPrefix="${resPrefix}Selector."
-				securityProviderClass="securityRoot"
+				securityObject="securityRoot"
 				showMaximize="false"
 			>
 				<layoutInfo
@@ -50,7 +50,7 @@
 				name="${namePrefix}Chart"
 				page="/jsp/layout/image/chart.jsp"
 				resPrefix="${resPrefix}Chart."
-				securityProviderClass="securityRoot"
+				securityObject="securityRoot"
 				showMinimize="false"
 			>
 				<export-manager class="com.top_logic.reporting.flex.chart.component.export.ConfiguredChartExportManager"

@@ -7,7 +7,6 @@ package com.top_logic.mig.html.layout.tiles.component;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.layout.basic.fragments.Fragments;
-import com.top_logic.mig.html.layout.tiles.TileLayout;
 
 /**
  * Factory to create a {@link HTMLFragment} as preview for a given {@link ComponentTile}.
@@ -22,8 +21,7 @@ public interface TilePreview {
 	TilePreview EMPTY = (tile) -> Fragments.empty();
 
 	/**
-	 * Creates a preview for the given {@link TileLayout} displayed in the given
-	 * {@link TileContainerComponent}.
+	 * Creates a preview for the given {@link ComponentTile} to display in a tile.
 	 * 
 	 * @param tile
 	 *        The {@link ComponentTile} to create preview for.

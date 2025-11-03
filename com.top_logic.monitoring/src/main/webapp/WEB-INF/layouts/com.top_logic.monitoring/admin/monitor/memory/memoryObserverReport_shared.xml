@@ -62,7 +62,7 @@
 				namePrefix="MemoryObserverChart"
 				objectType=""
 				resPrefix="reporting.memoryObserver.chart."
-				securityProvider="securityRoot"
+				securityObject="securityRoot"
 			/>
 		</components>
 	</layout>

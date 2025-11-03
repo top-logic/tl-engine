@@ -30,7 +30,8 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutList;
 import com.top_logic.mig.html.layout.tiles.control.GroupTileControlProvider;
 import com.top_logic.tool.boundsec.BoundChecker;
-import com.top_logic.tool.boundsec.BoundCheckerDelegate;
+import com.top_logic.tool.boundsec.SecurityObjectProvider;
+import com.top_logic.tool.boundsec.SecurityObjectProviderConfig;
 
 /**
  * {@link Layout} in a tile context.
@@ -47,14 +48,14 @@ import com.top_logic.tool.boundsec.BoundCheckerDelegate;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 @Label("Group of tiles")
-public class GroupTileComponent extends LayoutList implements Selectable, BoundCheckerDelegate {
+public class GroupTileComponent extends LayoutList implements Selectable, LayoutContainerBoundChecker {
 
 	/**
 	 * Configuration of a {@link GroupTileComponent}.
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
-	public interface Config extends Layout.Config {
+	public interface Config extends Layout.Config, SecurityObjectProviderConfig {
 
 		/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
 		Lookup LOOKUP = MethodHandles.lookup();
@@ -73,13 +74,34 @@ public class GroupTileComponent extends LayoutList implements Selectable, BoundC
 
 	}
 
-	private final BoundChecker _boundCheckerDelegate = new LayoutContainerBoundChecker<>(this);
+	private final SecurityObjectProvider _securityObjectProvider;
 
 	/**
 	 * Creates a new {@link GroupTileComponent}.
 	 */
-	public GroupTileComponent(InstantiationContext context, Config atts) throws ConfigurationException {
-		super(context, atts);
+	public GroupTileComponent(InstantiationContext context, Config config) throws ConfigurationException {
+		super(context, config);
+		_securityObjectProvider = SecurityObjectProvider.fromConfiguration(context, config.getSecurityObject());
+	}
+
+	@Override
+	public SecurityObjectProvider getSecurityObjectProvider() {
+		return _securityObjectProvider;
+	}
+
+	@Override
+	public ResKey hideReason() {
+		ResKey technicalReason = super.hideReason();
+		if (technicalReason != null) {
+			return technicalReason;
+		}
+
+		ResKey securityReason = BoundChecker.hideReasonForSecurity(this, internalModel());
+		if (securityReason != null) {
+			return securityReason;
+		}
+
+		return null;
 	}
 
 	/**
@@ -175,16 +197,6 @@ public class GroupTileComponent extends LayoutList implements Selectable, BoundC
 	@Override
 	public boolean isOuterFrameset() {
 		return false;
-	}
-
-	@Override
-	public BoundChecker getDelegate() {
-		return _boundCheckerDelegate;
-	}
-
-	@Override
-	public ResKey hideReason() {
-		return hideReason(internalModel());
 	}
 
 }

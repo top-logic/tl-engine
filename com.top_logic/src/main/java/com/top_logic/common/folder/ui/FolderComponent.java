@@ -56,6 +56,7 @@ import com.top_logic.layout.tree.model.TreeBuilder;
 import com.top_logic.mig.html.layout.decoratedTabBar.DecorationValueListener;
 import com.top_logic.mig.html.layout.decoratedTabBar.DecorationValueProvider;
 import com.top_logic.mig.html.layout.decoratedTabBar.DecorationValueProviderDelegate;
+import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.execution.ExecutableState;
@@ -303,9 +304,9 @@ public abstract class FolderComponent extends BuilderComponent implements FormHa
 
 		ExecutableState modifyability = getModifyability(folder);
 		if (modifyability.isExecutable()) {
-			canCreate = permissionExecutability(this.allow(SimpleBoundCommandGroup.CREATE));
-			canUpdate = permissionExecutability(this.allow(SimpleBoundCommandGroup.WRITE));
-			canDelete = permissionExecutability(this.allow(SimpleBoundCommandGroup.DELETE));
+			canCreate = permissionExecutability(BoundChecker.allowCommand(this, SimpleBoundCommandGroup.CREATE, this.getModel()));
+			canUpdate = permissionExecutability(BoundChecker.allowCommand(this, SimpleBoundCommandGroup.WRITE, this.getModel()));
+			canDelete = permissionExecutability(BoundChecker.allowCommand(this, SimpleBoundCommandGroup.DELETE, this.getModel()));
 		} else {
 			// Must not try to modify historic object independent of security.
 			canCreate = canUpdate = canDelete = modifyability;
@@ -336,7 +337,7 @@ public abstract class FolderComponent extends BuilderComponent implements FormHa
 			factory.addUploadCommand(newFormContext, selectionModel, canCreate, executer);
 		}
 		if (hasZipDownloadCommand()) {
-			ExecutableState canRead = permissionExecutability(this.allow(SimpleBoundCommandGroup.READ));
+			ExecutableState canRead = permissionExecutability(BoundChecker.allowCommand(this, SimpleBoundCommandGroup.READ, this.getModel()));
 			factory.addZipDownloadFolderCommand(newFormContext, selectionModel, canRead);
 		}
 		return newFormContext;

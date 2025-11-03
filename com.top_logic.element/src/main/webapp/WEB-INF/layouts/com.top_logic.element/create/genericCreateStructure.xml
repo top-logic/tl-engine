@@ -28,8 +28,8 @@
 		<param name="createCommandGroups"
 			optional="true"
 		/>
-		<param name="securityProvider"
-			value="default"
+		<param name="securityObject"
+			value="model"
 		/>
 		<param name="resPrefix"
 			optional="true"
@@ -55,7 +55,7 @@
 		model="${model}"
 		namePrefix="${namePrefix}"
 		resPrefix="${resPrefix}"
-		securityProvider="${securityProvider}"
+		securityObject="${securityObject}"
 		titleKey="${titleKey}"
 		typeOptions="${typeOptions}"
 		z_legacy_newModelAction="${newModelAction}"

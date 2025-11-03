@@ -58,6 +58,9 @@
 		<param name="rowsPerPage"
 			value="100"
 		/>
+		<param name="securityObject"
+			value="model"
+		/>
 	</params>
 
 	<layout horizontal="true">
@@ -78,7 +81,7 @@
 						name="${namePrefix}GanttFilter"
 						page="${filterJSP}"
 						resPrefix="reporting.chart.gantt.filter."
-						securityProviderClass="model"
+						securityObject="${securityObject}"
 						updateAutamaticallyOnNewModel="${updateAutamaticallyOnNewModel}"
 					>
 						<toolbar-groups>
@@ -106,7 +109,7 @@
 						page="${pageJSP}"
 						resPrefix="reporting.chart.gantt.display."
 						rowsPerPage="${rowsPerPage}"
-						securityProviderClass="master"
+						securityObject="ref:master"
 					>
 						<toolbar-groups>
 							<toolbar-group name="exportButtons">

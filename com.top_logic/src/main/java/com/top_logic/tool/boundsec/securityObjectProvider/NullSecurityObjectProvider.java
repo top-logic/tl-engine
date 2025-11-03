@@ -5,6 +5,8 @@
  */
 package com.top_logic.tool.boundsec.securityObjectProvider;
 
+import com.top_logic.basic.annotation.InApp;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundObject;
@@ -12,11 +14,22 @@ import com.top_logic.tool.boundsec.SecurityObjectProvider;
 import com.top_logic.tool.boundsec.SecurityObjectProviderManager;
 
 /**
- * The SecurityRootObjectProvider uses <code>null</code> as security object.
+ * Provides no security context object, effectively disabling access checks.
  *
  * @author <a href="mailto:CBR@top-logic.com">CBR</a>
  */
+@Label("No access checks")
+@InApp
 public class NullSecurityObjectProvider implements SecurityObjectProvider {
+
+	/**
+	 * Singleton {@link NullSecurityObjectProvider} instance.
+	 */
+	public static final NullSecurityObjectProvider INSTANCE = new NullSecurityObjectProvider();
+
+	private NullSecurityObjectProvider() {
+		// Singleton constructor.
+	}
 
 	/**
 	 * Name that is used to configure the {@link NullSecurityObjectProvider} in

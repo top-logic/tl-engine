@@ -1005,6 +1005,36 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		return true;
 	}
 
+	@Override
+	public ResKey hideReason() {
+		Object internalModel = internalModel();
+		if (!ComponentUtil.isValid(internalModel)) {
+			return com.top_logic.tool.execution.I18NConstants.ERROR_INVALID_MODEL;
+		}
+
+		if (hideOnUnsupportedModel() && !supportsModel(internalModel)) {
+			return com.top_logic.tool.execution.I18NConstants.ERROR_MODEL_NOT_SUPPORTED;
+		}
+		
+		return null;
+	}
+
+	/**
+	 * Whether the component should be hidden, if an unsupported model is set.
+	 * 
+	 * <p>
+	 * If the component is show for an unsupported, model, <code>null</code> is displayed instead.
+	 * </p>
+	 */
+	protected boolean hideOnUnsupportedModel() {
+		return true;
+	}
+
+	@Override
+	public final boolean canShow() {
+		return hideReason() == null;
+	}
+
     /**
      * the top dialog component knows its creation component.
      */
@@ -1246,10 +1276,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		return emptySet();
 	}
 
-    /**
-     * Accessor to the parent.
-     * @return LayoutComponent, null if we are the root of the layout hierarchy
-     */
+	@Override
 	public final LayoutComponent getParent() {
 		return _parent;
     }
@@ -1304,9 +1331,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		return _dialog;
 	}
 
-    /**
-	 * All dialogs of this component.
-	 */
+	@Override
 	public List<? extends LayoutComponent> getDialogs() {
 		return _dialogs;
     }
@@ -1753,15 +1778,8 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		return ThemeFactory.getTheme();
 	}
 
-	/**
-	 * Searches the enclosing window, where this component resides in. If this
-	 * component is a window itself, this method returns this component.
-	 * 
-	 * @return enclosing window, where this component resides in, or
-	 *         <code>null</code>, if this component is part of the main
-	 *         component tree.
-	 */
-    public final WindowComponent getEnclosingWindow() {
+	@Override
+	public final WindowComponent getEnclosingWindow() {
         LayoutComponent theAncestor = this;
         while ((theAncestor != null) && (! (theAncestor instanceof WindowComponent))) {
 			if (theAncestor.openedAsDialog()) {
@@ -1959,6 +1977,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	 *
 	 * If nothing is configured a (unique) synthetic name is returned.
 	 */
+	@Override
 	public final ComponentName getName() {
 		return getConfig().getName();
     }
@@ -2098,17 +2117,8 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		return getMainLayout().getComponentByName(aName);
     }
 
-    /**
-	 * Check if this component handles the given type.
-	 *
-	 * The type may either be a classname or (in TopLogic) some other meta-type. When this function
-	 * returns true, supports Objects shoud be true, too.
-	 * 
-	 * @param type
-	 *        the type. If <code>null</code> or empty false is returned
-	 * @return true if the component handles the type
-	 */
-    public final boolean isDefaultFor(String type) {
+	@Override
+	public final boolean isDefaultFor(String type) {
 		return getDefaultForTypes().contains(type);
     }
     

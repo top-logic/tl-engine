@@ -28,8 +28,8 @@
 		<param name="createCommandGroups"
 			optional="true"
 		/>
-		<param name="securityProvider"
-			value="default"
+		<param name="securityObject"
+			value="model"
 		/>
 		<param name="newResPrefix"
 			value="element.structure.edit."
@@ -52,7 +52,7 @@
 				newModelAction="${newModelAction}"
 				page="${jSPNewPage}"
 				resPrefix="${newResPrefix}"
-				securityProviderClass="${securityProvider}"
+				securityObject="${securityObject}"
 			>${createComponentConfig}</component>
 		</components>
 	</layout>

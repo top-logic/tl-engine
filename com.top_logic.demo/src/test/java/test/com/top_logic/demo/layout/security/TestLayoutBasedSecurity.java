@@ -30,12 +30,11 @@ import com.top_logic.layout.scripting.runtime.action.SimpleActionOp;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.tool.boundsec.BoundChecker;
+import com.top_logic.tool.boundsec.BoundCheckerComponent;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
-import com.top_logic.tool.boundsec.BoundComponent;
 import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.BoundMainLayout;
 import com.top_logic.tool.boundsec.compound.CompoundSecurityLayout;
-import com.top_logic.tool.boundsec.compound.CompoundSecurityLayoutCommandGroupDistributor;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.tool.boundsec.wrap.PersBoundComp;
@@ -343,11 +342,11 @@ public class TestLayoutBasedSecurity extends BasicTestCase {
 			if (false) {
 				/* Does not work because checker is DelegateStructureHTMLTree which does not
 				 * invalidates cache. */
-				assertTrue(thePLD.allow(theProject));
+				assertTrue(BoundChecker.allowShowSecurityObject(thePLD, theProject));
 			}
-			assertTrue(thePL1.allow(theProject));
-			assertFalse(thePL2.allow(theProject));
-			assertFalse(thePL3.allow(theProject));
+			assertTrue(BoundChecker.allowShowSecurityObject(thePL1, theProject));
+			assertFalse(BoundChecker.allowShowSecurityObject(thePL2, theProject));
+			assertFalse(BoundChecker.allowShowSecurityObject(thePL3, theProject));
 
 			// test handles and defaultFor
 
@@ -374,8 +373,6 @@ public class TestLayoutBasedSecurity extends BasicTestCase {
             return;
         }
         setAccess(aRole, aChecker, aGroup, isAllowed, true);
-        aChecker.acceptVisitorRecursively(new CompoundSecurityLayoutCommandGroupDistributor());
-
     }
 
     /**
@@ -389,16 +386,8 @@ public class TestLayoutBasedSecurity extends BasicTestCase {
      * @param recursive     ir true add/remove the access to/from all child checkers of aChecker
      */
     private static void setAccess(BoundedRole aRole, BoundChecker aChecker, BoundCommandGroup aCmdGrp,  boolean isAllowed, boolean recursive) {
-        if (aChecker instanceof BoundComponent ) {
-			PersBoundComp persBoundComp = ((BoundComponent) aChecker).getPersBoundComp();
-            if (isAllowed) {
-				persBoundComp.addAccess(aCmdGrp, aRole);
-            }
-            else {
-				persBoundComp.removeAccess(aCmdGrp, aRole);
-            }
-        } else if (aChecker instanceof CompoundSecurityLayout ) {
-			PersBoundComp persBoundComp = ((CompoundSecurityLayout) aChecker).getPersBoundComp();
+		if (aChecker instanceof BoundCheckerComponent checker) {
+			PersBoundComp persBoundComp = checker.getPersBoundComp();
             if (isAllowed) {
 				persBoundComp.addAccess(aCmdGrp, aRole);
             }

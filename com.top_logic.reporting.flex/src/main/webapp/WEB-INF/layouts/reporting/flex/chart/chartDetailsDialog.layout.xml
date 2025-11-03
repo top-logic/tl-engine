@@ -19,7 +19,7 @@
 			name="ChartDetailsTable"
 			objectType=""
 			resPrefix="chart.details.table.dialog."
-			securityProviderClass="securityRoot"
+			securityObject="securityRoot"
 			selectable="false"
 		>
 			<table

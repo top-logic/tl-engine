@@ -14,12 +14,8 @@ import java.io.InputStream;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 import javax.xml.stream.XMLStreamException;
 
@@ -28,17 +24,12 @@ import org.w3c.dom.Element;
 
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.StringServices;
-import com.top_logic.basic.config.ApplicationConfig;
-import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.db.schema.properties.DBProperties;
 import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.io.binary.BinaryData;
-import com.top_logic.basic.module.ManagedClass.ServiceConfiguration;
 import com.top_logic.basic.module.ModuleUtil;
 import com.top_logic.basic.module.RestartException;
-import com.top_logic.basic.module.TypedRuntimeModule.ModuleConfiguration;
 import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.tooling.ModuleLayoutConstants;
@@ -51,7 +42,6 @@ import com.top_logic.basic.xml.DOMUtil;
 import com.top_logic.element.config.ModelConfig;
 import com.top_logic.element.config.ModuleConfig;
 import com.top_logic.element.model.DynamicModelService;
-import com.top_logic.element.model.DynamicModelService.Config.DeclarationConfig;
 import com.top_logic.element.model.generate.MessagesGenerator;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -74,7 +64,6 @@ import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.tools.resources.ResourceFile;
 import com.top_logic.util.Resources;
-import com.top_logic.util.model.ModelService;
 
 /**
  * {@link CommandHandler} storing a selected module in the model editor back to the development
@@ -83,6 +72,8 @@ import com.top_logic.util.model.ModelService;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class IDEModelExtractCommand extends AbstractCommandHandler {
+
+	private static final String IN_APP_CONFIG_TEMPLATE = "inAppConfig.template.config.xml";
 
 	private static final String MODEL_RESOURCE_PREFIX = ModuleLayoutConstants.WEB_INF_RESOURCE_PREFIX + "/model";
 
@@ -290,76 +281,27 @@ public class IDEModelExtractCommand extends AbstractCommandHandler {
 	 */
 	private void createApplicationConfigFragment(File targetApp, String modelResource, TLModule module)
 			throws IOException {
-		// Create configuration fragment.
-		ApplicationConfig.Config fragment = TypedConfiguration.newConfigItem(ApplicationConfig.Config.class);
 
-		ResourcesModule.Config resourcesConfig = TypedConfiguration.newConfigItem(ResourcesModule.Config.class);
-		try {
-			ServiceConfiguration<ResourcesModule> currentConfig =
-				ApplicationConfig.getInstance().getServiceConfiguration(ResourcesModule.class);
-			if (currentConfig != null) {
-				resourcesConfig = (ResourcesModule.Config) TypedConfiguration
-					.createConfigItemForImplementationClass(currentConfig.getImplementationClass());
+		String template;
+		try (InputStream configTemplate = getClass().getResourceAsStream(IN_APP_CONFIG_TEMPLATE)) {
+			if (configTemplate == null) {
+				throw new IOException("Configuration template file '" + IN_APP_CONFIG_TEMPLATE + "' not found.");
 			}
-		} catch (ConfigurationException ex) {
-			// Ignore.
+			template = StreamUtilities.readAllFromStream(configTemplate, StringServices.UTF8);
 		}
-		String resourceRef = TLModelNamingConvention.getBundleName(module);
-		resourcesConfig.setBundles(Collections.singletonList(resourceRef));
-		ModuleConfiguration resourcesModuleConfig = TypedConfiguration.newConfigItem(ModuleConfiguration.class);
-		resourcesModuleConfig.setServiceClass(ResourcesModule.class);
-		resourcesModuleConfig.setInstance(resourcesConfig);
-		fragment.getServices().put(resourcesModuleConfig.getServiceClass(), resourcesModuleConfig);
 		
-		@SuppressWarnings("unchecked")
-		DynamicModelService.Config<DynamicModelService> serviceConfig =
-			TypedConfiguration.newConfigItem(DynamicModelService.Config.class);
-		try {
-			ServiceConfiguration<ModelService> currentConfig =
-				ApplicationConfig.getInstance().getServiceConfiguration(ModelService.class);
-			if (currentConfig != null) {
-				@SuppressWarnings("unchecked")
-				DynamicModelService.Config<DynamicModelService> copy = (DynamicModelService.Config<DynamicModelService>) TypedConfiguration
-					.createConfigItemForImplementationClass(currentConfig.getImplementationClass());
-				serviceConfig = copy;
-			}
-		} catch (ConfigurationException ex) {
-			// Ignore.
-		}
-		DeclarationConfig modelRef = TypedConfiguration.newConfigItem(DeclarationConfig.class);
-		modelRef.setFile(modelResource);
-		serviceConfig.getDeclarations().add(modelRef);
-		ModuleConfiguration serviceRef = TypedConfiguration.newConfigItem(ModuleConfiguration.class);
-		serviceRef.setServiceClass(ModelService.class);
-		serviceRef.setInstance(serviceConfig);
-		fragment.getServices().put(serviceRef.getServiceClass(), serviceRef);
+		String resourceRef = TLModelNamingConvention.getBundleName(module);
+		String withBundle = template.replace("${bundleName}", resourceRef);
+		String result = withBundle.replace("${modelPath}", modelResource);
+		
 		
 		File autoConf = new File(targetApp, ModuleLayoutConstants.AUTOCONF_PATH);
 		autoConf.mkdirs();
 		File fragmentFile = new File(autoConf, module.getName() + ".config.xml");
 		
 		try (Writer out = new FileWriter(fragmentFile)) {
-			out.write(
-				TypedConfiguration.toString(ApplicationConfig.ROOT_TAG, fragment));
+			out.write(result);
 		}
-	}
-
-	/**
-	 * Locates the base directory relative to which the given file can be resolved using the given
-	 * relative path.
-	 */
-	private static File baseDir(File file, String path) {
-		File result = file;
-		List<String> pathList = Arrays.asList(path.split("/" + "|" + Pattern.quote(File.separator)));
-		Collections.reverse(pathList);
-		for (String element : pathList) {
-			if (element.isEmpty()) {
-				continue;
-			}
-			assert element.equals(result.getName());
-			result = result.getParentFile();
-		}
-		return result;
 	}
 
 	@Override

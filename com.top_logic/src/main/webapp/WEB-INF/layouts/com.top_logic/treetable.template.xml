@@ -35,6 +35,7 @@
 					<property name="dragSource"/>
 					<property name="dropTargets"/>
 					<property name="buttons"/>
+					<property name="contextMenu"/>
 					<property name="onSelectionChange"/>
 					<property name="goto-targets"/>
 					<property name="additional-channels"/>
@@ -93,6 +94,13 @@
 		<property name="onSelectionChange"
 			instance-type="com.top_logic.layout.component.OnSelectionChangeHandler"
 		/>
+		<property name="contextMenu"
+			instance-type="com.top_logic.layout.basic.contextmenu.ContextMenuProvider"
+			type="PolymorphicConfiguration"
+		>
+			<display-minimized/>
+			<item-default value="com.top_logic.layout.table.tree.TreeTableContextMenuProvider"/>
+		</property>
 	</properties>
 
 	<tree-table name="TreeTable"
@@ -125,6 +133,7 @@
 		/>
 		<table
 			configurationProviders="${configurationProviders}"
+			contextMenu="${contextMenu}"
 			defaultColumns="${defaultColumns}"
 			dragSource="${dragSource}"
 			dropTargets="${dropTargets}"

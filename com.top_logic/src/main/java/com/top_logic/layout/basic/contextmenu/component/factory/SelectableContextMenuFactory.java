@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.CommandModelFactory;
 import com.top_logic.layout.basic.contextmenu.ContextMenuProvider;
@@ -25,6 +26,7 @@ import com.top_logic.tool.boundsec.CommandHandler;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
+@Label("Commands on selection")
 public class SelectableContextMenuFactory<C extends SelectableContextMenuFactory.Config<?>>
 		extends ComponentContextMenuFactory<C> {
 

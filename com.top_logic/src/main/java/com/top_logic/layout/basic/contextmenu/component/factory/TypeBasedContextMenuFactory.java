@@ -34,6 +34,8 @@ import com.top_logic.layout.basic.contextmenu.config.ContextMenuCommandsProvider
 import com.top_logic.layout.basic.contextmenu.config.MetaContextMenuCommandsProvider;
 import com.top_logic.layout.basic.contextmenu.menu.Menu;
 import com.top_logic.layout.basic.fragments.Fragments;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
+import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.tree.model.TLTreeNode;
 import com.top_logic.mig.html.layout.LayoutComponent;
@@ -78,6 +80,7 @@ public class TypeBasedContextMenuFactory<C extends TypeBasedContextMenuFactory.C
 		@Name(TITLE_PROVIDER)
 		@InstanceFormat
 		@InstanceDefault(MetaLabelProvider.class)
+		@Options(fun = AllInAppImplementations.class)
 		LabelProvider getTitleProvider();
 
 		/**

@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.contextmenu.ContextMenuProvider;
 import com.top_logic.layout.channel.ModelChannel;
@@ -25,6 +26,7 @@ import com.top_logic.tool.boundsec.CommandHandler;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
+@Label("Component commands")
 public class ComponentContextMenuFactory<C extends ComponentContextMenuFactory.Config<?>>
 		extends TypeBasedContextMenuFactory<C> {
 

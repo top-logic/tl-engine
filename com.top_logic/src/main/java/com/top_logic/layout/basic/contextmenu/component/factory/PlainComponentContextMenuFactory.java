@@ -8,6 +8,7 @@ package com.top_logic.layout.basic.contextmenu.component.factory;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.layout.LabelProvider;
@@ -20,6 +21,7 @@ import com.top_logic.layout.provider.label.NoLabelProvider;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
+@Label("No default commands")
 public class PlainComponentContextMenuFactory<C extends PlainComponentContextMenuFactory.Config<?>>
 		extends ComponentContextMenuFactory<C> {
 

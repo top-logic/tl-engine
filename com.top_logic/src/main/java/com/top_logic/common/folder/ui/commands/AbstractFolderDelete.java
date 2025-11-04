@@ -77,6 +77,9 @@ public abstract class AbstractFolderDelete extends AbstractFolderAction {
 				// on the client, the executability is recomputed.
 				return ExecutableState.NOT_EXEC_HIDDEN;
 			}
+			if (!ComponentUtil.isValid(content)) {
+				return ExecutableState.NO_EXEC_INVALID;
+			}
 			if (isLink(content, folder)) {
 				return ExecutableState.EXECUTABLE;
 			}

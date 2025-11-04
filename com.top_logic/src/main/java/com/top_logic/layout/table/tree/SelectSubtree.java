@@ -9,11 +9,15 @@ import java.util.Collection;
 import java.util.Map;
 
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
+import com.top_logic.basic.func.IFunction2;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.ScriptFunction2;
 import com.top_logic.layout.basic.contextmenu.component.factory.ContextMenuUtil;
 import com.top_logic.layout.table.TableDataOwner;
+import com.top_logic.layout.tree.model.TLTreeNode;
 import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.mig.html.TreeSelectionModel;
 import com.top_logic.mig.html.TreeSelectionModel.NodeSelectionState;
@@ -40,6 +44,7 @@ public class SelectSubtree extends AbstractCommandHandler {
 		/**
 		 * Whether the subtree is selected or deselected.
 		 */
+		@BooleanDefault(true)
 		boolean getSelect();
 
 		/**
@@ -50,6 +55,45 @@ public class SelectSubtree extends AbstractCommandHandler {
 		 * </p>
 		 */
 		int getLevels();
+
+		/**
+		 * An optional filter function to apply before selecting elements.
+		 * 
+		 * <p>
+		 * The selection of only those elements is chanced that are accepted by the specified filter
+		 * function.
+		 * </p>
+		 * 
+		 * <p>
+		 * The filter function receives the element to select as first argument and the component's
+		 * model as second argument:
+		 * </p>
+		 * 
+		 * <pre>
+		 * <code>element -> model -> true</code>
+		 * </pre>
+		 */
+		ScriptFunction2<Boolean, Object, Object> getFilter();
+
+		/**
+		 * An optional filter function that decides whether a node is counted as level.
+		 * 
+		 * <p>
+		 * An element not accepted by the level filter does not count as separate level. In the
+		 * subtree of those elements one additional level of elements is selected. Only relevant, if
+		 * a level limit is given.
+		 * </p>
+		 * 
+		 * <p>
+		 * The filter function receives the element as first argument and the component's model as
+		 * second argument:
+		 * </p>
+		 * 
+		 * <pre>
+		 * <code>element -> model -> true</code>
+		 * </pre>
+		 */
+		ScriptFunction2<Boolean, Object, Object> getLevelFilter();
 
 		@Override
 		@FormattedDefault(SimpleBoundCommandGroup.SYSTEM_NAME)
@@ -70,11 +114,18 @@ public class SelectSubtree extends AbstractCommandHandler {
 	 */
 	public static final String DESELECT_SUBTREE_ID = "treeTableDeselectSubtree";
 
+	private final IFunction2<Boolean, Object, Object> _filter;
+
+	private final IFunction2<Boolean, Object, Object> _levelFilter;
+
 	/**
 	 * Creates a {@link SelectSubtree}.
 	 */
 	public SelectSubtree(InstantiationContext context, Config config) {
 		super(context, config);
+
+		_filter = context.getInstance(config.getFilter());
+		_levelFilter = context.getInstance(config.getLevelFilter());
 	}
 
 	@Override
@@ -87,10 +138,10 @@ public class SelectSubtree extends AbstractCommandHandler {
 			SelectionModel<Object> selectionModel = table.getTableData().getSelectionModel();
 			if (selectionModel instanceof TreeSelectionModel<Object> treeSelection) {
 				int levels = levels();
-				if (levels == 0) {
+				if (levels == 0 && _filter == null) {
 					treeSelection.setSelectedSubtree(directTarget, select());
 				} else {
-					selectLevels(treeSelection, directTarget, levels);
+					selectLevels(component, treeSelection, directTarget, levels == 0 ? Integer.MAX_VALUE : levels);
 				}
 			}
 		}
@@ -98,23 +149,31 @@ public class SelectSubtree extends AbstractCommandHandler {
 		return HandlerResult.DEFAULT_RESULT;
 	}
 
-	private void selectLevels(TreeSelectionModel<Object> treeSelection, Object directTarget, int levels) {
+	private void selectLevels(LayoutComponent component, TreeSelectionModel<Object> treeSelection, Object directTarget,
+			int levels) {
 		Object update = treeSelection.startBulkUpdate();
 		try {
-			selectLevel(treeSelection, directTarget, levels);
+			selectLevel(component, treeSelection, directTarget, levels);
 		} finally {
 			treeSelection.completeBulkUpdate(update);
 		}
 	}
 
-	private void selectLevel(TreeSelectionModel<Object> treeSelection, Object directTarget, int levels) {
-		treeSelection.setSelected(directTarget, select());
+	private void selectLevel(LayoutComponent component, TreeSelectionModel<Object> treeSelection, Object directTarget,
+			int levels) {
+		if (_filter == null
+			|| _filter.apply(((TLTreeNode<?>) directTarget).getBusinessObject(), component.getModel())) {
+			treeSelection.setSelected(directTarget, select());
+		}
 
 		if (levels > 0) {
-			int childLevels = levels - 1;
+			int childLevels = (_levelFilter == null
+				|| _levelFilter.apply(((TLTreeNode<?>) directTarget).getBusinessObject(), component.getModel()))
+					? levels - 1
+					: levels;
 
 			for (Object child : treeSelection.getTreeModel().getChildren(directTarget)) {
-				selectLevel(treeSelection, child, childLevels);
+				selectLevel(component, treeSelection, child, childLevels);
 			}
 		}
 	}

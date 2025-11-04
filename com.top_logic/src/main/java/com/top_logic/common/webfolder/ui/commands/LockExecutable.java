@@ -37,10 +37,6 @@ public class LockExecutable extends AbstractWebfolderAction {
     @Override
 	public HandlerResult executeCommand(DisplayContext aContext) {
 		Document document = getDocument();
-		if (!ComponentUtil.isValid(document)) {
-			return ComponentUtil.errorObjectDeleted(aContext);
-		}
-
     	HandlerResult theResult = new HandlerResult();
 		{
             DataAccessProxy theDAP = document.getDAP();
@@ -62,6 +58,10 @@ public class LockExecutable extends AbstractWebfolderAction {
 		Document document = getDocument();
 		if (document == null) {
 			return ExecutableState.NOT_EXEC_HIDDEN;
+		}
+
+		if (!ComponentUtil.isValid(getContentObject())) {
+			return ExecutableState.NO_EXEC_INVALID;
 		}
 
 		{

@@ -45,9 +45,6 @@ public class UpdateExecutable extends AbstractWebfolderAction {
     @Override
 	public HandlerResult executeCommand(DisplayContext aContext) {
         Document document = this.getDocument();
-		if (!ComponentUtil.isValid(document)) {
-			return ComponentUtil.errorObjectDeleted(aContext);
-		}
 		if (!getManualLocking()) {
 			boolean success = document.getDAP().lock();
 			if (!success) {
@@ -67,7 +64,11 @@ public class UpdateExecutable extends AbstractWebfolderAction {
     	if (isLink()) {
     		return ExecutableState.NOT_EXEC_HIDDEN;
     	}
-		DataAccessProxy theDAP = this.getDocument().getDAP();
+		Document document = this.getDocument();
+		if (!ComponentUtil.isValid(getContentObject())) {
+			return ExecutableState.NO_EXEC_INVALID;
+		}
+		DataAccessProxy theDAP = document.getDAP();
 		if (LockExecutable.isLocked(theDAP)) {
 			return calculateExecutabilityWhenLocked(theDAP);
 		}

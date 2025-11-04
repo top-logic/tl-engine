@@ -7,9 +7,7 @@ package com.top_logic.model.search.providers;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
-import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
@@ -18,6 +16,7 @@ import com.top_logic.layout.table.control.TableControl;
 import com.top_logic.layout.table.model.TableConfig;
 import com.top_logic.layout.table.model.TableConfiguration;
 import com.top_logic.layout.table.model.TableConfigurationProvider;
+import com.top_logic.layout.table.renderer.DefaultRowClassProvider;
 import com.top_logic.layout.tree.model.TLTreeNode;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -30,13 +29,14 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  *           implementing {@link TableConfigurationProvider}.
  */
 @InApp
-public class RowClassProviderByExpression extends AbstractConfiguredInstance<RowClassProviderByExpression.Config<?>>
-		implements RowClassProvider, TableConfigurationProvider {
+public class RowClassProviderByExpression
+		extends DefaultRowClassProvider<RowClassProviderByExpression.Config<?>>
+		implements TableConfigurationProvider {
 
 	/**
 	 * Configuration options for {@link RowClassProviderByExpression}.
 	 */
-	public interface Config<I extends RowClassProviderByExpression> extends PolymorphicConfiguration<I> {
+	public interface Config<I extends RowClassProviderByExpression> extends DefaultRowClassProvider.Config<I> {
 		/**
 		 * Function computing the CSS class for a certain cell.
 		 * 
@@ -117,7 +117,11 @@ public class RowClassProviderByExpression extends AbstractConfiguredInstance<Row
 	}
 
 	@Override
-	public String getTRClass(TableControl view, int rowOptions, int displayedRow, int row) {
+	protected void buildRowClass(StringBuilder buffer, TableControl view, int rowOptions, int displayedRow, int row) {
+		// Note: It is important to always set the intrinsic CSS classes for table rows, since they
+		// are required for functionality.
+		super.buildRowClass(buffer, view, rowOptions, displayedRow, row);
+
 		// See also CellClassProviderByExpression
 		Object rowObj = view.getViewModel().getRowObject(row);
 		if (rowObj instanceof TLTreeNode<?> node) {
@@ -127,7 +131,10 @@ public class RowClassProviderByExpression extends AbstractConfiguredInstance<Row
 		}
 		Object componentModel = _component == null ? null : _component.getModel();
 		Object result = _cssClasses.execute(rowObj, componentModel);
-		return CellClassProviderByExpression.toCssClass(result);
+
+		String customClasses = CellClassProviderByExpression.toCssClass(result);
+
+		appendCssClass(buffer, customClasses);
 	}
 
 	@Override

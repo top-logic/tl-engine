@@ -6,6 +6,7 @@
 package com.top_logic.layout.table.renderer;
 
 import static com.top_logic.basic.StringServices.*;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
@@ -129,21 +130,27 @@ public class DefaultRowClassProvider<C extends DefaultRowClassProvider.Config<?>
 
 	@Override
 	public String getTRClass(TableControl view, int rowOptions, int displayedRow, int row) {
+		StringBuilder cssClass = new StringBuilder();
+		buildRowClass(cssClass, view, rowOptions, displayedRow, row);
+		return cssClass.toString();
+	}
+
+	/**
+	 * Fills the given buffer with the CSS class for the current row.
+	 */
+	protected void buildRowClass(StringBuilder buffer, TableControl view, int rowOptions, int displayedRow, int row) {
 		boolean isSelected = (rowOptions & TableRenderer.SELECTED) == TableRenderer.SELECTED;
 		boolean even = (displayedRow % 2) == 0;
-		StringBuilder cssClass = new StringBuilder();
-		cssClass.append(nonNull(isSelected ? getTRClassSelected(view) : getTRClass(view, even)));
+		buffer.append(nonNull(isSelected ? getTRClassSelected(view) : getTRClass(view, even)));
 		if (displayedRow == 0) {
-			appendCssClass(cssClass, FIRST_ROW_CSS_CLASS);
+			appendCssClass(buffer, FIRST_ROW_CSS_CLASS);
 		}
 		if ((rowOptions & TableRenderer.LAST) == TableRenderer.LAST) {
-			appendCssClass(cssClass, LAST_ROW_CSS_CLASS);
+			appendCssClass(buffer, LAST_ROW_CSS_CLASS);
 		}
 		TableViewModel viewModel = view.getViewModel();
 		Object rowObject = viewModel.getRowObject(row);
-		appendCssClass(cssClass, getFilterCssClass(rowObject, viewModel));
-
-		return cssClass.toString();
+		appendCssClass(buffer, getFilterCssClass(rowObject, viewModel));
 	}
 
 	/**
@@ -196,7 +203,7 @@ public class DefaultRowClassProvider<C extends DefaultRowClassProvider.Config<?>
 	 * @param additionalCssClass
 	 *        null means: Don't append anything.
 	 */
-	private void appendCssClass(StringBuilder cssClasses, String additionalCssClass) {
+	protected static void appendCssClass(StringBuilder cssClasses, String additionalCssClass) {
 		if (additionalCssClass != null) {
 			if (cssClasses.length() > 0) {
 				cssClasses.append(BLANK_CHAR);

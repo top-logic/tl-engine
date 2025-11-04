@@ -46,6 +46,7 @@ public class ScriptExecution extends AbstractConfiguredInstance<ScriptExecution.
 	 * Configuration options for {@link CommandHandlerByExpression}.
 	 */
 	@DisplayOrder({
+		Config.ARGUMENTS,
 		Config.OPERATION,
 		Config.TRANSACTION,
 		Config.COMMIT_MESSAGE,
@@ -57,6 +58,11 @@ public class ScriptExecution extends AbstractConfiguredInstance<ScriptExecution.
 			com.top_logic.model.search.providers.WithTransaction.Config {
 
 		/**
+		 * @see #getArguments()
+		 */
+		String ARGUMENTS = "arguments";
+
+		/**
 		 * @see #getOperation()
 		 */
 		String OPERATION = "operation";
@@ -64,6 +70,7 @@ public class ScriptExecution extends AbstractConfiguredInstance<ScriptExecution.
 		/**
 		 * Additional arguments to the {@link #getOperation()}.
 		 */
+		@Name(ARGUMENTS)
 		List<ModelSpec> getArguments();
 
 		/**

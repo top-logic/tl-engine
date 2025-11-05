@@ -5,8 +5,6 @@
  */
 package com.top_logic.tool.boundsec;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -22,9 +20,6 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.MapUtil;
 import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.col.Mappings;
-import com.top_logic.basic.config.ConfigurationException;
-import com.top_logic.basic.config.DefaultConfigConstructorScheme;
-import com.top_logic.basic.config.DefaultConfigConstructorScheme.Factory;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -366,8 +361,6 @@ public final class CommandHandlerFactory extends ManagedClass {
 		}
 	}
 
-	private static final Class<?>[] CONSTRUCTOR_ID_SIGNATURE = new Class[] { String.class };
-
     /** The map of known handlers. */
 	private transient Map<String, CommandHandler> handlerById;
 
@@ -535,18 +528,9 @@ public final class CommandHandlerFactory extends ManagedClass {
 		handlerById = MapUtil.newMap(config.getHandlers().size());
 		for (CommandHandler.Config handlerConfig : config.getHandlers()) {
 			String commandId = handlerConfig.getId();
-			try {
-				CommandHandler handler = createHandler(context, handlerConfig);
-
+			CommandHandler handler = createHandler(context, handlerConfig);
+			if (handler != null) {
 				handlerById.put(commandId, handler);
-			} catch (InstantiationException ex) {
-				error(commandId, ex);
-			} catch (IllegalAccessException ex) {
-				error(commandId, ex);
-			} catch (InvocationTargetException ex) {
-				error(commandId, ex);
-			} catch (ConfigurationException ex) {
-				error(commandId, ex);
 			}
 		}
 		Logger.info("Registered " + handlerById.size() + " command handlers.", CommandHandlerFactory.class);
@@ -623,8 +607,7 @@ public final class CommandHandlerFactory extends ManagedClass {
 		return Collections.unmodifiableCollection(handlerById.values());
 	}
 
-	private CommandHandler createHandler(InstantiationContext context, CommandHandler.Config handlerConfig)
-			throws InstantiationException, IllegalAccessException, InvocationTargetException, ConfigurationException {
+	private CommandHandler createHandler(InstantiationContext context, CommandHandler.Config handlerConfig) {
 		boolean copy = false;
 		if (handlerConfig.getClique() == null) {
 			handlerConfig = TypedConfiguration.copy(handlerConfig);
@@ -658,26 +641,7 @@ public final class CommandHandlerFactory extends ManagedClass {
 			}
 		}
 
-		String commandId = handlerConfig.getId();
-		Class<?> handlerClass = handlerConfig.getImplementationClass();
-
-		Factory factory;
-		try {
-			factory = DefaultConfigConstructorScheme.getFactory(handlerClass);
-		} catch (ConfigurationException ex1) {
-			// Fall-back to legacy instantiation.
-			try {
-				return createHandlerWithIdConstructor(handlerClass, commandId);
-			} catch (NoSuchMethodException ex2) {
-				try {
-					return createhandlerWithDefaultConstuctor(handlerClass);
-				} catch (Exception ex) {
-					throw ex1;
-				}
-			}
-		}
-
-		return (CommandHandler) factory.createInstance(context, handlerConfig);
+		return context.getInstance(handlerConfig);
     }
 
 	private void checkClique(InstantiationContext context, CommandHandler.Config handlerConfig) {
@@ -686,22 +650,6 @@ public final class CommandHandlerFactory extends ManagedClass {
 			context.error("CommandHandler '" + handlerConfig.getId() + "' with undefined clique '"
 					+ handlerConfig.getClique() + "', see " + handlerConfig.location());
 		}
-	}
-
-	private CommandHandler createhandlerWithDefaultConstuctor(Class<?> handlerClass) throws InstantiationException,
-			IllegalAccessException {
-		return (CommandHandler) handlerClass.newInstance();
-	}
-
-	private CommandHandler createHandlerWithIdConstructor(Class<?> handlerClass, String commandId)
-			throws NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
-		Constructor<?> idConstructor = handlerClass.getConstructor(CONSTRUCTOR_ID_SIGNATURE);
-		CommandHandler result = (CommandHandler) idConstructor.newInstance(new Object[] { commandId });
-		return result;
-	}
-
-	private void error(String commandId, Throwable ex) {
-		Logger.error("Unable to create CommandHandler for '" + commandId + "'.", ex, CommandHandlerFactory.class);
 	}
 
     /**
@@ -769,13 +717,7 @@ public final class CommandHandlerFactory extends ManagedClass {
 			PolymorphicConfiguration<? extends CommandHandler> handlerConfig) {
 		if (handlerConfig instanceof CommandHandler.Config) {
 			CommandHandler.Config commandConfig = (CommandHandler.Config) handlerConfig;
-			try {
-				return createHandler(context, commandConfig);
-			} catch (ConfigurationException | InstantiationException | IllegalAccessException
-					| InvocationTargetException ex) {
-				throw new ConfigurationError("Command handler '" + commandConfig.getId() + "' instantiation failed.",
-					ex);
-			}
+			return createHandler(context, commandConfig);
 		}
 		return context.getInstance(handlerConfig);
 	}

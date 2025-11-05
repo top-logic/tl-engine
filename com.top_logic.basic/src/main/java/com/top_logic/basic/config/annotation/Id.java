@@ -22,22 +22,26 @@ import com.top_logic.basic.config.ReferenceResolver;
  * {@link PolymorphicConfiguration}.
  * </p>
  * 
- * <p>
- * When set on a property, the value of an identifier attribute uniquely identifies an instance
- * instantiated from a {@link PolymorphicConfiguration} carrying this attribute. Each configuration
- * item may have at most one identifier attribute. The instance created from a configuration with an
- * identifier attribute can be resolved from constructors of other instances using the
- * {@link InstantiationContext#resolveReference(Object, Class, ReferenceResolver)} method by passing
- * the value of the identifier attribute (or the special identifier
- * {@link InstantiationContext#OUTER} when called from the constructor of an inner instance).
- * </p>
+ * @implNote
+ *           <p>
+ *           When set on a property, the value of an identifier attribute uniquely identifies an
+ *           instance instantiated from a {@link PolymorphicConfiguration} carrying this attribute.
+ *           Each configuration item may have at most one identifier attribute. The instance created
+ *           from a configuration with an identifier attribute can be resolved from constructors of
+ *           other instances using the
+ *           {@link InstantiationContext#resolveReference(Object, Class, ReferenceResolver)} method
+ *           by passing the value of the identifier attribute (or the special identifier
+ *           {@link InstantiationContext#OUTER} when called from the constructor of an inner
+ *           instance).
+ *           </p>
  * 
- * <p>
- * When set on a configuration interface, the {@link #value()} parameter must be specified.
- * Instances instantiated from those configuration can then be resolved from inner instances by
- * calling the {@link InstantiationContext#resolveReference(Object, Class, ReferenceResolver)} from
- * the constructor only passing the special identifier {@link InstantiationContext#OUTER}.
- * </p>
+ *           <p>
+ *           When set on a configuration interface, the {@link #value()} parameter must be
+ *           specified. Instances instantiated from those configuration can then be resolved from
+ *           inner instances by calling the
+ *           {@link InstantiationContext#resolveReference(Object, Class, ReferenceResolver)} from
+ *           the constructor only passing the special identifier {@link InstantiationContext#OUTER}.
+ *           </p>
  * 
  * @see InstantiationContext#resolveReference(Object, Class,
  *      com.top_logic.basic.config.ReferenceResolver)

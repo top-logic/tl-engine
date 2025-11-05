@@ -246,16 +246,21 @@ public class AbstractCreateComponent extends FormComponent {
     }
 
     /**
-     * Handle the UI part of creating a new object.
-     * 
-     * This method will invalidate the parent parts and notify about model creation.
-     * Moreover the {@link #setNewModel(LayoutComponent, Object)} will be called to
-     * set the model into the dialog parent component.
-     * 
-     * @param    aNewObject    The new created object.
-     * @see      #setNewModel(LayoutComponent, Object)
-     * @see      AbstractCreateCommandHandler
-     */
+	 * Handle the UI part of creating a new object.
+	 * 
+	 * This method will invalidate the parent parts and notify about model creation. Moreover the
+	 * {@link #setNewModel(LayoutComponent, Object)} will be called to set the model into the dialog
+	 * parent component.
+	 * 
+	 * @param aNewObject
+	 *        The new created object.
+	 * @see #setNewModel(LayoutComponent, Object)
+	 * @see AbstractCreateCommandHandler
+	 * 
+	 * @deprecated Configure {@link WithPostCreateActions.Config#getPostCreateActions()} on the
+	 *             apply command.
+	 */
+    @Deprecated
     public void handleNew(Object aNewObject) {
         
         if (this.openedAsDialog()) {

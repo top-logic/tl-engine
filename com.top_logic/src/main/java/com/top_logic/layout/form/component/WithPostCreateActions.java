@@ -85,7 +85,9 @@ public interface WithPostCreateActions {
 				((AbstractCreateComponent) component).handleNew(newObject);
 			}
 		} else {
-			postCreateActions.forEach(action -> action.handleNew(component, newObject));
+			for (PostCreateAction action : postCreateActions) {
+				action.handleNew(component, newObject);
+			}
 		}
 	}
 

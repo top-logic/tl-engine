@@ -919,6 +919,9 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	 * {@link CommandHandler} cannot in general be instantiated directly, since the may be
 	 * configured as {@link CommandHandlerReference}.
 	 * </p>
+	 * 
+	 * @return The instantiated configuration, or <code>null</code> if an error occurred, or no
+	 *         configuration was passed.
 	 */
 	protected final CommandHandler resolveCommand(InstantiationContext context,
 			PolymorphicConfiguration<? extends CommandHandler> config) {
@@ -2593,7 +2596,9 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	private void registerWindowOpener(InstantiationContext context, WindowTemplate.Config aSepWin) {
 		PolymorphicConfiguration<? extends CommandHandler> config = OpenWindowCommand.createWindowOpenHandler(aSepWin);
 		CommandHandler handler = resolveCommand(context, config);
-		registerCommandHandler(handler, aSepWin.getWindowInfo().getCreateOpenerButtons());
+		if (handler != null) {
+			registerCommandHandler(handler, aSepWin.getWindowInfo().getCreateOpenerButtons());
+		}
     }
 
 	/**
@@ -2675,7 +2680,10 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		List<CommandHandler.ConfigBase<? extends CommandHandler>> commandConfigs = _config.getCommands();
 		if (!commandConfigs.isEmpty()) {
 			for (CommandHandler.ConfigBase<? extends CommandHandler> commandConfig : commandConfigs) {
-				registerCommand(resolveCommand(context, commandConfig));
+				CommandHandler command = resolveCommand(context, commandConfig);
+				if (command != null) {
+					registerCommand(command);
+				}
         	}
 		}
 
@@ -2684,7 +2692,10 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		List<CommandHandler.ConfigBase<? extends CommandHandler>> buttonConfigs = _config.getButtons();
 		if (!buttonConfigs.isEmpty()) {
 			for (CommandHandler.ConfigBase<? extends CommandHandler> commandConfig : buttonConfigs) {
-				registerButtonCommand(resolveCommand(context, commandConfig));
+				CommandHandler command = resolveCommand(context, commandConfig);
+				if (command != null) {
+					registerButtonCommand(command);
+				}
         	}
         }
 
@@ -3313,7 +3324,9 @@ public abstract class LayoutComponent extends ModelEventAdapter
 				continue;
 			}
 			CommandHandler command = resolveCommand(context, openhandler);
-			registerCommandHandler(command, dialog.getDialogInfo().getCreateOpenerButtons());
+			if (command != null) {
+				registerCommandHandler(command, dialog.getDialogInfo().getCreateOpenerButtons());
+			}
 		}
     }
 

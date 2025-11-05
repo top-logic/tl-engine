@@ -28,6 +28,7 @@ import java.util.Set;
 import com.top_logic.basic.Protocol;
 import com.top_logic.basic.col.map.MultiMaps;
 import com.top_logic.basic.config.ConfigurationDescriptorBuilder.VisitMethod;
+import com.top_logic.basic.config.annotation.Id;
 import com.top_logic.basic.config.internal.ItemFactory;
 import com.top_logic.basic.config.internal.gen.ConfigurationDescriptorSPI;
 
@@ -74,6 +75,10 @@ final class ConfigurationDescriptorImpl extends AbstractConfigurationDescriptor
 			new LinkedHashMap<>();
 		PropertyDescriptorImpl defaultContainer = null;
 		PropertyDescriptorImpl id = null;
+		
+		Id scopeAnnotation = builder.getConfigInterface().getAnnotation(Id.class);
+		Class<?> idScope = scopeAnnotation == null ? null : scopeAnnotation.value();
+
 		for (int n = 0, cnt = superDescriptors.length; n < cnt; n++) {
 			ConfigurationDescriptorImpl superDescriptor = superDescriptors[n];
 			
@@ -89,6 +94,12 @@ final class ConfigurationDescriptorImpl extends AbstractConfigurationDescriptor
 					defaultContainer = container;
 				}
 			}
+			
+			Class<?> superScope = superDescriptor.getIdScope();
+			if (superScope != null) {
+				idScope = mergeScopes(builder, idScope, superScope);
+			}
+			
 			PropertyDescriptorImpl superId = superDescriptor.getIdProperty();
 			if (superId != null) {
 				if (id != null && !id.getPropertyName().equals(superId.getPropertyName())) {
@@ -96,6 +107,8 @@ final class ConfigurationDescriptorImpl extends AbstractConfigurationDescriptor
 						"Ambiguous default container in '" + toString() + "': " + id + " vs. " + superId);
 				} else {
 					id = superId;
+
+					idScope = mergeScopes(builder, idScope, id.getDescriptor().getIdScope());
 				}
 			}
 		}
@@ -117,9 +130,9 @@ final class ConfigurationDescriptorImpl extends AbstractConfigurationDescriptor
 			initDefaultContainer(propertiesByInternalName.get(defaultContainer.internalName()));
 		}
 
-		if (id != null) {
-			// Adjust to local property.
-			initIdProperty(id.getDescriptor().getIdScope(), propertiesByInternalName.get(id.internalName()));
+		// Adjust to local property.
+		if (idScope != null) {
+			initIdProperty(idScope, id == null ? null : propertiesByInternalName.get(id.internalName()));
 		}
 
 		for (int n = 0, cnt = superDescriptors.length; n < cnt; n++) {
@@ -138,6 +151,16 @@ final class ConfigurationDescriptorImpl extends AbstractConfigurationDescriptor
 		// Override inherited visit methods with implementations for the own
 		// configuration interface.
 		installVisitImplementations(getConfigurationInterface(), superDescriptors);
+	}
+
+	private Class<?> mergeScopes(ConfigurationDescriptorBuilder builder, Class<?> idScope, Class<?> superScope) {
+		if (idScope != null && idScope != superScope) {
+			builder.getProtocol().error(
+				"Ambiguous ID scope '" + toString() + "': " + idScope.getName() + " vs. " + superScope.getName());
+		} else {
+			idScope = superScope;
+		}
+		return idScope;
 	}
 
 	private void installVisitImplementations(Class<?> configurationInterface,

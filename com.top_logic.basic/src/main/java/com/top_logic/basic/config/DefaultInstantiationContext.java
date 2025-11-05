@@ -121,9 +121,8 @@ public class DefaultInstantiationContext extends AbstractInstantiationContext {
 			_level--;
 		}
 
-		PropertyDescriptor idProperty = configuration.descriptor().getIdProperty();
-		if (idProperty != null) {
-			Class<?> idScope = configuration.descriptor().getIdScope();
+		Class<?> idScope = configuration.descriptor().getIdScope();
+		if (idScope != null) {
 			OuterRef inner = (OuterRef) _referencesById.remove(new OuterRef(idScope, createLevel, null));
 			if (inner != null) {
 				OuterRef outer = inner.resolve(createLevel, ref);
@@ -132,7 +131,10 @@ public class DefaultInstantiationContext extends AbstractInstantiationContext {
 					_referencesById.put(outer, outer);
 				}
 			}
+		}
 
+		PropertyDescriptor idProperty = configuration.descriptor().getIdProperty();
+		if (idProperty != null) {
 			Object id = configuration.value(idProperty);
 			if (id != null) {
 				fillReferenceValue(self, new IdRef(idScope, id), ref);

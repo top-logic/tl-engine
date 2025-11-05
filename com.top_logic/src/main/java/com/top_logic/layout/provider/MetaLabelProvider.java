@@ -12,18 +12,16 @@ import com.top_logic.layout.LabelProvider;
 import com.top_logic.model.TLClass;
 
 /**
- * Computes labels for objects using implementations registered in the application configuration for
- * object types.
+ * Generates labels for objects using implementations registered in the application configuration.
  * 
  * <p>
- * Uses {@link LabelProviderService} for looking up its {@link LabelProvider} implementation. As key
- * to the registry, it either uses the {@link TLClass dynamic type} or the {@link Class Java class}
- * of the object to find an appropriate implementation.
+ * Implementations can be registered in the {@link LabelProviderService}. As key to the registry,
+ * either the {@link TLClass dynamic type} or the {@link Class Java class} of the object is used..
  * </p>
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-@Label("Application configuration lookup")
+@Label("Default label")
 @InApp
 public class MetaLabelProvider implements LabelProvider {
 

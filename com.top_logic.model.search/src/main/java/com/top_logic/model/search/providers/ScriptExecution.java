@@ -125,7 +125,7 @@ public class ScriptExecution extends AbstractConfiguredInstance<ScriptExecution.
 			}
 			args = Args.cons(model, args);
 
-			result = _operation.execute(model);
+			result = _operation.executeWith(args);
 		}
 
 		WithPostCreateActions.processCreateActions(_actions, component, result);

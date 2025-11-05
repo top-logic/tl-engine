@@ -30,7 +30,7 @@ import com.top_logic.basic.config.annotation.Id;
 public interface InstantiationContext extends Log {
 
 	/**
-	 * Special id that resolves to the outer instance of the specified scope type.
+	 * Special ID that resolves to the outer instance of the specified type.
 	 * 
 	 * @see #resolveReference(Object, Class, ReferenceResolver)
 	 */

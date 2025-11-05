@@ -26,6 +26,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Id;
 import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.Branch;
@@ -67,6 +68,7 @@ public abstract class AbstractCommandHandler implements CommandHandler {
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
+	@Id(CommandHandler.class)
 	public interface Config extends CommandHandler.Config, SecurityObjectProviderConfig {
 
 		@Override

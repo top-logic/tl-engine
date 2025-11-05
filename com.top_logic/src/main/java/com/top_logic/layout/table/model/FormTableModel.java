@@ -18,6 +18,8 @@ import com.top_logic.layout.VetoException;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.model.FormGroup;
+import com.top_logic.layout.scripting.recorder.ref.FieldResolver;
+import com.top_logic.layout.scripting.recorder.ref.field.TableFieldRef;
 
 /**
  * {@link DelegatingTableModel} that overlays cells with input elements.
@@ -66,7 +68,7 @@ public class FormTableModel extends DelegatingTableModel {
 
 		this.rowGroupByRowObject = new HashMap<>();
 		this.rowContainer = new FormGroup(ROWS_CONTAINER_NAME, this.formContainer.getResources());
-		this.rowContainer.setStableIdSpecialCaseMarker(this);
+		setStableIdMarker(this.rowContainer);
 		this.formContainer.addMember(this.rowContainer);
 
 		this.columnContainer = new FormGroup(COLUMNS_CONTAINER_NAME, this.formContainer.getResources());
@@ -75,6 +77,15 @@ public class FormTableModel extends DelegatingTableModel {
 
 		initColumnGroups();
     }
+
+	/**
+	 * This {@link FormTableModel} is expected as {@link FormMember#getStableIdSpecialCaseMarker()}.
+	 * 
+	 * @see FieldResolver#visitTableFieldRef(TableFieldRef, Object)
+	 */
+	private void setStableIdMarker(FormContainer member) {
+		member.setStableIdSpecialCaseMarker(this);
+	}
 
 	private void initColumnGroups() {
 		EditableRowTableModel tableModel = getInner();

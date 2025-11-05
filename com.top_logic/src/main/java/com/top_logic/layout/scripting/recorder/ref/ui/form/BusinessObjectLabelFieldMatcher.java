@@ -95,6 +95,11 @@ public class BusinessObjectLabelFieldMatcher extends AbstractFieldMatcher<Busine
 			if (StringServicesShared.isEmpty(label)) {
 				return null;
 			}
+			if (label.contains(Integer.toHexString(System.identityHashCode(marker)))) {
+				/* Label is (probably) the default toString implementation. This value changes for
+				 * different instances and is therefore not usable as identifier. */
+				return null;
+			}
 
 			Config config = TypedConfiguration.newConfigItem(Config.class);
 			config.setLabel(label);

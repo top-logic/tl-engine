@@ -12,6 +12,7 @@ import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.TagName;
@@ -69,8 +70,13 @@ public class ScriptExecution extends AbstractConfiguredInstance<ScriptExecution.
 
 		/**
 		 * Additional arguments to the {@link #getOperation()}.
+		 * 
+		 * <p>
+		 * Note: The commands target model is always passed automatically as first argument.
+		 * </p>
 		 */
 		@Name(ARGUMENTS)
+		@Label("Additional arguments")
 		List<ModelSpec> getArguments();
 
 		/**

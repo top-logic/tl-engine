@@ -8,6 +8,8 @@ package com.top_logic.model.wysiwyg.storage;
 import static com.top_logic.basic.shared.collection.factory.CollectionFactoryShared.*;
 import static com.top_logic.layout.wysiwyg.ui.StructuredText.*;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -36,6 +38,8 @@ import com.top_logic.model.access.WithStorageAttribute;
  */
 public class StructuredTextAttributeStorage<C extends StructuredTextAttributeStorage.Config<?>>
 		extends CommonStructuredTextAttributeStorage<C> implements ColumnStorage {
+
+	private static final Collection<? extends Class<?>> COMPATIBLE_TYPES = Arrays.asList(StructuredText.class);
 
 	/**
 	 * Configuration options for {@link StructuredTextAttributeStorage}.
@@ -163,8 +167,8 @@ public class StructuredTextAttributeStorage<C extends StructuredTextAttributeSto
 	}
 
 	@Override
-	protected Class<?> getApplicationValueType() {
-		return StructuredText.class;
+	protected Collection<? extends Class<?>> getApplicationValueTypes() {
+		return COMPATIBLE_TYPES;
 	}
 
 	@Override

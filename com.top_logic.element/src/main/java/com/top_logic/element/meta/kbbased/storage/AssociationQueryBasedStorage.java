@@ -8,6 +8,7 @@ package com.top_logic.element.meta.kbbased.storage;
 import static com.top_logic.model.util.TLModelUtil.*;
 import static java.util.Collections.*;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
@@ -129,13 +130,20 @@ public abstract class AssociationQueryBasedStorage<C extends AbstractStorage.Con
 		if (value == null) {
 			return;
 		}
-		if (!getApplicationValueType().isInstance(value)) {
+		boolean compatibleValue = false;
+		for (Class<?> compatibleType : getApplicationValueTypes()) {
+			if (compatibleType.isInstance(value)) {
+				compatibleValue = true;
+				break;
+			}
+		}
+		if (!compatibleValue) {
 			throw new TopLogicException(I18NConstants.NOT_APPLICATION_VALUE_TYPE___EXPECTED_ACTUAL
-				.fill(getApplicationValueType(), value.getClass()));
+				.fill(getApplicationValueTypes().stream().map(Class::getName).toList(), value.getClass().getName()));
 		}
 	}
 
-	/** The {@link Class} of the application objects created by this storage. */
-	protected abstract Class<?> getApplicationValueType();
+	/** The {@link Class}es of the application objects that can set as value. */
+	protected abstract Collection<? extends Class<?>> getApplicationValueTypes();
 
 }

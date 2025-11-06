@@ -68,7 +68,10 @@ public class GroupCellControl extends ConstantControl<HTMLFragment>
 
 		@Override
 		protected HandlerResult execute(DisplayContext commandContext, Control control, Map<String, Object> arguments) {
-			((GroupCellControl) control).toggle();
+			GroupCellControl groupCellControl = (GroupCellControl) control;
+			if (groupCellControl.isCollapsible()) {
+				groupCellControl.toggle();
+			}
 			return HandlerResult.DEFAULT_RESULT;
 		}
 	};
@@ -134,19 +137,23 @@ public class GroupCellControl extends ConstantControl<HTMLFragment>
 	 */
 	@TemplateVariable("onclick")
 	public void writeOnClick(TagWriter out) throws IOException {
-		out.write("const self = this;");
-		out.write("self.toggeling = true;");
-		out.write("setTimeout(function() {");
-		{
-			out.write("if (self.toggeling) {");
+		if (_settings.isCollapsible()) {
+			out.write("const self = this;");
+			out.write("self.toggeling = true;");
+			out.write("setTimeout(function() {");
 			{
-				out.write("self.toggeling = false;");
-				TOGGLE.writeInvokeExpression(out, this);
+				out.write("if (self.toggeling) {");
+				{
+					out.write("self.toggeling = false;");
+					TOGGLE.writeInvokeExpression(out, this);
+				}
+				out.write("}");
 			}
-			out.write("}");
+			out.write("}, 250);");
+			out.write("return false;");
+		} else {
+			out.write("this.toggeling = false;");
 		}
-		out.write("}, 250);");
-		out.write("return false;");
 	}
 
 	/**

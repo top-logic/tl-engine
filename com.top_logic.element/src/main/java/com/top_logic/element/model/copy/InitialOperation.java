@@ -17,6 +17,7 @@ import java.util.Set;
 import org.apache.commons.math3.util.Pair;
 
 import com.top_logic.basic.UnreachableAssertion;
+import com.top_logic.basic.col.ComparableComparator;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
@@ -26,6 +27,7 @@ import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.export.PreloadContext;
+import com.top_logic.model.fallback.StorageWithFallback;
 
 class InitialOperation extends CopyOperationImpl {
 
@@ -65,6 +67,26 @@ class InitialOperation extends CopyOperationImpl {
 			}
 
 			_properties.add(part);
+		}
+
+		private void finish() {
+			// fallback-attributes must be handled first to make sure, if there is a certain
+			// storage-attribute in source and dest-type the actual value will be copied later.
+			_properties.sort((TLStructuredTypePart a, TLStructuredTypePart b) -> {
+				boolean aFallback = isFallbackAttribute(a);
+				boolean bFallback = isFallbackAttribute(b);
+				if (aFallback == bFallback) {
+					return ComparableComparator.INSTANCE.compare(a, b);
+				} else if (aFallback) {
+					return -1;
+				} else {
+					return 1;
+				}
+			});
+		}
+
+		private boolean isFallbackAttribute(TLStructuredTypePart part) {
+			return part.getStorageImplementation() instanceof StorageWithFallback;
 		}
 	}
 
@@ -193,6 +215,7 @@ class InitialOperation extends CopyOperationImpl {
 
 			result.add(srcPart);
 		}
+		result.finish();
 		_copyAttributes.put(key, result);
 		return result;
 	}

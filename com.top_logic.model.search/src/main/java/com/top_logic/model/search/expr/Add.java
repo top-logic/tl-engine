@@ -65,19 +65,26 @@ public class Add extends GenericMethod {
 
 		int insertLength = insertion.size();
 		if (insertLength > 0) {
-			// Create a set of existing elements for efficient duplicate checking
-			Set<Object> existingElements = new HashSet<>(oldValue);
+			List<Object> filteredInsertion;
 
-			// Filter out duplicates from insertion collection
-			List<Object> filteredInsertion = new ArrayList<>();
-			for (Object item : insertion) {
-				if (!existingElements.contains(item)) {
-					filteredInsertion.add(item);
-					existingElements.add(item);
+			if (!part.isBag()) {
+				// Only filter duplicates if the reference does not allow duplicates
+				Set<Object> existingElements = new HashSet<>(oldValue);
+
+				// Filter out duplicates from insertion collection
+				filteredInsertion = new ArrayList<>();
+				for (Object item : insertion) {
+					if (!existingElements.contains(item)) {
+						filteredInsertion.add(item);
+						existingElements.add(item);
+					}
 				}
+			} else {
+				// If duplicates are allowed, add all elements without filtering
+				filteredInsertion = new ArrayList<>(insertion);
 			}
 
-			// Only proceed if there are non-duplicate elements to add
+			// Only proceed if there are elements to add
 			if (!filteredInsertion.isEmpty()) {
 				List<Object> newValue = new ArrayList<>(oldSize + filteredInsertion.size());
 				newValue.addAll(oldValue.subList(0, index));

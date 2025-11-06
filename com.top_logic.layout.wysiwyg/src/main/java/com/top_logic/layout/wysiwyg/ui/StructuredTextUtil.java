@@ -86,7 +86,7 @@ public class StructuredTextUtil {
 	 * Creates a {@link StructuredText} from the given source, where Base64 encoded images are
 	 * extracted and replaced by {@link I18NStructuredTextUtil#REF_ID_PREFIX} references.
 	 */
-	public static StructuredText fromCodeWithInlinedImages(String source) throws IOException {
+	public static StructuredText fromCodeWithInlinedImages(String source) {
 		org.jsoup.nodes.Document document = Jsoup.parse(source, "", Parser.xmlParser());
 
 		Elements localImaged = document.select("img[src^=\"" + DATA + "\"]");

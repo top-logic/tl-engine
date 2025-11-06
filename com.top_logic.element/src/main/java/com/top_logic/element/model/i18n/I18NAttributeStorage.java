@@ -6,6 +6,7 @@
 package com.top_logic.element.model.i18n;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
@@ -44,6 +45,8 @@ public class I18NAttributeStorage<C extends I18NAttributeStorage.Config<?>> exte
 
 	/** Name of the value attribute. */
 	public static final String VALUE_ATTRIBUTE_NAME = "value";
+
+	private static final Collection<? extends Class<?>> COMPATIBLE_TYPES = Arrays.asList(ResKey.class);
 
 	private AssociationSetQuery<? extends KnowledgeItem> _query;
 
@@ -162,8 +165,8 @@ public class I18NAttributeStorage<C extends I18NAttributeStorage.Config<?>> exte
 	}
 
 	@Override
-	protected Class<?> getApplicationValueType() {
-		return ResKey.class;
+	protected Collection<? extends Class<?>> getApplicationValueTypes() {
+		return COMPATIBLE_TYPES;
 	}
 
 }

@@ -686,6 +686,9 @@
 	<icon name="ICON_PLUS"
 		value="css:fa-solid fa-circle-plus"
 	/>
+	<icon name="ICON_COPY"
+		value="css:fa-solid fa-copy"
+	/>
 	<icon name="ICONS_ADD_BUTTON_DISABLED"
 		expr="%ICONS_ADD_BUTTON%"
 	/>
@@ -744,7 +747,7 @@
 		expr="%ICONS_HISTORY_FORWARD%"
 	/>
 	<icon name="ICONS_ADD2_CLIPBOARD"
-		value="css:fa-solid fa-copy"
+		expr="%ICON_COPY%"
 	/>
 	<icon name="ICONS_ADD2_CLIPBOARD_DISABLED"
 		expr="%ICONS_ADD2_CLIPBOARD%"
@@ -1117,6 +1120,12 @@
 	/>
 	<icon name="com.top_logic.layout.table.control.Icons.ICONS_MOVE_ROW_UP_DISABLED"
 		expr="%com.top_logic.layout.table.control.Icons.ICONS_MOVE_ROW_UP%"
+	/>
+	<icon name="com.top_logic.element.meta.form.fieldprovider.Icons.COPY_ROW"
+		expr="%ICON_COPY%"
+	/>
+	<icon name="com.top_logic.element.meta.form.fieldprovider.Icons.COPY_ROW_DISABLED"
+		expr="%com.top_logic.element.meta.form.fieldprovider.Icons.COPY_ROW%"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.ARROW_LEFT"
 		expr="%ICONS_MOVE_ROW_LEFT%"
@@ -1702,7 +1711,7 @@
 	/>
 	<icon name="TABLE_EMPTY"
 		value="/icons/sortNo.png"
-	/>	
+	/>
 	<string name="FORM_EDITOR_BUTTON_MOVE"
 		value="url(/icons/sortElementsDisabled.png)"
 	/>
@@ -1888,7 +1897,7 @@
 	/>
 	<icon name="com.top_logic.layout.scripting.recorder.gui.inspector.Icons.RESET_DISABLED"
 		expr="%com.top_logic.layout.scripting.recorder.gui.inspector.Icons.RESET%"
-	/>	
+	/>
 	<icon name="com.top_logic.layout.structure.Icons.HELP"
 		value="css:fa-solid fa-question"
 	/>
@@ -1900,7 +1909,7 @@
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.EMPTY"
 		value="/mimetypes/empty.png"
-	/>	
+	/>
 	<icon name="com.top_logic.layout.tree.renderer.Icons.BREADCRUMB_LF"
 		value="colored:tl-icon caret-right"
 	/>

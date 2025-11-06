@@ -5,15 +5,23 @@
  */
 package com.top_logic.layout.table.control;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.basic.AbstractControlBase;
+import com.top_logic.layout.basic.AttachedPropertyListener;
 import com.top_logic.layout.basic.CommandModel;
-import com.top_logic.layout.basic.ControlCommand;
+import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.component.model.MultiSelectionEvent;
 import com.top_logic.layout.component.model.SelectionEvent;
+import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.form.control.ButtonControl;
 import com.top_logic.layout.form.control.ImageButtonRenderer;
 import com.top_logic.layout.form.model.TableField;
@@ -22,48 +30,48 @@ import com.top_logic.layout.table.ITableRenderer;
 import com.top_logic.layout.table.RowObjectCreator;
 import com.top_logic.layout.table.RowObjectRemover;
 import com.top_logic.layout.table.TableData;
+import com.top_logic.layout.table.TableDataListener;
 import com.top_logic.layout.table.TableModel;
 import com.top_logic.layout.table.TableViewModel;
 import com.top_logic.layout.table.model.EditableRowTableModel;
+import com.top_logic.layout.table.model.TableModelEvent;
+import com.top_logic.layout.table.model.TableModelListener;
 import com.top_logic.layout.table.model.TableUtil;
 import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
- * Displays an editable list as table specified by a TableField with an ObjectTableModel.
+ * Displays an editable list as table specified by a {@link TableData} with an
+ * {@link EditableRowTableModel}.
  *
  * @author <a href="mailto:CBR@top-logic.com">CBR</a>
  */
 public class TableListControl extends TableControl {
 
+	/**
+	 * Provider for views to display in the toolbar of the {@link TableListControl}.
+	 * 
+	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+	 */
+	@FunctionalInterface
+	public static interface ToolbarFragment {
+
+		/**
+		 * Creates the views for the given {@link TableListControl}.
+		 * 
+		 * @return The views to display in the given order in the toolbar of the given table.
+		 */
+		List<? extends HTMLFragment> createFragment(TableListControl table);
+
+	}
+
     // Commands:
-    static final TableCommand ADD_ROW_COMMAND            = new AddRowCommand();
     static final TableCommand MOVE_ROW_UP_COMMAND        = new MoveRowUpCommand();
     static final TableCommand MOVE_ROW_DOWN_COMMAND      = new MoveRowDownCommand();
     static final TableCommand MOVE_ROW_TO_TOP_COMMAND    = new MoveRowToTopCommand();
     static final TableCommand MOVE_ROW_TO_BOTTOM_COMMAND = new MoveRowToBottomCommand();
-    static final TableCommand REMOVE_ROW_COMMAND         = new RemoveRowCommand();
 
-    static final Map<String, ControlCommand> COMMANDS =
-    	createCommandMap(TABLE_COMMANDS, 
-	    	new TableCommand[] {
-		    	ADD_ROW_COMMAND, 
-		    	MOVE_ROW_UP_COMMAND, 
-		    	MOVE_ROW_DOWN_COMMAND, 
-		    	MOVE_ROW_TO_TOP_COMMAND, 
-		    	MOVE_ROW_TO_BOTTOM_COMMAND, 
-		    	REMOVE_ROW_COMMAND
-		    });
-
-
-
-	private final RowObjectCreator rowObjectCreator;
-    private final RowObjectRemover rowObjectRemover;
-
-	private ButtonControl theMoveRowUpButton, theMoveRowDownButton, theMoveRowToTopButton, theMoveRowToBottomButton,
-			theRemoveRowButton, theAddRowButton;
-
-    /** Flag indicating that new rows should always be appended at the end of the list. */
+	/** Flag indicating that new rows should always be appended at the end of the list. */
     private boolean appendAlways = false;
 
     /**
@@ -72,16 +80,21 @@ public class TableListControl extends TableControl {
      */
     private boolean sortable = false;
 
-    /**
-     * Creates a {@link TableListControl}.
-     */
-	protected TableListControl(TableData tableData, ITableRenderer tableRenderer, RowObjectCreator rowObjectCreator,
-			RowObjectRemover rowObjectRemover, boolean isSortable) {
-		super(tableData, COMMANDS, tableRenderer);
-		this.rowObjectCreator = rowObjectCreator;
-		this.rowObjectRemover = rowObjectRemover;
+	/**
+	 * Creates a {@link TableListControl}.
+	 */
+	public TableListControl(TableData tableData, ITableRenderer tableRenderer, boolean isSortable,
+			List<? extends ToolbarFragment> toolbarFragments) {
+		super(tableData, TABLE_COMMANDS, tableRenderer);
 		this.sortable = isSortable;
-    }
+		List<? extends HTMLFragment> fragments = toolbarFragments
+			.stream()
+			.map(builder -> builder.createFragment(this))
+			.flatMap(List::stream)
+			.toList();
+
+		addTitleBarControls(0, fragments);
+	}
 
 	/**
 	 * Factory method to create a new {@link TableListControl} from a {@link TableField}.
@@ -119,88 +132,24 @@ public class TableListControl extends TableControl {
 	public static TableListControl createTableListControl(TableData tableData, ITableRenderer tableRenderer,
 			RowObjectCreator rowObjectCreator, RowObjectRemover rowObjectRemover, boolean createButtons,
 			boolean isSortable) {
-		final TableListControl tableListControl =
-			createTableListControl(tableData, tableRenderer, rowObjectCreator, rowObjectRemover, isSortable);
+		List<ToolbarFragment> buttons;
 		if (createButtons) {
-			tableListControl.createButtons();
+			buttons = new ArrayList<>();
+			if (rowObjectCreator != null) {
+				buttons.add(new AddRowFragment(rowObjectCreator));
+			}
+			if (!isSortable) {
+				// If table is automatically sortable, the move buttons will be disabled
+				buttons.add(new MoveRowsFragment());
+			}
+			if (rowObjectCreator != null) {
+				buttons.add(new RemoveRowFragment(rowObjectRemover));
+			}
+		} else {
+			buttons = Collections.emptyList();
 		}
-		return tableListControl;
+		return new TableListControl(tableData, tableRenderer, isSortable, buttons);
 	}
-
-	/**
-	 * Factory method to create a new {@link TableListControl}
-	 * @param rowObjectCreator
-	 *        the RowObjectCreator to create new rows. If it is <code>null</code>, the add command
-	 *        of this control will be disabled.
-	 * @param rowObjectRemover
-	 *        the RowObjectRemover to make cleanup work after removing a row. If it is
-	 *        <code>null</code>, the remove command of this control will be disabled.
-	 * @param isSortable
-	 *        If <code>true</code>, the table will be automatically sortable and the move buttons
-	 *        will be disabled
-	 */
-	public static TableListControl createTableListControl(TableData tableData, ITableRenderer tableRenderer,
-			RowObjectCreator rowObjectCreator, RowObjectRemover rowObjectRemover, boolean isSortable) {
-		return new TableListControl(tableData, tableRenderer, rowObjectCreator, rowObjectRemover, isSortable);
-	}
-
-    private void createButtons() {
-        if (!sortable && isSelectable()) {
-            // If table is automatically sortable, the move buttons will be disabled
-			CommandModel theMoveRowToTopCommandModel = newTableCommandModel(MOVE_ROW_TO_TOP_COMMAND);
-        	theMoveRowToTopCommandModel.setImage(Icons.MOVE_ROW_TO_TOP);
-        	theMoveRowToTopCommandModel.setNotExecutableImage(Icons.MOVE_ROW_TO_TOP_DISABLED);
-            theMoveRowToTopButton = new ButtonControl(theMoveRowToTopCommandModel, ImageButtonRenderer.NO_REASON_INSTANCE);
-            
-			CommandModel theMoveRowUpCommandModel = newTableCommandModel(MOVE_ROW_UP_COMMAND);
-            theMoveRowUpCommandModel.setImage(Icons.MOVE_ROW_UP);
-            theMoveRowUpCommandModel.setNotExecutableImage(Icons.MOVE_ROW_UP_DISABLED);
-            theMoveRowUpButton = new ButtonControl(theMoveRowUpCommandModel, ImageButtonRenderer.NO_REASON_INSTANCE);
-
-			CommandModel theMoveRowDownCommandModel = newTableCommandModel(MOVE_ROW_DOWN_COMMAND);
-            theMoveRowDownCommandModel.setImage(Icons.MOVE_ROW_DOWN);
-            theMoveRowDownCommandModel.setNotExecutableImage(Icons.MOVE_ROW_DOWN_DISABLED);
-            theMoveRowDownButton = new ButtonControl(theMoveRowDownCommandModel, ImageButtonRenderer.NO_REASON_INSTANCE);
-            
-			CommandModel theMoveRowToBottomCommandModel = newTableCommandModel(MOVE_ROW_TO_BOTTOM_COMMAND);
-            theMoveRowToBottomCommandModel.setImage(Icons.MOVE_ROW_TO_BOTTOM);
-            theMoveRowToBottomCommandModel.setNotExecutableImage(Icons.MOVE_ROW_TO_BOTTOM_DISABLED);
-            theMoveRowToBottomButton = new ButtonControl(theMoveRowToBottomCommandModel, ImageButtonRenderer.NO_REASON_INSTANCE);
-            
-            addTitleBarControl(theMoveRowToTopButton);
-            addTitleBarControl(theMoveRowUpButton);
-            addTitleBarControl(theMoveRowDownButton);
-            addTitleBarControl(theMoveRowToBottomButton);
-        }
-		if (getRowObjectRemover() != null && isSelectable()) {
-			CommandModel theRemoveRowCommandModel = newTableCommandModel(REMOVE_ROW_COMMAND);
-            theRemoveRowCommandModel.setImage(Icons.DELETE_TOOLBAR);
-            theRemoveRowCommandModel.setNotExecutableImage(Icons.DELETE_TOOLBAR_DISABLED);
-			theRemoveRowButton = new ButtonControl(theRemoveRowCommandModel);
-            addTitleBarControl(theRemoveRowButton);
-        }
-		if (getRowObjectCreator() != null) {
-			CommandModel theAddRowCommandModel = newTableCommandModel(ADD_ROW_COMMAND);
-            theAddRowCommandModel.setImage(Icons.ADD_ROW);
-            theAddRowCommandModel.setNotExecutableImage(Icons.ADD_ROW_DISABLED);
-			theAddRowButton = new ButtonControl(theAddRowCommandModel);
-            addTitleBarControl(0, theAddRowButton);
-        }
-    }
-
-	/**
-	 * Callback called to actually create an row object
-	 */
-    public RowObjectCreator getRowObjectCreator() {
-        return rowObjectCreator;
-    }
-
-	/**
-	 * Callback called to actually remove an row object
-	 */
-    public RowObjectRemover getRowObjectRemover() {
-        return rowObjectRemover;
-    }
 
 	/**
 	 * If <code>true</code> then new rows are always append to the end of the list
@@ -224,7 +173,6 @@ public class TableListControl extends TableControl {
 		super.internalAttach();
 		if (!sortable)
 			disableSorting();
-		updateButtons();
 	}
 
     /**
@@ -237,105 +185,6 @@ public class TableListControl extends TableControl {
 			viewModel.setColumnComparator(i, null);
         }
     }
-
-	/**
-	 * Triggers a selection changed notification, to use when a row was moved.
-	 * 
-	 * This is necessary because when moving a row the selection index changes but not the selected
-	 * object. Thus no notify is triggered when moving a row. Therefore it has to be triggered
-	 * manually.
-	 */
-	public void notifyRowMoved() {
-		SelectionModel selectionModel = getSelectionModel();
-		notifySelectionChanged(selectionModel,
-			new MultiSelectionEvent(selectionModel, Collections.emptySet(), selectionModel.getSelection()));
-	}
-
-	@Override
-	public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
-		super.notifySelectionChanged(model, event);
-		updateButtons();
-	}
-
-	/**
-	 * Updates the buttons due to the corresponding selection
-	 */
-	private void updateButtons() {
-		int selected = TableUtil.getSingleSelectedRow(getTableData());
-		int size = getViewModel().getRowCount();
-		updateUpButton(theMoveRowUpButton, selected, I18NConstants.MOVE_ROW_UP_DISABLED);
-		updateUpButton(theMoveRowToTopButton, selected, I18NConstants.MOVE_ROW_TO_TOP_DISABLED);
-		updateDownButton(theMoveRowDownButton, selected, size, I18NConstants.MOVE_ROW_DOWN_DISABLED);
-		updateDownButton(theMoveRowToBottomButton, selected, size, I18NConstants.MOVE_ROW_TO_BOTTOM_DISABLED);
-		updateRemoveButton(selected);
-		updateAddButton(selected);
-	}
-
-	private void updateAddButton(int selected) {
-		if (theAddRowButton == null) {
-			return;
-		}
-		RowObjectCreator theCreator = getRowObjectCreator();
-		
-		ResKey disabledReason = theCreator.allowCreateNewRow(selected, getTableData(), this);
-		if (disabledReason == null) {
-			theAddRowButton.enable();
-		} else {
-			theAddRowButton.disable(disabledReason);
-		}
-	}
-
-	private void updateRemoveButton(int selected) {
-		if (theRemoveRowButton == null) {
-			return;
-		}
-		boolean nothingSelected = selected < 0;
-		if (nothingSelected) {
-			theRemoveRowButton.disable(I18NConstants.NO_ROW_SELECTED);
-			return;
-		}
-		RowObjectRemover theRemover = getRowObjectRemover();
-		ResKey disabledReason = theRemover.allowRemoveRow(selected, getTableData(), this);
-		if (disabledReason == null) {
-			theRemoveRowButton.enable();
-		} else {
-			theRemoveRowButton.disable(disabledReason);
-		}
-	}
-
-	private void updateDownButton(ButtonControl downButton, int selected, int size, ResKey lastRowReason) {
-		if (downButton == null) {
-			return;
-		}
-		boolean nothingSelected = selected < 0;
-		if (nothingSelected) {
-			downButton.disable(I18NConstants.NO_ROW_SELECTED);
-			return;
-		}
-		boolean lastRowSelected = selected > size - 2;
-		if (lastRowSelected) {
-			downButton.disable(lastRowReason);
-			return;
-		}
-		downButton.enable();
-	}
-
-	private void updateUpButton(ButtonControl upButton, int selected, ResKey firstRowReason) {
-		if (upButton == null) {
-			return;
-		}
-		boolean nothingSelected = selected < 0;
-		if (nothingSelected) {
-			upButton.disable(I18NConstants.NO_ROW_SELECTED);
-			return;
-		}
-		boolean firstRowSelected = selected < 1;
-		if (firstRowSelected) {
-			upButton.disable(firstRowReason);
-			return;
-		}
-		upButton.enable();
-	}
 
 	/**
 	 * Adds a new row to the {@link TableModel} of this control.
@@ -361,31 +210,181 @@ public class TableListControl extends TableControl {
 	}
 
 	/**
+	 * {@link ToolbarFragment} whose button reacts on the change the tables selection.
+	 * 
+	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+	 */
+	public abstract static class SelectionObservingFragment<C extends AbstractControlBase> implements ToolbarFragment {
+
+		@Override
+		public List<C> createFragment(TableListControl table) {
+			C button = createButton(table);
+			SelectionListener modelUpdater = new SelectionListener() {
+
+				@Override
+				public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
+					updateButton(button, table);
+				}
+			};
+			TableDataListener tableDataListener = new TableDataListener() {
+
+				@Override
+				public void notifyTableViewModelChanged(TableData source, TableViewModel oldValue,
+						TableViewModel newValue) {
+					updateButton(button, table);
+				}
+
+				@Override
+				public void notifySelectionModelChanged(TableData source, SelectionModel oldValue,
+						SelectionModel newValue) {
+					if (oldValue != null) {
+						oldValue.removeSelectionListener(modelUpdater);
+					}
+					if (newValue != null) {
+						newValue.addSelectionListener(modelUpdater);
+					}
+					updateButton(button, table);
+				}
+			};
+			button.addListener(AbstractControlBase.ATTACHED_PROPERTY, new AttachedPropertyListener() {
+
+				@Override
+				public void handleAttachEvent(AbstractControlBase sender, Boolean oldValue, Boolean newValue) {
+					TableData data = table.getModel();
+
+					SelectionModel selectionModel = data.getSelectionModel();
+					if (newValue) {
+						data.addListener(TableData.SELECTION_MODEL_PROPERTY, tableDataListener);
+						data.addListener(TableData.VIEW_MODEL_PROPERTY, tableDataListener);
+						if (selectionModel != null) {
+							selectionModel.addSelectionListener(modelUpdater);
+						}
+						updateButton(button, table);
+					} else {
+						if (selectionModel != null) {
+							selectionModel.removeSelectionListener(modelUpdater);
+						}
+						data.removeListener(TableData.VIEW_MODEL_PROPERTY, tableDataListener);
+						data.removeListener(TableData.SELECTION_MODEL_PROPERTY, tableDataListener);
+					}
+				}
+
+			});
+			return Collections.singletonList(button);
+		}
+
+		/**
+		 * Creates the button to display in toolbar.
+		 * 
+		 * @param table
+		 *        The table in which the button is displayed.
+		 */
+		protected abstract C createButton(TableListControl table);
+
+		/**
+		 * Updates the button when the selection or view model of the table changes.
+		 * 
+		 * @param button
+		 *        The button to update when selection changes.
+		 * @param table
+		 *        The table in which the button is displayed.
+		 */
+		protected abstract void updateButton(C button, TableListControl table);
+
+	}
+
+	/**
+	 * {@link ToolbarFragment} creating a button to add a new row.
+	 * 
+	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+	 */
+	public static class AddRowFragment extends SelectionObservingFragment<ButtonControl> {
+
+		private final RowObjectCreator _creator;
+
+		private ThemeImage _image = Icons.ADD_ROW, _disabledImage = Icons.ADD_ROW_DISABLED;
+
+		private ResKey _label = I18NConstants.ADD_ROW;
+
+		/**
+		 * Creates a new {@link AddRowFragment}.
+		 */
+		public AddRowFragment(RowObjectCreator creator) {
+			_creator = creator;
+		}
+
+		/**
+		 * Sets images for the button.
+		 */
+		public AddRowFragment setImages(ThemeImage image, ThemeImage disabledImage) {
+			_image = Objects.requireNonNull(image);
+			_disabledImage = Objects.requireNonNull(disabledImage);
+			return this;
+		}
+
+		/**
+		 * Sets the label for the button.
+		 */
+		public AddRowFragment setLabel(ResKey label) {
+			_label = Objects.requireNonNull(label);
+			return this;
+		}
+
+		@Override
+		protected ButtonControl createButton(TableListControl table) {
+			CommandModel addRowCommandModel = newTableCommandModel(table, new AddRowCommand(_creator, _label));
+			addRowCommandModel.setImage(_image);
+			addRowCommandModel.setNotExecutableImage(_disabledImage);
+			return new ButtonControl(addRowCommandModel);
+		}
+
+		@Override
+		protected void updateButton(ButtonControl button, TableListControl table) {
+			TableData tableData = table.getTableData();
+			if (tableData.getSelectionModel() == null || tableData.getViewModel() == null) {
+				button.disable(com.top_logic.tool.execution.I18NConstants.ERROR_NO_MODEL);
+				return;
+			}
+
+			int selected = TableUtil.getSingleSelectedRow(tableData);
+			ResKey disabledReason = _creator.allowCreateNewRow(selected, tableData, table);
+			if (disabledReason == null) {
+				button.enable();
+			} else {
+				button.disable(disabledReason);
+			}
+		}
+
+	}
+
+	/**
 	 * Command to add a new row to the list.
 	 * 
 	 * @author <a href=mailto:CBR@top-logic.com>CBR</a>
 	 */
     public static class AddRowCommand extends TableCommand {
 
-		private final static String COMMAND = "AddRowCommand";
+		private final static String COMMAND_ID = "AddRowCommand";
+
+		private final RowObjectCreator _creator;
+
+		private final ResKey _label;
 
         /**
          * Creates a {@link AddRowCommand}.
          */
-        public AddRowCommand() {
-            super(COMMAND);
+		public AddRowCommand(RowObjectCreator creator, ResKey label) {
+			super(COMMAND_ID);
+			_creator = creator;
+			_label = label;
         }
 
         @Override
 		protected HandlerResult execute(DisplayContext aContext, TableControl tableControl,
 				Map<String, Object> aArguments) {
 			TableListControl listControl = (TableListControl) tableControl;
-			RowObjectCreator creator = listControl.getRowObjectCreator();
-			if (creator == null) {
-				return HandlerResult.DEFAULT_RESULT;
-			}
 
-			Object newRow = creator.createNewRow(tableControl);
+			Object newRow = _creator.createNewRow(tableControl);
 			if (newRow != null) {
 				listControl.addNewRow(newRow);
 			}
@@ -394,36 +393,255 @@ public class TableListControl extends TableControl {
 
 		@Override
 		public ResKey getI18NKey() {
-            return I18NConstants.ADD_ROW;
+			return _label;
         }
 
     }
 
+	/**
+	 * {@link ToolbarFragment} to display buttons to move rows.
+	 * 
+	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+	 */
+	public static class MoveRowsFragment implements ToolbarFragment {
 
-    /**
-     * Command to move a row up in the list.
-     *
-     * @author <a href=mailto:CBR@top-logic.com>CBR</a>
-     */
-    public static class MoveRowUpCommand extends TableCommand {
+		@Override
+		public List<? extends HTMLFragment> createFragment(TableListControl table) {
+			ButtonControl rowDown = createRowDown(table);
+			ButtonControl rowBottom = createRowToBottom(table);
+			ButtonControl rowUp = createRowUp(table);
+			ButtonControl rowTop = createRowToTop(table);
+			
+			class ModelUpdater implements TableModelListener, SelectionListener {
 
-		private final static String COMMAND = "MoveRowUpCommand";
+				@Override
+				public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
+					updateButtons(table, rowTop, rowUp, rowDown, rowBottom);
+				}
+
+				@Override
+				public void handleTableModelEvent(TableModelEvent event) {
+					updateButtons(table, rowTop, rowUp, rowDown, rowBottom);
+				}
+				
+			}
+			ModelUpdater modelUpdater = new ModelUpdater();
+			TableDataListener tableDataListener = new TableDataListener() {
+
+				@Override
+				public void notifyTableViewModelChanged(TableData source, TableViewModel oldValue,
+						TableViewModel newValue) {
+					if (oldValue != null) {
+						oldValue.removeTableModelListener(modelUpdater);
+					}
+					if (newValue != null) {
+						newValue.addTableModelListener(modelUpdater);
+					}
+					updateButtons(table, rowTop, rowUp, rowDown, rowBottom);
+				}
+
+				@Override
+				public void notifySelectionModelChanged(TableData source, SelectionModel oldValue,
+						SelectionModel newValue) {
+					if (oldValue != null) {
+						oldValue.removeSelectionListener(modelUpdater);
+					}
+					if (newValue != null) {
+						newValue.addSelectionListener(modelUpdater);
+					}
+					updateButtons(table, rowTop, rowUp, rowDown, rowBottom);
+				}
+			};
+			
+			AttachedPropertyListener attachedListener = new AttachedPropertyListener() {
+				
+
+				@Override
+				public void handleAttachEvent(AbstractControlBase sender, Boolean oldValue, Boolean newValue) {
+					TableData data = table.getModel();
+
+					TableModel tableModel = data.getTableModel();
+					SelectionModel selectionModel = data.getSelectionModel();
+					if (newValue) {
+						data.addListener(TableData.SELECTION_MODEL_PROPERTY, tableDataListener);
+						data.addListener(TableData.VIEW_MODEL_PROPERTY, tableDataListener);
+						if (tableModel != null) {
+							tableModel.addTableModelListener(modelUpdater);
+						}
+						if (selectionModel != null) {
+							selectionModel.addSelectionListener(modelUpdater);
+						}
+						updateButtons(table, rowTop, rowUp, rowDown, rowBottom);
+					} else {
+						if (selectionModel != null) {
+							selectionModel.removeSelectionListener(modelUpdater);
+						}
+						if (tableModel != null) {
+							tableModel.removeTableModelListener(modelUpdater);
+						}
+						data.removeListener(TableData.VIEW_MODEL_PROPERTY, tableDataListener);
+						data.removeListener(TableData.SELECTION_MODEL_PROPERTY, tableDataListener);
+					}
+				}
+
+			};
+			
+			/* It doesn't matter on which control the listener is attached because always all or no
+			 * button is displayed. */
+			rowTop.addListener(AbstractControlBase.ATTACHED_PROPERTY, attachedListener);
+			
+			return Arrays.asList(rowTop, rowUp,rowDown,rowBottom);
+		}
+		
+		/**
+		 * Creates the button to move a row down.
+		 */
+		protected ButtonControl createRowDown(TableListControl table) {
+			CommandModel moveRowDownCommandModel = newTableCommandModel(table, MOVE_ROW_DOWN_COMMAND);
+			moveRowDownCommandModel.setImage(Icons.MOVE_ROW_DOWN);
+			moveRowDownCommandModel.setNotExecutableImage(Icons.MOVE_ROW_DOWN_DISABLED);
+			return new ButtonControl(moveRowDownCommandModel, ImageButtonRenderer.NO_REASON_INSTANCE);
+		}
+
+		/**
+		 * Creates the button to move a row to the bottom.
+		 */
+		protected ButtonControl createRowToBottom(TableListControl table) {
+			CommandModel moveRowToBottomCommandModel = newTableCommandModel(table, MOVE_ROW_TO_BOTTOM_COMMAND);
+			moveRowToBottomCommandModel.setImage(Icons.MOVE_ROW_TO_BOTTOM);
+			moveRowToBottomCommandModel.setNotExecutableImage(Icons.MOVE_ROW_TO_BOTTOM_DISABLED);
+			return new ButtonControl(moveRowToBottomCommandModel, ImageButtonRenderer.NO_REASON_INSTANCE);
+		}
+	
+		/**
+		 * Creates the button to move a row to the top.
+		 */
+		protected ButtonControl createRowToTop(TableListControl table) {
+			CommandModel moveRowToTopCommandModel = newTableCommandModel(table, MOVE_ROW_TO_TOP_COMMAND);
+			moveRowToTopCommandModel.setImage(Icons.MOVE_ROW_TO_TOP);
+			moveRowToTopCommandModel.setNotExecutableImage(Icons.MOVE_ROW_TO_TOP_DISABLED);
+			return new ButtonControl(moveRowToTopCommandModel, ImageButtonRenderer.NO_REASON_INSTANCE);
+		}
+		
+		/**
+		 * Creates the button to move a row up.
+		 */
+		protected ButtonControl createRowUp(TableListControl table) {
+			CommandModel moveRowUpCommandModel = newTableCommandModel(table, MOVE_ROW_UP_COMMAND);
+			moveRowUpCommandModel.setImage(Icons.MOVE_ROW_UP);
+			moveRowUpCommandModel.setNotExecutableImage(Icons.MOVE_ROW_UP_DISABLED);
+			return new ButtonControl(moveRowUpCommandModel, ImageButtonRenderer.NO_REASON_INSTANCE);
+		}
+
+		/**
+		 * Updates the buttons due to change of table structure or selection.
+		 */
+		protected void updateButtons(TableListControl table,
+				ButtonControl top,
+				ButtonControl up,
+				ButtonControl down,
+				ButtonControl bottom) {
+			TableData tableData = table.getTableData();
+			if (tableData.getSelectionModel() == null || tableData.getViewModel() == null) {
+				top.disable(com.top_logic.tool.execution.I18NConstants.ERROR_NO_MODEL);
+				up.disable(com.top_logic.tool.execution.I18NConstants.ERROR_NO_MODEL);
+				down.disable(com.top_logic.tool.execution.I18NConstants.ERROR_NO_MODEL);
+				bottom.disable(com.top_logic.tool.execution.I18NConstants.ERROR_NO_MODEL);
+				return;
+			}
+
+			int selected = TableUtil.getSingleSelectedRow(tableData);
+			int size = table.getViewModel().getRowCount();
+
+			updateUpButton(top, selected, I18NConstants.MOVE_ROW_TO_TOP_DISABLED);
+			updateUpButton(up, selected, I18NConstants.MOVE_ROW_UP_DISABLED);
+			updateDownButton(down, size, selected, I18NConstants.MOVE_ROW_DOWN_DISABLED);
+			updateDownButton(bottom, size, selected, I18NConstants.MOVE_ROW_TO_BOTTOM_DISABLED);
+		}
+
+		private void updateUpButton(ButtonControl upButton, int selected, ResKey firstRowReason) {
+			boolean nothingSelected = selected < 0;
+			if (nothingSelected) {
+				upButton.disable(I18NConstants.NO_ROW_SELECTED);
+				return;
+			}
+			boolean firstRowSelected = selected < 1;
+			if (firstRowSelected) {
+				upButton.disable(firstRowReason);
+				return;
+			}
+			upButton.enable();
+		}
+
+		private void updateDownButton(ButtonControl downButton, int size, int selected, ResKey lastRowReason) {
+			boolean nothingSelected = selected < 0;
+			if (nothingSelected) {
+				downButton.disable(I18NConstants.NO_ROW_SELECTED);
+				return;
+			}
+
+			boolean lastRowSelected = selected > size - 2;
+			if (lastRowSelected) {
+				downButton.disable(lastRowReason);
+				return;
+			}
+			downButton.enable();
+		}
+
+	}
+
+	/**
+	 * Command to move a row in the list.
+	 */
+	public static abstract class MoveRowCommand extends TableCommand {
+
+		/**
+		 * Creates a new {@link MoveRowCommand}.
+		 */
+		public MoveRowCommand(String aCommand) {
+			super(aCommand);
+		}
+
+		/**
+		 * Triggers a selection changed notification, to use when a row was moved.
+		 * 
+		 * This is necessary because when moving a row the selection index changes but not the
+		 * selected object. Thus no notify is triggered when moving a row. Therefore it has to be
+		 * triggered manually.
+		 */
+		protected void notifyRowMoved(TableControl table) {
+			SelectionModel selectionModel = table.getSelectionModel();
+			table.notifySelectionChanged(selectionModel,
+				new MultiSelectionEvent(selectionModel, Collections.emptySet(), selectionModel.getSelection()));
+		}
+
+	}
+	
+	/**
+	 * Command to move a row up in the list.
+	 *
+	 * @author <a href=mailto:CBR@top-logic.com>CBR</a>
+	 */
+	public static class MoveRowUpCommand extends MoveRowCommand {
+
+		private final static String COMMAND_ID = "MoveRowUpCommand";
 
         /**
          * Creates a {@link MoveRowUpCommand}.
          */
         public MoveRowUpCommand() {
-            super(COMMAND);
+			super(COMMAND_ID);
         }
 
         @Override
 		protected HandlerResult execute(DisplayContext aContext, TableControl aTable, Map<String, Object> aArguments) {
-            EditableRowTableModel theTableModel = (EditableRowTableModel) aTable.getApplicationModel();
-            int theSelectedRow = aTable.getSelectedRow();
-            if (theSelectedRow < 1) return HandlerResult.DEFAULT_RESULT;
-            theTableModel.moveRowUp(theSelectedRow);
-            aTable.setSelectedRow(theSelectedRow - 1);
-			((TableListControl) aTable).notifyRowMoved();
+			EditableRowTableModel theTableModel = (EditableRowTableModel) aTable.getApplicationModel();
+			int theSelectedRow = aTable.getSelectedRow();
+			if (theSelectedRow < 1)
+				return HandlerResult.DEFAULT_RESULT;
+			theTableModel.moveRowUp(theSelectedRow);
+			aTable.setSelectedRow(theSelectedRow - 1);
+			notifyRowMoved(aTable);
             return HandlerResult.DEFAULT_RESULT;
         }
 
@@ -434,31 +652,31 @@ public class TableListControl extends TableControl {
 
     }
 
+	/**
+	 * Command to move a row down in the list.
+	 *
+	 * @author <a href=mailto:CBR@top-logic.com>CBR</a>
+	 */
+	public static class MoveRowDownCommand extends MoveRowCommand {
 
-    /**
-     * Command to move a row down in the list.
-     *
-     * @author <a href=mailto:CBR@top-logic.com>CBR</a>
-     */
-    public static class MoveRowDownCommand extends TableCommand {
-
-		private final static String COMMAND = "MoveRowDownCommand";
+		private final static String COMMAND_ID = "MoveRowDownCommand";
 
         /**
          * Creates a {@link MoveRowDownCommand}.
          */
         public MoveRowDownCommand() {
-            super(COMMAND);
+			super(COMMAND_ID);
         }
 
         @Override
 		protected HandlerResult execute(DisplayContext aContext, TableControl aTable, Map<String, Object> aArguments) {
-            EditableRowTableModel theTableModel = (EditableRowTableModel)aTable.getApplicationModel();
-            int theSelectedRow = aTable.getSelectedRow();
-            if (theSelectedRow < 0 || theSelectedRow > theTableModel.getRowCount() - 2) return HandlerResult.DEFAULT_RESULT;
-            theTableModel.moveRowDown(theSelectedRow);
-            aTable.setSelectedRow(theSelectedRow + 1);
-			((TableListControl) aTable).notifyRowMoved();
+			EditableRowTableModel theTableModel = (EditableRowTableModel) aTable.getApplicationModel();
+			int theSelectedRow = aTable.getSelectedRow();
+			if (theSelectedRow < 0 || theSelectedRow > theTableModel.getRowCount() - 2)
+				return HandlerResult.DEFAULT_RESULT;
+			theTableModel.moveRowDown(theSelectedRow);
+			aTable.setSelectedRow(theSelectedRow + 1);
+			notifyRowMoved(aTable);
             return HandlerResult.DEFAULT_RESULT;
         }
 
@@ -469,32 +687,32 @@ public class TableListControl extends TableControl {
 
     }
 
-
-    /**
+	/**
      * Command to move a row to top in the list.
      *
      * @author <a href=mailto:CBR@top-logic.com>CBR</a>
      */
-    public static class MoveRowToTopCommand extends TableCommand {
+	public static class MoveRowToTopCommand extends MoveRowCommand {
 
-		private final static String COMMAND = "MoveRowToTopCommand";
+		private final static String COMMAND_ID = "MoveRowToTopCommand";
 
         /**
          * Creates a {@link MoveRowToTopCommand}.
          */
         public MoveRowToTopCommand() {
-            super(COMMAND);
+			super(COMMAND_ID);
         }
 
         @Override
 		protected HandlerResult execute(DisplayContext aContext, TableControl aTable, Map<String, Object> aArguments) {
-            EditableRowTableModel theTableModel = (EditableRowTableModel)aTable.getApplicationModel();
-            int theSelectedRow = aTable.getSelectedRow();
-            if (theSelectedRow < 1) return HandlerResult.DEFAULT_RESULT;
-            theTableModel.moveRowToTop(theSelectedRow);
-            aTable.setSelectedRow(0);
-			((TableListControl) aTable).notifyRowMoved();
-            return HandlerResult.DEFAULT_RESULT;
+			EditableRowTableModel theTableModel = (EditableRowTableModel) aTable.getApplicationModel();
+			int theSelectedRow = aTable.getSelectedRow();
+			if (theSelectedRow < 1)
+				return HandlerResult.DEFAULT_RESULT;
+			theTableModel.moveRowToTop(theSelectedRow);
+			aTable.setSelectedRow(0);
+			notifyRowMoved(aTable);
+			return HandlerResult.DEFAULT_RESULT;
         }
 
         @Override
@@ -504,21 +722,20 @@ public class TableListControl extends TableControl {
 
     }
 
-
-    /**
+	/**
      * Command to move a row to bottom in the list.
      *
      * @author <a href=mailto:CBR@top-logic.com>CBR</a>
      */
-    public static class MoveRowToBottomCommand extends TableCommand {
+	public static class MoveRowToBottomCommand extends MoveRowCommand {
 
-		private final static String COMMAND = "MoveRowToBottomCommand";
+		private final static String COMMAND_ID = "MoveRowToBottomCommand";
 
         /**
          * Creates a {@link MoveRowToBottomCommand}.
          */
-        public MoveRowToBottomCommand() {
-            super(COMMAND);
+		public MoveRowToBottomCommand() {
+			super(COMMAND_ID);
         }
 
         @Override
@@ -528,7 +745,7 @@ public class TableListControl extends TableControl {
             if (theSelectedRow < 0 || theSelectedRow > theTableModel.getRowCount() - 2) return HandlerResult.DEFAULT_RESULT;
             theTableModel.moveRowToBottom(theSelectedRow);
             aTable.setSelectedRow(theTableModel.getRowCount() - 1);
-			((TableListControl) aTable).notifyRowMoved();
+			notifyRowMoved(aTable);
             return HandlerResult.DEFAULT_RESULT;
         }
 
@@ -539,6 +756,53 @@ public class TableListControl extends TableControl {
 
     }
 
+	/**
+	 * {@link ToolbarFragment} creating a button to remove the selected row.
+	 * 
+	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+	 */
+	public static class RemoveRowFragment extends SelectionObservingFragment<ButtonControl> {
+
+		private RowObjectRemover _remover;
+
+		/**
+		 * Creates a new {@link RemoveRowFragment}.
+		 */
+		public RemoveRowFragment(RowObjectRemover remover) {
+			_remover = remover;
+		}
+
+		@Override
+		protected ButtonControl createButton(TableListControl table) {
+			CommandModel removeRowCommandModel = newTableCommandModel(table, new RemoveRowCommand(_remover));
+			removeRowCommandModel.setImage(Icons.DELETE_TOOLBAR);
+			removeRowCommandModel.setNotExecutableImage(Icons.DELETE_TOOLBAR_DISABLED);
+			return new ButtonControl(removeRowCommandModel);
+		}
+
+		@Override
+		protected void updateButton(ButtonControl button, TableListControl table) {
+			TableData tableData = table.getTableData();
+			if (tableData.getSelectionModel() == null || tableData.getViewModel() == null) {
+				button.disable(com.top_logic.tool.execution.I18NConstants.ERROR_NO_MODEL);
+				return;
+			}
+
+			int selected = TableUtil.getSingleSelectedRow(tableData);
+			boolean nothingSelected = selected < 0;
+			if (nothingSelected) {
+				button.disable(I18NConstants.NO_ROW_SELECTED);
+				return;
+			}
+			ResKey disabledReason = _remover.allowRemoveRow(selected, tableData, table);
+			if (disabledReason == null) {
+				button.enable();
+			} else {
+				button.disable(disabledReason);
+			}
+		}
+
+	}
 
     /**
      * Command to remove a row from the list.
@@ -547,20 +811,23 @@ public class TableListControl extends TableControl {
      */
     public static class RemoveRowCommand extends TableCommand {
 
-		private final static String COMMAND = "RemoveRowCommand";
+		private final static String COMMAND_ID = "RemoveRowCommand";
+
+		private RowObjectRemover _remover;
 
         /**
          * Creates a {@link RemoveRowCommand}.
          */
-        public RemoveRowCommand() {
-            super(COMMAND);
+		public RemoveRowCommand(RowObjectRemover remover) {
+			super(COMMAND_ID);
+			_remover = remover;
         }
 
         @Override
 		protected HandlerResult execute(DisplayContext aContext, TableControl aTable, Map<String, Object> aArguments) {
             EditableRowTableModel theTableModel = (EditableRowTableModel)aTable.getApplicationModel();
-            RowObjectRemover theRowObjectRemover = ((TableListControl)aTable).getRowObjectRemover();
-            if (theRowObjectRemover == null) return HandlerResult.DEFAULT_RESULT;
+			if (_remover == null)
+				return HandlerResult.DEFAULT_RESULT;
             int theSelectedRow = aTable.getSelectedRow();
             if (theSelectedRow < 0) return HandlerResult.DEFAULT_RESULT;
 			int theApplicationRow = aTable.getViewModel().getApplicationModelRow(theSelectedRow);
@@ -570,7 +837,7 @@ public class TableListControl extends TableControl {
             if (theRowCount > 0) {
                 aTable.setSelectedRow(theSelectedRow >= theRowCount ? theRowCount - 1 : theSelectedRow);
             }
-            theRowObjectRemover.removeRow(theRowObject, aTable);
+			_remover.removeRow(theRowObject, aTable);
             return HandlerResult.DEFAULT_RESULT;
 
         }

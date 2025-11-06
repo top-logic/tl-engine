@@ -34,6 +34,30 @@ public class BinaryDataFactory {
 	public static final int MAX_MEMORY_SIZE = 4096;
 
 	/**
+	 * Creates a {@link BinaryData} from an Base64 encoded string with content-type
+	 * {@link BinaryData#CONTENT_TYPE_OCTET_STREAM} and no name.
+	 */
+	public static BinaryData decodeBase64(String base64) {
+		return decodeBase64(base64, BinaryData.CONTENT_TYPE_OCTET_STREAM);
+	}
+
+	/**
+	 * Creates a {@link BinaryData} from an Base64 encoded string with the given content-type and no
+	 * name.
+	 */
+	public static BinaryData decodeBase64(String base64, String contentType) {
+		return decodeBase64(base64, contentType, BinaryData.NO_NAME);
+	}
+
+	/**
+	 * Creates a {@link BinaryData} from an Base64 encoded string with the given content-type and
+	 * name.
+	 */
+	public static BinaryData decodeBase64(String base64, String contentType, String name) {
+		return new Base64BinaryData(name, base64, contentType);
+	}
+
+	/**
 	 * Creates a {@link BinaryData} from byte array contents with content-type
 	 * {@link BinaryData#CONTENT_TYPE_OCTET_STREAM} and no name.
 	 */

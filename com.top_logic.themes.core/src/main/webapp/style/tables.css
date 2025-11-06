@@ -1310,9 +1310,13 @@ div.dirtyHandlingDialog .changes {
   }
 }
 
-.h-100:not(+ .cError) {
-  	height: 100% !important;
-  	overflow: auto;
+.h-100 {
+	height: 100% !important;
+	overflow: auto;
+}
+
+.h-100:has(~ .cError) {
+	height: unset !important;
 }
 
 .w-100 {

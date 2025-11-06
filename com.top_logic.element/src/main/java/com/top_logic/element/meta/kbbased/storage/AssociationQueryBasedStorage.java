@@ -16,14 +16,12 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.meta.MOClass;
 import com.top_logic.dob.meta.MOReference;
-import com.top_logic.element.meta.AttributeUpdateContainer;
 import com.top_logic.element.meta.kbbased.AttributeUtil;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.AssociationQuery;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.db2.AssociationSetQuery;
-import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.export.PreloadContribution;
@@ -123,24 +121,10 @@ public abstract class AssociationQueryBasedStorage<C extends AbstractStorage.Con
 		return _knowledgeBase;
 	}
 
-	/**
-	 * Check if the given value may be used to update this attribute
-	 * 
-	 * @param context
-	 *        The object to access.
-	 * @param attribute
-	 *        The attribute to access.
-	 * @param value
-	 *        the simple value of the given <code>update</code>
-	 * @param container
-	 *        The intended updates.
-	 * @throws TopLogicException
-	 *         If the value is not compatible with the given attribute.
-	 */
-	protected void checkSetValue(Wrapper context, TLStructuredTypePart attribute, Object value,
-			AttributeUpdateContainer container) {
-		if (context != null) {
-			AttributeUtil.checkHasAttribute(context, attribute);
+	@Override
+	protected void checkSetValue(TLObject object, TLStructuredTypePart attribute, Object value) {
+		if (object != null) {
+			AttributeUtil.checkHasAttribute(object, attribute);
 		}
 		if (value == null) {
 			return;

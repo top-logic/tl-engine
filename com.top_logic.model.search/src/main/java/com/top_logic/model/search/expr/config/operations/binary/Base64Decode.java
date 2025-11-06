@@ -5,14 +5,11 @@
  */
 package com.top_logic.model.search.expr.config.operations.binary;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Base64;
 import java.util.List;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.mime.MimeTypesModule;
 import com.top_logic.element.meta.TypeSpec;
 import com.top_logic.model.TLType;
@@ -91,55 +88,7 @@ public class Base64Decode extends GenericMethod implements WithFlatMapSemantics<
 			contentType = specifiedContentType;
 		}
 
-		return new BinaryData() {
-			@Override
-			public InputStream getStream() throws IOException {
-				return Base64.getDecoder().wrap(new ASCIISource(data));
-			}
-
-			@Override
-			public String getName() {
-				return name;
-			}
-
-			@Override
-			public long getSize() {
-				return -1;
-			}
-
-			@Override
-			public String getContentType() {
-				return contentType;
-			}
-		};
-	}
-
-	/**
-	 * String buffer accepting binary data in ASCII encoding scheme.
-	 */
-	private static final class ASCIISource extends InputStream {
-		private final String _input;
-
-		private int _pos;
-
-		/**
-		 * Creates a {@link ASCIISource}.
-		 *
-		 * @param input
-		 *        The ASCII value to read.
-		 */
-		public ASCIISource(String input) {
-			_input = input;
-			_pos = 0;
-		}
-
-		@Override
-		public int read() throws IOException {
-			if (_pos >= _input.length()) {
-				return -1;
-			}
-			return _input.charAt(_pos++) & 0xFF;
-		}
+		return BinaryDataFactory.decodeBase64(data, contentType, name);
 	}
 
 	/**

@@ -59,6 +59,9 @@
 		>
 			<acceptable-classifiers value="table, commons"/>
 		</property>
+		<property name="onSelectionChange"
+			instance-type="com.top_logic.layout.component.OnSelectionChangeHandler"
+		/>
 	</properties>
 
 	<flowChart name="Chart"

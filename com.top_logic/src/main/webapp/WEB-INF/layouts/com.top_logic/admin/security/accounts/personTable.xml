@@ -58,9 +58,7 @@
 			rowStyle="%FROZEN_TABLE_ROW_SMALL_STYLE%"
 			showTitle="true"
 		>
-			<column-default
-				columnWidth="${columnWidth}"
-			/>
+			<column-default columnWidth="${columnWidth}"/>
 		</table>
 		<buttons>
 			<button id="exportExcel"

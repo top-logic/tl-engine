@@ -79,8 +79,8 @@ public class InstanceResolverByExpression extends AbstractConfiguredInstance<Ins
 	}
 
 	@Override
-	public TLObject resolve(I18NLog log, String kind, String id) {
-		return SearchExpression.asTLObject(_resolver.getSearch(), _resolver.execute(id));
+	public TLObject resolve(I18NLog log, Object context, String kind, String id) {
+		return SearchExpression.asTLObject(_resolver.getSearch(), _resolver.execute(id, context));
 	}
 
 	@Override

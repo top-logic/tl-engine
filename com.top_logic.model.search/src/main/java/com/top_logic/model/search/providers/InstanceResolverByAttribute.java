@@ -132,8 +132,8 @@ public class InstanceResolverByAttribute extends AbstractConfiguredInstance<Inst
 	}
 
 	@Override
-	public TLObject resolve(I18NLog log, String kind, String id) {
-		return _resolver.resolve(log, kind, id);
+	public TLObject resolve(I18NLog log, Object context, String kind, String id) {
+		return _resolver.resolve(log, context, kind, id);
 	}
 
 	@Override

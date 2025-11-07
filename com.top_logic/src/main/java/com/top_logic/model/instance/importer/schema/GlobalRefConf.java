@@ -44,7 +44,7 @@ public interface GlobalRefConf extends ValueConf {
 	 * and may vary from {@link #getKind() type} to {@link #getKind() type}.
 	 * </p>
 	 * 
-	 * @see InstanceResolver#resolve(I18NLog, String, String)
+	 * @see InstanceResolver#resolve(I18NLog, Object, String, String)
 	 */
 	@Mandatory
 	String getId();

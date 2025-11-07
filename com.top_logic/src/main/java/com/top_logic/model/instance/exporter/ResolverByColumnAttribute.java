@@ -40,7 +40,7 @@ public final class ResolverByColumnAttribute implements InstanceResolver {
 	}
 
 	@Override
-	public TLObject resolve(I18NLog log, String kind, String id) {
+	public TLObject resolve(I18NLog log, Object context, String kind, String id) {
 		Object value = XMLInstanceImporter.parse(log, _idValueType, id);
 		KnowledgeObject item = (KnowledgeObject) PersistencyLayer.getKnowledgeBase()
 			.getObjectByAttribute(_tableName, _idColumn, value);

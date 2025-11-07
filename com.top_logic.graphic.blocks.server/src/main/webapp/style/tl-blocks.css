@@ -1,4 +1,16 @@
-text {font-family: Arial; font-size: 14px; }
+
+/*
+   Default font properties that the layout algorithm can rely on, if not explicitly specified at diagram level.
+
+   Note: Values defined in CSS take precedence. Therefore, a selector must only 
+   apply, when not explicitly set at element level. When an explicit CSS attribute
+   is specified, it is likely that this is used to select an icon font. Therefore, 
+   the default setting must not apply also, since the selector is now more specific
+   than that of the icon font.
+*/
+text:not([font-family]):not([class]) {font-family: Arial }
+text:not([font-size]):not([class]) {font-size: 14px; }
+
 g.tlbA path.tlbShape {stroke: #265699; fill: #4C97FF; }
 g.tlbA path.tlbBorder {stroke: #6897d9; fill: none; }
 g.tlbB path.tlbShape {stroke: #996711; fill: #FFAB19; }

@@ -60,13 +60,7 @@
 		>
 			<column-default
 				columnWidth="${columnWidth}"
-				filterProvider="com.top_logic.layout.table.filter.LabelFilterProvider"
 			/>
-			<columns>
-				<column name="admin"
-					filterProvider="com.top_logic.layout.table.filter.SimpleBooleanFilterProvider"
-				/>
-			</columns>
 		</table>
 		<buttons>
 			<button id="exportExcel"

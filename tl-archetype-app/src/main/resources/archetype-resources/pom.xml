@@ -112,6 +112,10 @@
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-contact</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-graphic-blocks-server</artifactId>
+		</dependency>
 #if ($useChartJS == "true")
 		<dependency>
 			<groupId>com.top-logic</groupId>

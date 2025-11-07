@@ -194,6 +194,8 @@ public class ColumnDescription extends ColumnConfiguration {
 
 	private void copyFrom(ColumnDescription templateColumn) {
 		updateFrom(PropertyCopier.INSTANCE, templateColumn.getSettings());
+		// Copy the internal flag that tracks explicit full-text provider setting
+		this.fullTextProviderExplicitlySet = templateColumn.fullTextProviderExplicitlySet;
 	}
 
 	@Override
@@ -405,23 +407,10 @@ public class ColumnDescription extends ColumnConfiguration {
 
 	@Override
 	public LabelProvider getFullTextProvider() {
-		if (useResourceProviderAsFullTextProvider()) {
+		if (!fullTextProviderExplicitlySet) {
 			return getResourceProvider();
 		}
 		return fullTextProvider;
-	}
-
-	private boolean useResourceProviderAsFullTextProvider() {
-		// If the full text provider is explicitly set to null, don't use fallback
-		if (fullTextProvider == null && fullTextProviderExplicitlySet) {
-			return false;
-		}
-		// If the full text provider is null but not explicitly set, use fallback
-		if (fullTextProvider == null) {
-			return true;
-		}
-		// If the full text provider is not null, check if it was explicitly set
-		return !fullTextProviderExplicitlySet;
 	}
 
 	@Override
@@ -442,17 +431,6 @@ public class ColumnDescription extends ColumnConfiguration {
 		if (!fullTextProviderExplicitlySet) {
 			copyFullTextProvider(fullTextProvider);
 		}
-	}
-
-	@Override
-	protected void setFullTextProviderExplicitlySet(boolean explicitlySet) {
-		checkFrozen();
-		this.fullTextProviderExplicitlySet = explicitlySet;
-	}
-
-	@Override
-	protected boolean isFullTextProviderExplicitlySet() {
-		return fullTextProviderExplicitlySet;
 	}
 
     @Override

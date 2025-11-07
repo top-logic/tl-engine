@@ -657,18 +657,6 @@ public abstract class ColumnConfiguration extends ColumnBase
 	protected abstract void setFullTextProviderAsDefault(LabelProvider fullTextProvider);
 
 	/**
-	 * Internal method to set the explicitly set flag.
-	 * This method is for internal property system use only.
-	 */
-	protected abstract void setFullTextProviderExplicitlySet(boolean explicitlySet);
-
-	/**
-	 * Internal method to get the explicitly set flag.
-	 * This method is for internal property system use only.
-	 */
-	protected abstract boolean isFullTextProviderExplicitlySet();
-
-	/**
 	 * @see #getCellRenderer()
 	 */
 	public abstract void setCellRenderer(CellRenderer cellRenderer);
@@ -989,22 +977,6 @@ public abstract class ColumnConfiguration extends ColumnBase
 			@Override
 			public Object get(ColumnConfiguration self) {
 				return self.getFullTextProvider();
-			}
-		},
-		new ColumnConfiguration.Property(ColumnConfig.FULL_TEXT_PROVIDER_EXPLICITLY_SET) {
-			@Override
-			public void set(ColumnConfiguration self, Object value) {
-				self.setFullTextProviderExplicitlySet((Boolean) value);
-			}
-
-			@Override
-			public void copy(ColumnConfiguration self, Object value) {
-				self.setFullTextProviderExplicitlySet((Boolean) value);
-			}
-
-			@Override
-			public Object get(ColumnConfiguration self) {
-				return self.isFullTextProviderExplicitlySet();
 			}
 		},
 		new ColumnConfiguration.Property(ColumnConfig.FIELD_PROVIDER) {

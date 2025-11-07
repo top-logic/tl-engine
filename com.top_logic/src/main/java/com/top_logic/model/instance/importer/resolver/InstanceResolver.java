@@ -25,14 +25,18 @@ public interface InstanceResolver {
 	 * 
 	 * @param log
 	 *        The export log to report problems to.
+	 * @param context
+	 *        The context of the import. It is constant for all objects resolved during a single
+	 *        import and specified before the import starts, see
+	 *        {@link XMLInstanceImporter#setContext(Object)}.
 	 * @param kind
-	 *        Kind of resolver, see {@link XMLInstanceImporter}#addResolver(xxx)
+	 *        Kind of resolver, see
+	 *        {@link XMLInstanceImporter#addResolver(String, InstanceResolver)}
 	 * @param id
 	 *        The textual identifier of the object, see {@link GlobalRefConf#getId()}
-	 * 
 	 * @return The resolved object, or <code>null</code>, if no such object was found.
 	 */
-	TLObject resolve(I18NLog log, String kind, String id);
+	TLObject resolve(I18NLog log, Object context, String kind, String id);
 
 	/**
 	 * Creates a textual identifier for the given object.
@@ -40,7 +44,7 @@ public interface InstanceResolver {
 	 * @param obj
 	 *        The object to identify.
 	 * @return A textual identifier for the given object resolvable by
-	 *         {@link #resolve(I18NLog, String, String)}. See {@link GlobalRefConf#getId()}.
+	 *         {@link #resolve(I18NLog, Object, String, String)}. See {@link GlobalRefConf#getId()}.
 	 */
 	String buildId(TLObject obj);
 

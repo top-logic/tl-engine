@@ -48,7 +48,7 @@ public class PersistentObjectResolver implements InstanceResolver {
 	}
 
 	@Override
-	public TLObject resolve(I18NLog log, String kind, String id) {
+	public TLObject resolve(I18NLog log, Object context, String kind, String id) {
 		ObjectKey key;
 		try {
 			key = ObjectKey.fromStringObjectKey(_kb.getMORepository(), id);

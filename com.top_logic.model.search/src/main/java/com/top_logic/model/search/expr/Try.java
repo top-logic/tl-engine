@@ -110,8 +110,8 @@ public class Try extends SearchExpression {
 		 * Description of parameters for a {@link Try}.
 		 */
 		public static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
-			.mandatory("tryBlock")
-			.optional("catchFun")
+			.mandatory("eval")
+			.optional("catch")
 			.build();
 
 		/**

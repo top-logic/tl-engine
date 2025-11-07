@@ -1,28 +1,28 @@
 <h2>​​Syntax</h2>
 
 <pre>
-	<code>try($tryBlock, $catchFun)</code>
+	<code>try($eval, $catch)</code>
 </pre>
 
 <h2>Beschreibung</h2>
 
 <div>
-<div>Führt einen Try-Block aus und behandelt auftretende Fehler durch eine Catch-Funktion. Die try-Funktion implementiert ein try-catch-Verhalten für TLScript, das eine robuste Fehlerbehandlung ermöglicht.</div>
+<div>Führt einen Code-Block oder Ausdruck aus und behandelt auftretende Fehler über einen optionalen <code>catch</code>-Block. Die try-Funktion implementiert ein try-catch-Verhalten für TLScript, das eine robuste Fehlerbehandlung ermöglicht.</div>
 </div>
 
 <p>Die Funktion arbeitet mit zwei Parametern:</p>
 
 <ol>
-	<li><strong>Try-Block</strong>: Der auszuführende Code-Block oder Ausdruck, der einen Fehler verursachen könnte</li>
-	<li><strong>Catch-Funktion</strong>: Die Fallback-Funktion, die bei einem Fehler ausgeführt wird</li>
+	<li><strong>eval</strong>: Der auszuführende Code-Block oder Ausdruck, der einen Fehler verursachen könnte.</li>
+	<li><strong>catch</strong>: Ein optionaler Code-Block oder Ausdruck, der ausgeführt wird, wenn während der Ausführung von <code>eval</code> ein Fehler auftritt.</li>
 </ol>
 
 <div>
-<div>Bei erfolgreicher Ausführung des try-Blocks wird dessen Ergebnis zurückgegeben. Tritt ein Fehler auf, wird die catch-Funktion mit spezifischen Parametern ausgeführt:</div>
+<div>Wird der <code>eval</code>-Block erfolgreich ausgeführt, wird dessen Ergebnis zurückgegeben. Tritt ein Fehler auf, wird der <code>catch</code>-Block ausgeführt. Dieser erhält Informationen zur aufgetretenen Ausnahme abhängig vom Fehlertyp:</div>
 
 <ul>
-	<li><strong>I18NException</strong>: catch-Funktion erhält (ResKey, ursprüngliches Argument)</li>
-	<li><strong>Reguläre Exception</strong>: catch-Funktion erhält (Fehlermeldung, ursprüngliches Argument)</li>
+	<li><strong>I18NException</strong>: <code>catch</code>-Block erhält (<code>ResKey</code>, ursprüngliches Argument)</li>
+	<li><strong>Reguläre Exception</strong>: <code>catch</code>-Block erhält (<code>Fehlermeldung</code>, ursprüngliches Argument)</li>
 </ul>
 </div>
 
@@ -39,17 +39,17 @@
 		</tr>
 		<tr>
 			<td>
-			<p>tryBlock</p>
+			<p>eval</p>
 			</td>
-			<td>Code-Block / Ausdruck</td>
+			<td>Code-Block oder Ausdruck</td>
 			<td>Der Code-Block oder Ausdruck, der ausgeführt werden soll.</td>
 			<td>ja</td>
 			<td>-</td>
 		</tr>
 		<tr>
-			<td>catchFun</td>
-			<td>Funktion</td>
-			<td>Die Fallback-Funktion, die bei einem Fehler ausgeführt wird. Erhält das Exception-Objekt als Parameter</td>
+			<td>catch</td>
+			<td>Code-Block oder Ausdruck</td>
+			<td>Der Code-Block oder Ausdruck, der bei einem Fehler ausgeführt wird. Erhält das Exception-Objekt als Parameter</td>
 			<td>nein</td>
 			<td>null</td>
 		</tr>
@@ -61,7 +61,7 @@
 <p><strong>Typ:</strong> Object</p>
 
 <div>
-<div>Gibt das Ergebnis des try-Blocks zurück, wenn dieser erfolgreich ausgeführt wurde. Bei einem Fehler wird das Ergebnis der catch-Funktion zurückgegeben. Ist keine catch-Funktion angegeben, wird bei einem Fehler<code class="hljs inlineCode">null</code>zurückgegeben.</div>
+<div>Gibt das Ergebnis des <code>eval</code>-Blocks zurück, wenn dieser erfolgreich ausgeführt wurde. Tritt ein Fehler auf, wird das Ergebnis des <code>catch</code>-Blocks zurückgegeben. Ist kein <code>catch</code>-Block angegeben, wird bei einem Fehler <code class="hljs inlineCode">null</code> zurückgegeben.</div>
 </div>
 
 <h2>Beispiele</h2>
@@ -73,7 +73,7 @@
     to: $emailAddr,
     body: $emailBody
   ),
-  catchFun: mailError -&gt; {
+  catch: mailError -&gt; {
     info("E-Mail-Zustellung an " + $emailAddr + " fehlgeschlagen. Grund: " + $mailError);
     false
   }

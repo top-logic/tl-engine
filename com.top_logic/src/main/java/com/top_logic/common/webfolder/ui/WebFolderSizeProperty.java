@@ -7,13 +7,14 @@ package com.top_logic.common.webfolder.ui;
 
 import com.top_logic.knowledge.wrap.Document;
 import com.top_logic.layout.PropertyAccessor;
+import com.top_logic.layout.ValidObjectPropertyAccessor;
 
 /**
  * {@link PropertyAccessor} for the {@link Document#getSize()} property.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class WebFolderSizeProperty extends WebFolderPropertyAccessor<Object> {
+public class WebFolderSizeProperty extends ValidObjectPropertyAccessor<Object> {
 	
 	/**
 	 * Singleton {@link WebFolderSizeProperty} instance.

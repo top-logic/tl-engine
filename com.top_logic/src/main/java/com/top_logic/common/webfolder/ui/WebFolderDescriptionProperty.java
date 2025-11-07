@@ -9,13 +9,14 @@ import com.top_logic.knowledge.wrap.Document;
 import com.top_logic.knowledge.wrap.DocumentVersion;
 import com.top_logic.knowledge.wrap.WebFolder;
 import com.top_logic.layout.PropertyAccessor;
+import com.top_logic.layout.ValidObjectPropertyAccessor;
 
 /**
  * {@link PropertyAccessor} for the {@link DocumentVersion#getDescription()} property.
  * 
  * @author <a href="mailto:Diana.Pankratz@top-logic.com">Diana Pankratz</a>
  */
-public class WebFolderDescriptionProperty extends WebFolderPropertyAccessor<Object> {
+public class WebFolderDescriptionProperty extends ValidObjectPropertyAccessor<Object> {
 	
 	/**
 	 * Singleton {@link WebFolderDescriptionProperty} instance.

@@ -11,6 +11,7 @@ import com.top_logic.dsa.util.MimeTypes;
 import com.top_logic.knowledge.wrap.Document;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.layout.PropertyAccessor;
+import com.top_logic.layout.ValidObjectPropertyAccessor;
 import com.top_logic.layout.provider.MetaLabelProvider;
 
 /**
@@ -18,7 +19,7 @@ import com.top_logic.layout.provider.MetaLabelProvider;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class WebFolderMimetypeProperty extends WebFolderPropertyAccessor<Object> {
+public class WebFolderMimetypeProperty extends ValidObjectPropertyAccessor<Object> {
 	
 	/**
 	 * Singleton {@link WebFolderMimetypeProperty} instance.

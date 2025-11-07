@@ -4,17 +4,21 @@
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
 
-package com.top_logic.common.webfolder.ui;
+package com.top_logic.layout;
 
-import com.top_logic.layout.ReadOnlyPropertyAccessor;
 import com.top_logic.layout.component.ComponentUtil;
 
 /**
  * {@link ReadOnlyPropertyAccessor} checking for valid objects.
  * 
+ * <p>
+ * If the value for an {@link ComponentUtil#isValid(Object) invalid} object is requested,
+ * <code>null</code> is returned.
+ * </p>
+ * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public abstract class WebFolderPropertyAccessor<T> extends ReadOnlyPropertyAccessor<T> {
+public abstract class ValidObjectPropertyAccessor<T> extends ReadOnlyPropertyAccessor<T> {
 
 	@Override
 	public Object getValue(T target) {

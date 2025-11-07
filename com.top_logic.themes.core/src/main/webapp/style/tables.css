@@ -1264,6 +1264,10 @@ table.tl-table td .cDateTime .lFixedRight .cDateInput .lFlexible {
 	width: 100%;
 }
 
+.popupEditField .tlscript:not(.fullSize) + .cError {
+	display: none;
+}
+
 div.dirtyHandlingDialog {
 	width: 100%;
 	height: 100%; 

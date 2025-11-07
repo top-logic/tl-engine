@@ -15,11 +15,9 @@ import com.top_logic.basic.config.annotation.Mandatory;
  * <p>
  * Provides mathematical functions for TL-Script usage by delegating to Math.
  * </p>
- *
- * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 @ScriptPrefix("math")
-public class MathFuncions extends TLScriptFunctions {
+public class MathFunctions extends TLScriptFunctions {
 
 	/**
 	 * Returns the absolute value of a double value.

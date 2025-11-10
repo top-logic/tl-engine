@@ -106,7 +106,7 @@ public abstract class AbstractDiffDeletionQuery extends AbstractDiffQuery {
 		
 		List<SQLOrder> orderBy = new ArrayList<>();
 		if (multipleBranches) {
-			orderBy.add(order(false, column(sourceAlias, getBranchColumnName())));
+			orderBy.add(order(column(sourceAlias, getBranchColumnName())));
 		}
 
 		Map<String, DBAttribute> attrByDBName = newDBAttributeMapping();

@@ -888,6 +888,24 @@ public class SQLFactory {
 	}
 
 	/**
+	 * Creates a {@link SQLOrder#isDescending() ascending} order with the given expression.
+	 * 
+	 * @see #orderDescending(SQLExpression)
+	 */
+	public static SQLOrder order(SQLExpression expr) {
+		return order(false, expr);
+	}
+
+	/**
+	 * Creates a {@link SQLOrder#isDescending() descending} order with the given expression.
+	 * 
+	 * @see #order(SQLExpression)
+	 */
+	public static SQLOrder orderDescending(SQLExpression expr) {
+		return order(true, expr);
+	}
+
+	/**
 	 * An {@link SQLLiteral} representing <code>null</code> if the given {@link DBType}.
 	 */
 	public static SQLLiteral literalNull(DBType sqlType) {

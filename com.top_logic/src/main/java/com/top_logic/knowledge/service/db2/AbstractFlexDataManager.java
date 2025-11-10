@@ -1074,7 +1074,7 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 				ge(column(tableAlias, BasicTypes.REV_MAX_DB_NAME, NOT_NULL), parameter(DBType.LONG, HISTORY_CONTEXT)),
 				le(column(tableAlias, BasicTypes.REV_MIN_DB_NAME, NOT_NULL), parameter(DBType.LONG, HISTORY_CONTEXT))
 				);
-			List<SQLOrder> order = orders(order(false, column(tableAlias, IDENTIFIER_DBNAME)));
+				List<SQLOrder> order = orders(order(column(tableAlias, IDENTIFIER_DBNAME)));
 			SQLSelect select = select(columns, from, where, order);
 			select.setNoBlockHint(true);
 			List<Parameter> parameters = new ArrayList<>();

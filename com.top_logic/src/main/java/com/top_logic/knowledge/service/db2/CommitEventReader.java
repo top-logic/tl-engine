@@ -73,7 +73,7 @@ public class CommitEventReader extends AbstractKnowledgeEventReader<CommitEvent>
 		_logAttr = RevisionType.getLogAttribute(revisionType);
 		String tableAlias = NO_TABLE_ALIAS;
 		SQLExpression revisionFilter = attributeRange(tableAlias, _revisionAttr, startRev, stopRev);
-		List<SQLOrder> revisionOrder = orders(order(false, column(tableAlias, _revisionAttr, NOT_NULL)));
+		List<SQLOrder> revisionOrder = orders(order(column(tableAlias, _revisionAttr, NOT_NULL)));
 		
 		ItemQuery revisionQuery =
 			new ItemQuery(kb.dbHelper, revisionType, tableAlias, revisionFilter, revisionOrder);

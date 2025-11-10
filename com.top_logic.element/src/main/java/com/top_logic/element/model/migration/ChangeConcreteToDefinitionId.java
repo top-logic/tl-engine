@@ -194,12 +194,12 @@ public class ChangeConcreteToDefinitionId extends AbstractConfiguredInstance<Cha
 			}
 			List<SQLOrder> orders = new ArrayList<>();
 			if (branchCol != null) {
-				orders.add(order(false, sqlUtils.branchColumnRef()));
+				orders.add(order(sqlUtils.branchColumnRef()));
 			}
 			for (String idCol : getConfig().getIDColumns()) {
-				orders.add(order(false, column(idCol)));
+				orders.add(order(column(idCol)));
 			}
-			orders.add(order(true, column(BasicTypes.REV_MIN_DB_NAME)));
+			orders.add(orderDescending(column(BasicTypes.REV_MIN_DB_NAME)));
 
 			query = query(select(
 				columns,

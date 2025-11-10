@@ -170,9 +170,9 @@ public class InternationalizeAttributeProcessor extends AbstractConfiguredInstan
 								eqSQL(column(AbstractFlexDataManager.ATTRIBUTE_DBNAME),
 									literal(DBType.STRING, column))),
 							orders(
-								order(false, util.branchColumnRef()),
-								order(false, column(BasicTypes.IDENTIFIER_DB_NAME)),
-								order(false, column(BasicTypes.REV_MIN_DB_NAME))))).toSql(sqlDialect);
+								order(util.branchColumnRef()),
+								order(column(BasicTypes.IDENTIFIER_DB_NAME)),
+								order(column(BasicTypes.REV_MIN_DB_NAME))))).toSql(sqlDialect);
 				} else {
 					flex = false;
 					String valueColumn = objColumn.getDbMapping()[0].getDBName();
@@ -188,9 +188,9 @@ public class InternationalizeAttributeProcessor extends AbstractConfiguredInstan
 							table(table.getDBMapping().getDBName()),
 							inSet(column(tTypeColumn), implIds, DBType.ID),
 							orders(
-								order(false, util.branchColumnRef()),
-								order(false, column(BasicTypes.IDENTIFIER_DB_NAME)),
-								order(false, column(BasicTypes.REV_MIN_DB_NAME))))).toSql(sqlDialect);
+								order(util.branchColumnRef()),
+								order(column(BasicTypes.IDENTIFIER_DB_NAME)),
+								order(column(BasicTypes.REV_MIN_DB_NAME))))).toSql(sqlDialect);
 				}
 
 				long start = System.nanoTime();

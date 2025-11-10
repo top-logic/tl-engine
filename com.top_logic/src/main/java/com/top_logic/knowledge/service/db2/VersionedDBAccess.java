@@ -142,7 +142,7 @@ class VersionedDBAccess extends DefaultDBAccess {
 		DBAttribute idAttribute = id();
 		SQLExpression idCheck = inSet(column(tableAlias, idAttribute.getDBName()), setParam(idAttribute));
 		Parameter idParamDef = setParamDef(idAttribute);
-		List<SQLOrder> orders = orders(order(false, column(tableAlias, idAttribute.getDBName())));
+		List<SQLOrder> orders = orders(order(column(tableAlias, idAttribute.getDBName())));
 		return createFetchStatement(tableAlias, idCheck, idParamDef, historicData, orders);
 	}
 

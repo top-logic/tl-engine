@@ -200,9 +200,9 @@ public class RevisionXref {
 				le(column(tableAlias, revRef.getDBName()), parameter(revRef, "lastRev"))
 				);
 			List<SQLOrder> orderBy = orders(
-				order(false, column(tableAlias, revRef.getDBName())),
-				order(false, column(tableAlias, branchRef.getDBName())),
-				order(false, column(tableAlias, typeRef.getDBName()))
+				order(column(tableAlias, revRef.getDBName())),
+				order(column(tableAlias, branchRef.getDBName())),
+				order(column(tableAlias, typeRef.getDBName()))
 				);
 			SQLSelect select = select(columns, from, where, orderBy);
 			List<Parameter> parameters = parameters(

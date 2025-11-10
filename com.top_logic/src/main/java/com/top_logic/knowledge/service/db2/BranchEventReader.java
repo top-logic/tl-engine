@@ -74,7 +74,7 @@ public class BranchEventReader extends AbstractKnowledgeEventReader<BranchEvent>
 		_branchIDAttr = BranchSupport.getBranchIDAttr(branchType);
 		_createRevAttr = BranchSupport.getCreateRevAttr(branchType);
 		SQLExpression branchFilter = attributeRange(tableAlias, _createRevAttr, startRev, stopRev);
-		List<SQLOrder> branchOrder = orders(order(false, column(tableAlias, _createRevAttr, NOT_NULL)));
+		List<SQLOrder> branchOrder = orders(order(column(tableAlias, _createRevAttr, NOT_NULL)));
 		
 		ItemQuery branchQuery =
 			new ItemQuery(kb.dbHelper, branchType, tableAlias, branchFilter, branchOrder);

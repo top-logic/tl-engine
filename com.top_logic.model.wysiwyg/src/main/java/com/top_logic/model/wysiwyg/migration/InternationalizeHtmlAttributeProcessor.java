@@ -160,9 +160,9 @@ public class InternationalizeHtmlAttributeProcessor extends InternationalizeAttr
 							eqSQL(column(objRef.getColumn(ReferencePart.type).getDBName()),
 								literal(DBType.STRING, config.getTable()))),
 						orders(
-							order(false, util.branchColumnRef()),
-							order(false, column(BasicTypes.IDENTIFIER_DB_NAME)),
-							order(false, column(BasicTypes.REV_MIN_DB_NAME))))).toSql(sqlDialect);
+							order(util.branchColumnRef()),
+							order(column(BasicTypes.IDENTIFIER_DB_NAME)),
+							order(column(BasicTypes.REV_MIN_DB_NAME))))).toSql(sqlDialect);
 
 				select.setResultSetConfiguration(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
 

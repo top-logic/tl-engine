@@ -322,8 +322,8 @@ public class SynthesizeLinksProcessor extends AbstractConfiguredInstance<Synthes
 				table(tableName),
 				eqSQL(column(T_TYPE_ID_DB_NAME), literal(DBType.ID, type.getID())),
 				orders(
-					order(false, column(BasicTypes.IDENTIFIER_DB_NAME)),
-					order(false, column(BasicTypes.REV_MIN_DB_NAME))
+					order(column(BasicTypes.IDENTIFIER_DB_NAME)),
+					order(column(BasicTypes.REV_MIN_DB_NAME))
 				)
 			)
 		).toSql(sqlDialect);

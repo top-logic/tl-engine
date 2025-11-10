@@ -201,7 +201,7 @@ abstract class DirectDBAccess extends DefaultDBAccess {
 		List<SQLColumnDefinition> columns = columnDefs(tableAlias, type);
 		SQLTable table = table(type, tableAlias);
 		SQLExpression where = inSet(column(tableAlias, idAttribute.getDBName()), idSetParam(idAttribute, true));
-		List<SQLOrder> order = orders(order(false, column(tableAlias, idAttribute, NOT_NULL)));
+		List<SQLOrder> order = orders(order(column(tableAlias, idAttribute, NOT_NULL)));
 		SQLSelect select = select(columns, table, where, order);
 		List<Parameter> parameters = parameters(idSetParamDef(idAttribute));
 		return query(parameters, select).toSql(sqlDialect);

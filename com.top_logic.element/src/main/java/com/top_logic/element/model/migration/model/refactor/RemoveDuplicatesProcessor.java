@@ -204,8 +204,8 @@ public class RemoveDuplicatesProcessor extends AbstractConfiguredInstance<Remove
 					Util.listWithoutNull(
 						util.branchOrderOrNull(),
 						globallyUnique ? null
-							: order(false, column(ownerEnd.getColumn(ReferencePart.name).getDBName())),
-						order(false, column(BasicTypes.REV_MIN_DB_NAME))))
+							: order(column(ownerEnd.getColumn(ReferencePart.name).getDBName())),
+						order(column(BasicTypes.REV_MIN_DB_NAME))))
 				).toSql(connection.getSQLDialect());
 
 			links.setResultSetConfiguration(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);

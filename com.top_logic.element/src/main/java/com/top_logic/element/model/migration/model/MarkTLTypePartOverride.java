@@ -185,7 +185,7 @@ public class MarkTLTypePartOverride extends TLModelBaseLineMigrationProcessor<Ma
 						column(BasicTypes.IDENTIFIER_DB_NAME),
 						parameter(DBType.ID, "partID"))
 					),
-				orders(order(true, column(BasicTypes.REV_MAX_DB_NAME)))))
+				orders(orderDescending(column(BasicTypes.REV_MAX_DB_NAME)))))
 					.toSql(connection.getSQLDialect());
 		boolean bag = false;
 		boolean mandatory = false;
@@ -289,7 +289,7 @@ public class MarkTLTypePartOverride extends TLModelBaseLineMigrationProcessor<Ma
 					eqSQL(
 						column(BasicTypes.IDENTIFIER_DB_NAME),
 						parameter(DBType.ID, "partID"))),
-				orders(order(true, column(BasicTypes.REV_MAX_DB_NAME)))))
+				orders(orderDescending(column(BasicTypes.REV_MAX_DB_NAME)))))
 					.toSql(connection.getSQLDialect());
 		boolean bag = false;
 		boolean mandatory = false;

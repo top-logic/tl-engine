@@ -812,7 +812,7 @@ public class Util {
 						column(
 							refID(ownerRef)),
 						parameter(DBType.ID, "ownerID"))),
-				orders(order(false, column(SQLH.mangleDBName(orderAttribute)))))).toSql(con.getSQLDialect());
+				orders(order(column(SQLH.mangleDBName(orderAttribute)))))).toSql(con.getSQLDialect());
 		List<OrderValue> attributeOrders = new ArrayList<>();
 		try (ResultSet dbResult = selectMaxOrder.executeQuery(con, branch, ownerId)) {
 			while (dbResult.next()) {
@@ -1744,7 +1744,7 @@ public class Util {
 						parameter(DBType.ID, "owner")),
 					eqBranch()),
 				orders(
-					order(false, column(SQLH.mangleDBName(ApplicationObjectUtil.OWNER_REF_ORDER_ATTR))))))
+					order(column(SQLH.mangleDBName(ApplicationObjectUtil.OWNER_REF_ORDER_ATTR))))))
 						.toSql(sqlDialect);
 
 		List<TypePart> searchResult = new ArrayList<>();
@@ -1795,7 +1795,7 @@ public class Util {
 						parameter(DBType.ID, "owner")),
 					eqBranch()),
 				orders(
-					order(false, column(FastListElement.ORDER_DB_NAME))))).toSql(sqlDialect);
+					order(column(FastListElement.ORDER_DB_NAME))))).toSql(sqlDialect);
 
 		List<TypePart> searchResult = new ArrayList<>();
 		try (ResultSet dbResult =
@@ -2374,7 +2374,7 @@ public class Util {
 					eqSQL(
 						column(SQLH.mangleDBName(TLModule.NAME_ATTR)),
 						parameter(DBType.STRING, "name"))),
-				orders(order(true, column(BasicTypes.REV_MAX_DB_NAME)))))
+				orders(orderDescending(column(BasicTypes.REV_MAX_DB_NAME)))))
 					.toSql(con.getSQLDialect());
 
 		try (ResultSet result = sql.executeQuery(con, branch, moduleName)) {
@@ -2549,7 +2549,7 @@ public class Util {
 					eqSQL(
 						column(SQLH.mangleDBName(PersistentType.NAME_ATTR)),
 						parameter(DBType.STRING, "name"))),
-				orders(order(true, column(BasicTypes.REV_MAX_DB_NAME))))).toSql(con.getSQLDialect());
+				orders(orderDescending(column(BasicTypes.REV_MAX_DB_NAME))))).toSql(con.getSQLDialect());
 
 		try (ResultSet result = sql.executeQuery(con, module.getBranch(), module.getID(), typeName)) {
 			if (result.next()) {
@@ -2717,7 +2717,7 @@ public class Util {
 					eqSQL(
 						column(SQLH.mangleDBName(PersistentType.NAME_ATTR)),
 						parameter(DBType.STRING, "name"))),
-				orders(order(true, column(BasicTypes.REV_MAX_DB_NAME))))).toSql(con.getSQLDialect());
+				orders(orderDescending(column(BasicTypes.REV_MAX_DB_NAME))))).toSql(con.getSQLDialect());
 
 		try (ResultSet result = sql.executeQuery(con, owner.getBranch(), owner.getID(), partName)) {
 			if (result.next()) {
@@ -3989,7 +3989,7 @@ public class Util {
 	 * supported.
 	 */
 	public SQLOrder branchOrderOrNull(String tableAlias) {
-		return _branchSupport ? order(false, branchColumnRef(tableAlias)) : null;
+		return _branchSupport ? order(branchColumnRef(tableAlias)) : null;
 	}
 
 	/**

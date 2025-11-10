@@ -233,7 +233,8 @@ public class SynthesizeLinkOrderProcessor extends AbstractConfiguredInstance<Syn
 						selectCondition,
 						Util.listWithoutNull(
 							util.branchOrderOrNull(link),
-							order(false, column(link, scopeRef.getColumn(ReferencePart.name).getDBName()))
+							order(column(link, scopeRef.getColumn(ReferencePart.name)
+								.getDBName()))
 						)
 					)
 				).toSql(connection.getSQLDialect());
@@ -253,7 +254,8 @@ public class SynthesizeLinkOrderProcessor extends AbstractConfiguredInstance<Syn
 						updateCondition,
 						Util.listWithoutNull(
 							util.branchOrderOrNull(),
-							order(false, column(scopeRef.getColumn(ReferencePart.name).getDBName()))
+							order(column(scopeRef.getColumn(ReferencePart.name)
+								.getDBName()))
 						)
 					)
 				).toSql(connection.getSQLDialect());

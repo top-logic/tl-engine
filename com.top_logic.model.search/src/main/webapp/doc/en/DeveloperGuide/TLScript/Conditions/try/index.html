@@ -1,7 +1,7 @@
 <h2>Syntax</h2>
 
 <pre>
-	<code>try($tryBlock, $catchFun)</code>
+	<code>try($eval, $catch)</code>
 </pre>
 
 <h2>Description</h2>
@@ -39,7 +39,7 @@
 		</tr>
 		<tr>
 			<td>
-			<p>tryBlock</p>
+			<p>eval</p>
 			</td>
 			<td>Code block / expression</td>
 			<td>The code block or expression that is to be executed.</td>
@@ -47,7 +47,7 @@
 			<td>-</td>
 		</tr>
 		<tr>
-			<td>catchFun</td>
+			<td>catch</td>
 			<td>Function</td>
 			<td>The fallback function that is executed when an error occurs. Receives the exception object as a parameter</td>
 			<td>no</td>
@@ -73,7 +73,7 @@
     to: $emailAddr,
     body: $emailBody
   ),
-  catchFun: mailError -&gt; {
+  catch: mailError -&gt; {
     info("E-Mail-Zustellung an " + $emailAddr + " fehlgeschlagen. Grund: " + $mailError);
     false
   }

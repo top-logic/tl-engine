@@ -7,14 +7,14 @@ package com.top_logic.common.webfolder.ui;
 
 import com.top_logic.knowledge.wrap.Document;
 import com.top_logic.layout.PropertyAccessor;
-import com.top_logic.layout.ReadOnlyPropertyAccessor;
+import com.top_logic.layout.ValidObjectPropertyAccessor;
 
 /**
  * {@link PropertyAccessor} for the {@link Document#getSize()} property.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class WebFolderSizeProperty extends ReadOnlyPropertyAccessor<Object> {
+public class WebFolderSizeProperty extends ValidObjectPropertyAccessor<Object> {
 	
 	/**
 	 * Singleton {@link WebFolderSizeProperty} instance.
@@ -26,7 +26,7 @@ public class WebFolderSizeProperty extends ReadOnlyPropertyAccessor<Object> {
 	}
 	
 	@Override
-	public Object getValue(Object anObject) {
+	protected Object getValidValue(Object anObject) {
 		if (anObject instanceof Document) {
 			return ((Document) anObject).getSize();
 		}

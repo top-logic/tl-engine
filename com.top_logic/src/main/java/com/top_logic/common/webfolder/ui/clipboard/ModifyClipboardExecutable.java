@@ -12,10 +12,13 @@ import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.Command;
+import com.top_logic.layout.basic.CommandBuilder;
+import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.component.ComponentUtil;
+import com.top_logic.layout.form.model.AbstractDynamicCommand;
 import com.top_logic.layout.form.model.CommandField;
-import com.top_logic.layout.form.model.ConstantExecutabilityModel;
+import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.Resources;
@@ -25,7 +28,7 @@ import com.top_logic.util.Resources;
  * 
  * @author <a href="mailto:fsc@top-logic.com">Friedemann Schneider</a>
  */
-public class ModifyClipboardExecutable extends CommandField {
+public class ModifyClipboardExecutable extends AbstractDynamicCommand implements CommandBuilder {
 
 	/* package protected */static enum State {
 		IN_CLIPBOARD,
@@ -39,6 +42,10 @@ public class ModifyClipboardExecutable extends CommandField {
 	/** current state of the executable */
 	private State state;
 
+	private CommandModel _commandModel;
+
+	private ExecutableState _executability;
+
 	/**
 	 * Creates a {@link ModifyClipboardExecutable}.
 	 * 
@@ -47,16 +54,30 @@ public class ModifyClipboardExecutable extends CommandField {
 	 * @throws IllegalArgumentException
 	 *         If given object is <code>null</code> or invalid.
 	 */
-	public ModifyClipboardExecutable(String name, Wrapper aModel, State initialState, ExecutableState executability) {
-		super(name, new ConstantExecutabilityModel(executability));
+	public ModifyClipboardExecutable(Wrapper aModel, State initialState, ExecutableState executability) {
 		if (aModel == null) {
 			throw new IllegalArgumentException("Given wrapper is null.");
 		}
 
+		_executability = executability;
 		this.model = aModel;
 		this.state = initialState;
 	}
 
+	@Override
+	public Command build(CommandModel model) {
+		_commandModel = model;
+		return this;
+	}
+
+	@Override
+	protected ExecutableState calculateExecutability() {
+		ExecutableState execState = _executability;
+		if (!ComponentUtil.isValid(model)) {
+			execState = execState.combine(ExecutableState.NO_EXEC_INVALID);
+		}
+		return execState;
+	}
 
 	@Override
 	public HandlerResult executeCommand(DisplayContext aContext) {
@@ -83,15 +104,15 @@ public class ModifyClipboardExecutable extends CommandField {
 				if (inClipboard) {
 					this.removeFromClipboardCommit(this.model, clipboard);
 				}
-				setImage(Icons.ADD_CLIPBOARD);
-				setTooltip(theRes.getString(I18NConstants.ADD_TOOLTIP));
+				_commandModel.setImage(Icons.ADD_CLIPBOARD);
+				_commandModel.setTooltip(theRes.getString(I18NConstants.ADD_TOOLTIP));
 				this.state = State.NOT_IN_CLIPBOARD;
 			} else if (this.state == State.NOT_IN_CLIPBOARD) {
 				if (!inClipboard) {
 					this.addToClipboardCommit(this.model, clipboard);
 				}
-				setImage(Icons.REMOVE_CLIPBOARD);
-				setTooltip(theRes.getString(I18NConstants.REMOVE_TOOLTIP));
+				_commandModel.setImage(Icons.REMOVE_CLIPBOARD);
+				_commandModel.setTooltip(theRes.getString(I18NConstants.REMOVE_TOOLTIP));
 				this.state = State.IN_CLIPBOARD;
 			}
 		}
@@ -175,8 +196,8 @@ public class ModifyClipboardExecutable extends CommandField {
 				theState = State.NOT_IN_CLIPBOARD;
 			}
 		}
-
-		CommandField theField = new ModifyClipboardExecutable(aName, aWrapper, theState, executability);
+		ModifyClipboardExecutable executable = new ModifyClipboardExecutable(aWrapper, theState, executability);
+		CommandField theField = FormFactory.newCommandField(aName, (CommandBuilder) executable);
 		theField.setImage(theImage);
 		theField.setTooltip(theTool);
 		theField.setNotExecutableImage(Icons.ADD_CLIPBOARD_DISABLED);

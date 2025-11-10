@@ -1264,6 +1264,7 @@ table.tl-table td .cDateTime .lFixedRight .cDateInput .lFlexible {
 	width: 100%;
 }
 
+/* If the error element is next to a tlscript field, hide it.  */
 .popupEditField .tlscript:not(.fullSize) + .cError {
 	display: none;
 }

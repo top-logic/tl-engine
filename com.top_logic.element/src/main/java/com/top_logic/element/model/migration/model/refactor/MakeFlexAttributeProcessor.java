@@ -20,6 +20,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
@@ -51,25 +52,51 @@ import com.top_logic.model.migration.data.Type;
 
 /**
  * {@link MigrationProcessor} moving attribute values from columns to flex attribute table.
+ * 
+ * @see MakeColumnAttributeProcessor
  */
 public class MakeFlexAttributeProcessor extends AbstractConfiguredInstance<MakeFlexAttributeProcessor.Config<?>>
 		implements MigrationProcessor {
 
 	/**
+	 * Configuration of the types of the objects whose attributes should be moved.
+	 * 
+	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+	 */
+	public interface TypesConfig extends ConfigurationItem {
+
+		/**
+		 * The type of objects to move attributes for.
+		 */
+		@Mandatory
+		@Name("types")
+		@Format(QualifiedTypeName.ListFormat.class)
+		List<QualifiedTypeName> getTypes();
+
+		/**
+		 * Whether to only move attributes for objects of the given type excluding sub-classes.
+		 */
+		@Name("monomorphic")
+		boolean getMonomorphic();
+	}
+
+	/**
 	 * Configuration options for {@link MakeFlexAttributeProcessor}.
 	 */
 	@TagName("make-flex-attribute")
-	public interface Config<I extends MakeFlexAttributeProcessor> extends PolymorphicConfiguration<I> {
+	public interface Config<I extends MakeFlexAttributeProcessor> extends PolymorphicConfiguration<I>, TypesConfig {
 		/**
 		 * Name of the table to take column values from.
 		 */
 		@Name("table")
+		@Mandatory
 		String getTable();
 
 		/**
 		 * Name of the column to take attribute values from.
 		 */
 		@Name("column")
+		@Mandatory
 		String getColumn();
 
 		/**
@@ -83,19 +110,6 @@ public class MakeFlexAttributeProcessor extends AbstractConfiguredInstance<MakeF
 		@Nullable
 		String getAttribute();
 
-		/**
-		 * The type of objects to create flex attributes for.
-		 */
-		@Mandatory
-		@Name("types")
-		@Format(QualifiedTypeName.ListFormat.class)
-		List<QualifiedTypeName> getTypes();
-
-		/**
-		 * Whether to only move objects of the given type excluding sub-classes.
-		 */
-		@Name("monomorphic")
-		boolean getMonomorphic();
 	}
 
 	/**
@@ -145,17 +159,8 @@ public class MakeFlexAttributeProcessor extends AbstractConfiguredInstance<MakeF
 		}
 		DBAttribute dbColumn = column.getDbMapping()[0];
 
-		Util util = context.getSQLUtils();
 		try {
-			Set<TLID> changedTypes = new HashSet<>();
-			for (QualifiedTypeName type : config.getTypes()) {
-				Type declaredType = util.getTLTypeOrFail(connection, type);
-				if (config.getMonomorphic()) {
-					changedTypes.add(declaredType.getID());
-				} else {
-					changedTypes.addAll(util.getTransitiveSpecializations(connection, declaredType));
-				}
-			}
+			Set<TLID> changedTypes = resolveObjectTypeIds(context, connection, config);
 
 			log.info("Moving column values of objects with concrete type IDs: " + changedTypes);
 
@@ -237,7 +242,8 @@ public class MakeFlexAttributeProcessor extends AbstractConfiguredInstance<MakeF
 				case DATETIME:
 				case TIME:
 				default:
-					log.error("Unsupported DB type '' of column '' in table '' for a move to a flex attribute.");
+					log.error("Unsupported DB type '" + dbColumn.getSQLType() + "' of column '" + columnName
+							+ "' in table '" + tableName + "' for a move to a flex attribute.");
 					return;
 			}
 
@@ -280,6 +286,24 @@ public class MakeFlexAttributeProcessor extends AbstractConfiguredInstance<MakeF
 					+ attributeName + "': " + ex.getMessage(),
 				ex);
 		}
+	}
+
+	/**
+	 * Computes the {@link TLID} for the configured types.
+	 */
+	static Set<TLID> resolveObjectTypeIds(MigrationContext context, PooledConnection connection,
+			TypesConfig config) throws SQLException, MigrationException {
+		Util util = context.getSQLUtils();
+		Set<TLID> changedTypes = new HashSet<>();
+		for (QualifiedTypeName type : config.getTypes()) {
+			Type declaredType = util.getTLTypeOrFail(connection, type);
+			if (config.getMonomorphic()) {
+				changedTypes.add(declaredType.getID());
+			} else {
+				changedTypes.addAll(util.getTransitiveSpecializations(connection, declaredType));
+			}
+		}
+		return changedTypes;
 	}
 
 }

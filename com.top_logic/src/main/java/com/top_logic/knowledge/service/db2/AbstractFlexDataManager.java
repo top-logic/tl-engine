@@ -612,52 +612,62 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 	}
 
 	/**
+	 * Interface to access the actually coded flex data value.
+	 * 
+	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+	 */
+	public interface FlexDataValue {
+
+		/**
+		 * The encoding of the type of the value and the column that contains the data.
+		 */
+		byte getDataType() throws SQLException;
+
+		/**
+		 * The data from the {@link AbstractFlexDataManager#createLongTypeAttr()}.
+		 */
+		long getLongData() throws SQLException;
+
+		/**
+		 * The data from the {@link AbstractFlexDataManager#createDoubleDataAttr()}.
+		 */
+		double getDoubleData() throws SQLException;
+
+		/**
+		 * The data from the {@link AbstractFlexDataManager#createVarcharDataAttr()}.
+		 */
+		String getVarcharData() throws SQLException;
+
+		/**
+		 * The data from the {@link AbstractFlexDataManager#createClobDataAttr()}.
+		 */
+		String getClobData() throws SQLException;
+
+		/**
+		 * The data from the {@link AbstractFlexDataManager#createBlobDataAttr()}.
+		 */
+		BinaryData getBlobData() throws SQLException;
+
+	}
+
+	/**
 	 * {@link QueryResult} interface this {@link FlexDataManager} is able to
 	 * retrieve attribute values from.
 	 * 
 	 * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
 	 */
-    public interface AttributeResult extends QueryResult {
-    	/**
-    	 * The name of the attribute this row contains the value.
-    	 */
-    	String getAttributeName() throws SQLException;
+	public interface AttributeResult extends QueryResult, FlexDataValue {
+
+		/**
+		 * The name of the attribute this row contains the value.
+		 */
+		String getAttributeName() throws SQLException;
 
 		/**
 		 * The minimum revision from which the row is valid.
 		 */
 		long getRevMin() throws SQLException;
 
-		/**
-		 * The encoding of the type of the value and the column that contains
-		 * the data.
-		 */
-    	byte getDataType() throws SQLException;
-    	
-    	/**
-    	 * The data from the {@link AbstractFlexDataManager#createLongTypeAttr()}.
-    	 */
-    	long getLongData() throws SQLException;
-    	
-    	/**
-    	 * The data from the {@link AbstractFlexDataManager#createDoubleDataAttr()}.
-    	 */
-    	double getDoubleData() throws SQLException;
-    	
-    	/**
-    	 * The data from the {@link AbstractFlexDataManager#createVarcharDataAttr()}.
-    	 */
-    	String getVarcharData() throws SQLException;
-    	
-    	/**
-    	 * The data from the {@link AbstractFlexDataManager#createClobDataAttr()}.
-    	 */
-    	String getClobData() throws SQLException;
-    	
-        /**
-         * The data from the {@link AbstractFlexDataManager#createBlobDataAttr()}.
-         */
-        BinaryData getBlobData() throws SQLException;
     }
     
 	static abstract class AttributeResultSetWrapper extends ResultSetWrapper implements AttributeResult {
@@ -1612,7 +1622,10 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 		}
 	}
 
-	public static Object fetchValue(AttributeResult resultSet) throws SQLException {
+	/**
+	 * Fetches the value from the given {@link FlexDataValue}.
+	 */
+	public static Object fetchValue(FlexDataValue resultSet) throws SQLException {
 		byte dataType = resultSet.getDataType();
 		switch (dataType) {
 		case STRING_TYPE: {

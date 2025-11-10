@@ -8,26 +8,37 @@ package com.top_logic.model.wysiwyg.storage;
 import static com.top_logic.basic.shared.collection.factory.CollectionFactoryShared.*;
 import static com.top_logic.layout.wysiwyg.ui.StructuredText.*;
 
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.exception.I18NException;
+import com.top_logic.basic.html.SafeHTML;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.util.Utils;
+import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.element.meta.AssociationStorageDescriptor;
 import com.top_logic.element.meta.DefaultAssociationStorageDescriptor;
 import com.top_logic.element.meta.kbbased.storage.AbstractStorage;
 import com.top_logic.element.meta.kbbased.storage.ColumnStorage;
 import com.top_logic.knowledge.objects.KnowledgeItem;
+import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.wysiwyg.ui.StructuredText;
+import com.top_logic.layout.wysiwyg.ui.StructuredTextUtil;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.access.WithStorageAttribute;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * {@link AbstractStorage} to store source code and images for a HTML attribute.
@@ -36,6 +47,9 @@ import com.top_logic.model.access.WithStorageAttribute;
  */
 public class StructuredTextAttributeStorage<C extends StructuredTextAttributeStorage.Config<?>>
 		extends CommonStructuredTextAttributeStorage<C> implements ColumnStorage {
+
+	private static final Collection<? extends Class<?>> COMPATIBLE_TYPES =
+		Arrays.asList(StructuredText.class, HTMLFragment.class);
 
 	/**
 	 * Configuration options for {@link StructuredTextAttributeStorage}.
@@ -107,7 +121,17 @@ public class StructuredTextAttributeStorage<C extends StructuredTextAttributeSto
 		// The collection is copied to avoid ConcurrentModificationExceptions.
 		Set<KnowledgeItem> cachedImages = set(fetchImages(object));
 
-		StructuredText structuredText = (StructuredText) value;
+		StructuredText structuredText;
+		if (value == null) {
+			structuredText = null;
+		} else if (value instanceof StructuredText) {
+			structuredText = (StructuredText) value;
+		} else if (value instanceof HTMLFragment fragment) {
+			structuredText = toStructuredText(fragment);
+		} else {
+			throw new IllegalArgumentException(
+				"Unsupported application type " + value.getClass().getName() + ". Allowed: " + COMPATIBLE_TYPES);
+		}
 
 		Map<String, BinaryData> images = getImagesNullSafe(structuredText);
 		Set<String> filenames = images.keySet();
@@ -122,6 +146,23 @@ public class StructuredTextAttributeStorage<C extends StructuredTextAttributeSto
 			/* As an updated attribute does not affect the TLObject itself, Lucene will not create a
 			 * new index. Thats why the owner has to be touched. */
 			object.tTouch();
+		}
+	}
+
+	private StructuredText toStructuredText(HTMLFragment fragment) {
+		try (StringWriter stringOut = new StringWriter()) {
+			try (TagWriter out = new TagWriter(stringOut)) {
+				fragment.write(DefaultDisplayContext.getDisplayContext(), out);
+			}
+			String source = stringOut.toString();
+			try {
+				SafeHTML.getInstance().check(source);
+			} catch (I18NException ex) {
+				throw new TopLogicException(com.top_logic.layout.wysiwyg.ui.I18NConstants.UNSAFE_HTML_ERROR, ex);
+			}
+			return StructuredTextUtil.fromCodeWithInlinedImages(source);
+		} catch (IOException ex) {
+			throw new TopLogicException(I18NConstants.ERROR_CREATING_STRUCTURED_TEXT__INPUT.fill(fragment), ex);
 		}
 	}
 
@@ -163,8 +204,8 @@ public class StructuredTextAttributeStorage<C extends StructuredTextAttributeSto
 	}
 
 	@Override
-	protected Class<?> getApplicationValueType() {
-		return StructuredText.class;
+	protected Collection<? extends Class<?>> getApplicationValueTypes() {
+		return COMPATIBLE_TYPES;
 	}
 
 	@Override

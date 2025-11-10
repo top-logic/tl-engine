@@ -23,6 +23,7 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey1 ERROR_LAST_VALUE_MUST_NOT_BE_REMOVED_FROM_MANDATORY_ATTRIBUTE__ATTRIBUTE;
 
+	/** @en The value has to have one of the types {0}, but is of type {1}. */
 	public static ResKey2 NOT_APPLICATION_VALUE_TYPE___EXPECTED_ACTUAL;
 	
 	/**

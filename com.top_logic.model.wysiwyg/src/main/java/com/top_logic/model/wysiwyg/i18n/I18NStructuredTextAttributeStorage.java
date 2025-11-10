@@ -53,6 +53,8 @@ import com.top_logic.util.TLContextManager;
 public class I18NStructuredTextAttributeStorage<C extends I18NStructuredTextAttributeStorage.Config<?>>
 		extends CommonStructuredTextAttributeStorage<C> {
 
+	private static final Collection<? extends Class<?>> COMPATIBLE_TYPES = Arrays.asList(I18NStructuredText.class);
+
 	/** Name of the database table storing the sources codes. */
 	public static final String SOURCES_CODES_TABLE_NAME = I18NAttributeStorage.I18N_STORAGE_KO_TYPE;
 
@@ -270,8 +272,8 @@ public class I18NStructuredTextAttributeStorage<C extends I18NStructuredTextAttr
 	}
 
 	@Override
-	protected Class<?> getApplicationValueType() {
-		return I18NStructuredText.class;
+	protected Collection<? extends Class<?>> getApplicationValueTypes() {
+		return COMPATIBLE_TYPES;
 	}
 
 	private Locale getLanguage(KnowledgeItem object) {

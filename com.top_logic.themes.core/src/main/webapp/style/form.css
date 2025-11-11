@@ -1809,6 +1809,21 @@ input.is-checkbox[disabled] {
 	color: var(--text-placeholder);
 }
 
+/* Display side-by-side if there is an error element next to the text input. */
+.content:has(.cTextInput, .cError) {
+	display: flex;
+}
+
+/* If there is an error element, make the text input grow and shrink automatically. */
+.content:has(.cError) .cTextInput {
+	flex: auto;
+}
+
+/* If the error element is next to a text input, center it automatically (x and y). */
+.content:has(.cTextInput) .cError {
+	margin: auto;
+}
+
 .cError .error i,
 .cError .error-annotation i,
 .error {

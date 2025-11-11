@@ -58,7 +58,7 @@ public class PercentFormatDefinition extends FormatDefinition<PercentFormatDefin
 			@Override
 			public Number parse(String source, ParsePosition parsePosition) {
 				Number value = (Number) inner.parseObject(source, parsePosition);
-				return value.doubleValue() / 100.0;
+				return value == null ? null : value.doubleValue() / 100.0;
 			}
 
 			@Override

@@ -65,33 +65,40 @@ public class Add extends GenericMethod {
 
 		int insertLength = insertion.size();
 		if (insertLength > 0) {
-			List<Object> filteredInsertion;
+			Collection<?> effectiveInsertion = insertion;
 
 			if (!part.isBag()) {
 				// Only filter duplicates if the reference does not allow duplicates
 				Set<Object> existingElements = new HashSet<>(oldValue);
 
 				// Filter out duplicates from insertion collection
-				filteredInsertion = new ArrayList<>();
+				List<Object> filtered = null;
 				for (Object item : insertion) {
-					if (!existingElements.contains(item)) {
-						filteredInsertion.add(item);
-						existingElements.add(item);
+					// returns true only if item was not already present
+					if (existingElements.add(item)) {
+						if (filtered == null) {
+							filtered = new ArrayList<>();
+						}
+						filtered.add(item);
 					}
 				}
-			} else {
-				// If duplicates are allowed, add all elements without filtering
-				filteredInsertion = new ArrayList<>(insertion);
+
+				// Only proceed if there are elements to add
+				if (filtered == null || filtered.isEmpty()) {
+					return null;
+				}
+
+				effectiveInsertion = filtered;
+				insertLength = filtered.size();
 			}
 
-			// Only proceed if there are elements to add
-			if (!filteredInsertion.isEmpty()) {
-				List<Object> newValue = new ArrayList<>(oldSize + filteredInsertion.size());
-				newValue.addAll(oldValue.subList(0, index));
-				newValue.addAll(filteredInsertion);
-				newValue.addAll(oldValue.subList(index, oldSize));
-				obj.tUpdate(part, newValue);
-			}
+			// Build the new list with the elements to insert
+			List<Object> newValue = new ArrayList<>(oldSize + insertLength);
+			newValue.addAll(oldValue.subList(0, index));
+			newValue.addAll(effectiveInsertion);
+			newValue.addAll(oldValue.subList(index, oldSize));
+
+			obj.tUpdate(part, newValue);
 		}
 
 		return null;

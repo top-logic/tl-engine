@@ -65,6 +65,7 @@
 	</properties>
 
 	<flowChart name="Chart"
+		defaultSelection="${defaultSelection}"
 		dialogs="${dialogs}"
 		isSecurityMaster="${isSecurityMaster}"
 		model="${model}"

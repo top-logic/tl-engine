@@ -3886,7 +3886,18 @@ services.form = {
 		},
 
 		selectItem: function(item) {
-			const ddBox = item.parentElement.parentElement;
+			// getDDBox is only for when the dropdown is currently opened, as only then the DDBox exists directly below the html body's first child
+			// || 
+			// querySelector is for when a tag gets removed (item unselected). There are 2 different cases:
+			// 1. Tag/Item removed that is part of the shadow copy of the DDBox (inside the DropDownControl)
+			//	-> In this case the param item is the actual item, parent's parent would be the DDBox
+			// 2. Tag removed that's item is currently not selectable and therefor not part of the shadow DDBox
+			// 	-> In this case the param item is the tag, so we need to pick the container containing the tag and select the box inside of it as the tag location is a sibling of the DDBox
+			const ddBox = this.getDDBox() || document.body.firstElementChild.querySelector(":scope ." + this.containerCl + ":has(#" + item.id + ") ." + this.boxCl);
+			if (!ddBox) {
+				console.log("No item container (DDBox) found!");
+				return;
+			}
 			const button = this.getButton(ddBox);
 			let ctrlID = ddBox.dataset.ctrlid;
 			

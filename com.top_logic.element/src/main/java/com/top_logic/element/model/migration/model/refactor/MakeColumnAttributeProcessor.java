@@ -60,7 +60,8 @@ import com.top_logic.model.migration.data.MigrationException;
 import com.top_logic.util.TLContext;
 
 /**
- * {@link MigrationProcessor} moving attribute values from the attribute table to the row table.
+ * {@link MigrationProcessor} moving attribute values from the flex data table to a column in the
+ * object table.
  * 
  * @see MakeFlexAttributeProcessor
  */

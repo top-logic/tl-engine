@@ -66,7 +66,7 @@ public class MakeFlexAttributeProcessor extends AbstractConfiguredInstance<MakeF
 	public interface TypesConfig extends ConfigurationItem {
 
 		/**
-		 * The type of objects to move attributes for.
+		 * The type of objects for which attribute values are to be moved.
 		 */
 		@Mandatory
 		@Name("types")
@@ -74,7 +74,8 @@ public class MakeFlexAttributeProcessor extends AbstractConfiguredInstance<MakeF
 		List<QualifiedTypeName> getTypes();
 
 		/**
-		 * Whether to only move attributes for objects of the given type excluding sub-classes.
+		 * Whether only attributes for objects of the specified type should be moved. Subclasses are
+		 * then omitted.
 		 */
 		@Name("monomorphic")
 		boolean getMonomorphic();

@@ -5,6 +5,7 @@
  */
 package com.top_logic.services.jms;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.I18NConstantsBase;
 

@@ -494,6 +494,8 @@ public final class ApplicationConfig extends ManagedClass implements Reloadable 
 				return TypedConfiguration.newConfigItem(ApplicationConfig.Config.class);
 			}
 
+			context.info("Loading config files: " + typedConfigList);
+
 			ConfigurationReader reader = new ConfigurationReader(context, configDescriptor());
 			VariableExpander expander = AliasManager.getInstance().getExpander();
 			ConfigurationItem config = reader.setSources(typedConfigList).setVariableExpander(expander).read();

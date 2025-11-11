@@ -981,13 +981,13 @@ public class Ticket27517UpdatePersonTable extends AbstractConfiguredInstance<Tic
 		String branchColumn = _util.branchColumnOrNull();
 		if (branchColumn != null) {
 			order = orders(
-				order(false, column(branchColumn)),
-				order(false, column(idColumn)),
-				order(false, column(BasicTypes.REV_MIN_DB_NAME)));
+				order(column(branchColumn)),
+				order(column(idColumn)),
+				order(column(BasicTypes.REV_MIN_DB_NAME)));
 		} else {
 			order = orders(
-				order(false, column(idColumn)),
-				order(false, column(BasicTypes.REV_MIN_DB_NAME)));
+				order(column(idColumn)),
+				order(column(BasicTypes.REV_MIN_DB_NAME)));
 		}
 		return order;
 	}

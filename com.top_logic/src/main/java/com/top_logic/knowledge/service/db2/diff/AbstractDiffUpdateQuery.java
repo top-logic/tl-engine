@@ -188,7 +188,7 @@ public abstract class AbstractDiffUpdateQuery extends AbstractDiffQuery {
 		
 		List<SQLOrder> orderBy = new ArrayList<>();
 		if (multipleBranches) {
-			orderBy.add(order(false, column(destAlias, getBranchColumnName())));
+			orderBy.add(order(column(destAlias, getBranchColumnName())));
 		}
 		Map<String, DBAttribute> attrByDBName = newDBAttributeMapping();
 		for (String idColumnName : getIdColumnNames()) {

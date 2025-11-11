@@ -133,13 +133,13 @@ public class InlineCompositionLinks extends AbstractMoveCompositionLinks<InlineC
 		String attrIdColumn = Util.refID(ApplicationObjectUtil.META_ATTRIBUTE_ATTR);
 
 		List<SQLOrder> orders = new ArrayList<>();
-		orders.add(order(false, column(destTypeColumn)));
+		orders.add(order(column(destTypeColumn)));
 		String branchColumn = util().branchColumnOrNull();
 		if (branchColumn != null) {
-			orders.add(order(false, column(branchColumn)));
+			orders.add(order(column(branchColumn)));
 		}
-		orders.add(order(false, column(destIdColumn)));
-		orders.add(order(false, column(BasicTypes.REV_MIN_DB_NAME)));
+		orders.add(order(column(destIdColumn)));
+		orders.add(order(column(BasicTypes.REV_MIN_DB_NAME)));
 		CompiledStatement sourceLinksQ = query(
 			parameters(
 				util().branchParamDef(),
@@ -222,10 +222,10 @@ public class InlineCompositionLinks extends AbstractMoveCompositionLinks<InlineC
 			}
 			List<SQLOrder> targetTableorders = new ArrayList<>();
 			if (branchColumn != null) {
-				orders.add(order(false, column(branchColumn)));
+				orders.add(order(column(branchColumn)));
 			}
-			targetTableorders.add(order(false, column(BasicTypes.IDENTIFIER_DB_NAME)));
-			targetTableorders.add(order(false, column(BasicTypes.REV_MIN_DB_NAME)));
+			targetTableorders.add(order(column(BasicTypes.IDENTIFIER_DB_NAME)));
+			targetTableorders.add(order(column(BasicTypes.REV_MIN_DB_NAME)));
 
 			CompiledStatement destObjectsQ = query(
 				parameters(

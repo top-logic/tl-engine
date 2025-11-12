@@ -13,10 +13,11 @@
 					<property name="model"/>
 					<property name="modelBuilder"/>
 
-					<property name="multiSelection"/>
 					<property name="partnerGroup"/>
 					<property name="selectionFilter"/>
 
+					<property name="defaultSelection"/>
+					<property name="multiSelection"/>
 					<property name="isSecurityMaster"/>
 
 					<property name="toolbar"/>
@@ -58,9 +59,13 @@
 		>
 			<acceptable-classifiers value="table, commons"/>
 		</property>
+		<property name="onSelectionChange"
+			instance-type="com.top_logic.layout.component.OnSelectionChangeHandler"
+		/>
 	</properties>
 
 	<flowChart name="Chart"
+		defaultSelection="${defaultSelection}"
 		dialogs="${dialogs}"
 		isSecurityMaster="${isSecurityMaster}"
 		model="${model}"

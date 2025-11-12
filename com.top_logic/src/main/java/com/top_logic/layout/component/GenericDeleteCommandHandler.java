@@ -95,7 +95,7 @@ public class GenericDeleteCommandHandler extends AbstractCommandHandler {
 	public HandlerResult handleCommand(DisplayContext context, LayoutComponent component, Object model,
 			Map<String, Object> arguments) {
 		if (model == null) {
-			return HandlerResult.error("object.selection", GenericDeleteCommandHandler.class);
+			return HandlerResult.error(I18NConstants.NO_OBJECT_SELECTED);
         }
         
 		tryExecute(component, model);

@@ -12,6 +12,7 @@ import java.util.Queue;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.exception.ErrorSeverity;
+import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.mig.html.layout.Action;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -68,9 +69,9 @@ public class DefaultValidationQueue implements ValidationQueue, ActionQueue<Acti
 	private void notifyException(String message, RuntimeException ex) {
 		if (_result == null) {
 			_result = new HandlerResult();
-			TopLogicException tlEx;
-			if (ex instanceof TopLogicException) {
-				tlEx = (TopLogicException) ex;
+			I18NRuntimeException tlEx;
+			if (ex instanceof I18NRuntimeException) {
+				tlEx = (I18NRuntimeException) ex;
 				logTLException(message, tlEx);
 			} else {
 				tlEx = new TopLogicException(I18NConstants.INTERNAL_ERROR, ex);
@@ -84,7 +85,7 @@ public class DefaultValidationQueue implements ValidationQueue, ActionQueue<Acti
 		}
 	}
 
-	private void logTLException(String message, TopLogicException tlEx) {
+	private void logTLException(String message, I18NRuntimeException tlEx) {
 		if (ErrorHandlingHelper.isInternalError(tlEx)) {
 			logError(message, tlEx);
 		} else {

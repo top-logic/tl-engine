@@ -57,6 +57,7 @@ import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.listener.GenericPropertyListener;
 import com.top_logic.basic.shared.collection.CollectionUtilShared;
@@ -77,7 +78,6 @@ import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.element.meta.gui.MetaAttributeGUIHelper;
 import com.top_logic.gui.ThemeFactory;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseException;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.Clipboard;
@@ -1598,7 +1598,7 @@ public class GridComponent extends EditComponent implements
 
 	private HandlerResult error(Throwable ex) {
 		HandlerResult error = new HandlerResult();
-		error.setException(ex instanceof TopLogicException ? (TopLogicException) ex
+		error.setException(ex instanceof I18NRuntimeException i18nEx ? i18nEx
 			: new TopLogicException(com.top_logic.util.I18NConstants.INTERNAL_ERROR, ex));
 		return error;
 	}
@@ -3766,14 +3766,7 @@ public class GridComponent extends EditComponent implements
                 }
 
                 if (isAdded) {
-                    try {
-                        theTX.commit();
-                    }
-                    catch (KnowledgeBaseException ex) {
-                        HandlerResult theResult = new HandlerResult();
-						theResult.addErrorMessage(aComponent.getResPrefix().key("clipboard.failed"), ex.getLocalizedMessage());
-                        return theResult;
-                    }
+					theTX.commit();
                     // if everything did go well clear the check boxes
                     theComp.clearAllMarkedCheckboxes();
                 }

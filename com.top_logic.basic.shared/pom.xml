@@ -10,7 +10,8 @@
   </parent>
 
   <artifactId>tl-basic-shared</artifactId>
-  <description>Utilities shared between server and GWT-based client code.</description>
+	<name>${project.artifactId}</name>
+	<description>Utilities shared between server and GWT-based client code.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 
   <properties>

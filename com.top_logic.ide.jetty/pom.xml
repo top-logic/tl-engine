@@ -10,7 +10,8 @@
   </parent>
 
   <artifactId>tl-ide-jetty</artifactId>
-  <description>Services for starting a TopLogic application in the development environment.</description>
+	<name>${project.artifactId}</name>
+	<description>Services for starting a TopLogic application in the development environment.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 
 	<properties>

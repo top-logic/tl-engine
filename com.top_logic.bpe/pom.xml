@@ -9,7 +9,8 @@
   </parent>
 
   <artifactId>tl-bpe</artifactId>
-  <description>Business process engine.</description>
+	<name>${project.artifactId}</name>
+	<description>Business process engine.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>

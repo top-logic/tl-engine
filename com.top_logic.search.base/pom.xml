@@ -9,7 +9,8 @@
   </parent>
 
   <artifactId>tl-search-base</artifactId>
-  <description>Base functionality for full-text search.</description>
+	<name>${project.artifactId}</name>
+	<description>Base functionality for full-text search.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>

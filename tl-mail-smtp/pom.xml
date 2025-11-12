@@ -10,7 +10,8 @@
   
   <artifactId>tl-mail-smtp</artifactId>
   
-  <description>The TopLogic mail sender service.</description>
+	<name>${project.artifactId}</name>
+	<description>The TopLogic mail sender service.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>

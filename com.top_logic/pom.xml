@@ -10,7 +10,8 @@
   
   <artifactId>tl-core</artifactId>
   
-  <description>The TopLogic kernel.</description>
+	<name>${project.artifactId}</name>
+	<description>The TopLogic kernel.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>

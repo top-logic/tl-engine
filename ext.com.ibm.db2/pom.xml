@@ -9,6 +9,8 @@
 	<relativePath>../tl-parent-all</relativePath>
   </parent>
   <artifactId>ext-com-ibm-db2</artifactId>
+	<name>${project.artifactId}</name>
+	<url>https://github.com/top-logic/tl-engine/</url>
   <packaging>pom</packaging>
 
 	<properties>

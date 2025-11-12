@@ -8,6 +8,7 @@
     <version>7.9.6</version>
   </parent>
   <artifactId>test-tl-importer</artifactId>
+	<name>${project.artifactId}</name>
 	<url>https://github.com/top-logic/tl-engine/</url>
 	<properties>
 		<javadocOutput>${project.build.directory}/javadoc</javadocOutput>

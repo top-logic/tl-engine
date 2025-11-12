@@ -9,7 +9,8 @@
   </parent>
 
   <artifactId>tl-demo</artifactId>
-  <description>The technical TopLogic demo "kitchen sink".</description>
+	<name>${project.artifactId}</name>
+	<description>The technical TopLogic demo "kitchen sink".</description>
   <url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>

@@ -9,7 +9,8 @@
   </parent>
   <artifactId>ext-com-google-fonts</artifactId>
   
-  <description>Droid Fonts version 1.00 build 113 - a font family created by Ascender Corporation for use by the Open Handset Alliance platform, Android.</description>
+	<name>${project.artifactId}</name>
+	<description>Droid Fonts version 1.00 build 113 - a font family created by Ascender Corporation for use by the Open Handset Alliance platform, Android.</description>
   <url>https://www.fontsquirrel.com/fonts/droid-sans</url>
   
   <licenses>

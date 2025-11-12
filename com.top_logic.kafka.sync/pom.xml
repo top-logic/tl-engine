@@ -9,6 +9,7 @@
 	</parent>
 
 	<artifactId>tl-kafka-sync</artifactId>
+	<name>${project.artifactId}</name>
 	<description>Synchronize knowledge bases with TL-Sync</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 

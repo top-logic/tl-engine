@@ -9,7 +9,8 @@
   </parent>
 
   <artifactId>tl-reporting-office</artifactId>
-  <description>TopLogic office reporting.</description>
+	<name>${project.artifactId}</name>
+	<description>TopLogic office reporting.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>

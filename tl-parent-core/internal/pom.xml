@@ -13,6 +13,7 @@
 	<artifactId>tl-parent-core-internal</artifactId>
 	<url>https://github.com/top-logic/tl-engine/</url>
 
+	<name>${project.artifactId}</name>
 	<description>
 		Parent module for TopLogic framework modules. 
 	</description>

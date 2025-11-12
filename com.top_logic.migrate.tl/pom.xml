@@ -8,6 +8,7 @@
     <version>7.9.6</version>
   </parent>
   <artifactId>tl-migrate-tl</artifactId>
+	<name>${project.artifactId}</name>
 	<url>https://github.com/top-logic/tl-engine/</url>
   <dependencies>
     <dependency>

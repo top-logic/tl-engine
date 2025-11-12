@@ -9,7 +9,8 @@
   </parent>
 
   <artifactId>tl-basic</artifactId>
-  <description>Collection of utilities.</description>
+	<name>${project.artifactId}</name>
+	<description>Collection of utilities.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 
 	<properties>

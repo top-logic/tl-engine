@@ -9,7 +9,8 @@
   </parent>
 
   <artifactId>tl-layout-themeedit</artifactId>
-  <description>In-app theme editor.</description>
+	<name>${project.artifactId}</name>
+	<description>In-app theme editor.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>

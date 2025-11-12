@@ -9,7 +9,8 @@
   </parent>
 
   <artifactId>tl-layout-codeedit</artifactId>
-  <description>In-app code editor based on ace library.</description>
+	<name>${project.artifactId}</name>
+	<description>In-app code editor based on ace library.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>

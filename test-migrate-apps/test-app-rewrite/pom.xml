@@ -9,6 +9,7 @@
 	</parent>
 	
 	<artifactId>test-app-rewrite</artifactId>
+	<name>${project.artifactId}</name>
 	<url>https://github.com/top-logic/tl-engine/</url>
 	
 	<properties>

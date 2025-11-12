@@ -9,7 +9,8 @@
   </parent>
 
   <artifactId>tl-ajax-shared</artifactId>
-  <description>Interface to server-side functionality for GWT-based client code.</description>
+	<name>${project.artifactId}</name>
+	<description>Interface to server-side functionality for GWT-based client code.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>

@@ -9,7 +9,8 @@
   </parent>
   <artifactId>ext-io-c9-ace</artifactId>
   
-  <description>Ace version 1.31.0 - the high performance code editor for the web</description>
+	<name>${project.artifactId}</name>
+	<description>Ace version 1.31.0 - the high performance code editor for the web</description>
   <url>https://ace.c9.io/</url>
   
   <licenses>

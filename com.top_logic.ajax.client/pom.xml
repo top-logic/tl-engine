@@ -9,7 +9,8 @@
   </parent>
 
   <artifactId>tl-ajax-client</artifactId>
-  <description>Base classes for realizing GWT-based client code.</description>
+	<name>${project.artifactId}</name>
+	<description>Base classes for realizing GWT-based client code.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>

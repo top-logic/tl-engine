@@ -9,7 +9,8 @@
   </parent>
   <artifactId>ext-io-bpmn-bpmn-js</artifactId>
   
-  <description>bpmn-js version 3.0.4</description>
+	<name>${project.artifactId}</name>
+	<description>bpmn-js version 3.0.4</description>
   <url>https://github.com/bpmn-io/bpmn-js/</url>
   
   <licenses>

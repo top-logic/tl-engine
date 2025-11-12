@@ -9,6 +9,8 @@
 	</parent>
 	
 	<artifactId>test-app-7-9-3</artifactId>
+	<name>${project.artifactId}</name>
+	<url>https://github.com/top-logic/tl-engine/</url>
 	
 	<licenses>
         <license>

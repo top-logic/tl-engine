@@ -14,6 +14,7 @@
 
 	<artifactId>tl-parent-gwt</artifactId>
 
+	<name>${project.artifactId}</name>
 	<description>
 		Parent module for TopLogic GWT modules. 
 	</description>

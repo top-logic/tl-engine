@@ -9,7 +9,8 @@
   </parent>
 
   <artifactId>tl-build-doclet</artifactId>
-  <url>https://github.com/top-logic/tl-engine/</url>
+	<name>${project.artifactId}</name>
+	<url>https://github.com/top-logic/tl-engine/</url>
 
   <properties>
 	<dependency-check.skip>true</dependency-check.skip>

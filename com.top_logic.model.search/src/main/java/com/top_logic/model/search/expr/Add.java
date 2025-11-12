@@ -7,7 +7,6 @@ package com.top_logic.model.search.expr;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -49,7 +48,8 @@ public class Add extends GenericMethod {
 		TLObject obj = asTLObjectNonNull(arguments[0]);
 		TLStructuredTypePart part = asTypePart(getArguments()[1], arguments[1]);
 
-		List<?> oldValue = asList(obj.tValue(part));
+		Object rawValue = obj.tValue(part);
+		List<?> oldValue = asList(rawValue);
 		int oldSize = oldValue.size();
 
 		int index;
@@ -69,7 +69,7 @@ public class Add extends GenericMethod {
 
 			if (!part.isBag()) {
 				// Only filter duplicates if the reference does not allow duplicates
-				Set<Object> existingElements = new HashSet<>(oldValue);
+				Set<Object> existingElements = (Set<Object>) asSet(rawValue);
 
 				// Filter out duplicates from insertion collection
 				List<Object> filtered = null;

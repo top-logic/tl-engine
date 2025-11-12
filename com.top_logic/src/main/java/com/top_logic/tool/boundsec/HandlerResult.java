@@ -11,21 +11,19 @@ import java.util.List;
 import java.util.Map;
 
 import com.top_logic.basic.BufferingProtocol;
-import com.top_logic.basic.Logger;
 import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.col.LazyTypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.exception.I18NFailure;
+import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.messagebox.MessageBox.MessageType;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.util.error.CommandContextDescription;
 import com.top_logic.util.error.ContextDescription;
-import com.top_logic.util.error.TopLogicException;
 
 /**
  * The result object of a {@link com.top_logic.tool.boundsec.CommandHandler}.
@@ -70,7 +68,7 @@ public class HandlerResult extends LazyTypedAnnotatable implements ContextDescri
     /**
      * store an exception that occurred during processing.
      */
-    private TopLogicException         exception      = null;
+	private I18NRuntimeException exception = null;
 
 	private ContextDescription _description;
 
@@ -327,7 +325,7 @@ public class HandlerResult extends LazyTypedAnnotatable implements ContextDescri
 	 * @param anException
 	 *        may be null to clear
 	 */
-	public void setException(TopLogicException anException) {
+	public void setException(I18NRuntimeException anException) {
         exception = anException;
     }
 
@@ -336,7 +334,7 @@ public class HandlerResult extends LazyTypedAnnotatable implements ContextDescri
      * 
      * @return the stored exception, may be null
      */
-	public TopLogicException getException() {
+	public I18NRuntimeException getException() {
         return exception;
     }
 
@@ -410,36 +408,6 @@ public class HandlerResult extends LazyTypedAnnotatable implements ContextDescri
 	 */
 	public void addError(ResKey errorKey) {
 		addErrorMessage(errorKey);
-	}
-
-	/**
-	 * Adds an error message described by an I18N key taking a single argument.
-	 * 
-	 * @param errorMessageKey
-	 *        Key for an internationalized message that describes the failure occurred.
-	 * @param argument
-	 *        The single argument to the resource message.
-	 * @see ResKey#message(ResKey, Object...)
-	 * 
-	 * @see #getEncodedErrors()
-	 */
-	public void addErrorMessage(ResKey errorMessageKey, Object argument) {
-		internalAddError(ResKey.message(errorMessageKey, argument));
-	}
-
-	/**
-	 * Adds an error message described by an I18N key with arguments.
-	 * 
-	 * @param errorMessageKey
-	 *        Key for an internationalized message that describes the failure occurred.
-	 * @param arguments
-	 *        The arguments to the resource message.
-	 * @see ResKey#message(ResKey, Object...)
-	 * 
-	 * @see #getEncodedErrors()
-	 */
-	public void addErrorMessage(ResKey errorMessageKey, Object... arguments) {
-		internalAddError(ResKey.message(errorMessageKey, arguments));
 	}
 
 	/**
@@ -531,7 +499,7 @@ public class HandlerResult extends LazyTypedAnnotatable implements ContextDescri
         }
 		addAllProcessed(aHandlerResult.getProcessed());
 		setCloseDialog(shallCloseDialog() || aHandlerResult.shallCloseDialog());
-		TopLogicException theException = aHandlerResult.getException();
+		I18NRuntimeException theException = aHandlerResult.getException();
         if (exception == null) {
             exception = theException;
         }
@@ -555,82 +523,16 @@ public class HandlerResult extends LazyTypedAnnotatable implements ContextDescri
 	 * Create a {@link HandlerResult} that contains an error.
 	 * 
 	 * @param errorKey
-	 *        The error key as used in {@link TopLogicException#TopLogicException(Class, String)}.
-	 * @param category
-	 *        The error category as used in
-	 *        {@link TopLogicException#TopLogicException(Class, String)}.
-	 * @return A new {@link HandlerResult}.
-	 * 
-	 * @deprecated Use {@link #error(ResKey)}
-	 */
-	@Deprecated
-	public static HandlerResult error(String errorKey, Class<?> category) {
-		HandlerResult result = new HandlerResult();
-		result.addErrorMessage(ResPrefix.legacyString(TopLogicException.PREFIX + category.getName()).key(errorKey));
-		return result;
-	}
-
-	/**
-	 * Create a {@link HandlerResult} that contains an error.
-	 * 
-	 * @param errorKey
-	 *        The error key as used in {@link TopLogicException#TopLogicException(Class, String)}.
-	 * @param category
-	 *        The error category as used in
-	 *        {@link TopLogicException#TopLogicException(Class, String)}.
-	 * @param ex
-	 *        The exception as used in
-	 *        {@link TopLogicException#TopLogicException(Class, String, Throwable)} .
-	 * @return A new {@link HandlerResult}.
-	 * 
-	 * @deprecated Use {@link #error(ResKey)}
-	 */
-	@Deprecated
-	public static HandlerResult error(String errorKey, Class<?> category, Throwable ex) {
-		HandlerResult result = new HandlerResult();
-		result.setException(new TopLogicException(category, errorKey, null, ex));
-		return result;
-	}
-
-	/**
-	 * Create a {@link HandlerResult} that contains an error and log an error.
-	 * 
-	 * @param logMessage
-	 *        The message to use for logging.
-	 * @param errorKey
-	 *        The error key as used in {@link TopLogicException#TopLogicException(Class, String)}.
-	 * @param category
-	 *        The error category as used in
-	 *        {@link TopLogicException#TopLogicException(Class, String)}.
-	 * @param ex
-	 *        The exception as used in
-	 *        {@link TopLogicException#TopLogicException(Class, String, Throwable)} .
-	 * @return A new {@link HandlerResult}.
-	 * 
-	 * @deprecated Use {@link #error(ResKey)}
-	 */
-	@Deprecated
-	public static HandlerResult error(String logMessage, String errorKey, Class<?> category, Throwable ex) {
-		if (logMessage != null) {
-			Logger.error(logMessage, ex, category);
-		}
-		return error(errorKey, category, ex);
-	}
-
-	/**
-	 * Create a {@link HandlerResult} that contains an error.
-	 * 
-	 * @param errorKey
 	 *        The error key as used in
-	 *        {@link TopLogicException#TopLogicException(ResKey,Throwable)}.
+	 *        {@link I18NRuntimeException#I18NRuntimeException(ResKey,Throwable)}.
 	 * @param ex
 	 *        The exception as used in
-	 *        {@link TopLogicException#TopLogicException(ResKey,Throwable)}.
+	 *        {@link I18NRuntimeException#I18NRuntimeException(ResKey,Throwable)}.
 	 * @return A new {@link HandlerResult}.
 	 */
 	public static HandlerResult error(ResKey errorKey, Throwable ex) {
 		HandlerResult result = new HandlerResult();
-		result.setException(new TopLogicException(errorKey, ex));
+		result.setException(new I18NRuntimeException(errorKey, ex));
 		return result;
 	}
 

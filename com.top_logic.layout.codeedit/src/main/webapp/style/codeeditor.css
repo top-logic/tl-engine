@@ -40,7 +40,11 @@
 
 div.ace_tooltip {
 	white-space: normal;
-	max-height: 50vh !important; /* To overwrite ace's JS height implementation */
+	/* To overwrite ace's JS height implementation */
+/* 	max-height: 50vh !important; */
+	max-height: stretch !important;
+	max-height: -moz-available !important;
+	max-height: -webkit-fill-available !important;
 	/* To overwrite ace's JS width implementation */
 	max-width: stretch !important;
 	max-width: -moz-available !important;

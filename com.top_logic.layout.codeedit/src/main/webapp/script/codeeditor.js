@@ -69,6 +69,33 @@ services.codeeditor = {
 		});	
 		editor.on("change", function(delta) {
 			controlElement.changed = true;
+			
+			// Timeout to wait until the tooltip is renderd by the ace editor.
+			setTimeout(() => {
+				// Observer for when another list entry is focused.
+				const observer = new MutationObserver(() => {
+					limitTooltip(observer);
+				});
+	
+				limitTooltip(observer);
+				
+				// Function to limit the new tooltip by the bottom of the vieport and observe it.
+				function limitTooltip(observer) {
+					// Remove observation of previous tooltips.
+					observer.disconnect();
+					let tooltip = document.querySelector(".ace_doc-tooltip");
+					if (tooltip) {
+						if(window.innerHeight <= tooltip.getBoundingClientRect().bottom) {
+							// Limit to 1px above bottom to also display the border.
+							tooltip.style.bottom = "1px";
+						}
+						// Observe the new tooltip for when it gets removed (e.g. entry changed).
+						observer.observe(tooltip, {
+							childList: true,
+						});
+					}
+				};
+			}, 400);
 		});	
 
 		controlElement.editor = editor;

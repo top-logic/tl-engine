@@ -55,6 +55,11 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey RESUME_SCRIPT_EXECUTION;
 
+	/**
+	 * @en There is no action to execute.
+	 */
+	public static ResKey I18N_NO_ACTION;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

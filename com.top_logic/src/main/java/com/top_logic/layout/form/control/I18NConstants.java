@@ -133,7 +133,10 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey TOGGLE_EXPAND_TOOLTIP = legacyKey("expandableStringfield.buttonTooltip");
 
-	public static ResKey ERROR_CANNOT_COLLAPSE_GROUP = legacyKey("layout.form.error.collapsingNotPossible");
+	/**
+	 * @en Collapsing the group "{0}" is not possible.
+	 */
+	public static ResKey1 ERROR_CANNOT_COLLAPSE_GROUP;
 
 	public static ResKey ENTER_MAINTENANCE_MODE_0 = legacyKey("tl.maintabbar.message.enterMaintenanceMode.0");
 

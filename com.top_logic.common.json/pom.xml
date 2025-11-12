@@ -9,6 +9,7 @@
 	</parent>
 
 	<artifactId>tl-common-json</artifactId>
+	<name>${project.artifactId}</name>
 	<description>Port of the gstream JSON library to GWT.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 

@@ -12,6 +12,7 @@
 
 	<artifactId>tl-parent-app-internal</artifactId>
 
+	<name>${project.artifactId}</name>
 	<description>Parent module for TopLogic applications provided by BOS.</description>
 
 	<organization>

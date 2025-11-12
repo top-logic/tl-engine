@@ -9,7 +9,8 @@
   </parent>
 
   <artifactId>tl-graph-layouter</artifactId>
-  <description>Algorithms for automatic graph layout.</description>
+	<name>${project.artifactId}</name>
+	<description>Algorithms for automatic graph layout.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>

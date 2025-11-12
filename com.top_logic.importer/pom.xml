@@ -9,7 +9,8 @@
   </parent>
 
   <artifactId>tl-importer</artifactId>
-  <description>Excel import functionality.</description>
+	<name>${project.artifactId}</name>
+	<description>Excel import functionality.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>

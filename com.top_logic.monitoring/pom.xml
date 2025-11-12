@@ -9,7 +9,8 @@
   </parent>
 
   <artifactId>tl-monitoring</artifactId>
-  <description>TopLogic monitoring components.</description>
+	<name>${project.artifactId}</name>
+	<description>TopLogic monitoring components.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>

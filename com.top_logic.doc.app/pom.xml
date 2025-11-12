@@ -9,7 +9,8 @@
   </parent>
 
   <artifactId>tl-doc-app</artifactId>
-  <description>The TopLogic documentation wiki.</description>
+	<name>${project.artifactId}</name>
+	<description>The TopLogic documentation wiki.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>

@@ -9,7 +9,8 @@
   </parent>
 
   <artifactId>tl-reporting</artifactId>
-  <description>Legacy module for report generation.</description>
+	<name>${project.artifactId}</name>
+	<description>Legacy module for report generation.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>

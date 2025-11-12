@@ -9,7 +9,8 @@
   </parent>
 
   <artifactId>tl-search-lucene</artifactId>
-  <description>Integration of the Lucene full-text search engine.</description>
+	<name>${project.artifactId}</name>
+	<description>Integration of the Lucene full-text search engine.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>

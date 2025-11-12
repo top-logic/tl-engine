@@ -9,6 +9,7 @@
 	</parent>
 
 	<artifactId>tl-bpe-app</artifactId>
+	<name>${project.artifactId}</name>
 	<description>Business process engine application for executing BPMN configurable workflows.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 

@@ -9,7 +9,8 @@
   </parent>
 
   <artifactId>tl-graph-diagramjs-client</artifactId>
-  <description>GWT-based client library for displaying the TopLogic model as UML.</description>
+	<name>${project.artifactId}</name>
+	<description>GWT-based client library for displaying the TopLogic model as UML.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
   
   <properties>

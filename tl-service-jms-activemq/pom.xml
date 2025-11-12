@@ -10,6 +10,8 @@
 	</parent>
 	
 	<artifactId>tl-service-jms-activemq</artifactId>
+	<name>${project.artifactId}</name>
+	<url>https://github.com/top-logic/tl-engine/</url>
 	<properties>
 	  <netty.version>4.1.128.Final</netty.version>
 	</properties>

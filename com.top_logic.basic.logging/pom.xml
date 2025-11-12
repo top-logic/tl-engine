@@ -9,7 +9,8 @@
   </parent>
 
   <artifactId>tl-basic-logging</artifactId>
-  <description>The TopLogic logging abstraction layer.</description>
+	<name>${project.artifactId}</name>
+	<description>The TopLogic logging abstraction layer.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies/>

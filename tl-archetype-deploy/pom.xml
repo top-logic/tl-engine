@@ -21,6 +21,7 @@
 
 	<packaging>maven-archetype</packaging>
 
+	<name>${project.artifactId}</name>
 	<description>A Maven archetype that creates a deployment configuration module for a TopLogic app.</description>
 
 	<properties>

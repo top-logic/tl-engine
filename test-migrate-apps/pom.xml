@@ -12,6 +12,7 @@
 		<relativePath>../tl-parent-app</relativePath>
 	</parent>
 	<artifactId>test-migrate-apps</artifactId>
+	<name>${project.artifactId}</name>
 	<url>https://github.com/top-logic/tl-engine/</url>
 	<packaging>pom</packaging>
 

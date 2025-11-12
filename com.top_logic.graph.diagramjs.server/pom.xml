@@ -9,7 +9,8 @@
   </parent>
 
   <artifactId>tl-graph-diagramjs-server</artifactId>
-  <description>Server code for the TopLogic model editor.</description>
+	<name>${project.artifactId}</name>
+	<description>Server code for the TopLogic model editor.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>

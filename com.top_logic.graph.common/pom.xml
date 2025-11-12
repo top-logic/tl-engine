@@ -9,7 +9,8 @@
   </parent>
 
   <artifactId>tl-graph-common</artifactId>
-  <description>Code shared between server and GWT-based client libraries for displaying graphs such as the UML model.</description>
+	<name>${project.artifactId}</name>
+	<description>Code shared between server and GWT-based client libraries for displaying graphs such as the UML model.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>

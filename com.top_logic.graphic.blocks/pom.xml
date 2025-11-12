@@ -9,6 +9,8 @@
   </parent>
 
   <artifactId>tl-graphic-blocks</artifactId>
+	<name>${project.artifactId}</name>
+	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>
   	<dependency>

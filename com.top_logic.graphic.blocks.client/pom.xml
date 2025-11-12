@@ -9,6 +9,8 @@
   </parent>
 
   <artifactId>tl-graphic-blocks-client</artifactId>
+	<name>${project.artifactId}</name>
+	<url>https://github.com/top-logic/tl-engine/</url>
 
   <properties>
 	<gwt.module>com.top_logic.graphic.blocks.client.TLBlocksClient</gwt.module>

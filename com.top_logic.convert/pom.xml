@@ -9,7 +9,8 @@
   </parent>
 
   <artifactId>tl-convert</artifactId>
-  <description>Utilities for format conversion.</description>
+	<name>${project.artifactId}</name>
+	<description>Utilities for format conversion.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>

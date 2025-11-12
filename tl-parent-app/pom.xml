@@ -14,6 +14,7 @@
 
 	<artifactId>tl-parent-app</artifactId>
 
+	<name>${project.artifactId}</name>
 	<description>Parent module for TopLogic applications.</description>
 
 	<organization>

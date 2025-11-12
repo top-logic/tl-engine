@@ -8,8 +8,8 @@
     <version>7.10.0-SNAPSHOT</version>
   </parent>
   <artifactId>tl-layout-wysiwyg-youtube</artifactId>
-  
-  <description>Youtube Plugin for CKEditor 4 version 2.1.19</description>
+	<name>${project.artifactId}</name>
+	<description>Youtube Plugin for CKEditor 4 version 2.1.19</description>
   <url>https://fonini.github.io/youtube-plugin-for-ckeditor-4.html</url>
   
   <licenses>

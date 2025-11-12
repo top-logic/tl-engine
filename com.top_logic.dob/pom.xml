@@ -9,7 +9,8 @@
   </parent>
 
   <artifactId>tl-dob</artifactId>
-  <description>Library for modeling database schemas.</description>
+	<name>${project.artifactId}</name>
+	<description>Library for modeling database schemas.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>

@@ -9,7 +9,8 @@
   </parent>
 
   <artifactId>tl-kafka-server</artifactId>
-  <description>Code for bootstrapping an Apache Kafka server for testing.</description>
+	<name>${project.artifactId}</name>
+	<description>Code for bootstrapping an Apache Kafka server for testing.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 
 	<properties>

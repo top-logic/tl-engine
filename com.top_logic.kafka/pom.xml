@@ -9,7 +9,8 @@
   </parent>
 
   <artifactId>tl-kafka</artifactId>
-  <description>Apache Kafka bus connectivity.</description>
+	<name>${project.artifactId}</name>
+	<description>Apache Kafka bus connectivity.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 
 	<properties>

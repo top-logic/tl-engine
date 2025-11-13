@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 import com.top_logic.element.structured.StructuredElement;
+import com.top_logic.mig.html.ElementUpdate;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
@@ -41,8 +42,12 @@ public class StructuredElementListModelBuilder implements ListModelBuilder {
         return aModel instanceof StructuredElement;
     }
 
-    @Override
-	public boolean supportsListElement(LayoutComponent aComponent, Object element) {
+	@Override
+	public ElementUpdate supportsListElement(LayoutComponent contextComponent, Object listElement) {
+		return ElementUpdate.fromDecision(shouldDisplay(contextComponent, listElement));
+	}
+
+	private boolean shouldDisplay(LayoutComponent aComponent, Object element) {
 		if (!(element instanceof StructuredElement)) {
 			return false;
 		}

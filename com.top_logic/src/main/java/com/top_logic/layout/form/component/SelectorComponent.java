@@ -32,6 +32,7 @@ import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.provider.MetaResourceProvider;
+import com.top_logic.mig.html.ElementUpdate;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.CommandHandler;
@@ -193,7 +194,7 @@ public class SelectorComponent extends AbstractSelectorComponent {
 	 * Whether a value is supported as select option.
 	 */
 	@Override
-	protected boolean supportsOption(Object value) {
+	protected ElementUpdate supportsOption(Object value) {
 		return _optionBuilder.supportsListElement(this, value);
 	}
 

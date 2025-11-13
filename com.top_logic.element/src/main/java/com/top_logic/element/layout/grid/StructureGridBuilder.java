@@ -18,6 +18,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.layout.tree.component.StructureModelBuilder;
 import com.top_logic.layout.tree.component.TreeBuilderTreeView;
 import com.top_logic.layout.tree.model.TreeBuilder;
+import com.top_logic.mig.html.ElementUpdate;
 import com.top_logic.mig.html.ModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLStructuredType;
@@ -125,8 +126,8 @@ public class StructureGridBuilder<R> extends AbstractTreeGridBuilder<R> {
 	}
 
 	@Override
-	public boolean supportsRow(GridComponent grid, Object row) {
-		return _treeBuilder.supportsNode(grid, row);
+	public ElementUpdate supportsRow(GridComponent grid, Object row) {
+		return ElementUpdate.fromDecision(_treeBuilder.supportsNode(grid, row));
 	}
 
 	@Override

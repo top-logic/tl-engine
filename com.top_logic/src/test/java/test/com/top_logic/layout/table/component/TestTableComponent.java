@@ -203,12 +203,6 @@ public class TestTableComponent extends AbstractLayoutTest {
 		}
 
 		@Override
-		public boolean supportsListElement(LayoutComponent contextComponent, Object listElement) {
-			return listElement instanceof TestingElement
-				&& Character.isLowerCase(((TestingElement) listElement).getName().charAt(0));
-		}
-
-		@Override
 		public Object retrieveModelFromListElement(LayoutComponent contextComponent, Object listElement) {
 			return ((TestingElement) listElement).getModel();
 		}

@@ -73,12 +73,6 @@ public class DemoLargeTableModelBuilder implements ListModelBuilder {
 	}
 
 	@Override
-	public boolean supportsListElement(LayoutComponent aComponent,
-			Object anObject) {
-		return anObject instanceof DemoPerson;
-	}
-
-	@Override
 	public Collection<?> getModel(Object businessModel, LayoutComponent aComponent) {
 		return init();
 	}

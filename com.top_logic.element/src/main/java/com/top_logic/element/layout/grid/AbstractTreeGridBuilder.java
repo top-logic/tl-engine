@@ -626,7 +626,7 @@ public abstract class AbstractTreeGridBuilder<R> implements GridBuilder<R> {
 		}
 
 		void updateRowModel(Object rowModel) {
-			if (supportsRow(_grid, rowModel)) {
+			if (!supportsRow(_grid, rowModel).shouldRemove()) {
 				updateNewParents(rowModel);
 
 				for (GridTreeTableNode node : getTableRows(toGridRow(rowModel))) {

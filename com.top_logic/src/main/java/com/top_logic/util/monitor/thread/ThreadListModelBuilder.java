@@ -37,11 +37,6 @@ public class ThreadListModelBuilder implements ListModelBuilder {
 	}
 
 	@Override
-	public boolean supportsListElement(LayoutComponent contextComponent, Object element) {
-		return element instanceof ThreadData;
-	}
-
-	@Override
 	public Object retrieveModelFromListElement(LayoutComponent contextComponent, Object element) {
 		return null;
 	}

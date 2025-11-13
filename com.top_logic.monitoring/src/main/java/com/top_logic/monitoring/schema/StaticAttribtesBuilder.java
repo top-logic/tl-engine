@@ -74,11 +74,6 @@ public class StaticAttribtesBuilder implements ListModelBuilder {
 	}
 
 	@Override
-	public boolean supportsListElement(LayoutComponent contextComponent, Object listElement) {
-		return listElement instanceof DBAttribute;
-	}
-
-	@Override
 	public Object retrieveModelFromListElement(LayoutComponent contextComponent, Object listElement) {
 		return ((DBAttribute) listElement).getAttribute().getOwner();
 	}

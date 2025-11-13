@@ -332,12 +332,12 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 			if (newValue != null) {
 				if (newValue instanceof Collection) {
 					for (Object selectedObject : (Collection<?>) newValue) {
-						if (!self.getListBuilder().supportsListElement(self, selectedObject)) {
+						if (self.getListBuilder().supportsListElement(self, selectedObject).shouldRemove()) {
 							return false;
 						}
 					}
 				} else {
-					if (!self.getListBuilder().supportsListElement(self, newValue)) {
+					if (self.getListBuilder().supportsListElement(self, newValue).shouldRemove()) {
 						return false;
 					}
 				}
@@ -594,7 +594,7 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 
 	private boolean isObjectSelectable(TableModel tableModel, Object object) {
 		return tableModel.containsRowObject(object) && _selectionModel.isSelectable(object)
-			&& getListBuilder().supportsListElement(this, object);
+			&& !getListBuilder().supportsListElement(this, object).shouldRemove();
 	}
 
 	private boolean validateRows() {
@@ -763,7 +763,7 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
         if (row < 0) {
 			// The changed model is not within the displayed rows.
 
-            if (this.getListBuilder().supportsListElement(this, aModel)) {
+			if (this.getListBuilder().supportsListElement(this, aModel).shouldAdd()) {
 				// The element is now part of this table.
             	addNewRowObject(aModel);
             	return true;
@@ -773,13 +773,13 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
             	return false;
             }
         } else {
-            if (this.getListBuilder().supportsListElement(this, aModel)) {
-            	// Forward event to the UI and request a repaint.
-            	tableModel.updateRows(row, row);
-            } else {
+			if (this.getListBuilder().supportsListElement(this, aModel).shouldRemove()) {
 				// The element is no longer part of this table.
 				removeRow(tableModel, aModel, row);
 				invalidateSelection();
+			} else {
+				// Forward event to the UI and request a repaint.
+				tableModel.updateRows(row, row);
             }
         	
         	return true;
@@ -799,13 +799,12 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
             return false;
         }
 
-        if (! this.getListBuilder().supportsListElement(this, aModel)) {
-        	return false;
+		if (this.getListBuilder().supportsListElement(this, aModel).shouldAdd()) {
+			addNewRowObject(aModel);
+			return true;
         }
 
-        addNewRowObject(aModel);
-        
-        return true;
+		return false;
     }
 
 	/** 

@@ -12,6 +12,7 @@ import java.util.Map;
 
 import com.top_logic.knowledge.monitor.UserMonitor;
 import com.top_logic.knowledge.monitor.UserSession;
+import com.top_logic.mig.html.ElementUpdate;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
@@ -45,7 +46,11 @@ public class UserMonitorListModelBuilder implements ListModelBuilder {
     }
 
 	@Override
-	public boolean supportsListElement(LayoutComponent contextComponent, Object listElement) {
+	public ElementUpdate supportsListElement(LayoutComponent contextComponent, Object listElement) {
+		return ElementUpdate.fromDecision(shouldDisplay(contextComponent, listElement));
+	}
+
+	private boolean shouldDisplay(LayoutComponent contextComponent, Object listElement) {
 		if (!(listElement instanceof UserSession)) {
 			return false;
 		}

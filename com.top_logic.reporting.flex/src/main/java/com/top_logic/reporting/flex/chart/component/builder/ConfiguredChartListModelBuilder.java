@@ -37,11 +37,6 @@ public class ConfiguredChartListModelBuilder implements ListModelBuilder {
 	}
 
 	@Override
-	public boolean supportsListElement(LayoutComponent aComponent, Object anObject) {
-		return true;
-	}
-
-	@Override
 	public Object retrieveModelFromListElement(LayoutComponent aComponent, Object anObject) {
 		return null;
 	}

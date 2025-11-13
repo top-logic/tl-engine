@@ -453,11 +453,6 @@ public class ExtendedProducerChartComponent extends DefaultProducerChartComponen
         }
 
         @Override
-		public boolean supportsListElement(LayoutComponent aComponent, Object anObject) {
-            return true;
-        }
-
-        @Override
 		public Object retrieveModelFromListElement(LayoutComponent aComponent, Object anObject) {
             return null;
         }

@@ -168,11 +168,6 @@ public abstract class AbstractReportTableComponent extends TableComponent implem
 		public boolean supportsModel(Object aModel, LayoutComponent aComponent) {
             return (aModel instanceof Collection);
         }
-        
-		@Override
-		public boolean supportsListElement(LayoutComponent contextComponent, Object listElement) {
-			return true;
-		}
 
 		@Override
 		public Object retrieveModelFromListElement(LayoutComponent contextComponent, Object listElement) {

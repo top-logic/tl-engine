@@ -45,7 +45,7 @@ public class ListModelBuilderProxy implements ListModelBuilder {
 	}
 
 	@Override
-	public boolean supportsListElement(LayoutComponent contextComponent, Object listElement) {
+	public ElementUpdate supportsListElement(LayoutComponent contextComponent, Object listElement) {
 		return _impl.supportsListElement(contextComponent, listElement);
 	}
 

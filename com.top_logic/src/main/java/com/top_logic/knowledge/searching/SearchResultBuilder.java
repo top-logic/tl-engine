@@ -68,9 +68,4 @@ public class SearchResultBuilder implements ListModelBuilder {
 	    return anObject;
     }
 
-	@Override
-	public boolean supportsListElement(LayoutComponent component, Object anObject) {
-	    return anObject instanceof SearchResultSet;
-    }
-
 }

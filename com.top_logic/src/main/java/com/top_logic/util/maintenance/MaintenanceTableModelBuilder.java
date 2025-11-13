@@ -92,11 +92,6 @@ public class MaintenanceTableModelBuilder extends AbstractConfiguredInstance<Mai
 	}
 
 	@Override
-	public boolean supportsListElement(LayoutComponent contextComponent, Object listElement) {
-		return listElement instanceof String;
-	}
-
-	@Override
 	public Object retrieveModelFromListElement(LayoutComponent contextComponent, Object listElement) {
 		return contextComponent.getModel();
 	}

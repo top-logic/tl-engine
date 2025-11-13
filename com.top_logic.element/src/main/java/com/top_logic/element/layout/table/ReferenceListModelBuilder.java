@@ -20,6 +20,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.util.Utils;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.ReferenceStorage;
+import com.top_logic.mig.html.ElementUpdate;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLObject;
@@ -138,7 +139,11 @@ public class ReferenceListModelBuilder<C extends ReferenceListModelBuilder.Confi
 	}
 
 	@Override
-	public boolean supportsListElement(LayoutComponent aComponent, Object anElement) {
+	public ElementUpdate supportsListElement(LayoutComponent contextComponent, Object listElement) {
+		return ElementUpdate.fromDecision(shouldDisplay(contextComponent, listElement));
+	}
+
+	private boolean shouldDisplay(LayoutComponent aComponent, Object anElement) {
 		if (!(anElement instanceof TLObject)) {
 			return false;
 		}

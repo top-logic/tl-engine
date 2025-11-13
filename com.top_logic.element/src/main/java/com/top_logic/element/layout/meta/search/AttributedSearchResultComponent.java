@@ -26,7 +26,6 @@ import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.element.meta.form.DefaultAttributeFormFactory;
 import com.top_logic.knowledge.searching.SearchResultBuilder;
-import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 import com.top_logic.layout.table.SortConfig;
 import com.top_logic.layout.table.SortConfigFactory;
@@ -40,7 +39,6 @@ import com.top_logic.layout.table.model.TableConfiguration;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLClass;
-import com.top_logic.model.TLStructuredType;
 
 /**
  * Display results from a search in a table.
@@ -209,27 +207,6 @@ public class AttributedSearchResultComponent extends TableComponent
             }
 
             return theResult;
-        }
-
-        @Override
-        public boolean supportsListElement(LayoutComponent aComponent, Object anObject) {
-            if ((anObject instanceof Wrapper) && (aComponent instanceof AttributedSearchResultComponent)) {
-				TLStructuredType type = ((Wrapper) anObject).tType();
-				if (type == null) {
-					return false;
-				}
-                AttributedSearchResultSet theModel = ((AttributedSearchResultComponent) aComponent).getSearchResult();
-
-                if (theModel != null) {
-					return MetaElementUtil.hasGeneralization(type, theModel.getTypes());
-                }
-                else { 
-                    return false;
-                }
-            }
-            else { 
-                return false;
-            }
         }
     }
 

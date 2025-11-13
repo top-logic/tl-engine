@@ -44,11 +44,6 @@ public class EventModelBuilder implements ListModelBuilder {
 	}
 
 	@Override
-	public boolean supportsListElement(LayoutComponent contextComponent, Object listElement) {
-		return allEvents().contains(listElement);
-	}
-
-	@Override
 	public Object retrieveModelFromListElement(LayoutComponent contextComponent, Object listElement) {
 		return null;
 	}

@@ -14,6 +14,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.knowledge.wrap.list.FastList;
+import com.top_logic.mig.html.ElementUpdate;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.ModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
@@ -74,12 +75,16 @@ public class ClassificationTableModelBuilder extends AbstractConfiguredInstance<
 	}
 
 	@Override
-	public boolean supportsListElement(LayoutComponent aComponent, Object anObject) {
-		if (! (anObject instanceof FastList)) {
+	public ElementUpdate supportsListElement(LayoutComponent contextComponent, Object listElement) {
+		return ElementUpdate.fromDecision(shouldDisplay(contextComponent, listElement));
+	}
+
+	private boolean shouldDisplay(LayoutComponent contextComponent, Object listElement) {
+		if (!(listElement instanceof FastList)) {
 			return false;
 		}
 
-		FastList classification = (FastList) anObject;
+		FastList classification = (FastList) listElement;
     	if (type != null) {
 			if (! type.equals(classification.getClassificationType())) {
     			return false;

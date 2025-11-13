@@ -57,6 +57,7 @@ import com.top_logic.layout.provider.SelectControlProvider;
 import com.top_logic.layout.structure.ContentLayouting;
 import com.top_logic.layout.structure.LayoutControlProvider.Layouting;
 import com.top_logic.layout.table.provider.GenericTableConfigurationProvider;
+import com.top_logic.mig.html.ElementUpdate;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponentUIOptions;
 import com.top_logic.model.TLClass;
@@ -188,13 +189,13 @@ public abstract class AbstractSelectorComponent extends FormComponent
 
 			if (newValue instanceof Collection) {
 				for (Object element : ((Collection<?>) newValue)) {
-					if (!selector.supportsOption(element)) {
+					if (selector.supportsOption(element).shouldRemove()) {
 						return false;
 					}
 				}
 				return true;
 			} else {
-				return selector.supportsOption(newValue);
+				return !selector.supportsOption(newValue).shouldRemove();
 			}
 		}
 	};
@@ -395,7 +396,9 @@ public abstract class AbstractSelectorComponent extends FormComponent
 	/**
 	 * Whether a value is supported as select option.
 	 */
-	protected abstract boolean supportsOption(Object value);
+	protected ElementUpdate supportsOption(Object value) {
+		return ElementUpdate.NO_CHANGE;
+	}
 
 	/**
 	 * The objects to select from in the order to present to the user.

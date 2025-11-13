@@ -163,11 +163,6 @@ public class ChangeLogListModelBuilder extends AbstractConfiguredInstance<Change
 	}
 
 	@Override
-	public boolean supportsListElement(LayoutComponent component, Object candidate) {
-		return candidate instanceof com.top_logic.element.changelog.model.ChangeSet;
-	}
-
-	@Override
 	public Object retrieveModelFromListElement(LayoutComponent component, Object candidate) {
 		return null;
 	}

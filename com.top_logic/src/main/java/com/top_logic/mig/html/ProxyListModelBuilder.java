@@ -72,7 +72,7 @@ public abstract class ProxyListModelBuilder<C extends ProxyListModelBuilder.Conf
 	}
 
 	@Override
-	public boolean supportsListElement(LayoutComponent contextComponent, Object listElement) {
+	public ElementUpdate supportsListElement(LayoutComponent contextComponent, Object listElement) {
 		return _inner.supportsListElement(contextComponent, listElement);
 	}
 

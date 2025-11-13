@@ -34,6 +34,7 @@ import com.top_logic.layout.table.dnd.TableDragSource;
 import com.top_logic.layout.table.model.EditableRowTableModel;
 import com.top_logic.layout.table.model.ObjectTableModel;
 import com.top_logic.layout.table.model.TableConfiguration;
+import com.top_logic.mig.html.ElementUpdate;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.ListModelBuilderProxy;
 import com.top_logic.mig.html.SelectionModel;
@@ -316,13 +317,13 @@ public class TableGridBuilder<R> extends ListModelBuilderProxy
 		if (grid.getRowGroup(newObject) != null) {
 			return false;
 		}
-		if (!supportsListElement(grid, newObject)) {
-			return false;
+		if (supportsListElement(grid, newObject).shouldAdd()) {
+			if (!Utils.equals(grid.getModel(), retrieveModelFromListElement(grid, newObject))) {
+				return false;
+			}
+			return true;
 		}
-		if (!Utils.equals(grid.getModel(), retrieveModelFromListElement(grid, newObject))) {
-			return false;
-		}
-		return true;
+		return false;
 	}
 
 	private void handleNewRelevantObjects(GridComponent grid, Collection<? extends TLObject> creations) {
@@ -339,7 +340,7 @@ public class TableGridBuilder<R> extends ListModelBuilderProxy
 	}
 
 	@Override
-	public boolean supportsRow(GridComponent grid, Object row) {
+	public ElementUpdate supportsRow(GridComponent grid, Object row) {
 		return supportsListElement(grid, row);
 	}
 

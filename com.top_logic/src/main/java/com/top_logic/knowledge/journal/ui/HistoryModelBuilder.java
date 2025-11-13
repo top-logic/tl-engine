@@ -52,12 +52,6 @@ public class HistoryModelBuilder implements ListModelBuilder {
 	}
 
 	@Override
-	public boolean supportsListElement(LayoutComponent aComponent, Object anObject) {
-		return (anObject instanceof Wrapper)
-			&& aComponent.getModel() == WrapperHistoryUtils.getCurrent((Wrapper) anObject);
-	}
-
-	@Override
 	public Object retrieveModelFromListElement(LayoutComponent aComponent, Object anObject) {
 		return WrapperHistoryUtils.getCurrent((Wrapper) anObject);
 	}

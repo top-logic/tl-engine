@@ -35,20 +35,6 @@ public class IdentityListModelBuilder implements ListModelBuilder {
     }
 
     /**
-     * @see com.top_logic.mig.html.ListModelBuilder#supportsListElement(com.top_logic.mig.html.layout.LayoutComponent, java.lang.Object)
-     */
-    @Override
-	public boolean supportsListElement(LayoutComponent aComponent, Object anObject) {
-		Object model = aComponent.getModel();
-		if (model instanceof List<?>) {
-			List<?> current = (List<?>) model;
-			return current.contains(anObject);
-		} else {
-			return false;
-		}
-    }
-
-    /**
      * @see com.top_logic.mig.html.ModelBuilder#getModel(Object, com.top_logic.mig.html.layout.LayoutComponent)
      */
     @Override

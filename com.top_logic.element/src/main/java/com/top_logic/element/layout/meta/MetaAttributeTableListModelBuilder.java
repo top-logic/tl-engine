@@ -13,6 +13,7 @@ import java.util.Collections;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.layout.table.component.TableComponent;
+import com.top_logic.mig.html.ElementUpdate;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.ModelKind;
@@ -52,8 +53,12 @@ public class MetaAttributeTableListModelBuilder implements ListModelBuilder {
 		}
 	}
 
-    @Override
-	public boolean supportsListElement(LayoutComponent aComponent, Object anObject) {
+	@Override
+	public ElementUpdate supportsListElement(LayoutComponent contextComponent, Object listElement) {
+		return ElementUpdate.fromDecision(shouldDisplay(contextComponent, listElement));
+	}
+
+	private boolean shouldDisplay(LayoutComponent aComponent, Object anObject) {
 		if (anObject instanceof TLTypePart) {
 			TLTypePart attribute = ((TLTypePart) anObject);
 

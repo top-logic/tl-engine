@@ -8,6 +8,7 @@ package com.top_logic.element.layout.role;
 import java.util.Collection;
 
 import com.top_logic.basic.CollectionUtil;
+import com.top_logic.mig.html.ElementUpdate;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
@@ -43,9 +44,13 @@ public class GlobalRolesTableModelBuilder implements ListModelBuilder {
         return null;
     }
 
-    @Override
-	public boolean supportsListElement(LayoutComponent aComponent, Object aObject) {
-        return aObject instanceof BoundedRole;
+	@Override
+	public ElementUpdate supportsListElement(LayoutComponent contextComponent, Object listElement) {
+		return ElementUpdate.fromDecision(shouldDisplay(contextComponent, listElement));
+	}
+
+	private boolean shouldDisplay(LayoutComponent contextComponent, Object listElement) {
+		return listElement instanceof BoundedRole role && role.isGlobal();
     }
 
 }

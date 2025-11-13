@@ -45,9 +45,4 @@ public class ScopedRolesTableModelBuilder implements ListModelBuilder {
         return aObject instanceof BoundedRole ? ((BoundedRole)aObject).getScope() : null;
     }
 
-    @Override
-	public boolean supportsListElement(LayoutComponent aComponent, Object aObject) {
-        return aObject instanceof BoundedRole;
-    }
-
 }

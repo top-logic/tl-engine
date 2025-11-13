@@ -59,7 +59,7 @@ public class SelectableBuilderComponent extends BuilderComponent implements Sele
 	protected boolean receiveModelCreatedEvent(Object model, Object changedBy) {
 		ModelBuilder builder = getBuilder();
 		if (builder instanceof ListModelBuilder) {
-			if (((ListModelBuilder) builder).supportsListElement(this, model)) {
+			if (((ListModelBuilder) builder).supportsListElement(this, model).shouldAdd()) {
 				invalidate();
 				return true;
 			}

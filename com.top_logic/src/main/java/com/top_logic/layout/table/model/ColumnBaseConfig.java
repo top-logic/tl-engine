@@ -145,12 +145,6 @@ public interface ColumnBaseConfig extends WithColumnCssClasses {
 	String FULL_TEXT_PROVIDER = "fullTextProvider";
 
 	/**
-	 * Internal flag to track whether the full text provider was explicitly set.
-	 * This is not a public configuration option but an internal state flag.
-	 */
-	String FULL_TEXT_PROVIDER_EXPLICITLY_SET = "fullTextProviderExplicitlySet";
-
-	/**
 	 * @see #getLabelProvider()
 	 */
 	String LABEL_PROVIDER = "labelProvider";

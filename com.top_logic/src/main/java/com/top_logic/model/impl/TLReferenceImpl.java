@@ -6,7 +6,6 @@
 package com.top_logic.model.impl;
 
 
-import java.util.Collections;
 import java.util.Set;
 
 import com.top_logic.basic.Protocol;
@@ -16,6 +15,7 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLType;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Default implementation of {@link TLReference}.
@@ -166,7 +166,7 @@ public class TLReferenceImpl extends AbstractStructuredTypePart<TLClass> impleme
 	@Override
 	public Set<? extends TLObject> getReferers(TLObject element) {
 		// Not available in transient models.
-		return Collections.emptySet();
+		throw new TopLogicException(I18NConstants.ERROR_NO_REFERERS_AVAILABLE__REFERENCE.fill(this));
 	}
 
 	@Override

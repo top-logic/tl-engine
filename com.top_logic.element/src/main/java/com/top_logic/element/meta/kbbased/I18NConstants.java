@@ -40,6 +40,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 START_UP_WRAPPER_RESOLVER__IMPLCLASS;
 
+	/**
+	 * @en It is not possible to navigate backwards through the reference ''{0}''.
+	 */
+	public static ResKey1 ERROR_NO_REFERERS_AVAILABLE__REFERENCE;
+
     static {
         initConstants(I18NConstants.class);
     }

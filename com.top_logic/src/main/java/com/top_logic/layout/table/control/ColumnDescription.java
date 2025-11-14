@@ -194,6 +194,8 @@ public class ColumnDescription extends ColumnConfiguration {
 
 	private void copyFrom(ColumnDescription templateColumn) {
 		updateFrom(PropertyCopier.INSTANCE, templateColumn.getSettings());
+		// Copy the internal flag that tracks explicit full-text provider setting
+		this.fullTextProviderExplicitlySet = templateColumn.fullTextProviderExplicitlySet;
 	}
 
 	@Override
@@ -405,17 +407,10 @@ public class ColumnDescription extends ColumnConfiguration {
 
 	@Override
 	public LabelProvider getFullTextProvider() {
-		if (useResourceProviderAsFullTextProvider()) {
+		if (!fullTextProviderExplicitlySet) {
 			return getResourceProvider();
 		}
 		return fullTextProvider;
-	}
-
-	private boolean useResourceProviderAsFullTextProvider() {
-		if (fullTextProvider == null) {
-			return true;
-		}
-		return !fullTextProviderExplicitlySet;
 	}
 
 	@Override
@@ -437,7 +432,7 @@ public class ColumnDescription extends ColumnConfiguration {
 			copyFullTextProvider(fullTextProvider);
 		}
 	}
-    
+
     @Override
 	public ControlProvider getHeadControlProvider() {
         return (this.headControlProvider);

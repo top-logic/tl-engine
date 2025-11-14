@@ -29,6 +29,7 @@ import com.top_logic.layout.ResourceProvider;
 import com.top_logic.layout.table.ITableRenderer;
 import com.top_logic.layout.table.component.TableComponent;
 import com.top_logic.layout.table.control.TableControl;
+import com.top_logic.mig.html.ElementUpdate;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutStorage;
@@ -195,6 +196,12 @@ public class TestTableComponent extends AbstractLayoutTest {
 				return Collections.emptyList();
 			}
 			return componentModel.getElements();
+		}
+
+		@Override
+		public ElementUpdate supportsListElement(LayoutComponent contextComponent, Object listElement) {
+			return ElementUpdate.fromDecision(listElement instanceof TestingElement
+				&& Character.isLowerCase(((TestingElement) listElement).getName().charAt(0)));
 		}
 
 		@Override

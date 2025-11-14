@@ -79,7 +79,7 @@ services.codeeditor = {
 	
 				limitTooltip(observer);
 				
-				// Function to limit the new tooltip by the bottom of the vieport and observe it.
+				// Function to limit the new tooltip by the bottom of the viewport and observe it.
 				function limitTooltip(observer) {
 					// Remove observation of previous tooltips.
 					observer.disconnect();

@@ -281,7 +281,7 @@ public class SelectTransitionDialog extends SimpleFormDialog {
 					tooltip = TagUtil.encodeXML(combinedErrors);
 					break;
 				}
-				// get warnigs associated with edge
+				// get warnings associated with edge
 				warnings = GuiEngine.getInstance().checkWarnings(token, edge);
 			}
 
@@ -549,6 +549,8 @@ public class SelectTransitionDialog extends SimpleFormDialog {
 					res.add(new Decision(token, edge));
 				}
 			} else if (target instanceof Task) {
+				res.add(new Decision(token, edge));
+			} else if (target instanceof EndEvent) {
 				res.add(new Decision(token, edge));
 			}
 		}

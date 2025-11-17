@@ -224,9 +224,11 @@ public class ContextTileComponent extends LayoutContainer implements LayoutConta
 			return selectorReason;
 		}
 
-		ResKey contentReason = content.hideReason();
-		if (contentReason != null) {
-			return contentReason;
+		if (isContentDisplayed()) {
+			ResKey contentReason = content.hideReason();
+			if (contentReason != null) {
+				return contentReason;
+			}
 		}
 
 		return null;

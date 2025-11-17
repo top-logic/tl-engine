@@ -13,18 +13,14 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
-import com.top_logic.basic.TLID;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
-import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
-import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.db.sql.CompiledStatement;
 import com.top_logic.basic.db.sql.SQLExpression;
@@ -33,38 +29,34 @@ import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.dob.MetaObject;
-import com.top_logic.dob.meta.BasicTypes;
 import com.top_logic.dob.meta.MOStructure;
+import com.top_logic.element.model.migration.model.CreateTLObjectProcessor.Value;
 import com.top_logic.knowledge.service.KnowledgeBaseRuntimeException;
-import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.db2.PersistentObject;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.migration.Util;
-import com.top_logic.model.migration.data.BranchIdType;
 import com.top_logic.model.migration.data.MigrationException;
 import com.top_logic.model.migration.data.QualifiedTypeName;
 import com.top_logic.model.migration.data.Type;
 
 /**
- * {@link MigrationProcessor} creating a new {@link TLObject}.
+ * {@link MigrationProcessor} updating a {@link TLObject}.
  * 
- * @see UpdateTLObjectProcessor
- * 
- * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
+ * @see CreateTLObjectProcessor
  */
-public class CreateTLObjectProcessor extends AbstractConfiguredInstance<CreateTLObjectProcessor.Config>
+public class UpdateTLObjectProcessor extends AbstractConfiguredInstance<UpdateTLObjectProcessor.Config>
 		implements MigrationProcessor {
 
 	/**
-	 * Configuration options of {@link CreateTLObjectProcessor}.
+	 * Configuration options of {@link UpdateTLObjectProcessor}.
 	 */
-	@TagName("create-object")
-	public interface Config extends PolymorphicConfiguration<CreateTLObjectProcessor> {
+	@TagName("update-object")
+	public interface Config extends PolymorphicConfiguration<UpdateTLObjectProcessor> {
 
 		/**
-		 * Name of the {@link MetaObject table} in which the {@link TLObject} must be created.
+		 * Name of the {@link MetaObject table} in which {@link TLObject} to change lives.
 		 */
 		@Mandatory
 		String getTable();
@@ -75,7 +67,7 @@ public class CreateTLObjectProcessor extends AbstractConfiguredInstance<CreateTL
 		void setTable(String value);
 
 		/**
-		 * {@link TLObject#tType() Type} of the new created object.
+		 * {@link TLObject#tType() Type} of the changed object.
 		 */
 		@Mandatory
 		QualifiedTypeName getType();
@@ -101,92 +93,24 @@ public class CreateTLObjectProcessor extends AbstractConfiguredInstance<CreateTL
 		void setNoTypeColumn(boolean value);
 
 		/**
-		 * Table values for the new object.
+		 * Values identifying the element.
+		 */
+		@Key(Value.COLUMN)
+		List<Value> getKeyValues();
+
+		/**
+		 * Table values for the changed object.
 		 */
 		@Key(Value.COLUMN)
 		List<Value> getValues();
 	}
 
-	/**
-	 * Column value for a new {@link TLObject}.
-	 * 
-	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
-	 */
-	public interface Value extends ConfigurationItem {
-
-		/** Configuration name of {@link #getColumn()}. */
-		String COLUMN = "column";
-
-		/**
-		 * Name of the database column.
-		 * 
-		 * <p>
-		 * Note: This is the real name of the column in the database, usually in capital letters and
-		 * separated by underscore.
-		 * </p>
-		 */
-		@Name(COLUMN)
-		@Mandatory
-		String getColumn();
-
-		/**
-		 * Setter for {@link #getColumn()}.
-		 */
-		void setColumn(String column);
-
-		/**
-		 * Database type of the column.
-		 */
-		@Mandatory
-		DBType getColumnType();
-
-		/**
-		 * Setter for {@link #getColumnType()}.
-		 */
-		void setColumnType(DBType value);
-
-		/**
-		 * Formatted value for {@link #getColumn()}.
-		 * 
-		 * <p>
-		 * Note: If {@link #getValueSupplier()} is set, this value is ignored.
-		 * </p>
-		 * 
-		 * @return The string representation of the database value, matching
-		 *         {@link #getColumnType()}.
-		 * 
-		 * @see #getValueSupplier()
-		 */
-		String getValue();
-
-		/**
-		 * Setter for {@link #getValue()}.
-		 */
-		void setValue(String value);
-
-		/**
-		 * Supplier for the value for {@link #getColumn()}.
-		 * 
-		 * <p>
-		 * Note: If <code>null</code>, {@link #getValue()} is used.
-		 * </p>
-		 * 
-		 * @return Factory creating the database value, matching {@link #getColumnType()}.
-		 * 
-		 * @see #getValue()
-		 */
-		PolymorphicConfiguration<? extends Supplier<?>> getValueSupplier();
-
-		/**
-		 * Setter for {@link #getValue()}.
-		 */
-		void setValueSupplier(PolymorphicConfiguration<? extends Supplier<?>> value);
-	}
-
 	private final Map<String, Object> _values = new LinkedHashMap<>();
 
+	private final Map<String, Object> _keyValues = new LinkedHashMap<>();
+
 	/**
-	 * Creates a {@link CreateTLObjectProcessor} from configuration.
+	 * Creates a {@link UpdateTLObjectProcessor} from configuration.
 	 * 
 	 * @param context
 	 *        The context for instantiating sub configurations.
@@ -194,9 +118,15 @@ public class CreateTLObjectProcessor extends AbstractConfiguredInstance<CreateTL
 	 *        The configuration.
 	 */
 	@CalledByReflection
-	public CreateTLObjectProcessor(InstantiationContext context, Config config) {
+	public UpdateTLObjectProcessor(InstantiationContext context, Config config) {
 		super(context, config);
-		for (Value additionalValue: getConfig().getValues()) {
+		resolveValues(context, config, _keyValues, getConfig().getKeyValues());
+		resolveValues(context, config, _values, getConfig().getValues());
+	}
+
+	private void resolveValues(InstantiationContext context, Config config, Map<String, Object> out,
+			List<Value> input) {
+		for (Value additionalValue : input) {
 			DBType columnType = additionalValue.getColumnType();
 			String column = additionalValue.getColumn();
 			Object value;
@@ -212,7 +142,7 @@ public class CreateTLObjectProcessor extends AbstractConfiguredInstance<CreateTL
 					continue;
 				}
 			}
-			_values.put(column, value);
+			out.put(column, value);
 		}
 	}
 
@@ -221,91 +151,74 @@ public class CreateTLObjectProcessor extends AbstractConfiguredInstance<CreateTL
 		try {
 			internalDoMigration(context, log, connection);
 		} catch (Exception ex) {
-			log.error("Creating object migration failed at " + getConfig().location(), ex);
+			log.error("Updating object migration failed at " + getConfig().location(), ex);
 		}
 	}
 
 	private void internalDoMigration(MigrationContext context, Log log, PooledConnection connection) throws Exception {
-		createObject(context, connection);
+		int rows = updateObject(context, connection);
 
-		log.info("Created object in '" + getConfig().getTable() + "' with values: " + _values);
+		log.info("Updated '" + rows + "' for object in '" + getConfig().getTable() + "' with keys '" + _keyValues
+				+ "' with values: " + _values);
 	}
 
 	/**
-	 * Creates the {@link TLObject} according to {@link #getConfig()} in the given database
+	 * Updates the {@link TLObject} according to {@link #getConfig()} in the given database
 	 * connection.
 	 */
-	public BranchIdType createObject(MigrationContext context, PooledConnection connection)
+	public int updateObject(MigrationContext context, PooledConnection connection)
 			throws SQLException, MigrationException {
 		Util util = context.getSQLUtils();
+
+		DBHelper sqlDialect = connection.getSQLDialect();
 		
 		MOStructure table = (MOStructure) context.getPersistentRepository().getTypeOrNull(getConfig().getTable());
 		if (table == null) {
 			throw new KnowledgeBaseRuntimeException("No table with name '" + getConfig().getTable() + "' available.");
 		}
-
-		DBHelper sqlDialect = connection.getSQLDialect();
-		
 		Type type = util.getTLTypeOrFail(connection, getConfig().getType());
-		TLID newID = util.newID(connection);
-		long branch = type.getBranch();
 		
 		List<Parameter> parameterDefs = new ArrayList<>();
 		List<String> columns = new ArrayList<>();
 		List<SQLExpression> values = new ArrayList<>();
 		List<Object> arguments = new ArrayList<>();
 
-		parameterDefs.add(util.branchParamDef());
-		String branchColumn = util.branchColumnOrNull();
-		if (branchColumn != null) {
-			columns.add(branchColumn);
-		}
-		SQLExpression branchParam = util.branchParamOrNull();
-		if (branchParam != null) {
-			values.add(branchParam);
-		}
-		arguments.add(branch);
-		
-		parameterDefs.add(parameterDef(DBType.ID, "identifier"));
-		columns.add(BasicTypes.IDENTIFIER_DB_NAME);
-		values.add(parameter(DBType.ID, "identifier"));
-		arguments.add(newID);
-		
-		columns.add(BasicTypes.REV_MAX_DB_NAME);
-		values.add(literalLong(Revision.CURRENT_REV));
+		SQLExpression where = literalTrueLogical();
 
-		parameterDefs.add(parameterDef(DBType.LONG, "revCreate"));
-		columns.add(BasicTypes.REV_MIN_DB_NAME);
-		values.add(parameter(DBType.LONG, "revCreate"));
-		columns.add(BasicTypes.REV_CREATE_DB_NAME);
-		values.add(parameter(DBType.LONG, "revCreate"));
-		arguments.add(util.getRevCreate(connection));
-		
+		for (Value additionalValue : getConfig().getKeyValues()) {
+			DBType columnType = additionalValue.getColumnType();
+			String column = additionalValue.getColumn();
+			String paramName = column + "_key";
+			parameterDefs.add(parameterDef(columnType, paramName));
+			where = and(eq(column(column), parameter(columnType, paramName)), where);
+			arguments.add(_keyValues.get(column));
+		}
+
 		if (!getConfig().hasNoTypeColumn()) {
 			parameterDefs.add(parameterDef(DBType.ID, "typeID"));
-			columns.add(Util.refID(PersistentObject.TYPE_REF));
-			values.add(parameter(DBType.ID, "typeID"));
+			where = and(eq(column(Util.refID(PersistentObject.TYPE_REF)), parameter(DBType.ID, "typeID")), where);
 			arguments.add(type.getID());
 		}
 		
 		for (Value additionalValue: getConfig().getValues()) {
 			DBType columnType = additionalValue.getColumnType();
 			String column = additionalValue.getColumn();
-			parameterDefs.add(parameterDef(columnType, column));
+			String paramName = column;
+			parameterDefs.add(parameterDef(columnType, paramName));
 			columns.add(column);
-			values.add(parameter(columnType, column));
+			values.add(parameter(columnType, paramName));
 			arguments.add(_values.get(column));
 		}
 		
-		CompiledStatement createObj = query(
+		CompiledStatement updateObj = query(
 			parameterDefs,
-			insert(
+			update(
 				table(table.getDBMapping().getDBName()),
+				where,
 				columns,
 				values)).toSql(sqlDialect);
 
-		createObj.executeUpdate(connection, arguments.toArray());
-		return BranchIdType.newInstance(BranchIdType.class, branch, newID, getConfig().getTable());
+		return updateObj.executeUpdate(connection, arguments.toArray());
 	}
 
 }

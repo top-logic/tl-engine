@@ -1241,7 +1241,7 @@
 									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
 										<list>
 											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
-												label="users"
+												label="Benutzer"
 											/>
 										</list>
 									</value>
@@ -1996,7 +1996,7 @@
 									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
 										<list>
 											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
-												label="users"
+												label="Benutzer"
 											/>
 										</list>
 									</value>
@@ -2392,7 +2392,7 @@
 									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
 										<list>
 											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
-												label="users"
+												label="Benutzer"
 											/>
 										</list>
 									</value>

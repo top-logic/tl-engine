@@ -17,6 +17,7 @@
 			<!-- component to create attributed objects -->
 			<component class="com.top_logic.bpe.layout.execution.ProcessExecutionCreateComponent"
 				buttonbar="true"
+				cancelAction=""
 				create-handler="startProcessExecution"
 				element=""
 				model="${model}"

@@ -20,11 +20,7 @@
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
-      <artifactId>tl-bpe</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.top-logic</groupId>
-      <artifactId>tl-bpe-modeler</artifactId>
+      <artifactId>tl-bpe-app</artifactId>
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>

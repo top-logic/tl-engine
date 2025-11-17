@@ -82,7 +82,7 @@
 				<bpmn:extensionElements>
 					<tl:title/>
 					<tl:actorGroups>
-						<group name="users"/>
+						<group name="user"/>
 					</tl:actorGroups>
 					<tl:actorRule/>
 				</bpmn:extensionElements>

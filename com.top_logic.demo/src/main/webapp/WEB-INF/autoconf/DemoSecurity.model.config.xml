@@ -22,7 +22,7 @@
 							<singleton type="Root">
 								<role-assignments>
 									<role-assignment role="DemoSecurity.SecurityAdministrator" group="securityAdministrators"/>
-									<role-assignment role="DemoSecurity.User" group="users"/>
+									<role-assignment role="DemoSecurity.User" group="user"/>
 								</role-assignments>
 							</singleton>
 						</singletons>

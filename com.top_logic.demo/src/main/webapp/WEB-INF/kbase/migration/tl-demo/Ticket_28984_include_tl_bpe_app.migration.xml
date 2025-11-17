@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_28984_include_tl_bpe_app"
+		module="tl-demo"
+	/>
+	<dependencies>
+		<dependency name="Ticket_28604_Upgrade_commit_messages"
+			module="tl"
+		/>
+		<dependency name="Ticket_28604_changelog"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_28298_add_group_member_options"
+			module="tl-model-search"
+		/>
+		<dependency name="Ticket_28557_enlarge_contact_attributes"
+			module="tl-contact"
+		/>
+		<dependency name="Ticket_28604_changelog"
+			module="tl-model-wysiwyg"
+		/>
+		<dependency name="Ticket_27736_Upgrade_layout"
+			module="tl-monitoring"
+		/>
+		<dependency name="X05_Ticket_26702_fix_spelling_of_attachment"
+			module="tl-mail"
+		/>
+		<dependency name="Ticket_28298_update_account"
+			module="tl-layout-formeditor"
+		/>
+		<dependency name="Ticket_27442_Update_lucene_version_to_8_11_2"
+			module="tl-search-lucene"
+		/>
+		<dependency name="Ticket_28604_changelog"
+			module="tl-doc"
+		/>
+		<dependency name="Ticket_28592_actor_group_resolution"
+			module="tl-bpe"
+		/>
+		<dependency name="Ticket_28550_demo_for_name_typed_attribute"
+			module="tl-demo"
+		/>
+	</dependencies>
+	<processors>
+		<update-object
+			no-type-column="true"
+			table="BoundedRole"
+			type="tl.accounts:Role"
+		>
+			<key-values>
+				<key-value
+					column="NAME"
+					column-type="String"
+					value="SecurityStructure.User"
+				/>
+			</key-values>
+			<values>
+				<value
+					column="NAME"
+					column-type="String"
+					value="SecurityStructure.user"
+				/>
+			</values>
+		</update-object>
+		<update-object
+			no-type-column="true"
+			table="Group"
+			type="tl.accounts:Group"
+		>
+			<key-values>
+				<key-value
+					column="NAME"
+					column-type="String"
+					value="users"
+				/>
+			</key-values>
+			<values>
+				<value
+					column="NAME"
+					column-type="String"
+					value="user"
+				/>
+			</values>
+		</update-object>
+	</processors>
+</migration>

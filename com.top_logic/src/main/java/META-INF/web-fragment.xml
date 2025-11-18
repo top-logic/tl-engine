@@ -13,6 +13,7 @@
 	<filter>
 		<filter-name>HttpSecureHeaderFilter</filter-name>
 		<filter-class>com.top_logic.knowledge.gui.layout.HttpSecureHeaderFilter</filter-class>
+		<async-supported>true</async-supported>
 	</filter>
 
 	<filter>

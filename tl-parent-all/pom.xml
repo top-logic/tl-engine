@@ -38,7 +38,7 @@
 		<zookeeper.version>3.9.4</zookeeper.version>
 		<slf4j.version>2.0.17</slf4j.version>
 		<log4j.version>2.20.0</log4j.version>
-		<fasterxml.version>2.16.2</fasterxml.version>
+		<fasterxml.version>2.19.2</fasterxml.version>
 		<msgbuf.version>1.1.10</msgbuf.version>
 		<bouncycastle.version>1.79</bouncycastle.version>
 		<tl.license.version>7.8.2</tl.license.version>
@@ -1009,6 +1009,16 @@
 			<dependency>
 			    <groupId>com.fasterxml.jackson.dataformat</groupId>
 			    <artifactId>jackson-dataformat-yaml</artifactId>
+			    <version>${fasterxml.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.fasterxml.jackson.core</groupId>
+				<artifactId>jackson-annotations</artifactId>
+			    <version>${fasterxml.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.fasterxml.jackson.dataformat</groupId>
+				<artifactId>jackson-dataformat-csv</artifactId>
 			    <version>${fasterxml.version}</version>
 			</dependency>
 			<dependency>

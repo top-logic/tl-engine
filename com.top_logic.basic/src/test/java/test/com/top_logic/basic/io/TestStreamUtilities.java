@@ -14,6 +14,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.StringReader;
@@ -27,10 +28,14 @@ import junit.framework.TestSuite;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.BasicTestSetup;
 
+import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.EmptyInputStream;
 import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.io.NullWriter;
 import com.top_logic.basic.io.StreamUtilities;
+import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.io.binary.BinaryDataFactory;
+import com.top_logic.basic.io.binary.BinaryDataSource;
 
 /**
  * Test class to check the {@link StreamUtilities} class.
@@ -39,7 +44,9 @@ import com.top_logic.basic.io.StreamUtilities;
  */
 public class TestStreamUtilities extends BasicTestCase {
 
-    /** Counter to adjust timing */
+	private static final int STREAM_TEST_SIZE = 10000;
+
+	/** Counter to adjust timing */
     private static final int COUNT = 4096;
 
     /** temporary file containing some testData */
@@ -339,9 +346,81 @@ public class TestStreamUtilities extends BasicTestCase {
 		assertEquals("Unexpected content.", expected.toString(), new String(actual.toByteArray(), "ISO-8859-1"));
 	}
 
-    /** 
-     * Return the suite of tests to execute.
-     */
+	/**
+	 * @see StreamUtilities#readStreamContents(BinaryContent)
+	 */
+	public void testReadBinaryContent() throws IOException {
+		byte[] result = StreamUtilities.readStreamContents(new BinaryContent() {
+			@Override
+			public InputStream getStream() throws IOException {
+				return new InputStream() {
+					private int _cnt = STREAM_TEST_SIZE;
+
+					@Override
+					public int read() throws IOException {
+						if (_cnt == 0) {
+							return -1;
+						}
+						return (_cnt--) & 0xFF;
+					}
+				};
+			}
+		});
+		assertStreamContents(result);
+	}
+
+	/**
+	 * @see StreamUtilities#readStreamContents(BinaryDataSource)
+	 */
+	public void testReadBinaryDataSource() throws IOException {
+		byte[] result = StreamUtilities.readStreamContents(new BinaryDataSource() {
+
+			@Override
+			public String getName() {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public long getSize() {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public String getContentType() {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public void deliverTo(OutputStream out) throws IOException {
+				for (int n = STREAM_TEST_SIZE; n > 0; n--) {
+					out.write((byte) (n & 0xFF));
+				}
+			}
+		});
+		assertStreamContents(result);
+	}
+
+	/**
+	 * @see StreamUtilities#readStreamContents(BinaryData)
+	 */
+	public void testReadBinaryData() throws IOException {
+		byte[] content = new byte[STREAM_TEST_SIZE];
+		for (int n = STREAM_TEST_SIZE; n > 0; n--) {
+			content[STREAM_TEST_SIZE - n] = (byte) (n & 0xFF);
+		}
+		byte[] result = StreamUtilities.readStreamContents(BinaryDataFactory.createBinaryData(content));
+		assertStreamContents(result);
+	}
+
+	private void assertStreamContents(byte[] result) {
+		for (int n = STREAM_TEST_SIZE; n > 0; n--) {
+			assertEquals((byte) (n & 0xFF), result[STREAM_TEST_SIZE - n]);
+		}
+	}
+
+	/**
+	 * Return the suite of tests to execute.
+	 */
     public static Test suite () {
         return BasicTestSetup.createBasicTestSetup(new TestSuite(TestStreamUtilities.class));
     }

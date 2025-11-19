@@ -29,6 +29,8 @@ import java.util.stream.Stream;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.equal.CustomEqualitySpecification;
 import com.top_logic.basic.col.equal.EqualityRedirect;
+import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.io.binary.ByteArrayStream;
 
 /**
@@ -465,6 +467,40 @@ public abstract class StreamUtilities {
 			copyStreamContents(in, out);
 		}
 		return out.toByteArray();
+	}
+
+	/**
+	 * Reads the given content to a byte array and returns it.
+	 * 
+	 * @param content
+	 *        the content to read. must not be <code>null</code>.
+	 * 
+	 * @return a byte array containing the contents of the stream
+	 * 
+	 * @throws IOException
+	 *         iff the given {@link InputStream} throws some
+	 */
+	public static byte[] readStreamContents(BinaryDataSource content) throws IOException {
+		ByteArrayOutputStream out = new ByteArrayOutputStream(BUF_SIZE);
+		content.deliverTo(out);
+		return out.toByteArray();
+	}
+
+	/**
+	 * Reads the given content to a byte array and returns it.
+	 * 
+	 * @param content
+	 *        the content to read. must not be <code>null</code>.
+	 * 
+	 * @return a byte array containing the contents of the stream
+	 * 
+	 * @throws IOException
+	 *         iff the given {@link InputStream} throws some
+	 */
+	public static byte[] readStreamContents(BinaryData content) throws IOException {
+		// Make call unambiguous.
+		BinaryDataSource source = content;
+		return readStreamContents(source);
 	}
 
 	/**

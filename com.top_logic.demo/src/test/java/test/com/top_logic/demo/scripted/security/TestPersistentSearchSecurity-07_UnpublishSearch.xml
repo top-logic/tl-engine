@@ -232,7 +232,7 @@
 								<key-values>
 									<attribute name="name">
 										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-											string="Benutzer"
+											string="user"
 										/>
 									</attribute>
 								</key-values>
@@ -331,7 +331,7 @@
 								<key-values>
 									<attribute name="name">
 										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-											string="Benutzer"
+											string="user"
 										/>
 									</attribute>
 								</key-values>

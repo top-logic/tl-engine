@@ -26,9 +26,9 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.element.meta.TypeSpec;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DummyControlScope;
+import com.top_logic.layout.Renderer;
 import com.top_logic.layout.basic.DummyDisplayContext;
-import com.top_logic.layout.wysiwyg.ui.StructuredText;
-import com.top_logic.layout.wysiwyg.ui.StructuredTextUtil;
+import com.top_logic.layout.provider.LabelProviderService;
 import com.top_logic.mig.html.Media;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.EvalContext;
@@ -38,6 +38,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
 import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.tool.export.pdf.PDFRenderer;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
 
@@ -339,9 +340,6 @@ public class PdfFile extends GenericMethod {
 		if (htmlArg instanceof String) {
 			// Direct string input
 			return (String) htmlArg;
-		} else if (htmlArg instanceof StructuredText) {
-			// StructuredText with embedded images - convert to HTML with inlined BASE64 images
-			return StructuredTextUtil.getCodeWithInlinedImages((StructuredText) htmlArg);
 		} else if (htmlArg instanceof HTMLFragment) {
 			// Render HTMLFragment to string
 			return renderFragmentToString((HTMLFragment) htmlArg);
@@ -370,9 +368,31 @@ public class PdfFile extends GenericMethod {
 				throw new TopLogicException(I18NConstants.ERROR_INVALID_BINARY_CONTENT_TYPE__TYPE.fill(contentType));
 			}
 		} else {
-			// Try to convert to string as fallback
-			return asString(htmlArg);
+			// Use registered renderer for unknown types (e.g., StructuredText)
+			return renderWithLabelProvider(htmlArg);
 		}
+	}
+
+	/**
+	 * Renders an object using the registered {@link Renderer} from {@link LabelProviderService}.
+	 *
+	 * @param value
+	 *        The value to render.
+	 * @return The rendered HTML as a string.
+	 * @throws IOException
+	 *         If rendering fails.
+	 */
+	private String renderWithLabelProvider(Object value) throws IOException {
+		StringWriter htmlBuffer = new StringWriter();
+		DisplayContext context = createDisplayContext();
+
+		PDFRenderer renderer = LabelProviderService.getInstance().getPDFRenderer(value);
+
+		try (TagWriter tagWriter = new TagWriter(htmlBuffer)) {
+			renderer.write(context, tagWriter, null, value);
+		}
+
+		return htmlBuffer.toString();
 	}
 
 	/**

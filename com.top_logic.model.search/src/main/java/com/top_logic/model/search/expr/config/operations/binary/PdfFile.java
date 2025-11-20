@@ -27,6 +27,8 @@ import com.top_logic.element.meta.TypeSpec;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DummyControlScope;
 import com.top_logic.layout.basic.DummyDisplayContext;
+import com.top_logic.layout.wysiwyg.ui.StructuredText;
+import com.top_logic.layout.wysiwyg.ui.StructuredTextUtil;
 import com.top_logic.mig.html.Media;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.EvalContext;
@@ -337,6 +339,9 @@ public class PdfFile extends GenericMethod {
 		if (htmlArg instanceof String) {
 			// Direct string input
 			return (String) htmlArg;
+		} else if (htmlArg instanceof StructuredText) {
+			// StructuredText with embedded images - convert to HTML with inlined BASE64 images
+			return StructuredTextUtil.getCodeWithInlinedImages((StructuredText) htmlArg);
 		} else if (htmlArg instanceof HTMLFragment) {
 			// Render HTMLFragment to string
 			return renderFragmentToString((HTMLFragment) htmlArg);
@@ -534,11 +539,11 @@ public class PdfFile extends GenericMethod {
 			.optional("landscape", false)
 			.optional("pageWidth", 0)
 			.optional("pageHeight", 0)
-			.optional("resolution", DEFAULT_PDF_RESOLUTION)
 			.optional("marginLeft", toPixel(DEFAULT_MARGIN_MM, DEFAULT_PDF_RESOLUTION))
 			.optional("marginRight", toPixel(DEFAULT_MARGIN_MM, DEFAULT_PDF_RESOLUTION))
 			.optional("marginTop", toPixel(DEFAULT_MARGIN_MM, DEFAULT_PDF_RESOLUTION))
 			.optional("marginBottom", toPixel(10, DEFAULT_PDF_RESOLUTION))
+			.optional("resolution", DEFAULT_PDF_RESOLUTION)
 			.build();
 
 		/**

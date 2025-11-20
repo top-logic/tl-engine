@@ -249,7 +249,8 @@ abstract class AbstractConfigurationDescriptor implements ConfigurationDescripto
 	 *        See {@link #getIdProperty()}.
 	 */
 	public void initIdProperty(Class<?> idScope, PropertyDescriptorImpl idProperty) {
-		assert _id == null : "Re-initialization of ID property.";
+		assert idScope != null : "ID scope required.";
+		assert _idScope == null : "Re-initialization of ID scope.";
 		_id = idProperty;
 		_idScope = idScope;
 	}

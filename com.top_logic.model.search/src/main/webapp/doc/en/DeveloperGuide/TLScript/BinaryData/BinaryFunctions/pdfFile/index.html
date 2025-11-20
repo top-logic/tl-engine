@@ -1,8 +1,12 @@
 <h2>Syntax</h2>
 
-<pre>
-	<code>pdfFile(html: $htmlContent, name: $filename, pageWidth: $width, pageHeight: $height,
-          resolution: $dpi, marginLeft: $ml, marginRight: $mr, marginTop: $mt, marginBottom: $mb)</code>
+<pre><code>pdfFile(html: $htmlContent, name: $filename,
+    pageSize: $size, landscape: $landscape,
+    pageWidth: $width, pageHeight: $height,
+    marginLeft: $ml, marginRight: $mr,
+    marginTop: $mt, marginBottom: $mb,
+    resolution: $dpi
+)</code>
 </pre>
 
 <h2>Description</h2>
@@ -46,25 +50,32 @@
 			<td>document.pdf</td>
 		</tr>
 		<tr>
+			<td>pageSize</td>
+			<td>String</td>
+			<td>Standard paper size. Supported values: <code>A0</code>, <code>A1</code>, <code>A2</code>, <code>A3</code>, <code>A4</code>, <code>A5</code>, <code>A6</code>, <code>LETTER</code>, <code>LEGAL</code>, <code>TABLOID</code>. If specified, <code>pageWidth</code> and <code>pageHeight</code> are calculated automatically based on the resolution. Values are case-insensitive.</td>
+			<td>no</td>
+			<td>A4 (when neither pageSize nor pageWidth/pageHeight specified)</td>
+		</tr>
+		<tr>
+			<td>landscape</td>
+			<td>Boolean</td>
+			<td>If <code>true</code>, swaps page width and height for landscape orientation. Works with both <code>pageSize</code> and custom <code>pageWidth</code>/<code>pageHeight</code> values.</td>
+			<td>no</td>
+			<td>false</td>
+		</tr>
+		<tr>
 			<td>pageWidth</td>
 			<td>Number</td>
-			<td>The page width in pixels.</td>
+			<td>Override for page width in pixels. If specified (non-zero), this takes precedence over the <code>pageSize</code> width.</td>
 			<td>no</td>
-			<td>1240 (A4 width at 150 DPI)</td>
+			<td>0 (use pageSize or default A4 width at resolution)</td>
 		</tr>
 		<tr>
 			<td>pageHeight</td>
 			<td>Number</td>
-			<td>The page height in pixels.</td>
+			<td>Override for page height in pixels. If specified (non-zero), this takes precedence over the <code>pageSize</code> height.</td>
 			<td>no</td>
-			<td>1754 (A4 height at 150 DPI)</td>
-		</tr>
-		<tr>
-			<td>resolution</td>
-			<td>Number</td>
-			<td>The rendering resolution in DPI (dots per inch). Higher values produce better quality but larger files.</td>
-			<td>no</td>
-			<td>150</td>
+			<td>0 (use pageSize or default A4 height at resolution)</td>
 		</tr>
 		<tr>
 			<td>marginLeft</td>
@@ -93,6 +104,13 @@
 			<td>The bottom margin in pixels.</td>
 			<td>no</td>
 			<td>59 (10mm at 150 DPI)</td>
+		</tr>
+		<tr>
+			<td>resolution</td>
+			<td>Number</td>
+			<td>The rendering resolution in DPI (dots per inch). Higher values produce better quality but larger files. This also affects how <code>pageSize</code> dimensions are calculated (e.g., A4 at 150 DPI = 1240x1754 px, A4 at 300 DPI = 2480x3508 px).</td>
+			<td>no</td>
+			<td>150</td>
 		</tr>
 	</thead>
 </table>
@@ -208,6 +226,46 @@
 
 <p><strong>Output:</strong> A PDF with a dynamically generated list of invoice items.</p>
 
+<h3>Using Standard Page Sizes</h3>
+
+<pre>
+	<code>// US Letter page size
+pdfFile("""
+  &lt;html&gt;
+    &lt;body&gt;
+      &lt;h1&gt;US Letter Document&lt;/h1&gt;
+      &lt;p&gt;This document uses US Letter paper size.&lt;/p&gt;
+    &lt;/body&gt;
+  &lt;/html&gt;
+""", name: "letter-doc.pdf", pageSize: "LETTER")</code>
+</pre>
+
+<p><strong>Output:</strong> A PDF with US Letter page size (216 x 279 mm) at the default 150 DPI resolution.</p>
+
+<h3>Landscape Orientation</h3>
+
+<pre>
+	<code>// A4 landscape for wide content
+pdfFile({{{
+  &lt;html&gt;
+    &lt;body&gt;
+      &lt;h1&gt;Wide Report&lt;/h1&gt;
+      &lt;table style="width: 100%"&gt;
+        &lt;tr&gt;
+          &lt;th&gt;Column 1&lt;/th&gt;
+          &lt;th&gt;Column 2&lt;/th&gt;
+          &lt;th&gt;Column 3&lt;/th&gt;
+          &lt;th&gt;Column 4&lt;/th&gt;
+          &lt;th&gt;Column 5&lt;/th&gt;
+        &lt;/tr&gt;
+      &lt;/table&gt;
+    &lt;/body&gt;
+  &lt;/html&gt;
+}}}, name: "wide-report.pdf", pageSize: "A4", landscape: true)</code>
+</pre>
+
+<p><strong>Output:</strong> A PDF with A4 landscape orientation (297 x 210 mm), ideal for wide tables or charts.</p>
+
 <h3>Custom Page Size and Resolution</h3>
 
 <pre>
@@ -219,10 +277,11 @@ pdfFile("""
       &lt;p&gt;This document is rendered at higher resolution.&lt;/p&gt;
     &lt;/body&gt;
   &lt;/html&gt;
-""", "report.pdf", 1700, 2200, 200, 100, 100, 100, 100)</code>
+""", name: "report.pdf", pageSize: "LETTER", resolution: 200,
+    marginLeft: 100, marginRight: 100, marginTop: 100, marginBottom: 100)</code>
 </pre>
 
-<p><strong>Output:</strong> A PDF with US Letter page size (8.5" x 11" = 1700x2200 px at 200 DPI) and 100-pixel margins on all sides.</p>
+<p><strong>Output:</strong> A PDF with US Letter page size at 200 DPI and 100-pixel margins on all sides.</p>
 
 <h3>Minimal Margins for Maximum Content</h3>
 
@@ -235,15 +294,34 @@ pdfFile({{{
       &lt;p&gt;This uses minimal margins to maximize content area.&lt;/p&gt;
     &lt;/body&gt;
   &lt;/html&gt;
-}}}, "full-page.pdf", 1240, 1754, 150, 20, 20, 20, 20)</code>
+}}}, name: "full-page.pdf", pageSize: "A4",
+    marginLeft: 20, marginRight: 20, marginTop: 20, marginBottom: 20)</code>
 </pre>
 
 <p><strong>Output:</strong> A PDF with A4 page size and minimal 20-pixel margins (approximately 3.4mm at 150 DPI).</p>
+
+<h3>Large Format with A3</h3>
+
+<pre>
+	<code>// A3 for large diagrams
+pdfFile({{{
+  &lt;html&gt;
+    &lt;body&gt;
+      &lt;h1&gt;Architecture Diagram&lt;/h1&gt;
+      &lt;!-- Large diagram content --&gt;
+    &lt;/body&gt;
+  &lt;/html&gt;
+}}}, name: "diagram.pdf", pageSize: "A3")</code>
+</pre>
+
+<p><strong>Output:</strong> A PDF with A3 page size (297 x 420 mm), suitable for large diagrams or posters.</p>
 
 <h2>Technical Notes</h2>
 
 <ul>
 	<li><strong>Default Settings:</strong> Default page size is A4 (1240x1754 pixels at 150 DPI = 210mm x 297mm)</li>
+	<li><strong>Standard Page Sizes:</strong> The <code>pageSize</code> parameter supports A0 through A6, plus LETTER, LEGAL, and TABLOID. Dimensions are automatically calculated based on the resolution</li>
+	<li><strong>Landscape Mode:</strong> When <code>landscape: true</code>, width and height are swapped. This works independently of whether you use <code>pageSize</code> or custom dimensions</li>
 	<li><strong>Resolution:</strong> Default resolution is 150 DPI, suitable for most print and screen viewing. Higher values (e.g., 300 DPI) produce better quality but larger files</li>
 	<li><strong>Margins:</strong> Default margins are 15mm (left, right, top) and 10mm (bottom). Margins are specified in pixels at the chosen resolution</li>
 	<li><strong>Page Size Calculations:</strong>
@@ -257,5 +335,5 @@ pdfFile({{{
 	<li><strong>CSS Support:</strong> Basic CSS2 styles are supported. Complex CSS3 features may not render correctly</li>
 	<li><strong>Images:</strong> External images require accessible URLs. Base64-encoded images are supported</li>
 	<li><strong>Fonts:</strong> Standard fonts are available. Custom fonts may require additional configuration</li>
-	<li><strong>Parameter Order:</strong> All parameters after <code>html</code> are optional and positional. To specify a later parameter, you must provide values (or null) for all earlier parameters</li>
+	<li><strong>Named Parameters:</strong> Use named parameters for clarity (e.g., <code>pageSize: "A4", landscape: true</code>). This avoids having to specify null for unused positional parameters</li>
 </ul>

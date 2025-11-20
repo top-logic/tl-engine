@@ -148,9 +148,9 @@
 	<code>pdfFile({{{
   &lt;html&gt;
     &lt;body&gt;
-      &lt;h1&gt;Invoice for ${$customer.get('name')}&lt;/h1&gt;
-      &lt;p&gt;Date: ${format(now(), 'yyyy-MM-dd')}&lt;/p&gt;
-      &lt;p&gt;Amount: ${$invoice.get('amount')}&lt;/p&gt;
+      &lt;h1&gt;Invoice for {$customer.get('name')}&lt;/h1&gt;
+      &lt;p&gt;Date: {format(now(), 'yyyy-MM-dd')}&lt;/p&gt;
+      &lt;p&gt;Amount: {$invoice.get('amount')}&lt;/p&gt;
     &lt;/body&gt;
   &lt;/html&gt;
 }}}, "invoice-" + $invoice.get('number'))</code>
@@ -180,16 +180,16 @@
   &lt;html&gt;
     &lt;head&gt;
       &lt;style&gt;
-        body { font-family: Arial, sans-serif; }
-        h1 { color: #333366; }
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid #ddd; padding: 8px; }
-        th { background-color: #4CAF50; color: white; }
+        body \{ font-family: Arial, sans-serif; \}
+        h1 \{ color: #333366; \}
+        table \{ border-collapse: collapse; width: 100%; \}
+        th, td \{ border: 1px solid #ddd; padding: 8px; \}
+        th \{ background-color: #4CAF50; color: white; \}
       &lt;/style&gt;
     &lt;/head&gt;
     &lt;body&gt;
       &lt;h1&gt;Sales Report&lt;/h1&gt;
-      &lt;p&gt;Generated on: ${format(now(), 'yyyy-MM-dd')}&lt;/p&gt;
+      &lt;p&gt;Generated on: {format(now(), 'yyyy-MM-dd')}&lt;/p&gt;
       &lt;table&gt;
         &lt;tr&gt;
           &lt;th&gt;Product&lt;/th&gt;
@@ -215,8 +215,8 @@
     &lt;body&gt;
       &lt;h1&gt;Invoice Items&lt;/h1&gt;
       &lt;ul&gt;
-        ${$items.map(item -> {{{
-          &lt;li&gt;${item.get('name')} - ${item.get('price')}&lt;/li&gt;
+        {$items.map(item -> {{{
+          &lt;li&gt;{item.get('name')} - {item.get('price')}&lt;/li&gt;
         }}})}
       &lt;/ul&gt;
     &lt;/body&gt;

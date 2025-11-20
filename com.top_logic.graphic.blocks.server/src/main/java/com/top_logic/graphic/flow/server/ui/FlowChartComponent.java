@@ -86,6 +86,10 @@ public class FlowChartComponent extends BuilderComponent
 		}
 	};
 
+	/**
+	 * Listener on the {@link #_selectionModel} forwarding selected values to the component's
+	 * selection channel.
+	 */
 	private final SelectionListener<Object> _updateChannelSelection = new SelectionListener<>() {
 		@Override
 		public void notifySelectionChanged(SelectionModel<Object> model, SelectionEvent<Object> event) {
@@ -95,10 +99,17 @@ public class FlowChartComponent extends BuilderComponent
 				.filter(Objects::nonNull)
 				.collect(Collectors.toSet());
 
-			setSelected(selectedUserObjects);
+			if (_selectionModel.isMultiSelectionSupported()) {
+				setSelected(selectedUserObjects);
+			} else {
+				setSelected(CollectionUtil.getFirst(selectedUserObjects));
+			}
 		}
 	};
 
+	/**
+	 * Observer of the diagram's selection property updating the {@link #_selectionModel}.
+	 */
 	private final Listener _processUISelection = new Listener() {
 
 		private final List<Consumer<SelectionModel>> _deferredUpdates = new ArrayList<>();
@@ -202,6 +213,9 @@ public class FlowChartComponent extends BuilderComponent
 		}
 	};
 
+	/**
+	 * Listener on the component's selection channel updating the {@link #_selectionModel}.
+	 */
 	private ChannelListener _processChannelSelection = new ChannelListener() {
 		@Override
 		public void handleNewValue(ComponentChannel sender, Object oldValue, Object newValue) {

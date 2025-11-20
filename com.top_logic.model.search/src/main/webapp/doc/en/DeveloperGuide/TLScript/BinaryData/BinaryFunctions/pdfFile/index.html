@@ -149,7 +149,7 @@
   &lt;html&gt;
     &lt;body&gt;
       &lt;h1&gt;Invoice for {$customer.get('name')}&lt;/h1&gt;
-      &lt;p&gt;Date: {format(now(), 'yyyy-MM-dd')}&lt;/p&gt;
+      &lt;p&gt;Date: {dateFormat('yyyy-MM-dd').format(now())}&lt;/p&gt;
       &lt;p&gt;Amount: {$invoice.get('amount')}&lt;/p&gt;
     &lt;/body&gt;
   &lt;/html&gt;
@@ -189,7 +189,7 @@
     &lt;/head&gt;
     &lt;body&gt;
       &lt;h1&gt;Sales Report&lt;/h1&gt;
-      &lt;p&gt;Generated on: {format(now(), 'yyyy-MM-dd')}&lt;/p&gt;
+      &lt;p&gt;Generated on: {dateFormat('yyyy-MM-dd').format(now())}&lt;/p&gt;
       &lt;table&gt;
         &lt;tr&gt;
           &lt;th&gt;Product&lt;/th&gt;
@@ -202,7 +202,7 @@
       &lt;/table&gt;
     &lt;/body&gt;
   &lt;/html&gt;
-}}}, "sales-report-" + format(now(), 'yyyy-MM-dd'))</code>
+}}}, "sales-report-" + dateFormat('yyyy-MM-dd').format(now()))</code>
 </pre>
 
 <p><strong>Output:</strong> A styled PDF report named "sales-report-2025-10-22.pdf" with a table, including embedded CSS styles and dynamic date.</p>

@@ -149,7 +149,7 @@
   &lt;html&gt;
     &lt;body&gt;
       &lt;h1&gt;Rechnung für {$customer.get('name')}&lt;/h1&gt;
-      &lt;p&gt;Datum: {format(now(), 'yyyy-MM-dd')}&lt;/p&gt;
+      &lt;p&gt;Datum: {dateFormat('yyyy-MM-dd').format(now())}&lt;/p&gt;
       &lt;p&gt;Betrag: {$invoice.get('amount')}&lt;/p&gt;
     &lt;/body&gt;
   &lt;/html&gt;
@@ -189,7 +189,7 @@
     &lt;/head&gt;
     &lt;body&gt;
       &lt;h1&gt;Verkaufsbericht&lt;/h1&gt;
-      &lt;p&gt;Erstellt am: {format(now(), 'yyyy-MM-dd')}&lt;/p&gt;
+      &lt;p&gt;Erstellt am: {dateFormat('yyyy-MM-dd').format(now())}&lt;/p&gt;
       &lt;table&gt;
         &lt;tr&gt;
           &lt;th&gt;Produkt&lt;/th&gt;
@@ -202,7 +202,7 @@
       &lt;/table&gt;
     &lt;/body&gt;
   &lt;/html&gt;
-}}}, "verkaufsbericht-" + format(now(), 'yyyy-MM-dd'))</code>
+}}}, "verkaufsbericht-" + dateFormat('yyyy-MM-dd').format(now()))</code>
 </pre>
 
 <p><strong>Ausgabe:</strong> Ein gestalteter PDF-Bericht mit dem Namen "verkaufsbericht-2025-10-22.pdf", einschließlich Tabelle, eingebetteter CSS-Stile und dynamischem Datum.</p>

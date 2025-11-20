@@ -18,7 +18,7 @@ import com.top_logic.graphic.flow.data.Text;
 import com.top_logic.graphic.flow.server.script.FlowFactory;
 
 /**
- * Test case for {@link FlowFactory#svg(Diagram, String, double, Double, Double)}.
+ * Test case for {@link FlowFactory#toSvg(Diagram, String, double, Double, Double)}.
  */
 public class TestFlowSvg extends TestCase {
 
@@ -32,7 +32,7 @@ public class TestFlowSvg extends TestCase {
 				.setContent(Text.create().setValue("Hello World")));
 
 		// Generate SVG
-		BinaryData svg = FlowFactory.svg(diagram, "test.svg", 12.0, null, null);
+		BinaryData svg = FlowFactory.toSvg(diagram, "test.svg", 12.0, null, null);
 
 		// Verify result
 		assertNotNull("SVG should not be null", svg);
@@ -55,7 +55,7 @@ public class TestFlowSvg extends TestCase {
 		Diagram diagram = Diagram.create()
 			.setRoot(Text.create().setValue("Test"));
 
-		BinaryData svg = FlowFactory.svg(diagram, "large-text.svg", 20.0, null, null);
+		BinaryData svg = FlowFactory.toSvg(diagram, "large-text.svg", 20.0, null, null);
 
 		assertNotNull("SVG should not be null", svg);
 		String svgContent = StreamUtilities.readAllFromStream(svg);
@@ -69,7 +69,7 @@ public class TestFlowSvg extends TestCase {
 		Diagram diagram = Diagram.create()
 			.setRoot(Text.create().setValue("Fixed Size"));
 
-		BinaryData svg = FlowFactory.svg(diagram, "fixed.svg", 12.0, 800.0, 600.0);
+		BinaryData svg = FlowFactory.toSvg(diagram, "fixed.svg", 12.0, 800.0, 600.0);
 
 		assertNotNull("SVG should not be null", svg);
 		String svgContent = StreamUtilities.readAllFromStream(svg);
@@ -84,11 +84,11 @@ public class TestFlowSvg extends TestCase {
 			.setRoot(Text.create().setValue("Test"));
 
 		// Test without extension
-		BinaryData svg1 = FlowFactory.svg(diagram, "no-extension", 12.0, null, null);
+		BinaryData svg1 = FlowFactory.toSvg(diagram, "no-extension", 12.0, null, null);
 		assertEquals("Should add .svg extension", "no-extension.svg", svg1.getName());
 
 		// Test with extension already present
-		BinaryData svg2 = FlowFactory.svg(diagram, "has-extension.svg", 12.0, null, null);
+		BinaryData svg2 = FlowFactory.toSvg(diagram, "has-extension.svg", 12.0, null, null);
 		assertEquals("Should keep .svg extension", "has-extension.svg", svg2.getName());
 	}
 
@@ -103,7 +103,7 @@ public class TestFlowSvg extends TestCase {
 				.addContent(Border.create()
 					.setContent(Text.create().setValue("Right"))));
 
-		BinaryData svg = FlowFactory.svg(diagram, "complex.svg", 12.0, null, null);
+		BinaryData svg = FlowFactory.toSvg(diagram, "complex.svg", 12.0, null, null);
 
 		assertNotNull("SVG should not be null", svg);
 		String svgContent = StreamUtilities.readAllFromStream(svg);
@@ -118,7 +118,7 @@ public class TestFlowSvg extends TestCase {
 		Diagram diagram = Diagram.create()
 			.setRoot(Text.create().setValue("XML Test"));
 
-		BinaryData svg = FlowFactory.svg(diagram, "valid.svg", 12.0, null, null);
+		BinaryData svg = FlowFactory.toSvg(diagram, "valid.svg", 12.0, null, null);
 		String svgContent = StreamUtilities.readAllFromStream(svg);
 
 		// Basic XML validation

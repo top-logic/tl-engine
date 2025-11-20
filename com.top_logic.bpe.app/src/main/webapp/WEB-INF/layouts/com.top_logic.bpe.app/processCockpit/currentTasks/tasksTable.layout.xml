@@ -5,7 +5,7 @@
 	template="com.top_logic/tileTable.template.xml"
 >
 	<arguments name="%LAYOUT_RESPREFIX%tableName"
-		defaultColumns="node,executionNumber"
+		defaultColumns="name,executionNumber"
 		fixedColumns="-1"
 		model="selection(com.top_logic.bpe.app/processCockpit/contextListContext.layout.xml#List)"
 		securityObject="securityRoot"

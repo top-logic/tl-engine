@@ -907,7 +907,6 @@
 			<annotations>
 				<table name="BPNode"/>
 				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.TaskImpl"/>
-				<id-column value="label"/>
 			</annotations>
 			<attributes>
 				<property name="titleI18N"
@@ -954,20 +953,6 @@
 						<bpml-extension/>
 					</annotations>
 				</reference>
-				<property name="label"
-					type="tl.core:String"
-				>
-					<annotations>
-						<storage-algorithm>
-							<query>
-								<expr><![CDATA[t -> {
-$t.get(`tl.bpe.bpml:Task#titleI18N`).localize() || $t.get(`tl.bpe.bpml:Task#name`)
-}]]></expr>
-							</query>
-						</storage-algorithm>
-						<visibility value="hidden"/>
-					</annotations>
-				</property>
 			</attributes>
 		</class>
 		<class name="BusinessRuleTask">

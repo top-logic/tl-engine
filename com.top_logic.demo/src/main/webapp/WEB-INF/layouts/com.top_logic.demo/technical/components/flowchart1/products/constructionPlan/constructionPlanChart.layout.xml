@@ -27,10 +27,9 @@ nodes = $parts.map(p -> flowSelection(
     content: flowPadding(all: 3, 
     content: flowVertical(
         contents: [
-            {
-                marker = $p.get(`test.flowchart:FlowNode#marker`);
+            $p.get(`test.flowchart:FlowNode#marker`).with(marker ->
                 $marker.isEmpty()
-                    ? null
+                    ? flowEmpty()
                     : flowPadding(bottom: 8, content: flowAlign(
                         hAlign: "middle", 
                         content: 
@@ -40,7 +39,9 @@ nodes = $parts.map(p -> flowSelection(
                                 content: flowPadding(
                                     all: 4, 
                                     content: flowText($marker)))))
-            },
+            ),
+
+            // Node name
             flowAlign(
                 hAlign: "middle", 
                 content: flowPadding(
@@ -49,18 +50,20 @@ nodes = $parts.map(p -> flowSelection(
                         fontWeight: "bold",
                         text: $p.get(`test.flowchart:FlowNode#name`))
             )),
+            
+            // Node location grid
             flowAlign(
                 hAlign: "middle",  content: flowGrid(
                 gapY: -1, 
+                // Array with rows
                 contents: $p.get(`test.flowchart:FlowNode#locations`).map(l -> [
-                    {
-                        count = $l.get(`test.flowchart:Location#count`);
+                    $l.get(`test.flowchart:Location#count`).with(count -> 
                         $count == null 
-                            ? null
-                            : flowBorder(
-                                right: false,  
-                                content: flowPadding(all: 3, content: flowText($count)))
-                    },
+                        ? flowEmpty() 
+                        : flowBorder(
+                            right: false,  
+                            content: flowPadding(all: 3, content: flowText($count)))
+                    ),
                     flowBorder(
                         content: flowFill(
                             fill: $l.get(`test.flowchart:Location#part`)
@@ -72,7 +75,7 @@ nodes = $parts.map(p -> flowSelection(
                     {
                         usages = $l.get(`test.flowchart:Location#usages`);
                         $usages.isEmpty() 
-                            ? null 
+                            ? flowEmpty() 
                             : flowAlign(
                                 content: flowBorder(
                                     left: false, 
@@ -80,14 +83,15 @@ nodes = $parts.map(p -> flowSelection(
                     }
                 ])
             )),
-            {
-                image = $p.get(`test.flowchart:FlowNode#image`);
+            
+            // Node image
+            $p.get(`test.flowchart:FlowNode#image`).with(image -> 
                 $image == null
-                    ? null
-                    : flowPadding(
-                        top: 8, 
-                        content: flowBorder(flowImage($image)))
-            }
+                ? flowEmpty() 
+                : flowPadding(
+                    top: 8, 
+                    content: flowBorder(flowImage($image)))
+            )
         ]))))
         )
     );

@@ -22,12 +22,18 @@ public interface RuleCondition {
 	 *        Current {@link ProcessExecution} object representing the state of the workflow to test
 	 *        the condition on.
 	 */
-	boolean getTestCondition(ProcessExecution process);
+	default boolean getTestCondition(ProcessExecution process) {
+		return getMessage(process) == null;
+	}
 
 	/**
 	 * The error or warning message to show, if this condition is not satisfied.
+	 * 
+	 * @param process
+	 *        Current {@link ProcessExecution} object representing the state of the workflow to test
+	 *        the condition on.
 	 */
-	ResKey getMessage();
+	ResKey getMessage(ProcessExecution process);
 
 	/**
 	 * Specifies the UI behavior to show, when this condition is not satisfied.

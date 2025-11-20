@@ -22,6 +22,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import com.top_logic.ajax.server.util.JSControlUtil;
 import com.top_logic.base.services.simpleajax.JSFunctionCall;
+import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
@@ -166,10 +167,15 @@ public class DiagramControl extends AbstractControlBase
 		if (_diagram.getSelection().contains(node)) {
 			// A context menu opened on a selected item means that the operation targets the whole
 			// selection.
-			userObject = _diagram.getSelection().stream()
+			List<Object> selectedUserObjects = _diagram.getSelection().stream()
 				.map(Widget::getUserObject)
 				.filter(Objects::nonNull)
 				.toList();
+
+			// Make sure not to use collections as user objects for single-select diagrams.
+			userObject = _diagram.isMultiSelect()
+				? selectedUserObjects
+				: CollectionUtil.getFirst(selectedUserObjects);
 		} else {
 			userObject = node.getUserObject();
 			if (userObject == null) {

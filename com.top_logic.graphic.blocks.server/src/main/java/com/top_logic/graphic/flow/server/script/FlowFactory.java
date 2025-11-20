@@ -7,6 +7,7 @@ package com.top_logic.graphic.flow.server.script;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -22,6 +23,7 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
 
+import com.top_logic.basic.FileManager;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
@@ -33,6 +35,7 @@ import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.graphic.blocks.server.svg.SvgTagWriter;
 import com.top_logic.graphic.flow.callback.ClickHandler;
 import com.top_logic.graphic.flow.data.Align;
 import com.top_logic.graphic.flow.data.Alignment;
@@ -71,7 +74,6 @@ import com.top_logic.graphic.flow.data.TreeConnection;
 import com.top_logic.graphic.flow.data.TreeConnector;
 import com.top_logic.graphic.flow.data.TreeLayout;
 import com.top_logic.graphic.flow.data.VerticalLayout;
-import com.top_logic.graphic.blocks.server.svg.SvgTagWriter;
 import com.top_logic.graphic.flow.server.ui.AWTContext;
 import com.top_logic.graphic.flow.server.ui.handler.ServerDropHandler;
 import com.top_logic.model.search.expr.ToString;
@@ -1349,7 +1351,36 @@ public class FlowFactory extends TLScriptFunctions {
 		// Render to SVG
 		StringWriter buffer = new StringWriter();
 		try (TagWriter tagWriter = new TagWriter(buffer);
-				SvgTagWriter svgWriter = new SvgTagWriter(tagWriter)) {
+				SvgTagWriter svgWriter = new SvgTagWriter(tagWriter) {
+					boolean _svgStarted;
+					@Override
+					public void beginSvg() {
+						super.beginSvg();
+
+						_svgStarted = true;
+					}
+
+					@Override
+					protected void endBeginTag() {
+						super.endBeginTag();
+
+						if (_svgStarted) {
+							// Add default styles to the generated SVG.
+							BinaryData styles = FileManager.getInstance().getDataOrNull("/style/tl-flow-core.css");
+							if (styles != null) {
+								tagWriter.beginTag("style");
+								try (InputStream in = styles.getStream()) {
+									StreamUtilities.copyReaderWriterContents(
+										new InputStreamReader(in, StandardCharsets.UTF_8), tagWriter);
+								} catch (IOException ex) {
+									Logger.error("Failed to copy styles.", ex, FlowFactory.class);
+								}
+								tagWriter.endTag("style");
+							}
+							_svgStarted = false;
+						}
+					}
+				}) {
 			diagram.draw(svgWriter);
 		} catch (IOException ex) {
 			throw new RuntimeException("Failed to generate SVG: " + ex.getMessage(), ex);

@@ -1,0 +1,9 @@
+/*
+ * Stylesheet that is also included when a diagram is exported to PDF.
+ * 
+ * Rules in this stylesheet must use CSS2 features only, since the the Apache Batik rendering engine 
+ * does only support CSS2.  
+ */
+.tlSelectionMarker {
+	display: none;
+}

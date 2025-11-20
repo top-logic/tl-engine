@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_28984_Remove_task_label"
+		module="tl-bpe"
+	/>
+	<dependencies>
+		<dependency name="Ticket_28604_Upgrade_commit_messages"
+			module="tl"
+		/>
+		<dependency name="Ticket_28604_changelog"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_28298_add_group_member_options"
+			module="tl-model-search"
+		/>
+		<dependency name="Ticket_28557_enlarge_contact_attributes"
+			module="tl-contact"
+		/>
+		<dependency name="Ticket_28604_changelog"
+			module="tl-model-wysiwyg"
+		/>
+		<dependency name="Ticket_28298_update_account"
+			module="tl-layout-formeditor"
+		/>
+		<dependency name="Ticket_27442_Update_lucene_version_to_8_11_2"
+			module="tl-search-lucene"
+		/>
+		<dependency name="Ticket_28592_actor_group_resolution"
+			module="tl-bpe"
+		/>
+	</dependencies>
+	<processors>
+		<remove-annotations name="tl.bpe.bpml:Task">
+			<annotation class="com.top_logic.model.annotate.ui.TLIDColumn"/>
+		</remove-annotations>
+		<delete-property name="tl.bpe.bpml:Task#label"/>
+	</processors>
+	<post-processors/>
+</migration>

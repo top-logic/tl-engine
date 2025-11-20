@@ -62,7 +62,11 @@ public class ConcreteTypeContext implements TLTypeContext {
 
 	@Override
 	public String toString() {
-		return NameBuilder.buildName(this, TLModelUtil.qualifiedName(_type));
+		return new NameBuilder(this)
+			.add("type", TLModelUtil.qualifiedName(_type))
+			.add("multiple", _multiple)
+			.add("mandatory", _mandatory)
+			.buildName();
 	}
 
 }

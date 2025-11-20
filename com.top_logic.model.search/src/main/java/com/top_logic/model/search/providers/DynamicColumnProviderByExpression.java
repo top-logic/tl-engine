@@ -192,13 +192,13 @@ public class DynamicColumnProviderByExpression
 		 * Optional function computing the column label.
 		 * 
 		 * <p>
-		 * The function expects two arguments. The first argument is one of the column objects as
-		 * returned by the {@link #getColumns()} function. The second argument is the component's
-		 * model.
+		 * The function expects two arguments. The first argument is the column object of the
+		 * current column as returned by the {@link #getColumns()} function. The second argument is
+		 * the component's model.
 		 * </p>
 		 * 
 		 * <pre>
-		 * <code>column -> model -> ...</code>
+		 * <code>column -> model -> $column.label()</code>
 		 * </pre>
 		 * 
 		 * <p>
@@ -220,23 +220,24 @@ public class DynamicColumnProviderByExpression
 		 * 
 		 * <p>
 		 * If all columns have the same value type, a model type literal can be given, e.g.
-		 * `tl.core:Integer`. If columns have different types, a function can be specified that
-		 * computes the column type.
+		 * <code>`tl.core:Integer`</code>. If columns have different types, a function can be
+		 * specified that computes the column type.
 		 * </p>
 		 * 
 		 * <p>
-		 * The type function expects two arguments. The first argument is one of the column objects
-		 * as returned by the {@link #getColumns()} function. The second argument is the component's
-		 * model.
+		 * The function expects two arguments. The first argument is the column object of the
+		 * current column as returned by the {@link #getColumns()} function. The second argument is
+		 * the component's model.
 		 * </p>
 		 * 
 		 * <pre>
-		 * <code>column -> model -> ...</code>
+		 * <code>column -> model -> `tl.core:Integer`</code>
 		 * </pre>
 		 * 
 		 * <p>
-		 * The result of the type function must be reference to a <i>TopLogic</i> type (a primitive
-		 * type such as `tl.core:Integer`, an enumeration or any other class type.
+		 * The result of the type function must be a reference to a <i>TopLogic</i> type (a
+		 * primitive type such as <code>`tl.core:Integer`</code>, an enumeration or any other class
+		 * type.
 		 * </p>
 		 */
 		@Name(COLUMN_TYPE)
@@ -247,13 +248,13 @@ public class DynamicColumnProviderByExpression
 		 * Whether the column must contain a value.
 		 * 
 		 * <p>
-		 * The type function expects two arguments. The first argument is one of the column objects
-		 * as returned by the {@link #getColumns()} function. The second argument is the component's
-		 * model.
+		 * The function expects two arguments. The first argument is the column object of the
+		 * current column as returned from the {@link #getColumns()} function. The second argument
+		 * is the component's model.
 		 * </p>
 		 * 
 		 * <pre>
-		 * <code>column -> model -> ...</code>
+		 * <code>column -> model -> false</code>
 		 * </pre>
 		 */
 		@Name(COLUMN_MANDATORY)
@@ -265,13 +266,13 @@ public class DynamicColumnProviderByExpression
 		 * Whether the column can contain multiple values.
 		 * 
 		 * <p>
-		 * The type function expects two arguments. The first argument is one of the column objects
-		 * as returned by the {@link #getColumns()} function. The second argument is the component's
-		 * model.
+		 * The function expects two arguments. The first argument is the column object of the
+		 * current column as returned by the {@link #getColumns()} function. The second argument is
+		 * the component's model.
 		 * </p>
 		 * 
 		 * <pre>
-		 * <code>column -> model -> ...</code>
+		 * <code>column -> model -> false</code>
 		 * </pre>
 		 */
 		@Name(COLUMN_MULTIPLICITY)
@@ -289,7 +290,7 @@ public class DynamicColumnProviderByExpression
 		 * </p>
 		 * 
 		 * <pre>
-		 * <code>row -> column -> model -> ...</code>
+		 * <code>row -> column -> model -> $row.get($column)</code>
 		 * </pre>
 		 * 
 		 * <p>
@@ -315,7 +316,7 @@ public class DynamicColumnProviderByExpression
 		 * </p>
 		 * 
 		 * <pre>
-		 * <code>row -> column -> value -> model -> ...</code>
+		 * <code>row -> column -> value -> model -> $row.set($column, $value)</code>
 		 * </pre>
 		 * 
 		 * <p>
@@ -332,8 +333,11 @@ public class DynamicColumnProviderByExpression
 		 * <p>
 		 * The function takes the row object as first argument, the column object as second
 		 * argument, and optionally the component's model as third argument:
-		 * <code>row -> column -> model -> ...</code>
 		 * </p>
+		 * 
+		 * <pre>
+		 * <code>row -> column -> model -> false</code>
+		 * </pre>
 		 * 
 		 * <p>
 		 * The function must return a boolean value indicating whether a field should be created for

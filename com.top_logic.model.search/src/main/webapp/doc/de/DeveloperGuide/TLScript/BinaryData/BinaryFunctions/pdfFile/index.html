@@ -1,8 +1,12 @@
 <h2>Syntax</h2>
 
-<pre>
-	<code>pdfFile(html: $htmlContent, name: $filename, pageWidth: $width, pageHeight: $height,
-          resolution: $dpi, marginLeft: $ml, marginRight: $mr, marginTop: $mt, marginBottom: $mb)</code>
+<pre><code>pdfFile(html: $htmlContent, name: $filename,
+    pageSize: $size, landscape: $landscape,
+    pageWidth: $width, pageHeight: $height,
+    marginLeft: $ml, marginRight: $mr,
+    marginTop: $mt, marginBottom: $mb,
+    resolution: $dpi
+)</code>
 </pre>
 
 <h2>Beschreibung</h2>
@@ -46,25 +50,32 @@
 			<td>document.pdf</td>
 		</tr>
 		<tr>
+			<td>pageSize</td>
+			<td>String</td>
+			<td>Standard-Papierformat. Unterstützte Werte: <code>A0</code>, <code>A1</code>, <code>A2</code>, <code>A3</code>, <code>A4</code>, <code>A5</code>, <code>A6</code>, <code>LETTER</code>, <code>LEGAL</code>, <code>TABLOID</code>. Wenn angegeben, werden <code>pageWidth</code> und <code>pageHeight</code> automatisch basierend auf der Auflösung berechnet. Werte sind nicht case-sensitiv.</td>
+			<td>nein</td>
+			<td>A4 (wenn weder pageSize noch pageWidth/pageHeight angegeben)</td>
+		</tr>
+		<tr>
+			<td>landscape</td>
+			<td>Boolean</td>
+			<td>Wenn <code>true</code>, werden Seitenbreite und -höhe für Querformat getauscht. Funktioniert sowohl mit <code>pageSize</code> als auch mit benutzerdefinierten <code>pageWidth</code>/<code>pageHeight</code>-Werten.</td>
+			<td>nein</td>
+			<td>false</td>
+		</tr>
+		<tr>
 			<td>pageWidth</td>
 			<td>Number</td>
-			<td>Die Seitenbreite in Pixeln.</td>
+			<td>Überschreibung der Seitenbreite in Pixeln. Wenn angegeben (ungleich Null), hat dies Vorrang vor der <code>pageSize</code>-Breite.</td>
 			<td>nein</td>
-			<td>1240 (A4-Breite bei 150 DPI)</td>
+			<td>0 (pageSize oder Standard-A4-Breite bei Auflösung verwenden)</td>
 		</tr>
 		<tr>
 			<td>pageHeight</td>
 			<td>Number</td>
-			<td>Die Seitenhöhe in Pixeln.</td>
+			<td>Überschreibung der Seitenhöhe in Pixeln. Wenn angegeben (ungleich Null), hat dies Vorrang vor der <code>pageSize</code>-Höhe.</td>
 			<td>nein</td>
-			<td>1754 (A4-Höhe bei 150 DPI)</td>
-		</tr>
-		<tr>
-			<td>resolution</td>
-			<td>Number</td>
-			<td>Die Rendering-Auflösung in DPI (Punkte pro Zoll). Höhere Werte erzeugen bessere Qualität, aber größere Dateien.</td>
-			<td>nein</td>
-			<td>150</td>
+			<td>0 (pageSize oder Standard-A4-Höhe bei Auflösung verwenden)</td>
 		</tr>
 		<tr>
 			<td>marginLeft</td>
@@ -93,6 +104,13 @@
 			<td>Der untere Rand in Pixeln.</td>
 			<td>nein</td>
 			<td>59 (10mm bei 150 DPI)</td>
+		</tr>
+		<tr>
+			<td>resolution</td>
+			<td>Number</td>
+			<td>Die Rendering-Auflösung in DPI (Punkte pro Zoll). Höhere Werte erzeugen bessere Qualität, aber größere Dateien. Dies beeinflusst auch, wie <code>pageSize</code>-Dimensionen berechnet werden (z.B. A4 bei 150 DPI = 1240x1754 px, A4 bei 300 DPI = 2480x3508 px).</td>
+			<td>nein</td>
+			<td>150</td>
 		</tr>
 	</thead>
 </table>
@@ -208,6 +226,46 @@
 
 <p><strong>Ausgabe:</strong> Ein PDF mit einer dynamisch generierten Liste von Rechnungspositionen.</p>
 
+<h3>Verwendung von Standardpapierformaten</h3>
+
+<pre>
+	<code>// US Letter Papierformat
+pdfFile("""
+  &lt;html&gt;
+    &lt;body&gt;
+      &lt;h1&gt;US Letter Dokument&lt;/h1&gt;
+      &lt;p&gt;Dieses Dokument verwendet das US Letter Papierformat.&lt;/p&gt;
+    &lt;/body&gt;
+  &lt;/html&gt;
+""", name: "letter-doc.pdf", pageSize: "LETTER")</code>
+</pre>
+
+<p><strong>Ausgabe:</strong> Ein PDF mit US Letter-Papierformat (216 x 279 mm) bei der Standard-Auflösung von 150 DPI.</p>
+
+<h3>Querformat</h3>
+
+<pre>
+	<code>// A4 Querformat für breite Inhalte
+pdfFile({{{
+  &lt;html&gt;
+    &lt;body&gt;
+      &lt;h1&gt;Breiter Bericht&lt;/h1&gt;
+      &lt;table style="width: 100%"&gt;
+        &lt;tr&gt;
+          &lt;th&gt;Spalte 1&lt;/th&gt;
+          &lt;th&gt;Spalte 2&lt;/th&gt;
+          &lt;th&gt;Spalte 3&lt;/th&gt;
+          &lt;th&gt;Spalte 4&lt;/th&gt;
+          &lt;th&gt;Spalte 5&lt;/th&gt;
+        &lt;/tr&gt;
+      &lt;/table&gt;
+    &lt;/body&gt;
+  &lt;/html&gt;
+}}}, name: "breiter-bericht.pdf", pageSize: "A4", landscape: true)</code>
+</pre>
+
+<p><strong>Ausgabe:</strong> Ein PDF im A4-Querformat (297 x 210 mm), ideal für breite Tabellen oder Diagramme.</p>
+
 <h3>Benutzerdefinierte Seitengröße und Auflösung</h3>
 
 <pre>
@@ -219,10 +277,11 @@ pdfFile("""
       &lt;p&gt;Dieses Dokument wird mit höherer Auflösung gerendert.&lt;/p&gt;
     &lt;/body&gt;
   &lt;/html&gt;
-""", "bericht.pdf", 1700, 2200, 200, 100, 100, 100, 100)</code>
+""", name: "bericht.pdf", pageSize: "LETTER", resolution: 200,
+    marginLeft: 100, marginRight: 100, marginTop: 100, marginBottom: 100)</code>
 </pre>
 
-<p><strong>Ausgabe:</strong> Ein PDF mit US Letter-Seitengröße (8,5" x 11" = 1700x2200 px bei 200 DPI) und 100-Pixel-Rändern auf allen Seiten.</p>
+<p><strong>Ausgabe:</strong> Ein PDF mit US Letter-Seitengröße bei 200 DPI und 100-Pixel-Rändern auf allen Seiten.</p>
 
 <h3>Minimale Ränder für maximalen Inhalt</h3>
 
@@ -235,15 +294,34 @@ pdfFile({{{
       &lt;p&gt;Dies verwendet minimale Ränder, um den Inhaltsbereich zu maximieren.&lt;/p&gt;
     &lt;/body&gt;
   &lt;/html&gt;
-}}}, "vollseite.pdf", 1240, 1754, 150, 20, 20, 20, 20)</code>
+}}}, name: "vollseite.pdf", pageSize: "A4",
+    marginLeft: 20, marginRight: 20, marginTop: 20, marginBottom: 20)</code>
 </pre>
 
 <p><strong>Ausgabe:</strong> Ein PDF mit A4-Seitengröße und minimalen 20-Pixel-Rändern (ca. 3,4mm bei 150 DPI).</p>
+
+<h3>Großformate mit A3</h3>
+
+<pre>
+	<code>// A3 für große Diagramme
+pdfFile({{{
+  &lt;html&gt;
+    &lt;body&gt;
+      &lt;h1&gt;Architekturdiagramm&lt;/h1&gt;
+      &lt;!-- Großer Diagramminhalt --&gt;
+    &lt;/body&gt;
+  &lt;/html&gt;
+}}}, name: "diagramm.pdf", pageSize: "A3")</code>
+</pre>
+
+<p><strong>Ausgabe:</strong> Ein PDF mit A3-Seitengröße (297 x 420 mm), geeignet für große Diagramme oder Poster.</p>
 
 <h2>Technische Hinweise</h2>
 
 <ul>
 	<li><strong>Standardeinstellungen:</strong> Standard-Seitengröße ist A4 (1240x1754 Pixel bei 150 DPI = 210mm x 297mm)</li>
+	<li><strong>Standardpapierformate:</strong> Der <code>pageSize</code>-Parameter unterstützt A0 bis A6 sowie LETTER, LEGAL und TABLOID. Dimensionen werden automatisch basierend auf der Auflösung berechnet</li>
+	<li><strong>Querformat:</strong> Bei <code>landscape: true</code> werden Breite und Höhe getauscht. Dies funktioniert unabhängig davon, ob <code>pageSize</code> oder benutzerdefinierte Dimensionen verwendet werden</li>
 	<li><strong>Auflösung:</strong> Standardauflösung ist 150 DPI, geeignet für die meisten Druck- und Bildschirmansichten. Höhere Werte (z.B. 300 DPI) erzeugen bessere Qualität, aber größere Dateien</li>
 	<li><strong>Ränder:</strong> Standardränder sind 15mm (links, rechts, oben) und 10mm (unten). Ränder werden in Pixeln bei der gewählten Auflösung angegeben</li>
 	<li><strong>Seitengrößenberechnungen:</strong>
@@ -257,5 +335,5 @@ pdfFile({{{
 	<li><strong>CSS-Unterstützung:</strong> Grundlegende CSS2-Stile werden unterstützt. Komplexe CSS3-Features werden möglicherweise nicht korrekt gerendert</li>
 	<li><strong>Bilder:</strong> Externe Bilder benötigen zugängliche URLs. Base64-kodierte Bilder werden unterstützt</li>
 	<li><strong>Schriftarten:</strong> Standardschriftarten sind verfügbar. Benutzerdefinierte Schriftarten erfordern möglicherweise zusätzliche Konfiguration</li>
-	<li><strong>Parameterreihenfolge:</strong> Alle Parameter nach <code>html</code> sind optional und positionsabhängig. Um einen späteren Parameter anzugeben, müssen Werte (oder null) für alle früheren Parameter angegeben werden</li>
+	<li><strong>Benannte Parameter:</strong> Verwenden Sie benannte Parameter für mehr Klarheit (z.B. <code>pageSize: "A4", landscape: true</code>). Dies vermeidet das Angeben von null für ungenutzte Positionsparameter</li>
 </ul>

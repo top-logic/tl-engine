@@ -88,6 +88,10 @@
 					<attribute name="type" />
 				</allowed-attributes>
 				<allowed-tags>
+					<tag name="html" />
+					<tag name="head" />
+					<tag name="body" />
+					<tag name="style" />
 					<tag name="a" />
 					<tag name="address" />
 					<tag name="b" />

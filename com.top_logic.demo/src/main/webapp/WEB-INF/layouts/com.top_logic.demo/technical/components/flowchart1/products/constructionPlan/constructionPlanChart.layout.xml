@@ -22,7 +22,9 @@ parts = $model.get(`test.flowchart:Product#buildInstructions`);
 
 nodes = $parts.map(p -> flowSelection(
     userObject: $p,
-    content: flowBorder(stroke: "#eccf33", thickness: 2, cssClass:"tlSelectionMarker", content: flowFill(fill: "#eccf3340", cssClass:"tlSelectionMarker", content: flowPadding(all: 3, 
+    content: flowBorder(stroke: "#eccf33", thickness: 2, cssClass:"tlSelectionMarker", 
+    content: flowFill(fill: "#ffee95", cssClass:"tlSelectionMarker", 
+    content: flowPadding(all: 3, 
     content: flowVertical(
         contents: [
             {
@@ -123,6 +125,30 @@ flowChart(
 					<de>Selektiertes Bauteil löschen</de>
 				</resourceKey>
 				<confirmation class="com.top_logic.tool.boundsec.confirm.DefaultDeleteConfirmation"/>
+			</button>
+			<button id="ID_e0339c1d_bda2_45cf_89c4_7e7a52e65fef"
+				class="com.top_logic.model.search.providers.CommandHandlerByExpression"
+				clique="exportButtons"
+				group="Export"
+				image="css:fa-solid fa-file-pdf"
+				target="diagram(self())"
+			>
+				<resourceKey key="dynamic.10ba1e96-2e3b-4236-aa33-a5f173144aec">
+					<en>Download as PDF</en>
+					<de>Als PDF herunterladen</de>
+				</resourceKey>
+				<operation><![CDATA[diagram -> pdfFile({{{
+<h1>Bauplan</h1>
+<div>
+    <img style="width:100%; height: 800px;" 
+        src="data:image/svg+xml;base64,{$diagram.flowSvg().base64Encode()}"/>
+</div>
+}}}, landscape:true)]]></operation>
+				<postCreateActions>
+					<deliverAsDownload>
+						<input/>
+					</deliverAsDownload>
+				</postCreateActions>
 			</button>
 		</buttons>
 	</arguments>

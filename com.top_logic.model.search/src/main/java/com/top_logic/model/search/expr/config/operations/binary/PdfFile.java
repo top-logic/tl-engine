@@ -208,43 +208,43 @@ public class PdfFile extends GenericMethod {
 		// Extract optional rendering parameters
 		PageSize pageSize = asPageSize(arguments[2]);
 		boolean landscape = asBoolean(arguments[3]);
-		int pageWidthAdjust = asInt(arguments[4]);
-		int pageHeightAdjust = asInt(arguments[5]);
+		double pageWidthAdjust = asDouble(arguments[4]);
+		double pageHeightAdjust = asDouble(arguments[5]);
 		float resolution = asFloat(arguments[6]);
-		int marginLeft = asInt(arguments[7]);
-		int marginRight = asInt(arguments[8]);
-		int marginTop = asInt(arguments[9]);
-		int marginBottom = asInt(arguments[10]);
+		double marginLeft = asDouble(arguments[7]);
+		double marginRight = asDouble(arguments[8]);
+		double marginTop = asDouble(arguments[9]);
+		double marginBottom = asDouble(arguments[10]);
 
 		// Determine page dimensions: start with pageSize if given, then apply adjustments
-		int pageWidth;
-		int pageHeight;
+		double pageWidth;
+		double pageHeight;
 		if (pageSize != null) {
-			// Use standard page size
-			if (landscape) {
-				// Swap width and height for landscape
-				pageWidth = pageSize.getHeight(resolution);
-				pageHeight = pageSize.getWidth(resolution);
-			} else {
-				pageWidth = pageSize.getWidth(resolution);
-				pageHeight = pageSize.getHeight(resolution);
-			}
-			// Apply adjustments if provided
-			if (pageWidthAdjust != 0) {
-				pageWidth = pageWidthAdjust;
-			}
-			if (pageHeightAdjust != 0) {
-				pageHeight = pageHeightAdjust;
-			}
+			pageWidth = pageSize.getWidth(resolution);
+			pageHeight = pageSize.getHeight(resolution);
 		} else {
-			// Use explicit dimensions or defaults
-			pageWidth = pageWidthAdjust != 0 ? pageWidthAdjust : DEFAULT_PAGE_WIDTH;
-			pageHeight = pageHeightAdjust != 0 ? pageHeightAdjust : DEFAULT_PAGE_HEIGHT;
+			pageWidth = DEFAULT_PAGE_WIDTH;
+			pageHeight = DEFAULT_PAGE_HEIGHT;
+		}
+
+		// Apply adjustments if provided
+		if (pageWidthAdjust != 0) {
+			pageWidth = pageWidthAdjust;
+		}
+		if (pageHeightAdjust != 0) {
+			pageHeight = pageHeightAdjust;
+		}
+
+		if (landscape) {
+			// Swap width and height for landscape
+			double tmp = pageWidth;
+			pageWidth = pageHeight;
+			pageHeight = tmp;
 		}
 
 		// Calculate content area dimensions (page minus margins)
-		int contentWidth = pageWidth - marginLeft - marginRight;
-		int contentHeight = pageHeight - marginTop - marginBottom;
+		double contentWidth = pageWidth - marginLeft - marginRight;
+		double contentHeight = pageHeight - marginTop - marginBottom;
 
 		// Convert to HTML string (SVG needs content area dimensions for img tag sizing)
 		String html;
@@ -333,7 +333,7 @@ public class PdfFile extends GenericMethod {
 	 * @throws IOException
 	 *         If rendering the HTMLFragment or reading the BinaryDataSource fails.
 	 */
-	private String toHtmlString(Object htmlArg, int contentWidth, int contentHeight) throws IOException {
+	private String toHtmlString(Object htmlArg, double contentWidth, double contentHeight) throws IOException {
 		if (htmlArg instanceof String) {
 			// Direct string input
 			return (String) htmlArg;
@@ -432,8 +432,8 @@ public class PdfFile extends GenericMethod {
 	 * @throws IOException
 	 *         If I/O operations fail.
 	 */
-	private byte[] convertHtmlToPdf(String html, int pageWidth, int pageHeight, float resolution,
-			int marginLeft, int marginRight, int marginTop, int marginBottom)
+	private byte[] convertHtmlToPdf(String html, double pageWidth, double pageHeight, float resolution,
+			double marginLeft, double marginRight, double marginTop, double marginBottom)
 			throws DocumentException, IOException {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 
@@ -493,8 +493,8 @@ public class PdfFile extends GenericMethod {
 	 *        The bottom margin in pixels.
 	 * @return HTML with injected page styles.
 	 */
-	private String injectPageStyles(String html, int pageWidth, int pageHeight,
-			int marginLeft, int marginRight, int marginTop, int marginBottom) {
+	private String injectPageStyles(String html, double pageWidth, double pageHeight,
+			double marginLeft, double marginRight, double marginTop, double marginBottom) {
 		String pageStyle = "<style>@page {size: " + pageWidth + "px " + pageHeight
 			+ "px; margin-left: " + marginLeft + "px; margin-right: " + marginRight
 			+ "px; margin-top: " + marginTop + "px; margin-bottom: " + marginBottom

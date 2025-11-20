@@ -1268,9 +1268,8 @@ public class FlowFactory extends TLScriptFunctions {
 	 * Converts a flow chart diagram to SVG binary data.
 	 *
 	 * <p>
-	 * This function performs layout calculation using AWT font metrics and renders the diagram to
-	 * a standalone SVG document. The resulting SVG can be saved, displayed, or converted to other
-	 * formats (e.g., PDF using {@code pdfFile()}).
+	 * This function renders the diagram to a standalone SVG document. The resulting SVG can be
+	 * saved, displayed, or converted to other formats (e.g., PDF using {@code pdfFile()}).
 	 * </p>
 	 *
 	 * <p>
@@ -1278,38 +1277,43 @@ public class FlowFactory extends TLScriptFunctions {
 	 * </p>
 	 *
 	 * <pre>
+	 * <code>
 	 * // Basic usage with default settings
-	 * flowSvg(flowChart(flowText("Hello")))
+	 * flowToSvg(flowChart(flowText("Hello")))
 	 *
 	 * // With custom filename and text size
-	 * flowSvg(
+	 * flowToSvg(
 	 *     flowChart(flowVbox(flowText("Header"), flowText("Content"))),
 	 *     filename: "my-chart.svg",
 	 *     textSize: 14.0
 	 * )
 	 *
 	 * // With fixed dimensions
-	 * flowSvg($myDiagram, width: 800.0, height: 600.0)
+	 * flowToSvg($myDiagram, width: 800.0, height: 600.0)
 	 *
 	 * // Combined with PDF generation
-	 * pdfFile(flowSvg($diagram), "chart.pdf")
+	 * pdfFile(flowToSvg($diagram), "chart.pdf")
+	 * </code>
 	 * </pre>
 	 *
 	 * @param diagram
-	 *        The diagram to render. Must not be null.
+	 *        The diagram to render.
 	 * @param filename
-	 *        The filename for the resulting SVG file. Defaults to "diagram.svg".
+	 *        The filename for the resulting SVG file.
 	 * @param textSize
-	 *        The font size in points used for text measurement during layout. Defaults to 12.0.
+	 *        The font size in points used for text measurement during layout.
 	 * @param width
-	 *        The fixed width of the SVG viewBox, or null for auto-sizing based on content.
+	 *        The fixed width of the SVG <code>viewBox</code>, or <code>null</code> for auto-sizing
+	 *        based on content.
 	 * @param height
-	 *        The fixed height of the SVG viewBox, or null for auto-sizing based on content.
-	 * @return BinaryData containing the SVG document with content type "image/svg+xml".
+	 *        The fixed height of the SVG <code>viewBox</code>, or <code>null</code> for auto-sizing
+	 *        based on content.
+	 * @return {@link BinaryData} containing the SVG document with content type
+	 *         <code>"image/svg+xml"</code>.
 	 */
 	@SideEffectFree
 	@Label("Export as SVG")
-	public static BinaryData svg(
+	public static BinaryData toSvg(
 			@Mandatory Diagram diagram,
 			@StringDefault("diagram.svg") String filename,
 			@DoubleDefault(12.0) double textSize,

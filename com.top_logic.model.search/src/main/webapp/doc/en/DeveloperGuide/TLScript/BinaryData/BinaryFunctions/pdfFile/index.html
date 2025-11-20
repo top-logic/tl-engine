@@ -148,12 +148,12 @@
 	<code>pdfFile({{{
   &lt;html&gt;
     &lt;body&gt;
-      &lt;h1&gt;Invoice for {$customer.get('name')}&lt;/h1&gt;
+      &lt;h1&gt;Invoice for {$customer.get(`my.module:Customer#name`)}&lt;/h1&gt;
       &lt;p&gt;Date: {dateFormat('yyyy-MM-dd').format(now())}&lt;/p&gt;
-      &lt;p&gt;Amount: {$invoice.get('amount')}&lt;/p&gt;
+      &lt;p&gt;Amount: {$invoice.get(`my.module:Invoice#amount`)}&lt;/p&gt;
     &lt;/body&gt;
   &lt;/html&gt;
-}}}, "invoice-" + $invoice.get('number'))</code>
+}}}, "invoice-" + $invoice.get(`my.module:Invoice#number`))</code>
 </pre>
 
 <p><strong>Output:</strong> A PDF with dynamically generated content. The <code>{{{...}}}</code> syntax allows embedding TLScript expressions directly in the HTML, which are evaluated and safely HTML-escaped before PDF generation.</p>
@@ -216,7 +216,7 @@
       &lt;h1&gt;Invoice Items&lt;/h1&gt;
       &lt;ul&gt;
         {$items.map(item -> {{{
-          &lt;li&gt;{item.get('name')} - {item.get('price')}&lt;/li&gt;
+          &lt;li&gt;{item.get(`my.module:Item#name`)} - {item.get(`my.module:Item#price`)}&lt;/li&gt;
         }}})}
       &lt;/ul&gt;
     &lt;/body&gt;

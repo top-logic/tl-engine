@@ -201,7 +201,7 @@ public class PdfFile extends GenericMethod {
 	@Override
 	protected Object eval(Object[] arguments, EvalContext definitions) {
 		// Extract the HTML content from the first argument (can be String or HTMLFragment)
-		Object htmlArg = arguments[0];
+		Object htmlArg = asSingleElement(arguments[0]);
 
 		// Return null if no HTML content provided
 		if (htmlArg == null) {

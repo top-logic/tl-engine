@@ -13,10 +13,11 @@
 
 <p>Konvertiert HTML-Inhalte in ein PDF-Dokument. Das HTML wird als PDF gerendert, wobei die Flying Saucer-Bibliothek verwendet wird, die hochwertige PDF-Ausgaben aus wohlgeformtem XHTML erzeugt.</p>
 
-<p>Diese Funktion akzeptiert drei Arten von Eingaben:</p>
+<p>Diese Funktion akzeptiert vier Arten von Eingaben:</p>
 <ul>
 	<li><strong>String:</strong> Einfaches HTML als mehrzeiliges String-Literal (mit dreifachen Anführungszeichen <code>"""..."""</code>)</li>
 	<li><strong>HTMLFragment:</strong> HTML mit eingebetteten TLScript-Ausdrücken (mit HTML-Literal-Syntax mit dreifachen geschweiften Klammern <code>{{{...}}}</code>)</li>
+	<li><strong>StructuredText:</strong> Rich-Text-Inhalte aus WYSIWYG-Editor-Feldern mit eingebetteten Bildern. Bilder werden automatisch in BASE64-Daten-URIs für das PDF-Rendering konvertiert</li>
 	<li><strong>BinaryDataSource:</strong> Binärdaten mit Content-Type <code>text/html</code> oder <code>text/plain</code>, die HTML-Markup enthalten</li>
 </ul>
 
@@ -37,8 +38,8 @@
 		</tr>
 		<tr>
 			<td>html</td>
-			<td>String, HTMLFragment oder BinaryDataSource</td>
-			<td>Der HTML-Inhalt, der in PDF konvertiert werden soll. Kann ein einfacher String (mit dreifachen Anführungszeichen <code>"""..."""</code>), ein HTMLFragment (mit dreifachen geschweiften Klammern <code>{{{...}}}</code> Syntax mit eingebetteten TLScript-Ausdrücken) oder eine BinaryDataSource mit Content-Type <code>text/html</code> oder <code>text/plain</code> sein. Muss wohlgeformtes XHTML sein, bei dem alle Tags ordnungsgemäß geschlossen sind.</td>
+			<td>String, HTMLFragment, StructuredText oder BinaryDataSource</td>
+			<td>Der HTML-Inhalt, der in PDF konvertiert werden soll. Kann ein einfacher String (mit dreifachen Anführungszeichen <code>"""..."""</code>), ein HTMLFragment (mit dreifachen geschweiften Klammern <code>{{{...}}}</code> Syntax mit eingebetteten TLScript-Ausdrücken), ein StructuredText aus WYSIWYG-Editor-Feldern (mit automatisch eingebetteten BASE64-Bildern) oder eine BinaryDataSource mit Content-Type <code>text/html</code> oder <code>text/plain</code> sein. Muss wohlgeformtes XHTML sein, bei dem alle Tags ordnungsgemäß geschlossen sind.</td>
 			<td>ja</td>
 			<td> </td>
 		</tr>
@@ -225,6 +226,15 @@
 </pre>
 
 <p><strong>Ausgabe:</strong> Ein PDF mit einer dynamisch generierten Liste von Rechnungspositionen.</p>
+
+<h3>PDF aus StructuredText (WYSIWYG-Inhalt)</h3>
+
+<pre>
+	<code>// WYSIWYG-Editor-Inhalt in PDF konvertieren
+pdfFile($object.get(`my.module:Article#content`), name: "artikel.pdf")</code>
+</pre>
+
+<p><strong>Ausgabe:</strong> Ein PDF, das aus StructuredText-Inhalt generiert wurde. Alle eingebetteten Bilder im WYSIWYG-Feld werden automatisch in BASE64-Daten-URIs konvertiert und in das PDF eingefügt.</p>
 
 <h3>Verwendung von Standardpapierformaten</h3>
 

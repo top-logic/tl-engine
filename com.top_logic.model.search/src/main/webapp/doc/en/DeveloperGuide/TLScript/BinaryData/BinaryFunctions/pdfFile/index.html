@@ -13,10 +13,11 @@
 
 <p>Converts HTML content into a PDF document. The HTML is rendered as a PDF using the Flying Saucer library, which produces high-quality PDF output from well-formed XHTML.</p>
 
-<p>This function accepts three types of input:</p>
+<p>This function accepts four types of input:</p>
 <ul>
 	<li><strong>String:</strong> Plain HTML as a multi-line string literal (using triple quotes <code>"""..."""</code>)</li>
 	<li><strong>HTMLFragment:</strong> HTML with embedded TLScript expressions (using HTML literal syntax with triple braces <code>{{{...}}}</code>)</li>
+	<li><strong>StructuredText:</strong> Rich text content from WYSIWYG editor fields with embedded images. Images are automatically converted to BASE64 data URIs for PDF rendering</li>
 	<li><strong>BinaryDataSource:</strong> Binary data with content type <code>text/html</code> or <code>text/plain</code> containing HTML markup</li>
 </ul>
 
@@ -37,8 +38,8 @@
 		</tr>
 		<tr>
 			<td>html</td>
-			<td>String, HTMLFragment, or BinaryDataSource</td>
-			<td>The HTML content to convert to PDF. Can be a plain string (using triple quotes <code>"""..."""</code>), an HTMLFragment (using triple braces <code>{{{...}}}</code> syntax with embedded TLScript expressions), or a BinaryDataSource with content type <code>text/html</code> or <code>text/plain</code>. Must be well-formed XHTML with all tags properly closed.</td>
+			<td>String, HTMLFragment, StructuredText, or BinaryDataSource</td>
+			<td>The HTML content to convert to PDF. Can be a plain string (using triple quotes <code>"""..."""</code>), an HTMLFragment (using triple braces <code>{{{...}}}</code> syntax with embedded TLScript expressions), a StructuredText from WYSIWYG editor fields (with images automatically embedded as BASE64), or a BinaryDataSource with content type <code>text/html</code> or <code>text/plain</code>. Must be well-formed XHTML with all tags properly closed.</td>
 			<td>yes</td>
 			<td> </td>
 		</tr>
@@ -225,6 +226,15 @@
 </pre>
 
 <p><strong>Output:</strong> A PDF with a dynamically generated list of invoice items.</p>
+
+<h3>PDF from StructuredText (WYSIWYG Content)</h3>
+
+<pre>
+	<code>// Convert WYSIWYG editor content to PDF
+pdfFile($object.get(`my.module:Article#content`), name: "article.pdf")</code>
+</pre>
+
+<p><strong>Output:</strong> A PDF generated from StructuredText content. Any embedded images in the WYSIWYG field are automatically converted to BASE64 data URIs and included in the PDF.</p>
 
 <h3>Using Standard Page Sizes</h3>
 

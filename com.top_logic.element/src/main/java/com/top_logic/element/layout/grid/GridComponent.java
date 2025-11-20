@@ -421,7 +421,7 @@ public class GridComponent extends EditComponent implements
     public static final String COLUMN_TECHNICAL = "technical";
 
     /** The row object represented by a row form group. */
-	public static final Property<Object> PROP_ATTRIBUTED = TypedAnnotatable.property(Object.class, "attributed");
+	public static final Property<Object> PROP_ATTRIBUTED = FormMember.BUSINESS_MODEL_PROPERTY;
 
     /** Default value for {@link #XML_CONFIG_OPEN_IN_EDIT}. */
     private static final boolean DEFAULT_OPEN_IN_EDIT = false;

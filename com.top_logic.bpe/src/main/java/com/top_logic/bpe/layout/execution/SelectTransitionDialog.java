@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -396,7 +397,11 @@ public class SelectTransitionDialog extends SimpleFormDialog {
 	@Override
 	protected void fillFormContext(FormContext aContext) {
 		List<Decision> edges = getNextEdges(_token);
+		Optional<Decision> defaultEdge = edges.stream().filter(this::isDefaultEdge).findFirst();
 		SelectField field = FormFactory.newSelectField(SimpleFormDialog.INPUT_FIELD, edges);
+		if (defaultEdge.isPresent()) {
+			field.setAsSingleSelection(defaultEdge.get());
+		}
 		// add Error Constraint
 		field.addConstraint(new Constraint() {
 			@Override

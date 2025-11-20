@@ -13,6 +13,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.table.RowClassProvider;
 import com.top_logic.layout.table.control.TableControl;
 import com.top_logic.layout.table.model.TableConfig;
@@ -127,6 +128,9 @@ public class RowClassProviderByExpression extends AbstractConfiguredInstance<Row
 			// This establishes consistency with tree grids, where the row object is just the
 			// business object of the node.
 			rowObj = node.getBusinessObject();
+		}
+		if (rowObj instanceof FormMember form) {
+			rowObj = form.get(FormMember.BUSINESS_MODEL_PROPERTY);
 		}
 		Object componentModel = _component == null ? null : _component.getModel();
 		Object result = _cssClasses.execute(rowObj, componentModel);

@@ -8,6 +8,7 @@ package com.top_logic.bpe.bpml.display;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.order.DisplayOrder;
@@ -19,7 +20,6 @@ import com.top_logic.bpe.layout.execution.SelectTransitionDialog;
 import com.top_logic.layout.form.component.WarningsDialog;
 import com.top_logic.layout.form.model.FieldMode;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
-import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 
@@ -81,14 +81,17 @@ public class ConfigurableCondition extends AbstractConfiguredInstance<Configurab
 		 * The {@link Expr} used to calculate if the {@link SequenceFlow} is accessible.
 		 * 
 		 * <p>
-		 * The {@link Expr} uses the {@link ProcessExecution} as the only argument.
+		 * The {@link Expr} uses the {@link ProcessExecution} as first argument and
+		 * {@link #getMessage()} as second.
 		 * </p>
 		 *
 		 * <p>
-		 * A {@link Boolean} is expected as the return.
+		 * <code>true</code> as the result means that the condition is met. If a {@link ResKey} or
+		 * false is returned, then the {@link SequenceFlow} is not accessible.
 		 * </p>
 		 */
 		@Name(CONDITION)
+		@Mandatory
 		Expr getCondition();
 
 		/**
@@ -111,7 +114,7 @@ public class ConfigurableCondition extends AbstractConfiguredInstance<Configurab
 		RuleType getRuleType();
 
 		/**
-		 * The {@link ResKey} to be shown, when the Condition is not met.
+		 * The {@link ResKey} to be shown, when the condition is not met.
 		 */
 		@Name(MESSAGE)
 		@DynamicMode(fun = IsHidden.class, args = @Ref(RULETYPE))
@@ -128,19 +131,20 @@ public class ConfigurableCondition extends AbstractConfiguredInstance<Configurab
 		}
 	}
 
-	/**
-	 * Returns the {@link Boolean} calculated by the given {@link Expr}.
-	 */
 	@Override
-	public boolean getTestCondition(ProcessExecution process) {
-		return SearchExpression.isTrue(_condition.execute(process));
-	}
-
-	/**
-	 * returns the {@link ResKey} Message.
-	 */
-	@Override
-	public ResKey getMessage() {
+	public ResKey getMessage(ProcessExecution process) {
+		Object resultMessage = _condition.execute(process, _message);
+		if (resultMessage instanceof ResKey key) {
+			return key;
+		}
+		if (resultMessage instanceof String keyString) {
+			return ResKey.text(keyString);
+		}
+		if (resultMessage instanceof Boolean booleanResult) {
+			if (booleanResult.booleanValue()) {
+				return null;
+			}
+		}
 		return _message;
 	}
 

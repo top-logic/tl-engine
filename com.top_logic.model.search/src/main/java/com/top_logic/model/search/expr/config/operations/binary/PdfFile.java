@@ -46,9 +46,8 @@ import com.top_logic.util.error.TopLogicException;
  * A {@link GenericMethod} implementation that generates a PDF from HTML content.
  *
  * <p>
- * This function converts HTML content (as String, HTMLFragment, or BinaryDataSource) into PDF
- * binary data using the Flying Saucer library (ITextRenderer). The HTML must be well-formed XHTML
- * for proper PDF generation.
+ * This function converts HTML content (given as String, HTML literal, or binary data) into PDF
+ * binary data. The HTML given must be well-formed XHTML for proper PDF generation.
  * </p>
  *
  * <p>
@@ -327,14 +326,14 @@ public class PdfFile extends GenericMethod {
 	 * Converts the input argument to an HTML string.
 	 *
 	 * @param htmlArg
-	 *        Either a String, an HTMLFragment, or a BinaryDataSource.
+	 *        Either a string, an HTML literal or binary data.
 	 * @param contentWidth
 	 *        The content area width in pixels (page width minus left and right margins).
 	 * @param contentHeight
 	 *        The content area height in pixels (page height minus top and bottom margins).
 	 * @return The HTML content as a string.
 	 * @throws IOException
-	 *         If rendering the HTMLFragment or reading the BinaryDataSource fails.
+	 *         If reading input or rendering fails.
 	 */
 	private String toHtmlString(Object htmlArg, double contentWidth, double contentHeight) throws IOException {
 		if (htmlArg instanceof String) {

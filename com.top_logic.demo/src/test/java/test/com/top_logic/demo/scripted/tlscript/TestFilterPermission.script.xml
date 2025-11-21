@@ -708,7 +708,7 @@
 					user-id="root"
 				>
 					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="User: Administration > Development > Script Konsole (Lesen)"
+						label="user: Administration > Development > Script Konsole (Lesen)"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 							tab-path="Administration > Berechtigungen > Rollenprofile > Zugriffsberechtigungen"
@@ -1824,7 +1824,7 @@
 					user-id="root"
 				>
 					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="User: Administration > Development > Script Konsole (Lesen)"
+						label="user: Administration > Development > Script Konsole (Lesen)"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 							tab-path="Administration > Berechtigungen > Rollenprofile > Zugriffsberechtigungen"

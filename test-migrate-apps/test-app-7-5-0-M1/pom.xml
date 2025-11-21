@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>com.top-logic</groupId>
 		<artifactId>test-migrate-apps</artifactId>
-		<version>7.9.7</version>
+		<version>0.0.12-AEMA</version>
 	</parent>
 	
 	<artifactId>test-app-7-5-0-M1</artifactId>

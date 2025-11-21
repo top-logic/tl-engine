@@ -15,6 +15,7 @@ import com.top_logic.knowledge.monitor.I18NConstants;
 import com.top_logic.knowledge.wrap.WrapperAccessor;
 import com.top_logic.layout.ReadOnlyAccessor;
 import com.top_logic.layout.provider.MetaResourceProvider;
+import com.top_logic.mig.html.ElementUpdate;
 import com.top_logic.mig.html.HTMLFormatter;
 import com.top_logic.mig.html.I18NResourceProvider;
 import com.top_logic.mig.html.ListModelBuilder;
@@ -93,7 +94,11 @@ public class FailedLoginTableComponent {
         }
 
 		@Override
-		public boolean supportsListElement(LayoutComponent contextComponent, Object listElement) {
+		public ElementUpdate supportsListElement(LayoutComponent contextComponent, Object listElement) {
+			return ElementUpdate.fromDecision(shouldDisplay(contextComponent, listElement));
+		}
+
+		private boolean shouldDisplay(LayoutComponent contextComponent, Object listElement) {
 			if (!(listElement instanceof FailedLogin)) {
 				return false;
 			}

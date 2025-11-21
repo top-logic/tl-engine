@@ -12,7 +12,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import com.top_logic.basic.Logger;
-import com.top_logic.contact.business.CompanyContact;
 import com.top_logic.contact.business.ContactFactory;
 import com.top_logic.contact.business.PersonContact;
 import com.top_logic.contact.layout.company.CompanyContactModelBuilder;
@@ -60,7 +59,7 @@ public class COSCompanyContactModelBuilder extends CompanyContactModelBuilder {
             for (Iterator theIt = theColl.iterator(); theIt.hasNext(); ) {
                 Object theObject = theIt.next();
 
-                if (this.supportsListElement(aComponent, theObject)) {
+				if (shouldDisplay(aComponent, theObject)) {
                     theResult.add(theObject);
                 }
             }
@@ -79,14 +78,6 @@ public class COSCompanyContactModelBuilder extends CompanyContactModelBuilder {
     @Override
 	public Collection<?> getModel(Object businessModel, LayoutComponent aComponent) {
 		return this.retrieveListFromModel(aComponent, businessModel);
-    }
-    
-    /**
-     * @see com.top_logic.contact.layout.company.CompanyContactModelBuilder#supportsListElement(com.top_logic.mig.html.layout.LayoutComponent, java.lang.Object)
-     */
-    @Override
-	public boolean supportsListElement(LayoutComponent aComponent, Object anObject) {
-        return (anObject instanceof CompanyContact);
     }
     
     /**

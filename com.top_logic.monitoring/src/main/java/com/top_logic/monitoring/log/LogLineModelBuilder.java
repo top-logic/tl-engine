@@ -83,11 +83,6 @@ public class LogLineModelBuilder extends AbstractConfiguredInstance<LogLineModel
 	}
 
 	@Override
-	public boolean supportsListElement(LayoutComponent component, Object candidate) {
-		return candidate instanceof LogLine;
-	}
-
-	@Override
 	public Object retrieveModelFromListElement(LayoutComponent component, Object candidate) {
 		return null;
 	}

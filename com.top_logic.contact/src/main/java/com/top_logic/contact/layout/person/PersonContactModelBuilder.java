@@ -9,6 +9,7 @@ import java.util.Collection;
 
 import com.top_logic.contact.business.ContactFactory;
 import com.top_logic.contact.business.PersonContact;
+import com.top_logic.mig.html.ElementUpdate;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
@@ -54,14 +55,16 @@ public class PersonContactModelBuilder implements ListModelBuilder {
 		return null;
 	}
 
-	/** 
-     * this table only supports PersonContact's!
-     * 
-     * @return <code>true</code> only if the given object is a PersonContact
-     */
 	@Override
-	public boolean supportsListElement(LayoutComponent component, Object anObject) {
-		  return (anObject instanceof PersonContact);
+	public ElementUpdate supportsListElement(LayoutComponent contextComponent, Object listElement) {
+		return ElementUpdate.fromDecision(shouldDisplay(contextComponent, listElement));
+	}
+
+	/**
+	 * @see #supportsListElement(LayoutComponent, Object)
+	 */
+	protected boolean shouldDisplay(LayoutComponent contextComponent, Object listElement) {
+		return (listElement instanceof PersonContact);
 	}
 
 }

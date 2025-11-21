@@ -34,10 +34,4 @@ public class AttRoleClassMetaElementModelBuilder extends AttSecMetaElementModelB
         return theResult;
     }
 
-	@Override
-    public boolean supportsListElement(LayoutComponent aComponent, Object aObject) {
-		return super.supportsListElement(aComponent, aObject)
-			|| aObject == AttributeClassifierRolesComponent.GLOBAL_DOMAIN;
-    }
-
 }

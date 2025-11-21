@@ -10,7 +10,6 @@ import java.util.Collection;
 import com.top_logic.element.boundsec.manager.ElementAccessManager;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.model.TLClass;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 
 /**
@@ -41,11 +40,6 @@ public class AttSecMetaElementModelBuilder implements ListModelBuilder {
     @Override
 	public Object retrieveModelFromListElement(LayoutComponent aComponent, Object aObject) {
         return null;
-    }
-
-    @Override
-	public boolean supportsListElement(LayoutComponent aComponent, Object aObject) {
-        return aObject instanceof TLClass;
     }
 
 }

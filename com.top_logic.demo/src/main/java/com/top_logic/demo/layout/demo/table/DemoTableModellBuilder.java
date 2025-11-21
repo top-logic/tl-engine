@@ -80,12 +80,4 @@ public class DemoTableModellBuilder implements ListModelBuilder {
 	public Object retrieveModelFromListElement(LayoutComponent component, Object anObject) {
 		return null;
 	}
-
-	@Override
-	public boolean supportsListElement(LayoutComponent component, Object anObject) {
-		return anObject instanceof DemoPerson;
-	}
-
-
-
 }

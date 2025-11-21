@@ -21,9 +21,11 @@ import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.layout.component.ComponentUtil;
+import com.top_logic.mig.html.ElementUpdate;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLModel;
+import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.util.model.ModelService;
@@ -223,11 +225,15 @@ public class ListModelByExpression<C extends ListModelByExpression.Config<?>>
 	}
 
 	@Override
-	public boolean supportsListElement(LayoutComponent aComponent, Object element) {
+	public ElementUpdate supportsListElement(LayoutComponent aComponent, Object element) {
 		if (!ComponentUtil.isValid(element)) {
-			return false;
+			return ElementUpdate.REMOVE;
 		}
-		return (Boolean) _supportsElement.execute(element, aComponent.getModel());
+		Object result = _supportsElement.execute(element, aComponent.getModel());
+		if (result == null) {
+			return ElementUpdate.NO_CHANGE;
+		}
+		return ElementUpdate.fromDecision(SearchExpression.asBoolean(result));
 	}
 
 	@Override

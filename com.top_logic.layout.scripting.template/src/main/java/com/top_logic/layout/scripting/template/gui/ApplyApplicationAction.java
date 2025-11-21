@@ -77,8 +77,6 @@ public final class ApplyApplicationAction extends ActionReplayCommand {
 		PLAY
 	}
 
-	private static final String I18N_NO_ACTION = "tl.scripting.applyAction.noAction";
-
 	private Mode _mode;
 
 	/**
@@ -105,7 +103,7 @@ public final class ApplyApplicationAction extends ActionReplayCommand {
 
 		DefaultMutableTLTreeNode selection = scriptRecorder.getSelectedNode();
 		if (selection == null) {
-			return HandlerResult.error(I18N_NO_ACTION, ApplyApplicationAction.class);
+			return HandlerResult.error(I18NConstants.I18N_NO_ACTION);
 		}
 
 		String currentUserName = TLContextManager.getCurrentUserName(displayContext.getSubSessionContext());

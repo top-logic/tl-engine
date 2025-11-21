@@ -410,6 +410,12 @@ public class SVGBuilder implements SvgWriter {
 
 	@Override
 	public Registration attachOnClick(SVGClickHandler handler, Object sender) {
+		if (_current == null) {
+			throw new IllegalStateException(
+				"The last built SVG element is closed. In this state it is not possible to add a "
+					+ SVGClickHandler.class.getName()
+					+ "! Please make sure the handler is added within the desired element before its content.");
+		}
 		HandlerRegistration registration = _current.addDomHandler(new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
@@ -471,6 +477,12 @@ public class SVGBuilder implements SvgWriter {
 
 	@Override
 	public Registration attachOnDrop(SVGDropHandler handler, Object sender) {
+		if (_current == null) {
+			throw new IllegalStateException(
+				"The last built SVG element is closed. In this state it is not possible to add a "
+					+ SVGDropHandler.class.getName()
+					+ "! Please make sure the handler is added within the desired element before its content.");
+		}
 		HandlerRegistration registration = _current.addDomHandler(new DropHandler() {
 			@Override
 			public void onDrop(DropEvent event) {

@@ -10,6 +10,10 @@
 			<t:parameter name="Name"
 				type="string"
 			/>
+			<t:parameter name="Loeschschutz"
+				default="false"
+				type="string"
+			/>
 		</t:parameters>
 	</t:head>
 	<t:body>
@@ -45,6 +49,21 @@
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
 						value="${$Name}"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Löschschutz"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic/admin/security/groups/adminGroupsView.layout.xml#adminNewGroup"
+							tab-path=""
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+						value="${$Loeschschutz}"
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"

@@ -13,7 +13,7 @@
 					value="TestWorkflowWithoutDisplayDescription.bpml"
 				/>
 				<parameter name="URL"
-					value="file:src/test/java/test/com/top_logic/bpe/app/scripted/TestWorkflowWithoutDisplayDescription.bpml"
+					value="file:src/test/java/test/com/top_logic/demo/scripted/bpe/app/TestWorkflowWithoutDisplayDescription.bpml"
 				/>
 			</parameters>
 		</action>
@@ -36,7 +36,7 @@
 			command-label="Bearbeiten"
 			command-name="switchToAJAXEdit"
 			component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
-			component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+			component-name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
 			user-id="root"
 		>
 			<arguments/>
@@ -44,22 +44,27 @@
 		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 			user-id="root"
 		>
-			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-				label="Darstellung"
-			>
-				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-					name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+			<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
 					tab-path="Administration > Development > Prozess Editor"
 				/>
+				<path>
+					<labeled-member label="Formular"/>
+					<named-member name="config"/>
+					<labeled-member label="Anzeige"/>
+					<named-member name="outerContainer"/>
+					<labeled-member label="Anzeige"/>
+				</path>
 			</field>
-			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.NullValue"/>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name"/>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 			command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
 			command-label="Speichern"
 			command-name="defaultSave"
 			component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
-			component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+			component-name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
 			user-id="root"
 		>
 			<arguments/>
@@ -83,7 +88,7 @@
 			command-label="Bearbeiten"
 			command-name="switchToAJAXEdit"
 			component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
-			component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+			component-name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
 			user-id="root"
 		>
 			<arguments/>
@@ -91,22 +96,27 @@
 		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 			user-id="root"
 		>
-			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-				label="Darstellung"
-			>
-				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-					name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+			<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
 					tab-path="Administration > Development > Prozess Editor"
 				/>
+				<path>
+					<labeled-member label="Formular"/>
+					<named-member name="config"/>
+					<labeled-member label="Anzeige"/>
+					<named-member name="outerContainer"/>
+					<labeled-member label="Anzeige"/>
+				</path>
 			</field>
-			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.NullValue"/>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name"/>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 			command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
 			command-label="Speichern"
 			command-name="defaultSave"
 			component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
-			component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+			component-name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
 			user-id="root"
 		>
 			<arguments/>
@@ -133,7 +143,8 @@
 				<selection-state boolean="true"/>
 			</selection>
 			<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-				tab-path="Prozess Cockpit > Alle Prozesse > Alle Prozesse"
+				name="com.top_logic.bpe.app/processCockpit/contextListContext.layout.xml#List"
+				tab-path="Prozess Cockpit > Alle Prozesse"
 			/>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
@@ -161,11 +172,6 @@
 		>
 			<arguments/>
 		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
-			component-name="rootLayout#masterFrame"
-			label="Ok"
-			user-id="root"
-		/>
 		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 			command-implementation-comment="com.top_logic.bpe.layout.execution.command.FinishTaskCommand"
 			command-label="Aufgabe abschließen"
@@ -176,9 +182,25 @@
 		>
 			<arguments/>
 		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Weiter mit"
+			>
+				<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+				<values>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+						label="End"
+					/>
+				</values>
+			</value>
+		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
 			component-name="rootLayout#masterFrame"
-			label="Ja"
+			label="Ok"
 			user-id="root"
 		/>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
@@ -213,7 +235,7 @@
 					command-label="Löschen..."
 					command-name="delete"
 					component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
-					component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorTable"
+					component-name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorTable"
 					user-id="root"
 				>
 					<arguments/>

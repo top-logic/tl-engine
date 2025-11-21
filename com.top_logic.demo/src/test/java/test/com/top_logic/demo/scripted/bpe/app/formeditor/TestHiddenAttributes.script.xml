@@ -15,39 +15,56 @@
 						tab-path="Administration > Development > Modell Editor"
 					/>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
-					change-kind="ABSOLUTE"
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+					failure-expected="false"
 					user-id="root"
 				>
-					<selection>
-						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
-							name="Business Process Engine"
+					<model-name config:interface="com.top_logic.layout.tree.renderer.TreeCellRenderer$ToggleNaming$ToggleName"
+						expand="true"
+					>
+						<context-model config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
+							/>
+						</context-model>
+						<node config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+							path="TopLogic"
 						/>
-						<selection-state boolean="true"/>
-					</selection>
-					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
-						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree"
-							tab-path="Administration > Development > Modell Editor"
-						/>
-					</selection-model-name>
+					</model-name>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
-					change-kind="ABSOLUTE"
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+					failure-expected="false"
 					user-id="root"
 				>
-					<selection>
-						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
-							name="Workflow-Durchführung"
+					<model-name config:interface="com.top_logic.layout.tree.renderer.TreeCellRenderer$ToggleNaming$ToggleName"
+						expand="true"
+					>
+						<context-model config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
+							/>
+						</context-model>
+						<node config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+							path="TopLogic > Business Process Engine"
 						/>
-						<selection-state boolean="true"/>
-					</selection>
-					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
-						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree"
-							tab-path="Administration > Development > Modell Editor"
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+					failure-expected="false"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.tree.renderer.TreeCellRenderer$ToggleNaming$ToggleName"
+						expand="true"
+					>
+						<context-model config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
+							/>
+						</context-model>
+						<node config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+							path="TopLogic > Business Process Engine > Workflow-Durchführung"
 						/>
-					</selection-model-name>
+					</model-name>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
 					change-kind="ABSOLUTE"
@@ -152,7 +169,7 @@
 					value="TestHiddenAttributes.bpml"
 				/>
 				<parameter name="URL"
-					value="file:src/test/java/test/com/top_logic/bpe/app/scripted/formeditor/TestHiddenAttributes.bpml"
+					value="file:src/test/java/test/com/top_logic/demo/scripted/bpe/app/formeditor/TestHiddenAttributes.bpml"
 				/>
 			</parameters>
 		</action>
@@ -174,7 +191,8 @@
 				<selection-state boolean="true"/>
 			</selection>
 			<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-				tab-path="Prozess Cockpit > Alle Prozesse > Alle Prozesse"
+				name="com.top_logic.bpe.app/processCockpit/contextListContext.layout.xml#List"
+				tab-path="Prozess Cockpit > Alle Prozesse"
 			/>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
@@ -202,11 +220,6 @@
 		>
 			<arguments/>
 		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
-			component-name="rootLayout#masterFrame"
-			label="Ok"
-			user-id="root"
-		/>
 		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
 			change-kind="ABSOLUTE"
 			user-id="root"
@@ -241,7 +254,7 @@
 			<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 				<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 					name="com.top_logic.bpe.app/processCockpit/currentTasks/tasksTable.layout.xml#Table"
-					tab-path="Prozess Cockpit > Alle Prozesse > {0} > Aktuelle Aufgaben > Aktuelle Aufgaben"
+					tab-path="Prozess Cockpit > Alle Prozesse > {0} > Aktuelle Aufgaben"
 				/>
 			</selection-model-name>
 		</action>
@@ -254,7 +267,7 @@
 			>
 				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 					name="com.top_logic.bpe.app/processCockpit/currentTasks/taskEditor.layout.xml#EditActiveTaskEdit"
-					tab-path="Prozess Cockpit > Alle Prozesse > {0} > Aktuelle Aufgaben > Aktuelle Aufgabe"
+					tab-path="Prozess Cockpit > Alle Prozesse > {0} > Aktuelle Aufgaben"
 				/>
 			</model-name>
 		</action>
@@ -268,9 +281,25 @@
 		>
 			<arguments/>
 		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Weiter mit"
+			>
+				<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+				<values>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+						label="End"
+					/>
+				</values>
+			</value>
+		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
 			component-name="rootLayout#masterFrame"
-			label="Ja"
+			label="Ok"
 			user-id="root"
 		/>
 		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
@@ -301,7 +330,7 @@
 			command-label="Workflow abkündigen"
 			command-name="revoke"
 			component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
-			component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorTable"
+			component-name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorTable"
 			user-id="root"
 		>
 			<arguments/>
@@ -475,7 +504,7 @@
 					command-label="Löschen..."
 					command-name="delete"
 					component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
-					component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorTable"
+					component-name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorTable"
 					user-id="root"
 				>
 					<arguments/>

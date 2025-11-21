@@ -45,8 +45,25 @@
 				/>
 			</selection-model-name>
 		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			change-kind="ABSOLUTE"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+					name="OwnerRole"
+				/>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+				<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.element/admin/security/roleEditor/adminRolesView.layout.xml#editRolesTable"
+					tab-path="Administration > Berechtigungen > Rollen"
+				/>
+			</selection-model-name>
+		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-			comment="Test selects currently 2 rows. Add select actions for additional rows."
+			comment="Test selects currently 3 rows. Add select actions for additional rows."
 			comparision="equals"
 			inverted="false"
 			user-id="root"
@@ -60,7 +77,7 @@
 				</table>
 			</actual-value>
 			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
-				int="2"
+				int="3"
 			/>
 		</action>
 	</actions>

@@ -5,6 +5,7 @@
  */
 package com.top_logic.model.search.expr.config.operations.binary;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
 import com.top_logic.layout.I18NConstantsBase;
@@ -74,6 +75,16 @@ public class I18NConstants extends I18NConstantsBase {
 	 *     got: {0}
 	 */
 	public static ResKey1 ERROR_INVALID_BINARY_CONTENT_TYPE__TYPE;
+
+	/**
+	 * @en Cannot create cell at "{0}" - it is within existing merged region "{1}".
+	 */
+	public static ResKey2 ERROR_CELL_CONFLICT;
+
+	/**
+	 * @en Invalid style attribute.
+	 */
+	public static ResKey ERROR_INVALID_STYLE_ATTRIBUTE;
 
 	static {
 		initConstants(I18NConstants.class);

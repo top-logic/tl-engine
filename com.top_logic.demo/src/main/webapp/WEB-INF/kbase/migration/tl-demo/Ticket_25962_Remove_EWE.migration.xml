@@ -22,6 +22,9 @@
 		<dependency name="22747-PlainTypes_in_GenericObject_table"
 			module="tl-demo"
 		/>
+		<dependency name="Ticket_25210_Model_references_in_form_definitions"
+			module="tl-bpe"
+		/>
 	</dependencies>
 	<processors>
 		<processor class="com.top_logic.knowledge.service.migration.DeleteTableProcessor">

@@ -207,16 +207,18 @@ public class PdfFile extends GenericMethod {
 			return null;
 		}
 
+		String filename = asString(arguments[1]);
+
 		// Extract optional rendering parameters
 		PageSize pageSize = asPageSize(arguments[2]);
 		boolean landscape = asBoolean(arguments[3]);
 		double pageWidthAdjust = asDouble(arguments[4]);
 		double pageHeightAdjust = asDouble(arguments[5]);
-		float resolution = asFloat(arguments[6]);
-		double marginLeft = asDouble(arguments[7]);
-		double marginRight = asDouble(arguments[8]);
-		double marginTop = asDouble(arguments[9]);
-		double marginBottom = asDouble(arguments[10]);
+		double marginLeft = asDouble(arguments[6]);
+		double marginRight = asDouble(arguments[7]);
+		double marginTop = asDouble(arguments[8]);
+		double marginBottom = asDouble(arguments[9]);
+		float resolution = asFloat(arguments[10]);
 
 		// Determine page dimensions: start with pageSize if given, then apply adjustments
 		double pageWidth;
@@ -260,9 +262,6 @@ public class PdfFile extends GenericMethod {
 		if (html == null || html.trim().isEmpty()) {
 			return null;
 		}
-
-		// Extract the optional filename from the second argument
-		String filename = asString(arguments[1]);
 
 		// Ensure the filename has .pdf extension
 		if (!filename.toLowerCase().endsWith(".pdf")) {

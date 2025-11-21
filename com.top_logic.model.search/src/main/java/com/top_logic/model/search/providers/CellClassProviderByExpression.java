@@ -54,16 +54,12 @@ public class CellClassProviderByExpression extends AbstractConfiguredInstance<Ce
 		 * <dd>The value of the cell that should receive a CSS class. If the column represents an
 		 * attribute of an object, then the value is the value of this attribute for the row
 		 * object.</dd>
-		 * </dl>
 		 * 
-		 * <dl>
 		 * <dt><code>row</code></dt>
 		 * <dd>The row object of the current table row. If the column represents an attribute of an
 		 * object, then the row is the object from which attributes are displayed in the current
 		 * table row.</dd>
-		 * </dl>
 		 * 
-		 * <dl>
 		 * <dt><code>model</code></dt>
 		 * <dd>The model of the underlying component.</dd>
 		 * </dl>
@@ -131,6 +127,7 @@ public class CellClassProviderByExpression extends AbstractConfiguredInstance<Ce
 
 	@Override
 	public String getCellClass(Cell cell) {
+		// See also RowClassProviderByExpression
 		Object value = cell.getValue();
 		Object row = cell.getRowObject();
 		if (row instanceof TLTreeNode<?> node) {
@@ -150,7 +147,7 @@ public class CellClassProviderByExpression extends AbstractConfiguredInstance<Ce
 		return toCssClass(result);
 	}
 
-	private static String toCssClass(Object result) {
+	static String toCssClass(Object result) {
 		if (StringServices.isEmpty(result)) {
 			return null;
 		}

@@ -1351,10 +1351,18 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 		}
 	}
 
+	/**
+	 * Creates the {@link ConfigKey} that is used to store customizations in the personal
+	 * configuration.
+	 */
+	protected ConfigKey computeConfigKey() {
+		return ConfigKey.component(this);
+	}
+
 	private TableData createTableData() {
 		FormTableModel tableModel = createFormTableModel(createApplicationModel());
 		TableData tableData =
-			DefaultTableData.createTableData(this, tableModel, ConfigKey.component(this));
+			DefaultTableData.createTableData(this, tableModel, computeConfigKey());
 		if (getToolBar() != null) {
 			tableData.setToolBar(getToolBar());
 		}

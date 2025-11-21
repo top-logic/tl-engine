@@ -117,7 +117,20 @@
 			targetRef="Task_0x3la42"
 		>
 			<bpmn:extensionElements>
-				<tl:rule><![CDATA[process -> if ($process.get(`tl.bpe.execution:TestTaskFinishErrorMessageType#canFinish`), if ($process.get(`tl.bpe.execution:TestTaskFinishErrorMessageType#additionalError`).isEmpty(), null, $process.get(`tl.bpe.execution:TestTaskFinishErrorMessageType#additionalError`)), 'Can not finished.')]]></tl:rule>
+				<tl:rule>
+					<sequence-flow>
+						<rule-conditions>
+							<rule-condition class="com.top_logic.bpe.bpml.display.ConfigurableCondition"
+								condition="process -> if ($process.get(`tl.bpe.execution:TestTaskFinishErrorMessageType#canFinish`), if ($process.get(`tl.bpe.execution:TestTaskFinishErrorMessageType#additionalError`).isEmpty(), true, $process.get(`tl.bpe.execution:TestTaskFinishErrorMessageType#additionalError`)), false)"
+							>
+								<message key="dynamic.6fd3bacb-713a-455c-a529-1ef94be9961f">
+									<en>Can not finished.</en>
+									<de>Kann nicht beendet werden.</de>
+								</message>
+							</rule-condition>
+						</rule-conditions>
+					</sequence-flow>
+				</tl:rule>
 			</bpmn:extensionElements>
 		</bpmn:sequenceFlow>
 		<bpmn:sequenceFlow id="SequenceFlow_0gf4h9s"

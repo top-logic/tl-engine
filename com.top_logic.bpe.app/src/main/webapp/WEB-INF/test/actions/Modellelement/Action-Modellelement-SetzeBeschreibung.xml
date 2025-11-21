@@ -20,7 +20,7 @@
 					command-label="Bearbeiten"
 					command-name="switchToAJAXEdit"
 					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
-					component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+					component-name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
 					user-id="root"
 				>
 					<arguments/>
@@ -28,13 +28,15 @@
 				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 					user-id="root"
 				>
-					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Beschreibung"
-					>
-						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
 							tab-path="Administration > Development > Prozess Editor"
 						/>
+						<path>
+							<labeled-member label="Beschreibung"/>
+							<labeled-member label="Deutsch"/>
+						</path>
 					</field>
 					<value config:interface="com.top_logic.layout.wysiwyg.ui.scripting.StructuredTextNamingScheme$Name"
 						value="${$Wert}"
@@ -45,7 +47,7 @@
 					command-label="Speichern"
 					command-name="defaultSave"
 					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
-					component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+					component-name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
 					user-id="root"
 				>
 					<arguments/>

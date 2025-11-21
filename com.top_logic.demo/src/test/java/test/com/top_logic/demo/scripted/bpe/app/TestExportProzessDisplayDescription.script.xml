@@ -13,7 +13,7 @@
 					value="TestExportProzessDisplayDescription.bpml"
 				/>
 				<parameter name="URL"
-					value="file:src/test/java/test/com/top_logic/bpe/app/scripted/TestExportProzessDisplayDescription.bpml"
+					value="file:src/test/java/test/com/top_logic/demo/scripted/bpe/app/TestExportProzessDisplayDescription.bpml"
 				/>
 			</parameters>
 		</action>
@@ -35,7 +35,8 @@
 				<selection-state boolean="true"/>
 			</selection>
 			<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-				tab-path="Prozess Cockpit > Alle Prozesse > Alle Prozesse"
+				name="com.top_logic.bpe.app/processCockpit/contextListContext.layout.xml#List"
+				tab-path="Prozess Cockpit > Alle Prozesse"
 			/>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
@@ -63,11 +64,6 @@
 		>
 			<arguments/>
 		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
-			component-name="rootLayout#masterFrame"
-			label="Ok"
-			user-id="root"
-		/>
 		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
 			change-kind="ABSOLUTE"
 			user-id="root"
@@ -101,8 +97,8 @@
 			user-id="root"
 		>
 			<selection>
-				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
-					name="TestExportProzessDisplayDescription - Actor 1"
+				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+					displayed-row-index="0"
 				/>
 				<selection-state boolean="true"/>
 			</selection>
@@ -203,7 +199,7 @@
 			command-label="Bearbeiten"
 			command-name="switchToAJAXEdit"
 			component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
-			component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+			component-name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
 			user-id="root"
 		>
 			<arguments/>
@@ -215,14 +211,12 @@
 				label="Darstellung"
 			>
 				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-					name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+					name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
 					tab-path="Administration > Development > Prozess Editor"
 				/>
 			</field>
 			<value config:interface="com.top_logic.model.form.definition.FormDefinitionNaming$Name">
-				<item config:interface="com.top_logic.model.form.definition.FormDefinition"
-					class="com.top_logic.model.form.implementation.FormDefinitionTemplateProvider"
-				>
+				<item>
 					<field attribute="activeTokens"/>
 					<field attribute="executionNumber"/>
 					<field attribute="durationInMinutes"/>
@@ -235,7 +229,7 @@
 			command-label="Speichern"
 			command-name="defaultSave"
 			component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
-			component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+			component-name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
 			user-id="root"
 		>
 			<arguments/>
@@ -260,8 +254,8 @@
 			user-id="root"
 		>
 			<selection>
-				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
-					name="TestExportProzessDisplayDescription - Actor 1"
+				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+					displayed-row-index="0"
 				/>
 				<selection-state boolean="true"/>
 			</selection>

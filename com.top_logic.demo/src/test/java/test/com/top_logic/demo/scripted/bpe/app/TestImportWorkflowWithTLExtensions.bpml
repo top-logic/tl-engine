@@ -77,7 +77,13 @@
 			<bpmn:incoming>SequenceFlow_16fzfu0</bpmn:incoming>
 			<bpmn:extensionElements>
 				<tl:displayDescription/>
-				<tl:title><![CDATA[Machs mit {$model}]]></tl:title>
+				<tl:titleI18N>
+					<resource>
+						<en>Do it with {0}</en>
+						<de>Machs mit {0}</de>
+					</resource>
+				</tl:titleI18N>
+				<tl:titleFunction><![CDATA[i18n -> execution -> task -> token -> $i18n.fill($execution)]]></tl:titleFunction>
 				<tl:icon value="css:far fa-laugh-wink"/>
 				<tl:description>
 					<text img-count="1"><![CDATA[<p>Eine <strong>neue </strong><em>lustige </em><u>Aufgabe</u> mit <img src="ref:addElementDisabled_49432.png" style="opacity:1" />Bild.</p>]]></text>
@@ -130,7 +136,15 @@
 			targetRef="EndEvent_0co6i3s"
 		>
 			<bpmn:extensionElements>
-				<tl:rule><![CDATA[true]]></tl:rule>
+				<tl:rule>
+					<sequence-flow>
+						<rule-conditions>
+							<rule-condition class="com.top_logic.bpe.bpml.display.ConfigurableCondition"
+								condition="true"
+							/>
+						</rule-conditions>
+					</sequence-flow>
+				</tl:rule>
 			</bpmn:extensionElements>
 		</bpmn:sequenceFlow>
 		<bpmn:sequenceFlow id="SequenceFlow_1vnmfhz"

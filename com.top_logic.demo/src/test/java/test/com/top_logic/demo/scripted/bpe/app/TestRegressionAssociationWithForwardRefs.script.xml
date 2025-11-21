@@ -28,7 +28,7 @@
 			command-label="Workflow hochladen"
 			command-name="displayDialog_tlBpeModelerEditorUpload"
 			component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
-			component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorTable"
+			component-name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorTable"
 			user-id="root"
 		>
 			<arguments/>
@@ -40,7 +40,7 @@
 				label="BPML"
 			>
 				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-					name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorUploadForm"
+					name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorUploadForm"
 					tab-path=""
 				/>
 			</field>
@@ -49,7 +49,7 @@
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.ExternalDataValue"
 						content-type="application/octet-stream"
 						name="Procure parts.bpmnl"
-						url="file:../com.top_logic.bpe.app/src/test/java/test/com/top_logic/bpe/app/scripted/TestRegressionAssociationWithForwardRefs.bpmn"
+						url="file:src/test/java/test/com/top_logic/demo/scripted/bpe/app/TestRegressionAssociationWithForwardRefs.bpmn"
 					/>
 				</values>
 			</value>
@@ -59,7 +59,7 @@
 			command-label="Hochladen"
 			command-name="upload"
 			component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
-			component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorUploadForm"
+			component-name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorUploadForm"
 			user-id="root"
 		>
 			<arguments/>
@@ -97,7 +97,7 @@
 			command-label="Löschen..."
 			command-name="delete"
 			component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
-			component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorTable"
+			component-name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorTable"
 			user-id="root"
 		>
 			<arguments/>

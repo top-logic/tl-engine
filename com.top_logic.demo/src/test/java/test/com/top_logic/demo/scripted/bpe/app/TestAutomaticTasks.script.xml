@@ -24,7 +24,7 @@
 							command-label="Workflow hochladen"
 							command-name="displayDialog_tlBpeModelerEditorUpload"
 							component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
-							component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorTable"
+							component-name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorTable"
 							user-id="root"
 						>
 							<arguments/>
@@ -36,7 +36,7 @@
 								label="BPML"
 							>
 								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorUploadForm"
+									name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorUploadForm"
 									tab-path=""
 								/>
 							</field>
@@ -55,7 +55,7 @@
 							command-label="Hochladen"
 							command-name="upload"
 							component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
-							component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorUploadForm"
+							component-name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorUploadForm"
 							user-id="root"
 						>
 							<arguments/>
@@ -199,7 +199,7 @@
 							command-label="Bearbeiten"
 							command-name="switchToAJAXEdit"
 							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
-							component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+							component-name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
 							user-id="root"
 						>
 							<arguments/>
@@ -209,7 +209,7 @@
 							command-label="Übernehmen"
 							command-name="storeAttributes"
 							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
-							component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+							component-name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
 							user-id="root"
 						>
 							<arguments/>
@@ -235,7 +235,7 @@
 								label="Aktion"
 							>
 								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+									name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
 									tab-path="Administration > Development > Prozess Editor"
 								/>
 							</field>
@@ -248,7 +248,7 @@
 							command-label="Übernehmen"
 							command-name="storeAttributes"
 							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
-							component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+							component-name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
 							user-id="root"
 						>
 							<arguments/>
@@ -272,7 +272,7 @@
 							command-label="Übernehmen"
 							command-name="storeAttributes"
 							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
-							component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+							component-name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
 							user-id="root"
 						>
 							<arguments/>
@@ -298,7 +298,7 @@
 								label="Aktion"
 							>
 								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+									name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
 									tab-path="Administration > Development > Prozess Editor"
 								/>
 							</field>
@@ -311,7 +311,7 @@
 							command-label="Speichern"
 							command-name="defaultSave"
 							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
-							component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+							component-name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
 							user-id="root"
 						>
 							<arguments/>
@@ -398,7 +398,7 @@
 							command-label="Workflow freigeben"
 							command-name="release"
 							component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
-							component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorTable"
+							component-name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorTable"
 							user-id="root"
 						>
 							<arguments/>
@@ -527,7 +527,7 @@
 							command-label="Bearbeiten"
 							command-name="switchToAJAXEdit"
 							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
-							component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+							component-name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
 							user-id="root"
 						>
 							<arguments/>
@@ -539,7 +539,7 @@
 								label="Gruppe der Akteure"
 							>
 								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+									name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
 									tab-path="Administration > Development > Prozess Editor"
 								/>
 							</field>
@@ -556,7 +556,7 @@
 							command-label="Speichern"
 							command-name="defaultSave"
 							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
-							component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+							component-name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
 							user-id="root"
 						>
 							<arguments/>
@@ -585,7 +585,8 @@
 						<selection-state boolean="true"/>
 					</selection>
 					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Prozess Cockpit > Alle Prozesse > Alle Prozesse"
+						name="com.top_logic.bpe.app/processCockpit/contextListContext.layout.xml#List"
+						tab-path="Prozess Cockpit > Alle Prozesse"
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
@@ -637,7 +638,7 @@
 					user-id="root"
 				>
 					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Nächste Aufgabe"
+						label="Weiter mit"
 					>
 						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
 					</field>
@@ -665,7 +666,7 @@
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 								name="com.top_logic.bpe.app/processCockpit/currentTasks/taskEditor.layout.xml#EditActiveTaskEdit"
-								tab-path="Prozess Cockpit > Alle Prozesse > {0} > Aktuelle Aufgaben > Aktuelle Aufgabe"
+								tab-path="Prozess Cockpit > Alle Prozesse > {0} > Aktuelle Aufgaben > {0}"
 							/>
 						</model>
 					</actual-value>
@@ -691,7 +692,7 @@
 					user-id="root"
 				>
 					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Nächste Aufgabe"
+						label="Weiter mit"
 					>
 						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
 					</field>
@@ -712,24 +713,6 @@
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
 			<actions>
-				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
-					change-kind="ABSOLUTE"
-					user-id="root"
-				>
-					<selection>
-						<selectee config:interface="com.top_logic.bpe.layout.scripting.TokenNaming$TokenName"
-							token-id=""
-							token-path="script-after-decision > Automatic Task > Show A"
-						/>
-						<selection-state boolean="true"/>
-					</selection>
-					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
-						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic.bpe.app/processCockpit/currentTasks/tasksTable.layout.xml#Table"
-							tab-path="Prozess Cockpit > Alle Prozesse > {0} > Aktuelle Aufgaben > Aktuelle Aufgaben"
-						/>
-					</selection-model-name>
-				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
 					comparision="equals"
 					inverted="false"
@@ -741,7 +724,7 @@
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 								name="com.top_logic.bpe.app/processCockpit/currentTasks/taskEditor.layout.xml#EditActiveTaskEdit"
-								tab-path="Prozess Cockpit > Alle Prozesse > {0} > Aktuelle Aufgaben > Aktuelle Aufgabe"
+								tab-path="Prozess Cockpit > Alle Prozesse > {0} > Aktuelle Aufgaben > {0}"
 							/>
 						</model>
 					</actual-value>
@@ -763,7 +746,7 @@
 					user-id="root"
 				>
 					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Nächste Aufgabe"
+						label="Weiter mit"
 					>
 						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
 					</field>
@@ -780,24 +763,6 @@
 					label="Ok"
 					user-id="root"
 				/>
-				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
-					change-kind="ABSOLUTE"
-					user-id="root"
-				>
-					<selection>
-						<selectee config:interface="com.top_logic.bpe.layout.scripting.TokenNaming$TokenName"
-							token-id=""
-							token-path="script-after-decision > Automatic Task > Show B"
-						/>
-						<selection-state boolean="true"/>
-					</selection>
-					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
-						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic.bpe.app/processCockpit/currentTasks/tasksTable.layout.xml#Table"
-							tab-path="Prozess Cockpit > Alle Prozesse > {0} > Aktuelle Aufgaben > Aktuelle Aufgaben"
-						/>
-					</selection-model-name>
-				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
 					comparision="equals"
 					inverted="false"
@@ -809,7 +774,7 @@
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 								name="com.top_logic.bpe.app/processCockpit/currentTasks/taskEditor.layout.xml#EditActiveTaskEdit"
-								tab-path="Prozess Cockpit > Alle Prozesse > {0} > Aktuelle Aufgaben > Aktuelle Aufgabe"
+								tab-path="Prozess Cockpit > Alle Prozesse > {0} > Aktuelle Aufgaben > {0}"
 							/>
 						</model>
 					</actual-value>
@@ -827,9 +792,25 @@
 				>
 					<arguments/>
 				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Weiter mit"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+								label="Aufgabe abbrechen"
+							/>
+						</values>
+					</value>
+				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
 					component-name="rootLayout#masterFrame"
-					label="Ja"
+					label="Ok"
 					user-id="root"
 				/>
 			</actions>
@@ -858,7 +839,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="Business Process Engine"
+							path="TopLogic > Business Process Engine"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -874,7 +855,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="Business Process Engine > Workflow-Durchführung"
+							path="TopLogic > Business Process Engine > Workflow-Durchführung"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -890,7 +871,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="Business Process Engine > Workflow-Durchführung > Prozess-Instanz"
+							path="TopLogic > Business Process Engine > Workflow-Durchführung > Prozess-Instanz"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -906,7 +887,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="Business Process Engine > Workflow-Durchführung > Prozess-Instanz > AutomaticUpdate"
+							path="TopLogic > Business Process Engine > Workflow-Durchführung > Prozess-Instanz > AutomaticUpdate"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -922,29 +903,6 @@
 					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 						tab-path="Administration > Development > Modell Editor > Instanzen"
 					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
-					change-kind="ABSOLUTE"
-					user-id="root"
-				>
-					<selection>
-						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
-							<list>
-								<entry config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
-									name="script-after-decision - Automatic Task"
-								/>
-							</list>
-						</selectee>
-						<selection-state boolean="true"/>
-					</selection>
-					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Development > Modell Editor > Instanzen > Instanzen"
-						/>
-						<path>
-							<named-member name="fieldTable"/>
-						</path>
-					</selection-model-name>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.layout.component.GenericDeleteCommandHandler"
@@ -1001,7 +959,7 @@
 					command-label="Löschen..."
 					command-name="delete"
 					component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
-					component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorTable"
+					component-name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorTable"
 					user-id="root"
 				>
 					<arguments/>

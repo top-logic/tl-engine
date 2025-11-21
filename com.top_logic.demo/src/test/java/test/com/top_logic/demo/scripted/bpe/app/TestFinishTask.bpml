@@ -162,7 +162,20 @@
 			targetRef="EndEvent_0bn7944"
 		>
 			<bpmn:extensionElements>
-				<tl:rule><![CDATA[process -> if($process.get(`tl.bpe.execution:TestFinishTaskType#canFinish`), null, 'Can not finished!')]]></tl:rule>
+				<tl:rule>
+					<sequence-flow>
+						<rule-conditions>
+							<rule-condition class="com.top_logic.bpe.bpml.display.ConfigurableCondition"
+								condition="process -> $process.get(`tl.bpe.execution:TestFinishTaskType#canFinish`)"
+							>
+								<message key="dynamic.6da4e81d-3a63-40bf-bc6d-81b3133fa531">
+									<en>Can not finished!</en>
+									<de>Kann nicht abgeschlossen werden!</de>
+								</message>
+							</rule-condition>
+						</rule-conditions>
+					</sequence-flow>
+				</tl:rule>
 			</bpmn:extensionElements>
 		</bpmn:sequenceFlow>
 		<bpmn:sequenceFlow id="SequenceFlow_16fzfu0"
@@ -213,7 +226,20 @@
 			targetRef="Task_0x3la42"
 		>
 			<bpmn:extensionElements>
-				<tl:rule><![CDATA['Not allowed']]></tl:rule>
+				<tl:rule>
+					<sequence-flow>
+						<rule-conditions>
+							<rule-condition class="com.top_logic.bpe.bpml.display.ConfigurableCondition"
+								condition="false"
+							>
+								<message key="dynamic.6da4e81d-3a63-40bf-bc6d-81b3133fa531">
+									<en>Not allowed</en>
+									<de>Nicht erlaubt</de>
+								</message>
+							</rule-condition>
+						</rule-conditions>
+					</sequence-flow>
+				</tl:rule>
 			</bpmn:extensionElements>
 		</bpmn:sequenceFlow>
 		<bpmn:extensionElements>

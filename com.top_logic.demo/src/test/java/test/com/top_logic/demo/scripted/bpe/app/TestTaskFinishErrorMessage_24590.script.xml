@@ -67,7 +67,7 @@
 					value="TestTaskFinishErrorMessage.bpml"
 				/>
 				<parameter name="URL"
-					value="file:src/test/java/test/com/top_logic/bpe/app/scripted/TestTaskFinishErrorMessage_24590.bpml"
+					value="file:src/test/java/test/com/top_logic/demo/scripted/bpe/app/TestTaskFinishErrorMessage_24590.bpml"
 				/>
 			</parameters>
 		</action>
@@ -89,7 +89,8 @@
 				<selection-state boolean="true"/>
 			</selection>
 			<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-				tab-path="Prozess Cockpit > Alle Prozesse > Alle Prozesse"
+				name="com.top_logic.bpe.app/processCockpit/contextListContext.layout.xml#List"
+				tab-path="Prozess Cockpit > Alle Prozesse"
 			/>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
@@ -117,11 +118,6 @@
 		>
 			<arguments/>
 		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
-			component-name="rootLayout#masterFrame"
-			label="Ok"
-			user-id="root"
-		/>
 		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 			command-implementation-comment="com.top_logic.bpe.layout.execution.command.FinishTaskCommand"
 			command-label="Aufgabe abschließen"
@@ -133,36 +129,15 @@
 			<arguments/>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
-			component-name="rootLayout#masterFrame"
-			label="Ok"
-			user-id="root"
-		/>
-		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
 			comment="Confirm error dialog."
 			component-name="rootLayout#masterFrame"
 			label="Ok"
 			user-id="root"
 		/>
-		<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldErrorAssertionOp"
-			error="Can not finished."
-			error-pattern=""
-			user-id="root"
-		>
-			<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-				label="Nächste Aufgabe"
-			>
-				<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
-			</model-name>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
-			component-name="rootLayout#masterFrame"
-			label="Abbrechen"
-			user-id="root"
-		/>
 		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 			command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
 			command-label="Bearbeiten"
-			command-name="switchToAJAXEdit"
+			command-name="customEdit"
 			component-implementation-comment="com.top_logic.bpe.layout.execution.ActiveTaskComponent"
 			component-name="com.top_logic.bpe.app/processCockpit/currentTasks/taskEditor.layout.xml#EditActiveTaskEdit"
 			user-id="root"
@@ -177,7 +152,7 @@
 			>
 				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 					name="com.top_logic.bpe.app/processCockpit/currentTasks/taskEditor.layout.xml#EditActiveTaskEdit"
-					tab-path="Prozess Cockpit > Alle Prozesse > {0} > Aktuelle Aufgaben > Aktuelle Aufgabe"
+					tab-path="Prozess Cockpit > Alle Prozesse > {0} > Aktuelle Aufgaben > {0}"
 				/>
 			</field>
 			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
@@ -192,7 +167,7 @@
 			>
 				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 					name="com.top_logic.bpe.app/processCockpit/currentTasks/taskEditor.layout.xml#EditActiveTaskEdit"
-					tab-path="Prozess Cockpit > Alle Prozesse > {0} > Aktuelle Aufgaben > Aktuelle Aufgabe"
+					tab-path="Prozess Cockpit > Alle Prozesse > {0} > Aktuelle Aufgaben > {0}"
 				/>
 			</field>
 			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
@@ -220,46 +195,15 @@
 			<arguments/>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
-			component-name="rootLayout#masterFrame"
-			label="Ok"
-			user-id="root"
-		/>
-		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
 			comment="Confirm error dialog."
 			component-name="rootLayout#masterFrame"
 			label="Ok"
 			user-id="root"
 		/>
-		<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldValidityAssertionOp"
-			user-id="root"
-			validity="ERROR"
-		>
-			<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-				label="Nächste Aufgabe"
-			>
-				<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
-			</model-name>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldErrorAssertionOp"
-			error="DynamicError"
-			error-pattern=""
-			user-id="root"
-		>
-			<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-				label="Nächste Aufgabe"
-			>
-				<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
-			</model-name>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
-			component-name="rootLayout#masterFrame"
-			label="Abbrechen"
-			user-id="root"
-		/>
 		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 			command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
 			command-label="Bearbeiten"
-			command-name="switchToAJAXEdit"
+			command-name="customEdit"
 			component-implementation-comment="com.top_logic.bpe.layout.execution.ActiveTaskComponent"
 			component-name="com.top_logic.bpe.app/processCockpit/currentTasks/taskEditor.layout.xml#EditActiveTaskEdit"
 			user-id="root"
@@ -274,7 +218,7 @@
 			>
 				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 					name="com.top_logic.bpe.app/processCockpit/currentTasks/taskEditor.layout.xml#EditActiveTaskEdit"
-					tab-path="Prozess Cockpit > Alle Prozesse > {0} > Aktuelle Aufgaben > Aktuelle Aufgabe"
+					tab-path="Prozess Cockpit > Alle Prozesse > {0} > Aktuelle Aufgaben > {0}"
 				/>
 			</field>
 			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
@@ -302,57 +246,15 @@
 			<arguments/>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
-			component-name="rootLayout#masterFrame"
-			label="Ok"
-			user-id="root"
-		/>
-		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
 			comment="Confirm error dialog."
 			component-name="rootLayout#masterFrame"
 			label="Ok"
-			user-id="root"
-		/>
-		<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldValidityAssertionOp"
-			user-id="root"
-			validity="ERROR"
-		>
-			<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-				label="Nächste Aufgabe"
-			>
-				<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
-			</model-name>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldErrorAssertionOp"
-			error="DynamicError2"
-			error-pattern=""
-			user-id="root"
-		>
-			<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-				label="Nächste Aufgabe"
-			>
-				<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
-			</model-name>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
-			component-name="rootLayout#masterFrame"
-			label="Ok"
-			user-id="root"
-		/>
-		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
-			comment="Confirm error dialog."
-			component-name="rootLayout#masterFrame"
-			label="Ok"
-			user-id="root"
-		/>
-		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
-			component-name="rootLayout#masterFrame"
-			label="Abbrechen"
 			user-id="root"
 		/>
 		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 			command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
 			command-label="Bearbeiten"
-			command-name="switchToAJAXEdit"
+			command-name="customEdit"
 			component-implementation-comment="com.top_logic.bpe.layout.execution.ActiveTaskComponent"
 			component-name="com.top_logic.bpe.app/processCockpit/currentTasks/taskEditor.layout.xml#EditActiveTaskEdit"
 			user-id="root"
@@ -367,7 +269,7 @@
 			>
 				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 					name="com.top_logic.bpe.app/processCockpit/currentTasks/taskEditor.layout.xml#EditActiveTaskEdit"
-					tab-path="Prozess Cockpit > Alle Prozesse > {0} > Aktuelle Aufgaben > Aktuelle Aufgabe"
+					tab-path="Prozess Cockpit > Alle Prozesse > {0} > Aktuelle Aufgaben > {0}"
 				/>
 			</field>
 			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
@@ -394,6 +296,22 @@
 		>
 			<arguments/>
 		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Weiter mit"
+			>
+				<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+				<values>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+						label="Step"
+					/>
+				</values>
+			</value>
+		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
 			component-name="rootLayout#masterFrame"
 			label="Ok"
@@ -409,9 +327,25 @@
 		>
 			<arguments/>
 		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Weiter mit"
+			>
+				<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+				<values>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+						label="End"
+					/>
+				</values>
+			</value>
+		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
 			component-name="rootLayout#masterFrame"
-			label="Ja"
+			label="Ok"
 			user-id="root"
 		/>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
@@ -431,7 +365,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="Business Process Engine"
+							path="TopLogic"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -447,7 +381,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="Business Process Engine > Workflow-Durchführung"
+							path="TopLogic > Business Process Engine"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -463,7 +397,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="Business Process Engine > Workflow-Durchführung > Prozess-Instanz"
+							path="TopLogic > Business Process Engine > Workflow-Durchführung"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -479,7 +413,23 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="Business Process Engine > Workflow-Durchführung > Prozess-Instanz > TestTaskFinishErrorMessageType"
+							path="TopLogic > Business Process Engine > Workflow-Durchführung > Prozess-Instanz"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+							path="TopLogic > Business Process Engine > Workflow-Durchführung > Prozess-Instanz > TestTaskFinishErrorMessageType"
 						/>
 						<selection-state boolean="true"/>
 					</selection>

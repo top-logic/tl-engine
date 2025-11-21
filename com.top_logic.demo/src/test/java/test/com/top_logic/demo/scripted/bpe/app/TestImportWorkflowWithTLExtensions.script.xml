@@ -23,16 +23,12 @@
 			template-name-comment="Workflow Hochladen"
 		>
 			<parameters>
-				<parameter name="Name">
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-						string="The Process.bpml"
-					/>
-				</parameter>
-				<parameter name="URL">
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-						string="file:src/test/java/test/com/top_logic/bpe/app/scripted/TestImportWorkflowWithTLExtensions.bpml"
-					/>
-				</parameter>
+				<parameter name="Name"
+					value="The Process.bpml"
+				/>
+				<parameter name="URL"
+					value="file:src/test/java/test/com/top_logic/demo/scripted/bpe/app/TestImportWorkflowWithTLExtensions.bpml"
+				/>
 			</parameters>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
@@ -59,7 +55,7 @@
 					label="Symbol"
 				>
 					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+						name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
 						tab-path="Administration > Development > Prozess Editor"
 					/>
 				</model>
@@ -78,7 +74,7 @@
 					label="Status"
 				>
 					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+						name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
 						tab-path="Administration > Development > Prozess Editor"
 					/>
 				</model>
@@ -88,7 +84,7 @@
 					label="Status"
 				>
 					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+						name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
 						tab-path="Administration > Development > Prozess Editor"
 					/>
 				</context-name>
@@ -125,7 +121,7 @@
 					label="Symbol"
 				>
 					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+						name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
 						tab-path="Administration > Development > Prozess Editor"
 					/>
 				</model>
@@ -139,12 +135,12 @@
 			inverted="false"
 			user-id="root"
 		>
-			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldValueNaming$Name">
 				<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
 					label="Beschreibung"
 				>
 					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+						name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
 						tab-path="Administration > Development > Prozess Editor"
 					/>
 				</model>
@@ -154,13 +150,48 @@
 					label="Beschreibung"
 				>
 					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+						name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
 						tab-path="Administration > Development > Prozess Editor"
 					/>
 				</context-name>
-				<local-name config:interface="com.top_logic.layout.wysiwyg.ui.scripting.StructuredTextNamingScheme$Name"
-					value="&lt;p>Eine &lt;strong>neue &lt;/strong>&lt;em>lustige &lt;/em>&lt;u>Aufgabe&lt;/u> mit &lt;img src=&quot;ref:addElementDisabled_49432.png&quot; style=&quot;opacity:1&quot; />Bild.&lt;/p>"
-				/>
+				<local-name config:interface="com.top_logic.layout.wysiwyg.ui.scripting.I18NStructuredTextNamingScheme$Name">
+					<translations>
+						<translation language="de">
+							<text>
+								<source-code><![CDATA[<p>Eine <strong>neue </strong><em>lustige </em><u>Aufgabe</u> mit <img src="ref:addElementDisabled_49432.png" style="opacity:1" />Bild.</p>]]></source-code>
+								<image name="addElementDisabled_49432.png">iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAc0lEQVQ4y91RsQ2AMAxzUQeEhIBrekO+8le5Id8gARNDWRjKUKjUAYRXJ3YcA5VwOYLkAGABEEnG3JzPEWY2lxg1tRHeF3Dnwzoz20qXQgg9yfXyHBGJpQKq6qoikBwf60kvSh1/WKO/qaoFsAOYVBXfxQGXeh7V7BrRYQAAAABJRU5ErkJggg==</image>
+							</text>
+						</translation>
+					</translations>
+				</local-name>
+			</expected-value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldValueNaming$Name">
+				<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+					label="Bezeichnung"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+						tab-path="Administration > Development > Prozess Editor"
+					/>
+				</model>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ResKeyNaming$Name">
+				<translations>
+					<translation
+						lang="de"
+						value="Machs mit {0}"
+					/>
+					<translation
+						lang="en"
+						value="Do it with {0}"
+					/>
+				</translations>
 			</expected-value>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
@@ -170,16 +201,16 @@
 		>
 			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
 				<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-					label="Template für Titel"
+					label="Dynamische Bezeichnung"
 				>
 					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+						name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
 						tab-path="Administration > Development > Prozess Editor"
 					/>
 				</model>
 			</actual-value>
 			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-				value="Machs mit {$model}"
+				value="i18n -> execution -> task -> token -> $i18n.fill($execution)"
 			/>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
@@ -206,7 +237,7 @@
 					label="Aktion"
 				>
 					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+						name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
 						tab-path="Administration > Development > Prozess Editor"
 					/>
 				</model>
@@ -328,10 +359,10 @@
 		>
 			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
 				<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-					label="Bedingung"
+					label="Zustand"
 				>
 					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+						name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
 						tab-path="Administration > Development > Prozess Editor"
 					/>
 				</model>
@@ -361,7 +392,7 @@
 			command-label="BPML exportieren"
 			command-name="export"
 			component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
-			component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorTable"
+			component-name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorTable"
 			user-id="root"
 		>
 			<arguments/>
@@ -387,7 +418,7 @@
 			command-label="Löschen..."
 			command-name="delete"
 			component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
-			component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorTable"
+			component-name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorTable"
 			user-id="root"
 		>
 			<arguments/>

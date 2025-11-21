@@ -7,6 +7,7 @@ package com.top_logic.layout.basic.contextmenu.component.factory.adapter;
 
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.layout.basic.contextmenu.component.ContextMenuFactory;
@@ -18,6 +19,7 @@ import com.top_logic.layout.basic.contextmenu.component.factory.SelectableContex
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
+@Label("Context menu of selectable component")
 public class SelectableContextMenuProvider extends ComponentContextMenuProvider {
 
 	/**

@@ -93,7 +93,7 @@ public abstract class ContextCommandsControl<T> extends ConstantControl<T> imple
 	public Menu createContextMenu(String contextInfo) {
 		T model = getModel();
 		List<CommandHandler> commands = _contextMenu.getContextCommands(model);
-		Map<String, Object> arguments = ContextMenuUtil.createArguments(model);
+		Map<String, Object> arguments = ContextMenuUtil.createSingleObjectArguments(model);
 		Stream<CommandModel> buttonsStream = ContextMenuUtil.toButtonsStream(_component, arguments, commands);
 		Menu result = ContextMenuUtil.toContextMenu(buttonsStream);
 		String title = _titleProvider.getLabel(model);

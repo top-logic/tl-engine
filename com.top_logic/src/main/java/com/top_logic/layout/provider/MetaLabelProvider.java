@@ -6,21 +6,23 @@
 package com.top_logic.layout.provider;
 
 
-import com.top_logic.dob.MetaObject;
+import com.top_logic.basic.annotation.InApp;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.layout.LabelProvider;
+import com.top_logic.model.TLClass;
 
 /**
- * {@link LabelProvider} that decides upon its implementation based on the first object it should
- * provide a label for.
+ * Generates labels for objects using implementations registered in the application configuration.
  * 
  * <p>
- * Uses {@link LabelProviderService} for looking up its {@link LabelProvider} implementation. As key
- * to the registry, it either uses the {@link MetaObject} or the {@link Class} of the object it
- * should provide a label for.
+ * Implementations can be registered in the {@link LabelProviderService}. As key to the registry,
+ * either the {@link TLClass dynamic type} or the {@link Class Java class} of the object is used..
  * </p>
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
+@Label("Default label")
+@InApp
 public class MetaLabelProvider implements LabelProvider {
 
 	/**

@@ -14,6 +14,11 @@ import com.top_logic.layout.basic.contextmenu.component.factory.adapter.Selectab
 
 /**
  * {@link SelectableContextMenuProvider} choosing {@link TreeTableContextMenuFactory} by default.
+ * 
+ * @implNote This provider is used by default for a table configuration of a
+ *           {@link TreeTableComponent}.
+ * 
+ * @see TreeTableConfig#getContextMenu()
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

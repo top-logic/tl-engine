@@ -366,7 +366,7 @@ public class HTMLTemplateFormProvider
 		@Override
 		public Menu createContextMenu(String contextInfo) {
 			LayoutComponent component = FormComponent.componentForMember(_form.getFormContext());
-			Map<String, Object> args = ContextMenuUtil.createArguments(_model);
+			Map<String, Object> args = ContextMenuUtil.createSingleObjectArguments(_model);
 			Stream<CommandModel> buttonsStream =
 				ContextMenuUtil.toButtonsStream(component, args, _contextMenuCommands);
 			return ContextMenuUtil.toContextMenu(buttonsStream);

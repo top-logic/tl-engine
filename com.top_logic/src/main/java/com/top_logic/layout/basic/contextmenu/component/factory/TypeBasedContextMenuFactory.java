@@ -34,10 +34,13 @@ import com.top_logic.layout.basic.contextmenu.config.ContextMenuCommandsProvider
 import com.top_logic.layout.basic.contextmenu.config.MetaContextMenuCommandsProvider;
 import com.top_logic.layout.basic.contextmenu.menu.Menu;
 import com.top_logic.layout.basic.fragments.Fragments;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
+import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.tree.model.TLTreeNode;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.CommandHandler;
+import com.top_logic.tool.boundsec.CommandHandlerUtil;
 
 /**
  * {@link ContextMenuProvider} that uses custom {@link CommandHandler}s to build a context menu in
@@ -77,6 +80,7 @@ public class TypeBasedContextMenuFactory<C extends TypeBasedContextMenuFactory.C
 		@Name(TITLE_PROVIDER)
 		@InstanceFormat
 		@InstanceDefault(MetaLabelProvider.class)
+		@Options(fun = AllInAppImplementations.class)
 		LabelProvider getTitleProvider();
 
 		/**
@@ -143,7 +147,7 @@ public class TypeBasedContextMenuFactory<C extends TypeBasedContextMenuFactory.C
 		@Override
 		public Menu getContextMenu(Object directTarget, Object model) {
 			Object mappedModel = mapContext(model);
-			List<CommandModel> buttons = createButtons(directTarget, mappedModel, createArguments(mappedModel));
+			List<CommandModel> buttons = createButtons(directTarget, mappedModel, createArguments(directTarget, mappedModel));
 			Menu result = ContextMenuUtil.toContextMenu(buttons);
 			String title = getConfig().getTitleProvider().getLabel(mappedModel);
 			if (!StringServices.isEmpty(title)) {
@@ -204,7 +208,13 @@ public class TypeBasedContextMenuFactory<C extends TypeBasedContextMenuFactory.C
 		 *        even all currently selected objects, if the context menu was opened on a
 		 *        selection).
 		 * @param arguments
-		 *        The arguments to invoke the commands with.
+		 *        The arguments to invoke the commands with. These arguments contain at least the
+		 *        current model, on which a regular command is invoked under the key
+		 *        {@link CommandHandlerUtil#TARGET_MODEL_ARGUMENT}. When the context menu is called
+		 *        on a multi-selection, this model would be the whole selection. For commands, that
+		 *        must operate independently of the current selection, the object, on which the
+		 *        context menu was opened, is also contained in the arguments under the key
+		 *        {@link ContextMenuUtil#DIRECT_TARGET}.
 		 * @return The (unordered) list of context menu entries.
 		 */
 		protected List<CommandModel> createButtons(Object directTarget, Object model, Map<String, Object> arguments) {

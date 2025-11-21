@@ -6,7 +6,7 @@
 		<relativePath>../tl-parent-core/internal</relativePath>
 		<groupId>com.top-logic</groupId>
 		<artifactId>tl-parent-core-internal</artifactId>
-		<version>7.9.7</version>	
+		<version>0.0.11-AEMA</version>	
 	</parent>
 	
 	<artifactId>tl-service-jms-activemq</artifactId>

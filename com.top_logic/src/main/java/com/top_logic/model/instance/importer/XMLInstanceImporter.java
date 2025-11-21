@@ -91,6 +91,8 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 	 */
 	private List<Runnable> _delayed = new ArrayList<>();
 
+	private Object _context;
+
 	/**
 	 * Creates a {@link XMLInstanceImporter}.
 	 *
@@ -102,6 +104,21 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 	public XMLInstanceImporter(TLModel model, TLFactory factory) {
 		_model = model;
 		_factory = factory;
+	}
+
+	/**
+	 * Arbitrary context object that can be used from {@link InstanceResolver}s to find an object by
+	 * a local ID.
+	 */
+	public Object getContext() {
+		return _context;
+	}
+
+	/**
+	 * @see #getContext()
+	 */
+	public void setContext(Object context) {
+		_context = context;
 	}
 
 	/**
@@ -123,7 +140,7 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 	 * 
 	 * @param kind
 	 *        The type kind to register the given resolver for. See
-	 *        {@link InstanceResolver#resolve(I18NLog, String, String)}.
+	 *        {@link InstanceResolver#resolve(I18NLog, Object, String, String)}.
 	 * 
 	 * @see #addResolver(String, InstanceResolver)
 	 */
@@ -418,7 +435,7 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 			if (globalId != null) {
 				// Check, whether the object is already present in the target system.
 				String kind = ref.getType();
-				TLObject existing = resolver(kind).resolve(_log, kind, globalId);
+				TLObject existing = resolver(kind).resolve(_log, _context, kind, globalId);
 				if (existing != null) {
 					addObject(ref.getId(), existing);
 					return existing;
@@ -436,7 +453,7 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 	public TLObject visit(GlobalRefConf ref, TLStructuredTypePart arg) {
 		try {
 			String kind = ref.getKind();
-			TLObject result = resolver(kind).resolve(_log, kind, ref.getId());
+			TLObject result = resolver(kind).resolve(_log, _context, kind, ref.getId());
 			if (result == null) {
 				_log.error(
 					I18NConstants.FAILED_TO_RESOLVE_OBJECT__TYPE_ID.fill(ref.getKind(), ref.getId()));

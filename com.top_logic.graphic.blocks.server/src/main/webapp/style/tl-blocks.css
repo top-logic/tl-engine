@@ -40,10 +40,7 @@ path.tlbConnector {
 	stroke: #ffe635; 
 }
 
-.tlSelectionMarker {
-	display: none;
-}
-
+/* .tlSelectionMarker elements are hidden by default in the tl-flow-core.css rules. */
 .tlSelected .tlSelectionMarker {
 	display: initial;
 }

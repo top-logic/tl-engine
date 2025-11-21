@@ -210,6 +210,56 @@ public abstract class StreamUtilities {
 	}
 
 	/**
+	 * Reads the content from a {@link BinaryData} with {@link #ENCODING ISO} encoding.
+	 *
+	 * <p>
+	 * This overload resolves ambiguity between {@link BinaryContent} and {@link BinaryDataSource}
+	 * methods for {@link BinaryData} which implements both interfaces.
+	 * </p>
+	 */
+	public static String readAllFromStream(BinaryData data) throws IOException {
+		return readAllFromStream((BinaryContent) data, ENCODING);
+	}
+
+	/**
+	 * Reads the content from a {@link BinaryData} with the given character encoding.
+	 *
+	 * <p>
+	 * This overload resolves ambiguity between {@link BinaryContent} and {@link BinaryDataSource}
+	 * methods for {@link BinaryData} which implements both interfaces.
+	 * </p>
+	 */
+	public static String readAllFromStream(BinaryData data, String encoding) throws IOException {
+		return readAllFromStream((BinaryContent) data, encoding);
+	}
+
+	/**
+	 * Reads the content from a {@link BinaryDataSource} with {@link #ENCODING ISO} encoding.
+	 *
+	 * <p>
+	 * This method efficiently reads from {@link BinaryDataSource} without converting to
+	 * {@link com.top_logic.basic.io.binary.BinaryData} first.
+	 * </p>
+	 */
+	public static String readAllFromStream(BinaryDataSource source) throws IOException {
+		return readAllFromStream(source, ENCODING);
+	}
+
+	/**
+	 * Reads the content from a {@link BinaryDataSource} with the given character encoding.
+	 *
+	 * <p>
+	 * This method efficiently reads from {@link BinaryDataSource} without converting to
+	 * {@link com.top_logic.basic.io.binary.BinaryData} first.
+	 * </p>
+	 */
+	public static String readAllFromStream(BinaryDataSource source, String encoding) throws IOException {
+		ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+		source.deliverTo(buffer);
+		return buffer.toString(encoding);
+	}
+
+	/**
 	 * Convert the contents of the given {@link InputStream} to a string using
 	 * the given encoding.
 	 * 

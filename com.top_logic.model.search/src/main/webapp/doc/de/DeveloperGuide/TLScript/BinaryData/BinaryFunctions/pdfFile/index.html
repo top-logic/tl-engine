@@ -1,0 +1,349 @@
+<h2>Syntax</h2>
+
+<pre><code>pdfFile(html: $htmlContent, name: $filename,
+    pageSize: $size, landscape: $landscape,
+    pageWidth: $width, pageHeight: $height,
+    marginLeft: $ml, marginRight: $mr,
+    marginTop: $mt, marginBottom: $mb,
+    resolution: $dpi
+)</code>
+</pre>
+
+<h2>Beschreibung</h2>
+
+<p>Konvertiert HTML-Inhalte in ein PDF-Dokument. Das HTML wird als PDF gerendert, wobei die Flying Saucer-Bibliothek verwendet wird, die hochwertige PDF-Ausgaben aus wohlgeformtem XHTML erzeugt.</p>
+
+<p>Diese Funktion akzeptiert vier Arten von Eingaben:</p>
+<ul>
+	<li><strong>String:</strong> Einfaches HTML als mehrzeiliges String-Literal (mit dreifachen Anführungszeichen <code>"""..."""</code>)</li>
+	<li><strong>HTMLFragment:</strong> HTML mit eingebetteten TLScript-Ausdrücken (mit HTML-Literal-Syntax mit dreifachen geschweiften Klammern <code>{{{...}}}</code>)</li>
+	<li><strong>StructuredText:</strong> Rich-Text-Inhalte aus WYSIWYG-Editor-Feldern mit eingebetteten Bildern. Bilder werden automatisch in BASE64-Daten-URIs für das PDF-Rendering konvertiert</li>
+	<li><strong>BinaryDataSource:</strong> Binärdaten mit Content-Type <code>text/html</code> oder <code>text/plain</code>, die HTML-Markup enthalten</li>
+</ul>
+
+<p>Diese Funktion ist besonders nützlich für die Erstellung von Berichten, Rechnungen oder anderen Dokumenten, die dynamisch aus HTML-Vorlagen generiert und als PDF exportiert werden müssen.</p>
+
+<p><strong>Wichtig:</strong> Das HTML muss wohlgeformtes XHTML sein. Alle Tags müssen ordnungsgemäß geschlossen werden, und selbstschließende Tags sollten die XHTML-Syntax verwenden (z.B. <code>&lt;br/&gt;</code> statt <code>&lt;br&gt;</code>).</p>
+
+<h2>Parameter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Bezeichnung</th>
+			<th>Typ</th>
+			<th>Beschreibung</th>
+			<th>Pflicht</th>
+			<th>Standard</th>
+		</tr>
+		<tr>
+			<td>html</td>
+			<td>String, HTMLFragment, StructuredText oder BinaryDataSource</td>
+			<td>Der HTML-Inhalt, der in PDF konvertiert werden soll. Kann ein einfacher String (mit dreifachen Anführungszeichen <code>"""..."""</code>), ein HTMLFragment (mit dreifachen geschweiften Klammern <code>{{{...}}}</code> Syntax mit eingebetteten TLScript-Ausdrücken), ein StructuredText aus WYSIWYG-Editor-Feldern (mit automatisch eingebetteten BASE64-Bildern) oder eine BinaryDataSource mit Content-Type <code>text/html</code> oder <code>text/plain</code> sein. Muss wohlgeformtes XHTML sein, bei dem alle Tags ordnungsgemäß geschlossen sind.</td>
+			<td>ja</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>name</td>
+			<td>String</td>
+			<td>Der Dateiname für das generierte PDF. Die Erweiterung .pdf wird automatisch hinzugefügt, falls nicht vorhanden.</td>
+			<td>nein</td>
+			<td>document.pdf</td>
+		</tr>
+		<tr>
+			<td>pageSize</td>
+			<td>String</td>
+			<td>Standard-Papierformat. Unterstützte Werte: <code>A0</code>, <code>A1</code>, <code>A2</code>, <code>A3</code>, <code>A4</code>, <code>A5</code>, <code>A6</code>, <code>LETTER</code>, <code>LEGAL</code>, <code>TABLOID</code>. Wenn angegeben, werden <code>pageWidth</code> und <code>pageHeight</code> automatisch basierend auf der Auflösung berechnet. Werte sind nicht case-sensitiv.</td>
+			<td>nein</td>
+			<td>A4 (wenn weder pageSize noch pageWidth/pageHeight angegeben)</td>
+		</tr>
+		<tr>
+			<td>landscape</td>
+			<td>Boolean</td>
+			<td>Wenn <code>true</code>, werden Seitenbreite und -höhe für Querformat getauscht. Funktioniert sowohl mit <code>pageSize</code> als auch mit benutzerdefinierten <code>pageWidth</code>/<code>pageHeight</code>-Werten.</td>
+			<td>nein</td>
+			<td>false</td>
+		</tr>
+		<tr>
+			<td>pageWidth</td>
+			<td>Number</td>
+			<td>Überschreibung der Seitenbreite in Pixeln. Wenn angegeben (ungleich Null), hat dies Vorrang vor der <code>pageSize</code>-Breite.</td>
+			<td>nein</td>
+			<td>0 (pageSize oder Standard-A4-Breite bei Auflösung verwenden)</td>
+		</tr>
+		<tr>
+			<td>pageHeight</td>
+			<td>Number</td>
+			<td>Überschreibung der Seitenhöhe in Pixeln. Wenn angegeben (ungleich Null), hat dies Vorrang vor der <code>pageSize</code>-Höhe.</td>
+			<td>nein</td>
+			<td>0 (pageSize oder Standard-A4-Höhe bei Auflösung verwenden)</td>
+		</tr>
+		<tr>
+			<td>marginLeft</td>
+			<td>Number</td>
+			<td>Der linke Rand in Pixeln.</td>
+			<td>nein</td>
+			<td>88 (15mm bei 150 DPI)</td>
+		</tr>
+		<tr>
+			<td>marginRight</td>
+			<td>Number</td>
+			<td>Der rechte Rand in Pixeln.</td>
+			<td>nein</td>
+			<td>88 (15mm bei 150 DPI)</td>
+		</tr>
+		<tr>
+			<td>marginTop</td>
+			<td>Number</td>
+			<td>Der obere Rand in Pixeln.</td>
+			<td>nein</td>
+			<td>88 (15mm bei 150 DPI)</td>
+		</tr>
+		<tr>
+			<td>marginBottom</td>
+			<td>Number</td>
+			<td>Der untere Rand in Pixeln.</td>
+			<td>nein</td>
+			<td>59 (10mm bei 150 DPI)</td>
+		</tr>
+		<tr>
+			<td>resolution</td>
+			<td>Number</td>
+			<td>Die Rendering-Auflösung in DPI (Punkte pro Zoll). Höhere Werte erzeugen bessere Qualität, aber größere Dateien. Dies beeinflusst auch, wie <code>pageSize</code>-Dimensionen berechnet werden (z.B. A4 bei 150 DPI = 1240x1754 px, A4 bei 300 DPI = 2480x3508 px).</td>
+			<td>nein</td>
+			<td>150</td>
+		</tr>
+	</thead>
+</table>
+
+<h2> </h2>
+
+<h2>Rückgabewert</h2>
+
+<p><strong>Typ:</strong> BinaryData</p>
+
+<p>Gibt ein Binärdaten-Objekt zurück, das das generierte PDF mit dem Content-Type <code>application/pdf</code> enthält. Gibt <code>null</code> zurück, wenn die HTML-Eingabe null oder leer ist.</p>
+
+<p>Wenn die PDF-Generierung fehlschlägt, wird eine <code>RuntimeException</code> mit Details zum Fehler ausgelöst.</p>
+
+<h2>Beispiele</h2>
+
+<h3>Einfaches PDF mit String-Literal</h3>
+
+<pre>
+	<code>pdfFile("""
+  &lt;html&gt;
+    &lt;body&gt;
+      &lt;h1&gt;Hallo Welt&lt;/h1&gt;
+      &lt;p&gt;Dies ist ein aus HTML generiertes PDF.&lt;/p&gt;
+    &lt;/body&gt;
+  &lt;/html&gt;
+""")</code>
+</pre>
+
+<p><strong>Ausgabe:</strong> Ein PDF-Dokument mit dem Namen "document.pdf", das "Hallo Welt" als Überschrift und einen Textabsatz enthält.</p>
+
+<h3>PDF mit HTMLFragment und dynamischem Inhalt</h3>
+
+<pre>
+	<code>pdfFile({{{
+  &lt;html&gt;
+    &lt;body&gt;
+      &lt;h1&gt;Rechnung für {$customer.get(`my.module:Customer#name`)}&lt;/h1&gt;
+      &lt;p&gt;Datum: {dateFormat('yyyy-MM-dd').format(now())}&lt;/p&gt;
+      &lt;p&gt;Betrag: {$invoice.get(`my.module:Invoice#amount`)}&lt;/p&gt;
+    &lt;/body&gt;
+  &lt;/html&gt;
+}}}, "rechnung-" + $invoice.get(`my.module:Invoice#number`))</code>
+</pre>
+
+<p><strong>Ausgabe:</strong> Ein PDF mit dynamisch generiertem Inhalt. Die <code>{{{...}}}</code> Syntax ermöglicht das Einbetten von TLScript-Ausdrücken direkt im HTML, die vor der PDF-Generierung ausgewertet und sicher HTML-kodiert werden.</p>
+
+<h3>PDF mit benutzerdefiniertem Dateinamen</h3>
+
+<pre>
+	<code>pdfFile("""
+  &lt;html&gt;
+    &lt;body&gt;
+      &lt;h1&gt;Rechnung&lt;/h1&gt;
+      &lt;p&gt;Rechnung #12345&lt;/p&gt;
+    &lt;/body&gt;
+  &lt;/html&gt;
+""", "rechnung-12345")</code>
+</pre>
+
+<p><strong>Ausgabe:</strong> Ein PDF-Dokument mit dem Namen "rechnung-12345.pdf". Die Erweiterung .pdf wird automatisch hinzugefügt.</p>
+
+<h3>Gestalteter Bericht mit dynamischem Dateinamen</h3>
+
+<pre>
+	<code>pdfFile({{{
+  &lt;html&gt;
+    &lt;head&gt;
+      &lt;style&gt;
+        body \{ font-family: Arial, sans-serif; \}
+        h1 \{ color: #333366; \}
+        table \{ border-collapse: collapse; width: 100%; \}
+        th, td \{ border: 1px solid #ddd; padding: 8px; \}
+        th \{ background-color: #4CAF50; color: white; \}
+      &lt;/style&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+      &lt;h1&gt;Verkaufsbericht&lt;/h1&gt;
+      &lt;p&gt;Erstellt am: {dateFormat('yyyy-MM-dd').format(now())}&lt;/p&gt;
+      &lt;table&gt;
+        &lt;tr&gt;
+          &lt;th&gt;Produkt&lt;/th&gt;
+          &lt;th&gt;Menge&lt;/th&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+          &lt;td&gt;Widget A&lt;/td&gt;
+          &lt;td&gt;150&lt;/td&gt;
+        &lt;/tr&gt;
+      &lt;/table&gt;
+    &lt;/body&gt;
+  &lt;/html&gt;
+}}}, "verkaufsbericht-" + dateFormat('yyyy-MM-dd').format(now()))</code>
+</pre>
+
+<p><strong>Ausgabe:</strong> Ein gestalteter PDF-Bericht mit dem Namen "verkaufsbericht-2025-10-22.pdf", einschließlich Tabelle, eingebetteter CSS-Stile und dynamischem Datum.</p>
+
+<h3>Dynamischer Inhalt mit Iteration</h3>
+
+<pre>
+	<code>pdfFile({{{
+  &lt;html&gt;
+    &lt;body&gt;
+      &lt;h1&gt;Rechnungspositionen&lt;/h1&gt;
+      &lt;ul&gt;
+        {$items.map(item -> {{{
+          &lt;li&gt;{item.get(`my.module:Item#name`)} - {item.get(`my.module:Item#price`)}&lt;/li&gt;
+        }}})}
+      &lt;/ul&gt;
+    &lt;/body&gt;
+  &lt;/html&gt;
+}}})</code>
+</pre>
+
+<p><strong>Ausgabe:</strong> Ein PDF mit einer dynamisch generierten Liste von Rechnungspositionen.</p>
+
+<h3>PDF aus StructuredText (WYSIWYG-Inhalt)</h3>
+
+<pre>
+	<code>// WYSIWYG-Editor-Inhalt in PDF konvertieren
+pdfFile($object.get(`my.module:Article#content`), name: "artikel.pdf")</code>
+</pre>
+
+<p><strong>Ausgabe:</strong> Ein PDF, das aus StructuredText-Inhalt generiert wurde. Alle eingebetteten Bilder im WYSIWYG-Feld werden automatisch in BASE64-Daten-URIs konvertiert und in das PDF eingefügt.</p>
+
+<h3>Verwendung von Standardpapierformaten</h3>
+
+<pre>
+	<code>// US Letter Papierformat
+pdfFile("""
+  &lt;html&gt;
+    &lt;body&gt;
+      &lt;h1&gt;US Letter Dokument&lt;/h1&gt;
+      &lt;p&gt;Dieses Dokument verwendet das US Letter Papierformat.&lt;/p&gt;
+    &lt;/body&gt;
+  &lt;/html&gt;
+""", name: "letter-doc.pdf", pageSize: "LETTER")</code>
+</pre>
+
+<p><strong>Ausgabe:</strong> Ein PDF mit US Letter-Papierformat (216 x 279 mm) bei der Standard-Auflösung von 150 DPI.</p>
+
+<h3>Querformat</h3>
+
+<pre>
+	<code>// A4 Querformat für breite Inhalte
+pdfFile({{{
+  &lt;html&gt;
+    &lt;body&gt;
+      &lt;h1&gt;Breiter Bericht&lt;/h1&gt;
+      &lt;table style="width: 100%"&gt;
+        &lt;tr&gt;
+          &lt;th&gt;Spalte 1&lt;/th&gt;
+          &lt;th&gt;Spalte 2&lt;/th&gt;
+          &lt;th&gt;Spalte 3&lt;/th&gt;
+          &lt;th&gt;Spalte 4&lt;/th&gt;
+          &lt;th&gt;Spalte 5&lt;/th&gt;
+        &lt;/tr&gt;
+      &lt;/table&gt;
+    &lt;/body&gt;
+  &lt;/html&gt;
+}}}, name: "breiter-bericht.pdf", pageSize: "A4", landscape: true)</code>
+</pre>
+
+<p><strong>Ausgabe:</strong> Ein PDF im A4-Querformat (297 x 210 mm), ideal für breite Tabellen oder Diagramme.</p>
+
+<h3>Benutzerdefinierte Seitengröße und Auflösung</h3>
+
+<pre>
+	<code>// US Letter-Format bei 200 DPI mit benutzerdefinierten Rändern
+pdfFile("""
+  &lt;html&gt;
+    &lt;body&gt;
+      &lt;h1&gt;Hochqualitativer Bericht&lt;/h1&gt;
+      &lt;p&gt;Dieses Dokument wird mit höherer Auflösung gerendert.&lt;/p&gt;
+    &lt;/body&gt;
+  &lt;/html&gt;
+""", name: "bericht.pdf", pageSize: "LETTER", resolution: 200,
+    marginLeft: 100, marginRight: 100, marginTop: 100, marginBottom: 100)</code>
+</pre>
+
+<p><strong>Ausgabe:</strong> Ein PDF mit US Letter-Seitengröße bei 200 DPI und 100-Pixel-Rändern auf allen Seiten.</p>
+
+<h3>Minimale Ränder für maximalen Inhalt</h3>
+
+<pre>
+	<code>// A4 mit minimalen Rändern
+pdfFile({{{
+  &lt;html&gt;
+    &lt;body&gt;
+      &lt;h1&gt;Ganzseitiger Inhalt&lt;/h1&gt;
+      &lt;p&gt;Dies verwendet minimale Ränder, um den Inhaltsbereich zu maximieren.&lt;/p&gt;
+    &lt;/body&gt;
+  &lt;/html&gt;
+}}}, name: "vollseite.pdf", pageSize: "A4",
+    marginLeft: 20, marginRight: 20, marginTop: 20, marginBottom: 20)</code>
+</pre>
+
+<p><strong>Ausgabe:</strong> Ein PDF mit A4-Seitengröße und minimalen 20-Pixel-Rändern (ca. 3,4mm bei 150 DPI).</p>
+
+<h3>Großformate mit A3</h3>
+
+<pre>
+	<code>// A3 für große Diagramme
+pdfFile({{{
+  &lt;html&gt;
+    &lt;body&gt;
+      &lt;h1&gt;Architekturdiagramm&lt;/h1&gt;
+      &lt;!-- Großer Diagramminhalt --&gt;
+    &lt;/body&gt;
+  &lt;/html&gt;
+}}}, name: "diagramm.pdf", pageSize: "A3")</code>
+</pre>
+
+<p><strong>Ausgabe:</strong> Ein PDF mit A3-Seitengröße (297 x 420 mm), geeignet für große Diagramme oder Poster.</p>
+
+<h2>Technische Hinweise</h2>
+
+<ul>
+	<li><strong>Standardeinstellungen:</strong> Standard-Seitengröße ist A4 (1240x1754 Pixel bei 150 DPI = 210mm x 297mm)</li>
+	<li><strong>Standardpapierformate:</strong> Der <code>pageSize</code>-Parameter unterstützt A0 bis A6 sowie LETTER, LEGAL und TABLOID. Dimensionen werden automatisch basierend auf der Auflösung berechnet</li>
+	<li><strong>Querformat:</strong> Bei <code>landscape: true</code> werden Breite und Höhe getauscht. Dies funktioniert unabhängig davon, ob <code>pageSize</code> oder benutzerdefinierte Dimensionen verwendet werden</li>
+	<li><strong>Auflösung:</strong> Standardauflösung ist 150 DPI, geeignet für die meisten Druck- und Bildschirmansichten. Höhere Werte (z.B. 300 DPI) erzeugen bessere Qualität, aber größere Dateien</li>
+	<li><strong>Ränder:</strong> Standardränder sind 15mm (links, rechts, oben) und 10mm (unten). Ränder werden in Pixeln bei der gewählten Auflösung angegeben</li>
+	<li><strong>Seitengrößenberechnungen:</strong>
+		<ul>
+			<li>A4 bei 150 DPI: 1240 x 1754 Pixel</li>
+			<li>US Letter bei 150 DPI: 1275 x 1650 Pixel</li>
+			<li>A4 bei 300 DPI: 2480 x 3508 Pixel</li>
+			<li>Formel: Pixel = (Millimeter / 25,4) × DPI</li>
+		</ul>
+	</li>
+	<li><strong>CSS-Unterstützung:</strong> Grundlegende CSS2-Stile werden unterstützt. Komplexe CSS3-Features werden möglicherweise nicht korrekt gerendert</li>
+	<li><strong>Bilder:</strong> Externe Bilder benötigen zugängliche URLs. Base64-kodierte Bilder werden unterstützt</li>
+	<li><strong>Schriftarten:</strong> Standardschriftarten sind verfügbar. Benutzerdefinierte Schriftarten erfordern möglicherweise zusätzliche Konfiguration</li>
+	<li><strong>Benannte Parameter:</strong> Verwenden Sie benannte Parameter für mehr Klarheit (z.B. <code>pageSize: "A4", landscape: true</code>). Dies vermeidet das Angeben von null für ungenutzte Positionsparameter</li>
+</ul>

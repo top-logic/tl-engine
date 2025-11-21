@@ -1,0 +1,349 @@
+<h2>Syntax</h2>
+
+<pre><code>pdfFile(html: $htmlContent, name: $filename,
+    pageSize: $size, landscape: $landscape,
+    pageWidth: $width, pageHeight: $height,
+    marginLeft: $ml, marginRight: $mr,
+    marginTop: $mt, marginBottom: $mb,
+    resolution: $dpi
+)</code>
+</pre>
+
+<h2>Description</h2>
+
+<p>Converts HTML content into a PDF document. The HTML is rendered as a PDF using the Flying Saucer library, which produces high-quality PDF output from well-formed XHTML.</p>
+
+<p>This function accepts four types of input:</p>
+<ul>
+	<li><strong>String:</strong> Plain HTML as a multi-line string literal (using triple quotes <code>"""..."""</code>)</li>
+	<li><strong>HTMLFragment:</strong> HTML with embedded TLScript expressions (using HTML literal syntax with triple braces <code>{{{...}}}</code>)</li>
+	<li><strong>StructuredText:</strong> Rich text content from WYSIWYG editor fields with embedded images. Images are automatically converted to BASE64 data URIs for PDF rendering</li>
+	<li><strong>BinaryDataSource:</strong> Binary data with content type <code>text/html</code> or <code>text/plain</code> containing HTML markup</li>
+</ul>
+
+<p>This function is particularly useful for generating reports, invoices, or any document that needs to be created dynamically from HTML templates and exported as PDF.</p>
+
+<p><strong>Important:</strong> The HTML must be well-formed XHTML. All tags must be properly closed, and self-closing tags should use XHTML syntax (e.g., <code>&lt;br/&gt;</code> instead of <code>&lt;br&gt;</code>).</p>
+
+<h2>Parameters</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Type</th>
+			<th>Description</th>
+			<th>Mandatory</th>
+			<th>Default</th>
+		</tr>
+		<tr>
+			<td>html</td>
+			<td>String, HTMLFragment, StructuredText, or BinaryDataSource</td>
+			<td>The HTML content to convert to PDF. Can be a plain string (using triple quotes <code>"""..."""</code>), an HTMLFragment (using triple braces <code>{{{...}}}</code> syntax with embedded TLScript expressions), a StructuredText from WYSIWYG editor fields (with images automatically embedded as BASE64), or a BinaryDataSource with content type <code>text/html</code> or <code>text/plain</code>. Must be well-formed XHTML with all tags properly closed.</td>
+			<td>yes</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>name</td>
+			<td>String</td>
+			<td>The filename for the generated PDF. The .pdf extension is added automatically if not present.</td>
+			<td>no</td>
+			<td>document.pdf</td>
+		</tr>
+		<tr>
+			<td>pageSize</td>
+			<td>String</td>
+			<td>Standard paper size. Supported values: <code>A0</code>, <code>A1</code>, <code>A2</code>, <code>A3</code>, <code>A4</code>, <code>A5</code>, <code>A6</code>, <code>LETTER</code>, <code>LEGAL</code>, <code>TABLOID</code>. If specified, <code>pageWidth</code> and <code>pageHeight</code> are calculated automatically based on the resolution. Values are case-insensitive.</td>
+			<td>no</td>
+			<td>A4 (when neither pageSize nor pageWidth/pageHeight specified)</td>
+		</tr>
+		<tr>
+			<td>landscape</td>
+			<td>Boolean</td>
+			<td>If <code>true</code>, swaps page width and height for landscape orientation. Works with both <code>pageSize</code> and custom <code>pageWidth</code>/<code>pageHeight</code> values.</td>
+			<td>no</td>
+			<td>false</td>
+		</tr>
+		<tr>
+			<td>pageWidth</td>
+			<td>Number</td>
+			<td>Override for page width in pixels. If specified (non-zero), this takes precedence over the <code>pageSize</code> width.</td>
+			<td>no</td>
+			<td>0 (use pageSize or default A4 width at resolution)</td>
+		</tr>
+		<tr>
+			<td>pageHeight</td>
+			<td>Number</td>
+			<td>Override for page height in pixels. If specified (non-zero), this takes precedence over the <code>pageSize</code> height.</td>
+			<td>no</td>
+			<td>0 (use pageSize or default A4 height at resolution)</td>
+		</tr>
+		<tr>
+			<td>marginLeft</td>
+			<td>Number</td>
+			<td>The left margin in pixels.</td>
+			<td>no</td>
+			<td>88 (15mm at 150 DPI)</td>
+		</tr>
+		<tr>
+			<td>marginRight</td>
+			<td>Number</td>
+			<td>The right margin in pixels.</td>
+			<td>no</td>
+			<td>88 (15mm at 150 DPI)</td>
+		</tr>
+		<tr>
+			<td>marginTop</td>
+			<td>Number</td>
+			<td>The top margin in pixels.</td>
+			<td>no</td>
+			<td>88 (15mm at 150 DPI)</td>
+		</tr>
+		<tr>
+			<td>marginBottom</td>
+			<td>Number</td>
+			<td>The bottom margin in pixels.</td>
+			<td>no</td>
+			<td>59 (10mm at 150 DPI)</td>
+		</tr>
+		<tr>
+			<td>resolution</td>
+			<td>Number</td>
+			<td>The rendering resolution in DPI (dots per inch). Higher values produce better quality but larger files. This also affects how <code>pageSize</code> dimensions are calculated (e.g., A4 at 150 DPI = 1240x1754 px, A4 at 300 DPI = 2480x3508 px).</td>
+			<td>no</td>
+			<td>150</td>
+		</tr>
+	</thead>
+</table>
+
+<h2> </h2>
+
+<h2>Return Value</h2>
+
+<p><strong>Type:</strong> BinaryData</p>
+
+<p>Returns a binary data object containing the generated PDF with content type <code>application/pdf</code>. Returns <code>null</code> if the HTML input is null or empty.</p>
+
+<p>If PDF generation fails, a <code>RuntimeException</code> is thrown with details about the error.</p>
+
+<h2>Examples</h2>
+
+<h3>Simple PDF with String Literal</h3>
+
+<pre>
+	<code>pdfFile("""
+  &lt;html&gt;
+    &lt;body&gt;
+      &lt;h1&gt;Hello World&lt;/h1&gt;
+      &lt;p&gt;This is a PDF generated from HTML.&lt;/p&gt;
+    &lt;/body&gt;
+  &lt;/html&gt;
+""")</code>
+</pre>
+
+<p><strong>Output:</strong> A PDF document named "document.pdf" containing "Hello World" as a heading and a paragraph of text.</p>
+
+<h3>PDF with HTMLFragment and Dynamic Content</h3>
+
+<pre>
+	<code>pdfFile({{{
+  &lt;html&gt;
+    &lt;body&gt;
+      &lt;h1&gt;Invoice for {$customer.get(`my.module:Customer#name`)}&lt;/h1&gt;
+      &lt;p&gt;Date: {dateFormat('yyyy-MM-dd').format(now())}&lt;/p&gt;
+      &lt;p&gt;Amount: {$invoice.get(`my.module:Invoice#amount`)}&lt;/p&gt;
+    &lt;/body&gt;
+  &lt;/html&gt;
+}}}, "invoice-" + $invoice.get(`my.module:Invoice#number`))</code>
+</pre>
+
+<p><strong>Output:</strong> A PDF with dynamically generated content. The <code>{{{...}}}</code> syntax allows embedding TLScript expressions directly in the HTML, which are evaluated and safely HTML-escaped before PDF generation.</p>
+
+<h3>PDF with Custom Filename</h3>
+
+<pre>
+	<code>pdfFile("""
+  &lt;html&gt;
+    &lt;body&gt;
+      &lt;h1&gt;Invoice&lt;/h1&gt;
+      &lt;p&gt;Invoice #12345&lt;/p&gt;
+    &lt;/body&gt;
+  &lt;/html&gt;
+""", "invoice-12345")</code>
+</pre>
+
+<p><strong>Output:</strong> A PDF document named "invoice-12345.pdf". The .pdf extension is added automatically.</p>
+
+<h3>Styled Report with Dynamic Filename</h3>
+
+<pre>
+	<code>pdfFile({{{
+  &lt;html&gt;
+    &lt;head&gt;
+      &lt;style&gt;
+        body \{ font-family: Arial, sans-serif; \}
+        h1 \{ color: #333366; \}
+        table \{ border-collapse: collapse; width: 100%; \}
+        th, td \{ border: 1px solid #ddd; padding: 8px; \}
+        th \{ background-color: #4CAF50; color: white; \}
+      &lt;/style&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+      &lt;h1&gt;Sales Report&lt;/h1&gt;
+      &lt;p&gt;Generated on: {dateFormat('yyyy-MM-dd').format(now())}&lt;/p&gt;
+      &lt;table&gt;
+        &lt;tr&gt;
+          &lt;th&gt;Product&lt;/th&gt;
+          &lt;th&gt;Quantity&lt;/th&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+          &lt;td&gt;Widget A&lt;/td&gt;
+          &lt;td&gt;150&lt;/td&gt;
+        &lt;/tr&gt;
+      &lt;/table&gt;
+    &lt;/body&gt;
+  &lt;/html&gt;
+}}}, "sales-report-" + dateFormat('yyyy-MM-dd').format(now()))</code>
+</pre>
+
+<p><strong>Output:</strong> A styled PDF report named "sales-report-2025-10-22.pdf" with a table, including embedded CSS styles and dynamic date.</p>
+
+<h3>Dynamic Content with Iteration</h3>
+
+<pre>
+	<code>pdfFile({{{
+  &lt;html&gt;
+    &lt;body&gt;
+      &lt;h1&gt;Invoice Items&lt;/h1&gt;
+      &lt;ul&gt;
+        {$items.map(item -> {{{
+          &lt;li&gt;{item.get(`my.module:Item#name`)} - {item.get(`my.module:Item#price`)}&lt;/li&gt;
+        }}})}
+      &lt;/ul&gt;
+    &lt;/body&gt;
+  &lt;/html&gt;
+}}})</code>
+</pre>
+
+<p><strong>Output:</strong> A PDF with a dynamically generated list of invoice items.</p>
+
+<h3>PDF from StructuredText (WYSIWYG Content)</h3>
+
+<pre>
+	<code>// Convert WYSIWYG editor content to PDF
+pdfFile($object.get(`my.module:Article#content`), name: "article.pdf")</code>
+</pre>
+
+<p><strong>Output:</strong> A PDF generated from StructuredText content. Any embedded images in the WYSIWYG field are automatically converted to BASE64 data URIs and included in the PDF.</p>
+
+<h3>Using Standard Page Sizes</h3>
+
+<pre>
+	<code>// US Letter page size
+pdfFile("""
+  &lt;html&gt;
+    &lt;body&gt;
+      &lt;h1&gt;US Letter Document&lt;/h1&gt;
+      &lt;p&gt;This document uses US Letter paper size.&lt;/p&gt;
+    &lt;/body&gt;
+  &lt;/html&gt;
+""", name: "letter-doc.pdf", pageSize: "LETTER")</code>
+</pre>
+
+<p><strong>Output:</strong> A PDF with US Letter page size (216 x 279 mm) at the default 150 DPI resolution.</p>
+
+<h3>Landscape Orientation</h3>
+
+<pre>
+	<code>// A4 landscape for wide content
+pdfFile({{{
+  &lt;html&gt;
+    &lt;body&gt;
+      &lt;h1&gt;Wide Report&lt;/h1&gt;
+      &lt;table style="width: 100%"&gt;
+        &lt;tr&gt;
+          &lt;th&gt;Column 1&lt;/th&gt;
+          &lt;th&gt;Column 2&lt;/th&gt;
+          &lt;th&gt;Column 3&lt;/th&gt;
+          &lt;th&gt;Column 4&lt;/th&gt;
+          &lt;th&gt;Column 5&lt;/th&gt;
+        &lt;/tr&gt;
+      &lt;/table&gt;
+    &lt;/body&gt;
+  &lt;/html&gt;
+}}}, name: "wide-report.pdf", pageSize: "A4", landscape: true)</code>
+</pre>
+
+<p><strong>Output:</strong> A PDF with A4 landscape orientation (297 x 210 mm), ideal for wide tables or charts.</p>
+
+<h3>Custom Page Size and Resolution</h3>
+
+<pre>
+	<code>// US Letter size at 200 DPI with custom margins
+pdfFile("""
+  &lt;html&gt;
+    &lt;body&gt;
+      &lt;h1&gt;High Quality Report&lt;/h1&gt;
+      &lt;p&gt;This document is rendered at higher resolution.&lt;/p&gt;
+    &lt;/body&gt;
+  &lt;/html&gt;
+""", name: "report.pdf", pageSize: "LETTER", resolution: 200,
+    marginLeft: 100, marginRight: 100, marginTop: 100, marginBottom: 100)</code>
+</pre>
+
+<p><strong>Output:</strong> A PDF with US Letter page size at 200 DPI and 100-pixel margins on all sides.</p>
+
+<h3>Minimal Margins for Maximum Content</h3>
+
+<pre>
+	<code>// A4 with minimal margins
+pdfFile({{{
+  &lt;html&gt;
+    &lt;body&gt;
+      &lt;h1&gt;Full Page Content&lt;/h1&gt;
+      &lt;p&gt;This uses minimal margins to maximize content area.&lt;/p&gt;
+    &lt;/body&gt;
+  &lt;/html&gt;
+}}}, name: "full-page.pdf", pageSize: "A4",
+    marginLeft: 20, marginRight: 20, marginTop: 20, marginBottom: 20)</code>
+</pre>
+
+<p><strong>Output:</strong> A PDF with A4 page size and minimal 20-pixel margins (approximately 3.4mm at 150 DPI).</p>
+
+<h3>Large Format with A3</h3>
+
+<pre>
+	<code>// A3 for large diagrams
+pdfFile({{{
+  &lt;html&gt;
+    &lt;body&gt;
+      &lt;h1&gt;Architecture Diagram&lt;/h1&gt;
+      &lt;!-- Large diagram content --&gt;
+    &lt;/body&gt;
+  &lt;/html&gt;
+}}}, name: "diagram.pdf", pageSize: "A3")</code>
+</pre>
+
+<p><strong>Output:</strong> A PDF with A3 page size (297 x 420 mm), suitable for large diagrams or posters.</p>
+
+<h2>Technical Notes</h2>
+
+<ul>
+	<li><strong>Default Settings:</strong> Default page size is A4 (1240x1754 pixels at 150 DPI = 210mm x 297mm)</li>
+	<li><strong>Standard Page Sizes:</strong> The <code>pageSize</code> parameter supports A0 through A6, plus LETTER, LEGAL, and TABLOID. Dimensions are automatically calculated based on the resolution</li>
+	<li><strong>Landscape Mode:</strong> When <code>landscape: true</code>, width and height are swapped. This works independently of whether you use <code>pageSize</code> or custom dimensions</li>
+	<li><strong>Resolution:</strong> Default resolution is 150 DPI, suitable for most print and screen viewing. Higher values (e.g., 300 DPI) produce better quality but larger files</li>
+	<li><strong>Margins:</strong> Default margins are 15mm (left, right, top) and 10mm (bottom). Margins are specified in pixels at the chosen resolution</li>
+	<li><strong>Page Size Calculations:</strong>
+		<ul>
+			<li>A4 at 150 DPI: 1240 x 1754 pixels</li>
+			<li>US Letter at 150 DPI: 1275 x 1650 pixels</li>
+			<li>A4 at 300 DPI: 2480 x 3508 pixels</li>
+			<li>Formula: pixels = (millimeters / 25.4) × DPI</li>
+		</ul>
+	</li>
+	<li><strong>CSS Support:</strong> Basic CSS2 styles are supported. Complex CSS3 features may not render correctly</li>
+	<li><strong>Images:</strong> External images require accessible URLs. Base64-encoded images are supported</li>
+	<li><strong>Fonts:</strong> Standard fonts are available. Custom fonts may require additional configuration</li>
+	<li><strong>Named Parameters:</strong> Use named parameters for clarity (e.g., <code>pageSize: "A4", landscape: true</code>). This avoids having to specify null for unused positional parameters</li>
+</ul>

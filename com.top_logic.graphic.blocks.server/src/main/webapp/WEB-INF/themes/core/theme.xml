@@ -2,6 +2,7 @@
 
 <theme>
 	<styles>
+		<style name="/style/tl-flow-core.css"/>
 		<style name="/style/tl-blocks.css"/>
 	</styles>
 </theme>

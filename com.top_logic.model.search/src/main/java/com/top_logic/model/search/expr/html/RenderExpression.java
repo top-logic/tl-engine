@@ -87,6 +87,11 @@ public abstract class RenderExpression extends SearchExpression {
 			}
 		} else if (value instanceof HTMLFragment) {
 			((HTMLFragment) value).write(context, out);
+		} else if (value instanceof Number) {
+			// No internationalized formatting for numbers. Otherwise it is almost impossible to
+			// compute values for technical attributes like width and height. If formatting is
+			// required, this can be done explicitly.
+			out.writeText(value.toString());
 		} else {
 			Renderer<? super Object> valueRenderer = LabelProviderService.getInstance().getRenderer(value);
 			if (valueRenderer == null) {

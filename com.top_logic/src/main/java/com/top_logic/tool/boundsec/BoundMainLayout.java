@@ -261,7 +261,7 @@ public abstract class BoundMainLayout extends MainLayout implements LayoutContai
 				errMsg.append(config.location());
 				errMsg.append(". Can not register defaultFor for types: ");
 				errMsg.append(defaultForTypes);
-				log.error(errMsg.toString());
+				log.info(errMsg.toString(), Log.WARN);
 				return;
 			}
 			defaultForTypes.forEach(type -> BoundHelper.getInstance()

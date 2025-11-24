@@ -36,6 +36,15 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey CANNOT_EDIT_TASK;
 
+	/**
+	 * @en Type "{0}"
+	 */
+	public static ResKey1 FORM_DEF_TEMPLATE__TYPE;
+
+	/**
+	 * @en Task "{0}"
+	 */
+	public static ResKey1 FORM_DEF_TEMPLATE__TASK;
 
     static {
         initConstants(I18NConstants.class);

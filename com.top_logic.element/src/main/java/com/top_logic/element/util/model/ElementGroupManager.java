@@ -62,12 +62,14 @@ public class ElementGroupManager extends InitialGroupManager {
 				if (role == null) {
 					Logger.error("Role '" + roleName + "' used in assignment at '" + assignment.location()
 						+ "' is not defined.", ElementGroupManager.class);
+					continue;
 				}
 
 				Group group = Group.getGroupByName(assignment.getGroup());
 				if (group == null) {
 					Logger.error("Reference to undefined group '" + assignment.getGroup() + "' in assignment at '"
 						+ assignment.location() + "'.", ElementGroupManager.class);
+					continue;
 				}
 
 				BoundedRole.assignRole(module.getSingleton(singleton.getName()), group, role);

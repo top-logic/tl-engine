@@ -69,7 +69,9 @@ services.codeeditor = {
 		});	
 		editor.on("change", function(delta) {
 			controlElement.changed = true;
-			
+		});
+		
+		editor.container.querySelector("textarea.ace_text-input").addEventListener("keyup", (event) => {
 			// Timeout to wait until the tooltip is renderd by the ace editor.
 			setTimeout(() => {
 				// Observer for when another list entry is focused.
@@ -96,7 +98,7 @@ services.codeeditor = {
 					}
 				};
 			}, 400);
-		});	
+		});
 
 		controlElement.editor = editor;
 		

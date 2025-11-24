@@ -22,6 +22,8 @@ public class ClickTarget_Impl extends com.top_logic.graphic.flow.data.impl.Decor
 		}
 	};
 
+	private boolean _doubleClick = false;
+
 	private transient com.top_logic.graphic.flow.callback.ClickHandler _clickHandler = null;
 
 	private transient com.top_logic.graphic.blocks.svg.event.Registration _handlerRegistration = null;
@@ -72,6 +74,24 @@ public class ClickTarget_Impl extends com.top_logic.graphic.flow.data.impl.Decor
 	@Override
 	public final void removeButton(com.top_logic.graphic.flow.data.MouseButton value) {
 		_buttons.remove(value);
+	}
+
+	@Override
+	public final boolean isDoubleClick() {
+		return _doubleClick;
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.ClickTarget setDoubleClick(boolean value) {
+		internalSetDoubleClick(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #isDoubleClick()} without chain call utility. */
+	protected final void internalSetDoubleClick(boolean value) {
+		_listener.beforeSet(this, DOUBLE_CLICK__PROP, value);
+		_doubleClick = value;
+		_listener.afterChanged(this, DOUBLE_CLICK__PROP);
 	}
 
 	@Override
@@ -184,6 +204,7 @@ public class ClickTarget_Impl extends com.top_logic.graphic.flow.data.impl.Decor
 	static {
 		java.util.List<String> local = java.util.Arrays.asList(
 			BUTTONS__PROP, 
+			DOUBLE_CLICK__PROP, 
 			CLICK_HANDLER__PROP, 
 			HANDLER_REGISTRATION__PROP);
 		java.util.List<String> tmp = new java.util.ArrayList<>();
@@ -217,6 +238,7 @@ public class ClickTarget_Impl extends com.top_logic.graphic.flow.data.impl.Decor
 	public Object get(String field) {
 		switch (field) {
 			case BUTTONS__PROP: return getButtons();
+			case DOUBLE_CLICK__PROP: return isDoubleClick();
 			case CLICK_HANDLER__PROP: return getClickHandler();
 			case HANDLER_REGISTRATION__PROP: return getHandlerRegistration();
 			default: return super.get(field);
@@ -227,6 +249,7 @@ public class ClickTarget_Impl extends com.top_logic.graphic.flow.data.impl.Decor
 	public void set(String field, Object value) {
 		switch (field) {
 			case BUTTONS__PROP: internalSetButtons(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.graphic.flow.data.MouseButton.class, value)); break;
+			case DOUBLE_CLICK__PROP: internalSetDoubleClick((boolean) value); break;
 			case CLICK_HANDLER__PROP: internalSetClickHandler((com.top_logic.graphic.flow.callback.ClickHandler) value); break;
 			case HANDLER_REGISTRATION__PROP: internalSetHandlerRegistration((com.top_logic.graphic.blocks.svg.event.Registration) value); break;
 			default: super.set(field, value); break;
@@ -242,6 +265,8 @@ public class ClickTarget_Impl extends com.top_logic.graphic.flow.data.impl.Decor
 			x.writeTo(out);
 		}
 		out.endArray();
+		out.name(DOUBLE_CLICK__PROP);
+		out.value(isDoubleClick());
 	}
 
 	@Override
@@ -253,6 +278,10 @@ public class ClickTarget_Impl extends com.top_logic.graphic.flow.data.impl.Decor
 					x.writeTo(out);
 				}
 				out.endArray();
+				break;
+			}
+			case DOUBLE_CLICK__PROP: {
+				out.value(isDoubleClick());
 				break;
 			}
 			case CLICK_HANDLER__PROP: {
@@ -286,6 +315,7 @@ public class ClickTarget_Impl extends com.top_logic.graphic.flow.data.impl.Decor
 				setButtons(newValue);
 			}
 			break;
+			case DOUBLE_CLICK__PROP: setDoubleClick(in.nextBoolean()); break;
 			default: super.readField(scope, in, field);
 		}
 	}

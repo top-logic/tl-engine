@@ -40,6 +40,7 @@ import com.top_logic.layout.form.values.edit.initializer.InitializerProvider;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.internal.ConfigurationStorageMapping;
+import com.top_logic.util.Resources;
 
 /**
  * {@link FieldProvider} for attributes using the {@link ConfigurationStorageMapping}.
@@ -155,6 +156,7 @@ public class ConfigurationFieldProvider extends AbstractFieldProvider {
 			_configType = configType;
 
 			_valueField = FormFactory.newHiddenField("model");
+			_valueField.setLabel(Resources.getInstance().getString(editContext.getLabelKey(), "model"));
 			addMember(getValueField());
 
 			OnValueChange listener = new OnValueChange();

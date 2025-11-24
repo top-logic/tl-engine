@@ -94,6 +94,7 @@ public class StandardForm extends AbstractConfiguredInstance<StandardForm.Config
 		@Nullable
 		@Name(SOURCE_TASK)
 		@Options(fun = OtherTasks.class, mapping = TaskId.class)
+		@Label("Take from")
 		String getSourceTask();
 
 		/**

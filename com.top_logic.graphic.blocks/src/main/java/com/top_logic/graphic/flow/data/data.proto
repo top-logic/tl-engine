@@ -520,6 +520,9 @@ message ClickTarget extends Decoration {
 
 	/** The mouse buttons to react on. */
 	repeated MouseButton buttons;
+	
+	/** Whether to only react when a double click occurs. */
+	bool doubleClick;
 
 	/** Server-side-only field to store the callback to invoke when the element is clicked. */
 	transient com.top_logic.graphic.flow.callback.ClickHandler clickHandler;

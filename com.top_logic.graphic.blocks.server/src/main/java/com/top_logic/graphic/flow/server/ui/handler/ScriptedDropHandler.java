@@ -12,6 +12,8 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.graphic.flow.data.ClickTarget;
 import com.top_logic.graphic.flow.data.DropRegion;
 import com.top_logic.graphic.flow.server.ui.ScriptFlowChartBuilder.Config.HandlerDefinition;
@@ -33,8 +35,19 @@ public class ScriptedDropHandler extends AbstractConfiguredInstance<ScriptedDrop
 	/**
 	 * Configuration options for {@link ScriptedDropHandler}.
 	 */
+	@DisplayOrder({
+		Config.NAME_ATTRIBUTE,
+		Config.SCRIPT,
+		Config.TRANSACTION,
+		Config.POST_CREATE_ACTIONS,
+	})
 	public interface Config<I extends ScriptedDropHandler>
 			extends HandlerDefinition<I>, WithPostCreateActions.Config, WithTransaction.Config {
+
+		/**
+		 * @see #getScript()
+		 */
+		String SCRIPT = "script";
 
 		/**
 		 * Function that retrieves the {@link DropRegion} diagram element, the dragged objects and
@@ -54,6 +67,7 @@ public class ScriptedDropHandler extends AbstractConfiguredInstance<ScriptedDrop
 		 * element is used as input for {@link #getPostCreateActions() further UI actions}.
 		 * </p>
 		 */
+		@Name(SCRIPT)
 		Expr getScript();
 
 	}

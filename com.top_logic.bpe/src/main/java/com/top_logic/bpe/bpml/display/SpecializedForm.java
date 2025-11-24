@@ -9,6 +9,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.bpe.bpml.model.Task;
 import com.top_logic.element.layout.formeditor.FormDefinitionEditor;
@@ -21,6 +22,7 @@ import com.top_logic.model.util.TLModelPartRef;
 /**
  * {@link FormProvider} that is configured with a customized form.
  */
+@Label("Own form")
 public class SpecializedForm extends AbstractConfiguredInstance<SpecializedForm.Config<?>>
 		implements FormProvider {
 

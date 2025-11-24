@@ -13,6 +13,10 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.bpe.bpml.display.FormProvider;
+import com.top_logic.bpe.bpml.display.ProcessFormDefinition;
+import com.top_logic.bpe.bpml.display.SpecializedForm;
 import com.top_logic.bpe.bpml.model.Lane;
 import com.top_logic.bpe.bpml.model.ManualTask;
 import com.top_logic.bpe.bpml.model.Node;
@@ -20,8 +24,8 @@ import com.top_logic.bpe.bpml.model.Participant;
 import com.top_logic.bpe.bpml.model.Process;
 import com.top_logic.element.layout.formeditor.FormDefinitionTemplate;
 import com.top_logic.element.meta.form.fieldprovider.form.TemplateResolver;
+import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
-import com.top_logic.model.form.definition.FormDefinition;
 
 /**
  * {@link Function} computing the {@link FormDefinitionTemplate} for a given {@link Participant}.
@@ -46,21 +50,29 @@ public class ParticipantTemplateBuilder implements TemplateResolver {
 		return () -> {
 			List<FormDefinitionTemplate> templates = new ArrayList<>();
 			Process process = participant.getProcess();
+			TLClass modelType = process.getParticipant().getModelType();
 
 			for (Lane lane : process.getLanes()) {
 				Set<? extends Node> nodes = lane.getNodes();
 
 				for (Node node : nodes) {
 					if (node instanceof ManualTask manualTask && process.equals(getProcess(node))) {
-						FormDefinition displayDescription = manualTask.getDisplayDescription();
-						if (displayDescription != null) {
-							FormDefinitionTemplate template = copyDisplayDescription(node, displayDescription);
+						ProcessFormDefinition displayDescription = manualTask.getFormDefinition();
+						if (displayDescription == null) {
+							continue;
+						}
+						PolymorphicConfiguration<? extends FormProvider> formProvider =
+							displayDescription.getFormProvider();
+						if (formProvider instanceof SpecializedForm.Config<?> form) {
+							FormDefinitionTemplate template = copyDisplayDescription(node, form.getForm());
 							templates.add(template);
 						}
 					}
 				}
 			}
 		
+			addModelTypeForms(templates, modelType);
+
 			return templates;
 		};
 	}

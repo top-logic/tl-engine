@@ -26,6 +26,8 @@ import org.vectomatic.dom.svg.itf.ISVGTransformable;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.DoubleClickEvent;
+import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.event.dom.client.DragOverEvent;
 import com.google.gwt.event.dom.client.DragOverHandler;
 import com.google.gwt.event.dom.client.DropEvent;
@@ -471,6 +473,73 @@ public class SVGBuilder implements SvgWriter {
 				});
 			}
 		}, ClickEvent.getType());
+
+		return () -> registration.removeHandler();
+	}
+
+	@Override
+	public Registration attachOnDoubleClick(SVGClickHandler handler, Object sender) {
+		if (_current == null) {
+			throw new IllegalStateException(
+				"The last built SVG element is closed. In this state it is not possible to add a "
+					+ SVGClickHandler.class.getName()
+					+ "! Please make sure the handler is added within the desired element before its content.");
+		}
+		HandlerRegistration registration = _current.addDomHandler(new DoubleClickHandler() {
+			@Override
+			public void onDoubleClick(DoubleClickEvent event) {
+				handler.onClick(new SVGClickEvent() {
+					@Override
+					public Object getSender() {
+						return sender;
+					}
+
+					@Override
+					public boolean getButton(MouseButton button) {
+						int nativeButton = event.getNativeButton();
+						switch (button) {
+							case LEFT:
+								return (nativeButton & NativeEvent.BUTTON_LEFT) != 0;
+							case RIGHT:
+								return (nativeButton & NativeEvent.BUTTON_RIGHT) != 0;
+							case MIDDLE:
+								return (nativeButton & NativeEvent.BUTTON_MIDDLE) != 0;
+						}
+						return false;
+					}
+
+					@Override
+					public boolean isMetaKey() {
+						return event.getNativeEvent().getMetaKey();
+					}
+
+					@Override
+					public boolean isShiftKey() {
+						return event.getNativeEvent().getShiftKey();
+					}
+
+					@Override
+					public boolean isAltKey() {
+						return event.getNativeEvent().getAltKey();
+					}
+
+					@Override
+					public boolean isCtrlKey() {
+						return event.getNativeEvent().getCtrlKey();
+					}
+
+					@Override
+					public void stopPropagation() {
+						event.getNativeEvent().stopPropagation();
+					}
+
+					@Override
+					public void preventDefault() {
+						event.getNativeEvent().preventDefault();
+					}
+				});
+			}
+		}, DoubleClickEvent.getType());
 
 		return () -> registration.removeHandler();
 	}

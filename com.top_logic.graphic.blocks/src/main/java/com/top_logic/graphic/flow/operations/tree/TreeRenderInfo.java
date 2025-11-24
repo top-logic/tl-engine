@@ -18,6 +18,7 @@ import com.top_logic.graphic.flow.data.Box;
 import com.top_logic.graphic.flow.data.EdgeDecoration;
 import com.top_logic.graphic.flow.data.TreeConnection;
 import com.top_logic.graphic.flow.data.TreeConnector;
+import com.top_logic.graphic.flow.data.TreeLayout;
 import com.top_logic.graphic.flow.data.Widget;
 
 /**
@@ -144,19 +145,7 @@ public class TreeRenderInfo {
 
 	private final List<Column> _columns = new ArrayList<>();
 
-	private final List<TreeConnection> _connections;
-
-	private final double _gapX;
-
-	private final double _siblingGapY;
-
-	private final double _subtreeGapY;
-
-	private final boolean _compact;
-
-	private final double _parentAlign;
-
-	private final double _parentOffset;
+	private final TreeLayout _layout;
 
 	private double _width;
 
@@ -165,31 +154,24 @@ public class TreeRenderInfo {
 	/**
 	 * Creates a {@link TreeRenderInfo}.
 	 */
-	public TreeRenderInfo(boolean compact, double gapX, double siblingGapY, double subtreeGapY, double parentAlign,
-			double parentOffset, List<Box> nodes, List<TreeConnection> connections) {
-		_compact = compact;
-		_gapX = gapX;
-		_siblingGapY = siblingGapY;
-		_subtreeGapY = subtreeGapY;
-		_parentAlign = parentAlign;
-		_parentOffset = parentOffset;
-		_connections = connections;
+	public TreeRenderInfo(TreeLayout layout) {
+		_layout = layout;
 
 		// Create tree nodes from node boxes.
 		_nodeForBox = new LinkedHashMap<>();
-		for (Box node : nodes) {
+		for (Box node : _layout.getNodes()) {
 			_nodeForBox.put(node, new TreeNode(node));
 		}
 
 		// Resolve anchor boxes within nodes.
 		_nodeForAnchor = new HashMap<>();
-		for (TreeConnection connection : connections) {
+		for (TreeConnection connection : _layout.getConnections()) {
 			enterAnchor(connection.getParent());
 			enterAnchor(connection.getChild());
 		}
 
 		// Reconstruct tree structure.
-		for (TreeConnection connection : connections) {
+		for (TreeConnection connection : _layout.getConnections()) {
 			TreeNode parentNode = _nodeForAnchor.get(connection.getParent().getAnchor());
 			TreeNode childNode = _nodeForAnchor.get(connection.getChild().getAnchor());
 
@@ -298,7 +280,8 @@ public class TreeRenderInfo {
 		}
 
 		// Reserve space for decorations.
-		for (TreeConnection connection : _connections) {
+		double gapX = _layout.getGapX();
+		for (TreeConnection connection : _layout.getConnections()) {
 			Column column = getNodeForAnchor(connection.getChild().getAnchor()).getColumn();
 
 			double additionalWidth = 0;
@@ -307,7 +290,7 @@ public class TreeRenderInfo {
 				additionalWidth = Math.max(additionalWidth,
 					decorationWidth
 					// Free space due to the column gap.
-					- _gapX / 2
+						- gapX / 2
 					// Free space due to the anchor width.
 					- (column.getWidth() - connection.getChild().getAnchor().getWidth()) / 2);
 			}
@@ -327,11 +310,11 @@ public class TreeRenderInfo {
 				width += column.getWidth();
 
 				// Gap to the next column.
-				width += _gapX;
+				width += gapX;
 			}
 
 			// Subtract last gap.
-			width -= _gapX;
+			width -= gapX;
 		}
 
 		// Compute internal layout of nodes. This is required before computing the tree layout,
@@ -376,15 +359,15 @@ public class TreeRenderInfo {
 	private void layoutTree(TreeNode node) {
 		// The minimum Y coordinate, where the current node can be placed in its column.
 		double minY;
-		if (node.getLevel() == 0 && node.getIndex() > 0 && !_compact) {
+		if (node.getLevel() == 0 && node.getIndex() > 0 && !_layout.isCompact()) {
 			// A whole new tree is layouted, below an existing one. Do not mix contents in a line.
-			minY = _height + _subtreeGapY;
+			minY = _height + _layout.getSubtreeGapY();
 		} else if (node.getIndex() == 0) {
 			minY = 0;
 		} else {
 			TreeNode predecessor = node.getColumnPredecessor();
 			boolean sameParent = predecessor.getParent() == node.getParent();
-			minY = predecessor.getBottom() + (sameParent ? _siblingGapY : _subtreeGapY);
+			minY = predecessor.getBottom() + (sameParent ? _layout.getSibblingGapY() : _layout.getSubtreeGapY());
 		}
 
 		List<TreeNode> nextLevel = node.getChildren();
@@ -411,7 +394,7 @@ public class TreeRenderInfo {
 			double lastY = lastChild.getY() + lastAnchor.getY() + 0.5 * lastAnchor.getHeight();
 
 			// The Y coordinate of the center of the node's anchor box.
-			double anchorY = firstY + (lastY - firstY) * _parentAlign + _parentOffset;
+			double anchorY = firstY + (lastY - firstY) * _layout.getParentAlign() + _layout.getParentOffset();
 
 			Box nodeAnchor = node.getAnchor();
 			nodeY = anchorY - 0.5 * nodeAnchor.getHeight() - nodeAnchor.getY();

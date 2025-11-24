@@ -11,6 +11,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.bpe.bpml.display.FormProvider;
 import com.top_logic.bpe.bpml.display.ProcessFormDefinition;
 import com.top_logic.bpe.bpml.display.SpecializedForm;
 import com.top_logic.bpe.bpml.model.Lane;
@@ -24,7 +26,6 @@ import com.top_logic.element.layout.formeditor.FormDefinitionTemplate;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.form.fieldprovider.form.TLFormTemplates;
 import com.top_logic.element.meta.form.fieldprovider.form.TemplateResolver;
-import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
@@ -65,15 +66,19 @@ public class ManualTaskTemplateBuilder implements TemplateResolver {
 						Set<? extends Node> nodes = lane.getNodes();
 		
 						for (Node node : nodes) {
-							if (node instanceof ManualTask && process.equals(getProcess(node))) {
-								if (node != baseNode) {
-									ProcessFormDefinition displayDescription = ((ManualTask) node).getFormDefinition();
-									if (displayDescription != null
-										&& displayDescription instanceof SpecializedForm.Config<?> form) {
-										FormDefinitionTemplate template =
-											copyDisplayDescription(node, form.getForm());
-										templates.add(template);
-									}
+							if (node == baseNode) {
+								continue;
+							}
+							if (node instanceof ManualTask manualTask && process.equals(getProcess(node))) {
+								ProcessFormDefinition displayDescription = manualTask.getFormDefinition();
+								if (displayDescription == null) {
+									continue;
+								}
+								PolymorphicConfiguration<? extends FormProvider> formProvider =
+									displayDescription.getFormProvider();
+								if (formProvider instanceof SpecializedForm.Config<?> form) {
+									FormDefinitionTemplate template = copyDisplayDescription(node, form.getForm());
+									templates.add(template);
 								}
 							}
 						}
@@ -88,7 +93,7 @@ public class ManualTaskTemplateBuilder implements TemplateResolver {
 	private TLStructuredType getType(Node businessModel) {
 		Process process = getProcess(businessModel);
 
-		return (TLClass) process.getParticipant().getModelType();
+		return process.getParticipant().getModelType();
 	}
 
 	static Process getProcess(Node businessModel) {

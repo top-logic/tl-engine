@@ -825,6 +825,8 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        The handler to execute when the mouse click event occurs.
 	 * @param buttons
 	 *        The buttons to react on.
+	 * @param doubleClick
+	 *        Whether to only react on double clicks.
 	 * @param cssClass
 	 *        The css class for the new box.
 	 * @param userObject
@@ -837,6 +839,7 @@ public class FlowFactory extends TLScriptFunctions {
 			@Mandatory Box content,
 			@Mandatory ClickHandler clickHandler,
 			List<MouseButton> buttons,
+			boolean doubleClick,
 			String cssClass,
 			Object userObject
 			) {
@@ -844,6 +847,7 @@ public class FlowFactory extends TLScriptFunctions {
 			.setContent(nonNull(content))
 			.setClickHandler(clickHandler)
 			.setButtons(buttons)
+			.setDoubleClick(doubleClick)
 			.setCssClass(cssClass)
 			.setUserObject(userObject);
 	}

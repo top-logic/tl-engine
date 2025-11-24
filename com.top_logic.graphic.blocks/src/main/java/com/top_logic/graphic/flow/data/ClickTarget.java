@@ -18,6 +18,9 @@ public interface ClickTarget extends Decoration, com.top_logic.graphic.flow.oper
 	/** @see #getButtons() */
 	String BUTTONS__PROP = "buttons";
 
+	/** @see #isDoubleClick() */
+	String DOUBLE_CLICK__PROP = "doubleClick";
+
 	/** @see #getClickHandler() */
 	String CLICK_HANDLER__PROP = "clickHandler";
 
@@ -43,6 +46,16 @@ public interface ClickTarget extends Decoration, com.top_logic.graphic.flow.oper
 	 * Removes a value from the {@link #getButtons()} list.
 	 */
 	void removeButton(com.top_logic.graphic.flow.data.MouseButton value);
+
+	/**
+	 * Whether to only react when a double click occurs.
+	 */
+	boolean isDoubleClick();
+
+	/**
+	 * @see #isDoubleClick()
+	 */
+	com.top_logic.graphic.flow.data.ClickTarget setDoubleClick(boolean value);
 
 	/**
 	 * Server-side-only field to store the callback to invoke when the element is clicked.

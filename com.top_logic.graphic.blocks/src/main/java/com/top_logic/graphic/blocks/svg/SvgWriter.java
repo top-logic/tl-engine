@@ -466,6 +466,27 @@ public interface SvgWriter extends AutoCloseable {
 	}
 
 	/**
+	 * Attaches a callback to the created SVG document that is called, if the user double clicks on
+	 * the currently created element.
+	 * 
+	 * <p>
+	 * This is an optional method that is only supported, for special writers that construct
+	 * interactive documents. In all other cases, calls to this method are ignored.
+	 * </p>
+	 *
+	 * @param handler
+	 *        The callback that is invoked upon click.
+	 * @param sender
+	 *        The user object to pass to the invoked callback. See
+	 *        {@link SVGClickEvent#getSender()}.
+	 */
+	default Registration attachOnDoubleClick(SVGClickHandler handler, Object sender) {
+		// Ignore by default. This is only supported in specialized writers that build interactive
+		// DOM trees.
+		return Registration.NONE;
+	}
+
+	/**
 	 * Writes a custom SVG attribute.
 	 *
 	 * @param name

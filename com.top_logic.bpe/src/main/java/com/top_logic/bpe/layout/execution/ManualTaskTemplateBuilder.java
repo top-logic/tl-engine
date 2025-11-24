@@ -97,7 +97,7 @@ public class ManualTaskTemplateBuilder implements TemplateResolver {
 		};
 	}
 
-	private void addModelTypeForms(List<FormDefinitionTemplate> templates, TLClass modelType) {
+	static void addModelTypeForms(List<FormDefinitionTemplate> templates, TLClass modelType) {
 		Resources resources = Resources.getInstance();
 		for (TLClass type: TLModelUtil.getReflexiveTransitiveGeneralizations(modelType)) {
 			TLFormDefinition formDefinition = type.getAnnotation(TLFormDefinition.class);

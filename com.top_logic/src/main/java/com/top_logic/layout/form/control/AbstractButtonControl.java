@@ -596,9 +596,15 @@ public abstract class AbstractButtonControl<M extends ButtonUIModel> extends Abs
 		return null;
 	}
 	
-	private static class HandleClickInvokeExpressionProvider implements InvokeExpressionProvider {
+	/**
+	 * {@link InvokeExpressionProvider} issuing a server call.
+	 */
+	public static class HandleClickInvokeExpressionProvider implements InvokeExpressionProvider {
 
-		private static final HandleClickInvokeExpressionProvider INSTANCE = new HandleClickInvokeExpressionProvider();
+		/**
+		 * Singleton instance.
+		 */
+		public static final HandleClickInvokeExpressionProvider INSTANCE = new HandleClickInvokeExpressionProvider();
 
 		@Override
 		public void writeInvokeExpression(DisplayContext context, Appendable out, AbstractButtonControl<?> buttonControl)

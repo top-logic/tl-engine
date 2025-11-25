@@ -2387,16 +2387,20 @@ public class TableControl extends AbstractControl implements TableModelListener,
 				}
 			}
 
-			changeToNoDropCursor(table, refId);
+			changeToNoDropCursor(table, refId, pos);
 			return HandlerResult.DEFAULT_RESULT;
 		}
 
-		private void changeToNoDropCursor(TableControl control, String targetID) {
+		private void changeToNoDropCursor(TableControl control, String targetID, String position) {
 			control.getFrameScope().addClientAction(new JSSnipplet(new DynamicText() {
 				@Override
 				public void append(DisplayContext context, Appendable out) throws IOException {
 					out.append(TABLE_HANDLER_CLASS).append(".changeToNoDropCursor(");
 					TagUtil.writeJsString(out, targetID);
+					if (!StringServices.isEmpty(position)) {
+						out.append(",");
+						TagUtil.writeJsString(out, position);
+					}
 					out.append(");");
 				}
 			}));

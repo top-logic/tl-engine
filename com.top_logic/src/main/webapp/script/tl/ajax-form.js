@@ -295,12 +295,12 @@ services.form = {
 		updateFunction();
 	},
 	
-	_putToDnDCache: function(sourceID, targetID, dropability) {
+	_putToDnDCache: function(sourceID, targetID, position, dropability) {
 		if(window.tlDnD.cache === undefined) {
-			window.tlDnD.cache = new services.util.TwoKeyMap();
+			window.tlDnD.cache = new services.util.ThreeKeyMap();
 		}
 		
-		window.tlDnD.cache.set(sourceID, targetID, dropability);
+		window.tlDnD.cache.set(sourceID, targetID, position, dropability);
 	},
 	
 	_createDragImageElement: function(draggedObjects) {
@@ -673,7 +673,7 @@ services.form = {
 			}
 		},
 		
-		changeToNoDropCursor: function(targetID) {
+		changeToNoDropCursor: function(targetID, position) {
 			this.resetMarker();
 			
 			services.form._putToDnDCache(window.tlDnD.data.split("/").pop(), targetID, false);
@@ -1111,19 +1111,15 @@ services.form = {
 						var isDropable = window.tlDnD.cache.get(window.tlDnD.data.split("/").pop(), dropTarget.node.id);
 						
 						if(isDropable !== undefined) {
-							var isDropableAtPosition = isDropable[dropTarget.position];
+							if(isDropable) {
+								this.displayDropMarkerInternal(dropTarget.node, dropTarget.position);
+								event.dataTransfer.dropEffect = "move";
+							} else {
+								this.resetMarker();
+								event.dataTransfer.dropEffect = 'none';
+							}
 							
-							if(isDropableAtPosition !== undefined) {
-								if(isDropableAtPosition) {
-									this.displayDropMarkerInternal(dropTarget.node, dropTarget.position);
-									event.dataTransfer.dropEffect = "move";
-								} else {
-									this.resetMarker();
-									event.dataTransfer.dropEffect = 'none';
-								}
-								
-								return;
-							} 
+							return;
 						}
 					}
 					

@@ -739,6 +739,13 @@ services.util = {
 	 */
 	TwoKeyMap: function() {
 		this._map = new Map();
+	},
+
+	/**
+	 * Creates a three key based map.
+	 */
+	ThreeKeyMap: function() {
+		this._map = new services.util.TwoKeyMap();
 	}
 
 }
@@ -772,6 +779,41 @@ services.util.TwoKeyMap.prototype = {
 			
 			if(innerMap !== undefined){
 				return innerMap.has(key2);
+			}
+			
+			return false;
+		}
+}
+
+services.util.ThreeKeyMap.prototype = {
+		
+		get: function(key1, key2, key3) {
+			var innerMap = this._map.get(key1, key2);
+			
+			if(innerMap !== undefined){
+				return innerMap.get(key3);
+			}
+			
+			return undefined;
+		},
+		
+		set: function(key1, key2, key3, value) {
+			var value1 = this._map.get(key1, key2);
+			
+			if(value1 !== undefined){
+				value1.set(key3, value);
+			} else {
+				var innerMap = new Map();
+				innerMap.set(key3, value);
+				this._map.set(key1, key2, innerMap);
+			}
+		},
+		
+		has: function(key1, key2, key3) {
+			var innerMap = this._map.get(key1, key2);
+			
+			if(innerMap !== undefined){
+				return innerMap.has(key3);
 			}
 			
 			return false;

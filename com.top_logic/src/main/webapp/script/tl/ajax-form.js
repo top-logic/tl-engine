@@ -295,12 +295,12 @@ services.form = {
 		updateFunction();
 	},
 	
-	_putToDnDCache: function(sourceID, targetID, dropability) {
+	_putToDnDCache: function(sourceID, targetID, position, dropability) {
 		if(services.ajax.mainLayout.tlDnD.cache === undefined) {
-			services.ajax.mainLayout.tlDnD.cache = new services.util.TwoKeyMap();
+			services.ajax.mainLayout.tlDnD.cache = new services.util.ThreeKeyMap();
 		}
 		
-		services.ajax.mainLayout.tlDnD.cache.set(sourceID, targetID, dropability);
+		services.ajax.mainLayout.tlDnD.cache.set(sourceID, targetID, position, dropability);
 	},
 	
 	_createDragImageElement: function(draggedObjects) {
@@ -676,7 +676,7 @@ services.form = {
 			}
 		},
 		
-		changeToNoDropCursor: function(targetID) {
+		changeToNoDropCursor: function(targetID, position) {
 			this.resetMarker();
 			
 			services.form._putToDnDCache(services.ajax.mainLayout.tlDnD.data.split("|").pop(), targetID, false);
@@ -1114,19 +1114,15 @@ services.form = {
 						var isDropable = services.ajax.mainLayout.tlDnD.cache.get(services.ajax.mainLayout.tlDnD.data.split("|").pop(), dropTarget.node.id);
 						
 						if(isDropable !== undefined) {
-							var isDropableAtPosition = isDropable[dropTarget.position];
+							if(isDropable) {
+								this.displayDropMarkerInternal(dropTarget.node, dropTarget.position);
+								event.dataTransfer.dropEffect = "move";
+							} else {
+								this.resetMarker();
+								event.dataTransfer.dropEffect = 'none';
+							}
 							
-							if(isDropableAtPosition !== undefined) {
-								if(isDropableAtPosition) {
-									this.displayDropMarkerInternal(dropTarget.node, dropTarget.position);
-									event.dataTransfer.dropEffect = "move";
-								} else {
-									this.resetMarker();
-									event.dataTransfer.dropEffect = 'none';
-								}
-								
-								return;
-							} 
+							return;
 						}
 					}
 					

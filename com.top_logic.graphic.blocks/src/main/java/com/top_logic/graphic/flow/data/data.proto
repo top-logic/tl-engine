@@ -532,6 +532,15 @@ message ClickTarget extends Decoration {
 	
 }
 
+/** A box defines a custom context menu region.  */
+@Operations("com.top_logic.graphic.flow.operations.ContextMenuOperations")
+message ContextMenu extends Decoration {
+
+	/** Internal field to store the commands that should be displayed in the context menu. */
+	transient com.top_logic.graphic.flow.callback.DiagramContextMenuProvider menuProvider;
+	
+}
+
 /** A box that accepts drop events by invoking a server callback. */
 @Operations("com.top_logic.graphic.flow.operations.DropRegionOperations")
 message DropRegion extends Decoration {

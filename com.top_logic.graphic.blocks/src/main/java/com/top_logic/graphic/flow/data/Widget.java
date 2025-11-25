@@ -35,6 +35,9 @@ public interface Widget extends de.haumacher.msgbuf.graph.SharedGraphNode, com.t
 		/** Type literal for {@link com.top_logic.graphic.flow.data.ClickTarget}. */
 		CLICK_TARGET,
 
+		/** Type literal for {@link com.top_logic.graphic.flow.data.ContextMenu}. */
+		CONTEXT_MENU,
+
 		/** Type literal for {@link com.top_logic.graphic.flow.data.DropRegion}. */
 		DROP_REGION,
 
@@ -202,6 +205,7 @@ public interface Widget extends de.haumacher.msgbuf.graph.SharedGraphNode, com.t
 			case TreeLayout.TREE_LAYOUT__TYPE: result = com.top_logic.graphic.flow.data.TreeLayout.create(); break;
 			case SelectableBox.SELECTABLE_BOX__TYPE: result = com.top_logic.graphic.flow.data.SelectableBox.create(); break;
 			case ClickTarget.CLICK_TARGET__TYPE: result = com.top_logic.graphic.flow.data.ClickTarget.create(); break;
+			case ContextMenu.CONTEXT_MENU__TYPE: result = com.top_logic.graphic.flow.data.ContextMenu.create(); break;
 			case DropRegion.DROP_REGION__TYPE: result = com.top_logic.graphic.flow.data.DropRegion.create(); break;
 			case Tooltip.TOOLTIP__TYPE: result = com.top_logic.graphic.flow.data.Tooltip.create(); break;
 			case Align.ALIGN__TYPE: result = com.top_logic.graphic.flow.data.Align.create(); break;

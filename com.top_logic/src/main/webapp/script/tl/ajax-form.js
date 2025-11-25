@@ -295,12 +295,12 @@ services.form = {
 		updateFunction();
 	},
 	
-	_putToDnDCache: function(sourceID, targetID, dropability) {
+	_putToDnDCache: function(sourceID, targetID, position, dropability) {
 		if(window.tlDnD.cache === undefined) {
-			window.tlDnD.cache = new services.util.TwoKeyMap();
+			window.tlDnD.cache = new services.util.ThreeKeyMap();
 		}
 		
-		window.tlDnD.cache.set(sourceID, targetID, dropability);
+		window.tlDnD.cache.set(sourceID, targetID, position, dropability);
 	},
 	
 	_createDragImageElement: function(draggedObjects) {
@@ -628,7 +628,7 @@ services.form = {
 					var position = services.form.TableControl._getDropPosition(event, controlElement, row);
 					
 					if(window.tlDnD.cache !== undefined) {
-						var isDropable = window.tlDnD.cache.get(window.tlDnD.data.split("/").pop(), row.id);
+						var isDropable = window.tlDnD.cache.get(window.tlDnD.data.split("/").pop(), row.id, position);
 						
 						if(isDropable !== undefined) {
 							if(isDropable) {
@@ -676,15 +676,15 @@ services.form = {
 			}
 		},
 		
-		changeToNoDropCursor: function(targetID) {
+		changeToNoDropCursor: function(targetID, position) {
 			this.resetMarker();
 			
-			services.form._putToDnDCache(window.tlDnD.data.split("/").pop(), targetID, false);
+			services.form._putToDnDCache(window.tlDnD.data.split("/").pop(), targetID, position, false);
 		},
 		
 		displayDropMarker: function(targetID, position) {
 			this.displayDropMarkerInternal(document.getElementById(targetID), position);
-			services.form._putToDnDCache(window.tlDnD.data.split("/").pop(), targetID, true);
+			services.form._putToDnDCache(window.tlDnD.data.split("/").pop(), targetID, position, true);
 
 			return false;
 		},
@@ -1111,22 +1111,18 @@ services.form = {
 				
 				if(dropTarget !== undefined) {
 					if(window.tlDnD.cache !== undefined) {
-						var isDropable = window.tlDnD.cache.get(window.tlDnD.data.split("/").pop(), dropTarget.node.id);
+						var isDropable = window.tlDnD.cache.get(window.tlDnD.data.split("/").pop(), dropTarget.node.id, dropTarget.position);
 						
 						if(isDropable !== undefined) {
-							var isDropableAtPosition = isDropable[dropTarget.position];
+							if(isDropable) {
+								this.displayDropMarkerInternal(dropTarget.node, dropTarget.position);
+								event.dataTransfer.dropEffect = "move";
+							} else {
+								this.resetMarker();
+								event.dataTransfer.dropEffect = 'none';
+							}
 							
-							if(isDropableAtPosition !== undefined) {
-								if(isDropableAtPosition) {
-									this.displayDropMarkerInternal(dropTarget.node, dropTarget.position);
-									event.dataTransfer.dropEffect = "move";
-								} else {
-									this.resetMarker();
-									event.dataTransfer.dropEffect = 'none';
-								}
-								
-								return;
-							} 
+							return;
 						}
 					}
 					
@@ -1151,28 +1147,13 @@ services.form = {
 			this.resetMarker();
 			
 			var sourceID = window.tlDnD.data.split("/").pop();
-			this.addToDnDCache(sourceID, targetID, pos, false);
-		},
-		
-		addToDnDCache: function (sourceID, targetID, pos, isDropable) {
-			if(window.tlDnD.cache !== undefined) {
-				var cacheValue = window.tlDnD.cache.get(sourceID, targetID);
-				if(cacheValue !== undefined) {
-					cacheValue[pos] = isDropable;
-					return;
-				}
-			}
-			
-			var cacheValue = {};
-			cacheValue[pos] = isDropable;
-			
-			services.form._putToDnDCache(sourceID, targetID, cacheValue);
+			services.form._putToDnDCache(sourceID, targetID, pos, false);
 		},
 		
 		displayDropMarker: function(targetID, pos) {
 			this.displayDropMarkerInternal(document.getElementById(targetID), pos);
 			var sourceID = window.tlDnD.data.split("/").pop();
-			this.addToDnDCache(sourceID, targetID, pos, true);
+			services.form._putToDnDCache(sourceID, targetID, pos, true);
 
 			return false;
 		},

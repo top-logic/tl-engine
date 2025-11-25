@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.table.control;
 
+import static com.top_logic.layout.form.FormConstants.*;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -86,7 +88,6 @@ import com.top_logic.layout.dnd.DnD;
 import com.top_logic.layout.dnd.DndData;
 import com.top_logic.layout.dnd.DragSourceSPI;
 import com.top_logic.layout.form.CheckException;
-import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
@@ -2266,8 +2267,7 @@ public class TableControl extends AbstractControl implements TableModelListener,
 		 */
 		public final void writeInvokeExpression(Appendable out, Control control, int row, int column)
 				throws IOException {
-			out.append(FormConstants.FORM_PACKAGE);
-			out.append(".TableControl.select(arguments[0], this, ");
+			out.append(TABLE_HANDLER_CLASS).append(".select(arguments[0], this, ");
 			TagUtil.writeJsString(out, control.getID());
 			out.append(", ");
 			if (row < 0) {
@@ -2439,7 +2439,7 @@ public class TableControl extends AbstractControl implements TableModelListener,
 			control.getFrameScope().addClientAction(new JSSnipplet(new DynamicText() {
 				@Override
 				public void append(DisplayContext context, Appendable out) throws IOException {
-					out.append("services.form.TableControl.changeToNoDropCursor(");
+					out.append(TABLE_HANDLER_CLASS).append(".changeToNoDropCursor(");
 					TagUtil.writeJsString(out, targetID);
 					out.append(");");
 				}
@@ -2450,7 +2450,7 @@ public class TableControl extends AbstractControl implements TableModelListener,
 			control.getFrameScope().addClientAction(new JSSnipplet(new DynamicText() {
 				@Override
 				public void append(DisplayContext context, Appendable out) throws IOException {
-					out.append("services.form.TableControl.displayDropMarker(");
+					out.append(TABLE_HANDLER_CLASS).append(".displayDropMarker(");
 					TagUtil.writeJsString(out, targetID);
 					if (!StringServices.isEmpty(position)) {
 						out.append(",");

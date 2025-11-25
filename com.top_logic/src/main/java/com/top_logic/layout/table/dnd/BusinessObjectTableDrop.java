@@ -44,16 +44,20 @@ public abstract class BusinessObjectTableDrop implements TableDropTarget {
 	 * Returns the row before which the dragged object was dropped.
 	 */
 	protected Object getReferenceRow(TableDropEvent event) {
+		int refRow = event.getRefRow();
+		if (refRow < 0) {
+			return null;
+		}
 		TableViewModel viewModel = event.getTarget().getViewModel();
 
 		switch (event.getPos()) {
 			case ONTO:
 			case ABOVE: {
-				return viewModel.getRowObject(event.getRefRow());
+				return viewModel.getRowObject(refRow);
 			}
 			case BELOW: {
-				if (viewModel.getDisplayedRows().size() > event.getRefRow() + 1) {
-					return viewModel.getRowObject(event.getRefRow() + 1);
+				if (viewModel.getDisplayedRows().size() > refRow + 1) {
+					return viewModel.getRowObject(refRow + 1);
 				} else {
 					return null;
 				}

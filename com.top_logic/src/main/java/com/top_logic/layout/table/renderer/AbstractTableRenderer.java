@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.table.renderer;
 
+import static com.top_logic.layout.form.FormConstants.*;
+
 import java.io.IOException;
 import java.util.List;
 
@@ -59,10 +61,10 @@ public abstract class AbstractTableRenderer<C extends AbstractTableRenderer.Conf
 		TableData data = table.getTableData();
 		if (data.getDragSource().dragEnabled(data)) {
 			out.beginAttribute(ONDRAGSTART_ATTR);
-			out.append("return services.form.TableControl.handleOnDragStart(event, this);");
+			out.append("return ").append(TABLE_HANDLER_CLASS).append(".handleOnDragStart(event, this);");
 			out.endAttribute();
 			out.beginAttribute(ONDRAGEND_ATTR);
-			out.append("return services.form.TableControl.handleOnDragEnd(event, this);");
+			out.append("return ").append(TABLE_HANDLER_CLASS).append(".handleOnDragEnd(event, this);");
 			out.endAttribute();
 		}
 
@@ -99,16 +101,16 @@ public abstract class AbstractTableRenderer<C extends AbstractTableRenderer.Conf
 	 */
 	protected void writeOnDropAttributes(TagWriter out, TableData data) throws IOException {
 		out.beginAttribute(ONDROP_ATTR);
-		out.append("return services.form.TableControl.handleOnDrop(event, this);");
+		out.append("return ").append(TABLE_HANDLER_CLASS).append(".handleOnDrop(event, this);");
 		out.endAttribute();
 		out.beginAttribute(ONDRAGOVER_ATTR);
-		out.append("return services.form.TableControl.handleOnDragOver(event, this);");
+		out.append("return ").append(TABLE_HANDLER_CLASS).append(".handleOnDragOver(event, this);");
 		out.endAttribute();
 		out.beginAttribute(ONDRAGENTER_ATTR);
-		out.append("return services.form.TableControl.handleOnDragEnter(event, this);");
+		out.append("return ").append(TABLE_HANDLER_CLASS).append(".handleOnDragEnter(event, this);");
 		out.endAttribute();
 		out.beginAttribute(ONDRAGLEAVE_ATTR);
-		out.append("return services.form.TableControl.handleOnDragLeave(event, this);");
+		out.append("return ").append(TABLE_HANDLER_CLASS).append(".handleOnDragLeave(event, this);");
 		out.endAttribute();
 	}
 

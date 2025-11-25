@@ -2370,20 +2370,13 @@ public class TableControl extends AbstractControl implements TableModelListener,
 		}
 	}
 	
-	/**
-	 * {@link CheckedTableCommand} executed, when the element is dragged over a drop zone.
-	 */
-	public static class DnDTableDragOverAction extends CheckedTableCommand {
-
-		private static final String COMMAND_NAME = "dragOver";
+	private abstract static class AbstractDnDTableAction extends CheckedTableCommand {
 
 		/**
-		 * Singleton {@link DnDTableDragOverAction} instance.
+		 * Creates a new {@link AbstractDnDTableAction}.
 		 */
-		public static final DnDTableDragOverAction INSTANCE = new DnDTableDragOverAction();
-
-		private DnDTableDragOverAction() {
-			super(COMMAND_NAME);
+		public AbstractDnDTableAction(String command) {
+			super(command);
 		}
 
 		@Override
@@ -2400,20 +2393,45 @@ public class TableControl extends AbstractControl implements TableModelListener,
 				int rowNum = refId == null ? -1 : table.getRowIndex(refId);
 				TableDropEvent dropEvent = new TableDropEvent(data, tableData, rowNum, Position.fromString(pos));
 
-				List<TableDropTarget> dropTargets = table.getApplicationModel().getTableConfiguration().getDropTargets();
-
-				for (TableDropTarget dropTarget : dropTargets) {
-					if (dropTarget.canDrop(dropEvent)) {
-						displayDropMarker(table, refId, pos);
-
-						return HandlerResult.DEFAULT_RESULT;
-					}
-				}
-
-				changeToNoDropCursor(table, refId);
+				return handleDropEvent(dropEvent, table, pos, refId);
 			}
 
+			return HandlerResult.DEFAULT_RESULT;
+		}
 
+		protected abstract HandlerResult handleDropEvent(TableDropEvent event, TableControl table, String pos,
+				String refId);
+	}
+
+	/**
+	 * {@link CheckedTableCommand} executed, when the element is dragged over a drop zone.
+	 */
+	public static class DnDTableDragOverAction extends AbstractDnDTableAction {
+
+		private static final String COMMAND_NAME = "dragOver";
+
+		/**
+		 * Singleton {@link DnDTableDragOverAction} instance.
+		 */
+		public static final DnDTableDragOverAction INSTANCE = new DnDTableDragOverAction();
+
+		private DnDTableDragOverAction() {
+			super(COMMAND_NAME);
+		}
+
+		@Override
+		protected HandlerResult handleDropEvent(TableDropEvent event, TableControl table, String pos, String refId) {
+			List<TableDropTarget> dropTargets = table.getApplicationModel().getTableConfiguration().getDropTargets();
+
+			for (TableDropTarget dropTarget : dropTargets) {
+				if (dropTarget.canDrop(event)) {
+					displayDropMarker(table, refId, pos);
+
+					return HandlerResult.DEFAULT_RESULT;
+				}
+			}
+
+			changeToNoDropCursor(table, refId);
 			return HandlerResult.DEFAULT_RESULT;
 		}
 
@@ -2450,7 +2468,7 @@ public class TableControl extends AbstractControl implements TableModelListener,
 
 	}
 
-	public static class DndTableDropAction extends CheckedTableCommand {
+	public static class DndTableDropAction extends AbstractDnDTableAction {
 		public static final TableControl.TableCommand INSTANCE = new TableControl.DndTableDropAction();
 
 		public DndTableDropAction() {
@@ -2458,31 +2476,17 @@ public class TableControl extends AbstractControl implements TableModelListener,
 		}
 
 		@Override
-		public HandlerResult executeChecked(DisplayContext context, TableControl table, Map<String, Object> arguments) {
-			TableData tableData = table.getModel();
+		protected HandlerResult handleDropEvent(TableDropEvent event, TableControl table, String pos, String refId) {
 			List<TableDropTarget> dropTargets = table.getApplicationModel().getTableConfiguration().getDropTargets();
+			for (TableDropTarget dropTarget : dropTargets) {
+				if (dropTarget.canDrop(event)) {
+					dropTarget.handleDrop(event);
 
-			DndData data = DnD.getDndData(context, arguments);
-			if (data != null) {
-				String pos = (String) arguments.get(DND_TABLE_POS_PARAM);
-
-				String refId = (String) arguments.get(DND_TABLE_REF_ID_PARAM);
-				int rowNum = refId == null ? -1 : table.getRowIndex(refId);
-
-				TableDropEvent dropEvent = new TableDropEvent(data, tableData, rowNum, Position.fromString(pos));
-
-				for (TableDropTarget dropTarget : dropTargets) {
-					if (dropTarget.canDrop(dropEvent)) {
-						dropTarget.handleDrop(dropEvent);
-
-						return HandlerResult.DEFAULT_RESULT;
-					}
+					return HandlerResult.DEFAULT_RESULT;
 				}
-
-				throw new TopLogicException(com.top_logic.layout.dnd.I18NConstants.DROP_NOT_POSSIBLE);
 			}
 
-			return HandlerResult.DEFAULT_RESULT;
+			throw new TopLogicException(com.top_logic.layout.dnd.I18NConstants.DROP_NOT_POSSIBLE);
 		}
 
 		@Override

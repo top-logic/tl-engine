@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.table.renderer;
 
+import static com.top_logic.layout.form.FormConstants.*;
+
 import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
@@ -822,7 +824,7 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 		 */
 		@TemplateVariable("selectRowHandler")
 		public void writeSelectRowHandler(DisplayContext context, TagWriter out) throws IOException {
-			out.append("services.form.TableControl.selectRow(arguments[0], this, ");
+			out.append(TABLE_HANDLER_CLASS).append(".selectRow(arguments[0], this, ");
 			out.writeJsString(getView().getID());
 			out.append(");");
 		}

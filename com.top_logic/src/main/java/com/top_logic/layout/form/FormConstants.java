@@ -274,6 +274,11 @@ public interface FormConstants {
 	 */
 	public static final String CLOCK_HANDLER_CLASS = FORM_PACKAGE + ".TimeInputControl";
 
+	/**
+	 * JavaScript class of a table control.
+	 */
+	String TABLE_HANDLER_CLASS = FORM_PACKAGE + ".TableControl";
+
 	public static final String SELECT_CONTROL_CLASS = FORM_PACKAGE + ".SelectControl";
 
 	public static final String CHOICE_CONTROL_CLASS = FORM_PACKAGE + ".ChoiceControl";
@@ -393,4 +398,5 @@ public interface FormConstants {
 	 * states of the application.
 	 */
 	public static final String PUSHED_CSS_CLASS = "pushed";
+
 }

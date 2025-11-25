@@ -62,7 +62,7 @@ public class TypeBasedContextMenuFactory<C extends TypeBasedContextMenuFactory.C
 	/**
 	 * Configuration options for {@link ComponentContextMenuFactory}.
 	 */
-	public interface Config<I extends ComponentContextMenuFactory<?>> extends PolymorphicConfiguration<I> {
+	public interface Config<I extends TypeBasedContextMenuFactory<?>> extends PolymorphicConfiguration<I> {
 
 		/**
 		 * @see #getCustomCommands()

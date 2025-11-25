@@ -2346,7 +2346,7 @@ public class TableControl extends AbstractControl implements TableModelListener,
 				String pos = (String) arguments.get(DND_TABLE_POS_PARAM);
 				String refId = (String) arguments.get(DND_TABLE_REF_ID_PARAM);
 
-				int rowNum = refId == null ? -1 : table.getRowIndex(refId);
+				int rowNum = (refId == null || refId.equals(table.getID())) ? -1 : table.getRowIndex(refId);
 				TableDropEvent dropEvent = new TableDropEvent(data, tableData, rowNum, Position.fromString(pos));
 
 				return handleDropEvent(dropEvent, table, pos, refId);

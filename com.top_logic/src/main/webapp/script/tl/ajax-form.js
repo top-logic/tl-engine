@@ -580,7 +580,9 @@ services.form = {
 				success = rowElement != null;
 				if (success) {
 					targetId = rowElement.id;
-					if (dropType == "ORDERED") {
+					if (rowElement == controlElement) {
+						pos = "onto";
+					} else if (dropType == "ORDERED") {
 						if (BAL.DOM.containsClass(rowElement, "dndInsertAbove")) {
 							pos = "above";
 						} else if (BAL.DOM.containsClass(rowElement, "dndInsertBelow")) {
@@ -620,10 +622,15 @@ services.form = {
 			
 			if(!controlElement.isDragOverHandled) {
 				var row = this.getRow(controlElement, event.target);
-				
-				if(row != null) {
-					var position = services.form.TableControl._getDropPosition(event, controlElement, row);
-					
+				var position; 
+				if (row == null) {
+					row = controlElement;
+					position = "onto";
+				} else {
+					position = services.form.TableControl._getDropPosition(event, controlElement, row);
+				}
+
+				{
 					if(window.tlDnD.cache !== undefined) {
 						var isDropable = window.tlDnD.cache.get(window.tlDnD.data.split("/").pop(), row.id);
 						
@@ -653,9 +660,6 @@ services.form = {
 					setTimeout(function() {
 						controlElement.isDragOverHandled = false;
 					}, 50);
-				} else {
-					this.resetMarker();
-					event.dataTransfer.dropEffect = 'none';
 				}
 			}
 		},

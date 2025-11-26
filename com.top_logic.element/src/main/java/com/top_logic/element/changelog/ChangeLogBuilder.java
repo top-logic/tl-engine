@@ -520,8 +520,7 @@ public class ChangeLogBuilder {
 				TLObject newObject = entry.getKey();
 				change.setObject(newObject);
 
-				TLObject oldObject =
-					_kb.resolveObjectKey(inRevision(newObject.tId(), previousRevision())).getWrapper();
+				TLObject oldObject = resolve(inRevision(newObject.tId(), previousRevision())).getWrapper();
 				change.setOldObject(oldObject);
 
 				for (TLStructuredTypePart part : entry.getValue()) {
@@ -576,7 +575,7 @@ public class ChangeLogBuilder {
 						}
 					}
 
-					TLObject object = _kb.resolveObjectKey(creation.getOriginalObject()).getWrapper();
+					TLObject object = resolve(creation.getOriginalObject()).getWrapper();
 					if (excludedByModule(object) || isPersistentCacheObject(object)) {
 						if (stopOnChange && technicalUpdate) {
 							return true;
@@ -636,7 +635,7 @@ public class ChangeLogBuilder {
 					}
 				}
 		
-				TLObject newObject = _kb.resolveObjectKey(update.getOriginalObject()).getWrapper();
+				TLObject newObject = resolve(update.getOriginalObject()).getWrapper();
 				if (excludedByModule(newObject) || isPersistentCacheObject(newObject)) {
 					if (stopOnChange && technicalUpdate) {
 						return true;
@@ -727,8 +726,7 @@ public class ChangeLogBuilder {
 						}
 					}
 
-					KnowledgeItem item =
-						_kb.resolveObjectKey(inRevision(deletion.getObjectId(), previousRev));
+					KnowledgeItem item = resolve(inRevision(deletion.getObjectId(), previousRev));
 					TLObject object = item.getWrapper();
 					if (excludedByModule(object) || isPersistentCacheObject(object)) {
 						if (stopOnChange && technicalUpdate) {
@@ -779,7 +777,7 @@ public class ChangeLogBuilder {
 						continue;
 					}
 
-					TLObject newObject = _kb.resolveObjectKey(newId).getWrapper();
+					TLObject newObject = resolve(newId).getWrapper();
 					if (excludedByModule(newObject) || isPersistentCacheObject(newObject)) {
 						continue;
 					}
@@ -792,11 +790,11 @@ public class ChangeLogBuilder {
 							ChangeLogBuilder.class);
 						continue;
 					}
-					KnowledgeItem partKI = _kb.resolveObjectKey(partId);
+					KnowledgeItem partKI = resolve(partId);
 					if (partKI == null) {
 						/* Part is deleted in the meanwhile. It is possible to display the
 						 * change, but not to revert it. */
-						partKI = _kb.resolveObjectKey(inRevision(partId, revision));
+						partKI = resolve(inRevision(partId, revision));
 					}
 					TLStructuredTypePart part = partKI.getWrapper();
 					if (isPersistentCacheAttribute(part)) {
@@ -810,6 +808,10 @@ public class ChangeLogBuilder {
 			}
 			return technicalUpdate;
 		}
+	}
+
+	private KnowledgeItem resolve(ObjectKey key) {
+		return _kb.resolveObjectKey(key);
 	}
 
 	private static ObjectKey inRevision(ObjectBranchId objId, long rev) {

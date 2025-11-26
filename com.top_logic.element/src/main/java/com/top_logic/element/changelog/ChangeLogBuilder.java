@@ -422,9 +422,19 @@ public class ChangeLogBuilder {
 
 		private final ChangeSet _changeSet;
 
+		/** Mapping from an object to the parts that were updated in {@link #_changeSet}. */
 		private final Map<TLObject, Set<TLStructuredTypePart>> _updates = new HashMap<>();
 
+		/**
+		 * {@link Change}s to apply to a {@link com.top_logic.element.changelog.model.ChangeSet}.
+		 */
 		private final List<Change> _changes = new ArrayList<>();
+
+		/**
+		 * Adaptions for {@link #_changes} to execute before they are applied to a
+		 * {@link com.top_logic.element.changelog.model.ChangeSet}.
+		 */
+		private final List<Runnable> _adaptions = new ArrayList<>();
 
 		private final Iterator<ObjectCreation> _remainingCreations;
 
@@ -467,6 +477,7 @@ public class ChangeLogBuilder {
 		 */
 		public void applyChanges(com.top_logic.element.changelog.model.ChangeSet out) {
 			analyze(AnalyseState.FULL);
+			_adaptions.forEach(Runnable::run);
 			_changes.forEach(out::addChange);
 		}
 
@@ -507,6 +518,7 @@ public class ChangeLogBuilder {
 					}
 					assert _updates.isEmpty();
 					assert _changes.isEmpty();
+					assert _adaptions.isEmpty();
 					_state = AnalyseState.FULL;
 					break;
 			}
@@ -588,8 +600,7 @@ public class ChangeLogBuilder {
 					TransientCreation change = new TransientCreation();
 					change.setObject(object);
 
-					TLObject container = object.tContainer();
-					change.setImplicit(container != null && createdKeys.contains(container.tId()));
+					updateImplicit(change, object, createdKeys);
 
 					registerChange(change);
 					if (stopOnChange) {
@@ -598,6 +609,21 @@ public class ChangeLogBuilder {
 				} while (_remainingCreations.hasNext());
 			}
 			return false;
+		}
+
+		/**
+		 * Updates {@link Change#getImplicit()}.
+		 * 
+		 * <p>
+		 * Note: Determining the value can be expensive and the value is not needed for determining
+		 * {@link #hasChanges()}. So the value is updated lazy when applying the {@link #_changes}.
+		 * </p>
+		 */
+		private void updateImplicit(Change change, TLObject object, Set<ObjectKey> keys) {
+			_adaptions.add(() -> {
+				TLObject container = object.tContainer();
+				change.setImplicit(container != null && keys.contains(container.tId()));
+			});
 		}
 
 		private boolean isPersistentCacheObject(TLObject object) {
@@ -740,8 +766,7 @@ public class ChangeLogBuilder {
 					TransientDeletion change = new TransientDeletion();
 					change.setObject(object);
 
-					TLObject container = object.tContainer();
-					change.setImplicit(container != null && deletedKeys.contains(container.tId()));
+					updateImplicit(change, object, deletedKeys);
 
 					registerChange(change);
 					if (stopOnChange) {

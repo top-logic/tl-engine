@@ -155,6 +155,7 @@ public class ChangeLogListModelBuilder extends AbstractConfiguredInstance<Change
 			.setAuthor(config.getAllUsers() ? null : TLContext.currentUser())
 			.setStartRev(startRev)
 			.setNumberEntries(getConfig().getMaxEntries())
+			.setIncludeTechnical(config.getIncludeTechnicalChanges())
 			.setExcludedModules(getConfig().getExcludedModules()
 				.stream()
 				.map(TLModelPartRef::qualifiedName)

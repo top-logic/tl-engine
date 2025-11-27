@@ -14,10 +14,12 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.Renderer;
 import com.top_logic.layout.provider.LabelProviderService;
+import com.top_logic.mig.html.Media;
 import com.top_logic.mig.html.layout.tag.JSPErrorUtil;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.query.Args;
+import com.top_logic.tool.export.pdf.PDFRenderer;
 
 /**
  * Base class for {@link SearchExpression}s that produce page output as side-effect to their
@@ -87,12 +89,23 @@ public abstract class RenderExpression extends SearchExpression {
 			}
 		} else if (value instanceof HTMLFragment) {
 			((HTMLFragment) value).write(context, out);
+		} else if (value instanceof CharSequence text) {
+			// Short-cut for common case.
+			out.writeText(text);
 		} else if (value instanceof Number) {
 			// No internationalized formatting for numbers. Otherwise it is almost impossible to
 			// compute values for technical attributes like width and height. If formatting is
 			// required, this can be done explicitly.
 			out.writeText(value.toString());
 		} else {
+			Media media = context.getOutputMedia();
+			if (media == Media.PDF) {
+				PDFRenderer pdfRenderer = LabelProviderService.getInstance().getPDFRenderer(value);
+				if (pdfRenderer != null) {
+					pdfRenderer.write(context, out, null, value);
+					return;
+				}
+			}
 			Renderer<? super Object> valueRenderer = LabelProviderService.getInstance().getRenderer(value);
 			if (valueRenderer == null) {
 				valueRenderer = renderer;

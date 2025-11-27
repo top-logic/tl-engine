@@ -13,8 +13,10 @@ import org.w3c.dom.Document;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
@@ -43,7 +45,15 @@ public class DailySchedule<C extends DailySchedule.Config<?>>
 
 	/** {@link TypedConfiguration} of {@link DailySchedule}. */
 	@TagName("daily")
-	public interface Config<S extends DailySchedule<?>> extends AbstractSchedulingAlgorithm.Config<S> {
+	public interface Config<S extends DailySchedule<?>> extends AbstractSchedulingAlgorithm.Config<S>, TimeOfDayConfig {
+		// sum interface
+	}
+
+	/**
+	 * Configuration of a time in a day.
+	 */
+	@Abstract
+	public interface TimeOfDayConfig extends ConfigurationItem {
 
 		/** Property name for {@link #getTimeOfDay()} */
 		String PROPERTY_NAME_TIME_OF_DAY = "time-of-day";

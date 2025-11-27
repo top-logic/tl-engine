@@ -21,6 +21,7 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.time.TimeOfDayAsDateValueProvider;
 import com.top_logic.basic.xml.DOMUtil;
 import com.top_logic.layout.form.FormField;
@@ -45,7 +46,12 @@ public class DailySchedule<C extends DailySchedule.Config<?>>
 
 	/** {@link TypedConfiguration} of {@link DailySchedule}. */
 	@TagName("daily")
-	public interface Config<S extends DailySchedule<?>> extends AbstractSchedulingAlgorithm.Config<S>, TimeOfDayConfig {
+	@DisplayOrder({
+		Config.PROPERTY_NAME_TIME_OF_DAY,
+		Config.PROPERTY_NAME_PERIOD,
+	})
+	public interface Config<S extends DailySchedule<?>>
+			extends FixedDatePeriodicalSchedulingAlgorithm.Config<S>, TimeOfDayConfig {
 		// sum interface
 	}
 
@@ -86,6 +92,7 @@ public class DailySchedule<C extends DailySchedule.Config<?>>
 		+ templateStandardFields()
 		+ "		<tr>"
 		+ templateLargeField(NAME_FIELD_TIME_OF_DAY)
+		+ templateSmallField(NAME_FIELD_PERIOD)
 		+ "		</tr>"
 		+ "	</table>"
 		);
@@ -109,8 +116,8 @@ public class DailySchedule<C extends DailySchedule.Config<?>>
 	}
 
 	@Override
-	protected void addPeriod(Calendar result) {
-		result.add(Calendar.DAY_OF_YEAR, 1);
+	protected void addPeriod(Calendar result, int period) {
+		result.add(Calendar.DAY_OF_YEAR, period);
 	}
 
 	@Override
@@ -125,6 +132,8 @@ public class DailySchedule<C extends DailySchedule.Config<?>>
 		DateFormat format = HTMLFormatter.getInstance().getShortTimeFormat();
 		Object value = getConfig().getTimeOfDay();
 		group.addMember(FormFactory.newComplexField(NAME_FIELD_TIME_OF_DAY, format, value, FormFactory.IMMUTABLE));
+
+		addPeriodField(group);
 	}
 
 }

@@ -17,6 +17,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.xml.DOMUtil;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.model.FormFactory;
@@ -38,6 +39,10 @@ public class MonthlySchedule<C extends MonthlySchedule.Config<?>>
 
 	/** {@link TypedConfiguration} of {@link MonthlySchedule}. */
 	@TagName("monthly")
+	@DisplayOrder({
+		Config.PROPERTY_NAME_DAY_OF_MONTH,
+		Config.PROPERTY_NAME_TIME_OF_DAY,
+	})
 	public interface Config<S extends MonthlySchedule<?>>
 			extends AbstractSchedulingAlgorithm.Config<S>, TimeOfDayConfig {
 

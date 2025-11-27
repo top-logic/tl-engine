@@ -48,9 +48,10 @@ public class WeeklySchedule<C extends WeeklySchedule.Config<?>>
 	@DisplayOrder({
 		Config.PROPERTY_NAME_DAY_OF_WEEK,
 		Config.PROPERTY_NAME_TIME_OF_DAY,
+		Config.PROPERTY_NAME_PERIOD,
 	})
 	public interface Config<S extends WeeklySchedule<?>>
-			extends AbstractSchedulingAlgorithm.Config<S>, TimeOfDayConfig {
+			extends FixedDatePeriodicalSchedulingAlgorithm.Config<S>, TimeOfDayConfig {
 
 		/** Property name for {@link #getDayOfWeek()} */
 		String PROPERTY_NAME_DAY_OF_WEEK = "day-of-week";
@@ -88,6 +89,7 @@ public class WeeklySchedule<C extends WeeklySchedule.Config<?>>
 		+ "		<tr>"
 		+ templateSmallField(NAME_FIELD_DAY_OF_WEEK)
 		+ templateSmallField(NAME_FIELD_TIME_OF_DAY)
+		+ templateSmallField(NAME_FIELD_PERIOD)
 		+ "		</tr>"
 		+ "	</table>"
 		);
@@ -113,8 +115,8 @@ public class WeeklySchedule<C extends WeeklySchedule.Config<?>>
 	}
 
 	@Override
-	protected void addPeriod(Calendar result) {
-		result.add(Calendar.WEEK_OF_YEAR, 1);
+	protected void addPeriod(Calendar result, int period) {
+		result.add(Calendar.WEEK_OF_YEAR, period);
 	}
 
 	@Override
@@ -134,6 +136,8 @@ public class WeeklySchedule<C extends WeeklySchedule.Config<?>>
 		DateFormat timeOfDayFormat = HTMLFormatter.getInstance().getShortTimeFormat();
 		group.addMember(FormFactory.newComplexField(
 			NAME_FIELD_TIME_OF_DAY, timeOfDayFormat, getConfig().getTimeOfDay(), FormFactory.IMMUTABLE));
+
+		addPeriodField(group);
 	}
 
 }

@@ -42,9 +42,10 @@ public class MonthlySchedule<C extends MonthlySchedule.Config<?>>
 	@DisplayOrder({
 		Config.PROPERTY_NAME_DAY_OF_MONTH,
 		Config.PROPERTY_NAME_TIME_OF_DAY,
+		Config.PROPERTY_NAME_PERIOD,
 	})
 	public interface Config<S extends MonthlySchedule<?>>
-			extends AbstractSchedulingAlgorithm.Config<S>, TimeOfDayConfig {
+			extends FixedDatePeriodicalSchedulingAlgorithm.Config<S>, TimeOfDayConfig {
 
 		/** Property name for {@link #getDayOfMonth()} */
 		String PROPERTY_NAME_DAY_OF_MONTH = "day-of-month";
@@ -83,8 +84,9 @@ public class MonthlySchedule<C extends MonthlySchedule.Config<?>>
 		+ "	<table " + templateRootAttributes() + " >"
 		+ templateStandardFields()
 		+ "		<tr>"
-			+ templateSmallField(NAME_FIELD_DAY_OF_MONTH)
+		+ templateSmallField(NAME_FIELD_DAY_OF_MONTH)
 		+ templateSmallField(NAME_FIELD_TIME_OF_DAY)
+		+ templateSmallField(NAME_FIELD_PERIOD)
 		+ "		</tr>"
 		+ "	</table>"
 		);
@@ -118,11 +120,11 @@ public class MonthlySchedule<C extends MonthlySchedule.Config<?>>
 	}
 
 	@Override
-	protected void addPeriod(Calendar result) {
+	protected void addPeriod(Calendar result, int period) {
 		// Ensure that adding month does not roll calendar to large,e.g. 30.01. should not roll to
 		// 02.03.
 		result.set(Calendar.DAY_OF_MONTH, result.getGreatestMinimum(Calendar.DAY_OF_MONTH));
-		result.add(Calendar.MONTH, 1);
+		result.add(Calendar.MONTH, period);
 		setCorrectDayOfMonth(result);
 		
 	}
@@ -142,6 +144,8 @@ public class MonthlySchedule<C extends MonthlySchedule.Config<?>>
 		DateFormat timeOfDayFormat = HTMLFormatter.getInstance().getShortTimeFormat();
 		group.addMember(FormFactory.newComplexField(
 			NAME_FIELD_TIME_OF_DAY, timeOfDayFormat, getConfig().getTimeOfDay(), FormFactory.IMMUTABLE));
+
+		addPeriodField(group);
 	}
 
 }

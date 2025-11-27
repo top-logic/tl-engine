@@ -21,6 +21,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.xml.DOMUtil;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.model.FormFactory;
@@ -44,6 +45,10 @@ public class WeeklySchedule<C extends WeeklySchedule.Config<?>>
 
 	/** {@link TypedConfiguration} of {@link WeeklySchedule}. */
 	@TagName("weekly")
+	@DisplayOrder({
+		Config.PROPERTY_NAME_DAY_OF_WEEK,
+		Config.PROPERTY_NAME_TIME_OF_DAY,
+	})
 	public interface Config<S extends WeeklySchedule<?>>
 			extends AbstractSchedulingAlgorithm.Config<S>, TimeOfDayConfig {
 

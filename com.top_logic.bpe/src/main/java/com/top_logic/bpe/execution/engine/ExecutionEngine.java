@@ -388,18 +388,22 @@ public class ExecutionEngine {
 			if (edge instanceof SequenceFlow) {
 				SequenceFlow sf = (SequenceFlow) edge;
 				SequenceFlowRule rule = sf.getRule();
-				Boolean allConditionsTrue = rule.getRuleConditions().stream()
-					.map(config -> (RuleCondition) new ConfigurableCondition(null, (ConfigurableCondition.Config<?>) config)) // Cast
-																											// to
-																											// RuleCondition
-					.filter(condition -> condition.getRuleType() != RuleType.WARNING) // Ignore
-																						// warnings
-					.allMatch(condition -> condition.getTestCondition(processExecution)); // Check all
-																						// non-warning
-																						// conditions
-				// If all conditions are true, return the target
-				if (allConditionsTrue) {
-					return edge.getTarget();
+				if (rule != null) {
+					Boolean allConditionsTrue = rule.getRuleConditions().stream()
+						.map(config -> (RuleCondition) new ConfigurableCondition(null,
+							(ConfigurableCondition.Config<?>) config)) // Cast
+						// to
+						// RuleCondition
+						.filter(condition -> condition.getRuleType() != RuleType.WARNING) // Ignore
+																							// warnings
+						.allMatch(condition -> condition.getTestCondition(processExecution)); // Check
+																								// all
+																								// non-warning
+																								// conditions
+					// If all conditions are true, return the target
+					if (allConditionsTrue) {
+						return edge.getTarget();
+					}
 				}
 
 			}
@@ -574,7 +578,10 @@ public class ExecutionEngine {
 		token.setFinishDate(new Date());
 		token.setFinishBy(TLContext.currentUser());
 
-		processExecution.removeActiveToken(token);
+		// check if token is still active
+		if (processExecution.getActiveTokens().contains(token)) {
+			processExecution.removeActiveToken(token);
+		}
 	}
 
 	private void activate(ProcessExecution processExecution, Token token) {

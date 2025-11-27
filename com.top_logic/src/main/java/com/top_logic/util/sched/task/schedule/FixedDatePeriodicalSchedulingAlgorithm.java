@@ -62,7 +62,7 @@ public abstract class FixedDatePeriodicalSchedulingAlgorithm<C extends AbstractS
 	 * Sets the scheduling time in the given calendar.
 	 * 
 	 * <p>
-	 * Do not care whether this moves the time foreward or backwards.
+	 * Do not care whether this moves the time forward or backwards.
 	 * </p>
 	 *
 	 * @param result

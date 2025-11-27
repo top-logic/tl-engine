@@ -23,6 +23,17 @@
 				</task>
 				<task class="com.top_logic.util.sched.task.impl.InstructableTestTask"
 					blocked-by-default="true"
+					name="MonthlyScheduleTask"
+				>
+					<schedules>
+						<monthly
+							day-of-month="3"
+							time-of-day="15:00"
+						/>
+					</schedules>
+				</task>
+				<task class="com.top_logic.util.sched.task.impl.InstructableTestTask"
+					blocked-by-default="true"
 					name="WeeklyScheduleTask"
 				>
 					<schedules>

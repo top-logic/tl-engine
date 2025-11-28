@@ -12,7 +12,7 @@ import java.sql.SQLException;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public interface QueryResult {
+public interface QueryResult extends AutoCloseable {
 
 	/**
 	 * Advance the result set pointer to the first/next result.
@@ -24,6 +24,7 @@ public interface QueryResult {
 	/**
 	 * Closes the result set.
 	 */
+	@Override
 	public void close() throws SQLException;
 
 }

@@ -8,6 +8,7 @@ package test.com.top_logic.knowledge.service.db2.diff;
 import java.sql.SQLException;
 
 import junit.framework.Test;
+
 import test.com.top_logic.knowledge.service.db2.AbstractDBKnowledgeBaseTest;
 
 import com.top_logic.basic.sql.PooledConnection;
@@ -99,8 +100,7 @@ public class TestDiffRowAttributesQuery extends AbstractDBKnowledgeBaseTest {
 			DiffRowDeletionQuery deletionQuery =
 				DiffRowDeletionQuery.createDiffRowDeletionQuery(kb().getConnectionPool().getSQLDialect(), type(B_NAME),
 					TLContext.TRUNK_ID, r1, TLContext.TRUNK_ID, r2);
-    		DiffDeletionResult deletionResult = deletionQuery.query(connection);
-    		try {
+			try (DiffDeletionResult deletionResult = deletionQuery.query(connection)) {
     			boolean b8Seen = false;
     			boolean b9Seen = false;
 				while (deletionResult.next()) {
@@ -116,16 +116,13 @@ public class TestDiffRowAttributesQuery extends AbstractDBKnowledgeBaseTest {
 				}
 				assertTrue(b8Seen);
 				assertTrue(b9Seen);
-			} finally {
-				deletionResult.close();
 			}
     		
 			MOClass type = type(B_NAME);
 			DiffRowAttributesQuery query =
 				DiffRowAttributesQuery.createDiffRowAttributesQuery(kb().getConnectionPool().getSQLDialect(), type,
 					TLContext.TRUNK_ID, r1, TLContext.TRUNK_ID, r2);
-    		DiffUpdateResult result = query.query(connection);
-    		try {
+			try (DiffUpdateResult result = query.query(connection)) {
     			boolean b2Seen = false;
     			boolean b3Seen = false;
     			boolean b4Seen = false;
@@ -168,8 +165,6 @@ public class TestDiffRowAttributesQuery extends AbstractDBKnowledgeBaseTest {
     			assertTrue(b4Seen);
     			assertTrue(b6Seen);
     			assertTrue(b7Seen);
-    		} finally {
-    			result.close();
     		}
 		} finally {
 			kb().getConnectionPool().releaseReadConnection(connection);

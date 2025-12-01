@@ -44,6 +44,12 @@
 					</css-classes>
 				</column>
 			</column-customizations>
+			<configurationProvider class="com.top_logic.model.search.providers.RowClassProviderByExpression">
+				<css-classes><![CDATA[row -> model -> $row.get(`DemoTypes:DemoTypes.All#name`)
+    .stringContains("4")
+    ? "tl-warning" 
+    : null]]></css-classes>
+			</configurationProvider>
 		</configurationProviders>
 		<selectionFilter class="com.top_logic.model.search.providers.ScriptedFilter">
 			<predicate>x -&gt; !$x.get(`DemoTypes:A#name`).stringEndsWith("-final")</predicate>

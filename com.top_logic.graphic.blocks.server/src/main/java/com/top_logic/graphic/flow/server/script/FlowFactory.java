@@ -823,6 +823,11 @@ public class FlowFactory extends TLScriptFunctions {
 	 * 
 	 * @param content
 	 *        Actual content of the box.
+	 * @param menu
+	 *        The context menu handler. Pass in the variable implicitly defined for the context menu
+	 *        handler declared next to the diagram builder.
+	 * @param cssClass
+	 *        The css class for the new box.
 	 * @param userObject
 	 *        User object of the new box. Operations in the context menu operate on this object.
 	 * @return The new box.

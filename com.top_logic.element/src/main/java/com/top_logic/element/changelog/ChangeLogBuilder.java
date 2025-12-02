@@ -12,6 +12,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -243,6 +244,9 @@ public class ChangeLogBuilder {
 
 		analyzeModel();
 
+		Set<Long> canBeIgnored = new HashSet<>();
+		Map<Long, com.top_logic.element.changelog.model.ChangeSet> revertedBy = new HashMap<>();
+
 		List<LongRange> revisionRanges = getRevisionRanges();
 		processRevisions:
 		for (int i = revisionRanges.size() - 1; i >= 0; i--) {
@@ -259,8 +263,7 @@ public class ChangeLogBuilder {
 					long maxFetchEntries = (long) ((_numberEntries - log.size()) * 1.5);
 
 					long chunkStart = Long.max(start, stop - maxFetchEntries);
-					readChangesDescending(logsInRange, chunkStart, stop);
-					log.addAll(logsInRange);
+					readDescending(log, logsInRange, canBeIgnored, revertedBy, chunkStart, stop);
 
 					int remaining = _numberEntries - log.size();
 					if (remaining == 0) {
@@ -279,8 +282,7 @@ public class ChangeLogBuilder {
 					stop = chunkStart - 1;
 				}
 			} else {
-				readChangesDescending(logsInRange, start, stop);
-				log.addAll(logsInRange);
+				readDescending(log, logsInRange, canBeIgnored, revertedBy, start, stop);
 			}
 
 		}
@@ -288,6 +290,76 @@ public class ChangeLogBuilder {
 		// Return entries ascending
 		Collections.reverse(log);
 		return log;
+	}
+
+	private void readDescending(List<com.top_logic.element.changelog.model.ChangeSet> log,
+			List<com.top_logic.element.changelog.model.ChangeSet> logsInRange, Set<Long> canBeIgnored,
+			Map<Long, com.top_logic.element.changelog.model.ChangeSet> revertedBy, long start, long stop) {
+
+		List<com.top_logic.element.changelog.model.ChangeSet> toDelete = new ArrayList<>();
+
+		readChangesDescending(logsInRange, start, stop);
+		
+		for (Iterator<com.top_logic.element.changelog.model.ChangeSet> it = logsInRange.iterator(); it
+			.hasNext();) {
+			com.top_logic.element.changelog.model.ChangeSet cs1 = it.next();
+			long commitNumber = cs1.getRevision().getCommitNumber();
+		
+			if (canBeIgnored.remove(commitNumber)) {
+				it.remove();
+				// Mark originals as irrelevant
+				if (cs1.isRedo() || cs1.isRevert()) {
+					canBeIgnored.add(cs1.origRevision());
+				}
+				continue;
+			}
+		
+			com.top_logic.element.changelog.model.ChangeSet undoCS = revertedBy.remove(commitNumber);
+			if (undoCS != null) {
+				// Connect CS with its undo CS.
+				cs1.setRevertedBy(undoCS);
+				// Display message "Reverted: ..."
+				cs1.setMessage(undoCS.getMessage());
+				// Undo CS not longer needed
+				toDelete.add(undoCS);
+				// Mark originals as irrelevant
+				if (cs1.isRedo() || cs1.isRevert()) {
+					canBeIgnored.add(cs1.origRevision());
+				}
+				continue;
+			}
+		
+			if (cs1.isRevert()) {
+				long revertedRevision = cs1.origRevision();
+				if (revertedRevision != -1) {
+					// store cs for later connection with the undone CS.
+					revertedBy.put(revertedRevision, cs1);
+				}
+			}
+			if (cs1.isRedo()) {
+				canBeIgnored.add(cs1.origRevision());
+			}
+		}
+		
+		log.addAll(logsInRange);
+
+		Comparator<com.top_logic.element.changelog.model.ChangeSet> revisionOrder = Comparator
+			.comparing(com.top_logic.element.changelog.model.ChangeSet::getRevision);
+		// Ensure ascending revision order, log is sorted descending
+		toDelete.sort(revisionOrder);
+
+		Comparator<com.top_logic.element.changelog.model.ChangeSet> reversedRevisionOrder = revisionOrder.reversed();
+		List<com.top_logic.element.changelog.model.ChangeSet> searchList = log;
+		for (com.top_logic.element.changelog.model.ChangeSet cs : toDelete) {
+			int idx = Collections.binarySearch(searchList, cs, reversedRevisionOrder);
+			if (idx < 0) {
+				assert false : "toDelete is a sublist of log.";
+			} else {
+				searchList.remove(idx);
+				// All later CS in toDelete have larger commit number, i.e. before idx in log list
+				searchList = searchList.subList(0, idx);
+			}
+		}
 	}
 
 	private void readChangesDescending(List<com.top_logic.element.changelog.model.ChangeSet> out, long start,
@@ -959,4 +1031,5 @@ public class ChangeLogBuilder {
 		TLModule module = obj.tType().getModule();
 		return _excludeModules.contains(module.getName());
 	}
+	
 }

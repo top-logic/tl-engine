@@ -192,6 +192,11 @@
 					navigate="true"
 					type="tl.core:Revision"
 				/>
+				<reference name="revertedBy"
+					kind="forwards"
+					navigate="true"
+					type="ChangeSet"
+				/>
 			</attributes>
 		</class>
 		<interface name="Modification">

@@ -63,6 +63,15 @@ public interface ChangeSetBase extends com.top_logic.model.TLObject {
 	String PARENT_REV_ATTR = "parentRev";
 
 	/**
+	 * Part <code>revertedBy</code> of <code>ChangeSet</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.changelog:ChangeSet</code> in configuration.
+	 * </p>
+	 */
+	String REVERTED_BY_ATTR = "revertedBy";
+
+	/**
 	 * Part <code>revision</code> of <code>ChangeSet</code>
 	 * 
 	 * <p>
@@ -168,6 +177,20 @@ public interface ChangeSetBase extends com.top_logic.model.TLObject {
 	 */
 	default void setParentRev(com.top_logic.knowledge.service.Revision newValue) {
 		tUpdateByName(PARENT_REV_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #REVERTED_BY_ATTR}.
+	 */
+	default com.top_logic.element.changelog.model.ChangeSet getRevertedBy() {
+		return (com.top_logic.element.changelog.model.ChangeSet) tValueByName(REVERTED_BY_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #REVERTED_BY_ATTR}.
+	 */
+	default void setRevertedBy(com.top_logic.element.changelog.model.ChangeSet newValue) {
+		tUpdateByName(REVERTED_BY_ATTR, newValue);
 	}
 
 	/**

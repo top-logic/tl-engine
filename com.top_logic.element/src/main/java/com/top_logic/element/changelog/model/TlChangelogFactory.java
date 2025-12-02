@@ -22,6 +22,26 @@ public class TlChangelogFactory extends com.top_logic.element.meta.kbbased.Abstr
 	public static final String TL_CHANGELOG_STRUCTURE = "tl.changelog";
 
 	/**
+	 * Name of the enumeration <code>ChangeType</code> in module {@value #TL_CHANGELOG_STRUCTURE}.
+	 */
+	public static final String CHANGE_TYPE_ENUM = "ChangeType";
+
+	/**
+	 * Name of the classifier <code>CREATE</code> in enumeration {@value #CHANGE_TYPE_ENUM}.
+	 */
+	public static final String CREATE_CHANGE_TYPE_CLASSIFIER = "CREATE";
+
+	/**
+	 * Name of the classifier <code>DELETE</code> in enumeration {@value #CHANGE_TYPE_ENUM}.
+	 */
+	public static final String DELETE_CHANGE_TYPE_CLASSIFIER = "DELETE";
+
+	/**
+	 * Name of the classifier <code>UPDATE</code> in enumeration {@value #CHANGE_TYPE_ENUM}.
+	 */
+	public static final String UPDATE_CHANGE_TYPE_CLASSIFIER = "UPDATE";
+
+	/**
 	 * Name of the enumeration <code>ErrorAction</code> in module {@value #TL_CHANGELOG_STRUCTURE}.
 	 */
 	public static final String ERROR_ACTION_ENUM = "ErrorAction";
@@ -201,6 +221,13 @@ public class TlChangelogFactory extends com.top_logic.element.meta.kbbased.Abstr
 	}
 
 	/**
+	 * Lookup {@link ChangeSet#REVERTED_BY_ATTR} of {@link ChangeSet}.
+	 */
+	public static com.top_logic.model.TLReference getRevertedByChangeSetAttr() {
+		return (com.top_logic.model.TLReference) getChangeSetType().getPart(ChangeSet.REVERTED_BY_ATTR);
+	}
+
+	/**
 	 * Lookup {@link ChangeSet#REVISION_ATTR} of {@link ChangeSet}.
 	 */
 	public static com.top_logic.model.TLReference getRevisionChangeSetAttr() {
@@ -331,6 +358,34 @@ public class TlChangelogFactory extends com.top_logic.element.meta.kbbased.Abstr
 	 */
 	public static com.top_logic.model.TLProperty getValueSetOpAttr() {
 		return (com.top_logic.model.TLProperty) getSetOpType().getPart(SetOp.VALUE_ATTR);
+	}
+
+	/**
+	 * Lookup {@value #CHANGE_TYPE_ENUM} enumeration.
+	 */
+	public static com.top_logic.model.TLEnumeration getChangeTypeEnum() {
+		return (com.top_logic.model.TLEnumeration) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_CHANGELOG_STRUCTURE).getType(CHANGE_TYPE_ENUM);
+	}
+
+	/**
+	 * Lookup classifier {@value #CREATE_CHANGE_TYPE_CLASSIFIER} of enumeration {@value #CHANGE_TYPE_ENUM}.
+	 */
+	public static com.top_logic.model.TLClassifier getCREATEChangeTypeClassifier() {
+		return getChangeTypeEnum().getClassifier(CREATE_CHANGE_TYPE_CLASSIFIER);
+	}
+
+	/**
+	 * Lookup classifier {@value #DELETE_CHANGE_TYPE_CLASSIFIER} of enumeration {@value #CHANGE_TYPE_ENUM}.
+	 */
+	public static com.top_logic.model.TLClassifier getDELETEChangeTypeClassifier() {
+		return getChangeTypeEnum().getClassifier(DELETE_CHANGE_TYPE_CLASSIFIER);
+	}
+
+	/**
+	 * Lookup classifier {@value #UPDATE_CHANGE_TYPE_CLASSIFIER} of enumeration {@value #CHANGE_TYPE_ENUM}.
+	 */
+	public static com.top_logic.model.TLClassifier getUPDATEChangeTypeClassifier() {
+		return getChangeTypeEnum().getClassifier(UPDATE_CHANGE_TYPE_CLASSIFIER);
 	}
 
 	/**

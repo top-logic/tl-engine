@@ -1138,7 +1138,7 @@
 			<dependency>
 			    <groupId>org.pac4j</groupId>
 			    <artifactId>pac4j-oidc</artifactId>
-    			<version>6.3.0</version>
+    			<version>6.3.1</version>
 			</dependency>
 			<dependency>
 				<groupId>net.minidev</groupId>
@@ -1148,7 +1148,7 @@
 			<dependency>
 			    <groupId>org.pac4j</groupId>
 			    <artifactId>pac4j-jakartaee</artifactId>
-    			<version>6.3.0</version>
+    			<version>6.3.1</version>
 			</dependency>
 			<dependency>
 			    <groupId>org.pac4j</groupId>

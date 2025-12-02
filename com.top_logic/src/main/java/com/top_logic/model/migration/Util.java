@@ -121,7 +121,9 @@ import com.top_logic.model.migration.data.Type;
 import com.top_logic.model.migration.data.TypeGeneralization;
 import com.top_logic.model.migration.data.TypePart;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.model.v5.transform.ModelLayout;
 import com.top_logic.util.TLContext;
+import com.top_logic.util.model.TL5Types;
 
 /**
  * Utility class for migration processors updating the {@link TLModel}.
@@ -912,6 +914,11 @@ public class Util {
 	 */
 	public Module getTLModule(PooledConnection connection, long branch, String moduleName)
 			throws SQLException, MigrationException {
+		if (TL5Types.ENUM_PROTOCOL.equals(moduleName)) {
+			/* In old XML files the legacy notation "enum:..." instead of "tl5.enum:..." is used.
+			 * Such a module does not exist. */
+			moduleName = ModelLayout.TL5_ENUM_MODULE;
+		}
 		DBHelper sqlDialect = connection.getSQLDialect();
 
 		String identifierAlias = "id";

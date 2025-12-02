@@ -1948,9 +1948,16 @@ public class MigrationUtils {
 
 	private static void moveStructuredTypePart(Log log, Document tlModel, Element part, QualifiedPartName origName,
 			QualifiedPartName newName) throws MigrationException {
-		if (!newName.getModuleName().equals(origName.getModuleName())) {
+		boolean sameModule = newName.getModuleName().equals(origName.getModuleName());
+		if (!sameModule) {
 			// Part was moved to different module.
 			qualifyTypes(part, origName.getModuleName());
+		} else {
+			if (newName.getTypeName().equals(origName.getTypeName())) {
+				// Move is just a rename
+				part.setAttribute(PartConfig.NAME, newName.getPartName());
+				return;
+			}
 		}
 		Element newModule = getTLModuleOrFail(tlModel, newName.getModuleName());
 		Element newOwner = getTLTypeOrFail(log, newModule, newName.getTypeName());

@@ -1949,6 +1949,12 @@
 	<icon name="com.top_logic.layout.messagebox.Icons.IN_PROGRESS"
 		value="css:fas fa-running"
 	/>
+	<string name="tile-background"
+		expr="url(%tile-background-image%)"
+	/>
+	<icon name="tile-background-image"
+		value=""
+	/>
 
 	<!-- Style Tokens -->
 	<!-- Color Tokens -->

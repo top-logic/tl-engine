@@ -1855,6 +1855,12 @@ span.ltcCounting input {
 	box-sizing: border-box;
 }
 
+.tileContainer {
+	background: var(--tile-background);
+	background-position: center;
+	background-size: cover;
+}
+
 .tileRow {
 	display: flex;
 	flex-wrap: wrap;

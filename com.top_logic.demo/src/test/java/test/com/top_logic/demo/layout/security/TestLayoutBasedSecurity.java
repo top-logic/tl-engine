@@ -6,6 +6,7 @@
 package test.com.top_logic.demo.layout.security;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 
 import junit.framework.Test;
@@ -95,7 +96,7 @@ public class TestLayoutBasedSecurity extends BasicTestCase {
 		KnowledgeBase kBase = PersistencyLayer.getKnowledgeBase();
 		BoundMainLayout m = (BoundMainLayout) ((TestedApplicationSession) session).getMasterFrame();
 		Transaction t = kBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
-		m.initBoundComponents(kBase);
+		BoundMainLayout.initPersBoundComps(kBase, Collections.singletonList(m.getConfig()));
 		t.commit();
 
 		session.invalidate();

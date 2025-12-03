@@ -5,7 +5,6 @@
  */
 package com.top_logic.tool.boundsec;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -85,16 +84,6 @@ public abstract class BoundMainLayout extends MainLayout implements LayoutContai
 		// The top-level component cannot be hidden.
 		return null;
 	}
-
-    /**
-     * Call this method to setup the Persitency for all subcomponenets.
-     * 
-     * @return the number of componenets initializes, anything &gt; 0 implies that
-     *         you must commit the given Knlwoedgebase.
-     */
-    public int initBoundComponents(KnowledgeBase kBase) {
-		return initPersBoundComps(kBase, Collections.singletonList(getConfig()));
-    }
 
 	/**
 	 * Call this method to setup the persistence for all subcomponents.

@@ -42,7 +42,11 @@ public class DnD {
 	 */
 	public static final String DND_DATA_PREFIX = "dnd://";
 
-	private static final char DND_DATA_SEPARATOR = '/';
+	/**
+	 * @implNote '/' can not be used as separator, because a part of the data string contains the
+	 *           qualified name of a component which already contains '/'.
+	 */
+	private static final char DND_DATA_SEPARATOR = '|';
 
 	/**
 	 * Control command parameter that receives the drag data URL.
@@ -52,7 +56,7 @@ public class DnD {
 	public static final String DATA_PARAM = "data";
 
 	/**
-	 * Looks up the drag data parameter from the arguments map and parses its contens.
+	 * Looks up the drag data parameter from the arguments map and parses its contents.
 	 * 
 	 * @param context
 	 *        The command {@link DisplayContext}.

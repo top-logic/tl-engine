@@ -559,7 +559,7 @@ services.form = {
 				/**
 				 * For Chrome and IE the dataTransfer data is only available during the drop event handling. 
 				 */
-				data: "dnd://" + scope + "/" + controlElement.id + "/" + dataId,
+				data: "dnd://" + scope + "|" + controlElement.id + "|" + dataId,
 				image: dragImageElement
 			};
 
@@ -1088,7 +1088,7 @@ services.form = {
 				/**
 				 * For Chrome and IE the dataTransfer data is only available during the drop event handling. 
 				 */
-				data: "dnd://" + scope + "/" + controlElement.id + "/" + draggedNodeIDs,
+				data: "dnd://" + scope + "|" + controlElement.id + "|" + draggedNodeIDs,
 				image: dragImageElement
 			};
 			

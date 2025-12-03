@@ -35,12 +35,15 @@ import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLScope;
+import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
@@ -611,12 +614,22 @@ public class BoundHelper extends ManagedClass {
 	 * </p>
 	 * 
 	 * @param type
-	 *        The object type representation. In <i>TopLogic</i> either {@link MetaObject} or
-	 *        {@link Class}.
+	 *        The object type representation.
 	 * @return a checker type name.
 	 */
-    protected String getCheckerTypeForType(Object type) {
-        if (type instanceof MetaObject) {
+	protected final String getCheckerTypeForType(Object type) {
+		if (type instanceof TLClass) {
+			TLClass tlClass = (TLClass) type;
+			TLScope scope = tlClass.getScope();
+			if (scope instanceof TLModule) {
+				return TLModelUtil.qualifiedName(tlClass);
+			} else {
+				/* Can not use full qualified name for local classes, because it contains id of the
+				 * concrete scope element. Better use the checker type of the scope as "scope". */
+				return TLModelUtil.qualifiedName(tlClass.getModule().getName(), getCheckerType(scope),
+					tlClass.getName());
+			}
+		} else if (type instanceof MetaObject) {
             return ((MetaObject) type).getName();
         } else if (type instanceof Class<?>) {
             return ((Class<?>) type).getName();
@@ -634,10 +647,20 @@ public class BoundHelper extends ManagedClass {
 	 * 
 	 * @param anObject
 	 *        The object to find its type for.
-	 * @return In <i>TopLogic</i> either {@link MetaObject} or {@link Class}.
+	 * @return A type for {@link #getCheckerTypeForType(Object)}.
 	 */
-	protected Object getObjectType(Object anObject) {
-        if (anObject instanceof Wrapper) {
+	protected final Object getObjectType(Object anObject) {
+		if (anObject instanceof TLObject) {
+			TLStructuredType tType = ((TLObject) anObject).tType();
+			if (tType != null) {
+				return tType;
+			}
+			if (((TLObject) anObject).tTransient()) {
+				// Transient objects have no table. This actually just occur in tests.
+				return null;
+			}
+			return ApplicationObjectUtil.tableTypeQName(((TLObject) anObject).tTable());
+		} else if (anObject instanceof Wrapper) {
             return ((Wrapper) anObject).tTable();
         }
         else if (anObject instanceof KnowledgeObject) {
@@ -664,8 +687,12 @@ public class BoundHelper extends ManagedClass {
 	 * 
 	 * @see #getObjectType(Object) Finding types for implementations.
 	 */
-	protected List<?> getSuperTypes(Object type) {
-        if (type instanceof MOClass) {
+	protected final List<?> getSuperTypes(Object type) {
+		// Method declared final to prevent introducing even more type abstractions
+		// outside the framework.
+		if (type instanceof TLClass) {
+			return ((TLClass) type).getGeneralizations();
+		} else if (type instanceof MOClass) {
 			MOClass superclass = ((MOClass) type).getSuperclass();
 			return CollectionUtilShared.singletonOrEmptyList(superclass);
         } else if (type instanceof Class<?>) {

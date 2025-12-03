@@ -259,7 +259,7 @@ public class BoundHelper extends ManagedClass {
 	 * @see #getDefaultCheckersForType(TLClass, BoundCommandGroup)
 	 */
 	public final Collection<? extends BoundChecker> getDefaultCheckersForType(TLClass type) {
-		return getDefaultCheckers(getCheckerTypeForType(type), SimpleBoundCommandGroup.READ);
+		return getDefaultCheckersForType(type, SimpleBoundCommandGroup.READ);
 	}
 
 	/**
@@ -389,16 +389,18 @@ public class BoundHelper extends ManagedClass {
 			return Collections.emptyList();
         }
 
-		Iterator<String> theCheckerTypes = this.getBoundCheckerDefaultTypes(anObject).iterator();
+		List<String> checkerTypes = this.getBoundCheckerDefaultTypes(anObject);
 
         // Get the components from the MainLayout that are default for the type
 		Collection<BoundChecker> theCheckers = new HashSet<>();
 
         // search for the most specific type for which bound checkers are registered.
         // Only the checkers registered for that type are returned
-        while (theCheckers.isEmpty() && theCheckerTypes.hasNext()) {
-			String theCheckerType = theCheckerTypes.next();
-            theCheckers.addAll(getBoundHandlers(theCheckerType, aChecker, aBCG));
+		for (String checkerType : checkerTypes) {
+			theCheckers.addAll(getBoundHandlers(checkerType, aChecker, aBCG));
+			if (!theCheckers.isEmpty()) {
+				break;
+			}
         }
 		if (Logger.isDebugEnabled(BoundHelper.class)) {
 			Object typeName = (anObject != null) ? TLModelUtil.qualifiedName(anObject.tType()) : anObject;

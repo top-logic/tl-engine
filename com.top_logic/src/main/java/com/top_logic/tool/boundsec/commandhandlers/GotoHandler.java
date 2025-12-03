@@ -321,7 +321,6 @@ public class GotoHandler extends AbstractCommandHandler {
 			return null;
 		}
 		LayoutComponent theResult = null;
-		boolean isProcessed = false;
 		MainLayout theMain = contextComponent.getMainLayout();
 		LayoutComponent layout;
 		if (targetComponentName == null) {
@@ -357,10 +356,7 @@ public class GotoHandler extends AbstractCommandHandler {
 			}
 		}
 
-		if (targetComponentName != null) {
-			if (layout != null) {
-				isProcessed = true;
-				{
+		if (targetComponentName != null && layout != null) {
 					if (layout instanceof Selectable) {
 						Selectable selectable = (Selectable) layout;
 						boolean selectionChanged = selectable.setSelected(targetObject);
@@ -395,12 +391,7 @@ public class GotoHandler extends AbstractCommandHandler {
 					} else {
 						Logger.info("gotoLayout() failed: target '" + layout + "' did not acceptModel(" + targetObject + ")", this);
 					}
-
-				}
-			}
-		}
-
-		if (!isProcessed) {
+		} else {
 			theResult = theMain.showDefaultFor(targetObject);
 
 			if (theResult != null) {
@@ -456,7 +447,7 @@ public class GotoHandler extends AbstractCommandHandler {
 	public static String getJSCallStatement(DisplayContext context, LayoutComponent targetComponent, Object object) {
 		if (object != null) {
 			boolean canShow = canShow(object, targetComponent);
-			if (canShow) {
+			if (canShow || true) {
 				return getJSCallStatement(context, object, targetComponent != null ? targetComponent.getName() : null);
 			}
 		}

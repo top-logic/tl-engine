@@ -30,6 +30,7 @@ import com.top_logic.basic.i18n.log.I18NLog;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.logging.Level;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.knowledge.gui.layout.upload.AcceptedFileTypesConfig;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
@@ -95,6 +96,7 @@ public class XMLImportCommand extends AbstractCommandHandler implements WithPost
 		Config.PROGRESS_TITLE,
 		Config.PROGRESS_WIDTH,
 		Config.PROGRESS_HEIGHT,
+		Config.ACCEPTED_TYPES_NAME,
 		Config.IMPORT_DEFINITION,
 		Config.TRANSIENT,
 		Config.COMMIT_MESSAGE,
@@ -102,7 +104,8 @@ public class XMLImportCommand extends AbstractCommandHandler implements WithPost
 		Config.POST_PROCESSING,
 		Config.POST_CREATE_ACTIONS,
 	})
-	public interface Config extends AbstractCommandHandler.Config, WithCommitMessage, WithPostCreateActions.Config {
+	public interface Config extends AbstractCommandHandler.Config, WithCommitMessage, WithPostCreateActions.Config,
+			AcceptedFileTypesConfig {
 
 		/** @see #getUploadTitle() */
 		String UPLOAD_TITLE = "upload-title";
@@ -339,6 +342,10 @@ public class XMLImportCommand extends AbstractCommandHandler implements WithPost
 		_actions = TypedConfiguration.getInstanceList(context, config.getPostCreateActions());
 	}
 
+	private Config config() {
+		return (Config) getConfig();
+	}
+
 	private static ResKey fallback(ResKey value, ResKey fallback) {
 		return value == null ? fallback : value;
 	}
@@ -354,6 +361,7 @@ public class XMLImportCommand extends AbstractCommandHandler implements WithPost
 				_dataField = FormFactory.newDataField(INPUT_FIELD, false);
 				_dataField.setLabel(Resources.getInstance().getString(I18NConstants.UPLOAD_FIELD_LABEL));
 				_dataField.setMandatory(true);
+				config().applyAcceptedTypes(_dataField);
 				context.addMember(_dataField);
 			}
 

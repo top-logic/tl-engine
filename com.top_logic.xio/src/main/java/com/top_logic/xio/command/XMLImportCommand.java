@@ -55,7 +55,7 @@ import com.top_logic.layout.form.values.edit.annotation.RenderWholeLine;
 import com.top_logic.layout.messagebox.MessageBox;
 import com.top_logic.layout.messagebox.MessageBox.ButtonType;
 import com.top_logic.layout.messagebox.ProgressDialog;
-import com.top_logic.layout.messagebox.SimpleFormDialog;
+import com.top_logic.layout.messagebox.SimpleTemplateDialog;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.annotate.LabelPosition;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -346,7 +346,7 @@ public class XMLImportCommand extends AbstractCommandHandler implements WithPost
 	@Override
 	public HandlerResult handleCommand(DisplayContext aContext, LayoutComponent aComponent, Object model,
 			Map<String, Object> someArguments) {
-		return new SimpleFormDialog(_uploadTitle, _uploadHeader, _uploadMessage, _uploadWidth, _uploadHeight) {
+		return new SimpleTemplateDialog(_uploadTitle, _uploadHeader, _uploadMessage, _uploadWidth, _uploadHeight) {
 			private DataField _dataField;
 
 			@Override

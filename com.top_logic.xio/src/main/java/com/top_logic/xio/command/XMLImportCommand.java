@@ -25,6 +25,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
+import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.i18n.log.I18NLog;
 import com.top_logic.basic.io.binary.BinaryData;
@@ -274,6 +275,10 @@ public class XMLImportCommand extends AbstractCommandHandler implements WithPost
 		@Override
 		@FormattedDefault(SimpleBoundCommandGroup.CREATE_NAME)
 		CommandGroupReference getGroup();
+
+		@Override
+		@StringDefault("*.xml")
+		String getAcceptedTypes();
 
 		/**
 		 * Container for the import handler definition.

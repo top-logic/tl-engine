@@ -1,5 +1,14 @@
 <div>
 <h1>Dynamic HTML generation</h1>
+<ul>
+{
+    count(10).map(x -> 
+		{{{
+		<li>{$x / 4}</li>
+		}}}
+    )
+}
+</ul>
 <p>
 	A multiplication table: 
 </p>

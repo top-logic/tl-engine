@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
-import com.top_logic.element.comment.wrap.Comment;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
@@ -65,11 +64,4 @@ public class CommentTableModelBuilder implements ListModelBuilder {
             return null;
         }
 
-        /**
-         * @see com.top_logic.mig.html.ListModelBuilder#supportsListElement(com.top_logic.mig.html.layout.LayoutComponent, java.lang.Object)
-         */
-        @Override
-		public boolean supportsListElement(LayoutComponent aComponent, Object anObject) {
-            return (anObject instanceof Comment);
-        }
     }

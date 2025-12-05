@@ -17,6 +17,7 @@ import com.top_logic.dob.MetaObject;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
+import com.top_logic.mig.html.ElementUpdate;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
@@ -61,8 +62,12 @@ public class KOInstanceTableModelBuilder extends AbstractConfiguredInstance<KOIn
 	}
 
 	@Override
-	public boolean supportsListElement(LayoutComponent aComponent, Object anObject) {
-		return (anObject instanceof Wrapper) && ((Wrapper) anObject).tTable().getName().equals(metaObjectName);
+	public ElementUpdate supportsListElement(LayoutComponent contextComponent, Object listElement) {
+		return ElementUpdate.fromDecision(shouldDisplay(contextComponent, listElement));
+	}
+
+	private boolean shouldDisplay(LayoutComponent contextComponent, Object listElement) {
+		return (listElement instanceof Wrapper) && ((Wrapper) listElement).tTable().getName().equals(metaObjectName);
 	}
 
 	@Override

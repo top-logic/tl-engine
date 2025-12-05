@@ -13,6 +13,7 @@ import com.top_logic.element.meta.MetaElementHolder;
 import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.layout.table.component.TableComponent;
+import com.top_logic.mig.html.ElementUpdate;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLClass;
@@ -45,13 +46,13 @@ public class MetaElementTableListModelBuilder implements ListModelBuilder {
 		return theHolder;
 	}
 
-	/**
-	 * @see com.top_logic.mig.html.ListModelBuilder#supportsListElement(com.top_logic.mig.html.layout.LayoutComponent,
-	 *      java.lang.Object)
-	 */
 	@Override
-	public boolean supportsListElement(LayoutComponent component, Object anObject) {
-		return anObject instanceof TLClass;
+	public ElementUpdate supportsListElement(LayoutComponent contextComponent, Object listElement) {
+		return ElementUpdate.fromDecision(shouldDisplay(contextComponent, listElement));
+	}
+
+	private boolean shouldDisplay(LayoutComponent contextComponent, Object listElement) {
+		return listElement instanceof TLClass;
 	}
 
 	/**

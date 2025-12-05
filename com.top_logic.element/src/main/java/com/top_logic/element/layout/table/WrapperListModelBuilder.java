@@ -21,6 +21,7 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.element.meta.kbbased.AbstractWrapperResolver;
 import com.top_logic.knowledge.wrap.Wrapper;
+import com.top_logic.mig.html.ElementUpdate;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLClass;
@@ -89,7 +90,11 @@ public class WrapperListModelBuilder<C extends WrapperListModelBuilder.Config> e
 	}
 
 	@Override
-	public boolean supportsListElement(LayoutComponent contextComponent, Object listElement) {
+	public ElementUpdate supportsListElement(LayoutComponent contextComponent, Object listElement) {
+		return ElementUpdate.fromDecision(shouldDisplay(contextComponent, listElement));
+	}
+
+	private boolean shouldDisplay(LayoutComponent contextComponent, Object listElement) {
 		if (listElement instanceof TLObject) {
 			TLObject wrapper = (TLObject) listElement;
 			return _types.contains(wrapper.tType());

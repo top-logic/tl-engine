@@ -187,6 +187,7 @@ import com.top_logic.layout.tree.component.TreeModelBuilder;
 import com.top_logic.layout.tree.component.WithSelectionPath;
 import com.top_logic.layout.tree.model.TreeViewConfig;
 import com.top_logic.mig.html.AbstractRestrainedSelectionModel;
+import com.top_logic.mig.html.ElementUpdate;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.ModelBuilder;
 import com.top_logic.mig.html.SelectionModel;
@@ -959,12 +960,13 @@ public class GridComponent extends EditComponent implements
 		}
 		gridBuilder().receiveModelChangedEvent(this, aModel);
 		invalidateSelection();
-		if (!supportsRow(aModel)) {
+		ElementUpdate decision = supportsRow(aModel);
+		if (decision == ElementUpdate.NO_CHANGE) {
 			return false;
 		}
 
 		FormGroup formGroup = getRowGroup(aModel);
-		if (formGroup == null && this.isRelevant(aModel, someChangedBy) && isVisible()) {
+		if (formGroup == null && decision.shouldAdd() && isVisible()) {
 			this.invalidate();
 			formGroup = getRowGroup(aModel);
 		}
@@ -1690,20 +1692,6 @@ public class GridComponent extends EditComponent implements
             }
 			createFields();
         }
-    }
-
-    /**
-     * Check, if the given model is relevant for this component.
-     *
-     * Currently this will only be asked in {@link #receiveModelChangedEvent(Object, Object)}
-     * if the model is supported but cannot be found in the form group.
-     *
-     * @param    aModel       The model to be inspected, must not be <code>null</code>.
-     * @param    changedBy    The changing component (may be MainLayout).
-     * @return   <code>true</code> if it has to be displayed in this grid.
-     */
-    protected boolean isRelevant(Object aModel, Object changedBy) {
-        return false;
     }
 
     /**
@@ -3113,7 +3101,7 @@ public class GridComponent extends EditComponent implements
 					// Last node may be the transient.
 					return false;
 				}
-				if (!gridBuilder.supportsRow(grid, lastNode)) {
+				if (gridBuilder.supportsRow(grid, lastNode).shouldRemove()) {
 					return false;
 				}
 			} else {
@@ -3991,7 +3979,7 @@ public class GridComponent extends EditComponent implements
 		return ((TLObject) rowObject).tValid();
 	}
 
-	private boolean supportsRow(Object element) {
+	private ElementUpdate supportsRow(Object element) {
 		return gridBuilder().supportsRow(this, element);
 	}
 

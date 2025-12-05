@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.List;
 
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.mig.html.ElementUpdate;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
@@ -31,12 +32,13 @@ public class PersonTableModelBuilder implements ListModelBuilder{
 	    return component.getModel();
     }
 
-    /**
-     * This is a Table of Person Wrappers.
-     */
 	@Override
-	public boolean supportsListElement(LayoutComponent component, Object anObject) {
-		 return (anObject instanceof Person);
+	public ElementUpdate supportsListElement(LayoutComponent contextComponent, Object listElement) {
+		return ElementUpdate.fromDecision(shouldDisplay(contextComponent, listElement));
+	}
+
+	private boolean shouldDisplay(LayoutComponent contextComponent, Object listElement) {
+		return (listElement instanceof Person);
     }
 
     /**

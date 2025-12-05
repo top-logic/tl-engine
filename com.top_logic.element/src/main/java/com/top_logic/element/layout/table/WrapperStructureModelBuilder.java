@@ -136,7 +136,7 @@ public class WrapperStructureModelBuilder<C extends WrapperStructureModelBuilder
 			return false;
 		} else if (aNode == _root) {
 			return true;
-		} else if (_builder.supportsListElement(contextComponent, aNode)) {
+		} else if (!_builder.supportsListElement(contextComponent, aNode).shouldRemove()) {
 			return true;
 		} else {
 			return hasRelevantParts((Wrapper) aNode, _partsPerTargetType);

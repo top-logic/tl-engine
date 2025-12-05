@@ -16,6 +16,7 @@ import com.top_logic.layout.form.model.TableField;
 import com.top_logic.layout.table.TableModel;
 import com.top_logic.layout.table.model.TableConfiguration;
 import com.top_logic.layout.tree.component.TreeModelBuilder;
+import com.top_logic.mig.html.ElementUpdate;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.ModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
@@ -231,8 +232,8 @@ public interface GridBuilder<R> extends ModelBuilder {
 			Mapping<Object, ? extends R> toRow, Mapping<? super R, ?> toModel);
 
 	/**
-	 * Whether the given element displayed by the {@link GridComponent} using this
-	 * {@link GridBuilder}.
+	 * Whether the given created/updated element now/still be displayed the {@link GridComponent}
+	 * using this {@link GridBuilder}.
 	 * 
 	 * @param grid
 	 *        The context {@link GridComponent}.
@@ -242,7 +243,7 @@ public interface GridBuilder<R> extends ModelBuilder {
 	 * 
 	 * @see ListModelBuilder#supportsListElement(LayoutComponent, Object)
 	 */
-	boolean supportsRow(GridComponent grid, Object row);
+	ElementUpdate supportsRow(GridComponent grid, Object row);
 
 	/**
 	 * Find the component model so that {@link #supportsRow(GridComponent, Object)} for would be

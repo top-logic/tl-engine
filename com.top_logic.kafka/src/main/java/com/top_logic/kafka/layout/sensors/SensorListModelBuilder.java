@@ -98,11 +98,6 @@ public class SensorListModelBuilder extends AbstractConfiguredInstance<SensorLis
     }
 
     @Override
-    public boolean supportsListElement(LayoutComponent aComponent, Object anElement) {
-        return (anElement instanceof Sensor);
-    }
-
-    @Override
     public Object retrieveModelFromListElement(LayoutComponent aComponent, Object anElement) {
         return null;
     }

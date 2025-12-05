@@ -8,9 +8,9 @@ package com.top_logic.element.layout.instances;
 import java.util.Collection;
 
 import com.top_logic.element.meta.MetaElementUtil;
+import com.top_logic.mig.html.ElementUpdate;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
@@ -43,16 +43,16 @@ public class DirectInstances implements ListModelBuilder {
 	}
 
 	@Override
-	public boolean supportsListElement(LayoutComponent contextComponent, Object listElement) {
+	public ElementUpdate supportsListElement(LayoutComponent contextComponent, Object listElement) {
+		return ElementUpdate.fromDecision(shouldDisplay(contextComponent, listElement));
+	}
+
+	private boolean shouldDisplay(LayoutComponent contextComponent, Object listElement) {
 		if (!(listElement instanceof TLObject)) {
 			return false;
 		}
 		TLStructuredType tType = ((TLObject) listElement).tType();
-		if (tType == null) {
-			// internal type
-			return false;
-		}
-		return tType.getModelKind() == ModelKind.CLASS;
+		return tType == contextComponent.getModel();
 	}
 
 	@Override

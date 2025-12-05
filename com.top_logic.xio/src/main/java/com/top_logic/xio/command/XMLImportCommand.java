@@ -25,11 +25,13 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
+import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.i18n.log.I18NLog;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.logging.Level;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.knowledge.gui.layout.upload.AcceptedFileTypesConfig;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
@@ -55,7 +57,7 @@ import com.top_logic.layout.form.values.edit.annotation.RenderWholeLine;
 import com.top_logic.layout.messagebox.MessageBox;
 import com.top_logic.layout.messagebox.MessageBox.ButtonType;
 import com.top_logic.layout.messagebox.ProgressDialog;
-import com.top_logic.layout.messagebox.SimpleFormDialog;
+import com.top_logic.layout.messagebox.SimpleTemplateDialog;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.annotate.LabelPosition;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -65,6 +67,7 @@ import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
+import com.top_logic.util.Resources;
 import com.top_logic.util.model.ModelService;
 import com.top_logic.xio.importer.XmlImporter;
 import com.top_logic.xio.importer.binding.ApplicationModelBinding;
@@ -94,6 +97,7 @@ public class XMLImportCommand extends AbstractCommandHandler implements WithPost
 		Config.PROGRESS_TITLE,
 		Config.PROGRESS_WIDTH,
 		Config.PROGRESS_HEIGHT,
+		Config.ACCEPTED_TYPES_NAME,
 		Config.IMPORT_DEFINITION,
 		Config.TRANSIENT,
 		Config.COMMIT_MESSAGE,
@@ -101,7 +105,8 @@ public class XMLImportCommand extends AbstractCommandHandler implements WithPost
 		Config.POST_PROCESSING,
 		Config.POST_CREATE_ACTIONS,
 	})
-	public interface Config extends AbstractCommandHandler.Config, WithCommitMessage, WithPostCreateActions.Config {
+	public interface Config extends AbstractCommandHandler.Config, WithCommitMessage, WithPostCreateActions.Config,
+			AcceptedFileTypesConfig {
 
 		/** @see #getUploadTitle() */
 		String UPLOAD_TITLE = "upload-title";
@@ -271,6 +276,10 @@ public class XMLImportCommand extends AbstractCommandHandler implements WithPost
 		@FormattedDefault(SimpleBoundCommandGroup.CREATE_NAME)
 		CommandGroupReference getGroup();
 
+		@Override
+		@StringDefault("*.xml")
+		String getAcceptedTypes();
+
 		/**
 		 * Container for the import handler definition.
 		 */
@@ -338,6 +347,10 @@ public class XMLImportCommand extends AbstractCommandHandler implements WithPost
 		_actions = TypedConfiguration.getInstanceList(context, config.getPostCreateActions());
 	}
 
+	private Config config() {
+		return (Config) getConfig();
+	}
+
 	private static ResKey fallback(ResKey value, ResKey fallback) {
 		return value == null ? fallback : value;
 	}
@@ -345,13 +358,15 @@ public class XMLImportCommand extends AbstractCommandHandler implements WithPost
 	@Override
 	public HandlerResult handleCommand(DisplayContext aContext, LayoutComponent aComponent, Object model,
 			Map<String, Object> someArguments) {
-		return new SimpleFormDialog(_uploadTitle, _uploadHeader, _uploadMessage, _uploadWidth, _uploadHeight) {
+		return new SimpleTemplateDialog(_uploadTitle, _uploadHeader, _uploadMessage, _uploadWidth, _uploadHeight) {
 			private DataField _dataField;
 
 			@Override
 			protected void fillFormContext(FormContext context) {
 				_dataField = FormFactory.newDataField(INPUT_FIELD, false);
+				_dataField.setLabel(Resources.getInstance().getString(I18NConstants.UPLOAD_FIELD_LABEL));
 				_dataField.setMandatory(true);
+				config().applyAcceptedTypes(_dataField);
 				context.addMember(_dataField);
 			}
 

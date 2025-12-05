@@ -209,7 +209,7 @@ public class CommandDispatcher {
         	}
     
         	return theResult;
-		} catch (TopLogicException ex) {
+		} catch (I18NRuntimeException ex) {
 			HandlerResult error = new HandlerResult();
 			error.setException(ex);
 			return error;
@@ -262,7 +262,7 @@ public class CommandDispatcher {
 	}
 
 	private ResKey getErrorKey(HandlerResult result) {
-		TopLogicException problem = result.getException();
+		I18NRuntimeException problem = result.getException();
 		if (problem != null) {
 			return getErrorKey(problem);
 		}
@@ -274,7 +274,7 @@ public class CommandDispatcher {
 		return null;
 	}
 
-	private ResKey getErrorKey(TopLogicException problem) {
+	private ResKey getErrorKey(I18NRuntimeException problem) {
 		ResKey errorKey;
 		errorKey = problem.getErrorKey();
 	

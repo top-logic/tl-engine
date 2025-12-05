@@ -87,11 +87,24 @@ public abstract class RenderExpression extends SearchExpression {
 			}
 		} else if (value instanceof HTMLFragment) {
 			((HTMLFragment) value).write(context, out);
-		} else if (value instanceof Number) {
+		} else if (value instanceof Number num) {
 			// No internationalized formatting for numbers. Otherwise it is almost impossible to
 			// compute values for technical attributes like width and height. If formatting is
 			// required, this can be done explicitly.
-			out.writeText(value.toString());
+			if (value instanceof Long x) {
+				out.writeText(x.toString());
+			} else if (value instanceof Integer x) {
+				out.writeInt(x.intValue());
+			} else {
+				double x = num.doubleValue();
+				if (Math.round(x) == x && x >= Long.MIN_VALUE && x <= Long.MAX_VALUE) {
+					// Do not output .0 when the number was de-facto an integer (TL-Script only
+					// operates on doubles).
+					out.writeText(Long.toString(num.longValue()));
+				} else {
+					out.writeText(num.toString());
+				}
+			}
 		} else {
 			Renderer<? super Object> valueRenderer = LabelProviderService.getInstance().getRenderer(value);
 			if (valueRenderer == null) {

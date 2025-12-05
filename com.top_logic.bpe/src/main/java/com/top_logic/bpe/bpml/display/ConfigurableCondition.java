@@ -31,12 +31,6 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  */
 public class ConfigurableCondition extends AbstractConfiguredInstance<ConfigurableCondition.Config<?>> implements RuleCondition {
 
-	private static final ResKey DEFAULT_MESSAGE_WARNING =
-		ResKey.text("You can proceed via this path, but its condition is not fully satisfied.");
-
-	private static final ResKey DEFAULT_MESSAGE_ERROR =
-		ResKey.text("You cannot proceed via this path due to an unmet condition.");
-
 	private final QueryExecutor _condition;
 
 	private final RuleType _ruleType;
@@ -155,9 +149,9 @@ public class ConfigurableCondition extends AbstractConfiguredInstance<Configurab
 			return _message;
 		}
 		if (_ruleType == RuleType.WARNING) {
-			return DEFAULT_MESSAGE_WARNING;
+			return I18NConstants.DEFAULT_MESSAGE_WARNING;
 		}
-		return DEFAULT_MESSAGE_ERROR;
+		return I18NConstants.DEFAULT_MESSAGE_ERROR;
 	}
 
 	/**

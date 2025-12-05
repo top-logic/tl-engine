@@ -630,7 +630,7 @@ services.form = {
 					var position = services.form.TableControl._getDropPosition(event, controlElement, row);
 					
 					if(services.ajax.mainLayout.tlDnD.cache !== undefined) {
-						var isDropable = services.ajax.mainLayout.tlDnD.cache.get(services.ajax.mainLayout.tlDnD.data.split("/").pop(), row.id);
+						var isDropable = services.ajax.mainLayout.tlDnD.cache.get(services.ajax.mainLayout.tlDnD.data.split("|").pop(), row.id);
 						
 						if(isDropable !== undefined) {
 							if(isDropable) {
@@ -681,12 +681,12 @@ services.form = {
 		changeToNoDropCursor: function(targetID) {
 			this.resetMarker();
 			
-			services.form._putToDnDCache(services.ajax.mainLayout.tlDnD.data.split("/").pop(), targetID, false);
+			services.form._putToDnDCache(services.ajax.mainLayout.tlDnD.data.split("|").pop(), targetID, false);
 		},
 		
 		displayDropMarker: function(targetID, position) {
 			this.displayDropMarkerInternal(document.getElementById(targetID), position);
-			services.form._putToDnDCache(services.ajax.mainLayout.tlDnD.data.split("/").pop(), targetID, true);
+			services.form._putToDnDCache(services.ajax.mainLayout.tlDnD.data.split("|").pop(), targetID, true);
 
 			return false;
 		},
@@ -1113,7 +1113,7 @@ services.form = {
 				
 				if(dropTarget !== undefined) {
 					if(services.ajax.mainLayout.tlDnD.cache !== undefined) {
-						var isDropable = services.ajax.mainLayout.tlDnD.cache.get(services.ajax.mainLayout.tlDnD.data.split("/").pop(), dropTarget.node.id);
+						var isDropable = services.ajax.mainLayout.tlDnD.cache.get(services.ajax.mainLayout.tlDnD.data.split("|").pop(), dropTarget.node.id);
 						
 						if(isDropable !== undefined) {
 							var isDropableAtPosition = isDropable[dropTarget.position];
@@ -1152,7 +1152,7 @@ services.form = {
 		changeToNoDropCursor: function(targetID, pos) {
 			this.resetMarker();
 			
-			var sourceID = services.ajax.mainLayout.tlDnD.data.split("/").pop();
+			var sourceID = services.ajax.mainLayout.tlDnD.data.split("|").pop();
 			this.addToDnDCache(sourceID, targetID, pos, false);
 		},
 		
@@ -1173,7 +1173,7 @@ services.form = {
 		
 		displayDropMarker: function(targetID, pos) {
 			this.displayDropMarkerInternal(document.getElementById(targetID), pos);
-			var sourceID = services.ajax.mainLayout.tlDnD.data.split("/").pop();
+			var sourceID = services.ajax.mainLayout.tlDnD.data.split("|").pop();
 			this.addToDnDCache(sourceID, targetID, pos, true);
 
 			return false;

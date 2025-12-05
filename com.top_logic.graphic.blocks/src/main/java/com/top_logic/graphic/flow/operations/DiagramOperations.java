@@ -58,8 +58,8 @@ public interface DiagramOperations extends Drawable, SVGClickHandler {
 			self().getViewBoxY(),
 			self().getViewBoxWidth(),
 			self().getViewBoxHeight());
-		out.write(root);
 		self().setClickHandler(out.attachOnClick(this, self()));
+		out.write(root);
 		out.endSvg();
 	}
 

@@ -732,9 +732,9 @@ public class JSDiagramControl extends AbstractJSControl
 			var argsSupplier = function() {
 				var patch = patchSupplier();
 				return {
-					controlCommand:"update",
-					controlID:id,
-					patch:patch
+					controlCommand : "update",
+					controlID : id,
+					patch : patch
 				};
 			};
 			$wnd.services.ajax.executeOrUpdateWithLazyData(requestID, "dispatchControlCommand", argsSupplier);
@@ -744,9 +744,9 @@ public class JSDiagramControl extends AbstractJSControl
 	private native void sendUpdate(String id, String patch, double requestID) /*-{
 		$wnd.services.ajax.dropLazyRequest(requestID);
 		$wnd.services.ajax.execute("dispatchControlCommand", {
-			controlCommand:"update",
-			controlID:id,
-			patch:patch
+			controlCommand : "update",
+			controlID : id,
+			patch : patch
 		}, true)
 	}-*/;
 
@@ -804,24 +804,24 @@ public class JSDiagramControl extends AbstractJSControl
 	}
 
 	private native boolean hasWindowTlDnD() /*-{
-		return !($wnd.tlDnD === undefined);
+		return !($wnd.services.ajax.mainLayout.tlDnD === undefined);
 	}-*/;
 
 	private native void dispatchClick(String id, int nodeId, JsArrayString mouseButtons) /*-{
 		$wnd.services.ajax.execute("dispatchControlCommand", {
-			controlCommand:"dispatchClick",
-			controlID:id,
-			nodeId:nodeId,
-			mouseButtons:mouseButtons
+			controlCommand : "dispatchClick",
+			controlID : id,
+			nodeId : nodeId,
+			mouseButtons : mouseButtons
 		}, false)
 	}-*/;
 
 	private native void dispatchDrop(String id, int nodeId) /*-{
 		$wnd.services.ajax.execute("dispatchControlCommand", {
-			controlCommand:"dispatchDrop",
-			controlID:id,
-			nodeId:nodeId,
-			data:$wnd.tlDnD.data
+			controlCommand : "dispatchDrop",
+			controlID : id,
+			nodeId : nodeId,
+			data : $wnd.services.ajax.mainLayout.tlDnD.data
 		}, false)
 	}-*/;
 }

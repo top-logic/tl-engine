@@ -55,8 +55,7 @@ public class JavaScript {
      * Initiates JavaScript execution for the specified web response.
      */
     public static void run( WebResponse response ) throws IllegalAccessException, InstantiationException,
-            InvocationTargetException, ClassDefinitionException, NotAFunctionException,
-            PropertyException, SAXException, JavaScriptException {
+            InvocationTargetException, EvaluatorException, SAXException, JavaScriptException {
         Context context = Context.enter();
         // suggest bug fix for large java scripts see
         // bug report [ 1216567 ] Exception for large javascripts
@@ -75,14 +74,14 @@ public class JavaScript {
     /**
      * Runs the onload event for the specified web response.
      */
-    public static void load( WebResponse response ) throws ClassDefinitionException, InstantiationException, IllegalAccessException, InvocationTargetException, PropertyException, JavaScriptException, SAXException, NotAFunctionException {
+    public static void load( WebResponse response ) throws EvaluatorException, InstantiationException, IllegalAccessException, InvocationTargetException, JavaScriptException, SAXException, EvaluatorException {
         if (!(response.getScriptableObject().getScriptEngine() instanceof JavaScriptEngine)) run( response );
         response.getScriptableObject().load();
     }
 
 
     private static void initHTMLObjects( Scriptable scope ) throws IllegalAccessException, InstantiationException,
-            InvocationTargetException, ClassDefinitionException, PropertyException {
+            InvocationTargetException, EvaluatorException {
         ScriptableObject.defineClass( scope, Window.class );
         ScriptableObject.defineClass( scope, Document.class );
         ScriptableObject.defineClass( scope, Style.class );
@@ -105,8 +104,8 @@ public class JavaScript {
      * abstract Engine for JavaScript
      */
     abstract static class JavaScriptEngine extends ScriptingEngineImpl {
-
-        protected ScriptableDelegate _scriptable;
+		private static final long serialVersionUID = -5463439064536594762L;
+		protected ScriptableDelegate _scriptable;
         protected JavaScriptEngine   _parent;
 
         /**
@@ -115,7 +114,7 @@ public class JavaScript {
          * @scriptable - the scriptable object to do the initialization for
          */
         void initialize( JavaScriptEngine parent, ScriptableDelegate scriptable )
-                throws SAXException, PropertyException, JavaScriptException, NotAFunctionException {
+                throws SAXException, JavaScriptException, EvaluatorException {
             _scriptable = scriptable;
             _scriptable.setScriptEngine( this );
             _parent = parent;
@@ -274,8 +273,8 @@ public class JavaScript {
 
 
     static public class Window extends JavaScriptEngine {
-
-        private Document     _document;
+		private static final long serialVersionUID = -1227959217046504174L;
+		private Document     _document;
         private Navigator    _navigator;
         private Location     _location;
         private Screen       _screen;
@@ -305,7 +304,7 @@ public class JavaScript {
         }
 
 
-        public Scriptable jsGet_frames() throws SAXException, PropertyException, JavaScriptException, NotAFunctionException {
+        public Scriptable jsGet_frames() throws SAXException, JavaScriptException, EvaluatorException {
             if (_frames == null) {
                 WebResponse.Scriptable scriptables[] = getDelegate().getFrames();
                 Window[] frames = new Window[ scriptables.length ];
@@ -350,7 +349,7 @@ public class JavaScript {
          * @scriptable - the scriptable object to do the initialization for
          */
         void initialize( JavaScriptEngine parent, ScriptableDelegate scriptable )
-                throws JavaScriptException, NotAFunctionException, PropertyException, SAXException {
+                throws JavaScriptException, EvaluatorException, SAXException {
             super.initialize( parent, scriptable );
 
             _location = (Location) Context.getCurrentContext().newObject( this, "Location" );
@@ -401,7 +400,7 @@ public class JavaScript {
 
 
         public Window jsFunction_open( Object url, String name, String features, boolean replace )
-                throws PropertyException, JavaScriptException, NotAFunctionException, IOException, SAXException {
+                throws JavaScriptException, EvaluatorException, IOException, SAXException {
             WebResponse.Scriptable delegate = getDelegate().open( toStringIfNotUndefined( url ), name, features, replace );
             return delegate == null ? null : (Window) toScriptable( delegate );
         }
@@ -432,8 +431,8 @@ public class JavaScript {
      * Document script handling
      */
     static public class Document extends JavaScriptEngine {
-
-        private ElementArray _forms;
+		private static final long serialVersionUID = -234729825030477528L;
+		private ElementArray _forms;
         private ElementArray _links;
         private ElementArray _images;
         private StringBuffer _writeBuffer;
@@ -561,8 +560,8 @@ public class JavaScript {
 
 
     static public class Location extends JavaScriptEngine {
-
-        private URL _url;
+		private static final long serialVersionUID = -2468753452781742615L;
+		private URL _url;
         private Window _window;
 
         public String getClassName() {
@@ -639,7 +638,7 @@ public class JavaScript {
          * Note that this method is necessary, since Rhino will only call the toString method directly if there are no
          * Rhino methods defined (jsGet_*, jsFunction_*, etc.)
          */
-        public Object getDefaultValue( Class typeHint ) {
+        public Object getDefaultValue( Class<?> typeHint ) {
             return _url.toExternalForm();
         }
 
@@ -652,8 +651,8 @@ public class JavaScript {
 
 
     static public class Style extends JavaScriptEngine {
-
-        private String _display    = "inline";
+		private static final long serialVersionUID = 5872419195669437538L;
+		private String _display    = "inline";
         private String _visibility = "visible";
 
 
@@ -684,8 +683,8 @@ public class JavaScript {
 
 
     static public class Navigator extends JavaScriptEngine {
-
-        private ClientProperties _clientProperties;
+		private static final long serialVersionUID = -7952859084619677684L;
+		private ClientProperties _clientProperties;
 
         public String getClassName() {
             return "Navigator";
@@ -736,8 +735,8 @@ public class JavaScript {
 
 
     static public class Screen extends JavaScriptEngine {
-
-        private ClientProperties _clientProperties;
+		private static final long serialVersionUID = -1694538884746487476L;
+		private ClientProperties _clientProperties;
 
 
         void setClientProperties( ClientProperties clientProperties ) {
@@ -764,16 +763,14 @@ public class JavaScript {
 
 
     static public class ElementArray extends ScriptableObject {
-
-        private JavaScriptEngine _contents[] = new HTMLElement[0];
+		private static final long serialVersionUID = 7543007219051599184L;
+		private JavaScriptEngine _contents[] = new HTMLElement[0];
 
 
         static ElementArray newElementArray( Scriptable parent ) {
             try {
                 return (ElementArray) Context.getCurrentContext().newObject( parent, "ElementArray" );
-            } catch (PropertyException e) {
-                throw new RhinoException( e );
-            } catch (NotAFunctionException e) {
+            } catch (EvaluatorException e) {
                 throw new RhinoException( e );
             } catch (JavaScriptException e) {
                 throw new RhinoException( e );
@@ -831,8 +828,8 @@ public class JavaScript {
      * HTML Element support for JavaScript
      */
     static public class HTMLElement extends JavaScriptEngine {
-
-        private Style _style;
+		private static final long serialVersionUID = 9063754080919148068L;
+		private Style _style;
         private Document _document;
 
 
@@ -860,7 +857,7 @@ public class JavaScript {
         }
 
         void initialize( JavaScriptEngine parent, ScriptableDelegate scriptable )
-                throws JavaScriptException, NotAFunctionException, PropertyException, SAXException {
+                throws JavaScriptException, EvaluatorException, SAXException {
             super.initialize( parent, scriptable );
             _document = (Document) parent;
             _style = (Style) Context.getCurrentContext().newObject( this, "Style" );
@@ -870,16 +867,19 @@ public class JavaScript {
 
 
     static public class Image extends HTMLElement {
+		private static final long serialVersionUID = -3893753209769595211L;
 
-        public String getClassName() {
+		public String getClassName() {
             return "Image";
         }
     }
 
 
     static public class Link extends HTMLElement {
+		private static final long serialVersionUID = 60529567262561512L;
 
-        public Document jsGet_document() {
+
+		public Document jsGet_document() {
             return super.jsGet_document();
         }
 
@@ -891,8 +891,8 @@ public class JavaScript {
 
 
     static public class Form extends HTMLElement {
-
-        private ElementArray _controls;
+		private static final long serialVersionUID = 4501913657680842856L;
+		private ElementArray _controls;
 
         public String getClassName() {
             return "Form";
@@ -912,7 +912,7 @@ public class JavaScript {
         }
 
 
-        public Scriptable jsGet_elements() throws PropertyException, NotAFunctionException, JavaScriptException {
+        public Scriptable jsGet_elements() throws EvaluatorException, JavaScriptException {
             if (_controls == null) {
                 initializeControls();
             }
@@ -935,7 +935,7 @@ public class JavaScript {
         }
 
 
-        private void initializeControls() throws PropertyException, NotAFunctionException, JavaScriptException {
+        private void initializeControls() throws EvaluatorException, JavaScriptException {
             ScriptableDelegate scriptables[] = getDelegate().getElementDelegates();
             Control[] controls = new Control[ scriptables.length ];
             for (int i = 0; i < controls.length; i++) {
@@ -957,8 +957,8 @@ public class JavaScript {
      * Javascript support for any control 
      */
     static public class Control extends JavaScriptEngine {
-
-        private Form _form;
+		private static final long serialVersionUID = 4100230746716002725L;
+		private Form _form;
 
         public String getClassName() {
             return "Control";
@@ -1011,7 +1011,7 @@ public class JavaScript {
         }
 
         void initialize( JavaScriptEngine parent, ScriptableDelegate scriptable )
-                throws JavaScriptException, NotAFunctionException, PropertyException, SAXException {
+                throws JavaScriptException, EvaluatorException, SAXException {
             super.initialize( parent, scriptable );
             if (parent instanceof Form) _form = (Form) parent;
         }
@@ -1021,8 +1021,10 @@ public class JavaScript {
 
 
     static public class Options extends JavaScriptEngine {
+		private static final long serialVersionUID = -8031429930848706814L;
 
-        public String getClassName() {
+
+		public String getClassName() {
             return "Options";
         }
 
@@ -1057,8 +1059,10 @@ public class JavaScript {
 
 
     static public class Option extends JavaScriptEngine {
+		private static final long serialVersionUID = 8172404557810380541L;
 
-        public String getClassName() {
+
+		public String getClassName() {
             return "Option";
         }
 
@@ -1120,8 +1124,8 @@ public class JavaScript {
  * special exception for the Rhino Javscript engine
  */
 class RhinoException extends RuntimeException {
-
-    private Exception _cause;
+	private static final long serialVersionUID = -5728117739016538991L;
+	private Exception _cause;
 
 
     public RhinoException( Exception cause ) {

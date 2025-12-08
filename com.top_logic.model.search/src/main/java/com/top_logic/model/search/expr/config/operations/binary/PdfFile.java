@@ -466,8 +466,12 @@ public class PdfFile extends GenericMethod {
 			float resolutionFactor = resolution / DPI_TO_POINTS_FACTOR;
 			ITextRenderer renderer = new ITextRenderer(resolutionFactor, ANTI_ALIASING_PASSES);
 
+			ChainingReplacedElementFactory replacedElementFactory = new ChainingReplacedElementFactory();
+			replacedElementFactory.addFactory(new SVGReplacedElementFactory());
+			replacedElementFactory.addFactory(renderer.getSharedContext().getReplacedElementFactory());
+			
 			// Configure SVG support for rendering SVG images in HTML
-			renderer.getSharedContext().setReplacedElementFactory(new SVGReplacedElementFactory());
+			renderer.getSharedContext().setReplacedElementFactory(replacedElementFactory);
 
 			// Inject page size and margins into HTML if not already present
 			String htmlWithPageStyles = injectPageStyles(html, pageWidth, pageHeight,

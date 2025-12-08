@@ -70,6 +70,9 @@ public interface RoleRuleConfig extends ConfigurationItem {
 	/** Name of the value of {@link #isInherit()} in the configuration. */
 	String XML_ATTRIBUTE_INHERIT = "inherit";
 
+	/** Name of the value of {@link #getExpression()} in the configuration. */
+	String XML_ATTRIBUTE_EXPRESSION = "expression";
+
 	/**
 	 * The configuration of the steps to get from the source object to the target object to apply
 	 * role to.
@@ -77,6 +80,21 @@ public interface RoleRuleConfig extends ConfigurationItem {
 	@Name(RoleRuleConfig.XML_TAG_PATH_ELEMENT)
 	@EntryTag(RoleRuleConfig.XML_TAG_STEP_ELEMENT)
 	List<PathElementConfig> getPathElements();
+
+	/**
+	 * TLExpression that computes the target objects for role inheritance.
+	 * <p>
+	 * Mutually exclusive with {@link #getPathElements()}. The expression receives the source
+	 * object (where the role is assigned) as its argument and must return a collection of target
+	 * objects onto which the role is inherited.
+	 * </p>
+	 * <p>
+	 * The expression uses lambda syntax where the user defines the parameter name, e.g.:
+	 * <code>source -> singleton(\`MyModule#MY_SINGLETON\`)</code>
+	 * </p>
+	 */
+	@Name(RoleRuleConfig.XML_ATTRIBUTE_EXPRESSION)
+	String getExpression();
 
 	/**
 	 * Full qualified name of the {@link TLClass} to that an object must have to get the given

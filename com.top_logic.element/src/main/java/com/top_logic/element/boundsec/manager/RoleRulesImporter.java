@@ -21,6 +21,7 @@ import com.top_logic.basic.util.ResKey2;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.ex.UnknownTypeException;
 import com.top_logic.element.boundsec.manager.ElementAccessImporter.ApplicationRoleHolder;
+import com.top_logic.element.boundsec.manager.rule.ExpressionPathElement;
 import com.top_logic.element.boundsec.manager.rule.IdentityPathElement;
 import com.top_logic.element.boundsec.manager.rule.PathElement;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider;
@@ -93,6 +94,12 @@ public class RoleRulesImporter {
 	 */
 	static final ResKey NO_ATTRIBUTE_OR_ASSOCIATION_DECLARED =
 		I18NConstants.NO_ATTRIBUTE_OR_ASSOCIATION;
+
+	/**
+	 * Message key used when both expression and path elements are declared
+	 */
+	static final ResKey EXPRESSION_AND_PATH_DECLARED =
+		I18NConstants.EXPRESSION_AND_PATH_DECLARED;
 
 	/**
 	 * Message key used when the {@link TLClass} in a path is not a super tpye of the
@@ -234,11 +241,27 @@ public class RoleRulesImporter {
 			return;
 		}
 		List<PathElement> path = new ArrayList<>();
-		for (PathElementConfig pathElement : roleRule.getPathElements()) {
-			handlePath(path, pathElement);
+		String expression = roleRule.getExpression();
+
+		// Validate mutual exclusivity
+		if (expression != null && !expression.isEmpty() && !roleRule.getPathElements().isEmpty()) {
+			addProblem(EXPRESSION_AND_PATH_DECLARED);
+			return;
 		}
-		if (path.isEmpty()) {
-			path.add(new IdentityPathElement());
+
+		// Handle expression-based rule
+		if (expression != null && !expression.isEmpty()) {
+			// Store expression string; will be compiled lazily at runtime using reflection
+			// This avoids circular dependency on com.top_logic.model.search
+			path.add(new ExpressionPathElement(expression));
+		} else {
+			// Handle traditional path-based rule
+			for (PathElementConfig pathElement : roleRule.getPathElements()) {
+				handlePath(path, pathElement);
+			}
+			if (path.isEmpty()) {
+				path.add(new IdentityPathElement());
+			}
 		}
 
 		if (sourceRoles.isEmpty()) {

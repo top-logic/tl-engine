@@ -241,6 +241,25 @@
 							meta-element="DemoTypes:DemoTypes.B"
 							role="DemoTypes.BAdministrator"
 						/>
+
+						<!--
+							Example: TLExpression-based inheritance (new feature)
+
+							This rule demonstrates using TLScript expressions instead of path elements
+							to compute inheritance target sets. This is particularly useful for:
+							- Inheriting roles onto singleton objects
+							- Dynamic target computation
+							- Complex inheritance patterns not expressible via simple paths
+
+							The expression receives the source object as a lambda parameter and must
+							return a collection of target objects (or a single object).
+						-->
+						<inheritance-rule
+							inherit="true"
+							meta-element="DemoTypes:DemoTypes.A"
+							role="DemoTypes.Administrator"
+							expression="sourceObj -> singleton(`DemoTypes#structureRoot`)"
+						/>
 					</rules>
 				</role-rules>
 			</instance>

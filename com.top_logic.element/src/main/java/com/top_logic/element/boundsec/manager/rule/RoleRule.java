@@ -155,22 +155,30 @@ public class RoleRule implements RoleProvider {
         theSB.append('_');
         for (Iterator theIt = aPath.iterator(); theIt.hasNext();) {
             PathElement   thePE  = (PathElement) theIt.next();
-            TLStructuredTypePart theMA  = thePE.getMetaAttribute();
-            String        theAss = thePE.getAssociation();
-            if (theMA != null) {
-                TLClass theME = AttributeOperations.getMetaElement(theMA);
-                if (theME != null) {
-                    theSB.append("pme:");
-                    theSB.append(theME.getName());
-                }
-                theSB.append("ma:");
-                theSB.append(theMA.getName());
+
+            if (thePE instanceof ExpressionPathElement) {
+                theSB.append("expr:");
+                theSB.append(thePE.hashCode());
+            } else if (thePE instanceof IdentityPathElement) {
+                theSB.append("identity");
             } else {
-                theSB.append("a:");
-                theSB.append(theAss);
+                TLStructuredTypePart theMA  = thePE.getMetaAttribute();
+                String        theAss = thePE.getAssociation();
+                if (theMA != null) {
+                    TLClass theME = AttributeOperations.getMetaElement(theMA);
+                    if (theME != null) {
+                        theSB.append("pme:");
+                        theSB.append(theME.getName());
+                    }
+                    theSB.append("ma:");
+                    theSB.append(theMA.getName());
+                } else {
+                    theSB.append("a:");
+                    theSB.append(theAss);
+                }
+                theSB.append('_');
+                theSB.append(thePE.isInverse() ? "back" : "succ");
             }
-            theSB.append('_');
-            theSB.append(thePE.isInverse() ? "back" : "succ");
         }
         theSB.append("_base:");
         if (aBase != null) {

@@ -73,6 +73,9 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey1 UNKNOWN_META_OBJECT = legacyKey1("admin.security.import.roleRules.problem.unknownMetaObject");
 
+	public static ResKey EXPRESSION_AND_PATH_DECLARED =
+		legacyKey("admin.security.import.roleRules.problem.expressionAndPathDeclared");
+
 	static {
 		initConstants(I18NConstants.class);
 	}

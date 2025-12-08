@@ -407,6 +407,7 @@
 					<method name="set" class="com.top_logic.model.search.expr.config.operations.SetBuilder"/>
 					<method name="transient" class="com.top_logic.model.search.expr.config.operations.IsTransient$Builder"/>
 					<method name="add" class="com.top_logic.model.search.expr.Add$Builder"/>
+					<method name="remove" class="com.top_logic.model.search.expr.Remove$Builder"/>
 					<method name="loadFromSession" class="com.top_logic.model.search.expr.config.operations.session.LoadFromSession$Builder"/>
 					<method name="storeInSession" class="com.top_logic.model.search.expr.config.operations.session.StoreInSession$Builder"/>
 					<method name="type" class="com.top_logic.model.search.expr.config.operations.Type$Builder"/>

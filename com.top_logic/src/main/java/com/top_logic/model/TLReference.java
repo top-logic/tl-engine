@@ -8,6 +8,7 @@ package com.top_logic.model;
 import java.util.List;
 import java.util.Set;
 
+import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Reference;
 import com.top_logic.dob.meta.MOReference.DeletionPolicy;
@@ -183,11 +184,18 @@ public interface TLReference extends TLReferenceBase, TLClassPart {
 
 	/**
 	 * Resolves all objects pointing to the given object through this reference.
+	 * <p>
+	 * Note: This method must not be called directly. Use {@link TLObject#tReferers(TLReference)} to
+	 * get referers.
+	 * </p>
 	 * 
 	 * @param element
 	 *        The element that is searched in the contents of this {@link TLReference}.
 	 * @return All base objects that contain the given element in the value of this reference.
+	 * 
+	 * @see TLObject#tReferers(TLReference)
 	 */
+	@FrameworkInternal
 	Set<? extends TLObject> getReferers(TLObject element);
 
 	@Override

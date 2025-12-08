@@ -134,11 +134,11 @@
 		</config>
 		
 		<config service-class="com.top_logic.base.services.InitialGroupManager">
-			<instance default-group="users">
+			<instance default-group="user">
 				<groups>
 					<group name="securityOwner"/>
 					<group name="securityAdministrators"/>
-					<group name="users"/>
+					<group name="user"/>
 					<group name="maintenanceMode"/>
 				</groups>
 			</instance>
@@ -150,13 +150,11 @@
 					<module name="SecurityStructure">
 						<roles>
 							<role name="SecurityStructure.OwnerRole"/>
-							<role name="SecurityStructure.User"/>
 						</roles>
 						<singletons>
 							<singleton type="Root">
 								<role-assignments>
 									<role-assignment role="SecurityStructure.OwnerRole" group="securityOwner"/>
-									<role-assignment role="SecurityStructure.User" group="users"/>
 								</role-assignments>
 							</singleton>
 						</singletons>

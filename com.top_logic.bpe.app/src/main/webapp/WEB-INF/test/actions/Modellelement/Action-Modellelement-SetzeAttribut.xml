@@ -23,7 +23,7 @@
 					command-label="Bearbeiten"
 					command-name="switchToAJAXEdit"
 					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
-					component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+					component-name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
 					user-id="root"
 				>
 					<arguments/>
@@ -35,7 +35,7 @@
 						label="${$Attribut}"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+							name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
 							tab-path="Administration > Development > Prozess Editor"
 						/>
 					</field>
@@ -48,7 +48,7 @@
 					command-label="Speichern"
 					command-name="defaultSave"
 					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
-					component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+					component-name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
 					user-id="root"
 				>
 					<arguments/>

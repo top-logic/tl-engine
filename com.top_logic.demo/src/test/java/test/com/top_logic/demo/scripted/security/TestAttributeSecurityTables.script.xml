@@ -2185,7 +2185,7 @@
 							user-id="root"
 						>
 							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-								label="User: Tabellen > Tree Grid (Ändern)"
+								label="user: Tabellen > Tree Grid (Ändern)"
 							>
 								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 									tab-path="Administration > Berechtigungen > Rollenprofile > Zugriffsberechtigungen"
@@ -2199,7 +2199,7 @@
 							user-id="root"
 						>
 							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-								label="User: Tabellen > Tree Grid (Lesen)"
+								label="user: Tabellen > Tree Grid (Lesen)"
 							>
 								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 									tab-path="Administration > Berechtigungen > Rollenprofile > Zugriffsberechtigungen"
@@ -2213,7 +2213,7 @@
 							user-id="root"
 						>
 							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-								label="User: Tabellen > Tree Grid (Ändern)"
+								label="user: Tabellen > Tree Grid (Ändern)"
 							>
 								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 									tab-path="Administration > Berechtigungen > Rollenprofile > Zugriffsberechtigungen"
@@ -2227,7 +2227,7 @@
 							user-id="root"
 						>
 							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-								label="User: Tabellen > Tree Grid (Lesen)"
+								label="user: Tabellen > Tree Grid (Lesen)"
 							>
 								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 									tab-path="Administration > Berechtigungen > Rollenprofile > Zugriffsberechtigungen"
@@ -2261,7 +2261,7 @@
 							user-id="root"
 						>
 							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-								label="User: Tabellen > Frozen (Lesen)"
+								label="user: Tabellen > Frozen (Lesen)"
 							>
 								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 									tab-path="Administration > Berechtigungen > Rollenprofile > Zugriffsberechtigungen"
@@ -2275,7 +2275,7 @@
 							user-id="root"
 						>
 							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-								label="User: Tabellen > Frozen (Lesen)"
+								label="user: Tabellen > Frozen (Lesen)"
 							>
 								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 									tab-path="Administration > Berechtigungen > Rollenprofile > Zugriffsberechtigungen"

@@ -77,14 +77,23 @@ public class I18NStructuredTextNamingScheme
 
 		/**
 		 * The value localized in the language {@link #getLanguage()}.
+		 * 
+		 * @deprecated For compatibility with existing tests. Use {@link #getText()} instead
 		 */
 		@com.top_logic.basic.config.annotation.Name(VALUE)
+		@Deprecated
 		String getValue();
 
 		/**
-		 * Setter for {@link #getValue()}.
+		 * The represented {@link StructuredText}.
 		 */
-		void setValue(String value);
+		StructuredText getText();
+
+		/**
+		 * Setter for {@link #getText()}.
+		 */
+		void setText(StructuredText text);
+
 	}
 
 	/**
@@ -101,11 +110,11 @@ public class I18NStructuredTextNamingScheme
 		ResourcesModule resources = ResourcesModule.getInstance();
 		for (String localeName : resources.getSupportedLocaleNames()) {
 			Locale locale = ResourcesModule.localeFromString(localeName);
-			String value = model.localizeSourceCode(locale);
-			if (!StringServices.isEmpty(value)) {
+			StructuredText text = model.localize(locale);
+			if (!StringServices.isEmpty(text)) {
 				Translation translation = TypedConfiguration.newConfigItem(Translation.class);
 				translation.setLanguage(localeName);
-				translation.setValue(value);
+				translation.setText(text);
 				translations.put(translation.getLanguage(), translation);
 			}
 		}
@@ -122,7 +131,12 @@ public class I18NStructuredTextNamingScheme
 			Locale locale = ResourcesModule.localeFromString(localeName);
 			Translation source = translationSources.get(localeName);
 			if (source != null) {
-				translations.put(locale, new StructuredText(source.getValue()));
+				StructuredText text = source.getText();
+				if (text != null) {
+					translations.put(locale, text);
+				} else {
+					translations.put(locale, new StructuredText(source.getValue()));
+				}
 			}
 		}
 

@@ -75,6 +75,26 @@
 			</instance>
 		</config>
 
+        <config service-class="com.top_logic.layout.provider.LabelProviderService">
+            <instance>
+                <label-providers>
+					<provider
+						kind="MODEL"
+						type="tl.bpe.execution:ProcessExecution"
+					>
+						<implementation class="com.top_logic.model.search.providers.LabelProviderByExpression">
+							<label><![CDATA[execution -> {
+  process = $execution.get(`tl.bpe.execution:ProcessExecution#process`);
+  collaboration = $process.get(`tl.bpe.bpml:Process#collaboration`);
+  participant = $process.get(`tl.bpe.bpml:Process#participant`);
+  ($collaboration.get(`tl.bpe.bpml:Collaboration#name`) || "?") + " - " + ($participant.get(`tl.bpe.bpml:Participant#name`) || "?")
+}]]></label>
+						</implementation>
+					</provider>
+                </label-providers>
+            </instance>
+        </config>		
+		
 		<config service-class="com.top_logic.tool.boundsec.CommandHandlerFactory">
 			<instance>
 				<handlers>

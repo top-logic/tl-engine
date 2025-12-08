@@ -579,7 +579,7 @@
 					user-id="root"
 				>
 					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="User: Strukturen > TestLayoutRelease Tab (Ändern)"
+						label="user: Strukturen > TestLayoutRelease Tab (Ändern)"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 							tab-path="Administration > Berechtigungen > Rollenprofile > Zugriffsberechtigungen"
@@ -593,7 +593,7 @@
 					user-id="root"
 				>
 					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="User: Strukturen > TestLayoutRelease Tab (Lesen)"
+						label="user: Strukturen > TestLayoutRelease Tab (Lesen)"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 							tab-path="Administration > Berechtigungen > Rollenprofile > Zugriffsberechtigungen"
@@ -607,7 +607,7 @@
 					user-id="root"
 				>
 					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="User: Strukturen > TestLayoutRelease Tab (Exportieren)"
+						label="user: Strukturen > TestLayoutRelease Tab (Exportieren)"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 							tab-path="Administration > Berechtigungen > Rollenprofile > Zugriffsberechtigungen"

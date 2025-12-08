@@ -32,9 +32,10 @@ import com.top_logic.basic.db.sql.SQLQuery.Parameter;
 import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.PooledConnection;
-import com.top_logic.basic.sql.SQLH;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.meta.BasicTypes;
+import com.top_logic.dob.meta.MOStructure;
+import com.top_logic.knowledge.service.KnowledgeBaseRuntimeException;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.db2.PersistentObject;
 import com.top_logic.knowledge.service.migration.MigrationContext;
@@ -48,6 +49,8 @@ import com.top_logic.model.migration.data.Type;
 
 /**
  * {@link MigrationProcessor} creating a new {@link TLObject}.
+ * 
+ * @see UpdateTLObjectProcessor
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -218,7 +221,7 @@ public class CreateTLObjectProcessor extends AbstractConfiguredInstance<CreateTL
 		try {
 			internalDoMigration(context, log, connection);
 		} catch (Exception ex) {
-			log.error("Creating class migration failed at " + getConfig().location(), ex);
+			log.error("Creating object migration failed at " + getConfig().location(), ex);
 		}
 	}
 
@@ -235,6 +238,11 @@ public class CreateTLObjectProcessor extends AbstractConfiguredInstance<CreateTL
 	public BranchIdType createObject(MigrationContext context, PooledConnection connection)
 			throws SQLException, MigrationException {
 		Util util = context.getSQLUtils();
+		
+		MOStructure table = (MOStructure) context.getPersistentRepository().getTypeOrNull(getConfig().getTable());
+		if (table == null) {
+			throw new KnowledgeBaseRuntimeException("No table with name '" + getConfig().getTable() + "' available.");
+		}
 
 		DBHelper sqlDialect = connection.getSQLDialect();
 		
@@ -275,7 +283,7 @@ public class CreateTLObjectProcessor extends AbstractConfiguredInstance<CreateTL
 		
 		if (!getConfig().hasNoTypeColumn()) {
 			parameterDefs.add(parameterDef(DBType.ID, "typeID"));
-			columns.add(util.refID(PersistentObject.TYPE_REF));
+			columns.add(Util.refID(PersistentObject.TYPE_REF));
 			values.add(parameter(DBType.ID, "typeID"));
 			arguments.add(type.getID());
 		}
@@ -292,7 +300,7 @@ public class CreateTLObjectProcessor extends AbstractConfiguredInstance<CreateTL
 		CompiledStatement createObj = query(
 			parameterDefs,
 			insert(
-				table(SQLH.mangleDBName(getConfig().getTable())),
+				table(table.getDBMapping().getDBName()),
 				columns,
 				values)).toSql(sqlDialect);
 

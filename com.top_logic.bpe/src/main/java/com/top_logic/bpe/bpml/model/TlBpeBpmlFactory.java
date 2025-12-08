@@ -692,13 +692,6 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	}
 
 	/**
-	 * Lookup {@link Task#LABEL_ATTR} of {@link Task}.
-	 */
-	public static com.top_logic.model.TLProperty getLabelTaskAttr() {
-		return (com.top_logic.model.TLProperty) getTaskType().getPart(Task.LABEL_ATTR);
-	}
-
-	/**
 	 * Lookup {@link Task#TITLE_FUNCTION_ATTR} of {@link Task}.
 	 */
 	public static com.top_logic.model.TLProperty getTitleFunctionTaskAttr() {

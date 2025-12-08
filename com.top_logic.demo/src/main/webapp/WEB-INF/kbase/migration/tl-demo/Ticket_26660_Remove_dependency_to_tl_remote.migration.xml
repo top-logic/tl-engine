@@ -28,6 +28,9 @@
 		<dependency name="Ticket_26398_remove_table_interfaces"
 			module="tl-demo"
 		/>
+		<dependency name="Ticket_25210_Model_references_in_form_definitions"
+			module="tl-bpe"
+		/>
 	</dependencies>
 	
 	<pre-processors>

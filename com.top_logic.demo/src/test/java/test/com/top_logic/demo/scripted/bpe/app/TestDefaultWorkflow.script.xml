@@ -16,7 +16,7 @@
 			command-label="Neuen Workflow anlegen"
 			command-name="displayDialog_tlBpeModelerEditorNew"
 			component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
-			component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorTable"
+			component-name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorTable"
 			user-id="root"
 		>
 			<arguments/>
@@ -28,7 +28,7 @@
 				label="Name"
 			>
 				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-					name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorNewForm"
+					name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorNewForm"
 					tab-path=""
 				/>
 			</field>
@@ -41,7 +41,7 @@
 			command-label="Anlegen"
 			command-name="create"
 			component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
-			component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorNewForm"
+			component-name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorNewForm"
 			user-id="root"
 		>
 			<arguments/>
@@ -65,7 +65,7 @@
 			command-label="Bearbeiten"
 			command-name="switchToAJAXEdit"
 			component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
-			component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+			component-name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
 			user-id="root"
 		>
 			<arguments/>
@@ -77,7 +77,7 @@
 				label="Gruppe der Akteure"
 			>
 				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-					name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+					name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
 					tab-path="Administration > Development > Prozess Editor"
 				/>
 			</field>
@@ -94,7 +94,7 @@
 			command-label="Übernehmen"
 			command-name="storeAttributes"
 			component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
-			component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+			component-name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
 			user-id="root"
 		>
 			<arguments/>
@@ -120,7 +120,7 @@
 				label="Gruppe der Akteure"
 			>
 				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-					name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+					name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
 					tab-path="Administration > Development > Prozess Editor"
 				/>
 			</field>
@@ -137,7 +137,7 @@
 			command-label="Speichern"
 			command-name="defaultSave"
 			component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
-			component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+			component-name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
 			user-id="root"
 		>
 			<arguments/>
@@ -147,7 +147,7 @@
 			command-label="Workflow freigeben"
 			command-name="release"
 			component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
-			component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorTable"
+			component-name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorTable"
 			user-id="root"
 		>
 			<arguments/>
@@ -170,7 +170,8 @@
 				<selection-state boolean="true"/>
 			</selection>
 			<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-				tab-path="Prozess Cockpit > Alle Prozesse > Alle Prozesse"
+				name="com.top_logic.bpe.app/processCockpit/contextListContext.layout.xml#List"
+				tab-path="Prozess Cockpit > Alle Prozesse"
 			/>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
@@ -198,11 +199,6 @@
 		>
 			<arguments/>
 		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
-			component-name="rootLayout#masterFrame"
-			label="Ok"
-			user-id="root"
-		/>
 		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 			command-implementation-comment="com.top_logic.bpe.layout.execution.command.FinishTaskCommand"
 			command-label="Aufgabe abschließen"
@@ -213,9 +209,25 @@
 		>
 			<arguments/>
 		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Weiter mit"
+			>
+				<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+				<values>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+						label="End"
+					/>
+				</values>
+			</value>
+		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
 			component-name="rootLayout#masterFrame"
-			label="Ja"
+			label="Ok"
 			user-id="root"
 		/>
 		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
@@ -253,7 +265,7 @@
 			command-label="Löschen..."
 			command-name="delete"
 			component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
-			component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorTable"
+			component-name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorTable"
 			user-id="root"
 		>
 			<arguments/>

@@ -91,6 +91,8 @@ import com.top_logic.model.migration.data.MigrationException;
 import com.top_logic.model.migration.data.QualifiedPartName;
 import com.top_logic.model.migration.data.QualifiedTypeName;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.model.v5.transform.ModelLayout;
+import com.top_logic.util.model.TL5Types;
 
 /**
  * Utilities for migration.
@@ -314,6 +316,11 @@ public class MigrationUtils {
 	 *         When no such module exists.
 	 */
 	public static Element getTLModuleOrFail(Document model, String name) throws MigrationException {
+		if (TL5Types.ENUM_PROTOCOL.equals(name)) {
+			/* In old XML files the legacy notation "enum:..." instead of "tl5.enum:..." is used.
+			 * Such a module does not exist. */
+			name = ModelLayout.TL5_ENUM_MODULE;
+		}
 		NodeList nodes = model.getElementsByTagName(ModelConfig.MODULE);
 		for (int i = 0; i < nodes.getLength(); i++) {
 			Element module = (Element) nodes.item(i);
@@ -1941,9 +1948,16 @@ public class MigrationUtils {
 
 	private static void moveStructuredTypePart(Log log, Document tlModel, Element part, QualifiedPartName origName,
 			QualifiedPartName newName) throws MigrationException {
-		if (!newName.getModuleName().equals(origName.getModuleName())) {
+		boolean sameModule = newName.getModuleName().equals(origName.getModuleName());
+		if (!sameModule) {
 			// Part was moved to different module.
 			qualifyTypes(part, origName.getModuleName());
+		} else {
+			if (newName.getTypeName().equals(origName.getTypeName())) {
+				// Move is just a rename
+				part.setAttribute(PartConfig.NAME, newName.getPartName());
+				return;
+			}
 		}
 		Element newModule = getTLModuleOrFail(tlModel, newName.getModuleName());
 		Element newOwner = getTLTypeOrFail(log, newModule, newName.getTypeName());

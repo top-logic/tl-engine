@@ -34,13 +34,19 @@
 		<dropTargets>
 			<dropTarget class="com.top_logic.model.search.providers.GridDropTargetByExpression"
 				dropType="ROW"
-				handleDrop="draggedObjects->referenceRow->{handleDrop=work -> processor -> $processor.add(`test.dnd.dropon:Processor#processing`, $work);$draggedObjects.foreach(draggedObject -> $handleDrop($draggedObject,$referenceRow));}"
 			>
-				<canDrop><![CDATA[draggedObjects->referenceRow->{canDrop=work -> processor -> switch {
-	    !$processor.get(`test.dnd.dropon:Processor#active`): false;
-	    !$processor.get(`test.dnd.dropon:Processor#canProcess`).containsElement($work.get(`test.dnd.dropon:WorkItem#type`)): false;
-	    default: true;
-	};$draggedObjects.filter(draggedObject -> !$canDrop($draggedObject,$referenceRow)).isEmpty();}]]></canDrop>
+				<canDrop><![CDATA[draggedObjects -> referenceRow-> $referenceRow == null ? true : {
+  canDrop = work -> processor -> switch {
+    !$processor.get(`test.dnd.dropon:Processor#active`): false;
+	!$processor.get(`test.dnd.dropon:Processor#canProcess`).containsElement($work.get(`test.dnd.dropon:WorkItem#type`)): false;
+	default: true;
+  };
+  $draggedObjects.filter(draggedObject -> !$canDrop($draggedObject, $referenceRow)).isEmpty();
+}]]></canDrop>
+				<handleDrop><![CDATA[draggedObjects -> referenceRow -> $referenceRow == null ? info(#("Bitte lassen Sie die Aufgabe auf einem Bearbeiter fallen."@de , "Please drop the task on a processor."@en)) : {
+  handleDrop = work -> processor -> $processor.add(`test.dnd.dropon:Processor#processing`, $work);
+  $draggedObjects.foreach(draggedObject -> $handleDrop($draggedObject,$referenceRow));
+}]]></handleDrop>
 			</dropTarget>
 		</dropTargets>
 		<buttons>

@@ -18,7 +18,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import com.top_logic.base.services.simpleajax.JSSnipplet;
-import com.top_logic.basic.Logger;
 import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.util.ResKey;
@@ -751,6 +750,15 @@ public class TreeControl extends AbstractControlBase implements TreeModelListene
 			TreeControl treeControl = (TreeControl) control;
 			String id = (String) arguments.get(ID_PARAM);
 
+			Object node = resolveNode(treeControl, id);
+
+			return execute(context, treeControl, node, arguments);
+		}
+
+		/**
+		 * Resolves the node that is referenced in {@link #ID_PARAM} argument on the client.
+		 */
+		protected Object resolveNode(TreeControl treeControl, String id) {
 			Object node;
 			if (id != null) {
 				// Handle cases, where node IDs are prefixed since a single node has more than one
@@ -762,14 +770,13 @@ public class TreeControl extends AbstractControlBase implements TreeModelListene
 				node = treeControl.getNodeById(id);
 
 				if (node == null) {
-					Logger.error("Tree node not found for id '" + id + "' in AJAX request.", this);
-					return HandlerResult.DEFAULT_RESULT;
+					throw new TopLogicException(I18NConstants.TREE_NODE_NOT_FOUND__ID.fill(id));
 				}
 			} else {
 				node = null;
 			}
 
-			return execute(context, treeControl, node, arguments);
+			return node;
 		}
 
 		/**
@@ -1067,10 +1074,52 @@ public class TreeControl extends AbstractControlBase implements TreeModelListene
 		}
 	}
 
+	private abstract static class AbstractDnDTreeAction extends TreeAction {
+
+		private static final String POS_PARAM = "pos";
+
+		/**
+		 * Creates a new {@link AbstractDnDTreeAction}.
+		 */
+		public AbstractDnDTreeAction(String command) {
+			super(command);
+		}
+
+		@Override
+		protected HandlerResult execute(DisplayContext context, TreeControl treeControl, Object node,
+				Map<String, Object> arguments) {
+			DndData data = DnD.getDndData(context, arguments);
+
+			if (data != null) {
+				TreeData treeData = treeControl.getData();
+				String position = (String) arguments.get(POS_PARAM);
+				String targetID = (String) arguments.get(ID_PARAM);
+				TreeDropEvent dropEvent = new TreeDropEvent(data, treeData, node, Position.fromString(position));
+
+				return handleDnDEvent(dropEvent, treeControl, targetID, position);
+			}
+
+			return HandlerResult.DEFAULT_RESULT;
+		}
+
+		@Override
+		protected Object resolveNode(TreeControl treeControl, String id) {
+			if (treeControl.getID().equals(id)) {
+				// ID of the tree control is used when no node is visible on client. Use root
+				// element as referenced element.
+				return treeControl.getData().getTreeModel().getRoot();
+			}
+			return super.resolveNode(treeControl, id);
+		}
+
+		protected abstract HandlerResult handleDnDEvent(TreeDropEvent dropEvent, TreeControl treeControl, String targetID,
+				String position);
+	}
+
 	/**
 	 * {@link TreeAction} executed, when the element is dragged over a drop zone.
 	 */
-	public static class DragOverAction extends TreeAction {
+	public static class DragOverAction extends AbstractDnDTreeAction {
 
 		private static final String COMMAND_NAME = "dragOver";
 
@@ -1084,27 +1133,17 @@ public class TreeControl extends AbstractControlBase implements TreeModelListene
 		}
 
 		@Override
-		protected HandlerResult execute(DisplayContext context, TreeControl treeControl, Object node,
-				Map<String, Object> arguments) {
-			DndData data = DnD.getDndData(context, arguments);
+		protected HandlerResult handleDnDEvent(TreeDropEvent dropEvent, TreeControl treeControl, String targetID,
+				String position) {
+			for (TreeDropTarget dropTarget : treeControl.getData().getDropTargets()) {
+				if (dropTarget.canDrop(dropEvent)) {
+					displayDropMarker(treeControl, targetID, position);
 
-			if (data != null) {
-				TreeData treeData = treeControl.getData();
-				String position = (String) arguments.get("pos");
-				TreeDropEvent dropEvent = new TreeDropEvent(data, treeData, node, Position.fromString(position));
-
-				List<TreeDropTarget> dropTargets = treeData.getDropTargets();
-				for (TreeDropTarget dropTarget : dropTargets) {
-					if (dropTarget.canDrop(dropEvent)) {
-						displayDropMarker(treeControl, (String) arguments.get(ID_PARAM), position);
-
-						return HandlerResult.DEFAULT_RESULT;
-					}
+					return HandlerResult.DEFAULT_RESULT;
 				}
-
-				changeToNoDropCursor(treeControl, (String) arguments.get(ID_PARAM), position);
 			}
 
+			changeToNoDropCursor(treeControl, targetID, position);
 			return HandlerResult.DEFAULT_RESULT;
 		}
 
@@ -1144,7 +1183,7 @@ public class TreeControl extends AbstractControlBase implements TreeModelListene
 	/**
 	 * {@link TreeAction} executed, when a drop operation happens on a tree.
 	 */
-	public static class DndTreeDropAction extends TreeAction {
+	public static class DndTreeDropAction extends AbstractDnDTreeAction {
 
 		/**
 		 * Singleton {@link DndTreeDropAction} instance.
@@ -1153,34 +1192,22 @@ public class TreeControl extends AbstractControlBase implements TreeModelListene
 
 		private static final String COMMAND_NAME = "dndTreeDrop";
 
-		private static final String POS_PARAM = "pos";
-
 		private DndTreeDropAction() {
 			super(COMMAND_NAME);
 		}
 
 		@Override
-		protected HandlerResult execute(DisplayContext context, TreeControl treeControl, Object node, Map arguments) {
-			TreeData treeData = treeControl.getData();
+		protected HandlerResult handleDnDEvent(TreeDropEvent dropEvent, TreeControl treeControl, String targetID,
+				String position) {
+			for (TreeDropTarget dropTarget : treeControl.getData().getDropTargets()) {
+				if (dropTarget.canDrop(dropEvent)) {
+					dropTarget.handleDrop(dropEvent);
 
-			DndData data = DnD.getDndData(context, arguments);
-			if (data != null) {
-				String pos = (String) arguments.get(POS_PARAM);
-
-				TreeDropEvent dropEvent = new TreeDropEvent(data, treeData, node, Position.fromString(pos));
-
-				List<TreeDropTarget> dropTargets = treeData.getDropTargets();
-				for (TreeDropTarget dropTarget : dropTargets) {
-					if (dropTarget.canDrop(dropEvent)) {
-						dropTarget.handleDrop(dropEvent);
-
-						return HandlerResult.DEFAULT_RESULT;
-					}
+					return HandlerResult.DEFAULT_RESULT;
 				}
-
-				throw new TopLogicException(com.top_logic.layout.dnd.I18NConstants.DROP_NOT_POSSIBLE);
 			}
-			return HandlerResult.DEFAULT_RESULT;
+
+			throw new TopLogicException(com.top_logic.layout.dnd.I18NConstants.DROP_NOT_POSSIBLE);
 		}
 
 		@Override

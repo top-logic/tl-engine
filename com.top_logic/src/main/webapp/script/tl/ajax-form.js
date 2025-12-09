@@ -1112,14 +1112,24 @@ services.form = {
 			
 			if(!controlElement.isDragOverHandled) {
 				var dropTarget = this.getDropTarget(controlElement, event);
+				var node;
+				var position;
+				if (dropTarget !== undefined) {
+					node = dropTarget.node;
+					position = dropTarget.position;
+				} else {
+					// control element is used as placeholder for root element which might not be visible.
+					node = controlElement;
+					position = "within";
+				}
 				
-				if(dropTarget !== undefined) {
+				{
 					if(services.ajax.mainLayout.tlDnD.cache !== undefined) {
-						var isDropable = services.ajax.mainLayout.tlDnD.cache.get(services.ajax.mainLayout.tlDnD.data.split("|").pop(), dropTarget.node.id);
+						var isDropable = services.ajax.mainLayout.tlDnD.cache.get(services.ajax.mainLayout.tlDnD.data.split("/").pop(), node.id, position);
 						
 						if(isDropable !== undefined) {
 							if(isDropable) {
-								this.displayDropMarkerInternal(dropTarget.node, dropTarget.position);
+								this.displayDropMarkerInternal(node, position);
 								event.dataTransfer.dropEffect = "move";
 							} else {
 								this.resetMarker();
@@ -1136,8 +1146,8 @@ services.form = {
 						controlCommand : "dragOver",
 						controlID : controlElement.id,
 						data: services.ajax.mainLayout.tlDnD.data,
-						id: dropTarget.node.id,
-						pos: dropTarget.position
+						id: node.id,
+						pos: position
 					}, true);
 					
 					setTimeout(function() {
@@ -1316,6 +1326,10 @@ services.form = {
 		},
 		
 		getDropPositionFromElement: function(controlElement, nodeElement) {
+			if (nodeElement == controlElement) {
+				// control element is used as placeholder for root element which might not be visible.
+				return "within";
+			}
 			var dropType = BAL.DOM.getNonStandardAttribute(controlElement, "data-droptype");
 			
 			if (dropType == "ORDERED") {

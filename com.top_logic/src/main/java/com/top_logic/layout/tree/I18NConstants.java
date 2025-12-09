@@ -6,6 +6,7 @@
 package com.top_logic.layout.tree;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
@@ -25,6 +26,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey NODE_DBL_CLICK_ACTION;
 
 	public static ResKey DND_TREE_DROP_ACTION;
+
+	/**
+	 * @en Tree node for id ''{0}'' not found in AJAX request.
+	 */
+	public static ResKey1 TREE_NODE_NOT_FOUND__ID;
 
 	static {
 		initConstants(I18NConstants.class);

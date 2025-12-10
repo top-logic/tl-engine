@@ -56,7 +56,7 @@ public class InstanceResolverByExpression extends AbstractConfiguredInstance<Ins
 		 * <p>
 		 * The function expects the object's ID as first argument and an optional import context as
 		 * second argument. The function must return the resolved object. If the function returns
-		 * <code>null</code>, this is treaded as resolve failure.
+		 * <code>null</code>, this is treated as resolve failure.
 		 * </p>
 		 */
 		@Mandatory

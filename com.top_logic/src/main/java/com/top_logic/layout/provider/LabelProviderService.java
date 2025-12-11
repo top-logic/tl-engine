@@ -47,6 +47,9 @@ import com.top_logic.layout.Renderer;
 import com.top_logic.layout.ResourceProvider;
 import com.top_logic.layout.basic.ResourceRenderer;
 import com.top_logic.layout.basic.contextmenu.config.ContextMenuCommandsProvider;
+import com.top_logic.layout.form.values.edit.InAppImplementations;
+import com.top_logic.layout.form.values.edit.annotation.AcceptableClassifiers;
+import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.renderers.RendererRegistryPDFRenderer;
 import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
 import com.top_logic.model.TLClass;
@@ -62,7 +65,13 @@ import com.top_logic.util.TLContext;
 import com.top_logic.util.model.ModelService;
 
 /**
- * Services looking up functional classes assigned to objects.
+ * Service looking up functional classes assigned to object types.
+ * 
+ * <p>
+ * The service provides implementations of {@link LabelProvider}, {@link ResourceProvider},
+ * {@link Renderer}, {@link PDFRenderer}, {@link ExcelCellRenderer} for types registered in the
+ * application configuration.
+ * </p>
  * 
  * @see #getLabelProvider(Object)
  * @see #getResourceProvider(Object)
@@ -284,6 +293,8 @@ public class LabelProviderService extends ManagedClass implements UpdateListener
 		 */
 		@Name(COMMANDS)
 		@DefaultContainer
+		@Options(fun = InAppImplementations.class)
+		@AcceptableClassifiers("context-menu")
 		List<CommandHandler.ConfigBase<? extends CommandHandler>> getCommands();
 
 	}

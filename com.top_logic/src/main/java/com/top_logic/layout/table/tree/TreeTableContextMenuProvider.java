@@ -5,12 +5,15 @@
  */
 package com.top_logic.layout.table.tree;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.layout.basic.contextmenu.component.ContextMenuFactory;
 import com.top_logic.layout.basic.contextmenu.component.factory.adapter.SelectableContextMenuProvider;
+import com.top_logic.layout.form.values.edit.annotation.AcceptableClassifiers;
 
 /**
  * {@link SelectableContextMenuProvider} choosing {@link TreeTableContextMenuFactory} by default.
@@ -22,6 +25,8 @@ import com.top_logic.layout.basic.contextmenu.component.factory.adapter.Selectab
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
+@Label("Tree-table context menu")
+@InApp(classifiers = "treetable")
 public class TreeTableContextMenuProvider extends SelectableContextMenuProvider {
 
 	/**
@@ -31,6 +36,7 @@ public class TreeTableContextMenuProvider extends SelectableContextMenuProvider 
 		@Override
 		@ItemDefault(TreeTableContextMenuFactory.class)
 		@ImplementationClassDefault(TreeTableContextMenuFactory.class)
+		@AcceptableClassifiers("treetable")
 		PolymorphicConfiguration<? extends ContextMenuFactory> getContextMenuFactory();
 	}
 

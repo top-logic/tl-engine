@@ -9,6 +9,7 @@ import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.ConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.knowledge.gui.WrapperResourceProvider;
@@ -25,7 +26,8 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-@InApp
+@Label("Resources via TL-Script")
+@InApp(classifiers = "resource-provider")
 public class LabelByExpression extends ProxyResourceProvider
 		implements ConfiguredInstance<LabelByExpression.Config<?>> {
 

@@ -12,6 +12,9 @@ import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.layout.basic.contextmenu.component.ContextMenuFactory;
 import com.top_logic.layout.basic.contextmenu.component.factory.SelectableContextMenuFactory;
+import com.top_logic.layout.form.values.edit.InAppImplementations;
+import com.top_logic.layout.form.values.edit.annotation.AcceptableClassifiers;
+import com.top_logic.layout.form.values.edit.annotation.Options;
 
 /**
  * {@link ComponentContextMenuProvider} using {@link SelectableContextMenuFactory} to create the
@@ -29,6 +32,8 @@ public class SelectableContextMenuProvider extends ComponentContextMenuProvider 
 		@Override
 		@ItemDefault(SelectableContextMenuFactory.class)
 		@ImplementationClassDefault(SelectableContextMenuFactory.class)
+		@Options(fun = InAppImplementations.class)
+		@AcceptableClassifiers("selectable-context-menu")
 		PolymorphicConfiguration<? extends ContextMenuFactory> getContextMenuFactory();
 	}
 

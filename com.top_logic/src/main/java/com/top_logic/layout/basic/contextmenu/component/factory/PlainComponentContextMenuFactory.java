@@ -9,7 +9,6 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Label;
-import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.basic.contextmenu.config.ContextMenuCommandsProvider;
@@ -32,8 +31,8 @@ public class PlainComponentContextMenuFactory<C extends PlainComponentContextMen
 			extends ComponentContextMenuFactory.Config<I> {
 
 		@Override
-		@InstanceDefault(NoLabelProvider.class)
-		LabelProvider getTitleProvider();
+		@ItemDefault(NoLabelProvider.class)
+		PolymorphicConfiguration<? extends LabelProvider> getTitleProvider();
 
 		@Override
 		@ItemDefault(NoContextMenuCommands.class)

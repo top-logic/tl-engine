@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.basic.contextmenu;
 
+import com.top_logic.basic.annotation.InApp;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.layout.basic.contextmenu.menu.Menu;
 
 /**
@@ -12,6 +14,8 @@ import com.top_logic.layout.basic.contextmenu.menu.Menu;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
+@Label("No context menu")
+@InApp(classifiers = "common")
 public final class NoContextMenuProvider implements ContextMenuProvider {
 
 	/**

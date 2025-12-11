@@ -7,6 +7,7 @@ package com.top_logic.layout.basic.contextmenu.component.factory;
 
 import static com.top_logic.layout.basic.contextmenu.component.factory.ContextMenuUtil.*;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -15,6 +16,8 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.contextmenu.ContextMenuProvider;
 import com.top_logic.layout.channel.ModelChannel;
@@ -29,6 +32,24 @@ import com.top_logic.tool.boundsec.CommandHandler;
 @Label("Component commands")
 public class ComponentContextMenuFactory<C extends ComponentContextMenuFactory.Config<?>>
 		extends TypeBasedContextMenuFactory<C> {
+
+	/**
+	 * Configuration options for {@link ComponentContextMenuFactory}.
+	 */
+	public interface Config<I extends ComponentContextMenuFactory<?>> extends TypeBasedContextMenuFactory.Config<I> {
+		/**
+		 * @see #isIncludeModelCommands()
+		 */
+		String INCLUDE_MODEL_COMMANDS = "include-model-commands";
+
+		/**
+		 * Whether to also show commands that operate on the model of this component or on the
+		 * selected element, if the context menu is opened on a selection.
+		 */
+		@Name(INCLUDE_MODEL_COMMANDS)
+		@BooleanDefault(true)
+		boolean isIncludeModelCommands();
+	}
 
 	/**
 	 * Creates a {@link ComponentContextMenuFactory} from configuration.
@@ -78,9 +99,10 @@ public class ComponentContextMenuFactory<C extends ComponentContextMenuFactory.C
 			// Must be lazy, since component commands are only available if components are fully
 			// resolved.
 			if (_componentCommands == null) {
-				_componentCommands =
-					CollectionUtil.nonNull(getComponent().getCommands()).stream().filter(this::acceptComponentCommand)
-						.collect(Collectors.toList());
+				_componentCommands = getConfig().isIncludeModelCommands()
+					? CollectionUtil.nonNull(getComponent().getCommands()).stream().filter(this::acceptComponentCommand)
+						.collect(Collectors.toList())
+					: Collections.emptyList();
 			}
 			return _componentCommands;
 		}

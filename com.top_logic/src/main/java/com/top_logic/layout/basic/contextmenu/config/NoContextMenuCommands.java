@@ -8,8 +8,8 @@ package com.top_logic.layout.basic.contextmenu.config;
 import java.util.Collections;
 import java.util.List;
 
-import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.annotation.InApp;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.tool.boundsec.CommandHandler;
 
 /**
@@ -17,32 +17,17 @@ import com.top_logic.tool.boundsec.CommandHandler;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
+@Label("No commands")
+@InApp
 public class NoContextMenuCommands implements ContextMenuCommandsProvider {
 
 	/**
-	 * Configuration options for {@link NoContextMenuCommands}.
-	 *
-	 * @author <a href=mailto:sfo@top-logic.com>sfo</a>
+	 * Singleton {@link NoContextMenuCommands} instance.
 	 */
-	public interface Config extends PolymorphicConfiguration<NoContextMenuCommands> {
-		/* 
-		 * Empty.
-		 *
-		 * This is necessary to prevent writing configuration defaults for content layouting when
-		 * exporting layouts. See #26263. 
-		 */
-	}
+	public static final NoContextMenuCommands INSTANCE = new NoContextMenuCommands();
 
-	/**
-	 * Creates a {@link NoContextMenuCommands} from configuration.
-	 * 
-	 * @param context
-	 *        The context for instantiating sub configurations.
-	 * @param config
-	 *        The configuration.
-	 */
-	public NoContextMenuCommands(InstantiationContext context, Config config) {
-		// Empty.
+	private NoContextMenuCommands() {
+		// Singleton constructor.
 	}
 
 	@Override

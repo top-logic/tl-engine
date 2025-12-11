@@ -5,7 +5,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  *
- * Date: 2023-11-27
+ * Date: 2025-12-11
  */
 
 (function (global, factory) {
@@ -3617,7 +3617,7 @@
    * @param {string} action The action to be allowed or disallowed.
    * @param {Object} [context] The context for allowing or disallowing the action.
    *
-   * @return {boolean|null} Whether the action is allowed. Returns `null` if the action
+   * @return {boolean|null} Wether the action is allowed. Returns `null` if the action
    * is to be ignored.
    */
   Rules.prototype.allowed = function(action, context) {
@@ -4727,7 +4727,7 @@
   }
 
   /**
-   * Check whether node type can have marker attributes.
+   * Check wether node type can have marker attributes.
    *
    * @param {HTMLElement} node
    *
@@ -6374,7 +6374,7 @@
     // rules //////////
 
     /**
-     * Check whether elements can be created.
+     * Check wether elements can be created.
      *
      * @param {Element[]} elements
      * @param {Shape} target
@@ -6453,7 +6453,7 @@
         };
       }
 
-      // ignore whether or not elements can be created
+      // ignore wether or not elements can be created
       if (create === null || attach === null) {
         return null;
       }

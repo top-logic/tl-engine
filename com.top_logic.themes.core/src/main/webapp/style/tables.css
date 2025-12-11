@@ -121,9 +121,9 @@ a.tl-table__title:visited {
     align-items: center;
     gap: var(--spacing-02);
 
-	background-color: var(--layer-accent);
-	color: var(--layer-accent-text);
-	--button-fg: var(--layer-accent-icon);
+	background-color: var(--layer);
+	color: var(--layer-text);
+	--button-fg: var(--layer-icon);
 
 	font-family: var(--font-family);
 	font-weight: bold;
@@ -131,7 +131,7 @@ a.tl-table__title:visited {
     line-height: var(--heading-compact-02-line-height);
     letter-spacing: var(--heading-compact-02-letter-spacing);
 	padding: var(--spacing-02) var(--spacing-03);
-	border: var(--border-strong) solid 1px;
+	border: var(--border-strong) solid 2px;
 	border-top-style: none;
 	border-right-style: none;
 	border-left-style: none;
@@ -141,8 +141,8 @@ a.tl-table__title:visited {
 
 th.tblTitleRight {
 	background-color: var(--layer-accent);
-	color: var(--layer-accent-text);
-	--button-fg: var(--layer-accent-icon);
+	color: var(--layer-text);
+	--button-fg: var(--layer-icon);
 
 	font-family: var(--font-family);
 	font-weight: bold;

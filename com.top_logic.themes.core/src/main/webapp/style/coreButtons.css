@@ -630,15 +630,18 @@ cButton.cImageButton,
 a.fClear,
 a.fChoose, 
 .cButton.i18nTranslationCommand a,
-.cButton.cmdLink a, 
 .cButton.cImageButton a,
 .cButton.dfRemove a,
 .cButton.fToggle a {
-	color: var(--button-fg, var(--icon-primary));
+	color: var(--button-fg, var(--icon-primary ,var(--icon-on-color)));
+}
+
+.cButton.cmdLink a {
+	color: var(--icon-on-color);
 }
 
 .cButton.fToggle a {
-	color: var(--highlight-fg, var(--button-fg, var(--icon-primary)));
+	color: var(--highlight-fg, var(--button-fg, var(--icon-on-color)));
 }
 
 .cOpenCalendar a:hover,

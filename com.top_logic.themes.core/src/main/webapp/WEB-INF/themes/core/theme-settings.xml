@@ -2033,6 +2033,12 @@
 	<color name="link-visited"
 		value="#8955a6"
 	/>
+	<color name="link-on-color"
+		value="#afc8ee"
+	/>
+	<color name="link-on-color-hover"
+		value="#6493da"
+	/>
 	<color name="field"
 		value="#f0f1f2"
 	/>

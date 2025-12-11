@@ -555,10 +555,14 @@ div.rf_buttons {
 	height: 2.5rem;
 	background-color: var(--layer-accent);
 	color: var(--layer-accent-text);
-	--button-fg: var(--layer-accent-icon);
+	--button-fg: var(--layer-icon);
 	padding: 0 var(--spacing-03);
 	white-space: nowrap;
 	margin-bottom: 1px;
+}
+
+.dfEntryTitle.colored .gotoLink{
+	color: var(--link-on-color);
 }
 
 .dfEntryTitle label {
@@ -566,9 +570,13 @@ div.rf_buttons {
 }
 
 .dfEntryTitle.colored:hover {
-	background-color: var(--layer-accent);
-	color: var(--layer-accent-text);
-	--button-fg: var(--layer-accent-icon);
+	background-color: var(--layer-accent-hover);
+	color: var(--highlight-fg-hover, var(--text-inverse));
+	--button-fg: var(--layer-icon-hover);
+}
+
+.dfEntryTitle.colored .gotoLink:hover{
+	color: var(--link-on-color-hover);
 }
 
 .dfEntryTitle.colored .lFixedRight,
@@ -825,8 +833,8 @@ div.dfListAdd {
     display: flex;
     align-items: center;
     gap: var(--spacing-02);
-    color: var(--highlight-fg, inherit);
-    background: var(--highlight-bg, var(--layer));
+    color: var(--highlight-fg, var(--layer-accent-text, inherit));
+    background: var(--highlight-bg, var(--layer-accent));
     padding: var(--spacing-02) var(--spacing-03);
     white-space: nowrap;
     height: 2.5rem;
@@ -835,7 +843,8 @@ div.dfListAdd {
 }
 
 .rf_groupCell .rf_header:hover {
-	background: var(--highlight-bg--hover, var(--layer-hover));
+	background: var(--highlight-bg--hover, var(--layer-accent-hover));
+	color: var(--highlight-fg-hover, var(--text-inverse));
 }
 
 .rf_groupCell .rf_header a:hover {

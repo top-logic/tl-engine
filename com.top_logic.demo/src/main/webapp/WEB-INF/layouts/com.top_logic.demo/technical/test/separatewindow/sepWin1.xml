@@ -38,6 +38,16 @@
 										</substitutions>
 									</window>
 								</windows>
+								<dialogs>
+									<include name="com.top_logic.demo/technical/layoutDemo1/dialogs/dialogn.xml"
+										n="99"
+										namePrefix="${namePrefix}"
+									>
+										<inject>
+											<dialogInfo/>
+										</inject>
+									</include>
+								</dialogs>
 							</component>
 							<treeView name="${namePrefix}SWTreeB"
 								adjustSelectionWhenCollapsing="true"

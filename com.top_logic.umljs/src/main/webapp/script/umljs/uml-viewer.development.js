@@ -5,7 +5,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  *
- * Date: 2023-11-27
+ * Date: 2025-12-11
  */
 
 (function (global, factory) {

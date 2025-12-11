@@ -7,6 +7,8 @@ package com.top_logic.layout.basic.contextmenu.config;
 
 import java.util.List;
 
+import com.top_logic.basic.annotation.InApp;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.layout.provider.LabelProviderService;
 import com.top_logic.tool.boundsec.CommandHandler;
 
@@ -17,6 +19,8 @@ import com.top_logic.tool.boundsec.CommandHandler;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
+@Label("Commands from application configuration")
+@InApp
 public class MetaContextMenuCommandsProvider implements ContextMenuCommandsProvider {
 
 	/**

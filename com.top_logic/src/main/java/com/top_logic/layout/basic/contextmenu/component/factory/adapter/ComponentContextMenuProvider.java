@@ -19,7 +19,7 @@ import com.top_logic.layout.basic.contextmenu.component.factory.ComponentContext
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-@Label("Context menu of component")
+@Label("Context menu")
 public class ComponentContextMenuProvider extends TypeBasedContextMenuProvider {
 
 	/**

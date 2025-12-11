@@ -8,6 +8,7 @@ package com.top_logic.layout.table.tree;
 import java.util.Collection;
 import java.util.Map;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
@@ -34,6 +35,7 @@ import com.top_logic.tool.execution.ExecutableState;
 /**
  * {@link CommandHandler} selecting all nodes in the subtree.
  */
+@InApp(classifiers = "context-menu")
 public class SelectSubtree extends AbstractCommandHandler {
 
 	/**

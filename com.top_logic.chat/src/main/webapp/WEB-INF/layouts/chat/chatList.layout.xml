@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<layout xmlns="http://www.top-logic.com/ns/layout/8.0"
+        xmlns:config="http://www.top-logic.com/ns/config/6.0">
+
+	<template>
+		<component name="chatList"
+		           class="com.top_logic.chat.component.ChatListComponent$Config">
+			<title>Chats</title>
+			<icon>css:fas fa-list</icon>
+
+			<modelSpec>
+				<model-builder class="com.top_logic.chat.builder.AllChatsModelBuilder"/>
+			</modelSpec>
+
+			<table>
+				<defaultColumns>
+					<columnRef columnName="chatId"/>
+					<columnRef columnName="lastMessageAt"/>
+				</defaultColumns>
+			</table>
+
+			<buttons>
+				<button id="newChat"
+				        command="newChat"
+				        image="css:fas fa-plus"
+				        resourceKey="tl.command.newChat"/>
+			</buttons>
+
+			<commands>
+				<command id="newChat"
+				         class="com.top_logic.chat.handler.NewChatHandler"/>
+			</commands>
+		</component>
+	</template>
+</layout>

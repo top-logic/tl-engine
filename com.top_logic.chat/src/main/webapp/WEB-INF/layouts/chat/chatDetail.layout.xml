@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<layout xmlns="http://www.top-logic.com/ns/layout/8.0"
+        xmlns:config="http://www.top-logic.com/ns/config/6.0">
+
+	<template>
+		<component name="chatDetail"
+		           class="com.top_logic.chat.component.ChatDetailComponent$Config">
+			<title>Chat</title>
+			<icon>css:fas fa-comment-dots</icon>
+
+			<modelSpec>
+				<channel-linking>
+					<selection>
+						<reference-path>
+							<component name="chatList"/>
+						</reference-path>
+					</selection>
+				</channel-linking>
+			</modelSpec>
+
+			<page>chat/chatDetail.jsp</page>
+			<pollInterval>500</pollInterval>
+
+			<buttons>
+				<button id="sendMessage"
+				        command="sendMessage"
+				        image="css:fas fa-paper-plane"
+				        resourceKey="tl.command.sendMessage"/>
+			</buttons>
+
+			<commands>
+				<command id="sendMessage"
+				         class="com.top_logic.chat.handler.SendMessageHandler"/>
+				<command id="pollStreaming"
+				         class="com.top_logic.chat.handler.PollStreamingHandler"/>
+			</commands>
+		</component>
+	</template>
+</layout>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<layout xmlns="http://www.top-logic.com/ns/layout/8.0"
+        xmlns:config="http://www.top-logic.com/ns/config/6.0">
+
+	<template>
+		<layout name="chatContainer"
+		        horizontal="true"
+		        resizable="true">
+			<title>Chat</title>
+			<icon>css:fas fa-comments</icon>
+
+			<components>
+				<!-- Left: Chat List (300px fixed width) -->
+				<layout-reference resource="chatList.layout.xml">
+					<layoutInfo size="300px"/>
+				</layout-reference>
+
+				<!-- Right: Chat Detail (fills remaining space) -->
+				<layout-reference resource="chatDetail.layout.xml">
+					<layoutInfo size="100%"/>
+				</layout-reference>
+			</components>
+		</layout>
+	</template>
+</layout>

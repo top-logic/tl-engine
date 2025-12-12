@@ -1,0 +1,1 @@
+package com.top_logic.chat.model;

@@ -613,11 +613,9 @@ services.form = {
 		},
 		
 		handleOnDragOver: function(event, controlElement) {
-		console.log(controlElement);
 			var event = BAL.getEvent(event);
 			event.preventDefault();
 			
-		console.log(services.ajax.topWindow);
 			if(!services.ajax.mainLayout.tlDnD || !services.ajax.mainLayout.tlDnD.data){
 				event.dataTransfer.dropEffect = 'none';
 				return;

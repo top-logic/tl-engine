@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="tl.chat">
+		<annotations>
+			<package-binding
+				implementation-package="com.top_logic.tl.chat.model.implementation"
+				interface-package="com.top_logic.tl.chat.model.interfaces"
+			/>
+			<singletons>
+				<singleton name="ChatRoot" type="ChatRoot"/>
+			</singletons>
+		</annotations>
+
+		<!-- Chat container (singleton root) -->
+		<class name="ChatRoot">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<table name="ChatRoot"/>
+				<instance-presentation icon="css:fas fa-comments"/>
+			</annotations>
+			<attributes>
+				<reference name="chats"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					ordered="true"
+					type="Chat"
+				/>
+			</attributes>
+		</class>
+
+		<!-- Chat class -->
+		<class name="Chat">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<table name="Chat"/>
+				<instance-presentation icon="css:fas fa-comment-dots"/>
+			</annotations>
+			<attributes>
+				<property name="chatId"
+					mandatory="true"
+					type="tl.core:String"
+				>
+					<annotations>
+						<create-visibility value="hidden"/>
+						<visibility value="read-only"/>
+					</annotations>
+				</property>
+
+				<property name="createdAt"
+					mandatory="true"
+					type="tl.core:DateTime"
+				>
+					<annotations>
+						<create-visibility value="hidden"/>
+						<visibility value="read-only"/>
+					</annotations>
+				</property>
+
+				<property name="lastMessageAt"
+					type="tl.core:DateTime"
+				>
+					<annotations>
+						<visibility value="read-only"/>
+					</annotations>
+				</property>
+
+				<reference name="messages"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					ordered="true"
+					type="ChatMessage"
+				/>
+			</attributes>
+		</class>
+
+		<!-- ChatMessage class -->
+		<class name="ChatMessage">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<table name="ChatMessage"/>
+			</annotations>
+			<attributes>
+				<property name="role"
+					mandatory="true"
+					type="tl.accounts:Person"
+				>
+					<annotations>
+						<visibility value="read-only"/>
+					</annotations>
+				</property>
+
+				<property name="text"
+					mandatory="true"
+					type="tl.core:Text"
+				>
+					<annotations>
+						<visibility value="read-only"/>
+					</annotations>
+				</property>
+
+				<property name="timestamp"
+					mandatory="true"
+					type="tl.core:DateTime"
+				>
+					<annotations>
+						<visibility value="read-only"/>
+					</annotations>
+				</property>
+
+				<reference name="chat"
+					inverse-reference="messages"
+					kind="backwards"
+					type="Chat"
+				/>
+			</attributes>
+		</class>
+	</module>
+</model>

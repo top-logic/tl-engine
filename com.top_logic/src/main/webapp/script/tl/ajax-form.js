@@ -750,6 +750,7 @@ services.form = {
 			var markerElement = this.currentInsertionMarker;
 			if (markerElement != null) {
 				this.resetMarkerOn(markerElement);
+				this.currentInsertionMarker = null;
 			}
 		},
 		
@@ -1373,6 +1374,7 @@ services.form = {
 				BAL.DOM.removeClass(this.currentInsertionMarker, "dndInsertWithin");
 				BAL.DOM.removeClass(this.currentInsertionMarker, "dndInsertBelow");
 				BAL.DOM.removeClass(this.currentInsertionMarker, "dndInsertInto");
+				this.currentInsertionMarker = null;
 			}
 		},
 		

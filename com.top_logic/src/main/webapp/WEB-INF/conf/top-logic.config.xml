@@ -450,12 +450,6 @@
 			</instance>
 		</config>
 	
-		<config service-class="com.top_logic.knowledge.service.listener.ContentChangeEventListener">
-			<instance class="com.top_logic.knowledge.service.listener.ContentChangeEventListener"
-				types="Document"
-			/>
-		</config>
-	
 		<config service-class="com.top_logic.base.services.CurrencySystem">
 			<instance class="com.top_logic.base.services.CurrencySystem"
 				system-currency="EUR"

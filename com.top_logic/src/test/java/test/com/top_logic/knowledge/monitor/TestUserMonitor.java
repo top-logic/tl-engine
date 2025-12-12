@@ -128,11 +128,11 @@ public class TestUserMonitor extends BasicTestCase {
 		Person dummy = Person.byName(testUserName);
 		assertNotNull("Unable to get user for name " + testUserName, us);
         Sender            sender = new Sender("Testing", "TestUserMonitor");
-        UserEvent         login  = new UserEvent(sender, dummy, "yyyyy", server, UserEvent.LOGGED_IN);
-        UserEvent         logout = new UserEvent(sender, dummy, "yyyyy", server, UserEvent.LOGGED_OUT);
+		UserEvent login = new UserEvent(dummy, dummy, "yyyyy", server, UserEvent.EventType.LOGGED_IN);
+		UserEvent logout = new UserEvent(dummy, dummy, "yyyyy", server, UserEvent.EventType.LOGGED_OUT);
 		tx.commit();
 
-		um.receive(login);
+		um.notifyUserEvent(login);
 
         Thread.sleep(1000);
 		// Wait a second due to implementation hack for Oracle evil for MSSQL
@@ -148,7 +148,7 @@ public class TestUserMonitor extends BasicTestCase {
 
 		endSession(us, end);
 
-		um.receive(logout);
+		um.notifyUserEvent(logout);
 
         assertNotInIterator(us, um.getOpenSessionsIterated());
 		assertTrue(um.getUserSessions().contains(us));

@@ -11,6 +11,7 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -33,8 +34,7 @@ import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.thread.ThreadContextManager;
-import com.top_logic.event.bus.Bus;
-import com.top_logic.event.bus.Sender;
+import com.top_logic.knowledge.monitor.UserMonitor;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.util.Resources;
@@ -109,9 +109,9 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 	private final Map<String, SessionInfo> _sessionMap = new ConcurrentHashMap<>(100);
 
 	/**
-	 * Sender to send UserEvents to the ApplicationBus
+	 * Consumer to consume {@link UserEvent}.
 	 */
-	private Sender _sender;
+	private Consumer<UserEvent> _userEventConsumer;
 
 	private final PersonManager _personManager;
 
@@ -410,7 +410,7 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
         
         this.putSession (session, aUser, request, sessionContext);            
 
-		sendEvent(session.getId(), aUser, aUser, UserEvent.LOGGED_IN);
+		sendEvent(session.getId(), aUser, aUser, UserEvent.EventType.LOGGED_IN);
 
         return (session);
     }
@@ -547,18 +547,18 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 					+ theRemovingUser.getName(), this);
             }
 	
-			sendEvent(sessionid, theRemovedUser, theRemovingUser, UserEvent.LOGGED_OUT);
+			sendEvent(sessionid, theRemovedUser, theRemovingUser, UserEvent.EventType.LOGGED_OUT);
         }
     }
 
 	private void sendEvent(String sessionid, Person passiveUser, Person activeUser,
-			final String mode) {
-		final Sender sender = this.getSender();
-		if (sender != null) {
+			UserEvent.EventType mode) {
+		final Consumer<UserEvent> consumer = this.getUserEvtConsumer();
+		if (consumer != null) {
 			UserEvent theEvent =
-				new UserEvent(sender, passiveUser, activeUser, sessionid, this.getClientIP(sessionid), mode);
+				new UserEvent(passiveUser, activeUser, sessionid, this.getClientIP(sessionid), mode);
 
-			sender.send(theEvent);
+			consumer.accept(theEvent);
 		}
 	}
 
@@ -584,16 +584,13 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
     }
 
 	/**
-	 * Returns the {@link Sender} to send {@link Bus} events.
-	 * 
-	 * If the {@link com.top_logic.event.bus.Bus.Module BUS module} is inactive it returns
-	 * <code>null</code>
+	 * The {@link Consumer} to notify about user event. May be <code>null</code>.
 	 */
-	private Sender getSender() {
-		if (Bus.Module.INSTANCE.isActive() && _sender == null) {
-			this._sender = new Sender(Bus.CHANGES, Bus.USER);
+	private Consumer<UserEvent> getUserEvtConsumer() {
+		if (UserMonitor.Module.INSTANCE.isActive() && _userEventConsumer == null) {
+			this._userEventConsumer = UserMonitor.Module.INSTANCE.getImplementationInstance()::notifyUserEvent;
 		}
-		return (this._sender);
+		return (this._userEventConsumer);
 	}
 
     /**
@@ -609,7 +606,7 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 			invalidateSession(info.getSessionId());
 		}
 		_sessionMap.clear();
-		_sender = null;
+		_userEventConsumer = null;
 		super.shutDown();
 	}
 	

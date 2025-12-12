@@ -7,7 +7,6 @@ package com.top_logic.knowledge.monitor;
 
 import static com.top_logic.knowledge.search.ExpressionFactory.*;
 
-import java.rmi.RemoteException;
 import java.sql.Timestamp;
 import java.util.Collections;
 import java.util.Comparator;
@@ -19,24 +18,20 @@ import java.util.concurrent.TimeUnit;
 
 import com.top_logic.base.bus.UserEvent;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.col.FilteredIterator;
 import com.top_logic.basic.config.CommaSeparatedStringSet;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.config.annotation.defaults.StringDefault;
-import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
-import com.top_logic.event.bus.AbstractReceiver;
-import com.top_logic.event.bus.Bus;
-import com.top_logic.event.bus.BusEvent;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.search.Expression;
 import com.top_logic.knowledge.search.RevisionQuery;
+import com.top_logic.knowledge.service.KBBasedManagedClass;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
 
@@ -49,8 +44,7 @@ import com.top_logic.knowledge.wrap.person.Person;
  * 
  * @author    <a href="mailto:mga@top-logic.com"></a>
  */
-@ServiceDependencies(PersistencyLayer.Module.class)
-public class UserMonitor extends AbstractReceiver {
+public class UserMonitor extends KBBasedManagedClass<UserMonitor.Config> {
 
 	/** Number of milliseconds that {@link UserSession}s will looked up in the past. */
 	public static final long THREE_DAYS = TimeUnit.DAYS.toMillis(3);
@@ -58,19 +52,14 @@ public class UserMonitor extends AbstractReceiver {
 	/** Config attribute for the user names to exclude from creating login and logout events. */
     public static final String CONF_EXCLUDE_UIDS = "excludeUIDs";
     
-    /** The Knowledgebase to use (usually the default KB) */
-	private final KnowledgeBase kBase;
-    
     
 	/** User names to exclude from automatic deleting. */
 	private final Set<String> excludeUIDs;
 
 	/**
 	 * Configuration for {@link UserMonitor}.
-	 * 
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
 	 */
-	public interface Config extends AbstractReceiver.Config {
+	public interface Config extends KBBasedManagedClass.Config<UserMonitor> {
 
 		/**
 		 * The user names to exclude from beeing logged.
@@ -80,19 +69,6 @@ public class UserMonitor extends AbstractReceiver {
 		@Format(CommaSeparatedStringSet.class)
 		Set<String> getExcludeUIDs();
 
-		/**
-		 * Namespace for the service.
-		 */
-		@Override
-		@StringDefault(Bus.CHANGES)
-		String getServiceNamespace();
-
-		/**
-		 * Name of the service.
-		 */
-		@Override
-		@StringDefault(Bus.USER)
-		String getServiceName();
 	}
 
 	/**
@@ -103,26 +79,24 @@ public class UserMonitor extends AbstractReceiver {
 	 */
 	public UserMonitor(InstantiationContext context, Config config) {
 		super(context, config);
-        kBase = PersistencyLayer.getKnowledgeBase();
 
 		excludeUIDs = config.getExcludeUIDs();
-       	subscribe();
 	}
 
 	/**
-     * Dispatch the Events depending on (LOGIN/LOGUT) type.
-     */
-    @Override
-	public void receive(BusEvent anEvent) throws RemoteException {
-        String theType = anEvent.getType();
-
-        if (UserEvent.LOGGED_IN.equals(theType)) {
-            this.login((UserEvent) anEvent);
-        }
-        else if (UserEvent.LOGGED_OUT.equals(theType)) {
-            this.logout((UserEvent) anEvent);
-        }
-    }
+	 * Notifies this {@link UserMonitor} about the given {@link UserEvent}.
+	 */
+	public void notifyUserEvent(UserEvent evt) {
+		switch (evt.type()) {
+			case LOGGED_IN:
+				this.login(evt);
+				return;
+			case LOGGED_OUT:
+				this.logout(evt);
+				return;
+		}
+		throw new UnreachableAssertion("No such enum " + evt.type());
+	}
 
     /**
      * Find a user session with the given parameters.
@@ -167,7 +141,7 @@ public class UserMonitor extends AbstractReceiver {
      *           such session.
      */
     public UserSession findUserSession(String aUser, String anID, String aServer) {
-        return findUserSession(kBase, aUser, anID, aServer);
+		return findUserSession(kb(), aUser, anID, aServer);
     }
 
     /**
@@ -196,15 +170,15 @@ public class UserMonitor extends AbstractReceiver {
      * @param    anEvent    The event holding the information about the login.
      */
     protected void login(UserEvent anEvent) {
-		Person theUser = anEvent.getPassiveUser();
-        Date          theDate = anEvent.getDate();
+		Person theUser = anEvent.passiveUser();
+		Date theDate = anEvent.date();
 
 		String userName = theUser.getName();
 		if (isExcluded(userName)) {
 			return;
 		}
-		try (Transaction tx = kBase.beginTransaction(I18NConstants.LOGGED_IN_USER__USER.fill(userName))) {
-			UserSession.startSession(kBase, userName, anEvent.getSessionID(), anEvent.getMachine(), theDate);
+		try (Transaction tx = kb().beginTransaction(I18NConstants.LOGGED_IN_USER__USER.fill(userName))) {
+			UserSession.startSession(kb(), userName, anEvent.sessionID(), anEvent.machine(), theDate);
             // This should happen in the (TL-/DB-)context of the user logging in.
 			tx.commit();
         }
@@ -217,8 +191,8 @@ public class UserMonitor extends AbstractReceiver {
      * @return   <code>true</code>, if ending the session succeeds.
      */
     protected boolean logout(UserEvent anEvent) {
-		Person theUser = anEvent.getPassiveUser();
-        Date          theDate    = anEvent.getDate();
+		Person theUser = anEvent.passiveUser();
+		Date theDate = anEvent.date();
 
 		String userName = theUser.getName();
 		if (isExcluded(userName)) {
@@ -226,7 +200,7 @@ public class UserMonitor extends AbstractReceiver {
 		}
 
 		UserSession   theSession = this.findSessionOnServer(userName,
-                                                            anEvent.getSessionID());
+			anEvent.sessionID());
 		boolean theResult;
 		try (Transaction tx =
 			theSession.getKnowledgeBase().beginTransaction(I18NConstants.LOGGED_OUT_USER__USER.fill(userName))) {
@@ -258,7 +232,7 @@ public class UserMonitor extends AbstractReceiver {
      * @return   The found session.
      */
     protected UserSession findSessionOnServer(String aUser, String anID) {
-        return findUserSession(kBase, aUser, anID, UserSession.getServerName());
+		return findUserSession(kb(), aUser, anID, UserSession.getServerName());
     }
     
     /**
@@ -355,7 +329,7 @@ public class UserMonitor extends AbstractReceiver {
      * @return    The list of user sessions, null on error.
      */
     public List<UserSession> getUserSessions() {
-        return getUserSessions(kBase);
+		return getUserSessions(kb());
     }
     
     /** 
@@ -366,7 +340,7 @@ public class UserMonitor extends AbstractReceiver {
      * @return the session list
      */
     public List<UserSession> getUserSessions(Date aStartDate, Date anEndDate) {
-    	return this.getUserSessions(kBase, aStartDate, anEndDate, UserSession.LOGIN);
+		return this.getUserSessions(kb(), aStartDate, anEndDate, UserSession.LOGIN);
     }
 
 	private boolean isExcluded(String userName) {

@@ -322,14 +322,6 @@ com.top_logic.base.monitor.bus.DefaultMonitor.java: Invalid camel case word 'Buf
 com.top_logic.base.monitor.bus.DefaultMonitor.java: Invalid camel case word 'MonitorEvent', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.monitor.bus.DefaultMonitor.java: Invalid camel case word 'MonitorEvents', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.monitor.bus.DefaultMonitor.java: Missing documentation: com.top_logic.base.monitor.bus.DefaultMonitor.process
-com.top_logic.base.monitor.bus.DocumentMonitor.java: Invalid camel case word 'BufferedReader', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.monitor.bus.DocumentMonitor.java: Invalid camel case word 'DocumentEvents', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.monitor.bus.DocumentMonitor.java: Invalid camel case word 'DocumentMonitor', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.monitor.bus.DocumentMonitor.java: Invalid camel case word 'EventBuffer', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.monitor.bus.DocumentMonitor.java: Invalid camel case word 'EventReader', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.monitor.bus.DocumentMonitor.java: Invalid camel case word 'EventWriter', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.monitor.bus.DocumentMonitor.java: Invalid camel case word 'MonitorEvent', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.monitor.bus.DocumentMonitor.java: Invalid camel case word 'UserEvent', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.monitor.bus.EventBuffer.java: Invalid camel case word 'BusEvents', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.monitor.bus.EventMonitor.java: Invalid camel case word 'EventMonitor', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.monitor.bus.EventReader.java: Invalid camel case word 'EventReader', this may only be used within JavaDoc links or HTML code tags.

@@ -33,20 +33,27 @@
 		</modelBuilder>
 		<dropTargets>
 			<dropTarget class="com.top_logic.model.search.providers.GridDropTargetByExpression"
+				canDrop="draggedObjects -> referenceRow -> true"
 				dropType="ROW"
 			>
-				<canDrop><![CDATA[draggedObjects -> referenceRow-> $referenceRow == null ? true : {
-  canDrop = work -> processor -> switch {
-    !$processor.get(`test.dnd.dropon:Processor#active`): false;
-	!$processor.get(`test.dnd.dropon:Processor#canProcess`).containsElement($work.get(`test.dnd.dropon:WorkItem#type`)): false;
-	default: true;
-  };
-  $draggedObjects.filter(draggedObject -> !$canDrop($draggedObject, $referenceRow)).isEmpty();
-}]]></canDrop>
-				<handleDrop><![CDATA[draggedObjects -> referenceRow -> $referenceRow == null ? info(#("Bitte lassen Sie die Aufgabe auf einem Bearbeiter fallen."@de , "Please drop the task on a processor."@en)) : {
-  handleDrop = work -> processor -> $processor.add(`test.dnd.dropon:Processor#processing`, $work);
-  $draggedObjects.foreach(draggedObject -> $handleDrop($draggedObject,$referenceRow));
+				<handleDrop><![CDATA[draggedObjects -> referenceRow -> {
+  $referenceRow == null ? info(#("Bitte lassen Sie die Aufgabe auf einem Bearbeiter fallen."@de , "Please drop the task on a processor."@en)) : {
+    !$referenceRow.get(`test.dnd.dropon:Processor#active`) ? info(#("Bearbeiter ist nicht aktiv."@de , "Processor is not active."@en)) : {
+      canProcess = $referenceRow.get(`test.dnd.dropon:Processor#canProcess`);
+      handleDrop = work -> processor -> {
+        !$canProcess.containsElement($work.get(`test.dnd.dropon:WorkItem#type`)) ? 
+          throw(#("Der Bearbeiter kann keine Objekte vom Typ {0} bearbeiten."@de, "the processor can not process objects of type {0}."@en).fill($work.get(`test.dnd.dropon:WorkItem#type`))) :
+          $referenceRow.add(`test.dnd.dropon:Processor#processing`, $work);
+      };
+      $draggedObjects.foreach(draggedObject -> $handleDrop($draggedObject,$referenceRow));
+    }
+  }
 }]]></handleDrop>
+				<postCreateActions>
+					<updateComponent>
+						<target name="com.top_logic.demo/technical/components/dropOn/tasksTable.layout.xml#Table"/>
+					</updateComponent>
+				</postCreateActions>
 			</dropTarget>
 		</dropTargets>
 		<buttons>
@@ -70,6 +77,12 @@
 						<global-target name="com.top_logic.demo/technical/components/dropOn/tree/tabLayout.layout.xml#TabLayout"/>
 					</showComponent>
 				</postCreateActions>
+			</button>
+			<button id="ID_5f228007_aab3_4c3e_8062_086833b950c1"
+				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+				target="selection(self())"
+			>
+				<confirmation class="com.top_logic.tool.boundsec.confirm.DefaultDeleteConfirmation"/>
 			</button>
 		</buttons>
 		<dialogs>

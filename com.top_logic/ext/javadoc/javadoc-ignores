@@ -52,12 +52,6 @@ com.top_logic.base.administration.PerformanceTests.java: Missing documentation: 
 com.top_logic.base.administration.PerformanceTests.java: Missing documentation: com.top_logic.base.administration.PerformanceTests.lineBreak
 com.top_logic.base.administration.PerformanceTests.java: Missing documentation: com.top_logic.base.administration.PerformanceTests.space
 com.top_logic.base.administration.TLPerformanceTests.java: Invalid camel case word 'PerformanceTest', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.bus.DocumentEvent.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.base.bus.DocumentEvent
-com.top_logic.base.bus.DocumentEvent.java: Invalid camel case word 'ApplicationBus', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.bus.DocumentEvent.java: Invalid camel case word 'BusEvent', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.bus.DocumentEvent.java: Invalid camel case word 'DocumentEvent', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.bus.DocumentEvent.java: Invalid camel case word 'MonitorEvent', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.bus.DocumentEvent.java: Invalid camel case word 'PrintWriter', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.bus.MonitorEvent.java: Invalid camel case word 'EventObject', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.bus.MonitorEvent.java: Invalid camel case word 'KnowledgeObject', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.bus.MonitorEvent.java: Invalid camel case word 'MonitorEvent', this may only be used within JavaDoc links or HTML code tags.
@@ -66,16 +60,6 @@ com.top_logic.base.bus.MonitorEvent.java: Invalid camel case word 'WebFolder', t
 com.top_logic.base.bus.MonitorEvent.java: Invalid camel case word 'WebFolders', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.bus.MonitorEvent.java: Invalid camel case word 'toString', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.bus.MonitorEvent.java: Missing documentation: com.top_logic.base.bus.MonitorEvent.getUser
-com.top_logic.base.bus.MonitorEventAccessor.java: Invalid camel case word 'MonitorEvent', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.bus.MonitorEventAccessor.java: Invalid camel case word 'MonitorEventAccessor', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.bus.MonitorEventAccessor.java: Missing documentation: com.top_logic.base.bus.MonitorEventAccessor.PROPERTY_CHANNEL
-com.top_logic.base.bus.MonitorEventAccessor.java: Missing documentation: com.top_logic.base.bus.MonitorEventAccessor.PROPERTY_DATE
-com.top_logic.base.bus.MonitorEventAccessor.java: Missing documentation: com.top_logic.base.bus.MonitorEventAccessor.PROPERTY_MESSAGE_OBJECT
-com.top_logic.base.bus.MonitorEventAccessor.java: Missing documentation: com.top_logic.base.bus.MonitorEventAccessor.PROPERTY_SENDER
-com.top_logic.base.bus.MonitorEventAccessor.java: Missing documentation: com.top_logic.base.bus.MonitorEventAccessor.PROPERTY_SERVICE
-com.top_logic.base.bus.MonitorEventAccessor.java: Missing documentation: com.top_logic.base.bus.MonitorEventAccessor.PROPERTY_SOURCE_OBJECT
-com.top_logic.base.bus.MonitorEventAccessor.java: Missing documentation: com.top_logic.base.bus.MonitorEventAccessor.PROPERTY_TYPE
-com.top_logic.base.bus.MonitorEventAccessor.java: Missing documentation: com.top_logic.base.bus.MonitorEventAccessor.PROPERTY_USER
 com.top_logic.base.bus.UserEvent.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.base.bus.UserEvent
 com.top_logic.base.bus.UserEvent.java: Invalid camel case word 'ApplicationBus', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.bus.UserEvent.java: Invalid camel case word 'MonitorEvent', this may only be used within JavaDoc links or HTML code tags.
@@ -319,7 +303,6 @@ com.top_logic.base.dsa.ldap.ServiceProviderInfo.java: Missing documentation: com
 com.top_logic.base.locking.handler.LockHandler.java: Invalid camel case word 'TokenContext', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.locking.service.ConfiguredLockService.java: Missing documentation: com.top_logic.base.locking.service.ConfiguredLockService.Config.TypeConfig.StrategyContainerConfig
 com.top_logic.base.monitor.bus.EventBuffer.java: Invalid camel case word 'BusEvents', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.monitor.bus.EventMonitor.java: Invalid camel case word 'EventMonitor', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.monitor.bus.EventWriter.java: Invalid camel case word 'EventWriter', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.monitor.bus.EventWriter.java: Invalid camel case word 'MonitorEvents', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.monitor.bus.LoginInfo.java: Missing documentation: com.top_logic.base.monitor.bus.LoginInfo.getFormattedDuration

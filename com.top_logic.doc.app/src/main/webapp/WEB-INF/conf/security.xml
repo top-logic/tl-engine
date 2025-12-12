@@ -177,9 +177,6 @@
 				<commandGroup name="Export"/>
 				<commandGroup name="Read"/>
 			</view>
-			<view name="com.top_logic/admin/monitor/event/eventMonitor.layout.xml#adminEventMonitor">
-				<commandGroup name="Read"/>
-			</view>
 			<view name="com.top_logic/admin/monitor/memory/memoryMonitor.layout.xml#adminMemory">
 				<commandGroup name="Export"/>
 				<commandGroup name="Read"/>

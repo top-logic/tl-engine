@@ -1166,12 +1166,10 @@ com.top_logic.event.bus.Channel.java: Invalid camel case word 'HashSet', this ma
 com.top_logic.event.bus.Channel.java: Invalid camel case word 'busEvent', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.event.bus.Channel.java: Invalid camel case word 'receiverList', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.event.bus.Channel.java: Missing documentation: com.top_logic.event.bus.Channel.getSenderList
-com.top_logic.event.bus.Gateway.java: Missing documentation: com.top_logic.event.bus.Gateway.getRegistryPort
 com.top_logic.event.bus.IReceiver.java: Invalid camel case word 'BusEvent', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.event.bus.Sender.java: Invalid camel case word 'BusEvent', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.event.bus.Sender.java: Invalid camel case word 'nameSpace', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.event.bus.Sender.java: Invalid camel case word 'receiverList', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.event.bus.ServerGateway.java: Invalid camel case word 'ServerGateway', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.event.bus.Service.java: Invalid camel case word 'EventObject', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.event.bus.Service.java: Invalid camel case word 'anObject', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.event.bus.Service.java: Missing documentation: com.top_logic.event.bus.Service.setName

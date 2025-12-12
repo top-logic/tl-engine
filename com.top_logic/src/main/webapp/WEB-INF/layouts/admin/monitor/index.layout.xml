@@ -15,7 +15,6 @@
 			<layout-reference resource="com.top_logic/admin/monitor/thread/threadMonitor.layout.xml"/>
 			<layout-reference resource="com.top_logic/admin/monitor/systemEnvironment.layout.xml"/>
 			<layout-reference resource="com.top_logic/admin/monitor/db/sqlMonitor.layout.xml"/>
-			<layout-reference resource="com.top_logic/admin/monitor/event/eventMonitor.layout.xml"/>
 			<layout-reference resource="com.top_logic/admin/monitor/memory/memoryMonitor.layout.xml"/>
 		</components>
 	</arguments>

@@ -134,11 +134,6 @@
             <entry name="source" value="Sorry, could not access the requested portal."/>
         </section>
         
-        <section name="BusMonitor" comment="Enabled Recievers to be inited by the Monitor Component">
-            <entry name="DocumentMonitor" value=""/>
-            <entry name="UserMonitor" value=""/>
-        </section>
-        
         <section name="TokenManager" comment="Infos for the token system for logical locking">
             <!-- entry name="class" value="com.top_logic.base.token.manage.TransientTokenManager" comment="Token manager for transient tokens. Only to be used in single server environments"/ -->
             <entry name="class" value="com.top_logic.base.token.manage.PersistentTokenManager" comment="Token manager for persistent token. Used for testing, cleans always the DB"/>

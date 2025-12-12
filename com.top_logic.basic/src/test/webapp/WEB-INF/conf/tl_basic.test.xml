@@ -208,11 +208,6 @@
 			<entry name="proxyPort" value="3128" />
 		</section>
 
-	    <section name = "BusMonitor" comment="Enabled Recievers to be inited by the Monitor Component">
-	        <entry name = "DocumentMonitor" value = ""/>
-	        <entry name = "UserMonitor" value = ""/>
-	    </section>
-
         <section name="WebCMS" comment="Settings for TopLogic WebCMS (aka Web Content Assistant aka Content Assistant Extension)">
             <entry name="CollectionManagerImpl"     value="com.top_logic.base.cms.pool.xmlpool.XmlCollectionManager" />
             <entry name="cms.layoutlocation"        value="cms://layouts" />

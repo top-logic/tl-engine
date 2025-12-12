@@ -35,7 +35,6 @@ public class StartStopListener extends AbstractStartStopListener implements Serv
     @Override
 	protected void initSubClassHook(ServletContext aContext) throws Exception {
         this.initPersons();
-        this.initLogEntryConfiguration();
     }
     
     /**
@@ -97,7 +96,4 @@ public class StartStopListener extends AbstractStartStopListener implements Serv
 	protected void exitSubClassHook(ServletContext context) {
     }
 
-    @Deprecated
-    protected void initLogEntryConfiguration() {
-    }
 }

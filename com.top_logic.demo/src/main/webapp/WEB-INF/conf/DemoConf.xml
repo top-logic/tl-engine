@@ -15,9 +15,6 @@
 	</alias>
 	
 	<properties>
-        <section name="Monitoring">
-            <entry name="com.top_logic.event.logEntry.LogEntryReceiver$Module" value="enabled"/>
-        </section>
 		
 <!-- 		<section name="RoleSetup" > -->
 <!-- 			<entry name="DemoSecurity" value="Role1,Role2,Role3" comment="" /> -->

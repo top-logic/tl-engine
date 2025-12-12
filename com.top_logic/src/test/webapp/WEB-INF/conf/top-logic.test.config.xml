@@ -46,13 +46,6 @@
 			</instance>
 		</config>
 	
-        <config service-class="com.top_logic.base.monitor.bus.DocumentMonitor">
-			<instance class="com.top_logic.base.monitor.bus.DocumentMonitor"
-				number-events-to-store="50"
-				output-file="file://tmp/documents.log"
-			/>
-		</config>
-        
 		<config service-class="com.top_logic.base.monitor.bus.WebContentMonitor">
 			<instance class="com.top_logic.base.monitor.bus.WebContentMonitor"
 				number-events-to-store="50"

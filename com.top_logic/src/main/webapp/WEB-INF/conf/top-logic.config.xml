@@ -60,7 +60,6 @@
 			       <module key="com.top_logic.util.maintenance.MemoryObserver$Module" value="true"/>
 			       <module key="com.top_logic.base.monitor.bus.EventMonitor$Module" value="true"/>
 			       <module key="com.top_logic.knowledge.monitor.UserMonitor$Module" value="true"/>
-		           <module key="com.top_logic.base.monitor.bus.DocumentMonitor$Module" value="false" />
 			       <module key="com.top_logic.knowledge.service.InitialTableSetup$Module" value="true" />
 			       <module key="com.top_logic.tool.boundsec.wrap.SecurityComponentCache$Module" value="true" />
 			       <module key="com.top_logic.knowledge.service.ExtIDFactory$Module" value="true" />
@@ -393,13 +392,6 @@
 		<config service-class="com.top_logic.base.monitor.bus.EventMonitor">
 			<instance class="com.top_logic.base.monitor.bus.EventMonitor"
 				buffer-size="1000"
-			/>
-		</config>
-	
-		<config service-class="com.top_logic.base.monitor.bus.DocumentMonitor">
-			<instance class="com.top_logic.base.monitor.bus.DocumentMonitor"
-				number-events-to-store="50"
-				output-file="logs/document_monitor.log"
 			/>
 		</config>
 	

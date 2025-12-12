@@ -1801,8 +1801,6 @@ com.top_logic.knowledge.service.db2.migration.sql.SQLDumper.java: Missing docume
 com.top_logic.knowledge.service.encryption.data.EncryptedFlexDataManagerFactory.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.knowledge.service.encryption.data.EncryptedFlexDataManagerFactory.Config
 com.top_logic.knowledge.service.event.CommitVetoException.java: Invalid camel case word 'rootEvent', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.knowledge.service.event.CommitVetoException.java: Invalid camel case word 'rootListener', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.knowledge.service.listener.ContentChangeEventListener.java: Invalid camel case word 'DocumentEvents', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.knowledge.service.listener.ContentChangeEventListener.java: Missing documentation: com.top_logic.knowledge.service.listener.ContentChangeEventListener.Config
 com.top_logic.knowledge.service.migration.InitVersionActions.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.knowledge.service.migration.InitVersionActions
 com.top_logic.knowledge.service.migration.SQLMigrationProcessor.java: Invalid camel case word 'fileNamePrefix', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.knowledge.service.migration.SQLMigrationProcessor.java: Invalid camel case word 'sqlDialect', this may only be used within JavaDoc links or HTML code tags.

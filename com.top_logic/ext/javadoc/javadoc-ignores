@@ -328,9 +328,6 @@ com.top_logic.base.monitor.bus.EventReader.java: Invalid camel case word 'EventR
 com.top_logic.base.monitor.bus.EventWriter.java: Invalid camel case word 'EventWriter', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.monitor.bus.EventWriter.java: Invalid camel case word 'MonitorEvents', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.monitor.bus.LoginInfo.java: Missing documentation: com.top_logic.base.monitor.bus.LoginInfo.getFormattedDuration
-com.top_logic.base.monitor.bus.WebContentMonitor.java: Invalid camel case word 'DocumentEvents', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.monitor.bus.WebContentMonitor.java: Invalid camel case word 'EventBuffer', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.monitor.bus.WebContentMonitor.java: Invalid camel case word 'WebContent', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.multipart.MultipartRequest.java: Invalid camel case word 'DiskSpace', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.multipart.MultipartRequest.java: Invalid camel case word 'InputStream', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.multipart.MultipartRequest.java: Invalid camel case word 'MultipartRequest', this may only be used within JavaDoc links or HTML code tags.

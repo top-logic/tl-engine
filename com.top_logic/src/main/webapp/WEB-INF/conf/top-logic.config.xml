@@ -395,13 +395,6 @@
 			/>
 		</config>
 	
-		<config service-class="com.top_logic.base.monitor.bus.WebContentMonitor">
-			<instance class="com.top_logic.base.monitor.bus.WebContentMonitor"
-				number-events-to-store="50"
-				output-file="logs/webcontent_monitor.log"
-			/>
-		</config>
-	
         <config service-class="com.top_logic.basic.mime.MimeTypesModule">
         	<instance class="com.top_logic.util.WebMimeTypes" />
         </config>

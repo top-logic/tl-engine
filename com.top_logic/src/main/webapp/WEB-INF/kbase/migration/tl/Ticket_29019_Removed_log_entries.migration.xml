@@ -11,10 +11,13 @@
 			module="tl"
 		/>
 	</dependencies>
-	<processors>
+	<pre-processors>
+		<!-- Remove references to removed implementation classes. -->
 		<processor class="com.top_logic.knowledge.service.db2.migration.processor.XsltTableDefinitionBaselineProcessor"
 			transform="/WEB-INF/kbase/migration/tl/Ticket_29019_Removed_log_entries.db.xslt"
 		/>
+	</pre-processors>
+	<processors>
 		<processor class="com.top_logic.knowledge.service.migration.processors.RemoveApplicationTypesProcessor">
 			<application-tables>
 				<application-table name="LogEntry"

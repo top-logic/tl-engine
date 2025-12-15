@@ -557,6 +557,7 @@ services.form = {
 				 * For Chrome and IE the dataTransfer data is only available during the drop event handling. 
 				 */
 				data: "dnd://" + scope + "/" + controlElement.id + "/" + draggedRows.map(row => row.id).join(),
+				sourceID: dataId,
 				image: dragImageElement
 			};
 
@@ -632,7 +633,7 @@ services.form = {
 
 				{
 					if(window.tlDnD.cache !== undefined) {
-						var isDropable = window.tlDnD.cache.get(window.tlDnD.data.split("/").pop(), row.id);
+						var isDropable = window.tlDnD.cache.get(window.tlDnD.sourceID, row.id);
 						
 						if(isDropable !== undefined) {
 							if(isDropable) {
@@ -680,12 +681,12 @@ services.form = {
 		changeToNoDropCursor: function(targetID, position) {
 			this.resetMarker();
 			
-			services.form._putToDnDCache(window.tlDnD.data.split("/").pop(), targetID, position, false);
+			services.form._putToDnDCache(window.tlDnD.sourceID, targetID, position, false);
 		},
 		
 		displayDropMarker: function(targetID, position) {
 			this.displayDropMarkerInternal(document.getElementById(targetID), position);
-			services.form._putToDnDCache(window.tlDnD.data.split("/").pop(), targetID, position, true);
+			services.form._putToDnDCache(window.tlDnD.sourceID, targetID, position, true);
 
 			return false;
 		},
@@ -1089,6 +1090,7 @@ services.form = {
 				 * For Chrome and IE the dataTransfer data is only available during the drop event handling. 
 				 */
 				data: "dnd://" + scope + "/" + controlElement.id + "/" + draggedNodeIDs,
+				sourceID: draggedNodeIDs,
 				image: dragImageElement
 			};
 			
@@ -1123,7 +1125,7 @@ services.form = {
 				
 				{
 					if(window.tlDnD.cache !== undefined) {
-						var isDropable = window.tlDnD.cache.get(window.tlDnD.data.split("/").pop(), node.id, position);
+						var isDropable = window.tlDnD.cache.get(window.tlDnD.sourceID, node.id, position);
 						
 						if(isDropable !== undefined) {
 							if(isDropable) {
@@ -1158,7 +1160,7 @@ services.form = {
 		changeToNoDropCursor: function(targetID, pos) {
 			this.resetMarker();
 			
-			var sourceID = window.tlDnD.data.split("/").pop();
+			var sourceID = window.tlDnD.sourceID;
 			this.addToDnDCache(sourceID, targetID, pos, false);
 		},
 		
@@ -1179,7 +1181,7 @@ services.form = {
 		
 		displayDropMarker: function(targetID, pos) {
 			this.displayDropMarkerInternal(document.getElementById(targetID), pos);
-			var sourceID = window.tlDnD.data.split("/").pop();
+			var sourceID = window.tlDnD.sourceID;
 			this.addToDnDCache(sourceID, targetID, pos, true);
 
 			return false;

@@ -560,6 +560,7 @@ services.form = {
 				 * For Chrome and IE the dataTransfer data is only available during the drop event handling. 
 				 */
 				data: "dnd://" + scope + "|" + controlElement.id + "|" + dataId,
+				sourceID: dataId,
 				image: dragImageElement
 			};
 
@@ -635,7 +636,7 @@ services.form = {
 
 				{
 					if(services.ajax.mainLayout.tlDnD.cache !== undefined) {
-						var isDropable = services.ajax.mainLayout.tlDnD.cache.get(services.ajax.mainLayout.tlDnD.data.split("|").pop(), row.id);
+						var isDropable = services.ajax.mainLayout.tlDnD.cache.get(services.ajax.mainLayout.tlDnD.sourceID, row.id);
 						
 						if(isDropable !== undefined) {
 							if(isDropable) {
@@ -683,12 +684,12 @@ services.form = {
 		changeToNoDropCursor: function(targetID, position) {
 			this.resetMarker();
 			
-			services.form._putToDnDCache(services.ajax.mainLayout.tlDnD.data.split("|").pop(), targetID, position, false);
+			services.form._putToDnDCache(services.ajax.mainLayout.tlDnD.sourceID, targetID, position, false);
 		},
 		
 		displayDropMarker: function(targetID, position) {
 			this.displayDropMarkerInternal(document.getElementById(targetID), position);
-			services.form._putToDnDCache(services.ajax.mainLayout.tlDnD.data.split("|").pop(), targetID, position, true);
+			services.form._putToDnDCache(services.ajax.mainLayout.tlDnD.sourceID, targetID, position, true);
 
 			return false;
 		},
@@ -1092,6 +1093,7 @@ services.form = {
 				 * For Chrome and IE the dataTransfer data is only available during the drop event handling. 
 				 */
 				data: "dnd://" + scope + "|" + controlElement.id + "|" + draggedNodeIDs,
+				sourceID: draggedNodeIDs,
 				image: dragImageElement
 			};
 			
@@ -1126,7 +1128,7 @@ services.form = {
 				
 				{
 					if(services.ajax.mainLayout.tlDnD.cache !== undefined) {
-						var isDropable = services.ajax.mainLayout.tlDnD.cache.get(services.ajax.mainLayout.tlDnD.data.split("|").pop(), node.id, position);
+						var isDropable = services.ajax.mainLayout.tlDnD.cache.get(services.ajax.mainLayout.tlDnD.sourceID, node.id, position);
 						
 						if(isDropable !== undefined) {
 							if(isDropable) {
@@ -1161,13 +1163,13 @@ services.form = {
 		changeToNoDropCursor: function(targetID, pos) {
 			this.resetMarker();
 			
-			var sourceID = services.ajax.mainLayout.tlDnD.data.split("|").pop();
+			var sourceID = services.ajax.mainLayout.tlDnD.sourceID;
 			services.form._putToDnDCache(sourceID, targetID, pos, false);
 		},
 		
 		displayDropMarker: function(targetID, pos) {
 			this.displayDropMarkerInternal(document.getElementById(targetID), pos);
-			var sourceID = services.ajax.mainLayout.tlDnD.data.split("|").pop();
+			var sourceID = services.ajax.mainLayout.tlDnD.sourceID;
 			services.form._putToDnDCache(sourceID, targetID, pos, true);
 
 			return false;

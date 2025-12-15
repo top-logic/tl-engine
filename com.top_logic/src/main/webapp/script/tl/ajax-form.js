@@ -615,7 +615,7 @@ services.form = {
 			var event = BAL.getEvent(event);
 			event.preventDefault();
 			
-			if(!window.tlDnD || !window.tlDnD.data){
+			if(!window.tlDnD){
 				event.dataTransfer.dropEffect = 'none';
 				return;
 			}
@@ -860,7 +860,7 @@ services.form = {
 			var event = BAL.getEvent(event);
 			event.preventDefault();
 			
-			if(!window.tlDnD || !window.tlDnD.data){
+			if(!window.tlDnD){
 				event.dataTransfer.dropEffect = 'none';
 				return;
 			}
@@ -1103,7 +1103,7 @@ services.form = {
 			var event = BAL.getEvent(event);
 			event.preventDefault();
 			
-			if(!window.tlDnD || !window.tlDnD.data){
+			if(!window.tlDnD){
 				event.dataTransfer.dropEffect = 'none';
 				return;
 			}
@@ -3298,7 +3298,7 @@ services.form = {
 			var event = BAL.getEvent(event);
 			event.preventDefault();
 			
-			if(!window.tlDnD || !window.tlDnD.data){
+			if(!window.tlDnD){
 				event.dataTransfer.dropEffect = 'none';
 				return;
 			}

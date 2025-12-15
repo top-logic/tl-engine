@@ -683,12 +683,12 @@ services.form = {
 		changeToNoDropCursor: function(targetID, position) {
 			this.resetMarker();
 			
-			services.form._putToDnDCache(services.ajax.mainLayout.tlDnD.data.split("|").pop(), targetID, false);
+			services.form._putToDnDCache(services.ajax.mainLayout.tlDnD.data.split("|").pop(), targetID, position, false);
 		},
 		
 		displayDropMarker: function(targetID, position) {
 			this.displayDropMarkerInternal(document.getElementById(targetID), position);
-			services.form._putToDnDCache(services.ajax.mainLayout.tlDnD.data.split("|").pop(), targetID, true);
+			services.form._putToDnDCache(services.ajax.mainLayout.tlDnD.data.split("|").pop(), targetID, position, true);
 
 			return false;
 		},
@@ -1126,7 +1126,7 @@ services.form = {
 				
 				{
 					if(services.ajax.mainLayout.tlDnD.cache !== undefined) {
-						var isDropable = services.ajax.mainLayout.tlDnD.cache.get(services.ajax.mainLayout.tlDnD.data.split("/").pop(), node.id, position);
+						var isDropable = services.ajax.mainLayout.tlDnD.cache.get(services.ajax.mainLayout.tlDnD.data.split("|").pop(), node.id, position);
 						
 						if(isDropable !== undefined) {
 							if(isDropable) {
@@ -1162,28 +1162,13 @@ services.form = {
 			this.resetMarker();
 			
 			var sourceID = services.ajax.mainLayout.tlDnD.data.split("|").pop();
-			this.addToDnDCache(sourceID, targetID, pos, false);
-		},
-		
-		addToDnDCache: function (sourceID, targetID, pos, isDropable) {
-			if(services.ajax.mainLayout.tlDnD.cache !== undefined) {
-				var cacheValue = services.ajax.mainLayout.tlDnD.cache.get(sourceID, targetID);
-				if(cacheValue !== undefined) {
-					cacheValue[pos] = isDropable;
-					return;
-				}
-			}
-			
-			var cacheValue = {};
-			cacheValue[pos] = isDropable;
-			
-			services.form._putToDnDCache(sourceID, targetID, cacheValue);
+			services.form._putToDnDCache(sourceID, targetID, pos, false);
 		},
 		
 		displayDropMarker: function(targetID, pos) {
 			this.displayDropMarkerInternal(document.getElementById(targetID), pos);
 			var sourceID = services.ajax.mainLayout.tlDnD.data.split("|").pop();
-			this.addToDnDCache(sourceID, targetID, pos, true);
+			services.form._putToDnDCache(sourceID, targetID, pos, true);
 
 			return false;
 		},

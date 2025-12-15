@@ -11,9 +11,6 @@ import java.util.Map;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.InstanceFormat;
-import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
-import com.top_logic.event.ModelTrackingService;
 import com.top_logic.importer.base.ListDataImportPerformer;
 import com.top_logic.knowledge.wrap.Wrapper;
 
@@ -41,73 +38,39 @@ public interface ImportPerformerPostProcessor {
     void postProcessObject(Wrapper anAttributed, Map<String, Object> someValues, Wrapper aModel, boolean created);
 
     /**
-	 * Simple implementation of interface which will notify the {@link ModelTrackingService}.
+	 * Simple implementation of interface which actually do nothing.
+	 * 
+	 * <p>
+	 * This class is a place holder for configuration items with
+	 * {@link ImportPerformerPostProcessor} to avoid null check.
+	 * </p>
+	 */
+	public static class NoImportPerformerPostProcessor implements ImportPerformerPostProcessor {
+
+		/**
+		 * Singleton {@link NoImportPerformerPostProcessor} instance.
+		 */
+		public static final NoImportPerformerPostProcessor INSTANCE = new NoImportPerformerPostProcessor();
+
+		/**
+		 * Creates a new {@link NoImportPerformerPostProcessor}.
+		 */
+		protected NoImportPerformerPostProcessor() {
+			// singleton instance
+		}
+
+		@Override
+		public void postProcessObject(Wrapper anAttributed, Map<String, Object> someValues, Wrapper aModel,
+				boolean isCreated) {
+			// Do nothing
+		}
+	}
+
+	/**
+	 * Collection of different post performers called one after the other.
 	 * 
 	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
 	 */
-    public static class SimpleImportPerformerPostProcessor<C extends SimpleImportPerformerPostProcessor.Config> implements ImportPerformerPostProcessor {
-
-        @SuppressWarnings("javadoc")
-        public interface Config extends PolymorphicConfiguration<SimpleImportPerformerPostProcessor<?>> {
-
-			/** Method for declare the sending of events to the {@link ModelTrackingService}. */
-			public static final String SEND_EVENTS = "send-events";
-
-			/** Flag, if monitor events should be send. */
-			@Name(SEND_EVENTS)
-			@BooleanDefault(true)
-			boolean isSendingEvents();
-        }
-
-        // Attributes
-
-		/** Configuration of this instance. */
-        protected final C config;
-
-        // Constructors
-
-        /** 
-         * Creates a {@link SimpleImportPerformerPostProcessor}.
-         */
-		public SimpleImportPerformerPostProcessor(@SuppressWarnings("unused") InstantiationContext aContext, C aConfig) {
-			this.config = aConfig;
-        }
-
-        // Implementation of interface ImportPostProcessor
-
-        @Override
-		public void postProcessObject(Wrapper anAttributed, Map<String, Object> someValues, Wrapper aModel, boolean isCreated) {
-			this.sendEvent(anAttributed, aModel, isCreated);
-		}
-
-		// Protected methods
-
-		/**
-		 * Send an monitor event when configured in this instance.
-		 * 
-		 * @param anAttributed
-		 *        The affected object.
-		 * @param aModel
-		 *        The model the object belongs to.
-		 * @param isCreated
-		 *        <code>true</code> when affected object has been created.
-		 */
-		protected void sendEvent(Wrapper anAttributed, Wrapper aModel, boolean isCreated) {
-			if (ModelTrackingService.Module.INSTANCE.isActive() && this.config.isSendingEvents()) {
-				if (isCreated) {
-					ModelTrackingService.sendCreateEvent(anAttributed, aModel);
-				} else {
-					ModelTrackingService.sendModifyEvent(anAttributed, aModel);
-				}
-			}
-		}
-    }
-
-    /**
-     * Collection of different post performers called one after the other. 
-     * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
-     */
     public static class CollectingImportPerformerPostProcessor<C extends CollectingImportPerformerPostProcessor.Config> implements ImportPerformerPostProcessor {
         
         @SuppressWarnings("javadoc")

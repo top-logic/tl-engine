@@ -52,14 +52,6 @@ com.top_logic.base.administration.PerformanceTests.java: Missing documentation: 
 com.top_logic.base.administration.PerformanceTests.java: Missing documentation: com.top_logic.base.administration.PerformanceTests.lineBreak
 com.top_logic.base.administration.PerformanceTests.java: Missing documentation: com.top_logic.base.administration.PerformanceTests.space
 com.top_logic.base.administration.TLPerformanceTests.java: Invalid camel case word 'PerformanceTest', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.bus.MonitorEvent.java: Invalid camel case word 'EventObject', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.bus.MonitorEvent.java: Invalid camel case word 'KnowledgeObject', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.bus.MonitorEvent.java: Invalid camel case word 'MonitorEvent', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.bus.MonitorEvent.java: Invalid camel case word 'PrintWriter', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.bus.MonitorEvent.java: Invalid camel case word 'WebFolder', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.bus.MonitorEvent.java: Invalid camel case word 'WebFolders', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.bus.MonitorEvent.java: Invalid camel case word 'toString', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.bus.MonitorEvent.java: Missing documentation: com.top_logic.base.bus.MonitorEvent.getUser
 com.top_logic.base.bus.UserEvent.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.base.bus.UserEvent
 com.top_logic.base.bus.UserEvent.java: Invalid camel case word 'ApplicationBus', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.bus.UserEvent.java: Invalid camel case word 'MonitorEvent', this may only be used within JavaDoc links or HTML code tags.
@@ -1120,39 +1112,6 @@ com.top_logic.common.webfolder.ui.commands.ZipFolderNameProvider.java: Documenta
 com.top_logic.common.webfolder.ui.commands.ZipFolderNameProvider.java: Missing documentation: com.top_logic.common.webfolder.ui.commands.ZipFolderNameProvider.INSTANCE
 com.top_logic.common.webfolder.ui.keywords.KeywordsDialog.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.common.webfolder.ui.keywords.KeywordsDialog
 com.top_logic.common.webfolder.ui.similar.SimilarDocumentsDialog.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.common.webfolder.ui.similar.SimilarDocumentsDialog
-com.top_logic.event.ModelTrackingService.java: Invalid camel case word 'ModelTrackingService', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.event.ModelTrackingService.java: Invalid camel case word 'MonitorEvent', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.event.ModelTrackingService.java: Invalid camel case word 'RiskItem', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.event.ModelTrackingService.java: Invalid camel case word 'aMessage', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.event.ModelTrackingService.java: Invalid camel case word 'aSource', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.event.ModelTrackingService.java: Missing documentation: com.top_logic.event.ModelTrackingService.Module
-com.top_logic.event.ModelTrackingService.java: Missing documentation: com.top_logic.event.ModelTrackingService.Module.INSTANCE
-com.top_logic.event.bus.AbstractReceiver.java: Missing documentation: com.top_logic.event.bus.AbstractReceiver.Config
-com.top_logic.event.bus.Bus.java: Invalid camel case word 'HashMap', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.event.bus.Bus.java: Invalid camel case word 'collectionOfReceivers', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.event.bus.Bus.java: Invalid camel case word 'getInstance', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.event.bus.Bus.java: Invalid camel case word 'starMap', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.event.bus.Bus.java: Invalid camel case word 'theBus', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.event.bus.Bus.java: Missing documentation: com.top_logic.event.bus.Bus.Module
-com.top_logic.event.bus.Bus.java: Missing documentation: com.top_logic.event.bus.Bus.Module.INSTANCE
-com.top_logic.event.bus.BusEvent.java: Invalid camel case word 'BusEvent', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.event.bus.BusEvent.java: Invalid camel case word 'EventObject', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.event.bus.BusEvent.java: Invalid camel case word 'aMessage', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.event.bus.BusEvent.java: Invalid camel case word 'busEvent', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.event.bus.Channel.java: Invalid camel case word 'BusEvent', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.event.bus.Channel.java: Invalid camel case word 'EventObject', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.event.bus.Channel.java: Invalid camel case word 'HashSet', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.event.bus.Channel.java: Invalid camel case word 'busEvent', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.event.bus.Channel.java: Invalid camel case word 'receiverList', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.event.bus.Channel.java: Missing documentation: com.top_logic.event.bus.Channel.getSenderList
-com.top_logic.event.bus.IReceiver.java: Invalid camel case word 'BusEvent', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.event.bus.Sender.java: Invalid camel case word 'BusEvent', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.event.bus.Sender.java: Invalid camel case word 'nameSpace', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.event.bus.Sender.java: Invalid camel case word 'receiverList', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.event.bus.Service.java: Invalid camel case word 'EventObject', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.event.bus.Service.java: Invalid camel case word 'anObject', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.event.bus.Service.java: Missing documentation: com.top_logic.event.bus.Service.setName
-com.top_logic.event.bus.Service.java: Missing documentation: com.top_logic.event.bus.Service.setNameSpace
 com.top_logic.event.infoservice.InfoService.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.event.infoservice.InfoService.Config
 com.top_logic.gui.JSDeploy.java: Invalid camel case word 'runMainCommandLine', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.gui.JSFileCompiler.java: Invalid camel case word 'YouSee', this may only be used within JavaDoc links or HTML code tags.

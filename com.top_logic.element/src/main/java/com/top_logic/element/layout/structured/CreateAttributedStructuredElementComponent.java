@@ -14,14 +14,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.top_logic.base.bus.MonitorEvent;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
-import com.top_logic.element.core.util.ElementEventUtil;
 import com.top_logic.element.layout.create.CreateFormBuilder;
 import com.top_logic.element.meta.PersistentClass;
 import com.top_logic.element.meta.gui.AbstractCreateAttributedCommandHandler;
@@ -39,7 +37,6 @@ import com.top_logic.layout.form.component.AbstractCreateComponent;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.SelectField;
-import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 
@@ -316,18 +313,6 @@ public class CreateAttributedStructuredElementComponent extends CreateAttributed
 		protected TLObject callFactory(StructuredElement parent, String name, TLClass type) {
 			return parent.createChild(name, type);
 		}
-
-		@Override
-		public Object createObject(LayoutComponent component, Object createContext, FormContainer formContainer,
-				Map arguments) {
-			Object newElement = super.createObject(component, createContext, formContainer, arguments);
-			if (newElement instanceof StructuredElement) {
-				ElementEventUtil.sendEvent((StructuredElement) newElement, MonitorEvent.CREATED);
-			}
-			return newElement;
-		}
-
-        // Protected methods
 
         /** 
          * Extract the structured element type value from the given form context.

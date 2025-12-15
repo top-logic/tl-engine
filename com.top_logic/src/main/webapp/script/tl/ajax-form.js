@@ -680,12 +680,12 @@ services.form = {
 		changeToNoDropCursor: function(targetID, position) {
 			this.resetMarker();
 			
-			services.form._putToDnDCache(window.tlDnD.data.split("/").pop(), targetID, false);
+			services.form._putToDnDCache(window.tlDnD.data.split("/").pop(), targetID, position, false);
 		},
 		
 		displayDropMarker: function(targetID, position) {
 			this.displayDropMarkerInternal(document.getElementById(targetID), position);
-			services.form._putToDnDCache(window.tlDnD.data.split("/").pop(), targetID, true);
+			services.form._putToDnDCache(window.tlDnD.data.split("/").pop(), targetID, position, true);
 
 			return false;
 		},

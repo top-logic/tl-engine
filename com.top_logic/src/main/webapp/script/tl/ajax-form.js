@@ -683,13 +683,25 @@ services.form = {
 		
 		changeToNoDropCursor: function(targetID, position) {
 			this.resetMarker();
-			
-			services.form._putToDnDCache(services.ajax.mainLayout.tlDnD.sourceID, targetID, position, false);
+			if (!services.ajax.mainLayout.tlDnD) {
+				// No DnD data found. That may happen when the user has 
+				// ended drag before the server answer is applied.
+				return;
+			}
+			var sourceID = services.ajax.mainLayout.tlDnD.sourceID;
+			services.form._putToDnDCache(sourceID, targetID, position, false);
 		},
 		
 		displayDropMarker: function(targetID, position) {
+			if (!services.ajax.mainLayout.tlDnD) {
+				// No DnD data found. That may happen when the user has 
+				// ended drag before the server answer is applied.
+				this.resetMarker();
+				return false;
+			}
 			this.displayDropMarkerInternal(document.getElementById(targetID), position);
-			services.form._putToDnDCache(services.ajax.mainLayout.tlDnD.sourceID, targetID, position, true);
+			var sourceID = services.ajax.mainLayout.tlDnD.sourceID;
+			services.form._putToDnDCache(sourceID, targetID, position, true);
 
 			return false;
 		},
@@ -1162,12 +1174,22 @@ services.form = {
 		
 		changeToNoDropCursor: function(targetID, pos) {
 			this.resetMarker();
-			
+			if (!services.ajax.mainLayout.tlDnD) {
+				// No DnD data found. That may happen when the user has 
+				// ended drag before the server answer is applied.
+				return;
+			}
 			var sourceID = services.ajax.mainLayout.tlDnD.sourceID;
 			services.form._putToDnDCache(sourceID, targetID, pos, false);
 		},
 		
 		displayDropMarker: function(targetID, pos) {
+			if (!services.ajax.mainLayout.tlDnD) {
+				// No DnD data found. That may happen when the user has 
+				// ended drag before the server answer is applied.
+				this.resetMarker();
+				return false;
+			}
 			this.displayDropMarkerInternal(document.getElementById(targetID), pos);
 			var sourceID = services.ajax.mainLayout.tlDnD.sourceID;
 			services.form._putToDnDCache(sourceID, targetID, pos, true);

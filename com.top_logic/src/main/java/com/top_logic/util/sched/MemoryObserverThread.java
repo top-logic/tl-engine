@@ -22,7 +22,6 @@ import org.jfree.data.time.Second;
 import org.jfree.data.time.TimeSeriesCollection;
 
 import com.top_logic.base.chart.dataset.ExtendedTimeSeries;
-import com.top_logic.base.monitor.bus.EventBuffer;
 import com.top_logic.basic.AliasManager;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.Reloadable;
@@ -705,8 +704,6 @@ public class MemoryObserverThread extends ConfiguredManagedClass<MemoryObserverT
 	 * Circular Buffer for a certain number of Object for later access.
 	 * 
 	 * TODO KHA Use some kind of {@link Queue} or moved this into tl-basic.col.
-	 * 
-	 * @see EventBuffer
 	 * 
 	 * @author <a href=mailto:fsc@top-logic.com>fsc</a>
 	 */

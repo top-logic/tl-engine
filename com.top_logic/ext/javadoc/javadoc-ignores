@@ -303,7 +303,6 @@ com.top_logic.base.dsa.ldap.ServiceProviderInfo.java: Missing documentation: com
 com.top_logic.base.locking.handler.LockHandler.java: Invalid camel case word 'TokenContext', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.locking.service.ConfiguredLockService.java: Missing documentation: com.top_logic.base.locking.service.ConfiguredLockService.Config.TypeConfig.StrategyContainerConfig
 com.top_logic.base.monitor.bus.EventBuffer.java: Invalid camel case word 'BusEvents', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.monitor.bus.LoginInfo.java: Missing documentation: com.top_logic.base.monitor.bus.LoginInfo.getFormattedDuration
 com.top_logic.base.multipart.MultipartRequest.java: Invalid camel case word 'DiskSpace', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.multipart.MultipartRequest.java: Invalid camel case word 'InputStream', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.multipart.MultipartRequest.java: Invalid camel case word 'MultipartRequest', this may only be used within JavaDoc links or HTML code tags.

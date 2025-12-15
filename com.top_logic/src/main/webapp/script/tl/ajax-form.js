@@ -618,7 +618,7 @@ services.form = {
 			var event = BAL.getEvent(event);
 			event.preventDefault();
 			
-			if(!services.ajax.mainLayout.tlDnD || !services.ajax.mainLayout.tlDnD.data){
+			if(!services.ajax.mainLayout.tlDnD){
 				event.dataTransfer.dropEffect = 'none';
 				return;
 			}
@@ -863,7 +863,7 @@ services.form = {
 			var event = BAL.getEvent(event);
 			event.preventDefault();
 			
-			if(!services.ajax.mainLayout.tlDnD || !services.ajax.mainLayout.tlDnD.data){
+			if(!services.ajax.mainLayout.tlDnD){
 				event.dataTransfer.dropEffect = 'none';
 				return;
 			}
@@ -1106,7 +1106,7 @@ services.form = {
 			var event = BAL.getEvent(event);
 			event.preventDefault();
 			
-			if(!services.ajax.mainLayout.tlDnD || !services.ajax.mainLayout.tlDnD.data){
+			if(!services.ajax.mainLayout.tlDnD){
 				event.dataTransfer.dropEffect = 'none';
 				return;
 			}
@@ -3314,7 +3314,7 @@ services.form = {
 			var event = BAL.getEvent(event);
 			event.preventDefault();
 			
-			if(!services.ajax.mainLayout.tlDnD || !services.ajax.mainLayout.tlDnD.data){
+			if(!services.ajax.mainLayout.tlDnD){
 				event.dataTransfer.dropEffect = 'none';
 				return;
 			}

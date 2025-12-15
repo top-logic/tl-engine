@@ -680,13 +680,25 @@ services.form = {
 		
 		changeToNoDropCursor: function(targetID, position) {
 			this.resetMarker();
-			
-			services.form._putToDnDCache(window.tlDnD.sourceID, targetID, position, false);
+			if (!window.tlDnD) {
+				// No DnD data found. That may happen when the user has 
+				// ended drag before the server answer is applied.
+				return;
+			}
+			var sourceID = window.tlDnD.sourceID;
+			services.form._putToDnDCache(sourceID, targetID, position, false);
 		},
 		
 		displayDropMarker: function(targetID, position) {
+			if (!window.tlDnD) {
+				// No DnD data found. That may happen when the user has 
+				// ended drag before the server answer is applied.
+				this.resetMarker();
+				return false;
+			}
 			this.displayDropMarkerInternal(document.getElementById(targetID), position);
-			services.form._putToDnDCache(window.tlDnD.sourceID, targetID, position, true);
+			var sourceID = window.tlDnD.sourceID;
+			services.form._putToDnDCache(sourceID, targetID, position, true);
 
 			return false;
 		},
@@ -1159,7 +1171,11 @@ services.form = {
 		
 		changeToNoDropCursor: function(targetID, pos) {
 			this.resetMarker();
-			
+			if (!window.tlDnD) {
+				// No DnD data found. That may happen when the user has 
+				// ended drag before the server answer is applied.
+				return;
+			}
 			var sourceID = window.tlDnD.sourceID;
 			this.addToDnDCache(sourceID, targetID, pos, false);
 		},
@@ -1180,6 +1196,12 @@ services.form = {
 		},
 		
 		displayDropMarker: function(targetID, pos) {
+			if (!window.tlDnD) {
+				// No DnD data found. That may happen when the user has 
+				// ended drag before the server answer is applied.
+				this.resetMarker();
+				return false;
+			}
 			this.displayDropMarkerInternal(document.getElementById(targetID), pos);
 			var sourceID = window.tlDnD.sourceID;
 			this.addToDnDCache(sourceID, targetID, pos, true);

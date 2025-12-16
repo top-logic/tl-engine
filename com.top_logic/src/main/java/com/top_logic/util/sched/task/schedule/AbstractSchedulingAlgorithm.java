@@ -13,15 +13,19 @@ import java.util.Date;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.form.FormField;
+import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.FormGroup;
+import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.model.form.definition.Columns;
 import com.top_logic.util.Resources;
@@ -149,6 +153,27 @@ public abstract class AbstractSchedulingAlgorithm<C extends PolymorphicConfigura
 		FormGroup group = new FormGroup(groupName, getI18nPrefix());
 		schedulingAlgorithm.fillFormGroup(group);
 		return group;
+	}
+
+	/**
+	 * Transfers the label and tooltip of a configuration property to the given member.
+	 * 
+	 * @param configItem
+	 *        {@link ConfigurationItem} type.
+	 * @param propertyName
+	 *        Name of the property.
+	 * @param member
+	 *        Member to update label and tooltip.
+	 */
+	protected static <M extends FormMember> M transferPropertyLabel(Class<? extends ConfigurationItem> configItem,
+			String propertyName, M member) {
+		PropertyDescriptor property =
+			TypedConfiguration.getConfigurationDescriptor(configItem).getProperty(propertyName);
+		ResKey label = Labels.propertyLabelKey(property);
+		Resources resources = com.top_logic.util.Resources.getInstance();
+		member.setLabel(resources.getString(label));
+		member.setTooltip(resources.getString(label.tooltipOptional()));
+		return member;
 	}
 
 }

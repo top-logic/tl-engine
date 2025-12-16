@@ -125,7 +125,9 @@ public class DailySchedule<C extends DailySchedule.Config<?>>
 
 		DateFormat format = HTMLFormatter.getInstance().getShortTimeFormat();
 		Object value = getConfig().getTimeOfDay();
-		group.addMember(FormFactory.newComplexField(NAME_FIELD_TIME_OF_DAY, format, value, FormFactory.IMMUTABLE));
+		group.addMember(
+			transferPropertyLabel(Config.class, Config.PROPERTY_NAME_TIME_OF_DAY,
+				FormFactory.newComplexField(NAME_FIELD_TIME_OF_DAY, format, value, FormFactory.IMMUTABLE)));
 
 		addPeriodField(group);
 	}

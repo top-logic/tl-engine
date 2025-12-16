@@ -124,12 +124,16 @@ public class WeeklySchedule<C extends WeeklySchedule.Config<?>>
 
 		List<Day> dayOfWeekOptions = Arrays.asList(Day.values());
 		List<Day> dayOfWeekValue = Collections.singletonList(getConfig().getDayOfWeek());
-		group.addMember(FormFactory.newSelectField(
-			NAME_FIELD_DAY_OF_WEEK, dayOfWeekOptions, !FormFactory.MULTIPLE, dayOfWeekValue, FormFactory.IMMUTABLE));
+		group.addMember(transferPropertyLabel(Config.class, Config.PROPERTY_NAME_DAY_OF_WEEK,
+			FormFactory.newSelectField(
+				NAME_FIELD_DAY_OF_WEEK, dayOfWeekOptions, !FormFactory.MULTIPLE, dayOfWeekValue,
+				FormFactory.IMMUTABLE)));
 
 		DateFormat timeOfDayFormat = HTMLFormatter.getInstance().getShortTimeFormat();
-		group.addMember(FormFactory.newComplexField(
-			NAME_FIELD_TIME_OF_DAY, timeOfDayFormat, getConfig().getTimeOfDay(), FormFactory.IMMUTABLE));
+		group.addMember(
+			transferPropertyLabel(Config.class, Config.PROPERTY_NAME_TIME_OF_DAY,
+				FormFactory.newComplexField(
+				NAME_FIELD_TIME_OF_DAY, timeOfDayFormat, getConfig().getTimeOfDay(), FormFactory.IMMUTABLE)));
 
 		addPeriodField(group);
 	}

@@ -14,7 +14,7 @@ import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.constraint.impl.Positive;
 import com.top_logic.basic.time.CalendarUtil;
-import com.top_logic.layout.form.FormField;
+import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.FormGroup;
 
@@ -49,17 +49,17 @@ public abstract class FixedDatePeriodicalSchedulingAlgorithm<C extends FixedDate
 	}
 
 	/**
-	 * The common name prefix for all the {@link FormField}s created by this class.
+	 * The common name prefix for all the {@link FormMember}s created by this class.
 	 * <p>
-	 * Is used to avoid i18n clashes with other {@link SchedulingAlgorithm}s. The {@link FormField}s
-	 * created by the superclass and potential subclasses have no or other such prefixes, i.e. they
-	 * intentionally don't reuse this.
+	 * Is used to avoid i18n clashes with other {@link SchedulingAlgorithm}s. The
+	 * {@link FormMember}s created by the superclass and potential subclasses have no or other such
+	 * prefixes, i.e. they intentionally don't reuse this.
 	 * </p>
 	 */
 	private static final String NAME_FIELD_PREFIX = FixedDatePeriodicalSchedulingAlgorithm.class.getSimpleName();
 
 	/**
-	 * The name of the {@link FormField} presenting {@link Config#getPeriod()}.
+	 * The name of the {@link FormMember} presenting {@link Config#getPeriod()}.
 	 */
 	public static final String NAME_FIELD_PERIOD = NAME_FIELD_PREFIX + "Period";
 
@@ -131,8 +131,7 @@ public abstract class FixedDatePeriodicalSchedulingAlgorithm<C extends FixedDate
 	 * @see #fillFormGroup(FormGroup)
 	 */
 	protected void addPeriodField(FormGroup group) {
-		group.addMember(FormFactory.newIntField(
-			NAME_FIELD_PERIOD, getConfig().getPeriod(), FormFactory.IMMUTABLE));
+		group.addMember(transferPropertyLabel(Config.class, Config.PROPERTY_NAME_PERIOD, FormFactory.newIntField(NAME_FIELD_PERIOD, getConfig().getPeriod(), FormFactory.IMMUTABLE)));
 	}
 
 }

@@ -132,12 +132,16 @@ public class MonthlySchedule<C extends MonthlySchedule.Config<?>>
 	public void fillFormGroup(FormGroup group) {
 		super.fillFormGroup(group);
 
-		group.addMember(FormFactory.newIntField(
-			NAME_FIELD_DAY_OF_MONTH, getConfig().getDayOfMonth(), FormFactory.IMMUTABLE));
+		group.addMember(
+			transferPropertyLabel(Config.class, Config.PROPERTY_NAME_DAY_OF_MONTH,
+				FormFactory.newIntField(
+					NAME_FIELD_DAY_OF_MONTH, getConfig().getDayOfMonth(), FormFactory.IMMUTABLE)));
 
 		DateFormat timeOfDayFormat = HTMLFormatter.getInstance().getShortTimeFormat();
-		group.addMember(FormFactory.newComplexField(
-			NAME_FIELD_TIME_OF_DAY, timeOfDayFormat, getConfig().getTimeOfDay(), FormFactory.IMMUTABLE));
+		group.addMember(
+			transferPropertyLabel(Config.class, Config.PROPERTY_NAME_TIME_OF_DAY,
+				FormFactory.newComplexField(
+					NAME_FIELD_TIME_OF_DAY, timeOfDayFormat, getConfig().getTimeOfDay(), FormFactory.IMMUTABLE)));
 
 		addPeriodField(group);
 	}

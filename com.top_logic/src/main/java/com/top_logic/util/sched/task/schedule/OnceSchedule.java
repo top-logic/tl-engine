@@ -93,8 +93,10 @@ public class OnceSchedule<C extends OnceSchedule.Config<?>> extends AbstractSche
 	public void fillFormGroup(FormGroup group) {
 		super.fillFormGroup(group);
 
-		group.addMember(FormFactory.newComplexField(
-			TIME_FIELD, HTMLFormatter.getInstance().getDateTimeFormat(), _time, FormFactory.IMMUTABLE));
+		group.addMember(
+			transferPropertyLabel(Config.class, Config.TIME,
+				FormFactory.newComplexField(
+					TIME_FIELD, HTMLFormatter.getInstance().getDateTimeFormat(), _time, FormFactory.IMMUTABLE)));
 	}
 
 }

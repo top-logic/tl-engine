@@ -5,12 +5,11 @@
  */
 package com.top_logic.util.sched.task.schedule.legacy;
 
+import static com.top_logic.layout.form.template.model.Templates.*;
 import static com.top_logic.util.sched.task.schedule.legacy.LegacySchedulesCommon.*;
 
 import java.util.Calendar;
 import java.util.Date;
-
-import org.w3c.dom.Document;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.col.Maybe;
@@ -20,7 +19,7 @@ import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.time.CalendarUtil;
-import com.top_logic.basic.xml.DOMUtil;
+import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.FormGroup;
@@ -96,16 +95,6 @@ public class LegacyDateSchedule extends AbstractSchedulingAlgorithm<LegacyDateSc
 	 */
 	public static final String NAME_FIELD_TIME = NAME_FIELD_PREFIX + "Time";
 
-	private static final Document TEMPLATE = DOMUtil.parseThreadSafe(""
-		+ "	<table " + templateRootAttributes() + " >"
-		+ templateStandardFields()
-		+ "		<tr>"
-		+ templateSmallField(NAME_FIELD_DATE)
-		+ templateSmallField(NAME_FIELD_TIME)
-		+ "		</tr>"
-		+ "	</table>"
-		);
-
 	// Fields are only 'protected' and not 'private', because thats how they were in TaskImpl.
 	// This allows subclass of TaskImpl that use these fields to easily migrate by
 	// subclassing the corresponding LegacyFooSchedule class and using these fields.
@@ -178,8 +167,12 @@ public class LegacyDateSchedule extends AbstractSchedulingAlgorithm<LegacyDateSc
 	}
 
 	@Override
-	public Document getFormTemplateDocument() {
-		return TEMPLATE;
+	protected HTMLTemplateFragment createTemplate() {
+		return fragment(
+			fieldBox(NAME_FIELD_STRATEGY),
+			fieldBox(NAME_FIELD_CLASS),
+			fieldBox(NAME_FIELD_DATE),
+			fieldBox(NAME_FIELD_TIME));
 	}
 
 	@Override

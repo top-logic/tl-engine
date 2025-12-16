@@ -5,9 +5,12 @@
  */
 package com.top_logic.util.sched.task.schedule;
 
+import static com.top_logic.layout.form.template.model.Templates.*;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.util.sched.task.Task;
 
 /**
@@ -43,6 +46,13 @@ public final class AlwaysSchedule extends AbstractSchedulingAlgorithm<AlwaysSche
 	@Override
 	public long nextSchedule(long notBefore, long lastSchedule) {
 		return notBefore;
+	}
+
+	@Override
+	protected HTMLTemplateFragment createTemplate() {
+		return fragment(
+			fieldBox(NAME_FIELD_STRATEGY),
+			fieldBox(NAME_FIELD_CLASS));
 	}
 
 }

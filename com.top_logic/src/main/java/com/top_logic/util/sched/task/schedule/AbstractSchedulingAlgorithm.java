@@ -5,10 +5,10 @@
  */
 package com.top_logic.util.sched.task.schedule;
 
+import static com.top_logic.layout.form.template.model.Templates.*;
+
 import java.util.Calendar;
 import java.util.Date;
-
-import org.w3c.dom.Document;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.col.Maybe;
@@ -17,18 +17,13 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.basic.xml.DOMUtil;
+import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.FormGroup;
-import com.top_logic.layout.form.template.ControlProvider;
-import com.top_logic.layout.form.template.DefaultFormFieldControlProvider;
-import com.top_logic.layout.form.template.FormPatternConstants;
-import com.top_logic.layout.form.template.FormTemplate;
-import com.top_logic.layout.form.template.FormTemplateConstants;
-import com.top_logic.layout.form.template.FormTemplateControlProvider;
-import com.top_logic.mig.html.HTMLConstants;
+import com.top_logic.model.form.ReactiveFormCSS;
+import com.top_logic.model.form.definition.Columns;
 import com.top_logic.util.Resources;
 import com.top_logic.util.sched.task.Task;
 
@@ -60,16 +55,10 @@ public abstract class AbstractSchedulingAlgorithm<C extends PolymorphicConfigura
 	public static final String NAME_FIELD_STRATEGY = "strategy";
 
 	/**
-	 * The CSS class on the outermost HTML tag written by the {@link #getFormTemplateDocument()
+	 * The CSS class on the outermost HTML tag written by the {@link #createTemplate()
 	 * FormTemplate}.
 	 */
 	public static final String CSS_CLASS = "schedulingAlgorithm";
-
-	private static final Document TEMPLATE = DOMUtil.parseThreadSafe(""
-		+ "	<table " + templateRootAttributes() + " >"
-		+ templateStandardFields()
-		+ "	</table>"
-		);
 
 	/**
 	 * Creates a {@link AbstractSchedulingAlgorithm} from configuration.
@@ -130,95 +119,27 @@ public abstract class AbstractSchedulingAlgorithm<C extends PolymorphicConfigura
 	}
 
 	/**
-	 * The {@link FormTemplate} for the GUI representation of this {@link SchedulingAlgorithm}.
+	 * Creates the {@link HTMLTemplateFragment} to display the group filled in
+	 * {@link #fillFormGroup(FormGroup)}.
 	 */
-	protected Document getFormTemplateDocument() {
-		return TEMPLATE;
-	}
+	protected abstract HTMLTemplateFragment createTemplate();
 
 	@Override
 	public void fillFormGroup(FormGroup group) {
 		group.addMember(FormFactory.newStringField(NAME_FIELD_CLASS, getClass().getName(), FormFactory.IMMUTABLE));
 		String translatedName = Resources.getInstance().getString(ResKey.forClass(getClass()));
 		group.addMember(FormFactory.newStringField(NAME_FIELD_STRATEGY, translatedName, FormFactory.IMMUTABLE));
-		group.setControlProvider(createControlProvider(getFormTemplateDocument()));
+		
+		HTMLTemplateFragment template = createTemplate();
+		template(group,
+			contentBox(div(
+				css(Columns.TWO.appendColsCSSto(ReactiveFormCSS.RF_COLUMNS_LAYOUT + " " + CSS_CLASS)),
+				template)));
 	}
 
-	/**
-	 * Is called in {@link #fillFormGroup(FormGroup)} and set as the {@link ControlProvider} of its
-	 * {@link FormGroup}.
-	 */
-	public static ControlProvider createControlProvider(Document template) {
-		return new FormTemplateControlProvider(
-			new FormTemplate(getI18nPrefix(), DefaultFormFieldControlProvider.INSTANCE, false,
-				template));
-	}
 
 	private static ResPrefix getI18nPrefix() {
 		return ResPrefix.legacyClass(SchedulingAlgorithm.class);
-	}
-
-	// Convenience shortcuts for writing the FormTemplate String
-
-	/**
-	 * Writes the {@link FormTemplate} XML snippet for the {@link FormField}s every
-	 * {@link SchedulingAlgorithm} has: Class, strategy (i18n of class) and scheduling window
-	 * length.
-	 */
-	public static String templateStandardFields() {
-		return ""
-			+ "<tr>"
-			+ templateSmallField(NAME_FIELD_STRATEGY)
-			+ "</tr>"
-			+ "<tr>"
-			+ templateLargeField(NAME_FIELD_CLASS)
-			+ "</tr>";
-	}
-
-	/** Writes all the attributes needed on the {@link FormTemplate} XML root tag. */
-	public static String templateRootAttributes() {
-		return ""
-			+ " class='" + CSS_CLASS + "'"
-			+ " xmlns='" + HTMLConstants.XHTML_NS + "'"
-			+ " xmlns:t='" + FormTemplateConstants.TEMPLATE_NS + "'"
-			+ " xmlns:p='" + FormPatternConstants.PATTERN_NS + "'";
-	}
-
-	/**
-	 * Writes a {@link FormTemplate} XML snippet for a {@link FormField} that uses only half of its
-	 * row.
-	 * <p>
-	 * Extracted for subclasses to prevent mistakes when writing the template: Missing class on
-	 * 'td', missing colon after label, ...
-	 * </p>
-	 */
-	protected static String templateSmallField(String name) {
-		return templateField(name, false);
-	}
-
-	/**
-	 * Writes a {@link FormTemplate} XML snippet for a {@link FormField} that uses all of its row.
-	 * <p>
-	 * Extracted for subclasses to prevent mistakes when writing the template: Missing class on
-	 * 'td', missing colon after label, ...
-	 * </p>
-	 */
-	protected static String templateLargeField(String name) {
-		return templateField(name, true);
-	}
-
-	/**
-	 * Extracted for subclasses to prevent mistakes when writing the template: Missing class on
-	 * 'td', missing colon after label, ...
-	 */
-	private static String templateField(String name, boolean large) {
-		return ""
-			+ "<td class='label'>"
-			+ "<p:field name='" + name + "' style='label' />:"
-			+ "</td>"
-			+ "<td class='content' " + (large ? "colspan='3'" : "") + ">"
-			+ "<p:field name='" + name + "' style='input' />"
-			+ "</td>";
 	}
 
 	/**

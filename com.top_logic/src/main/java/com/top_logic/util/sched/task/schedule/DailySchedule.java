@@ -5,11 +5,11 @@
  */
 package com.top_logic.util.sched.task.schedule;
 
+import static com.top_logic.layout.form.template.model.Templates.*;
+
 import java.text.DateFormat;
 import java.util.Calendar;
 import java.util.Date;
-
-import org.w3c.dom.Document;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
@@ -23,7 +23,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.time.TimeOfDayAsDateValueProvider;
-import com.top_logic.basic.xml.DOMUtil;
+import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.FormGroup;
@@ -87,16 +87,6 @@ public class DailySchedule<C extends DailySchedule.Config<?>>
 	 */
 	public static final String NAME_FIELD_TIME_OF_DAY = NAME_FIELD_PREFIX + "TimeOfDay";
 
-	private static final Document TEMPLATE = DOMUtil.parseThreadSafe(""
-		+ "	<table " + templateRootAttributes() + " >"
-		+ templateStandardFields()
-		+ "		<tr>"
-		+ templateLargeField(NAME_FIELD_TIME_OF_DAY)
-		+ templateSmallField(NAME_FIELD_PERIOD)
-		+ "		</tr>"
-		+ "	</table>"
-		);
-
 	/**
 	 * Called by the {@link TypedConfiguration} for creating a {@link DailySchedule}.
 	 * 
@@ -121,8 +111,12 @@ public class DailySchedule<C extends DailySchedule.Config<?>>
 	}
 
 	@Override
-	public Document getFormTemplateDocument() {
-		return TEMPLATE;
+	protected HTMLTemplateFragment createTemplate() {
+		return fragment(
+			fieldBox(NAME_FIELD_STRATEGY),
+			fieldBox(NAME_FIELD_CLASS),
+			fieldBox(NAME_FIELD_TIME_OF_DAY),
+			fieldBox(NAME_FIELD_PERIOD));
 	}
 
 	@Override

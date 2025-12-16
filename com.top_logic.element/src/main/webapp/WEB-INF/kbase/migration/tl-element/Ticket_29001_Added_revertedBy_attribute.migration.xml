@@ -7,7 +7,7 @@
 		module="tl-element"
 	/>
 	<dependencies>
-		<dependency name="Ticket_28604_Upgrade_commit_messages"
+		<dependency name="Ticket_29019_Removed_log_entries"
 			module="tl"
 		/>
 		<dependency name="Ticket_28604_changelog"

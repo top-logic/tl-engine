@@ -319,7 +319,7 @@ public class ChangeLogBuilder {
 				// Connect CS with its undo CS.
 				cs1.setRevertedBy(undoCS);
 				// Display message "Reverted: ..."
-				cs1.setMessage(undoCS.getMessage());
+				cs1.setMessage(I18NConstants.REVERTED__MSG.fill(cs1.getMessage()));
 				// Undo CS not longer needed
 				toDelete.add(undoCS);
 				// Mark originals as irrelevant

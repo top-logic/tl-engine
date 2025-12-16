@@ -25,6 +25,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 CONFLICTS_WHEN_UNDO_REVISION__REV;
 
+	/**
+	 * @en Reverted: {0}
+	 */
+	public static ResKey1 REVERTED__MSG;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

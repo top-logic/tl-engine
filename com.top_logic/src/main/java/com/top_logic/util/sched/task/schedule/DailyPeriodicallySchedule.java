@@ -263,12 +263,18 @@ public class DailyPeriodicallySchedule<C extends DailyPeriodicallySchedule.Confi
 		super.fillFormGroup(group);
 
 		DateFormat timeFormat = HTMLFormatter.getInstance().getShortTimeFormat();
-		group.addMember(FormFactory.newComplexField(
-			NAME_FIELD_START_TIME, timeFormat, getStartTime(), FormFactory.IMMUTABLE));
-		group.addMember(FormFactory.newComplexField(
-			NAME_FIELD_STOP_TIME, timeFormat, getStopTime(), FormFactory.IMMUTABLE));
-		group.addMember(FormFactory.newStringField(
-			NAME_FIELD_INTERVAL, TimeUtil.formatMillisAsTime(getConfig().getInterval()), FormFactory.IMMUTABLE));
+		group.addMember(
+			transferPropertyLabel(Config.class, Config.PROPERTY_NAME_START_TIME,
+				FormFactory.newComplexField(
+			NAME_FIELD_START_TIME, timeFormat, getStartTime(), FormFactory.IMMUTABLE)));
+		group.addMember(
+			transferPropertyLabel(Config.class, Config.PROPERTY_NAME_STOP_TIME,
+				FormFactory.newComplexField(
+			NAME_FIELD_STOP_TIME, timeFormat, getStopTime(), FormFactory.IMMUTABLE)));
+		group.addMember(
+			transferPropertyLabel(Config.class, Config.PROPERTY_NAME_INTERVAL,
+				FormFactory.newStringField(
+			NAME_FIELD_INTERVAL, TimeUtil.formatMillisAsTime(getConfig().getInterval()), FormFactory.IMMUTABLE)));
 	}
 
 }

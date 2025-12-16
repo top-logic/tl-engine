@@ -34,7 +34,6 @@ import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.MainLayout;
@@ -608,9 +607,9 @@ public class BoundHelper extends ManagedClass {
 			}
 			if (((TLObject) anObject).tTransient()) {
 				// Transient objects have no table. This actually just occur in tests.
-				return null;
+				return anObject.getClass();
 			}
-			return ApplicationObjectUtil.tableTypeQName(((TLObject) anObject).tTable());
+			return ((TLObject) anObject).tTable();
 		} else if (anObject instanceof Wrapper) {
             return ((Wrapper) anObject).tTable();
         }

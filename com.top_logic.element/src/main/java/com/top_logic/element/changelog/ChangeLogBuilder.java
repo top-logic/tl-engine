@@ -239,18 +239,14 @@ public class ChangeLogBuilder {
 	public Collection<com.top_logic.element.changelog.model.ChangeSet> build() {
 		// all log messages. Sorted in descending order
 		List<com.top_logic.element.changelog.model.ChangeSet> log = new ArrayList<>();
-		// temporary list containing messages for a read range. Sorted in ascending order.
-		List<com.top_logic.element.changelog.model.ChangeSet> logsInRange = new ArrayList<>();
 
 		analyzeModel();
 
-		Set<Long> canBeIgnored = new HashSet<>();
 		Map<Long, com.top_logic.element.changelog.model.ChangeSet> revertedBy = new HashMap<>();
 
 		List<LongRange> revisionRanges = getRevisionRanges();
 		processRevisions:
 		for (int i = revisionRanges.size() - 1; i >= 0; i--) {
-			logsInRange.clear();
 			LongRange range = revisionRanges.get(i);
 
 			long start = range.getStartValue();
@@ -263,7 +259,7 @@ public class ChangeLogBuilder {
 					long maxFetchEntries = (long) ((_numberEntries - log.size()) * 1.5);
 
 					long chunkStart = Long.max(start, stop - maxFetchEntries);
-					readDescending(log, logsInRange, canBeIgnored, revertedBy, chunkStart, stop);
+					readDescending(log, revertedBy, chunkStart, stop);
 
 					int remaining = _numberEntries - log.size();
 					if (remaining == 0) {
@@ -282,7 +278,7 @@ public class ChangeLogBuilder {
 					stop = chunkStart - 1;
 				}
 			} else {
-				readDescending(log, logsInRange, canBeIgnored, revertedBy, start, stop);
+				readDescending(log, revertedBy, start, stop);
 			}
 
 		}
@@ -293,26 +289,18 @@ public class ChangeLogBuilder {
 	}
 
 	private void readDescending(List<com.top_logic.element.changelog.model.ChangeSet> log,
-			List<com.top_logic.element.changelog.model.ChangeSet> logsInRange, Set<Long> canBeIgnored,
-			Map<Long, com.top_logic.element.changelog.model.ChangeSet> revertedBy, long start, long stop) {
+			Map<Long, com.top_logic.element.changelog.model.ChangeSet> revertedBy, long start,
+			long stop) {
 
 		List<com.top_logic.element.changelog.model.ChangeSet> toDelete = new ArrayList<>();
 
-		readChangesDescending(logsInRange, start, stop);
+		List<com.top_logic.element.changelog.model.ChangeSet> logsInRange =
+			readChangesDescending(start, stop);
 		
 		for (Iterator<com.top_logic.element.changelog.model.ChangeSet> it = logsInRange.iterator(); it
 			.hasNext();) {
 			com.top_logic.element.changelog.model.ChangeSet cs1 = it.next();
 			long commitNumber = cs1.getRevision().getCommitNumber();
-		
-			if (canBeIgnored.remove(commitNumber)) {
-				it.remove();
-				// Mark originals as irrelevant
-				if (cs1.isRedo() || cs1.isRevert()) {
-					canBeIgnored.add(cs1.origRevision());
-				}
-				continue;
-			}
 		
 			com.top_logic.element.changelog.model.ChangeSet undoCS = revertedBy.remove(commitNumber);
 			if (undoCS != null) {
@@ -320,12 +308,8 @@ public class ChangeLogBuilder {
 				cs1.setRevertedBy(undoCS);
 				// Display message "Reverted: ..."
 				cs1.setMessage(I18NConstants.REVERTED__MSG.fill(cs1.getMessage()));
-				// Undo CS not longer needed
+				// Undo CS is not displayed
 				toDelete.add(undoCS);
-				// Mark originals as irrelevant
-				if (cs1.isRedo() || cs1.isRevert()) {
-					canBeIgnored.add(cs1.origRevision());
-				}
 				continue;
 			}
 		
@@ -335,9 +319,6 @@ public class ChangeLogBuilder {
 					// store cs for later connection with the undone CS.
 					revertedBy.put(revertedRevision, cs1);
 				}
-			}
-			if (cs1.isRedo()) {
-				canBeIgnored.add(cs1.origRevision());
 			}
 		}
 		
@@ -362,12 +343,13 @@ public class ChangeLogBuilder {
 		}
 	}
 
-	private void readChangesDescending(List<com.top_logic.element.changelog.model.ChangeSet> out, long start,
-			long stop) {
-		out.clear();
+	private List<com.top_logic.element.changelog.model.ChangeSet> readChangesDescending(
+			long start, long stop) {
+		List<com.top_logic.element.changelog.model.ChangeSet> out = new ArrayList<>();
 		readChanges(out, start, stop);
 		// entries are filled in ascending order to output
 		Collections.reverse(out);
+		return out;
 	}
 
 	private void readChanges(List<com.top_logic.element.changelog.model.ChangeSet> out, long start, long stop) {

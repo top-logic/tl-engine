@@ -5193,12 +5193,6 @@ com.top_logic.tool.boundsec.wrap.GroupResourceHelper.java: Missing documentation
 com.top_logic.tool.boundsec.wrap.GroupResourceHelper.java: Missing documentation: com.top_logic.tool.boundsec.wrap.GroupResourceHelper.I18N_INFIX_NAME
 com.top_logic.tool.boundsec.wrap.GroupResourceHelper.java: Missing documentation: com.top_logic.tool.boundsec.wrap.GroupResourceHelper.I18N_PREFIX_GROUP
 com.top_logic.tool.boundsec.wrap.GroupResourceHelper.java: Missing documentation: com.top_logic.tool.boundsec.wrap.GroupResourceHelper.I18N_SEPARATOR
-com.top_logic.tool.boundsec.wrap.PersBoundChecker.java: Invalid camel case word 'BoundChcker', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.tool.boundsec.wrap.PersBoundChecker.java: Invalid camel case word 'BoundChecker', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.tool.boundsec.wrap.PersBoundChecker.java: Invalid camel case word 'CommandGroup', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.tool.boundsec.wrap.PersBoundChecker.java: Invalid camel case word 'CommandGroups', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.tool.boundsec.wrap.PersBoundChecker.java: Invalid camel case word 'PersBoundComp', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.tool.boundsec.wrap.PersBoundChecker.java: Invalid camel case word 'aModel', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.tool.boundsec.wrap.PersBoundComp.java: Invalid camel case word 'BoundChecker', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.tool.boundsec.wrap.PersBoundComp.java: Invalid camel case word 'BoundComponent', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.tool.boundsec.wrap.PersBoundComp.java: Invalid camel case word 'BoundRole', this may only be used within JavaDoc links or HTML code tags.

@@ -20,7 +20,6 @@ import java.util.Set;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
-import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.Location;
@@ -50,7 +49,6 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.boundsec.simple.SimpleBoundObject;
 import com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
-import com.top_logic.tool.boundsec.wrap.PersBoundChecker;
 import com.top_logic.util.TLContext;
 
 /**
@@ -106,8 +104,6 @@ public class BoundHelper extends ManagedClass {
     /** The default {@link com.top_logic.tool.boundsec.BoundObject} */
 	private BoundObject defaultObject;
 
-	private Map<Location, Map<String, Collection<PersBoundChecker>>> defaultPersBoundCheckers;
-
 	private Map<Location, Map<String, Collection<ComponentName>>> boundCheckerCache;
     
 
@@ -136,41 +132,10 @@ public class BoundHelper extends ManagedClass {
 	public BoundHelper(InstantiationContext context, Config config) {
 		super(context, config);
         // for getInstance
-		defaultPersBoundCheckers =
-			Collections.synchronizedMap(new HashMap<>());
 		boundCheckerCache =
 			Collections.synchronizedMap(new HashMap<>());
 
 		_useDefaultSecurityParent = config.getUseDefaultSecurityParent();
-    }
-
-	public final boolean registerPersBoundCheckerFor(Location rootLocation, ComponentName aPersBoundID, String aType) {
-		Map<String, Collection<PersBoundChecker>> checkerForType = defaultPersBoundCheckers.get(rootLocation);
-		if (checkerForType == null) {
-			checkerForType = Collections.synchronizedMap(new HashMap<>());
-			defaultPersBoundCheckers.put(rootLocation, checkerForType);
-		}
-		Collection<PersBoundChecker> theCheckers = checkerForType.get(aType);
-        if (theCheckers == null) {
-			theCheckers = CollectionUtil.newSet(1);
-        }
-
-        theCheckers.add(new PersBoundChecker(aPersBoundID));
-		checkerForType.put(aType, theCheckers);
-
-        if (theCheckers.size() > 1) {
-            String theIDs = StringServices.toString(asIDs(theCheckers), ",");
-			Logger.warn("Multiple PersBoundComp are default for type '" + aType + "': " + theIDs, BoundHelper.class);
-        }
-        return true;
-    }
-
-	private Collection<ComponentName> asIDs(Collection<? extends PersBoundChecker> someCheckers) {
-		ArrayList<ComponentName> theIds = new ArrayList<>(someCheckers.size());
-		for (BoundChecker theChecker : someCheckers) {
-			theIds.add(theChecker.getSecurityId());
-        }
-        return theIds;
     }
 
     /**
@@ -288,21 +253,7 @@ public class BoundHelper extends ManagedClass {
     	}
     	// no context, get cached PersBoundCheckers
 		else {
-			switch (defaultPersBoundCheckers.size()) {
-				case 0: {
-					return Collections.emptyList();
-				}
-				case 1: {
-					return getDefaultFromMap(this.defaultPersBoundCheckers.values().iterator().next(), aType);
-				}
-				default: {
-					Collection<BoundChecker> allChecker = new ArrayList<>();
-					defaultPersBoundCheckers.values().forEach(m -> {
-						allChecker.addAll(getDefaultFromMap(m, aType));
-					});
-					return allChecker;
-				}
-			}
+			return Collections.emptyList();
 		}
     	
     }
@@ -430,7 +381,7 @@ public class BoundHelper extends ManagedClass {
 				boundCheckerCache.put(boundCheckerCacheKey(main), storedCache);
 				cachedCheckerNames = null;
 			} else {
-				cachedCheckerNames = getDefaultFromMap(storedCache, aType);
+				cachedCheckerNames = storedCache.get(aType);
 			}
 			if (cachedCheckerNames != null) {
 				checkerNames = cachedCheckerNames;
@@ -962,11 +913,7 @@ public class BoundHelper extends ManagedClass {
 		BoundedRole.copyRoleAssignments(aDest, aSource);
     }
     
-	private static <T> Collection<T> getDefaultFromMap(Map<String, Collection<T>> defaultsByType, String type) {
-		return defaultsByType.get(type);
-    }
-
-    /**
+	/**
      * Flag if using default object as security parent
      * for all AbstractBoundWrappers that don't define
      * one themselves.

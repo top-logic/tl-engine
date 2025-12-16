@@ -22,7 +22,6 @@ import java.util.Set;
 
 import org.w3c.dom.Document;
 
-import com.top_logic.base.bus.MonitorEvent;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.DateUtil;
 import com.top_logic.basic.Logger;
@@ -40,7 +39,6 @@ import com.top_logic.demo.model.types.DemoTypesA;
 import com.top_logic.demo.model.types.DemoTypesFactory;
 import com.top_logic.demo.model.types.Root;
 import com.top_logic.demo.model.types.X;
-import com.top_logic.element.core.util.ElementEventUtil;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.SimpleEditContext;
 import com.top_logic.element.meta.complex.CountryOptionProvider;
@@ -188,10 +186,8 @@ public class TypeGenerator {
 					child.setIsAssignable(rand.nextBoolean());
 					child.setStringInBAndC("GeneratedString_" + rand.nextInt());
 
-					sendCreateEvent(child);
 					for (int n = 0; n < 2; n++) {
 						StructuredElement cNode = child.createChild("C" + (cId++), C.C_TYPE);
-						sendCreateEvent(cNode);
 					}
 					createXChild(generatedRoot, "X" + i);
 				} else {
@@ -245,15 +241,12 @@ public class TypeGenerator {
 
 					Person person = createWrapperValueNullable(Person.class, DemoTypesFactory.getAccountDemoTypesAAttr(), rand);
 					child.setAccount(person);
-					sendCreateEvent(child);
 
 					for (int n = 0; n < 2; n++) {
 						C cNode = (C) child.createChild("C" + (cId++), C.C_TYPE);
 						
 						cNode.setValue(C.DEPENDENT_DATE_ATTR,
 							DateUtil.addDays(date1, (int) (rand.nextDouble() * range)));
-						
-						sendCreateEvent(cNode);
 					}
 					createXChild(child, "X" + i);
 				}
@@ -326,17 +319,9 @@ public class TypeGenerator {
 		return createWrapperValue(TLClassifier.class, attribute, random);
 	}
 
-	private static void createXChild(StructuredElement parent, String name) {
+	private static StructuredElement createXChild(StructuredElement parent, String name) {
 		StructuredElement xNode = parent.createChild(name, X.X_TYPE);
-		sendCreateEvent(xNode);
-	}
-
-	static void sendCreateEvent(StructuredElement element) {
-		ElementEventUtil.sendEvent(element, MonitorEvent.CREATED);
-	}
-
-	static void sendDeleteEvent(StructuredElement deletedNode) {
-		ElementEventUtil.sendEvent(deletedNode, MonitorEvent.DELETED);
+		return xNode;
 	}
 
 	private static TLClassifier createChecklistSingleValue(Random random) {

@@ -35,7 +35,6 @@
 			       <module key="com.top_logic.base.services.CurrencySystem$Module" value="true"/>
 			       <module key="com.top_logic.gui.JSFileCompiler$Module" value="true"/>
 			       <module key="com.top_logic.knowledge.journal.JournalManager$Module" value="true"/>
-			       <module key="com.top_logic.event.logEntry.LogEntryConfiguration$Module" value="true"/>
 			       <module key="com.top_logic.base.administration.LoggerAdminBean$Module" value="true"/>
 			       <module key="com.top_logic.knowledge.wrap.person.PersonManager$Module" value="true"/>
 			       <module key="com.top_logic.util.sched.Scheduler$Module" value="true"/>
@@ -45,9 +44,7 @@
 			       <module key="com.top_logic.base.services.InitialGroupManager$Module" value="true" />
 			       <module key="com.top_logic.tool.boundsec.config.AccessConfigurationSetupService$Module" value="true" />
 			       <module key="com.top_logic.base.administration.MaintenanceWindowManager$Module" value="true"/>
-			       <module key="com.top_logic.event.bus.Bus$Module" value="true" />
 			       <module key="com.top_logic.base.accesscontrol.SessionService$Module" value="true"/>
-			       <module key="com.top_logic.event.ModelTrackingService$Module" value="true" />
 			       <module key="com.top_logic.layout.admin.component.PerformanceMonitor$Module" value="true" />
 			       <module key="com.top_logic.util.error.ErrorHandlingHelper$Module" value="true" />
 			       <module key="com.top_logic.layout.form.boxes.reactive_tag.BoxLayoutTag$ConfigService$Module" value="true" />
@@ -58,9 +55,7 @@
 			       <module key="com.top_logic.layout.scripting.recorder.ref.ModelResolver$Module" value="true" />
 			       <module key="com.top_logic.util.sched.MemoryObserverThread$Module" value="true"/>
 			       <module key="com.top_logic.util.maintenance.MemoryObserver$Module" value="true"/>
-			       <module key="com.top_logic.base.monitor.bus.EventMonitor$Module" value="true"/>
 			       <module key="com.top_logic.knowledge.monitor.UserMonitor$Module" value="true"/>
-		           <module key="com.top_logic.base.monitor.bus.DocumentMonitor$Module" value="false" />
 			       <module key="com.top_logic.knowledge.service.InitialTableSetup$Module" value="true" />
 			       <module key="com.top_logic.tool.boundsec.wrap.SecurityComponentCache$Module" value="true" />
 			       <module key="com.top_logic.knowledge.service.ExtIDFactory$Module" value="true" />
@@ -246,7 +241,6 @@
 		            <provider kind="CODE" type="com.top_logic.knowledge.service.Revision" implementation="com.top_logic.layout.provider.label.RevisionResourceProvider" />
 		            
 		            <provider kind="CODE" type="java.util.Locale" implementation="com.top_logic.layout.provider.LocaleLabelProvider" />
-		            <provider kind="CODE" type="com.top_logic.event.bus.Channel" implementation="com.top_logic.event.layout.ChannelResourceProvider"/>
 		            <provider kind="CODE" type="com.top_logic.knowledge.wrap.currency.Amount" implementation="com.top_logic.knowledge.wrap.currency.AmountLabelProvider" />
 		
 		            <provider kind="CODE" type="com.top_logic.model.TLObject" implementation="com.top_logic.knowledge.gui.WrapperResourceProvider"/>
@@ -386,30 +380,6 @@
 			</instance>
 		</config>
 		
-		<config service-class="com.top_logic.event.logEntry.LogEntryReceiver">
-			<instance class="com.top_logic.event.logEntry.LogEntryReceiver" />
-		</config>
-		
-		<config service-class="com.top_logic.base.monitor.bus.EventMonitor">
-			<instance class="com.top_logic.base.monitor.bus.EventMonitor"
-				buffer-size="1000"
-			/>
-		</config>
-	
-		<config service-class="com.top_logic.base.monitor.bus.DocumentMonitor">
-			<instance class="com.top_logic.base.monitor.bus.DocumentMonitor"
-				number-events-to-store="50"
-				output-file="logs/document_monitor.log"
-			/>
-		</config>
-	
-		<config service-class="com.top_logic.base.monitor.bus.WebContentMonitor">
-			<instance class="com.top_logic.base.monitor.bus.WebContentMonitor"
-				number-events-to-store="50"
-				output-file="logs/webcontent_monitor.log"
-			/>
-		</config>
-	
         <config service-class="com.top_logic.basic.mime.MimeTypesModule">
         	<instance class="com.top_logic.util.WebMimeTypes" />
         </config>
@@ -469,12 +439,6 @@
 					<dependency key="com.top_logic.gui.ThemeFactory$Module" value="true"/>
 				</dependencies>
 			</instance>
-		</config>
-	
-		<config service-class="com.top_logic.knowledge.service.listener.ContentChangeEventListener">
-			<instance class="com.top_logic.knowledge.service.listener.ContentChangeEventListener"
-				types="Document"
-			/>
 		</config>
 	
 		<config service-class="com.top_logic.base.services.CurrencySystem">
@@ -649,17 +613,6 @@
 				<allowed-groups></allowed-groups>
 				<!-- In cluster mode maintenance mode cannot be entered immediately. This is the minimum waiting intervall in miliseconds. -->
 				<min-intervall-in-cluster>20000</min-intervall-in-cluster>
-			</instance>
-		</config>
-
-		<config service-class="com.top_logic.event.logEntry.LogEntryConfiguration">
-			<instance class="com.top_logic.event.logEntry.LogEntryConfiguration">
-				<object-types>
-					<object-type
-						name="Person"
-						display-group="Person"
-						event-types="%DEFAULT_EVENT_TYPES%" />
-				</object-types>
 			</instance>
 		</config>
 
@@ -1115,12 +1068,6 @@
 		            <handler id="applyRoleRights" class="com.top_logic.tool.boundsec.gui.profile.ApplyRolesCommandHandler"
 		            	clique="apply" group="System"
 		            />
-		            <handler id="AllOn" class="com.top_logic.event.layout.ToggleAllCommand"
-		            	value="true" 
-		            />
-		            <handler id="AllOff" class="com.top_logic.event.layout.ToggleAllCommand"
-		            	value="false" 
-		            />
 					<handler id="expandAll" class="com.top_logic.layout.tree.component.ExpandCollapseAll"
 						clique="expand"
 						disabledImage="theme:ICONS_EXPAND_ALL_DISABLED" 
@@ -1338,11 +1285,6 @@
 					
 					<handler id="sortConfigOpenForControlRepresentable" class="com.top_logic.layout.table.control.SortConfigDialog$OpenForControlRepresentable"/>
 					<handler id="sortConfigOpenForTableComponent" class="com.top_logic.layout.table.control.SortConfigDialog$OpenForTableComponent"/>
-					
-					<handler id="updateLogEntries" class="com.top_logic.event.layout.LogEntryFilterComponent$UpdateLogEntriesCommandHandler"
-						clique="refresh"/>
-					<handler id="configureLogEntries" class="com.top_logic.event.layout.ConfigureLogEntriesCommandHandler"
-						clique="save" group="System"/>
 					
 					<handler id="ChoiceChartCommand" class="com.top_logic.base.chart.component.ChoiceJFreeChartComponent$ChoiceChartCommand"/>
 					<handler id="refreshFilters" class="com.top_logic.base.chart.flex.control.FilterRefreshCommandHandler"
@@ -1583,8 +1525,6 @@
 					<dependency key="com.top_logic.basic.Settings$Module" value="true" />
 					<!-- Needed by multiple tasks
 						com.top_logic.util.sched.CleanUpTask
-						com.top_logic.event.logEntry.DayEntryArchiverTask
-						com.top_logic.event.logEntry.DayEntryCleanupTask 
 					 -->
 					<dependency key="com.top_logic.util.monitor.ApplicationMonitor$Module" value="true" />
 				</dependencies>
@@ -1617,14 +1557,6 @@
 								stop-time="23:30" />
 						</schedules>
 					</task>
-				<!-- Run at 04:04 in the morning -->
-					<task class="com.top_logic.event.logEntry.DayEntryArchiverTask" 
-						name="DayEntryArchiverTask"
-						run-on-startup="false">
-						<schedules>
-							<daily time-of-day="04:04" />
-						</schedules>
-					</task>
 					<task class="com.top_logic.knowledge.monitor.CheckUnusedAccountsTask"
 						name="CheckUnusedAccountsTask"
 						run-on-startup="false" >
@@ -1635,16 +1567,6 @@
 						<schedules>
 							<daily
 								time-of-day="01:00" />
-						</schedules>
-					</task>
-					<!-- Run at 04:34 in the morning -->
-					<task class="com.top_logic.event.logEntry.DayEntryCleanupTask"
-						name="DayEntryCleanUpTask"
-						run-on-startup="false"
-						archive-period="0M" >
-						<schedules>
-							<daily
-								time-of-day="04:34" />
 						</schedules>
 					</task>
 					<task class="com.top_logic.util.sched.SchedulerClusterCleanupTask"
@@ -1877,10 +1799,6 @@
 			beginDay="1"
 		/>
 		
-		<config config:interface="com.top_logic.event.logEntry.UserDayEntryManager$Config"
-			duplicateInterval="600"
-		/>
-		
 		<config config:interface="com.top_logic.tool.export.ExcelExportSupport$Config"
 			className="com.top_logic.tool.export.ExcelExportSupport"
 		/>
@@ -2019,7 +1937,6 @@
 			            <declaration resource="webinf://kbase/ModelMeta.xml" />
 			            <declaration resource="webinf://kbase/ListMeta.xml" />
 			            <declaration resource="webinf://kbase/UnitMeta.xml" />
-			            <declaration resource="webinf://kbase/LogEntryMeta.xml" /> 
 			            <declaration resource="webinf://kbase/LayoutMeta.xml" /> 
 			            <declaration resource="webinf://kbase/TemplateLayoutMeta.xml" /> 
 					</declarations>

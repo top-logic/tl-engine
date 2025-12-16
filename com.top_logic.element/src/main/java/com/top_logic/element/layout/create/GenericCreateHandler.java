@@ -7,12 +7,10 @@ package com.top_logic.element.layout.create;
 
 import java.util.Map;
 
-import com.top_logic.base.bus.MonitorEvent;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.element.core.util.ElementEventUtil;
 import com.top_logic.element.meta.form.AttributeFormContext;
 import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.layout.form.FormContainer;
@@ -69,7 +67,6 @@ public abstract class GenericCreateHandler extends AbstractCreateCommandHandler 
 
 		linkNewObject(container, newObject, createContext);
 
-		sendEvent(newObject);
 		return newObject;
     }
 
@@ -86,15 +83,4 @@ public abstract class GenericCreateHandler extends AbstractCreateCommandHandler 
 	 */
 	protected abstract void linkNewObject(TLObject container, TLObject newObject, Object model);
 
-    /**
-	 * Sends a {@link MonitorEvent#CREATED} {@link MonitorEvent} to the bus announcing the newly
-	 * created object.
-	 * 
-	 * @param newObject
-	 *        the newly created object.
-	 */
-	public void sendEvent(TLObject newObject) {
-		ElementEventUtil.sendEvent(newObject, MonitorEvent.CREATED);
-    }
-    
 }

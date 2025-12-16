@@ -89,20 +89,6 @@
 			</instance>
 		</config>
 		
-		<config service-class="com.top_logic.event.logEntry.LogEntryConfiguration">
-			<instance>
-				<object-types>
-					<object-type
-						name="DemoTypes.A"
-						display-group="DemoTypes"
-						event-types="%DEFAULT_EVENT_TYPES%" />
-					<object-type
-						name="DemoTypes.B"
-						display-group="DemoTypes"
-						event-types="%DEFAULT_EVENT_TYPES%" />
-				</object-types>
-			</instance>
-		</config>
 	</services>
 
 	<configs>

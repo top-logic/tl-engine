@@ -46,20 +46,6 @@
 			</instance>
 		</config>
 	
-        <config service-class="com.top_logic.base.monitor.bus.DocumentMonitor">
-			<instance class="com.top_logic.base.monitor.bus.DocumentMonitor"
-				number-events-to-store="50"
-				output-file="file://tmp/documents.log"
-			/>
-		</config>
-        
-		<config service-class="com.top_logic.base.monitor.bus.WebContentMonitor">
-			<instance class="com.top_logic.base.monitor.bus.WebContentMonitor"
-				number-events-to-store="50"
-				output-file="file://tmp/webcontent_monitor.log"
-			/>
-		</config>
-        
 		<config service-class="com.top_logic.basic.encryption.EncryptionService">
 			<instance class="com.top_logic.knowledge.service.encryption.pbe.PasswordBasedEncryptionService"
 				pbe-algorithm="PBEWithMD5AndDES"
@@ -105,12 +91,6 @@
 			</instance>
 		</config>
 				
-		<config service-class="com.top_logic.knowledge.service.listener.ContentChangeEventListener">
-			<instance class="com.top_logic.knowledge.service.listener.ContentChangeEventListener"
-				types="Document"
-			/>
-		</config>
-	
 		<config service-class="com.top_logic.base.services.CurrencySystem">
 			<instance class="com.top_logic.base.services.CurrencySystem"
 				system-currency="EUR"
@@ -176,22 +156,6 @@
 					<classification name="tl.systemList" mode="use" />
 					<classification name="TestFastList_1" mode="use" />
 				</classifications>
-			</instance>
-		</config>
-
-		<config service-class="com.top_logic.event.logEntry.LogEntryConfiguration">
-			<instance>
-				<object-types>
-					<!-- "testGroup" used in  test.com.top_logic.event.logEntry.TestLogEventManager -->
-					<object-type
-						name="TestB"
-						display-group="testGroup"
-						event-types="created,modified,deleted" />
-					<object-type
-						name="Wrapper"
-						display-group="testGroup"
-						event-types="created,modified" />
-				</object-types>
 			</instance>
 		</config>
 
@@ -321,12 +285,8 @@
 					<handler id="savePersonGroup" class="com.top_logic.knowledge.gui.layout.person.PersonGroupComponent$SavePersonGroupCommand"/>
 					<handler id="switchToAJAXEdit" class="com.top_logic.layout.form.component.SwitchEditCommandHandler"/>
 					
-					<handler id="updateLogEntries" class="com.top_logic.event.layout.LogEntryFilterComponent$UpdateLogEntriesCommandHandler"/>
-					<handler id="configureLogEntries" class="com.top_logic.event.layout.ConfigureLogEntriesCommandHandler"/>
-					
 					<handler id="ChoiceChartCommand" class="com.top_logic.base.chart.component.ChoiceJFreeChartComponent$ChoiceChartCommand"/>
 					<handler id="refreshFilters" class="com.top_logic.base.chart.flex.control.FilterRefreshCommandHandler"/>
-					
 					
 					<handler id="TestIntrinsicCommands" 
 						class="test.com.top_logic.tool.boundsec.TestAbstractCommandHandler$TestingCommand"/>
@@ -408,7 +368,6 @@
 			>
 				<tasks>
 					<task name="RefreshUsersTask" enabled="false" />
-					<task name="DayEntryArchiverTask" enabled="false" />
 					<task name="CheckUnusedAccountsTask" enabled="false" />
 					<task
 						class="com.top_logic.util.sched.task.impl.InstructableTestTask"
@@ -527,9 +486,6 @@
 	</services>
 	
 	<configs>
-		<config config:interface="com.top_logic.event.logEntry.UserDayEntryManager$Config"
-			duplicateInterval="600"
-		/>
 	
 		<config config:interface="test.com.top_logic.basic.jsp.TestJSPContent$Config">
 			<ignore>

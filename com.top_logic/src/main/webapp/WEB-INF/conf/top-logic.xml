@@ -47,8 +47,6 @@
         <!-- Folder for various temporary data. -->
         <entry name="%TMP_PATH%" value="%VAR_PATH%/tmp" />
 
-        <entry name="%DEFAULT_EVENT_TYPES%" value="created,modified,deleted" comment="basic log event types" />
-        
         <entry name="%tl_version_allow_downgrade%" value="${env:tl_version_allow_downgrade:false}" />
         
         <entry name="%tl_enable_debug%" value="${env:tl_enable_debug:false}" />

@@ -24,7 +24,7 @@ import com.top_logic.importer.base.AbstractImportParser;
 import com.top_logic.importer.base.StructuredDataImportPerformer;
 import com.top_logic.importer.base.StructuredDataImportPerformer.GenericDataObjectWithChildren;
 import com.top_logic.importer.excel.ImportPerformerPostProcessor;
-import com.top_logic.importer.excel.ImportPerformerPostProcessor.SimpleImportPerformerPostProcessor;
+import com.top_logic.importer.excel.ImportPerformerPostProcessor.NoImportPerformerPostProcessor;
 import com.top_logic.importer.handler.structured.AbstractDOImportHandler;
 import com.top_logic.importer.logger.ImportLogger;
 import com.top_logic.importer.text.TextImportParser;
@@ -85,7 +85,7 @@ public class XMLFileImportParser<C extends XMLFileImportParser.Config> extends A
         String getType();
 
         @InstanceFormat
-        @InstanceDefault(SimpleImportPerformerPostProcessor.class)
+        @InstanceDefault(NoImportPerformerPostProcessor.class)
         ImportPerformerPostProcessor getPostProcessor();
     }
 

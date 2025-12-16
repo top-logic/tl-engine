@@ -7,11 +7,11 @@ package test.com.top_logic.base.accesscontrol;
 
 import java.util.Collection;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
 import junit.framework.Test;
 import junit.framework.TestSuite;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import test.com.top_logic.PersonManagerSetup;
 import test.com.top_logic.basic.BasicTestCase;
@@ -29,7 +29,6 @@ import com.top_logic.base.accesscontrol.LoginPageServlet;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.basic.encryption.SecureRandomService;
 import com.top_logic.basic.thread.ThreadContext;
-import com.top_logic.event.bus.Bus;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.PersonManager;
@@ -98,7 +97,7 @@ public class TestSessionService extends BasicTestCase {
     public static Test suite () {
         Test innerTest = new TestSuite (TestSessionService.class);
 		innerTest =
-			ServiceTestSetup.createSetup(innerTest, Bus.Module.INSTANCE, SessionService.Module.INSTANCE,
+			ServiceTestSetup.createSetup(innerTest, SessionService.Module.INSTANCE,
 				Login.Module.INSTANCE);
 		return PersonManagerSetup.createPersonManagerSetup(innerTest);
         

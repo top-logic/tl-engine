@@ -25,7 +25,7 @@ import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.element.meta.gui.AbstractCreateAttributedCommandHandler;
 import com.top_logic.importer.base.KeyMappingProvider.DefaultKeyMappingProvider;
 import com.top_logic.importer.excel.ImportPerformerPostProcessor;
-import com.top_logic.importer.excel.ImportPerformerPostProcessor.SimpleImportPerformerPostProcessor;
+import com.top_logic.importer.excel.ImportPerformerPostProcessor.NoImportPerformerPostProcessor;
 import com.top_logic.importer.text.TextFileImportParser;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.Wrapper;
@@ -58,7 +58,7 @@ public class ListDataImportPerformer<C extends ListDataImportPerformer.Config> e
 
         /** Optional post processor when performer is finished. */
         @InstanceFormat
-        @InstanceDefault(SimpleImportPerformerPostProcessor.class)
+        @InstanceDefault(NoImportPerformerPostProcessor.class)
         ImportPerformerPostProcessor getPostProcessor();
 
 		@Name("lookupOnHandlerResponsibility")

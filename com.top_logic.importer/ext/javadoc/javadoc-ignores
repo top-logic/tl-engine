@@ -71,7 +71,6 @@ com.top_logic.importer.excel.ImportParserPostProcessor.java: Missing documentati
 com.top_logic.importer.excel.ImportParserPostProcessor.java: Missing documentation: com.top_logic.importer.excel.ImportParserPostProcessor.postProcessGlobal
 com.top_logic.importer.excel.ImportPerformerPostProcessor.java: Missing documentation: com.top_logic.importer.excel.ImportPerformerPostProcessor.CollectingImportPerformerPostProcessor.Config
 com.top_logic.importer.excel.ImportPerformerPostProcessor.java: Missing documentation: com.top_logic.importer.excel.ImportPerformerPostProcessor.CollectingImportPerformerPostProcessor.Config.getPostProcessors
-com.top_logic.importer.excel.ImportPerformerPostProcessor.java: Missing documentation: com.top_logic.importer.excel.ImportPerformerPostProcessor.SimpleImportPerformerPostProcessor.Config
 com.top_logic.importer.excel.MixedModeExcelContext.java: Missing documentation: com.top_logic.importer.excel.MixedModeExcelContext.getColumnIndex
 com.top_logic.importer.excel.extractor.AbstractDataExtractor.java: Invalid camel case word 'AbstractDataExtractor', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.importer.excel.extractor.AbstractExcelStructureExtractor.java: Missing documentation: com.top_logic.importer.excel.extractor.AbstractExcelStructureExtractor.ColumnConfig

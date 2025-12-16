@@ -25,7 +25,6 @@
 		<config service-class="com.top_logic.basic.module.ModuleSystem">
 			<instance class="com.top_logic.basic.module.ModuleSystem">
 				<modules>
-				   <module key="com.top_logic.knowledge.service.listener.ContentChangeEventListener$Module" value="true"/>
 				   	<module key="com.top_logic.convert.FormatConverterFactory$Module" value="true"/>
 				</modules>
 			</instance>
@@ -87,7 +86,6 @@
 		<config config:operation="update" service-class="com.top_logic.util.sched.Scheduler">
 			<instance>
 				<tasks>
-					<task name="DayEntryArchiverTask"  enabled="false" />
 					<task name="CheckUnusedAccountsTask" enabled="false" />
 				</tasks>
 			</instance>

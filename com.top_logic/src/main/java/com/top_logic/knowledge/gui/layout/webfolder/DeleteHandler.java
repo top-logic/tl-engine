@@ -14,7 +14,6 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.event.ModelTrackingService;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -141,9 +140,6 @@ public class DeleteHandler extends AbstractCommandHandler {
      * Delete the wrapper
      */
     protected boolean deleteDocument(WebFolder theFolder, Wrapper aWrapper, LayoutComponent aComponent) {
-        // inform the system about deletion
-        ModelTrackingService.sendDeleteEvent(aWrapper, theFolder);
-        
 		return theFolder.remove(aWrapper);
     }
     

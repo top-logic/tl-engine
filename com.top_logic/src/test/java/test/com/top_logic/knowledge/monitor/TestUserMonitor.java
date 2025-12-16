@@ -23,7 +23,6 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import com.top_logic.base.bus.UserEvent;
 import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.col.Mappings;
-import com.top_logic.event.bus.Sender;
 import com.top_logic.knowledge.monitor.UserMonitor;
 import com.top_logic.knowledge.monitor.UserSession;
 import com.top_logic.knowledge.objects.KnowledgeObject;
@@ -127,12 +126,11 @@ public class TestUserMonitor extends BasicTestCase {
 		String testUserName = TestPersonSetup.USER_ID;
 		Person dummy = Person.byName(testUserName);
 		assertNotNull("Unable to get user for name " + testUserName, us);
-        Sender            sender = new Sender("Testing", "TestUserMonitor");
-        UserEvent         login  = new UserEvent(sender, dummy, "yyyyy", server, UserEvent.LOGGED_IN);
-        UserEvent         logout = new UserEvent(sender, dummy, "yyyyy", server, UserEvent.LOGGED_OUT);
+		UserEvent login = new UserEvent(dummy, dummy, "yyyyy", server, UserEvent.EventType.LOGGED_IN);
+		UserEvent logout = new UserEvent(dummy, dummy, "yyyyy", server, UserEvent.EventType.LOGGED_OUT);
 		tx.commit();
 
-		um.receive(login);
+		um.notifyUserEvent(login);
 
         Thread.sleep(1000);
 		// Wait a second due to implementation hack for Oracle evil for MSSQL
@@ -148,7 +146,7 @@ public class TestUserMonitor extends BasicTestCase {
 
 		endSession(us, end);
 
-		um.receive(logout);
+		um.notifyUserEvent(logout);
 
         assertNotInIterator(us, um.getOpenSessionsIterated());
 		assertTrue(um.getUserSessions().contains(us));

@@ -10,9 +10,6 @@
 <!--                                                          -->
 
 <root>
-	<alias>
-		<entry name="%DEFAULT_EVENT_TYPES%" value="created,modified,deleted" comment="basic log event types" />
-    </alias>
     <properties>
 		<section name="DocumentFilterFactory">
 			<entry name="DefaultFilter" value="com.top_logic.base.documentfilter.DispatchingDocumentFilter" />

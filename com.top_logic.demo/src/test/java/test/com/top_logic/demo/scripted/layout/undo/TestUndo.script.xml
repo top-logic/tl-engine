@@ -648,7 +648,7 @@
 								/>
 							</actual-value>
 							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-								value="Zeile im Grid erstellt."
+								value="Zurückgenommen: Zeile im Grid erstellt."
 							/>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
@@ -1568,7 +1568,7 @@
 								/>
 							</actual-value>
 							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-								value="Objekt bearbeitet: a1"
+								value="Zurückgenommen: Objekt bearbeitet: a1"
 							/>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
@@ -2227,7 +2227,7 @@
 						>
 							<selection>
 								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
-									displayed-row-index="6"
+									displayed-row-index="7"
 								/>
 								<selection-state boolean="true"/>
 							</selection>
@@ -2251,7 +2251,7 @@
 									/>
 								</table>
 								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
-									displayed-row-index="6"
+									displayed-row-index="7"
 								/>
 							</actual-value>
 							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"

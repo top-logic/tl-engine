@@ -5,9 +5,10 @@
  */
 package com.top_logic.util.sched.task.schedule;
 
-import java.util.List;
+import static com.top_logic.layout.form.template.model.Templates.*;
 
-import org.w3c.dom.Document;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.col.Maybe;
@@ -16,10 +17,10 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.util.ResKey1;
-import com.top_logic.basic.xml.DOMUtil;
-import com.top_logic.layout.ResPrefix;
+import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.layout.ResourceView;
 import com.top_logic.layout.form.model.FormGroup;
+import com.top_logic.layout.table.ConfigKey;
 import com.top_logic.util.Resources;
 
 /**
@@ -45,29 +46,6 @@ public class SchedulingAlgorithmCombinator implements SchedulingAlgorithm {
 	 * </p>
 	 */
 	public static final String NAME_STEM_FORM_GROUP_CHILD = "child_";
-
-	private static final Document TEMPLATE = DOMUtil.parseThreadSafe(""
-		+ "	<table " + AbstractSchedulingAlgorithm.templateRootAttributes() + " >"
-		+ "		<p:field name='" + NAME_FORM_GROUP_CHILDREN + "'>"
-		+ "			<t:list>"
-		+ "				<tbody>"
-		+ "					<t:items>"
-		+ "						<tr>"
-		+ "							<td colspan='4'>"
-		+ "								<fieldset>"
-		+ "									<legend>"
-		+ "										<p:self style='label' />"
-		+ "									</legend>"
-		+ "									<p:self />"
-		+ "								</fieldset>"
-		+ "							</td>"
-		+ "						</tr>"
-		+ "					</t:items>"
-		+ "				</tbody>"
-		+ "			</t:list>"
-		+ "		</p:field>"
-		+ "	</table>"
-	);
 
 	/**
 	 * Instantiates and combines the given {@link SchedulingAlgorithm} configurations.
@@ -141,28 +119,19 @@ public class SchedulingAlgorithmCombinator implements SchedulingAlgorithm {
 
 	@Override
 	public void fillFormGroup(FormGroup group) {
-		group.addMember(createChildrenFormGroup());
-		group.setControlProvider(AbstractSchedulingAlgorithm.createControlProvider(TEMPLATE));
-	}
-
-	/**
-	 * Create the {@link FormGroup} containing all the children's {@link FormGroup}s.
-	 * 
-	 * @return Never null.
-	 */
-	protected FormGroup createChildrenFormGroup() {
-		FormGroup childrenGroup = new FormGroup(NAME_FORM_GROUP_CHILDREN, getI18nPrefix());
 		int i = 0;
+		ArrayList<HTMLTemplateFragment> fragments = new ArrayList<>();
 		for (SchedulingAlgorithm child : getChildren()) {
 			FormGroup childGroup = createChildFormGroup(child, i);
-			childrenGroup.addMember(childGroup);
+			group.addMember(childGroup);
 			i += 1;
+			fragments.add(
+				fieldsetBoxDirect(
+					label(childGroup.getName()),
+					member(childGroup.getName()),
+					ConfigKey.field(childGroup)));
 		}
-		return childrenGroup;
-	}
-
-	private ResPrefix getI18nPrefix() {
-		return ResPrefix.legacyClass(SchedulingAlgorithmCombinator.class);
+		template(group, fragment(fragments));
 	}
 
 	/**

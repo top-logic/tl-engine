@@ -54,7 +54,9 @@ public class InstanceResolverByExpression extends AbstractConfiguredInstance<Ins
 		 * Function resolving an object from its ID.
 		 * 
 		 * <p>
-		 * The function expects the object's ID as single argument and returns the resolved object.
+		 * The function expects the object's ID as first argument and an optional import context as
+		 * second argument. The function must return the resolved object. If the function returns
+		 * <code>null</code>, this is treated as resolve failure.
 		 * </p>
 		 */
 		@Mandatory
@@ -79,8 +81,8 @@ public class InstanceResolverByExpression extends AbstractConfiguredInstance<Ins
 	}
 
 	@Override
-	public TLObject resolve(I18NLog log, String kind, String id) {
-		return SearchExpression.asTLObject(_resolver.getSearch(), _resolver.execute(id));
+	public TLObject resolve(I18NLog log, Object context, String kind, String id) {
+		return SearchExpression.asTLObject(_resolver.getSearch(), _resolver.execute(id, context));
 	}
 
 	@Override

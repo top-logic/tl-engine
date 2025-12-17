@@ -724,8 +724,6 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	@Inspectable
 	private Object _model;
 
-	private LayoutComponent _window;
-
 	@Inspectable
 	private PropertyListeners _listeners;
 
@@ -1085,7 +1083,6 @@ public abstract class LayoutComponent extends ModelEventAdapter
 			}
 		} else {
 			main = null;
-			_window = null;
 		}
     }
 
@@ -1105,10 +1102,6 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		main = newMainLayout;
 		if (newMainLayout != null) {
 			newMainLayout.registerComponent(this);
-			LayoutComponent parent = getParent();
-			if (parent != null) {
-				_window = parent.getWindow();
-			}
 			notifyAddToMainLayout();
 		} else {
 			setToolBar(null);
@@ -4433,22 +4426,10 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	}
 
 	/**
-	 * Returns the support for opening and closing a {@link LayoutComponent} as dialog.
-	 * 
-	 * @return <code>null</code> if and only if the {@link MainLayout} is not yet resolved.
-	 * 
-	 * @see #componentsResolved(InstantiationContext)
+	 * The support for opening and closing a {@link LayoutComponent} as dialog.
 	 */
 	public DialogSupport getDialogSupport() {
-		return getWindow().getDialogSupport();
-	}
-
-	/**
-	 * The enclosing {@link WindowComponent} if it is an external window, otherwise the
-	 * {@link MainLayout}.
-	 */
-	public LayoutComponent getWindow() {
-		return _window;
+		return DefaultDisplayContext.getDisplayContext().getWindowScope().getDialogSupport();
 	}
 
 	/**

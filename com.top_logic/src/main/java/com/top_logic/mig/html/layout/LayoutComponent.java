@@ -2437,25 +2437,17 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	}
 
 	@Override
-	protected final boolean receiveDialogOpenedEvent(Object aModel, Object changedBy) {
-		boolean handleTypeResult;
+	protected final void receiveDialogOpenedEvent(Object aModel, Object changedBy) {
 		if (this.isVisible()) {
-			handleTypeResult = this.receiveDialogEvent(aModel, changedBy, true);
-		} else {
-			handleTypeResult = false;
+			this.receiveDialogEvent(aModel, changedBy, true);
 		}
-		return handleTypeResult;
 	}
 
 	@Override
-	protected final boolean receiveDialogClosedEvent(Object aModel, Object changedBy) {
-		boolean handleTypeResult;
+	protected final void receiveDialogClosedEvent(Object aModel, Object changedBy) {
 		if (this.isVisible()) {
-			handleTypeResult = this.receiveDialogEvent(aModel, changedBy, false);
-		} else {
-			handleTypeResult = false;
+			this.receiveDialogEvent(aModel, changedBy, false);
 		}
-		return handleTypeResult;
 	}
 
     /**
@@ -2469,11 +2461,9 @@ public abstract class LayoutComponent extends ModelEventAdapter
      * @param    aDialog      The dialog opened or closed.
      * @param    anOwner      The component that opend / closed the dialog
      * @param    isOpen       true when dialog was opened
-     * @return   <code>true</code> to indicate that this part (or subparts)
-     *           have become invalid.
      */
-    public boolean receiveDialogEvent(Object aDialog, Object anOwner, boolean isOpen) {
-        return false;
+    public void receiveDialogEvent(Object aDialog, Object anOwner, boolean isOpen) {
+		// Does nothing in general
     }
 
     /**

@@ -648,12 +648,12 @@
 								/>
 							</actual-value>
 							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-								value="Rückgängig gemacht: Zeile im Grid erstellt."
+								value="Zurückgenommen: Zeile im Grid erstellt."
 							/>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 							command-implementation-comment="com.top_logic.element.changelog.RevertCommandHandler"
-							command-label="Änderung zurücknehmen"
+							command-label="Änderung wiederherstellen"
 							component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
 							component-name="admin/myLatestChanges/lastChangesTable.layout.xml#Table"
 							user-id="root"
@@ -1568,12 +1568,12 @@
 								/>
 							</actual-value>
 							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-								value="Rückgängig gemacht: Objekt bearbeitet: a1"
+								value="Zurückgenommen: Objekt bearbeitet: a1"
 							/>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 							command-implementation-comment="com.top_logic.element.changelog.RevertCommandHandler"
-							command-label="Änderung zurücknehmen"
+							command-label="Änderung wiederherstellen"
 							component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
 							component-name="admin/myLatestChanges/lastChangesTable.layout.xml#Table"
 							user-id="root"
@@ -2227,7 +2227,7 @@
 						>
 							<selection>
 								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
-									displayed-row-index="11"
+									displayed-row-index="7"
 								/>
 								<selection-state boolean="true"/>
 							</selection>
@@ -2236,6 +2236,27 @@
 									tab-path="Letzte Änderungen"
 								/>
 							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.table.TableCellFullText"
+								column-label="Beschreibung"
+							>
+								<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="Letzte Änderungen"
+									/>
+								</table>
+								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+									displayed-row-index="7"
+								/>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Erneut durchgeführt: Zeile im Grid erstellt."
+							/>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 							command-implementation-comment="com.top_logic.element.changelog.RevertCommandHandler"
@@ -2845,7 +2866,7 @@
 						>
 							<selection>
 								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
-									displayed-row-index="4"
+									displayed-row-index="2"
 								/>
 								<selection-state boolean="true"/>
 							</selection>
@@ -2858,7 +2879,7 @@
 						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 							command-implementation-comment="com.top_logic.element.changelog.RevertCommandHandler"
 							command-label="Änderung zurücknehmen"
-							comment="Select creation of a2"
+							comment="Revert creation of a2"
 							component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
 							component-name="admin/myLatestChanges/lastChangesTable.layout.xml#Table"
 							user-id="root"
@@ -2871,7 +2892,7 @@
 						>
 							<selection>
 								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
-									displayed-row-index="6"
+									displayed-row-index="3"
 								/>
 								<selection-state boolean="true"/>
 							</selection>
@@ -2884,7 +2905,7 @@
 						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 							command-implementation-comment="com.top_logic.element.changelog.RevertCommandHandler"
 							command-label="Änderung zurücknehmen"
-							comment="Select creation of a1"
+							comment="Revert creation of a1"
 							component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
 							component-name="admin/myLatestChanges/lastChangesTable.layout.xml#Table"
 							user-id="root"
@@ -3169,7 +3190,7 @@
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 							command-implementation-comment="com.top_logic.element.changelog.RevertCommandHandler"
-							command-label="Änderung zurücknehmen"
+							command-label="Änderung wiederherstellen"
 							component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
 							component-name="admin/myLatestChanges/lastChangesTable.layout.xml#Table"
 							user-id="root"
@@ -3378,7 +3399,7 @@
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.element.changelog.RevertCommandHandler"
-					command-label="Änderung zurücknehmen"
+					command-label="Änderung wiederherstellen"
 					component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
 					component-name="admin/myLatestChanges/lastChangesTable.layout.xml#Table"
 					user-id="root"

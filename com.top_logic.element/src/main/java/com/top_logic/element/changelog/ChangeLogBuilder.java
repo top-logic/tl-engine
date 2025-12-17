@@ -12,6 +12,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -238,15 +239,14 @@ public class ChangeLogBuilder {
 	public Collection<com.top_logic.element.changelog.model.ChangeSet> build() {
 		// all log messages. Sorted in descending order
 		List<com.top_logic.element.changelog.model.ChangeSet> log = new ArrayList<>();
-		// temporary list containing messages for a read range. Sorted in ascending order.
-		List<com.top_logic.element.changelog.model.ChangeSet> logsInRange = new ArrayList<>();
 
 		analyzeModel();
+
+		Map<Long, com.top_logic.element.changelog.model.ChangeSet> revertedBy = new HashMap<>();
 
 		List<LongRange> revisionRanges = getRevisionRanges();
 		processRevisions:
 		for (int i = revisionRanges.size() - 1; i >= 0; i--) {
-			logsInRange.clear();
 			LongRange range = revisionRanges.get(i);
 
 			long start = range.getStartValue();
@@ -259,8 +259,7 @@ public class ChangeLogBuilder {
 					long maxFetchEntries = (long) ((_numberEntries - log.size()) * 1.5);
 
 					long chunkStart = Long.max(start, stop - maxFetchEntries);
-					readChangesDescending(logsInRange, chunkStart, stop);
-					log.addAll(logsInRange);
+					readDescending(log, revertedBy, chunkStart, stop);
 
 					int remaining = _numberEntries - log.size();
 					if (remaining == 0) {
@@ -279,8 +278,7 @@ public class ChangeLogBuilder {
 					stop = chunkStart - 1;
 				}
 			} else {
-				readChangesDescending(logsInRange, start, stop);
-				log.addAll(logsInRange);
+				readDescending(log, revertedBy, start, stop);
 			}
 
 		}
@@ -290,12 +288,68 @@ public class ChangeLogBuilder {
 		return log;
 	}
 
-	private void readChangesDescending(List<com.top_logic.element.changelog.model.ChangeSet> out, long start,
+	private void readDescending(List<com.top_logic.element.changelog.model.ChangeSet> log,
+			Map<Long, com.top_logic.element.changelog.model.ChangeSet> revertedBy, long start,
 			long stop) {
-		out.clear();
+
+		List<com.top_logic.element.changelog.model.ChangeSet> toDelete = new ArrayList<>();
+
+		List<com.top_logic.element.changelog.model.ChangeSet> logsInRange =
+			readChangesDescending(start, stop);
+		
+		for (Iterator<com.top_logic.element.changelog.model.ChangeSet> it = logsInRange.iterator(); it
+			.hasNext();) {
+			com.top_logic.element.changelog.model.ChangeSet cs1 = it.next();
+			long commitNumber = cs1.getRevision().getCommitNumber();
+		
+			com.top_logic.element.changelog.model.ChangeSet undoCS = revertedBy.remove(commitNumber);
+			if (undoCS != null) {
+				// Connect CS with its undo CS.
+				cs1.setRevertedBy(undoCS);
+				// Display message "Reverted: ..."
+				cs1.setMessage(I18NConstants.REVERTED__MSG.fill(cs1.getMessage()));
+				// Undo CS is not displayed
+				toDelete.add(undoCS);
+				continue;
+			}
+		
+			if (cs1.isRevert()) {
+				long revertedRevision = cs1.origRevision();
+				if (revertedRevision != -1) {
+					// store cs for later connection with the undone CS.
+					revertedBy.put(revertedRevision, cs1);
+				}
+			}
+		}
+		
+		log.addAll(logsInRange);
+
+		Comparator<com.top_logic.element.changelog.model.ChangeSet> revisionOrder = Comparator
+			.comparing(com.top_logic.element.changelog.model.ChangeSet::getRevision);
+		// Ensure ascending revision order, log is sorted descending
+		toDelete.sort(revisionOrder);
+
+		Comparator<com.top_logic.element.changelog.model.ChangeSet> reversedRevisionOrder = revisionOrder.reversed();
+		List<com.top_logic.element.changelog.model.ChangeSet> searchList = log;
+		for (com.top_logic.element.changelog.model.ChangeSet cs : toDelete) {
+			int idx = Collections.binarySearch(searchList, cs, reversedRevisionOrder);
+			if (idx < 0) {
+				assert false : "toDelete is a sublist of log.";
+			} else {
+				searchList.remove(idx);
+				// All later CS in toDelete have larger commit number, i.e. before idx in log list
+				searchList = searchList.subList(0, idx);
+			}
+		}
+	}
+
+	private List<com.top_logic.element.changelog.model.ChangeSet> readChangesDescending(
+			long start, long stop) {
+		List<com.top_logic.element.changelog.model.ChangeSet> out = new ArrayList<>();
 		readChanges(out, start, stop);
 		// entries are filled in ascending order to output
 		Collections.reverse(out);
+		return out;
 	}
 
 	private void readChanges(List<com.top_logic.element.changelog.model.ChangeSet> out, long start, long stop) {
@@ -959,4 +1013,5 @@ public class ChangeLogBuilder {
 		TLModule module = obj.tType().getModule();
 		return _excludeModules.contains(module.getName());
 	}
+	
 }

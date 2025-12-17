@@ -48,3 +48,8 @@ table.tblFrozen td span.urlWithIcon > .cTextInput.active + a {
 	min-width: 20px;
 	max-width: 100%;
 }
+
+.change-reverted {
+	font-style: italic;
+	color: hsl(from var(--text-primary) h s l/0.5);
+}

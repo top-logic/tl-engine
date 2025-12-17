@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_29001_Added_revertedBy_attribute"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29019_Removed_log_entries"
+			module="tl"
+		/>
+		<dependency name="Ticket_28604_changelog"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<create-reference name="tl.changelog:ChangeSet#revertedBy"
+			navigate="true"
+			type="tl.changelog:ChangeSet"
+		/>
+		<reorder-part name="tl.changelog:ChangeSet#revertedBy"
+			before="name"
+		/>
+	</processors>
+	<post-processors/>
+</migration>

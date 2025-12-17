@@ -392,9 +392,6 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 
 	private final LayoutFactory _layoutFactory;
 	
-	/** @see #getDialogSupport() */
-	private DialogSupport _dialogSupport;
-
 	private final BidiMap<String, LayoutComponent> _availableComponents = new BidiHashMap<>();
 
 	private final Map<String, ComponentChannel> _partnerChannels = new HashMap<>();
@@ -470,11 +467,6 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 
 			window.internalBroadcastModelEvent(aModel, changedBy, eventType);
 		}
-	}
-
-	@Override
-	public LayoutComponent getWindow() {
-		return this;
 	}
 
 	/**
@@ -1054,7 +1046,6 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 		if (oldId != null) {
 			getEnclosingFrameScope().addClientAction(new ElementReplacement(oldId, layoutControl));
 		}
-		_dialogSupport = new DialogSupport(layoutControl);
 		for (Entry<LayoutComponent, DialogComponent> entry : openedDialogs) {
 			LayoutComponent newComponent = getComponentByName(entry.getKey().getName());
 			if (newComponent == null) {
@@ -1659,11 +1650,6 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
      */
 	public LayoutFactory getLayoutFactory() {
 		return _layoutFactory;
-	}
-
-	@Override
-	public DialogSupport getDialogSupport() {
-		return _dialogSupport;
 	}
 
 	/**

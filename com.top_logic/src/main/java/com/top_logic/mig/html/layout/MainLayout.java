@@ -1406,9 +1406,10 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 
 	private void initWindowManager() {
 		if(this.windowManager == null) {
-			this.windowManager = new WindowManager(this);
+			LayoutComponentScope frameScope = getEnclosingFrameScope();
+			this.windowManager = new WindowManager(frameScope);
 
-			getEnclosingFrameScope().registerContentHandler("_windows", windowManager);
+			frameScope.registerContentHandler("_windows", windowManager);
         }
 	}
 	

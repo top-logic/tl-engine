@@ -57,7 +57,6 @@ import com.top_logic.layout.window.WindowCloseActionOp.WindowCloseAction;
 import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.mig.html.layout.ComponentInstantiationContext;
 import com.top_logic.mig.html.layout.ComponentName;
-import com.top_logic.mig.html.layout.Layout;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutConstants;
 import com.top_logic.mig.html.layout.LayoutUtils;
@@ -230,7 +229,7 @@ public class WindowManager extends WindowRegistry<WindowHandler> {
 	 */
 	private final ArrayList<String> closedWindows;
 
-	private final Layout holder;
+	private final FrameScope _frame;
 
 	/**
 	 * {@link IdentifierSource} creating new IDs for component name delivered in
@@ -241,10 +240,10 @@ public class WindowManager extends WindowRegistry<WindowHandler> {
 	/**
 	 * De-serializing constructor.
 	 */
-	public WindowManager(final Layout holder) {
+	public WindowManager(FrameScope frame) {
 		super(WindowHandler.class);
 
-		this.holder = holder;
+		_frame = frame;
 		openedWindows = new ArrayList<>();
 		closedWindows = new ArrayList<>();
 	}
@@ -285,8 +284,8 @@ public class WindowManager extends WindowRegistry<WindowHandler> {
 	}
 
 	/**
-	 * Clears the slot in {@link #openedWindows} with index <code>index</code>, and
-	 * removes the given window from the {@link #getHolder() holder}.
+	 * Clears the slot in {@link #openedWindows} with index <code>index</code>, and removes the
+	 * given window.
 	 */
 	private void dropWindow(int index, WindowComponent window) {
 		openedWindows.remove(index);
@@ -722,17 +721,13 @@ public class WindowManager extends WindowRegistry<WindowHandler> {
 	}
 
 	/**
-	 * Appends a reference to come from the window of the document represented
-	 * by the {@link MainLayout#getEnclosingFrameScope() frame scope} of the
-	 * {@link #getHolder() corresponding component} to the window to the
-	 * document represented by the top level frame scope of the given
-	 * {@link WindowScope} if the windowScope was opened by this
-	 * {@link WindowManager}.
+	 * Appends a reference to come from the window of the document represented by the {@link #_frame
+	 * frame scope} to the window to the document represented by the top level frame scope of the
+	 * given {@link WindowScope} if the windowScope was opened by this {@link WindowManager}.
 	 * 
 	 * <p>
-	 * If the given {@link WindowScope} is not the scope of a
-	 * {@link WindowComponent} opened by this {@link WindowManager}, nothing is
-	 * appended.
+	 * If the given {@link WindowScope} is not the scope of a {@link WindowComponent} opened by this
+	 * {@link WindowManager}, nothing is appended.
 	 * </p>
 	 * 
 	 * 
@@ -769,16 +764,8 @@ public class WindowManager extends WindowRegistry<WindowHandler> {
 	 *         if <code>out</code> throws some
 	 */
 	public void appendCloseAllWindows(Appendable out, FrameScope source) throws IOException{
-		out.append(LayoutUtils.getFrameReference(source, getHolder().getEnclosingFrameScope()));
+		out.append(LayoutUtils.getFrameReference(source, _frame));
 		out.append(".winCloseAllOpenWindows();");
-	}
-
-	/**
-	 * Returns the Layout which serves as parent for all the windows opened by
-	 * this {@link WindowManager}.
-	 */
-	private Layout getHolder() {
-		return holder;
 	}
 
 	/**
@@ -896,6 +883,6 @@ public class WindowManager extends WindowRegistry<WindowHandler> {
 
 	@Override
 	public URLBuilder getURL(DisplayContext context) {
-		return holder.getEnclosingFrameScope().getURL(context, this);
+		return _frame.getURL(context, this);
 	}
 }

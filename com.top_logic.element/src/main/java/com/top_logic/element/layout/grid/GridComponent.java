@@ -1020,8 +1020,8 @@ public class GridComponent extends EditComponent implements
     }
 
 	@Override
-	public boolean receiveDialogEvent(Object aDialog, Object anOwner, boolean isOpen) {
-		boolean receiveDialogEvent = super.receiveDialogEvent(aDialog, anOwner, isOpen);
+	public void receiveDialogEvent(Object aDialog, Object anOwner, boolean isOpen) {
+		super.receiveDialogEvent(aDialog, anOwner, isOpen);
 		if (isOpen) {
 			dropRowFields(getSelectedCollection());
 		} else {
@@ -1049,7 +1049,6 @@ public class GridComponent extends EditComponent implements
 				}
 			}
 		}
-		return receiveDialogEvent;
 	}
 
     /**

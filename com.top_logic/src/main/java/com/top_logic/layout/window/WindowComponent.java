@@ -37,7 +37,6 @@ import com.top_logic.layout.structure.LayoutFactory;
 import com.top_logic.layout.window.WindowTemplate.WindowConfig;
 import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.mig.html.layout.CommandRegistry;
-import com.top_logic.mig.html.layout.DialogSupport;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutComponentScope;
 import com.top_logic.mig.html.layout.LayoutContainer;
@@ -98,9 +97,6 @@ public class WindowComponent extends BoundLayout implements VisibilityListener, 
 	 * @see WindowComponent#getWindowName()
 	 */
 	private String _endcodedWindowName;
-
-	/** @see #getDialogSupport() */
-	private DialogSupport _dialogSupport;
 
 	public WindowComponent(InstantiationContext context, Config atts) throws ConfigurationException {
 		super(context, atts);
@@ -285,7 +281,6 @@ public class WindowComponent extends BoundLayout implements VisibilityListener, 
 
 		LayoutFactory layoutFactory = getMainLayout().getLayoutFactory();
 		layoutControl = (BrowserWindowControl) layoutFactory.createLayout(this);
-		_dialogSupport = new DialogSupport(layoutControl);
 		_endcodedWindowName = WindowRegistry.encodeWindowName(getName().qualifiedName());
 	}
 
@@ -314,11 +309,6 @@ public class WindowComponent extends BoundLayout implements VisibilityListener, 
 		return TopLevelComponentScope.createTopLevelComponentScope(this, this, basicAJAXSupport);
 	}
 	
-	@Override
-	public LayoutComponent getWindow() {
-		return this;
-	}
-
 	@Override
 	public WindowScope getWindowScope() {
 		return getLayoutControl();
@@ -374,11 +364,6 @@ public class WindowComponent extends BoundLayout implements VisibilityListener, 
 	 */
 	public BrowserWindowControl getLayoutControl() {
 		return layoutControl;
-	}
-
-	@Override
-	public DialogSupport getDialogSupport() {
-		return _dialogSupport;
 	}
 
 	/**

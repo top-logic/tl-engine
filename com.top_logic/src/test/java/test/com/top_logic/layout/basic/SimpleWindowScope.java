@@ -18,6 +18,7 @@ import com.top_logic.layout.history.HistoryEntry;
 import com.top_logic.layout.structure.DialogWindowControl;
 import com.top_logic.layout.structure.PopupDialogControl;
 import com.top_logic.mig.html.layout.ComponentName;
+import com.top_logic.mig.html.layout.DialogSupport;
 
 /**
  * The class {@link SimpleWindowScope} is used by {@link SimpleControlScope}.
@@ -45,11 +46,18 @@ public final class SimpleWindowScope implements WindowScope {
 	private final WindowScope opener;
 	private final FrameScope topLevelScope;
 
+	private final DialogSupport _dialogSupport = new DialogSupport(this);
+
 	@Override
 	public ComponentName getName() {
 		/* Good enough. This class is only used for tests, as it lies in the 'test' package. And the
 		 * tests using it don't need the name. */
 		return null;
+	}
+
+	@Override
+	public DialogSupport getDialogSupport() {
+		return _dialogSupport;
 	}
 
 	@Override

@@ -416,20 +416,6 @@ public class FormComponent extends BuilderComponent implements FormHandler, Form
     }
 
 	@Override
-    public boolean receiveDialogEvent(Object aDialog, Object anOwner, boolean dialogOpened) {
-		if (!this.isVisible()) {
-			return false;
-		}
-		if (this.getDialogParent() == anOwner) {
-			// This component is the being opened as dialog. Do not mangle its
-			// immutable state.
-			return false;
-		}
-
-		return super.receiveDialogEvent(aDialog, anOwner, dialogOpened);
-	}
-
-	@Override
 	protected void afterModelSet(Object oldModel, Object newModel) {
 		super.afterModelSet(oldModel, newModel);
 		updateForm();

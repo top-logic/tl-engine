@@ -124,6 +124,11 @@ public class ConfigurationFieldProvider extends AbstractFieldProvider {
 
 	/**
 	 * Retrieves the {@link EditContext}.
+	 * 
+	 * <p>
+	 * May be <code>null</code> when this method is not called in context of a field created by a
+	 * {@link ConfigurationFieldProvider}.
+	 * </p>
 	 */
 	public static EditContext editContext(TypedAnnotatable options) {
 		return options.get(EDIT_CONTEXT);
@@ -165,7 +170,7 @@ public class ConfigurationFieldProvider extends AbstractFieldProvider {
 			getValueField().addValueListener(listener);
 
 			// Initialize value.
-			listener.valueChanged(null, null, null);
+			listener.handleNewValue(null);
 
 			Templates.template(this, Templates.div(Templates.member("config")));
 		}
@@ -173,6 +178,10 @@ public class ConfigurationFieldProvider extends AbstractFieldProvider {
 		class OnValueChange implements ValueListener {
 			@Override
 			public void valueChanged(FormField field, Object oldValue, Object newValue) {
+				handleNewValue(newValue);
+			}
+
+			void handleNewValue(Object newValue) {
 				if (_configGroup != null && newValue == EditorFactory.getModel(_configGroup)) {
 					return;
 				}

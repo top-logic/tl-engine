@@ -88,6 +88,8 @@ import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
 @ScriptPrefix("flow")
 public class FlowFactory extends TLScriptFunctions {
 	
+	private static final String FLOW_CORE_CSS = "/style/tl-flow-core.css";
+
 	/**
 	 * Factory for {@link Diagram}s.
 	 * 
@@ -1370,8 +1372,10 @@ public class FlowFactory extends TLScriptFunctions {
 
 						if (_svgStarted) {
 							// Add default styles to the generated SVG.
-							BinaryData styles = FileManager.getInstance().getDataOrNull("/style/tl-flow-core.css");
-							if (styles != null) {
+							BinaryData styles = FileManager.getInstance().getDataOrNull(FLOW_CORE_CSS);
+							if (styles == null) {
+								Logger.warn("Missing PDF export styles: " + FLOW_CORE_CSS, FlowFactory.class);
+							} else {
 								tagWriter.beginTag("style");
 								try (InputStream in = styles.getStream()) {
 									StreamUtilities.copyReaderWriterContents(

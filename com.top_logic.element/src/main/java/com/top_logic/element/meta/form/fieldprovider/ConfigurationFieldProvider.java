@@ -63,9 +63,13 @@ public class ConfigurationFieldProvider extends AbstractFieldProvider {
 	 * feature, the {@link ConfigurationItem} type edited must extend {@link ConfigPart} and declare
 	 * {@link ConfigEditContext} as its {@link Container} property type.
 	 * </p>
+	 * 
+	 * @deprecated Only required for ease of migration, see
+	 *             "com.top_logic.bpe.bpml.display.DisplayDescription".
 	 *
 	 * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
 	 */
+	@Deprecated
 	public interface ConfigEditContext extends ConfigurationItem {
 
 		/**
@@ -180,11 +184,6 @@ public class ConfigurationFieldProvider extends AbstractFieldProvider {
 				_configGroup = new FormGroup("config", ResPrefix.NONE);
 				addMember(_configGroup);
 				ConfigurationItem model = TypedConfiguration.newConfigItem(_configType);
-
-				ConfigEditContext context = TypedConfiguration.newConfigItem(ConfigEditContext.class);
-				context.setBaseModel(_editContext.getObject());
-				context.setEditContext(_editContext);
-				context.setValue(model);
 
 				if (newValue != null) {
 					ConfigCopier.copyContent(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY,

@@ -96,12 +96,12 @@ public class PdfFile extends GenericMethod {
 	private static final int ANTI_ALIASING_PASSES = 1;
 
 	/**
-	 * Default page width in pixels at 150 DPI (A4 width: 210mm ≈ 1240px).
+	 * Default page width in pixels at 150 DPI (A4 width: 210mm approximately 1240px).
 	 */
 	private static final int DEFAULT_PAGE_WIDTH = 1240;
 
 	/**
-	 * Default page height in pixels at 150 DPI (A4 height: 297mm ≈ 1754px).
+	 * Default page height in pixels at 150 DPI (A4 height: 297mm approximately 1754px).
 	 */
 	private static final int DEFAULT_PAGE_HEIGHT = 1754;
 

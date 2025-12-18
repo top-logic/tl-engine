@@ -15,10 +15,10 @@
 
 <p>Diese Funktion akzeptiert vier Arten von Eingaben:</p>
 <ul>
-	<li><strong>String:</strong> Einfaches HTML als mehrzeiliges String-Literal (mit dreifachen Anführungszeichen <code>"""..."""</code>)</li>
-	<li><strong>HTMLFragment:</strong> HTML mit eingebetteten TLScript-Ausdrücken (mit HTML-Literal-Syntax mit dreifachen geschweiften Klammern <code>{{{...}}}</code>)</li>
-	<li><strong>StructuredText:</strong> Rich-Text-Inhalte aus WYSIWYG-Editor-Feldern mit eingebetteten Bildern. Bilder werden automatisch in BASE64-Daten-URIs für das PDF-Rendering konvertiert</li>
-	<li><strong>BinaryDataSource:</strong> Binärdaten mit Content-Type <code>text/html</code> oder <code>text/plain</code>, die HTML-Markup enthalten</li>
+	<li><strong>Zeichenkette:</strong> Einfaches HTML als mehrzeiliges String-Literal (mit dreifachen Anführungszeichen <code>"""..."""</code>)</li>
+	<li><strong>HTML:</strong> HTML mit eingebetteten TLScript-Ausdrücken (mit HTML-Literal-Syntax mit dreifachen geschweiften Klammern <code>{{{...}}}</code>)</li>
+	<li><strong>Strukturierter Text:</strong> Rich-Text-Inhalte aus WYSIWYG-Editor-Feldern mit eingebetteten Bildern. Bilder werden automatisch in BASE64-Daten-URIs für das PDF-Rendering konvertiert</li>
+	<li><strong>Binärdaten:</strong> Binärdaten mit Content-Type <code>text/html</code> oder <code>text/plain</code>, die HTML-Markup enthalten</li>
 </ul>
 
 <p>Diese Funktion ist besonders nützlich für die Erstellung von Berichten, Rechnungen oder anderen Dokumenten, die dynamisch aus HTML-Vorlagen generiert und als PDF exportiert werden müssen.</p>
@@ -38,21 +38,21 @@
 		</tr>
 		<tr>
 			<td>html</td>
-			<td>String, HTMLFragment, StructuredText oder BinaryDataSource</td>
-			<td>Der HTML-Inhalt, der in PDF konvertiert werden soll. Kann ein einfacher String (mit dreifachen Anführungszeichen <code>"""..."""</code>), ein HTMLFragment (mit dreifachen geschweiften Klammern <code>{{{...}}}</code> Syntax mit eingebetteten TLScript-Ausdrücken), ein StructuredText aus WYSIWYG-Editor-Feldern (mit automatisch eingebetteten BASE64-Bildern) oder eine BinaryDataSource mit Content-Type <code>text/html</code> oder <code>text/plain</code> sein. Muss wohlgeformtes XHTML sein, bei dem alle Tags ordnungsgemäß geschlossen sind.</td>
+			<td>String, HTMLFragment, StructuredText oder Binärdaten</td>
+			<td>Der HTML-Inhalt, der in PDF konvertiert werden soll. Kann ein einfacher String (mit dreifachen Anführungszeichen <code>"""..."""</code>), ein HTMLFragment (mit dreifachen geschweiften Klammern <code>{{{...}}}</code> Syntax mit eingebetteten TLScript-Ausdrücken), ein StructuredText aus WYSIWYG-Editor-Feldern (mit automatisch eingebetteten BASE64-Bildern) oder eine Binärdaten mit Content-Type <code>text/html</code> oder <code>text/plain</code> sein. Muss wohlgeformtes XHTML sein, bei dem alle Tags ordnungsgemäß geschlossen sind.</td>
 			<td>ja</td>
 			<td> </td>
 		</tr>
 		<tr>
 			<td>name</td>
-			<td>String</td>
+			<td>Zeichenkette</td>
 			<td>Der Dateiname für das generierte PDF. Die Erweiterung .pdf wird automatisch hinzugefügt, falls nicht vorhanden.</td>
 			<td>nein</td>
 			<td>document.pdf</td>
 		</tr>
 		<tr>
 			<td>pageSize</td>
-			<td>String</td>
+			<td>Zeichenkette</td>
 			<td>Standard-Papierformat. Unterstützte Werte: <code>A0</code>, <code>A1</code>, <code>A2</code>, <code>A3</code>, <code>A4</code>, <code>A5</code>, <code>A6</code>, <code>LETTER</code>, <code>LEGAL</code>, <code>TABLOID</code>. Wenn angegeben, werden <code>pageWidth</code> und <code>pageHeight</code> automatisch basierend auf der Auflösung berechnet. Werte sind nicht case-sensitiv.</td>
 			<td>nein</td>
 			<td>A4 (wenn weder pageSize noch pageWidth/pageHeight angegeben)</td>
@@ -66,45 +66,52 @@
 		</tr>
 		<tr>
 			<td>pageWidth</td>
-			<td>Number</td>
-			<td>Überschreibung der Seitenbreite in Pixeln. Wenn angegeben (ungleich Null), hat dies Vorrang vor der <code>pageSize</code>-Breite.</td>
+			<td>Zahl/Zeichenkette</td>
+			<td>Überschreibung der Seitenbreite in Pixeln oder Größenangabe wie "15cm", "150mm", "7.5in". Wenn angegeben, hat dies Vorrang vor der <code>pageSize</code>-Breite.</td>
 			<td>nein</td>
-			<td>0 (pageSize oder Standard-A4-Breite bei Auflösung verwenden)</td>
+			<td>null</td>
 		</tr>
 		<tr>
 			<td>pageHeight</td>
-			<td>Number</td>
-			<td>Überschreibung der Seitenhöhe in Pixeln. Wenn angegeben (ungleich Null), hat dies Vorrang vor der <code>pageSize</code>-Höhe.</td>
+			<td>Zahl/Zeichenkette</td>
+			<td>Überschreibung der Seitenhöhe in Pixeln oder Größenangabe wie "15cm", "150mm", "7.5in". Wenn angegeben, hat dies Vorrang vor der <code>pageHeight</code>-Höhe.</td>
 			<td>nein</td>
-			<td>0 (pageSize oder Standard-A4-Höhe bei Auflösung verwenden)</td>
+			<td>null</td>
+		</tr>
+		<tr>
+			<td>margin</td>
+			<td>Zahl/Zeichenkette</td>
+			<td>Der linke Rand in Pixeln oder Größenangabe wie "1cm", "15mm", ".5in".</td>
+			<td>nein</td>
+			<td>"15mm"</td>
 		</tr>
 		<tr>
 			<td>marginLeft</td>
-			<td>Number</td>
-			<td>Der linke Rand in Pixeln.</td>
+			<td>Zahl/Zeichenkette</td>
+			<td>Der linke Rand in Pixeln oder Größenangabe wie "1cm", "15mm", ".5in".</td>
 			<td>nein</td>
-			<td>88 (15mm bei 150 DPI)</td>
+			<td>null</td>
 		</tr>
 		<tr>
 			<td>marginRight</td>
-			<td>Number</td>
-			<td>Der rechte Rand in Pixeln.</td>
+			<td>Zahl/Zeichenkette</td>
+			<td>Der rechte Rand in Pixeln oder Größenangabe wie "1cm", "15mm", ".5in".</td>
 			<td>nein</td>
-			<td>88 (15mm bei 150 DPI)</td>
+			<td>null</td>
 		</tr>
 		<tr>
 			<td>marginTop</td>
 			<td>Number</td>
-			<td>Der obere Rand in Pixeln.</td>
+			<td>Der obere Rand in Pixeln oder Größenangabe wie "1cm", "15mm", ".5in".</td>
 			<td>nein</td>
-			<td>88 (15mm bei 150 DPI)</td>
+			<td>null</td>
 		</tr>
 		<tr>
 			<td>marginBottom</td>
 			<td>Number</td>
-			<td>Der untere Rand in Pixeln.</td>
+			<td>Der untere Rand in Pixeln oder Größenangabe wie "1cm", "15mm", ".5in".</td>
 			<td>nein</td>
-			<td>59 (10mm bei 150 DPI)</td>
+			<td>null</td>
 		</tr>
 		<tr>
 			<td>resolution</td>
@@ -128,7 +135,7 @@
 
 <h2>Beispiele</h2>
 
-<h3>Einfaches PDF mit String-Literal</h3>
+<h3>Einfaches PDF mit aus Text</h3>
 
 <pre>
 	<code>pdfFile("""

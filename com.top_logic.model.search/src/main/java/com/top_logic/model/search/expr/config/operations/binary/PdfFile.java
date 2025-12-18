@@ -9,6 +9,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.xhtmlrenderer.pdf.ITextRenderer;
 
@@ -81,11 +83,6 @@ import com.top_logic.util.error.TopLogicException;
 public class PdfFile extends GenericMethod {
 
 	/**
-	 * Default resolution for PDF rendering in DPI (dots per inch).
-	 */
-	private static final float DEFAULT_PDF_RESOLUTION = 150f;
-
-	/**
 	 * Conversion factor from DPI to points (72 points per inch).
 	 */
 	private static final float DPI_TO_POINTS_FACTOR = 72f;
@@ -114,6 +111,9 @@ public class PdfFile extends GenericMethod {
 	 * Conversion factor from millimeters to inches.
 	 */
 	private static final float INCH_MILLIES_FACTOR = 25.4F;
+
+	private static final Pattern DIMENSION_PATTERN =
+		Pattern.compile("(" + "(?:" + "\\d+" + "(?:" + "\\.\\d+" + ")?)" + "|" + "(?:" + "\\.\\d+" + ")" + ")(.*)");
 
 	/**
 	 * Standard paper sizes with dimensions in millimeters.
@@ -212,13 +212,14 @@ public class PdfFile extends GenericMethod {
 		// Extract optional rendering parameters
 		PageSize pageSize = asPageSize(arguments[2]);
 		boolean landscape = asBoolean(arguments[3]);
-		double pageWidthAdjust = asDouble(arguments[4]);
-		double pageHeightAdjust = asDouble(arguments[5]);
-		double marginLeft = asDouble(arguments[6]);
-		double marginRight = asDouble(arguments[7]);
-		double marginTop = asDouble(arguments[8]);
-		double marginBottom = asDouble(arguments[9]);
-		float resolution = asFloat(arguments[10]);
+		Object pageWidthAdjust = arguments[4];
+		Object pageHeightAdjust = arguments[5];
+		Object defaultMarginVal = arguments[6];
+		Object marginLeftVal = arguments[7];
+		Object marginRightVal = arguments[8];
+		Object marginTopVal = arguments[9];
+		Object marginBottomVal = arguments[10];
+		float resolution = asFloat(arguments[11]);
 
 		// Determine page dimensions: start with pageSize if given, then apply adjustments
 		double pageWidth;
@@ -232,11 +233,11 @@ public class PdfFile extends GenericMethod {
 		}
 
 		// Apply adjustments if provided
-		if (pageWidthAdjust != 0) {
-			pageWidth = pageWidthAdjust;
+		if (pageWidthAdjust != null) {
+			pageWidth = toPixel(pageWidthAdjust, resolution, pageWidth, pageWidth);
 		}
-		if (pageHeightAdjust != 0) {
-			pageHeight = pageHeightAdjust;
+		if (pageHeightAdjust != null) {
+			pageHeight = toPixel(pageHeightAdjust, resolution, pageHeight, pageHeight);
 		}
 
 		if (landscape) {
@@ -245,6 +246,12 @@ public class PdfFile extends GenericMethod {
 			pageWidth = pageHeight;
 			pageHeight = tmp;
 		}
+
+		double defaultMargin = toPixel(defaultMarginVal, resolution, 0.0, pageWidth);
+		double marginLeft = toPixel(marginLeftVal, resolution, defaultMargin, pageWidth);
+		double marginRight = toPixel(marginRightVal, resolution, defaultMargin, pageWidth);
+		double marginTop = toPixel(marginTopVal, resolution, defaultMargin, pageHeight);
+		double marginBottom = toPixel(marginBottomVal, resolution, defaultMargin, pageHeight);
 
 		// Calculate content area dimensions (page minus margins)
 		double contentWidth = pageWidth - marginLeft - marginRight;
@@ -279,6 +286,41 @@ public class PdfFile extends GenericMethod {
 		} catch (DocumentException | IOException ex) {
 			// Log error and return null on conversion failure
 			throw new TopLogicException(I18NConstants.ERROR_PDF_GENERATION_FAILED__MSG.fill(ex.getMessage()), ex);
+		}
+	}
+
+	private double toPixel(Object size, float dpi, double defaultValue, double full) {
+		if (size == null) {
+			return defaultValue;
+		}
+		if (size instanceof Number num) {
+			return num.doubleValue();
+		}
+
+		String sizeSpec = size.toString();
+		Matcher matcher = DIMENSION_PATTERN.matcher(sizeSpec);
+		if (!matcher.matches()) {
+			throw new TopLogicException(I18NConstants.INVALID_SIZE_FORMAT__VALUE.fill(sizeSpec));
+		}
+
+		double value = Double.parseDouble(matcher.group(1));
+		String unit = matcher.group(2).trim().toLowerCase();
+
+		switch (unit) {
+			case "":
+			case "px":
+				return value;
+
+			case "mm":
+				return (value / 10) / 2.54 * dpi;
+			case "cm":
+				return value / 2.54 * dpi;
+			case "in":
+				return value * dpi;
+			case "%":
+				return value / 100 * full;
+			default:
+				throw new TopLogicException(I18NConstants.INVALID_SIZE_FORMAT__VALUE.fill(sizeSpec));
 		}
 	}
 
@@ -559,13 +601,14 @@ public class PdfFile extends GenericMethod {
 			.optional("name", "document.pdf")
 			.optional("pageSize")
 			.optional("landscape", false)
-			.optional("pageWidth", 0)
-			.optional("pageHeight", 0)
-			.optional("marginLeft", toPixel(DEFAULT_MARGIN_MM, DEFAULT_PDF_RESOLUTION))
-			.optional("marginRight", toPixel(DEFAULT_MARGIN_MM, DEFAULT_PDF_RESOLUTION))
-			.optional("marginTop", toPixel(DEFAULT_MARGIN_MM, DEFAULT_PDF_RESOLUTION))
-			.optional("marginBottom", toPixel(10, DEFAULT_PDF_RESOLUTION))
-			.optional("resolution", DEFAULT_PDF_RESOLUTION)
+			.optional("pageWidth")
+			.optional("pageHeight")
+			.optional("margin", "15mm")
+			.optional("marginLeft")
+			.optional("marginRight")
+			.optional("marginTop")
+			.optional("marginBottom")
+			.optional("resolution", 150f)
 			.build();
 
 		/**

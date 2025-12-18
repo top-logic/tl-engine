@@ -86,6 +86,12 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 ERROR_INVALID_BINARY_CONTENT_TYPE__TYPE;
 
+	/**
+	 * @en Invalid size format in value "{0}": The value must either be a number in pixels or a size
+	 *     specification like "10mm", "1cm", "0.5in".
+	 */
+	public static ResKey1 INVALID_SIZE_FORMAT__VALUE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

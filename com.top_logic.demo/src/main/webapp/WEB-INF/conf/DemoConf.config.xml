@@ -134,11 +134,10 @@
 		</config>
 		
 		<config service-class="com.top_logic.base.services.InitialGroupManager">
-			<instance default-group="user">
+			<instance>
 				<groups>
 					<group name="securityOwner"/>
 					<group name="securityAdministrators"/>
-					<group name="user"/>
 					<group name="maintenanceMode"/>
 				</groups>
 			</instance>

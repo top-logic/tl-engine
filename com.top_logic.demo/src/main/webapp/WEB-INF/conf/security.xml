@@ -1,0 +1,1229 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<security>
+	<profiles>
+		<profile name="DemoSecurity.Role1"/>
+		<profile name="DemoSecurity.Role2"/>
+		<profile name="DemoSecurity.Role3"/>
+		<profile name="DemoSecurity.SecurityAdministrator"/>
+		<profile name="DemoSecurity.SecurityAdministratorB"/>
+		<profile name="DemoSecurity.User"/>
+		<profile name="DemoSecurity.navigation"/>
+		<profile name="DemoSecurity.selection"/>
+		<profile name="DemoTypes.Administrator">
+			<view name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#createPlainCCreateAttributedDialog">
+				<commandGroup name="Create"/>
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#demoPlainView">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoChartCockpitCockpitGrid">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoChartCockpitCockpitTable">
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoRevisionCompareTreeTableLayout">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesView">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="mainTabbar.layout.xml#globalDialogDemoTypesTop">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+		</profile>
+		<profile name="DemoTypes.BAdministrator"/>
+		<profile name="DemoTypes.BooleanAdministrator"/>
+		<profile name="DemoTypes.DateAdministrator"/>
+		<profile name="DemoTypes.Navigation"/>
+		<profile name="DemoTypes.Responsible">
+			<view name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#createPlainCCreateAttributedDialog">
+				<commandGroup name="Create"/>
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#demoPlainView">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoChartCockpitCockpitGrid">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoChartCockpitCockpitTable">
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoRevisionCompareTreeTableLayout">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesView">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="mainTabbar.layout.xml#globalDialogDemoTypesTop">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+		</profile>
+		<profile name="DemoTypes.Selection"/>
+		<profile name="DemoTypes.StringAdministrator"/>
+		<profile name="SecurityStructure.OwnerRole"/>
+		<profile name="SecurityStructure.superuser">
+			<view name="admin/base/index.layout.xml#adminBaseView">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="admin/functional/index.layout.xml#adminFunctionalView">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="admin/index.layout.xml#adminView">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="admin/loginMessageDialog.layout.xml#editLoginMessage">
+				<commandGroup name="Delete"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="admin/monitor/index.layout.xml#adminMonitorView">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="admin/myLatestChanges/dialog.layout.xml#Dialog">
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="admin/security/accounts/defaultFor/dialog.layout.xml#Dialog">
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="admin/security/accounts/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="admin/security/index.layout.xml#adminRolesView">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="admin/studio/index.layout.xml#studioView">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="admin/studio/layoutEditor/legacyLayout/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="admin/studio/layoutEditor/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="admin/studio/layoutEditor/templateLayout/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="admin/technical/index.layout.xml#adminTechnicalView">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.addons.loginmessages/admin/adminLoginMessages.layout.xml#adminLoginMessagesEditView">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.bpe.app/processCockpit/cockpitTab.layout.xml#TabLayout">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.bpe.app/processCockpit/contextListContext.layout.xml#ContextList">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.bpe.app/processCockpit/currentTasks/currentTasksTileLayout.layout.xml#TileLayout">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.bpe.app/processCockpit/currentTasks/tasksTable.layout.xml#ContextTable">
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.bpe.app/processCockpit/myProcesses/myProcessesTileLayout.layout.xml#TileLayout">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.bpe.app/processCockpit/myProcesses/processesTable.layout.xml#ContextTable">
+				<commandGroup name="Create"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.bpe.app/processCockpit/startProcessRun/startProcessRunObjects.layout.xml#TileLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.contact/admin/companyContacts/companyContactView.layout.xml#companyContactView">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/admin/demo/index.layout.xml#adminDemoView">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/chartJS/index.layout.xml#TabLayout">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/reporting/index.layout.xml#demoReportingFlex">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/reporting/interactive/demoInteractiveCharts.layout.xml#demoInteractiveCharts">
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/reporting/multi/demoChartCockpit.layout.xml#demoChartCockpit">
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/reporting/static/demoStaticCharts.layout.xml#demoStaticCharts">
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/reporting/staticCockpit/demoChartStaticCockpit.layout.xml#demoChartStaticCockpit">
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/search/searchChart.layout.xml#searchChart">
+				<commandGroup name="Create"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="ownerWrite"/>
+				<commandGroup name="publish"/>
+			</view>
+			<view name="com.top_logic.demo/structure/index.layout.xml#structureTab">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/table/customizedSidebar/customizedSidebar.layout.xml#demoTableCustomizedSidebar">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/table/default/demoFrozenTable.layout.xml#demoFrozenTable">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/table/grid/demoGrid.layout.xml#demoGrid">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/table/index.layout.xml#tableDemo">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/table/simple/demoTableSimple.layout.xml#demoTable">
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/table/structureEdit/demoStructureEdit.layout.xml#demoStructureEdit">
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#demoTreeGrid">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/table/treeTable/demoTreeTable.layout.xml#demoTreeTable">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/blocks/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/changeLog/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/combiningChannel/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/commandExecutability/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/componentVisibility/basicInformation/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/componentVisibility/documents/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/componentVisibility/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/containmentContext/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/dialogs/dialogForTestingDeclarationOfButtonsOnDialog/tabWithOwnMessageButton/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/dialogs/dialogForTestingDeclarationOfButtonsOnDialog/tabWithoutOwnMessageButton/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/dialogs/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/documentManagement/contexts/documentAttributes/tileLayout.layout.xml#TileLayout">
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/documentManagement/contexts/webfolder/tileLayout.layout.xml#TileLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/documentManagement/contextsContextList.layout.xml#ContextList">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/documentManagement/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/dragAndDrop/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/dropOn/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/dropOn/tree/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/dropOn/treeGrid/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/dynamicColumns/developmentGrid/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/dynamicColumns/developmentTable/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/dynamicColumns/developmentTreeGrid/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/dynamicColumns/developmentTreeTable/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/dynamicColumns/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/dynamicVisibility/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/fallbackValues/grid/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/fallbackValues/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/fallbackValues/table/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/flowchart1/products/constructionPlan/tileLayout.layout.xml#TileLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/flowchart1/products/parts/tileLayout.layout.xml#TileLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/flowchart1/products/series/tileLayout.layout.xml#TileLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/flowchart1/productsContextList.layout.xml#ContextList">
+				<commandGroup name="Create"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/flowchart1/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/generalForms/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/graph/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/graph/tree/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/graph/treeGrid/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/graph/treeTable/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/graphGrid/index.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/gridEditability/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/hTMLTemplates/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/history/milestones/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/history/reports/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/history/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/index.layout.xml#TabLayout">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/pDFExport/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/polymorphicForms/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/polymorphicViews/bView/details/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/polymorphicViews/bView/features/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/polymorphicViews/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/reports/details/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/reports/export/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/reports/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/selectionComponent/index.layout.xml#TabLayout">
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/selectionOptions/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/tabellenUndBaeume/baum/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/tabellenUndBaeume/baumgrid/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/tabellenUndBaeume/baumtabelle/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/tabellenUndBaeume/formTable/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/tabellenUndBaeume/grid/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/tabellenUndBaeume/gridWithMultipleSelection/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/tabellenUndBaeume/syntheticRootNode/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/tabellenUndBaeume/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/tabellenUndBaeume/tabelle/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/tabellenUndBaeume/tableWithMultipleSelection/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/tabellenUndBaeume/treeGridWithTreeSelection/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/tabellenUndBaeume/treeTableWithMultipleSelection/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/tabellenUndBaeume/treeTableWithTreeSelection/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/tabellenUndBaeume/treeTable_priorityTable_/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/tabellenUndBaeume/treeWithMultipleSelection/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/tiles/pdfTile/tileLayout.layout.xml#TileLayout">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/tiles/productsTileLayout.layout.xml#ContextList">
+				<commandGroup name="Create"/>
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/tiles/releaseProperties/featuresTileLayout.layout.xml#TileLayout">
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/tiles/releasesTileLayout.layout.xml#ContextTable">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/tiles/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/tiles/ticketsGrid/ticketsTileLayout.layout.xml#TileLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/toggleButton/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/transaction/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/transformingChannel/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/transientObjects/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/workflow/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/index.layout.xml#technicalDemo">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo1/cockpit/cockpitDemo.layout.xml#cockpitDemo">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo1/dialogs/dialogDemo.layout.xml#dialogDemo">
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo1/forms/declarative/declarativeFormComponentDemo.layout.xml#declarativeFormComponentDemo">
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo1/forms/declarative/declarativeFormConfiguredType.layout.xml#declarativeFormConfiguredType">
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo1/forms/demoTablePopupSelectCustomization/demoTablePopupSelectCustomization.layout.xml#demoTablePopupSelectCustomization">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo1/forms/dragndrop/inapp/inAppDragAndDrop.layout.xml#TabLayout">
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo1/forms/dragndrop/testDragAndDrop.layout.xml#testDragAndDrop">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo1/forms/error/demoError.layout.xml#demoError">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo1/forms/errorInComponent/demoErrorComponent.layout.xml#demoErrorComponent">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo1/forms/errorOnJSP/demoErrorJSP.layout.xml#demoErrorJSP">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo1/forms/frame/demoOrderFormContainer.layout.xml#demoOrderFormContainer">
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#testControlsFormContainer">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo1/forms/index.layout.xml#formDemo">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInlineTab">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo1/forms/layoutProblems/testLayoutProblemsContainer.layout.xml#testLayoutProblemsContainer">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo1/forms/reactiveForms/formular_Allgemein_/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo1/forms/reactiveForms/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo1/forms/testDeFactoMonomorphicProperties/testDeFactoMonomorphicPropertiesLayout.layout.xml#testDeFactoMonomorphicPropertiesLayout">
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo1/tables/custom/demoTableComponentCustom.layout.xml#demoTableComponentCustom">
+				<commandGroup name="Delete"/>
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo1/tables/formula/demoFormTable.layout.xml#demoFormTable">
+				<commandGroup name="Delete"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo1/tables/frozen/demoTableComponentFrozenContainer.layout.xml#demoTableComponentFrozenContainer">
+				<commandGroup name="Delete"/>
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo1/tables/frozenLarge/demoLargeTableComponent.layout.xml#demoLargeTableComponent">
+				<commandGroup name="Delete"/>
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo1/tables/index.layout.xml#tablesDemo">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo1/tables/multipleTables/demoMultipleTablesView.layout.xml#demoMultipleTablesView">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo1/tables/partialWidthTable/demoPartialTable.layout.xml#demoPartialTable">
+				<commandGroup name="Delete"/>
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo1/tables/sortFilterIconState/DemoSortFilterTable.xml#demoSortFilterTable">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo1/tables/table1/demoTableComponentContainer.layout.xml#demoTableComponentContainer">
+				<commandGroup name="Delete"/>
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo1/tables/viewpane/demoTableVisiblePane.layout.xml#demoTableVisiblePane">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo1/tables/xlsxExport/demoXlsxExport.layout.xml#demoXlsxExport">
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo1/trees/dynamic/dynamicTree.layout.xml#dynamicTree">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo1/trees/edit/editTree.layout.xml#editTree">
+				<commandGroup name="Delete"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo1/trees/index.layout.xml#demoTrees">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo1/windows/windowDemo.layout.xml#windowDemo">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo1/windows/windowDemoTab1.layout.xml#windowDemoTab1">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo2/assistent/assistantDemo.layout.xml#assistantDemo">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo2/assistent/subtab1/assistantSimple.layout.xml#assistantSimple">
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo2/assistent/subtab2/assistantDialog.layout.xml#assistantDialog">
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo2/assistent/subtab4/assistantDialogH.layout.xml#assistantDialogH">
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo2/boxes/filter/boxesDemoFilter.layout.xml#boxesDemoFilter">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo2/boxes/filter/noDisplay/boxesDemoFilterNoDisplay.layout.xml#boxesDemoFilterNoDisplay">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo2/boxes/form/boxesDemoForm.layout.xml#boxesDemoForm">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo2/boxes/index.layout.xml#boxesDemo">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo2/boxes/input/boxesDemoInput.layout.xml#boxesDemoInput">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo2/boxes/page/boxesDemoPage.layout.xml#boxesDemoPage">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo2/boxes/reactive/boxesDemoReactive.layout.xml#boxesDemoReactive">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo2/buttonComponent/buttonComponentDemo.layout.xml#buttonComponentDemo">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo2/formTemplate/formTemplatesDemo.layout.xml#formTemplatesDemo">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo2/imageTag/imageTageDemo.layout.xml#imageTageDemo">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo2/index.layout.xml#layoutDemo2">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/layoutDemo2/webfolder/webFolderDemo.layout.xml#webFolderDemo">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/test/DemoAJAXProgress/progressDemo.layout.xml#progressDemo">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/test/DemoProgress/progressDemo2.layout.xml#progressDemo2">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/test/DemoTabbing/tabbingDemo.layout.xml#tabbingDemo">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/test/PersonAjaxForm/personDemo.layout.xml#personDemo">
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/test/TestAJAX/ajaxDemoContainer.layout.xml#ajaxDemoContainer">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/test/TestAJAXEditComponent/editDemo.layout.xml#editDemo">
+				<commandGroup name="Create"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/test/TestCustomConfirmComponent/confirmDemo.layout.xml#confirmDemo">
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/test/TestPageLayout/TestPageLayoutEdit/pageLayoutDemoEdit.layout.xml#pageLayoutDemoEdit">
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/test/TestPageLayout/TestPageLayoutStatic/pageLayoutDemoStatic.layout.xml#pageLayoutDemoStatic">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/test/TestPageLayout/index.layout.xml#pageLayoutDemo">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/test/attributeOverride/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/test/calculatedDefaultValueAsReference/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/test/chart/chartDemo.layout.xml#chartDemo">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/test/dynamicToolbar/dynamicToolbarTitle.layout.xml#dynamicToolbarTitle">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/test/exports/TestOfficeExports.layout.xml#view">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/test/externalFrames/externalFrames.layout.xml#externalFrames">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/test/externalSelection/externalSelection.layout.xml#externalSelection">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/test/externalSelection/gridExternalSelection.layout.xml#gridExternalSelection">
+				<commandGroup name="Delete"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/test/externalSelection/treeExternalSelection.layout.xml#treeExternalSelection">
+				<commandGroup name="Delete"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/test/layoutTest.layout.xml#layoutTest">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/test/noDefaultSelection/grid/gridNoDefaultSelection.layout.xml#gridNoDefaultSelection">
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/test/noDefaultSelection/index.layout.xml#noDefaultSelection">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/test/noDefaultSelection/table/tableNoDefaultSelection.layout.xml#tableNoDefaultSelection">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/test/noDefaultSelection/tree/treeNoDefaultSelection.layout.xml#treeNoDefaultSelection">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/test/renderingRobustness/FaultyComparatorGrid/faultyComparatorGrid.layout.xml#faultyComparatorGrid">
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/test/renderingRobustness/FaultyComparatorTable/faultyComparatorTable.layout.xml#faultyComparatorTable">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/test/renderingRobustness/FaultyFormComponent/faultyFormComponent.layout.xml#faultyFormComponent">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/test/renderingRobustness/FaultyFormFields/faultyFormFields.layout.xml#faultyFormFields">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/test/renderingRobustness/FaultyJSPIframe/faultyJSPIframe.layout.xml#faultyJSPIframe">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/test/renderingRobustness/FaultyJSPInline/faultyJSPInline.layout.xml#faultyJSPInline">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/test/renderingRobustness/index.layout.xml#renderingRobustness">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/test/separatewindow/separateWindowDemo.layout.xml#separateWindowDemo">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/technical/test/test22708/test22708.layout.xml#test22708">
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/test/test22798/test22798.layout.xml#test22798">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/test/testPDFDisplay/testPDFDisplay.layout.xml#testPDFDisplay">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.doc/tl.doc.layout.xml#view">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.element/admin/base/currencies/adminCurrencies.layout.xml#adminCurrencies">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.element/admin/model/attributeCategories/attributeSecurity.layout.xml#adminAttSec">
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.element/admin/model/dbAdmin/binding/bindingTab.layout.xml#TabLayout">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.element/admin/model/dbAdmin/columns/columnsTab.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.element/admin/model/dbAdmin/schemaTab.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.element/admin/model/dbAdmin/tables/tableTab.layout.xml#TabLayout">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.element/admin/model/dbAdmin/usage/usageTab.layout.xml#TabLayout">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.element/admin/model/modelEditor/adminModel.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.element/admin/security/attributeCategoryPermissions/attributeSecurityRelease.layout.xml#adminRoleClassSec">
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.element/admin/security/groupRoles/adminGroupRolesView.layout.xml#adminGroupRolesView">
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.element/admin/security/profilesLegacy/adminRolesConfigView.layout.xml#adminRolesConfigView">
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.element/admin/security/roleAssignment/adminPersonsRolesView.layout.xml#adminPersonsRolesView">
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.element/admin/security/roleEditor/adminRolesView.layout.xml#adminRolesAdminView">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.element/admin/security/roleInspector/showSecurity.layout.xml#showSecurity">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.element/search/searchInput.layout.xml#searchInput">
+				<commandGroup name="Create"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="ownerWrite"/>
+				<commandGroup name="publish"/>
+			</view>
+			<view name="com.top_logic.graph.diagramjs.server/modelGraph/modelGraph.layout.xml#GraphSecurity">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.layout.themeedit/themeEditorView.layout.xml#themeEditorView">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.model.search/admin/scriptConsole.layout.xml#view">
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.model.search/search/modelSearch.layout.xml#modelSearch">
+				<commandGroup name="Create"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="ownerWrite"/>
+				<commandGroup name="publish"/>
+			</view>
+			<view name="com.top_logic.monitoring/admin/monitor/history/revisionMonitor.layout.xml#adminRevisionMonitor">
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.monitoring/admin/monitor/memory/memoryMonitorChart.layout.xml#adminMemoryReport">
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.monitoring/admin/monitor/schema/dbSchemaMonitor.layout.xml#adminMonitorSchema">
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.monitoring/admin/monitor/session/userMonitorWithFailedLogin.layout.xml#adminTechnicalUserHistoryView">
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.reporting/search/searchResult.layout.xml#searchResult">
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic/admin/model/checklists/adminChecklists.layout.xml#adminChecklists">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic/admin/model/classifications/adminClassifications.layout.xml#adminClassifications">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic/admin/model/lists/adminLists.layout.xml#adminLists">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic/admin/model/units/adminUnit.layout.xml#adminUnit">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic/admin/monitor/app/applicationMonitor.layout.xml#adminMonitor">
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic/admin/monitor/db/sqlMonitor.layout.xml#adminMonitorDB">
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic/admin/monitor/memory/memoryMonitor.layout.xml#adminMemory">
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic/admin/monitor/systemEnvironment.layout.xml#view">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic/admin/monitor/thread/threadMonitor.layout.xml#adminMonitorThread">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic/admin/security/groups/adminGroupsView.layout.xml#adminGroupEditView">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#adminSecurity">
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic/admin/technical/locks/locksView.layout.xml#adminTechnicalDeleteLocksView">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic/admin/technical/logs/logView.layout.xml#adminTechnicalViewLogsView">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic/admin/technical/maintenanceMode/maintenanceWindow.layout.xml#enterMaintenanceWindowDialog">
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic/admin/technical/maintenanceMode/maintenanceWindow.layout.xml#exitMaintenanceWindowDialog">
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic/admin/technical/maintenanceMode/maintenanceWindow.layout.xml#maintenanceWindow">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic/admin/technical/maintenancePages/maintenanceView.layout.xml#adminMaintenance">
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic/admin/technical/scheduler/schedulerView.layout.xml#adminScheduler">
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic/admin/technical/services/servicesView.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="reporting/flex/chart/chartDetailsDialog.layout.xml#ChartDetailsTableDialog">
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+			</view>
+			<view name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#workflowAdminView">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+		</profile>
+		<profile name="SecurityStructure.user">
+			<view name="admin/myLatestChanges/dialog.layout.xml#Dialog">
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+		</profile>
+		<profile name="mandatorStructure.navigation"/>
+	</profiles>
+</security>

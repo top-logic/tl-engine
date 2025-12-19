@@ -66,5 +66,25 @@
 				<downloadNameProvider class="com.top_logic.layout.table.export.ComponentDownloadName"/>
 			</button>
 		</buttons>
+		<contextMenu class="com.top_logic.layout.basic.contextmenu.component.factory.adapter.SelectableContextMenuProvider">
+			<contextMenuFactory>
+				<titleProvider class="com.top_logic.layout.provider.MetaLabelProvider"/>
+				<customCommands class="com.top_logic.layout.basic.contextmenu.config.CustomContextMenuCommands"
+					include-application-configuration="false"
+				>
+					<command id="ID_c5d2bc9a_2d3e_42dd_bf92_e3fedc7a6698"
+						class="com.top_logic.model.search.providers.CommandHandlerByExpression"
+						group="System"
+						image="css:fa-solid fa-computer-mouse"
+					>
+						<resourceKey key="dynamic.732e3263-0214-4faa-a050-99ba25aaa46a">
+							<en>Click me!</en>
+							<de>Click me!</de>
+						</resourceKey>
+						<operation>model -&gt; info("Context menu selected: " + $model.label())</operation>
+					</command>
+				</customCommands>
+			</contextMenuFactory>
+		</contextMenu>
 	</arguments>
 </config:template-call>

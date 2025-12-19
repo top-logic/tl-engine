@@ -23,7 +23,7 @@ import org.apache.batik.transcoder.print.PrintTranscoder;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
-import org.xhtmlrenderer.css.style.CalculatedStyle;
+import org.xhtmlrenderer.css.style.CalculatedStyle.Edge;
 import org.xhtmlrenderer.extend.ReplacedElement;
 import org.xhtmlrenderer.extend.ReplacedElementFactory;
 import org.xhtmlrenderer.extend.UserAgentCallback;
@@ -294,9 +294,9 @@ public class SVGReplacedElementFactory implements ReplacedElementFactory {
 			graphics.dispose();
 
 			PageBox page = renderingContext.getPage();
-			float x = blockBox.getAbsX() + page.getMarginBorderPadding(renderingContext, CalculatedStyle.LEFT);
+			float x = blockBox.getAbsX() + page.getMarginBorderPadding(renderingContext, Edge.LEFT);
 			float y = (page.getBottom() - (blockBox.getAbsY() + _cssHeight))
-				+ page.getMarginBorderPadding(renderingContext, CalculatedStyle.BOTTOM);
+				+ page.getMarginBorderPadding(renderingContext, Edge.BOTTOM);
 			x /= outputDevice.getDotsPerPoint();
 			y /= outputDevice.getDotsPerPoint();
 

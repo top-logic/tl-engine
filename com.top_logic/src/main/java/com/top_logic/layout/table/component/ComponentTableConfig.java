@@ -11,6 +11,7 @@ import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.layout.basic.contextmenu.ContextMenuProvider;
 import com.top_logic.layout.basic.contextmenu.component.factory.adapter.SelectableContextMenuProvider;
 import com.top_logic.layout.component.TabComponent;
+import com.top_logic.layout.form.values.edit.annotation.AcceptableClassifiers;
 import com.top_logic.layout.table.model.TableConfig;
 
 /**
@@ -23,6 +24,7 @@ public interface ComponentTableConfig extends TableConfig {
 	@Override
 	@ItemDefault(SelectableContextMenuProvider.class)
 	@ImplementationClassDefault(SelectableContextMenuProvider.class)
+	@AcceptableClassifiers({ "common", "table" })
 	PolymorphicConfiguration<? extends ContextMenuProvider> getContextMenu();
 
 }

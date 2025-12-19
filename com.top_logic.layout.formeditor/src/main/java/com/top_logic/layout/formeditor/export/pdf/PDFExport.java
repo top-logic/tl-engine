@@ -472,7 +472,7 @@ public class PDFExport {
 			if (parameter > 0) {
 				uri = uri.substring(0, parameter);
 			}
-			if (uri.startsWith("data:")) {
+			if (uri.startsWith("data:") || uri.startsWith("jar:")) {
 				return uri;
 			}
 			if (!uri.startsWith("file:")) {

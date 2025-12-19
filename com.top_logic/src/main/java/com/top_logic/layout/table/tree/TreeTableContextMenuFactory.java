@@ -52,30 +52,6 @@ public class TreeTableContextMenuFactory<C extends TreeTableContextMenuFactory.C
 		super(context, config);
 	}
 
-	@Override
-	public ContextMenuProvider createContextMenuProvider(LayoutComponent component) {
-		return new Provider(component);
-	}
-
-	/**
-	 * {@link SelectableContextMenuFactory} wrapping node objects to their respective business
-	 * objects.
-	 */
-	protected class Provider extends SelectableContextMenuFactory<C>.Provider {
-
-		/**
-		 * Creates a {@link Provider}.
-		 */
-		public Provider(LayoutComponent component) {
-			super(component);
-		}
-
-		@Override
-		protected Object mapContextObject(Object object) {
-			return TreeTableContextMenuFactory.this.mapContextObject(getComponent(), object);
-		}
-	}
-
 	/**
 	 * Hook for adjusting the context object mapping for {@link ContextMenuProvider}s.
 	 * 
@@ -84,6 +60,7 @@ public class TreeTableContextMenuFactory<C extends TreeTableContextMenuFactory.C
 	 * 
 	 * @see #createContextMenuProvider(LayoutComponent)
 	 */
+	@Override
 	protected Object mapContextObject(LayoutComponent component, Object object) {
 		if (object instanceof TLTreeNode<?> node) {
 			return node.getBusinessObject();

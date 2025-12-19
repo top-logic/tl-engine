@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.basic.contextmenu.component.factory.adapter;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Label;
@@ -23,6 +24,7 @@ import com.top_logic.layout.form.values.edit.annotation.Options;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @Label("Context menu of selectable component")
+@InApp(classifiers = { "table" })
 public class SelectableContextMenuProvider extends ComponentContextMenuProvider {
 
 	/**
@@ -33,7 +35,7 @@ public class SelectableContextMenuProvider extends ComponentContextMenuProvider 
 		@ItemDefault(SelectableContextMenuFactory.class)
 		@ImplementationClassDefault(SelectableContextMenuFactory.class)
 		@Options(fun = InAppImplementations.class)
-		@AcceptableClassifiers("selectable-context-menu")
+		@AcceptableClassifiers("table")
 		PolymorphicConfiguration<? extends ContextMenuFactory> getContextMenuFactory();
 	}
 

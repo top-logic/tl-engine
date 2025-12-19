@@ -8,7 +8,6 @@ package com.top_logic.layout.basic.contextmenu.component.factory;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
-import com.top_logic.layout.basic.contextmenu.ContextMenuProvider;
 import com.top_logic.layout.tree.component.TreeComponent;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
@@ -36,32 +35,13 @@ public class TreeContextMenuFactory<C extends TreeContextMenuFactory.Config<?>>
 	}
 
 	@Override
-	public ContextMenuProvider createContextMenuProvider(LayoutComponent component) {
-		return new Provider(component);
-	}
-
-	/**
-	 * {@link ContextMenuProvider} created by {@link TreeContextMenuFactory}.
-	 */
-	protected class Provider extends SelectableContextMenuFactory<C>.Provider {
-
-		/**
-		 * Creates a {@link Provider}.
-		 */
-		public Provider(LayoutComponent component) {
-			super(component);
+	protected Object mapContextObject(LayoutComponent component, Object obj) {
+		if (obj == null) {
+			return null;
 		}
-
-		@Override
-		protected Object mapContextObject(Object obj) {
-			if (obj == null) {
-				return null;
-			}
-			@SuppressWarnings("unchecked")
-			Object result = ((TreeComponent) getComponent()).getTreeData().getTreeModel().getBusinessObject(obj);
-			return result;
-		}
-
+		@SuppressWarnings("unchecked")
+		Object result = ((TreeComponent) component).getTreeData().getTreeModel().getBusinessObject(obj);
+		return result;
 	}
 
 }

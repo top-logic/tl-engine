@@ -24,7 +24,6 @@ import com.top_logic.basic.Log;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.Settings;
 import com.top_logic.basic.StringServices;
-import com.top_logic.basic.TLID;
 import com.top_logic.basic.col.BidiHashMap;
 import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.col.FilteredIterable;
@@ -53,14 +52,11 @@ import com.top_logic.element.boundsec.manager.rule.PathElement;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider.Type;
 import com.top_logic.element.boundsec.manager.rule.RoleRule;
-import com.top_logic.element.boundsec.manager.rule.SecurityStorageCommitObserver;
 import com.top_logic.element.boundsec.manager.rule.config.RoleRulesConfig;
 import com.top_logic.element.meta.MetaElementFactory;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
-import com.top_logic.knowledge.service.CommitHandler;
-import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -109,9 +105,6 @@ public class ElementAccessManager extends AccessManager {
 		/** Property name of {@link #getRoleProvider()}. */
 		String ROLE_PROVIDER = "role-provider";
 
-		/** Property name of {@link #getCommitObserver()}. */
-		String COMMIT_OBSERVER = "commit-observer";
-
 		@Name(GROUP_MAPPER)
 		@InstanceFormat
 		@InstanceDefault(SimpleGroupMapper.class)
@@ -124,13 +117,6 @@ public class ElementAccessManager extends AccessManager {
 		@Name(ROLE_PROVIDER)
 		@Key(ExternalRoleProvider.Config.RULE_NAME)
 		List<ExternalRoleProvider> getRoleProvider();
-
-		/**
-		 * @see ElementAccessManager#commitObservers
-		 */
-		@Name(COMMIT_OBSERVER)
-		@Key(SecurityStorageCommitObserver.Config.NAME_ATTRIBUTE)
-		List<SecurityStorageCommitObserver> getCommitObserver();
 
 		/**
 		 * The role rule definition for the access manager.
@@ -197,7 +183,6 @@ public class ElementAccessManager extends AccessManager {
 				theSet.add(roleProvider);
 			}
 		}
-		commitObservers = Collections.unmodifiableList(getConfig().getCommitObserver());
 	}
 
 	@Override
@@ -326,12 +311,6 @@ public class ElementAccessManager extends AccessManager {
 
 	private Map<Object, Collection<Group>> getGroupsCache = new HashMap<>();
     
-    /**
-     * Observers, that determine additional objects to the sets of
-     * new and removed objects in the context of a commit
-     */
-	private final Collection<SecurityStorageCommitObserver> commitObservers;
-
 	private final ElementBoundHelper _boundHelper;
 
 
@@ -492,10 +471,6 @@ public class ElementAccessManager extends AccessManager {
 			dbProperties.setProperty(DBProperties.GLOBAL_PROPERTY, ROLE_RULES_CONFIG_VERSION_PROPERTY, null);
 		}
 		super.shutDown();
-	}
-
-	protected Collection<SecurityStorageCommitObserver> getCommitObservers() {
-		return (commitObservers);
 	}
 
 	public Map<Object, Collection<RoleProvider>> getRules() {
@@ -820,16 +795,6 @@ public class ElementAccessManager extends AccessManager {
         return this.externalRoleProviders;
     }
     
-    @Override
-	public void handleSecurityUpdate(KnowledgeBase kb, Map<TLID, Object> someChanged,
-			Map<TLID, Object> someNew, Map<TLID, Object> someRemoved, CommitHandler aHandler) {
-        for(SecurityStorageCommitObserver theObserver : this.getCommitObservers()) {
-            someNew    .putAll(theObserver.getAdded  (someChanged, someNew, someRemoved, aHandler));
-            someRemoved.putAll(theObserver.getRemoved(someChanged, someNew, someRemoved, aHandler));
-        }
-        super.handleSecurityUpdate(kb, someChanged, someNew, someRemoved, aHandler);
-    }
-
 	final BoundObject getSecurityRoot() {
 		return _boundHelper.securityRoot();
 	}

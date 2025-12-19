@@ -102,6 +102,10 @@ public final class CheckerProxyHandler extends CommandHandlerProxy {
 		MainLayout mainlayout = ComponentInstantiationContext.getMainLayout(context);
 		ComponentName checkerName = config.getName();
 		LayoutComponent checkerComponent = mainlayout.getComponentByName(checkerName);
+		if (checkerComponent == null) {
+			context.error("Configured security component '" + checkerName + "' does not exist at " + config.location());
+			return null;
+		}
 		BoundCheckerComponent checker;
 		if (checkerComponent instanceof BoundCheckerComponent) {
 			checker = (BoundCheckerComponent) checkerComponent;

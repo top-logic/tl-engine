@@ -127,6 +127,17 @@ public class TypeBasedContextMenuFactory<C extends TypeBasedContextMenuFactory.C
 	}
 
 	/**
+	 * Hook for sub-classes to transform the passed model object on which the context menu is opened
+	 * before using that as model for context-menu commands.
+	 * 
+	 * @param layoutComponent
+	 *        The context component.
+	 */
+	protected Object mapContextObject(LayoutComponent layoutComponent, Object model) {
+		return model;
+	}
+
+	/**
 	 * {@link ContextMenuProvider} created by {@link TypeBasedContextMenuFactory}.
 	 */
 	protected class Provider implements ContextMenuProvider {
@@ -203,8 +214,8 @@ public class TypeBasedContextMenuFactory<C extends TypeBasedContextMenuFactory.C
 		 * the collection.
 		 * </p>
 		 */
-		protected Object mapContextObject(Object obj) {
-			return obj;
+		protected final Object mapContextObject(Object obj) {
+			return TypeBasedContextMenuFactory.this.mapContextObject(getComponent(), obj);
 		}
 
 		/**

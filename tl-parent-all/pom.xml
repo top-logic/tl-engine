@@ -1108,8 +1108,8 @@
 			</dependency>
 			<dependency>
 			    <groupId>org.xhtmlrenderer</groupId>
-			    <artifactId>flying-saucer-pdf-openpdf</artifactId>
-			    <version>9.1.22</version>
+			    <artifactId>flying-saucer-pdf</artifactId>
+			    <version>9.4.0</version>
 			    
 		        <exclusions>
 		            <exclusion>

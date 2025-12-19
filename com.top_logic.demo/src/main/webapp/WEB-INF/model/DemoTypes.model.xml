@@ -1170,6 +1170,11 @@
 						<dimensions height="200px"/>
 					</annotations>
 				</property>
+				<reference name="responsibleContact"
+					kind="forwards"
+					navigate="true"
+					type="Contacts:PersonContact"
+				/>
 			</attributes>
 		</interface>
 		<class name="A">

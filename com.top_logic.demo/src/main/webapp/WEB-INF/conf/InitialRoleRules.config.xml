@@ -222,6 +222,23 @@
 								/>
 							</path>
 						</rule>
+						<rule
+							inherit="true"
+							meta-element="DemoTypes:DemoTypes.A"
+							role="DemoTypes.Responsible"
+						>
+							<path>
+								<step
+									attribute="responsibleContact"
+									meta-element="DemoTypes:DemoTypes.A"
+								/>
+								<step
+									attribute="contact"
+									inverse="true"
+									meta-element="tl.accounts:Person"
+								/>
+							</path>
+						</rule>
 						<inheritance-rule
 							inherit="true"
 							meta-element="DemoTypes:DemoTypes.All"

@@ -221,7 +221,7 @@
 			user-id="root"
 		>
 			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-				label="Responsible for subtree"
+				label="Verantwortlicher Zugang für Teilbaum"
 			>
 				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 					name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"

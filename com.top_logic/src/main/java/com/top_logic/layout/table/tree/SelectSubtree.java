@@ -12,6 +12,7 @@ import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
+import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.func.IFunction2;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
@@ -100,6 +101,10 @@ public class SelectSubtree extends AbstractCommandHandler {
 		@Override
 		@FormattedDefault(SimpleBoundCommandGroup.SYSTEM_NAME)
 		CommandGroupReference getGroup();
+
+		@Override
+		@StringDefault("select")
+		String getClique();
 	}
 
 	private static final ExecutableState NO_EXEC_FULL = ExecutableState.createDisabledState(I18NConstants.NO_EXEC_FULL);

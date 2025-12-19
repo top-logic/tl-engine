@@ -72,12 +72,24 @@ public class TreeTableContextMenuFactory<C extends TreeTableContextMenuFactory.C
 
 		@Override
 		protected Object mapContextObject(Object object) {
-			if (object instanceof TLTreeNode) {
-				return ((TLTreeNode<?>) object).getBusinessObject();
-			}
-
-			return null;
+			return TreeTableContextMenuFactory.this.mapContextObject(getComponent(), object);
 		}
+	}
+
+	/**
+	 * Hook for adjusting the context object mapping for {@link ContextMenuProvider}s.
+	 * 
+	 * @param component
+	 *        The context component.
+	 * 
+	 * @see #createContextMenuProvider(LayoutComponent)
+	 */
+	protected Object mapContextObject(LayoutComponent component, Object object) {
+		if (object instanceof TLTreeNode<?> node) {
+			return node.getBusinessObject();
+		}
+
+		return null;
 	}
 
 }

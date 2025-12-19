@@ -10,6 +10,7 @@ import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.layout.basic.contextmenu.ContextMenuProvider;
 import com.top_logic.layout.form.component.FormTableConfig;
+import com.top_logic.layout.form.values.edit.annotation.AcceptableClassifiers;
 
 /**
  * {@link FormTableConfig} choosing {@link TreeTableContextMenuProvider} by default.
@@ -26,6 +27,7 @@ public interface TreeTableConfig extends FormTableConfig {
 	@Override
 	@ItemDefault(TreeTableContextMenuProvider.class)
 	@ImplementationClassDefault(TreeTableContextMenuProvider.class)
+	@AcceptableClassifiers({ "common", "treetable" })
 	PolymorphicConfiguration<? extends ContextMenuProvider> getContextMenu();
 
 }

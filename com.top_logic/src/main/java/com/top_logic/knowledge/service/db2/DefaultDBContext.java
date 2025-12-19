@@ -760,7 +760,7 @@ class DefaultDBContext extends DBContext {
 
 					JournalLine journalLine = createJournalLine();
 					
-					handleSecurityUdate();
+					handleSecurityUpdate();
 					
 					prepareCommitables();
 
@@ -1192,7 +1192,7 @@ class DefaultDBContext extends DBContext {
 		}
 	}
 	
-    protected void handleSecurityUdate() {
+	protected void handleSecurityUpdate() {
     	if (AccessManager.Module.INSTANCE.isActive()) {
     		AccessManager.getInstance().handleSecurityUpdate(
 				kb,

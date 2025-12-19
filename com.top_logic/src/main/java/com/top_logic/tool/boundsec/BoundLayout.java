@@ -40,7 +40,7 @@ public class BoundLayout extends Layout implements LayoutContainerBoundChecker {
 	}
 
 	/** The component to delegate access checks to. */
-	private BoundCheckerComponent securityMaster;
+	private BoundCheckerComponent _securityMaster;
 
 	private SecurityObjectProvider _securityObjectProvider;
 
@@ -53,13 +53,16 @@ public class BoundLayout extends Layout implements LayoutContainerBoundChecker {
 
 	@Override
 	public SecurityObjectProvider getSecurityObjectProvider() {
+		if (_securityMaster != null) {
+			return _securityMaster.getSecurityObjectProvider();
+		}
 		return _securityObjectProvider;
 	}
 
 	@Override
 	public ResKey hideReason() {
-		if (securityMaster != null) {
-			return securityMaster.hideReason();
+		if (_securityMaster != null) {
+			return _securityMaster.hideReason();
         }
 
 		if (getChildCount() == 1) {
@@ -93,11 +96,12 @@ public class BoundLayout extends Layout implements LayoutContainerBoundChecker {
 	 * </p>
 	 */
 	public void initSecurityMaster(BoundCheckerComponent masterComponent) {
-		if (securityMaster != null && !securityMaster.getName().equals(masterComponent.getName())) {
+		if (_securityMaster != null && !_securityMaster.getName().equals(masterComponent.getName())) {
 			Logger.warn("Non-unique security master components in layout '" + getName() + "': "
-				+ securityMaster.getName() + " and " + masterComponent.getName(), BoundLayout.class);
+					+ _securityMaster.getName() + " and " + masterComponent.getName(),
+				BoundLayout.class);
 		}
-		securityMaster = masterComponent;
+		_securityMaster = masterComponent;
 
 		// Forward to ancestors.
 		if (getParent() instanceof BoundLayout layout) {

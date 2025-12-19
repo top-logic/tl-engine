@@ -188,10 +188,9 @@ public class ExportChapterCommand extends PreconditionCommandHandler {
 		 * Prints the given page and all of its sub-pages.
 		 */
 		public ITextRenderer print(Page page) throws IOException {
-			float dpi = 150.0f;
-			float dpp = dpi / 72;
+			int dpp = 2;
 			ITextOutputDevice device = new ITextOutputDevice(dpp);
-			ITextUserAgent ua = new ITextUserAgent(device) {
+			ITextUserAgent ua = new ITextUserAgent(device, dpp) {
 				@Override
 				protected InputStream openStream(String uri) throws MalformedURLException, IOException {
 					BinaryData data = _data.get(uri);

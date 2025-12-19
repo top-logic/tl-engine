@@ -248,11 +248,21 @@ public class TLBackReferenceFormBuilder extends TLReferenceFormBuilder {
 				while (objectsByAttribute.hasNext()) {
 					KnowledgeItem next = objectsByAttribute.next();
 					TLObject wrapper = next.getWrapper();
-					if (wrapper instanceof TLAssociationEnd) {
-						TLReference reference = ((TLAssociationEnd) wrapper).getReference();
-						if (reference != null) {
-							references.add(reference);
+					if (wrapper instanceof TLAssociationEnd end) {
+						TLReference reference = end.getReference();
+						if (reference == null) {
+							// No implementation for the end
+							continue;
 						}
+						if (reference.isBackwards()) {
+							// No Back reference for a back reference!
+							continue;
+						}
+						if (reference.getOpposite() != null) {
+							// There is already a back reference for the reference.
+							continue;
+						}
+						references.add(reference);
 					}
 				}
 

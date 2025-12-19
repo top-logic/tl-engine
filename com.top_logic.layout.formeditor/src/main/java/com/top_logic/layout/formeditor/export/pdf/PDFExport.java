@@ -13,27 +13,19 @@ import java.io.OutputStream;
 import java.io.StringWriter;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import jakarta.servlet.ServletContext;
 
-import org.w3c.dom.Element;
-import org.xhtmlrenderer.extend.ReplacedElement;
-import org.xhtmlrenderer.extend.ReplacedElementFactory;
 import org.xhtmlrenderer.extend.UserAgentCallback;
-import org.xhtmlrenderer.layout.LayoutContext;
 import org.xhtmlrenderer.layout.SharedContext;
 import org.xhtmlrenderer.pdf.ITextRenderer;
-import org.xhtmlrenderer.render.BlockBox;
 import org.xhtmlrenderer.resource.CSSResource;
 import org.xhtmlrenderer.resource.ImageResource;
 import org.xhtmlrenderer.resource.XMLResource;
-import org.xhtmlrenderer.simple.extend.FormSubmissionListener;
 
 import com.lowagie.text.DocumentException;
 
@@ -61,6 +53,8 @@ import com.top_logic.mig.html.Media;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.form.implementation.FormEditorContext;
 import com.top_logic.model.form.implementation.FormElementTemplateProvider;
+import com.top_logic.model.search.expr.config.operations.binary.ChainingReplacedElementFactory;
+import com.top_logic.model.search.expr.config.operations.binary.SVGReplacedElementFactory;
 import com.top_logic.util.TLContext;
 
 /**
@@ -348,8 +342,8 @@ public class PDFExport {
 
 		ChainingReplacedElementFactory chainingFactory = new ChainingReplacedElementFactory();
 		SharedContext sharedContext = renderer.getSharedContext();
-		chainingFactory.getFactories().add(new SVGReplacedElementFactory());
-		chainingFactory.getFactories().add(sharedContext.getReplacedElementFactory());
+		chainingFactory.addFactory(new SVGReplacedElementFactory());
+		chainingFactory.addFactory(sharedContext.getReplacedElementFactory());
 		sharedContext.setReplacedElementFactory(chainingFactory);
 	}
 
@@ -542,59 +536,6 @@ public class PDFExport {
 			uri = getTLPath(uri); // transform the URI
 			return callback.getBinaryResource(uri);
 		}
-
 	}
-
-	/**
-	 * {@link ReplacedElementFactory} holding a sequence of {@link ReplacedElementFactory} and
-	 * returning the first possible replaced element.
-	 * 
-	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
-	 */
-	public class ChainingReplacedElementFactory implements ReplacedElementFactory {
-
-		private List<ReplacedElementFactory> _factories = new ArrayList<>();
-
-		/**
-		 * Modifiable sequence of the factories to call.
-		 */
-		public List<ReplacedElementFactory> getFactories() {
-			return _factories;
-		}
-
-		@Override
-		public ReplacedElement createReplacedElement(LayoutContext c, BlockBox box,
-				UserAgentCallback uac, int cssWidth, int cssHeight) {
-			for (ReplacedElementFactory factory : _factories) {
-				ReplacedElement element = factory.createReplacedElement(c, box, uac, cssWidth, cssHeight);
-				if (element != null) {
-					return element;
-				}
-			}
-			return null;
-		}
-
-		@Override
-		public void reset() {
-			for (ReplacedElementFactory replacedElementFactory : _factories) {
-				replacedElementFactory.reset();
-			}
-		}
-
-		@Override
-		public void remove(Element e) {
-			for (ReplacedElementFactory replacedElementFactory : _factories) {
-				replacedElementFactory.remove(e);
-			}
-		}
-
-		@Override
-		public void setFormSubmissionListener(FormSubmissionListener listener) {
-			for (ReplacedElementFactory replacedElementFactory : _factories) {
-				replacedElementFactory.setFormSubmissionListener(listener);
-			}
-		}
-	}
-
 }
 

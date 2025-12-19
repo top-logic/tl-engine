@@ -65,6 +65,33 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey ERROR_INVALID_STYLE_ATTRIBUTE;
 
+	/**
+	 * @en Failed to render HTML content: {0}
+	 */
+	public static ResKey1 ERROR_HTML_RENDER_FAILED__MSG;
+
+	/**
+	 * @en Failed to generate PDF: {0}
+	 */
+	public static ResKey1 ERROR_PDF_GENERATION_FAILED__MSG;
+
+	/**
+	 * @en Invalid page size: {0}. Valid values are: {1}
+	 */
+	public static ResKey2 ERROR_INVALID_PAGE_SIZE__VALUE_VALID;
+
+	/**
+	 * @en Binary data must have content type 'text/html', 'text/plain', or 'image/svg+xml', but
+	 *     got: {0}
+	 */
+	public static ResKey1 ERROR_INVALID_BINARY_CONTENT_TYPE__TYPE;
+
+	/**
+	 * @en Invalid size format in value "{0}": The value must either be a number in pixels or a size
+	 *     specification like "10mm", "1cm", "0.5in".
+	 */
+	public static ResKey1 INVALID_SIZE_FORMAT__VALUE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

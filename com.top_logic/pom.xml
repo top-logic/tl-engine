@@ -71,7 +71,7 @@
     </dependency>
 	<dependency>
 	    <groupId>org.xhtmlrenderer</groupId>
-	    <artifactId>flying-saucer-pdf-openpdf</artifactId>
+	    <artifactId>flying-saucer-pdf</artifactId>
 	</dependency>
 	<dependency>
 	    <groupId>org.apache.xmlgraphics</groupId>

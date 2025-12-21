@@ -41,6 +41,12 @@
 	<dependency>
 	    <groupId>org.xhtmlrenderer</groupId>
 	    <artifactId>flying-saucer-pdf</artifactId>
+	    <exclusions>
+	    	<exclusion>
+	    		<groupId>commons-logging</groupId>
+	    		<artifactId>commons-logging</artifactId>
+	    	</exclusion>
+	    </exclusions>
 	</dependency>
   </dependencies>
 </project>

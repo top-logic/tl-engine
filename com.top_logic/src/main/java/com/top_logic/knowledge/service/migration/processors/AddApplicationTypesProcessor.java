@@ -34,6 +34,8 @@ import com.top_logic.knowledge.service.migration.MigrationProcessor;
 
 /**
  * {@link MigrationProcessor} to add database tables for persistent object types.
+ * 
+ * @see RemoveApplicationTypesProcessor
  */
 public class AddApplicationTypesProcessor extends AbstractConfiguredInstance<AddApplicationTypesProcessor.Config<?>>
 		implements MigrationProcessor {

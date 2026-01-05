@@ -42,6 +42,8 @@ import com.top_logic.knowledge.service.migration.RemoveBranchSwitchProcessor;
 /**
  * {@link MigrationProcessor} to remove database tables of persistent object types.
  * 
+ * @see AddApplicationTypesProcessor
+ * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class RemoveApplicationTypesProcessor extends AbstractConfiguredInstance<RemoveApplicationTypesProcessor.Config>

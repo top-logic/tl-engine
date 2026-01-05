@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_28710_Remove_global_role"
+		module="tl"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29019_Removed_log_entries"
+			module="tl"
+		/>
+	</dependencies>
+	<processors>
+		<processor class="com.top_logic.knowledge.service.migration.processors.RemoveApplicationTypesProcessor">
+			<application-tables>
+				<application-table name="hasGlobalRole"
+					db-name="HAS_GLOBAL_ROLE"
+				/>
+			</application-tables>
+		</processor>
+	</processors>
+	<post-processors/>
+</migration>

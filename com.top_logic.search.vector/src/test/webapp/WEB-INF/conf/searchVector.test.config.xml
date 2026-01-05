@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+
+	<services>
+		<config service-class="com.top_logic.knowledge.analyze.DefaultAnalyzeService">
+			<instance class="com.top_logic.knowledge.analyze.DefaultAnalyzeService"
+				default-max-count-feature-extractor="20"
+				default-threshold-feature-extractor="0.001"
+				default-max-count-doc-finder="10"
+			/>
+		</config>
+	
+		<config service-class="com.top_logic.dsa.DataAccessService">
+			<instance>
+				<adaptors>
+					<adaptor name="testRoot">
+						<config class="com.top_logic.dsa.file.FilesystemDataSourceAdaptor"
+							home="./src/test/java/test" />
+					</adaptor>
+            	</adaptors>
+			</instance>
+		</config>
+	</services>
+
+	<configs>
+		<config config:interface="com.top_logic.basic.db.schema.setup.config.ApplicationTypes">
+			<type-systems>
+				<type-system name="Default">
+					<declarations>
+						<declaration resource="webinf://kbase/KBTestMeta.xml"/>
+					</declarations>
+				</type-system>
+			</type-systems>
+		</config>
+	</configs>
+</application>
+
+

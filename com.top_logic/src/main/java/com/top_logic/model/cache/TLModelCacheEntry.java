@@ -116,12 +116,17 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 
 	private final KnowledgeBase _knowledgeBase;
 
-	TLModelCacheEntry(KnowledgeBase knowledgeBase) {
+	/**
+	 * Creates a new {@link TLModelCacheEntry}.
+	 */
+	protected TLModelCacheEntry(KnowledgeBase knowledgeBase) {
 		_knowledgeBase = knowledgeBase;
 	}
 
-	private TLModelCacheEntry(TLModelCacheEntry otherEntry) {
-		_knowledgeBase = otherEntry._knowledgeBase;
+	/**
+	 * Initializes this {@link TLModelCacheEntry} from the given one.
+	 */
+	protected void initFrom(TLModelCacheEntry otherEntry) {
 		/* The unsynchronized access to the fields of the other entry is correct here, as the caller
 		 * (the copy() method) is synchronized on the otherEntry. And just reusing the Map values of
 		 * the other entry without copying them, too, is correct, as they are immutable and can
@@ -142,7 +147,9 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 
 	@Override
 	public synchronized TLModelCacheEntry copy() {
-		return new TLModelCacheEntry(this);
+		TLModelCacheEntry copy = new TLModelCacheEntry(_knowledgeBase);
+		copy.initFrom(this);
+		return copy;
 	}
 
 	@Override
@@ -402,7 +409,10 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 		return getKnowledgeBase().equals(modelPart.tKnowledgeBase());
 	}
 
-	private KnowledgeBase getKnowledgeBase() {
+	/**
+	 * The {@link KnowledgeBase} for which this cache is created.
+	 */
+	protected KnowledgeBase getKnowledgeBase() {
 		return _knowledgeBase;
 	}
 

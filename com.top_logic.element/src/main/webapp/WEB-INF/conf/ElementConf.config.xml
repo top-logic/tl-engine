@@ -23,6 +23,10 @@
 			</instance>
 		</config>
 		
+		<config service-class="com.top_logic.model.cache.TLModelCacheService">
+			<instance class="com.top_logic.element.model.cache.ElementModelCacheService"/>
+		</config>
+		
 		<config service-class="com.top_logic.layout.scripting.recorder.ref.ValueNamingSchemeRegistry">
 			<instance class="com.top_logic.layout.scripting.recorder.ref.ValueNamingSchemeRegistry">
 				<schemes>

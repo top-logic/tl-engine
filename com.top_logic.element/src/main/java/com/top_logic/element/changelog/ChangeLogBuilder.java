@@ -42,7 +42,6 @@ import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.identifier.DefaultObjectKey;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.dob.meta.MOClass;
-import com.top_logic.dob.meta.MOStructure;
 import com.top_logic.element.changelog.model.Change;
 import com.top_logic.element.changelog.model.trans.TransientChangeSet;
 import com.top_logic.element.changelog.model.trans.TransientCreation;
@@ -50,8 +49,8 @@ import com.top_logic.element.changelog.model.trans.TransientDeletion;
 import com.top_logic.element.changelog.model.trans.TransientModification;
 import com.top_logic.element.changelog.model.trans.TransientUpdate;
 import com.top_logic.element.meta.AssociationStorageDescriptor;
-import com.top_logic.element.meta.SeparateTableStorage;
-import com.top_logic.element.meta.kbbased.storage.ColumnStorage;
+import com.top_logic.element.model.cache.ElementModelCacheService;
+import com.top_logic.element.model.cache.ModelTables;
 import com.top_logic.knowledge.event.ChangeSet;
 import com.top_logic.knowledge.event.ChangeSetReader;
 import com.top_logic.knowledge.event.ItemChange;
@@ -69,17 +68,14 @@ import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.db2.RevisionType;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.provider.MetaLabelProvider;
-import com.top_logic.model.ModelKind;
-import com.top_logic.model.StorageDetail;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
-import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.util.TLAnnotations;
-import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.util.model.ModelService;
 
 /**
  * Algorithm to analyze technical changes reported by a {@link KnowledgeBase} an build a model
@@ -103,22 +99,7 @@ public class ChangeLogBuilder {
 
 	private boolean _includeTechnical;
 
-	/**
-	 * The classes that store their instances in a certain table.
-	 */
-	private Map<MOStructure, List<TLClass>> _classesByTable;
-
-	/**
-	 * For each type, a mapping that assigns the {@link TLStructuredTypePart} that stores the column
-	 * with a given name of the object's table.
-	 */
-	private Map<TLStructuredType, Map<String, TLStructuredTypePart>> _columnBindingByType = new HashMap<>();
-
-	/**
-	 * For each table and column, the descriptor that describes how values for foreign objects are
-	 * stored (if any).
-	 */
-	private Map<MOStructure, Map<String, AssociationStorageDescriptor>> _descriptorsByTable = new HashMap<>();
+	private ModelTables _modelTables;
 
 	private Set<String> _excludeModules = Collections.emptySet();
 
@@ -240,7 +221,11 @@ public class ChangeLogBuilder {
 		// all log messages. Sorted in descending order
 		List<com.top_logic.element.changelog.model.ChangeSet> log = new ArrayList<>();
 
-		analyzeModel();
+		if (_excludeModules.isEmpty() && _model == ModelService.getApplicationModel()) {
+			_modelTables = ElementModelCacheService.getModelTables();
+		} else {
+			_modelTables = new ModelTables(_model, this::isExcludedModule);
+		}
 
 		Map<Long, com.top_logic.element.changelog.model.ChangeSet> revertedBy = new HashMap<>();
 
@@ -631,8 +616,8 @@ public class ChangeLogBuilder {
 					MetaObject table = creation.getObjectType();
 					boolean technicalUpdate = analyzeTechnicalUpdate(_changeSet.getRevision(), table, createdKeys, creation);
 
-					List<TLClass> classes = _classesByTable.get(table);
-					if (classes == null) {
+					List<TLClass> classes = _modelTables.getClassesForTable(table);
+					if (classes.isEmpty()) {
 						// A pure technical object.
 						if (stopOnChange && technicalUpdate) {
 							return true;
@@ -705,8 +690,8 @@ public class ChangeLogBuilder {
 				boolean technicalUpdate =
 					analyzeTechnicalUpdate(_changeSet.getRevision(), table, Collections.emptySet(), update);
 		
-				List<TLClass> classes = _classesByTable.get(table);
-				if (classes == null) {
+				List<TLClass> classes = _modelTables.getClassesForTable(table);
+				if (classes.isEmpty()) {
 					// A pure technical object.
 					if (stopOnChange && technicalUpdate) {
 						return true;
@@ -731,7 +716,7 @@ public class ChangeLogBuilder {
 				Map<String, Object> oldValues = update.getOldValues();
 				TLStructuredType type = newObject.tType();
 		
-				Map<String, TLStructuredTypePart> partByColumn = lookupColumnBinding(type);
+				Map<String, TLStructuredTypePart> partByColumn = _modelTables.lookupColumnBinding(type);
 				for (Entry<String, Object> valueUpdate : valueUpdates.entrySet()) {
 					String storageAttribute = valueUpdate.getKey();
 
@@ -796,8 +781,8 @@ public class ChangeLogBuilder {
 					boolean technicalUpdate =
 						analyzeTechnicalUpdate(_changeSet.getRevision(), table, deletedKeys, deletion);
 
-					List<TLClass> classes = _classesByTable.get(table);
-					if (classes == null) {
+					List<TLClass> classes = _modelTables.getClassesForTable(table);
+					if (classes.isEmpty()) {
 						// A pure technical object.
 						if (stopOnChange && technicalUpdate) {
 							return true;
@@ -833,8 +818,8 @@ public class ChangeLogBuilder {
 
 		private boolean analyzeTechnicalUpdate(long revision, MetaObject table, Set<ObjectKey> createdDeletedKeys,
 				ItemChange change) {
-			Map<String, AssociationStorageDescriptor> descriptors = _descriptorsByTable.get(table);
-			if (descriptors == null) {
+			Map<String, AssociationStorageDescriptor> descriptors = _modelTables.getDescriptorsForTable(table);
+			if (descriptors.isEmpty()) {
 				// Table is not used to store value of foreign objects.
 				return false;
 			}
@@ -908,24 +893,6 @@ public class ChangeLogBuilder {
 		return new DefaultObjectKey(objId.getBranchContext(), rev, objId.getObjectType(), objId.getObjectName());
 	}
 
-	private Map<String, TLStructuredTypePart> lookupColumnBinding(TLStructuredType type) {
-		Map<String, TLStructuredTypePart> partByColumn = _columnBindingByType.get(type);
-
-		if (partByColumn == null) {
-			partByColumn = new HashMap<>();
-			List<? extends TLStructuredTypePart> parts = type.getAllParts();
-			for (TLStructuredTypePart part : parts) {
-				StorageDetail storage = part.getStorageImplementation();
-				if (storage instanceof ColumnStorage columnStorage) {
-					partByColumn.put(columnStorage.getStorageAttribute(), part);
-				}
-			}
-			_columnBindingByType.put(type, partByColumn);
-		}
-
-		return partByColumn;
-	}
-
 	/**
 	 * Lookup the account that was the author of the given {@link Revision}, or <code>null</code>
 	 * for a technical transaction.
@@ -946,71 +913,15 @@ public class ChangeLogBuilder {
 		return author;
 	}
 
-	/**
-	 * Analyze the application model to map technical changes to model changes.
-	 */
-	private void analyzeModel() {
-		_classesByTable = new HashMap<>();
-		_descriptorsByTable = new HashMap<>();
-
-		for (TLModule module : _model.getModules()) {
-			if (_excludeModules.contains(module.getName())) {
-				continue;
-			}
-			for (TLType type : module.getTypes()) {
-				if (type.getModelKind() == ModelKind.CLASS) {
-					TLClass classType = (TLClass) type;
-					try {
-						analyzeType(classType);
-					} catch (RuntimeException ex) {
-						// Safety. Do not fail when something is strange in the model.
-						Logger.error("Unable to analyze type " + TLModelUtil.qualifiedName(type), ex);
-					}
-				}
-			}
-		}
-	}
-
-	private void analyzeType(TLClass classType) {
-		MOStructure table = TLModelUtil.getTable(classType);
-		_classesByTable.computeIfAbsent(table, x -> new ArrayList<>()).add(classType);
-
-		for (TLStructuredTypePart part : classType.getLocalParts()) {
-			try {
-				analyzeTypePart(part);
-			} catch (RuntimeException ex) {
-				// Safety. Do not fail when something is strange in the model.
-				Logger.error("Unable to analyze type part " + TLModelUtil.qualifiedName(part), ex);
-			}
-		}
-	}
-
-	private void analyzeTypePart(TLStructuredTypePart part) {
-		StorageDetail storage = part.getStorageImplementation();
-		if (storage.isReadOnly()) {
-			return;
-		}
-		if (storage instanceof SeparateTableStorage associationStorage) {
-			associationStorage.getStorageDescriptors().forEach(descriptor -> {
-				String storageTable = descriptor.getTable();
-				String storageColumn = descriptor.getStorageColumn();
-
-				MOStructure storageType = (MOStructure) _kb.getMORepository().getType(storageTable);
-				Map<String, AssociationStorageDescriptor> storageByColumn =
-					_descriptorsByTable.computeIfAbsent(storageType, x -> new HashMap<>());
-
-				/* Each descriptor that uses the same storage column must deliver same base object
-				 * and part id. */
-				storageByColumn.putIfAbsent(storageColumn, descriptor);
-			});
-		}
-	}
-
 	boolean excludedByModule(TLObject obj) {
 		if (_excludeModules.isEmpty()) {
 			return false;
 		}
 		TLModule module = obj.tType().getModule();
+		return isExcludedModule(module);
+	}
+
+	boolean isExcludedModule(TLModule module) {
 		return _excludeModules.contains(module.getName());
 	}
 	

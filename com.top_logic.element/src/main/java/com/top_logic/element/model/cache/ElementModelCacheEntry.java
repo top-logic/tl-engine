@@ -6,8 +6,11 @@
 
 package com.top_logic.element.model.cache;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.model.cache.TLModelCacheEntry;
+import com.top_logic.util.model.ModelService;
 
 /**
  * {@link TLModelCacheEntry} for {@link ElementModelCacheImpl}.
@@ -15,6 +18,8 @@ import com.top_logic.model.cache.TLModelCacheEntry;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class ElementModelCacheEntry extends TLModelCacheEntry {
+	
+	private final AtomicReference<ModelTables> _modelTables = new AtomicReference<>();
 
 	/**
 	 * Creates a new {@link ElementModelCacheEntry}.
@@ -28,6 +33,36 @@ public class ElementModelCacheEntry extends TLModelCacheEntry {
 		ElementModelCacheEntry copy = new ElementModelCacheEntry(getKnowledgeBase());
 		copy.initFrom(this);
 		return copy;
+	}
+	
+	@Override
+	protected void initFrom(TLModelCacheEntry otherEntry) {
+		super.initFrom(otherEntry);
+		_modelTables.set(((ElementModelCacheEntry) otherEntry)._modelTables.get());
+	}
+
+	@Override
+	public synchronized void clear() {
+		super.clear();
+		_modelTables.set(null);
+	}
+
+	/**
+	 * The {@link ModelTables} for the {@link ModelService#getApplicationModel() application model}.
+	 */
+	public ModelTables getModelTables() {
+		ModelTables modelTables = _modelTables.get();
+		if (modelTables == null) {
+			ModelTables newModelTables = new ModelTables(ModelService.getApplicationModel());
+			boolean success = _modelTables.compareAndSet(null, newModelTables);
+			if (!success) {
+				// Changed concurrently
+				modelTables = _modelTables.get();
+			} else {
+				modelTables = newModelTables;
+			}
+		}
+		return modelTables;
 	}
 
 }

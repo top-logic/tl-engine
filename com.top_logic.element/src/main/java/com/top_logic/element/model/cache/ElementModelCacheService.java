@@ -35,5 +35,20 @@ public class ElementModelCacheService extends TLModelCacheService {
 		super(context, config);
 	}
 
+	/**
+	 * The model tables for the application model.
+	 */
+	public static ModelTables getModelTables() {
+		if (!Module.INSTANCE.isActive()) {
+			throw new IllegalStateException(TLModelCacheService.class.getName() + " not active!");
+		}
+		ElementModelCacheEntry cacheValue = (ElementModelCacheEntry) implementationInstance().getCache().getValue();
+		return cacheValue.getModelTables();
+	}
+
+	private static ElementModelCacheService implementationInstance() {
+		return (ElementModelCacheService) Module.INSTANCE.getImplementationInstance();
+	}
+
 }
 

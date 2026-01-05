@@ -2339,8 +2339,11 @@ public class TLModelUtil {
 	 * </p>
 	 * 
 	 * @see #potentialTables(TLClass, boolean)
+	 * 
+	 * @throws UnknownTypeException
+	 *         iff the table configured table does not exist.
 	 */
-	public static MOStructure getTable(TLStructuredType type) {
+	public static MOStructure getTable(TLStructuredType type) throws UnknownTypeException {
 		String tableName = CompatibilityService.getInstance().getTableFor(type);
 		if (tableName == null) {
 			return null;

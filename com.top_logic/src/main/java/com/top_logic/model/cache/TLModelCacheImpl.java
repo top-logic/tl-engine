@@ -15,6 +15,8 @@ import com.top_logic.knowledge.service.db2.KBCache;
 /**
  * A {@link KBCache} based {@link TLModelCache}.
  * 
+ * @see TLModelCacheService
+ * 
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
 public class TLModelCacheImpl extends AbstractTLModelCache<TLModelCacheEntry, TLModelCacheImpl.Config<?>>

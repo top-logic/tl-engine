@@ -422,7 +422,6 @@ public class BoundedRole extends AbstractBoundWrapper implements BoundRole {
 	 */
 	public static Set<BoundRole> getLocalAndGlobalRoles(TLObject context, Person person) {
 		Set<BoundRole> result = new HashSet<>();
-		result.addAll(person.getGlobalRoles());
 
 		addRoles(result, context, person.getRepresentativeGroup());
 		return result;
@@ -434,9 +433,6 @@ public class BoundedRole extends AbstractBoundWrapper implements BoundRole {
 	 * @see #getLocalAndGlobalRoles(TLObject, Person)
 	 */
 	public static boolean hasLocalOrGlobalOrGroupRole(TLObject context, Person aPerson) {
-		if (!aPerson.getGlobalRoles().isEmpty()) {
-			return true;
-		}
 
 		for (Group group : Group.getGroups(aPerson, true, true)) {
 			if (hasRole(context, group)) {
@@ -457,7 +453,6 @@ public class BoundedRole extends AbstractBoundWrapper implements BoundRole {
 	 */
 	public static Set<BoundRole> getLocalAndGlobalAndGroupRoles(TLObject context, Person person) {
 		Set<BoundRole> result = new HashSet<>();
-		result.addAll(person.getGlobalRoles());
 
 		// Note: The Group.getGroups() resolution does not deliver the representative group of a
 		// person. It also only resolves group membership of representative groups, not groups in

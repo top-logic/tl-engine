@@ -66,19 +66,6 @@
 </attributes>
 </association>
 
-<association super_class="Association" object_name="hasGlobalRole">
-<attributes>
-	<source
-		override="true"
-		target-type="Person"
-	/>
-	<destination
-		override="true"
-		target-type="BoundedRole"
-	/>
-</attributes>
-</association>
-
 <association super_class="Association" object_name="hasGroupMembers">
 <attributes>
 	<source

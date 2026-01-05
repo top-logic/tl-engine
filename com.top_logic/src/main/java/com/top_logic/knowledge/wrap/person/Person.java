@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 import java.util.TimeZone;
 
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
@@ -24,20 +23,15 @@ import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.time.TimeZones;
-import com.top_logic.dob.DataObjectException;
 import com.top_logic.dob.NamedValues;
 import com.top_logic.dsa.DataAccessProxy;
-import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
-import com.top_logic.knowledge.service.AssociationQuery;
 import com.top_logic.knowledge.service.HistoryManager;
 import com.top_logic.knowledge.service.HistoryUtils;
-import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Revision;
-import com.top_logic.knowledge.service.db2.AssociationSetQuery;
 import com.top_logic.knowledge.service.db2.DBKnowledgeBase;
 import com.top_logic.knowledge.util.ItemByNameCache;
 import com.top_logic.knowledge.wrap.AbstractWrapper;
@@ -49,9 +43,7 @@ import com.top_logic.model.provider.DefaultCountryDefault;
 import com.top_logic.model.provider.DefaultLocaleDefault;
 import com.top_logic.model.provider.UserTimeZoneDefault;
 import com.top_logic.model.util.TLModelUtil;
-import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper;
-import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.tool.boundsec.wrap.Group;
 import com.top_logic.tool.boundsec.wrap.GroupMember;
 import com.top_logic.util.Country;
@@ -115,11 +107,6 @@ public class Person extends AbstractBoundWrapper implements Author, GroupMember 
     /** Attribute indicating whether the person has been notified about his unused account. */
     public static final String ATTR_UNUSED_NOTIFIED = "unusedNotified";
 
-    protected static final String GLOBAL_ROLE_KA = "hasGlobalRole";
-    
-	private static final AssociationSetQuery<KnowledgeAssociation> GLOBAL_ROLES_ATTR = AssociationQuery
-		.createOutgoingQuery("globalRoles", Person.GLOBAL_ROLE_KA);
-    
     /**
      * Caches the representative group for this person.
      * 
@@ -408,47 +395,6 @@ public class Person extends AbstractBoundWrapper implements Author, GroupMember 
 		throw new UnsupportedOperationException("No contact module available.");
 	}
 
-    /**
-     * Get the global roles as a Collection of BoundedRoles
-     * 
-     * @return the global roles. May be empty but not <code>null</code>.
-     */
-	public Set<? extends BoundRole> getGlobalRoles() {
-		@SuppressWarnings("unchecked")
-		Set<? extends BoundRole> result = (Set<? extends BoundRole>) resolveWrappers(GLOBAL_ROLES_ATTR);
-		return result;
-    }
-    
-    /**
-     * Add a global role to the Person
-     * 
-     * @param aGlobalRole    the global role. May be <code>null</code> (code has no effect then).
-     * @throws DataObjectException if creation of the KA fails
-     */
-	public void addGlobalRole(BoundRole aGlobalRole) throws DataObjectException {
-        if (aGlobalRole == null) {
-            return;
-        }
-        
-        KnowledgeObject      theSource = this.tHandle();
-		KnowledgeObject theDest = ((BoundedRole) aGlobalRole).tHandle();
-		theSource.getKnowledgeBase().createAssociation(theSource, theDest, Person.GLOBAL_ROLE_KA);
-    }
-    
-    /**
-     * Remove a global role from the Person
-     * 
-     * @param aGlobalRole    the global role. May be <code>null</code> (code has no effect then).
-     * @throws DataObjectException if removal of the KA fails
-     */
-	public void removeGlobalRole(BoundRole aGlobalRole) throws DataObjectException {
-        if (aGlobalRole == null) {
-            return;
-        }
-		KBUtils.deleteAllKI(
-			tHandle().getOutgoingAssociations(Person.GLOBAL_ROLE_KA, ((BoundedRole) aGlobalRole).tHandle()));
-    }
-    
     /**
      * Return the full name of the person -
      * a formatted String for Username, should be "Title FirstName LastName".

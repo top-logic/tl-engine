@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.DummyIDFactory;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringID;
@@ -143,13 +144,12 @@ public class SimpleBoundObject extends TransientObject implements BoundObject {
             }
         }
         
-        return result;
+		return CollectionUtil.nonNull(result);
     }
     
     @Override
 	public Set<? extends BoundRole> getLocalAndGlobalRoles(Person aPerson) {
 		Set<? extends BoundRole> result = this.getRoles(aPerson);
-		result = BoundHelper.merge(result, aPerson.getGlobalRoles());
         return result;
     }
 
@@ -173,8 +173,6 @@ public class SimpleBoundObject extends TransientObject implements BoundObject {
 				coll = BoundHelper.merge(coll, myParent.getRoles(aPerson));
 			}
 		}
-
-		coll = BoundHelper.merge(coll, aPerson.getGlobalRoles());
 
 		return coll != null && coll.size() > 0;
 	}
@@ -274,7 +272,7 @@ public class SimpleBoundObject extends TransientObject implements BoundObject {
             }
         }
         
-        return result;
+		return CollectionUtil.nonNull(result);
     }
 
     /** @see java.lang.Object#toString() */

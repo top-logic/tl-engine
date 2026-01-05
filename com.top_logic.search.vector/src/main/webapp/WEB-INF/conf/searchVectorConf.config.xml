@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.basic.module.ModuleSystem">
+			<instance class="com.top_logic.basic.module.ModuleSystem">
+				<modules>
+		           <module key="com.top_logic.base.services.SearchFactory$Module" value="true" />
+		           <module key="com.top_logic.knowledge.indexing.vector.VectorIndex$Module" value="true" />
+		           <module key="com.top_logic.knowledge.analyze.DefaultAnalyzeService$Module" value="true" />
+		           <module key="com.top_logic.knowledge.indexing.DefaultIndexingService$Module" value="true" />
+				</modules>
+			</instance>
+		</config>
+	
+ 		<config service-class="com.top_logic.base.services.SearchFactory">
+			<instance>
+				<dependencies>
+					<dependency key="com.top_logic.knowledge.indexing.vector.VectorIndex$Module" value="true"/>
+					<dependency key="com.top_logic.knowledge.service.PersistencyLayer$Module" value="true"/>
+				</dependencies>
+				<search-engines>
+					<search-engine class="com.top_logic.knowledge.searching.vector.VectorSearchEngine"
+						display-name="search.engine.name.Vector"
+					/>
+				</search-engines>
+			</instance>
+		</config>
+	
+        <config service-class="com.top_logic.util.monitor.ApplicationMonitor">
+			<instance class="com.top_logic.util.monitor.ApplicationMonitor">
+				<components>
+					<component name="search" class="com.top_logic.knowledge.indexing.vector.VectorMonitor" />
+				</components>
+			</instance>
+		</config>
+		<config service-class="com.top_logic.basic.util.ResourcesModule">
+			<instance>
+				<bundles>
+					<bundle name="searchVectorMessages" />
+				</bundles>
+			</instance>
+		</config>
+		
+		
+		<config service-class="com.top_logic.knowledge.indexing.DefaultIndexingService" >
+			<instance class="com.top_logic.knowledge.indexing.vector.VectorIndexingService">
+				<protocols>
+					<protocol value="knowledgerepository" />
+					<protocol value="knowledge" />
+					<protocol value="repository" />
+				</protocols>
+				<meta-objects>
+					<meta-object value="Document" />
+					<meta-object value="GenericObject" />
+				</meta-objects>
+			</instance>
+		</config>
+		<config service-class="com.top_logic.knowledge.service.migration.MigrationService">
+			<instance>
+				<modules>
+					<module name="tl-search-vector" />
+				</modules>
+			</instance>
+		</config>
+	</services>
+</application>

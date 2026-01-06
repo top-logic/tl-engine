@@ -17,7 +17,6 @@ import java.util.Set;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.CloseableIterator;
-import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.dob.ex.UnknownTypeException;
 import com.top_logic.element.boundsec.manager.rule.PathElement;
@@ -424,28 +423,21 @@ public class ElementAccessHelper {
      * @return never NULL
      */
     public static Set<BoundObject> getTargetObjects(RoleRule aRule) {
-        MetaObject theMO = aRule.getMetaObject();
-        if (theMO != null) {
-            return new HashSet(WrapperFactory.getWrappersByType(theMO.getName(), PersistencyLayer.getKnowledgeBase()));
-        } else {
-            Set<BoundObject> theResult = new HashSet<>();
-            TLClass      theME     = aRule.getMetaElement();
-			Iterable<TLClass> theMEs =
-				aRule.isInherit() ?
-					TLModelUtil.getConcreteSpecializations(theME) :
-					Collections.singleton(theME);
-            for (Iterator theIt = theMEs.iterator(); theIt.hasNext();) {
-				TLClass theFoundME = (TLClass) theIt.next();
-				try (CloseableIterator<BoundObject> theObjectIterator =
-					MetaElementUtil.iterateDirectInstances(theFoundME, BoundObject.class)) {
-                    while (theObjectIterator.hasNext()) {
-						theResult.add(theObjectIterator.next());
-                    }
-                }
+		Set<BoundObject> theResult = new HashSet<>();
+		TLClass theME = aRule.getMetaElement();
+		Iterable<TLClass> theMEs =
+			aRule.isInherit() ? TLModelUtil.getConcreteSpecializations(theME) : Collections.singleton(theME);
+		for (Iterator theIt = theMEs.iterator(); theIt.hasNext();) {
+			TLClass theFoundME = (TLClass) theIt.next();
+			try (CloseableIterator<BoundObject> theObjectIterator =
+				MetaElementUtil.iterateDirectInstances(theFoundME, BoundObject.class)) {
+				while (theObjectIterator.hasNext()) {
+					theResult.add(theObjectIterator.next());
+				}
+			}
 
-            }
-            return theResult;
-        }
+		}
+		return theResult;
     }
 
 	private static void addBaseObjects(List<PathElement> aPath, int aPos, Set<TLObject> someSources,

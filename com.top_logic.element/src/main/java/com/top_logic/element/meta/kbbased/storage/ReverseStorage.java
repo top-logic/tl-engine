@@ -6,6 +6,8 @@
 package com.top_logic.element.meta.kbbased.storage;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -19,6 +21,7 @@ import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.element.meta.AbstractStorageBase;
 import com.top_logic.element.meta.AssociationStorage;
+import com.top_logic.element.meta.AssociationStorageDescriptor;
 import com.top_logic.element.meta.AttributeException;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.AttributeUpdate;
@@ -103,6 +106,11 @@ public class ReverseStorage<C extends ReverseStorage.Config<?>> extends Abstract
 	@Override
 	public String getStorageColumn() {
 		throw new UnsupportedOperationException("Derived attribute.");
+	}
+
+	@Override
+	public List<? extends AssociationStorageDescriptor> getStorageDescriptors() {
+		return Collections.emptyList();
 	}
 
 	@Override

@@ -485,6 +485,7 @@ public class TLDoclet implements Doclet {
 		switch (type.getKind()) {
 			case ANNOTATION_TYPE:
 				return "annotation";
+			case RECORD:
 			case CLASS:
 				if (isSubType(classType, _wellKnown._errorType)) {
 					return "error";
@@ -507,6 +508,7 @@ public class TLDoclet implements Doclet {
 				} else {
 					return "interface";
 				}
+			case BINDING_VARIABLE:
 			case CONSTRUCTOR:
 			case ENUM_CONSTANT:
 			case EXCEPTION_PARAMETER:
@@ -518,13 +520,15 @@ public class TLDoclet implements Doclet {
 			case OTHER:
 			case PACKAGE:
 			case PARAMETER:
+			case RECORD_COMPONENT:
 			case RESOURCE_VARIABLE:
 			case STATIC_INIT:
 			case TYPE_PARAMETER:
-			default:
-				throw new IllegalArgumentException();
-
+				throw new IllegalArgumentException(
+					"No kind available for type with " + ElementKind.class.getName() + ": " + type.getKind());
 		}
+		throw new IllegalArgumentException(
+			"Uncovered " + ElementKind.class.getName() + ": " + type.getKind());
 	}
 
 	boolean isSubType(TypeMirror subType, TypeMirror superType) {

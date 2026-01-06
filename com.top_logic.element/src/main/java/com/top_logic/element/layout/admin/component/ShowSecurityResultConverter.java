@@ -17,13 +17,11 @@ import java.util.Map.Entry;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.col.MapUtil;
-import com.top_logic.dob.MetaObject;
 import com.top_logic.element.boundsec.manager.ElementAccessManager;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider;
 import com.top_logic.element.boundsec.manager.rule.RoleRule;
 import com.top_logic.element.layout.admin.component.SecurityRow.ComplexSecurityRow;
 import com.top_logic.element.layout.admin.component.SecurityRow.SimpleSecurityRow;
-import com.top_logic.model.TLClass;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.search.ExpressionFactory;
@@ -35,8 +33,9 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.db2.DBKnowledgeBase;
 import com.top_logic.knowledge.wrap.WrapperFactory;
-import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
@@ -183,20 +182,12 @@ public class ShowSecurityResultConverter {
 	 * @param    someValues    The list of string based rows.
 	 * @return   A list of (pre-) resolved business objects.
 	 * @see      #preload(TLClass, RoleProvider, List)
-	 * @see      #preload(MetaObject, RoleProvider, List)
 	 */
 	protected List<SecurityRow> preload(RoleProvider aProvider, List<SecurityRow> someValues) {
 		TLClass theME = this.getMetaElement(aProvider);
 
 		if (theME != null) {
 			return this.preload(theME, aProvider, someValues);
-		}
-		else {
-			MetaObject theMO = this.getMetaObject(aProvider);
-
-			if (theMO != null) {
-				return this.preload(theMO, aProvider, someValues);
-			}
 		}
 
 		return someValues;
@@ -208,26 +199,10 @@ public class ShowSecurityResultConverter {
 	 * The simple rows contains only strings whereas the complex rows provide 
 	 * resolved business objects.
 	 * 
-	 * @param    aMO           The meta object to get the query for.
-	 * @param    someValues    The list of string based rows.
-	 * @return   A list of (pre-) resolved business objects.
-	 * @see      #getMetaObjectNames(MetaObject)
-	 * @see      #preload(Collection, RoleProvider, List)
-	 */
-	protected List<SecurityRow> preload(MetaObject aMO, RoleProvider aProvider, List<SecurityRow> someValues) {
-		return this.preload(this.getMetaObjectNames(aMO), aProvider, someValues);
-	}
-
-	/** 
-	 * Convert the list of (raw) security rows into complex rows.
-	 * 
-	 * The simple rows contains only strings whereas the complex rows provide 
-	 * resolved business objects.
-	 * 
 	 * @param    aME           The meta element to get the query for.
 	 * @param    someValues    The list of string based rows.
 	 * @return   A list of (pre-) resolved business objects.
-	 * @see      #getMetaObjectNames(MetaObject)
+	 * @see      #getMetaObjectNames(TLClass)
 	 * @see      #preload(Collection, RoleProvider, List)
 	 */
 	protected List<SecurityRow> preload(TLClass aME, RoleProvider aProvider, List<SecurityRow> someValues) {
@@ -301,16 +276,6 @@ public class ShowSecurityResultConverter {
 		return theProvider;
 	}
 
-	/** 
-	 * Return the name of the given meta object as single collection.
-	 * 
-	 * @param    aMO    The meta object to get its name from, must not be <code>null</code>..
-	 * @return   The requested name as single value collection, never <code>null</code>.
-	 */
-	protected Collection<String> getMetaObjectNames(MetaObject aMO) {
-		return Collections.singleton(aMO.getName());
-	}
-
 	/**
 	 * Return the names of the meta objects which implement the given meta element.
 	 * 
@@ -320,16 +285,6 @@ public class ShowSecurityResultConverter {
 	protected Collection<String> getMetaObjectNames(TLClass aME) {
 		Map<String, ? extends Collection<TLClass>> potentialTables = TLModelUtil.potentialTables(aME, false);
 		return potentialTables.keySet();
-	}
-
-	/**
-	 * Return the meta object out of the given role provider.
-	 * 
-	 * @param    aProvider    The role provider to get the meta object from, may be <code>null</code>.
-	 * @return   The requested meta object, may be <code>null</code>.
-	 */
-	protected MetaObject getMetaObject(RoleProvider aProvider) {
-		return (aProvider instanceof RoleRule) ? ((RoleRule) aProvider).getMetaObject() : null;
 	}
 
 	/**

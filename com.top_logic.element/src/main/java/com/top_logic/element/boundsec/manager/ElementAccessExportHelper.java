@@ -19,7 +19,6 @@ import javax.swing.tree.TreeModel;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.basic.xml.TagWriter;
-import com.top_logic.dob.MetaObject;
 import com.top_logic.element.boundsec.attribute.AttributeClassifierManager;
 import com.top_logic.element.boundsec.manager.rule.IdentityPathElement;
 import com.top_logic.element.boundsec.manager.rule.PathElement;
@@ -214,9 +213,7 @@ public class ElementAccessExportHelper {
             for (Iterator theRuleIt = theRules.iterator(); theRuleIt.hasNext();) {
                 RoleRule theRule = (RoleRule) theRuleIt.next();
                 TLClass theME = theRule.getMetaElement();
-                MetaObject theMO = theRule.getMetaObject();
                 TLClass theSourceME = theRule.getSourceMetaElement();
-                MetaObject theSourceMO = theRule.getSourceMetaObject();
                 BoundRole theRole = theRule.getRole();
                 BoundRole theSourceRole = theRule.getSourceRole();
                 Type theType = theRule.getType();
@@ -227,14 +224,8 @@ public class ElementAccessExportHelper {
                 if (theME != null) {
 					out.writeAttribute(RoleRuleConfig.XML_ATTRIBUTE_META_ELEMENT, TLModelUtil.qualifiedName(theME));
                 }
-                if (theMO != null) {
-                    out.writeAttribute(RoleRuleConfig.XML_ATTRIBUTE_META_OBJECT, theMO.getName());
-                }
                 if (theSourceME != null) {
 					out.writeAttribute(RoleRuleConfig.XML_ATTRIBUTE_SOURCE_META_ELEMENT, TLModelUtil.qualifiedName(theSourceME));
-                }
-                if (theSourceMO != null) {
-                    out.writeAttribute(RoleRuleConfig.XML_ATTRIBUTE_SOURCE_META_OBJECT, theSourceMO.getName());
                 }
                 if (theRole != null) {
                     out.writeAttribute(RoleRuleConfig.XML_ATTRIBUTE_ROLE, theRole.getName());

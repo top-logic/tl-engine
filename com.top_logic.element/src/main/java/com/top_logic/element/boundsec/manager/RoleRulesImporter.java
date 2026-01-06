@@ -18,8 +18,6 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
-import com.top_logic.dob.MetaObject;
-import com.top_logic.dob.ex.UnknownTypeException;
 import com.top_logic.element.boundsec.manager.ElementAccessImporter.ApplicationRoleHolder;
 import com.top_logic.element.boundsec.manager.rule.IdentityPathElement;
 import com.top_logic.element.boundsec.manager.rule.PathElement;
@@ -57,28 +55,9 @@ public class RoleRulesImporter {
 			I18NConstants.ABSTRACT_TYPE_WITHOUT_INHERITANCE;
 
 	/**
-	 * Message key used when neither a {@link TLClass} nor a {@link MetaObject} is declared in a
-	 * rule.
-	 */
-	static final ResKey NO_ELEMENT_OR_OBJECT_DECLARED =
-			I18NConstants.META_ELEMENT_AND_META_OBJECT_NOT_DECLARED;
-
-	/**
-	 * Message key used when both, {@link TLClass} and {@link MetaObject}, are declared in a
-	 * rule.
-	 */
-	static final ResKey2 ELEMENT_AND_OBJECT_DECLARED =
-			I18NConstants.META_ELEMENT_AND_META_OBJECT_DECLARED;
-
-	/**
 	 * Message key used when configured {@link TLClass} is unknown.
 	 */
 	static final ResKey1 UNKNOWN_META_ELEMENT = I18NConstants.UNKNOWN_META_ELEMENT;
-
-	/**
-	 * Message key used when configured {@link MetaObject} is unknown.
-	 */
-	static final ResKey1 UNKNOWN_META_OBJECT = I18NConstants.UNKNOWN_META_OBJECT;
 
 	/**
 	 * Message key used when both, {@link TLStructuredTypePart} and {@link KnowledgeAssociation} are
@@ -119,11 +98,7 @@ public class RoleRulesImporter {
 
 	private TLClass _metaElement;
 
-	private MetaObject _metaObject;
-
 	private TLClass _sourceMetaElement;
-
-	private MetaObject _sourceMetaObject;
 
 	private ResKey _resKey;
 
@@ -144,14 +119,11 @@ public class RoleRulesImporter {
     }
 
     void addRule(RoleRule aRule) {
-        MetaObject  theMO     = aRule.getMetaObject();
         TLClass theME     = aRule.getMetaElement();
-        Object      theTarget = theME != null ? (Object) theME : (Object) theMO;
-
-		Collection<RoleProvider> theRules = this._rules.get(theTarget);
+		Collection<RoleProvider> theRules = this._rules.get(theME);
         if (theRules == null) {
 			theRules = new ArrayList<>();
-			this._rules.put(theTarget, theRules);
+			this._rules.put(theME, theRules);
         }
         theRules.add(aRule);
     }
@@ -164,18 +136,6 @@ public class RoleRulesImporter {
 			return (TLClass) TLModelUtil.findType(aMetaElementName);
 		} catch (TopLogicException ex) {
 			addProblem(UNKNOWN_META_ELEMENT.fill(aMetaElementName));
-			return null;
-		}
-    }
-
-	private MetaObject getMetaObject(String aMetaObjectName) {
-		if (StringServices.isEmpty(aMetaObjectName)) {
-			return null;
-		}
-		try {
-			return _kb.getMORepository().getMetaObject(aMetaObjectName);
-		} catch (UnknownTypeException ex) {
-			addProblem(UNKNOWN_META_OBJECT.fill(aMetaObjectName));
 			return null;
 		}
     }
@@ -211,21 +171,16 @@ public class RoleRulesImporter {
 
 		_inherit = roleRule.isInherit();
 		_metaElement = getMetaElement(roleRule.getMetaElement());
-		_metaObject = getMetaObject(roleRule.getMetaObject());
-		if (roleRule.getMetaElement().isEmpty() && roleRule.getMetaObject().isEmpty()) {
-			addProblem(NO_ELEMENT_OR_OBJECT_DECLARED);
-		}
-		if (!roleRule.getMetaElement().isEmpty() && !roleRule.getMetaObject().isEmpty()) {
-			addProblem(ELEMENT_AND_OBJECT_DECLARED.fill(roleRule.getMetaElement(), roleRule.getMetaObject()));
+		if (roleRule.getMetaElement() == null) {
+			addProblem(I18NConstants.NO_META_ELEMENT_DECLARED);
 		}
 		_sourceMetaElement = getMetaElement(roleRule.getSourceMetaElement());
 		if (_metaElement != null && _metaElement.isAbstract() && !_inherit) {
 			addProblem(ABSTRACT_TYPE_WITHOUT_INHERITANCE.fill(roleRule.getMetaElement()));
 		}
 		if (_sourceMetaElement != null && _sourceMetaElement.isAbstract()) {
-			addProblem(ABSTRACT_SOURCE_TYPE.fill(roleRule.getSourceMetaObject()));
+			addProblem(ABSTRACT_SOURCE_TYPE.fill(roleRule.getSourceMetaElement()));
 		}
-		_sourceMetaObject = getMetaObject(roleRule.getSourceMetaObject());
 		Collection<BoundedRole> roles = getRoles(roleRule.getRole());
 		Collection<BoundedRole> sourceRoles = getRoles(roleRule.getSourceRole());
 
@@ -254,23 +209,12 @@ public class RoleRulesImporter {
 	private void createRules(RoleRuleConfig roleRuleConfig, BoundedRole sourceRole, Collection<BoundedRole> roles,
 			List<PathElement> path) {
 		for (BoundedRole role : roles) {
-			if (_metaElement != null) {
-				if (Type.inheritance.equals(roleRuleConfig.getType())) {
-					addRule(
-						new RoleRule(_metaElement, _sourceMetaElement, _sourceMetaObject, _inherit,
-							role, sourceRole, path, _base, _resKey));
-				} else {
-					addRule(
-						new RoleRule(_metaElement, _inherit, role, path, _base,
-							_resKey));
-				}
+			if (Type.inheritance.equals(roleRuleConfig.getType())) {
+				addRule(
+					new RoleRule(_metaElement, _sourceMetaElement, _inherit, role, sourceRole, path, _base, _resKey));
 			} else {
-				if (Type.inheritance.equals(roleRuleConfig.getType())) {
-					addRule(new RoleRule(_metaObject, _sourceMetaElement, _sourceMetaObject, role,
-						sourceRole, path, _base, _resKey));
-				} else {
-					addRule(new RoleRule(_metaObject, role, path, _base, _resKey));
-				}
+				addRule(
+					new RoleRule(_metaElement, _inherit, role, path, _base, _resKey));
 			}
 		}
 	}

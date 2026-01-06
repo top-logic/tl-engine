@@ -13,7 +13,6 @@ import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.dob.MetaObject;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider.Type;
 import com.top_logic.model.TLClass;
 
@@ -29,14 +28,8 @@ public interface RoleRuleConfig extends ConfigurationItem {
 	/** Name of the value of {@link #getMetaElement()} in the configuration. */
 	String XML_ATTRIBUTE_META_ELEMENT = "meta-element";
 
-	/** Name of the value of {@link #getMetaObject()} in the configuration. */
-	String XML_ATTRIBUTE_META_OBJECT = "meta-object";
-
 	/** Name of the value of {@link #getSourceMetaElement()} in the configuration. */
 	String XML_ATTRIBUTE_SOURCE_META_ELEMENT = "source-meta-element";
-
-	/** Name of the value of {@link #getSourceMetaObject()} in the configuration. */
-	String XML_ATTRIBUTE_SOURCE_META_OBJECT = "source-meta-object";
 
 	/** Name of the value of {@link #getRole()} in the configuration. */
 	String XML_ATTRIBUTE_ROLE = "role";
@@ -86,25 +79,11 @@ public interface RoleRuleConfig extends ConfigurationItem {
 	String getMetaElement();
 
 	/**
-	 * Name of the {@link MetaObject} which must an object use to write data to to get the given
-	 * {@link #getRole()}.
-	 */
-	@Name(RoleRuleConfig.XML_ATTRIBUTE_META_OBJECT)
-	String getMetaObject();
-
-	/**
 	 * Optional name of the {@link TLClass} which the source object must have to get the given
 	 * {@link #getRole()}.
 	 */
 	@Name(RoleRuleConfig.XML_ATTRIBUTE_SOURCE_META_ELEMENT)
 	String getSourceMetaElement();
-
-	/**
-	 * Optional name of the {@link MetaObject} which the source object must write data to to get the
-	 * given {@link #getRole()}.
-	 */
-	@Name(RoleRuleConfig.XML_ATTRIBUTE_SOURCE_META_OBJECT)
-	String getSourceMetaObject();
 
 	/**
 	 * Target roles which a user gets on the target objects.

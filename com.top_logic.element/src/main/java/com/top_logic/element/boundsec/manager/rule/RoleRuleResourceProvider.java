@@ -12,7 +12,6 @@ import java.util.List;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagUtil;
-import com.top_logic.dob.MetaObject;
 import com.top_logic.element.boundsec.manager.ElementAccessManager;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.layout.Flavor;
@@ -92,22 +91,17 @@ public class RoleRuleResourceProvider extends DefaultResourceProvider {
             values.add(rule.getType());
             values.add(rule.getRole());
             values.add(rule.getMetaElement());
-            values.add(rule.getMetaObject());
             values.add(rule.getSourceRole());
             values.add(rule.getBaseString());
 
             values.add(rule.getId());
 
             values.add(rule.getSourceMetaElement());
-            values.add(rule.getSourceMetaObject());
             values.add(rule.getPath());
 
             for (int i = 0, length = values.size(); i < length; i++) {
                 Object value = values.get(i);
-                if (value instanceof MetaObject) {
-                    value = ((MetaObject)value).getName();
-                }
-                else if (value instanceof TLClass) {
+				if (value instanceof TLClass) {
                     value = ((TLClass)value).getName();
                 }
                 else if (value instanceof BoundedRole) {

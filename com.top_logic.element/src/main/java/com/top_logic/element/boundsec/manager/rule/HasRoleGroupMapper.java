@@ -8,10 +8,9 @@ package com.top_logic.element.boundsec.manager.rule;
 import java.util.Collections;
 
 import com.top_logic.basic.col.Mapping;
-import com.top_logic.dob.MetaObject;
 import com.top_logic.element.boundsec.manager.ElementAccessManager;
-import com.top_logic.model.TLClass;
 import com.top_logic.knowledge.wrap.Wrapper;
+import com.top_logic.model.TLClass;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.manager.AccessManager;
@@ -22,14 +21,12 @@ import com.top_logic.tool.boundsec.manager.AccessManager;
 public class HasRoleGroupMapper implements Mapping {
 
     private TLClass sourceMetaElement;
-    private MetaObject  sourceMetaObject;
     private BoundRole   role;
 
-    public HasRoleGroupMapper(BoundRole aRole, TLClass aSourceME, MetaObject aSourceMO) {
+    public HasRoleGroupMapper(BoundRole aRole, TLClass aSourceME) {
         super();
         this.role = aRole;
         this.sourceMetaElement = aSourceME;
-        this.sourceMetaObject  = aSourceMO;
     }
 
     /**
@@ -38,9 +35,6 @@ public class HasRoleGroupMapper implements Mapping {
     @Override
 	public Object map(Object anInput) {
     	final Wrapper theWrapper = (Wrapper) anInput;
-    	if (this.sourceMetaObject != null && theWrapper.tTable() != this.sourceMetaObject) {
-    		return Collections.EMPTY_LIST;
-    	}
     	if (this.sourceMetaElement != null
     			&& (theWrapper instanceof Wrapper)
 			&& (!((Wrapper) theWrapper).tType().equals(this.sourceMetaElement))) {

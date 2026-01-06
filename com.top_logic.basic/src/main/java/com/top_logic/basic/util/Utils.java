@@ -222,7 +222,8 @@ public class Utils {
 	}
 
 	/**
-	 * Helper interface for the {@link #fold(Object, Object)} method declaring a folder function.
+	 * Helper interface for the {@link Utils#fold(Object, Iterator, FolderFunction)} method
+	 * declaring a folder function.
 	 */
 	public static interface FolderFunction {
 		public Object fold(Object currentResult, Object aNewObject);

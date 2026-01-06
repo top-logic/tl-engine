@@ -50,10 +50,10 @@ public class I18NConstants extends I18NConstantsBase {
 		legacyKey2("admin.security.import.roleRules.problem.illegalMetaElement");
 
 
-	public static ResKey2 META_ELEMENT_AND_META_OBJECT_DECLARED =
-		legacyKey2("admin.security.import.roleRules.problem.metaElementAndMetaObjectDeclared");
-
-	public static ResKey META_ELEMENT_AND_META_OBJECT_NOT_DECLARED = legacyKey("admin.security.import.roleRules.problem.metaElementAndMetaObjectNotDeclared");
+	/**
+	 * @en No type is given.
+	 */
+	public static ResKey NO_META_ELEMENT_DECLARED;
 
 	public static ResKey NO_ATTRIBUTE_OR_ASSOCIATION = legacyKey("admin.security.import.roleRules.problem.noAttributeOrAssociation");
 
@@ -70,8 +70,6 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey1 UNKNOWN_META_ELEMENT =
 		legacyKey1("admin.security.import.roleRules.problem.unknownMetaElement");
-
-	public static ResKey1 UNKNOWN_META_OBJECT = legacyKey1("admin.security.import.roleRules.problem.unknownMetaObject");
 
 	static {
 		initConstants(I18NConstants.class);

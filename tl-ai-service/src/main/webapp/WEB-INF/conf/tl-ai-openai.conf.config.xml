@@ -13,14 +13,14 @@
 		<config service-class="com.top_logic.basic.module.ModuleSystem">
 			<instance>
 				<modules>
-					<!-- OpenAI Service for OpenAI API integration -->
-					<module key="com.top_logic.ai.service.OpenAIService$Module" value="true"/>
+					<!-- AI Service for AI/LLM API integration -->
+					<module key="com.top_logic.ai.service.AIService$Module" value="true"/>
 				</modules>
 			</instance>
 		</config>
 
-		<config service-class="com.top_logic.ai.service.OpenAIService">
-			<instance class="com.top_logic.ai.service.OpenAIService"
+		<config service-class="com.top_logic.ai.service.AIService">
+			<instance class="com.top_logic.ai.service.AIService"
 				default-model="gpt-4o"
 			>
 				<factories>

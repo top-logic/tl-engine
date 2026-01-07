@@ -103,11 +103,11 @@ Configure AI response structure:
 
 ### Core Components
 
-#### OpenAIService
+#### AIService
 Main service managing AI model access and pooling.
 
-- **Location**: `com.top_logic.ai.service.OpenAIService`
-- **Singleton**: Access via `OpenAIService.getInstance()`
+- **Location**: `com.top_logic.ai.service.AIService`
+- **Singleton**: Access via `AIService.getInstance()`
 - **Thread-safe**: Models bound to InteractionContext
 - **Configurable**: Via `tl-ai-service.config.xml`
 
@@ -138,7 +138,7 @@ Utility for converting TL-Script maps to LangChain4j JSON schemas.
 
 ### Service Configuration
 
-See service configuration `com.top_logic.ai.service.OpenAIService` in `tl-ai-service.config.xml`:
+See service configuration `com.top_logic.ai.service.AIService` in `tl-ai-service.config.xml`:
 
 ### Environment Variables
 

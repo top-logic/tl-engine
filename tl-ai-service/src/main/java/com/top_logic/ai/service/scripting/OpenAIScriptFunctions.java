@@ -14,7 +14,7 @@ import java.util.Map;
 import jakarta.activation.MimeType;
 import jakarta.activation.MimeTypeParseException;
 
-import com.top_logic.ai.service.OpenAIService;
+import com.top_logic.ai.service.AIService;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.io.binary.BinaryDataSource;
@@ -77,7 +77,7 @@ public class OpenAIScriptFunctions extends TLScriptFunctions {
 	 *        </ul>
 	 * @param model
 	 *        The model name to use (e.g., "gpt-4o", "gpt-3.5-turbo"), or {@code null} to use the
-	 *        default model configured in {@link OpenAIService}.
+	 *        default model configured in {@link AIService}.
 	 * @param responseFormat
 	 *        The response format specification. Can be:
 	 *        <ul>
@@ -89,7 +89,7 @@ public class OpenAIScriptFunctions extends TLScriptFunctions {
 	 * @return The assistant's response text.
 	 */
 	public static String chat(List<Object> messages, String model, Object responseFormat) {
-		ChatModel chatModel = OpenAIService.getInstance().getChatModel(model);
+		ChatModel chatModel = AIService.getInstance().getChatModel(model);
 
 		List<ChatMessage> chatMessages = new ArrayList<>();
 

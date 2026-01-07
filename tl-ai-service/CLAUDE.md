@@ -47,7 +47,7 @@ This is a TopLogic **core module** (extends `tl-parent-core`), not an applicatio
 ```
 tl-ai-service/
 ├── src/main/java/com/top_logic/ai/service/
-│   ├── OpenAIService.java                    # Main service - manages AI model access
+│   ├── AIService.java                    # Main service - manages AI model access
 │   ├── ChatModelFactory.java                 # Factory interface for chat models
 │   ├── providers/                            # Provider-specific implementations
 │   │   ├── OpenAIChatModelFactory.java       # OpenAI (GPT-3.5, GPT-4)
@@ -84,7 +84,7 @@ The service uses a sophisticated pooling mechanism to manage AI model clients:
 4. **Per-Model Pools**: Each configured AI model has its own connection pool
 
 **Key Classes:**
-- `OpenAIService` (src/main/java/com/top_logic/ai/service/OpenAIService.java:48) - Main service singleton
+- `AIService` (src/main/java/com/top_logic/ai/service/AIService.java:48) - Main service singleton
 - `ChatModelFactory` - Factory interface for creating model pools
 - Provider-specific factories in `providers/` package
 
@@ -145,8 +145,8 @@ This demonstrates:
 Configuration is in `src/main/webapp/WEB-INF/conf/tl-ai-openai.conf.config.xml`:
 
 ```xml
-<config service-class="com.top_logic.ai.service.OpenAIService">
-    <instance class="com.top_logic.ai.service.OpenAIService"
+<config service-class="com.top_logic.ai.service.AIService">
+    <instance class="com.top_logic.ai.service.AIService"
         default-model="gpt-4o"
     >
         <factories>

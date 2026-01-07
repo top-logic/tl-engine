@@ -77,8 +77,8 @@ public abstract class ChatModelFactory implements ConfiguredInstance<ChatModelFa
 		 * determines which models can be requested. All listed models will use the same API
 		 * credentials from this factory.
 		 * </p>
-		 * 
-		 * @see OpenAIService#getChatModel(String)
+		 *
+		 * @see AIService#getChatModel(String)
 		 */
 		@Name(MODELS)
 		@Format(CommaSeparatedStrings.class)

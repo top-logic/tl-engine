@@ -14,7 +14,6 @@ import java.util.Map;
 
 import com.top_logic.ai.service.agents.UMLSpecificationAgent;
 import com.top_logic.ai.service.scripting.OpenAIScriptFunctions;
-import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Control;
@@ -30,7 +29,6 @@ import com.top_logic.util.TLContext;
  *
  * @author jhu
  */
-@ServiceDependencies(com.top_logic.ai.service.OpenAIService.Module.class)
 public class ChatControl extends AbstractControlBase {
 
 	private static final Map<String, ControlCommand> COMMANDS =

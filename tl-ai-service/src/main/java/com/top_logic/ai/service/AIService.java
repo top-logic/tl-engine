@@ -45,23 +45,23 @@ import dev.langchain4j.model.chat.ChatModel;
  * @see #getInstance()
  * @see #getChatModel()
  */
-public class OpenAIService extends ConfiguredManagedClass<OpenAIService.Config<?>> {
+public class AIService extends ConfiguredManagedClass<AIService.Config<?>> {
 
 	/**
 	 * ThreadContext property key for storing the borrowed chat models by model name.
 	 */
 	private static final Property<Map<String, ChatModel>> CONTEXT_MODELS_KEY =
-		TypedAnnotatable.propertyMap(OpenAIService.class.getName() + ".models");
+		TypedAnnotatable.propertyMap(AIService.class.getName() + ".models");
 
 	/**
-	 * Configuration interface for {@link OpenAIService}.
+	 * Configuration interface for {@link AIService}.
 	 */
 	@DisplayOrder({
 		Config.FACTORIES,
 		Config.DEFAULT_MODEL,
 	})
 	@DisplayInherited(DisplayStrategy.PREPEND)
-	public interface Config<I extends OpenAIService> extends ConfiguredManagedClass.Config<I> {
+	public interface Config<I extends AIService> extends ConfiguredManagedClass.Config<I> {
 
 		/**
 		 * Configuration property name for model factories.
@@ -103,14 +103,14 @@ public class OpenAIService extends ConfiguredManagedClass<OpenAIService.Config<?
 		String getDefaultModel();
 	}
 
-	private static volatile OpenAIService _instance;
+	private static volatile AIService _instance;
 
 	private Map<String, ObjectPool<ChatModel>> _modelPools = new HashMap<>();
 
 	private String _defaultModel;
 
 	/**
-	 * Creates a new {@link OpenAIService} from configuration.
+	 * Creates a new {@link AIService} from configuration.
 	 *
 	 * @param context
 	 *        The instantiation context for error reporting.
@@ -118,16 +118,16 @@ public class OpenAIService extends ConfiguredManagedClass<OpenAIService.Config<?
 	 *        The service configuration.
 	 */
 	@CalledByReflection
-	public OpenAIService(InstantiationContext context, Config<?> config) {
+	public AIService(InstantiationContext context, Config<?> config) {
 		super(context, config);
 	}
 
 	/**
-	 * Returns the singleton instance of the {@link OpenAIService}.
+	 * Returns the singleton instance of the {@link AIService}.
 	 *
 	 * @return The service instance, or {@code null} if not yet started.
 	 */
-	public static OpenAIService getInstance() {
+	public static AIService getInstance() {
 		return _instance;
 	}
 
@@ -150,7 +150,7 @@ public class OpenAIService extends ConfiguredManagedClass<OpenAIService.Config<?
 			}
 
 			// Create a pool for each model from each configured factory
-			InstantiationContext context = new DefaultInstantiationContext(OpenAIService.class);
+			InstantiationContext context = new DefaultInstantiationContext(AIService.class);
 			for (ChatModelFactory.Config<?> factoryConfig : factoryConfigs) {
 				List<String> modelNames = factoryConfig.getModels();
 
@@ -192,7 +192,7 @@ public class OpenAIService extends ConfiguredManagedClass<OpenAIService.Config<?
 			if (_modelPools.isEmpty()) {
 				Logger.warn(
 					"No valid model factories available. Please check that API keys are properly configured.",
-					OpenAIService.class);
+					AIService.class);
 			} else {
 				// Set default model
 				_defaultModel = config.getDefaultModel();
@@ -200,14 +200,14 @@ public class OpenAIService extends ConfiguredManagedClass<OpenAIService.Config<?
 					// Use first available model as default
 					_defaultModel = _modelPools.keySet().iterator().next();
 
-					Logger.info("Selecting default AI model: " + _defaultModel, OpenAIService.class);
+					Logger.info("Selecting default AI model: " + _defaultModel, AIService.class);
 				}
 			}
 			context.checkErrors();
 		} catch (RuntimeException ex) {
 			throw ex;
 		} catch (Exception ex) {
-			throw new RuntimeException("Failed to start OpenAI service: " + ex.getMessage(), ex);
+			throw new RuntimeException("Failed to start AI service: " + ex.getMessage(), ex);
 		}
 	}
 
@@ -334,22 +334,22 @@ public class OpenAIService extends ConfiguredManagedClass<OpenAIService.Config<?
 	}
 
 	/**
-	 * Module for {@link OpenAIService}.
+	 * Module for {@link AIService}.
 	 */
-	public static final class Module extends TypedRuntimeModule<OpenAIService> {
+	public static final class Module extends TypedRuntimeModule<AIService> {
 
 		/**
-		 * Singleton {@link OpenAIService.Module} instance.
+		 * Singleton {@link AIService.Module} instance.
 		 */
-		public static final OpenAIService.Module INSTANCE = new OpenAIService.Module();
+		public static final AIService.Module INSTANCE = new AIService.Module();
 
 		private Module() {
 			// Singleton constructor
 		}
 
 		@Override
-		public Class<OpenAIService> getImplementation() {
-			return OpenAIService.class;
+		public Class<AIService> getImplementation() {
+			return AIService.class;
 		}
 	}
 }

@@ -47,7 +47,7 @@ public class ResourceTranslator extends AbstractTranslateMojo {
 	private static final String XML_BRACE_OPEN = XML_OPEN + XML_BRACE_NAME;
 	private static final String XML_BRACE_CLOSE = XML_OPEN + XML_SLASH + XML_BRACE_NAME;
 
-	private static final Pattern SUFFIX_PATTERN = Pattern.compile("(.*/)?([^_/]+)_([A-Za-z_]+).properties");
+	private static final Pattern SUFFIX_PATTERN = Pattern.compile("(.*/)?([^_/]+)_([-A-Za-z_]+).properties");
 
 	/**
 	 * Base directory to resolve {@link #sourcePath} against.
@@ -301,7 +301,7 @@ public class ResourceTranslator extends AbstractTranslateMojo {
 		if (isEmpty(lang)) {
 			Matcher srcMather = SUFFIX_PATTERN.matcher(resourcePath);
 			if (srcMather.matches()) {
-				lang = srcMather.group(3);
+				lang = srcMather.group(3).replace('_', '-');
 			}
 		}
 		return lang;

@@ -376,26 +376,41 @@ public class LogParser extends AbstractConfiguredInstance<LogParser.Config> {
 
 	/** Creates, caches and returns the {@link LogLineSeverity}. */
 	protected LogLineSeverity getSeverity(String name) {
+		if (name == null) {
+			return null;
+		}
 		return _severities.computeIfAbsent(name, ignored -> new LogLineSeverity(name, DEFAULT_SEVERITY_SORT_ORDER));
 	}
 
 	/** Interns the {@link String} by using a single cached instance for every equal text. */
 	protected String internMessage(String original) {
+		if (original == null) {
+			return null;
+		}
 		return _messages.computeIfAbsent(original, Function.identity());
 	}
 
 	/** Interns the {@link String} by using a single cached instance for every equal text. */
 	protected String internCategory(String original) {
+		if (original == null) {
+			return null;
+		}
 		return _categories.computeIfAbsent(original, Function.identity());
 	}
 
 	/** Interns the {@link String} by using a single cached instance for every equal text. */
 	protected String internThread(String original) {
+		if (original == null) {
+			return null;
+		}
 		return _threads.computeIfAbsent(original, Function.identity());
 	}
 
 	/** Interns the {@link String} by using a single cached instance for every equal text. */
 	protected String internDetails(String original) {
+		if (original == null) {
+			return null;
+		}
 		return _details.computeIfAbsent(original, Function.identity());
 	}
 

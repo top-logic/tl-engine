@@ -724,8 +724,6 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	@Inspectable
 	private Object _model;
 
-	private LayoutComponent _window;
-
 	@Inspectable
 	private PropertyListeners _listeners;
 
@@ -1085,7 +1083,6 @@ public abstract class LayoutComponent extends ModelEventAdapter
 			}
 		} else {
 			main = null;
-			_window = null;
 		}
     }
 
@@ -1105,10 +1102,6 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		main = newMainLayout;
 		if (newMainLayout != null) {
 			newMainLayout.registerComponent(this);
-			LayoutComponent parent = getParent();
-			if (parent != null) {
-				_window = parent.getWindow();
-			}
 			notifyAddToMainLayout();
 		} else {
 			setToolBar(null);
@@ -2437,25 +2430,17 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	}
 
 	@Override
-	protected final boolean receiveDialogOpenedEvent(Object aModel, Object changedBy) {
-		boolean handleTypeResult;
+	protected final void receiveDialogOpenedEvent(Object aModel, Object changedBy) {
 		if (this.isVisible()) {
-			handleTypeResult = this.receiveDialogEvent(aModel, changedBy, true);
-		} else {
-			handleTypeResult = false;
+			this.receiveDialogEvent(aModel, changedBy, true);
 		}
-		return handleTypeResult;
 	}
 
 	@Override
-	protected final boolean receiveDialogClosedEvent(Object aModel, Object changedBy) {
-		boolean handleTypeResult;
+	protected final void receiveDialogClosedEvent(Object aModel, Object changedBy) {
 		if (this.isVisible()) {
-			handleTypeResult = this.receiveDialogEvent(aModel, changedBy, false);
-		} else {
-			handleTypeResult = false;
+			this.receiveDialogEvent(aModel, changedBy, false);
 		}
-		return handleTypeResult;
 	}
 
     /**
@@ -2469,11 +2454,9 @@ public abstract class LayoutComponent extends ModelEventAdapter
      * @param    aDialog      The dialog opened or closed.
      * @param    anOwner      The component that opend / closed the dialog
      * @param    isOpen       true when dialog was opened
-     * @return   <code>true</code> to indicate that this part (or subparts)
-     *           have become invalid.
      */
-    public boolean receiveDialogEvent(Object aDialog, Object anOwner, boolean isOpen) {
-        return false;
+    public void receiveDialogEvent(Object aDialog, Object anOwner, boolean isOpen) {
+		// Does nothing in general
     }
 
     /**
@@ -4443,22 +4426,10 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	}
 
 	/**
-	 * Returns the support for opening and closing a {@link LayoutComponent} as dialog.
-	 * 
-	 * @return <code>null</code> if and only if the {@link MainLayout} is not yet resolved.
-	 * 
-	 * @see #componentsResolved(InstantiationContext)
+	 * The support for opening and closing a {@link LayoutComponent} as dialog.
 	 */
 	public DialogSupport getDialogSupport() {
-		return getWindow().getDialogSupport();
-	}
-
-	/**
-	 * The enclosing {@link WindowComponent} if it is an external window, otherwise the
-	 * {@link MainLayout}.
-	 */
-	public LayoutComponent getWindow() {
-		return _window;
+		return DefaultDisplayContext.getDisplayContext().getWindowScope().getDialogSupport();
 	}
 
 	/**

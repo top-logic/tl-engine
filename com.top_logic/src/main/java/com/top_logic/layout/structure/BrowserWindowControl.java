@@ -85,6 +85,7 @@ import com.top_logic.layout.servlet.CacheControl;
 import com.top_logic.layout.window.WindowManager;
 import com.top_logic.mig.html.layout.CommandDispatcher;
 import com.top_logic.mig.html.layout.ComponentName;
+import com.top_logic.mig.html.layout.DialogSupport;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.tool.boundsec.CommandHandler;
@@ -240,6 +241,8 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 
 	private final TimerControl _timerControl;
 
+	private final DialogSupport _dialogSupport;
+
 	/**
 	 * @param opener
 	 *        the opener of this window. my be <code>null</code> if this window is the main window
@@ -261,11 +264,17 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 		_downloadSurvivingTime = config.getDownloadSurvivingTime();
 		_downloadModification = config.getDownloadModification();
 		_name = name;
+		_dialogSupport = new DialogSupport(this);
 	}
 
 	@Override
 	public ComponentName getName() {
 		return _name;
+	}
+
+	@Override
+	public DialogSupport getDialogSupport() {
+		return _dialogSupport;
 	}
 
 	@Override

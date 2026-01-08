@@ -447,7 +447,7 @@ public class GotoHandler extends AbstractCommandHandler {
 	public static String getJSCallStatement(DisplayContext context, LayoutComponent targetComponent, Object object) {
 		if (object != null) {
 			boolean canShow = canShow(object, targetComponent);
-			if (canShow || true) {
+			if (canShow) {
 				return getJSCallStatement(context, object, targetComponent != null ? targetComponent.getName() : null);
 			}
 		}

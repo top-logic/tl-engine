@@ -5,11 +5,11 @@
  */
 package com.top_logic.util.sched.task.schedule;
 
+import static com.top_logic.layout.form.template.model.Templates.*;
+
 import java.text.DateFormat;
 import java.util.Calendar;
 import java.util.Date;
-
-import org.w3c.dom.Document;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
@@ -23,7 +23,7 @@ import com.top_logic.basic.config.format.MillisFormatInt;
 import com.top_logic.basic.time.CalendarUtil;
 import com.top_logic.basic.time.TimeOfDayAsDateValueProvider;
 import com.top_logic.basic.time.TimeUtil;
-import com.top_logic.basic.xml.DOMUtil;
+import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.FormGroup;
@@ -123,19 +123,6 @@ public class DailyPeriodicallySchedule<C extends DailyPeriodicallySchedule.Confi
 	 * The name of the {@link FormField} presenting {@link Config#getInterval()}.
 	 */
 	public static final String NAME_FIELD_INTERVAL = NAME_FIELD_PREFIX + "Interval";
-
-	private static final Document TEMPLATE = DOMUtil.parseThreadSafe(""
-		+ "	<table " + templateRootAttributes() + " >"
-		+ templateStandardFields()
-		+ "		<tr>"
-		+ templateSmallField(NAME_FIELD_START_TIME)
-		+ templateSmallField(NAME_FIELD_STOP_TIME)
-		+ "		</tr>"
-		+ "		<tr>"
-		+ templateLargeField(NAME_FIELD_INTERVAL)
-		+ "		</tr>"
-		+ "	</table>"
-		);
 
 	/**
 	 * Called by the {@link TypedConfiguration} for creating a {@link DailyPeriodicallySchedule}.
@@ -262,8 +249,13 @@ public class DailyPeriodicallySchedule<C extends DailyPeriodicallySchedule.Confi
 	}
 
 	@Override
-	public Document getFormTemplateDocument() {
-		return TEMPLATE;
+	protected HTMLTemplateFragment createTemplate() {
+		return fragment(
+			fieldBox(NAME_FIELD_STRATEGY),
+			fieldBox(NAME_FIELD_CLASS),
+			fieldBox(NAME_FIELD_START_TIME),
+			fieldBox(NAME_FIELD_STOP_TIME),
+			fieldBox(NAME_FIELD_INTERVAL));
 	}
 
 	@Override
@@ -271,12 +263,18 @@ public class DailyPeriodicallySchedule<C extends DailyPeriodicallySchedule.Confi
 		super.fillFormGroup(group);
 
 		DateFormat timeFormat = HTMLFormatter.getInstance().getShortTimeFormat();
-		group.addMember(FormFactory.newComplexField(
-			NAME_FIELD_START_TIME, timeFormat, getStartTime(), FormFactory.IMMUTABLE));
-		group.addMember(FormFactory.newComplexField(
-			NAME_FIELD_STOP_TIME, timeFormat, getStopTime(), FormFactory.IMMUTABLE));
-		group.addMember(FormFactory.newStringField(
-			NAME_FIELD_INTERVAL, TimeUtil.formatMillisAsTime(getConfig().getInterval()), FormFactory.IMMUTABLE));
+		group.addMember(
+			transferPropertyLabel(Config.class, Config.PROPERTY_NAME_START_TIME,
+				FormFactory.newComplexField(
+			NAME_FIELD_START_TIME, timeFormat, getStartTime(), FormFactory.IMMUTABLE)));
+		group.addMember(
+			transferPropertyLabel(Config.class, Config.PROPERTY_NAME_STOP_TIME,
+				FormFactory.newComplexField(
+			NAME_FIELD_STOP_TIME, timeFormat, getStopTime(), FormFactory.IMMUTABLE)));
+		group.addMember(
+			transferPropertyLabel(Config.class, Config.PROPERTY_NAME_INTERVAL,
+				FormFactory.newStringField(
+			NAME_FIELD_INTERVAL, TimeUtil.formatMillisAsTime(getConfig().getInterval()), FormFactory.IMMUTABLE)));
 	}
 
 }

@@ -5,22 +5,25 @@
  */
 package com.top_logic.util.sched.task.schedule;
 
+import static com.top_logic.layout.form.template.model.Templates.*;
+
 import java.text.DateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
-import org.w3c.dom.Document;
-
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.time.TimeOfDayAsDateValueProvider;
-import com.top_logic.basic.xml.DOMUtil;
+import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.FormGroup;
@@ -43,7 +46,20 @@ public class DailySchedule<C extends DailySchedule.Config<?>>
 
 	/** {@link TypedConfiguration} of {@link DailySchedule}. */
 	@TagName("daily")
-	public interface Config<S extends DailySchedule<?>> extends AbstractSchedulingAlgorithm.Config<S> {
+	@DisplayOrder({
+		Config.PROPERTY_NAME_TIME_OF_DAY,
+		Config.PROPERTY_NAME_PERIOD,
+	})
+	public interface Config<S extends DailySchedule<?>>
+			extends FixedDatePeriodicalSchedulingAlgorithm.Config<S>, TimeOfDayConfig {
+		// sum interface
+	}
+
+	/**
+	 * Configuration of a time in a day.
+	 */
+	@Abstract
+	public interface TimeOfDayConfig extends ConfigurationItem {
 
 		/** Property name for {@link #getTimeOfDay()} */
 		String PROPERTY_NAME_TIME_OF_DAY = "time-of-day";
@@ -71,15 +87,6 @@ public class DailySchedule<C extends DailySchedule.Config<?>>
 	 */
 	public static final String NAME_FIELD_TIME_OF_DAY = NAME_FIELD_PREFIX + "TimeOfDay";
 
-	private static final Document TEMPLATE = DOMUtil.parseThreadSafe(""
-		+ "	<table " + templateRootAttributes() + " >"
-		+ templateStandardFields()
-		+ "		<tr>"
-		+ templateLargeField(NAME_FIELD_TIME_OF_DAY)
-		+ "		</tr>"
-		+ "	</table>"
-		);
-
 	/**
 	 * Called by the {@link TypedConfiguration} for creating a {@link DailySchedule}.
 	 * 
@@ -99,13 +106,17 @@ public class DailySchedule<C extends DailySchedule.Config<?>>
 	}
 
 	@Override
-	protected void addPeriod(Calendar result) {
-		result.add(Calendar.DAY_OF_YEAR, 1);
+	protected void addPeriod(Calendar result, int period) {
+		result.add(Calendar.DAY_OF_YEAR, period);
 	}
 
 	@Override
-	public Document getFormTemplateDocument() {
-		return TEMPLATE;
+	protected HTMLTemplateFragment createTemplate() {
+		return fragment(
+			fieldBox(NAME_FIELD_STRATEGY),
+			fieldBox(NAME_FIELD_CLASS),
+			fieldBox(NAME_FIELD_TIME_OF_DAY),
+			fieldBox(NAME_FIELD_PERIOD));
 	}
 
 	@Override
@@ -114,7 +125,11 @@ public class DailySchedule<C extends DailySchedule.Config<?>>
 
 		DateFormat format = HTMLFormatter.getInstance().getShortTimeFormat();
 		Object value = getConfig().getTimeOfDay();
-		group.addMember(FormFactory.newComplexField(NAME_FIELD_TIME_OF_DAY, format, value, FormFactory.IMMUTABLE));
+		group.addMember(
+			transferPropertyLabel(Config.class, Config.PROPERTY_NAME_TIME_OF_DAY,
+				FormFactory.newComplexField(NAME_FIELD_TIME_OF_DAY, format, value, FormFactory.IMMUTABLE)));
+
+		addPeriodField(group);
 	}
 
 }

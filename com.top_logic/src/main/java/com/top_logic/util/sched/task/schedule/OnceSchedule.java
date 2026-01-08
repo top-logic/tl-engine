@@ -5,9 +5,9 @@
  */
 package com.top_logic.util.sched.task.schedule;
 
-import java.util.Date;
+import static com.top_logic.layout.form.template.model.Templates.*;
 
-import org.w3c.dom.Document;
+import java.util.Date;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
@@ -16,7 +16,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
-import com.top_logic.basic.xml.DOMUtil;
+import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.FormGroup;
 import com.top_logic.layout.form.values.edit.annotation.PropertyEditor;
@@ -51,16 +51,7 @@ public class OnceSchedule<C extends OnceSchedule.Config<?>> extends AbstractSche
 
 	private static final String TIME_FIELD = "time";
 
-	private static final Document TEMPLATE = DOMUtil.parseThreadSafe(""
-		+ "	<table " + templateRootAttributes() + " >"
-		+ templateStandardFields()
-		+ "		<tr>"
-		+ templateSmallField(TIME_FIELD)
-		+ "		</tr>"
-		+ "	</table>"
-		);
-
-		private long _time;
+	private long _time;
 
 	/**
 	 * Called by the {@link TypedConfiguration} for creating a {@link OnceSchedule}.
@@ -91,16 +82,21 @@ public class OnceSchedule<C extends OnceSchedule.Config<?>> extends AbstractSche
 	}
 
 	@Override
-	public Document getFormTemplateDocument() {
-		return TEMPLATE;
+	protected HTMLTemplateFragment createTemplate() {
+		return fragment(
+			fieldBox(NAME_FIELD_STRATEGY),
+			fieldBox(NAME_FIELD_CLASS),
+			fieldBox(TIME_FIELD));
 	}
 
 	@Override
 	public void fillFormGroup(FormGroup group) {
 		super.fillFormGroup(group);
 
-		group.addMember(FormFactory.newComplexField(
-			TIME_FIELD, HTMLFormatter.getInstance().getDateTimeFormat(), _time, FormFactory.IMMUTABLE));
+		group.addMember(
+			transferPropertyLabel(Config.class, Config.TIME,
+				FormFactory.newComplexField(
+					TIME_FIELD, HTMLFormatter.getInstance().getDateTimeFormat(), _time, FormFactory.IMMUTABLE)));
 	}
 
 }

@@ -8,13 +8,9 @@ package com.top_logic.util.sched.task.schedule;
 import static com.top_logic.layout.form.template.model.Templates.*;
 
 import java.text.DateFormat;
-import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Collections;
-import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.Day;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
@@ -31,35 +27,36 @@ import com.top_logic.util.sched.task.Task;
 import com.top_logic.util.sched.task.schedule.DailySchedule.TimeOfDayConfig;
 
 /**
- * {@link SchedulingAlgorithm} for running a {@link Task} once a week.
+ * {@link SchedulingAlgorithm} for running a {@link Task} once a month.
  * 
  * <p>
- * Use the {@link SchedulingAlgorithmCombinator} if it should run at multiple days of the week.
+ * Use the {@link SchedulingAlgorithmCombinator} if it should run at multiple days of the month.
  * </p>
- * 
- * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
 @InApp
-public class WeeklySchedule<C extends WeeklySchedule.Config<?>>
-		extends FixedDatePeriodicalSchedulingAlgorithm<WeeklySchedule.Config<?>> {
+public class MonthlySchedule<C extends MonthlySchedule.Config<?>>
+		extends FixedDatePeriodicalSchedulingAlgorithm<MonthlySchedule.Config<?>> {
 
-	/** {@link TypedConfiguration} of {@link WeeklySchedule}. */
-	@TagName("weekly")
+	/** {@link TypedConfiguration} of {@link MonthlySchedule}. */
+	@TagName("monthly")
 	@DisplayOrder({
-		Config.PROPERTY_NAME_DAY_OF_WEEK,
+		Config.PROPERTY_NAME_DAY_OF_MONTH,
 		Config.PROPERTY_NAME_TIME_OF_DAY,
 		Config.PROPERTY_NAME_PERIOD,
 	})
-	public interface Config<S extends WeeklySchedule<?>>
+	public interface Config<S extends MonthlySchedule<?>>
 			extends FixedDatePeriodicalSchedulingAlgorithm.Config<S>, TimeOfDayConfig {
 
-		/** Property name for {@link #getDayOfWeek()} */
-		String PROPERTY_NAME_DAY_OF_WEEK = "day-of-week";
+		/** Property name for {@link #getDayOfMonth()} */
+		String PROPERTY_NAME_DAY_OF_MONTH = "day-of-month";
 
-		/** The {@link Day Day of week} at which the {@link Task} should be scheduled. */
+		/**
+		 * The day of the month on which the task should be scheduled. If the day falls outside the
+		 * range of the actual month, it is adjusted so that it falls within it.
+		 */
 		@Mandatory
-		@Name(PROPERTY_NAME_DAY_OF_WEEK)
-		Day getDayOfWeek();
+		@Name(PROPERTY_NAME_DAY_OF_MONTH)
+		int getDayOfMonth();
 
 	}
 
@@ -71,12 +68,12 @@ public class WeeklySchedule<C extends WeeklySchedule.Config<?>>
 	 * intentionally don't reuse this.
 	 * </p>
 	 */
-	public static final String NAME_FIELD_PREFIX = WeeklySchedule.class.getSimpleName();
+	public static final String NAME_FIELD_PREFIX = MonthlySchedule.class.getSimpleName();
 
 	/**
-	 * The name of the {@link FormField} presenting {@link Config#getDayOfWeek()}.
+	 * The name of the {@link FormField} presenting {@link Config#getDayOfMonth()}.
 	 */
-	public static final String NAME_FIELD_DAY_OF_WEEK = NAME_FIELD_PREFIX + "DayOfWeek";
+	public static final String NAME_FIELD_DAY_OF_MONTH = NAME_FIELD_PREFIX + "DayOfMonth";
 
 	/**
 	 * The name of the {@link FormField} presenting {@link Config#getTimeOfDay()}.
@@ -84,28 +81,41 @@ public class WeeklySchedule<C extends WeeklySchedule.Config<?>>
 	public static final String NAME_FIELD_TIME_OF_DAY = NAME_FIELD_PREFIX + "TimeOfDay";
 
 	/**
-	 * Called by the {@link TypedConfiguration} for creating a {@link WeeklySchedule}.
+	 * Called by the {@link TypedConfiguration} for creating a {@link MonthlySchedule}.
 	 * 
 	 * @param context
 	 *        For instantiation of dependent configured objects.
 	 * @param config
-	 *        The configuration of this {@link WeeklySchedule}.
+	 *        The configuration of this {@link MonthlySchedule}.
 	 */
 	@CalledByReflection
-	public WeeklySchedule(InstantiationContext context, C config) {
+	public MonthlySchedule(InstantiationContext context, C config) {
 		super(context, config);
 	}
 
 	@Override
 	protected void setScheduleTime(Calendar result) {
-		Config<?> config = getConfig();
-		config.getDayOfWeek().applyTo(result);
-		applyTimeOfDay(config.getTimeOfDay(), result);
+		setCorrectDayOfMonth(result);
+		applyTimeOfDay(getConfig().getTimeOfDay(), result);
+	}
+
+	private void setCorrectDayOfMonth(Calendar result) {
+		int dayOfMonth = Math.max(
+			Math.min(
+				getConfig().getDayOfMonth(),
+				result.getActualMaximum(Calendar.DAY_OF_MONTH)),
+			result.getActualMinimum(Calendar.DAY_OF_MONTH));
+		result.set(Calendar.DAY_OF_MONTH, dayOfMonth);
 	}
 
 	@Override
 	protected void addPeriod(Calendar result, int period) {
-		result.add(Calendar.WEEK_OF_YEAR, period);
+		// Ensure that adding month does not roll calendar to large,e.g. 30.01. should not roll to
+		// 02.03.
+		result.set(Calendar.DAY_OF_MONTH, result.getGreatestMinimum(Calendar.DAY_OF_MONTH));
+		result.add(Calendar.MONTH, period);
+		setCorrectDayOfMonth(result);
+		
 	}
 
 	@Override
@@ -113,7 +123,7 @@ public class WeeklySchedule<C extends WeeklySchedule.Config<?>>
 		return fragment(
 			fieldBox(NAME_FIELD_STRATEGY),
 			fieldBox(NAME_FIELD_CLASS),
-			fieldBox(NAME_FIELD_DAY_OF_WEEK),
+			fieldBox(NAME_FIELD_DAY_OF_MONTH),
 			fieldBox(NAME_FIELD_TIME_OF_DAY),
 			fieldBox(NAME_FIELD_PERIOD));
 	}
@@ -122,18 +132,16 @@ public class WeeklySchedule<C extends WeeklySchedule.Config<?>>
 	public void fillFormGroup(FormGroup group) {
 		super.fillFormGroup(group);
 
-		List<Day> dayOfWeekOptions = Arrays.asList(Day.values());
-		List<Day> dayOfWeekValue = Collections.singletonList(getConfig().getDayOfWeek());
-		group.addMember(transferPropertyLabel(Config.class, Config.PROPERTY_NAME_DAY_OF_WEEK,
-			FormFactory.newSelectField(
-				NAME_FIELD_DAY_OF_WEEK, dayOfWeekOptions, !FormFactory.MULTIPLE, dayOfWeekValue,
-				FormFactory.IMMUTABLE)));
+		group.addMember(
+			transferPropertyLabel(Config.class, Config.PROPERTY_NAME_DAY_OF_MONTH,
+				FormFactory.newIntField(
+					NAME_FIELD_DAY_OF_MONTH, getConfig().getDayOfMonth(), FormFactory.IMMUTABLE)));
 
 		DateFormat timeOfDayFormat = HTMLFormatter.getInstance().getShortTimeFormat();
 		group.addMember(
 			transferPropertyLabel(Config.class, Config.PROPERTY_NAME_TIME_OF_DAY,
 				FormFactory.newComplexField(
-				NAME_FIELD_TIME_OF_DAY, timeOfDayFormat, getConfig().getTimeOfDay(), FormFactory.IMMUTABLE)));
+					NAME_FIELD_TIME_OF_DAY, timeOfDayFormat, getConfig().getTimeOfDay(), FormFactory.IMMUTABLE)));
 
 		addPeriodField(group);
 	}

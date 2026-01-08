@@ -55,6 +55,7 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.PackageElement;
+import javax.lang.model.element.RecordComponentElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.TypeParameterElement;
 import javax.lang.model.element.VariableElement;
@@ -486,6 +487,7 @@ public class TLDoclet implements Doclet {
 			case ANNOTATION_TYPE:
 				return "annotation";
 			case RECORD:
+				return "record";
 			case CLASS:
 				if (isSubType(classType, _wellKnown._errorType)) {
 					return "error";
@@ -605,7 +607,12 @@ public class TLDoclet implements Doclet {
 	}
 
 	void printWarning(Element element, String msg) {
-		printWarning(position(element), msg);
+		SourcePosition position = position(element);
+		if (position == null) {
+			// TODO:
+//			return;
+		}
+		printWarning(position, msg);
 	}
 
 	private String simpleTypeName(TypeVariable type) {
@@ -1004,7 +1011,9 @@ public class TLDoclet implements Doclet {
 	}
 
 	/**
-	 * Writer creating
+	 * Writer collecting elements to write to resource files.
+	 * 
+	 * @see TLDoclet#_configDoc
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
@@ -1680,23 +1689,21 @@ public class TLDoclet implements Doclet {
 				}
 
 				// Write tooltip for parameters
-				for (DocTree tag : pathToMethod.getDocComment().getBlockTags()) {
-					if (tag.getKind() == DocTree.Kind.PARAM) {
-						ParamTree paramTree = (ParamTree) tag;
-						String paramName = paramTree.getName().getName().toString();
-						if (!parametersByName.containsKey(paramName)) {
-							continue;
-						}
-
-						String description =
-							extractDoc(type, new DocTreePath(pathToMethod, paramTree), paramTree.getDescription());
-						String res = description.toString().trim();
-						if (res.isEmpty()) {
-							continue;
-						}
-						_configDoc.setProperty(tooltipKey(parameterKey.apply(paramName)), res);
-						parametersByName.remove(paramName);
+				for (DocTree tag : paramTags(pathToMethod.getDocComment())) {
+					ParamTree paramTree = (ParamTree) tag;
+					String paramName = paramTree.getName().getName().toString();
+					if (!parametersByName.containsKey(paramName)) {
+						continue;
 					}
+
+					String description =
+							extractDoc(type, new DocTreePath(pathToMethod, paramTree), paramTree.getDescription());
+					String res = description.toString().trim();
+					if (res.isEmpty()) {
+						continue;
+					}
+					_configDoc.setProperty(tooltipKey(parameterKey.apply(paramName)), res);
+					parametersByName.remove(paramName);
 				}
 				if (!parametersByName.isEmpty()) {
 					parametersByName.values()
@@ -2167,6 +2174,8 @@ public class TLDoclet implements Doclet {
 			List<VariableElement> inner;
 			if (type.getKind() == ElementKind.ENUM) {
 				inner = enumConstantsIn(type);
+			} else if (type.getKind() == ElementKind.RECORD) {
+				inner = recordComponentsIn(type);
 			} else {
 				inner = fieldsIn(type);
 			}
@@ -2227,7 +2236,6 @@ public class TLDoclet implements Doclet {
 		}
 
 		private void writeField(VariableElement field, boolean inInterface) throws XMLStreamException, IOException {
-			checkDocumentation(field);
 
 			nl();
 			startElement("field");
@@ -2249,7 +2257,26 @@ public class TLDoclet implements Doclet {
 				writeTypeRef(field.asType());
 				writeAnnotations(field);
 
-				writeDoc(field);
+				if (field instanceof RecordComponentElement rce) {
+					// Comment for a RecordComponentElement must be in an @param tag of the Record.
+					Element recordElement = rce.getEnclosingElement();
+					boolean commentFound = false;
+					for (ParamTree param : paramTags(recordElement)) {
+						if (param.getName().getName().equals(rce.getSimpleName())) {
+							writeDoc(recordElement, param, () -> param.getDescription());
+							commentFound = true;
+							break;
+						}
+					}
+					if (!commentFound) {
+						printWarning(recordElement,
+							"Missing comment for record component " + rce.getSimpleName());
+					}
+				} else {
+					checkDocumentation(field);
+
+					writeDoc(field);
+				}
 			}
 			endElement();
 		}
@@ -2537,7 +2564,11 @@ public class TLDoclet implements Doclet {
 		}
 
 		long lineNumber(Element element) {
-			return position(element).line();
+			SourcePosition position = position(element);
+			if (position == null) {
+				return -1;
+			}
+			return position.line();
 		}
 
 		private String plural(String kind) {

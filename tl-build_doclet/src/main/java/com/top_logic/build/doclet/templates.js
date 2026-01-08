@@ -623,7 +623,7 @@ output += runtime.suppressValue(env.getFilter("doc").call(context, runtime.conte
 output += "</p>\n";
 output += runtime.suppressValue(env.getFilter("doc").call(context, runtime.contextOrFrameLookup(context, frame, "doc"),runtime.contextOrFrameLookup(context, frame, "name")), env.opts.autoescape);
 output += "\n\n";
-if(runtime.contextOrFrameLookup(context, frame, "extends") && (runtime.contextOrFrameLookup(context, frame, "kind") != "enum")) {
+if(runtime.contextOrFrameLookup(context, frame, "extends") && (runtime.contextOrFrameLookup(context, frame, "kind") != "enum") && (runtime.contextOrFrameLookup(context, frame, "kind") != "record")) {
 output += "\n<p class=\"extends\">\nExtends <code>";
 output += runtime.suppressValue((lineno = 218, colno = 26, runtime.callWrap(macro_t_36, "printType", context, [runtime.contextOrFrameLookup(context, frame, "extends"),runtime.contextOrFrameLookup(context, frame, "name")])), env.opts.autoescape);
 output += "</code>\n</p>\n";
@@ -1588,9 +1588,11 @@ output += runtime.suppressValue((lineno = 60, colno = 10, runtime.callWrap(macro
 output += "\n";
 output += runtime.suppressValue((lineno = 61, colno = 10, runtime.callWrap(macro_t_14, "section", context, ["Classes",env.getFilter("nonAbstract").call(context, runtime.contextOrFrameLookup(context, frame, "classes"))])), env.opts.autoescape);
 output += "\n";
-output += runtime.suppressValue((lineno = 62, colno = 10, runtime.callWrap(macro_t_14, "section", context, ["Exceptions",runtime.contextOrFrameLookup(context, frame, "exceptions")])), env.opts.autoescape);
+output += runtime.suppressValue((lineno = 62, colno = 10, runtime.callWrap(macro_t_14, "section", context, ["Records",runtime.contextOrFrameLookup(context, frame, "records")])), env.opts.autoescape);
 output += "\n";
-output += runtime.suppressValue((lineno = 63, colno = 10, runtime.callWrap(macro_t_14, "section", context, ["Errors",runtime.contextOrFrameLookup(context, frame, "errors")])), env.opts.autoescape);
+output += runtime.suppressValue((lineno = 63, colno = 10, runtime.callWrap(macro_t_14, "section", context, ["Exceptions",runtime.contextOrFrameLookup(context, frame, "exceptions")])), env.opts.autoescape);
+output += "\n";
+output += runtime.suppressValue((lineno = 64, colno = 10, runtime.callWrap(macro_t_14, "section", context, ["Errors",runtime.contextOrFrameLookup(context, frame, "errors")])), env.opts.autoescape);
 output += "\n</div>\n\n<div class=\"footer\">\nTopLogic API and implementations © Copyright by Business Operation Systems GmbH\n</div>\n</div>";
 if(parentTemplate) {
 parentTemplate.rootRenderFunc(env, context, frame, runtime, cb);
@@ -1663,4 +1665,3 @@ root: root
 
 })();
 })();
-

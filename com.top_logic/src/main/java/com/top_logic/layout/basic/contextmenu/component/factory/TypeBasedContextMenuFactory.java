@@ -19,11 +19,11 @@ import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
-import com.top_logic.basic.config.annotation.InstanceFormat;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
-import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
+import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.util.Utils;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.basic.CommandModel;
@@ -34,10 +34,15 @@ import com.top_logic.layout.basic.contextmenu.config.ContextMenuCommandsProvider
 import com.top_logic.layout.basic.contextmenu.config.MetaContextMenuCommandsProvider;
 import com.top_logic.layout.basic.contextmenu.menu.Menu;
 import com.top_logic.layout.basic.fragments.Fragments;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
+import com.top_logic.layout.form.values.edit.InAppImplementations;
+import com.top_logic.layout.form.values.edit.annotation.AcceptableClassifiers;
+import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.tree.model.TLTreeNode;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.CommandHandler;
+import com.top_logic.tool.boundsec.CommandHandlerUtil;
 
 /**
  * {@link ContextMenuProvider} that uses custom {@link CommandHandler}s to build a context menu in
@@ -59,12 +64,11 @@ public class TypeBasedContextMenuFactory<C extends TypeBasedContextMenuFactory.C
 	/**
 	 * Configuration options for {@link ComponentContextMenuFactory}.
 	 */
+	@DisplayOrder({
+		Config.TITLE_PROVIDER,
+		Config.CUSTOM_COMMANDS,
+	})
 	public interface Config<I extends ComponentContextMenuFactory<?>> extends PolymorphicConfiguration<I> {
-
-		/**
-		 * @see #getCustomCommands()
-		 */
-		String CUSTOM_COMMANDS = "customCommands";
 
 		/**
 		 * @see #getTitleProvider()
@@ -72,12 +76,19 @@ public class TypeBasedContextMenuFactory<C extends TypeBasedContextMenuFactory.C
 		String TITLE_PROVIDER = "titleProvider";
 
 		/**
+		 * @see #getCustomCommands()
+		 */
+		String CUSTOM_COMMANDS = "customCommands";
+
+		/**
 		 * {@link LabelProvider} that displays the context object in the menu's title bar.
 		 */
+		@Label("Context menu title")
 		@Name(TITLE_PROVIDER)
-		@InstanceFormat
-		@InstanceDefault(MetaLabelProvider.class)
-		LabelProvider getTitleProvider();
+		@ItemDefault(MetaLabelProvider.class)
+		@Options(fun = InAppImplementations.class)
+		@AcceptableClassifiers({ "label-provider", "context-menu-title" })
+		PolymorphicConfiguration<? extends LabelProvider> getTitleProvider();
 
 		/**
 		 * Commands added to the context menu.
@@ -86,11 +97,14 @@ public class TypeBasedContextMenuFactory<C extends TypeBasedContextMenuFactory.C
 		@DefaultContainer
 		@ImplementationClassDefault(ConfiguredContextMenuCommandsProvider.class)
 		@ItemDefault(MetaContextMenuCommandsProvider.class)
+		@Options(fun = AllInAppImplementations.class)
 		PolymorphicConfiguration<? extends ContextMenuCommandsProvider> getCustomCommands();
 
 	}
 
-	final ContextMenuCommandsProvider _provider;
+	private final LabelProvider _titleProvider;
+
+	private final ContextMenuCommandsProvider _commandsProvider;
 
 	/**
 	 * Creates a {@link TypeBasedContextMenuFactory} from configuration.
@@ -103,12 +117,24 @@ public class TypeBasedContextMenuFactory<C extends TypeBasedContextMenuFactory.C
 	@CalledByReflection
 	public TypeBasedContextMenuFactory(InstantiationContext context, C config) {
 		super(context, config);
-		_provider = context.getInstance(config.getCustomCommands());
+		_titleProvider = context.getInstance(getConfig().getTitleProvider());
+		_commandsProvider = context.getInstance(config.getCustomCommands());
 	}
 
 	@Override
 	public ContextMenuProvider createContextMenuProvider(LayoutComponent component) {
 		return new Provider(component);
+	}
+
+	/**
+	 * Hook for sub-classes to transform the passed model object on which the context menu is opened
+	 * before using that as model for context-menu commands.
+	 * 
+	 * @param layoutComponent
+	 *        The context component.
+	 */
+	protected Object mapContextObject(LayoutComponent layoutComponent, Object model) {
+		return model;
 	}
 
 	/**
@@ -137,15 +163,15 @@ public class TypeBasedContextMenuFactory<C extends TypeBasedContextMenuFactory.C
 
 		@Override
 		public boolean hasContextMenu(Object obj) {
-			return _provider.hasContextMenuCommands(obj);
+			return _commandsProvider.hasContextMenuCommands(obj);
 		}
 
 		@Override
 		public Menu getContextMenu(Object directTarget, Object model) {
 			Object mappedModel = mapContext(model);
-			List<CommandModel> buttons = createButtons(directTarget, mappedModel, createArguments(mappedModel));
+			List<CommandModel> buttons = createButtons(directTarget, mappedModel, createArguments(directTarget, mappedModel));
 			Menu result = ContextMenuUtil.toContextMenu(buttons);
-			String title = getConfig().getTitleProvider().getLabel(mappedModel);
+			String title = _titleProvider.getLabel(mappedModel);
 			if (!StringServices.isEmpty(title)) {
 				result.setTitle(Fragments.text(title));
 			}
@@ -188,8 +214,8 @@ public class TypeBasedContextMenuFactory<C extends TypeBasedContextMenuFactory.C
 		 * the collection.
 		 * </p>
 		 */
-		protected Object mapContextObject(Object obj) {
-			return obj;
+		protected final Object mapContextObject(Object obj) {
+			return TypeBasedContextMenuFactory.this.mapContextObject(getComponent(), obj);
 		}
 
 		/**
@@ -204,7 +230,13 @@ public class TypeBasedContextMenuFactory<C extends TypeBasedContextMenuFactory.C
 		 *        even all currently selected objects, if the context menu was opened on a
 		 *        selection).
 		 * @param arguments
-		 *        The arguments to invoke the commands with.
+		 *        The arguments to invoke the commands with. These arguments contain at least the
+		 *        current model, on which a regular command is invoked under the key
+		 *        {@link CommandHandlerUtil#TARGET_MODEL_ARGUMENT}. When the context menu is called
+		 *        on a multi-selection, this model would be the whole selection. For commands, that
+		 *        must operate independently of the current selection, the object, on which the
+		 *        context menu was opened, is also contained in the arguments under the key
+		 *        {@link ContextMenuUtil#DIRECT_TARGET}.
 		 * @return The (unordered) list of context menu entries.
 		 */
 		protected List<CommandModel> createButtons(Object directTarget, Object model, Map<String, Object> arguments) {
@@ -215,7 +247,7 @@ public class TypeBasedContextMenuFactory<C extends TypeBasedContextMenuFactory.C
 		 * Creates context menu entries from {@link Config#getCustomCommands()}.
 		 */
 		protected final List<CommandModel> createProviderButtons(Object model, Map<String, Object> arguments) {
-			return toButtons(getComponent(), arguments, _provider.getContextCommands(model));
+			return toButtons(getComponent(), arguments, _commandsProvider.getContextCommands(model));
 		}
 	}
 

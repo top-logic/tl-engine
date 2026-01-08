@@ -12,6 +12,10 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.layout.basic.contextmenu.ContextMenuProvider;
 import com.top_logic.layout.basic.contextmenu.NoContextMenuProvider;
+import com.top_logic.layout.form.values.edit.InAppImplementations;
+import com.top_logic.layout.form.values.edit.annotation.AcceptableClassifiers;
+import com.top_logic.layout.form.values.edit.annotation.DisplayMinimized;
+import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
@@ -33,6 +37,9 @@ public interface WithContextMenu extends ConfigurationItem {
 	 * {@link ContextMenuProvider} that creates a {@link ContextMenuProvider} for this component.
 	 */
 	@Name(CONTEXT_MENU)
+	@DisplayMinimized
+	@Options(fun = InAppImplementations.class)
+	@AcceptableClassifiers({ "common" })
 	@ItemDefault(NoContextMenuProvider.class)
 	PolymorphicConfiguration<? extends ContextMenuProvider> getContextMenu();
 

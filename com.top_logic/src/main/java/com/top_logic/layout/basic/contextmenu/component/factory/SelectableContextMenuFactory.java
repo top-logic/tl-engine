@@ -11,6 +11,9 @@ import java.util.stream.Collectors;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.CommandModelFactory;
 import com.top_logic.layout.basic.contextmenu.ContextMenuProvider;
@@ -25,8 +28,34 @@ import com.top_logic.tool.boundsec.CommandHandler;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
+@Label("Commands on selection")
 public class SelectableContextMenuFactory<C extends SelectableContextMenuFactory.Config<?>>
 		extends ComponentContextMenuFactory<C> {
+
+	/**
+	 * Configuration options for {@link SelectableContextMenuFactory}.
+	 */
+	public interface Config<I extends SelectableContextMenuFactory<?>> extends ComponentContextMenuFactory.Config<I> {
+
+		/**
+		 * @see #isIncludeDependentCommands()
+		 */
+		String INCLUDE_DEPENDENT_COMMANDS = "include-dependent-commands";
+
+		/**
+		 * Whether to include commands defined on dependent components into the context menu.
+		 * 
+		 * <p>
+		 * A dependent component is one that uses the selection of this component as its model.
+		 * Commands that operate on the dependent components model are suitable to be used in the
+		 * context menu of the selection.
+		 * </p>
+		 */
+		@Name(INCLUDE_DEPENDENT_COMMANDS)
+		@BooleanDefault(true)
+		boolean isIncludeDependentCommands();
+
+	}
 
 	/**
 	 * Creates a {@link SelectableContextMenuFactory} from configuration.
@@ -68,14 +97,16 @@ public class SelectableContextMenuFactory<C extends SelectableContextMenuFactory
 		protected List<CommandModel> createButtons(Object directTarget, Object model, Map<String, Object> arguments) {
 			List<CommandModel> buttons = super.createButtons(directTarget, model, arguments);
 
-			LayoutComponent self = getComponent();
-			buttons.addAll(
-				self.getSlaves().stream()
+			if (getConfig().isIncludeDependentCommands()) {
+				LayoutComponent self = getComponent();
+				buttons.addAll(
+					self.getSlaves().stream()
 					.filter(component -> acceptSlave(component, model))
 					.flatMap(component -> component.getCommands().stream()
 						.filter(this::acceptSlaveCommand)
 						.map(command -> CommandModelFactory.commandModel(command, component, arguments)))
 					.collect(Collectors.toList()));
+			}
 
 			return buttons;
 		}

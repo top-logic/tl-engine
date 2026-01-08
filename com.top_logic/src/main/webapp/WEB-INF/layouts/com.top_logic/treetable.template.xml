@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <config:template xmlns:config="http://www.top-logic.com/ns/config/6.0">
-	<properties extends="com.top_logic.layout.tree.component.WithTreeModelBuilder, com.top_logic.layout.editor.config.ColumnsTemplateParameters, com.top_logic.mig.html.DefaultSelectionModelFactory$UIOptions, com.top_logic.layout.structure.OptionalToolbarOptions, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.layout.tree.model.TreeViewConfig, com.top_logic.layout.component.InAppSelectable$InAppSelectableConfig, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.tool.boundsec.WithSecurityMaster, com.top_logic.mig.html.layout.WithGotoConfiguration, com.top_logic.mig.html.layout.WithChannelConfigs">
+	<properties extends="com.top_logic.layout.tree.component.WithTreeModelBuilder, com.top_logic.layout.editor.config.ColumnsTemplateParameters, com.top_logic.mig.html.DefaultSelectionModelFactory$UIOptions, com.top_logic.layout.structure.OptionalToolbarOptions, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.layout.tree.model.TreeViewConfig, com.top_logic.layout.component.InAppSelectable$InAppSelectableConfig, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.tool.boundsec.WithSecurityMaster, com.top_logic.layout.basic.contextmenu.component.config.WithContextMenu, com.top_logic.mig.html.layout.WithGotoConfiguration, com.top_logic.mig.html.layout.WithChannelConfigs">
 		<annotations>
 			<display-order>
 				<value>
@@ -35,6 +35,7 @@
 					<property name="dragSource"/>
 					<property name="dropTargets"/>
 					<property name="buttons"/>
+					<property name="contextMenu"/>
 					<property name="onSelectionChange"/>
 					<property name="goto-targets"/>
 					<property name="additional-channels"/>
@@ -93,6 +94,16 @@
 		<property name="onSelectionChange"
 			instance-type="com.top_logic.layout.component.OnSelectionChangeHandler"
 		/>
+		<property name="contextMenu"
+			instance-type="com.top_logic.layout.basic.contextmenu.ContextMenuProvider"
+			type="PolymorphicConfiguration"
+		>
+			<acceptable-classifiers
+				unclassified="false"
+				value="treetable, common"
+			/>
+			<item-default value="com.top_logic.layout.table.tree.TreeTableContextMenuProvider"/>
+		</property>
 	</properties>
 
 	<tree-table name="TreeTable"
@@ -125,6 +136,7 @@
 		/>
 		<table
 			configurationProviders="${configurationProviders}"
+			contextMenu="${contextMenu}"
 			defaultColumns="${defaultColumns}"
 			dragSource="${dragSource}"
 			dropTargets="${dropTargets}"

@@ -54,5 +54,11 @@
 				<downloadNameProvider class="com.top_logic.layout.table.export.ComponentDownloadName"/>
 			</button>
 		</buttons>
+		<contextMenu class="com.top_logic.element.layout.grid.GridContextMenuProvider">
+			<contextMenuFactory>
+				<titleProvider class="com.top_logic.layout.provider.MetaLabelProvider"/>
+				<customCommands class="com.top_logic.layout.basic.contextmenu.config.MetaContextMenuCommandsProvider"/>
+			</contextMenuFactory>
+		</contextMenu>
 	</arguments>
 </config:template-call>

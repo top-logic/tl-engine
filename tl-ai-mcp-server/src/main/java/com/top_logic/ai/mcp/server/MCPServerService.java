@@ -30,6 +30,7 @@ import com.top_logic.ai.mcp.server.tools.EnumerationCreationTool;
 import com.top_logic.ai.mcp.server.tools.EnumerationUpdateTool;
 import com.top_logic.ai.mcp.server.tools.ModuleCreationTool;
 import com.top_logic.ai.mcp.server.tools.ModuleUpdateTool;
+import com.top_logic.ai.mcp.server.tools.ModelSearchTool;
 import com.top_logic.ai.mcp.server.tools.PropertyCreationTool;
 import com.top_logic.ai.mcp.server.tools.PropertyUpdateTool;
 import com.top_logic.ai.mcp.server.tools.ReferenceCreationTool;
@@ -332,6 +333,9 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 
 		// Register tool for executing TLScript
 		builder.tools(TLScriptExecutionTool.createSpecification());
+
+		// Register tool for searching the model
+		builder.tools(ModelSearchTool.createSpecification());
 
 		// Register configured dynamic resources
 		InstantiationContext context = new com.top_logic.basic.config.DefaultInstantiationContext(getClass());

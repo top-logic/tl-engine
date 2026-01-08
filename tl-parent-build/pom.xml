@@ -6,7 +6,7 @@
 	
 	<parent>
 		<groupId>com.top-logic</groupId>
-		<version>7.9.7</version>
+		<version>0.0.2-SECURITY</version>
 		<artifactId>tl-parent-all</artifactId>
 		
 		<relativePath>../tl-parent-all</relativePath>

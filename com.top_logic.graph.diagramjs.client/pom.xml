@@ -5,7 +5,7 @@
     <relativePath>../tl-parent-gwt</relativePath>
     <groupId>com.top-logic</groupId>
 	<artifactId>tl-parent-gwt</artifactId>
-    <version>7.9.7</version>
+    <version>0.0.2-SECURITY</version>
   </parent>
 
   <artifactId>tl-graph-diagramjs-client</artifactId>
@@ -36,7 +36,7 @@
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-ajax-client</artifactId>
-	  <version>7.9.7</version>
+	  <version>0.0.2-SECURITY</version>
       <classifier>sources</classifier>
       <scope>provided</scope>
     </dependency>
@@ -48,7 +48,7 @@
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-client-diagramjs</artifactId>
-	  <version>7.9.7</version>
+	  <version>0.0.2-SECURITY</version>
       <classifier>sources</classifier>
       <scope>provided</scope>
     </dependency>
@@ -60,7 +60,7 @@
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-graph-diagramjs</artifactId>
-	  <version>7.9.7</version>
+	  <version>0.0.2-SECURITY</version>
       <classifier>sources</classifier>
       <scope>provided</scope>
     </dependency>
@@ -69,28 +69,28 @@
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-graph-common</artifactId>
-	  <version>7.9.7</version>
+	  <version>0.0.2-SECURITY</version>
       <classifier>sources</classifier>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-common-remote</artifactId>
-	  <version>7.9.7</version>
+	  <version>0.0.2-SECURITY</version>
       <classifier>sources</classifier>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-common-json</artifactId>
-	  <version>7.9.7</version>
+	  <version>0.0.2-SECURITY</version>
       <classifier>sources</classifier>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-basic-shared</artifactId>
-	  <version>7.9.7</version>
+	  <version>0.0.2-SECURITY</version>
       <classifier>sources</classifier>
       <scope>provided</scope>
     </dependency>

@@ -29,7 +29,10 @@
 			optional="true"
 		/>
 		<param name="securityObject"
-			value="model"
+			optional="true"
+		/>
+		<param name="isSecurityMaster"
+			optional="true"
 		/>
 		<param name="resPrefix"
 			optional="true"
@@ -52,6 +55,7 @@
 		detailComponentName="${detailComponentName}"
 		dialogName="${dialogName}"
 		forms="${forms}"
+		isSecurityMaster="${isSecurityMaster}"
 		model="${model}"
 		namePrefix="${namePrefix}"
 		resPrefix="${resPrefix}"

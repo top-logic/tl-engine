@@ -44,6 +44,9 @@
 		<param name="securityObject"
 			value="model"
 		/>
+		<param name="isSecurityMaster"
+			value="true"
+		/>
 		<param name="resPrefix"
 			value="layouts.element.create.genericCreate."
 		/>
@@ -77,7 +80,7 @@
 			commandGroups="${createCommandGroups}"
 			commands="${commands}"
 			create-handler="${createHandler}"
-			isSecurityMaster="true"
+			isSecurityMaster="${isSecurityMaster}"
 			model="${model}"
 			modelBuilder="${modelBuilder}"
 			name="${detailComponentName}"

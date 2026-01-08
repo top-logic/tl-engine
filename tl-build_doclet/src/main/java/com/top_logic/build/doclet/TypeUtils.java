@@ -239,6 +239,15 @@ public class TypeUtils {
 	}
 
 	/**
+	 * Determines the record components in the given type.
+	 */
+	public static List<VariableElement> recordComponentsIn(TypeElement element) {
+		return element.getRecordComponents().stream()
+			.map(VariableElement.class::cast)
+			.collect(Collectors.toList());
+	}
+
+	/**
 	 * Determines the inner types in the given type.
 	 */
 	public static List<TypeElement> typesIn(Element elem) {

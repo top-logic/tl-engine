@@ -214,7 +214,7 @@ Abstract
 <p class="title">{{ title | doc(name) }}</p>
 {{ doc | doc(name) }}
 
-{% if extends and (kind != "enum") %}
+{% if extends and (kind != "enum") and (kind != "record") %}
 <p class="extends">
 Extends <code>{{ printType(extends, name) }}</code>
 </p>

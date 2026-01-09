@@ -871,8 +871,7 @@ public abstract class ThemeImage implements HTMLFragment {
 			return new AbstractXMLTag() {
 				@Override
 				public void beginBeginTag(DisplayContext context, TagWriter out) throws IOException {
-					out.beginBeginTag(ANCHOR);
-					out.writeAttribute(HREF_ATTR, "#");
+					out.beginBeginTag(BUTTON);
 					// This is to ensure an error if someone tries to write the icon's style
 					// attribute.
 					out.writeAttribute(STYLE_ATTR, "");
@@ -891,7 +890,7 @@ public abstract class ThemeImage implements HTMLFragment {
 					out.endBeginTag(); // ITALICS
 
 					out.endTag(ITALICS);
-					out.endTag(ANCHOR);
+					out.endTag(BUTTON);
 				}
 			};
 		}

@@ -27,7 +27,11 @@
 						<property name="expression"
 							mandatory="true"
 							type="tl.core:String"
-						/>
+						>
+							<annotations>
+								<size-constraint/>
+							</annotations>
+						</property>
 					</attributes>
 				</interface>
 				<class name="SearchExpressionNode">

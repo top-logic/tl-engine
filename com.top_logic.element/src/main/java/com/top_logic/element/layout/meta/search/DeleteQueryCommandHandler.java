@@ -15,12 +15,12 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.element.meta.query.StoredFlexWrapper;
 import com.top_logic.element.meta.query.StoredQuery;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.model.TLObject;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutabilityRule;
@@ -100,8 +100,8 @@ public class DeleteQueryCommandHandler extends AJAXCommandHandler {
      * @return   The knowledge base, which has deleted the query, never <code>null</code>.
      * @throws   Exception      If deleting the object failed.
      */
-    public KnowledgeBase deleteStoredWrapper(StoredFlexWrapper aStoredQuery) throws Exception {
-        KnowledgeBase kb = aStoredQuery.getKnowledgeBase();
+	public KnowledgeBase deleteStoredWrapper(TLObject aStoredQuery) throws Exception {
+		KnowledgeBase kb = aStoredQuery.tKnowledgeBase();
         aStoredQuery.tDelete();
         return kb;
     }
@@ -120,7 +120,7 @@ public class DeleteQueryCommandHandler extends AJAXCommandHandler {
         }
     }
     
-    protected void updateField(SelectField aField, StoredFlexWrapper aWrapper) {
+	protected void updateField(SelectField aField, TLObject aWrapper) {
     	List        theOptions = new ArrayList(aField.getOptions());
         int         thePos     = theOptions.indexOf(aWrapper);
 

@@ -21,9 +21,9 @@ import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.dob.DataObject;
 import com.top_logic.dob.filt.DOAttributeFilter;
 import com.top_logic.dob.filt.DOTypeNameFilter;
+import com.top_logic.element.meta.kbbased.AttributedWrapper;
 import com.top_logic.element.meta.query.FlexWrapperAdminComparator;
 import com.top_logic.element.meta.query.FlexWrapperUserComparator;
-import com.top_logic.element.meta.query.StoredFlexWrapper;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.wrap.AbstractWrapper;
@@ -39,7 +39,7 @@ import com.top_logic.util.Utils;
  * 
  * @author <a href="mailto:tbe@top-logic.com">tbe</a>
  */
-public class StoredReport extends StoredFlexWrapper {
+public class StoredReport extends AttributedWrapper {
 
 	public static final String	KO_TYPE			   = "StoredReport";
 	public static final String	ATTRIBUTE_REPORT   = "report";

@@ -20,6 +20,7 @@ import com.top_logic.dob.NamedValues;
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.knowledge.objects.KAIterator;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
+import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.objects.SourceIterator;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -63,7 +64,7 @@ public class MapBasedPersistancySupport {
 	 * @return a collection of {@link MapBasedPersistancyAware}, never <code>null</code>, an empty
 	 *         collection if aDO is null or does not contain appropritate configurations.
 	 */
-	public static Collection getObjects(FlexData aDO) {
+	public static Collection getObjects(KnowledgeItem aDO) {
         
         if (aDO == null) { // No filters yet
             return Collections.EMPTY_LIST;
@@ -75,7 +76,7 @@ public class MapBasedPersistancySupport {
         
         // Map of Maps indexed by Integer (index)
 		Map theValueMaps = new HashMap(); // / 2
-		for (String theAttName : aDO.getAttributes()) {
+		for (String theAttName : aDO.getAllAttributeNames()) {
             
             int theFirstIndex = theAttName.indexOf(ATTNAME_SEPARATOR);
             if (theFirstIndex == 0) {
@@ -146,16 +147,19 @@ public class MapBasedPersistancySupport {
      * 
      * @param someObjects some instances of {@link MapBasedPersistancyAware} to be stored
      * @param aDO         the data object to keep the filter data, MUST NOT BE NULL
-     * @param doCleanup   indicates that the existing filter data is to be removed
      */
-	public static void setObjects(Collection someObjects, FlexData aDO, boolean doCleanup) {
+	public static void setObjects(Collection someObjects, KnowledgeItem aDO) {
 
-		if (doCleanup) { // No flex attribs yet
-            // Remove old values // TODO KHA/KBU optimize via FlexWrapper.removeAll() or such.
-			for (String theAttName : aDO.getAttributes()) {
-                aDO.setAttributeValue(theAttName, null);
-            }
-        }
+		// Remove old values // TODO KHA/KBU optimize via FlexWrapper.removeAll() or such.
+		for (String theAttName : aDO.getAllAttributeNames()) {
+			int theFirstIndex = theAttName.indexOf(ATTNAME_SEPARATOR);
+			if (theFirstIndex == 0) {
+				int theSecondIndex = theAttName.indexOf(ATTNAME_SEPARATOR, 2);
+				if (theSecondIndex >= 2) {
+					aDO.setAttributeValue(theAttName, null);
+				}
+			}
+		}
         
         // Set new values
         if (someObjects == null || someObjects.isEmpty()) { // No filters -> nothing to do

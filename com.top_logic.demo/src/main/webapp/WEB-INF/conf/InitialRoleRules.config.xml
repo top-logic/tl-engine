@@ -7,7 +7,7 @@
 				<role-rules>
 					<rules>
 						<!-- SEARCH -->
-
+<!-- 
 						<rule
 							meta-object="StoredQuery"
 							role="SecurityStructure.OwnerRole"
@@ -43,6 +43,7 @@
 								/>
 							</path>
 						</rule>
+ -->
 
 						<rule
 							inherit="true"

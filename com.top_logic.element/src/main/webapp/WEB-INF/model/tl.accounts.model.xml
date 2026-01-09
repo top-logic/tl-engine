@@ -386,5 +386,27 @@
 				</property>
 			</attributes>
 		</class>
+		<interface name="WithOwner">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<reference name="owner"
+					deletion-policy="delete-referer"
+					kind="forwards"
+					navigate="true"
+					type="Person"
+				>
+					<annotations>
+						<storage-algorithm>
+							<singleton-link-storage
+								monomorphic-table="true"
+								table="hasOwner"
+							/>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+			</attributes>
+		</interface>
 	</module>
 </model>

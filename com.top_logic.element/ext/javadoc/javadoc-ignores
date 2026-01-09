@@ -1162,7 +1162,6 @@ com.top_logic.element.meta.query.SecurityFilter.java: Invalid camel case word 'S
 com.top_logic.element.meta.query.SecurityFilter.java: Invalid camel case word 'StoredQuery', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.meta.query.SimpleAttributeFilter.java: Invalid camel case word 'SimpleMetaAttributes', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.meta.query.StatefulElementFilter.java: Missing documentation: com.top_logic.element.meta.query.StatefulElementFilter.KEY_ELT_STATE
-com.top_logic.element.meta.query.StoredFlexWrapper.java: Missing documentation: com.top_logic.element.meta.query.StoredFlexWrapper
 com.top_logic.element.meta.query.StoredQuery.java: Invalid camel case word 'CollectionFilters', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.meta.query.StoredQuery.java: Invalid camel case word 'StoredQueries', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.meta.query.StoredQuery.java: Invalid camel case word 'StoredQuery', this may only be used within JavaDoc links or HTML code tags.

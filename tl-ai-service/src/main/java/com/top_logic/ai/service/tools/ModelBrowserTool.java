@@ -39,7 +39,7 @@ import dev.langchain4j.agent.tool.Tool;
  * <ul>
  * <li>{@link #listModules()} - Lists all modules in the application</li>
  * <li>{@link #listTypes(String)} - Lists types within a specific module</li>
- * <li>{@link #listTypeParts(String, String)} - Lists properties/references of a type</li>
+ * <li>{@link #listTypeParts(String, String, Boolean)} - Lists properties/references of a type</li>
  * </ul>
  * </p>
  *
@@ -234,21 +234,24 @@ public class ModelBrowserTool {
 	 *
 	 * <p>
 	 * Returns a JSON array of parts with their names, types, kinds (property/reference), and
-	 * multiplicity constraints. Only local parts (not inherited) are included. Parts are sorted
-	 * by name.
+	 * multiplicity constraints. By default, only local parts are included, but inherited parts
+	 * can be included by setting includeInherited to true. Parts are sorted by name.
 	 * </p>
 	 *
 	 * @param moduleName
 	 *        The module containing the type.
 	 * @param typeName
 	 *        The name of the type.
+	 * @param includeInherited
+	 *        Whether to include inherited parts from supertypes (default: false).
 	 * @return JSON array of parts, or error JSON if module/type not found or type is not
 	 *         structured.
 	 */
-	@Tool("List all parts (properties and references) of a specific type with multiplicity and constraints")
+	@Tool("List all parts (properties and references) of a specific type with multiplicity and constraints. Set includeInherited=true to include inherited parts from supertypes.")
 	public String listTypeParts(
 			@P("The module containing the type") String moduleName,
-			@P("The name of the type") String typeName) {
+			@P("The name of the type") String typeName,
+			@P("Whether to include inherited parts from supertypes (default: false)") Boolean includeInherited) {
 
 		return ThreadContextManager.inSystemInteraction(
 			ModelBrowserTool.class,
@@ -286,8 +289,13 @@ public class ModelBrowserTool {
 
 					TLStructuredType structuredType = (TLStructuredType) type;
 
-					// Get all local parts, sorted by name
-					List<? extends TLStructuredTypePart> parts = structuredType.getLocalParts().stream()
+					// Default to false if not specified
+					boolean includeInheritedParts = includeInherited != null && includeInherited;
+
+					// Get parts based on includeInherited flag, sorted by name
+					List<? extends TLStructuredTypePart> parts = (includeInheritedParts
+						? structuredType.getAllParts()
+						: structuredType.getLocalParts()).stream()
 						.sorted((p1, p2) -> p1.getName().compareTo(p2.getName()))
 						.collect(Collectors.toList());
 
@@ -303,6 +311,11 @@ public class ModelBrowserTool {
 							// Add part kind (property/reference)
 							ModelKind partKind = part.getModelKind();
 							json.name("kind").value(partKind.name().toLowerCase());
+
+							// Add owner information (type that defines this part)
+							TLStructuredType owner = part.getOwner();
+							json.name("definedIn").value(TLModelUtil.qualifiedName(owner));
+							json.name("inherited").value(!owner.equals(structuredType));
 
 							// Add type information
 							TLType partType = part.getType();

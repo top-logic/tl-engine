@@ -7,7 +7,10 @@ package com.top_logic.ai.service.tools;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.top_logic.ai.service.tools.util.JsonToolResponseBuilder;
 import com.top_logic.basic.IdentifierUtil;
@@ -40,7 +43,7 @@ import dev.langchain4j.agent.tool.Tool;
  * <p>
  * This tool provides two methods for working with instances:
  * <ul>
- * <li>{@link #listInstances(String, String)} - Lists all TIDs for a type</li>
+ * <li>{@link #listInstances(String, String, Integer, String)} - Lists all TIDs for a type</li>
  * <li>{@link #getInstance(String)} - Gets detailed info for a specific instance</li>
  * </ul>
  * </p>
@@ -51,25 +54,38 @@ import dev.langchain4j.agent.tool.Tool;
  */
 public class InstanceBrowserTool {
 
+	/** Default number of instances per page. */
+	private static final int DEFAULT_LIMIT = 100;
+
+	/** Maximum number of instances per page. */
+	private static final int MAX_LIMIT = 1000;
+
 	/**
-	 * Lists all instances of a specific type.
+	 * Lists instances of a specific type with pagination support.
 	 *
 	 * <p>
-	 * Returns a JSON object containing the module name, type name, instance count, and an array
-	 * of TID strings for all instances. These TIDs can be used with {@link #getInstance(String)}
-	 * to retrieve detailed information.
+	 * Returns a JSON object containing paginated instance TIDs, total count, and a cursor for
+	 * retrieving the next page. The cursor is an opaque string that should be passed to
+	 * subsequent calls to retrieve more results.
 	 * </p>
 	 *
 	 * @param moduleName
 	 *        The module containing the type.
 	 * @param typeName
 	 *        The type name.
-	 * @return JSON object with instance TIDs, or error JSON if type not found.
+	 * @param limit
+	 *        Maximum number of instances to return (default: 100, max: 1000).
+	 * @param cursor
+	 *        Pagination cursor from previous response (null/empty for first page).
+	 * @return JSON object with paginated instance TIDs and pagination metadata, or error JSON if
+	 *         type not found.
 	 */
-	@Tool("Get all instances of a specific type (returns object TIDs for further inspection)")
+	@Tool("Get a paginated list of instances for a specific type. Use limit parameter to control page size (default: 100, max: 1000). Use cursor from previous response to get next page.")
 	public String listInstances(
 			@P("The module containing the type") String moduleName,
-			@P("The type name") String typeName) {
+			@P("The name of the type") String typeName,
+			@P("Maximum number of instances to return (default: 100, max: 1000)") Integer limit,
+			@P("Cursor for pagination (null/empty for first page, use nextCursor from previous response)") String cursor) {
 
 		return ThreadContextManager.inSystemInteraction(
 			InstanceBrowserTool.class,
@@ -83,6 +99,23 @@ public class InstanceBrowserTool {
 						return JsonToolResponseBuilder.buildErrorJson("Type name is required");
 					}
 
+					// Validate and normalize limit
+					int effectiveLimit = limit != null ? limit : DEFAULT_LIMIT;
+					if (effectiveLimit <= 0) {
+						return JsonToolResponseBuilder.buildErrorJson("Limit must be positive, got: " + effectiveLimit);
+					}
+					if (effectiveLimit > MAX_LIMIT) {
+						effectiveLimit = MAX_LIMIT; // Clamp to maximum
+					}
+
+					// Decode cursor to offset
+					int offset;
+					try {
+						offset = PaginationCursor.decode(cursor);
+					} catch (IllegalArgumentException ex) {
+						return JsonToolResponseBuilder.buildErrorJson("Invalid cursor: " + ex.getMessage());
+					}
+
 					// Get the type using MetaElementUtil
 					TLClass type = MetaElementUtil.getGlobalType(moduleName, typeName);
 					if (type == null) {
@@ -92,8 +125,20 @@ public class InstanceBrowserTool {
 
 					// Get all instances of this type
 					List<TLObject> allInstances = MetaElementUtil.getAllInstancesOf(type, TLObject.class);
+					int totalCount = allInstances.size();
 
-					// Build JSON response with all TIDs
+					// Apply pagination
+					List<TLObject> pageInstances = allInstances.stream()
+						.skip(offset)
+						.limit(effectiveLimit)
+						.collect(Collectors.toList());
+
+					// Calculate next cursor
+					int nextOffset = offset + pageInstances.size();
+					String nextCursor = (nextOffset < totalCount) ? PaginationCursor.encode(nextOffset) : null;
+					boolean hasMore = nextOffset < totalCount;
+
+					// Build JSON response with paginated TIDs
 					StringWriter buffer = new StringWriter();
 					try (JsonWriter json = JsonToolResponseBuilder.createWriter(buffer)) {
 						json.beginObject();
@@ -101,15 +146,25 @@ public class InstanceBrowserTool {
 						// Basic information
 						json.name("module").value(moduleName);
 						json.name("type").value(typeName);
-						json.name("count").value(allInstances.size());
+						json.name("totalCount").value(totalCount);
+						json.name("limit").value(effectiveLimit);
+						json.name("offset").value(offset);
 
-						// Array of TIDs
+						// Array of TIDs for this page
 						json.name("instances");
 						json.beginArray();
-						for (TLObject instance : allInstances) {
+						for (TLObject instance : pageInstances) {
 							json.value(instance.tId().asString());
 						}
 						json.endArray();
+
+						// Pagination metadata
+						if (nextCursor != null) {
+							json.name("nextCursor").value(nextCursor);
+						} else {
+							json.name("nextCursor").nullValue();
+						}
+						json.name("hasMore").value(hasMore);
 
 						json.endObject();
 					}
@@ -131,6 +186,55 @@ public class InstanceBrowserTool {
 					return error;
 				}
 			});
+	}
+
+	/**
+	 * Utility class for encoding and decoding pagination cursors.
+	 */
+	private static final class PaginationCursor {
+
+		/**
+		 * Encodes an offset into a Base64 cursor string.
+		 *
+		 * @param offset
+		 *        The offset to encode (must be non-negative).
+		 * @return Base64-encoded cursor string.
+		 * @throws IllegalArgumentException
+		 *         if offset is negative.
+		 */
+		static String encode(int offset) {
+			if (offset < 0) {
+				throw new IllegalArgumentException("Offset must be non-negative: " + offset);
+			}
+			return Base64.getEncoder().encodeToString(
+				String.valueOf(offset).getBytes(StandardCharsets.UTF_8)
+			);
+		}
+
+		/**
+		 * Decodes a Base64 cursor string into an offset.
+		 *
+		 * @param cursor
+		 *        The cursor to decode (null or empty means offset 0).
+		 * @return The decoded offset.
+		 * @throws IllegalArgumentException
+		 *         if cursor format is invalid or offset is negative.
+		 */
+		static int decode(String cursor) {
+			if (cursor == null || cursor.isEmpty()) {
+				return 0;
+			}
+			try {
+				byte[] decoded = Base64.getDecoder().decode(cursor);
+				int offset = Integer.parseInt(new String(decoded, StandardCharsets.UTF_8));
+				if (offset < 0) {
+					throw new IllegalArgumentException("Decoded offset is negative: " + offset);
+				}
+				return offset;
+			} catch (IllegalArgumentException ex) {
+				throw new IllegalArgumentException("Invalid cursor format: " + cursor, ex);
+			}
+		}
 	}
 
 	/**

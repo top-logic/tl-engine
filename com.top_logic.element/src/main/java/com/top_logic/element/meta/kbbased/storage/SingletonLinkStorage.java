@@ -163,7 +163,7 @@ public class SingletonLinkStorage<C extends SingletonLinkStorage.Config<?>> exte
 
 			// delete it
 			if (link != null) {
-				DBKnowledgeAssociation.clearDestinationAndRemoveLink(link);
+				DBKnowledgeAssociation.clearReferencesAndRemoveLink(link);
 			}
 
 			// create new association

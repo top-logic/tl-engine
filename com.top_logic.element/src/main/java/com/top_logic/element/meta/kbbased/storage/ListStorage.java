@@ -129,7 +129,7 @@ public class ListStorage<C extends ListStorage.Config<?>> extends LinkStorage<C>
 			boolean changed = false;
 			for (KnowledgeAssociation link : new ArrayList<>(links)) {
 				if (itemKey.equals(link.getDestinationIdentity())) {
-					DBKnowledgeAssociation.clearDestinationAndRemoveLink(link);
+					DBKnowledgeAssociation.clearReferencesAndRemoveLink(link);
 					changed = true;
 					break;
 				}
@@ -230,7 +230,7 @@ public class ListStorage<C extends ListStorage.Config<?>> extends LinkStorage<C>
 
 			// Remove tail.
 			for (int n = links.size() - 1; n >= destPos; n--) {
-				DBKnowledgeAssociation.clearDestinationAndRemoveLink(links.get(n));
+				DBKnowledgeAssociation.clearReferencesAndRemoveLink(links.get(n));
 			}
 		} else {
 			if (src != null) {

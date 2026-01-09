@@ -331,6 +331,7 @@ public class TLReferenceFormBuilder extends TLStructuredTypePartFormBuilder {
 		referenceModel.setNavigate(reference.getEnd().canNavigate());
 		referenceModel.setKind(TLMetaModelUtil.getReferenceKind(reference));
 		referenceModel.setHistoryType(reference.getHistoryType());
+		referenceModel.setDeletionPolicy(reference.getDeletionPolicy());
 
 		TLReference inverse = TLModelUtil.getOtherEnd(reference.getEnd()).getReference();
 		if (inverse != null) {

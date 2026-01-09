@@ -418,12 +418,7 @@ public class TLStructuredTypePartFormBuilder extends
 		switch (businessModel.getModelKind()) {
 			case REFERENCE:
 				TLReference reference = (TLReference) businessModel;
-
-				if (TLModelUtil.getEndIndex(reference.getEnd()) == 0) {
-					TLBackReferenceFormBuilder.initWithReference(formModel, reference);
-				} else {
-					TLReferenceFormBuilder.initWithReference(formModel, reference);
-				}
+				TLReferenceFormBuilder.initWithReference(formModel, reference);
 
 				break;
 			case PROPERTY:

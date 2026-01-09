@@ -234,7 +234,8 @@
 .ToolBarContainer .IconContainer .cButton.cmdLink a, 
 .ToolBarContainer .IconContainer .cButton.cmdLinkActive a,
 .ToolBarContainer .IconContainer .trbEntry a, 
-.quickSearch .cButton a {
+.quickSearch .cButton a,
+.quickSearch .cButton button {
 	display: flex;
 	justify-content: center;
 	align-items: center;
@@ -275,6 +276,22 @@
 .quickSearch .cButton.quickSearchButton a, 
 .ToolBarContainer .cButton.cmdLink a, 
 .mtbGroup .trbEntry a {
+	color: var(--icon-secondary);
+	padding: inherit;
+}
+
+.quickSearch .cButton.quickSearchButton button {
+	height: 2rem;
+    width: 2rem;
+}
+
+.quickSearch .cButton.quickSearchButton button i {
+	font-size: 1rem;
+}
+
+.quickSearch .cButton.quickSearchButton button, 
+.ToolBarContainer .cButton.cmdLink button, 
+.mtbGroup .trbEntry button {
 	color: var(--icon-secondary);
 	padding: inherit;
 }

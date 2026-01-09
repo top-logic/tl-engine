@@ -602,6 +602,9 @@ div.cCollapsibleToolbar .input-image.disabled i, .tl-table__title-toolbar .input
 }
 
 /* Icon Button Styles */
+/**********************/
+/*       Link a       */
+/**********************/
 .cOpenCalendar,
 .cButton.i18nTranslationCommand,
 .cButton.cmdLink, 
@@ -746,5 +749,174 @@ a.fChoose:hover,
 	cursor: default;
 }
 
+/**********************/
+/*       button       */
+/**********************/
+button {
+	cursor: pointer !important;
+	color: var(--highlight, var(--link-primary));
+}
 
+button:not(.disabled):hover {
+	color: var(--highlight, var(--link-primary-hover));
+}
+
+button:not(.disabled):active {
+	color: var(--highlight, var(--text-primary));
+}
+
+button:not(.disabled):focus {
+	color: var(--highlight, var(--link-primary-hover));
+	outline: 2px solid var(--focus);
+	outline-offset: 2px;
+}
+
+button.input-image,
+.cLogoutTimer button {
+	all: unset;
+}
+
+.cOpenCalendar,
+.cButton.i18nTranslationCommand,
+.cButton.cmdLink, 
+.cButton.cImageButton,
+cButton.cImageButton,
+.dfToolbar .cmdLink, 
+.dfToolbar .cmdLinkDisabled, 
+.dfListCommands .cmdLink,
+.dfListCommands .cmdLinkDisabled,
+.tl-table__cell-container .cmdLink,
+.tl-table__cell-container .cmdLinkDisabled,
+.dfListAdd .cButton button,
+.dfListAdd .cButton button.disabled,
+.cButton.dfRemove,
+.cButton.fToggle {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	align-self: center;
+	height: 1rem;
+	min-width: 1rem;
+	color: var(--button-fg, var(--icon-primary));
+}
+
+.cOpenCalendar button,
+button.fClear,
+button.fChoose, 
+.cButton.i18nTranslationCommand button,
+.cButton.cmdLink button, 
+.cButton.cImageButton button,
+.cButton.dfRemove button,
+.cButton.fToggle button {
+	color: var(--button-fg, var(--icon-primary));
+}
+
+.cButton.fToggle button {
+	color: var(--highlight-fg, var(--button-fg, var(--icon-primary)));
+}
+
+.cOpenCalendar button:hover,
+button.fClear:hover,
+button.fChoose:hover,
+.cButton.i18nTranslationCommand button:hover,
+.cButton.cmdLink button:hover, 
+.cButton.cImageButton button:hover,
+.dfToolbar .cmdLink:hover, 
+.dfListCommands .cmdLink:hover,
+.tl-table__cell-container .cmdLink:hover,
+.dfListAdd .cButton button:hover,
+.cButton.dfRemove button:hover {
+	color: var(--button-fg, var(--icon-primary));
+}
+
+.cButton.fToggle button:hover {
+	color: var(--highlight-fg, var(--button-fg, var(--icon-primary)));
+}
+
+.cButton.dfRemove button {
+	text-shadow: var(--icon-outline);
+	color: var(--support-danger) !important;
+}
+
+.sblLogo,
+.licenseView {
+	box-sizing: border-box;
+	padding-left: var(--spacing-02);
+	padding-right: var(--spacing-02);
+}
+
+/* Icon Styles for design mode hamburger buttons */
+.tlAdditionalRightContent .cButton.cImageButton,
+.tlAdditionalRightContent .cButton.cImageButton.cmdButtonDisabled, 
+.sblLogo .cButton.cImageButton,
+.sblLogo .cButton.cImageButton.cmdButtonDisabled {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	padding: var(--spacing-02) var(--spacing-02);
+	border-radius: var(--corner-radius);
+	background: var(--button-primary);
+	box-shadow: inset 0px 0px 0px 2px var(--button-primary);
+}
+
+.tlAdditionalRightContent .cButton.cImageButton,
+.tlAdditionalRightContent .cButton.cImageButton.cmdButtonDisabled {
+	height: var(--tabbar-height);
+	width: var(--tabbar-height);
+	box-sizing: border-box;
+}
+
+.sblLogo .cButton.cImageButton, 
+.sblLogo .cButton.cImageButton.cmdButtonDisabled {
+	width: .5rem;
+}
+
+.tlAdditionalRightContent .cButton.cImageButton button,
+.sblLogo .cImageButton button,
+.sblLogo .cImageButton button:hover {
+	padding: inherit;
+	color: var(--icon-on-color);
+}
+
+.breadCrumbRight .Right span button {
+	color: var(--button-fg, var(--icon-primary));
+	height: .1rem;
+	width: .1rem;
+}
+
+.tlAdditionalRightContent .cButton.cImageButton:hover,
+.sblLogo .cImageButton:hover {
+	background: var(--button-primary-hover);
+	box-shadow: inset 0px 0px 0px 2px var(--button-primary-hover);
+}
+
+.tlAdditionalRightContent .cButton.cImageButton:focus,
+.sblLogo .cImageButton:focus {
+	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
+	outline: none !important;
+}
+
+.tlAdditionalRightContent .cButton.cImageButton button:focus,
+.sblLogo .cImageButton button:focus {
+	box-shadow: none;
+	outline: none !important;
+}
+
+.tlAdditionalRightContent .cButton.cImageButton:active,
+.sblLogo .cImageButton:active {
+	background: var(--button-primary-active);
+}
+
+.tlAdditionalRightContent .cButton.cImageButton.cmdButtonDisabled,
+.sblLogo .cImageButton.cmdButtonDisabled {
+	background: var(--button-disabled);
+	box-shadow: inset 0px 0px 0px 2px var(--button-disabled);
+	cursor: default;
+}
+
+.tlAdditionalRightContent .cButton.cImageButton.cmdButtonDisabled button,
+.sblLogo .cImageButton.cmdButtonDisabled button {
+	color: var(--icon-on-color-disabled);
+	cursor: default;
+}
 

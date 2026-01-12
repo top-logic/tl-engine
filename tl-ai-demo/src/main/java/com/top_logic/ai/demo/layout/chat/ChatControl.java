@@ -12,8 +12,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.ai.service.agents.ModelExplorer;
 import com.top_logic.ai.service.agents.UMLSpecificationAgent;
 import com.top_logic.ai.service.scripting.OpenAIScriptFunctions;
+import com.top_logic.ai.service.tools.AnnotationDefinitionExplorerTool;
+import com.top_logic.ai.service.tools.InstanceBrowserTool;
+import com.top_logic.ai.service.tools.ModelAnnotationBrowserTool;
+import com.top_logic.ai.service.tools.ModelBrowserTool;
+import com.top_logic.ai.service.tools.ModelSearchTool;
+import com.top_logic.ai.service.tools.TypeAnalysisTool;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Control;
@@ -23,6 +30,10 @@ import com.top_logic.layout.basic.AbstractControlBase;
 import com.top_logic.layout.basic.ControlCommand;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.TLContext;
+
+import dev.langchain4j.agentic.AgenticServices;
+import dev.langchain4j.model.chat.ChatModel;
+import dev.langchain4j.model.mistralai.MistralAiChatModel;
 
 /**
  * A minimal chat control displaying messages and allowing user input.
@@ -291,6 +302,20 @@ public class ChatControl extends AbstractControlBase {
 	}
 
 	/**
+	 * Checks if the given text is a model exploration command.
+	 */
+	private boolean isModelExplorationCommand(String text) {
+		return text != null && text.trim().startsWith("/explore-model");
+	}
+
+	/**
+	 * Extracts the exploration question from a model exploration command.
+	 */
+	private String extractExplorationQuestion(String command) {
+		return command.trim().substring("/explore-model".length()).trim();
+	}
+
+	/**
 	 * Handles a model creation command synchronously.
 	 */
 	private void handleModelCreationCommand(String command, String userName) {
@@ -315,6 +340,58 @@ public class ChatControl extends AbstractControlBase {
 
 			// Handle workflow failure
 			_chat.addMessage(new ChatMessage("Agent", "❌ Workflow execution failed: " + e.getMessage()));
+			requestRepaint();
+		}
+	}
+
+	/**
+	 * Handles a model exploration command synchronously.
+	 */
+	private void handleModelExplorationCommand(String command, String userName) {
+		// Clear any previous notifiers
+		_notifiers.clear();
+
+		String explorationQuestion = extractExplorationQuestion(command);
+
+		try {
+			System.out.println("ChatControl: Starting model exploration in thread: " + Thread.currentThread().getName());
+
+			// Create the ModelExplorer agent
+			ChatModel explorationModel = MistralAiChatModel.builder()
+				.apiKey("IeHf1m5VQVCx0ZK3oQUYJC1hyOXVFjGn")
+				.baseUrl("https://api.mistral.ai/v1")
+				.modelName("mistral-large-latest")
+				.logRequests(false)
+				.logResponses(true)
+				.build();
+
+			// Create internal tool instances (no HTTP overhead)
+			ModelBrowserTool browserTool = new ModelBrowserTool();
+			InstanceBrowserTool instanceTool = new InstanceBrowserTool();
+			TypeAnalysisTool analysisTool = new TypeAnalysisTool();
+			ModelSearchTool searchTool = new ModelSearchTool();
+			ModelAnnotationBrowserTool annotationTool = new ModelAnnotationBrowserTool();
+			AnnotationDefinitionExplorerTool definitionTool = new AnnotationDefinitionExplorerTool();
+
+			// Build the ModelExplorer agent with direct tools
+			ModelExplorer explorer = AgenticServices.agentBuilder(ModelExplorer.class)
+				.chatModel(explorationModel)
+				.tools(browserTool, instanceTool, analysisTool, searchTool, annotationTool, definitionTool)
+				.build();
+
+			// Execute the exploration
+			String result = explorer.explore(explorationQuestion);
+
+			// Add final result as Agent message
+			_chat.addMessage(new ChatMessage("Agent", result));
+			requestRepaint();
+
+		} catch (Exception e) {
+			System.err.println("ChatControl: Model exploration failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
+			e.printStackTrace();
+
+			// Handle exploration failure
+			_chat.addMessage(new ChatMessage("Agent", "❌ Model exploration failed: " + e.getMessage()));
 			requestRepaint();
 		}
 	}
@@ -401,6 +478,9 @@ public class ChatControl extends AbstractControlBase {
 				if (chatControl.isModelCreationCommand(text.trim())) {
 					// Handle model creation workflow
 					chatControl.handleModelCreationCommand(text.trim(), userName);
+				} else if (chatControl.isModelExplorationCommand(text.trim())) {
+					// Handle model exploration workflow
+					chatControl.handleModelExplorationCommand(text.trim(), userName);
 				} else {
 					// Regular chat - schedule AI response via JavaScript
 					chatControl._scheduleAIResponse = true;

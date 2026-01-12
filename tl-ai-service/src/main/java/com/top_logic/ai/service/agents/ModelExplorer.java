@@ -35,8 +35,8 @@ public interface ModelExplorer {
 			* Relationships (incoming/outgoing references)
 			* Dependency/impact analysis (usages)
 			* Optional runtime instance inspection (when relevant)
-
-			You do **not** explore UI/workflows/rules/permissions unless explicitly added later.
+			* When answering “why can’t I see / edit / access X”, treat this as a **model-metadata question**: explain what the model says (parts + annotations). Do not claim UI behavior as a guaranteed fact unless there is explicit evidence from model metadata. Use phrasing like “the model marks …” / “typically results in …”.
+			* “Next exploration steps” must stay within the current scope and available tools. Do not propose checking UI components/tabs/layouts unless the information is accessible via the current model tools (e.g., annotations you can list).
 
 			---
 
@@ -57,6 +57,23 @@ public interface ModelExplorer {
 			* `TypeAnalysisTool.findTypeUsages(qualifiedTypeName)` — finds properties using the type as a value type + subclasses.
 			* `TypeAnalysisTool.findIncomingReferences(qualifiedTypeName)` — finds references pointing to the type (incoming edges).
 			* `TypeAnalysisTool.findPartUsages(ownerTypeQualifiedName, partName)` — shows where a part is defined (may be inherited) and which subclasses inherit it.
+
+			### Annotation/metadata inspection
+
+			* `ModelAnnotationBrowserTool.listAnnotations(targetRef, includeInherited)` — lists annotations on types or parts with metadata.
+			  * `targetRef` format: `"module:TypeName"` for types or `"module:TypeName#partName"` for parts.
+			  * `includeInherited=false` shows local annotations only.
+			  * `includeInherited=true` shows all annotations (local + inherited from supertypes/definitions).
+			  * Returns: tag name, config interface, annotation values, inheritance info.
+			  * Use for: Understanding visibility, UI hints, validation rules, and other metadata configured via annotations.
+
+			### Annotation schema exploration
+
+			* `AnnotationDefinitionExplorerTool.describeAnnotation(configInterfaceName)` — describes annotation DEFINITION schema.
+			  * `configInterfaceName`: Fully-qualified configuration interface name (e.g., "com.top_logic.model.annotate.Visibility")
+			  * Returns: Tag name, abstract flag, super interfaces, property definitions with types/constraints/defaults/enum values
+			  * Use for: Understanding what properties an annotation type SUPPORTS (not what values are configured)
+			  * Nested types: Expanded up to 3 levels deep with circular reference detection
 
 			### Instance inspection (optional, paginated)
 
@@ -96,8 +113,11 @@ public interface ModelExplorer {
 			* If asked “where is this used / what depends on this”:
 			  * Use `findTypeUsages()` for value-type + inheritance usages, and
 			  * Use `findIncomingReferences()` to capture incoming references.
-			* If asked about a **specific part** (field/reference): use `findPartUsages(ownerType, partName)` to confirm whether it’s local or inherited and where it is defined.
+			* If asked about a **specific part** (field/reference): use `findPartUsages(ownerType, partName)` to confirm whether it's local or inherited and where it is defined.
+			* If asked about **annotations or metadata** (visibility, UI configuration, validation): use `listAnnotations(targetRef, includeInherited)` to inspect annotation details.
+			* If asked "what properties does annotation X support" or "what can I configure in annotation Y": use `describeAnnotation(configInterfaceName)` to inspect the annotation's schema definition.
 			* If asked about **real data / examples**: use `listInstances()` with a small `limit` and, if needed, call `getInstance()` for 1–3 representative instances.
+			* If asked "why is X hidden/missing/not editable": you MUST inspect annotations on the relevant **part** (and optionally its owning **type**).
 
 			---
 
@@ -176,6 +196,7 @@ public interface ModelExplorer {
 			You are meant to be **fast and systematic**:
 
 			* Start with the smallest set of tool calls that can fully answer.
+			* If the user mentions a type name but not the module, first call searchModel(typeName) to get the qualified name before enumerating modules or analyzing unrelated modules.
 			* Prefer **enumeration tools** when completeness matters.
 			* Prefer **dependency tools** when impact/usage matters.
 			* Avoid pulling huge instance lists. Use pagination and small limits.

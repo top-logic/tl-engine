@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.top_logic.ai.mcp.server.completions.ModuleNameCompletion;
 import com.top_logic.ai.mcp.server.dynamic.ConfigurableResourceTemplate;
 import com.top_logic.ai.mcp.server.dynamic.DynamicResource;
+import com.top_logic.ai.mcp.server.resources.EnumerationClassifiersResource;
 import com.top_logic.ai.mcp.server.resources.InstanceResource;
 import com.top_logic.ai.mcp.server.resources.ModelModulesResource;
 import com.top_logic.ai.mcp.server.resources.ModuleTypesResource;
@@ -262,6 +263,7 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 	 * <li>{@link TypeInstancesResource} - Retrieves all instances of a specific type</li>
 	 * <li>{@link ModuleTypesResource} - Lists types within a specific module (dynamic resource template)</li>
 	 * <li>{@link TypePartsResource} - Lists parts within a specific type (dynamic resource template)</li>
+	 * <li>{@link EnumerationClassifiersResource} - Lists classifiers within an enumeration (dynamic resource template)</li>
 	 * <li>{@link TypeUsagesResource} - Finds usages of a specific type (dynamic resource template)</li>
 	 * <li>{@link ModuleNameCompletion} - Provides completions for module name parameters</li>
 	 * <li>{@link ModuleCreationTool} - Creates new TopLogic modules</li>
@@ -291,6 +293,9 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 
 		// Register resource template for listing parts in a specific type
 		builder.resourceTemplates(TypePartsResource.createSpecification());
+
+		// Register resource template for listing classifiers in an enumeration
+		builder.resourceTemplates(EnumerationClassifiersResource.createSpecification());
 
 		// Register resource template for finding usages of a specific type
 		builder.resourceTemplates(TypeUsagesResource.createSpecification());

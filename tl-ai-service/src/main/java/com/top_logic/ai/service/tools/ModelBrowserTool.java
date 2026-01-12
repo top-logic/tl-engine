@@ -17,11 +17,15 @@ import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.common.json.gstream.JsonWriter;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLClassifier;
+import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
+import com.top_logic.model.annotate.TLI18NKey;
+import com.top_logic.model.config.annotation.UnorderedEnum;
 import com.top_logic.model.resources.TLTypePartResourceProvider;
 import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.model.util.TLModelUtil;
@@ -168,8 +172,12 @@ public class ModelBrowserTool {
 							ModelKind modelKind = type.getModelKind();
 							json.name("metaType").value(modelKind.name().toLowerCase());
 
-							// Add part count for structured types
-							if (type instanceof TLStructuredType) {
+							// Add classifier count for enumerations, part count for other structured types
+							if (type instanceof TLEnumeration) {
+								TLEnumeration enumeration = (TLEnumeration) type;
+								int classifierCount = enumeration.getClassifiers().size();
+								json.name("classifierCount").value(classifierCount);
+							} else if (type instanceof TLStructuredType) {
 								TLStructuredType structuredType = (TLStructuredType) type;
 								int partCount = structuredType.getLocalParts().size();
 								json.name("partCount").value(partCount);
@@ -362,6 +370,121 @@ public class ModelBrowserTool {
 					String error = JsonToolResponseBuilder.buildErrorJson("Error accessing type: " + ex.getMessage());
 					Logger.error("listTypeParts() error: " + ex.getMessage(), ex, ModelBrowserTool.class);
 					System.err.println("ModelBrowserTool.listTypeParts() error: " + error);
+					return error;
+				}
+			});
+	}
+
+	/**
+	 * Lists all classifiers in a TopLogic enumeration type.
+	 *
+	 * @param moduleName
+	 *        The name of the module containing the enumeration
+	 * @param enumName
+	 *        The name of the enumeration type
+	 * @return JSON string containing enumeration metadata and classifier list with annotations
+	 */
+	@Tool("List all classifiers in a TopLogic enumeration with annotations")
+	public String listClassifiers(
+			@P("The name of the module containing the enumeration") String moduleName,
+			@P("The name of the enumeration type") String enumName) {
+
+		return ThreadContextManager.inSystemInteraction(
+			ModelBrowserTool.class,
+			() -> {
+				try (StringWriter buffer = new StringWriter(); JsonWriter json = new JsonWriter(buffer)) {
+					json.beginObject();
+
+					// Validate inputs
+					if (moduleName == null || moduleName.trim().isEmpty()) {
+						json.name("error").value("Module name is required");
+						json.endObject();
+						return buffer.toString();
+					}
+					if (enumName == null || enumName.trim().isEmpty()) {
+						json.name("error").value("Enumeration name is required");
+						json.endObject();
+						return buffer.toString();
+					}
+
+					// Get model and module
+					TLModel model = ModelService.getApplicationModel();
+					TLModule module = model.getModule(moduleName);
+					if (module == null) {
+						json.name("error").value("Module not found: " + moduleName);
+						json.endObject();
+						return buffer.toString();
+					}
+
+					// Get type
+					TLType type = module.getType(enumName);
+					if (type == null) {
+						json.name("error").value("Type not found: " + enumName + " in module " + moduleName);
+						json.endObject();
+						return buffer.toString();
+					}
+
+					// Verify it's an enumeration
+					if (!(type instanceof TLEnumeration)) {
+						json.name("error").value("Type " + enumName + " is not an enumeration (it's a " + type.getModelKind() + ")");
+						json.endObject();
+						return buffer.toString();
+					}
+
+					TLEnumeration enumeration = (TLEnumeration) type;
+
+					// Build enumeration metadata
+					json.name("enumeration").value(TLModelUtil.qualifiedName(enumeration));
+					json.name("module").value(moduleName);
+					json.name("name").value(enumName);
+					json.name("classifierCount").value(enumeration.getClassifiers().size());
+
+					// Check for UnorderedEnum annotation
+					UnorderedEnum unorderedAnnotation = enumeration.getAnnotation(UnorderedEnum.class);
+					json.name("unordered").value(unorderedAnnotation != null);
+
+					// Add label and description
+					JsonToolResponseBuilder.writeLabelAndDescription(json,
+						TLModelNamingConvention.getTypeLabelKey(enumeration));
+
+					// Write classifiers array
+					json.name("classifiers").beginArray();
+					for (TLClassifier classifier : enumeration.getClassifiers()) {
+						json.beginObject();
+						json.name("name").value(classifier.getName());
+						json.name("default").value(classifier.isDefault());
+						json.name("index").value(classifier.getIndex());
+
+						// Check for TLI18NKey annotation
+						TLI18NKey i18nKey = classifier.getAnnotation(TLI18NKey.class);
+						if (i18nKey != null && i18nKey.getValue() != null) {
+							json.name("customI18NKey").value(i18nKey.getValue().toString());
+						}
+
+						// Add label and description
+						JsonToolResponseBuilder.writeLabelAndDescription(json,
+							TLModelNamingConvention.resourceKey(classifier));
+
+						json.endObject();
+					}
+					json.endArray();
+
+					json.endObject();
+
+					String result = buffer.toString();
+					Logger.info("listClassifiers() result: " + result, ModelBrowserTool.class);
+					System.out.println("ModelBrowserTool.listClassifiers() result: " + result);
+					return result;
+
+				} catch (IOException ex) {
+					String error = JsonToolResponseBuilder.buildErrorJson("Failed to list classifiers: " + ex.getMessage());
+					Logger.error("listClassifiers() error: " + ex.getMessage(), ex, ModelBrowserTool.class);
+					System.err.println("ModelBrowserTool.listClassifiers() error: " + error);
+					return error;
+				} catch (Exception ex) {
+					String error = JsonToolResponseBuilder.buildErrorJson("Error accessing enumeration: " + ex.getMessage());
+					Logger.error("listClassifiers() error: " + ex.getMessage(), ex, ModelBrowserTool.class);
+					System.err.println("ModelBrowserTool.listClassifiers() error: " + error);
 					return error;
 				}
 			});

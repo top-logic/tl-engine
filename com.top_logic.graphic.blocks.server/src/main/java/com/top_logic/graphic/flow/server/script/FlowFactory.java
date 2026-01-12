@@ -37,6 +37,7 @@ import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.graphic.blocks.server.svg.SvgTagWriter;
 import com.top_logic.graphic.flow.callback.ClickHandler;
+import com.top_logic.graphic.flow.callback.DiagramContextMenuProvider;
 import com.top_logic.graphic.flow.data.Align;
 import com.top_logic.graphic.flow.data.Alignment;
 import com.top_logic.graphic.flow.data.Border;
@@ -45,6 +46,7 @@ import com.top_logic.graphic.flow.data.ClickTarget;
 import com.top_logic.graphic.flow.data.ClipBox;
 import com.top_logic.graphic.flow.data.CompassLayout;
 import com.top_logic.graphic.flow.data.ConnectorSymbol;
+import com.top_logic.graphic.flow.data.ContextMenu;
 import com.top_logic.graphic.flow.data.Decoration;
 import com.top_logic.graphic.flow.data.Diagram;
 import com.top_logic.graphic.flow.data.DiagramDirection;
@@ -819,6 +821,34 @@ public class FlowFactory extends TLScriptFunctions {
 	}
 	
 	/**
+	 * Creates a box that displays a custom context menu.
+	 * 
+	 * @param content
+	 *        Actual content of the box.
+	 * @param menu
+	 *        The context menu handler. Pass in the variable implicitly defined for the context menu
+	 *        handler declared next to the diagram builder.
+	 * @param cssClass
+	 *        The css class for the new box.
+	 * @param userObject
+	 *        User object of the new box. Operations in the context menu operate on this object.
+	 * @return The new box.
+	 */
+	@SideEffectFree
+	@Label("Context menu")
+	public static Box contextMenu(
+			@Mandatory Box content,
+			@Mandatory DiagramContextMenuProvider menu,
+			String cssClass,
+			Object userObject) {
+		return ContextMenu.create()
+			.setContent(nonNull(content))
+			.setMenuProvider(menu)
+			.setCssClass(cssClass)
+			.setUserObject(userObject);
+	}
+
+	/**
 	 * Creates box that responds to mouse click events.
 	 * 
 	 * @param content
@@ -827,6 +857,8 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        The handler to execute when the mouse click event occurs.
 	 * @param buttons
 	 *        The buttons to react on.
+	 * @param doubleClick
+	 *        Whether to only react on double clicks.
 	 * @param cssClass
 	 *        The css class for the new box.
 	 * @param userObject
@@ -839,6 +871,7 @@ public class FlowFactory extends TLScriptFunctions {
 			@Mandatory Box content,
 			@Mandatory ClickHandler clickHandler,
 			List<MouseButton> buttons,
+			boolean doubleClick,
 			String cssClass,
 			Object userObject
 			) {
@@ -846,6 +879,7 @@ public class FlowFactory extends TLScriptFunctions {
 			.setContent(nonNull(content))
 			.setClickHandler(clickHandler)
 			.setButtons(buttons)
+			.setDoubleClick(doubleClick)
 			.setCssClass(cssClass)
 			.setUserObject(userObject);
 	}

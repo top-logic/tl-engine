@@ -44,7 +44,8 @@ public interface ClickTargetOperations extends DecorationOperations, SVGClickHan
 
 		out.beginGroup(self());
 		out.writeCssClass(self().getCssClass());
-		self().setHandlerRegistration(out.attachOnClick(this, self()));
+		self().setHandlerRegistration(
+			self().isDoubleClick() ? out.attachOnDoubleClick(this, self()) : out.attachOnClick(this, self()));
 		{
 			DecorationOperations.super.draw(out);
 		}

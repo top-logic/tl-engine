@@ -12,6 +12,8 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.graphic.flow.callback.ClickHandler;
 import com.top_logic.graphic.flow.data.ClickTarget;
 import com.top_logic.graphic.flow.data.MouseButton;
@@ -31,7 +33,17 @@ public class ScriptedClickHandler extends AbstractConfiguredInstance<ScriptedCli
 	/**
 	 * Configuration options for {@link ScriptedClickHandler}.
 	 */
+	@DisplayOrder({
+		Config.NAME_ATTRIBUTE,
+		Config.SCRIPT,
+		Config.POST_CREATE_ACTIONS,
+	})
 	public interface Config<I extends ScriptedClickHandler> extends HandlerDefinition<I>, WithPostCreateActions.Config {
+
+		/**
+		 * @see #getScript()
+		 */
+		String SCRIPT = "script";
 
 		/**
 		 * Function that retrieves the {@link ClickTarget} diagram element.
@@ -46,6 +58,7 @@ public class ScriptedClickHandler extends AbstractConfiguredInstance<ScriptedCli
 		 * actions}.
 		 * </p>
 		 */
+		@Name(SCRIPT)
 		Expr getScript();
 
 	}

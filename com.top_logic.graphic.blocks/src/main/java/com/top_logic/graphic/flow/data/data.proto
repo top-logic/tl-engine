@@ -520,12 +520,24 @@ message ClickTarget extends Decoration {
 
 	/** The mouse buttons to react on. */
 	repeated MouseButton buttons;
+	
+	/** Whether to only react when a double click occurs. */
+	bool doubleClick;
 
 	/** Server-side-only field to store the callback to invoke when the element is clicked. */
 	transient com.top_logic.graphic.flow.callback.ClickHandler clickHandler;
 	
 	/** Internal field to store the click handler registration (client-side only). */
 	transient com.top_logic.graphic.blocks.svg.event.Registration handlerRegistration;
+	
+}
+
+/** A box defines a custom context menu region.  */
+@Operations("com.top_logic.graphic.flow.operations.ContextMenuOperations")
+message ContextMenu extends Decoration {
+
+	/** Internal field to store the commands that should be displayed in the context menu. */
+	transient com.top_logic.graphic.flow.callback.DiagramContextMenuProvider menuProvider;
 	
 }
 

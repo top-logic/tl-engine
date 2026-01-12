@@ -68,7 +68,7 @@ public class TypeBasedContextMenuFactory<C extends TypeBasedContextMenuFactory.C
 		Config.TITLE_PROVIDER,
 		Config.CUSTOM_COMMANDS,
 	})
-	public interface Config<I extends ComponentContextMenuFactory<?>> extends PolymorphicConfiguration<I> {
+	public interface Config<I extends TypeBasedContextMenuFactory<?>> extends PolymorphicConfiguration<I> {
 
 		/**
 		 * @see #getTitleProvider()

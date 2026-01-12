@@ -21,6 +21,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.common.json.gstream.JsonWriter;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLNamedPart;
@@ -304,8 +305,10 @@ public class ModelSearchTool {
 			context.put("moduleLabel", moduleLabel);
 		}
 
-		// Add part count for structured types
-		if (type instanceof TLStructuredType) {
+		// Add classifier count for enumerations, part count for other structured types
+		if (type instanceof TLEnumeration) {
+			context.put("classifierCount", ((TLEnumeration) type).getClassifiers().size());
+		} else if (type instanceof TLStructuredType) {
 			context.put("partCount", ((TLStructuredType) type).getLocalParts().size());
 		}
 

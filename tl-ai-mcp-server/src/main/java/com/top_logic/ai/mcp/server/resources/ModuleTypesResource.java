@@ -18,6 +18,7 @@ import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.common.json.gstream.JsonWriter;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLStructuredType;
@@ -172,8 +173,12 @@ public class ModuleTypesResource {
 				ModelKind modelKind = type.getModelKind();
 				json.name("metaType").value(modelKind.name().toLowerCase());
 
-				// Add part count (for structured types that have parts)
-				if (type instanceof TLStructuredType) {
+				// Add classifier count for enumerations, part count for other structured types
+				if (type instanceof TLEnumeration) {
+					TLEnumeration enumeration = (TLEnumeration) type;
+					int classifierCount = enumeration.getClassifiers().size();
+					json.name("classifierCount").value(classifierCount);
+				} else if (type instanceof TLStructuredType) {
 					TLStructuredType structuredType = (TLStructuredType) type;
 					int partCount = structuredType.getLocalParts().size();
 					json.name("partCount").value(partCount);

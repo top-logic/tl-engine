@@ -6,39 +6,14 @@
 			<instance>
 				<role-rules>
 					<rules>
-						<!-- SEARCH -->
-
 						<rule
-							meta-object="StoredQuery"
+							inherit="true"
+							meta-element="tl.accounts:WithOwner"
 							role="SecurityStructure.OwnerRole"
 						>
 							<path>
 								<step
-									association="hasOwner"
-									inverse="false"
-								/>
-							</path>
-						</rule>
-
-						<rule
-							meta-object="SearchExpressionTable"
-							role="SecurityStructure.OwnerRole"
-						>
-							<path>
-								<step
-									association="hasOwner"
-									inverse="false"
-								/>
-							</path>
-						</rule>
-
-						<rule
-							meta-object="FlexReport"
-							role="SecurityStructure.OwnerRole"
-						>
-							<path>
-								<step
-									association="hasOwner"
+									attribute="owner"
 									inverse="false"
 								/>
 							</path>

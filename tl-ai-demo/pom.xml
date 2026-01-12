@@ -33,6 +33,11 @@
 		</dependency>
 		<dependency>
 			<groupId>com.top-logic</groupId>
+			<artifactId>tl-search-vector</artifactId>
+			<version>${tl.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
 			<artifactId>tl-themes-core</artifactId>
 		</dependency>
 		<dependency>
@@ -85,7 +90,6 @@
                 <groupId>com.top-logic</groupId>
                 <artifactId>tl-service-openapi-server</artifactId>
         </dependency>
-
 		<!-- Tests -->
 		<dependency>
 			<groupId>com.top-logic</groupId>

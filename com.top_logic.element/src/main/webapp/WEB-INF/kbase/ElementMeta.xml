@@ -732,6 +732,17 @@
 <attributes>
 		<mo_attribute att_name="name"      att_type="String" mandatory="true"/>
 		<mo_attribute att_name="sortOrder" att_type="Integer" mandatory="false" />
+		<mo_attribute class="com.top_logic.dob.attr.ComputedMOAttribute"
+			att_name="tType"
+			att_type="MetaElement"
+			mandatory="true"
+		>
+			<storage class="com.top_logic.dob.attr.storage.CachedComputedAttributeStorage">
+				<value-factory class="com.top_logic.element.meta.kbbased.TLTypeCacheFactory"
+					type="tl.search:StoredQuery"
+				/>
+			</storage>
+		</mo_attribute>
 </attributes>
 	</metaobject>
 

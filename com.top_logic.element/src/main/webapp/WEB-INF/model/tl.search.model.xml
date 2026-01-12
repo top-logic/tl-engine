@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="tl.search">
+		<interface name="IsPublished">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<reference name="publishedTo"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="tl.accounts:Group"
+				>
+					<annotations>
+						<storage-algorithm>
+							<set-storage
+								monomorphic-table="true"
+								table="hasPublisher"
+							/>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+			</attributes>
+		</interface>
+		<class name="StoredQuery">
+			<annotations>
+				<table name="StoredQuery"/>
+			</annotations>
+			<generalizations>
+				<generalization type="tl.accounts:WithOwner"/>
+				<generalization type="IsPublished"/>
+			</generalizations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<property name="sortOrder"
+					type="tl.core:Integer"
+				/>
+			</attributes>
+		</class>
+	</module>
+</model>

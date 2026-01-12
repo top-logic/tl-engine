@@ -1,0 +1,487 @@
+/*
+ * SPDX-FileCopyrightText: 2025 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.ai.service.tools;
+
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.HashSet;
+import java.util.Set;
+
+import com.top_logic.ai.service.tools.util.JsonToolResponseBuilder;
+import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.ConfigurationDescriptor;
+import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.PropertyDescriptor;
+import com.top_logic.basic.config.PropertyKind;
+import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Hidden;
+import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.common.json.gstream.JsonWriter;
+
+import dev.langchain4j.agent.tool.P;
+import dev.langchain4j.agent.tool.Tool;
+
+/**
+ * Tool for exploring annotation definition schemas.
+ *
+ * <p>
+ * This tool allows AI agents to understand annotation DEFINITIONS (what CAN be configured), not
+ * annotation INSTANCES (what IS configured). It provides schema information including property
+ * metadata, types, constraints, and defaults.
+ * </p>
+ *
+ * <h3>Example Usage:</h3>
+ *
+ * <pre>
+ * // Explore a specific annotation definition
+ * describeAnnotation("com.top_logic.model.annotate.Visibility")
+ *
+ * // Explore form-definition annotation
+ * describeAnnotation("com.top_logic.model.form.definition.FormDefinition")
+ * </pre>
+ *
+ * <h3>Integration:</h3>
+ *
+ * <p>
+ * To use this tool with an AI agent, instantiate it and add to the agent's tools:
+ * </p>
+ *
+ * <pre>
+ * AnnotationDefinitionExplorerTool definitionTool = new AnnotationDefinitionExplorerTool();
+ *
+ * ModelExplorer explorer = AgenticServices.agentBuilder(ModelExplorer.class)
+ *     .chatModel(explorationModel)
+ *     .tools(browserTool, instanceTool, analysisTool, searchTool, annotationTool, definitionTool)
+ *     .build();
+ * </pre>
+ */
+public class AnnotationDefinitionExplorerTool {
+
+	/**
+	 * Describes the schema definition of an annotation configuration interface.
+	 *
+	 * <p>
+	 * Returns detailed schema information about what properties an annotation supports, their
+	 * types, constraints, and defaults. This is useful for understanding what CAN be configured for
+	 * an annotation type.
+	 * </p>
+	 *
+	 * @param configInterfaceName
+	 *        Fully-qualified configuration interface class name (e.g.,
+	 *        "com.top_logic.model.annotate.Visibility")
+	 * @return JSON schema description, or error JSON if class not found or invalid
+	 */
+	@Tool("Describe the schema definition of an annotation configuration interface")
+	public String describeAnnotation(
+			@P("Fully-qualified configuration interface class name") String configInterfaceName) {
+
+		return ThreadContextManager.inSystemInteraction(
+			AnnotationDefinitionExplorerTool.class,
+			() -> {
+				try {
+					// 1. Validate parameter
+					if (configInterfaceName == null || configInterfaceName.isEmpty()) {
+						return JsonToolResponseBuilder.buildErrorJson("Configuration interface name is required");
+					}
+
+					// 2. Load class and validate it's a ConfigurationItem
+					Class<?> configClass = ClassValidator.loadAndValidate(configInterfaceName);
+
+					// 3. Get ConfigurationDescriptor via TypedConfiguration
+					ConfigurationDescriptor descriptor = TypedConfiguration.getConfigurationDescriptor(configClass);
+
+					// 4. Build JSON schema response
+					StringWriter buffer = new StringWriter();
+					try (JsonWriter json = JsonToolResponseBuilder.createWriter(buffer)) {
+						json.beginObject();
+
+						// Basic metadata
+						json.name("configInterface").value(configInterfaceName);
+						json.name("tagName").value(getTagName(configClass));
+						json.name("abstract").value(descriptor.isAbstract());
+
+						// Super interfaces
+						writeSuperInterfaces(json, descriptor);
+
+						// Properties
+						json.name("properties").beginArray();
+						Set<String> visitedDescriptors = new HashSet<>();
+						for (PropertyDescriptor property : descriptor.getProperties()) {
+							if (isInternalProperty(property)) {
+								continue;
+							}
+							PropertyDefinitionSerializer.writePropertyDefinition(json, property, visitedDescriptors,
+								0);
+						}
+						json.endArray();
+
+						json.endObject();
+					}
+
+					String result = buffer.toString();
+					Logger.info("describeAnnotation() result: " + result,
+						AnnotationDefinitionExplorerTool.class);
+					System.out.println("AnnotationDefinitionExplorerTool.describeAnnotation() result: " + result);
+					return result;
+
+				} catch (ClassNotFoundException ex) {
+					String error =
+						JsonToolResponseBuilder.buildErrorJson("Class not found: " + configInterfaceName);
+					Logger.error("describeAnnotation() error: " + ex.getMessage(), ex,
+						AnnotationDefinitionExplorerTool.class);
+					System.err.println("AnnotationDefinitionExplorerTool.describeAnnotation() error: " + error);
+					return error;
+				} catch (IllegalArgumentException ex) {
+					String error = JsonToolResponseBuilder.buildErrorJson(ex.getMessage());
+					Logger.error("describeAnnotation() error: " + ex.getMessage(), ex,
+						AnnotationDefinitionExplorerTool.class);
+					System.err.println("AnnotationDefinitionExplorerTool.describeAnnotation() error: " + error);
+					return error;
+				} catch (IOException ex) {
+					String error = JsonToolResponseBuilder
+						.buildErrorJson("Failed to describe annotation: " + ex.getMessage());
+					Logger.error("describeAnnotation() error: " + ex.getMessage(), ex,
+						AnnotationDefinitionExplorerTool.class);
+					System.err.println("AnnotationDefinitionExplorerTool.describeAnnotation() error: " + error);
+					return error;
+				} catch (Exception ex) {
+					String error = JsonToolResponseBuilder
+						.buildErrorJson("Error accessing annotation definition: " + ex.getMessage());
+					Logger.error("describeAnnotation() error: " + ex.getMessage(), ex,
+						AnnotationDefinitionExplorerTool.class);
+					System.err.println("AnnotationDefinitionExplorerTool.describeAnnotation() error: " + error);
+					return error;
+				}
+			});
+	}
+
+	/**
+	 * Extracts the tag name from a configuration interface's {@link TagName} annotation.
+	 *
+	 * @param configClass
+	 *        The configuration interface class.
+	 * @return The tag name, or the simple class name in lowercase if no {@link TagName} annotation
+	 *         is present.
+	 */
+	private static String getTagName(Class<?> configClass) {
+		TagName tagNameAnnotation = configClass.getAnnotation(TagName.class);
+
+		if (tagNameAnnotation != null) {
+			return tagNameAnnotation.value();
+		}
+
+		// Fallback: use simple class name in lowercase
+		return configClass.getSimpleName().toLowerCase();
+	}
+
+	/**
+	 * Writes the super interfaces of a configuration descriptor to JSON.
+	 *
+	 * @param json
+	 *        The JSON writer.
+	 * @param descriptor
+	 *        The configuration descriptor.
+	 * @throws IOException
+	 *         If writing fails.
+	 */
+	private static void writeSuperInterfaces(JsonWriter json, ConfigurationDescriptor descriptor)
+			throws IOException {
+		json.name("superInterfaces").beginArray();
+
+		for (ConfigurationDescriptor superDescriptor : descriptor.getSuperDescriptors()) {
+			json.value(superDescriptor.getConfigurationInterface().getName());
+		}
+
+		json.endArray();
+	}
+
+	/**
+	 * Checks if a property is internal and should be filtered from the schema output.
+	 *
+	 * @param property
+	 *        The property to check.
+	 * @return True if the property is internal and should be skipped.
+	 */
+	private static boolean isInternalProperty(PropertyDescriptor property) {
+		String name = property.getPropertyName();
+
+		// Filter standard internal properties
+		if (name.equals("annotated") || name.equals(ConfigurationItem.CONFIGURATION_INTERFACE_NAME)) {
+			return true;
+		}
+
+		// Filter properties marked as @Hidden
+		if (property.getAnnotation(Hidden.class) != null) {
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Validates and loads configuration interface classes.
+	 */
+	private static class ClassValidator {
+
+		/**
+		 * Loads a class and validates it's a ConfigurationItem interface.
+		 *
+		 * @param className
+		 *        The fully-qualified class name to load.
+		 * @return The loaded and validated class.
+		 * @throws ClassNotFoundException
+		 *         If the class cannot be found.
+		 * @throws IllegalArgumentException
+		 *         If the class is not a valid ConfigurationItem interface.
+		 */
+		static Class<?> loadAndValidate(String className) throws ClassNotFoundException, IllegalArgumentException {
+
+			Class<?> clazz = Class.forName(className);
+
+			// Must be an interface
+			if (!clazz.isInterface()) {
+				throw new IllegalArgumentException(
+					"Not an interface: " + className + ". Expected a ConfigurationItem interface.");
+			}
+
+			// Must extend ConfigurationItem
+			if (!ConfigurationItem.class.isAssignableFrom(clazz)) {
+				throw new IllegalArgumentException(
+					"Not a ConfigurationItem: " + className
+						+ ". Expected an interface extending ConfigurationItem.");
+			}
+
+			return clazz;
+		}
+	}
+
+	/**
+	 * Serializes property definitions from ConfigurationDescriptor to JSON schema.
+	 */
+	private static class PropertyDefinitionSerializer {
+
+		private static final int MAX_DEPTH = 3;
+
+		/**
+		 * Writes a property definition to JSON.
+		 *
+		 * @param json
+		 *        The JSON writer.
+		 * @param property
+		 *        The property descriptor to serialize.
+		 * @param visitedDescriptors
+		 *        Set of already-visited descriptor class names for circular reference detection.
+		 * @param depth
+		 *        Current recursion depth.
+		 * @throws IOException
+		 *         If writing fails.
+		 */
+		static void writePropertyDefinition(JsonWriter json, PropertyDescriptor property,
+				Set<String> visitedDescriptors, int depth) throws IOException {
+
+			json.beginObject();
+
+			// Basic metadata
+			json.name("name").value(property.getPropertyName());
+			json.name("kind").value(property.kind().name().toLowerCase());
+
+			// Type information
+			Class<?> type = property.getType();
+			json.name("type").value(type.getName());
+			json.name("typeSimpleName").value(type.getSimpleName());
+
+			// Element type for collections/arrays
+			if (property.kind() == PropertyKind.LIST ||
+				property.kind() == PropertyKind.ARRAY ||
+				property.kind() == PropertyKind.MAP) {
+				Class<?> elementType = property.getElementType();
+				if (elementType != null) {
+					json.name("elementType").value(elementType.getName());
+					json.name("elementTypeSimpleName").value(elementType.getSimpleName());
+				}
+			}
+
+			// Constraints
+			json.name("mandatory").value(property.isMandatory());
+			json.name("nullable").value(property.isNullable());
+			json.name("multiple").value(property.isMultiple());
+			json.name("ordered").value(property.isOrdered());
+
+			// Default value
+			json.name("hasExplicitDefault").value(property.hasExplicitDefault());
+			if (property.hasExplicitDefault()) {
+				writeDefaultValue(json, property);
+			}
+
+			// Enum values (if applicable)
+			Class<?> enumType = getEnumType(property);
+			if (enumType != null && enumType.isEnum()) {
+				writeEnumValues(json, enumType);
+			}
+
+			// Nested descriptor (for ITEM/COMPLEX types, with depth limit)
+			if (depth < MAX_DEPTH && shouldExpandNestedType(property)) {
+				writeNestedDescriptor(json, property, visitedDescriptors, depth);
+			}
+
+			json.endObject();
+		}
+
+		/**
+		 * Gets the enum type for a property, checking both the property type and element type.
+		 *
+		 * @param property
+		 *        The property descriptor.
+		 * @return The enum type, or null if not an enum.
+		 */
+		private static Class<?> getEnumType(PropertyDescriptor property) {
+			Class<?> type = property.getType();
+			if (type.isEnum()) {
+				return type;
+			}
+
+			// For collections, check element type
+			if (property.kind() == PropertyKind.LIST ||
+				property.kind() == PropertyKind.ARRAY ||
+				property.kind() == PropertyKind.MAP) {
+				Class<?> elementType = property.getElementType();
+				if (elementType != null && elementType.isEnum()) {
+					return elementType;
+				}
+			}
+
+			return null;
+		}
+
+		/**
+		 * Writes the default value of a property to JSON.
+		 *
+		 * @param json
+		 *        The JSON writer.
+		 * @param property
+		 *        The property descriptor.
+		 * @throws IOException
+		 *         If writing fails.
+		 */
+		private static void writeDefaultValue(JsonWriter json, PropertyDescriptor property) throws IOException {
+			try {
+				Object defaultValue = property.getDefaultValue();
+				json.name("defaultValue");
+				if (defaultValue == null) {
+					json.nullValue();
+				} else if (defaultValue instanceof String) {
+					json.value((String) defaultValue);
+				} else if (defaultValue instanceof Number) {
+					json.value((Number) defaultValue);
+				} else if (defaultValue instanceof Boolean) {
+					json.value((Boolean) defaultValue);
+				} else if (defaultValue instanceof Enum) {
+					json.value(((Enum<?>) defaultValue).name());
+				} else {
+					json.value(defaultValue.toString());
+				}
+			} catch (Exception ex) {
+				// If default value cannot be retrieved, write null
+				json.name("defaultValue").nullValue();
+			}
+		}
+
+		/**
+		 * Writes enum values to JSON.
+		 *
+		 * @param json
+		 *        The JSON writer.
+		 * @param enumType
+		 *        The enum class.
+		 * @throws IOException
+		 *         If writing fails.
+		 */
+		private static void writeEnumValues(JsonWriter json, Class<?> enumType) throws IOException {
+			json.name("enumValues").beginArray();
+			Object[] constants = enumType.getEnumConstants();
+			if (constants != null) {
+				for (Object constant : constants) {
+					json.value(((Enum<?>) constant).name());
+				}
+			}
+			json.endArray();
+		}
+
+		/**
+		 * Checks if a property's nested type should be expanded.
+		 *
+		 * @param property
+		 *        The property descriptor.
+		 * @return True if the property should be expanded.
+		 */
+		private static boolean shouldExpandNestedType(PropertyDescriptor property) {
+			PropertyKind kind = property.kind();
+
+			// Expand ITEM and COMPLEX properties
+			if (kind == PropertyKind.ITEM || kind == PropertyKind.COMPLEX) {
+				return property.getValueDescriptor() != null;
+			}
+
+			// Expand LIST/MAP/ARRAY if element type is ConfigurationItem
+			if (kind == PropertyKind.LIST || kind == PropertyKind.MAP || kind == PropertyKind.ARRAY) {
+				Class<?> elementType = property.getElementType();
+				return elementType != null &&
+					ConfigurationItem.class.isAssignableFrom(elementType) &&
+					property.getValueDescriptor() != null;
+			}
+
+			return false;
+		}
+
+		/**
+		 * Writes nested descriptor information to JSON.
+		 *
+		 * @param json
+		 *        The JSON writer.
+		 * @param property
+		 *        The property descriptor.
+		 * @param visitedDescriptors
+		 *        Set of already-visited descriptor class names.
+		 * @param depth
+		 *        Current recursion depth.
+		 * @throws IOException
+		 *         If writing fails.
+		 */
+		private static void writeNestedDescriptor(JsonWriter json, PropertyDescriptor property,
+				Set<String> visitedDescriptors, int depth) throws IOException {
+
+			ConfigurationDescriptor valueDescriptor = property.getValueDescriptor();
+			if (valueDescriptor == null) {
+				return;
+			}
+
+			// Circular reference detection
+			String descriptorId = valueDescriptor.getConfigurationInterface().getName();
+			if (visitedDescriptors.contains(descriptorId)) {
+				json.name("nestedType").value("<circular reference: " + descriptorId + ">");
+				return;
+			}
+
+			// Add to visited set
+			visitedDescriptors.add(descriptorId);
+
+			try {
+				json.name("nestedProperties").beginArray();
+				for (PropertyDescriptor nestedProperty : valueDescriptor.getProperties()) {
+					if (isInternalProperty(nestedProperty)) {
+						continue;
+					}
+					writePropertyDefinition(json, nestedProperty, visitedDescriptors, depth + 1);
+				}
+				json.endArray();
+			} finally {
+				// Remove from visited set (allow same type in different branches)
+				visitedDescriptors.remove(descriptorId);
+			}
+		}
+	}
+}

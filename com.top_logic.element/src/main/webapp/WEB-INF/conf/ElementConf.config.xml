@@ -1128,13 +1128,6 @@
 			<show-table-dialog>true</show-table-dialog>
 		</config>
 
-		<config config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$GlobalConfig">
-			<types>
-				<type name="tl.legacy.tabletypes:TagTable" attributes="name"/>
-				<type name="tl.legacy.tabletypes:StoredQueryTable" attributes="name"/>
-			</types>
-		</config>
-
 		<config config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.FieldAnalyzers">
 			<analyzers>
 				<!-- Use label matcher first. -->

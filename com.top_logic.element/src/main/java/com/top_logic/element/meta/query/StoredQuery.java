@@ -22,15 +22,12 @@ import com.top_logic.dob.filt.DOTypeNameFilter;
 import com.top_logic.element.layout.meta.search.AttributedSearchComponent;
 import com.top_logic.element.meta.kbbased.AttributedWrapper;
 import com.top_logic.element.meta.kbbased.KBBasedMetaElement;
-import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.knowledge.wrap.Wrapper;
-import com.top_logic.knowledge.wrap.WrapperFactory;
-import com.top_logic.knowledge.wrap.exceptions.WrapperRuntimeException;
 import com.top_logic.knowledge.wrap.mapBasedPersistancy.MapBasedPersistancySupport;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
@@ -69,9 +66,6 @@ public class StoredQuery extends AttributedWrapper {
 
     /** Attribute storing the result columns of the query. */
     public static final String RESULT_COLUMNS = "ResultColumns";
-
-    /** KA Type to connect a StoredQuery to a Person */
-    public static final String OWNER_ASSOCIATION = "hasOwner";
 
 
     /**
@@ -407,23 +401,6 @@ public class StoredQuery extends AttributedWrapper {
             return PersonManager.getManager().getRoot();
         }
         return theP;
-    }
-
-    public Person getOwner() {
-        try {
-            Iterator it = tHandle().getOutgoingAssociations(OWNER_ASSOCIATION);
-            while (it.hasNext()) {
-                KnowledgeAssociation theKA = (KnowledgeAssociation)it.next();
-                Wrapper theOwner = WrapperFactory.getWrapper(theKA.getDestinationObject());
-                if (theOwner instanceof Person) {
-                    return (Person)theOwner;
-                }
-            }
-            return null;
-        }
-        catch (Exception ex) {
-            throw new WrapperRuntimeException("Failed to get owner: ", ex);
-        }
     }
 
 }

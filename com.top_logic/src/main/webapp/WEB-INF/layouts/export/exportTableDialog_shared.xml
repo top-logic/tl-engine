@@ -44,6 +44,7 @@
 		<dialogInfo
 			defaultI18n="${dialogDefaultI18N}"
 			height="${dialogHeight}"
+			openButtonSecComp="${namePrefix}Component"
 			openHandlerClass="${dialogOpenHandlerClass}"
 			openHandlerName="${dialogOpenHandlerName}"
 			openerClique="exportButtons"

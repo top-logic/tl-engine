@@ -20,7 +20,6 @@ import java.util.Set;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
-import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.Location;
@@ -41,13 +40,14 @@ import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLScope;
+import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.boundsec.simple.SimpleBoundObject;
 import com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
-import com.top_logic.tool.boundsec.wrap.PersBoundChecker;
 import com.top_logic.util.TLContext;
 
 /**
@@ -103,8 +103,6 @@ public class BoundHelper extends ManagedClass {
     /** The default {@link com.top_logic.tool.boundsec.BoundObject} */
 	private BoundObject defaultObject;
 
-	private Map<Location, Map<String, Collection<PersBoundChecker>>> defaultPersBoundCheckers;
-
 	private Map<Location, Map<String, Collection<ComponentName>>> boundCheckerCache;
     
 
@@ -133,41 +131,10 @@ public class BoundHelper extends ManagedClass {
 	public BoundHelper(InstantiationContext context, Config config) {
 		super(context, config);
         // for getInstance
-		defaultPersBoundCheckers =
-			Collections.synchronizedMap(new HashMap<>());
 		boundCheckerCache =
 			Collections.synchronizedMap(new HashMap<>());
 
 		_useDefaultSecurityParent = config.getUseDefaultSecurityParent();
-    }
-
-	public final boolean registerPersBoundCheckerFor(Location rootLocation, ComponentName aPersBoundID, String aType) {
-		Map<String, Collection<PersBoundChecker>> checkerForType = defaultPersBoundCheckers.get(rootLocation);
-		if (checkerForType == null) {
-			checkerForType = Collections.synchronizedMap(new HashMap<>());
-			defaultPersBoundCheckers.put(rootLocation, checkerForType);
-		}
-		Collection<PersBoundChecker> theCheckers = checkerForType.get(aType);
-        if (theCheckers == null) {
-			theCheckers = CollectionUtil.newSet(1);
-        }
-
-        theCheckers.add(new PersBoundChecker(aPersBoundID));
-		checkerForType.put(aType, theCheckers);
-
-        if (theCheckers.size() > 1) {
-            String theIDs = StringServices.toString(asIDs(theCheckers), ",");
-			Logger.warn("Multiple PersBoundComp are default for type '" + aType + "': " + theIDs, BoundHelper.class);
-        }
-        return true;
-    }
-
-	private Collection<ComponentName> asIDs(Collection<? extends PersBoundChecker> someCheckers) {
-		ArrayList<ComponentName> theIds = new ArrayList<>(someCheckers.size());
-		for (BoundChecker theChecker : someCheckers) {
-			theIds.add(theChecker.getSecurityId());
-        }
-        return theIds;
     }
 
     /**
@@ -259,7 +226,7 @@ public class BoundHelper extends ManagedClass {
 	 * @see #getDefaultCheckersForType(TLClass, BoundCommandGroup)
 	 */
 	public final Collection<? extends BoundChecker> getDefaultCheckersForType(TLClass type) {
-		return getDefaultCheckers(getCheckerTypeForType(type), SimpleBoundCommandGroup.READ);
+		return getDefaultCheckersForType(type, SimpleBoundCommandGroup.READ);
 	}
 
 	/**
@@ -285,21 +252,7 @@ public class BoundHelper extends ManagedClass {
     	}
     	// no context, get cached PersBoundCheckers
 		else {
-			switch (defaultPersBoundCheckers.size()) {
-				case 0: {
-					return Collections.emptyList();
-				}
-				case 1: {
-					return getDefaultFromMap(this.defaultPersBoundCheckers.values().iterator().next(), aType);
-				}
-				default: {
-					Collection<BoundChecker> allChecker = new ArrayList<>();
-					defaultPersBoundCheckers.values().forEach(m -> {
-						allChecker.addAll(getDefaultFromMap(m, aType));
-					});
-					return allChecker;
-				}
-			}
+			return Collections.emptyList();
 		}
     	
     }
@@ -389,16 +342,18 @@ public class BoundHelper extends ManagedClass {
 			return Collections.emptyList();
         }
 
-		Iterator<String> theCheckerTypes = this.getBoundCheckerDefaultTypes(anObject).iterator();
+		List<String> checkerTypes = this.getBoundCheckerDefaultTypes(anObject);
 
         // Get the components from the MainLayout that are default for the type
 		Collection<BoundChecker> theCheckers = new HashSet<>();
 
         // search for the most specific type for which bound checkers are registered.
         // Only the checkers registered for that type are returned
-        while (theCheckers.isEmpty() && theCheckerTypes.hasNext()) {
-			String theCheckerType = theCheckerTypes.next();
-            theCheckers.addAll(getBoundHandlers(theCheckerType, aChecker, aBCG));
+		for (String checkerType : checkerTypes) {
+			theCheckers.addAll(getBoundHandlers(checkerType, aChecker, aBCG));
+			if (!theCheckers.isEmpty()) {
+				break;
+			}
         }
 		if (Logger.isDebugEnabled(BoundHelper.class)) {
 			Object typeName = (anObject != null) ? TLModelUtil.qualifiedName(anObject.tType()) : anObject;
@@ -425,7 +380,7 @@ public class BoundHelper extends ManagedClass {
 				boundCheckerCache.put(boundCheckerCacheKey(main), storedCache);
 				cachedCheckerNames = null;
 			} else {
-				cachedCheckerNames = getDefaultFromMap(storedCache, aType);
+				cachedCheckerNames = storedCache.get(aType);
 			}
 			if (cachedCheckerNames != null) {
 				checkerNames = cachedCheckerNames;
@@ -609,12 +564,22 @@ public class BoundHelper extends ManagedClass {
 	 * </p>
 	 * 
 	 * @param type
-	 *        The object type representation. In <i>TopLogic</i> either {@link MetaObject} or
-	 *        {@link Class}.
+	 *        The object type representation.
 	 * @return a checker type name.
 	 */
-    protected String getCheckerTypeForType(Object type) {
-        if (type instanceof MetaObject) {
+	protected final String getCheckerTypeForType(Object type) {
+		if (type instanceof TLClass) {
+			TLClass tlClass = (TLClass) type;
+			TLScope scope = tlClass.getScope();
+			if (scope instanceof TLModule) {
+				return TLModelUtil.qualifiedName(tlClass);
+			} else {
+				/* Can not use full qualified name for local classes, because it contains id of the
+				 * concrete scope element. Better use the checker type of the scope as "scope". */
+				return TLModelUtil.qualifiedName(tlClass.getModule().getName(), getCheckerType(scope),
+					tlClass.getName());
+			}
+		} else if (type instanceof MetaObject) {
             return ((MetaObject) type).getName();
         } else if (type instanceof Class<?>) {
             return ((Class<?>) type).getName();
@@ -632,10 +597,20 @@ public class BoundHelper extends ManagedClass {
 	 * 
 	 * @param anObject
 	 *        The object to find its type for.
-	 * @return In <i>TopLogic</i> either {@link MetaObject} or {@link Class}.
+	 * @return A type for {@link #getCheckerTypeForType(Object)}.
 	 */
-	protected Object getObjectType(Object anObject) {
-        if (anObject instanceof Wrapper) {
+	protected final Object getObjectType(Object anObject) {
+		if (anObject instanceof TLObject) {
+			TLStructuredType tType = ((TLObject) anObject).tType();
+			if (tType != null) {
+				return tType;
+			}
+			if (((TLObject) anObject).tTransient()) {
+				// Transient objects have no table. This actually just occur in tests.
+				return anObject.getClass();
+			}
+			return ((TLObject) anObject).tTable();
+		} else if (anObject instanceof Wrapper) {
             return ((Wrapper) anObject).tTable();
         }
         else if (anObject instanceof KnowledgeObject) {
@@ -662,8 +637,12 @@ public class BoundHelper extends ManagedClass {
 	 * 
 	 * @see #getObjectType(Object) Finding types for implementations.
 	 */
-	protected List<?> getSuperTypes(Object type) {
-        if (type instanceof MOClass) {
+	protected final List<?> getSuperTypes(Object type) {
+		// Method declared final to prevent introducing even more type abstractions
+		// outside the framework.
+		if (type instanceof TLClass) {
+			return ((TLClass) type).getGeneralizations();
+		} else if (type instanceof MOClass) {
 			MOClass superclass = ((MOClass) type).getSuperclass();
 			return CollectionUtilShared.singletonOrEmptyList(superclass);
         } else if (type instanceof Class<?>) {
@@ -933,11 +912,7 @@ public class BoundHelper extends ManagedClass {
 		BoundedRole.copyRoleAssignments(aDest, aSource);
     }
     
-	private static <T> Collection<T> getDefaultFromMap(Map<String, Collection<T>> defaultsByType, String type) {
-		return defaultsByType.get(type);
-    }
-
-    /**
+	/**
      * Flag if using default object as security parent
      * for all AbstractBoundWrappers that don't define
      * one themselves.

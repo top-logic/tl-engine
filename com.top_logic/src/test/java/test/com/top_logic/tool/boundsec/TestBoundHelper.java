@@ -24,6 +24,7 @@ import com.top_logic.mig.html.layout.LayoutStorage;
 import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundHelper;
+import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.SecurityObjectProviderManager;
 import com.top_logic.tool.boundsec.simple.SimpleBoundObject;
 import com.top_logic.tool.boundsec.wrap.SecurityComponentCache;
@@ -178,6 +179,7 @@ public class TestBoundHelper extends BasicTestCase {
 	public static Test suite() {
 		Test test = ServiceTestSetup.createSetup(TestBoundHelper.class,
 			SecurityObjectProviderManager.Module.INSTANCE,
+			CommandHandlerFactory.Module.INSTANCE,
 			RequestLockFactory.Module.INSTANCE,
 			SecurityComponentCache.Module.INSTANCE,
 			LayoutStorage.Module.INSTANCE);

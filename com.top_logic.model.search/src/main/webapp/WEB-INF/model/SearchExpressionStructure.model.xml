@@ -12,6 +12,10 @@
 			</annotations>
 			<types>
 				<interface name="SearchExpression">
+					<generalizations>
+						<generalization type="tl.accounts:WithOwner"/>
+						<generalization type="tl.search:IsPublished"/>
+					</generalizations>
 					<annotations>
 						<legacy-qualified-name qualified-name="SearchExpression"/>
 					</annotations>

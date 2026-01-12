@@ -87,13 +87,14 @@ public class StringReplacementProcessor extends StringColumnTransformProcessor<S
 				cnt += batch;
 				batch = 0;
 				if (watch.getElapsedMillis() > 5000) {
-					log.info("Processed " + cnt + " values in column '" + column + "' of " + cnt + " rows of table '"
-						+ table + "', continuing.");
+					log.info("Updated values in column '" + column + "' of " + cnt + " rows of table '" + table
+						+ "', continuing.");
 					watch.restart();
 				}
 			}
 		}
 
+		cnt += batch;
 		log.info("Updated values in column '" + column + "' of " + cnt + " rows of table '" + table + "'.");
 	}
 

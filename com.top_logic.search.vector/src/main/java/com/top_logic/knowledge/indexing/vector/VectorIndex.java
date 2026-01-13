@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.json.simple.JSONObject;
 
@@ -104,7 +106,7 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		Integer getQdrantDbPort();
 
 		/**
-		 * The Qdrant collection name
+		 * The Qdrant Vector Index collection name
 		 */
 		@StringDefault("changeme")
 		String getQdrantDbCollectionName();
@@ -114,6 +116,24 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		 */
 		@StringDefault("EMPTY")
 		String getMistralApiKey();
+
+		/**
+		 * Mistral Embedding model
+		 */
+		@StringDefault("mistral-embed")
+		String getMistralEmbedModel();
+
+		/**
+		 * Vector Index models
+		 */
+		@StringDefault("")
+		String getVectorIndexModels();
+
+		/**
+		 * No Vector Index models
+		 */
+		@StringDefault("")
+		String getNoVectorIndexModels();
 
 		/**
 		 * Number of millisecond to wait before aborting the indexing process after the
@@ -180,6 +200,12 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 
 	private final String mistralApiKey;
 
+	private final String mistralEmbedModel;
+
+	private final List<String> vectorIndexModels;
+
+	private final List<String> noVectorIndexModels;
+
 	private QdrantClient qdrantClient;
 
 	private final MistralClient mistralClient;
@@ -197,6 +223,11 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		this.qdrantDbCollectionName = config.getQdrantDbCollectionName();
 		this.qdrantDbCollectionNameNoVector = this.qdrantDbCollectionName + "_noVector";
 		this.mistralApiKey = config.getMistralApiKey();
+		this.mistralEmbedModel = config.getMistralEmbedModel();
+		this.vectorIndexModels =
+			Stream.of(config.getVectorIndexModels().split(",")).map(String::trim).collect(Collectors.toList());
+		this.noVectorIndexModels =
+			Stream.of(config.getNoVectorIndexModels().split(",")).map(String::trim).collect(Collectors.toList());
 
 		Logger.info("Create a Qdrant Client for Qdrant database at " + this.qdrantDbHostname + ":"
 			+ this.qdrantDbPort, VectorThread.class);
@@ -252,6 +283,35 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		return this.mistralApiKey;
 	}
 
+	/**
+	 * Mistral embedding model
+	 * 
+	 * @return Mistral Embed model
+	 */
+	public String getMistralEmbedModel() {
+		return this.mistralEmbedModel;
+	}
+
+	/**
+	 * Vector Index models - FQN of all models to be included in the indexing. Only objects of these
+	 * models shall be indexed
+	 * 
+	 * @return List of FQNs of models to be indexed
+	 */
+	public List<String> getVectorIndexModels() {
+		return this.vectorIndexModels;
+	}
+
+	/**
+	 * Vector No Index models - FQN of all models to be added as points to the Qdrant DB, but
+	 * without vectors (no embedding). These points can be used for AI model context storage.
+	 * 
+	 * @return List of FQNs of models to be indexed
+	 */
+	public List<String> getNoVectorIndexModels() {
+		return this.noVectorIndexModels;
+	}
+
 	void init(InstantiationContext context) {
 		Logger.info("Initiating VectorIndex", VectorIndex.class);
 
@@ -280,7 +340,7 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 	 *         if the index could not be opened
 	 */
 	public QdrantClient getSearcher() throws SearchException {
-		return new QdrantClient(QdrantGrpcClient.newBuilder("localhost").build());
+		return new QdrantClient(QdrantGrpcClient.newBuilder(this.getQdrantDbHostname()).build());
     }
     
     /** 
@@ -421,7 +481,8 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		 */
 
 		/* Do not index objects from the ai.admin.tools module! */
-		if (aDoc.getWrapper().tType().toString().startsWith("ai.admin.tools:")) {
+//		if (aDoc.getWrapper().tType().toString().startsWith("ai.admin.tools:")) {
+		if (!this.getVectorIndexModels().contains(aDoc.getWrapper().tType().toString())) {
 			return;
 		}
 
@@ -460,7 +521,7 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 			association = outgoingAssociations.next();
 			if(! association.getDestinationObject().getWrapper().tType().toString().equals("tl.model:TLClassifier")) {
 				associationKeyName = "Association-" +
-					association.getDestinationObject().getWrapper().tType().toString().replace("ObjectsToIndex:", "");
+					association.getDestinationObject().getWrapper().tType().toString();
 
 				prev = associations.get(associationKeyName);
 				if (prev == null) {
@@ -477,7 +538,7 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 			association = incomingAssociations.next();
 			if (!association.getSourceObject().getWrapper().tType().toString().equals("tl.model:TLClassifier")) {
 				associationKeyName = "Association-" +
-					association.getSourceObject().getWrapper().tType().toString().replace("ObjectsToIndex:", "");
+					association.getSourceObject().getWrapper().tType().toString();
 
 				prev = associations.get(associationKeyName);
 				if (prev == null) {
@@ -506,7 +567,7 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 			"id", value(this.getDocumentUUID(documentId).toString()),
 //			"internalId", value(payload.get(associationKeyName)),
 			"description", value(description),
-			"TopLogic-type", value(aDoc.getWrapper().tType().toString().replace("ObjectsToIndex:", "")),
+			"TopLogic-type", value(aDoc.getWrapper().tType().toString()),
 			"TLObject-creation-date", value(aDoc.getWrapper().tCreationDate().toString()),
 			"TLObject-modification-date", value(aDoc.getWrapper().tLastModificationDate().toString()),
 			"content", value(content)));
@@ -527,7 +588,7 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		 * overall information about the application.
 		 * 
 		 * These objects shall be store in the _noVector collection. */
-		if (!aDoc.getWrapper().tType().toString().equals("ObjectsToIndex:ApplicationModel")) {
+		if (!this.getNoVectorIndexModels().contains(aDoc.getWrapper().tType().toString())) {
 			embeddings = this.getDocumentEmbeddings(payload.toString());
 			collectionName = this.qdrantDbCollectionName;
 		}
@@ -561,8 +622,8 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		List<String> contentList = List.of(content);
 
 		EmbeddingRequest embeddingRequest = EmbeddingRequest.builder()
-			.model("mistral-embed") // mistral-embed is currently the only model available for
-									// embedding
+			.model(this.getMistralEmbedModel()) // mistral-embed is currently the only model
+												// available for embedding
 			.input(contentList)
 			.build();
 

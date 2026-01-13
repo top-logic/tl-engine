@@ -8,8 +8,10 @@ package com.top_logic.dob;
 import java.io.Serializable;
 
 import com.top_logic.basic.TLID;
+import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.dob.meta.MOReference;
+import com.top_logic.dob.util.MetaObjectUtils;
 
 /** 
  * DataObjects have Attributes/values and are "Instances" of MetaObjects.
@@ -70,12 +72,28 @@ public interface DataObject extends StaticTyped, NamedValues, Serializable {
 	 * Returns the {@link ObjectKey} of the value of the given {@link MOReference}.
 	 * 
 	 * @param reference
-	 *        an {@link MOReference} known by this {@link DataObject}.
-	 *        
+	 *        An {@link MOReference} known by this {@link DataObject}.
+	 * 
 	 * @return The {@link ObjectKey} of the referenced value, or <code>null</code> when currently no
 	 *         reference is set.
 	 */
 	public ObjectKey getReferencedKey(MOReference reference);
+
+	/**
+	 * Returns the {@link ObjectKey} of the value of the {@link MOReference} with the given name.
+	 * 
+	 * @param reference
+	 *        Name of an {@link MOReference} known by this {@link DataObject}.
+	 * 
+	 * @return The {@link ObjectKey} of the referenced value, or <code>null</code> when currently no
+	 *         reference is set.
+	 * 
+	 * @throws NoSuchAttributeException
+	 *         iff the given reference is not the valid name of an {@link MOReference}.
+	 */
+	default ObjectKey getReferencedKey(String reference) {
+		return getReferencedKey(MetaObjectUtils.getReference(tTable(), reference));
+	}
 
     /**
      * Sets the value of the given {@link MOAttribute} in this

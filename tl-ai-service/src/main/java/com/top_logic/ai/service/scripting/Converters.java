@@ -6,6 +6,7 @@
 package com.top_logic.ai.service.scripting;
 
 import com.vladsch.flexmark.html.HtmlRenderer;
+import com.vladsch.flexmark.html2md.converter.FlexmarkHtmlConverter;
 import com.vladsch.flexmark.parser.Parser;
 import com.vladsch.flexmark.util.ast.Node;
 import com.vladsch.flexmark.util.data.MutableDataSet;
@@ -47,6 +48,22 @@ public class Converters extends TLScriptFunctions {
 		String html = renderer.render(document);
 
 		return Fragments.htmlSource(html);
+	}
+
+	/**
+	 * Converts HTML to <i>Markdown</i>.
+	 *
+	 * @param html
+	 *        Text in HTML format.
+	 * @return Markdown formatted text.
+	 */
+	public static String htmlToMarkdown(@Mandatory String html) {
+		MutableDataSet options = new MutableDataSet();
+
+		// Configure the HTML to Markdown converter
+		// You can add additional options here if needed
+
+		return FlexmarkHtmlConverter.builder(options).build().convert(html);
 	}
 
 }

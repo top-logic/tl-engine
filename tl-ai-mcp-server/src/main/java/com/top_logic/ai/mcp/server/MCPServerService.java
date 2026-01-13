@@ -36,6 +36,7 @@ import com.top_logic.ai.mcp.server.tools.PropertyCreationTool;
 import com.top_logic.ai.mcp.server.tools.PropertyUpdateTool;
 import com.top_logic.ai.mcp.server.tools.ReferenceCreationTool;
 import com.top_logic.ai.mcp.server.tools.TLScriptExecutionTool;
+import com.top_logic.ai.mcp.server.tools.TLScriptFunctionsMCPTool;
 import com.top_logic.ai.mcp.server.tools.TLScriptValidationTool;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -267,6 +268,7 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 	 * <li>{@link TypeUsagesResource} - Finds usages of a specific type (dynamic resource template)</li>
 	 * <li>{@link ModuleNameCompletion} - Provides completions for module name parameters</li>
 	 * <li>{@link ModuleCreationTool} - Creates new TopLogic modules</li>
+	 * <li>{@link TLScriptFunctionsMCPTool} - Lists TLScript functions and retrieves function documentation</li>
 	 * </ul>
 	 *
 	 * <p>
@@ -341,6 +343,12 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 
 		// Register tool for searching the model
 		builder.tools(ModelSearchTool.createSpecification());
+
+		// Register tool for listing TLScript functions
+		builder.tools(TLScriptFunctionsMCPTool.createListFunctionsSpecification());
+
+		// Register tool for getting TLScript function documentation
+		builder.tools(TLScriptFunctionsMCPTool.createGetFunctionDocSpecification());
 
 		// Register configured dynamic resources
 		InstantiationContext context = new com.top_logic.basic.config.DefaultInstantiationContext(getClass());

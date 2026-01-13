@@ -9,6 +9,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ConfiguredManagedClass;
@@ -53,6 +54,7 @@ public class ToolRegistry extends ConfiguredManagedClass<ToolRegistry.Config<?>>
 		 */
 		@Name(TOOL_FACTORIES)
 		@Key(ToolFactoryConfig.NAME_ATTRIBUTE)
+		@EntryTag("factory")
 		Map<String, ToolFactoryConfig> getToolFactories();
 
 	}

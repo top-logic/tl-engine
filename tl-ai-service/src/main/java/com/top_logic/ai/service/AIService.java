@@ -107,6 +107,8 @@ public class AIService extends ConfiguredManagedClass<AIService.Config<?>> {
 
 	private Map<String, ObjectPool<ChatModel>> _modelPools = new HashMap<>();
 
+	private List<String> _modelNames;
+
 	private String _defaultModel;
 
 	/**
@@ -193,12 +195,16 @@ public class AIService extends ConfiguredManagedClass<AIService.Config<?>> {
 				Logger.warn(
 					"No valid model factories available. Please check that API keys are properly configured.",
 					AIService.class);
+				_modelNames = List.of();
 			} else {
+				// Create immutable list of model names in consistent order
+				_modelNames = List.copyOf(_modelPools.keySet());
+
 				// Set default model
 				_defaultModel = config.getDefaultModel();
 				if (_defaultModel == null || !_modelPools.containsKey(_defaultModel)) {
 					// Use first available model as default
-					_defaultModel = _modelPools.keySet().iterator().next();
+					_defaultModel = _modelNames.get(0);
 
 					Logger.info("Selecting default AI model: " + _defaultModel, AIService.class);
 				}
@@ -331,6 +337,20 @@ public class AIService extends ConfiguredManagedClass<AIService.Config<?>> {
 		contextModels.put(effectiveModelName, newModel);
 
 		return newModel;
+	}
+
+	/**
+	 * Returns the names of all available models.
+	 *
+	 * <p>
+	 * These are the model names that can be passed to {@link #getChatModel(String)}. The returned
+	 * list is immutable and maintains a consistent order across calls.
+	 * </p>
+	 *
+	 * @return An immutable list of all configured model names.
+	 */
+	public List<String> getModelNames() {
+		return _modelNames;
 	}
 
 	/**

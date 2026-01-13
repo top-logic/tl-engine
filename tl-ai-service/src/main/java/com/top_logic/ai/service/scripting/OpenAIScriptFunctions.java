@@ -8,6 +8,7 @@ package com.top_logic.ai.service.scripting;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -15,12 +16,14 @@ import jakarta.activation.MimeType;
 import jakarta.activation.MimeTypeParseException;
 
 import com.top_logic.ai.service.AIService;
+import com.top_logic.ai.service.tools.registry.ToolRegistry;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
 
+import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.data.audio.Audio;
 import dev.langchain4j.data.image.Image;
 import dev.langchain4j.data.message.AiMessage;
@@ -38,6 +41,7 @@ import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.request.ResponseFormat;
 import dev.langchain4j.model.chat.request.ResponseFormatType;
+import dev.langchain4j.model.chat.request.ToolChoice;
 import dev.langchain4j.model.chat.response.ChatResponse;
 
 /**
@@ -58,6 +62,35 @@ import dev.langchain4j.model.chat.response.ChatResponse;
  */
 @ScriptPrefix("ai")
 public class OpenAIScriptFunctions extends TLScriptFunctions {
+
+	/**
+	 * Returns a list of all available model names from the {@link AIService}.
+	 *
+	 * <p>
+	 * Model names can be passed to the {@link #chat(List, String, Object, Collection)} function to
+	 * select which AI model to use. The returned list maintains a consistent order across calls.
+	 * </p>
+	 *
+	 * @return An immutable list of all configured model names.
+	 */
+	public static List<String> models() {
+		return AIService.getInstance().getModelNames();
+	}
+
+	/**
+	 * Returns a list of all available tool names from the {@link ToolRegistry}.
+	 *
+	 * <p>
+	 * Tool names are in the qualified format {@code factory-name.tool-name}. These names can be
+	 * passed to the {@link #chat(List, String, Object, Collection)} function to make tools
+	 * available to the AI agent.
+	 * </p>
+	 *
+	 * @return A list of all registered tool names.
+	 */
+	public static List<String> tools() {
+		return new ArrayList<>(ToolRegistry.getInstance().getToolNames());
+	}
 
 	/**
 	 * Sends a multi-turn conversation to the chat completion API.
@@ -86,9 +119,13 @@ public class OpenAIScriptFunctions extends TLScriptFunctions {
 	 *        <li>Map with "name" and "schema" fields describing a JSON schema for structured
 	 *        output.</li>
 	 *        </ul>
+	 * @param tools
+	 *        A collection of qualified tool names to make available to the AI agent (e.g.,
+	 *        {@code ["mytools.calculateSum", "texttools.formatText"]}), or {@code null} to provide
+	 *        no tools.
 	 * @return The assistant's response text.
 	 */
-	public static String chat(List<Object> messages, String model, Object responseFormat) {
+	public static String chat(List<Object> messages, String model, Object responseFormat, Collection<String> tools) {
 		ChatModel chatModel = AIService.getInstance().getChatModel(model);
 
 		List<ChatMessage> chatMessages = new ArrayList<>();
@@ -127,6 +164,13 @@ public class OpenAIScriptFunctions extends TLScriptFunctions {
 		ResponseFormat format = parseResponseFormat(responseFormat);
 		if (format != null) {
 			requestBuilder.responseFormat(format);
+		}
+
+		// Add tools if specified
+		if (tools != null && !tools.isEmpty()) {
+			List<ToolSpecification> toolSpecs = ToolRegistry.getInstance().getToolSpecifications(tools);
+			requestBuilder.toolSpecifications(toolSpecs);
+			requestBuilder.toolChoice(ToolChoice.AUTO);
 		}
 
 		ChatResponse response = chatModel.chat(requestBuilder.build());

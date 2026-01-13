@@ -52,10 +52,9 @@ public interface ModelExplorer {
 			  * `includeInherited=false` shows local parts only
 			  * `includeInherited=true` shows **all parts (local + inherited)** and marks `definedIn` + `inherited`.
 
-			### Dependency / relationship analysis (“Find references”)
+			### Dependency / relationship analysis ("Find references")
 
-			* `TypeAnalysisTool.findTypeUsages(qualifiedTypeName)` — finds properties using the type as a value type + subclasses.
-			* `TypeAnalysisTool.findIncomingReferences(qualifiedTypeName)` — finds references pointing to the type (incoming edges).
+			* `TypeAnalysisTool.findTypeUsages(qualifiedTypeName)` — finds properties using the type as a value type, references pointing to the type, and subclasses. Returns three separate sections: `properties`, `references`, and `subclasses`.
 			* `TypeAnalysisTool.findPartUsages(ownerTypeQualifiedName, partName)` — shows where a part is defined (may be inherited) and which subclasses inherit it.
 
 			### Annotation/metadata inspection
@@ -109,10 +108,8 @@ public interface ModelExplorer {
 			### “Definition of done” rules
 
 			* If asked about a **module**: you MUST call `listTypes(moduleName)` (do not rely on counts).
-			* If asked about a **type**: you MUST call `listTypeParts(..., includeInherited=true)` unless the user explicitly asks for “local only”.
-			* If asked “where is this used / what depends on this”:
-			  * Use `findTypeUsages()` for value-type + inheritance usages, and
-			  * Use `findIncomingReferences()` to capture incoming references.
+			* If asked about a **type**: you MUST call `listTypeParts(..., includeInherited=true)` unless the user explicitly asks for "local only".
+			* If asked "where is this used / what depends on this": use `findTypeUsages()` which returns three sections: properties (non-reference value types), references (incoming references), and subclasses (inheritance).
 			* If asked about a **specific part** (field/reference): use `findPartUsages(ownerType, partName)` to confirm whether it's local or inherited and where it is defined.
 			* If asked about **annotations or metadata** (visibility, UI configuration, validation): use `listAnnotations(targetRef, includeInherited)` to inspect annotation details.
 			* If asked "what properties does annotation X support" or "what can I configure in annotation Y": use `describeAnnotation(configInterfaceName)` to inspect the annotation's schema definition.
@@ -138,16 +135,17 @@ public interface ModelExplorer {
 
 			---
 
-			### Example 2: “Where is this type used?”
+			### Example 2: "Where is this type used?"
 
 			**User question:**
-			“Where is `SomeType` used?”
+			"Where is `SomeType` used?"
 
 			**Good answer pattern:**
-			- `SomeType` is **used as a value type** in:
-			  - `OtherType.someProperty` (from `findTypeUsages(SomeType)`).
-			- There are **no reference parts targeting `SomeType`** (from `findIncomingReferences(SomeType)`).
-			- These two facts are reported **separately** and not merged into a single statement.
+			- From `findTypeUsages(SomeType)`:
+			  - **Properties**: `SomeType` is used as a value type in `OtherType.someProperty`.
+			  - **References**: No reference parts targeting `SomeType`.
+			  - **Subclasses**: (list any subclasses if present)
+			- Property usages and reference usages are reported **separately** based on the tool's distinct sections.
 
 			---
 

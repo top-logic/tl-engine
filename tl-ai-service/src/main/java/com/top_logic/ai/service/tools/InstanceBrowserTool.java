@@ -171,7 +171,6 @@ public class InstanceBrowserTool {
 
 					String result = buffer.toString();
 					Logger.info("listInstances() result: " + result, InstanceBrowserTool.class);
-					System.out.println("InstanceBrowserTool.listInstances() result: " + result);
 					return result;
 
 				} catch (IOException ex) {
@@ -335,7 +334,6 @@ public class InstanceBrowserTool {
 
 					String result = buffer.toString();
 					Logger.info("getInstance() result: " + result, InstanceBrowserTool.class);
-					System.out.println("InstanceBrowserTool.getInstance() result: " + result);
 					return result;
 
 				} catch (IOException ex) {

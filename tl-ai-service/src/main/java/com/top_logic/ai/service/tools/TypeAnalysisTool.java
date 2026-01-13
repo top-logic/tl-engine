@@ -15,6 +15,7 @@ import com.top_logic.ai.service.tools.util.JsonToolResponseBuilder;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.common.json.gstream.JsonWriter;
+import com.top_logic.model.TLAssociationEnd;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLReference;
@@ -34,7 +35,6 @@ import dev.langchain4j.agent.tool.Tool;
  * This tool provides methods for understanding how types are used throughout the model:
  * <ul>
  * <li>{@link #findTypeUsages(String)} - Finds all usages of a type</li>
- * <li>{@link #findIncomingReferences(String)} - Finds references pointing to a type</li>
  * <li>{@link #findPartUsages(String, String)} - Finds where a part is defined and inherited</li>
  * </ul>
  * </p>
@@ -49,9 +49,10 @@ public class TypeAnalysisTool {
 	 * Finds all usages of a specific type in the model.
 	 *
 	 * <p>
-	 * Returns a JSON object with two arrays:
+	 * Returns a JSON object with three arrays:
 	 * <ul>
-	 * <li>{@code properties} - Properties that use this type as their value type</li>
+	 * <li>{@code properties} - Non-reference properties that use this type as their value type</li>
+	 * <li>{@code references} - References that point to this type</li>
 	 * <li>{@code subclasses} - Classes that extend this type (only for classes)</li>
 	 * </ul>
 	 * </p>
@@ -60,7 +61,7 @@ public class TypeAnalysisTool {
 	 *        The fully qualified type name in format "module:TypeName" (e.g., "tl.core:TLObject").
 	 * @return JSON object with usage information, or error JSON if type not found.
 	 */
-	@Tool("Find all usages of a type in the model (properties using it, classes extending it)")
+	@Tool("Find all usages of a type in the model (properties, references, and classes extending it)")
 	public String findTypeUsages(
 			@P("The qualified type name in format 'module:TypeName'") String qualifiedTypeName) {
 
@@ -83,6 +84,7 @@ public class TypeAnalysisTool {
 
 					// Find all usages of this type
 					List<PropertyUsage> propertyUsages = findPropertyUsages(model, type);
+					List<ReferenceUsage> referenceUsages = findReferenceUsages(model, type);
 					List<String> subclasses = findSubclasses(type);
 
 					// Build JSON object with usage information
@@ -90,13 +92,24 @@ public class TypeAnalysisTool {
 					try (JsonWriter json = JsonToolResponseBuilder.createWriter(buffer)) {
 						json.beginObject();
 
-						// Properties that use this type as value type
+						// Properties that use this type as value type (non-reference parts)
 						json.name("properties").beginArray();
 						for (PropertyUsage usage : propertyUsages) {
 							json.beginObject();
 							json.name("owner").value(usage.ownerType);
 							json.name("property").value(usage.propertyName);
 							json.name("usage").value("value type");
+							json.endObject();
+						}
+						json.endArray();
+
+						// References that point to this type
+						json.name("references").beginArray();
+						for (ReferenceUsage usage : referenceUsages) {
+							json.beginObject();
+							json.name("owner").value(usage.ownerType);
+							json.name("reference").value(usage.referenceName);
+							json.name("usage").value("reference type");
 							json.endObject();
 						}
 						json.endArray();
@@ -116,7 +129,6 @@ public class TypeAnalysisTool {
 
 					String result = buffer.toString();
 					Logger.info("findTypeUsages() result: " + result, TypeAnalysisTool.class);
-					System.out.println("TypeAnalysisTool.findTypeUsages() result: " + result);
 					return result;
 
 				} catch (IOException ex) {
@@ -128,84 +140,6 @@ public class TypeAnalysisTool {
 					String error = JsonToolResponseBuilder.buildErrorJson("Error analyzing type: " + ex.getMessage());
 					Logger.error("findTypeUsages() error: " + ex.getMessage(), ex, TypeAnalysisTool.class);
 					System.err.println("TypeAnalysisTool.findTypeUsages() error: " + error);
-					return error;
-				}
-			});
-	}
-
-	/**
-	 * Finds all references pointing to a specific type (excludes simple properties).
-	 *
-	 * <p>
-	 * Returns a JSON object with:
-	 * <ul>
-	 * <li>{@code targetType} - The type being referenced</li>
-	 * <li>{@code references} - Array of references pointing to this type</li>
-	 * </ul>
-	 * </p>
-	 *
-	 * @param qualifiedTypeName
-	 *        The fully qualified type name in format "module:TypeName" (e.g., "tl.core:TLObject").
-	 * @return JSON object with incoming references information, or error JSON if type not found.
-	 */
-	@Tool("Find all references pointing to a specific type")
-	public String findIncomingReferences(
-			@P("The qualified type name in format 'module:TypeName'") String qualifiedTypeName) {
-
-		return ThreadContextManager.inSystemInteraction(
-			TypeAnalysisTool.class,
-			() -> {
-				try {
-					// Validate parameter
-					if (qualifiedTypeName == null || qualifiedTypeName.isEmpty()) {
-						return JsonToolResponseBuilder.buildErrorJson("Qualified type name is required");
-					}
-
-					// Get the application model and find the requested type
-					TLModel model = ModelService.getApplicationModel();
-					TLType type = TLModelUtil.findType(model, qualifiedTypeName);
-
-					if (type == null) {
-						return JsonToolResponseBuilder.buildErrorJson("Type not found: " + qualifiedTypeName);
-					}
-
-					// Find all references to this type
-					List<ReferenceUsage> referenceUsages = findReferenceUsages(model, type);
-
-					// Build JSON object with reference information
-					StringWriter buffer = new StringWriter();
-					try (JsonWriter json = JsonToolResponseBuilder.createWriter(buffer)) {
-						json.beginObject();
-
-						json.name("targetType").value(qualifiedTypeName);
-
-						// References that point to this type
-						json.name("references").beginArray();
-						for (ReferenceUsage usage : referenceUsages) {
-							json.beginObject();
-							json.name("ownerType").value(usage.ownerType);
-							json.name("referenceName").value(usage.referenceName);
-							json.endObject();
-						}
-						json.endArray();
-
-						json.endObject();
-					}
-
-					String result = buffer.toString();
-					Logger.info("findIncomingReferences() result: " + result, TypeAnalysisTool.class);
-					System.out.println("TypeAnalysisTool.findIncomingReferences() result: " + result);
-					return result;
-
-				} catch (IOException ex) {
-					String error = JsonToolResponseBuilder.buildErrorJson("Failed to find incoming references: " + ex.getMessage());
-					Logger.error("findIncomingReferences() error: " + ex.getMessage(), ex, TypeAnalysisTool.class);
-					System.err.println("TypeAnalysisTool.findIncomingReferences() error: " + error);
-					return error;
-				} catch (Exception ex) {
-					String error = JsonToolResponseBuilder.buildErrorJson("Error analyzing references: " + ex.getMessage());
-					Logger.error("findIncomingReferences() error: " + ex.getMessage(), ex, TypeAnalysisTool.class);
-					System.err.println("TypeAnalysisTool.findIncomingReferences() error: " + error);
 					return error;
 				}
 			});
@@ -299,7 +233,6 @@ public class TypeAnalysisTool {
 
 					String result = buffer.toString();
 					Logger.info("findPartUsages() result: " + result, TypeAnalysisTool.class);
-					System.out.println("TypeAnalysisTool.findPartUsages() result: " + result);
 					return result;
 
 				} catch (IOException ex) {
@@ -317,18 +250,19 @@ public class TypeAnalysisTool {
 	}
 
 	/**
-	 * Finds all properties that use the given type as their value type.
+	 * Finds all properties (non-references) that use the given type as their value type.
 	 *
 	 * <p>
 	 * Uses the meta-model to find all instances of TLStructuredTypePart where the 'type' reference
-	 * points to the given type.
+	 * points to the given type. This method excludes references and only returns actual properties
+	 * (attributes with primitive or enumeration types).
 	 * </p>
 	 *
 	 * @param model
 	 *        The TopLogic model.
 	 * @param type
 	 *        The type to find usages for.
-	 * @return List of property usages.
+	 * @return List of property usages (excluding references).
 	 */
 	private static List<PropertyUsage> findPropertyUsages(TLModel model, TLType type) {
 		List<PropertyUsage> usages = new ArrayList<>();
@@ -346,10 +280,36 @@ public class TypeAnalysisTool {
 		}
 
 		// Use getReferers() to find all TLStructuredTypePart instances that reference this type
+		// Handle both direct TLStructuredTypePart and TLAssociationEnd, but only keep properties
 		for (Object referer : typeRef.getReferers(type)) {
-			if (referer instanceof TLStructuredTypePart part) {
-				String ownerTypeName = TLModelUtil.qualifiedName(part.getOwner());
-				usages.add(new PropertyUsage(ownerTypeName, part.getName()));
+			String ownerTypeName = null;
+			String partName = null;
+			boolean isReference = false;
+
+			if (referer instanceof TLReference) {
+				// This is a reference, not a property - skip it
+				continue;
+			} else if (referer instanceof TLAssociationEnd) {
+				// Association end - check if it implements a reference
+				TLAssociationEnd end = (TLAssociationEnd) referer;
+				TLReference ref = end.getReference();
+				if (ref != null) {
+					// This association end implements a reference - skip it
+					continue;
+				}
+				// Otherwise, treat it as a property (shouldn't normally happen)
+				TLStructuredTypePart part = (TLStructuredTypePart) referer;
+				ownerTypeName = TLModelUtil.qualifiedName(part.getOwner());
+				partName = part.getName();
+			} else if (referer instanceof TLStructuredTypePart) {
+				// Direct property
+				TLStructuredTypePart part = (TLStructuredTypePart) referer;
+				ownerTypeName = TLModelUtil.qualifiedName(part.getOwner());
+				partName = part.getName();
+			}
+
+			if (ownerTypeName != null && partName != null && !isReference) {
+				usages.add(new PropertyUsage(ownerTypeName, partName));
 			}
 		}
 
@@ -369,9 +329,9 @@ public class TypeAnalysisTool {
 	 * Finds all references (not properties) that use the given type as their target type.
 	 *
 	 * <p>
-	 * Uses the meta-model to find all instances of TLReference where the 'type' reference
-	 * points to the given type. This differs from {@link #findPropertyUsages(TLModel, TLType)}
-	 * by filtering to only TLReference instances.
+	 * Uses the meta-model to find all instances of TLStructuredTypePart where the 'type' reference
+	 * points to the given type. This method handles both direct {@link TLReference} instances and
+	 * {@link TLAssociationEnd} instances (which represent association-end based references).
 	 * </p>
 	 *
 	 * @param model
@@ -396,9 +356,20 @@ public class TypeAnalysisTool {
 		}
 
 		// Use getReferers() to find all TLStructuredTypePart instances that reference this type
-		// Filter to only TLReference instances (exclude TLProperty)
+		// Handle both TLReference (direct) and TLAssociationEnd (association-based references)
 		for (Object referer : typeRef.getReferers(type)) {
-			if (referer instanceof TLReference reference) {
+			TLReference reference = null;
+
+			if (referer instanceof TLReference) {
+				// Direct reference
+				reference = (TLReference) referer;
+			} else if (referer instanceof TLAssociationEnd) {
+				// Association end - get the reference it implements
+				TLAssociationEnd end = (TLAssociationEnd) referer;
+				reference = end.getReference();
+			}
+
+			if (reference != null) {
 				String ownerTypeName = TLModelUtil.qualifiedName(reference.getOwner());
 				usages.add(new ReferenceUsage(ownerTypeName, reference.getName()));
 			}

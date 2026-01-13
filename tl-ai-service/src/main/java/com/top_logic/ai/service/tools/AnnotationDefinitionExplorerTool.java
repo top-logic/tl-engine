@@ -125,7 +125,6 @@ public class AnnotationDefinitionExplorerTool {
 					String result = buffer.toString();
 					Logger.info("describeAnnotation() result: " + result,
 						AnnotationDefinitionExplorerTool.class);
-					System.out.println("AnnotationDefinitionExplorerTool.describeAnnotation() result: " + result);
 					return result;
 
 				} catch (ClassNotFoundException ex) {

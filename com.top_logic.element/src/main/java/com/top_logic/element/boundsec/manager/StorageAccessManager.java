@@ -29,6 +29,7 @@ import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.sql.ConnectionPoolRegistry;
 import com.top_logic.basic.thread.ThreadContext;
+import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.security.SecurityStorage;
 import com.top_logic.knowledge.service.CommitHandler;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -425,8 +426,8 @@ public class StorageAccessManager extends ElementAccessManager {
 
 
     @Override
-	public void handleSecurityUpdate(KnowledgeBase kb, Map<TLID, Object> someChanged,
-			Map<TLID, Object> someNew, Map<TLID, Object> someRemoved, CommitHandler aHandler) {
+	public void handleSecurityUpdate(KnowledgeBase kb, Map<TLID, KnowledgeItem> someChanged,
+			Map<TLID, KnowledgeItem> someNew, Map<TLID, KnowledgeItem> someRemoved, CommitHandler aHandler) {
         // Don't do anything if SecurityStorage is disabled
         if (!securityStorage.isAutoUpdate()) {
             return;
@@ -446,7 +447,8 @@ public class StorageAccessManager extends ElementAccessManager {
     /**
      * Hook for subclasses to update the access manager in case of a security change.
      */
-    protected void doHandleSecurityUpdate(KnowledgeBase kb, Map<TLID, Object> someChanged, Map<TLID, Object> someNew, Map<TLID, Object> someRemoved, CommitHandler aHandler) {
+	protected void doHandleSecurityUpdate(KnowledgeBase kb, Map<TLID, KnowledgeItem> someChanged,
+			Map<TLID, KnowledgeItem> someNew, Map<TLID, KnowledgeItem> someRemoved, CommitHandler aHandler) {
 		securityUpdateManager.handleSecurityUpdate(kb, someChanged, someNew, someRemoved, aHandler);
     }
 

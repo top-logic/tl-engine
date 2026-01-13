@@ -36,6 +36,7 @@ import com.top_logic.element.boundsec.manager.rule.RoleRule;
 import com.top_logic.element.meta.kbbased.WrapperMetaAttributeUtil;
 import com.top_logic.knowledge.objects.InvalidLinkException;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
+import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeItemUtil;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.security.SecurityStorage;
@@ -160,8 +161,8 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
 		return _logHandler;
 	}
 
-	public synchronized void handleSecurityUpdate(KnowledgeBase kb, Map<TLID, Object> someChanged,
-			Map<TLID, Object> someNew, final Map<TLID, Object> someRemoved, CommitHandler aHandler) {
+	public synchronized void handleSecurityUpdate(KnowledgeBase kb, Map<TLID, KnowledgeItem> someChanged,
+			Map<TLID, KnowledgeItem> someNew, final Map<TLID, KnowledgeItem> someRemoved, CommitHandler aHandler) {
 
         // This map holds the affected rules mapped to the set of affected objects
 		final Map<RoleProvider, Collection<BoundObject>> rulesToObjectsMap =
@@ -236,7 +237,7 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
     /**
      * This method handles new created objects.
      */
-	private void handleNewObjects(Map<TLID, Object> someNew,
+	private void handleNewObjects(Map<TLID, KnowledgeItem> someNew,
 			Map<RoleProvider, Collection<BoundObject>> rulesToObjectsMap) {
         Map<TLClass, Collection<RoleProvider>> meRules = accessManager.getResolvedMERules();
         Map<MetaObject, Collection<RoleProvider>> moRules = accessManager.getResolvedMORules();
@@ -283,7 +284,7 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
 			final Map<RoleProvider, Collection<BoundObject>> aRulesToObjectsMap,
 			final Map<RoleProvider, Collection<BoundObject>> aRulesToDeletedObjectsMap,
 			Map<BoundRole, Collection<Object>> someNewHasRoles,
-			final Map<BoundRole, Collection<Object>> someDeletedHasRoles, final Collection<Object> removed) {
+			final Map<BoundRole, Collection<Object>> someDeletedHasRoles, final Collection<KnowledgeItem> removed) {
 
         // for each rule we have a set of affected objects
         for (Map.Entry<BoundRole,Collection<Object>>  theEntry : someNewHasRoles.entrySet()) {

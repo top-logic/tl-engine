@@ -60,8 +60,18 @@ public class Converters extends TLScriptFunctions {
 	public static String htmlToMarkdown(@Mandatory String html) {
 		MutableDataSet options = new MutableDataSet();
 
-		// Configure the HTML to Markdown converter
-		// You can add additional options here if needed
+		// Configure the HTML to Markdown converter for cleaner output
+		options.set(FlexmarkHtmlConverter.SETEXT_HEADINGS, false); // Use ATX headings (# style) instead of setext (underlined)
+		options.set(FlexmarkHtmlConverter.OUTPUT_ATTRIBUTES_ID, false); // Don't output id attributes
+		options.set(FlexmarkHtmlConverter.WRAP_AUTO_LINKS, false); // Don't wrap auto-links in angle brackets
+		options.set(FlexmarkHtmlConverter.EXTRACT_AUTO_LINKS, true); // Extract links from anchor tags
+		options.set(FlexmarkHtmlConverter.DOT_ONLY_NUMERIC_LISTS, true); // Use . for numeric lists
+		options.set(FlexmarkHtmlConverter.BR_AS_EXTRA_BLANK_LINES, false); // <br> as space, not blank line
+		options.set(FlexmarkHtmlConverter.LISTS_END_ON_DOUBLE_BLANK, false); // End lists on single blank
+		options.set(FlexmarkHtmlConverter.DIV_AS_PARAGRAPH, true); // Treat divs as paragraphs
+		options.set(FlexmarkHtmlConverter.SKIP_HEADING_1, false); // Include H1 headings
+		options.set(FlexmarkHtmlConverter.SKIP_HEADING_2, false); // Include H2 headings
+		options.set(FlexmarkHtmlConverter.SKIP_ATTRIBUTES, true); // Skip HTML attributes
 
 		return FlexmarkHtmlConverter.builder(options).build().convert(html);
 	}

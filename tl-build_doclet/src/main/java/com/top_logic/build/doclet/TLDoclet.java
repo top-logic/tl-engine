@@ -607,12 +607,7 @@ public class TLDoclet implements Doclet {
 	}
 
 	void printWarning(Element element, String msg) {
-		SourcePosition position = position(element);
-		if (position == null) {
-			// TODO:
-//			return;
-		}
-		printWarning(position, msg);
+		printWarning(position(element), msg);
 	}
 
 	private String simpleTypeName(TypeVariable type) {

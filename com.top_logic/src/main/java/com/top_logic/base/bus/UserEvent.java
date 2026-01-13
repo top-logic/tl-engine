@@ -10,7 +10,20 @@ import java.util.Date;
 import com.top_logic.knowledge.wrap.person.Person;
 
 /**
- * The {@link UserEvent} to make changes of Users available.
+ * The {@link UserEvent} to make changes of users available.
+ * 
+ * @param passiveUser
+ *        The user affected by this event.
+ * @param user
+ *        The user triggering this event.
+ * @param sessionID
+ *        Session ID of the passive user.
+ * @param machine
+ *        Client IP address of the session.
+ * @param type
+ *        Type of this event.
+ * @param date
+ *        Date when this event occurs.
  */
 public record UserEvent(Person passiveUser, Person user, String sessionID, String machine, EventType type, Date date) {
 

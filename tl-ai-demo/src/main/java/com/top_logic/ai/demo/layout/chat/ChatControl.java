@@ -14,6 +14,7 @@ import java.util.Map;
 
 import com.top_logic.ai.service.agents.ModelExplorer;
 import com.top_logic.ai.service.agents.UMLSpecificationAgent;
+import com.top_logic.ai.service.scripting.Converters;
 import com.top_logic.ai.service.scripting.OpenAIScriptFunctions;
 import com.top_logic.ai.service.tools.AnnotationDefinitionExplorerTool;
 import com.top_logic.ai.service.tools.InstanceBrowserTool;
@@ -88,7 +89,7 @@ public class ChatControl extends AbstractControlBase {
 		writeControlAttributes(context, out);
 		out.endBeginTag();
 		{
-			writeMessages(out);
+			writeMessages(context, out);
 			writeInputSection(out);
 		}
 		out.endTag(DIV);
@@ -117,7 +118,7 @@ public class ChatControl extends AbstractControlBase {
 		com.top_logic.mig.html.HTMLUtil.appendCSSClass(out, "chat-control");
 	}
 
-	private void writeMessages(TagWriter out) throws IOException {
+	private void writeMessages(DisplayContext context, TagWriter out) throws IOException {
 		String messagesId = getID() + "-messages";
 		out.beginBeginTag(DIV);
 		out.writeAttribute(CLASS_ATTR, "chat-messages");
@@ -128,7 +129,7 @@ public class ChatControl extends AbstractControlBase {
 		{
 			// Render regular chat messages
 			for (ChatMessage msg : _chat.getMessages()) {
-				writeMessage(out, msg);
+				writeMessage(context, out, msg);
 			}
 
 			// Render notifier messages
@@ -149,7 +150,7 @@ public class ChatControl extends AbstractControlBase {
 		out.endScript();
 	}
 
-	private void writeMessage(TagWriter out, ChatMessage msg) throws IOException {
+	private void writeMessage(DisplayContext context, TagWriter out, ChatMessage msg) throws IOException {
 		out.beginBeginTag(DIV);
 		out.writeAttribute(CLASS_ATTR, "chat-message");
 		out.writeAttribute(STYLE_ATTR, "margin-bottom: 8px;");
@@ -179,7 +180,7 @@ public class ChatControl extends AbstractControlBase {
 			out.beginBeginTag(SPAN);
 			out.writeAttribute(CLASS_ATTR, "chat-text");
 			out.endBeginTag();
-			out.writeText(msg.getText());
+			Converters.markdownToHtml(msg.getText()).write(context, out);
 			out.endTag(SPAN);
 		}
 		out.endTag(DIV);

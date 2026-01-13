@@ -5,6 +5,13 @@
  */
 package com.top_logic.ai.service.scripting;
 
+import java.util.Arrays;
+
+import com.vladsch.flexmark.ext.emoji.EmojiExtension;
+import com.vladsch.flexmark.ext.gfm.strikethrough.StrikethroughExtension;
+import com.vladsch.flexmark.ext.ins.InsExtension;
+import com.vladsch.flexmark.ext.superscript.SuperscriptExtension;
+import com.vladsch.flexmark.ext.tables.TablesExtension;
 import com.vladsch.flexmark.html.HtmlRenderer;
 import com.vladsch.flexmark.html2md.converter.FlexmarkHtmlConverter;
 import com.vladsch.flexmark.parser.Parser;
@@ -22,6 +29,8 @@ import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
  */
 @ScriptPrefix("convert")
 public class Converters extends TLScriptFunctions {
+
+	private static final MutableDataSet DEFAULT_OPTIONS = createDefaultOptions();
 
 	/**
 	 * Converts <i>Markdown</i> to HTML.
@@ -58,7 +67,20 @@ public class Converters extends TLScriptFunctions {
 	 * @return Markdown formatted text.
 	 */
 	public static String htmlToMarkdown(@Mandatory String html) {
+		return FlexmarkHtmlConverter.builder(DEFAULT_OPTIONS).build().convert(html);
+	}
+
+	private static MutableDataSet createDefaultOptions() {
 		MutableDataSet options = new MutableDataSet();
+
+		// Enable extensions for better HTML conversion
+		options.set(Parser.EXTENSIONS, Arrays.asList(
+			TablesExtension.create(),
+			StrikethroughExtension.create(),
+			EmojiExtension.create(),
+			InsExtension.create(),
+			SuperscriptExtension.create()
+		));
 
 		// Configure the HTML to Markdown converter for cleaner output
 		options.set(FlexmarkHtmlConverter.SETEXT_HEADINGS, false); // Use ATX headings (# style) instead of setext (underlined)
@@ -72,8 +94,7 @@ public class Converters extends TLScriptFunctions {
 		options.set(FlexmarkHtmlConverter.SKIP_HEADING_1, false); // Include H1 headings
 		options.set(FlexmarkHtmlConverter.SKIP_HEADING_2, false); // Include H2 headings
 		options.set(FlexmarkHtmlConverter.SKIP_ATTRIBUTES, true); // Skip HTML attributes
-
-		return FlexmarkHtmlConverter.builder(options).build().convert(html);
+		return options;
 	}
 
 }

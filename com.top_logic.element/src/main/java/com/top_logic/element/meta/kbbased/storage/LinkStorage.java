@@ -250,7 +250,7 @@ public abstract class LinkStorage<C extends LinkStorage.Config<?>> extends Colle
 	@Override
 	public ObjectKey getPartId(Map<String, Object> row) {
 		if (monomophicTable()) {
-			return getAttribute().tId();
+			return getAttribute().getDefinition().tId();
 		} else {
 			return (ObjectKey) row.get(WrapperMetaAttributeUtil.META_ATTRIBUTE_ATTR);
 		}
@@ -259,7 +259,7 @@ public abstract class LinkStorage<C extends LinkStorage.Config<?>> extends Colle
 	@Override
 	public ObjectKey getPartId(KnowledgeItem item) {
 		if (monomophicTable()) {
-			return getAttribute().tId();
+			return getAttribute().getDefinition().tId();
 		} else {
 			return item.getReferencedKey(WrapperMetaAttributeUtil.META_ATTRIBUTE_ATTR);
 		}

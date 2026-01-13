@@ -130,7 +130,7 @@ public class SingletonLinkStorage<C extends SingletonLinkStorage.Config<?>> exte
 	@Override
 	public ObjectKey getPartId(Map<String, Object> row) {
 		if (monomophicTable()) {
-			return getAttribute().tId();
+			return getAttribute().getDefinition().tId();
 		} else {
 			return (ObjectKey) row.get(WrapperMetaAttributeUtil.META_ATTRIBUTE_ATTR);
 		}
@@ -139,7 +139,7 @@ public class SingletonLinkStorage<C extends SingletonLinkStorage.Config<?>> exte
 	@Override
 	public ObjectKey getPartId(KnowledgeItem item) {
 		if (monomophicTable()) {
-			return getAttribute().tId();
+			return getAttribute().getDefinition().tId();
 		} else {
 			return item.getReferencedKey(WrapperMetaAttributeUtil.META_ATTRIBUTE_ATTR);
 		}

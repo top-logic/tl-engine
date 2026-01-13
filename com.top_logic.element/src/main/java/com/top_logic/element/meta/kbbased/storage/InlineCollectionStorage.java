@@ -28,6 +28,7 @@ import com.top_logic.element.meta.AttributeException;
 import com.top_logic.element.meta.ReferenceStorage;
 import com.top_logic.element.meta.SeparateTableStorage;
 import com.top_logic.element.meta.kbbased.AttributeUtil;
+import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
@@ -148,6 +149,11 @@ public abstract class InlineCollectionStorage<C extends InlineCollectionStorage.
 	}
 
 	@Override
+	public ObjectKey getBaseObjectId(KnowledgeItem item) {
+		return item.getReferencedKey(getConfig().getContainerColumn());
+	}
+
+	@Override
 	public String getStorageColumn() {
 		return getConfig().getContainerColumn();
 	}
@@ -159,6 +165,16 @@ public abstract class InlineCollectionStorage<C extends InlineCollectionStorage.
 			return getAttribute().tId();
 		} else {
 			return (ObjectKey) row.get(referenceColumn);
+		}
+	}
+
+	@Override
+	public ObjectKey getPartId(KnowledgeItem item) {
+		String referenceColumn = getConfig().getReferenceColumn();
+		if (referenceColumn == null) {
+			return getAttribute().tId();
+		} else {
+			return item.getReferencedKey(referenceColumn);
 		}
 	}
 

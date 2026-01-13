@@ -17,6 +17,7 @@ import com.top_logic.dob.meta.MOClass;
 import com.top_logic.dob.meta.MOReference;
 import com.top_logic.dob.meta.MORepository;
 import com.top_logic.element.changelog.ChangeLogBuilder;
+import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.util.TLModelUtil;
@@ -62,9 +63,23 @@ public interface AssociationStorageDescriptor {
 	ObjectKey getBaseObjectId(Map<String, Object> row);
 
 	/**
+	 * The ID of the base objects to which the attribute data from the given item belongs.
+	 *
+	 * @param item
+	 *        Values of a {@link #getTable() table} item.
+	 * @return ID of the object for which a value is stored in the given item.
+	 */
+	ObjectKey getBaseObjectId(KnowledgeItem item);
+
+	/**
 	 * The ID of the attribute for which values are stored in the given row.
 	 */
 	ObjectKey getPartId(Map<String, Object> row);
+
+	/**
+	 * The ID of the attribute for which values are stored in the given item.
+	 */
+	ObjectKey getPartId(KnowledgeItem item);
 
 	/**
 	 * The column in the {@link #getTable()} that is used for storing values.

@@ -24,6 +24,7 @@ import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.element.meta.AssociationStorage;
 import com.top_logic.element.meta.kbbased.WrapperMetaAttributeUtil;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
+import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.db2.AssociationSetQuery;
 import com.top_logic.knowledge.service.db2.DBKnowledgeAssociation;
 import com.top_logic.knowledge.wrap.AbstractWrapper;
@@ -237,6 +238,11 @@ public abstract class LinkStorage<C extends LinkStorage.Config<?>> extends Colle
 	}
 
 	@Override
+	public ObjectKey getBaseObjectId(KnowledgeItem item) {
+		return item.getReferencedKey(DBKnowledgeAssociation.REFERENCE_SOURCE_NAME);
+	}
+
+	@Override
 	public String getStorageColumn() {
 		return DBKnowledgeAssociation.REFERENCE_DEST_NAME;
 	}
@@ -247,6 +253,15 @@ public abstract class LinkStorage<C extends LinkStorage.Config<?>> extends Colle
 			return getAttribute().tId();
 		} else {
 			return (ObjectKey) row.get(WrapperMetaAttributeUtil.META_ATTRIBUTE_ATTR);
+		}
+	}
+
+	@Override
+	public ObjectKey getPartId(KnowledgeItem item) {
+		if (monomophicTable()) {
+			return getAttribute().tId();
+		} else {
+			return item.getReferencedKey(WrapperMetaAttributeUtil.META_ATTRIBUTE_ATTR);
 		}
 	}
 

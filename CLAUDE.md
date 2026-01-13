@@ -171,6 +171,10 @@ Build output includes:
 
 ## Coding Conventions
 
+### Internationalization (I18N)
+
+**DO NOT** manually edit internationalization message files (`messages_en.properties`, `messages_de.properties`). These files are automatically generated and updated by the build process. The build system extracts configuration property names, class names, and other metadata to generate appropriate I18N keys and default messages.
+
 ### JavaDoc
 
 **DO NOT** add `@author` tags to class JavaDoc. Author information should be tracked through version control (git), not in source code comments.

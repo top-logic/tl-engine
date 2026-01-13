@@ -40,6 +40,11 @@
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-common-json</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-ai-service</artifactId>
+			<version>${project.version}</version>
+		</dependency>
 
 		<!-- MCP SDK -->
 		<dependency>

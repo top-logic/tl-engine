@@ -15,7 +15,7 @@
 	<properties>
 		<project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
 		
-		<langchain4j.version>1.9.1</langchain4j.version>
+		<langchain4j.version>1.10.0</langchain4j.version>
 	</properties>
 
 	<dependencies>
@@ -72,6 +72,12 @@
 			<artifactId>commons-pool</artifactId>
 		</dependency>
 
+		<dependency>
+	        <groupId>com.vladsch.flexmark</groupId>
+		    <artifactId>flexmark-html2md-converter</artifactId>
+        	<version>0.64.8</version>
+    	</dependency>
+
 		<!-- Tests -->
 		<dependency>
 			<groupId>com.top-logic</groupId>
@@ -89,6 +95,20 @@
 
 	<build>
 		<plugins>
+			<plugin>
+				<groupId>de.haumacher.msgbuf</groupId>
+				<artifactId>msgbuf-generator-maven-plugin</artifactId>
+				<version>${msgbuf.version}</version>
+				
+				<executions>
+					<execution>
+						<id>generate-protocols</id>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>		
 		</plugins>
 	</build>
 </project>

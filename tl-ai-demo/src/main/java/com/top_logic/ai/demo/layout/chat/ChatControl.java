@@ -432,7 +432,7 @@ public class ChatControl extends AbstractControlBase {
 
 		try {
 			// Call OpenAI API
-			String aiResponse = OpenAIScriptFunctions.chat(messages, null, null);
+			String aiResponse = OpenAIScriptFunctions.chat(messages, null, null, null);
 
 			// Clear processing notifier and add AI response
 			_notifiers.clear();

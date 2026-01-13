@@ -146,43 +146,35 @@ public class JsonSchemaConverter {
 	}
 
 	/**
-	 * Adds a single property to a {@link dev.langchain4j.model.chat.request.json.JsonObjectSchema.Builder} based on its definition.
+	 * Adds a property to a {@link dev.langchain4j.model.chat.request.json.JsonObjectSchema.Builder}
+	 * from a type string and description.
+	 *
+	 * <p>
+	 * This is a convenience method for adding properties when you have the type as a string (e.g.,
+	 * "string", "integer", "number", "boolean", "array", "object") and an optional description.
+	 * </p>
 	 *
 	 * @param builder
 	 *        The builder to add the property to.
 	 * @param propertyName
 	 *        The name of the property.
-	 * @param propertyDef
-	 *        The property definition map containing "type", "description", etc.
+	 * @param type
+	 *        The JSON schema type (string, integer, number, boolean, array, object).
+	 * @param description
+	 *        Optional description for the property (may be {@code null}).
 	 */
-	private static void addProperty(JsonObjectSchema.Builder builder, String propertyName,
-			Map<?, ?> propertyDef) {
-		String type = (String) propertyDef.get(FIELD_TYPE);
-
+	public static void addProperty(JsonObjectSchema.Builder builder, String propertyName,
+			String type, String description) {
 		if (type == null) {
-			throw new IllegalArgumentException("Property '" + propertyName + "' must have a '" + FIELD_TYPE + "' field.");
+			throw new IllegalArgumentException("Property '" + propertyName + "' must have a type.");
 		}
-
-		String description = (String) propertyDef.get(FIELD_DESCRIPTION);
 
 		switch (type.toLowerCase()) {
 			case TYPE_STRING:
-				// Check for enum
-				Object enumValues = propertyDef.get(FIELD_ENUM);
-				if (enumValues instanceof List<?> enumList) {
-					List<String> enumStrings = extractStringList(enumList);
-					if (description != null) {
-						builder.addEnumProperty(propertyName, enumStrings, description);
-					} else {
-						builder.addEnumProperty(propertyName, enumStrings);
-					}
+				if (description != null) {
+					builder.addStringProperty(propertyName, description);
 				} else {
-					// Regular string property
-					if (description != null) {
-						builder.addStringProperty(propertyName, description);
-					} else {
-						builder.addStringProperty(propertyName);
-					}
+					builder.addStringProperty(propertyName);
 				}
 				break;
 
@@ -211,16 +203,73 @@ public class JsonSchemaConverter {
 				break;
 
 			case TYPE_ARRAY:
-				builder.addProperty(propertyName, buildArraySchema(propertyDef));
+				builder.addProperty(propertyName, JsonArraySchema.builder()
+					.description(description)
+					.build());
 				break;
 
 			case TYPE_OBJECT:
-				builder.addProperty(propertyName, buildObjectSchema(propertyDef));
+				builder.addProperty(propertyName, JsonObjectSchema.builder()
+					.description(description)
+					.build());
 				break;
 
 			default:
 				throw new IllegalArgumentException("Unsupported property type: " + type);
 		}
+	}
+
+	/**
+	 * Adds a single property to a {@link dev.langchain4j.model.chat.request.json.JsonObjectSchema.Builder} based on its definition.
+	 *
+	 * @param builder
+	 *        The builder to add the property to.
+	 * @param propertyName
+	 *        The name of the property.
+	 * @param propertyDef
+	 *        The property definition map containing "type", "description", etc.
+	 */
+	private static void addProperty(JsonObjectSchema.Builder builder, String propertyName,
+			Map<?, ?> propertyDef) {
+		String type = (String) propertyDef.get(FIELD_TYPE);
+
+		if (type == null) {
+			throw new IllegalArgumentException("Property '" + propertyName + "' must have a '" + FIELD_TYPE + "' field.");
+		}
+
+		String description = (String) propertyDef.get(FIELD_DESCRIPTION);
+
+		// Special handling for enum strings
+		if (TYPE_STRING.equals(type.toLowerCase())) {
+			Object enumValues = propertyDef.get(FIELD_ENUM);
+			if (enumValues instanceof List<?> enumList) {
+				List<String> enumStrings = extractStringList(enumList);
+				if (description != null) {
+					builder.addEnumProperty(propertyName, enumStrings, description);
+				} else {
+					builder.addEnumProperty(propertyName, enumStrings);
+				}
+				return;
+			}
+		}
+
+		// Special handling for complex types (array and object) with nested definitions
+		if (TYPE_ARRAY.equals(type.toLowerCase())) {
+			builder.addProperty(propertyName, buildArraySchema(propertyDef));
+			return;
+		}
+
+		if (TYPE_OBJECT.equals(type.toLowerCase())) {
+			Object propertiesObj = propertyDef.get(FIELD_PROPERTIES);
+			if (propertiesObj != null) {
+				// Complex object with nested properties - use full builder
+				builder.addProperty(propertyName, buildObjectSchema(propertyDef));
+				return;
+			}
+		}
+
+		// For simple types, delegate to the public method
+		addProperty(builder, propertyName, type, description);
 	}
 
 	/**

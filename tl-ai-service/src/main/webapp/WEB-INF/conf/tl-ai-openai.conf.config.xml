@@ -15,7 +15,50 @@
 				<modules>
 					<!-- AI Service for AI/LLM API integration -->
 					<module key="com.top_logic.ai.service.AIService$Module" value="true"/>
+					<!-- Tool Registry for managing AI tool providers -->
+					<module key="com.top_logic.ai.service.tools.registry.ToolRegistry$Module" value="true"/>
 				</modules>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.ai.service.tools.registry.ToolRegistry">
+			<instance class="com.top_logic.ai.service.tools.registry.ToolRegistry">
+				<tool-factories>
+					<!-- Example configuration with ReflectiveToolFactory:
+					<factory name="mytools">
+						<implementation class="com.top_logic.ai.service.tools.registry.ReflectiveToolFactory"
+							tool-class="com.example.MyToolClass"
+						/>
+					</factory>
+					-->
+
+					<!-- Example configuration with ScriptToolFactory:
+					<factory name="scripttools">
+						<implementation class="com.top_logic.ai.service.tools.registry.ScriptToolFactory">
+							<tools>
+								<tool name="add"
+									description="Adds two numbers together">
+									<parameters>
+										<parameter name="a"
+											type="number"
+											description="First number"
+										/>
+										<parameter name="b"
+											type="number"
+											description="Second number"
+										/>
+									</parameters>
+									<implementation>
+										$a + $b
+									</implementation>
+								</tool>
+							</tools>
+						</implementation>
+					</factory>
+
+					Tools from factories will be accessible as "factoryName.toolName"
+					-->
+				</tool-factories>
 			</instance>
 		</config>
 

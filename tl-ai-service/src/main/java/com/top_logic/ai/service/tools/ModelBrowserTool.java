@@ -103,7 +103,6 @@ public class ModelBrowserTool {
 
 					String result = buffer.toString();
 					Logger.info("listModules() result: " + result, ModelBrowserTool.class);
-					System.out.println("ModelBrowserTool.listModules() result: " + result);
 					return result;
 
 				} catch (IOException ex) {
@@ -220,7 +219,6 @@ public class ModelBrowserTool {
 
 					String result = buffer.toString();
 					Logger.info("listTypes() result: " + result, ModelBrowserTool.class);
-					System.out.println("ModelBrowserTool.listTypes() result: " + result);
 					return result;
 
 				} catch (IOException ex) {
@@ -358,7 +356,6 @@ public class ModelBrowserTool {
 
 					String result = buffer.toString();
 					Logger.info("listTypeParts() result: " + result, ModelBrowserTool.class);
-					System.out.println("ModelBrowserTool.listTypeParts() result: " + result);
 					return result;
 
 				} catch (IOException ex) {
@@ -392,88 +389,91 @@ public class ModelBrowserTool {
 		return ThreadContextManager.inSystemInteraction(
 			ModelBrowserTool.class,
 			() -> {
-				try (StringWriter buffer = new StringWriter(); JsonWriter json = new JsonWriter(buffer)) {
-					json.beginObject();
-
-					// Validate inputs
-					if (moduleName == null || moduleName.trim().isEmpty()) {
-						json.name("error").value("Module name is required");
-						json.endObject();
-						return buffer.toString();
-					}
-					if (enumName == null || enumName.trim().isEmpty()) {
-						json.name("error").value("Enumeration name is required");
-						json.endObject();
-						return buffer.toString();
-					}
-
-					// Get model and module
-					TLModel model = ModelService.getApplicationModel();
-					TLModule module = model.getModule(moduleName);
-					if (module == null) {
-						json.name("error").value("Module not found: " + moduleName);
-						json.endObject();
-						return buffer.toString();
-					}
-
-					// Get type
-					TLType type = module.getType(enumName);
-					if (type == null) {
-						json.name("error").value("Type not found: " + enumName + " in module " + moduleName);
-						json.endObject();
-						return buffer.toString();
-					}
-
-					// Verify it's an enumeration
-					if (!(type instanceof TLEnumeration)) {
-						json.name("error").value("Type " + enumName + " is not an enumeration (it's a " + type.getModelKind() + ")");
-						json.endObject();
-						return buffer.toString();
-					}
-
-					TLEnumeration enumeration = (TLEnumeration) type;
-
-					// Build enumeration metadata
-					json.name("enumeration").value(TLModelUtil.qualifiedName(enumeration));
-					json.name("module").value(moduleName);
-					json.name("name").value(enumName);
-					json.name("classifierCount").value(enumeration.getClassifiers().size());
-
-					// Check for UnorderedEnum annotation
-					UnorderedEnum unorderedAnnotation = enumeration.getAnnotation(UnorderedEnum.class);
-					json.name("unordered").value(unorderedAnnotation != null);
-
-					// Add label and description
-					JsonToolResponseBuilder.writeLabelAndDescription(json,
-						TLModelNamingConvention.getTypeLabelKey(enumeration));
-
-					// Write classifiers array
-					json.name("classifiers").beginArray();
-					for (TLClassifier classifier : enumeration.getClassifiers()) {
+				try {
+					// Build JSON response with enumeration metadata and classifier list
+					StringWriter buffer = new StringWriter();
+					try (JsonWriter json = JsonToolResponseBuilder.createWriter(buffer)) {
 						json.beginObject();
-						json.name("name").value(classifier.getName());
-						json.name("default").value(classifier.isDefault());
-						json.name("index").value(classifier.getIndex());
 
-						// Check for TLI18NKey annotation
-						TLI18NKey i18nKey = classifier.getAnnotation(TLI18NKey.class);
-						if (i18nKey != null && i18nKey.getValue() != null) {
-							json.name("customI18NKey").value(i18nKey.getValue().toString());
+						// Validate inputs
+						if (moduleName == null || moduleName.trim().isEmpty()) {
+							json.name("error").value("Module name is required");
+							json.endObject();
+							return buffer.toString();
 						}
+						if (enumName == null || enumName.trim().isEmpty()) {
+							json.name("error").value("Enumeration name is required");
+							json.endObject();
+							return buffer.toString();
+						}
+
+						// Get model and module
+						TLModel model = ModelService.getApplicationModel();
+						TLModule module = model.getModule(moduleName);
+						if (module == null) {
+							json.name("error").value("Module not found: " + moduleName);
+							json.endObject();
+							return buffer.toString();
+						}
+
+						// Get type
+						TLType type = module.getType(enumName);
+						if (type == null) {
+							json.name("error").value("Type not found: " + enumName + " in module " + moduleName);
+							json.endObject();
+							return buffer.toString();
+						}
+
+						// Verify it's an enumeration
+						if (!(type instanceof TLEnumeration)) {
+							json.name("error").value("Type " + enumName + " is not an enumeration (it's a " + type.getModelKind() + ")");
+							json.endObject();
+							return buffer.toString();
+						}
+
+						TLEnumeration enumeration = (TLEnumeration) type;
+
+						// Build enumeration metadata
+						json.name("enumeration").value(TLModelUtil.qualifiedName(enumeration));
+						json.name("module").value(moduleName);
+						json.name("name").value(enumName);
+						json.name("classifierCount").value(enumeration.getClassifiers().size());
+
+						// Check for UnorderedEnum annotation
+						UnorderedEnum unorderedAnnotation = enumeration.getAnnotation(UnorderedEnum.class);
+						json.name("unordered").value(unorderedAnnotation != null);
 
 						// Add label and description
 						JsonToolResponseBuilder.writeLabelAndDescription(json,
-							TLModelNamingConvention.resourceKey(classifier));
+							TLModelNamingConvention.getTypeLabelKey(enumeration));
+
+						// Write classifiers array
+						json.name("classifiers").beginArray();
+						for (TLClassifier classifier : enumeration.getClassifiers()) {
+							json.beginObject();
+							json.name("name").value(classifier.getName());
+							json.name("default").value(classifier.isDefault());
+							json.name("index").value(classifier.getIndex());
+
+							// Check for TLI18NKey annotation
+							TLI18NKey i18nKey = classifier.getAnnotation(TLI18NKey.class);
+							if (i18nKey != null && i18nKey.getValue() != null) {
+								json.name("customI18NKey").value(i18nKey.getValue().toString());
+							}
+
+							// Add label and description
+							JsonToolResponseBuilder.writeLabelAndDescription(json,
+								TLModelNamingConvention.resourceKey(classifier));
+
+							json.endObject();
+						}
+						json.endArray();
 
 						json.endObject();
 					}
-					json.endArray();
-
-					json.endObject();
 
 					String result = buffer.toString();
 					Logger.info("listClassifiers() result: " + result, ModelBrowserTool.class);
-					System.out.println("ModelBrowserTool.listClassifiers() result: " + result);
 					return result;
 
 				} catch (IOException ex) {

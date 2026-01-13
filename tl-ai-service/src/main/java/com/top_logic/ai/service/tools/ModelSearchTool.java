@@ -106,7 +106,6 @@ public class ModelSearchTool {
 					// Build JSON response
 					String result = buildSearchResultJson(query, results);
 					Logger.info("searchModel() result: " + result, ModelSearchTool.class);
-					System.out.println("ModelSearchTool.searchModel() result: " + result);
 					return result;
 
 				} catch (Exception ex) {

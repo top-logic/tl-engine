@@ -14,6 +14,7 @@ import java.util.Map;
 
 import com.top_logic.ai.service.agents.ModelExplorer;
 import com.top_logic.ai.service.agents.UMLSpecificationAgent;
+import com.top_logic.ai.service.scripting.Converters;
 import com.top_logic.ai.service.scripting.OpenAIScriptFunctions;
 import com.top_logic.ai.service.tools.AnnotationDefinitionExplorerTool;
 import com.top_logic.ai.service.tools.InstanceBrowserTool;
@@ -88,7 +89,7 @@ public class ChatControl extends AbstractControlBase {
 		writeControlAttributes(context, out);
 		out.endBeginTag();
 		{
-			writeMessages(out);
+			writeMessages(context, out);
 			writeInputSection(out);
 		}
 		out.endTag(DIV);
@@ -117,18 +118,16 @@ public class ChatControl extends AbstractControlBase {
 		com.top_logic.mig.html.HTMLUtil.appendCSSClass(out, "chat-control");
 	}
 
-	private void writeMessages(TagWriter out) throws IOException {
+	private void writeMessages(DisplayContext context, TagWriter out) throws IOException {
 		String messagesId = getID() + "-messages";
 		out.beginBeginTag(DIV);
 		out.writeAttribute(CLASS_ATTR, "chat-messages");
 		out.writeAttribute(ID_ATTR, messagesId);
-		out.writeAttribute(STYLE_ATTR,
-			"height: 400px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; background-color: #f9f9f9;");
 		out.endBeginTag();
 		{
 			// Render regular chat messages
 			for (ChatMessage msg : _chat.getMessages()) {
-				writeMessage(out, msg);
+				writeMessage(context, out, msg);
 			}
 
 			// Render notifier messages
@@ -149,16 +148,14 @@ public class ChatControl extends AbstractControlBase {
 		out.endScript();
 	}
 
-	private void writeMessage(TagWriter out, ChatMessage msg) throws IOException {
+	private void writeMessage(DisplayContext context, TagWriter out, ChatMessage msg) throws IOException {
 		out.beginBeginTag(DIV);
 		out.writeAttribute(CLASS_ATTR, "chat-message");
-		out.writeAttribute(STYLE_ATTR, "margin-bottom: 8px;");
 		out.endBeginTag();
 		{
 			// User name
 			out.beginBeginTag(SPAN);
 			out.writeAttribute(CLASS_ATTR, "chat-user");
-			out.writeAttribute(STYLE_ATTR, "font-weight: bold; color: #0066cc;");
 			out.endBeginTag();
 			out.writeText(msg.getUser());
 			out.endTag(SPAN);
@@ -168,7 +165,6 @@ public class ChatControl extends AbstractControlBase {
 			// Timestamp
 			out.beginBeginTag(SPAN);
 			out.writeAttribute(CLASS_ATTR, "chat-time");
-			out.writeAttribute(STYLE_ATTR, "color: #666; font-size: 0.9em;");
 			out.endBeginTag();
 			out.writeText("(" + TIME_FORMAT.format(msg.getTimestamp().atZone(ZoneId.systemDefault())) + ")");
 			out.endTag(SPAN);
@@ -179,7 +175,7 @@ public class ChatControl extends AbstractControlBase {
 			out.beginBeginTag(SPAN);
 			out.writeAttribute(CLASS_ATTR, "chat-text");
 			out.endBeginTag();
-			out.writeText(msg.getText());
+			Converters.markdownToHtml(msg.getText()).write(context, out);
 			out.endTag(SPAN);
 		}
 		out.endTag(DIV);
@@ -188,13 +184,11 @@ public class ChatControl extends AbstractControlBase {
 	private void writeNotifierMessage(TagWriter out, ChatNotifier notifier) throws IOException {
 		out.beginBeginTag(DIV);
 		out.writeAttribute(CLASS_ATTR, "chat-notifier");
-		out.writeAttribute(STYLE_ATTR,
-			"margin-bottom: 4px; padding: 6px 10px; background-color: #f0f0f0; border-radius: 4px; font-size: 0.9em; color: #666; border-left: 3px solid #ccc;");
 		out.endBeginTag();
 		{
 			// Icon and source
 			out.beginBeginTag(SPAN);
-			out.writeAttribute(STYLE_ATTR, "font-weight: normal; color: #888;");
+			out.writeAttribute(CLASS_ATTR, "chat-notifier-source");
 			out.endBeginTag();
 			out.writeText(notifier.getIcon() + " " + notifier.getSource());
 			out.endTag(SPAN);
@@ -203,7 +197,7 @@ public class ChatControl extends AbstractControlBase {
 
 			// Timestamp
 			out.beginBeginTag(SPAN);
-			out.writeAttribute(STYLE_ATTR, "color: #999; font-size: 0.8em;");
+			out.writeAttribute(CLASS_ATTR, "chat-notifier-time");
 			out.endBeginTag();
 			out.writeText("(" + TIME_FORMAT.format(notifier.getTimestamp().atZone(ZoneId.systemDefault())) + ")");
 			out.endTag(SPAN);
@@ -212,7 +206,7 @@ public class ChatControl extends AbstractControlBase {
 
 			// Message text with type-specific styling
 			out.beginBeginTag(SPAN);
-			out.writeAttribute(STYLE_ATTR, getNotifierTextStyle(notifier.getType()));
+			out.writeAttribute(CLASS_ATTR, getNotifierTextClass(notifier.getType()));
 			out.endBeginTag();
 			out.writeText(notifier.getMessage());
 			out.endTag(SPAN);
@@ -220,25 +214,24 @@ public class ChatControl extends AbstractControlBase {
 		out.endTag(DIV);
 	}
 
-	private String getNotifierTextStyle(ChatNotifier.NotificationType type) {
+	private String getNotifierTextClass(ChatNotifier.NotificationType type) {
 		switch (type) {
 			case INFO:
-				return "color: #555;";
+				return "chat-notifier-text-info";
 			case PROGRESS:
-				return "color: #2980b9; font-style: italic;";
+				return "chat-notifier-text-progress";
 			case SUCCESS:
-				return "color: #27ae60; font-weight: 500;";
+				return "chat-notifier-text-success";
 			case ERROR:
-				return "color: #e74c3c; font-weight: 500;";
+				return "chat-notifier-text-error";
 			default:
-				return "color: #666;";
+				return "chat-notifier-text-info";
 		}
 	}
 
 	private void writeInputSection(TagWriter out) throws IOException {
 		out.beginBeginTag(DIV);
 		out.writeAttribute(CLASS_ATTR, "chat-input-section");
-		out.writeAttribute(STYLE_ATTR, "display: flex; gap: 10px;");
 		out.endBeginTag();
 		{
 			// Text input
@@ -246,8 +239,8 @@ public class ChatControl extends AbstractControlBase {
 			out.writeAttribute(TYPE_ATTR, "text");
 			out.writeAttribute(ID_ATTR, getInputId());
 			out.writeAttribute(NAME_ATTR, "message");
+			out.writeAttribute(CLASS_ATTR, "chat-input");
 			out.writeAttribute(PLACEHOLDER_ATTR, "Type a message...");
-			out.writeAttribute(STYLE_ATTR, "flex: 1; padding: 8px;");
 			out.writeAttribute(ONKEYPRESS_ATTR,
 				"if(event.keyCode == 13 || event.key == 'Enter') { " + getSendCommandJS() + " return false; }");
 			out.endEmptyTag();
@@ -256,7 +249,7 @@ public class ChatControl extends AbstractControlBase {
 			out.beginBeginTag(BUTTON);
 			out.writeAttribute(ID_ATTR, getButtonId());
 			out.writeAttribute(TYPE_ATTR, "button");
-			out.writeAttribute(STYLE_ATTR, "padding: 8px 20px; white-space: nowrap;");
+			out.writeAttribute(CLASS_ATTR, "chat-button");
 			out.writeAttribute(ONCLICK_ATTR, getSendCommandJS());
 			out.endBeginTag();
 			out.writeText("Send");

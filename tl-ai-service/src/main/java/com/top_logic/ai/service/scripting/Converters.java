@@ -5,10 +5,27 @@
  */
 package com.top_logic.ai.service.scripting;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
+import com.vladsch.flexmark.ast.FencedCodeBlock;
+import com.vladsch.flexmark.ext.emoji.EmojiExtension;
+import com.vladsch.flexmark.ext.gfm.strikethrough.StrikethroughExtension;
+import com.vladsch.flexmark.ext.ins.InsExtension;
+import com.vladsch.flexmark.ext.superscript.SuperscriptExtension;
+import com.vladsch.flexmark.ext.tables.TablesExtension;
 import com.vladsch.flexmark.html.HtmlRenderer;
+import com.vladsch.flexmark.html.HtmlWriter;
+import com.vladsch.flexmark.html.renderer.NodeRenderer;
+import com.vladsch.flexmark.html.renderer.NodeRendererContext;
+import com.vladsch.flexmark.html.renderer.NodeRendererFactory;
+import com.vladsch.flexmark.html.renderer.NodeRenderingHandler;
 import com.vladsch.flexmark.html2md.converter.FlexmarkHtmlConverter;
 import com.vladsch.flexmark.parser.Parser;
 import com.vladsch.flexmark.util.ast.Node;
+import com.vladsch.flexmark.util.data.DataHolder;
+import com.vladsch.flexmark.util.data.MutableDataHolder;
 import com.vladsch.flexmark.util.data.MutableDataSet;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
@@ -23,6 +40,8 @@ import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
 @ScriptPrefix("convert")
 public class Converters extends TLScriptFunctions {
 
+	private static final MutableDataSet DEFAULT_OPTIONS = createDefaultOptions();
+
 	/**
 	 * Converts <i>Markdown</i> to HTML.
 	 *
@@ -31,14 +50,7 @@ public class Converters extends TLScriptFunctions {
 	 * @return HTML fragment that can be rendered.
 	 */
 	public static HTMLFragment markdownToHtml(@Mandatory String markdown) {
-		MutableDataSet options = new MutableDataSet();
-
-		// uncomment to set optional extensions
-		// options.set(Parser.EXTENSIONS, Arrays.asList(TablesExtension.create(),
-		// StrikethroughExtension.create()));
-
-		// uncomment to convert soft-breaks to hard breaks
-		// options.set(HtmlRenderer.SOFT_BREAK, "<br />\n");
+		MutableDataSet options = DEFAULT_OPTIONS;
 
 		Parser parser = Parser.builder(options).build();
 		HtmlRenderer renderer = HtmlRenderer.builder(options).build();
@@ -58,7 +70,21 @@ public class Converters extends TLScriptFunctions {
 	 * @return Markdown formatted text.
 	 */
 	public static String htmlToMarkdown(@Mandatory String html) {
+		return FlexmarkHtmlConverter.builder(DEFAULT_OPTIONS).build().convert(html);
+	}
+
+	private static MutableDataSet createDefaultOptions() {
 		MutableDataSet options = new MutableDataSet();
+
+		// Enable extensions for better HTML conversion
+		options.set(Parser.EXTENSIONS, Arrays.asList(
+			TablesExtension.create(),
+			StrikethroughExtension.create(),
+			EmojiExtension.create(),
+			InsExtension.create(),
+			SuperscriptExtension.create(),
+			NestedMarkdownExtension.create()
+		));
 
 		// Configure the HTML to Markdown converter for cleaner output
 		options.set(FlexmarkHtmlConverter.SETEXT_HEADINGS, false); // Use ATX headings (# style) instead of setext (underlined)
@@ -72,8 +98,87 @@ public class Converters extends TLScriptFunctions {
 		options.set(FlexmarkHtmlConverter.SKIP_HEADING_1, false); // Include H1 headings
 		options.set(FlexmarkHtmlConverter.SKIP_HEADING_2, false); // Include H2 headings
 		options.set(FlexmarkHtmlConverter.SKIP_ATTRIBUTES, true); // Skip HTML attributes
+		return options;
+	}
 
-		return FlexmarkHtmlConverter.builder(options).build().convert(html);
+	/**
+	 * Flexmark extension that renders fenced code blocks with language "markdown" or "md"
+	 * as actual rendered markdown instead of literal code blocks.
+	 * <p>
+	 * AI models sometimes return markdown content wrapped in markdown code blocks,
+	 * which would normally be displayed as literal code. This extension detects such
+	 * blocks and renders their content as HTML.
+	 * </p>
+	 */
+	static class NestedMarkdownExtension implements HtmlRenderer.HtmlRendererExtension {
+
+		@Override
+		public void rendererOptions(MutableDataHolder options) {
+			// No custom options needed
+		}
+
+		@Override
+		public void extend(HtmlRenderer.Builder rendererBuilder, String rendererType) {
+			rendererBuilder.nodeRendererFactory(new NestedMarkdownNodeRendererFactory());
+		}
+
+		static NestedMarkdownExtension create() {
+			return new NestedMarkdownExtension();
+		}
+	}
+
+	/**
+	 * Factory for creating the nested markdown node renderer.
+	 */
+	static class NestedMarkdownNodeRendererFactory implements NodeRendererFactory {
+
+		@Override
+		public NodeRenderer apply(DataHolder options) {
+			return new NestedMarkdownNodeRenderer(options);
+		}
+	}
+
+	/**
+	 * Node renderer that handles fenced code blocks with "markdown" or "md" language.
+	 */
+	static class NestedMarkdownNodeRenderer implements NodeRenderer {
+
+		private final Parser _parser;
+
+		private final HtmlRenderer _renderer;
+
+		NestedMarkdownNodeRenderer(DataHolder options) {
+			// Create parser and renderer for nested markdown content
+			_parser = Parser.builder(options).build();
+			_renderer = HtmlRenderer.builder(options).build();
+		}
+
+		@Override
+		public Set<NodeRenderingHandler<?>> getNodeRenderingHandlers() {
+			Set<NodeRenderingHandler<?>> handlers = new HashSet<>();
+			handlers.add(new NodeRenderingHandler<>(FencedCodeBlock.class, this::render));
+			return handlers;
+		}
+
+		private void render(FencedCodeBlock node, NodeRendererContext context, HtmlWriter html) {
+			String language = node.getInfo().toString().trim().toLowerCase();
+
+			// Check if this is a markdown code block
+			if ("markdown".equals(language) || "md".equals(language)) {
+				// Extract the content and parse it as markdown
+				String markdownContent = node.getContentChars().toString();
+
+				// Parse and render the nested markdown
+				Node document = _parser.parse(markdownContent);
+				String renderedHtml = _renderer.render(document);
+
+				// Write the rendered HTML directly
+				html.raw(renderedHtml);
+			} else {
+				// For all other languages, use default rendering
+				context.delegateRender();
+			}
+		}
 	}
 
 }

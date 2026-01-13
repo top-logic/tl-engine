@@ -27,6 +27,7 @@ import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.ServiceExtensionPoint;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.CommitHandler;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -235,10 +236,20 @@ public class AccessManager extends ConfiguredManagedClass<AccessManager.Config> 
     // Subclass hooks
 
     /**
-     * Hook for subclasses to update the access manager in case of a security change.
-     */
-	public void handleSecurityUpdate(KnowledgeBase kb, Map<TLID, Object> someChanged,
-			Map<TLID, Object> someNew, Map<TLID, Object> someRemoved, CommitHandler aHandler) {
+	 * Hook for subclasses to update the access manager in case of a security change.
+	 * 
+	 * @param kb
+	 *        The {@link KnowledgeBase} in which the change occurred.
+	 * @param someChanged
+	 *        The changed objects, indexed by their {@link TLID}.
+	 * @param someNew
+	 *        The created objects, indexed by their {@link TLID}.
+	 * @param someRemoved
+	 *        The deleted objects, indexed by their {@link TLID}. Standard access for attributes may
+	 *        fail.
+	 */
+	public void handleSecurityUpdate(KnowledgeBase kb, Map<TLID, KnowledgeItem> someChanged,
+			Map<TLID, KnowledgeItem> someNew, Map<TLID, KnowledgeItem> someRemoved, CommitHandler aHandler) {
         // Nothing to do here - hook for subclasses only
     }
     

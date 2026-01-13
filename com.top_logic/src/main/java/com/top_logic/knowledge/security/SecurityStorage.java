@@ -801,16 +801,15 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
      * @throws StorageException
      *             if some error occurs while requesting the database
      */
-	public int removeObjects(Map<TLID, Object> removedObjects) throws StorageException {
+	public int removeObjects(Map<TLID, KnowledgeItem> removedObjects) throws StorageException {
         if (CollectionUtil.isEmptyOrNull(removedObjects)) return 0;
         int result = removeObjects(CollectionUtil.toList(removedObjects.keySet()));
 
         try {
 			Object[] vector = new Object[4];
-			for (Map.Entry<TLID, Object> entry : removedObjects.entrySet()) {
-                Object value = entry.getValue();
-				if (value instanceof KnowledgeObject
-						&& ((KnowledgeObject) value).tTable().getName().equals(Group.OBJECT_NAME)) {
+			for (Map.Entry<TLID, KnowledgeItem> entry : removedObjects.entrySet()) {
+				KnowledgeItem value = entry.getValue();
+				if (value.tTable().getName().equals(Group.OBJECT_NAME)) {
                     vector[0] = entry.getKey();
                     result += executor.remove(vector);
                 }

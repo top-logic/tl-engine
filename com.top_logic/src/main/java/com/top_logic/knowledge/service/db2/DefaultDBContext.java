@@ -1196,10 +1196,10 @@ class DefaultDBContext extends DBContext {
     	if (AccessManager.Module.INSTANCE.isActive()) {
     		AccessManager.getInstance().handleSecurityUpdate(
 				kb,
-					Collections.<TLID, Object> emptyMap(),
-					this.<Object> toNameMap(this.newObjectsById),
-					this.<Object> toNameMap(this.removedObjectsById),
-    				kb);
+				toNameMap(this.changedObjectsById),
+				toNameMap(this.newObjectsById),
+				toNameMap(this.removedObjectsById),
+				kb);
     	} else {
 			Logger.info("Commit without access manager, security is not updated.", DefaultDBContext.class);
     	}

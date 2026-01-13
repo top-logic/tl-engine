@@ -18,6 +18,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.util.StopWatch;
 
 /**
  * {@link StringColumnTransformProcessor} that uses a (list of) configured {@link Mapping}s that are
@@ -66,6 +67,8 @@ public class StringReplacementProcessor extends StringColumnTransformProcessor<S
 		log.info("Updating values in column '" + column + "' of table '" + table + "'.");
 
 		int cnt = 0;
+		int batch = 0;
+		StopWatch watch = StopWatch.createStartedWatch();
 		while (rows.next()) {
 			String value = rows.getString(1);
 			String original = value;
@@ -76,11 +79,22 @@ public class StringReplacementProcessor extends StringColumnTransformProcessor<S
 				continue;
 			}
 
-			cnt++;
+			batch++;
 			rows.updateString(1, value);
 			rows.updateRow();
+
+			if (batch >= 1000) {
+				cnt += batch;
+				batch = 0;
+				if (watch.getElapsedMillis() > 5000) {
+					log.info("Updated values in column '" + column + "' of " + cnt + " rows of table '" + table
+						+ "', continuing.");
+					watch.restart();
+				}
+			}
 		}
 
+		cnt += batch;
 		log.info("Updated values in column '" + column + "' of " + cnt + " rows of table '" + table + "'.");
 	}
 

@@ -161,8 +161,8 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
 		return _logHandler;
 	}
 
-	public synchronized void handleSecurityUpdate(KnowledgeBase kb, Map<TLID, KnowledgeItem> someChanged,
-			Map<TLID, KnowledgeItem> someNew, final Map<TLID, KnowledgeItem> someRemoved, CommitHandler aHandler) {
+	public synchronized void handleSecurityUpdate(KnowledgeBase kb, long commitNumber,
+			Map<TLID, KnowledgeItem> someChanged, Map<TLID, KnowledgeItem> someNew, final Map<TLID, KnowledgeItem> someRemoved, CommitHandler aHandler) {
 
         // This map holds the affected rules mapped to the set of affected objects
 		final Map<RoleProvider, Collection<BoundObject>> rulesToObjectsMap =

@@ -214,38 +214,45 @@ public class RichTextBuilder {
 	 * Appends the given text to the text buffer.
 	 * 
 	 * <p>
-	 * breaks lines so that the maximum width does not exceed {@link #MAX_WIDTH} characters.
+	 * Breaks lines so that the maximum width does not exceed {@link #MAX_WIDTH} characters.
+	 * </p>
 	 */
 	private void appendText(String content) {
-		content = content.replaceAll("\\s+", " ");
-
-		int offset = 0;
-		int length = content.length();
-		while (offset < length) {
-			int chunkLen = Math.min(MAX_WIDTH - _lineWidth, length - offset);
-
-			boolean mustWrap = offset + chunkLen < length;
-			if (mustWrap) {
-				int wrap = chunkLen;
-				while (wrap >= 0 && !Character.isWhitespace(content.charAt(offset + wrap))) {
-					wrap--;
+		/* No characters added until now must be changed. */
+		int savepoint = _text.length() - 1;
+		boolean lastIsWhitespace = false;
+		for (int index = 0, length = content.length(); index < length; index++) {
+			char c = content.charAt(index);
+			boolean isWhitespace = Character.isWhitespace(c);
+			if (isWhitespace) {
+				if (lastIsWhitespace) {
+					// avoid multiple blanks.
+					continue;
 				}
-				if (wrap > 0) {
-					chunkLen = wrap;
-				} else {
-					mustWrap = false;
-				}
+				// space for all white spaces
+				c = ' ';
 			}
+			lastIsWhitespace = isWhitespace;
 
-			_text.append(content.subSequence(offset, offset + chunkLen));
-			_lineWidth += chunkLen;
-			offset += chunkLen;
+			_text.append(c);
+			_lineWidth++;
 
-			if (mustWrap) {
-				nl();
-				
-				// Skip space.
-				offset++;
+			if (_lineWidth > MAX_WIDTH) {
+				// Find position to insert newLine
+				int whitespaceIndex = _text.length() - 1;
+				for (; whitespaceIndex > savepoint; whitespaceIndex--) {
+					if (Character.isWhitespace(_text.charAt(whitespaceIndex))) {
+						break;
+					}
+				}
+				if (whitespaceIndex > savepoint) {
+					_text.setCharAt(whitespaceIndex, '\n');
+					int oldLineWith = _lineWidth;
+					_lineWidth = _text.length() - whitespaceIndex - 1;
+					_width = Math.max(_width, oldLineWith - _lineWidth - 1);
+				} else {
+					// Text does not contain a whitespace where wrapping can happen
+				}
 			}
 		}
 	}
@@ -276,7 +283,7 @@ public class RichTextBuilder {
 	 * Moves to the next line.
 	 */
 	private void nl() {
-		_text.append("\n");
+		_text.append('\n');
 		_width = Math.max(_width, _lineWidth);
 		_lineWidth = 0;
 	}

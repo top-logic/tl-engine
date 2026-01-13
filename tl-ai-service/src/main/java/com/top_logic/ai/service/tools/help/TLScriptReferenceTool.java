@@ -16,6 +16,7 @@ import com.top_logic.ai.service.tools.help.messages.FunctionDocResult;
 import com.top_logic.ai.service.tools.help.messages.FunctionListResult;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.layout.basic.DummyDisplayContext;
 import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
@@ -95,8 +96,8 @@ public class TLScriptReferenceTool {
 
 					SearchBuilder<?> searchBuilder = SearchBuilder.getInstance();
 
-					// Pass null for DisplayContext - the documentation retrieval doesn't require it
-					Optional<String> documentation = searchBuilder.getDocumentation(null, functionName);
+					Optional<String> documentation =
+						searchBuilder.getDocumentation(DummyDisplayContext.newInstance(), functionName);
 
 					// Retrieve parameter information from the function builder
 					List<String> parameters = new ArrayList<>();

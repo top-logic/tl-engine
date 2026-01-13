@@ -93,6 +93,167 @@ public class OpenAIScriptFunctions extends TLScriptFunctions {
 	}
 
 	/**
+	 * Retrieves detailed information about a registered tool.
+	 *
+	 * <p>
+	 * This function returns metadata about a tool including its name, description, and parameter
+	 * specifications. The tool is identified by its qualified name in the format
+	 * {@code factory-name.tool-name}.
+	 * </p>
+	 *
+	 * <p>
+	 * The returned map contains:
+	 * </p>
+	 * <ul>
+	 * <li>{@code name} - The tool's simple name (without factory prefix)</li>
+	 * <li>{@code qualifiedName} - The tool's fully qualified name</li>
+	 * <li>{@code description} - A description of what the tool does (optional, may be absent)</li>
+	 * <li>{@code parameters} - A list of parameter specifications, where each parameter is a map
+	 * with {@code name} (String) and {@code required} (Boolean) fields</li>
+	 * </ul>
+	 *
+	 * <p>
+	 * Example usage in TL-Script:
+	 * </p>
+	 *
+	 * <pre>
+	 * // Get info for a tool without parameters
+	 * aiToolInfo("tlscript.listTLScriptFunctions")
+	 * // Returns:
+	 * // {
+	 * //   "name": "listTLScriptFunctions",
+	 * //   "qualifiedName": "tlscript.listTLScriptFunctions",
+	 * //   "description": "List all available TLScript functions...",
+	 * //   "parameters": []
+	 * // }
+	 *
+	 * // Get info for a tool with parameters
+	 * aiToolInfo("tlscript.getTLScriptFunctionDocumentation")
+	 * // Returns:
+	 * // {
+	 * //   "name": "getTLScriptFunctionDocumentation",
+	 * //   "qualifiedName": "tlscript.getTLScriptFunctionDocumentation",
+	 * //   "description": "Get detailed documentation for a specific TLScript function...",
+	 * //   "parameters": [
+	 * //     {
+	 * //       "name": "functionName",
+	 * //       "required": true
+	 * //     }
+	 * //   ]
+	 * // }
+	 *
+	 * // Non-existent tool
+	 * aiToolInfo("nonexistent.tool")
+	 * // Returns: null
+	 * </pre>
+	 *
+	 * @param toolName
+	 *        The qualified name of the tool.
+	 * @return A map containing the tool's metadata with the structure described above, or
+	 *         {@code null} if the tool is not found.
+	 */
+	public static Map<String, Object> toolInfo(String toolName) {
+		com.top_logic.ai.service.tools.registry.ToolImplementation tool =
+			ToolRegistry.getInstance().getTool(toolName);
+
+		if (tool == null) {
+			return null;
+		}
+
+		dev.langchain4j.agent.tool.ToolSpecification spec = tool.getSpecification();
+
+		Map<String, Object> result = new java.util.HashMap<>();
+		result.put("name", spec.name());
+		result.put("qualifiedName", toolName);
+
+		if (spec.description() != null) {
+			result.put("description", spec.description());
+		}
+
+		// Convert parameters to map format
+		if (spec.parameters() != null && spec.parameters().properties() != null) {
+			List<Map<String, Object>> parameters = new ArrayList<>();
+
+			for (String paramName : spec.parameters().properties().keySet()) {
+				Map<String, Object> paramInfo = new java.util.HashMap<>();
+				paramInfo.put("name", paramName);
+
+				// Check if parameter is required
+				boolean required = false;
+				if (spec.parameters().required() != null) {
+					required = spec.parameters().required().contains(paramName);
+				}
+				paramInfo.put("required", required);
+
+				parameters.add(paramInfo);
+			}
+
+			result.put("parameters", parameters);
+		}
+
+		return result;
+	}
+
+	/**
+	 * Invokes a tool manually with the given parameters.
+	 *
+	 * <p>
+	 * This function allows direct invocation of registered tools from TL-Script. The tool is
+	 * identified by its qualified name in the format {@code factory-name.tool-name}.
+	 * </p>
+	 *
+	 * <p>
+	 * Parameters can be passed as a map where keys match the tool's parameter names, or as
+	 * positional arguments if the tool accepts them. The function returns the tool's result as a
+	 * string.
+	 * </p>
+	 *
+	 * <p>
+	 * Example usage in TL-Script:
+	 * </p>
+	 *
+	 * <pre>
+	 * aiCallTool("tlscript.listTLScriptFunctions", map())
+	 * aiCallTool("tlscript.getTLScriptFunctionDocumentation", map("functionName" -> "list"))
+	 * </pre>
+	 *
+	 * @param toolName
+	 *        The qualified name of the tool to invoke.
+	 * @param parameters
+	 *        A map of parameter names to values, or null if the tool has no parameters.
+	 * @return The result of the tool execution as a string.
+	 */
+	public static String callTool(String toolName, Map<String, Object> parameters) {
+		com.top_logic.ai.service.tools.registry.ToolImplementation tool =
+			ToolRegistry.getInstance().getTool(toolName);
+
+		if (tool == null) {
+			return "Error: Tool '" + toolName + "' not found. Available tools: "
+				+ String.join(", ", ToolRegistry.getInstance().getToolNames());
+		}
+
+		try {
+			// Convert parameters map to JSON string
+			String argumentsJson = null;
+			if (parameters != null && !parameters.isEmpty()) {
+				argumentsJson = com.top_logic.basic.json.JSON.toString(parameters);
+			}
+
+			// Create a ToolExecutionRequest
+			dev.langchain4j.agent.tool.ToolExecutionRequest request =
+				dev.langchain4j.agent.tool.ToolExecutionRequest.builder()
+					.name(tool.getName())
+					.arguments(argumentsJson)
+					.build();
+
+			// Execute the tool
+			return tool.getExecutor().execute(request, null);
+		} catch (Exception ex) {
+			return "Error invoking tool '" + toolName + "': " + ex.getMessage();
+		}
+	}
+
+	/**
 	 * Sends a multi-turn conversation to the chat completion API.
 	 *
 	 * <p>

@@ -218,20 +218,22 @@ public class RichTextBuilder {
 	 * </p>
 	 */
 	private void appendText(String content) {
-		/* No characters <= savepoint must be changed. */
+		/* No characters added until now must be changed. */
 		int savepoint = _text.length() - 1;
 		boolean lastIsWhitespace = false;
 		for (int index = 0, length = content.length(); index < length; index++) {
 			char c = content.charAt(index);
 			boolean isWhitespace = Character.isWhitespace(c);
 			if (isWhitespace) {
+				if (lastIsWhitespace) {
+					// avoid multiple blanks.
+					continue;
+				}
 				// space for all white spaces
 				c = ' ';
 			}
-			if (lastIsWhitespace && isWhitespace) {
-				// avoid multiple blanks.
-				continue;
-			}
+			lastIsWhitespace = isWhitespace;
+
 			_text.append(c);
 			_lineWidth++;
 
@@ -250,11 +252,6 @@ public class RichTextBuilder {
 					_width = Math.max(_width, oldLineWith - _lineWidth - 1);
 				} else {
 					// Text does not contain a whitespace where wrapping can happen
-				}
-			} else {
-				if (isWhitespace) {
-					// everything fine up to now!
-					savepoint = _text.length() - 2;
 				}
 			}
 		}

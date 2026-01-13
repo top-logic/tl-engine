@@ -64,6 +64,12 @@ public class ScriptToolFactory implements ToolFactory, ConfiguredInstance<Script
 	/**
 	 * Configuration for a single TL-Script tool.
 	 */
+	@DisplayOrder({
+		ScriptToolConfig.NAME,
+		ScriptToolConfig.PARAMETERS,
+		ScriptToolConfig.DESCRIPTION,
+		ScriptToolConfig.IMPLEMENTATION,
+	})
 	public interface ScriptToolConfig extends PolymorphicConfiguration<ScriptToolConfig> {
 
 		/**
@@ -137,6 +143,11 @@ public class ScriptToolFactory implements ToolFactory, ConfiguredInstance<Script
 	/**
 	 * Configuration for a tool parameter.
 	 */
+	@DisplayOrder({
+		ToolParameterConfig.NAME,
+		ToolParameterConfig.TYPE,
+		ToolParameterConfig.DESCRIPTION,
+	})
 	public interface ToolParameterConfig extends PolymorphicConfiguration<ToolParameterConfig> {
 
 		/**

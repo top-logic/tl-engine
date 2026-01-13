@@ -240,6 +240,8 @@ public class AccessManager extends ConfiguredManagedClass<AccessManager.Config> 
 	 * 
 	 * @param kb
 	 *        The {@link KnowledgeBase} in which the change occurred.
+	 * @param commitNumber
+	 *        the commit number of the change.
 	 * @param someChanged
 	 *        The changed objects, indexed by their {@link TLID}.
 	 * @param someNew
@@ -248,7 +250,7 @@ public class AccessManager extends ConfiguredManagedClass<AccessManager.Config> 
 	 *        The deleted objects, indexed by their {@link TLID}. Standard access for attributes may
 	 *        fail.
 	 */
-	public void handleSecurityUpdate(KnowledgeBase kb, Map<TLID, KnowledgeItem> someChanged,
+	public void handleSecurityUpdate(KnowledgeBase kb, long commitNumber, Map<TLID, KnowledgeItem> someChanged,
 			Map<TLID, KnowledgeItem> someNew, Map<TLID, KnowledgeItem> someRemoved, CommitHandler aHandler) {
         // Nothing to do here - hook for subclasses only
     }

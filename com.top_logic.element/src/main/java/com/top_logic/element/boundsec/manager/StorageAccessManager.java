@@ -426,7 +426,7 @@ public class StorageAccessManager extends ElementAccessManager {
 
 
     @Override
-	public void handleSecurityUpdate(KnowledgeBase kb, Map<TLID, KnowledgeItem> someChanged,
+	public void handleSecurityUpdate(KnowledgeBase kb, long commitNumber, Map<TLID, KnowledgeItem> someChanged,
 			Map<TLID, KnowledgeItem> someNew, Map<TLID, KnowledgeItem> someRemoved, CommitHandler aHandler) {
         // Don't do anything if SecurityStorage is disabled
         if (!securityStorage.isAutoUpdate()) {
@@ -440,16 +440,16 @@ public class StorageAccessManager extends ElementAccessManager {
                 Logger.warn("A data change is about to be commited while security storage is rebuilding. Security could be inconsistent.", StorageAccessManager.class);
             }
         }
-        super.handleSecurityUpdate(kb, someChanged, someNew, someRemoved, aHandler);
-        doHandleSecurityUpdate(kb, someChanged, someNew, someRemoved, aHandler);
+        super.handleSecurityUpdate(kb, commitNumber, someChanged, someNew, someRemoved, aHandler);
+		doHandleSecurityUpdate(kb, commitNumber, someChanged, someNew, someRemoved, aHandler);
     }
 
     /**
      * Hook for subclasses to update the access manager in case of a security change.
      */
-	protected void doHandleSecurityUpdate(KnowledgeBase kb, Map<TLID, KnowledgeItem> someChanged,
+	protected void doHandleSecurityUpdate(KnowledgeBase kb, long commitNumber, Map<TLID, KnowledgeItem> someChanged,
 			Map<TLID, KnowledgeItem> someNew, Map<TLID, KnowledgeItem> someRemoved, CommitHandler aHandler) {
-		securityUpdateManager.handleSecurityUpdate(kb, someChanged, someNew, someRemoved, aHandler);
+		securityUpdateManager.handleSecurityUpdate(kb, commitNumber, someChanged, someNew, someRemoved, aHandler);
     }
 
 

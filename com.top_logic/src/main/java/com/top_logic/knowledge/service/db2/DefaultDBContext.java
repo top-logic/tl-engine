@@ -1195,7 +1195,7 @@ class DefaultDBContext extends DBContext {
 	protected void handleSecurityUpdate() {
     	if (AccessManager.Module.INSTANCE.isActive()) {
     		AccessManager.getInstance().handleSecurityUpdate(
-				kb,
+				kb, newRevision.getCommitNumber(),
 				toNameMap(this.changedObjectsById),
 				toNameMap(this.newObjectsById),
 				toNameMap(this.removedObjectsById),

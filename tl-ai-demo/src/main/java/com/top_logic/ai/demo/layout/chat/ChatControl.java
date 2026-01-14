@@ -26,6 +26,7 @@ import com.top_logic.ai.service.tools.model.ModelSearchTool;
 import com.top_logic.ai.service.tools.model.TypeAnalysisTool;
 import com.top_logic.ai.service.tools.help.ModelExplorerTool;
 import com.top_logic.ai.service.tools.help.TLScriptReferenceTool;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Control;
@@ -335,19 +336,18 @@ public class ChatControl extends AbstractControlBase {
 		String businessRequirements = extractBusinessRequirements(command);
 
 		try {
-			System.out.println("ChatControl: Starting workflow execution in thread: " + Thread.currentThread().getName());
-
+			Logger.info("ChatControl: Starting workflow execution in thread: " + Thread.currentThread().getName(),
+				ChatControl.class);
 			// Execute the workflow synchronously
 			String result = UMLSpecificationAgent.execute(businessRequirements);
-
 			// Add final result as Agent message
 			_chat.addMessage(new ChatMessage("Agent", result));
 			requestRepaint();
 
 		} catch (Exception e) {
-			System.err.println("ChatControl: Workflow execution failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
-			e.printStackTrace();
-
+			Logger.error(
+				"ChatControl: Workflow execution failed: " + e.getClass().getSimpleName() + ": " + e.getMessage(),
+				ChatControl.class);
 			// Handle workflow failure
 			_chat.addMessage(new ChatMessage("Agent", "❌ Workflow execution failed: " + e.getMessage()));
 			requestRepaint();
@@ -364,8 +364,8 @@ public class ChatControl extends AbstractControlBase {
 		String explorationQuestion = extractExplorationQuestion(command);
 
 		try {
-			System.out.println("ChatControl: Starting model exploration in thread: " + Thread.currentThread().getName());
-
+			Logger.info("ChatControl: Starting model exploration in thread: " + Thread.currentThread().getName(),
+				ChatControl.class);
 			// Get the model from AIService (uses environment variable configuration)
 			AIService aiService = AIService.getInstance();
 			if (aiService == null) {
@@ -397,9 +397,9 @@ public class ChatControl extends AbstractControlBase {
 			requestRepaint();
 
 		} catch (Exception e) {
-			System.err.println("ChatControl: Model exploration failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
-			e.printStackTrace();
-
+			Logger.error(
+				"ChatControl: Model exploration failed: " + e.getClass().getSimpleName() + ": " + e.getMessage(),
+				ChatControl.class);
 			// Handle exploration failure
 			_chat.addMessage(new ChatMessage("Agent", "❌ Model exploration failed: " + e.getMessage()));
 			requestRepaint();
@@ -416,9 +416,8 @@ public class ChatControl extends AbstractControlBase {
 		String question = extractTLScriptQuestion(command);
 
 		try {
-			System.out
-				.println("ChatControl: Starting TLScript reference in thread: " + Thread.currentThread().getName());
-
+			Logger.info("ChatControl: Starting TLScript reference in thread: " + Thread.currentThread().getName(),
+				ChatControl.class);
 			// Get the model from AIService (uses environment variable configuration)
 			AIService aiService = AIService.getInstance();
 			if (aiService == null) {
@@ -446,10 +445,7 @@ public class ChatControl extends AbstractControlBase {
 			requestRepaint();
 
 		} catch (Exception e) {
-			System.err.println(
-				"ChatControl: TLScript reference failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
-			e.printStackTrace();
-
+			Logger.error("ChatControl: TLScript reference failed: " + e.getClass().getSimpleName() + ": " + e.getMessage(), ChatControl.class);
 			// Handle failure
 			_chat.addMessage(new ChatMessage("Agent", "❌ TLScript reference failed: " + e.getMessage()));
 			requestRepaint();

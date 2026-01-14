@@ -26,8 +26,6 @@ import com.top_logic.basic.Settings;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.BidiHashMap;
 import com.top_logic.basic.col.CloseableIterator;
-import com.top_logic.basic.col.Filter;
-import com.top_logic.basic.col.FilteredIterable;
 import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.col.TupleFactory;
 import com.top_logic.basic.config.ApplicationConfig;
@@ -48,7 +46,6 @@ import com.top_logic.basic.sql.ConnectionPoolRegistry;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.element.boundsec.ElementBoundHelper;
-import com.top_logic.element.boundsec.manager.rule.ExternalRoleProvider;
 import com.top_logic.element.boundsec.manager.rule.PathElement;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider.Type;
@@ -102,9 +99,6 @@ public class ElementAccessManager extends AccessManager {
 		/** Property name of {@link #getMetaElements()}. */
 		String META_ELEMENTS = "meta-elements";
 
-		/** Property name of {@link #getRoleProvider()}. */
-		String ROLE_PROVIDER = "role-provider";
-
 		@Name(GROUP_MAPPER)
 		@InstanceFormat
 		@InstanceDefault(SimpleGroupMapper.class)
@@ -113,10 +107,6 @@ public class ElementAccessManager extends AccessManager {
 		@Name(META_ELEMENTS)
 		@Key(MEConfig.NAME_ATTRIBUTE)
 		List<MEConfig> getMetaElements();
-
-		@Name(ROLE_PROVIDER)
-		@Key(ExternalRoleProvider.Config.RULE_NAME)
-		List<ExternalRoleProvider> getRoleProvider();
 
 		/**
 		 * The role rule definition for the access manager.
@@ -169,20 +159,6 @@ public class ElementAccessManager extends AccessManager {
 		_boundHelper = (ElementBoundHelper) BoundHelper.getInstance();
 
 		groupMapper = getConfig().getGroupMapper();
-
-		externalRoleProviders = new HashMap<>();
-		externalRoleProvidersByTypes = new HashMap<>();
-		for (ExternalRoleProvider roleProvider : getConfig().getRoleProvider()) {
-			this.externalRoleProviders.put(roleProvider.getConfig().getRuleName(), roleProvider);
-			for (String theType : roleProvider.getAffectingTypes()) {
-				Set<ExternalRoleProvider> theSet = this.externalRoleProvidersByTypes.get(theType);
-				if (theSet == null) {
-					theSet = new HashSet<>();
-					this.externalRoleProvidersByTypes.put(theType, theSet);
-				}
-				theSet.add(roleProvider);
-			}
-		}
 	}
 
 	@Override
@@ -227,19 +203,6 @@ public class ElementAccessManager extends AccessManager {
 		return (Config) super.getConfig();
 	}
 
-	private final class ExternalRoleProviderFilter implements Filter<RoleProvider> {
-		private final BoundObject theBO;
-
-		/*package protected*/ ExternalRoleProviderFilter(BoundObject theBO) {
-			this.theBO = theBO;
-		}
-
-		@Override
-		public boolean accept(RoleProvider anObject) {
-			return anObject.matches(theBO);
-		}
-	}
-
     /**
      * The rules declared for the access manager
      *
@@ -251,18 +214,6 @@ public class ElementAccessManager extends AccessManager {
 
 	private BidiHashMap/* <String, Integer> */ruleNumbers;
     
-    /**
-     * external role provides by id ( {@link RoleProvider#getId()}
-     */
-	private final Map<String, ExternalRoleProvider> externalRoleProviders;
-    
-    /**
-     * maps {@link KnowledgeItem} types ({@link ExternalRoleProvider#getAffectingTypes()})
-     * to the {@link ExternalRoleProvider}s affected by changes of objects of such types.
-     */
-	private final Map<String, Set<ExternalRoleProvider>> externalRoleProvidersByTypes;
-
-
     /**
      * MetaAttributes that participate in a rule path.
      *
@@ -543,11 +494,6 @@ public class ElementAccessManager extends AccessManager {
         return theResult == null ? Collections.<RoleProvider>emptySet() : theResult;
     }
 
-    public Set<ExternalRoleProvider> getAffectedRoleRuleFactories(String aType) {
-        Set<ExternalRoleProvider> theResult = this.externalRoleProvidersByTypes.get(aType);
-        return theResult != null ? theResult : Collections.<ExternalRoleProvider>emptySet();
-    }
-
     private void resolveRules(Map <Object, Collection<RoleProvider> > someRules, Map <TLClass, Collection<RoleProvider> > aMEMap, Map <MetaObject, Collection<RoleProvider> > aMOMap) {
         for (Map.Entry<Object, Collection<RoleProvider>> theEntry : someRules.entrySet()) {
         	Object      theKey = theEntry.getKey();
@@ -571,7 +517,6 @@ public class ElementAccessManager extends AccessManager {
         Set<RoleProvider> theResult = new HashSet<>();
 
 		addMatchingProvides(aRole, aType, theResult, this.ruleIds.values());
-		addMatchingProvides(aRole, aType, theResult, this.externalRoleProviders.values());
 
         return theResult;
     }
@@ -680,13 +625,6 @@ public class ElementAccessManager extends AccessManager {
 			addRoleProviderRoles(getRules((TLClass) context.tType()), theGroups, context, result);
 			addRoleProviderRoles(getRules(context.tTable()), theGroups, context, result);
             
-            // handle external role providers
-			addRoleProviderRoles(
-				new FilteredIterable<>(
-					new ExternalRoleProviderFilter(context),
-					this.externalRoleProviders.values()),
-				theGroups, context, result);
-
 			context = context.getSecurityParent();
         }
 		return result;
@@ -723,12 +661,6 @@ public class ElementAccessManager extends AccessManager {
 	            Logger.error("Failed to get direct hasRole associations.", e, this);
 	        }
         }
-        // handle extenal rules
-        for (ExternalRoleProvider theFactory : this.externalRoleProviders.values()) {
-			if (theFactory.matches(aBO) && aRole.equals(theFactory.getRole())) {
-				theResult.addAll(theFactory.getGroups(aBO));
-			}
-		}
         if (isInCacheMode()) {
 			getGroupsCache.put(getGroupCacheKey, ElementAccessHelper.shrink(theResult));
         }
@@ -793,10 +725,6 @@ public class ElementAccessManager extends AccessManager {
         return this.resolvedMORules;
     }
 
-    public Map<String, ExternalRoleProvider> getExternalRules() {
-        return this.externalRoleProviders;
-    }
-    
 	final BoundObject getSecurityRoot() {
 		return _boundHelper.securityRoot();
 	}

@@ -13,7 +13,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.CollectionUtil;
@@ -28,7 +27,6 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.util.StopWatch;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.element.boundsec.manager.ElementAccessManager;
-import com.top_logic.element.boundsec.manager.rule.ExternalRoleProvider;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider;
 import com.top_logic.element.boundsec.manager.rule.RoleRule;
 import com.top_logic.element.meta.MetaElementUtil;
@@ -268,7 +266,6 @@ public class ElementSecurityStorage extends SecurityStorage {
 			StopWatch sw = StopWatch.createStartedWatch();
             computeMERuleBasedRoles();
             computeMORuleBasedRoles();
-            computeExternalRulesBasedRoles();
 			Logger.info("Computing of rules completed in " + sw + ".", ElementSecurityStorage.class);
         }
         finally {
@@ -277,23 +274,6 @@ public class ElementSecurityStorage extends SecurityStorage {
     }
 
 
-
-    /**
-     * Compute all roles based on the configured {@link ExternalRoleProvider}s.
-     */
-    public void computeExternalRulesBasedRoles() {
-        Logger.info("Computing external rules...", ElementSecurityStorage.class);
-		StopWatch sw = StopWatch.createStartedWatch();
-        ElementAccessManager theAM = (ElementAccessManager)getAccessManager();
-        Map<String, ExternalRoleProvider> externalRules = theAM.getExternalRules();
-        int counterRules = externalRules.size();
-        for(Iterator<Map.Entry<String, ExternalRoleProvider>> theIt = externalRules.entrySet().iterator(); theIt.hasNext(); ) {
-            Entry<String, ExternalRoleProvider> theNext = theIt.next();
-            ExternalRoleProvider theRoleRuleFactory = theNext.getValue();
-            theRoleRuleFactory.computeRoles(this.executor);
-        }
-		Logger.info("Done in " + sw + ". Executed " + counterRules + " external rules.", ElementSecurityStorage.class);
-    }
 
     /**
 	 * Creates the database entries based on {@link TLClass} rules.

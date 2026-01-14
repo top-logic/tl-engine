@@ -29,7 +29,6 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
 import com.top_logic.basic.util.Computation;
 import com.top_logic.dob.MetaObject;
-import com.top_logic.element.boundsec.manager.rule.ExternalRoleProvider;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider.Type;
 import com.top_logic.element.boundsec.manager.rule.RoleRule;
@@ -258,11 +257,6 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
                 Collection<RoleProvider> rules = moRules.get(mo);
                 if (rules != null)
                 for (RoleProvider rule : rules) {
-                    getOrCreateSet(rulesToObjectsMap, rule).add((BoundObject)newObject);
-                }
-                Collection<ExternalRoleProvider> extRules = accessManager.getAffectedRoleRuleFactories(mo.getName());
-                if (extRules != null)
-                for (RoleProvider rule : extRules) {
                     getOrCreateSet(rulesToObjectsMap, rule).add((BoundObject)newObject);
                 }
             }
@@ -499,13 +493,6 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
                 if (!CollectionUtil.isEmptyOrNull(theBaseObjects)) {
                     Collection<BoundObject> theRuleObjects = this.getOrCreateSet(aRulesToObjectsMap, theRule);
                     theRuleObjects.addAll(theBaseObjects);
-                }
-            }
-            for(ExternalRoleProvider theFactory : accessManager.getAffectedRoleRuleFactories(theKATypeName)) {
-                Set<BoundObject> theAffected = theFactory.getAffectedObjects(aKA);
-                if (!CollectionUtil.isEmptyOrNull(theAffected)) {
-                    Collection<BoundObject> theRuleObjects = this.getOrCreateSet(aRulesToObjectsMap, theFactory);
-                    theRuleObjects.addAll(theAffected);
                 }
             }
         }

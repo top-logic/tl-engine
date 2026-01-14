@@ -288,42 +288,42 @@ public class ChatControl extends AbstractControlBase {
 	 * Checks if the given text is a model creation command.
 	 */
 	private boolean isModelCreationCommand(String text) {
-		return text != null && text.trim().startsWith("/model-creation");
+		return text != null && text.startsWith("/model-creation");
 	}
 
 	/**
 	 * Extracts business requirements from a model creation command.
 	 */
 	private String extractBusinessRequirements(String command) {
-		return command.trim().substring("/model-creation".length()).trim();
+		return command.substring("/model-creation".length()).trim();
 	}
 
 	/**
 	 * Checks if the given text is a model exploration command.
 	 */
 	private boolean isModelExplorationCommand(String text) {
-		return text != null && text.trim().startsWith("/explore-model");
+		return text != null && text.startsWith("/explore-model");
 	}
 
 	/**
 	 * Extracts the exploration question from a model exploration command.
 	 */
 	private String extractExplorationQuestion(String command) {
-		return command.trim().substring("/explore-model".length()).trim();
+		return command.substring("/explore-model".length()).trim();
 	}
 
 	/**
 	 * Checks if the given text is a TLScript reference command.
 	 */
 	private boolean isTLScriptCommand(String text) {
-		return text != null && text.trim().startsWith("/tlscript");
+		return text != null && text.startsWith("/tlscript");
 	}
 
 	/**
 	 * Extracts the question from a TLScript reference command.
 	 */
 	private String extractTLScriptQuestion(String command) {
-		return command.trim().substring("/tlscript".length()).trim();
+		return command.substring("/tlscript".length()).trim();
 	}
 
 	/**
@@ -522,27 +522,30 @@ public class ChatControl extends AbstractControlBase {
 			ChatControl chatControl = (ChatControl) control;
 			String text = (String) arguments.get(TEXT_PARAM);
 
-			if (text != null && !text.trim().isEmpty()) {
-				String userName = getCurrentUserName();
-				ChatMessage message = new ChatMessage(userName, text.trim());
-				chatControl._chat.addMessage(message);
+			if (text != null) {
+				String trimmedText = text.trim();
+				if (!trimmedText.isEmpty()) {
+					String userName = getCurrentUserName();
+					ChatMessage message = new ChatMessage(userName, trimmedText);
+					chatControl._chat.addMessage(message);
 
-				// Show user message immediately
-				chatControl.requestRepaint();
+					// Show user message immediately
+					chatControl.requestRepaint();
 
-				// Check if this is a model creation command
-				if (chatControl.isModelCreationCommand(text.trim())) {
-					// Handle model creation workflow
-					chatControl.handleModelCreationCommand(text.trim(), userName);
-				} else if (chatControl.isModelExplorationCommand(text.trim())) {
-					// Handle model exploration workflow
-					chatControl.handleModelExplorationCommand(text.trim(), userName);
-				} else if (chatControl.isTLScriptCommand(text.trim())) {
-					// Handle TLScript reference workflow
-					chatControl.handleTLScriptCommand(text.trim(), userName);
-				} else {
-					// Regular chat - schedule AI response via JavaScript
-					chatControl._scheduleAIResponse = true;
+					// Check if this is a model creation command
+					if (chatControl.isModelCreationCommand(trimmedText)) {
+						// Handle model creation workflow
+						chatControl.handleModelCreationCommand(trimmedText, userName);
+					} else if (chatControl.isModelExplorationCommand(trimmedText)) {
+						// Handle model exploration workflow
+						chatControl.handleModelExplorationCommand(trimmedText, userName);
+					} else if (chatControl.isTLScriptCommand(trimmedText)) {
+						// Handle TLScript reference workflow
+						chatControl.handleTLScriptCommand(trimmedText, userName);
+					} else {
+						// Regular chat - schedule AI response via JavaScript
+						chatControl._scheduleAIResponse = true;
+					}
 				}
 			}
 

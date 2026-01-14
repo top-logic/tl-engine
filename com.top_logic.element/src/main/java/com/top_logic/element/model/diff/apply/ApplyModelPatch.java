@@ -1040,6 +1040,7 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		copyIfSet(part, EndAspect.AGGREGATE_PROPERTY, config::setAggregate);
 		copyIfSet(part, EndAspect.NAVIGATE_PROPERTY, config::setNavigate);
 		copyIfSet(part, EndAspect.HISTORY_TYPE_PROPERTY, config::setHistoryType);
+		copyIfSet(part, EndAspect.DELETION_POLICY_PROPERTY, config::setDeletionPolicy);
 		fillPartProcessor(config, qOwnerName, part);
 	}
 

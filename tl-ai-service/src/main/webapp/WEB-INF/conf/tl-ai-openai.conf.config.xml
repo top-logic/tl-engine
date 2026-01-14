@@ -25,9 +25,14 @@
 			<instance class="com.top_logic.ai.service.tools.registry.ToolRegistry">
 				<tool-factories>
 					<!-- TLScript Reference Tool - provides function listing and documentation -->
-					<factory name="tlscript">
+					<factory name="script-doc">
 						<implementation class="com.top_logic.ai.service.tools.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.ai.service.tools.help.TLScriptReferenceTool"
+						/>
+					</factory>
+					<factory name="script-exec">
+						<implementation class="com.top_logic.ai.service.tools.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.ai.service.tools.script.TLScriptTool"
 						/>
 					</factory>
 

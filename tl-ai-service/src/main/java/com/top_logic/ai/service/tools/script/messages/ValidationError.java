@@ -27,7 +27,7 @@ public class ValidationError extends de.haumacher.msgbuf.data.AbstractDataObject
 	/** @see #getColumn() */
 	public static final String COLUMN__PROP = "column";
 
-	private String _type = "";
+	private com.top_logic.ai.service.tools.script.messages.ErrorType _type = com.top_logic.ai.service.tools.script.messages.ErrorType.SYNTAX_ERROR;
 
 	private String _message = "";
 
@@ -45,22 +45,23 @@ public class ValidationError extends de.haumacher.msgbuf.data.AbstractDataObject
 	}
 
 	/**
-	 * Type of validation error (SYNTAX_ERROR, LEXICAL_ERROR, VALIDATION_ERROR).
+	 * Type of validation error.
 	 */
-	public final String getType() {
+	public final com.top_logic.ai.service.tools.script.messages.ErrorType getType() {
 		return _type;
 	}
 
 	/**
 	 * @see #getType()
 	 */
-	public com.top_logic.ai.service.tools.script.messages.ValidationError setType(String value) {
+	public com.top_logic.ai.service.tools.script.messages.ValidationError setType(com.top_logic.ai.service.tools.script.messages.ErrorType value) {
 		internalSetType(value);
 		return this;
 	}
 
 	/** Internal setter for {@link #getType()} without chain call utility. */
-	protected final void internalSetType(String value) {
+	protected final void internalSetType(com.top_logic.ai.service.tools.script.messages.ErrorType value) {
+		if (value == null) throw new IllegalArgumentException("Property 'type' cannot be null.");
 		_type = value;
 	}
 
@@ -171,7 +172,7 @@ public class ValidationError extends de.haumacher.msgbuf.data.AbstractDataObject
 	@Override
 	public void set(String field, Object value) {
 		switch (field) {
-			case TYPE__PROP: internalSetType((String) value); break;
+			case TYPE__PROP: internalSetType((com.top_logic.ai.service.tools.script.messages.ErrorType) value); break;
 			case MESSAGE__PROP: internalSetMessage((String) value); break;
 			case LINE__PROP: internalSetLine((int) value); break;
 			case COLUMN__PROP: internalSetColumn((int) value); break;
@@ -194,7 +195,7 @@ public class ValidationError extends de.haumacher.msgbuf.data.AbstractDataObject
 	protected void writeFields(de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
 		super.writeFields(out);
 		out.name(TYPE__PROP);
-		out.value(getType());
+		getType().writeTo(out);
 		out.name(MESSAGE__PROP);
 		out.value(getMessage());
 		out.name(LINE__PROP);
@@ -206,7 +207,7 @@ public class ValidationError extends de.haumacher.msgbuf.data.AbstractDataObject
 	@Override
 	protected void readField(de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
 		switch (field) {
-			case TYPE__PROP: setType(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case TYPE__PROP: setType(com.top_logic.ai.service.tools.script.messages.ErrorType.readErrorType(in)); break;
 			case MESSAGE__PROP: setMessage(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case LINE__PROP: setLine(in.nextInt()); break;
 			case COLUMN__PROP: setColumn(in.nextInt()); break;

@@ -13,6 +13,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.ai.service.tools.script.messages.ErrorType;
+import com.top_logic.ai.service.tools.script.messages.ValidationError;
+import com.top_logic.ai.service.tools.script.messages.ValidationResult;
 import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -50,124 +53,13 @@ import com.top_logic.util.model.ModelService;
  * <li>Script execution with configurable transaction control</li>
  * <li>Result serialization (primitives, collections, TLObjects)</li>
  * </ul>
+ * <p>
+ * The tool uses the same validation pipeline as the TLScript console editor, leveraging
+ * {@link SearchExpressionParser} for parsing and {@link ModelReferenceChecker} for semantic
+ * validation.
+ * </p>
  */
 public class TLScriptExecutor {
-
-	/**
-	 * Result of TLScript validation.
-	 */
-	public static class ValidationResult {
-		private final boolean _valid;
-
-		private final Expr _expr;
-
-		private final ValidationError _error;
-
-		private ValidationResult(boolean valid, Expr expr, ValidationError error) {
-			_valid = valid;
-			_expr = expr;
-			_error = error;
-		}
-
-		/**
-		 * Creates a successful validation result.
-		 */
-		public static ValidationResult success(Expr expr) {
-			return new ValidationResult(true, expr, null);
-		}
-
-		/**
-		 * Creates a failed validation result.
-		 */
-		public static ValidationResult error(ValidationError error) {
-			return new ValidationResult(false, null, error);
-		}
-
-		/**
-		 * Whether the validation was successful.
-		 */
-		public boolean isValid() {
-			return _valid;
-		}
-
-		/**
-		 * The parsed expression (only available if validation succeeded).
-		 */
-		public Expr getExpr() {
-			return _expr;
-		}
-
-		/**
-		 * The validation error (only available if validation failed).
-		 */
-		public ValidationError getError() {
-			return _error;
-		}
-	}
-
-	/**
-	 * Details about a validation error.
-	 */
-	public static class ValidationError {
-
-		/**
-		 * Type of validation error.
-		 */
-		public enum ErrorType {
-			/** Syntax error (parser error). */
-			SYNTAX_ERROR,
-			/** Lexical error (invalid characters). */
-			LEXICAL_ERROR,
-			/** Validation error (model references, type checking). */
-			VALIDATION_ERROR
-		}
-
-		private final ErrorType _type;
-
-		private final String _message;
-
-		private final int _line;
-
-		private final int _column;
-
-		/**
-		 * Creates a {@link ValidationError}.
-		 */
-		public ValidationError(ErrorType type, String message, int line, int column) {
-			_type = type;
-			_message = message;
-			_line = line;
-			_column = column;
-		}
-
-		/**
-		 * The type of error.
-		 */
-		public ErrorType getType() {
-			return _type;
-		}
-
-		/**
-		 * The error message.
-		 */
-		public String getMessage() {
-			return _message;
-		}
-
-		/**
-		 * The line number where the error occurred (0 if not applicable).
-		 */
-		public int getLine() {
-			return _line;
-		}
-
-		/**
-		 * The column number where the error occurred (0 if not applicable).
-		 */
-		public int getColumn() {
-			return _column;
-		}
-	}
 
 	/**
 	 * Result of TLScript execution.
@@ -418,16 +310,23 @@ public class TLScriptExecutor {
 				// Trailing garbage found
 				int line = currentToken.beginLine;
 				int column = currentToken.beginColumn;
-				return ValidationResult.error(
-					new ValidationError(ValidationError.ErrorType.SYNTAX_ERROR,
-						"Unexpected content after expression", line, column));
+				return ValidationResult.create()
+					.setValid(false)
+					.setError(ValidationError.create()
+						.setType(ErrorType.SYNTAX_ERROR)
+						.setMessage("Unexpected content after expression")
+						.setLine(line)
+						.setColumn(column));
 			}
 
 			// Step 3: Full validation (model references + type checking)
 			ModelReferenceChecker.checkModelElements(expr);
 
 			// Success - all validation passed
-			return ValidationResult.success(expr);
+			return ValidationResult.create()
+				.setValid(true)
+				.setMessage("TLScript is valid")
+				.setExpr(expr);
 
 		} catch (ParseException ex) {
 			// Syntax error with location information
@@ -435,25 +334,44 @@ public class TLScriptExecutor {
 			int line = errorToken.beginLine;
 			int column = errorToken.beginColumn;
 			String message = ex.getMessage();
-			return ValidationResult.error(
-				new ValidationError(ValidationError.ErrorType.SYNTAX_ERROR, message, line, column));
+			return ValidationResult.create()
+				.setValid(false)
+				.setError(ValidationError.create()
+					.setType(ErrorType.SYNTAX_ERROR)
+					.setMessage(message)
+					.setLine(line)
+					.setColumn(column));
 
 		} catch (TokenMgrError ex) {
 			// Lexical error (invalid characters, malformed tokens)
-			return ValidationResult.error(
-				new ValidationError(ValidationError.ErrorType.LEXICAL_ERROR, ex.getMessage(), 0, 0));
+			return ValidationResult.create()
+				.setValid(false)
+				.setError(ValidationError.create()
+					.setType(ErrorType.LEXICAL_ERROR)
+					.setMessage(ex.getMessage())
+					.setLine(0)
+					.setColumn(0));
 
 		} catch (I18NRuntimeException ex) {
 			// Model reference or type checking error
 			String message = Resources.getInstance().getString(ex.getErrorKey());
-			return ValidationResult.error(
-				new ValidationError(ValidationError.ErrorType.VALIDATION_ERROR, message, 0, 0));
+			return ValidationResult.create()
+				.setValid(false)
+				.setError(ValidationError.create()
+					.setType(ErrorType.VALIDATION_ERROR)
+					.setMessage(message)
+					.setLine(0)
+					.setColumn(0));
 
 		} catch (Exception ex) {
 			// Unexpected error during validation
-			return ValidationResult.error(
-				new ValidationError(ValidationError.ErrorType.VALIDATION_ERROR,
-					"Validation failed: " + ex.getMessage(), 0, 0));
+			return ValidationResult.create()
+				.setValid(false)
+				.setError(ValidationError.create()
+					.setType(ErrorType.VALIDATION_ERROR)
+					.setMessage("Validation failed: " + ex.getMessage())
+					.setLine(0)
+					.setColumn(0));
 		}
 	}
 

@@ -7,6 +7,20 @@ option NoInterfaces;
 option NoXml;
 
 /**
+ * Type of validation error.
+ */
+enum ErrorType {
+	/** Syntax error (parser error). */
+	SYNTAX_ERROR;
+
+	/** Lexical error (invalid characters). */
+	LEXICAL_ERROR;
+
+	/** Validation error (model references, type checking). */
+	VALIDATION_ERROR;
+}
+
+/**
  * Result of TLScript validation.
  */
 message ValidationResult {
@@ -24,6 +38,15 @@ message ValidationResult {
 	 * Validation error details (only present if valid is false).
 	 */
 	ValidationError error;
+
+	/**
+	 * The parsed expression (only available if validation succeeded).
+	 *
+	 * <p>
+	 * This property is transient and not serialized to JSON.
+	 * </p>
+	 */
+	transient com.top_logic.model.search.expr.config.dom.Expr expr;
 }
 
 /**
@@ -31,9 +54,9 @@ message ValidationResult {
  */
 message ValidationError {
 	/**
-	 * Type of validation error (SYNTAX_ERROR, LEXICAL_ERROR, VALIDATION_ERROR).
+	 * Type of validation error.
 	 */
-	string type;
+	ErrorType type;
 
 	/**
 	 * The error message.

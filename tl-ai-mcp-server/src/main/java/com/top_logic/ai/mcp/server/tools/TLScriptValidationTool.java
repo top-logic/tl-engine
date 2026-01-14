@@ -5,18 +5,12 @@
  */
 package com.top_logic.ai.mcp.server.tools;
 
-import java.io.IOException;
-import java.io.StringWriter;
 import java.util.Map;
 
 import com.top_logic.ai.mcp.server.util.JsonResponseBuilder;
 import com.top_logic.ai.service.tools.script.TLScriptExecutor;
-import com.top_logic.ai.service.tools.script.TLScriptExecutor.ValidationError;
-import com.top_logic.ai.service.tools.script.TLScriptExecutor.ValidationResult;
+import com.top_logic.ai.service.tools.script.messages.ValidationResult;
 import com.top_logic.basic.thread.ThreadContextManager;
-import com.top_logic.common.json.gstream.JsonWriter;
-import com.top_logic.model.search.expr.parser.SearchExpressionParser;
-import com.top_logic.model.search.ui.ModelReferenceChecker;
 
 import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.server.McpServerFeatures;
@@ -33,11 +27,6 @@ import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
  * <li>Model reference validation (undefined classes/properties/types)</li>
  * <li>Type checking (type compatibility)</li>
  * </ul>
- * </p>
- * <p>
- * The tool uses the same validation pipeline as the TLScript console editor, leveraging
- * {@link SearchExpressionParser} for parsing and {@link ModelReferenceChecker} for semantic
- * validation.
  * </p>
  */
 public class TLScriptValidationTool {
@@ -128,126 +117,9 @@ public class TLScriptValidationTool {
 		// Use shared validation logic from TLScriptExecutor
 		ValidationResult result = TLScriptExecutor.validate(script);
 
-		if (result.isValid()) {
-			return buildSuccessResponse();
-		} else {
-			ValidationError error = result.getError();
-			switch (error.getType()) {
-				case SYNTAX_ERROR:
-					return buildSyntaxErrorResponse(error.getLine(), error.getColumn(), error.getMessage());
-				case LEXICAL_ERROR:
-					return buildLexicalErrorResponse(error.getMessage());
-				case VALIDATION_ERROR:
-					return buildValidationErrorResponse(error.getMessage());
-				default:
-					return createToolErrorResult("Validation failed: " + error.getMessage());
-			}
-		}
-	}
-
-	/**
-	 * Builds a JSON response for successful validation.
-	 *
-	 * @return JSON string containing the success response.
-	 */
-	private static McpSchema.CallToolResult buildSuccessResponse() {
-		try {
-			StringWriter buffer = new StringWriter();
-			try (JsonWriter json = JsonResponseBuilder.createWriter(buffer)) {
-				json.beginObject();
-				json.name("success").value(true);
-				json.name("valid").value(true);
-				json.name("message").value("TLScript is valid");
-				json.endObject();
-			}
-			return new McpSchema.CallToolResult(buffer.toString(), false);
-		} catch (IOException ex) {
-			return createToolErrorResult("Failed to build success response: " + ex.getMessage());
-		}
-	}
-
-	/**
-	 * Builds a JSON response for syntax errors.
-	 *
-	 * @param line
-	 *        The line number where the error occurred (1-indexed).
-	 * @param column
-	 *        The column number where the error occurred (1-indexed).
-	 * @param message
-	 *        The error message.
-	 * @return JSON string containing the error response.
-	 */
-	private static McpSchema.CallToolResult buildSyntaxErrorResponse(int line, int column, String message) {
-		try {
-			StringWriter buffer = new StringWriter();
-			try (JsonWriter json = JsonResponseBuilder.createWriter(buffer)) {
-				json.beginObject();
-				json.name("success").value(true);
-				json.name("valid").value(false);
-				json.name("error").beginObject();
-				json.name("type").value("SYNTAX_ERROR");
-				json.name("message").value(message);
-				json.name("line").value(line);
-				json.name("column").value(column);
-				json.endObject();
-				json.endObject();
-			}
-			return new McpSchema.CallToolResult(buffer.toString(), false);
-		} catch (IOException ex) {
-			return createToolErrorResult("Failed to build error response: " + ex.getMessage());
-		}
-	}
-
-	/**
-	 * Builds a JSON response for lexical errors.
-	 *
-	 * @param message
-	 *        The error message.
-	 * @return JSON string containing the error response.
-	 */
-	private static McpSchema.CallToolResult buildLexicalErrorResponse(String message) {
-		try {
-			StringWriter buffer = new StringWriter();
-			try (JsonWriter json = JsonResponseBuilder.createWriter(buffer)) {
-				json.beginObject();
-				json.name("success").value(true);
-				json.name("valid").value(false);
-				json.name("error").beginObject();
-				json.name("type").value("LEXICAL_ERROR");
-				json.name("message").value(message);
-				json.endObject();
-				json.endObject();
-			}
-			return new McpSchema.CallToolResult(buffer.toString(), false);
-		} catch (IOException ex) {
-			return createToolErrorResult("Failed to build error response: " + ex.getMessage());
-		}
-	}
-
-	/**
-	 * Builds a JSON response for validation errors (model references, type checking).
-	 *
-	 * @param message
-	 *        The error message.
-	 * @return JSON string containing the error response.
-	 */
-	private static McpSchema.CallToolResult buildValidationErrorResponse(String message) {
-		try {
-			StringWriter buffer = new StringWriter();
-			try (JsonWriter json = JsonResponseBuilder.createWriter(buffer)) {
-				json.beginObject();
-				json.name("success").value(true);
-				json.name("valid").value(false);
-				json.name("error").beginObject();
-				json.name("type").value("VALIDATION_ERROR");
-				json.name("message").value(message);
-				json.endObject();
-				json.endObject();
-			}
-			return new McpSchema.CallToolResult(buffer.toString(), false);
-		} catch (IOException ex) {
-			return createToolErrorResult("Failed to build error response: " + ex.getMessage());
-		}
+		// Use ValidationResult's built-in JSON serialization
+		String jsonResult = result.toString();
+		return new McpSchema.CallToolResult(jsonResult, false);
 	}
 
 	/**

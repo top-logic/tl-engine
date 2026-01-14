@@ -9,8 +9,7 @@ import java.util.List;
 
 import com.top_logic.ai.service.tools.help.messages.ErrorResult;
 import com.top_logic.ai.service.tools.script.TLScriptExecutor.ExecutionResult;
-import com.top_logic.ai.service.tools.script.TLScriptExecutor.ValidationError;
-import com.top_logic.ai.service.tools.script.TLScriptExecutor.ValidationResult;
+import com.top_logic.ai.service.tools.script.messages.ValidationResult;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.thread.ThreadContextManager;
 
@@ -63,28 +62,10 @@ public class TLScriptTool {
 						return toJson(ErrorResult.create().setError("Script is required"));
 					}
 
-					// Perform validation
+					// Perform validation and return JSON directly
 					ValidationResult result = TLScriptExecutor.validate(script);
+					String jsonResult = result.toString();
 
-					// Build response using msgbuf
-					com.top_logic.ai.service.tools.script.messages.ValidationResult msgResult =
-						com.top_logic.ai.service.tools.script.messages.ValidationResult.create()
-							.setValid(result.isValid());
-
-					if (result.isValid()) {
-						msgResult.setMessage("TLScript is valid");
-					} else {
-						ValidationError error = result.getError();
-						com.top_logic.ai.service.tools.script.messages.ValidationError msgError =
-							com.top_logic.ai.service.tools.script.messages.ValidationError.create()
-								.setType(error.getType().name())
-								.setMessage(error.getMessage())
-								.setLine(error.getLine())
-								.setColumn(error.getColumn());
-						msgResult.setError(msgError);
-					}
-
-					String jsonResult = toJson(msgResult);
 					Logger.info("validateTLScript() result: " + jsonResult, TLScriptTool.class);
 					return jsonResult;
 

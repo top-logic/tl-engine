@@ -24,11 +24,16 @@ public class ValidationResult extends de.haumacher.msgbuf.data.AbstractDataObjec
 	/** @see #getError() */
 	public static final String ERROR__PROP = "error";
 
+	/** @see #getExpr() */
+	public static final String EXPR__PROP = "expr";
+
 	private boolean _valid = false;
 
 	private String _message = "";
 
 	private com.top_logic.ai.service.tools.script.messages.ValidationError _error = null;
+
+	private transient com.top_logic.model.search.expr.config.dom.Expr _expr = null;
 
 	/**
 	 * Creates a {@link ValidationResult} instance.
@@ -106,6 +111,37 @@ public class ValidationResult extends de.haumacher.msgbuf.data.AbstractDataObjec
 		return _error != null;
 	}
 
+	/**
+	 * The parsed expression (only available if validation succeeded).
+	 *
+	 * <p>
+	 * This property is transient and not serialized to JSON.
+	 * </p>
+	 */
+	public final com.top_logic.model.search.expr.config.dom.Expr getExpr() {
+		return _expr;
+	}
+
+	/**
+	 * @see #getExpr()
+	 */
+	public com.top_logic.ai.service.tools.script.messages.ValidationResult setExpr(com.top_logic.model.search.expr.config.dom.Expr value) {
+		internalSetExpr(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getExpr()} without chain call utility. */
+	protected final void internalSetExpr(com.top_logic.model.search.expr.config.dom.Expr value) {
+		_expr = value;
+	}
+
+	/**
+	 * Checks, whether {@link #getExpr()} has a value.
+	 */
+	public final boolean hasExpr() {
+		return _expr != null;
+	}
+
 	@Override
 	public String jsonType() {
 		return VALIDATION_RESULT__TYPE;
@@ -116,7 +152,8 @@ public class ValidationResult extends de.haumacher.msgbuf.data.AbstractDataObjec
 		java.util.List<String> local = java.util.Arrays.asList(
 			VALID__PROP, 
 			MESSAGE__PROP, 
-			ERROR__PROP);
+			ERROR__PROP, 
+			EXPR__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -124,7 +161,7 @@ public class ValidationResult extends de.haumacher.msgbuf.data.AbstractDataObjec
 	static {
 		java.util.HashSet<String> tmp = new java.util.HashSet<>();
 		tmp.addAll(java.util.Arrays.asList(
-				));
+				EXPR__PROP));
 		TRANSIENT_PROPERTIES = java.util.Collections.unmodifiableSet(tmp);
 	}
 
@@ -144,6 +181,7 @@ public class ValidationResult extends de.haumacher.msgbuf.data.AbstractDataObjec
 			case VALID__PROP: return isValid();
 			case MESSAGE__PROP: return getMessage();
 			case ERROR__PROP: return getError();
+			case EXPR__PROP: return getExpr();
 			default: return null;
 		}
 	}
@@ -154,6 +192,7 @@ public class ValidationResult extends de.haumacher.msgbuf.data.AbstractDataObjec
 			case VALID__PROP: internalSetValid((boolean) value); break;
 			case MESSAGE__PROP: internalSetMessage((String) value); break;
 			case ERROR__PROP: internalSetError((com.top_logic.ai.service.tools.script.messages.ValidationError) value); break;
+			case EXPR__PROP: internalSetExpr((com.top_logic.model.search.expr.config.dom.Expr) value); break;
 		}
 	}
 

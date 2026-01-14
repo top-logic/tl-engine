@@ -1,0 +1,52 @@
+package com.top_logic.ai.service.tools.script.messages;
+
+option NoBinary;
+option NoVisit;
+option NoListener;
+option NoInterfaces;
+option NoXml;
+
+/**
+ * Result of TLScript validation.
+ */
+message ValidationResult {
+	/**
+	 * Whether the TLScript is valid.
+	 */
+	bool valid;
+
+	/**
+	 * Message describing validation success.
+	 */
+	string `message`;
+
+	/**
+	 * Validation error details (only present if valid is false).
+	 */
+	ValidationError error;
+}
+
+/**
+ * Details about a validation error.
+ */
+message ValidationError {
+	/**
+	 * Type of validation error (SYNTAX_ERROR, LEXICAL_ERROR, VALIDATION_ERROR).
+	 */
+	string type;
+
+	/**
+	 * The error message.
+	 */
+	string `message`;
+
+	/**
+	 * Line number where the error occurred (0 if not applicable).
+	 */
+	int line;
+
+	/**
+	 * Column number where the error occurred (0 if not applicable).
+	 */
+	int column;
+}

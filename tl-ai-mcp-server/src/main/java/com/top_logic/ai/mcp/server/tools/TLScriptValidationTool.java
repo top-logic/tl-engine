@@ -6,22 +6,17 @@
 package com.top_logic.ai.mcp.server.tools;
 
 import java.io.IOException;
-import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.Map;
 
 import com.top_logic.ai.mcp.server.util.JsonResponseBuilder;
-import com.top_logic.basic.exception.I18NRuntimeException;
+import com.top_logic.ai.service.tools.script.TLScriptExecutor;
+import com.top_logic.ai.service.tools.script.TLScriptExecutor.ValidationError;
+import com.top_logic.ai.service.tools.script.TLScriptExecutor.ValidationResult;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.common.json.gstream.JsonWriter;
-import com.top_logic.model.search.expr.config.dom.Expr;
-import com.top_logic.model.search.expr.parser.ParseException;
 import com.top_logic.model.search.expr.parser.SearchExpressionParser;
-import com.top_logic.model.search.expr.parser.SearchExpressionParserConstants;
-import com.top_logic.model.search.expr.parser.Token;
-import com.top_logic.model.search.expr.parser.TokenMgrError;
 import com.top_logic.model.search.ui.ModelReferenceChecker;
-import com.top_logic.util.Resources;
 
 import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.server.McpServerFeatures;
@@ -130,52 +125,23 @@ public class TLScriptValidationTool {
 			return createToolErrorResult(e.getMessage());
 		}
 
-		// Perform validation
-		SearchExpressionParser parser = new SearchExpressionParser(new StringReader(script));
+		// Use shared validation logic from TLScriptExecutor
+		ValidationResult result = TLScriptExecutor.validate(script);
 
-		try {
-			// Step 1: Parse (syntax validation)
-			Expr expr = parser.expr();
-
-			// Step 2: Check for trailing content (garbage after valid expression)
-			Token currentToken = parser.token;
-			if (currentToken.kind != SearchExpressionParserConstants.EOF) {
-				currentToken = parser.getNextToken();
-			}
-			if (currentToken.kind != SearchExpressionParserConstants.EOF) {
-				// Trailing garbage found
-				int line = currentToken.beginLine;
-				int column = currentToken.beginColumn;
-				return buildSyntaxErrorResponse(line, column, "Unexpected content after expression");
-			}
-
-			// Step 3: Full validation (model references + type checking)
-			// This matches the TLScript console validation behavior
-			ModelReferenceChecker.checkModelElements(expr);
-
-			// Success - all validation passed
+		if (result.isValid()) {
 			return buildSuccessResponse();
-
-		} catch (ParseException ex) {
-			// Syntax error with location information
-			Token errorToken = ex.currentToken.next;
-			int line = errorToken.beginLine;
-			int column = errorToken.beginColumn;
-			String message = ex.getMessage();
-			return buildSyntaxErrorResponse(line, column, message);
-
-		} catch (TokenMgrError ex) {
-			// Lexical error (invalid characters, malformed tokens)
-			return buildLexicalErrorResponse(ex.getMessage());
-
-		} catch (I18NRuntimeException ex) {
-			// Model reference or type checking error
-			String message = Resources.getInstance().getString(ex.getErrorKey());
-			return buildValidationErrorResponse(message);
-
-		} catch (Exception ex) {
-			// Unexpected error during validation
-			return createToolErrorResult("Validation failed: " + ex.getMessage());
+		} else {
+			ValidationError error = result.getError();
+			switch (error.getType()) {
+				case SYNTAX_ERROR:
+					return buildSyntaxErrorResponse(error.getLine(), error.getColumn(), error.getMessage());
+				case LEXICAL_ERROR:
+					return buildLexicalErrorResponse(error.getMessage());
+				case VALIDATION_ERROR:
+					return buildValidationErrorResponse(error.getMessage());
+				default:
+					return createToolErrorResult("Validation failed: " + error.getMessage());
+			}
 		}
 	}
 

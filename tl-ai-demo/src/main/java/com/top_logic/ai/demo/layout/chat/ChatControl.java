@@ -12,7 +12,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.ai.service.AIService;
 import com.top_logic.ai.service.agents.ModelExplorer;
+import com.top_logic.ai.service.agents.TLScriptAgent;
 import com.top_logic.ai.service.agents.UMLSpecificationAgent;
 import com.top_logic.ai.service.scripting.Converters;
 import com.top_logic.ai.service.scripting.OpenAIScriptFunctions;
@@ -22,6 +24,7 @@ import com.top_logic.ai.service.tools.model.ModelAnnotationBrowserTool;
 import com.top_logic.ai.service.tools.model.ModelBrowserTool;
 import com.top_logic.ai.service.tools.model.ModelSearchTool;
 import com.top_logic.ai.service.tools.model.TypeAnalysisTool;
+import com.top_logic.ai.service.tools.help.TLScriptReferenceTool;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Control;
@@ -34,7 +37,6 @@ import com.top_logic.util.TLContext;
 
 import dev.langchain4j.agentic.AgenticServices;
 import dev.langchain4j.model.chat.ChatModel;
-import dev.langchain4j.model.mistralai.MistralAiChatModel;
 
 /**
  * A minimal chat control displaying messages and allowing user input.
@@ -309,6 +311,20 @@ public class ChatControl extends AbstractControlBase {
 	}
 
 	/**
+	 * Checks if the given text is a TLScript reference command.
+	 */
+	private boolean isTLScriptCommand(String text) {
+		return text != null && text.trim().startsWith("/tlscript");
+	}
+
+	/**
+	 * Extracts the question from a TLScript reference command.
+	 */
+	private String extractTLScriptQuestion(String command) {
+		return command.trim().substring("/tlscript".length()).trim();
+	}
+
+	/**
 	 * Handles a model creation command synchronously.
 	 */
 	private void handleModelCreationCommand(String command, String userName) {
@@ -349,14 +365,14 @@ public class ChatControl extends AbstractControlBase {
 		try {
 			System.out.println("ChatControl: Starting model exploration in thread: " + Thread.currentThread().getName());
 
-			// Create the ModelExplorer agent
-			ChatModel explorationModel = MistralAiChatModel.builder()
-				.apiKey("IeHf1m5VQVCx0ZK3oQUYJC1hyOXVFjGn")
-				.baseUrl("https://api.mistral.ai/v1")
-				.modelName("mistral-large-latest")
-				.logRequests(false)
-				.logResponses(true)
-				.build();
+			// Get the model from AIService (uses environment variable configuration)
+			AIService aiService = AIService.getInstance();
+			if (aiService == null) {
+				throw new RuntimeException("AIService is not available. Please ensure the service is started.");
+			}
+
+			// Use mistral-large-latest model (configured in tl-ai-service)
+			ChatModel explorationModel = aiService.getChatModel("mistral-large-latest");
 
 			// Create internal tool instances (no HTTP overhead)
 			ModelBrowserTool browserTool = new ModelBrowserTool();
@@ -385,6 +401,55 @@ public class ChatControl extends AbstractControlBase {
 
 			// Handle exploration failure
 			_chat.addMessage(new ChatMessage("Agent", "❌ Model exploration failed: " + e.getMessage()));
+			requestRepaint();
+		}
+	}
+
+	/**
+	 * Handles a TLScript reference command synchronously.
+	 */
+	private void handleTLScriptCommand(String command, String userName) {
+		// Clear any previous notifiers
+		_notifiers.clear();
+
+		String question = extractTLScriptQuestion(command);
+
+		try {
+			System.out
+				.println("ChatControl: Starting TLScript reference in thread: " + Thread.currentThread().getName());
+
+			// Get the model from AIService (uses environment variable configuration)
+			AIService aiService = AIService.getInstance();
+			if (aiService == null) {
+				throw new RuntimeException("AIService is not available. Please ensure the service is started.");
+			}
+
+			// Use mistral-large-latest model (configured in tl-ai-service)
+			ChatModel tlscriptModel = aiService.getChatModel("mistral-large-latest");
+
+			// Create TLScript reference tool
+			TLScriptReferenceTool tlscriptTool = new TLScriptReferenceTool();
+
+			// Build the TLScriptAgent with TLScriptReferenceTool
+			TLScriptAgent agent = AgenticServices.agentBuilder(TLScriptAgent.class)
+				.chatModel(tlscriptModel)
+				.tools(tlscriptTool)
+				.build();
+
+			// Execute the agent
+			String result = agent.answer(question);
+
+			// Add final result as Agent message
+			_chat.addMessage(new ChatMessage("Agent", result));
+			requestRepaint();
+
+		} catch (Exception e) {
+			System.err.println(
+				"ChatControl: TLScript reference failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
+			e.printStackTrace();
+
+			// Handle failure
+			_chat.addMessage(new ChatMessage("Agent", "❌ TLScript reference failed: " + e.getMessage()));
 			requestRepaint();
 		}
 	}
@@ -474,6 +539,9 @@ public class ChatControl extends AbstractControlBase {
 				} else if (chatControl.isModelExplorationCommand(text.trim())) {
 					// Handle model exploration workflow
 					chatControl.handleModelExplorationCommand(text.trim(), userName);
+				} else if (chatControl.isTLScriptCommand(text.trim())) {
+					// Handle TLScript reference workflow
+					chatControl.handleTLScriptCommand(text.trim(), userName);
 				} else {
 					// Regular chat - schedule AI response via JavaScript
 					chatControl._scheduleAIResponse = true;

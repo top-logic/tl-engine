@@ -122,8 +122,6 @@ com.top_logic.element.boundsec.manager.StorageAccessManager.java: Invalid camel 
 com.top_logic.element.boundsec.manager.StorageAccessManager.java: Missing documentation: com.top_logic.element.boundsec.manager.StorageAccessManager.Config.getStorage
 com.top_logic.element.boundsec.manager.StorageAccessManager.java: Missing documentation: com.top_logic.element.boundsec.manager.StorageAccessManager.Config.getUpdateManager
 com.top_logic.element.boundsec.manager.StorageAccessManager.java: Missing documentation: com.top_logic.element.boundsec.manager.StorageAccessManager.Config.getUsePersonRoleCache
-com.top_logic.element.boundsec.manager.rule.ExternalRoleProvider.java: Missing documentation: com.top_logic.element.boundsec.manager.rule.ExternalRoleProvider.Config.getRuleName
-com.top_logic.element.boundsec.manager.rule.ExternalRoleProvider.java: Missing documentation: com.top_logic.element.boundsec.manager.rule.ExternalRoleProvider.getAffectedObjects
 com.top_logic.element.boundsec.manager.rule.GroupMapper.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.element.boundsec.manager.rule.GroupMapper
 com.top_logic.element.boundsec.manager.rule.HasRoleGroupMapper.java: Missing documentation: com.top_logic.element.boundsec.manager.rule.HasRoleGroupMapper
 com.top_logic.element.boundsec.manager.rule.IdentityPathElement.java: Invalid camel case word 'IdentityPathElement', this may only be used within JavaDoc links or HTML code tags.

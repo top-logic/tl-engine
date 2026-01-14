@@ -11,11 +11,11 @@ import dev.langchain4j.service.UserMessage;
 import dev.langchain4j.service.V;
 
 /**
- * Agent for answering questions about TLScript functions and their usage.
+ * TLScript Specialist Agent.
  * <p>
- * This agent helps users discover available TLScript functions and retrieve documentation for
- * specific functions. It uses the TLScriptReferenceTool to list functions and get detailed
- * documentation.
+ * Analyzes, explains, validates, corrects, and authors TLScript expressions with mandatory
+ * function verification. Uses TLScript function tools and model exploration to provide
+ * accurate assistance with TLScript syntax and semantics.
  * </p>
  */
 public interface TLScriptAgent {
@@ -151,7 +151,7 @@ public interface TLScriptAgent {
 			{{userQuestion}}
 			""")
 
-	@Agent("Answers questions about TLScript functions and their usage")
+	@Agent("TLScript Specialist: analyzes, explains, validates, corrects, and authors TLScript expressions with mandatory function verification")
 	String answer(@V("userQuestion") String userQuestion);
 
 }

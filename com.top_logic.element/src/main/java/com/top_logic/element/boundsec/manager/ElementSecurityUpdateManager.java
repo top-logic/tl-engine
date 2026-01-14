@@ -34,7 +34,6 @@ import com.top_logic.element.boundsec.manager.rule.RoleProvider;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider.Type;
 import com.top_logic.element.boundsec.manager.rule.RoleRule;
 import com.top_logic.element.meta.kbbased.WrapperMetaAttributeUtil;
-import com.top_logic.knowledge.objects.InvalidLinkException;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeItemUtil;
@@ -177,8 +176,8 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
 		final Set<BoundObject> invalidObjects = new HashSet<>();
         
         if (!someNew.isEmpty() || !someRemoved.isEmpty()) {
-            securityStorage.begin(aHandler);
-            handleAssociations(someNew, rulesToObjectsMap, newHasRoleChanged, invalidObjects, true);
+			securityStorage.begin(aHandler);
+			handleAssociations(someNew, rulesToObjectsMap, newHasRoleChanged, invalidObjects, true);
 			kb.withoutModifications(new Computation<Void>() {
 
 				@Override
@@ -190,42 +189,40 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
 			});
 			handleInheritance(kb, rulesToObjectsMap, rulesToDeletedObjectsMap, newHasRoleChanged,
 				deletedHasRoleChanged, someRemoved.values());
-            handleNewObjects(someNew, rulesToObjectsMap);
+			handleNewObjects(someNew, rulesToObjectsMap);
 
-            Map<BoundRole, Set<BoundObject>> invalidObjectsByRole = mergeValuesByRole(rulesToObjectsMap);
+			Map<BoundRole, Set<BoundObject>> invalidObjectsByRole = mergeValuesByRole(rulesToObjectsMap);
 
 			getLogHandler().logSecurityUpdate(someNew, someRemoved, rulesToObjectsMap, invalidObjects);
 
-            long start = System.currentTimeMillis();
-            try {
-                // Set invalid objects
-                if (accessManager instanceof StorageAccessManager) {
-                    ((StorageAccessManager)accessManager).setInvalidObjects(invalidObjects, invalidObjectsByRole);
-                }
+			long start = System.currentTimeMillis();
+			try {
+				// Set invalid objects
+				if (accessManager instanceof StorageAccessManager) {
+					((StorageAccessManager) accessManager).setInvalidObjects(invalidObjects, invalidObjectsByRole);
+				}
 
-                try { // remove security entries of removed objects
-                    securityStorage.removeObjects(someRemoved);
-                }
-                catch (StorageException ex) {
-                    Logger.error("Failed to remove security entries of removed objects.", ex, this);
-                }
+				try { // remove security entries of removed objects
+					securityStorage.removeObjects(someRemoved);
+				} catch (StorageException ex) {
+					Logger.error("Failed to remove security entries of removed objects.", ex, this);
+				}
 
-                try { // update security entries of changed objects
-                    securityStorage.updateSecurity(rulesToObjectsMap);
-                }
-                catch (StorageException ex) {
-                    Logger.error("Failed to update security entries of changed objects.", ex, this);
-                }
-            }
-            finally {
-                if (accessManager instanceof StorageAccessManager) {
-                    ((StorageAccessManager)accessManager).removeInvalidObjects();
-                }
-                long delta = System.currentTimeMillis() - start;
-                if (delta > 3000) {
-                    Logger.warn("Incremental security update needed " + DebugHelper.getTime(delta), ElementSecurityUpdateManager.class);
-                }
-            }
+				try { // update security entries of changed objects
+					securityStorage.updateSecurity(rulesToObjectsMap);
+				} catch (StorageException ex) {
+					Logger.error("Failed to update security entries of changed objects.", ex, this);
+				}
+			} finally {
+				if (accessManager instanceof StorageAccessManager) {
+					((StorageAccessManager) accessManager).removeInvalidObjects();
+				}
+				long delta = System.currentTimeMillis() - start;
+				if (delta > 3000) {
+					Logger.warn("Incremental security update needed " + DebugHelper.getTime(delta),
+						ElementSecurityUpdateManager.class);
+				}
+			}
 
         }
     }
@@ -454,42 +451,41 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
 	void handleAssociations(Map someAssociations, Map<RoleProvider, Collection<BoundObject>> rulesToObjectsMap,
 			Map<BoundRole, Collection<Object>> hasRoleChanged, Set<BoundObject> invalidObjects, boolean isAdded) {
         for (Iterator theIt = someAssociations.values().iterator(); theIt.hasNext();) {
-            Object theObject = theIt.next();
+            KnowledgeItem theObject = (KnowledgeItem) theIt.next();
             if (KnowledgeItemUtil.instanceOfKnowledgeAssociation(theObject)) {
                 KnowledgeAssociation theDO = (KnowledgeAssociation) theObject;
-                MetaObject theMO     = theDO.tTable();
-                String     theMOType = theMO.getName();
 				if (WrapperMetaAttributeUtil.isAttributeReferenceAssociation(theDO)) {
                     this.handleAttributedAssociationChange(theDO, rulesToObjectsMap, isAdded);
                     this.handleAssociationChange(theDO, rulesToObjectsMap, isAdded);
-                } else if (BoundedRole.HAS_ROLE_ASSOCIATION.equals(theMOType)) {
-                    try {
-						BoundRole theRole = (BoundRole) WrapperFactory.getWrapper(theDO.getDestinationObject());
-						Collection<Object> theRoleObjects = this.getOrCreateSet(hasRoleChanged, theRole);
-						BoundObject theBusinessObject =
-							(BoundObject) WrapperFactory.getWrapper(theDO.getSourceObject());
-						invalidObjects.add(theBusinessObject);
-						theRoleObjects.add(theBusinessObject);
-                        // update security storage with direct haseRole associations
-                        try {
-                            if (isAdded) {
-                                securityStorage.insert(theDO);
-                            }
-                            else {
-                                securityStorage.remove(theDO);
-                            }
-                        }
-                        catch (StorageException ex) {
-                            Logger.warn("Could not update hasRole association in security storage.", ex, ElementSecurityUpdateManager.class);
-                        }
-                    }
-                    catch (InvalidLinkException ex) {
-                        // is ok, source data object was removed too, so security update will be triggered by removed source object
-                        //Logger.error("Failed to handle "+(isAdded?"new":"removed")+" hasRole knowledge association: "+theDO.toString(), ex, ElementSecurityUpdateManager.class);
-                    }
                 } else {
                     this.handleAssociationChange(theDO, rulesToObjectsMap, isAdded);
                 }
+            } else  {
+            	MetaObject theMO     = theObject.tTable();
+            	String     theMOType = theMO.getName();
+            	
+				if (BoundedRole.ROLE_ASSIGNMENT_OBJECT_NAME.equals(theMOType)) {
+					KnowledgeItem roleAssignment = theObject;
+					BoundRole theRole =
+							((KnowledgeItem) roleAssignment.getAttributeValue(BoundedRole.ATTRIBUTE_ROLE)).getWrapper();
+					Collection<Object> theRoleObjects = this.getOrCreateSet(hasRoleChanged, theRole);
+					BoundObject theBusinessObject =
+							((KnowledgeItem) roleAssignment.getAttributeValue(BoundedRole.ATTRIBUTE_OBJECT))
+							.getWrapper();
+					invalidObjects.add(theBusinessObject);
+					theRoleObjects.add(theBusinessObject);
+					// update security storage with direct haseRole associations
+					try {
+						if (isAdded) {
+							securityStorage.insert(theObject);
+						} else {
+							securityStorage.remove(theObject);
+						}
+					} catch (StorageException ex) {
+						Logger.warn("Could not update hasRole association in security storage.", ex,
+							ElementSecurityUpdateManager.class);
+					}
+            	}
             }
         }
     }

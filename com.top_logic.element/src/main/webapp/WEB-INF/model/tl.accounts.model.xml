@@ -386,6 +386,64 @@
 				</property>
 			</attributes>
 		</class>
+		<class name="RoleAssignment">
+			<annotations>
+				<table name="hasRole"/>
+			</annotations>
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<reference name="role"
+					deletion-policy="delete-referer"
+					kind="forwards"
+					mandatory="true"
+					navigate="true"
+					type="Role"
+				>
+					<annotations>
+						<storage-algorithm>
+							<foreign-key-storage
+								storage-attribute="dest"
+								storage-type="hasRole"
+							/>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+				<reference name="group"
+					deletion-policy="delete-referer"
+					kind="forwards"
+					mandatory="true"
+					navigate="true"
+					type="Group"
+				>
+					<annotations>
+						<storage-algorithm>
+							<foreign-key-storage
+								storage-attribute="owner"
+								storage-type="hasRole"
+							/>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+				<reference name="object"
+					deletion-policy="delete-referer"
+					kind="forwards"
+					mandatory="true"
+					navigate="true"
+					type="tl.model:TLObject"
+				>
+					<annotations>
+						<storage-algorithm>
+							<foreign-key-storage
+								storage-attribute="source"
+								storage-type="hasRole"
+							/>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
 		<interface name="WithOwner">
 			<generalizations>
 				<generalization type="tl.model:TLObject"/>

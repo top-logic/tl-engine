@@ -20,6 +20,7 @@ import java.util.Set;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.col.CloseableIterator;
 import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.Location;
@@ -30,7 +31,6 @@ import com.top_logic.basic.shared.collection.CollectionUtilShared;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.meta.MOClass;
-import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -863,12 +863,12 @@ public class BoundHelper extends ManagedClass {
     public boolean isRoleInUse(BoundedRole aRole) {
         try {
             boolean inUse = false;
-			Iterator<KnowledgeAssociation> theRoleKAs =
-				aRole.tHandle().getIncomingAssociations(BoundedRole.HAS_ROLE_ASSOCIATION);
-            while (theRoleKAs.hasNext() && !inUse) {
-				KnowledgeAssociation theKA = theRoleKAs.next();
-                inUse = theKA.getAttributeValue(BoundedRole.ATTRIBUTE_OWNER) != null;
-            }
+			try (CloseableIterator<KnowledgeObject> theRoleKAs = BoundedRole.roleAssignmentsForRole(aRole.tHandle())) {
+				while (theRoleKAs.hasNext() && !inUse) {
+					KnowledgeObject theKA = theRoleKAs.next();
+					inUse = theKA.getAttributeValue(BoundedRole.ATTRIBUTE_OWNER) != null;
+				}
+			}
 
             return inUse;
         }

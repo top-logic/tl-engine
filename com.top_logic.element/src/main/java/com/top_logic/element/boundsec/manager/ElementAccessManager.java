@@ -25,6 +25,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.Settings;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.BidiHashMap;
+import com.top_logic.basic.col.CloseableIterator;
 import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.col.FilteredIterable;
 import com.top_logic.basic.col.Mapping;
@@ -54,7 +55,6 @@ import com.top_logic.element.boundsec.manager.rule.RoleProvider.Type;
 import com.top_logic.element.boundsec.manager.rule.RoleRule;
 import com.top_logic.element.boundsec.manager.rule.config.RoleRulesConfig;
 import com.top_logic.element.meta.MetaElementFactory;
-import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.wrap.Wrapper;
@@ -739,16 +739,18 @@ public class ElementAccessManager extends AccessManager {
 	 * Checks the direct has role associations.
 	 */
 	protected void handleDirectHasRole(BoundRole role, Set<Group> result, Wrapper wrapper) throws Exception {
-		for (Iterator<KnowledgeAssociation> theIt =
-			wrapper.tHandle().getOutgoingAssociations(BoundedRole.HAS_ROLE_ASSOCIATION); theIt.hasNext();) {
-			KnowledgeAssociation theKA = theIt.next();
-			Wrapper theDestination = WrapperFactory.getWrapper(theKA.getDestinationObject());
-			if (!theDestination.equals(role)) {
-		        continue;
-		    }
-		    KnowledgeObject owner = (KnowledgeObject) theKA.getAttributeValue(BoundedRole.ATTRIBUTE_OWNER);
-		    Group theGroup = (Group) WrapperFactory.getWrapper(owner);
-		    result.add(theGroup);
+		try (CloseableIterator<KnowledgeObject> theIt = BoundedRole.roleAssignmentsForContext(wrapper.tHandle())) {
+			while (theIt.hasNext()) {
+				KnowledgeObject theKA = theIt.next();
+				Wrapper theDestination =
+					WrapperFactory.getWrapper((KnowledgeItem) theKA.getAttributeValue(BoundedRole.ATTRIBUTE_ROLE));
+				if (!theDestination.equals(role)) {
+					continue;
+				}
+				KnowledgeObject owner = (KnowledgeObject) theKA.getAttributeValue(BoundedRole.ATTRIBUTE_OWNER);
+				Group theGroup = (Group) WrapperFactory.getWrapper(owner);
+				result.add(theGroup);
+			}
 		}
 	}
 

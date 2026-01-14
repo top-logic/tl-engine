@@ -24,6 +24,7 @@ import com.top_logic.ai.service.tools.model.ModelAnnotationBrowserTool;
 import com.top_logic.ai.service.tools.model.ModelBrowserTool;
 import com.top_logic.ai.service.tools.model.ModelSearchTool;
 import com.top_logic.ai.service.tools.model.TypeAnalysisTool;
+import com.top_logic.ai.service.tools.help.ModelExplorerTool;
 import com.top_logic.ai.service.tools.help.TLScriptReferenceTool;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
@@ -427,13 +428,14 @@ public class ChatControl extends AbstractControlBase {
 			// Use mistral-large-latest model (configured in tl-ai-service)
 			ChatModel tlscriptModel = aiService.getChatModel("mistral-large-latest");
 
-			// Create TLScript reference tool
+			// Create TLScript reference tool and ModelExplorer tool
 			TLScriptReferenceTool tlscriptTool = new TLScriptReferenceTool();
+			ModelExplorerTool modelExplorerTool = new ModelExplorerTool();
 
-			// Build the TLScriptAgent with TLScriptReferenceTool
+			// Build the TLScriptAgent with both tools
 			TLScriptAgent agent = AgenticServices.agentBuilder(TLScriptAgent.class)
 				.chatModel(tlscriptModel)
-				.tools(tlscriptTool)
+				.tools(tlscriptTool, modelExplorerTool)
 				.build();
 
 			// Execute the agent

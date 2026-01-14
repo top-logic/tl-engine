@@ -132,7 +132,6 @@ public abstract class AbstractCreateTypePartProcessor<C extends AbstractCreateTy
 	 */
 	public AbstractCreateTypePartProcessor(InstantiationContext context, C config) {
 		super(context, config);
-		// TODO: handle abstract.
 	}
 
 	<T> T nullIfUnset(String propertyName) {

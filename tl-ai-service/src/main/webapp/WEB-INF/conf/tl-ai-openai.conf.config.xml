@@ -35,6 +35,36 @@
 							tool-class="com.top_logic.ai.service.tools.script.TLScriptTool"
 						/>
 					</factory>
+					<factory name="model-annotation-definitions">
+						<implementation class="com.top_logic.ai.service.tools.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.ai.service.tools.model.AnnotationDefinitionExplorerTool"
+						/>
+					</factory>
+					<factory name="model-instances">
+						<implementation class="com.top_logic.ai.service.tools.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.ai.service.tools.model.InstanceBrowserTool"
+						/>
+					</factory>
+					<factory name="model-annotation-browser">
+						<implementation class="com.top_logic.ai.service.tools.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.ai.service.tools.model.ModelAnnotationBrowserTool"
+						/>
+					</factory>
+					<factory name="model-browser">
+						<implementation class="com.top_logic.ai.service.tools.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.ai.service.tools.model.ModelBrowserTool"
+						/>
+					</factory>
+					<factory name="model-search">
+						<implementation class="com.top_logic.ai.service.tools.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.ai.service.tools.model.ModelSearchTool"
+						/>
+					</factory>
+					<factory name="model-analysis">
+						<implementation class="com.top_logic.ai.service.tools.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.ai.service.tools.model.TypeAnalysisTool"
+						/>
+					</factory>
 
 					<!-- Example configuration with ReflectiveToolFactory:
 					<factory name="mytools">

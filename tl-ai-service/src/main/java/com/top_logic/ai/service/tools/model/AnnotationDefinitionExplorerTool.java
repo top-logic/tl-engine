@@ -5,12 +5,12 @@
  */
 package com.top_logic.ai.service.tools.model;
 
-import java.io.IOException;
-import java.io.StringWriter;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.top_logic.ai.service.tools.util.JsonToolResponseBuilder;
+import com.top_logic.ai.service.tools.model.messages.AnnotationDefinitionResponse;
+import com.top_logic.ai.service.tools.model.messages.PropertyDefinition;
+import com.top_logic.ai.service.tools.util.DataClassSerializer;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationItem;
@@ -20,7 +20,6 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.thread.ThreadContextManager;
-import com.top_logic.common.json.gstream.JsonWriter;
 
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
@@ -79,13 +78,14 @@ public class AnnotationDefinitionExplorerTool {
 	public String describeAnnotation(
 			@P("Fully-qualified configuration interface class name") String configInterfaceName) {
 
-		return ThreadContextManager.inSystemInteraction(
-			AnnotationDefinitionExplorerTool.class,
-			() -> {
-				try {
+		try {
+			// System interaction returns data class
+			AnnotationDefinitionResponse response = ThreadContextManager.inSystemInteraction(
+				AnnotationDefinitionExplorerTool.class,
+				() -> {
 					// 1. Validate parameter
 					if (configInterfaceName == null || configInterfaceName.isEmpty()) {
-						return JsonToolResponseBuilder.buildErrorJson("Configuration interface name is required");
+						throw new IllegalArgumentException("Configuration interface name is required");
 					}
 
 					// 2. Load class and validate it's a ConfigurationItem
@@ -94,68 +94,44 @@ public class AnnotationDefinitionExplorerTool {
 					// 3. Get ConfigurationDescriptor via TypedConfiguration
 					ConfigurationDescriptor descriptor = TypedConfiguration.getConfigurationDescriptor(configClass);
 
-					// 4. Build JSON schema response
-					StringWriter buffer = new StringWriter();
-					try (JsonWriter json = JsonToolResponseBuilder.createWriter(buffer)) {
-						json.beginObject();
+					// 4. Build response using data class
+					AnnotationDefinitionResponse result = AnnotationDefinitionResponse.create();
+					result.setConfigInterface(configInterfaceName);
+					result.setTagName(getTagName(configClass));
+					result.setAbstract(descriptor.isAbstract());
 
-						// Basic metadata
-						json.name("configInterface").value(configInterfaceName);
-						json.name("tagName").value(getTagName(configClass));
-						json.name("abstract").value(descriptor.isAbstract());
-
-						// Super interfaces
-						writeSuperInterfaces(json, descriptor);
-
-						// Properties
-						json.name("properties").beginArray();
-						Set<String> visitedDescriptors = new HashSet<>();
-						for (PropertyDescriptor property : descriptor.getProperties()) {
-							if (isInternalProperty(property)) {
-								continue;
-							}
-							PropertyDefinitionSerializer.writePropertyDefinition(json, property, visitedDescriptors,
-								0);
-						}
-						json.endArray();
-
-						json.endObject();
+					// Super interfaces
+					for (ConfigurationDescriptor superDescriptor : descriptor.getSuperDescriptors()) {
+						result.addSuperInterface(superDescriptor.getConfigurationInterface().getName());
 					}
 
-					String result = buffer.toString();
-					Logger.info("describeAnnotation() result: " + result,
-						AnnotationDefinitionExplorerTool.class);
-					return result;
+					// Properties
+					Set<String> visitedDescriptors = new HashSet<>();
+					for (PropertyDescriptor property : descriptor.getProperties()) {
+						if (isInternalProperty(property)) {
+							continue;
+						}
+						PropertyDefinition propDef =
+							PropertyDefinitionSerializer.buildPropertyDefinition(property, visitedDescriptors, 0);
+						result.addPropertie(propDef);
+					}
 
-				} catch (ClassNotFoundException ex) {
-					String error =
-						JsonToolResponseBuilder.buildErrorJson("Class not found: " + configInterfaceName);
-					Logger.error("describeAnnotation() error: " + ex.getMessage(), ex,
-						AnnotationDefinitionExplorerTool.class);
-					System.err.println("AnnotationDefinitionExplorerTool.describeAnnotation() error: " + error);
-					return error;
-				} catch (IllegalArgumentException ex) {
-					String error = JsonToolResponseBuilder.buildErrorJson(ex.getMessage());
-					Logger.error("describeAnnotation() error: " + ex.getMessage(), ex,
-						AnnotationDefinitionExplorerTool.class);
-					System.err.println("AnnotationDefinitionExplorerTool.describeAnnotation() error: " + error);
-					return error;
-				} catch (IOException ex) {
-					String error = JsonToolResponseBuilder
-						.buildErrorJson("Failed to describe annotation: " + ex.getMessage());
-					Logger.error("describeAnnotation() error: " + ex.getMessage(), ex,
-						AnnotationDefinitionExplorerTool.class);
-					System.err.println("AnnotationDefinitionExplorerTool.describeAnnotation() error: " + error);
-					return error;
-				} catch (Exception ex) {
-					String error = JsonToolResponseBuilder
-						.buildErrorJson("Error accessing annotation definition: " + ex.getMessage());
-					Logger.error("describeAnnotation() error: " + ex.getMessage(), ex,
-						AnnotationDefinitionExplorerTool.class);
-					System.err.println("AnnotationDefinitionExplorerTool.describeAnnotation() error: " + error);
-					return error;
-				}
-			});
+					return result;
+				});
+
+			// Serialize to JSON using DataClassSerializer
+			return DataClassSerializer.toJson(response, AnnotationDefinitionExplorerTool.class,
+				"describeAnnotation()");
+
+		} catch (Exception ex) {
+			Logger.error("describeAnnotation() error: " + ex.getMessage(), ex,
+				AnnotationDefinitionExplorerTool.class);
+			System.err.println("AnnotationDefinitionExplorerTool.describeAnnotation() error: " + ex.getMessage());
+			return DataClassSerializer.errorToJson(
+				"Error accessing annotation definition: " + ex.getMessage(),
+				AnnotationDefinitionExplorerTool.class,
+				"describeAnnotation()");
+		}
 	}
 
 	/**
@@ -175,27 +151,6 @@ public class AnnotationDefinitionExplorerTool {
 
 		// Fallback: use simple class name in lowercase
 		return configClass.getSimpleName().toLowerCase();
-	}
-
-	/**
-	 * Writes the super interfaces of a configuration descriptor to JSON.
-	 *
-	 * @param json
-	 *        The JSON writer.
-	 * @param descriptor
-	 *        The configuration descriptor.
-	 * @throws IOException
-	 *         If writing fails.
-	 */
-	private static void writeSuperInterfaces(JsonWriter json, ConfigurationDescriptor descriptor)
-			throws IOException {
-		json.name("superInterfaces").beginArray();
-
-		for (ConfigurationDescriptor superDescriptor : descriptor.getSuperDescriptors()) {
-			json.value(superDescriptor.getConfigurationInterface().getName());
-		}
-
-		json.endArray();
 	}
 
 	/**
@@ -259,39 +214,36 @@ public class AnnotationDefinitionExplorerTool {
 	}
 
 	/**
-	 * Serializes property definitions from ConfigurationDescriptor to JSON schema.
+	 * Serializes property definitions from ConfigurationDescriptor to data classes.
 	 */
 	private static class PropertyDefinitionSerializer {
 
 		private static final int MAX_DEPTH = 3;
 
 		/**
-		 * Writes a property definition to JSON.
+		 * Builds a property definition data object.
 		 *
-		 * @param json
-		 *        The JSON writer.
 		 * @param property
 		 *        The property descriptor to serialize.
 		 * @param visitedDescriptors
 		 *        Set of already-visited descriptor class names for circular reference detection.
 		 * @param depth
 		 *        Current recursion depth.
-		 * @throws IOException
-		 *         If writing fails.
+		 * @return PropertyDefinition data object.
 		 */
-		static void writePropertyDefinition(JsonWriter json, PropertyDescriptor property,
-				Set<String> visitedDescriptors, int depth) throws IOException {
+		static PropertyDefinition buildPropertyDefinition(PropertyDescriptor property,
+				Set<String> visitedDescriptors, int depth) {
 
-			json.beginObject();
+			PropertyDefinition propDef = PropertyDefinition.create();
 
 			// Basic metadata
-			json.name("name").value(property.getPropertyName());
-			json.name("kind").value(property.kind().name().toLowerCase());
+			propDef.setName(property.getPropertyName());
+			propDef.setKind(property.kind().name().toLowerCase());
 
 			// Type information
 			Class<?> type = property.getType();
-			json.name("type").value(type.getName());
-			json.name("typeSimpleName").value(type.getSimpleName());
+			propDef.setType(type.getName());
+			propDef.setTypeSimpleName(type.getSimpleName());
 
 			// Element type for collections/arrays
 			if (property.kind() == PropertyKind.LIST ||
@@ -299,35 +251,35 @@ public class AnnotationDefinitionExplorerTool {
 				property.kind() == PropertyKind.MAP) {
 				Class<?> elementType = property.getElementType();
 				if (elementType != null) {
-					json.name("elementType").value(elementType.getName());
-					json.name("elementTypeSimpleName").value(elementType.getSimpleName());
+					propDef.setElementType(elementType.getName());
+					propDef.setElementTypeSimpleName(elementType.getSimpleName());
 				}
 			}
 
 			// Constraints
-			json.name("mandatory").value(property.isMandatory());
-			json.name("nullable").value(property.isNullable());
-			json.name("multiple").value(property.isMultiple());
-			json.name("ordered").value(property.isOrdered());
+			propDef.setMandatory(property.isMandatory());
+			propDef.setNullable(property.isNullable());
+			propDef.setMultiple(property.isMultiple());
+			propDef.setOrdered(property.isOrdered());
 
 			// Default value
-			json.name("hasExplicitDefault").value(property.hasExplicitDefault());
+			propDef.setHasExplicitDefault(property.hasExplicitDefault());
 			if (property.hasExplicitDefault()) {
-				writeDefaultValue(json, property);
+				setDefaultValue(propDef, property);
 			}
 
 			// Enum values (if applicable)
 			Class<?> enumType = getEnumType(property);
 			if (enumType != null && enumType.isEnum()) {
-				writeEnumValues(json, enumType);
+				addEnumValues(propDef, enumType);
 			}
 
 			// Nested descriptor (for ITEM/COMPLEX types, with depth limit)
 			if (depth < MAX_DEPTH && shouldExpandNestedType(property)) {
-				writeNestedDescriptor(json, property, visitedDescriptors, depth);
+				addNestedDescriptor(propDef, property, visitedDescriptors, depth);
 			}
 
-			json.endObject();
+			return propDef;
 		}
 
 		/**
@@ -357,57 +309,50 @@ public class AnnotationDefinitionExplorerTool {
 		}
 
 		/**
-		 * Writes the default value of a property to JSON.
+		 * Sets the default value of a property.
 		 *
-		 * @param json
-		 *        The JSON writer.
+		 * @param propDef
+		 *        The property definition to update.
 		 * @param property
 		 *        The property descriptor.
-		 * @throws IOException
-		 *         If writing fails.
 		 */
-		private static void writeDefaultValue(JsonWriter json, PropertyDescriptor property) throws IOException {
+		private static void setDefaultValue(PropertyDefinition propDef, PropertyDescriptor property) {
 			try {
 				Object defaultValue = property.getDefaultValue();
-				json.name("defaultValue");
 				if (defaultValue == null) {
-					json.nullValue();
+					propDef.setDefaultValue(null);
 				} else if (defaultValue instanceof String) {
-					json.value((String) defaultValue);
+					propDef.setDefaultValue((String) defaultValue);
 				} else if (defaultValue instanceof Number) {
-					json.value((Number) defaultValue);
+					propDef.setDefaultValue(defaultValue.toString());
 				} else if (defaultValue instanceof Boolean) {
-					json.value((Boolean) defaultValue);
+					propDef.setDefaultValue(defaultValue.toString());
 				} else if (defaultValue instanceof Enum) {
-					json.value(((Enum<?>) defaultValue).name());
+					propDef.setDefaultValue(((Enum<?>) defaultValue).name());
 				} else {
-					json.value(defaultValue.toString());
+					propDef.setDefaultValue(defaultValue.toString());
 				}
 			} catch (Exception ex) {
-				// If default value cannot be retrieved, write null
-				json.name("defaultValue").nullValue();
+				// If default value cannot be retrieved, leave null
+				propDef.setDefaultValue(null);
 			}
 		}
 
 		/**
-		 * Writes enum values to JSON.
+		 * Adds enum values to a property definition.
 		 *
-		 * @param json
-		 *        The JSON writer.
+		 * @param propDef
+		 *        The property definition to update.
 		 * @param enumType
 		 *        The enum class.
-		 * @throws IOException
-		 *         If writing fails.
 		 */
-		private static void writeEnumValues(JsonWriter json, Class<?> enumType) throws IOException {
-			json.name("enumValues").beginArray();
+		private static void addEnumValues(PropertyDefinition propDef, Class<?> enumType) {
 			Object[] constants = enumType.getEnumConstants();
 			if (constants != null) {
 				for (Object constant : constants) {
-					json.value(((Enum<?>) constant).name());
+					propDef.addEnumValue(((Enum<?>) constant).name());
 				}
 			}
-			json.endArray();
 		}
 
 		/**
@@ -437,21 +382,19 @@ public class AnnotationDefinitionExplorerTool {
 		}
 
 		/**
-		 * Writes nested descriptor information to JSON.
+		 * Adds nested descriptor information to a property definition.
 		 *
-		 * @param json
-		 *        The JSON writer.
+		 * @param propDef
+		 *        The property definition to update.
 		 * @param property
 		 *        The property descriptor.
 		 * @param visitedDescriptors
 		 *        Set of already-visited descriptor class names.
 		 * @param depth
 		 *        Current recursion depth.
-		 * @throws IOException
-		 *         If writing fails.
 		 */
-		private static void writeNestedDescriptor(JsonWriter json, PropertyDescriptor property,
-				Set<String> visitedDescriptors, int depth) throws IOException {
+		private static void addNestedDescriptor(PropertyDefinition propDef, PropertyDescriptor property,
+				Set<String> visitedDescriptors, int depth) {
 
 			ConfigurationDescriptor valueDescriptor = property.getValueDescriptor();
 			if (valueDescriptor == null) {
@@ -461,7 +404,7 @@ public class AnnotationDefinitionExplorerTool {
 			// Circular reference detection
 			String descriptorId = valueDescriptor.getConfigurationInterface().getName();
 			if (visitedDescriptors.contains(descriptorId)) {
-				json.name("nestedType").value("<circular reference: " + descriptorId + ">");
+				// Skip circular references - don't add nested properties
 				return;
 			}
 
@@ -469,14 +412,14 @@ public class AnnotationDefinitionExplorerTool {
 			visitedDescriptors.add(descriptorId);
 
 			try {
-				json.name("nestedProperties").beginArray();
 				for (PropertyDescriptor nestedProperty : valueDescriptor.getProperties()) {
 					if (isInternalProperty(nestedProperty)) {
 						continue;
 					}
-					writePropertyDefinition(json, nestedProperty, visitedDescriptors, depth + 1);
+					PropertyDefinition nestedPropDef =
+						buildPropertyDefinition(nestedProperty, visitedDescriptors, depth + 1);
+					propDef.addNestedPropertie(nestedPropDef);
 				}
-				json.endArray();
 			} finally {
 				// Remove from visited set (allow same type in different branches)
 				visitedDescriptors.remove(descriptorId);

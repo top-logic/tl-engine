@@ -1,0 +1,795 @@
+package com.top_logic.ai.service.tools.model.messages;
+
+option NoBinary;
+option NoVisit;
+option NoListener;
+option NoInterfaces;
+option NoXml;
+
+/**
+ * Generic error response for tool operations.
+ */
+message ErrorResponse {
+	/**
+	 * Error message describing what went wrong.
+	 */
+	string error;
+}
+
+// ===== ModelBrowserTool Messages =====
+
+/**
+ * Information about a module in the application model.
+ */
+message ModuleInfo {
+	/**
+	 * Module name.
+	 */
+	string name;
+
+	/**
+	 * Number of types in this module (excluding associations).
+	 */
+	long typeCount;
+
+	/**
+	 * Localized label for the module.
+	 */
+	string label;
+
+	/**
+	 * Localized description of the module.
+	 */
+	string description;
+}
+
+/**
+ * List of modules response.
+ */
+message ModuleListResponse {
+	/**
+	 * Array of module information.
+	 */
+	repeated ModuleInfo modules;
+}
+
+/**
+ * Information about a type (class, enumeration, datatype).
+ */
+message TypeInfo {
+	/**
+	 * Type name.
+	 */
+	string name;
+
+	/**
+	 * Qualified type name (module:TypeName).
+	 */
+	string qualifiedName;
+
+	/**
+	 * Meta-type: class, enumeration, or datatype.
+	 */
+	string metaType;
+
+	/**
+	 * Number of classifiers (for enumerations only).
+	 */
+	int classifierCount;
+
+	/**
+	 * Number of local parts (for structured types).
+	 */
+	int partCount;
+
+	/**
+	 * List of qualified names of supertypes (for classes).
+	 */
+	repeated string generalizations;
+
+	/**
+	 * List of qualified names of subtypes (for classes).
+	 */
+	repeated string specializations;
+
+	/**
+	 * Localized label for the type.
+	 */
+	string label;
+
+	/**
+	 * Localized description of the type.
+	 */
+	string description;
+}
+
+/**
+ * List of types response.
+ */
+message TypeListResponse {
+	/**
+	 * Array of type information.
+	 */
+	repeated TypeInfo types;
+}
+
+/**
+ * Information about a type part (property or reference).
+ */
+message TypePartInfo {
+	/**
+	 * Part name.
+	 */
+	string name;
+
+	/**
+	 * Part kind: property or reference.
+	 */
+	string kind;
+
+	/**
+	 * Qualified name of the type that defines this part.
+	 */
+	string definedIn;
+
+	/**
+	 * Whether this part is inherited from a supertype.
+	 */
+	bool inherited;
+
+	/**
+	 * Qualified name of the part's type.
+	 */
+	string type;
+
+	/**
+	 * Whether the part is mandatory.
+	 */
+	bool mandatory;
+
+	/**
+	 * Whether the part can have multiple values.
+	 */
+	bool multiple;
+
+	/**
+	 * Whether multiple values are ordered (only for multiple parts).
+	 */
+	bool ordered;
+
+	/**
+	 * Whether the part is a bag (unordered, allows duplicates).
+	 */
+	bool bag;
+
+	/**
+	 * Whether the part is abstract.
+	 */
+	bool `abstract`;
+
+	/**
+	 * Whether the part is derived (computed).
+	 */
+	bool derived;
+
+	/**
+	 * Whether the part overrides a part from a supertype.
+	 */
+	bool `override`;
+
+	/**
+	 * Localized label for the part.
+	 */
+	string label;
+
+	/**
+	 * Localized description of the part.
+	 */
+	string description;
+}
+
+/**
+ * List of type parts response.
+ */
+message TypePartListResponse {
+	/**
+	 * Array of type part information.
+	 */
+	repeated TypePartInfo parts;
+}
+
+/**
+ * Information about an enumeration classifier.
+ */
+message ClassifierInfo {
+	/**
+	 * Classifier name.
+	 */
+	string name;
+
+	/**
+	 * Whether this is the default classifier.
+	 */
+	bool `default`;
+
+	/**
+	 * Index of the classifier in the enumeration.
+	 */
+	int index;
+
+	/**
+	 * Custom I18N key (if annotated with TLI18NKey).
+	 */
+	string customI18NKey;
+
+	/**
+	 * Localized label for the classifier.
+	 */
+	string label;
+
+	/**
+	 * Localized description of the classifier.
+	 */
+	string description;
+}
+
+/**
+ * Enumeration details response.
+ */
+message EnumerationResponse {
+	/**
+	 * Qualified enumeration name.
+	 */
+	string enumeration;
+
+	/**
+	 * Module name.
+	 */
+	string module;
+
+	/**
+	 * Enumeration name.
+	 */
+	string name;
+
+	/**
+	 * Number of classifiers in the enumeration.
+	 */
+	int classifierCount;
+
+	/**
+	 * Whether the enumeration is unordered.
+	 */
+	bool unordered;
+
+	/**
+	 * Localized label for the enumeration.
+	 */
+	string label;
+
+	/**
+	 * Localized description of the enumeration.
+	 */
+	string description;
+
+	/**
+	 * List of classifiers in the enumeration.
+	 */
+	repeated ClassifierInfo classifiers;
+}
+
+// ===== InstanceBrowserTool Messages =====
+
+/**
+ * Paginated list of instance TIDs.
+ */
+message InstanceListResponse {
+	/**
+	 * Module name.
+	 */
+	string module;
+
+	/**
+	 * Type name.
+	 */
+	string type;
+
+	/**
+	 * Total number of instances.
+	 */
+	int totalCount;
+
+	/**
+	 * Requested page size limit.
+	 */
+	int limit;
+
+	/**
+	 * Current offset in the result set.
+	 */
+	int offset;
+
+	/**
+	 * Array of instance TIDs for the current page.
+	 */
+	repeated string instances;
+
+	/**
+	 * Cursor for the next page (null if no more pages).
+	 */
+	string nextCursor;
+
+	/**
+	 * Whether there are more instances beyond this page.
+	 */
+	bool hasMore;
+}
+
+/**
+ * Type information for an instance.
+ */
+message InstanceTypeInfo {
+	/**
+	 * Type name.
+	 */
+	string name;
+
+	/**
+	 * Module name.
+	 */
+	string module;
+
+	/**
+	 * Module label.
+	 */
+	string moduleLabel;
+
+	/**
+	 * Type label.
+	 */
+	string label;
+
+	/**
+	 * Model kind (class, enumeration, etc.).
+	 */
+	string kind;
+}
+
+/**
+ * Reference to another TLObject.
+ */
+message TLObjectReference {
+	/**
+	 * Object TID.
+	 */
+	string tid;
+
+	/**
+	 * Type of the referenced object.
+	 */
+	string type;
+
+	/**
+	 * Label of the referenced object (if available).
+	 */
+	string label;
+}
+
+/**
+ * Instance metadata.
+ */
+message InstanceMetadata {
+	/**
+	 * Container TID (if the instance is contained).
+	 */
+	string container;
+
+	/**
+	 * Name of the container reference.
+	 */
+	string containerReference;
+
+	/**
+	 * Whether the instance is transient.
+	 */
+	bool `transient`;
+}
+
+/**
+ * Detailed instance information.
+ */
+message InstanceResponse {
+	/**
+	 * Instance TID.
+	 */
+	string tid;
+
+	/**
+	 * Type information.
+	 */
+	InstanceTypeInfo type;
+
+	/**
+	 * Map of attribute names to values.
+	 *
+	 * Note: Values are serialized as JSON and need to be parsed.
+	 * Primitive values are strings, references are TLObjectReference objects,
+	 * collections are arrays.
+	 */
+	map<string, string> attributes;
+
+	/**
+	 * Instance metadata.
+	 */
+	InstanceMetadata metadata;
+}
+
+// ===== ModelAnnotationBrowserTool Messages =====
+
+/**
+ * Information about an annotation instance.
+ */
+message AnnotationInfo {
+	/**
+	 * Annotation tag name.
+	 */
+	string tag;
+
+	/**
+	 * Configuration interface class name.
+	 */
+	string configInterface;
+
+	/**
+	 * Whether this annotation is inherited.
+	 */
+	bool inherited;
+
+	/**
+	 * Qualified name where the annotation is defined (for inherited annotations).
+	 */
+	string definedIn;
+
+	/**
+	 * Annotation configuration as XML string.
+	 */
+	string configXml;
+}
+
+/**
+ * Annotation list response.
+ */
+message AnnotationListResponse {
+	/**
+	 * Target reference (module, type, or part).
+	 */
+	string target;
+
+	/**
+	 * Kind of target: module, type, enumeration, part, or classifier.
+	 */
+	string kind;
+
+	/**
+	 * Module name.
+	 */
+	string module;
+
+	/**
+	 * Type name (null for module targets).
+	 */
+	string type;
+
+	/**
+	 * Part name (null for module/type targets).
+	 */
+	string part;
+
+	/**
+	 * Classifier name (null for non-classifier targets).
+	 */
+	string classifier;
+
+	/**
+	 * Whether inherited annotations are included.
+	 */
+	bool includeInherited;
+
+	/**
+	 * List of annotations.
+	 */
+	repeated AnnotationInfo annotations;
+}
+
+// ===== AnnotationDefinitionExplorerTool Messages =====
+
+/**
+ * Property definition in a configuration schema.
+ */
+message PropertyDefinition {
+	/**
+	 * Property name.
+	 */
+	string name;
+
+	/**
+	 * Property kind (plain, item, list, array, map, complex, derived, ref).
+	 */
+	string kind;
+
+	/**
+	 * Property type (fully-qualified class name).
+	 */
+	string type;
+
+	/**
+	 * Simple type name.
+	 */
+	string typeSimpleName;
+
+	/**
+	 * Element type for collections (fully-qualified class name).
+	 */
+	string elementType;
+
+	/**
+	 * Simple element type name.
+	 */
+	string elementTypeSimpleName;
+
+	/**
+	 * Whether the property is mandatory.
+	 */
+	bool mandatory;
+
+	/**
+	 * Whether the property is nullable.
+	 */
+	bool nullable;
+
+	/**
+	 * Whether the property can have multiple values.
+	 */
+	bool multiple;
+
+	/**
+	 * Whether multiple values are ordered.
+	 */
+	bool ordered;
+
+	/**
+	 * Whether the property has an explicit default value.
+	 */
+	bool hasExplicitDefault;
+
+	/**
+	 * Default value (serialized as string).
+	 */
+	string defaultValue;
+
+	/**
+	 * Enum values (for enum properties).
+	 */
+	repeated string enumValues;
+
+	/**
+	 * Nested property definitions (for ITEM/COMPLEX types).
+	 */
+	repeated PropertyDefinition nestedProperties;
+}
+
+/**
+ * Annotation definition schema response.
+ */
+message AnnotationDefinitionResponse {
+	/**
+	 * Configuration interface class name.
+	 */
+	string configInterface;
+
+	/**
+	 * Annotation tag name.
+	 */
+	string tagName;
+
+	/**
+	 * Whether the annotation is abstract.
+	 */
+	bool `abstract`;
+
+	/**
+	 * List of super interface class names.
+	 */
+	repeated string superInterfaces;
+
+	/**
+	 * List of property definitions.
+	 */
+	repeated PropertyDefinition properties;
+}
+
+// ===== TypeAnalysisTool Messages =====
+
+/**
+ * Property usage information.
+ */
+message PropertyUsage {
+	/**
+	 * Qualified name of the owner type.
+	 */
+	string owner;
+
+	/**
+	 * Property name.
+	 */
+	string property;
+
+	/**
+	 * Usage description.
+	 */
+	string usage;
+}
+
+/**
+ * Reference usage information.
+ */
+message ReferenceUsage {
+	/**
+	 * Qualified name of the owner type.
+	 */
+	string owner;
+
+	/**
+	 * Reference name.
+	 */
+	string reference;
+
+	/**
+	 * Usage description.
+	 */
+	string usage;
+}
+
+/**
+ * Subclass usage information.
+ */
+message SubclassUsage {
+	/**
+	 * Qualified name of the subclass.
+	 */
+	string subclass;
+
+	/**
+	 * Usage description.
+	 */
+	string usage;
+}
+
+/**
+ * Type usage analysis response.
+ */
+message TypeUsageResponse {
+	/**
+	 * Properties that use this type as value type.
+	 */
+	repeated PropertyUsage properties;
+
+	/**
+	 * References that point to this type.
+	 */
+	repeated ReferenceUsage references;
+
+	/**
+	 * Classes that extend this type.
+	 */
+	repeated SubclassUsage subclasses;
+}
+
+/**
+ * Part usage analysis response.
+ */
+message PartUsageResponse {
+	/**
+	 * Qualified name of the owner type.
+	 */
+	string ownerType;
+
+	/**
+	 * Part name.
+	 */
+	string partName;
+
+	/**
+	 * Part kind (property or reference).
+	 */
+	string partKind;
+
+	/**
+	 * Qualified name where the part is defined.
+	 */
+	string definedIn;
+
+	/**
+	 * List of qualified names of subclasses that inherit this part.
+	 */
+	repeated string inheritedBy;
+}
+
+// ===== ModelSearchTool Messages =====
+
+/**
+ * Search result for a model element.
+ */
+message SearchResult {
+	/**
+	 * Kind of element (module, class, enumeration, datatype, property, reference).
+	 */
+	string kind;
+
+	/**
+	 * Element name.
+	 */
+	string name;
+
+	/**
+	 * Qualified name (for types).
+	 */
+	string qualifiedName;
+
+	/**
+	 * Relevance score.
+	 */
+	int score;
+
+	/**
+	 * Which field was matched (name, qualifiedName, label, description).
+	 */
+	string matchedField;
+
+	/**
+	 * Contextual information (module, type, counts, etc.).
+	 *
+	 * Note: Values are serialized as JSON and need to be parsed.
+	 */
+	map<string, string> context;
+
+	/**
+	 * Localized label.
+	 */
+	string label;
+
+	/**
+	 * Localized description.
+	 */
+	string description;
+}
+
+/**
+ * Model search response.
+ */
+message SearchResponse {
+	/**
+	 * Whether the search succeeded.
+	 */
+	bool success;
+
+	/**
+	 * Search query.
+	 */
+	string query;
+
+	/**
+	 * Number of results.
+	 */
+	int resultCount;
+
+	/**
+	 * List of search results.
+	 */
+	repeated SearchResult results;
+
+	/**
+	 * Error message (if success is false).
+	 */
+	string error;
+}

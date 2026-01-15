@@ -27,6 +27,7 @@ abstract message Schema {
 	 * </p>
 	 */
 	@Name("$id")
+	@Nullable
 	string id;
 
 	/**
@@ -38,6 +39,7 @@ abstract message Schema {
 	 * </p>
 	 */
 	@Name("$anchor")
+	@Nullable
 	string anchor;
 
 	/**
@@ -48,6 +50,7 @@ abstract message Schema {
 	 * </p>
 	 */
 	@Name("$dynamicAnchor")
+	@Nullable
 	string dynamicAnchor;
 
 	/**
@@ -58,6 +61,7 @@ abstract message Schema {
 	 * </p>
 	 */
 	@Name("$comment")
+	@Nullable
 	string comment;
 
 	/**
@@ -76,17 +80,20 @@ abstract message Schema {
 	/**
 	 * Title annotation for UI display.
 	 */
+	@Nullable
 	string title;
 
 	/**
 	 * Description annotation for documentation.
 	 */
+	@Nullable
 	string description;
 
 	/**
 	 * Default value (JSON-serialized string).
 	 */
 	@Name("default")
+	@Nullable
 	string defaultValue;
 
 	/**
@@ -216,6 +223,7 @@ message StringSchema extends Schema {
 	/**
 	 * ECMA-262 regular expression pattern.
 	 */
+	@Nullable
 	string pattern;
 
 	/**
@@ -225,21 +233,25 @@ message StringSchema extends Schema {
 	 * Examples: date-time, email, hostname, ipv4, ipv6, uri, uuid, etc.
 	 * </p>
 	 */
+	@Nullable
 	string format;
 
 	/**
 	 * Content encoding (e.g., base64, base32).
 	 */
+	@Nullable
 	string contentEncoding;
 
 	/**
 	 * MIME type of encoded content.
 	 */
+	@Nullable
 	string contentMediaType;
 
 	/**
 	 * Schema validating decoded content.
 	 */
+	@Nullable
 	Schema contentSchema;
 }
 
@@ -337,6 +349,7 @@ message ArraySchema extends Schema {
 	 * For arrays with prefixItems: validates items beyond prefixItems positions.
 	 * </p>
 	 */
+	@Nullable
 	Schema items;
 
 	/**
@@ -346,6 +359,7 @@ message ArraySchema extends Schema {
 	 * Array must contain at least one item matching this schema.
 	 * </p>
 	 */
+	@Nullable
 	Schema contains;
 
 	/**
@@ -417,6 +431,7 @@ message ObjectSchema extends Schema {
 	/**
 	 * Schema for additional properties not in properties or patternProperties.
 	 */
+	@Nullable
 	Schema additionalProperties;
 
 	/**
@@ -426,6 +441,7 @@ message ObjectSchema extends Schema {
 	 * All property names must validate against this schema.
 	 * </p>
 	 */
+	@Nullable
 	Schema propertyNames;
 
 	/**
@@ -542,18 +558,21 @@ message ConditionalSchema extends Schema {
 	 * Condition schema.
 	 */
 	@Name("if")
+	@Nullable
 	Schema condition;
 
 	/**
 	 * Schema applied when 'if' validates successfully.
 	 */
 	@Name("then")
+	@Nullable
 	Schema thenSchema;
 
 	/**
 	 * Schema applied when 'if' validation fails.
 	 */
 	@Name("else")
+	@Nullable
 	Schema elseSchema;
 }
 
@@ -576,6 +595,7 @@ message JsonSchemaDocument extends Schema {
 	 * </p>
 	 */
 	@Name("$schema")
+	@Nullable
 	string schemaDialectUri;
 
 	/**
@@ -595,6 +615,7 @@ message JsonSchemaDocument extends Schema {
 	 * Can be any schema type (StringSchema, ObjectSchema, AllOfSchema, etc.).
 	 * </p>
 	 */
+	@Nullable
 	Schema schema;
 }
 

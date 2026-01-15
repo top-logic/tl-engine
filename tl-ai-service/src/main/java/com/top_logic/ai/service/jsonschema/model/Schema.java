@@ -165,21 +165,21 @@ public abstract class Schema extends de.haumacher.msgbuf.data.AbstractDataObject
 	/** @see #getExamples() */
 	public static final String EXAMPLES__PROP = "examples";
 
-	private String _id = "";
+	private String _id = null;
 
-	private String _anchor = "";
+	private String _anchor = null;
 
-	private String _dynamicAnchor = "";
+	private String _dynamicAnchor = null;
 
-	private String _comment = "";
+	private String _comment = null;
 
 	private final java.util.Map<String, com.top_logic.ai.service.jsonschema.model.Schema> _definitions = new java.util.HashMap<>();
 
-	private String _title = "";
+	private String _title = null;
 
-	private String _description = "";
+	private String _description = null;
 
-	private String _defaultValue = "";
+	private String _defaultValue = null;
 
 	private boolean _deprecated = false;
 
@@ -225,6 +225,13 @@ public abstract class Schema extends de.haumacher.msgbuf.data.AbstractDataObject
 	}
 
 	/**
+	 * Checks, whether {@link #getId()} has a value.
+	 */
+	public final boolean hasId() {
+		return _id != null;
+	}
+
+	/**
 	 * Plain name fragment for referencing this schema.
 	 *
 	 * <p>
@@ -247,6 +254,13 @@ public abstract class Schema extends de.haumacher.msgbuf.data.AbstractDataObject
 	/** Internal setter for {@link #getAnchor()} without chain call utility. */
 	protected final void internalSetAnchor(String value) {
 		_anchor = value;
+	}
+
+	/**
+	 * Checks, whether {@link #getAnchor()} has a value.
+	 */
+	public final boolean hasAnchor() {
+		return _anchor != null;
 	}
 
 	/**
@@ -274,6 +288,13 @@ public abstract class Schema extends de.haumacher.msgbuf.data.AbstractDataObject
 	}
 
 	/**
+	 * Checks, whether {@link #getDynamicAnchor()} has a value.
+	 */
+	public final boolean hasDynamicAnchor() {
+		return _dynamicAnchor != null;
+	}
+
+	/**
 	 * Comment for schema authors.
 	 *
 	 * <p>
@@ -295,6 +316,13 @@ public abstract class Schema extends de.haumacher.msgbuf.data.AbstractDataObject
 	/** Internal setter for {@link #getComment()} without chain call utility. */
 	protected final void internalSetComment(String value) {
 		_comment = value;
+	}
+
+	/**
+	 * Checks, whether {@link #getComment()} has a value.
+	 */
+	public final boolean hasComment() {
+		return _comment != null;
 	}
 
 	/**
@@ -368,6 +396,13 @@ public abstract class Schema extends de.haumacher.msgbuf.data.AbstractDataObject
 	}
 
 	/**
+	 * Checks, whether {@link #getTitle()} has a value.
+	 */
+	public final boolean hasTitle() {
+		return _title != null;
+	}
+
+	/**
 	 * Description annotation for documentation.
 	 */
 	public final String getDescription() {
@@ -388,6 +423,13 @@ public abstract class Schema extends de.haumacher.msgbuf.data.AbstractDataObject
 	}
 
 	/**
+	 * Checks, whether {@link #getDescription()} has a value.
+	 */
+	public final boolean hasDescription() {
+		return _description != null;
+	}
+
+	/**
 	 * Default value (JSON-serialized string).
 	 */
 	public final String getDefaultValue() {
@@ -405,6 +447,13 @@ public abstract class Schema extends de.haumacher.msgbuf.data.AbstractDataObject
 	/** Internal setter for {@link #getDefaultValue()} without chain call utility. */
 	protected final void internalSetDefaultValue(String value) {
 		_defaultValue = value;
+	}
+
+	/**
+	 * Checks, whether {@link #getDefaultValue()} has a value.
+	 */
+	public final boolean hasDefaultValue() {
+		return _defaultValue != null;
 	}
 
 	/**
@@ -622,14 +671,22 @@ public abstract class Schema extends de.haumacher.msgbuf.data.AbstractDataObject
 	@Override
 	protected void writeFields(de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
 		super.writeFields(out);
-		out.name(ID__PROP);
-		out.value(getId());
-		out.name(ANCHOR__PROP);
-		out.value(getAnchor());
-		out.name(DYNAMIC_ANCHOR__PROP);
-		out.value(getDynamicAnchor());
-		out.name(COMMENT__PROP);
-		out.value(getComment());
+		if (hasId()) {
+			out.name(ID__PROP);
+			out.value(getId());
+		}
+		if (hasAnchor()) {
+			out.name(ANCHOR__PROP);
+			out.value(getAnchor());
+		}
+		if (hasDynamicAnchor()) {
+			out.name(DYNAMIC_ANCHOR__PROP);
+			out.value(getDynamicAnchor());
+		}
+		if (hasComment()) {
+			out.name(COMMENT__PROP);
+			out.value(getComment());
+		}
 		out.name(DEFINITIONS__PROP);
 		out.beginObject();
 		for (java.util.Map.Entry<String,com.top_logic.ai.service.jsonschema.model.Schema> entry : getDefinitions().entrySet()) {
@@ -637,12 +694,18 @@ public abstract class Schema extends de.haumacher.msgbuf.data.AbstractDataObject
 			entry.getValue().writeTo(out);
 		}
 		out.endObject();
-		out.name(TITLE__PROP);
-		out.value(getTitle());
-		out.name(DESCRIPTION__PROP);
-		out.value(getDescription());
-		out.name(DEFAULT_VALUE__PROP);
-		out.value(getDefaultValue());
+		if (hasTitle()) {
+			out.name(TITLE__PROP);
+			out.value(getTitle());
+		}
+		if (hasDescription()) {
+			out.name(DESCRIPTION__PROP);
+			out.value(getDescription());
+		}
+		if (hasDefaultValue()) {
+			out.name(DEFAULT_VALUE__PROP);
+			out.value(getDefaultValue());
+		}
 		out.name(DEPRECATED__PROP);
 		out.value(isDeprecated());
 		out.name(READ_ONLY__PROP);

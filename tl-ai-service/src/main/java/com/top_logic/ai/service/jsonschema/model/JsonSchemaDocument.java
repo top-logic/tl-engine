@@ -29,7 +29,7 @@ public class JsonSchemaDocument extends Schema {
 	/** @see #getSchema() */
 	public static final String SCHEMA__PROP = "schema";
 
-	private String _schemaDialectUri = "";
+	private String _schemaDialectUri = null;
 
 	private final java.util.Map<String, Boolean> _vocabulary = new java.util.HashMap<>();
 
@@ -71,6 +71,13 @@ public class JsonSchemaDocument extends Schema {
 	/** Internal setter for {@link #getSchemaDialectUri()} without chain call utility. */
 	protected final void internalSetSchemaDialectUri(String value) {
 		_schemaDialectUri = value;
+	}
+
+	/**
+	 * Checks, whether {@link #getSchemaDialectUri()} has a value.
+	 */
+	public final boolean hasSchemaDialectUri() {
+		return _schemaDialectUri != null;
 	}
 
 	/**
@@ -305,8 +312,10 @@ public class JsonSchemaDocument extends Schema {
 	@Override
 	protected void writeFields(de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
 		super.writeFields(out);
-		out.name(SCHEMA_DIALECT_URI__PROP);
-		out.value(getSchemaDialectUri());
+		if (hasSchemaDialectUri()) {
+			out.name(SCHEMA_DIALECT_URI__PROP);
+			out.value(getSchemaDialectUri());
+		}
 		out.name(VOCABULARY__PROP);
 		out.beginObject();
 		for (java.util.Map.Entry<String,Boolean> entry : getVocabulary().entrySet()) {

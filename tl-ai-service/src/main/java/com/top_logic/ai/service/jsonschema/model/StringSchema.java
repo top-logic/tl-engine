@@ -44,13 +44,13 @@ public class StringSchema extends Schema {
 
 	private Integer _minLength = null;
 
-	private String _pattern = "";
+	private String _pattern = null;
 
-	private String _format = "";
+	private String _format = null;
 
-	private String _contentEncoding = "";
+	private String _contentEncoding = null;
 
-	private String _contentMediaType = "";
+	private String _contentMediaType = null;
 
 	private com.top_logic.ai.service.jsonschema.model.Schema _contentSchema = null;
 
@@ -143,6 +143,13 @@ public class StringSchema extends Schema {
 	}
 
 	/**
+	 * Checks, whether {@link #getPattern()} has a value.
+	 */
+	public final boolean hasPattern() {
+		return _pattern != null;
+	}
+
+	/**
 	 * Format annotation for semantic validation.
 	 *
 	 * <p>
@@ -167,6 +174,13 @@ public class StringSchema extends Schema {
 	}
 
 	/**
+	 * Checks, whether {@link #getFormat()} has a value.
+	 */
+	public final boolean hasFormat() {
+		return _format != null;
+	}
+
+	/**
 	 * Content encoding (e.g., base64, base32).
 	 */
 	public final String getContentEncoding() {
@@ -187,6 +201,13 @@ public class StringSchema extends Schema {
 	}
 
 	/**
+	 * Checks, whether {@link #getContentEncoding()} has a value.
+	 */
+	public final boolean hasContentEncoding() {
+		return _contentEncoding != null;
+	}
+
+	/**
 	 * MIME type of encoded content.
 	 */
 	public final String getContentMediaType() {
@@ -204,6 +225,13 @@ public class StringSchema extends Schema {
 	/** Internal setter for {@link #getContentMediaType()} without chain call utility. */
 	protected final void internalSetContentMediaType(String value) {
 		_contentMediaType = value;
+	}
+
+	/**
+	 * Checks, whether {@link #getContentMediaType()} has a value.
+	 */
+	public final boolean hasContentMediaType() {
+		return _contentMediaType != null;
 	}
 
 	/**
@@ -405,14 +433,22 @@ public class StringSchema extends Schema {
 			out.name(MIN_LENGTH__PROP);
 			out.value(getMinLength());
 		}
-		out.name(PATTERN__PROP);
-		out.value(getPattern());
-		out.name(FORMAT__PROP);
-		out.value(getFormat());
-		out.name(CONTENT_ENCODING__PROP);
-		out.value(getContentEncoding());
-		out.name(CONTENT_MEDIA_TYPE__PROP);
-		out.value(getContentMediaType());
+		if (hasPattern()) {
+			out.name(PATTERN__PROP);
+			out.value(getPattern());
+		}
+		if (hasFormat()) {
+			out.name(FORMAT__PROP);
+			out.value(getFormat());
+		}
+		if (hasContentEncoding()) {
+			out.name(CONTENT_ENCODING__PROP);
+			out.value(getContentEncoding());
+		}
+		if (hasContentMediaType()) {
+			out.name(CONTENT_MEDIA_TYPE__PROP);
+			out.value(getContentMediaType());
+		}
 		if (hasContentSchema()) {
 			out.name(CONTENT_SCHEMA__PROP);
 			getContentSchema().writeTo(out);

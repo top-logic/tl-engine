@@ -35,8 +35,8 @@ public class TestJsonSchemaSerializer extends TestCase {
 				.setTitle("Age")
 				.setDescription("The person's age in years")
 				.setIntegerOnly(true)
-				.setMinimum(0)
-				.setMaximum(150))
+				.setMinimum(0.0)
+				.setMaximum(150.0))
 			.putPropertie("email", StringSchema.create()
 				.setTitle("Email")
 				.setFormat("email"))
@@ -90,8 +90,8 @@ public class TestJsonSchemaSerializer extends TestCase {
 		// Integer schema
 		NumericSchema integerSchema = NumericSchema.create()
 			.setIntegerOnly(true)
-			.setMinimum(0)
-			.setMaximum(100);
+			.setMinimum(0.0)
+			.setMaximum(100.0);
 		String integerJson = JsonSchemaWriter.toJson(integerSchema);
 		assertTrue("Integer should have type integer", integerJson.contains("\"type\":\"integer\""));
 		assertTrue("Integer should have minimum", integerJson.contains("\"minimum\""));

@@ -47,9 +47,9 @@ public class ObjectSchema extends Schema {
 	/** @see #getDependentSchemas() */
 	public static final String DEPENDENT_SCHEMAS__PROP = "dependentSchemas";
 
-	private int _maxProperties = 0;
+	private Integer _maxProperties = null;
 
-	private int _minProperties = 0;
+	private Integer _minProperties = null;
 
 	private final java.util.List<String> _required = new java.util.ArrayList<>();
 
@@ -82,41 +82,55 @@ public class ObjectSchema extends Schema {
 	/**
 	 * Maximum number of properties.
 	 */
-	public final int getMaxProperties() {
+	public final Integer getMaxProperties() {
 		return _maxProperties;
 	}
 
 	/**
 	 * @see #getMaxProperties()
 	 */
-	public com.top_logic.ai.service.jsonschema.model.ObjectSchema setMaxProperties(int value) {
+	public com.top_logic.ai.service.jsonschema.model.ObjectSchema setMaxProperties(Integer value) {
 		internalSetMaxProperties(value);
 		return this;
 	}
 
 	/** Internal setter for {@link #getMaxProperties()} without chain call utility. */
-	protected final void internalSetMaxProperties(int value) {
+	protected final void internalSetMaxProperties(Integer value) {
 		_maxProperties = value;
+	}
+
+	/**
+	 * Checks, whether {@link #getMaxProperties()} has a value.
+	 */
+	public final boolean hasMaxProperties() {
+		return _maxProperties != null;
 	}
 
 	/**
 	 * Minimum number of properties.
 	 */
-	public final int getMinProperties() {
+	public final Integer getMinProperties() {
 		return _minProperties;
 	}
 
 	/**
 	 * @see #getMinProperties()
 	 */
-	public com.top_logic.ai.service.jsonschema.model.ObjectSchema setMinProperties(int value) {
+	public com.top_logic.ai.service.jsonschema.model.ObjectSchema setMinProperties(Integer value) {
 		internalSetMinProperties(value);
 		return this;
 	}
 
 	/** Internal setter for {@link #getMinProperties()} without chain call utility. */
-	protected final void internalSetMinProperties(int value) {
+	protected final void internalSetMinProperties(Integer value) {
 		_minProperties = value;
+	}
+
+	/**
+	 * Checks, whether {@link #getMinProperties()} has a value.
+	 */
+	public final boolean hasMinProperties() {
+		return _minProperties != null;
 	}
 
 	/**
@@ -561,8 +575,8 @@ public class ObjectSchema extends Schema {
 	@Override
 	public void set(String field, Object value) {
 		switch (field) {
-			case MAX_PROPERTIES__PROP: internalSetMaxProperties((int) value); break;
-			case MIN_PROPERTIES__PROP: internalSetMinProperties((int) value); break;
+			case MAX_PROPERTIES__PROP: internalSetMaxProperties((Integer) value); break;
+			case MIN_PROPERTIES__PROP: internalSetMinProperties((Integer) value); break;
 			case REQUIRED__PROP: internalSetRequired(de.haumacher.msgbuf.util.Conversions.asList(String.class, value)); break;
 			case DEPENDENT_REQUIRED__PROP: internalSetDependentRequired((java.util.Map<String, com.top_logic.ai.service.jsonschema.model.StringArray>) value); break;
 			case PROPERTIES__PROP: internalSetProperties((java.util.Map<String, com.top_logic.ai.service.jsonschema.model.Schema>) value); break;
@@ -584,10 +598,14 @@ public class ObjectSchema extends Schema {
 	@Override
 	protected void writeFields(de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
 		super.writeFields(out);
-		out.name(MAX_PROPERTIES__PROP);
-		out.value(getMaxProperties());
-		out.name(MIN_PROPERTIES__PROP);
-		out.value(getMinProperties());
+		if (hasMaxProperties()) {
+			out.name(MAX_PROPERTIES__PROP);
+			out.value(getMaxProperties());
+		}
+		if (hasMinProperties()) {
+			out.name(MIN_PROPERTIES__PROP);
+			out.value(getMinProperties());
+		}
 		out.name(REQUIRED__PROP);
 		out.beginArray();
 		for (String x : getRequired()) {

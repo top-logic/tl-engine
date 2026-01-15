@@ -204,11 +204,13 @@ message StringSchema extends Schema {
 	/**
 	 * Maximum string length (inclusive).
 	 */
+	@Nullable
 	int maxLength;
 
 	/**
 	 * Minimum string length (inclusive).
 	 */
+	@Nullable
 	int minLength;
 
 	/**
@@ -256,26 +258,31 @@ message NumericSchema extends Schema {
 	 * Valid only if division by this value results in an integer.
 	 * </p>
 	 */
+	@Nullable
 	double multipleOf;
 
 	/**
 	 * Maximum value (inclusive).
 	 */
+	@Nullable
 	double maximum;
 
 	/**
 	 * Exclusive maximum value (strictly less than).
 	 */
+	@Nullable
 	double exclusiveMaximum;
 
 	/**
 	 * Minimum value (inclusive).
 	 */
+	@Nullable
 	double minimum;
 
 	/**
 	 * Exclusive minimum value (strictly greater than).
 	 */
+	@Nullable
 	double exclusiveMinimum;
 
 	/**
@@ -295,11 +302,13 @@ message ArraySchema extends Schema {
 	/**
 	 * Maximum array size.
 	 */
+	@Nullable
 	int maxItems;
 
 	/**
 	 * Minimum array size.
 	 */
+	@Nullable
 	int minItems;
 
 	/**
@@ -342,11 +351,13 @@ message ArraySchema extends Schema {
 	/**
 	 * Minimum number of items matching contains schema.
 	 */
+	@Nullable
 	int minContains;
 
 	/**
 	 * Maximum number of items matching contains schema.
 	 */
+	@Nullable
 	int maxContains;
 }
 
@@ -362,11 +373,13 @@ message ObjectSchema extends Schema {
 	/**
 	 * Maximum number of properties.
 	 */
+	@Nullable
 	int maxProperties;
 
 	/**
 	 * Minimum number of properties.
 	 */
+	@Nullable
 	int minProperties;
 
 	/**

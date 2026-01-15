@@ -37,15 +37,15 @@ public class NumericSchema extends Schema {
 	/** @see #isIntegerOnly() */
 	public static final String INTEGER_ONLY__PROP = "integerOnly";
 
-	private double _multipleOf = 0.0d;
+	private Double _multipleOf = null;
 
-	private double _maximum = 0.0d;
+	private Double _maximum = null;
 
-	private double _exclusiveMaximum = 0.0d;
+	private Double _exclusiveMaximum = null;
 
-	private double _minimum = 0.0d;
+	private Double _minimum = null;
 
-	private double _exclusiveMinimum = 0.0d;
+	private Double _exclusiveMinimum = null;
 
 	private boolean _integerOnly = false;
 
@@ -70,101 +70,136 @@ public class NumericSchema extends Schema {
 	 * Valid only if division by this value results in an integer.
 	 * </p>
 	 */
-	public final double getMultipleOf() {
+	public final Double getMultipleOf() {
 		return _multipleOf;
 	}
 
 	/**
 	 * @see #getMultipleOf()
 	 */
-	public com.top_logic.ai.service.jsonschema.model.NumericSchema setMultipleOf(double value) {
+	public com.top_logic.ai.service.jsonschema.model.NumericSchema setMultipleOf(Double value) {
 		internalSetMultipleOf(value);
 		return this;
 	}
 
 	/** Internal setter for {@link #getMultipleOf()} without chain call utility. */
-	protected final void internalSetMultipleOf(double value) {
+	protected final void internalSetMultipleOf(Double value) {
 		_multipleOf = value;
+	}
+
+	/**
+	 * Checks, whether {@link #getMultipleOf()} has a value.
+	 */
+	public final boolean hasMultipleOf() {
+		return _multipleOf != null;
 	}
 
 	/**
 	 * Maximum value (inclusive).
 	 */
-	public final double getMaximum() {
+	public final Double getMaximum() {
 		return _maximum;
 	}
 
 	/**
 	 * @see #getMaximum()
 	 */
-	public com.top_logic.ai.service.jsonschema.model.NumericSchema setMaximum(double value) {
+	public com.top_logic.ai.service.jsonschema.model.NumericSchema setMaximum(Double value) {
 		internalSetMaximum(value);
 		return this;
 	}
 
 	/** Internal setter for {@link #getMaximum()} without chain call utility. */
-	protected final void internalSetMaximum(double value) {
+	protected final void internalSetMaximum(Double value) {
 		_maximum = value;
+	}
+
+	/**
+	 * Checks, whether {@link #getMaximum()} has a value.
+	 */
+	public final boolean hasMaximum() {
+		return _maximum != null;
 	}
 
 	/**
 	 * Exclusive maximum value (strictly less than).
 	 */
-	public final double getExclusiveMaximum() {
+	public final Double getExclusiveMaximum() {
 		return _exclusiveMaximum;
 	}
 
 	/**
 	 * @see #getExclusiveMaximum()
 	 */
-	public com.top_logic.ai.service.jsonschema.model.NumericSchema setExclusiveMaximum(double value) {
+	public com.top_logic.ai.service.jsonschema.model.NumericSchema setExclusiveMaximum(Double value) {
 		internalSetExclusiveMaximum(value);
 		return this;
 	}
 
 	/** Internal setter for {@link #getExclusiveMaximum()} without chain call utility. */
-	protected final void internalSetExclusiveMaximum(double value) {
+	protected final void internalSetExclusiveMaximum(Double value) {
 		_exclusiveMaximum = value;
+	}
+
+	/**
+	 * Checks, whether {@link #getExclusiveMaximum()} has a value.
+	 */
+	public final boolean hasExclusiveMaximum() {
+		return _exclusiveMaximum != null;
 	}
 
 	/**
 	 * Minimum value (inclusive).
 	 */
-	public final double getMinimum() {
+	public final Double getMinimum() {
 		return _minimum;
 	}
 
 	/**
 	 * @see #getMinimum()
 	 */
-	public com.top_logic.ai.service.jsonschema.model.NumericSchema setMinimum(double value) {
+	public com.top_logic.ai.service.jsonschema.model.NumericSchema setMinimum(Double value) {
 		internalSetMinimum(value);
 		return this;
 	}
 
 	/** Internal setter for {@link #getMinimum()} without chain call utility. */
-	protected final void internalSetMinimum(double value) {
+	protected final void internalSetMinimum(Double value) {
 		_minimum = value;
+	}
+
+	/**
+	 * Checks, whether {@link #getMinimum()} has a value.
+	 */
+	public final boolean hasMinimum() {
+		return _minimum != null;
 	}
 
 	/**
 	 * Exclusive minimum value (strictly greater than).
 	 */
-	public final double getExclusiveMinimum() {
+	public final Double getExclusiveMinimum() {
 		return _exclusiveMinimum;
 	}
 
 	/**
 	 * @see #getExclusiveMinimum()
 	 */
-	public com.top_logic.ai.service.jsonschema.model.NumericSchema setExclusiveMinimum(double value) {
+	public com.top_logic.ai.service.jsonschema.model.NumericSchema setExclusiveMinimum(Double value) {
 		internalSetExclusiveMinimum(value);
 		return this;
 	}
 
 	/** Internal setter for {@link #getExclusiveMinimum()} without chain call utility. */
-	protected final void internalSetExclusiveMinimum(double value) {
+	protected final void internalSetExclusiveMinimum(Double value) {
 		_exclusiveMinimum = value;
+	}
+
+	/**
+	 * Checks, whether {@link #getExclusiveMinimum()} has a value.
+	 */
+	public final boolean hasExclusiveMinimum() {
+		return _exclusiveMinimum != null;
 	}
 
 	/**
@@ -328,11 +363,11 @@ public class NumericSchema extends Schema {
 	@Override
 	public void set(String field, Object value) {
 		switch (field) {
-			case MULTIPLE_OF__PROP: internalSetMultipleOf((double) value); break;
-			case MAXIMUM__PROP: internalSetMaximum((double) value); break;
-			case EXCLUSIVE_MAXIMUM__PROP: internalSetExclusiveMaximum((double) value); break;
-			case MINIMUM__PROP: internalSetMinimum((double) value); break;
-			case EXCLUSIVE_MINIMUM__PROP: internalSetExclusiveMinimum((double) value); break;
+			case MULTIPLE_OF__PROP: internalSetMultipleOf((Double) value); break;
+			case MAXIMUM__PROP: internalSetMaximum((Double) value); break;
+			case EXCLUSIVE_MAXIMUM__PROP: internalSetExclusiveMaximum((Double) value); break;
+			case MINIMUM__PROP: internalSetMinimum((Double) value); break;
+			case EXCLUSIVE_MINIMUM__PROP: internalSetExclusiveMinimum((Double) value); break;
 			case INTEGER_ONLY__PROP: internalSetIntegerOnly((boolean) value); break;
 			default: super.set(field, value); break;
 		}
@@ -348,16 +383,26 @@ public class NumericSchema extends Schema {
 	@Override
 	protected void writeFields(de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
 		super.writeFields(out);
-		out.name(MULTIPLE_OF__PROP);
-		out.value(getMultipleOf());
-		out.name(MAXIMUM__PROP);
-		out.value(getMaximum());
-		out.name(EXCLUSIVE_MAXIMUM__PROP);
-		out.value(getExclusiveMaximum());
-		out.name(MINIMUM__PROP);
-		out.value(getMinimum());
-		out.name(EXCLUSIVE_MINIMUM__PROP);
-		out.value(getExclusiveMinimum());
+		if (hasMultipleOf()) {
+			out.name(MULTIPLE_OF__PROP);
+			out.value(getMultipleOf());
+		}
+		if (hasMaximum()) {
+			out.name(MAXIMUM__PROP);
+			out.value(getMaximum());
+		}
+		if (hasExclusiveMaximum()) {
+			out.name(EXCLUSIVE_MAXIMUM__PROP);
+			out.value(getExclusiveMaximum());
+		}
+		if (hasMinimum()) {
+			out.name(MINIMUM__PROP);
+			out.value(getMinimum());
+		}
+		if (hasExclusiveMinimum()) {
+			out.name(EXCLUSIVE_MINIMUM__PROP);
+			out.value(getExclusiveMinimum());
+		}
 		out.name(INTEGER_ONLY__PROP);
 		out.value(isIntegerOnly());
 	}

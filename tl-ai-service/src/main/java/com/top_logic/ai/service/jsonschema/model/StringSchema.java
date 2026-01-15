@@ -40,9 +40,9 @@ public class StringSchema extends Schema {
 	/** @see #getContentSchema() */
 	public static final String CONTENT_SCHEMA__PROP = "contentSchema";
 
-	private int _maxLength = 0;
+	private Integer _maxLength = null;
 
-	private int _minLength = 0;
+	private Integer _minLength = null;
 
 	private String _pattern = "";
 
@@ -71,41 +71,55 @@ public class StringSchema extends Schema {
 	/**
 	 * Maximum string length (inclusive).
 	 */
-	public final int getMaxLength() {
+	public final Integer getMaxLength() {
 		return _maxLength;
 	}
 
 	/**
 	 * @see #getMaxLength()
 	 */
-	public com.top_logic.ai.service.jsonschema.model.StringSchema setMaxLength(int value) {
+	public com.top_logic.ai.service.jsonschema.model.StringSchema setMaxLength(Integer value) {
 		internalSetMaxLength(value);
 		return this;
 	}
 
 	/** Internal setter for {@link #getMaxLength()} without chain call utility. */
-	protected final void internalSetMaxLength(int value) {
+	protected final void internalSetMaxLength(Integer value) {
 		_maxLength = value;
+	}
+
+	/**
+	 * Checks, whether {@link #getMaxLength()} has a value.
+	 */
+	public final boolean hasMaxLength() {
+		return _maxLength != null;
 	}
 
 	/**
 	 * Minimum string length (inclusive).
 	 */
-	public final int getMinLength() {
+	public final Integer getMinLength() {
 		return _minLength;
 	}
 
 	/**
 	 * @see #getMinLength()
 	 */
-	public com.top_logic.ai.service.jsonschema.model.StringSchema setMinLength(int value) {
+	public com.top_logic.ai.service.jsonschema.model.StringSchema setMinLength(Integer value) {
 		internalSetMinLength(value);
 		return this;
 	}
 
 	/** Internal setter for {@link #getMinLength()} without chain call utility. */
-	protected final void internalSetMinLength(int value) {
+	protected final void internalSetMinLength(Integer value) {
 		_minLength = value;
+	}
+
+	/**
+	 * Checks, whether {@link #getMinLength()} has a value.
+	 */
+	public final boolean hasMinLength() {
+		return _minLength != null;
 	}
 
 	/**
@@ -362,8 +376,8 @@ public class StringSchema extends Schema {
 	@Override
 	public void set(String field, Object value) {
 		switch (field) {
-			case MAX_LENGTH__PROP: internalSetMaxLength((int) value); break;
-			case MIN_LENGTH__PROP: internalSetMinLength((int) value); break;
+			case MAX_LENGTH__PROP: internalSetMaxLength((Integer) value); break;
+			case MIN_LENGTH__PROP: internalSetMinLength((Integer) value); break;
 			case PATTERN__PROP: internalSetPattern((String) value); break;
 			case FORMAT__PROP: internalSetFormat((String) value); break;
 			case CONTENT_ENCODING__PROP: internalSetContentEncoding((String) value); break;
@@ -383,10 +397,14 @@ public class StringSchema extends Schema {
 	@Override
 	protected void writeFields(de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
 		super.writeFields(out);
-		out.name(MAX_LENGTH__PROP);
-		out.value(getMaxLength());
-		out.name(MIN_LENGTH__PROP);
-		out.value(getMinLength());
+		if (hasMaxLength()) {
+			out.name(MAX_LENGTH__PROP);
+			out.value(getMaxLength());
+		}
+		if (hasMinLength()) {
+			out.name(MIN_LENGTH__PROP);
+			out.value(getMinLength());
+		}
 		out.name(PATTERN__PROP);
 		out.value(getPattern());
 		out.name(FORMAT__PROP);

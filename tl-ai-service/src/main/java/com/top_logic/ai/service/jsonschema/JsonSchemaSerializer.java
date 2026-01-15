@@ -358,20 +358,20 @@ public class JsonSchemaSerializer implements Schema.Visitor<Void, JsonWriter, IO
 	}
 
 	/**
-	 * Writes an integer field only if value is non-zero.
+	 * Writes an integer field only if value is non-null.
 	 */
-	private void writeNonZeroInt(JsonWriter out, String fieldName, int value) throws IOException {
-		if (value != 0) {
+	private void writeNonZeroInt(JsonWriter out, String fieldName, Integer value) throws IOException {
+		if (value != null) {
 			out.name(fieldName);
 			out.value(value);
 		}
 	}
 
 	/**
-	 * Writes a double field only if value is non-zero.
+	 * Writes a double field only if value is non-null.
 	 */
-	private void writeNonZeroDouble(JsonWriter out, String fieldName, double value) throws IOException {
-		if (value != 0.0) {
+	private void writeNonZeroDouble(JsonWriter out, String fieldName, Double value) throws IOException {
+		if (value != null) {
 			out.name(fieldName);
 			out.value(value);
 		}

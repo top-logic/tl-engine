@@ -43,9 +43,9 @@ public class ArraySchema extends Schema {
 	/** @see #getMaxContains() */
 	public static final String MAX_CONTAINS__PROP = "maxContains";
 
-	private int _maxItems = 0;
+	private Integer _maxItems = null;
 
-	private int _minItems = 0;
+	private Integer _minItems = null;
 
 	private boolean _uniqueItems = false;
 
@@ -55,9 +55,9 @@ public class ArraySchema extends Schema {
 
 	private com.top_logic.ai.service.jsonschema.model.Schema _contains = null;
 
-	private int _minContains = 0;
+	private Integer _minContains = null;
 
-	private int _maxContains = 0;
+	private Integer _maxContains = null;
 
 	/**
 	 * Creates a {@link ArraySchema} instance.
@@ -76,41 +76,55 @@ public class ArraySchema extends Schema {
 	/**
 	 * Maximum array size.
 	 */
-	public final int getMaxItems() {
+	public final Integer getMaxItems() {
 		return _maxItems;
 	}
 
 	/**
 	 * @see #getMaxItems()
 	 */
-	public com.top_logic.ai.service.jsonschema.model.ArraySchema setMaxItems(int value) {
+	public com.top_logic.ai.service.jsonschema.model.ArraySchema setMaxItems(Integer value) {
 		internalSetMaxItems(value);
 		return this;
 	}
 
 	/** Internal setter for {@link #getMaxItems()} without chain call utility. */
-	protected final void internalSetMaxItems(int value) {
+	protected final void internalSetMaxItems(Integer value) {
 		_maxItems = value;
+	}
+
+	/**
+	 * Checks, whether {@link #getMaxItems()} has a value.
+	 */
+	public final boolean hasMaxItems() {
+		return _maxItems != null;
 	}
 
 	/**
 	 * Minimum array size.
 	 */
-	public final int getMinItems() {
+	public final Integer getMinItems() {
 		return _minItems;
 	}
 
 	/**
 	 * @see #getMinItems()
 	 */
-	public com.top_logic.ai.service.jsonschema.model.ArraySchema setMinItems(int value) {
+	public com.top_logic.ai.service.jsonschema.model.ArraySchema setMinItems(Integer value) {
 		internalSetMinItems(value);
 		return this;
 	}
 
 	/** Internal setter for {@link #getMinItems()} without chain call utility. */
-	protected final void internalSetMinItems(int value) {
+	protected final void internalSetMinItems(Integer value) {
 		_minItems = value;
+	}
+
+	/**
+	 * Checks, whether {@link #getMinItems()} has a value.
+	 */
+	public final boolean hasMinItems() {
+		return _minItems != null;
 	}
 
 	/**
@@ -249,41 +263,55 @@ public class ArraySchema extends Schema {
 	/**
 	 * Minimum number of items matching contains schema.
 	 */
-	public final int getMinContains() {
+	public final Integer getMinContains() {
 		return _minContains;
 	}
 
 	/**
 	 * @see #getMinContains()
 	 */
-	public com.top_logic.ai.service.jsonschema.model.ArraySchema setMinContains(int value) {
+	public com.top_logic.ai.service.jsonschema.model.ArraySchema setMinContains(Integer value) {
 		internalSetMinContains(value);
 		return this;
 	}
 
 	/** Internal setter for {@link #getMinContains()} without chain call utility. */
-	protected final void internalSetMinContains(int value) {
+	protected final void internalSetMinContains(Integer value) {
 		_minContains = value;
+	}
+
+	/**
+	 * Checks, whether {@link #getMinContains()} has a value.
+	 */
+	public final boolean hasMinContains() {
+		return _minContains != null;
 	}
 
 	/**
 	 * Maximum number of items matching contains schema.
 	 */
-	public final int getMaxContains() {
+	public final Integer getMaxContains() {
 		return _maxContains;
 	}
 
 	/**
 	 * @see #getMaxContains()
 	 */
-	public com.top_logic.ai.service.jsonschema.model.ArraySchema setMaxContains(int value) {
+	public com.top_logic.ai.service.jsonschema.model.ArraySchema setMaxContains(Integer value) {
 		internalSetMaxContains(value);
 		return this;
 	}
 
 	/** Internal setter for {@link #getMaxContains()} without chain call utility. */
-	protected final void internalSetMaxContains(int value) {
+	protected final void internalSetMaxContains(Integer value) {
 		_maxContains = value;
+	}
+
+	/**
+	 * Checks, whether {@link #getMaxContains()} has a value.
+	 */
+	public final boolean hasMaxContains() {
+		return _maxContains != null;
 	}
 
 	@Override
@@ -431,14 +459,14 @@ public class ArraySchema extends Schema {
 	@Override
 	public void set(String field, Object value) {
 		switch (field) {
-			case MAX_ITEMS__PROP: internalSetMaxItems((int) value); break;
-			case MIN_ITEMS__PROP: internalSetMinItems((int) value); break;
+			case MAX_ITEMS__PROP: internalSetMaxItems((Integer) value); break;
+			case MIN_ITEMS__PROP: internalSetMinItems((Integer) value); break;
 			case UNIQUE_ITEMS__PROP: internalSetUniqueItems((boolean) value); break;
 			case PREFIX_ITEMS__PROP: internalSetPrefixItems(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.ai.service.jsonschema.model.Schema.class, value)); break;
 			case ITEMS__PROP: internalSetItems((com.top_logic.ai.service.jsonschema.model.Schema) value); break;
 			case CONTAINS__PROP: internalSetContains((com.top_logic.ai.service.jsonschema.model.Schema) value); break;
-			case MIN_CONTAINS__PROP: internalSetMinContains((int) value); break;
-			case MAX_CONTAINS__PROP: internalSetMaxContains((int) value); break;
+			case MIN_CONTAINS__PROP: internalSetMinContains((Integer) value); break;
+			case MAX_CONTAINS__PROP: internalSetMaxContains((Integer) value); break;
 			default: super.set(field, value); break;
 		}
 	}
@@ -453,10 +481,14 @@ public class ArraySchema extends Schema {
 	@Override
 	protected void writeFields(de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
 		super.writeFields(out);
-		out.name(MAX_ITEMS__PROP);
-		out.value(getMaxItems());
-		out.name(MIN_ITEMS__PROP);
-		out.value(getMinItems());
+		if (hasMaxItems()) {
+			out.name(MAX_ITEMS__PROP);
+			out.value(getMaxItems());
+		}
+		if (hasMinItems()) {
+			out.name(MIN_ITEMS__PROP);
+			out.value(getMinItems());
+		}
 		out.name(UNIQUE_ITEMS__PROP);
 		out.value(isUniqueItems());
 		out.name(PREFIX_ITEMS__PROP);
@@ -473,10 +505,14 @@ public class ArraySchema extends Schema {
 			out.name(CONTAINS__PROP);
 			getContains().writeTo(out);
 		}
-		out.name(MIN_CONTAINS__PROP);
-		out.value(getMinContains());
-		out.name(MAX_CONTAINS__PROP);
-		out.value(getMaxContains());
+		if (hasMinContains()) {
+			out.name(MIN_CONTAINS__PROP);
+			out.value(getMinContains());
+		}
+		if (hasMaxContains()) {
+			out.name(MAX_CONTAINS__PROP);
+			out.value(getMaxContains());
+		}
 	}
 
 	@Override

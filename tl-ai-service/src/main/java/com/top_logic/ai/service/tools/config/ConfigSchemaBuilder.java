@@ -212,16 +212,16 @@ public class ConfigSchemaBuilder {
 		if (type == Short.class) {
 			NumericSchema schema = NumericSchema.create()
 				.setIntegerOnly(true)
-				.setMinimum(Short.MIN_VALUE)
-				.setMaximum(Short.MAX_VALUE);
+				.setMinimum((double) Short.MIN_VALUE)
+				.setMaximum((double) Short.MAX_VALUE);
 			processNumeric(property, schema);
 			return schema;
 		}
 		if (type == Byte.class) {
 			NumericSchema schema = NumericSchema.create()
 				.setIntegerOnly(true)
-				.setMinimum(Byte.MIN_VALUE)
-				.setMaximum(Byte.MAX_VALUE);
+				.setMinimum((double) Byte.MIN_VALUE)
+				.setMaximum((double) Byte.MAX_VALUE);
 			processNumeric(property, schema);
 			return schema;
 		}
@@ -256,13 +256,13 @@ public class ConfigSchemaBuilder {
 		if (constraint != null) {
 			Class<? extends ConstraintAlgorithm> algorithm = constraint.value();
 			if (algorithm == NonNegative.class) {
-				numericSchema.setMinimum(0);
+				numericSchema.setMinimum(0.0);
 			} else if (algorithm == Negative.class) {
-				numericSchema.setExclusiveMaximum(0);
+				numericSchema.setExclusiveMaximum(0.0);
 			} else if (algorithm == NonPositive.class) {
-				numericSchema.setMaximum(0);
+				numericSchema.setMaximum(0.0);
 			} else if (algorithm == Positive.class) {
-				numericSchema.setExclusiveMinimum(0);
+				numericSchema.setExclusiveMinimum(0.0);
 			}
 		}
 

@@ -27,6 +27,8 @@ import com.top_logic.basic.config.constraint.impl.Negative;
 import com.top_logic.basic.config.constraint.impl.NonNegative;
 import com.top_logic.basic.config.constraint.impl.NonPositive;
 import com.top_logic.basic.config.constraint.impl.Positive;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.util.Resources;
 
 /**
  * Builder for creating JSON Schemas from TopLogic configuration descriptors.
@@ -81,12 +83,16 @@ public class ConfigSchemaBuilder {
 			Schema schema = buildPropertySchema(property);
 
 			if (schema != null) {
-				// Add description from property if available
-				// TODO: Find the resource key for a property and use tooltip sub-key
-				// String description = resolvePropertyDescription(property);
-				// if (description != null) {
-				//     schema.setDescription(description);
-				// }
+				// Add label and description from property resources
+				String label = resolvePropertyLabel(descriptor, property);
+				if (label != null && !label.isEmpty()) {
+					schema.setTitle(label);
+				}
+
+				String description = resolvePropertyDescription(descriptor, property);
+				if (description != null && !description.isEmpty()) {
+					schema.setDescription(description);
+				}
 
 				result.putPropertie(property.getPropertyName(), schema);
 
@@ -290,6 +296,54 @@ public class ConfigSchemaBuilder {
 				numericSchema.setMaximum(bound.value());
 				break;
 		}
+	}
+
+	/**
+	 * Resolves the label (title) for a configuration property.
+	 *
+	 * <p>
+	 * Constructs a resource key following TopLogic's naming convention for configuration
+	 * properties: <code>class.&lt;ClassName&gt;.&lt;propertyName&gt;</code>
+	 * </p>
+	 *
+	 * @param descriptor
+	 *        The configuration descriptor containing the property.
+	 * @param property
+	 *        The property descriptor.
+	 * @return The localized label, or null if not found.
+	 */
+	private String resolvePropertyLabel(ConfigurationDescriptor descriptor, PropertyDescriptor property) {
+		ResKey labelKey = getPropertyResourceKey(descriptor, property);
+		return Resources.getInstance().getString(labelKey, null);
+	}
+
+	/**
+	 * Resolves the description (tooltip) for a configuration property.
+	 *
+	 * <p>
+	 * Constructs a resource key following TopLogic's naming convention for configuration property
+	 * tooltips: <code>class.&lt;ClassName&gt;.&lt;propertyName&gt;.tooltip</code>
+	 * </p>
+	 *
+	 * @param descriptor
+	 *        The configuration descriptor containing the property.
+	 * @param property
+	 *        The property descriptor.
+	 * @return The localized description, or null if not found.
+	 */
+	private String resolvePropertyDescription(ConfigurationDescriptor descriptor, PropertyDescriptor property) {
+		ResKey labelKey = getPropertyResourceKey(descriptor, property);
+		ResKey tooltipKey = labelKey.tooltip();
+		return Resources.getInstance().getString(tooltipKey, null);
+	}
+
+	private ResKey getPropertyResourceKey(ConfigurationDescriptor descriptor, PropertyDescriptor property) {
+		Class<?> configInterface = descriptor.getConfigurationInterface();
+		String propertyName = property.getPropertyName();
+
+		// TopLogic convention: class.<ClassName>.<propertyName>.tooltip
+		ResKey labelKey = ResKey.forClass(configInterface).suffix(propertyName);
+		return labelKey;
 	}
 
 }

@@ -25,6 +25,12 @@ public abstract class Schema extends de.haumacher.msgbuf.data.AbstractDataObject
 		/** Type literal for {@link com.top_logic.ai.service.jsonschema.model.DynamicRefSchema}. */
 		DYNAMIC_REF_SCHEMA,
 
+		/** Type literal for {@link com.top_logic.ai.service.jsonschema.model.NullSchema}. */
+		NULL_SCHEMA,
+
+		/** Type literal for {@link com.top_logic.ai.service.jsonschema.model.BooleanSchema}. */
+		BOOLEAN_SCHEMA,
+
 		/** Type literal for {@link com.top_logic.ai.service.jsonschema.model.StringSchema}. */
 		STRING_SCHEMA,
 
@@ -78,6 +84,12 @@ public abstract class Schema extends de.haumacher.msgbuf.data.AbstractDataObject
 
 		/** Visit case for {@link com.top_logic.ai.service.jsonschema.model.DynamicRefSchema}.*/
 		R visit(com.top_logic.ai.service.jsonschema.model.DynamicRefSchema self, A arg) throws E;
+
+		/** Visit case for {@link com.top_logic.ai.service.jsonschema.model.NullSchema}.*/
+		R visit(com.top_logic.ai.service.jsonschema.model.NullSchema self, A arg) throws E;
+
+		/** Visit case for {@link com.top_logic.ai.service.jsonschema.model.BooleanSchema}.*/
+		R visit(com.top_logic.ai.service.jsonschema.model.BooleanSchema self, A arg) throws E;
 
 		/** Visit case for {@link com.top_logic.ai.service.jsonschema.model.StringSchema}.*/
 		R visit(com.top_logic.ai.service.jsonschema.model.StringSchema self, A arg) throws E;
@@ -579,6 +591,8 @@ public abstract class Schema extends de.haumacher.msgbuf.data.AbstractDataObject
 			case FalseSchema.FALSE_SCHEMA__TYPE: result = com.top_logic.ai.service.jsonschema.model.FalseSchema.readFalseSchema(in); break;
 			case RefSchema.REF_SCHEMA__TYPE: result = com.top_logic.ai.service.jsonschema.model.RefSchema.readRefSchema(in); break;
 			case DynamicRefSchema.DYNAMIC_REF_SCHEMA__TYPE: result = com.top_logic.ai.service.jsonschema.model.DynamicRefSchema.readDynamicRefSchema(in); break;
+			case NullSchema.NULL_SCHEMA__TYPE: result = com.top_logic.ai.service.jsonschema.model.NullSchema.readNullSchema(in); break;
+			case BooleanSchema.BOOLEAN_SCHEMA__TYPE: result = com.top_logic.ai.service.jsonschema.model.BooleanSchema.readBooleanSchema(in); break;
 			case StringSchema.STRING_SCHEMA__TYPE: result = com.top_logic.ai.service.jsonschema.model.StringSchema.readStringSchema(in); break;
 			case NumericSchema.NUMERIC_SCHEMA__TYPE: result = com.top_logic.ai.service.jsonschema.model.NumericSchema.readNumericSchema(in); break;
 			case ArraySchema.ARRAY_SCHEMA__TYPE: result = com.top_logic.ai.service.jsonschema.model.ArraySchema.readArraySchema(in); break;

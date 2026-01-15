@@ -170,6 +170,30 @@ message DynamicRefSchema extends Schema {
 // ===== Type-Specific Schemas =====
 
 /**
+ * Schema for null type validation.
+ *
+ * <p>
+ * Validates that an instance is null (JSON null value).
+ * Serializes as {"type": "null"}.
+ * </p>
+ */
+message NullSchema extends Schema {
+	// No additional fields - validates null values only
+}
+
+/**
+ * Schema for boolean type validation.
+ *
+ * <p>
+ * Validates that an instance is a boolean (true or false).
+ * Serializes as {"type": "boolean"}.
+ * </p>
+ */
+message BooleanSchema extends Schema {
+	// No additional fields - validates boolean values only
+}
+
+/**
  * Schema for string validation (JSON Schema 2020-12).
  *
  * <p>

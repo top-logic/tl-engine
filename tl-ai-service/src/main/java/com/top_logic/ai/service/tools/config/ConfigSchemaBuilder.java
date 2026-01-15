@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.top_logic.ai.service.jsonschema.model.ArraySchema;
+import com.top_logic.ai.service.jsonschema.model.BooleanSchema;
 import com.top_logic.ai.service.jsonschema.model.ConstSchema;
 import com.top_logic.ai.service.jsonschema.model.EnumSchema;
 import com.top_logic.ai.service.jsonschema.model.NumericSchema;
@@ -232,10 +233,7 @@ public class ConfigSchemaBuilder {
 	
 		// Boolean type
 		if (type == Boolean.class) {
-			// JSON Schema doesn't have a dedicated boolean schema in our model
-			// We could use ConstSchema with true/false or create a BooleanSchema
-			// For now, return a generic schema
-			return StringSchema.create(); // TODO: Add BooleanSchema to the model
+			return BooleanSchema.create();
 		}
 	
 		// Enum types

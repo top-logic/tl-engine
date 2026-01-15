@@ -6,7 +6,7 @@
 	<rules>
 		<rule
 			inherit="true"
-			meta-element="projElement:ROOT:projElement.All"
+			meta-element="projElement:projElement.All"
 			resource-key="roleRule.simple"
 			role="testRole"
 		>
@@ -14,7 +14,7 @@
 				<step
 					attribute="Mitarbeiter"
 					inverse="false"
-					meta-element="projElement:ROOT:projElement.Project"
+					meta-element="projElement:projElement.Project"
 				/>
 			</path>
 		</rule>

@@ -131,7 +131,7 @@ public class TestElementAccessImporter extends BasicTestCase {
     public void testInvalidPathMetaElement2Rules() throws Exception {
 		this.multiProblemTest(
                 ROLE_RULES_INVALID_PATH_META_ELEMENT_2,
-			I18NConstants.ILLEGAL_META_ELEMENT.fill("projElement:ROOT:projElement.Project", "projElement.All")
+			I18NConstants.ILLEGAL_META_ELEMENT.fill("projElement:projElement.Project", "projElement.All")
         );
     }
 

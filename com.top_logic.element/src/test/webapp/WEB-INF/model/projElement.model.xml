@@ -74,12 +74,12 @@
 					<attributes>
 						<property name="name"
 							mandatory="true"
-							type="tl.core:String"
 							override="true"
+							type="tl.core:String"
 						>
 							<annotations>
 								<delete-protected/>
-		
+
 								<!-- Singletons must be created without additional input. -->
 								<default-value>
 									<string value="Projekte"/>
@@ -95,145 +95,75 @@
 						<generalization type="projElement.ProjectRoot"/>
 						<generalization type="ProjElementContainer"/>
 					</generalizations>
-					<types>
-						<interface name="projElement.All">
-							<annotations>
-								<legacy-qualified-name qualified-name="projElement.All"/>
-							</annotations>
-							<attributes>
-								<property name="Startdatum"
-									type="tl.core:Date"
-								>
-									<annotations>
-										<delete-protected/>
-									</annotations>
-								</property>
-								<property name="Endedatum"
-									type="tl.core:Date"
-								>
-									<annotations>
-										<delete-protected/>
-									</annotations>
-								</property>
-								<reference name="Verantwortlicher"
-									kind="forwards"
-									type="tl.accounts:Person"
-								/>
-								<reference name="Mitarbeiter"
-									kind="forwards"
-									multiple="true"
-									type="tl.accounts:Person"
-								/>
-								<reference name="AbhaengigVon"
-									kind="forwards"
-									multiple="true"
-									type="tl.element:StructuredElement"
-								/>
-							</attributes>
-							<generalizations>
-								<generalization type="projElement.ProjectRoot"/>
-							</generalizations>
-						</interface>
-						<interface name="projElement.Part">
-							<annotations>
-								<legacy-qualified-name qualified-name="projElement.Part"/>
-							</annotations>
-							<generalizations>
-								<generalization
-									scope="this"
-									type="projElement.All"
-								/>
-							</generalizations>
-						</interface>
-						<interface name="projElement.Project">
-							<annotations>
-								<instance-presentation icon="/tree/proj/p.png"/>
-								<legacy-qualified-name qualified-name="projElement.Project"/>
-							</annotations>
-							<attributes>
-								<property name="Houston"
-									type="tl.core:Boolean"
-								>
-									<annotations>
-										<delete-protected/>
-									</annotations>
-								</property>
-							</attributes>
-							<generalizations>
-								<generalization
-									scope="this"
-									type="projElement.All"
-								/>
-							</generalizations>
-						</interface>
-						<class name="Project">
-							<annotations>
-								<table name="StructuredElement"/>
-								<implementation-binding class-name="com.top_logic.element.structured.wrap.AttributedStructuredElementWrapper"/>
-							</annotations>
-							<generalizations>
-								<generalization
-									scope="this"
-									type="projElement.Project"
-								/>
-								<generalization type="Project"/>
-								<generalization type="ProjElement"/>
-							</generalizations>
-						</class>
-						<class name="Subproject">
-							<annotations>
-								<table name="StructuredElement"/>
-								<implementation-binding class-name="com.top_logic.element.structured.wrap.AttributedStructuredElementWrapper"/>
-							</annotations>
-							<generalizations>
-								<generalization
-									scope="this"
-									type="projElement.Part"
-								/>
-								<generalization type="Subproject"/>
-								<generalization type="ProjElement"/>
-							</generalizations>
-						</class>
-						<class name="Workpackage">
-							<annotations>
-								<table name="StructuredElement"/>
-								<implementation-binding class-name="com.top_logic.element.structured.wrap.AttributedStructuredElementWrapper"/>
-							</annotations>
-							<generalizations>
-								<generalization
-									scope="this"
-									type="projElement.Part"
-								/>
-								<generalization type="Workpackage"/>
-								<generalization type="ProjElement"/>
-							</generalizations>
-						</class>
-						<class name="Order">
-							<annotations>
-								<table name="StructuredElement"/>
-								<implementation-binding class-name="com.top_logic.element.structured.wrap.AttributedStructuredElementWrapper"/>
-							</annotations>
-							<generalizations>
-								<generalization
-									scope="this"
-									type="projElement.Part"
-								/>
-								<generalization type="Order"/>
-								<generalization type="ProjElement"/>
-							</generalizations>
-						</class>
-					</types>
 				</class>
-				<class name="Project"
-					abstract="true"
-				>
+				<interface name="projElement.All">
+					<annotations>
+						<legacy-qualified-name qualified-name="projElement.All"/>
+					</annotations>
+					<attributes>
+						<property name="Startdatum"
+							type="tl.core:Date"
+						>
+							<annotations>
+								<delete-protected/>
+							</annotations>
+						</property>
+						<property name="Endedatum"
+							type="tl.core:Date"
+						>
+							<annotations>
+								<delete-protected/>
+							</annotations>
+						</property>
+						<reference name="Verantwortlicher"
+							kind="forwards"
+							type="tl.accounts:Person"
+						/>
+						<reference name="Mitarbeiter"
+							kind="forwards"
+							multiple="true"
+							type="tl.accounts:Person"
+						/>
+						<reference name="AbhaengigVon"
+							kind="forwards"
+							multiple="true"
+							type="tl.element:StructuredElement"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="projElement.ProjectRoot"/>
+					</generalizations>
+				</interface>
+				<interface name="projElement.Part">
+					<annotations>
+						<legacy-qualified-name qualified-name="projElement.Part"/>
+					</annotations>
+					<generalizations>
+						<generalization type="projElement.All"/>
+					</generalizations>
+				</interface>
+				<interface name="projElement.Project">
+					<annotations>
+						<instance-presentation icon="/tree/proj/p.png"/>
+						<legacy-qualified-name qualified-name="projElement.Project"/>
+					</annotations>
+					<attributes>
+						<property name="Houston"
+							type="tl.core:Boolean"
+						>
+							<annotations>
+								<delete-protected/>
+							</annotations>
+						</property>
+					</attributes>
+					<generalizations>
+						<generalization type="projElement.All"/>
+					</generalizations>
+				</interface>
+				<class name="Project">
 					<annotations>
 						<table name="StructuredElement"/>
 						<implementation-binding class-name="com.top_logic.element.structured.wrap.AttributedStructuredElementWrapper"/>
-						<create-scope
-							create-type="Project"
-							scope-ref="ProjectRoot"
-						/>
 					</annotations>
 					<attributes>
 						<reference name="children"
@@ -243,21 +173,17 @@
 					</attributes>
 					<generalizations>
 						<generalization type="projElement.ProjectRoot"/>
+						<generalization type="projElement.Project"/>
+						<generalization type="ProjElement"/>
 						<generalization type="projElement:ProjectRootChild"/>
 						<generalization type="ProjElementContainer"/>
 					</generalizations>
 				</class>
-				<class name="Subproject"
-					abstract="true"
-				>
+				<class name="Subproject">
 					<annotations>
 						<table name="StructuredElement"/>
 						<implementation-binding class-name="com.top_logic.element.structured.wrap.AttributedStructuredElementWrapper"/>
 						<instance-presentation icon="/tree/proj/sp.png"/>
-						<create-scope
-							create-type="Subproject"
-							scope-ref="ProjectRoot"
-						/>
 					</annotations>
 					<attributes>
 						<reference name="children"
@@ -266,6 +192,8 @@
 						/>
 					</attributes>
 					<generalizations>
+						<generalization type="projElement.Part"/>
+						<generalization type="ProjElement"/>
 						<generalization type="projElement.ProjectRoot"/>
 						<generalization type="projElement:ProjectChild"/>
 						<generalization type="ProjElementContainer"/>
@@ -274,17 +202,11 @@
 						<generalization type="projElement:OrderChild"/>
 					</generalizations>
 				</class>
-				<class name="Workpackage"
-					abstract="true"
-				>
+				<class name="Workpackage">
 					<annotations>
 						<table name="StructuredElement"/>
 						<implementation-binding class-name="com.top_logic.element.structured.wrap.AttributedStructuredElementWrapper"/>
 						<instance-presentation icon="/tree/proj/wp.png"/>
-						<create-scope
-							create-type="Workpackage"
-							scope-ref="ProjectRoot"
-						/>
 					</annotations>
 					<attributes>
 						<reference name="children"
@@ -293,6 +215,8 @@
 						/>
 					</attributes>
 					<generalizations>
+						<generalization type="projElement.Part"/>
+						<generalization type="ProjElement"/>
 						<generalization type="projElement.ProjectRoot"/>
 						<generalization type="projElement:ProjectChild"/>
 						<generalization type="projElement:SubprojectChild"/>
@@ -301,17 +225,11 @@
 						<generalization type="projElement:OrderChild"/>
 					</generalizations>
 				</class>
-				<class name="Order"
-					abstract="true"
-				>
+				<class name="Order">
 					<annotations>
 						<table name="StructuredElement"/>
 						<implementation-binding class-name="com.top_logic.element.structured.wrap.AttributedStructuredElementWrapper"/>
 						<instance-presentation icon="/tree/proj/o.png"/>
-						<create-scope
-							create-type="Order"
-							scope-ref="ProjectRoot"
-						/>
 					</annotations>
 					<attributes>
 						<reference name="children"
@@ -320,6 +238,8 @@
 						/>
 					</attributes>
 					<generalizations>
+						<generalization type="projElement.Part"/>
+						<generalization type="ProjElement"/>
 						<generalization type="projElement.ProjectRoot"/>
 						<generalization type="projElement:ProjectChild"/>
 						<generalization type="projElement:SubprojectChild"/>

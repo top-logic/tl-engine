@@ -14,10 +14,12 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.LazyTypedAnnotatable;
@@ -194,6 +196,21 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 			return Arrays.asList((Object[]) value);
 		} else {
 			return CollectionUtilShared.singletonOrEmptyList(value);
+		}
+	}
+
+	/**
+	 * Converts the given value to a {@link Set}.
+	 */
+	public static Set<?> asSet(Object value) {
+		if (value instanceof Set<?> set) {
+			return set;
+		} else if (value instanceof Collection<?> coll) {
+			return new LinkedHashSet<>(coll);
+		} else if (value == null) {
+			return Collections.emptySet();
+		} else {
+			return Collections.singleton(value);
 		}
 	}
 

@@ -7,19 +7,19 @@ package com.top_logic.ai.service.tools.help;
 
 import com.top_logic.ai.service.AIService;
 import com.top_logic.ai.service.agents.ModelExplorer;
-import com.top_logic.ai.service.tools.AnnotationDefinitionExplorerTool;
-import com.top_logic.ai.service.tools.InstanceBrowserTool;
-import com.top_logic.ai.service.tools.ModelAnnotationBrowserTool;
-import com.top_logic.ai.service.tools.ModelBrowserTool;
-import com.top_logic.ai.service.tools.ModelSearchTool;
-import com.top_logic.ai.service.tools.TypeAnalysisTool;
 import com.top_logic.ai.service.tools.help.messages.ErrorResult;
+import com.top_logic.ai.service.tools.model.AnnotationDefinitionExplorerTool;
+import com.top_logic.ai.service.tools.model.InstanceBrowserTool;
+import com.top_logic.ai.service.tools.model.ModelAnnotationBrowserTool;
+import com.top_logic.ai.service.tools.model.ModelBrowserTool;
+import com.top_logic.ai.service.tools.model.ModelSearchTool;
+import com.top_logic.ai.service.tools.model.TypeAnalysisTool;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.thread.ThreadContextManager;
 
-import dev.langchain4j.agentic.AgenticServices;
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
+import dev.langchain4j.agentic.AgenticServices;
 
 /**
  * Tool for exploring the TopLogic application model.

@@ -12,7 +12,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.ai.service.AIService;
 import com.top_logic.ai.service.agents.ModelExplorer;
+import com.top_logic.ai.service.agents.TLScriptAgent;
 import com.top_logic.ai.service.agents.UMLSpecificationAgent;
 import com.top_logic.ai.service.scripting.Converters;
 import com.top_logic.ai.service.scripting.OpenAIScriptFunctions;
@@ -22,6 +24,9 @@ import com.top_logic.ai.service.tools.model.ModelAnnotationBrowserTool;
 import com.top_logic.ai.service.tools.model.ModelBrowserTool;
 import com.top_logic.ai.service.tools.model.ModelSearchTool;
 import com.top_logic.ai.service.tools.model.TypeAnalysisTool;
+import com.top_logic.ai.service.tools.help.ModelExplorerTool;
+import com.top_logic.ai.service.tools.help.TLScriptReferenceTool;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Control;
@@ -34,7 +39,6 @@ import com.top_logic.util.TLContext;
 
 import dev.langchain4j.agentic.AgenticServices;
 import dev.langchain4j.model.chat.ChatModel;
-import dev.langchain4j.model.mistralai.MistralAiChatModel;
 
 /**
  * A minimal chat control displaying messages and allowing user input.
@@ -284,28 +288,42 @@ public class ChatControl extends AbstractControlBase {
 	 * Checks if the given text is a model creation command.
 	 */
 	private boolean isModelCreationCommand(String text) {
-		return text != null && text.trim().startsWith("/model-creation");
+		return text != null && text.startsWith("/model-creation");
 	}
 
 	/**
 	 * Extracts business requirements from a model creation command.
 	 */
 	private String extractBusinessRequirements(String command) {
-		return command.trim().substring("/model-creation".length()).trim();
+		return command.substring("/model-creation".length()).trim();
 	}
 
 	/**
 	 * Checks if the given text is a model exploration command.
 	 */
 	private boolean isModelExplorationCommand(String text) {
-		return text != null && text.trim().startsWith("/explore-model");
+		return text != null && text.startsWith("/explore-model");
 	}
 
 	/**
 	 * Extracts the exploration question from a model exploration command.
 	 */
 	private String extractExplorationQuestion(String command) {
-		return command.trim().substring("/explore-model".length()).trim();
+		return command.substring("/explore-model".length()).trim();
+	}
+
+	/**
+	 * Checks if the given text is a TLScript reference command.
+	 */
+	private boolean isTLScriptCommand(String text) {
+		return text != null && text.startsWith("/tlscript");
+	}
+
+	/**
+	 * Extracts the question from a TLScript reference command.
+	 */
+	private String extractTLScriptQuestion(String command) {
+		return command.substring("/tlscript".length()).trim();
 	}
 
 	/**
@@ -318,19 +336,18 @@ public class ChatControl extends AbstractControlBase {
 		String businessRequirements = extractBusinessRequirements(command);
 
 		try {
-			System.out.println("ChatControl: Starting workflow execution in thread: " + Thread.currentThread().getName());
-
+			Logger.info("ChatControl: Starting workflow execution in thread: " + Thread.currentThread().getName(),
+				ChatControl.class);
 			// Execute the workflow synchronously
 			String result = UMLSpecificationAgent.execute(businessRequirements);
-
 			// Add final result as Agent message
 			_chat.addMessage(new ChatMessage("Agent", result));
 			requestRepaint();
 
 		} catch (Exception e) {
-			System.err.println("ChatControl: Workflow execution failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
-			e.printStackTrace();
-
+			Logger.error(
+				"ChatControl: Workflow execution failed: " + e.getClass().getSimpleName() + ": " + e.getMessage(),
+				ChatControl.class);
 			// Handle workflow failure
 			_chat.addMessage(new ChatMessage("Agent", "❌ Workflow execution failed: " + e.getMessage()));
 			requestRepaint();
@@ -347,16 +364,16 @@ public class ChatControl extends AbstractControlBase {
 		String explorationQuestion = extractExplorationQuestion(command);
 
 		try {
-			System.out.println("ChatControl: Starting model exploration in thread: " + Thread.currentThread().getName());
+			Logger.info("ChatControl: Starting model exploration in thread: " + Thread.currentThread().getName(),
+				ChatControl.class);
+			// Get the model from AIService (uses environment variable configuration)
+			AIService aiService = AIService.getInstance();
+			if (aiService == null) {
+				throw new RuntimeException("AIService is not available. Please ensure the service is started.");
+			}
 
-			// Create the ModelExplorer agent
-			ChatModel explorationModel = MistralAiChatModel.builder()
-				.apiKey("IeHf1m5VQVCx0ZK3oQUYJC1hyOXVFjGn")
-				.baseUrl("https://api.mistral.ai/v1")
-				.modelName("mistral-large-latest")
-				.logRequests(false)
-				.logResponses(true)
-				.build();
+			// Use mistral-large-latest model (configured in tl-ai-service)
+			ChatModel explorationModel = aiService.getChatModel("mistral-large-latest");
 
 			// Create internal tool instances (no HTTP overhead)
 			ModelBrowserTool browserTool = new ModelBrowserTool();
@@ -380,11 +397,57 @@ public class ChatControl extends AbstractControlBase {
 			requestRepaint();
 
 		} catch (Exception e) {
-			System.err.println("ChatControl: Model exploration failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
-			e.printStackTrace();
-
+			Logger.error(
+				"ChatControl: Model exploration failed: " + e.getClass().getSimpleName() + ": " + e.getMessage(),
+				ChatControl.class);
 			// Handle exploration failure
 			_chat.addMessage(new ChatMessage("Agent", "❌ Model exploration failed: " + e.getMessage()));
+			requestRepaint();
+		}
+	}
+
+	/**
+	 * Handles a TLScript reference command synchronously.
+	 */
+	private void handleTLScriptCommand(String command, String userName) {
+		// Clear any previous notifiers
+		_notifiers.clear();
+
+		String question = extractTLScriptQuestion(command);
+
+		try {
+			Logger.info("ChatControl: Starting TLScript reference in thread: " + Thread.currentThread().getName(),
+				ChatControl.class);
+			// Get the model from AIService (uses environment variable configuration)
+			AIService aiService = AIService.getInstance();
+			if (aiService == null) {
+				throw new RuntimeException("AIService is not available. Please ensure the service is started.");
+			}
+
+			// Use mistral-large-latest model (configured in tl-ai-service)
+			ChatModel tlscriptModel = aiService.getChatModel("mistral-large-latest");
+
+			// Create TLScript reference tool and ModelExplorer tool
+			TLScriptReferenceTool tlscriptTool = new TLScriptReferenceTool();
+			ModelExplorerTool modelExplorerTool = new ModelExplorerTool();
+
+			// Build the TLScriptAgent with both tools
+			TLScriptAgent agent = AgenticServices.agentBuilder(TLScriptAgent.class)
+				.chatModel(tlscriptModel)
+				.tools(tlscriptTool, modelExplorerTool)
+				.build();
+
+			// Execute the agent
+			String result = agent.answer(question);
+
+			// Add final result as Agent message
+			_chat.addMessage(new ChatMessage("Agent", result));
+			requestRepaint();
+
+		} catch (Exception e) {
+			Logger.error("ChatControl: TLScript reference failed: " + e.getClass().getSimpleName() + ": " + e.getMessage(), ChatControl.class);
+			// Handle failure
+			_chat.addMessage(new ChatMessage("Agent", "❌ TLScript reference failed: " + e.getMessage()));
 			requestRepaint();
 		}
 	}
@@ -459,24 +522,30 @@ public class ChatControl extends AbstractControlBase {
 			ChatControl chatControl = (ChatControl) control;
 			String text = (String) arguments.get(TEXT_PARAM);
 
-			if (text != null && !text.trim().isEmpty()) {
-				String userName = getCurrentUserName();
-				ChatMessage message = new ChatMessage(userName, text.trim());
-				chatControl._chat.addMessage(message);
+			if (text != null) {
+				String trimmedText = text.trim();
+				if (!trimmedText.isEmpty()) {
+					String userName = getCurrentUserName();
+					ChatMessage message = new ChatMessage(userName, trimmedText);
+					chatControl._chat.addMessage(message);
 
-				// Show user message immediately
-				chatControl.requestRepaint();
+					// Show user message immediately
+					chatControl.requestRepaint();
 
-				// Check if this is a model creation command
-				if (chatControl.isModelCreationCommand(text.trim())) {
-					// Handle model creation workflow
-					chatControl.handleModelCreationCommand(text.trim(), userName);
-				} else if (chatControl.isModelExplorationCommand(text.trim())) {
-					// Handle model exploration workflow
-					chatControl.handleModelExplorationCommand(text.trim(), userName);
-				} else {
-					// Regular chat - schedule AI response via JavaScript
-					chatControl._scheduleAIResponse = true;
+					// Check if this is a model creation command
+					if (chatControl.isModelCreationCommand(trimmedText)) {
+						// Handle model creation workflow
+						chatControl.handleModelCreationCommand(trimmedText, userName);
+					} else if (chatControl.isModelExplorationCommand(trimmedText)) {
+						// Handle model exploration workflow
+						chatControl.handleModelExplorationCommand(trimmedText, userName);
+					} else if (chatControl.isTLScriptCommand(trimmedText)) {
+						// Handle TLScript reference workflow
+						chatControl.handleTLScriptCommand(trimmedText, userName);
+					} else {
+						// Regular chat - schedule AI response via JavaScript
+						chatControl._scheduleAIResponse = true;
+					}
 				}
 			}
 

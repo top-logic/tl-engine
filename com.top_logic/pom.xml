@@ -82,7 +82,7 @@
 	    <artifactId>batik-codec</artifactId>
 	</dependency>
 
-	<!-- Note: Required as replacement for commons-logging in batik-transcoder. -->
+	<!-- Note: Required as replacement for commons-logging in batik-transcoder and batik-codec. -->
 	<dependency>
 	    <groupId>org.slf4j</groupId>
 	    <artifactId>jcl-over-slf4j</artifactId>

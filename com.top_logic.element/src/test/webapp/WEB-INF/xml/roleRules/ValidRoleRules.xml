@@ -6,20 +6,20 @@
 	<rules>
 		<rule
 			inherit="true"
-			meta-element="projElement:ROOT:projElement.All"
+			meta-element="projElement:projElement.All"
 			resource-key="roleRule.minimal"
 			role="testRole"
 		>
 			<path>
 				<step
 					attribute="Verantwortlicher"
-					meta-element="projElement:ROOT:projElement.All"
+					meta-element="projElement:projElement.All"
 				/>
 			</path>
 		</rule>
 		<rule
 			inherit="true"
-			meta-element="projElement:ROOT:projElement.All"
+			meta-element="projElement:projElement.All"
 			resource-key="roleRule.simple"
 			role="testRole"
 		>
@@ -27,13 +27,13 @@
 				<step
 					attribute="Mitarbeiter"
 					inverse="false"
-					meta-element="projElement:ROOT:projElement.All"
+					meta-element="projElement:projElement.All"
 				/>
 			</path>
 		</rule>
 		<rule
 			inherit="true"
-			meta-element="projElement:ROOT:projElement.Part"
+			meta-element="projElement:projElement.Part"
 			resource-key="roleRule.forward"
 			role="testRole"
 		>
@@ -41,18 +41,18 @@
 				<step
 					attribute="AbhaengigVon"
 					inverse="false"
-					meta-element="projElement:ROOT:projElement.All"
+					meta-element="projElement:projElement.All"
 				/>
 				<step
 					attribute="Mitarbeiter"
 					inverse="false"
-					meta-element="projElement:ROOT:projElement.All"
+					meta-element="projElement:projElement.All"
 				/>
 			</path>
 		</rule>
 		<rule
 			inherit="true"
-			meta-element="projElement:ROOT:projElement.Part"
+			meta-element="projElement:projElement.Part"
 			resource-key="roleRule.backward"
 			role="testRole"
 		>
@@ -60,12 +60,12 @@
 				<step
 					attribute="AbhaengigVon"
 					inverse="true"
-					meta-element="projElement:ROOT:projElement.All"
+					meta-element="projElement:projElement.All"
 				/>
 				<step
 					attribute="Mitarbeiter"
 					inverse="false"
-					meta-element="projElement:ROOT:projElement.All"
+					meta-element="projElement:projElement.All"
 				/>
 			</path>
 		</rule>

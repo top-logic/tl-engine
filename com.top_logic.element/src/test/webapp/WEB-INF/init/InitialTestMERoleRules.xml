@@ -6,7 +6,7 @@
 	<rules>
 		<rule
 			inherit="true"
-			meta-element="projElement:ROOT:projElement.All"
+			meta-element="projElement:projElement.All"
 			resource-key="roleRule.assignedResponsible"
 			role="projElement.Verantwortlicher"
 		>
@@ -14,13 +14,13 @@
 				<step
 					attribute="Verantwortlicher"
 					inverse="false"
-					meta-element="projElement:ROOT:projElement.All"
+					meta-element="projElement:projElement.All"
 				/>
 			</path>
 		</rule>
 		<rule
 			inherit="true"
-			meta-element="projElement:ROOT:projElement.All"
+			meta-element="projElement:projElement.All"
 			resource-key="roleRule.assignedMember"
 			role="projElement.Mitarbeiter"
 		>
@@ -28,14 +28,14 @@
 				<step
 					attribute="Mitarbeiter"
 					inverse="false"
-					meta-element="projElement:ROOT:projElement.All"
+					meta-element="projElement:projElement.All"
 				/>
 			</path>
 		</rule>
 
 		<rule
 			inherit="true"
-			meta-element="projElement:ROOT:projElement.All"
+			meta-element="projElement:projElement.All"
 			resource-key="roleRule.inheritedResponsible"
 			role="projElement.Mitarbeiter,projElement.Verantwortlicher"
 			type="inheritance"
@@ -67,7 +67,7 @@
 		<rule
 			base="structureRoot@SecurityStructure"
 			inherit="true"
-			meta-element="projElement:ROOT:projElement.All"
+			meta-element="projElement:projElement.All"
 			resource-key="roleRule.allUsers"
 			role="projElement.Nutzer"
 		>
@@ -81,7 +81,7 @@
 		<rule
 			base="structureRoot@SecurityStructure"
 			inherit="false"
-			meta-element="projElement:ROOT:Project"
+			meta-element="projElement:Project"
 			resource-key="roleRule.mainUsers"
 			role="projElement.Hauptbenutzer"
 		>
@@ -96,7 +96,7 @@
 		<rule
 			base="structureRoot@SecurityStructure"
 			inherit="true"
-			meta-element="projElement:ROOT:projElement.Part"
+			meta-element="projElement:projElement.Part"
 			resource-key="roleRule.observer"
 			role="projElement.Nutzer"
 			source-role="projElement.Beobachter"
@@ -105,7 +105,7 @@
 		<rule
 			base="structureRoot@SecurityStructure"
 			inherit="true"
-			meta-element="projElement:ROOT:projElement.All"
+			meta-element="projElement:projElement.All"
 			resource-key="roleRule.projectObserver"
 			role="projElement.Projektbeobachter"
 			type="inheritance"
@@ -113,7 +113,7 @@
 
 		<rule
 			inherit="true"
-			meta-element="projElement:ROOT:projElement.All"
+			meta-element="projElement:projElement.All"
 			resource-key="roleRule.dependendResponsible"
 			role="projElement.Verantwortlicher"
 		>
@@ -121,18 +121,18 @@
 				<step
 					attribute="AbhaengigVon"
 					inverse="false"
-					meta-element="projElement:ROOT:projElement.All"
+					meta-element="projElement:projElement.All"
 				/>
 				<step
 					attribute="Verantwortlicher"
 					inverse="false"
-					meta-element="projElement:ROOT:projElement.All"
+					meta-element="projElement:projElement.All"
 				/>
 			</path>
 		</rule>
 		<rule
 			inherit="true"
-			meta-element="projElement:ROOT:projElement.All"
+			meta-element="projElement:projElement.All"
 			resource-key="roleRule.dependendMember"
 			role="projElement.Mitarbeiter"
 		>
@@ -140,12 +140,12 @@
 				<step
 					attribute="AbhaengigVon"
 					inverse="true"
-					meta-element="projElement:ROOT:projElement.All"
+					meta-element="projElement:projElement.All"
 				/>
 				<step
 					attribute="Verantwortlicher"
 					inverse="false"
-					meta-element="projElement:ROOT:projElement.All"
+					meta-element="projElement:projElement.All"
 				/>
 			</path>
 		</rule>

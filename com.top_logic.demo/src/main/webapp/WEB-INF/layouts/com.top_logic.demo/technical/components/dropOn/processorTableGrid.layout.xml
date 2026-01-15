@@ -81,9 +81,7 @@
 			<button id="ID_5f228007_aab3_4c3e_8062_086833b950c1"
 				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
 				target="selection(self())"
-			>
-				<confirmation class="com.top_logic.tool.boundsec.confirm.DefaultDeleteConfirmation"/>
-			</button>
+			/>
 		</buttons>
 		<dialogs>
 			<layout-reference resource="com.top_logic.demo/technical/components/dropOn/newProcessor/dialog.layout.xml"/>

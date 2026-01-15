@@ -6,19 +6,25 @@
 package com.top_logic.ai.service.tools.model;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.top_logic.ai.service.tools.util.JsonToolResponseBuilder;
+import com.top_logic.ai.service.tools.model.messages.InstanceListResponse;
+import com.top_logic.ai.service.tools.model.messages.InstanceMetadata;
+import com.top_logic.ai.service.tools.model.messages.InstanceResponse;
+import com.top_logic.ai.service.tools.model.messages.InstanceTypeInfo;
+import com.top_logic.ai.service.tools.model.messages.TLObjectReference;
+import com.top_logic.ai.service.tools.util.DataClassSerializer;
 import com.top_logic.basic.IdentifierUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.common.json.gstream.JsonWriter;
+
+import de.haumacher.msgbuf.io.StringW;
+import de.haumacher.msgbuf.json.JsonWriter;
 import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -31,6 +37,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.util.TLModelNamingConvention;
+import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.model.visit.LabelVisitor;
 import com.top_logic.util.Resources;
 
@@ -87,39 +94,35 @@ public class InstanceBrowserTool {
 			@P("Maximum number of instances to return (default: 100, max: 1000)") Integer limit,
 			@P("Cursor for pagination (null/empty for first page, use nextCursor from previous response)") String cursor) {
 
-		return ThreadContextManager.inSystemInteraction(
-			InstanceBrowserTool.class,
-			() -> {
-				try {
+		try {
+			// System interaction returns data class
+			InstanceListResponse response = ThreadContextManager.inSystemInteraction(
+				InstanceBrowserTool.class,
+				() -> {
 					// Validate parameters
 					if (moduleName == null || moduleName.isEmpty()) {
-						return JsonToolResponseBuilder.buildErrorJson("Module name is required");
+						throw new IllegalArgumentException("Module name is required");
 					}
 					if (typeName == null || typeName.isEmpty()) {
-						return JsonToolResponseBuilder.buildErrorJson("Type name is required");
+						throw new IllegalArgumentException("Type name is required");
 					}
 
 					// Validate and normalize limit
 					int effectiveLimit = limit != null ? limit : DEFAULT_LIMIT;
 					if (effectiveLimit <= 0) {
-						return JsonToolResponseBuilder.buildErrorJson("Limit must be positive, got: " + effectiveLimit);
+						throw new IllegalArgumentException("Limit must be positive, got: " + effectiveLimit);
 					}
 					if (effectiveLimit > MAX_LIMIT) {
 						effectiveLimit = MAX_LIMIT; // Clamp to maximum
 					}
 
 					// Decode cursor to offset
-					int offset;
-					try {
-						offset = PaginationCursor.decode(cursor);
-					} catch (IllegalArgumentException ex) {
-						return JsonToolResponseBuilder.buildErrorJson("Invalid cursor: " + ex.getMessage());
-					}
+					int offset = PaginationCursor.decode(cursor);
 
 					// Get the type using MetaElementUtil
 					TLClass type = MetaElementUtil.getGlobalType(moduleName, typeName);
 					if (type == null) {
-						return JsonToolResponseBuilder.buildErrorJson(
+						throw new IllegalArgumentException(
 							"Type '" + typeName + "' not found in module '" + moduleName + "'");
 					}
 
@@ -138,53 +141,37 @@ public class InstanceBrowserTool {
 					String nextCursor = (nextOffset < totalCount) ? PaginationCursor.encode(nextOffset) : null;
 					boolean hasMore = nextOffset < totalCount;
 
-					// Build JSON response with paginated TIDs
-					StringWriter buffer = new StringWriter();
-					try (JsonWriter json = JsonToolResponseBuilder.createWriter(buffer)) {
-						json.beginObject();
+					// Build response using data class
+					InstanceListResponse result = InstanceListResponse.create();
+					result.setModule(moduleName);
+					result.setType(typeName);
+					result.setTotalCount(totalCount);
+					result.setLimit(effectiveLimit);
+					result.setOffset(offset);
 
-						// Basic information
-						json.name("module").value(moduleName);
-						json.name("type").value(typeName);
-						json.name("totalCount").value(totalCount);
-						json.name("limit").value(effectiveLimit);
-						json.name("offset").value(offset);
-
-						// Array of TIDs for this page
-						json.name("instances");
-						json.beginArray();
-						for (TLObject instance : pageInstances) {
-							json.value(instance.tId().asString());
-						}
-						json.endArray();
-
-						// Pagination metadata
-						if (nextCursor != null) {
-							json.name("nextCursor").value(nextCursor);
-						} else {
-							json.name("nextCursor").nullValue();
-						}
-						json.name("hasMore").value(hasMore);
-
-						json.endObject();
+					// Add TIDs for this page
+					for (TLObject instance : pageInstances) {
+						result.addInstance(instance.tId().asString());
 					}
 
-					String result = buffer.toString();
-					Logger.info("listInstances() result: " + result, InstanceBrowserTool.class);
-					return result;
+					// Pagination metadata
+					result.setNextCursor(nextCursor);
+					result.setHasMore(hasMore);
 
-				} catch (IOException ex) {
-					String error = JsonToolResponseBuilder.buildErrorJson("Failed to list instances: " + ex.getMessage());
-					Logger.error("listInstances() error: " + ex.getMessage(), ex, InstanceBrowserTool.class);
-					System.err.println("InstanceBrowserTool.listInstances() error: " + error);
-					return error;
-				} catch (Exception ex) {
-					String error = JsonToolResponseBuilder.buildErrorJson("Error accessing instances: " + ex.getMessage());
-					Logger.error("listInstances() error: " + ex.getMessage(), ex, InstanceBrowserTool.class);
-					System.err.println("InstanceBrowserTool.listInstances() error: " + error);
-					return error;
-				}
-			});
+					return result;
+				});
+
+			// Serialize to JSON using DataClassSerializer
+			return DataClassSerializer.toJson(response, InstanceBrowserTool.class, "listInstances()");
+
+		} catch (Exception ex) {
+			Logger.error("listInstances() error: " + ex.getMessage(), ex, InstanceBrowserTool.class);
+			System.err.println("InstanceBrowserTool.listInstances() error: " + ex.getMessage());
+			return DataClassSerializer.errorToJson(
+				"Error accessing instances: " + ex.getMessage(),
+				InstanceBrowserTool.class,
+				"listInstances()");
+		}
 	}
 
 	/**
@@ -252,19 +239,20 @@ public class InstanceBrowserTool {
 	@Tool("Get detailed information about a single instance by its TID including all attributes and values")
 	public String getInstance(@P("The TopLogic identifier (TID) in format 'TypeName:id'") String tid) {
 
-		return ThreadContextManager.inSystemInteraction(
-			InstanceBrowserTool.class,
-			() -> {
-				try {
+		try {
+			// System interaction returns data class
+			InstanceResponse response = ThreadContextManager.inSystemInteraction(
+				InstanceBrowserTool.class,
+				() -> {
 					// Validate parameter
 					if (tid == null || tid.isEmpty()) {
-						return JsonToolResponseBuilder.buildErrorJson("TID is required");
+						throw new IllegalArgumentException("TID is required");
 					}
 
 					// Parse TID (format: "TypeName:hexId")
 					String[] split = tid.split(":", 2);
 					if (split.length != 2) {
-						return JsonToolResponseBuilder.buildErrorJson(
+						throw new IllegalArgumentException(
 							"Invalid TID format. Expected 'TypeName:id', got: " + tid);
 					}
 
@@ -281,93 +269,74 @@ public class InstanceBrowserTool {
 					KnowledgeObject ko = kb.getKnowledgeObject(typeName, tlid);
 
 					if (ko == null) {
-						return JsonToolResponseBuilder.buildErrorJson("Object with TID '" + tid + "' not found");
+						throw new IllegalArgumentException("Object with TID '" + tid + "' not found");
 					}
 
 					// Wrap it as a TLObject
 					TLObject tlObject = WrapperFactory.getWrapper(ko);
 
-					// Build JSON response with all object information
-					StringWriter buffer = new StringWriter();
-					try (JsonWriter json = JsonToolResponseBuilder.createWriter(buffer)) {
-						json.beginObject();
+					// Build response using data class
+					InstanceResponse result = InstanceResponse.create();
+					result.setTid(tid);
 
-						// Basic object information
-						json.name("tid").value(tid);
+					// Type information
+					TLStructuredType type = tlObject.tType();
+					if (type != null) {
+						result.setType(buildTypeInfo(type));
 
-						// Type information
-						TLStructuredType type = tlObject.tType();
-						if (type != null) {
-							json.name("type");
-							writeTypeInfo(json, type);
+						// Get all parts (attributes) of this type
+						for (TLStructuredTypePart part : type.getAllParts()) {
+							String partName = part.getName();
+							Object value = tlObject.tValue(part);
+
+							// Add attribute value as JSON string
+							result.putAttribute(partName, serializeAttributeValue(value));
 						}
-
-						// Attributes
-						json.name("attributes");
-						json.beginObject();
-
-						if (type != null) {
-							// Get all parts (attributes) of this type
-							for (TLStructuredTypePart part : type.getAllParts()) {
-								String partName = part.getName();
-								Object value = tlObject.tValue(part);
-
-								// Write attribute value
-								writeAttributeValue(json, partName, value);
-							}
-						}
-
-						json.endObject(); // attributes
-
-						// Additional metadata
-						json.name("metadata");
-						json.beginObject();
-						json.name("container").value(
-							tlObject.tContainer() != null ? tlObject.tContainer().tId().toString() : null);
-						json.name("containerReference").value(
-							tlObject.tContainerReference() != null ? tlObject.tContainerReference().getName() : null);
-						json.name("transient").value(tlObject.tTransient());
-						json.endObject(); // metadata
-
-						json.endObject(); // root
 					}
 
-					String result = buffer.toString();
-					Logger.info("getInstance() result: " + result, InstanceBrowserTool.class);
-					return result;
+					// Additional metadata
+					InstanceMetadata metadata = InstanceMetadata.create();
+					metadata.setContainer(
+						tlObject.tContainer() != null ? tlObject.tContainer().tId().toString() : null);
+					metadata.setContainerReference(
+						tlObject.tContainerReference() != null ? tlObject.tContainerReference().getName() : null);
+					metadata.setTransient(tlObject.tTransient());
+					result.setMetadata(metadata);
 
-				} catch (IOException ex) {
-					String error = JsonToolResponseBuilder.buildErrorJson("Failed to get instance: " + ex.getMessage());
-					Logger.error("getInstance() error: " + ex.getMessage(), ex, InstanceBrowserTool.class);
-					System.err.println("InstanceBrowserTool.getInstance() error: " + error);
-					return error;
-				} catch (Exception ex) {
-					String error = JsonToolResponseBuilder.buildErrorJson("Error retrieving instance: " + ex.getMessage());
-					Logger.error("getInstance() error: " + ex.getMessage(), ex, InstanceBrowserTool.class);
-					System.err.println("InstanceBrowserTool.getInstance() error: " + error);
-					return error;
-				}
-			});
+					return result;
+				});
+
+			// Serialize to JSON using DataClassSerializer
+			return DataClassSerializer.toJson(response, InstanceBrowserTool.class, "getInstance()");
+
+		} catch (Exception ex) {
+			Logger.error("getInstance() error: " + ex.getMessage(), ex, InstanceBrowserTool.class);
+			System.err.println("InstanceBrowserTool.getInstance() error: " + ex.getMessage());
+			return DataClassSerializer.errorToJson(
+				"Error retrieving instance: " + ex.getMessage(),
+				InstanceBrowserTool.class,
+				"getInstance()");
+		}
 	}
 
 	/**
-	 * Writes type information to JSON output.
+	 * Builds type information data object.
 	 */
-	private static void writeTypeInfo(JsonWriter json, TLStructuredType type) throws IOException {
-		json.beginObject();
-		json.name("name").value(type.getName());
+	private static InstanceTypeInfo buildTypeInfo(TLStructuredType type) {
+		InstanceTypeInfo typeInfo = InstanceTypeInfo.create();
+		typeInfo.setName(type.getName());
 
 		// Module information
 		TLModule module = type.getModule();
 		if (module != null) {
-			json.name("module").value(module.getName());
+			typeInfo.setModule(module.getName());
 
 			// Module label if available
 			ResKey moduleKey = LabelVisitor.getModuleResourceKey(module);
 			Resources resources = Resources.getInstance();
 			String moduleLabel = resources.getString(moduleKey, null);
 			if (moduleLabel != null && !moduleLabel.isEmpty()) {
-				json.name("moduleLabel").value(moduleLabel);
+				typeInfo.setModuleLabel(moduleLabel);
 			}
 		}
 
@@ -376,43 +345,89 @@ public class InstanceBrowserTool {
 		Resources resources = Resources.getInstance();
 		String typeLabel = resources.getString(typeKey, null);
 		if (typeLabel != null && !typeLabel.isEmpty()) {
-			json.name("label").value(typeLabel);
+			typeInfo.setLabel(typeLabel);
 		}
 
 		// Model kind
 		ModelKind kind = type.getModelKind();
 		if (kind != null) {
-			json.name("kind").value(kind.name().toLowerCase());
+			typeInfo.setKind(kind.name().toLowerCase());
 		}
 
-		json.endObject();
+		return typeInfo;
 	}
 
 	/**
-	 * Writes an attribute value to JSON output with proper type handling.
+	 * Serializes an attribute value to a JSON string.
+	 *
+	 * @param value
+	 *        The value to serialize.
+	 * @return JSON string representation of the value.
 	 */
-	private static void writeAttributeValue(JsonWriter json, String name, Object value) throws IOException {
-		json.name(name);
+	private static String serializeAttributeValue(Object value) throws IOException {
+		StringW buffer = new StringW();
+		try (JsonWriter json = new JsonWriter(buffer)) {
+			writeValue(json, value);
+		}
+		return buffer.toString();
+	}
 
+	/**
+	 * Writes a value to JSON with proper type handling.
+	 */
+	private static void writeValue(JsonWriter json, Object value) throws IOException {
 		if (value == null) {
 			json.nullValue();
 		} else if (value instanceof TLObject) {
-			// For reference to another TLObject, use the utility method
-			JsonToolResponseBuilder.writeTLObjectReference(json, (TLObject) value);
+			// For reference to another TLObject, write as TLObjectReference
+			TLObjectReference ref = buildTLObjectReference((TLObject) value);
+			ref.writeTo(json);
 		} else if (value instanceof Iterable) {
 			// For collections, write as JSON array
 			json.beginArray();
 			for (Object item : (Iterable<?>) value) {
-				if (item instanceof TLObject) {
-					JsonToolResponseBuilder.writeTLObjectReference(json, (TLObject) item);
-				} else {
-					json.value(item != null ? item.toString() : null);
-				}
+				writeValue(json, item);
 			}
 			json.endArray();
+		} else if (value instanceof String) {
+			json.value((String) value);
+		} else if (value instanceof Number) {
+			json.value((Number) value);
+		} else if (value instanceof Boolean) {
+			json.value((Boolean) value);
 		} else {
-			// For primitive values, write as string
+			// For other types, write as string
 			json.value(value.toString());
 		}
+	}
+
+	/**
+	 * Builds a TLObjectReference data object.
+	 */
+	private static TLObjectReference buildTLObjectReference(TLObject tlObject) {
+		TLObjectReference ref = TLObjectReference.create();
+		ref.setTid(tlObject.tId().asString());
+
+		TLStructuredType type = tlObject.tType();
+		if (type != null) {
+			ref.setType(TLModelUtil.qualifiedName(type));
+		}
+
+		// Try to get a label for the object using TLModelNamingConvention
+		String label = null;
+		try {
+			ResKey labelKey = TLModelNamingConvention.getTypeLabelKey(type);
+			if (labelKey != null) {
+				Resources resources = Resources.getInstance();
+				label = resources.getString(labelKey, null);
+			}
+		} catch (Exception ex) {
+			// Ignore - label is optional
+		}
+		if (label != null && !label.isEmpty()) {
+			ref.setLabel(label);
+		}
+
+		return ref;
 	}
 }

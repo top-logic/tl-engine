@@ -5,16 +5,18 @@
  */
 package com.top_logic.ai.service.tools.model;
 
-import java.io.IOException;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.top_logic.ai.service.tools.util.JsonToolResponseBuilder;
+import com.top_logic.ai.service.tools.model.messages.PartUsageResponse;
+import com.top_logic.ai.service.tools.model.messages.PropertyUsage;
+import com.top_logic.ai.service.tools.model.messages.ReferenceUsage;
+import com.top_logic.ai.service.tools.model.messages.SubclassUsage;
+import com.top_logic.ai.service.tools.model.messages.TypeUsageResponse;
+import com.top_logic.ai.service.tools.util.DataClassSerializer;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.thread.ThreadContextManager;
-import com.top_logic.common.json.gstream.JsonWriter;
 import com.top_logic.model.TLAssociationEnd;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModel;
@@ -65,13 +67,14 @@ public class TypeAnalysisTool {
 	public String findTypeUsages(
 			@P("The qualified type name in format 'module:TypeName'") String qualifiedTypeName) {
 
-		return ThreadContextManager.inSystemInteraction(
-			TypeAnalysisTool.class,
-			() -> {
-				try {
+		try {
+			// System interaction returns data class
+			TypeUsageResponse response = ThreadContextManager.inSystemInteraction(
+				TypeAnalysisTool.class,
+				() -> {
 					// Validate parameter
 					if (qualifiedTypeName == null || qualifiedTypeName.isEmpty()) {
-						return JsonToolResponseBuilder.buildErrorJson("Qualified type name is required");
+						throw new IllegalArgumentException("Qualified type name is required");
 					}
 
 					// Get the application model and find the requested type
@@ -79,7 +82,7 @@ public class TypeAnalysisTool {
 					TLType type = TLModelUtil.findType(model, qualifiedTypeName);
 
 					if (type == null) {
-						return JsonToolResponseBuilder.buildErrorJson("Type not found: " + qualifiedTypeName);
+						throw new IllegalArgumentException("Type not found: " + qualifiedTypeName);
 					}
 
 					// Find all usages of this type
@@ -87,62 +90,41 @@ public class TypeAnalysisTool {
 					List<ReferenceUsage> referenceUsages = findReferenceUsages(model, type);
 					List<String> subclasses = findSubclasses(type);
 
-					// Build JSON object with usage information
-					StringWriter buffer = new StringWriter();
-					try (JsonWriter json = JsonToolResponseBuilder.createWriter(buffer)) {
-						json.beginObject();
+					// Build response using data classes
+					TypeUsageResponse result = TypeUsageResponse.create();
 
-						// Properties that use this type as value type (non-reference parts)
-						json.name("properties").beginArray();
-						for (PropertyUsage usage : propertyUsages) {
-							json.beginObject();
-							json.name("owner").value(usage.ownerType);
-							json.name("property").value(usage.propertyName);
-							json.name("usage").value("value type");
-							json.endObject();
-						}
-						json.endArray();
-
-						// References that point to this type
-						json.name("references").beginArray();
-						for (ReferenceUsage usage : referenceUsages) {
-							json.beginObject();
-							json.name("owner").value(usage.ownerType);
-							json.name("reference").value(usage.referenceName);
-							json.name("usage").value("reference type");
-							json.endObject();
-						}
-						json.endArray();
-
-						// Classes that use this type as generalization (supertype)
-						json.name("subclasses").beginArray();
-						for (String subclass : subclasses) {
-							json.beginObject();
-							json.name("class").value(subclass);
-							json.name("usage").value("generalization");
-							json.endObject();
-						}
-						json.endArray();
-
-						json.endObject();
+					// Add property usages (directly from findPropertyUsages)
+					for (PropertyUsage propertyUsage : propertyUsages) {
+						result.addPropertie(propertyUsage);
 					}
 
-					String result = buffer.toString();
-					Logger.info("findTypeUsages() result: " + result, TypeAnalysisTool.class);
-					return result;
+					// Add reference usages (directly from findReferenceUsages)
+					for (ReferenceUsage referenceUsage : referenceUsages) {
+						result.addReference(referenceUsage);
+					}
 
-				} catch (IOException ex) {
-					String error = JsonToolResponseBuilder.buildErrorJson("Failed to find type usages: " + ex.getMessage());
-					Logger.error("findTypeUsages() error: " + ex.getMessage(), ex, TypeAnalysisTool.class);
-					System.err.println("TypeAnalysisTool.findTypeUsages() error: " + error);
-					return error;
-				} catch (Exception ex) {
-					String error = JsonToolResponseBuilder.buildErrorJson("Error analyzing type: " + ex.getMessage());
-					Logger.error("findTypeUsages() error: " + ex.getMessage(), ex, TypeAnalysisTool.class);
-					System.err.println("TypeAnalysisTool.findTypeUsages() error: " + error);
-					return error;
-				}
-			});
+					// Add subclasses
+					for (String subclass : subclasses) {
+						SubclassUsage subclassUsage = SubclassUsage.create();
+						subclassUsage.setSubclass(subclass);
+						subclassUsage.setUsage("generalization");
+						result.addSubclasse(subclassUsage);
+					}
+
+					return result;
+				});
+
+			// Serialize to JSON using DataClassSerializer
+			return DataClassSerializer.toJson(response, TypeAnalysisTool.class, "findTypeUsages()");
+
+		} catch (Exception ex) {
+			Logger.error("findTypeUsages() error: " + ex.getMessage(), ex, TypeAnalysisTool.class);
+			System.err.println("TypeAnalysisTool.findTypeUsages() error: " + ex.getMessage());
+			return DataClassSerializer.errorToJson(
+				"Error analyzing type: " + ex.getMessage(),
+				TypeAnalysisTool.class,
+				"findTypeUsages()");
+		}
 	}
 
 	/**
@@ -170,14 +152,15 @@ public class TypeAnalysisTool {
 			@P("The qualified type name of the owner in format 'module:TypeName'") String ownerTypeQualifiedName,
 			@P("The name of the part to analyze") String partName) {
 
-		return ThreadContextManager.inSystemInteraction(
-			TypeAnalysisTool.class,
-			() -> {
-				try {
+		try {
+			// System interaction returns data class
+			PartUsageResponse response = ThreadContextManager.inSystemInteraction(
+				TypeAnalysisTool.class,
+				() -> {
 					// Validate parameters
 					if (ownerTypeQualifiedName == null || ownerTypeQualifiedName.isEmpty() ||
 							partName == null || partName.isEmpty()) {
-						return JsonToolResponseBuilder.buildErrorJson("Owner type and part name are required");
+						throw new IllegalArgumentException("Owner type and part name are required");
 					}
 
 					// Get the application model and find the requested type
@@ -185,18 +168,18 @@ public class TypeAnalysisTool {
 					TLType type = TLModelUtil.findType(model, ownerTypeQualifiedName);
 
 					if (type == null) {
-						return JsonToolResponseBuilder.buildErrorJson("Type not found: " + ownerTypeQualifiedName);
+						throw new IllegalArgumentException("Type not found: " + ownerTypeQualifiedName);
 					}
 
 					// Check if type is structured (has parts)
 					if (!(type instanceof TLStructuredType structuredType)) {
-						return JsonToolResponseBuilder.buildErrorJson("Type is not structured: " + ownerTypeQualifiedName);
+						throw new IllegalArgumentException("Type is not structured: " + ownerTypeQualifiedName);
 					}
 
 					// Get the part from the type
 					TLStructuredTypePart part = structuredType.getPart(partName);
 					if (part == null) {
-						return JsonToolResponseBuilder.buildErrorJson("Part not found: " + partName + " in type " + ownerTypeQualifiedName);
+						throw new IllegalArgumentException("Part not found: " + partName + " in type " + ownerTypeQualifiedName);
 					}
 
 					// Find where the part is actually defined (may be in a superclass)
@@ -211,42 +194,32 @@ public class TypeAnalysisTool {
 						findInheritingSubclasses(tlClass, partName, inheritedBy);
 					}
 
-					// Build JSON object with part usage information
-					StringWriter buffer = new StringWriter();
-					try (JsonWriter json = JsonToolResponseBuilder.createWriter(buffer)) {
-						json.beginObject();
+					// Build response using data classes
+					PartUsageResponse result = PartUsageResponse.create();
+					result.setOwnerType(ownerTypeQualifiedName);
+					result.setPartName(partName);
+					result.setPartKind(partKind);
+					result.setDefinedIn(definedIn);
 
-						json.name("ownerType").value(ownerTypeQualifiedName);
-						json.name("partName").value(partName);
-						json.name("partKind").value(partKind);
-						json.name("definedIn").value(definedIn);
-
-						// Subclasses that inherit this part
-						json.name("inheritedBy").beginArray();
-						for (String subclass : inheritedBy) {
-							json.value(subclass);
-						}
-						json.endArray();
-
-						json.endObject();
+					// Add inherited by subclasses
+					for (String subclass : inheritedBy) {
+						result.addInheritedBy(subclass);
 					}
 
-					String result = buffer.toString();
-					Logger.info("findPartUsages() result: " + result, TypeAnalysisTool.class);
 					return result;
+				});
 
-				} catch (IOException ex) {
-					String error = JsonToolResponseBuilder.buildErrorJson("Failed to find part usages: " + ex.getMessage());
-					Logger.error("findPartUsages() error: " + ex.getMessage(), ex, TypeAnalysisTool.class);
-					System.err.println("TypeAnalysisTool.findPartUsages() error: " + error);
-					return error;
-				} catch (Exception ex) {
-					String error = JsonToolResponseBuilder.buildErrorJson("Error analyzing part: " + ex.getMessage());
-					Logger.error("findPartUsages() error: " + ex.getMessage(), ex, TypeAnalysisTool.class);
-					System.err.println("TypeAnalysisTool.findPartUsages() error: " + error);
-					return error;
-				}
-			});
+			// Serialize to JSON using DataClassSerializer
+			return DataClassSerializer.toJson(response, TypeAnalysisTool.class, "findPartUsages()");
+
+		} catch (Exception ex) {
+			Logger.error("findPartUsages() error: " + ex.getMessage(), ex, TypeAnalysisTool.class);
+			System.err.println("TypeAnalysisTool.findPartUsages() error: " + ex.getMessage());
+			return DataClassSerializer.errorToJson(
+				"Error analyzing part: " + ex.getMessage(),
+				TypeAnalysisTool.class,
+				"findPartUsages()");
+		}
 	}
 
 	/**
@@ -309,17 +282,21 @@ public class TypeAnalysisTool {
 			}
 
 			if (ownerTypeName != null && partName != null && !isReference) {
-				usages.add(new PropertyUsage(ownerTypeName, partName));
+				PropertyUsage usage = PropertyUsage.create();
+				usage.setOwner(ownerTypeName);
+				usage.setProperty(partName);
+				usage.setUsage("value type");
+				usages.add(usage);
 			}
 		}
 
 		// Sort by owner type, then property name
 		usages.sort((u1, u2) -> {
-			int cmp = u1.ownerType.compareTo(u2.ownerType);
+			int cmp = u1.getOwner().compareTo(u2.getOwner());
 			if (cmp != 0) {
 				return cmp;
 			}
-			return u1.propertyName.compareTo(u2.propertyName);
+			return u1.getProperty().compareTo(u2.getProperty());
 		});
 
 		return usages;
@@ -370,18 +347,21 @@ public class TypeAnalysisTool {
 			}
 
 			if (reference != null) {
-				String ownerTypeName = TLModelUtil.qualifiedName(reference.getOwner());
-				usages.add(new ReferenceUsage(ownerTypeName, reference.getName()));
+				ReferenceUsage usage = ReferenceUsage.create();
+				usage.setOwner(TLModelUtil.qualifiedName(reference.getOwner()));
+				usage.setReference(reference.getName());
+				usage.setUsage("reference type");
+				usages.add(usage);
 			}
 		}
 
 		// Sort by owner type, then reference name
 		usages.sort((u1, u2) -> {
-			int cmp = u1.ownerType.compareTo(u2.ownerType);
+			int cmp = u1.getOwner().compareTo(u2.getOwner());
 			if (cmp != 0) {
 				return cmp;
 			}
-			return u1.referenceName.compareTo(u2.referenceName);
+			return u1.getReference().compareTo(u2.getReference());
 		});
 
 		return usages;
@@ -431,31 +411,4 @@ public class TypeAnalysisTool {
 			.collect(Collectors.toList());
 	}
 
-	/**
-	 * Helper class to hold property usage information.
-	 */
-	private static class PropertyUsage {
-		final String ownerType;
-
-		final String propertyName;
-
-		PropertyUsage(String ownerType, String propertyName) {
-			this.ownerType = ownerType;
-			this.propertyName = propertyName;
-		}
-	}
-
-	/**
-	 * Helper class to hold reference usage information.
-	 */
-	private static class ReferenceUsage {
-		final String ownerType;
-
-		final String referenceName;
-
-		ReferenceUsage(String ownerType, String referenceName) {
-			this.ownerType = ownerType;
-			this.referenceName = referenceName;
-		}
-	}
 }

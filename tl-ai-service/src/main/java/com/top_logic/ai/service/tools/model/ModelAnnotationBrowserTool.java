@@ -5,18 +5,17 @@
  */
 package com.top_logic.ai.service.tools.model;
 
-import java.io.IOException;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.top_logic.ai.service.tools.util.JsonToolResponseBuilder;
+import com.top_logic.ai.service.tools.model.messages.AnnotationInfo;
+import com.top_logic.ai.service.tools.model.messages.AnnotationListResponse;
+import com.top_logic.ai.service.tools.util.DataClassSerializer;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.thread.ThreadContextManager;
-import com.top_logic.common.json.gstream.JsonWriter;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
@@ -126,13 +125,14 @@ public class ModelAnnotationBrowserTool {
 			@P("Target reference in format 'module', 'module:Type', or 'module:Type#part'") String targetRef,
 			@P("Include inherited annotations from supertypes/definitions (default: false)") Boolean includeInherited) {
 
-		return ThreadContextManager.inSystemInteraction(
-			ModelAnnotationBrowserTool.class,
-			() -> {
-				try {
+		try {
+			// System interaction returns data class
+			AnnotationListResponse response = ThreadContextManager.inSystemInteraction(
+				ModelAnnotationBrowserTool.class,
+				() -> {
 					// 1. Validate and default parameters
 					if (targetRef == null || targetRef.isEmpty()) {
-						return JsonToolResponseBuilder.buildErrorJson("Target reference is required");
+						throw new IllegalArgumentException("Target reference is required");
 					}
 					boolean includeInheritedAnnotations = includeInherited != null && includeInherited;
 
@@ -147,91 +147,54 @@ public class ModelAnnotationBrowserTool {
 					String kind = determineKind(target, parser);
 
 					// 5. Collect annotations
-					List<AnnotationInfo> annotations =
+					List<InternalAnnotationInfo> annotations =
 						AnnotationCollector.collect(target, includeInheritedAnnotations);
 
-					// 6. Build JSON response
-					StringWriter buffer = new StringWriter();
-					try (JsonWriter json = JsonToolResponseBuilder.createWriter(buffer)) {
-						json.beginObject();
+					// 6. Build response using data classes
+					AnnotationListResponse result = AnnotationListResponse.create();
+					result.setTarget(targetRef);
+					result.setKind(kind);
+					result.setModule(parser.getModuleName());
+					result.setType(parser.getTypeName()); // null for module targets
 
-						// Target information
-						json.name("target").value(targetRef);
-						json.name("kind").value(kind);
-						json.name("module").value(parser.getModuleName());
-
-						// type field (null for module targets)
-						if (parser.getTypeName() != null) {
-							json.name("type").value(parser.getTypeName());
-						} else {
-							json.name("type").nullValue();
-						}
-
-						// part field (null for module/type/enumeration targets, or for classifier targets)
-						if ("part".equals(kind)) {
-							json.name("part").value(parser.getPartName());
-						} else {
-							json.name("part").nullValue();
-						}
-
-						// classifier field (only for classifier targets)
-						if ("classifier".equals(kind)) {
-							json.name("classifier").value(parser.getPartName());
-						} else {
-							json.name("classifier").nullValue();
-						}
-
-						json.name("includeInherited").value(includeInheritedAnnotations);
-
-						// Annotations array
-						json.name("annotations").beginArray();
-						for (AnnotationInfo info : annotations) {
-							json.beginObject();
-
-							json.name("tag").value(getTagName(info.annotation));
-							json.name("configInterface").value(info.annotation.getConfigurationInterface().getName());
-							json.name("inherited").value(info.inherited);
-
-							if (info.definedIn != null) {
-								json.name("definedIn").value(info.definedIn);
-							} else {
-								json.name("definedIn").nullValue();
-							}
-
-							// Serialize annotation as XML string
-							json.name("configXml").value(info.annotation.toString());
-
-							json.endObject();
-						}
-						json.endArray();
-
-						json.endObject();
+					// Set part field (null for module/type/enumeration targets, or for classifier targets)
+					if ("part".equals(kind)) {
+						result.setPart(parser.getPartName());
 					}
 
-					String result = buffer.toString();
-					Logger.info("listAnnotations() result: " + result, ModelAnnotationBrowserTool.class);
-					return result;
+					// Set classifier field (only for classifier targets)
+					if ("classifier".equals(kind)) {
+						result.setClassifier(parser.getPartName());
+					}
 
-				} catch (IllegalArgumentException ex) {
-					// Parsing or resolution errors
-					String error = JsonToolResponseBuilder.buildErrorJson(ex.getMessage());
-					Logger.error("listAnnotations() error: " + ex.getMessage(), ex, ModelAnnotationBrowserTool.class);
-					System.err.println("ModelAnnotationBrowserTool.listAnnotations() error: " + error);
-					return error;
-				} catch (IOException ex) {
-					String error =
-						JsonToolResponseBuilder.buildErrorJson("Failed to list annotations: " + ex.getMessage());
-					Logger.error("listAnnotations() error: " + ex.getMessage(), ex, ModelAnnotationBrowserTool.class);
-					System.err.println("ModelAnnotationBrowserTool.listAnnotations() error: " + error);
-					return error;
-				} catch (Exception ex) {
-					String error =
-						JsonToolResponseBuilder.buildErrorJson("Error accessing annotations: " + ex.getMessage());
-					Logger.error("listAnnotations() error: " + ex.getMessage(), ex, ModelAnnotationBrowserTool.class);
-					System.err.println("ModelAnnotationBrowserTool.listAnnotations() error: " + error);
-					return error;
-				}
-			});
+					result.setIncludeInherited(includeInheritedAnnotations);
+
+					// Convert internal annotations to message objects
+					for (InternalAnnotationInfo info : annotations) {
+						AnnotationInfo annotationInfo = AnnotationInfo.create();
+						annotationInfo.setTag(getTagName(info.annotation));
+						annotationInfo.setConfigInterface(info.annotation.getConfigurationInterface().getName());
+						annotationInfo.setInherited(info.inherited);
+						annotationInfo.setDefinedIn(info.definedIn); // can be null
+						annotationInfo.setConfigXml(info.annotation.toString());
+
+						result.addAnnotation(annotationInfo);
+					}
+
+					return result;
+				});
+
+			// Serialize to JSON using DataClassSerializer
+			return DataClassSerializer.toJson(response, ModelAnnotationBrowserTool.class, "listAnnotations()");
+
+		} catch (Exception ex) {
+			Logger.error("listAnnotations() error: " + ex.getMessage(), ex, ModelAnnotationBrowserTool.class);
+			System.err.println("ModelAnnotationBrowserTool.listAnnotations() error: " + ex.getMessage());
+			return DataClassSerializer.errorToJson(
+				"Error accessing annotations: " + ex.getMessage(),
+				ModelAnnotationBrowserTool.class,
+				"listAnnotations()");
+		}
 	}
 
 	/**
@@ -446,7 +409,7 @@ public class ModelAnnotationBrowserTool {
 	 */
 	private static class AnnotationCollector {
 
-		private final Map<Class<? extends TLAnnotation>, AnnotationInfo> annotations = new LinkedHashMap<>();
+		private final Map<Class<? extends TLAnnotation>, InternalAnnotationInfo> annotations = new LinkedHashMap<>();
 
 		/**
 		 * Collects annotations from the target model part.
@@ -457,7 +420,7 @@ public class ModelAnnotationBrowserTool {
 		 *        Whether to include inherited annotations.
 		 * @return List of annotation information.
 		 */
-		static List<AnnotationInfo> collect(TLModelPart target, boolean includeInherited) {
+		static List<InternalAnnotationInfo> collect(TLModelPart target, boolean includeInherited) {
 			AnnotationCollector collector = new AnnotationCollector();
 
 			// Always add local annotations first
@@ -480,14 +443,14 @@ public class ModelAnnotationBrowserTool {
 		}
 
 		private void addLocal(TLAnnotation annotation) {
-			annotations.put(annotation.getConfigurationInterface(), new AnnotationInfo(annotation, false, null));
+			annotations.put(annotation.getConfigurationInterface(), new InternalAnnotationInfo(annotation, false, null));
 		}
 
 		private void addInherited(TLAnnotation annotation, String definedIn) {
 			Class<? extends TLAnnotation> key = annotation.getConfigurationInterface();
 			// Only add if not already present (local takes precedence)
 			if (!annotations.containsKey(key)) {
-				annotations.put(key, new AnnotationInfo(annotation, true, definedIn));
+				annotations.put(key, new InternalAnnotationInfo(annotation, true, definedIn));
 			}
 		}
 
@@ -553,9 +516,9 @@ public class ModelAnnotationBrowserTool {
 	}
 
 	/**
-	 * Information about an annotation including its source.
+	 * Internal helper class for annotation information including its source.
 	 */
-	private static class AnnotationInfo {
+	private static class InternalAnnotationInfo {
 
 		final TLAnnotation annotation;
 
@@ -563,7 +526,7 @@ public class ModelAnnotationBrowserTool {
 
 		final String definedIn; // null for local, qualified name for inherited
 
-		AnnotationInfo(TLAnnotation annotation, boolean inherited, String definedIn) {
+		InternalAnnotationInfo(TLAnnotation annotation, boolean inherited, String definedIn) {
 			this.annotation = annotation;
 			this.inherited = inherited;
 			this.definedIn = definedIn;

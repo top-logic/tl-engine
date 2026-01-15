@@ -2158,7 +2158,8 @@ img.type-image {
 .is-radio,
 .is-checkbox,
 a.tristate, 
-input.tristate {
+input.tristate,
+button.tristate {
 	margin-left: var(--spacing-01);
 	margin-right: var(--spacing-01);
 }
@@ -2696,6 +2697,20 @@ a.input-image.tristate .bi-info-square {
 }
 
 a.input-image.tristate.tBoolean {
+	color: var(--button-fg, var(--icon-primary))
+}
+
+button.input-image.tristate .bi-x-octagon-fill,
+button.input-image.tristate .bi-exclamation-triangle-fill {
+	color: var(--support-danger);
+}
+
+button.input-image.tristate .bi-info-circle-fill,
+button.input-image.tristate .bi-info-square {
+	color: var(--support-info);
+}
+
+button.input-image.tristate.tBoolean {
 	color: var(--button-fg, var(--icon-primary))
 }
 

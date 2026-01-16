@@ -67,7 +67,7 @@
 
 	<scm>
 		<connection>scm:git:https://github.com/top-logic/tl-engine.git</connection>
-		<developerConnection>scm:git:http://tl.bos.local:3000/TopLogic/tl-engine.git</developerConnection>
+		<developerConnection>scm:git:https://git.top-logic.com/TopLogic/tl-engine-7.git</developerConnection>
 		<url>https://github.com/top-logic/tl-engine</url>
 	</scm>
 	

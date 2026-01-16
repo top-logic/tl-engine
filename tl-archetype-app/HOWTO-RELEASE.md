@@ -57,79 +57,36 @@ A workaround for a Maven vs. Java 17 incompatibility is required to allow releas
 export MAVEN_OPTS="--add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.lang.reflect=ALL-UNNAMED --add-opens java.base/java.text=ALL-UNNAMED --add-opens java.desktop/java.awt.font=ALL-UNNAMED"
 ```
 
-Having this all set up, you can prepare a release (after the version number has been incremented to the new version to 
-release) using:
+Having this all set up, you can deploy a version (after incrementing the version number to the new version to be released)
+ using the following:
 
 ```
 cd ../tl-parent-all
-mvn deploy -P \!full-build -P maven-central
+mvn clean deploy -P \!full-build -P maven-central
 ```
 
-This results in a staging repository to be created at Sonatype:
-
 ```
-[INFO] --- nexus-staging-maven-plugin:1.6.7:deploy (injected-nexus-deploy) @ tl-archetype-app ---
-[INFO]  * Connected to Nexus at https://s01.oss.sonatype.org:443/, is version 2.15.1-02 and edition "Professional"
-[INFO]  * Using staging profile ID "..." (matched by Nexus).
-[INFO] Installing .../devel/tl-engine-2/tl-archetype-app/target/tl-archetype-app-7.5.1.jar to ...
-[INFO] Installing .../devel/tl-engine-2/tl-archetype-app/pom.xml to ...
 ...
-[INFO] Performing remote staging...
+[INFO] Created bundle successfully /home/dbu/Development/workspaces/CWS_3/git/tl-engine-7/tl-parent-all/target/central-staging/central-bundle.zip
+[INFO] Going to upload /home/dbu/Development/workspaces/CWS_3/git/tl-engine-7/tl-parent-all/target/central-publishing/central-bundle.zip
+[INFO] Uploaded bundle successfully, deployment name: Deployment, deploymentId: a865a3ce-bc4c-40ac-ae9f-6117956ac295. Deployment will publish automatically
+[INFO] Waiting until Deployment a865a3ce-bc4c-40ac-ae9f-6117956ac295 is validated
+[INFO] Deployment a865a3ce-bc4c-40ac-ae9f-6117956ac295 has been validated. To finish publishing visit https://central.sonatype.com/publishing/deployments
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Summary for tl-parent-all 7.9.8:
 [INFO] 
-[INFO]  * Remote staging into staging profile ID "..."
-[INFO]  * Created staging repository with ID "comtop-logic-1002".
-[INFO]  * Staging repository at https://s01.oss.sonatype.org:443/service/local/staging/deployByRepositoryId/comtop-logic-1002
-[INFO]  * Uploading locally staged artifacts to profile com.top-logic
-Uploading to tl-ossrh: https://s01.oss.sonatype.org:443/service/local/staging/deployByRepositoryId/comtop-logic-1002/...
-Uploaded to tl-ossrh: https://s01.oss.sonatype.org:443/service/local/staging/deployByRepositoryId/comtop-logic-1002/...
-...
-[INFO]  * Upload of locally staged artifacts finished.
-[INFO]  * Closing staging repository with ID "comtop-logic-1002".
-
-Waiting for operation to complete...
-................
-
-[INFO] Remote staged 1 repositories, finished with success.
+[INFO] tl-parent-all ...................................... SUCCESS [  1.408 s]
+[INFO] tl-archetype-app ................................... SUCCESS [ 38.508 s]
+[INFO] tl-parent-build .................................... SUCCESS [  0.758 s]
+[INFO] tl-parent-core ..................................... SUCCESS [  1.409 s]
+[INFO] tl-parent-app ...................................... SUCCESS [  1.506 s]
+[INFO] tl-parent-app-internal ............................. SUCCESS [  1.111 s]
+[INFO] tl-parent-core-internal ............................ SUCCESS [  0.909 s]
+[INFO] tl-parent-gwt ...................................... SUCCESS [  7.541 s]
 [INFO] ------------------------------------------------------------------------
 [INFO] BUILD SUCCESS
 [INFO] ------------------------------------------------------------------------
-[INFO] Total time:  01:49 min
-[INFO] Finished at: 2023-06-26T18:26:05+02:00
+[INFO] Total time:  53.650 s
+[INFO] Finished at: 2026-01-16T15:18:24+01:00
 [INFO] ------------------------------------------------------------------------
-```
-
-To finally release the staged artifacts to Maven Central, you have to issue the following command:
-
-```
-cd ../tl-parent-all
-mvn nexus-staging:release -P \!full-build -P maven-central
-```
-
-This releases the staged artifacts:
-
-```
-[INFO] -------------------< com.top-logic:tl-archetype-app >-------------------
-[INFO] Building tl-archetype-app 7.5.1
-[INFO] --------------------------[ maven-archetype ]---------------------------
-[INFO] 
-[INFO] --- nexus-staging-maven-plugin:1.6.7:release (default-cli) @ tl-archetype-app ---
-[INFO]  * Connected to Nexus at https://s01.oss.sonatype.org:443/, is version 2.15.1-02 and edition "Professional"
-[INFO] Releasing staging repository with IDs=[comtop-logic-1002]
-
-Waiting for operation to complete...
-....
-
-[INFO] Released
-[INFO] ------------------------------------------------------------------------
-[INFO] BUILD SUCCESS
-[INFO] ------------------------------------------------------------------------
-[INFO] Total time:  15.278 s
-[INFO] Finished at: 2023-06-26T18:26:32+02:00
-[INFO] ------------------------------------------------------------------------
-```
-
-If something went wrong and the release should be aborted, type:
-
-```
-mvn nexus-staging:drop -P maven-central
 ```

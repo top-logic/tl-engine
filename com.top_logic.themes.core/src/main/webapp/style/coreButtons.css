@@ -594,7 +594,7 @@ span.cImageButton .input-image.disabled i, span.cmdLink .input-image.disabled i,
 span.cTimeInput .input-image.disabled i, span.cPopupSelect .input-image.disabled i, .cIntegerInput .input-image.disabled i, 
 span.cTextSelect .input-image.disabled i, span.cImageLinkButton .input-image.disabled i, .cDownload .input-image.disabled i, 
 span.cDecoratedCell .input-image.disabled i, span.cExpandableTextInput .input-image.disabled i, span.cBlockTextInput .input-image.disabled i, 
-span.urlWithIcon .input-image.disabled i, span.cIconSelect .input-image.cannot-edit i, .fChoose.input-image.disabled i, a.cmdButtonDisabled i, 
+span.urlWithIcon .input-image.disabled i, span.cIconCycle .input-image.cannot-edit i, .fChoose.input-image.disabled i, a.cmdButtonDisabled i, 
 .cMenuButton.menuEntryDisabled i, .cMenuButton.menuEntryDisabled:hover i, .cmdLinkDisabled .input-image.disabled i,
 span.dlgToolbar .input-image.disabled i, span.pdlgToolbar .input-image.disabled i,
 div.cCollapsibleToolbar .input-image.disabled i, .tl-table__title-toolbar .input-image.disabled i {
@@ -602,11 +602,13 @@ div.cCollapsibleToolbar .input-image.disabled i, .tl-table__title-toolbar .input
 }
 
 /* Icon Button Styles */
+/**********************/
+/*       Link a       */
+/**********************/
 .cOpenCalendar,
 .cButton.i18nTranslationCommand,
 .cButton.cmdLink, 
 .cButton.cImageButton,
-cButton.cImageButton,
 .dfToolbar .cmdLink, 
 .dfToolbar .cmdLinkDisabled, 
 .dfListCommands .cmdLink,
@@ -746,5 +748,119 @@ a.fChoose:hover,
 	cursor: default;
 }
 
+/**********************/
+/*       button       */
+/**********************/
+button {
+	cursor: pointer;
+}
 
+button:not(.disabled, :disabled):hover {
+	/* Currently no defined values. */
+/* 	color: var(--highlight, var(--link-primary-hover)); */
+}
+
+button:not(.disabled, :disabled):active {
+	color: var(--highlight, var(--text-primary));
+}
+
+button:not(.disabled, :disabled):focus {
+	color: var(--highlight, var(--link-primary-hover));
+	outline: 2px solid var(--focus);
+	outline-offset: 2px;
+}
+
+button.input-image,
+.cLogoutTimer button {
+	margin: unset;
+	padding: unset;
+	border: unset;
+	background: unset;
+	font: unset;
+}
+
+.cOpenCalendar,
+.cButton.i18nTranslationCommand,
+.cButton.cmdLink, 
+.cButton.cImageButton,
+.dfToolbar .cmdLink, 
+.dfToolbar .cmdLinkDisabled, 
+.dfListCommands .cmdLink,
+.dfListCommands .cmdLinkDisabled,
+.tl-table__cell-container .cmdLink,
+.tl-table__cell-container .cmdLinkDisabled,
+.dfListAdd .cButton button,
+.dfListAdd .cButton button.disabled,
+.dfListAdd .cButton button:disabled,
+.cButton.dfRemove,
+.cButton.fToggle {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	align-self: center;
+	height: 1rem;
+	min-width: 1rem;
+	color: var(--button-fg, var(--icon-primary));
+}
+
+.cOpenCalendar button,
+button.fClear,
+button.fChoose, 
+.cButton.i18nTranslationCommand button,
+.cButton.cmdLink button, 
+.cButton.cImageButton button,
+.cButton.dfRemove button,
+.cButton.fToggle button {
+	color: var(--button-fg, var(--icon-primary));
+}
+
+.cButton.fToggle button {
+	color: var(--highlight-fg, var(--button-fg, var(--icon-primary)));
+}
+
+.cOpenCalendar button:hover,
+button.fClear:hover,
+button.fChoose:hover,
+.cButton.i18nTranslationCommand button:hover,
+.cButton.cmdLink button:hover, 
+.cButton.cImageButton button:hover,
+.dfToolbar .cmdLink:hover, 
+.dfListCommands .cmdLink:hover,
+.tl-table__cell-container .cmdLink:hover,
+.dfListAdd .cButton button:hover,
+.cButton.dfRemove button:hover {
+	color: var(--button-fg, var(--icon-primary));
+}
+
+.cButton.fToggle button:hover {
+	color: var(--highlight-fg, var(--button-fg, var(--icon-primary)));
+}
+
+.cButton.dfRemove button {
+	text-shadow: var(--icon-outline);
+	color: var(--support-danger) !important;
+}
+
+.tlAdditionalRightContent .cButton.cImageButton button,
+.sblLogo .cImageButton button,
+.sblLogo .cImageButton button:hover {
+	padding: inherit;
+	color: var(--icon-on-color);
+}
+
+.breadCrumbRight .Right span button {
+	color: var(--button-fg, var(--icon-primary));
+}
+
+.tlAdditionalRightContent .cButton.cImageButton button:focus,
+.sblLogo .cImageButton button:focus {
+	box-shadow: none;
+	outline: none !important;
+}
+
+.tlAdditionalRightContent .cButton.cImageButton.cmdButtonDisabled button,
+.sblLogo .cImageButton.cmdButtonDisabled button {
+	color: var(--icon-on-color-disabled);
+	cursor: default;
+}
 

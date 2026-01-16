@@ -31,7 +31,7 @@ public class JsonSchemaDocument extends Schema {
 
 	private String _schemaDialectUri = null;
 
-	private final java.util.Map<String, Boolean> _vocabulary = new java.util.HashMap<>();
+	private final java.util.Map<String, Boolean> _vocabulary = new java.util.LinkedHashMap<>();
 
 	private com.top_logic.ai.service.jsonschema.model.Schema _schema = null;
 

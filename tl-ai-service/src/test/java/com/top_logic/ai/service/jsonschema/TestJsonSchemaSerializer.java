@@ -27,17 +27,17 @@ public class TestJsonSchemaSerializer extends TestCase {
 	public void testPersonSchema() {
 		// Build a person schema with name and age properties
 		ObjectSchema personSchema = ObjectSchema.create()
-			.putPropertie("name", StringSchema.create()
+			.putProperty("name", StringSchema.create()
 				.setTitle("Name")
 				.setDescription("The person's full name")
 				.setMinLength(1))
-			.putPropertie("age", NumericSchema.create()
+			.putProperty("age", NumericSchema.create()
 				.setTitle("Age")
 				.setDescription("The person's age in years")
 				.setIntegerOnly(true)
 				.setMinimum(0.0)
 				.setMaximum(150.0))
-			.putPropertie("email", StringSchema.create()
+			.putProperty("email", StringSchema.create()
 				.setTitle("Email")
 				.setFormat("email"))
 			.addRequired("name");
@@ -175,16 +175,16 @@ public class TestJsonSchemaSerializer extends TestCase {
 	public void testNestedObjectSchema() {
 		// Address schema
 		ObjectSchema addressSchema = ObjectSchema.create()
-			.putPropertie("street", StringSchema.create())
-			.putPropertie("city", StringSchema.create())
-			.putPropertie("zipCode", StringSchema.create().setPattern("^\\d{5}$"))
+			.putProperty("street", StringSchema.create())
+			.putProperty("city", StringSchema.create())
+			.putProperty("zipCode", StringSchema.create().setPattern("^\\d{5}$"))
 			.addRequired("street")
 			.addRequired("city");
 
 		// Person with address
 		ObjectSchema personWithAddressSchema = ObjectSchema.create()
-			.putPropertie("name", StringSchema.create())
-			.putPropertie("address", addressSchema)
+			.putProperty("name", StringSchema.create())
+			.putProperty("address", addressSchema)
 			.addRequired("name")
 			.addRequired("address");
 
@@ -210,13 +210,13 @@ public class TestJsonSchemaSerializer extends TestCase {
 	public void testSchemaWithDefinitions() {
 		// Define a reusable address schema
 		ObjectSchema addressDef = ObjectSchema.create()
-			.putPropertie("street", StringSchema.create())
-			.putPropertie("city", StringSchema.create())
-			.putPropertie("country", StringSchema.create());
+			.putProperty("street", StringSchema.create())
+			.putProperty("city", StringSchema.create())
+			.putProperty("country", StringSchema.create());
 
 		// Main schema using the definition
 		ObjectSchema mainSchema = ObjectSchema.create()
-			.putPropertie("name", StringSchema.create());
+			.putProperty("name", StringSchema.create());
 
 		// Add the definition to the schema
 		mainSchema.putDefinition("Address", addressDef);

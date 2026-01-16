@@ -152,10 +152,10 @@ public class TestJsonSchemaParser extends TestCase {
 	public void testRoundTrip() throws Exception {
 		// Create original schema
 		ObjectSchema original = ObjectSchema.create()
-			.putPropertie("name", StringSchema.create()
+			.putProperty("name", StringSchema.create()
 				.setTitle("Name")
 				.setMinLength(1))
-			.putPropertie("age", NumericSchema.create()
+			.putProperty("age", NumericSchema.create()
 				.setTitle("Age")
 				.setIntegerOnly(true)
 				.setMinimum(0.0)

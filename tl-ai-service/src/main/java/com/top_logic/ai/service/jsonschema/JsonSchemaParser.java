@@ -462,14 +462,14 @@ public class JsonSchemaParser {
 			@SuppressWarnings("unchecked")
 			Map<String, Schema> props = (Map<String, Schema>) properties.get("properties");
 			for (Map.Entry<String, Schema> entry : props.entrySet()) {
-				schema.putPropertie(entry.getKey(), entry.getValue());
+				schema.putProperty(entry.getKey(), entry.getValue());
 			}
 		}
 		if (properties.containsKey("patternProperties")) {
 			@SuppressWarnings("unchecked")
 			Map<String, Schema> patternProps = (Map<String, Schema>) properties.get("patternProperties");
 			for (Map.Entry<String, Schema> entry : patternProps.entrySet()) {
-				schema.putPatternPropertie(entry.getKey(), entry.getValue());
+				schema.putPatternProperty(entry.getKey(), entry.getValue());
 			}
 		}
 		if (properties.containsKey("additionalProperties")) {

@@ -173,7 +173,7 @@ public abstract class Schema extends de.haumacher.msgbuf.data.AbstractDataObject
 
 	private String _comment = null;
 
-	private final java.util.Map<String, com.top_logic.ai.service.jsonschema.model.Schema> _definitions = new java.util.HashMap<>();
+	private final java.util.Map<String, com.top_logic.ai.service.jsonschema.model.Schema> _definitions = new java.util.LinkedHashMap<>();
 
 	private String _title = null;
 

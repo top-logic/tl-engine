@@ -23,8 +23,8 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * <h3>Example Usage:</h3>
  * <pre>
  * ObjectSchema personSchema = ObjectSchema.create()
- *     .putPropertie("name", StringSchema.create().setMinLength(1))
- *     .putPropertie("age", NumericSchema.create().setIntegerOnly(true).setMinimum(0))
+ *     .putProperty("name", StringSchema.create().setMinLength(1))
+ *     .putProperty("age", NumericSchema.create().setIntegerOnly(true).setMinimum(0))
  *     .addRequired("name");
  *
  * JsonSchemaDocument document = JsonSchemaDocument.create()

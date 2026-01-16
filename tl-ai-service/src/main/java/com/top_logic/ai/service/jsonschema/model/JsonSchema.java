@@ -1267,13 +1267,13 @@ public class JsonSchema extends de.haumacher.msgbuf.data.AbstractDataObject impl
 	/**
 	 * Adds a key value pair to the {@link #getProperties()} map.
 	 */
-	public com.top_logic.ai.service.jsonschema.model.JsonSchema putPropertie(String key, com.top_logic.ai.service.jsonschema.model.JsonSchema value) {
-		internalPutPropertie(key, value);
+	public com.top_logic.ai.service.jsonschema.model.JsonSchema putProperty(String key, com.top_logic.ai.service.jsonschema.model.JsonSchema value) {
+		internalputProperty(key, value);
 		return this;
 	}
 
-	/** Implementation of {@link #putPropertie(String, com.top_logic.ai.service.jsonschema.model.JsonSchema)} without chain call utility. */
-	protected final void  internalPutPropertie(String key, com.top_logic.ai.service.jsonschema.model.JsonSchema value) {
+	/** Implementation of {@link #putProperty(String, com.top_logic.ai.service.jsonschema.model.JsonSchema)} without chain call utility. */
+	protected final void  internalputProperty(String key, com.top_logic.ai.service.jsonschema.model.JsonSchema value) {
 		if (_properties.containsKey(key)) {
 			throw new IllegalArgumentException("Property 'properties' already contains a value for key '" + key + "'.");
 		}

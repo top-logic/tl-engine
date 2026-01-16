@@ -79,7 +79,7 @@ public class ConfigSchemaBuilder {
 
 		// Create schema and add to cache before processing properties to handle recursion
 		ObjectSchema result = ObjectSchema.create()
-			.putPropertie("$type", ConstSchema.create().setConstValue(configInterface.getName()));
+			.putProperty("$type", ConstSchema.create().setConstValue(configInterface.getName()));
 		_schemaCache.put(configInterface, result);
 
 		// Process all properties
@@ -98,7 +98,7 @@ public class ConfigSchemaBuilder {
 					schema.setDescription(description);
 				}
 
-				result.putPropertie(property.getPropertyName(), schema);
+				result.putProperty(property.getPropertyName(), schema);
 
 				// Mark as required if mandatory
 				if (property.isMandatory()) {
@@ -201,7 +201,7 @@ public class ConfigSchemaBuilder {
 					// Copy all properties except the key property
 					for (Map.Entry<String, Schema> entry : objectValueSchema.getProperties().entrySet()) {
 						if (!entry.getKey().equals(keyPropertyName)) {
-							clonedValueSchema.putPropertie(entry.getKey(), entry.getValue());
+							clonedValueSchema.putProperty(entry.getKey(), entry.getValue());
 						}
 					}
 

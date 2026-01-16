@@ -53,17 +53,17 @@ public class ObjectSchema extends Schema {
 
 	private final java.util.List<String> _required = new java.util.ArrayList<>();
 
-	private final java.util.Map<String, com.top_logic.ai.service.jsonschema.model.StringArray> _dependentRequired = new java.util.HashMap<>();
+	private final java.util.Map<String, com.top_logic.ai.service.jsonschema.model.StringArray> _dependentRequired = new java.util.LinkedHashMap<>();
 
-	private final java.util.Map<String, com.top_logic.ai.service.jsonschema.model.Schema> _properties = new java.util.HashMap<>();
+	private final java.util.Map<String, com.top_logic.ai.service.jsonschema.model.Schema> _properties = new java.util.LinkedHashMap<>();
 
-	private final java.util.Map<String, com.top_logic.ai.service.jsonschema.model.Schema> _patternProperties = new java.util.HashMap<>();
+	private final java.util.Map<String, com.top_logic.ai.service.jsonschema.model.Schema> _patternProperties = new java.util.LinkedHashMap<>();
 
 	private com.top_logic.ai.service.jsonschema.model.Schema _additionalProperties = null;
 
 	private com.top_logic.ai.service.jsonschema.model.Schema _propertyNames = null;
 
-	private final java.util.Map<String, com.top_logic.ai.service.jsonschema.model.Schema> _dependentSchemas = new java.util.HashMap<>();
+	private final java.util.Map<String, com.top_logic.ai.service.jsonschema.model.Schema> _dependentSchemas = new java.util.LinkedHashMap<>();
 
 	/**
 	 * Creates a {@link ObjectSchema} instance.
@@ -252,13 +252,13 @@ public class ObjectSchema extends Schema {
 	/**
 	 * Adds a key value pair to the {@link #getProperties()} map.
 	 */
-	public com.top_logic.ai.service.jsonschema.model.ObjectSchema putPropertie(String key, com.top_logic.ai.service.jsonschema.model.Schema value) {
-		internalPutPropertie(key, value);
+	public com.top_logic.ai.service.jsonschema.model.ObjectSchema putProperty(String key, com.top_logic.ai.service.jsonschema.model.Schema value) {
+		internalPutProperty(key, value);
 		return this;
 	}
 
-	/** Implementation of {@link #putPropertie(String, com.top_logic.ai.service.jsonschema.model.Schema)} without chain call utility. */
-	protected final void  internalPutPropertie(String key, com.top_logic.ai.service.jsonschema.model.Schema value) {
+	/** Implementation of {@link #putProperty(String, com.top_logic.ai.service.jsonschema.model.Schema)} without chain call utility. */
+	protected final void  internalPutProperty(String key, com.top_logic.ai.service.jsonschema.model.Schema value) {
 		if (_properties.containsKey(key)) {
 			throw new IllegalArgumentException("Property 'properties' already contains a value for key '" + key + "'.");
 		}
@@ -268,7 +268,7 @@ public class ObjectSchema extends Schema {
 	/**
 	 * Removes a key from the {@link #getProperties()} map.
 	 */
-	public final void removePropertie(String key) {
+	public final void removeProperty(String key) {
 		_properties.remove(key);
 	}
 
@@ -301,13 +301,13 @@ public class ObjectSchema extends Schema {
 	/**
 	 * Adds a key value pair to the {@link #getPatternProperties()} map.
 	 */
-	public com.top_logic.ai.service.jsonschema.model.ObjectSchema putPatternPropertie(String key, com.top_logic.ai.service.jsonschema.model.Schema value) {
-		internalPutPatternPropertie(key, value);
+	public com.top_logic.ai.service.jsonschema.model.ObjectSchema putPatternProperty(String key, com.top_logic.ai.service.jsonschema.model.Schema value) {
+		internalPutPatternProperty(key, value);
 		return this;
 	}
 
-	/** Implementation of {@link #putPatternPropertie(String, com.top_logic.ai.service.jsonschema.model.Schema)} without chain call utility. */
-	protected final void  internalPutPatternPropertie(String key, com.top_logic.ai.service.jsonschema.model.Schema value) {
+	/** Implementation of {@link #putPatternProperty(String, com.top_logic.ai.service.jsonschema.model.Schema)} without chain call utility. */
+	protected final void  internalPutPatternProperty(String key, com.top_logic.ai.service.jsonschema.model.Schema value) {
 		if (_patternProperties.containsKey(key)) {
 			throw new IllegalArgumentException("Property 'patternProperties' already contains a value for key '" + key + "'.");
 		}
@@ -317,7 +317,7 @@ public class ObjectSchema extends Schema {
 	/**
 	 * Removes a key from the {@link #getPatternProperties()} map.
 	 */
-	public final void removePatternPropertie(String key) {
+	public final void removePatternProperty(String key) {
 		_patternProperties.remove(key);
 	}
 

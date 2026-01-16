@@ -40,7 +40,7 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * <h3>Usage:</h3>
  * <pre>
  * Schema schema = ObjectSchema.create()
- *     .putPropertie("name", StringSchema.create())
+ *     .putProperty("name", StringSchema.create())
  *     .addRequired("name");
  *
  * JsonWriter writer = new JsonWriter(output);

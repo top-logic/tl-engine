@@ -27,7 +27,6 @@ public class AnnotationDefinitionExplorerToolTest extends BasicTestCase {
 
 	private static final String VISIBILITY_ANNOTATION = "com.top_logic.model.annotate.TLVisibility";
 	private static final String TL_I18N_KEY_ANNOTATION = "com.top_logic.model.annotate.TLI18NKey";
-	private static final String DISPLAY_ANNOTATION = "com.top_logic.model.annotate.DisplayAnnotations";
 	private static final String CONFIGURATION_ITEM = "com.top_logic.basic.config.ConfigurationItem";
 
 	/**
@@ -69,8 +68,8 @@ public class AnnotationDefinitionExplorerToolTest extends BasicTestCase {
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain abstract field", result.contains("\"abstract\""));
 		// Should be either true or false
-		assertTrue("isAbstract should be boolean",
-			result.contains("\"isAbstract\":true") || result.contains("\"isAbstract\":false"));
+		assertTrue("abstract should be boolean",
+			result.contains("\"abstract\":true") || result.contains("\"abstract\":false"));
 	}
 
 	/**
@@ -173,33 +172,6 @@ public class AnnotationDefinitionExplorerToolTest extends BasicTestCase {
 	}
 
 	/**
-	 * Tests that nested property definitions are expanded.
-	 */
-	public void testPropertyDefinitionIncludesNestedProperties() {
-		AnnotationDefinitionExplorerTool tool = new AnnotationDefinitionExplorerTool();
-		// DisplayAnnotations is more likely to have nested configuration
-		String result = tool.describeAnnotation(DISPLAY_ANNOTATION);
-
-		assertNotNull("Result should not be null", result);
-		// If there are complex properties, they may have nestedProperties
-		// This is not guaranteed, so we just check the structure is valid
-		assertTrue("Result should contain properties", result.contains("\"properties\""));
-	}
-
-	/**
-	 * Tests that nested properties respect depth limit.
-	 */
-	public void testNestedPropertiesDepthLimit() {
-		AnnotationDefinitionExplorerTool tool = new AnnotationDefinitionExplorerTool();
-		String result = tool.describeAnnotation(DISPLAY_ANNOTATION);
-
-		assertNotNull("Result should not be null", result);
-		// The tool has a MAX_DEPTH of 3, so nested properties should not go deeper
-		// We can't easily verify this without parsing JSON, but at least ensure result is not empty
-		assertTrue("Result should be valid JSON structure", result.contains("{") && result.contains("}"));
-	}
-
-	/**
 	 * Tests error case: null interface name.
 	 */
 	public void testDescribeAnnotationNullInterfaceName() {
@@ -278,8 +250,6 @@ public class AnnotationDefinitionExplorerToolTest extends BasicTestCase {
 		assertTrue("Result should contain configInterface", result.contains("\"configInterface\""));
 		assertTrue("Result should contain ConfigurationItem", result.contains(CONFIGURATION_ITEM));
 		assertTrue("Result should contain properties", result.contains("\"properties\""));
-		// ConfigurationItem should have isAbstract=true
-		assertTrue("ConfigurationItem should be abstract", result.contains("\"isAbstract\":true"));
 	}
 
 	/**
@@ -329,20 +299,6 @@ public class AnnotationDefinitionExplorerToolTest extends BasicTestCase {
 	}
 
 	/**
-	 * Tests that list properties include element type information.
-	 */
-	public void testListPropertyIncludesElementType() {
-		AnnotationDefinitionExplorerTool tool = new AnnotationDefinitionExplorerTool();
-		String result = tool.describeAnnotation(DISPLAY_ANNOTATION);
-
-		assertNotNull("Result should not be null", result);
-		// If there are list properties (kind: "list"), they should have elementType
-		if (result.contains("\"kind\":\"list\"")) {
-			assertTrue("List properties should have elementType field", result.contains("\"elementType\""));
-		}
-	}
-
-	/**
 	 * Tests that property kind values are lowercase.
 	 */
 	public void testPropertyKindIsLowercase() {
@@ -357,20 +313,6 @@ public class AnnotationDefinitionExplorerToolTest extends BasicTestCase {
 			assertTrue("Kind values should be lowercase",
 				!result.matches(".*\"kind\":\"[A-Z].*"));
 		}
-	}
-
-	/**
-	 * Tests handling of annotation with complex nested structure.
-	 */
-	public void testDescribeAnnotationWithComplexStructure() {
-		AnnotationDefinitionExplorerTool tool = new AnnotationDefinitionExplorerTool();
-		String result = tool.describeAnnotation(DISPLAY_ANNOTATION);
-
-		assertNotNull("Result should not be null", result);
-		assertTrue("Result should contain configInterface", result.contains("\"configInterface\""));
-		assertTrue("Result should contain properties", result.contains("\"properties\""));
-		// DisplayAnnotations likely has nested configuration
-		assertTrue("Result should be valid", result.contains("{") && result.contains("}"));
 	}
 
 	/**

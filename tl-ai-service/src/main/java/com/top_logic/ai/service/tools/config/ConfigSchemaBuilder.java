@@ -17,6 +17,7 @@ import com.top_logic.ai.service.jsonschema.model.NumericSchema;
 import com.top_logic.ai.service.jsonschema.model.ObjectSchema;
 import com.top_logic.ai.service.jsonschema.model.Schema;
 import com.top_logic.ai.service.jsonschema.model.StringSchema;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationValueBinding;
 import com.top_logic.basic.config.ExternallyNamed;
@@ -191,6 +192,7 @@ public class ConfigSchemaBuilder {
 	 * only possible for XML serialized configurations.
 	 */
 	private Schema buildComplexPropertySchema(PropertyDescriptor property) {
+		Logger.warn("Ignoring complex property '" + property + "' (only supported in XML).", ConfigSchemaBuilder.class);
 		return null;
 	}
 

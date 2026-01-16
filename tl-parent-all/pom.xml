@@ -1080,6 +1080,14 @@
 			    <groupId>org.apache.xmlgraphics</groupId>
 			    <artifactId>batik-codec</artifactId>
 			    <version>${batik.version}</version>
+			    <exclusions>
+
+			    	<!-- Note: Whenever batik-codec is used, jcl-over-slf4j must be added as well. -->
+			    	<exclusion>
+					    <groupId>commons-logging</groupId>
+					    <artifactId>commons-logging</artifactId>
+			    	</exclusion>
+			    </exclusions>
 			</dependency>
 			<dependency>
 			    <groupId>org.apache.xmlgraphics</groupId>

@@ -14,7 +14,7 @@
 							user-id="root"
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Administration > Development"
+								tab-path="Administration > Development > Modell Editor"
 							/>
 						</action>
 						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
@@ -39,6 +39,13 @@
 									value="MyA"
 								/>
 							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Modell Editor > Attribute"
+							/>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 							command-implementation-comment="com.top_logic.tool.boundsec.CheckerProxyHandler"
@@ -374,13 +381,6 @@
 							user-id="root"
 						>
 							<arguments/>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-							user-id="root"
-						>
-							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Technisches Demo"
-							/>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
 							user-id="root"
@@ -856,13 +856,6 @@
 					user-id="root"
 				>
 					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Technisches Demo"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-					user-id="root"
-				>
-					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 						tab-path="Technisches Demo > Komponenten > Test Regression 28932"
 					/>
 				</action>
@@ -963,7 +956,7 @@
 							user-id="root"
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Strukturen"
+								tab-path="Strukturen > Typendemo"
 							/>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
@@ -1017,20 +1010,6 @@
 							user-id="root"
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Technisches Demo"
-							/>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-							user-id="root"
-						>
-							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Technisches Demo > Komponenten > Flussdiagramm"
-							/>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-							user-id="root"
-						>
-							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 								tab-path="Technisches Demo > Komponenten > Test Regression 28932"
 							/>
 						</action>
@@ -1062,20 +1041,6 @@
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
 					<actions>
-						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-							user-id="root"
-						>
-							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Administration > Development"
-							/>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-							user-id="root"
-						>
-							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Administration > Development > Modell Editor > Eigenschaften"
-							/>
-						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
 							user-id="root"
 						>
@@ -1131,13 +1096,6 @@
 									tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
 								/>
 							</selection-model-name>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-							user-id="root"
-						>
-							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Administration > Development > Modell Editor > Diagramm"
-							/>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
 							user-id="root"

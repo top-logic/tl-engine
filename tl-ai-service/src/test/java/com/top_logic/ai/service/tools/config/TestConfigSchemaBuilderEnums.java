@@ -5,7 +5,11 @@
  */
 package com.top_logic.ai.service.tools.config;
 
+import junit.framework.Test;
 import junit.framework.TestCase;
+
+import test.com.top_logic.TLTestSetup;
+import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.ai.service.jsonschema.JsonSchemaWriter;
 import com.top_logic.ai.service.jsonschema.model.EnumSchema;
@@ -16,6 +20,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ExternallyNamed;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.thread.ThreadContextManager;
 
 /**
  * Test case for {@link ConfigSchemaBuilder} enum handling.
@@ -177,5 +182,11 @@ public class TestConfigSchemaBuilderEnums extends TestCase {
 
 		System.out.println("ProtocolEnum Schema:");
 		System.out.println(JsonSchemaWriter.toJson(enumSchema, true));
+	}
+
+	public static Test suite() {
+		return TLTestSetup.createTLTestSetup(
+			ServiceTestSetup.createSetup(
+				TestConfigSchemaBuilderKeyAnnotation.class, ThreadContextManager.Module.INSTANCE));
 	}
 }

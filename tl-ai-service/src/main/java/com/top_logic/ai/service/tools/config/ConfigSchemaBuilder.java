@@ -179,8 +179,48 @@ public class ConfigSchemaBuilder {
 		Class<?> valueType = property.getElementType();
 		Schema valueSchema = buildObjectSchema(valueType);
 		if (valueSchema != null) {
-			// TODO: Use Key annotation to determine key property of the map, use this as property
-			// name schema and remove that property from the properties of the inner object.
+			// Check for @Key annotation
+			com.top_logic.basic.config.annotation.Key keyAnnotation =
+				property.getAnnotation(com.top_logic.basic.config.annotation.Key.class);
+
+			if (keyAnnotation != null && valueSchema instanceof ObjectSchema) {
+				// The map key comes from a property of the value object
+				String keyPropertyName = keyAnnotation.value();
+				ObjectSchema objectValueSchema = (ObjectSchema) valueSchema;
+
+				// Get the key property schema to use as property name constraint
+				Schema keyPropertySchema = objectValueSchema.getProperties().get(keyPropertyName);
+				if (keyPropertySchema != null) {
+					// Use the key property schema to constrain property names
+					schema.setPropertyNames(keyPropertySchema);
+
+					// Remove the key property from the value schema since it's redundant
+					// (the property name already contains this information)
+					ObjectSchema clonedValueSchema = ObjectSchema.create();
+
+					// Copy all properties except the key property
+					for (Map.Entry<String, Schema> entry : objectValueSchema.getProperties().entrySet()) {
+						if (!entry.getKey().equals(keyPropertyName)) {
+							clonedValueSchema.putPropertie(entry.getKey(), entry.getValue());
+						}
+					}
+
+					// Copy other object schema properties
+					clonedValueSchema.setMaxProperties(objectValueSchema.getMaxProperties());
+					clonedValueSchema.setMinProperties(objectValueSchema.getMinProperties());
+					for (String req : objectValueSchema.getRequired()) {
+						if (!req.equals(keyPropertyName)) {
+							clonedValueSchema.addRequired(req);
+						}
+					}
+
+					// Copy base schema properties
+					copyBaseSchemaProperties(objectValueSchema, clonedValueSchema);
+
+					valueSchema = clonedValueSchema;
+				}
+			}
+
 			schema.setAdditionalProperties(valueSchema);
 		}
 
@@ -363,6 +403,32 @@ public class ConfigSchemaBuilder {
 		// TopLogic convention: class.<ClassName>.<propertyName>.tooltip
 		ResKey labelKey = ResKey.forClass(configInterface).suffix(propertyName);
 		return labelKey;
+	}
+
+	/**
+	 * Copies base schema properties (metadata) from source to target schema.
+	 */
+	private void copyBaseSchemaProperties(Schema source, Schema target) {
+		target.setId(source.getId());
+		target.setAnchor(source.getAnchor());
+		target.setDynamicAnchor(source.getDynamicAnchor());
+		target.setComment(source.getComment());
+		target.setTitle(source.getTitle());
+		target.setDescription(source.getDescription());
+		target.setDefaultValue(source.getDefaultValue());
+		target.setDeprecated(source.isDeprecated());
+		target.setReadOnly(source.isReadOnly());
+		target.setWriteOnly(source.isWriteOnly());
+
+		// Copy definitions
+		for (Map.Entry<String, Schema> entry : source.getDefinitions().entrySet()) {
+			target.putDefinition(entry.getKey(), entry.getValue());
+		}
+
+		// Copy examples
+		for (String example : source.getExamples()) {
+			target.addExample(example);
+		}
 	}
 
 }

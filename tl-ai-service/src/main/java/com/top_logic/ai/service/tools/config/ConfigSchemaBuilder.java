@@ -6,6 +6,7 @@
 package com.top_logic.ai.service.tools.config;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import com.top_logic.ai.service.jsonschema.model.ArraySchema;
@@ -18,6 +19,7 @@ import com.top_logic.ai.service.jsonschema.model.Schema;
 import com.top_logic.ai.service.jsonschema.model.StringSchema;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationValueBinding;
+import com.top_logic.basic.config.ExternallyNamed;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.constraint.algorithm.ConstraintAlgorithm;
@@ -240,9 +242,22 @@ public class ConfigSchemaBuilder {
 		if (type.isEnum()) {
 			EnumSchema schema = EnumSchema.create();
 			for (Object constant : type.getEnumConstants()) {
-				// TODO: Care for enums that implement ExternallyNamed or ProtcolEnum that use
-				// different serialization.
-				schema.addEnumLiteral(((Enum<?>) constant).name());
+				String literalValue;
+
+				// Check if enum implements ExternallyNamed (TopLogic convention)
+				if (constant instanceof ExternallyNamed) {
+					literalValue = ((ExternallyNamed) constant).getExternalName();
+				}
+				// Check if enum implements ProtocolEnum (msgbuf convention)
+				else if (constant instanceof de.haumacher.msgbuf.data.ProtocolEnum) {
+					literalValue = ((de.haumacher.msgbuf.data.ProtocolEnum) constant).protocolName();
+				}
+				// Default: use enum constant name
+				else {
+					literalValue = ((Enum<?>) constant).name();
+				}
+
+				schema.addEnumLiteral(literalValue);
 			}
 			return schema;
 		}
@@ -312,7 +327,11 @@ public class ConfigSchemaBuilder {
 	 */
 	private String resolvePropertyLabel(ConfigurationDescriptor descriptor, PropertyDescriptor property) {
 		ResKey labelKey = getPropertyResourceKey(descriptor, property);
-		return Resources.getInstance().getString(labelKey, null);
+		return resources().getString(labelKey, null);
+	}
+
+	private Resources resources() {
+		return Resources.getInstance(Locale.ENGLISH);
 	}
 
 	/**
@@ -332,7 +351,7 @@ public class ConfigSchemaBuilder {
 	private String resolvePropertyDescription(ConfigurationDescriptor descriptor, PropertyDescriptor property) {
 		ResKey labelKey = getPropertyResourceKey(descriptor, property);
 		ResKey tooltipKey = labelKey.tooltip();
-		return Resources.getInstance().getString(tooltipKey, null);
+		return resources().getString(tooltipKey, null);
 	}
 
 	private ResKey getPropertyResourceKey(ConfigurationDescriptor descriptor, PropertyDescriptor property) {

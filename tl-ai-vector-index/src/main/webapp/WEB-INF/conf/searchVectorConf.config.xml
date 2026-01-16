@@ -7,7 +7,7 @@
 			<instance class="com.top_logic.basic.module.ModuleSystem">
 				<modules>
 		           <module key="com.top_logic.base.services.SearchFactory$Module" value="true" />
-		           <module key="com.top_logic.knowledge.indexing.vector.VectorIndex$Module" value="true" />
+		           <module key="com.top_logic.ai.vector.index.VectorIndex$Module" value="true" />
 		           <module key="com.top_logic.knowledge.analyze.DefaultAnalyzeService$Module" value="true" />
 		           <module key="com.top_logic.knowledge.indexing.DefaultIndexingService$Module" value="true" />
 				</modules>
@@ -17,21 +17,16 @@
  		<config service-class="com.top_logic.base.services.SearchFactory">
 			<instance>
 				<dependencies>
-					<dependency key="com.top_logic.knowledge.indexing.vector.VectorIndex$Module" value="true"/>
+					<dependency key="com.top_logic.ai.vector.index.VectorIndex$Module" value="true"/>
 					<dependency key="com.top_logic.knowledge.service.PersistencyLayer$Module" value="true"/>
 				</dependencies>
-				<search-engines>
-					<search-engine class="com.top_logic.knowledge.searching.vector.VectorSearchEngine"
-						display-name="search.engine.name.Vector"
-					/>
-				</search-engines>
 			</instance>
 		</config>
 	
         <config service-class="com.top_logic.util.monitor.ApplicationMonitor">
 			<instance class="com.top_logic.util.monitor.ApplicationMonitor">
 				<components>
-					<component name="search" class="com.top_logic.knowledge.indexing.vector.VectorMonitor" />
+					<component name="search" class="com.top_logic.ai.vector.index.VectorMonitor" />
 				</components>
 			</instance>
 		</config>
@@ -45,7 +40,7 @@
 		
 		
 		<config service-class="com.top_logic.knowledge.indexing.DefaultIndexingService" >
-			<instance class="com.top_logic.knowledge.indexing.vector.VectorIndexingService">
+			<instance class="com.top_logic.ai.vector.index.VectorIndexingService">
 				<protocols>
 					<protocol value="knowledgerepository" />
 					<protocol value="knowledge" />

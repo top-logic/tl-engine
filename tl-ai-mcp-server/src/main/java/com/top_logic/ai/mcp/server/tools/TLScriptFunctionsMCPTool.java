@@ -18,8 +18,8 @@ import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
 /**
  * MCP tool wrapper for {@link TLScriptReferenceTool}.
  * <p>
- * This class wraps the LangChain4j-based {@link TLScriptReferenceTool} to expose it through the
- * MCP (Model Context Protocol) interface. It provides two tools:
+ * This class wraps the {@code LangChain4j}-based {@link TLScriptReferenceTool} to expose it
+ * through the MCP (Model Context Protocol) interface. It provides two tools:
  * </p>
  * <ul>
  * <li><b>list-tlscript-functions</b> - Lists all available TLScript functions</li>

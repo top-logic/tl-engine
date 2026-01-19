@@ -254,7 +254,7 @@ public class ModelBrowserTool {
 	 * @return JSON array of parts, or error JSON if module/type not found or type is not
 	 *         structured.
 	 */
-	@Tool("List all parts (properties and references) of a specific type with multiplicity and constraints. Set include-inherited=true to include inherited parts from supertypes.")
+	@Tool("List all parts (properties and references) of a specific type with multiplicity and constraints. Set {@code include-inherited=true} to include inherited parts from supertypes.")
 	public String listTypeParts(
 			@P("The module containing the type") String moduleName,
 			@P("The name of the type") String typeName,

@@ -51,8 +51,8 @@ import io.modelcontextprotocol.spec.McpSchema;
  *
  * <p>
  * The resource returns a JSON object containing enumeration metadata and an array of classifier
- * objects, each with name, default status, index, label, description, and key annotations (TLI18NKey,
- * UnorderedEnum).
+ * objects, each with name, default status, index, label, description, and key annotations
+ * ({@code TLI18NKey}, {@code UnorderedEnum}).
  * </p>
  */
 public class EnumerationClassifiersResource {

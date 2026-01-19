@@ -9,11 +9,33 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Utility class for validating and extracting arguments from MCP tool calls.
+ *
+ * <p>
+ * This class provides helper methods to extract and validate arguments passed to MCP tools
+ * from the generic argument map structure used by the MCP protocol.
+ * </p>
+ */
 public final class ToolArgumentUtil {
 
 	private ToolArgumentUtil() {
+		// Utility class - prevent instantiation
 	}
 
+	/**
+	 * Requires a non-empty string argument from the arguments map.
+	 *
+	 * @param arguments
+	 *        The arguments map from the tool call.
+	 * @param key
+	 *        The argument key to look up.
+	 * @param fieldLabel
+	 *        Human-readable label for error messages.
+	 * @return The trimmed string value.
+	 * @throws ToolInputException
+	 *         If the argument is missing or empty.
+	 */
 	public static String requireNonEmptyString(
 			Map<String, Object> arguments,
 			String key,
@@ -36,7 +58,16 @@ public final class ToolArgumentUtil {
 		return text;
 	}
 
+	/**
+	 * Exception thrown when tool input validation fails.
+	 */
 	public static final class ToolInputException extends Exception {
+		/**
+		 * Creates a new exception with the given message.
+		 *
+		 * @param message
+		 *        The error message.
+		 */
 		public ToolInputException(String message) {
 			super(message);
 		}
@@ -78,6 +109,17 @@ public final class ToolArgumentUtil {
 		return value instanceof Boolean ? (Boolean) value : defaultValue;
 	}
 
+	/**
+	 * Extracts an optional list of strings from the arguments map.
+	 *
+	 * @param arguments
+	 *        The arguments map.
+	 * @param key
+	 *        The argument key.
+	 * @return List of strings, or {@code null} if not present.
+	 * @throws IllegalArgumentException
+	 *         If the value is not an array or contains non-strings.
+	 */
 	public static List<String> getOptionalStringList(Map<String, Object> arguments, String key) {
 		Object value = arguments.get(key);
 		if (value == null) {

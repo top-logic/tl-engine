@@ -340,6 +340,24 @@ mvn exec:java@migrate-ticket28336
 - **bos-settings/** - Build settings and configuration
 - **tl-doc/** - Documentation and JavaDoc output
 
+## Trac Ticket System
+
+This project uses **Trac** for issue tracking. Tickets are referenced using the format `#<number>` (e.g., `#29053`).
+
+### MCP Server Integration
+
+A Trac MCP server is configured in `.mcp.json` to allow Claude Code to interact with tickets at `http://tl/trac/`.
+
+**When discussing "tickets" in this project, always use the Trac MCP server tools to retrieve ticket information.**
+
+Available tools include:
+- `get_ticket` - Get complete ticket details
+- `search_tickets` - Search for tickets using Trac query syntax
+- `get_ticket_changelog` - Get ticket change history
+- `create_ticket` / `update_ticket` - Create or update tickets
+
+See `mcp-servers/README.md` for setup instructions.
+
 ## Git Commit Message Convention
 
 Commit messages in this project must follow a specific format:

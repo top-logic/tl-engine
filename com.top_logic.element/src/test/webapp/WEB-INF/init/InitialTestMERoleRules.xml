@@ -42,8 +42,9 @@
 		>
 			<path>
 				<step
-					association="hasStructureChild"
+					attribute="children"
 					inverse="true"
+					meta-element="projElement:ProjElementContainer"
 				/>
 			</path>
 		</rule>
@@ -58,7 +59,7 @@
 		>
 			<path>
 				<step
-					association="hasStructureChild"
+					attribute="children"
 					inverse="false"
 				/>
 			</path>

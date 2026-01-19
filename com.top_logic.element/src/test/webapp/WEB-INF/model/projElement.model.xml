@@ -63,7 +63,7 @@
 						/>
 					</attributes>
 					<generalizations>
-						<generalization type="ProjElement"/>
+						<generalization type="ProjElementContainer"/>
 					</generalizations>
 				</interface>
 				<class name="ProjectRoot">
@@ -93,7 +93,6 @@
 					</attributes>
 					<generalizations>
 						<generalization type="projElement.ProjectRoot"/>
-						<generalization type="ProjElementContainer"/>
 					</generalizations>
 				</class>
 				<interface name="projElement.All">

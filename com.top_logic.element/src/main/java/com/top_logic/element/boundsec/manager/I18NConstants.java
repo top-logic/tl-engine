@@ -27,9 +27,6 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ABSTRACT_TYPE_WITHOUT_INHERITANCE =
 		legacyKey1("admin.security.import.roleRules.problem.abstractTypeWithoutInheritance");
 
-	public static ResKey2 ATTRIBUTE_AND_ASSOCIATION_GIVEN =
-		legacyKey2("admin.security.import.roleRules.problem.attributeAndAssociationGiven");
-
 	public static ResKey1 AUTHORIZATION_PROBLEM_UNKNOWN_CLASSIFIER =
 		legacyKey1("admin.security.import.authorization.problem.unknownClassifier");
 
@@ -55,7 +52,10 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey NO_META_ELEMENT_DECLARED;
 
-	public static ResKey NO_ATTRIBUTE_OR_ASSOCIATION = legacyKey("admin.security.import.roleRules.problem.noAttributeOrAssociation");
+	/**
+	 * @en No attribute given in path.
+	 */
+	public static ResKey NO_ATTRIBUTE_DECLARED;
 
 	/**
 	 * @en The role {0} does not exist. Available application roles are {1}, available global roles

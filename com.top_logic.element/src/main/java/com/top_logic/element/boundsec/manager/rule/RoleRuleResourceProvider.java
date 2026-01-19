@@ -116,23 +116,16 @@ public class RoleRuleResourceProvider extends DefaultResourceProvider {
                         if (element instanceof IdentityPathElement) continue;
                         sb.append("<br/>").append(HTMLConstants.NBSP).append(HTMLConstants.NBSP).append(HTMLConstants.NBSP).append("> ");
                         TLStructuredTypePart metaAttribute = element.getMetaAttribute();
-                        if (metaAttribute != null) {
-                            TLClass metaElement = AttributeOperations.getMetaElement(metaAttribute);
-                            if (metaElement != null) {
-                                if (separator) sb.append("; ");
-                                sb.append("ME: ").append(TagUtil.encodeXML(metaElement.getName())).append(' ');
-                                separator = true;
-                            }
-                            if (separator) sb.append("; ");
-                            sb.append("MA: ").append(TagUtil.encodeXML(metaAttribute.getName())).append(' ');
-                            separator = true;
-                        }
-                        else {
-                            if (separator) sb.append("; ");
-                            sb.append("Assoc: ").append(TagUtil.encodeXML(StringServices.getEmptyString(element.getAssociation()))).append(' ');
-                            separator = true;
+						TLClass metaElement = AttributeOperations.getMetaElement(metaAttribute);
+						if (metaElement != null) {
+							if (separator)
+								sb.append("; ");
+							sb.append("ME: ").append(TagUtil.encodeXML(metaElement.getName())).append(' ');
+							separator = true;
                         }
                         if (separator) sb.append("; ");
+						sb.append("MA: ").append(TagUtil.encodeXML(metaAttribute.getName())).append(' ');
+						sb.append("; ");
                         sb.append("Inverse: ").append(element.isInverse());
                         separator = true;
                     }

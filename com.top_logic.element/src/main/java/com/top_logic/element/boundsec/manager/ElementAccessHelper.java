@@ -24,16 +24,12 @@ import com.top_logic.element.boundsec.manager.rule.RoleRule;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.MetaElementFactory;
 import com.top_logic.element.meta.MetaElementUtil;
-import com.top_logic.knowledge.objects.DestinationIterator;
 import com.top_logic.knowledge.objects.InvalidLinkException;
-import com.top_logic.knowledge.objects.KAIterator;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeObject;
-import com.top_logic.knowledge.objects.SourceIterator;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
-import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.knowledge.wrap.exceptions.WrapperRuntimeException;
 import com.top_logic.knowledge.wrap.list.FastListElement;
@@ -343,33 +339,6 @@ public class ElementAccessHelper {
 
     /**
      * Get all Objects affected by the given rule and using the given association
-     *
-     * @param aRule   the rule to check
-     * @param aKA     the association (which is assumably part of the path)
-     * @return the Wrppers effected
-     */
-    public static Set<BoundObject> traversRoleRuleBackwards(RoleRule aRule, KnowledgeAssociation aKA) {
-
-        List<PathElement> thePath = aRule.getPath();
-
-        int thePathLength = thePath.size();
-        List<Integer> theMALocations = new ArrayList<>();
-        String theAssociationType = aKA.tTable().getName();
-
-        // locate the meta attribute, may appeare more than once
-        for (int i=0; i < thePathLength; i++) {
-            PathElement thePE = thePath.get(i);
-            String theAssociation = thePE.getAssociation();
-            if (theAssociation != null && theAssociation.equals(theAssociationType)) {
-				theMALocations.add(Integer.valueOf(i));
-            }
-        }
-
-        return taversRoleRuleBackwards(aRule, aKA, thePath, theMALocations);
-    }
-
-    /**
-     * Get all Objects affected by the given rule and using the given association
      */
     private static Set<BoundObject> taversRoleRuleBackwards(RoleRule aRule, KnowledgeAssociation aKA, List<PathElement> thePath, List<Integer> theMALocations) {
         Set<BoundObject> theResult = new HashSet<>();
@@ -449,37 +418,21 @@ public class ElementAccessHelper {
             int           theNewPos     = aPos - 1;
             PathElement   thePE         = aPath.get(theNewPos);
             TLStructuredTypePart theMA         = thePE.getMetaAttribute();
-            String        theAssType    = thePE.getAssociation();
-            if (theMA != null) {
-                if (thePE.isInverse()) {
-					for (Iterator<TLObject> theIt = someSources.iterator(); theIt.hasNext();) {
-						TLObject theSource = theIt.next();
-						Object theDestination = theSource.tValue(theMA);
-                        if (theDestination != null) {
-                            theNewSources.addAll((theDestination instanceof Collection)
-								? (Collection<TLObject>) theDestination
-								: Collections.singleton((TLObject) theDestination));
-                        }
-                    }
-                } else {
-					for (Iterator<TLObject> theIt = someSources.iterator(); theIt.hasNext();) {
-						TLObject theSource = theIt.next();
-						theNewSources.addAll(AttributeOperations.getReferers(theSource, theMA));
-                    }
-                }
+			if (thePE.isInverse()) {
+				for (Iterator<TLObject> theIt = someSources.iterator(); theIt.hasNext();) {
+					TLObject theSource = theIt.next();
+					Object theDestination = theSource.tValue(theMA);
+					if (theDestination != null) {
+						theNewSources.addAll((theDestination instanceof Collection)
+							? (Collection<TLObject>) theDestination
+							: Collections.singleton((TLObject) theDestination));
+					}
+				}
             } else {
 				for (Iterator<TLObject> theIt = someSources.iterator(); theIt.hasNext();) {
-					{
-						TLObject theSource = theIt.next();
-                        KAIterator theKAIt;
-                        if (thePE.isInverse()) {
-							theKAIt = new DestinationIterator((KnowledgeObject) theSource.tHandle(), theAssType);
-                        } else {
-							theKAIt = new SourceIterator((KnowledgeObject) theSource.tHandle(), theAssType);
-                        }
-						theNewSources.addAll(AbstractWrapper.getWrappersFromAssociations(theKAIt, null));
-                    }
-                }
+					TLObject theSource = theIt.next();
+					theNewSources.addAll(AttributeOperations.getReferers(theSource, theMA));
+				}
             }
             addBaseObjects(aPath, theNewPos, theNewSources, someResult);
         }

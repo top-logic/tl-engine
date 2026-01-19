@@ -252,16 +252,12 @@ public class ElementAccessExportHelper {
 				for (PathElement thePE : path) {
                     if (thePE instanceof IdentityPathElement) continue;
                     TLStructuredTypePart theMA = thePE.getMetaAttribute();
-                    String theKA = thePE.getAssociation();
 
 					out.beginBeginTag(RoleRuleConfig.XML_TAG_STEP_ELEMENT);
                     if (theMA != null) {
 						out.writeAttribute(PathElementConfig.XML_ATTRIBUTE_META_ELEMENT,
 							TLModelUtil.qualifiedName(theMA.getType()));
                         out.writeAttribute(PathElementConfig.XML_ATTRIBUTE_ATTRIBUTE,    theMA.getName());
-                    }
-                    if (!StringServices.isEmpty(theKA)) {
-                        out.writeAttribute(PathElementConfig.XML_ATTRIBUTE_ASSOCIATION,  theKA);
                     }
                     out.writeAttribute(PathElementConfig.XML_ATTRIBUTE_INVERSE,          thePE.isInverse());
                     out.endEmptyTag();

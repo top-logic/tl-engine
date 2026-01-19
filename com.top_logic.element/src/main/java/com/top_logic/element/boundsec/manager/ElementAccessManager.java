@@ -46,6 +46,7 @@ import com.top_logic.basic.sql.ConnectionPoolRegistry;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.element.boundsec.ElementBoundHelper;
+import com.top_logic.element.boundsec.manager.rule.IdentityPathElement;
 import com.top_logic.element.boundsec.manager.rule.PathElement;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider.Type;
@@ -222,13 +223,6 @@ public class ElementAccessManager extends AccessManager {
     private Map<TLStructuredTypePart, Set<RoleProvider> > pathAttributes;
 
     /**
-     * Association types that participate in a rule path
-     *
-     * Updates to such associations must trigger recalculation of access rights
-     */
-    private Map<String, Set <RoleProvider>> pathAssociations;
-
-    /**
      * The resolved rules declared for the access manager (respecting the inherit flag)
      */
     private Map<TLClass, Collection<RoleProvider>> resolvedMERules;
@@ -335,7 +329,6 @@ public class ElementAccessManager extends AccessManager {
         this.resolvedMERules  = new HashMap<>();
         this.resolvedMORules  = new HashMap<>();
         this.pathAttributes   = new HashMap< >();
-        this.pathAssociations = new HashMap< >();
     }
 
 	private TLModule getSecurityModule(MEConfig meConfig, Log log) {
@@ -452,8 +445,7 @@ public class ElementAccessManager extends AccessManager {
     	    ? Collections.<Object, Collection<RoleProvider> >emptyMap() 
     	    : someRules;
         resolveRules(theRules, this.resolvedMERules, this.resolvedMORules);
-        this.pathAttributes   = resolveMataAttributes(theRules);
-        this.pathAssociations = resolveAssociations(theRules);
+        this.pathAttributes   = resolveMetaAttributes(theRules);
         this.rules            = theRules;
         this.ruleIds          = new HashMap<>();
         this.ruleNumbers      = new BidiHashMap();
@@ -486,11 +478,6 @@ public class ElementAccessManager extends AccessManager {
 
     public Set<RoleProvider> getRules(TLStructuredTypePart aMA) {
         Set<RoleProvider> theResult = this.pathAttributes.get(aMA);
-        return theResult == null ? Collections.<RoleProvider>emptySet() : theResult;
-    }
-
-    public Set<RoleProvider> getRules(String anAssociationType) {
-        Set<RoleProvider> theResult = this.pathAssociations.get(anAssociationType);
         return theResult == null ? Collections.<RoleProvider>emptySet() : theResult;
     }
 
@@ -537,7 +524,7 @@ public class ElementAccessManager extends AccessManager {
     }
 
 
-	private Map<TLStructuredTypePart, Set<RoleProvider>> resolveMataAttributes(Map<Object, Collection<RoleProvider>> someRules) {
+	private Map<TLStructuredTypePart, Set<RoleProvider>> resolveMetaAttributes(Map<Object, Collection<RoleProvider>> someRules) {
         Map<TLStructuredTypePart, Set<RoleProvider>> theResult = new HashMap<>();
 		for (Map.Entry<Object, Collection<RoleProvider>> theEntry : someRules.entrySet()) {
 			Collection<RoleProvider> theRules = theEntry.getValue();
@@ -545,27 +532,10 @@ public class ElementAccessManager extends AccessManager {
                 RoleRule theRule = (RoleRule) theRIt.next();
 
 				for (PathElement thePathElement : theRule.getPath()) {
+					if (thePathElement instanceof IdentityPathElement) continue;
                     TLStructuredTypePart theMA          = thePathElement.getMetaAttribute();
                     if (theMA != null) {
                         this.addRuleToMap(theResult, theMA, theRule);
-                    }
-                }
-            }
-        }
-        return theResult;
-    }
-
-	private Map<String, Set<RoleProvider>> resolveAssociations(Map<Object, Collection<RoleProvider>> someRules) {
-        Map<String, Set <RoleProvider>> theResult = new HashMap<>();
-		for (Map.Entry<Object, Collection<RoleProvider>> theEntry : someRules.entrySet()) {
-			Collection<RoleProvider> theRules = theEntry.getValue();
-			for (Iterator<RoleProvider> theRIt = theRules.iterator(); theRIt.hasNext();) {
-                RoleRule theRule = (RoleRule) theRIt.next();
-
-				for (PathElement thePathElement : theRule.getPath()) {
-                    String      theAssociation = thePathElement.getAssociation();
-                    if (theAssociation != null) {
-                        this.addRuleToMap(theResult, theAssociation, theRule);
                     }
                 }
             }

@@ -104,7 +104,7 @@ public class RoleRule implements RoleProvider {
         this(aME, aSourceME, isInterit, aRole, aSourceRole, aPath, Type.inheritance, aBase, aResourceKey);
     }
 
-    public String computeId(TLClass aME, TLClass aSourceME, boolean isInherit, BoundRole aRole, BoundRole aSourceRole, List aPath, Type aType, String aBase) {
+    public String computeId(TLClass aME, TLClass aSourceME, boolean isInherit, BoundRole aRole, BoundRole aSourceRole, List<PathElement> aPath, Type aType, String aBase) {
         StringBuffer theSB = new StringBuffer();
 		theSB.append("me:");
 		theSB.append(aME.getName());
@@ -121,22 +121,17 @@ public class RoleRule implements RoleProvider {
             theSB.append(aSourceRole.getName());
         }
         theSB.append('_');
-        for (Iterator theIt = aPath.iterator(); theIt.hasNext();) {
-            PathElement   thePE  = (PathElement) theIt.next();
+        for (Iterator<PathElement> theIt = aPath.iterator(); theIt.hasNext();) {
+            PathElement   thePE  = theIt.next();
+            if (thePE instanceof IdentityPathElement) continue;
             TLStructuredTypePart theMA  = thePE.getMetaAttribute();
-            String        theAss = thePE.getAssociation();
-            if (theMA != null) {
-                TLClass theME = AttributeOperations.getMetaElement(theMA);
-                if (theME != null) {
-                    theSB.append("pme:");
-                    theSB.append(theME.getName());
-                }
-                theSB.append("ma:");
-                theSB.append(theMA.getName());
-            } else {
-                theSB.append("a:");
-                theSB.append(theAss);
+			TLClass theME = AttributeOperations.getMetaElement(theMA);
+			if (theME != null) {
+				theSB.append("pme:");
+				theSB.append(theME.getName());
             }
+			theSB.append("ma:");
+			theSB.append(theMA.getName());
             theSB.append('_');
             theSB.append(thePE.isInverse() ? "back" : "succ");
         }

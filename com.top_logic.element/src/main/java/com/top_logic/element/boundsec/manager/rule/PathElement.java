@@ -9,12 +9,8 @@ import java.util.Collection;
 import java.util.Collections;
 
 import com.top_logic.element.meta.AttributeOperations;
-import com.top_logic.model.TLStructuredTypePart;
-import com.top_logic.knowledge.objects.KnowledgeAssociation;
-import com.top_logic.knowledge.service.AssociationQuery;
-import com.top_logic.knowledge.service.db2.AssociationSetQuery;
-import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.knowledge.wrap.Wrapper;
+import com.top_logic.model.TLStructuredTypePart;
 
 /**
  * One node in a role rule path
@@ -26,38 +22,19 @@ public class PathElement {
     /** the meta attribute defining the content */
     private TLStructuredTypePart metaAttribute;
     
-    /** the association defining the content */
-    private final String association;
     /** 
      * indicates that the attribute is to be resolved in revers,
      * i.e. get all objects that hold a given object via the given meta attribute.
      */
     private boolean       inverse;
 
-	private AssociationSetQuery<KnowledgeAssociation> sourceQuery;
-
-	private AssociationSetQuery<KnowledgeAssociation> destQuery;
-    
     /**
      * Constructor
      */
     public PathElement(TLStructuredTypePart aMA, boolean isInvers) {
         this.metaAttribute = aMA;
         this.inverse       = isInvers;
-        this.association   = null;
         // TODO TSA: add consistency checks: type of attribute, ...
-    }
-    
-    /**
-     * Constructor
-     */
-    public PathElement(String anAssociationType, boolean isInvers) {
-        this.association = anAssociationType;
-        this.inverse     = isInvers;
-        // TODO TSA: add consistency checks: type of attribute, ...
-
-        this.sourceQuery = AssociationQuery.createIncomingQuery(this.association, this.association);
-        this.destQuery   = AssociationQuery.createOutgoingQuery(this.association, this.association);
     }
     
     /**
@@ -65,13 +42,6 @@ public class PathElement {
      */
     public TLStructuredTypePart getMetaAttribute() {
         return (metaAttribute);
-    }
-    
-    /**
-     * Getter
-     */
-    public String getAssociation() {
-        return (association);
     }
     
     /**
@@ -95,25 +65,17 @@ public class PathElement {
     private Collection getValues(Wrapper aBase, boolean isForward) {
         Collection theResult;
         
-        if (this.metaAttribute != null) {   
-            if (this.isInverse() == isForward) {
-				theResult = AttributeOperations.getReferers(aBase, this.metaAttribute);
-            } else {
-                Object theContent = aBase.getValue(metaAttribute.getName());
-                if (theContent instanceof Collection) {
-                    theResult = (Collection) theContent;
-                } else if (theContent != null) {
-                    theResult = Collections.singleton(theContent);
-                } else {
-                    theResult = Collections.EMPTY_LIST;
-                }
-            }
-        }
-        else {
-			AssociationSetQuery<KnowledgeAssociation> theQuery =
-				(this.isInverse() == isForward) ? this.sourceQuery : this.destQuery;
-
-            theResult = AbstractWrapper.resolveWrappers(aBase, theQuery);
+		if (this.isInverse() == isForward) {
+			theResult = AttributeOperations.getReferers(aBase, this.metaAttribute);
+		} else {
+			Object theContent = aBase.getValue(metaAttribute.getName());
+			if (theContent instanceof Collection) {
+				theResult = (Collection) theContent;
+			} else if (theContent != null) {
+				theResult = Collections.singleton(theContent);
+			} else {
+				theResult = Collections.EMPTY_LIST;
+			}
         }
         return theResult != null ? theResult : Collections.EMPTY_SET;
     }

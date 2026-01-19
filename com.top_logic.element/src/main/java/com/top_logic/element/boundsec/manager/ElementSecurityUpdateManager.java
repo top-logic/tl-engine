@@ -450,9 +450,6 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
                 KnowledgeAssociation theDO = (KnowledgeAssociation) theObject;
 				if (WrapperMetaAttributeUtil.isAttributeReferenceAssociation(theDO)) {
                     this.handleAttributedAssociationChange(theDO, rulesToObjectsMap, isAdded);
-                    this.handleAssociationChange(theDO, rulesToObjectsMap, isAdded);
-                } else {
-                    this.handleAssociationChange(theDO, rulesToObjectsMap, isAdded);
                 }
             } else  {
             	MetaObject theMO     = theObject.tTable();
@@ -481,23 +478,6 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
 					}
             	}
             }
-        }
-    }
-
-    private void handleAssociationChange(KnowledgeAssociation aKA, Map<RoleProvider, Collection<BoundObject>> aRulesToObjectsMap, boolean isAdded) {
-        try {
-            String theKATypeName = aKA.tTable().getName();
-            for (Iterator theIt = accessManager.getRules(theKATypeName).iterator(); theIt.hasNext();) {
-                RoleRule         theRule        = (RoleRule) theIt.next();
-                Set<BoundObject> theBaseObjects = ElementAccessHelper.traversRoleRuleBackwards(theRule, aKA);
-                if (!CollectionUtil.isEmptyOrNull(theBaseObjects)) {
-                    Collection<BoundObject> theRuleObjects = this.getOrCreateSet(aRulesToObjectsMap, theRule);
-                    theRuleObjects.addAll(theBaseObjects);
-                }
-            }
-        }
-        catch (Exception ex) {
-            Logger.error("Failed to handle "+(isAdded?"new":"removed")+" meta attribute knowledge association: "+aKA.toString(), ex, ElementSecurityUpdateManager.class);
         }
     }
 

@@ -28,7 +28,6 @@ import com.top_logic.element.boundsec.manager.rule.config.PathElementConfig;
 import com.top_logic.element.boundsec.manager.rule.config.RoleRuleConfig;
 import com.top_logic.element.boundsec.manager.rule.config.RoleRulesConfig;
 import com.top_logic.element.meta.MetaElementUtil;
-import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.model.TLClass;
@@ -58,20 +57,6 @@ public class RoleRulesImporter {
 	 * Message key used when configured {@link TLClass} is unknown.
 	 */
 	static final ResKey1 UNKNOWN_META_ELEMENT = I18NConstants.UNKNOWN_META_ELEMENT;
-
-	/**
-	 * Message key used when both, {@link TLStructuredTypePart} and {@link KnowledgeAssociation} are
-	 * declared in a rule.
-	 */
-	static final ResKey2 ATTRIBUTE_AND_ASSOCIATION_DECLARED =
-		I18NConstants.ATTRIBUTE_AND_ASSOCIATION_GIVEN;
-
-	/**
-	 * Message key used when neither a {@link TLStructuredTypePart} nor an {@link KnowledgeAssociation} is
-	 * declared in a rule.
-	 */
-	static final ResKey NO_ATTRIBUTE_OR_ASSOCIATION_DECLARED =
-		I18NConstants.NO_ATTRIBUTE_OR_ASSOCIATION;
 
 	/**
 	 * Message key used when the {@link TLClass} in a path is not a super tpye of the
@@ -222,18 +207,9 @@ public class RoleRulesImporter {
 	private void handlePath(List<PathElement> path, PathElementConfig pathElement) {
 		String metaElementName = pathElement.getMetaElement();
 		String metaAtributeName = pathElement.getAttribute();
-		String associationName = pathElement.getAssociation();
 		boolean inverse = pathElement.isInverse();
-		if (metaAtributeName.isEmpty() && associationName.isEmpty()) {
-			addProblem(NO_ATTRIBUTE_OR_ASSOCIATION_DECLARED);
-			return;
-		}
-		if (!metaAtributeName.isEmpty() && !associationName.isEmpty()) {
-			addProblem(ATTRIBUTE_AND_ASSOCIATION_DECLARED.fill(metaAtributeName, associationName));
-			return;
-		}
 		if (metaAtributeName.isEmpty()) {
-			path.add(new PathElement(associationName, inverse));
+			addProblem(I18NConstants.NO_ATTRIBUTE_DECLARED);
 			return;
 		}
 		TLClass theME;
@@ -242,6 +218,7 @@ public class RoleRulesImporter {
 		} else {
 			theME = getMetaElement(metaElementName);
 			if (theME == null) {
+				// Error is logged in #getMetaElement(..)
 				return;
 			}
 			if (metaElementName.isEmpty()) {
@@ -261,7 +238,8 @@ public class RoleRulesImporter {
 		}
 		TLStructuredTypePart theMA = MetaElementUtil.getMetaAttributeOrNull(theME, metaAtributeName);
 		if (theMA == null) {
-			addProblem(UNKNOWN_ATTRIBUTE.fill(metaElementName, metaAtributeName));
+			String qMEName = TLModelUtil.qualifiedName(theME);
+			addProblem(UNKNOWN_ATTRIBUTE.fill(qMEName, metaAtributeName));
 			return;
 		}
 		path.add(new PathElement(theMA.getDefinition(), inverse));

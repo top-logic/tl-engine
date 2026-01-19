@@ -52,8 +52,9 @@
 						>
 							<path>
 								<step
-									association="hasStructureChild"
+									attribute="children"
 									inverse="true"
+									meta-element="DemoSecurity:DemoSecurityElementContainer"
 								/>
 							</path>
 						</inheritance-rule>
@@ -82,25 +83,12 @@
 
 						<inheritance-rule
 							inherit="true"
-							meta-element="DemoSecurity:DemoSecurity.All"
+							meta-element="DemoSecurity:DemoSecurityElementContainer"
 							role="DemoSecurity.navigation"
 						>
 							<path>
 								<step
-									association="hasStructureChild"
-									inverse="false"
-								/>
-							</path>
-						</inheritance-rule>
-
-						<inheritance-rule
-							inherit="true"
-							meta-element="DemoSecurity:DemoSecurity.Root"
-							role="DemoSecurity.navigation"
-						>
-							<path>
-								<step
-									association="hasStructureChild"
+									attribute="children"
 									inverse="false"
 								/>
 							</path>
@@ -115,12 +103,12 @@
 
 						<inheritance-rule
 							inherit="true"
-							meta-element="DemoTypes:DemoTypes.All"
+							meta-element="DemoTypes:DemoTypesContainer"
 							role="DemoTypes.Navigation"
 						>
 							<path>
 								<step
-									association="hasDemoStructureChild"
+									attribute="children"
 									inverse="false"
 								/>
 							</path>
@@ -133,8 +121,9 @@
 						>
 							<path>
 								<step
-									association="hasDemoStructureChild"
+									attribute="children"
 									inverse="true"
+									meta-element="DemoTypes:DemoTypesContainer"
 								/>
 							</path>
 						</inheritance-rule>
@@ -146,8 +135,9 @@
 						>
 							<path>
 								<step
-									association="hasDemoStructureChild"
+									attribute="children"
 									inverse="true"
+									meta-element="DemoTypes:DemoTypesContainer"
 								/>
 							</path>
 						</inheritance-rule>
@@ -159,8 +149,9 @@
 						>
 							<path>
 								<step
-									association="hasDemoStructureChild"
+									attribute="children"
 									inverse="true"
+									meta-element="DemoTypes:DemoTypesContainer"
 								/>
 							</path>
 						</inheritance-rule>
@@ -172,8 +163,9 @@
 						>
 							<path>
 								<step
-									association="hasDemoStructureChild"
+									attribute="children"
 									inverse="true"
+									meta-element="DemoTypes:DemoTypesContainer"
 								/>
 							</path>
 						</inheritance-rule>
@@ -221,8 +213,9 @@
 						>
 							<path>
 								<step
-									association="hasDemoStructureChild"
+									attribute="children"
 									inverse="true"
+									meta-element="DemoTypes:DemoTypesContainer"
 								/>
 							</path>
 						</inheritance-rule>

@@ -55,7 +55,7 @@
 							type="inheritance"
 						>
 							<path>
-					            <step association="hasStructureChild" inverse="false" />
+					            <step attribute="children" inverse="false" />
 							</path>
 				        </rule>
 					</rules>

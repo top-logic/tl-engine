@@ -48,14 +48,17 @@ public class FormatExpr extends GenericMethod {
 	protected Object eval(Object[] arguments, EvalContext definitions) {
 		Format format = (Format) arguments[0];
 		if (arguments.length == 2) {
-			Object first = arguments[1];
-			if (first instanceof Collection<?>) {
-				return format.format(((Collection<?>) first).toArray());
+			Object input = arguments[1];
+			if (input == null) {
+				return null;
+			}
+			if (input instanceof Collection<?>) {
+				return format.format(((Collection<?>) input).toArray());
 			} else {
 				if (format instanceof MessageFormat) {
-					return format.format(new Object[] { first });
+					return format.format(new Object[] { input });
 				} else {
-					return format.format(first);
+					return format.format(input);
 				}
 			}
 		} else {

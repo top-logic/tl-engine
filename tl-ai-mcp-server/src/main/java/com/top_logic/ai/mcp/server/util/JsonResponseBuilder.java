@@ -18,8 +18,8 @@ import com.top_logic.util.Resources;
  *
  * <p>
  * This class provides helper methods to reduce boilerplate when constructing JSON responses using
- * TopLogic's {@link JsonWriter}. It follows the wrapper pattern, augmenting JsonWriter with common
- * operations while preserving the streaming nature of JSON generation.
+ * TopLogic's {@link JsonWriter}. It follows the wrapper pattern, augmenting {@link JsonWriter} with
+ * common operations while preserving the streaming nature of JSON generation.
  * </p>
  *
  * <h3>Usage Pattern:</h3>
@@ -27,10 +27,10 @@ import com.top_logic.util.Resources;
  * <pre>
  * StringWriter buffer = new StringWriter();
  * try (JsonWriter json = JsonResponseBuilder.createWriter(buffer)) {
- *     json.beginObject();
- *     JsonResponseBuilder.writeField(json, "name", value);
- *     JsonResponseBuilder.writeLabelAndDescription(json, resourceKey);
- *     json.endObject();
+ * 	json.beginObject();
+ * 	JsonResponseBuilder.writeField(json, "name", value);
+ * 	JsonResponseBuilder.writeLabelAndDescription(json, resourceKey);
+ * 	json.endObject();
  * }
  * return buffer.toString();
  * </pre>

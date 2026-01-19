@@ -59,6 +59,7 @@ import com.top_logic.model.TLTypePart;
 import com.top_logic.model.instance.importer.XMLInstanceImporter;
 import com.top_logic.model.search.expr.CalendarField;
 import com.top_logic.model.search.expr.CalendarUpdate;
+import com.top_logic.model.search.expr.FormatExpr;
 import com.top_logic.model.search.expr.I18NConstants;
 import com.top_logic.model.search.expr.Literal;
 import com.top_logic.model.search.expr.SearchExpression;
@@ -813,6 +814,21 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 
 	public void testNumberFormat() throws ParseException {
 		assertEquals("0042", execute(search("numberFormat('0000').format(42)")));
+	}
+
+	/**
+	 * Test for {@link FormatExpr} with null input.
+	 *
+	 * <p>
+	 * Formatting null should return null instead of throwing an exception.
+	 * </p>
+	 *
+	 * @see <a href="http://tl/trac/ticket/29053">Ticket #29053</a>
+	 */
+	public void testFormatNull() throws ParseException {
+		assertNull(execute(search("numberFormat('0000').format(null)")));
+		assertNull(execute(search("dateFormat('y/MM').format(null)")));
+		assertNull(execute(search("messageFormat('Value: {0}').format(null)")));
 	}
 
 	public void testDateFormat() throws ParseException {

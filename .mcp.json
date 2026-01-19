@@ -2,11 +2,14 @@
   "mcpServers": {
     "trac": {
       "type": "stdio",
-      "command": "python3",
-      "args": [
-        "mcp-servers/trac-mcp-server.py"
-      ],
-      "env": {}
+      "command": "./.venv/bin/python",
+      "args": ["mcp-servers/trac-mcp-server.py"],
+      "env": {
+        "TRAC_URL": "http://tl/trac/login/xmlrpc",
+        "TRAC_KEYRING_SERVICE": "tl-engine-trac-mcp",
+        "TRAC_KEYRING_ACCOUNT_USER": "username",
+        "TRAC_KEYRING_ACCOUNT_PASS": "password"
+      }
     }
   }
 }

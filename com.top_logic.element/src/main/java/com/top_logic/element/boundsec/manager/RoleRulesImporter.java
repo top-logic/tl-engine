@@ -264,7 +264,7 @@ public class RoleRulesImporter {
 			addProblem(UNKNOWN_ATTRIBUTE.fill(metaElementName, metaAtributeName));
 			return;
 		}
-		path.add(new PathElement(theMA, inverse));
+		path.add(new PathElement(theMA.getDefinition(), inverse));
 	}
 
 	private Collection<BoundedRole> getRoles(List<String> roleNames) {

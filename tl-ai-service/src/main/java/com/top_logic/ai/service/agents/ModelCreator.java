@@ -10,8 +10,18 @@ import dev.langchain4j.service.SystemMessage;
 import dev.langchain4j.service.UserMessage;
 import dev.langchain4j.service.V;
 
+/**
+ * Agent for creating TopLogic model elements from parsed UML specifications.
+ */
 public interface ModelCreator {
 
+	/**
+	 * Creates TopLogic model elements from parsed requirements.
+	 *
+	 * @param modelRequirements
+	 *        The parsed model requirements in JSON format.
+	 * @return A summary of the creation process.
+	 */
 	@SystemMessage("""
 			You are **ModelCreatorAgent** for a TopLogic application model.
 

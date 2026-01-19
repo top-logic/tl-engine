@@ -26,9 +26,11 @@ import dev.langchain4j.service.tool.ToolExecutor;
  * annotated methods.
  *
  * <p>
- * This factory uses {@link ToolSpecifications#toolSpecificationsFrom(Class)} to extract tool
- * specifications from the configured class and creates corresponding executors for each tool.
+ * This factory extracts tool specifications from the configured class and creates corresponding
+ * executors for each tool.
  * </p>
+ *
+ * @see ToolSpecifications
  */
 public class ReflectiveToolFactory implements ToolFactory {
 
@@ -41,8 +43,8 @@ public class ReflectiveToolFactory implements ToolFactory {
 		 * The Java class containing {@code @Tool} annotated methods.
 		 *
 		 * <p>
-		 * This class will be scanned for tool definitions using the LangChain4j tool specification
-		 * mechanism. All public methods annotated with {@code @Tool} will be exposed as AI tools.
+		 * This class will be scanned for tool definitions. All public methods annotated with
+		 * {@code @Tool} will be exposed as AI tools.
 		 * </p>
 		 */
 		@Mandatory

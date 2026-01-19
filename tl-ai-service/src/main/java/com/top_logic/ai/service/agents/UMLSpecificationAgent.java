@@ -18,6 +18,14 @@ import dev.langchain4j.mcp.client.transport.http.StreamableHttpMcpTransport;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.mistralai.MistralAiChatModel;
 
+/**
+ * Multi-agent workflow for generating and refining TopLogic UML specifications.
+ *
+ * <p>
+ * This agent orchestrates a workflow that iteratively designs, critiques, and scores UML
+ * specifications before parsing and creating the corresponding model elements.
+ * </p>
+ */
 public class UMLSpecificationAgent {
 	private static final ChatModel PIXTRAL_MODEL = MistralAiChatModel.builder()
 		.apiKey("xxx")
@@ -35,6 +43,13 @@ public class UMLSpecificationAgent {
 		.logResponses(true)
 		.build();
 
+	/**
+	 * Executes the UML specification workflow.
+	 *
+	 * @param businessRequirement
+	 *        The business requirements to translate into a UML specification.
+	 * @return The result of model creation.
+	 */
 	public static String execute(String businessRequirement) {
 		// Step 1: build the agents
 		UMLDesigner designer = AgenticServices.agentBuilder(UMLDesigner.class)
@@ -117,6 +132,12 @@ public class UMLSpecificationAgent {
 			.build();
 	}
 
+	/**
+	 * Main method for testing the UML specification workflow.
+	 *
+	 * @param args
+	 *        Command line arguments (not used).
+	 */
 	public static void main(String[] args) {
 		String businessRequirement = """
 				Create a comprehensive project management system for software development teams.

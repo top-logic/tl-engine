@@ -10,8 +10,20 @@ import dev.langchain4j.service.SystemMessage;
 import dev.langchain4j.service.UserMessage;
 import dev.langchain4j.service.V;
 
+/**
+ * Agent for evaluating and critiquing TopLogic UML specifications.
+ */
 public interface UMLCritic {
 
+	/**
+	 * Evaluates a UML specification and returns a structured critique.
+	 *
+	 * @param umlSpec
+	 *        The UML specification to evaluate.
+	 * @param originalRequirements
+	 *        The original business requirements.
+	 * @return A structured critique in JSON format.
+	 */
 	@SystemMessage("""
 			## Role
 			You are a **TopLogic UML specification reviewer** with deep expertise in model-driven development and enterprise architecture.

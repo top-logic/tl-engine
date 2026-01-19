@@ -153,8 +153,8 @@ public class ToolRegistry extends ConfiguredManagedClass<ToolRegistry.Config<?>>
 	 * Creates a {@link ToolProvider} that provides access to the specified tools.
 	 *
 	 * <p>
-	 * The returned tool provider can be used with LangChain4j AI services to make the specified
-	 * tools available to AI agents during conversation.
+	 * The returned tool provider can be used with AI services to make the specified tools
+	 * available to AI agents during conversation.
 	 * </p>
 	 *
 	 * @param qualifiedToolNames
@@ -192,7 +192,7 @@ public class ToolRegistry extends ConfiguredManagedClass<ToolRegistry.Config<?>>
 	 *
 	 * <p>
 	 * This method retrieves the {@link ToolSpecification} objects for the requested tools,
-	 * which can be used with LangChain4j chat requests.
+	 * which can be used with chat requests.
 	 * </p>
 	 *
 	 * @param qualifiedToolNames

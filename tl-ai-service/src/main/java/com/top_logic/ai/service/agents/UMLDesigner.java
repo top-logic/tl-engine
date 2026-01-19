@@ -10,8 +10,22 @@ import dev.langchain4j.service.SystemMessage;
 import dev.langchain4j.service.UserMessage;
 import dev.langchain4j.service.V;
 
+/**
+ * Agent for designing TopLogic UML specifications from business requirements.
+ */
 public interface UMLDesigner {
 
+	/**
+	 * Generates or revises a UML specification based on requirements, critique and current UML.
+	 *
+	 * @param businessRequirement
+	 *        The business requirements to satisfy.
+	 * @param critique
+	 *        The critique feedback to address.
+	 * @param umlSpec
+	 *        The current UML specification to revise.
+	 * @return The updated UML specification.
+	 */
 	@SystemMessage("""
 						## Role
 			You are a UML system architect for **TopLogic model creation**.

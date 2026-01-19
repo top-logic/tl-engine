@@ -10,7 +10,17 @@ import dev.langchain4j.service.SystemMessage;
 import dev.langchain4j.service.UserMessage;
 import dev.langchain4j.service.V;
 
+/**
+ * Agent for parsing TopLogic UML specifications into structured JSON.
+ */
 public interface UMLParser {
+	/**
+	 * Parses a TopLogic UML design specification into structured data.
+	 *
+	 * @param umlSpec
+	 *        The UML specification to parse.
+	 * @return Structured JSON representation of the UML specification.
+	 */
 	@SystemMessage("""
 			## Role
 			You are a **deterministic parser** for TopLogic UML specifications.

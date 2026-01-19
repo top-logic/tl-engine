@@ -46,6 +46,16 @@ public interface WithColumnCssClasses extends ConfigurationItem {
 	 */
 	String CSS_CLASS_PROVIDER = "cssClassProvider";
 
+	/**
+	 * @see #getCssClassOverride()
+	 */
+	String CSS_CLASS_OVERRIDE = "cssClassOverride";
+
+	/**
+	 * @see #getCssHeaderClassOverride()
+	 */
+	String CSS_HEADER_CLASS_OVERRIDE = "cssHeaderClassOverride";
+
 
 	/**
 	 * Static CSS class to apply to all content cells of a column.
@@ -83,6 +93,20 @@ public interface WithColumnCssClasses extends ConfigurationItem {
 	void setCssClass(String value);
 
 	/**
+	 * When true, the specified CSS class replaces any existing classes instead of being added to
+	 * them. This allows overriding default classes like <code>tblRight</code> for numeric columns.
+	 *
+	 * @see #getCssClass()
+	 */
+	@Name(CSS_CLASS_OVERRIDE)
+	boolean getCssClassOverride();
+
+	/**
+	 * @see #getCssClassOverride()
+	 */
+	void setCssClassOverride(boolean value);
+
+	/**
 	 * The CSS class to add to the column's header.
 	 * 
 	 * <p>
@@ -115,6 +139,20 @@ public interface WithColumnCssClasses extends ConfigurationItem {
 	 * @see #getCssHeaderClass()
 	 */
 	void setCssHeaderClass(String value);
+
+	/**
+	 * When true, the specified CSS header class replaces any existing header classes instead of
+	 * being added to them.
+	 *
+	 * @see #getCssHeaderClass()
+	 */
+	@Name(CSS_HEADER_CLASS_OVERRIDE)
+	boolean getCssHeaderClassOverride();
+
+	/**
+	 * @see #getCssHeaderClassOverride()
+	 */
+	void setCssHeaderClassOverride(boolean value);
 
 	/**
 	 * CSS class for this column if it is the first column in a column group.

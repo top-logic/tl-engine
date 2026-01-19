@@ -117,49 +117,7 @@
 						<inheritance-rule
 							inherit="true"
 							meta-element="DemoTypes:DemoTypes.All"
-							role="DemoTypes.Administrator"
-						>
-							<path>
-								<step
-									attribute="children"
-									inverse="true"
-									meta-element="DemoTypes:DemoTypesContainer"
-								/>
-							</path>
-						</inheritance-rule>
-
-						<inheritance-rule
-							inherit="true"
-							meta-element="DemoTypes:DemoTypes.All"
-							role="DemoTypes.StringAdministrator"
-						>
-							<path>
-								<step
-									attribute="children"
-									inverse="true"
-									meta-element="DemoTypes:DemoTypesContainer"
-								/>
-							</path>
-						</inheritance-rule>
-
-						<inheritance-rule
-							inherit="true"
-							meta-element="DemoTypes:DemoTypes.All"
-							role="DemoTypes.BooleanAdministrator"
-						>
-							<path>
-								<step
-									attribute="children"
-									inverse="true"
-									meta-element="DemoTypes:DemoTypesContainer"
-								/>
-							</path>
-						</inheritance-rule>
-
-						<inheritance-rule
-							inherit="true"
-							meta-element="DemoTypes:DemoTypes.All"
-							role="DemoTypes.DateAdministrator"
+							role="DemoTypes.Administrator,DemoTypes.StringAdministrator,DemoTypes.BooleanAdministrator,DemoTypes.DateAdministrator,DemoTypes.Responsible"
 						>
 							<path>
 								<step
@@ -206,19 +164,6 @@
 								/>
 							</path>
 						</rule>
-						<inheritance-rule
-							inherit="true"
-							meta-element="DemoTypes:DemoTypes.All"
-							role="DemoTypes.Responsible"
-						>
-							<path>
-								<step
-									attribute="children"
-									inverse="true"
-									meta-element="DemoTypes:DemoTypesContainer"
-								/>
-							</path>
-						</inheritance-rule>
 
 						<inheritance-rule
 							base="structureRoot@DemoTypes"

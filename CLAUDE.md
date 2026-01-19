@@ -356,6 +356,11 @@ Available tools include:
 - `get_ticket_changelog` - Get ticket change history
 - `create_ticket` / `update_ticket` - Create or update tickets
 
+**Important**: Trac uses WikiFormatting syntax (not Markdown) for ticket descriptions and comments. Key syntax:
+- Headings: `= Title =`, `== Subtitle ==`
+- Bold: `'''text'''`
+- Code blocks: `{{{` ... `}}}` with optional syntax highlighting `{{{#!java`
+
 See `mcp-servers/README.md` for setup instructions.
 
 ## Git Commit Message Convention

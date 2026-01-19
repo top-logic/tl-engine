@@ -3,17 +3,16 @@
 MCP Server for Trac ticket system access via XML-RPC.
 
 This server exposes Trac functionality to Claude Code through the Model Context Protocol.
-Credentials are read from ~/.netrc for the 'tl.bos.local' machine.
+Credentials are stored in the OS keyring (no plaintext files).
 """
 
 import asyncio
-import json
-import netrc
+import base64
 import os
 import sys
-from pathlib import Path
-from typing import Any
+import keyring
 import xmlrpc.client
+from typing import Any
 
 try:
     from mcp.server import Server
@@ -35,31 +34,43 @@ class TracMCPServer:
         self._load_credentials()
 
     def _load_credentials(self):
-        """Load credentials from ~/.netrc for 'tl.bos.local' machine"""
+        """Load credentials from OS keyring (no plaintext files)."""
         try:
-            netrc_auth = netrc.netrc()
-            # Get credentials for 'tl.bos.local' host
-            auth_info = netrc_auth.authenticators('tl.bos.local')
+            trac_url = os.environ.get("TRAC_URL", self.TRAC_URL)
 
-            if not auth_info:
-                print("Error: No credentials found for 'tl.bos.local' in ~/.netrc", file=sys.stderr)
-                print("Add an entry like:", file=sys.stderr)
-                print("machine tl.bos.local", file=sys.stderr)
-                print("  login your-username", file=sys.stderr)
-                print("  password your-password", file=sys.stderr)
+            # Keyring config (shared across the team)
+            service = os.environ.get("TRAC_KEYRING_SERVICE", "tl-engine-trac-mcp")
+            acc_user = os.environ.get("TRAC_KEYRING_ACCOUNT_USER", "username")
+            acc_pass = os.environ.get("TRAC_KEYRING_ACCOUNT_PASS", "password")
+
+            username = keyring.get_password(service, acc_user)
+            password = keyring.get_password(service, acc_pass)
+
+            if not username or not password:
+                print(
+                    "Error: Missing Trac credentials in OS keyring.\n"
+                    f"  service: {service}\n"
+                    f"  username key: {acc_user}\n"
+                    f"  password key: {acc_pass}\n"
+                    "Run: ./scripts/setup-trac-mcp.sh",
+                    file=sys.stderr,
+                )
                 sys.exit(1)
 
-            username, _, password = auth_info
+            class BasicAuthTransport(xmlrpc.client.Transport):
+                def send_headers(self, connection, headers):
+                    auth = base64.b64encode(f"{username}:{password}".encode("utf-8")).decode("ascii")
+                    connection.putheader("Authorization", f"Basic {auth}")
+                    super().send_headers(connection, headers)
 
-            # Create XML-RPC client with basic auth
-            auth_url = self.TRAC_URL.replace("http://", f"http://{username}:{password}@")
-            self.trac = xmlrpc.client.ServerProxy(auth_url)
+            self.trac = xmlrpc.client.ServerProxy(
+                trac_url,
+                transport=BasicAuthTransport(),
+                allow_none=True,
+            )
 
-        except FileNotFoundError:
-            print("Error: ~/.netrc file not found", file=sys.stderr)
-            sys.exit(1)
         except Exception as e:
-            print(f"Error loading credentials from .netrc: {e}", file=sys.stderr)
+            print(f"Error loading credentials from keyring: {e}", file=sys.stderr)
             sys.exit(1)
 
     def setup_handlers(self):
@@ -177,18 +188,12 @@ class TracMCPServer:
                 Tool(
                     name="get_milestones",
                     description="List all milestones in the Trac system",
-                    inputSchema={
-                        "type": "object",
-                        "properties": {}
-                    }
+                    inputSchema={"type": "object", "properties": {}}
                 ),
                 Tool(
                     name="get_components",
                     description="List all components in the Trac system",
-                    inputSchema={
-                        "type": "object",
-                        "properties": {}
-                    }
+                    inputSchema={"type": "object", "properties": {}}
                 )
             ]
 
@@ -197,20 +202,17 @@ class TracMCPServer:
             try:
                 if name == "get_ticket":
                     ticket_id = int(arguments["ticket_id"])
-                    # Returns [id, time_created, time_changed, attributes]
                     ticket = self.trac.ticket.get(ticket_id)
                     result = self._format_ticket(ticket)
 
                 elif name == "search_tickets":
                     query = arguments["query"]
-                    max_results = arguments.get("max_results", 50)
-                    # Returns list of ticket IDs
+                    max_results = int(arguments.get("max_results", 50))
                     ticket_ids = self.trac.ticket.query(query)
 
                     if len(ticket_ids) > max_results:
                         ticket_ids = ticket_ids[:max_results]
 
-                    # Get details for each ticket
                     tickets = []
                     for tid in ticket_ids:
                         ticket = self.trac.ticket.get(tid)
@@ -242,7 +244,6 @@ class TracMCPServer:
                     ticket_id = int(arguments["ticket_id"])
                     comment = arguments.get("comment", "")
                     attributes = arguments.get("attributes", {})
-
                     self.trac.ticket.update(ticket_id, comment, attributes)
                     result = f"Updated ticket #{ticket_id}"
 
@@ -260,14 +261,11 @@ class TracMCPServer:
                 return [TextContent(type="text", text=result)]
 
             except xmlrpc.client.Fault as e:
-                error_msg = f"Trac XML-RPC Error: {e.faultString}"
-                return [TextContent(type="text", text=error_msg)]
+                return [TextContent(type="text", text=f"Trac XML-RPC Error: {e.faultString}")]
             except Exception as e:
-                error_msg = f"Error: {str(e)}"
-                return [TextContent(type="text", text=error_msg)]
+                return [TextContent(type="text", text=f"Error: {str(e)}")]
 
     def _format_ticket(self, ticket: tuple) -> str:
-        """Format ticket data for display."""
         ticket_id, time_created, time_changed, attrs = ticket
 
         lines = [
@@ -284,16 +282,15 @@ class TracMCPServer:
             f"Modified: {time_changed}",
         ]
 
-        if attrs.get('resolution'):
+        if attrs.get("resolution"):
             lines.append(f"Resolution: {attrs['resolution']}")
 
-        if attrs.get('description'):
+        if attrs.get("description"):
             lines.append(f"\nDescription:\n{attrs['description']}")
 
         return "\n".join(lines)
 
     def _format_changelog(self, ticket_id: int, changelog: list) -> str:
-        """Format changelog data for display."""
         lines = [f"Changelog for Ticket #{ticket_id}:\n"]
 
         for entry in changelog:
@@ -305,7 +302,6 @@ class TracMCPServer:
         return "\n".join(lines)
 
     async def run(self):
-        """Run the MCP server."""
         async with stdio_server() as (read_stream, write_stream):
             await self.server.run(
                 read_stream,
@@ -315,7 +311,6 @@ class TracMCPServer:
 
 
 def main():
-    """Main entry point."""
     server = TracMCPServer()
     server.setup_handlers()
     asyncio.run(server.run())

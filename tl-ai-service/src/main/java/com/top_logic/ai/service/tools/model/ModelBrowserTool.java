@@ -241,8 +241,8 @@ public class ModelBrowserTool {
 	 *
 	 * <p>
 	 * Returns a JSON array of parts with their names, types, kinds (property/reference), and
-	 * multiplicity constraints. By default, only local parts are included, but inherited parts
-	 * can be included by setting includeInherited to true. Parts are sorted by name.
+	 * multiplicity constraints. By default, only local parts are included, but inherited parts can
+	 * be included by setting {@code includeInherited} to true. Parts are sorted by name.
 	 * </p>
 	 *
 	 * @param moduleName
@@ -254,7 +254,7 @@ public class ModelBrowserTool {
 	 * @return JSON array of parts, or error JSON if module/type not found or type is not
 	 *         structured.
 	 */
-	@Tool("List all parts (properties and references) of a specific type with multiplicity and constraints. Set {@code include-inherited=true} to include inherited parts from supertypes.")
+	@Tool("List all parts (properties and references) of a specific type with multiplicity and constraints. Set {@code includeInherited=true} to include inherited parts from supertypes.")
 	public String listTypeParts(
 			@P("The module containing the type") String moduleName,
 			@P("The name of the type") String typeName,
@@ -303,7 +303,7 @@ public class ModelBrowserTool {
 					// Default to false if not specified
 					boolean includeInheritedParts = includeInherited != null && includeInherited;
 
-					// Get parts based on includeInherited flag, sorted by name
+					// Get parts based on include inherited flag, sorted by name
 					List<? extends TLStructuredTypePart> tlParts = (includeInheritedParts
 						? structuredType.getAllParts()
 						: structuredType.getLocalParts()).stream()

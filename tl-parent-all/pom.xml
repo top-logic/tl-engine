@@ -67,7 +67,7 @@
 
 	<scm>
 		<connection>scm:git:https://github.com/top-logic/tl-engine.git</connection>
-		<developerConnection>scm:git:http://tl.bos.local:3000/TopLogic/tl-engine.git</developerConnection>
+		<developerConnection>scm:git:https://git.top-logic.com/TopLogic/tl-engine-7.git</developerConnection>
 		<url>https://github.com/top-logic/tl-engine</url>
 	</scm>
 	
@@ -101,7 +101,6 @@
 			<distributionManagement>
 				<repository>
 					<id>tl-ossrh</id>
-					<url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
 					<releases>
 						<enabled>true</enabled>
 					</releases>
@@ -116,7 +115,7 @@
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-gpg-plugin</artifactId>
-						<version>1.5</version>
+						<version>3.2.8</version>
 						<executions>
 							<execution>
 								<id>sign-artifacts</id>
@@ -135,10 +134,12 @@
 					<plugin>
 						<groupId>org.sonatype.central</groupId>
 						<artifactId>central-publishing-maven-plugin</artifactId>
-						<version>0.9.0</version>
+						<version>0.10.0</version>
 						<extensions>true</extensions>
 						<configuration>
 							<publishingServerId>tl-ossrh</publishingServerId>
+							<autoPublish>true</autoPublish>
+							<waitUntil>published</waitUntil>
 						</configuration>
 					</plugin>
 				</plugins>

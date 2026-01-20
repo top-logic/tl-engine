@@ -15,6 +15,50 @@ KEYRING_ACCOUNT_PASS="${KEYRING_ACCOUNT_PASS:-password}"
 die() { echo "ERROR: $*" >&2; exit 1; }
 info() { echo "• $*"; }
 
+# --- check prerequisites ---
+check_prereqs() {
+  local missing=()
+  local has_curl_or_wget=false
+
+  # Check python3
+  if ! command -v python3 >/dev/null 2>&1; then
+    missing+=("python3")
+  fi
+
+  # Check python3-venv module
+  if ! python3 -c "import venv" 2>/dev/null; then
+    missing+=("python3-venv module")
+  fi
+
+  # Check curl or wget (optional, for fallback pip installation)
+  if command -v curl >/dev/null 2>&1 || command -v wget >/dev/null 2>&1; then
+    has_curl_or_wget=true
+  fi
+
+  if [ ${#missing[@]} -gt 0 ]; then
+    echo "❌ Missing prerequisites:" >&2
+    printf "  - %s\n" "${missing[@]}" >&2
+    echo >&2
+    echo "Install missing packages:" >&2
+    echo "  Ubuntu/Debian:  sudo apt install python3 python3-venv" >&2
+    echo "  Fedora/RHEL:    sudo dnf install python3 python3-venv" >&2
+    echo "  macOS:          brew install python3" >&2
+    echo "  Windows (WSL):  sudo apt install python3 python3-venv" >&2
+    echo "  Windows (Git Bash): Install Python from python.org" >&2
+    exit 1
+  fi
+
+  info "Prerequisites check passed"
+
+  # Optional: warn about curl/wget for fallback
+  if [ "$has_curl_or_wget" = false ]; then
+    echo "⚠️  Note: curl or wget not found. Fallback pip installation may fail." >&2
+    echo "   If ensurepip fails, install curl or wget and re-run." >&2
+  fi
+}
+
+check_prereqs
+
 # Ensure we run from repo root (best effort)
 if git rev-parse --show-toplevel >/dev/null 2>&1; then
   REPO_ROOT="$(git rev-parse --show-toplevel)"
@@ -33,6 +77,21 @@ fi
 
 PY="$VENV_DIR/bin/python"
 PIP="$VENV_DIR/bin/pip"
+
+# Ensure pip is installed (venv might have been created with --without-pip)
+if ! "$PY" -m pip --version >/dev/null 2>&1; then
+  info "pip not found in venv, installing via ensurepip"
+  "$PY" -m ensurepip --upgrade --default-pip >/dev/null 2>&1 || {
+    # Fallback: download and install get-pip.py
+    info "ensurepip failed, trying get-pip.py"
+    tmp_get_pip=$(mktemp)
+    trap "rm -f $tmp_get_pip" EXIT
+    curl -sSLo "$tmp_get_pip" https://bootstrap.pypa.io/get-pip.py || \
+      wget -qO "$tmp_get_pip" https://bootstrap.pypa.io/get-pip.py || \
+      die "Failed to download get-pip.py. Please install pip manually or delete $VENV_DIR and re-run."
+    "$PY" "$tmp_get_pip" >/dev/null || die "Failed to install pip. Delete $VENV_DIR and re-run, or install pip manually."
+  }
+fi
 
 info "Upgrading pip"
 "$PY" -m pip install -U pip >/dev/null

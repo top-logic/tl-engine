@@ -13,8 +13,10 @@ import com.top_logic.ai.service.jsonschema.model.ArraySchema;
 import com.top_logic.ai.service.jsonschema.model.BooleanSchema;
 import com.top_logic.ai.service.jsonschema.model.ConstSchema;
 import com.top_logic.ai.service.jsonschema.model.EnumSchema;
+import com.top_logic.ai.service.jsonschema.model.JsonSchemaDocument;
 import com.top_logic.ai.service.jsonschema.model.NumericSchema;
 import com.top_logic.ai.service.jsonschema.model.ObjectSchema;
+import com.top_logic.ai.service.jsonschema.model.RefSchema;
 import com.top_logic.ai.service.jsonschema.model.Schema;
 import com.top_logic.ai.service.jsonschema.model.StringSchema;
 import com.top_logic.basic.Logger;
@@ -47,7 +49,7 @@ public class ConfigSchemaBuilder {
 	/**
 	 * Cache of schemas being built to handle recursive references.
 	 */
-	private final Map<Class<?>, Schema> _schemaCache = new HashMap<>();
+	private Map<String, Schema> _schemaCache;
 
 	/**
 	 * Builds a JSON Schema from a configuration descriptor.
@@ -57,25 +59,33 @@ public class ConfigSchemaBuilder {
 	 * @return The JSON Schema representing the configuration interface.
 	 */
 	public Schema build(ConfigurationDescriptor descriptor) {
-		return buildObjectSchema(descriptor);
+		_schemaCache = new HashMap<>();
+		Schema toplevel = buildObjectSchema(descriptor);
+
+		JsonSchemaDocument.create().setSchema(toplevel).setDefinitions(_schemaCache);
+		_schemaCache = null;
+
+		return toplevel;
 	}
 
 	/**
 	 * Builds an object schema for a configuration interface.
 	 */
-	private ObjectSchema buildObjectSchema(ConfigurationDescriptor descriptor) {
+	private Schema buildObjectSchema(ConfigurationDescriptor descriptor) {
 		Class<?> configInterface = descriptor.getConfigurationInterface();
 
+		String schemaName = schemaId(configInterface);
+
 		// Check cache to handle recursive references
-		if (_schemaCache.containsKey(configInterface)) {
+		if (_schemaCache.containsKey(schemaName)) {
 			// Return a reference to the cached schema
-			return (ObjectSchema) _schemaCache.get(configInterface);
+			return RefSchema.create().setId(schemaName);
 		}
 
 		// Create schema and add to cache before processing properties to handle recursion
 		ObjectSchema result = ObjectSchema.create()
 			.putProperty("$type", ConstSchema.create().setConstValue(configInterface.getName()));
-		_schemaCache.put(configInterface, result);
+		_schemaCache.put(schemaName, result);
 
 		// Process all properties
 		for (PropertyDescriptor property : descriptor.getProperties()) {
@@ -103,6 +113,10 @@ public class ConfigSchemaBuilder {
 		}
 
 		return result;
+	}
+
+	private String schemaId(Class<?> configInterface) {
+		return "config://" + configInterface.getName();
 	}
 
 	/**

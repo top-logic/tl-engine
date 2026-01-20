@@ -60,11 +60,6 @@ public class ConfigSchemaBuilder {
 		return buildObjectSchema(descriptor);
 	}
 
-	private Schema buildObjectSchema(Class<?> type) {
-		ConfigurationDescriptor descriptor = TypedConfiguration.getConfigurationDescriptor(type);
-		return buildObjectSchema(descriptor);
-	}
-
 	/**
 	 * Builds an object schema for a configuration interface.
 	 */
@@ -157,10 +152,10 @@ public class ConfigSchemaBuilder {
 		ArraySchema schema = ArraySchema.create();
 
 		// Get the element type
-		Class<?> elementType = property.getElementType();
+		ConfigurationDescriptor valueDescriptor = property.getValueDescriptor();
 
 		// Create a property descriptor-like schema for the element
-		Schema elementSchema = buildObjectSchema(elementType);
+		Schema elementSchema = buildObjectSchema(valueDescriptor);
 		if (elementSchema != null) {
 			schema.setItems(elementSchema);
 		}
@@ -176,8 +171,8 @@ public class ConfigSchemaBuilder {
 		ObjectSchema schema = ObjectSchema.create();
 
 		// Get the value type
-		Class<?> valueType = property.getElementType();
-		Schema valueSchema = buildObjectSchema(valueType);
+		ConfigurationDescriptor valueDescriptor = property.getValueDescriptor();
+		Schema valueSchema = buildObjectSchema(valueDescriptor);
 		if (valueSchema != null) {
 			// Check for @Key annotation
 			com.top_logic.basic.config.annotation.Key keyAnnotation =

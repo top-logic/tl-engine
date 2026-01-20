@@ -62,7 +62,10 @@ public class ConfigSchemaBuilder {
 		_schemaCache = new HashMap<>();
 		Schema toplevel = buildObjectSchema(descriptor);
 
-		JsonSchemaDocument.create().setSchema(toplevel).setDefinitions(_schemaCache);
+		JsonSchemaDocument.create()
+			.setId(schemaId(descriptor))
+			.setDefinitions(_schemaCache)
+			.setSchema(toplevel);
 		_schemaCache = null;
 
 		return toplevel;
@@ -74,7 +77,7 @@ public class ConfigSchemaBuilder {
 	private Schema buildObjectSchema(ConfigurationDescriptor descriptor) {
 		Class<?> configInterface = descriptor.getConfigurationInterface();
 
-		String schemaName = schemaId(configInterface);
+		String schemaName = schemaId(descriptor);
 
 		// Check cache to handle recursive references
 		if (_schemaCache.containsKey(schemaName)) {
@@ -115,8 +118,8 @@ public class ConfigSchemaBuilder {
 		return result;
 	}
 
-	private String schemaId(Class<?> configInterface) {
-		return "config://" + configInterface.getName();
+	private String schemaId(ConfigurationDescriptor descriptor) {
+		return "config://" + descriptor.getConfigurationInterface().getName();
 	}
 
 	/**

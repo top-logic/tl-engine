@@ -131,9 +131,9 @@ public class JsonConfigurationWriter {
 		}
 		// Check, whether the concrete configuration interface cannot be
 		// reconstructed from from the content.
-		Class<?> annotationClass;
+		Class<?> typeAnnotation;
 		if (descriptor == staticType) {
-			annotationClass = null;
+			typeAnnotation = null;
 		} else if (implClassProperty != null) {
 			Class<?> implementationClass = (Class<?>) item.value(implClassProperty);
 			if (implementationClass != null) {
@@ -144,15 +144,15 @@ public class JsonConfigurationWriter {
 					 * interface is written, then the reader expects a simple ConfigurationItem
 					 * which has no property class. */
 
-					annotationClass = descriptor.getConfigurationInterface();
+					typeAnnotation = descriptor.getConfigurationInterface();
 				} else {
 					try {
 						Class<?> expectedConfigurationInterface =
 							DefaultConfigConstructorScheme.getFactory(implementationClass).getConfigurationInterface();
 						if (!expectedConfigurationInterface.equals(descriptor.getConfigurationInterface())) {
-							annotationClass = descriptor.getConfigurationInterface();
+							typeAnnotation = descriptor.getConfigurationInterface();
 						} else {
-							annotationClass = implementationClass;
+							typeAnnotation = implementationClass;
 						}
 					} catch (ConfigurationException ex) {
 						throw new IOException(
@@ -162,15 +162,15 @@ public class JsonConfigurationWriter {
 					}
 				}
 			} else {
-				annotationClass = descriptor.getConfigurationInterface();
+				typeAnnotation = descriptor.getConfigurationInterface();
 			}
 		} else {
-			annotationClass = descriptor.getConfigurationInterface();
+			typeAnnotation = descriptor.getConfigurationInterface();
 		}
 		
-		if (annotationClass != null) {
+		if (typeAnnotation != null) {
 			_out.beginArray();
-			_out.value(annotationClass.getName());
+			_out.value(typeAnnotation.getName());
 		}
 		_out.beginObject();
 		
@@ -200,7 +200,7 @@ public class JsonConfigurationWriter {
 
 			}.collect();
 
-		if (implClassProperty != null && !implClassAnnotated(annotationClass)) {
+		if (implClassProperty != null && !implClassAnnotated(typeAnnotation)) {
 			// The implementation class property must be written first to prevent it from being
 			// serialized as sub-tag, if another property serialized before cannot be written as
 			// attribute.
@@ -244,7 +244,7 @@ public class JsonConfigurationWriter {
 		}
 		
 		_out.endObject();
-		if (annotationClass != null) {
+		if (typeAnnotation != null) {
 			_out.endArray();
 		}
 	}

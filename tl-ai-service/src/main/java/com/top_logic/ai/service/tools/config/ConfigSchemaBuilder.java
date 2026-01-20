@@ -17,6 +17,7 @@ import com.top_logic.ai.service.jsonschema.model.BooleanSchema;
 import com.top_logic.ai.service.jsonschema.model.ConstSchema;
 import com.top_logic.ai.service.jsonschema.model.EnumSchema;
 import com.top_logic.ai.service.jsonschema.model.JsonSchemaDocument;
+import com.top_logic.ai.service.jsonschema.model.NullSchema;
 import com.top_logic.ai.service.jsonschema.model.NumericSchema;
 import com.top_logic.ai.service.jsonschema.model.ObjectSchema;
 import com.top_logic.ai.service.jsonschema.model.RefSchema;
@@ -223,12 +224,6 @@ public class ConfigSchemaBuilder {
 	 * </pre>
 	 */
 	private Schema buildBaseSchema(ConfigurationDescriptor descriptor) {
-		String baseSchemaId = baseSchemaId(descriptor);
-
-		if (_schemaCache.containsKey(baseSchemaId)) {
-			return RefSchema.create().setRef(baseSchemaId);
-		}
-
 		// Build properties schema first
 		buildPropertiesSchema(descriptor);
 		String propertiesSchemaId = propertiesSchemaId(descriptor);
@@ -237,7 +232,6 @@ public class ConfigSchemaBuilder {
 		allOf.addAllOf(buildOptionalTypeRef(descriptor));
 		allOf.addAllOf(RefSchema.create().setRef(propertiesSchemaId));
 
-		_schemaCache.put(baseSchemaId, allOf);
 		return allOf;
 	}
 
@@ -331,12 +325,6 @@ public class ConfigSchemaBuilder {
 	 * </pre>
 	 */
 	private Schema buildLocalPropertiesSchema(ConfigurationDescriptor descriptor) {
-		String localPropsId = localPropertiesSchemaId(descriptor);
-
-		if (_schemaCache.containsKey(localPropsId)) {
-			return RefSchema.create().setRef(localPropsId);
-		}
-
 		ObjectSchema result = ObjectSchema.create();
 
 		// Process only local (non-inherited) properties
@@ -350,7 +338,6 @@ public class ConfigSchemaBuilder {
 			}
 
 			Schema schema = buildPropertySchema(property);
-
 			if (schema != null) {
 				// Add label and description from property resources
 				String label = resolvePropertyLabel(descriptor, property);
@@ -371,8 +358,6 @@ public class ConfigSchemaBuilder {
 				}
 			}
 		}
-
-		_schemaCache.put(localPropsId, result);
 		return result;
 	}
 
@@ -584,31 +569,32 @@ public class ConfigSchemaBuilder {
 		Class<?> type = property.getType();
 	
 		// Numeric types
-		if (type == Integer.class || type == Long.class) {
+		if (type == int.class || type == Integer.class || type == long.class || type == Long.class) {
 			NumericSchema schema = NumericSchema.create().setIntegerOnly(true);
 			processNumeric(property, schema);
-			return schema;
+
+			return handleWrapperType(type, schema);
 		}
-		if (type == Float.class || type == Double.class) {
+		if (type == float.class || type == Float.class || type == double.class || type == Double.class) {
 			NumericSchema schema = NumericSchema.create();
 			processNumeric(property, schema);
-			return schema;
+			return handleWrapperType(type, schema);
 		}
-		if (type == Short.class) {
+		if (type == short.class || type == Short.class) {
 			NumericSchema schema = NumericSchema.create()
 				.setIntegerOnly(true)
 				.setMinimum((double) Short.MIN_VALUE)
 				.setMaximum((double) Short.MAX_VALUE);
 			processNumeric(property, schema);
-			return schema;
+			return handleWrapperType(type, schema);
 		}
-		if (type == Byte.class) {
+		if (type == byte.class || type == Byte.class) {
 			NumericSchema schema = NumericSchema.create()
 				.setIntegerOnly(true)
 				.setMinimum((double) Byte.MIN_VALUE)
 				.setMaximum((double) Byte.MAX_VALUE);
 			processNumeric(property, schema);
-			return schema;
+			return handleWrapperType(type, schema);
 		}
 	
 		// String type
@@ -617,8 +603,8 @@ public class ConfigSchemaBuilder {
 		}
 	
 		// Boolean type
-		if (type == Boolean.class) {
-			return BooleanSchema.create();
+		if (type == boolean.class || type == Boolean.class) {
+			return handleWrapperType(type, BooleanSchema.create());
 		}
 	
 		// Enum types
@@ -647,6 +633,18 @@ public class ConfigSchemaBuilder {
 	
 		// TODO: Use annotated ConfigurationValueProvider to determine format.
 		return null;
+	}
+
+	private Schema handleWrapperType(Class<?> type, Schema schema) {
+		if (type.isPrimitive()) {
+			return schema;
+		} else {
+			return nullable(schema);
+		}
+	}
+
+	private AnyOfSchema nullable(Schema schema) {
+		return AnyOfSchema.create().addAnyOf(schema).addAnyOf(NullSchema.create());
 	}
 
 	private void processNumeric(PropertyDescriptor property, NumericSchema numericSchema) {

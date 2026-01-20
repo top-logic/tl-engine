@@ -7,7 +7,7 @@
 	<parent>
 		<groupId>com.top-logic</groupId>
 		<artifactId>tl-parent-build</artifactId>
-		<version>7.9.7</version>
+		<version>0.0.12-SollAna_TL_7.9.7</version>
 
 		<relativePath>../tl-parent-build</relativePath>
 	</parent>
@@ -121,7 +121,7 @@
 			<plugin>
 				<groupId>com.top-logic</groupId>
 				<artifactId>tl-maven-plugin</artifactId>
-				<version>7.9.7</version>
+				<version>0.0.12-SollAna_TL_7.9.7</version>
 
 				<executions>
 					<execution>
@@ -174,7 +174,7 @@
 					<dependency>
 						<groupId>com.top-logic</groupId>
 						<artifactId>tl-build-processor</artifactId>
-						<version>7.9.7</version>
+						<version>0.0.12-SollAna_TL_7.9.7</version>
 						<classifier>jar-with-dependencies</classifier>
 					</dependency>
 				</dependencies>

@@ -25,6 +25,7 @@ import com.top_logic.ai.service.tools.config.ConfigSchemaBuilder;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContent;
 
 /**
@@ -33,12 +34,50 @@ import com.top_logic.basic.io.character.CharacterContent;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 @SuppressWarnings("javadoc")
-public class TestJsonConfigurationWriter extends AbstractConfigurationWriterTest {
+public class TestJsonConfigurationWithSchema extends AbstractConfigurationWriterTest {
+
+	public interface A extends ConfigurationItem {
+		B getB();
+
+		void setB(B value);
+	}
+
+	public interface B extends ConfigurationItem {
+		int getX();
+
+		void setX(int value);
+	}
+
+	public interface C extends B {
+		int getY();
+
+		void setY(int value);
+	}
+
+	public void testPolymorphicBaseValue() throws Exception {
+		A a = TypedConfiguration.newConfigItem(A.class);
+		B b = TypedConfiguration.newConfigItem(B.class);
+		b.setX(42);
+		a.setB(b);
+
+		doReadWrite("a", TypedConfiguration.getConfigurationDescriptor(A.class), a);
+	}
+
+	public void testPolymorphicExtensionValue() throws Exception {
+		A a = TypedConfiguration.newConfigItem(A.class);
+		C c = TypedConfiguration.newConfigItem(C.class);
+		c.setX(42);
+		c.setY(13);
+		a.setB(c);
+
+		doReadWrite("a", TypedConfiguration.getConfigurationDescriptor(A.class), a);
+	}
 
 	@Override
 	protected ConfigurationItem readConfigItem(String localName, ConfigurationDescriptor expectedType,
 			CharacterContent content) throws ConfigurationException {
 		ConfigurationItem result = new JsonConfigurationReader(context, expectedType)
+			.schemaAware()
 			.setSource(content)
 			.read();
 		return result;
@@ -52,6 +91,7 @@ public class TestJsonConfigurationWriter extends AbstractConfigurationWriterTest
 
 		StringWriter buffer = new StringWriter();
 		new JsonConfigurationWriter(buffer)
+			.schemaAware()
 			.prettyPrint()
 			.write(staticType, item);
 		String configJson = buffer.toString();
@@ -75,7 +115,7 @@ public class TestJsonConfigurationWriter extends AbstractConfigurationWriterTest
 	}
 
 	public static Test suite() {
-		return BasicTestSetup.createBasicTestSetup(new TestSuite(TestJsonConfigurationWriter.class));
+		return BasicTestSetup.createBasicTestSetup(new TestSuite(TestJsonConfigurationWithSchema.class));
 	}
 
 }

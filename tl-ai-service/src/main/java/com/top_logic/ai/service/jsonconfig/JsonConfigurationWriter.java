@@ -49,6 +49,8 @@ public class JsonConfigurationWriter {
 	
 	private JsonWriter _out;
 
+	private boolean _schemaAware;
+
 	/**
 	 * Creates a {@link JsonConfigurationWriter}.
 	 * 
@@ -71,6 +73,18 @@ public class JsonConfigurationWriter {
 	 */
 	public JsonConfigurationWriter prettyPrint() {
 		return indent("\t");
+	}
+
+	/**
+	 * Use JSON schema aware serialization format.
+	 * 
+	 * <p>
+	 * The default format is optimized for stream processing.
+	 * </p>
+	 */
+	public JsonConfigurationWriter schemaAware() {
+		_schemaAware = true;
+		return this;
 	}
 
 	/**
@@ -168,11 +182,19 @@ public class JsonConfigurationWriter {
 			typeAnnotation = descriptor.getConfigurationInterface();
 		}
 		
-		if (typeAnnotation != null) {
-			_out.beginArray();
-			_out.value(typeAnnotation.getName());
+		if (!_schemaAware) {
+			if (typeAnnotation != null) {
+				_out.beginArray();
+				_out.value(typeAnnotation.getName());
+			}
 		}
 		_out.beginObject();
+		if (_schemaAware) {
+			if (typeAnnotation != null) {
+				_out.name("$type");
+				_out.value(typeAnnotation.getName());
+			}
+		}
 		
 		List<PropertyDescriptor> properties =
 			new DefaultOrderStrategy.Collector(NoCustomizations.INSTANCE, descriptor) {
@@ -200,18 +222,20 @@ public class JsonConfigurationWriter {
 
 			}.collect();
 
-		if (implClassProperty != null && !implClassAnnotated(typeAnnotation)) {
-			// The implementation class property must be written first to prevent it from being
-			// serialized as sub-tag, if another property serialized before cannot be written as
-			// attribute.
-			writePlain(staticType, item, implClassProperty);
+		if (!_schemaAware) {
+			if (implClassProperty != null && !implClassAnnotated(typeAnnotation)) {
+				// The implementation class property must be written first to prevent it from being
+				// serialized as sub-tag, if another property serialized before cannot be written as
+				// attribute.
+				writePlain(staticType, item, implClassProperty);
+			}
 		}
 		for (PropertyDescriptor property : properties) {
 			if (skippedProperties.contains(property.getPropertyName())) {
 				continue;
 			}
 			if (property == implClassProperty) {
-				// Already written as first property.
+				// Already written as first property, or not written at all.
 				continue;
 			}
 			JsonValueBinding valueBinding = fetchValueBinding(property);
@@ -244,8 +268,11 @@ public class JsonConfigurationWriter {
 		}
 		
 		_out.endObject();
-		if (typeAnnotation != null) {
-			_out.endArray();
+
+		if (!_schemaAware) {
+			if (typeAnnotation != null) {
+				_out.endArray();
+			}
 		}
 	}
 

@@ -284,18 +284,21 @@ public class ConfigSchemaBuilder {
 		_schemaCache.put(propertiesSchemaId, null);
 
 		ConfigurationDescriptor[] superDescriptors = descriptor.getSuperDescriptors();
+		ObjectSchema localProps = buildLocalPropertiesSchema(descriptor);
+		boolean hasLocalProps = !localProps.getProperties().isEmpty();
 
 		if (superDescriptors.length == 0) {
 			// No super-types, just use local properties
-			Schema localProps = buildLocalPropertiesSchema(descriptor);
 			_schemaCache.put(propertiesSchemaId, localProps);
 			return localProps;
 		}
 
 		AllOfSchema allOf = AllOfSchema.create();
 
-		// Add local-properties(A)
-		allOf.addAllOf(buildLocalPropertiesSchema(descriptor));
+		// Add local-properties(A) only if it has properties
+		if (hasLocalProps) {
+			allOf.addAllOf(localProps);
+		}
 
 		// Add ref:properties(Cn) for each direct super-type Cn
 		for (ConfigurationDescriptor superDescriptor : superDescriptors) {
@@ -307,6 +310,9 @@ public class ConfigSchemaBuilder {
 		Schema result;
 		if (allOf.getAllOf().size() == 1) {
 			result = allOf.getAllOf().get(0);
+		} else if (allOf.getAllOf().isEmpty()) {
+			// No local properties and no super-types with properties
+			result = localProps;
 		} else {
 			result = allOf;
 		}
@@ -324,7 +330,7 @@ public class ConfigSchemaBuilder {
 	 *   that also allows other properties not defined here.
 	 * </pre>
 	 */
-	private Schema buildLocalPropertiesSchema(ConfigurationDescriptor descriptor) {
+	private ObjectSchema buildLocalPropertiesSchema(ConfigurationDescriptor descriptor) {
 		ObjectSchema result = ObjectSchema.create();
 
 		// Process only local (non-inherited) properties

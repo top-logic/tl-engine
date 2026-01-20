@@ -26,6 +26,7 @@ import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.io.character.CharacterContent;
 
 /**
@@ -36,41 +37,76 @@ import com.top_logic.basic.io.character.CharacterContent;
 @SuppressWarnings("javadoc")
 public class TestJsonConfigurationWithSchema extends AbstractConfigurationWriterTest {
 
-	public interface A extends ConfigurationItem {
-		B getB();
+	public interface ConcretePolymorphicItem extends ConfigurationItem {
+		A getB();
 
-		void setB(B value);
+		void setB(A value);
+
+		public interface A extends ConfigurationItem {
+			int getX();
+
+			void setX(int value);
+		}
+
+		public interface B extends A {
+			int getY();
+
+			void setY(int value);
+		}
 	}
 
-	public interface B extends ConfigurationItem {
-		int getX();
+	public interface AbstractPolymorphicItem extends ConfigurationItem {
+		A getB();
 
-		void setX(int value);
-	}
+		void setB(A value);
 
-	public interface C extends B {
-		int getY();
+		@Abstract
+		public interface A extends ConfigurationItem {
+			int getX();
 
-		void setY(int value);
+			void setX(int value);
+		}
+
+		public interface B extends A {
+			int getY();
+
+			void setY(int value);
+		}
+
+		public interface C extends A {
+			int getZ();
+
+			void setZ(int value);
+		}
 	}
 
 	public void testPolymorphicBaseValue() throws Exception {
-		A a = TypedConfiguration.newConfigItem(A.class);
-		B b = TypedConfiguration.newConfigItem(B.class);
+		ConcretePolymorphicItem a = TypedConfiguration.newConfigItem(ConcretePolymorphicItem.class);
+		ConcretePolymorphicItem.A b = TypedConfiguration.newConfigItem(ConcretePolymorphicItem.A.class);
 		b.setX(42);
 		a.setB(b);
 
-		doReadWrite("a", TypedConfiguration.getConfigurationDescriptor(A.class), a);
+		doReadWrite("a", TypedConfiguration.getConfigurationDescriptor(ConcretePolymorphicItem.class), a);
 	}
 
 	public void testPolymorphicExtensionValue() throws Exception {
-		A a = TypedConfiguration.newConfigItem(A.class);
-		C c = TypedConfiguration.newConfigItem(C.class);
+		ConcretePolymorphicItem a = TypedConfiguration.newConfigItem(ConcretePolymorphicItem.class);
+		ConcretePolymorphicItem.B c = TypedConfiguration.newConfigItem(ConcretePolymorphicItem.B.class);
 		c.setX(42);
 		c.setY(13);
 		a.setB(c);
 
-		doReadWrite("a", TypedConfiguration.getConfigurationDescriptor(A.class), a);
+		doReadWrite("a", TypedConfiguration.getConfigurationDescriptor(ConcretePolymorphicItem.class), a);
+	}
+
+	public void testPolymorphicValue() throws Exception {
+		AbstractPolymorphicItem a = TypedConfiguration.newConfigItem(AbstractPolymorphicItem.class);
+		AbstractPolymorphicItem.B c = TypedConfiguration.newConfigItem(AbstractPolymorphicItem.B.class);
+		c.setX(42);
+		c.setY(13);
+		a.setB(c);
+
+		doReadWrite("a", TypedConfiguration.getConfigurationDescriptor(AbstractPolymorphicItem.class), a);
 	}
 
 	@Override
@@ -86,7 +122,7 @@ public class TestJsonConfigurationWithSchema extends AbstractConfigurationWriter
 	@Override
 	protected String writeConfigurationItem(String localName, ConfigurationDescriptor staticType,
 			ConfigurationItem item) throws Exception {
-		Schema schemaDoc = new ConfigSchemaBuilder().build(staticType);
+		Schema schemaDoc = new ConfigSchemaBuilder().setInline(true).build(staticType);
 		String schemaData = JsonSchemaWriter.toJson(schemaDoc);
 
 		StringWriter buffer = new StringWriter();

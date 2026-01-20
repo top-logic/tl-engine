@@ -60,6 +60,31 @@ public class ConfigSchemaBuilder {
 	private Map<String, Schema> _schemaCache;
 
 	/**
+	 * Whether to inline properties schemas instead of using references.
+	 *
+	 * <p>
+	 * When set to <code>true</code>, properties schemas are inlined directly into the surrounding
+	 * all-of schema instead of being referenced via <code>$ref</code>. This produces a
+	 * self-contained schema without separate definitions for properties.
+	 * </p>
+	 */
+	private boolean _inline;
+
+	/**
+	 * Sets whether to inline properties schemas.
+	 *
+	 * @param inline
+	 *        <code>true</code> to inline properties schemas, <code>false</code> to use references.
+	 * @return This builder for method chaining.
+	 *
+	 * @see #_inline
+	 */
+	public ConfigSchemaBuilder setInline(boolean inline) {
+		_inline = inline;
+		return this;
+	}
+
+	/**
 	 * Builds a JSON Schema from a configuration descriptor.
 	 *
 	 * @param descriptor
@@ -213,7 +238,7 @@ public class ConfigSchemaBuilder {
 		}
 
 		_schemaCache.put(schemaName, result);
-		return result;
+		return RefSchema.create().setRef(schemaName);
 	}
 
 	/**
@@ -222,17 +247,20 @@ public class ConfigSchemaBuilder {
 	 * <pre>
 	 * base-schema(A) := all-of(optional-type-ref(A), ref:properties(A))
 	 * </pre>
+	 *
+	 * <p>
+	 * When {@link #_inline} is set, the properties schema is inlined directly instead of being
+	 * referenced.
+	 * </p>
 	 */
 	private Schema buildBaseSchema(ConfigurationDescriptor descriptor) {
-		// Build properties schema first
-		buildPropertiesSchema(descriptor);
-		String propertiesSchemaId = propertiesSchemaId(descriptor);
-
 		AllOfSchema allOf = AllOfSchema.create();
 		allOf.addAllOf(buildOptionalTypeRef(descriptor));
-		allOf.addAllOf(RefSchema.create().setRef(propertiesSchemaId));
 
-		return allOf;
+		Schema propertiesSchema = buildPropertiesSchema(descriptor);
+		inlineAllOf(allOf, propertiesSchema);
+
+		return simplifyAllOf(allOf);
 	}
 
 	/**
@@ -241,6 +269,11 @@ public class ConfigSchemaBuilder {
 	 * <pre>
 	 * extension-schema(A) := all-of(required-type-ref(A), ref:properties(A))
 	 * </pre>
+	 *
+	 * <p>
+	 * When {@link #_inline} is set, the properties schema is inlined directly instead of being
+	 * referenced.
+	 * </p>
 	 */
 	private Schema buildExtensionSchema(ConfigurationDescriptor descriptor) {
 		String extensionSchemaId = extensionSchemaId(descriptor);
@@ -252,16 +285,15 @@ public class ConfigSchemaBuilder {
 		// Reserve slot to handle recursion
 		_schemaCache.put(extensionSchemaId, null);
 
-		// Build properties schema first
-		buildPropertiesSchema(descriptor);
-		String propertiesSchemaId = propertiesSchemaId(descriptor);
-
 		AllOfSchema allOf = AllOfSchema.create();
 		allOf.addAllOf(buildRequiredTypeRef(descriptor));
-		allOf.addAllOf(RefSchema.create().setRef(propertiesSchemaId));
 
-		_schemaCache.put(extensionSchemaId, allOf);
-		return allOf;
+		Schema propertiesSchema = buildPropertiesSchema(descriptor);
+		inlineAllOf(allOf, propertiesSchema);
+
+		Schema result = simplifyAllOf(allOf);
+		_schemaCache.put(extensionSchemaId, result);
+		return RefSchema.create().setRef(extensionSchemaId);
 	}
 
 	/**
@@ -272,52 +304,60 @@ public class ConfigSchemaBuilder {
 	 *   all-of(local-properties(A), ref:properties(Cn),...)
 	 *   if A is a config type and Cn is a direct super-type of A
 	 * </pre>
+	 *
+	 * <p>
+	 * When {@link #_inline} is set, super-type properties schemas are inlined directly instead of
+	 * being referenced.
+	 * </p>
 	 */
 	private Schema buildPropertiesSchema(ConfigurationDescriptor descriptor) {
-		String propertiesSchemaId = propertiesSchemaId(descriptor);
+		if (_inline) {
+			return createPropertiesSchema(descriptor);
+		} else {
+			String propertiesSchemaId = propertiesSchemaId(descriptor);
 
-		if (_schemaCache.containsKey(propertiesSchemaId)) {
+			if (!_schemaCache.containsKey(propertiesSchemaId)) {
+				// Reserve slot to handle recursion
+				_schemaCache.put(propertiesSchemaId, null);
+
+				Schema result = createPropertiesSchema(descriptor);
+
+				_schemaCache.put(propertiesSchemaId, result);
+			}
+
 			return RefSchema.create().setRef(propertiesSchemaId);
 		}
+	}
 
-		// Reserve slot to handle recursion
-		_schemaCache.put(propertiesSchemaId, null);
-
+	private Schema createPropertiesSchema(ConfigurationDescriptor descriptor) {
 		ConfigurationDescriptor[] superDescriptors = descriptor.getSuperDescriptors();
 		ObjectSchema localProps = buildLocalPropertiesSchema(descriptor);
 		boolean hasLocalProps = !localProps.getProperties().isEmpty();
 
+		Schema result;
 		if (superDescriptors.length == 0) {
 			// No super-types, just use local properties
-			_schemaCache.put(propertiesSchemaId, localProps);
-			return localProps;
-		}
-
-		AllOfSchema allOf = AllOfSchema.create();
-
-		// Add local-properties(A) only if it has properties
-		if (hasLocalProps) {
-			allOf.addAllOf(localProps);
-		}
-
-		// Add ref:properties(Cn) for each direct super-type Cn
-		for (ConfigurationDescriptor superDescriptor : superDescriptors) {
-			buildPropertiesSchema(superDescriptor);
-			String superPropertiesId = propertiesSchemaId(superDescriptor);
-			allOf.addAllOf(RefSchema.create().setRef(superPropertiesId));
-		}
-
-		Schema result;
-		if (allOf.getAllOf().size() == 1) {
-			result = allOf.getAllOf().get(0);
-		} else if (allOf.getAllOf().isEmpty()) {
-			// No local properties and no super-types with properties
 			result = localProps;
 		} else {
-			result = allOf;
-		}
+			AllOfSchema allOf = AllOfSchema.create();
 
-		_schemaCache.put(propertiesSchemaId, result);
+			// Add local-properties(A) only if it has properties
+			if (hasLocalProps) {
+				allOf.addAllOf(localProps);
+			}
+
+			// Add properties(Cn) for each direct super-type Cn
+			for (ConfigurationDescriptor superDescriptor : superDescriptors) {
+				Schema superPropertiesSchema = buildPropertiesSchema(superDescriptor);
+				inlineAllOf(allOf, superPropertiesSchema);
+			}
+
+			result = simplifyAllOf(allOf);
+			if (result == null) {
+				// No local properties and no super-types with properties
+				result = localProps;
+			}
+		}
 		return result;
 	}
 
@@ -440,6 +480,96 @@ public class ConfigSchemaBuilder {
 
 	private String extensionSchemaId(ConfigurationDescriptor descriptor) {
 		return "config://" + descriptor.getConfigurationInterface().getName() + "#extension";
+	}
+
+	/**
+	 * Inlines the given schema into an all-of schema.
+	 *
+	 * <p>
+	 * If the schema is itself an {@link AllOfSchema}, its contents are added directly to avoid
+	 * nested all-of schemas. Otherwise, the schema is added as a single element.
+	 * </p>
+	 *
+	 * @param allOf
+	 *        The all-of schema to add to.
+	 * @param schema
+	 *        The schema to inline.
+	 */
+	private void inlineAllOf(AllOfSchema allOf, Schema schema) {
+		if (schema instanceof AllOfSchema) {
+			// Flatten nested all-of
+			for (Schema nested : ((AllOfSchema) schema).getAllOf()) {
+				allOf.addAllOf(nested);
+			}
+		} else if (schema != null) {
+			allOf.addAllOf(schema);
+		}
+	}
+
+	/**
+	 * Simplifies an all-of schema.
+	 *
+	 * <p>
+	 * Returns <code>null</code> if the all-of is empty, returns the single element if it contains
+	 * only one schema. If all elements are {@link ObjectSchema}s, they are merged into a single
+	 * object schema. Otherwise returns the all-of as-is.
+	 * </p>
+	 *
+	 * @param allOf
+	 *        The all-of schema to simplify.
+	 * @return The simplified schema, or <code>null</code> if empty.
+	 */
+	private Schema simplifyAllOf(AllOfSchema allOf) {
+		if (allOf.getAllOf().isEmpty()) {
+			return null;
+		} else if (allOf.getAllOf().size() == 1) {
+			return allOf.getAllOf().get(0);
+		} else if (allObjectSchemas(allOf)) {
+			return mergeObjectSchemas(allOf);
+		} else {
+			return allOf;
+		}
+	}
+
+	/**
+	 * Checks if all elements in the all-of schema are object schemas.
+	 */
+	private boolean allObjectSchemas(AllOfSchema allOf) {
+		for (Schema schema : allOf.getAllOf()) {
+			if (!(schema instanceof ObjectSchema)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Merges all object schemas in an all-of into a single object schema.
+	 *
+	 * <p>
+	 * Combines properties and required fields from all object schemas.
+	 * </p>
+	 */
+	private ObjectSchema mergeObjectSchemas(AllOfSchema allOf) {
+		ObjectSchema merged = ObjectSchema.create();
+
+		for (Schema schema : allOf.getAllOf()) {
+			ObjectSchema objectSchema = (ObjectSchema) schema;
+
+			// Merge properties
+			for (Map.Entry<String, Schema> entry : objectSchema.getProperties().entrySet()) {
+				merged.putProperty(entry.getKey(), entry.getValue());
+			}
+
+			// Merge required fields
+			for (String required : objectSchema.getRequired()) {
+				if (!merged.getRequired().contains(required)) {
+					merged.addRequired(required);
+				}
+			}
+		}
+
+		return merged;
 	}
 
 	/**

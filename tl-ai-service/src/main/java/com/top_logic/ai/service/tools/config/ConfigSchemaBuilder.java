@@ -21,10 +21,13 @@ import com.top_logic.ai.service.jsonschema.model.Schema;
 import com.top_logic.ai.service.jsonschema.model.StringSchema;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationDescriptor;
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ConfigurationValueBinding;
 import com.top_logic.basic.config.ExternallyNamed;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.constraint.algorithm.ConstraintAlgorithm;
 import com.top_logic.basic.config.constraint.annotation.Bound;
 import com.top_logic.basic.config.constraint.annotation.Bounds;
@@ -33,6 +36,7 @@ import com.top_logic.basic.config.constraint.impl.Negative;
 import com.top_logic.basic.config.constraint.impl.NonNegative;
 import com.top_logic.basic.config.constraint.impl.NonPositive;
 import com.top_logic.basic.config.constraint.impl.Positive;
+import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.util.Resources;
 
@@ -73,6 +77,77 @@ public class ConfigSchemaBuilder {
 
 	/**
 	 * Builds an object schema for a configuration interface.
+	 * 
+	 * <p>
+	 * A configuration is serialized to JSON in the following ways:
+	 * </p>
+	 * 
+	 * <p>
+	 * A configuration item is serialized as object with an optional <code>$type</code> property
+	 * that contains either the configuration interface (for pure configurations), or the
+	 * implementation class if the configuration is a {@link PolymorphicConfiguration}.
+	 * </p>
+	 * 
+	 * <p>
+	 * The type property is optional, if the type is clear from its context. When a configuration
+	 * item is stored in a property of type A (either configuration type A extends
+	 * {@link ConfigurationItem} or implementation type {@link InstanceFormat} A, or
+	 * {@link PolymorphicConfiguration}&lt;? extends A&gt; and the value is of exactly that type (no
+	 * sub-type), then the type annotation can be omitted.
+	 * </p>
+	 * 
+	 * <p>
+	 * Therefore, the schema for type A must enforce all mandatory properties of A, define the
+	 * schema for all properties of A and its super-types. If A has sub-types, the schema for A must
+	 * mention all of them in an any-of schema:
+	 * </p>
+	 * 
+	 * <p>
+	 * A redundancy-free schema definition for A would look like (the schema does not exclude other
+	 * garbage properties not defined for type A):
+	 * </p>
+	 * 
+	 * <pre>
+	 * <code>
+	 * value-schema(A) := 
+	 *   any-of(base-schema(A) if not abstract, ref:extension-schema(Bn),...) with Bn is a direct non-abstract sub-type of A
+	 *   
+	 * properties(A) :=
+	 *   all-of(local-properties(A), ref:properties(Cn),...) if A is a config type and Cn is a direct super-type of A
+	 *   properties(C) if A is an implementation type and C is its configuration interface.
+	 *   
+	 * local-properties(A) :=
+	 *   JSON object schema with property schemas for all direct properties of A (without $type)
+	 *   that also allows other properties not defined here.
+	 *   
+	 * base-schema(A) :=
+	 *   all-of(optional-type-ref(A), ref:properties(A))
+	 *   
+	 * extension-schema(A) :=
+	 *   all-of(required-type-ref(A), ref:properties(A))
+	 *   
+	 * required-type-ref(A) :=
+	 *   JSON object schema that defines just the required $type property fixed to A.class.getName() 
+	 *   and allows any other properties.
+	 *
+	 * optional-type-ref(A) :=
+	 *   JSON object schema that defines just the optional $type property fixed to A.class.getName() 
+	 *   and allows any other properties.
+	 * </code>
+	 * </pre>
+	 * 
+	 * <p>
+	 * The following holds:
+	 * </p>
+	 * 
+	 * <ul>
+	 * <li>A config interface type A is abstract, if its descriptor is abstract.</li>
+	 * <li>An implementation type A is abstract, if it is an abstract class.</li>
+	 * <li>The direct super-types of a config interface type A are the config interfaces of the
+	 * super-descriptory of the descriptor for A.</li>
+	 * <li>The direct sub-types of a config interface type A are config interfaces that directly
+	 * extend A and can by found through the {@link TypeIndex}.</li>
+	 * </ul>
 	 */
 	private Schema buildObjectSchema(ConfigurationDescriptor descriptor) {
 		Class<?> configInterface = descriptor.getConfigurationInterface();

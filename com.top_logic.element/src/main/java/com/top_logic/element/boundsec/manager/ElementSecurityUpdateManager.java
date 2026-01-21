@@ -236,7 +236,6 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
 	private void handleNewObjects(Map<TLID, KnowledgeItem> someNew,
 			Map<RoleProvider, Collection<BoundObject>> rulesToObjectsMap) {
         Map<TLClass, Collection<RoleProvider>> meRules = accessManager.getResolvedMERules();
-        Map<MetaObject, Collection<RoleProvider>> moRules = accessManager.getResolvedMORules();
 
         for (Object newObject : someNew.values()) {
             if (newObject instanceof KnowledgeObject) {
@@ -247,14 +246,6 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
             if (newObject instanceof Wrapper) {
 				TLStructuredType me = ((Wrapper) newObject).tType();
                 Collection<RoleProvider> rules = meRules.get(me);
-                if (rules != null)
-                for (RoleProvider rule : rules) {
-                    getOrCreateSet(rulesToObjectsMap, rule).add((BoundObject)newObject);
-                }
-            }
-            if (newObject instanceof Wrapper) {
-                MetaObject mo = ((Wrapper)newObject).tTable();
-                Collection<RoleProvider> rules = moRules.get(mo);
                 if (rules != null)
                 for (RoleProvider rule : rules) {
                     getOrCreateSet(rulesToObjectsMap, rule).add((BoundObject)newObject);

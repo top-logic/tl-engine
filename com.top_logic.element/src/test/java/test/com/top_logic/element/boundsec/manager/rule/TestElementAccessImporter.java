@@ -160,7 +160,7 @@ public class TestElementAccessImporter extends BasicTestCase {
 		RoleRulesImporter importer = RoleRulesImporter.loadRules(elementAccessManager(), roleRules);
 		assertTrue(importer.getProblems().isEmpty());
 
-		final Map<Object, Collection<RoleProvider>> theRulesMap = importer.getRules();
+		final Map<TLClass, Collection<RoleProvider>> theRulesMap = importer.getRules();
 		assertEquals(2, theRulesMap.size());
 
 		List<RuleDesc> allRuleDescs = new ArrayList<>();

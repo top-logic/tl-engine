@@ -105,6 +105,60 @@ public class JudgeClient {
 	}
 
 	/**
+	 * Scores an agent's answer with LLM-inferred expectations.
+	 * 
+	 * <p>
+	 * This method lets the judge infer what should be in the answer based on the user's prompt
+	 * and the model XML, eliminating the need for manually crafted required_facts JSON.
+	 * </p>
+	 * 
+	 * @param userPrompt
+	 *        The original prompt given to the agent (e.g., "list all root types...")
+	 * @param modelXml
+	 *        Complete model XML (authoritative source of truth)
+	 * @param agentAnswer
+	 *        The agent's actual answer
+	 * @param judgeSystemPrompt
+	 *        The system prompt for the judge
+	 * @return Judge result with score and violations
+	 */
+	public JudgeResult scoreWithPrompt(
+		String userPrompt,
+		String modelXml,
+		String agentAnswer,
+		String judgeSystemPrompt
+	) {
+		return ThreadContextManager.inSystemInteraction(
+			JudgeClient.class,
+			() -> {
+				try {
+					ChatModel judgeModel = _aiService.getChatModel(_judgeModelName);
+
+					String judgeUserPrompt = buildPromptBasedUserMessage(userPrompt, modelXml, agentAnswer);
+
+					SystemMessage systemMessage = SystemMessage.from(judgeSystemPrompt);
+					UserMessage userMessage = UserMessage.from(judgeUserPrompt);
+
+					ChatRequest request = ChatRequest.builder()
+						.messages(systemMessage, userMessage)
+						.build();
+
+					ChatResponse response = judgeModel.chat(request);
+					AiMessage aiMessage = response.aiMessage();
+					String resultText = aiMessage.text();
+
+					Logger.info("Judge response: " + resultText, JudgeClient.class);
+
+					return parseJudgeResult(resultText);
+					
+				} catch (Exception ex) {
+					Logger.error("Failed to score answer: " + ex.getMessage(), ex, JudgeClient.class);
+					throw new RuntimeException("Failed to score answer: " + ex.getMessage(), ex);
+				}
+			});
+	}
+
+	/**
 	 * Builds the user prompt with required facts, oracle, and agent answer as a single JSON
 	 * envelope.
 	 * 
@@ -119,6 +173,19 @@ public class JudgeClient {
 		json.append("{\n");
 		json.append("  \"required_facts\": ").append(requiredFactsJson).append(",\n");
 		json.append("  \"available_facts\": ").append(oracleJson).append(",\n");
+		json.append("  \"agent_answer\": ").append(escapeJson(agentAnswer)).append("\n");
+		json.append("}\n");
+		return json.toString();
+	}
+
+	/**
+	 * Builds user prompt for prompt-based judging (no required_facts).
+	 */
+	private String buildPromptBasedUserMessage(String userPrompt, String modelXml, String agentAnswer) {
+		StringBuilder json = new StringBuilder();
+		json.append("{\n");
+		json.append("  \"user_prompt\": ").append(escapeJson(userPrompt)).append(",\n");
+		json.append("  \"model_xml\": ").append(escapeJson(modelXml)).append(",\n");
 		json.append("  \"agent_answer\": ").append(escapeJson(agentAnswer)).append("\n");
 		json.append("}\n");
 		return json.toString();

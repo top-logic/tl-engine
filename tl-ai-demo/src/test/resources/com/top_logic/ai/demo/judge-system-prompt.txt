@@ -3,15 +3,59 @@ an AI's response against two truth sets:
 1. **required_facts**: JSON with prompt-specific minimum expectations (what MUST be mentioned)
 2. **available_facts**: XML model definition (authoritative source of truth for hallucination detection)
 
-# Important: Two Truth Sets
+# Important: Input Modes
 
-The input may contain either:
-- **Single truth set**: `expected_facts` (legacy mode - use for both missing and hallucination detection)
-- **Two truth sets**: `required_facts` + `available_facts` (new mode)
+The input can be in one of three modes:
 
-When both are present:
-- Use `required_facts` ONLY for computing `missingFacts`
+**Mode 1: Prompt-Based (Recommended)**
+- Input: `user_prompt` + `model_xml` + `agent_answer`
+- You infer what should be in the answer based on the prompt
+- Example: If prompt is "list all root types", you determine from model_xml what the root types are
+- Then check if agent_answer contains them
+
+**Mode 2: Two Truth Sets (Legacy)**
+- Input: `required_facts` (JSON) + `available_facts` (XML or JSON) + `agent_answer`
+- Use `required_facts` for computing `missingFacts`
 - Use `available_facts` for detecting `hallucinations` and `notFetched`
+
+**Mode 3: Single Truth Set (Legacy)**
+- Input: `expected_facts` + `agent_answer`
+- Use for both missing facts and hallucination detection
+
+## Prompt-Based Mode Details
+
+When `user_prompt` and `model_xml` are provided:
+
+1. **Analyze the prompt** to understand user intent:
+   - "list all root types" → expect types with no domain generalizations
+   - "high-level overview" → expect types + relationships, not detailed attributes
+   - "aggregate types" → expect types with composite references
+   - "how they relate" → expect inheritance and composition relationships
+
+2. **Examine the model_xml** to find what exists:
+   - Parse XML to identify types, inheritance, attributes, relationships
+   - Use the XML structure guide from the previous section
+
+3. **Determine expected facts** based on prompt + model:
+   - What information is reasonably expected given the prompt?
+   - What level of detail is appropriate?
+   - What should NOT be included (out of scope)?
+
+4. **Score the agent_answer**:
+   - **Completeness**: Does it contain the expected facts? (Not all facts, just what the prompt asks for)
+   - **Correctness**: Are claims accurate per model_xml?
+   - **No hallucinations**: Nothing contradicts or adds to model_xml?
+   - **Appropriate scope**: Focused on what was asked?
+
+**Example:**
+
+Prompt: "list all root / aggregate types in the model and how they relate"
+
+Expected analysis:
+- Root types = types with no domain-specific generalizations (may inherit from framework)
+- Aggregate types = types with composite references (look for `composite="true"`)
+- "how they relate" = inheritance hierarchy + composition relationships
+- NOT expected: detailed attributes, enum values, TLScript formulas
 
 ---
 
@@ -247,13 +291,28 @@ You MUST output valid JSON and nothing else. Do not include explanations outside
 # Input
 
 **Input Format**:
-You will receive a single JSON object with three fields:
+You will receive a single JSON object in one of these formats:
 
+**Mode 1: Prompt-Based (Recommended)**
+{
+  "user_prompt": "...",       // Original user prompt to the agent
+  "model_xml": "...",         // Complete model XML definition
+  "agent_answer": "..."       // The agent's actual answer
+}
+
+**Mode 2: Two Truth Sets (Legacy)**
 {
   "required_facts": {...},    // Prompt-specific minimum expectations
   "available_facts": {...},   // Complete oracle truth
   "agent_answer": "..."       // The agent's actual answer
 }
 
-Use required_facts for missing facts scoring.
-Use available_facts for hallucination and notFetched detection.
+**Mode 3: Single Truth Set (Legacy)**
+{
+  "expected_facts": {...},    // Complete oracle truth
+  "agent_answer": "..."       // The agent's actual answer
+}
+
+For prompt-based mode: Infer expected facts from user_prompt + model_xml, then score.
+For two truth sets: Use required_facts for missing facts, available_facts for hallucinations.
+For single truth set: Use expected_facts for both.

@@ -21,13 +21,8 @@ import test.com.top_logic.knowledge.KBSetup;
 import com.top_logic.ai.demo.test.agent.judge.JudgeClient;
 import com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult;
 import com.top_logic.ai.demo.test.agent.oracle.OracleLoader;
-import com.top_logic.ai.demo.test.agent.util.ExpectedFactsBuilder;
-import com.top_logic.ai.demo.test.agent.util.RequiredFacts;
 import com.top_logic.ai.service.AIService;
 import com.top_logic.ai.service.tools.help.ModelExplorerTool;
-import com.top_logic.ai.service.tools.model.messages.TypeListResponse;
-import com.top_logic.ai.service.tools.model.messages.TypePartListResponse;
-import com.top_logic.ai.service.tools.util.DataClassSerializer;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.layout.provider.LabelProviderService;
 import com.top_logic.util.model.ModelService;
@@ -50,89 +45,27 @@ import com.top_logic.util.model.ModelService;
 public class ModelExplorerScoringTest extends TestCase {
 
 	/**
-	 * Builds required facts for overview prompts: types + relationships (references only).
-	 * 
-	 * @return JSON string with required facts
-	 */
-	private String buildOverviewRequiredFacts(String testMethodName) {
-		ExpectedFactsBuilder builder = new ExpectedFactsBuilder();
-		RequiredFacts required = new RequiredFacts();
-		
-		// Get all types (required)
-		String typesJson = builder.getBrowserTool().listTypes("luigis.pizzashop");
-		required.add(typesJson);
-		
-		// Get relationships via listTypeParts filtering for references (required)
-		TypeListResponse typesResponse = builder.parseResponse(typesJson, TypeListResponse.class);
-		if (typesResponse.getTypes() != null) {
-			for (var type : typesResponse.getTypes()) {
-				String typeName = type.getName();
-				
-				// Only call listTypeParts for classes (not enumerations)
-				if (!"class".equals(type.getMetaType())) {
-					continue;
-				}
-				
-				try {
-					// Get all parts first
-					String allPartsJson = builder.getBrowserTool().listTypeParts("luigis.pizzashop", typeName, false);
-					TypePartListResponse allPartsResponse =
-						builder.parseResponse(allPartsJson, TypePartListResponse.class);
-
-					// Filter to only reference parts
-					TypePartListResponse referencesOnly = TypePartListResponse.create();
-					for (var part : allPartsResponse.getParts()) {
-						if ("reference".equals(part.getKind())) {
-							referencesOnly.addPart(part);
-						}
-					}
-
-					// Only add if there are reference parts
-					if (!referencesOnly.getParts().isEmpty()) {
-						String referencesJson = DataClassSerializer.toJson(referencesOnly,
-							ModelExplorerScoringTest.class, testMethodName);
-						required.add(referencesJson);
-					}
-				} catch (Exception ex) {
-					System.err.println("Warning: Failed to get parts for " + typeName);
-				}
-			}
-		}
-		
-		String requiredFactsJson = required.toJson();
-		System.out.println("Required facts: " + required.size() + " tool results (types + relationships)");
-		System.out.println("\n--- Required Facts JSON ---");
-		System.out.println(requiredFactsJson);
-		System.out.println("--- End Required Facts ---\n");
-		
-		return requiredFactsJson;
-	}
-
-	/**
 	 * Test 1: High-level overview of types and relationships.
 	 * 
 	 * Prompt: "give me a high-level overview of the luigis.pizzashop model (types and relationships only)"
 	 * 
-	 * Required facts: All types + relationships (not individual attributes)
+	 * Uses prompt-based judging where the LLM infers expected facts from the prompt.
 	 */
 	public void testPrompt1_HighLevelOverview() throws IOException {
 		String prompt = "give me a high-level overview of the luigis.pizzashop model (types and relationships only)";
 		int minScore = 7;
 		
 		System.out.println("\n==========================================");
-		System.out.println("TEST 1: High-Level Overview");
+		System.out.println("TEST 1: High-Level Overview (Prompt-Based)");
 		System.out.println("==========================================");
 		System.out.println("Prompt: " + prompt);
 		System.out.println();
 		
-		// 1. Build required facts - for overview we need: types + relationships ONLY
-		String requiredFactsJson = buildOverviewRequiredFacts("testPrompt1_HighLevelOverview()");
+		// 1. Load model XML (single source of truth)
+		String modelXml = OracleLoader.loadPizzaShopModelXml();
+		System.out.println("Model loaded: " + modelXml.length() + " chars (XML)");
 		
-		// 2. Load oracle (overview = types + parts only, no usages/annotations)
-		String oracleJson = OracleLoader.loadPizzaShopOracleForOverview();
-		System.out.println("Oracle loaded: " + oracleJson.length() + " chars (overview)");
-		
-		// 3. Run the agent
+		// 2. Run the agent
 		System.out.println("\nRunning ModelExplorerTool agent...");
 		ModelExplorerTool agent = new ModelExplorerTool();
 		String agentAnswer = agent.exploreModel(prompt);
@@ -141,17 +74,17 @@ public class ModelExplorerScoringTest extends TestCase {
 		System.out.println(agentAnswer);
 		System.out.println();
 		
-		// 4. Score with AI judge
-		System.out.println("Scoring with AI judge...");
+		// 3. Score with AI judge (prompt-based - no manual required_facts)
+		System.out.println("Scoring with AI judge (prompt-based mode)...");
 		JudgeClient judge = new JudgeClient(AIService.getInstance());
 		String judgePrompt = loadJudgeSystemPrompt();
 		
-		JudgeResult result = judge.score(requiredFactsJson, oracleJson, agentAnswer, judgePrompt);
+		JudgeResult result = judge.scoreWithPrompt(prompt, modelXml, agentAnswer, judgePrompt);
 		
-		// 5. Print results
+		// 4. Print results
 		printJudgeResult(result);
 		
-		// 6. Assertions
+		// 5. Assertions
 		assertTrue(
 			"Score must be at least " + minScore + " (was: " + result.getScore() + ")",
 			result.getScore() >= minScore
@@ -175,26 +108,23 @@ public class ModelExplorerScoringTest extends TestCase {
 	 * 
 	 * Prompt: "list all root / aggregate types in the model and how they relate"
 	 * 
-	 * Required facts: All types + relationships (focusing on type hierarchy and aggregation)
+	 * Uses prompt-based judging where the LLM infers expected facts from the prompt.
 	 */
 	public void testPrompt2_RootAggregateTypes() throws IOException {
 		String prompt = "list all root / aggregate types in the model and how they relate";
 		int minScore = 7;
 		
 		System.out.println("\n==========================================");
-		System.out.println("TEST 2: Root/Aggregate Types");
+		System.out.println("TEST 2: Root/Aggregate Types (Prompt-Based)");
 		System.out.println("==========================================");
 		System.out.println("Prompt: " + prompt);
 		System.out.println();
 		
-		// 1. Build required facts - for root/aggregate types we need: types + relationships
-		String requiredFactsJson = buildOverviewRequiredFacts("testPrompt2_RootAggregateTypes()");
-		
-		// 2. Load oracle (XML model = authoritative source of truth)
+		// 1. Load model XML (single source of truth)
 		String modelXml = OracleLoader.loadPizzaShopModelXml();
-		System.out.println("Oracle loaded: " + modelXml.length() + " chars (XML model)");
+		System.out.println("Model loaded: " + modelXml.length() + " chars (XML)");
 		
-		// 3. Run the agent
+		// 2. Run the agent
 		System.out.println("\nRunning ModelExplorerTool agent...");
 		ModelExplorerTool agent = new ModelExplorerTool();
 		String agentAnswer = agent.exploreModel(prompt);
@@ -203,17 +133,17 @@ public class ModelExplorerScoringTest extends TestCase {
 		System.out.println(agentAnswer);
 		System.out.println();
 		
-		// 4. Score with AI judge
-		System.out.println("Scoring with AI judge...");
+		// 3. Score with AI judge (prompt-based - no manual required_facts)
+		System.out.println("Scoring with AI judge (prompt-based mode)...");
 		JudgeClient judge = new JudgeClient(AIService.getInstance());
 		String judgePrompt = loadJudgeSystemPrompt();
 		
-		JudgeResult result = judge.score(requiredFactsJson, modelXml, agentAnswer, judgePrompt);
+		JudgeResult result = judge.scoreWithPrompt(prompt, modelXml, agentAnswer, judgePrompt);
 		
-		// 5. Print results
+		// 4. Print results
 		printJudgeResult(result);
 		
-		// 6. Assertions
+		// 5. Assertions
 		assertTrue(
 			"Score must be at least " + minScore + " (was: " + result.getScore() + ")",
 			result.getScore() >= minScore

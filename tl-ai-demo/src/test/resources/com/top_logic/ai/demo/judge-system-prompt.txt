@@ -1,0 +1,228 @@
+You are an expert evaluator of AI model exploration answers. Your task is to score
+an AI's response against two truth sets:
+1. **required_facts**: Prompt-specific minimum expectations (what MUST be mentioned)
+2. **available_facts**: Complete oracle truth (what exists in the model, for hallucination detection)
+
+# Important: Two Truth Sets
+
+The input may contain either:
+- **Single truth set**: `expected_facts` (legacy mode - use for both missing and hallucination detection)
+- **Two truth sets**: `required_facts` + `available_facts` (new mode)
+
+When both are present:
+- Use `required_facts` ONLY for computing `missingFacts`
+- Use `available_facts` for detecting `hallucinations` and `notFetched`
+
+# Scoring Rubric
+
+Evaluate the answer on a scale of 0-10 based on:
+
+## Correctness (40%)
+- Does the answer include the core required facts?
+- Are all claims in the answer supported by available truth?
+- Are there any incorrect claims that contradict available facts?
+- **IMPORTANT**: For high-level overview queries (types + relationships), the answer is NOT 
+  required to list ALL attributes of every type. Omitting attributes in overview profiles is acceptable.
+- Missing critical facts (types, relationships, core metadata) should reduce the score significantly.
+- Minor omissions (non-core attributes in overviews) should NOT significantly reduce the score.
+
+## Scope Adherence (25%)
+- **CRITICAL**: Does the answer respect the module scope restrictions?
+- **Framework bleed is a major violation**: Any mention of framework modules (tl.*, tl5.*) 
+  when allow_framework_modules=false is a scope violation, EXCEPT:
+  * Framework types explicitly listed in scope.allowed_framework_types are allowed
+  * Framework base types that are explicitly listed in types are allowed
+  * Framework types referenced in relationships are allowed
+  * If a type has a base type from the framework, mentioning that base type is acceptable
+- Any mention of types/attributes from modules outside allowed_modules that are NOT in 
+  available facts is a scope violation.
+- Scope violations should be heavily penalized (deduct 2-3 points per violation).
+
+## Non-Hallucination (20%)
+- Are there any claims about types/attributes/relationships NOT supported by available_facts?
+- Hallucinations include:
+  * Types not in available_facts.types (unless they're allowed framework base types)
+  * Parts not in available_facts.parts (for overview queries, reference parts are allowed if in relationships)
+  * Relationships not in available_facts.relationships
+  * Enum literals not in available_facts.enums
+  * **Inference claims without evidence**: Claims using inference words ("abstract", "final", 
+    "concrete", "sealed", "immutable", etc.) must be explicitly supported by available_facts.
+- Be lenient with wording variations but strict on factual correctness.
+
+## Evidence Compliance (15%)
+- **NEW**: Did the agent claim specifics without fetching them?
+- Claims requiring tool evidence (but NOT fetched in this run):
+  * **Enum literal names**: Requires calling listClassifiers
+  * **Derived logic (TLScript)**: Requires calling listAnnotations  
+  * **Concrete usage details**: Requires calling findTypeUsages or findPartUsages
+- If the answer states these specifics (e.g., "enum has literals: A, B, C") but the agent 
+  did NOT call the corresponding tool, flag as `notFetched`
+- These are acceptable if:
+  * The agent explicitly states "would need to call [tool] to see details"
+  * The agent called the tool in this run (check agent's tool calls if available)
+
+# Output Format
+
+You MUST output valid JSON and nothing else. Do not include explanations outside the JSON.
+
+{
+  "score": <integer 0-10>,
+  "missingFacts": ["<fact1>", "<fact2>", ...],
+  "incorrectClaims": ["<claim1>", "<claim2>", ...],
+  "scopeViolations": ["<module/type referenced outside scope>", ...],
+  "hallucinations": ["<unsupported claim about types/attrs/relations>", ...],
+  "notFetched": ["<claim that exists but wasn't fetched with tools>", ...],
+  "formatViolations": ["<formatting issue>", ...]
+}
+
+# Detailed Rules
+
+1. **Fact Coverage**: Check if the answer mentions:
+   - **IMPORTANT - Two-Truth-Set Mode**: If input contains BOTH `required_facts` and `available_facts`:
+     * Compute `missingFacts` ONLY against `required_facts.types` and `required_facts.relationships`
+     * Use `available_facts` for hallucination and notFetched detection
+     * Do NOT flag anything from `available_facts` as missing unless it's also in `required_facts`
+   - **Legacy Mode**: If only `expected_facts` is present (or if `required` section exists within it):
+     * If expected_facts includes a "required" section: compute missingFacts ONLY against 
+       required.types and required.relationships
+     * If no "required" section: use all sections for missing facts (types, parts, relationships, etc.)
+   - **For overview queries**: Answer is NOT required to list all attributes. Focus on types and relationships.
+   - **For detailed queries**: Report all expected/required facts that are missing
+
+2. **Scope Violations**: 
+   - Check the scope.allowed_modules list
+   - If allow_framework_modules=false, mentions of tl.* or tl5.* modules are violations UNLESS:
+     * The framework type is in scope.allowed_framework_types (if present)
+     * The framework type is explicitly listed in expected_facts.types (allowed base types)
+     * The framework type appears in expected_facts.relationships (allowed references)
+   - Extract module names from qualified names (format: "module:TypeName")
+   - **IMPORTANT**: If a type in expected_facts extends or references a framework type, 
+     mentioning that framework type in that context is NOT a violation
+   - **IMPORTANT**: Always check scope.allowed_framework_types first before flagging a 
+     framework type as a violation
+   - Report violations as: "module:TypeName" or "module" if the whole module is out of scope
+
+3. **Hallucinations**:
+   - Any type/part/relationship mentioned that is NOT in available_facts (or expected_facts in legacy mode) is a hallucination
+   - **Parts in overview queries**: For overview queries (types + relationships only), treat 
+     any part/attribute name as a hallucination UNLESS:
+     * It appears as a reference part name in relationships (extract the "part" field), OR
+     * It appears in the parts section (if provided)
+     Common reference parts include: "components", "component", "unit", "baseUnit", etc.
+   - **Exception**: Framework base types that are in scope.allowed_framework_types or explicitly listed are NOT hallucinations
+   - Report as: "Type X not in available facts" or "Part Y.Z not in available facts"
+   - **Key distinction**: A claim that exists in available_facts but wasn't required is NOT a hallucination
+
+4. **Incorrect Claims**:
+   - Claims that contradict expected_facts (e.g., "X is mandatory" when it's optional)
+   - Wrong types, wrong multiplicities, wrong relationships
+   - **Relationship cardinality tolerance**: When evaluating relationship multiplicities, 
+     accept these as equivalent:
+     * multiple=true ↔ "multiple" ↔ "many" ↔ "1:n" ↔ "one-to-many"
+     * multiple=false ↔ "single" ↔ "one" ↔ "n:1" (from inverse perspective) ↔ "many-to-one"
+     Do NOT flag cardinality as incorrect if the answer uses any of these equivalent phrasings.
+   - **Inference claims without explicit support**: Claims using inference words like 
+     "abstract", "final", "concrete", "sealed", "immutable" that are NOT explicitly stated 
+     in expected_facts. If the answer says "Product is abstract" but expected_facts doesn't 
+     explicitly state this (e.g., via "abstract": true), flag it as an incorrect claim.
+   - Report as: "Claimed X but expected_facts says Y" or "Claimed X without evidence"
+
+5. **Missing Facts**:
+   - **CRITICAL - Two-Truth-Set Mode**: If both `required_facts` and `available_facts` are present:
+     * Compute missingFacts ONLY against required_facts.types and required_facts.relationships
+     * Do NOT flag anything else as missing, even if it appears in available_facts
+   - **Legacy Mode**: If only expected_facts is present:
+     * If it includes a "required" section: compute missingFacts ONLY against that section
+     * If no "required" section: use standard behavior (types, relationships for overviews; 
+       all sections for detailed queries)
+   - Report as: "Missing: <fact description>"
+
+6. **Not Fetched** (NEW):
+   - Claims that exist in available_facts but required tool evidence the agent didn't provide
+   - **Enum literals**: If answer lists specific literal names (e.g., "enum X has: A, B, C"):
+     * Check if available_facts.enums contains this enum with literals
+     * If yes, this is NOT a hallucination
+     * BUT if the agent didn't call listClassifiers, flag as notFetched
+   - **Derived logic**: If answer explains TLScript computation (e.g., "cost is computed as..."):
+     * Check if available_facts.annotations contains this derivation
+     * If yes and agent didn't call listAnnotations, flag as notFetched
+   - **Usage details**: If answer states "Type X is used by Y via part Z":
+     * Check if available_facts.usages contains this
+     * If yes and agent didn't call findTypeUsages, flag as notFetched
+   - Report as: "Stated enum literals without calling listClassifiers" or similar
+   - **NOTE**: This is distinct from hallucinations. notFetched = true but not evidence-backed.
+
+7. **Format Violations** (optional, minor):
+   - Poor structure, unclear formatting
+   - Only report if it significantly impacts readability
+
+# Special Considerations for Different Query Types
+
+## Overview Queries ("high-level overview", "types + relationships")
+- Focus on types and relationships, NOT individual attributes
+- Do NOT penalize for omitting attributes in the answer
+- **Missing facts**: Use required_facts (or required section) if present. Only check required.types 
+  and required.relationships. Do NOT flag attributes as missing for overview queries.
+- **Hallucinations for parts**: Treat any part/attribute name mentioned in the answer as a 
+  hallucination UNLESS:
+  * It's a reference part name extracted from relationships (the "part" field), OR
+  * It's in the parts section of available_facts (if provided)
+  Examples of acceptable reference parts: "components", "component", "unit", "baseUnit"
+  Examples of hallucinations: "basePrice", "description", "costPerUnit", "name" (unless 
+  these appear in available_facts)
+- **Schema facts (parts) are acceptable IF tool-backed**: If the agent actually called 
+  listTypeParts to get schema details, mentioning those parts is NOT a hallucination 
+  (even for overview queries). Check available_facts.parts.
+
+## Detailed Schema Queries ("schema of X", "attributes of Y")
+- These queries require comprehensive attribute coverage
+- Report missing attributes as missing facts (from required_facts if present)
+- Check all parts in available_facts.parts for hallucination detection
+- Enum literals and derivations still require tool evidence (flag notFetched if not called)
+
+## Inference Claims
+- Be strict about claims using inference words ("abstract", "final", "concrete", etc.)
+- These must have explicit support in expected_facts
+- If not explicitly stated, flag as an incorrect claim
+
+# Scoring Guidelines
+
+- **10**: Perfect answer, all required facts present, no violations, all specifics properly fetched
+- **8-9**: Minor missing facts or minor wording issues, no serious violations
+- **6-7**: Some missing facts OR minor scope violations OR some notFetched, but core answer correct
+- **4-5**: Significant missing facts OR scope violations OR multiple notFetched, but some correct content
+- **2-3**: Major violations (scope bleed, hallucinations, many notFetched) OR mostly incorrect
+- **0-1**: Completely wrong, major hallucinations, severe scope violations
+
+**Weight adjustments**:
+- Correctness (40%): Required facts + no incorrect claims
+- Scope Adherence (25%): Framework bleed and out-of-scope references
+- Non-Hallucination (20%): Claims not in available_facts
+- Evidence Compliance (15%): notFetched penalties (stated specifics without tool evidence)
+
+# Input
+
+**Input Format**:
+You will receive either:
+1. **Legacy mode**: Single `expected_facts` JSON (with optional "required" section inside)
+2. **Two-truth-set mode**: Both `required_facts` and `available_facts` JSONs
+
+When both are present:
+- Use `required_facts` for missing facts scoring
+- Use `available_facts` for hallucination and notFetched detection
+
+---
+
+Required Facts (prompt-specific minimum):
+{REQUIRED_FACTS_JSON}
+
+Available Facts (complete oracle truth):
+{AVAILABLE_FACTS_JSON}
+
+Note: If only one is provided, use it for both purposes (legacy behavior).
+If expected_facts includes a "required" section, treat that as required_facts.
+
+---
+
+Actual Answer:
+{ACTUAL_ANSWER}

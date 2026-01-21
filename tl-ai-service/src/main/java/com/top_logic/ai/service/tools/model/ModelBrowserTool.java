@@ -31,6 +31,7 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.TLI18NKey;
+import com.top_logic.model.annotate.TLModuleDisplayGroup;
 import com.top_logic.model.config.annotation.UnorderedEnum;
 import com.top_logic.model.resources.TLTypePartResourceProvider;
 import com.top_logic.model.util.TLModelNamingConvention;
@@ -108,6 +109,11 @@ public class ModelBrowserTool {
 						if (description != null && !description.isEmpty()) {
 							moduleInfo.setDescription(description);
 						}
+
+						// Determine if this is a framework module
+						// Framework modules are grouped under "tl" in the model editor
+						boolean isFramework = isFrameworkModule(module);
+						moduleInfo.setFrameworkModule(isFramework);
 
 						result.addModule(moduleInfo);
 					}
@@ -487,5 +493,44 @@ public class ModelBrowserTool {
 				ModelBrowserTool.class,
 				"listClassifiers()");
 		}
+	}
+
+	/**
+	 * Determines if a module is a framework/platform module.
+	 * 
+	 * <p>
+	 * Framework modules are identified by:
+	 * <ul>
+	 * <li>Having a {@link TLModuleDisplayGroup} annotation starting with "tl"</li>
+	 * <li>Or having a technical name starting with "tl." or "tl5."</li>
+	 * </ul>
+	 * </p>
+	 * 
+	 * <p>
+	 * This matches the grouping logic in TopLogic's model editor, where framework modules
+	 * are grouped under the "TopLogic" container (with display group "tl").
+	 * </p>
+	 * 
+	 * @param module
+	 *        The module to check
+	 * @return true if this is a framework module, false if it's an application module
+	 */
+	private boolean isFrameworkModule(TLModule module) {
+		// Check for TLModuleDisplayGroup annotation
+		TLModuleDisplayGroup displayGroup = module.getAnnotation(TLModuleDisplayGroup.class);
+		if (displayGroup != null) {
+			String groupValue = displayGroup.getValue();
+			if (groupValue != null && groupValue.startsWith("tl")) {
+				return true;
+			}
+		}
+
+		// Check technical module name
+		String moduleName = module.getName();
+		if (moduleName.startsWith("tl.") || moduleName.startsWith("tl5.")) {
+			return true;
+		}
+
+		return false;
 	}
 }

@@ -51,6 +51,51 @@ public interface ModelExplorer {
 
 			---
 
+			### MODULE SCOPE: APPLICATION vs. FRAMEWORK
+
+			**CRITICAL DEFAULT BEHAVIOR:**
+
+			When the user asks about "the model" or "types in the model" **WITHOUT** explicitly mentioning framework modules, you MUST scope your exploration to **application domain modules only**.
+
+			**Using listModules() Classification:**
+
+			The `listModules()` tool returns a `frameworkModule` boolean field for each module:
+			* `frameworkModule: true` → TopLogic platform module (tl.*, tl5.*, and infrastructure modules grouped under "TopLogic" in the model editor)
+			* `frameworkModule: false` → Application business domain module (e.g., luigis.pizzashop, sales, inventory)
+
+			**Scoping Strategy:**
+
+			1. When the user asks generally about "the model", "types", "root types", "aggregate types":
+			   * First call `listModules()`
+			   * Filter to modules where `frameworkModule: false`
+			   * Explore ONLY those application modules
+			   
+			2. When the user explicitly mentions a framework module (e.g., "show me tl.accounts types"):
+			   * Include that specific module regardless of its classification
+			   
+			3. When the user asks about "the entire model including framework":
+			   * Include all modules in your exploration
+
+			**Example:**
+
+			If `listModules()` returns:
+			```json
+			{
+			  "modules": [
+			    {"name": "luigis.pizzashop", "frameworkModule": false, ...},
+			    {"name": "tl.model", "frameworkModule": true, ...},
+			    {"name": "tl.accounts", "frameworkModule": true, ...},
+			    {"name": "orgStructure", "frameworkModule": true, ...}
+			  ]
+			}
+			```
+
+			And user asks "list all root types in the model":
+			→ Explore ONLY luigis.pizzashop (frameworkModule: false)
+			→ Do NOT explore tl.model, tl.accounts, orgStructure (frameworkModule: true)
+
+			---
+
 			### TOOLS
 
 			You have access to the **model browser, search, analysis and annotation tools** described in the tool metadata. Use these tools to explore modules, types, parts, annotations, and their usages.
@@ -59,7 +104,7 @@ public interface ModelExplorer {
 
 			### UNDERSTANDING THE MODEL STRUCTURE
 
-			* **Framework vs. application modules:** Framework modules start with `tl.*`; application modules do not.
+			* **Framework vs. application modules:** The `listModules()` tool includes a `frameworkModule` boolean field that distinguishes TopLogic platform modules (true) from application business domain modules (false). Use this field to filter modules appropriately.
 			* **Hierarchy:** Modules contain Types (classes/enumerations/datatypes); structured types contain Parts; relationships exist via references and type usage.
 
 			---
@@ -79,7 +124,8 @@ public interface ModelExplorer {
 
 			Standard flows you may compose or reuse:
 
-			* **Model overview** – List available modules and their types to summarise the domain.
+			* **Model overview** – List available modules (filtered by frameworkModule field) and their types to summarise the domain.
+			* **Module filtering** – When answering general model questions, first call listModules(), filter by frameworkModule field, then explore only application modules.
 			* **Type summary** – List all parts (local + inherited), indicating multiplicities and constraints.
 			* **Attribute summary / constraints** – List attributes with their types and constraint metadata.
 			* **Where is this used?** – Find usages of a type or part to understand its dependencies and references.
@@ -236,6 +282,44 @@ public interface ModelExplorer {
 
 			* `listAnnotations(targetRef="sales:Order#totalPrice", includeInherited=false)` → annotation containing TLScript (shown verbatim above).
 			* `listTypeParts(sales, Order, includeInherited=true)` → totalPrice part: derived=true, type=tl.core:Double.
+
+			---
+
+			### Example 3 – Root Types with Correct Module Scoping
+
+			**Prompt**
+
+			> *List all root / aggregate types in the model and how they relate*
+
+			**Strategy**
+
+			1. Call `listModules()` to get all modules with frameworkModule classification
+			2. Filter to application modules (frameworkModule: false)
+			3. Call `listTypes()` for each application module
+			4. Analyze type hierarchies and composition relationships
+			5. Present only application domain types
+
+			**Answer**
+
+			* **Module:** luigis.pizzashop
+			* **Root Types:**
+			  * NamedEntities (no domain generalizations, base for all named entities)
+			  * UnitOfMeasure (enumeration, no generalizations)
+			* **Aggregate Roots:**
+			  * Product (composes ProductComponent via components reference)
+			* **Type Hierarchy:**
+			  * NamedEntities → Product, Component, ProductComponent
+			  * Component → Ingredient, Labor
+
+			**Next suggested query (optional)**
+
+			* Explore the composition relationship: use `listTypeParts(luigis.pizzashop, Product, true)` to see all parts of Product including the components reference.
+
+			**Source Reference**
+
+			* `listModules()` → 1 application module (luigis.pizzashop, frameworkModule: false) + 30 framework modules (frameworkModule: true)
+			* `listTypes(luigis.pizzashop)` → returned 7 types with generalization data
+			* `listTypeParts(luigis.pizzashop, Product, false)` → components reference (multiple=true, mandatory=true) to ProductComponent
 
 			""")
 	@UserMessage("""

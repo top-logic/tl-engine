@@ -103,6 +103,20 @@
 
 	<build>
 		<plugins>
+			<plugin>
+				<groupId>de.haumacher.msgbuf</groupId>
+				<artifactId>msgbuf-generator-maven-plugin</artifactId>
+				<version>${msgbuf.version}</version>
+
+				<executions>
+					<execution>
+						<id>generate-protocols</id>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 	</build>
 </project>

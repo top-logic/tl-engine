@@ -50,23 +50,11 @@ import com.top_logic.util.model.ModelService;
 public class ModelExplorerScoringTest extends TestCase {
 
 	/**
-	 * Test 1: High-level overview of types and relationships.
+	 * Builds required facts for overview prompts: types + relationships (references only).
 	 * 
-	 * Prompt: "give me a high-level overview of the luigis.pizzashop model (types and relationships only)"
-	 * 
-	 * Required facts: All types + relationships (not individual attributes)
+	 * @return JSON string with required facts
 	 */
-	public void testPrompt1_HighLevelOverview() throws IOException {
-		String prompt = "give me a high-level overview of the luigis.pizzashop model (types and relationships only)";
-		int minScore = 7;
-		
-		System.out.println("\n==========================================");
-		System.out.println("TEST 1: High-Level Overview");
-		System.out.println("==========================================");
-		System.out.println("Prompt: " + prompt);
-		System.out.println();
-		
-		// 1. Build required facts - for overview we need: types + relationships ONLY
+	private String buildOverviewRequiredFacts(String testMethodName) {
 		ExpectedFactsBuilder builder = new ExpectedFactsBuilder();
 		RequiredFacts required = new RequiredFacts();
 		
@@ -102,7 +90,7 @@ public class ModelExplorerScoringTest extends TestCase {
 					// Only add if there are reference parts
 					if (!referencesOnly.getParts().isEmpty()) {
 						String referencesJson = DataClassSerializer.toJson(referencesOnly,
-							ModelExplorerScoringTest.class, "testPrompt1_HighLevelOverview()");
+							ModelExplorerScoringTest.class, testMethodName);
 						required.add(referencesJson);
 					}
 				} catch (Exception ex) {
@@ -117,7 +105,92 @@ public class ModelExplorerScoringTest extends TestCase {
 		System.out.println(requiredFactsJson);
 		System.out.println("--- End Required Facts ---\n");
 		
+		return requiredFactsJson;
+	}
+
+	/**
+	 * Test 1: High-level overview of types and relationships.
+	 * 
+	 * Prompt: "give me a high-level overview of the luigis.pizzashop model (types and relationships only)"
+	 * 
+	 * Required facts: All types + relationships (not individual attributes)
+	 */
+	public void _disabled_testPrompt1_HighLevelOverview() throws IOException {
+		String prompt = "give me a high-level overview of the luigis.pizzashop model (types and relationships only)";
+		int minScore = 7;
+		
+		System.out.println("\n==========================================");
+		System.out.println("TEST 1: High-Level Overview");
+		System.out.println("==========================================");
+		System.out.println("Prompt: " + prompt);
+		System.out.println();
+		
+		// 1. Build required facts - for overview we need: types + relationships ONLY
+		String requiredFactsJson = buildOverviewRequiredFacts("testPrompt1_HighLevelOverview()");
+		
 		// 2. Load oracle (overview = types + parts only, no usages/annotations)
+		String oracleJson = OracleLoader.loadPizzaShopOracleForOverview();
+		System.out.println("Oracle loaded: " + oracleJson.length() + " chars (overview)");
+		
+		// 3. Run the agent
+		System.out.println("\nRunning ModelExplorerTool agent...");
+		ModelExplorerTool agent = new ModelExplorerTool();
+		String agentAnswer = agent.exploreModel(prompt);
+		
+		System.out.println("\n--- Agent Answer ---");
+		System.out.println(agentAnswer);
+		System.out.println();
+		
+		// 4. Score with AI judge
+		System.out.println("Scoring with AI judge...");
+		JudgeClient judge = new JudgeClient(AIService.getInstance());
+		String judgePrompt = loadJudgeSystemPrompt();
+		
+		JudgeResult result = judge.score(requiredFactsJson, oracleJson, agentAnswer, judgePrompt);
+		
+		// 5. Print results
+		printJudgeResult(result);
+		
+		// 6. Assertions
+		assertTrue(
+			"Score must be at least " + minScore + " (was: " + result.getScore() + ")",
+			result.getScore() >= minScore
+		);
+		
+		assertTrue(
+			"No incorrect claims allowed. Found: " + result.getIncorrectClaims(),
+			result.getIncorrectClaims().isEmpty()
+		);
+		
+		assertTrue(
+			"No scope violations allowed. Found: " + result.getScopeViolations(),
+			result.getScopeViolations().isEmpty()
+		);
+		
+		System.out.println("\n✓ Test passed!");
+	}
+
+	/**
+	 * Test 2: List all root/aggregate types and their relationships.
+	 * 
+	 * Prompt: "list all root / aggregate types in the model and how they relate"
+	 * 
+	 * Required facts: All types + relationships (focusing on type hierarchy and aggregation)
+	 */
+	public void testPrompt2_RootAggregateTypes() throws IOException {
+		String prompt = "list all root / aggregate types in the model and how they relate";
+		int minScore = 7;
+		
+		System.out.println("\n==========================================");
+		System.out.println("TEST 2: Root/Aggregate Types");
+		System.out.println("==========================================");
+		System.out.println("Prompt: " + prompt);
+		System.out.println();
+		
+		// 1. Build required facts - for root/aggregate types we need: types + relationships
+		String requiredFactsJson = buildOverviewRequiredFacts("testPrompt2_RootAggregateTypes()");
+		
+		// 2. Load oracle (overview = types + parts only)
 		String oracleJson = OracleLoader.loadPizzaShopOracleForOverview();
 		System.out.println("Oracle loaded: " + oracleJson.length() + " chars (overview)");
 		

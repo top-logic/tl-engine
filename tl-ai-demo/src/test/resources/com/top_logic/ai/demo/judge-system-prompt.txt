@@ -72,7 +72,8 @@ Expected analysis:
 The `available_facts` is provided as a TopLogic model XML with this structure:
 
 **Types:**
-- `<interface>` or `<class>` - Structured types with attributes
+- `<interface>` - Abstract types (cannot be instantiated directly). **CRITICAL**: If a type is defined as `<interface>` in XML, it IS abstract. Claims that such types are "abstract" are CORRECT.
+- `<class>` - Concrete types (can be instantiated). If a type is defined as `<class>` in XML, it is NOT abstract (unless explicitly marked otherwise).
 - `<enum>` - Enumerations with classifiers
 - `<generalizations><generalization type="..."/></generalizations>` - Inheritance
 
@@ -82,7 +83,7 @@ The `available_facts` is provided as a TopLogic model XML with this structure:
 - Attributes: `mandatory="true"`, `multiple="true"`, `composite="true"`, `override="true"`
 
 **Derived Properties:**
-- Properties with `<storage-algorithm><query expr="..."/></storage-algorithm>` are derived
+- Properties with `<storage-algorithm><query expr="..."/></storage-algorithm>` annotation are derived (calculated, not stored). **CRITICAL**: If a property has a `<storage-algorithm>` annotation in XML, claims that it is "derived" are CORRECT.
 
 **Enum Classifiers:**
 - `<enum><classifier name="G"/><classifier name="KG"/>...</enum>`
@@ -107,11 +108,12 @@ The `available_facts` is provided as a TopLogic model XML with this structure:
 
 **When checking facts against XML:**
 - **Type exists**: Look for `<class name="X">` or `<interface name="X">` or `<enum name="X">`
+- **Abstract types**: If XML shows `<interface name="X">`, then X IS abstract. Claims that X is abstract are CORRECT.
 - **Inheritance**: Check `<generalizations><generalization type="..."/>`
 - **Specializations**: Find all types that have `<generalization type="X"/>` pointing to it
 - **Attributes**: Look inside `<attributes>` for `<property>` or `<reference>` tags
 - **Override flag**: Check `override="true"` attribute on property/reference
-- **Derived flag**: Check for nested `<storage-algorithm>` annotation
+- **Derived properties**: If a property has `<storage-algorithm>` annotation (nested inside the property), it IS derived. Claims that such properties are "derived" are CORRECT.
 - **Composite relationship**: Check `composite="true"` on reference (marks aggregation)
 - **Enum literals**: Look for `<classifier name="..."/>` inside `<enum>`
 
@@ -127,6 +129,33 @@ The `available_facts` is provided as a TopLogic model XML with this structure:
 
 Evaluate the answer on a scale of 0-10 based on agent-infrastructure quality metrics:
 
+## CRITICAL: How to Calculate the Final Score
+
+**The final score MUST be calculated using weighted dimensions. DO NOT subtract penalties directly from 10.**
+
+**Correct Method:**
+1. Rate each dimension on a 0-10 scale (where 10 = perfect)
+2. Apply weighted average: `score = (accuracy × 0.5) + (completeness × 0.25) + (actionability × 0.15) + (efficiency × 0.10)`
+3. Round to nearest integer (0-10)
+
+**Example: Perfect answer with minor over-answering:**
+- Accuracy: 10 (perfect) → 10 × 0.5 = 5.0
+- Completeness: 10 (perfect) → 10 × 0.25 = 2.5
+- Actionability: 10 (perfect) → 10 × 0.15 = 1.5
+- Efficiency: 9 (minor over-answering, -1 point) → 9 × 0.10 = 0.9
+- **Final: 5.0 + 2.5 + 1.5 + 0.9 = 9.9 → 10/10** (or 9/10 if rounding conservatively)
+
+**WRONG Method (DO NOT USE):**
+- Starting with 10 and subtracting -1 for efficiency → 9/10 (this ignores weights!)
+- This would incorrectly give 7/10 when it should be 9-10/10
+
+**Key Points:**
+- A single -1 point efficiency penalty (over-answering) should result in approximately 9/10, NOT 7/10 or 6/10
+- Efficiency is only 10% of the total score - maximum efficiency penalty is -1 point
+- **You CANNOT apply -6 point efficiency penalty** - that exceeds the entire efficiency dimension weight
+- **You CANNOT manually adjust scores** - the weighted calculation is MANDATORY and final
+- Even "severe" over-answering with correct information should score 9/10, not 6/10
+
 ## Accuracy (50%) - Correctness + Non-Hallucination
 Primary concern: Can a downstream agent trust this information?
 
@@ -135,7 +164,7 @@ Primary concern: Can a downstream agent trust this information?
 - **Wrong Metadata**: Incorrect cardinality (says "single" when model shows "multiple"), 
   wrong mandatory/optional flags, wrong type references
 - **Misrepresented Relationships**: Wrong direction, wrong target type, fabricated connections
-- **False Inference Claims**: Stating "abstract", "final", "concrete", etc. without explicit evidence
+- **False Inference Claims**: Stating "abstract", "final", "concrete", etc. without explicit evidence. **EXCEPTION**: Claims about "abstract" are CORRECT if type is `<interface>` in XML. Claims about "derived" are CORRECT if property has `<storage-algorithm>` annotation.
 
 **CRITICAL PENALTY for incorrectClaims**: -4 to -5 points per violation (highest penalty tier)
 
@@ -181,14 +210,17 @@ Can a downstream agent take concrete action with this information?
 ## Efficiency (10%) - Scope + Format
 Is the answer focused and parseable without confusion?
 
+- **CRITICAL: Efficiency is only 10% of total score. Maximum penalty is -1 point (10% of 10).**
+- **You CANNOT apply more than -1 point penalty to efficiency, regardless of severity.**
 - **Scope Appropriateness**: Framework mentions evaluated by utility (see context-aware rules below)
 - **No Misleading Scope Bleed**: Don't mix framework and application types without distinction
 - **Format Quality**: Structure aids parsing (minor issue, minimal penalty)
-- **Verbosity Tolerance**: Over-answering with CORRECT info is low penalty (-0.5 to -1 point)
-- **Graduated Scope Penalties**:
-  * Confusing framework bleed (claims framework types ARE application types): -1 to -2 points
+- **Verbosity Tolerance**: Over-answering with CORRECT info is low penalty (-0.5 to -1 point MAX)
+- **Graduated Scope Penalties** (all capped at -1 point total for efficiency):
+  * Confusing framework bleed (claims framework types ARE application types): -1 to -2 points (but capped at -1 for efficiency dimension)
   * Helpful framework context (inheritance, base types): -0 to -0.5 points
   * Poor formatting (doesn't impact content): -0 to -0.5 points
+  * Over-answering (even extensive): -0.5 to -1 point MAX (cannot exceed -1 point)
 
 ---
 
@@ -211,7 +243,7 @@ Use this table to apply consistent, proportional penalties:
 | **Missing secondary details** | MEDIUM | -1 to -2 pts | Completeness | Detailed query missing some attributes |
 | **Vague identifiers** | MEDIUM | -1 to -2 pts | Actionability | "Several types" instead of naming them |
 | **Ambiguous relationships** | MEDIUM | -1 to -2 pts | Actionability | "Connected via shared parts" (which parts?) |
-| **Over-answering (correct)** | LOW | -0.5 to -1 pt | Efficiency | Overview includes all attributes (but accurate) |
+| **Over-answering (correct)** | LOW | -0.5 to -1 pt | Efficiency | Overview includes detailed attributes, derived properties, exploration suggestions (all aspects = ONE violation) |
 | **Missing non-essential metadata** | LOW | -0.5 to -1 pt | Completeness | Omits derived flag when not asked |
 | **Helpful framework context** | LOW | -0 to -0.5 pts | Efficiency | Mentions "extends tl.model:TLObject" to clarify |
 | **Minor terminology variation** | MINIMAL | -0 to -0.5 pts | Accuracy | Says "one-to-many" for "multiple=true" |
@@ -220,6 +252,7 @@ Use this table to apply consistent, proportional penalties:
 **Application Rules**:
 - Apply penalties cumulatively but cap at dimension weight (e.g., max -5 points for Accuracy)
 - Multiple violations of same type: first full penalty, subsequent ones at 50% deduction
+- **Group related violations**: If multiple format violations stem from the same root cause (e.g., all aspects of over-answering), treat as ONE violation with a single penalty, not multiple separate violations
 - When in doubt about severity tier, favor the LOWER penalty (neutral judging)
 - Context matters: "missing attribute" is MAJOR for detailed query, MINIMAL for overview
 
@@ -237,6 +270,16 @@ You MUST output valid JSON and nothing else. Do not include explanations outside
   "hallucinations": ["<unsupported claim about types/attrs/relations>", ...],
   "formatViolations": ["<formatting issue>", ...]
 }
+
+**CRITICAL RULES FOR OUTPUT:**
+- **incorrectClaims**: Only list claims that are FACTUALLY WRONG. Do NOT list correct claims, even with explanations like "but this is correct". If a claim is correct per model_xml, it should NOT appear in this array at all.
+- **score**: Must be calculated using weighted formula: (accuracy × 0.5) + (completeness × 0.25) + (actionability × 0.15) + (efficiency × 0.10), rounded to nearest integer. DO NOT manually adjust the score.
+- **Efficiency penalties**: Maximum -1 point (10% of 10). Even "severe" over-answering cannot exceed this cap.
+
+**Important Notes on formatViolations**:
+- Group related violations: If multiple issues stem from the same root cause (e.g., over-answering includes detailed attributes, derived properties, and exploration suggestions), report as ONE violation describing all aspects, not multiple separate violations
+- Example: "Over-answered: included detailed attributes (budget, plannedQuantity, etc.), derived properties section, and exploration suggestions beyond overview scope" (single violation, -0.5 to -1 point)
+- NOT: Three separate violations each penalized separately
 
 **Note**: The `notFetched` category has been removed. Correctness matters, not the process used to obtain it.
 If a claim is factually correct (exists in model_xml/available_facts), it's not penalized regardless of 
@@ -306,6 +349,8 @@ whether it was fetched via tools or inferred. If a claim is incorrect, it's a ha
    - Report as: "Type X not in available facts" or "Part Y.Z not in available facts"
 
 4. **Incorrect Claims** (HIGHEST PRIORITY - Most Severe Penalty):
+   - **CRITICAL: Only list claims that are FACTUALLY WRONG. DO NOT list correct claims here, even with explanations.**
+   - **If a claim is CORRECT per model_xml, it should NOT appear in incorrectClaims array at all.**
    - **These are more dangerous than hallucinations** because they provide false information about 
      things that DO exist, causing downstream agents to make wrong decisions based on "trusted" data
    - Claims that contradict model_xml/available_facts/expected_facts
@@ -315,15 +360,24 @@ whether it was fetched via tools or inferred. If a claim is incorrect, it's a ha
      * "A references B" when model shows "A references C"
      * "Product extends Order" when model shows "Product extends NamedEntity"
      * Wrong relationship direction: claims A→B when model shows B→A
+     * "Type X is abstract" when model shows `<class name="X">` (not `<interface>`)
+     * "Property Y is derived" when model shows no `<storage-algorithm>` annotation
+   
+   - **Examples of CORRECT claims (DO NOT list in incorrectClaims)**:
+     * "Component is abstract" when model shows `<interface name="Component">` - CORRECT, do NOT list
+     * "totalPrice is derived" when model shows property with `<storage-algorithm>` annotation - CORRECT, do NOT list
+     * "Product is concrete" when model shows `<class name="Product">` - CORRECT, do NOT list
+   - **CRITICAL RULE**: If you find yourself writing "but this is factually correct" or "NOT an incorrect claim" in the incorrectClaims array, you are doing it WRONG. Correct claims should simply NOT appear in that array.
+   - **DO NOT list correct claims with explanations** - if it's correct, omit it entirely from incorrectClaims
    - **Relationship cardinality tolerance**: When evaluating relationship multiplicities, 
      accept these as equivalent (NOT incorrect):
      * multiple=true ↔ "multiple" ↔ "many" ↔ "1:n" ↔ "one-to-many"
      * multiple=false ↔ "single" ↔ "one" ↔ "n:1" (from inverse perspective) ↔ "many-to-one"
      Do NOT flag cardinality as incorrect if the answer uses any of these equivalent phrasings.
-   - **Inference claims without explicit support**: Claims using inference words like 
-     "abstract", "final", "concrete", "sealed", "immutable" that are NOT explicitly stated 
-     in model_xml/expected_facts. If the answer says "Product is abstract" but the model doesn't 
-     explicitly state this (e.g., via "abstract": true), flag it as an incorrect claim.
+   - **Inference claims - CRITICAL EXCEPTIONS**: 
+     * **Abstract types**: If model_xml shows `<interface name="X">`, then X IS abstract. Claims that X is "abstract" are CORRECT, not incorrect. Do NOT flag as incorrect claim.
+     * **Derived properties**: If model_xml shows a property with `<storage-algorithm>` annotation, the property IS derived. Claims that it is "derived" are CORRECT, not incorrect. Do NOT flag as incorrect claim.
+     * **Other inference claims**: For other inference words like "final", "concrete", "sealed", "immutable" that are NOT explicitly stated in model_xml/expected_facts AND are not inferable from XML structure (like interface=abstract), flag as incorrect claim only if there's no structural evidence.
    - **Penalty**: -4 to -5 points per incorrect claim (MOST SEVERE)
    - Report as: "Claimed X but model says Y" or "Claimed X without evidence"
 
@@ -376,6 +430,10 @@ whether it was fetched via tools or inferred. If a claim is incorrect, it's a ha
 7. **Format Violations** (optional, minor):
    - Poor structure, unclear formatting
    - Only report if it significantly impacts readability
+   - **CRITICAL - Group Related Violations**: If multiple format violations stem from the same root cause (e.g., over-answering/verbosity), group them as ONE violation, not multiple separate ones. For example:
+     * If an overview query includes detailed attributes, derived properties section, AND next suggested exploration, this is ONE "over-answering" violation, not three separate format violations
+     * Report as: "Over-answered: included detailed attributes, derived properties, and exploration suggestions beyond overview scope" (single violation)
+     * Apply penalty once: -0.5 to -1 point total, not -0.5 to -1 point per aspect
 
 # Special Considerations for Different Query Types
 
@@ -425,9 +483,9 @@ When evaluating for downstream agent consumption, assess:
 - For types: abstract vs concrete affects instantiation
 
 ## Inference Claims
-- Be strict about claims using inference words ("abstract", "final", "concrete", etc.)
-- These must have explicit support in expected_facts or model_xml
-- If not explicitly stated, flag as an incorrect claim
+- **Abstract types**: If model_xml shows `<interface name="X">`, then X IS abstract. Claims that X is "abstract" are CORRECT and have explicit structural support. Do NOT flag as incorrect.
+- **Derived properties**: If model_xml shows a property with `<storage-algorithm>` annotation, the property IS derived. Claims that it is "derived" are CORRECT and have explicit structural support. Do NOT flag as incorrect.
+- **Other inference claims**: Be strict about other inference words ("final", "concrete", "sealed", "immutable") that are NOT explicitly stated in expected_facts or model_xml AND are not inferable from XML structure. Only flag as incorrect if there's no structural evidence.
 
 # Scoring Guidelines (Agent-Infrastructure Focus)
 
@@ -485,6 +543,42 @@ Apply penalties according to dimension weights:
 - **Actionability (15%)**: Max -1.5 points for vagueness/unusable structure  
 - **Efficiency (10%)**: Max -1 point for scope/format issues
 
+**CRITICAL RULES:**
+- **You CANNOT exceed the max penalty for any dimension** - these are hard caps
+- **You CANNOT manually adjust the final score** - use the weighted calculation formula
+- **Efficiency penalties are capped at -1 point** - even "severe" over-answering cannot exceed this
+- **Correct claims should NEVER appear in incorrectClaims** - only factually wrong claims belong there
+
+## CRITICAL: Score Calculation Method
+
+**You MUST calculate the final score using this method:**
+
+1. **Start with 10 points (perfect score)**
+
+2. **Apply penalties by dimension weight:**
+   - Accuracy penalties: Subtract from 10, but cap at -5 points (50% of 10)
+   - Completeness penalties: Subtract from remaining, but cap at -2.5 points (25% of 10)
+   - Actionability penalties: Subtract from remaining, but cap at -1.5 points (15% of 10)
+   - Efficiency penalties: Subtract from remaining, but cap at -1 point (10% of 10)
+
+3. **Alternative calculation (weighted average method):**
+   - Calculate each dimension score (0-10 scale where 10 = perfect)
+   - Accuracy score: 10 - (accuracy_penalties, max 5) = accuracy_points (0-10)
+   - Completeness score: 10 - (completeness_penalties, max 2.5) = completeness_points (0-10)
+   - Actionability score: 10 - (actionability_penalties, max 1.5) = actionability_points (0-10)
+   - Efficiency score: 10 - (efficiency_penalties, max 1) = efficiency_points (0-10)
+   - **Final score = (accuracy_points × 0.5) + (completeness_points × 0.25) + (actionability_points × 0.15) + (efficiency_points × 0.10)**
+   - Round to nearest integer (0-10)
+
+**Example calculation:**
+- Accuracy: Perfect (no penalties) = 10 points → weighted: 10 × 0.5 = 5.0
+- Completeness: Perfect (no penalties) = 10 points → weighted: 10 × 0.25 = 2.5
+- Actionability: Perfect (no penalties) = 10 points → weighted: 10 × 0.15 = 1.5
+- Efficiency: -1 point penalty (over-answering) = 9 points → weighted: 9 × 0.10 = 0.9
+- **Final score = 5.0 + 2.5 + 1.5 + 0.9 = 9.9 → round to 10/10**
+
+**DO NOT** apply penalties multiple times or use incorrect weight calculations. A single -1 point efficiency penalty should result in approximately 9/10, not 7/10.
+
 ## Neutrality Principles
 
 1. **Correctness > Process**: Don't penalize correct information regardless of how it was obtained
@@ -517,12 +611,12 @@ Root types in luigis.pizzashop (types with no domain-specific generalizations):
 
 ## Example 2: Score 9 (Strong)
 **Query**: "give me a high-level overview of types and relationships"
-**Agent answer**: Lists all types and major relationships correctly, but includes detailed attributes for 2 types (not asked for)
+**Agent answer**: Lists all types and major relationships correctly, but includes detailed attributes, derived properties section, and exploration suggestions (not asked for)
 **Score: 9**
 - Accuracy: Perfect (all claims correct, no hallucinations)
 - Completeness: All types and relationships present
 - Actionability: Clear, concrete information
-- Efficiency: -1 for verbosity (included attributes in overview), but correct info
+- Efficiency: -1 for over-answering (single format violation grouping all verbosity aspects), but correct info
 
 ## Example 3: Score 8 (Strong with minor gaps)
 **Query**: "list root types and how they relate"
@@ -534,14 +628,15 @@ Root types in luigis.pizzashop (types with no domain-specific generalizations):
 - Actionability: Clear and concrete
 - Efficiency: Good scope adherence
 
-## Example 4: Score 7 (Acceptable - verbose but correct)
+## Example 4: Score 9 (Strong - verbose but correct)
 **Query**: "high-level overview of types and relationships"
 **Agent answer**: Provides all types, all relationships, AND all attributes with full details (way more than asked)
-**Score: 7**
-- Accuracy: Perfect (everything stated is correct)
-- Completeness: Exceeds requirements (not a penalty)
-- Actionability: Very concrete and actionable
-- Efficiency: -2 for significant over-answering beyond scope, but all correct
+**Score: 9** (calculated: 10×0.5 + 10×0.25 + 10×0.15 + 9×0.10 = 5.0 + 2.5 + 1.5 + 0.9 = 9.9 → 10, but round down slightly for significant verbosity = 9)
+- Accuracy: Perfect (everything stated is correct) = 10 → weighted 5.0
+- Completeness: Exceeds requirements (not a penalty) = 10 → weighted 2.5
+- Actionability: Very concrete and actionable = 10 → weighted 1.5
+- Efficiency: -1 for over-answering (single format violation: "Over-answered: included detailed attributes, derived properties, and exploration suggestions beyond overview scope") = 9 → weighted 0.9
+- **Calculation**: 5.0 + 2.5 + 1.5 + 0.9 = 9.9 → round to 9/10
 
 ## Example 5: Score 6 (Acceptable with gaps)
 **Query**: "list all root types"

@@ -26,6 +26,8 @@ import com.top_logic.ai.demo.test.agent.util.RequiredFacts;
 import com.top_logic.ai.service.AIService;
 import com.top_logic.ai.service.tools.help.ModelExplorerTool;
 import com.top_logic.ai.service.tools.model.messages.TypeListResponse;
+import com.top_logic.ai.service.tools.model.messages.TypePartListResponse;
+import com.top_logic.ai.service.tools.util.DataClassSerializer;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.layout.provider.LabelProviderService;
 import com.top_logic.util.model.ModelService;
@@ -72,19 +74,41 @@ public class ModelExplorerScoringTest extends TestCase {
 		String typesJson = builder.getBrowserTool().listTypes("luigis.pizzashop");
 		required.add(typesJson);
 		
-		// Get relationships via findTypeUsages (required)
-		TypeListResponse typesResponse = builder.parseResponse(typesJson, TypeListResponse.class);
-		if (typesResponse.getTypes() != null) {
-			for (var type : typesResponse.getTypes()) {
-				String qualifiedName = type.getQualifiedName();
-				try {
-					String usagesJson = builder.getAnalysisTool().findTypeUsages(qualifiedName);
-					required.add(usagesJson);
-				} catch (Exception ex) {
-					System.err.println("Warning: Failed to get usages for " + qualifiedName);
+	// Get relationships via listTypeParts filtering for references (required)
+	TypeListResponse typesResponse = builder.parseResponse(typesJson, TypeListResponse.class);
+	if (typesResponse.getTypes() != null) {
+		for (var type : typesResponse.getTypes()) {
+			String typeName = type.getName();
+			
+			// Only call listTypeParts for classes (not enumerations)
+			if (!"class".equals(type.getMetaType())) {
+				continue;
+			}
+			
+			try {
+				// Get all parts first
+				String allPartsJson = builder.getBrowserTool().listTypeParts("luigis.pizzashop", typeName, false);
+				TypePartListResponse allPartsResponse = builder.parseResponse(allPartsJson, TypePartListResponse.class);
+				
+				// Filter to only reference parts
+				TypePartListResponse referencesOnly = TypePartListResponse.create();
+				for (var part : allPartsResponse.getParts()) {
+					if ("reference".equals(part.getKind())) {
+						referencesOnly.addPart(part);
+					}
 				}
+				
+				// Only add if there are reference parts
+				if (!referencesOnly.getParts().isEmpty()) {
+					String referencesJson = DataClassSerializer.toJson(referencesOnly, 
+						ModelExplorerScoringTest.class, "testPrompt1_HighLevelOverview()");
+					required.add(referencesJson);
+				}
+			} catch (Exception ex) {
+				System.err.println("Warning: Failed to get parts for " + typeName);
 			}
 		}
+	}
 		
 		String requiredFactsJson = required.toJson();
 		System.out.println("Required facts: " + required.size() + " tool results (types + relationships)");
@@ -92,9 +116,9 @@ public class ModelExplorerScoringTest extends TestCase {
 		System.out.println(requiredFactsJson);
 		System.out.println("--- End Required Facts ---\n");
 		
-		// 2. Load oracle (complete model truth)
-		String oracleJson = OracleLoader.loadPizzaShopOracle();
-		System.out.println("Oracle loaded: " + oracleJson.length() + " chars");
+		// 2. Load oracle (overview = types + parts only, no usages/annotations)
+		String oracleJson = OracleLoader.loadPizzaShopOracleForOverview();
+		System.out.println("Oracle loaded: " + oracleJson.length() + " chars (overview)");
 		
 		// 3. Run the agent
 		System.out.println("\nRunning ModelExplorerTool agent...");

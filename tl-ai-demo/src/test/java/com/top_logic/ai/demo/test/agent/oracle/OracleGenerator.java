@@ -29,6 +29,59 @@ import com.top_logic.basic.Logger;
  */
 public class OracleGenerator {
 
+	/**
+	 * Configuration for what sections to include in the oracle.
+	 */
+	public static class OracleConfig {
+		private boolean _includeUsages = true;
+		private boolean _includeAnnotations = true;
+		private boolean _includeClassifiers = true;
+
+		/**
+		 * Creates a default configuration (all sections included).
+		 */
+		public static OracleConfig defaults() {
+			return new OracleConfig();
+		}
+
+		/**
+		 * Creates a configuration for overview scoring (types + parts only).
+		 */
+		public static OracleConfig forOverview() {
+			OracleConfig config = new OracleConfig();
+			config._includeUsages = false;
+			config._includeAnnotations = false;
+			return config;
+		}
+
+		public boolean includeUsages() {
+			return _includeUsages;
+		}
+
+		public OracleConfig setIncludeUsages(boolean includeUsages) {
+			_includeUsages = includeUsages;
+			return this;
+		}
+
+		public boolean includeAnnotations() {
+			return _includeAnnotations;
+		}
+
+		public OracleConfig setIncludeAnnotations(boolean includeAnnotations) {
+			_includeAnnotations = includeAnnotations;
+			return this;
+		}
+
+		public boolean includeClassifiers() {
+			return _includeClassifiers;
+		}
+
+		public OracleConfig setIncludeClassifiers(boolean includeClassifiers) {
+			_includeClassifiers = includeClassifiers;
+			return this;
+		}
+	}
+
 	private final ExpectedFactsBuilder _builder;
 
 	/**
@@ -39,7 +92,7 @@ public class OracleGenerator {
 	}
 
 	/**
-	 * Generates a complete oracle for the given module.
+	 * Generates a complete oracle for the given module with default configuration.
 	 * 
 	 * @param moduleName
 	 *        The module name (e.g., "luigis.pizzashop")
@@ -48,6 +101,21 @@ public class OracleGenerator {
 	 * @return The oracle JSON string
 	 */
 	public String generateOracle(String moduleName, String outputPath) throws IOException {
+		return generateOracle(moduleName, outputPath, OracleConfig.defaults());
+	}
+
+	/**
+	 * Generates an oracle for the given module with custom configuration.
+	 * 
+	 * @param moduleName
+	 *        The module name (e.g., "luigis.pizzashop")
+	 * @param outputPath
+	 *        The file path to save the oracle JSON
+	 * @param config
+	 *        Configuration for what sections to include
+	 * @return The oracle JSON string
+	 */
+	public String generateOracle(String moduleName, String outputPath, OracleConfig config) throws IOException {
 		Logger.info("Generating oracle for module: " + moduleName, OracleGenerator.class);
 
 		StringBuilder json = new StringBuilder();
@@ -60,15 +128,16 @@ public class OracleGenerator {
 		TypeListResponse typesResponse = _builder.parseResponse(typesJson, TypeListResponse.class);
 		json.append("  \"types\": ").append(typesJson).append(",\n");
 
-		// 2. Get annotations for the module
-		Logger.info("Fetching module annotations...", OracleGenerator.class);
+		// 2. Get annotations for the module (optional)
 		String moduleAnnotationsJson = null;
-		try {
-			moduleAnnotationsJson = _builder.getAnnotationTool().listAnnotations(moduleName, true);
-		} catch (Exception ex) {
-			Logger.warn("Failed to get module annotations: " + ex.getMessage(), OracleGenerator.class);
+		if (config.includeAnnotations()) {
+			Logger.info("Fetching module annotations...", OracleGenerator.class);
+			try {
+				moduleAnnotationsJson = _builder.getAnnotationTool().listAnnotations(moduleName, true);
+			} catch (Exception ex) {
+				Logger.warn("Failed to get module annotations: " + ex.getMessage(), OracleGenerator.class);
+			}
 		}
-		json.append("  \"moduleAnnotations\": ").append(moduleAnnotationsJson != null ? moduleAnnotationsJson : "null").append(",\n");
 
 		// 3. For each type, get parts, classifiers, usages, and annotations
 		Logger.info("Fetching details for each type...", OracleGenerator.class);
@@ -85,13 +154,15 @@ public class OracleGenerator {
 				String qualifiedName = type.getQualifiedName();
 				Logger.info("Processing: " + qualifiedName, OracleGenerator.class);
 
-				// Get type annotations
-				try {
-					String typeAnnoJson = _builder.getAnnotationTool().listAnnotations(qualifiedName, true);
-					typeAnnotations.put(typeName, typeAnnoJson);
-				} catch (Exception ex) {
-					Logger.warn("Failed to get annotations for " + qualifiedName + ": " + ex.getMessage(),
-						OracleGenerator.class);
+				// Get type annotations (optional)
+				if (config.includeAnnotations()) {
+					try {
+						String typeAnnoJson = _builder.getAnnotationTool().listAnnotations(qualifiedName, true);
+						typeAnnotations.put(typeName, typeAnnoJson);
+					} catch (Exception ex) {
+						Logger.warn("Failed to get annotations for " + qualifiedName + ": " + ex.getMessage(),
+							OracleGenerator.class);
+					}
 				}
 
 				// Get parts (for classes)
@@ -101,18 +172,20 @@ public class OracleGenerator {
 							_builder.getBrowserTool().listTypeParts(moduleName, typeName, true);
 						partsByType.put(typeName, partsJson);
 
-						// Get annotations for each part
-						var partsResponse = _builder.parseResponse(partsJson,
-							com.top_logic.ai.service.tools.model.messages.TypePartListResponse.class);
-						if (partsResponse.getParts() != null) {
-							for (var part : partsResponse.getParts()) {
-								String partRef = qualifiedName + "#" + part.getName();
-								try {
-									String partAnnoJson = _builder.getAnnotationTool().listAnnotations(partRef, true);
-									partAnnotations.put(partRef, partAnnoJson);
-								} catch (Exception ex) {
-									Logger.warn("Failed to get annotations for " + partRef + ": " + ex.getMessage(),
-										OracleGenerator.class);
+						// Get annotations for each part (optional)
+						if (config.includeAnnotations()) {
+							var partsResponse = _builder.parseResponse(partsJson,
+								com.top_logic.ai.service.tools.model.messages.TypePartListResponse.class);
+							if (partsResponse.getParts() != null) {
+								for (var part : partsResponse.getParts()) {
+									String partRef = qualifiedName + "#" + part.getName();
+									try {
+										String partAnnoJson = _builder.getAnnotationTool().listAnnotations(partRef, true);
+										partAnnotations.put(partRef, partAnnoJson);
+									} catch (Exception ex) {
+										Logger.warn("Failed to get annotations for " + partRef + ": " + ex.getMessage(),
+											OracleGenerator.class);
+									}
 								}
 							}
 						}
@@ -122,26 +195,28 @@ public class OracleGenerator {
 					}
 				}
 
-				// Get classifiers (for enums)
-				if ("enumeration".equals(type.getMetaType())) {
+				// Get classifiers (for enums, optional)
+				if (config.includeClassifiers() && "enumeration".equals(type.getMetaType())) {
 					try {
 						String classifiersJson =
 							_builder.getBrowserTool().listClassifiers(moduleName, typeName);
 						classifiersByEnum.put(typeName, classifiersJson);
 
-						// Get annotations for each classifier
-						var classifiersResponse = _builder.parseResponse(classifiersJson,
-							com.top_logic.ai.service.tools.model.messages.EnumerationResponse.class);
-						if (classifiersResponse.getClassifiers() != null) {
-							for (var classifier : classifiersResponse.getClassifiers()) {
-								String classifierRef = qualifiedName + "#" + classifier.getName();
-								try {
-									String classifierAnnoJson =
-										_builder.getAnnotationTool().listAnnotations(classifierRef, true);
-									classifierAnnotations.put(classifierRef, classifierAnnoJson);
-								} catch (Exception ex) {
-									Logger.warn("Failed to get annotations for " + classifierRef + ": " + ex.getMessage(),
-										OracleGenerator.class);
+						// Get annotations for each classifier (optional)
+						if (config.includeAnnotations()) {
+							var classifiersResponse = _builder.parseResponse(classifiersJson,
+								com.top_logic.ai.service.tools.model.messages.EnumerationResponse.class);
+							if (classifiersResponse.getClassifiers() != null) {
+								for (var classifier : classifiersResponse.getClassifiers()) {
+									String classifierRef = qualifiedName + "#" + classifier.getName();
+									try {
+										String classifierAnnoJson =
+											_builder.getAnnotationTool().listAnnotations(classifierRef, true);
+										classifierAnnotations.put(classifierRef, classifierAnnoJson);
+									} catch (Exception ex) {
+										Logger.warn("Failed to get annotations for " + classifierRef + ": " + ex.getMessage(),
+											OracleGenerator.class);
+									}
 								}
 							}
 						}
@@ -151,46 +226,89 @@ public class OracleGenerator {
 					}
 				}
 
-				// Get usages
-				try {
-					String usagesJson = _builder.getAnalysisTool().findTypeUsages(qualifiedName);
-					usagesByType.put(typeName, usagesJson);
-				} catch (Exception ex) {
-					Logger.warn("Failed to get usages for " + qualifiedName + ": " + ex.getMessage(),
-						OracleGenerator.class);
+				// Get usages (optional)
+				if (config.includeUsages()) {
+					try {
+						String usagesJson = _builder.getAnalysisTool().findTypeUsages(qualifiedName);
+						usagesByType.put(typeName, usagesJson);
+					} catch (Exception ex) {
+						Logger.warn("Failed to get usages for " + qualifiedName + ": " + ex.getMessage(),
+							OracleGenerator.class);
+					}
 				}
 			}
 		}
 
-		// Build parts object
+		// Build optional sections
+		boolean needsComma = false;
+
+		// Module annotations (if included)
+		if (config.includeAnnotations()) {
+			if (needsComma)
+				json.append(",\n");
+			json.append("  \"moduleAnnotations\": ")
+				.append(moduleAnnotationsJson != null ? moduleAnnotationsJson : "null");
+			needsComma = true;
+		}
+
+		// Parts (always included)
+		if (needsComma)
+			json.append(",\n");
 		json.append("  \"parts\": {\n");
 		appendJsonMap(json, partsByType, "    ");
-		json.append("  },\n");
+		json.append("  }");
+		needsComma = true;
 
-		// Build classifiers object
-		json.append("  \"classifiers\": {\n");
-		appendJsonMap(json, classifiersByEnum, "    ");
-		json.append("  },\n");
+		// Classifiers (if included)
+		if (config.includeClassifiers() && !classifiersByEnum.isEmpty()) {
+			if (needsComma)
+				json.append(",\n");
+			json.append("  \"classifiers\": {\n");
+			appendJsonMap(json, classifiersByEnum, "    ");
+			json.append("  }");
+			needsComma = true;
+		}
 
-		// Build usages object
-		json.append("  \"usages\": {\n");
-		appendJsonMap(json, usagesByType, "    ");
-		json.append("  },\n");
+		// Usages (if included)
+		if (config.includeUsages() && !usagesByType.isEmpty()) {
+			if (needsComma)
+				json.append(",\n");
+			json.append("  \"usages\": {\n");
+			appendJsonMap(json, usagesByType, "    ");
+			json.append("  }");
+			needsComma = true;
+		}
 
-		// Build annotations objects
-		json.append("  \"typeAnnotations\": {\n");
-		appendJsonMap(json, typeAnnotations, "    ");
-		json.append("  },\n");
+		// Type annotations (if included)
+		if (config.includeAnnotations() && !typeAnnotations.isEmpty()) {
+			if (needsComma)
+				json.append(",\n");
+			json.append("  \"typeAnnotations\": {\n");
+			appendJsonMap(json, typeAnnotations, "    ");
+			json.append("  }");
+			needsComma = true;
+		}
 
-		json.append("  \"partAnnotations\": {\n");
-		appendJsonMap(json, partAnnotations, "    ");
-		json.append("  },\n");
+		// Part annotations (if included)
+		if (config.includeAnnotations() && !partAnnotations.isEmpty()) {
+			if (needsComma)
+				json.append(",\n");
+			json.append("  \"partAnnotations\": {\n");
+			appendJsonMap(json, partAnnotations, "    ");
+			json.append("  }");
+			needsComma = true;
+		}
 
-		json.append("  \"classifierAnnotations\": {\n");
-		appendJsonMap(json, classifierAnnotations, "    ");
-		json.append("  }\n");
+		// Classifier annotations (if included)
+		if (config.includeAnnotations() && !classifierAnnotations.isEmpty()) {
+			if (needsComma)
+				json.append(",\n");
+			json.append("  \"classifierAnnotations\": {\n");
+			appendJsonMap(json, classifierAnnotations, "    ");
+			json.append("  }");
+		}
 
-		json.append("}");
+		json.append("\n}");
 
 		String oracleJson = json.toString();
 
@@ -238,5 +356,21 @@ public class OracleGenerator {
 	 */
 	public String generatePizzaShopOracle(String outputPath) throws IOException {
 		return generateOracle("luigis.pizzashop", outputPath);
+	}
+
+	/**
+	 * Convenience method to generate overview oracle for luigis.pizzashop module.
+	 * 
+	 * <p>
+	 * This generates a lighter oracle suitable for overview prompts (types + parts only, no usages
+	 * or annotations).
+	 * </p>
+	 * 
+	 * @param outputPath
+	 *        The file path to save the oracle
+	 * @return The oracle JSON string
+	 */
+	public String generatePizzaShopOracleForOverview(String outputPath) throws IOException {
+		return generateOracle("luigis.pizzashop", outputPath, OracleConfig.forOverview());
 	}
 }

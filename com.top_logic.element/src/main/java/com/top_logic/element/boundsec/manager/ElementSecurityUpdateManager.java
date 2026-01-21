@@ -5,10 +5,13 @@
  */
 package com.top_logic.element.boundsec.manager;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -18,6 +21,7 @@ import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.DebugHelper;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.TLID;
+import com.top_logic.basic.col.FilterUtil;
 import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.col.Mappings;
 import com.top_logic.basic.config.ConfiguredInstance;
@@ -28,24 +32,28 @@ import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
 import com.top_logic.basic.util.Computation;
-import com.top_logic.dob.MetaObject;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider.Type;
 import com.top_logic.element.boundsec.manager.rule.RoleRule;
-import com.top_logic.element.meta.kbbased.WrapperMetaAttributeUtil;
-import com.top_logic.knowledge.objects.KnowledgeAssociation;
+import com.top_logic.element.changelog.KBChangeAnalzyer;
+import com.top_logic.element.changelog.model.Change;
+import com.top_logic.element.changelog.model.Creation;
+import com.top_logic.element.changelog.model.Deletion;
+import com.top_logic.element.changelog.model.Modification;
+import com.top_logic.element.changelog.model.Update;
+import com.top_logic.element.changelog.model.trans.TransientChangeSet;
 import com.top_logic.knowledge.objects.KnowledgeItem;
-import com.top_logic.knowledge.objects.KnowledgeItemUtil;
-import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.security.SecurityStorage;
 import com.top_logic.knowledge.service.CommitHandler;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.StorageException;
-import com.top_logic.knowledge.wrap.Wrapper;
-import com.top_logic.knowledge.wrap.WrapperFactory;
+import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLObject;
+import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.manager.AccessManager;
@@ -162,222 +170,281 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
 	public synchronized void handleSecurityUpdate(KnowledgeBase kb, long commitNumber,
 			Map<TLID, KnowledgeItem> someChanged, Map<TLID, KnowledgeItem> someNew, final Map<TLID, KnowledgeItem> someRemoved, CommitHandler aHandler) {
 
-        // This map holds the affected rules mapped to the set of affected objects
-		final Map<RoleProvider, Collection<BoundObject>> rulesToObjectsMap =
-			new HashMap<>();
-		final Map<RoleProvider, Collection<BoundObject>> rulesToDeletedObjectsMap =
-			new HashMap<>();
-		Map<BoundRole, Collection<Object>> newHasRoleChanged = new HashMap<>();
-		final Map<BoundRole, Collection<Object>> deletedHasRoleChanged = new HashMap<>();
+		TransientChangeSet cs = new KBChangeAnalzyer(kb, commitNumber, someChanged, someNew, someRemoved).analyze();
+		Set<? extends Change> changes = cs.getChanges();
+		if (changes.isEmpty()) {
+			return;
+		}
 
-        // Contains the business objects whose roles became invalid for inheritance rules
-        // and rules must reevaluate this roles manually in storage access manager.
-		final Set<BoundObject> invalidObjects = new HashSet<>();
-        
-        if (!someNew.isEmpty() || !someRemoved.isEmpty()) {
-			securityStorage.begin(aHandler);
-			handleAssociations(someNew, rulesToObjectsMap, newHasRoleChanged, invalidObjects, true);
-			kb.withoutModifications(new Computation<Void>() {
+		// Reset temporary
+		Map<RoleProvider, Set<BoundObject>> rulesToObjectsMap = new HashMap<>();
+		Map<RoleProvider, Set<BoundObject>> rulesToDeletedObjectsMap = new HashMap<>();
 
-				@Override
-				public Void run() {
-					handleAssociations(someRemoved, rulesToDeletedObjectsMap, deletedHasRoleChanged, invalidObjects,
-						false);
-					return null;
+		/* Map holding new role assignments. The value for a {@link BoundedRole} are the objects for
+		 * which a new {@link BoundedRole#ROLE_ASSIGNMENT_TYPE role assignment} is created. */
+		Map<BoundRole, Set<Object>> newRoleAssignments = new HashMap<>();
+		/* Map holding deleted role assignments. The value for a {@link BoundedRole} are the objects
+		 * for which a {@link BoundedRole#ROLE_ASSIGNMENT_TYPE role assignment} was deleted. */
+		Map<BoundRole, Set<Object>> deletedRoleAssignments = new HashMap<>();
+		/* Collection of all objects for which a {@link BoundedRole#ROLE_ASSIGNMENT_TYPE role
+		 * assignment} was created or deleted. */
+		Set<BoundObject> invalidObjects = new HashSet<>();
+
+		securityStorage.begin(aHandler);
+		
+		List<Creation> creations = Collections.emptyList();
+		List<Deletion> deletions = Collections.emptyList();
+		List<Update> updates = Collections.emptyList();
+		for (Change change : changes) {
+			if (change instanceof Creation) {
+				if (creations.isEmpty()) {
+					creations = new ArrayList<>();
 				}
+				creations.add((Creation) change);
+			} else if (change instanceof Deletion) {
+				if (deletions.isEmpty()) {
+					deletions = new ArrayList<>();
+				}
+				deletions.add((Deletion) change);
+			} else if (change instanceof Update) {
+				if (updates.isEmpty()) {
+					updates = new ArrayList<>();
+				}
+				updates.add((Update) change);
+			} else {
+				throw new IllegalArgumentException("Unexpected change type " + change.getClass());
+			}
+		}
+
+		Map<TLObject, List<TLReference>> added = new HashMap<>();
+		Set<TLObject> addedDirectRoles = new HashSet<>();
+		Map<TLObject, List<TLReference>> removed = new HashMap<>();
+		Set<TLObject> removedDirectRoles = new HashSet<>();
+
+		if (!creations.isEmpty()) {
+			for (Creation creation : creations) {
+				TLObject createdObject = creation.getObject();
+				TLStructuredType objType = createdObject.tType();
+				if (BoundedRole.ROLE_ASSIGNMENT_TYPE.equals(TLModelUtil.qualifiedName(objType))) {
+					addedDirectRoles.add(createdObject);
+				} else {
+					added.put(createdObject, FilterUtil.filterList(TLReference.class, objType.getAllParts()));
+				}
+			}
+		}
+		if (!deletions.isEmpty()) {
+			List<? extends Deletion> tmp = deletions;
+			kb.withoutModifications(() -> {
+				for (Deletion deletion : tmp) {
+					TLObject deletedHistoricObject = deletion.getObject();
+					TLObject deletedObject = WrapperHistoryUtils.getCurrent(deletedHistoricObject);
+
+					TLStructuredType objType = deletedObject.tType();
+					if (BoundedRole.ROLE_ASSIGNMENT_TYPE.equals(TLModelUtil.qualifiedName(objType))) {
+						removedDirectRoles.add(deletedObject);
+					} else {
+						removed.put(deletedObject, FilterUtil.filterList(TLReference.class, objType.getAllParts()));
+					}
+				}
+				return null;
 			});
-			handleInheritance(kb, rulesToObjectsMap, rulesToDeletedObjectsMap, newHasRoleChanged,
-				deletedHasRoleChanged, someRemoved.values());
-			handleNewObjects(someNew, rulesToObjectsMap);
-
-			Map<BoundRole, Set<BoundObject>> invalidObjectsByRole = mergeValuesByRole(rulesToObjectsMap);
-
-			getLogHandler().logSecurityUpdate(someNew, someRemoved, rulesToObjectsMap, invalidObjects);
-
-			long start = System.currentTimeMillis();
-			try {
-				// Set invalid objects
-				if (accessManager instanceof StorageAccessManager) {
-					((StorageAccessManager) accessManager).setInvalidObjects(invalidObjects, invalidObjectsByRole);
-				}
-
-				try { // remove security entries of removed objects
-					securityStorage.removeObjects(someRemoved);
-				} catch (StorageException ex) {
-					Logger.error("Failed to remove security entries of removed objects.", ex, this);
-				}
-
-				try { // update security entries of changed objects
-					securityStorage.updateSecurity(rulesToObjectsMap);
-				} catch (StorageException ex) {
-					Logger.error("Failed to update security entries of changed objects.", ex, this);
-				}
-			} finally {
-				if (accessManager instanceof StorageAccessManager) {
-					((StorageAccessManager) accessManager).removeInvalidObjects();
-				}
-				long delta = System.currentTimeMillis() - start;
-				if (delta > 3000) {
-					Logger.warn("Incremental security update needed " + DebugHelper.getTime(delta),
-						ElementSecurityUpdateManager.class);
+		}
+		if (!updates.isEmpty()) {
+			for (Update update : updates) {
+				TLObject updatedObject = update.getObject();
+				TLStructuredType objType = updatedObject.tType();
+				if (BoundedRole.ROLE_ASSIGNMENT_TYPE.equals(TLModelUtil.qualifiedName(objType))) {
+					/* For simplicity: Role assignment is added to remove and to add. */
+					removedDirectRoles.add(updatedObject);
+					addedDirectRoles.add(updatedObject);
+				} else {
+					for (Modification change : update.getModifications()) {
+						TLStructuredTypePart part = change.getPart();
+						if (part instanceof TLReference reference) {
+							// register as change
+							removed.computeIfAbsent(updatedObject, unused -> new ArrayList<>()).add(reference);
+							added.computeIfAbsent(updatedObject, unused -> new ArrayList<>()).add(reference);
+						}
+					}
 				}
 			}
 
-        }
-    }
+		}
+		for (TLObject addedDirectRole : addedDirectRoles) {
+			handleRoleAssignment(addedDirectRole, newRoleAssignments, invalidObjects, true);
+		}
+		for (Entry<TLObject, List<TLReference>> e : added.entrySet()) {
+			TLObject object = e.getKey();
+			e.getValue().forEach(ref -> handleReference(object, ref, rulesToObjectsMap, true));
+		}
+		kb.withoutModifications(() -> {
+			for (TLObject removedDirectRole : removedDirectRoles) {
+				handleRoleAssignment(removedDirectRole, deletedRoleAssignments, invalidObjects, false);
+			}
+			for (Entry<TLObject, List<TLReference>> e : removed.entrySet()) {
+				TLObject object = e.getKey();
+				e.getValue().forEach(ref -> handleReference(object, ref, rulesToDeletedObjectsMap, false));
+			}
+			return null;
+		});
 
+		handleInheritance(kb, someRemoved.values(), newRoleAssignments, deletedRoleAssignments, rulesToObjectsMap,
+			rulesToDeletedObjectsMap);
+		handleNewObjects(creations, rulesToObjectsMap);
 
+		getLogHandler().logSecurityUpdate(someNew, someRemoved, rulesToObjectsMap, invalidObjects);
 
+		Map<BoundRole, Set<BoundObject>> invalidObjectsByRole = mergeValuesByRole(rulesToObjectsMap);
+		updateSecurityStorage(someRemoved, invalidObjects, invalidObjectsByRole, rulesToObjectsMap);
+	}
 
+	/**
+	 * Consider all rules for the concrete type: It is not enough to consider only the rules for all
+	 * attributes of the type, because there may be inheritance rules which inherit a role without
+	 * attribute; e.g. inherit a role from a root object to all instances of a certain type.
+	 */
+	private void handleNewObjects(List<Creation> creations, Map<RoleProvider, Set<BoundObject>> rulesToObjectsMap) {
+		Map<TLClass, Collection<RoleProvider>> meRules = accessManager.getResolvedMERules();
 
-    /**
-     * This method handles new created objects.
-     */
-	private void handleNewObjects(Map<TLID, KnowledgeItem> someNew,
-			Map<RoleProvider, Collection<BoundObject>> rulesToObjectsMap) {
-        Map<TLClass, Collection<RoleProvider>> meRules = accessManager.getResolvedMERules();
+		for (Creation creation : creations) {
+			TLObject createdObject = creation.getObject();
+			TLStructuredType objType = createdObject.tType();
+			if (BoundedRole.ROLE_ASSIGNMENT_TYPE.equals(TLModelUtil.qualifiedName(objType))) {
+				continue;
+			} else {
+				Collection<RoleProvider> rulesForType = meRules.getOrDefault(objType, Collections.emptyList());
+				for (RoleProvider rule : rulesForType) {
+					add(rulesToObjectsMap, rule, (BoundObject) createdObject);
+				}
+			}
+		}
+	}
 
-        for (Object newObject : someNew.values()) {
-            if (newObject instanceof KnowledgeObject) {
-				newObject = WrapperFactory.getWrapper((KnowledgeObject) newObject);
-            }
-            if (!(newObject instanceof BoundObject)) continue;
+	private void updateSecurityStorage(Map<TLID, KnowledgeItem> someRemoved,
+			Collection<BoundObject> invalidObjects, Map<BoundRole, Set<BoundObject>> invalidObjectsByRole,
+			Map<RoleProvider, Set<BoundObject>> rulesToObjectsMap) {
+		long start = System.currentTimeMillis();
+		try {
+			// Set invalid objects
+			if (accessManager instanceof StorageAccessManager) {
+				((StorageAccessManager) accessManager).setInvalidObjects(invalidObjects, invalidObjectsByRole);
+			}
 
-            if (newObject instanceof Wrapper) {
-				TLStructuredType me = ((Wrapper) newObject).tType();
-                Collection<RoleProvider> rules = meRules.get(me);
-                if (rules != null)
-                for (RoleProvider rule : rules) {
-                    getOrCreateSet(rulesToObjectsMap, rule).add((BoundObject)newObject);
-                }
-            }
-        }
-    }
+			try { // remove security entries of removed objects
+				securityStorage.removeObjects(someRemoved);
+			} catch (StorageException ex) {
+				Logger.error("Failed to remove security entries of removed objects.", ex, this);
+			}
 
+			try { // update security entries of changed objects
+				securityStorage.updateSecurity(rulesToObjectsMap);
+			} catch (StorageException ex) {
+				Logger.error("Failed to update security entries of changed objects.", ex, this);
+			}
+		} finally {
+			if (accessManager instanceof StorageAccessManager) {
+				((StorageAccessManager) accessManager).removeInvalidObjects();
+			}
+			long delta = System.currentTimeMillis() - start;
+			if (delta > 3000) {
+				Logger.warn("Incremental security update needed " + DebugHelper.getTime(delta),
+					ElementSecurityUpdateManager.class);
+			}
+		}
+	}
 
+	private void handleReference(TLObject baseObject, TLReference reference,
+			Map<RoleProvider, Set<BoundObject>> rulesToObjectsMap,
+			boolean isAdded) {
+		try {
+			for (Iterator<RoleProvider> theIt = accessManager.getRules(reference).iterator(); theIt.hasNext();) {
+				RoleProvider theRule = theIt.next();
+				if (theRule instanceof RoleRule) {
+					Set<BoundObject> theBaseObjects =
+						ElementAccessHelper.navigateRoleRuleBackwards((RoleRule) theRule, baseObject, reference);
+					if (!CollectionUtil.isEmptyOrNull(theBaseObjects)) {
+						addAll(rulesToObjectsMap, theRule, theBaseObjects);
+					}
+				}
+			}
+		} catch (Exception ex) {
+			Logger.error("Failed to handle " + (isAdded ? "new" : "removed") + " reference value change.",
+				ex, ElementSecurityUpdateManager.class);
+		}
+
+	}
+
+	private void handleRoleAssignment(TLObject roleAssignment, Map<BoundRole, Set<Object>> roleAssignments,
+			Set<BoundObject> invalidObjects, boolean isAdded) {
+		BoundRole role =
+			((KnowledgeItem) roleAssignment.tValueByName(BoundedRole.ATTRIBUTE_ROLE)).getWrapper();
+		BoundObject businessObject =
+			((KnowledgeItem) roleAssignment.tValueByName(BoundedRole.ATTRIBUTE_OBJECT))
+				.getWrapper();
+
+		add(roleAssignments, role, businessObject);
+		invalidObjects.add(businessObject);
+
+		// update security storage with direct haseRole associations
+		try {
+			if (isAdded) {
+				securityStorage.insert(roleAssignment.tHandle());
+			} else {
+				securityStorage.remove(roleAssignment.tHandle());
+			}
+		} catch (StorageException ex) {
+			Logger.warn("Could not update role assignment in security storage.", ex,
+				ElementSecurityUpdateManager.class);
+		}
+
+	}
 
     /**
 	 * This method handles inheritance.
-	 * 
-     * @param aRulesToObjectsMap
-	 *        Map < RoleRule , Collection < BoundObject > >
 	 */
-	private void handleInheritance(KnowledgeBase kb,
-			final Map<RoleProvider, Collection<BoundObject>> aRulesToObjectsMap,
-			final Map<RoleProvider, Collection<BoundObject>> aRulesToDeletedObjectsMap,
-			Map<BoundRole, Collection<Object>> someNewHasRoles,
-			final Map<BoundRole, Collection<Object>> someDeletedHasRoles, final Collection<KnowledgeItem> removed) {
+	private void handleInheritance(KnowledgeBase kb, final Collection<KnowledgeItem> removed,
+			Map<BoundRole, Set<Object>> newRoleAssignments,
+			Map<BoundRole, Set<Object>> deletedRoleAssignments,
+			Map<RoleProvider, Set<BoundObject>> rulesToObjectsMap,
+			Map<RoleProvider, Set<BoundObject>> rulesToDeletedObjectsMap) {
 
-        // for each rule we have a set of affected objects
-        for (Map.Entry<BoundRole,Collection<Object>>  theEntry : someNewHasRoles.entrySet()) {
-            BoundRole          theRole    = theEntry.getKey();
-            Collection<Object> theObjects = theEntry.getValue();
-
-            // we take all inheritance rules that declare the given rule's role as source role
-            for (Iterator theRulesIt = accessManager.getRulesWithSourceRole(theRole, Type.inheritance).iterator(); theRulesIt.hasNext(); ) {
-                RoleProvider   theInheritRule = (RoleProvider) theRulesIt.next();
-
-                // for each inheritance rule we determine the affected base objects starting form the objects affected by the given role rule
-                // All these objects are added to the new "rules to be considered" map
-                for (Iterator<Object> theObIt = theObjects.iterator(); theObIt.hasNext();) {
-                    Object           theObject      = theObIt.next();
-                    Set<BoundObject> theBaseObjects = theInheritRule.getBaseObjects(theObject);
-                    if (!CollectionUtil.isEmptyOrNull(theBaseObjects)) {
-                        Collection<BoundObject> theRuleObjects = this.getOrCreateSet(aRulesToObjectsMap, theInheritRule);
-                        theRuleObjects.addAll(theBaseObjects);
-                    }
-                }
-            }
-        }
+		/* For each role we have a set of affected objects */
+		for (Entry<BoundRole, Set<Object>> entry : newRoleAssignments.entrySet()) {
+			addInheritedRules(rulesToObjectsMap, entry.getKey(), entry.getValue(), Collections.emptySet());
+		}
 
 		kb.withoutModifications(new Computation<Void>() {
 
 			@Override
 			public Void run() {
-				handleDeletedRoles(someDeletedHasRoles, aRulesToObjectsMap);
-
-				for (Map.Entry<RoleProvider, Collection<BoundObject>> theEntry : aRulesToDeletedObjectsMap.entrySet()) {
-					RoleProvider theRule = theEntry.getKey();
-					Collection<BoundObject> theObjects = theEntry.getValue();
-					BoundRole theRole = theRule.getRole();
-
-					// we take all inheritance rules that declare the given rule's role as source
-					// role
-					for (Iterator theRulesIt =
-						accessManager.getRulesWithSourceRole(theRole, Type.inheritance).iterator(); theRulesIt
-						.hasNext();) {
-						RoleProvider theInheritRule = (RoleProvider) theRulesIt.next();
-
-						// for each inheritance rule we determine the affected base objects starting
-						// form
-						// the objects affected by the given role rule
-						// All these objects are added to the new "rules to be considered" map
-						for (Iterator theObIt = theObjects.iterator(); theObIt.hasNext();) {
-							BoundObject theObject = (BoundObject) theObIt.next();
-							Set<BoundObject> theBaseObjects = theInheritRule.getBaseObjects(theObject);
-							Iterator<BoundObject> iterator = theBaseObjects.iterator();
-							BoundObject notDeleted = null;
-							while (iterator.hasNext()) {
-								BoundObject affectedObject = iterator.next();
-								if (!removed.contains(affectedObject.tHandle())) {
-									notDeleted = affectedObject;
-									break;
-								}
-							}
-							if (notDeleted == null) {
-								// all affected are also deleted
-								continue;
-							}
-							Collection<BoundObject> theRuleObjects = getOrCreateSet(aRulesToObjectsMap, theInheritRule);
-							theRuleObjects.add(notDeleted);
-							while (iterator.hasNext()) {
-								BoundObject affectedObject = iterator.next();
-								if (!removed.contains(affectedObject.tHandle())) {
-									theRuleObjects.add(affectedObject);
-								}
-							}
-						}
-					}
+				for (Entry<BoundRole, Set<Object>> entry : deletedRoleAssignments.entrySet()) {
+					addInheritedRules(rulesToObjectsMap, entry.getKey(), entry.getValue(), removed);
+				}
+				for (Entry<RoleProvider, Set<BoundObject>> entry : rulesToDeletedObjectsMap.entrySet()) {
+					addInheritedRules(rulesToObjectsMap, entry.getKey().getRole(), entry.getValue(), removed);
 				}
 				return null;
 			}
 		});
 
-        Map<RoleProvider, Collection <BoundObject>> theRulesToObjectsToBeConsidered = aRulesToObjectsMap;
+		Map<RoleProvider, Set<BoundObject>> theRulesToObjectsToBeConsidered = rulesToObjectsMap;
 
         int i = 0;
         // repeat until no more rules are to be considered
         while ( (! theRulesToObjectsToBeConsidered.isEmpty()) && (i < 50) ) {
 
             i++;
+
             // initially there are no more rules to be considered
-            Map<RoleProvider, Collection<BoundObject>> someMoreRulesToObjects = new HashMap<>();
-            // for each rule we have a set of affected objects
-            for (Iterator<Map.Entry<RoleProvider, Collection <BoundObject>>> theIt = theRulesToObjectsToBeConsidered.entrySet().iterator(); theIt.hasNext();) {
-                Map.Entry<RoleProvider, Collection <BoundObject>> theEntry   = theIt.next();
-                RoleProvider                                      theRule    = theEntry.getKey();
-                Collection<BoundObject>                           theObjects = theEntry.getValue();
-                BoundRole  theRole    = theRule.getRole();
+			Map<RoleProvider, Set<BoundObject>> someMoreRulesToObjects = new HashMap<>();
 
-                // we take all inheritance rules that declare the given rule's role as source role
-                for (Iterator theRulesIt = accessManager.getRulesWithSourceRole(theRole, Type.inheritance).iterator(); theRulesIt.hasNext(); ) {
-                    RoleProvider   theInheritRule = (RoleProvider) theRulesIt.next();
-
-                    // for each inheritance rule we determine the affected base objects starting form the objects affected by the given role rule
-                    // All these objects are added to the new "rules to be considered" map
-                    for (Iterator theObIt = theObjects.iterator(); theObIt.hasNext();) {
-                        BoundObject      theObject      = (BoundObject) theObIt.next();
-                        Set<BoundObject> theBaseObjects = theInheritRule.getBaseObjects(theObject);
-                        if (!CollectionUtil.isEmptyOrNull(theBaseObjects)) {
-                            Collection<BoundObject> theRuleObjects = this.getOrCreateSet(someMoreRulesToObjects, theInheritRule);
-                            theRuleObjects.addAll(theBaseObjects);
-                        }
-                    }
-                }
-            }
+			for (Entry<RoleProvider, Set<BoundObject>> entry : theRulesToObjectsToBeConsidered.entrySet()) {
+				addInheritedRules(someMoreRulesToObjects, entry.getKey().getRole(), entry.getValue(),
+					Collections.emptySet());
+			}
             // finally we add all the new entries to the original "rules to be considered" map
             // in order to return the enriched map to the calling method
-            mergeMaps(someMoreRulesToObjects, aRulesToObjectsMap);
+			mergeMaps(someMoreRulesToObjects, rulesToObjectsMap);
             theRulesToObjectsToBeConsidered = someMoreRulesToObjects;
         }
         if (i > 40) {
@@ -390,133 +457,110 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
         }
 
 		// Enhance output map with deleted objects.
-		mergeMaps(aRulesToDeletedObjectsMap, aRulesToObjectsMap);
+		mergeMaps(rulesToDeletedObjectsMap, rulesToObjectsMap);
 
     }
 
-	void handleDeletedRoles(Map<BoundRole, Collection<Object>> someDeletedHasRoles,
-			Map<RoleProvider, Collection<BoundObject>> aRulesToObjectsMap) {
-		// for each rule we have a set of affected objects
-		for (Entry<BoundRole, Collection<Object>> entry : someDeletedHasRoles.entrySet()) {
-			// we take all inheritance rules that declare the given rule's role as source role
-			BoundRole deletedRole = entry.getKey();
-			Collection<Object> objectsWithDeletedRoles = entry.getValue();
-			for (Object roleProvider : accessManager.getRulesWithSourceRole(deletedRole, Type.inheritance)) {
-				RoleProvider inheritRule = (RoleProvider) roleProvider;
+	/**
+	 * Finds for a {@link BoundedRole} the inheritance rules with that role as source rule, and
+	 * computes the objects that must be evaluated on the inheritance rule when the objects inherits
+	 * the rule from one of the given target objects.
+	 * 
+	 * @param out
+	 *        Map to store {@link RoleProvider} together with the base objects. The rules must be
+	 *        reevaluated on the base objects.
+	 * @param role
+	 *        The role which is assigned to <code>objects</code>.
+	 * @param objects
+	 *        The objects to which <code>role</code> is assigned.
+	 * @param removed
+	 *        All removed items. Only elements that are not contained in this collection must be
+	 *        stored in <code>out</code>.
+	 */
+	private void addInheritedRules(Map<RoleProvider, Set<BoundObject>> out, BoundRole role,
+			Collection<?> objects, Collection<KnowledgeItem> removed) {
 
-				/* for each inheritance rule we determine the affected base objects starting form
-				 * the objects affected by the given role rule */
-				/* All these objects are added to the new "rules to be considered" map */
-				for (Object source : objectsWithDeletedRoles) {
-					Set<BoundObject> affectedObjects = inheritRule.getBaseObjects(source);
-					if (CollectionUtil.isEmptyOrNull(affectedObjects)) {
+		/* We take all inheritance rules that declare the given role as source role. */
+		for (RoleProvider inheritRule : accessManager.getRulesWithSourceRole(role, Type.inheritance)) {
+			/* For each inheritance rule we determine the affected base objects starting from
+			 * the objects affected by the given role assignment. All these objects are added to
+			 * the new "rules to be considered" map. */
+			for (Object object : objects) {
+				Set<BoundObject> baseObjects = inheritRule.getBaseObjects(object);
+				if (CollectionUtil.isEmptyOrNull(baseObjects)) {
+					continue;
+				}
+				if (removed.isEmpty()) {
+					addAll(out, inheritRule, baseObjects);
+				} else {
+					Iterator<BoundObject> iterator = baseObjects.iterator();
+					BoundObject notDeleted = null;
+					while (iterator.hasNext()) {
+						BoundObject affectedObject = iterator.next();
+						if (removed.contains(affectedObject.tHandle())) {
+							// Skip elements that are deleted
+							continue;
+						}
+						notDeleted = affectedObject;
+						break;
+					}
+					if (notDeleted == null) {
+						// all affected are also deleted
 						continue;
-                    }
-					getOrCreateSet(aRulesToObjectsMap, inheritRule).addAll(affectedObjects);
-                }
-            }
-        }
-	}
-
-	private void mergeMaps(Map<RoleProvider, Collection<BoundObject>> source,
-			final Map<RoleProvider, Collection<BoundObject>> into) {
-		for (Iterator<Map.Entry<RoleProvider, Collection<BoundObject>>> theIt = source.entrySet().iterator(); theIt.hasNext();) {
-		    Map.Entry<RoleProvider, Collection<BoundObject>> theEntry   = theIt.next();
-		    RoleProvider                                     theRule    = theEntry.getKey();
-		    Collection<BoundObject>                          theObjects = theEntry.getValue();
-		    if (!CollectionUtil.isEmptyOrNull(theObjects)) {
-		        Collection<BoundObject> theRuleObjects = this.getOrCreateSet(into, theRule);
-		        theRuleObjects.addAll(theObjects);
+					}
+					Collection<BoundObject> inheritedRuleObjects = getOrCreateSet(out, inheritRule);
+					inheritedRuleObjects.add(notDeleted);
+					while (iterator.hasNext()) {
+						BoundObject affectedObject = iterator.next();
+						if (removed.contains(affectedObject.tHandle())) {
+							// Skip elements that are deleted
+							continue;
+						}
+						inheritedRuleObjects.add(affectedObject);
+					}
+				}
 		    }
 		}
 	}
 
+	private void mergeMaps(
+			Map<RoleProvider, Set<BoundObject>> source,
+			Map<RoleProvider, Set<BoundObject>> into) {
+		for (Map.Entry<RoleProvider, Set<BoundObject>> entry : source.entrySet()) {
+			RoleProvider rule = entry.getKey();
+			Set<BoundObject> objects = entry.getValue();
+			if (!CollectionUtil.isEmptyOrNull(objects)) {
+				addAll(into, rule, objects);
+		    }
+		}
+	}
 
+	private Map<BoundRole, Set<BoundObject>> mergeValuesByRole(Map<RoleProvider, Set<BoundObject>> rulesToObjectsMap) {
+		Map<BoundRole, Set<BoundObject>> invalidObjectsByRole = new HashMap<>();
 
-	void handleAssociations(Map someAssociations, Map<RoleProvider, Collection<BoundObject>> rulesToObjectsMap,
-			Map<BoundRole, Collection<Object>> hasRoleChanged, Set<BoundObject> invalidObjects, boolean isAdded) {
-        for (Iterator theIt = someAssociations.values().iterator(); theIt.hasNext();) {
-            KnowledgeItem theObject = (KnowledgeItem) theIt.next();
-            if (KnowledgeItemUtil.instanceOfKnowledgeAssociation(theObject)) {
-                KnowledgeAssociation theDO = (KnowledgeAssociation) theObject;
-				if (WrapperMetaAttributeUtil.isAttributeReferenceAssociation(theDO)) {
-                    this.handleAttributedAssociationChange(theDO, rulesToObjectsMap, isAdded);
-                }
-            } else  {
-            	MetaObject theMO     = theObject.tTable();
-            	String     theMOType = theMO.getName();
-            	
-				if (BoundedRole.ROLE_ASSIGNMENT_OBJECT_NAME.equals(theMOType)) {
-					KnowledgeItem roleAssignment = theObject;
-					BoundRole theRole =
-							((KnowledgeItem) roleAssignment.getAttributeValue(BoundedRole.ATTRIBUTE_ROLE)).getWrapper();
-					Collection<Object> theRoleObjects = this.getOrCreateSet(hasRoleChanged, theRole);
-					BoundObject theBusinessObject =
-							((KnowledgeItem) roleAssignment.getAttributeValue(BoundedRole.ATTRIBUTE_OBJECT))
-							.getWrapper();
-					invalidObjects.add(theBusinessObject);
-					theRoleObjects.add(theBusinessObject);
-					// update security storage with direct haseRole associations
-					try {
-						if (isAdded) {
-							securityStorage.insert(theObject);
-						} else {
-							securityStorage.remove(theObject);
-						}
-					} catch (StorageException ex) {
-						Logger.warn("Could not update hasRole association in security storage.", ex,
-							ElementSecurityUpdateManager.class);
-					}
-            	}
-            }
-        }
-    }
+		for (Map.Entry<RoleProvider, Set<BoundObject>> entry : rulesToObjectsMap.entrySet()) {
+			BoundRole theRole = entry.getKey().getRole();
+			addAll(invalidObjectsByRole, theRole, entry.getValue());
+		}
 
-    private void handleAttributedAssociationChange(KnowledgeAssociation aKA, Map<RoleProvider, Collection<BoundObject>> aRulesToObjectsMap, boolean isAdded) {
-        try {
-            TLStructuredTypePart theMA = WrapperMetaAttributeUtil.getMetaAttribute(aKA);
+		return invalidObjectsByRole;
+	}
 
-            for (Iterator<RoleProvider> theIt = accessManager.getRules(theMA).iterator(); theIt.hasNext();) {
-                RoleProvider theRule = theIt.next();
-                if (theRule instanceof RoleRule) {
-                    Set<BoundObject> theBaseObjects = ElementAccessHelper.traversRoleRuleBackwards((RoleRule)theRule, theMA, aKA);
-                    if (!CollectionUtil.isEmptyOrNull(theBaseObjects)) {
-                        Collection<BoundObject> theRuleObjects = this.getOrCreateSet(aRulesToObjectsMap, theRule);
-                        theRuleObjects.addAll(theBaseObjects);
-                    }
-                }
-            }
-        }
-        catch (Exception ex) {
-            Logger.error("Failed to handle "+(isAdded?"new":"removed")+" meta attribute knowledge association: "+aKA.toString(), ex, this);
-        }
-    }
+	private static <U, V> void add(Map<U, Set<V>> map, U key, V value) {
+		getOrCreateSet(map, key).add(value);
+	}
 
-    private <U,V> Collection<V> getOrCreateSet(Map<U,Collection<V>> aMap, U aKey) {
-        Collection<V> theResult = aMap.get(aKey);
+	private static <U, V> void addAll(Map<U, Set<V>> map, U key, Collection<? extends V> values) {
+		getOrCreateSet(map, key).addAll(values);
+	}
+
+	private static <U, V> Set<V> getOrCreateSet(Map<U, Set<V>> aMap, U aKey) {
+		Set<V> theResult = aMap.get(aKey);
         if (theResult == null) {
             theResult = new HashSet<>();
             aMap.put(aKey, theResult);
         }
         return theResult;
-    }
-
-    private Map<BoundRole, Set<BoundObject>> mergeValuesByRole(Map<RoleProvider, Collection<BoundObject>> aCollectionMap) {
-    	Map<BoundRole, Set<BoundObject>> invalidObjectsByRole = new HashMap<>();
-
-        Iterator<Map.Entry<RoleProvider, Collection<BoundObject>>> it = aCollectionMap.entrySet().iterator();
-        for (Iterator<Map.Entry<RoleProvider, Collection<BoundObject>>> theIt = aCollectionMap.entrySet().iterator(); theIt.hasNext();) {
-        	Map.Entry<RoleProvider, Collection<BoundObject>> theEntry = theIt.next();
-        	BoundRole        theRole   = theEntry.getKey().getRole();
-			Set<BoundObject> theValues = invalidObjectsByRole.get(theRole);
-			if (theValues == null) {
-				theValues = new HashSet<>();
-				invalidObjectsByRole.put(theRole, theValues);
-			}
-			theValues.addAll(theEntry.getValue());
-		}
-        
-        return invalidObjectsByRole;
     }
 
 }

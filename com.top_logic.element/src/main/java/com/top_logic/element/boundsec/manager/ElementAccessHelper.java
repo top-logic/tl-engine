@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.CloseableIterator;
 import com.top_logic.dob.ex.NoSuchAttributeException;
@@ -24,7 +25,6 @@ import com.top_logic.element.boundsec.manager.rule.RoleRule;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.MetaElementFactory;
 import com.top_logic.element.meta.MetaElementUtil;
-import com.top_logic.knowledge.objects.InvalidLinkException;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KBUtils;
@@ -36,6 +36,7 @@ import com.top_logic.knowledge.wrap.list.FastListElement;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
@@ -62,7 +63,7 @@ public class ElementAccessHelper {
 	public static Map<String, Set<BoundedRole>> getRolesMap(FastListElement aClassifier) {
 		Map<String, Set<BoundedRole>> theRolesMap = new HashMap<>();
 		for (Iterator<KnowledgeAssociation> theAIt =
-			((KnowledgeObject) aClassifier.tHandle()).getOutgoingAssociations(PersBoundComp.NEEDS_ROLE); theAIt
+			aClassifier.tHandle().getOutgoingAssociations(PersBoundComp.NEEDS_ROLE); theAIt
 				.hasNext();) {
 			KnowledgeAssociation theAss = theAIt.next();
             String theAccessRight = (String) theAss.getAttributeValue(PersBoundComp.ATTRIBUTE_CMDGRP);
@@ -310,81 +311,66 @@ public class ElementAccessHelper {
     }
 
 
-    /**
-     * Get all Objects affected by the given rule and using the given meta attribute association
-     *
-     * @param aRule   the rule to check
-     * @param aMA     the meta attribute the association is mapped to
-     * @param aKA     the association (which is assumably part of the path)
-     * @return the wrappers effected
-     */
-    public static Set<BoundObject> traversRoleRuleBackwards(RoleRule aRule, TLStructuredTypePart aMA, KnowledgeAssociation aKA) {
+	/**
+	 * Collects all base objects of the given {@link RoleRule} when the given {@link TLReference} of
+	 * the given object has changed
+	 */
+	public static Set<BoundObject> navigateRoleRuleBackwards(RoleRule rule, TLObject obj, TLReference reference) {
 
-        List<PathElement> thePath = aRule.getPath();
+		List<PathElement> path = rule.getPath();
 
-        int           thePathLength = thePath.size();
-        List<Integer> theMALocations = new ArrayList<>();
+		List<Integer> partIndexes = new ArrayList<>();
+		// locate the meta attribute, may appear more than once
+		for (int i = 0, thePathLength = path.size(); i < thePathLength; i++) {
+			PathElement elt = path.get(i);
+			if (reference.equals(elt.getMetaAttribute())) {
+				partIndexes.add(Integer.valueOf(i));
+			}
+		}
 
-        // locate the meta attribute, may appear more than once
-        for (int i=0; i < thePathLength; i++) {
-            PathElement thePE = thePath.get(i);
-            TLStructuredTypePart theMetaAttribute = thePE.getMetaAttribute();
-            if (theMetaAttribute != null && theMetaAttribute.equals(aMA)) {
-				theMALocations.add(Integer.valueOf(i));
-            }
-        }
+		return navigateRoleRuleBackwards(rule, obj, reference, partIndexes);
+	}
 
-        return taversRoleRuleBackwards(aRule, aKA, thePath, theMALocations);
-    }
+	private static Set<BoundObject> navigateRoleRuleBackwards(RoleRule rule, TLObject base, TLReference reference,
+			List<Integer> referenceIndexes) {
+		List<PathElement> path = rule.getPath();
+		Set<BoundObject> theResult = new HashSet<>();
+		for (Integer index : referenceIndexes) {
+			PathElement thePE = path.get(index.intValue());
+			Collection<? extends TLObject> theWrapper;
+			if (thePE.isInverse()) {
+				@SuppressWarnings("unchecked")
+				Collection<? extends TLObject> refValue =
+					(Collection<? extends TLObject>) CollectionUtil.asCollection(base.tValue(reference));
+				theWrapper = refValue;
+			} else {
+				theWrapper = Collections.singleton(base);
+			}
 
-    /**
-     * Get all Objects affected by the given rule and using the given association
-     */
-    private static Set<BoundObject> taversRoleRuleBackwards(RoleRule aRule, KnowledgeAssociation aKA, List<PathElement> thePath, List<Integer> theMALocations) {
-        Set<BoundObject> theResult = new HashSet<>();
-        for (Iterator<Integer> theIt = theMALocations.iterator(); theIt.hasNext();) {
-            int             thePos = theIt.next().intValue();
-            PathElement     thePE  = thePath.get(thePos);
-            KnowledgeObject theKO;
-			TLObject theWrapper;
-            try {
-                if (thePE.isInverse()) {
-                    theKO = aKA.getDestinationObject();
-                } else {
-                    theKO = aKA.getSourceObject();
-                }
-                theWrapper = WrapperFactory.getWrapper(theKO);
+			addBaseObjects(path, index.intValue(), theWrapper, theResult);
+		}
 
-                addBaseObjects(thePath, thePos, Collections.singleton(theWrapper), theResult);
-            }
-            catch (InvalidLinkException ex) {
-// this maight be ok because it happens while traversing a rule path backwards.
-// if it happens in this case, the effect will alredy be estblished by the change to an other association...
-// TODO TSA:  ??? !!! ??? think about this
-//                Logger.error("Unable to get wrapper while determining security. Security may be compromised. Global refresh of security is advisable.", ex, ElementAccessHelper.class);
-            }
-        }
-        // handle base object
-		TLObject theBaseObject = aRule.getBase();
-        if (theBaseObject == null) {
-            // no base object, therefore the calculated objects are already the result
-            // Filter the objects that do not fit the meta object / meta element of the rule
-            for (Iterator<BoundObject> theIt = theResult.iterator(); theIt.hasNext();) {
-            	BoundObject theObject = theIt.next();
-                if ( ! (aRule.matches(theObject)) ) {
-                    theIt.remove();
-                }
-            }
-            
-            return theResult;
-        } else {
-            if (theResult.contains(theBaseObject)) {
-                return getTargetObjects(aRule);
-            } else {
-                return Collections.emptySet();
-            }
-        }
-    }
+		// handle base object
+		TLObject theBaseObject = rule.getBase();
+		if (theBaseObject == null) {
+			// no base object, therefore the calculated objects are already the result
+			// Filter the objects that do not fit the meta object / meta element of the rule
+			for (Iterator<BoundObject> theIt = theResult.iterator(); theIt.hasNext();) {
+				BoundObject theObject = theIt.next();
+				if (!(rule.matches(theObject))) {
+					theIt.remove();
+				}
+			}
+
+			return theResult;
+		} else {
+			if (theResult.contains(theBaseObject)) {
+				return getTargetObjects(rule);
+			} else {
+				return Collections.emptySet();
+			}
+		}
+	}
 
     /**
      * Get all objects potentially affected by this rule
@@ -396,8 +382,7 @@ public class ElementAccessHelper {
 		TLClass theME = aRule.getMetaElement();
 		Iterable<TLClass> theMEs =
 			aRule.isInherit() ? TLModelUtil.getConcreteSpecializations(theME) : Collections.singleton(theME);
-		for (Iterator theIt = theMEs.iterator(); theIt.hasNext();) {
-			TLClass theFoundME = (TLClass) theIt.next();
+		for (TLClass theFoundME : theMEs) {
 			try (CloseableIterator<BoundObject> theObjectIterator =
 				MetaElementUtil.iterateDirectInstances(theFoundME, BoundObject.class)) {
 				while (theObjectIterator.hasNext()) {
@@ -409,7 +394,7 @@ public class ElementAccessHelper {
 		return theResult;
     }
 
-	private static void addBaseObjects(List<PathElement> aPath, int aPos, Set<TLObject> someSources,
+	private static void addBaseObjects(List<PathElement> aPath, int aPos, Collection<? extends TLObject> someSources,
 			Set<BoundObject> someResult) {
         if (aPos == 0) {
             uncheckedAddAll(someSources, someResult);
@@ -419,7 +404,7 @@ public class ElementAccessHelper {
             PathElement   thePE         = aPath.get(theNewPos);
             TLStructuredTypePart theMA         = thePE.getMetaAttribute();
 			if (thePE.isInverse()) {
-				for (Iterator<TLObject> theIt = someSources.iterator(); theIt.hasNext();) {
+				for (Iterator<? extends TLObject> theIt = someSources.iterator(); theIt.hasNext();) {
 					TLObject theSource = theIt.next();
 					Object theDestination = theSource.tValue(theMA);
 					if (theDestination != null) {
@@ -429,9 +414,9 @@ public class ElementAccessHelper {
 					}
 				}
             } else {
-				for (Iterator<TLObject> theIt = someSources.iterator(); theIt.hasNext();) {
+				for (Iterator<? extends TLObject> theIt = someSources.iterator(); theIt.hasNext();) {
 					TLObject theSource = theIt.next();
-					theNewSources.addAll(AttributeOperations.getReferers(theSource, theMA));
+					theNewSources.addAll(theSource.tReferers((TLReference) theMA));
 				}
             }
             addBaseObjects(aPath, theNewPos, theNewSources, someResult);

@@ -483,7 +483,7 @@ public class ElementAccessManager extends AccessManager {
 		return resolved;
     }
 
-    public Set getRulesWithSourceRole(BoundRole aRole, Type aType) {
+	public Set<RoleProvider> getRulesWithSourceRole(BoundRole aRole, Type aType) {
         Set<RoleProvider> theResult = new HashSet<>();
 
 		addMatchingProvides(aRole, aType, theResult, this.ruleIds.values());

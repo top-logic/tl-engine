@@ -15,6 +15,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.col.map.MultiMaps;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
@@ -31,6 +32,7 @@ import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
@@ -72,10 +74,9 @@ public class RoleRulesImporter {
 	private List<ResKey> _problems = new ArrayList<>();
 
     /**
-     * holds the rules impotrted indexed by either the meta object or the meta element
-     * depending on which is declared for the rule.
-     */
-	private Map<Object, Collection<RoleProvider>> _rules = new HashMap<>();
+	 * Holds the imported rules indexed by their {@link TLStructuredType}.
+	 */
+	private Map<TLClass, Collection<RoleProvider>> _rules = new HashMap<>();
 
 	private ApplicationRoleHolder _roleProvider;
 
@@ -105,13 +106,8 @@ public class RoleRulesImporter {
 
     void addRule(RoleRule aRule) {
         TLClass theME     = aRule.getMetaElement();
-		Collection<RoleProvider> theRules = this._rules.get(theME);
-        if (theRules == null) {
-			theRules = new ArrayList<>();
-			this._rules.put(theME, theRules);
-        }
-        theRules.add(aRule);
-    }
+		MultiMaps.add(_rules, theME, aRule, ArrayList::new);
+	}
 
     private TLClass getMetaElement(String aMetaElementName) {
 		if (StringServices.isEmpty(aMetaElementName)) {
@@ -274,7 +270,7 @@ public class RoleRulesImporter {
 	/**
 	 * Returns the modifiable {@link Map} containing the parsed {@link RoleProvider}.
 	 */
-	public Map<Object, Collection<RoleProvider>> getRules() {
+	public Map<TLClass, Collection<RoleProvider>> getRules() {
 		return _rules;
 	}
 

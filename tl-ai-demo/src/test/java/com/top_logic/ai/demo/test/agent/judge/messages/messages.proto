@@ -1,4 +1,4 @@
-package com.top_logic.ai.demo.test.scoreAgent.messages;
+package com.top_logic.ai.demo.test.agent.judge.messages;
 
 option NoBinary;
 option NoVisit;
@@ -34,6 +34,11 @@ message JudgeResult {
 	 * Claims about types/attributes not supported by expected facts.
 	 */
 	repeated string hallucinations;
+
+	/**
+	 * Claims that exist in available facts but weren't fetched by the agent (evidence violation).
+	 */
+	repeated string notFetched;
 
 	/**
 	 * Formatting issues in the answer.

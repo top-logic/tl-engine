@@ -1,4 +1,4 @@
-package com.top_logic.ai.demo.test.scoreAgent.messages;
+package com.top_logic.ai.demo.test.agent.judge.messages;
 
 /**
  * Result from AI judge scoring ModelExplorerTool output.
@@ -6,13 +6,13 @@ package com.top_logic.ai.demo.test.scoreAgent.messages;
 public class JudgeResult extends de.haumacher.msgbuf.data.AbstractDataObject implements de.haumacher.msgbuf.data.ReflectiveDataObject {
 
 	/**
-	 * Creates a {@link com.top_logic.ai.demo.test.scoreAgent.messages.JudgeResult} instance.
+	 * Creates a {@link com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult} instance.
 	 */
-	public static com.top_logic.ai.demo.test.scoreAgent.messages.JudgeResult create() {
-		return new com.top_logic.ai.demo.test.scoreAgent.messages.JudgeResult();
+	public static com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult create() {
+		return new com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult();
 	}
 
-	/** Identifier for the {@link com.top_logic.ai.demo.test.scoreAgent.messages.JudgeResult} type in JSON format. */
+	/** Identifier for the {@link com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult} type in JSON format. */
 	public static final String JUDGE_RESULT__TYPE = "JudgeResult";
 
 	/** @see #getScore() */
@@ -53,7 +53,7 @@ public class JudgeResult extends de.haumacher.msgbuf.data.AbstractDataObject imp
 	/**
 	 * Creates a {@link JudgeResult} instance.
 	 *
-	 * @see com.top_logic.ai.demo.test.scoreAgent.messages.JudgeResult#create()
+	 * @see com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult#create()
 	 */
 	protected JudgeResult() {
 		super();
@@ -69,7 +69,7 @@ public class JudgeResult extends de.haumacher.msgbuf.data.AbstractDataObject imp
 	/**
 	 * @see #getScore()
 	 */
-	public com.top_logic.ai.demo.test.scoreAgent.messages.JudgeResult setScore(int value) {
+	public com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult setScore(int value) {
 		internalSetScore(value);
 		return this;
 	}
@@ -89,7 +89,7 @@ public class JudgeResult extends de.haumacher.msgbuf.data.AbstractDataObject imp
 	/**
 	 * @see #getMissingFacts()
 	 */
-	public com.top_logic.ai.demo.test.scoreAgent.messages.JudgeResult setMissingFacts(java.util.List<? extends String> value) {
+	public com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult setMissingFacts(java.util.List<? extends String> value) {
 		internalSetMissingFacts(value);
 		return this;
 	}
@@ -103,7 +103,7 @@ public class JudgeResult extends de.haumacher.msgbuf.data.AbstractDataObject imp
 	/**
 	 * Adds a value to the {@link #getMissingFacts()} list.
 	 */
-	public com.top_logic.ai.demo.test.scoreAgent.messages.JudgeResult addMissingFact(String value) {
+	public com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult addMissingFact(String value) {
 		internalAddMissingFact(value);
 		return this;
 	}
@@ -130,7 +130,7 @@ public class JudgeResult extends de.haumacher.msgbuf.data.AbstractDataObject imp
 	/**
 	 * @see #getIncorrectClaims()
 	 */
-	public com.top_logic.ai.demo.test.scoreAgent.messages.JudgeResult setIncorrectClaims(java.util.List<? extends String> value) {
+	public com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult setIncorrectClaims(java.util.List<? extends String> value) {
 		internalSetIncorrectClaims(value);
 		return this;
 	}
@@ -144,7 +144,7 @@ public class JudgeResult extends de.haumacher.msgbuf.data.AbstractDataObject imp
 	/**
 	 * Adds a value to the {@link #getIncorrectClaims()} list.
 	 */
-	public com.top_logic.ai.demo.test.scoreAgent.messages.JudgeResult addIncorrectClaim(String value) {
+	public com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult addIncorrectClaim(String value) {
 		internalAddIncorrectClaim(value);
 		return this;
 	}
@@ -171,7 +171,7 @@ public class JudgeResult extends de.haumacher.msgbuf.data.AbstractDataObject imp
 	/**
 	 * @see #getScopeViolations()
 	 */
-	public com.top_logic.ai.demo.test.scoreAgent.messages.JudgeResult setScopeViolations(java.util.List<? extends String> value) {
+	public com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult setScopeViolations(java.util.List<? extends String> value) {
 		internalSetScopeViolations(value);
 		return this;
 	}
@@ -185,7 +185,7 @@ public class JudgeResult extends de.haumacher.msgbuf.data.AbstractDataObject imp
 	/**
 	 * Adds a value to the {@link #getScopeViolations()} list.
 	 */
-	public com.top_logic.ai.demo.test.scoreAgent.messages.JudgeResult addScopeViolation(String value) {
+	public com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult addScopeViolation(String value) {
 		internalAddScopeViolation(value);
 		return this;
 	}
@@ -212,7 +212,7 @@ public class JudgeResult extends de.haumacher.msgbuf.data.AbstractDataObject imp
 	/**
 	 * @see #getHallucinations()
 	 */
-	public com.top_logic.ai.demo.test.scoreAgent.messages.JudgeResult setHallucinations(java.util.List<? extends String> value) {
+	public com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult setHallucinations(java.util.List<? extends String> value) {
 		internalSetHallucinations(value);
 		return this;
 	}
@@ -226,7 +226,7 @@ public class JudgeResult extends de.haumacher.msgbuf.data.AbstractDataObject imp
 	/**
 	 * Adds a value to the {@link #getHallucinations()} list.
 	 */
-	public com.top_logic.ai.demo.test.scoreAgent.messages.JudgeResult addHallucination(String value) {
+	public com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult addHallucination(String value) {
 		internalAddHallucination(value);
 		return this;
 	}
@@ -255,7 +255,7 @@ public class JudgeResult extends de.haumacher.msgbuf.data.AbstractDataObject imp
 	/**
 	 * @see #getNotFetched()
 	 */
-	public com.top_logic.ai.demo.test.scoreAgent.messages.JudgeResult setNotFetched(java.util.List<? extends String> value) {
+	public com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult setNotFetched(java.util.List<? extends String> value) {
 		internalSetNotFetched(value);
 		return this;
 	}
@@ -269,7 +269,7 @@ public class JudgeResult extends de.haumacher.msgbuf.data.AbstractDataObject imp
 	/**
 	 * Adds a value to the {@link #getNotFetched()} list.
 	 */
-	public com.top_logic.ai.demo.test.scoreAgent.messages.JudgeResult addNotFetched(String value) {
+	public com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult addNotFetched(String value) {
 		internalAddNotFetched(value);
 		return this;
 	}
@@ -296,7 +296,7 @@ public class JudgeResult extends de.haumacher.msgbuf.data.AbstractDataObject imp
 	/**
 	 * @see #getFormatViolations()
 	 */
-	public com.top_logic.ai.demo.test.scoreAgent.messages.JudgeResult setFormatViolations(java.util.List<? extends String> value) {
+	public com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult setFormatViolations(java.util.List<? extends String> value) {
 		internalSetFormatViolations(value);
 		return this;
 	}
@@ -310,7 +310,7 @@ public class JudgeResult extends de.haumacher.msgbuf.data.AbstractDataObject imp
 	/**
 	 * Adds a value to the {@link #getFormatViolations()} list.
 	 */
-	public com.top_logic.ai.demo.test.scoreAgent.messages.JudgeResult addFormatViolation(String value) {
+	public com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult addFormatViolation(String value) {
 		internalAddFormatViolation(value);
 		return this;
 	}
@@ -391,8 +391,8 @@ public class JudgeResult extends de.haumacher.msgbuf.data.AbstractDataObject imp
 	}
 
 	/** Reads a new instance from the given reader. */
-	public static com.top_logic.ai.demo.test.scoreAgent.messages.JudgeResult readJudgeResult(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
-		com.top_logic.ai.demo.test.scoreAgent.messages.JudgeResult result = new com.top_logic.ai.demo.test.scoreAgent.messages.JudgeResult();
+	public static com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult readJudgeResult(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+		com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult result = new com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult();
 		result.readContent(in);
 		return result;
 	}

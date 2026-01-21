@@ -105,12 +105,75 @@ public class JudgeClient {
 	}
 
 	/**
-	 * Builds the user prompt with required facts, oracle, and agent answer.
+	 * Builds the user prompt with required facts, oracle, and agent answer as a single JSON
+	 * envelope.
+	 * 
+	 * <p>
+	 * This prevents misbinding between required_facts and available_facts by sending a clear
+	 * structured format instead of plain-text sections.
+	 * </p>
 	 */
 	private String buildUserPrompt(String requiredFactsJson, String oracleJson, String agentAnswer) {
-		return "Required Facts (what MUST be mentioned):\n" + requiredFactsJson + "\n\n" +
-			"Oracle (complete model truth):\n" + oracleJson + "\n\n" +
-			"Agent Answer:\n" + agentAnswer;
+		// Build JSON envelope
+		StringBuilder json = new StringBuilder();
+		json.append("{\n");
+		json.append("  \"required_facts\": ").append(requiredFactsJson).append(",\n");
+		json.append("  \"available_facts\": ").append(oracleJson).append(",\n");
+		json.append("  \"agent_answer\": ").append(escapeJson(agentAnswer)).append("\n");
+		json.append("}\n");
+		return json.toString();
+	}
+
+	/**
+	 * Escapes a string for use as a JSON value.
+	 * 
+	 * <p>
+	 * Handles quotes, backslashes, newlines, and other special characters.
+	 * </p>
+	 */
+	private String escapeJson(String value) {
+		if (value == null) {
+			return "null";
+		}
+		
+		StringBuilder sb = new StringBuilder();
+		sb.append("\"");
+		for (int i = 0; i < value.length(); i++) {
+			char c = value.charAt(i);
+			switch (c) {
+				case '"':
+					sb.append("\\\"");
+					break;
+				case '\\':
+					sb.append("\\\\");
+					break;
+				case '\b':
+					sb.append("\\b");
+					break;
+				case '\f':
+					sb.append("\\f");
+					break;
+				case '\n':
+					sb.append("\\n");
+					break;
+				case '\r':
+					sb.append("\\r");
+					break;
+				case '\t':
+					sb.append("\\t");
+					break;
+				default:
+					// Control characters
+					if (c < 0x20) {
+						sb.append(String.format("\\u%04x", (int) c));
+					} else {
+						sb.append(c);
+					}
+					break;
+			}
+		}
+		sb.append("\"");
+		return sb.toString();
 	}
 
 	/**

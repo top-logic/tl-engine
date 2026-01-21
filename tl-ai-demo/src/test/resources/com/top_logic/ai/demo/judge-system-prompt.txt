@@ -103,15 +103,12 @@ You MUST output valid JSON and nothing else. Do not include explanations outside
    - Report violations as: "module:TypeName" or "module" if the whole module is out of scope
 
 3. **Hallucinations**:
-   - Any type/part/relationship mentioned that is NOT in available_facts (or expected_facts in legacy mode) is a hallucination
-   - **Parts in overview queries**: For overview queries (types + relationships only), treat 
-     any part/attribute name as a hallucination UNLESS:
-     * It appears as a reference part name in relationships (extract the "part" field), OR
-     * It appears in the parts section (if provided)
-     Common reference parts include: "components", "component", "unit", "baseUnit", etc.
+   - **CRITICAL - OVERRIDE ALL OTHER RULES**: If something appears in available_facts (types, parts, relationships, enums), it is NEVER a hallucination, regardless of query type or scope.
+     * If an overview query asks for "types and relationships only" and the agent lists detailed attributes that ARE in available_facts, this is NOT a hallucination
+     * Classify such cases as formatViolations if needed, but NEVER as hallucinations
+   - **Definition**: A hallucination is ONLY something that is NOT in available_facts (or expected_facts in legacy mode)
    - **Exception**: Framework base types that are in scope.allowed_framework_types or explicitly listed are NOT hallucinations
    - Report as: "Type X not in available facts" or "Part Y.Z not in available facts"
-   - **Key distinction**: A claim that exists in available_facts but wasn't required is NOT a hallucination
 
 4. **Incorrect Claims**:
    - Claims that contradict expected_facts (e.g., "X is mandatory" when it's optional)
@@ -139,13 +136,14 @@ You MUST output valid JSON and nothing else. Do not include explanations outside
 
 6. **Not Fetched** (NEW):
    - Claims that exist in available_facts but required tool evidence the agent didn't provide
-   - **Enum literals**: If answer lists specific literal names (e.g., "enum X has: A, B, C"):
-     * Check if available_facts.enums contains this enum with literals
-     * If yes, this is NOT a hallucination
-     * BUT if the agent didn't call listClassifiers, flag as notFetched
-   - **Derived logic**: If answer explains TLScript computation (e.g., "cost is computed as..."):
-     * Check if available_facts.annotations contains this derivation
-     * If yes and agent didn't call listAnnotations, flag as notFetched
+   - **listClassifiers is required** ONLY IF the answer names specific literal identifiers 
+     (e.g., "enum has literals: G, KG, ML"). Merely stating "classifierCount=7" does NOT 
+     require listClassifiers (this count is already in available_facts.types).
+   - **listAnnotations is required** ONLY IF the answer describes derivation logic/formula 
+     (e.g., "cost is computed as amount * price"). Merely stating "derived=true" does NOT 
+     require listAnnotations (this flag is already in available_facts.parts).
+   - **Suggested next queries** (e.g., "use listClassifiers to see details") are NEVER 
+     flagged as notFetched. These are recommendations, not claims of fetched evidence.
    - **Usage details**: If answer states "Type X is used by Y via part Z":
      * Check if available_facts.usages contains this
      * If yes and agent didn't call findTypeUsages, flag as notFetched
@@ -163,16 +161,10 @@ You MUST output valid JSON and nothing else. Do not include explanations outside
 - Do NOT penalize for omitting attributes in the answer
 - **Missing facts**: Use required_facts (or required section) if present. Only check required.types 
   and required.relationships. Do NOT flag attributes as missing for overview queries.
-- **Hallucinations for parts**: Treat any part/attribute name mentioned in the answer as a 
-  hallucination UNLESS:
-  * It's a reference part name extracted from relationships (the "part" field), OR
-  * It's in the parts section of available_facts (if provided)
-  Examples of acceptable reference parts: "components", "component", "unit", "baseUnit"
-  Examples of hallucinations: "basePrice", "description", "costPerUnit", "name" (unless 
-  these appear in available_facts)
-- **Schema facts (parts) are acceptable IF tool-backed**: If the agent actually called 
-  listTypeParts to get schema details, mentioning those parts is NOT a hallucination 
-  (even for overview queries). Check available_facts.parts.
+- **Hallucinations**: Apply the CRITICAL rule from section 3: anything in available_facts is NEVER a hallucination.
+  * If the agent mentions parts/attributes that ARE in available_facts, this is NOT a hallucination
+  * If they're too detailed for an overview query, classify as formatViolations instead
+  * ONLY flag as hallucination if the part does NOT appear in available_facts at all
 
 ## Detailed Schema Queries ("schema of X", "attributes of Y")
 - These queries require comprehensive attribute coverage
@@ -203,26 +195,13 @@ You MUST output valid JSON and nothing else. Do not include explanations outside
 # Input
 
 **Input Format**:
-You will receive either:
-1. **Legacy mode**: Single `expected_facts` JSON (with optional "required" section inside)
-2. **Two-truth-set mode**: Both `required_facts` and `available_facts` JSONs
+You will receive a single JSON object with three fields:
 
-When both are present:
-- Use `required_facts` for missing facts scoring
-- Use `available_facts` for hallucination and notFetched detection
+{
+  "required_facts": {...},    // Prompt-specific minimum expectations
+  "available_facts": {...},   // Complete oracle truth
+  "agent_answer": "..."       // The agent's actual answer
+}
 
----
-
-Required Facts (prompt-specific minimum):
-{REQUIRED_FACTS_JSON}
-
-Available Facts (complete oracle truth):
-{AVAILABLE_FACTS_JSON}
-
-Note: If only one is provided, use it for both purposes (legacy behavior).
-If expected_facts includes a "required" section, treat that as required_facts.
-
----
-
-Actual Answer:
-{ACTUAL_ANSWER}
+Use required_facts for missing facts scoring.
+Use available_facts for hallucination and notFetched detection.

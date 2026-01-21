@@ -74,41 +74,42 @@ public class ModelExplorerScoringTest extends TestCase {
 		String typesJson = builder.getBrowserTool().listTypes("luigis.pizzashop");
 		required.add(typesJson);
 		
-	// Get relationships via listTypeParts filtering for references (required)
-	TypeListResponse typesResponse = builder.parseResponse(typesJson, TypeListResponse.class);
-	if (typesResponse.getTypes() != null) {
-		for (var type : typesResponse.getTypes()) {
-			String typeName = type.getName();
-			
-			// Only call listTypeParts for classes (not enumerations)
-			if (!"class".equals(type.getMetaType())) {
-				continue;
-			}
-			
-			try {
-				// Get all parts first
-				String allPartsJson = builder.getBrowserTool().listTypeParts("luigis.pizzashop", typeName, false);
-				TypePartListResponse allPartsResponse = builder.parseResponse(allPartsJson, TypePartListResponse.class);
+		// Get relationships via listTypeParts filtering for references (required)
+		TypeListResponse typesResponse = builder.parseResponse(typesJson, TypeListResponse.class);
+		if (typesResponse.getTypes() != null) {
+			for (var type : typesResponse.getTypes()) {
+				String typeName = type.getName();
 				
-				// Filter to only reference parts
-				TypePartListResponse referencesOnly = TypePartListResponse.create();
-				for (var part : allPartsResponse.getParts()) {
-					if ("reference".equals(part.getKind())) {
-						referencesOnly.addPart(part);
+				// Only call listTypeParts for classes (not enumerations)
+				if (!"class".equals(type.getMetaType())) {
+					continue;
+				}
+				
+				try {
+					// Get all parts first
+					String allPartsJson = builder.getBrowserTool().listTypeParts("luigis.pizzashop", typeName, false);
+					TypePartListResponse allPartsResponse =
+						builder.parseResponse(allPartsJson, TypePartListResponse.class);
+
+					// Filter to only reference parts
+					TypePartListResponse referencesOnly = TypePartListResponse.create();
+					for (var part : allPartsResponse.getParts()) {
+						if ("reference".equals(part.getKind())) {
+							referencesOnly.addPart(part);
+						}
 					}
+
+					// Only add if there are reference parts
+					if (!referencesOnly.getParts().isEmpty()) {
+						String referencesJson = DataClassSerializer.toJson(referencesOnly,
+							ModelExplorerScoringTest.class, "testPrompt1_HighLevelOverview()");
+						required.add(referencesJson);
+					}
+				} catch (Exception ex) {
+					System.err.println("Warning: Failed to get parts for " + typeName);
 				}
-				
-				// Only add if there are reference parts
-				if (!referencesOnly.getParts().isEmpty()) {
-					String referencesJson = DataClassSerializer.toJson(referencesOnly, 
-						ModelExplorerScoringTest.class, "testPrompt1_HighLevelOverview()");
-					required.add(referencesJson);
-				}
-			} catch (Exception ex) {
-				System.err.println("Warning: Failed to get parts for " + typeName);
 			}
 		}
-	}
 		
 		String requiredFactsJson = required.toJson();
 		System.out.println("Required facts: " + required.size() + " tool results (types + relationships)");

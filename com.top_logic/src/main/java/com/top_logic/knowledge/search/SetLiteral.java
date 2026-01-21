@@ -17,13 +17,18 @@ import java.util.Collection;
  */
 public class SetLiteral extends SetExpression {
 
-	private final Collection<? extends Object> values;
+	private final Collection<?> values;
 
 	SetLiteral(Collection<? extends Object> values) {
-		this.values = values;
+		this.values = (Collection<?>) ExpressionFactory.replaceKIbyObjectKey(values);
 	}
 	
-	public Collection<? extends Object> getValues() {
+	/**
+	 * The value of this {@link SetLiteral}.
+	 * 
+	 * @return never <code>null</code>.
+	 */
+	public Collection<?> getValues() {
 		return values;
 	}
 	

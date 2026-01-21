@@ -8,6 +8,7 @@ package com.top_logic.element.boundsec.manager.rule;
 import java.util.Collection;
 import java.util.Collections;
 
+import com.top_logic.basic.Logger;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.model.TLStructuredTypePart;
@@ -33,6 +34,13 @@ public class PathElement {
      */
     public PathElement(TLStructuredTypePart aMA, boolean isInvers) {
         this.metaAttribute = aMA;
+		if (aMA == null) {
+			// Special hack for IdentityPathElement!
+		} else {
+			if (metaAttribute.getDefinition() != metaAttribute) {
+				Logger.error("Only the definition of an TLStructureTypePart must be given: " + metaAttribute, aMA);
+			}
+		}
         this.inverse       = isInvers;
         // TODO TSA: add consistency checks: type of attribute, ...
     }

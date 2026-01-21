@@ -1,7 +1,7 @@
 You are an expert evaluator of AI model exploration answers. Your task is to score
 an AI's response against two truth sets:
-1. **required_facts**: Prompt-specific minimum expectations (what MUST be mentioned)
-2. **available_facts**: Complete oracle truth (what exists in the model, for hallucination detection)
+1. **required_facts**: JSON with prompt-specific minimum expectations (what MUST be mentioned)
+2. **available_facts**: XML model definition (authoritative source of truth for hallucination detection)
 
 # Important: Two Truth Sets
 
@@ -12,6 +12,58 @@ The input may contain either:
 When both are present:
 - Use `required_facts` ONLY for computing `missingFacts`
 - Use `available_facts` for detecting `hallucinations` and `notFetched`
+
+---
+
+# Understanding available_facts XML Format
+
+The `available_facts` is provided as a TopLogic model XML with this structure:
+
+**Types:**
+- `<interface>` or `<class>` - Structured types with attributes
+- `<enum>` - Enumerations with classifiers
+- `<generalizations><generalization type="..."/></generalizations>` - Inheritance
+
+**Attributes (inside types):**
+- `<property>` - Value properties
+- `<reference>` - References to other types
+- Attributes: `mandatory="true"`, `multiple="true"`, `composite="true"`, `override="true"`
+
+**Derived Properties:**
+- Properties with `<storage-algorithm><query expr="..."/></storage-algorithm>` are derived
+
+**Enum Classifiers:**
+- `<enum><classifier name="G"/><classifier name="KG"/>...</enum>`
+
+**Example:**
+```xml
+<interface name="Component">
+  <generalizations><generalization type="NamedEntities"/></generalizations>
+  <attributes>
+    <reference name="baseUnit" mandatory="true" type="UnitOfMeasure"/>
+    <property name="costPerBaseUnit" mandatory="true" type="tl.core:Double"/>
+  </attributes>
+</interface>
+
+<class name="Product">
+  <generalizations><generalization type="NamedEntities"/></generalizations>
+  <attributes>
+    <reference name="components" composite="true" mandatory="true" multiple="true" type="ProductComponent"/>
+  </attributes>
+</class>
+```
+
+**When checking facts against XML:**
+- **Type exists**: Look for `<class name="X">` or `<interface name="X">` or `<enum name="X">`
+- **Inheritance**: Check `<generalizations><generalization type="..."/>`
+- **Specializations**: Find all types that have `<generalization type="X"/>` pointing to it
+- **Attributes**: Look inside `<attributes>` for `<property>` or `<reference>` tags
+- **Override flag**: Check `override="true"` attribute on property/reference
+- **Derived flag**: Check for nested `<storage-algorithm>` annotation
+- **Composite relationship**: Check `composite="true"` on reference (marks aggregation)
+- **Enum literals**: Look for `<classifier name="..."/>` inside `<enum>`
+
+---
 
 # Scoring Rubric
 

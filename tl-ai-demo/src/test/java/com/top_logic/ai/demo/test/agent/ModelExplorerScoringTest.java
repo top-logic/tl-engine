@@ -115,7 +115,7 @@ public class ModelExplorerScoringTest extends TestCase {
 	 * 
 	 * Required facts: All types + relationships (not individual attributes)
 	 */
-	public void _disabled_testPrompt1_HighLevelOverview() throws IOException {
+	public void testPrompt1_HighLevelOverview() throws IOException {
 		String prompt = "give me a high-level overview of the luigis.pizzashop model (types and relationships only)";
 		int minScore = 7;
 		
@@ -190,9 +190,9 @@ public class ModelExplorerScoringTest extends TestCase {
 		// 1. Build required facts - for root/aggregate types we need: types + relationships
 		String requiredFactsJson = buildOverviewRequiredFacts("testPrompt2_RootAggregateTypes()");
 		
-		// 2. Load oracle (overview = types + parts only)
-		String oracleJson = OracleLoader.loadPizzaShopOracleForOverview();
-		System.out.println("Oracle loaded: " + oracleJson.length() + " chars (overview)");
+		// 2. Load oracle (XML model = authoritative source of truth)
+		String modelXml = OracleLoader.loadPizzaShopModelXml();
+		System.out.println("Oracle loaded: " + modelXml.length() + " chars (XML model)");
 		
 		// 3. Run the agent
 		System.out.println("\nRunning ModelExplorerTool agent...");
@@ -208,7 +208,7 @@ public class ModelExplorerScoringTest extends TestCase {
 		JudgeClient judge = new JudgeClient(AIService.getInstance());
 		String judgePrompt = loadJudgeSystemPrompt();
 		
-		JudgeResult result = judge.score(requiredFactsJson, oracleJson, agentAnswer, judgePrompt);
+		JudgeResult result = judge.score(requiredFactsJson, modelXml, agentAnswer, judgePrompt);
 		
 		// 5. Print results
 		printJudgeResult(result);

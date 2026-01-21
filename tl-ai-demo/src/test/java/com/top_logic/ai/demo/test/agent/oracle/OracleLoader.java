@@ -78,4 +78,18 @@ public class OracleLoader {
 				return generator.generatePizzaShopOracleForOverview(outputPath);
 			});
 	}
+
+	/**
+	 * Loads the luigis.pizzashop model XML file.
+	 * 
+	 * <p>
+	 * This returns the authoritative XML model definition which serves as the single source of truth
+	 * for the judge to verify agent answers against.
+	 * </p>
+	 * 
+	 * @return The model XML string
+	 */
+	public static String loadPizzaShopModelXml() throws IOException {
+		return loadOracle("src/main/webapp/WEB-INF/model/luigis.pizzashop.model.xml");
+	}
 }

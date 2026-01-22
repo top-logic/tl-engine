@@ -76,7 +76,7 @@ public class ModelExplorerScoringTest extends TestCase {
 	 * 
 	 * Uses prompt-based judging where the LLM infers expected facts from the prompt.
 	 */
-	public void dtestPrompt1_HighLevelOverview() throws IOException {
+	public void testPrompt1_HighLevelOverview() throws IOException {
 		String testName = "High-Level Overview (Prompt-Based)";
 		String prompt = "give me a high-level overview of the luigis.pizzashop model (types and relationships only)";
 		int minScore = 7;
@@ -148,7 +148,7 @@ public class ModelExplorerScoringTest extends TestCase {
 	 * 
 	 * Uses prompt-based judging where the LLM infers expected facts from the prompt.
 	 */
-	public void dtestPrompt2_RootAggregateTypes() throws IOException {
+	public void testPrompt2_RootAggregateTypes() throws IOException {
 		String testName = "Root/Aggregate Types (Prompt-Based)";
 		String prompt = "list all root / aggregate types in the model and how they relate";
 		int minScore = 7;
@@ -220,7 +220,7 @@ public class ModelExplorerScoringTest extends TestCase {
 	 * 
 	 * Uses prompt-based judging where the LLM infers expected facts from the prompt.
 	 */
-	public void dtestPrompt3_ProductComponentType() throws IOException {
+	public void testPrompt3_ProductComponentType() throws IOException {
 		String testName = "ProductComponent Type Description (Prompt-Based)";
 		String prompt = "describe the ProductComponent type: attributes, attribute types, and constraints";
 		int minScore = 7;
@@ -292,7 +292,7 @@ public class ModelExplorerScoringTest extends TestCase {
 	 * 
 	 * Uses prompt-based judging where the LLM infers expected facts from the prompt.
 	 */
-	public void dtestPrompt4_ComponentAttributes() throws IOException {
+	public void testPrompt4_ComponentAttributes() throws IOException {
 		String testName = "Component Attributes (Declared vs Inherited) (Prompt-Based)";
 		String prompt = "what are all attributes defined on Component and where do they come from (declared vs inherited)";
 		int minScore = 7;
@@ -1072,8 +1072,8 @@ public class ModelExplorerScoringTest extends TestCase {
 	public static Test suite() {
 		TestSuite suite = new TestSuite(ModelExplorerScoringTest.class.getName());
 		
-		// Add tests in explicit order to ensure testZZZ runs last
-		// Using TestSuite.addTestSuite with a custom suite that only contains specific methods
+		// Add tests in explicit order to ensure test ZZZ runs last
+		// Using {@link TestSuite#addTestSuite(Class)} with a custom suite that only contains specific methods
 		try {
 			suite.addTest(createTest("testPrompt1_HighLevelOverview"));
 			suite.addTest(createTest("testPrompt2_RootAggregateTypes"));

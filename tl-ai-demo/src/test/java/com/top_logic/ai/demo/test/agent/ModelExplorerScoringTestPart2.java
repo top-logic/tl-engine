@@ -6,6 +6,7 @@
 package com.top_logic.ai.demo.test.agent;
 
 import java.io.IOException;
+import java.util.Map;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -19,6 +20,8 @@ import com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult;
 import com.top_logic.ai.demo.test.agent.oracle.OracleLoader;
 import com.top_logic.ai.demo.test.agent.scorer.NeutralScorerResult;
 import com.top_logic.ai.service.AIService;
+import com.top_logic.ai.service.tools.ToolCallTracker;
+import com.top_logic.ai.service.tools.ToolCallTracking;
 import com.top_logic.ai.service.tools.help.ModelExplorerTool;
 import com.top_logic.basic.module.BasicRuntimeModule;
 
@@ -61,30 +64,40 @@ public class ModelExplorerScoringTestPart2 extends ModelExplorerScoringTestBase 
 		// 1. Load model XML (single source of truth)
 		String modelXml = OracleLoader.loadPizzaShopModelXml();
 		
-		// 2. Run the agent
-		ModelExplorerTool agent = new ModelExplorerTool();
-		String agentAnswer = agent.exploreModel(prompt);
-		
-		// 3. Score with AI judge (prompt-based - no manual required_facts)
-		JudgeClient judge = new JudgeClient(AIService.getInstance());
-		String judgePrompt = loadJudgeSystemPrompt();
-		
-		JudgeResult judgeResult = judge.scoreWithPrompt(prompt, modelXml, agentAnswer, judgePrompt);
-		
-		// 4. Get final score from neutral scorer (or use judge score if disabled)
-		NeutralScorerResult finalScore = getFinalScore(prompt, agentAnswer, judgeResult);
-		
-		// 5. Collect results for later analysis
-		collectTestResult(testName, prompt, agentAnswer, judgeResult, finalScore);
-		
-		// 6. Save test assessment to file
-		saveTestAssessment(testName, prompt, agentAnswer, judgeResult, finalScore);
-		
-		// 7. Assertions (using final score only)
-		assertTrue(
-			"Final score must be at least " + minScore + " (was: " + finalScore.getFinalScore() + ")",
-			finalScore.getFinalScore() >= minScore
-		);
+		// 2. Run the agent with tool tracking
+		ToolCallTracker tracker = new ToolCallTracker();
+		ToolCallTracking.setTracker(tracker);
+		try {
+			ModelExplorerTool agent = new ModelExplorerTool();
+			String agentAnswer = agent.exploreModel(prompt);
+			
+			// 2b. Extract and minimize tool results
+			Map<String, Object> toolResults = ToolResultMinimizer.minimizeToolResults(tracker.getToolResults());
+			
+			// 3. Score with AI judge (prompt-based with tool trace)
+			JudgeClient judge = new JudgeClient(AIService.getInstance());
+			String judgePrompt = loadJudgeSystemPrompt();
+			
+			JudgeResult judgeResult = judge.scoreWithPromptAndToolTrace(
+				prompt, modelXml, agentAnswer, tracker.getToolCalls(), toolResults, judgePrompt);
+			
+			// 4. Get final score from neutral scorer (or use judge score if disabled)
+			NeutralScorerResult finalScore = getFinalScore(prompt, agentAnswer, judgeResult);
+			
+			// 5. Collect results for later analysis
+			collectTestResult(testName, prompt, agentAnswer, judgeResult, finalScore);
+			
+			// 6. Save test assessment to file
+			saveTestAssessment(testName, prompt, agentAnswer, judgeResult, finalScore);
+			
+			// 7. Assertions (using final score only)
+			assertTrue(
+				"Final score must be at least " + minScore + " (was: " + finalScore.getFinalScore() + ")",
+				finalScore.getFinalScore() >= minScore
+			);
+		} finally {
+			ToolCallTracking.setTracker(null);
+		}
 	}
 
 	/**
@@ -102,30 +115,40 @@ public class ModelExplorerScoringTestPart2 extends ModelExplorerScoringTestBase 
 		// 1. Load model XML (single source of truth)
 		String modelXml = OracleLoader.loadPizzaShopModelXml();
 		
-		// 2. Run the agent
-		ModelExplorerTool agent = new ModelExplorerTool();
-		String agentAnswer = agent.exploreModel(prompt);
-		
-		// 3. Score with AI judge (prompt-based - no manual required_facts)
-		JudgeClient judge = new JudgeClient(AIService.getInstance());
-		String judgePrompt = loadJudgeSystemPrompt();
-		
-		JudgeResult judgeResult = judge.scoreWithPrompt(prompt, modelXml, agentAnswer, judgePrompt);
-		
-		// 4. Get final score from neutral scorer (or use judge score if disabled)
-		NeutralScorerResult finalScore = getFinalScore(prompt, agentAnswer, judgeResult);
-		
-		// 5. Collect results for later analysis
-		collectTestResult(testName, prompt, agentAnswer, judgeResult, finalScore);
-		
-		// 6. Save test assessment to file
-		saveTestAssessment(testName, prompt, agentAnswer, judgeResult, finalScore);
-		
-		// 7. Assertions (using final score only)
-		assertTrue(
-			"Final score must be at least " + minScore + " (was: " + finalScore.getFinalScore() + ")",
-			finalScore.getFinalScore() >= minScore
-		);
+		// 2. Run the agent with tool tracking
+		ToolCallTracker tracker = new ToolCallTracker();
+		ToolCallTracking.setTracker(tracker);
+		try {
+			ModelExplorerTool agent = new ModelExplorerTool();
+			String agentAnswer = agent.exploreModel(prompt);
+			
+			// 2b. Extract and minimize tool results
+			Map<String, Object> toolResults = ToolResultMinimizer.minimizeToolResults(tracker.getToolResults());
+			
+			// 3. Score with AI judge (prompt-based with tool trace)
+			JudgeClient judge = new JudgeClient(AIService.getInstance());
+			String judgePrompt = loadJudgeSystemPrompt();
+			
+			JudgeResult judgeResult = judge.scoreWithPromptAndToolTrace(
+				prompt, modelXml, agentAnswer, tracker.getToolCalls(), toolResults, judgePrompt);
+			
+			// 4. Get final score from neutral scorer (or use judge score if disabled)
+			NeutralScorerResult finalScore = getFinalScore(prompt, agentAnswer, judgeResult);
+			
+			// 5. Collect results for later analysis
+			collectTestResult(testName, prompt, agentAnswer, judgeResult, finalScore);
+			
+			// 6. Save test assessment to file
+			saveTestAssessment(testName, prompt, agentAnswer, judgeResult, finalScore);
+			
+			// 7. Assertions (using final score only)
+			assertTrue(
+				"Final score must be at least " + minScore + " (was: " + finalScore.getFinalScore() + ")",
+				finalScore.getFinalScore() >= minScore
+			);
+		} finally {
+			ToolCallTracking.setTracker(null);
+		}
 	}
 
 	/**
@@ -143,30 +166,40 @@ public class ModelExplorerScoringTestPart2 extends ModelExplorerScoringTestBase 
 		// 1. Load model XML (single source of truth)
 		String modelXml = OracleLoader.loadPizzaShopModelXml();
 		
-		// 2. Run the agent
-		ModelExplorerTool agent = new ModelExplorerTool();
-		String agentAnswer = agent.exploreModel(prompt);
-		
-		// 3. Score with AI judge (prompt-based - no manual required_facts)
-		JudgeClient judge = new JudgeClient(AIService.getInstance());
-		String judgePrompt = loadJudgeSystemPrompt();
-		
-		JudgeResult judgeResult = judge.scoreWithPrompt(prompt, modelXml, agentAnswer, judgePrompt);
-		
-		// 4. Get final score from neutral scorer (or use judge score if disabled)
-		NeutralScorerResult finalScore = getFinalScore(prompt, agentAnswer, judgeResult);
-		
-		// 5. Collect results for later analysis
-		collectTestResult(testName, prompt, agentAnswer, judgeResult, finalScore);
-		
-		// 6. Save test assessment to file
-		saveTestAssessment(testName, prompt, agentAnswer, judgeResult, finalScore);
-		
-		// 7. Assertions (using final score only)
-		assertTrue(
-			"Final score must be at least " + minScore + " (was: " + finalScore.getFinalScore() + ")",
-			finalScore.getFinalScore() >= minScore
-		);
+		// 2. Run the agent with tool tracking
+		ToolCallTracker tracker = new ToolCallTracker();
+		ToolCallTracking.setTracker(tracker);
+		try {
+			ModelExplorerTool agent = new ModelExplorerTool();
+			String agentAnswer = agent.exploreModel(prompt);
+			
+			// 2b. Extract and minimize tool results
+			Map<String, Object> toolResults = ToolResultMinimizer.minimizeToolResults(tracker.getToolResults());
+			
+			// 3. Score with AI judge (prompt-based with tool trace)
+			JudgeClient judge = new JudgeClient(AIService.getInstance());
+			String judgePrompt = loadJudgeSystemPrompt();
+			
+			JudgeResult judgeResult = judge.scoreWithPromptAndToolTrace(
+				prompt, modelXml, agentAnswer, tracker.getToolCalls(), toolResults, judgePrompt);
+			
+			// 4. Get final score from neutral scorer (or use judge score if disabled)
+			NeutralScorerResult finalScore = getFinalScore(prompt, agentAnswer, judgeResult);
+			
+			// 5. Collect results for later analysis
+			collectTestResult(testName, prompt, agentAnswer, judgeResult, finalScore);
+			
+			// 6. Save test assessment to file
+			saveTestAssessment(testName, prompt, agentAnswer, judgeResult, finalScore);
+			
+			// 7. Assertions (using final score only)
+			assertTrue(
+				"Final score must be at least " + minScore + " (was: " + finalScore.getFinalScore() + ")",
+				finalScore.getFinalScore() >= minScore
+			);
+		} finally {
+			ToolCallTracking.setTracker(null);
+		}
 	}
 
 	/**
@@ -184,30 +217,40 @@ public class ModelExplorerScoringTestPart2 extends ModelExplorerScoringTestBase 
 		// 1. Load model XML (single source of truth)
 		String modelXml = OracleLoader.loadPizzaShopModelXml();
 		
-		// 2. Run the agent
-		ModelExplorerTool agent = new ModelExplorerTool();
-		String agentAnswer = agent.exploreModel(prompt);
-		
-		// 3. Score with AI judge (prompt-based - no manual required_facts)
-		JudgeClient judge = new JudgeClient(AIService.getInstance());
-		String judgePrompt = loadJudgeSystemPrompt();
-		
-		JudgeResult judgeResult = judge.scoreWithPrompt(prompt, modelXml, agentAnswer, judgePrompt);
-		
-		// 4. Get final score from neutral scorer (or use judge score if disabled)
-		NeutralScorerResult finalScore = getFinalScore(prompt, agentAnswer, judgeResult);
-		
-		// 5. Collect results for later analysis
-		collectTestResult(testName, prompt, agentAnswer, judgeResult, finalScore);
-		
-		// 6. Save test assessment to file
-		saveTestAssessment(testName, prompt, agentAnswer, judgeResult, finalScore);
-		
-		// 7. Assertions (using final score only)
-		assertTrue(
-			"Final score must be at least " + minScore + " (was: " + finalScore.getFinalScore() + ")",
-			finalScore.getFinalScore() >= minScore
-		);
+		// 2. Run the agent with tool tracking
+		ToolCallTracker tracker = new ToolCallTracker();
+		ToolCallTracking.setTracker(tracker);
+		try {
+			ModelExplorerTool agent = new ModelExplorerTool();
+			String agentAnswer = agent.exploreModel(prompt);
+			
+			// 2b. Extract and minimize tool results
+			Map<String, Object> toolResults = ToolResultMinimizer.minimizeToolResults(tracker.getToolResults());
+			
+			// 3. Score with AI judge (prompt-based with tool trace)
+			JudgeClient judge = new JudgeClient(AIService.getInstance());
+			String judgePrompt = loadJudgeSystemPrompt();
+			
+			JudgeResult judgeResult = judge.scoreWithPromptAndToolTrace(
+				prompt, modelXml, agentAnswer, tracker.getToolCalls(), toolResults, judgePrompt);
+			
+			// 4. Get final score from neutral scorer (or use judge score if disabled)
+			NeutralScorerResult finalScore = getFinalScore(prompt, agentAnswer, judgeResult);
+			
+			// 5. Collect results for later analysis
+			collectTestResult(testName, prompt, agentAnswer, judgeResult, finalScore);
+			
+			// 6. Save test assessment to file
+			saveTestAssessment(testName, prompt, agentAnswer, judgeResult, finalScore);
+			
+			// 7. Assertions (using final score only)
+			assertTrue(
+				"Final score must be at least " + minScore + " (was: " + finalScore.getFinalScore() + ")",
+				finalScore.getFinalScore() >= minScore
+			);
+		} finally {
+			ToolCallTracking.setTracker(null);
+		}
 	}
 
 	/**
@@ -225,30 +268,40 @@ public class ModelExplorerScoringTestPart2 extends ModelExplorerScoringTestBase 
 		// 1. Load model XML (single source of truth)
 		String modelXml = OracleLoader.loadPizzaShopModelXml();
 		
-		// 2. Run the agent
-		ModelExplorerTool agent = new ModelExplorerTool();
-		String agentAnswer = agent.exploreModel(prompt);
-		
-		// 3. Score with AI judge (prompt-based - no manual required_facts)
-		JudgeClient judge = new JudgeClient(AIService.getInstance());
-		String judgePrompt = loadJudgeSystemPrompt();
-		
-		JudgeResult judgeResult = judge.scoreWithPrompt(prompt, modelXml, agentAnswer, judgePrompt);
-		
-		// 4. Get final score from neutral scorer (or use judge score if disabled)
-		NeutralScorerResult finalScore = getFinalScore(prompt, agentAnswer, judgeResult);
-		
-		// 5. Collect results for later analysis
-		collectTestResult(testName, prompt, agentAnswer, judgeResult, finalScore);
-		
-		// 6. Save test assessment to file
-		saveTestAssessment(testName, prompt, agentAnswer, judgeResult, finalScore);
-		
-		// 7. Assertions (using final score only)
-		assertTrue(
-			"Final score must be at least " + minScore + " (was: " + finalScore.getFinalScore() + ")",
-			finalScore.getFinalScore() >= minScore
-		);
+		// 2. Run the agent with tool tracking
+		ToolCallTracker tracker = new ToolCallTracker();
+		ToolCallTracking.setTracker(tracker);
+		try {
+			ModelExplorerTool agent = new ModelExplorerTool();
+			String agentAnswer = agent.exploreModel(prompt);
+			
+			// 2b. Extract and minimize tool results
+			Map<String, Object> toolResults = ToolResultMinimizer.minimizeToolResults(tracker.getToolResults());
+			
+			// 3. Score with AI judge (prompt-based with tool trace)
+			JudgeClient judge = new JudgeClient(AIService.getInstance());
+			String judgePrompt = loadJudgeSystemPrompt();
+			
+			JudgeResult judgeResult = judge.scoreWithPromptAndToolTrace(
+				prompt, modelXml, agentAnswer, tracker.getToolCalls(), toolResults, judgePrompt);
+			
+			// 4. Get final score from neutral scorer (or use judge score if disabled)
+			NeutralScorerResult finalScore = getFinalScore(prompt, agentAnswer, judgeResult);
+			
+			// 5. Collect results for later analysis
+			collectTestResult(testName, prompt, agentAnswer, judgeResult, finalScore);
+			
+			// 6. Save test assessment to file
+			saveTestAssessment(testName, prompt, agentAnswer, judgeResult, finalScore);
+			
+			// 7. Assertions (using final score only)
+			assertTrue(
+				"Final score must be at least " + minScore + " (was: " + finalScore.getFinalScore() + ")",
+				finalScore.getFinalScore() >= minScore
+			);
+		} finally {
+			ToolCallTracking.setTracker(null);
+		}
 	}
 
 

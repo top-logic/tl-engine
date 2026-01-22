@@ -24,6 +24,8 @@ import dev.langchain4j.model.chat.response.ChatResponse;
 
 /**
  * System prompt improver that analyzes test results and suggests improvements.
+ * 
+ * @author jhu
  */
 public class SystemPromptImprover {
 

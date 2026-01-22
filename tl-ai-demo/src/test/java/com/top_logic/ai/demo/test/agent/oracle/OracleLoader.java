@@ -13,6 +13,8 @@ import java.nio.file.Paths;
 
 /**
  * Utility to load the model XML for scoring tests.
+ * 
+ * @author jhu
  */
 public class OracleLoader {
 

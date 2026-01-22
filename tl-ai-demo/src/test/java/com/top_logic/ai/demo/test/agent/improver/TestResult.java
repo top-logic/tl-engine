@@ -7,6 +7,8 @@ package com.top_logic.ai.demo.test.agent.improver;
 
 /**
  * Holds the complete result of a single test for analysis by the system prompt improver.
+ * 
+ * @author jhu
  */
 public class TestResult {
 

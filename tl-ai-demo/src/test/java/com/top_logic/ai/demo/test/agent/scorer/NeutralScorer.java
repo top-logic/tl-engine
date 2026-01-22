@@ -26,6 +26,8 @@ import dev.langchain4j.model.chat.response.ChatResponse;
 
 /**
  * Neutral scorer that provides a final assessment after the judge's evaluation.
+ * 
+ * @author jhu
  */
 public class NeutralScorer {
 

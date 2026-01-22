@@ -37,6 +37,8 @@ import dev.langchain4j.model.chat.response.ChatResponse;
  * </ul>
  * to an AI judge that scores the answer.
  * </p>
+ * 
+ * @author jhu
  */
 public class JudgeClient {
 

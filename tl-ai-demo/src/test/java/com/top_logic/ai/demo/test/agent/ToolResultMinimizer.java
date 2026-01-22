@@ -14,10 +14,11 @@ import java.util.Map;
  * Extracts minimal fields from tool results for judge scoring.
  * 
  * <p>
- * Only includes fields needed for validation:
- * - Types: qualifiedName, metaType, generalizations
- * - Parts: definedIn, name, kind, type, mandatory, multiple, derived, override
+ * Only includes fields needed for validation: - Types: qualifiedName, metaType, generalizations -
+ * Parts: definedIn, name, kind, type, mandatory, multiple, derived, override
  * </p>
+ * 
+ * @author jhu
  */
 public class ToolResultMinimizer {
 

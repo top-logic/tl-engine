@@ -10,6 +10,8 @@ import java.util.List;
 
 /**
  * Result from the neutral scorer that provides a final assessment.
+ * 
+ * @author jhu
  */
 public class NeutralScorerResult {
 

@@ -97,10 +97,6 @@ public class ModelExplorerTool {
 
 					// Execute the exploration
 					String result = explorer.explore(question);
-
-					// Log result
-					System.out.println("ModelExplorerTool.exploreModel() result: " + result);
-					Logger.info("exploreModel() completed successfully", ModelExplorerTool.class);
 					return result;
 
 				} catch (Exception ex) {

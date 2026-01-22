@@ -1,0 +1,164 @@
+================================================================================
+SYSTEM PROMPT IMPROVEMENT SUGGESTIONS
+================================================================================
+
+Generated: 2026-01-22T11:44:08.443999534
+Number of tests analyzed: 5
+
+Tests Analyzed:
+--------------------------------------------------------------------------------
+1. High-Level Overview (Prompt-Based)
+   Prompt: give me a high-level overview of the luigis.pizzashop model (types and relationships only)
+
+2. Root/Aggregate Types (Prompt-Based)
+   Prompt: list all root / aggregate types in the model and how they relate
+
+3. ProductComponent Type Description (Prompt-Based)
+   Prompt: describe the ProductComponent type: attributes, attribute types, and constraints
+
+4. Component Attributes (Declared vs Inherited) (Prompt-Based)
+   Prompt: what are all attributes defined on Component and where do they come from (declared vs inherited)
+
+5. Enum Types (Prompt-Based)
+   Prompt: show all enum types in the model and which attributes use them
+
+
+================================================================================
+IMPROVEMENT SUGGESTIONS
+================================================================================
+
+```json
+{
+  "overall_assessment": "The agent demonstrates excellent adherence to its system prompt with strong evidence-based exploration, proper tool usage, and accurate reporting. Performance is consistently high (9-10 scores) across all test cases.",
+  "key_patterns": [
+    {
+      "pattern": "Consistent excellent performance with proper tool usage and evidence citation",
+      "evidence": "All 5 tests scored 9-10 with zero hallucinations, incorrect claims, or scope violations",
+      "impact": "Agent successfully fulfills its core mission as a read-only model explorer with fact-based reporting"
+    },
+    {
+      "pattern": "Strong module scoping behavior with proper frameworkModule filtering",
+      "evidence": "Tests 'High-Level Overview' and 'Root/Aggregate Types' correctly filtered to application modules (luigis.pizzashop) and explicitly documented the filtering process",
+      "impact": "Agent correctly implements the critical default behavior of scoping to application modules when users ask about 'the model'"
+    },
+    {
+      "pattern": "Comprehensive source referencing with tool citations",
+      "evidence": "All tests include detailed 'Source Reference' sections citing specific tool calls (e.g., 'listTypeParts(luigis.pizzashop, Product, true) → components reference')",
+      "impact": "Enables full traceability and verification of all reported facts"
+    },
+    {
+      "pattern": "Proper handling of inherited vs. declared attributes",
+      "evidence": "Test 'Component Attributes' clearly distinguished local attributes (baseUnit, costPerBaseUnit) from inherited (name from NamedEntities, tType from TLObject)",
+      "impact": "Users get complete and accurate type schemas with proper attribution"
+    },
+    {
+      "pattern": "Consistent structured output format",
+      "evidence": "All responses follow the prescribed format: Answer section with bullets, Next Suggested Query, and Source Reference",
+      "impact": "Predictable, scannable responses that match user expectations"
+    }
+  ],
+  "suggestions": [
+    {
+      "priority": "low",
+      "category": "clarity",
+      "current_behavior": "Agent sometimes adds interpretive labels like 'Role: Aggregate root' or 'Role: Base type' in responses without explicit model metadata supporting these terms",
+      "suggested_change": "In the 'EXPLORER MODE: FACTS ONLY' section, add explicit guidance: 'Do not add interpretive role labels (e.g., \"aggregate root\", \"base type\") unless these exact terms appear in model labels/descriptions. Use structural descriptions instead (e.g., \"composes X via Y reference\", \"has no generalizations\").'",
+      "expected_improvement": "Eliminates subtle interpretation while maintaining clarity through purely structural descriptions",
+      "potential_risks": "Minimal - responses may be slightly more verbose but will be more purely factual"
+    },
+    {
+      "priority": "low",
+      "category": "completeness",
+      "current_behavior": "In 'Enum Types' test, agent explored framework enumerations (tl.yesno, tl.yesnoundef) beyond the application scope, which was not explicitly requested",
+      "suggested_change": "In the MODULE SCOPE section, add a clarification: 'When listing enum types \"in the model\", apply the same application-module-only default as for other type queries. Only include framework enumerations if they are directly referenced by application types or explicitly requested.'",
+      "expected_improvement": "More consistent scoping behavior across all query types (types, enums, etc.)",
+      "potential_risks": "Very low - may miss framework enums in edge cases, but aligns with stated default scoping philosophy"
+    },
+    {
+      "priority": "low",
+      "category": "efficiency",
+      "current_behavior": "Agent provides comprehensive 'Next Suggested Query' sections in all responses, which are helpful but not always essential",
+      "suggested_change": "Modify the output format guidance to make 'Next suggested query' explicitly optional: '2. **Next suggested query** (optional) – Only include if there is a natural follow-up exploration that would significantly enhance understanding. Omit if the query is fully satisfied.'",
+      "expected_improvement": "Slightly more concise responses when no meaningful follow-up exists",
+      "potential_risks": "None - this was already
+
+================================================================================
+
+================================================================================
+SYSTEM PROMPT IMPROVEMENT SUGGESTIONS
+================================================================================
+
+Generated: 2026-01-22T11:49:39.530297484
+Number of tests analyzed: 5
+
+Tests Analyzed:
+--------------------------------------------------------------------------------
+1. Cost Attribute Definition (Prompt-Based)
+   Prompt: explain how the cost attribute on ProductComponent is defined, using only model or script references
+
+2. Calculated/Derived Attributes (Prompt-Based)
+   Prompt: list all calculated / derived attributes in the model and how they are computed
+
+3. Component Usage (Prompt-Based)
+   Prompt: where is Component used across the model (attributes, relations, scripts)
+
+4. Unit References (Prompt-Based)
+   Prompt: find all types that reference Unit and explain the nature of each reference
+
+5. Pricing/Cost Search (Prompt-Based)
+   Prompt: search for anything related to pricing or cost and summarize the findings by type
+
+
+================================================================================
+IMPROVEMENT SUGGESTIONS
+================================================================================
+
+```json
+{
+  "overall_assessment": "The agent performs excellently on most tasks but has a critical failure pattern when handling type name disambiguation, particularly with 'Unit' references, leading to hallucinated types and incorrect claims.",
+  "key_patterns": [
+    {
+      "pattern": "Hallucination of non-existent types when query terms are ambiguous",
+      "evidence": "Test 'Unit References' - agent invented 'tl.units:Unit' and 'tl.units:AbstractUnit' types that don't exist in the model, despite the actual type being 'UnitOfMeasure' enum in luigis.pizzashop",
+      "impact": "Complete answer failure (score 0/10) - user receives entirely fabricated information about the model structure"
+    },
+    {
+      "pattern": "Misinterpretation of tool results when parsing complex reference structures",
+      "evidence": "Test 'Component Usage' - incorrectly claimed 'Property `self` on `luigis.pizzashop:Component$baseUnit`' when baseUnit is actually a reference to UnitOfMeasure enum",
+      "impact": "Moderate accuracy degradation (score 4/10) - correct usages identified but with fabricated details"
+    },
+    {
+      "pattern": "Strong performance on derived attribute analysis and script extraction",
+      "evidence": "Tests 'Cost Attribute Definition', 'Calculated/Derived Attributes', 'Pricing/Cost Search' all scored 10/10 with accurate TLScript extraction and proper verbatim presentation",
+      "impact": "High value delivered when task aligns with core competency - users get complete, accurate answers"
+    },
+    {
+      "pattern": "Inconsistent application of clarification strategy when search yields no results",
+      "evidence": "In 'Unit References' test, instead of clarifying or reporting 'no matches found', agent fabricated types; in other tests, agent successfully uses searchModel to disambiguate",
+      "impact": "Unpredictable behavior when facing ambiguous or non-existent entities"
+    }
+  ],
+  "suggestions": [
+    {
+      "priority": "high",
+      "category": "accuracy",
+      "current_behavior": "When tool results are empty or ambiguous (especially searchModel), agent sometimes invents plausible-sounding types/modules instead of reporting no findings or asking for clarification",
+      "suggested_change": "Add explicit instruction after CLARIFICATION & CONTEXT RESOLUTION section: '**CRITICAL: If searchModel or findTypeUsages returns no results, you MUST state this explicitly.** Never invent types, modules, or parts. If the user's query term (e.g., \"Unit\") could refer to multiple concepts, first report what was found (including enumerations, partial matches), then ask user to clarify which entity they meant. Example: \"Found UnitOfMeasure enum in luigis.pizzashop and no types named Unit. Did you mean UnitOfMeasure, or are you looking for a different entity?\"'",
+      "expected_improvement": "Eliminates hallucinations when searches fail; forces agent to either report findings accurately or request clarification",
+      "potential_risks": "May increase clarification questions, but this is preferable to fabricating information"
+    },
+    {
+      "priority": "high",
+      "category": "accuracy",
+      "current_behavior": "Agent misinterprets complex tool output structures (e.g., 'Component$baseUnit' notation in findTypeUsages) and invents property names like 'self'",
+      "suggested_change": "Add to FACT GUARANTEE RULES section: '**Reference notation interpretation:** When tool results show patterns like `TypeName$partName`, this indicates a part named `partName` on type `TypeName`. Never invent intermediate properties like \"self\". Always verify part names against listTypeParts output before claiming their existence. If a usage result seems unusual (e.g., self-references, nested paths), call listTypeParts to confirm the actual part structure before explaining it to the user.'",
+      "expected_improvement": "Reduces misinterpretation of tool output notation; ensures claims about parts are verified against actual model data",
+      "potential_risks": "Slightly increases tool calls, but necessary for accuracy"
+    },
+    {
+      "priority": "high",
+      "category": "completeness",
+      "current
+
+================================================================================
+

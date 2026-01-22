@@ -1,0 +1,886 @@
+================================================================================
+TEST ASSESSMENT: High-Level Overview (Prompt-Based)
+================================================================================
+
+Generated: 2026-01-22T11:41:34.668476800
+
+Test Information:
+--------------------------------------------------------------------------------
+Test Name: High-Level Overview (Prompt-Based)
+Prompt: give me a high-level overview of the luigis.pizzashop model (types and relationships only)
+
+================================================================================
+AGENT ANSWER
+================================================================================
+
+### Answer: High-Level Overview of the `luigis.pizzashop` Model
+
+#### **Types and Hierarchy**
+- **Base Type:**
+  - `NamedEntities` (extends `tl.model:TLObject`)
+    - **Attributes:**
+      - `name` (String, mandatory)
+    - **Subtypes:**
+      - `Component`
+        - **Subtypes:**
+          - `Ingredient`
+          - `Labor`
+      - `Product`
+      - `ProductComponent`
+
+- **Enumeration:**
+  - `UnitOfMeasure` (7 literals: G, KG, T, ML, L, HOUR, MINUTE)
+
+---
+
+#### **Attributes and Relationships**
+
+1. **`Component`** (extends `NamedEntities`)
+   - **Attributes:**
+     - `costPerBaseUnit` (Double, mandatory)
+   - **References:**
+     - `baseUnit` (UnitOfMeasure, mandatory)
+
+2. **`Ingredient`** (extends `Component`)
+   - *No additional parts (inherits all from `Component`).*
+
+3. **`Labor`** (extends `Component`)
+   - *No additional parts (inherits all from `Component`).*
+
+4. **`Product`** (extends `NamedEntities`)
+   - **Attributes:**
+     - `budget` (Double, optional)
+     - `costPerUnit` (Double, derived)
+     - `plannedQuantity` (Double, mandatory)
+     - `totalCost` (Double, derived)
+   - **References:**
+     - `components` (ProductComponent, multiple, mandatory)
+
+5. **`ProductComponent`** (extends `NamedEntities`)
+   - **Attributes:**
+     - `amount` (Double, mandatory)
+     - `cost` (Double, derived)
+     - `name` (String, derived, overrides `NamedEntities.name`)
+   - **References:**
+     - `component` (Component, mandatory)
+     - `unit` (UnitOfMeasure, mandatory)
+
+---
+
+#### **Key Relationships**
+- **Composition:**
+  - `Product` **→** `ProductComponent` (1:N, mandatory)
+- **Reference:**
+  - `ProductComponent` **→** `Component` (1:1, mandatory)
+  - `Component` **→** `UnitOfMeasure` (1:1, mandatory)
+
+---
+
+### Next Suggested Query
+- Explore the **derived attributes** (`costPerUnit`, `totalCost`, `cost`, `name` on `ProductComponent`) to review their calculation logic using `listAnnotations`.
+
+---
+
+### Source Reference
+- **Module and Type List:**
+  - `listModules()` → Confirmed `luigis.pizzashop` as the only application module (`frameworkModule: false`).
+  - `listTypes(luigis.pizzashop)` → Returned 7 types: `Component`, `Ingredient`, `Labor`, `NamedEntities`, `Product`, `ProductComponent`, `UnitOfMeasure`.
+
+- **Type Parts and Inheritance:**
+  - `listTypeParts(luigis.pizzashop, NamedEntities, true)` → `name` (String), `tType` (derived reference).
+  - `listTypeParts(luigis.pizzashop, Component, true)` → `baseUnit` (UnitOfMeasure), `costPerBaseUnit` (Double).
+  - `listTypeParts(luigis.pizzashop, Product, true)` → `budget`, `components` (ProductComponent), `costPerUnit` (derived), `plannedQuantity`, `totalCost` (derived).
+  - `listTypeParts(luigis.pizzashop, ProductComponent, true)` → `amount`, `component` (Component), `cost` (derived), `name` (derived, override), `unit` (UnitOfMeasure).
+
+- **Enumeration:**
+  - `listClassifiers(luigis.pizzashop, UnitOfMeasure)` → 7 literals: G, KG, T, ML, L, HOUR, MINUTE.
+
+================================================================================
+JUDGE RESULT
+================================================================================
+
+Score: 9/10
+
+================================================================================
+FINAL SCORE
+================================================================================
+
+Score: 9/10
+Explanation: Neutral scorer disabled - using judge score directly
+
+
+================================================================================
+
+================================================================================
+TEST ASSESSMENT: Root/Aggregate Types (Prompt-Based)
+================================================================================
+
+Generated: 2026-01-22T11:42:21.395795019
+
+Test Information:
+--------------------------------------------------------------------------------
+Test Name: Root/Aggregate Types (Prompt-Based)
+Prompt: list all root / aggregate types in the model and how they relate
+
+================================================================================
+AGENT ANSWER
+================================================================================
+
+### Answer
+
+#### **Root / Aggregate Types in the Model (Application Module: `luigis.pizzashop`)**
+
+- **`NamedEntities`**
+  - **Role:** Base type for all named entities in the domain.
+  - **Direct Subtypes:**
+    - `Component` (→ `Ingredient`, `Labor`)
+    - `Product`
+    - `ProductComponent`
+  - **Key Part:** `name` (mandatory, single-valued, `tl.core:String`).
+  - **Inheritance:** Inherits from `tl.model:TLObject` (framework type).
+
+- **`Product`**
+  - **Role:** **Aggregate root** for products.
+  - **Composition Relationship:**
+    - Contains `components` (reference to `ProductComponent`, **multiple**, **mandatory**).
+  - **Key Parts:**
+    - `budget` (`tl.core:Double`, optional)
+    - `plannedQuantity` (`tl.core:Double`, mandatory)
+    - `costPerUnit` (derived, `tl.core:Double`)
+    - `totalCost` (derived, `tl.core:Double`)
+  - **Inheritance:** Subtype of `NamedEntities`.
+
+- **`ProductComponent`**
+  - **Role:** Part of the `Product` aggregate (composed via `components` reference).
+  - **Key Parts:**
+    - `amount` (`tl.core:Double`, mandatory)
+    - `component` (reference to `Component`, **single**, **mandatory**)
+    - `unit` (reference to `UnitOfMeasure`, **single**, **mandatory**)
+    - `cost` (derived, `tl.core:Double`)
+  - **Inheritance:** Subtype of `NamedEntities`.
+
+- **`UnitOfMeasure`**
+  - **Role:** Enumeration (standalone, no generalizations/specializations).
+  - **Classifiers:** 7 literals (names not fetched in this run).
+
+---
+
+#### **Relationships Between Root/Aggregate Types**
+| **Source Type**       | **Relationship**       | **Target Type**       | **Multiplicity** | **Mandatory** | **Description**                          |
+|-----------------------|------------------------|-----------------------|------------------|---------------|------------------------------------------|
+| `Product`             | `components` (reference) | `ProductComponent`    | Multiple         | Yes           | Composition: Product → ProductComponent  |
+| `ProductComponent`    | `component` (reference) | `Component`           | Single           | Yes           | Links to a `Component` (Ingredient/Labor)|
+| `ProductComponent`    | `unit` (reference)      | `UnitOfMeasure`       | Single           | Yes           | Unit of measure for the component        |
+
+---
+
+#### **Type Hierarchy**
+```
+tl.model:TLObject (framework)
+└── luigis.pizzashop:NamedEntities (abstract base)
+    ├── luigis.pizzashop:Component
+    │   ├── luigis.pizzashop:Ingredient
+    │   └── luigis.pizzashop:Labor
+    ├── luigis.pizzashop:Product (aggregate root)
+    └── luigis.pizzashop:ProductComponent (part of Product aggregate)
+```
+
+---
+
+### Next Suggested Query
+Explore the **`components` reference** in `Product` to confirm its **cascading behavior** (e.g., delete propagation) or inspect the **derived properties** (`costPerUnit`, `totalCost`) for their TLScript logic:
+```text
+listAnnotations(targetRef="luigis.pizzashop:Product#costPerUnit", includeInherited=false)
+```
+
+---
+
+### Source Reference
+1. **Module Scope:**
+   `listModules()` → 1 application module (`luigis.pizzashop`, `frameworkModule: false`).
+
+2. **Types in `luigis.pizzashop`:**
+   `listTypes("luigis.pizzashop")` → 7 types, including:
+   - `Product` (aggregate root, composes `ProductComponent`).
+   - `NamedEntities` (base type for all named entities).
+   - `UnitOfMeasure` (enumeration, no generalizations).
+
+3. **Parts of `Product`:**
+   `listTypeParts("luigis.pizzashop", "Product", true)` →
+   - `components` (reference to `ProductComponent`, `multiple=true`, `mandatory=true`).
+
+4. **Parts of `ProductComponent`:**
+   `listTypeParts("luigis.pizzashop", "ProductComponent", true)` →
+   - `component` (reference to `Component`, `multiple=false`, `mandatory=true`).
+   - `unit` (reference to `UnitOfMeasure`, `multiple=false`, `mandatory=true`).
+
+5. **Parts of `NamedEntities`:**
+   `listTypeParts("luigis.pizzashop", "NamedEntities", true)` →
+   - `name` (property, `mandatory=true`).
+
+================================================================================
+JUDGE RESULT
+================================================================================
+
+Score: 9/10
+
+================================================================================
+FINAL SCORE
+================================================================================
+
+Score: 9/10
+Explanation: Neutral scorer disabled - using judge score directly
+
+
+================================================================================
+
+================================================================================
+TEST ASSESSMENT: ProductComponent Type Description (Prompt-Based)
+================================================================================
+
+Generated: 2026-01-22T11:42:49.003653250
+
+Test Information:
+--------------------------------------------------------------------------------
+Test Name: ProductComponent Type Description (Prompt-Based)
+Prompt: describe the ProductComponent type: attributes, attribute types, and constraints
+
+================================================================================
+AGENT ANSWER
+================================================================================
+
+### Answer
+
+**Type:** `ProductComponent` in module `luigis.pizzashop`
+
+- **Inherits from:** `NamedEntities` (via `luigis.pizzashop:NamedEntities`)
+- **Attributes and References:**
+  - `amount`
+    - **Type:** `tl.core:Double` (numeric)
+    - **Mandatory:** Yes
+    - **Multiplicity:** Single
+    - **Derived:** No
+  - `component`
+    - **Type:** `luigis.pizzashop:Component` (reference)
+    - **Mandatory:** Yes
+    - **Multiplicity:** Single
+    - **Derived:** No
+  - `cost`
+    - **Type:** `tl.core:Double` (numeric)
+    - **Mandatory:** No
+    - **Multiplicity:** Single
+    - **Derived:** Yes (calculated)
+  - `name`
+    - **Type:** `tl.core:String` (text)
+    - **Mandatory:** Yes
+    - **Multiplicity:** Single
+    - **Derived:** Yes (calculated)
+    - **Note:** Overrides inherited `name` property
+  - `unit`
+    - **Type:** `luigis.pizzashop:UnitOfMeasure` (reference)
+    - **Mandatory:** Yes
+    - **Multiplicity:** Single
+    - **Derived:** No
+- **Inherited from `TLObject` (framework):**
+  - `tType`
+    - **Type:** `tl.model:TLType` (reference)
+    - **Mandatory:** No
+    - **Multiplicity:** Single
+    - **Derived:** Yes (calculated)
+
+---
+
+### Next Suggested Query
+- Explore the `Component` and `UnitOfMeasure` types to understand their structure and constraints.
+- Use `listAnnotations` on `ProductComponent#cost` or `ProductComponent#name` to inspect the TLScript used for derived attributes.
+
+---
+
+### Source Reference
+- `searchModel(query="ProductComponent")` → Confirmed type `luigis.pizzashop:ProductComponent` with 5 parts.
+- `listTypeParts(luigis.pizzashop, ProductComponent, includeInherited=true)` → Returned 6 parts (5 local + 1 inherited from `TLObject`):
+  - `amount`: `tl.core:Double`, mandatory, single, derived=false
+  - `component`: `luigis.pizzashop:Component` (reference), mandatory, single, derived=false
+  - `cost`: `tl.core:Double`, optional, single, derived=true
+  - `name`: `tl.core:String`, mandatory, single, derived=true, override=true
+  - `unit`: `luigis.pizzashop:UnitOfMeasure` (reference), mandatory, single, derived=false
+  - `tType`: `tl.model:TLType` (reference), optional, single, derived=true (inherited from `TLObject`).
+
+================================================================================
+JUDGE RESULT
+================================================================================
+
+Score: 10/10
+
+================================================================================
+FINAL SCORE
+================================================================================
+
+Score: 10/10
+Explanation: Neutral scorer disabled - using judge score directly
+
+
+================================================================================
+
+================================================================================
+TEST ASSESSMENT: Component Attributes (Declared vs Inherited) (Prompt-Based)
+================================================================================
+
+Generated: 2026-01-22T11:43:11.344400077
+
+Test Information:
+--------------------------------------------------------------------------------
+Test Name: Component Attributes (Declared vs Inherited) (Prompt-Based)
+Prompt: what are all attributes defined on Component and where do they come from (declared vs inherited)
+
+================================================================================
+AGENT ANSWER
+================================================================================
+
+### Answer
+
+**Type:** `Component` in module `luigis.pizzashop`
+
+**Attributes on `Component`:**
+- **Declared on `Component` (local):**
+  - `baseUnit` – **Reference** to `UnitOfMeasure`, **Mandatory:** yes, **Multiplicity:** single
+  - `costPerBaseUnit` – **Property** of type `Double`, **Mandatory:** yes, **Multiplicity:** single
+- **Inherited from `NamedEntities`:**
+  - `name` – **Property** of type `String`, **Mandatory:** yes, **Multiplicity:** single
+- **Inherited from `TLObject` (framework):**
+  - `tType` – **Reference** to `TLType`, **Mandatory:** no, **Multiplicity:** single, **Derived:** yes
+
+---
+
+### Next Suggested Query
+- Explore the `NamedEntities` type to see if it defines additional attributes or relationships.
+- Check the `UnitOfMeasure` enumeration to see its available values.
+
+---
+
+### Source Reference
+- **`searchModel(query="Component")`** → Confirmed `Component` exists in `luigis.pizzashop` with 2 parts and inherits from `NamedEntities`.
+- **`listTypeParts(moduleName="luigis.pizzashop", typeName="Component", includeInherited=true)`** → Returned 4 parts:
+  - `baseUnit` (reference, local, mandatory, single)
+  - `costPerBaseUnit` (property, local, mandatory, single)
+  - `name` (property, inherited from `NamedEntities`, mandatory, single)
+  - `tType` (reference, inherited from `TLObject`, derived, optional, single)
+
+================================================================================
+JUDGE RESULT
+================================================================================
+
+Score: 10/10
+
+================================================================================
+FINAL SCORE
+================================================================================
+
+Score: 10/10
+Explanation: Neutral scorer disabled - using judge score directly
+
+
+================================================================================
+
+================================================================================
+TEST ASSESSMENT: Enum Types (Prompt-Based)
+================================================================================
+
+Generated: 2026-01-22T11:43:42.495769592
+
+Test Information:
+--------------------------------------------------------------------------------
+Test Name: Enum Types (Prompt-Based)
+Prompt: show all enum types in the model and which attributes use them
+
+================================================================================
+AGENT ANSWER
+================================================================================
+
+### Answer
+
+#### **Enumeration Types in the Model**
+1. **`luigis.pizzashop:UnitOfMeasure`**
+   - **Classifiers (7):**
+     - G, KG, T, ML, L, HOUR, MINUTE
+   - **Used by attributes:**
+     - `luigis.pizzashop:Component#baseUnit` (reference, mandatory, single)
+     - `luigis.pizzashop:ProductComponent#unit` (reference, mandatory, single)
+
+2. **`tl5.enum:tl.yesno`**
+   - **Classifiers (2):**
+     - tl.yes (default), tl.no
+   - **Used by attributes:**
+     - *No attributes in the explored modules use this enumeration.*
+
+3. **`tl5.enum:tl.yesnoundef`**
+   - **Classifiers (3):**
+     - tl.yesnoundef.yes, tl.yesnoundef.no, tl.yesnoundef.undefined (default)
+   - **Used by attributes:**
+     - *No attributes in the explored modules use this enumeration.*
+
+---
+
+#### **Next Suggested Query**
+- Explore framework modules (e.g., `tl.*`) to identify where `tl.yesno` and `tl.yesnoundef` are used, as they are not referenced in the application module (`luigis.pizzashop`).
+
+---
+
+#### **Source Reference**
+- **Enumeration Definitions:**
+  - `listTypes(luigis.pizzashop)` → `UnitOfMeasure` (enumeration, classifierCount=7).
+  - `listTypes(tl5.enum)` → `tl.yesno` (classifierCount=2), `tl.yesnoundef` (classifierCount=3).
+  - `listClassifiers(luigis.pizzashop, UnitOfMeasure)` → Classifiers: G, KG, T, ML, L, HOUR, MINUTE.
+  - `listClassifiers(tl5.enum, tl.yesno)` → Classifiers: tl.yes, tl.no.
+  - `listClassifiers(tl5.enum, tl.yesnoundef)` → Classifiers: tl.yesnoundef.yes, tl.yesnoundef.no, tl.yesnoundef.undefined.
+
+- **Attribute Usages:**
+  - `listTypeParts(luigis.pizzashop, ProductComponent, true)` → `unit` (reference to `UnitOfMeasure`, mandatory, single).
+  - `listTypeParts(luigis.pizzashop, Component, true)` → `baseUnit` (reference to `UnitOfMeasure`, mandatory, single).
+  - `findTypeUsages(luigis.pizzashop:UnitOfMeasure)` → Usages: `Component#baseUnit`, `ProductComponent#unit`.
+  - `findTypeUsages(tl5.enum:tl.yesno)` → No usages found in explored modules.
+  - `findTypeUsages(tl5.enum:tl.yesnoundef)` → No usages found in explored modules.
+
+================================================================================
+JUDGE RESULT
+================================================================================
+
+Score: 10/10
+
+================================================================================
+FINAL SCORE
+================================================================================
+
+Score: 10/10
+Explanation: Neutral scorer disabled - using judge score directly
+
+
+================================================================================
+
+================================================================================
+TEST ASSESSMENT: Cost Attribute Definition (Prompt-Based)
+================================================================================
+
+Generated: 2026-01-22T11:47:23.551251191
+
+Test Information:
+--------------------------------------------------------------------------------
+Test Name: Cost Attribute Definition (Prompt-Based)
+Prompt: explain how the cost attribute on ProductComponent is defined, using only model or script references
+
+================================================================================
+AGENT ANSWER
+================================================================================
+
+### Answer
+
+- **Attribute:** `cost` on type `ProductComponent` in module `luigis.pizzashop`.
+- **Definition:**
+  - **Data type:** `tl.core:Double`
+  - **Multiplicity:** Single
+  - **Mandatory:** No (optional)
+  - **Derived:** Yes (calculated, not stored)
+  - **Storage Algorithm:** Defined via TLScript embedded in a `<query>` annotation.
+- **Calculation Logic (verbatim TLScript):**
+  ```tlscript
+  pC -> {
+    toUnitQty = value -> fromUnit -> toUnit -> {
+      fromFactor =
+        switch {
+          // MASS
+          $fromUnit == `luigis.pizzashop:UnitOfMeasure#G`      : 1;
+          $fromUnit == `luigis.pizzashop:UnitOfMeasure#KG`     : 1000;
+          $fromUnit == `luigis.pizzashop:UnitOfMeasure#T`      : 1000000;
+
+          // VOLUME
+          $fromUnit == `luigis.pizzashop:UnitOfMeasure#ML`     : 1;
+          $fromUnit == `luigis.pizzashop:UnitOfMeasure#L`      : 1000;
+
+          // TIME (base = MINUTE)
+          $fromUnit == `luigis.pizzashop:UnitOfMeasure#MINUTE` : 1;
+          $fromUnit == `luigis.pizzashop:UnitOfMeasure#HOUR`   : 60;
+
+          true                                           : null;
+        };
+
+      toFactor =
+        switch {
+          // MASS
+          $toUnit == `luigis.pizzashop:UnitOfMeasure#G`        : 1;
+          $toUnit == `luigis.pizzashop:UnitOfMeasure#KG`       : 1000;
+          $toUnit == `luigis.pizzashop:UnitOfMeasure#T`        : 1000000;
+
+          // VOLUME
+          $toUnit == `luigis.pizzashop:UnitOfMeasure#ML`       : 1;
+          $toUnit == `luigis.pizzashop:UnitOfMeasure#L`        : 1000;
+
+          // TIME (base = MINUTE)
+          $toUnit == `luigis.pizzashop:UnitOfMeasure#MINUTE`   : 1;
+          $toUnit == `luigis.pizzashop:UnitOfMeasure#HOUR`     : 60;
+
+          true                                           : null;
+        };
+
+      result =
+        switch {
+          $fromUnit == $toUnit
+            : $value;
+          $fromFactor != null && $toFactor != null
+            : $value * $fromFactor / $toFactor;
+          true
+            : null;
+        };
+
+      $result
+    };
+    c          = $pC.get(`luigis.pizzashop:ProductComponent#component`);
+    amount     = $pC.get(`luigis.pizzashop:ProductComponent#amount`);
+    fromUnit   = $pC.get(`luigis.pizzashop:ProductComponent#unit`);
+    baseUnit   = $c.get(`luigis.pizzashop:Component#baseUnit`);
+    pricePerBU = $c.get(`luigis.pizzashop:Component#costPerBaseUnit`);
+    qtyInBase  = $toUnitQty($amount, $fromUnit, $baseUnit);
+    $qtyInBase * $pricePerBU
+  }
+  ```
+
+---
+
+### Next Suggested Query
+- Explore the `Component` type to verify the definitions of `baseUnit` and `costPerBaseUnit`, which are referenced in the `cost` calculation.
+
+---
+
+### Source Reference
+- **`searchModel`**: Confirmed `ProductComponent` exists in module `luigis.pizzashop`.
+- **`listTypeParts`**: Revealed `cost` is a derived property of type `tl.core:Double` on `ProductComponent`.
+- **`listAnnotations`**: Provided the embedded TLScript for the `cost` attribute's storage algorithm.
+
+================================================================================
+JUDGE RESULT
+================================================================================
+
+Score: 10/10
+
+================================================================================
+FINAL SCORE
+================================================================================
+
+Score: 10/10
+Explanation: Neutral scorer disabled - using judge score directly
+
+
+================================================================================
+
+================================================================================
+TEST ASSESSMENT: Calculated/Derived Attributes (Prompt-Based)
+================================================================================
+
+Generated: 2026-01-22T11:48:12.489463969
+
+Test Information:
+--------------------------------------------------------------------------------
+Test Name: Calculated/Derived Attributes (Prompt-Based)
+Prompt: list all calculated / derived attributes in the model and how they are computed
+
+================================================================================
+AGENT ANSWER
+================================================================================
+
+### Answer
+
+#### **Derived Attributes in the Application Model (`luigis.pizzashop`)**
+
+##### **1. `Product` Type**
+- **`costPerUnit`**
+  - **Type:** `tl.core:Double`
+  - **Derived:** Yes
+  - **Computation:**
+    ```xml
+    <query expr="product -> $product.get(`luigis.pizzashop:Product#components`).get(`luigis.pizzashop:ProductComponent#cost`).sum()"/>
+    ```
+    *Sum of all `cost` values of associated `ProductComponent` instances.*
+
+- **`totalCost`**
+  - **Type:** `tl.core:Double`
+  - **Derived:** Yes
+  - **Computation:**
+    ```xml
+    <query expr="product -> $product.get(`luigis.pizzashop:Product#costPerUnit`) * $product.get(`luigis.pizzashop:Product#plannedQuantity`)"/>
+    ```
+    *Product of `costPerUnit` and `plannedQuantity`.*
+
+---
+
+##### **2. `ProductComponent` Type**
+- **`cost`**
+  - **Type:** `tl.core:Double`
+  - **Derived:** Yes
+  - **Computation:**
+    *Converts the component's `amount` from its `unit` to the component's `baseUnit`, then multiplies by the component's `costPerBaseUnit`.*
+    *Includes unit conversion logic for mass (G, KG, T), volume (ML, L), and time (MINUTE, HOUR).*
+    *Full TLScript logic provided in **Source Reference**.*
+
+- **`name`**
+  - **Type:** `tl.core:String`
+  - **Derived:** Yes
+  - **Computation:**
+    ```xml
+    <query>
+      <expr>pC -> $pC.get(`luigis.pizzashop:ProductComponent#amount`) + " " + $pC.get(`luigis.pizzashop:ProductComponent#unit`) + " " + $pC.get(`luigis.pizzashop:ProductComponent#component`)</expr>
+    </query>
+    ```
+    *Concatenates `amount`, `unit`, and `component` (e.g., "200 G Tomato Sauce").*
+
+---
+
+#### **Framework-Derived Attribute (Inherited)**
+- **`tType`** (on `NamedEntities`, `Product`, `ProductComponent`)
+  - **Type:** `tl.model:TLType` (reference)
+  - **Derived:** Yes
+  - **Computation:** *System-generated type reference (not user-defined).*
+
+---
+
+### Next Suggested Query
+Explore the **unit conversion logic** in the `ProductComponent#cost` script to verify edge cases (e.g., unsupported unit pairs) or inspect **instances** of `Product`/`ProductComponent` to validate derived values.
+
+---
+
+### Source Reference
+1. **`listTypeParts`** (for `Product`, `ProductComponent`, `NamedEntities`)
+   - Identified derived attributes: `costPerUnit`, `totalCost`, `cost`, `name`, `tType`.
+   - Example: `Product#costPerUnit` → `derived=true`.
+
+2. **`listAnnotations`** (for derived attributes)
+   - **`luigis.pizzashop:Product#costPerUnit`**: Storage algorithm with sum query.
+   - **`luigis.pizzashop:Product#totalCost`**: Storage algorithm with multiplication query.
+   - **`luigis.pizzashop:ProductComponent#cost`**: Storage algorithm with unit conversion TLScript.
+   - **`luigis.pizzashop:ProductComponent#name`**: Storage algorithm with concatenation query.
+
+================================================================================
+JUDGE RESULT
+================================================================================
+
+Score: 10/10
+
+================================================================================
+FINAL SCORE
+================================================================================
+
+Score: 10/10
+Explanation: Neutral scorer disabled - using judge score directly
+
+
+================================================================================
+
+================================================================================
+TEST ASSESSMENT: Component Usage (Prompt-Based)
+================================================================================
+
+Generated: 2026-01-22T11:48:28.082142019
+
+Test Information:
+--------------------------------------------------------------------------------
+Test Name: Component Usage (Prompt-Based)
+Prompt: where is Component used across the model (attributes, relations, scripts)
+
+================================================================================
+AGENT ANSWER
+================================================================================
+
+### Answer
+
+**Where is the type `Component` (luigis.pizzashop:Component) used in the model?**
+
+- **As a value type for a property:**
+  - Property `self` on `luigis.pizzashop:Component$baseUnit` (used as the data type for the `baseUnit` attribute of `Component` itself).
+- **As a reference type:**
+  - Reference `component` on `luigis.pizzashop:ProductComponent` (a reference to `Component`).
+- **As a generalization (base type):**
+  - Subclasses `luigis.pizzashop:Ingredient` and `luigis.pizzashop:Labor` extend `Component`.
+
+**No usages in scripts or other model elements were found.**
+
+---
+
+### Next Suggested Query
+To explore the details of the `ProductComponent` type and its `component` reference, you could:
+- Run `listTypeParts(luigis.pizzashop, ProductComponent, true)` to inspect the `component` reference and its constraints (e.g., multiplicity, mandatory flag).
+
+---
+
+### Source Reference
+- **`searchModel(query="Component")`**:
+  - Confirmed the type `luigis.pizzashop:Component` exists in the application module `luigis.pizzashop`.
+- **`findTypeUsages(qualifiedTypeName="luigis.pizzashop:Component")`**:
+  - Returned usages:
+    - Property `self` on `luigis.pizzashop:Component$baseUnit` (value type).
+    - Reference `component` on `luigis.pizzashop:ProductComponent` (reference type).
+    - Subclasses `Ingredient` and `Labor` (generalization).
+
+================================================================================
+JUDGE RESULT
+================================================================================
+
+Score: 4/10
+
+Incorrect claims:
+  - Property `self` on `luigis.pizzashop:Component$baseUnit` - the XML shows `baseUnit` is a reference to `UnitOfMeasure` enum, not a property named `self` with `Component` as value type
+  - Claimed `Component` is used 'as a value type for a property' via `self` on `baseUnit` - this is not supported by the XML; `baseUnit` references `UnitOfMeasure`, not `Component`
+
+Hallucinations:
+  - Property named `self` on `Component$baseUnit` does not exist in the XML and is not in tool_results
+  - The claim that `Component` is used as a value type for a property `self` is not supported by XML or tool_results
+
+================================================================================
+FINAL SCORE
+================================================================================
+
+Score: 4/10
+Explanation: Neutral scorer disabled - using judge score directly
+
+
+================================================================================
+
+================================================================================
+TEST ASSESSMENT: Unit References (Prompt-Based)
+================================================================================
+
+Generated: 2026-01-22T11:48:53.550781293
+
+Test Information:
+--------------------------------------------------------------------------------
+Test Name: Unit References (Prompt-Based)
+Prompt: find all types that reference Unit and explain the nature of each reference
+
+================================================================================
+AGENT ANSWER
+================================================================================
+
+### **Answer: Types Referencing `tl.units:Unit`**
+
+#### **1. Direct References to `tl.units:Unit`**
+- **`tl.units:Unit` (self-reference)**
+  - **Reference:** `baseUnit`
+  - **Nature:** A **single, optional** reference to another `Unit` instance, representing the "base unit" for conversion.
+  - **Multiplicity:** `0..1` (optional, single)
+  - **Defined in:** `tl.units:Unit` (local part)
+
+#### **2. No Other Direct Usages**
+- No other types in the model reference `tl.units:Unit` as a **property, reference, or subclass**.
+- The `Unit` type is **not extended** by any other type (no subclasses).
+
+---
+
+### **Next Suggested Exploration**
+- Investigate the **`tl.units:AbstractUnit`** supertype to see if other unit-related types inherit or reference it.
+- Check the **`UnitOfMeasure` enumeration** in `luigis.pizzashop` to see if it is used as a lightweight alternative to `Unit`.
+
+---
+
+### **Source Reference**
+1. **`searchModel("Unit")`**
+   - Identified `tl.units:Unit` as the primary type of interest.
+   - Excluded `OrgUnit` (organisational units) and `UnitOfMeasure` (enumeration) as unrelated.
+
+2. **`listTypeParts("tl.units", "Unit", includeInherited=true)`**
+   - Confirmed `baseUnit` as the **only reference part** targeting `tl.units:Unit`.
+   - Multiplicity: `mandatory=false`, `multiple=false`.
+
+3. **`findTypeUsages("tl.units:Unit")`**
+   - No other types reference `Unit` as a property, reference, or subclass.
+   - Self-reference (`baseUnit`) confirmed as the sole usage.
+
+================================================================================
+JUDGE RESULT
+================================================================================
+
+Score: 0/10
+
+Incorrect claims:
+  - Answer discusses 'tl.units:Unit' which does not exist in the model XML
+  - Claims self-reference 'baseUnit' points to 'tl.units:Unit' when it actually points to UnitOfMeasure enum
+  - Claims no other types reference Unit, but Component.baseUnit and ProductComponent.unit both reference UnitOfMeasure
+  - References to 'tl.units:AbstractUnit' which is not in the model
+  - Claims baseUnit is optional (mandatory=false) when XML shows mandatory=true for Component.baseUnit
+
+Hallucinations:
+  - Invented type 'tl.units:Unit' not present in model XML
+  - Invented type 'tl.units:AbstractUnit' not present in model XML
+  - Invented reference 'baseUnit' on non-existent 'tl.units:Unit' type
+  - Tool calls to searchModel, listTypeParts, findTypeUsages claiming to find 'tl.units:Unit' when model only contains 'UnitOfMeasure' enum
+  - Claims about 'OrgUnit' and 'organisational units' not in the model
+
+================================================================================
+FINAL SCORE
+================================================================================
+
+Score: 0/10
+Explanation: Neutral scorer disabled - using judge score directly
+
+
+================================================================================
+
+================================================================================
+TEST ASSESSMENT: Pricing/Cost Search (Prompt-Based)
+================================================================================
+
+Generated: 2026-01-22T11:49:14.134853393
+
+Test Information:
+--------------------------------------------------------------------------------
+Test Name: Pricing/Cost Search (Prompt-Based)
+Prompt: search for anything related to pricing or cost and summarize the findings by type
+
+================================================================================
+AGENT ANSWER
+================================================================================
+
+### Answer
+
+**Summary of pricing/cost-related findings by type:**
+
+- **Type:** `Product` (module: `luigis.pizzashop`)
+  - **Properties:**
+    - `costPerUnit` – **Data type:** `tl.core:Double`, **Multiplicity:** single, **Mandatory:** no, **Derived:** yes
+    - `totalCost` – **Data type:** `tl.core:Double`, **Multiplicity:** single, **Mandatory:** no, **Derived:** yes
+
+- **Type:** `ProductComponent` (module: `luigis.pizzashop`)
+  - **Properties:**
+    - `cost` – **Data type:** `tl.core:Double`, **Multiplicity:** single, **Mandatory:** no, **Derived:** yes
+
+- **Type:** `Component` (module: `luigis.pizzashop`)
+  - **Properties:**
+    - `costPerBaseUnit` – **Data type:** `tl.core:Double`, **Multiplicity:** single, **Mandatory:** yes, **Derived:** no
+
+---
+
+### Next Suggested Query
+Explore the **derived properties** (`costPerUnit`, `totalCost`, `cost`) to inspect their TLScript logic for calculation:
+- Use `listAnnotations` on `luigis.pizzashop:Product#costPerUnit`, `luigis.pizzashop:Product#totalCost`, and `luigis.pizzashop:ProductComponent#cost`.
+
+---
+
+### Source Reference
+- **Tool:** `searchModel(query="cost", kindFilter=["class", "enumeration", "property", "reference"])`
+  - **Evidence:**
+    - `Product` type: properties `costPerUnit` (derived, tl.core:Double) and `totalCost` (derived, tl.core:Double)
+    - `ProductComponent` type: property `cost` (derived, tl.core:Double)
+    - `Component` type: property `costPerBaseUnit` (mandatory, tl.core:Double)
+
+================================================================================
+JUDGE RESULT
+================================================================================
+
+Score: 10/10
+
+================================================================================
+FINAL SCORE
+================================================================================
+
+Score: 10/10
+Explanation: Neutral scorer disabled - using judge score directly
+
+
+================================================================================
+

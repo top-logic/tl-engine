@@ -323,10 +323,11 @@ public abstract class ModelExplorerScoringTestBase extends TestCase {
 			content.append("IMPROVEMENT SUGGESTIONS\n");
 			content.append("=".repeat(80)).append("\n\n");
 			content.append(suggestions);
-			content.append("\n\n").append("=".repeat(80)).append("\n");
+			content.append("\n\n").append("=".repeat(80)).append("\n\n");
 
-			// Write to file
-			Files.write(outputPath, content.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+			// Append to file (don't overwrite existing content)
+			Files.write(outputPath, content.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8),
+				java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.APPEND);
 		} catch (Exception ex) {
 			System.err.println("Warning: Failed to save suggestions to file: " + ex.getMessage());
 			ex.printStackTrace();

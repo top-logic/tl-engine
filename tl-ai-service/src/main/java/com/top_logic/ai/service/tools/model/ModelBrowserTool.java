@@ -5,8 +5,11 @@
  */
 package com.top_logic.ai.service.tools.model;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+
 
 import com.top_logic.ai.service.tools.model.messages.ClassifierInfo;
 import com.top_logic.ai.service.tools.model.messages.EnumerationResponse;
@@ -58,6 +61,8 @@ import dev.langchain4j.agent.tool.Tool;
  * <p>
  * All methods return JSON-formatted strings for consumption by AI agents.
  * </p>
+ * 
+ * @author jhu
  */
 public class ModelBrowserTool {
 
@@ -121,16 +126,19 @@ public class ModelBrowserTool {
 					return result;
 				});
 
-			// Serialize to JSON using DataClassSerializer
-			return DataClassSerializer.toJson(response, ModelBrowserTool.class, "listModules()");
+			// Serialize to JSON using DataClassSerializer with tracking
+			Map<String, Object> args = new HashMap<>();
+			return DataClassSerializer.toJson(response, ModelBrowserTool.class, "listModules()", args);
 
 		} catch (Exception ex) {
 			Logger.error("listModules() error: " + ex.getMessage(), ex, ModelBrowserTool.class);
 			System.err.println("ModelBrowserTool.listModules() error: " + ex.getMessage());
+			Map<String, Object> args = new HashMap<>();
 			return DataClassSerializer.errorToJson(
 				"Error listing modules: " + ex.getMessage(),
 				ModelBrowserTool.class,
-				"listModules()");
+				"listModules()",
+				args);
 		}
 	}
 
@@ -229,16 +237,21 @@ public class ModelBrowserTool {
 					return result;
 				});
 
-			// Serialize to JSON using DataClassSerializer
-			return DataClassSerializer.toJson(response, ModelBrowserTool.class, "listTypes()");
+			// Serialize to JSON using DataClassSerializer with tracking
+			Map<String, Object> args = new HashMap<>();
+			args.put("moduleName", moduleName);
+			return DataClassSerializer.toJson(response, ModelBrowserTool.class, "listTypes()", args);
 
 		} catch (Exception ex) {
 			Logger.error("listTypes() error: " + ex.getMessage(), ex, ModelBrowserTool.class);
 			System.err.println("ModelBrowserTool.listTypes() error: " + ex.getMessage());
+			Map<String, Object> args = new HashMap<>();
+			args.put("moduleName", moduleName);
 			return DataClassSerializer.errorToJson(
 				"Error listing types: " + ex.getMessage(),
 				ModelBrowserTool.class,
-				"listTypes()");
+				"listTypes()",
+				args);
 		}
 	}
 
@@ -367,16 +380,25 @@ public class ModelBrowserTool {
 					return result;
 				});
 
-			// Serialize to JSON using DataClassSerializer
-			return DataClassSerializer.toJson(response, ModelBrowserTool.class, "listTypeParts()");
+			// Serialize to JSON using DataClassSerializer with tracking
+			Map<String, Object> args = new HashMap<>();
+			args.put("moduleName", moduleName);
+			args.put("typeName", typeName);
+			args.put("includeInherited", includeInherited);
+			return DataClassSerializer.toJson(response, ModelBrowserTool.class, "listTypeParts()", args);
 
 		} catch (Exception ex) {
 			Logger.error("listTypeParts() error: " + ex.getMessage(), ex, ModelBrowserTool.class);
 			System.err.println("ModelBrowserTool.listTypeParts() error: " + ex.getMessage());
+			Map<String, Object> args = new HashMap<>();
+			args.put("moduleName", moduleName);
+			args.put("typeName", typeName);
+			args.put("includeInherited", includeInherited);
 			return DataClassSerializer.errorToJson(
 				"Error listing type parts: " + ex.getMessage(),
 				ModelBrowserTool.class,
-				"listTypeParts()");
+				"listTypeParts()",
+				args);
 		}
 	}
 
@@ -482,16 +504,23 @@ public class ModelBrowserTool {
 					return result;
 				});
 
-			// Serialize to JSON using DataClassSerializer
-			return DataClassSerializer.toJson(response, ModelBrowserTool.class, "listClassifiers()");
+			// Serialize to JSON using DataClassSerializer with tracking
+			Map<String, Object> args = new HashMap<>();
+			args.put("moduleName", moduleName);
+			args.put("enumName", enumName);
+			return DataClassSerializer.toJson(response, ModelBrowserTool.class, "listClassifiers()", args);
 
 		} catch (Exception ex) {
 			Logger.error("listClassifiers() error: " + ex.getMessage(), ex, ModelBrowserTool.class);
 			System.err.println("ModelBrowserTool.listClassifiers() error: " + ex.getMessage());
+			Map<String, Object> args = new HashMap<>();
+			args.put("moduleName", moduleName);
+			args.put("enumName", enumName);
 			return DataClassSerializer.errorToJson(
 				"Error listing classifiers: " + ex.getMessage(),
 				ModelBrowserTool.class,
-				"listClassifiers()");
+				"listClassifiers()",
+				args);
 		}
 	}
 

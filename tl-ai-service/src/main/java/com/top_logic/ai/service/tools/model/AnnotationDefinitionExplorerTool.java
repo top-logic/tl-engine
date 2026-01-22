@@ -5,7 +5,9 @@
  */
 package com.top_logic.ai.service.tools.model;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.ai.service.tools.model.messages.AnnotationDefinitionResponse;
@@ -57,6 +59,8 @@ import dev.langchain4j.agent.tool.Tool;
  *     .tools(browserTool, instanceTool, analysisTool, searchTool, annotationTool, definitionTool)
  *     .build();
  * </pre>
+ * 
+ * @author jhu
  */
 public class AnnotationDefinitionExplorerTool {
 
@@ -119,18 +123,23 @@ public class AnnotationDefinitionExplorerTool {
 					return result;
 				});
 
-			// Serialize to JSON using DataClassSerializer
+			// Serialize to JSON using DataClassSerializer with tracking
+			Map<String, Object> args = new HashMap<>();
+			args.put("configInterfaceName", configInterfaceName);
 			return DataClassSerializer.toJson(response, AnnotationDefinitionExplorerTool.class,
-				"describeAnnotation()");
+				"describeAnnotation()", args);
 
 		} catch (Exception ex) {
 			Logger.error("describeAnnotation() error: " + ex.getMessage(), ex,
 				AnnotationDefinitionExplorerTool.class);
 			System.err.println("AnnotationDefinitionExplorerTool.describeAnnotation() error: " + ex.getMessage());
+			Map<String, Object> args = new HashMap<>();
+			args.put("configInterfaceName", configInterfaceName);
 			return DataClassSerializer.errorToJson(
 				"Error accessing annotation definition: " + ex.getMessage(),
 				AnnotationDefinitionExplorerTool.class,
-				"describeAnnotation()");
+				"describeAnnotation()",
+				args);
 		}
 	}
 

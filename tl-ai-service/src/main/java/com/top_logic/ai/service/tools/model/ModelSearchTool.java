@@ -6,9 +6,12 @@
 package com.top_logic.ai.service.tools.model;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Collectors;
+
 
 import com.top_logic.ai.service.tools.model.messages.SearchResponse;
 import com.top_logic.ai.service.tools.model.messages.SearchResult;
@@ -41,6 +44,8 @@ import dev.langchain4j.agent.tool.Tool;
  * datatypes), and properties/references. It searches technical names, qualified names, labels, and
  * descriptions, returning the top 10 most relevant matches with contextual information.
  * </p>
+ * 
+ * @author jhu
  */
 public class ModelSearchTool {
 
@@ -101,8 +106,12 @@ public class ModelSearchTool {
 					return buildSearchResponse(query, results);
 				});
 
-			// Serialize to JSON using DataClassSerializer
-			return DataClassSerializer.toJson(response, ModelSearchTool.class, "searchModel()");
+			// Serialize to JSON using DataClassSerializer with tracking
+			Map<String, Object> args = new HashMap<>();
+			args.put("query", query);
+			args.put("moduleFilter", moduleFilter);
+			args.put("kindFilter", kindFilter);
+			return DataClassSerializer.toJson(response, ModelSearchTool.class, "searchModel()", args);
 
 		} catch (Exception ex) {
 			Logger.error("searchModel() error: " + ex.getMessage(), ex, ModelSearchTool.class);
@@ -115,7 +124,11 @@ public class ModelSearchTool {
 			errorResponse.setQuery(query != null ? query : "");
 			errorResponse.setResultCount(0);
 
-			return DataClassSerializer.toJson(errorResponse, ModelSearchTool.class, "searchModel()");
+			Map<String, Object> args = new HashMap<>();
+			args.put("query", query);
+			args.put("moduleFilter", moduleFilter);
+			args.put("kindFilter", kindFilter);
+			return DataClassSerializer.toJson(errorResponse, ModelSearchTool.class, "searchModel()", args);
 		}
 	}
 

@@ -6,9 +6,11 @@
 package com.top_logic.ai.service.tools.model;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
 
 import com.top_logic.ai.service.tools.model.messages.AnnotationInfo;
 import com.top_logic.ai.service.tools.model.messages.AnnotationListResponse;
@@ -78,6 +80,8 @@ import dev.langchain4j.agent.tool.Tool;
  *     .tools(browserTool, instanceTool, analysisTool, searchTool, annotationTool)
  *     .build();
  * </pre>
+ * 
+ * @author jhu
  */
 public class ModelAnnotationBrowserTool {
 
@@ -184,16 +188,23 @@ public class ModelAnnotationBrowserTool {
 					return result;
 				});
 
-			// Serialize to JSON using DataClassSerializer
-			return DataClassSerializer.toJson(response, ModelAnnotationBrowserTool.class, "listAnnotations()");
+			// Serialize to JSON using DataClassSerializer with tracking
+			Map<String, Object> args = new HashMap<>();
+			args.put("targetRef", targetRef);
+			args.put("includeInherited", includeInherited);
+			return DataClassSerializer.toJson(response, ModelAnnotationBrowserTool.class, "listAnnotations()", args);
 
 		} catch (Exception ex) {
 			Logger.error("listAnnotations() error: " + ex.getMessage(), ex, ModelAnnotationBrowserTool.class);
 			System.err.println("ModelAnnotationBrowserTool.listAnnotations() error: " + ex.getMessage());
+			Map<String, Object> args = new HashMap<>();
+			args.put("targetRef", targetRef);
+			args.put("includeInherited", includeInherited);
 			return DataClassSerializer.errorToJson(
 				"Error accessing annotations: " + ex.getMessage(),
 				ModelAnnotationBrowserTool.class,
-				"listAnnotations()");
+				"listAnnotations()",
+				args);
 		}
 	}
 

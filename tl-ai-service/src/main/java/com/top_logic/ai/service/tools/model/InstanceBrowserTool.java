@@ -8,8 +8,11 @@ package com.top_logic.ai.service.tools.model;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+
 
 import com.top_logic.ai.service.tools.model.messages.InstanceListResponse;
 import com.top_logic.ai.service.tools.model.messages.InstanceMetadata;
@@ -58,6 +61,8 @@ import dev.langchain4j.agent.tool.Tool;
  * <p>
  * All methods return JSON-formatted strings for consumption by AI agents.
  * </p>
+ * 
+ * @author jhu
  */
 public class InstanceBrowserTool {
 
@@ -161,16 +166,27 @@ public class InstanceBrowserTool {
 					return result;
 				});
 
-			// Serialize to JSON using DataClassSerializer
-			return DataClassSerializer.toJson(response, InstanceBrowserTool.class, "listInstances()");
+			// Serialize to JSON using DataClassSerializer with tracking
+			Map<String, Object> args = new HashMap<>();
+			args.put("moduleName", moduleName);
+			args.put("typeName", typeName);
+			args.put("limit", limit);
+			args.put("cursor", cursor);
+			return DataClassSerializer.toJson(response, InstanceBrowserTool.class, "listInstances()", args);
 
 		} catch (Exception ex) {
 			Logger.error("listInstances() error: " + ex.getMessage(), ex, InstanceBrowserTool.class);
 			System.err.println("InstanceBrowserTool.listInstances() error: " + ex.getMessage());
+			Map<String, Object> args = new HashMap<>();
+			args.put("moduleName", moduleName);
+			args.put("typeName", typeName);
+			args.put("limit", limit);
+			args.put("cursor", cursor);
 			return DataClassSerializer.errorToJson(
 				"Error accessing instances: " + ex.getMessage(),
 				InstanceBrowserTool.class,
-				"listInstances()");
+				"listInstances()",
+				args);
 		}
 	}
 
@@ -306,16 +322,21 @@ public class InstanceBrowserTool {
 					return result;
 				});
 
-			// Serialize to JSON using DataClassSerializer
-			return DataClassSerializer.toJson(response, InstanceBrowserTool.class, "getInstance()");
+			// Serialize to JSON using DataClassSerializer with tracking
+			Map<String, Object> args = new HashMap<>();
+			args.put("tid", tid);
+			return DataClassSerializer.toJson(response, InstanceBrowserTool.class, "getInstance()", args);
 
 		} catch (Exception ex) {
 			Logger.error("getInstance() error: " + ex.getMessage(), ex, InstanceBrowserTool.class);
 			System.err.println("InstanceBrowserTool.getInstance() error: " + ex.getMessage());
+			Map<String, Object> args = new HashMap<>();
+			args.put("tid", tid);
 			return DataClassSerializer.errorToJson(
 				"Error retrieving instance: " + ex.getMessage(),
 				InstanceBrowserTool.class,
-				"getInstance()");
+				"getInstance()",
+				args);
 		}
 	}
 

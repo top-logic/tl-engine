@@ -6,7 +6,9 @@
 package com.top_logic.ai.service.tools.util;
 
 import java.io.IOException;
+import java.util.Map;
 
+import com.top_logic.ai.service.tools.ToolCallTracking;
 import com.top_logic.ai.service.tools.model.messages.ErrorResponse;
 import com.top_logic.basic.Logger;
 
@@ -84,7 +86,50 @@ public final class DataClassSerializer {
 		}
 
 		String result = buffer.toString();
-		Logger.info(operationName + " result: " + result, logContext);
+		return result;
+	}
+
+	/**
+	 * Serializes a data object to JSON string with optional tool call tracking.
+	 *
+	 * <p>
+	 * If serialization fails, this method automatically returns a fallback error JSON response
+	 * instead of throwing an exception.
+	 * </p>
+	 *
+	 * <p>
+	 * If {@code args} is provided (non-null), tool call tracking will be automatically performed.
+	 * The tool name is extracted from {@code operationName} by removing the trailing "()".
+	 * </p>
+	 *
+	 * @param dataObject
+	 *        The data object to serialize.
+	 * @param logContext
+	 *        Class for logging context (used to identify the source in logs).
+	 * @param operationName
+	 *        Operation name for logging (e.g., "getInstance()"). Tool name is extracted from this.
+	 * @param args
+	 *        Optional map of tool arguments for tracking. If null, no tracking is performed.
+	 * @return JSON string representation of the data object.
+	 */
+	public static String toJson(DataObject dataObject, Class<?> logContext, String operationName,
+			Map<String, Object> args) {
+		String result = toJson(dataObject, logContext, operationName);
+		
+		// Perform tool call tracking if args are provided
+		if (args != null) {
+			// Extract tool name from operationName by removing trailing "()"
+			String toolName = operationName;
+			if (toolName.endsWith("()")) {
+				toolName = toolName.substring(0, toolName.length() - 2);
+			}
+			ToolCallTracking.recordIfTracking(toolName, args, result);
+			
+			// Log the tool call
+			String toolCall = ToolCallTracking.formatToolCall(toolName, args, result);
+			Logger.info(toolCall, logContext);
+		}
+		
 		return result;
 	}
 
@@ -108,6 +153,31 @@ public final class DataClassSerializer {
 		ErrorResponse error = ErrorResponse.create();
 		error.setError(errorMessage);
 		return toJson(error, logContext, operationName);
+	}
+
+	/**
+	 * Creates an error response and serializes it to JSON with optional tool call tracking.
+	 *
+	 * <p>
+	 * This is a convenience method for creating error responses from exception messages or
+	 * validation failures. If {@code args} is provided, tool call tracking will be performed.
+	 * </p>
+	 *
+	 * @param errorMessage
+	 *        The error message.
+	 * @param logContext
+	 *        Class for logging context.
+	 * @param operationName
+	 *        Operation name for logging. Tool name is extracted from this.
+	 * @param args
+	 *        Optional map of tool arguments for tracking. If null, no tracking is performed.
+	 * @return JSON error response string.
+	 */
+	public static String errorToJson(String errorMessage, Class<?> logContext, String operationName,
+			Map<String, Object> args) {
+		ErrorResponse error = ErrorResponse.create();
+		error.setError(errorMessage);
+		return toJson(error, logContext, operationName, args);
 	}
 
 	/**

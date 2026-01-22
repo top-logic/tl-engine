@@ -6,8 +6,11 @@
 package com.top_logic.ai.service.tools.model;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+
 
 import com.top_logic.ai.service.tools.model.messages.PartUsageResponse;
 import com.top_logic.ai.service.tools.model.messages.PropertyUsage;
@@ -44,6 +47,8 @@ import dev.langchain4j.agent.tool.Tool;
  * <p>
  * All methods return JSON-formatted strings for consumption by AI agents.
  * </p>
+ * 
+ * @author jhu
  */
 public class TypeAnalysisTool {
 
@@ -114,16 +119,21 @@ public class TypeAnalysisTool {
 					return result;
 				});
 
-			// Serialize to JSON using DataClassSerializer
-			return DataClassSerializer.toJson(response, TypeAnalysisTool.class, "findTypeUsages()");
+			// Serialize to JSON using DataClassSerializer with tracking
+			Map<String, Object> args = new HashMap<>();
+			args.put("qualifiedTypeName", qualifiedTypeName);
+			return DataClassSerializer.toJson(response, TypeAnalysisTool.class, "findTypeUsages()", args);
 
 		} catch (Exception ex) {
 			Logger.error("findTypeUsages() error: " + ex.getMessage(), ex, TypeAnalysisTool.class);
 			System.err.println("TypeAnalysisTool.findTypeUsages() error: " + ex.getMessage());
+			Map<String, Object> args = new HashMap<>();
+			args.put("qualifiedTypeName", qualifiedTypeName);
 			return DataClassSerializer.errorToJson(
 				"Error analyzing type: " + ex.getMessage(),
 				TypeAnalysisTool.class,
-				"findTypeUsages()");
+				"findTypeUsages()",
+				args);
 		}
 	}
 
@@ -209,16 +219,23 @@ public class TypeAnalysisTool {
 					return result;
 				});
 
-			// Serialize to JSON using DataClassSerializer
-			return DataClassSerializer.toJson(response, TypeAnalysisTool.class, "findPartUsages()");
+			// Serialize to JSON using DataClassSerializer with tracking
+			Map<String, Object> args = new HashMap<>();
+			args.put("ownerTypeQualifiedName", ownerTypeQualifiedName);
+			args.put("partName", partName);
+			return DataClassSerializer.toJson(response, TypeAnalysisTool.class, "findPartUsages()", args);
 
 		} catch (Exception ex) {
 			Logger.error("findPartUsages() error: " + ex.getMessage(), ex, TypeAnalysisTool.class);
 			System.err.println("TypeAnalysisTool.findPartUsages() error: " + ex.getMessage());
+			Map<String, Object> args = new HashMap<>();
+			args.put("ownerTypeQualifiedName", ownerTypeQualifiedName);
+			args.put("partName", partName);
 			return DataClassSerializer.errorToJson(
 				"Error analyzing part: " + ex.getMessage(),
 				TypeAnalysisTool.class,
-				"findPartUsages()");
+				"findPartUsages()",
+				args);
 		}
 	}
 

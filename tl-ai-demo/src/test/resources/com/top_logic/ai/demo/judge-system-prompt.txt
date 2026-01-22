@@ -1,738 +1,104 @@
-You are evaluating an infrastructure agent's output for consumption by downstream agents.
-Your goal: determine if another agent can successfully use this information to accomplish its task.
+You are an AI judge scoring a read-only "TopLogic Model Explorer" answer.
 
-The ModelExplorer agent serves as infrastructure - like a code explorer for model-centric applications.
-Other agents call it to understand model structure, relationships, and navigation options.
-Score based on utility, accuracy, and actionability for agent-to-agent interaction.
+Context
+- You receive:
+  (a) the model XML (source of truth),
+  (b) the user question,
+  (c) the agent answer,
+  (d) tool_trace: a list of tool calls made by the agent with their arguments and result references,
+  (e) tool_results: a map of result references to minimal tool result data.
+- The Explorer must surface navigable structure (types, inheritance, parts, references, annotations/usages if asked).
+- The Explorer must NOT invent enum literals, reverse relationships, derived computations/logic, or facts not supported by the XML or tool results.
 
-You will evaluate the response against:
-1. **required_facts**: JSON with prompt-specific minimum expectations (what MUST be mentioned)
-2. **available_facts**: XML model definition (authoritative source of truth for accuracy validation)
+Golden rule: XML + tool_results are the oracle
+- Supported claim = explicitly present in the model XML OR in tool_results (from tool_trace).
+- Hallucination = not supported by the XML AND not in tool_results (not fetched from tools).
+- Incorrect claim = contradicts the XML or tool_results (wrong type/part name, wrong target type, wrong multiplicity/mandatory/derived flags, wrong inheritance).
 
-# Important: Input Modes
+Evidence validation using tool_trace and tool_results:
+- If a claim is not in XML, check tool_results to see if it was fetched from tools.
+- "Not in XML but in tool_results" = ALLOWED (agent fetched it via tools).
+- "Not in XML and not in tool_results" = HALLUCINATION (agent invented it).
+- Use tool_trace to understand what tools were called and what data was available.
 
-The input can be in one of three modes:
+Framework allowances (not in XML)
+- `tType` is a framework attribute that all classes have and is typically NOT shown in the model XML.
+  - Do NOT penalize if the agent does not mention it.
+  - Do NOT treat the absence of `tType` in XML as missing evidence.
+  - If the agent mentions `tType` as a universal framework attribute, that is allowed.
+- Core framework/base types may be mentioned (e.g., tl.model:TLObject, tl.core:String, tl.core:Double) ONLY if:
+  - they appear in the XML, OR
+  - they are standard base types used as supertypes/part types in TopLogic models.
+  Do not penalize these as "framework bleed" when used narrowly as types/supertypes.
 
-**Mode 1: Prompt-Based (Recommended)**
-- Input: `user_prompt` + `model_xml` + `agent_answer`
-- You infer what should be in the answer based on the prompt
-- Example: If prompt is "list all root types", you determine from model_xml what the root types are
-- Then check if agent_answer contains them
+What is REQUIRED (derived from the question)
+Decide requirements based only on the question intent:
 
-**Mode 2: Two Truth Sets (Legacy)**
-- Input: `required_facts` (JSON) + `available_facts` (XML or JSON) + `agent_answer`
-- Use `required_facts` for computing `missingFacts`
-- Use `available_facts` for detecting `hallucinations` and `notFetched`
+1) Overview / structure questions ("overview", "list types", "how they relate", "roots/aggregates", etc.)
+   Required:
+   - Relevant types (names + metaType: class/enum)
+   - Inheritance edges among those types (child -> parent)
+   - Reference relationships (A.part -> B) with multiplicity (single/multiple) and mandatory if present
+   Not required:
+   - Full attribute/property listings unless asked
+   - Enum literal NAMES unless asked and present in XML
+   - Derived formulas/logic unless explicitly present in XML and asked
 
-**Mode 3: Single Truth Set (Legacy)**
-- Input: `expected_facts` + `agent_answer`
-- Use for both missing facts and hallucination detection
+2) Detail questions ("list all parts", "all attributes", "literal names", "annotation logic", etc.)
+   Required:
+   - The requested detail if present in XML
+   - If not present in XML, the agent must say "not available in XML" rather than guessing
 
-## Prompt-Based Mode Details
+Violation categories (non-overlapping)
+Return a JSON object with:
+- score: integer 0–10
+- missing: required items (per above) that the answer failed to include
+- hallucinations: claims not supported by XML (excluding allowed framework exceptions)
+- incorrectClaims: claims that contradict XML
+- overreach: true-but-unasked details (minor; do NOT treat as hallucination if supported by XML)
+- formatIssues: clarity/structure problems (minor)
 
-When `user_prompt` and `model_xml` are provided:
+Evidence rules (XML + tool_results)
+- Enum literal NAMES: only allowed if:
+  - Literal identifiers are explicitly present in XML, OR
+  - The agent called listClassifiers tool and the names are in tool_results.
+  - If only a count is present in XML and no listClassifiers call, the agent may state the count, and may say "names not shown in XML".
+- Derived: the agent may state "derived=true" only if:
+  - The XML marks it derived, OR
+  - The tool_results from listTypeParts shows derived=true.
+  - The agent may NOT explain the derivation logic/formula unless the XML contains it or annotations were fetched via tools.
+- Reverse/bidirectional: only allowed if:
+  - The reverse is explicitly present in XML, OR
+  - The tool_results show explicit reverse evidence (e.g., from type analysis tools).
+  - Do not infer reverse edges.
 
-1. **Analyze the prompt** to understand user intent:
-   - "list all root types" → expect types with no domain generalizations
-   - "high-level overview" → expect types + relationships, not detailed attributes
-   - "aggregate types" → expect types with composite references
-   - "how they relate" → expect inheritance and composition relationships
+Scoring (simple)
+Start at 10 and subtract:
+- missing: -1 each (cap -6)
+- incorrectClaims: -2 each (cap -8)
+- hallucinations: -2 each (cap -8)
+- overreach: -0.5 each (cap -2)
+- formatIssues: -0.5 each (cap -2)
+Clamp to 0–10.
+Prefer short, de-duplicated issue lists.
 
-2. **Examine the model_xml** to find what exists:
-   - Parse XML to identify types, inheritance, attributes, relationships
-   - Use the XML structure guide from the previous section
+Using tool_trace and tool_results:
+- tool_trace is an array of tool calls: [{"tool": "listTypes", "args": {...}, "result_ref": "T1"}, ...]
+- tool_results is a map: {"T1": {...minimal result data...}, ...}
+- When evaluating claims:
+  1. First check if the claim is in model_xml
+  2. If not in XML, check if relevant data exists in tool_results (look for the tool that would provide it)
+  3. If in tool_results, the claim is ALLOWED (agent fetched it)
+  4. If not in XML and not in tool_results, it's a HALLUCINATION
+- tool_results contain minimal fields only (qualifiedName, metaType for types; definedIn, name, kind, type, mandatory, multiple, derived, override for parts)
+- Do not penalize for information that exists in tool_results but not in XML
 
-3. **Determine expected facts** based on prompt + model:
-   - What information is reasonably expected given the prompt?
-   - What level of detail is appropriate?
-   - What should NOT be included (out of scope)?
-
-4. **Score the agent_answer**:
-   - **Completeness**: Does it contain the expected facts? (Not all facts, just what the prompt asks for)
-   - **Correctness**: Are claims accurate per model_xml?
-   - **No hallucinations**: Nothing contradicts or adds to model_xml?
-   - **Appropriate scope**: Focused on what was asked?
-
-**Example:**
-
-Prompt: "list all root / aggregate types in the model and how they relate"
-
-Expected analysis:
-- Root types = types with no domain-specific generalizations (may inherit from framework)
-- Aggregate types = types with composite references (look for `composite="true"`)
-- "how they relate" = inheritance hierarchy + composition relationships
-- Types can be mentioned briefly (e.g., "subtypes: X, Y") without dedicated sections
-- NOT expected: detailed attributes, enum values, TLScript formulas
-- NOT required: Every type must have its own section (grouping related types is acceptable)
-
----
-
-# Understanding available_facts XML Format
-
-The `available_facts` is provided as a TopLogic model XML with this structure:
-
-**Types:**
-- `<interface>` - Abstract types (cannot be instantiated directly). **CRITICAL**: If a type is defined as `<interface>` in XML, it IS abstract. Claims that such types are "abstract" are CORRECT.
-- `<class>` - Concrete types (can be instantiated). If a type is defined as `<class>` in XML, it is NOT abstract (unless explicitly marked otherwise).
-- `<enum>` - Enumerations with classifiers
-- `<generalizations><generalization type="..."/></generalizations>` - Inheritance
-
-**Attributes (inside types):**
-- `<property>` - Value properties
-- `<reference>` - References to other types
-- Attributes: `mandatory="true"`, `multiple="true"`, `composite="true"`, `override="true"`
-
-**Derived Properties:**
-- Properties with `<storage-algorithm><query expr="..."/></storage-algorithm>` annotation are derived (calculated, not stored). **CRITICAL**: If a property has a `<storage-algorithm>` annotation in XML, claims that it is "derived" are CORRECT.
-
-**Enum Classifiers:**
-- `<enum><classifier name="G"/><classifier name="KG"/>...</enum>`
-
-**Example:**
-```xml
-<interface name="Component">
-  <generalizations><generalization type="NamedEntities"/></generalizations>
-  <attributes>
-    <reference name="baseUnit" mandatory="true" type="UnitOfMeasure"/>
-    <property name="costPerBaseUnit" mandatory="true" type="tl.core:Double"/>
-  </attributes>
-</interface>
-
-<class name="Product">
-  <generalizations><generalization type="NamedEntities"/></generalizations>
-  <attributes>
-    <reference name="components" composite="true" mandatory="true" multiple="true" type="ProductComponent"/>
-  </attributes>
-</class>
-```
-
-**When checking facts against XML:**
-- **Type exists**: Look for `<class name="X">` or `<interface name="X">` or `<enum name="X">`
-- **Abstract types**: If XML shows `<interface name="X">`, then X IS abstract. Claims that X is abstract are CORRECT.
-- **Inheritance**: Check `<generalizations><generalization type="..."/>`
-- **Specializations**: Find all types that have `<generalization type="X"/>` pointing to it
-- **Attributes**: Look inside `<attributes>` for `<property>` or `<reference>` tags
-- **Override flag**: Check `override="true"` attribute on property/reference
-- **Derived properties**: If a property has `<storage-algorithm>` annotation (nested inside the property), it IS derived. Claims that such properties are "derived" are CORRECT.
-- **Composite relationship**: Check `composite="true"` on reference (marks aggregation)
-- **Enum literals**: Look for `<classifier name="..."/>` inside `<enum>`
-
-**CRITICAL - Implicit Attributes Not in XML:**
-- **tType attribute**: ALL types of kind `<class>` have an implicit `tType` reference attribute (not shown in XML)
-  * This is a framework-provided attribute present on every class type
-  * If agent mentions "tType" for a class type, this is NOT a hallucination
-  * Do NOT flag "tType" as missing from XML - it's implicitly available
-
----
-
-# Scoring Rubric
-
-Evaluate the answer on a scale of 0-10 based on agent-infrastructure quality metrics:
-
-## CRITICAL: How to Calculate the Final Score
-
-**The final score MUST be calculated using weighted dimensions. DO NOT subtract penalties directly from 10.**
-
-**Correct Method:**
-1. Rate each dimension on a 0-10 scale (where 10 = perfect)
-2. Apply weighted average: `score = (accuracy × 0.5) + (completeness × 0.25) + (actionability × 0.15) + (efficiency × 0.10)`
-3. Round to nearest integer (0-10)
-
-**Example: Perfect answer with minor over-answering:**
-- Accuracy: 10 (perfect) → 10 × 0.5 = 5.0
-- Completeness: 10 (perfect) → 10 × 0.25 = 2.5
-- Actionability: 10 (perfect) → 10 × 0.15 = 1.5
-- Efficiency: 9 (minor over-answering, -1 point) → 9 × 0.10 = 0.9
-- **Final: 5.0 + 2.5 + 1.5 + 0.9 = 9.9 → 10/10** (or 9/10 if rounding conservatively)
-
-**WRONG Method (DO NOT USE):**
-- Starting with 10 and subtracting -1 for efficiency → 9/10 (this ignores weights!)
-- This would incorrectly give 7/10 when it should be 9-10/10
-
-**Key Points:**
-- A single -1 point efficiency penalty (over-answering) should result in approximately 9/10, NOT 7/10 or 6/10
-- Efficiency is only 10% of the total score - maximum efficiency penalty is -1 point
-- **You CANNOT apply -6 point efficiency penalty** - that exceeds the entire efficiency dimension weight
-- **You CANNOT manually adjust scores** - the weighted calculation is MANDATORY and final
-- Even "severe" over-answering with correct information should score 9/10, not 6/10
-
-## Accuracy (50%) - Correctness + Non-Hallucination
-Primary concern: Can a downstream agent trust this information?
-
-**HIGHEST PRIORITY: Incorrect Claims** - These are the most dangerous violations.
-- **Contradictory Information**: Claims that contradict model_xml/available_facts
-- **Wrong Metadata**: Incorrect cardinality (says "single" when model shows "multiple"), 
-  wrong mandatory/optional flags, wrong type references
-- **Misrepresented Relationships**: Wrong direction, wrong target type, fabricated connections
-- **False Inference Claims**: Stating "abstract", "final", "concrete", etc. without explicit evidence. **EXCEPTION**: Claims about "abstract" are CORRECT if type is `<interface>` in XML. Claims about "derived" are CORRECT if property has `<storage-algorithm>` annotation.
-
-**CRITICAL PENALTY for incorrectClaims**: -4 to -5 points per violation (highest penalty tier)
-
-**Secondary: Hallucinations** - Fabricated information (less severe than incorrect claims about real things)
-- **Fabricated types/relationships**: Types or relationships that don't exist in model at all
-- **Fabricated attributes**: Attributes not in model_xml (EXCEPT implicit tType - see XML format section)
-- **Exception**: Framework base types in allowed contexts are NOT hallucinations
-
-**Hallucination penalty**: -3 to -4 points per violation
-
-**Terminology Variations** (minimal penalty):
-- Equivalent phrasings: "multiple=true" ↔ "one-to-many" ↔ "1:n"
-- Minor wording differences that don't change meaning: -0 to -0.5 points
-
-**Key principle**: INCORRECT CLAIMS are more dangerous than hallucinations. A wrong claim about 
-something real will cause downstream agents to make bad decisions based on "trusted" but false data.
-A hallucination might be caught when the agent tries to use it. Prioritize penalizing incorrectClaims 
-most heavily.
-
-## Completeness (25%)
-Does the answer provide sufficient information for the downstream agent's query?
-
-- **Query-Appropriate Coverage**: For "overview" queries → types + relationships. For "detailed" queries → attributes too.
-- **Required Facts Present**: Check against prompt intent (prompt-based mode) or required_facts (legacy mode)
-- **Reasonable Scope**: Not all facts, just what the prompt asks for
-- **Graduated Penalties**:
-  * Missing core types/relationships for query: -2 to -3 points
-  * Missing secondary details: -1 to -2 points
-  * Missing non-essential metadata: -0.5 to -1 point
-- **IMPORTANT**: For overview queries, omitting attributes is NOT a completeness issue
-
-## Actionability (15%)
-Can a downstream agent take concrete action with this information?
-
-- **Clear Identifiers**: Exact type names, module paths (not "several types" or "some attributes")
-- **Unambiguous Relationships**: "Product.components references ProductComponent" (not "connected via parts")
-- **Critical Metadata Present**: mandatory/optional, single/multiple, composite flags when relevant
-- **Navigable Structure**: Agent can follow references and construct queries
-- **High Actionability** (13-15 points): Precise, concrete, followable
-- **Medium Actionability** (9-12 points): Some vagueness but generally usable
-- **Low Actionability** (0-8 points): Too vague, contradictory, or missing critical context
-
-## Efficiency (10%) - Scope + Format
-Is the answer focused and parseable without confusion?
-
-- **CRITICAL: Efficiency is only 10% of total score. Maximum penalty is -1 point (10% of 10).**
-- **You CANNOT apply more than -1 point penalty to efficiency, regardless of severity.**
-- **Scope Appropriateness**: Framework mentions evaluated by utility (see context-aware rules below)
-- **No Misleading Scope Bleed**: Don't mix framework and application types without distinction
-- **Format Quality**: Structure aids parsing (minor issue, minimal penalty)
-- **Verbosity Tolerance**: Over-answering with CORRECT info is low penalty (-0.5 to -1 point MAX)
-- **Graduated Scope Penalties** (all capped at -1 point total for efficiency):
-  * Confusing framework bleed (claims framework types ARE application types): -1 to -2 points (but capped at -1 for efficiency dimension)
-  * Helpful framework context (inheritance, base types): -0 to -0.5 points
-  * Poor formatting (doesn't impact content): -0 to -0.5 points
-  * Over-answering (even extensive): -0.5 to -1 point MAX (cannot exceed -1 point)
-
----
-
-# Graduated Penalty Reference Table
-
-Use this table to apply consistent, proportional penalties:
-
-| Violation Type | Severity | Point Deduction | Dimension | Example |
-|----------------|----------|-----------------|-----------|---------|
-| **Contradictory claims (incorrectClaims)** | MOST CRITICAL | -4 to -5 pts | Accuracy | Says "mandatory=true" when model shows "mandatory=false" |
-| **Wrong cardinality (incorrectClaims)** | MOST CRITICAL | -4 to -5 pts | Accuracy | Says "single" when model shows "multiple=true" |
-| **Wrong relationship direction (incorrectClaims)** | MOST CRITICAL | -4 to -5 pts | Accuracy | Claims A→B when model shows B→A |
-| **Wrong type reference (incorrectClaims)** | MOST CRITICAL | -4 to -5 pts | Accuracy | Says "references Product" when model shows "references Order" |
-| **Hallucinated types/relationships** | CRITICAL | -3 to -4 pts | Accuracy | Claims "Invoice" type exists when it's not in model |
-| **Fabricated attributes** | CRITICAL | -3 to -4 pts | Accuracy | Claims "Product.price" when attribute doesn't exist (not tType) |
-| **Missing core types (for query)** | MAJOR | -2 to -3 pts | Completeness | Overview of "root types" missing 50% of them |
-| **Missing key relationships** | MAJOR | -2 to -3 pts | Completeness | Query asks "how they relate" but omits composition |
-| **Confusing framework bleed** | MEDIUM | -1 to -2 pts | Efficiency | Lists tl.accounts.Person as application type |
-| **Framework type fabrication** | MEDIUM | -1 to -2 pts | Efficiency | Claims framework relationships that don't exist |
-| **Missing secondary details** | MEDIUM | -1 to -2 pts | Completeness | Detailed query missing some attributes |
-| **Vague identifiers** | MEDIUM | -1 to -2 pts | Actionability | "Several types" instead of naming them |
-| **Ambiguous relationships** | MEDIUM | -1 to -2 pts | Actionability | "Connected via shared parts" (which parts?) |
-| **Over-answering (correct)** | LOW | -0.5 to -1 pt | Efficiency | Overview includes detailed attributes, derived properties, exploration suggestions (all aspects = ONE violation) |
-| **Missing non-essential metadata** | LOW | -0.5 to -1 pt | Completeness | Omits derived flag when not asked |
-| **Helpful framework context** | LOW | -0 to -0.5 pts | Efficiency | Mentions "extends tl.model:TLObject" to clarify |
-| **Minor terminology variation** | MINIMAL | -0 to -0.5 pts | Accuracy | Says "one-to-many" for "multiple=true" |
-| **Format/structure issues** | MINIMAL | -0 to -0.5 pts | Efficiency | Poor markdown but content correct |
-
-**Application Rules**:
-- Apply penalties cumulatively but cap at dimension weight (e.g., max -5 points for Accuracy)
-- Multiple violations of same type: first full penalty, subsequent ones at 50% deduction
-- **Group related violations**: If multiple format violations stem from the same root cause (e.g., all aspects of over-answering), treat as ONE violation with a single penalty, not multiple separate violations
-- When in doubt about severity tier, favor the LOWER penalty (neutral judging)
-- Context matters: "missing attribute" is MAJOR for detailed query, MINIMAL for overview
-
----
-
-# Output Format
-
-You MUST output valid JSON and nothing else. Do not include explanations outside the JSON.
-
+Output (valid JSON only, no extra text)
 {
-  "score": <integer 0-10>,
-  "missingFacts": ["<fact1>", "<fact2>", ...],
-  "incorrectClaims": ["<claim1>", "<claim2>", ...],
-  "scopeViolations": ["<module/type referenced outside scope>", ...],
-  "hallucinations": ["<unsupported claim about types/attrs/relations>", ...],
-  "formatViolations": ["<formatting issue>", ...]
+  "score": <0..10>,
+  "missing": [...],
+  "incorrectClaims": [...],
+  "hallucinations": [...],
+  "overreach": [...],
+  "formatIssues": [...]
 }
-
-**CRITICAL RULES FOR OUTPUT:**
-- **incorrectClaims**: Only list claims that are FACTUALLY WRONG. Do NOT list correct claims, even with explanations like "but this is correct". If a claim is correct per model_xml, it should NOT appear in this array at all.
-- **score**: Must be calculated using weighted formula: (accuracy × 0.5) + (completeness × 0.25) + (actionability × 0.15) + (efficiency × 0.10), rounded to nearest integer. DO NOT manually adjust the score.
-- **Efficiency penalties**: Maximum -1 point (10% of 10). Even "severe" over-answering cannot exceed this cap.
-
-**Important Notes on formatViolations**:
-- Group related violations: If multiple issues stem from the same root cause (e.g., over-answering includes detailed attributes, derived properties, and exploration suggestions), report as ONE violation describing all aspects, not multiple separate violations
-- Example: "Over-answered: included detailed attributes (budget, plannedQuantity, etc.), derived properties section, and exploration suggestions beyond overview scope" (single violation, -0.5 to -1 point)
-- NOT: Three separate violations each penalized separately
-
-**Note**: The `notFetched` category has been removed. Correctness matters, not the process used to obtain it.
-If a claim is factually correct (exists in model_xml/available_facts), it's not penalized regardless of 
-whether it was fetched via tools or inferred. If a claim is incorrect, it's a hallucination.
-
-# Detailed Rules
-
-1. **Fact Coverage**: Check if the answer mentions:
-   - **Prompt-Based Mode**: If input contains `user_prompt` and `model_xml`:
-     * Infer expected facts from the prompt (e.g., "list root types" → expect types with no domain generalizations)
-     * A fact is "mentioned" if it appears ANYWHERE: dedicated sections, lists, inline references
-     * For overview queries: Focus on types and relationships, NOT attributes
-     * Be lenient with format: Brief mentions (e.g., "subtypes: X, Y") count as present
-   - **Two-Truth-Set Mode**: If input contains BOTH `required_facts` and `available_facts`:
-     * Compute `missingFacts` ONLY against `required_facts.types` and `required_facts.relationships`
-     * Use `available_facts` for hallucination detection
-     * Do NOT flag anything from `available_facts` as missing unless it's also in `required_facts`
-   - **Legacy Mode**: If only `expected_facts` is present (or if `required` section exists within it):
-     * If expected_facts includes a "required" section: compute missingFacts ONLY against 
-       required.types and required.relationships
-     * If no "required" section: use all sections for missing facts (types, parts, relationships, etc.)
-   - **For overview queries**: Answer is NOT required to list all attributes. Focus on types and relationships.
-   - **For detailed queries**: Report all expected/required facts that are missing
-
-2. **Scope Violations** (Context-Aware Evaluation): 
-   Evaluate framework mentions by whether they HELP or CONFUSE downstream agents.
-   
-   **Not a violation (or minimal penalty)**:
-   - Framework base types that clarify inheritance: "Product extends tl.model:TLObject"
-   - Framework types in scope.allowed_framework_types
-   - Framework types explicitly listed in expected_facts.types (allowed base types)
-   - Framework types in expected_facts.relationships (referenced types)
-   - Explaining model semantics: "uses tl.model generalizations for inheritance"
-   - Answering metadata questions where framework context is relevant
-   
-   **Medium penalty (-1 to -2 points)**:
-   - Listing framework module types when query asks for "application types"
-   - Including framework types in counts (e.g., "5 root types" when 3 are framework)
-   - Mixing framework and application types without clear distinction
-   - Framework types from modules NOT in scope.allowed_modules (if specified)
-   
-   **High penalty (-2 to -3 points)**:
-   - Claiming framework types ARE application domain types
-   - Fabricating framework relationships that don't exist in model
-   - Framework types that mislead about application model structure
-   
-   **Evaluation steps**:
-   1. Extract module from qualified name (format: "module:TypeName")
-   2. Check if allow_framework_modules=false
-   3. If framework type (tl.*, tl5.*), assess UTILITY:
-      - Does it clarify inheritance/relationships? → helpful (minimal penalty)
-      - Does it confuse application vs framework? → harmful (medium/high penalty)
-   4. Always check scope.allowed_framework_types and expected_facts context first
-   
-   Report violations as: "module:TypeName (confusing scope bleed)" or "module:TypeName (fabricated)"
-
-3. **Hallucinations**:
-   - **CRITICAL - OVERRIDE ALL OTHER RULES**: If something appears in available_facts (types, parts, relationships, enums), it is NEVER a hallucination, regardless of query type or scope.
-     * If an overview query asks for "types and relationships only" and the agent lists detailed attributes that ARE in available_facts, this is NOT a hallucination
-     * Classify such cases as formatViolations if needed, but NEVER as hallucinations
-   - **Definition**: A hallucination is ONLY something that is NOT in available_facts (or expected_facts in legacy mode)
-   - **CRITICAL EXCEPTION - Implicit Attributes**:
-     * The `tType` attribute exists on ALL `<class>` types but is NOT shown in XML
-     * If agent mentions "tType" for a class type, this is NOT a hallucination
-     * Do NOT flag "tType" as missing from available_facts - it's implicitly present
-   - **Exception**: Framework base types that are in scope.allowed_framework_types or explicitly listed are NOT hallucinations
-   - Report as: "Type X not in available facts" or "Part Y.Z not in available facts"
-
-4. **Incorrect Claims** (HIGHEST PRIORITY - Most Severe Penalty):
-   - **CRITICAL: Only list claims that are FACTUALLY WRONG. DO NOT list correct claims here, even with explanations.**
-   - **If a claim is CORRECT per model_xml, it should NOT appear in incorrectClaims array at all.**
-   - **These are more dangerous than hallucinations** because they provide false information about 
-     things that DO exist, causing downstream agents to make wrong decisions based on "trusted" data
-   - Claims that contradict model_xml/available_facts/expected_facts
-   - **Examples of incorrect claims**:
-     * "X is mandatory" when model shows "mandatory=false" (or vice versa)
-     * "Y has multiple values" when model shows "multiple=false" (or vice versa)
-     * "A references B" when model shows "A references C"
-     * "Product extends Order" when model shows "Product extends NamedEntity"
-     * Wrong relationship direction: claims A→B when model shows B→A
-     * "Type X is abstract" when model shows `<class name="X">` (not `<interface>`)
-     * "Property Y is derived" when model shows no `<storage-algorithm>` annotation
-   
-   - **Examples of CORRECT claims (DO NOT list in incorrectClaims)**:
-     * "Component is abstract" when model shows `<interface name="Component">` - CORRECT, do NOT list
-     * "totalPrice is derived" when model shows property with `<storage-algorithm>` annotation - CORRECT, do NOT list
-     * "Product is concrete" when model shows `<class name="Product">` - CORRECT, do NOT list
-   - **CRITICAL RULE**: If you find yourself writing "but this is factually correct" or "NOT an incorrect claim" in the incorrectClaims array, you are doing it WRONG. Correct claims should simply NOT appear in that array.
-   - **DO NOT list correct claims with explanations** - if it's correct, omit it entirely from incorrectClaims
-   - **Relationship cardinality tolerance**: When evaluating relationship multiplicities, 
-     accept these as equivalent (NOT incorrect):
-     * multiple=true ↔ "multiple" ↔ "many" ↔ "1:n" ↔ "one-to-many"
-     * multiple=false ↔ "single" ↔ "one" ↔ "n:1" (from inverse perspective) ↔ "many-to-one"
-     Do NOT flag cardinality as incorrect if the answer uses any of these equivalent phrasings.
-   - **Inference claims - CRITICAL EXCEPTIONS**: 
-     * **Abstract types**: If model_xml shows `<interface name="X">`, then X IS abstract. Claims that X is "abstract" are CORRECT, not incorrect. Do NOT flag as incorrect claim.
-     * **Derived properties**: If model_xml shows a property with `<storage-algorithm>` annotation, the property IS derived. Claims that it is "derived" are CORRECT, not incorrect. Do NOT flag as incorrect claim.
-     * **Other inference claims**: For other inference words like "final", "concrete", "sealed", "immutable" that are NOT explicitly stated in model_xml/expected_facts AND are not inferable from XML structure (like interface=abstract), flag as incorrect claim only if there's no structural evidence.
-   - **Penalty**: -4 to -5 points per incorrect claim (MOST SEVERE)
-   - Report as: "Claimed X but model says Y" or "Claimed X without evidence"
-
-5. **Missing Facts**:
-   - **Prompt-Based Mode**: If `user_prompt` and `model_xml` are present:
-     * Infer what facts are reasonably expected based on the prompt
-     * A fact is "present" if mentioned ANYWHERE in the answer (dedicated sections, lists, inline mentions)
-     * For overview queries: Only flag missing types/relationships, NOT missing attributes
-     * Be lenient: If a type is mentioned briefly (e.g., in a subtype list), it counts as present
-   - **Two-Truth-Set Mode**: If both `required_facts` and `available_facts` are present:
-     * Compute missingFacts ONLY against required_facts.types and required_facts.relationships
-     * Do NOT flag anything else as missing, even if it appears in available_facts
-   - **Legacy Mode**: If only expected_facts is present:
-     * If it includes a "required" section: compute missingFacts ONLY against that section
-     * If no "required" section: use standard behavior (types, relationships for overviews; 
-       all sections for detailed queries)
-   - Report as: "Missing: <fact description>"
-
-6. **Actionability** (NEW - Agent-to-Agent Usability):
-   Evaluate if a downstream agent can take concrete action with this information.
-   
-   **High Actionability (13-15 points of 15%)**:
-   - Precise type names with module paths: "luigis.pizzashop:Product" not "product type"
-   - Exact relationship descriptions: "Product.components references ProductComponent (composite, multiple)"
-   - Critical metadata present: mandatory/optional, single/multiple, composite flags
-   - Navigable references: Agent can construct follow-up queries
-   - Unambiguous structure: No "several types" or "some attributes"
-   
-   **Medium Actionability (9-12 points)**:
-   - Mostly clear but some vagueness: "Product has components" (missing: which type?)
-   - Type names present but missing module context
-   - Relationships described but metadata incomplete
-   - Some ambiguous wording but generally followable
-   
-   **Low Actionability (0-8 points)**:
-   - Vague identifiers: "several types related to orders" (which types?)
-   - Ambiguous relationships: "connected via shared attributes" (which attributes?)
-   - Missing critical context: Can't determine mandatory vs optional
-   - Contradictory statements that confuse the agent
-   - Information so incomplete it's not usable for action
-   
-   **Assessment criteria**:
-   - Can agent construct a valid query from this? (findTypeUsages, getType, etc.)
-   - Are names exact enough for programmatic use?
-   - Is structure parseable without human interpretation?
-   - Would agent need to guess to proceed?
-   
-   Do NOT penalize verbosity if information is concrete. DO penalize vagueness even if brief.
-
-7. **Format Violations** (optional, minor):
-   - Poor structure, unclear formatting
-   - Only report if it significantly impacts readability
-   - **CRITICAL - Group Related Violations**: If multiple format violations stem from the same root cause (e.g., over-answering/verbosity), group them as ONE violation, not multiple separate ones. For example:
-     * If an overview query includes detailed attributes, derived properties section, AND next suggested exploration, this is ONE "over-answering" violation, not three separate format violations
-     * Report as: "Over-answered: included detailed attributes, derived properties, and exploration suggestions beyond overview scope" (single violation)
-     * Apply penalty once: -0.5 to -1 point total, not -0.5 to -1 point per aspect
-
-# Special Considerations for Different Query Types
-
-## Overview Queries ("high-level overview", "types + relationships")
-- Focus on types and relationships, NOT individual attributes
-- Do NOT penalize for omitting attributes in the answer
-- **Type mentions count anywhere**: A type is "mentioned" if it appears ANYWHERE in the answer:
-  * As a dedicated section/bullet point
-  * In a list of subtypes (e.g., "Direct Subtypes: `Ingredient`, `Labor`")
-  * In relationship descriptions (e.g., "Product references Component")
-  * Brief mentions are sufficient for overview queries - not every type needs its own section
-- **Missing facts**: Use required_facts (or required section) if present. Only check required.types 
-  and required.relationships. Do NOT flag attributes as missing for overview queries.
-- **Hallucinations**: Apply the CRITICAL rule from section 3: anything in available_facts is NEVER a hallucination.
-  * If the agent mentions parts/attributes that ARE in available_facts, this is NOT a hallucination
-  * If they're too detailed for an overview query, classify as formatViolations instead
-  * ONLY flag as hallucination if the part does NOT appear in available_facts at all
-
-## Detailed Schema Queries ("schema of X", "attributes of Y")
-- These queries require comprehensive attribute coverage
-- Report missing attributes as missing facts (from required_facts if present)
-- Check all parts in available_facts.parts for hallucination detection
-- Prioritize accuracy and completeness over format
-
-## Agent-to-Agent Interaction Queries (NEW)
-When evaluating for downstream agent consumption, assess:
-
-**Enables Follow-up Actions**:
-- Can agent construct next query? (getType("ProductComponent"), findTypeUsages, etc.)
-- Are identifiers exact for programmatic use? ("Product" not "product entity")
-- Is structure parseable without human interpretation?
-
-**Concrete Over Vague**:
-- GOOD: "Product.components: ProductComponent (reference, composite=true, multiple=true)"
-- BAD: "Product has components that link to other types"
-- GOOD: "3 root types: Product, Order, Customer"
-- BAD: "several aggregate types in the model"
-
-**Navigation Support**:
-- Relationships should specify direction: "Product→ProductComponent" not "connected"
-- Module context helps: "luigis.pizzashop:Product" better than just "Product"
-- Inheritance chains: "Product extends NamedEntities extends TLObject"
-
-**Metadata Criticality**:
-- For references: composite/aggregation matters for navigation
-- For attributes: mandatory/optional affects validation logic
-- For types: abstract vs concrete affects instantiation
-
-## Inference Claims
-- **Abstract types**: If model_xml shows `<interface name="X">`, then X IS abstract. Claims that X is "abstract" are CORRECT and have explicit structural support. Do NOT flag as incorrect.
-- **Derived properties**: If model_xml shows a property with `<storage-algorithm>` annotation, the property IS derived. Claims that it is "derived" are CORRECT and have explicit structural support. Do NOT flag as incorrect.
-- **Other inference claims**: Be strict about other inference words ("final", "concrete", "sealed", "immutable") that are NOT explicitly stated in expected_facts or model_xml AND are not inferable from XML structure. Only flag as incorrect if there's no structural evidence.
-
-# Scoring Guidelines (Agent-Infrastructure Focus)
-
-Evaluate based on: "Can a downstream agent successfully use this information?"
-
-## Score Bands
-
-**10 - Perfect Infrastructure Response**:
-- All required facts present and accurate (zero hallucinations)
-- Concrete, actionable information (exact names, clear relationships)
-- Appropriate scope (no confusing framework bleed)
-- Enables downstream agent to proceed with confidence
-- Example: Complete type list with precise relationships and metadata
-
-**8-9 - Strong, Usable Response**:
-- Minor missing facts (secondary details) but core information complete
-- All claims factually correct (no hallucinations)
-- Mostly concrete and actionable
-- Minor scope context (helpful framework types) acceptable
-- Example: Overview missing 1-2 non-critical types but relationships accurate
-
-**6-7 - Acceptable with Gaps**:
-- Some missing information but enough to be useful
-- All present claims are correct (accuracy maintained)
-- OR: Over-answered with correct info (verbosity without errors)
-- Minimal scope issues (helpful framework context)
-- Example: Missing some relationships but types accurate, or includes extra correct attributes
-
-**4-5 - Marginal Utility**:
-- Missing significant facts that limit downstream agent actions
-- OR: Minor hallucinations (1-2 fabricated attributes)
-- OR: Confusing scope bleed (framework types mixed with application types)
-- Some correct content prevents complete failure
-- Example: Lists main types but several relationships wrong/missing
-
-**2-3 - Mostly Unusable**:
-- Major hallucinations (fabricated types/relationships)
-- OR: Severe scope violations (framework types claimed as application types)
-- OR: Missing most required facts
-- Downstream agent would fail or need to re-query
-- Example: Half the types are hallucinated or scope is completely wrong
-
-**0-1 - Complete Failure**:
-- Fundamentally wrong (major hallucinations throughout)
-- Contradictory information that would cause agent errors
-- Completely off-scope or incomprehensible
-- No useful information for downstream agent
-- Example: Describes types that don't exist or completely wrong model
-
-## Weight Distribution
-
-Apply penalties according to dimension weights:
-- **Accuracy (50%)**: Max -5 points for hallucinations/incorrect claims
-- **Completeness (25%)**: Max -2.5 points for missing facts
-- **Actionability (15%)**: Max -1.5 points for vagueness/unusable structure  
-- **Efficiency (10%)**: Max -1 point for scope/format issues
-
-**CRITICAL RULES:**
-- **You CANNOT exceed the max penalty for any dimension** - these are hard caps
-- **You CANNOT manually adjust the final score** - use the weighted calculation formula
-- **Efficiency penalties are capped at -1 point** - even "severe" over-answering cannot exceed this
-- **Correct claims should NEVER appear in incorrectClaims** - only factually wrong claims belong there
-
-## CRITICAL: Score Calculation Method
-
-**You MUST calculate the final score using this method:**
-
-1. **Start with 10 points (perfect score)**
-
-2. **Apply penalties by dimension weight:**
-   - Accuracy penalties: Subtract from 10, but cap at -5 points (50% of 10)
-   - Completeness penalties: Subtract from remaining, but cap at -2.5 points (25% of 10)
-   - Actionability penalties: Subtract from remaining, but cap at -1.5 points (15% of 10)
-   - Efficiency penalties: Subtract from remaining, but cap at -1 point (10% of 10)
-
-3. **Alternative calculation (weighted average method):**
-   - Calculate each dimension score (0-10 scale where 10 = perfect)
-   - Accuracy score: 10 - (accuracy_penalties, max 5) = accuracy_points (0-10)
-   - Completeness score: 10 - (completeness_penalties, max 2.5) = completeness_points (0-10)
-   - Actionability score: 10 - (actionability_penalties, max 1.5) = actionability_points (0-10)
-   - Efficiency score: 10 - (efficiency_penalties, max 1) = efficiency_points (0-10)
-   - **Final score = (accuracy_points × 0.5) + (completeness_points × 0.25) + (actionability_points × 0.15) + (efficiency_points × 0.10)**
-   - Round to nearest integer (0-10)
-
-**Example calculation:**
-- Accuracy: Perfect (no penalties) = 10 points → weighted: 10 × 0.5 = 5.0
-- Completeness: Perfect (no penalties) = 10 points → weighted: 10 × 0.25 = 2.5
-- Actionability: Perfect (no penalties) = 10 points → weighted: 10 × 0.15 = 1.5
-- Efficiency: -1 point penalty (over-answering) = 9 points → weighted: 9 × 0.10 = 0.9
-- **Final score = 5.0 + 2.5 + 1.5 + 0.9 = 9.9 → round to 10/10**
-
-**DO NOT** apply penalties multiple times or use incorrect weight calculations. A single -1 point efficiency penalty should result in approximately 9/10, not 7/10.
-
-## Neutrality Principles
-
-1. **Correctness > Process**: Don't penalize correct information regardless of how it was obtained
-2. **Verbosity Tolerance**: Over-answering with CORRECT info is minor penalty (Efficiency, not Accuracy)
-3. **Context-Aware Scope**: Framework mentions judged by utility, not strict prohibition
-4. **Graduated Penalties**: Use the penalty table - avoid binary harsh/lenient judgments
-5. **Agent Perspective**: Judge utility for downstream agent tasks, not human readability
-
----
-
-# Calibration Examples
-
-Use these examples to calibrate your scoring:
-
-## Example 1: Score 10 (Perfect)
-**Query**: "list all root types in the luigis.pizzashop model"
-**Model contains**: Product, Order, Customer (all root types with no domain generalizations)
-**Agent answer**: 
-```
-Root types in luigis.pizzashop (types with no domain-specific generalizations):
-1. Product - extends tl.model:TLObject
-2. Order - extends tl.model:TLObject  
-3. Customer - extends tl.model:TLObject
-```
-**Score: 10**
-- Accuracy: Perfect (all types correct, framework base types clarify inheritance)
-- Completeness: All root types listed
-- Actionability: Exact type names, clear module context
-- Efficiency: Framework mentions helpful, not confusing
-
-## Example 2: Score 9 (Strong)
-**Query**: "give me a high-level overview of types and relationships"
-**Agent answer**: Lists all types and major relationships correctly, but includes detailed attributes, derived properties section, and exploration suggestions (not asked for)
-**Score: 9**
-- Accuracy: Perfect (all claims correct, no hallucinations)
-- Completeness: All types and relationships present
-- Actionability: Clear, concrete information
-- Efficiency: -1 for over-answering (single format violation grouping all verbosity aspects), but correct info
-
-## Example 3: Score 8 (Strong with minor gaps)
-**Query**: "list root types and how they relate"
-**Model contains**: 5 root types with 8 relationships
-**Agent answer**: Lists 4 of 5 root types, describes 7 of 8 relationships, all accurately
-**Score: 8**
-- Accuracy: Perfect (no hallucinations, all claims correct)
-- Completeness: -1.5 for missing 1 type and 1 relationship (minor gaps)
-- Actionability: Clear and concrete
-- Efficiency: Good scope adherence
-
-## Example 4: Score 9 (Strong - verbose but correct)
-**Query**: "high-level overview of types and relationships"
-**Agent answer**: Provides all types, all relationships, AND all attributes with full details (way more than asked)
-**Score: 9** (calculated: 10×0.5 + 10×0.25 + 10×0.15 + 9×0.10 = 5.0 + 2.5 + 1.5 + 0.9 = 9.9 → 10, but round down slightly for significant verbosity = 9)
-- Accuracy: Perfect (everything stated is correct) = 10 → weighted 5.0
-- Completeness: Exceeds requirements (not a penalty) = 10 → weighted 2.5
-- Actionability: Very concrete and actionable = 10 → weighted 1.5
-- Efficiency: -1 for over-answering (single format violation: "Over-answered: included detailed attributes, derived properties, and exploration suggestions beyond overview scope") = 9 → weighted 0.9
-- **Calculation**: 5.0 + 2.5 + 1.5 + 0.9 = 9.9 → round to 9/10
-
-## Example 5: Score 6 (Acceptable with gaps)
-**Query**: "list all root types"
-**Model contains**: 5 root types
-**Agent answer**: Lists 3 of 5 root types correctly, misses 2
-**Score: 6**
-- Accuracy: Perfect for what's listed (no hallucinations)
-- Completeness: -2.5 for missing 40% of root types
-- Actionability: Clear type names provided
-- Efficiency: Good
-
-## Example 6: Score 4 (Marginal - incorrect claim)
-**Query**: "describe Product.components reference"
-**Model**: Product.components is "multiple=true, mandatory=true"
-**Agent answer**: States "Product.components is a single, optional reference to ProductComponent"
-**Score: 4**
-- Accuracy: -5 for incorrect claim about cardinality AND mandatory flag (contradicts model)
-- Completeness: Has the reference, but wrong metadata
-- Actionability: Misleading - agent would make wrong assumptions
-- Efficiency: Good scope
-**Note**: incorrectClaims penalized more than hallucinations because wrong info about real things is most dangerous
-
-## Example 7: Score 5 (Marginal - minor hallucination)
-**Query**: "describe Product type and its attributes"
-**Agent answer**: Describes Product correctly but adds one attribute "discount" that doesn't exist in model
-**Score: 5**
-- Accuracy: -3 for hallucinated attribute
-- Completeness: Otherwise complete
-- Actionability: Mostly actionable but false info misleads
-- Efficiency: Good scope
-
-## Example 8: Score 4 (Marginal - confusing scope)
-**Query**: "list all application types in luigis.pizzashop"
-**Agent answer**: Lists 3 correct application types + 2 framework types (tl.accounts.Person, tl.model.TLObject) as if they're application types
-**Score: 4**
-- Accuracy: -2 for scope confusion (mixed framework as application)
-- Completeness: Has required application types
-- Actionability: Unclear what's actually in application module
-- Efficiency: -2 for confusing framework bleed
-
-## Example 9: Score 3 (Poor - multiple hallucinations)
-**Query**: "describe Order type"
-**Agent answer**: Claims Order has attributes "paymentStatus" and "shippingAddress" which don't exist, but correctly identifies "customer" reference
-**Score: 3**
-- Accuracy: -4 for 2 hallucinated attributes (critical errors)
-- Completeness: Missing several real attributes
-- Actionability: Misleading information
-- Efficiency: OK
-
-## Example 10: Score 2 (Very Poor - multiple incorrect claims)
-**Query**: "describe Order type relationships"
-**Model**: Order.customer is "mandatory=true, multiple=false", Order.items is "mandatory=true, multiple=true"
-**Agent answer**: States "Order.customer is optional and multiple", "Order.items is single and optional"
-**Score: 2**
-- Accuracy: -5 for multiple incorrect claims (both relationships have wrong metadata)
-- Completeness: Has the relationships, but all metadata wrong
-- Actionability: Completely misleading
-- Efficiency: OK
-**Note**: Score 2 instead of 3 because incorrectClaims are penalized more heavily than hallucinations
-
-## Example 11: Score 1 (Failure)
-**Query**: "list root types in luigis.pizzashop"
-**Agent answer**: Lists 4 types, none of which exist in the model (all hallucinated)
-**Score: 1**
-- Accuracy: -5 (capped at max penalty) - complete fabrication
-- Completeness: -2.5 for missing all real types
-- Actionability: Completely unusable
-- Efficiency: Wrong scope entirely
-
----
-
-# Input
-
-**Input Format**:
-You will receive a single JSON object in one of these formats:
-
-**Mode 1: Prompt-Based (Recommended)**
-{
-  "user_prompt": "...",       // Original user prompt to the agent
-  "model_xml": "...",         // Complete model XML definition
-  "agent_answer": "..."       // The agent's actual answer
-}
-
-**Mode 2: Two Truth Sets (Legacy)**
-{
-  "required_facts": {...},    // Prompt-specific minimum expectations
-  "available_facts": {...},   // Complete oracle truth
-  "agent_answer": "..."       // The agent's actual answer
-}
-
-**Mode 3: Single Truth Set (Legacy)**
-{
-  "expected_facts": {...},    // Complete oracle truth
-  "agent_answer": "..."       // The agent's actual answer
-}
-
-For prompt-based mode: Infer expected facts from user_prompt + model_xml, then score.
-For two truth sets: Use required_facts for missing facts, available_facts for hallucinations.
-For single truth set: Use expected_facts for both.

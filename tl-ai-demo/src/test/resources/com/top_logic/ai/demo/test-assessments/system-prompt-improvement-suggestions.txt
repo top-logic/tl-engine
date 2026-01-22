@@ -2,7 +2,7 @@
 SYSTEM PROMPT IMPROVEMENT SUGGESTIONS
 ================================================================================
 
-Generated: 2026-01-22T11:44:08.443999534
+Generated: 2026-01-22T15:18:17.085521080
 Number of tests analyzed: 5
 
 Tests Analyzed:
@@ -29,58 +29,61 @@ IMPROVEMENT SUGGESTIONS
 
 ```json
 {
-  "overall_assessment": "The agent demonstrates excellent adherence to its system prompt with strong evidence-based exploration, proper tool usage, and accurate reporting. Performance is consistently high (9-10 scores) across all test cases.",
+  "overall_assessment": "The agent performs well on straightforward tasks but struggles with enumeration literals, part name accuracy, and scope interpretation, leading to significant hallucinations and incorrect claims.",
   "key_patterns": [
     {
-      "pattern": "Consistent excellent performance with proper tool usage and evidence citation",
-      "evidence": "All 5 tests scored 9-10 with zero hallucinations, incorrect claims, or scope violations",
-      "impact": "Agent successfully fulfills its core mission as a read-only model explorer with fact-based reporting"
+      "pattern": "Hallucinated enumeration classifier names",
+      "evidence": "Test 'Enum Types' shows completely fabricated classifier names (GRAMS, KILOGRAMS, etc.) that don't exist in XML (actual: G, KG, T, ML, L, HOUR, MINUTE)",
+      "impact": "Critical accuracy violation - agent invents data not present in tools or model"
     },
     {
-      "pattern": "Strong module scoping behavior with proper frameworkModule filtering",
-      "evidence": "Tests 'High-Level Overview' and 'Root/Aggregate Types' correctly filtered to application modules (luigis.pizzashop) and explicitly documented the filtering process",
-      "impact": "Agent correctly implements the critical default behavior of scoping to application modules when users ask about 'the model'"
+      "pattern": "Hallucinated part names and attributes",
+      "evidence": "Test 'Root/Aggregate Types' shows invented parts (basePrice, description, image, isActive on Product; quantity/unitOfMeasure on ProductComponent) not in XML",
+      "impact": "Violates FACT GUARANTEE RULES - mentions parts not in listTypeParts output"
     },
     {
-      "pattern": "Comprehensive source referencing with tool citations",
-      "evidence": "All tests include detailed 'Source Reference' sections citing specific tool calls (e.g., 'listTypeParts(luigis.pizzashop, Product, true) → components reference')",
-      "impact": "Enables full traceability and verification of all reported facts"
+      "pattern": "Incorrect part name mappings",
+      "evidence": "Test 'Root/Aggregate Types' uses 'quantity' instead of 'amount', 'unitOfMeasure' instead of 'unit', 'costPerBaseUnit' claim without verification",
+      "impact": "Violates VERBATIM PART NAMES rule - renames/normalizes instead of using exact tool output"
     },
     {
-      "pattern": "Proper handling of inherited vs. declared attributes",
-      "evidence": "Test 'Component Attributes' clearly distinguished local attributes (baseUnit, costPerBaseUnit) from inherited (name from NamedEntities, tType from TLObject)",
-      "impact": "Users get complete and accurate type schemas with proper attribution"
+      "pattern": "Missing critical parts in summaries",
+      "evidence": "Test 'Root/Aggregate Types' omits plannedQuantity, budget, totalCost, costPerUnit from Product; omits amount, unit, cost from ProductComponent",
+      "impact": "Incomplete enumeration despite includeInherited=true - fails completeness requirement"
     },
     {
-      "pattern": "Consistent structured output format",
-      "evidence": "All responses follow the prescribed format: Answer section with bullets, Next Suggested Query, and Source Reference",
-      "impact": "Predictable, scannable responses that match user expectations"
+      "pattern": "Strong performance on single-type focused queries",
+      "evidence": "Tests 'ProductComponent Type Description' and 'Component Attributes' scored 10/10 with accurate, complete results",
+      "impact": "Shows agent can perform well when focused on one entity at a time"
+    },
+    {
+      "pattern": "Correct ambiguity handling",
+      "evidence": "Test 'Component Attributes' properly stops and asks for clarification between Component and ProductComponent",
+      "impact": "Demonstrates proper CONTEXT RESOLUTION implementation"
     }
   ],
   "suggestions": [
     {
-      "priority": "low",
-      "category": "clarity",
-      "current_behavior": "Agent sometimes adds interpretive labels like 'Role: Aggregate root' or 'Role: Base type' in responses without explicit model metadata supporting these terms",
-      "suggested_change": "In the 'EXPLORER MODE: FACTS ONLY' section, add explicit guidance: 'Do not add interpretive role labels (e.g., \"aggregate root\", \"base type\") unless these exact terms appear in model labels/descriptions. Use structural descriptions instead (e.g., \"composes X via Y reference\", \"has no generalizations\").'",
-      "expected_improvement": "Eliminates subtle interpretation while maintaining clarity through purely structural descriptions",
-      "potential_risks": "Minimal - responses may be slightly more verbose but will be more purely factual"
+      "priority": "high",
+      "category": "accuracy",
+      "current_behavior": "Agent invents enumeration classifier names when listClassifiers is not called, claiming them as facts",
+      "suggested_change": "Add explicit rule: 'ENUMERATION CLASSIFIERS: Never list specific classifier names unless they appear in listClassifiers(moduleName, enumName) output from THIS run. If only classifierCount is known, state ONLY: \"X classifiers (names not fetched)\" or call listClassifiers to retrieve names.'",
+      "expected_improvement": "Eliminates fabricated enum literal names like GRAMS/KILOGRAMS when actual values are G/KG",
+      "potential_risks": "May require additional tool calls for enum details, but prevents critical hallucinations"
     },
     {
-      "priority": "low",
-      "category": "completeness",
-      "current_behavior": "In 'Enum Types' test, agent explored framework enumerations (tl.yesno, tl.yesnoundef) beyond the application scope, which was not explicitly requested",
-      "suggested_change": "In the MODULE SCOPE section, add a clarification: 'When listing enum types \"in the model\", apply the same application-module-only default as for other type queries. Only include framework enumerations if they are directly referenced by application types or explicitly requested.'",
-      "expected_improvement": "More consistent scoping behavior across all query types (types, enums, etc.)",
-      "potential_risks": "Very low - may miss framework enums in edge cases, but aligns with stated default scoping philosophy"
+      "priority": "high",
+      "category": "accuracy",
+      "current_behavior": "Agent lists parts not present in listTypeParts output, inventing attributes based on assumed semantics or patterns",
+      "suggested_change": "Strengthen FACT GUARANTEE RULES with: 'STRICT PART LISTING: Before mentioning ANY part name in your answer, verify it exists in listTypeParts output from THIS run. If a part seems missing but you expect it, run listTypeParts again or state \"not confirmed by tools.\" Never assume parts exist based on type semantics or common patterns.'",
+      "expected_improvement": "Prevents hallucinations like basePrice, description, image, isActive on Product",
+      "potential_risks": "None - this enforces existing rules more strictly"
     },
     {
-      "priority": "low",
-      "category": "efficiency",
-      "current_behavior": "Agent provides comprehensive 'Next Suggested Query' sections in all responses, which are helpful but not always essential",
-      "suggested_change": "Modify the output format guidance to make 'Next suggested query' explicitly optional: '2. **Next suggested query** (optional) – Only include if there is a natural follow-up exploration that would significantly enhance understanding. Omit if the query is fully satisfied.'",
-      "expected_improvement": "Slightly more concise responses when no meaningful follow-up exists",
-      "potential_risks": "None - this was already
+      "priority": "high",
+      "category": "accuracy",
+      "current_behavior": "Agent renames parts (quantity→amount, unitOfMeasure→unit) instead of using exact tool output",
+      "suggested_change": "Add enforcement mechanism to VERBATIM PART NAMES: '
 
 ================================================================================
 
@@ -88,7 +91,7 @@ IMPROVEMENT SUGGESTIONS
 SYSTEM PROMPT IMPROVEMENT SUGGESTIONS
 ================================================================================
 
-Generated: 2026-01-22T11:49:39.530297484
+Generated: 2026-01-22T15:22:40.504161619
 Number of tests analyzed: 5
 
 Tests Analyzed:
@@ -115,50 +118,47 @@ IMPROVEMENT SUGGESTIONS
 
 ```json
 {
-  "overall_assessment": "The agent performs excellently on most tasks but has a critical failure pattern when handling type name disambiguation, particularly with 'Unit' references, leading to hallucinated types and incorrect claims.",
+  "overall_assessment": "The agent performs well overall, with strong adherence to evidence-based responses and proper tool usage. However, it struggles with ambiguous context resolution and occasionally misinterprets tool output, particularly around type/part distinctions.",
   "key_patterns": [
     {
-      "pattern": "Hallucination of non-existent types when query terms are ambiguous",
-      "evidence": "Test 'Unit References' - agent invented 'tl.units:Unit' and 'tl.units:AbstractUnit' types that don't exist in the model, despite the actual type being 'UnitOfMeasure' enum in luigis.pizzashop",
-      "impact": "Complete answer failure (score 0/10) - user receives entirely fabricated information about the model structure"
+      "pattern": "Ambiguity handling inconsistency",
+      "evidence": "Test 'Unit References' (score=2) stopped appropriately for clarification, but included framework modules despite default application-only scope. Test 'Component Usage' (score=6) misinterpreted tool output for baseUnit.",
+      "impact": "When users provide ambiguous terms, the agent sometimes expands scope beyond stated defaults or misidentifies entity types, leading to incorrect categorizations."
     },
     {
-      "pattern": "Misinterpretation of tool results when parsing complex reference structures",
-      "evidence": "Test 'Component Usage' - incorrectly claimed 'Property `self` on `luigis.pizzashop:Component$baseUnit`' when baseUnit is actually a reference to UnitOfMeasure enum",
-      "impact": "Moderate accuracy degradation (score 4/10) - correct usages identified but with fabricated details"
+      "pattern": "Misinterpretation of usage tokens",
+      "evidence": "Test 'Component Usage' incorrectly reported 'Component$baseUnit' as 'property (value type)' when baseUnit is actually a reference (kind='forwards') to UnitOfMeasure enum.",
+      "impact": "The agent conflates usage bucket identifiers (Type$part) with part definitions, violating the rule that these tokens must be verified via listTypeParts before stating kind/type/multiplicity."
     },
     {
-      "pattern": "Strong performance on derived attribute analysis and script extraction",
-      "evidence": "Tests 'Cost Attribute Definition', 'Calculated/Derived Attributes', 'Pricing/Cost Search' all scored 10/10 with accurate TLScript extraction and proper verbatim presentation",
-      "impact": "High value delivered when task aligns with core competency - users get complete, accurate answers"
-    },
-    {
-      "pattern": "Inconsistent application of clarification strategy when search yields no results",
-      "evidence": "In 'Unit References' test, instead of clarifying or reporting 'no matches found', agent fabricated types; in other tests, agent successfully uses searchModel to disambiguate",
-      "impact": "Unpredictable behavior when facing ambiguous or non-existent entities"
+      "pattern": "Inconsistent scope application",
+      "evidence": "Test 'Unit References' included framework modules (tl.units:Unit, orgStructure:OrgUnit) when the user simply asked 'find all types that reference Unit' without explicit framework inclusion.",
+      "impact": "Default application-only scope is not consistently enforced, leading to unexpected framework results when users don't explicitly request them."
     }
   ],
   "suggestions": [
     {
       "priority": "high",
       "category": "accuracy",
-      "current_behavior": "When tool results are empty or ambiguous (especially searchModel), agent sometimes invents plausible-sounding types/modules instead of reporting no findings or asking for clarification",
-      "suggested_change": "Add explicit instruction after CLARIFICATION & CONTEXT RESOLUTION section: '**CRITICAL: If searchModel or findTypeUsages returns no results, you MUST state this explicitly.** Never invent types, modules, or parts. If the user's query term (e.g., \"Unit\") could refer to multiple concepts, first report what was found (including enumerations, partial matches), then ask user to clarify which entity they meant. Example: \"Found UnitOfMeasure enum in luigis.pizzashop and no types named Unit. Did you mean UnitOfMeasure, or are you looking for a different entity?\"'",
-      "expected_improvement": "Eliminates hallucinations when searches fail; forces agent to either report findings accurately or request clarification",
-      "potential_risks": "May increase clarification questions, but this is preferable to fabricating information"
+      "current_behavior": "When processing usage tokens like 'Type$part', the agent sometimes states part kind (property vs reference) without calling listTypeParts to verify.",
+      "suggested_change": "Add to 'USAGE TOKENS ARE NOT PART DEFINITIONS' section: 'When you encounter Type$part in usage results: 1) Report it verbatim as an identifier, 2) If you need to state its kind/type/multiplicity, IMMEDIATELY call listTypeParts(Type, includeInherited=true) and cite that output, 3) Never infer kind from the usage bucket name alone.'",
+      "expected_improvement": "Eliminates incorrect claims about part kinds when they appear in usage results, ensuring all part metadata comes from explicit listTypeParts calls.",
+      "potential_risks": "May increase tool call count slightly, but necessary for accuracy."
     },
     {
       "priority": "high",
-      "category": "accuracy",
-      "current_behavior": "Agent misinterprets complex tool output structures (e.g., 'Component$baseUnit' notation in findTypeUsages) and invents property names like 'self'",
-      "suggested_change": "Add to FACT GUARANTEE RULES section: '**Reference notation interpretation:** When tool results show patterns like `TypeName$partName`, this indicates a part named `partName` on type `TypeName`. Never invent intermediate properties like \"self\". Always verify part names against listTypeParts output before claiming their existence. If a usage result seems unusual (e.g., self-references, nested paths), call listTypeParts to confirm the actual part structure before explaining it to the user.'",
-      "expected_improvement": "Reduces misinterpretation of tool output notation; ensures claims about parts are verified against actual model data",
-      "potential_risks": "Slightly increases tool calls, but necessary for accuracy"
+      "category": "scope",
+      "current_behavior": "When resolving ambiguous terms via searchModel, the agent sometimes includes framework modules in clarification lists even when default application-only scope should apply.",
+      "suggested_change": "In 'CONTEXT RESOLUTION' section, add before step 1: 'Apply current scope filter BEFORE searching. If scope is application-only, pass appropriate moduleFilter to searchModel to exclude framework modules. Only include framework results if: a) user explicitly named framework modules, b) user requested \"include framework\", or c) NO application matches exist (then note scope expansion in clarification).'",
+      "expected_improvement": "Ensures clarification questions respect the stated scope, reducing confusion when framework types appear unexpectedly.",
+      "potential_risks": "If searchModel doesn't support moduleFilter well, may need alternative filtering approach post-search."
     },
     {
-      "priority": "high",
-      "category": "completeness",
-      "current
+      "priority": "medium",
+      "category": "clarity",
+      "current_behavior": "When calling findTypeUsages, the agent reports buckets but sometimes adds interpretive phrases like 'used as value type' that may not match tool output exactly.",
+      "suggested_change": "In 'Where-used (STRICT)' section, strengthen: 'Report bucket contents using ONLY the structure/labels the tool returns. Do not add interpretive phrases (e.g., \"used as value type\", \"serves as\") unless those exact phrases appear in tool output. For Type$part tokens, state: \"Found in [bucket name]: Type$part\" without elaboration unless you call listTypeParts(Type) to verify details.'",
+      "expected_improvement": "Reduces risk of adding non-tool-backed interpret
 
 ================================================================================
 

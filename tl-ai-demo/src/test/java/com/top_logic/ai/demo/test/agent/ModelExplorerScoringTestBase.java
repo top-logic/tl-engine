@@ -31,7 +31,7 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * 
  * <p>
  * This class provides common functionality for test result collection, scoring, and file output
- * that is shared between {@link ModelExplorerScoringTest} and
+ * that is shared between {@link ModelExplorerScoringTestPart1} and
  * {@link ModelExplorerScoringTestPart2}.
  * </p>
  * 

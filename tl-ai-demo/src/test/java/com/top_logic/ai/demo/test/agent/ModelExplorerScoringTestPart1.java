@@ -47,7 +47,7 @@ import com.top_logic.basic.module.BasicRuntimeModule;
  * 
  * @author jhu
  */
-public class ModelExplorerScoringTest extends ModelExplorerScoringTestBase {
+public class ModelExplorerScoringTestPart1 extends ModelExplorerScoringTestBase {
 
 	/**
 	 * Test 1: High-level overview of types and relationships.
@@ -311,7 +311,7 @@ public class ModelExplorerScoringTest extends ModelExplorerScoringTestBase {
 	 * Tests are explicitly ordered to ensure testZZZ_SystemPromptImprovement runs last.
 	 */
 	public static Test suite() {
-		TestSuite suite = new TestSuite(ModelExplorerScoringTest.class.getName());
+		TestSuite suite = new TestSuite(ModelExplorerScoringTestPart1.class.getName());
 		
 		// Add tests in explicit order to ensure test ZZZ runs last
 		// Using {@link TestSuite#addTestSuite(Class)} with a custom suite that only contains specific methods
@@ -336,20 +336,20 @@ public class ModelExplorerScoringTest extends ModelExplorerScoringTestBase {
 	 * Creates a TestCase for a specific test method.
 	 */
 	private static TestCase createTest(String methodName) {
-		return new ModelExplorerScoringTest(methodName);
+		return new ModelExplorerScoringTestPart1(methodName);
 	}
 	
 	/**
 	 * Constructor to create a test case for a specific method.
 	 */
-	public ModelExplorerScoringTest(String testName) {
+	public ModelExplorerScoringTestPart1(String testName) {
 		super(testName);
 	}
 	
 	/**
 	 * Default constructor.
 	 */
-	public ModelExplorerScoringTest() {
+	public ModelExplorerScoringTestPart1() {
 		super();
 	}
 

@@ -33,9 +33,7 @@ import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.layout.provider.LabelProviderService;
 import com.top_logic.util.model.ModelService;
 
-import de.haumacher.msgbuf.io.StringR;
 import de.haumacher.msgbuf.io.StringW;
-import de.haumacher.msgbuf.json.JsonReader;
 import de.haumacher.msgbuf.json.JsonWriter;
 
 /**
@@ -78,55 +76,26 @@ public class ModelExplorerScoringTestPart2 extends TestCase {
 		String prompt = "explain how the cost attribute on ProductComponent is defined, using only model or script references";
 		int minScore = 7;
 		
-		System.out.println("\n==========================================");
-		System.out.println("TEST 6: " + testName);
-		System.out.println("==========================================");
-		System.out.println("Prompt: " + prompt);
-		System.out.println();
-		
 		// 1. Load model XML (single source of truth)
 		String modelXml = OracleLoader.loadPizzaShopModelXml();
-		System.out.println("Model loaded: " + modelXml.length() + " chars (XML)");
 		
 		// 2. Run the agent
-		System.out.println("\nRunning ModelExplorerTool agent...");
 		ModelExplorerTool agent = new ModelExplorerTool();
 		String agentAnswer = agent.exploreModel(prompt);
 		
-		System.out.println("\n--- Agent Answer ---");
-		System.out.println(agentAnswer);
-		System.out.println();
-		
 		// 3. Score with AI judge (prompt-based - no manual required_facts)
-		System.out.println("Scoring with AI judge (prompt-based mode)...");
-		System.out.println("Agent answer length: " + agentAnswer.length() + " characters");
-		System.out.println("Model XML length: " + modelXml.length() + " characters");
-		System.out.println("User prompt length: " + prompt.length() + " characters");
-		
 		JudgeClient judge = new JudgeClient(AIService.getInstance());
 		String judgePrompt = loadJudgeSystemPrompt();
-		System.out.println("Judge system prompt length: " + judgePrompt.length() + " characters");
-		System.out.println("Total estimated prompt size: ~" + (judgePrompt.length() + prompt.length() + modelXml.length() + agentAnswer.length()) + " characters");
-		System.out.println("Calling judge.scoreWithPrompt()...");
-		System.out.flush(); // Ensure output is visible before blocking call
 		
-		long startTime = System.currentTimeMillis();
 		JudgeResult judgeResult = judge.scoreWithPrompt(prompt, modelXml, agentAnswer, judgePrompt);
-		long elapsedTime = System.currentTimeMillis() - startTime;
-		System.out.println("Judge call completed in " + elapsedTime + " ms");
 		
-		// 4. Print judge results
-		printJudgeResult(judgeResult);
-		
-		// 5. Get final score from neutral scorer (or use judge score if disabled)
+		// 4. Get final score from neutral scorer (or use judge score if disabled)
 		NeutralScorerResult finalScore = getFinalScore(prompt, agentAnswer, judgeResult);
 		
-		printFinalScore(finalScore);
-		
-		// 6. Collect results for later analysis
+		// 5. Collect results for later analysis
 		collectTestResult(testName, prompt, agentAnswer, judgeResult, finalScore);
 		
-		// 6b. Save individual test assessment to file
+		// 6. Save test assessment to file
 		saveTestAssessment(testName, prompt, agentAnswer, judgeResult, finalScore);
 		
 		// 7. Assertions (using final score only)
@@ -134,8 +103,6 @@ public class ModelExplorerScoringTestPart2 extends TestCase {
 			"Final score must be at least " + minScore + " (was: " + finalScore.getFinalScore() + ")",
 			finalScore.getFinalScore() >= minScore
 		);
-		
-		System.out.println("\n✓ Test passed!");
 	}
 
 	/**
@@ -150,44 +117,26 @@ public class ModelExplorerScoringTestPart2 extends TestCase {
 		String prompt = "list all calculated / derived attributes in the model and how they are computed";
 		int minScore = 7;
 		
-		System.out.println("\n==========================================");
-		System.out.println("TEST 7: " + testName);
-		System.out.println("==========================================");
-		System.out.println("Prompt: " + prompt);
-		System.out.println();
-		
 		// 1. Load model XML (single source of truth)
 		String modelXml = OracleLoader.loadPizzaShopModelXml();
-		System.out.println("Model loaded: " + modelXml.length() + " chars (XML)");
 		
 		// 2. Run the agent
-		System.out.println("\nRunning ModelExplorerTool agent...");
 		ModelExplorerTool agent = new ModelExplorerTool();
 		String agentAnswer = agent.exploreModel(prompt);
 		
-		System.out.println("\n--- Agent Answer ---");
-		System.out.println(agentAnswer);
-		System.out.println();
-		
 		// 3. Score with AI judge (prompt-based - no manual required_facts)
-		System.out.println("Scoring with AI judge (prompt-based mode)...");
 		JudgeClient judge = new JudgeClient(AIService.getInstance());
 		String judgePrompt = loadJudgeSystemPrompt();
 		
 		JudgeResult judgeResult = judge.scoreWithPrompt(prompt, modelXml, agentAnswer, judgePrompt);
 		
-		// 4. Print judge results
-		printJudgeResult(judgeResult);
-		
-		// 5. Get final score from neutral scorer (or use judge score if disabled)
+		// 4. Get final score from neutral scorer (or use judge score if disabled)
 		NeutralScorerResult finalScore = getFinalScore(prompt, agentAnswer, judgeResult);
 		
-		printFinalScore(finalScore);
-		
-		// 6. Collect results for later analysis
+		// 5. Collect results for later analysis
 		collectTestResult(testName, prompt, agentAnswer, judgeResult, finalScore);
 		
-		// 6b. Save individual test assessment to file
+		// 6. Save test assessment to file
 		saveTestAssessment(testName, prompt, agentAnswer, judgeResult, finalScore);
 		
 		// 7. Assertions (using final score only)
@@ -195,8 +144,6 @@ public class ModelExplorerScoringTestPart2 extends TestCase {
 			"Final score must be at least " + minScore + " (was: " + finalScore.getFinalScore() + ")",
 			finalScore.getFinalScore() >= minScore
 		);
-		
-		System.out.println("\n✓ Test passed!");
 	}
 
 	/**
@@ -211,44 +158,26 @@ public class ModelExplorerScoringTestPart2 extends TestCase {
 		String prompt = "where is Component used across the model (attributes, relations, scripts)";
 		int minScore = 7;
 		
-		System.out.println("\n==========================================");
-		System.out.println("TEST 8: " + testName);
-		System.out.println("==========================================");
-		System.out.println("Prompt: " + prompt);
-		System.out.println();
-		
 		// 1. Load model XML (single source of truth)
 		String modelXml = OracleLoader.loadPizzaShopModelXml();
-		System.out.println("Model loaded: " + modelXml.length() + " chars (XML)");
 		
 		// 2. Run the agent
-		System.out.println("\nRunning ModelExplorerTool agent...");
 		ModelExplorerTool agent = new ModelExplorerTool();
 		String agentAnswer = agent.exploreModel(prompt);
 		
-		System.out.println("\n--- Agent Answer ---");
-		System.out.println(agentAnswer);
-		System.out.println();
-		
 		// 3. Score with AI judge (prompt-based - no manual required_facts)
-		System.out.println("Scoring with AI judge (prompt-based mode)...");
 		JudgeClient judge = new JudgeClient(AIService.getInstance());
 		String judgePrompt = loadJudgeSystemPrompt();
 		
 		JudgeResult judgeResult = judge.scoreWithPrompt(prompt, modelXml, agentAnswer, judgePrompt);
 		
-		// 4. Print judge results
-		printJudgeResult(judgeResult);
-		
-		// 5. Get final score from neutral scorer (or use judge score if disabled)
+		// 4. Get final score from neutral scorer (or use judge score if disabled)
 		NeutralScorerResult finalScore = getFinalScore(prompt, agentAnswer, judgeResult);
 		
-		printFinalScore(finalScore);
-		
-		// 6. Collect results for later analysis
+		// 5. Collect results for later analysis
 		collectTestResult(testName, prompt, agentAnswer, judgeResult, finalScore);
 		
-		// 6b. Save individual test assessment to file
+		// 6. Save test assessment to file
 		saveTestAssessment(testName, prompt, agentAnswer, judgeResult, finalScore);
 		
 		// 7. Assertions (using final score only)
@@ -256,8 +185,6 @@ public class ModelExplorerScoringTestPart2 extends TestCase {
 			"Final score must be at least " + minScore + " (was: " + finalScore.getFinalScore() + ")",
 			finalScore.getFinalScore() >= minScore
 		);
-		
-		System.out.println("\n✓ Test passed!");
 	}
 
 	/**
@@ -272,44 +199,26 @@ public class ModelExplorerScoringTestPart2 extends TestCase {
 		String prompt = "find all types that reference Unit and explain the nature of each reference";
 		int minScore = 7;
 		
-		System.out.println("\n==========================================");
-		System.out.println("TEST 9: " + testName);
-		System.out.println("==========================================");
-		System.out.println("Prompt: " + prompt);
-		System.out.println();
-		
 		// 1. Load model XML (single source of truth)
 		String modelXml = OracleLoader.loadPizzaShopModelXml();
-		System.out.println("Model loaded: " + modelXml.length() + " chars (XML)");
 		
 		// 2. Run the agent
-		System.out.println("\nRunning ModelExplorerTool agent...");
 		ModelExplorerTool agent = new ModelExplorerTool();
 		String agentAnswer = agent.exploreModel(prompt);
 		
-		System.out.println("\n--- Agent Answer ---");
-		System.out.println(agentAnswer);
-		System.out.println();
-		
 		// 3. Score with AI judge (prompt-based - no manual required_facts)
-		System.out.println("Scoring with AI judge (prompt-based mode)...");
 		JudgeClient judge = new JudgeClient(AIService.getInstance());
 		String judgePrompt = loadJudgeSystemPrompt();
 		
 		JudgeResult judgeResult = judge.scoreWithPrompt(prompt, modelXml, agentAnswer, judgePrompt);
 		
-		// 4. Print judge results
-		printJudgeResult(judgeResult);
-		
-		// 5. Get final score from neutral scorer (or use judge score if disabled)
+		// 4. Get final score from neutral scorer (or use judge score if disabled)
 		NeutralScorerResult finalScore = getFinalScore(prompt, agentAnswer, judgeResult);
 		
-		printFinalScore(finalScore);
-		
-		// 6. Collect results for later analysis
+		// 5. Collect results for later analysis
 		collectTestResult(testName, prompt, agentAnswer, judgeResult, finalScore);
 		
-		// 6b. Save individual test assessment to file
+		// 6. Save test assessment to file
 		saveTestAssessment(testName, prompt, agentAnswer, judgeResult, finalScore);
 		
 		// 7. Assertions (using final score only)
@@ -317,8 +226,6 @@ public class ModelExplorerScoringTestPart2 extends TestCase {
 			"Final score must be at least " + minScore + " (was: " + finalScore.getFinalScore() + ")",
 			finalScore.getFinalScore() >= minScore
 		);
-		
-		System.out.println("\n✓ Test passed!");
 	}
 
 	/**
@@ -333,44 +240,26 @@ public class ModelExplorerScoringTestPart2 extends TestCase {
 		String prompt = "search for anything related to pricing or cost and summarize the findings by type";
 		int minScore = 7;
 		
-		System.out.println("\n==========================================");
-		System.out.println("TEST 10: " + testName);
-		System.out.println("==========================================");
-		System.out.println("Prompt: " + prompt);
-		System.out.println();
-		
 		// 1. Load model XML (single source of truth)
 		String modelXml = OracleLoader.loadPizzaShopModelXml();
-		System.out.println("Model loaded: " + modelXml.length() + " chars (XML)");
 		
 		// 2. Run the agent
-		System.out.println("\nRunning ModelExplorerTool agent...");
 		ModelExplorerTool agent = new ModelExplorerTool();
 		String agentAnswer = agent.exploreModel(prompt);
 		
-		System.out.println("\n--- Agent Answer ---");
-		System.out.println(agentAnswer);
-		System.out.println();
-		
 		// 3. Score with AI judge (prompt-based - no manual required_facts)
-		System.out.println("Scoring with AI judge (prompt-based mode)...");
 		JudgeClient judge = new JudgeClient(AIService.getInstance());
 		String judgePrompt = loadJudgeSystemPrompt();
 		
 		JudgeResult judgeResult = judge.scoreWithPrompt(prompt, modelXml, agentAnswer, judgePrompt);
 		
-		// 4. Print judge results
-		printJudgeResult(judgeResult);
-		
-		// 5. Get final score from neutral scorer (or use judge score if disabled)
+		// 4. Get final score from neutral scorer (or use judge score if disabled)
 		NeutralScorerResult finalScore = getFinalScore(prompt, agentAnswer, judgeResult);
 		
-		printFinalScore(finalScore);
-		
-		// 6. Collect results for later analysis
+		// 5. Collect results for later analysis
 		collectTestResult(testName, prompt, agentAnswer, judgeResult, finalScore);
 		
-		// 6b. Save individual test assessment to file
+		// 6. Save test assessment to file
 		saveTestAssessment(testName, prompt, agentAnswer, judgeResult, finalScore);
 		
 		// 7. Assertions (using final score only)
@@ -378,8 +267,6 @@ public class ModelExplorerScoringTestPart2 extends TestCase {
 			"Final score must be at least " + minScore + " (was: " + finalScore.getFinalScore() + ")",
 			finalScore.getFinalScore() >= minScore
 		);
-		
-		System.out.println("\n✓ Test passed!");
 	}
 
 	/**
@@ -468,12 +355,10 @@ public class ModelExplorerScoringTestPart2 extends TestCase {
 	 */
 	private NeutralScorerResult getFinalScore(String prompt, String agentAnswer, JudgeResult judgeResult) {
 		if (USE_NEUTRAL_SCORER) {
-			System.out.println("\nGetting final score from neutral scorer...");
 			NeutralScorer scorer = new NeutralScorer(AIService.getInstance());
 			String scorerPrompt = NeutralScorer.loadScorerSystemPrompt();
 			return scorer.score(prompt, agentAnswer, judgeResult, scorerPrompt);
 		} else {
-			System.out.println("\nSkipping neutral scorer - using judge score directly...");
 			NeutralScorerResult result = new NeutralScorerResult();
 			result.setFinalScore(judgeResult.getScore());
 			result.setExplanation("Neutral scorer disabled - using judge score directly");
@@ -530,15 +415,13 @@ public class ModelExplorerScoringTestPart2 extends TestCase {
 	}
 
 	/**
-	 * Saves the assessment results for a single test to a file.
+	 * Saves the assessment results for a single test to a file (appends to single file).
 	 */
 	private void saveTestAssessment(String testName, String prompt, String agentAnswer, JudgeResult judgeResult,
 		NeutralScorerResult finalScore) throws IOException {
 		try {
-			// Create a safe filename from test name
-			String safeFileName = testName.replaceAll("[^a-zA-Z0-9\\-_]", "_").toLowerCase();
 			java.nio.file.Path outputPath = Paths.get(
-				"src/test/resources/com/top_logic/ai/demo/test-assessments/" + safeFileName + ".txt"
+				"src/test/resources/com/top_logic/ai/demo/test-assessments/all-test-assessments.txt"
 			);
 
 			// Create parent directories if they don't exist
@@ -640,12 +523,11 @@ public class ModelExplorerScoringTestPart2 extends TestCase {
 				content.append("\n");
 			}
 
-			content.append("\n").append("=".repeat(80)).append("\n");
+			content.append("\n").append("=".repeat(80)).append("\n\n");
 
-			// Write to file
-			Files.write(outputPath, content.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
-
-			System.out.println("✓ Test assessment saved to: " + outputPath.toAbsolutePath());
+			// Append to file
+			Files.write(outputPath, content.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8),
+				java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.APPEND);
 		} catch (Exception ex) {
 			System.err.println("Warning: Failed to save test assessment to file: " + ex.getMessage());
 			ex.printStackTrace();
@@ -672,14 +554,8 @@ public class ModelExplorerScoringTestPart2 extends TestCase {
 	 */
 	public void testZZZ_SystemPromptImprovement() throws IOException {
 		if (ALL_TEST_RESULTS.isEmpty()) {
-			System.out.println("\nNo test results collected - skipping system prompt improvement.");
 			return;
 		}
-
-		System.out.println("\n==========================================");
-		System.out.println("SYSTEM PROMPT IMPROVEMENT ANALYSIS");
-		System.out.println("==========================================");
-		System.out.println("Analyzing " + ALL_TEST_RESULTS.size() + " test results...\n");
 
 		// Load current system prompt from ModelExplorer
 		String currentSystemPrompt = loadModelExplorerSystemPrompt();
@@ -690,15 +566,8 @@ public class ModelExplorerScoringTestPart2 extends TestCase {
 
 		String suggestions = improver.improveSystemPrompt(currentSystemPrompt, ALL_TEST_RESULTS, improverPrompt);
 
-		System.out.println("\n--- System Prompt Improvement Suggestions ---");
-		System.out.println(suggestions);
-		System.out.println("\n==========================================");
-
 		// Save suggestions to file
 		saveSuggestionsToFile(suggestions, ALL_TEST_RESULTS);
-
-		// Save test scores summary
-		saveTestScoresSummary(ALL_TEST_RESULTS);
 
 		// This test always passes - it's just for analysis
 		assertTrue("System prompt improvement analysis completed", true);
@@ -710,7 +579,7 @@ public class ModelExplorerScoringTestPart2 extends TestCase {
 	private void saveSuggestionsToFile(String suggestions, List<TestResult> testResults) throws IOException {
 		try {
 			java.nio.file.Path outputPath = Paths.get(
-				"src/test/resources/com/top_logic/ai/demo/system-prompt-improvement-suggestions.txt"
+				"src/test/resources/com/top_logic/ai/demo/test-assessments/system-prompt-improvement-suggestions.txt"
 			);
 
 			// Create parent directories if they don't exist
@@ -741,251 +610,12 @@ public class ModelExplorerScoringTestPart2 extends TestCase {
 
 			// Write to file
 			Files.write(outputPath, content.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
-
-			System.out.println("\n✓ Suggestions saved to: " + outputPath.toAbsolutePath());
 		} catch (Exception ex) {
 			System.err.println("Warning: Failed to save suggestions to file: " + ex.getMessage());
 			ex.printStackTrace();
 		}
 	}
 
-	/**
-	 * Saves a summary of all test scores to a file.
-	 * 
-	 * @param testResults
-	 *        List of all test results to summarize.
-	 */
-	private void saveTestScoresSummary(List<TestResult> testResults) throws IOException {
-		try {
-			java.nio.file.Path outputPath = Paths.get(
-				"src/test/resources/com/top_logic/ai/demo/test-scores-summary.txt"
-			);
-
-			// Create parent directories if they don't exist
-			Files.createDirectories(outputPath.getParent());
-
-			// Parse scores from JSON
-			List<TestScoreData> scoreData = new ArrayList<>();
-			for (TestResult result : testResults) {
-				try {
-					int judgeScore = parseJudgeScore(result.getJudgeEvaluationJson());
-					int finalScore = parseFinalScore(result.getFinalScoreJson());
-					scoreData.add(new TestScoreData(result.getTestName(), judgeScore, finalScore));
-				} catch (Exception ex) {
-					System.err.println("Warning: Failed to parse scores for test: " + result.getTestName() + " - " + ex.getMessage());
-				}
-			}
-
-			// Build the content
-			StringBuilder content = new StringBuilder();
-			content.append("=".repeat(80)).append("\n");
-			content.append("TEST SCORES SUMMARY\n");
-			content.append("=".repeat(80)).append("\n\n");
-			content.append("Generated: ").append(LocalDateTime.now()).append("\n");
-			content.append("Total Tests: ").append(scoreData.size()).append("\n\n");
-
-			// Create table
-			if (!scoreData.isEmpty()) {
-				// Calculate column widths
-				int testNumWidth = Math.max(6, String.valueOf(scoreData.size()).length() + 2);
-				int nameWidth = Math.max(50, scoreData.stream()
-					.mapToInt(d -> d.testName.length())
-					.max().orElse(50));
-				int scoreWidth = 13;
-
-				// Table header
-				content.append(buildTableHeader(testNumWidth, nameWidth, scoreWidth));
-				content.append(buildTableSeparator(testNumWidth, nameWidth, scoreWidth));
-
-				// Table rows
-				for (int i = 0; i < scoreData.size(); i++) {
-					TestScoreData data = scoreData.get(i);
-					content.append(buildTableRow(testNumWidth, nameWidth, scoreWidth,
-						String.valueOf(i + 1),
-						data.testName,
-						String.valueOf(data.judgeScore) + "/10",
-						String.valueOf(data.finalScore) + "/10"));
-				}
-
-				// Table footer
-				content.append(buildTableFooter(testNumWidth, nameWidth, scoreWidth));
-
-				// Summary statistics
-				content.append("\n");
-				content.append("Summary Statistics:\n");
-				content.append("-".repeat(80)).append("\n");
-
-				double avgJudgeScore = scoreData.stream().mapToInt(d -> d.judgeScore).average().orElse(0.0);
-				double avgFinalScore = scoreData.stream().mapToInt(d -> d.finalScore).average().orElse(0.0);
-
-				content.append(String.format("- Average Judge Score: %.1f/10\n", avgJudgeScore));
-				content.append(String.format("- Average Final Score: %.1f/10\n", avgFinalScore));
-
-				// Find highest and lowest scores
-				TestScoreData highest = scoreData.stream()
-					.max((a, b) -> Integer.compare(a.finalScore, b.finalScore))
-					.orElse(null);
-				TestScoreData lowest = scoreData.stream()
-					.min((a, b) -> Integer.compare(a.finalScore, b.finalScore))
-					.orElse(null);
-
-				if (highest != null) {
-					int highestIndex = scoreData.indexOf(highest) + 1;
-					content.append(String.format("- Highest Score: Test %d - %s (Final: %d/10)\n",
-						highestIndex, highest.testName, highest.finalScore));
-				}
-				if (lowest != null) {
-					int lowestIndex = scoreData.indexOf(lowest) + 1;
-					content.append(String.format("- Lowest Score: Test %d - %s (Final: %d/10)\n",
-						lowestIndex, lowest.testName, lowest.finalScore));
-				}
-			}
-
-			content.append("\n").append("=".repeat(80)).append("\n");
-
-			// Write to file
-			Files.write(outputPath, content.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
-
-			System.out.println("\n✓ Test scores summary saved to: " + outputPath.toAbsolutePath());
-		} catch (Exception ex) {
-			System.err.println("Warning: Failed to save test scores summary: " + ex.getMessage());
-			ex.printStackTrace();
-		}
-	}
-
-	/**
-	 * Helper class to hold test score data.
-	 */
-	private static class TestScoreData {
-		final String testName;
-		final int judgeScore;
-		final int finalScore;
-
-		TestScoreData(String testName, int judgeScore, int finalScore) {
-			this.testName = testName;
-			this.judgeScore = judgeScore;
-			this.finalScore = finalScore;
-		}
-	}
-
-	/**
-	 * Parses the judge score from JSON string.
-	 */
-	private int parseJudgeScore(String judgeJson) throws IOException {
-		StringR reader = new StringR(judgeJson);
-		JsonReader jsonReader = new JsonReader(reader);
-		JudgeResult result = JudgeResult.readJudgeResult(jsonReader);
-		return result.getScore();
-	}
-
-	/**
-	 * Parses the final score from JSON string.
-	 */
-	private int parseFinalScore(String finalScoreJson) throws IOException {
-		StringR reader = new StringR(finalScoreJson);
-		JsonReader jsonReader = new JsonReader(reader);
-
-		jsonReader.beginObject();
-		int finalScore = 0;
-		while (jsonReader.hasNext()) {
-			String field = jsonReader.nextName();
-			if ("finalScore".equals(field)) {
-				finalScore = jsonReader.nextInt();
-			} else {
-				jsonReader.skipValue();
-			}
-		}
-		jsonReader.endObject();
-
-		return finalScore;
-	}
-
-	/**
-	 * Builds a table header row.
-	 */
-	private String buildTableHeader(int testNumWidth, int nameWidth, int scoreWidth) {
-		StringBuilder row = new StringBuilder();
-		row.append("+");
-		row.append("-".repeat(testNumWidth));
-		row.append("+");
-		row.append("-".repeat(nameWidth));
-		row.append("+");
-		row.append("-".repeat(scoreWidth));
-		row.append("+");
-		row.append("-".repeat(scoreWidth));
-		row.append("+\n");
-		row.append("| ");
-		row.append(String.format("%-" + (testNumWidth - 2) + "s", "Test"));
-		row.append(" | ");
-		row.append(String.format("%-" + (nameWidth - 2) + "s", "Test Name"));
-		row.append(" | ");
-		row.append(String.format("%" + (scoreWidth - 2) + "s", "Judge Score"));
-		row.append(" | ");
-		row.append(String.format("%" + (scoreWidth - 2) + "s", "Final Score"));
-		row.append(" |\n");
-		return row.toString();
-	}
-
-	/**
-	 * Builds a table row.
-	 */
-	private String buildTableRow(int testNumWidth, int nameWidth, int scoreWidth, String testNum, String name, String judgeScore, String finalScore) {
-		StringBuilder row = new StringBuilder();
-		row.append("| ");
-		row.append(String.format("%-" + (testNumWidth - 2) + "s", testNum));
-		row.append(" | ");
-		row.append(String.format("%-" + (nameWidth - 2) + "s", truncate(name, nameWidth - 2)));
-		row.append(" | ");
-		row.append(String.format("%" + (scoreWidth - 2) + "s", judgeScore));
-		row.append(" | ");
-		row.append(String.format("%" + (scoreWidth - 2) + "s", finalScore));
-		row.append(" |\n");
-		return row.toString();
-	}
-
-	/**
-	 * Builds a table separator row.
-	 */
-	private String buildTableSeparator(int testNumWidth, int nameWidth, int scoreWidth) {
-		StringBuilder sep = new StringBuilder();
-		sep.append("+");
-		sep.append("-".repeat(testNumWidth));
-		sep.append("+");
-		sep.append("-".repeat(nameWidth));
-		sep.append("+");
-		sep.append("-".repeat(scoreWidth));
-		sep.append("+");
-		sep.append("-".repeat(scoreWidth));
-		sep.append("+\n");
-		return sep.toString();
-	}
-
-	/**
-	 * Builds a table footer.
-	 */
-	private String buildTableFooter(int testNumWidth, int nameWidth, int scoreWidth) {
-		StringBuilder footer = new StringBuilder();
-		footer.append("+");
-		footer.append("-".repeat(testNumWidth));
-		footer.append("+");
-		footer.append("-".repeat(nameWidth));
-		footer.append("+");
-		footer.append("-".repeat(scoreWidth));
-		footer.append("+");
-		footer.append("-".repeat(scoreWidth));
-		footer.append("+\n");
-		return footer.toString();
-	}
-
-	/**
-	 * Truncates a string to the specified length, adding "..." if needed.
-	 */
-	private String truncate(String str, int maxLength) {
-		if (str.length() <= maxLength) {
-			return str;
-		}
-		return str.substring(0, maxLength - 3) + "...";
-	}
 
 	/**
 	 * Loads the ModelExplorer system prompt using reflection to read the @SystemMessage annotation.

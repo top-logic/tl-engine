@@ -6,6 +6,7 @@
 package com.top_logic.ai.service.tools;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -88,14 +89,14 @@ public class ToolCallTracker {
 	 * Gets the list of tool calls in order.
 	 */
 	public List<ToolCall> getToolCalls() {
-		return new ArrayList<>(_toolCalls);
+		return Collections.unmodifiableList(_toolCalls);
 	}
 
 	/**
 	 * Gets the map of result references to tool results.
 	 */
 	public Map<String, Object> getToolResults() {
-		return new HashMap<>(_toolResults);
+		return Collections.unmodifiableMap(_toolResults);
 	}
 
 	/**

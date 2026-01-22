@@ -50,13 +50,6 @@ public class ToolCallTracking {
 	}
 
 	/**
-	 * Clears the tracker for the current thread.
-	 */
-	public static void clearTracker() {
-		TRACKER.remove();
-	}
-
-	/**
 	 * Records a tool call if tracking is enabled in the current thread.
 	 * 
 	 * <p>

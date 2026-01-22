@@ -137,7 +137,7 @@ public class ModelExplorerScoringTest extends TestCase {
 			
 			System.out.println("\n✓ Test passed!");
 		} finally {
-			ToolCallTracking.clearTracker();
+			ToolCallTracking.setTracker(null);
 		}
 	}
 
@@ -209,7 +209,7 @@ public class ModelExplorerScoringTest extends TestCase {
 			
 			System.out.println("\n✓ Test passed!");
 		} finally {
-			ToolCallTracking.clearTracker();
+			ToolCallTracking.setTracker(null);
 		}
 	}
 
@@ -281,7 +281,7 @@ public class ModelExplorerScoringTest extends TestCase {
 			
 			System.out.println("\n✓ Test passed!");
 		} finally {
-			ToolCallTracking.clearTracker();
+			ToolCallTracking.setTracker(null);
 		}
 	}
 
@@ -353,7 +353,7 @@ public class ModelExplorerScoringTest extends TestCase {
 			
 			System.out.println("\n✓ Test passed!");
 		} finally {
-			ToolCallTracking.clearTracker();
+			ToolCallTracking.setTracker(null);
 		}
 	}
 
@@ -425,7 +425,7 @@ public class ModelExplorerScoringTest extends TestCase {
 			
 			System.out.println("\n✓ Test passed!");
 		} finally {
-			ToolCallTracking.clearTracker();
+			ToolCallTracking.setTracker(null);
 		}
 	}
 

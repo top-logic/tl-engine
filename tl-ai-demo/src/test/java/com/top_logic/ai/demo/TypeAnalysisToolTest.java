@@ -239,8 +239,8 @@ public class TypeAnalysisToolTest extends BasicTestCase {
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain inheritedBy array", result.contains("\"inheritedBy\""));
-		// If Product inherits from NamedEntities, it should be in the inheritedBy list
-		// (or the inheritedBy array might be empty if no subclasses inherit it)
+		// If Product inherits from NamedEntities, it should be in the inherited by list
+		// (or the inherited by array might be empty if no subclasses inherit it)
 	}
 
 	/**

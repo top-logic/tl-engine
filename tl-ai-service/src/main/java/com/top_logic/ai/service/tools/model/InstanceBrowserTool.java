@@ -265,7 +265,7 @@ public class InstanceBrowserTool {
 						throw new IllegalArgumentException("TID is required");
 					}
 
-					// Parse TID (format: "TypeName:hexId")
+					// Parse TID (format: "type-name:hex-id")
 					String[] split = tid.split(":", 2);
 					if (split.length != 2) {
 						throw new IllegalArgumentException(

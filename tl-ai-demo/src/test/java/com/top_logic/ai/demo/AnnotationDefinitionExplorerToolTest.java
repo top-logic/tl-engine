@@ -53,7 +53,7 @@ public class AnnotationDefinitionExplorerToolTest extends BasicTestCase {
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain tagName field", result.contains("\"tagName\""));
-		// The tagName should be either from @TagName annotation or lowercase simple class name
+		// The tag name should be either from @TagName annotation or lowercase simple class name
 		assertTrue("Result should contain visibility tag",
 			result.contains("\"tagName\":\"visibility\"") || result.contains("\"tagName\":\"Visibility\""));
 	}
@@ -120,7 +120,7 @@ public class AnnotationDefinitionExplorerToolTest extends BasicTestCase {
 		String result = tool.describeAnnotation(VISIBILITY_ANNOTATION);
 
 		assertNotNull("Result should not be null", result);
-		// If there are properties, they should have type and typeSimpleName
+		// If there are properties, they should have type and type simple name
 		if (result.contains("\"properties\":[{")) {
 			assertTrue("Properties should have type field", result.contains("\"type\""));
 			assertTrue("Properties should have typeSimpleName field", result.contains("\"typeSimpleName\""));
@@ -150,7 +150,7 @@ public class AnnotationDefinitionExplorerToolTest extends BasicTestCase {
 		String result = tool.describeAnnotation(VISIBILITY_ANNOTATION);
 
 		assertNotNull("Result should not be null", result);
-		// If there are properties with explicit defaults, they should have hasExplicitDefault field
+		// If there are properties with explicit defaults, they should have has explicit default field
 		if (result.contains("\"properties\":[{")) {
 			assertTrue("Properties should have hasExplicitDefault field", result.contains("\"hasExplicitDefault\""));
 		}
@@ -165,7 +165,7 @@ public class AnnotationDefinitionExplorerToolTest extends BasicTestCase {
 		String result = tool.describeAnnotation(VISIBILITY_ANNOTATION);
 
 		assertNotNull("Result should not be null", result);
-		// If there are enum properties, they should have enumValues array
+		// If there are enum properties, they should have enum values array
 		if (result.contains("\"enumValues\"")) {
 			assertTrue("Enum properties should have enumValues array", result.contains("\"enumValues\":["));
 		}

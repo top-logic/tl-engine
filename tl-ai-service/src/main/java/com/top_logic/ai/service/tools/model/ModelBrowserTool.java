@@ -312,7 +312,7 @@ public class ModelBrowserTool {
 						throw new IllegalArgumentException("Type " + typeName + " is not a structured type and does not have parts");
 					}
 
-					// Check if the type is an enumeration (use listClassifiers instead)
+					// Check if the type is an enumeration (use {@link #listClassifiers(String, String)} instead)
 					if (type instanceof TLEnumeration) {
 						throw new IllegalArgumentException("Type " + typeName + " is an enumeration. Use listClassifiers() to retrieve its classifiers.");
 					}

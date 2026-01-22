@@ -118,7 +118,7 @@ public final class DataClassSerializer {
 		
 		// Perform tool call tracking if args are provided
 		if (args != null) {
-			// Extract tool name from operationName by removing trailing "()"
+			// Extract tool name from operation name by removing trailing "()"
 			String toolName = operationName;
 			if (toolName.endsWith("()")) {
 				toolName = toolName.substring(0, toolName.length() - 2);

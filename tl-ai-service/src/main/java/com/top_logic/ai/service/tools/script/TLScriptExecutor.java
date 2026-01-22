@@ -165,7 +165,7 @@ public class TLScriptExecutor {
 				return convertToJsonData(Arrays.asList(array));
 			}
 
-			// Fallback: toString representation
+			// Fallback: use {@link Object#toString()} representation
 			return String.valueOf(result);
 		}
 

@@ -158,7 +158,7 @@ public class ModelAnnotationBrowserToolTest extends BasicTestCase {
 		String result = tool.listAnnotations(targetRef, true);
 
 		assertNotNull("Result should not be null", result);
-		// If there are inherited annotations, they should have definedIn field
+		// If there are inherited annotations, they should have defined in field
 		if (result.contains("\"inherited\":true")) {
 			assertTrue("Inherited annotations should have definedIn field", result.contains("\"definedIn\""));
 		}
@@ -322,7 +322,7 @@ public class ModelAnnotationBrowserToolTest extends BasicTestCase {
 		String result = tool.listAnnotations(targetRef, false);
 
 		assertNotNull("Result should not be null", result);
-		// If there are annotations, they should have a configInterface field
+		// If there are annotations, they should have a config interface field
 		if (result.contains("\"annotations\":[{")) {
 			assertTrue("Annotations should have configInterface field", result.contains("\"configInterface\""));
 		}
@@ -337,7 +337,7 @@ public class ModelAnnotationBrowserToolTest extends BasicTestCase {
 		String result = tool.listAnnotations(targetRef, false);
 
 		assertNotNull("Result should not be null", result);
-		// If there are annotations, they should have a configXml field
+		// If there are annotations, they should have a config XML field
 		if (result.contains("\"annotations\":[{")) {
 			assertTrue("Annotations should have configXml field", result.contains("\"configXml\""));
 		}

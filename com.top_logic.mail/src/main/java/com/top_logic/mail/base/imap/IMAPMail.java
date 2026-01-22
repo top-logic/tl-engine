@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import jakarta.mail.Address;
 import jakarta.mail.Message;
@@ -18,10 +19,12 @@ import jakarta.mail.Message;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.util.Utils;
+import com.top_logic.element.meta.kbbased.PersistentObjectImpl;
 import com.top_logic.knowledge.objects.DestinationIterator;
 import com.top_logic.knowledge.objects.InvalidLinkException;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeObject;
+import com.top_logic.knowledge.searching.FullTextBuBuffer;
 import com.top_logic.knowledge.service.AssociationQuery;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.db2.AssociationSetQuery;
@@ -34,7 +37,10 @@ import com.top_logic.mail.base.MailFolder;
 import com.top_logic.mail.proxy.MailReceiverService;
 import com.top_logic.mail.proxy.MailServerMessage;
 import com.top_logic.mail.proxy.exchange.ExchangeMail;
+import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLReference;
+import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.util.error.TopLogicException;
 
@@ -63,7 +69,53 @@ public class IMAPMail extends AbstractContainerWrapper implements Mail {
         super(ko);
     }
 
-    @Override
+	@Override
+	public TLClass tType() {
+		return PersistentObjectImpl.tType(this);
+	}
+
+	@Override
+	public Set<String> getAllAttributeNames() {
+		Set<String> theResult = super.getAllAttributeNames();
+
+		for (TLStructuredTypePart part : tType().getAllParts()) {
+			theResult.add(part.getName());
+		}
+
+		return theResult;
+	}
+
+	@Override
+	public TLObject tContainer() {
+		return PersistentObjectImpl.tContainer(this);
+	}
+
+	@Override
+	public TLReference tContainerReference() {
+		return PersistentObjectImpl.tContainerReference(this);
+	}
+
+	@Override
+	public Object getValue(String anAttribute) {
+		return PersistentObjectImpl.getValue(this, anAttribute);
+	}
+
+	@Override
+	public Object tValue(TLStructuredTypePart part) {
+		return PersistentObjectImpl.getValue(this, part);
+	}
+
+	@Override
+	public void generateFullText(FullTextBuBuffer buffer) {
+		PersistentObjectImpl.generateFullText(buffer, this);
+	}
+
+	@Override
+	public void setValue(String aKey, Object aValue) {
+		PersistentObjectImpl.setValue(this, aKey, aValue);
+	}
+
+	@Override
 	public Collection<? extends Document> getContent() {
 		return CollectionUtil.dynamicCastView(Document.class, this.resolveWrappers(DOCUMENTS));
     }

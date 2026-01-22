@@ -25,6 +25,7 @@ import com.top_logic.basic.util.Utils;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.identifier.DefaultObjectKey;
 import com.top_logic.dob.identifier.ObjectKey;
+import com.top_logic.dob.meta.MOStructure;
 import com.top_logic.element.changelog.model.Change;
 import com.top_logic.element.changelog.model.ChangeSet;
 import com.top_logic.element.changelog.model.trans.TransientChangeSet;
@@ -406,7 +407,12 @@ public class KBChangeAnalzyer {
 	}
 
 	private boolean isPersistentCacheObject(TLObject object) {
-		return TLAnnotations.isPersistentCache(object.tType());
+		TLStructuredType type = object.tType();
+		if (type == null) {
+			MOStructure table = object.tTable();
+			throw new NullPointerException("No type found for object from table " + table + ": " + object);
+		}
+		return TLAnnotations.isPersistentCache(type);
 	}
 
 	private boolean isPersistentCacheAttribute(TLStructuredTypePart part) {

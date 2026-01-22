@@ -8,9 +8,9 @@ package com.top_logic.ai.demo.test.agent.judge;
 import java.util.List;
 import java.util.Map;
 
-import com.top_logic.ai.service.tools.ToolCallTracker;
 import com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult;
 import com.top_logic.ai.service.AIService;
+import com.top_logic.ai.service.tools.ToolCallTracker;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.thread.ThreadContextManager;
 
@@ -98,8 +98,6 @@ public class JudgeClient {
 					ChatResponse response = judgeModel.chat(request);
 					AiMessage aiMessage = response.aiMessage();
 					String resultText = aiMessage.text();
-
-					Logger.info("Judge response: " + resultText, JudgeClient.class);
 
 					return parseJudgeResult(resultText);
 					

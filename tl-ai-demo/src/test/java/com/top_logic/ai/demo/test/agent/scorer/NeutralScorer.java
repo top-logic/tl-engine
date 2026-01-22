@@ -87,8 +87,6 @@ public class NeutralScorer {
 					AiMessage aiMessage = response.aiMessage();
 					String resultText = aiMessage.text();
 
-					Logger.info("Scorer response: " + resultText, NeutralScorer.class);
-
 					return parseResult(resultText);
 
 				} catch (Exception ex) {

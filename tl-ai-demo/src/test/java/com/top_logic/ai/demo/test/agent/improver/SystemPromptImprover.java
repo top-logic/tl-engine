@@ -82,8 +82,6 @@ public class SystemPromptImprover {
 					AiMessage aiMessage = response.aiMessage();
 					String resultText = aiMessage.text();
 
-					Logger.info("Improver response: " + resultText, SystemPromptImprover.class);
-
 					return resultText;
 
 				} catch (Exception ex) {

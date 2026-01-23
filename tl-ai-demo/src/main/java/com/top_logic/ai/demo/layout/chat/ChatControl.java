@@ -24,6 +24,8 @@ import com.top_logic.ai.service.tools.model.ModelAnnotationBrowserTool;
 import com.top_logic.ai.service.tools.model.ModelBrowserTool;
 import com.top_logic.ai.service.tools.model.ModelSearchTool;
 import com.top_logic.ai.service.tools.model.TypeAnalysisTool;
+import com.top_logic.ai.service.tools.ToolCallTracker;
+import com.top_logic.ai.service.tools.ToolCallTracking;
 import com.top_logic.ai.service.tools.help.ModelExplorerTool;
 import com.top_logic.ai.service.tools.help.TLScriptReferenceTool;
 import com.top_logic.basic.Logger;
@@ -233,6 +235,54 @@ public class ChatControl extends AbstractControlBase {
 		}
 	}
 
+	/**
+	 * Formats tool calls for display in the chat.
+	 *
+	 * @param tracker
+	 *        The tool tracker containing recorded tool calls.
+	 * @return A formatted string listing all tool calls with their raw JSON results.
+	 */
+	private String formatToolCalls(ToolCallTracker tracker) {
+		StringBuilder sb = new StringBuilder();
+		sb.append("## Tool Calls\n\n");
+
+		for (ToolCallTracker.ToolCall call : tracker.getToolCalls()) {
+			sb.append("- **").append(call.getTool()).append("**");
+			if (!call.getArgs().isEmpty()) {
+				sb.append("(");
+				boolean first = true;
+				for (Map.Entry<String, Object> arg : call.getArgs().entrySet()) {
+					if (!first) {
+						sb.append(", ");
+					}
+					sb.append(arg.getKey()).append("=");
+					Object value = arg.getValue();
+					if (value instanceof String) {
+						String str = (String) value;
+						if (str.length() > 50) {
+							sb.append("\"").append(str.substring(0, 47)).append("...\"");
+						} else {
+							sb.append("\"").append(str).append("\"");
+						}
+					} else {
+						sb.append(value);
+					}
+					first = false;
+				}
+				sb.append(")");
+			}
+			sb.append(" -> [").append(call.getResultRef()).append("]\n\n");
+
+			// Add the raw JSON result
+			String rawJson = tracker.getRawResultJsons().get(call.getResultRef());
+			if (rawJson != null) {
+				sb.append("  ```json\n  ").append(rawJson.replace("\n", "\n  ")).append("\n  ```\n\n");
+			}
+		}
+
+		return sb.toString();
+	}
+
 	private void writeInputSection(TagWriter out) throws IOException {
 		out.beginBeginTag(DIV);
 		out.writeAttribute(CLASS_ATTR, "chat-input-section");
@@ -363,6 +413,10 @@ public class ChatControl extends AbstractControlBase {
 
 		String explorationQuestion = extractExplorationQuestion(command);
 
+		// Set up tool tracking
+		ToolCallTracker tracker = new ToolCallTracker();
+		ToolCallTracking.setTracker(tracker);
+
 		try {
 			Logger.info("ChatControl: Starting model exploration in thread: " + Thread.currentThread().getName(),
 				ChatControl.class);
@@ -392,6 +446,12 @@ public class ChatControl extends AbstractControlBase {
 			// Execute the exploration
 			String result = explorer.explore(explorationQuestion);
 
+			// Add tool calls as a system message if there were any
+			if (!tracker.getToolCalls().isEmpty()) {
+				String toolCallsMessage = formatToolCalls(tracker);
+				_chat.addMessage(new ChatMessage("System", toolCallsMessage));
+			}
+
 			// Add final result as Agent message
 			_chat.addMessage(new ChatMessage("Agent", result));
 			requestRepaint();
@@ -403,6 +463,9 @@ public class ChatControl extends AbstractControlBase {
 			// Handle exploration failure
 			_chat.addMessage(new ChatMessage("Agent", "❌ Model exploration failed: " + e.getMessage()));
 			requestRepaint();
+		} finally {
+			// Always clear the tracker
+			ToolCallTracking.setTracker(null);
 		}
 	}
 
@@ -414,6 +477,10 @@ public class ChatControl extends AbstractControlBase {
 		_notifiers.clear();
 
 		String question = extractTLScriptQuestion(command);
+
+		// Set up tool tracking
+		ToolCallTracker tracker = new ToolCallTracker();
+		ToolCallTracking.setTracker(tracker);
 
 		try {
 			Logger.info("ChatControl: Starting TLScript reference in thread: " + Thread.currentThread().getName(),
@@ -440,6 +507,12 @@ public class ChatControl extends AbstractControlBase {
 			// Execute the agent
 			String result = agent.answer(question);
 
+			// Add tool calls as a system message if there were any
+			if (!tracker.getToolCalls().isEmpty()) {
+				String toolCallsMessage = formatToolCalls(tracker);
+				_chat.addMessage(new ChatMessage("System", toolCallsMessage));
+			}
+
 			// Add final result as Agent message
 			_chat.addMessage(new ChatMessage("Agent", result));
 			requestRepaint();
@@ -449,6 +522,9 @@ public class ChatControl extends AbstractControlBase {
 			// Handle failure
 			_chat.addMessage(new ChatMessage("Agent", "❌ TLScript reference failed: " + e.getMessage()));
 			requestRepaint();
+		} finally {
+			// Always clear the tracker
+			ToolCallTracking.setTracker(null);
 		}
 	}
 

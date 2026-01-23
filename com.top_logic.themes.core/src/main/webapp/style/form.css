@@ -613,6 +613,7 @@ div.dfListAdd {
 	margin: var(--spacing-01) 0;
 }
 
+.dfEntryTitle .lFixedRight button:not(.lFlexible),
 .dfEntryTitle .lFixedRight a:not(.lFlexible),
 .dfEntryTitle .lFixedRight:not(.timePart) span:not(.lFlexible),
 .dfEntryTitle .lFixedRight span span:not(.lFlexible),
@@ -1600,6 +1601,7 @@ div.cal_zoom_inAnimation {
 	padding-right: var(--spacing-02);
 }
 
+.cBlockTextInput .lFixedRight button:not(.lFlexible),
 .cBlockTextInput .lFixedRight a:not(.lFlexible),
 .cExpandableTextInput .lFixedRight a:not(.lFlexible) {
 	height: inherit;
@@ -1626,6 +1628,7 @@ td.tl-table__cell--selected .cDecoratedCell a.input-image:focus {
 	background-color: unset;
 }
 
+.lFixedRight button:not(.lFlexible),
 .lFixedRight a:not(.lFlexible),
 .lFixedRight:not(.timePart) span:not(.lFlexible),
 .lFixedRight span span:not(.lFlexible),
@@ -1651,11 +1654,13 @@ td.tl-table__cell--selected .cDecoratedCell a.input-image:focus {
 	border-left: 1px solid var(--border-subtle);
 }
 
+.lFixedRight button:hover,
 .lFixedRight a:hover {
 	background: var(--field-hover);
 	text-decoration: none;
 }
 
+.lFixedRight button:focus-within,
 .lFixedRight a:focus-within,
 .lFixedRight .button_minus:focus-within::after {
 	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
@@ -1663,6 +1668,7 @@ td.tl-table__cell--selected .cDecoratedCell a.input-image:focus {
 	outline: none !important;
 }
 
+.lFixedRight button.disabled,
 .lFixedRight a.disabled,
 .lFixedRight .fChoose.disabled,
 .lFixedRight span.disabled,
@@ -1672,10 +1678,12 @@ input.is-checkbox[disabled] {
 	color: var(--icon-disabled);
 }
 
+.lFixedRight button.disabled:hover,
 .lFixedRight a.disabled:hover {
 	background: none;
 }
 
+.lFixedRight button.disabled:focus,
 .lFixedRight a.disabled:focus,
 .lFixedRight .button_minus:focus::after {
 	box-shadow: none;

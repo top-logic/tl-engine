@@ -202,39 +202,44 @@ public class ConfigSchemaBuilder {
 		// Reserve the slot in cache before processing to handle recursion
 		_schemaCache.put(schemaName, null);
 
-		AnyOfSchema anyOf = AnyOfSchema.create();
-
-		// Add base-schema(A) if A is not abstract
-		if (!descriptor.isAbstract()) {
-			anyOf.addAnyOf(buildBaseSchema(descriptor));
-		}
-
-		// Add ref:extension-schema(Bn) for each direct non-abstract sub-type Bn
-		Collection<Class<?>> directSubtypes = getDirectSubtypes(descriptor);
-		for (Class<?> subtype : directSubtypes) {
-			try {
-				ConfigurationDescriptor subtypeDescriptor = TypedConfiguration.getConfigurationDescriptor(subtype);
-				String extensionSchemaId = extensionSchemaId(subtypeDescriptor);
-
-				// Build extension schema and cache it
-				buildExtensionSchema(subtypeDescriptor);
-
-				anyOf.addAnyOf(RefSchema.create().setRef(extensionSchemaId));
-			} catch (Exception ex) {
-				Logger.warn("Invalid sub-configuration encountered: " + subtype.getName(), ex,
-					ConfigSchemaBuilder.class);
-			}
-		}
-
 		Schema result;
-		if (anyOf.getAnyOf().size() == 1) {
-			// Simplify: if only one option, use it directly
-			result = anyOf.getAnyOf().get(0);
-		} else if (anyOf.getAnyOf().isEmpty()) {
-			// Abstract type with no subtypes - return base schema anyway for documentation
-			result = buildBaseSchema(descriptor);
+		if (descriptor.getConfigurationInterface() == ConfigurationItem.class) {
+			// TODO: Prevent enumerating the world.
+			result = ObjectSchema.create();
 		} else {
-			result = anyOf;
+			AnyOfSchema anyOf = AnyOfSchema.create();
+
+			// Add base-schema(A) if A is not abstract
+			if (!descriptor.isAbstract()) {
+				anyOf.addAnyOf(buildBaseSchema(descriptor));
+			}
+
+			// Add ref:extension-schema(Bn) for each direct non-abstract sub-type Bn
+			Collection<Class<?>> directSubtypes = getDirectSubtypes(descriptor);
+			for (Class<?> subtype : directSubtypes) {
+				try {
+					ConfigurationDescriptor subtypeDescriptor = TypedConfiguration.getConfigurationDescriptor(subtype);
+					String extensionSchemaId = extensionSchemaId(subtypeDescriptor);
+
+					// Build extension schema and cache it
+					buildExtensionSchema(subtypeDescriptor);
+
+					anyOf.addAnyOf(RefSchema.create().setRef(extensionSchemaId));
+				} catch (Exception ex) {
+					Logger.warn("Invalid sub-configuration encountered: " + subtype.getName(), ex,
+						ConfigSchemaBuilder.class);
+				}
+			}
+
+			if (anyOf.getAnyOf().size() == 1) {
+				// Simplify: if only one option, use it directly
+				result = anyOf.getAnyOf().get(0);
+			} else if (anyOf.getAnyOf().isEmpty()) {
+				// Abstract type with no subtypes - return base schema anyway for documentation
+				result = buildBaseSchema(descriptor);
+			} else {
+				result = anyOf;
+			}
 		}
 
 		_schemaCache.put(schemaName, result);
@@ -603,13 +608,19 @@ public class ConfigSchemaBuilder {
 	 * Builds schema for ITEM properties (nested configuration interfaces).
 	 */
 	private Schema buildItemPropertySchema(PropertyDescriptor property) {
-		Class<?> itemType = property.getValueDescriptor().getConfigurationInterface();
+		Class<?> instanceType = property.getInstanceType();
+		if (instanceType != null) {
+			// TODO: Find matching implementations.
+			return ObjectSchema.create();
+		} else {
+			Class<?> itemType = property.getValueDescriptor().getConfigurationInterface();
 
-		// Get the configuration descriptor for the nested interface
-		ConfigurationDescriptor itemDescriptor = TypedConfiguration.getConfigurationDescriptor(itemType);
+			// Get the configuration descriptor for the nested interface
+			ConfigurationDescriptor itemDescriptor = TypedConfiguration.getConfigurationDescriptor(itemType);
 
-		// Recursively build schema for the nested configuration
-		return buildObjectSchema(itemDescriptor);
+			// Recursively build schema for the nested configuration
+			return buildObjectSchema(itemDescriptor);
+		}
 	}
 
 	/**

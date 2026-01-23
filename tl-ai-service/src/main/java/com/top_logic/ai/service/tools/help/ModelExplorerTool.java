@@ -10,6 +10,7 @@ import java.util.Map;
 
 import com.top_logic.ai.service.AIService;
 import com.top_logic.ai.service.agents.ModelExplorer;
+import com.top_logic.ai.service.tools.help.messages.ModelExplorerResponse;
 import com.top_logic.ai.service.tools.model.AnnotationDefinitionExplorerTool;
 import com.top_logic.ai.service.tools.model.InstanceBrowserTool;
 import com.top_logic.ai.service.tools.model.ModelAnnotationBrowserTool;
@@ -103,10 +104,9 @@ public class ModelExplorerTool {
 				ModelExplorerTool.class,
 				() -> explorer.explore(question));
 
-			// Create a simple data object wrapper for the text result
-			com.top_logic.ai.service.tools.help.messages.TextResult response =
-				com.top_logic.ai.service.tools.help.messages.TextResult.create();
-			response.setText(result);
+			// Create response object with the exploration result
+			ModelExplorerResponse response = ModelExplorerResponse.create();
+			response.setResult(result);
 
 			return DataClassSerializer.toJson(response, ModelExplorerTool.class, "exploreModel()", args);
 

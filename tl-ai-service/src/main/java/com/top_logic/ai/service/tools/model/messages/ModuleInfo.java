@@ -27,6 +27,9 @@ public class ModuleInfo extends de.haumacher.msgbuf.data.AbstractDataObject impl
 	/** @see #getDescription() */
 	public static final String DESCRIPTION__PROP = "description";
 
+	/** @see #isFrameworkModule() */
+	public static final String FRAMEWORK_MODULE__PROP = "frameworkModule";
+
 	private String _name = "";
 
 	private long _typeCount = 0L;
@@ -34,6 +37,8 @@ public class ModuleInfo extends de.haumacher.msgbuf.data.AbstractDataObject impl
 	private String _label = "";
 
 	private String _description = "";
+
+	private boolean _frameworkModule = false;
 
 	/**
 	 * Creates a {@link ModuleInfo} instance.
@@ -124,6 +129,27 @@ public class ModuleInfo extends de.haumacher.msgbuf.data.AbstractDataObject impl
 		_description = value;
 	}
 
+	/**
+	 * Whether this is a framework/platform module (true) or an application domain module (false).
+	 * Framework modules include tl.*, tl5.*, and infrastructure modules (orgStructure, mandatorStructure, etc.).
+	 */
+	public final boolean isFrameworkModule() {
+		return _frameworkModule;
+	}
+
+	/**
+	 * @see #isFrameworkModule()
+	 */
+	public com.top_logic.ai.service.tools.model.messages.ModuleInfo setFrameworkModule(boolean value) {
+		internalSetFrameworkModule(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #isFrameworkModule()} without chain call utility. */
+	protected final void internalSetFrameworkModule(boolean value) {
+		_frameworkModule = value;
+	}
+
 	@Override
 	public String jsonType() {
 		return MODULE_INFO__TYPE;
@@ -135,7 +161,8 @@ public class ModuleInfo extends de.haumacher.msgbuf.data.AbstractDataObject impl
 			NAME__PROP, 
 			TYPE_COUNT__PROP, 
 			LABEL__PROP, 
-			DESCRIPTION__PROP);
+			DESCRIPTION__PROP, 
+			FRAMEWORK_MODULE__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -164,6 +191,7 @@ public class ModuleInfo extends de.haumacher.msgbuf.data.AbstractDataObject impl
 			case TYPE_COUNT__PROP: return getTypeCount();
 			case LABEL__PROP: return getLabel();
 			case DESCRIPTION__PROP: return getDescription();
+			case FRAMEWORK_MODULE__PROP: return isFrameworkModule();
 			default: return null;
 		}
 	}
@@ -175,6 +203,7 @@ public class ModuleInfo extends de.haumacher.msgbuf.data.AbstractDataObject impl
 			case TYPE_COUNT__PROP: internalSetTypeCount((long) value); break;
 			case LABEL__PROP: internalSetLabel((String) value); break;
 			case DESCRIPTION__PROP: internalSetDescription((String) value); break;
+			case FRAMEWORK_MODULE__PROP: internalSetFrameworkModule((boolean) value); break;
 		}
 	}
 
@@ -201,6 +230,8 @@ public class ModuleInfo extends de.haumacher.msgbuf.data.AbstractDataObject impl
 		out.value(getLabel());
 		out.name(DESCRIPTION__PROP);
 		out.value(getDescription());
+		out.name(FRAMEWORK_MODULE__PROP);
+		out.value(isFrameworkModule());
 	}
 
 	@Override
@@ -210,6 +241,7 @@ public class ModuleInfo extends de.haumacher.msgbuf.data.AbstractDataObject impl
 			case TYPE_COUNT__PROP: setTypeCount(in.nextLong()); break;
 			case LABEL__PROP: setLabel(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case DESCRIPTION__PROP: setDescription(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case FRAMEWORK_MODULE__PROP: setFrameworkModule(in.nextBoolean()); break;
 			default: super.readField(in, field);
 		}
 	}

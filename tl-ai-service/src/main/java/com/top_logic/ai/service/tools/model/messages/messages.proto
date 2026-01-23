@@ -41,6 +41,12 @@ message ModuleInfo {
 	 * Localized description of the module.
 	 */
 	string description;
+
+	/**
+	 * Whether this is a framework/platform module (true) or an application domain module (false).
+	 * Framework modules include tl.*, tl5.*, and infrastructure modules (orgStructure, mandatorStructure, etc.).
+	 */
+	bool frameworkModule;
 }
 
 /**

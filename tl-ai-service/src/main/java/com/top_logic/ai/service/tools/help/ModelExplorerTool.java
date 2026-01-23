@@ -48,7 +48,13 @@ public class ModelExplorerTool {
 	 *        The user's question about the model.
 	 * @return The exploration result as a formatted text response.
 	 */
-	@Tool("Explore the TopLogic application model to answer questions about modules, types, properties, references, and model structure. Use this when the user asks about the actual application model.")
+	@Tool("Explore the TopLogic application model to answer questions about modules, types, parts, references, " +
+		"and model structure. Provide a clear, specific question—for example, 'What parts does sales:Order have?' " +
+		"or 'Where is sales:Order used?' The Model Explorer will run the appropriate model tools, return its findings "
+		+
+		"in concise bullet points, optionally suggest a next exploration step, and include a source Reference (citations) "
+		+
+		"linking each fact to the tool output. Use this for read‑only exploration; it never modifies the model.")
 	public String exploreModel(@P("The user's question about the TopLogic application model") String question) {
 		return ThreadContextManager.inSystemInteraction(
 			ModelExplorerTool.class,
@@ -91,10 +97,6 @@ public class ModelExplorerTool {
 
 					// Execute the exploration
 					String result = explorer.explore(question);
-
-					// Log result
-					System.out.println("ModelExplorerTool.exploreModel() result: " + result);
-					Logger.info("exploreModel() completed successfully", ModelExplorerTool.class);
 					return result;
 
 				} catch (Exception ex) {

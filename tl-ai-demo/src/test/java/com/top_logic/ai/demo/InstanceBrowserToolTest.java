@@ -96,7 +96,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 			String firstPage = tool.listInstances(PIZZASHOP_MODULE, PRODUCT_CLASS, 2, null);
 			assertNotNull("First page should not be null", firstPage);
 
-			// Extract nextCursor (simple string matching since we don't want to parse JSON)
+			// Extract next cursor (simple string matching since we don't want to parse JSON)
 			int cursorStart = firstPage.indexOf("\"nextCursor\":\"") + 14;
 			int cursorEnd = firstPage.indexOf("\"", cursorStart);
 			String cursor = firstPage.substring(cursorStart, cursorEnd);
@@ -168,7 +168,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 			assertNotNull("Result should not be null", result);
 			// Product1 has name="Margherita Pizza"
 			assertTrue("Should contain product name", result.contains("Margherita"));
-			// Product1 has plannedQuantity=100.0
+			// Product1 has planned quantity=100.0
 			assertTrue("Should contain planned quantity", result.contains("100"));
 		});
 	}

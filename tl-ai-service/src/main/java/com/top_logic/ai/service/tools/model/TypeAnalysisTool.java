@@ -6,8 +6,11 @@
 package com.top_logic.ai.service.tools.model;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+
 
 import com.top_logic.ai.service.tools.model.messages.PartUsageResponse;
 import com.top_logic.ai.service.tools.model.messages.PropertyUsage;
@@ -44,6 +47,8 @@ import dev.langchain4j.agent.tool.Tool;
  * <p>
  * All methods return JSON-formatted strings for consumption by AI agents.
  * </p>
+ * 
+ * @author jhu
  */
 public class TypeAnalysisTool {
 
@@ -93,12 +98,12 @@ public class TypeAnalysisTool {
 					// Build response using data classes
 					TypeUsageResponse result = TypeUsageResponse.create();
 
-					// Add property usages (directly from findPropertyUsages)
+					// Add property usages (directly from {@link #findPropertyUsages(TLModel, TLType)})
 					for (PropertyUsage propertyUsage : propertyUsages) {
 						result.addPropertie(propertyUsage);
 					}
 
-					// Add reference usages (directly from findReferenceUsages)
+					// Add reference usages (directly from {@link #findReferenceUsages(TLModel, TLType)})
 					for (ReferenceUsage referenceUsage : referenceUsages) {
 						result.addReference(referenceUsage);
 					}
@@ -114,16 +119,21 @@ public class TypeAnalysisTool {
 					return result;
 				});
 
-			// Serialize to JSON using DataClassSerializer
-			return DataClassSerializer.toJson(response, TypeAnalysisTool.class, "findTypeUsages()");
+			// Serialize to JSON using DataClassSerializer with tracking
+			Map<String, Object> args = new HashMap<>();
+			args.put("qualifiedTypeName", qualifiedTypeName);
+			return DataClassSerializer.toJson(response, TypeAnalysisTool.class, "findTypeUsages()", args);
 
 		} catch (Exception ex) {
 			Logger.error("findTypeUsages() error: " + ex.getMessage(), ex, TypeAnalysisTool.class);
 			System.err.println("TypeAnalysisTool.findTypeUsages() error: " + ex.getMessage());
+			Map<String, Object> args = new HashMap<>();
+			args.put("qualifiedTypeName", qualifiedTypeName);
 			return DataClassSerializer.errorToJson(
 				"Error analyzing type: " + ex.getMessage(),
 				TypeAnalysisTool.class,
-				"findTypeUsages()");
+				"findTypeUsages()",
+				args);
 		}
 	}
 
@@ -209,16 +219,23 @@ public class TypeAnalysisTool {
 					return result;
 				});
 
-			// Serialize to JSON using DataClassSerializer
-			return DataClassSerializer.toJson(response, TypeAnalysisTool.class, "findPartUsages()");
+			// Serialize to JSON using DataClassSerializer with tracking
+			Map<String, Object> args = new HashMap<>();
+			args.put("ownerTypeQualifiedName", ownerTypeQualifiedName);
+			args.put("partName", partName);
+			return DataClassSerializer.toJson(response, TypeAnalysisTool.class, "findPartUsages()", args);
 
 		} catch (Exception ex) {
 			Logger.error("findPartUsages() error: " + ex.getMessage(), ex, TypeAnalysisTool.class);
 			System.err.println("TypeAnalysisTool.findPartUsages() error: " + ex.getMessage());
+			Map<String, Object> args = new HashMap<>();
+			args.put("ownerTypeQualifiedName", ownerTypeQualifiedName);
+			args.put("partName", partName);
 			return DataClassSerializer.errorToJson(
 				"Error analyzing part: " + ex.getMessage(),
 				TypeAnalysisTool.class,
-				"findPartUsages()");
+				"findPartUsages()",
+				args);
 		}
 	}
 
@@ -252,7 +269,7 @@ public class TypeAnalysisTool {
 			return usages; // 'type' is not a reference
 		}
 
-		// Use getReferers() to find all TLStructuredTypePart instances that reference this type
+		// Use {@link TLReference#getReferers(Object)} to find all TLStructuredTypePart instances that reference this type
 		// Handle both direct TLStructuredTypePart and TLAssociationEnd, but only keep properties
 		for (Object referer : typeRef.getReferers(type)) {
 			String ownerTypeName = null;
@@ -332,7 +349,7 @@ public class TypeAnalysisTool {
 			return usages; // 'type' is not a reference
 		}
 
-		// Use getReferers() to find all TLStructuredTypePart instances that reference this type
+		// Use {@link TLReference#getReferers(Object)} to find all TLStructuredTypePart instances that reference this type
 		// Handle both TLReference (direct) and TLAssociationEnd (association-based references)
 		for (Object referer : typeRef.getReferers(type)) {
 			TLReference reference = null;

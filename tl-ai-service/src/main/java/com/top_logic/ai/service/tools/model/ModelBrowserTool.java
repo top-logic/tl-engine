@@ -5,8 +5,11 @@
  */
 package com.top_logic.ai.service.tools.model;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+
 
 import com.top_logic.ai.service.tools.model.messages.ClassifierInfo;
 import com.top_logic.ai.service.tools.model.messages.EnumerationResponse;
@@ -31,6 +34,7 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.TLI18NKey;
+import com.top_logic.model.annotate.TLModuleDisplayGroup;
 import com.top_logic.model.config.annotation.UnorderedEnum;
 import com.top_logic.model.resources.TLTypePartResourceProvider;
 import com.top_logic.model.util.TLModelNamingConvention;
@@ -57,6 +61,8 @@ import dev.langchain4j.agent.tool.Tool;
  * <p>
  * All methods return JSON-formatted strings for consumption by AI agents.
  * </p>
+ * 
+ * @author jhu
  */
 public class ModelBrowserTool {
 
@@ -109,22 +115,30 @@ public class ModelBrowserTool {
 							moduleInfo.setDescription(description);
 						}
 
+						// Determine if this is a framework module
+						// Framework modules are grouped under "tl" in the model editor
+						boolean isFramework = isFrameworkModule(module);
+						moduleInfo.setFrameworkModule(isFramework);
+
 						result.addModule(moduleInfo);
 					}
 
 					return result;
 				});
 
-			// Serialize to JSON using DataClassSerializer
-			return DataClassSerializer.toJson(response, ModelBrowserTool.class, "listModules()");
+			// Serialize to JSON using DataClassSerializer with tracking
+			Map<String, Object> args = new HashMap<>();
+			return DataClassSerializer.toJson(response, ModelBrowserTool.class, "listModules()", args);
 
 		} catch (Exception ex) {
 			Logger.error("listModules() error: " + ex.getMessage(), ex, ModelBrowserTool.class);
 			System.err.println("ModelBrowserTool.listModules() error: " + ex.getMessage());
+			Map<String, Object> args = new HashMap<>();
 			return DataClassSerializer.errorToJson(
 				"Error listing modules: " + ex.getMessage(),
 				ModelBrowserTool.class,
-				"listModules()");
+				"listModules()",
+				args);
 		}
 	}
 
@@ -223,16 +237,21 @@ public class ModelBrowserTool {
 					return result;
 				});
 
-			// Serialize to JSON using DataClassSerializer
-			return DataClassSerializer.toJson(response, ModelBrowserTool.class, "listTypes()");
+			// Serialize to JSON using DataClassSerializer with tracking
+			Map<String, Object> args = new HashMap<>();
+			args.put("moduleName", moduleName);
+			return DataClassSerializer.toJson(response, ModelBrowserTool.class, "listTypes()", args);
 
 		} catch (Exception ex) {
 			Logger.error("listTypes() error: " + ex.getMessage(), ex, ModelBrowserTool.class);
 			System.err.println("ModelBrowserTool.listTypes() error: " + ex.getMessage());
+			Map<String, Object> args = new HashMap<>();
+			args.put("moduleName", moduleName);
 			return DataClassSerializer.errorToJson(
 				"Error listing types: " + ex.getMessage(),
 				ModelBrowserTool.class,
-				"listTypes()");
+				"listTypes()",
+				args);
 		}
 	}
 
@@ -293,7 +312,7 @@ public class ModelBrowserTool {
 						throw new IllegalArgumentException("Type " + typeName + " is not a structured type and does not have parts");
 					}
 
-					// Check if the type is an enumeration (use listClassifiers instead)
+					// Check if the type is an enumeration (use {@link #listClassifiers(String, String)} instead)
 					if (type instanceof TLEnumeration) {
 						throw new IllegalArgumentException("Type " + typeName + " is an enumeration. Use listClassifiers() to retrieve its classifiers.");
 					}
@@ -361,16 +380,25 @@ public class ModelBrowserTool {
 					return result;
 				});
 
-			// Serialize to JSON using DataClassSerializer
-			return DataClassSerializer.toJson(response, ModelBrowserTool.class, "listTypeParts()");
+			// Serialize to JSON using DataClassSerializer with tracking
+			Map<String, Object> args = new HashMap<>();
+			args.put("moduleName", moduleName);
+			args.put("typeName", typeName);
+			args.put("includeInherited", includeInherited);
+			return DataClassSerializer.toJson(response, ModelBrowserTool.class, "listTypeParts()", args);
 
 		} catch (Exception ex) {
 			Logger.error("listTypeParts() error: " + ex.getMessage(), ex, ModelBrowserTool.class);
 			System.err.println("ModelBrowserTool.listTypeParts() error: " + ex.getMessage());
+			Map<String, Object> args = new HashMap<>();
+			args.put("moduleName", moduleName);
+			args.put("typeName", typeName);
+			args.put("includeInherited", includeInherited);
 			return DataClassSerializer.errorToJson(
 				"Error listing type parts: " + ex.getMessage(),
 				ModelBrowserTool.class,
-				"listTypeParts()");
+				"listTypeParts()",
+				args);
 		}
 	}
 
@@ -476,16 +504,62 @@ public class ModelBrowserTool {
 					return result;
 				});
 
-			// Serialize to JSON using DataClassSerializer
-			return DataClassSerializer.toJson(response, ModelBrowserTool.class, "listClassifiers()");
+			// Serialize to JSON using DataClassSerializer with tracking
+			Map<String, Object> args = new HashMap<>();
+			args.put("moduleName", moduleName);
+			args.put("enumName", enumName);
+			return DataClassSerializer.toJson(response, ModelBrowserTool.class, "listClassifiers()", args);
 
 		} catch (Exception ex) {
 			Logger.error("listClassifiers() error: " + ex.getMessage(), ex, ModelBrowserTool.class);
 			System.err.println("ModelBrowserTool.listClassifiers() error: " + ex.getMessage());
+			Map<String, Object> args = new HashMap<>();
+			args.put("moduleName", moduleName);
+			args.put("enumName", enumName);
 			return DataClassSerializer.errorToJson(
 				"Error listing classifiers: " + ex.getMessage(),
 				ModelBrowserTool.class,
-				"listClassifiers()");
+				"listClassifiers()",
+				args);
 		}
+	}
+
+	/**
+	 * Determines if a module is a framework/platform module.
+	 * 
+	 * <p>
+	 * Framework modules are identified by:
+	 * <ul>
+	 * <li>Having a {@link TLModuleDisplayGroup} annotation starting with "tl"</li>
+	 * <li>Or having a technical name starting with "tl." or "tl5."</li>
+	 * </ul>
+	 * </p>
+	 * 
+	 * <p>
+	 * This matches the grouping logic in TopLogic's model editor, where framework modules
+	 * are grouped under the "TopLogic" container (with display group "tl").
+	 * </p>
+	 * 
+	 * @param module
+	 *        The module to check
+	 * @return true if this is a framework module, false if it's an application module
+	 */
+	private boolean isFrameworkModule(TLModule module) {
+		// Check for TLModuleDisplayGroup annotation
+		TLModuleDisplayGroup displayGroup = module.getAnnotation(TLModuleDisplayGroup.class);
+		if (displayGroup != null) {
+			String groupValue = displayGroup.getValue();
+			if (groupValue != null && groupValue.startsWith("tl")) {
+				return true;
+			}
+		}
+
+		// Check technical module name
+		String moduleName = module.getName();
+		if (moduleName.startsWith("tl.") || moduleName.startsWith("tl5.")) {
+			return true;
+		}
+
+		return false;
 	}
 }

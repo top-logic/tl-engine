@@ -123,7 +123,7 @@ public class TLScriptReferenceToolTest extends BasicTestCase {
 			result.contains("\"functionName\""));
 		assertTrue("Result should contain the non-existent function name",
 			result.contains("nonExistentFunction12345"));
-		// Non-existent functions should still return a valid result with hasDocumentation=false or error message
+		// Non-existent functions should still return a valid result with has documentation=false or error message
 	}
 
 	/**

@@ -49,7 +49,7 @@ public class SearchResult extends de.haumacher.msgbuf.data.AbstractDataObject im
 
 	private String _matchedField = "";
 
-	private final java.util.Map<String, String> _context = new java.util.HashMap<>();
+	private final java.util.Map<String, String> _context = new java.util.LinkedHashMap<>();
 
 	private String _label = "";
 

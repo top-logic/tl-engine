@@ -175,20 +175,20 @@ public class AnnotationDefinitionResponse extends de.haumacher.msgbuf.data.Abstr
 	/**
 	 * Adds a value to the {@link #getProperties()} list.
 	 */
-	public com.top_logic.ai.service.tools.model.messages.AnnotationDefinitionResponse addPropertie(com.top_logic.ai.service.tools.model.messages.PropertyDefinition value) {
-		internalAddPropertie(value);
+	public com.top_logic.ai.service.tools.model.messages.AnnotationDefinitionResponse addProperty(com.top_logic.ai.service.tools.model.messages.PropertyDefinition value) {
+		internalAddProperty(value);
 		return this;
 	}
 
-	/** Implementation of {@link #addPropertie(com.top_logic.ai.service.tools.model.messages.PropertyDefinition)} without chain call utility. */
-	protected final void internalAddPropertie(com.top_logic.ai.service.tools.model.messages.PropertyDefinition value) {
+	/** Implementation of {@link #addProperty(com.top_logic.ai.service.tools.model.messages.PropertyDefinition)} without chain call utility. */
+	protected final void internalAddProperty(com.top_logic.ai.service.tools.model.messages.PropertyDefinition value) {
 		_properties.add(value);
 	}
 
 	/**
 	 * Removes a value from the {@link #getProperties()} list.
 	 */
-	public final void removePropertie(com.top_logic.ai.service.tools.model.messages.PropertyDefinition value) {
+	public final void removeProperty(com.top_logic.ai.service.tools.model.messages.PropertyDefinition value) {
 		_properties.remove(value);
 	}
 

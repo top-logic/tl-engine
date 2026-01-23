@@ -31,7 +31,7 @@ public class InstanceResponse extends de.haumacher.msgbuf.data.AbstractDataObjec
 
 	private com.top_logic.ai.service.tools.model.messages.InstanceTypeInfo _type = null;
 
-	private final java.util.Map<String, String> _attributes = new java.util.HashMap<>();
+	private final java.util.Map<String, String> _attributes = new java.util.LinkedHashMap<>();
 
 	private com.top_logic.ai.service.tools.model.messages.InstanceMetadata _metadata = null;
 

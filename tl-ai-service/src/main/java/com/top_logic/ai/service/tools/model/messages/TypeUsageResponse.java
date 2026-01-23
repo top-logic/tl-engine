@@ -64,20 +64,20 @@ public class TypeUsageResponse extends de.haumacher.msgbuf.data.AbstractDataObje
 	/**
 	 * Adds a value to the {@link #getProperties()} list.
 	 */
-	public com.top_logic.ai.service.tools.model.messages.TypeUsageResponse addPropertie(com.top_logic.ai.service.tools.model.messages.PropertyUsage value) {
-		internalAddPropertie(value);
+	public com.top_logic.ai.service.tools.model.messages.TypeUsageResponse addProperty(com.top_logic.ai.service.tools.model.messages.PropertyUsage value) {
+		internalAddProperty(value);
 		return this;
 	}
 
-	/** Implementation of {@link #addPropertie(com.top_logic.ai.service.tools.model.messages.PropertyUsage)} without chain call utility. */
-	protected final void internalAddPropertie(com.top_logic.ai.service.tools.model.messages.PropertyUsage value) {
+	/** Implementation of {@link #addProperty(com.top_logic.ai.service.tools.model.messages.PropertyUsage)} without chain call utility. */
+	protected final void internalAddProperty(com.top_logic.ai.service.tools.model.messages.PropertyUsage value) {
 		_properties.add(value);
 	}
 
 	/**
 	 * Removes a value from the {@link #getProperties()} list.
 	 */
-	public final void removePropertie(com.top_logic.ai.service.tools.model.messages.PropertyUsage value) {
+	public final void removeProperty(com.top_logic.ai.service.tools.model.messages.PropertyUsage value) {
 		_properties.remove(value);
 	}
 
@@ -148,20 +148,20 @@ public class TypeUsageResponse extends de.haumacher.msgbuf.data.AbstractDataObje
 	/**
 	 * Adds a value to the {@link #getSubclasses()} list.
 	 */
-	public com.top_logic.ai.service.tools.model.messages.TypeUsageResponse addSubclasse(com.top_logic.ai.service.tools.model.messages.SubclassUsage value) {
-		internalAddSubclasse(value);
+	public com.top_logic.ai.service.tools.model.messages.TypeUsageResponse addSubclass(com.top_logic.ai.service.tools.model.messages.SubclassUsage value) {
+		internalAddSubclass(value);
 		return this;
 	}
 
-	/** Implementation of {@link #addSubclasse(com.top_logic.ai.service.tools.model.messages.SubclassUsage)} without chain call utility. */
-	protected final void internalAddSubclasse(com.top_logic.ai.service.tools.model.messages.SubclassUsage value) {
+	/** Implementation of {@link #addSubclass(com.top_logic.ai.service.tools.model.messages.SubclassUsage)} without chain call utility. */
+	protected final void internalAddSubclass(com.top_logic.ai.service.tools.model.messages.SubclassUsage value) {
 		_subclasses.add(value);
 	}
 
 	/**
 	 * Removes a value from the {@link #getSubclasses()} list.
 	 */
-	public final void removeSubclasse(com.top_logic.ai.service.tools.model.messages.SubclassUsage value) {
+	public final void removeSubclass(com.top_logic.ai.service.tools.model.messages.SubclassUsage value) {
 		_subclasses.remove(value);
 	}
 

@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-
 import com.top_logic.ai.service.tools.model.messages.PartUsageResponse;
 import com.top_logic.ai.service.tools.model.messages.PropertyUsage;
 import com.top_logic.ai.service.tools.model.messages.ReferenceUsage;
@@ -100,7 +99,7 @@ public class TypeAnalysisTool {
 
 					// Add property usages (directly from {@link #findPropertyUsages(TLModel, TLType)})
 					for (PropertyUsage propertyUsage : propertyUsages) {
-						result.addPropertie(propertyUsage);
+						result.addProperty(propertyUsage);
 					}
 
 					// Add reference usages (directly from {@link #findReferenceUsages(TLModel, TLType)})
@@ -113,7 +112,7 @@ public class TypeAnalysisTool {
 						SubclassUsage subclassUsage = SubclassUsage.create();
 						subclassUsage.setSubclass(subclass);
 						subclassUsage.setUsage("generalization");
-						result.addSubclasse(subclassUsage);
+						result.addSubclass(subclassUsage);
 					}
 
 					return result;

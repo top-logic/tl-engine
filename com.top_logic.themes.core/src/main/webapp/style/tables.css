@@ -659,6 +659,8 @@ td.fltButton {
 
 .fltReset a:not(.disabled),
 .fltReset:hover a:not(.disabled), 
+.fltReset button:not(.disabled),
+.fltReset:hover button:not(.disabled),
 .tl-table__header-cell-content .fltButton.activeFilter,
 .tl-table__header-cell-content .fltButton.activeFilter:hover, 
 .tl-sidebar-filter__reset-button i {

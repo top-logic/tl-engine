@@ -379,10 +379,12 @@ a.cmdLink:visited {
 	margin-right: var(--spacing-02);
 }
 
+.pdlgToolbar button,
 .pdlgToolbar a {
 	color: var(--button-fg, var(--icon-primary));
 }
 
+.pdlgToolbar button:hover,
 .pdlgToolbar a:hover {
 	color: var(--button-fg, var(--icon-primary));
 }
@@ -979,12 +981,15 @@ div.dlgMaximized .input-image.dlgRestore {
 	gap: var(--spacing-02);
 }
 
+.dlgToolbar button,
+.dlgToolbar button:hover,
 .dlgToolbar a,
 .dlgToolbar a:hover {
 	color: var(--button-fg, var(--icon-primary));
 	box-shadow: none;
 }
 
+.dlgToolbar button:focus,
 .dlgToolbar a:focus {
 	color: var(--button-fg, var(--icon-primary));
 }

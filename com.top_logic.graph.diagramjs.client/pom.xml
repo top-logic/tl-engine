@@ -36,7 +36,6 @@
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-ajax-client</artifactId>
-	  <version>7.9.9</version>
       <classifier>sources</classifier>
       <scope>provided</scope>
     </dependency>
@@ -48,7 +47,6 @@
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-client-diagramjs</artifactId>
-	  <version>7.9.9</version>
       <classifier>sources</classifier>
       <scope>provided</scope>
     </dependency>
@@ -60,7 +58,6 @@
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-graph-diagramjs</artifactId>
-	  <version>7.9.9</version>
       <classifier>sources</classifier>
       <scope>provided</scope>
     </dependency>
@@ -69,28 +66,24 @@
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-graph-common</artifactId>
-	  <version>7.9.9</version>
       <classifier>sources</classifier>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-common-remote</artifactId>
-	  <version>7.9.9</version>
       <classifier>sources</classifier>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-common-json</artifactId>
-	  <version>7.9.9</version>
       <classifier>sources</classifier>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-basic-shared</artifactId>
-	  <version>7.9.9</version>
       <classifier>sources</classifier>
       <scope>provided</scope>
     </dependency>

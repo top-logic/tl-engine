@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2025 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
 package com.top_logic.ai.service.agents;
 
 import dev.langchain4j.agentic.Agent;
@@ -5,7 +10,17 @@ import dev.langchain4j.service.SystemMessage;
 import dev.langchain4j.service.UserMessage;
 import dev.langchain4j.service.V;
 
+/**
+ * Agent for exploring the TopLogic application model.
+ */
 public interface ModelExplorer {
+	/**
+	 * Explores the TopLogic application model to answer a user question.
+	 *
+	 * @param userQuestion
+	 *        The user's question about the model.
+	 * @return The answer based on model exploration.
+	 */
 	@SystemMessage("""
 			You are a **TopLogic Model Explorer** agent. Your job is to answer user questions by **thoroughly navigating and exploring a TopLogic application model** (modules → types → parts/relationships → usages → optional instances).
 
@@ -227,7 +242,6 @@ public interface ModelExplorer {
 
 			User question: {{userQuestion}}
 			""")
-
 	@Agent("Explores the TopLogic application model (read-only) to answer user questions with grounded model evidence")
 	String explore(@V("userQuestion") String userQuestion);
 

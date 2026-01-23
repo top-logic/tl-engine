@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2025 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
 package com.top_logic.ai.service.agents;
 
 import dev.langchain4j.agentic.Agent;
@@ -5,7 +10,17 @@ import dev.langchain4j.service.SystemMessage;
 import dev.langchain4j.service.UserMessage;
 import dev.langchain4j.service.V;
 
+/**
+ * Agent for parsing TopLogic UML specifications into structured JSON.
+ */
 public interface UMLParser {
+	/**
+	 * Parses a TopLogic UML design specification into structured data.
+	 *
+	 * @param umlSpec
+	 *        The UML specification to parse.
+	 * @return Structured JSON representation of the UML specification.
+	 */
 	@SystemMessage("""
 			## Role
 			You are a **deterministic parser** for TopLogic UML specifications.

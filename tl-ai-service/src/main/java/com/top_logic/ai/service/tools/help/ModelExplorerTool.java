@@ -24,8 +24,8 @@ import dev.langchain4j.agentic.AgenticServices;
 /**
  * Tool for exploring the TopLogic application model.
  * <p>
- * This tool wraps the ModelExplorer agent to allow TLScriptAgent to delegate
- * model exploration questions when users ask about the actual application structure.
+ * This tool wraps the {@link ModelExplorer} agent to allow TL-Script agents to delegate model
+ * exploration questions when users ask about the actual application structure.
  * </p>
  */
 public class ModelExplorerTool {

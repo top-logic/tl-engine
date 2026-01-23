@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2025 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
 package com.top_logic.ai.service.agents;
 
 import dev.langchain4j.agentic.Agent;
@@ -5,8 +10,18 @@ import dev.langchain4j.service.SystemMessage;
 import dev.langchain4j.service.UserMessage;
 import dev.langchain4j.service.V;
 
+/**
+ * Agent for creating TopLogic model elements from parsed UML specifications.
+ */
 public interface ModelCreator {
 
+	/**
+	 * Creates TopLogic model elements from parsed requirements.
+	 *
+	 * @param modelRequirements
+	 *        The parsed model requirements in JSON format.
+	 * @return A summary of the creation process.
+	 */
 	@SystemMessage("""
 			You are **ModelCreatorAgent** for a TopLogic application model.
 

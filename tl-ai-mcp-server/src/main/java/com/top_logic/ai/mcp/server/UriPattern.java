@@ -61,7 +61,7 @@ public class UriPattern {
 	 *
 	 * @param template
 	 *        The URI template string (e.g., "myapp://data/{itemId}").
-	 * @return A compiled UriPattern that can match and extract parameters from URIs.
+	 * @return A compiled {@code UriPattern} that can match and extract parameters from URIs.
 	 * @throws IllegalArgumentException
 	 *         If the template contains unclosed variable placeholders.
 	 */

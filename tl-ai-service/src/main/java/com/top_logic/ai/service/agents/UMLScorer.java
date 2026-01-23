@@ -1,10 +1,25 @@
+/*
+ * SPDX-FileCopyrightText: 2025 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
 package com.top_logic.ai.service.agents;
 
 import dev.langchain4j.agentic.Agent;
 import dev.langchain4j.service.UserMessage;
 import dev.langchain4j.service.V;
 
+/**
+ * Agent for scoring UML specification critiques.
+ */
 public interface UMLScorer {
+	/**
+	 * Scores a UML critique result.
+	 *
+	 * @param critiqueForScoring
+	 *        The critique in JSON format.
+	 * @return A quality score between 0.0 and 1.0.
+	 */
 	@UserMessage("""
 			You are a scoring agent.  Given a JSON critique of a UML specification,
 			compute a quality score between 0.0 and 1.0.  Use the following

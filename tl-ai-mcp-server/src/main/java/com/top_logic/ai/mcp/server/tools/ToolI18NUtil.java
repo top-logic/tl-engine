@@ -17,7 +17,12 @@ import com.top_logic.element.layout.meta.TLMetaModelUtil;
 import com.top_logic.model.TLNamedPart;
 
 /**
- * 
+ * Utility class for handling internationalization (I18N) in MCP tools.
+ *
+ * <p>
+ * This class provides helper methods to extract localized label and description
+ * values from MCP tool arguments and apply them to TopLogic model elements.
+ * </p>
  */
 public class ToolI18NUtil {
 
@@ -27,6 +32,15 @@ public class ToolI18NUtil {
 
 	/**
 	 * Simple value holder for localized label/description.
+	 *
+	 * @param labelEn
+	 *        English label.
+	 * @param labelDe
+	 *        German label.
+	 * @param descEn
+	 *        English description.
+	 * @param descDe
+	 *        German description.
 	 */
 	public record LocalizedTexts(
 			String labelEn,
@@ -34,14 +48,29 @@ public class ToolI18NUtil {
 			String descEn,
 			String descDe) {
 
+		/**
+		 * Checks if any label is present.
+		 *
+		 * @return {@code true} if English or German label is non-null.
+		 */
 		public boolean hasLabel() {
 			return labelEn != null || labelDe != null;
 		}
 
+		/**
+		 * Checks if any description is present.
+		 *
+		 * @return {@code true} if English or German description is non-null.
+		 */
 		public boolean hasDescription() {
 			return descEn != null || descDe != null;
 		}
 
+		/**
+		 * Checks if any localized content is present.
+		 *
+		 * @return {@code true} if any label or description is non-null.
+		 */
 		public boolean hasAny() {
 			return hasLabel() || hasDescription();
 		}

@@ -18,8 +18,8 @@ import com.top_logic.util.Resources;
  *
  * <p>
  * This class provides helper methods to reduce boilerplate when constructing JSON responses using
- * TopLogic's {@link JsonWriter}. It follows the wrapper pattern, augmenting JsonWriter with common
- * operations while preserving the streaming nature of JSON generation.
+ * TopLogic's {@link JsonWriter}. It follows the wrapper pattern, augmenting {@link JsonWriter} with
+ * common operations while preserving the streaming nature of JSON generation.
  * </p>
  *
  * <h3>Usage Pattern:</h3>
@@ -27,10 +27,10 @@ import com.top_logic.util.Resources;
  * <pre>
  * StringWriter buffer = new StringWriter();
  * try (JsonWriter json = JsonResponseBuilder.createWriter(buffer)) {
- *     json.beginObject();
- *     JsonResponseBuilder.writeField(json, "name", value);
- *     JsonResponseBuilder.writeLabelAndDescription(json, resourceKey);
- *     json.endObject();
+ * 	json.beginObject();
+ * 	JsonResponseBuilder.writeField(json, "name", value);
+ * 	JsonResponseBuilder.writeLabelAndDescription(json, resourceKey);
+ * 	json.endObject();
  * }
  * return buffer.toString();
  * </pre>
@@ -51,11 +51,11 @@ public final class JsonResponseBuilder {
 	// ========== Writer Creation ==========
 
 	/**
-	 * Creates a configured JsonWriter with standard indentation.
+	 * Creates a configured {@code JsonWriter} with standard indentation.
 	 *
 	 * @param buffer
-	 *        The StringWriter to write to.
-	 * @return A JsonWriter ready for use.
+	 *        The {@code StringWriter} to write to.
+	 * @return A {@code JsonWriter} ready for use.
 	 */
 	public static JsonWriter createWriter(StringWriter buffer) {
 		JsonWriter json = new JsonWriter(buffer);
@@ -69,7 +69,7 @@ public final class JsonResponseBuilder {
 	 * Writes a field only if the value is non-null and non-empty.
 	 *
 	 * @param json
-	 *        The JsonWriter to write to.
+	 *        The {@code JsonWriter} to write to.
 	 * @param name
 	 *        The field name.
 	 * @param value
@@ -93,7 +93,7 @@ public final class JsonResponseBuilder {
 	 * </p>
 	 *
 	 * @param json
-	 *        The JsonWriter to write to.
+	 *        The {@code JsonWriter} to write to.
 	 * @param name
 	 *        The field name.
 	 * @param value
@@ -109,7 +109,7 @@ public final class JsonResponseBuilder {
 	 * Writes a numeric field unconditionally.
 	 *
 	 * @param json
-	 *        The JsonWriter to write to.
+	 *        The {@code JsonWriter} to write to.
 	 * @param name
 	 *        The field name.
 	 * @param value
@@ -125,7 +125,7 @@ public final class JsonResponseBuilder {
 	 * Writes a boolean field unconditionally.
 	 *
 	 * @param json
-	 *        The JsonWriter to write to.
+	 *        The {@code JsonWriter} to write to.
 	 * @param name
 	 *        The field name.
 	 * @param value
@@ -149,7 +149,7 @@ public final class JsonResponseBuilder {
 	 * </p>
 	 *
 	 * @param json
-	 *        The JsonWriter to write to.
+	 *        The {@code JsonWriter} to write to.
 	 * @param resourceKey
 	 *        The resource key to retrieve label and description from.
 	 * @throws IOException
@@ -174,7 +174,7 @@ public final class JsonResponseBuilder {
 	 * Writes a TLObject reference as a structured object with type and TID.
 	 *
 	 * <p>
-	 * Used in InstanceResource to format references to other objects. Writes:
+	 * Used in {@code InstanceResource} to format references to other objects. Writes:
 	 * </p>
 	 *
 	 * <pre>
@@ -186,7 +186,7 @@ public final class JsonResponseBuilder {
 	 * </pre>
 	 *
 	 * @param json
-	 *        The JsonWriter to write to.
+	 *        The {@code JsonWriter} to write to.
 	 * @param tlObject
 	 *        The TLObject to write as a reference.
 	 * @throws IOException

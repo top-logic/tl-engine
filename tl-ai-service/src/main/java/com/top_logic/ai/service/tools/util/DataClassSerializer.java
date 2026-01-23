@@ -89,7 +89,7 @@ public final class DataClassSerializer {
 	}
 
 	/**
-	 * Creates an ErrorResponse and serializes it to JSON.
+	 * Creates an error response and serializes it to JSON.
 	 *
 	 * <p>
 	 * This is a convenience method for creating error responses from exception messages or

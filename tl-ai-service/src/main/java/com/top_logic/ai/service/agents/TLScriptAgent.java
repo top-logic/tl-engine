@@ -21,11 +21,11 @@ import dev.langchain4j.service.V;
 public interface TLScriptAgent {
 
 	/**
-	 * Answers user questions about TLScript functions and their usage.
+	 * Answers user questions about TLScript.
 	 *
 	 * @param userQuestion
 	 *        The user's question about TLScript.
-	 * @return A helpful answer with information about TLScript functions.
+	 * @return The answer.
 	 */
 	@SystemMessage("""
 			You are a TLScript Specialist Agent for the TopLogic platform.

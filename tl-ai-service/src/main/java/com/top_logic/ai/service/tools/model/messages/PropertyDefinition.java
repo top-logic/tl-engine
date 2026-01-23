@@ -400,20 +400,20 @@ public class PropertyDefinition extends de.haumacher.msgbuf.data.AbstractDataObj
 	/**
 	 * Adds a value to the {@link #getNestedProperties()} list.
 	 */
-	public com.top_logic.ai.service.tools.model.messages.PropertyDefinition addNestedPropertie(com.top_logic.ai.service.tools.model.messages.PropertyDefinition value) {
-		internalAddNestedPropertie(value);
+	public com.top_logic.ai.service.tools.model.messages.PropertyDefinition addNestedProperty(com.top_logic.ai.service.tools.model.messages.PropertyDefinition value) {
+		internalAddNestedProperty(value);
 		return this;
 	}
 
-	/** Implementation of {@link #addNestedPropertie(com.top_logic.ai.service.tools.model.messages.PropertyDefinition)} without chain call utility. */
-	protected final void internalAddNestedPropertie(com.top_logic.ai.service.tools.model.messages.PropertyDefinition value) {
+	/** Implementation of {@link #addNestedProperty(com.top_logic.ai.service.tools.model.messages.PropertyDefinition)} without chain call utility. */
+	protected final void internalAddNestedProperty(com.top_logic.ai.service.tools.model.messages.PropertyDefinition value) {
 		_nestedProperties.add(value);
 	}
 
 	/**
 	 * Removes a value from the {@link #getNestedProperties()} list.
 	 */
-	public final void removeNestedPropertie(com.top_logic.ai.service.tools.model.messages.PropertyDefinition value) {
+	public final void removeNestedProperty(com.top_logic.ai.service.tools.model.messages.PropertyDefinition value) {
 		_nestedProperties.remove(value);
 	}
 

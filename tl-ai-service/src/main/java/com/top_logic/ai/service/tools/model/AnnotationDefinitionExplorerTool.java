@@ -117,7 +117,7 @@ public class AnnotationDefinitionExplorerTool {
 						}
 						PropertyDefinition propDef =
 							PropertyDefinitionSerializer.buildPropertyDefinition(property, visitedDescriptors, 0);
-						result.addPropertie(propDef);
+						result.addProperty(propDef);
 					}
 
 					return result;
@@ -427,7 +427,7 @@ public class AnnotationDefinitionExplorerTool {
 					}
 					PropertyDefinition nestedPropDef =
 						buildPropertyDefinition(nestedProperty, visitedDescriptors, depth + 1);
-					propDef.addNestedPropertie(nestedPropDef);
+					propDef.addNestedProperty(nestedPropDef);
 				}
 			} finally {
 				// Remove from visited set (allow same type in different branches)

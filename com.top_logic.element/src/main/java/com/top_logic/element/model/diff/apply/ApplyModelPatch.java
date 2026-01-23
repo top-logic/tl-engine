@@ -1193,7 +1193,7 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 			}
 		}
 		
-		log().info("Deleting '" + diff.getName() + "'.");
+		log().info("Deleting part with name '" + diff.getName() + "': " + part);
 		if (part instanceof TLModelPart) {
 			TLModelUtil.deleteRecursive((TLModelPart) part);
 		} else {

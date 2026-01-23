@@ -198,8 +198,22 @@
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
+				<artifactId>tl-ajax-client</artifactId>
+				<version>${tl.version}</version>
+			    <classifier>sources</classifier>
+			    <scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
 				<artifactId>tl-client-diagramjs</artifactId>
 				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-client-diagramjs</artifactId>
+				<version>${tl.version}</version>
+			    <classifier>sources</classifier>
+			    <scope>provided</scope>
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
@@ -208,8 +222,22 @@
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
+				<artifactId>tl-graph-diagramjs-client</artifactId>
+				<version>${tl.version}</version>
+				<classifier>sources</classifier>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
 				<artifactId>tl-graphic-blocks-client</artifactId>
 				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-graphic-blocks-client</artifactId>
+				<version>${tl.version}</version>
+				<classifier>sources</classifier>
+				<scope>provided</scope>
 			</dependency>
 
 			<dependency>
@@ -299,6 +327,13 @@
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
+				<artifactId>tl-ajax-shared</artifactId>
+				<version>${tl.version}</version>
+				<classifier>sources</classifier>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
 				<artifactId>tl-basic</artifactId>
 				<version>${tl.version}</version>
 			</dependency>
@@ -339,6 +374,13 @@
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
+				<artifactId>tl-basic-shared</artifactId>
+				<version>${tl.version}</version>
+				<classifier>sources</classifier>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
 				<artifactId>tl-bpe</artifactId>
 				<version>${tl.version}</version>
 			</dependency>
@@ -359,6 +401,13 @@
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
+				<artifactId>tl-common-json</artifactId>
+				<version>${tl.version}</version>
+				<classifier>sources</classifier>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
 				<artifactId>tl-chart-chartjs</artifactId>
 				<version>${tl.version}</version>
 			</dependency>
@@ -366,6 +415,13 @@
 				<groupId>com.top-logic</groupId>
 				<artifactId>tl-common-remote</artifactId>
 				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-common-remote</artifactId>
+				<version>${tl.version}</version>
+				<classifier>sources</classifier>
+				<scope>provided</scope>
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
@@ -419,8 +475,22 @@
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
+				<artifactId>tl-graph-common</artifactId>
+				<version>${tl.version}</version>
+				<classifier>sources</classifier>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
 				<artifactId>tl-graph-diagramjs</artifactId>
 				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-graph-diagramjs</artifactId>
+				<version>${tl.version}</version>
+				<classifier>sources</classifier>
+				<scope>provided</scope>
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
@@ -441,6 +511,13 @@
 				<groupId>com.top-logic</groupId>
 				<artifactId>tl-graphic-blocks</artifactId>
 				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-graphic-blocks</artifactId>
+				<version>${tl.version}</version>
+				<classifier>sources</classifier>
+				<scope>provided</scope>
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>

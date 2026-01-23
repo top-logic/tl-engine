@@ -32,7 +32,6 @@
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-ajax-shared</artifactId>
-	  <version>${tl.version}</version>
       <classifier>sources</classifier>
       <scope>provided</scope>
     </dependency>

@@ -57,7 +57,7 @@
 								  <groupId>com.top-logic</groupId>
 								  <artifactId>tl-build-doclet</artifactId>
 								  <classifier>jar-with-dependencies</classifier>
-								  <version>${tl.version}</version>
+								  <version>${project.version}</version>
 							</docletArtifact>
 							<useStandardDocletOptions>false</useStandardDocletOptions>
 							<additionalOptions>
@@ -87,7 +87,7 @@
 						<groupId>com.top-logic</groupId>
 						<artifactId>tl-build-doclet</artifactId>
 						<classifier>jar-with-dependencies</classifier>
-						<version>${tl.version}</version>
+						<version>${project.version}</version>
 					</dependency>
 				</dependencies>            
 			</plugin>
@@ -95,7 +95,7 @@
 			<plugin>
 				<groupId>com.top-logic</groupId>
 				<artifactId>tl-maven-plugin</artifactId>
-				<version>${tl.version}</version>
+				<version>${project.version}</version>
 				<executions>
 					<execution>
 						<id>translate-system-messages</id>

@@ -63,6 +63,7 @@ import com.top_logic.basic.col.NameValueBuffer;
 import com.top_logic.basic.col.TupleFactory.Pair;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
+import com.top_logic.basic.config.ConfigUtil;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.db.schema.setup.SchemaSetup;
@@ -501,6 +502,8 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 
 	private SchemaSetup _schemaSetup;
 
+	private DBContextFactory _dbContextFactory;
+
     /**
      * Empty constructor for {@link KnowledgeBaseFactory}.
      */
@@ -612,6 +615,7 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 			this.commitWarnTime = configuration.getCommitWarnTime();
     		this.disableVersioning = configuration.getDisableVersioning();
     		this.chunkSize = configuration.getReaderChunkSize();
+			_dbContextFactory = ConfigUtil.getInstance(configuration.getContextFactory());
 			this.connectionPool = ConnectionPoolRegistry.getConnectionPool(configuration.getConnectionPool());
 			InstantiationContext context = InstantiationContext.toContext(protocol);
 			if (_schemaSetup == null) {
@@ -3096,7 +3100,7 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 		String contextId = subsession.getContextId();
 		
 		if (contextId != null)  {
-			DBContext newDbContext = new DefaultDBContext(this, contextId);
+			DBContext newDbContext = _dbContextFactory.createContext(this, contextId);
 			installContext(newDbContext);
 		    
 			subsession.getSessionContext().addHttpSessionBindingListener(this);

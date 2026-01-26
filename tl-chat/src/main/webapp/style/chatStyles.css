@@ -10,7 +10,7 @@
 
 /* Messages container with scrolling */
 .chat-messages {
-	height: 400px;
+	height: 80vh;
 	overflow-y: auto;
 	border: 1px solid #ccc;
 	padding: 10px;

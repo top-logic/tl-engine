@@ -24,6 +24,7 @@ import com.top_logic.ai.service.jsonschema.model.ObjectSchema;
 import com.top_logic.ai.service.jsonschema.model.RefSchema;
 import com.top_logic.ai.service.jsonschema.model.Schema;
 import com.top_logic.ai.service.jsonschema.model.StringSchema;
+import com.top_logic.ai.service.jsonschema.model.TrueSchema;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationException;
@@ -56,6 +57,8 @@ import com.top_logic.util.Resources;
  * </p>
  */
 public class ConfigSchemaBuilder {
+
+	private static final Schema NONE = FalseSchema.create();
 
 	/**
 	 * Cache of schemas being built to handle recursive references.
@@ -208,27 +211,53 @@ public class ConfigSchemaBuilder {
 	}
 
 	private Schema createImplementationSchema(Class<?> instanceType) {
-		AnyOfSchema result = AnyOfSchema.create();
+		Schema result = NONE;
 
 		try {
 			if (!isAbstract(instanceType)) {
-				result.addAnyOf(createLocalImplementationSchema(instanceType));
+				result = anyOf(result, createLocalImplementationSchema(instanceType));
 			}
 
 			for (Class<?> specialization : TypeIndex.getInstance().getSpecializations(instanceType, false, false,
 				true)) {
-				result.addAnyOf(implementationSchema(specialization));
+				result = anyOf(result, implementationSchema(specialization));
 			}
 		} catch (ConfigurationException ex) {
 			Logger.warn("Cannot resolve schema for instance type '': " + ex.getMessage(), ex,
 				ConfigSchemaBuilder.class);
 		}
 
-		return optimize(result);
+		return result;
 	}
 
-	private Schema optimize(AnyOfSchema result) {
-		return result.getAnyOf().size() == 1 ? result.getAnyOf().get(0) : result;
+	private Schema anyOf(Schema a, Schema b) {
+		if (a instanceof FalseSchema) {
+			return b;
+		}
+		if (b instanceof FalseSchema) {
+			return a;
+		}
+		if (a instanceof TrueSchema) {
+			return a;
+		}
+		if (b instanceof TrueSchema) {
+			return b;
+		}
+
+		AnyOfSchema result = AnyOfSchema.create();
+		addAnyOf(result, a);
+		addAnyOf(result, b);
+		return result;
+	}
+
+	private void addAnyOf(AnyOfSchema result, Schema other) {
+		if (other instanceof AnyOfSchema inner) {
+			for (Schema option : inner.getAnyOf()) {
+				result.addAnyOf(option);
+			}
+		} else {
+			result.addAnyOf(other);
+		}
 	}
 
 	private Schema createLocalImplementationSchema(Class<?> instanceType) throws ConfigurationException {
@@ -250,7 +279,7 @@ public class ConfigSchemaBuilder {
 	private Schema finalize(AllOfSchema allOf) {
 		Schema result = simplifyAllOf(allOf);
 		if (result instanceof ObjectSchema objSchema) {
-			objSchema.setAdditionalProperties(FalseSchema.create());
+			objSchema.setAdditionalProperties(NONE);
 		}
 		return result;
 	}
@@ -284,11 +313,11 @@ public class ConfigSchemaBuilder {
 			// TODO: Prevent enumerating the world.
 			result = ObjectSchema.create();
 		} else {
-			AnyOfSchema anyOf = AnyOfSchema.create();
+			result = NONE;
 
 			// Add base-schema(A) if A is not abstract
 			if (!descriptor.isAbstract()) {
-				anyOf.addAnyOf(buildBaseSchema(descriptor));
+				result = anyOf(result, buildBaseSchema(descriptor));
 			}
 
 			// Add ref:extension-schema(Bn) for each direct non-abstract sub-type Bn
@@ -300,14 +329,12 @@ public class ConfigSchemaBuilder {
 					// Build extension schema and cache it
 					Schema extensionSchema = buildExtensionSchema(subtypeDescriptor);
 
-					anyOf.addAnyOf(extensionSchema);
+					result = anyOf(result, extensionSchema);
 				} catch (Exception ex) {
 					Logger.warn("Invalid sub-configuration encountered: " + subtype.getName(), ex,
 						ConfigSchemaBuilder.class);
 				}
 			}
-
-			result = optimize(anyOf);
 		}
 
 		_schemaCache.put(schemaName, result);
@@ -657,7 +684,7 @@ public class ConfigSchemaBuilder {
 	private Schema buildPropertySchema(PropertyDescriptor property) {
 		switch (property.kind()) {
 			case PLAIN:
-				return buildPlainPropertySchema(property);
+				return nullable(property, buildPlainPropertySchema(property));
 			case ITEM:
 				return buildItemPropertySchema(property);
 			case ARRAY:
@@ -682,11 +709,20 @@ public class ConfigSchemaBuilder {
 	 * Builds schema for ITEM properties (nested configuration interfaces).
 	 */
 	private Schema buildItemPropertySchema(PropertyDescriptor property) {
-		Schema result = buildItemObjectPropertySchema(property);
+		Schema result = NONE;
 		if (property.getValueProvider() != null) {
 			// Also allow a plain string configuration.
-			return AnyOfSchema.create().addAnyOf(StringSchema.create()).addAnyOf(result);
+			result = anyOf(result, StringSchema.create());
 		}
+
+		if (property.isNullable()) {
+			// Also allow a plain string configuration.
+			result = anyOf(result, NullSchema.create());
+		}
+
+		Schema objectSchema = buildItemObjectPropertySchema(property);
+		result = anyOf(result, objectSchema);
+
 		return result;
 	}
 
@@ -802,12 +838,12 @@ public class ConfigSchemaBuilder {
 			NumericSchema schema = NumericSchema.create().setIntegerOnly(true);
 			processNumeric(property, schema);
 
-			return handleWrapperType(type, schema);
+			return schema;
 		}
 		if (type == float.class || type == Float.class || type == double.class || type == Double.class) {
 			NumericSchema schema = NumericSchema.create();
 			processNumeric(property, schema);
-			return handleWrapperType(type, schema);
+			return schema;
 		}
 		if (type == short.class || type == Short.class) {
 			NumericSchema schema = NumericSchema.create()
@@ -815,7 +851,7 @@ public class ConfigSchemaBuilder {
 				.setMinimum((double) Short.MIN_VALUE)
 				.setMaximum((double) Short.MAX_VALUE);
 			processNumeric(property, schema);
-			return handleWrapperType(type, schema);
+			return schema;
 		}
 		if (type == byte.class || type == Byte.class) {
 			NumericSchema schema = NumericSchema.create()
@@ -823,7 +859,7 @@ public class ConfigSchemaBuilder {
 				.setMinimum((double) Byte.MIN_VALUE)
 				.setMaximum((double) Byte.MAX_VALUE);
 			processNumeric(property, schema);
-			return handleWrapperType(type, schema);
+			return schema;
 		}
 	
 		// String type
@@ -833,7 +869,7 @@ public class ConfigSchemaBuilder {
 	
 		// Boolean type
 		if (type == boolean.class || type == Boolean.class) {
-			return handleWrapperType(type, BooleanSchema.create());
+			return BooleanSchema.create();
 		}
 	
 		// Enum types
@@ -864,16 +900,12 @@ public class ConfigSchemaBuilder {
 		return StringSchema.create();
 	}
 
-	private Schema handleWrapperType(Class<?> type, Schema schema) {
-		if (type.isPrimitive()) {
-			return schema;
+	private Schema nullable(PropertyDescriptor property, Schema schema) {
+		if (property.isNullable()) {
+			return anyOf(schema, NullSchema.create());
 		} else {
-			return nullable(schema);
+			return schema;
 		}
-	}
-
-	private AnyOfSchema nullable(Schema schema) {
-		return AnyOfSchema.create().addAnyOf(schema).addAnyOf(NullSchema.create());
 	}
 
 	private void processNumeric(PropertyDescriptor property, NumericSchema numericSchema) {

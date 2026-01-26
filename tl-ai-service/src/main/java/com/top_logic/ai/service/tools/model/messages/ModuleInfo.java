@@ -131,7 +131,7 @@ public class ModuleInfo extends de.haumacher.msgbuf.data.AbstractDataObject impl
 
 	/**
 	 * Whether this is a framework/platform module (true) or an application domain module (false).
-	 * Framework modules include tl.*, tl5.*, and infrastructure modules (orgStructure, mandatorStructure, etc.).
+	 * Framework modules include tl.*, tl5.*, and infrastructure modules (<code>orgStructure</code>, <code>mandatorStructure</code>, etc.).
 	 */
 	public final boolean isFrameworkModule() {
 		return _frameworkModule;

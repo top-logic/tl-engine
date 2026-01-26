@@ -39,14 +39,23 @@ public class ToolCallTracker {
 			_resultRef = resultRef;
 		}
 
+		/**
+		 * The name of the tool that was called.
+		 */
 		public String getTool() {
 			return _tool;
 		}
 
+		/**
+		 * The arguments passed to the tool.
+		 */
 		public Map<String, Object> getArgs() {
 			return _args;
 		}
 
+		/**
+		 * The result reference (e.g., "T1", "T2") for this tool call.
+		 */
 		public String getResultRef() {
 			return _resultRef;
 		}

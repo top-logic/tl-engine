@@ -7,13 +7,15 @@ package com.top_logic.ai.service.tools.help;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import com.top_logic.ai.service.scripting.Converters;
-import com.top_logic.ai.service.tools.help.messages.ErrorResult;
 import com.top_logic.ai.service.tools.help.messages.FunctionDocResult;
 import com.top_logic.ai.service.tools.help.messages.FunctionListResult;
+import com.top_logic.ai.service.tools.util.DataClassSerializer;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.layout.basic.DummyDisplayContext;
@@ -45,6 +47,8 @@ public class TLScriptReferenceTool {
 	 */
 	@Tool("List all available TLScript functions and methods. Returns function names that can be used in TLScript expressions.")
 	public String listTLScriptFunctions() {
+		Map<String, Object> args = new HashMap<>();
+
 		return ThreadContextManager.inSystemInteraction(
 			TLScriptReferenceTool.class,
 			() -> {
@@ -56,12 +60,12 @@ public class TLScriptReferenceTool {
 					FunctionListResult result = FunctionListResult.create();
 					result.setFunctions(functionNames);
 
-					return toJson(result);
+					return DataClassSerializer.toJson(result, TLScriptReferenceTool.class, "listTLScriptFunctions()", args);
 
 				} catch (Exception ex) {
 					String error = "Failed to list TLScript functions: " + ex.getMessage();
 					Logger.error(error, ex, TLScriptReferenceTool.class);
-					return buildErrorJson(error);
+					return DataClassSerializer.errorToJson(error, TLScriptReferenceTool.class, "listTLScriptFunctions()", args);
 				}
 			});
 	}
@@ -82,6 +86,9 @@ public class TLScriptReferenceTool {
 	public String getTLScriptFunctionDocumentation(
 			@P("Name of the TLScript function") String functionName) {
 
+		Map<String, Object> args = new HashMap<>();
+		args.put("functionName", functionName);
+
 		return ThreadContextManager.inSystemInteraction(
 			TLScriptReferenceTool.class,
 			() -> {
@@ -91,7 +98,7 @@ public class TLScriptReferenceTool {
 						String error = "Function name is required";
 						Logger.error("getTLScriptFunctionDocumentation() error: " + error,
 							TLScriptReferenceTool.class);
-						return buildErrorJson(error);
+						return DataClassSerializer.errorToJson(error, TLScriptReferenceTool.class, "getTLScriptFunctionDocumentation()", args);
 					}
 
 					SearchBuilder<?> searchBuilder = SearchBuilder.getInstance();
@@ -147,36 +154,13 @@ public class TLScriptReferenceTool {
 						result.setErrorMessage("No documentation available for function: " + functionName);
 					}
 
-					return toJson(result);
+					return DataClassSerializer.toJson(result, TLScriptReferenceTool.class, "getTLScriptFunctionDocumentation()", args);
 
 				} catch (Exception ex) {
 					String error = "Failed to get function documentation: " + ex.getMessage();
 					Logger.error(error, ex, TLScriptReferenceTool.class);
-					return buildErrorJson(error);
+					return DataClassSerializer.errorToJson(error, TLScriptReferenceTool.class, "getTLScriptFunctionDocumentation()", args);
 				}
 			});
-	}
-
-	/**
-	 * Serializes a msgbuf data object to JSON string.
-	 *
-	 * @param dataObject
-	 *        The msgbuf data object to serialize.
-	 * @return JSON string representation.
-	 */
-	private static String toJson(de.haumacher.msgbuf.data.DataObject dataObject) {
-		return dataObject.toString();
-	}
-
-	/**
-	 * Builds an error JSON response using msgbuf data object.
-	 *
-	 * @param errorMessage
-	 *        The error message.
-	 * @return JSON string containing the error.
-	 */
-	private static String buildErrorJson(String errorMessage) {
-		ErrorResult error = ErrorResult.create().setError(errorMessage);
-		return toJson(error);
 	}
 }

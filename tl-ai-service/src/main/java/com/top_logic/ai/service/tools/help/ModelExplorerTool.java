@@ -5,15 +5,19 @@
  */
 package com.top_logic.ai.service.tools.help;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.top_logic.ai.service.AIService;
 import com.top_logic.ai.service.agents.ModelExplorer;
-import com.top_logic.ai.service.tools.help.messages.ErrorResult;
+import com.top_logic.ai.service.tools.help.messages.ModelExplorerResponse;
 import com.top_logic.ai.service.tools.model.AnnotationDefinitionExplorerTool;
 import com.top_logic.ai.service.tools.model.InstanceBrowserTool;
 import com.top_logic.ai.service.tools.model.ModelAnnotationBrowserTool;
 import com.top_logic.ai.service.tools.model.ModelBrowserTool;
 import com.top_logic.ai.service.tools.model.ModelSearchTool;
 import com.top_logic.ai.service.tools.model.TypeAnalysisTool;
+import com.top_logic.ai.service.tools.util.DataClassSerializer;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.thread.ThreadContextManager;
 
@@ -56,67 +60,61 @@ public class ModelExplorerTool {
 		+
 		"linking each fact to the tool output. Use this for read‑only exploration; it never modifies the model.")
 	public String exploreModel(@P("The user's question about the TopLogic application model") String question) {
-		return ThreadContextManager.inSystemInteraction(
-			ModelExplorerTool.class,
-			() -> {
-				try {
-					// Log tool call
-					System.out.println("ModelExplorerTool.exploreModel() called with question: " + question);
+		Map<String, Object> args = new HashMap<>();
+		args.put("question", question);
 
-					// Validate parameters
-					if (question == null || question.trim().isEmpty()) {
-						String error = "Question is required";
-						Logger.error("exploreModel() error: " + error, ModelExplorerTool.class);
-						return buildErrorJson(error);
-					}
+		try {
+			// Log tool call
+			System.out.println("ModelExplorerTool.exploreModel() called with question: " + question);
 
-					// Get the model from AIService
-					AIService aiService = AIService.getInstance();
-					if (aiService == null) {
-						String error = "AIService is not available";
-						Logger.error("exploreModel() error: " + error, ModelExplorerTool.class);
-						return buildErrorJson(error);
-					}
+			// Validate parameters
+			if (question == null || question.trim().isEmpty()) {
+				String error = "Question is required";
+				Logger.error("exploreModel() error: " + error, ModelExplorerTool.class);
+				return DataClassSerializer.errorToJson(error, ModelExplorerTool.class, "exploreModel()", args);
+			}
 
-					// Use mistral-large-latest model (same as TLScriptAgent)
-					var explorationModel = aiService.getChatModel("mistral-large-latest");
+			// Get the model from AIService
+			AIService aiService = AIService.getInstance();
+			if (aiService == null) {
+				String error = "AIService is not available";
+				Logger.error("exploreModel() error: " + error, ModelExplorerTool.class);
+				return DataClassSerializer.errorToJson(error, ModelExplorerTool.class, "exploreModel()", args);
+			}
 
-					// Create internal tool instances
-					ModelBrowserTool browserTool = new ModelBrowserTool();
-					InstanceBrowserTool instanceTool = new InstanceBrowserTool();
-					TypeAnalysisTool analysisTool = new TypeAnalysisTool();
-					ModelSearchTool searchTool = new ModelSearchTool();
-					ModelAnnotationBrowserTool annotationTool = new ModelAnnotationBrowserTool();
-					AnnotationDefinitionExplorerTool definitionTool = new AnnotationDefinitionExplorerTool();
+			// Use mistral-large-latest model (same as TLScriptAgent)
+			var explorationModel = aiService.getChatModel("mistral-large-latest");
 
-					// Build the ModelExplorer agent with all required tools
-					ModelExplorer explorer = AgenticServices.agentBuilder(ModelExplorer.class)
-						.chatModel(explorationModel)
-						.tools(browserTool, instanceTool, analysisTool, searchTool, annotationTool, definitionTool)
-						.build();
+			// Create internal tool instances
+			ModelBrowserTool browserTool = new ModelBrowserTool();
+			InstanceBrowserTool instanceTool = new InstanceBrowserTool();
+			TypeAnalysisTool analysisTool = new TypeAnalysisTool();
+			ModelSearchTool searchTool = new ModelSearchTool();
+			ModelAnnotationBrowserTool annotationTool = new ModelAnnotationBrowserTool();
+			AnnotationDefinitionExplorerTool definitionTool = new AnnotationDefinitionExplorerTool();
 
-					// Execute the exploration
-					String result = explorer.explore(question);
-					return result;
+			// Build the ModelExplorer agent with all required tools
+			ModelExplorer explorer = AgenticServices.agentBuilder(ModelExplorer.class)
+				.chatModel(explorationModel)
+				.tools(browserTool, instanceTool, analysisTool, searchTool, annotationTool, definitionTool)
+				.build();
 
-				} catch (Exception ex) {
-					String error = "Failed to explore model: " + ex.getMessage();
-					Logger.error(error, ex, ModelExplorerTool.class);
-					System.err.println("ModelExplorerTool.exploreModel() error: " + error);
-					return buildErrorJson(error);
-				}
-			});
-	}
+			// Execute the exploration
+			String result = ThreadContextManager.inSystemInteraction(
+				ModelExplorerTool.class,
+				() -> explorer.explore(question));
 
-	/**
-	 * Builds an error JSON response using msgbuf data object.
-	 *
-	 * @param errorMessage
-	 *        The error message.
-	 * @return JSON string containing the error.
-	 */
-	private static String buildErrorJson(String errorMessage) {
-		ErrorResult error = ErrorResult.create().setError(errorMessage);
-		return error.toString();
+			// Create response object with the exploration result
+			ModelExplorerResponse response = ModelExplorerResponse.create();
+			response.setResult(result);
+
+			return DataClassSerializer.toJson(response, ModelExplorerTool.class, "exploreModel()", args);
+
+		} catch (Exception ex) {
+			String error = "Failed to explore model: " + ex.getMessage();
+			Logger.error(error, ex, ModelExplorerTool.class);
+			System.err.println("ModelExplorerTool.exploreModel() error: " + error);
+			return DataClassSerializer.errorToJson(error, ModelExplorerTool.class, "exploreModel()", args);
+		}
 	}
 }

@@ -13,7 +13,7 @@
 					<!-- Mistral AI models factory for ModelExplorerTool -->
 					<factory
 						class="com.top_logic.ai.service.providers.MistralChatModelFactory"
-						api-key="xxx"
+						api-key="unencrypted:xxx"
 						base-url="https://api.mistral.ai/v1"
 						max-pool-size="10"
 						max-idle-models="5"
@@ -22,7 +22,7 @@
 					<factory
 						class="com.top_logic.ai.service.providers.AnthropicChatModelFactory"
 						models="claude-sonnet-4-5-20250929"
-						api-key="xxx"
+						api-key="unencrypted:xxx"
 						base-url="https://api.anthropic.com/v1"
 						max-pool-size="10"
 						max-idle-models="5"
@@ -37,5 +37,12 @@
 			test-layouts-normalized="true"
 			test-jsp-content="true"
 		/>
+		
+		<config config:interface="test.com.top_logic.basic.TestComment$Config">
+				<ignore>
+					<entry value="com.top_logic.ai.demo.test.agent.judge.messages" />
+				</ignore>
+			</config>
+		
 	</configs>
 </application>

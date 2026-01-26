@@ -2,9 +2,9 @@
 
 <include name="templates/contentTab.xml"
 	z_legacy_componentName="chatDemo"
-	z_legacy_tabLabel="layoutdemo.test.demoChat.tabber"
+	z_legacy_tabLabel="chat.layout.demoChat.tabber"
 >
 	<components>
-		<include name="tl-ai-demo/chat/demoChat.xml"/>
+		<layout-reference resource="tl-chat/chat/chatDemo.layout.xml"/>
 	</components>
 </include>

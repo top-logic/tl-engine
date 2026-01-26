@@ -1,4 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
+
 <include name="templates/contentTab.xml"
 	z_legacy_componentName="chatDemo"
 	z_legacy_tabLabel="chat.layout.demoChat.tabber"

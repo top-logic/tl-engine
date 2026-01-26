@@ -854,8 +854,8 @@ public class ConfigSchemaBuilder {
 			return schema;
 		}
 	
-		// TODO: Use annotated ConfigurationValueProvider to determine format.
-		return null;
+		// Concrete format is defined by the ConfigurationValueProvider.
+		return StringSchema.create();
 	}
 
 	private Schema handleWrapperType(Class<?> type, Schema schema) {

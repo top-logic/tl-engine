@@ -5,6 +5,7 @@
  */
 package com.top_logic.ai.service.tools.config;
 
+import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Locale;
@@ -16,7 +17,7 @@ import com.top_logic.ai.service.jsonschema.model.ArraySchema;
 import com.top_logic.ai.service.jsonschema.model.BooleanSchema;
 import com.top_logic.ai.service.jsonschema.model.ConstSchema;
 import com.top_logic.ai.service.jsonschema.model.EnumSchema;
-import com.top_logic.ai.service.jsonschema.model.JsonSchemaDocument;
+import com.top_logic.ai.service.jsonschema.model.FalseSchema;
 import com.top_logic.ai.service.jsonschema.model.NullSchema;
 import com.top_logic.ai.service.jsonschema.model.NumericSchema;
 import com.top_logic.ai.service.jsonschema.model.ObjectSchema;
@@ -25,8 +26,10 @@ import com.top_logic.ai.service.jsonschema.model.Schema;
 import com.top_logic.ai.service.jsonschema.model.StringSchema;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationDescriptor;
+import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ConfigurationValueBinding;
+import com.top_logic.basic.config.DefaultConfigConstructorScheme;
 import com.top_logic.basic.config.ExternallyNamed;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
@@ -93,15 +96,11 @@ public class ConfigSchemaBuilder {
 	 */
 	public Schema build(ConfigurationDescriptor descriptor) {
 		_schemaCache = new HashMap<>();
-		Schema toplevel = buildObjectSchema(descriptor);
-
-		JsonSchemaDocument result = JsonSchemaDocument.create()
-			.setId(schemaId(descriptor))
-			.setDefinitions(_schemaCache)
-			.setSchema(toplevel);
+		Schema toplevel = buildConfigSchema(descriptor)
+			.setDefinitions(_schemaCache);
 		_schemaCache = null;
 
-		return result;
+		return toplevel;
 	}
 
 	/**
@@ -178,8 +177,86 @@ public class ConfigSchemaBuilder {
 	 * extend A and can by found through the {@link TypeIndex}.</li>
 	 * </ul>
 	 */
-	private Schema buildObjectSchema(ConfigurationDescriptor descriptor) {
-		return buildValueSchema(descriptor);
+	private Schema buildConfigSchema(ConfigurationDescriptor descriptor) {
+		return buildConfigValueSchema(descriptor);
+	}
+
+	/**
+	 * Creates a schema for a configured instance.
+	 *
+	 * @param instanceType
+	 *        The implementation type being used for a configuration property (either a type
+	 *        parameter of {@link PolymorphicConfiguration} or directly with {@link InstanceFormat}.
+	 * @return An object schema describing all possible implementation classes with their
+	 *         configuration options.
+	 */
+	private Schema implementationSchema(Class<?> instanceType) {
+		String schemaName = schemaId(instanceType);
+
+		// Check cache to handle recursive references
+		if (_schemaCache.containsKey(schemaName)) {
+			return ref(schemaName);
+		}
+
+		// Reserve the slot in cache before processing to handle recursion
+		_schemaCache.put(schemaName, null);
+
+		Schema result = createImplementationSchema(instanceType);
+
+		_schemaCache.put(schemaName, result);
+		return ref(schemaName);
+	}
+
+	private Schema createImplementationSchema(Class<?> instanceType) {
+		AnyOfSchema result = AnyOfSchema.create();
+
+		try {
+			if (!isAbstract(instanceType)) {
+				result.addAnyOf(createLocalImplementationSchema(instanceType));
+			}
+
+			for (Class<?> specialization : TypeIndex.getInstance().getSpecializations(instanceType, false, false,
+				true)) {
+				result.addAnyOf(implementationSchema(specialization));
+			}
+		} catch (ConfigurationException ex) {
+			Logger.warn("Cannot resolve schema for instance type '': " + ex.getMessage(), ex,
+				ConfigSchemaBuilder.class);
+		}
+
+		return optimize(result);
+	}
+
+	private Schema optimize(AnyOfSchema result) {
+		return result.getAnyOf().size() == 1 ? result.getAnyOf().get(0) : result;
+	}
+
+	private Schema createLocalImplementationSchema(Class<?> instanceType) throws ConfigurationException {
+		AllOfSchema allOf = AllOfSchema.create();
+
+		ObjectSchema implRef = ObjectSchema.create();
+		implRef.putProperty("$type", ConstSchema.create().setConstValue(instanceType.getName()));
+		implRef.addRequired("$type");
+		allOf.addAllOf(implRef);
+
+		Class<?> configInterface = DefaultConfigConstructorScheme.getFactory(instanceType).getConfigurationInterface();
+		ConfigurationDescriptor descriptor = TypedConfiguration.getConfigurationDescriptor(configInterface);
+		Schema propertiesSchema = buildPropertiesSchema(descriptor);
+		inlineAllOf(allOf, propertiesSchema);
+
+		return finalize(allOf);
+	}
+
+	private Schema finalize(AllOfSchema allOf) {
+		Schema result = simplifyAllOf(allOf);
+		if (result instanceof ObjectSchema objSchema) {
+			objSchema.setAdditionalProperties(FalseSchema.create());
+		}
+		return result;
+	}
+
+	private boolean isAbstract(Class<?> instanceType) {
+		return (instanceType.getModifiers() & Modifier.ABSTRACT) != 0;
 	}
 
 	/**
@@ -191,12 +268,12 @@ public class ConfigSchemaBuilder {
 	 *   with Bn is a direct non-abstract sub-type of A
 	 * </pre>
 	 */
-	private Schema buildValueSchema(ConfigurationDescriptor descriptor) {
+	private Schema buildConfigValueSchema(ConfigurationDescriptor descriptor) {
 		String schemaName = schemaId(descriptor);
 
 		// Check cache to handle recursive references
 		if (_schemaCache.containsKey(schemaName)) {
-			return RefSchema.create().setRef(schemaName);
+			return ref(schemaName);
 		}
 
 		// Reserve the slot in cache before processing to handle recursion
@@ -219,31 +296,26 @@ public class ConfigSchemaBuilder {
 			for (Class<?> subtype : directSubtypes) {
 				try {
 					ConfigurationDescriptor subtypeDescriptor = TypedConfiguration.getConfigurationDescriptor(subtype);
-					String extensionSchemaId = extensionSchemaId(subtypeDescriptor);
 
 					// Build extension schema and cache it
-					buildExtensionSchema(subtypeDescriptor);
+					Schema extensionSchema = buildExtensionSchema(subtypeDescriptor);
 
-					anyOf.addAnyOf(RefSchema.create().setRef(extensionSchemaId));
+					anyOf.addAnyOf(extensionSchema);
 				} catch (Exception ex) {
 					Logger.warn("Invalid sub-configuration encountered: " + subtype.getName(), ex,
 						ConfigSchemaBuilder.class);
 				}
 			}
 
-			if (anyOf.getAnyOf().size() == 1) {
-				// Simplify: if only one option, use it directly
-				result = anyOf.getAnyOf().get(0);
-			} else if (anyOf.getAnyOf().isEmpty()) {
-				// Abstract type with no subtypes - return base schema anyway for documentation
-				result = buildBaseSchema(descriptor);
-			} else {
-				result = anyOf;
-			}
+			result = optimize(anyOf);
 		}
 
 		_schemaCache.put(schemaName, result);
-		return RefSchema.create().setRef(schemaName);
+		return ref(schemaName);
+	}
+
+	private RefSchema ref(String schemaName) {
+		return RefSchema.create().setRef("#/$defs/" + schemaName);
 	}
 
 	/**
@@ -265,7 +337,7 @@ public class ConfigSchemaBuilder {
 		Schema propertiesSchema = buildPropertiesSchema(descriptor);
 		inlineAllOf(allOf, propertiesSchema);
 
-		return simplifyAllOf(allOf);
+		return finalize(allOf);
 	}
 
 	/**
@@ -284,7 +356,7 @@ public class ConfigSchemaBuilder {
 		String extensionSchemaId = extensionSchemaId(descriptor);
 
 		if (_schemaCache.containsKey(extensionSchemaId)) {
-			return RefSchema.create().setRef(extensionSchemaId);
+			return ref(extensionSchemaId);
 		}
 
 		// Reserve slot to handle recursion
@@ -296,9 +368,9 @@ public class ConfigSchemaBuilder {
 		Schema propertiesSchema = buildPropertiesSchema(descriptor);
 		inlineAllOf(allOf, propertiesSchema);
 
-		Schema result = simplifyAllOf(allOf);
+		Schema result = finalize(allOf);
 		_schemaCache.put(extensionSchemaId, result);
-		return RefSchema.create().setRef(extensionSchemaId);
+		return ref(extensionSchemaId);
 	}
 
 	/**
@@ -330,7 +402,7 @@ public class ConfigSchemaBuilder {
 				_schemaCache.put(propertiesSchemaId, result);
 			}
 
-			return RefSchema.create().setRef(propertiesSchemaId);
+			return ref(propertiesSchemaId);
 		}
 	}
 
@@ -467,24 +539,20 @@ public class ConfigSchemaBuilder {
 			/* includeAbstract */ false);
 	}
 
+	private String schemaId(Class<?> implType) {
+		return implType.getName();
+	}
+
 	private String schemaId(ConfigurationDescriptor descriptor) {
-		return "config://" + descriptor.getConfigurationInterface().getName();
+		return descriptor.getConfigurationInterface().getName();
 	}
 
 	private String propertiesSchemaId(ConfigurationDescriptor descriptor) {
-		return "config://" + descriptor.getConfigurationInterface().getName() + "#properties";
-	}
-
-	private String localPropertiesSchemaId(ConfigurationDescriptor descriptor) {
-		return "config://" + descriptor.getConfigurationInterface().getName() + "#local-properties";
-	}
-
-	private String baseSchemaId(ConfigurationDescriptor descriptor) {
-		return "config://" + descriptor.getConfigurationInterface().getName() + "#base";
+		return descriptor.getConfigurationInterface().getName() + "#properties";
 	}
 
 	private String extensionSchemaId(ConfigurationDescriptor descriptor) {
-		return "config://" + descriptor.getConfigurationInterface().getName() + "#extension";
+		return descriptor.getConfigurationInterface().getName() + "#extension";
 	}
 
 	/**
@@ -610,8 +678,7 @@ public class ConfigSchemaBuilder {
 	private Schema buildItemPropertySchema(PropertyDescriptor property) {
 		Class<?> instanceType = property.getInstanceType();
 		if (instanceType != null) {
-			// TODO: Find matching implementations.
-			return ObjectSchema.create();
+			return implementationSchema(instanceType);
 		} else {
 			Class<?> itemType = property.getValueDescriptor().getConfigurationInterface();
 
@@ -619,7 +686,7 @@ public class ConfigSchemaBuilder {
 			ConfigurationDescriptor itemDescriptor = TypedConfiguration.getConfigurationDescriptor(itemType);
 
 			// Recursively build schema for the nested configuration
-			return buildObjectSchema(itemDescriptor);
+			return buildConfigSchema(itemDescriptor);
 		}
 	}
 
@@ -633,7 +700,7 @@ public class ConfigSchemaBuilder {
 		ConfigurationDescriptor valueDescriptor = property.getValueDescriptor();
 
 		// Create a property descriptor-like schema for the element
-		Schema elementSchema = buildObjectSchema(valueDescriptor);
+		Schema elementSchema = buildConfigSchema(valueDescriptor);
 		if (elementSchema != null) {
 			schema.setItems(elementSchema);
 		}
@@ -650,7 +717,7 @@ public class ConfigSchemaBuilder {
 
 		// Get the value type
 		ConfigurationDescriptor valueDescriptor = property.getValueDescriptor();
-		Schema valueSchema = buildObjectSchema(valueDescriptor);
+		Schema valueSchema = buildConfigSchema(valueDescriptor);
 		if (valueSchema != null) {
 			// Check for @Key annotation
 			com.top_logic.basic.config.annotation.Key keyAnnotation =

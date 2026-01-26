@@ -33,7 +33,7 @@
 		</dependency>
 		<dependency>
 			<groupId>com.top-logic</groupId>
-			<artifactId>tl-search-vector-index</artifactId>
+			<artifactId>tl-ai-vector-index</artifactId>
 			<version>${tl.version}</version>
 		</dependency>
 		<dependency>

@@ -47,12 +47,18 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.db2.FlexData;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 
+import dev.langchain4j.community.store.embedding.jvector.JVectorEmbeddingStore;
+import dev.langchain4j.data.embedding.Embedding;
+import dev.langchain4j.data.segment.TextSegment;
+import dev.langchain4j.model.mistralai.MistralAiEmbeddingModel;
+import dev.langchain4j.store.embedding.EmbeddingStore;
+import dev.langchain4j.store.embedding.qdrant.QdrantEmbeddingStore;
 import io.qdrant.client.QdrantClient;
 import io.qdrant.client.QdrantGrpcClient;
 import io.qdrant.client.grpc.Collections.Distance;
 import io.qdrant.client.grpc.Collections.VectorParams;
+import io.qdrant.client.grpc.Common.PointId;
 import io.qdrant.client.grpc.JsonWithInt;
-import io.qdrant.client.grpc.Points.PointId;
 import io.qdrant.client.grpc.Points.PointStruct;
 import io.qdrant.client.grpc.Points.Vectors;
 import nl.dannyj.mistral.MistralClient;
@@ -209,6 +215,12 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 
 	private final MistralClient mistralClient;
 
+	private final MistralAiEmbeddingModel lc4jMistralEmbedClient;
+
+	private EmbeddingStore<TextSegment> qdrantEmbeddingStore;
+
+	private EmbeddingStore<TextSegment> jVectorEmbeddingStore;
+
 	/**
 	 * Protected constructor for singleton pattern. Initialization with a given index location.
 	 * Creates the Vector index in case it does not exist yet.
@@ -232,6 +244,20 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 			+ this.qdrantDbPort, VectorThread.class);
 		try {
 			this.qdrantClient = this.getQdrandClient();
+
+			this.qdrantEmbeddingStore =
+				QdrantEmbeddingStore.builder()
+					.host(config.getQdrantDbHostname())
+					.port(config.getQdrantDbPort())
+					.collectionName(config.getQdrantDbCollectionName())
+					.build();
+
+			this.jVectorEmbeddingStore = JVectorEmbeddingStore.builder()
+				.dimension(1024)
+				.persistencePath("tmp/jvector") // Base path for index files
+				.build();
+
+
 		} catch (InterruptedException | ExecutionException ex) {
 			// TODO Auto-generated catch block
 			ex.printStackTrace();
@@ -243,6 +269,11 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		Logger.info("Initiate Mistral Client", VectorThread.class);
 		this.mistralClient = new MistralClient(this.mistralApiKey);
 		
+		MistralAiEmbeddingModel.MistralAiEmbeddingModelBuilder mistralEmbedBuilder =
+			new MistralAiEmbeddingModel.MistralAiEmbeddingModelBuilder();
+		mistralEmbedBuilder.apiKey(this.mistralApiKey).modelName("mistral-embed");
+		this.lc4jMistralEmbedClient = new MistralAiEmbeddingModel(mistralEmbedBuilder);
+
 		createAndStartThread();
 	}
 
@@ -479,8 +510,7 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		 * Create document embedding and store to Qdrant DB
 		 */
 
-		/* Do not index objects from the ai.admin.tools module! */
-//		if (aDoc.getWrapper().tType().toString().startsWith("ai.admin.tools:")) {
+		/* Do not index objects not in the Vector Index Models configuration list! */
 		if (!this.getVectorIndexModels().contains(aDoc.getWrapper().tType().toString())) {
 			return;
 		}
@@ -491,6 +521,7 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		}
 		
 		JSONObject jo = new JSONObject();
+		JSONObject joContent = new JSONObject();
 		
 		FlexData fd = aDoc.getFlexDataManager().load(aDoc.getKnowledgeBase(), aDoc.tId(), true);
 		
@@ -499,11 +530,11 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 			if (key.equals("id")) {
 				indexKey = "internalId";
 			}
-			jo.put(indexKey, fd.getAttributeValue(key).toString());
+			joContent.put(indexKey, fd.getAttributeValue(key).toString());
 		}
-		jo.put("_text", content);
+		joContent.put("_text", content);
 		
-		content = jo.toJSONString();
+		content = joContent.toJSONString();
 		
 		HashMap<String, ArrayList<JsonWithInt.Value>> associations = new HashMap<>();
 
@@ -561,7 +592,8 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		}
 
 		HashMap<String, JsonWithInt.Value> payload = new HashMap<>();
-		payload.putAll(Map.of(
+
+		Map plMap = Map.of(
 			"objectId", value(documentId),
 			"id", value(this.getDocumentUUID(documentId).toString()),
 //			"internalId", value(payload.get(associationKeyName)),
@@ -569,14 +601,30 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 			"TopLogic-type", value(aDoc.getWrapper().tType().toString()),
 			"TLObject-creation-date", value(aDoc.getWrapper().tCreationDate().toString()),
 			"TLObject-modification-date", value(aDoc.getWrapper().tLastModificationDate().toString()),
-			"content", value(content)));
+			"content", value(content));
 
-		String internalId = jo.get("internalId").toString();
+		payload.putAll(plMap);
+
+		plMap = Map.of(
+			"objectId", documentId,
+			"id", this.getDocumentUUID(documentId).toString(),
+//			"internalId", value(payload.get(associationKeyName)),
+			"description", description,
+			"TopLogic-type", aDoc.getWrapper().tType().toString(),
+			"TLObject-creation-date", aDoc.getWrapper().tCreationDate().toString(),
+			"TLObject-modification-date", aDoc.getWrapper().tLastModificationDate().toString(),
+			"content", joContent);
+
+		jo.putAll(plMap);
+
+		String internalId = joContent.get("internalId").toString();
 		if (internalId != null) {
 			payload.put("internalId", value(internalId));
+			jo.put("internalId", internalId);
 		}
 
 		payload.putAll(associationsHashMap);
+		jo.putAll(associationsHashMap);
 
 		List<FloatEmbedding> embeddings = new ArrayList<>();
 		embeddings.add(new FloatEmbedding());
@@ -593,6 +641,7 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		}
 
 		this.storeVectorIndexToQdrantDb(documentId, embeddings, payload, collectionName);
+		this.storeVectorIndexToQdrantDb_(documentId, jo);
 	}
 
 	/**
@@ -615,6 +664,10 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		}
 	}
 
+//	protected void deleteDocument_(ObjectKey key) {
+//		this.embeddingStore.remove(key.toString());
+//	}
+
 	private List<FloatEmbedding> getDocumentEmbeddings(String content) {
 		Logger.info("Embed the content with Mistral Embedding client...", VectorThread.class);
 
@@ -634,6 +687,14 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 
 		return embeddingsResponse.getData();
 
+	}
+
+	private Embedding getDocumentEmbedding(String content) {
+		Logger.info("Embed the content with Mistral Embedding client...", VectorThread.class);
+
+		Embedding embeddingsResponse = this.lc4jMistralEmbedClient.embed(content).content();
+
+		return embeddingsResponse;
 	}
 
 	private void storeVectorIndexToQdrantDb(String documentId, List<FloatEmbedding> embeddings,
@@ -667,7 +728,20 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		});
 	}
 
-	private UUID getDocumentUUID(String documentId) {
+	public void storeVectorIndexToQdrantDb_(String documentId, JSONObject payload) {
+		String pl = payload.toJSONString();
+		this.qdrantEmbeddingStore.addAll(List.of(this.getDocumentUUID(documentId).toString()),
+			List.of(this.getDocumentEmbedding(pl)),
+			List.of(TextSegment.from(pl)));
+
+		this.jVectorEmbeddingStore.addAll(List.of(this.getDocumentUUID(documentId).toString()),
+			List.of(this.getDocumentEmbedding(pl)),
+			List.of(TextSegment.from(pl)));
+
+		((JVectorEmbeddingStore) this.jVectorEmbeddingStore).save();
+	}
+
+	public UUID getDocumentUUID(String documentId) {
 		return UUID.nameUUIDFromBytes(documentId.getBytes(StandardCharsets.UTF_8));
 	}
 

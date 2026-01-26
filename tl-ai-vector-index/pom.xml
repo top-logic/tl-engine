@@ -14,8 +14,20 @@
   <properties>
 	  <!-- Use the latest version whenever possible. -->
 	  <jackson.version>2.19.0</jackson.version>
+	  <langchain4j.version>1.9.1</langchain4j.version>
 	</properties>
 
+	<dependencyManagement>
+	    <dependencies>
+	        <dependency>
+	            <groupId>org.testcontainers</groupId>
+	            <artifactId>testcontainers-bom</artifactId>
+	            <version>2.0.2</version>
+	            <type>pom</type>
+	            <scope>import</scope>
+	        </dependency>
+	    </dependencies>
+	</dependencyManagement>
   <dependencies>
     <dependency>
       <groupId>com.top-logic</groupId>
@@ -36,7 +48,7 @@
 	<dependency>
 	  <groupId>io.qdrant</groupId>
 	  <artifactId>client</artifactId>
-	  <version>1.15.0</version>
+	  <version>1.16.0</version>
 	</dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
@@ -50,7 +62,7 @@
 	<dependency>
         <groupId>io.grpc</groupId>
         <artifactId>grpc-protobuf</artifactId>
-        <version>1.65.1</version>
+        <version>1.75.0</version>
     </dependency>
     <dependency>
 	    <groupId>com.github.Dannyj1</groupId>
@@ -61,7 +73,24 @@
 	    <groupId>com.fasterxml.jackson.core</groupId>
 	    <artifactId>jackson-databind</artifactId>
 	    <version>${jackson.version}</version>
-	  </dependency>
+	</dependency>
+	
+	<!-- LangChain4j Mistral integration -->
+	<dependency>
+		<groupId>dev.langchain4j</groupId>
+		<artifactId>langchain4j-mistral-ai</artifactId>
+		<version>${langchain4j.version}</version>
+	</dependency>
+	<dependency>
+	    <groupId>dev.langchain4j</groupId>
+	    <artifactId>langchain4j-qdrant</artifactId>
+	    <version>1.10.0-beta18</version>
+	</dependency>
+	<dependency>
+	    <groupId>dev.langchain4j</groupId>
+	    <artifactId>langchain4j-community-jvector</artifactId>
+	    <version>1.10.0-beta18</version>
+	</dependency>
   </dependencies>
   
   <repositories>

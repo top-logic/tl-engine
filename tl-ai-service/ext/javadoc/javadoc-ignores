@@ -3,3 +3,5 @@
 com.top_logic.ai.service.tools.model.messages.SearchResult.java: Invalid camel case word 'qualifiedName', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.ai.service.tools.model.messages.InstanceResponse.java: Invalid camel case word 'TLObjectReference', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.ai.service.tools.model.messages.TypeInfo.java: Invalid camel case word 'TypeName', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.ai.service.tools.model.messages.ModuleInfo.java: Invalid camel case word 'orgStructure', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.ai.service.tools.model.messages.ModuleInfo.java: Invalid camel case word 'mandatorStructure', this may only be used within JavaDoc links or HTML code tags.

@@ -676,6 +676,15 @@ public class ConfigSchemaBuilder {
 	 * Builds schema for ITEM properties (nested configuration interfaces).
 	 */
 	private Schema buildItemPropertySchema(PropertyDescriptor property) {
+		Schema result = buildItemObjectPropertySchema(property);
+		if (property.getValueProvider() != null) {
+			// Also allow a plain string configuration.
+			return AnyOfSchema.create().addAnyOf(StringSchema.create()).addAnyOf(result);
+		}
+		return result;
+	}
+
+	private Schema buildItemObjectPropertySchema(PropertyDescriptor property) {
 		Class<?> instanceType = property.getInstanceType();
 		if (instanceType != null) {
 			return implementationSchema(instanceType);

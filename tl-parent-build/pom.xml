@@ -57,7 +57,7 @@
 								  <groupId>com.top-logic</groupId>
 								  <artifactId>tl-build-doclet</artifactId>
 								  <classifier>jar-with-dependencies</classifier>
-								  <version>7.9.9-SNAPSHOT</version>
+								  <version>${tl.version}</version>
 							</docletArtifact>
 							<useStandardDocletOptions>false</useStandardDocletOptions>
 							<additionalOptions>

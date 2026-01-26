@@ -1483,8 +1483,6 @@
 				<artifactId>maven-release-plugin</artifactId>
 				<version>3.3.1</version>
 				<configuration>
-					<tagBase>http://tl.bos.local/svn/top-logic/tags/TL/</tagBase>
-					<branchBase>http://tl.bos.local/svn/top-logic/branches/TL/</branchBase>
 					<autoVersionSubmodules>true</autoVersionSubmodules>
 					<tagNameFormat>TL_@{project.version}</tagNameFormat>
 					<preparationGoals>clean install</preparationGoals>

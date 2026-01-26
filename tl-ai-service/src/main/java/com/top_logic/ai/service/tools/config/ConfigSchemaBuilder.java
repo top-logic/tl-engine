@@ -450,9 +450,15 @@ public class ConfigSchemaBuilder {
 	private ObjectSchema buildLocalPropertiesSchema(ConfigurationDescriptor descriptor) {
 		ObjectSchema result = ObjectSchema.create();
 
+		if (descriptor.getConfigurationInterface() == ConfigurationItem.class
+			|| descriptor.getConfigurationInterface() == PolymorphicConfiguration.class) {
+			// All properties are handles especially.
+			return result;
+		}
+
 		// Process only local (non-inherited) properties
 		for (PropertyDescriptor property : descriptor.getProperties()) {
-			if (!property.isLocalProperty()) {
+			if (property.isInherited()) {
 				continue;
 			}
 			if (property.isAbstract()) {

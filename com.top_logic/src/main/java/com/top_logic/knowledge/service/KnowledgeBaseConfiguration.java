@@ -11,11 +11,14 @@ import com.top_logic.basic.config.NamedConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
+import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.ConnectionPoolRegistry;
+import com.top_logic.knowledge.service.db2.DBContext;
+import com.top_logic.knowledge.service.db2.DBContextFactory;
 
 /**
  * Configuration interface of a {@link KnowledgeBase}.
@@ -245,4 +248,13 @@ public interface KnowledgeBaseConfiguration extends NamedConfiguration {
 	 *        New value of {@link #isOverridePersistentTypeDefinitions()}.
 	 */
 	void setOverridePersistentTypeDefinitions(boolean b);
+
+	/**
+	 * Class of the factory creating the {@link DBContext} for the {@link KnowledgeBase}.
+	 * 
+	 * @implNote This property is declared as class to be able to configure a default for
+	 *           {@link KnowledgeBaseConfiguration} in the application config.
+	 */
+	@ClassDefault(DBContextFactory.class)
+	Class<DBContextFactory> getContextFactory();
 }

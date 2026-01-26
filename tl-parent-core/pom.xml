@@ -275,7 +275,7 @@
         							<pluginExecutionFilter>
         								<groupId>com.top-logic</groupId>
         								<artifactId>tl-maven-plugin</artifactId>
-										<versionRange>[7.11.0-SNAPSHOT,)</versionRange>
+										<versionRange>[${tl.version},)</versionRange>
         								<goals>
         									<goal>resolve</goal>
         									<goal>touch</goal>

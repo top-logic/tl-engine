@@ -4,21 +4,21 @@
 
 	<parent>
 		<groupId>com.top-logic</groupId>
-		<artifactId>tl-parent-core</artifactId>
-		<version>7.10.0-SNAPSHOT</version>
+		<artifactId>tl-parent-app</artifactId>
+		<version>7.10.0-SNAPSHOT</version>	
 	</parent>
-
+	
 	<artifactId>tl-chat</artifactId>
-
+	
 	<properties>
-		<project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
+		<project.build.sourceEncoding>utf-8</project.build.sourceEncoding>		
 	</properties>
 
 	<dependencies>
-		<!-- Runtime -->
+		<!-- TopLogic -->
 		<dependency>
 			<groupId>com.top-logic</groupId>
-			<artifactId>tl-element</artifactId>
+			<artifactId>tl-core</artifactId>
 		</dependency>
 
 		<!-- Tests -->
@@ -36,24 +36,4 @@
 		</dependency>
 	</dependencies>
 
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>com.top-logic</groupId>
-				<artifactId>tl-maven-plugin</artifactId>
-				<version>${tl.version}</version>
-				<executions>
-					<execution>
-						<id>generate-binding</id>
-						<goals>
-							<goal>generate-java</goal>
-						</goals>
-						<configuration>
-							<modules>tl.chat</modules>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-		</plugins>
-	</build>
 </project>

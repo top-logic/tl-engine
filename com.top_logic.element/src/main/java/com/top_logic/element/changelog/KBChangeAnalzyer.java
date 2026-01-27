@@ -7,7 +7,6 @@
 package com.top_logic.element.changelog;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -16,98 +15,73 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
-import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
-import com.top_logic.basic.TLID;
 import com.top_logic.basic.util.Utils;
 import com.top_logic.dob.MetaObject;
-import com.top_logic.dob.identifier.DefaultObjectKey;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.dob.meta.MOStructure;
-import com.top_logic.element.changelog.model.Change;
-import com.top_logic.element.changelog.model.ChangeSet;
-import com.top_logic.element.changelog.model.trans.TransientChangeSet;
-import com.top_logic.element.changelog.model.trans.TransientCreation;
-import com.top_logic.element.changelog.model.trans.TransientDeletion;
-import com.top_logic.element.changelog.model.trans.TransientModification;
-import com.top_logic.element.changelog.model.trans.TransientUpdate;
 import com.top_logic.element.meta.AssociationStorageDescriptor;
 import com.top_logic.element.model.cache.ElementModelCacheService;
 import com.top_logic.element.model.cache.ModelTables;
+import com.top_logic.knowledge.event.ItemDeletion;
+import com.top_logic.knowledge.event.ItemEvent;
+import com.top_logic.knowledge.event.ItemUpdate;
+import com.top_logic.knowledge.event.ObjectCreation;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.KnowledgeBase;
+import com.top_logic.knowledge.service.UpdateEvent;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.util.TLAnnotations;
+import com.top_logic.model.cs.TLObjectChange;
+import com.top_logic.model.cs.TLObjectChangeSet;
+import com.top_logic.model.cs.TLObjectCreation;
+import com.top_logic.model.cs.TLObjectDeletion;
+import com.top_logic.model.cs.TLObjectUpdate;
 
 /**
  * Analyzer of changes from the {@link KnowledgeBase}.
  * 
  * <p>
- * The {@link KBChangeAnalzyer} gets the updates, creations, and deletions of the current commit and
- * creates a {@link ChangeSet} of them.
+ * The {@link KBChangeAnalzyer} gets an {@link UpdateEvent} for the current commit and creates a
+ * {@link TLObjectChangeSet} of them.
  * </p>
  */
 public class KBChangeAnalzyer {
-
-	private final KnowledgeBase _kb;
-
-	private final Map<TLID, KnowledgeItem> _updates;
-
-	private final Map<TLID, KnowledgeItem> _creations;
-
-	private final Map<TLID, KnowledgeItem> _deletions;
-
-	private final long _commitNumber;
 
 	private ModelTables _modelTables;
 
 	private final Map<TLObject, Set<TLStructuredTypePart>> _updatesByItem = new HashMap<>();
 
-	/**
-	 * {@link Change}s to apply to a {@link ChangeSet}.
-	 */
-	private final List<Change> _changes = new ArrayList<>();
+	private final List<TLObjectChange> _objectChanges = new ArrayList<>();
+
+	private final UpdateEvent _event;
 
 	/**
 	 * Creates a new {@link KBChangeAnalzyer}.
-	 * 
-	 * @param kb
-	 *        {@link KnowledgeBase} that triggered the change.
-	 * @param commitNumber
-	 *        The commit number of the change.
-	 * @param changes
-	 *        Changed elements.
-	 * @param creations
-	 *        Newly created elements.
-	 * @param deletions
-	 *        Deleted elements.
 	 */
-	public KBChangeAnalzyer(KnowledgeBase kb, long commitNumber, Map<TLID, KnowledgeItem> changes,
-			Map<TLID, KnowledgeItem> creations,
-			Map<TLID, KnowledgeItem> deletions) {
-		_kb = kb;
-		_commitNumber = commitNumber;
-		_updates = changes;
-		_creations = creations;
-		_deletions = deletions;
+	public KBChangeAnalzyer(UpdateEvent event) {
+		_event = event;
+	}
+
+	private KnowledgeBase kb() {
+		return _event.getKnowledgeBase();
 	}
 
 	private void reset() {
 		_modelTables = ElementModelCacheService.getModelTables();
-		_changes.clear();
+		_objectChanges.clear();
 		_updatesByItem.clear();
 	}
 
 	/**
-	 * Starts the analysis process and returns the {@link ChangeSet} from it.
+	 * Starts the analysis process and returns the {@link TLObjectChangeSet} from it.
 	 */
-	public TransientChangeSet analyze() {
+	public TLObjectChangeSet analyze() {
 		reset();
 
 		analyzeCreations();
@@ -116,52 +90,45 @@ public class KBChangeAnalzyer {
 
 		processUpdates();
 
-		TransientChangeSet cs = new TransientChangeSet();
-		_changes.forEach(cs::addChange);
+		TLObjectChangeSet cs = new TLObjectChangeSet(_event.getKnowledgeBase(), _event.getCommitNumber());
+		_objectChanges.forEach(cs::addChange);
 
 		return cs;
 	}
 
-	private static Function<AssociationStorageDescriptor, ObjectKey> currentValue(KnowledgeItem item) {
-		return descriptor -> descriptor.getBaseObjectId(item);
+	private static Function<AssociationStorageDescriptor, ObjectKey> value(Map<String, Object> values) {
+		return descriptor -> descriptor.getBaseObjectId(values);
 	}
 
 	private static Function<AssociationStorageDescriptor, ObjectKey> noValue() {
 		return descriptor -> null;
 	}
 
-	private static Function<AssociationStorageDescriptor, ObjectKey> oldValue(KnowledgeItem item) {
-		return descriptor -> item.getKnowledgeBase().withoutModifications(() -> descriptor.getBaseObjectId(item));
-	}
-
-	private static Function<AssociationStorageDescriptor, ObjectKey> currentPart(KnowledgeItem item) {
-		return descriptor -> descriptor.getPartId(item);
+	private static Function<AssociationStorageDescriptor, ObjectKey> part(Map<String, Object> values) {
+		return descriptor -> descriptor.getPartId(values);
 	}
 
 	private static Function<AssociationStorageDescriptor, ObjectKey> noPart() {
 		return descriptor -> null;
 	}
 
-	private static Function<AssociationStorageDescriptor, ObjectKey> oldPart(KnowledgeItem item) {
-		return descriptor -> item.getKnowledgeBase().withoutModifications(() -> descriptor.getPartId(item));
-	}
-
-	private boolean analyzeCreations() {
-		if (_creations.isEmpty()) {
-			return false;
+	private void analyzeCreations() {
+		Map<ObjectKey, KnowledgeItem> createdObjects = _event.getCreatedObjects();
+		if (createdObjects.isEmpty()) {
+			return;
 		}
+
 		// All object IDs of objects created in the current change set.
-		Set<ObjectKey> createdKeys = _creations.values().stream()
-			.map(KnowledgeItem::tId)
-			.collect(Collectors.toSet());
-		for (KnowledgeItem creation : _creations.values()) {
-			MetaObject table = creation.tTable();
+		Set<ObjectKey> createdKeys = createdObjects.keySet();
+		for (ObjectCreation creation : _event.getChanges().getCreations()) {
+			MetaObject table = creation.getObjectType();
 
 			Map<String, AssociationStorageDescriptor> descriptors = _modelTables.getDescriptorsForTable(table);
 			if (!descriptors.isEmpty()) {
-				// Table is not used to store value of foreign objects.
+				// Table is used to store value of foreign objects.
+				Map<String, Object> values = creation.getValues();
 				analyzeTechnicalUpdate(descriptors, table, createdKeys,
-					currentValue(creation), noValue(), currentPart(creation), noPart());
+					value(values), noValue(), part(values), noPart());
 			}
 
 			List<TLClass> classes = _modelTables.getClassesForTable(table);
@@ -170,31 +137,32 @@ public class KBChangeAnalzyer {
 				continue;
 			}
 
-			TLObject object = creation.getWrapper();
+			TLObject object = createdObjects.get(objectKey(creation)).getWrapper();
 			if (isPersistentCacheObject(object)) {
 				continue;
 			}
 
 			// Record a creation.
-			TransientCreation change = new TransientCreation();
-			change.setObject(object);
-
-			updateImplicit(change, object, createdKeys);
-
-			registerChange(change);
+			registerChange(new TLObjectCreation(object));
 		}
-		return false;
 	}
 
-	private boolean analyzeUpdates() {
-		for (KnowledgeItem update : _updates.values()) {
-			MetaObject table = update.tTable();
+	private static ObjectKey objectKey(ItemEvent evt) {
+		return evt.getObjectId().toCurrentObjectKey();
+	}
+
+	private void analyzeUpdates() {
+		Map<ObjectKey, KnowledgeItem> updatedObjects = _event.getUpdatedObjects();
+		for (ItemUpdate update : _event.getChanges().getUpdates()) {
+			MetaObject table = update.getObjectType();
+			Map<String, Object> values = update.getValues();
+			Map<String, Object> oldValues = update.getOldValues();
 
 			Map<String, AssociationStorageDescriptor> descriptors = _modelTables.getDescriptorsForTable(table);
 			if (!descriptors.isEmpty()) {
-				// Table is not used to store value of foreign objects.
+				// Table is used to store value of foreign objects.
 				analyzeTechnicalUpdate(descriptors, table, Collections.emptySet(),
-					currentValue(update), oldValue(update), currentPart(update), oldPart(update));
+					value(values), value(oldValues), part(values), part(oldValues));
 			}
 
 			List<TLClass> classes = _modelTables.getClassesForTable(table);
@@ -203,110 +171,131 @@ public class KBChangeAnalzyer {
 				continue;
 			}
 
-			TLObject newObject = update.getWrapper();
+			TLObject newObject = updatedObjects.get(objectKey(update)).getWrapper();
 			if (isPersistentCacheObject(newObject)) {
 				continue;
 			}
 
-			// Record an update.
-			Set<TLStructuredTypePart> changedParts = enter(newObject);
 			TLStructuredType type = newObject.tType();
 
 			// TLStructuredTypeParts that store in the table of the KnowledgeItem
-			Map<String, TLStructuredTypePart> partsByColumn = _modelTables.lookupColumnBinding(type);
+			Map<String, TLStructuredTypePart> partByColumn = _modelTables.lookupColumnBinding(type);
+			for (Entry<String, Object> valueUpdate : values.entrySet()) {
+				String storageAttribute = valueUpdate.getKey();
 
-			for (Entry<String, TLStructuredTypePart> partByColumn : partsByColumn.entrySet()) {
-				if (isPersistentCacheAttribute(partByColumn.getValue())) {
+				Object newValue = valueUpdate.getValue();
+				Object oldValue = oldValues.get(storageAttribute);
+
+				if (Utils.equals(newValue, oldValue)) {
+					// A value was provided in an update event for technical reasons, without
+					// the value being changed.
+					continue;
+				}
+
+				TLStructuredTypePart part = partByColumn.get(storageAttribute);
+				if (part == null) {
+					// A change that has no model representation, ignore.
+					continue;
+				}
+				if (isPersistentCacheAttribute(part)) {
 					// Value is just a persistent cache, ignore.
 					continue;
 				}
 
-				Object newValue = update.getAttributeValue(partByColumn.getKey());
-				Object oldValue = update.getKnowledgeBase()
-					.withoutModifications(() -> update.getAttributeValue(partByColumn.getKey()));
-
-				if (Utils.equals(newValue, oldValue)) {
-					// No change for part partByColumn.getValue().
-					continue;
-				}
-				changedParts.add(partByColumn.getValue());
+				enter(newObject).add(part);
 			}
 
 		}
-		return false;
 	}
 
-	private boolean analyzeDeletions() {
-		if (_deletions.isEmpty()) {
-			return false;
-		}
+	private void analyzeDeletions() {
 		// All object IDs of objects deleted in the current change set.
-		Set<ObjectKey> deletedKeys = _deletions.values().stream()
-			.map(KnowledgeItem::tId)
-			.collect(Collectors.toSet());
-		for (KnowledgeItem deletion : _deletions.values()) {
-			MetaObject table = deletion.tTable();
+		Set<ObjectKey> deletedKeys = _event.getDeletedObjectKeys();
+		if (deletedKeys.isEmpty()) {
+			return;
+		}
+
+		Map<ObjectKey, KnowledgeItem> deletedObjects = new HashMap<>();
+		for (KnowledgeItem deleted : _event.getCachedDeletedObjects()) {
+			deletedObjects.put(deleted.tId(), deleted);
+		}
+
+		for (ItemDeletion deletion : _event.getChanges().getDeletions()) {
+			MetaObject table = deletion.getObjectType();
 
 			Map<String, AssociationStorageDescriptor> descriptors = _modelTables.getDescriptorsForTable(table);
 			if (!descriptors.isEmpty()) {
-				// Table is not used to store value of foreign objects.
+				// Table is used to store value of foreign objects.
+				Map<String, Object> oldValues = deletion.getValues();
 				analyzeTechnicalUpdate(descriptors, table, deletedKeys,
-					noValue(), oldValue(deletion), noPart(), oldPart(deletion));
+					noValue(), value(oldValues), noPart(), part(oldValues));
 			}
 
+			ObjectKey deletedKey = objectKey(deletion);
 			List<TLClass> classes = _modelTables.getClassesForTable(table);
 			if (classes.isEmpty()) {
-				// A pure technical object.
-				continue;
+				// A pure technical object. remove it from later processing.
+				deletedObjects.remove(deletedKey);
+			} else {
+				/* add null as placeholder when deleted object is not delivered by
+				 * #getCachedDeletedObjects() */
+				deletedObjects.putIfAbsent(deletedKey, null);
 			}
-			KnowledgeItem item = resolve(inPreviousRevision(deletion.tId()));
-			TLObject object = item.getWrapper();
-			if (isPersistentCacheObject(object)) {
-				continue;
-			}
-
-			// Record a deletion.
-			TransientDeletion change = new TransientDeletion();
-			change.setObject(object);
-
-			updateImplicit(change, object, deletedKeys);
-			registerChange(change);
 		}
-		return false;
+
+		kb().withoutModifications(() -> {
+			for (Entry<ObjectKey, KnowledgeItem> deletion : deletedObjects.entrySet()) {
+				TLObject deleted;
+				if (deletion.getValue() != null) {
+					deleted = deletion.getValue().getWrapper();
+				} else {
+					deleted = kb().resolveObjectKey(deletion.getKey()).getWrapper();
+				}
+				if (isPersistentCacheObject(deleted)) {
+					continue;
+				}
+				// Record a deletion.
+				registerChange(new TLObjectDeletion(deleted));
+			}
+			return null;
+		});
+
 	}
 
 	private void processUpdates() {
-		for (Entry<TLObject, Set<TLStructuredTypePart>> entry : _updatesByItem.entrySet()) {
-			TransientUpdate change = new TransientUpdate();
-
-			TLObject newObject = entry.getKey();
-			change.setObject(newObject);
-
-			TLObject oldObject = resolve(inPreviousRevision(newObject.tId())).getWrapper();
-			change.setOldObject(oldObject);
-
-			for (TLStructuredTypePart part : entry.getValue()) {
-				TransientModification modification = new TransientModification();
-				modification.setPart(part);
-
-				// Cast should not be necessary, since a setter of a multiple property should
-				// not expect modifyable collections.
-				modification.setOldValue((Collection<Object>) CollectionUtil.asList(oldObject.tValue(part)));
-				modification.setNewValue((Collection<Object>) CollectionUtil.asList(newObject.tValue(part)));
-
-				change.addModification(modification);
+		Set<ObjectKey> created = _event.getCreatedObjectKeys();
+		Set<ObjectKey> deleted = _event.getDeletedObjectKeys();
+		for (Entry<TLObject, Set<TLStructuredTypePart>> updates : _updatesByItem.entrySet()) {
+			TLObject object = updates.getKey();
+			TLObjectUpdate change = new TLObjectUpdate(object);
+			kb().withoutModifications(() -> {
+				for (TLStructuredTypePart part : updates.getValue()) {
+					if (created.contains(part.tId())) {
+						// Part is created in the revision: The old value is not filled.
+						continue;
+					}
+					change.oldValues().put(part, object.tValue(part));
+				}
+				return null;	
+			});
+			for (TLStructuredTypePart part : updates.getValue()) {
+				if (deleted.contains(part.tId())) {
+					// Part is deleted in the revision: The new value is not filled.
+					continue;
+				}
+				change.newValues().put(part, object.tValue(part));
 			}
-
+			
 			registerChange(change);
 		}
+
 	}
 
-	private boolean analyzeTechnicalUpdate(Map<String, AssociationStorageDescriptor> descriptors, MetaObject table,
+	private void analyzeTechnicalUpdate(Map<String, AssociationStorageDescriptor> descriptors, MetaObject table,
 			Set<ObjectKey> createdDeletedKeys, Function<AssociationStorageDescriptor, ObjectKey> newValue,
 			Function<AssociationStorageDescriptor, ObjectKey> oldValue,
 			Function<AssociationStorageDescriptor, ObjectKey> newPart,
 			Function<AssociationStorageDescriptor, ObjectKey> oldPart) {
-		boolean technicalUpdate = false;
 		for (AssociationStorageDescriptor descriptor : descriptors.values()) {
 			// A row that stores (part of) an attribute value of some object.
 			ObjectKey newId = newValue.apply(descriptor);
@@ -336,10 +325,7 @@ public class KBChangeAnalzyer {
 					enterChange(table, createdDeletedKeys, descriptor, newId, newPartId);
 				}
 			}
-
-			technicalUpdate = true;
 		}
-		return technicalUpdate;
 	}
 
 	private void enterChange(MetaObject table, Set<ObjectKey> createdDeletedKeys,
@@ -347,59 +333,53 @@ public class KBChangeAnalzyer {
 		if (createdDeletedKeys.contains(objId)) {
 			// Part of a deleted or created object, no additional change.
 			return;
-		} else {
-			TLObject oldObject = resolve(objId).getWrapper();
-			if (isPersistentCacheObject(oldObject)) {
-				return;
-			}
-			if (partId == null) {
-				Logger.error("Unable to determine part id for update of '"
-						+ MetaLabelProvider.INSTANCE.getLabel(oldObject) + "': table: " + table
-						+ ", descriptor: " + descriptor,
-					KBChangeAnalzyer.class);
-				return;
-			}
+		}
+		TLObject object = resolve(objId).getWrapper();
+		if (isPersistentCacheObject(object)) {
+			return;
+		}
+		if (partId == null) {
+			Logger.error("Unable to determine part id for update of '"
+					+ MetaLabelProvider.INSTANCE.getLabel(object) + "': table: " + table
+					+ ", descriptor: " + descriptor,
+				KBChangeAnalzyer.class);
+			return;
+		}
 
-			KnowledgeItem partKI = resolve(partId);
-			if (partKI == null) {
-				// part is deleted, but not the object itself
-				assert createdDeletedKeys.contains(partId) : "Part " + partId
-						+ " can not be resolved whereas it was not deleted: " + createdDeletedKeys;
-				partKI = resolve(inPreviousRevision(partId));
+		TLStructuredTypePart part;
+		KnowledgeItem partKI = resolve(partId);
+		if (partKI == null) {
+			// part is deleted, but not the object itself
+			assert createdDeletedKeys.contains(partId) : "Part " + partId
+					+ " can not be resolved whereas it was not deleted: " + createdDeletedKeys;
+			part = kb().withoutModifications(
+				() -> {
+					TLStructuredTypePart deleted = resolve(partId).getWrapper();
+					if (isPersistentCacheAttribute(deleted)) {
+						return null;
+					}
+					return deleted;
+
+				});
+			if (part == null) {
+				return;
 			}
-			TLStructuredTypePart part = partKI.getWrapper();
+		} else {
+			part = partKI.getWrapper();
 			if (isPersistentCacheAttribute(part)) {
 				// Value is just a persistent cache, ignore.
 				return;
 			}
-
-			enter(oldObject).add(part);
 		}
+		enter(object).add(part);
 	}
 
-	private void updateImplicit(Change change, TLObject object, Set<ObjectKey> keys) {
-		TLObject container = object.tContainer();
-		change.setImplicit(container != null && keys.contains(container.tId()));
-	}
-
-	private void registerChange(Change change) {
-		_changes.add(change);
+	private void registerChange(TLObjectChange change) {
+		_objectChanges.add(change);
 	}
 
 	private KnowledgeItem resolve(ObjectKey key) {
-		return _kb.resolveObjectKey(key);
-	}
-
-	private long previousRevision() {
-		return _commitNumber - 1;
-	}
-
-	private ObjectKey inPreviousRevision(ObjectKey objId) {
-		return inRevision(objId, previousRevision());
-	}
-
-	private static ObjectKey inRevision(ObjectKey objId, long rev) {
-		return new DefaultObjectKey(objId.getBranchContext(), rev, objId.getObjectType(), objId.getObjectName());
+		return kb().resolveObjectKey(key);
 	}
 
 	private Set<TLStructuredTypePart> enter(TLObject newObject) {

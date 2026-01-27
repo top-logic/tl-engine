@@ -8,6 +8,8 @@ package com.top_logic.element.boundsec.manager;
 import java.util.Map;
 import java.util.Set;
 
+import com.top_logic.model.cs.TLObjectChangeSet;
+
 /**
  * Logging during security update.
  * 
@@ -15,7 +17,7 @@ import java.util.Set;
  */
 public interface LogHandler {
 
-    void logSecurityUpdate(Map aSomeNew, Map aSomeRemoved, Map aRulesToObjectsMap,
+	void logSecurityUpdate(TLObjectChangeSet changes, Map aRulesToObjectsMap,
             Set aInvalidObjects);
 
 }

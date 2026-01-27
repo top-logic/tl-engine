@@ -8,6 +8,8 @@ package com.top_logic.element.boundsec.manager;
 import java.util.Map;
 import java.util.Set;
 
+import com.top_logic.model.cs.TLObjectChangeSet;
+
 /**
  * {@link LogHandler} that logs nothing.
  * 
@@ -19,7 +21,7 @@ public class NullLogHandler implements LogHandler {
 	public static final NullLogHandler INSTANCE = new NullLogHandler();
 
 	@Override
-	public void logSecurityUpdate(Map someNew, Map someRemoved, Map rulesToObjectsMap, Set invalidObjects) {
+	public void logSecurityUpdate(TLObjectChangeSet changes, Map rulesToObjectsMap, Set invalidObjects) {
 		// Log nothing
 	}
 

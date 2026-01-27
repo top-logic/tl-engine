@@ -14,6 +14,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 
 import com.top_logic.basic.annotation.FrameworkInternal;
+import com.top_logic.basic.shared.collection.CollectionUtilShared;
 import com.top_logic.dob.MOAttribute;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.attr.MOPrimitive;
@@ -178,16 +179,15 @@ public class ExpressionFactory {
 	}
 
 	/**
-	 * 
-	 * Internal method replacing {@link KnowledgeItem} but their {@link KnowledgeItem#tId()
+	 * Internal method replacing {@link KnowledgeItem} by their {@link KnowledgeItem#tId()
 	 * identifier}.
+	 * 
 	 * <p>
 	 * This is used to modify literal values.
 	 * </p>
 	 * 
 	 * @see #literal(Object)
 	 * @see #setLiteral(Collection)
-	 * 
 	 */
 	@FrameworkInternal
 	public static Object replaceKIbyObjectKey(Object value) {
@@ -199,30 +199,46 @@ public class ExpressionFactory {
 			return ki.tId();
 		}
 		if (value instanceof Collection col) {
-			if (col.size() > 0) {
-				Collection<Object> copy;
-				if (col instanceof LinkedHashSet) {
-					copy = new LinkedHashSet<>(col.size());
-				} else if (col instanceof HashSet) {
-					copy = new HashSet<>(col.size());
-				} else {
-					copy = new ArrayList<>(col.size());
-				}
-				boolean changes = false;
-				for (Object entry : col) {
-					if (entry instanceof IdentifiedObject ki) {
-						entry = ki.tId();
-						changes = true;
-					}
-					copy.add(entry);
-
-				}
-				if (changes) {
-					return copy;
-				}
-			}
+			return replaceKIsByObjectKeys(col);
 		}
 		return value;
+	}
+
+	/**
+	 * Internal method replacing {@link KnowledgeItem}s in the given collection by their
+	 * {@link KnowledgeItem#tId() identifier}.
+	 * 
+	 * <p>
+	 * This is used to modify literal values.
+	 * </p>
+	 * 
+	 * @see #literal(Object)
+	 * @see #setLiteral(Collection)
+	 */
+	public static Collection<?> replaceKIsByObjectKeys(Collection<?> col) {
+		if (col.size() > 0) {
+			Collection<Object> copy;
+			if (col instanceof LinkedHashSet) {
+				copy = CollectionUtilShared.newLinkedSet(col.size());
+			} else if (col instanceof HashSet) {
+				copy = CollectionUtilShared.newSet(col.size());
+			} else {
+				copy = new ArrayList<>(col.size());
+			}
+			boolean changes = false;
+			for (Object entry : col) {
+				if (entry instanceof IdentifiedObject ki) {
+					entry = ki.tId();
+					changes = true;
+				}
+				copy.add(entry);
+
+			}
+			if (changes) {
+				return copy;
+			}
+		}
+		return col;
 	}
 	
 	/**

@@ -83,9 +83,6 @@ public class ChatControl extends AbstractControlBase {
 
 	private final Chat _chat;
 
-	/** List to hold notifier messages for progress updates */
-	private final List<ChatNotifier> _notifiers = new ArrayList<>();
-
 	/** Shared state for background processing (null when not processing) */
 	private AIProcessingState _processingState = null;
 
@@ -164,11 +161,6 @@ public class ChatControl extends AbstractControlBase {
 				writeMessage(context, out, msg);
 			}
 
-			// Render notifier messages
-			for (ChatNotifier notifier : _notifiers) {
-				writeNotifierMessage(out, notifier);
-			}
-
 			// Render task progress
 			writeTaskProgress(context, out);
 		}
@@ -218,54 +210,6 @@ public class ChatControl extends AbstractControlBase {
 		out.endTag(DIV);
 	}
 
-	private void writeNotifierMessage(TagWriter out, ChatNotifier notifier) throws IOException {
-		out.beginBeginTag(DIV);
-		out.writeAttribute(CLASS_ATTR, "chat-notifier");
-		out.endBeginTag();
-		{
-			// Icon and source
-			out.beginBeginTag(SPAN);
-			out.writeAttribute(CLASS_ATTR, "chat-notifier-source");
-			out.endBeginTag();
-			out.writeText(notifier.getIcon() + " " + notifier.getSource());
-			out.endTag(SPAN);
-
-			out.writeText(" ");
-
-			// Timestamp
-			out.beginBeginTag(SPAN);
-			out.writeAttribute(CLASS_ATTR, "chat-notifier-time");
-			out.endBeginTag();
-			out.writeText("(" + TIME_FORMAT.format(notifier.getTimestamp().atZone(ZoneId.systemDefault())) + ")");
-			out.endTag(SPAN);
-
-			out.writeText(": ");
-
-			// Message text with type-specific styling
-			out.beginBeginTag(SPAN);
-			out.writeAttribute(CLASS_ATTR, getNotifierTextClass(notifier.getType()));
-			out.endBeginTag();
-			out.writeText(notifier.getMessage());
-			out.endTag(SPAN);
-		}
-		out.endTag(DIV);
-	}
-
-	private String getNotifierTextClass(ChatNotifier.NotificationType type) {
-		switch (type) {
-			case INFO:
-				return "chat-notifier-text-info";
-			case PROGRESS:
-				return "chat-notifier-text-progress";
-			case SUCCESS:
-				return "chat-notifier-text-success";
-			case ERROR:
-				return "chat-notifier-text-error";
-			default:
-				return "chat-notifier-text-info";
-		}
-	}
-
 	private void writeTaskProgress(DisplayContext context, TagWriter out) throws IOException {
 		List<ChatTask> tasks = _taskTracker.getAllTasks();
 		if (tasks.isEmpty()) {
@@ -299,9 +243,12 @@ public class ChatControl extends AbstractControlBase {
 	}
 
 	private void writeTaskHeader(TagWriter out, ChatTask task, String taskDivId) throws IOException {
+		String arrowId = taskDivId + "-arrow";
+		String bodyId = taskDivId + "-body";
+
 		out.beginBeginTag(DIV);
 		out.writeAttribute(CLASS_ATTR, "chat-task-header");
-		out.writeAttribute(ONCLICK_ATTR, "toggleTaskExpand('" + taskDivId + "')");
+		out.writeAttribute(ONCLICK_ATTR, "toggleTaskExpand('" + bodyId + "', '" + arrowId + "')");
 		out.endBeginTag();
 		{
 			// Status icon
@@ -331,8 +278,9 @@ public class ChatControl extends AbstractControlBase {
 			// Expand arrow
 			out.beginBeginTag(SPAN);
 			out.writeAttribute(CLASS_ATTR, "chat-task-expand");
+			out.writeAttribute(ID_ATTR, arrowId);
 			out.endBeginTag();
-			out.writeText("▶");
+			out.writeText("▼");
 			out.endTag(SPAN);
 		}
 		out.endTag(DIV);
@@ -343,7 +291,6 @@ public class ChatControl extends AbstractControlBase {
 		out.beginBeginTag(DIV);
 		out.writeAttribute(CLASS_ATTR, "chat-task-body");
 		out.writeAttribute(ID_ATTR, taskDivId + "-body");
-		out.writeAttribute(STYLE_ATTR, "display:none;");
 		out.endBeginTag();
 		{
 			// Tool calls
@@ -378,9 +325,12 @@ public class ChatControl extends AbstractControlBase {
 	}
 
 	private void writeToolHeader(TagWriter out, ChatToolCall toolCall, String toolDivId) throws IOException {
+		String arrowId = toolDivId + "-arrow";
+		String resultId = toolDivId + "-result";
+
 		out.beginBeginTag(DIV);
 		out.writeAttribute(CLASS_ATTR, "chat-tool-header");
-		out.writeAttribute(ONCLICK_ATTR, "toggleToolExpand('" + toolDivId + "')");
+		out.writeAttribute(ONCLICK_ATTR, "toggleToolExpand('" + resultId + "', '" + arrowId + "')");
 		out.endBeginTag();
 		{
 			// Tool name
@@ -410,8 +360,9 @@ public class ChatControl extends AbstractControlBase {
 			// Expand arrow
 			out.beginBeginTag(SPAN);
 			out.writeAttribute(CLASS_ATTR, "chat-tool-expand");
+			out.writeAttribute(ID_ATTR, arrowId);
 			out.endBeginTag();
-			out.writeText("▶");
+			out.writeText("▼");
 			out.endTag(SPAN);
 		}
 		out.endTag(DIV);
@@ -421,7 +372,6 @@ public class ChatControl extends AbstractControlBase {
 		out.beginBeginTag(DIV);
 		out.writeAttribute(CLASS_ATTR, "chat-tool-result");
 		out.writeAttribute(ID_ATTR, toolDivId + "-result");
-		out.writeAttribute(STYLE_ATTR, "display:none;");
 		out.endBeginTag();
 		{
 			if (toolCall.getResultJson() != null) {
@@ -590,26 +540,30 @@ public class ChatControl extends AbstractControlBase {
 
 	private void writeTaskToggleScript(TagWriter out) throws IOException {
 		out.beginScript();
-		out.append("function toggleTaskExpand(taskId) {");
-		out.append("  var body = document.getElementById(taskId + '-body');");
-		out.append("  var arrow = document.querySelector('[onclick*=\"' + taskId + '\"] .chat-task-expand');");
-		out.append("  if (body.style.display === 'none') {");
-		out.append("    body.style.display = 'block';");
-		out.append("    arrow.textContent = '▼';");
-		out.append("  } else {");
-		out.append("    body.style.display = 'none';");
-		out.append("    arrow.textContent = '▶';");
+		out.append("function toggleTaskExpand(bodyId, arrowId) {");
+		out.append("  var body = document.getElementById(bodyId);");
+		out.append("  var arrow = document.getElementById(arrowId);");
+		out.append("  if (body && arrow) {");
+		out.append("    if (body.style.display === 'none' || body.style.display === '') {");
+		out.append("      body.style.display = 'block';");
+		out.append("      arrow.textContent = '▼';");
+		out.append("    } else {");
+		out.append("      body.style.display = 'none';");
+		out.append("      arrow.textContent = '▶';");
+		out.append("    }");
 		out.append("  }");
 		out.append("}");
-		out.append("function toggleToolExpand(toolId) {");
-		out.append("  var result = document.getElementById(toolId + '-result');");
-		out.append("  var arrow = document.querySelector('[onclick*=\"' + toolId + '\"] .chat-tool-expand');");
-		out.append("  if (result.style.display === 'none') {");
-		out.append("    result.style.display = 'block';");
-		out.append("    arrow.textContent = '▼';");
-		out.append("  } else {");
-		out.append("    result.style.display = 'none';");
-		out.append("    arrow.textContent = '▶';");
+		out.append("function toggleToolExpand(resultId, arrowId) {");
+		out.append("  var result = document.getElementById(resultId);");
+		out.append("  var arrow = document.getElementById(arrowId);");
+		out.append("  if (result && arrow) {");
+		out.append("    if (result.style.display === 'none' || result.style.display === '') {");
+		out.append("      result.style.display = 'block';");
+		out.append("      arrow.textContent = '▼';");
+		out.append("    } else {");
+		out.append("      result.style.display = 'none';");
+		out.append("      arrow.textContent = '▶';");
+		out.append("    }");
 		out.append("  }");
 		out.append("}");
 		out.endScript();
@@ -668,9 +622,6 @@ public class ChatControl extends AbstractControlBase {
 		_processingState.setCurrentTaskId(taskId);
 
 		try {
-			_processingState.addProgressNotifier(
-				new ChatNotifier("Processing chat request...", ChatNotifier.NotificationType.PROGRESS, "AI"));
-
 			// Convert message history to OpenAI format
 			List<Object> messages = new ArrayList<>();
 			for (ChatMessage msg : _chat.getMessages()) {
@@ -688,9 +639,6 @@ public class ChatControl extends AbstractControlBase {
 
 			// Add the current user message
 			messages.add(Map.of("role", "user", "content", userMessage));
-
-			_processingState.addProgressNotifier(
-				new ChatNotifier("Calling OpenAI API...", ChatNotifier.NotificationType.PROGRESS, "AI"));
 
 			// Call OpenAI API (this is the blocking operation)
 			String aiResponse = OpenAIScriptFunctions.chat(messages, null, null, null);
@@ -723,9 +671,6 @@ public class ChatControl extends AbstractControlBase {
 		_processingState.setCurrentTaskId(taskId);
 
 		try {
-			_processingState.addProgressNotifier(
-				new ChatNotifier("Starting UML specification workflow...", ChatNotifier.NotificationType.PROGRESS, "Workflow"));
-
 			Logger.info("ChatControl: Starting workflow execution in thread: " + Thread.currentThread().getName(),
 				ChatControl.class);
 
@@ -759,12 +704,12 @@ public class ChatControl extends AbstractControlBase {
 		_processingState.setCurrentTaskId(taskId);
 
 		try {
-			_processingState.addProgressNotifier(
-				new ChatNotifier("Initializing model exploration agent...", ChatNotifier.NotificationType.PROGRESS, "Agent"));
-
 			// Set up tool tracking
 			ToolCallTracker tracker = new ToolCallTracker();
 			ToolCallTracking.setTracker(tracker);
+
+			// Store tracker in processing state for real-time polling
+			_processingState.setToolCallTracker(tracker);
 
 			try {
 				Logger.info("ChatControl: Starting model exploration in thread: " + Thread.currentThread().getName(),
@@ -787,30 +732,14 @@ public class ChatControl extends AbstractControlBase {
 				ModelAnnotationBrowserTool annotationTool = new ModelAnnotationBrowserTool();
 				AnnotationDefinitionExplorerTool definitionTool = new AnnotationDefinitionExplorerTool();
 
-				_processingState.addProgressNotifier(
-					new ChatNotifier("Building ModelExplorer agent with tools...", ChatNotifier.NotificationType.PROGRESS, "Agent"));
-
 				// Build the ModelExplorer agent
 				ModelExplorer explorer = AgenticServices.agentBuilder(ModelExplorer.class)
 					.chatModel(explorationModel)
 					.tools(browserTool, instanceTool, analysisTool, searchTool, annotationTool, definitionTool)
 					.build();
 
-				_processingState.addProgressNotifier(
-					new ChatNotifier("Executing exploration...", ChatNotifier.NotificationType.PROGRESS, "ModelExplorer"));
-
-				// Execute the exploration
+				// Execute the exploration (tool calls will be detected by polling)
 				String result = explorer.explore(explorationQuestion);
-
-				// Extract tool calls and add to task
-				for (ToolCallTracker.ToolCall call : tracker.getToolCalls()) {
-					ChatToolCall chatToolCall = new ChatToolCall(
-						call.getTool(),
-						call.getArgs(),
-						tracker.getRawResultJsons().get(call.getResultRef())
-					);
-					_taskTracker.addToolCall(taskId, chatToolCall);
-				}
 
 				// Add final result
 				_processingState.addPendingMessage(new ChatMessage("Agent", result));
@@ -829,6 +758,7 @@ public class ChatControl extends AbstractControlBase {
 			throw ex;
 		} finally {
 			_processingState.setCurrentTaskId(null);
+			_processingState.setToolCallTracker(null);
 		}
 	}
 
@@ -845,12 +775,12 @@ public class ChatControl extends AbstractControlBase {
 		_processingState.setCurrentTaskId(taskId);
 
 		try {
-			_processingState.addProgressNotifier(
-				new ChatNotifier("Initializing TLScript agent...", ChatNotifier.NotificationType.PROGRESS, "Agent"));
-
 			// Set up tool tracking
 			ToolCallTracker tracker = new ToolCallTracker();
 			ToolCallTracking.setTracker(tracker);
+
+			// Store tracker in processing state for real-time polling
+			_processingState.setToolCallTracker(tracker);
 
 			try {
 				Logger.info("ChatControl: Starting TLScript reference in thread: " + Thread.currentThread().getName(),
@@ -869,30 +799,14 @@ public class ChatControl extends AbstractControlBase {
 				TLScriptReferenceTool tlscriptTool = new TLScriptReferenceTool();
 				ModelExplorerTool modelExplorerTool = new ModelExplorerTool();
 
-				_processingState.addProgressNotifier(
-					new ChatNotifier("Building TLScriptAgent with tools...", ChatNotifier.NotificationType.PROGRESS, "Agent"));
-
 				// Build the TLScriptAgent
 				TLScriptAgent agent = AgenticServices.agentBuilder(TLScriptAgent.class)
 					.chatModel(tlscriptModel)
 					.tools(tlscriptTool, modelExplorerTool)
 					.build();
 
-				_processingState.addProgressNotifier(
-					new ChatNotifier("Executing TLScript query...", ChatNotifier.NotificationType.PROGRESS, "TLScriptAgent"));
-
-				// Execute the agent
+				// Execute the agent (tool calls will be detected by polling)
 				String result = agent.answer(question);
-
-				// Extract tool calls and add to task
-				for (ToolCallTracker.ToolCall call : tracker.getToolCalls()) {
-					ChatToolCall chatToolCall = new ChatToolCall(
-						call.getTool(),
-						call.getArgs(),
-						tracker.getRawResultJsons().get(call.getResultRef())
-					);
-					_taskTracker.addToolCall(taskId, chatToolCall);
-				}
 
 				// Add final result
 				_processingState.addPendingMessage(new ChatMessage("Agent", result));
@@ -911,6 +825,7 @@ public class ChatControl extends AbstractControlBase {
 			throw ex;
 		} finally {
 			_processingState.setCurrentTaskId(null);
+			_processingState.setToolCallTracker(null);
 		}
 	}
 
@@ -927,14 +842,6 @@ public class ChatControl extends AbstractControlBase {
 
 		boolean hasUpdates = false;
 
-		// Check for new progress notifiers
-		List<ChatNotifier> newNotifiers = state.consumeProgressNotifiers();
-		if (!newNotifiers.isEmpty()) {
-			_notifiers.clear(); // Replace old notifiers
-			_notifiers.addAll(newNotifiers);
-			hasUpdates = true;
-		}
-
 		// Check for new messages
 		List<ChatMessage> newMessages = state.consumePendingMessages();
 		if (!newMessages.isEmpty()) {
@@ -944,10 +851,29 @@ public class ChatControl extends AbstractControlBase {
 			hasUpdates = true;
 		}
 
-		// Check if task progress changed
-		// (Tasks are updated from background thread via _taskTracker)
+		// Check for new tool calls in real-time
 		String currentTaskId = state.getCurrentTaskId();
-		if (currentTaskId != null) {
+		ToolCallTracker tracker = state.getToolCallTracker();
+		if (currentTaskId != null && tracker != null) {
+			List<ToolCallTracker.ToolCall> allCalls = tracker.getToolCalls();
+			int currentCount = allCalls.size();
+			int lastSeen = state.getLastSeenToolCallCount();
+
+			// Process new tool calls
+			if (currentCount > lastSeen) {
+				for (int i = lastSeen; i < currentCount; i++) {
+					ToolCallTracker.ToolCall call = allCalls.get(i);
+					ChatToolCall chatToolCall = new ChatToolCall(
+						call.getTool(),
+						call.getArgs(),
+						tracker.getRawResultJsons().get(call.getResultRef())
+					);
+					_taskTracker.addToolCall(currentTaskId, chatToolCall);
+				}
+				state.setLastSeenToolCallCount(currentCount);
+				hasUpdates = true;
+			}
+
 			// Task is in progress, trigger repaint to show updates
 			hasUpdates = true;
 		}
@@ -959,9 +885,6 @@ public class ChatControl extends AbstractControlBase {
 				state._pollingTask.cancel(false);
 				state._pollingTask = null;
 			}
-
-			// Clear notifiers on completion
-			_notifiers.clear();
 
 			// Handle errors
 			Throwable error = state.getError();
@@ -1052,8 +975,9 @@ public class ChatControl extends AbstractControlBase {
 		// Current task ID for progress tracking
 		private volatile String _currentTaskId = null;
 
-		// Progress tracking with agent and tool information
-		private final List<ChatNotifier> _progressNotifiers = new ArrayList<>();
+		// Tool call tracking for real-time updates
+		private volatile ToolCallTracker _toolCallTracker = null;
+		private final AtomicInteger _lastSeenToolCallCount = new AtomicInteger(0);
 
 		// Result accumulation
 		private final List<ChatMessage> _pendingMessages = new ArrayList<>();
@@ -1074,21 +998,6 @@ public class ChatControl extends AbstractControlBase {
 				_completed = false;
 				_error = null;
 				_pendingMessages.clear();
-				_progressNotifiers.clear();
-			}
-		}
-
-		public void addProgressNotifier(ChatNotifier notifier) {
-			synchronized (_lock) {
-				_progressNotifiers.add(notifier);
-			}
-		}
-
-		public List<ChatNotifier> consumeProgressNotifiers() {
-			synchronized (_lock) {
-				List<ChatNotifier> result = new ArrayList<>(_progressNotifiers);
-				_progressNotifiers.clear();
-				return result;
 			}
 		}
 
@@ -1142,6 +1051,23 @@ public class ChatControl extends AbstractControlBase {
 
 		public String getCurrentTaskId() {
 			return _currentTaskId;
+		}
+
+		public void setToolCallTracker(ToolCallTracker tracker) {
+			_toolCallTracker = tracker;
+			_lastSeenToolCallCount.set(0);
+		}
+
+		public ToolCallTracker getToolCallTracker() {
+			return _toolCallTracker;
+		}
+
+		public int getLastSeenToolCallCount() {
+			return _lastSeenToolCallCount.get();
+		}
+
+		public void setLastSeenToolCallCount(int count) {
+			_lastSeenToolCallCount.set(count);
 		}
 	}
 

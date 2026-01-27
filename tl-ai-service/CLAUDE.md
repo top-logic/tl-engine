@@ -56,13 +56,27 @@ tl-ai-service/
 │   ├── scripting/                            # TL-Script integration
 │   │   ├── OpenAIScriptFunctions.java        # aiChat() function
 │   │   └── JsonSchemaConverter.java          # Map to JSON schema conversion
-│   └── agents/                               # Agentic workflow examples
-│       ├── UMLSpecificationAgent.java        # Multi-agent UML workflow
-│       ├── UMLDesigner.java                  # UML design agent
-│       ├── UMLCritic.java                    # UML review agent
-│       ├── UMLScorer.java                    # UML scoring agent
-│       ├── UMLParser.java                    # UML parsing agent
-│       └── ModelCreator.java                 # Model creation agent
+│   ├── agents/                               # Agentic workflows and orchestrator
+│   │   ├── OrchestratorAgent.java            # Single chat entrypoint; routes to specialists
+│   │   ├── AgentInvoker.java                 # Agent-to-agent calls (no agent-as-tool)
+│   │   ├── handoff/
+│   │   │   └── AgentWorkOrder.java           # Structured handoff DTO (goal, task, context)
+│   │   ├── ModelExplorer.java                # Read-only model exploration agent
+│   │   ├── ModelCreator.java                 # Model creation agent
+│   │   ├── TLScriptAgent.java                # TLScript specialist agent
+│   │   ├── UMLSpecificationAgent.java        # Multi-agent UML workflow
+│   │   ├── UMLDesigner.java                  # UML design agent
+│   │   ├── UMLCritic.java                    # UML review agent
+│   │   ├── UMLScorer.java                    # UML scoring agent
+│   │   └── UMLParser.java                    # UML parsing agent
+│   └── tools/                                # Tool and trace infrastructure
+│       ├── ToolCallTracker.java              # Records tool calls + agent calls; getTimeline()
+│       ├── ToolCallTracking.java             # Thread-local trace for current run
+│       ├── TraceEntry.java                   # TOOL_CALL | AGENT_CALL timeline entry
+│       ├── TraceEventKind.java               # TOOL_CALL, AGENT_CALL
+│       └── help/
+│           ├── RequestModelExplorationTool.java  # Structured exploration (goal/task/context)
+│           └── TLScriptReferenceTool.java        # TLScript function docs
 ├── src/main/webapp/WEB-INF/
 │   ├── web.xml                               # Servlet configuration
 │   └── conf/
@@ -137,6 +151,85 @@ This demonstrates:
 - State management across agents
 - MCP (Model Context Protocol) tool integration
 - Multi-model coordination (Mistral Large + Pixtral)
+
+### Multi-Agent Orchestrator (Chat Entrypoint)
+
+The chat UI sends user messages to **OrchestratorAgent** as the single entrypoint. The orchestrator thinks: what does the user want, what steps are needed, do any need a specialist? It may call **zero, one, or several** specialists in sequence; after each result it reasons “is it enough?” and either calls another tool or synthesizes the final answer. It does not expose other agents as @Tool; it uses **AgentInvoker** and a **work-order handoff** so sub-agents receive distilled requests, not the full user prompt.
+
+**Flow diagram:**
+
+```mermaid
+flowchart TB
+    subgraph UI["tl-chat (ChatControl)"]
+        U[User message]
+        U --> Send[SendMessage]
+        Send --> Exec[executeOrchestrator]
+        Exec --> Tracker["new ToolCallTracker()<br/>ToolCallTracking.setTracker(tracker)"]
+        Tracker --> OChat["OrchestratorAgent.chat(userMessage)"]
+        Poll["PollAIProgress"] --> Timeline["tracker.getTimeline()"]
+        Timeline --> Render["Render AgentCall / ToolCall<br/>+ final answer"]
+    end
+
+    subgraph Orch["tl-ai-service: Orchestrator"]
+        OChat --> Build["Build OrchestratorRouter<br/>+ OrchestratorTools<br/>+ mistral-large-latest"]
+        Build --> Router["OrchestratorRouter.chat(trimmed)"]
+        Router --> LLM["LLM: plan steps<br/>(no keywords)"]
+        LLM --> Tool["Call 0..N tools in sequence<br/>goal, task, context per call"]
+        Tool --> T1[delegateToModelExplorer]
+        Tool --> T2[delegateToModelCreator]
+        Tool --> T3[delegateToTLScriptSpecialist]
+    end
+
+    subgraph Invoker["AgentInvoker (handoff; records AgentCall per call)"]
+        T1 --> I1["invokeExplorer(Orchestrator, workOrder)"]
+        T2 --> I2["invokeCreator(Orchestrator, workOrder)"]
+        T3 --> I3["invokeTLScript(Orchestrator, workOrder)"]
+        I1 --> ME
+        I2 --> MC
+        I3 --> TL
+    end
+
+    subgraph Specialists["Specialist agents"]
+        ME[ModelExplorer.explore(prompt)<br/>tools: ModelBrowser, InstanceBrowser,<br/>TypeAnalysis, ModelSearch, …]
+        MC[UMLSpecificationAgent.execute(requirements)<br/>Designer → Critic → Scorer → Parser → Creator]
+        TL[TLScriptAgent.answer(message)<br/>tools: TLScriptReferenceTool,<br/>RequestModelExplorationTool]
+    end
+
+    ME -.->|result| I1
+    MC -.->|result| I2
+    TL -.->|result| I3
+    I1 --> Router
+    I2 --> Router
+    I3 --> Router
+    Router --> OChat
+    OChat --> Render
+```
+
+The LLM may call several tools in sequence; after each result it reasons whether to call more or synthesize the final answer. The diagram shows one possible tool invocation; in general there are 0..N such calls per user message.
+
+**Flow (numbered):**
+1. **OrchestratorAgent.chat(userMessage)** – Builds an LLM-based **OrchestratorRouter** with three tools. The LLM **plans steps** (what does the user want, what’s needed, do any steps need a specialist?), calls **zero, one, or multiple** tools in sequence with distilled work orders, and after each result reasons “is it enough?”; when satisfied, it synthesizes and returns the final answer.
+2. **OrchestratorRouter** system prompt (see `OrchestratorRouter.java`) defines “think first”, planning, work-order discipline (goal/task/context per step; never paste the full user message), and iterative behavior (after each tool result: is it enough? call more or synthesize?). Inspired by [orchestrator pattern](https://dev.to/akshaygupta1996/the-orchestrator-pattern-routing-conversations-to-specialized-ai-agents-33h8) and [system-prompts-and-models-of-ai-tools](https://github.com/x1xhlol/system-prompts-and-models-of-ai-tools).
+3. **OrchestratorTools** – Three @Tool methods that call **AgentInvoker.invokeExplorer/Creator/TLScript**; each call records an **AgentCall** in the run's trace.
+
+**Handoff contract (AgentWorkOrder):**
+- **goal** – Short intent (e.g. “Explore the model and return tool-backed facts”).
+- **task** – Concrete question or instruction.
+- **context** – Optional hints (type/part names, module, entity ids).
+- **expectedOutputFormat** – Optional (e.g. “JSON with elementIds, fields, annotations”).
+
+Callers (Orchestrator or TLScript’s “Request Model Exploration” tool) must fill these fields instead of pasting the full user message.
+
+**Execution timeline (observability):**
+- **ToolCallTracker** holds a unified **timeline**: `getTimeline()` returns `List<TraceEntry>` in order.
+- **TraceEntry** is either **ToolCallTraceEntry** (toolName, args, resultRef) or **AgentCallTraceEntry** (fromAgent, toAgent, inputSummary, resultSummary).
+- The chat UI (tl-chat) maps this to **ChatTimelineEvent** and renders “Orchestrator → ModelExplorer” vs “listModules(...)” so AgentCall and ToolCall are clearly distinguished.
+- The caller must set **ToolCallTracking.setTracker(tracker)** before calling Orchestrator (or any flow that uses AgentInvoker) so tools and agent calls write into the same trace.
+
+**Specialist agents:**
+- **ModelExplorer** – Read-only; uses model browser/search/analysis tools. Invoked only via AgentInvoker (or direct /explore-model path). System prompt accepts work-order-style input (Goal/Task/Context/Expected output format).
+- **TLScriptAgent** – Has TLScriptReferenceTool and **RequestModelExplorationTool**. The latter takes goal/task/context and calls AgentInvoker.invokeExplorer("TLScriptAgent", workOrder), so TLScript gets model context via a structured handoff, not by forwarding the user prompt.
+- **ModelCreator** – Used by UMLSpecificationAgent; Orchestrator routes “create/modify” to AgentInvoker.invokeCreator, which calls UMLSpecificationAgent.execute(workOrder.task()).
 
 ## Configuration
 

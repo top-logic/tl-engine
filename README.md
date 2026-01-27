@@ -11,7 +11,7 @@ AI service integration providing LLM access through LangChain4j with support for
 Model Context Protocol (MCP) server implementation enabling AI agents to interact with TopLogic's model structure, metadata, and business logic through standardized resources and tools.
 
 ### [tl-chat](tl-chat/)
-Chat UI components and model definitions for building conversational interfaces within TopLogic applications.
+Chat UI components and model definitions for building conversational interfaces within TopLogic applications. Chat messages are handled by **OrchestratorAgent** (tl-ai-service), which routes to specialist agents (ModelExplorer, TLScriptAgent, ModelCreator) via **AgentInvoker** and a structured work-order handoff; the UI shows a unified execution timeline (AgentCall vs ToolCall).
 
 ### [tl-ai-demo](tl-ai-demo/)
 Demo application showcasing AI integration features including chat interactions, MCP server capabilities, and AI-powered business logic.

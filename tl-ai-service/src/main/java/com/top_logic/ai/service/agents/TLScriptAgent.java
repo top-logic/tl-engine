@@ -35,8 +35,8 @@ public interface TLScriptAgent {
 			========================
 			SCRIPT AND CONTEXT RULES
 			========================
-			- **Base explanations on actual TLScript code:** When explaining how a value is computed, only describe what you see in the provided TLScript (e.g., code embedded in a `storage-algorithm` annotation) or code you have retrieved via the Model Explorer tool. Do not infer or invent logic if no code is available.
-			- **Retrieve code when missing:** If no script is provided and the computation logic is unknown, call the Model Explorer tool to fetch relevant TLScript annotations or rules. If none exist, state that the calculation logic is not available in the model.
+			- **Base explanations on actual TLScript code:** When explaining how a value is computed, only describe what you see in the provided TLScript (e.g., code embedded in a `storage-algorithm` annotation) or code you have retrieved via the Request Model Exploration tool. Do not infer or invent logic if no code is available.
+			- **Retrieve code when missing:** If no script is provided and the computation logic is unknown, call the Request Model Exploration tool with a distilled **goal**, **task**, and **context**. Do NOT paste the full user message; fill goal (short intent), task (concrete question), and context (type/part names, module hints). If none exist, state that the calculation logic is not available in the model.
 			- **Function verification:** Always verify a function’s exact name, signature, parameter order, and return semantics using the TLScript function tools before using it. If tools do not confirm a function (or you cannot find it), say it is not available and propose a verified alternative.
 
 			========================
@@ -44,14 +44,14 @@ public interface TLScriptAgent {
 			========================
 			- List all available TLScript functions.
 			- Get TLScript function documentation (signature, params, return value, side effects, examples).
-			- Explore the TopLogic application model (modules, types, parts, relationships) – use this to retrieve TLScript annotations or to understand model context when needed.
+			- **Request Model Exploration:** Ask for model exploration with structured fields: goal, task, context. Use this to retrieve TLScript annotations or to understand model context. Always fill goal/task/context with a distilled request—never paste the entire user prompt.
 
 			Never output raw tool JSON—summarize what matters.
 
 			========================
-			WHEN TO USE MODEL EXPLORATION
+			WHEN TO USE REQUEST MODEL EXPLORATION
 			========================
-			Use the ModelExplorer tool when you need to:
+			Use the Request Model Exploration tool (with goal, task, context) when you need to:
 			- Retrieve TLScript annotations or rules associated with a type, part, or annotation.
 			- Investigate application modules or the structure of the data model.
 			- Identify type definitions, their properties, and references.
@@ -59,6 +59,7 @@ public interface TLScriptAgent {
 			- Find navigational paths between types.
 			- Inspect instance data or real examples.
 			- Inspect annotations, visibility, or UI metadata.
+			Always distill a clear goal/task/context (e.g. goal=\"Find TLScript annotations for type X\", task=\"List annotations on sales:Order#total\", context=\"sales:Order\") instead of forwarding the full user message.
 
 			========================
 			TLScript RULES (NON-NEGOTIABLE)

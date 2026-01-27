@@ -14,11 +14,13 @@ import java.util.Map;
 import com.top_logic.basic.json.JSON;
 
 /**
- * Tracks tool calls made during agent execution.
+ * Tracks tool calls and agent-to-agent calls during agent execution.
  * 
  * <p>
  * Records tool name, arguments, and results with result references (T1, T2, etc.)
  * for various purposes such as debugging, monitoring, analysis, and judge scoring.
+ * Also records agent-to-agent delegations for a unified execution timeline
+ * (AgentCall vs ToolCall) usable by the UI.
  * </p>
  * 
  * @author jhu
@@ -64,6 +66,7 @@ public class ToolCallTracker {
 	private final List<ToolCall> _toolCalls = new ArrayList<>();
 	private final Map<String, Object> _toolResults = new HashMap<>();
 	private final Map<String, String> _rawResultJsons = new HashMap<>();
+	private final List<TraceEntry> _timeline = new ArrayList<>();
 	private int _nextResultRef = 1;
 
 	/**
@@ -80,6 +83,7 @@ public class ToolCallTracker {
 	public String recordToolCall(String toolName, Map<String, Object> args, String resultJson) {
 		String resultRef = "T" + _nextResultRef++;
 		_toolCalls.add(new ToolCall(toolName, args, resultRef));
+		_timeline.add(new TraceEntry.ToolCallTraceEntry(toolName, args != null ? args : Map.of(), resultRef));
 
 		// Store the raw JSON
 		_rawResultJsons.put(resultRef, resultJson);
@@ -96,6 +100,33 @@ public class ToolCallTracker {
 		}
 
 		return resultRef;
+	}
+
+	/**
+	 * Records an agent-to-agent call for the execution timeline.
+	 *
+	 * @param fromAgent
+	 *        Name of the calling agent (e.g. "Orchestrator").
+	 * @param toAgent
+	 *        Name of the called agent (e.g. "ModelExplorer").
+	 * @param inputSummary
+	 *        Short summary of the work order or input sent.
+	 * @param resultSummary
+	 *        Short summary of the result returned.
+	 */
+	public void recordAgentCall(String fromAgent, String toAgent, String inputSummary, String resultSummary) {
+		_timeline.add(new TraceEntry.AgentCallTraceEntry(
+			fromAgent != null ? fromAgent : "",
+			toAgent != null ? toAgent : "",
+			inputSummary != null ? inputSummary : "",
+			resultSummary != null ? resultSummary : ""));
+	}
+
+	/**
+	 * Returns the unified execution timeline: tool calls and agent calls in order.
+	 */
+	public List<TraceEntry> getTimeline() {
+		return Collections.unmodifiableList(_timeline);
 	}
 
 	/**
@@ -120,12 +151,13 @@ public class ToolCallTracker {
 	}
 
 	/**
-	 * Clears all recorded tool calls and results.
+	 * Clears all recorded tool calls, agent calls, and results.
 	 */
 	public void clear() {
 		_toolCalls.clear();
 		_toolResults.clear();
 		_rawResultJsons.clear();
+		_timeline.clear();
 		_nextResultRef = 1;
 	}
 }

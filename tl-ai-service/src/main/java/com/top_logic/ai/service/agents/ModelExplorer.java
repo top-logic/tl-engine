@@ -378,6 +378,8 @@ public interface ModelExplorer {
 			- Next suggested query (optional)
 			- Evidence: tool calls (name + key args) and the facts each supports
 
+			Work-order input (from another agent): If the input is structured as "Goal: ... Task: ... Context: ... Expected output format: ...", treat those lines as the user question and follow the requested output format. Prefer structured, concise findings (elementIds, fields, annotations) when Expected output format requests them.
+
 			User question: {{userQuestion}}
 			""")
 

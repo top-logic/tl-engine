@@ -71,6 +71,30 @@ public class ToolCallTracking {
 	}
 
 	/**
+	 * Records an agent-to-agent call if tracking is enabled in the current thread.
+	 * 
+	 * <p>
+	 * This method is safe to call even when tracking is not enabled - it will simply do nothing.
+	 * </p>
+	 * 
+	 * @param fromAgent
+	 *        Name of the calling agent (e.g. "Orchestrator").
+	 * @param toAgent
+	 *        Name of the called agent (e.g. "ModelExplorer").
+	 * @param inputSummary
+	 *        Short summary of the work order or input sent.
+	 * @param resultSummary
+	 *        Short summary of the result returned.
+	 */
+	public static void recordAgentCallIfTracking(String fromAgent, String toAgent, String inputSummary,
+			String resultSummary) {
+		ToolCallTracker tracker = getTracker();
+		if (tracker != null) {
+			tracker.recordAgentCall(fromAgent, toAgent, inputSummary, resultSummary);
+		}
+	}
+
+	/**
 	 * Formats a tool call for logging purposes.
 	 * 
 	 * <p>

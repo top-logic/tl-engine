@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.CollectionUtil;
@@ -35,24 +36,20 @@ import com.top_logic.basic.util.Computation;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider.Type;
 import com.top_logic.element.boundsec.manager.rule.RoleRule;
-import com.top_logic.element.changelog.KBChangeAnalzyer;
-import com.top_logic.element.changelog.model.Change;
-import com.top_logic.element.changelog.model.Creation;
-import com.top_logic.element.changelog.model.Deletion;
-import com.top_logic.element.changelog.model.Modification;
-import com.top_logic.element.changelog.model.Update;
-import com.top_logic.element.changelog.model.trans.TransientChangeSet;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.security.SecurityStorage;
 import com.top_logic.knowledge.service.CommitHandler;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.StorageException;
-import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.cs.TLObjectChangeSet;
+import com.top_logic.model.cs.TLObjectCreation;
+import com.top_logic.model.cs.TLObjectDeletion;
+import com.top_logic.model.cs.TLObjectUpdate;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
@@ -167,14 +164,18 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
 		return _logHandler;
 	}
 
-	public synchronized void handleSecurityUpdate(KnowledgeBase kb, long commitNumber,
-			Map<TLID, KnowledgeItem> someChanged, Map<TLID, KnowledgeItem> someNew, final Map<TLID, KnowledgeItem> someRemoved, CommitHandler aHandler) {
+	public synchronized void handleSecurityUpdate(TLObjectChangeSet change, CommitHandler aHandler) {
 
-		TransientChangeSet cs = new KBChangeAnalzyer(kb, commitNumber, someChanged, someNew, someRemoved).analyze();
-		Set<? extends Change> changes = cs.getChanges();
-		if (changes.isEmpty()) {
+		KnowledgeBase kb = change.kb();
+		List<TLObjectCreation> creations = change.creations();
+		List<TLObjectDeletion> deletions = change.deletions();
+		List<TLObjectUpdate> updates = change.updates();
+		if (creations.isEmpty() && deletions.isEmpty() && updates.isEmpty()) {
 			return;
 		}
+		
+		Map<TLID, KnowledgeItem> someRemoved = deletions.stream().map(TLObjectDeletion::object)
+			.collect(Collectors.toMap(object -> object.tIdLocal(), object -> object.tHandle()));
 
 		// Reset temporary
 		Map<RoleProvider, Set<BoundObject>> rulesToObjectsMap = new HashMap<>();
@@ -192,38 +193,14 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
 
 		securityStorage.begin(aHandler);
 		
-		List<Creation> creations = Collections.emptyList();
-		List<Deletion> deletions = Collections.emptyList();
-		List<Update> updates = Collections.emptyList();
-		for (Change change : changes) {
-			if (change instanceof Creation) {
-				if (creations.isEmpty()) {
-					creations = new ArrayList<>();
-				}
-				creations.add((Creation) change);
-			} else if (change instanceof Deletion) {
-				if (deletions.isEmpty()) {
-					deletions = new ArrayList<>();
-				}
-				deletions.add((Deletion) change);
-			} else if (change instanceof Update) {
-				if (updates.isEmpty()) {
-					updates = new ArrayList<>();
-				}
-				updates.add((Update) change);
-			} else {
-				throw new IllegalArgumentException("Unexpected change type " + change.getClass());
-			}
-		}
-
 		Map<TLObject, List<TLReference>> added = new HashMap<>();
 		Set<TLObject> addedDirectRoles = new HashSet<>();
 		Map<TLObject, List<TLReference>> removed = new HashMap<>();
 		Set<TLObject> removedDirectRoles = new HashSet<>();
 
 		if (!creations.isEmpty()) {
-			for (Creation creation : creations) {
-				TLObject createdObject = creation.getObject();
+			for (TLObjectCreation creation : creations) {
+				TLObject createdObject = creation.object();
 				TLStructuredType objType = createdObject.tType();
 				if (BoundedRole.ROLE_ASSIGNMENT_TYPE.equals(TLModelUtil.qualifiedName(objType))) {
 					addedDirectRoles.add(createdObject);
@@ -233,11 +210,9 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
 			}
 		}
 		if (!deletions.isEmpty()) {
-			List<? extends Deletion> tmp = deletions;
 			kb.withoutModifications(() -> {
-				for (Deletion deletion : tmp) {
-					TLObject deletedHistoricObject = deletion.getObject();
-					TLObject deletedObject = WrapperHistoryUtils.getCurrent(deletedHistoricObject);
+				for (TLObjectDeletion deletion : deletions) {
+					TLObject deletedObject = deletion.object();
 
 					TLStructuredType objType = deletedObject.tType();
 					if (BoundedRole.ROLE_ASSIGNMENT_TYPE.equals(TLModelUtil.qualifiedName(objType))) {
@@ -250,19 +225,23 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
 			});
 		}
 		if (!updates.isEmpty()) {
-			for (Update update : updates) {
-				TLObject updatedObject = update.getObject();
+			for (TLObjectUpdate update : updates) {
+				TLObject updatedObject = update.object();
 				TLStructuredType objType = updatedObject.tType();
 				if (BoundedRole.ROLE_ASSIGNMENT_TYPE.equals(TLModelUtil.qualifiedName(objType))) {
 					/* For simplicity: Role assignment is added to remove and to add. */
 					removedDirectRoles.add(updatedObject);
 					addedDirectRoles.add(updatedObject);
 				} else {
-					for (Modification change : update.getModifications()) {
-						TLStructuredTypePart part = change.getPart();
+					for (TLStructuredTypePart part : update.oldValues().keySet()) {
 						if (part instanceof TLReference reference) {
 							// register as change
 							removed.computeIfAbsent(updatedObject, unused -> new ArrayList<>()).add(reference);
+						}
+					}
+					for (TLStructuredTypePart part : update.newValues().keySet()) {
+						if (part instanceof TLReference reference) {
+							// register as change
 							added.computeIfAbsent(updatedObject, unused -> new ArrayList<>()).add(reference);
 						}
 					}
@@ -292,7 +271,7 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
 			rulesToDeletedObjectsMap);
 		handleNewObjects(creations, rulesToObjectsMap);
 
-		getLogHandler().logSecurityUpdate(someNew, someRemoved, rulesToObjectsMap, invalidObjects);
+		getLogHandler().logSecurityUpdate(change, rulesToObjectsMap, invalidObjects);
 
 		Map<BoundRole, Set<BoundObject>> invalidObjectsByRole = mergeValuesByRole(rulesToObjectsMap);
 		updateSecurityStorage(someRemoved, invalidObjects, invalidObjectsByRole, rulesToObjectsMap);
@@ -303,11 +282,12 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
 	 * attributes of the type, because there may be inheritance rules which inherit a role without
 	 * attribute; e.g. inherit a role from a root object to all instances of a certain type.
 	 */
-	private void handleNewObjects(List<Creation> creations, Map<RoleProvider, Set<BoundObject>> rulesToObjectsMap) {
+	private void handleNewObjects(List<TLObjectCreation> creations,
+			Map<RoleProvider, Set<BoundObject>> rulesToObjectsMap) {
 		Map<TLClass, Collection<RoleProvider>> meRules = accessManager.getResolvedMERules();
 
-		for (Creation creation : creations) {
-			TLObject createdObject = creation.getObject();
+		for (TLObjectCreation creation : creations) {
+			TLObject createdObject = creation.object();
 			TLStructuredType objType = createdObject.tType();
 			if (BoundedRole.ROLE_ASSIGNMENT_TYPE.equals(TLModelUtil.qualifiedName(objType))) {
 				continue;

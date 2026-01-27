@@ -13,6 +13,7 @@ import java.util.Set;
 
 import com.top_logic.basic.io.BasicFileLog;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider;
+import com.top_logic.model.cs.TLObjectChangeSet;
 
 /**
  * Default {@link LogHandler} implementation.
@@ -23,18 +24,14 @@ public class DefaultLogHandler implements LogHandler {
 
     private static final String SECURITY_UPDATE = "securityUpdate";
 
-    /**
-     * @see com.top_logic.element.boundsec.manager.LogHandler#logSecurityUpdate(java.util.Map, java.util.Map, java.util.Map, java.util.Set)
-     */
     @Override
-	public void logSecurityUpdate(Map someNew, Map someRemoved, Map aRulesToObjectsMap,
-            Set anInvalidObjects) {
+	public void logSecurityUpdate(TLObjectChangeSet changes, Map aRulesToObjectsMap, Set anInvalidObjects) {
         
         BasicFileLog theLog = BasicFileLog.getInstance();
         long start = System.currentTimeMillis();
         theLog.appendIntoLogFile(SECURITY_UPDATE, "=== Start: "+(new Date(start)).toString() + "\n");
-        theLog.appendIntoLogFile(SECURITY_UPDATE, "- new: "+someNew.size() + "\n");    
-        theLog.appendIntoLogFile(SECURITY_UPDATE, "- removed: "+someRemoved.size() + "\n");    
+		theLog.appendIntoLogFile(SECURITY_UPDATE, "- new: " + changes.creations().size() + "\n");
+		theLog.appendIntoLogFile(SECURITY_UPDATE, "- removed: " + changes.deletions().size() + "\n");
         theLog.appendIntoLogFile(SECURITY_UPDATE, "- rules: "+aRulesToObjectsMap.size() + "\n");  
         for (Iterator theIt = aRulesToObjectsMap.entrySet().iterator(); theIt.hasNext();) {
             Map.Entry  theEntry   = (Map.Entry) theIt.next();

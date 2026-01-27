@@ -9,14 +9,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Reloadable;
 import com.top_logic.basic.ReloadableManager;
-import com.top_logic.basic.TLID;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
@@ -27,12 +25,12 @@ import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.ServiceExtensionPoint;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.thread.ThreadContextManager;
-import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.CommitHandler;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.component.ComponentUtil;
+import com.top_logic.model.cs.TLObjectChangeSet;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.util.TLContext;
@@ -238,20 +236,10 @@ public class AccessManager extends ConfiguredManagedClass<AccessManager.Config> 
     /**
 	 * Hook for subclasses to update the access manager in case of a security change.
 	 * 
-	 * @param kb
-	 *        The {@link KnowledgeBase} in which the change occurred.
-	 * @param commitNumber
-	 *        the commit number of the change.
-	 * @param someChanged
-	 *        The changed objects, indexed by their {@link TLID}.
-	 * @param someNew
-	 *        The created objects, indexed by their {@link TLID}.
-	 * @param someRemoved
-	 *        The deleted objects, indexed by their {@link TLID}. Standard access for attributes may
-	 *        fail.
+	 * @param change
+	 *        The changes from the {@link KnowledgeBase}.
 	 */
-	public void handleSecurityUpdate(KnowledgeBase kb, long commitNumber, Map<TLID, KnowledgeItem> someChanged,
-			Map<TLID, KnowledgeItem> someNew, Map<TLID, KnowledgeItem> someRemoved, CommitHandler aHandler) {
+	public void handleSecurityUpdate(TLObjectChangeSet change, CommitHandler aHandler) {
         // Nothing to do here - hook for subclasses only
     }
     

@@ -20,7 +20,7 @@ public class SetLiteral extends SetExpression {
 	private final Collection<?> values;
 
 	SetLiteral(Collection<? extends Object> values) {
-		this.values = (Collection<?>) ExpressionFactory.replaceKIbyObjectKey(values);
+		this.values = ExpressionFactory.replaceKIsByObjectKeys(values);
 	}
 	
 	/**

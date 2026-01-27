@@ -110,6 +110,18 @@ public class TaskProgressTracker {
 	}
 
 	/**
+	 * Adds a timeline event (tool call or agent call) to the specified task.
+	 *
+	 * @param taskId
+	 *        The task ID to add the event to.
+	 * @param event
+	 *        The timeline event to add.
+	 */
+	public void addTimelineEvent(String taskId, ChatTimelineEvent event) {
+		updateTask(taskId, builder -> builder.addTimelineEvent(event));
+	}
+
+	/**
 	 * Marks a task as completed successfully.
 	 *
 	 * @param taskId

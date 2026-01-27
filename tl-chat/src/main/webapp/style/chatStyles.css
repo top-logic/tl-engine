@@ -383,6 +383,30 @@
 	border-top: 1px solid #d1d5da;
 }
 
+/* Agent call (agent-to-agent delegation) */
+.chat-agent-call {
+	margin-bottom: 8px;
+	padding: 6px 8px;
+	padding-left: 10px;
+	border-left: 3px solid #8250df;
+	background-color: #faf0ff;
+	border-radius: 3px;
+	font-size: 0.9em;
+}
+
+.chat-agent-call-label {
+	font-weight: 600;
+	color: #8250df;
+}
+
+.chat-agent-call-input,
+.chat-agent-call-result {
+	display: block;
+	margin-top: 4px;
+	color: #57606a;
+	font-size: 0.9em;
+}
+
 /* Tool call container */
 .chat-tool-call {
 	margin-bottom: 8px;

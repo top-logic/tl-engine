@@ -10,9 +10,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
- * Represents a high-level task in the chat with status tracking and child tool calls.
+ * Represents a high-level task in the chat with status tracking and a unified execution timeline
+ * (tool calls and agent-to-agent calls).
  *
  * <p>
  * This class is immutable. Use the {@link Builder} to create modified versions.
@@ -49,7 +51,7 @@ public class ChatTask {
 
 	private final String _errorMessage;
 
-	private final List<ChatToolCall> _toolCalls;
+	private final List<ChatTimelineEvent> _timelineEvents;
 
 	/**
 	 * Creates a new {@link ChatTask} with PENDING status.
@@ -63,14 +65,14 @@ public class ChatTask {
 	}
 
 	private ChatTask(String id, String description, TaskStatus status, Instant startTime, Instant endTime,
-			String errorMessage, List<ChatToolCall> toolCalls) {
+			String errorMessage, List<ChatTimelineEvent> timelineEvents) {
 		_id = id;
 		_description = description;
 		_status = status;
 		_startTime = startTime;
 		_endTime = endTime;
 		_errorMessage = errorMessage;
-		_toolCalls = new ArrayList<>(toolCalls);
+		_timelineEvents = new ArrayList<>(timelineEvents);
 	}
 
 	/**
@@ -116,10 +118,20 @@ public class ChatTask {
 	}
 
 	/**
-	 * Returns an unmodifiable view of the tool calls executed as part of this task.
+	 * Returns an unmodifiable view of the execution timeline (tool calls and agent calls in order).
+	 */
+	public List<ChatTimelineEvent> getTimelineEvents() {
+		return Collections.unmodifiableList(_timelineEvents);
+	}
+
+	/**
+	 * Returns tool calls from the timeline for backward compatibility.
 	 */
 	public List<ChatToolCall> getToolCalls() {
-		return Collections.unmodifiableList(_toolCalls);
+		return Collections.unmodifiableList(_timelineEvents.stream()
+			.filter(e -> e.getKind() == ChatTimelineEvent.Kind.TOOL_CALL && e.getToolCall() != null)
+			.map(ChatTimelineEvent::getToolCall)
+			.collect(Collectors.toList()));
 	}
 
 	/**
@@ -145,7 +157,7 @@ public class ChatTask {
 
 		private String _errorMessage;
 
-		private List<ChatToolCall> _toolCalls;
+		private List<ChatTimelineEvent> _timelineEvents;
 
 		private Builder(ChatTask task) {
 			_id = task._id;
@@ -154,7 +166,7 @@ public class ChatTask {
 			_startTime = task._startTime;
 			_endTime = task._endTime;
 			_errorMessage = task._errorMessage;
-			_toolCalls = new ArrayList<>(task._toolCalls);
+			_timelineEvents = new ArrayList<>(task._timelineEvents);
 		}
 
 		/**
@@ -182,25 +194,33 @@ public class ChatTask {
 		}
 
 		/**
-		 * Adds a tool call to this task.
+		 * Adds a tool call to this task (stored as a TOOL_CALL timeline event).
 		 */
 		public Builder addToolCall(ChatToolCall toolCall) {
-			_toolCalls.add(toolCall);
+			_timelineEvents.add(ChatTimelineEvent.toolCall(toolCall));
 			return this;
 		}
 
 		/**
-		 * Returns the current list of tool calls (mutable for updates).
+		 * Adds a timeline event (tool call or agent call).
 		 */
-		public List<ChatToolCall> getToolCalls() {
-			return _toolCalls;
+		public Builder addTimelineEvent(ChatTimelineEvent event) {
+			_timelineEvents.add(event);
+			return this;
+		}
+
+		/**
+		 * Returns the current list of timeline events (mutable for updates).
+		 */
+		public List<ChatTimelineEvent> getTimelineEvents() {
+			return _timelineEvents;
 		}
 
 		/**
 		 * Builds the modified task.
 		 */
 		public ChatTask build() {
-			return new ChatTask(_id, _description, _status, _startTime, _endTime, _errorMessage, _toolCalls);
+			return new ChatTask(_id, _description, _status, _startTime, _endTime, _errorMessage, _timelineEvents);
 		}
 	}
 }

@@ -22,13 +22,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.top_logic.ai.service.AIService;
 import com.top_logic.ai.service.agents.ModelExplorer;
+import com.top_logic.ai.service.agents.OrchestratorAgent;
 import com.top_logic.ai.service.agents.TLScriptAgent;
 import com.top_logic.ai.service.agents.UMLSpecificationAgent;
 import com.top_logic.ai.service.scripting.Converters;
 import com.top_logic.ai.service.scripting.OpenAIScriptFunctions;
 import com.top_logic.ai.service.tools.ToolCallTracker;
 import com.top_logic.ai.service.tools.ToolCallTracking;
-import com.top_logic.ai.service.tools.help.ModelExplorerTool;
+import com.top_logic.ai.service.tools.TraceEntry;
+import com.top_logic.ai.service.tools.help.RequestModelExplorationTool;
 import com.top_logic.ai.service.tools.help.TLScriptReferenceTool;
 import com.top_logic.ai.service.tools.model.AnnotationDefinitionExplorerTool;
 import com.top_logic.ai.service.tools.model.InstanceBrowserTool;
@@ -293,9 +295,13 @@ public class ChatControl extends AbstractControlBase {
 		out.writeAttribute(ID_ATTR, taskDivId + "-body");
 		out.endBeginTag();
 		{
-			// Tool calls
-			for (ChatToolCall toolCall : task.getToolCalls()) {
-				writeToolCall(out, toolCall);
+			// Timeline: agent calls and tool calls in order
+			for (ChatTimelineEvent ev : task.getTimelineEvents()) {
+				if (ev.getKind() == ChatTimelineEvent.Kind.TOOL_CALL && ev.getToolCall() != null) {
+					writeToolCall(out, ev.getToolCall());
+				} else if (ev.getKind() == ChatTimelineEvent.Kind.AGENT_CALL) {
+					writeAgentCall(out, ev);
+				}
 			}
 
 			// Error message if failed
@@ -308,6 +314,53 @@ public class ChatControl extends AbstractControlBase {
 			}
 		}
 		out.endTag(DIV);
+	}
+
+	private void writeAgentCall(TagWriter out, ChatTimelineEvent ev) throws IOException {
+		out.beginBeginTag(DIV);
+		out.writeAttribute(CLASS_ATTR, "chat-agent-call");
+		out.endBeginTag();
+		{
+			out.beginBeginTag(SPAN);
+			out.writeAttribute(CLASS_ATTR, "chat-agent-call-label");
+			out.endBeginTag();
+			out.writeText(ev.getFromAgent() + " \u2192 " + ev.getToAgent());
+			out.endTag(SPAN);
+			if (ev.getInputSummary() != null && !ev.getInputSummary().isEmpty()) {
+				out.beginBeginTag(SPAN);
+				out.writeAttribute(CLASS_ATTR, "chat-agent-call-input");
+				out.endBeginTag();
+				out.writeText(truncateForDisplay(ev.getInputSummary(), 80));
+				out.endTag(SPAN);
+			}
+			if (ev.getResultSummary() != null && !ev.getResultSummary().isEmpty()) {
+				out.beginBeginTag(SPAN);
+				out.writeAttribute(CLASS_ATTR, "chat-agent-call-result");
+				out.endBeginTag();
+				out.writeText(truncateForDisplay(ev.getResultSummary(), 120));
+				out.endTag(SPAN);
+			}
+		}
+		out.endTag(DIV);
+	}
+
+	private static String truncateForDisplay(String s, int maxLen) {
+		if (s == null) {
+			return "";
+		}
+		return s.length() <= maxLen ? s : s.substring(0, maxLen - 3) + "...";
+	}
+
+	private static ChatTimelineEvent toChatTimelineEvent(TraceEntry entry, ToolCallTracker tracker) {
+		if (entry instanceof TraceEntry.ToolCallTraceEntry tc) {
+			String resultJson = tracker.getRawResultJsons().get(tc.resultRef());
+			ChatToolCall chatToolCall = new ChatToolCall(tc.toolName(), tc.args(), resultJson);
+			return ChatTimelineEvent.toolCall(chatToolCall);
+		}
+		if (entry instanceof TraceEntry.AgentCallTraceEntry ac) {
+			return ChatTimelineEvent.agentCall(ac.fromAgent(), ac.toAgent(), ac.inputSummary(), ac.resultSummary());
+		}
+		return null;
 	}
 
 	private void writeToolCall(TagWriter out, ChatToolCall toolCall) throws IOException {
@@ -612,8 +665,43 @@ public class ChatControl extends AbstractControlBase {
 	}
 
 	/**
-	 * Executes a regular chat request in the background thread with progress tracking.
+	 * Executes user message through OrchestratorAgent (single chat entrypoint).
+	 * Sets trace so AgentCall and ToolCall events are visible in the UI timeline.
 	 */
+	private void executeOrchestrator(String userMessage) throws Exception {
+		String taskDescription = "Chat: " +
+			(userMessage.length() > 50 ? userMessage.substring(0, 47) + "..." : userMessage);
+		String taskId = _taskTracker.startTask(taskDescription);
+		_processingState.setCurrentTaskId(taskId);
+
+		ToolCallTracker tracker = new ToolCallTracker();
+		ToolCallTracking.setTracker(tracker);
+		_processingState.setToolCallTracker(tracker);
+
+		try {
+			Logger.info("ChatControl: Starting Orchestrator in thread: " + Thread.currentThread().getName(),
+				ChatControl.class);
+
+			String result = OrchestratorAgent.chat(userMessage);
+
+			_processingState.addPendingMessage(new ChatMessage("Agent", result));
+			_taskTracker.completeTask(taskId);
+
+		} catch (Exception ex) {
+			_taskTracker.failTask(taskId, ex.getMessage());
+			throw ex;
+		} finally {
+			ToolCallTracking.setTracker(null);
+			_processingState.setCurrentTaskId(null);
+			_processingState.setToolCallTracker(null);
+		}
+	}
+
+	/**
+	 * Executes a regular chat request in the background thread with progress tracking.
+	 * @deprecated Use {@link #executeOrchestrator(String)}; Orchestrator is the single entrypoint.
+	 */
+	@Deprecated
 	private void executeRegularChat(String userMessage) throws Exception {
 		// Start task
 		String taskDescription = "Chat: " +
@@ -795,14 +883,14 @@ public class ChatControl extends AbstractControlBase {
 				// Use mistral-large-latest model
 				ChatModel tlscriptModel = aiService.getChatModel("mistral-large-latest");
 
-				// Create TLScript reference tool and ModelExplorer tool
+				// Create TLScript reference tool and Request Model Exploration tool (structured handoff)
 				TLScriptReferenceTool tlscriptTool = new TLScriptReferenceTool();
-				ModelExplorerTool modelExplorerTool = new ModelExplorerTool();
+				RequestModelExplorationTool requestExplorationTool = new RequestModelExplorationTool();
 
 				// Build the TLScriptAgent
 				TLScriptAgent agent = AgenticServices.agentBuilder(TLScriptAgent.class)
 					.chatModel(tlscriptModel)
-					.tools(tlscriptTool, modelExplorerTool)
+					.tools(tlscriptTool, requestExplorationTool)
 					.build();
 
 				// Execute the agent (tool calls will be detected by polling)
@@ -851,30 +939,26 @@ public class ChatControl extends AbstractControlBase {
 			hasUpdates = true;
 		}
 
-		// Check for new tool calls in real-time
+		// Check for new timeline events (tool calls and agent calls) in real-time
 		String currentTaskId = state.getCurrentTaskId();
 		ToolCallTracker tracker = state.getToolCallTracker();
 		if (currentTaskId != null && tracker != null) {
-			List<ToolCallTracker.ToolCall> allCalls = tracker.getToolCalls();
-			int currentCount = allCalls.size();
+			List<TraceEntry> timeline = tracker.getTimeline();
+			int currentCount = timeline.size();
 			int lastSeen = state.getLastSeenToolCallCount();
 
-			// Process new tool calls
 			if (currentCount > lastSeen) {
 				for (int i = lastSeen; i < currentCount; i++) {
-					ToolCallTracker.ToolCall call = allCalls.get(i);
-					ChatToolCall chatToolCall = new ChatToolCall(
-						call.getTool(),
-						call.getArgs(),
-						tracker.getRawResultJsons().get(call.getResultRef())
-					);
-					_taskTracker.addToolCall(currentTaskId, chatToolCall);
+					TraceEntry entry = timeline.get(i);
+					ChatTimelineEvent chatEv = toChatTimelineEvent(entry, tracker);
+					if (chatEv != null) {
+						_taskTracker.addTimelineEvent(currentTaskId, chatEv);
+					}
 				}
 				state.setLastSeenToolCallCount(currentCount);
 				hasUpdates = true;
 			}
 
-			// Task is in progress, trigger repaint to show updates
 			hasUpdates = true;
 		}
 
@@ -925,20 +1009,13 @@ public class ChatControl extends AbstractControlBase {
 				ThreadContextManager.inSystemInteraction(ChatControl.class, () -> {
 					try {
 						switch (_operationType) {
-							case "chat":
-								executeRegularChat(_userMessage);
-								break;
-							case "model-creation":
-								executeModelCreation(_userMessage);
-								break;
-							case "explore-model":
-								executeModelExploration(_userMessage);
-								break;
-							case "tlscript":
-								executeTLScript(_userMessage);
+							case "orchestrator":
+								executeOrchestrator(_userMessage);
 								break;
 							default:
-								throw new RuntimeException("Unknown operation type: " + _operationType);
+								// Fallback for legacy operation types: route through Orchestrator
+								executeOrchestrator(_userMessage);
+								break;
 						}
 
 						_processingState.completeSuccessfully();
@@ -1102,17 +1179,8 @@ public class ChatControl extends AbstractControlBase {
 					// Show user message immediately
 					chatControl.requestRepaint();
 
-					// Determine operation type
-					String operationType;
-					if (chatControl.isModelCreationCommand(trimmedText)) {
-						operationType = "model-creation";
-					} else if (chatControl.isModelExplorationCommand(trimmedText)) {
-						operationType = "explore-model";
-					} else if (chatControl.isTLScriptCommand(trimmedText)) {
-						operationType = "tlscript";
-					} else {
-						operationType = "chat";
-					}
+					// Single entrypoint: all messages go through OrchestratorAgent (step 7)
+					String operationType = "orchestrator";
 
 					// Initialize processing state
 					chatControl._processingState = new AIProcessingState();

@@ -534,6 +534,7 @@ services.form = {
 				return false;
 			}
 
+			var dataId;
 			var draggedRows = [];
 			
 			if(BAL.DOM.containsClass(rowElement, "tblSelected")) {
@@ -548,6 +549,7 @@ services.form = {
 			} else {
 				draggedRows.push(rowElement);
 			}
+			dataId = draggedRows.map(row => row.id).join();
 
 			var scope = services.ajax.COMPONENT_ID;
 			var dragImageElement = services.form._createDragImageElement(draggedRows);
@@ -556,7 +558,7 @@ services.form = {
 				/**
 				 * For Chrome and IE the dataTransfer data is only available during the drop event handling. 
 				 */
-				data: "dnd://" + scope + "/" + controlElement.id + "/" + draggedRows.map(row => row.id).join(),
+				data: "dnd://" + scope + "/" + controlElement.id + "/" + dataId,
 				sourceID: dataId,
 				image: dragImageElement
 			};
@@ -1158,8 +1160,8 @@ services.form = {
 						controlCommand : "dragOver",
 						controlID : controlElement.id,
 						data: window.tlDnD.data,
-						id: dropTarget.node.id,
-						pos: dropTarget.position
+						id: node.id,
+						pos: position
 					}, true);
 					
 					setTimeout(function() {

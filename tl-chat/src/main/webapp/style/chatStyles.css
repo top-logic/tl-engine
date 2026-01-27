@@ -286,3 +286,197 @@
 .chat-text strong {
 	font-weight: bold;
 }
+
+/* ========================================
+ * Task Progress Display
+ * ======================================== */
+
+.chat-task-section {
+	margin-top: 16px;
+	padding-top: 16px;
+	border-top: 2px solid #e1e4e8;
+}
+
+/* Task container */
+.chat-task {
+	margin-bottom: 12px;
+	border: 1px solid #d1d5da;
+	border-radius: 6px;
+	overflow: hidden;
+	background-color: #fff;
+}
+
+/* Task header - clickable */
+.chat-task-header {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 10px 12px;
+	background-color: #f6f8fa;
+	cursor: pointer;
+	user-select: none;
+	font-size: 0.95em;
+}
+
+.chat-task-header:hover {
+	background-color: #e1e4e8;
+}
+
+/* Status-based task header colors */
+.chat-task[data-status="completed"] .chat-task-header {
+	background-color: #d1f4e0;
+}
+
+.chat-task[data-status="error"] .chat-task-header {
+	background-color: #ffd7d5;
+}
+
+.chat-task[data-status="in_progress"] .chat-task-header {
+	background-color: #ddf4ff;
+}
+
+/* Task icon */
+.chat-task-icon {
+	font-size: 1.1em;
+	width: 20px;
+	text-align: center;
+	flex-shrink: 0;
+}
+
+/* Pulsing animation for in-progress tasks */
+@keyframes pulse {
+	0%, 100% { opacity: 1; }
+	50% { opacity: 0.5; }
+}
+
+.chat-task[data-status="in_progress"] .chat-task-icon {
+	animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Task description */
+.chat-task-description {
+	flex: 1;
+	font-weight: 500;
+	color: #24292f;
+}
+
+/* Task duration */
+.chat-task-time {
+	color: #57606a;
+	font-size: 0.85em;
+	margin-left: auto;
+}
+
+/* Expand arrow */
+.chat-task-expand {
+	color: #57606a;
+	font-size: 0.8em;
+	width: 16px;
+	text-align: center;
+	transition: transform 0.2s;
+}
+
+/* Task body (tool calls) */
+.chat-task-body {
+	padding: 12px;
+	background-color: #ffffff;
+	border-top: 1px solid #d1d5da;
+}
+
+/* Tool call container */
+.chat-tool-call {
+	margin-bottom: 8px;
+	padding-left: 8px;
+	border-left: 3px solid #d1d5da;
+}
+
+.chat-tool-call[data-status="success"] {
+	border-left-color: #1a7f37;
+}
+
+.chat-tool-call[data-status="error"] {
+	border-left-color: #cf222e;
+}
+
+.chat-tool-call[data-status="running"] {
+	border-left-color: #0969da;
+}
+
+/* Tool header - clickable */
+.chat-tool-header {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 6px 8px;
+	background-color: #f6f8fa;
+	border-radius: 3px;
+	cursor: pointer;
+	user-select: none;
+	font-size: 0.9em;
+}
+
+.chat-tool-header:hover {
+	background-color: #e1e4e8;
+}
+
+/* Tool name */
+.chat-tool-name {
+	font-weight: 600;
+	color: #0969da;
+	font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+}
+
+/* Tool arguments */
+.chat-tool-args {
+	color: #57606a;
+	font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+	font-size: 0.9em;
+}
+
+/* Tool duration */
+.chat-tool-time {
+	color: #57606a;
+	font-size: 0.85em;
+	margin-left: auto;
+}
+
+/* Tool expand arrow */
+.chat-tool-expand {
+	color: #57606a;
+	font-size: 0.75em;
+	width: 14px;
+	text-align: center;
+}
+
+/* Tool result (JSON) */
+.chat-tool-result {
+	margin-top: 8px;
+	padding: 8px;
+	background-color: #f6f8fa;
+	border-radius: 3px;
+}
+
+.chat-tool-result pre {
+	margin: 0;
+	background-color: transparent;
+	border: none;
+	padding: 0;
+	font-size: 0.85em;
+}
+
+.chat-tool-result code {
+	background-color: transparent;
+	border: none;
+	padding: 0;
+}
+
+/* Task error message */
+.chat-task-error {
+	margin-top: 8px;
+	padding: 8px 12px;
+	background-color: #fff1f0;
+	border: 1px solid #ffc9c7;
+	border-radius: 4px;
+	color: #cf222e;
+	font-size: 0.9em;
+}

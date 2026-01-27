@@ -42,6 +42,10 @@ public class ChatComponentBuilder implements ModelBuilder {
 		final Chat chat = new Chat();
 		chat.addMessage(new ChatMessage("System", "Welcome to TopLogic Chat Demo!"));
 
+		// Get or create task tracker from WindowScope
+		final TaskProgressTracker taskTracker = TaskProgressTracker.getInstance(
+			component.getMainLayout().getWindowScope());
+
 		// Create hidden field with custom ControlProvider that embeds ChatControl
 		HiddenField chatField = FormFactory.newHiddenField("chat");
 		chatField.setControlProvider(new ControlProvider() {
@@ -50,7 +54,7 @@ public class ChatComponentBuilder implements ModelBuilder {
 				return new FragmentControl(new HTMLFragment() {
 					@Override
 					public void write(DisplayContext context, TagWriter out) throws IOException {
-						new ChatControl(chat).write(context, out);
+						new ChatControl(chat, taskTracker).write(context, out);
 					}
 				});
 			}

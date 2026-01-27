@@ -153,9 +153,7 @@ public class AttributeByExpression<C extends AttributeByExpression.Config<?>> ex
 			TLPrimitive primitiveType = (TLPrimitive) type;
 			StorageMapping<?> mapping = primitiveType.getStorageMapping();
 
-			// Normalize value.
-			Object storage = mapping.getStorageObject(element);
-			return mapping.getBusinessObject(storage);
+			return mapping.normalizeValue(element);
 		} else {
 			checkValue(object, attribute, type, mandatory, element);
 			return element;

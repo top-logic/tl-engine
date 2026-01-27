@@ -50,6 +50,15 @@ public abstract class AbstractExprMapping extends AbstractConfigurationValueProv
 	}
 
 	@Override
+	public Object normalize(Object value) {
+		if (value != null && !getApplicationType().isInstance(value)) {
+			throw new IllegalArgumentException("Value '" + value + "' is of type '" + value.getClass().getName()
+				+ "', expected is '" + getApplicationType().getName() + "'.");
+		}
+		return value;
+	}
+
+	@Override
 	public SearchExpression getBusinessObject(Object aStorageObject) {
 		if (StringServices.isEmpty(aStorageObject)) {
 			return null;

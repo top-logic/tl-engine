@@ -1,0 +1,394 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_28710_Removed_legacy_types"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29019_Removed_log_entries"
+			module="tl"
+		/>
+		<dependency name="Ticket_29001_Added_revertedBy_attribute"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<!-- Legacy tables -->
+		<delete-class name="tl.legacy.tabletypes:ItemTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:HTMLAttributeStorageTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:I18NHTMLAttributeStorageTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:I18NAttributeStorageTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:ObjectTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:KnowledgeObjectTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:AbstractUnitTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:CurrencyTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:UnitTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:AddressTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:ArchiveUserDayEntryTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:BoundedRoleTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:CommentTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:DublinCoreTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:DocumentTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:DocumentVersionTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:MailFolderTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:MailTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:WebFolderTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:FailedLoginTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:FlexReportTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:GroupTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:LayoutConfigurationsTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:LogEntryTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:PersBoundCompTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:PersonTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:PersonalConfigurationTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:StoredQueryTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:StoredReportTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:TaskLogTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:TaskResultTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:TaskTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:EMailTaskTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:TemplateLayoutsTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:UserSessionTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:ObjectLabelTable"
+			skip-model-baseline-change="true"
+		/>
+		<!-- Associations! -->
+		<delete-class name="tl.legacy.tabletypes:AssociationTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:classifiedByTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:definesGroupTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:definesRoleTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:hasAreaTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:hasAttachedDocumentsTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:hasClipObjectTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:hasContactTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:hasCurrencyTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:hasExchangeTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:hasFolderContentTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:hasGlobalRoleTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:hasGroupTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:hasLogEntryTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:hasMailBoxTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:hasMailFolderContentTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:hasOwnerTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:hasPersonalConfigurationTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:hasPublisherTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:hasRoleTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:hasStructureChildTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:hasTaskResultTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:hasWrapperAttValueBaseAssociationTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:hasWrapperAttValueTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:needsRoleTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.legacy.tabletypes:representsUserTable"
+			skip-model-baseline-change="true"
+		/>
+
+		<!-- Legacy Table interfaces -->
+		<delete-class name="tl.tables:ItemTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:HTMLAttributeStorageTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:I18NHTMLAttributeStorageTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:I18NAttributeStorageTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:ObjectTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:KnowledgeObjectTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:AbstractUnitTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:CurrencyTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:UnitTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:AddressTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:ArchiveUserDayEntryTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:BoundedRoleTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:CommentTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:DublinCoreTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:DocumentTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:DocumentVersionTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:MailFolderTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:MailTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:WebFolderTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:FailedLoginTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:FlexReportTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:GroupTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:LayoutConfigurationsTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:LogEntryTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:PersBoundCompTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:PersonTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:PersonalConfigurationTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:StoredQueryTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:StoredReportTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:TaskLogTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:TaskResultTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:TaskTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:EMailTaskTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:TemplateLayoutsTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:TypeDemoTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:UserSessionTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:ObjectLabelTableInterface"
+			skip-model-baseline-change="true"
+		/>
+
+		<delete-class name="tl.tables:GroupMembersTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:MailFolderContentTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:FastListEltTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:TLModelTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:TLTypeTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:FastListTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:MetaElementTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:TLDatatypeTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:TLScopeTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:TLModuleTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:TLObjectTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:AttributedObjectTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:ContactTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:SearchExpressionTableTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:StructuredElementTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:OrgUnitTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:TagTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:tl.doc.PageTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:GalleryImageTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:GenericObjectTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:LoginMessageTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:needsRoleAwareTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:MetaAttributeTableInterface"
+			skip-model-baseline-change="true"
+		/>
+	</processors>
+	<migration>
+		<type-mapping class=""/>
+	</migration>
+	<post-processors/>
+</migration>

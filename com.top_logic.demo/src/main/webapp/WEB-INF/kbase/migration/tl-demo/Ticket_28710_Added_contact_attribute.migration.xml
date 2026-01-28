@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_28710_Added_contact_attribute"
+		module="tl-demo"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29019_Removed_log_entries"
+			module="tl"
+		/>
+		<dependency name="Ticket_28710_RoleAssignment_TLSearch"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_28710_Added_TLSearch"
+			module="tl-model-search"
+		/>
+		<dependency name="Ticket_28557_enlarge_contact_attributes"
+			module="tl-contact"
+		/>
+		<dependency name="Ticket_28604_changelog"
+			module="tl-model-wysiwyg"
+		/>
+		<dependency name="Ticket_27736_Upgrade_layout"
+			module="tl-monitoring"
+		/>
+		<dependency name="X05_Ticket_26702_fix_spelling_of_attachment"
+			module="tl-mail"
+		/>
+		<dependency name="Ticket_28298_update_account"
+			module="tl-layout-formeditor"
+		/>
+		<dependency name="Ticket_27442_Update_lucene_version_to_8_11_2"
+			module="tl-search-lucene"
+		/>
+		<dependency name="Ticket_28604_changelog"
+			module="tl-doc"
+		/>
+		<dependency name="Ticket_28710_Missing_migrations"
+			module="tl-bpe"
+		/>
+		<dependency name="Ticket_28710_Removed_legacy_types"
+			module="tl-demo"
+		/>
+	</dependencies>
+	<processors>
+		<create-reference name="DemoTypes:DemoTypes.A#responsibleContact"
+			navigate="true"
+			type="Contacts:PersonContact"
+		/>
+		<reorder-part name="DemoTypes:DemoTypes.A#responsibleContact"/>
+	</processors>
+	<migration>
+		<type-mapping class=""/>
+	</migration>
+	<post-processors/>
+</migration>

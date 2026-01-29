@@ -5,20 +5,26 @@
  */
 package com.top_logic.knowledge.search;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 import com.top_logic.basic.annotation.FrameworkInternal;
+import com.top_logic.basic.shared.collection.CollectionUtilShared;
 import com.top_logic.dob.MOAttribute;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.attr.MOPrimitive;
 import com.top_logic.dob.identifier.ObjectKey;
+import com.top_logic.dob.meta.IdentifiedObject;
 import com.top_logic.dob.meta.MOClass;
 import com.top_logic.dob.meta.MOReference;
 import com.top_logic.dob.meta.MOReference.ReferencePart;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
+import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.search.RevisionQuery.LoadStrategy;
 import com.top_logic.knowledge.service.BasicTypes;
@@ -169,11 +175,70 @@ public class ExpressionFactory {
 	 * Constructs a {@link Literal} expression.
 	 */
 	public static Expression literal(Object value) {
+		return new Literal(value);
+	}
+
+	/**
+	 * Internal method replacing {@link KnowledgeItem} by their {@link KnowledgeItem#tId()
+	 * identifier}.
+	 * 
+	 * <p>
+	 * This is used to modify literal values.
+	 * </p>
+	 * 
+	 * @see #literal(Object)
+	 * @see #setLiteral(Collection)
+	 */
+	@FrameworkInternal
+	public static Object replaceKIbyObjectKey(Object value) {
 		if (value == null) {
 			// null-Literals are not allowed #9479
 			throw new IllegalArgumentException("Literals with value 'null' are not allowed.");
 		}
-		return new Literal(value);
+		if (value instanceof IdentifiedObject ki) {
+			return ki.tId();
+		}
+		if (value instanceof Collection col) {
+			return replaceKIsByObjectKeys(col);
+		}
+		return value;
+	}
+
+	/**
+	 * Internal method replacing {@link KnowledgeItem}s in the given collection by their
+	 * {@link KnowledgeItem#tId() identifier}.
+	 * 
+	 * <p>
+	 * This is used to modify literal values.
+	 * </p>
+	 * 
+	 * @see #literal(Object)
+	 * @see #setLiteral(Collection)
+	 */
+	public static Collection<?> replaceKIsByObjectKeys(Collection<?> col) {
+		if (col.size() > 0) {
+			Collection<Object> copy;
+			if (col instanceof LinkedHashSet) {
+				copy = CollectionUtilShared.newLinkedSet(col.size());
+			} else if (col instanceof HashSet) {
+				copy = CollectionUtilShared.newSet(col.size());
+			} else {
+				copy = new ArrayList<>(col.size());
+			}
+			boolean changes = false;
+			for (Object entry : col) {
+				if (entry instanceof IdentifiedObject ki) {
+					entry = ki.tId();
+					changes = true;
+				}
+				copy.add(entry);
+
+			}
+			if (changes) {
+				return copy;
+			}
+		}
+		return col;
 	}
 	
 	/**

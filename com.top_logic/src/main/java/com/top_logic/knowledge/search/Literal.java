@@ -5,8 +5,6 @@
  */
 package com.top_logic.knowledge.search;
 
-import com.top_logic.knowledge.objects.KnowledgeItem;
-
 /**
  * A literal value in an {@link Expression}.
  * 
@@ -19,13 +17,8 @@ public class Literal extends Expression {
 	 */
 	private final Object value;
 	
-	/*package protected*/ Literal(Object value) {
-		assert value != null : "#9479: Literals with value 'null' are not allowed.";
-		if (value instanceof KnowledgeItem) {
-			this.value = ((KnowledgeItem) value).tId();
-		} else {
-			this.value = value;
-		}
+	Literal(Object value) {
+		this.value = ExpressionFactory.replaceKIbyObjectKey(value);
 	}
 	
 	/**

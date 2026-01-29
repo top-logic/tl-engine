@@ -14,6 +14,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
@@ -313,9 +314,18 @@ public class ElementAccessHelper {
 
 	/**
 	 * Collects all base objects of the given {@link RoleRule} when the given {@link TLReference} of
-	 * the given object has changed
+	 * the given object has changed.
+	 * 
+	 * @param obj
+	 *        The object which has changed values.
+	 * @param reference
+	 *        The reference whose value has changed.
+	 * @param referenceValue
+	 *        Supplier delivering values for the reference. When the reference is multiple, then the
+	 *        reference value may not deliver all values.
 	 */
-	public static Set<BoundObject> navigateRoleRuleBackwards(RoleRule rule, TLObject obj, TLReference reference) {
+	public static Set<BoundObject> navigateRoleRuleBackwards(RoleRule rule, TLObject obj, TLReference reference,
+			Supplier<?> referenceValue) {
 
 		List<PathElement> path = rule.getPath();
 
@@ -328,10 +338,10 @@ public class ElementAccessHelper {
 			}
 		}
 
-		return navigateRoleRuleBackwards(rule, obj, reference, partIndexes);
+		return navigateRoleRuleBackwards(rule, obj, referenceValue, partIndexes);
 	}
 
-	private static Set<BoundObject> navigateRoleRuleBackwards(RoleRule rule, TLObject base, TLReference reference,
+	private static Set<BoundObject> navigateRoleRuleBackwards(RoleRule rule, TLObject base, Supplier<?> referenceValue,
 			List<Integer> referenceIndexes) {
 		List<PathElement> path = rule.getPath();
 		Set<BoundObject> theResult = new HashSet<>();
@@ -341,7 +351,7 @@ public class ElementAccessHelper {
 			if (thePE.isInverse()) {
 				@SuppressWarnings("unchecked")
 				Collection<? extends TLObject> refValue =
-					(Collection<? extends TLObject>) CollectionUtil.asCollection(base.tValue(reference));
+					(Collection<? extends TLObject>) CollectionUtil.asCollection(referenceValue.get());
 				theWrapper = refValue;
 			} else {
 				theWrapper = Collections.singleton(base);

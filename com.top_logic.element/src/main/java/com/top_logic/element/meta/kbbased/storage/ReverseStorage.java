@@ -27,7 +27,6 @@ import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.AttributeUpdate;
 import com.top_logic.element.meta.StorageImplementation;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
-import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.AssociationQuery;
 import com.top_logic.knowledge.service.db2.AbstractAssociationQuery;
 import com.top_logic.knowledge.service.db2.AssociationSetQuery;
@@ -100,17 +99,7 @@ public class ReverseStorage<C extends ReverseStorage.Config<?>> extends Abstract
 	}
 
 	@Override
-	public ObjectKey getBaseObjectId(KnowledgeItem item) {
-		throw new UnsupportedOperationException("Derived attribute.");
-	}
-
-	@Override
 	public ObjectKey getPartId(Map<String, Object> row) {
-		throw new UnsupportedOperationException("Derived attribute.");
-	}
-
-	@Override
-	public ObjectKey getPartId(KnowledgeItem item) {
 		throw new UnsupportedOperationException("Derived attribute.");
 	}
 

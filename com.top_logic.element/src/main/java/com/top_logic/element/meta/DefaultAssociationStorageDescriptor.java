@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.Objects;
 
 import com.top_logic.dob.identifier.ObjectKey;
-import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.model.TLStructuredTypePart;
 
 /**
@@ -50,18 +49,8 @@ public class DefaultAssociationStorageDescriptor implements AssociationStorageDe
 	}
 
 	@Override
-	public ObjectKey getBaseObjectId(KnowledgeItem item) {
-		return item.getReferencedKey(baseObjectCol());
-	}
-
-	@Override
 	public ObjectKey getPartId(Map<String, Object> row) {
 		return (ObjectKey) row.get(partCol());
-	}
-
-	@Override
-	public ObjectKey getPartId(KnowledgeItem item) {
-		return item.getReferencedKey(partCol());
 	}
 
 	@Override

@@ -70,11 +70,13 @@ public class Glossaries_Impl extends de.haumacher.msgbuf.data.AbstractDataObject
 	protected void readField(de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
 		switch (field) {
 			case GLOSSARIES__PROP: {
+				java.util.List<com.top_logic.tools.resources.translate.deepl.protocol.Glossary> newValue = new java.util.ArrayList<>();
 				in.beginArray();
 				while (in.hasNext()) {
-					addGlossarie(com.top_logic.tools.resources.translate.deepl.protocol.Glossary.readGlossary(in));
+					newValue.add(com.top_logic.tools.resources.translate.deepl.protocol.Glossary.readGlossary(in));
 				}
 				in.endArray();
+				setGlossaries(newValue);
 			}
 			break;
 			default: super.readField(in, field);

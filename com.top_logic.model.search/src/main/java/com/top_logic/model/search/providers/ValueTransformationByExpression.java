@@ -16,6 +16,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 import com.top_logic.layout.channel.linking.impl.ChannelLinking;
 import com.top_logic.layout.channel.linking.impl.DirectLinking;
 import com.top_logic.layout.form.component.ValueTransformation;
@@ -44,7 +45,9 @@ public class ValueTransformationByExpression
 		 * Additional arguments for the given {@link #getFunction()}.
 		 */
 		@DefaultContainer
-		List<PolymorphicConfiguration<? extends DirectLinking>> getAditionalArguments();
+		// For backwards compatibility - if nothing configured, it's a component channel.
+		@ImplementationClassDefault(DirectLinking.class)
+		List<PolymorphicConfiguration<? extends ChannelLinking>> getAditionalArguments();
 
 		/**
 		 * The transformation to apply to the input value and potentially given additional

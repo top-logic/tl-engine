@@ -10,13 +10,19 @@ import com.top_logic.element.meta.AbstractStorageBase;
 import com.top_logic.element.meta.AttributeException;
 import com.top_logic.element.meta.AttributeUpdate;
 import com.top_logic.element.meta.StorageImplementation;
+import com.top_logic.model.TLFormObjectBase;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * Dummy {@link StorageImplementation} used if instantiating the {@link StorageImplementation} of an
- * attribute fails.
+ * Dummy {@link StorageImplementation} used for inaccessible attributes.
+ * 
+ * <p>
+ * An attribute is inaccessible, if instantiating its configured {@link StorageImplementation}
+ * fails, or if the attribute is declared <code>abstract</code>.
+ * </p>
  * 
  * <p>
  * Note: This class must be non-public to prevent the UI from offering it as option for the storage
@@ -34,6 +40,13 @@ final class NoStorage extends AbstractStorageBase<AbstractStorageBase.Config<?>>
 
 	private NoStorage() {
 		super(null, null);
+	}
+
+	@Override
+	public boolean isReadOnly() {
+		// This makes sure that attributes with this storage are also inaccessible when used in
+		// transient objects.
+		return true;
 	}
 
 	@Override
@@ -73,8 +86,13 @@ final class NoStorage extends AbstractStorageBase<AbstractStorageBase.Config<?>>
 		throw unsupported(attribute);
 	}
 
-	private UnsupportedOperationException unsupported(TLStructuredTypePart attribute) {
-		return new UnsupportedOperationException(
-			"Invalid storage implementation for attribute '" + attribute + "'.");
+	@Override
+	public Object getFormValue(TLFormObjectBase formObject, TLStructuredTypePart part) {
+		throw unsupported(part);
+	}
+
+	private RuntimeException unsupported(TLStructuredTypePart attribute) {
+		return new TopLogicException(
+			I18NConstants.ERROR_ABSTRACT_ATTRIBUTE_ACCESS__ATTR.fill(TLModelUtil.qualifiedName(attribute)));
 	}
 }

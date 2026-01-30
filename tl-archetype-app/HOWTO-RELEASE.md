@@ -61,14 +61,13 @@ Having this all set up, you can deploy a version (after incrementing the version
  using the following:
 
 ```
-cd ../tl-parent-all
 mvn clean deploy -P \!full-build -P maven-central
 ```
 
 ```
 ...
-[INFO] Created bundle successfully /home/dbu/Development/workspaces/CWS_3/git/tl-engine-7/tl-parent-all/target/central-staging/central-bundle.zip
-[INFO] Going to upload /home/dbu/Development/workspaces/CWS_3/git/tl-engine-7/tl-parent-all/target/central-publishing/central-bundle.zip
+[INFO] Created bundle successfully /home/dbu/Development/workspaces/CWS_3/git/tl-engine-7/target/central-staging/central-bundle.zip
+[INFO] Going to upload /home/dbu/Development/workspaces/CWS_3/git/tl-engine-7/target/central-publishing/central-bundle.zip
 [INFO] Uploaded bundle successfully, deployment name: Deployment, deploymentId: a865a3ce-bc4c-40ac-ae9f-6117956ac295. Deployment will publish automatically
 [INFO] Waiting until Deployment a865a3ce-bc4c-40ac-ae9f-6117956ac295 is validated
 [INFO] Deployment a865a3ce-bc4c-40ac-ae9f-6117956ac295 has been validated. To finish publishing visit https://central.sonatype.com/publishing/deployments

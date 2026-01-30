@@ -25,5 +25,5 @@
 		<javadocOutput>${basedir}/../tl-doc/javadoc</javadocOutput>
 	</properties>
 
-  <dependencies/>
+  <dependencies />
 </project>

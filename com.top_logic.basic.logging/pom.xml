@@ -13,5 +13,5 @@
 	<description>The TopLogic logging abstraction layer.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 
-  <dependencies/>
+  <dependencies />
 </project>

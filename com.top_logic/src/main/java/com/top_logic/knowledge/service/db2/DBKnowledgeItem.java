@@ -11,6 +11,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import com.top_logic.basic.ArrayUtil;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.col.InlineSet;
@@ -1119,6 +1120,9 @@ public abstract class DBKnowledgeItem extends AbstractDBKnowledgeItem implements
 		DBContext before = kb.installContext(ImmutableDBContext.INSTANCE);
 		try {
 			return attribute.getStorage().getCacheValue(attribute, this, oldValues);
+		} catch (Exception ex) {
+			Logger.error("Failed to access old value of column '" + attribute + "'.", ex, DBKnowledgeItem.class);
+			return null;
 		} finally {
 			kb.installContext(before);
 		}

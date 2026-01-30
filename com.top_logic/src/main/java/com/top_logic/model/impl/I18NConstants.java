@@ -6,6 +6,7 @@
 package com.top_logic.model.impl;
 
 import com.top_logic.basic.util.ResKey1;
+import com.top_logic.basic.util.ResKey2;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
@@ -17,6 +18,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en It is not possible to navigate backwards through the transient reference ''{0}''.
 	 */
 	public static ResKey1 ERROR_NO_REFERERS_AVAILABLE__REFERENCE;
+
+	/**
+	 * @en Error initializing object of type ''{0}'': {1}
+	 */
+	public static ResKey2 ERROR_INITIALIZING_OBJECT__TYPE_MSG;
 
 	static {
         initConstants(I18NConstants.class);

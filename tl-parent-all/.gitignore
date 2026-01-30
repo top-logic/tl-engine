@@ -1,9 +1,0 @@
-/.apt_generated
-/.apt_generated_tests
-/target
-/tmp
-/war
-/src/main/webapp/script/top-logic.js
-/src/main/webapp/style/_*.css
-/.settings/com.gwtplugins.gwt.eclipse.core.prefs
-/**/*~

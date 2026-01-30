@@ -9,8 +9,7 @@
 		<groupId>com.top-logic</groupId>
 		<artifactId>tl-parent-all</artifactId>
 		<version>7.11.0-SNAPSHOT</version>
-		
-		<relativePath>../tl-parent-all</relativePath>
+		<relativePath>..</relativePath>
 	</parent>
 	
 	<artifactId>tl-maven-plugin</artifactId>

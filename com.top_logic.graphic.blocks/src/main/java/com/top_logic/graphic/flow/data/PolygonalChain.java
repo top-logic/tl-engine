@@ -116,12 +116,12 @@ public interface PolygonalChain extends Box, com.top_logic.graphic.flow.operatio
 	/**
 	 * Adds a value to the {@link #getDashes()} list.
 	 */
-	com.top_logic.graphic.flow.data.PolygonalChain addDashe(double value);
+	com.top_logic.graphic.flow.data.PolygonalChain addDash(double value);
 
 	/**
 	 * Removes a value from the {@link #getDashes()} list.
 	 */
-	void removeDashe(double value);
+	void removeDash(double value);
 
 	@Override
 	com.top_logic.graphic.flow.data.PolygonalChain setX(double value);

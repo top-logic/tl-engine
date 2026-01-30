@@ -95,7 +95,6 @@ Waiting for operation to complete...
 To finally release the staged artifacts to Maven Central, you have to issue the following command:
 
 ```
-cd ../tl-parent-all
 mvn nexus-staging:release -P \!full-build -P maven-central
 ```
 

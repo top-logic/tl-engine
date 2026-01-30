@@ -102,18 +102,18 @@ public class Border_Impl extends com.top_logic.graphic.flow.data.impl.Decoration
 	}
 
 	@Override
-	public com.top_logic.graphic.flow.data.Border addDashe(double value) {
-		internalAddDashe(value);
+	public com.top_logic.graphic.flow.data.Border addDash(double value) {
+		internalAddDash(value);
 		return this;
 	}
 
-	/** Implementation of {@link #addDashe(double)} without chain call utility. */
-	protected final void internalAddDashe(double value) {
+	/** Implementation of {@link #addDash(double)} without chain call utility. */
+	protected final void internalAddDash(double value) {
 		_dashes.add(value);
 	}
 
 	@Override
-	public final void removeDashe(double value) {
+	public final void removeDash(double value) {
 		_dashes.remove(value);
 	}
 

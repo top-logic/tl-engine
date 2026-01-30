@@ -7,7 +7,6 @@ package test.com.top_logic.model.search.expr;
 
 import static com.top_logic.model.search.expr.query.QueryExecutor.*;
 
-import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -1160,9 +1159,6 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 	}
 
 	public void testHtml() {
-		// Decimal separator depends on Locale
-		char decimalSeparator = DecimalFormatSymbols.getInstance(TLContext.getLocale()).getDecimalSeparator();
-
 		with("TestSearchExpression-testHtml.scenario.xml",
 			scenario -> {
 				SearchExpression renderer = search(
@@ -1184,10 +1180,10 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 				{
 					assertEquals(
 						"<table>" +
-							"<tr><td>a4</td>" + "<td>8" + decimalSeparator + "9</td>" + "<td>D</td></tr>" +
-							"<tr><td>a3</td>" + "<td>8" + decimalSeparator + "9</td>" + "<td>C</td></tr>" +
-							"<tr><td>a5</td>" + "<td>8" + decimalSeparator + "9</td>" + "<td></td></tr>" +
-							"<tr class=\"critical\"><td>a1</td>" + "<td>42" + decimalSeparator + "13</td>"
+							"<tr><td>a4</td>" + "<td>8.9</td>" + "<td>D</td></tr>" +
+							"<tr><td>a3</td>" + "<td>8.9</td>" + "<td>C</td></tr>" +
+							"<tr><td>a5</td>" + "<td>8.9</td>" + "<td></td></tr>" +
+							"<tr class=\"critical\"><td>a1</td>" + "<td>42.13</td>"
 							+ "<td>A</td></tr>" +
 							"<tr><td>a2</td>" + "<td></td>" + "<td>B</td></tr>" +
 							"</table>",

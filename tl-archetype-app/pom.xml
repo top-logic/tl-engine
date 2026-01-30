@@ -37,12 +37,6 @@
 		</developer>
 	</developers>
 
-	<scm>
-		<connection>scm:git:https://github.com/top-logic/tl-engine.git</connection>
-		<developerConnection>scm:git:http://tl.bos.local:3000/TopLogic/tl-engine.git</developerConnection>
-		<url>https://github.com/top-logic/tl-engine</url>
-	</scm>
-
 	<dependencies>
 		<!-- 
 			Note: The archetype is test by building an app generated with this archetype. To do this successfully, 

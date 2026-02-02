@@ -243,6 +243,40 @@ Types are defined in XML files (`*.model.xml`):
 </model>
 ```
 
+### UI Labels and I18N
+
+TopLogic generates UI labels from configuration interface properties. The `messages_en.properties` and `messages_de.properties` files in `src/main/java/META-INF/` are **generated during `mvn install`** from JavaDoc comments.
+
+**Do NOT edit `messages.properties` files directly** - changes will be overwritten on next build.
+
+**To change a UI label:**
+
+1. **Add a `@Label` annotation** to the configuration property:
+
+```java
+@Name("cssClassOverride")
+@Label("CSS class override")  // Overrides auto-generated label
+boolean getCssClassOverride();
+```
+
+2. **Run `mvn install`** on the module to regenerate the properties files
+
+3. **Commit both** the Java source change AND the regenerated `messages_*.properties` files
+
+**How labels are generated:**
+- Default label is derived from the property name (e.g., `cssClassOverride` → "Css class override")
+- `@Label` annotation overrides the auto-generated label
+- Tooltips are generated from JavaDoc comments on the getter method
+
+**Example regeneration workflow:**
+```bash
+cd com.top_logic
+mvn install
+git diff src/main/java/META-INF/messages_en.properties  # Verify changes
+git add src/main/java/META-INF/messages_*.properties
+git commit -m "Ticket #XXXXX: Regenerate messages with label fixes."
+```
+
 ### Exception Handling
 
 TopLogic uses **`TopLogicException`** for user-visible errors that should be displayed with internationalized messages:

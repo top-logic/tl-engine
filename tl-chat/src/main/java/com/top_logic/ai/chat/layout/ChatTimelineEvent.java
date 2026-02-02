@@ -5,6 +5,8 @@
  */
 package com.top_logic.ai.chat.layout;
 
+import java.util.function.Supplier;
+
 /**
  * One entry in an execution timeline: either a tool call or an agent-to-agent call.
  *
@@ -31,22 +33,24 @@ public class ChatTimelineEvent {
 	private final String _toAgent;
 	private final String _inputSummary;
 	private final String _resultSummary;
+	private final Supplier<String> _resultSummarySupplier;
 
 	private ChatTimelineEvent(Kind kind, ChatToolCall toolCall, String fromAgent, String toAgent,
-			String inputSummary, String resultSummary) {
+			String inputSummary, String resultSummary, Supplier<String> resultSummarySupplier) {
 		_kind = kind;
 		_toolCall = toolCall;
 		_fromAgent = fromAgent;
 		_toAgent = toAgent;
 		_inputSummary = inputSummary;
 		_resultSummary = resultSummary;
+		_resultSummarySupplier = resultSummarySupplier;
 	}
 
 	/**
 	 * Creates a timeline entry for a tool call.
 	 */
 	public static ChatTimelineEvent toolCall(ChatToolCall toolCall) {
-		return new ChatTimelineEvent(Kind.TOOL_CALL, toolCall, null, null, null, null);
+		return new ChatTimelineEvent(Kind.TOOL_CALL, toolCall, null, null, null, null, null);
 	}
 
 	/**
@@ -54,7 +58,17 @@ public class ChatTimelineEvent {
 	 */
 	public static ChatTimelineEvent agentCall(String fromAgent, String toAgent, String inputSummary,
 			String resultSummary) {
-		return new ChatTimelineEvent(Kind.AGENT_CALL, null, fromAgent, toAgent, inputSummary, resultSummary);
+		return new ChatTimelineEvent(Kind.AGENT_CALL, null, fromAgent, toAgent, inputSummary, resultSummary, null);
+	}
+
+	/**
+	 * Creates a timeline entry for an agent-to-agent call whose result summary is read at render time
+	 * (e.g. when the call was recorded at start and completed later).
+	 */
+	public static ChatTimelineEvent agentCallWithDynamicResult(String fromAgent, String toAgent, String inputSummary,
+			Supplier<String> resultSummarySupplier) {
+		return new ChatTimelineEvent(Kind.AGENT_CALL, null, fromAgent, toAgent, inputSummary, null,
+			resultSummarySupplier);
 	}
 
 	public Kind getKind() {
@@ -83,8 +97,12 @@ public class ChatTimelineEvent {
 		return _inputSummary;
 	}
 
-	/** Result summary when kind is AGENT_CALL. */
+	/** Result summary when kind is AGENT_CALL (read at call time; may be updated if using dynamic result). */
 	public String getResultSummary() {
-		return _resultSummary;
+		if (_resultSummarySupplier != null) {
+			String s = _resultSummarySupplier.get();
+			return s != null ? s : "";
+		}
+		return _resultSummary != null ? _resultSummary : "";
 	}
 }

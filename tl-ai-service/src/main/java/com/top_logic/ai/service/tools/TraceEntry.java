@@ -12,7 +12,8 @@ import java.util.Map;
  *
  * @see ToolCallTracker#getTimeline()
  */
-public sealed interface TraceEntry permits TraceEntry.ToolCallTraceEntry, TraceEntry.AgentCallTraceEntry {
+public sealed interface TraceEntry permits TraceEntry.ToolCallTraceEntry, TraceEntry.AgentCallTraceEntry,
+		TraceEntry.MutableAgentCallTraceEntry {
 
 	/**
 	 * Whether this entry is a tool call or an agent call.
@@ -40,6 +41,50 @@ public sealed interface TraceEntry permits TraceEntry.ToolCallTraceEntry, TraceE
 		@Override
 		public TraceEventKind getKind() {
 			return TraceEventKind.AGENT_CALL;
+		}
+	}
+
+	/**
+	 * Mutable agent-call entry: recorded when the call starts (before the sub-agent runs),
+	 * so it appears before that agent's tool calls in the timeline. Result summary is set when
+	 * the call completes.
+	 */
+	final class MutableAgentCallTraceEntry implements TraceEntry {
+		private final String _fromAgent;
+		private final String _toAgent;
+		private final String _inputSummary;
+		private volatile String _resultSummary;
+
+		MutableAgentCallTraceEntry(String fromAgent, String toAgent, String inputSummary, String resultSummary) {
+			_fromAgent = fromAgent != null ? fromAgent : "";
+			_toAgent = toAgent != null ? toAgent : "";
+			_inputSummary = inputSummary != null ? inputSummary : "";
+			_resultSummary = resultSummary != null ? resultSummary : "";
+		}
+
+		@Override
+		public TraceEventKind getKind() {
+			return TraceEventKind.AGENT_CALL;
+		}
+
+		public String fromAgent() {
+			return _fromAgent;
+		}
+
+		public String toAgent() {
+			return _toAgent;
+		}
+
+		public String inputSummary() {
+			return _inputSummary;
+		}
+
+		public String resultSummary() {
+			return _resultSummary;
+		}
+
+		public void setResultSummary(String resultSummary) {
+			_resultSummary = resultSummary != null ? resultSummary : "";
 		}
 	}
 }

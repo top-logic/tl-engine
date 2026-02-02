@@ -361,6 +361,10 @@ public class ChatControl extends AbstractControlBase {
 		if (entry instanceof TraceEntry.AgentCallTraceEntry ac) {
 			return ChatTimelineEvent.agentCall(ac.fromAgent(), ac.toAgent(), ac.inputSummary(), ac.resultSummary());
 		}
+		if (entry instanceof TraceEntry.MutableAgentCallTraceEntry mac) {
+			return ChatTimelineEvent.agentCallWithDynamicResult(mac.fromAgent(), mac.toAgent(), mac.inputSummary(),
+				mac::resultSummary);
+		}
 		return null;
 	}
 

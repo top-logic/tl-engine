@@ -67,6 +67,7 @@ public class ToolCallTracker {
 	private final Map<String, Object> _toolResults = new HashMap<>();
 	private final Map<String, String> _rawResultJsons = new HashMap<>();
 	private final List<TraceEntry> _timeline = new ArrayList<>();
+	private final List<TraceEntry.MutableAgentCallTraceEntry> _incompleteAgentCalls = new ArrayList<>();
 	private int _nextResultRef = 1;
 
 	/**
@@ -103,7 +104,43 @@ public class ToolCallTracker {
 	}
 
 	/**
-	 * Records an agent-to-agent call for the execution timeline.
+	 * Records the start of an agent-to-agent call (when the request is sent, before the sub-agent runs).
+	 * The entry appears in the timeline immediately so it shows before that agent's tool calls.
+	 * Call {@link #recordAgentCallComplete(String)} when the sub-agent returns to set the result summary.
+	 *
+	 * @param fromAgent
+	 *        Name of the calling agent (e.g. "Orchestrator").
+	 * @param toAgent
+	 *        Name of the called agent (e.g. "ModelExplorer").
+	 * @param inputSummary
+	 *        Short summary of the work order or input sent.
+	 */
+	public void recordAgentCallStart(String fromAgent, String toAgent, String inputSummary) {
+		TraceEntry.MutableAgentCallTraceEntry entry = new TraceEntry.MutableAgentCallTraceEntry(
+			fromAgent, toAgent, inputSummary, "");
+		_timeline.add(entry);
+		_incompleteAgentCalls.add(entry);
+	}
+
+	/**
+	 * Completes the most recently started agent call with the result summary.
+	 * Call this when the sub-agent returns (success or error).
+	 *
+	 * @param resultSummary
+	 *        Short summary of the result returned.
+	 */
+	public void recordAgentCallComplete(String resultSummary) {
+		if (_incompleteAgentCalls.isEmpty()) {
+			return;
+		}
+		TraceEntry.MutableAgentCallTraceEntry entry = _incompleteAgentCalls.remove(_incompleteAgentCalls.size() - 1);
+		entry.setResultSummary(resultSummary != null ? resultSummary : "");
+	}
+
+	/**
+	 * Records an agent-to-agent call for the execution timeline (single call, e.g. for backward compatibility).
+	 * Prefer {@link #recordAgentCallStart(String, String, String)} before invoking and
+	 * {@link #recordAgentCallComplete(String)} on return so the agent call appears before the sub-agent's tool calls.
 	 *
 	 * @param fromAgent
 	 *        Name of the calling agent (e.g. "Orchestrator").
@@ -158,6 +195,7 @@ public class ToolCallTracker {
 		_toolResults.clear();
 		_rawResultJsons.clear();
 		_timeline.clear();
+		_incompleteAgentCalls.clear();
 		_nextResultRef = 1;
 	}
 }

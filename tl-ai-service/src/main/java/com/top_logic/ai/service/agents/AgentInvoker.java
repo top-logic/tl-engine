@@ -44,6 +44,7 @@ public final class AgentInvoker {
 	 */
 	public static String invokeExplorer(String fromAgent, AgentWorkOrder workOrder) {
 		String inputSummary = workOrder.toSummary();
+		ToolCallTracking.recordAgentCallStartIfTracking(fromAgent, "ModelExplorer", inputSummary);
 		String prompt = buildExplorerPrompt(workOrder);
 		String result;
 		try {
@@ -57,12 +58,11 @@ public final class AgentInvoker {
 				() -> explorer.explore(prompt));
 		} catch (Exception e) {
 			result = "Error: " + e.getMessage();
-			ToolCallTracking.recordAgentCallIfTracking(fromAgent, "ModelExplorer", inputSummary,
-				result);
+			ToolCallTracking.recordAgentCallCompleteIfTracking(truncate(result, RESULT_SUMMARY_MAX_LEN));
 			throw e;
 		}
 		String resultSummary = truncate(result, RESULT_SUMMARY_MAX_LEN);
-		ToolCallTracking.recordAgentCallIfTracking(fromAgent, "ModelExplorer", inputSummary, resultSummary);
+		ToolCallTracking.recordAgentCallCompleteIfTracking(resultSummary);
 		return result;
 	}
 
@@ -77,6 +77,7 @@ public final class AgentInvoker {
 	 */
 	public static String invokeTLScript(String fromAgent, AgentWorkOrder workOrder) {
 		String inputSummary = workOrder.toSummary();
+		ToolCallTracking.recordAgentCallStartIfTracking(fromAgent, "TLScriptAgent", inputSummary);
 		String userMessage = workOrder.task() != null && !workOrder.task().isEmpty()
 			? workOrder.task()
 			: workOrder.goal();
@@ -99,11 +100,11 @@ public final class AgentInvoker {
 				() -> agent.answer(messageForLambda));
 		} catch (Exception e) {
 			result = "Error: " + e.getMessage();
-			ToolCallTracking.recordAgentCallIfTracking(fromAgent, "TLScriptAgent", inputSummary, result);
+			ToolCallTracking.recordAgentCallCompleteIfTracking(truncate(result, RESULT_SUMMARY_MAX_LEN));
 			throw e;
 		}
 		String resultSummary = truncate(result, RESULT_SUMMARY_MAX_LEN);
-		ToolCallTracking.recordAgentCallIfTracking(fromAgent, "TLScriptAgent", inputSummary, resultSummary);
+		ToolCallTracking.recordAgentCallCompleteIfTracking(resultSummary);
 		return result;
 	}
 
@@ -118,6 +119,7 @@ public final class AgentInvoker {
 	 */
 	public static String invokeCreator(String fromAgent, AgentWorkOrder workOrder) {
 		String inputSummary = workOrder.toSummary();
+		ToolCallTracking.recordAgentCallStartIfTracking(fromAgent, "ModelCreator", inputSummary);
 		String requirements = workOrder.task() != null && !workOrder.task().isEmpty()
 			? workOrder.task()
 			: workOrder.goal();
@@ -126,11 +128,11 @@ public final class AgentInvoker {
 			result = UMLSpecificationAgent.execute(requirements);
 		} catch (Exception e) {
 			result = "Error: " + e.getMessage();
-			ToolCallTracking.recordAgentCallIfTracking(fromAgent, "ModelCreator", inputSummary, result);
+			ToolCallTracking.recordAgentCallCompleteIfTracking(truncate(result, RESULT_SUMMARY_MAX_LEN));
 			throw e;
 		}
 		String resultSummary = truncate(result, RESULT_SUMMARY_MAX_LEN);
-		ToolCallTracking.recordAgentCallIfTracking(fromAgent, "ModelCreator", inputSummary, resultSummary);
+		ToolCallTracking.recordAgentCallCompleteIfTracking(resultSummary);
 		return result;
 	}
 

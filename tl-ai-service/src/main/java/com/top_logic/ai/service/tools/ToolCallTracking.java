@@ -71,12 +71,43 @@ public class ToolCallTracking {
 	}
 
 	/**
-	 * Records an agent-to-agent call if tracking is enabled in the current thread.
-	 * 
-	 * <p>
-	 * This method is safe to call even when tracking is not enabled - it will simply do nothing.
-	 * </p>
-	 * 
+	 * Records the start of an agent-to-agent call when the request is sent (before invoking the sub-agent).
+	 * The agent call will appear in the timeline before that agent's tool calls.
+	 * Call {@link #recordAgentCallCompleteIfTracking(String)} when the sub-agent returns.
+	 *
+	 * @param fromAgent
+	 *        Name of the calling agent (e.g. "Orchestrator").
+	 * @param toAgent
+	 *        Name of the called agent (e.g. "ModelExplorer").
+	 * @param inputSummary
+	 *        Short summary of the work order or input sent.
+	 */
+	public static void recordAgentCallStartIfTracking(String fromAgent, String toAgent, String inputSummary) {
+		ToolCallTracker tracker = getTracker();
+		if (tracker != null) {
+			tracker.recordAgentCallStart(fromAgent, toAgent, inputSummary);
+		}
+	}
+
+	/**
+	 * Completes the most recently started agent call with the result summary.
+	 * Call when the sub-agent returns (success or error).
+	 *
+	 * @param resultSummary
+	 *        Short summary of the result returned.
+	 */
+	public static void recordAgentCallCompleteIfTracking(String resultSummary) {
+		ToolCallTracker tracker = getTracker();
+		if (tracker != null) {
+			tracker.recordAgentCallComplete(resultSummary);
+		}
+	}
+
+	/**
+	 * Records an agent-to-agent call if tracking is enabled (single call).
+	 * Prefer {@link #recordAgentCallStartIfTracking(String, String, String)} and
+	 * {@link #recordAgentCallCompleteIfTracking(String)} so the agent call appears before the sub-agent's tool calls.
+	 *
 	 * @param fromAgent
 	 *        Name of the calling agent (e.g. "Orchestrator").
 	 * @param toAgent

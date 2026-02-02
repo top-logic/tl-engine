@@ -5,6 +5,7 @@
  */
 package com.top_logic.service.openapi.common.authentication.apikey;
 
+import com.top_logic.basic.config.annotation.Encrypted;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
@@ -30,6 +31,7 @@ public interface APIKeySecret extends SecretConfiguration {
 	 */
 	@Mandatory
 	@Name(API_KEY)
+	@Encrypted
 	String getAPIKey();
 
 	/**

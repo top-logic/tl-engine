@@ -30,6 +30,7 @@ import com.top_logic.ai.service.scripting.OpenAIScriptFunctions;
 import com.top_logic.ai.service.tools.ToolCallTracker;
 import com.top_logic.ai.service.tools.ToolCallTracking;
 import com.top_logic.ai.service.tools.TraceEntry;
+import com.top_logic.ai.service.tools.util.JsonPrettyPrint;
 import com.top_logic.ai.service.tools.help.RequestModelExplorationTool;
 import com.top_logic.ai.service.tools.help.TLScriptReferenceTool;
 import com.top_logic.ai.service.tools.model.AnnotationDefinitionExplorerTool;
@@ -410,12 +411,12 @@ public class ChatControl extends AbstractControlBase {
 				out.endTag(SPAN);
 			}
 
-			// Expand arrow
+			// Expand arrow (▶ when collapsed, ▼ when expanded)
 			out.beginBeginTag(SPAN);
 			out.writeAttribute(CLASS_ATTR, "chat-tool-expand");
 			out.writeAttribute(ID_ATTR, arrowId);
 			out.endBeginTag();
-			out.writeText("▼");
+			out.writeText("▶");
 			out.endTag(SPAN);
 		}
 		out.endTag(DIV);
@@ -425,16 +426,18 @@ public class ChatControl extends AbstractControlBase {
 		out.beginBeginTag(DIV);
 		out.writeAttribute(CLASS_ATTR, "chat-tool-result");
 		out.writeAttribute(ID_ATTR, toolDivId + "-result");
+		out.writeAttribute("style", "display: none");
 		out.endBeginTag();
 		{
 			if (toolCall.getResultJson() != null) {
+				String prettyJson = JsonPrettyPrint.prettyPrint(toolCall.getResultJson());
 				out.beginBeginTag(PRE);
 				out.endBeginTag();
 				{
 					out.beginBeginTag(CODE);
 					out.writeAttribute(CLASS_ATTR, "language-json");
 					out.endBeginTag();
-					out.writeText(toolCall.getResultJson());
+					out.writeText(prettyJson);
 					out.endTag(CODE);
 				}
 				out.endTag(PRE);

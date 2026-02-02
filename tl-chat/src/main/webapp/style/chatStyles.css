@@ -525,12 +525,13 @@
 	margin-left: auto;
 }
 
-/* Tool expand arrow */
+/* Tool expand arrow - right-aligned in header */
 .chat-tool-expand {
 	color: #57606a;
 	font-size: 0.75em;
 	width: 14px;
 	text-align: center;
+	margin-left: auto;
 }
 
 /* Tool result (JSON) - scrollable when expanded */

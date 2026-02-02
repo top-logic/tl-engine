@@ -501,16 +501,6 @@ public class ChatControl extends AbstractControlBase {
 			out.writeText(formatArgsFull(toolCall.getArgs()));
 			out.endTag(SPAN);
 
-			// Duration
-			if (toolCall.getEndTime() != null) {
-				long durationMs = java.time.Duration.between(toolCall.getStartTime(), toolCall.getEndTime()).toMillis();
-				out.beginBeginTag(SPAN);
-				out.writeAttribute(CLASS_ATTR, "chat-tool-time");
-				out.endBeginTag();
-				out.writeText(formatDuration(durationMs));
-				out.endTag(SPAN);
-			}
-
 			// Expand arrow (▶ when collapsed, ▼ when expanded)
 			out.beginBeginTag(SPAN);
 			out.writeAttribute(CLASS_ATTR, "chat-tool-expand");
@@ -584,10 +574,8 @@ public class ChatControl extends AbstractControlBase {
 		}
 	}
 
+	/** Formats duration in seconds for the overall task trace. */
 	private String formatDuration(long ms) {
-		if (ms < 1000) {
-			return ms + "ms";
-		}
 		return String.format("%.1fs", ms / 1000.0);
 	}
 

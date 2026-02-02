@@ -12,7 +12,14 @@
       }
     },
     "jenkins": {
-      "command": "./scripts/mcp-jenkins-wrapper.sh"
+      "type": "stdio",
+      "command": "./scripts/mcp-jenkins-wrapper.sh",
+      "env": {
+        "JENKINS_URL": "http://jenkins:8090/",
+        "JENKINS_KEYRING_SERVICE": "tl-engine-jenkins-mcp",
+        "JENKINS_KEYRING_ACCOUNT_USER": "username",
+        "JENKINS_KEYRING_ACCOUNT_PASS": "password"
+      }
     }
   }
 }

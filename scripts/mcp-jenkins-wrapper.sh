@@ -1,23 +1,32 @@
 #!/bin/bash
-# Wrapper script that reads Jenkins credentials from ~/.netrc
-# netrc format: machine tl.bos.local login <username> password <api-token>
+# Wrapper script that reads Jenkins credentials from OS keyring.
+# Credentials are stored securely in the OS keyring (no plaintext files).
+#
+# Setup credentials with:
+#   ./scripts/setup-mcp-credentials.sh
 
-NETRC_MACHINE="tl.bos.local"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Parse credentials from netrc
-if [[ -f ~/.netrc ]]; then
-    CREDS=$(awk -v host="$NETRC_MACHINE" '
-        $1 == "machine" && $2 == host { found=1 }
-        found && $1 == "login" { user=$2 }
-        found && $1 == "password" { pass=$2; print user " " pass; exit }
-    ' ~/.netrc)
+# Keyring config (from environment or defaults)
+SERVICE="${JENKINS_KEYRING_SERVICE:-tl-engine-jenkins-mcp}"
+ACC_USER="${JENKINS_KEYRING_ACCOUNT_USER:-username}"
+ACC_PASS="${JENKINS_KEYRING_ACCOUNT_PASS:-password}"
 
-    JENKINS_USERNAME=$(echo "$CREDS" | cut -d' ' -f1)
-    JENKINS_PASSWORD=$(echo "$CREDS" | cut -d' ' -f2)
+# Read credentials from keyring using Python
+JENKINS_USERNAME=$(python3 -c "import keyring; print(keyring.get_password('$SERVICE', '$ACC_USER') or '')" 2>/dev/null)
+JENKINS_PASSWORD=$(python3 -c "import keyring; print(keyring.get_password('$SERVICE', '$ACC_PASS') or '')" 2>/dev/null)
+
+if [[ -z "$JENKINS_USERNAME" || -z "$JENKINS_PASSWORD" ]]; then
+    echo "Error: Missing Jenkins credentials in OS keyring." >&2
+    echo "  service: $SERVICE" >&2
+    echo "  username key: $ACC_USER" >&2
+    echo "  password key: $ACC_PASS" >&2
+    echo "Run: ./scripts/setup-mcp-credentials.sh" >&2
+    exit 1
 fi
 
 exec mcp-jenkins \
-    --jenkins-url "http://jenkins:8090/" \
+    --jenkins-url "${JENKINS_URL:-http://jenkins:8090/}" \
     --jenkins-username "${JENKINS_USERNAME}" \
     --jenkins-password "${JENKINS_PASSWORD}" \
     "$@"

@@ -5,7 +5,10 @@
  */
 package com.top_logic.ai.chat.layout;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -70,6 +73,22 @@ public class ChatControl extends AbstractControlBase {
 	/** Polling interval for UI updates (milliseconds) */
 	private static final long POLL_INTERVAL_MS = 500;
 
+	// #region agent log
+	private static final String DEBUG_LOG_PATH = "/home/jhu/git/tl-ai/.cursor/debug.log";
+
+	private static void debugLog(String hypothesisId, String location, String message, String dataStr) {
+		try {
+			String dataEsc = dataStr == null ? "null" : "\"" + dataStr.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
+			String msgEsc = message.replace("\\", "\\\\").replace("\"", "\\\"");
+			String json = "{\"hypothesisId\":\"" + hypothesisId + "\",\"location\":\"" + location + "\",\"message\":\"" + msgEsc + "\",\"data\":" + dataEsc + ",\"timestamp\":" + System.currentTimeMillis() + "}\n";
+			try (OutputStreamWriter w = new OutputStreamWriter(new FileOutputStream(DEBUG_LOG_PATH, true), StandardCharsets.UTF_8)) {
+				w.write(json);
+			}
+		} catch (Throwable ignored) {
+		}
+	}
+	// #endregion
+
 	/** Background thread pool for AI operations */
 	private static final ExecutorService BACKGROUND_EXECUTOR =
 		Executors.newCachedThreadPool(new ThreadFactory() {
@@ -99,6 +118,9 @@ public class ChatControl extends AbstractControlBase {
 		super(COMMANDS);
 		_chat = chat;
 		_taskTracker = taskTracker;
+		// #region agent log
+		debugLog("B", "ChatControl.<init>", "ChatControl created", "entries=" + chat.getEntries().size());
+		// #endregion
 	}
 
 	@Override
@@ -123,11 +145,13 @@ public class ChatControl extends AbstractControlBase {
 
 	@Override
 	protected void internalDetach() {
-		// Cancel any ongoing AI processing
-		if (_processingState != null) {
-			_processingState.cancel();
-			_processingState = null;
-		}
+		// #region agent log
+		boolean had = _processingState != null;
+		debugLog("A", "ChatControl.internalDetach", "internalDetach called", "hadProcessingState=" + had);
+		// #endregion
+		// Do NOT cancel processing on detach: state lives in tracker so navigation away and back
+		// still shows in-progress task and agent answer when it arrives.
+		_processingState = null;
 		super.internalDetach();
 	}
 
@@ -153,6 +177,11 @@ public class ChatControl extends AbstractControlBase {
 	}
 
 	private void writeMessages(DisplayContext context, TagWriter out) throws IOException {
+		// #region agent log
+		int entriesCount = _chat.getEntries().size();
+		boolean hasState = _processingState != null;
+		debugLog("C", "ChatControl.writeMessages", "writeMessages", "hasProcessingState=" + hasState + " entriesCount=" + entriesCount);
+		// #endregion
 		String messagesId = getID() + "-messages";
 		out.beginBeginTag(DIV);
 		out.writeAttribute(CLASS_ATTR, "chat-messages");
@@ -172,9 +201,12 @@ public class ChatControl extends AbstractControlBase {
 					writeTask(context, out, tse.task());
 				}
 			}
-			// Show in-progress task (not yet in entries) so trace appears after user message
-			if (_processingState != null) {
-				String currentTaskId = _processingState.getCurrentTaskId();
+			// Show in-progress task (not yet in entries) so trace appears after user message.
+			// Use state from this control or from tracker so returning to the chat view shows it.
+			AIProcessingState state = _processingState != null ? _processingState
+				: (AIProcessingState) _taskTracker.getCurrentProcessingState();
+			if (state != null) {
+				String currentTaskId = state.getCurrentTaskId();
 				if (currentTaskId != null) {
 					ChatTask task = _taskTracker.getTask(currentTaskId);
 					if (task != null) {
@@ -710,16 +742,22 @@ public class ChatControl extends AbstractControlBase {
 	/**
 	 * Executes user message through OrchestratorAgent (single chat entrypoint).
 	 * Sets trace so AgentCall and ToolCall events are visible in the UI timeline.
+	 * Uses state from tracker so the background task keeps working after navigation (control detach).
 	 */
 	private void executeOrchestrator(String userMessage) throws Exception {
+		AIProcessingState state = _processingState != null ? _processingState
+			: (AIProcessingState) _taskTracker.getCurrentProcessingState();
+		if (state == null) {
+			return;
+		}
 		String taskDescription = "Chat: " +
 			(userMessage.length() > 50 ? userMessage.substring(0, 47) + "..." : userMessage);
 		String taskId = _taskTracker.startTask(taskDescription);
-		_processingState.setCurrentTaskId(taskId);
+		state.setCurrentTaskId(taskId);
 
 		ToolCallTracker tracker = new ToolCallTracker();
 		ToolCallTracking.setTracker(tracker);
-		_processingState.setToolCallTracker(tracker);
+		state.setToolCallTracker(tracker);
 
 		try {
 			Logger.info("ChatControl: Starting Orchestrator in thread: " + Thread.currentThread().getName(),
@@ -727,7 +765,7 @@ public class ChatControl extends AbstractControlBase {
 
 			String result = OrchestratorAgent.chat(userMessage);
 
-			_processingState.addPendingMessage(new ChatMessage("Agent", result));
+			state.addPendingMessage(new ChatMessage("Agent", result));
 			_taskTracker.completeTask(taskId);
 
 		} catch (Exception ex) {
@@ -735,8 +773,7 @@ public class ChatControl extends AbstractControlBase {
 			throw ex;
 		} finally {
 			ToolCallTracking.setTracker(null);
-			// Do NOT clear currentTaskId here: UI poll needs it when consuming newMessages to add task snapshot
-			_processingState.setToolCallTracker(null);
+			state.setToolCallTracker(null);
 		}
 	}
 
@@ -961,29 +998,27 @@ public class ChatControl extends AbstractControlBase {
 	}
 
 	/**
-	 * Polls for AI processing updates and updates the UI.
-	 * Called periodically by the UI executor.
+	 * Applies poll updates for the given state to chat and taskTracker. Clears tracker and
+	 * cancels polling when processing is done. Used by both the control and the scheduled
+	 * polling runnable (so updates continue after navigation away).
 	 */
-	private void pollForUpdates() {
-		AIProcessingState state = _processingState;
-
+	private static boolean applyPollUpdates(AIProcessingState state, Chat chat,
+			TaskProgressTracker taskTracker) {
 		if (state == null) {
-			return;
+			return false;
 		}
-
 		boolean hasUpdates = false;
 		String currentTaskId = state.getCurrentTaskId();
 
 		// Check for new messages (agent response when task completes)
 		List<ChatMessage> newMessages = state.consumePendingMessages();
 		if (!newMessages.isEmpty()) {
-			// Store task as snapshot so trace persists (no lookup at render time)
 			if (currentTaskId != null) {
-				ChatTask task = _taskTracker.getTask(currentTaskId);
-				_chat.addTaskSnapshot(task);
+				ChatTask task = taskTracker.getTask(currentTaskId);
+				chat.addTaskSnapshot(task);
 			}
 			for (ChatMessage msg : newMessages) {
-				_chat.addMessage(msg);
+				chat.addMessage(msg);
 			}
 			hasUpdates = true;
 		}
@@ -994,51 +1029,64 @@ public class ChatControl extends AbstractControlBase {
 			List<TraceEntry> timeline = tracker.getTimeline();
 			int currentCount = timeline.size();
 			int lastSeen = state.getLastSeenToolCallCount();
-
 			if (currentCount > lastSeen) {
 				for (int i = lastSeen; i < currentCount; i++) {
 					TraceEntry entry = timeline.get(i);
 					ChatTimelineEvent chatEv = toChatTimelineEvent(entry, tracker);
 					if (chatEv != null) {
-						_taskTracker.addTimelineEvent(currentTaskId, chatEv);
+						taskTracker.addTimelineEvent(currentTaskId, chatEv);
 					}
 				}
 				state.setLastSeenToolCallCount(currentCount);
 				hasUpdates = true;
 			}
-
-			hasUpdates = true;
 		}
 
 		// Check for completion
 		if (!state.isProcessing()) {
-			// Cancel polling task
 			if (state._pollingTask != null) {
 				state._pollingTask.cancel(false);
 				state._pollingTask = null;
 			}
-
-			// Handle errors: show task trace then error message (store as snapshot so it persists)
 			Throwable error = state.getError();
 			if (error != null) {
 				if (currentTaskId != null) {
-					ChatTask task = _taskTracker.getTask(currentTaskId);
-					_chat.addTaskSnapshot(task);
+					ChatTask task = taskTracker.getTask(currentTaskId);
+					chat.addTaskSnapshot(task);
 				}
 				String errorMsg = "Error: " + error.getMessage();
 				if (error instanceof InterruptedException) {
 					errorMsg = "Processing was cancelled";
 				}
-				_chat.addMessage(new ChatMessage("AI", errorMsg));
+				chat.addMessage(new ChatMessage("AI", errorMsg));
 				hasUpdates = true;
 			}
+			taskTracker.clearCurrentProcessingState();
+		}
+		return hasUpdates;
+	}
 
-			// Clean up state
-			_processingState = null;
+	/**
+	 * Polls for AI processing updates and updates the UI. Uses state from this control or from
+	 * tracker so polling continues to apply updates after navigation away and back.
+	 */
+	private void pollForUpdates() {
+		AIProcessingState state = _processingState != null ? _processingState
+			: (AIProcessingState) _taskTracker.getCurrentProcessingState();
+
+		if (state == null) {
+			// #region agent log
+			debugLog("E", "ChatControl.pollForUpdates", "pollForUpdates state null early return", null);
+			// #endregion
+			return;
 		}
 
+		boolean hasUpdates = applyPollUpdates(state, _chat, _taskTracker);
 		if (hasUpdates) {
 			requestRepaint();
+		}
+		if (_taskTracker.getCurrentProcessingState() == null) {
+			_processingState = null;
 		}
 	}
 
@@ -1056,6 +1104,11 @@ public class ChatControl extends AbstractControlBase {
 
 		@Override
 		public void run() {
+			// Use state from tracker so we keep working after user navigates away (control detach)
+			AIProcessingState state = (AIProcessingState) _taskTracker.getCurrentProcessingState();
+			if (state == null) {
+				return;
+			}
 			// Run in system interaction context for AIService access
 			try {
 				ThreadContextManager.inSystemInteraction(ChatControl.class, () -> {
@@ -1070,22 +1123,22 @@ public class ChatControl extends AbstractControlBase {
 								break;
 						}
 
-						_processingState.completeSuccessfully();
+						state.completeSuccessfully();
 						return null; // ComputationEx2 requires a return value
 
 					} catch (InterruptedException ex) {
 						Thread.currentThread().interrupt();
-						_processingState.completeWithError(ex);
+						state.completeWithError(ex);
 						return null;
 					} catch (Exception ex) {
 						Logger.error("AI processing failed: " + ex.getMessage(), ex, ChatControl.class);
-						_processingState.completeWithError(ex);
+						state.completeWithError(ex);
 						return null;
 					}
 				});
 			} catch (Exception ex) {
 				Logger.error("Failed to run background task: " + ex.getMessage(), ex, ChatControl.class);
-				_processingState.completeWithError(ex);
+				state.completeWithError(ex);
 			}
 		}
 	}
@@ -1234,26 +1287,40 @@ public class ChatControl extends AbstractControlBase {
 					// Single entrypoint: all messages go through OrchestratorAgent (step 7)
 					String operationType = "orchestrator";
 
-					// Initialize processing state
+					// Initialize processing state (on control and in tracker so it survives navigation)
 					chatControl._processingState = new AIProcessingState();
 					chatControl._processingState.startProcessing();
+					chatControl._taskTracker.setCurrentProcessingState(chatControl._processingState);
+					chatControl._taskTracker.setRepaintRequester(() -> chatControl.requestRepaint());
+					// #region agent log
+					debugLog("D", "ChatControl.SendMessage", "SendMessage started processing", "operationType=" + operationType);
+					// #endregion
 
 					// Submit background task
 					AIBackgroundTask task = chatControl.new AIBackgroundTask(trimmedText, operationType);
 					Future<?> future = BACKGROUND_EXECUTOR.submit(task);
 					chatControl._processingState._backgroundTask = future;
 
-					// Schedule UI executor polling
+					// Schedule UI executor polling (uses tracker so updates apply after navigation)
 					try {
 						MainLayout mainLayout = commandContext.getLayoutContext().getMainLayout();
 						ScheduledExecutorService uiExecutor = mainLayout.getWindowScope().getUIExecutor();
+						TaskProgressTracker tracker = chatControl._taskTracker;
 
 						ScheduledFuture<?> pollingTask = uiExecutor.scheduleWithFixedDelay(
 							new Runnable() {
 								@Override
 								public void run() {
-									// Poll for updates in UI thread
-									chatControl.pollForUpdates();
+									AIProcessingState state =
+										(AIProcessingState) tracker.getCurrentProcessingState();
+									if (state == null) {
+										return;
+									}
+									boolean hasUpdates =
+										applyPollUpdates(state, tracker.getChat(), tracker);
+									if (hasUpdates) {
+										tracker.requestRepaintIfNeeded();
+									}
 								}
 							},
 							POLL_INTERVAL_MS,

@@ -38,11 +38,62 @@ public class TaskProgressTracker {
 
 	private final Chat _chat = new Chat();
 
+	/** Current AI processing state (survives navigation); cleared when processing finishes. */
+	private volatile Object _currentProcessingState = null;
+
+	/** Called when polling has updates to request a repaint of the chat view. */
+	private volatile Runnable _repaintRequester = null;
+
 	/**
 	 * Returns the chat for this window. Same instance for add and render so task traces persist.
 	 */
 	public Chat getChat() {
 		return _chat;
+	}
+
+	/**
+	 * Returns the current AI processing state, or null if none. Survives navigation so returning
+	 * to the chat view shows in-progress task and tool trace.
+	 */
+	public Object getCurrentProcessingState() {
+		return _currentProcessingState;
+	}
+
+	/**
+	 * Sets the current AI processing state (called when sending a message). Cleared when
+	 * processing completes or fails.
+	 */
+	public void setCurrentProcessingState(Object state) {
+		_currentProcessingState = state;
+	}
+
+	/**
+	 * Clears the current processing state (called when processing finishes).
+	 */
+	public void clearCurrentProcessingState() {
+		_currentProcessingState = null;
+	}
+
+	/**
+	 * Sets a runnable to request repaint when polling has updates (e.g. so the chat view
+	 * refreshes even if the user navigated away and back).
+	 */
+	public void setRepaintRequester(Runnable runnable) {
+		_repaintRequester = runnable;
+	}
+
+	/**
+	 * Requests a repaint of the chat view if a requester was set. Called by polling when
+	 * there are updates.
+	 */
+	public void requestRepaintIfNeeded() {
+		Runnable r = _repaintRequester;
+		if (r != null) {
+			try {
+				r.run();
+			} catch (Throwable ignored) {
+			}
+		}
 	}
 
 	/**

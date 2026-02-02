@@ -52,7 +52,7 @@ class TracMCPServer:
                     f"  service: {service}\n"
                     f"  username key: {acc_user}\n"
                     f"  password key: {acc_pass}\n"
-                    "Run: ./scripts/setup-trac-mcp.sh",
+                    "Run: ./scripts/setup-mcp-credentials.sh trac",
                     file=sys.stderr,
                 )
                 sys.exit(1)

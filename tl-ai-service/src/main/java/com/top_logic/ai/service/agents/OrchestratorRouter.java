@@ -65,8 +65,8 @@ public interface OrchestratorRouter {
 
 		Example flow:
 		- User: "How is the total calculated on Order?"
-		- Step 1: delegateToModelExplorer → returns TLScript annotation: `$lines.sum(line -> $line.get(\`m:t#price\`))`
-		- Step 2: delegateToTLScriptSpecialist with goal="Explain TLScript", task="Explain what this code does", context="Code: $lines.sum(line -> $line.get(\`m:t#price\`))"
+		- Step 1: delegateToModelExplorer → returns TLScript annotation: `$lines.sum(line -> $line.get(`m:t#price`))`
+		- Step 2: delegateToTLScriptSpecialist with goal="Explain TLScript", task="Explain what this code does", context="Code: $lines.sum(line -> $line.get(`m:t#price`))"
 		- Synthesize both results for the user.
 
 		---

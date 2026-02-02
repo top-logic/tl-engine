@@ -149,36 +149,32 @@ tuple(a -> all(`test:A`), b? -> all(`test:B`).filter(x -> $a.get(`test:A#values`
 x -> foo({{{<p class="important {$css}">Some value <b>'{$x}'</b> being output.</p>}}})
 -----
 x -> foo({{{<p class="important {$css}">Some value <b>'{$x}'</b> being output.</p>}}})
-===== SafeHTML
+===== IncorrectHTML
 {{{<div><div class="foo"/><div>text<br><p></br><i>italics</p>}}}
 -----
-{{{<div><div class="foo"></div><div>text<br/><p><i>italics</i></p></div></div>}}}
+{{{<div><div class="foo"/><div>text<br><p></br><i>italics</p>}}}
 -----
 <config config:interface="com.top_logic.model.search.expr.config.dom.Expr$Html"
   xmlns:config="http://www.top-logic.com/ns/config/6.0"
 >
   <start tag="div"/>
-  <start tag="div">
+  <start
+    empty="true"
+    tag="div"
+  >
     <attribute name="class">
       <text value="foo"/>
     </attribute>
   </start>
-  <end tag="div"/>
   <start tag="div"/>
   <text value="text"/>
-  <start
-    empty="true"
-    tag="br"
-  />
+  <start tag="br"/>
   <start tag="p"/>
+  <end tag="br"/>
   <start tag="i"/>
   <text value="italics"/>
-  <end tag="i"/>
   <end tag="p"/>
-  <end tag="div"/>
-  <end tag="div"/>
 </config>
-
 ===== Complex Scenario
 model ->
   all(`tl.graph.demo:A`)

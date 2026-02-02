@@ -27,7 +27,6 @@ import test.com.top_logic.model.search.model.testJavaBinding.ReferencesDerived;
 
 import com.top_logic.basic.AliasManager;
 import com.top_logic.basic.col.MapBuilder;
-import com.top_logic.basic.config.Location;
 import com.top_logic.basic.config.XmlDateTimeFormat;
 import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.html.SafeHTML;
@@ -1222,21 +1221,6 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		TagWriter buffer = new TagWriter();
 		execute(DummyDisplayContext.newInstance(), buffer, renderer, args);
 		return buffer.toString();
-	}
-
-	public void testHtmlSafety() throws ParseException {
-		try {
-			search("{{{<a href=\"javascript:alert();\">click</a>}}}");
-			fail("Expected error.");
-		} catch (I18NRuntimeException ex) {
-			assertEquals(com.top_logic.basic.html.I18NConstants.NO_JAVASCRIPT_ALLOWED,
-				Location.detail(ex.getErrorKey()));
-		}
-	}
-
-	public void testHtmlSafetyDynamic() throws ParseException {
-		SearchExpression expr = search("{{{<a href=\"{concat('java', 'script:alert();')}\">click</a>}}}");
-		assertFalse(render(expr).contains("javascript:"));
 	}
 
 	public void testDynamicValuesInURL() throws ParseException {

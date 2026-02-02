@@ -57,10 +57,12 @@ install_gitea() {
 
 install_python_deps() {
     echo "=== Installing Python dependencies (keyring) ==="
-    if command -v uv &>/dev/null; then
-        uv pip install --user keyring
+    if command -v pip3 &>/dev/null; then
+        pip3 install --user keyring
     elif command -v pip &>/dev/null; then
         pip install --user keyring
+    else
+        echo "Warning: pip not found. Install keyring manually: pip install keyring" >&2
     fi
 }
 

@@ -31,7 +31,8 @@ import dev.langchain4j.model.chat.ChatModel;
  */
 public final class AgentInvoker {
 
-	private static final int RESULT_SUMMARY_MAX_LEN = 300;
+	/** Max length for result summary in trace; use large value so UI can show full text. */
+	private static final int RESULT_SUMMARY_MAX_LEN = 100_000;
 
 	/**
 	 * Invokes the ModelExplorer with a work-order-derived prompt.
@@ -43,9 +44,8 @@ public final class AgentInvoker {
 	 * @return The explorer's text answer.
 	 */
 	public static String invokeExplorer(String fromAgent, AgentWorkOrder workOrder) {
-		String inputSummary = workOrder.toSummary();
-		ToolCallTracking.recordAgentCallStartIfTracking(fromAgent, "ModelExplorer", inputSummary);
 		String prompt = buildExplorerPrompt(workOrder);
+		ToolCallTracking.recordAgentCallStartIfTracking(fromAgent, "ModelExplorer", prompt);
 		String result;
 		try {
 			AIService aiService = AIService.getInstance();
@@ -76,8 +76,6 @@ public final class AgentInvoker {
 	 * @return The TLScript agent's answer.
 	 */
 	public static String invokeTLScript(String fromAgent, AgentWorkOrder workOrder) {
-		String inputSummary = workOrder.toSummary();
-		ToolCallTracking.recordAgentCallStartIfTracking(fromAgent, "TLScriptAgent", inputSummary);
 		String userMessage = workOrder.task() != null && !workOrder.task().isEmpty()
 			? workOrder.task()
 			: workOrder.goal();
@@ -85,6 +83,7 @@ public final class AgentInvoker {
 			userMessage = userMessage + "\n\nContext: " + workOrder.context();
 		}
 		final String messageForLambda = userMessage;
+		ToolCallTracking.recordAgentCallStartIfTracking(fromAgent, "TLScriptAgent", messageForLambda);
 		String result;
 		try {
 			AIService aiService = AIService.getInstance();
@@ -118,11 +117,10 @@ public final class AgentInvoker {
 	 * @return The workflow result.
 	 */
 	public static String invokeCreator(String fromAgent, AgentWorkOrder workOrder) {
-		String inputSummary = workOrder.toSummary();
-		ToolCallTracking.recordAgentCallStartIfTracking(fromAgent, "ModelCreator", inputSummary);
 		String requirements = workOrder.task() != null && !workOrder.task().isEmpty()
 			? workOrder.task()
 			: workOrder.goal();
+		ToolCallTracking.recordAgentCallStartIfTracking(fromAgent, "ModelCreator", requirements);
 		String result;
 		try {
 			result = UMLSpecificationAgent.execute(requirements);

@@ -297,11 +297,13 @@ public class ChatControl extends AbstractControlBase {
 		out.endBeginTag();
 		{
 			// Timeline: agent calls and tool calls in order
-			for (ChatTimelineEvent ev : task.getTimelineEvents()) {
+			List<ChatTimelineEvent> events = task.getTimelineEvents();
+			for (int i = 0; i < events.size(); i++) {
+				ChatTimelineEvent ev = events.get(i);
 				if (ev.getKind() == ChatTimelineEvent.Kind.TOOL_CALL && ev.getToolCall() != null) {
 					writeToolCall(out, ev.getToolCall());
 				} else if (ev.getKind() == ChatTimelineEvent.Kind.AGENT_CALL) {
-					writeAgentCall(out, ev);
+					writeAgentCall(out, ev, taskDivId + "-agent-" + i);
 				}
 			}
 
@@ -317,30 +319,67 @@ public class ChatControl extends AbstractControlBase {
 		out.endTag(DIV);
 	}
 
-	private void writeAgentCall(TagWriter out, ChatTimelineEvent ev) throws IOException {
+	private void writeAgentCall(TagWriter out, ChatTimelineEvent ev, String agentCallId) throws IOException {
+		String bodyId = agentCallId + "-body";
+		String arrowId = agentCallId + "-arrow";
+
 		out.beginBeginTag(DIV);
 		out.writeAttribute(CLASS_ATTR, "chat-agent-call");
 		out.endBeginTag();
 		{
-			out.beginBeginTag(SPAN);
-			out.writeAttribute(CLASS_ATTR, "chat-agent-call-label");
+			// Clickable header: label + expand arrow
+			out.beginBeginTag(DIV);
+			out.writeAttribute(CLASS_ATTR, "chat-agent-call-header");
+			out.writeAttribute(ONCLICK_ATTR, "toggleToolExpand('" + bodyId + "', '" + arrowId + "')");
 			out.endBeginTag();
-			out.writeText(ev.getFromAgent() + " \u2192 " + ev.getToAgent());
-			out.endTag(SPAN);
-			if (ev.getInputSummary() != null && !ev.getInputSummary().isEmpty()) {
+			{
 				out.beginBeginTag(SPAN);
-				out.writeAttribute(CLASS_ATTR, "chat-agent-call-input");
+				out.writeAttribute(CLASS_ATTR, "chat-agent-call-label");
 				out.endBeginTag();
-				out.writeText(truncateForDisplay(ev.getInputSummary(), 80));
+				out.writeText(ev.getFromAgent() + " \u2192 " + ev.getToAgent());
+				out.endTag(SPAN);
+				out.beginBeginTag(SPAN);
+				out.writeAttribute(CLASS_ATTR, "chat-agent-call-expand");
+				out.writeAttribute(ID_ATTR, arrowId);
+				out.endBeginTag();
+				out.writeText("▶");
 				out.endTag(SPAN);
 			}
-			if (ev.getResultSummary() != null && !ev.getResultSummary().isEmpty()) {
-				out.beginBeginTag(SPAN);
-				out.writeAttribute(CLASS_ATTR, "chat-agent-call-result");
-				out.endBeginTag();
-				out.writeText(truncateForDisplay(ev.getResultSummary(), 120));
-				out.endTag(SPAN);
+			out.endTag(DIV);
+
+			// Collapsible body: full input and result (no truncation)
+			out.beginBeginTag(DIV);
+			out.writeAttribute(CLASS_ATTR, "chat-agent-call-body");
+			out.writeAttribute(ID_ATTR, bodyId);
+			out.writeAttribute("style", "display: none");
+			out.endBeginTag();
+			{
+				if (ev.getInputSummary() != null && !ev.getInputSummary().isEmpty()) {
+					out.beginBeginTag(DIV);
+					out.writeAttribute(CLASS_ATTR, "chat-agent-call-input-label");
+					out.endBeginTag();
+					out.writeText("Input:");
+					out.endTag(DIV);
+					out.beginBeginTag(PRE);
+					out.writeAttribute(CLASS_ATTR, "chat-agent-call-input");
+					out.endBeginTag();
+					out.writeText(ev.getInputSummary());
+					out.endTag(PRE);
+				}
+				if (ev.getResultSummary() != null && !ev.getResultSummary().isEmpty()) {
+					out.beginBeginTag(DIV);
+					out.writeAttribute(CLASS_ATTR, "chat-agent-call-result-label");
+					out.endBeginTag();
+					out.writeText("Result:");
+					out.endTag(DIV);
+					out.beginBeginTag(PRE);
+					out.writeAttribute(CLASS_ATTR, "chat-agent-call-result");
+					out.endBeginTag();
+					out.writeText(ev.getResultSummary());
+					out.endTag(PRE);
+				}
 			}
+			out.endTag(DIV);
 		}
 		out.endTag(DIV);
 	}
@@ -398,11 +437,11 @@ public class ChatControl extends AbstractControlBase {
 			out.writeText(toolCall.getToolName());
 			out.endTag(SPAN);
 
-			// Args summary
+			// Full arguments (no truncation)
 			out.beginBeginTag(SPAN);
 			out.writeAttribute(CLASS_ATTR, "chat-tool-args");
 			out.endBeginTag();
-			out.writeText(formatArgs(toolCall.getArgs()));
+			out.writeText(formatArgsFull(toolCall.getArgs()));
 			out.endTag(SPAN);
 
 			// Duration
@@ -472,11 +511,11 @@ public class ChatControl extends AbstractControlBase {
 		return String.format("%.1fs", ms / 1000.0);
 	}
 
-	private String formatArgs(Map<String, Object> args) {
-		if (args.isEmpty()) {
+	/** Full arguments string for display (no truncation). */
+	private String formatArgsFull(Map<String, Object> args) {
+		if (args == null || args.isEmpty()) {
 			return "()";
 		}
-
 		StringBuilder sb = new StringBuilder("(");
 		boolean first = true;
 		for (Map.Entry<String, Object> entry : args.entrySet()) {
@@ -487,9 +526,7 @@ public class ChatControl extends AbstractControlBase {
 			Object value = entry.getValue();
 			if (value instanceof String) {
 				String str = (String) value;
-				sb.append("\"");
-				sb.append(str.length() > 30 ? str.substring(0, 27) + "..." : str);
-				sb.append("\"");
+				sb.append("\"").append(str.replace("\\", "\\\\").replace("\"", "\\\"")).append("\"");
 			} else {
 				sb.append(value);
 			}

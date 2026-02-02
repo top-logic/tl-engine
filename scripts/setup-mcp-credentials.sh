@@ -2,7 +2,7 @@
 # Setup credentials for MCP servers in the OS keyring.
 # This script stores credentials securely - no plaintext files.
 #
-# Usage: ./scripts/setup-mcp-credentials.sh [trac|jenkins|all]
+# Usage: ./scripts/setup-mcp-credentials.sh [trac|jenkins|gitea|all]
 
 set -e
 
@@ -38,6 +38,20 @@ print('Jenkins credentials stored in keyring.')
 "
 }
 
+setup_gitea() {
+    echo "=== Gitea MCP Credentials ==="
+    local service="tl-engine-gitea-mcp"
+
+    read -s -p "Gitea access token: " token
+    echo
+
+    python3 -c "
+import keyring
+keyring.set_password('$service', 'token', '$token')
+print('Gitea credentials stored in keyring.')
+"
+}
+
 case "${1:-all}" in
     trac)
         setup_trac
@@ -45,13 +59,18 @@ case "${1:-all}" in
     jenkins)
         setup_jenkins
         ;;
+    gitea)
+        setup_gitea
+        ;;
     all)
         setup_trac
         echo
         setup_jenkins
+        echo
+        setup_gitea
         ;;
     *)
-        echo "Usage: $0 [trac|jenkins|all]"
+        echo "Usage: $0 [trac|jenkins|gitea|all]"
         exit 1
         ;;
 esac

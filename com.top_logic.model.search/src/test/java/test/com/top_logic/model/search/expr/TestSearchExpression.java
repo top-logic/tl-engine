@@ -831,6 +831,33 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		assertNull(execute(search("messageFormat('Value: {0}').format(null)")));
 	}
 
+	/**
+	 * Test for {@link FormatExpr} with list/collection input.
+	 *
+	 * <p>
+	 * For non-MessageFormat, formatting a list should format each element individually (flat-map
+	 * semantics). For MessageFormat, the list elements are used as format arguments.
+	 * </p>
+	 *
+	 * @see <a href="http://tl/trac/ticket/29053">Ticket #29053</a>
+	 */
+	public void testFormatList() throws ParseException {
+		// Non-MessageFormat: format each element individually
+		assertEquals(list("0001", "0002", "0003"),
+			execute(search("numberFormat('0000').format(list(1, 2, 3))")));
+
+		// Null elements in list are preserved as null
+		assertEquals(list("0001", null, "0003"),
+			execute(search("numberFormat('0000').format(list(1, null, 3))")));
+
+		// Empty list returns empty list
+		assertEquals(list(), execute(search("numberFormat('0000').format(list())")));
+
+		// MessageFormat: list elements are used as format arguments
+		assertEquals("a:X, b:Y",
+			execute(search("messageFormat('a:{0}, b:{1}').format(list('X', 'Y'))")));
+	}
+
 	public void testDateFormat() throws ParseException {
 		assertEquals("2019/08", execute(search("dateFormat('y/MM').format(dateTime(2019,8-1,1))")));
 	}

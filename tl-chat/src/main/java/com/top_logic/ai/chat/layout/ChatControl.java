@@ -20,6 +20,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -72,6 +73,28 @@ public class ChatControl extends AbstractControlBase {
 
 	/** Polling interval for UI updates (milliseconds) */
 	private static final long POLL_INTERVAL_MS = 500;
+
+	/** Funny placeholder descriptions for in-progress chat tasks (Cursor/Claude style). */
+	private static final String[] CHAT_TASK_PLACEHOLDERS = {
+		"Flabbergasting...",
+		"Contemplating...",
+		"Warming up neurons...",
+		"Consulting the oracle...",
+		"Assembling thoughts...",
+		"Polishing the answer...",
+		"Thinking really hard...",
+		"Consulting ancient scrolls...",
+		"Loading infinite wisdom...",
+		"Brewing ideas...",
+		"Reticulating splines...",
+		"Herding cats...",
+		"Convincing the AI...",
+		"Spinning up...",
+	};
+
+	private static String randomChatTaskPlaceholder() {
+		return CHAT_TASK_PLACEHOLDERS[ThreadLocalRandom.current().nextInt(CHAT_TASK_PLACEHOLDERS.length)];
+	}
 
 	// #region agent log
 	private static final String DEBUG_LOG_PATH = "/home/jhu/git/tl-ai/.cursor/debug.log";
@@ -203,13 +226,15 @@ public class ChatControl extends AbstractControlBase {
 			}
 			// Show in-progress task (not yet in entries) so trace appears after user message.
 			// Use state from this control or from tracker so returning to the chat view shows it.
+			// Only show here when task is still IN_PROGRESS; when COMPLETED/ERROR it's already
+			// in entries as a snapshot, so skip to avoid rendering the same task twice.
 			AIProcessingState state = _processingState != null ? _processingState
 				: (AIProcessingState) _taskTracker.getCurrentProcessingState();
 			if (state != null) {
 				String currentTaskId = state.getCurrentTaskId();
 				if (currentTaskId != null) {
 					ChatTask task = _taskTracker.getTask(currentTaskId);
-					if (task != null) {
+					if (task != null && task.getStatus() == ChatTask.TaskStatus.IN_PROGRESS) {
 						writeTask(context, out, task);
 					}
 				}
@@ -292,11 +317,12 @@ public class ChatControl extends AbstractControlBase {
 			out.writeText(getTaskIcon(task.getStatus()));
 			out.endTag(SPAN);
 
-			// Description
+			// Description: funny placeholder while in progress, "Completed"/"Failed" when done
+			String headerText = getTaskHeaderDescription(task);
 			out.beginBeginTag(SPAN);
 			out.writeAttribute(CLASS_ATTR, "chat-task-description");
 			out.endBeginTag();
-			out.writeText(task.getDescription());
+			out.writeText(headerText);
 			out.endTag(SPAN);
 
 			// Duration
@@ -535,6 +561,29 @@ public class ChatControl extends AbstractControlBase {
 		}
 	}
 
+	/** Interval in seconds after which the in-progress placeholder message rotates. */
+	private static final int PLACEHOLDER_ROTATE_SECONDS = 25;
+
+	/**
+	 * Returns the header text for a task: "Completed" or "Failed" when done; while in progress,
+	 * a funny placeholder that rotates every {@value #PLACEHOLDER_ROTATE_SECONDS} seconds.
+	 */
+	private static String getTaskHeaderDescription(ChatTask task) {
+		switch (task.getStatus()) {
+			case COMPLETED:
+				return "Completed";
+			case ERROR:
+				return "Failed";
+			case IN_PROGRESS: {
+				long elapsedSeconds = java.time.Duration.between(task.getStartTime(), java.time.Instant.now()).getSeconds();
+				int index = (int) (elapsedSeconds / PLACEHOLDER_ROTATE_SECONDS) % CHAT_TASK_PLACEHOLDERS.length;
+				return CHAT_TASK_PLACEHOLDERS[index];
+			}
+			default:
+				return task.getDescription();
+		}
+	}
+
 	private String formatDuration(long ms) {
 		if (ms < 1000) {
 			return ms + "ms";
@@ -750,8 +799,7 @@ public class ChatControl extends AbstractControlBase {
 		if (state == null) {
 			return;
 		}
-		String taskDescription = "Chat: " +
-			(userMessage.length() > 50 ? userMessage.substring(0, 47) + "..." : userMessage);
+		String taskDescription = randomChatTaskPlaceholder();
 		String taskId = _taskTracker.startTask(taskDescription);
 		state.setCurrentTaskId(taskId);
 

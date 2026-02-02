@@ -21,6 +21,6 @@ if [[ -z "$GITEA_TOKEN" ]]; then
 fi
 
 exec gitea-mcp \
-    --gitea-host "${GITEA_HOST:-https://git.top-logic.com}" \
-    --access-token "${GITEA_TOKEN}" \
+    -host "${GITEA_HOST:-https://git.top-logic.com}" \
+    -token "${GITEA_TOKEN}" \
     "$@"

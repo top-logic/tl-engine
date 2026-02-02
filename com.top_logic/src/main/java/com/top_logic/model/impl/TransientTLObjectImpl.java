@@ -29,6 +29,8 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TransientObject;
 import com.top_logic.model.fallback.StorageWithFallback;
+import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Transient {@link TLObject} implementation.
@@ -89,6 +91,7 @@ public class TransientTLObjectImpl extends TransientObject {
 	}
 
 	private Object directValue(TLStructuredTypePart part) {
+		part = resolvePart(part);
 		StorageDetail storageImplementation = part.getStorageImplementation();
 		if (storageImplementation instanceof StorageWithFallback) {
 			return storageImplementation.getAttributeValue(this, part);
@@ -146,6 +149,7 @@ public class TransientTLObjectImpl extends TransientObject {
 
 	@Override
 	public void tUpdate(TLStructuredTypePart part, Object newValue) {
+		part = resolvePart(part);
 		checkDerived(part);
 		newValue = ensureMultiplicity(part, newValue);
 		Object oldValue = directUpdate(part, newValue);
@@ -246,6 +250,7 @@ public class TransientTLObjectImpl extends TransientObject {
 
 	@Override
 	public void tAdd(TLStructuredTypePart part, Object value) {
+		part = resolvePart(part);
 		checkDerived(part);
 		if (part.getModelKind() == ModelKind.REFERENCE) {
 			checkNonNull(value);
@@ -264,6 +269,7 @@ public class TransientTLObjectImpl extends TransientObject {
 
 	@Override
 	public void tRemove(TLStructuredTypePart part, Object value) {
+		part = resolvePart(part);
 		checkDerived(part);
 		if (part.getModelKind() == ModelKind.REFERENCE) {
 			checkNonNull(value);
@@ -320,8 +326,25 @@ public class TransientTLObjectImpl extends TransientObject {
 	
 	private static void checkDerived(TLStructuredTypePart part) {
 		if (part.isDerived()) {
-			throw new UnsupportedOperationException("Cannot modify derived attribute: " + part);
+			throw new TopLogicException(
+				I18NConstants.ERROR_CANNOT_MODIFY_DERIVED_ATTRIBUTE__ATTR.fill(TLModelUtil.qualifiedName(part)));
 		}
+	}
+
+	/**
+	 * Resolves the given part to this object's concrete type.
+	 *
+	 * <p>
+	 * This is required when a part from a supertype is passed (e.g., an abstract attribute from a
+	 * base class), but this object is of a subtype that provides a concrete override.
+	 * </p>
+	 */
+	private TLStructuredTypePart resolvePart(TLStructuredTypePart part) {
+		TLStructuredTypePart resolvedPart = tType().getPart(part.getName());
+		if (resolvedPart != null) {
+			return resolvedPart;
+		}
+		return part;
 	}
 
 	@Override

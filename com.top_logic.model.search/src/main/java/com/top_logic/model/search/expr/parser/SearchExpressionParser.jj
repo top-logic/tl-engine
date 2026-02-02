@@ -3,7 +3,7 @@
  */
 options
 {
-    JDK_VERSION = "1.7";
+    JDK_VERSION = "17";
     STATIC = false;
     UNICODE_INPUT = true;
     JAVA_UNICODE_ESCAPE = false;
@@ -33,8 +33,6 @@ import com.top_logic.model.search.expr.config.dom.ExprFactory.*;
 public class SearchExpressionParser {
   private ExprFactory _f = new ExprFactory(this);
 
-  private boolean _checkHtml = true;
-
   public ExprFactory getFactory() {
 	return _f;
   }
@@ -43,9 +41,6 @@ public class SearchExpressionParser {
 	_f = f;
   }
 
-  public void setCheckHtml(boolean checkHtml) {
-    _checkHtml = checkHtml;  
-  }
 }
 PARSER_END(SearchExpressionParser)
 
@@ -450,7 +445,7 @@ Html html() :
   ( content=htmlContent()
     { result.getContents().add(content); }
   )*
-  { return _checkHtml == true ? _f.checkHtml(result) : result; }
+  { return result; }
 }
 
 HtmlContent htmlContent() :
@@ -480,7 +475,7 @@ Expr textWithEmbeddedExpressions() :
 {
   Token t;
   Expr expr;
-  List<Expr> parts = new ArrayList<Expr>();
+  List<Expr> parts = new ArrayList<>();
 }
 {
   (

@@ -71,7 +71,7 @@ final class NoStorage extends AbstractStorageBase<AbstractStorageBase.Config<?>>
 	@Override
 	public Object getAttributeValue(TLObject object, TLStructuredTypePart attribute)
 			throws AttributeException {
-		return null;
+		throw unsupported(attribute);
 	}
 
 	@Override

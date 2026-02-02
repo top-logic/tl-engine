@@ -194,7 +194,12 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 				return;
 			}
 		}
-		member.addCssClass(staticCssClass);
+		boolean override = annotation.getOverride();
+		if (override) {
+			member.setCssClasses(staticCssClass);
+		} else {
+			member.addCssClass(staticCssClass);
+		}
 	}
 
 	protected FormMember createFormMember(

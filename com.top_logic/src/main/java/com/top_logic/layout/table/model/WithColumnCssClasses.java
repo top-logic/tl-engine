@@ -9,6 +9,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.DefaultContainer;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
@@ -99,6 +100,7 @@ public interface WithColumnCssClasses extends ConfigurationItem {
 	 * @see #getCssClass()
 	 */
 	@Name(CSS_CLASS_OVERRIDE)
+	@Label("CSS class override")
 	boolean getCssClassOverride();
 
 	/**
@@ -147,6 +149,7 @@ public interface WithColumnCssClasses extends ConfigurationItem {
 	 * @see #getCssHeaderClass()
 	 */
 	@Name(CSS_HEADER_CLASS_OVERRIDE)
+	@Label("CSS header class override")
 	boolean getCssHeaderClassOverride();
 
 	/**

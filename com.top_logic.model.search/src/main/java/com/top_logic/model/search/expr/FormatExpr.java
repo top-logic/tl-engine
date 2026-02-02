@@ -58,7 +58,11 @@ public class FormatExpr extends GenericMethod {
 			}
 			return formatValue(format, input);
 		} else {
-			return format.format(Arrays.copyOfRange(arguments, 1, arguments.length));
+			Object[] args = Arrays.copyOfRange(arguments, 1, arguments.length);
+			if (format instanceof MessageFormat) {
+				return format.format(args);
+			}
+			return formatEach(format, Arrays.asList(args));
 		}
 	}
 

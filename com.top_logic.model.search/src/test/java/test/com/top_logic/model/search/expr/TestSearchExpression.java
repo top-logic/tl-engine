@@ -59,6 +59,7 @@ import com.top_logic.model.TLTypePart;
 import com.top_logic.model.instance.importer.XMLInstanceImporter;
 import com.top_logic.model.search.expr.CalendarField;
 import com.top_logic.model.search.expr.CalendarUpdate;
+import com.top_logic.model.search.expr.FormatExpr;
 import com.top_logic.model.search.expr.I18NConstants;
 import com.top_logic.model.search.expr.Literal;
 import com.top_logic.model.search.expr.SearchExpression;
@@ -813,6 +814,56 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 
 	public void testNumberFormat() throws ParseException {
 		assertEquals("0042", execute(search("numberFormat('0000').format(42)")));
+	}
+
+	/**
+	 * Test for {@link FormatExpr} with null input.
+	 *
+	 * <p>
+	 * Formatting null should return null instead of throwing an exception.
+	 * </p>
+	 *
+	 * @see <a href="http://tl/trac/ticket/29053">Ticket #29053</a>
+	 */
+	public void testFormatNull() throws ParseException {
+		assertNull(execute(search("numberFormat('0000').format(null)")));
+		assertNull(execute(search("dateFormat('y/MM').format(null)")));
+		assertNull(execute(search("messageFormat('Value: {0}').format(null)")));
+	}
+
+	/**
+	 * Test for {@link FormatExpr} with list/collection input.
+	 *
+	 * <p>
+	 * For non-MessageFormat, formatting a list should format each element individually (flat-map
+	 * semantics). For MessageFormat, the list elements are used as format arguments.
+	 * </p>
+	 *
+	 * @see <a href="http://tl/trac/ticket/29053">Ticket #29053</a>
+	 */
+	public void testFormatList() throws ParseException {
+		// Non-MessageFormat: format each element individually
+		assertEquals(list("0001", "0002", "0003"),
+			execute(search("numberFormat('0000').format(list(1, 2, 3))")));
+
+		// Null elements in list are preserved as null
+		assertEquals(list("0001", null, "0003"),
+			execute(search("numberFormat('0000').format(list(1, null, 3))")));
+
+		// Empty list returns empty list
+		assertEquals(list(), execute(search("numberFormat('0000').format(list())")));
+
+		// MessageFormat: list elements are used as format arguments
+		assertEquals("a:X, b:Y",
+			execute(search("messageFormat('a:{0}, b:{1}').format(list('X', 'Y'))")));
+
+		// Multiple arguments: non-MessageFormat formats each individually
+		assertEquals(list("0001", "0002", "0003"),
+			execute(search("numberFormat('0000').format(1, 2, 3)")));
+
+		// Multiple arguments: MessageFormat uses them as placeholders
+		assertEquals("a:X, b:Y",
+			execute(search("messageFormat('a:{0}, b:{1}').format('X', 'Y')")));
 	}
 
 	public void testDateFormat() throws ParseException {

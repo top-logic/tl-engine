@@ -10,6 +10,9 @@
         "TRAC_KEYRING_ACCOUNT_USER": "username",
         "TRAC_KEYRING_ACCOUNT_PASS": "password"
       }
+    },
+    "jenkins": {
+      "command": "./scripts/mcp-jenkins-wrapper.sh"
     }
   }
 }

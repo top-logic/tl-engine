@@ -159,13 +159,29 @@ public class ChatControl extends AbstractControlBase {
 		out.writeAttribute(ID_ATTR, messagesId);
 		out.endBeginTag();
 		{
-			// Render regular chat messages
-			for (ChatMessage msg : _chat.getMessages()) {
-				writeMessage(context, out, msg);
+			// Render entries in order: user message → task trace → agent response
+			for (ChatEntry entry : _chat.getEntries()) {
+				if (entry instanceof ChatEntry.MessageEntry me) {
+					writeMessage(context, out, me.message());
+				} else if (entry instanceof ChatEntry.TaskEntry te) {
+					ChatTask task = _taskTracker.getTask(te.taskId());
+					if (task != null) {
+						writeTask(context, out, task);
+					}
+				} else if (entry instanceof ChatEntry.TaskSnapshotEntry tse) {
+					writeTask(context, out, tse.task());
+				}
 			}
-
-			// Render task progress
-			writeTaskProgress(context, out);
+			// Show in-progress task (not yet in entries) so trace appears after user message
+			if (_processingState != null) {
+				String currentTaskId = _processingState.getCurrentTaskId();
+				if (currentTaskId != null) {
+					ChatTask task = _taskTracker.getTask(currentTaskId);
+					if (task != null) {
+						writeTask(context, out, task);
+					}
+				}
+			}
 		}
 		out.endTag(DIV);
 
@@ -209,23 +225,6 @@ public class ChatControl extends AbstractControlBase {
 			out.endBeginTag();
 			Converters.markdownToHtml(msg.getText()).write(context, out);
 			out.endTag(SPAN);
-		}
-		out.endTag(DIV);
-	}
-
-	private void writeTaskProgress(DisplayContext context, TagWriter out) throws IOException {
-		List<ChatTask> tasks = _taskTracker.getAllTasks();
-		if (tasks.isEmpty()) {
-			return;
-		}
-
-		out.beginBeginTag(DIV);
-		out.writeAttribute(CLASS_ATTR, "chat-task-section");
-		out.endBeginTag();
-		{
-			for (ChatTask task : tasks) {
-				writeTask(context, out, task);
-			}
 		}
 		out.endTag(DIV);
 	}
@@ -736,7 +735,7 @@ public class ChatControl extends AbstractControlBase {
 			throw ex;
 		} finally {
 			ToolCallTracking.setTracker(null);
-			_processingState.setCurrentTaskId(null);
+			// Do NOT clear currentTaskId here: UI poll needs it when consuming newMessages to add task snapshot
 			_processingState.setToolCallTracker(null);
 		}
 	}
@@ -973,10 +972,16 @@ public class ChatControl extends AbstractControlBase {
 		}
 
 		boolean hasUpdates = false;
+		String currentTaskId = state.getCurrentTaskId();
 
-		// Check for new messages
+		// Check for new messages (agent response when task completes)
 		List<ChatMessage> newMessages = state.consumePendingMessages();
 		if (!newMessages.isEmpty()) {
+			// Store task as snapshot so trace persists (no lookup at render time)
+			if (currentTaskId != null) {
+				ChatTask task = _taskTracker.getTask(currentTaskId);
+				_chat.addTaskSnapshot(task);
+			}
 			for (ChatMessage msg : newMessages) {
 				_chat.addMessage(msg);
 			}
@@ -984,7 +989,6 @@ public class ChatControl extends AbstractControlBase {
 		}
 
 		// Check for new timeline events (tool calls and agent calls) in real-time
-		String currentTaskId = state.getCurrentTaskId();
 		ToolCallTracker tracker = state.getToolCallTracker();
 		if (currentTaskId != null && tracker != null) {
 			List<TraceEntry> timeline = tracker.getTimeline();
@@ -1014,9 +1018,13 @@ public class ChatControl extends AbstractControlBase {
 				state._pollingTask = null;
 			}
 
-			// Handle errors
+			// Handle errors: show task trace then error message (store as snapshot so it persists)
 			Throwable error = state.getError();
 			if (error != null) {
+				if (currentTaskId != null) {
+					ChatTask task = _taskTracker.getTask(currentTaskId);
+					_chat.addTaskSnapshot(task);
+				}
 				String errorMsg = "Error: " + error.getMessage();
 				if (error instanceof InterruptedException) {
 					errorMsg = "Processing was cancelled";

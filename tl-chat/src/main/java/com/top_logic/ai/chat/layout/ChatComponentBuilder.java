@@ -38,13 +38,11 @@ public class ChatComponentBuilder implements ModelBuilder {
 	public Object getModel(Object businessModel, LayoutComponent component) {
 		FormContext context = new FormContext(component);
 
-		// Create in-memory Chat model
-		final Chat chat = new Chat();
-		chat.addMessage(new ChatMessage("System", "Welcome to TopLogic Chat Demo!"));
-
-		// Get or create task tracker from WindowScope
+		// Chat lives inside the tracker so add (in poll) and render use the same instance
 		final TaskProgressTracker taskTracker = TaskProgressTracker.getInstance(
 			component.getMainLayout().getWindowScope());
+		final Chat chat = taskTracker.getChat();
+		chat.ensureWelcomeMessage();
 
 		// Create hidden field with custom ControlProvider that embeds ChatControl
 		HiddenField chatField = FormFactory.newHiddenField("chat");

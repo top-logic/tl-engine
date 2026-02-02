@@ -36,6 +36,15 @@ public class TaskProgressTracker {
 
 	private final LinkedList<ChatTask> _tasks = new LinkedList<>();
 
+	private final Chat _chat = new Chat();
+
+	/**
+	 * Returns the chat for this window. Same instance for add and render so task traces persist.
+	 */
+	public Chat getChat() {
+		return _chat;
+	}
+
 	/**
 	 * Gets or creates a {@link TaskProgressTracker} from the given {@link WindowScope}.
 	 *
@@ -148,6 +157,24 @@ public class TaskProgressTracker {
 			builder.withError(error);
 			builder.withEndTime(Instant.now());
 		});
+	}
+
+	/**
+	 * Returns a task by ID, or null if not found.
+	 *
+	 * @param taskId
+	 *        The task ID.
+	 * @return The task, or null.
+	 */
+	public ChatTask getTask(String taskId) {
+		synchronized (_lock) {
+			for (ChatTask task : _tasks) {
+				if (task.getId().equals(taskId)) {
+					return task;
+				}
+			}
+			return null;
+		}
 	}
 
 	/**

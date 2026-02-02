@@ -7,6 +7,7 @@ package com.top_logic.model.search.expr;
 
 import java.text.Format;
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -52,18 +53,42 @@ public class FormatExpr extends GenericMethod {
 			if (input == null) {
 				return null;
 			}
-			if (input instanceof Collection<?>) {
-				return format.format(((Collection<?>) input).toArray());
-			} else {
-				if (format instanceof MessageFormat) {
-					return format.format(new Object[] { input });
-				} else {
-					return format.format(input);
-				}
+			if (format instanceof MessageFormat) {
+				return formatMessage((MessageFormat) format, input);
 			}
+			return formatValue(format, input);
 		} else {
 			return format.format(Arrays.copyOfRange(arguments, 1, arguments.length));
 		}
+	}
+
+	private String formatMessage(MessageFormat format, Object input) {
+		Object[] args;
+		if (input instanceof Collection<?> collection) {
+			args = collection.toArray();
+		} else if (input instanceof Object[] array) {
+			args = array;
+		} else {
+			args = new Object[] { input };
+		}
+		return format.format(args);
+	}
+
+	private Object formatValue(Format format, Object input) {
+		if (input instanceof Collection<?> collection) {
+			return formatEach(format, collection);
+		} else if (input instanceof Object[] array) {
+			return formatEach(format, Arrays.asList(array));
+		}
+		return format.format(input);
+	}
+
+	private List<String> formatEach(Format format, Collection<?> collection) {
+		List<String> result = new ArrayList<>(collection.size());
+		for (Object element : collection) {
+			result.add(element == null ? null : format.format(element));
+		}
+		return result;
 	}
 
 	/**

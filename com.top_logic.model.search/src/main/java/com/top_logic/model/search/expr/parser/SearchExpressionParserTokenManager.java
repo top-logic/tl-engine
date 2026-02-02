@@ -6,12 +6,6 @@
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
 package com.top_logic.model.search.expr.parser;
-import java.util.List;
-import java.util.ArrayList;
-import com.top_logic.model.search.expr.config.dom.Expr;
-import com.top_logic.model.search.expr.config.dom.Expr.*;
-import com.top_logic.model.search.expr.config.dom.ExprFactory;
-import com.top_logic.model.search.expr.config.dom.ExprFactory.*;
 
 /** Token Manager. */
 @SuppressWarnings ("unused")

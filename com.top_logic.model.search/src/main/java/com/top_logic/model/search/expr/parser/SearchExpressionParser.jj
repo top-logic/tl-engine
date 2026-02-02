@@ -445,7 +445,10 @@ Html html() :
   ( content=htmlContent()
     { result.getContents().add(content); }
   )*
-  { return result; }
+  {
+  _f.checkXML(result); 
+  return result;
+  }
 }
 
 HtmlContent htmlContent() :

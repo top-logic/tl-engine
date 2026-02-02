@@ -341,7 +341,7 @@ public class TransientTLObjectImpl extends TransientObject {
 	 */
 	private TLStructuredTypePart resolvePart(TLStructuredTypePart part) {
 		TLStructuredTypePart resolvedPart = tType().getPart(part.getName());
-		if (resolvedPart != null) {
+		if (resolvedPart != null && resolvedPart.getDefinition().equals(part.getDefinition())) {
 			return resolvedPart;
 		}
 		return part;

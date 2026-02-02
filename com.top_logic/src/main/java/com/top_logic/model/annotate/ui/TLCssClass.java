@@ -75,6 +75,7 @@ public interface TLCssClass extends TLAttributeAnnotation, TLTypeAnnotation {
 	 * @see #getValue()
 	 */
 	@Name(OVERRIDE)
+	@Label("CSS class override")
 	boolean getOverride();
 
 	/**

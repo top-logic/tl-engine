@@ -2528,6 +2528,71 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		}
 	}
 
+	public void testXMLValid() throws ParseException {
+		// Valid well-formed XML
+		search("{{{<div><span>Hello</span></div>}}}");
+		search("{{{<div><p>Test</p><p>Test2</p></div>}}}");
+		search("{{{<div><span><b>Nested</b></span></div>}}}");
+		search("{{{<br/>}}}");
+		search("{{{<img src=\"test.png\"/>}}}");
+	}
+
+	public void testXMLUnclosedTag() throws ParseException {
+		try {
+			search("{{{<div><span>Hello</div>}}}");
+			fail("Expected error for unclosed tag.");
+		} catch (TopLogicException ex) {
+			assertEquals(
+				com.top_logic.model.search.expr.config.dom.I18NConstants.ERROR_UNCLOSED_TAG__NAME,
+				ex.getErrorKey().plain());
+		}
+	}
+
+	public void testXMLMismatchedTags() throws ParseException {
+		try {
+			search("{{{<div><span>Hello</div></span>}}}");
+			fail("Expected error for mismatched tags.");
+		} catch (TopLogicException ex) {
+			assertEquals(
+				com.top_logic.model.search.expr.config.dom.I18NConstants.ERROR_MISMATCHED_TAGS__EXPECTED_ACTUAL,
+				ex.getErrorKey().plain());
+		}
+	}
+
+	public void testXMLNoMatchingStartTag() throws ParseException {
+		try {
+			search("{{{<div>Hello</div></span>}}}");
+			fail("Expected error for end tag without start tag.");
+		} catch (TopLogicException ex) {
+			assertEquals(
+				com.top_logic.model.search.expr.config.dom.I18NConstants.ERROR_NO_MATCHING_START_TAG__NAME,
+				ex.getErrorKey().plain());
+		}
+	}
+
+	public void testXMLMultipleUnclosedTags() throws ParseException {
+		try {
+			search("{{{<div><span><p>Hello</p></div>}}}");
+			fail("Expected error for unclosed tag.");
+		} catch (TopLogicException ex) {
+			assertEquals(
+				com.top_logic.model.search.expr.config.dom.I18NConstants.ERROR_UNCLOSED_TAG__NAME,
+				ex.getErrorKey().plain());
+		}
+	}
+
+	public void testXMLEmptyTags() throws ParseException {
+		// Empty tags should not require closing
+		search("{{{<div><br/><hr/>Text</div>}}}");
+		search("{{{<div><input type=\"text\"/></div>}}}");
+	}
+
+	public void testXMLNestedStructure() throws ParseException {
+		// Complex nested structure
+		search("{{{<div><ul><li><a href=\"#\">Link</a></li></ul></div>}}}");
+		search("{{{<table><tr><td>Cell1</td><td>Cell2</td></tr></table>}}}");
+	}
+
 	private Object value(TLObject obj, String name) {
 		return obj.tValue(((TLClass) obj.tType()).getPart(name));
 	}

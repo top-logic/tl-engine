@@ -258,6 +258,46 @@ public class ExprFactory {
 	}
 
 	/**
+	 * Checks that the given {@link Html} is well-formed XML.
+	 */
+	public void checkXML(Html html) {
+		Stack<String> opened = new Stack<>();
+		for (HtmlContent content : html.getContents()) {
+			checkXMLContent(opened, content);
+		}
+		if (!opened.isEmpty()) {
+			String unclosedTag = opened.peek();
+			throw new TopLogicException(
+				html.location().withLocation(I18NConstants.ERROR_UNCLOSED_TAG__NAME.fill(unclosedTag)));
+		}
+	}
+
+	private void checkXMLContent(Stack<String> opened, HtmlContent content) {
+		if (content instanceof StartTag) {
+			StartTag start = (StartTag) content;
+			String tag = start.getTag();
+
+			if (!start.isEmpty()) {
+				opened.push(tag);
+			}
+		} else if (content instanceof EndTag) {
+			String tag = ((EndTag) content).getTag();
+
+			if (opened.isEmpty()) {
+				throw new TopLogicException(
+					content.location().withLocation(I18NConstants.ERROR_NO_MATCHING_START_TAG__NAME.fill(tag)));
+			}
+
+			String expectedTag = opened.pop();
+			if (!expectedTag.equals(tag)) {
+				throw new TopLogicException(
+					content.location().withLocation(
+						I18NConstants.ERROR_MISMATCHED_TAGS__EXPECTED_ACTUAL.fill(expectedTag, tag)));
+			}
+		}
+	}
+
+	/**
 	 * Transforms the given {@link Html} so that it is well-formed and does not contain unsafe
 	 * content.
 	 */

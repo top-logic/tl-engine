@@ -8,9 +8,7 @@ package com.top_logic.model.search.expr;
 import java.util.List;
 
 import com.top_logic.knowledge.search.Expression;
-import com.top_logic.basic.html.SafeHTML;
 import com.top_logic.knowledge.search.SetExpression;
-import com.top_logic.layout.basic.fragments.RenderedFragment;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.model.TLAssociationEnd;
 import com.top_logic.model.TLClass;
@@ -29,8 +27,6 @@ import com.top_logic.model.search.expr.html.TagMacro;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class SearchExpressionFactory {
-
-	private static final SearchExpression[] NO_ARGS = {};
 
 	/**
 	 * Creates an {@link All} expression.
@@ -661,20 +657,7 @@ public class SearchExpressionFactory {
 	 */
 	public static AttributeMacro attr(String name, SearchExpression value) {
 		boolean cssAttribute = HTMLConstants.CLASS_ATTR.equals(name);
-		boolean dynamicSafety = dynamicSafety(name, value);
-		return new AttributeMacro(cssAttribute, dynamicSafety, name, value);
-	}
-
-	private static boolean dynamicSafety(String name, SearchExpression value) {
-		if (value instanceof Literal) {
-			if (((Literal) value).getValue() instanceof RenderedFragment) {
-				// This situation is statically checked.
-				return false;
-			}
-		}
-
-		// Dynamic safety is only required for protected attributes.
-		return SafeHTML.getInstance().getAttributeChecker(name) != null;
+		return new AttributeMacro(cssAttribute, name, value);
 	}
 	/**
 	 * Creates a {@link Try} expression.

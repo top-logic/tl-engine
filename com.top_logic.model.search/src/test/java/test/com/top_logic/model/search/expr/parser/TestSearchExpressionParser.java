@@ -103,7 +103,7 @@ public class TestSearchExpressionParser extends TestCase {
 					continue;
 				}
 				int descrEnd = test.indexOf('\n');
-				String name = test.substring(0, descrEnd + 1);
+				String name = test.substring(0, descrEnd);
 				String[] inputs = test.substring(descrEnd + 1).split("-----\\s*");
 				suite.addTest(new TestSearchExpressionParser(name, inputs));
 			}

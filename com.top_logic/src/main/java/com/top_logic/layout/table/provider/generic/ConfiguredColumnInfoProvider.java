@@ -12,6 +12,7 @@ import com.top_logic.layout.Accessor;
 import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.layout.table.model.ColumnBaseConfig;
 import com.top_logic.layout.table.model.ColumnConfiguration;
+import com.top_logic.layout.table.model.ColumnConfiguration.DisplayMode;
 import com.top_logic.layout.table.model.ColumnConfigurator;
 import com.top_logic.layout.table.model.TableConfigUtil;
 import com.top_logic.layout.table.provider.ColumnInfo;
@@ -27,6 +28,8 @@ import com.top_logic.model.util.TLTypeContext;
 public class ConfiguredColumnInfoProvider implements ColumnInfoProvider {
 
 	private final ColumnConfigurator _configurator;
+
+	private ColumnInfo _baseInfo;
 
 	/**
 	 * Creates a {@link ConfiguredColumnInfoProvider} from configuration.
@@ -47,29 +50,56 @@ public class ConfiguredColumnInfoProvider implements ColumnInfoProvider {
 
 	@Override
 	public ColumnInfo createColumnInfo(TLTypeContext contentType, ResKey headerI18NKey) {
-		return new ConfiguredColumnInfo(contentType, headerI18NKey,
-			GenericTableConfigurationProvider.getDefaultAccessor(), _configurator);
+		DisplayMode visiblity;
+		Accessor<?> accessor;
+		if (_baseInfo == null) {
+			visiblity = null;
+			accessor = GenericTableConfigurationProvider.getDefaultAccessor();
+		} else {
+			visiblity = _baseInfo.getVisibility();
+			accessor = _baseInfo.getAccessor();
+		}
+		return new ConfiguredColumnInfo(contentType, headerI18NKey, visiblity, accessor, _configurator, _baseInfo);
+	}
+
+	/**
+	 * {@link ColumnInfo} that is adapted. May be <code>null</code>.
+	 */
+	public ColumnInfo getBaseInfo() {
+		return _baseInfo;
+	}
+
+	/**
+	 * Setter for {@link #getBaseInfo()}.
+	 */
+	public void setBaseInfo(ColumnInfo baseInfo) {
+		_baseInfo = baseInfo;
 	}
 
 	/**
 	 * {@link ColumnInfo} that is directly derived from a configuration.
 	 */
 	private static final class ConfiguredColumnInfo extends ColumnInfo {
+		private final ColumnInfo _base;
 		private final ColumnConfigurator _configurator;
 	
 		/** 
 		 * Creates a {@link ConfiguredColumnInfo}.
 		 */
-		ConfiguredColumnInfo(TLTypeContext contentType, ResKey headerI18NKey, Accessor accessor,
-				ColumnConfigurator configurator) {
-			super(contentType, headerI18NKey, null, accessor);
+		ConfiguredColumnInfo(TLTypeContext contentType, ResKey headerI18NKey, DisplayMode visiblity, Accessor accessor,
+				ColumnConfigurator configurator, ColumnInfo base) {
+			super(contentType, headerI18NKey, visiblity, accessor);
 			_configurator = configurator;
+			_base = base;
 		}
 	
 		@Override
 		protected void internalAdapt(ColumnConfiguration column) {
 			super.internalAdapt(column);
 
+			if (_base != null) {
+				_base.adapt(column);
+			}
 			_configurator.adapt(column);
 		}
 	

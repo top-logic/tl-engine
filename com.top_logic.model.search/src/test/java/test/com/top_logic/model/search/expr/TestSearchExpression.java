@@ -856,6 +856,14 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		// MessageFormat: list elements are used as format arguments
 		assertEquals("a:X, b:Y",
 			execute(search("messageFormat('a:{0}, b:{1}').format(list('X', 'Y'))")));
+
+		// Multiple arguments: non-MessageFormat formats each individually
+		assertEquals(list("0001", "0002", "0003"),
+			execute(search("numberFormat('0000').format(1, 2, 3)")));
+
+		// Multiple arguments: MessageFormat uses them as placeholders
+		assertEquals("a:X, b:Y",
+			execute(search("messageFormat('a:{0}, b:{1}').format('X', 'Y')")));
 	}
 
 	public void testDateFormat() throws ParseException {

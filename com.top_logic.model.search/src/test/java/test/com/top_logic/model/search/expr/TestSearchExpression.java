@@ -2442,6 +2442,48 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		void accept(XMLInstanceImporter scenario) throws Exception;
 	}
 
+	/**
+	 * Test for ticket #29069: A derived attribute of type "General search expression"
+	 * (tl.model.search:Expr) can return a computed function (closure) with bound values.
+	 *
+	 * <p>
+	 * This test verifies that accessing a derived attribute that returns a closure works without
+	 * ClassCastException.
+	 * </p>
+	 */
+	public void testDerivedAttributeReturningClosure() {
+		with("TestSearchExpression-testDerivedClosure.scenario.xml", scenario -> {
+			TLObject e1 = scenario.getObject("e1");
+			assertNotNull(e1);
+			TLObject e2 = scenario.getObject("e2");
+			assertNotNull(e2);
+
+			// Get the derived attribute that returns a closure (function with bound 'factor')
+			Object multiplier1 = e1.tValueByName("multiplier");
+			assertNotNull("Derived attribute returning closure should not be null", multiplier1);
+			assertTrue("Derived attribute should return a SearchExpression (closure)",
+				multiplier1 instanceof SearchExpression);
+
+			Object multiplier2 = e2.tValueByName("multiplier");
+			assertNotNull("Derived attribute returning closure should not be null", multiplier2);
+			assertTrue("Derived attribute should return a SearchExpression (closure)",
+				multiplier2 instanceof SearchExpression);
+
+			// Apply the closures and verify they work correctly
+			// e1 has factor=3, so multiplier1(7) should return 21
+			Object result1 = eval("fun -> arg -> $fun.apply($arg)", multiplier1, 7.0);
+			assertEquals(21.0, result1);
+
+			// e2 has factor=5, so multiplier2(7) should return 35
+			Object result2 = eval("fun -> arg -> $fun.apply($arg)", multiplier2, 7.0);
+			assertEquals(35.0, result2);
+
+			// Test accessing the attribute via TL-Script expression
+			assertEquals(21.0, eval("e -> $e.get(`TestSearchExpression:E#multiplier`).apply(7)", e1));
+			assertEquals(35.0, eval("e -> $e.get(`TestSearchExpression:E#multiplier`).apply(7)", e2));
+		});
+	}
+
 	public void testEnumLiteralAccess() throws ParseException {
 		SearchExpression search = search("`TestSearchExpression:MyEnum#A`.singleton()");
 		Set<?> result = asSet(executeAsSet(search));

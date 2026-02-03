@@ -50,6 +50,15 @@ public abstract class AbstractExprMapping extends AbstractConfigurationValueProv
 	}
 
 	@Override
+	public Object normalizeValue(Object value) {
+		if (value != null && !getApplicationType().isInstance(value)) {
+			throw new IllegalArgumentException("Value '" + value + "' is of type '" + value.getClass().getName()
+				+ "', expected is '" + getApplicationType().getName() + "'.");
+		}
+		return value;
+	}
+
+	@Override
 	public SearchExpression getBusinessObject(Object aStorageObject) {
 		if (StringServices.isEmpty(aStorageObject)) {
 			return null;
@@ -63,7 +72,13 @@ public abstract class AbstractExprMapping extends AbstractConfigurationValueProv
 
 	@Override
 	protected String getSpecificationNonNull(SearchExpression configValue) {
-		return serialize(configValue);
+		if (configValue instanceof AnnotatedSearchExpression expr) {
+			return expr.getSource();
+		} else {
+			// Note: This must not fail here, since this happens by accident, when an attribute
+			// returning a function closure is displayed as option in the form editor.
+			return null;
+		}
 	}
 
 	@Override
@@ -85,8 +100,14 @@ public abstract class AbstractExprMapping extends AbstractConfigurationValueProv
 	 * {@link #getSpecificationNonNull(SearchExpression)}.
 	 */
 	protected String serialize(Object aBusinessObject) {
-		AnnotatedSearchExpression expr = (AnnotatedSearchExpression) aBusinessObject;
-		return expr.getSource();
+		if (aBusinessObject instanceof AnnotatedSearchExpression expr) {
+			return expr.getSource();
+		} else {
+			throw new IllegalArgumentException(
+				"Attemted to store a function to a TL-Script attribute that is not a literal script ("
+					+ aBusinessObject.getClass().getName()
+					+ "). A function value returned from another function cannot be stored in an attribute.");
+		}
 	}
 
 	/**

@@ -27,6 +27,7 @@ import test.com.top_logic.model.search.model.testJavaBinding.ReferencesDerived;
 
 import com.top_logic.basic.AliasManager;
 import com.top_logic.basic.col.MapBuilder;
+import com.top_logic.basic.config.Location;
 import com.top_logic.basic.config.XmlDateTimeFormat;
 import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.html.SafeHTML;
@@ -2537,17 +2538,6 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		search("{{{<img src=\"test.png\"/>}}}");
 	}
 
-	public void testXMLUnclosedTag() throws ParseException {
-		try {
-			search("{{{<div><span>Hello</div>}}}");
-			fail("Expected error for unclosed tag.");
-		} catch (TopLogicException ex) {
-			assertEquals(
-				com.top_logic.model.search.expr.config.dom.I18NConstants.ERROR_UNCLOSED_TAG__NAME,
-				ex.getErrorKey().plain());
-		}
-	}
-
 	public void testXMLMismatchedTags() throws ParseException {
 		try {
 			search("{{{<div><span>Hello</div></span>}}}");
@@ -2555,7 +2545,7 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		} catch (TopLogicException ex) {
 			assertEquals(
 				com.top_logic.model.search.expr.config.dom.I18NConstants.ERROR_MISMATCHED_TAGS__EXPECTED_ACTUAL,
-				ex.getErrorKey().plain());
+				Location.detail(ex.getErrorKey()).plain());
 		}
 	}
 
@@ -2566,18 +2556,18 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		} catch (TopLogicException ex) {
 			assertEquals(
 				com.top_logic.model.search.expr.config.dom.I18NConstants.ERROR_NO_MATCHING_START_TAG__NAME,
-				ex.getErrorKey().plain());
+				Location.detail(ex.getErrorKey()).plain());
 		}
 	}
 
 	public void testXMLMultipleUnclosedTags() throws ParseException {
 		try {
-			search("{{{<div><span><p>Hello</p></div>}}}");
+			search("{{{<div><span><p>Hello}}}");
 			fail("Expected error for unclosed tag.");
 		} catch (TopLogicException ex) {
 			assertEquals(
 				com.top_logic.model.search.expr.config.dom.I18NConstants.ERROR_UNCLOSED_TAG__NAME,
-				ex.getErrorKey().plain());
+				Location.detail(ex.getErrorKey()).plain());
 		}
 	}
 

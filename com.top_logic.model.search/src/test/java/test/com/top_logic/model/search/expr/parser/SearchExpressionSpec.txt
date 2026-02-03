@@ -149,10 +149,10 @@ tuple(a -> all(`test:A`), b? -> all(`test:B`).filter(x -> $a.get(`test:A#values`
 x -> foo({{{<p class="important {$css}">Some value <b>'{$x}'</b> being output.</p>}}})
 -----
 x -> foo({{{<p class="important {$css}">Some value <b>'{$x}'</b> being output.</p>}}})
-===== IncorrectHTML
-{{{<div><div class="foo"/><div>text<br><p></br><i>italics</p>}}}
+===== ValidHTML
+{{{<div><div class="foo"/><div>text<br/><p><i>italics</i></p></div></div>}}}
 -----
-{{{<div><div class="foo"/><div>text<br><p></br><i>italics</p>}}}
+{{{<div><div class="foo"/><div>text<br/><p><i>italics</i></p></div></div>}}}
 -----
 <config config:interface="com.top_logic.model.search.expr.config.dom.Expr$Html"
   xmlns:config="http://www.top-logic.com/ns/config/6.0"
@@ -168,12 +168,17 @@ x -> foo({{{<p class="important {$css}">Some value <b>'{$x}'</b> being output.</
   </start>
   <start tag="div"/>
   <text value="text"/>
-  <start tag="br"/>
+  <start
+    empty="true"
+    tag="br"
+  />
   <start tag="p"/>
-  <end tag="br"/>
   <start tag="i"/>
   <text value="italics"/>
+  <end tag="i"/>
   <end tag="p"/>
+  <end tag="div"/>
+  <end tag="div"/>
 </config>
 ===== Complex Scenario
 model ->

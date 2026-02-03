@@ -51,6 +51,7 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
+import com.top_logic.basic.func.IFunction2;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.layout.DisplayContext;
@@ -316,6 +317,7 @@ public class TreeTableComponent extends BoundComponent
 
 	private CommandHandler _onSelectionChange;
 
+	private IFunction2<String, Object, String> _configKeyBuilder;
 	/**
 	 * Legacy constructor for creating an {@link TreeTableComponent} via {@link Config}.
 	 */
@@ -335,6 +337,7 @@ public class TreeTableComponent extends BoundComponent
 			_tableConfigProvider = TableConfigurationFactory.toProvider(context, table);
 		}
 		_onSelectionChange = context.getInstance(config.getOnSelectionChange());
+		_configKeyBuilder = context.getInstance(config.getCustomConfigKey());
 	}
 
 	@Override
@@ -1515,7 +1518,7 @@ public class TreeTableComponent extends BoundComponent
 		AbstractTreeTableModel<?> treeModel = createTreeModel();
 		configureTreeModel(treeModel);
 
-		ConfigKey configKey = getConfig().resolveConfigKey(this, ConfigKey::component);
+		ConfigKey configKey = WithCustomConfigKey.resolveObjectKey(this, _configKeyBuilder, ConfigKey.component(this));
 		TreeTableData treeTableData =
 			DefaultTreeTableData.createTreeTableData(this, treeModel, configKey);
 

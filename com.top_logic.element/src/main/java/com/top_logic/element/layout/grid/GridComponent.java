@@ -58,6 +58,7 @@ import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.exception.I18NRuntimeException;
+import com.top_logic.basic.func.IFunction2;
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.listener.GenericPropertyListener;
 import com.top_logic.basic.shared.collection.CollectionUtilShared;
@@ -529,6 +530,8 @@ public class GridComponent extends EditComponent implements
 
 	private CommandHandler _onSelectionChange;
 
+	private IFunction2<String, Object, String> _configKeyBuilder;
+
 	/**
 	 * Create a new GridComponent from XML.
 	 */
@@ -550,6 +553,7 @@ public class GridComponent extends EditComponent implements
 		_componentTableConfigProvider = config.getComponentTableConfigProvider();
 		_addTechnicalColumn = config.getAddTechnicalColumn();
 		_onSelectionChange = context.getInstance(config.getOnSelectionChange());
+		_configKeyBuilder = context.getInstance(config.getCustomConfigKey());
 	}
 
 	@Override
@@ -2555,7 +2559,7 @@ public class GridComponent extends EditComponent implements
 	}
 
     public ConfigKey getConfigKey() {
-		return getConfig().resolveConfigKey(this, table -> ConfigKey.part(table, FIELD_TABLE));
+		return WithCustomConfigKey.resolveObjectKey(this, _configKeyBuilder, ConfigKey.part(this, FIELD_TABLE));
 	}
 
     /**

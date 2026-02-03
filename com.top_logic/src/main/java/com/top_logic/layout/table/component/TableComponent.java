@@ -47,6 +47,7 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.func.IFunction2;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -441,6 +442,8 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 
 	private CommandHandler _onSelectionChange;
 
+	private IFunction2<String, Object, String> _configKeyBuilder;
+
 	/**
 	 * Create a {@link TableComponent}.
 	 */
@@ -465,6 +468,7 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 		}
 		_selectionModel = createSelectionModel(config);
 		_onSelectionChange = context.getInstance(config.getOnSelectionChange());
+		_configKeyBuilder = context.getInstance(config.getCustomConfigKey());
 	}
 
 	@Override
@@ -1360,7 +1364,7 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 
 	private TableData createTableData() {
 		FormTableModel tableModel = createFormTableModel(createApplicationModel());
-		ConfigKey configKey = getConfig().resolveConfigKey(this, ConfigKey::component);
+		ConfigKey configKey = WithCustomConfigKey.resolveObjectKey(this, _configKeyBuilder, ConfigKey.component(this));
 		TableData tableData =
 			DefaultTableData.createTableData(this, tableModel, configKey);
 		if (getToolBar() != null) {

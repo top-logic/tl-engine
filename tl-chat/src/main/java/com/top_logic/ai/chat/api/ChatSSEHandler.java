@@ -6,7 +6,9 @@
 package com.top_logic.ai.chat.api;
 
 import java.io.PrintWriter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -74,6 +76,9 @@ public class ChatSSEHandler {
 	private String _lastTaskId = null;
 	private ChatTask.TaskStatus _lastTaskStatus = null;
 	private long _lastHeartbeatTime = 0;
+
+	/** Tracks agent call result summaries to detect updates (key = event index "e0", "e1", etc.). */
+	private final Map<String, String> _agentCallResults = new HashMap<>();
 
 	private ScheduledFuture<?> _pollTask;
 
@@ -234,9 +239,30 @@ public class ChatSSEHandler {
 				// Emit new timeline events
 				List<ChatTimelineEvent> timeline = task.getTimelineEvents();
 				for (int i = _lastTimelineSeq; i < timeline.size(); i++) {
-					emitTimelineEvent(timeline.get(i), "e" + i);
+					ChatTimelineEvent ev = timeline.get(i);
+					String eventId = "e" + i;
+					emitTimelineEvent(ev, eventId);
+					// Track agent call results for update detection
+					if (ev.getKind() == ChatTimelineEvent.Kind.AGENT_CALL) {
+						_agentCallResults.put(eventId, ev.getResultSummary());
+					}
 				}
 				_lastTimelineSeq = timeline.size();
+
+				// Check for updated agent call results (re-emit if changed)
+				for (int i = 0; i < timeline.size(); i++) {
+					ChatTimelineEvent ev = timeline.get(i);
+					if (ev.getKind() == ChatTimelineEvent.Kind.AGENT_CALL) {
+						String eventId = "e" + i;
+						String currentResult = ev.getResultSummary();
+						String lastResult = _agentCallResults.get(eventId);
+						if (lastResult != null && !lastResult.equals(currentResult)) {
+							// Result has changed - re-emit with updated data
+							emitTimelineEvent(ev, eventId);
+							_agentCallResults.put(eventId, currentResult);
+						}
+					}
+				}
 
 				// Emit task status change
 				if (_lastTaskId == null || !_lastTaskId.equals(currentTaskId) ||
@@ -252,7 +278,7 @@ public class ChatSSEHandler {
 			if (_lastTaskId != null) {
 				ChatTask task = _tracker.getTask(_lastTaskId);
 				if (task != null && _lastTaskStatus != task.getStatus()) {
-					// Emit the final status change (e.g., IN_PROGRESS -> COMPLETED)
+					// Emit the final status change (e.g. IN_PROGRESS -> COMPLETED)
 					emitTaskStatus(task);
 					_lastTaskStatus = task.getStatus();
 				}
@@ -260,6 +286,7 @@ public class ChatSSEHandler {
 				_lastTimelineSeq = 0;
 				_lastTaskId = null;
 				_lastTaskStatus = null;
+				_agentCallResults.clear();
 			}
 		}
 	}

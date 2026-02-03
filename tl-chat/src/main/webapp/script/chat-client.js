@@ -311,7 +311,30 @@
 		if (!body) return;
 
 		var existingEv = body.querySelector('[data-event-id="' + (ev.id || '') + '"]');
-		if (existingEv) return;
+		if (existingEv) {
+			// Update existing agent call if result has changed
+			if (ev.type === 'agent_call' && ev.resultSummary) {
+				var resultSection = existingEv.querySelector('.chat-agent-call-result');
+				if (!resultSection) {
+					// Result section doesn't exist yet, create it
+					var agentBody = existingEv.querySelector('.chat-agent-call-body');
+					if (agentBody) {
+						var resultLabel = document.createElement('div');
+						resultLabel.className = 'chat-agent-call-result-label';
+						resultLabel.textContent = 'Result:';
+						agentBody.appendChild(resultLabel);
+						var resultPre = document.createElement('pre');
+						resultPre.className = 'chat-agent-call-result';
+						resultPre.textContent = ev.resultSummary;
+						agentBody.appendChild(resultPre);
+					}
+				} else {
+					// Update existing result
+					resultSection.textContent = ev.resultSummary;
+				}
+			}
+			return;
+		}
 
 		var uniqueId = 'ev-' + (ev.id || '') + '-' + Date.now();
 

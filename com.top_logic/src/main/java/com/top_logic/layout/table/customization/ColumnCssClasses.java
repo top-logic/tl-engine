@@ -60,8 +60,20 @@ public class ColumnCssClasses extends AbstractConfiguredInstance<ColumnCssClasse
 
 	@Override
 	public void adapt(ColumnConfiguration column) {
-		column.addCssClass(getConfig().getCssClass());
-		column.addCssHeaderClass(getConfig().getCssHeaderClass());
+		if (getConfig().getCssClassOverride()) {
+			// When override is set, always replace existing classes, even with null/empty
+			column.setCssClass(getConfig().getCssClass());
+		} else {
+			column.addCssClass(getConfig().getCssClass());
+		}
+
+		if (getConfig().getCssHeaderClassOverride()) {
+			// When override is set, always replace existing classes, even with null/empty
+			column.setCssHeaderClass(getConfig().getCssHeaderClass());
+		} else {
+			column.addCssHeaderClass(getConfig().getCssHeaderClass());
+		}
+
 		if (_provider != null) {
 			column.setCssClassProvider(_provider);
 		}

@@ -151,7 +151,7 @@
 						</property>
 					</attributes>
 					<generalizations>
-						<generalization type="Common" />
+						<generalization type="CommonChild" />
 					</generalizations>
 				</class>
 				

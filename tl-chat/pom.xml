@@ -25,6 +25,10 @@
 			<artifactId>tl-ai-service</artifactId>
 			<version>${tl.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+		</dependency>
 
 		<!-- Tests -->
 		<dependency>

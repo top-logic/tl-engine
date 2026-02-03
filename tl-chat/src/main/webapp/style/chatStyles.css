@@ -21,6 +21,7 @@
 /* Individual chat message */
 .chat-message {
 	margin-bottom: 8px;
+	padding-left: 8px;
 }
 
 /* User name in chat message */

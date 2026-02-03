@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-fragment xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-fragment_3_1.xsd"
+	version="3.1">
+	<name>tl-chat</name>
+
+	<servlet>
+		<servlet-name>ChatServlet</servlet-name>
+		<servlet-class>com.top_logic.ai.chat.api.ChatServlet</servlet-class>
+		<async-supported>true</async-supported>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>ChatServlet</servlet-name>
+		<url-pattern>/chat/*</url-pattern>
+	</servlet-mapping>
+</web-fragment>

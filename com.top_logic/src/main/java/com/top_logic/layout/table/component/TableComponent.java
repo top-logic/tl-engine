@@ -127,8 +127,8 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 	 * Configuration options for {@link TableComponent}.
 	 */
 	@TagName(Config.TAG_NAME)
-	public interface Config
-			extends BuilderComponent.Config, ColumnsChannel.Config, InAppSelectable.InAppSelectableConfig, SelectionModelConfig {
+	public interface Config extends BuilderComponent.Config, ColumnsChannel.Config,
+			InAppSelectable.InAppSelectableConfig, SelectionModelConfig, WithCustomConfigKey {
 
 		/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
 		Lookup LOOKUP = MethodHandles.lookup();
@@ -222,6 +222,7 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 
 		@Override
 		PolymorphicConfiguration<? extends ListModelBuilder> getModelBuilder();
+
 	}
 
     /** Configuration name for excluded columns attribute. */
@@ -1359,8 +1360,9 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 
 	private TableData createTableData() {
 		FormTableModel tableModel = createFormTableModel(createApplicationModel());
+		ConfigKey configKey = getConfig().resolveConfigKey(this, ConfigKey::component);
 		TableData tableData =
-			DefaultTableData.createTableData(this, tableModel, ConfigKey.component(this));
+			DefaultTableData.createTableData(this, tableModel, configKey);
 		if (getToolBar() != null) {
 			tableData.setToolBar(getToolBar());
 		}

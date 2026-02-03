@@ -82,6 +82,7 @@ import com.top_logic.layout.table.component.ComponentTableConfigProvider;
 import com.top_logic.layout.table.component.InvalidSelectionVeto;
 import com.top_logic.layout.table.component.TableComponent;
 import com.top_logic.layout.table.component.TableComponentTableConfigProvider;
+import com.top_logic.layout.table.component.WithCustomConfigKey;
 import com.top_logic.layout.table.control.SelectionVetoListener;
 import com.top_logic.layout.table.control.TableControl;
 import com.top_logic.layout.table.model.SetTableResPrefix;
@@ -139,8 +140,8 @@ public class TreeTableComponent extends BoundComponent
 	 * Configuration options for {@link TreeTableComponent}.
 	 */
 	@TagName(Config.TAG_NAME)
-	public interface Config
-			extends BoundComponent.Config, TreeViewConfig, SelectionModelConfig, InAppSelectable.InAppSelectableConfig {
+	public interface Config extends BoundComponent.Config, TreeViewConfig, SelectionModelConfig,
+			InAppSelectable.InAppSelectableConfig, WithCustomConfigKey {
 
 		/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
 		Lookup LOOKUP = MethodHandles.lookup();
@@ -1514,8 +1515,9 @@ public class TreeTableComponent extends BoundComponent
 		AbstractTreeTableModel<?> treeModel = createTreeModel();
 		configureTreeModel(treeModel);
 
+		ConfigKey configKey = getConfig().resolveConfigKey(this, ConfigKey::component);
 		TreeTableData treeTableData =
-			DefaultTreeTableData.createTreeTableData(this, treeModel, ConfigKey.component(this));
+			DefaultTreeTableData.createTreeTableData(this, treeModel, configKey);
 
 		treeTableData.setSelectionModel(selectionModel);
 		ToolBar toolbar = getToolBar();

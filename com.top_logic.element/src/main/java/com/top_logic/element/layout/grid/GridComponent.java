@@ -163,6 +163,7 @@ import com.top_logic.layout.table.component.ColumnsChannel;
 import com.top_logic.layout.table.component.ComponentRowSource;
 import com.top_logic.layout.table.component.ComponentTableConfigProvider;
 import com.top_logic.layout.table.component.TableComponent;
+import com.top_logic.layout.table.component.WithCustomConfigKey;
 import com.top_logic.layout.table.control.SelectionVetoListener;
 import com.top_logic.layout.table.control.TableControl;
 import com.top_logic.layout.table.control.TableControl.SelectionType;
@@ -239,7 +240,8 @@ public class GridComponent extends EditComponent implements
 	 * Configuration options for {@link GridComponent}.
 	 */
 	@TagName(Config.TAG_NAME)
-	public interface Config extends EditComponent.Config, ColumnsChannel.Config, TreeViewConfig, SelectionModelConfig, InAppSelectableConfig {
+	public interface Config extends EditComponent.Config, ColumnsChannel.Config, TreeViewConfig,
+			SelectionModelConfig, InAppSelectableConfig, WithCustomConfigKey {
 
 		/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
 		Lookup LOOKUP = MethodHandles.lookup();
@@ -2553,7 +2555,7 @@ public class GridComponent extends EditComponent implements
 	}
 
     public ConfigKey getConfigKey() {
-		return ConfigKey.part(this, FIELD_TABLE);
+		return getConfig().resolveConfigKey(this, table -> ConfigKey.part(table, FIELD_TABLE));
 	}
 
     /**

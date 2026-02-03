@@ -192,6 +192,27 @@
 						<classifier name="C"/>
 					</classifiers>
 				</enum>
+
+				<!-- Test type for ticket #29069: Derived attribute returning a closure -->
+				<class name="E">
+					<annotations>
+						<table name="StructuredElement" />
+					</annotations>
+					<attributes>
+						<property name="name" type="tl.core:String" />
+						<property name="factor" type="tl.core:Integer" />
+
+						<!-- Derived attribute of type Expr that returns a closure with bound values.
+						     The closure captures the 'factor' attribute value. -->
+						<property name="multiplier" type="tl.model.search:Expr">
+							<annotations>
+								<storage-algorithm>
+									<query expr="self -> { f = $self.get(`TestSearchExpression:E#factor`); x -> $x * $f; }"/>
+								</storage-algorithm>
+							</annotations>
+						</property>
+					</attributes>
+				</class>
 			</types>
 		</module>
 	</modules>

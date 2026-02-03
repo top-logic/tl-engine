@@ -337,6 +337,11 @@ public class TreeTableComponent extends BoundComponent
 	}
 
 	@Override
+	public Config getConfig() {
+		return (Config) super.getConfig();
+	}
+
+	@Override
 	public CommandHandler getOnSelectionHandler() {
 		return _onSelectionChange;
 	}
@@ -390,7 +395,7 @@ public class TreeTableComponent extends BoundComponent
 
 	/** @see Config#shouldCheckMissingTypeConfiguration() */
 	protected boolean shouldCheckMissingTypeConfiguration() {
-		return ((Config) getConfig()).shouldCheckMissingTypeConfiguration();
+		return getConfig().shouldCheckMissingTypeConfiguration();
 	}
 
 	private void checkMissingTypeConfiguration() {
@@ -1124,7 +1129,7 @@ public class TreeTableComponent extends BoundComponent
 	}
 
 	private TableConfigurationProvider createTableConfigurationProvider() {
-		Config config = (Config) getConfig();
+		Config config = getConfig();
 
 		List<TableConfigurationProvider> providers = new ArrayList<>();
 
@@ -1144,7 +1149,7 @@ public class TreeTableComponent extends BoundComponent
 			providers.add(_tableConfigProvider);
 		}
 
-		providers.add(((Config) getConfig()).getAdditionalConfiguration());
+		providers.add(getConfig().getAdditionalConfiguration());
 		providers.add(GenericTableConfigurationProvider.showDefaultColumns());
 
 		return TableConfigurationFactory.combine(providers);

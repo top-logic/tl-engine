@@ -551,6 +551,11 @@ public class GridComponent extends EditComponent implements
 	}
 
 	@Override
+	public Config getConfig() {
+		return (Config) super.getConfig();
+	}
+
+	@Override
 	public CommandHandler getOnSelectionHandler() {
 		return _onSelectionChange;
 	}
@@ -746,7 +751,7 @@ public class GridComponent extends EditComponent implements
 	 * </p>
 	 */
 	public Object getDefaultSelection() {
-		if (((Config) getConfig()).getDefaultSelection()) {
+		if (getConfig().getDefaultSelection()) {
 			TableViewModel tableViewModel = getViewModel();
 			TableModel tableModel = getTableField(getFormContext()).getTableModel();
 
@@ -916,7 +921,7 @@ public class GridComponent extends EditComponent implements
 			return Collections.emptySet();
 		}
 		Set<TLClass> nodeClasses = CollectionUtil.newSet(count);
-		String structureName = ((Config) getConfig()).getStructureName();
+		String structureName = getConfig().getStructureName();
 		if (!StringServices.isEmpty(structureName)) {
 			for (String elementName : elementNames) {
 				String typeSpec = TL5Types.nodeTypeSpec(structureName, elementName);
@@ -1089,7 +1094,7 @@ public class GridComponent extends EditComponent implements
      * Shall marker fields be created.
      */
     public boolean showMarkerFields() {
-		return ((Config) getConfig()).getShowMarkerFields();
+		return getConfig().getShowMarkerFields();
     }
 
     /**
@@ -2830,7 +2835,7 @@ public class GridComponent extends EditComponent implements
 	public void linkChannels(Log log) {
 		super.linkChannels(log);
 
-		ChannelLinking channelLinking = getChannelLinking(((Config) getConfig()).getColumns());
+		ChannelLinking channelLinking = getChannelLinking(getConfig().getColumns());
 		columnsChannel().linkChannel(log, this, channelLinking);
 		columnsChannel().addListener(COLUMNS_LISTENER);
 

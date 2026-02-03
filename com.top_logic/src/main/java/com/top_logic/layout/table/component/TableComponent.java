@@ -467,6 +467,11 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 	}
 
 	@Override
+	public Config getConfig() {
+		return (Config) super.getConfig();
+	}
+
+	@Override
 	public CommandHandler getOnSelectionHandler() {
 		return _onSelectionChange;
 	}
@@ -642,7 +647,7 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 
 	/** @see Config#shouldCheckMissingTypeConfiguration() */
 	protected boolean shouldCheckMissingTypeConfiguration() {
-		return ((Config) getConfig()).shouldCheckMissingTypeConfiguration();
+		return getConfig().shouldCheckMissingTypeConfiguration();
 	}
 
 	private void checkMissingTypeConfiguration() {
@@ -883,7 +888,7 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 	}
 
 	private Object getDefaultSelection() {
-		if (((Config) getConfig()).getDefaultSelection()) {
+		if (getConfig().getDefaultSelection()) {
 			if (this.listValid) {
 				List<?> displayedRows = getTableModel().getDisplayedRows();
 
@@ -1057,7 +1062,7 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 	 * Creates the {@link TableConfigurationProvider} for this {@link TableComponent}.
 	 */
 	protected TableConfigurationProvider createTableConfigurationProvider() {
-		Config config = (Config) getConfig();
+		Config config = getConfig();
 
 		List<TableConfigurationProvider> providers = new ArrayList<>();
 		ComponentTableConfigProvider componentTableConfigProvider = config.getComponentTableConfigProvider();
@@ -1376,7 +1381,7 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 	public void linkChannels(Log log) {
 		super.linkChannels(log);
 
-		Config config = (Config) getConfig();
+		Config config = getConfig();
 		ChannelLinking channelLinking = getChannelLinking(config.getColumns());
 		columnsChannel().linkChannel(log, this, channelLinking);
 		columnsChannel().addListener(COLUMNS_LISTENER);

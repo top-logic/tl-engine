@@ -5,7 +5,7 @@
     <relativePath>../tl-parent-build</relativePath>
     <groupId>com.top-logic</groupId>
     <artifactId>tl-parent-build</artifactId>
-    <version>7.9.7</version>
+    <version>0.0.14-AEMA</version>
   </parent>
   <artifactId>tl-build-processor</artifactId>
 	<name>${project.artifactId}</name>
@@ -41,7 +41,7 @@
 				<dependency>
 					<groupId>com.top-logic</groupId>
 					<artifactId>tl-basic-core</artifactId>
-					<version>7.9.7</version>
+					<version>0.0.14-AEMA</version>
 				</dependency>
 			</dependencies>
 		</plugin>

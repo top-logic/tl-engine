@@ -765,7 +765,7 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 
 			if (this.getListBuilder().supportsListElement(this, aModel).shouldAdd()) {
 				// The element is now part of this table.
-            	addNewRowObject(aModel);
+				invalidate();
             	return true;
             } else {
             	// The changed model cannot be part of the displayed rows. There is
@@ -800,7 +800,7 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
         }
 
 		if (this.getListBuilder().supportsListElement(this, aModel).shouldAdd()) {
-			addNewRowObject(aModel);
+			invalidate();
 			return true;
         }
 

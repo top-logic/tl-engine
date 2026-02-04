@@ -104,8 +104,11 @@ public class FormData extends AbstractChannelLinking<FormData.Config> {
 		@Override
 		public Object getBusinessModel(LayoutComponent businessComponent) {
 			if (businessComponent instanceof FormHandler form) {
-				AttributeFormContext fc = (AttributeFormContext) form.getFormContext();
-	
+				if (!(form.getFormContext() instanceof AttributeFormContext fc)) {
+					// Not an attribute-based form, cannot extract form data.
+					return null;
+				}
+
 				AttributeUpdateContainer updateContainer = fc.getAttributeUpdateContainer();
 				TLFormObject formData;
 				if (fc.isSet(ConfiguredDynamicFormBuilder.TOP_LEVEL_OBJECT)) {

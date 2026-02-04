@@ -122,12 +122,12 @@ public interface TreeConnection extends Widget, com.top_logic.graphic.flow.opera
 	/**
 	 * Adds a value to the {@link #getDashes()} list.
 	 */
-	com.top_logic.graphic.flow.data.TreeConnection addDashe(double value);
+	com.top_logic.graphic.flow.data.TreeConnection addDash(double value);
 
 	/**
 	 * Removes a value from the {@link #getDashes()} list.
 	 */
-	void removeDashe(double value);
+	void removeDash(double value);
 
 	/**
 	 * Decorations to place on the connection.

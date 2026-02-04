@@ -1,7 +1,5 @@
 <?xml version="1.0"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>com.top-logic</groupId>
@@ -69,17 +67,18 @@
 		<connection>scm:git:https://github.com/top-logic/tl-engine.git</connection>
 		<developerConnection>scm:git:https://git.top-logic.com/TopLogic/tl-engine-7.git</developerConnection>
 		<url>https://github.com/top-logic/tl-engine</url>
+		<tag>HEAD</tag>
 	</scm>
 	
 	<modules>
 		<!-- Archetypes -->
-		<module>../tl-archetype-app</module>
+		<module>tl-archetype-app</module>
 
 		<!-- Module parents -->
-		<module>../tl-parent-app</module>
-		<module>../tl-parent-core</module>
-		<module>../tl-parent-build</module>
-		<module>../tl-parent-gwt</module>
+		<module>tl-parent-app</module>
+		<module>tl-parent-core</module>
+		<module>tl-parent-build</module>
+		<module>tl-parent-gwt</module>
 	</modules>
 
 	<profiles>
@@ -91,7 +90,7 @@
 
 			<modules>
 				<!-- TopLogic aggregator -->
-				<module>../tl-parent-engine</module>
+				<module>tl-parent-engine</module>
 			</modules>			
 		</profile>
 		
@@ -198,8 +197,22 @@
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
+				<artifactId>tl-ajax-client</artifactId>
+				<version>${tl.version}</version>
+			    <classifier>sources</classifier>
+			    <scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
 				<artifactId>tl-client-diagramjs</artifactId>
 				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-client-diagramjs</artifactId>
+				<version>${tl.version}</version>
+			    <classifier>sources</classifier>
+			    <scope>provided</scope>
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
@@ -208,8 +221,22 @@
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
+				<artifactId>tl-graph-diagramjs-client</artifactId>
+				<version>${tl.version}</version>
+				<classifier>sources</classifier>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
 				<artifactId>tl-graphic-blocks-client</artifactId>
 				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-graphic-blocks-client</artifactId>
+				<version>${tl.version}</version>
+				<classifier>sources</classifier>
+				<scope>provided</scope>
 			</dependency>
 
 			<dependency>
@@ -299,6 +326,13 @@
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
+				<artifactId>tl-ajax-shared</artifactId>
+				<version>${tl.version}</version>
+				<classifier>sources</classifier>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
 				<artifactId>tl-basic</artifactId>
 				<version>${tl.version}</version>
 			</dependency>
@@ -339,6 +373,13 @@
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
+				<artifactId>tl-basic-shared</artifactId>
+				<version>${tl.version}</version>
+				<classifier>sources</classifier>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
 				<artifactId>tl-bpe</artifactId>
 				<version>${tl.version}</version>
 			</dependency>
@@ -359,6 +400,13 @@
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
+				<artifactId>tl-common-json</artifactId>
+				<version>${tl.version}</version>
+				<classifier>sources</classifier>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
 				<artifactId>tl-chart-chartjs</artifactId>
 				<version>${tl.version}</version>
 			</dependency>
@@ -366,6 +414,13 @@
 				<groupId>com.top-logic</groupId>
 				<artifactId>tl-common-remote</artifactId>
 				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-common-remote</artifactId>
+				<version>${tl.version}</version>
+				<classifier>sources</classifier>
+				<scope>provided</scope>
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
@@ -419,8 +474,22 @@
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
+				<artifactId>tl-graph-common</artifactId>
+				<version>${tl.version}</version>
+				<classifier>sources</classifier>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
 				<artifactId>tl-graph-diagramjs</artifactId>
 				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-graph-diagramjs</artifactId>
+				<version>${tl.version}</version>
+				<classifier>sources</classifier>
+				<scope>provided</scope>
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
@@ -441,6 +510,13 @@
 				<groupId>com.top-logic</groupId>
 				<artifactId>tl-graphic-blocks</artifactId>
 				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-graphic-blocks</artifactId>
+				<version>${tl.version}</version>
+				<classifier>sources</classifier>
+				<scope>provided</scope>
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
@@ -1404,13 +1480,11 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-release-plugin</artifactId>
-				<version>3.0.1</version>
+				<version>3.3.1</version>
 				<configuration>
-					<tagBase>http://tl.bos.local/svn/top-logic/tags/TL/</tagBase>
-					<branchBase>http://tl.bos.local/svn/top-logic/branches/TL/</branchBase>
 					<autoVersionSubmodules>true</autoVersionSubmodules>
 					<tagNameFormat>TL_@{project.version}</tagNameFormat>
-					<preparationGoals>clean install com.top-logic:tl-maven-plugin:set-tl-version</preparationGoals>
+					<preparationGoals>clean install</preparationGoals>
 				</configuration>
 			</plugin>
 			
@@ -1924,7 +1998,7 @@
 										</goals>
 									</pluginExecutionFilter>
 									<action>
-										<ignore></ignore>
+										<ignore />
 									</action>
 								</pluginExecution>
 								<pluginExecution>
@@ -1943,7 +2017,7 @@
 										</goals>
 									</pluginExecutionFilter>
 									<action>
-										<ignore></ignore>
+										<ignore />
 									</action>
 								</pluginExecution>
 								<pluginExecution>
@@ -1962,7 +2036,7 @@
 										</goals>
 									</pluginExecutionFilter>
 									<action>
-										<ignore></ignore>
+										<ignore />
 									</action>
 								</pluginExecution>
 							</pluginExecutions>

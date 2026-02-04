@@ -156,7 +156,7 @@ public abstract class InlineCollectionStorage<C extends InlineCollectionStorage.
 	public ObjectKey getPartId(Map<String, Object> row) {
 		String referenceColumn = getConfig().getReferenceColumn();
 		if (referenceColumn == null) {
-			return getAttribute().tId();
+			return getAttribute().getDefinition().tId();
 		} else {
 			return (ObjectKey) row.get(referenceColumn);
 		}

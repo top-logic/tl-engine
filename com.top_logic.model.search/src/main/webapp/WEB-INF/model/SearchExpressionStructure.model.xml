@@ -12,6 +12,10 @@
 			</annotations>
 			<types>
 				<interface name="SearchExpression">
+					<generalizations>
+						<generalization type="tl.accounts:WithOwner"/>
+						<generalization type="tl.search:IsPublished"/>
+					</generalizations>
 					<annotations>
 						<legacy-qualified-name qualified-name="SearchExpression"/>
 					</annotations>
@@ -27,7 +31,11 @@
 						<property name="expression"
 							mandatory="true"
 							type="tl.core:String"
-						/>
+						>
+							<annotations>
+								<size-constraint/>
+							</annotations>
+						</property>
 					</attributes>
 				</interface>
 				<class name="SearchExpressionNode">

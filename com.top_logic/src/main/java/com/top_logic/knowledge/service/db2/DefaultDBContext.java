@@ -26,6 +26,7 @@ import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.DebugHelper;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.TLID;
+import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.col.FilterUtil;
 import com.top_logic.basic.col.IdentityHashSet;
 import com.top_logic.basic.col.InlineList;
@@ -72,17 +73,18 @@ import com.top_logic.knowledge.service.merge.MergeConflictDescription;
 import com.top_logic.knowledge.service.merge.MergeConflictException;
 import com.top_logic.knowledge.service.merge.ReferenceToDeleted;
 import com.top_logic.knowledge.wrap.WrapperFactory;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.cs.TLObjectChangeSet;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.util.TLContext;
 
 /**
- * For every Transaction in Progress in the DBKB there is a DBContext.
- * 
- * @author    <a href="mailto:kha@top-logic.com">kha</a>
+ * For every {@link Transaction} in progress in the {@link DBKnowledgeBase} there is a
+ * {@link DefaultDBContext}.
  */
-/*package protected*/
-class DefaultDBContext extends DBContext {
+@FrameworkInternal
+public class DefaultDBContext extends DBContext {
 
 	/**
 	 * Switch to enable tracing context allocations.
@@ -237,14 +239,15 @@ class DefaultDBContext extends DBContext {
 
     /**
 	 * Create a new DBContext for the given database connection.
-     * @param anUpdater
-	 *        a name identifying the upodating Person.
+	 * 
+	 * @param updater
+	 *        Name identifying the committing {@link Person}.
 	 */
-	public DefaultDBContext(DBKnowledgeBase kb, String anUpdater) {
+	public DefaultDBContext(DBKnowledgeBase kb, String updater) {
 		super();
 		this.kb = kb;
 		
-		this.updater = anUpdater;
+		this.updater = updater;
 		
 		this.committables = new IdentityHashSet<>(INIT_SIZE);
 		this.committablesDeleted = new IdentityHashSet<>(INIT_SIZE);
@@ -760,8 +763,6 @@ class DefaultDBContext extends DBContext {
 
 					JournalLine journalLine = createJournalLine();
 					
-					handleSecurityUdate();
-					
 					prepareCommitables();
 
 					// Filter out locally removed objects that have been concurrently deleted. Those
@@ -781,6 +782,8 @@ class DefaultDBContext extends DBContext {
 					// constraint checking with an ugly error message.
 					UpdateEvent updateEvent = createUpdateEvent();
 					checkVeto(updateEvent);
+
+					handleSecurityUpdate(updateEvent);
 
 					Map<MOKnowledgeItem, Object> changes = new HashMap<>();
 					ArrayList<DBKnowledgeItem> removedObjects = commitRemoved(commitConnection, commitNumber, changes);
@@ -1192,35 +1195,30 @@ class DefaultDBContext extends DBContext {
 		}
 	}
 	
-    protected void handleSecurityUdate() {
+	protected void handleSecurityUpdate(UpdateEvent event) {
     	if (AccessManager.Module.INSTANCE.isActive()) {
-    		AccessManager.getInstance().handleSecurityUpdate(
-				kb,
-					Collections.<TLID, Object> emptyMap(),
-					this.<Object> toNameMap(this.newObjectsById),
-					this.<Object> toNameMap(this.removedObjectsById),
-    				kb);
+			TLObjectChangeSet modelChangeSet = createModelChangeSet(event);
+			if (modelChangeSet == null) {
+				// No model change set available,
+				return;
+			}
+			AccessManager.getInstance().handleSecurityUpdate(modelChangeSet, kb);
     	} else {
 			Logger.info("Commit without access manager, security is not updated.", DefaultDBContext.class);
     	}
     }
 
-	private <T> Map<TLID, T> toNameMap(HashMap<? extends ObjectKey, ? extends T> objectsByKey) {
-		Map<TLID, T> result = new HashMap<>();
-		for (Entry<? extends ObjectKey, ? extends T> entry : objectsByKey.entrySet()) {
-            
-            ObjectKey key = entry.getKey();
-			// TODO #1960: Workaround for missing branch support in SecurityStorage: Only objects in
-			// trunk have object-based security.
-			if (TLContext.TRUNK_ID != key.getBranchContext()) {
-            	continue;
-            }
-            
-			Object clash = result.put(key.getObjectName(), entry.getValue());
-            assert clash == null;
-        }
-        return result;
-    }
+	/**
+	 * Creates a {@link TLObjectChangeSet} from the given {@link UpdateEvent}.
+	 * 
+	 * @param event
+	 *        {@link UpdateEvent} for the current change.
+	 * @return {@link TLObjectChangeSet} based on the {@link UpdateEvent} or <code>null</code>, when
+	 *         no event could be created.
+	 */
+	protected TLObjectChangeSet createModelChangeSet(UpdateEvent event) {
+		return null;
+	}
 
 	private static <K, V> Map<K, V> unmodifyableCopy(Map<? extends K, ? extends V> map) {
 		if (map.isEmpty()) {

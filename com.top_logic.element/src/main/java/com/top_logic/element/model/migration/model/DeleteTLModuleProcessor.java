@@ -81,6 +81,7 @@ public class DeleteTLModuleProcessor extends TLModelBaseLineMigrationProcessor<D
 
 	private boolean internalDoMigration(Log log, PooledConnection connection, Document tlModel) throws Exception {
 		String moduleName = getConfig().getName();
+		log.info("Deleting module '" + moduleName + "'.");
 		Module module = _util.getTLModule(connection, TLContext.TRUNK_ID, moduleName);
 		if (module == null) {
 			log.info("No module with name '" + moduleName + "' to delete available at " + getConfig().location());

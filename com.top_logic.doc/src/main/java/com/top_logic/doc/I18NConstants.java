@@ -26,6 +26,11 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey1 TRANSLATED_SUCCESSFUL__COUNT;
 
+	/**
+	 * @en Updated documentation from file system. Last change date: {0}
+	 */
+	public static ResKey1 UPDATE_DOCUMENTATION_FROM_FS__DATE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

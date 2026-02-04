@@ -46,38 +46,45 @@
 	</index>
 </metaobject>
 
-<!-- Association between a bound object and a BoundedRole -->
-<association super_class="Association" object_name="hasRole">
-<attributes>
-	<destination
-		override="true"
-		target-type="BoundedRole"
-	/>
-	<reference att_name="owner" 
-		mandatory="true"
-		initial="true"
-		history-type="current" 
-		branch-global="false" 
-		monomorphic="true" 
-		is-container="false" 
-		deletion-policy="delete-referer" 
-		target-type="Group"
-	/>
-</attributes>
-</association>
-
-<association super_class="Association" object_name="hasGlobalRole">
-<attributes>
-	<source
-		override="true"
-		target-type="Person"
-	/>
-	<destination
-		override="true"
-		target-type="BoundedRole"
-	/>
-</attributes>
-</association>
+		<!-- Association between a bound object and a BoundedRole -->
+		<metaobject
+			object_name="hasRole"
+			object_type="MOKnowledgeObject"
+			super_class="Object"
+		>
+			<annotations>
+				<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.KnowledgeItemFactoryAnnotation">
+					<implementation-factory class="com.top_logic.knowledge.service.db2.KnowledgeObjectFactory"/>
+				</annotation>
+				<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.FullLoadAnnotation"
+					full-load="true"
+				/>
+				<key-attributes attributes="source,dest"/>
+			</annotations>
+			<attributes>
+				<reference
+					att_name="source"
+					deletion-policy="delete-referer"
+					mandatory="true"
+					monomorphic="false"
+					target-type="Object"
+				/>
+				<reference
+					att_name="dest"
+					deletion-policy="delete-referer"
+					mandatory="true"
+					monomorphic="false"
+					target-type="BoundedRole"
+				/>
+				<reference
+					att_name="owner"
+					deletion-policy="delete-referer"
+					mandatory="true"
+					monomorphic="true"
+					target-type="Group"
+				/>
+			</attributes>
+		</metaobject>
 
 <association super_class="Association" object_name="hasGroupMembers">
 <attributes>

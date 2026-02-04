@@ -6,7 +6,7 @@
 	<rules>
 		<rule
 			inherit="true"
-			meta-element="projElement:ROOT:projElement.All"
+			meta-element="projElement:projElement.All"
 			resource-key="roleRule.invalidRole"
 			role="unknown"
 		>

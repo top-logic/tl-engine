@@ -210,12 +210,6 @@
 				</type-system>
 			</type-systems>
 		</config>
-		
-		<config config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$GlobalConfig">
-			<types>
-				<type name="tl.legacy.tabletypes:FlexReportTable" attributes="name"/>
-			</types>
-		</config>
 	</configs>
 	
 	<defaults>

@@ -34,5 +34,26 @@
 				</mo_attribute>
 			</attributes>
 		</metaobject>
+		<metaobject object_name="hasRole">
+			<annotations>
+		    	<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
+					<binding application-type="com.top_logic.element.meta.kbbased.AttributedWrapper"/>
+				</annotation>
+				<key-attributes attributes="source,dest,tType"/>
+			</annotations>
+			<attributes>
+				<mo_attribute class="com.top_logic.dob.attr.ComputedMOAttribute"
+					att_name="tType"
+					att_type="MetaElement"
+					mandatory="true"
+				>
+					<storage class="com.top_logic.dob.attr.storage.CachedComputedAttributeStorage">
+						<value-factory class="com.top_logic.element.meta.kbbased.TLTypeCacheFactory"
+							type="tl.accounts:RoleAssignment"
+						/>
+					</storage>
+				</mo_attribute>
+			</attributes>
+		</metaobject>
 	</metaobjects>
 </objectlist>

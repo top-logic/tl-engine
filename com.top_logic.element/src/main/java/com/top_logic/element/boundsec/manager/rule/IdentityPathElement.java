@@ -9,6 +9,7 @@ import java.util.Collection;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.knowledge.wrap.Wrapper;
+import com.top_logic.model.TLStructuredTypePart;
 
 /**
  * The IdentityPathElement is used for rules with no path elements to map some roles to
@@ -19,7 +20,7 @@ import com.top_logic.knowledge.wrap.Wrapper;
 public class IdentityPathElement extends PathElement {
 
     public IdentityPathElement() {
-        super((String)null, false);
+		super(null, false);
     }
 
     @Override
@@ -31,5 +32,10 @@ public class IdentityPathElement extends PathElement {
 	public Collection getValues(Wrapper aBase) {
         return CollectionUtil.intoList(aBase);
     }
+
+	@Override
+	public TLStructuredTypePart getMetaAttribute() {
+		throw new NullPointerException("No MetaAttribute.");
+	}
 
 }

@@ -61,7 +61,7 @@ public class SecurityRowAccessor extends ReadOnlyAccessor<SecurityRow> {
 		else if (aKey.equals(SecurityRowAccessor.REASON)) {
 			Object reason = aRow.getReason();
 			if (SecurityStorage.REASON_HAS_ROLE.equals(reason)) {
-				return BoundedRole.HAS_ROLE_ASSOCIATION;
+				return BoundedRole.ROLE_ASSIGNMENT_OBJECT_NAME;
 			}
 			return reason;
 		}

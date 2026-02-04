@@ -131,7 +131,7 @@ public class TestElementAccessImporter extends BasicTestCase {
     public void testInvalidPathMetaElement2Rules() throws Exception {
 		this.multiProblemTest(
                 ROLE_RULES_INVALID_PATH_META_ELEMENT_2,
-			I18NConstants.ILLEGAL_META_ELEMENT.fill("projElement:ROOT:projElement.Project", "projElement.All")
+			I18NConstants.ILLEGAL_META_ELEMENT.fill("projElement:projElement.Project", "projElement.All")
         );
     }
 
@@ -160,7 +160,7 @@ public class TestElementAccessImporter extends BasicTestCase {
 		RoleRulesImporter importer = RoleRulesImporter.loadRules(elementAccessManager(), roleRules);
 		assertTrue(importer.getProblems().isEmpty());
 
-		final Map<Object, Collection<RoleProvider>> theRulesMap = importer.getRules();
+		final Map<TLClass, Collection<RoleProvider>> theRulesMap = importer.getRules();
 		assertEquals(2, theRulesMap.size());
 
 		List<RuleDesc> allRuleDescs = new ArrayList<>();

@@ -14,12 +14,11 @@ import com.top_logic.basic.LongID;
 import com.top_logic.basic.TLID;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider;
 import com.top_logic.element.layout.admin.component.ShowSecurityResultConverter.ShowSecurityBusinessObjectResolver;
-import com.top_logic.knowledge.objects.KnowledgeAssociation;
+import com.top_logic.knowledge.objects.KnowledgeItem;
+import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.search.Expression;
-import com.top_logic.knowledge.service.BasicTypes;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
-import com.top_logic.knowledge.service.db2.DBKnowledgeAssociation;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.tool.boundsec.BoundRole;
@@ -194,30 +193,34 @@ public interface SecurityRow {
 
 		// Protected methods
 
-		/** 
-		 * Find a wrapper by inspecting the {@link KnowledgeAssociation} named {@link BoundedRole#HAS_ROLE_ASSOCIATION}.
+		/**
+		 * Find a wrapper by inspecting the {@link KnowledgeItem} named
+		 * {@link BoundedRole#ROLE_ASSIGNMENT_OBJECT_NAME}.
 		 * 
-		 * @param    sourceID    The source ID of the association.
-		 * @param    destID      The destination ID of the association.
-		 * @return   The requested wrapper or the given source ID (when wrapper not found).
+		 * @param sourceID
+		 *        The source ID of the association.
+		 * @param destID
+		 *        The destination ID of the association.
+		 * @return The requested wrapper or the given source ID (when wrapper not found).
 		 */
 		protected Object findBOViaHasRole(TLID sourceID, TLID destID) {
 			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 
 			Expression sourceIdAttr = identifier(
-				reference(BasicTypes.ASSOCIATION_TYPE_NAME, DBKnowledgeAssociation.REFERENCE_SOURCE_NAME));
+				reference(BoundedRole.ROLE_ASSIGNMENT_OBJECT_NAME, BoundedRole.ATTRIBUTE_OBJECT));
 			Expression destIdAttr = identifier(
-				reference(BasicTypes.ASSOCIATION_TYPE_NAME, DBKnowledgeAssociation.REFERENCE_DEST_NAME));
-			List<KnowledgeAssociation> search = kb.search(associationQuery(
+				reference(BoundedRole.ROLE_ASSIGNMENT_OBJECT_NAME, BoundedRole.ATTRIBUTE_ROLE));
+			List<KnowledgeObject> search = kb.search(queryUnresolved(
 				filter(
-					allOf(BoundedRole.HAS_ROLE_ASSOCIATION),
+					allOf(BoundedRole.ROLE_ASSIGNMENT_OBJECT_NAME),
 					and(
 						eqBinary(sourceIdAttr, literal(sourceID)),
 						eqBinary(destIdAttr, literal(destID))))));
 			try {
-				for (KnowledgeAssociation theItem : search) {
+				for (KnowledgeItem theItem : search) {
 					Wrapper theWrapper;
-					theWrapper = WrapperFactory.getWrapper(theItem.getSourceObject());
+					theWrapper = WrapperFactory
+						.getWrapper((KnowledgeItem) theItem.getAttributeValue(BoundedRole.ATTRIBUTE_OBJECT));
 
 					return (theWrapper != null) ? theWrapper : sourceID;
 				}

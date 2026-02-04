@@ -13,7 +13,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.CollectionUtil;
@@ -26,20 +25,14 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.util.StopWatch;
-import com.top_logic.dob.MetaObject;
 import com.top_logic.element.boundsec.manager.ElementAccessManager;
-import com.top_logic.element.boundsec.manager.rule.ExternalRoleProvider;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider;
 import com.top_logic.element.boundsec.manager.rule.RoleRule;
 import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.knowledge.security.SecurityStorage;
-import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.StorageException;
 import com.top_logic.knowledge.wrap.Wrapper;
-import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.model.TLClass;
-import com.top_logic.model.TLObject;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.wrap.Group;
@@ -267,8 +260,6 @@ public class ElementSecurityStorage extends SecurityStorage {
             Logger.info("Computing rules...", ElementSecurityStorage.class);
 			StopWatch sw = StopWatch.createStartedWatch();
             computeMERuleBasedRoles();
-            computeMORuleBasedRoles();
-            computeExternalRulesBasedRoles();
 			Logger.info("Computing of rules completed in " + sw + ".", ElementSecurityStorage.class);
         }
         finally {
@@ -277,23 +268,6 @@ public class ElementSecurityStorage extends SecurityStorage {
     }
 
 
-
-    /**
-     * Compute all roles based on the configured {@link ExternalRoleProvider}s.
-     */
-    public void computeExternalRulesBasedRoles() {
-        Logger.info("Computing external rules...", ElementSecurityStorage.class);
-		StopWatch sw = StopWatch.createStartedWatch();
-        ElementAccessManager theAM = (ElementAccessManager)getAccessManager();
-        Map<String, ExternalRoleProvider> externalRules = theAM.getExternalRules();
-        int counterRules = externalRules.size();
-        for(Iterator<Map.Entry<String, ExternalRoleProvider>> theIt = externalRules.entrySet().iterator(); theIt.hasNext(); ) {
-            Entry<String, ExternalRoleProvider> theNext = theIt.next();
-            ExternalRoleProvider theRoleRuleFactory = theNext.getValue();
-            theRoleRuleFactory.computeRoles(this.executor);
-        }
-		Logger.info("Done in " + sw + ". Executed " + counterRules + " external rules.", ElementSecurityStorage.class);
-    }
 
     /**
 	 * Creates the database entries based on {@link TLClass} rules.
@@ -358,74 +332,6 @@ public class ElementSecurityStorage extends SecurityStorage {
 				+ ", rules: " + counterRules + "). Computed entries: " + counterEntries + ".",
 			ElementSecurityStorage.class);
 	}
-
-    /**
-     * Creates the database entries based on MetaObject rules.
-     *
-     * @throws StorageException
-     *             if some error occurs while requesting the database
-     */
-    protected void computeMORuleBasedRoles() throws StorageException {
-        Logger.info("Computing MO rules...", ElementSecurityStorage.class);
-		StopWatch sw = StopWatch.createStartedWatch();
-        int counterBOs = 0, counterRules = 0, counterExecs = 0, counterInserts = 0;
-        KnowledgeBase theKB = PersistencyLayer.getKnowledgeBase();
-        ElementAccessManager theAM = (ElementAccessManager)getAccessManager();
-
-		List<Object[]> batchInserts = new ArrayList<>();
-		Map<Object, Object> sharedIds = new HashMap<>();
-
-        // Vector for insert parameters - group, object, role, rule
-		Object[] theVector = new Object[] { null, null, null, null };
-
-        // Map < MetaObject, Collection < Rule > >
-		Map<MetaObject, Collection<RoleProvider>> theMetaObjects = theAM.getResolvedMORules();
-
-        // Iterator <MetaObject>
-		Iterator<MetaObject> itMO = theMetaObjects.keySet().iterator();
-        while (itMO.hasNext()) {
-			MetaObject theMO = itMO.next();
-			Collection<RoleProvider> theRules = theMetaObjects.get(theMO);
-            counterRules += theRules.size();
-
-            // Iterator <Business Object>
-			Iterator<TLObject> theObjectIterator = WrapperFactory.getWrappersByType(theMO.getName(), theKB).iterator();
-			while (theObjectIterator.hasNext()) {
-				TLObject theBusinessObject = theObjectIterator.next();
-			    theVector[1] = objectId(theBusinessObject);
-			    counterBOs++;
-
-			    // Iterator <RoleRule>
-				Iterator<RoleProvider> itRule = theRules.iterator();
-			    while (itRule.hasNext()) {
-					RoleProvider theRule = itRule.next();
-			        theVector[2] = roleId(theRule);
-			        theVector[3] = theAM.getPersitancyId(theRule);
-					Collection<Group> theGroups = theRule.getGroups((BoundObject) theBusinessObject);
-			        counterExecs++;
-
-			        // Iterator <Group>
-					Iterator<Group> itGroup = theGroups.iterator();
-			        while (itGroup.hasNext()) {
-						Group theGroup = itGroup.next();
-						theVector[0] = securityId(theGroup);
-			            try {
-							batchInsert(theVector, batchInserts, sharedIds);
-			                counterInserts++;
-			            }
-			            catch (IllegalArgumentException e) {
-			                Logger.warn("An element is null - something is wrong in this world.", e, ElementSecurityStorage.class);
-			            }
-			        }
-			    }
-			}
-        }
-        multiInsert(batchInserts);
-		Logger.info(
-			"Done in " + sw + ". Executed " + counterExecs + " MO based rules (business objects: " + counterBOs
-				+ ", rules: " + counterRules + "). Computed entries: " + counterInserts + ".",
-			ElementSecurityStorage.class);
-    }
 
 	private Object roleId(RoleProvider theRule) {
 		return securityId(theRule.getRole());

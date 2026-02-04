@@ -94,8 +94,6 @@ com.top_logic.element.boundsec.manager.ElementAccessManager.java: Missing docume
 com.top_logic.element.boundsec.manager.ElementAccessManager.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessManager.getRules
 com.top_logic.element.boundsec.manager.ElementAccessManager.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessManager.getRulesWithSourceRole
 com.top_logic.element.boundsec.manager.ElementSecurityUpdateManager.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementSecurityUpdateManager.handleSecurityUpdate
-com.top_logic.element.boundsec.manager.FallbackAccessManager.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.element.boundsec.manager.FallbackAccessManager
-com.top_logic.element.boundsec.manager.FallbackAccessManager.java: Invalid camel case word 'FallbackAccessManager', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.boundsec.manager.GroupImporter.java: Missing documentation: com.top_logic.element.boundsec.manager.GroupImporter
 com.top_logic.element.boundsec.manager.GroupImporter.java: Missing documentation: com.top_logic.element.boundsec.manager.GroupImporter.EntryHandler
 com.top_logic.element.boundsec.manager.GroupImporter.java: Missing documentation: com.top_logic.element.boundsec.manager.GroupImporter.GroupHandler
@@ -124,8 +122,6 @@ com.top_logic.element.boundsec.manager.StorageAccessManager.java: Invalid camel 
 com.top_logic.element.boundsec.manager.StorageAccessManager.java: Missing documentation: com.top_logic.element.boundsec.manager.StorageAccessManager.Config.getStorage
 com.top_logic.element.boundsec.manager.StorageAccessManager.java: Missing documentation: com.top_logic.element.boundsec.manager.StorageAccessManager.Config.getUpdateManager
 com.top_logic.element.boundsec.manager.StorageAccessManager.java: Missing documentation: com.top_logic.element.boundsec.manager.StorageAccessManager.Config.getUsePersonRoleCache
-com.top_logic.element.boundsec.manager.rule.ExternalRoleProvider.java: Missing documentation: com.top_logic.element.boundsec.manager.rule.ExternalRoleProvider.Config.getRuleName
-com.top_logic.element.boundsec.manager.rule.ExternalRoleProvider.java: Missing documentation: com.top_logic.element.boundsec.manager.rule.ExternalRoleProvider.getAffectedObjects
 com.top_logic.element.boundsec.manager.rule.GroupMapper.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.element.boundsec.manager.rule.GroupMapper
 com.top_logic.element.boundsec.manager.rule.HasRoleGroupMapper.java: Missing documentation: com.top_logic.element.boundsec.manager.rule.HasRoleGroupMapper
 com.top_logic.element.boundsec.manager.rule.IdentityPathElement.java: Invalid camel case word 'IdentityPathElement', this may only be used within JavaDoc links or HTML code tags.
@@ -145,7 +141,6 @@ com.top_logic.element.boundsec.manager.rule.RoleRule.java: Missing documentation
 com.top_logic.element.boundsec.manager.rule.RoleRuleResourceProvider.java: Invalid camel case word 'ResourceProvider', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.boundsec.manager.rule.RoleRuleResourceProvider.java: Invalid camel case word 'RoleRules', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.boundsec.manager.rule.RoleRuleResourceProvider.java: Missing documentation: com.top_logic.element.boundsec.manager.rule.RoleRuleResourceProvider.INSTANCE
-com.top_logic.element.boundsec.manager.rule.SecurityStorageCommitObserver.java: Invalid camel case word 'SecurityStorageCommitObserver', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.boundsec.manager.rule.config.PathElementConfig.java: Missing documentation: com.top_logic.element.boundsec.manager.rule.config.PathElementConfig.getAssociation
 com.top_logic.element.boundsec.manager.rule.config.PathElementConfig.java: Missing documentation: com.top_logic.element.boundsec.manager.rule.config.PathElementConfig.getAttribute
 com.top_logic.element.boundsec.manager.rule.config.PathElementConfig.java: Missing documentation: com.top_logic.element.boundsec.manager.rule.config.PathElementConfig.getMetaElement
@@ -1165,7 +1160,6 @@ com.top_logic.element.meta.query.SecurityFilter.java: Invalid camel case word 'S
 com.top_logic.element.meta.query.SecurityFilter.java: Invalid camel case word 'StoredQuery', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.meta.query.SimpleAttributeFilter.java: Invalid camel case word 'SimpleMetaAttributes', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.meta.query.StatefulElementFilter.java: Missing documentation: com.top_logic.element.meta.query.StatefulElementFilter.KEY_ELT_STATE
-com.top_logic.element.meta.query.StoredFlexWrapper.java: Missing documentation: com.top_logic.element.meta.query.StoredFlexWrapper
 com.top_logic.element.meta.query.StoredQuery.java: Invalid camel case word 'CollectionFilters', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.meta.query.StoredQuery.java: Invalid camel case word 'StoredQueries', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.meta.query.StoredQuery.java: Invalid camel case word 'StoredQuery', this may only be used within JavaDoc links or HTML code tags.

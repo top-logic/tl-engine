@@ -51,7 +51,7 @@ import com.top_logic.basic.sql.PostgreSQLHelper;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.StopWatch;
 import com.top_logic.dob.MetaObject;
-import com.top_logic.knowledge.objects.KnowledgeAssociation;
+import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.CommitHandler;
@@ -660,33 +660,38 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
     }
 
     /**
-     * Inserts an entry from a hasRole association to the database: The given group has the
-     * given role an the given business object for the hasRole reason. The parameter must
-     * NOT be <code>null</code>.
-     *
-     * @param aKA
-     *            the has role association to insert
-     * @return <code>true</code> if a entry has been inserted, <code>false</code> if the
-     *         entry was already in the database
-     * @throws StorageException
-     *             if some error occurs while requesting the database
-     */
-    public boolean insert(KnowledgeAssociation/*<hasRole>*/ aKA) throws StorageException {
-        if (aKA == null || !aKA.tTable().getName().equals(BoundedRole.HAS_ROLE_ASSOCIATION)) {
-            throw new IllegalArgumentException("Illegal Arguments: The KA must be a KnowledgeAssociation of type " + BoundedRole.HAS_ROLE_ASSOCIATION);
-        }
+	 * Inserts an entry from a {@link BoundedRole#ROLE_ASSIGNMENT_OBJECT_NAME} to the database: The
+	 * given group has the given role an the given business object for the {@link #REASON_HAS_ROLE
+	 * "hasRole"} reason. The parameter must NOT be <code>null</code>.
+	 *
+	 * @param roleAssignment
+	 *        The {@link BoundedRole#ROLE_ASSIGNMENT_OBJECT_NAME assignment} to insert.
+	 * @return <code>true</code> if a entry has been inserted, <code>false</code> if the entry was
+	 *         already in the database
+	 * @throws StorageException
+	 *         if some error occurs while requesting the database
+	 */
+	public boolean insert(KnowledgeItem/* <hasRole> */ roleAssignment) throws StorageException {
+		ensureRoleAssignment(roleAssignment);
         try {
-            KnowledgeObject owner = (KnowledgeObject) aKA.getAttributeValue(BoundedRole.ATTRIBUTE_OWNER);
 			return insert(new Object[] {
-				objectId(owner),
-				objectId(aKA.getSourceObject()),
-				objectId(aKA.getDestinationObject()),
+				objectId(roleAssignment.getReferencedKey(BoundedRole.ATTRIBUTE_OWNER)),
+				objectId(roleAssignment.getReferencedKey(BoundedRole.ATTRIBUTE_OBJECT)),
+				objectId(roleAssignment.getReferencedKey(BoundedRole.ATTRIBUTE_ROLE)),
 				REASON_HAS_ROLE });
         }
         catch (Exception e) {
             throw new StorageException("Can't get necessary informations from the KA.", e);
         }
     }
+
+	private void ensureRoleAssignment(KnowledgeItem roleAssignment) {
+		if (roleAssignment == null
+				|| !roleAssignment.tTable().getName().equals(BoundedRole.ROLE_ASSIGNMENT_OBJECT_NAME)) {
+			throw new IllegalArgumentException(
+				"Illegal argument: The item must have type " + BoundedRole.ROLE_ASSIGNMENT_OBJECT_NAME);
+        }
+	}
 
     // Remove
 
@@ -767,24 +772,22 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
     }
 
     /**
-     * Removes an entry from a hasRole association from the database. The parameter must NOT
-     * be <code>null</code>.
-     *
-     * @param aKA
-     *            the has role association to remove
-     * @return the amount of entries that have been deleted from the database
-     * @throws StorageException
-     *             if some error occurs while requesting the database
-     */
-    public int remove(KnowledgeAssociation/*<hasRole>*/ aKA) throws StorageException {
-        if (aKA == null || !aKA.tTable().getName().equals(BoundedRole.HAS_ROLE_ASSOCIATION)) {
-            throw new IllegalArgumentException("Illegal Arguments: The KA must be a KnowledgeAssociation of type " + BoundedRole.HAS_ROLE_ASSOCIATION);
-        }
+	 * Removes an entry from a {@link BoundedRole#ROLE_ASSIGNMENT_OBJECT_NAME} from the database.
+	 * The parameter must NOT be <code>null</code>.
+	 *
+	 * @param roleAssignment
+	 *        The {@link BoundedRole#ROLE_ASSIGNMENT_OBJECT_NAME assignment} to remove.
+	 * @return the amount of entries that have been deleted from the database
+	 * @throws StorageException
+	 *         if some error occurs while requesting the database
+	 */
+	public int remove(KnowledgeItem/* <hasRole> */ roleAssignment) throws StorageException {
+		ensureRoleAssignment(roleAssignment);
         try {
 			return remove(new Object[] {
-				objectId(((KnowledgeItem) aKA.getAttributeValue(BoundedRole.ATTRIBUTE_OWNER))),
-				objectId(aKA.getSourceObject()),
-				objectId(aKA.getDestinationObject()),
+				objectId(roleAssignment.getReferencedKey(BoundedRole.ATTRIBUTE_OWNER)),
+				objectId(roleAssignment.getReferencedKey(BoundedRole.ATTRIBUTE_OBJECT)),
+				objectId(roleAssignment.getReferencedKey(BoundedRole.ATTRIBUTE_ROLE)),
 				REASON_HAS_ROLE });
         }
         catch (Exception e) {
@@ -801,16 +804,15 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
      * @throws StorageException
      *             if some error occurs while requesting the database
      */
-	public int removeObjects(Map<TLID, Object> removedObjects) throws StorageException {
+	public int removeObjects(Map<TLID, KnowledgeItem> removedObjects) throws StorageException {
         if (CollectionUtil.isEmptyOrNull(removedObjects)) return 0;
         int result = removeObjects(CollectionUtil.toList(removedObjects.keySet()));
 
         try {
 			Object[] vector = new Object[4];
-			for (Map.Entry<TLID, Object> entry : removedObjects.entrySet()) {
-                Object value = entry.getValue();
-				if (value instanceof KnowledgeObject
-						&& ((KnowledgeObject) value).tTable().getName().equals(Group.OBJECT_NAME)) {
+			for (Map.Entry<TLID, KnowledgeItem> entry : removedObjects.entrySet()) {
+				KnowledgeItem value = entry.getValue();
+				if (value.tTable().getName().equals(Group.OBJECT_NAME)) {
                     vector[0] = entry.getKey();
                     result += executor.remove(vector);
                 }
@@ -1101,7 +1103,7 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
 		StopWatch sw = StopWatch.createStartedWatch();
         int counterEntries = 0;
         KnowledgeBase theKB = PersistencyLayer.getKnowledgeBase();
-		for (KnowledgeAssociation association : theKB.getAllKnowledgeAssociations(BoundedRole.HAS_ROLE_ASSOCIATION)) {
+		for (KnowledgeObject association : theKB.getAllKnowledgeObjects(BoundedRole.ROLE_ASSIGNMENT_OBJECT_NAME)) {
 			if (insert(association))
 				counterEntries++;
 
@@ -1810,8 +1812,8 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
 		return storageValue(KBUtils.getWrappedObjectName(obj));
 	}
 
-	protected static Object objectId(KnowledgeItem obj) {
-		return storageValue(KBUtils.getObjectName(obj));
+	protected static Object objectId(ObjectKey obj) {
+		return storageValue(obj.getObjectName());
 	}
 
     /**

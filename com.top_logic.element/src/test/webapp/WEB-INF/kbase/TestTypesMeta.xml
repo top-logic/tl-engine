@@ -58,6 +58,9 @@
 			object_name="CompositePart"
 			super_class="AttributedObject"
 		>
+			<annotations>
+				<key-attributes attributes="container,reference"/>
+			</annotations>
 			<attributes>
 				<reference
 					att_name="container"

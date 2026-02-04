@@ -61,9 +61,7 @@ import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
-import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
-import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.manager.AccessManager.Config;
@@ -482,106 +480,7 @@ public class TestElementAccessManager extends BasicTestCase {
         }
     }
 
-	private void createRoles(String[] someRoleName, String aStructureName) {
-		Transaction tx = begin();
-		TLModule scope = TLModelUtil.findModule(aStructureName);
-        for (int theI = 0; theI < someRoleName.length; theI++) {
-            String theRoleName = someRoleName[theI];
-            BoundedRole       theBR   = BoundedRole.createBoundedRole(aStructureName + "." + theRoleName);
-			theBR.bind(scope);
-        }
-		tx.commit();
-    }
-
-	private void deleteRoles(String[] someRoleName) {
-		Transaction tx = begin();
-        for (int theI = 0; theI < someRoleName.length; theI++) {
-            String theRoleName = someRoleName[theI];
-            BoundedRole   theBR = BoundedRole.getRoleByName(theRoleName);
-            theBR.unbind();
-            theBR.tDelete();
-        }
-		tx.commit();
-
-    }
-
-    public void testSourceMEMO() throws Exception {
-
-        Person        personA = null;
-        Person        personB = null;
-        Person        personC = null;
-        StructuredElementWrapper theProd        = null;
-        StructuredElementWrapper theProdVersion = null;
-        StructuredElementWrapper theProdType    = null;
-
-        createRoles(new String[] { "testRoleVersionME", "testRoleVersionMO", "testRoleTypeME", "testRoleTypeMO"} , "prodElement");
-
-        BoundedRole testRoleVersionME = BoundedRole.getRoleByName("prodElement.testRoleVersionME");
-        BoundedRole testRoleVersionMO = BoundedRole.getRoleByName("prodElement.testRoleVersionMO");
-        BoundedRole testRoleTypeME    = BoundedRole.getRoleByName("prodElement.testRoleTypeME");
-        BoundedRole testRoleTypeMO    = BoundedRole.getRoleByName("prodElement.testRoleTypeMO");
-
-        try {
-
-            RELOAD_SECURITY_STORAGE_AFTER_EACH_COMMIT = false;
-
-			Transaction tx1 = begin();
-            // create three different persons
-            personA = initPerson("AAX");
-            personB = initPerson("BBX");
-            personC = initPerson("CCX");
-
-			commit(tx1);
-
-            AccessManager theAM = AccessManager.getInstance();
-			loadRules("/WEB-INF/init/InitialTestMEMORoleRules.xml");
-            reloadStorage();
-			TLContext context = TLContext.getContext();
-            context.setCurrentPerson(personA);
-
-			StructuredElement theRoot = rootForStructure("prodElement");
-
-			Transaction tx2 = begin();
-            theProd        = (StructuredElementWrapper) theRoot.createChild("prod",        "Product");
-            theProdVersion = (StructuredElementWrapper) theProd.createChild("prodVersion", "ProductVersion");
-            theProdType    = (StructuredElementWrapper) theProd.createChild("prodType",    "ProductType");
-
-            assertTrue("Expected no initial roles for personA on product.", theAM.getRoles(personA, theProd)       .isEmpty());
-            assertTrue("Expected no initial roles for personB on version.", theAM.getRoles(personA, theProdVersion).isEmpty());
-            assertTrue("Expected no initial roles for personC on type.",    theAM.getRoles(personA, theProdType)   .isEmpty());
-
-            theProdVersion.setValue("Verantwortlicher", personA);
-			commit(tx2);
-
-            assertRoles(theAM, personA, theProdVersion, new Object[] { testRoleVersionME, testRoleVersionMO, testRoleTypeME, testRoleTypeMO });
-            assertRoles(theAM, personA, theProd,        new Object[] { testRoleVersionME, testRoleVersionMO });
-
-
-			Transaction tx3 = begin();
-            theProdVersion.setValue("Verantwortlicher", null);
-            theProdType   .setValue("Verantwortlicher", personA);
-
-			commit(tx3);
-
-            assertRoles(theAM, personA, theProdType,    new Object[] { testRoleVersionME, testRoleVersionMO, testRoleTypeME, testRoleTypeMO });
-            assertRoles(theAM, personA, theProd,        new Object[] { testRoleTypeME, testRoleTypeMO });
-
-
-			Transaction tx4 = begin();
-            theProdType   .setValue("Verantwortlicher", null);
-
-			commit(tx4);
-
-            assertRoles(theAM, personA, theProd,        new Object[] { });
-
-        } finally {
-            deleteRoles(new String[] { testRoleVersionME.getName(), testRoleVersionMO.getName(), testRoleTypeME.getName(), testRoleTypeMO.getName() });
-            cleanUp(new AbstractWrapper[] { theProd, theProdVersion, theProdType },
-				new Person[] { personA, personB, personC });
-        }
-    }
-
-    public void testMEStructureA() throws Exception {
+	public void testMEStructureA() throws Exception {
         RELOAD_SECURITY_STORAGE_AFTER_EACH_COMMIT = false;
         sysOut("\n\ntestMEStructureA:");
         doTestME();

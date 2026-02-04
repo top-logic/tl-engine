@@ -6,39 +6,14 @@
 			<instance>
 				<role-rules>
 					<rules>
-						<!-- SEARCH -->
-
 						<rule
-							meta-object="StoredQuery"
+							inherit="true"
+							meta-element="tl.accounts:WithOwner"
 							role="SecurityStructure.OwnerRole"
 						>
 							<path>
 								<step
-									association="hasOwner"
-									inverse="false"
-								/>
-							</path>
-						</rule>
-
-						<rule
-							meta-object="SearchExpressionTable"
-							role="SecurityStructure.OwnerRole"
-						>
-							<path>
-								<step
-									association="hasOwner"
-									inverse="false"
-								/>
-							</path>
-						</rule>
-
-						<rule
-							meta-object="FlexReport"
-							role="SecurityStructure.OwnerRole"
-						>
-							<path>
-								<step
-									association="hasOwner"
+									attribute="owner"
 									inverse="false"
 								/>
 							</path>
@@ -77,8 +52,9 @@
 						>
 							<path>
 								<step
-									association="hasStructureChild"
+									attribute="children"
 									inverse="true"
+									meta-element="DemoSecurity:DemoSecurityElementContainer"
 								/>
 							</path>
 						</inheritance-rule>
@@ -107,25 +83,12 @@
 
 						<inheritance-rule
 							inherit="true"
-							meta-element="DemoSecurity:DemoSecurity.All"
+							meta-element="DemoSecurity:DemoSecurityElementContainer"
 							role="DemoSecurity.navigation"
 						>
 							<path>
 								<step
-									association="hasStructureChild"
-									inverse="false"
-								/>
-							</path>
-						</inheritance-rule>
-
-						<inheritance-rule
-							inherit="true"
-							meta-element="DemoSecurity:DemoSecurity.Root"
-							role="DemoSecurity.navigation"
-						>
-							<path>
-								<step
-									association="hasStructureChild"
+									attribute="children"
 									inverse="false"
 								/>
 							</path>
@@ -140,12 +103,12 @@
 
 						<inheritance-rule
 							inherit="true"
-							meta-element="DemoTypes:DemoTypes.All"
+							meta-element="DemoTypes:DemoTypesContainer"
 							role="DemoTypes.Navigation"
 						>
 							<path>
 								<step
-									association="hasDemoStructureChild"
+									attribute="children"
 									inverse="false"
 								/>
 							</path>
@@ -154,51 +117,13 @@
 						<inheritance-rule
 							inherit="true"
 							meta-element="DemoTypes:DemoTypes.All"
-							role="DemoTypes.Administrator"
+							role="DemoTypes.Administrator,DemoTypes.StringAdministrator,DemoTypes.BooleanAdministrator,DemoTypes.DateAdministrator,DemoTypes.Responsible"
 						>
 							<path>
 								<step
-									association="hasDemoStructureChild"
+									attribute="children"
 									inverse="true"
-								/>
-							</path>
-						</inheritance-rule>
-
-						<inheritance-rule
-							inherit="true"
-							meta-element="DemoTypes:DemoTypes.All"
-							role="DemoTypes.StringAdministrator"
-						>
-							<path>
-								<step
-									association="hasDemoStructureChild"
-									inverse="true"
-								/>
-							</path>
-						</inheritance-rule>
-
-						<inheritance-rule
-							inherit="true"
-							meta-element="DemoTypes:DemoTypes.All"
-							role="DemoTypes.BooleanAdministrator"
-						>
-							<path>
-								<step
-									association="hasDemoStructureChild"
-									inverse="true"
-								/>
-							</path>
-						</inheritance-rule>
-
-						<inheritance-rule
-							inherit="true"
-							meta-element="DemoTypes:DemoTypes.All"
-							role="DemoTypes.DateAdministrator"
-						>
-							<path>
-								<step
-									association="hasDemoStructureChild"
-									inverse="true"
+									meta-element="DemoTypes:DemoTypesContainer"
 								/>
 							</path>
 						</inheritance-rule>
@@ -222,18 +147,23 @@
 								/>
 							</path>
 						</rule>
-						<inheritance-rule
+						<rule
 							inherit="true"
-							meta-element="DemoTypes:DemoTypes.All"
+							meta-element="DemoTypes:DemoTypes.A"
 							role="DemoTypes.Responsible"
 						>
 							<path>
 								<step
-									association="hasDemoStructureChild"
+									attribute="responsibleContact"
+									meta-element="DemoTypes:DemoTypes.A"
+								/>
+								<step
+									attribute="contact"
 									inverse="true"
+									meta-element="tl.accounts:Person"
 								/>
 							</path>
-						</inheritance-rule>
+						</rule>
 
 						<inheritance-rule
 							base="structureRoot@DemoTypes"

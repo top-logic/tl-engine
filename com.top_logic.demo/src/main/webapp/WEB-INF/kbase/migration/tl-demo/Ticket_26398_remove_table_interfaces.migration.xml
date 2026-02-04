@@ -67,6 +67,19 @@
 			part="DemoTypes:DemoTypes.X#untypedWrapper"
 			target="tl.model:TLObject"
 		/>
+
+		<change-part-type
+			part="DemoPlain:DemoPlain.A#createdBy"
+			target="tl.accounts:Person"
+		/>
+		<change-part-type
+			part="DemoPlain:DemoPlain.A#modifiedBy"
+			target="tl.accounts:Person"
+		/>
+		<change-part-type
+			part="DemoTypes:DemoTypes.X#historicWrapper"
+			target="DemoTypes:DemoTypes.All"
+		/>
 	</processors>
 	<migration/>
 	<post-processors/>

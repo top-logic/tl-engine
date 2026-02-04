@@ -23,6 +23,10 @@
 			</instance>
 		</config>
 		
+		<config service-class="com.top_logic.model.cache.TLModelCacheService">
+			<instance class="com.top_logic.element.model.cache.ElementModelCacheService"/>
+		</config>
+		
 		<config service-class="com.top_logic.layout.scripting.recorder.ref.ValueNamingSchemeRegistry">
 			<instance class="com.top_logic.layout.scripting.recorder.ref.ValueNamingSchemeRegistry">
 				<schemes>
@@ -1124,13 +1128,6 @@
 			<show-table-dialog>true</show-table-dialog>
 		</config>
 
-		<config config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$GlobalConfig">
-			<types>
-				<type name="tl.legacy.tabletypes:TagTable" attributes="name"/>
-				<type name="tl.legacy.tabletypes:StoredQueryTable" attributes="name"/>
-			</types>
-		</config>
-
 		<config config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.FieldAnalyzers">
 			<analyzers>
 				<!-- Use label matcher first. -->
@@ -1160,6 +1157,9 @@
 			<property name="discardCommand" value="gridDiscard"/>
 			<property name="cancelCommand" value="gridCancelEdit"/>
 			<property name="deleteCommand" value="dispatchingDelete"/>
+		</config>
+		<config interface="com.top_logic.knowledge.service.KnowledgeBaseConfiguration">
+			<property name="context-factory" value="com.top_logic.element.knowledge.ElementContextFactory"/>
 		</config>
 	</defaults>
 

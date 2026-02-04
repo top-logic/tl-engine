@@ -1823,10 +1823,6 @@ com.top_logic.knowledge.wrap.JournallableWrapper.java: Invalid camel case word '
 com.top_logic.knowledge.wrap.JournallableWrapper.java: Invalid camel case word 'WrapperJournalEntry', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.knowledge.wrap.JournallableWrapper.java: Invalid camel case word 'getMetaObject', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.knowledge.wrap.JournallableWrapper.java: Invalid camel case word 'getName', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.knowledge.wrap.LegacyFlexWrapper.java: Invalid camel case word 'CommitContext', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.knowledge.wrap.LegacyFlexWrapper.java: Invalid camel case word 'FlexWrapper', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.knowledge.wrap.LegacyFlexWrapper.java: Invalid camel case word 'KnowledgeObject', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.knowledge.wrap.LegacyFlexWrapper.java: Invalid camel case word 'MySQL', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.knowledge.wrap.RefersTo.java: Invalid camel case word 'aWrapper', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.knowledge.wrap.RefersTo.java: Invalid camel case word 'referenceType', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.knowledge.wrap.RefersTo.java: Missing documentation: com.top_logic.knowledge.wrap.RefersTo.OBJECT_NAME

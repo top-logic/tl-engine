@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_28710_RoleAssignment_TLSearch"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29019_Removed_log_entries"
+			module="tl"
+		/>
+		<dependency name="Ticket_28710_Update_application_types"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<create-module name="tl.search"/>
+		<create-class name="tl.search:IsPublished"
+			abstract="true"
+			without-primary-generalization="true"
+		/>
+		<create-class name="tl.search:StoredQuery"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		>
+			<annotations>
+				<table name="StoredQuery"/>
+			</annotations>
+		</create-class>
+		<create-class name="tl.accounts:RoleAssignment"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		>
+			<annotations>
+				<table name="hasRole"/>
+			</annotations>
+		</create-class>
+		<create-class name="tl.accounts:WithOwner"
+			abstract="true"
+			without-primary-generalization="true"
+		/>
+		<add-class-generalizations name="tl.search:IsPublished">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="tl.search:StoredQuery">
+			<generalizations>
+				<generalization type="tl.accounts:WithOwner"/>
+				<generalization type="tl.search:IsPublished"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="tl.accounts:RoleAssignment">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="tl.accounts:WithOwner">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</add-class-generalizations>
+		<create-property name="tl.search:StoredQuery#name"
+			mandatory="true"
+			type="tl.core:String"
+		/>
+		<create-property name="tl.search:StoredQuery#sortOrder"
+			type="tl.core:Integer"
+		/>
+
+		<create-reference name="tl.accounts:WithOwner#owner"
+			deletion-policy="delete-referer"
+			navigate="true"
+			type="tl.accounts:Person"
+		>
+			<annotations>
+				<storage-algorithm>
+					<singleton-link-storage
+						monomorphic-table="true"
+						table="hasOwner"
+					/>
+				</storage-algorithm>
+			</annotations>
+		</create-reference>
+		<create-reference name="tl.search:IsPublished#publishedTo"
+			multiple="true"
+			navigate="true"
+			type="tl.accounts:Group"
+		>
+			<annotations>
+				<storage-algorithm>
+					<set-storage
+						monomorphic-table="true"
+						table="hasPublisher"
+					/>
+				</storage-algorithm>
+			</annotations>
+		</create-reference>
+		<create-reference name="tl.accounts:RoleAssignment#role"
+			deletion-policy="delete-referer"
+			mandatory="true"
+			navigate="true"
+			type="tl.accounts:Role"
+		>
+			<annotations>
+				<storage-algorithm>
+					<foreign-key-storage
+						storage-attribute="dest"
+						storage-type="hasRole"
+					/>
+				</storage-algorithm>
+			</annotations>
+		</create-reference>
+		<create-reference name="tl.accounts:RoleAssignment#group"
+			deletion-policy="delete-referer"
+			mandatory="true"
+			navigate="true"
+			type="tl.accounts:Group"
+		>
+			<annotations>
+				<storage-algorithm>
+					<foreign-key-storage
+						storage-attribute="owner"
+						storage-type="hasRole"
+					/>
+				</storage-algorithm>
+			</annotations>
+		</create-reference>
+		<create-reference name="tl.accounts:RoleAssignment#object"
+			deletion-policy="delete-referer"
+			mandatory="true"
+			navigate="true"
+			type="tl.model:TLObject"
+		>
+			<annotations>
+				<storage-algorithm>
+					<foreign-key-storage
+						storage-attribute="source"
+						storage-type="hasRole"
+					/>
+				</storage-algorithm>
+			</annotations>
+		</create-reference>
+	</processors>
+	<migration>
+		<type-mapping class=""/>
+	</migration>
+	<post-processors/>
+</migration>

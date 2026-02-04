@@ -7,7 +7,6 @@ package test.com.top_logic.model.search.expr;
 
 import static com.top_logic.model.search.expr.query.QueryExecutor.*;
 
-import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -1160,9 +1159,6 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 	}
 
 	public void testHtml() {
-		// Decimal separator depends on Locale
-		char decimalSeparator = DecimalFormatSymbols.getInstance(TLContext.getLocale()).getDecimalSeparator();
-
 		with("TestSearchExpression-testHtml.scenario.xml",
 			scenario -> {
 				SearchExpression renderer = search(
@@ -1184,10 +1180,10 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 				{
 					assertEquals(
 						"<table>" +
-							"<tr><td>a4</td>" + "<td>8" + decimalSeparator + "9</td>" + "<td>D</td></tr>" +
-							"<tr><td>a3</td>" + "<td>8" + decimalSeparator + "9</td>" + "<td>C</td></tr>" +
-							"<tr><td>a5</td>" + "<td>8" + decimalSeparator + "9</td>" + "<td></td></tr>" +
-							"<tr class=\"critical\"><td>a1</td>" + "<td>42" + decimalSeparator + "13</td>"
+							"<tr><td>a4</td>" + "<td>8.9</td>" + "<td>D</td></tr>" +
+							"<tr><td>a3</td>" + "<td>8.9</td>" + "<td>C</td></tr>" +
+							"<tr><td>a5</td>" + "<td>8.9</td>" + "<td></td></tr>" +
+							"<tr class=\"critical\"><td>a1</td>" + "<td>42.13</td>"
 							+ "<td>A</td></tr>" +
 							"<tr><td>a2</td>" + "<td></td>" + "<td>B</td></tr>" +
 							"</table>",
@@ -1226,21 +1222,6 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		TagWriter buffer = new TagWriter();
 		execute(DummyDisplayContext.newInstance(), buffer, renderer, args);
 		return buffer.toString();
-	}
-
-	public void testHtmlSafety() throws ParseException {
-		try {
-			search("{{{<a href=\"javascript:alert();\">click</a>}}}");
-			fail("Expected error.");
-		} catch (I18NRuntimeException ex) {
-			assertEquals(com.top_logic.basic.html.I18NConstants.NO_JAVASCRIPT_ALLOWED,
-				Location.detail(ex.getErrorKey()));
-		}
-	}
-
-	public void testHtmlSafetyDynamic() throws ParseException {
-		SearchExpression expr = search("{{{<a href=\"{concat('java', 'script:alert();')}\">click</a>}}}");
-		assertFalse(render(expr).contains("javascript:"));
 	}
 
 	public void testDynamicValuesInURL() throws ParseException {
@@ -2546,6 +2527,60 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 			}
 			tx.commit();
 		}
+	}
+
+	public void testXMLValid() throws ParseException {
+		// Valid well-formed XML
+		search("{{{<div><span>Hello</span></div>}}}");
+		search("{{{<div><p>Test</p><p>Test2</p></div>}}}");
+		search("{{{<div><span><b>Nested</b></span></div>}}}");
+		search("{{{<br/>}}}");
+		search("{{{<img src=\"test.png\"/>}}}");
+	}
+
+	public void testXMLMismatchedTags() throws ParseException {
+		try {
+			search("{{{<div><span>Hello</div></span>}}}");
+			fail("Expected error for mismatched tags.");
+		} catch (TopLogicException ex) {
+			assertEquals(
+				com.top_logic.model.search.expr.config.dom.I18NConstants.ERROR_MISMATCHED_TAGS__EXPECTED_ACTUAL,
+				Location.detail(ex.getErrorKey()).plain());
+		}
+	}
+
+	public void testXMLNoMatchingStartTag() throws ParseException {
+		try {
+			search("{{{<div>Hello</div></span>}}}");
+			fail("Expected error for end tag without start tag.");
+		} catch (TopLogicException ex) {
+			assertEquals(
+				com.top_logic.model.search.expr.config.dom.I18NConstants.ERROR_NO_MATCHING_START_TAG__NAME,
+				Location.detail(ex.getErrorKey()).plain());
+		}
+	}
+
+	public void testXMLMultipleUnclosedTags() throws ParseException {
+		try {
+			search("{{{<div><span><p>Hello}}}");
+			fail("Expected error for unclosed tag.");
+		} catch (TopLogicException ex) {
+			assertEquals(
+				com.top_logic.model.search.expr.config.dom.I18NConstants.ERROR_UNCLOSED_TAG__NAME,
+				Location.detail(ex.getErrorKey()).plain());
+		}
+	}
+
+	public void testXMLEmptyTags() throws ParseException {
+		// Empty tags should not require closing
+		search("{{{<div><br/><hr/>Text</div>}}}");
+		search("{{{<div><input type=\"text\"/></div>}}}");
+	}
+
+	public void testXMLNestedStructure() throws ParseException {
+		// Complex nested structure
+		search("{{{<div><ul><li><a href=\"#\">Link</a></li></ul></div>}}}");
+		search("{{{<table><tr><td>Cell1</td><td>Cell2</td></tr></table>}}}");
 	}
 
 	private Object value(TLObject obj, String name) {

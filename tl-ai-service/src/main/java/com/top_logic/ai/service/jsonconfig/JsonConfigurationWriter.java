@@ -46,7 +46,16 @@ import com.top_logic.common.json.gstream.JsonWriter;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class JsonConfigurationWriter {
-	
+
+	/**
+	 * Meta-property that links a configuration to its configuration type.
+	 * 
+	 * <p>
+	 * For schema-aware serialization, this property is mandatory.
+	 * </p>
+	 */
+	private static final String TYPE_PROPERTY = "$type";
+
 	private JsonWriter _out;
 
 	private boolean _schemaAware;
@@ -147,7 +156,11 @@ public class JsonConfigurationWriter {
 		// reconstructed from from the content.
 		Class<?> typeAnnotation;
 		if (descriptor == staticType) {
-			typeAnnotation = null;
+			if (_schemaAware) {
+				typeAnnotation = staticType.getConfigurationInterface();
+			} else {
+				typeAnnotation = null;
+			}
 		} else {
 			Class<?> expectedConfigurationInterface = descriptor.getConfigurationInterface();
 			if (implClassProperty != null) {
@@ -196,10 +209,10 @@ public class JsonConfigurationWriter {
 		}
 		_out.beginObject();
 		if (_schemaAware) {
-			if (typeAnnotation != null) {
-				_out.name("$type");
-				_out.value(typeAnnotation.getName());
-			}
+			assert typeAnnotation != null : "Scheme aware serialization must not ommit type annotations.";
+
+			_out.name(TYPE_PROPERTY);
+			_out.value(typeAnnotation.getName());
 		}
 		
 		List<PropertyDescriptor> properties =

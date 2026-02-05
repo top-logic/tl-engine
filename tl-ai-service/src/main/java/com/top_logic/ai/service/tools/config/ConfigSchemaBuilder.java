@@ -142,12 +142,11 @@ public class ConfigSchemaBuilder {
 	 *
 	 * <pre>
 	 * <code>
-	 * value-schema(A) :=
-	 *   any-of(
-	 *     base-schema(A) if not abstract, 
-	 *     ref:extension-schema(Bn), ...  // with Bn is a direct sub-type of A
-	 *   ) 
-	 *
+	 * value-schema(A) := any-of(
+	 *   all-of(required-type-ref(A), ref:properties(A)), // if A is non-abstract
+	 *   ref:value-schema(Bn), ...  // with Bn is a direct sub-type of A
+	 * )
+	 * 
 	 * properties(A) :=
 	 *   all-of(local-properties(A), ref:properties(Cn),...) if A is a config type and Cn is a direct super-type of A
 	 *   properties(C) if A is an implementation type and C is its configuration interface.
@@ -158,12 +157,6 @@ public class ConfigSchemaBuilder {
 	 *
 	 * base-schema(A) :=
 	 *   all-of(optional-type-ref(A), ref:properties(A))
-	 *
-	 * extension-schema(A) :=
-	 *   any-of(
-	 *     all-of(required-type-ref(A), ref:properties(A)), // if A is non-abstract
-	 *     ref:extension-schema(Bn), ...  // with Bn is a direct sub-type of A
-	 *   )
 	 *
 	 * required-type-ref(A) :=
 	 *   JSON object schema that defines just the required $type property fixed to A.class.getName()
@@ -302,56 +295,59 @@ public class ConfigSchemaBuilder {
 	}
 
 	/**
-	 * Builds a value-schema for type A.
+	 * Builds an extension-schema for type A.
 	 *
 	 * <pre>
 	 * value-schema(A) := any-of(
-	 *   base-schema(A), // if non-abstract 
-	 *   ref:extension-schema(Bn),... // with Bn is a direct sub-type of A
+	 *   all-of(required-type-ref(A), ref:properties(A)), // if A is non-abstract
+	 *   ref:value-schema(Bn), ...  // with Bn is a direct sub-type of A
 	 * )
 	 * </pre>
+	 *
+	 * <p>
+	 * When {@link #_inline} is set, the properties schema is inlined directly instead of being
+	 * referenced.
+	 * </p>
 	 */
 	private Schema buildConfigValueSchema(ConfigurationDescriptor descriptor) {
-		String schemaName = schemaId(descriptor);
-
-		// Check cache to handle recursive references
-		if (_schemaCache.containsKey(schemaName)) {
-			return ref(schemaName);
+		String extensionSchemaId = schemaId(descriptor);
+	
+		if (_schemaCache.containsKey(extensionSchemaId)) {
+			return ref(extensionSchemaId);
 		}
-
-		// Reserve the slot in cache before processing to handle recursion
-		_schemaCache.put(schemaName, null);
-
+	
+		// Reserve slot to handle recursion
+		_schemaCache.put(extensionSchemaId, null);
+	
 		Schema result;
 		if (descriptor.getConfigurationInterface() == ConfigurationItem.class) {
+			// Safety: Do not iterate the world.
 			result = allConfigs();
 		} else {
 			result = NONE;
 
-			// Add base-schema(A) if A is not abstract
+			// The concrete configuration itself.
 			if (!descriptor.isAbstract()) {
-				result = anyOf(result, buildBaseSchema(descriptor));
+				AllOfSchema allOf = AllOfSchema.create();
+
+				allOf.addAllOf(buildRequiredTypeRef(descriptor));
+
+				Schema propertiesSchema = buildPropertiesSchema(descriptor);
+				inlineAllOf(allOf, propertiesSchema);
+
+				Schema self = finalize(allOf);
+
+				result = anyOf(result, self);
 			}
 
-			// Add ref:extension-schema(Bn) for each direct non-abstract sub-type Bn
-			Collection<Class<?>> directSubtypes = getDirectSubtypes(descriptor);
-			for (Class<?> subtype : directSubtypes) {
-				try {
-					ConfigurationDescriptor subtypeDescriptor = TypedConfiguration.getConfigurationDescriptor(subtype);
-
-					// Build extension schema and cache it
-					Schema extensionSchema = buildExtensionSchema(subtypeDescriptor);
-
-					result = anyOf(result, extensionSchema);
-				} catch (Exception ex) {
-					Logger.warn("Invalid sub-configuration encountered: " + subtype.getName(), ex,
-						ConfigSchemaBuilder.class);
-				}
+			// Add sub-type options.
+			for (Class<?> subType : getDirectSubtypes(descriptor)) {
+				result = anyOf(result, buildConfigValueSchema(TypedConfiguration.getConfigurationDescriptor(subType)));
 			}
 		}
-
-		_schemaCache.put(schemaName, result);
-		return ref(schemaName);
+		
+		_schemaCache.put(extensionSchemaId, result);
+		return ref(extensionSchemaId);
 	}
 
 	/**
@@ -368,80 +364,6 @@ public class ConfigSchemaBuilder {
 
 	private RefSchema ref(String schemaName) {
 		return RefSchema.create().setRef("#/$defs/" + schemaName);
-	}
-
-	/**
-	 * Builds a base-schema for type A.
-	 *
-	 * <pre>
-	 * base-schema(A) := all-of(optional-type-ref(A), ref:properties(A))
-	 * </pre>
-	 *
-	 * <p>
-	 * When {@link #_inline} is set, the properties schema is inlined directly instead of being
-	 * referenced.
-	 * </p>
-	 */
-	private Schema buildBaseSchema(ConfigurationDescriptor descriptor) {
-		AllOfSchema allOf = AllOfSchema.create();
-		allOf.addAllOf(buildOptionalTypeRef(descriptor));
-
-		Schema propertiesSchema = buildPropertiesSchema(descriptor);
-		inlineAllOf(allOf, propertiesSchema);
-
-		return finalize(allOf);
-	}
-
-	/**
-	 * Builds an extension-schema for type A.
-	 *
-	 * <pre>
-	 * extension-schema(A) :=
-	 *   any-of(
-	 *     all-of(required-type-ref(A), ref:properties(A)), // if A is non-abstract
-	 *     ref:extension-schema(Bn), ...  // with Bn is a direct sub-type of A
-	 *   )
-	 * </pre>
-	 *
-	 * <p>
-	 * When {@link #_inline} is set, the properties schema is inlined directly instead of being
-	 * referenced.
-	 * </p>
-	 */
-	private Schema buildExtensionSchema(ConfigurationDescriptor descriptor) {
-		String extensionSchemaId = extensionSchemaId(descriptor);
-
-		if (_schemaCache.containsKey(extensionSchemaId)) {
-			return ref(extensionSchemaId);
-		}
-
-		// Reserve slot to handle recursion
-		_schemaCache.put(extensionSchemaId, null);
-
-		Schema result = NONE;
-
-		// The concrete configuration itself.
-		if (!descriptor.isAbstract()) {
-			AllOfSchema allOf = AllOfSchema.create();
-
-			allOf.addAllOf(buildRequiredTypeRef(descriptor));
-
-			Schema propertiesSchema = buildPropertiesSchema(descriptor);
-			inlineAllOf(allOf, propertiesSchema);
-
-			Schema self = finalize(allOf);
-
-			result = anyOf(result, self);
-		}
-		
-		// Add sub-type options.
-		for (Class<?> subType : TypeIndex.getInstance().getSpecializations(descriptor.getConfigurationInterface(),
-			false, true, true)) {
-			result = anyOf(result, buildExtensionSchema(TypedConfiguration.getConfigurationDescriptor(subType)));
-		}
-		
-		_schemaCache.put(extensionSchemaId, result);
-		return ref(extensionSchemaId);
 	}
 
 	/**
@@ -562,25 +484,6 @@ public class ConfigSchemaBuilder {
 	}
 
 	/**
-	 * Builds an optional-type-ref schema for type A.
-	 *
-	 * <pre>
-	 * optional-type-ref(A) :=
-	 *   JSON object schema that defines just the optional $type property fixed to A.class.getName()
-	 *   and allows any other properties.
-	 * </pre>
-	 */
-	private Schema buildOptionalTypeRef(ConfigurationDescriptor descriptor) {
-		Class<?> configInterface = descriptor.getConfigurationInterface();
-
-		ObjectSchema result = ObjectSchema.create();
-		result.putProperty(TYPE_PROPERTY, ConstSchema.create().setConstValue(configInterface.getName()));
-		// $type is NOT added to required - it's optional
-
-		return result;
-	}
-
-	/**
 	 * Builds a required-type-ref schema for type A.
 	 *
 	 * <pre>
@@ -600,15 +503,11 @@ public class ConfigSchemaBuilder {
 	}
 
 	/**
-	 * Gets direct non-abstract subtypes of a configuration interface.
+	 * Gets direct subtypes of a configuration interface (including abstract ones).
 	 */
 	private Collection<Class<?>> getDirectSubtypes(ConfigurationDescriptor descriptor) {
 		Class<?> configInterface = descriptor.getConfigurationInterface();
 
-		// Use TypeIndex to find direct subtypes
-		// transitive=false for direct subtypes only
-		// onlyInterfaces=true for configuration interfaces
-		// includeAbstract=false to exclude abstract types
 		return TypeIndex.getInstance().getSpecializations(
 			configInterface,
 			/* transitive */ false,
@@ -626,10 +525,6 @@ public class ConfigSchemaBuilder {
 
 	private String propertiesSchemaId(ConfigurationDescriptor descriptor) {
 		return descriptor.getConfigurationInterface().getName() + "#properties";
-	}
-
-	private String extensionSchemaId(ConfigurationDescriptor descriptor) {
-		return descriptor.getConfigurationInterface().getName() + "#extension";
 	}
 
 	/**

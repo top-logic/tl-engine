@@ -35,7 +35,8 @@ import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.io.character.CharacterContent;
 
 /**
- * {@link AbstractConfigurationWriterTest} testing {@link JsonConfigurationWriter}.
+ * {@link AbstractConfigurationWriterTest} testing {@link JsonConfigurationWriter} and
+ * {@link ConfigSchemaBuilder}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

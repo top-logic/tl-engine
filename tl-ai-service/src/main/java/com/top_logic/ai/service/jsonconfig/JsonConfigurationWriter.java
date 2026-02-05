@@ -148,38 +148,44 @@ public class JsonConfigurationWriter {
 		Class<?> typeAnnotation;
 		if (descriptor == staticType) {
 			typeAnnotation = null;
-		} else if (implClassProperty != null) {
-			Class<?> implementationClass = (Class<?>) item.value(implClassProperty);
-			if (implementationClass != null) {
-				boolean staticPolymorph =
-					PolymorphicConfiguration.class.isAssignableFrom(staticType.getConfigurationInterface());
-				if (!staticPolymorph) {
-					/* Assume the static type is not polymorph and a class is set. If no config
-					 * interface is written, then the reader expects a simple ConfigurationItem
-					 * which has no property class. */
-
-					typeAnnotation = descriptor.getConfigurationInterface();
-				} else {
-					try {
-						Class<?> expectedConfigurationInterface =
-							DefaultConfigConstructorScheme.getFactory(implementationClass).getConfigurationInterface();
-						if (!expectedConfigurationInterface.equals(descriptor.getConfigurationInterface())) {
-							typeAnnotation = descriptor.getConfigurationInterface();
-						} else {
-							typeAnnotation = implementationClass;
+		} else {
+			Class<?> expectedConfigurationInterface = descriptor.getConfigurationInterface();
+			if (implClassProperty != null) {
+				Class<?> implementationClass = (Class<?>) item.value(implClassProperty);
+				if (implementationClass != null) {
+					boolean staticPolymorph =
+						PolymorphicConfiguration.class.isAssignableFrom(staticType.getConfigurationInterface());
+					if (!staticPolymorph) {
+						/* Assume the static type is not polymorphic and a class is set. If no
+						 * config interface is written, then the reader expects a simple
+						 * ConfigurationItem which does not accept an implementation class. */
+						typeAnnotation = expectedConfigurationInterface;
+					} else {
+						try {
+							// Configuration type that is required to instantiate the requested
+							// implementation class.
+							Class<?> requiredConfigurationInterface =
+								DefaultConfigConstructorScheme.getFactory(implementationClass)
+									.getConfigurationInterface();
+							if (requiredConfigurationInterface == expectedConfigurationInterface
+								|| expectedConfigurationInterface.isAssignableFrom(requiredConfigurationInterface)) {
+								typeAnnotation = implementationClass;
+							} else {
+								typeAnnotation = expectedConfigurationInterface;
+							}
+						} catch (ConfigurationException ex) {
+							throw new IOException(
+								"Cannot serialize configuration, invalid implementation class '"
+									+ implementationClass.getName() + "'.",
+								ex);
 						}
-					} catch (ConfigurationException ex) {
-						throw new IOException(
-							"Cannot serialize configuration, invalid implementation class '"
-								+ implementationClass.getName() + "'.",
-							ex);
 					}
+				} else {
+					typeAnnotation = expectedConfigurationInterface;
 				}
 			} else {
-				typeAnnotation = descriptor.getConfigurationInterface();
+				typeAnnotation = expectedConfigurationInterface;
 			}
-		} else {
-			typeAnnotation = descriptor.getConfigurationInterface();
 		}
 		
 		if (!_schemaAware) {

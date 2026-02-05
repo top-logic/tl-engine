@@ -58,6 +58,8 @@ import com.top_logic.util.Resources;
  */
 public class ConfigSchemaBuilder {
 
+	private static final String TYPE_PROPERTY = "$type";
+
 	private static final Schema NONE = FalseSchema.create();
 
 	/**
@@ -141,7 +143,10 @@ public class ConfigSchemaBuilder {
 	 * <pre>
 	 * <code>
 	 * value-schema(A) :=
-	 *   any-of(base-schema(A) if not abstract, ref:extension-schema(Bn),...) with Bn is a direct non-abstract sub-type of A
+	 *   any-of(
+	 *     base-schema(A) if not abstract, 
+	 *     ref:extension-schema(Bn), ...  // with Bn is a direct sub-type of A
+	 *   ) 
 	 *
 	 * properties(A) :=
 	 *   all-of(local-properties(A), ref:properties(Cn),...) if A is a config type and Cn is a direct super-type of A
@@ -155,7 +160,10 @@ public class ConfigSchemaBuilder {
 	 *   all-of(optional-type-ref(A), ref:properties(A))
 	 *
 	 * extension-schema(A) :=
-	 *   all-of(required-type-ref(A), ref:properties(A))
+	 *   any-of(
+	 *     all-of(required-type-ref(A), ref:properties(A)), // if A is non-abstract
+	 *     ref:extension-schema(Bn), ...  // with Bn is a direct sub-type of A
+	 *   )
 	 *
 	 * required-type-ref(A) :=
 	 *   JSON object schema that defines just the required $type property fixed to A.class.getName()
@@ -218,15 +226,20 @@ public class ConfigSchemaBuilder {
 				result = anyOf(result, createLocalImplementationSchema(instanceType));
 			}
 
-			for (Class<?> specialization : TypeIndex.getInstance().getSpecializations(instanceType, false, false,
-				true)) {
-				result = anyOf(result, implementationSchema(specialization));
-			}
+			result = addSubtypeOptions(instanceType, result);
 		} catch (ConfigurationException ex) {
 			Logger.warn("Cannot resolve schema for instance type '': " + ex.getMessage(), ex,
 				ConfigSchemaBuilder.class);
 		}
 
+		return result;
+	}
+
+	private Schema addSubtypeOptions(Class<?> instanceType, Schema result) {
+		for (Class<?> specialization : TypeIndex.getInstance().getSpecializations(instanceType, false, false,
+			true)) {
+			result = anyOf(result, implementationSchema(specialization));
+		}
 		return result;
 	}
 
@@ -264,8 +277,8 @@ public class ConfigSchemaBuilder {
 		AllOfSchema allOf = AllOfSchema.create();
 
 		ObjectSchema implRef = ObjectSchema.create();
-		implRef.putProperty("$type", ConstSchema.create().setConstValue(instanceType.getName()));
-		implRef.addRequired("$type");
+		implRef.putProperty(TYPE_PROPERTY, ConstSchema.create().setConstValue(instanceType.getName()));
+		implRef.addRequired(TYPE_PROPERTY);
 		allOf.addAllOf(implRef);
 
 		Class<?> configInterface = DefaultConfigConstructorScheme.getFactory(instanceType).getConfigurationInterface();
@@ -292,9 +305,10 @@ public class ConfigSchemaBuilder {
 	 * Builds a value-schema for type A.
 	 *
 	 * <pre>
-	 * value-schema(A) :=
-	 *   any-of(base-schema(A) if not abstract, ref:extension-schema(Bn),...)
-	 *   with Bn is a direct non-abstract sub-type of A
+	 * value-schema(A) := any-of(
+	 *   base-schema(A), // if non-abstract 
+	 *   ref:extension-schema(Bn),... // with Bn is a direct sub-type of A
+	 * )
 	 * </pre>
 	 */
 	private Schema buildConfigValueSchema(ConfigurationDescriptor descriptor) {
@@ -310,8 +324,7 @@ public class ConfigSchemaBuilder {
 
 		Schema result;
 		if (descriptor.getConfigurationInterface() == ConfigurationItem.class) {
-			// TODO: Prevent enumerating the world.
-			result = ObjectSchema.create();
+			result = allConfigs();
 		} else {
 			result = NONE;
 
@@ -339,6 +352,18 @@ public class ConfigSchemaBuilder {
 
 		_schemaCache.put(schemaName, result);
 		return ref(schemaName);
+	}
+
+	/**
+	 * Generic schema that allows any configuration.
+	 */
+	private ObjectSchema allConfigs() {
+		ObjectSchema allConfigs = ObjectSchema.create();
+		allConfigs.setDescription(
+			"All configuration types fit here. Such situation typically is a but in the configuration descriptor.");
+		allConfigs.putProperty(TYPE_PROPERTY, StringSchema.create());
+		allConfigs.addRequired(TYPE_PROPERTY);
+		return allConfigs;
 	}
 
 	private RefSchema ref(String schemaName) {
@@ -371,7 +396,11 @@ public class ConfigSchemaBuilder {
 	 * Builds an extension-schema for type A.
 	 *
 	 * <pre>
-	 * extension-schema(A) := all-of(required-type-ref(A), ref:properties(A))
+	 * extension-schema(A) :=
+	 *   any-of(
+	 *     all-of(required-type-ref(A), ref:properties(A)), // if A is non-abstract
+	 *     ref:extension-schema(Bn), ...  // with Bn is a direct sub-type of A
+	 *   )
 	 * </pre>
 	 *
 	 * <p>
@@ -389,13 +418,28 @@ public class ConfigSchemaBuilder {
 		// Reserve slot to handle recursion
 		_schemaCache.put(extensionSchemaId, null);
 
-		AllOfSchema allOf = AllOfSchema.create();
-		allOf.addAllOf(buildRequiredTypeRef(descriptor));
+		Schema result = NONE;
 
-		Schema propertiesSchema = buildPropertiesSchema(descriptor);
-		inlineAllOf(allOf, propertiesSchema);
+		// The concrete configuration itself.
+		if (!descriptor.isAbstract()) {
+			AllOfSchema allOf = AllOfSchema.create();
 
-		Schema result = finalize(allOf);
+			allOf.addAllOf(buildRequiredTypeRef(descriptor));
+
+			Schema propertiesSchema = buildPropertiesSchema(descriptor);
+			inlineAllOf(allOf, propertiesSchema);
+
+			Schema self = finalize(allOf);
+
+			result = anyOf(result, self);
+		}
+		
+		// Add sub-type options.
+		for (Class<?> subType : TypeIndex.getInstance().getSpecializations(descriptor.getConfigurationInterface(),
+			false, true, true)) {
+			result = anyOf(result, buildExtensionSchema(TypedConfiguration.getConfigurationDescriptor(subType)));
+		}
+		
 		_schemaCache.put(extensionSchemaId, result);
 		return ref(extensionSchemaId);
 	}
@@ -530,7 +574,7 @@ public class ConfigSchemaBuilder {
 		Class<?> configInterface = descriptor.getConfigurationInterface();
 
 		ObjectSchema result = ObjectSchema.create();
-		result.putProperty("$type", ConstSchema.create().setConstValue(configInterface.getName()));
+		result.putProperty(TYPE_PROPERTY, ConstSchema.create().setConstValue(configInterface.getName()));
 		// $type is NOT added to required - it's optional
 
 		return result;
@@ -549,8 +593,8 @@ public class ConfigSchemaBuilder {
 		Class<?> configInterface = descriptor.getConfigurationInterface();
 
 		ObjectSchema result = ObjectSchema.create();
-		result.putProperty("$type", ConstSchema.create().setConstValue(configInterface.getName()));
-		result.addRequired("$type");
+		result.putProperty(TYPE_PROPERTY, ConstSchema.create().setConstValue(configInterface.getName()));
+		result.addRequired(TYPE_PROPERTY);
 
 		return result;
 	}
@@ -569,7 +613,7 @@ public class ConfigSchemaBuilder {
 			configInterface,
 			/* transitive */ false,
 			/* onlyInterfaces */ true,
-			/* includeAbstract */ false);
+			/* includeAbstract */ true);
 	}
 
 	private String schemaId(Class<?> implType) {
@@ -627,11 +671,11 @@ public class ConfigSchemaBuilder {
 	 */
 	private Schema simplifyAllOf(AllOfSchema allOf) {
 		if (allOf.getAllOf().isEmpty()) {
-			return null;
+			return TrueSchema.create();
 		} else if (allOf.getAllOf().size() == 1) {
 			return allOf.getAllOf().get(0);
-		} else if (allObjectSchemas(allOf)) {
-			return mergeObjectSchemas(allOf);
+		} else if (canMerge(allOf)) {
+			return mergeAllOf(allOf);
 		} else {
 			return allOf;
 		}
@@ -640,11 +684,18 @@ public class ConfigSchemaBuilder {
 	/**
 	 * Checks if all elements in the all-of schema are object schemas.
 	 */
-	private boolean allObjectSchemas(AllOfSchema allOf) {
+	private boolean canMerge(AllOfSchema allOf) {
 		for (Schema schema : allOf.getAllOf()) {
-			if (!(schema instanceof ObjectSchema)) {
-				return false;
+			if (schema instanceof ObjectSchema) {
+				continue;
 			}
+			if (schema instanceof TrueSchema) {
+				continue;
+			}
+			if (schema instanceof FalseSchema) {
+				continue;
+			}
+			return false;
 		}
 		return true;
 	}
@@ -656,14 +707,30 @@ public class ConfigSchemaBuilder {
 	 * Combines properties and required fields from all object schemas.
 	 * </p>
 	 */
-	private ObjectSchema mergeObjectSchemas(AllOfSchema allOf) {
-		ObjectSchema merged = ObjectSchema.create();
+	private Schema mergeAllOf(AllOfSchema allOf) {
+		ObjectSchema merged = null;
 
 		for (Schema schema : allOf.getAllOf()) {
+			if (schema instanceof TrueSchema) {
+				continue;
+			}
+			if (schema instanceof FalseSchema) {
+				return schema;
+			}
+
 			ObjectSchema objectSchema = (ObjectSchema) schema;
+
+			if (merged == null) {
+				merged = ObjectSchema.create();
+			}
 
 			// Merge properties
 			for (Map.Entry<String, Schema> entry : objectSchema.getProperties().entrySet()) {
+				if (merged.getProperties().containsKey(entry.getKey())) {
+					// Prevent clash. overwritten properties are entered first, so all other
+					// properties with the same name are redundant.
+					continue;
+				}
 				merged.putProperty(entry.getKey(), entry.getValue());
 			}
 
@@ -673,6 +740,10 @@ public class ConfigSchemaBuilder {
 					merged.addRequired(required);
 				}
 			}
+		}
+
+		if (merged == null) {
+			return TrueSchema.create();
 		}
 
 		return merged;

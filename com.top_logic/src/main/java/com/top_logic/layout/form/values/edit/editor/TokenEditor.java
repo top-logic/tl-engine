@@ -24,7 +24,6 @@ import com.top_logic.html.template.TagTemplate;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.DisplayUnit;
-import com.top_logic.layout.basic.AbstractCommandModel;
 import com.top_logic.layout.basic.AbstractVisibleControl;
 import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.CommandModel;
@@ -35,9 +34,10 @@ import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.ImmutablePropertyListener;
 import com.top_logic.layout.form.MandatoryChangedListener;
 import com.top_logic.layout.form.ValueListener;
-import com.top_logic.layout.form.control.ButtonControl;
+import com.top_logic.layout.form.model.CommandField;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
+import com.top_logic.layout.form.model.FormGroup;
 import com.top_logic.layout.form.model.StringField;
 import com.top_logic.layout.form.template.model.Templates;
 import com.top_logic.layout.form.values.Fields;
@@ -80,20 +80,27 @@ public class TokenEditor extends AbstractEditor {
 
 		init(editorFactory, model, field, Identity.getInstance(), Identity.getInstance());
 
+		return field;
+	}
+
+	@Override
+	public FormMember createUI(EditorFactory editorFactory, FormContainer container, ValueModel model) {
+		FormGroup group = Fields.group(container, Fields.normalizeFieldName(model.getProperty().getPropertyName()));
+
+		StringField field = (StringField) super.createUI(editorFactory, group, model);
 		Resources resources = Resources.getInstance();
 
-		CommandModel dialogOpener = createDialogOpener(field, resources);
-		CommandModel clearCommand = createClearCommand(field, resources);
+		CommandField dialogOpener = addDialogOpener(group, field, resources);
+		CommandField clearCommand = addClearCommand(group, field, resources);
 
-		template(field, horizontalBox(
+		template(group, horizontalBox(
 			span(css(FormConstants.FLEXIBLE_CSS_CLASS),
 				htmlTemplate(new DisplayValueControl(field))),
 			span(Templates.css(FormConstants.FIXED_RIGHT_CSS_CLASS),
-				htmlTemplate(new ButtonControl(dialogOpener)),
-				htmlTemplate(new ButtonControl(clearCommand)),
-				error())));
-
-		return field;
+				member(dialogOpener),
+				member(clearCommand),
+				error(field))));
+		return group;
 	}
 
 	/**
@@ -110,11 +117,11 @@ public class TokenEditor extends AbstractEditor {
 	 *        The resources for internationalization.
 	 * @return A command model configured with the dialog opener functionality.
 	 */
-	private CommandModel createDialogOpener(StringField tokenField, Resources resources) {
-		CommandModel dialogOpener = new AbstractCommandModel() {
+	private CommandField addDialogOpener(FormGroup group, StringField tokenField, Resources resources) {
+		CommandField dialogOpener = new CommandField("opener") {
 
 			@Override
-			protected HandlerResult internalExecuteCommand(DisplayContext context) {
+			public HandlerResult executeCommand(DisplayContext context) {
 				ResKey dialogTitle = I18NConstants.UPDATE_TOKEN_DIALOG_TITLE;
 				DisplayDimension width = DisplayDimension.dim(600, DisplayUnit.PIXEL);
 				DisplayDimension height = DisplayDimension.dim(250, DisplayUnit.PIXEL);
@@ -123,6 +130,7 @@ public class TokenEditor extends AbstractEditor {
 				return dialog.open(context);
 			}
 		};
+		group.addMember(dialogOpener);
 		dialogOpener.setImage(Icons.UPDATE_TOKEN);
 		dialogOpener.setLabel(resources.getString(I18NConstants.UPDATE_TOKEN_DIALOG_TITLE));
 
@@ -154,15 +162,16 @@ public class TokenEditor extends AbstractEditor {
 	 *        The resources for internationalization.
 	 * @return A command model configured with the clear functionality.
 	 */
-	private CommandModel createClearCommand(StringField tokenField, Resources resources) {
-		CommandModel clearCommand = new AbstractCommandModel() {
+	private CommandField addClearCommand(FormGroup group, StringField tokenField, Resources resources) {
+		CommandField clearCommand = new CommandField("clear") {
 
 			@Override
-			protected HandlerResult internalExecuteCommand(DisplayContext context) {
+			public HandlerResult executeCommand(DisplayContext context) {
 				tokenField.setAsString(null);
 				return HandlerResult.DEFAULT_RESULT;
 			}
 		};
+		group.addMember(clearCommand);
 		clearCommand.setLabel(resources.getString(I18NConstants.CLEAR_TOKEN_FIELD_LABEL));
 		clearCommand.setImage(com.top_logic.layout.form.tag.Icons.DELETE_BUTTON);
 		clearCommand.setNotExecutableImage(com.top_logic.layout.form.tag.Icons.DELETE_BUTTON_DISABLED);

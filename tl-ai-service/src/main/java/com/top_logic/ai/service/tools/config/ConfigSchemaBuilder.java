@@ -182,7 +182,17 @@ public class ConfigSchemaBuilder {
 	 * </ul>
 	 */
 	private Schema buildConfigSchema(ConfigurationDescriptor descriptor) {
-		return buildConfigValueSchema(descriptor);
+		Class<?> instanceType = descriptor.getInstanceType();
+		if (instanceType == null) {
+			return buildConfigValueSchema(descriptor);
+		} else {
+			if (instanceType == Object.class) {
+				// Safety: Do not enumerate the world.
+				return allConfigs();
+			} else {
+				return buildImplementationSchema(instanceType);
+			}
+		}
 	}
 
 	/**
@@ -194,7 +204,7 @@ public class ConfigSchemaBuilder {
 	 * @return An object schema describing all possible implementation classes with their
 	 *         configuration options.
 	 */
-	private Schema implementationSchema(Class<?> instanceType) {
+	private Schema buildImplementationSchema(Class<?> instanceType) {
 		String schemaName = schemaId(instanceType);
 
 		// Check cache to handle recursive references
@@ -231,7 +241,7 @@ public class ConfigSchemaBuilder {
 	private Schema addSubtypeOptions(Class<?> instanceType, Schema result) {
 		for (Class<?> specialization : TypeIndex.getInstance().getSpecializations(instanceType, false, false,
 			true)) {
-			result = anyOf(result, implementationSchema(specialization));
+			result = anyOf(result, buildImplementationSchema(specialization));
 		}
 		return result;
 	}
@@ -686,43 +696,39 @@ public class ConfigSchemaBuilder {
 			result = anyOf(result, NullSchema.create());
 		}
 
-		Schema objectSchema = buildItemObjectPropertySchema(property);
+		Schema objectSchema = buildItemValueSchema(property);
 		result = anyOf(result, objectSchema);
 
 		return result;
 	}
 
-	private Schema buildItemObjectPropertySchema(PropertyDescriptor property) {
+	private Schema buildItemValueSchema(PropertyDescriptor property) {
 		Class<?> instanceType = property.getInstanceType();
 		if (instanceType != null) {
-			return implementationSchema(instanceType);
+			return buildImplementationSchema(instanceType);
 		} else {
-			Class<?> itemType = property.getValueDescriptor().getConfigurationInterface();
-
-			// Get the configuration descriptor for the nested interface
-			ConfigurationDescriptor itemDescriptor = TypedConfiguration.getConfigurationDescriptor(itemType);
-
-			// Recursively build schema for the nested configuration
-			return buildConfigSchema(itemDescriptor);
+			return buildConfigValueSchema(property);
 		}
+	}
+
+	private Schema buildConfigValueSchema(PropertyDescriptor property) {
+		// Get the configuration descriptor for the nested interface
+		ConfigurationDescriptor valueDescriptor = property.getValueDescriptor();
+
+		// Recursively build schema for the nested configuration
+		return buildConfigSchema(valueDescriptor);
 	}
 
 	/**
 	 * Builds schema for LIST/ARRAY properties.
 	 */
 	private Schema buildListPropertySchema(PropertyDescriptor property) {
-		ArraySchema schema = ArraySchema.create();
+		ArraySchema listSchema = ArraySchema.create();
 
-		// Get the element type
-		ConfigurationDescriptor valueDescriptor = property.getValueDescriptor();
+		Schema elementSchema = buildItemValueSchema(property);
+		listSchema.setItems(elementSchema);
 
-		// Create a property descriptor-like schema for the element
-		Schema elementSchema = buildConfigSchema(valueDescriptor);
-		if (elementSchema != null) {
-			schema.setItems(elementSchema);
-		}
-
-		return schema;
+		return listSchema;
 	}
 
 	/**
@@ -732,9 +738,7 @@ public class ConfigSchemaBuilder {
 		// Maps in JSON Schema are typically represented as objects with additionalProperties
 		ObjectSchema schema = ObjectSchema.create();
 
-		// Get the value type
-		ConfigurationDescriptor valueDescriptor = property.getValueDescriptor();
-		Schema valueSchema = buildConfigSchema(valueDescriptor);
+		Schema valueSchema = buildItemValueSchema(property);
 		if (valueSchema != null) {
 			// Check for @Key annotation
 			com.top_logic.basic.config.annotation.Key keyAnnotation =

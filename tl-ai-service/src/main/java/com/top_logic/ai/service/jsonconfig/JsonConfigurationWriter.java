@@ -157,7 +157,16 @@ public class JsonConfigurationWriter {
 		Class<?> typeAnnotation;
 		if (descriptor == staticType) {
 			if (_schemaAware) {
-				typeAnnotation = staticType.getConfigurationInterface();
+				if (implClassProperty != null) {
+					Class<?> implementationClass = (Class<?>) item.value(implClassProperty);
+					if (implementationClass != null) {
+						typeAnnotation = implementationClass;
+					} else {
+						typeAnnotation = staticType.getInstanceType();
+					}
+				} else {
+					typeAnnotation = staticType.getConfigurationInterface();
+				}
 			} else {
 				typeAnnotation = null;
 			}
@@ -184,7 +193,13 @@ public class JsonConfigurationWriter {
 								|| expectedConfigurationInterface.isAssignableFrom(requiredConfigurationInterface)) {
 								typeAnnotation = implementationClass;
 							} else {
-								typeAnnotation = expectedConfigurationInterface;
+								if (_schemaAware) {
+									// A configuration type does not match the schema, if it is
+									// statically an configured implementation.
+									typeAnnotation = implementationClass;
+								} else {
+									typeAnnotation = expectedConfigurationInterface;
+								}
 							}
 						} catch (ConfigurationException ex) {
 							throw new IOException(

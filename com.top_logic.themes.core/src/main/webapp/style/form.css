@@ -3116,3 +3116,6 @@ div.sifSearchElementSelected:focus {
     outline: none !important;
 }
 
+span.cTokenFieldValue.noValue {
+	font-style: italic;
+}

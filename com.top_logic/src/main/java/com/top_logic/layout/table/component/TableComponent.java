@@ -47,6 +47,7 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.func.IFunction2;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -127,8 +128,8 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 	 * Configuration options for {@link TableComponent}.
 	 */
 	@TagName(Config.TAG_NAME)
-	public interface Config
-			extends BuilderComponent.Config, ColumnsChannel.Config, InAppSelectable.InAppSelectableConfig, SelectionModelConfig {
+	public interface Config extends BuilderComponent.Config, ColumnsChannel.Config,
+			InAppSelectable.InAppSelectableConfig, SelectionModelConfig, WithCustomConfigKey {
 
 		/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
 		Lookup LOOKUP = MethodHandles.lookup();
@@ -222,6 +223,7 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 
 		@Override
 		PolymorphicConfiguration<? extends ListModelBuilder> getModelBuilder();
+
 	}
 
     /** Configuration name for excluded columns attribute. */
@@ -440,6 +442,8 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 
 	private CommandHandler _onSelectionChange;
 
+	private IFunction2<String, Object, String> _configKeyBuilder;
+
 	/**
 	 * Create a {@link TableComponent}.
 	 */
@@ -464,6 +468,12 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 		}
 		_selectionModel = createSelectionModel(config);
 		_onSelectionChange = context.getInstance(config.getOnSelectionChange());
+		_configKeyBuilder = context.getInstance(config.getCustomConfigKey());
+	}
+
+	@Override
+	public Config getConfig() {
+		return (Config) super.getConfig();
 	}
 
 	@Override
@@ -642,7 +652,7 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 
 	/** @see Config#shouldCheckMissingTypeConfiguration() */
 	protected boolean shouldCheckMissingTypeConfiguration() {
-		return ((Config) getConfig()).shouldCheckMissingTypeConfiguration();
+		return getConfig().shouldCheckMissingTypeConfiguration();
 	}
 
 	private void checkMissingTypeConfiguration() {
@@ -883,7 +893,7 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 	}
 
 	private Object getDefaultSelection() {
-		if (((Config) getConfig()).getDefaultSelection()) {
+		if (getConfig().getDefaultSelection()) {
 			if (this.listValid) {
 				List<?> displayedRows = getTableModel().getDisplayedRows();
 
@@ -1057,7 +1067,7 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 	 * Creates the {@link TableConfigurationProvider} for this {@link TableComponent}.
 	 */
 	protected TableConfigurationProvider createTableConfigurationProvider() {
-		Config config = (Config) getConfig();
+		Config config = getConfig();
 
 		List<TableConfigurationProvider> providers = new ArrayList<>();
 		ComponentTableConfigProvider componentTableConfigProvider = config.getComponentTableConfigProvider();
@@ -1354,8 +1364,9 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 
 	private TableData createTableData() {
 		FormTableModel tableModel = createFormTableModel(createApplicationModel());
+		ConfigKey configKey = WithCustomConfigKey.resolveObjectKey(this, _configKeyBuilder, ConfigKey.component(this));
 		TableData tableData =
-			DefaultTableData.createTableData(this, tableModel, ConfigKey.component(this));
+			DefaultTableData.createTableData(this, tableModel, configKey);
 		if (getToolBar() != null) {
 			tableData.setToolBar(getToolBar());
 		}
@@ -1376,7 +1387,7 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 	public void linkChannels(Log log) {
 		super.linkChannels(log);
 
-		Config config = (Config) getConfig();
+		Config config = getConfig();
 		ChannelLinking channelLinking = getChannelLinking(config.getColumns());
 		columnsChannel().linkChannel(log, this, channelLinking);
 		columnsChannel().addListener(COLUMNS_LISTENER);

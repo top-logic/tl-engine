@@ -58,6 +58,7 @@ import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.exception.I18NRuntimeException;
+import com.top_logic.basic.func.IFunction2;
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.listener.GenericPropertyListener;
 import com.top_logic.basic.shared.collection.CollectionUtilShared;
@@ -163,6 +164,7 @@ import com.top_logic.layout.table.component.ColumnsChannel;
 import com.top_logic.layout.table.component.ComponentRowSource;
 import com.top_logic.layout.table.component.ComponentTableConfigProvider;
 import com.top_logic.layout.table.component.TableComponent;
+import com.top_logic.layout.table.component.WithCustomConfigKey;
 import com.top_logic.layout.table.control.SelectionVetoListener;
 import com.top_logic.layout.table.control.TableControl;
 import com.top_logic.layout.table.control.TableControl.SelectionType;
@@ -239,7 +241,8 @@ public class GridComponent extends EditComponent implements
 	 * Configuration options for {@link GridComponent}.
 	 */
 	@TagName(Config.TAG_NAME)
-	public interface Config extends EditComponent.Config, ColumnsChannel.Config, TreeViewConfig, SelectionModelConfig, InAppSelectableConfig {
+	public interface Config extends EditComponent.Config, ColumnsChannel.Config, TreeViewConfig,
+			SelectionModelConfig, InAppSelectableConfig, WithCustomConfigKey {
 
 		/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
 		Lookup LOOKUP = MethodHandles.lookup();
@@ -527,6 +530,8 @@ public class GridComponent extends EditComponent implements
 
 	private CommandHandler _onSelectionChange;
 
+	private IFunction2<String, Object, String> _configKeyBuilder;
+
 	/**
 	 * Create a new GridComponent from XML.
 	 */
@@ -548,6 +553,12 @@ public class GridComponent extends EditComponent implements
 		_componentTableConfigProvider = config.getComponentTableConfigProvider();
 		_addTechnicalColumn = config.getAddTechnicalColumn();
 		_onSelectionChange = context.getInstance(config.getOnSelectionChange());
+		_configKeyBuilder = context.getInstance(config.getCustomConfigKey());
+	}
+
+	@Override
+	public Config getConfig() {
+		return (Config) super.getConfig();
 	}
 
 	@Override
@@ -746,7 +757,7 @@ public class GridComponent extends EditComponent implements
 	 * </p>
 	 */
 	public Object getDefaultSelection() {
-		if (((Config) getConfig()).getDefaultSelection()) {
+		if (getConfig().getDefaultSelection()) {
 			TableViewModel tableViewModel = getViewModel();
 			TableModel tableModel = getTableField(getFormContext()).getTableModel();
 
@@ -916,7 +927,7 @@ public class GridComponent extends EditComponent implements
 			return Collections.emptySet();
 		}
 		Set<TLClass> nodeClasses = CollectionUtil.newSet(count);
-		String structureName = ((Config) getConfig()).getStructureName();
+		String structureName = getConfig().getStructureName();
 		if (!StringServices.isEmpty(structureName)) {
 			for (String elementName : elementNames) {
 				String typeSpec = TL5Types.nodeTypeSpec(structureName, elementName);
@@ -1089,7 +1100,7 @@ public class GridComponent extends EditComponent implements
      * Shall marker fields be created.
      */
     public boolean showMarkerFields() {
-		return ((Config) getConfig()).getShowMarkerFields();
+		return getConfig().getShowMarkerFields();
     }
 
     /**
@@ -2548,7 +2559,7 @@ public class GridComponent extends EditComponent implements
 	}
 
     public ConfigKey getConfigKey() {
-		return ConfigKey.part(this, FIELD_TABLE);
+		return WithCustomConfigKey.resolveObjectKey(this, _configKeyBuilder, ConfigKey.part(this, FIELD_TABLE));
 	}
 
     /**
@@ -2830,7 +2841,7 @@ public class GridComponent extends EditComponent implements
 	public void linkChannels(Log log) {
 		super.linkChannels(log);
 
-		ChannelLinking channelLinking = getChannelLinking(((Config) getConfig()).getColumns());
+		ChannelLinking channelLinking = getChannelLinking(getConfig().getColumns());
 		columnsChannel().linkChannel(log, this, channelLinking);
 		columnsChannel().addListener(COLUMNS_LISTENER);
 

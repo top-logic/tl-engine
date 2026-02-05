@@ -51,6 +51,7 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
+import com.top_logic.basic.func.IFunction2;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.layout.DisplayContext;
@@ -82,6 +83,7 @@ import com.top_logic.layout.table.component.ComponentTableConfigProvider;
 import com.top_logic.layout.table.component.InvalidSelectionVeto;
 import com.top_logic.layout.table.component.TableComponent;
 import com.top_logic.layout.table.component.TableComponentTableConfigProvider;
+import com.top_logic.layout.table.component.WithCustomConfigKey;
 import com.top_logic.layout.table.control.SelectionVetoListener;
 import com.top_logic.layout.table.control.TableControl;
 import com.top_logic.layout.table.model.SetTableResPrefix;
@@ -139,8 +141,8 @@ public class TreeTableComponent extends BoundComponent
 	 * Configuration options for {@link TreeTableComponent}.
 	 */
 	@TagName(Config.TAG_NAME)
-	public interface Config
-			extends BoundComponent.Config, TreeViewConfig, SelectionModelConfig, InAppSelectable.InAppSelectableConfig {
+	public interface Config extends BoundComponent.Config, TreeViewConfig, SelectionModelConfig,
+			InAppSelectable.InAppSelectableConfig, WithCustomConfigKey {
 
 		/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
 		Lookup LOOKUP = MethodHandles.lookup();
@@ -315,6 +317,7 @@ public class TreeTableComponent extends BoundComponent
 
 	private CommandHandler _onSelectionChange;
 
+	private IFunction2<String, Object, String> _configKeyBuilder;
 	/**
 	 * Legacy constructor for creating an {@link TreeTableComponent} via {@link Config}.
 	 */
@@ -334,6 +337,12 @@ public class TreeTableComponent extends BoundComponent
 			_tableConfigProvider = TableConfigurationFactory.toProvider(context, table);
 		}
 		_onSelectionChange = context.getInstance(config.getOnSelectionChange());
+		_configKeyBuilder = context.getInstance(config.getCustomConfigKey());
+	}
+
+	@Override
+	public Config getConfig() {
+		return (Config) super.getConfig();
 	}
 
 	@Override
@@ -390,7 +399,7 @@ public class TreeTableComponent extends BoundComponent
 
 	/** @see Config#shouldCheckMissingTypeConfiguration() */
 	protected boolean shouldCheckMissingTypeConfiguration() {
-		return ((Config) getConfig()).shouldCheckMissingTypeConfiguration();
+		return getConfig().shouldCheckMissingTypeConfiguration();
 	}
 
 	private void checkMissingTypeConfiguration() {
@@ -1124,7 +1133,7 @@ public class TreeTableComponent extends BoundComponent
 	}
 
 	private TableConfigurationProvider createTableConfigurationProvider() {
-		Config config = (Config) getConfig();
+		Config config = getConfig();
 
 		List<TableConfigurationProvider> providers = new ArrayList<>();
 
@@ -1144,7 +1153,7 @@ public class TreeTableComponent extends BoundComponent
 			providers.add(_tableConfigProvider);
 		}
 
-		providers.add(((Config) getConfig()).getAdditionalConfiguration());
+		providers.add(getConfig().getAdditionalConfiguration());
 		providers.add(GenericTableConfigurationProvider.showDefaultColumns());
 
 		return TableConfigurationFactory.combine(providers);
@@ -1509,8 +1518,9 @@ public class TreeTableComponent extends BoundComponent
 		AbstractTreeTableModel<?> treeModel = createTreeModel();
 		configureTreeModel(treeModel);
 
+		ConfigKey configKey = WithCustomConfigKey.resolveObjectKey(this, _configKeyBuilder, ConfigKey.component(this));
 		TreeTableData treeTableData =
-			DefaultTreeTableData.createTreeTableData(this, treeModel, ConfigKey.component(this));
+			DefaultTreeTableData.createTreeTableData(this, treeModel, configKey);
 
 		treeTableData.setSelectionModel(selectionModel);
 		ToolBar toolbar = getToolBar();

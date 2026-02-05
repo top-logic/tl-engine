@@ -14,9 +14,9 @@ import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import com.top_logic.base.security.util.Password;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.encryption.SecureRandomService;
-import com.top_logic.basic.func.Identity;
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
@@ -38,6 +38,7 @@ import com.top_logic.layout.form.model.CommandField;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.FormGroup;
+import com.top_logic.layout.form.model.HiddenField;
 import com.top_logic.layout.form.model.StringField;
 import com.top_logic.layout.form.template.model.Templates;
 import com.top_logic.layout.form.values.Fields;
@@ -76,18 +77,33 @@ public class TokenEditor extends AbstractEditor {
 	protected FormField addField(EditorFactory editorFactory, FormContainer container, ValueModel model,
 			String fieldName) {
 		
-		StringField field = Fields.line(container, fieldName);
+		HiddenField field = FormFactory.newHiddenField(fieldName);
+		container.addMember(field);
 
-		init(editorFactory, model, field, Identity.getInstance(), Identity.getInstance());
+		init(editorFactory, model, field, TokenEditor::toPassword, TokenEditor::fromPassword);
 
 		return field;
+	}
+
+	private static Object toPassword(Object value) {
+		if (StringServices.isEmpty(value)) {
+			return null;
+		}
+		return new Password((String) value);
+	}
+
+	private static Object fromPassword(Object value) {
+		if (value == null) {
+			return null;
+		}
+		return ((Password) value).getCryptedValue();
 	}
 
 	@Override
 	public FormMember createUI(EditorFactory editorFactory, FormContainer container, ValueModel model) {
 		FormGroup group = Fields.group(container, Fields.normalizeFieldName(model.getProperty().getPropertyName()));
 
-		StringField field = (StringField) super.createUI(editorFactory, group, model);
+		HiddenField field = (HiddenField) super.createUI(editorFactory, group, model);
 		Resources resources = Resources.getInstance();
 
 		CommandField dialogOpener = addDialogOpener(group, field, resources);
@@ -112,12 +128,13 @@ public class TokenEditor extends AbstractEditor {
 	 * </p>
 	 *
 	 * @param tokenField
-	 *        The string field that will receive the new token value.
+	 *        The field that will receive the new token value, encapsulated in a
+	 *        {@link Password}.
 	 * @param resources
 	 *        The resources for internationalization.
 	 * @return A command model configured with the dialog opener functionality.
 	 */
-	private CommandField addDialogOpener(FormGroup group, StringField tokenField, Resources resources) {
+	private CommandField addDialogOpener(FormGroup group, FormField tokenField, Resources resources) {
 		CommandField dialogOpener = new CommandField("opener") {
 
 			@Override
@@ -125,8 +142,9 @@ public class TokenEditor extends AbstractEditor {
 				ResKey dialogTitle = I18NConstants.UPDATE_TOKEN_DIALOG_TITLE;
 				DisplayDimension width = DisplayDimension.dim(600, DisplayUnit.PIXEL);
 				DisplayDimension height = DisplayDimension.dim(250, DisplayUnit.PIXEL);
+				Consumer<Object> tokenConsumer = newToken -> tokenField.setValue(toPassword(newToken));
 				DisplayTokenDialog dialog =
-					new DisplayTokenDialog(dialogTitle, width, height, tokenField::setAsString);
+					new DisplayTokenDialog(dialogTitle, width, height, tokenConsumer);
 				return dialog.open(context);
 			}
 		};
@@ -162,12 +180,12 @@ public class TokenEditor extends AbstractEditor {
 	 *        The resources for internationalization.
 	 * @return A command model configured with the clear functionality.
 	 */
-	private CommandField addClearCommand(FormGroup group, StringField tokenField, Resources resources) {
+	private CommandField addClearCommand(FormGroup group, FormField tokenField, Resources resources) {
 		CommandField clearCommand = new CommandField("clear") {
 
 			@Override
 			public HandlerResult executeCommand(DisplayContext context) {
-				tokenField.setAsString(null);
+				tokenField.setValue(null);
 				return HandlerResult.DEFAULT_RESULT;
 			}
 		};
@@ -324,7 +342,7 @@ public class TokenEditor extends AbstractEditor {
 
 		private Supplier<String> _tokenGenerator = SecureRandomService.getInstance()::getRandomString;
 
-		private Consumer<String> _out;
+		private Consumer<? super String> _out;
 
 		/**
 		 * Creates a new {@link DisplayTokenDialog}.
@@ -342,7 +360,7 @@ public class TokenEditor extends AbstractEditor {
 		 *         if the consumer is <code>null</code>.
 		 */
 		public DisplayTokenDialog(ResKey dialogTitle, DisplayDimension width, DisplayDimension height,
-				Consumer<String> out) {
+				Consumer<? super String> out) {
 			super(dialogTitle, width, height);
 			setTokenConsumer(out);
 		}
@@ -358,7 +376,7 @@ public class TokenEditor extends AbstractEditor {
 		 * @throws NullPointerException
 		 *         if the consumer is <code>null</code>.
 		 */
-		public DisplayTokenDialog(DialogModel dialogModel, Consumer<String> out) {
+		public DisplayTokenDialog(DialogModel dialogModel, Consumer<? super String> out) {
 			super(dialogModel);
 			setTokenConsumer(out);
 		}
@@ -372,7 +390,7 @@ public class TokenEditor extends AbstractEditor {
 		 * @throws NullPointerException
 		 *         if the consumer is <code>null</code>.
 		 */
-		public void setTokenConsumer(Consumer<String> out) {
+		public void setTokenConsumer(Consumer<? super String> out) {
 			_out = Objects.requireNonNull(out, "Token consumer must not be null.");
 		}
 

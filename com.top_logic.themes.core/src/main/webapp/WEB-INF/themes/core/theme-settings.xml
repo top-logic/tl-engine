@@ -446,6 +446,9 @@
 	<icon name="com.top_logic.layout.form.values.edit.editor.Icons.HIDE_DERIVED_RESOURCES"
 		expr="%ICONS_MOVE_ROW_TO_TOP%"
 	/>
+	<icon name="com.top_logic.layout.form.values.edit.editor.Icons.UPDATE_TOKEN"
+		expr="%ICONS_BUTTON_REFRESH%"
+	/>
 	<icon name="com.top_logic.layout.form.values.edit.editor.Icons.TRANSLATE"
 		expr="%IMAGE_BUTTONS_DOC_TRANSLATE%"
 	/>

@@ -1,0 +1,42 @@
+{
+	"$defs": {
+		"test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$IndexedItem#map:id": {
+			"type": "object",
+			"required": [
+				"$type"
+			],
+			"properties": {
+				"$type": {
+					"const": "test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$IndexedItem"
+				},
+				"data": {
+					"type": "string"
+				}
+			},
+			"additionalProperties": false
+		},
+		"test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$ConfigWithIntKeyMap": {
+			"type": "object",
+			"required": [
+				"$type"
+			],
+			"properties": {
+				"$type": {
+					"const": "test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$ConfigWithIntKeyMap"
+				},
+				"items": {
+					"type": "object",
+					"additionalProperties": {
+						"$ref": "#/$defs/test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$IndexedItem#map:id"
+					},
+					"propertyNames": {
+						"type": "string",
+						"pattern": "^-?[0-9]+$"
+					}
+				}
+			},
+			"additionalProperties": false
+		}
+	},
+	"$ref": "#/$defs/test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$ConfigWithIntKeyMap"
+}

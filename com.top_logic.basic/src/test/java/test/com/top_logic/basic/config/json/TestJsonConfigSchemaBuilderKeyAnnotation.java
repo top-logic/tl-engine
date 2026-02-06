@@ -146,9 +146,9 @@ public class TestJsonConfigSchemaBuilderKeyAnnotation extends BasicTestCase {
 	 * Tests that serialized configuration with @Key annotation validates against the schema.
 	 *
 	 * <p>
-	 * This test demonstrates the current issue: the serialized JSON does not include the key
-	 * property in value objects (it's used as the map key instead), but the schema still requires
-	 * it. Once @Key handling is properly implemented in the schema builder, this test should pass.
+	 * The schema builder creates specialized map value schemas that exclude the key property, so
+	 * the serialized JSON (which omits the key property since it's used as the map key) should
+	 * validate successfully.
 	 * </p>
 	 */
 	public void testKeyAnnotationSerializationValidation() throws Exception {
@@ -190,11 +190,7 @@ public class TestJsonConfigSchemaBuilderKeyAnnotation extends BasicTestCase {
 			executionContext.executionConfig(executionConfig -> executionConfig.formatAssertionsEnabled(true));
 		});
 
-		// Currently fails because the schema requires 'name' but serialization omits it (uses map key)
-		// TODO: Fix @Key handling in JsonConfigSchemaBuilder to remove key property from value schemas
-		assertFalse("Expected validation to fail until @Key handling is implemented", errors.isEmpty());
-		assertTrue("Should have 'name' property missing error",
-			errors.stream().anyMatch(e -> e.getMessage().contains("name")));
+		assertTrue("Validation errors: " + errors, errors.isEmpty());
 	}
 
 	private String loadExpectedSchema(String resourceName) throws Exception {

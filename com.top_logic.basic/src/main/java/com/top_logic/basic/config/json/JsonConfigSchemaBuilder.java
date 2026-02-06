@@ -206,7 +206,11 @@ public class JsonConfigSchemaBuilder {
 	 *         configuration options.
 	 */
 	private Schema buildImplementationSchema(Class<?> instanceType) {
-		String schemaName = schemaId(instanceType);
+		return buildImplementationSchema(instanceType, null);
+	}
+
+	private Schema buildImplementationSchema(Class<?> instanceType, String excludeProperty) {
+		String schemaName = schemaId(instanceType, excludeProperty);
 
 		// Check cache to handle recursive references
 		if (_schemaCache.containsKey(schemaName)) {
@@ -216,21 +220,21 @@ public class JsonConfigSchemaBuilder {
 		// Reserve the slot in cache before processing to handle recursion
 		_schemaCache.put(schemaName, null);
 
-		Schema result = createImplementationSchema(instanceType);
+		Schema result = createImplementationSchema(instanceType, excludeProperty);
 
 		_schemaCache.put(schemaName, result);
 		return ref(schemaName);
 	}
 
-	private Schema createImplementationSchema(Class<?> instanceType) {
+	private Schema createImplementationSchema(Class<?> instanceType, String excludeProperty) {
 		Schema result = NONE;
 
 		try {
 			if (!isAbstract(instanceType)) {
-				result = anyOf(result, createLocalImplementationSchema(instanceType));
+				result = anyOf(result, createLocalImplementationSchema(instanceType, excludeProperty));
 			}
 
-			result = addSubtypeOptions(instanceType, result);
+			result = addSubtypeOptions(instanceType, result, excludeProperty);
 		} catch (ConfigurationException ex) {
 			Logger.warn("Cannot resolve schema for instance type '': " + ex.getMessage(), ex,
 				JsonConfigSchemaBuilder.class);
@@ -239,10 +243,10 @@ public class JsonConfigSchemaBuilder {
 		return result;
 	}
 
-	private Schema addSubtypeOptions(Class<?> instanceType, Schema result) {
+	private Schema addSubtypeOptions(Class<?> instanceType, Schema result, String excludeProperty) {
 		for (Class<?> specialization : TypeIndex.getInstance().getSpecializations(instanceType, false, false,
 			true)) {
-			result = anyOf(result, buildImplementationSchema(specialization));
+			result = anyOf(result, buildImplementationSchema(specialization, excludeProperty));
 		}
 		return result;
 	}
@@ -277,7 +281,8 @@ public class JsonConfigSchemaBuilder {
 		}
 	}
 
-	private Schema createLocalImplementationSchema(Class<?> instanceType) throws ConfigurationException {
+	private Schema createLocalImplementationSchema(Class<?> instanceType, String excludeProperty)
+			throws ConfigurationException {
 		AllOfSchema allOf = AllOfSchema.create();
 
 		ObjectSchema implRef = ObjectSchema.create();
@@ -287,7 +292,7 @@ public class JsonConfigSchemaBuilder {
 
 		Class<?> configInterface = DefaultConfigConstructorScheme.getFactory(instanceType).getConfigurationInterface();
 		ConfigurationDescriptor descriptor = TypedConfiguration.getConfigurationDescriptor(configInterface);
-		Schema propertiesSchema = buildPropertiesSchema(descriptor);
+		Schema propertiesSchema = buildPropertiesSchema(descriptor, excludeProperty);
 		inlineAllOf(allOf, propertiesSchema);
 
 		return finalize(allOf);
@@ -321,15 +326,28 @@ public class JsonConfigSchemaBuilder {
 	 * </p>
 	 */
 	private Schema buildConfigValueSchema(ConfigurationDescriptor descriptor) {
-		String extensionSchemaId = schemaId(descriptor);
-	
+		return buildConfigValueSchema(descriptor, null);
+	}
+
+	/**
+	 * Builds an extension-schema for type A, optionally excluding a property.
+	 *
+	 * @param descriptor
+	 *        The configuration descriptor.
+	 * @param excludeProperty
+	 *        Property name to exclude (for map value schemas where the key property is omitted), or
+	 *        <code>null</code> for normal schemas.
+	 */
+	private Schema buildConfigValueSchema(ConfigurationDescriptor descriptor, String excludeProperty) {
+		String extensionSchemaId = schemaId(descriptor, excludeProperty);
+
 		if (_schemaCache.containsKey(extensionSchemaId)) {
 			return ref(extensionSchemaId);
 		}
-	
+
 		// Reserve slot to handle recursion
 		_schemaCache.put(extensionSchemaId, null);
-	
+
 		Schema result;
 		if (descriptor.getConfigurationInterface() == ConfigurationItem.class) {
 			// Safety: Do not iterate the world.
@@ -343,7 +361,7 @@ public class JsonConfigSchemaBuilder {
 
 				allOf.addAllOf(buildRequiredTypeRef(descriptor));
 
-				Schema propertiesSchema = buildPropertiesSchema(descriptor);
+				Schema propertiesSchema = buildPropertiesSchema(descriptor, excludeProperty);
 				inlineAllOf(allOf, propertiesSchema);
 
 				Schema self = finalize(allOf);
@@ -353,10 +371,10 @@ public class JsonConfigSchemaBuilder {
 
 			// Add sub-type options.
 			for (Class<?> subType : getDirectSubtypes(descriptor)) {
-				result = anyOf(result, buildConfigValueSchema(TypedConfiguration.getConfigurationDescriptor(subType)));
+				result = anyOf(result, buildConfigValueSchema(TypedConfiguration.getConfigurationDescriptor(subType), excludeProperty));
 			}
 		}
-		
+
 		_schemaCache.put(extensionSchemaId, result);
 		return ref(extensionSchemaId);
 	}
@@ -392,27 +410,39 @@ public class JsonConfigSchemaBuilder {
 	 * </p>
 	 */
 	private Schema buildPropertiesSchema(ConfigurationDescriptor descriptor) {
+		return buildPropertiesSchema(descriptor, null);
+	}
+
+	/**
+	 * Builds a properties schema for type A, optionally excluding a property.
+	 *
+	 * @param descriptor
+	 *        The configuration descriptor.
+	 * @param excludeProperty
+	 *        Property name to exclude (for map value schemas), or <code>null</code>.
+	 */
+	private Schema buildPropertiesSchema(ConfigurationDescriptor descriptor, String excludeProperty) {
 		if (_inline) {
-			return createPropertiesSchema(descriptor);
+			return createPropertiesSchema(descriptor, excludeProperty);
 		} else {
-			String propertiesSchemaId = propertiesSchemaId(descriptor);
+			String propsSchemaId = propertiesSchemaId(descriptor, excludeProperty);
 
-			if (!_schemaCache.containsKey(propertiesSchemaId)) {
+			if (!_schemaCache.containsKey(propsSchemaId)) {
 				// Reserve slot to handle recursion
-				_schemaCache.put(propertiesSchemaId, null);
+				_schemaCache.put(propsSchemaId, null);
 
-				Schema result = createPropertiesSchema(descriptor);
+				Schema result = createPropertiesSchema(descriptor, excludeProperty);
 
-				_schemaCache.put(propertiesSchemaId, result);
+				_schemaCache.put(propsSchemaId, result);
 			}
 
-			return ref(propertiesSchemaId);
+			return ref(propsSchemaId);
 		}
 	}
 
-	private Schema createPropertiesSchema(ConfigurationDescriptor descriptor) {
+	private Schema createPropertiesSchema(ConfigurationDescriptor descriptor, String excludeProperty) {
 		ConfigurationDescriptor[] superDescriptors = descriptor.getSuperDescriptors();
-		ObjectSchema localProps = buildLocalPropertiesSchema(descriptor);
+		ObjectSchema localProps = buildLocalPropertiesSchema(descriptor, excludeProperty);
 		boolean hasLocalProps = !localProps.getProperties().isEmpty();
 
 		Schema result;
@@ -429,7 +459,7 @@ public class JsonConfigSchemaBuilder {
 
 			// Add properties(Cn) for each direct super-type Cn
 			for (ConfigurationDescriptor superDescriptor : superDescriptors) {
-				Schema superPropertiesSchema = buildPropertiesSchema(superDescriptor);
+				Schema superPropertiesSchema = buildPropertiesSchema(superDescriptor, excludeProperty);
 				inlineAllOf(allOf, superPropertiesSchema);
 			}
 
@@ -451,7 +481,7 @@ public class JsonConfigSchemaBuilder {
 	 *   that also allows other properties not defined here.
 	 * </pre>
 	 */
-	private ObjectSchema buildLocalPropertiesSchema(ConfigurationDescriptor descriptor) {
+	private ObjectSchema buildLocalPropertiesSchema(ConfigurationDescriptor descriptor, String excludeProperty) {
 		ObjectSchema result = ObjectSchema.create();
 
 		if (descriptor.getConfigurationInterface() == ConfigurationItem.class
@@ -470,6 +500,14 @@ public class JsonConfigSchemaBuilder {
 				continue;
 			}
 
+			String propertyName = property.getPropertyName();
+
+			// Skip the excluded property (used for map value schemas where the key property is
+			// omitted)
+			if (propertyName.equals(excludeProperty)) {
+				continue;
+			}
+
 			Schema schema = buildPropertySchema(property);
 			if (schema != null) {
 				// Add label and description from property resources
@@ -483,11 +521,11 @@ public class JsonConfigSchemaBuilder {
 					schema.setDescription(description);
 				}
 
-				result.putProperty(property.getPropertyName(), schema);
+				result.putProperty(propertyName, schema);
 
 				// Mark as required if mandatory
 				if (property.isMandatory()) {
-					result.addRequired(property.getPropertyName());
+					result.addRequired(propertyName);
 				}
 			}
 		}
@@ -530,12 +568,33 @@ public class JsonConfigSchemaBuilder {
 		return implType.getName();
 	}
 
+	private String schemaId(Class<?> implType, String excludeProperty) {
+		if (excludeProperty == null) {
+			return schemaId(implType);
+		}
+		return implType.getName() + "#map:" + excludeProperty;
+	}
+
 	private String schemaId(ConfigurationDescriptor descriptor) {
 		return descriptor.getConfigurationInterface().getName();
 	}
 
+	private String schemaId(ConfigurationDescriptor descriptor, String excludeProperty) {
+		if (excludeProperty == null) {
+			return schemaId(descriptor);
+		}
+		return descriptor.getConfigurationInterface().getName() + "#map:" + excludeProperty;
+	}
+
 	private String propertiesSchemaId(ConfigurationDescriptor descriptor) {
 		return descriptor.getConfigurationInterface().getName() + "#properties";
+	}
+
+	private String propertiesSchemaId(ConfigurationDescriptor descriptor, String excludeProperty) {
+		if (excludeProperty == null) {
+			return propertiesSchemaId(descriptor);
+		}
+		return descriptor.getConfigurationInterface().getName() + "#properties#map:" + excludeProperty;
 	}
 
 	/**
@@ -704,20 +763,24 @@ public class JsonConfigSchemaBuilder {
 	}
 
 	private Schema buildItemValueSchema(PropertyDescriptor property) {
+		return buildItemValueSchema(property, null);
+	}
+
+	private Schema buildItemValueSchema(PropertyDescriptor property, String excludeProperty) {
 		Class<?> instanceType = property.getInstanceType();
 		if (instanceType != null) {
-			return buildImplementationSchema(instanceType);
+			return buildImplementationSchema(instanceType, excludeProperty);
 		} else {
-			return buildConfigValueSchema(property);
+			return buildConfigValueSchema(property, excludeProperty);
 		}
 	}
 
-	private Schema buildConfigValueSchema(PropertyDescriptor property) {
+	private Schema buildConfigValueSchema(PropertyDescriptor property, String excludeProperty) {
 		// Get the configuration descriptor for the nested interface
 		ConfigurationDescriptor valueDescriptor = property.getValueDescriptor();
 
 		// Recursively build schema for the nested configuration
-		return buildConfigSchema(valueDescriptor);
+		return buildConfigValueSchema(valueDescriptor, excludeProperty);
 	}
 
 	/**
@@ -739,50 +802,14 @@ public class JsonConfigSchemaBuilder {
 		// Maps in JSON Schema are typically represented as objects with additionalProperties
 		ObjectSchema schema = ObjectSchema.create();
 
-		Schema valueSchema = buildItemValueSchema(property);
+		// Check for @Key annotation to determine if we need a specialized value schema
+		com.top_logic.basic.config.annotation.Key keyAnnotation =
+			property.getAnnotation(com.top_logic.basic.config.annotation.Key.class);
+
+		String excludeProperty = keyAnnotation != null ? keyAnnotation.value() : null;
+
+		Schema valueSchema = buildItemValueSchema(property, excludeProperty);
 		if (valueSchema != null) {
-			// Check for @Key annotation
-			com.top_logic.basic.config.annotation.Key keyAnnotation =
-				property.getAnnotation(com.top_logic.basic.config.annotation.Key.class);
-
-			if (keyAnnotation != null && valueSchema instanceof ObjectSchema) {
-				// The map key comes from a property of the value object
-				String keyPropertyName = keyAnnotation.value();
-				ObjectSchema objectValueSchema = (ObjectSchema) valueSchema;
-
-				// Get the key property schema to use as property name constraint
-				Schema keyPropertySchema = objectValueSchema.getProperties().get(keyPropertyName);
-				if (keyPropertySchema != null) {
-					// Use the key property schema to constrain property names
-					schema.setPropertyNames(keyPropertySchema);
-
-					// Remove the key property from the value schema since it's redundant
-					// (the property name already contains this information)
-					ObjectSchema clonedValueSchema = ObjectSchema.create();
-
-					// Copy all properties except the key property
-					for (Map.Entry<String, Schema> entry : objectValueSchema.getProperties().entrySet()) {
-						if (!entry.getKey().equals(keyPropertyName)) {
-							clonedValueSchema.putProperty(entry.getKey(), entry.getValue());
-						}
-					}
-
-					// Copy other object schema properties
-					clonedValueSchema.setMaxProperties(objectValueSchema.getMaxProperties());
-					clonedValueSchema.setMinProperties(objectValueSchema.getMinProperties());
-					for (String req : objectValueSchema.getRequired()) {
-						if (!req.equals(keyPropertyName)) {
-							clonedValueSchema.addRequired(req);
-						}
-					}
-
-					// Copy base schema properties
-					copyBaseSchemaProperties(objectValueSchema, clonedValueSchema);
-
-					valueSchema = clonedValueSchema;
-				}
-			}
-
 			schema.setAdditionalProperties(valueSchema);
 		}
 

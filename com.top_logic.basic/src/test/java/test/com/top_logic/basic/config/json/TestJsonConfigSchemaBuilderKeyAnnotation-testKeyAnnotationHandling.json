@@ -1,5 +1,20 @@
 {
 	"$defs": {
+		"test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$NamedItem#map:name": {
+			"type": "object",
+			"required": [
+				"$type"
+			],
+			"properties": {
+				"$type": {
+					"const": "test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$NamedItem"
+				},
+				"value": {
+					"type": "string"
+				}
+			},
+			"additionalProperties": false
+		},
 		"test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$ConfigWithMap": {
 			"type": "object",
 			"required": [
@@ -12,27 +27,8 @@
 				"items": {
 					"type": "object",
 					"additionalProperties": {
-						"$ref": "#/$defs/test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$NamedItem"
+						"$ref": "#/$defs/test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$NamedItem#map:name"
 					}
-				}
-			},
-			"additionalProperties": false
-		},
-		"test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$NamedItem": {
-			"type": "object",
-			"required": [
-				"$type",
-				"name"
-			],
-			"properties": {
-				"$type": {
-					"const": "test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$NamedItem"
-				},
-				"name": {
-					"type": "string"
-				},
-				"value": {
-					"type": "string"
 				}
 			},
 			"additionalProperties": false

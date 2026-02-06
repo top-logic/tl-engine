@@ -98,6 +98,7 @@ import com.top_logic.layout.table.model.TableModelListener;
 import com.top_logic.layout.table.model.TableUtil;
 import com.top_logic.layout.table.provider.GenericTableConfigurationProvider;
 import com.top_logic.layout.toolbar.ToolBar;
+import com.top_logic.mig.html.ElementUpdate;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.mig.html.SelectionModelConfig;
@@ -766,12 +767,17 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
             return true;
         }
 
-        EditableRowTableModel tableModel = getTableModel();
+		ElementUpdate decision = this.getListBuilder().supportsListElement(this, aModel);
+		if (decision == ElementUpdate.NO_CHANGE) {
+			return false;
+		}
+
+		EditableRowTableModel tableModel = getTableModel();
 		int row = tableModel.getRowOfObject(aModel);
         if (row < 0) {
 			// The changed model is not within the displayed rows.
 
-			if (this.getListBuilder().supportsListElement(this, aModel).shouldAdd()) {
+			if (decision.shouldAdd()) {
 				// The element is now part of this table.
             	addNewRowObject(aModel);
             	return true;
@@ -781,7 +787,7 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
             	return false;
             }
         } else {
-			if (this.getListBuilder().supportsListElement(this, aModel).shouldRemove()) {
+			if (decision.shouldRemove()) {
 				// The element is no longer part of this table.
 				removeRow(tableModel, aModel, row);
 				invalidateSelection();

@@ -129,12 +129,24 @@ public class ListModelByExpression<C extends ListModelByExpression.Config<?>>
 		 * 
 		 * <p>
 		 * The function is expected take two arguments, the potential list element as first argument
-		 * and the current component model as second argument.
+		 * and the current component model as second argument:
+		 * <ul>
+		 * <li>When component supports the configuration of row types, it is checked before that the
+		 * potential list element has the correct type.</li>
+		 * <li>When the method returns <code>true</code> then the element is included within the
+		 * elements.</li>
+		 * <li>When the method returns <code>false</code> then the element is removed from the
+		 * elements.</li>
+		 * <li>When the method returns <code>{@value ListModelByExpression#UPDATE_NO_CHANGE}</code>
+		 * then the element does not trigger any change in the table.</li>
+		 * <li>When the method returns <code>{@value ListModelByExpression#UPDATE_UNKNOWN}</code> it
+		 * can not be determined whether the element must be added to or removed from the list. In
+		 * this case the list is re-created and the function {@link #getElements()} decides whether
+		 * the object in question is added to the list or not.</li>
+		 * </ul>
 		 * </p>
 		 */
 		@Name(SUPPORTS_ELEMENT_NAME)
-		@ItemDefault(Expr.True.class)
-		@NonNullable
 		Expr getSupportsElement();
 
 		/**
@@ -184,6 +196,10 @@ public class ListModelByExpression<C extends ListModelByExpression.Config<?>>
 
 	}
 
+	static final String UPDATE_NO_CHANGE = "no_change";
+
+	static final String UPDATE_UNKNOWN = "unknown";
+
 	private QueryExecutor _elements;
 
 	private QueryExecutor _supportsModel;
@@ -207,7 +223,7 @@ public class ListModelByExpression<C extends ListModelByExpression.Config<?>>
 		TLModel model = ModelService.getApplicationModel();
 		_elements = QueryExecutor.compile(kb, model, config.getElements());
 		_supportsModel = QueryExecutor.compile(kb, model, config.getSupportsModel());
-		_supportsElement = QueryExecutor.compile(kb, model, config.getSupportsElement());
+		_supportsElement = QueryExecutor.compileOptional(kb, model, config.getSupportsElement());
 		_modelForElement = QueryExecutor.compile(kb, model, config.getModelForElement());
 	}
 
@@ -229,9 +245,15 @@ public class ListModelByExpression<C extends ListModelByExpression.Config<?>>
 		if (!ComponentUtil.isValid(element)) {
 			return ElementUpdate.REMOVE;
 		}
+		if (_supportsElement == null) {
+			return ElementUpdate.UNKNOWN;
+		}
 		Object result = _supportsElement.execute(element, aComponent.getModel());
-		if (result == null) {
+		if (result == null || UPDATE_NO_CHANGE.equals(result)) {
 			return ElementUpdate.NO_CHANGE;
+		}
+		if (UPDATE_UNKNOWN.equals(result)) {
+			return ElementUpdate.UNKNOWN;
 		}
 		return ElementUpdate.fromDecision(SearchExpression.asBoolean(result));
 	}

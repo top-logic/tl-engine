@@ -5,12 +5,11 @@
  */
 package com.top_logic.element.layout.grid;
 
-import static java.util.stream.Collectors.*;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -303,35 +302,45 @@ public class TableGridBuilder<R> extends ListModelBuilderProxy
 
 	@Override
 	public boolean handleTLObjectCreations(GridComponent grid, Stream<? extends TLObject> creations) {
-		Collection<? extends TLObject> relevantCreations = creations
-			.filter(newObject -> isRelevantCreation(grid, newObject))
-			.collect(toUnmodifiableList());
+		List<TLObject> relevantCreations = Collections.emptyList();
+
+		for (Iterator<? extends TLObject> it = creations.iterator(); it.hasNext();) {
+			TLObject newObject = it.next();
+			if (grid.getRowGroup(newObject) != null) {
+				continue;
+			}
+			ElementUpdate updateDecision = supportsListElement(grid, newObject);
+			switch (updateDecision) {
+				case ADD:
+					if (!Utils.equals(grid.getModel(), retrieveModelFromListElement(grid, newObject))) {
+						continue;
+					}
+					if (!relevantCreations.isEmpty()) {
+						relevantCreations.add(newObject);
+						continue;
+					}
+					if (!grid.isVisible()) {
+						grid.invalidate();
+						return true;
+					}
+					relevantCreations = new ArrayList<>();
+					relevantCreations.add(newObject);
+					continue;
+				case UNKNOWN:
+					grid.invalidate();
+					return true;
+				case NO_CHANGE:
+				case REMOVE:
+					continue;
+			}
+			throw new IllegalArgumentException("Uncovered case: " + updateDecision);
+		}
+
 		if (relevantCreations.isEmpty()) {
 			return false;
 		}
-		handleNewRelevantObjects(grid, relevantCreations);
+		grid.getHandler().addNewRows(relevantCreations);
 		return true;
-	}
-
-	private boolean isRelevantCreation(GridComponent grid, TLObject newObject) {
-		if (grid.getRowGroup(newObject) != null) {
-			return false;
-		}
-		if (supportsListElement(grid, newObject).shouldAdd()) {
-			if (!Utils.equals(grid.getModel(), retrieveModelFromListElement(grid, newObject))) {
-				return false;
-			}
-			return true;
-		}
-		return false;
-	}
-
-	private void handleNewRelevantObjects(GridComponent grid, Collection<? extends TLObject> creations) {
-		if (grid.isVisible()) {
-			grid.getHandler().addNewRows(creations);
-		} else {
-			grid.invalidate();
-		}
 	}
 
 	@Override

@@ -796,6 +796,10 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 		if (decision == ElementUpdate.NO_CHANGE) {
 			return false;
 		}
+		if (decision == ElementUpdate.UNKNOWN) {
+			invalidate();
+			return true;
+		}
 
 		EditableRowTableModel tableModel = getTableModel();
 		int row = tableModel.getRowOfObject(aModel);
@@ -841,10 +845,20 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 		if (_rowTypeFilter.accept(aModel)) {
 			// model has a valid row type. It may be displayed as list element.
 
-			if (this.getListBuilder().supportsListElement(this, aModel).shouldAdd()) {
-				addNewRowObject(aModel);
-				return true;
+			ElementUpdate updateDecision = this.getListBuilder().supportsListElement(this, aModel);
+			switch (updateDecision) {
+				case ADD:
+					addNewRowObject(aModel);
+					return true;
+				case UNKNOWN:
+					invalidate();
+					return true;
+				case NO_CHANGE:
+				case REMOVE:
+					return false;
 			}
+
+			throw new IllegalArgumentException("Uncovered case: " + updateDecision);
 		}
 
 

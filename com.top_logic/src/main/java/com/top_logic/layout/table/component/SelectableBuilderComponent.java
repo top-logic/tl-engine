@@ -10,6 +10,7 @@ import java.util.Set;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.layout.component.Selectable;
+import com.top_logic.mig.html.ElementUpdate;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.ModelBuilder;
 import com.top_logic.model.TLObject;
@@ -58,11 +59,22 @@ public class SelectableBuilderComponent extends BuilderComponent implements Sele
 	@Override
 	protected boolean receiveModelCreatedEvent(Object model, Object changedBy) {
 		ModelBuilder builder = getBuilder();
-		if (builder instanceof ListModelBuilder) {
-			if (((ListModelBuilder) builder).supportsListElement(this, model).shouldAdd()) {
-				invalidate();
-				return true;
+		if (builder instanceof ListModelBuilder listBuilder) {
+			ElementUpdate updateDecision = listBuilder.supportsListElement(this, model);
+			switch (updateDecision) {
+				case ADD:
+					// don't know how to add incrementally
+					invalidate();
+					return true;
+				case UNKNOWN:
+					invalidate();
+					return true;
+				case NO_CHANGE:
+				case REMOVE:
+					return false;
 			}
+
+			throw new IllegalArgumentException("Uncovered case: " + updateDecision);
 		}
 		return super.receiveModelCreatedEvent(model, changedBy);
 	}

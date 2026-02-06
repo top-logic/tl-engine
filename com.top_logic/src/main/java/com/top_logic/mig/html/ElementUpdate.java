@@ -33,7 +33,12 @@ public enum ElementUpdate {
 		public boolean shouldRemove() {
 			return true;
 		}
-	};
+	},
+
+	/** It is unknown whether the object will be displayed in the current view. */
+	UNKNOWN,
+
+	;
 
 	/**
 	 * Whether a created/changed object should now be displayed.

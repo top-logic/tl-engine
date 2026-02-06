@@ -992,6 +992,10 @@ public class GridComponent extends EditComponent implements
 		if (decision == ElementUpdate.NO_CHANGE) {
 			return false;
 		}
+		if (decision == ElementUpdate.UNKNOWN) {
+			invalidate();
+			return true;
+		}
 
 		FormGroup formGroup = getRowGroup(aModel);
 		if (formGroup == null && decision.shouldAdd() && isVisible()) {

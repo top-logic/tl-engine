@@ -14,28 +14,25 @@
 				}
 			},
 			"additionalProperties": false
-		},
-		"test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$ConfigWithMap": {
-			"type": "object",
-			"required": [
-				"$type"
-			],
-			"properties": {
-				"$type": {
-					"const": "test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$ConfigWithMap"
-				},
-				"items": {
-					"type": "object",
-					"additionalProperties": {
-						"$ref": "#/$defs/test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$NamedItem#map:name"
-					},
-					"propertyNames": {
-						"type": "string"
-					}
-				}
-			},
-			"additionalProperties": false
 		}
 	},
-	"$ref": "#/$defs/test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$ConfigWithMap"
+	"type": "object",
+	"required": [
+		"$type"
+	],
+	"properties": {
+		"$type": {
+			"const": "test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$ConfigWithMap"
+		},
+		"items": {
+			"type": "object",
+			"additionalProperties": {
+				"$ref": "#/$defs/test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$NamedItem#map:name"
+			},
+			"propertyNames": {
+				"type": "string"
+			}
+		}
+	},
+	"additionalProperties": false
 }

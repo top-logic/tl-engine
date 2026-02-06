@@ -59,6 +59,39 @@ import com.top_logic.basic.util.ResourcesModule;
  */
 public class JsonConfigSchemaBuilder {
 
+	/**
+	 * Resolver that controls how schema references are generated.
+	 *
+	 * <p>
+	 * This interface allows customizing whether nested type schemas should be built inline or
+	 * referenced externally. When external references are used, the schema for nested types is not
+	 * generated immediately but referenced via a URL that can be resolved separately.
+	 * </p>
+	 */
+	public interface SchemaResolver {
+
+		/**
+		 * Resolves how a configuration type should be referenced in the schema.
+		 *
+		 * @param configType
+		 *        The configuration interface class.
+		 * @return An external reference URL if the type should be referenced externally, or
+		 *         <code>null</code> to build the schema inline.
+		 */
+		String resolveConfigType(Class<?> configType);
+
+		/**
+		 * Resolves how an implementation type should be referenced in the schema.
+		 *
+		 * @param implType
+		 *        The implementation class.
+		 * @return An external reference URL if the type should be referenced externally, or
+		 *         <code>null</code> to build the schema inline.
+		 */
+		String resolveImplementationType(Class<?> implType);
+
+	}
+
 	private static final String TYPE_PROPERTY = "$type";
 
 	private static final Schema NONE = FalseSchema.create();
@@ -80,6 +113,13 @@ public class JsonConfigSchemaBuilder {
 	private boolean _inline;
 
 	/**
+	 * Optional resolver for controlling external schema references.
+	 *
+	 * @see SchemaResolver
+	 */
+	private SchemaResolver _schemaResolver;
+
+	/**
 	 * Sets whether to inline properties schemas.
 	 *
 	 * @param inline
@@ -94,15 +134,55 @@ public class JsonConfigSchemaBuilder {
 	}
 
 	/**
-	 * Builds a JSON Schema from a configuration descriptor.
+	 * Sets the schema resolver for controlling external references.
+	 *
+	 * <p>
+	 * When a resolver is set, it is consulted before building schemas for nested configuration or
+	 * implementation types. If the resolver returns an external URL, a <code>$ref</code> to that
+	 * URL is emitted instead of building the schema inline.
+	 * </p>
+	 *
+	 * @param resolver
+	 *        The resolver to use, or <code>null</code> to build all schemas inline.
+	 * @return This builder for method chaining.
+	 */
+	public JsonConfigSchemaBuilder setSchemaResolver(SchemaResolver resolver) {
+		_schemaResolver = resolver;
+		return this;
+	}
+
+	/**
+	 * Builds a JSON Schema for a configuration interface.
 	 *
 	 * @param descriptor
 	 *        The configuration descriptor to convert.
 	 * @return The JSON Schema representing the configuration interface.
 	 */
-	public Schema build(ConfigurationDescriptor descriptor) {
+	public Schema buildConfigSchema(ConfigurationDescriptor descriptor) {
 		_schemaCache = new HashMap<>();
-		Schema toplevel = buildConfigSchema(descriptor)
+		Schema toplevel = internalBuildConfigSchema(descriptor)
+			.setDefinitions(_schemaCache);
+		_schemaCache = null;
+
+		return toplevel;
+	}
+
+	/**
+	 * Builds a JSON Schema for an implementation class.
+	 *
+	 * <p>
+	 * This method creates a schema that describes the configuration options for a specific
+	 * implementation class, including its {@code $type} annotation and all properties from its
+	 * configuration interface.
+	 * </p>
+	 *
+	 * @param implementationType
+	 *        The implementation class to create a schema for.
+	 * @return The JSON Schema representing the implementation class configuration.
+	 */
+	public Schema buildImplementationSchema(Class<?> implementationType) {
+		_schemaCache = new HashMap<>();
+		Schema toplevel = internalBuildImplementationSchema(implementationType)
 			.setDefinitions(_schemaCache);
 		_schemaCache = null;
 
@@ -182,7 +262,7 @@ public class JsonConfigSchemaBuilder {
 	 * extend A and can by found through the {@link TypeIndex}.</li>
 	 * </ul>
 	 */
-	private Schema buildConfigSchema(ConfigurationDescriptor descriptor) {
+	private Schema internalBuildConfigSchema(ConfigurationDescriptor descriptor) {
 		Class<?> instanceType = descriptor.getInstanceType();
 		if (instanceType == null) {
 			return buildConfigValueSchema(descriptor);
@@ -191,7 +271,7 @@ public class JsonConfigSchemaBuilder {
 				// Safety: Do not enumerate the world.
 				return allConfigs();
 			} else {
-				return buildImplementationSchema(instanceType);
+				return internalBuildImplementationSchema(instanceType);
 			}
 		}
 	}
@@ -205,11 +285,19 @@ public class JsonConfigSchemaBuilder {
 	 * @return An object schema describing all possible implementation classes with their
 	 *         configuration options.
 	 */
-	private Schema buildImplementationSchema(Class<?> instanceType) {
-		return buildImplementationSchema(instanceType, null);
+	private Schema internalBuildImplementationSchema(Class<?> instanceType) {
+		return internalBuildImplementationSchema(instanceType, null);
 	}
 
-	private Schema buildImplementationSchema(Class<?> instanceType, String excludeProperty) {
+	private Schema internalBuildImplementationSchema(Class<?> instanceType, String excludeProperty) {
+		// Check resolver for external reference
+		if (_schemaResolver != null && excludeProperty == null) {
+			String externalRef = _schemaResolver.resolveImplementationType(instanceType);
+			if (externalRef != null) {
+				return RefSchema.create().setRef(externalRef);
+			}
+		}
+
 		String schemaName = schemaId(instanceType, excludeProperty);
 
 		// Check cache to handle recursive references
@@ -246,7 +334,7 @@ public class JsonConfigSchemaBuilder {
 	private Schema addSubtypeOptions(Class<?> instanceType, Schema result, String excludeProperty) {
 		for (Class<?> specialization : TypeIndex.getInstance().getSpecializations(instanceType, false, false,
 			true)) {
-			result = anyOf(result, buildImplementationSchema(specialization, excludeProperty));
+			result = anyOf(result, internalBuildImplementationSchema(specialization, excludeProperty));
 		}
 		return result;
 	}
@@ -339,6 +427,14 @@ public class JsonConfigSchemaBuilder {
 	 *        <code>null</code> for normal schemas.
 	 */
 	private Schema buildConfigValueSchema(ConfigurationDescriptor descriptor, String excludeProperty) {
+		// Check resolver for external reference
+		if (_schemaResolver != null && excludeProperty == null) {
+			String externalRef = _schemaResolver.resolveConfigType(descriptor.getConfigurationInterface());
+			if (externalRef != null) {
+				return RefSchema.create().setRef(externalRef);
+			}
+		}
+
 		String extensionSchemaId = schemaId(descriptor, excludeProperty);
 
 		if (_schemaCache.containsKey(extensionSchemaId)) {
@@ -775,7 +871,7 @@ public class JsonConfigSchemaBuilder {
 	private Schema buildItemValueSchema(PropertyDescriptor property, String excludeProperty) {
 		Class<?> instanceType = property.getInstanceType();
 		if (instanceType != null) {
-			return buildImplementationSchema(instanceType, excludeProperty);
+			return internalBuildImplementationSchema(instanceType, excludeProperty);
 		} else {
 			return buildConfigValueSchema(property, excludeProperty);
 		}
@@ -1042,6 +1138,59 @@ public class JsonConfigSchemaBuilder {
 		// TopLogic convention: class.<ClassName>.<propertyName>.tooltip
 		ResKey labelKey = ResKey.forClass(configInterface).suffix(propertyName);
 		return labelKey;
+	}
+
+	/**
+	 * Encodes a Java class name to a URI-safe schema identifier.
+	 *
+	 * <p>
+	 * Replaces the {@code $} character used for inner classes with {@code /} to produce an
+	 * unambiguous URI-like naming scheme. Package separators remain as {@code .}.
+	 * </p>
+	 *
+	 * <p>
+	 * Example: {@code com.example.Outer$Inner} becomes {@code com.example.Outer/Inner}
+	 * </p>
+	 *
+	 * @param className
+	 *        The fully-qualified Java class name.
+	 * @return The encoded schema identifier.
+	 */
+	public static String encodeTypeName(String className) {
+		return className.replace('$', '/');
+	}
+
+	/**
+	 * Decodes a schema identifier back to a Java class name.
+	 *
+	 * <p>
+	 * This is the inverse of {@link #encodeTypeName(String)}.
+	 * </p>
+	 *
+	 * @param schemaId
+	 *        The encoded schema identifier.
+	 * @return The original Java class name.
+	 */
+	public static String decodeTypeName(String schemaId) {
+		return schemaId.replace('/', '$');
+	}
+
+	/**
+	 * Loads a class from an encoded type name.
+	 *
+	 * <p>
+	 * Decodes the schema identifier and loads the corresponding class.
+	 * </p>
+	 *
+	 * @param encodedName
+	 *        The encoded type name (with {@code /} instead of {@code $} for inner classes).
+	 * @return The loaded class.
+	 * @throws ClassNotFoundException
+	 *         If no class can be found matching the encoded name.
+	 */
+	public static Class<?> loadEncodedClass(String encodedName) throws ClassNotFoundException {
+		String className = decodeTypeName(encodedName);
+		return Class.forName(className);
 	}
 
 	/**

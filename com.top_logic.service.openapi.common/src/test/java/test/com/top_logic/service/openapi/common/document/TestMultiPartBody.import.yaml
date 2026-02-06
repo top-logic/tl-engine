@@ -1,0 +1,129 @@
+%YAML 1.1
+---
+openapi: 3.0.3
+info:
+  title: TL-Demo OpenAPI Server
+  version: 1.0
+servers:
+- url: http://localhost:8080/demo/api
+paths:
+  /createA/{parent}:
+    put:
+      summary: Creates a new A
+      tags: []
+      parameters: []
+      requestBody:
+        description: Properties for the new A
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required:
+              - name
+              - booleanMandatory
+              - booleanMandatoryRadio
+              - booleanSelectMandatory
+              properties:
+                name:
+                  type: string
+                  description: Name for the new DemoA.
+                booleanMandatory:
+                  type: boolean
+                  description: Value `DemoTypes:A#booleanMandatory` of the new object.
+                booleanMandatoryRadio:
+                  type: boolean
+                  description: Value `DemoTypes:A#booleanRadioMandatory` of the new
+                    object.
+                booleanSelectMandatory:
+                  type: boolean
+                  description: Value `DemoTypes:A#booleanSelectMandatory` of the new
+                    object.
+      responses:
+        "200":
+          description: 'If process was successful. '
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  result:
+                    type: array
+                    description: Path to the new object
+                    items:
+                      type: string
+      security: []
+      x-tl-implementation: "<impl class=\"com.top_logic.service.openapi.server.impl.ServiceMethodBuilderByExpression\"\
+        \n  transaction=\"true\"\n>\n  <operation><![CDATA[{\n  parentElem = $parent.reduce(`DemoTypes#ROOT`,\
+        \ element -> childName -> $element.get(`tl.element:StructuredElementContainer#children`).filter(elem\
+        \ -> $elem.get(`DemoTypes:DemoTypes.All#name`) == $childName).elementAt(0));\n\
+        \  if ($parentElem == null, \n  {\n    \"status\": \"error\",\n    \"error_message\"\
+        : \"Could not resolve parent.\",\n    \"parent\": $parent\n  },\n  {\n   \
+        \ existing = $parentElem.get(`tl.element:StructuredElementContainer#children`).filter(elem\
+        \ -> $elem.get(`DemoTypes:DemoTypes.All#name`) == $name).elementAt(0);\n \
+        \   if ($existing != null,\n    {\n      \"status\": \"error\",\n      \"\
+        error_message\": \"Element with same name exists.\",\n      \"child\": $parent.concat($name)\n\
+        \    },\n    {\n      result = new(`DemoTypes:A`, $parentElem);\n      $result.set(`DemoTypes:DemoTypes.A#name`,\
+        \ $name);\n      $result.set(`DemoTypes:DemoTypes.A#booleanMandatory`, $booleanMandatory);\n\
+        \      $result.set(`DemoTypes:DemoTypes.A#booleanRadioMandatory`, $booleanMandatoryRadio);\n\
+        \      $result.set(`DemoTypes:DemoTypes.A#booleanSelectMandatory`, $booleanSelectMandatory);\n\
+        \      // append new child to parent\n      $parentElem.add(`tl.element:StructuredElementContainer#children`,\
+        \ $result);\n      {\n        \"status\": \"OK\",\n        \"result\": $parent.concat($name)\n\
+        \      }\n    })\n  })\n}\n]]></operation>\n</impl>"
+    parameters:
+    - name: parent
+      in: path
+      description: Path to parent
+      required: true
+      schema:
+        type: array
+        items:
+          type: string
+  /setBinaryValue/{target}:
+    put:
+      summary: Sets the value `DemoTypes:A#binary`
+      tags: []
+      parameters: []
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: []
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Value as byte sequence.
+                encoded:
+                  type: string
+                  format: byte
+                  description: Base64 encoded content
+      responses:
+        "200":
+          description: Ok
+          content:
+            text/plain; charset=utf-8:
+              schema:
+                type: string
+      security: []
+      x-tl-implementation: "<impl class=\"com.top_logic.service.openapi.server.impl.ServiceMethodBuilderByExpression\"\
+        \n  transaction=\"true\"\n>\n  <operation><![CDATA[{\n  requestedObject =\
+        \ $target.reduce(`DemoTypes#ROOT`, element -> name -> $element.get(`tl.element:StructuredElementContainer#children`).filter(elem\
+        \ -> $elem.get(`DemoTypes:DemoTypes.All#name`) == $name).elementAt(0));\n\
+        \  if ($file, \n    $requestedObject.set(`DemoTypes:A#binary`, $file),\n \
+        \   if ($encoded,\n      $requestedObject.set(`DemoTypes:A#binary`, $encoded),\n\
+        \      $requestedObject.set(`DemoTypes:A#binary`, null)\n    )\n  )\n}]]></operation>\n\
+        </impl>"
+    parameters:
+    - name: target
+      in: path
+      description: Path to the A to set value to.
+      required: true
+      schema:
+        type: array
+        items:
+          type: string
+security: []

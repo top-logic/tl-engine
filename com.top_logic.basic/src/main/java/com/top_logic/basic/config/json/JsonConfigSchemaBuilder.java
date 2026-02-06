@@ -802,15 +802,21 @@ public class JsonConfigSchemaBuilder {
 		// Maps in JSON Schema are typically represented as objects with additionalProperties
 		ObjectSchema schema = ObjectSchema.create();
 
-		// Check for @Key annotation to determine if we need a specialized value schema
-		com.top_logic.basic.config.annotation.Key keyAnnotation =
-			property.getAnnotation(com.top_logic.basic.config.annotation.Key.class);
-
-		String excludeProperty = keyAnnotation != null ? keyAnnotation.value() : null;
+		// Check for key property to determine if we need a specialized value schema
+		PropertyDescriptor keyProperty = property.getKeyProperty();
+		String excludeProperty = keyProperty != null ? keyProperty.getPropertyName() : null;
 
 		Schema valueSchema = buildItemValueSchema(property, excludeProperty);
 		if (valueSchema != null) {
 			schema.setAdditionalProperties(valueSchema);
+		}
+
+		// Add propertyNames constraint based on the key property's schema
+		if (keyProperty != null) {
+			Schema keySchema = buildPlainPropertySchema(keyProperty, true);
+			if (keySchema != null) {
+				schema.setPropertyNames(keySchema);
+			}
 		}
 
 		return schema;
@@ -829,21 +835,44 @@ public class JsonConfigSchemaBuilder {
 	 * Builds schema for plain (primitive/simple) properties.
 	 */
 	private Schema buildPlainPropertySchema(PropertyDescriptor property) {
+		return buildPlainPropertySchema(property, false);
+	}
+
+	/**
+	 * Builds schema for plain (primitive/simple) properties.
+	 *
+	 * @param property
+	 *        The property descriptor.
+	 * @param asMapKey
+	 *        Whether this schema is for a map key. If <code>true</code>, numeric and boolean types
+	 *        are represented as string schemas with appropriate patterns, since JSON object keys
+	 *        are always strings.
+	 */
+	private Schema buildPlainPropertySchema(PropertyDescriptor property, boolean asMapKey) {
 		Class<?> type = property.getType();
-	
+
 		// Numeric types
 		if (type == int.class || type == Integer.class || type == long.class || type == Long.class) {
+			if (asMapKey) {
+				return StringSchema.create().setPattern("^-?[0-9]+$");
+			}
 			NumericSchema schema = NumericSchema.create().setIntegerOnly(true);
 			processNumeric(property, schema);
 
 			return schema;
 		}
 		if (type == float.class || type == Float.class || type == double.class || type == Double.class) {
+			if (asMapKey) {
+				return StringSchema.create().setPattern("^-?[0-9]+(\\.[0-9]+)?([eE][+-]?[0-9]+)?$");
+			}
 			NumericSchema schema = NumericSchema.create();
 			processNumeric(property, schema);
 			return schema;
 		}
 		if (type == short.class || type == Short.class) {
+			if (asMapKey) {
+				return StringSchema.create().setPattern("^-?[0-9]+$");
+			}
 			NumericSchema schema = NumericSchema.create()
 				.setIntegerOnly(true)
 				.setMinimum((double) Short.MIN_VALUE)
@@ -852,6 +881,9 @@ public class JsonConfigSchemaBuilder {
 			return schema;
 		}
 		if (type == byte.class || type == Byte.class) {
+			if (asMapKey) {
+				return StringSchema.create().setPattern("^-?[0-9]+$");
+			}
 			NumericSchema schema = NumericSchema.create()
 				.setIntegerOnly(true)
 				.setMinimum((double) Byte.MIN_VALUE)
@@ -859,17 +891,20 @@ public class JsonConfigSchemaBuilder {
 			processNumeric(property, schema);
 			return schema;
 		}
-	
+
 		// String type
 		if (type == String.class) {
 			return StringSchema.create();
 		}
-	
+
 		// Boolean type
 		if (type == boolean.class || type == Boolean.class) {
+			if (asMapKey) {
+				return EnumSchema.create().addEnumLiteral("true").addEnumLiteral("false");
+			}
 			return BooleanSchema.create();
 		}
-	
+
 		// Enum types
 		if (type.isEnum()) {
 			EnumSchema schema = EnumSchema.create();
@@ -893,7 +928,7 @@ public class JsonConfigSchemaBuilder {
 			}
 			return schema;
 		}
-	
+
 		// Concrete format is defined by the ConfigurationValueProvider.
 		return StringSchema.create();
 	}

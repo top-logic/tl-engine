@@ -308,8 +308,10 @@ public class TestJsonConfigSchemaBuilderKeyAnnotation extends AbstractJsonConfig
 		if (in == null) {
 			fail("Expected schema resource not found: " + resourceName +
 				". Create this file with the expected schema. Actual schema: \n" + actualSchema);
+			return "";
+		} else {
+			return new String(in.readAllBytes(), "UTF-8");
 		}
-		return new String(in.readAllBytes(), "UTF-8");
 	}
 
 	public static Test suite() {

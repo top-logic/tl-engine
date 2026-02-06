@@ -23,9 +23,9 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.thread.ThreadContextManager;
 
 /**
- * Test case for {@link ConfigSchemaBuilder} enum handling.
+ * Test case for {@link ConfigJsonSchemaBuilder} enum handling.
  */
-public class TestConfigSchemaBuilderEnums extends TestCase {
+public class TestJsonConfigSchemaBuilderEnums extends TestCase {
 
 	/**
 	 * Regular enum using standard Java names.
@@ -110,7 +110,7 @@ public class TestConfigSchemaBuilderEnums extends TestCase {
 	 * Tests that regular enum uses Java constant names.
 	 */
 	public void testRegularEnum() {
-		ConfigSchemaBuilder builder = new ConfigSchemaBuilder();
+		ConfigJsonSchemaBuilder builder = new ConfigJsonSchemaBuilder();
 		ConfigurationDescriptor descriptor = TypedConfiguration.getConfigurationDescriptor(ConfigWithRegularEnum.class);
 
 		Schema schema = builder.build(descriptor);
@@ -136,7 +136,7 @@ public class TestConfigSchemaBuilderEnums extends TestCase {
 	 * Tests that ExternallyNamed enum uses external names.
 	 */
 	public void testExternallyNamedEnum() {
-		ConfigSchemaBuilder builder = new ConfigSchemaBuilder();
+		ConfigJsonSchemaBuilder builder = new ConfigJsonSchemaBuilder();
 		ConfigurationDescriptor descriptor = TypedConfiguration.getConfigurationDescriptor(ConfigWithExternalEnum.class);
 
 		Schema schema = builder.build(descriptor);
@@ -162,7 +162,7 @@ public class TestConfigSchemaBuilderEnums extends TestCase {
 	 * Tests that ProtocolEnum uses protocol names.
 	 */
 	public void testProtocolEnum() {
-		ConfigSchemaBuilder builder = new ConfigSchemaBuilder();
+		ConfigJsonSchemaBuilder builder = new ConfigJsonSchemaBuilder();
 		ConfigurationDescriptor descriptor = TypedConfiguration.getConfigurationDescriptor(ConfigWithProtocolEnum.class);
 
 		Schema schema = builder.build(descriptor);
@@ -187,6 +187,6 @@ public class TestConfigSchemaBuilderEnums extends TestCase {
 	public static Test suite() {
 		return TLTestSetup.createTLTestSetup(
 			ServiceTestSetup.createSetup(
-				TestConfigSchemaBuilderKeyAnnotation.class, ThreadContextManager.Module.INSTANCE));
+				TestJsonConfigSchemaBuilderKeyAnnotation.class, ThreadContextManager.Module.INSTANCE));
 	}
 }

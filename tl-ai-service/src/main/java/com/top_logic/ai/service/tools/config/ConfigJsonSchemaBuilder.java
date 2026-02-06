@@ -56,7 +56,7 @@ import com.top_logic.util.Resources;
  * by analyzing property descriptors, types, constraints, and nested structures.
  * </p>
  */
-public class ConfigSchemaBuilder {
+public class ConfigJsonSchemaBuilder {
 
 	private static final String TYPE_PROPERTY = "$type";
 
@@ -87,7 +87,7 @@ public class ConfigSchemaBuilder {
 	 *
 	 * @see #_inline
 	 */
-	public ConfigSchemaBuilder setInline(boolean inline) {
+	public ConfigJsonSchemaBuilder setInline(boolean inline) {
 		_inline = inline;
 		return this;
 	}
@@ -232,7 +232,7 @@ public class ConfigSchemaBuilder {
 			result = addSubtypeOptions(instanceType, result);
 		} catch (ConfigurationException ex) {
 			Logger.warn("Cannot resolve schema for instance type '': " + ex.getMessage(), ex,
-				ConfigSchemaBuilder.class);
+				ConfigJsonSchemaBuilder.class);
 		}
 
 		return result;
@@ -793,7 +793,7 @@ public class ConfigSchemaBuilder {
 	 * only possible for XML serialized configurations.
 	 */
 	private Schema buildComplexPropertySchema(PropertyDescriptor property) {
-		Logger.warn("Ignoring complex property '" + property + "' (only supported in XML).", ConfigSchemaBuilder.class);
+		Logger.warn("Ignoring complex property '" + property + "' (only supported in XML).", ConfigJsonSchemaBuilder.class);
 		return null;
 	}
 

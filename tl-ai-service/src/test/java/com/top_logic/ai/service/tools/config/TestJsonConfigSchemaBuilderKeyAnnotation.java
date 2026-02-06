@@ -23,9 +23,9 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.thread.ThreadContextManager;
 
 /**
- * Test case for {@link ConfigSchemaBuilder} @Key annotation handling.
+ * Test case for {@link ConfigJsonSchemaBuilder} @Key annotation handling.
  */
-public class TestConfigSchemaBuilderKeyAnnotation extends BasicTestCase {
+public class TestJsonConfigSchemaBuilderKeyAnnotation extends BasicTestCase {
 
 	/**
 	 * A simple value configuration with a name property.
@@ -58,7 +58,7 @@ public class TestConfigSchemaBuilderKeyAnnotation extends BasicTestCase {
 	 * propertyNames constraint.
 	 */
 	public void testKeyAnnotationHandling() {
-		ConfigSchemaBuilder builder = new ConfigSchemaBuilder();
+		ConfigJsonSchemaBuilder builder = new ConfigJsonSchemaBuilder();
 		ConfigurationDescriptor descriptor =
 			TypedConfiguration.getConfigurationDescriptor(ConfigWithMap.class);
 
@@ -104,7 +104,7 @@ public class TestConfigSchemaBuilderKeyAnnotation extends BasicTestCase {
 	 * Tests complete round-trip scenario.
 	 */
 	public void testKeyAnnotationFullExample() {
-		ConfigSchemaBuilder builder = new ConfigSchemaBuilder();
+		ConfigJsonSchemaBuilder builder = new ConfigJsonSchemaBuilder();
 		ConfigurationDescriptor descriptor =
 			TypedConfiguration.getConfigurationDescriptor(ConfigWithMap.class);
 
@@ -124,7 +124,7 @@ public class TestConfigSchemaBuilderKeyAnnotation extends BasicTestCase {
 	public static Test suite() {
 		return TLTestSetup.createTLTestSetup(
 			ServiceTestSetup.createSetup(
-				TestConfigSchemaBuilderKeyAnnotation.class, ThreadContextManager.Module.INSTANCE));
+				TestJsonConfigSchemaBuilderKeyAnnotation.class, ThreadContextManager.Module.INSTANCE));
 	}
 	
 }

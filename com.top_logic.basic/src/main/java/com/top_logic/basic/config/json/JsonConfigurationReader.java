@@ -53,6 +53,8 @@ public class JsonConfigurationReader extends AbstractConfigurationReader {
 
 	private boolean _unexpectedEntriesAsWarn = false;
 
+	private boolean _schemaAware;
+
 	/**
 	 * Creates a new {@link JsonConfigurationReader}.
 	 * 
@@ -74,7 +76,18 @@ public class JsonConfigurationReader extends AbstractConfigurationReader {
 	 */
 	public void treatUnexpectedEntriesAsWarn(boolean value) {
 		_unexpectedEntriesAsWarn = value;
+	}
 
+	/**
+	 * Use JSON schema aware serialization format.
+	 * 
+	 * <p>
+	 * The default format is optimized for stream processing.
+	 * </p>
+	 */
+	public JsonConfigurationReader schemaAware() {
+		_schemaAware = true;
+		return this;
 	}
 
 	@Override
@@ -97,23 +110,65 @@ public class JsonConfigurationReader extends AbstractConfigurationReader {
 
 	private ConfigBuilder nextItem(ConfigurationDescriptor expectedDescriptor, ConfigurationItem baseItem)
 			throws IOException, ConfigurationException {
-		JsonToken currentState = _input.peek();
-		switch (currentState) {
-			case BEGIN_ARRAY:
-				return readPolymorphicItem(expectedDescriptor, baseItem);
-			case BEGIN_OBJECT:
-				return readMonomorphicItem(expectedDescriptor, baseItem);
-			default:
-				throw new IOException(
-					"Unexpected input state " + currentState + " when reading item" + inSourceAtPath() + ".");
+		if (_schemaAware) {
+			return readPolymorphicInlineItem(expectedDescriptor, baseItem);
+		} else {
+			JsonToken currentState = _input.peek();
+			switch (currentState) {
+				case BEGIN_ARRAY:
+					return readPolymorphicArrayItem(expectedDescriptor, baseItem);
+				case BEGIN_OBJECT:
+					return readMonomorphicItem(expectedDescriptor, baseItem);
+				default:
+					throw new IOException(
+						"Unexpected input state " + currentState + " when reading item" + inSourceAtPath() + ".");
+			}
 		}
 	}
 
-	private ConfigBuilder readPolymorphicItem(ConfigurationDescriptor staticType, ConfigurationItem baseItem)
+	private ConfigBuilder readPolymorphicInlineItem(ConfigurationDescriptor staticType, ConfigurationItem baseItem)
+			throws IOException, ConfigurationException {
+		_input.beginObject();
+
+		String firstProperty;
+
+		ConfigBuilder result;
+		if (_input.hasNext()) {
+			firstProperty = _input.nextName();
+			if (firstProperty.equals("$type")) {
+				// Consumed.
+				firstProperty = null;
+
+				String typeName = _input.nextString();
+
+				result = createBuilder(staticType, typeName);
+			} else {
+				result = TypedConfiguration.createConfigBuilder(staticType);
+			}
+		} else {
+			firstProperty = null;
+			result = TypedConfiguration.createConfigBuilder(staticType);
+		}
+
+		readProperties(result, baseItem, firstProperty);
+
+		_input.endObject();
+		return result;
+	}
+
+	private ConfigBuilder readPolymorphicArrayItem(ConfigurationDescriptor staticType, ConfigurationItem baseItem)
 			throws IOException, ConfigurationException {
 		_input.beginArray();
+		ConfigBuilder result = createBuilder(staticType, _input.nextString());
+		readObject(result, baseItem);
+		_input.endArray();
+		return result;
+	}
+
+	private ConfigBuilder createBuilder(ConfigurationDescriptor staticType, String typeName)
+			throws ConfigurationException, IOException {
 		Class<?> polymorphicType =
-			ConfigUtil.getClassForNameMandatory(Object.class, "polymorphicTypeDefinition", _input.nextString());
+			ConfigUtil.getClassForNameMandatory(Object.class, "polymorphicTypeDefinition", typeName);
 
 		ConfigBuilder result;
 		if (ConfigurationItem.class.isAssignableFrom(polymorphicType)) {
@@ -133,20 +188,33 @@ public class JsonConfigurationReader extends AbstractConfigurationReader {
 					+ "' is not a configuration" + inSourceAtPath() + ".");
 			}
 		}
-		fillBuilder(result, baseItem);
-		_input.endArray();
 		return result;
 	}
 
-	private void fillBuilder(ConfigBuilder result, ConfigurationItem baseItem)
+	private void readObject(ConfigBuilder result, ConfigurationItem baseItem)
 			throws IOException, ConfigurationException {
 		_input.beginObject();
+		readProperties(result, baseItem, null);
+		_input.endObject();
+	}
+
+	private void readProperties(ConfigBuilder result, ConfigurationItem baseItem, String pendingProperty)
+			throws IOException, ConfigurationException {
 		if (baseItem != null) {
 			moveValues(baseItem, result);
 		}
 		ConfigurationDescriptor descriptor = result.descriptor();
-		while (_input.hasNext()) {
-			String key = _input.nextName();
+		while (pendingProperty != null || _input.hasNext()) {
+			String key;
+			if (pendingProperty != null) {
+				key = pendingProperty;
+
+				// Consumed.
+				pendingProperty = null;
+			} else {
+				key = _input.nextName();
+			}
+
 			PropertyDescriptor property = descriptor.getProperty(key);
 			if (property == null) {
 				String msg = "No property with name '" + key + "' found " + inSourceAtPath() + " (see also "
@@ -161,7 +229,6 @@ public class JsonConfigurationReader extends AbstractConfigurationReader {
 				updateProperty(result, property);
 			}
 		}
-		_input.endObject();
 	}
 
 	private void updateProperty(ConfigBuilder result, PropertyDescriptor property)
@@ -389,7 +456,7 @@ public class JsonConfigurationReader extends AbstractConfigurationReader {
 	private ConfigBuilder readMonomorphicItem(ConfigurationDescriptor descriptor, ConfigurationItem baseItem)
 			throws IOException, ConfigurationException {
 		ConfigBuilder result = TypedConfiguration.createConfigBuilder(descriptor);
-		fillBuilder(result, baseItem);
+		readObject(result, baseItem);
 		return result;
 	}
 

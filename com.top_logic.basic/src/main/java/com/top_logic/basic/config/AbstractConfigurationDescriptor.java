@@ -78,6 +78,8 @@ abstract class AbstractConfigurationDescriptor implements ConfigurationDescripto
 
 	private Constructor<?> _itemConstructor;
 
+	private Class<?> _instanceType;
+
 	/**
 	 * Creates a new {@link AbstractConfigurationDescriptor}.
 	 * 
@@ -86,11 +88,19 @@ abstract class AbstractConfigurationDescriptor implements ConfigurationDescripto
 	 */
 	public AbstractConfigurationDescriptor(Class<?> configInterface) {
 		_configInterface = configInterface;
+		_instanceType = PolymorphicConfiguration.class.isAssignableFrom(configInterface)
+			? ConfigurationDescriptorImpl.resolveImplementationClass(configInterface)
+			: null;
 	}
 
 	@Override
 	public Class<?> getConfigurationInterface() {
 		return _configInterface;
+	}
+
+	@Override
+	public Class<?> getInstanceType() {
+		return _instanceType;
 	}
 
 	@Override
@@ -301,7 +311,7 @@ abstract class AbstractConfigurationDescriptor implements ConfigurationDescripto
 				} else {
 					Class<?> scope = idAnnotation.value();
 					Class<?> implClass =
-						MethodBasedPropertyDescriptor
+						ConfigurationDescriptorImpl
 							.resolveImplementationClass(configDescriptor.getConfigurationInterface());
 
 					if (scope == Void.class) {

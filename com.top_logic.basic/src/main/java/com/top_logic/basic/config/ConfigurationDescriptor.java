@@ -49,7 +49,26 @@ public interface ConfigurationDescriptor {
 		return other.getConfigurationInterface().isAssignableFrom(getConfigurationInterface());
 	}
 
+	/**
+	 * The Java interface that defines the configuration type.
+	 * 
+	 * <p>
+	 * Typically this is a subtype of {@link ConfigurationItem}, but can also be an
+	 * {@link Annotation} type.
+	 * </p>
+	 */
 	Class<?> getConfigurationInterface();
+
+	/**
+	 * The implementation class whose instances can be configured with configurations described by
+	 * this descriptor.
+	 * 
+	 * @return The implementation class A, if the {@link #getConfigurationInterface()} is a subtype
+	 *         of {@link PolymorphicConfiguration}&lt;A&gt;, <code>null</code> otherwise.
+	 *
+	 * @see PropertyDescriptor#getInstanceType()
+	 */
+	Class<?> getInstanceType();
 
 	/**
 	 * Looks up an annotation of the given annotation type for this configuration type.

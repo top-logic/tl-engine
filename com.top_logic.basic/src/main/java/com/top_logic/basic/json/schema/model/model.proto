@@ -1,0 +1,636 @@
+package com.top_logic.basic.json.schema.model;
+
+option NoBinary;
+option NoListener;
+option NoInterfaces;
+option NoXml;
+
+// ===== Base Schema Class =====
+
+/**
+ * Abstract base class for all JSON Schema types (JSON Schema 2020-12).
+ *
+ * <p>
+ * Contains the core vocabulary keywords that can appear in any schema,
+ * including metadata annotations and reference mechanisms.
+ * </p>
+ */
+abstract message Schema {
+	// ===== Core Vocabulary Keywords =====
+
+	/**
+	 * Canonical URI identifying this schema resource.
+	 *
+	 * <p>
+	 * Establishes the base URI for resolving relative references.
+	 * Subschemas with $id create distinct schema resources.
+	 * </p>
+	 */
+	@Name("$id")
+	@Nullable
+	string id;
+
+	/**
+	 * Plain name fragment for referencing this schema.
+	 *
+	 * <p>
+	 * Creates location-independent references that survive schema restructuring.
+	 * Value must match XML's NCName pattern.
+	 * </p>
+	 */
+	@Name("$anchor")
+	@Nullable
+	string anchor;
+
+	/**
+	 * Dynamic anchor for runtime-resolved references.
+	 *
+	 * <p>
+	 * Works cooperatively with $dynamicRef for recursive schemas.
+	 * </p>
+	 */
+	@Name("$dynamicAnchor")
+	@Nullable
+	string dynamicAnchor;
+
+	/**
+	 * Comment for schema authors.
+	 *
+	 * <p>
+	 * Explanatory text that doesn't affect validation or annotation results.
+	 * </p>
+	 */
+	@Name("$comment")
+	@Nullable
+	string comment;
+
+	/**
+	 * Reusable schema definitions.
+	 *
+	 * <p>
+	 * Reserved location for defining schemas that can be referenced via $ref.
+	 * Does not directly affect validation.
+	 * </p>
+	 */
+	@Name("$defs")
+	map<string, Schema> definitions;
+
+	// ===== Metadata Annotations =====
+
+	/**
+	 * Title annotation for UI display.
+	 */
+	@Nullable
+	string title;
+
+	/**
+	 * Description annotation for documentation.
+	 */
+	@Nullable
+	string description;
+
+	/**
+	 * Default value (JSON-serialized string).
+	 */
+	@Name("default")
+	@Nullable
+	string defaultValue;
+
+	/**
+	 * Deprecated flag marking schema as obsolete.
+	 */
+	bool deprecated;
+
+	/**
+	 * Read-only flag for access control metadata.
+	 */
+	bool readOnly;
+
+	/**
+	 * Write-only flag for access control metadata.
+	 */
+	bool writeOnly;
+
+	/**
+	 * Example values (JSON-serialized strings).
+	 */
+	repeated string examples;
+}
+
+// ===== Boolean Schemas =====
+
+/**
+ * Boolean schema that always passes validation.
+ *
+ * <p>
+ * Equivalent to an empty schema object {}.
+ * </p>
+ */
+message TrueSchema extends Schema {
+	// No additional fields - always validates successfully
+}
+
+/**
+ * Boolean schema that always fails validation.
+ *
+ * <p>
+ * Equivalent to {"not": {}}.
+ * </p>
+ */
+message FalseSchema extends Schema {
+	// No additional fields - always fails validation
+}
+
+// ===== Reference Schema =====
+
+/**
+ * Schema reference ($ref) pointing to another schema by URI.
+ *
+ * <p>
+ * Can appear alongside other keywords in the same schema object.
+ * </p>
+ */
+message RefSchema extends Schema {
+	/**
+	 * Reference to another schema by URI.
+	 */
+	@Name("$ref")
+	string ref;
+}
+
+/**
+ * Dynamic reference resolved at runtime.
+ *
+ * <p>
+ * Particularly useful for recursive schemas that reference themselves.
+ * Works with $dynamicAnchor.
+ * </p>
+ */
+message DynamicRefSchema extends Schema {
+	/**
+	 * Dynamic reference URI.
+	 */
+	@Name("$dynamicRef")
+	string dynamicRef;
+}
+
+// ===== Type-Specific Schemas =====
+
+/**
+ * Schema for null type validation.
+ *
+ * <p>
+ * Validates that an instance is null (JSON null value).
+ * Serializes as {"type": "null"}.
+ * </p>
+ */
+message NullSchema extends Schema {
+	// No additional fields - validates null values only
+}
+
+/**
+ * Schema for boolean type validation.
+ *
+ * <p>
+ * Validates that an instance is a boolean (true or false).
+ * Serializes as {"type": "boolean"}.
+ * </p>
+ */
+message BooleanSchema extends Schema {
+	// No additional fields - validates boolean values only
+}
+
+/**
+ * Schema for string validation (JSON Schema 2020-12).
+ *
+ * <p>
+ * Validates string instances with length, pattern, format, and content constraints.
+ * </p>
+ */
+message StringSchema extends Schema {
+	/**
+	 * Maximum string length (inclusive).
+	 */
+	@Nullable
+	int maxLength;
+
+	/**
+	 * Minimum string length (inclusive).
+	 */
+	@Nullable
+	int minLength;
+
+	/**
+	 * ECMA-262 regular expression pattern.
+	 */
+	@Nullable
+	string pattern;
+
+	/**
+	 * Format annotation for semantic validation.
+	 *
+	 * <p>
+	 * Examples: date-time, email, hostname, ipv4, ipv6, uri, uuid, etc.
+	 * </p>
+	 */
+	@Nullable
+	string format;
+
+	/**
+	 * Content encoding (e.g., base64, base32).
+	 */
+	@Nullable
+	string contentEncoding;
+
+	/**
+	 * MIME type of encoded content.
+	 */
+	@Nullable
+	string contentMediaType;
+
+	/**
+	 * Schema validating decoded content.
+	 */
+	@Nullable
+	Schema contentSchema;
+}
+
+/**
+ * Schema for numeric validation (number and integer types).
+ *
+ * <p>
+ * Validates numeric instances with range and multiple-of constraints.
+ * </p>
+ */
+message NumericSchema extends Schema {
+	/**
+	 * Multiple-of constraint.
+	 *
+	 * <p>
+	 * Valid only if division by this value results in an integer.
+	 * </p>
+	 */
+	@Nullable
+	double multipleOf;
+
+	/**
+	 * Maximum value (inclusive).
+	 */
+	@Nullable
+	double maximum;
+
+	/**
+	 * Exclusive maximum value (strictly less than).
+	 */
+	@Nullable
+	double exclusiveMaximum;
+
+	/**
+	 * Minimum value (inclusive).
+	 */
+	@Nullable
+	double minimum;
+
+	/**
+	 * Exclusive minimum value (strictly greater than).
+	 */
+	@Nullable
+	double exclusiveMinimum;
+
+	/**
+	 * Whether this is an integer schema (vs. number).
+	 */
+	bool integerOnly;
+}
+
+/**
+ * Schema for array validation.
+ *
+ * <p>
+ * Validates array instances with size, uniqueness, and item constraints.
+ * </p>
+ */
+message ArraySchema extends Schema {
+	/**
+	 * Maximum array size.
+	 */
+	@Nullable
+	int maxItems;
+
+	/**
+	 * Minimum array size.
+	 */
+	@Nullable
+	int minItems;
+
+	/**
+	 * Unique items constraint.
+	 *
+	 * <p>
+	 * If true, all array elements must be distinct.
+	 * </p>
+	 */
+	bool uniqueItems;
+
+	/**
+	 * Positional schemas for array items.
+	 *
+	 * <p>
+	 * Applies schemas to array elements by position.
+	 * </p>
+	 */
+	repeated Schema prefixItems;
+
+	/**
+	 * Schema for array items.
+	 *
+	 * <p>
+	 * For arrays without prefixItems: validates all items.
+	 * For arrays with prefixItems: validates items beyond prefixItems positions.
+	 * </p>
+	 */
+	@Nullable
+	Schema items;
+
+	/**
+	 * Contains constraint schema.
+	 *
+	 * <p>
+	 * Array must contain at least one item matching this schema.
+	 * </p>
+	 */
+	@Nullable
+	Schema contains;
+
+	/**
+	 * Minimum number of items matching contains schema.
+	 */
+	@Nullable
+	int minContains;
+
+	/**
+	 * Maximum number of items matching contains schema.
+	 */
+	@Nullable
+	int maxContains;
+}
+
+/**
+ * Schema for object validation.
+ *
+ * <p>
+ * Validates object instances with property count, required properties,
+ * and property schemas.
+ * </p>
+ */
+message ObjectSchema extends Schema {
+	/**
+	 * Maximum number of properties.
+	 */
+	@Nullable
+	int maxProperties;
+
+	/**
+	 * Minimum number of properties.
+	 */
+	@Nullable
+	int minProperties;
+
+	/**
+	 * Required property names.
+	 *
+	 * <p>
+	 * Every name in this array must be a property in the instance.
+	 * </p>
+	 */
+	repeated string required;
+
+	/**
+	 * Conditional required properties.
+	 *
+	 * <p>
+	 * Maps property names to arrays of required properties when that property is present.
+	 * </p>
+	 */
+	map<string, StringArray> dependentRequired;
+
+	/**
+	 * Schema for object properties by name.
+	 */
+	map<string, Schema> properties;
+
+	/**
+	 * Schema for properties matching regex patterns.
+	 *
+	 * <p>
+	 * Maps ECMA-262 regex patterns to schemas for matching properties.
+	 * </p>
+	 */
+	map<string, Schema> patternProperties;
+
+	/**
+	 * Schema for additional properties not in properties or patternProperties.
+	 */
+	@Nullable
+	Schema additionalProperties;
+
+	/**
+	 * Schema for property names.
+	 *
+	 * <p>
+	 * All property names must validate against this schema.
+	 * </p>
+	 */
+	@Nullable
+	Schema propertyNames;
+
+	/**
+	 * Dependent schemas by property.
+	 *
+	 * <p>
+	 * When a property from this map is present, the corresponding schema is applied.
+	 * </p>
+	 */
+	map<string, Schema> dependentSchemas;
+}
+
+// ===== Enum and Const Schemas =====
+
+/**
+ * Enumeration schema constraining instance to specific values.
+ *
+ * <p>
+ * Instance must equal one of the values in the enum array.
+ * </p>
+ */
+message EnumSchema extends Schema {
+	/**
+	 * Allowed values (JSON-serialized strings).
+	 */
+	@Name("enum")
+	repeated string enumLiterals;
+}
+
+/**
+ * Constant value schema.
+ *
+ * <p>
+ * Instance must equal exactly this value.
+ * </p>
+ */
+message ConstSchema extends Schema {
+	/**
+	 * Constant value (JSON-serialized string).
+	 */
+	@Name("const")
+	string constValue;
+}
+
+// ===== Composition Schemas =====
+
+/**
+ * All-of composition schema.
+ *
+ * <p>
+ * Instance must validate against ALL subschemas.
+ * </p>
+ */
+message AllOfSchema extends Schema {
+	/**
+	 * Array of schemas - all must validate.
+	 */
+	repeated Schema allOf;
+}
+
+/**
+ * Any-of composition schema.
+ *
+ * <p>
+ * Instance must validate against AT LEAST ONE subschema.
+ * </p>
+ */
+message AnyOfSchema extends Schema {
+	/**
+	 * Array of schemas - at least one must validate.
+	 */
+	repeated Schema anyOf;
+}
+
+/**
+ * One-of composition schema.
+ *
+ * <p>
+ * Instance must validate against EXACTLY ONE subschema.
+ * </p>
+ */
+message OneOfSchema extends Schema {
+	/**
+	 * Array of schemas - exactly one must validate.
+	 */
+	repeated Schema oneOf;
+}
+
+/**
+ * Negation schema.
+ *
+ * <p>
+ * Instance must NOT validate against the subschema.
+ * </p>
+ */
+message NotSchema extends Schema {
+	/**
+	 * Schema that must not validate.
+	 */
+	Schema not;
+}
+
+// ===== Conditional Schema =====
+
+/**
+ * Conditional if/then/else schema.
+ *
+ * <p>
+ * If instance validates against 'if', 'then' is applied, otherwise 'else'.
+ * </p>
+ */
+message ConditionalSchema extends Schema {
+	/**
+	 * Condition schema.
+	 */
+	@Name("if")
+	@Nullable
+	Schema condition;
+
+	/**
+	 * Schema applied when 'if' validates successfully.
+	 */
+	@Name("then")
+	@Nullable
+	Schema thenSchema;
+
+	/**
+	 * Schema applied when 'if' validation fails.
+	 */
+	@Name("else")
+	@Nullable
+	Schema elseSchema;
+}
+
+// ===== Root Schema Document =====
+
+/**
+ * Root JSON Schema document (JSON Schema 2020-12).
+ *
+ * <p>
+ * Represents a complete JSON Schema document with dialect identifier
+ * and vocabulary declarations. Can contain any schema type as its content.
+ * </p>
+ */
+message JsonSchemaDocument extends Schema {
+	/**
+	 * Dialect identifier (e.g., "https://json-schema.org/draft/2020-12/schema").
+	 *
+	 * <p>
+	 * Should be used in the document root schema object.
+	 * </p>
+	 */
+	@Name("$schema")
+	@Nullable
+	string schemaDialectUri;
+
+	/**
+	 * Vocabulary declarations (used in meta-schemas only).
+	 *
+	 * <p>
+	 * Maps vocabulary URIs to boolean indicating if required (true) or optional (false).
+	 * </p>
+	 */
+	 @Name("$vocabulary")
+	map<string, bool> vocabulary;
+
+	/**
+	 * The actual schema content.
+	 *
+	 * <p>
+	 * Can be any schema type (StringSchema, ObjectSchema, AllOfSchema, etc.).
+	 * </p>
+	 */
+	@Nullable
+	Schema schema;
+}
+
+// ===== Helper Messages =====
+
+/**
+ * Array of strings for use in maps.
+ *
+ * <p>
+ * Proto3 doesn't support repeated fields in maps directly.
+ * </p>
+ */
+message StringArray {
+	/**
+	 * Array of string values.
+	 */
+	repeated string values;
+}

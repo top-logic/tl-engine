@@ -7,6 +7,7 @@ package com.top_logic.service.openapi.common.document;
 
 import java.util.Map;
 
+import com.top_logic.basic.config.annotation.Final;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
@@ -14,11 +15,12 @@ import com.top_logic.basic.config.order.DisplayOrder;
 
 /**
  * Describes a single request body.
- * 
+ *
  * @see "https://spec.openapis.org/oas/v3.0.3#request-body-object"
- * 
+ *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@Final
 @DisplayOrder({
 	RequestBodyObject.DESCRIPTION,
 	RequestBodyObject.REQUIRED,

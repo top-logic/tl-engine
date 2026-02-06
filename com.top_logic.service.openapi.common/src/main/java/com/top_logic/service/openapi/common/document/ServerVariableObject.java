@@ -6,6 +6,7 @@
 package com.top_logic.service.openapi.common.document;
 
 import com.top_logic.basic.config.NamedConfigMandatory;
+import com.top_logic.basic.config.annotation.Final;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.json.JsonBinding;
@@ -14,11 +15,12 @@ import com.top_logic.basic.config.order.DisplayOrder;
 
 /**
  * An object representing a Server Variable for server URL template substitution.
- * 
+ *
  * @see "https://spec.openapis.org/oas/v3.0.3.html#serverVariableObject"
- * 
+ *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@Final
 @DisplayOrder({
 	ServerVariableObject.NAME_ATTRIBUTE,
 	ServerVariableObject.DEFAULT,

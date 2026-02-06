@@ -8,6 +8,7 @@ package com.top_logic.service.openapi.common.document;
 import java.util.Map;
 
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.annotation.Final;
 import com.top_logic.basic.config.annotation.MapBinding;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.json.JsonBinding;
@@ -16,11 +17,12 @@ import com.top_logic.basic.config.order.DisplayOrder;
 
 /**
  * Configuration details for a supported {@link OAuthFlow}.
- * 
+ *
  * @see "https://spec.openapis.org/oas/v3.0.3.html#oauth-flow-object"
- * 
+ *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@Final
 @DisplayOrder({
 	OAuthFlowObject.FLOW,
 	OAuthFlowObject.TOKEN_URL,

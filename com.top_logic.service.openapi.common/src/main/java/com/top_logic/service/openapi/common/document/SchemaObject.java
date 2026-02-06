@@ -6,6 +6,7 @@
 package com.top_logic.service.openapi.common.document;
 
 import com.top_logic.basic.config.NamedConfigMandatory;
+import com.top_logic.basic.config.annotation.Final;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.order.DisplayOrder;
@@ -19,9 +20,10 @@ import com.top_logic.model.annotate.LabelPosition;
 
 /**
  * A named <i>OpenAPI</i> schema.
- * 
+ *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@Final
 @DisplayOrder({
 	SchemaObject.NAME_ATTRIBUTE,
 	SchemaObject.SCHEMA,

@@ -7,6 +7,7 @@ package com.top_logic.service.openapi.common.document;
 
 import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.annotation.Binding;
+import com.top_logic.basic.config.annotation.Final;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
@@ -20,13 +21,14 @@ import com.top_logic.basic.config.order.DisplayOrder;
 
 /**
  * Describes a single operation parameter.
- * 
+ *
  * A unique parameter is defined by a combination of a name and location.
- * 
+ *
  * @see "https://spec.openapis.org/oas/v3.0.3.html#parameter-object"
- * 
+ *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@Final
 @DisplayOrder({
 	ParameterObject.NAME_ATTRIBUTE,
 	ParameterObject.IN,

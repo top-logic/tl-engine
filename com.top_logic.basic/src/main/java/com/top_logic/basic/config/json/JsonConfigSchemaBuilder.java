@@ -558,7 +558,7 @@ public class JsonConfigSchemaBuilder {
 	private ObjectSchema allConfigs() {
 		ObjectSchema allConfigs = ObjectSchema.create();
 		allConfigs.setDescription(
-			"All configuration types fit here. Such situation typically is a but in the configuration descriptor.");
+			"All configuration types fit here. Such situation typically is a bug in the configuration descriptor.");
 		allConfigs.putProperty(TYPE_PROPERTY, StringSchema.create());
 		allConfigs.addRequired(TYPE_PROPERTY);
 		return allConfigs;

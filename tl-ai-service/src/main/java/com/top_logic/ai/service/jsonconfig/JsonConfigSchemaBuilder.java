@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.ai.service.tools.config;
+package com.top_logic.ai.service.jsonconfig;
 
 import java.lang.reflect.Modifier;
 import java.util.Collection;
@@ -56,7 +56,7 @@ import com.top_logic.util.Resources;
  * by analyzing property descriptors, types, constraints, and nested structures.
  * </p>
  */
-public class ConfigJsonSchemaBuilder {
+public class JsonConfigSchemaBuilder {
 
 	private static final String TYPE_PROPERTY = "$type";
 
@@ -87,7 +87,7 @@ public class ConfigJsonSchemaBuilder {
 	 *
 	 * @see #_inline
 	 */
-	public ConfigJsonSchemaBuilder setInline(boolean inline) {
+	public JsonConfigSchemaBuilder setInline(boolean inline) {
 		_inline = inline;
 		return this;
 	}
@@ -232,7 +232,7 @@ public class ConfigJsonSchemaBuilder {
 			result = addSubtypeOptions(instanceType, result);
 		} catch (ConfigurationException ex) {
 			Logger.warn("Cannot resolve schema for instance type '': " + ex.getMessage(), ex,
-				ConfigJsonSchemaBuilder.class);
+				JsonConfigSchemaBuilder.class);
 		}
 
 		return result;
@@ -793,7 +793,7 @@ public class ConfigJsonSchemaBuilder {
 	 * only possible for XML serialized configurations.
 	 */
 	private Schema buildComplexPropertySchema(PropertyDescriptor property) {
-		Logger.warn("Ignoring complex property '" + property + "' (only supported in XML).", ConfigJsonSchemaBuilder.class);
+		Logger.warn("Ignoring complex property '" + property + "' (only supported in XML).", JsonConfigSchemaBuilder.class);
 		return null;
 	}
 

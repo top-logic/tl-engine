@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.ai.service.tools.config;
+package com.top_logic.ai.service.jsonconfig;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -23,7 +23,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.thread.ThreadContextManager;
 
 /**
- * Test case for {@link ConfigJsonSchemaBuilder} enum handling.
+ * Test case for {@link JsonConfigSchemaBuilder} enum handling.
  */
 public class TestJsonConfigSchemaBuilderEnums extends TestCase {
 
@@ -110,7 +110,7 @@ public class TestJsonConfigSchemaBuilderEnums extends TestCase {
 	 * Tests that regular enum uses Java constant names.
 	 */
 	public void testRegularEnum() {
-		ConfigJsonSchemaBuilder builder = new ConfigJsonSchemaBuilder();
+		JsonConfigSchemaBuilder builder = new JsonConfigSchemaBuilder();
 		ConfigurationDescriptor descriptor = TypedConfiguration.getConfigurationDescriptor(ConfigWithRegularEnum.class);
 
 		Schema schema = builder.build(descriptor);
@@ -136,7 +136,7 @@ public class TestJsonConfigSchemaBuilderEnums extends TestCase {
 	 * Tests that ExternallyNamed enum uses external names.
 	 */
 	public void testExternallyNamedEnum() {
-		ConfigJsonSchemaBuilder builder = new ConfigJsonSchemaBuilder();
+		JsonConfigSchemaBuilder builder = new JsonConfigSchemaBuilder();
 		ConfigurationDescriptor descriptor = TypedConfiguration.getConfigurationDescriptor(ConfigWithExternalEnum.class);
 
 		Schema schema = builder.build(descriptor);
@@ -162,7 +162,7 @@ public class TestJsonConfigSchemaBuilderEnums extends TestCase {
 	 * Tests that ProtocolEnum uses protocol names.
 	 */
 	public void testProtocolEnum() {
-		ConfigJsonSchemaBuilder builder = new ConfigJsonSchemaBuilder();
+		JsonConfigSchemaBuilder builder = new JsonConfigSchemaBuilder();
 		ConfigurationDescriptor descriptor = TypedConfiguration.getConfigurationDescriptor(ConfigWithProtocolEnum.class);
 
 		Schema schema = builder.build(descriptor);

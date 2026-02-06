@@ -21,7 +21,6 @@ import com.networknt.schema.SpecificationVersion;
 
 import com.top_logic.ai.service.jsonschema.JsonSchemaWriter;
 import com.top_logic.ai.service.jsonschema.model.Schema;
-import com.top_logic.ai.service.tools.config.ConfigJsonSchemaBuilder;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationException;
@@ -36,7 +35,7 @@ import com.top_logic.basic.io.character.CharacterContent;
 
 /**
  * {@link AbstractConfigurationWriterTest} testing {@link JsonConfigurationWriter} and
- * {@link ConfigJsonSchemaBuilder}.
+ * {@link JsonConfigSchemaBuilder}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
@@ -257,7 +256,7 @@ public class TestJsonConfigurationWithSchema extends AbstractConfigurationWriter
 	@Override
 	protected String writeConfigurationItem(String localName, ConfigurationDescriptor staticType,
 			ConfigurationItem item) throws Exception {
-		Schema schemaDoc = new ConfigJsonSchemaBuilder().setInline(true).build(staticType);
+		Schema schemaDoc = new JsonConfigSchemaBuilder().setInline(true).build(staticType);
 		String schemaData = JsonSchemaWriter.toJson(schemaDoc);
 
 		StringWriter buffer = new StringWriter();

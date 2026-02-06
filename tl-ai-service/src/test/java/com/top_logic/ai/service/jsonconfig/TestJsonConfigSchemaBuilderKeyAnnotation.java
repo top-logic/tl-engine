@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.ai.service.tools.config;
+package com.top_logic.ai.service.jsonconfig;
 
 import junit.framework.Test;
 
@@ -23,7 +23,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.thread.ThreadContextManager;
 
 /**
- * Test case for {@link ConfigJsonSchemaBuilder} @Key annotation handling.
+ * Test case for {@link JsonConfigSchemaBuilder} @Key annotation handling.
  */
 public class TestJsonConfigSchemaBuilderKeyAnnotation extends BasicTestCase {
 
@@ -58,7 +58,7 @@ public class TestJsonConfigSchemaBuilderKeyAnnotation extends BasicTestCase {
 	 * propertyNames constraint.
 	 */
 	public void testKeyAnnotationHandling() {
-		ConfigJsonSchemaBuilder builder = new ConfigJsonSchemaBuilder();
+		JsonConfigSchemaBuilder builder = new JsonConfigSchemaBuilder();
 		ConfigurationDescriptor descriptor =
 			TypedConfiguration.getConfigurationDescriptor(ConfigWithMap.class);
 
@@ -104,7 +104,7 @@ public class TestJsonConfigSchemaBuilderKeyAnnotation extends BasicTestCase {
 	 * Tests complete round-trip scenario.
 	 */
 	public void testKeyAnnotationFullExample() {
-		ConfigJsonSchemaBuilder builder = new ConfigJsonSchemaBuilder();
+		JsonConfigSchemaBuilder builder = new JsonConfigSchemaBuilder();
 		ConfigurationDescriptor descriptor =
 			TypedConfiguration.getConfigurationDescriptor(ConfigWithMap.class);
 

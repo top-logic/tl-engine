@@ -1,0 +1,46 @@
+{
+	"$defs": {
+		"test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$ConfigWithEnumKeyMap": {
+			"type": "object",
+			"required": [
+				"$type"
+			],
+			"properties": {
+				"$type": {
+					"const": "test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$ConfigWithEnumKeyMap"
+				},
+				"tasks": {
+					"type": "object",
+					"additionalProperties": {
+						"$ref": "#/$defs/test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$Task#map:priority"
+					},
+					"propertyNames": {
+						"enum": [
+							"LOW",
+							"MEDIUM",
+							"HIGH",
+							"CRITICAL"
+						]
+					}
+				}
+			},
+			"additionalProperties": false
+		},
+		"test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$Task#map:priority": {
+			"type": "object",
+			"required": [
+				"$type"
+			],
+			"properties": {
+				"$type": {
+					"const": "test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$Task"
+				},
+				"description": {
+					"type": "string"
+				}
+			},
+			"additionalProperties": false
+		}
+	},
+	"$ref": "#/$defs/test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$ConfigWithEnumKeyMap"
+}

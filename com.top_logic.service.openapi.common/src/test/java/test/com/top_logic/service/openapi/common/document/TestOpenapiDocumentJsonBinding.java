@@ -194,7 +194,7 @@ public class TestOpenapiDocumentJsonBinding extends BasicTestCase {
 
 		// Parse and serialize back
 		OpenapiDocument doc = parseOpenAPIJson(originalJson);
-		String serializedJson = serializeToJson(doc);
+		String serializedJson = serializeToJson(doc, true);
 
 		// Compare as untyped JSON data
 		assertJsonEquals(originalJson, serializedJson);
@@ -208,21 +208,68 @@ public class TestOpenapiDocumentJsonBinding extends BasicTestCase {
 
 		// Parse and serialize back
 		OpenapiDocument doc = parseOpenAPIJson(originalJson);
-		String serializedJson = serializeToJson(doc);
+		String serializedJson = serializeToJson(doc, true);
 
 		// Compare as untyped JSON data
 		assertJsonEquals(originalJson, serializedJson);
 	}
 
 	/**
-	 * Serializes an OpenAPI document to JSON.
+	 * Tests that schema-aware and non-schema-aware serialization produce identical output for the
+	 * ServerClient document.
+	 *
+	 * <p>
+	 * Since all OpenAPI document types are annotated with {@code @Final}, both serialization modes
+	 * should produce the same JSON without any type annotations.
+	 * </p>
 	 */
-	private String serializeToJson(OpenapiDocument doc) throws Exception {
+	public void testSchemaAwareEqualsNonSchemaAwareServerClient() throws Exception {
+		OpenapiDocument doc = readOpenAPIDocument("TestServerClient.import.json");
+
+		String schemaAwareJson = serializeToJson(doc, true);
+		String nonSchemaAwareJson = serializeToJson(doc, false);
+
+		assertJsonEquals(schemaAwareJson, nonSchemaAwareJson);
+	}
+
+	/**
+	 * Tests that schema-aware and non-schema-aware serialization produce identical output for the
+	 * MultiPartBody document.
+	 *
+	 * <p>
+	 * Since all OpenAPI document types are annotated with {@code @Final}, both serialization modes
+	 * should produce the same JSON without any type annotations.
+	 * </p>
+	 */
+	public void testSchemaAwareEqualsNonSchemaAwareMultiPartBody() throws Exception {
+		OpenapiDocument doc = readOpenAPIDocumentFromYaml("TestMultiPartBody.import.yaml");
+
+		String schemaAwareJson = serializeToJson(doc, true);
+		String nonSchemaAwareJson = serializeToJson(doc, false);
+
+		assertJsonEquals(schemaAwareJson, nonSchemaAwareJson);
+	}
+
+	/**
+	 * Serializes an OpenAPI document to JSON.
+	 *
+	 * @param doc
+	 *        The document to serialize.
+	 * @param schemaAware
+	 *        Whether to use schema-aware serialization mode. In schema-aware mode, polymorphic
+	 *        types are annotated with a {@code $type} property. In non-schema-aware mode,
+	 *        polymorphic types are wrapped in arrays.
+	 */
+	private String serializeToJson(OpenapiDocument doc, boolean schemaAware) throws Exception {
 		ConfigurationDescriptor descriptor =
 			TypedConfiguration.getConfigurationDescriptor(OpenapiDocument.class);
 
 		StringWriter writer = new StringWriter();
-		new JsonConfigurationWriter(writer).write(descriptor, doc);
+		JsonConfigurationWriter jsonWriter = new JsonConfigurationWriter(writer);
+		if (schemaAware) {
+			jsonWriter.schemaAware();
+		}
+		jsonWriter.write(descriptor, doc);
 		return writer.toString();
 	}
 

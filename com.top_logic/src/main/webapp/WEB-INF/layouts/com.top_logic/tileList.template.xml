@@ -8,6 +8,7 @@
 			<display-order>
 				<value>
 					<property name="name"/>
+					<property name="types"/>
 					<property name="model"/>
 					<property name="modelBuilder"/>
 					<property name="preview"/>
@@ -20,6 +21,12 @@
 			</display-order>
 		</annotations>
 
+		<property name="types"
+			element-type="com.top_logic.model.util.TLModelPartRef"
+			type="List"
+		>
+			<format value="com.top_logic.model.util.TLModelPartRef$CommaSeparatedTLModelPartRefs"/>
+		</property>
 		<property name="model"
 			instance-type="com.top_logic.layout.channel.linking.impl.ChannelLinking"
 			type="com.top_logic.layout.ModelSpec"
@@ -82,6 +89,7 @@
 				securityObject="${securityObject}"
 				tilePreview="${preview}"
 				titleKey="${name}"
+				types="${types}"
 			>
 				<buttons>
 					${buttons}

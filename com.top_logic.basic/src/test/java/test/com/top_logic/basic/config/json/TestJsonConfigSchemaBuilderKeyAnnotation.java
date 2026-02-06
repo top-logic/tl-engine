@@ -176,7 +176,7 @@ public class TestJsonConfigSchemaBuilderKeyAnnotation extends AbstractJsonConfig
 		ConfigurationDescriptor descriptor =
 			TypedConfiguration.getConfigurationDescriptor(ConfigWithMap.class);
 
-		Schema schema = new JsonConfigSchemaBuilder().setInline(true).build(descriptor);
+		Schema schema = new JsonConfigSchemaBuilder().setInline(true).buildConfigSchema(descriptor);
 		String actualJson = JsonSchemaWriter.toJson(schema, true);
 
 		String expectedJson = loadExpectedSchema("TestJsonConfigSchemaBuilderKeyAnnotation-testKeyAnnotationHandling.json", actualJson);
@@ -191,7 +191,7 @@ public class TestJsonConfigSchemaBuilderKeyAnnotation extends AbstractJsonConfig
 		ConfigurationDescriptor descriptor =
 			TypedConfiguration.getConfigurationDescriptor(ConfigWithPolymorphicMap.class);
 
-		Schema schema = new JsonConfigSchemaBuilder().setInline(true).build(descriptor);
+		Schema schema = new JsonConfigSchemaBuilder().setInline(true).buildConfigSchema(descriptor);
 		String actualJson = JsonSchemaWriter.toJson(schema, true);
 
 		String expectedJson = loadExpectedSchema("TestJsonConfigSchemaBuilderKeyAnnotation-testKeyAnnotationPolymorphic.json", actualJson);
@@ -206,7 +206,7 @@ public class TestJsonConfigSchemaBuilderKeyAnnotation extends AbstractJsonConfig
 		ConfigurationDescriptor descriptor =
 			TypedConfiguration.getConfigurationDescriptor(ConfigWithEnumKeyMap.class);
 
-		Schema schema = new JsonConfigSchemaBuilder().setInline(true).build(descriptor);
+		Schema schema = new JsonConfigSchemaBuilder().setInline(true).buildConfigSchema(descriptor);
 		String actualJson = JsonSchemaWriter.toJson(schema, true);
 
 		String expectedJson = loadExpectedSchema("TestJsonConfigSchemaBuilderKeyAnnotation-testKeyAnnotationEnumKey.json", actualJson);
@@ -243,7 +243,7 @@ public class TestJsonConfigSchemaBuilderKeyAnnotation extends AbstractJsonConfig
 		ConfigurationDescriptor descriptor =
 			TypedConfiguration.getConfigurationDescriptor(ConfigWithIntKeyMap.class);
 
-		Schema schema = new JsonConfigSchemaBuilder().setInline(true).build(descriptor);
+		Schema schema = new JsonConfigSchemaBuilder().setInline(true).buildConfigSchema(descriptor);
 		String actualJson = JsonSchemaWriter.toJson(schema, true);
 
 		String expectedJson = loadExpectedSchema("TestJsonConfigSchemaBuilderKeyAnnotation-testKeyAnnotationIntKey.json", actualJson);

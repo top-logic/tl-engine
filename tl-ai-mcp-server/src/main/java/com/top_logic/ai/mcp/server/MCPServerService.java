@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.top_logic.ai.mcp.server.completions.ModuleNameCompletion;
 import com.top_logic.ai.mcp.server.dynamic.ConfigurableResourceTemplate;
 import com.top_logic.ai.mcp.server.dynamic.DynamicResource;
+import com.top_logic.ai.mcp.server.resources.ConfigSchemaResource;
 import com.top_logic.ai.mcp.server.resources.EnumerationClassifiersResource;
 import com.top_logic.ai.mcp.server.resources.InstanceResource;
 import com.top_logic.ai.mcp.server.resources.ModelModulesResource;
@@ -304,6 +305,9 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 
 		// Register resource template for finding usages of a specific type
 		builder.resourceTemplates(TypeUsagesResource.createSpecification());
+
+		// Register resource template for configuration interface JSON schemas
+		builder.resourceTemplates(ConfigSchemaResource.createSpecification());
 
 		// Register completion handler for module name parameter
 		builder.completions(ModuleNameCompletion.createSpecification());

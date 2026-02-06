@@ -1,27 +1,16 @@
 /*
  * SPDX-FileCopyrightText: 2022 (c) Business Operation Systems GmbH <info@top-logic.com>
- * 
+ *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
 package test.com.top_logic.basic.config.json;
-
-import java.io.StringWriter;
-import java.util.List;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.BasicTestSetup;
-import test.com.top_logic.basic.config.AbstractConfigurationWriterTest;
-
-import com.networknt.schema.InputFormat;
-import com.networknt.schema.SchemaRegistry;
-import com.networknt.schema.SchemaRegistryConfig;
-import com.networknt.schema.SpecificationVersion;
 
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.config.ConfigurationDescriptor;
-import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
@@ -29,21 +18,17 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.json.JsonConfigSchemaBuilder;
-import com.top_logic.basic.config.json.JsonConfigurationReader;
 import com.top_logic.basic.config.json.JsonConfigurationWriter;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
-import com.top_logic.basic.io.character.CharacterContent;
-import com.top_logic.basic.json.schema.JsonSchemaWriter;
-import com.top_logic.basic.json.schema.model.Schema;
 
 /**
- * {@link AbstractConfigurationWriterTest} testing {@link JsonConfigurationWriter} and
+ * {@link AbstractJsonConfigurationWriterTest} testing {@link JsonConfigurationWriter} and
  * {@link JsonConfigSchemaBuilder}.
- * 
+ *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 @SuppressWarnings("javadoc")
-public class TestJsonConfigurationWithSchema extends AbstractConfigurationWriterTest {
+public class TestJsonConfigurationWithSchema extends AbstractJsonConfigurationWriterTest {
 
 	public interface ConcretePolymorphicItem extends ConfigurationItem {
 		A getB();
@@ -218,11 +203,10 @@ public class TestJsonConfigurationWithSchema extends AbstractConfigurationWriter
 		doReadWrite("a", TypedConfiguration.getConfigurationDescriptor(AbstractPolymorphicItem.class), a);
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public void testImplementationSingleton() throws Exception {
 		ConfiguredImplementation doc = TypedConfiguration.newConfigItem(ConfiguredImplementation.class);
-		PolymorphicConfiguration<? extends ConfiguredImplementation.A> b =
-			TypedConfiguration.newConfigItem(PolymorphicConfiguration.class);
+		PolymorphicConfiguration b = TypedConfiguration.newConfigItem(PolymorphicConfiguration.class);
 		b.setImplementationClass(ConfiguredImplementation.B.class);
 		doc.setB(b);
 
@@ -244,47 +228,6 @@ public class TestJsonConfigurationWithSchema extends AbstractConfigurationWriter
 			TypedConfiguration.getConfigurationDescriptor(ConfiguredImplementation.class), doc);
 
 		assertEquals("F(str, 42)", TypedConfigUtil.createInstance(newDoc.getB()).doIt());
-	}
-
-	@Override
-	protected ConfigurationItem readConfigItem(String localName, ConfigurationDescriptor expectedType,
-			CharacterContent content) throws ConfigurationException {
-		ConfigurationItem result = new JsonConfigurationReader(context, expectedType)
-			.schemaAware()
-			.setSource(content)
-			.read();
-		return result;
-	}
-
-	@Override
-	protected String writeConfigurationItem(String localName, ConfigurationDescriptor staticType,
-			ConfigurationItem item) throws Exception {
-		Schema schemaDoc = new JsonConfigSchemaBuilder().setInline(true).build(staticType);
-		String schemaData = JsonSchemaWriter.toJson(schemaDoc);
-
-		StringWriter buffer = new StringWriter();
-		new JsonConfigurationWriter(buffer)
-			.schemaAware()
-			.prettyPrint()
-			.write(staticType, item);
-		String configJson = buffer.toString();
-
-		SchemaRegistryConfig schemaRegistryConfig = SchemaRegistryConfig.builder().build();
-
-		SchemaRegistry schemaRegistry = SchemaRegistry.withDefaultDialect(SpecificationVersion.DRAFT_2020_12,
-			builder -> builder.schemaRegistryConfig(schemaRegistryConfig));
-
-		com.networknt.schema.Schema schema = schemaRegistry.getSchema(schemaData, InputFormat.JSON);
-
-		List<com.networknt.schema.Error> errors = schema.validate(configJson, InputFormat.JSON, executionContext -> {
-			/* By default since Draft 2019-09 the format keyword only generates annotations and not
-			 * assertions. */
-			executionContext.executionConfig(executionConfig -> executionConfig.formatAssertionsEnabled(true));
-		});
-
-		assertTrue("Errors: " + errors, errors.isEmpty());
-
-		return configJson;
 	}
 
 	public static Test suite() {

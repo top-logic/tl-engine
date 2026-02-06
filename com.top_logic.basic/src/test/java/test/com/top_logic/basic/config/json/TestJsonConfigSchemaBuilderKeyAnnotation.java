@@ -5,19 +5,10 @@
  */
 package test.com.top_logic.basic.config.json;
 
-import java.io.StringWriter;
-import java.util.List;
-
 import junit.framework.Test;
+import junit.framework.TestSuite;
 
-import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.BasicTestSetup;
-import test.com.top_logic.basic.module.ServiceTestSetup;
-
-import com.networknt.schema.InputFormat;
-import com.networknt.schema.SchemaRegistry;
-import com.networknt.schema.SchemaRegistryConfig;
-import com.networknt.schema.SpecificationVersion;
 
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationItem;
@@ -27,15 +18,13 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.json.JsonConfigSchemaBuilder;
-import com.top_logic.basic.config.json.JsonConfigurationWriter;
 import com.top_logic.basic.json.schema.JsonSchemaWriter;
 import com.top_logic.basic.json.schema.model.Schema;
-import com.top_logic.basic.thread.ThreadContextManager;
 
 /**
  * Test case for {@link JsonConfigSchemaBuilder} @Key annotation handling.
  */
-public class TestJsonConfigSchemaBuilderKeyAnnotation extends BasicTestCase {
+public class TestJsonConfigSchemaBuilderKeyAnnotation extends AbstractJsonConfigurationWriterTest {
 
 	/**
 	 * A simple value configuration with a name property.
@@ -165,32 +154,11 @@ public class TestJsonConfigSchemaBuilderKeyAnnotation extends BasicTestCase {
 		org.setEmployeeCount(100);
 		config.getEntities().put("Acme", org);
 
-		// Build schema
+		// Serialize configuration to JSON and validate against schema
 		ConfigurationDescriptor descriptor =
 			TypedConfiguration.getConfigurationDescriptor(ConfigWithPolymorphicMap.class);
-		Schema schemaDoc = new JsonConfigSchemaBuilder().setInline(true).build(descriptor);
-		String schemaJson = JsonSchemaWriter.toJson(schemaDoc);
-
-		// Serialize configuration to JSON
-		StringWriter buffer = new StringWriter();
-		new JsonConfigurationWriter(buffer)
-			.schemaAware()
-			.prettyPrint()
-			.write(descriptor, config);
-		String configJson = buffer.toString();
-
-		// Validate against schema
-		SchemaRegistryConfig schemaRegistryConfig = SchemaRegistryConfig.builder().build();
-		SchemaRegistry schemaRegistry = SchemaRegistry.withDefaultDialect(SpecificationVersion.DRAFT_2020_12,
-			builder -> builder.schemaRegistryConfig(schemaRegistryConfig));
-
-		com.networknt.schema.Schema schema = schemaRegistry.getSchema(schemaJson, InputFormat.JSON);
-
-		List<com.networknt.schema.Error> errors = schema.validate(configJson, InputFormat.JSON, executionContext -> {
-			executionContext.executionConfig(executionConfig -> executionConfig.formatAssertionsEnabled(true));
-		});
-
-		assertTrue("Validation errors: " + errors, errors.isEmpty());
+		String configJson = writeJson(descriptor, config);
+		validateAgainstSchema(descriptor, configJson);
 	}
 
 	private String loadExpectedSchema(String resourceName) throws Exception {
@@ -203,9 +171,7 @@ public class TestJsonConfigSchemaBuilderKeyAnnotation extends BasicTestCase {
 	}
 
 	public static Test suite() {
-		return BasicTestSetup.createBasicTestSetup(
-			ServiceTestSetup.createSetup(
-				TestJsonConfigSchemaBuilderKeyAnnotation.class, ThreadContextManager.Module.INSTANCE));
+		return BasicTestSetup.createBasicTestSetup(new TestSuite(TestJsonConfigSchemaBuilderKeyAnnotation.class));
 	}
 
 }

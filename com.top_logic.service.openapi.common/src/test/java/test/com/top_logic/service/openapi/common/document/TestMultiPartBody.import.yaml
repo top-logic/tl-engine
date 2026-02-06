@@ -3,7 +3,7 @@
 openapi: 3.0.3
 info:
   title: TL-Demo OpenAPI Server
-  version: 1.0
+  version: "1.0"
 servers:
 - url: http://localhost:8080/demo/api
 paths:

@@ -14,9 +14,7 @@ import java.lang.reflect.TypeVariable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import com.top_logic.basic.ArrayUtil;
 import com.top_logic.basic.Protocol;
@@ -588,15 +586,8 @@ class MethodBasedPropertyDescriptor extends PropertyDescriptorImpl implements Pr
 	protected void initInstanceType(Class<?> contentType, Type genericContentType) {
 		initInstanceType(contentType);
 		if (PolymorphicConfiguration.class.isAssignableFrom(contentType)) {
-			setInstanceType(MethodBasedPropertyDescriptor.resolveImplementationClass(genericContentType));
+			setInstanceType(ConfigurationDescriptorImpl.resolveImplementationClass(genericContentType));
 		}
-
-	}
-
-	static Class<?> resolveImplementationClass(Type polymorphicConfigurationType) {
-		Map<TypeVariable<?>, Type> bindings = new HashMap<>();
-		ConfigurationDescriptorImpl.addTypeBinding(bindings, polymorphicConfigurationType);
-		return ConfigurationDescriptorImpl.resolveImplementationClass(bindings);
 	}
 
 }

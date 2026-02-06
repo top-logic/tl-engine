@@ -25,8 +25,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import org.apache.commons.collections4.CollectionUtils;
-
 import com.top_logic.basic.ArrayUtil;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Log;
@@ -897,7 +895,7 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 			if (this.listValid) {
 				List<?> displayedRows = getTableModel().getDisplayedRows();
 
-				if (!CollectionUtils.isEmpty(displayedRows) && getTableControl().isSelectable()) {
+				if (!CollectionUtil.isEmpty(displayedRows) && getTableControl().isSelectable()) {
 					return getDefaultSelection(displayedRows);
 				}
 			}
@@ -1171,7 +1169,7 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 				case 0:
 					return setSelected(null);
 				case 1:
-					return setSelected(CollectionUtils.extractSingleton(newSelection));
+					return setSelected(newSelection.iterator().next());
 				default:
 					throw new IllegalArgumentException(
 						"Multiple selection " + newSelection + " for single selection table: " + this);

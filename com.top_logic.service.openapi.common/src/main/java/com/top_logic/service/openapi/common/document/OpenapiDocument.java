@@ -8,6 +8,7 @@ package com.top_logic.service.openapi.common.document;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.basic.config.annotation.Final;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
@@ -15,16 +16,17 @@ import com.top_logic.basic.config.order.DisplayOrder;
 
 /**
  * Configuration specifying an <i>OpenAPI</i> document.
- * 
+ *
  * <p>
  * The configuration currently specifies version {@value #VERSION_3_0_3}.
  * </p>
- * 
+ *
  * @see "https://spec.openapis.org/oas/v3.0.3.html"
  * @see "https://spec.openapis.org/oas/v3.0.3.html#openapi-object"
- * 
+ *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@Final
 @DisplayOrder({
 	OpenapiDocument.OPENAPI,
 	OpenapiDocument.INFO,

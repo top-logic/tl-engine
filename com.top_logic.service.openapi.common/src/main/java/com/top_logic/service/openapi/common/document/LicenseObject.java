@@ -6,6 +6,7 @@
 package com.top_logic.service.openapi.common.document;
 
 import com.top_logic.basic.config.NamedConfigMandatory;
+import com.top_logic.basic.config.annotation.Final;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
@@ -14,11 +15,12 @@ import com.top_logic.basic.config.order.DisplayOrder;
 
 /**
  * License information for the exposed API.
- * 
+ *
  * @see "https://spec.openapis.org/oas/v3.0.3.html#license-object"
- * 
+ *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@Final
 @DisplayOrder({
 	LicenseObject.NAME_ATTRIBUTE,
 	LicenseObject.URL,

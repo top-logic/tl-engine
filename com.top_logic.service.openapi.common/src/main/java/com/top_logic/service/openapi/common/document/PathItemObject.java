@@ -7,6 +7,7 @@ package com.top_logic.service.openapi.common.document;
 
 import java.util.List;
 
+import com.top_logic.basic.config.annotation.Final;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.order.DisplayOrder;
 
@@ -14,11 +15,12 @@ import com.top_logic.basic.config.order.DisplayOrder;
  * Describes the operations available on a single path. A Path Item MAY be empty, due to ACL
  * constraints. The path itself is still exposed to the documentation viewer but they will not know
  * which operations and parameters are available.
- * 
+ *
  * @see "https://spec.openapis.org/oas/v3.0.3.html#path-item-object"
- * 
+ *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@Final
 @DisplayOrder({
 	PathItemObject.PATH,
 	PathItemObject.GET,

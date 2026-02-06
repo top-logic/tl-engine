@@ -7,6 +7,7 @@ package com.top_logic.service.openapi.common.document;
 
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.Binding;
+import com.top_logic.basic.config.annotation.Final;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
@@ -16,11 +17,12 @@ import com.top_logic.basic.config.order.DisplayOrder;
 
 /**
  * Each Media Type Object provides schema and examples for the media type identified by its key.
- * 
+ *
  * @see "https://spec.openapis.org/oas/v3.0.3.html#media-type-object"
- * 
+ *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@Final
 @DisplayOrder({
 	MediaTypeObject.MEDIA_TYPE,
 	MediaTypeObject.SCHEMA,

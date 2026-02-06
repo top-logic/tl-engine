@@ -28,6 +28,9 @@
 					"type": "object",
 					"additionalProperties": {
 						"$ref": "#/$defs/test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$NamedItem#map:name"
+					},
+					"propertyNames": {
+						"type": "string"
 					}
 				}
 			},

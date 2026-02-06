@@ -128,7 +128,7 @@ public class ConfigSchemaTool {
 		@SuppressWarnings("unchecked")
 		Class<? extends ConfigurationItem> configItemClass = (Class<? extends ConfigurationItem>) configClass;
 
-		JsonConfigSchemaBuilder builder = new JsonConfigSchemaBuilder();
+		JsonConfigSchemaBuilder builder = new JsonConfigSchemaBuilder().setInline(true);
 		builder.setSchemaResolver(new ExternalSchemaResolver());
 
 		return builder.buildConfigSchema(TypedConfiguration.getConfigurationDescriptor(configItemClass));
@@ -148,7 +148,7 @@ public class ConfigSchemaTool {
 				ex);
 		}
 
-		JsonConfigSchemaBuilder builder = new JsonConfigSchemaBuilder();
+		JsonConfigSchemaBuilder builder = new JsonConfigSchemaBuilder().setInline(true);
 		builder.setSchemaResolver(new ExternalSchemaResolver());
 
 		return builder.buildImplementationSchema(implClass);

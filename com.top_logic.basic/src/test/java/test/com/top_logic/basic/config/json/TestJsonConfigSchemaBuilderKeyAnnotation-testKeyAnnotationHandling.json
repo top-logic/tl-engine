@@ -1,0 +1,42 @@
+{
+	"$defs": {
+		"test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$ConfigWithMap": {
+			"type": "object",
+			"required": [
+				"$type"
+			],
+			"properties": {
+				"$type": {
+					"const": "test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$ConfigWithMap"
+				},
+				"items": {
+					"type": "object",
+					"additionalProperties": {
+						"$ref": "#/$defs/test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$NamedItem"
+					}
+				}
+			},
+			"additionalProperties": false
+		},
+		"test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$NamedItem": {
+			"type": "object",
+			"required": [
+				"$type",
+				"name"
+			],
+			"properties": {
+				"$type": {
+					"const": "test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$NamedItem"
+				},
+				"name": {
+					"type": "string"
+				},
+				"value": {
+					"type": "string"
+				}
+			},
+			"additionalProperties": false
+		}
+	},
+	"$ref": "#/$defs/test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$ConfigWithMap"
+}

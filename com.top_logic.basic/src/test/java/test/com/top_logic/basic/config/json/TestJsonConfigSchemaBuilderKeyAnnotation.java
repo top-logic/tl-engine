@@ -19,7 +19,6 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.json.JsonConfigSchemaBuilder;
 import com.top_logic.basic.json.schema.JsonSchemaWriter;
-import com.top_logic.basic.json.schema.model.ObjectSchema;
 import com.top_logic.basic.json.schema.model.Schema;
 import com.top_logic.basic.thread.ThreadContextManager;
 
@@ -55,77 +54,33 @@ public class TestJsonConfigSchemaBuilderKeyAnnotation extends BasicTestCase {
 	}
 
 	/**
-	 * Tests that @Key annotation removes the key property from value schema and uses it for
-	 * propertyNames constraint.
+	 * Tests that @Key annotation is properly handled in the generated schema.
 	 */
-	public void testKeyAnnotationHandling() {
-		JsonConfigSchemaBuilder builder = new JsonConfigSchemaBuilder();
+	public void testKeyAnnotationHandling() throws Exception {
 		ConfigurationDescriptor descriptor =
 			TypedConfiguration.getConfigurationDescriptor(ConfigWithMap.class);
 
-		Schema schema = builder.build(descriptor);
+		Schema schema = new JsonConfigSchemaBuilder().setInline(true).build(descriptor);
+		String actualJson = JsonSchemaWriter.toJson(schema, true);
 
-		assertTrue("Should be ObjectSchema, was " + schema.getClass().getName(), schema instanceof ObjectSchema);
-		ObjectSchema objectSchema = (ObjectSchema) schema;
+		String expectedJson = loadExpectedSchema("TestJsonConfigSchemaBuilderKeyAnnotation-testKeyAnnotationHandling.json");
 
-		Schema itemsProperty = objectSchema.getProperties().get("items");
-		assertNotNull("Should have items property", itemsProperty);
-		assertTrue("Should be ObjectSchema", itemsProperty instanceof ObjectSchema);
-
-		ObjectSchema itemsMapSchema = (ObjectSchema) itemsProperty;
-
-		// Check that propertyNames constraint is set
-		Schema propertyNamesSchema = itemsMapSchema.getPropertyNames();
-		assertNotNull("Should have propertyNames constraint", propertyNamesSchema);
-
-		// Check the value schema
-		Schema valueSchema = itemsMapSchema.getAdditionalProperties();
-		assertNotNull("Should have additionalProperties (value schema)", valueSchema);
-		assertTrue("Value schema should be ObjectSchema", valueSchema instanceof ObjectSchema);
-
-		ObjectSchema valueObjectSchema = (ObjectSchema) valueSchema;
-
-		// The "name" property should be removed from the value schema
-		assertFalse("Value schema should NOT contain 'name' property",
-			valueObjectSchema.getProperties().containsKey("name"));
-
-		// But should still contain the "value" property
-		assertTrue("Value schema should contain 'value' property",
-			valueObjectSchema.getProperties().containsKey("value"));
-
-		// The "name" should not be in required list
-		assertFalse("Value schema required should NOT contain 'name'",
-			valueObjectSchema.getRequired().contains("name"));
-
-		System.out.println("Map with @Key annotation schema:");
-		System.out.println(JsonSchemaWriter.toJson(itemsMapSchema, true));
+		assertEquals(expectedJson, actualJson);
 	}
 
-	/**
-	 * Tests complete round-trip scenario.
-	 */
-	public void testKeyAnnotationFullExample() {
-		JsonConfigSchemaBuilder builder = new JsonConfigSchemaBuilder();
-		ConfigurationDescriptor descriptor =
-			TypedConfiguration.getConfigurationDescriptor(ConfigWithMap.class);
-
-		Schema schema = builder.build(descriptor);
-		String json = JsonSchemaWriter.toJson(schema, true);
-
-		System.out.println("Complete schema with @Key annotation:");
-		System.out.println(json);
-
-		// Verify JSON contains expected structure
-		assertTrue("Should contain 'items' property", json.contains("\"items\""));
-		assertTrue("Should contain 'additionalProperties'", json.contains("\"additionalProperties\""));
-		assertTrue("Should contain 'propertyNames'", json.contains("\"propertyNames\""));
-		assertTrue("Should contain 'value' in value schema", json.contains("\"value\""));
+	private String loadExpectedSchema(String resourceName) throws Exception {
+		java.io.InputStream in = getClass().getResourceAsStream(resourceName);
+		if (in == null) {
+			fail("Expected schema resource not found: " + resourceName +
+				". Create this file in the test resources directory with the generated schema output above.");
+		}
+		return new String(in.readAllBytes(), "UTF-8");
 	}
-	
+
 	public static Test suite() {
 		return BasicTestSetup.createBasicTestSetup(
 			ServiceTestSetup.createSetup(
 				TestJsonConfigSchemaBuilderKeyAnnotation.class, ThreadContextManager.Module.INSTANCE));
 	}
-	
+
 }

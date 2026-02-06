@@ -352,6 +352,12 @@ public class JsonConfigSchemaBuilder {
 		if (descriptor.getConfigurationInterface() == ConfigurationItem.class) {
 			// Safety: Do not iterate the world.
 			result = allConfigs();
+		} else if (descriptor.isFinal()) {
+			// Final types: no $type annotation, no subtypes considered.
+			result = buildPropertiesSchema(descriptor, excludeProperty);
+			if (result instanceof ObjectSchema objSchema) {
+				objSchema.setAdditionalProperties(NONE);
+			}
 		} else {
 			result = NONE;
 

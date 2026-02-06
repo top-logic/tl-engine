@@ -27,6 +27,7 @@ import com.top_logic.basic.col.Mappings;
 import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.External;
 import com.top_logic.basic.config.annotation.Factory;
+import com.top_logic.basic.config.annotation.Final;
 import com.top_logic.basic.config.annotation.Indexed;
 import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.config.container.ConfigPartUtilInternal;
@@ -242,6 +243,11 @@ public final class ConfigurationDescriptorBuilder {
 		Abstract abstractInterface = configurationInterface.getAnnotation(Abstract.class);
 		if (abstractInterface != null) {
 			descriptor.setAbstract();
+		}
+
+		Final finalInterface = configurationInterface.getAnnotation(Final.class);
+		if (finalInterface != null) {
+			descriptor.setFinal();
 		}
 
 		Method[] methods = configurationInterface.getDeclaredMethods();

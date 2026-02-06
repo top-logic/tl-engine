@@ -11,6 +11,7 @@ import java.util.Collection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.DefaultContainer;
+import com.top_logic.basic.config.annotation.Final;
 import com.top_logic.basic.config.annotation.Id;
 import com.top_logic.basic.config.customization.AnnotationCustomizations;
 import com.top_logic.basic.config.internal.ItemFactory;
@@ -167,6 +168,17 @@ public interface ConfigurationDescriptor {
 	 * has {@link Abstract} methods.
 	 */
 	boolean isAbstract();
+
+	/**
+	 * Whether this {@link ConfigurationDescriptor} is marked as {@link Final}, meaning no
+	 * sub-interfaces should be considered during serialization or schema generation.
+	 *
+	 * <p>
+	 * When a type is final, serialized values do not contain type annotations, and the expected
+	 * type is used directly when reading.
+	 * </p>
+	 */
+	boolean isFinal();
 
 	/**
 	 * The {@link PropertyDescriptor} whose contents is used to uniquely identify instances created

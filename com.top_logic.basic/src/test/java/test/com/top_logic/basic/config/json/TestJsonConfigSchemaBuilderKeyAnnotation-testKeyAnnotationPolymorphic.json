@@ -1,52 +1,14 @@
 {
 	"$defs": {
-		"test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$Organization": {
-			"type": "object",
-			"required": [
-				"$type",
-				"name"
-			],
-			"properties": {
-				"$type": {
-					"const": "test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$Organization"
-				},
-				"employee-count": {
-					"type": "integer"
-				},
-				"name": {
-					"type": "string"
-				}
-			},
-			"additionalProperties": false
-		},
-		"test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$Named": {
+		"test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$Named#map:name": {
 			"anyOf": [
 				{
-					"$ref": "#/$defs/test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$Organization"
+					"$ref": "#/$defs/test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$Organization#map:name"
 				},
 				{
-					"$ref": "#/$defs/test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$Person"
+					"$ref": "#/$defs/test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$Person#map:name"
 				}
 			]
-		},
-		"test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$Person": {
-			"type": "object",
-			"required": [
-				"$type",
-				"name"
-			],
-			"properties": {
-				"$type": {
-					"const": "test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$Person"
-				},
-				"age": {
-					"type": "integer"
-				},
-				"name": {
-					"type": "string"
-				}
-			},
-			"additionalProperties": false
 		},
 		"test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$ConfigWithPolymorphicMap": {
 			"type": "object",
@@ -60,8 +22,38 @@
 				"entities": {
 					"type": "object",
 					"additionalProperties": {
-						"$ref": "#/$defs/test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$Named"
+						"$ref": "#/$defs/test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$Named#map:name"
 					}
+				}
+			},
+			"additionalProperties": false
+		},
+		"test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$Organization#map:name": {
+			"type": "object",
+			"required": [
+				"$type"
+			],
+			"properties": {
+				"$type": {
+					"const": "test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$Organization"
+				},
+				"employee-count": {
+					"type": "integer"
+				}
+			},
+			"additionalProperties": false
+		},
+		"test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$Person#map:name": {
+			"type": "object",
+			"required": [
+				"$type"
+			],
+			"properties": {
+				"$type": {
+					"const": "test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$Person"
+				},
+				"age": {
+					"type": "integer"
 				}
 			},
 			"additionalProperties": false

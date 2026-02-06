@@ -102,6 +102,16 @@ public class JsonConfigSchemaBuilder {
 	private Map<String, Schema> _schemaCache;
 
 	/**
+	 * The schema id of the root type being built.
+	 *
+	 * <p>
+	 * Used to generate correct references: the root type is referenced via {@code #} (document
+	 * root), while other types use {@code #/$defs/...}.
+	 * </p>
+	 */
+	private String _rootSchemaId;
+
+	/**
 	 * Whether to inline properties schemas instead of using references.
 	 *
 	 * <p>
@@ -160,9 +170,22 @@ public class JsonConfigSchemaBuilder {
 	 */
 	public Schema buildConfigSchema(ConfigurationDescriptor descriptor) {
 		_schemaCache = new HashMap<>();
-		Schema toplevel = internalBuildConfigSchema(descriptor)
-			.setDefinitions(_schemaCache);
+
+		// Set root schema id for correct reference generation
+		Class<?> instanceType = descriptor.getInstanceType();
+		if (instanceType == null) {
+			_rootSchemaId = schemaId(descriptor);
+		} else if (instanceType != Object.class) {
+			_rootSchemaId = schemaId(instanceType);
+		}
+
+		Schema toplevel = internalBuildConfigSchema(descriptor);
+
+		// Extract root schema from $defs and make it the top-level
+		toplevel = hoistRootSchema(toplevel);
+
 		_schemaCache = null;
+		_rootSchemaId = null;
 
 		return toplevel;
 	}
@@ -182,10 +205,45 @@ public class JsonConfigSchemaBuilder {
 	 */
 	public Schema buildImplementationSchema(Class<?> implementationType) {
 		_schemaCache = new HashMap<>();
-		Schema toplevel = internalBuildImplementationSchema(implementationType)
-			.setDefinitions(_schemaCache);
-		_schemaCache = null;
 
+		// Set root schema id for correct reference generation
+		_rootSchemaId = schemaId(implementationType);
+
+		Schema toplevel = internalBuildImplementationSchema(implementationType);
+
+		// Extract root schema from $defs and make it the top-level
+		toplevel = hoistRootSchema(toplevel);
+
+		_schemaCache = null;
+		_rootSchemaId = null;
+
+		return toplevel;
+	}
+
+	/**
+	 * Extracts the root schema from $defs and makes it the top-level schema.
+	 *
+	 * <p>
+	 * The internal build methods put all schemas (including the root) into {@link #_schemaCache}
+	 * and return references. This method extracts the root schema and places the remaining schemas
+	 * as {@code $defs}.
+	 * </p>
+	 *
+	 * @param toplevel
+	 *        The schema returned from internal build methods (typically a RefSchema).
+	 * @return The hoisted root schema with definitions set.
+	 */
+	private Schema hoistRootSchema(Schema toplevel) {
+		if (_rootSchemaId != null && _schemaCache.containsKey(_rootSchemaId)) {
+			// Extract root schema from cache
+			Schema rootSchema = _schemaCache.remove(_rootSchemaId);
+			if (rootSchema != null) {
+				toplevel = rootSchema;
+			}
+		}
+
+		// Set remaining schemas as $defs
+		toplevel.setDefinitions(_schemaCache);
 		return toplevel;
 	}
 
@@ -290,19 +348,19 @@ public class JsonConfigSchemaBuilder {
 	}
 
 	private Schema internalBuildImplementationSchema(Class<?> instanceType, String excludeProperty) {
-		// Check resolver for external reference
-		if (_schemaResolver != null && excludeProperty == null) {
+		String schemaName = schemaId(instanceType, excludeProperty);
+
+		// Check cache first - if already building this type, use internal ref
+		if (_schemaCache.containsKey(schemaName)) {
+			return ref(schemaName);
+		}
+
+		// Check resolver for external reference (skip root type and types with excludeProperty)
+		if (_schemaResolver != null && excludeProperty == null && !schemaName.equals(_rootSchemaId)) {
 			String externalRef = _schemaResolver.resolveImplementationType(instanceType);
 			if (externalRef != null) {
 				return RefSchema.create().setRef(externalRef);
 			}
-		}
-
-		String schemaName = schemaId(instanceType, excludeProperty);
-
-		// Check cache to handle recursive references
-		if (_schemaCache.containsKey(schemaName)) {
-			return ref(schemaName);
 		}
 
 		// Reserve the slot in cache before processing to handle recursion
@@ -427,18 +485,19 @@ public class JsonConfigSchemaBuilder {
 	 *        <code>null</code> for normal schemas.
 	 */
 	private Schema buildConfigValueSchema(ConfigurationDescriptor descriptor, String excludeProperty) {
-		// Check resolver for external reference
-		if (_schemaResolver != null && excludeProperty == null) {
+		String extensionSchemaId = schemaId(descriptor, excludeProperty);
+
+		// Check cache first - if already building this type, use internal ref
+		if (_schemaCache.containsKey(extensionSchemaId)) {
+			return ref(extensionSchemaId);
+		}
+
+		// Check resolver for external reference (skip root type and types with excludeProperty)
+		if (_schemaResolver != null && excludeProperty == null && !extensionSchemaId.equals(_rootSchemaId)) {
 			String externalRef = _schemaResolver.resolveConfigType(descriptor.getConfigurationInterface());
 			if (externalRef != null) {
 				return RefSchema.create().setRef(externalRef);
 			}
-		}
-
-		String extensionSchemaId = schemaId(descriptor, excludeProperty);
-
-		if (_schemaCache.containsKey(extensionSchemaId)) {
-			return ref(extensionSchemaId);
 		}
 
 		// Reserve slot to handle recursion
@@ -494,6 +553,10 @@ public class JsonConfigSchemaBuilder {
 	}
 
 	private RefSchema ref(String schemaName) {
+		if (schemaName.equals(_rootSchemaId)) {
+			// Reference to root schema uses document root URI
+			return RefSchema.create().setRef("#");
+		}
 		return RefSchema.create().setRef("#/$defs/" + schemaName);
 	}
 

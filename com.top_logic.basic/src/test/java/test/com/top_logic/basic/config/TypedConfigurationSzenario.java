@@ -66,9 +66,9 @@ public interface TypedConfigurationSzenario {
 
 			String B_CONFIG_NAME = "b";
 			@Name(B_CONFIG_NAME)
-			B.Config getBConfig();
+			B.Config<?> getBConfig();
 			
-			void setBConfig(B.Config value);
+			void setBConfig(B.Config<?> value);
 
 			@EntryTag("a")
 			List<A.Config> getOthers();
@@ -89,7 +89,7 @@ public interface TypedConfigurationSzenario {
 			@ItemDefault(E.Config.class)
 			E.Config getEConfigWithDefault();
 
-			List<B.Config> getBConfigs();
+			List<B.Config<?>> getBConfigs();
 
 			@InstanceFormat
 			List<B> getBs();
@@ -122,8 +122,8 @@ public interface TypedConfigurationSzenario {
 		
 	}
 
-	public static class B implements ConfiguredInstance<B.Config> {
-		public interface Config extends PolymorphicConfiguration<B> {
+	public static class B implements ConfiguredInstance<B.Config<?>> {
+		public interface Config<I extends B> extends PolymorphicConfiguration<I> {
 			String X_NAME = "x";
 			@IntDefault(42)
 			@Name(X_NAME)
@@ -134,9 +134,9 @@ public interface TypedConfigurationSzenario {
 			int getW();
 		}
 	
-		protected final Config config;;
+		protected final Config<?> config;
 		
-		public B(InstantiationContext context, Config config) {
+		public B(@SuppressWarnings("unused") InstantiationContext context, Config<?> config) {
 			this.config = config;
 		}
 		
@@ -145,17 +145,17 @@ public interface TypedConfigurationSzenario {
 		}
 
 		@Override
-		public Config getConfig() {
+		public Config<?> getConfig() {
 			return config;
 		}
 	}
 
 	public static class C extends B {
-		public interface Config extends B.Config {
+		public interface Config extends B.Config<B> {
 
 			@Override
 			@ClassDefault(C.class)
-			Class<? extends B> getImplementationClass();
+			Class<? extends C> getImplementationClass();
 
 			@IntDefault(13)
 			int getY();
@@ -180,7 +180,7 @@ public interface TypedConfigurationSzenario {
 	}
 
 	public static class D extends B {
-		public interface Config extends B.Config {
+		public interface Config extends B.Config<D> {
 			String Z_NAME = "z";
 			
 			@StringDefault("Hello world!")

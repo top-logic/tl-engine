@@ -353,14 +353,16 @@ public class JsonConfigSchemaBuilder {
 
 		// Check cache first - if already building this type, use internal ref
 		if (_schemaCache.containsKey(schemaName)) {
-			return ref(schemaName);
+			return ref(schemaName, instanceType);
 		}
 
 		// Check resolver for external reference (skip root type and types with excludeProperty)
 		if (_schemaResolver != null && excludeProperty == null && !schemaName.equals(_rootSchemaId)) {
 			String externalRef = _schemaResolver.resolveImplementationType(instanceType);
 			if (externalRef != null) {
-				return RefSchema.create().setRef(externalRef);
+				RefSchema refSchema = RefSchema.create().setRef(externalRef);
+				addTypeDocumentation(refSchema, instanceType);
+				return refSchema;
 			}
 		}
 
@@ -369,8 +371,11 @@ public class JsonConfigSchemaBuilder {
 
 		Schema result = createImplementationSchema(instanceType, excludeProperty);
 
+		// Add type documentation to the schema definition
+		addTypeDocumentation(result, instanceType);
+
 		_schemaCache.put(schemaName, result);
-		return ref(schemaName);
+		return ref(schemaName, instanceType);
 	}
 
 	private Schema createImplementationSchema(Class<?> instanceType, String excludeProperty) {
@@ -487,17 +492,20 @@ public class JsonConfigSchemaBuilder {
 	 */
 	private Schema buildConfigValueSchema(ConfigurationDescriptor descriptor, String excludeProperty) {
 		String extensionSchemaId = schemaId(descriptor, excludeProperty);
+		Class<?> configInterface = descriptor.getConfigurationInterface();
 
 		// Check cache first - if already building this type, use internal ref
 		if (_schemaCache.containsKey(extensionSchemaId)) {
-			return ref(extensionSchemaId);
+			return ref(extensionSchemaId, configInterface);
 		}
 
 		// Check resolver for external reference (skip root type and types with excludeProperty)
 		if (_schemaResolver != null && excludeProperty == null && !extensionSchemaId.equals(_rootSchemaId)) {
-			String externalRef = _schemaResolver.resolveConfigType(descriptor.getConfigurationInterface());
+			String externalRef = _schemaResolver.resolveConfigType(configInterface);
 			if (externalRef != null) {
-				return RefSchema.create().setRef(externalRef);
+				RefSchema refSchema = RefSchema.create().setRef(externalRef);
+				addTypeDocumentation(refSchema, configInterface);
+				return refSchema;
 			}
 		}
 
@@ -505,7 +513,7 @@ public class JsonConfigSchemaBuilder {
 		_schemaCache.put(extensionSchemaId, null);
 
 		Schema result;
-		if (descriptor.getConfigurationInterface() == ConfigurationItem.class) {
+		if (configInterface == ConfigurationItem.class) {
 			// Safety: Do not iterate the world.
 			result = allConfigs();
 		} else if (descriptor.isFinal()) {
@@ -537,8 +545,11 @@ public class JsonConfigSchemaBuilder {
 			}
 		}
 
+		// Add type documentation to the schema definition
+		addTypeDocumentation(result, configInterface);
+
 		_schemaCache.put(extensionSchemaId, result);
-		return ref(extensionSchemaId);
+		return ref(extensionSchemaId, configInterface);
 	}
 
 	/**
@@ -554,11 +565,32 @@ public class JsonConfigSchemaBuilder {
 	}
 
 	private RefSchema ref(String schemaName) {
+		return ref(schemaName, null);
+	}
+
+	/**
+	 * Creates a reference to a schema definition, optionally with type documentation.
+	 *
+	 * @param schemaName
+	 *        The schema name to reference.
+	 * @param type
+	 *        The type to get documentation from, or {@code null} to skip documentation.
+	 * @return The reference schema with optional documentation.
+	 */
+	private RefSchema ref(String schemaName, Class<?> type) {
+		RefSchema refSchema;
 		if (schemaName.equals(_rootSchemaId)) {
 			// Reference to root schema uses document root URI
-			return RefSchema.create().setRef("#");
+			refSchema = RefSchema.create().setRef("#");
+		} else {
+			refSchema = RefSchema.create().setRef("#/$defs/" + schemaName);
 		}
-		return RefSchema.create().setRef("#/$defs/" + schemaName);
+
+		if (type != null) {
+			addTypeDocumentation(refSchema, type);
+		}
+
+		return refSchema;
 	}
 
 	/**
@@ -1257,6 +1289,58 @@ public class JsonConfigSchemaBuilder {
 		// TopLogic convention: class.<ClassName>.<propertyName>.tooltip
 		ResKey labelKey = ResKey.forClass(configInterface).suffix(propertyName);
 		return labelKey;
+	}
+
+	/**
+	 * Resolves the title for a type.
+	 *
+	 * <p>
+	 * Uses the resource key {@code class.<ClassName>} following TopLogic's naming convention.
+	 * </p>
+	 *
+	 * @param type
+	 *        The class to resolve the title for.
+	 * @return The localized title, or null if not found.
+	 */
+	private String resolveTypeTitle(Class<?> type) {
+		ResKey labelKey = ResKey.forClass(type);
+		return resources().getString(labelKey, null);
+	}
+
+	/**
+	 * Resolves the description for a type.
+	 *
+	 * <p>
+	 * Uses the resource key {@code class.<ClassName>.tooltip} following TopLogic's naming
+	 * convention.
+	 * </p>
+	 *
+	 * @param type
+	 *        The class to resolve the description for.
+	 * @return The localized description, or null if not found.
+	 */
+	private String resolveTypeDescription(Class<?> type) {
+		ResKey labelKey = ResKey.forClass(type);
+		return resources().getString(labelKey.tooltip(), null);
+	}
+
+	/**
+	 * Adds type documentation (title and description) to a schema.
+	 *
+	 * @param schema
+	 *        The schema to add documentation to.
+	 * @param type
+	 *        The type to get documentation from.
+	 */
+	private void addTypeDocumentation(Schema schema, Class<?> type) {
+		String title = resolveTypeTitle(type);
+		if (title != null) {
+			schema.setTitle(title);
+		}
+		String description = resolveTypeDescription(type);
+		if (description != null) {
+			schema.setDescription(description);
+		}
 	}
 
 	/**

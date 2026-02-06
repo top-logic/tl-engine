@@ -58,6 +58,9 @@ abstract class AbstractConfigurationDescriptor implements ConfigurationDescripto
 	/** @see #isAbstract() */
 	private boolean _abstract;
 
+	/** @see #isFinal() */
+	private boolean _final;
+
 	/** Additional {@link ResolverPart}s. */
 	private List<ResolverPart> _resolverParts = new ArrayList<>();
 
@@ -126,6 +129,18 @@ abstract class AbstractConfigurationDescriptor implements ConfigurationDescripto
 	 */
 	public void setAbstract() {
 		_abstract = true;
+	}
+
+	@Override
+	public boolean isFinal() {
+		return _final;
+	}
+
+	/**
+	 * Marks this {@link ConfigurationDescriptor} as {@link #isFinal() final}.
+	 */
+	public void setFinal() {
+		_final = true;
 	}
 
 	/**

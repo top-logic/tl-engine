@@ -30,6 +30,7 @@ import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.col.FilterUtil;
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.ConfigurationException;
@@ -333,11 +334,21 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 			if (newValue != null) {
 				if (newValue instanceof Collection) {
 					for (Object selectedObject : (Collection<?>) newValue) {
+						if (!self._rowTypeFilter.accept(selectedObject)) {
+							/* Type of the selected element is incompatible with the rows types of
+							 * the table. */
+							return false;
+						}
 						if (self.getListBuilder().supportsListElement(self, selectedObject).shouldRemove()) {
 							return false;
 						}
 					}
 				} else {
+					if (!self._rowTypeFilter.accept(newValue)) {
+						/* Type of the selected element is incompatible with the rows types of the
+						 * table. */
+						return false;
+					}
 					if (self.getListBuilder().supportsListElement(self, newValue).shouldRemove()) {
 						return false;
 					}
@@ -444,11 +455,18 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 	private IFunction2<String, Object, String> _configKeyBuilder;
 
 	/**
+	 * Filter that checks whether a potential list element has the correct {@link TLType}. If no
+	 * {@link #getTypes() types} are configured, all elements are potentially part of the list.
+	 */
+	private Filter<Object> _rowTypeFilter;
+
+	/**
 	 * Create a {@link TableComponent}.
 	 */
 	public TableComponent(final InstantiationContext context, final Config config) throws ConfigurationException {
 		super(context, config);
 		_types = resolveTypes(context, config);
+		_rowTypeFilter = CorrectTypeFilter.newTypeFilter(_types);
 		this.useFooterForPaging = config.getUseFooterForPaging();
 
 		this.selectable = config.getSelectable();
@@ -602,8 +620,10 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 	}
 
 	private boolean isObjectSelectable(TableModel tableModel, Object object) {
-		return tableModel.containsRowObject(object) && _selectionModel.isSelectable(object)
-			&& !getListBuilder().supportsListElement(this, object).shouldRemove();
+		return tableModel.containsRowObject(object)
+				&& _selectionModel.isSelectable(object)
+				&& _rowTypeFilter.accept(object)
+				&& !getListBuilder().supportsListElement(this, object).shouldRemove();
 	}
 
 	private boolean validateRows() {
@@ -767,6 +787,11 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
             return true;
         }
 
+		if (!_rowTypeFilter.accept(aModel)) {
+			// model has a invalid row type. It will never be displayed as list element.
+			return false;
+		}
+		
 		ElementUpdate decision = this.getListBuilder().supportsListElement(this, aModel);
 		if (decision == ElementUpdate.NO_CHANGE) {
 			return false;
@@ -813,10 +838,15 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
             return false;
         }
 
-		if (this.getListBuilder().supportsListElement(this, aModel).shouldAdd()) {
-			addNewRowObject(aModel);
-			return true;
-        }
+		if (_rowTypeFilter.accept(aModel)) {
+			// model has a valid row type. It may be displayed as list element.
+
+			if (this.getListBuilder().supportsListElement(this, aModel).shouldAdd()) {
+				addNewRowObject(aModel);
+				return true;
+			}
+		}
+
 
 		return false;
     }

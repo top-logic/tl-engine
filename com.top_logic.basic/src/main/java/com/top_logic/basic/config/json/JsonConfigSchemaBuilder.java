@@ -40,6 +40,7 @@ import com.top_logic.basic.json.schema.model.FalseSchema;
 import com.top_logic.basic.json.schema.model.NullSchema;
 import com.top_logic.basic.json.schema.model.NumericSchema;
 import com.top_logic.basic.json.schema.model.ObjectSchema;
+import com.top_logic.basic.json.schema.model.OneOfSchema;
 import com.top_logic.basic.json.schema.model.RefSchema;
 import com.top_logic.basic.json.schema.model.Schema;
 import com.top_logic.basic.json.schema.model.StringSchema;
@@ -1072,30 +1073,85 @@ public class JsonConfigSchemaBuilder {
 
 		// Enum types
 		if (type.isEnum()) {
-			EnumSchema schema = EnumSchema.create();
-			for (Object constant : type.getEnumConstants()) {
-				String literalValue;
-
-				// Check if enum implements ExternallyNamed (TopLogic convention)
-				if (constant instanceof ExternallyNamed) {
-					literalValue = ((ExternallyNamed) constant).getExternalName();
-				}
-				// Check if enum implements ProtocolEnum (msgbuf convention)
-				else if (constant instanceof de.haumacher.msgbuf.data.ProtocolEnum) {
-					literalValue = ((de.haumacher.msgbuf.data.ProtocolEnum) constant).protocolName();
-				}
-				// Default: use enum constant name
-				else {
-					literalValue = ((Enum<?>) constant).name();
-				}
-
-				schema.addEnumLiteral(literalValue);
-			}
-			return schema;
+			return buildEnumSchema(type);
 		}
 
 		// Concrete format is defined by the ConfigurationValueProvider.
 		return StringSchema.create();
+	}
+
+	/**
+	 * Builds a schema for an enum type.
+	 *
+	 * <p>
+	 * If any enum constant has a resource key defined, a {@link OneOfSchema} is created with
+	 * individual {@link ConstSchema} entries including title and description. Otherwise, a simple
+	 * {@link EnumSchema} is used for compactness.
+	 * </p>
+	 *
+	 * @param enumType
+	 *        The enum class.
+	 * @return The schema for the enum type.
+	 */
+	private Schema buildEnumSchema(Class<?> enumType) {
+		Object[] constants = enumType.getEnumConstants();
+
+		// First pass: collect literals and check if any have documentation
+		String[] literals = new String[constants.length];
+		String[] titles = new String[constants.length];
+		String[] descriptions = new String[constants.length];
+		boolean hasDocumentation = false;
+
+		I18NBundle bundle = resources();
+		for (int i = 0; i < constants.length; i++) {
+			Object constant = constants[i];
+
+			// Determine the literal value
+			String literalValue;
+			if (constant instanceof ExternallyNamed) {
+				literalValue = ((ExternallyNamed) constant).getExternalName();
+			} else if (constant instanceof de.haumacher.msgbuf.data.ProtocolEnum) {
+				literalValue = ((de.haumacher.msgbuf.data.ProtocolEnum) constant).protocolName();
+			} else {
+				literalValue = ((Enum<?>) constant).name();
+			}
+			literals[i] = literalValue;
+
+			// Look up documentation
+			ResKey labelKey = ResKey.forClass(enumType).suffix(((Enum<?>) constant).name());
+			String title = bundle.getString(labelKey, null);
+			String description = bundle.getString(labelKey.tooltip(), null);
+
+			titles[i] = title;
+			descriptions[i] = description;
+
+			if (title != null || description != null) {
+				hasDocumentation = true;
+			}
+		}
+
+		// If no documentation, use simple enum schema
+		if (!hasDocumentation) {
+			EnumSchema schema = EnumSchema.create();
+			for (String literal : literals) {
+				schema.addEnumLiteral(literal);
+			}
+			return schema;
+		}
+
+		// Build oneOf schema with documentation
+		OneOfSchema oneOf = OneOfSchema.create();
+		for (int i = 0; i < constants.length; i++) {
+			ConstSchema constSchema = ConstSchema.create().setConstValue(literals[i]);
+			if (titles[i] != null) {
+				constSchema.setTitle(titles[i]);
+			}
+			if (descriptions[i] != null) {
+				constSchema.setDescription(descriptions[i]);
+			}
+			oneOf.addOneOf(constSchema);
+		}
+		return oneOf;
 	}
 
 	private Schema nullable(PropertyDescriptor property, Schema schema) {

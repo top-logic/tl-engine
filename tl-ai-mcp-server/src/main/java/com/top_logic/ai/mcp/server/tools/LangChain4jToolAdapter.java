@@ -49,7 +49,7 @@ public class LangChain4jToolAdapter {
 	 * hyphens. This prefix helps identify adapted tools.
 	 * </p>
 	 */
-	private static final String TOOL_NAME_PREFIX = "lc4j-";
+	private static final String TOOL_NAME_PREFIX = "tl-";
 
 	/**
 	 * Adapts a single langchain4j {@link ToolImplementation} to an MCP tool specification.

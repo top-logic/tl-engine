@@ -7,6 +7,7 @@ package test.com.top_logic.service.openapi.common.document;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.io.StringWriter;
 import java.util.List;
 import java.util.Map;
 
@@ -25,6 +26,7 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.json.JsonConfigurationReader;
+import com.top_logic.basic.config.json.JsonConfigurationWriter;
 import com.top_logic.basic.i18n.log.BufferingI18NLog;
 import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.io.character.CharacterContent;
@@ -182,6 +184,191 @@ public class TestOpenapiDocumentJsonBinding extends BasicTestCase {
 		OperationObject binaryOp = binaryPath.getPut();
 		assertNotNull(binaryOp.getRequestBody());
 		assertNotNull(binaryOp.getRequestBody().getContent().get("multipart/form-data"));
+	}
+
+	/**
+	 * Tests round-trip: read JSON, serialize back, compare with original.
+	 */
+	public void testRoundTripServerClientJson() throws Exception {
+		String originalJson = readResourceAsString("TestServerClient.import.json");
+
+		// Parse and serialize back
+		OpenapiDocument doc = parseOpenAPIJson(originalJson);
+		String serializedJson = serializeToJson(doc);
+
+		// Compare as untyped JSON data
+		assertJsonEquals(originalJson, serializedJson);
+	}
+
+	/**
+	 * Tests round-trip: read YAML (as JSON), serialize back, compare with original.
+	 */
+	public void testRoundTripMultiPartBodyYaml() throws Exception {
+		String originalJson = readYamlResourceAsJson("TestMultiPartBody.import.yaml");
+
+		// Parse and serialize back
+		OpenapiDocument doc = parseOpenAPIJson(originalJson);
+		String serializedJson = serializeToJson(doc);
+
+		// Compare as untyped JSON data
+		assertJsonEquals(originalJson, serializedJson);
+	}
+
+	/**
+	 * Serializes an OpenAPI document to JSON.
+	 */
+	private String serializeToJson(OpenapiDocument doc) throws Exception {
+		ConfigurationDescriptor descriptor =
+			TypedConfiguration.getConfigurationDescriptor(OpenapiDocument.class);
+
+		StringWriter writer = new StringWriter();
+		new JsonConfigurationWriter(writer).write(descriptor, doc);
+		return writer.toString();
+	}
+
+	/**
+	 * Compares two JSON strings by parsing them as untyped data and comparing the structures.
+	 *
+	 * <p>
+	 * Empty collections are treated as equivalent to null/missing values, since the typed
+	 * configuration system may add default empty values during serialization.
+	 * </p>
+	 */
+	private void assertJsonEquals(String expectedJson, String actualJson) throws Exception {
+		ObjectMapper mapper = new ObjectMapper();
+
+		Object expected = mapper.readValue(expectedJson, Object.class);
+		Object actual = mapper.readValue(actualJson, Object.class);
+
+		String diff = buildJsonDiff("", expected, actual);
+		if (!diff.isEmpty()) {
+			fail("JSON content mismatch:\n" + diff);
+		}
+	}
+
+	/**
+	 * Checks if a value is considered "empty" (null, empty list, or empty map).
+	 */
+	private boolean isEmpty(Object value) {
+		if (value == null) {
+			return true;
+		}
+		if (value instanceof List && ((List<?>) value).isEmpty()) {
+			return true;
+		}
+		if (value instanceof Map && ((Map<?, ?>) value).isEmpty()) {
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Builds a human-readable diff between two JSON structures.
+	 *
+	 * <p>
+	 * Empty collections are treated as equivalent to null/missing values.
+	 * </p>
+	 */
+	@SuppressWarnings("unchecked")
+	private String buildJsonDiff(String path, Object expected, Object actual) {
+		StringBuilder diff = new StringBuilder();
+
+		// Treat empty collections as equivalent to null
+		if (isEmpty(expected) && isEmpty(actual)) {
+			return "";
+		}
+		if (isEmpty(expected) && !isEmpty(actual)) {
+			diff.append(path).append(": expected empty/null, but was: ").append(actual).append("\n");
+			return diff.toString();
+		}
+		if (!isEmpty(expected) && isEmpty(actual)) {
+			diff.append(path).append(": expected ").append(expected).append(", but was empty/null\n");
+			return diff.toString();
+		}
+
+		if (expected instanceof Map && actual instanceof Map) {
+			Map<String, Object> expectedMap = (Map<String, Object>) expected;
+			Map<String, Object> actualMap = (Map<String, Object>) actual;
+
+			// Check for missing keys in actual (only if value is not empty)
+			for (String key : expectedMap.keySet()) {
+				Object expectedValue = expectedMap.get(key);
+				if (!actualMap.containsKey(key) && !isEmpty(expectedValue)) {
+					String childPath = path.isEmpty() ? key : path + "." + key;
+					diff.append(childPath).append(": missing in actual (expected: ")
+						.append(expectedValue).append(")\n");
+				}
+			}
+
+			// Check for extra keys in actual (only if value is not empty)
+			for (String key : actualMap.keySet()) {
+				Object actualValue = actualMap.get(key);
+				if (!expectedMap.containsKey(key) && !isEmpty(actualValue)) {
+					String childPath = path.isEmpty() ? key : path + "." + key;
+					diff.append(childPath).append(": unexpected in actual (value: ")
+						.append(actualValue).append(")\n");
+				}
+			}
+
+			// Recursively compare common keys
+			for (String key : expectedMap.keySet()) {
+				if (actualMap.containsKey(key)) {
+					String childPath = path.isEmpty() ? key : path + "." + key;
+					diff.append(buildJsonDiff(childPath, expectedMap.get(key), actualMap.get(key)));
+				}
+			}
+		} else if (expected instanceof List && actual instanceof List) {
+			List<Object> expectedList = (List<Object>) expected;
+			List<Object> actualList = (List<Object>) actual;
+
+			if (expectedList.size() != actualList.size()) {
+				diff.append(path).append(": list size differs (expected: ")
+					.append(expectedList.size()).append(", actual: ").append(actualList.size()).append(")\n");
+			}
+
+			int minSize = Math.min(expectedList.size(), actualList.size());
+			for (int i = 0; i < minSize; i++) {
+				diff.append(buildJsonDiff(path + "[" + i + "]", expectedList.get(i), actualList.get(i)));
+			}
+		} else if (!expected.equals(actual)) {
+			// Show types if values look the same (helps diagnose type mismatches)
+			String expectedType = expected.getClass().getSimpleName();
+			String actualType = actual.getClass().getSimpleName();
+			if (expected.toString().equals(actual.toString())) {
+				diff.append(path).append(": type mismatch - expected ").append(expected)
+					.append(" (").append(expectedType).append("), but was: ").append(actual)
+					.append(" (").append(actualType).append(")\n");
+			} else {
+				diff.append(path).append(": expected ").append(expected)
+					.append(", but was: ").append(actual).append("\n");
+			}
+		}
+
+		return diff.toString();
+	}
+
+	/**
+	 * Reads a resource file as a string.
+	 */
+	private String readResourceAsString(String resourceName) throws Exception {
+		try (InputStream in = getClass().getResourceAsStream(resourceName)) {
+			assertNotNull("Resource not found: " + resourceName, in);
+			return new String(StreamUtilities.readStreamContents(in), "UTF-8");
+		}
+	}
+
+	/**
+	 * Reads a YAML resource file and converts it to JSON.
+	 */
+	private String readYamlResourceAsJson(String resourceName) throws Exception {
+		try (InputStream in = getClass().getResourceAsStream(resourceName)) {
+			assertNotNull("Resource not found: " + resourceName, in);
+
+			Object yamlData = new Yaml().load(in);
+			ByteArrayOutputStream jsonOut = new ByteArrayOutputStream();
+			new ObjectMapper().writeValue(jsonOut, yamlData);
+			return jsonOut.toString("UTF-8");
+		}
 	}
 
 	/**

@@ -26,6 +26,7 @@ import com.top_logic.basic.thread.ThreadContextManager;
 /**
  * Test case for {@link JsonConfigSchemaBuilder} enum handling.
  */
+@SuppressWarnings("javadoc")
 public class TestJsonConfigSchemaBuilderEnums extends TestCase {
 
 	/**

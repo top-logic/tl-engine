@@ -82,13 +82,6 @@
 		<!-- Tests -->
 		
 		<dependency>
-			<groupId>com.networknt</groupId>
-			<artifactId>json-schema-validator</artifactId>
-			<version>3.0.0</version>
-			<scope>test</scope>
-		</dependency>		
-		
-		<dependency>
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-basic</artifactId>
 			<type>test-jar</type>

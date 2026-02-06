@@ -394,7 +394,7 @@ public class JsonSchema extends de.haumacher.msgbuf.data.AbstractDataObject impl
 	 * Dynamic anchor for runtime-resolved references.
 	 *
 	 * <p>
-	 * Works cooperatively with $dynamicRef for recursive schemas.
+	 * Works cooperatively with <code>$dynamicRef</code> for recursive schemas.
 	 * </p>
 	 */
 	public final String get$dynamicAnchor() {
@@ -443,7 +443,7 @@ public class JsonSchema extends de.haumacher.msgbuf.data.AbstractDataObject impl
 	 *
 	 * <p>
 	 * Particularly useful for recursive schemas that reference themselves.
-	 * Works with $dynamicAnchor.
+	 * Works with <code>$dynamicAnchor</code>.
 	 * </p>
 	 */
 	public final String get$dynamicRef() {
@@ -1337,7 +1337,7 @@ public class JsonSchema extends de.haumacher.msgbuf.data.AbstractDataObject impl
 	}
 
 	/**
-	 * Schema for additional properties not defined in properties or patternProperties.
+	 * Schema for additional properties not defined in <code>properties</code> or <code>patternProperties</code>.
 	 */
 	public final com.top_logic.basic.json.schema.model.JsonSchema getAdditionalProperties() {
 		return _additionalProperties;
@@ -1445,8 +1445,8 @@ public class JsonSchema extends de.haumacher.msgbuf.data.AbstractDataObject impl
 	 * Schema for array items.
 	 *
 	 * <p>
-	 * For arrays without prefixItems: validates all items.
-	 * For arrays with prefixItems: validates items beyond prefixItems positions.
+	 * For arrays without <code>prefixItems</code>: validates all items.
+	 * For arrays with <code>prefixItems</code>: validates items beyond <code>prefixItems</code> positions.
 	 * </p>
 	 */
 	public final com.top_logic.basic.json.schema.model.JsonSchema getItems() {
@@ -1478,7 +1478,7 @@ public class JsonSchema extends de.haumacher.msgbuf.data.AbstractDataObject impl
 	 *
 	 * <p>
 	 * Array must contain at least one item matching this schema.
-	 * Works with minContains and maxContains.
+	 * Works with <code>minContains</code> and <code>maxContains</code>.
 	 * </p>
 	 */
 	public final com.top_logic.basic.json.schema.model.JsonSchema getContains() {
@@ -1996,8 +1996,8 @@ public class JsonSchema extends de.haumacher.msgbuf.data.AbstractDataObject impl
 	 *
 	 * <p>
 	 * When true: represents a boolean schema (always pass or always fail).
-	 * - booleanSchemaValue = true: schema always passes (equivalent to {})
-	 * - booleanSchemaValue = false: schema always fails (equivalent to {"not": {}})
+	 * - <code>booleanSchemaValue</code> = true: schema always passes (equivalent to {})
+	 * - <code>booleanSchemaValue</code> = false: schema always fails (equivalent to {"not": {}})
 	 * When false: this is a regular object schema (default).
 	 * </p>
 	 */
@@ -2022,7 +2022,7 @@ public class JsonSchema extends de.haumacher.msgbuf.data.AbstractDataObject impl
 	 * Boolean schema value (true = pass, false = fail).
 	 *
 	 * <p>
-	 * Only meaningful when isBooleanSchema is true.
+	 * Only meaningful when <code>isBooleanSchema</code> is true.
 	 * </p>
 	 */
 	public final boolean isBooleanSchemaValue() {

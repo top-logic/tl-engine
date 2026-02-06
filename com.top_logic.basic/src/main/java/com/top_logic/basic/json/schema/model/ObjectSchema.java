@@ -322,7 +322,7 @@ public class ObjectSchema extends Schema {
 	}
 
 	/**
-	 * Schema for additional properties not in properties or patternProperties.
+	 * Schema for additional properties not in <code>properties</code> or <code>patternProperties</code>.
 	 */
 	public final com.top_logic.basic.json.schema.model.Schema getAdditionalProperties() {
 		return _additionalProperties;

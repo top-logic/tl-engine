@@ -267,7 +267,7 @@ public abstract class Schema extends de.haumacher.msgbuf.data.AbstractDataObject
 	 * Dynamic anchor for runtime-resolved references.
 	 *
 	 * <p>
-	 * Works cooperatively with $dynamicRef for recursive schemas.
+	 * Works cooperatively with <code>$dynamicRef</code> for recursive schemas.
 	 * </p>
 	 */
 	public final String getDynamicAnchor() {

@@ -5,7 +5,7 @@ package com.top_logic.basic.json.schema.model;
  *
  * <p>
  * Particularly useful for recursive schemas that reference themselves.
- * Works with $dynamicAnchor.
+ * Works with <code>$dynamicAnchor</code>.
  * </p>
  */
 public class DynamicRefSchema extends Schema {

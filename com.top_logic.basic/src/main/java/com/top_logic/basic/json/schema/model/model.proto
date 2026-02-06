@@ -46,7 +46,7 @@ abstract message Schema {
 	 * Dynamic anchor for runtime-resolved references.
 	 *
 	 * <p>
-	 * Works cooperatively with $dynamicRef for recursive schemas.
+	 * Works cooperatively with <code>$dynamicRef</code> for recursive schemas.
 	 * </p>
 	 */
 	@Name("$dynamicAnchor")
@@ -163,7 +163,7 @@ message RefSchema extends Schema {
  *
  * <p>
  * Particularly useful for recursive schemas that reference themselves.
- * Works with $dynamicAnchor.
+ * Works with <code>$dynamicAnchor</code>.
  * </p>
  */
 message DynamicRefSchema extends Schema {
@@ -345,8 +345,8 @@ message ArraySchema extends Schema {
 	 * Schema for array items.
 	 *
 	 * <p>
-	 * For arrays without prefixItems: validates all items.
-	 * For arrays with prefixItems: validates items beyond prefixItems positions.
+	 * For arrays without <code>prefixItems</code>: validates all items.
+	 * For arrays with <code>prefixItems</code>: validates items beyond <code>prefixItems</code> positions.
 	 * </p>
 	 */
 	@Nullable
@@ -429,7 +429,7 @@ message ObjectSchema extends Schema {
 	map<string, Schema> patternProperties;
 
 	/**
-	 * Schema for additional properties not in properties or patternProperties.
+	 * Schema for additional properties not in <code>properties</code> or <code>patternProperties</code>.
 	 */
 	@Nullable
 	Schema additionalProperties;
@@ -612,7 +612,7 @@ message JsonSchemaDocument extends Schema {
 	 * The actual schema content.
 	 *
 	 * <p>
-	 * Can be any schema type (StringSchema, ObjectSchema, AllOfSchema, etc.).
+	 * Can be any schema type ({@link StringSchema}, {@link ObjectSchema}, {@link AllOfSchema}, etc.).
 	 * </p>
 	 */
 	@Nullable

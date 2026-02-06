@@ -14,6 +14,7 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
@@ -54,6 +55,49 @@ public class TestJsonConfigSchemaBuilderKeyAnnotation extends BasicTestCase {
 	}
 
 	/**
+	 * Abstract base interface for named things.
+	 */
+	@Abstract
+	public interface Named extends ConfigurationItem {
+		String NAME = "name";
+
+		@Name(NAME)
+		@Mandatory
+		String getName();
+	}
+
+	/**
+	 * A person with a name and age.
+	 */
+	public interface Person extends Named {
+		String AGE = "age";
+
+		@Name(AGE)
+		int getAge();
+	}
+
+	/**
+	 * An organization with a name and employee count.
+	 */
+	public interface Organization extends Named {
+		String EMPLOYEE_COUNT = "employee-count";
+
+		@Name(EMPLOYEE_COUNT)
+		int getEmployeeCount();
+	}
+
+	/**
+	 * A configuration with a map of polymorphic named items.
+	 */
+	public interface ConfigWithPolymorphicMap extends ConfigurationItem {
+		String ENTITIES = "entities";
+
+		@Name(ENTITIES)
+		@Key(Named.NAME)
+		java.util.Map<String, Named> getEntities();
+	}
+
+	/**
 	 * Tests that @Key annotation is properly handled in the generated schema.
 	 */
 	public void testKeyAnnotationHandling() throws Exception {
@@ -64,6 +108,21 @@ public class TestJsonConfigSchemaBuilderKeyAnnotation extends BasicTestCase {
 		String actualJson = JsonSchemaWriter.toJson(schema, true);
 
 		String expectedJson = loadExpectedSchema("TestJsonConfigSchemaBuilderKeyAnnotation-testKeyAnnotationHandling.json");
+
+		assertEquals(expectedJson, actualJson);
+	}
+
+	/**
+	 * Tests @Key annotation with a polymorphic type hierarchy.
+	 */
+	public void testKeyAnnotationPolymorphic() throws Exception {
+		ConfigurationDescriptor descriptor =
+			TypedConfiguration.getConfigurationDescriptor(ConfigWithPolymorphicMap.class);
+
+		Schema schema = new JsonConfigSchemaBuilder().setInline(true).build(descriptor);
+		String actualJson = JsonSchemaWriter.toJson(schema, true);
+
+		String expectedJson = loadExpectedSchema("TestJsonConfigSchemaBuilderKeyAnnotation-testKeyAnnotationPolymorphic.json");
 
 		assertEquals(expectedJson, actualJson);
 	}

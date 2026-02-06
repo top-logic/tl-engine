@@ -95,7 +95,7 @@ public class JsonSchemaWriter {
 	 * @param schema
 	 *        The schema to write.
 	 * @param writer
-	 *        The JsonWriter to write to.
+	 *        The {@link JsonWriter} to write to.
 	 * @throws IOException
 	 *         If writing fails.
 	 */

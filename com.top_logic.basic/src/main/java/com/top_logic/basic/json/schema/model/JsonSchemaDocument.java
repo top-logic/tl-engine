@@ -133,7 +133,7 @@ public class JsonSchemaDocument extends Schema {
 	 * The actual schema content.
 	 *
 	 * <p>
-	 * Can be any schema type (StringSchema, ObjectSchema, AllOfSchema, etc.).
+	 * Can be any schema type ({@link StringSchema}, {@link ObjectSchema}, {@link AllOfSchema}, etc.).
 	 * </p>
 	 */
 	public final com.top_logic.basic.json.schema.model.Schema getSchema() {

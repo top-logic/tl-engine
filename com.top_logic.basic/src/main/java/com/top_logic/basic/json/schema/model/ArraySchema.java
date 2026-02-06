@@ -201,8 +201,8 @@ public class ArraySchema extends Schema {
 	 * Schema for array items.
 	 *
 	 * <p>
-	 * For arrays without prefixItems: validates all items.
-	 * For arrays with prefixItems: validates items beyond prefixItems positions.
+	 * For arrays without <code>prefixItems</code>: validates all items.
+	 * For arrays with <code>prefixItems</code>: validates items beyond <code>prefixItems</code> positions.
 	 * </p>
 	 */
 	public final com.top_logic.basic.json.schema.model.Schema getItems() {

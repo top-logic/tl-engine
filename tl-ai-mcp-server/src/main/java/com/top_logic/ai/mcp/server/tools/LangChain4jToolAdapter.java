@@ -19,7 +19,6 @@ import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import dev.langchain4j.model.chat.request.json.JsonSchemaElement;
 import dev.langchain4j.service.tool.ToolExecutor;
-
 import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.server.McpSyncServerExchange;
@@ -36,7 +35,8 @@ import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
  * The adapter converts:
  * </p>
  * <ul>
- * <li>{@link ToolSpecification} → {@link McpSchema.Tool} (tool metadata and input schema)</li>
+ * <li>{@link ToolSpecification} → {@link io.modelcontextprotocol.spec.McpSchema.Tool} (tool
+ * metadata and input schema)</li>
  * <li>{@link ToolExecutor} → MCP call handler (execution logic)</li>
  * </ul>
  */

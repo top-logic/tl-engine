@@ -78,7 +78,7 @@ public abstract class AbstractJsonConfigurationWriterTest extends AbstractConfig
 	 * @return The JSON schema as a string.
 	 */
 	protected String buildSchemaJson(ConfigurationDescriptor descriptor) {
-		Schema schemaDoc = new JsonConfigSchemaBuilder().setInline(true).build(descriptor);
+		Schema schemaDoc = new JsonConfigSchemaBuilder().setInline(true).buildConfigSchema(descriptor);
 		return JsonSchemaWriter.toJson(schemaDoc);
 	}
 

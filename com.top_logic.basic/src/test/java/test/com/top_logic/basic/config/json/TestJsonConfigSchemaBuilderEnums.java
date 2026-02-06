@@ -115,7 +115,7 @@ public class TestJsonConfigSchemaBuilderEnums extends TestCase {
 		JsonConfigSchemaBuilder builder = new JsonConfigSchemaBuilder();
 		ConfigurationDescriptor descriptor = TypedConfiguration.getConfigurationDescriptor(ConfigWithRegularEnum.class);
 
-		Schema schema = builder.build(descriptor);
+		Schema schema = builder.buildConfigSchema(descriptor);
 
 		assertTrue("Should be ObjectSchema", schema instanceof ObjectSchema);
 		ObjectSchema objectSchema = (ObjectSchema) schema;
@@ -141,7 +141,7 @@ public class TestJsonConfigSchemaBuilderEnums extends TestCase {
 		JsonConfigSchemaBuilder builder = new JsonConfigSchemaBuilder();
 		ConfigurationDescriptor descriptor = TypedConfiguration.getConfigurationDescriptor(ConfigWithExternalEnum.class);
 
-		Schema schema = builder.build(descriptor);
+		Schema schema = builder.buildConfigSchema(descriptor);
 
 		assertTrue("Should be ObjectSchema", schema instanceof ObjectSchema);
 		ObjectSchema objectSchema = (ObjectSchema) schema;
@@ -167,7 +167,7 @@ public class TestJsonConfigSchemaBuilderEnums extends TestCase {
 		JsonConfigSchemaBuilder builder = new JsonConfigSchemaBuilder();
 		ConfigurationDescriptor descriptor = TypedConfiguration.getConfigurationDescriptor(ConfigWithProtocolEnum.class);
 
-		Schema schema = builder.build(descriptor);
+		Schema schema = builder.buildConfigSchema(descriptor);
 
 		assertTrue("Should be ObjectSchema", schema instanceof ObjectSchema);
 		ObjectSchema objectSchema = (ObjectSchema) schema;

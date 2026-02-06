@@ -143,17 +143,24 @@ public class JsonConfigurationWriter {
 	protected void writeContent(ConfigurationDescriptor staticType, ConfigurationItem item,
 			Set<String> skippedProperties) throws IOException {
 		ConfigurationDescriptor descriptor = item.descriptor();
-		
+
 		final PropertyDescriptor implClassProperty;
 		if (item instanceof PolymorphicConfiguration<?>) {
 			implClassProperty = descriptor.getProperty(PolymorphicConfiguration.IMPLEMENTATION_CLASS_NAME);
 		} else {
 			implClassProperty = null;
 		}
+
+		// Check if the static type is final - if so, no type annotation is needed.
+		boolean staticTypeFinal = staticType.isFinal();
+
 		// Check, whether the concrete configuration interface cannot be
 		// reconstructed from from the content.
 		Class<?> typeAnnotation;
-		if (descriptor == staticType) {
+		if (staticTypeFinal) {
+			// Final types never need type annotations - the expected type is always used.
+			typeAnnotation = null;
+		} else if (descriptor == staticType) {
 			if (_schemaAware) {
 				if (implClassProperty != null) {
 					Class<?> implementationClass = (Class<?>) item.value(implClassProperty);
@@ -213,7 +220,7 @@ public class JsonConfigurationWriter {
 				typeAnnotation = expectedConfigurationInterface;
 			}
 		}
-		
+
 		if (!_schemaAware) {
 			if (typeAnnotation != null) {
 				_out.beginArray();
@@ -221,9 +228,7 @@ public class JsonConfigurationWriter {
 			}
 		}
 		_out.beginObject();
-		if (_schemaAware) {
-			assert typeAnnotation != null : "Scheme aware serialization must not ommit type annotations.";
-
+		if (_schemaAware && typeAnnotation != null) {
 			_out.name(TYPE_PROPERTY);
 			_out.value(typeAnnotation.getName());
 		}

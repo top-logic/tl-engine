@@ -13,25 +13,26 @@ import de.haumacher.msgbuf.io.StringW;
 import de.haumacher.msgbuf.json.JsonWriter;
 
 /**
- * Utility for writing JSON Schema objects to JSON format.
+ * Utility for writing <i>JSON Schema</i> objects to JSON format.
  *
  * <p>
- * Provides convenient methods for serializing JSON Schema objects to JSON strings
- * according to the JSON Schema 2020-12 specification.
+ * Provides convenient methods for serializing <i>JSON Schema</i> objects to JSON strings according
+ * to the <i>JSON Schema 2020-12 specification</i>.
  * </p>
  *
  * <h3>Example Usage:</h3>
+ * 
  * <pre>
  * ObjectSchema personSchema = ObjectSchema.create()
- *     .putProperty("name", StringSchema.create().setMinLength(1))
- *     .putProperty("age", NumericSchema.create().setIntegerOnly(true).setMinimum(0))
- *     .addRequired("name");
+ * 	.putProperty("name", StringSchema.create().setMinLength(1))
+ * 	.putProperty("age", NumericSchema.create().setIntegerOnly(true).setMinimum(0))
+ * 	.addRequired("name");
  *
  * JsonSchemaDocument document = JsonSchemaDocument.create()
- *     .setSchemaDialectUri("https://json-schema.org/draft/2020-12/schema")
- *     .setTitle("Person")
- *     .setDescription("A person with name and age")
- *     .setSchema(personSchema);
+ * 	.setSchemaDialectUri("https://json-schema.org/draft/2020-12/schema")
+ * 	.setTitle("Person")
+ * 	.setDescription("A person with name and age")
+ * 	.setSchema(personSchema);
  *
  * String json = JsonSchemaWriter.toJson(document);
  * // Result:
@@ -53,7 +54,7 @@ import de.haumacher.msgbuf.json.JsonWriter;
 public class JsonSchemaWriter {
 
 	/**
-	 * Serializes a JSON Schema to a JSON string.
+	 * Serializes a <i>JSON Schema</i> to a JSON string.
 	 *
 	 * @param schema
 	 *        The schema to serialize.
@@ -66,7 +67,7 @@ public class JsonSchemaWriter {
 	}
 
 	/**
-	 * Serializes a JSON Schema to a JSON string with optional pretty-printing.
+	 * Serializes a <i>JSON Schema</i> to a JSON string with optional pretty-printing.
 	 *
 	 * @param schema
 	 *        The schema to serialize.
@@ -90,7 +91,7 @@ public class JsonSchemaWriter {
 	}
 
 	/**
-	 * Writes a JSON Schema to a JsonWriter.
+	 * Writes a <i>JSON Schema</i> to a {@link JsonWriter}.
 	 *
 	 * @param schema
 	 *        The schema to write.

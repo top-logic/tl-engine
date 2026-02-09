@@ -343,7 +343,9 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 
 		private boolean checkSelectedSingleValue(TableComponent self, Object selectedObject) {
 			if (!ComponentUtil.isValid(selectedObject)) {
-				self.showErrorSelectedObjectDeleted();
+				/* At this point, it cannot be determined whether the element was deleted by the
+				 * user or whether the deletion originated from another session. */
+//				self.showErrorSelectedObjectDeleted();
 				return false;
 			}
 			if (!self._rowTypeFilter.accept(selectedObject)) {

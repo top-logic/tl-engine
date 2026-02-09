@@ -5,6 +5,9 @@
  */
 package test.com.top_logic.basic.config.json;
 
+import java.util.List;
+import java.util.Map;
+
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
@@ -17,6 +20,9 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Abstract;
+import com.top_logic.basic.config.annotation.DefaultContainer;
+import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.json.JsonConfigSchemaBuilder;
 import com.top_logic.basic.config.json.JsonConfigurationWriter;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
@@ -228,6 +234,107 @@ public class TestJsonConfigurationWithSchema extends AbstractJsonConfigurationWr
 			TypedConfiguration.getConfigurationDescriptor(ConfiguredImplementation.class), doc);
 
 		assertEquals("F(str, 42)", TypedConfigUtil.createInstance(newDoc.getB()).doIt());
+	}
+
+	public interface DefaultContainerListItem extends ConfigurationItem {
+		String NAME = "name";
+
+		@Name(NAME)
+		String getName();
+
+		void setName(String value);
+
+		int getValue();
+
+		void setValue(int value);
+	}
+
+	public interface ConfigWithDefaultContainerList extends ConfigurationItem {
+		String getTitle();
+
+		void setTitle(String value);
+
+		@DefaultContainer
+		List<DefaultContainerListItem> getItems();
+	}
+
+	public interface DefaultContainerMapEntry extends ConfigurationItem {
+		String NAME = "name";
+
+		@Name(NAME)
+		String getName();
+
+		void setName(String value);
+
+		String getDescription();
+
+		void setDescription(String value);
+	}
+
+	public interface ConfigWithDefaultContainerMap extends ConfigurationItem {
+		String getTitle();
+
+		void setTitle(String value);
+
+		@DefaultContainer
+		@Key(DefaultContainerMapEntry.NAME)
+		Map<String, DefaultContainerMapEntry> getEntries();
+	}
+
+	/**
+	 * Tests that a {@link DefaultContainer} list property is correctly serialized to JSON.
+	 *
+	 * <p>
+	 * In XML, default container lists inline their elements into the parent tag without a wrapper
+	 * element. In JSON, this is not possible - the list must always be written as a named array
+	 * property.
+	 * </p>
+	 */
+	public void testDefaultContainerList() throws Exception {
+		ConfigWithDefaultContainerList config =
+			TypedConfiguration.newConfigItem(ConfigWithDefaultContainerList.class);
+		config.setTitle("Test");
+
+		DefaultContainerListItem item1 = TypedConfiguration.newConfigItem(DefaultContainerListItem.class);
+		item1.setName("first");
+		item1.setValue(1);
+		config.getItems().add(item1);
+
+		DefaultContainerListItem item2 = TypedConfiguration.newConfigItem(DefaultContainerListItem.class);
+		item2.setName("second");
+		item2.setValue(2);
+		config.getItems().add(item2);
+
+		doReadWrite("config",
+			TypedConfiguration.getConfigurationDescriptor(ConfigWithDefaultContainerList.class), config);
+	}
+
+	/**
+	 * Tests that a {@link DefaultContainer} map property is correctly serialized to JSON.
+	 *
+	 * <p>
+	 * In XML, default container maps inline their entries into the parent tag without a wrapper
+	 * element. In JSON, this is not possible - the map must always be written as a named object
+	 * property.
+	 * </p>
+	 */
+	public void testDefaultContainerMap() throws Exception {
+		ConfigWithDefaultContainerMap config =
+			TypedConfiguration.newConfigItem(ConfigWithDefaultContainerMap.class);
+		config.setTitle("Test");
+
+		DefaultContainerMapEntry entry1 = TypedConfiguration.newConfigItem(DefaultContainerMapEntry.class);
+		entry1.setName("key1");
+		entry1.setDescription("First entry");
+		config.getEntries().put(entry1.getName(), entry1);
+
+		DefaultContainerMapEntry entry2 = TypedConfiguration.newConfigItem(DefaultContainerMapEntry.class);
+		entry2.setName("key2");
+		entry2.setDescription("Second entry");
+		config.getEntries().put(entry2.getName(), entry2);
+
+		doReadWrite("config",
+			TypedConfiguration.getConfigurationDescriptor(ConfigWithDefaultContainerMap.class), config);
 	}
 
 	public static Test suite() {

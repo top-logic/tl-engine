@@ -322,37 +322,37 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 	};
 
 	private static final ChannelValueFilter SELECTION_FILTER = new ChannelValueFilter() {
+
 		@Override
 		public boolean accept(ComponentChannel sender, Object oldValue, Object newValue) {
 			TableComponent self = (TableComponent) sender.getComponent();
 
-			if (!ComponentUtil.isValid(newValue)) {
-				self.showErrorSelectedObjectDeleted();
-				return false;
-			}
-
-			if (newValue != null) {
-				if (newValue instanceof Collection) {
-					for (Object selectedObject : (Collection<?>) newValue) {
-						if (!self._rowTypeFilter.accept(selectedObject)) {
-							/* Type of the selected element is incompatible with the rows types of
-							 * the table. */
-							return false;
-						}
-						if (self.getListBuilder().supportsListElement(self, selectedObject).shouldRemove()) {
-							return false;
-						}
-					}
-				} else {
-					if (!self._rowTypeFilter.accept(newValue)) {
-						/* Type of the selected element is incompatible with the rows types of the
-						 * table. */
-						return false;
-					}
-					if (self.getListBuilder().supportsListElement(self, newValue).shouldRemove()) {
+			if (newValue instanceof Collection) {
+				for (Object selectedObject : (Collection<?>) newValue) {
+					if (!checkSelectedSingleValue(self, selectedObject)) {
 						return false;
 					}
 				}
+				return true;
+			} else if (newValue != null) {
+				return checkSelectedSingleValue(self, newValue);
+			} else {
+				return true;
+			}
+		}
+
+		private boolean checkSelectedSingleValue(TableComponent self, Object selectedObject) {
+			if (!ComponentUtil.isValid(selectedObject)) {
+				self.showErrorSelectedObjectDeleted();
+				return false;
+			}
+			if (!self._rowTypeFilter.accept(selectedObject)) {
+				/* Type of the selected element is incompatible with the rows types of
+				 * the table. */
+				return false;
+			}
+			if (self.getListBuilder().supportsListElement(self, selectedObject).shouldRemove()) {
+				return false;
 			}
 			return true;
 		}

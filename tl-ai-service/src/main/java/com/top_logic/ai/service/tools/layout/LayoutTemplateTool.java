@@ -25,6 +25,7 @@ import com.top_logic.basic.config.json.JsonConfigurationWriter;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.gui.ThemeFactory;
+import com.top_logic.knowledge.gui.layout.LayoutConfig;
 import com.top_logic.layout.editor.DynamicComponentDefinition;
 import com.top_logic.layout.editor.DynamicComponentService;
 import com.top_logic.mig.html.layout.LayoutStorage;
@@ -115,6 +116,32 @@ public class LayoutTemplateTool {
 	}
 
 	/**
+	 * Returns the layout key of the application's top-level layout.
+	 *
+	 * <p>
+	 * This is the entry point for navigating the layout tree. Use the returned key with
+	 * {@link #getLayout(String)} to inspect the top-level layout configuration.
+	 * </p>
+	 *
+	 * @return The top-level layout key.
+	 */
+	@Tool("Get the top-level layout key of the application. Use this as entry point for getLayout to navigate the layout tree.")
+	public String getTopLevelLayoutKey() {
+		try {
+			return ThreadContextManager.inSystemInteraction(
+				LayoutTemplateTool.class,
+				() -> LayoutConfig.getDefaultLayout());
+		} catch (Exception ex) {
+			Logger.error("getTopLevelLayoutKey() error: " + ex.getMessage(), ex, LayoutTemplateTool.class);
+			return DataClassSerializer.errorToJson(
+				"Error retrieving top-level layout key: " + ex.getMessage(),
+				LayoutTemplateTool.class,
+				"getTopLevelLayoutKey()",
+				new HashMap<>());
+		}
+	}
+
+	/**
 	 * Retrieves the configuration of a specific layout.
 	 *
 	 * <p>
@@ -126,9 +153,9 @@ public class LayoutTemplateTool {
 	 *        The layout identifier.
 	 * @return JSON string containing the layout configuration.
 	 */
-	@Tool("Get the configuration of a layout by its key. Returns template name and arguments for template-based layouts, or the component configuration for others.")
+	@Tool("Get the configuration of a layout by its key. Returns template name and arguments for template-based layouts, or the component configuration for others. Use getTopLevelLayoutKey to find the application's top-level layout key.")
 	public String getLayout(
-			@P("The layout key (identifier)") String layoutKey) {
+			@P("The layout key (identifier). Use getTopLevelLayoutKey to find the top-level layout key.") String layoutKey) {
 
 		try {
 			LayoutInfo response = ThreadContextManager.inSystemInteraction(

@@ -130,6 +130,26 @@ public class JsonConfigurationWriter {
 	}
 
 	/**
+	 * Resolves the type identifier string for a type annotation.
+	 *
+	 * <p>
+	 * This method is called when writing a type annotation ({@value #TYPE_PROPERTY} in
+	 * schema-aware mode, or the array type tag in default mode). The default implementation
+	 * returns the Java class name. Subclasses may override this to produce custom type
+	 * identifiers, e.g. schema URIs for dynamic configuration descriptors.
+	 * </p>
+	 *
+	 * @param itemDescriptor
+	 *        The {@link ConfigurationDescriptor} of the item being serialized.
+	 * @param typeClass
+	 *        The Java class that was resolved as type annotation.
+	 * @return The string to use as type identifier.
+	 */
+	protected String resolveTypeId(ConfigurationDescriptor itemDescriptor, Class<?> typeClass) {
+		return typeClass.getName();
+	}
+
+	/**
 	 * Writes the given {@link ConfigurationItem} with context informations when the actually
 	 * expected type would be the given static type.
 	 * 
@@ -224,13 +244,13 @@ public class JsonConfigurationWriter {
 		if (!_schemaAware) {
 			if (typeAnnotation != null) {
 				_out.beginArray();
-				_out.value(typeAnnotation.getName());
+				_out.value(resolveTypeId(descriptor, typeAnnotation));
 			}
 		}
 		_out.beginObject();
 		if (_schemaAware && typeAnnotation != null) {
 			_out.name(TYPE_PROPERTY);
-			_out.value(typeAnnotation.getName());
+			_out.value(resolveTypeId(descriptor, typeAnnotation));
 		}
 		
 		List<PropertyDescriptor> properties =

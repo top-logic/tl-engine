@@ -5,14 +5,15 @@
  */
 package com.top_logic.ai.service.tools.layout;
 
+import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.top_logic.ai.service.tools.ToolCallTracking;
 import com.top_logic.ai.service.tools.config.ConfigSchemaTool;
 import com.top_logic.ai.service.tools.layout.messages.LayoutCreateResponse;
-import com.top_logic.ai.service.tools.layout.messages.LayoutInfo;
 import com.top_logic.ai.service.tools.layout.messages.LayoutTemplateInfo;
 import com.top_logic.ai.service.tools.layout.messages.LayoutTemplateListResponse;
 import com.top_logic.ai.service.tools.util.DataClassSerializer;
@@ -31,6 +32,8 @@ import com.top_logic.layout.editor.DynamicComponentService;
 import com.top_logic.mig.html.layout.LayoutStorage;
 import com.top_logic.mig.html.layout.TLLayout;
 import com.top_logic.util.Resources;
+
+import de.haumacher.msgbuf.io.StringW;
 
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
@@ -149,6 +152,12 @@ public class LayoutTemplateTool {
 	 * For non-template layouts, returns the raw component configuration as JSON.
 	 * </p>
 	 *
+	 * <p>
+	 * The response JSON is built directly (not via msgbuf) so that the configuration JSON
+	 * ({@code arguments} or {@code componentConfig}) is embedded as a structured JSON object rather
+	 * than double-encoded as a string.
+	 * </p>
+	 *
 	 * @param layoutKey
 	 *        The layout identifier.
 	 * @return JSON string containing the layout configuration.
@@ -158,7 +167,7 @@ public class LayoutTemplateTool {
 			@P("The layout key (identifier). Use getTopLevelLayoutKey to find the top-level layout key.") String layoutKey) {
 
 		try {
-			LayoutInfo response = ThreadContextManager.inSystemInteraction(
+			String response = ThreadContextManager.inSystemInteraction(
 				LayoutTemplateTool.class,
 				() -> {
 					if (layoutKey == null || layoutKey.isEmpty()) {
@@ -172,62 +181,15 @@ public class LayoutTemplateTool {
 						throw new IllegalArgumentException("Layout not found: " + layoutKey);
 					}
 
-					LayoutInfo result = LayoutInfo.create();
-					result.setLayoutKey(layoutKey);
-					result.setHasTemplate(layout.hasTemplate());
-
-					if (layout.hasTemplate()) {
-						String templateName = layout.getTemplateName();
-						result.setTemplateName(templateName);
-
-						String schemaUri =
-							ConfigSchemaTool.LAYOUT_TEMPLATE_SCHEMA_URI_PREFIX + templateName;
-
-						// Serialize template arguments to JSON, resolving the dynamic
-						// descriptor's $type to the layout template schema URI.
-						ConfigurationItem arguments = layout.getArguments();
-						if (arguments != null) {
-							DynamicComponentDefinition definition =
-								DynamicComponentService.getInstance()
-									.getComponentDefinition(templateName);
-							ConfigurationDescriptor templateDescriptor =
-								definition != null ? definition.descriptor() : null;
-
-							StringWriter sw = new StringWriter();
-							new JsonConfigurationWriter(sw) {
-								@Override
-								protected String resolveTypeId(
-										ConfigurationDescriptor itemDescriptor,
-										Class<?> typeClass) {
-									if (itemDescriptor == templateDescriptor) {
-										return schemaUri;
-									}
-									return super.resolveTypeId(itemDescriptor, typeClass);
-								}
-							}.prettyPrint().schemaAware().write(arguments);
-							result.setArguments(sw.toString());
-						}
-
-						// Provide schema URI for template parameters
-						result.setTemplateSchemaUri(schemaUri);
-
-					} else {
-						// Serialize the full component config to JSON
-						ConfigurationItem componentConfig = layout.get();
-						if (componentConfig != null) {
-							StringWriter sw = new StringWriter();
-							new JsonConfigurationWriter(sw)
-								.prettyPrint().schemaAware().write(componentConfig);
-							result.setComponentConfig(sw.toString());
-						}
-					}
-
-					return result;
+					return buildLayoutResponse(layoutKey, layout);
 				});
 
 			Map<String, Object> args = new HashMap<>();
 			args.put("layoutKey", layoutKey);
-			return DataClassSerializer.toJson(response, LayoutTemplateTool.class, "getLayout()", args);
+			ToolCallTracking.recordIfTracking("getLayout", args, response);
+			Logger.info(ToolCallTracking.formatToolCall("getLayout", args, response),
+				LayoutTemplateTool.class);
+			return response;
 
 		} catch (Exception ex) {
 			Logger.error("getLayout() error: " + ex.getMessage(), ex, LayoutTemplateTool.class);
@@ -239,6 +201,85 @@ public class LayoutTemplateTool {
 				"getLayout()",
 				args);
 		}
+	}
+
+	/**
+	 * Builds the JSON response for a layout, embedding configuration JSON directly.
+	 */
+	private String buildLayoutResponse(String layoutKey, TLLayout layout) throws Exception {
+		StringW buffer = new StringW();
+		try (de.haumacher.msgbuf.json.JsonWriter json = new de.haumacher.msgbuf.json.JsonWriter(buffer)) {
+			json.beginObject();
+			json.name("layoutKey");
+			json.value(layoutKey);
+			json.name("hasTemplate");
+			json.value(layout.hasTemplate());
+
+			if (layout.hasTemplate()) {
+				String templateName = layout.getTemplateName();
+				json.name("templateName");
+				json.value(templateName);
+
+				String schemaUri =
+					ConfigSchemaTool.LAYOUT_TEMPLATE_SCHEMA_URI_PREFIX + templateName;
+
+				// Serialize template arguments, embedding as raw JSON object.
+				ConfigurationItem arguments = layout.getArguments();
+				if (arguments != null) {
+					json.name("arguments");
+					json.jsonValue(serializeTemplateArguments(arguments, templateName, schemaUri));
+				}
+
+				json.name("templateSchemaUri");
+				json.value(schemaUri);
+
+			} else {
+				// Serialize the full component config, embedding as raw JSON object.
+				ConfigurationItem componentConfig = layout.get();
+				if (componentConfig != null) {
+					json.name("componentConfig");
+					json.jsonValue(serializeConfig(componentConfig));
+				}
+			}
+
+			json.endObject();
+		}
+		return buffer.toString();
+	}
+
+	/**
+	 * Serializes template arguments to JSON, resolving the dynamic descriptor's {@code $type} to
+	 * the layout template schema URI.
+	 */
+	private String serializeTemplateArguments(ConfigurationItem arguments, String templateName,
+			String schemaUri) throws IOException {
+		DynamicComponentDefinition definition =
+			DynamicComponentService.getInstance().getComponentDefinition(templateName);
+		ConfigurationDescriptor templateDescriptor =
+			definition != null ? definition.descriptor() : null;
+
+		StringWriter sw = new StringWriter();
+		new JsonConfigurationWriter(sw) {
+			@Override
+			protected String resolveTypeId(
+					ConfigurationDescriptor itemDescriptor,
+					Class<?> typeClass) {
+				if (itemDescriptor == templateDescriptor) {
+					return schemaUri;
+				}
+				return super.resolveTypeId(itemDescriptor, typeClass);
+			}
+		}.prettyPrint().schemaAware().write(arguments);
+		return sw.toString();
+	}
+
+	/**
+	 * Serializes a configuration item to a JSON string.
+	 */
+	private String serializeConfig(ConfigurationItem config) throws IOException {
+		StringWriter sw = new StringWriter();
+		new JsonConfigurationWriter(sw).prettyPrint().schemaAware().write(config);
+		return sw.toString();
 	}
 
 	/**

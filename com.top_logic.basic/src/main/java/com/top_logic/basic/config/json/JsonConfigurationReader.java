@@ -274,14 +274,16 @@ public class JsonConfigurationReader extends AbstractConfigurationReader {
 	}
 
 	private JsonValueBinding fetchValueBinding(PropertyDescriptor property) throws ConfigurationException {
-		JsonValueBinding valueBinding;
 		JsonBinding annotation = property.getAnnotation(JsonBinding.class);
 		if (annotation == null) {
-			valueBinding = null;
-		} else {
-			valueBinding = ConfigUtil.getInstance(annotation.value());
+			// Fall back to value type annotation, analogous to how @Format and @Binding are
+			// resolved from the type when not present on the property getter.
+			annotation = property.getType().getAnnotation(JsonBinding.class);
 		}
-		return valueBinding;
+		if (annotation == null) {
+			return null;
+		}
+		return ConfigUtil.getInstance(annotation.value());
 	}
 
 	private void updateItemValue(ConfigBuilder result, PropertyDescriptor property, Object currentValue)

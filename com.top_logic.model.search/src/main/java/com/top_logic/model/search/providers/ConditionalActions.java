@@ -16,6 +16,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 import com.top_logic.basic.config.order.DisplayInherited;
 import com.top_logic.basic.config.order.DisplayInherited.DisplayStrategy;
 import com.top_logic.layout.channel.linking.impl.ChannelLinking;
@@ -58,7 +59,8 @@ public class ConditionalActions extends AbstractConfiguredInstance<ConditionalAc
 		 * Additional arguments for the given {@link #getCondition()}.
 		 */
 		@DefaultContainer
-		List<PolymorphicConfiguration<? extends DirectLinking>> getAditionalArguments();
+		@ImplementationClassDefault(DirectLinking.class)
+		List<PolymorphicConfiguration<? extends ChannelLinking>> getAditionalArguments();
 
 		/**
 		 * Function taking the command result and deciding whether to execute the inner actions.

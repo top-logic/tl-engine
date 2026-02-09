@@ -14,8 +14,10 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 import com.top_logic.basic.config.order.DisplayInherited;
 import com.top_logic.basic.config.order.DisplayInherited.DisplayStrategy;
+import com.top_logic.layout.channel.linking.impl.ChannelLinking;
 import com.top_logic.layout.channel.linking.impl.DirectLinking;
 import com.top_logic.layout.form.component.PostCreateAction;
 import com.top_logic.layout.form.component.WithPostCreateActions;
@@ -45,7 +47,8 @@ public class ActionsWithTransformedModel implements PostCreateAction {
 		 * Additional arguments for the given {@link #getTransformation()}.
 		 */
 		@DefaultContainer
-		List<PolymorphicConfiguration<? extends DirectLinking>> getAditionalArguments();
+		@ImplementationClassDefault(DirectLinking.class)
+		List<PolymorphicConfiguration<? extends ChannelLinking>> getAditionalArguments();
 
 		/**
 		 * Function transforming the command result to be passed to inner actions.
@@ -60,7 +63,7 @@ public class ActionsWithTransformedModel implements PostCreateAction {
 		Expr getTransformation();
 	}
 
-	private final List<DirectLinking> _args;
+	private final List<ChannelLinking> _args;
 	private final QueryExecutor _transformation;
 	private final List<PostCreateAction> _actions;
 

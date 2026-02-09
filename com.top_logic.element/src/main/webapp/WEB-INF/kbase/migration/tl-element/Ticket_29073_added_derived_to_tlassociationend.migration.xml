@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_29073_added_derived_to_tlassociationend"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29019_Removed_log_entries"
+			module="tl"
+		/>
+		<dependency name="Ticket_28710_RoleAssignment_TLSearch"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<remove-class-generalizations name="tl.model:TLStructuredTypePart">
+			<generalization type="tl.model:TLTypePart"/>
+		</remove-class-generalizations>
+		<remove-class-generalizations name="tl.model:TLReference">
+			<generalization type="tl.model:DerivedTLTypePart"/>
+		</remove-class-generalizations>
+		<remove-class-generalizations name="tl.model:TLProperty">
+			<generalization type="tl.model:DerivedTLTypePart"/>
+		</remove-class-generalizations>
+		<add-class-generalizations name="tl.model:TLStructuredTypePart">
+			<generalizations>
+				<generalization type="tl.model:DerivedTLTypePart"/>
+			</generalizations>
+		</add-class-generalizations>
+	</processors>
+</migration>

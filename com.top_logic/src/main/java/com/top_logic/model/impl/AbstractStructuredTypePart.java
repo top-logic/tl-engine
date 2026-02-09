@@ -155,16 +155,6 @@ public abstract class AbstractStructuredTypePart<O extends TLStructuredType> ext
 	}
 
 	@Override
-	public final boolean isDerived() {
-		StorageDetail storage = getStorageImplementation();
-		if (storage == null) {
-			/* Happens during tests in "com.top_logic". */
-			return false;
-		}
-		return storage.isReadOnly();
-	}
-
-	@Override
 	public TLType getType() {
 		return _type;
 	}

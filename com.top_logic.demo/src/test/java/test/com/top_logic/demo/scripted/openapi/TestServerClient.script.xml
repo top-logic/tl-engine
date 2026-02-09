@@ -1251,20 +1251,6 @@
 										<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 											user-id="root"
 										>
-											<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-												label="Api-Schlüssel"
-											>
-												<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-													tab-path="Administration > Development > Service Editor > Modul Konfiguration"
-												/>
-											</field>
-											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-												value="b42d1c18-faaf-40fc-bde4-cf6b8c06e803"
-											/>
-										</action>
-										<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-											user-id="root"
-										>
 											<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 												<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 													tab-path="Administration > Development > Service Editor > Modul Konfiguration"
@@ -1293,6 +1279,35 @@
 												</values>
 											</value>
 										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+											failure-expected="false"
+											user-id="root"
+										>
+											<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+												label="Token aktualisieren"
+											>
+												<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+													tab-path="Administration > Development > Service Editor > Modul Konfiguration"
+												/>
+											</model-name>
+										</action>
+										<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+											user-id="root"
+										>
+											<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+												label="Token"
+											>
+												<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+											</field>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+												value="b42d1c18-faaf-40fc-bde4-cf6b8c06e803"
+											/>
+										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+											component-name="rootLayout#masterFrame"
+											label="Ok"
+											user-id="root"
+										/>
 										<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 											user-id="root"
 										>
@@ -1853,10 +1868,11 @@
 												</values>
 											</value>
 										</action>
-										<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+										<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+											failure-expected="false"
 											user-id="root"
 										>
-											<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+											<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 												<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 													tab-path="Administration > Development > Service Editor > Modul Konfiguration"
 												/>
@@ -1874,12 +1890,27 @@
 													</object>
 													<labeled-member label="API-Schlüssel"/>
 													<labeled-member label="Api-Schlüssel"/>
+													<labeled-member label="Token aktualisieren"/>
 												</path>
+											</model-name>
+										</action>
+										<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+											user-id="root"
+										>
+											<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+												label="Token"
+											>
+												<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
 											</field>
 											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
 												value="9af5fbc0_8989_43b6_8704_4404de2ed9e2"
 											/>
 										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+											component-name="rootLayout#masterFrame"
+											label="Ok"
+											user-id="root"
+										/>
 										<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 											user-id="root"
 										>
@@ -2434,11 +2465,21 @@
 												</values>
 											</value>
 										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+											failure-expected="false"
+											user-id="root"
+										>
+											<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+												label="Token aktualisieren"
+											>
+												<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+											</model-name>
+										</action>
 										<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 											user-id="root"
 										>
 											<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-												label="Api-Schlüssel"
+												label="Token"
 											>
 												<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
 											</field>
@@ -2446,6 +2487,11 @@
 												value="b42d1c18-faaf-40fc-bde4-cf6b8c06e803"
 											/>
 										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+											component-name="rootLayout#masterFrame"
+											label="Ok"
+											user-id="root"
+										/>
 										<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
 											component-name="rootLayout#masterFrame"
 											label="Ok"
@@ -2714,11 +2760,21 @@
 												</values>
 											</value>
 										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+											failure-expected="false"
+											user-id="root"
+										>
+											<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+												label="Token aktualisieren"
+											>
+												<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+											</model-name>
+										</action>
 										<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 											user-id="root"
 										>
 											<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-												label="Api-Schlüssel"
+												label="Token"
 											>
 												<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
 											</field>
@@ -2726,6 +2782,11 @@
 												value="9af5fbc0_8989_43b6_8704_4404de2ed9e2"
 											/>
 										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+											component-name="rootLayout#masterFrame"
+											label="Ok"
+											user-id="root"
+										/>
 										<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
 											component-name="rootLayout#masterFrame"
 											label="Ok"

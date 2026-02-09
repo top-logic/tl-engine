@@ -5,11 +5,14 @@
  */
 package com.top_logic.service.openapi.common.authentication.apikey;
 
+import com.top_logic.basic.config.annotation.Encrypted;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.layout.form.values.MultiLineText;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
+import com.top_logic.layout.form.values.edit.annotation.PropertyEditor;
+import com.top_logic.layout.form.values.edit.editor.TokenEditor;
 import com.top_logic.service.openapi.common.authentication.SecretConfiguration;
 
 /**
@@ -30,6 +33,8 @@ public interface APIKeySecret extends SecretConfiguration {
 	 */
 	@Mandatory
 	@Name(API_KEY)
+	@Encrypted
+	@PropertyEditor(TokenEditor.class)
 	String getAPIKey();
 
 	/**

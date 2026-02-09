@@ -12,11 +12,9 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.TagName;
-import com.top_logic.basic.config.annotation.ValueInitializer;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.layout.form.values.DeclarativeFormOptions;
 import com.top_logic.layout.form.values.edit.annotation.Options;
-import com.top_logic.layout.form.values.edit.initializer.SecretInitializer;
 import com.top_logic.service.openapi.common.authentication.AuthenticationConfig;
 import com.top_logic.service.openapi.common.authentication.apikey.APIKeySecret;
 import com.top_logic.service.openapi.server.OpenApiServer;
@@ -45,10 +43,6 @@ public interface ServerAPIKeySecret extends ServerSecret, APIKeySecret {
 	 * @see #getUserId()
 	 */
 	String USER_ID = "user-id";
-
-	@Override
-	@ValueInitializer(SecretInitializer.class)
-	String getAPIKey();
 
 	@Override
 	@Options(fun = AllAPIKeyDomains.class, args = {

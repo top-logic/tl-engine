@@ -186,12 +186,22 @@ public class ConfigSchemaTool {
 			return buildErrorJson("Layout template not found: " + templateName);
 		}
 
-		ConfigurationDescriptor descriptor = definition.descriptor();
+		ConfigurationDescriptor templateDescriptor = definition.descriptor();
 
-		JsonConfigSchemaBuilder builder = new JsonConfigSchemaBuilder().setInline(true);
+		JsonConfigSchemaBuilder builder = new JsonConfigSchemaBuilder() {
+			@Override
+			protected String resolveTypeId(
+					ConfigurationDescriptor itemDescriptor,
+					Class<?> configInterface) {
+				if (itemDescriptor == templateDescriptor) {
+					return typeReference;
+				}
+				return super.resolveTypeId(itemDescriptor, configInterface);
+			}
+		}.setInline(true);
 		builder.setSchemaResolver(new ExternalSchemaResolver());
 
-		Schema schema = builder.buildConfigSchema(descriptor);
+		Schema schema = builder.buildConfigSchema(templateDescriptor);
 		schema.setId(typeReference);
 
 		return JsonSchemaWriter.toJson(schema, true);
@@ -210,7 +220,8 @@ public class ConfigSchemaTool {
 	static class ExternalSchemaResolver implements SchemaResolver {
 
 		@Override
-		public String resolveConfigType(Class<?> configType) {
+		public String resolveConfigType(ConfigurationDescriptor descriptor) {
+			Class<?> configType = descriptor.getConfigurationInterface();
 			// Skip the base ConfigurationItem interface
 			if (configType == ConfigurationItem.class) {
 				return null;

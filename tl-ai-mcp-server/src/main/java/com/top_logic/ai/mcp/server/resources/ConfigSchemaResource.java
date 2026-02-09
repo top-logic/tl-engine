@@ -227,7 +227,8 @@ public class ConfigSchemaResource {
 	private static class ExternalSchemaResolver implements SchemaResolver {
 
 		@Override
-		public String resolveConfigType(Class<?> configType) {
+		public String resolveConfigType(com.top_logic.basic.config.ConfigurationDescriptor descriptor) {
+			Class<?> configType = descriptor.getConfigurationInterface();
 			// Skip the base ConfigurationItem interface
 			if (configType == ConfigurationItem.class) {
 				return null;

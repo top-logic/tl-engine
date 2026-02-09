@@ -489,18 +489,20 @@ public class JsonConfigurationWriter {
 	}
 
 	private JsonValueBinding fetchValueBinding(PropertyDescriptor property) throws ConfigurationError {
-		JsonValueBinding valueBinding;
 		JsonBinding annotation = property.getAnnotation(JsonBinding.class);
 		if (annotation == null) {
-			valueBinding = null;
-		} else {
-			try {
-				valueBinding = ConfigUtil.getInstance(annotation.value());
-			} catch (ConfigurationException ex) {
-				throw new ConfigurationError(ex);
-			}
+			// Fall back to value type annotation, analogous to how @Format and @Binding are
+			// resolved from the type when not present on the property getter.
+			annotation = property.getType().getAnnotation(JsonBinding.class);
 		}
-		return valueBinding;
+		if (annotation == null) {
+			return null;
+		}
+		try {
+			return ConfigUtil.getInstance(annotation.value());
+		} catch (ConfigurationException ex) {
+			throw new ConfigurationError(ex);
+		}
 	}
 
 	private void writeName(PropertyDescriptor property) throws IOException {

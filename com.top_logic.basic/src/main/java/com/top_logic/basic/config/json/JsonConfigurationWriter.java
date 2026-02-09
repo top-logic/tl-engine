@@ -301,7 +301,6 @@ public class JsonConfigurationWriter {
 				if (value != null) {
 					writeName(property);
 					valueBinding.saveConfigItem(property, _out, value);
-					System.out.println();
 				}
 				continue;
 			}
@@ -666,14 +665,13 @@ public class JsonConfigurationWriter {
 	 * @see #write(ConfigurationDescriptor, ConfigurationItem)
 	 */
 	public void writeMap(PropertyDescriptor property, Map<?, ?> value) throws IOException {
-		if (property.isDefaultContainer()) {
-			writeMapContents(property, value);
-		} else {
-			writeName(property);
-			_out.beginObject();
-			writeMapContents(property, value);
-			_out.endObject();
-		}
+		// Note: No special handling for default containers here. In XML, default container maps
+		// inline their entries into the parent element without a wrapper tag. In JSON, this is not
+		// possible - a map always requires a named object property with {...} brackets.
+		writeName(property);
+		_out.beginObject();
+		writeMapContents(property, value);
+		_out.endObject();
 	}
 
 	private void writeMapContents(PropertyDescriptor property, Map<?, ?> value) throws IOException {
@@ -735,14 +733,13 @@ public class JsonConfigurationWriter {
 	 * @see #write(ConfigurationDescriptor, ConfigurationItem)
 	 */
 	public void writeList(PropertyDescriptor property, List<?> value) throws IOException {
-		if (property.isDefaultContainer()) {
-			writeCollectionContents(property, value);
-		} else {
-			writeName(property);
-			_out.beginArray();
-			writeCollectionContents(property, value);
-			_out.endArray();
-		}
+		// Note: No special handling for default containers here. In XML, default container lists
+		// inline their elements into the parent element without a wrapper tag. In JSON, this is not
+		// possible - a list always requires a named array property with [...] brackets.
+		writeName(property);
+		_out.beginArray();
+		writeCollectionContents(property, value);
+		_out.endArray();
 	}
 
 	private void writeCollectionContents(PropertyDescriptor property, List<?> value) throws IOException {

@@ -39,6 +39,8 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.json.JsonBinding;
+import com.top_logic.basic.config.json.ResKeyJsonBinding;
 import com.top_logic.basic.i18n.I18NConstantsBase;
 import com.top_logic.basic.text.TLMessageFormat;
 import com.top_logic.basic.xml.XMLStreamUtil;
@@ -53,6 +55,7 @@ import com.top_logic.basic.xml.XMLStreamUtil;
  */
 @Format(ResKey.ValueFormat.class)
 @Binding(ResKey.ValueBinding.class)
+@JsonBinding(ResKeyJsonBinding.class)
 @Label("Resource key")
 public abstract class ResKey {
 

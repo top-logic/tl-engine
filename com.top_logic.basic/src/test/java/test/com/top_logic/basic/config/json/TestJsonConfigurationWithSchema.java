@@ -6,6 +6,7 @@
 package test.com.top_logic.basic.config.json;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import junit.framework.Test;
@@ -26,6 +27,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.json.JsonConfigSchemaBuilder;
 import com.top_logic.basic.config.json.JsonConfigurationWriter;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.basic.util.ResKey;
 
 /**
  * {@link AbstractJsonConfigurationWriterTest} testing {@link JsonConfigurationWriter} and
@@ -335,6 +337,51 @@ public class TestJsonConfigurationWithSchema extends AbstractJsonConfigurationWr
 
 		doReadWrite("config",
 			TypedConfiguration.getConfigurationDescriptor(ConfigWithDefaultContainerMap.class), config);
+	}
+
+	public interface ResKeyItem extends ConfigurationItem {
+		String getTitle();
+
+		void setTitle(String value);
+
+		ResKey getLabel();
+
+		void setLabel(ResKey value);
+	}
+
+	/**
+	 * Tests that a non-literal {@link ResKey} (a regular resource key reference) is correctly
+	 * serialized to and from JSON.
+	 */
+	public void testResKeyNonLiteral() throws Exception {
+		ResKeyItem config = TypedConfiguration.newConfigItem(ResKeyItem.class);
+		config.setTitle("Test");
+		config.setLabel(ResKey.internalCreate("my.resource.key"));
+
+		doReadWrite("config",
+			TypedConfiguration.getConfigurationDescriptor(ResKeyItem.class), config);
+	}
+
+	/**
+	 * Tests that a literal {@link ResKey} (with inline translations) is correctly serialized to and
+	 * from JSON.
+	 *
+	 * <p>
+	 * Literal keys have {@link ResKey#isLiteral()} == {@code true} and are serialized using the
+	 * {@link com.top_logic.basic.config.json.ResKeyJsonBinding} rather than the plain format.
+	 * </p>
+	 */
+	public void testResKeyLiteral() throws Exception {
+		ResKeyItem config = TypedConfiguration.newConfigItem(ResKeyItem.class);
+		config.setTitle("Test");
+		ResKey literalKey = ResKey.builder()
+			.add(Locale.ENGLISH, "Hello World")
+			.add(Locale.GERMAN, "Hallo Welt")
+			.build();
+		config.setLabel(literalKey);
+
+		doReadWrite("config",
+			TypedConfiguration.getConfigurationDescriptor(ResKeyItem.class), config);
 	}
 
 	public static Test suite() {

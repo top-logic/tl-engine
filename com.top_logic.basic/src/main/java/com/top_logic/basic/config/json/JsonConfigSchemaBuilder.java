@@ -7,6 +7,7 @@ package com.top_logic.basic.config.json;
 
 import java.lang.reflect.Modifier;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -74,12 +75,12 @@ public class JsonConfigSchemaBuilder {
 		/**
 		 * Resolves how a configuration type should be referenced in the schema.
 		 *
-		 * @param configType
-		 *        The configuration interface class.
+		 * @param descriptor
+		 *        The configuration descriptor.
 		 * @return An external reference URL if the type should be referenced externally, or
 		 *         <code>null</code> to build the schema inline.
 		 */
-		String resolveConfigType(Class<?> configType);
+		String resolveConfigType(ConfigurationDescriptor descriptor);
 
 		/**
 		 * Resolves how an implementation type should be referenced in the schema.
@@ -160,6 +161,29 @@ public class JsonConfigSchemaBuilder {
 	public JsonConfigSchemaBuilder setSchemaResolver(SchemaResolver resolver) {
 		_schemaResolver = resolver;
 		return this;
+	}
+
+	/**
+	 * Resolves the type identifier string for a configuration descriptor.
+	 *
+	 * <p>
+	 * This method is called to produce the string identifier used for schema caching, internal
+	 * references, and the {@code $type} constant value. The default implementation returns the Java
+	 * class name. Subclasses may override this to produce custom identifiers, e.g. schema URIs for
+	 * dynamic configuration descriptors whose
+	 * {@link ConfigurationDescriptor#getConfigurationInterface()} returns only
+	 * {@link ConfigurationItem}.
+	 * </p>
+	 *
+	 * @param descriptor
+	 *        The {@link ConfigurationDescriptor} being processed.
+	 * @param configInterface
+	 *        The Java interface as returned by
+	 *        {@link ConfigurationDescriptor#getConfigurationInterface()}.
+	 * @return The string to use as type identifier.
+	 */
+	protected String resolveTypeId(ConfigurationDescriptor descriptor, Class<?> configInterface) {
+		return configInterface.getName();
 	}
 
 	/**
@@ -493,6 +517,7 @@ public class JsonConfigSchemaBuilder {
 	private Schema buildConfigValueSchema(ConfigurationDescriptor descriptor, String excludeProperty) {
 		String extensionSchemaId = schemaId(descriptor, excludeProperty);
 		Class<?> configInterface = descriptor.getConfigurationInterface();
+		String typeId = resolveTypeId(descriptor, configInterface);
 
 		// Check cache first - if already building this type, use internal ref
 		if (_schemaCache.containsKey(extensionSchemaId)) {
@@ -501,7 +526,7 @@ public class JsonConfigSchemaBuilder {
 
 		// Check resolver for external reference (skip root type and types with excludeProperty)
 		if (_schemaResolver != null && excludeProperty == null && !extensionSchemaId.equals(_rootSchemaId)) {
-			String externalRef = _schemaResolver.resolveConfigType(configInterface);
+			String externalRef = _schemaResolver.resolveConfigType(descriptor);
 			if (externalRef != null) {
 				RefSchema refSchema = RefSchema.create().setRef(externalRef);
 				addTypeDocumentation(refSchema, configInterface);
@@ -513,7 +538,7 @@ public class JsonConfigSchemaBuilder {
 		_schemaCache.put(extensionSchemaId, null);
 
 		Schema result;
-		if (configInterface == ConfigurationItem.class) {
+		if (typeId.equals(ConfigurationItem.class.getName())) {
 			// Safety: Do not iterate the world.
 			result = allConfigs();
 		} else if (descriptor.isFinal()) {
@@ -682,9 +707,10 @@ public class JsonConfigSchemaBuilder {
 	private ObjectSchema buildLocalPropertiesSchema(ConfigurationDescriptor descriptor, String excludeProperty) {
 		ObjectSchema result = ObjectSchema.create();
 
-		if (descriptor.getConfigurationInterface() == ConfigurationItem.class
-			|| descriptor.getConfigurationInterface() == PolymorphicConfiguration.class) {
-			// All properties are handles especially.
+		String typeId = resolveTypeId(descriptor, descriptor.getConfigurationInterface());
+		if (typeId.equals(ConfigurationItem.class.getName())
+			|| typeId.equals(PolymorphicConfiguration.class.getName())) {
+			// All properties are handled especially.
 			return result;
 		}
 
@@ -740,10 +766,10 @@ public class JsonConfigSchemaBuilder {
 	 * </pre>
 	 */
 	private Schema buildRequiredTypeRef(ConfigurationDescriptor descriptor) {
-		Class<?> configInterface = descriptor.getConfigurationInterface();
+		String typeId = resolveTypeId(descriptor, descriptor.getConfigurationInterface());
 
 		ObjectSchema result = ObjectSchema.create();
-		result.putProperty(TYPE_PROPERTY, ConstSchema.create().setConstValue(configInterface.getName()));
+		result.putProperty(TYPE_PROPERTY, ConstSchema.create().setConstValue(typeId));
 		result.addRequired(TYPE_PROPERTY);
 
 		return result;
@@ -754,6 +780,12 @@ public class JsonConfigSchemaBuilder {
 	 */
 	private Collection<Class<?>> getDirectSubtypes(ConfigurationDescriptor descriptor) {
 		Class<?> configInterface = descriptor.getConfigurationInterface();
+		String typeId = resolveTypeId(descriptor, configInterface);
+
+		// Dynamic descriptors with custom type IDs have no Java-level subtypes.
+		if (!typeId.equals(configInterface.getName())) {
+			return Collections.emptyList();
+		}
 
 		return TypeIndex.getInstance().getSpecializations(
 			configInterface,
@@ -774,25 +806,25 @@ public class JsonConfigSchemaBuilder {
 	}
 
 	private String schemaId(ConfigurationDescriptor descriptor) {
-		return descriptor.getConfigurationInterface().getName();
+		return resolveTypeId(descriptor, descriptor.getConfigurationInterface());
 	}
 
 	private String schemaId(ConfigurationDescriptor descriptor, String excludeProperty) {
 		if (excludeProperty == null) {
 			return schemaId(descriptor);
 		}
-		return descriptor.getConfigurationInterface().getName() + "#map:" + excludeProperty;
+		return resolveTypeId(descriptor, descriptor.getConfigurationInterface()) + "#map:" + excludeProperty;
 	}
 
 	private String propertiesSchemaId(ConfigurationDescriptor descriptor) {
-		return descriptor.getConfigurationInterface().getName() + "#properties";
+		return resolveTypeId(descriptor, descriptor.getConfigurationInterface()) + "#properties";
 	}
 
 	private String propertiesSchemaId(ConfigurationDescriptor descriptor, String excludeProperty) {
 		if (excludeProperty == null) {
 			return propertiesSchemaId(descriptor);
 		}
-		return descriptor.getConfigurationInterface().getName() + "#properties#map:" + excludeProperty;
+		return resolveTypeId(descriptor, descriptor.getConfigurationInterface()) + "#properties#map:" + excludeProperty;
 	}
 
 	/**

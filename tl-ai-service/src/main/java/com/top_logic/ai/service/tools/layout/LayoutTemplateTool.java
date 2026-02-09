@@ -150,27 +150,47 @@ public class LayoutTemplateTool {
 					result.setHasTemplate(layout.hasTemplate());
 
 					if (layout.hasTemplate()) {
-						result.setTemplateName(layout.getTemplateName());
+						String templateName = layout.getTemplateName();
+						result.setTemplateName(templateName);
 
-						// Serialize template arguments to JSON
+						String schemaUri =
+							ConfigSchemaTool.LAYOUT_TEMPLATE_SCHEMA_URI_PREFIX + templateName;
+
+						// Serialize template arguments to JSON, resolving the dynamic
+						// descriptor's $type to the layout template schema URI.
 						ConfigurationItem arguments = layout.getArguments();
 						if (arguments != null) {
+							DynamicComponentDefinition definition =
+								DynamicComponentService.getInstance()
+									.getComponentDefinition(templateName);
+							ConfigurationDescriptor templateDescriptor =
+								definition != null ? definition.descriptor() : null;
+
 							StringWriter sw = new StringWriter();
-							new JsonConfigurationWriter(sw).prettyPrint().schemaAware().write(arguments);
+							new JsonConfigurationWriter(sw) {
+								@Override
+								protected String resolveTypeId(
+										ConfigurationDescriptor itemDescriptor,
+										Class<?> typeClass) {
+									if (itemDescriptor == templateDescriptor) {
+										return schemaUri;
+									}
+									return super.resolveTypeId(itemDescriptor, typeClass);
+								}
+							}.prettyPrint().schemaAware().write(arguments);
 							result.setArguments(sw.toString());
 						}
 
 						// Provide schema URI for template parameters
-						result.setTemplateSchemaUri(
-							ConfigSchemaTool.LAYOUT_TEMPLATE_SCHEMA_URI_PREFIX
-								+ layout.getTemplateName());
+						result.setTemplateSchemaUri(schemaUri);
 
 					} else {
 						// Serialize the full component config to JSON
 						ConfigurationItem componentConfig = layout.get();
 						if (componentConfig != null) {
 							StringWriter sw = new StringWriter();
-							new JsonConfigurationWriter(sw).prettyPrint().schemaAware().write(componentConfig);
+							new JsonConfigurationWriter(sw)
+								.prettyPrint().schemaAware().write(componentConfig);
 							result.setComponentConfig(sw.toString());
 						}
 					}

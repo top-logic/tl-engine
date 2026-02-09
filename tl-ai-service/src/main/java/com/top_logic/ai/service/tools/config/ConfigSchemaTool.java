@@ -6,6 +6,7 @@
 package com.top_logic.ai.service.tools.config;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.DefaultConfigConstructorScheme;
 import com.top_logic.basic.config.TypedConfiguration;
@@ -14,6 +15,8 @@ import com.top_logic.basic.config.json.JsonConfigSchemaBuilder.SchemaResolver;
 import com.top_logic.basic.json.schema.JsonSchemaWriter;
 import com.top_logic.basic.json.schema.model.Schema;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.layout.editor.DynamicComponentDefinition;
+import com.top_logic.layout.editor.DynamicComponentService;
 
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
@@ -29,11 +32,12 @@ import dev.langchain4j.agent.tool.Tool;
  * </p>
  *
  * <p>
- * The tool accepts both:
+ * The tool accepts:
  * </p>
  * <ul>
  * <li>Configuration interfaces (extending {@link ConfigurationItem})</li>
  * <li>Implementation classes (classes with a configuration constructor)</li>
+ * <li>Layout template URIs ({@code toplogic://schema/layout-template/{name}})</li>
  * </ul>
  */
 public class ConfigSchemaTool {
@@ -42,6 +46,11 @@ public class ConfigSchemaTool {
 	 * The URI prefix for configuration schema references.
 	 */
 	public static final String SCHEMA_URI_PREFIX = "toplogic://schema/config/";
+
+	/**
+	 * The URI prefix for layout template schema references.
+	 */
+	public static final String LAYOUT_TEMPLATE_SCHEMA_URI_PREFIX = "toplogic://schema/layout-template/";
 
 	/**
 	 * Retrieves the JSON Schema for a TopLogic configuration type.
@@ -54,20 +63,26 @@ public class ConfigSchemaTool {
 	 * </p>
 	 *
 	 * @param typeReference
-	 *        Either a schema URI (e.g., {@code toplogic://schema/config/com.example.Service/Config})
-	 *        or a fully-qualified class name (e.g., {@code com.example.Service$Config}). In URIs,
-	 *        inner classes use {@code /} as separator instead of {@code $}.
+	 *        Either a schema URI (e.g., {@code toplogic://schema/config/com.example.Service/Config}
+	 *        or {@code toplogic://schema/layout-template/{name}}) or a fully-qualified class name
+	 *        (e.g., {@code com.example.Service$Config}). In config URIs, inner classes use
+	 *        {@code /} as separator instead of {@code $}.
 	 * @return The JSON Schema as a string, or an error message if the class cannot be found or is
 	 *         not a valid configuration type.
 	 */
-	@Tool("Get JSON Schema for a TopLogic configuration type. Accepts schema URIs (from $ref) or class names. Returns the schema with $ref URIs for nested types that can be resolved by calling this tool again.")
+	@Tool("Get JSON Schema for a TopLogic configuration type or layout template. Accepts config schema URIs (toplogic://schema/config/...), layout template URIs (toplogic://schema/layout-template/{name}), or class names. Returns the schema with $ref URIs for nested types that can be resolved by calling this tool again.")
 	public String getConfigSchema(
-			@P("Schema URI (toplogic://schema/config/...) or class name") String typeReference) {
+			@P("Schema URI (toplogic://schema/config/... or toplogic://schema/layout-template/{name}) or class name") String typeReference) {
 
 		return ThreadContextManager.inSystemInteraction(
 			ConfigSchemaTool.class,
 			() -> {
 				try {
+					// Handle layout template schema URIs
+					if (typeReference.startsWith(LAYOUT_TEMPLATE_SCHEMA_URI_PREFIX)) {
+						return buildLayoutTemplateSchema(typeReference);
+					}
+
 					// Extract class name from URI if needed
 					String className = extractClassName(typeReference);
 
@@ -152,6 +167,34 @@ public class ConfigSchemaTool {
 		builder.setSchemaResolver(new ExternalSchemaResolver());
 
 		return builder.buildImplementationSchema(implClass);
+	}
+
+	/**
+	 * Builds a JSON Schema for a layout template's parameter descriptor.
+	 *
+	 * @param typeReference
+	 *        The full layout template schema URI.
+	 * @return The JSON Schema as a string.
+	 */
+	private String buildLayoutTemplateSchema(String typeReference) {
+		String templateName = typeReference.substring(LAYOUT_TEMPLATE_SCHEMA_URI_PREFIX.length());
+
+		DynamicComponentDefinition definition =
+			DynamicComponentService.getInstance().getComponentDefinition(templateName);
+
+		if (definition == null) {
+			return buildErrorJson("Layout template not found: " + templateName);
+		}
+
+		ConfigurationDescriptor descriptor = definition.descriptor();
+
+		JsonConfigSchemaBuilder builder = new JsonConfigSchemaBuilder().setInline(true);
+		builder.setSchemaResolver(new ExternalSchemaResolver());
+
+		Schema schema = builder.buildConfigSchema(descriptor);
+		schema.setId(typeReference);
+
+		return JsonSchemaWriter.toJson(schema, true);
 	}
 
 	/**

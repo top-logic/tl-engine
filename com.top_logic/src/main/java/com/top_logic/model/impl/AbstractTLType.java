@@ -14,6 +14,7 @@ import com.top_logic.basic.col.MapUtil;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLScope;
+import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.TLTypePart;
 import com.top_logic.model.annotate.TLAnnotation;
@@ -24,15 +25,13 @@ import com.top_logic.model.annotate.util.AttributeSettings;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public abstract class AbstractTLType extends AbstractTLModelPart implements TLType {
+public abstract class AbstractTLType extends AbstractTLNamedPart implements TLType {
 
 	private TLModule module;
 	private TLScope scope;
-	private String name;
 
 	/* package protected */ AbstractTLType(TLModel model, String name) {
-		super(model);
-		this.name = name;
+		super(model, name);
 	}
 	
 	@Override
@@ -55,11 +54,6 @@ public abstract class AbstractTLType extends AbstractTLModelPart implements TLTy
 	}
 
 	@Override
-	public String getName() {
-		return this.name;
-	}
-	
-	@Override
 	public void setName(String value) {
 		TLModule owner = module;
 		if (owner != null) {
@@ -67,13 +61,25 @@ public abstract class AbstractTLType extends AbstractTLModelPart implements TLTy
 			// changing the name, this index gets corrupted. Since changing a type name is only
 			// possible, if the type is not owned, the type is temporarily removed from its owner.
 			owner.getTypes().remove(this);
-			this.name = value;
+			super.setName(value);
 			owner.getTypes().add(this);
 		} else {
-			this.name = value;
+			super.setName(value);
 		}
 	}
 	
+	@Override
+	public Object tValue(TLStructuredTypePart part) {
+		switch (part.getName()) {
+			case MODULE_ATTR:
+				return getModule();
+			case SCOPE_ATTR:
+				return getScope();
+			default:
+				return super.tValue(part);
+		}
+	}
+
 	protected static <T extends TLTypePart> Map<String, T> initAllParts(List<? extends T> ...references) {
 		int expectedSize = 0;
 		for (List<? extends T> parts : references) {

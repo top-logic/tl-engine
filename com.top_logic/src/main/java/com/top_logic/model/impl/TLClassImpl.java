@@ -138,4 +138,20 @@ public class TLClassImpl extends AbstractTLStructuredType<TLClassPart> implement
 		return getLocalParts();
 	}
 
+	@Override
+	public Object tValue(TLStructuredTypePart part) {
+		switch (part.getName()) {
+			case ABSTRACT_ATTR:
+				return isAbstract();
+			case FINAL_ATTR:
+				return isFinal();
+			case GENERALIZATIONS_ATTR:
+				return getGeneralizations();
+			case SPECIALIZATIONS_ATTR:
+				return getSpecializations();
+			default:
+				return super.tValue(part);
+		}
+	}
+
 }

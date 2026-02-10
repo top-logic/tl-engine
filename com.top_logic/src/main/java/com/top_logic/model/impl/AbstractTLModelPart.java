@@ -15,6 +15,7 @@ import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLNamedPart;
 import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TransientObject;
 import com.top_logic.model.annotate.TLAnnotation;
 import com.top_logic.model.internal.TTypeVisitor;
@@ -41,6 +42,18 @@ public abstract class AbstractTLModelPart extends TransientObject implements TLM
 		return this.model;
 	}
 	
+	@Override
+	public Object tValue(TLStructuredTypePart part) {
+		switch (part.getName()) {
+			case MODEL_ATTR:
+				return getModel();
+			case ANNOTATIONS_ATTR:
+				return getAnnotations();
+			default:
+				return super.tValue(part);
+		}
+	}
+
 	@Override
 	public <T extends TLAnnotation> T getAnnotationLocal(Class<T> annotationInterface) {
 		if (_annotations == null) {

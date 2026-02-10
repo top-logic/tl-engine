@@ -635,7 +635,7 @@ services.form = {
 
 				{
 					if(window.tlDnD.cache !== undefined) {
-						var isDropable = window.tlDnD.cache.get(window.tlDnD.sourceID, row.id);
+						var isDropable = window.tlDnD.cache.get(window.tlDnD.sourceID, row.id, position);
 						
 						if(isDropable !== undefined) {
 							if(isDropable) {

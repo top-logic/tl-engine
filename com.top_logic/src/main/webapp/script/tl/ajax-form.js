@@ -636,7 +636,7 @@ services.form = {
 
 				{
 					if(services.ajax.mainLayout.tlDnD.cache !== undefined) {
-						var isDropable = services.ajax.mainLayout.tlDnD.cache.get(services.ajax.mainLayout.tlDnD.sourceID, row.id);
+						var isDropable = services.ajax.mainLayout.tlDnD.cache.get(services.ajax.mainLayout.tlDnD.sourceID, row.id, position);
 						
 						if(isDropable !== undefined) {
 							if(isDropable) {

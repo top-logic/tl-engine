@@ -1179,22 +1179,7 @@ services.form = {
 				return;
 			}
 			var sourceID = window.tlDnD.sourceID;
-			this.addToDnDCache(sourceID, targetID, pos, false);
-		},
-		
-		addToDnDCache: function (sourceID, targetID, pos, isDropable) {
-			if(window.tlDnD.cache !== undefined) {
-				var cacheValue = window.tlDnD.cache.get(sourceID, targetID);
-				if(cacheValue !== undefined) {
-					cacheValue[pos] = isDropable;
-					return;
-				}
-			}
-			
-			var cacheValue = {};
-			cacheValue[pos] = isDropable;
-			
-			services.form._putToDnDCache(sourceID, targetID, cacheValue);
+			services.form._putToDnDCache(sourceID, targetID, pos, false);
 		},
 		
 		displayDropMarker: function(targetID, pos) {
@@ -1206,7 +1191,7 @@ services.form = {
 			}
 			this.displayDropMarkerInternal(document.getElementById(targetID), pos);
 			var sourceID = window.tlDnD.sourceID;
-			this.addToDnDCache(sourceID, targetID, pos, true);
+			services.form._putToDnDCache(sourceID, targetID, pos, true);
 
 			return false;
 		},

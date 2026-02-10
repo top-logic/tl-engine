@@ -14,8 +14,10 @@ import com.top_logic.basic.Protocol;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLNamedPart;
+import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TransientObject;
 import com.top_logic.model.annotate.TLAnnotation;
+import com.top_logic.model.internal.TTypeVisitor;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
@@ -129,6 +131,11 @@ public abstract class AbstractTLModelPart extends TransientObject implements TLM
 			}
 			out.append("]");
 		}
+	}
+
+	@Override
+	public TLStructuredType tType() {
+		return TTypeVisitor.getTType(this);
 	}
 
 }

@@ -17,7 +17,7 @@
 		</name>
 		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
 			elements="model->all(`test.dynamicmode:Acquisition`)"
-			supportsElement="element->$element.instanceOf(`test.dynamicmode:Acquisition`)"
+			supportsElement="true"
 		/>
 		<buttons>
 			<button id="exportExcel"

@@ -19,7 +19,6 @@
 		</name>
 		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
 			elements="model->$model.get(`test.fallback:A#contents`)"
-			supportsElement="element->$element.instanceOf(`test.fallback:B`)"
 		/>
 		<configurationProviders>
 			<configurationProvider class="com.top_logic.layout.table.provider.ButtonColumnProvider"

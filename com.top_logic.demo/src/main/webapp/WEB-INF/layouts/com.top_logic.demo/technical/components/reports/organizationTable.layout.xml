@@ -20,7 +20,7 @@
 		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
 			elements="model->all(`test.report:BusinessUnit`)"
 			modelForElement="null"
-			supportsElement="element->$element.instanceOf(`test.report:BusinessUnit`)"
+			supportsElement="true"
 			supportsModel="true"
 		/>
 		<buttons>

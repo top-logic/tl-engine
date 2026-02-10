@@ -16,7 +16,7 @@
 		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
 			elements="model->all(`test.dynamictable:Objective`)"
 			modelForElement="null"
-			supportsElement="element->$element.instanceOf(`test.dynamictable:Objective`)"
+			supportsElement="true"
 			supportsModel="true"
 		/>
 		<buttons>

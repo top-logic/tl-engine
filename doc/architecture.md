@@ -1,77 +1,77 @@
-# TopLogic KI-Integration -- Architekturuebersicht
+# TopLogic KI-Integration – Architekturübersicht
 
 
 ## Was ist das?
 
-Die TopLogic KI-Integration macht eine TopLogic-Anwendung fuer
-KI-Assistenten zugaenglich. Ein KI-Assistent kann die Anwendung
-verstehen, mit ihr arbeiten und sie konfigurieren -- aehnlich wie ein
+Die TopLogic KI-Integration macht eine TopLogic-Anwendung für
+KI-Assistenten zugänglich. Ein KI-Assistent kann die Anwendung
+verstehen, mit ihr arbeiten und sie konfigurieren – ähnlich wie ein
 erfahrener Berater, der die Anwendung kennt.
 
 Dabei gibt es drei Einsatzformen:
 
-- **Eingebauter Assistent**: Ein KI-Chat direkt in der Anwendung, ueber
-  den Anwender Fragen stellen und Aufgaben ausfuehren lassen koennen.
+- **Eingebauter Assistent**: Ein KI-Chat direkt in der Anwendung, über
+  den Anwender Fragen stellen und Aufgaben ausführen lassen können.
 
-- **Externer Assistent**: Ein eigenstaendiges KI-Werkzeug (z.B. Claude
-  Desktop, Cursor), das sich von aussen mit der Anwendung verbindet und
+- **Externer Assistent**: Ein eigenständiges KI-Werkzeug (z.B. Claude
+  Desktop, Cursor), das sich von außen mit der Anwendung verbindet und
   mit ihr arbeitet.
 
 - **Fachliche Agenten**: Spezialisierte KI-Agenten innerhalb der
-  Anwendung, die eigenstaendig wiederkehrende Aufgaben uebernehmen --
+  Anwendung, die eigenständig wiederkehrende Aufgaben übernehmen –
   zeitgesteuert oder als Reaktion auf Ereignisse.
 
 Alle drei Formen nutzen dieselben Werkzeuge. Was der eingebaute
-Assistent kann, kann auch ein fachlicher Agent -- nur eben
+Assistent kann, kann auch ein fachlicher Agent – nur eben
 automatisch und ohne dass jemand eine Frage stellt.
 
 
 ## Warum?
 
 TopLogic-Anwendungen sind hochgradig konfigurierbar: Datenmodelle,
-Oberflaechen, Geschaeftslogik -- vieles laesst sich ohne Programmierung
-anpassen. Diese Konfigurierbarkeit ist eine Staerke, erfordert aber
-Fachwissen ueber die Plattform.
+Oberflächen, Geschäftslogik – vieles lässt sich ohne Programmierung
+anpassen. Diese Konfigurierbarkeit ist eine Stärke, erfordert aber
+Fachwissen über die Plattform.
 
-Gleichzeitig gibt es in jeder Anwendung eine Luecke zwischen dem, was
-die Oberflaeche bietet, und dem, was Anwender im Alltag brauchen.
-Fuer haeufige Arbeitsschritte gibt es spezialisierte Funktionen --
-aber fuer die vielen einmaligen oder seltenen Aufgaben nicht. "Setze
-bei allen Auftraegen aus dem letzten Quartal den Status auf
-'archiviert'", "Uebertrage die Kontaktdaten aus der alten Struktur
+Gleichzeitig gibt es in jeder Anwendung eine Lücke zwischen dem, was
+die Oberfläche bietet, und dem, was Anwender im Alltag brauchen.
+Für häufige Arbeitsschritte gibt es spezialisierte Funktionen –
+aber für die vielen einmaligen oder seltenen Aufgaben nicht. "Setze
+bei allen Aufträgen aus dem letzten Quartal den Status auf
+'archiviert'", "Übertrage die Kontaktdaten aus der alten Struktur
 in die neue", "Zeig mir alle Projekte, bei denen Budget und
-Aufwand um mehr als 20% auseinanderliegen" -- solche Aufgaben fallen
-regelmaessig an, aber keine davon rechtfertigt eine eigene
+Aufwand um mehr als 20% auseinanderliegen" – solche Aufgaben fallen
+regelmäßig an, aber keine davon rechtfertigt eine eigene
 Anwendungsfunktion.
 
-Bisher bleiben zwei Moeglichkeiten: Entweder man baut fuer jeden
-solchen Fall eine Spezialfunktion (aufwaendig, und die meisten
-Wuensche werden nie umgesetzt), oder der Anwender erledigt es von
-Hand (fehleranfaellig und muehsam bei grossen Datenmengen).
+Bisher bleiben zwei Möglichkeiten: Entweder man baut für jeden
+solchen Fall eine Spezialfunktion (aufwändig, und die meisten
+Wünsche werden nie umgesetzt), oder der Anwender erledigt es von
+Hand (fehleranfällig und mühsam bei großen Datenmengen).
 
-Ein KI-Assistent ist das Schweizer Taschenmesser fuer genau diese
-Situationen. Er braucht keine vorgefertigte Funktion -- er versteht
-die Aufgabe in natuerlicher Sprache und fuehrt sie mit den
+Ein KI-Assistent ist das Schweizer Taschenmesser für genau diese
+Situationen. Er braucht keine vorgefertigte Funktion – er versteht
+die Aufgabe in natürlicher Sprache und führt sie mit den
 vorhandenen Werkzeugen aus. Das betrifft nicht nur Massenoperationen,
-sondern jede Aufgabe, fuer die es keinen eigenen Button gibt: Daten
-abgleichen, Zusammenfassungen erstellen, Plausibilitaeten pruefen,
-Aenderungen nach Regeln durchfuehren.
+sondern jede Aufgabe, für die es keinen eigenen Button gibt: Daten
+abgleichen, Zusammenfassungen erstellen, Plausibilitäten prüfen,
+Änderungen nach Regeln durchführen.
 
-Damit verschiebt sich die Frage von "Haben wir dafuer eine Funktion?"
-zu "Kann ich das dem Assistenten sagen?" -- und die Antwort ist fast
+Damit verschiebt sich die Frage von "Haben wir dafür eine Funktion?"
+zu "Kann ich das dem Assistenten sagen?" – und die Antwort ist fast
 immer ja.
 
 Im Einzelnen profitieren verschiedene Zielgruppen:
 
 - **Endanwender**: Fragen zur Anwendung stellen, Daten suchen und
-  auswerten, Routineaufgaben automatisieren -- ohne auf eine
-  Spezialfunktion warten zu muessen.
+  auswerten, Routineaufgaben automatisieren – ohne auf eine
+  Spezialfunktion warten zu müssen.
 
 - **Konfiguratoren**: Datenmodelle erkunden und erweitern,
-  Oberflaechen erstellen und anpassen, Konfigurationsaenderungen
-  durchfuehren.
+  Oberflächen erstellen und anpassen, Konfigurationsänderungen
+  durchführen.
 
-- **Entwickler**: Die Anwendungsstruktur verstehen, Aenderungen
+- **Entwickler**: Die Anwendungsstruktur verstehen, Änderungen
   planen und umsetzen, Skripte schreiben und testen.
 
 
@@ -81,46 +81,46 @@ Im Einzelnen profitieren verschiedene Zielgruppen:
 
 Der eingebaute Assistent ist ein Chat-Fenster innerhalb der
 TopLogic-Anwendung. Der Anwender stellt eine Frage oder gibt einen
-Auftrag in natuerlicher Sprache. Der Assistent versteht die Anfrage,
-fuehrt die noetige Aktion aus und antwortet.
+Auftrag in natürlicher Sprache. Der Assistent versteht die Anfrage,
+führt die nötige Aktion aus und antwortet.
 
 Hinter den Kulissen verbindet sich der Assistent mit einem
 KI-Sprachmodell (z.B. von OpenAI oder Anthropic). Dieses Sprachmodell
-entscheidet selbstaendig, welche Werkzeuge es braucht, um die Anfrage
+entscheidet selbständig, welche Werkzeuge es braucht, um die Anfrage
 zu beantworten. Es kann mehrere Werkzeuge nacheinander einsetzen, um
-komplexe Aufgaben zu loesen.
+komplexe Aufgaben zu lösen.
 
 ### Vom Chatbot zum Copiloten
 
-Ein reiner Chatbot beantwortet Fragen. Ein Copilot arbeitet mit --
+Ein reiner Chatbot beantwortet Fragen. Ein Copilot arbeitet mit –
 er sieht, was der Anwender sieht, und handelt im selben Kontext.
 
 Der entscheidende Schritt ist der Zugriff auf den Benutzerkontext:
-Der Assistent weiss, welche Ansicht gerade geoeffnet ist, welches
+Der Assistent weiß, welche Ansicht gerade geöffnet ist, welches
 Objekt selektiert ist, welche Filter aktiv sind und welche Felder
-im Formular ausgefuellt oder fehlerhaft sind. Damit kann er auf
+im Formular ausgefüllt oder fehlerhaft sind. Damit kann er auf
 "dieses hier" reagieren, statt den Anwender nach Typnamen und
-Instanz-IDs fragen zu muessen.
+Instanz-IDs fragen zu müssen.
 
-*Beispiel: Der Anwender oeffnet eine Kundenliste und fragt "Warum
-fehlt hier die Firma Mueller?" Der Assistent sieht die aktive
+*Beispiel: Der Anwender öffnet eine Kundenliste und fragt "Warum
+fehlt hier die Firma Müller?" Der Assistent sieht die aktive
 Ansicht, erkennt die gesetzten Filter und antwortet: "Die Firma
-Mueller hat den Status 'inaktiv'. Dein aktueller Filter zeigt nur
+Müller hat den Status 'inaktiv'. Dein aktueller Filter zeigt nur
 aktive Kunden."*
 
 Umgekehrt kann der Assistent den Anwender auch aktiv zu Informationen
-fuehren: "Hier ist der Auftrag, den du suchst" -- und navigiert die
+führen: "Hier ist der Auftrag, den du suchst" – und navigiert die
 Anwendung zur entsprechenden Detailansicht. Oder er markiert das
 relevante Feld in einem Formular, statt nur dessen Namen zu nennen.
 
 So wird der Assistent zum Copiloten, der neben dem Anwender sitzt,
-den Bildschirm mitliest und im richtigen Moment eingreift -- nicht
+den Bildschirm mitliest und im richtigen Moment eingreift – nicht
 als abstraktes Frage-Antwort-System, sondern als kontextbewusster
 Begleiter im Arbeitsalltag.
 
 ### Was kann er?
 
-Der Assistent verfuegt ueber Werkzeuge, die ihm Zugriff auf die
+Der Assistent verfügt über Werkzeuge, die ihm Zugriff auf die
 Anwendung geben.
 
 **Datenmodell erkunden und erweitern**
@@ -128,7 +128,7 @@ Anwendung geben.
 Der Assistent kann das Datenmodell der Anwendung lesen und verstehen:
 Welche Module gibt es? Welche Typen sind definiert? Welche
 Eigenschaften und Beziehungen haben sie? Er kann nach Modellelementen
-suchen, analysieren wo ein Typ verwendet wird -- und das Modell
+suchen, analysieren wo ein Typ verwendet wird – und das Modell
 erweitern: neue Module, Typen, Eigenschaften und Beziehungen anlegen.
 
 *Beispiel: "Welche Eigenschaften hat der Typ 'Kunde'?" oder "Lege
@@ -137,9 +137,9 @@ einen neuen Typ 'Lieferant' mit Name, Adresse und Bewertung an."*
 Weitergedacht kann der Assistent eine komplette Fachanwendung im
 Dialog aufbauen: "Ich brauche eine Projektverwaltung mit Aufgaben,
 Meilensteinen und Ressourcenplanung." Er legt Module, Typen,
-Eigenschaften und Beziehungen an, erstellt passende Oberflaechen und
-konfiguriert Formulare -- alles in einem Gespraech. Kein UML, kein
-Pflichtenheft, kein Entwickler noetig.
+Eigenschaften und Beziehungen an, erstellt passende Oberflächen und
+konfiguriert Formulare – alles in einem Gespräch. Kein UML, kein
+Pflichtenheft, kein Entwickler nötig.
 
 **Daten lesen und auswerten**
 
@@ -150,104 +150,104 @@ filtern und zusammenfassen.
 *Beispiel: "Liste alle aktiven Projekte auf" oder "Zeig mir die
 Details zum Kunden mit der Nummer 4711."*
 
-Ueber die reine Abfrage hinaus kann der Assistent Daten analysieren
+Über die reine Abfrage hinaus kann der Assistent Daten analysieren
 und interpretieren: "Zeig mir die Umsatzentwicklung der letzten
-12 Monate pro Region." Er schreibt ein Skript, fuehrt es aus,
-interpretiert die Ergebnisse und erklaert sie in natuerlicher Sprache.
+12 Monate pro Region." Er schreibt ein Skript, führt es aus,
+interpretiert die Ergebnisse und erklärt sie in natürlicher Sprache.
 Oder er baut gleich eine Dashboard-Ansicht.
 
-**Oberflaechen verwalten**
+**Oberflächen verwalten**
 
-Der Assistent kennt die verfuegbaren Oberflaechenvorlagen und kann
+Der Assistent kennt die verfügbaren Oberflächenvorlagen und kann
 neue Ansichten erstellen. Er liest das Schema einer Vorlage (welche
-Parameter werden erwartet?) und erzeugt daraus eine neue Oberflaeche
-mit den gewuenschten Einstellungen.
+Parameter werden erwartet?) und erzeugt daraus eine neue Oberfläche
+mit den gewünschten Einstellungen.
 
-*Beispiel: "Erstelle eine Tabelle fuer alle offenen Auftraege" oder
-"Welche Oberflaechenvorlagen gibt es?"*
+*Beispiel: "Erstelle eine Tabelle für alle offenen Aufträge" oder
+"Welche Oberflächenvorlagen gibt es?"*
 
-Fachanwender koennen so ihre Arbeitsumgebung selbst gestalten: "Mach
-die Kundenliste uebersichtlicher, fuege eine Spalte fuer den letzten
-Kontakt hinzu und sortiere nach Prioritaet." Der Assistent aendert
-die Konfiguration, ohne dass jemand einen Editor oeffnen muss.
+Fachanwender können so ihre Arbeitsumgebung selbst gestalten: "Mach
+die Kundenliste übersichtlicher, füge eine Spalte für den letzten
+Kontakt hinzu und sortiere nach Priorität." Der Assistent ändert
+die Konfiguration, ohne dass jemand einen Editor öffnen muss.
 
 **Konfiguration verstehen**
 
-Jede Konfigurationsmoeglichkeit in TopLogic hat ein Schema, das
-beschreibt, welche Einstellungen moeglich sind. Der Assistent kann
+Jede Konfigurationsmöglichkeit in TopLogic hat ein Schema, das
+beschreibt, welche Einstellungen möglich sind. Der Assistent kann
 diese Schemas lesen und so verstehen, wie eine bestimmte Komponente
 konfiguriert werden kann.
 
 *Beispiel: "Welche Einstellungen hat die Tabellenkomponente?" oder
 "Was kann ich an einem Formularlayout alles konfigurieren?"*
 
-**Geschaeftslogik beschreiben**
+**Geschäftslogik beschreiben**
 
-TopLogic hat eine eigene Skriptsprache (TL-Script) fuer Berechnungen,
+TopLogic hat eine eigene Skriptsprache (TL-Script) für Berechnungen,
 Abfragen und Automatisierungen. Der Assistent kann Skripte schreiben,
-auf korrekte Syntax pruefen und ausfuehren. Er kennt die verfuegbaren
+auf korrekte Syntax prüfen und ausführen. Er kennt die verfügbaren
 Funktionen und deren Dokumentation.
 
 *Beispiel: "Berechne die Summe aller offenen Rechnungen" oder
 "Schreibe ein Skript, das alle inaktiven Benutzer auflistet."*
 
-Damit kann der Assistent auch Geschaeftsprozesse abbilden: "Wenn ein
+Damit kann der Assistent auch Geschäftsprozesse abbilden: "Wenn ein
 Auftrag den Status 'abgeschlossen' bekommt, soll automatisch eine
 Rechnung erzeugt werden." Er legt Regeln, Workflows oder
-Skript-Ausdruecke an. Die Plattform fuehrt sie aus -- kein deployter
+Skript-Ausdrücke an. Die Plattform führt sie aus – kein deployter
 Code, sondern Konfiguration.
 
-**Die Anwendung erklaeren**
+**Die Anwendung erklären**
 
-Der Assistent kennt das Datenmodell und kann Zusammenhaenge in
-natuerlicher Sprache darstellen: "Was bedeutet dieses Feld?", "Warum
-sehe ich diese Daten nicht?", "Wie haengen Auftraege und Rechnungen
-zusammen?" Die Anwendung wird selbsterklarend.
+Der Assistent kennt das Datenmodell und kann Zusammenhänge in
+natürlicher Sprache darstellen: "Was bedeutet dieses Feld?", "Warum
+sehe ich diese Daten nicht?", "Wie hängen Aufträge und Rechnungen
+zusammen?" Die Anwendung wird selbsterklärend.
 
 **Berechtigungen durchschaubar machen**
 
-"Warum kann ich diesen Datensatz nicht bearbeiten?" -- diese Frage
-stellt nicht nur der Endanwender, sondern regelmaessig auch der
+"Warum kann ich diesen Datensatz nicht bearbeiten?" – diese Frage
+stellt nicht nur der Endanwender, sondern regelmäßig auch der
 Entwickler. In einer konfigurierbaren Anwendung mit Rollen,
 Gruppenrechten, Typ-Berechtigungen und instanzspezifischen Regeln
 ist die Antwort oft nicht offensichtlich. Selbst wer die
 Berechtigungskonfiguration kennt, muss im Einzelfall mehrere Ebenen
 durchgehen, um nachzuvollziehen, warum ein bestimmter Zugriff
-gewaehrt oder verweigert wird.
+gewährt oder verweigert wird.
 
-Der Assistent kann diese Kette nachvollziehen und erklaeren:
+Der Assistent kann diese Kette nachvollziehen und erklären:
 
-*Endanwender: "Warum sehe ich den Menuepunkt 'Berichte' nicht?"
--- "Du hast die Rolle 'Sachbearbeiter'. Der Menuepunkt 'Berichte'
-ist nur fuer die Rolle 'Teamleitung' sichtbar. Wende dich an deinen
-Administrator, wenn du Zugriff benoetigen."*
+*Endanwender: "Warum sehe ich den Menüpunkt 'Berichte' nicht?"
+– "Du hast die Rolle 'Sachbearbeiter'. Der Menüpunkt 'Berichte'
+ist nur für die Rolle 'Teamleitung' sichtbar. Wende dich an deinen
+Administrator, wenn du Zugriff benötigst."*
 
-*Entwickler: "Warum kann der Benutzer 'meier' keine Auftraege
-anlegen?" -- "Der Benutzer hat die Rolle 'Vertrieb-Leser'. Diese
+*Entwickler: "Warum kann der Benutzer 'meier' keine Aufträge
+anlegen?" – "Der Benutzer hat die Rolle 'Vertrieb-Leser'. Diese
 Rolle erlaubt Lesezugriff auf den Typ 'Auftrag', aber kein
 Schreiben. Die Berechtigung ist definiert in der Rollengruppe
-'Vertrieb' mit der Einschraenkung 'nur lesen'."*
+'Vertrieb' mit der Einschränkung 'nur lesen'."*
 
 So wird der Assistent zum Berechtigungs-Debugger: Er durchsucht
 Rollenzuordnungen, Gruppenmitgliedschaften und Berechtigungsregeln
-und liefert eine nachvollziehbare Erklaerung statt einer stummen
-Verweigerung. Fuer Endanwender bedeutet das weniger Frust und
-weniger Supportanfragen. Fuer Entwickler und Konfiguratoren
-verkuerzt es die Zeit fuer Fehlersuche in der
+und liefert eine nachvollziehbare Erklärung statt einer stummen
+Verweigerung. Für Endanwender bedeutet das weniger Frust und
+weniger Supportanfragen. Für Entwickler und Konfiguratoren
+verkürzt es die Zeit für Fehlersuche in der
 Berechtigungskonfiguration erheblich.
 
-**Qualitaet sichern**
+**Qualität sichern**
 
 Der Assistent kann Konsistenz zwischen Modell, Konfiguration und
-Oberflaechen pruefen: "Sind alle Pflichtfelder auch in den Formularen
-sichtbar?" oder "Gibt es Typen ohne Oberflaeche?" Er findet
-Ungereimtheiten, die bei manueller Pruefung leicht uebersehen werden.
+Oberflächen prüfen: "Sind alle Pflichtfelder auch in den Formularen
+sichtbar?" oder "Gibt es Typen ohne Oberfläche?" Er findet
+Ungereimtheiten, die bei manueller Prüfung leicht übersehen werden.
 
 **Refactoring und Migration**
 
-"Wir wollen 'Lieferant' und 'Kunde' zu 'Geschaeftspartner'
-zusammenfuehren." Der Assistent kann das Modell umbauen, Daten
-migrieren und Oberflaechen anpassen -- eine Aufgabe, die manuell
+"Wir wollen 'Lieferant' und 'Kunde' zu 'Geschäftspartner'
+zusammenführen." Der Assistent kann das Modell umbauen, Daten
+migrieren und Oberflächen anpassen – eine Aufgabe, die manuell
 Tage dauert.
 
 
@@ -255,17 +255,17 @@ Tage dauert.
 
 ### Wie funktioniert er?
 
-Der externe Assistent ist ein eigenstaendiges KI-Werkzeug, das sich
-ueber eine standardisierte Schnittstelle (MCP -- Model Context
+Der externe Assistent ist ein eigenständiges KI-Werkzeug, das sich
+über eine standardisierte Schnittstelle (MCP – Model Context
 Protocol) mit der laufenden TopLogic-Anwendung verbindet. MCP ist ein
-offener Standard, der von verschiedenen KI-Werkzeugen unterstuetzt
+offener Standard, der von verschiedenen KI-Werkzeugen unterstützt
 wird.
 
-Die Verbindung erfolgt ueber HTTP. Der externe Assistent hat Zugriff
-auf dieselben Werkzeuge wie der eingebaute Assistent. Zusaetzlich
-stehen ihm passive Datenquellen zur Verfuegung, die er gezielt
-abfragen kann -- zum Beispiel die Typen eines Moduls, die
-Konfiguration einer Oberflaeche oder das Schema eines
+Die Verbindung erfolgt über HTTP. Der externe Assistent hat Zugriff
+auf dieselben Werkzeuge wie der eingebaute Assistent. Zusätzlich
+stehen ihm passive Datenquellen zur Verfügung, die er gezielt
+abfragen kann – zum Beispiel die Typen eines Moduls, die
+Konfiguration einer Oberfläche oder das Schema eines
 Konfigurationstyps.
 
 
@@ -275,37 +275,37 @@ Konfigurationstyps.
 
 Der eingebaute Assistent und der externe Assistent reagieren auf
 Anfragen: Ein Mensch stellt eine Frage oder gibt einen Auftrag.
-Fachliche Agenten gehen einen Schritt weiter -- sie handeln
-eigenstaendig, ohne dass jemand sie anstossen muss.
+Fachliche Agenten gehen einen Schritt weiter – sie handeln
+eigenständig, ohne dass jemand sie anstoßen muss.
 
-Ein fachlicher Agent ist ein KI-Agent, der fuer eine bestimmte
+Ein fachlicher Agent ist ein KI-Agent, der für eine bestimmte
 Aufgabe in einer konkreten Anwendung eingerichtet wird. Er kennt
 die Fachlichkeit, hat Zugriff auf dieselben Werkzeuge wie der
 Assistent und arbeitet im Hintergrund.
 
 ### Zeitgesteuert
 
-Fachliche Agenten koennen nach Zeitplan arbeiten:
+Fachliche Agenten können nach Zeitplan arbeiten:
 
-- *Jeden Montagmorgen*: "Pruefe alle offenen Auftraege. Wenn die
-  Lieferfrist in weniger als drei Tagen ablaeuft und kein Versand
-  erfasst ist, eskaliere an den zustaendigen Sachbearbeiter."
+- *Jeden Montagmorgen*: "Prüfe alle offenen Aufträge. Wenn die
+  Lieferfrist in weniger als drei Tagen abläuft und kein Versand
+  erfasst ist, eskaliere an den zuständigen Sachbearbeiter."
 
-- *Jeden Monatsersten*: "Erstelle eine Uebersicht aller
+- *Jeden Monatsersten*: "Erstelle eine Übersicht aller
   abgeschlossenen Projekte mit Budget-Soll-Ist-Vergleich und sende
-  sie an die Geschaeftsfuehrung."
+  sie an die Geschäftsführung."
 
-- *Taeglich nachts*: "Pruefe die Datenqualitaet: Gibt es Kunden ohne
-  Ansprechpartner? Auftraege ohne Positionen? Kontakte mit
-  ungueltigen E-Mail-Adressen? Erstelle einen Bericht der
-  Auffaelligkeiten."
+- *Täglich nachts*: "Prüfe die Datenqualität: Gibt es Kunden ohne
+  Ansprechpartner? Aufträge ohne Positionen? Kontakte mit
+  ungültigen E-Mail-Adressen? Erstelle einen Bericht der
+  Auffälligkeiten."
 
 ### Ereignisgesteuert
 
 Noch wirkungsvoller sind Agenten, die auf Ereignisse in der
 Anwendung reagieren:
 
-- *Neuer Auftrag angelegt*: "Pruefe die Bonitaet des Kunden,
+- *Neuer Auftrag angelegt*: "Prüfe die Bonität des Kunden,
   berechne die voraussichtliche Lieferzeit und benachrichtige das
   Lager."
 
@@ -313,51 +313,51 @@ Anwendung reagieren:
   aktualisiere die Umsatzstatistik und archiviere die
   Projektunterlagen."
 
-- *Neuer Mitarbeiter erfasst*: "Lege die Standardzugaenge an,
+- *Neuer Mitarbeiter erfasst*: "Lege die Standardzugänge an,
   erstelle einen Onboarding-Plan und weise die Einarbeitungsaufgaben
   dem Teamleiter zu."
 
 ### Was sie vom Skript unterscheidet
 
 Zeitgesteuerte Aktionen und Ereignisreaktionen gibt es auch ohne KI
--- als fest programmierte Skripte oder Workflow-Regeln. Der
-Unterschied liegt in der Flexibilitaet:
+– als fest programmierte Skripte oder Workflow-Regeln. Der
+Unterschied liegt in der Flexibilität:
 
-Ein Skript fuehrt immer exakt dieselben Schritte aus. Ein fachlicher
+Ein Skript führt immer exakt dieselben Schritte aus. Ein fachlicher
 Agent *versteht* die Aufgabe und kann auf unvorhergesehene
-Situationen reagieren. Wenn die Bonitaetspruefung ein unerwartetes
+Situationen reagieren. Wenn die Bonitätsprüfung ein unerwartetes
 Ergebnis liefert, kann der Agent entscheiden, ob er den Auftrag
-zurueckstellt, eine Teillieferung vorschlaegt oder einen Menschen
+zurückstellt, eine Teillieferung vorschlägt oder einen Menschen
 einbezieht. Ein Skript bricht ab oder ignoriert das Problem.
 
-Ausserdem sind fachliche Agenten leichter einzurichten. Statt eine
-technische Regel zu programmieren, beschreibt man in natuerlicher
+Außerdem sind fachliche Agenten leichter einzurichten. Statt eine
+technische Regel zu programmieren, beschreibt man in natürlicher
 Sprache, was der Agent tun soll. Das macht Automatisierung
-zugaenglich fuer Konfiguratoren und Fachabteilungen, nicht nur fuer
+zugänglich für Konfiguratoren und Fachabteilungen, nicht nur für
 Entwickler.
 
-### Vom Agenten zum Skript -- und zurueck
+### Vom Agenten zum Skript – und zurück
 
-Agent und Skript sind keine Gegensaetze, sondern zwei Enden eines
+Agent und Skript sind keine Gegensätze, sondern zwei Enden eines
 Spektrums. In einer No-Code-Plattform, die ihre eigene
 Entwicklungsumgebung ist, kann die KI zwischen beiden Formen
 vermitteln.
 
-Der typische Weg beginnt mit einer textuellen Beschreibung: "Pruefe
-jeden Abend, ob es Auftraege gibt, deren Lieferfrist morgen ablaeuft,
-und sende eine Erinnerung an den zustaendigen Sachbearbeiter." Das
-genuegt, um einen fachlichen Agenten einzurichten. Bei jeder
-Ausfuehrung interpretiert die KI die Aufgabe neu, waehlt die
+Der typische Weg beginnt mit einer textuellen Beschreibung: "Prüfe
+jeden Abend, ob es Aufträge gibt, deren Lieferfrist morgen abläuft,
+und sende eine Erinnerung an den zuständigen Sachbearbeiter." Das
+genügt, um einen fachlichen Agenten einzurichten. Bei jeder
+Ausführung interpretiert die KI die Aufgabe neu, wählt die
 passenden Werkzeuge und reagiert auf die aktuelle Datenlage.
 
-Wenn sich herausstellt, dass die Aufgabe immer gleich ablaeuft --
-dieselben Schritte, keine Sonderfaelle, keine Ermessensentscheidungen
--- dann kann die KI daraus ein Skript erzeugen. Dieses Skript wird
-direkt in die Anwendung eingebunden und laeuft nativ, ohne
-KI-Aufruf. Es ist schneller, kostenguenstiger und vorhersagbar.
+Wenn sich herausstellt, dass die Aufgabe immer gleich abläuft –
+dieselben Schritte, keine Sonderfälle, keine Ermessensentscheidungen
+– dann kann die KI daraus ein Skript erzeugen. Dieses Skript wird
+direkt in die Anwendung eingebunden und läuft nativ, ohne
+KI-Aufruf. Es ist schneller, kostengünstiger und vorhersagbar.
 
-Der umgekehrte Weg ist ebenso moeglich: Ein bestehendes Skript stoesst
-an seine Grenzen, weil neue Sonderfaelle auftreten. Statt das Skript
+Der umgekehrte Weg ist ebenso möglich: Ein bestehendes Skript stößt
+an seine Grenzen, weil neue Sonderfälle auftreten. Statt das Skript
 immer weiter zu verkomplizieren, kann es durch einen fachlichen
 Agenten ersetzt werden, der die Grundlogik kennt, aber flexibel auf
 Ausnahmen reagiert.
@@ -368,238 +368,238 @@ So entsteht ein Kreislauf:
   Textuelle             Fachlicher            Generiertes
   Beschreibung  ----->  Agent       ----->    Skript
        ^                (flexibel,            (schnell,
-       |                 KI-gestuetzt)         nativ)
+       |                 KI-gestützt)          nativ)
        |                                        |
        +-------------- bei Bedarf <-------------+
-                        zurueck zum Agenten
+                        zurück zum Agenten
 ```
 
 Die Plattform bietet beiden Formen dieselbe Laufzeitumgebung. Ein
-generiertes Skript ist kein Fremdkoerper, der separat deployed werden
-muss -- es ist eine regulaere TL-Script-Konfiguration innerhalb der
+generiertes Skript ist kein Fremdkörper, der separat deployed werden
+muss – es ist eine reguläre TL-Script-Konfiguration innerhalb der
 Anwendung. Und der fachliche Agent, der es erzeugt hat, kann es bei
 Bedarf auch wieder anpassen oder erweitern.
 
-Fuer den Anwender bedeutet das: Er beschreibt, was er will. Die
+Für den Anwender bedeutet das: Er beschreibt, was er will. Die
 Plattform entscheidet, ob ein Agent oder ein Skript die richtige
-Ausfuehrungsform ist -- oder sie beginnt mit dem Agenten und
-verdichtet die Loesung spaeter zu einem Skript, wenn sich das Muster
+Ausführungsform ist – oder sie beginnt mit dem Agenten und
+verdichtet die Lösung später zu einem Skript, wenn sich das Muster
 stabilisiert hat.
 
 
 ## Zusammenspiel der drei Formen
 
 Eingebauter Assistent, externer Assistent und fachliche Agenten
-ergaenzen sich:
+ergänzen sich:
 
 | Eigenschaft      | Eingebauter Assistent     | Externer Assistent          | Fachliche Agenten              |
 |------------------|---------------------------|-----------------------------|--------------------------------|
 | Zugang           | Direkt in der Anwendung   | Eigenes KI-Werkzeug         | Im Hintergrund                 |
-| Ausloser         | Frage oder Auftrag        | Frage oder Auftrag          | Zeitplan oder Ereignis         |
+| Auslöser         | Frage oder Auftrag        | Frage oder Auftrag          | Zeitplan oder Ereignis         |
 | Zielgruppe       | Endanwender, Fachabteilung | Konfiguratoren, Entwickler  | Fachabteilung, Administratoren |
-| Staerke          | Schnelle Hilfe im Arbeitsalltag | Umfangreiche Konfiguration | Wiederkehrende Aufgaben, proaktives Handeln |
+| Stärke           | Schnelle Hilfe im Arbeitsalltag | Umfangreiche Konfiguration | Wiederkehrende Aufgaben, proaktives Handeln |
 | Kontext          | Sieht, was der Anwender sieht | Sieht die gesamte Struktur | Kennt die fachlichen Regeln |
 
 Alle drei nutzen denselben Satz an Werkzeugen. Eine Erweiterung der
 Werkzeuge kommt automatisch allen Formen zugute.
 
 
-## Faehigkeiten im Ueberblick
+## Fähigkeiten im Überblick
 
 ```
 +-----------------------------------------------------------+
 |                    KI-Assistent                           |
 |                                                           |
 |   "Welche Typen gibt es?"    "Erstelle eine Tabelle"     |
-|   "Fuehre dieses Skript aus" "Lege einen neuen Typ an"   |
+|   "Führe dieses Skript aus"  "Lege einen neuen Typ an"   |
 +----------------------------+------------------------------+
                              |
                              v
 +-----------------------------------------------------------+
 |                   Werkzeugkasten                          |
 |                                                           |
-|   Modell         Daten          Oberflaechen              |
+|   Modell         Daten          Oberflächen               |
 |   erkunden       lesen          verwalten                 |
 |                                                           |
 |   Konfigurations-  TL-Script     Modell                   |
-|   schemas lesen    ausfuehren    erweitern                |
+|   schemas lesen    ausführen     erweitern                |
 +----------------------------+------------------------------+
                              |
                              v
 +-----------------------------------------------------------+
 |               TopLogic-Anwendung                          |
 |                                                           |
-|   Datenmodell    Geschaeftsdaten    Oberflaechen          |
+|   Datenmodell    Geschäftsdaten    Oberflächen            |
 |   Konfiguration  Skripte           Benutzer               |
 +-----------------------------------------------------------+
 ```
 
 
-## Semantisches Gedaechtnis: Der Vectorindex
+## Semantisches Gedächtnis: Der Vectorindex
 
 ### Warum ein Vectorindex?
 
 Die Werkzeuge geben dem Assistenten Zugriff auf die Anwendung. Aber
-Zugriff allein reicht nicht -- der Assistent braucht auch Verstaendnis.
+Zugriff allein reicht nicht – der Assistent braucht auch Verständnis.
 Wenn ein Anwender fragt "Wie richte ich eine Genehmigungsstufe ein?",
 muss der Assistent nicht nur wissen, welche Werkzeuge er hat, sondern
 auch, wie die Plattform funktioniert, wie das konkrete Datenmodell
-aufgebaut ist und welche fachlichen Zusammenhaenge es gibt.
+aufgebaut ist und welche fachlichen Zusammenhänge es gibt.
 
-Dieses Verstaendnis entsteht durch einen Vectorindex: eine semantische
+Dieses Verständnis entsteht durch einen Vectorindex: eine semantische
 Wissensbasis, die Texte nicht nach Stichworten, sondern nach Bedeutung
 durchsuchbar macht. Der Assistent findet relevante Informationen, auch
-wenn die Formulierung nicht exakt uebereinstimmt -- "Lieferung" findet
+wenn die Formulierung nicht exakt übereinstimmt – "Lieferung" findet
 auch "Versand", "Speditionsauftrag" und "Warenausgang".
 
 Der Vectorindex wirkt auf drei Ebenen:
 
-### Plattformverstaendnis
+### Plattformverständnis
 
-Fuer die Konfiguration einer spezifischen Plattform gibt es in den
+Für die Konfiguration einer spezifischen Plattform gibt es in den
 Trainingsdaten der KI kaum Beispiele. Plattform-Dokumentation,
-Best Practices, Konfigurationsbeispiele und Hilfetexte koennen als
+Best Practices, Konfigurationsbeispiele und Hilfetexte können als
 Vectorindex bereitgestellt werden. Der Assistent findet so die
-relevanten Dokumentationsstellen, bevor er ueberhaupt ein Werkzeug
+relevanten Dokumentationsstellen, bevor er überhaupt ein Werkzeug
 aufruft.
 
 *Beispiel: "Wie konfiguriere ich eine Tabelle mit gruppierten
-Zeilen?" -- der Vectorindex findet die passende Dokumentation zur
+Zeilen?" – der Vectorindex findet die passende Dokumentation zur
 Tabellenkomponente und ihren Gruppierungsoptionen, auch wenn der
 Anwender nicht den exakten Konfigurationsnamen kennt.*
 
-Das kompensiert gezielt die Luecke im Vorwissen der KI: Was nicht in
+Das kompensiert gezielt die Lücke im Vorwissen der KI: Was nicht in
 den Trainingsdaten steckt, steckt im Vectorindex.
 
-### Modellverstaendnis
+### Modellverständnis
 
-Die Werkzeuge liefern strukturierte Informationen ueber das
+Die Werkzeuge liefern strukturierte Informationen über das
 Datenmodell: Typen, Eigenschaften, Beziehungen. Aber ein Vectorindex
-ueber Modellbeschreibungen, Labels und Annotationen ermoeglicht
-zusaetzlich semantische Suche: "Ich brauche etwas, das mit
+über Modellbeschreibungen, Labels und Annotationen ermöglicht
+zusätzlich semantische Suche: "Ich brauche etwas, das mit
 Rechnungsstellung zu tun hat" findet Typen wie "Rechnung",
-"Rechnungsposition", "Fakturierung" und "Zahlungseingang" -- auch
-wenn der Suchbegriff woertlich nirgends vorkommt.
+"Rechnungsposition", "Fakturierung" und "Zahlungseingang" – auch
+wenn der Suchbegriff wörtlich nirgends vorkommt.
 
-In einer modellbasierten Plattform koennen die Embeddings mit
-strukturellem Wissen angereichert werden: Typzugehoerigkeiten,
+In einer modellbasierten Plattform können die Embeddings mit
+strukturellem Wissen angereichert werden: Typzugehörigkeiten,
 Beziehungen, Eigenschaftssemantik. Ein Kundendatensatz ist nicht
 nur ein Textblock, sondern ein Objekt mit bekanntem Typ, bekannten
-Beziehungen und bekannter Rolle im Geschaeftsprozess. Das Modell
-*ist* der Kontext, den man bei reiner Textsuche muehsam
-rekonstruieren muesste.
+Beziehungen und bekannter Rolle im Geschäftsprozess. Das Modell
+*ist* der Kontext, den man bei reiner Textsuche mühsam
+rekonstruieren müsste.
 
-### Datenverstaendnis
+### Datenverständnis
 
-Die wirkungsvollste Ebene betrifft die konkreten Geschaeftsdaten
+Die wirkungsvollste Ebene betrifft die konkreten Geschäftsdaten
 einer Kundenanwendung. Wenn der Vectorindex nicht nur das Modell,
 sondern auch die Inhalte der Anwendung erfasst, kann der Assistent
-Fragen beantworten, die ueber strukturierte Abfragen hinausgehen:
+Fragen beantworten, die über strukturierte Abfragen hinausgehen:
 
-- *Aehnlichkeitssuche*: "Finde Kunden mit aehnlichem Profil wie die
-  Firma Mueller" -- basierend auf der Gesamtheit der Kundendaten,
+- *Ähnlichkeitssuche*: "Finde Kunden mit ähnlichem Profil wie die
+  Firma Müller" – basierend auf der Gesamtheit der Kundendaten,
   nicht auf einzelnen Feldern.
 
-- *Dokumentensuche*: Viele Fachanwendungen verwalten Dokumente --
-  Vertraege, Protokolle, Spezifikationen. Ein Vectorindex ueber den
+- *Dokumentensuche*: Viele Fachanwendungen verwalten Dokumente –
+  Verträge, Protokolle, Spezifikationen. Ein Vectorindex über den
   Dokumentinhalt macht sie durchsuchbar: "Gibt es in unseren
-  Vertraegen Klauseln zur Haftungsbegrenzung?"
+  Verträgen Klauseln zur Haftungsbegrenzung?"
 
-- *Muster erkennen*: "Welche Projekte hatten aehnliche Probleme wie
-  Projekt X?" -- der Vectorindex findet Aehnlichkeiten ueber
+- *Muster erkennen*: "Welche Projekte hatten ähnliche Probleme wie
+  Projekt X?" – der Vectorindex findet Ähnlichkeiten über
   Freitextfelder, Kommentare und Beschreibungen, die eine
-  strukturierte Abfrage nicht erfassen wuerde.
+  strukturierte Abfrage nicht erfassen würde.
 
-- *Wissen aus Gespraechen*: Vergangene Konversationen mit dem
-  Assistenten koennen indiziert werden. So baut sich ueber die
-  Zeit ein institutionelles Gedaechtnis auf: Was wurde schon
-  gefragt? Welche Loesungen wurden gefunden? Welche
+- *Wissen aus Gesprächen*: Vergangene Konversationen mit dem
+  Assistenten können indiziert werden. So baut sich über die
+  Zeit ein institutionelles Gedächtnis auf: Was wurde schon
+  gefragt? Welche Lösungen wurden gefunden? Welche
   Entscheidungen wurden getroffen?
 
 ### Zusammenspiel mit den Werkzeugen
 
-Der Vectorindex ersetzt die Werkzeuge nicht -- er ergaenzt sie. Die
-Werkzeuge liefern praezise, strukturierte Antworten: "Der Typ Kunde
+Der Vectorindex ersetzt die Werkzeuge nicht – er ergänzt sie. Die
+Werkzeuge liefern präzise, strukturierte Antworten: "Der Typ Kunde
 hat die Eigenschaften Name, Adresse, Umsatz." Der Vectorindex
 liefert Kontext und Hintergrund: "Kunden mit hohem Umsatz werden
 im Quartalsbericht gesondert ausgewiesen, siehe Dokumentation zur
 Key-Account-Verwaltung."
 
 Zusammen ergibt das einen Assistenten, der nicht nur Zugriff auf die
-Anwendung hat, sondern sie auch wirklich versteht -- die Plattform,
+Anwendung hat, sondern sie auch wirklich versteht – die Plattform,
 das Modell und die konkreten Daten.
 
 
 ## Warum eine No-Code-Plattform mit KI?
 
-### Der Unterschied zur KI-gestuetzten Programmierung
+### Der Unterschied zur KI-gestützten Programmierung
 
 Wenn KI heute in der Softwareentwicklung eingesetzt wird, generiert sie
 meistens Quellcode: Java, TypeScript, SQL, HTML, CSS. Das funktioniert
-erstaunlich gut -- aber der generierte Code muss kompiliert, getestet
-und deployed werden, bevor er laeuft.
+erstaunlich gut – aber der generierte Code muss kompiliert, getestet
+und deployed werden, bevor er läuft.
 
 Bei einer modellbasierten Plattform wie TopLogic ist der Ansatz
-grundsaetzlich anders: Die KI schreibt keinen Code, sondern
+grundsätzlich anders: Die KI schreibt keinen Code, sondern
 konfiguriert. Sie beschreibt *was* sie will, nicht *wie* es technisch
-umgesetzt wird. Die Plattform kuemmert sich um das Wie.
+umgesetzt wird. Die Plattform kümmert sich um das Wie.
 
 Das ist ein feiner, aber wichtiger Unterschied. Die KI ersetzt nicht
 den Entwickler, indem sie denselben Job macht (Code schreiben).
-Stattdessen wird der Job selbst ueberfluessig, weil kein Code noetig
+Stattdessen wird der Job selbst überflüssig, weil kein Code nötig
 ist.
 
 ### Vorteile
 
 **Kleinerer Fehlerraum**
 
-Eine Konfiguration ist entweder gueltig oder nicht -- das Schema sagt
+Eine Konfiguration ist entweder gültig oder nicht – das Schema sagt
 es sofort. Generierter Code kann syntaktisch korrekt, aber inhaltlich
-falsch sein: Sicherheitsluecken, Timing-Probleme, falsche Datentypen.
+falsch sein: Sicherheitslücken, Timing-Probleme, falsche Datentypen.
 Die Plattform verhindert ganze Fehlerklassen, die bei generiertem Code
-auftreten koennen.
+auftreten können.
 
 **Sofortige Wirkung**
 
-Aenderungen an Konfiguration und Modell wirken sofort. Bei
-herkoemmlicher Entwicklung muss generierter Code erst kompiliert,
+Änderungen an Konfiguration und Modell wirken sofort. Bei
+herkömmlicher Entwicklung muss generierter Code erst kompiliert,
 getestet und in Betrieb genommen werden. Das dauert und ist eine
-zusaetzliche Fehlerquelle.
+zusätzliche Fehlerquelle.
 
 **Garantierte Konsistenz**
 
-Die Plattform sorgt dafuer, dass Datenmodell, Datenhaltung und
-Oberflaeche zusammenpassen. Bei herkoemmlicher Entwicklung muss die KI
-Datenbankschema, Schnittstellen, Oberflaeche und Tests konsistent
-halten -- eine Aufgabe, an der auch erfahrene Entwickler regelmaessig
+Die Plattform sorgt dafür, dass Datenmodell, Datenhaltung und
+Oberfläche zusammenpassen. Bei herkömmlicher Entwicklung muss die KI
+Datenbankschema, Schnittstellen, Oberfläche und Tests konsistent
+halten – eine Aufgabe, an der auch erfahrene Entwickler regelmäßig
 scheitern.
 
 **Weniger Halluzination**
 
 Die KI arbeitet mit konkreten Schemas und bekommt strukturierte
 Antworten. Sie erfindet keine Schnittstellen, sondern nutzt
-vorhandene. Bei der Code-Generierung erfindet die KI regelmaessig
+vorhandene. Bei der Code-Generierung erfindet die KI regelmäßig
 Funktionen und Bibliotheken, die es gar nicht gibt.
 
 **Nachvollziehbarkeit**
 
-Konfigurationsaenderungen sind deklarativ: Man sieht, was eingestellt
+Konfigurationsänderungen sind deklarativ: Man sieht, was eingestellt
 ist, nicht wie es umgesetzt wurde. Generierter Code ist schwerer zu
-pruefen -- war er vor der Aenderung korrekt? Was genau hat sich
-geaendert? Bei Konfiguration ist das offensichtlich.
+prüfen – war er vor der Änderung korrekt? Was genau hat sich
+geändert? Bei Konfiguration ist das offensichtlich.
 
-**Fachleute koennen mitreden**
+**Fachleute können mitreden**
 
 Ein Fachanwender kann eine Modellbeschreibung lesen und sagen "Ja, das
 stimmt" oder "Nein, da fehlt etwas". Generierten Programmcode kann er
-nicht beurteilen. Die Plattform bringt die KI naeher an die
+nicht beurteilen. Die Plattform bringt die KI näher an die
 Fachsprache.
 
 **Weniger Entscheidungen, weniger Fehler**
 
 Statt tausend Zeilen Code zu generieren, trifft die KI zehn
 Konfigurationsentscheidungen. Die Fehlerrate pro Entscheidung mag
-aehnlich sein -- aber zehn statt tausend Entscheidungen ergeben in
+ähnlich sein – aber zehn statt tausend Entscheidungen ergeben in
 Summe weniger Fehler.
 
 ### Grenzen
@@ -607,54 +607,54 @@ Summe weniger Fehler.
 **Plattform-Decke**
 
 Was die Plattform nicht kann, kann auch die KI nicht konfigurieren.
-Herkoemmliche Entwicklung hat diese Grenze prinzipiell nicht. Sehr
-spezifische Oberflaechen-Interaktionen oder Integrationen mit
+Herkömmliche Entwicklung hat diese Grenze prinzipiell nicht. Sehr
+spezifische Oberflächen-Interaktionen oder Integrationen mit
 Fremdsystemen, die die Plattform nicht vorsieht, erfordern weiterhin
 klassische Entwicklung.
 
-**Plattform-Wissen noetig**
+**Plattform-Wissen nötig**
 
 Die KI muss die Konzepte und Eigenheiten der Plattform kennen. Bei
-allgemeiner Programmierung reicht Wissen ueber gaengige Sprachen und
+allgemeiner Programmierung reicht Wissen über gängige Sprachen und
 Frameworks, das in den Trainingsdaten der KI massiv vertreten ist.
-Plattform-spezifisches Wissen ist seltener -- das wird ueber
+Plattform-spezifisches Wissen ist seltener – das wird über
 Werkzeuge, Schemas und den Vectorindex kompensiert (siehe
-*Semantisches Gedaechtnis*).
+*Semantisches Gedächtnis*).
 
 **Weniger Vorwissen**
 
-Fuer gaengige Programmiersprachen und Frameworks gibt es Millionen von
-Beispielen in den Trainingsdaten der KI. Fuer die Konfiguration einer
-spezifischen Plattform praktisch keine. Die KI stuetzt sich auf
+Für gängige Programmiersprachen und Frameworks gibt es Millionen von
+Beispielen in den Trainingsdaten der KI. Für die Konfiguration einer
+spezifischen Plattform praktisch keine. Die KI stützt sich auf
 Werkzeuge, Schemas und den Vectorindex statt auf gelerntes Wissen.
-Das macht die Qualitaet dieser Bausteine umso wichtiger.
+Das macht die Qualität dieser Bausteine umso wichtiger.
 
 **Grenzen der Konfigurationssprache**
 
-Manche Anforderungen lassen sich in Programmcode natuerlicher
-ausdruecken als in Konfiguration. "Sortiere die Liste nach einem
+Manche Anforderungen lassen sich in Programmcode natürlicher
+ausdrücken als in Konfiguration. "Sortiere die Liste nach einem
 komplexen Score aus drei gewichteten Faktoren" ist in Code trivial, in
-Konfiguration moeglicherweise umstaendlich. Die Skriptsprache der
+Konfiguration möglicherweise umständlich. Die Skriptsprache der
 Plattform kann vieles abfangen, aber nicht alles.
 
 
 ## Erweiterbarkeit
 
-Die Werkzeuge des Assistenten koennen auf mehrere Arten erweitert
+Die Werkzeuge des Assistenten können auf mehrere Arten erweitert
 werden:
 
-- **Neue Werkzeuge programmieren**: Entwickler koennen neue Werkzeuge
+- **Neue Werkzeuge programmieren**: Entwickler können neue Werkzeuge
   in Java implementieren und registrieren. Ein neues Werkzeug steht
-  automatisch beiden Assistentenformen zur Verfuegung.
+  automatisch beiden Assistentenformen zur Verfügung.
 
-- **Skript-basierte Datenquellen**: Neue Datenquellen koennen per
-  TL-Script definiert werden -- ohne Programmierung. So koennen
-  Konfiguratoren dem Assistenten Zugriff auf zusaetzliche Informationen
+- **Skript-basierte Datenquellen**: Neue Datenquellen können per
+  TL-Script definiert werden – ohne Programmierung. So können
+  Konfiguratoren dem Assistenten Zugriff auf zusätzliche Informationen
   geben.
 
-- **Anpassung des Verhaltens**: Ueber Systemprompts und
-  Werkzeugauswahl laesst sich steuern, welche Faehigkeiten der
-  Assistent hat und wie er sich verhaelt.
+- **Anpassung des Verhaltens**: Über Systemprompts und
+  Werkzeugauswahl lässt sich steuern, welche Fähigkeiten der
+  Assistent hat und wie er sich verhält.
 
 
 ## Sicherheit und Berechtigungen
@@ -662,50 +662,50 @@ werden:
 ### Grundprinzip
 
 Der Assistent handelt immer *als* der angemeldete Nutzer. Er hat
-exakt dieselben Rechte -- kann nichts sehen, was der Nutzer nicht
-sehen duerfte, und nichts aendern, was der Nutzer nicht aendern
-duerfte. Er ist wie ein Sachbearbeiter mit denselben Berechtigungen,
-der aber effizienter arbeitet, weil er Abkuerzungen kennt.
+exakt dieselben Rechte – kann nichts sehen, was der Nutzer nicht
+sehen dürfte, und nichts ändern, was der Nutzer nicht ändern
+dürfte. Er ist wie ein Sachbearbeiter mit denselben Berechtigungen,
+der aber effizienter arbeitet, weil er Abkürzungen kennt.
 
-Aenderungen am Datenmodell und an Daten erfolgen transaktional: Sie
-werden entweder vollstaendig durchgefuehrt oder vollstaendig
-zurueckgerollt. Ein fehlgeschlagener Vorgang hinterlaesst keine
+Änderungen am Datenmodell und an Daten erfolgen transaktional: Sie
+werden entweder vollständig durchgeführt oder vollständig
+zurückgerollt. Ein fehlgeschlagener Vorgang hinterlässt keine
 inkonsistenten Daten.
 
 ### Berechtigungen auf zwei Ebenen
 
 In einer klassischen TopLogic-Anwendung sind Berechtigungen stark an
-die Oberflaeche gebunden: Ein Nutzer darf eine bestimmte Ansicht
-sehen, ein bestimmtes Kommando ausfuehren, ein bestimmtes Feld in
+die Oberfläche gebunden: Ein Nutzer darf eine bestimmte Ansicht
+sehen, ein bestimmtes Kommando ausführen, ein bestimmtes Feld in
 einem bestimmten Formular bearbeiten. Das ergibt Sinn, weil die
-Oberflaeche der einzige Zugang zur Anwendung ist.
+Oberfläche der einzige Zugang zur Anwendung ist.
 
-Der KI-Assistent arbeitet aber nicht ueber die Oberflaeche. Er greift
-direkt auf das Datenmodell und die Geschaeftsdaten zu. Wuerde man ihn
-an die Oberflaechenberechtigungen binden, muesste er sich gedanklich
-durch Ansichten und Kommandos hangeln -- und ein grosser Teil seines
+Der KI-Assistent arbeitet aber nicht über die Oberfläche. Er greift
+direkt auf das Datenmodell und die Geschäftsdaten zu. Würde man ihn
+an die Oberflächenberechtigungen binden, müsste er sich gedanklich
+durch Ansichten und Kommandos hangeln – und ein großer Teil seines
 Effizienzvorteils ginge verloren.
 
-Die Loesung liegt darin, Berechtigungen auf zwei Ebenen zu betrachten:
+Die Lösung liegt darin, Berechtigungen auf zwei Ebenen zu betrachten:
 
-**Daten-Ebene**: Wer darf welche Daten lesen und schreiben --
-unabhaengig von der Oberflaeche? Das betrifft Typen, Instanzen und
+**Daten-Ebene**: Wer darf welche Daten lesen und schreiben –
+unabhängig von der Oberfläche? Das betrifft Typen, Instanzen und
 Eigenschaften. Zum Beispiel: "Rolle X darf Kunden lesen aber nicht
-aendern", "Rolle Y darf Auftraege anlegen."
+ändern", "Rolle Y darf Aufträge anlegen."
 
-**Oberflaechen-Ebene**: Welche Ansichten und Kommandos sind sichtbar?
-Das ist eine *Projektion* der Daten-Ebene auf die Benutzeroberflaeche.
-Sie bestimmt, *wie* ein Nutzer seine Rechte ausueben kann -- nicht
+**Oberflächen-Ebene**: Welche Ansichten und Kommandos sind sichtbar?
+Das ist eine *Projektion* der Daten-Ebene auf die Benutzeroberfläche.
+Sie bestimmt, *wie* ein Nutzer seine Rechte ausüben kann – nicht
 *welche* Rechte er hat.
 
-Fuer die Oberflaeche reicht die Oberflaechenebene, weil sie die
+Für die Oberfläche reicht die Oberflächenebene, weil sie die
 Datenberechtigungen implizit abbildet: Wenn ein Nutzer den
-"Loeschen"-Button nicht sieht, kann er nicht loeschen.
+"Löschen"-Button nicht sieht, kann er nicht löschen.
 
-Fuer den KI-Assistenten braucht man die Daten-Ebene explizit. Er
-prueft nicht "darf ich den Button klicken?", sondern "darf dieser
-Nutzer Instanzen vom Typ Kunde aendern?" Das ist direkter, schneller
--- und genauso sicher.
+Für den KI-Assistenten braucht man die Daten-Ebene explizit. Er
+prüft nicht "darf ich den Button klicken?", sondern "darf dieser
+Nutzer Instanzen vom Typ Kunde ändern?" Das ist direkter, schneller
+– und genauso sicher.
 
 ### Was dabei gewonnen wird
 
@@ -713,115 +713,115 @@ Wenn die Daten-Ebene sauber existiert, gewinnen beide Seiten:
 
 - **Der Assistent** arbeitet effizient, weil er direkt auf Daten
   zugreift und bei jedem Zugriff gegen die Datenberechtigungen
-  geprueft wird. Kein Umweg ueber simulierte Oberflaecheninteraktionen.
+  geprüft wird. Kein Umweg über simulierte Oberflächeninteraktionen.
 
-- **Die Oberflaeche** wird einfacher, weil sie sich auf die
-  Datenberechtigungen stuetzen kann, statt eigene Regeln zu pflegen.
-  "Zeige den Loeschen-Button" wird abgeleitet aus "Nutzer darf diesen
-  Typ loeschen", statt separat konfiguriert.
+- **Die Oberfläche** wird einfacher, weil sie sich auf die
+  Datenberechtigungen stützen kann, statt eigene Regeln zu pflegen.
+  "Zeige den Löschen-Button" wird abgeleitet aus "Nutzer darf diesen
+  Typ löschen", statt separat konfiguriert.
 
 - **Die Konsistenz** steigt: Es gibt eine einzige Quelle der Wahrheit
-  fuer Berechtigungen. Ob ein Zugriff ueber die Oberflaeche, den
-  Assistenten oder eine Schnittstelle kommt -- dieselben Regeln gelten.
+  für Berechtigungen. Ob ein Zugriff über die Oberfläche, den
+  Assistenten oder eine Schnittstelle kommt – dieselben Regeln gelten.
 
-- **Zukuenftige Schnittstellen** profitieren ebenfalls. Jede
-  Erweiterung -- REST-API, Batch-Jobs, Integrationen mit
-  Fremdsystemen -- kann sich auf dieselbe Berechtigungsschicht
-  stuetzen.
+- **Zukünftige Schnittstellen** profitieren ebenfalls. Jede
+  Erweiterung – REST-API, Batch-Jobs, Integrationen mit
+  Fremdsystemen – kann sich auf dieselbe Berechtigungsschicht
+  stützen.
 
 
-## Ausblick: Ueber die einzelne Anwendung hinaus
+## Ausblick: Über die einzelne Anwendung hinaus
 
 ### Anwendungen, die sich selbst kennen
 
 Alles bisher Beschriebene spielt sich innerhalb einer einzelnen
 Anwendung ab. Aber in einem Unternehmen gibt es nicht eine Anwendung,
-sondern viele -- und jede modellbasierte Anwendung hat eine
-Eigenschaft, die herkoemmliche Software nicht hat: Sie kennt sich
+sondern viele – und jede modellbasierte Anwendung hat eine
+Eigenschaft, die herkömmliche Software nicht hat: Sie kennt sich
 selbst.
 
-Eine TopLogic-Anwendung weiss, welche Datentypen sie verwaltet,
+Eine TopLogic-Anwendung weiß, welche Datentypen sie verwaltet,
 welche Beziehungen zwischen ihnen bestehen, welche
-Geschaeftsprozesse sie abbildet und wie ihre Oberflaechen aufgebaut
+Geschäftsprozesse sie abbildet und wie ihre Oberflächen aufgebaut
 sind. Dieses Wissen steckt nicht in einer externen Dokumentation, die
 veralten kann, sondern im laufenden System selbst. Was der
-KI-Assistent fuer einen einzelnen Anwender tut -- die Anwendung
-erkunden und erklaeren -- kann er prinzipiell auch fuer andere
+KI-Assistent für einen einzelnen Anwender tut – die Anwendung
+erkunden und erklären – kann er prinzipiell auch für andere
 Systeme tun.
 
 ### Agenten als Schnittstelle
 
-Heute werden Integrationen zwischen Anwendungen ueber
-zweckgebundene Schnittstellen realisiert: Eine REST-API fuer
-Kundendaten, ein Kafka-Topic fuer Auftragsereignisse, ein
-Dateiexport fuer das Controlling. Jede Schnittstelle wird fuer
-einen bestimmten Zweck gebaut und muss bei Aenderungen angepasst
+Heute werden Integrationen zwischen Anwendungen über
+zweckgebundene Schnittstellen realisiert: Eine REST-API für
+Kundendaten, ein Kafka-Topic für Auftragsereignisse, ein
+Dateiexport für das Controlling. Jede Schnittstelle wird für
+einen bestimmten Zweck gebaut und muss bei Änderungen angepasst
 werden.
 
-Wenn eine Anwendung ihren Agenten auch nach aussen zugaenglich
+Wenn eine Anwendung ihren Agenten auch nach außen zugänglich
 macht, entsteht eine Schnittstelle anderer Art. Statt eines starren
-Datenformats bietet sie einen Gespraechspartner an, der die
+Datenformats bietet sie einen Gesprächspartner an, der die
 Anwendung versteht und Fragen beantworten kann:
 
 - "Welche Auftragstypen gibt es in eurem System?"
-- "Gibt es offene Auftraege fuer den Kunden mit der Nummer 4711?"
-- "Wie ist der Genehmigungsprozess fuer Bestellungen aufgebaut?"
+- "Gibt es offene Aufträge für den Kunden mit der Nummer 4711?"
+- "Wie ist der Genehmigungsprozess für Bestellungen aufgebaut?"
 
-Das ersetzt nicht die klassischen Schnittstellen -- fuer hohe
-Durchsaetze und Echtzeitverarbeitung bleibt eine dedizierte API
-der richtige Weg. Aber fuer Erkundung, Abstimmung und
+Das ersetzt nicht die klassischen Schnittstellen – für hohe
+Durchsätze und Echtzeitverarbeitung bleibt eine dedizierte API
+der richtige Weg. Aber für Erkundung, Abstimmung und
 gelegentliche Abfragen bietet ein Agent etwas, das keine API kann:
-Er versteht Kontext und kann erklaeren.
+Er versteht Kontext und kann erklären.
 
 ### Lebendige Unternehmensarchitektur
 
 Wenn jede Anwendung im Unternehmen einen Agenten hat, der ihr
-Modell und ihre Prozesse kennt, ergibt sich eine neue Moeglichkeit:
-Ein uebergreifender Agent, der die Unternehmensarchitektur nicht
+Modell und ihre Prozesse kennt, ergibt sich eine neue Möglichkeit:
+Ein übergreifender Agent, der die Unternehmensarchitektur nicht
 aus Dokumenten liest, sondern aus den laufenden Systemen.
 
 Heute sieht Unternehmensarchitektur oft so aus: Es gibt
 Architekturdiagramme, Schnittstellenverzeichnisse und
 Prozessdokumentationen. Sie werden mit Aufwand erstellt und sind
-am naechsten Tag schon nicht mehr ganz aktuell. Niemand hat ein
-vollstaendiges, aktuelles Bild der Systemlandschaft.
+am nächsten Tag schon nicht mehr ganz aktuell. Niemand hat ein
+vollständiges, aktuelles Bild der Systemlandschaft.
 
-Ein Architektur-Agent koennte die Agenten der einzelnen Anwendungen
+Ein Architektur-Agent könnte die Agenten der einzelnen Anwendungen
 befragen:
 
 - "Welche Systeme verwalten Kundendaten? Wie sind die Datenmodelle
-  aufgebaut? Wo gibt es Ueberschneidungen?"
-- "Wenn wir den Typ 'Lieferant' im ERP aendern -- welche anderen
+  aufgebaut? Wo gibt es Überschneidungen?"
+- "Wenn wir den Typ 'Lieferant' im ERP ändern – welche anderen
   Systeme sind betroffen?"
-- "Zeig mir den kompletten Lebenszyklus eines Auftrags ueber alle
+- "Zeig mir den kompletten Lebenszyklus eines Auftrags über alle
   beteiligten Systeme hinweg."
 
 Die Antworten kommen nicht aus einer Dokumentation, sondern aus den
-Systemen selbst -- und sind damit immer aktuell.
+Systemen selbst – und sind damit immer aktuell.
 
-### Was das veraendert
+### Was das verändert
 
 **Integrationsplanung wird einfacher.** Statt Schnittstellendoku-
 mentationen zu lesen und Ansprechpartner zu suchen, fragt ein Agent
 die beteiligten Systeme direkt. "Welche Daten kann das CRM liefern?
-In welchem Format? Wie oft aendern sie sich?"
+In welchem Format? Wie oft ändern sie sich?"
 
-**Auswirkungsanalysen werden moeglich.** Vor einer Aenderung kann
-der Architektur-Agent pruefen, welche Systeme betroffen waeren. Das
+**Auswirkungsanalysen werden möglich.** Vor einer Änderung kann
+der Architektur-Agent prüfen, welche Systeme betroffen wären. Das
 passiert nicht auf Basis eines statischen Modells, sondern auf Basis
-des tatsaechlichen Zustands.
+des tatsächlichen Zustands.
 
-**Redundanzen werden sichtbar.** Wenn mehrere Systeme aehnliche
+**Redundanzen werden sichtbar.** Wenn mehrere Systeme ähnliche
 Datenmodelle haben, kann der Agent das erkennen und aufzeigen. "Das
 CRM und das ERP verwalten beide Kundenadressen, aber mit
 unterschiedlichen Feldern. Hier ist der Vergleich." Besonders
-wirkungsvoll wird das mit semantischer Suche ueber die Vectorindizes
-der einzelnen Anwendungen: Der Agent findet Ueberschneidungen auch
-dann, wenn die Systeme unterschiedliche Begriffe verwenden --
-"Geschaeftspartner" im einen, "Mandant" im anderen.
+wirkungsvoll wird das mit semantischer Suche über die Vectorindizes
+der einzelnen Anwendungen: Der Agent findet Überschneidungen auch
+dann, wenn die Systeme unterschiedliche Begriffe verwenden –
+"Geschäftspartner" im einen, "Mandant" im anderen.
 
-**Dokumentation wird ueberfluessig -- oder erzeugt sich selbst.**
+**Dokumentation wird überflüssig – oder erzeugt sich selbst.**
 Wenn ein Agent die Architektur jederzeit live abfragen kann, braucht
 es kein manuell gepflegtes Architekturverzeichnis mehr. Oder der
 Agent erzeugt die Dokumentation auf Knopfdruck aus dem aktuellen
-Stand -- immer aktuell, immer vollstaendig.
+Stand – immer aktuell, immer vollständig.

@@ -6,6 +6,7 @@
 package com.top_logic.layout;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
 import com.top_logic.basic.util.ResKey3;
 
@@ -45,6 +46,28 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey2 UNKNOWN_COMPONENT__NAME__LOCATION;
 
 	public static ResKey2 UNKNOWN_CHANNEL__NAME__LOCATION;
+
+	/**
+	 * @en You are going to open a new window of the application "{0}". Click "Load" to load the
+	 *     application window.
+	 */
+	public static ResKey1 SUBSESSION_CREATE__NAME;
+
+	/**
+	 * @en You cannot open another window of the application "{0}". Close another window, wait a
+	 *     moment, and reload this page.
+	 */
+	public static ResKey1 SUBSESSION_DENY__NAME;
+
+	/**
+	 * @en Close
+	 */
+	public static ResKey SUBSESSION_CANCEL;
+
+	/**
+	 * @en Load
+	 */
+	public static ResKey SUBSESSION_LOAD;
 
 	static {
 		initConstants(I18NConstants.class);

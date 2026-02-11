@@ -7,7 +7,6 @@
 %><%@page import="com.top_logic.mig.html.UserAgent"
 %><%@taglib uri="basic" prefix="basic"
 %><%
-Resources res = Resources.getInstance();
 String theContext = request.getContextPath();
 boolean allowSubsession = ContentHandlersRegistry.allowSubsession(pageContext);
 %>
@@ -106,20 +105,20 @@ boolean allowSubsession = ContentHandlersRegistry.allowSubsession(pageContext);
 			</div>
 			<div class="login-box">
 				<div class="message">
-					<%=res.getMessage(allowSubsession ? ResKey.legacy("tl.subsession.create") : ResKey.legacy("tl.subsession.deny"), Version.getApplicationVersion().getName())%>
+					<basic:text key="<%= (allowSubsession ? com.top_logic.layout.I18NConstants.SUBSESSION_CREATE__NAME : com.top_logic.layout.I18NConstants.SUBSESSION_DENY__NAME).fill(Version.getApplicationVersion().getName()) %>"/>
 				</div>
 				<div class="button-container">
 					<a class="cta-button"
 						href="#"
 						onclick="window.close(); return false;"
 					>
-						<basic:text i18n="tl.subsession.cancel"/>
+						<basic:text key="<%= com.top_logic.layout.I18NConstants.SUBSESSION_CANCEL %>"/>
 					</a>
 					<% if (allowSubsession) { %>
 						<a class="cta-button"
 							href="<%=theContext + ApplicationPages.getInstance().getStartPage() %>"
 						>
-							<basic:text i18n="tl.subsession.load"/>
+							<basic:text key="<%= com.top_logic.layout.I18NConstants.SUBSESSION_LOAD %>"/>
 						</a>
 					<% } %>
 				</div>

@@ -435,6 +435,101 @@ Werkzeuge kommt automatisch allen Formen zugute.
 ```
 
 
+## Semantisches Gedaechtnis: Der Vectorindex
+
+### Warum ein Vectorindex?
+
+Die Werkzeuge geben dem Assistenten Zugriff auf die Anwendung. Aber
+Zugriff allein reicht nicht -- der Assistent braucht auch Verstaendnis.
+Wenn ein Anwender fragt "Wie richte ich eine Genehmigungsstufe ein?",
+muss der Assistent nicht nur wissen, welche Werkzeuge er hat, sondern
+auch, wie die Plattform funktioniert, wie das konkrete Datenmodell
+aufgebaut ist und welche fachlichen Zusammenhaenge es gibt.
+
+Dieses Verstaendnis entsteht durch einen Vectorindex: eine semantische
+Wissensbasis, die Texte nicht nach Stichworten, sondern nach Bedeutung
+durchsuchbar macht. Der Assistent findet relevante Informationen, auch
+wenn die Formulierung nicht exakt uebereinstimmt -- "Lieferung" findet
+auch "Versand", "Speditionsauftrag" und "Warenausgang".
+
+Der Vectorindex wirkt auf drei Ebenen:
+
+### Plattformverstaendnis
+
+Fuer die Konfiguration einer spezifischen Plattform gibt es in den
+Trainingsdaten der KI kaum Beispiele. Plattform-Dokumentation,
+Best Practices, Konfigurationsbeispiele und Hilfetexte koennen als
+Vectorindex bereitgestellt werden. Der Assistent findet so die
+relevanten Dokumentationsstellen, bevor er ueberhaupt ein Werkzeug
+aufruft.
+
+*Beispiel: "Wie konfiguriere ich eine Tabelle mit gruppierten
+Zeilen?" -- der Vectorindex findet die passende Dokumentation zur
+Tabellenkomponente und ihren Gruppierungsoptionen, auch wenn der
+Anwender nicht den exakten Konfigurationsnamen kennt.*
+
+Das kompensiert gezielt die Luecke im Vorwissen der KI: Was nicht in
+den Trainingsdaten steckt, steckt im Vectorindex.
+
+### Modellverstaendnis
+
+Die Werkzeuge liefern strukturierte Informationen ueber das
+Datenmodell: Typen, Eigenschaften, Beziehungen. Aber ein Vectorindex
+ueber Modellbeschreibungen, Labels und Annotationen ermoeglicht
+zusaetzlich semantische Suche: "Ich brauche etwas, das mit
+Rechnungsstellung zu tun hat" findet Typen wie "Rechnung",
+"Rechnungsposition", "Fakturierung" und "Zahlungseingang" -- auch
+wenn der Suchbegriff woertlich nirgends vorkommt.
+
+In einer modellbasierten Plattform koennen die Embeddings mit
+strukturellem Wissen angereichert werden: Typzugehoerigkeiten,
+Beziehungen, Eigenschaftssemantik. Ein Kundendatensatz ist nicht
+nur ein Textblock, sondern ein Objekt mit bekanntem Typ, bekannten
+Beziehungen und bekannter Rolle im Geschaeftsprozess. Das Modell
+*ist* der Kontext, den man bei reiner Textsuche muehsam
+rekonstruieren muesste.
+
+### Datenverstaendnis
+
+Die wirkungsvollste Ebene betrifft die konkreten Geschaeftsdaten
+einer Kundenanwendung. Wenn der Vectorindex nicht nur das Modell,
+sondern auch die Inhalte der Anwendung erfasst, kann der Assistent
+Fragen beantworten, die ueber strukturierte Abfragen hinausgehen:
+
+- *Aehnlichkeitssuche*: "Finde Kunden mit aehnlichem Profil wie die
+  Firma Mueller" -- basierend auf der Gesamtheit der Kundendaten,
+  nicht auf einzelnen Feldern.
+
+- *Dokumentensuche*: Viele Fachanwendungen verwalten Dokumente --
+  Vertraege, Protokolle, Spezifikationen. Ein Vectorindex ueber den
+  Dokumentinhalt macht sie durchsuchbar: "Gibt es in unseren
+  Vertraegen Klauseln zur Haftungsbegrenzung?"
+
+- *Muster erkennen*: "Welche Projekte hatten aehnliche Probleme wie
+  Projekt X?" -- der Vectorindex findet Aehnlichkeiten ueber
+  Freitextfelder, Kommentare und Beschreibungen, die eine
+  strukturierte Abfrage nicht erfassen wuerde.
+
+- *Wissen aus Gespraechen*: Vergangene Konversationen mit dem
+  Assistenten koennen indiziert werden. So baut sich ueber die
+  Zeit ein institutionelles Gedaechtnis auf: Was wurde schon
+  gefragt? Welche Loesungen wurden gefunden? Welche
+  Entscheidungen wurden getroffen?
+
+### Zusammenspiel mit den Werkzeugen
+
+Der Vectorindex ersetzt die Werkzeuge nicht -- er ergaenzt sie. Die
+Werkzeuge liefern praezise, strukturierte Antworten: "Der Typ Kunde
+hat die Eigenschaften Name, Adresse, Umsatz." Der Vectorindex
+liefert Kontext und Hintergrund: "Kunden mit hohem Umsatz werden
+im Quartalsbericht gesondert ausgewiesen, siehe Dokumentation zur
+Key-Account-Verwaltung."
+
+Zusammen ergibt das einen Assistenten, der nicht nur Zugriff auf die
+Anwendung hat, sondern sie auch wirklich versteht -- die Plattform,
+das Modell und die konkreten Daten.
+
+
 ## Warum eine No-Code-Plattform mit KI?
 
 ### Der Unterschied zur KI-gestuetzten Programmierung
@@ -522,17 +617,17 @@ klassische Entwicklung.
 Die KI muss die Konzepte und Eigenheiten der Plattform kennen. Bei
 allgemeiner Programmierung reicht Wissen ueber gaengige Sprachen und
 Frameworks, das in den Trainingsdaten der KI massiv vertreten ist.
-Plattform-spezifisches Wissen ist seltener -- das muss ueber die
-bereitgestellten Werkzeuge und Schemas kompensiert werden.
+Plattform-spezifisches Wissen ist seltener -- das wird ueber
+Werkzeuge, Schemas und den Vectorindex kompensiert (siehe
+*Semantisches Gedaechtnis*).
 
 **Weniger Vorwissen**
 
 Fuer gaengige Programmiersprachen und Frameworks gibt es Millionen von
 Beispielen in den Trainingsdaten der KI. Fuer die Konfiguration einer
-spezifischen Plattform praktisch keine. Die KI muss sich staerker auf
-die bereitgestellten Werkzeuge, Schemas und Dokumentation stuetzen
-statt auf gelerntes Wissen. Das macht die Qualitaet der Werkzeuge
-umso wichtiger.
+spezifischen Plattform praktisch keine. Die KI stuetzt sich auf
+Werkzeuge, Schemas und den Vectorindex statt auf gelerntes Wissen.
+Das macht die Qualitaet dieser Bausteine umso wichtiger.
 
 **Grenzen der Konfigurationssprache**
 
@@ -719,7 +814,11 @@ des tatsaechlichen Zustands.
 **Redundanzen werden sichtbar.** Wenn mehrere Systeme aehnliche
 Datenmodelle haben, kann der Agent das erkennen und aufzeigen. "Das
 CRM und das ERP verwalten beide Kundenadressen, aber mit
-unterschiedlichen Feldern. Hier ist der Vergleich."
+unterschiedlichen Feldern. Hier ist der Vergleich." Besonders
+wirkungsvoll wird das mit semantischer Suche ueber die Vectorindizes
+der einzelnen Anwendungen: Der Agent findet Ueberschneidungen auch
+dann, wenn die Systeme unterschiedliche Begriffe verwenden --
+"Geschaeftspartner" im einen, "Mandant" im anderen.
 
 **Dokumentation wird ueberfluessig -- oder erzeugt sich selbst.**
 Wenn ein Agent die Architektur jederzeit live abfragen kann, braucht

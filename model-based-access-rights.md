@@ -237,7 +237,7 @@ The model defines four fundamental operations, aligned with the existing `Comman
 |-----------|--------------------------|---------|
 | `READ` | `CommandGroupType.READ` | View/query instances and their attribute values |
 | `WRITE` | `CommandGroupType.WRITE` | Modify attribute values of existing instances |
-| `CREATE` | `CommandGroupType.WRITE` | Create new instances |
+| `CREATE` | `CommandGroupType.WRITE` | Create new instances (see section 2.3.6) |
 | `DELETE` | `CommandGroupType.DELETE` | Delete instances |
 
 Custom operations can extend this set, mapping to custom `BoundCommandGroup` definitions.
@@ -267,15 +267,12 @@ roles: {Editor, Manager}
 inherit: true
 
 type: myapp:Customer
-operation: CREATE
-roles: {Editor, Manager}
-inherit: false
-
-type: myapp:Customer
 operation: DELETE
 roles: {Manager}
 inherit: false
 ```
+
+Note: `CREATE` is not listed as a type-level operation here. Object creation is context-dependent and handled through attribute-level WRITE permissions on the composition reference of the parent object. See section 2.3.6 for details.
 
 #### 2.3.3 Attribute-Level Access Rules
 
@@ -346,6 +343,65 @@ Access check for "Can user U perform operation O on attribute A of instance I?":
 2. AccessManager.hasRole(U, I, R) → true/false
 ```
 
+#### 2.3.6 Object Creation as Modification of the Composition Context
+
+Object creation poses a unique challenge for model-based access rights: when a new instance is being created, there is no target instance yet to check roles against. In the view-based system, this is hidden by the fact that the view's `SecurityObjectProvider` resolves a context object (e.g., the current Project) for the role check. A naive type-level rule like "Role Editor can CREATE Milestone" would be context-free and could not distinguish between creating a Milestone in Project P1 (allowed) and in Project P2 (forbidden).
+
+The key observation is that **creating an object in a context is really a modification of that context**. Creating a Milestone for a Project means adding it to the Project's `milestones` composition reference -- this is a write operation on the Project instance, not an isolated act on the Milestone type.
+
+Therefore, object creation is modeled as a **WRITE operation on the parent's composition attribute**:
+
+```
+"Can user U create a Milestone in Project P?"
+
+  ≡ "Can user U write attribute Project#milestones on instance P?"
+
+  1. Look up AttributeAccessRule(Project#milestones, WRITE) → required roles R
+     (Falls back to TypeAccessRule(Project, WRITE) if no attribute-level rule)
+
+  2. AccessManager.hasRole(U, P, R) → true/false
+```
+
+This approach has several advantages:
+
+- **Context-dependent**: The check is against the parent instance (P), so user U may be allowed to create milestones in P1 (where U has the Editor role) but not in P2 (where U only has Viewer). This naturally falls out of the existing instance-level role mechanism.
+- **Attribute-level granularity**: Different composition references on the same type can have different permissions. A user might be allowed to add milestones to a project (`Project#milestones`) but not sub-projects (`Project#subProjects`), controlled by separate attribute-level rules.
+- **No special CREATE semantics needed**: Creation is a WRITE, using the same mechanism as all other modifications.
+
+For **top-level objects** that have no composition parent (e.g., creating a new top-level Project), the creation check falls back to a WRITE check on the module's security root or a configured context object, analogous to today's `SecurityObjectProvider` with the `securityRoot` strategy.
+
+Example configuration:
+```xml
+<class name="Project">
+    <annotations>
+        <access-rights>
+            <grant operation="read"  roles="Viewer, Editor, Manager"/>
+            <grant operation="write" roles="Editor, Manager"/>
+        </access-rights>
+    </annotations>
+    <attributes>
+        <reference name="milestones" type="myapp:Milestone" kind="list"
+                   composition="true">
+            <annotations>
+                <access-rights>
+                    <!-- Who can add/remove milestones in a project -->
+                    <grant operation="write" roles="Editor, Manager"/>
+                </access-rights>
+            </annotations>
+        </reference>
+        <reference name="subProjects" type="myapp:Project" kind="list"
+                   composition="true">
+            <annotations>
+                <access-rights>
+                    <!-- Only Managers can create/remove sub-projects -->
+                    <grant operation="write" roles="Manager"/>
+                </access-rights>
+            </annotations>
+        </reference>
+    </attributes>
+</class>
+```
+
 ### 2.4 Configuration Model
 
 The access rules are stored as part of the TL model, using annotations on model elements.
@@ -360,7 +416,6 @@ Access rules are configured as annotations on `TLClass` definitions in `*.model.
         <access-rights>
             <grant operation="read"   roles="Viewer, Editor, Manager"/>
             <grant operation="write"  roles="Editor, Manager"/>
-            <grant operation="create" roles="Editor, Manager"/>
             <grant operation="delete" roles="Manager"/>
         </access-rights>
     </annotations>
@@ -374,6 +429,15 @@ Access rules are configured as annotations on `TLClass` definitions in `*.model.
                 </access-rights>
             </annotations>
         </property>
+        <reference name="contacts" type="myapp:Contact" kind="list"
+                   composition="true">
+            <annotations>
+                <access-rights>
+                    <!-- Controls who can create/remove contacts for this customer -->
+                    <grant operation="write" roles="Editor, Manager"/>
+                </access-rights>
+            </annotations>
+        </reference>
     </attributes>
 </class>
 ```
@@ -386,7 +450,6 @@ Access rules are configured as annotations on `TLClass` definitions in `*.model.
         <access-rights>
             <grant operation="read"   roles="Viewer, Editor, Manager"/>
             <grant operation="write"  roles="Editor, Manager"/>
-            <grant operation="create" roles="Manager"/>
             <grant operation="delete" roles="Manager"/>
         </access-rights>
     </annotations>
@@ -448,6 +511,16 @@ public interface ModelAccessRights {
                       TLStructuredTypePart attribute, Operation operation);
 
     /**
+     * Checks whether the given person can create a new child object in
+     * the given composition attribute of the given parent instance.
+     *
+     * This is equivalent to isAllowed(person, parent, compositionAttribute, WRITE)
+     * but provides a semantically clear entry point for creation checks.
+     */
+    boolean isAllowedCreate(Person person, TLObject parent,
+                            TLStructuredTypePart compositionAttribute);
+
+    /**
      * Returns all types that the given person can perform the given
      * operation on (based on type-level rules; instance-level checks
      * still required for specific objects).
@@ -463,7 +536,7 @@ public interface ModelAccessRights {
 The AI assistant uses the `ModelAccessRights` API directly:
 - Before reading data: `isAllowed(currentUser, instance, READ)`
 - Before modifying data: `isAllowed(currentUser, instance, WRITE)`
-- Before creating objects: check `getAllowedRoles(type, CREATE)` against user's roles
+- Before creating objects: `isAllowedCreate(currentUser, parent, compositionAttr)`
 - To explain permissions: `getAllowedRoles(type, operation)` → map to users
 
 #### 2.7.2 REST API / OpenAPI
@@ -471,7 +544,7 @@ The AI assistant uses the `ModelAccessRights` API directly:
 REST endpoints check model-level permissions instead of simulating view access:
 - GET: `isAllowed(user, instance, READ)`
 - PUT/PATCH: `isAllowed(user, instance, attribute, WRITE)` for each modified attribute
-- POST: `isAllowed(user, type, CREATE)`
+- POST: `isAllowedCreate(user, parent, compositionAttribute)`
 - DELETE: `isAllowed(user, instance, DELETE)`
 
 #### 2.7.3 Existing UI
@@ -484,7 +557,7 @@ New TL-Script functions expose model-based access checks:
 ```
 canRead($instance)
 canWrite($instance)
-canCreate($type)
+canCreate($parent, $compositionAttribute)
 canDelete($instance)
 canReadAttribute($instance, $attribute)
 canWriteAttribute($instance, $attribute)

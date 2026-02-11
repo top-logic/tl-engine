@@ -13,13 +13,15 @@ Dabei gibt es drei Einsatzformen:
 - **Eingebauter Assistent**: Ein KI-Chat direkt in der Anwendung, über
   den Anwender Fragen stellen und Aufgaben ausführen lassen können.
 
-- **Externer Assistent**: Ein eigenständiges KI-Werkzeug (z.B. Claude
-  Desktop, Cursor), das sich von außen mit der Anwendung verbindet und
-  mit ihr arbeitet.
+- **Externe Agenten**: Eigenständige KI-Werkzeuge (z.B. Claude
+  Desktop, Cursor), die sich von außen mit der Anwendung verbinden und
+  mit ihr arbeiten.
 
-- **Fachliche Agenten**: Spezialisierte KI-Agenten innerhalb der
+- **Interne Agenten**: Spezialisierte KI-Agenten innerhalb der
   Anwendung, die eigenständig wiederkehrende Aufgaben übernehmen –
-  zeitgesteuert oder als Reaktion auf Ereignisse.
+  zeitgesteuert oder als Reaktion auf Ereignisse. Interne Agenten
+  können dabei auch externe Werkzeuge (Anwendungen) verwenden und 
+  aus deren Perspektive als externe Agenten auftreten.
 
 Alle drei Formen nutzen dieselben Werkzeuge. Was der eingebaute
 Assistent kann, kann auch ein fachlicher Agent – nur eben
@@ -251,17 +253,17 @@ migrieren und Oberflächen anpassen – eine Aufgabe, die manuell
 Tage dauert.
 
 
-## Der externe Assistent
+## Der externe Agent
 
 ### Wie funktioniert er?
 
-Der externe Assistent ist ein eigenständiges KI-Werkzeug, das sich
+Der externe Agent ist ein eigenständiges KI-Werkzeug, das sich
 über eine standardisierte Schnittstelle (MCP – Model Context
 Protocol) mit der laufenden TopLogic-Anwendung verbindet. MCP ist ein
 offener Standard, der von verschiedenen KI-Werkzeugen unterstützt
 wird.
 
-Die Verbindung erfolgt über HTTP. Der externe Assistent hat Zugriff
+Die Verbindung erfolgt über HTTP. Der externe Agent hat Zugriff
 auf dieselben Werkzeuge wie der eingebaute Assistent. Zusätzlich
 stehen ihm passive Datenquellen zur Verfügung, die er gezielt
 abfragen kann – zum Beispiel die Typen eines Moduls, die
@@ -269,23 +271,24 @@ Konfiguration einer Oberfläche oder das Schema eines
 Konfigurationstyps.
 
 
-## Fachliche Agenten
+## Der interne Agent
 
 ### Von der Assistenz zur Automatisierung
 
-Der eingebaute Assistent und der externe Assistent reagieren auf
+Der eingebaute Assistent reagiert auf
 Anfragen: Ein Mensch stellt eine Frage oder gibt einen Auftrag.
-Fachliche Agenten gehen einen Schritt weiter – sie handeln
-eigenständig, ohne dass jemand sie anstoßen muss.
 
-Ein fachlicher Agent ist ein KI-Agent, der für eine bestimmte
+Interne Agenten gehen einen Schritt weiter – sie handeln
+eigenständig, Ereignis- oder Zeitgesteuert, ohne dass jemand sie anstoßen muss.
+
+Ein interner Agent ist ein KI-Agent, der für eine bestimmte
 Aufgabe in einer konkreten Anwendung eingerichtet wird. Er kennt
 die Fachlichkeit, hat Zugriff auf dieselben Werkzeuge wie der
 Assistent und arbeitet im Hintergrund.
 
 ### Zeitgesteuert
 
-Fachliche Agenten können nach Zeitplan arbeiten:
+Interne Agenten können nach Zeitplan arbeiten:
 
 - *Jeden Montagmorgen*: "Prüfe alle offenen Aufträge. Wenn die
   Lieferfrist in weniger als drei Tagen abläuft und kein Versand
@@ -392,7 +395,7 @@ stabilisiert hat.
 Eingebauter Assistent, externer Assistent und fachliche Agenten
 ergänzen sich:
 
-| Eigenschaft      | Eingebauter Assistent     | Externer Assistent          | Fachliche Agenten              |
+| Eigenschaft      | Eingebauter Assistent     | Externer Assistent          | Interne Agenten              |
 |------------------|---------------------------|-----------------------------|--------------------------------|
 | Zugang           | Direkt in der Anwendung   | Eigenes KI-Werkzeug         | Im Hintergrund                 |
 | Auslöser         | Frage oder Auftrag        | Frage oder Auftrag          | Zeitplan oder Ereignis         |

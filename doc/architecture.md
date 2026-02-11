@@ -633,3 +633,96 @@ Wenn die Daten-Ebene sauber existiert, gewinnen beide Seiten:
   Erweiterung -- REST-API, Batch-Jobs, Integrationen mit
   Fremdsystemen -- kann sich auf dieselbe Berechtigungsschicht
   stuetzen.
+
+
+## Ausblick: Ueber die einzelne Anwendung hinaus
+
+### Anwendungen, die sich selbst kennen
+
+Alles bisher Beschriebene spielt sich innerhalb einer einzelnen
+Anwendung ab. Aber in einem Unternehmen gibt es nicht eine Anwendung,
+sondern viele -- und jede modellbasierte Anwendung hat eine
+Eigenschaft, die herkoemmliche Software nicht hat: Sie kennt sich
+selbst.
+
+Eine TopLogic-Anwendung weiss, welche Datentypen sie verwaltet,
+welche Beziehungen zwischen ihnen bestehen, welche
+Geschaeftsprozesse sie abbildet und wie ihre Oberflaechen aufgebaut
+sind. Dieses Wissen steckt nicht in einer externen Dokumentation, die
+veralten kann, sondern im laufenden System selbst. Was der
+KI-Assistent fuer einen einzelnen Anwender tut -- die Anwendung
+erkunden und erklaeren -- kann er prinzipiell auch fuer andere
+Systeme tun.
+
+### Agenten als Schnittstelle
+
+Heute werden Integrationen zwischen Anwendungen ueber
+zweckgebundene Schnittstellen realisiert: Eine REST-API fuer
+Kundendaten, ein Kafka-Topic fuer Auftragsereignisse, ein
+Dateiexport fuer das Controlling. Jede Schnittstelle wird fuer
+einen bestimmten Zweck gebaut und muss bei Aenderungen angepasst
+werden.
+
+Wenn eine Anwendung ihren Agenten auch nach aussen zugaenglich
+macht, entsteht eine Schnittstelle anderer Art. Statt eines starren
+Datenformats bietet sie einen Gespraechspartner an, der die
+Anwendung versteht und Fragen beantworten kann:
+
+- "Welche Auftragstypen gibt es in eurem System?"
+- "Gibt es offene Auftraege fuer den Kunden mit der Nummer 4711?"
+- "Wie ist der Genehmigungsprozess fuer Bestellungen aufgebaut?"
+
+Das ersetzt nicht die klassischen Schnittstellen -- fuer hohe
+Durchsaetze und Echtzeitverarbeitung bleibt eine dedizierte API
+der richtige Weg. Aber fuer Erkundung, Abstimmung und
+gelegentliche Abfragen bietet ein Agent etwas, das keine API kann:
+Er versteht Kontext und kann erklaeren.
+
+### Lebendige Unternehmensarchitektur
+
+Wenn jede Anwendung im Unternehmen einen Agenten hat, der ihr
+Modell und ihre Prozesse kennt, ergibt sich eine neue Moeglichkeit:
+Ein uebergreifender Agent, der die Unternehmensarchitektur nicht
+aus Dokumenten liest, sondern aus den laufenden Systemen.
+
+Heute sieht Unternehmensarchitektur oft so aus: Es gibt
+Architekturdiagramme, Schnittstellenverzeichnisse und
+Prozessdokumentationen. Sie werden mit Aufwand erstellt und sind
+am naechsten Tag schon nicht mehr ganz aktuell. Niemand hat ein
+vollstaendiges, aktuelles Bild der Systemlandschaft.
+
+Ein Architektur-Agent koennte die Agenten der einzelnen Anwendungen
+befragen:
+
+- "Welche Systeme verwalten Kundendaten? Wie sind die Datenmodelle
+  aufgebaut? Wo gibt es Ueberschneidungen?"
+- "Wenn wir den Typ 'Lieferant' im ERP aendern -- welche anderen
+  Systeme sind betroffen?"
+- "Zeig mir den kompletten Lebenszyklus eines Auftrags ueber alle
+  beteiligten Systeme hinweg."
+
+Die Antworten kommen nicht aus einer Dokumentation, sondern aus den
+Systemen selbst -- und sind damit immer aktuell.
+
+### Was das veraendert
+
+**Integrationsplanung wird einfacher.** Statt Schnittstellendoku-
+mentationen zu lesen und Ansprechpartner zu suchen, fragt ein Agent
+die beteiligten Systeme direkt. "Welche Daten kann das CRM liefern?
+In welchem Format? Wie oft aendern sie sich?"
+
+**Auswirkungsanalysen werden moeglich.** Vor einer Aenderung kann
+der Architektur-Agent pruefen, welche Systeme betroffen waeren. Das
+passiert nicht auf Basis eines statischen Modells, sondern auf Basis
+des tatsaechlichen Zustands.
+
+**Redundanzen werden sichtbar.** Wenn mehrere Systeme aehnliche
+Datenmodelle haben, kann der Agent das erkennen und aufzeigen. "Das
+CRM und das ERP verwalten beide Kundenadressen, aber mit
+unterschiedlichen Feldern. Hier ist der Vergleich."
+
+**Dokumentation wird ueberfluessig -- oder erzeugt sich selbst.**
+Wenn ein Agent die Architektur jederzeit live abfragen kann, braucht
+es kein manuell gepflegtes Architekturverzeichnis mehr. Oder der
+Agent erzeugt die Dokumentation auf Knopfdruck aus dem aktuellen
+Stand -- immer aktuell, immer vollstaendig.

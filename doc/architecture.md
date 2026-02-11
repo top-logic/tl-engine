@@ -28,16 +28,45 @@ Oberflaechen, Geschaeftslogik -- vieles laesst sich ohne Programmierung
 anpassen. Diese Konfigurierbarkeit ist eine Staerke, erfordert aber
 Fachwissen ueber die Plattform.
 
-KI-Assistenten schliessen diese Luecke:
+Gleichzeitig gibt es in jeder Anwendung eine Luecke zwischen dem, was
+die Oberflaeche bietet, und dem, was Anwender im Alltag brauchen.
+Fuer haeufige Arbeitsschritte gibt es spezialisierte Funktionen --
+aber fuer die vielen einmaligen oder seltenen Aufgaben nicht. "Setze
+bei allen Auftraegen aus dem letzten Quartal den Status auf
+'archiviert'", "Uebertrage die Kontaktdaten aus der alten Struktur
+in die neue", "Zeig mir alle Projekte, bei denen Budget und
+Aufwand um mehr als 20% auseinanderliegen" -- solche Aufgaben fallen
+regelmaessig an, aber keine davon rechtfertigt eine eigene
+Anwendungsfunktion.
 
-- **Fuer Endanwender**: Fragen zur Anwendung stellen, Daten suchen und
-  auswerten, Routineaufgaben automatisieren.
+Bisher bleiben zwei Moeglichkeiten: Entweder man baut fuer jeden
+solchen Fall eine Spezialfunktion (aufwaendig, und die meisten
+Wuensche werden nie umgesetzt), oder der Anwender erledigt es von
+Hand (fehleranfaellig und muehsam bei grossen Datenmengen).
 
-- **Fuer Konfiguratoren**: Datenmodelle erkunden und erweitern,
+Ein KI-Assistent ist das Schweizer Taschenmesser fuer genau diese
+Situationen. Er braucht keine vorgefertigte Funktion -- er versteht
+die Aufgabe in natuerlicher Sprache und fuehrt sie mit den
+vorhandenen Werkzeugen aus. Das betrifft nicht nur Massenoperationen,
+sondern jede Aufgabe, fuer die es keinen eigenen Button gibt: Daten
+abgleichen, Zusammenfassungen erstellen, Plausibilitaeten pruefen,
+Aenderungen nach Regeln durchfuehren.
+
+Damit verschiebt sich die Frage von "Haben wir dafuer eine Funktion?"
+zu "Kann ich das dem Assistenten sagen?" -- und die Antwort ist fast
+immer ja.
+
+Im Einzelnen profitieren verschiedene Zielgruppen:
+
+- **Endanwender**: Fragen zur Anwendung stellen, Daten suchen und
+  auswerten, Routineaufgaben automatisieren -- ohne auf eine
+  Spezialfunktion warten zu muessen.
+
+- **Konfiguratoren**: Datenmodelle erkunden und erweitern,
   Oberflaechen erstellen und anpassen, Konfigurationsaenderungen
   durchfuehren.
 
-- **Fuer Entwickler**: Die Anwendungsstruktur verstehen, Aenderungen
+- **Entwickler**: Die Anwendungsstruktur verstehen, Aenderungen
   planen und umsetzen, Skripte schreiben und testen.
 
 

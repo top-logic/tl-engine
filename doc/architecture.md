@@ -28,7 +28,7 @@ Oberflaechen, Geschaeftslogik -- vieles laesst sich ohne Programmierung
 anpassen. Diese Konfigurierbarkeit ist eine Staerke, erfordert aber
 Fachwissen ueber die Plattform.
 
-KI-Assistenten koennen diese Luecke schliessen:
+KI-Assistenten schliessen diese Luecke:
 
 - **Fuer Endanwender**: Fragen zur Anwendung stellen, Daten suchen und
   auswerten, Routineaufgaben automatisieren.
@@ -58,40 +58,58 @@ komplexe Aufgaben zu loesen.
 
 ### Was kann er?
 
-Der Assistent verfuegt ueber eine Reihe von Werkzeugen, die ihm
-Zugriff auf die Anwendung geben:
+Der Assistent verfuegt ueber Werkzeuge, die ihm Zugriff auf die
+Anwendung geben.
 
-**Datenmodell erkunden**
+**Datenmodell erkunden und erweitern**
 
 Der Assistent kann das Datenmodell der Anwendung lesen und verstehen:
 Welche Module gibt es? Welche Typen sind definiert? Welche
-Eigenschaften und Beziehungen haben sie? Er kann auch nach
-Modellelementen suchen und analysieren, wo ein bestimmter Typ
-ueberall verwendet wird.
+Eigenschaften und Beziehungen haben sie? Er kann nach Modellelementen
+suchen, analysieren wo ein Typ verwendet wird -- und das Modell
+erweitern: neue Module, Typen, Eigenschaften und Beziehungen anlegen.
 
-*Beispiel: "Welche Eigenschaften hat der Typ 'Kunde'?" oder
-"Zeig mir alle Typen im Modul 'Vertrieb'."*
+*Beispiel: "Welche Eigenschaften hat der Typ 'Kunde'?" oder "Lege
+einen neuen Typ 'Lieferant' mit Name, Adresse und Bewertung an."*
 
-**Daten lesen**
+Weitergedacht kann der Assistent eine komplette Fachanwendung im
+Dialog aufbauen: "Ich brauche eine Projektverwaltung mit Aufgaben,
+Meilensteinen und Ressourcenplanung." Er legt Module, Typen,
+Eigenschaften und Beziehungen an, erstellt passende Oberflaechen und
+konfiguriert Formulare -- alles in einem Gespraech. Kein UML, kein
+Pflichtenheft, kein Entwickler noetig.
 
-Der Assistent kann Instanzen (also die eigentlichen Daten) der
-Anwendung lesen: alle Kunden auflisten, einen bestimmten Datensatz
-nachschlagen, Daten filtern und zusammenfassen.
+**Daten lesen und auswerten**
 
-*Beispiel: "Liste alle aktiven Projekte auf" oder
-"Zeig mir die Details zum Kunden mit der Nummer 4711."*
+Der Assistent kann die eigentlichen Daten der Anwendung lesen: alle
+Kunden auflisten, einen bestimmten Datensatz nachschlagen, Daten
+filtern und zusammenfassen.
+
+*Beispiel: "Liste alle aktiven Projekte auf" oder "Zeig mir die
+Details zum Kunden mit der Nummer 4711."*
+
+Ueber die reine Abfrage hinaus kann der Assistent Daten analysieren
+und interpretieren: "Zeig mir die Umsatzentwicklung der letzten
+12 Monate pro Region." Er schreibt ein Skript, fuehrt es aus,
+interpretiert die Ergebnisse und erklaert sie in natuerlicher Sprache.
+Oder er baut gleich eine Dashboard-Ansicht.
 
 **Oberflaechen verwalten**
 
 Der Assistent kennt die verfuegbaren Oberflaechenvorlagen und kann
-neue Ansichten erstellen. Dazu liest er das Schema einer Vorlage
-(welche Parameter werden erwartet?) und erzeugt daraus eine neue
-Oberflaeche mit den gewuenschten Einstellungen.
+neue Ansichten erstellen. Er liest das Schema einer Vorlage (welche
+Parameter werden erwartet?) und erzeugt daraus eine neue Oberflaeche
+mit den gewuenschten Einstellungen.
 
 *Beispiel: "Erstelle eine Tabelle fuer alle offenen Auftraege" oder
 "Welche Oberflaechenvorlagen gibt es?"*
 
-**Konfigurationsschemas lesen**
+Fachanwender koennen so ihre Arbeitsumgebung selbst gestalten: "Mach
+die Kundenliste uebersichtlicher, fuege eine Spalte fuer den letzten
+Kontakt hinzu und sortiere nach Prioritaet." Der Assistent aendert
+die Konfiguration, ohne dass jemand einen Editor oeffnen muss.
+
+**Konfiguration verstehen**
 
 Jede Konfigurationsmoeglichkeit in TopLogic hat ein Schema, das
 beschreibt, welche Einstellungen moeglich sind. Der Assistent kann
@@ -101,15 +119,42 @@ konfiguriert werden kann.
 *Beispiel: "Welche Einstellungen hat die Tabellenkomponente?" oder
 "Was kann ich an einem Formularlayout alles konfigurieren?"*
 
-**Skripte schreiben und ausfuehren**
+**Geschaeftslogik beschreiben**
 
 TopLogic hat eine eigene Skriptsprache (TL-Script) fuer Berechnungen,
 Abfragen und Automatisierungen. Der Assistent kann Skripte schreiben,
-auf korrekte Syntax pruefen und ausfuehren. Er kennt auch die
-verfuegbaren Funktionen und deren Dokumentation.
+auf korrekte Syntax pruefen und ausfuehren. Er kennt die verfuegbaren
+Funktionen und deren Dokumentation.
 
 *Beispiel: "Berechne die Summe aller offenen Rechnungen" oder
 "Schreibe ein Skript, das alle inaktiven Benutzer auflistet."*
+
+Damit kann der Assistent auch Geschaeftsprozesse abbilden: "Wenn ein
+Auftrag den Status 'abgeschlossen' bekommt, soll automatisch eine
+Rechnung erzeugt werden." Er legt Regeln, Workflows oder
+Skript-Ausdruecke an. Die Plattform fuehrt sie aus -- kein deployter
+Code, sondern Konfiguration.
+
+**Die Anwendung erklaeren**
+
+Der Assistent kennt das Datenmodell und kann Zusammenhaenge in
+natuerlicher Sprache darstellen: "Was bedeutet dieses Feld?", "Warum
+sehe ich diese Daten nicht?", "Wie haengen Auftraege und Rechnungen
+zusammen?" Die Anwendung wird selbsterklarend.
+
+**Qualitaet sichern**
+
+Der Assistent kann Konsistenz zwischen Modell, Konfiguration und
+Oberflaechen pruefen: "Sind alle Pflichtfelder auch in den Formularen
+sichtbar?" oder "Gibt es Typen ohne Oberflaeche?" Er findet
+Ungereimtheiten, die bei manueller Pruefung leicht uebersehen werden.
+
+**Refactoring und Migration**
+
+"Wir wollen 'Lieferant' und 'Kunde' zu 'Geschaeftspartner'
+zusammenfuehren." Der Assistent kann das Modell umbauen, Daten
+migrieren und Oberflaechen anpassen -- eine Aufgabe, die manuell
+Tage dauert.
 
 
 ## Der externe Assistent
@@ -122,37 +167,24 @@ Protocol) mit der laufenden TopLogic-Anwendung verbindet. MCP ist ein
 offener Standard, der von verschiedenen KI-Werkzeugen unterstuetzt
 wird.
 
-Die Verbindung erfolgt ueber HTTP. Der externe Assistent hat dadurch
-Zugriff auf dieselben Werkzeuge wie der eingebaute Assistent.
-Zusaetzlich stehen ihm weitere Faehigkeiten zur Verfuegung:
-
-**Datenmodell aendern**
-
-Der externe Assistent kann das Datenmodell der Anwendung erweitern:
-neue Module, Typen, Eigenschaften und Beziehungen anlegen und
-bestehende aendern.
-
-*Beispiel: "Lege einen neuen Typ 'Lieferant' mit den Eigenschaften
-Name, Adresse und Bewertung an."*
-
-**Ressourcen abrufen**
-
-Neben den aktiven Werkzeugen bietet die Schnittstelle auch passive
-Datenquellen, die der Assistent gezielt abfragen kann -- zum Beispiel
-die Typen eines Moduls oder die Konfiguration einer Oberflaeche.
+Die Verbindung erfolgt ueber HTTP. Der externe Assistent hat Zugriff
+auf dieselben Werkzeuge wie der eingebaute Assistent. Zusaetzlich
+stehen ihm passive Datenquellen zur Verfuegung, die er gezielt
+abfragen kann -- zum Beispiel die Typen eines Moduls, die
+Konfiguration einer Oberflaeche oder das Schema eines
+Konfigurationstyps.
 
 
 ## Zusammenspiel beider Formen
 
 Eingebauter und externer Assistent ergaenzen sich:
 
-| Eigenschaft           | Eingebauter Assistent    | Externer Assistent       |
-|-----------------------|--------------------------|--------------------------|
-| Zugang                | Direkt in der Anwendung  | Eigenes KI-Werkzeug      |
-| Zielgruppe            | Endanwender, Fachabteilung | Konfiguratoren, Entwickler |
-| Staerke               | Schnelle Fragen und Aufgaben im Arbeitsalltag | Umfangreiche Konfigurations- und Modellierungsaufgaben |
-| Kontext               | Sieht, was der Anwender sieht | Sieht die gesamte Anwendungsstruktur |
-| Modell aendern        | Lesen                    | Lesen und Schreiben      |
+| Eigenschaft      | Eingebauter Assistent              | Externer Assistent                    |
+|------------------|------------------------------------|---------------------------------------|
+| Zugang           | Direkt in der Anwendung            | Eigenes KI-Werkzeug                   |
+| Zielgruppe       | Endanwender, Fachabteilung         | Konfiguratoren, Entwickler            |
+| Staerke          | Schnelle Fragen und Aufgaben im Arbeitsalltag | Umfangreiche Konfigurations- und Modellierungsaufgaben |
+| Kontext          | Sieht, was der Anwender sieht      | Sieht die gesamte Anwendungsstruktur  |
 
 Beide nutzen denselben Satz an Werkzeugen. Eine Erweiterung der
 Werkzeuge kommt automatisch beiden Formen zugute.
@@ -187,6 +219,114 @@ Werkzeuge kommt automatisch beiden Formen zugute.
 |   Konfiguration  Skripte           Benutzer               |
 +-----------------------------------------------------------+
 ```
+
+
+## Warum eine No-Code-Plattform mit KI?
+
+### Der Unterschied zur KI-gestuetzten Programmierung
+
+Wenn KI heute in der Softwareentwicklung eingesetzt wird, generiert sie
+meistens Quellcode: Java, TypeScript, SQL, HTML, CSS. Das funktioniert
+erstaunlich gut -- aber der generierte Code muss kompiliert, getestet
+und deployed werden, bevor er laeuft.
+
+Bei einer modellbasierten Plattform wie TopLogic ist der Ansatz
+grundsaetzlich anders: Die KI schreibt keinen Code, sondern
+konfiguriert. Sie beschreibt *was* sie will, nicht *wie* es technisch
+umgesetzt wird. Die Plattform kuemmert sich um das Wie.
+
+Das ist ein feiner, aber wichtiger Unterschied. Die KI ersetzt nicht
+den Entwickler, indem sie denselben Job macht (Code schreiben).
+Stattdessen wird der Job selbst ueberfluessig, weil kein Code noetig
+ist.
+
+### Vorteile
+
+**Kleinerer Fehlerraum**
+
+Eine Konfiguration ist entweder gueltig oder nicht -- das Schema sagt
+es sofort. Generierter Code kann syntaktisch korrekt, aber inhaltlich
+falsch sein: Sicherheitsluecken, Timing-Probleme, falsche Datentypen.
+Die Plattform verhindert ganze Fehlerklassen, die bei generiertem Code
+auftreten koennen.
+
+**Sofortige Wirkung**
+
+Aenderungen an Konfiguration und Modell wirken sofort. Bei
+herkoemmlicher Entwicklung muss generierter Code erst kompiliert,
+getestet und in Betrieb genommen werden. Das dauert und ist eine
+zusaetzliche Fehlerquelle.
+
+**Garantierte Konsistenz**
+
+Die Plattform sorgt dafuer, dass Datenmodell, Datenhaltung und
+Oberflaeche zusammenpassen. Bei herkoemmlicher Entwicklung muss die KI
+Datenbankschema, Schnittstellen, Oberflaeche und Tests konsistent
+halten -- eine Aufgabe, an der auch erfahrene Entwickler regelmaessig
+scheitern.
+
+**Weniger Halluzination**
+
+Die KI arbeitet mit konkreten Schemas und bekommt strukturierte
+Antworten. Sie erfindet keine Schnittstellen, sondern nutzt
+vorhandene. Bei der Code-Generierung erfindet die KI regelmaessig
+Funktionen und Bibliotheken, die es gar nicht gibt.
+
+**Nachvollziehbarkeit**
+
+Konfigurationsaenderungen sind deklarativ: Man sieht, was eingestellt
+ist, nicht wie es umgesetzt wurde. Generierter Code ist schwerer zu
+pruefen -- war er vor der Aenderung korrekt? Was genau hat sich
+geaendert? Bei Konfiguration ist das offensichtlich.
+
+**Fachleute koennen mitreden**
+
+Ein Fachanwender kann eine Modellbeschreibung lesen und sagen "Ja, das
+stimmt" oder "Nein, da fehlt etwas". Generierten Programmcode kann er
+nicht beurteilen. Die Plattform bringt die KI naeher an die
+Fachsprache.
+
+**Weniger Entscheidungen, weniger Fehler**
+
+Statt tausend Zeilen Code zu generieren, trifft die KI zehn
+Konfigurationsentscheidungen. Die Fehlerrate pro Entscheidung mag
+aehnlich sein -- aber zehn statt tausend Entscheidungen ergeben in
+Summe weniger Fehler.
+
+### Grenzen
+
+**Plattform-Decke**
+
+Was die Plattform nicht kann, kann auch die KI nicht konfigurieren.
+Herkoemmliche Entwicklung hat diese Grenze prinzipiell nicht. Sehr
+spezifische Oberflaechen-Interaktionen oder Integrationen mit
+Fremdsystemen, die die Plattform nicht vorsieht, erfordern weiterhin
+klassische Entwicklung.
+
+**Plattform-Wissen noetig**
+
+Die KI muss die Konzepte und Eigenheiten der Plattform kennen. Bei
+allgemeiner Programmierung reicht Wissen ueber gaengige Sprachen und
+Frameworks, das in den Trainingsdaten der KI massiv vertreten ist.
+Plattform-spezifisches Wissen ist seltener -- das muss ueber die
+bereitgestellten Werkzeuge und Schemas kompensiert werden.
+
+**Weniger Vorwissen**
+
+Fuer gaengige Programmiersprachen und Frameworks gibt es Millionen von
+Beispielen in den Trainingsdaten der KI. Fuer die Konfiguration einer
+spezifischen Plattform praktisch keine. Die KI muss sich staerker auf
+die bereitgestellten Werkzeuge, Schemas und Dokumentation stuetzen
+statt auf gelerntes Wissen. Das macht die Qualitaet der Werkzeuge
+umso wichtiger.
+
+**Grenzen der Konfigurationssprache**
+
+Manche Anforderungen lassen sich in Programmcode natuerlicher
+ausdruecken als in Konfiguration. "Sortiere die Liste nach einem
+komplexen Score aus drei gewichteten Faktoren" ist in Code trivial, in
+Konfiguration moeglicherweise umstaendlich. Die Skriptsprache der
+Plattform kann vieles abfangen, aber nicht alles.
 
 
 ## Erweiterbarkeit

@@ -56,6 +56,34 @@ entscheidet selbstaendig, welche Werkzeuge es braucht, um die Anfrage
 zu beantworten. Es kann mehrere Werkzeuge nacheinander einsetzen, um
 komplexe Aufgaben zu loesen.
 
+### Vom Chatbot zum Copiloten
+
+Ein reiner Chatbot beantwortet Fragen. Ein Copilot arbeitet mit --
+er sieht, was der Anwender sieht, und handelt im selben Kontext.
+
+Der entscheidende Schritt ist der Zugriff auf den Benutzerkontext:
+Der Assistent weiss, welche Ansicht gerade geoeffnet ist, welches
+Objekt selektiert ist, welche Filter aktiv sind und welche Felder
+im Formular ausgefuellt oder fehlerhaft sind. Damit kann er auf
+"dieses hier" reagieren, statt den Anwender nach Typnamen und
+Instanz-IDs fragen zu muessen.
+
+*Beispiel: Der Anwender oeffnet eine Kundenliste und fragt "Warum
+fehlt hier die Firma Mueller?" Der Assistent sieht die aktive
+Ansicht, erkennt die gesetzten Filter und antwortet: "Die Firma
+Mueller hat den Status 'inaktiv'. Dein aktueller Filter zeigt nur
+aktive Kunden."*
+
+Umgekehrt kann der Assistent den Anwender auch aktiv zu Informationen
+fuehren: "Hier ist der Auftrag, den du suchst" -- und navigiert die
+Anwendung zur entsprechenden Detailansicht. Oder er markiert das
+relevante Feld in einem Formular, statt nur dessen Namen zu nennen.
+
+So wird der Assistent zum Copiloten, der neben dem Anwender sitzt,
+den Bildschirm mitliest und im richtigen Moment eingreift -- nicht
+als abstraktes Frage-Antwort-System, sondern als kontextbewusster
+Begleiter im Arbeitsalltag.
+
 ### Was kann er?
 
 Der Assistent verfuegt ueber Werkzeuge, die ihm Zugriff auf die

@@ -223,7 +223,7 @@ Introduce a model-level access rights definition that answers these questions di
 
 3. **Backward compatible**: The existing view-based configuration continues to work. The model-based definition is an additional layer that can coexist with and eventually replace the view-based configuration.
 
-4. **Type-level and instance-level**: Type-level definitions say what is generally possible ("Editors can modify Customers"). Instance-level checks determine whether a specific user actually has the required role on a specific instance (the existing role assignment mechanism).
+4. **Type-level and instance-level**: Type-level definitions say what is generally possible ("Editors can modify Customers"). Instance-level checks determine whether a specific user actually has the required role on a specific instance. The existing role assignment and role rule mechanisms are fully preserved, providing fine-grained instance-level access control: user U may have role R on instance I1 of type T but not on instance I2 of the same type.
 
 5. **Granularity**: Permissions can be defined at the type level (all attributes) or at the attribute level (individual properties and references).
 
@@ -321,7 +321,9 @@ Precedence (most specific wins):
 
 #### 2.3.5 Relationship to Existing Role Assignments
 
-The model-based access rules define **which roles are needed** for an operation on a type. The existing role assignment mechanism continues to determine **which users have which roles on which instances**:
+The model-based access rules define **which roles are needed** for an operation on a type. The existing role assignment mechanism continues to determine **which users have which roles on which instances**.
+
+This separation is key: the new type-level rules only replace the view-based `PersBoundComp` configuration -- the part that was previously tied to the UI. The instance-level role assignments (direct `hasRole` records, rule-based role derivation via `RoleRule`, and security parent chain inheritance) remain unchanged. This means access control stays fine-grained at the instance level. For example, if user U has the `Editor` role on Customer instance C1 (via a direct assignment or a role rule) but not on Customer instance C2, then U can modify C1 but not C2 -- even though both are of type `Customer` and the type-level rule permits `Editor` to write `Customer` instances.
 
 ```
 Access check for "Can user U perform operation O on instance I of type T?":

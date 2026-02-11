@@ -336,6 +336,56 @@ Sprache, was der Agent tun soll. Das macht Automatisierung
 zugaenglich fuer Konfiguratoren und Fachabteilungen, nicht nur fuer
 Entwickler.
 
+### Vom Agenten zum Skript -- und zurueck
+
+Agent und Skript sind keine Gegensaetze, sondern zwei Enden eines
+Spektrums. In einer No-Code-Plattform, die ihre eigene
+Entwicklungsumgebung ist, kann die KI zwischen beiden Formen
+vermitteln.
+
+Der typische Weg beginnt mit einer textuellen Beschreibung: "Pruefe
+jeden Abend, ob es Auftraege gibt, deren Lieferfrist morgen ablaeuft,
+und sende eine Erinnerung an den zustaendigen Sachbearbeiter." Das
+genuegt, um einen fachlichen Agenten einzurichten. Bei jeder
+Ausfuehrung interpretiert die KI die Aufgabe neu, waehlt die
+passenden Werkzeuge und reagiert auf die aktuelle Datenlage.
+
+Wenn sich herausstellt, dass die Aufgabe immer gleich ablaeuft --
+dieselben Schritte, keine Sonderfaelle, keine Ermessensentscheidungen
+-- dann kann die KI daraus ein Skript erzeugen. Dieses Skript wird
+direkt in die Anwendung eingebunden und laeuft nativ, ohne
+KI-Aufruf. Es ist schneller, kostenguenstiger und vorhersagbar.
+
+Der umgekehrte Weg ist ebenso moeglich: Ein bestehendes Skript stoesst
+an seine Grenzen, weil neue Sonderfaelle auftreten. Statt das Skript
+immer weiter zu verkomplizieren, kann es durch einen fachlichen
+Agenten ersetzt werden, der die Grundlogik kennt, aber flexibel auf
+Ausnahmen reagiert.
+
+So entsteht ein Kreislauf:
+
+```
+  Textuelle             Fachlicher            Generiertes
+  Beschreibung  ----->  Agent       ----->    Skript
+       ^                (flexibel,            (schnell,
+       |                 KI-gestuetzt)         nativ)
+       |                                        |
+       +-------------- bei Bedarf <-------------+
+                        zurueck zum Agenten
+```
+
+Die Plattform bietet beiden Formen dieselbe Laufzeitumgebung. Ein
+generiertes Skript ist kein Fremdkoerper, der separat deployed werden
+muss -- es ist eine regulaere TL-Script-Konfiguration innerhalb der
+Anwendung. Und der fachliche Agent, der es erzeugt hat, kann es bei
+Bedarf auch wieder anpassen oder erweitern.
+
+Fuer den Anwender bedeutet das: Er beschreibt, was er will. Die
+Plattform entscheidet, ob ein Agent oder ein Skript die richtige
+Ausfuehrungsform ist -- oder sie beginnt mit dem Agenten und
+verdichtet die Loesung spaeter zu einem Skript, wenn sich das Muster
+stabilisiert hat.
+
 
 ## Zusammenspiel der drei Formen
 

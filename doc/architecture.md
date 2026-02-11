@@ -8,7 +8,7 @@ KI-Assistenten zugaenglich. Ein KI-Assistent kann die Anwendung
 verstehen, mit ihr arbeiten und sie konfigurieren -- aehnlich wie ein
 erfahrener Berater, der die Anwendung kennt.
 
-Dabei gibt es zwei Einsatzformen:
+Dabei gibt es drei Einsatzformen:
 
 - **Eingebauter Assistent**: Ein KI-Chat direkt in der Anwendung, ueber
   den Anwender Fragen stellen und Aufgaben ausfuehren lassen koennen.
@@ -17,8 +17,13 @@ Dabei gibt es zwei Einsatzformen:
   Desktop, Cursor), das sich von aussen mit der Anwendung verbindet und
   mit ihr arbeitet.
 
-Beide Formen nutzen dieselben Faehigkeiten. Was der eingebaute
-Assistent kann, kann auch der externe -- und umgekehrt.
+- **Fachliche Agenten**: Spezialisierte KI-Agenten innerhalb der
+  Anwendung, die eigenstaendig wiederkehrende Aufgaben uebernehmen --
+  zeitgesteuert oder als Reaktion auf Ereignisse.
+
+Alle drei Formen nutzen dieselben Werkzeuge. Was der eingebaute
+Assistent kann, kann auch ein fachlicher Agent -- nur eben
+automatisch und ohne dass jemand eine Frage stellt.
 
 
 ## Warum?
@@ -264,19 +269,89 @@ Konfiguration einer Oberflaeche oder das Schema eines
 Konfigurationstyps.
 
 
-## Zusammenspiel beider Formen
+## Fachliche Agenten
 
-Eingebauter und externer Assistent ergaenzen sich:
+### Von der Assistenz zur Automatisierung
 
-| Eigenschaft      | Eingebauter Assistent              | Externer Assistent                    |
-|------------------|------------------------------------|---------------------------------------|
-| Zugang           | Direkt in der Anwendung            | Eigenes KI-Werkzeug                   |
-| Zielgruppe       | Endanwender, Fachabteilung         | Konfiguratoren, Entwickler            |
-| Staerke          | Schnelle Fragen und Aufgaben im Arbeitsalltag | Umfangreiche Konfigurations- und Modellierungsaufgaben |
-| Kontext          | Sieht, was der Anwender sieht      | Sieht die gesamte Anwendungsstruktur  |
+Der eingebaute Assistent und der externe Assistent reagieren auf
+Anfragen: Ein Mensch stellt eine Frage oder gibt einen Auftrag.
+Fachliche Agenten gehen einen Schritt weiter -- sie handeln
+eigenstaendig, ohne dass jemand sie anstossen muss.
 
-Beide nutzen denselben Satz an Werkzeugen. Eine Erweiterung der
-Werkzeuge kommt automatisch beiden Formen zugute.
+Ein fachlicher Agent ist ein KI-Agent, der fuer eine bestimmte
+Aufgabe in einer konkreten Anwendung eingerichtet wird. Er kennt
+die Fachlichkeit, hat Zugriff auf dieselben Werkzeuge wie der
+Assistent und arbeitet im Hintergrund.
+
+### Zeitgesteuert
+
+Fachliche Agenten koennen nach Zeitplan arbeiten:
+
+- *Jeden Montagmorgen*: "Pruefe alle offenen Auftraege. Wenn die
+  Lieferfrist in weniger als drei Tagen ablaeuft und kein Versand
+  erfasst ist, eskaliere an den zustaendigen Sachbearbeiter."
+
+- *Jeden Monatsersten*: "Erstelle eine Uebersicht aller
+  abgeschlossenen Projekte mit Budget-Soll-Ist-Vergleich und sende
+  sie an die Geschaeftsfuehrung."
+
+- *Taeglich nachts*: "Pruefe die Datenqualitaet: Gibt es Kunden ohne
+  Ansprechpartner? Auftraege ohne Positionen? Kontakte mit
+  ungueltigen E-Mail-Adressen? Erstelle einen Bericht der
+  Auffaelligkeiten."
+
+### Ereignisgesteuert
+
+Noch wirkungsvoller sind Agenten, die auf Ereignisse in der
+Anwendung reagieren:
+
+- *Neuer Auftrag angelegt*: "Pruefe die Bonitaet des Kunden,
+  berechne die voraussichtliche Lieferzeit und benachrichtige das
+  Lager."
+
+- *Status auf 'abgeschlossen' gesetzt*: "Erzeuge die Rechnung,
+  aktualisiere die Umsatzstatistik und archiviere die
+  Projektunterlagen."
+
+- *Neuer Mitarbeiter erfasst*: "Lege die Standardzugaenge an,
+  erstelle einen Onboarding-Plan und weise die Einarbeitungsaufgaben
+  dem Teamleiter zu."
+
+### Was sie vom Skript unterscheidet
+
+Zeitgesteuerte Aktionen und Ereignisreaktionen gibt es auch ohne KI
+-- als fest programmierte Skripte oder Workflow-Regeln. Der
+Unterschied liegt in der Flexibilitaet:
+
+Ein Skript fuehrt immer exakt dieselben Schritte aus. Ein fachlicher
+Agent *versteht* die Aufgabe und kann auf unvorhergesehene
+Situationen reagieren. Wenn die Bonitaetspruefung ein unerwartetes
+Ergebnis liefert, kann der Agent entscheiden, ob er den Auftrag
+zurueckstellt, eine Teillieferung vorschlaegt oder einen Menschen
+einbezieht. Ein Skript bricht ab oder ignoriert das Problem.
+
+Ausserdem sind fachliche Agenten leichter einzurichten. Statt eine
+technische Regel zu programmieren, beschreibt man in natuerlicher
+Sprache, was der Agent tun soll. Das macht Automatisierung
+zugaenglich fuer Konfiguratoren und Fachabteilungen, nicht nur fuer
+Entwickler.
+
+
+## Zusammenspiel der drei Formen
+
+Eingebauter Assistent, externer Assistent und fachliche Agenten
+ergaenzen sich:
+
+| Eigenschaft      | Eingebauter Assistent     | Externer Assistent          | Fachliche Agenten              |
+|------------------|---------------------------|-----------------------------|--------------------------------|
+| Zugang           | Direkt in der Anwendung   | Eigenes KI-Werkzeug         | Im Hintergrund                 |
+| Ausloser         | Frage oder Auftrag        | Frage oder Auftrag          | Zeitplan oder Ereignis         |
+| Zielgruppe       | Endanwender, Fachabteilung | Konfiguratoren, Entwickler  | Fachabteilung, Administratoren |
+| Staerke          | Schnelle Hilfe im Arbeitsalltag | Umfangreiche Konfiguration | Wiederkehrende Aufgaben, proaktives Handeln |
+| Kontext          | Sieht, was der Anwender sieht | Sieht die gesamte Struktur | Kennt die fachlichen Regeln |
+
+Alle drei nutzen denselben Satz an Werkzeugen. Eine Erweiterung der
+Werkzeuge kommt automatisch allen Formen zugute.
 
 
 ## Faehigkeiten im Ueberblick

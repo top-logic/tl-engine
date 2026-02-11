@@ -1,22 +1,15 @@
 <%@page import="com.top_logic.base.accesscontrol.ApplicationPages"
 %><%@page import="com.top_logic.basic.util.ResKey"
 %><%@page language="java" session="true"  extends="com.top_logic.util.TopLogicJspBase"
-%><%@page import="com.top_logic.knowledge.gui.layout.TLLayoutServlet"
 %><%@page import="com.top_logic.layout.ContentHandlersRegistry"
-%><%@page import="com.top_logic.layout.DisplayContext"
-%><%@page import="com.top_logic.layout.basic.DefaultDisplayContext"
 %><%@page import="com.top_logic.basic.version.Version"
-%><%@page import="java.io.File"
-%><%@page import="com.top_logic.basic.StringServices"
 %><%@page import="com.top_logic.util.Resources"
 %><%@page import="com.top_logic.mig.html.UserAgent"
 %><%@taglib uri="basic" prefix="basic"
 %><%Resources   res             = Resources.getInstance();
 
 String      theContext      = request.getContextPath();
-String      theLoginLogoURL = theContext + "/images/login/logo.jpg";
 
-String theEnabledImage = theContext + "/images/login/" + res.getString(ResKey.legacy("tl.login.button"));
 boolean allowSubsession = ContentHandlersRegistry.allowSubsession(pageContext);%>
 <basic:html>
 	<!-- Note: IE does not accept comments before the top-level element in XHTML. -->

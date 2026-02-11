@@ -348,15 +348,74 @@ werden:
   Assistent hat und wie er sich verhaelt.
 
 
-## Sicherheit
+## Sicherheit und Berechtigungen
 
-Alle Aktionen des Assistenten laufen innerhalb der
-TopLogic-Anwendung und unterliegen denselben Sicherheitsmechanismen
-wie regulaere Anwenderaktionen. Der Assistent hat keinen
-uneingeschraenkten Zugriff, sondern arbeitet im Rahmen der
-konfigurierten Berechtigungen.
+### Grundprinzip
+
+Der Assistent handelt immer *als* der angemeldete Nutzer. Er hat
+exakt dieselben Rechte -- kann nichts sehen, was der Nutzer nicht
+sehen duerfte, und nichts aendern, was der Nutzer nicht aendern
+duerfte. Er ist wie ein Sachbearbeiter mit denselben Berechtigungen,
+der aber effizienter arbeitet, weil er Abkuerzungen kennt.
 
 Aenderungen am Datenmodell und an Daten erfolgen transaktional: Sie
 werden entweder vollstaendig durchgefuehrt oder vollstaendig
 zurueckgerollt. Ein fehlgeschlagener Vorgang hinterlaesst keine
 inkonsistenten Daten.
+
+### Berechtigungen auf zwei Ebenen
+
+In einer klassischen TopLogic-Anwendung sind Berechtigungen stark an
+die Oberflaeche gebunden: Ein Nutzer darf eine bestimmte Ansicht
+sehen, ein bestimmtes Kommando ausfuehren, ein bestimmtes Feld in
+einem bestimmten Formular bearbeiten. Das ergibt Sinn, weil die
+Oberflaeche der einzige Zugang zur Anwendung ist.
+
+Der KI-Assistent arbeitet aber nicht ueber die Oberflaeche. Er greift
+direkt auf das Datenmodell und die Geschaeftsdaten zu. Wuerde man ihn
+an die Oberflaechenberechtigungen binden, muesste er sich gedanklich
+durch Ansichten und Kommandos hangeln -- und ein grosser Teil seines
+Effizienzvorteils ginge verloren.
+
+Die Loesung liegt darin, Berechtigungen auf zwei Ebenen zu betrachten:
+
+**Daten-Ebene**: Wer darf welche Daten lesen und schreiben --
+unabhaengig von der Oberflaeche? Das betrifft Typen, Instanzen und
+Eigenschaften. Zum Beispiel: "Rolle X darf Kunden lesen aber nicht
+aendern", "Rolle Y darf Auftraege anlegen."
+
+**Oberflaechen-Ebene**: Welche Ansichten und Kommandos sind sichtbar?
+Das ist eine *Projektion* der Daten-Ebene auf die Benutzeroberflaeche.
+Sie bestimmt, *wie* ein Nutzer seine Rechte ausueben kann -- nicht
+*welche* Rechte er hat.
+
+Fuer die Oberflaeche reicht die Oberflaechenebene, weil sie die
+Datenberechtigungen implizit abbildet: Wenn ein Nutzer den
+"Loeschen"-Button nicht sieht, kann er nicht loeschen.
+
+Fuer den KI-Assistenten braucht man die Daten-Ebene explizit. Er
+prueft nicht "darf ich den Button klicken?", sondern "darf dieser
+Nutzer Instanzen vom Typ Kunde aendern?" Das ist direkter, schneller
+-- und genauso sicher.
+
+### Was dabei gewonnen wird
+
+Wenn die Daten-Ebene sauber existiert, gewinnen beide Seiten:
+
+- **Der Assistent** arbeitet effizient, weil er direkt auf Daten
+  zugreift und bei jedem Zugriff gegen die Datenberechtigungen
+  geprueft wird. Kein Umweg ueber simulierte Oberflaecheninteraktionen.
+
+- **Die Oberflaeche** wird einfacher, weil sie sich auf die
+  Datenberechtigungen stuetzen kann, statt eigene Regeln zu pflegen.
+  "Zeige den Loeschen-Button" wird abgeleitet aus "Nutzer darf diesen
+  Typ loeschen", statt separat konfiguriert.
+
+- **Die Konsistenz** steigt: Es gibt eine einzige Quelle der Wahrheit
+  fuer Berechtigungen. Ob ein Zugriff ueber die Oberflaeche, den
+  Assistenten oder eine Schnittstelle kommt -- dieselben Regeln gelten.
+
+- **Zukuenftige Schnittstellen** profitieren ebenfalls. Jede
+  Erweiterung -- REST-API, Batch-Jobs, Integrationen mit
+  Fremdsystemen -- kann sich auf dieselbe Berechtigungsschicht
+  stuetzen.

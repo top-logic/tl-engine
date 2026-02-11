@@ -1,160 +1,129 @@
-<%@page import="com.top_logic.base.accesscontrol.ApplicationPages"
+<%@page language="java" session="true" extends="com.top_logic.util.TopLogicJspBase"
 %><%@page import="com.top_logic.basic.util.ResKey"
-%><%@page language="java" session="true"  extends="com.top_logic.util.TopLogicJspBase"
+%><%@page import="com.top_logic.base.accesscontrol.ApplicationPages"
 %><%@page import="com.top_logic.layout.ContentHandlersRegistry"
 %><%@page import="com.top_logic.basic.version.Version"
 %><%@page import="com.top_logic.util.Resources"
 %><%@page import="com.top_logic.mig.html.UserAgent"
 %><%@taglib uri="basic" prefix="basic"
-%><%Resources   res             = Resources.getInstance();
-
-String      theContext      = request.getContextPath();
-
-boolean allowSubsession = ContentHandlersRegistry.allowSubsession(pageContext);%>
+%><%
+Resources res = Resources.getInstance();
+String theContext = request.getContextPath();
+boolean allowSubsession = ContentHandlersRegistry.allowSubsession(pageContext);
+%>
 <basic:html>
-	<!-- Note: IE does not accept comments before the top-level element in XHTML. -->
-
 	<head>
 		<title>
 			<basic:text key="<%= com.top_logic.layout.I18NConstants.APPLICATION_TITLE %>"/>
 		</title>
 		<basic:js/>
+		<basic:favicon/>
 		<style type="text/css">
+			* {
+				box-sizing: border-box;
+				margin: 0;
+				padding: 0;
+			}
+			
 			body {
-				font-family:Arial,sans-serif;
-				margin:0;
-				padding:0;
-				background-color:#F5F5F5
+				font-family: Arial, sans-serif;
+				background-color: #FFFFFF;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				min-height: 100vh;
+				padding: 20px;
 			}
 			
-			form {
-				margin:0px;
+			.container {
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				max-width: 400px;
+				width: 100%;
 			}
 			
-			div.logindiv {
-				background-image: url(<%=theContext%>/images/login/loginscreen.png);
+			.app-logo {
+				width: 280px;
+				height: 80px;
+				background-image: url(<%=theContext%>/images/appLogo.svg);
 				background-repeat: no-repeat;
-				z-index:42;
-				position:relative;
-				left:-10px;
-				top:0px;
-				width:280px;
-				height: 200px;
-				padding-top: 80px;
-				padding-left: 60px;
-				padding-right: 60px;
-			}
-			td.message {
-				height: 100px;
-				text-align: left;
-				font-family:Arial,sans-serif;
-				font-size:9pt;
-				font-weight:bold;
-				vertical-align:middle;
-				color:#6F6F6F;
-			}
-			input {
-				font-family:Arial,sans-serif;
-				font-size:8pt;
-			}
-			img {
-				border: none;
-			}
-			img.hidden {
-				width:0px;
-				height:0px;
-				display:none;
+				background-size: contain;
+				margin-bottom: 20px;
 			}
 			
-			tr.hspace {
-				height: 10px;
-			}
-			
-			tr.buttonbar {
-				height: 22px;
-			}
-			
-			td.button {
-				padding: 0px;
+			.login-box {
+				background-color: #f0f1f2;
+				border: 4px solid #2968C8;
+				border-radius: 24px;
+				padding: 40px 30px;
+				width: 100%;
+				max-width: 320px;
 				text-align: center;
-				width: 82px;
-				height: 22px;
-				vertical-align: middle;
-				background-image: url(<%=theContext%>/images/icons/button-background.png);
-				background-repeat: no-repeat;
+				box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 			}
 			
-			td.button a {
-				text-decoration: none;
-				font-size: 10pt;
+			.message {
+				font-size: 14px;
+				font-weight: bold;
+				color: #6F6F6F;
+				margin-bottom: 20px;
+				text-align: center;
+			}
+			
+			.button-container {
+				display: flex;
+				justify-content: center;
+				gap: 10px;
+				margin-top: 20px;
+			}
+			
+			.cta-button {
+				background-color: #2968C8;
 				color: white;
-				font-weight: normal;
+				padding: 12px 24px;
+				border: none;
+				border-radius: 8px;
+				cursor: pointer;
+				font-weight: bold;
+				font-size: 12px;
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				text-decoration: none;
+				position: relative;
+			}
+			
+			.cta-button:hover {
+				background-color: #205cb4;
 			}
 		</style>
-
-		<basic:favicon/>
 	</head>
 
 	<body class="<%=UserAgent.getUserAgent(request).getCSSClasses("")%>">
-		<table
-			border="0"
-			width="100%"
-		>
-			<tr valign="bottom">
-				<td align="center">
-					<div class="logindiv">
-						<table
-							border="0"
-							cellpadding="0"
-							cellspacing="0"
-							width="100%"
+		<div class="container">
+			<div class="app-logo">
+			</div>
+			<div class="login-box">
+				<div class="message">
+					<%=res.getMessage(allowSubsession ? ResKey.legacy("tl.subsession.create") : ResKey.legacy("tl.subsession.deny"), Version.getApplicationVersion().getName())%>
+				</div>
+				<div class="button-container">
+					<a class="cta-button"
+						href="#"
+						onclick="window.close(); return false;"
+					>
+						<basic:text i18n="tl.subsession.cancel"/>
+					</a>
+					<% if (allowSubsession) { %>
+						<a class="cta-button"
+							href="<%=theContext + ApplicationPages.getInstance().getStartPage() %>"
 						>
-							<tr>
-								<td height="10px">
-								</td>
-							</tr>
-							<tr>
-								<td class="message">
-									<%=res.getMessage(allowSubsession ? ResKey.legacy("tl.subsession.create") : ResKey.legacy("tl.subsession.deny"), Version.getApplicationVersion().getName())%>
-								</td>
-							</tr>
-							<tr class="hspace">
-								<td>
-								</td>
-							</tr>
-							<tr>
-								<td align="right">
-									<table>
-										<tr class="buttonbar">
-											<td class="button">
-												<a
-													href="#"
-													onclick="window.close(); return false;"
-												>
-													<basic:text i18n="tl.subsession.cancel"/>
-												</a>
-											</td>
-											<%
-											if (allowSubsession) {
-												%>
-												<td width="5px">
-												</td>
-												<td class="button">
-													<a href="<%=theContext + ApplicationPages.getInstance().getStartPage() %>">
-														<basic:text i18n="tl.subsession.load"/>
-													</a>
-												</td>
-												<%
-											}
-											%>
-										</tr>
-									</table>
-								</td>
-							</tr>
-						</table>
-					</div>
-				</td>
-			</tr>
-		</table>
+							<basic:text i18n="tl.subsession.load"/>
+						</a>
+					<% } %>
+				</div>
+			</div>
+		</div>
 	</body>
 </basic:html>

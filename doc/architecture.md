@@ -199,6 +199,38 @@ natuerlicher Sprache darstellen: "Was bedeutet dieses Feld?", "Warum
 sehe ich diese Daten nicht?", "Wie haengen Auftraege und Rechnungen
 zusammen?" Die Anwendung wird selbsterklarend.
 
+**Berechtigungen durchschaubar machen**
+
+"Warum kann ich diesen Datensatz nicht bearbeiten?" -- diese Frage
+stellt nicht nur der Endanwender, sondern regelmaessig auch der
+Entwickler. In einer konfigurierbaren Anwendung mit Rollen,
+Gruppenrechten, Typ-Berechtigungen und instanzspezifischen Regeln
+ist die Antwort oft nicht offensichtlich. Selbst wer die
+Berechtigungskonfiguration kennt, muss im Einzelfall mehrere Ebenen
+durchgehen, um nachzuvollziehen, warum ein bestimmter Zugriff
+gewaehrt oder verweigert wird.
+
+Der Assistent kann diese Kette nachvollziehen und erklaeren:
+
+*Endanwender: "Warum sehe ich den Menuepunkt 'Berichte' nicht?"
+-- "Du hast die Rolle 'Sachbearbeiter'. Der Menuepunkt 'Berichte'
+ist nur fuer die Rolle 'Teamleitung' sichtbar. Wende dich an deinen
+Administrator, wenn du Zugriff benoetigen."*
+
+*Entwickler: "Warum kann der Benutzer 'meier' keine Auftraege
+anlegen?" -- "Der Benutzer hat die Rolle 'Vertrieb-Leser'. Diese
+Rolle erlaubt Lesezugriff auf den Typ 'Auftrag', aber kein
+Schreiben. Die Berechtigung ist definiert in der Rollengruppe
+'Vertrieb' mit der Einschraenkung 'nur lesen'."*
+
+So wird der Assistent zum Berechtigungs-Debugger: Er durchsucht
+Rollenzuordnungen, Gruppenmitgliedschaften und Berechtigungsregeln
+und liefert eine nachvollziehbare Erklaerung statt einer stummen
+Verweigerung. Fuer Endanwender bedeutet das weniger Frust und
+weniger Supportanfragen. Fuer Entwickler und Konfiguratoren
+verkuerzt es die Zeit fuer Fehlersuche in der
+Berechtigungskonfiguration erheblich.
+
 **Qualitaet sichern**
 
 Der Assistent kann Konsistenz zwischen Modell, Konfiguration und

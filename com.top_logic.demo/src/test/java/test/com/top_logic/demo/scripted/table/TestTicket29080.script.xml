@@ -1,0 +1,731 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Nutzer/Action-Nutzer-Anlegen.xml"
+					template-name-comment="Nutzer Anlegen"
+				>
+					<parameters>
+						<parameter name="ergebnis"
+							value="lbr"
+						/>
+						<parameter name="Loginname"
+							value="lbr"
+						/>
+						<parameter name="Vorname"
+							value="Luca"
+						/>
+						<parameter name="Nachname"
+							value="Brasi"
+						/>
+						<parameter name="isAdmin"
+							value="true"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Nutzer/Passwort setzen.xml"
+					template-name-comment="Passwort setzen"
+				>
+					<parameters>
+						<parameter name="Loginname"
+							value="lbr"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Technisches Demo > Komponenten"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.editor.commands.ToggleDesignModeCommand"
+							command-label="Designmodus"
+							command-name="toggleDesignModeCommand"
+							component-implementation-comment="com.top_logic.addons.loginmessages.layout.LoginMessagesMainLayout"
+							component-name="rootLayout#masterFrame"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.editor.commands.AddTabCommand"
+							command-label="Tab hinzufügen"
+							command-name="addTabCommand"
+							component-implementation-comment="com.top_logic.layout.component.TabComponent"
+							component-name="com.top_logic.demo/technical/components/componentsTabbar.layout.xml#Tabbar"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Deutsch"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Ticket 29080"
+							/>
+						</action>
+						<action class="com.top_logic.layout.editor.scripting.CreateComponentButtonAction$CreateComponentButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Ok"
+							user-id="root"
+						>
+							<identifiers>
+								<component-keys>
+									<component-key value="1cbff25b-b035-4c71-afc3-003d8be30dfe.layout.xml"/>
+									<component-key value="592cd57e-c21b-4154-985e-7697c619af68.layout.xml"/>
+									<component-key value="3084a5d6-ab85-4ade-bb5e-e005093fd5fb.layout.xml"/>
+								</component-keys>
+								<uuids>
+									<uuid value="ID_47ed91ee_3ed2_4873_99df_c34f22a1e77e"/>
+								</uuids>
+							</identifiers>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.editor.commands.AddComponentCommand"
+							command-label="Sicht hinzufügen..."
+							command-name="addComponentCommand"
+							component-implementation-comment="com.top_logic.layout.editor.components.ComponentPlaceholder"
+							component-name="1cbff25b-b035-4c71-afc3-003d8be30dfe.layout.xml#placeholder"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Auswahl"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+										label="Tabelle"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Ok"
+							user-id="root"
+						/>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Deutsch"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Eigene As"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Typ"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+										ref="DemoTypes:DemoTypes.A"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.editor.scripting.CreateComponentButtonAction$CreateComponentButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Ok"
+							user-id="root"
+						>
+							<identifiers/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.editor.commands.EditComponentCommand"
+							command-label="Sicht bearbeiten"
+							command-name="editComponentCommand"
+							component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+							component-name="1cbff25b-b035-4c71-afc3-003d8be30dfe.layout.xml#Table"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Elemente der Liste"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="model->all(`DemoTypes:DemoTypes.A`).filter(a->$a.get(`DemoTypes:DemoTypes.A#account`) == currentUser())"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Prüfer für Benutzung als Komponentenmodell"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="model->$model==null"
+							/>
+						</action>
+						<action class="com.top_logic.layout.editor.scripting.CreateComponentButtonAction$CreateComponentButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Ok"
+							user-id="root"
+						>
+							<identifiers/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.editor.commands.ReleaseLayoutConfiguration"
+							command-label="Layout freigeben"
+							command-name="releaseLayout"
+							component-implementation-comment="com.top_logic.layout.component.TabComponent"
+							component-name="mainTabbar.layout.xml#mainTabber"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Ja"
+							user-id="root"
+						/>
+					</actions>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Script Konsole"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Nutzer/Nutzer anmelden.xml"
+					template-name-comment="Nutzer anmelden"
+				>
+					<parameters>
+						<parameter name="Username"
+							value="lbr"
+						/>
+						<parameter name="ProcessId"
+							value="lbr"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					user-id="lbr"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Technisches Demo > Komponenten > Ticket 29080"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRows">
+								<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="Technisches Demo > Komponenten > Ticket 29080 > Eigene As"
+									/>
+								</table>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+								int="0"
+							/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+					<actions>
+						<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Suchausdruck"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Development > Script Konsole > Editor"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+								<value><![CDATA[{
+  newA = new(`DemoTypes:A`, `DemoTypes#ROOT`)
+  ..set(`DemoTypes:A#name`, "Ticket29080_root_1")
+  ..set(`DemoTypes:A#booleanMandatory`, true)
+  ..set(`DemoTypes:A#booleanRadioMandatory`, true)
+  ..set(`DemoTypes:A#booleanSelectMandatory`, true)
+  ..set(`DemoTypes:A#account`, all(`tl.accounts:Person`).filter(p->$p.get(`tl.accounts:Person#name`) == 'root').singleElement());
+  `DemoTypes#ROOT`.add(`DemoTypes:Root#children`, $newA);
+  $newA;
+}]]></value>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+							command-label="Script ausführen und Änderungen speichern"
+							command-name="updateSearchConsole"
+							component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+							component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							user-id="lbr"
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+									comment="Trigger events."
+								>
+									<actions>
+										<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+											component-name="rootLayout#masterFrame"
+											label="Tabelle filtern"
+										>
+											<business-object config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+												<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+													tab-path="Technisches Demo > Komponenten > Ticket 29080 > Eigene As"
+												/>
+											</business-object>
+										</action>
+									</actions>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+									comparision="equals"
+									inverted="false"
+								>
+									<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.AllTableRows">
+										<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+											<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												tab-path="Technisches Demo > Komponenten > Ticket 29080 > Eigene As"
+											/>
+										</table>
+									</actual-value>
+									<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+										int="0"
+									/>
+								</action>
+							</actions>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+					<actions>
+						<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Suchausdruck"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Development > Script Konsole > Editor"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+								<value><![CDATA[{
+  newA = new(`DemoTypes:A`, `DemoTypes#ROOT`)
+  ..set(`DemoTypes:A#name`, "Ticket29080_lbr_1")
+  ..set(`DemoTypes:A#booleanMandatory`, true)
+  ..set(`DemoTypes:A#booleanRadioMandatory`, true)
+  ..set(`DemoTypes:A#booleanSelectMandatory`, true)
+  ..set(`DemoTypes:A#account`, all(`tl.accounts:Person`).filter(p->$p.get(`tl.accounts:Person#name`) == 'lbr').singleElement());
+  `DemoTypes#ROOT`.add(`DemoTypes:Root#children`, $newA);
+  $newA;
+}]]></value>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+							command-label="Script ausführen und Änderungen speichern"
+							command-name="updateSearchConsole"
+							component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+							component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							user-id="lbr"
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+									comment="Trigger events."
+								>
+									<actions>
+										<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+											component-name="rootLayout#masterFrame"
+											label="Tabelle filtern"
+										>
+											<business-object config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+												<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+													tab-path="Technisches Demo > Komponenten > Ticket 29080 > Eigene As"
+												/>
+											</business-object>
+										</action>
+									</actions>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+									comparision="equals"
+									inverted="false"
+								>
+									<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+										column-label="Name"
+									>
+										<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+											<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												tab-path="Technisches Demo > Komponenten > Ticket 29080 > Eigene As"
+											/>
+										</table>
+										<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+											name="Ticket29080_lbr_1"
+										/>
+									</actual-value>
+									<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="Ticket29080_lbr_1"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+									comparision="equals"
+									inverted="false"
+								>
+									<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.AllTableRows">
+										<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+											<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												tab-path="Technisches Demo > Komponenten > Ticket 29080 > Eigene As"
+											/>
+										</table>
+									</actual-value>
+									<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+										int="1"
+									/>
+								</action>
+							</actions>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+					<actions>
+						<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Suchausdruck"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Development > Script Konsole > Editor"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+								<value><![CDATA[{
+  all(`DemoTypes:A`)
+    .filter(a->$a.get(`DemoTypes:A#name`) == 'Ticket29080_lbr_1')
+    .singleElement()
+    .set(`DemoTypes:A#account`, all(`tl.accounts:Person`).filter(p->$p.get(`tl.accounts:Person#name`) == 'root').singleElement());
+  all(`DemoTypes:A`)
+    .filter(a->$a.get(`DemoTypes:A#name`) == 'Ticket29080_root_1')
+    .singleElement()
+    .set(`DemoTypes:A#account`, all(`tl.accounts:Person`).filter(p->$p.get(`tl.accounts:Person#name`) == 'lbr').singleElement());
+}]]></value>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+							command-label="Script ausführen und Änderungen speichern"
+							command-name="updateSearchConsole"
+							component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+							component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							user-id="lbr"
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+									comment="Trigger events."
+								>
+									<actions>
+										<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+											component-name="rootLayout#masterFrame"
+											label="Tabelle filtern"
+										>
+											<business-object config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+												<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+													tab-path="Technisches Demo > Komponenten > Ticket 29080 > Eigene As"
+												/>
+											</business-object>
+										</action>
+									</actions>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+									comparision="equals"
+									inverted="false"
+								>
+									<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+										column-label="Name"
+									>
+										<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+											<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												tab-path="Technisches Demo > Komponenten > Ticket 29080 > Eigene As"
+											/>
+										</table>
+										<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+											name="Ticket29080_root_1"
+										/>
+									</actual-value>
+									<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="Ticket29080_root_1"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+									comparision="equals"
+									inverted="false"
+								>
+									<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.AllTableRows">
+										<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+											<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												tab-path="Technisches Demo > Komponenten > Ticket 29080 > Eigene As"
+											/>
+										</table>
+									</actual-value>
+									<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+										int="1"
+									/>
+								</action>
+							</actions>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+					<actions>
+						<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Suchausdruck"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Development > Script Konsole > Editor"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+								<value><![CDATA[{
+  all(`DemoTypes:A`)
+    .filter(a->['Ticket29080_lbr_1','Ticket29080_root_1'].containsElement($a.get(`DemoTypes:A#name`)))
+    .delete()
+}]]></value>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+							command-label="Script ausführen und Änderungen speichern"
+							command-name="updateSearchConsole"
+							component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+							component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							user-id="lbr"
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+									comment="Trigger events."
+								>
+									<actions>
+										<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+											component-name="rootLayout#masterFrame"
+											label="Tabelle filtern"
+										>
+											<business-object config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+												<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+													tab-path="Technisches Demo > Komponenten > Ticket 29080 > Eigene As"
+												/>
+											</business-object>
+										</action>
+									</actions>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+									comparision="equals"
+									inverted="false"
+								>
+									<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.AllTableRows">
+										<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+											<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												tab-path="Technisches Demo > Komponenten > Ticket 29080 > Eigene As"
+											/>
+										</table>
+									</actual-value>
+									<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+										int="0"
+									/>
+								</action>
+							</actions>
+						</action>
+					</actions>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Technisches Demo > Komponenten > Ticket 29080"
+							/>
+						</action>
+						<action class="com.top_logic.layout.editor.scripting.CommandActionWithIdentifiers$CommandActionOpWithIdentifiers"
+							command-name="deleteComponentCommand"
+							component-name="com.top_logic.demo/technical/components/componentsTabbar.layout.xml#Tabbar"
+							user-id="root"
+						>
+							<arguments>
+								<argument name="__execution_confirmed">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+										value="true"
+									/>
+								</argument>
+							</arguments>
+							<identifiers/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.editor.commands.ReleaseLayoutConfiguration"
+							command-label="Layout freigeben"
+							command-name="releaseLayout"
+							component-implementation-comment="com.top_logic.layout.component.TabComponent"
+							component-name="mainTabbar.layout.xml#mainTabber"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Ja"
+							user-id="root"
+						/>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.editor.commands.ToggleDesignModeCommand"
+							command-label="Designmodus verlassen"
+							command-name="toggleDesignModeCommand"
+							component-implementation-comment="com.top_logic.addons.loginmessages.layout.LoginMessagesMainLayout"
+							component-name="rootLayout#masterFrame"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Berechtigungen > Benutzerverwaltung"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+									name="Brasi"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Berechtigungen > Benutzerverwaltung > Benutzer"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+							command-label="Bearbeiten"
+							command-name="customEdit"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="admin/security/accounts/detailsForm.layout.xml#Form"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Administrator"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="false"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+							command-label="Speichern"
+							command-name="defaultSave"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="admin/security/accounts/detailsForm.layout.xml#Form"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Nutzer/Action-Nutzer-Loeschen.xml"
+					template-name-comment="Nutzer Loeschen"
+				>
+					<parameters>
+						<parameter name="kontext"
+							value="lbr"
+						/>
+					</parameters>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

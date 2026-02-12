@@ -449,7 +449,36 @@ types. The "second factor" semantic is purely a matter of how the Person is conf
 
 #### 3.2.3 Login Flow Extension
 
-The modified login sequence in `LoginPageServlet` / `Login` proceeds as follows:
+After successful primary authentication, the login flow checks whether the Person has
+a `secondAuthDeviceID` configured. If so, there are two sub-cases depending on whether
+the device requires enrollment:
+
+```
+After primary authDevice.authentify() succeeds:
+
+secondAuthDeviceID set?
+│
+├── NO
+│   └── Check password expiry → session established (existing behavior)
+│
+└── YES
+    │
+    ├── device instanceof EnrollableDevice AND !isEnrolled(person)?
+    │   │
+    │   YES → Redirect to enrollment page
+    │   │     (analogous to forced password change)
+    │   │     User completes enrollment → session established
+    │   │
+    │   NO  → Redirect to second-factor code page
+    │         User enters code → device.authentify() → session established
+```
+
+This three-way branch mirrors the existing pattern where `LoginPageServlet` redirects
+to `changePwd.jsp` when `isPasswordChangeRequested()` returns `true`. The forced
+enrollment redirect works the same way -- the user has authenticated their identity
+via the primary device, but cannot proceed until the second device is set up.
+
+**Full login sequence (second factor already enrolled):**
 
 ```
 Browser                    LoginPageServlet / Login
@@ -458,60 +487,102 @@ Browser                    LoginPageServlet / Login
   |----------------------------->|
   |                              |  1. Resolve Person
   |                              |  2. authDevice.authentify(credentials)
-  |                              |
-  |                              |  3. Check: secondAuthDeviceID set?
-  |                              |
-  |                              |  --- If NO second factor required ---
-  |                              |  4a. SessionService.loginUser()
-  |                              |      -> redirect to start page
-  |                              |
-  |                              |  --- If second factor required ---
-  |                              |  4b. Store partial auth state in
-  |                              |      HTTP session (not a full login)
+  |                              |  3. secondAuthDevice set, enrolled
+  |                              |  4. Store partial auth in session
   |  <-- redirect to 2FA page --|
   |                              |
   |  POST totp-code              |
   |----------------------------->|
-  |                              |  5. Retrieve partial auth state
-  |                              |  6. secondAuthDevice.authentify(credentials)
-  |                              |
-  |                              |  --- If valid ---
-  |                              |  7. SessionService.loginUser()
-  |                              |     -> redirect to start page
-  |                              |
-  |                              |  --- If invalid ---
-  |                              |  8. Increment failure count
-  |  <-- redirect to 2FA page --|     (with rate limiting)
-  |     (with error message)     |
+  |                              |  5. secondAuthDevice.authentify(credentials)
+  |                              |  6. SessionService.loginUser()
+  |  <-- redirect to start --   |
 ```
 
-**Key design decisions:**
+**Full login sequence (enrollment required):**
 
-- **Partial authentication state:** After successful primary authentication but before
-  second-factor verification, a temporary marker is stored in the HTTP session. This is
-  *not* a full TopLogic session (no `TLSessionContext` is installed). The marker contains:
-  - The Person reference (or person name)
-  - A timestamp (to enforce a timeout for the second-factor step)
-  - The original request parameters (start page, etc.)
+```
+Browser                    LoginPageServlet / Login
+  |                              |
+  |  POST username + password    |
+  |----------------------------->|
+  |                              |  1. Resolve Person
+  |                              |  2. authDevice.authentify(credentials)
+  |                              |  3. secondAuthDevice set, NOT enrolled
+  |                              |  4. Store partial auth in session
+  |  <-- redirect to            |
+  |     enrollment page    --   |
+  |                              |
+  |  (enrollment flow:           |
+  |   QR code displayed,         |
+  |   user scans + enters code)  |
+  |  POST totp-code              |
+  |----------------------------->|
+  |                              |  5. enrollableDevice.confirmEnrollment()
+  |                              |  6. SessionService.loginUser()
+  |  <-- redirect to start --   |
+```
 
-  The marker is implemented as a dedicated session attribute (e.g.,
-  `"tl.partialAuth"`). It has a configurable timeout (default: 5 minutes). If the
-  timeout expires, the user must re-authenticate from the beginning.
+#### 3.2.4 TOTP Enrollment Use Cases
 
-- **Rate limiting:** The existing `LoginFailure` mechanism in `LoginPageServlet` is
-  reused. Failed second-factor attempts count toward the same failure tracking as
-  password failures.
+The `EnrollableDevice` interface and the TOTP enrollment flow serve three distinct
+use cases. All three use the same `beginEnrollment()` / `confirmEnrollment()` methods
+but differ in how the flow is triggered:
 
-- **No changes for SSO users:** The `ExternalAuthenticationServlet` path
-  (`loginFromExternalAuth`) is not affected. Persons authenticating via OpenID Connect
-  or other external mechanisms bypass the second-factor check, since their identity
-  provider is assumed to handle MFA independently.
+**Use case A: Voluntary enrollment from personal settings**
 
-- **LoginHook compatibility:** The existing `LoginHook` is invoked *after* successful
-  completion of all authentication factors (i.e., after step 6/7 above), preserving
-  existing behavior.
+A logged-in user with only a primary auth device decides to add a second factor.
 
-#### 3.2.4 Changes to `Login`
+1. User navigates to personal settings (within authenticated session).
+2. Clicks "Set up two-factor authentication".
+3. System calls `beginEnrollment(person)` → shows QR code.
+4. User scans QR code, enters confirmation code.
+5. System calls `confirmEnrollment(person, enrollment, code)`.
+6. On success, system sets `secondAuthDeviceID = "totp"` on the Person.
+7. From the next login onward, the second factor is required.
+
+This is analogous to the existing voluntary password change. It operates within an
+authenticated session and is initiated by the user.
+
+**Use case B: Enforced enrollment on first login**
+
+An administrator (or a provisioning system) configures `secondAuthDeviceID = "totp"` on
+a Person before the user has enrolled. On the next login:
+
+1. User enters username + password → primary auth succeeds.
+2. System detects `secondAuthDeviceID` is set but `isEnrolled()` is `false`.
+3. System stores partial auth state and redirects to enrollment page.
+4. User completes enrollment (QR code → confirmation code).
+5. System calls `confirmEnrollment()` → session established.
+
+This is analogous to the existing forced password change on first login. The
+administrator sets the requirement; the user fulfills it during login.
+
+**Use case C: Enrollment during invitation/registration**
+
+A new user going through the registration flow (section 3.5) encounters the
+`TOTPEnrollmentStep`:
+
+1. Registration flow reaches the TOTP enrollment step.
+2. System calls `beginEnrollment(person)` → shows QR code.
+3. User scans QR code, enters confirmation code.
+4. System calls `confirmEnrollment()` → step complete, flow continues.
+
+This is the same enrollment logic, just executed within the registration step
+pipeline (section 3.5.7) rather than the login flow. The `AccountCreationStep`
+sets `secondAuthDeviceID` on the newly created Person.
+
+**Summary:**
+
+| Use case | Trigger | Context | Analog |
+|---|---|---|---|
+| A: Voluntary | User-initiated from settings | Authenticated session | Voluntary password change |
+| B: Enforced | `secondAuthDeviceID` set, not enrolled | Login flow (after primary auth) | Forced password change (expired password) |
+| C: Registration | Registration step pipeline | Unauthenticated (registration flow) | Initial password setup during registration |
+
+All three use cases call the same `EnrollableDevice` methods. The only difference is
+where and when the flow is triggered.
+
+#### 3.2.5 Changes to `Login`
 
 New methods are added:
 
@@ -542,47 +613,77 @@ public boolean verifySecondFactor(Person person, String code) {
 public boolean requiresSecondFactor(Person person) {
     return person.getSecondAuthDevice() != null;
 }
+
+/**
+ * Whether the given person's second auth device requires enrollment
+ * before it can authenticate.
+ */
+public boolean requiresSecondFactorEnrollment(Person person) {
+    AuthenticationDevice device = person.getSecondAuthDevice();
+    if (device == null) {
+        return false;
+    }
+    if (device instanceof EnrollableDevice enrollable) {
+        return !enrollable.isEnrolled(person);
+    }
+    return false;
+}
 ```
 
 Note that `verifySecondFactor` uses the standard `authentify(LoginCredentials)`
 method -- the second device is just another `AuthenticationDevice` and receives the
 code via the password field in `LoginCredentials`.
 
-#### 3.2.5 Changes to `LoginPageServlet`
+#### 3.2.6 Changes to `LoginPageServlet`
 
-The servlet is extended to handle a new request parameter:
+The servlet is extended to handle two new request parameters:
 
 ```java
 public static final String SECOND_FACTOR_CODE_PARAMETER = "secondFactorCode";
+public static final String ENROLLMENT_CODE_PARAMETER = "enrollmentCode";
 ```
 
-The `checkRequest()` method is extended with a branch: if the request contains a
-`secondFactorCode` parameter (and a valid partial-auth session marker exists), the
-servlet performs second-factor verification instead of primary authentication.
+The `checkRequest()` method is extended with two new branches:
 
-#### 3.2.6 Second-Factor JSP Page
+1. If the request contains a `secondFactorCode` parameter (and a valid partial-auth
+   session marker exists), the servlet performs second-factor verification.
+2. If the request contains an `enrollmentCode` parameter (and a valid partial-auth
+   session marker with pending enrollment exists), the servlet performs enrollment
+   confirmation via `EnrollableDevice.confirmEnrollment()`.
 
-A new JSP page (e.g., `secondFactor.jsp`) is provided:
+The decision between showing the second-factor page vs. the enrollment page is made
+after primary authentication, based on `requiresSecondFactorEnrollment()`.
 
-- Displays a single input field for the TOTP code.
-- Carries the original `startPage` and other parameters as hidden fields.
-- Submits to the same `LoginPageServlet`.
+#### 3.2.7 JSP Pages
 
-The page path is registered in `ApplicationPages`:
+Two new JSP pages are provided:
+
+- **`secondFactor.jsp`** -- Displays a single input field for the TOTP code.
+  Used when the second device is already enrolled.
+- **`secondFactorEnroll.jsp`** -- Displays a QR code (from `Enrollment.getProvisioningUri()`)
+  and a manual-entry key (from `Enrollment.getManualEntryKey()`), plus an input field
+  for the confirmation code. Used when enrollment is required.
+
+Both pages carry the original `startPage` and other parameters as hidden fields and
+submit to the same `LoginPageServlet`.
+
+The page paths are registered in `ApplicationPages`:
 
 ```java
-// New method in ApplicationPages:
-String getSecondFactorPage();  // Default: "/jsp/auth/secondFactor.jsp"
+// New methods in ApplicationPages:
+String getSecondFactorPage();        // Default: "/jsp/auth/secondFactor.jsp"
+String getSecondFactorEnrollPage();  // Default: "/jsp/auth/secondFactorEnroll.jsp"
 ```
 
-#### 3.2.7 Configuration
+#### 3.2.8 Configuration
 
-The MFA timeout is added to `Login.Config`:
+New options in `Login.Config`:
 
 ```java
 /**
  * Maximum time in seconds between successful primary authentication and
- * second-factor submission. If exceeded, the user must re-authenticate.
+ * second-factor submission or enrollment completion. If exceeded, the
+ * user must re-authenticate from the beginning.
  */
 @Name("second-factor-timeout")
 @IntDefault(300)

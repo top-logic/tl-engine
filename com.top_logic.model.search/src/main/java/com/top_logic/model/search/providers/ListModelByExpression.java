@@ -119,31 +119,36 @@ public class ListModelByExpression<C extends ListModelByExpression.Config<?>>
 		Expr getSupportsModel();
 
 		/**
-		 * Function deciding whether some (new/changed) object should (now) be part of the
+		 * This function decides whether a new or changed object should be included in the
 		 * collection of objects being shown.
 		 * 
 		 * <p>
-		 * This is the case, if the object in question would (now) be included in the result of the
-		 * evaluation of the {@link #getElements()} function, when re-evaluating it.
+		 * This is the case if the object in question would be included in the result of
+		 * re-evaluating the {@link #getElements()} function.
 		 * </p>
 		 * 
 		 * <p>
-		 * The function is expected take two arguments, the potential list element as first argument
-		 * and the current component model as second argument:
+		 * The function is expected to take two arguments: the potential list element as the first
+		 * argument and the current component model as the second:
 		 * <ul>
-		 * <li>When component supports the configuration of row types, it is checked before that the
-		 * potential list element has the correct type.</li>
-		 * <li>When the method returns <code>true</code> then the element is included within the
-		 * elements.</li>
-		 * <li>When the method returns <code>false</code> then the element is removed from the
-		 * elements.</li>
-		 * <li>When the method returns <code>{@value ListModelByExpression#UPDATE_NO_CHANGE}</code>
-		 * then the element does not trigger any change in the table.</li>
-		 * <li>When the method returns <code>{@value ListModelByExpression#UPDATE_UNKNOWN}</code> it
-		 * can not be determined whether the element must be added to or removed from the list. In
-		 * this case the list is re-created and the function {@link #getElements()} decides whether
-		 * the object in question is added to the list or not.</li>
+		 * <li>When the component supports the configuration of row types, the potential list
+		 * element's type is checked beforehand.</li>
+		 * <li>When the method returns <code>true</code>, the updated or created element is included
+		 * within the elements.</li>
+		 * <li>When the method returns <code>false</code>, an updated element is removed from the
+		 * elements and a newly created element is not added.</li>
+		 * <li>When the method returns <code>{@value ListModelByExpression#UPDATE_NO_CHANGE}</code>,
+		 * the element does not trigger any change in the table.</li>
+		 * <li>When the method returns <code>{@value ListModelByExpression#UPDATE_UNKNOWN}</code>,
+		 * it cannot be determined whether the element must be added to or removed from the list. In
+		 * this case, the list is recreated and the function {@link #getElements()} decides whether
+		 * the object in question is added to the list.</li>
 		 * </ul>
+		 * </p>
+		 * 
+		 * <p>
+		 * If no function is specified, the collection of displayed elements is always recreated
+		 * whenever an updated or newly created object has the correct row type.
 		 * </p>
 		 */
 		@Name(SUPPORTS_ELEMENT_NAME)

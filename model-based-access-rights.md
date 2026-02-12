@@ -240,7 +240,7 @@ The model defines four fundamental operations, aligned with the existing `Comman
 | `CREATE` | `CommandGroupType.WRITE` | Create new instances (see section 2.3.6) |
 | `DELETE` | `CommandGroupType.DELETE` | Delete instances |
 
-Custom operations can extend this set, mapping to custom `BoundCommandGroup` definitions.
+In addition, types can declare **custom business operations** beyond these built-in ones. See section 2.3.7.
 
 #### 2.3.2 Type-Level Access Rules
 
@@ -402,6 +402,71 @@ Example configuration:
 </class>
 ```
 
+#### 2.3.7 Custom Business Operations
+
+Real-world applications often have complex operations that go beyond simple data access. An "Approve Order" operation might change `order.status` to "approved", create a new `ApprovalRecord`, and update `project.approvedBudget`. Such operations cannot be meaningfully decomposed into atomic READ/WRITE/DELETE checks:
+
+- **The permission is semantically distinct from the data it touches.** A regular Editor might be allowed to modify `Order#status` in general (e.g., changing it to "in progress"), but "Approve" requires the `Approver` role -- not because of *which* data is modified, but because of the *business meaning* of the action.
+- **Deriving permissions from atomic operations is impractical.** It would require analyzing all data modifications the operation performs in advance, and the intersection of the role sets for each atomic operation might be too restrictive, too permissive, or simply not what the application intends.
+
+The solution is to allow **custom operations on types**, analogous to the existing custom `BoundCommandGroup` mechanism. A type can declare domain-specific operations with their own role sets. The access check for a custom operation is a single check against the context instance -- the same mechanism as READ/WRITE/DELETE, just with a custom operation name. No decomposition into atomic operations is needed.
+
+```
+CustomOperationRule:
+  type:       TLClass          -- The type this operation applies to
+  operation:  String            -- Custom operation name (e.g. "approve", "cancel")
+  roles:      Set<BoundedRole>  -- Roles that are permitted
+  inherit:    boolean           -- Whether the rule applies to sub-types
+```
+
+Example:
+```
+type: myapp:Order
+operation: approve
+roles: {Manager, Approver}
+inherit: false
+
+type: myapp:Order
+operation: cancel
+roles: {Manager}
+inherit: false
+```
+
+The access check:
+```
+"Can user U approve Order instance O?"
+
+  1. Look up CustomOperationRule(Order, "approve") → required roles R = {Manager, Approver}
+
+  2. AccessManager.hasRole(U, O, R) → true/false
+     (Same instance-level check as for data access operations)
+```
+
+This maps directly to the existing `BoundCommandGroup` system: each custom operation corresponds to a `BoundCommandGroup`. The difference is that the `(operation → roles)` mapping lives on the model type, not on a view. A custom command group like `Approve` in the current system becomes a custom operation `approve` on type `Order` in the model-based system.
+
+**Three levels of access rights** emerge:
+
+1. **Data access operations** (READ, WRITE, DELETE): Defined on types and attributes, covering straightforward data access from any access path (UI, AI, REST, batch).
+2. **Custom business operations** (approve, cancel, finish, ...): Defined on types, covering complex domain-specific actions. Checked against the context instance. The implementation of what the operation actually does remains opaque to the access rights system.
+3. **Attribute-level restrictions**: Refine data access for individual properties and composition references.
+
+Configuration example:
+```xml
+<class name="Order">
+    <annotations>
+        <access-rights>
+            <grant operation="read"    roles="Viewer, Editor, Manager, Approver"/>
+            <grant operation="write"   roles="Editor, Manager"/>
+            <grant operation="delete"  roles="Manager"/>
+            <grant operation="approve" roles="Manager, Approver"/>
+            <grant operation="cancel"  roles="Manager"/>
+        </access-rights>
+    </annotations>
+</class>
+```
+
+The AI assistant or REST API uses the data access operations (READ, WRITE, DELETE) and attribute-level restrictions for general data access. When invoking a specific business operation (e.g., through a tool or endpoint that corresponds to "approve this order"), it checks the custom operation.
+
 ### 2.4 Configuration Model
 
 The access rules are stored as part of the TL model, using annotations on model elements.
@@ -474,9 +539,14 @@ View "Customer Details" displays type "myapp:Customer"
   → Read commands require: TypeAccessRule(Customer, READ).roles = {Viewer, Editor, Manager}
   → Write commands require: TypeAccessRule(Customer, WRITE).roles = {Editor, Manager}
   → Delete commands require: TypeAccessRule(Customer, DELETE).roles = {Manager}
+
+View "Order Processing" displays type "myapp:Order"
+  → Read commands require: TypeAccessRule(Order, READ).roles = {Viewer, Editor, Manager, Approver}
+  → Write commands require: TypeAccessRule(Order, WRITE).roles = {Editor, Manager}
+  → "Approve" commands require: CustomOperationRule(Order, "approve").roles = {Manager, Approver}
 ```
 
-This replaces the per-view `PersBoundComp` configuration for views that follow the standard pattern. Views with special requirements can still override with explicit view-level configuration.
+Custom `BoundCommandGroup`s in views are mapped to custom operations on the displayed type. This replaces the per-view `PersBoundComp` configuration for views that follow the standard pattern. Views with special requirements can still override with explicit view-level configuration.
 
 ### 2.6 API for Programmatic Access
 
@@ -521,6 +591,22 @@ public interface ModelAccessRights {
                             TLStructuredTypePart compositionAttribute);
 
     /**
+     * Checks whether the given person can perform a custom business
+     * operation on the given instance.
+     *
+     * @param customOperation  The operation name (e.g. "approve", "cancel").
+     *                         Must match a custom operation declared on the
+     *                         instance's type.
+     */
+    boolean isAllowed(Person person, TLObject instance, String customOperation);
+
+    /**
+     * Returns the roles that are permitted to perform a custom business
+     * operation on instances of the given type.
+     */
+    Set<BoundedRole> getAllowedRoles(TLClass type, String customOperation);
+
+    /**
      * Returns all types that the given person can perform the given
      * operation on (based on type-level rules; instance-level checks
      * still required for specific objects).
@@ -537,6 +623,7 @@ The AI assistant uses the `ModelAccessRights` API directly:
 - Before reading data: `isAllowed(currentUser, instance, READ)`
 - Before modifying data: `isAllowed(currentUser, instance, WRITE)`
 - Before creating objects: `isAllowedCreate(currentUser, parent, compositionAttr)`
+- Before business operations: `isAllowed(currentUser, instance, "approve")`
 - To explain permissions: `getAllowedRoles(type, operation)` → map to users
 
 #### 2.7.2 REST API / OpenAPI
@@ -561,6 +648,7 @@ canCreate($parent, $compositionAttribute)
 canDelete($instance)
 canReadAttribute($instance, $attribute)
 canWriteAttribute($instance, $attribute)
+canExecute($instance, $customOperation)
 ```
 
 ### 2.8 Migration Path
@@ -585,6 +673,9 @@ With model-based access rights in place:
 
 **"Which data can the AI assistant access for the current user?"**
 → `getAccessibleTypes(currentUser, READ)` gives all readable types. For each type, instance-level checks filter to the specific objects the user can see.
+
+**"Who can approve orders?"**
+→ `getAllowedRoles(Order, "approve")` = {Manager, Approver}. The permission for the complex "approve" operation is defined directly on the Order type, independent of which views offer an Approve button.
 
 **"What would change if we give role X write access to type T?"**
 → The impact is immediately visible: all users with role X on any T instance would gain write access. No need to trace through view configurations.

@@ -23,7 +23,12 @@ import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * JSON API for the agentic chat: POST /chat/send, GET /chat/updates, GET /chat/events (SSE).
+ *
+ * <p>
  * Uses session-scoped {@link TaskProgressTracker} via {@link ChatSessionRegistry}.
+ * Authentication is enforced by TopLogic's {@code SessionCheckingFilter} mapped to {@code /chat/*}
+ * in the {@code web-fragment.xml}, so only authenticated users can reach this servlet.
+ * </p>
  */
 public class ChatServlet extends HttpServlet {
 

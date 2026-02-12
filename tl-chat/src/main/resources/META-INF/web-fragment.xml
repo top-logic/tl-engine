@@ -5,6 +5,17 @@
 	version="3.1">
 	<name>tl-chat</name>
 
+	<filter>
+		<filter-name>chatSessionCheckingFilter</filter-name>
+		<filter-class>com.top_logic.base.accesscontrol.SessionCheckingFilter</filter-class>
+		<async-supported>true</async-supported>
+	</filter>
+
+	<filter-mapping>
+		<filter-name>chatSessionCheckingFilter</filter-name>
+		<url-pattern>/chat/*</url-pattern>
+	</filter-mapping>
+
 	<servlet>
 		<servlet-name>ChatServlet</servlet-name>
 		<servlet-class>com.top_logic.ai.chat.api.ChatServlet</servlet-class>

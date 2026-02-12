@@ -87,7 +87,7 @@ public class ChatServlet extends HttpServlet {
 		// Get user name: try TLContext first (if behind TL filter), then tracker's stored name
 		final String userName = getCurrentUserName(tracker);
 		ChatProcessor.SendResult result = ThreadContextManager.inSystemInteraction(ChatServlet.class, () -> {
-			return ChatSendService.send(tracker, userName, messageText, null, null);
+			return ChatProcessor.sendMessage(tracker, userName, messageText, null, null);
 		});
 
 		resp.setStatus(HttpServletResponse.SC_OK);

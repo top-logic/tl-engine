@@ -21,7 +21,6 @@ import com.top_logic.layout.UpdateQueue;
 import com.top_logic.layout.basic.AbstractControlBase;
 import com.top_logic.layout.basic.ControlCommand;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.TLContext;
 
 /**
  * Chat control that renders messages, task traces, and an input section.
@@ -92,6 +91,8 @@ public class ChatControl extends AbstractControlBase {
 		out.writeAttribute("data-chat-messages-id", getID() + "-messages");
 		out.writeAttribute("data-chat-input-id", getID() + "-input");
 		out.writeAttribute("data-chat-button-id", getID() + "-button");
+		out.writeAttribute("data-chat-user-name",
+			_taskTracker.getUserName() != null ? _taskTracker.getUserName() : "User");
 		out.endBeginTag();
 		{
 			writeMessages(context, out);
@@ -550,7 +551,8 @@ public class ChatControl extends AbstractControlBase {
 			if (text != null) {
 				String trimmedText = text.trim();
 				if (!trimmedText.isEmpty()) {
-					String userName = getCurrentUserName();
+						String storedName = chatControl._taskTracker.getUserName();
+					String userName = storedName != null ? storedName : "Anonymous";
 					// No UIExecutor polling: the client uses SSE for real-time updates.
 					ChatProcessor.SendResult result = ChatProcessor.sendMessage(
 						chatControl._taskTracker, userName, trimmedText,
@@ -568,18 +570,6 @@ public class ChatControl extends AbstractControlBase {
 			}
 
 			return HandlerResult.DEFAULT_RESULT;
-		}
-
-		private String getCurrentUserName() {
-			try {
-				TLContext context = TLContext.getContext();
-				if (context != null && context.getPerson() != null) {
-					return context.getPerson().getName();
-				}
-			} catch (Exception e) {
-				// Fallback if person not available
-			}
-			return "Anonymous";
 		}
 
 		@Override

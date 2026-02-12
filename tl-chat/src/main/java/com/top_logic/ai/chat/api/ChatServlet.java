@@ -13,7 +13,6 @@ import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.basic.thread.ThreadContextManager;
-import com.top_logic.util.TLContext;
 
 import jakarta.servlet.AsyncContext;
 import jakarta.servlet.ServletException;
@@ -89,8 +88,8 @@ public class ChatServlet extends HttpServlet {
 
 		TaskProgressTracker tracker = ChatSessionRegistry.getOrCreate(req.getSession(false));
 
-		// Get user name: try TLContext first (if behind TL filter), then tracker's stored name
-		final String userName = getCurrentUserName(tracker);
+		String storedName = tracker.getUserName();
+		final String userName = storedName != null ? storedName : "Anonymous";
 		ChatProcessor.SendResult result = ThreadContextManager.inSystemInteraction(ChatServlet.class, () -> {
 			return ChatProcessor.sendMessage(tracker, userName, messageText, null, null);
 		});
@@ -143,20 +142,4 @@ public class ChatServlet extends HttpServlet {
 		handler.start();
 	}
 
-	private static String getCurrentUserName(TaskProgressTracker tracker) {
-		try {
-			TLContext context = TLContext.getContext();
-			if (context != null && context.getPerson() != null) {
-				return context.getPerson().getName();
-			}
-		} catch (Exception ignored) {
-			// fallback
-		}
-		// Fall back to the name stored on the tracker (set by ChatComponentBuilder in TL context)
-		String storedName = tracker.getUserName();
-		if (storedName != null) {
-			return storedName;
-		}
-		return "Anonymous";
-	}
 }

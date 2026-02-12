@@ -120,13 +120,18 @@
 		if (existingMsg) return;
 
 		// If this is a server-delivered user message, absorb it into the pending optimistic message.
-		// Only update the canonical message ID (for deduplication); keep the client-provided
-		// userName and time which are already correct on the optimistic element.
+		// Update the canonical message ID (for deduplication) and the displayed user name
+		// to the server-authoritative value.
 		if (msg.role === 'user' && !msg.optimistic) {
 			var optimistic = container.querySelector('.chat-message[data-optimistic="true"]');
 			if (optimistic) {
 				optimistic.setAttribute('data-message-id', msg.id || ('m' + container.children.length));
 				optimistic.removeAttribute('data-optimistic');
+				// Update displayed user name to server-authoritative value
+				var userSpan = optimistic.querySelector('.chat-user');
+				if (userSpan && msg.userName) {
+					userSpan.textContent = msg.userName;
+				}
 				return;
 			}
 		}
@@ -440,6 +445,7 @@
 			log('Missing elements', { messages: !!el.messages, input: !!el.input, button: !!el.button });
 			return;
 		}
+		var userName = root.getAttribute('data-chat-user-name') || 'User';
 		log('Elements found, initializing');
 
 		var state = {
@@ -608,7 +614,7 @@
 		appendMessage(el.messages, {
 			id: tempMsgId,
 			role: 'user',
-			userName: 'User',
+			userName: userName,
 			content: text,
 			time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }),
 			optimistic: true

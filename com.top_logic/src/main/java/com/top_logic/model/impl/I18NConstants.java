@@ -24,6 +24,16 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey2 ERROR_INITIALIZING_OBJECT__TYPE_MSG;
 
+	/**
+	 * @en Cannot modify derived attribute ''{0}''.
+	 */
+	public static ResKey1 ERROR_CANNOT_MODIFY_DERIVED_ATTRIBUTE__ATTR;
+
+	/**
+	 * @en The type ''{0}'' has no attribute ''{1}''.
+	 */
+	public static ResKey2 ERROR_HAS_NO_PART__TYPE_PART;
+
 	static {
         initConstants(I18NConstants.class);
     }

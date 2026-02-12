@@ -8,27 +8,12 @@ package com.top_logic.ai.chat.layout;
 import java.io.IOException;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
-import com.top_logic.ai.service.agents.OrchestratorAgent;
 import com.top_logic.ai.service.scripting.Converters;
-import com.top_logic.ai.service.tools.ToolCallTracker;
-import com.top_logic.ai.service.tools.ToolCallTracking;
-import com.top_logic.ai.service.tools.TraceEntry;
 import com.top_logic.ai.service.tools.util.JsonPrettyPrint;
-import com.top_logic.basic.Logger;
-import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Control;
@@ -41,9 +26,13 @@ import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.TLContext;
 
 /**
- * A minimal chat control displaying messages and allowing user input.
+ * Chat control that renders messages, task traces, and an input section.
  *
- * @author jhu
+ * <p>
+ * All background processing logic (AI execution, polling, state management) lives in
+ * {@link ChatProcessor}. This class is responsible only for rendering and the thin
+ * {@link SendMessage} command fallback.
+ * </p>
  */
 public class ChatControl extends AbstractControlBase {
 
@@ -52,49 +41,10 @@ public class ChatControl extends AbstractControlBase {
 
 	private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm:ss");
 
-	/** Polling interval for UI updates (milliseconds) */
-	private static final long POLL_INTERVAL_MS = 500;
-
-	/** Funny placeholder descriptions for in-progress chat tasks (Cursor/Claude style). */
-	private static final String[] CHAT_TASK_PLACEHOLDERS = {
-		"Flabbergasting...",
-		"Contemplating...",
-		"Warming up neurons...",
-		"Consulting the oracle...",
-		"Assembling thoughts...",
-		"Polishing the answer...",
-		"Thinking really hard...",
-		"Consulting ancient scrolls...",
-		"Loading infinite wisdom...",
-		"Brewing ideas...",
-		"Reticulating splines...",
-		"Herding cats...",
-		"Convincing the AI...",
-		"Spinning up...",
-	};
-
-	private static String randomChatTaskPlaceholder() {
-		return CHAT_TASK_PLACEHOLDERS[ThreadLocalRandom.current().nextInt(CHAT_TASK_PLACEHOLDERS.length)];
-	}
-
-	/** Background thread pool for AI operations */
-	private static final ExecutorService BACKGROUND_EXECUTOR =
-		Executors.newCachedThreadPool(new ThreadFactory() {
-			private final AtomicInteger _counter = new AtomicInteger();
-
-			@Override
-			public Thread newThread(Runnable r) {
-				Thread thread = new Thread(r);
-				thread.setName("ChatControl-AI-Worker-" + _counter.incrementAndGet());
-				thread.setDaemon(true);
-				return thread;
-			}
-		});
-
 	private final Chat _chat;
 
 	/** Shared state for background processing (null when not processing) */
-	private AIProcessingState _processingState = null;
+	private ChatProcessor.AIProcessingState _processingState = null;
 
 	/** Session-scoped task progress tracker */
 	private final TaskProgressTracker _taskTracker;
@@ -177,7 +127,7 @@ public class ChatControl extends AbstractControlBase {
 		out.writeAttribute(ID_ATTR, messagesId);
 		out.endBeginTag();
 		{
-			// Render entries in order: user message → task trace → agent response
+			// Render entries in order: user message -> task trace -> agent response
 			int messageIndex = 0;
 			for (ChatEntry entry : _chat.getEntries()) {
 				if (entry instanceof ChatEntry.MessageEntry me) {
@@ -193,11 +143,8 @@ public class ChatControl extends AbstractControlBase {
 				}
 			}
 			// Show in-progress task (not yet in entries) so trace appears after user message.
-			// Use state from this control or from tracker so returning to the chat view shows it.
-			// Only show here when task is still IN_PROGRESS; when COMPLETED/ERROR it's already
-			// in entries as a snapshot, so skip to avoid rendering the same task twice.
-			AIProcessingState state = _processingState != null ? _processingState
-				: (AIProcessingState) _taskTracker.getCurrentProcessingState();
+			ChatProcessor.AIProcessingState state = _processingState != null ? _processingState
+				: (ChatProcessor.AIProcessingState) _taskTracker.getCurrentProcessingState();
 			if (state != null) {
 				String currentTaskId = state.getCurrentTaskId();
 				if (currentTaskId != null) {
@@ -310,7 +257,7 @@ public class ChatControl extends AbstractControlBase {
 			out.writeAttribute(CLASS_ATTR, "chat-task-expand");
 			out.writeAttribute(ID_ATTR, arrowId);
 			out.endBeginTag();
-			out.writeText("▼");
+			out.writeText("\u25BC");
 			out.endTag(SPAN);
 		}
 		out.endTag(DIV);
@@ -372,7 +319,7 @@ public class ChatControl extends AbstractControlBase {
 				out.writeAttribute(CLASS_ATTR, "chat-agent-call-expand");
 				out.writeAttribute(ID_ATTR, arrowId);
 				out.endBeginTag();
-				out.writeText("▶");
+				out.writeText("\u25B6");
 				out.endTag(SPAN);
 			}
 			out.endTag(DIV);
@@ -414,22 +361,6 @@ public class ChatControl extends AbstractControlBase {
 		out.endTag(DIV);
 	}
 
-	private static ChatTimelineEvent toChatTimelineEvent(TraceEntry entry, ToolCallTracker tracker) {
-		if (entry instanceof TraceEntry.ToolCallTraceEntry tc) {
-			String resultJson = tracker.getRawResultJsons().get(tc.resultRef());
-			ChatToolCall chatToolCall = new ChatToolCall(tc.toolName(), tc.args(), resultJson);
-			return ChatTimelineEvent.toolCall(chatToolCall);
-		}
-		if (entry instanceof TraceEntry.AgentCallTraceEntry ac) {
-			return ChatTimelineEvent.agentCall(ac.fromAgent(), ac.toAgent(), ac.inputSummary(), ac.resultSummary());
-		}
-		if (entry instanceof TraceEntry.MutableAgentCallTraceEntry mac) {
-			return ChatTimelineEvent.agentCallWithDynamicResult(mac.fromAgent(), mac.toAgent(), mac.inputSummary(),
-				mac::resultSummary);
-		}
-		return null;
-	}
-
 	private void writeToolCall(TagWriter out, ChatToolCall toolCall, String eventId) throws IOException {
 		String toolDivId = "tool-" + toolCall.getId();
 
@@ -468,12 +399,12 @@ public class ChatControl extends AbstractControlBase {
 			out.writeText(formatArgsFull(toolCall.getArgs()));
 			out.endTag(SPAN);
 
-			// Expand arrow (▶ when collapsed, ▼ when expanded)
+			// Expand arrow
 			out.beginBeginTag(SPAN);
 			out.writeAttribute(CLASS_ATTR, "chat-tool-expand");
 			out.writeAttribute(ID_ATTR, arrowId);
 			out.endBeginTag();
-			out.writeText("▶");
+			out.writeText("\u25B6");
 			out.endTag(SPAN);
 		}
 		out.endTag(DIV);
@@ -506,25 +437,21 @@ public class ChatControl extends AbstractControlBase {
 	private String getTaskIcon(ChatTask.TaskStatus status) {
 		switch (status) {
 			case COMPLETED:
-				return "✓";
+				return "\u2713";
 			case ERROR:
-				return "✗";
+				return "\u2717";
 			case IN_PROGRESS:
-				return "⏳";
+				return "\u23F3";
 			case PENDING:
-				return "○";
+				return "\u25CB";
 			default:
-				return "○";
+				return "\u25CB";
 		}
 	}
 
 	/** Interval in seconds after which the in-progress placeholder message rotates. */
 	private static final int PLACEHOLDER_ROTATE_SECONDS = 25;
 
-	/**
-	 * Returns the header text for a task: "Completed" or "Failed" when done; while in progress,
-	 * a funny placeholder that rotates every {@value #PLACEHOLDER_ROTATE_SECONDS} seconds.
-	 */
 	private static String getTaskHeaderDescription(ChatTask task) {
 		switch (task.getStatus()) {
 			case COMPLETED:
@@ -533,20 +460,18 @@ public class ChatControl extends AbstractControlBase {
 				return "Failed";
 			case IN_PROGRESS: {
 				long elapsedSeconds = java.time.Duration.between(task.getStartTime(), java.time.Instant.now()).getSeconds();
-				int index = (int) (elapsedSeconds / PLACEHOLDER_ROTATE_SECONDS) % CHAT_TASK_PLACEHOLDERS.length;
-				return CHAT_TASK_PLACEHOLDERS[index];
+				int index = (int) (elapsedSeconds / PLACEHOLDER_ROTATE_SECONDS) % ChatProcessor.CHAT_TASK_PLACEHOLDERS.length;
+				return ChatProcessor.CHAT_TASK_PLACEHOLDERS[index];
 			}
 			default:
 				return task.getDescription();
 		}
 	}
 
-	/** Formats duration in seconds for the overall task trace. */
 	private String formatDuration(long ms) {
 		return String.format("%.1fs", ms / 1000.0);
 	}
 
-	/** Full arguments string for display (no truncation). */
 	private String formatArgsFull(Map<String, Object> args) {
 		if (args == null || args.isEmpty()) {
 			return "()";
@@ -574,7 +499,7 @@ public class ChatControl extends AbstractControlBase {
 	private void writeInputSection(TagWriter out) throws IOException {
 		String controlId = getID();
 		String inputId = getInputId();
-		// Only use TL path when script has not inited (data-tl-chat-inited); else script handles send → incremental
+		// Only use TL path when script has not inited (data-tl-chat-inited); else script handles send
 		String sendOnClick = "var root=document.getElementById('" + controlId + "');"
 			+ "if(root&&root.getAttribute('data-tl-chat-inited')==='true')return;"
 			+ "var inp=document.getElementById('" + inputId + "');var t=inp?inp.value.trim():'';"
@@ -628,10 +553,10 @@ public class ChatControl extends AbstractControlBase {
 		out.append("  if (body && arrow) {");
 		out.append("    if (body.style.display === 'none' || body.style.display === '') {");
 		out.append("      body.style.display = 'block';");
-		out.append("      arrow.textContent = '▼';");
+		out.append("      arrow.textContent = '\u25BC';");
 		out.append("    } else {");
 		out.append("      body.style.display = 'none';");
-		out.append("      arrow.textContent = '▶';");
+		out.append("      arrow.textContent = '\u25B6';");
 		out.append("    }");
 		out.append("  }");
 		out.append("}");
@@ -641,10 +566,10 @@ public class ChatControl extends AbstractControlBase {
 		out.append("  if (result && arrow) {");
 		out.append("    if (result.style.display === 'none' || result.style.display === '') {");
 		out.append("      result.style.display = 'block';");
-		out.append("      arrow.textContent = '▼';");
+		out.append("      arrow.textContent = '\u25BC';");
 		out.append("    } else {");
 		out.append("      result.style.display = 'none';");
-		out.append("      arrow.textContent = '▶';");
+		out.append("      arrow.textContent = '\u25B6';");
 		out.append("    }");
 		out.append("  }");
 		out.append("}");
@@ -652,409 +577,23 @@ public class ChatControl extends AbstractControlBase {
 	}
 
 	/**
-	 * Executes user message through OrchestratorAgent (single chat entrypoint).
-	 * Sets trace so AgentCall and ToolCall events are visible in the UI timeline.
-	 * Uses state from tracker; taskId must already be set on state (by sendMessage / ChatSendService).
-	 */
-	private static void executeOrchestrator(TaskProgressTracker taskTracker, AIProcessingState state,
-			String userMessage) throws Exception {
-		if (state == null) {
-			return;
-		}
-		String taskId = state.getCurrentTaskId();
-		if (taskId == null) {
-			return;
-		}
-
-		ToolCallTracker tracker = new ToolCallTracker();
-		ToolCallTracking.setTracker(tracker);
-		state.setToolCallTracker(tracker);
-
-		try {
-			Logger.info("ChatControl: Starting Orchestrator in thread: " + Thread.currentThread().getName(),
-				ChatControl.class);
-
-			String result = OrchestratorAgent.chat(userMessage);
-
-			state.addPendingMessage(new ChatMessage("Agent", result));
-			taskTracker.completeTask(taskId);
-
-		} catch (Exception ex) {
-			taskTracker.failTask(taskId, ex.getMessage());
-			throw ex;
-		} finally {
-			ToolCallTracking.setTracker(null);
-			state.setToolCallTracker(null);
-		}
-	}
-
-	/**
-	 * Applies poll updates for the given state to chat and taskTracker. Clears tracker and
-	 * cancels polling when processing is done. Used by both the control and the scheduled
-	 * polling runnable (so updates continue after navigation away).
-	 *
-	 * <p>
-	 * Public so {@link com.top_logic.ai.chat.api.ChatServlet} and
-	 * {@link com.top_logic.ai.chat.api.ChatSSEHandler} can call it to sync timeline events
-	 * from ToolCallTracker to TaskProgressTracker before returning updates.
-	 * </p>
-	 */
-	public static boolean applyPollUpdates(AIProcessingState state, Chat chat,
-			TaskProgressTracker taskTracker) {
-		if (state == null) {
-			return false;
-		}
-		boolean hasUpdates = false;
-		String currentTaskId = state.getCurrentTaskId();
-
-		// Check for new messages (agent response when task completes)
-		List<ChatMessage> newMessages = state.consumePendingMessages();
-		if (!newMessages.isEmpty()) {
-			if (currentTaskId != null) {
-				ChatTask task = taskTracker.getTask(currentTaskId);
-				chat.addTaskSnapshot(task);
-			}
-			for (ChatMessage msg : newMessages) {
-				chat.addMessage(msg);
-			}
-			hasUpdates = true;
-		}
-
-		// Check for new timeline events (tool calls and agent calls) in real-time
-		ToolCallTracker tracker = state.getToolCallTracker();
-		if (currentTaskId != null && tracker != null) {
-			List<TraceEntry> timeline = tracker.getTimeline();
-			int currentCount = timeline.size();
-			int lastSeen = state.getLastSeenToolCallCount();
-			if (currentCount > lastSeen) {
-				for (int i = lastSeen; i < currentCount; i++) {
-					TraceEntry entry = timeline.get(i);
-					ChatTimelineEvent chatEv = toChatTimelineEvent(entry, tracker);
-					if (chatEv != null) {
-						taskTracker.addTimelineEvent(currentTaskId, chatEv);
-					}
-				}
-				state.setLastSeenToolCallCount(currentCount);
-				hasUpdates = true;
-			}
-		}
-
-		// Check for completion
-		if (!state.isProcessing()) {
-			if (state._pollingTask != null) {
-				state._pollingTask.cancel(false);
-				state._pollingTask = null;
-			}
-			Throwable error = state.getError();
-			if (error != null) {
-				if (currentTaskId != null) {
-					ChatTask task = taskTracker.getTask(currentTaskId);
-					chat.addTaskSnapshot(task);
-				}
-				String errorMsg = "Error: " + error.getMessage();
-				if (error instanceof InterruptedException) {
-					errorMsg = "Processing was cancelled";
-				}
-				chat.addMessage(new ChatMessage("AI", errorMsg));
-				hasUpdates = true;
-			}
-			taskTracker.clearCurrentProcessingState();
-		}
-		return hasUpdates;
-	}
-
-	/**
-	 * Polls for AI processing updates and updates the UI. Uses state from this control or from
-	 * tracker so polling continues to apply updates after navigation away and back.
+	 * Polls for AI processing updates and updates the UI.
 	 */
 	private void pollForUpdates() {
-		AIProcessingState state = _processingState != null ? _processingState
-			: (AIProcessingState) _taskTracker.getCurrentProcessingState();
+		ChatProcessor.AIProcessingState state = _processingState != null ? _processingState
+			: (ChatProcessor.AIProcessingState) _taskTracker.getCurrentProcessingState();
 
 		if (state == null) {
 			return;
 		}
 
-		boolean hasUpdates = applyPollUpdates(state, _chat, _taskTracker);
+		boolean hasUpdates = ChatProcessor.applyPollUpdates(state, _chat, _taskTracker);
 		if (hasUpdates) {
 			requestRepaint();
 		}
 		if (_taskTracker.getCurrentProcessingState() == null) {
 			_processingState = null;
 		}
-	}
-
-	/**
-	 * Background task for AI processing with detailed progress tracking.
-	 */
-	private static class AIBackgroundTask implements Runnable {
-		private final TaskProgressTracker _taskTracker;
-		private final String _userMessage;
-
-		AIBackgroundTask(TaskProgressTracker taskTracker, String userMessage) {
-			_taskTracker = taskTracker;
-			_userMessage = userMessage;
-		}
-
-		@Override
-		public void run() {
-			AIProcessingState state = (AIProcessingState) _taskTracker.getCurrentProcessingState();
-			if (state == null) {
-				return;
-			}
-			try {
-				ThreadContextManager.inSystemInteraction(ChatControl.class, () -> {
-					try {
-						executeOrchestrator(_taskTracker, state, _userMessage);
-						state.completeSuccessfully();
-						return null;
-					} catch (InterruptedException ex) {
-						Thread.currentThread().interrupt();
-						state.completeWithError(ex);
-						return null;
-					} catch (Exception ex) {
-						Logger.error("AI processing failed: " + ex.getMessage(), ex, ChatControl.class);
-						state.completeWithError(ex);
-						return null;
-					}
-				});
-			} catch (Exception ex) {
-				Logger.error("Failed to run background task: " + ex.getMessage(), ex, ChatControl.class);
-				state.completeWithError(ex);
-			}
-		}
-	}
-
-	/**
-	 * Thread-safe container for AI processing state shared between background and UI threads.
-	 *
-	 * <p>
-	 * Public so {@link com.top_logic.ai.chat.api.ChatServlet} can access it for syncing
-	 * timeline events.
-	 * </p>
-	 */
-	public static class AIProcessingState {
-		private final Object _lock = new Object();
-
-		// Processing status
-		private volatile boolean _processing = false;
-		private volatile boolean _completed = false;
-		private volatile Throwable _error = null;
-
-		// Current task ID for progress tracking
-		private volatile String _currentTaskId = null;
-
-		// Tool call tracking for real-time updates
-		private volatile ToolCallTracker _toolCallTracker = null;
-		private final AtomicInteger _lastSeenToolCallCount = new AtomicInteger(0);
-
-		// Result accumulation
-		private final List<ChatMessage> _pendingMessages = new ArrayList<>();
-
-		// Lifecycle management
-		volatile Future<?> _backgroundTask = null;
-		volatile ScheduledFuture<?> _pollingTask = null;
-
-		public boolean isProcessing() {
-			synchronized (_lock) {
-				return _processing && !_completed;
-			}
-		}
-
-		public void startProcessing() {
-			synchronized (_lock) {
-				_processing = true;
-				_completed = false;
-				_error = null;
-				_pendingMessages.clear();
-			}
-		}
-
-		public void addPendingMessage(ChatMessage message) {
-			synchronized (_lock) {
-				_pendingMessages.add(message);
-			}
-		}
-
-		public List<ChatMessage> consumePendingMessages() {
-			synchronized (_lock) {
-				List<ChatMessage> result = new ArrayList<>(_pendingMessages);
-				_pendingMessages.clear();
-				return result;
-			}
-		}
-
-		public void completeSuccessfully() {
-			synchronized (_lock) {
-				_processing = false;
-				_completed = true;
-			}
-		}
-
-		public void completeWithError(Throwable error) {
-			synchronized (_lock) {
-				_processing = false;
-				_completed = true;
-				_error = error;
-			}
-		}
-
-		public void cancel() {
-			synchronized (_lock) {
-				if (_backgroundTask != null) {
-					_backgroundTask.cancel(true);
-				}
-				if (_pollingTask != null) {
-					_pollingTask.cancel(false);
-				}
-			}
-		}
-
-		public Throwable getError() {
-			return _error;
-		}
-
-		public void setCurrentTaskId(String taskId) {
-			_currentTaskId = taskId;
-		}
-
-		public String getCurrentTaskId() {
-			return _currentTaskId;
-		}
-
-		public void setToolCallTracker(ToolCallTracker tracker) {
-			_toolCallTracker = tracker;
-			_lastSeenToolCallCount.set(0);
-		}
-
-		public ToolCallTracker getToolCallTracker() {
-			return _toolCallTracker;
-		}
-
-		public int getLastSeenToolCallCount() {
-			return _lastSeenToolCallCount.get();
-		}
-
-		public void setLastSeenToolCallCount(int count) {
-			_lastSeenToolCallCount.set(count);
-		}
-	}
-
-	/**
-	 * Shared send logic: adds user message, starts task, submits background orchestrator, optionally
-	 * schedules UI polling. Used by SendMessage (TL UI) and ChatServlet (JSON API).
-	 *
-	 * @param tracker
-	 *        Task progress tracker for this session.
-	 * @param userName
-	 *        Display name of the user sending the message.
-	 * @param userMessage
-	 *        The message text.
-	 * @param repaintRequester
-	 *        Called when polling has updates (e.g. requestRepaint); may be null for API-only.
-	 * @param uiExecutor
-	 *        Top Logic UI executor for server-side polling; if null, no polling is scheduled (client polls).
-	 * @return The send result (task ID, or busy/error); never null.
-	 */
-	public static SendResult sendMessage(TaskProgressTracker tracker, String userName, String userMessage,
-			Runnable repaintRequester, ScheduledExecutorService uiExecutor) {
-		if (isProcessing(tracker)) {
-			tracker.getChat().addMessage(new ChatMessage("System", "Please wait for the current response to complete."));
-			if (repaintRequester != null) {
-				repaintRequester.run();
-			}
-			return SendResult.busy();
-		}
-
-		ChatMessage message = new ChatMessage(userName, userMessage);
-		tracker.getChat().addMessage(message);
-
-		AIProcessingState state = new AIProcessingState();
-		state.startProcessing();
-		String taskId = tracker.startTask(randomChatTaskPlaceholder());
-		state.setCurrentTaskId(taskId);
-		tracker.setCurrentProcessingState(state);
-		if (repaintRequester != null) {
-			tracker.setRepaintRequester(repaintRequester);
-		}
-
-		Future<?> future = BACKGROUND_EXECUTOR.submit(new AIBackgroundTask(tracker, userMessage));
-		state._backgroundTask = future;
-
-		if (uiExecutor != null) {
-			try {
-				ScheduledFuture<?> pollingTask = uiExecutor.scheduleWithFixedDelay(
-					() -> {
-						AIProcessingState s = (AIProcessingState) tracker.getCurrentProcessingState();
-						if (s == null) {
-							return;
-						}
-						boolean hasUpdates = applyPollUpdates(s, tracker.getChat(), tracker);
-						if (hasUpdates) {
-							tracker.requestRepaintIfNeeded();
-						}
-					},
-					POLL_INTERVAL_MS,
-					POLL_INTERVAL_MS,
-					TimeUnit.MILLISECONDS);
-				state._pollingTask = pollingTask;
-			} catch (Exception ex) {
-				Logger.error("Failed to schedule UI polling: " + ex.getMessage(), ex, ChatControl.class);
-				future.cancel(true);
-				tracker.clearCurrentProcessingState();
-				return SendResult.error();
-			}
-		}
-		return SendResult.ok(taskId);
-	}
-
-	/** Result of a send attempt: success (taskId), busy (already processing), or error. */
-	public static final class SendResult {
-		private final String _taskId;
-		private final boolean _busy;
-
-		private SendResult(String taskId, boolean busy) {
-			_taskId = taskId;
-			_busy = busy;
-		}
-
-		public static SendResult ok(String taskId) {
-			return new SendResult(taskId, false);
-		}
-
-		public static SendResult busy() {
-			return new SendResult(null, true);
-		}
-
-		public static SendResult error() {
-			return new SendResult(null, false);
-		}
-
-		public String getTaskId() {
-			return _taskId;
-		}
-
-		public boolean isBusy() {
-			return _busy;
-		}
-	}
-
-	/**
-	 * Returns whether an AI task is currently in progress for the given tracker.
-	 * Used by the JSON API to build the updates response.
-	 */
-	public static boolean isProcessing(TaskProgressTracker tracker) {
-		Object state = tracker.getCurrentProcessingState();
-		return state instanceof AIProcessingState s && s.isProcessing();
-	}
-
-	/**
-	 * Returns the current task ID for the given tracker, or null if none.
-	 * Used by the JSON API to build the updates response.
-	 */
-	public static String getCurrentTaskId(TaskProgressTracker tracker) {
-		Object state = tracker.getCurrentProcessingState();
-		return state instanceof AIProcessingState s ? s.getCurrentTaskId() : null;
 	}
 
 	/**
@@ -1089,10 +628,12 @@ public class ChatControl extends AbstractControlBase {
 					} catch (Exception ex) {
 						uiExecutor = null;
 					}
-					SendResult result = sendMessage(chatControl._taskTracker, userName, trimmedText,
+					ChatProcessor.SendResult result = ChatProcessor.sendMessage(
+						chatControl._taskTracker, userName, trimmedText,
 						() -> chatControl.requestRepaint(), uiExecutor);
 					if (result.getTaskId() != null) {
-						chatControl._processingState = (AIProcessingState) chatControl._taskTracker.getCurrentProcessingState();
+						chatControl._processingState =
+							(ChatProcessor.AIProcessingState) chatControl._taskTracker.getCurrentProcessingState();
 						chatControl.requestRepaint();
 					} else if (!result.isBusy()) {
 						chatControl._chat.addMessage(new ChatMessage("System", "Failed to start AI processing"));

@@ -22,8 +22,8 @@ import jakarta.servlet.AsyncListener;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import com.top_logic.ai.chat.layout.Chat;
-import com.top_logic.ai.chat.layout.ChatControl;
 import com.top_logic.ai.chat.layout.ChatEntry;
+import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.ChatMessage;
 import com.top_logic.ai.chat.layout.ChatTask;
 import com.top_logic.ai.chat.layout.ChatTimelineEvent;
@@ -163,7 +163,7 @@ public class ChatSSEHandler {
 		_lastMessageSeq = messageCount;
 
 		// Get current task timeline count and status
-		String currentTaskId = ChatControl.getCurrentTaskId(_tracker);
+		String currentTaskId = ChatProcessor.getCurrentTaskId(_tracker);
 		int timelineCount = 0;
 		ChatTask.TaskStatus currentTaskStatus = null;
 		if (currentTaskId != null) {
@@ -177,7 +177,7 @@ public class ChatSSEHandler {
 		_lastTaskId = currentTaskId;
 		_lastTaskStatus = currentTaskStatus;
 
-		boolean processing = ChatControl.isProcessing(_tracker);
+		boolean processing = ChatProcessor.isProcessing(_tracker);
 
 		try {
 			String data = MAPPER.writeValueAsString(new ConnectedEvent(messageCount, timelineCount, processing, currentTaskId));
@@ -196,8 +196,8 @@ public class ChatSSEHandler {
 			ThreadContextManager.inSystemInteraction(ChatSSEHandler.class, () -> {
 				// Sync timeline events from ToolCallTracker to TaskProgressTracker
 				Object stateObj = _tracker.getCurrentProcessingState();
-				if (stateObj instanceof ChatControl.AIProcessingState state) {
-					ChatControl.applyPollUpdates(state, _tracker.getChat(), _tracker);
+				if (stateObj instanceof ChatProcessor.AIProcessingState state) {
+					ChatProcessor.applyPollUpdates(state, _tracker.getChat(), _tracker);
 				}
 
 				emitDeltas();
@@ -232,7 +232,7 @@ public class ChatSSEHandler {
 		_lastMessageSeq = messageIndex;
 
 		// Emit timeline events and task status
-		String currentTaskId = ChatControl.getCurrentTaskId(_tracker);
+		String currentTaskId = ChatProcessor.getCurrentTaskId(_tracker);
 		if (currentTaskId != null) {
 			ChatTask task = _tracker.getTask(currentTaskId);
 			if (task != null) {

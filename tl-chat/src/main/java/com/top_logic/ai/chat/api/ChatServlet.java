@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.top_logic.ai.chat.layout.ChatControl;
+import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.basic.thread.ThreadContextManager;
@@ -86,7 +86,7 @@ public class ChatServlet extends HttpServlet {
 		final String userName = getCurrentUserName();
 
 		TaskProgressTracker tracker = ChatSessionRegistry.getOrCreate(req.getSession(false));
-		ChatControl.SendResult result = ThreadContextManager.inSystemInteraction(ChatServlet.class, () -> {
+		ChatProcessor.SendResult result = ThreadContextManager.inSystemInteraction(ChatServlet.class, () -> {
 			return ChatSendService.send(tracker, userName, messageText, null, null);
 		});
 
@@ -108,11 +108,11 @@ public class ChatServlet extends HttpServlet {
 		ThreadContextManager.inSystemInteraction(ChatServlet.class, () -> {
 			// Sync timeline events from ToolCallTracker to TaskProgressTracker before returning updates
 			Object stateObj = tracker.getCurrentProcessingState();
-			if (stateObj instanceof ChatControl.AIProcessingState state) {
-				ChatControl.applyPollUpdates(state, tracker.getChat(), tracker);
+			if (stateObj instanceof ChatProcessor.AIProcessingState state) {
+				ChatProcessor.applyPollUpdates(state, tracker.getChat(), tracker);
 			}
-			processing[0] = ChatControl.isProcessing(tracker);
-			currentTaskId[0] = ChatControl.getCurrentTaskId(tracker);
+			processing[0] = ChatProcessor.isProcessing(tracker);
+			currentTaskId[0] = ChatProcessor.getCurrentTaskId(tracker);
 			return null;
 		});
 

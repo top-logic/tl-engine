@@ -72,8 +72,35 @@
 		}
 	}
 
-	// Toggle functions (toggleTaskExpand, toggleToolExpand) are defined by the server-rendered
-	// inline script in ChatControl.writeTaskToggleScript() and are available globally.
+	// ==================== Toggle Functions (global for onclick) ====================
+
+	window.toggleTaskExpand = function(bodyId, arrowId) {
+		var body = document.getElementById(bodyId);
+		var arrow = document.getElementById(arrowId);
+		if (body && arrow) {
+			if (body.style.display === 'none' || body.style.display === '') {
+				body.style.display = 'block';
+				arrow.textContent = '\u25bc'; // ▼
+			} else {
+				body.style.display = 'none';
+				arrow.textContent = '\u25b6'; // ▶
+			}
+		}
+	};
+
+	window.toggleToolExpand = function(resultId, arrowId) {
+		var result = document.getElementById(resultId);
+		var arrow = document.getElementById(arrowId);
+		if (result && arrow) {
+			if (result.style.display === 'none' || result.style.display === '') {
+				result.style.display = 'block';
+				arrow.textContent = '\u25bc'; // ▼
+			} else {
+				result.style.display = 'none';
+				arrow.textContent = '\u25b6'; // ▶
+			}
+		}
+	};
 
 	// ==================== DOM Helpers ====================
 

@@ -99,9 +99,6 @@ public class ChatControl extends AbstractControlBase {
 		}
 		out.endTag(DIV);
 
-		// Add JavaScript for task/tool expand/collapse
-		writeTaskToggleScript(out);
-
 		// Load chat client via inline script so it runs when fragment is AJAX-injected
 		// (browsers do not execute <script src="..."> in injected HTML)
 		String contextPath = context.getContextPath();
@@ -527,36 +524,6 @@ public class ChatControl extends AbstractControlBase {
 		return getID() + "-button";
 	}
 
-	private void writeTaskToggleScript(TagWriter out) throws IOException {
-		out.beginScript();
-		out.append("function toggleTaskExpand(bodyId, arrowId) {");
-		out.append("  var body = document.getElementById(bodyId);");
-		out.append("  var arrow = document.getElementById(arrowId);");
-		out.append("  if (body && arrow) {");
-		out.append("    if (body.style.display === 'none' || body.style.display === '') {");
-		out.append("      body.style.display = 'block';");
-		out.append("      arrow.textContent = '\u25BC';");
-		out.append("    } else {");
-		out.append("      body.style.display = 'none';");
-		out.append("      arrow.textContent = '\u25B6';");
-		out.append("    }");
-		out.append("  }");
-		out.append("}");
-		out.append("function toggleToolExpand(resultId, arrowId) {");
-		out.append("  var result = document.getElementById(resultId);");
-		out.append("  var arrow = document.getElementById(arrowId);");
-		out.append("  if (result && arrow) {");
-		out.append("    if (result.style.display === 'none' || result.style.display === '') {");
-		out.append("      result.style.display = 'block';");
-		out.append("      arrow.textContent = '\u25BC';");
-		out.append("    } else {");
-		out.append("      result.style.display = 'none';");
-		out.append("      arrow.textContent = '\u25B6';");
-		out.append("    }");
-		out.append("  }");
-		out.append("}");
-		out.endScript();
-	}
 
 	/**
 	 * Command that sends a chat message (TL AJAX fallback).

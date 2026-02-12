@@ -14,6 +14,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import jakarta.servlet.AsyncContext;
 import jakarta.servlet.AsyncEvent;
@@ -58,13 +59,17 @@ public class ChatSSEHandler {
 
 	private static final ObjectMapper MAPPER = new ObjectMapper();
 
+	private static final AtomicInteger SSE_THREAD_COUNTER = new AtomicInteger();
+
 	private static final ScheduledExecutorService SSE_EXECUTOR =
-		Executors.newScheduledThreadPool(2, r -> {
-			Thread t = new Thread(r);
-			t.setName("ChatSSE-Worker");
-			t.setDaemon(true);
-			return t;
-		});
+		Executors.newScheduledThreadPool(
+			Math.max(4, Runtime.getRuntime().availableProcessors()),
+			r -> {
+				Thread t = new Thread(r);
+				t.setName("ChatSSE-Worker-" + SSE_THREAD_COUNTER.incrementAndGet());
+				t.setDaemon(true);
+				return t;
+			});
 
 	private final TaskProgressTracker _tracker;
 	private final AsyncContext _asyncContext;

@@ -648,7 +648,7 @@ werden:
 
 - **Neue Werkzeuge programmieren**: Entwickler können neue Werkzeuge
   in Java implementieren und registrieren. Ein neues Werkzeug steht
-  automatisch beiden Assistentenformen zur Verfügung.
+  automatisch den Assistentenformen zur Verfügung.
 
 - **Skript-basierte Datenquellen**: Neue Datenquellen können per
   TL-Script definiert werden – ohne Programmierung. So können

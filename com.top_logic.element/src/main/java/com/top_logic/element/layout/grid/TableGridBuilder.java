@@ -41,7 +41,6 @@ import com.top_logic.mig.html.SelectionUtil;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.export.AccessContext;
 import com.top_logic.tool.boundsec.CommandHandler;
-import com.top_logic.util.Utils;
 
 /**
  * {@link GridBuilder} that creates a regular grid without hierarchy. 
@@ -312,9 +311,6 @@ public class TableGridBuilder<R> extends ListModelBuilderProxy
 			ElementUpdate updateDecision = supportsListElement(grid, newObject);
 			switch (updateDecision) {
 				case ADD:
-					if (!Utils.equals(grid.getModel(), retrieveModelFromListElement(grid, newObject))) {
-						continue;
-					}
 					if (relevantCreations == null) {
 						// newObject is the first object to add to list.
 						if (!grid.isVisible()) {

@@ -13,6 +13,8 @@ username/password or external SSO. Specific needs include:
 
 - **Two-factor authentication** (password + TOTP) for user groups that cannot use an
   external identity provider.
+- **Passwordless authentication** ("login by email") where a user receives a one-time
+  code via email instead of maintaining a password.
 - **Self-service account management** (password reset, TOTP reset) without administrator
   intervention.
 - **Invitation-based registration**, where existing users can invite external parties
@@ -129,9 +131,9 @@ Five groups of changes are proposed:
 
 | # | Feature | Scope | New Module? |
 |---|---------|-------|-------------|
-| 3.1 | TOTP Authentication | New security device type | Yes: `com.top_logic.security.auth.totp` |
+| 3.1 | Authentication Device Types | New security device types (TOTP, Email OTP) | Yes: `com.top_logic.security.auth.totp`; Email OTP in `com.top_logic.security.otp` |
 | 3.2 | Multi-Factor Login Flow | Core login extension | No (changes to `com.top_logic` / tl-core) |
-| 3.3 | OTP Email Verification Service | New platform service | Yes: `com.top_logic.security.otp` (or part of tl-core) |
+| 3.3 | OTP Email Verification Service | New platform service | Yes: `com.top_logic.security.otp` |
 | 3.4 | Self-Service Account Management | Password/TOTP reset flows | Yes: `com.top_logic.security.selfservice` |
 | 3.5 | Registration Framework | Invitation-based and open self-registration | Yes: `com.top_logic.security.register` |
 
@@ -139,12 +141,15 @@ The dependency graph is:
 
 ```
                     com.top_logic (tl-core)
-                    [3.2: MFA login flow]
+                    [3.2: MFA login flow,
+                     EnrollableDevice,
+                     ChallengeResponseDevice]
                           |
               +-----------+-----------+
               |                       |
   com.top_logic.security.auth.totp   com.top_logic.security.otp
-  [3.1: TOTP device]                 [3.3: OTP email service]
+  [3.1: TOTP device]                 [3.1 + 3.3: OTP service,
+                                      Email OTP device]
               |                       |
               +-----------+-----------+
                           |
@@ -157,25 +162,31 @@ The dependency graph is:
 
 ---
 
-### 3.1 TOTP Authentication Module
+### 3.1 Authentication Device Types
 
 #### 3.1.1 Purpose
 
-Provide a TOTP (Time-Based One-Time Password, RFC 6238) implementation as a standard
-`AuthenticationDevice`. The TOTP device can serve as:
+Introduce new `AuthenticationDevice` implementations that extend the platform's
+authentication capabilities beyond passwords and LDAP:
 
-- A **second authentication factor** alongside a primary device (typically
-  `DBAuthenticationAccessDevice`), or
-- A **standalone primary device** for accounts that authenticate by TOTP code alone.
+- **TOTP** (Time-Based One-Time Password, RFC 6238): An offline code generator
+  (authenticator app). Can serve as a second factor alongside a password device, or
+  as a standalone primary device.
+- **Email OTP** ("login by email"): A one-time code sent via email. Can serve as a
+  passwordless primary device, or as a second factor.
 
-#### 3.1.2 Design Approach: TOTP as AuthenticationDevice
+Both device types implement the existing `AuthenticationDevice` interface and integrate
+with the login flow without requiring changes to the core authentication model.
 
-TOTP authentication is conceptually the same as password authentication: the user provides
-a credential (a time-based code instead of a memorized password), and the device verifies
-it. The existing `AuthenticationDevice` interface already accommodates devices where the
+#### 3.1.2 Design Approach: New Devices as AuthenticationDevice
+
+Both TOTP and Email OTP authentication are conceptually the same as password
+authentication: the user provides a credential (a code instead of a memorized password),
+and the device verifies it. The existing `AuthenticationDevice` interface already
+accommodates devices where the
 password-management methods are not applicable -- `LDAPAuthenticationAccessDevice` returns
-`false` for `allowPwdChange()` and does not support `setPassword()`. A TOTP device follows
-the same pattern:
+`false` for `allowPwdChange()` and does not support `setPassword()`. Both new device
+types follow the same pattern. For TOTP:
 
 | Method | TOTP behavior |
 |--------|---------------|
@@ -190,7 +201,13 @@ This means **no new device interface is needed** for the core authentication flo
 existing `AuthenticationDevice` is sufficient, and the `TLSecurityDeviceManager` already
 supports registering any number of `AuthenticationDevice` instances by ID.
 
-#### 3.1.3 Enrollment: `EnrollableDevice` Mix-In Interface
+#### 3.1.3 Mix-In Interfaces
+
+Two mix-in interfaces are introduced in **tl-core** for authentication devices with
+special lifecycle requirements. Code that needs these capabilities checks via
+`device instanceof EnrollableDevice` or `device instanceof ChallengeResponseDevice`.
+
+##### EnrollableDevice
 
 Authentication devices like TOTP require an **enrollment** step (generating a secret,
 showing a QR code, confirming the first code) that has no equivalent in
@@ -280,7 +297,64 @@ public interface Enrollment {
 }
 ```
 
-**Placement:** `EnrollableDevice` and `Enrollment` are added to
+##### ChallengeResponseDevice
+
+Some authentication devices require the server to **send a challenge** (e.g., an email
+with a one-time code) before the user can respond with a credential. This is different
+from TOTP, where the code is generated offline by the user's authenticator app.
+
+```java
+package com.top_logic.base.security.device.interfaces;
+
+/**
+ * Optional mix-in for {@link AuthenticationDevice} implementations where
+ * authentication requires a server-initiated challenge before the user can
+ * respond.
+ *
+ * <p>
+ * For example, an Email OTP device must send a one-time code to the user's
+ * email address before the user can enter it. A TOTP device does not need
+ * this -- the code is generated client-side by the authenticator app.
+ * </p>
+ *
+ * <p>
+ * The login flow checks {@code device instanceof ChallengeResponseDevice}
+ * and calls {@link #sendChallenge} before presenting the code input page.
+ * </p>
+ */
+public interface ChallengeResponseDevice {
+
+    /**
+     * Sends a challenge to the user (e.g., an email with a one-time code).
+     *
+     * <p>
+     * Must be called before {@link AuthenticationDevice#authentify} for this
+     * device to work. The returned token is stored in the session and passed
+     * back during validation.
+     * </p>
+     *
+     * @param account the person to send the challenge to.
+     * @return an opaque challenge token identifying this challenge session.
+     * @throws ChallengeException if the challenge cannot be sent (e.g.,
+     *         email delivery failure, no email address on account).
+     */
+    String sendChallenge(Person account) throws ChallengeException;
+
+    /**
+     * Returns a user-facing message describing where the challenge was sent
+     * (e.g., "A code was sent to j***@example.com"). Used by the login page
+     * to inform the user.
+     *
+     * @param account the person.
+     * @return an I18N resource key for the message.
+     */
+    ResKey getChallengeMessage(Person account);
+}
+```
+
+##### Placement
+
+`EnrollableDevice`, `Enrollment`, and `ChallengeResponseDevice` are added to
 `com.top_logic.base.security.device.interfaces` in **tl-core**. They are small
 interfaces with no dependencies beyond `Person`.
 
@@ -387,18 +461,94 @@ existing `getAuthenticationDevice(deviceID)` method.
   `secondAuthDeviceID = "totp"`. Login requires password, then TOTP code.
 - *TOTP as sole factor:* Person has `authDeviceID = "totp"` and no
   `secondAuthDeviceID`. Login requires only a TOTP code.
+- *Email OTP as sole factor ("login by email"):* Person has `authDeviceID = "emailOtp"`
+  and no `secondAuthDeviceID`. Login page asks for username, system sends code to email,
+  user enters code.
+- *Email OTP as second factor:* Person has `authDeviceID = "dbSecurity"` and
+  `secondAuthDeviceID = "emailOtp"`. Login requires password, then email code.
 - *Password only:* Person has `authDeviceID = "dbSecurity"` and no
   `secondAuthDeviceID`. Existing behavior, unchanged.
 
-#### 3.1.4 External Dependencies
+#### 3.1.5 TOTP External Dependencies
 
-The module requires a TOTP library. Candidates:
+The TOTP module requires a TOTP library. Candidates:
 
 - `com.eatthepath:java-otp` (lightweight, well-maintained)
 - `dev.samstevens:totp` (higher-level API, includes QR code helpers)
 
 Alternatively, the TOTP algorithm (RFC 6238) is simple enough to implement directly
 using `javax.crypto.Mac`, avoiding an external dependency. This is a design-time decision.
+
+#### 3.1.6 Email OTP Authentication Device
+
+An **Email OTP device** implements `AuthenticationDevice` and `ChallengeResponseDevice`.
+It delegates to the `OTPService` (section 3.3) for code generation, delivery, and
+validation.
+
+**`EmailOTPAuthenticationDevice`:**
+
+| Method | Behavior |
+|--------|----------|
+| `authentify(LoginCredentials)` | Validates the OTP code (from `credentials.getPassword()`) against the `OTPService`. |
+| `allowPwdChange()` | Returns `false`. |
+| `setPassword()` | Throws `UnsupportedOperationException`. |
+| `getPasswordValidator()` | Throws `UnsupportedOperationException`. |
+| `expirePassword()` | No-op. |
+| `isPasswordChangeRequested()` | Returns `false`. |
+| `sendChallenge(Person)` | Resolves the person's email address, calls `OTPService.generate(email, "login")`, stores the session token internally. Returns the session token. |
+| `getChallengeMessage(Person)` | Returns an I18N message with the masked email address (e.g., "Code sent to j\*\*\*@example.com"). |
+
+**Email resolution:** The device needs the person's email address to send the OTP. This
+is resolved via a configurable `AccountResolver` strategy (same interface as section
+3.4.6). The default implementation uses the Person's email attribute.
+
+**Configuration:**
+
+```java
+public interface Config extends AuthenticationDevice.Config<EmailOTPAuthenticationDevice> {
+
+    /** Purpose string used when calling OTPService. */
+    @Name("purpose")
+    @StringDefault("login")
+    String getPurpose();
+
+    /** Strategy for resolving the email address from a Person. */
+    @Name("account-resolver")
+    @InstanceDefault(DefaultAccountResolver.class)
+    PolymorphicConfiguration<AccountResolver> getAccountResolver();
+}
+```
+
+The Email OTP device does **not** implement `EnrollableDevice` -- there is no enrollment
+step. If the person has a valid email address, the device is ready to use.
+
+**Module placement:** `EmailOTPAuthenticationDevice` is placed in the
+`com.top_logic.security.otp` module alongside `OTPService`, since it directly depends
+on the OTP infrastructure.
+
+**Example configuration:**
+
+```xml
+<security-devices>
+    <!-- Existing primary auth device -->
+    <security-device id="dbSecurity"
+        class="com.top_logic.base.security.device.db.DBAuthenticationAccessDevice">
+        ...
+    </security-device>
+
+    <!-- TOTP device -->
+    <security-device id="totp"
+        class="com.top_logic.security.auth.totp.TOTPAuthenticationDevice"
+        issuer="MyApplication"
+        encryption-key="%TOTP_ENCRYPTION_KEY%"
+    />
+
+    <!-- Email OTP device ("login by email") -->
+    <security-device id="emailOtp"
+        class="com.top_logic.security.otp.EmailOTPAuthenticationDevice"
+    />
+</security-devices>
+```
 
 ---
 
@@ -449,36 +599,57 @@ types. The "second factor" semantic is purely a matter of how the Person is conf
 
 #### 3.2.3 Login Flow Extension
 
-After successful primary authentication, the login flow checks whether the Person has
-a `secondAuthDeviceID` configured. If so, there are two sub-cases depending on whether
-the device requires enrollment:
+The login flow is extended in two dimensions:
+
+1. **Primary device may be a `ChallengeResponseDevice`:** If the primary
+   `AuthenticationDevice` implements `ChallengeResponseDevice`, the servlet must send
+   a challenge (e.g., email OTP) before the user can enter a code. This changes the
+   first step of the login from "submit username + password" to "submit username →
+   receive challenge → submit code".
+
+2. **Second factor handling (unchanged from before):** After primary authentication
+   succeeds, the flow checks `secondAuthDeviceID` and branches on enrollment state.
+   If the second device is also a `ChallengeResponseDevice`, `sendChallenge()` is
+   called before showing the code page.
+
+**Complete decision tree:**
 
 ```
-After primary authDevice.authentify() succeeds:
+1. Resolve Person, determine primary authDevice
 
-secondAuthDeviceID set?
-│
-├── NO
-│   └── Check password expiry → session established (existing behavior)
-│
-└── YES
-    │
-    ├── device instanceof EnrollableDevice AND !isEnrolled(person)?
-    │   │
-    │   YES → Redirect to enrollment page
-    │   │     (analogous to forced password change)
-    │   │     User completes enrollment → session established
-    │   │
-    │   NO  → Redirect to second-factor code page
-    │         User enters code → device.authentify() → session established
+   authDevice instanceof ChallengeResponseDevice?
+   │
+   ├── YES → sendChallenge(person)
+   │         → redirect to primary code page
+   │         User enters code → authDevice.authentify()
+   │
+   └── NO  → authDevice.authentify(username + password)
+             (existing single-step behavior)
+
+2. Primary auth succeeded. secondAuthDeviceID set?
+   │
+   ├── NO
+   │   └── Check password expiry → session established (existing behavior)
+   │
+   └── YES
+       │
+       ├── device instanceof EnrollableDevice AND !isEnrolled(person)?
+       │   YES → Redirect to enrollment page
+       │         (analogous to forced password change)
+       │         User completes enrollment → session established
+       │
+       └── NO (device is ready to authenticate)
+           │
+           ├── device instanceof ChallengeResponseDevice?
+           │   YES → sendChallenge(person)
+           │         → redirect to second-factor code page
+           │         User enters code → device.authentify() → session
+           │
+           └── NO  → redirect to second-factor code page
+                     User enters code → device.authentify() → session
 ```
 
-This three-way branch mirrors the existing pattern where `LoginPageServlet` redirects
-to `changePwd.jsp` when `isPasswordChangeRequested()` returns `true`. The forced
-enrollment redirect works the same way -- the user has authenticated their identity
-via the primary device, but cannot proceed until the second device is set up.
-
-**Full login sequence (second factor already enrolled):**
+**Scenario A -- Password primary, TOTP second (most common MFA):**
 
 ```
 Browser                    LoginPageServlet / Login
@@ -487,7 +658,7 @@ Browser                    LoginPageServlet / Login
   |----------------------------->|
   |                              |  1. Resolve Person
   |                              |  2. authDevice.authentify(credentials)
-  |                              |  3. secondAuthDevice set, enrolled
+  |                              |  3. secondAuthDevice = TOTP, enrolled
   |                              |  4. Store partial auth in session
   |  <-- redirect to 2FA page --|
   |                              |
@@ -498,7 +669,61 @@ Browser                    LoginPageServlet / Login
   |  <-- redirect to start --   |
 ```
 
-**Full login sequence (enrollment required):**
+**Scenario B -- Password primary, Email OTP second (challenge-response):**
+
+```
+Browser                    LoginPageServlet / Login
+  |                              |
+  |  POST username + password    |
+  |----------------------------->|
+  |                              |  1. Resolve Person
+  |                              |  2. authDevice.authentify(credentials)
+  |                              |  3. secondAuthDevice = EmailOTP
+  |                              |  4. sendChallenge(person) → email sent
+  |                              |  5. Store partial auth in session
+  |  <-- redirect to 2FA page --|
+  |     (shows "code sent to    |
+  |      j***@example.com")     |
+  |                              |
+  |  POST email-otp-code         |
+  |----------------------------->|
+  |                              |  6. secondAuthDevice.authentify(credentials)
+  |                              |  7. SessionService.loginUser()
+  |  <-- redirect to start --   |
+```
+
+**Scenario C -- Email OTP as sole primary device ("login by email"):**
+
+```
+Browser                    LoginPageServlet / Login
+  |                              |
+  |  POST username               |
+  |  (password field empty       |
+  |   or absent)                 |
+  |----------------------------->|
+  |                              |  1. Resolve Person
+  |                              |  2. authDevice is ChallengeResponseDevice
+  |                              |  3. sendChallenge(person) → email sent
+  |                              |  4. Store partial auth in session
+  |  <-- redirect to code page --|
+  |     (shows "code sent to    |
+  |      j***@example.com")     |
+  |                              |
+  |  POST email-otp-code         |
+  |----------------------------->|
+  |                              |  5. authDevice.authentify(credentials)
+  |                              |  6. No secondAuthDeviceID
+  |                              |  7. SessionService.loginUser()
+  |  <-- redirect to start --   |
+```
+
+Note: In scenario C, the user has not yet proven their identity when `sendChallenge()`
+is called (the username alone is not a credential). This is acceptable because the
+challenge is sent to the registered email -- an attacker who enters a valid username
+only triggers an email to the legitimate owner. To prevent abuse, rate limiting applies
+(see section 3.2.8).
+
+**Scenario D -- Enrollment required (second factor not yet set up):**
 
 ```
 Browser                    LoginPageServlet / Login
@@ -515,12 +740,38 @@ Browser                    LoginPageServlet / Login
   |  (enrollment flow:           |
   |   QR code displayed,         |
   |   user scans + enters code)  |
-  |  POST totp-code              |
+  |  POST enrollment-code        |
   |----------------------------->|
   |                              |  5. enrollableDevice.confirmEnrollment()
   |                              |  6. SessionService.loginUser()
   |  <-- redirect to start --   |
 ```
+
+**Key design decisions:**
+
+- **ChallengeResponseDevice on primary:** When the primary `AuthenticationDevice`
+  implements `ChallengeResponseDevice`, the `LoginPageServlet` detects this after
+  resolving the Person (step 1) and calls `sendChallenge()` instead of
+  `authentify()`. The password field in the login form is ignored (or may be absent).
+  The code entry page is reused for both primary-challenge and second-factor flows.
+
+- **Partial authentication state:** After successful primary authentication (or after
+  sending a primary challenge) but before second-factor verification, a temporary
+  marker is stored in the HTTP session. This is *not* a full TopLogic session (no
+  `TLSessionContext` is installed). The marker contains the Person reference, a
+  timestamp, and original request parameters. It has a configurable timeout
+  (default: 5 minutes).
+
+- **Rate limiting:** The existing `LoginFailure` mechanism in `LoginPageServlet` is
+  reused. Failed second-factor and challenge-response attempts count toward the same
+  failure tracking. For primary `ChallengeResponseDevice` usage, rate limiting also
+  bounds the number of challenge emails that can be triggered per username.
+
+- **No changes for SSO users:** The `ExternalAuthenticationServlet` path
+  (`loginFromExternalAuth`) is not affected.
+
+- **LoginHook compatibility:** The existing `LoginHook` is invoked *after* successful
+  completion of all authentication factors, preserving existing behavior.
 
 #### 3.2.4 TOTP Enrollment Use Cases
 
@@ -634,43 +885,69 @@ Note that `verifySecondFactor` uses the standard `authentify(LoginCredentials)`
 method -- the second device is just another `AuthenticationDevice` and receives the
 code via the password field in `LoginCredentials`.
 
-#### 3.2.6 Changes to `LoginPageServlet`
-
-The servlet is extended to handle two new request parameters:
+A new method supports the primary-challenge-response flow:
 
 ```java
+/**
+ * Whether the given person's primary auth device requires a server-sent
+ * challenge before authentication (e.g., Email OTP).
+ */
+public boolean requiresPrimaryChallenge(Person person) {
+    return person.getAuthenticationDevice()
+        instanceof ChallengeResponseDevice;
+}
+```
+
+#### 3.2.6 Changes to `LoginPageServlet`
+
+The servlet is extended to handle three new request parameters:
+
+```java
+public static final String CHALLENGE_CODE_PARAMETER = "challengeCode";
 public static final String SECOND_FACTOR_CODE_PARAMETER = "secondFactorCode";
 public static final String ENROLLMENT_CODE_PARAMETER = "enrollmentCode";
 ```
 
-The `checkRequest()` method is extended with two new branches:
+The `checkRequest()` method gains three new branches:
 
-1. If the request contains a `secondFactorCode` parameter (and a valid partial-auth
-   session marker exists), the servlet performs second-factor verification.
-2. If the request contains an `enrollmentCode` parameter (and a valid partial-auth
-   session marker with pending enrollment exists), the servlet performs enrollment
+1. **Primary challenge-response:** If the Person's primary device is a
+   `ChallengeResponseDevice`, the servlet calls `sendChallenge(person)`, stores a
+   partial-auth marker (without full authentication), and redirects to the code page.
+   When the user submits the `challengeCode`, the servlet calls
+   `authDevice.authentify()` to complete primary authentication.
+2. **Second-factor code:** If a `secondFactorCode` parameter is present (and a valid
+   partial-auth marker exists after primary auth), the servlet performs second-factor
+   verification. If the second device is a `ChallengeResponseDevice`, `sendChallenge()`
+   was already called when the second-factor page was rendered.
+3. **Enrollment code:** If an `enrollmentCode` parameter is present (and a valid
+   partial-auth marker with pending enrollment exists), the servlet performs enrollment
    confirmation via `EnrollableDevice.confirmEnrollment()`.
 
-The decision between showing the second-factor page vs. the enrollment page is made
-after primary authentication, based on `requiresSecondFactorEnrollment()`.
+The decision between branches is driven by the state stored in the partial-auth session
+marker and the request parameters present.
 
 #### 3.2.7 JSP Pages
 
-Two new JSP pages are provided:
+Three new JSP pages are provided:
 
+- **`challengeCode.jsp`** -- Displays a message from `ChallengeResponseDevice.getChallengeMessage()`
+  (e.g., "A code was sent to j\*\*\*@example.com") and a single input field for the code.
+  Used when the primary device is a `ChallengeResponseDevice`, or when the second device
+  is a `ChallengeResponseDevice` (the same page is reused with different messaging).
 - **`secondFactor.jsp`** -- Displays a single input field for the TOTP code.
-  Used when the second device is already enrolled.
+  Used when the second device is already enrolled and is not a `ChallengeResponseDevice`.
 - **`secondFactorEnroll.jsp`** -- Displays a QR code (from `Enrollment.getProvisioningUri()`)
   and a manual-entry key (from `Enrollment.getManualEntryKey()`), plus an input field
   for the confirmation code. Used when enrollment is required.
 
-Both pages carry the original `startPage` and other parameters as hidden fields and
+All pages carry the original `startPage` and other parameters as hidden fields and
 submit to the same `LoginPageServlet`.
 
 The page paths are registered in `ApplicationPages`:
 
 ```java
 // New methods in ApplicationPages:
+String getChallengePage();           // Default: "/jsp/auth/challengeCode.jsp"
 String getSecondFactorPage();        // Default: "/jsp/auth/secondFactor.jsp"
 String getSecondFactorEnrollPage();  // Default: "/jsp/auth/secondFactorEnroll.jsp"
 ```
@@ -681,13 +958,23 @@ New options in `Login.Config`:
 
 ```java
 /**
- * Maximum time in seconds between successful primary authentication and
- * second-factor submission or enrollment completion. If exceeded, the
- * user must re-authenticate from the beginning.
+ * Maximum time in seconds between successful primary authentication (or
+ * challenge send) and second-factor submission or enrollment completion.
+ * If exceeded, the user must re-authenticate from the beginning.
  */
 @Name("second-factor-timeout")
 @IntDefault(300)
 int getSecondFactorTimeout();
+
+/**
+ * Maximum number of challenge emails that can be sent for the same
+ * username within the rate limit window. Prevents abuse of
+ * ChallengeResponseDevice as a primary device (e.g., flooding a user's
+ * inbox). Uses the existing LoginFailure rate limiting mechanism.
+ */
+@Name("max-challenges-per-window")
+@IntDefault(5)
+int getMaxChallengesPerWindow();
 ```
 
 ---
@@ -697,8 +984,12 @@ int getSecondFactorTimeout();
 #### 3.3.1 Purpose
 
 Provide a general-purpose service for generating, storing, and validating one-time
-passwords (numeric codes) delivered via email. This is a building block used by
-self-service flows (section 3.4) and invitation flows (section 3.5).
+passwords (numeric codes) delivered via email. The `OTPService` serves two roles:
+
+1. **Building block** for self-service flows (section 3.4) and registration flows
+   (section 3.5), where email verification is a step in a multi-step process.
+2. **Backend for `EmailOTPAuthenticationDevice`** (section 3.1.6), where an OTP code
+   *is* the authentication credential ("login by email").
 
 #### 3.3.2 Service Interface
 
@@ -1531,22 +1822,25 @@ List<String> getBlockedEmailDomains();
 | `AuthenticationDevice.java` | No change |
 | **New:** `EnrollableDevice.java` | Mix-in interface for devices requiring enrollment (e.g. TOTP) |
 | **New:** `Enrollment.java` | Enrollment information interface (QR code URI, manual key, session token) |
-| `TLSecurityDeviceManager.java` | No change (TOTP device registered as standard `AuthenticationDevice`) |
+| **New:** `ChallengeResponseDevice.java` | Mix-in interface for devices that send a server-side challenge before authentication (e.g. Email OTP) |
+| `TLSecurityDeviceManager.java` | No change (new devices registered as standard `AuthenticationDevice`) |
 | `Person.java` | Add `secondAuthDeviceID` attribute and accessor methods |
-| `Login.java` | Add `verifySecondFactor()`, `requiresSecondFactor()` methods |
+| `Login.java` | Add `verifySecondFactor()`, `requiresSecondFactor()`, `requiresSecondFactorEnrollment()`, `requiresPrimaryChallenge()` methods |
 | `Login.Config` | Add `second-factor-timeout` option, `self-service` sub-config |
-| `LoginPageServlet.java` | Extend `checkRequest()` for second-factor flow branch |
+| `LoginPageServlet.java` | Extend `checkRequest()` for challenge-response primary, second-factor, and enrollment branches |
 | `LoginCredentials.java` | No change |
-| `ApplicationPages` | Add `getSecondFactorPage()`, `getPasswordResetPage()`, `getTotpResetPage()` |
+| `ApplicationPages` | Add `getChallengePage()`, `getSecondFactorPage()`, `getSecondFactorEnrollPage()`, `getPasswordResetPage()`, `getTotpResetPage()` |
 | `login.jsp` | Add optional links for password reset, TOTP reset, and open registration |
-| **New:** `secondFactor.jsp` | Second-factor code entry page |
+| **New:** `challengeCode.jsp` | Challenge-response code entry page (used for Email OTP and other `ChallengeResponseDevice` types) |
+| **New:** `secondFactor.jsp` | Second-factor code entry page (TOTP and similar offline devices) |
+| **New:** `secondFactorEnroll.jsp` | Enrollment page (QR code + confirmation for `EnrollableDevice` types) |
 
 ## 5. New Modules Summary
 
 | Module | Artifact ID | Key Contents |
 |---|---|---|
 | `com.top_logic.security.auth.totp` | `tl-security-auth-totp` | `TOTPAuthenticationDevice` (implements `AuthenticationDevice` + `EnrollableDevice`), TOTP generation/validation, secret storage |
-| `com.top_logic.security.otp` | `tl-security-otp` | `OTPService`, OTP generation/validation, email delivery |
+| `com.top_logic.security.otp` | `tl-security-otp` | `OTPService`, OTP generation/validation, email delivery; `EmailOTPAuthenticationDevice` (implements `AuthenticationDevice` + `ChallengeResponseDevice`) |
 | `com.top_logic.security.selfservice` | `tl-security-selfservice` | `SelfServiceServlet`, password-reset flow, TOTP-reset flow, `AccountResolver` |
 | `com.top_logic.security.register` | `tl-security-register` | `RegistrationServlet`, `RegistrationStep` framework, `RegistrationHandler`, `InvitationService` (invitation + open self-registration) |
 
@@ -1559,7 +1853,8 @@ List<String> getBlockedEmailDomains();
 | **TOTP secret exposure** | Secrets encrypted at rest with configurable symmetric key. Never exposed in logs or API responses. |
 | **OTP brute force** | OTPs invalidated after configurable max attempts (default: 5). Rate limiting on the servlet level. |
 | **Invitation token guessing** | Tokens generated with >= 256 bits of cryptographic randomness (e.g., `SecureRandom`). URL-safe encoding (Base64url). |
-| **User enumeration** | Password-reset flow does not reveal whether an account exists. Always shows "code sent" message. |
+| **User enumeration** | Password-reset flow does not reveal whether an account exists. Always shows "code sent" message. Primary ChallengeResponseDevice login also does not reveal account existence (challenge is "sent" regardless). |
+| **Challenge flooding** | When Email OTP is used as primary device, an attacker could trigger emails to arbitrary users. Mitigated by rate limiting (`max-challenges-per-window`, default: 5) tied to the existing `LoginFailure` mechanism. |
 | **Partial auth session hijacking** | Partial-auth markers have short timeout (default: 5 minutes). Bound to the HTTP session (not transferable). Cleared on use. |
 | **TOTP replay** | Each TOTP code is valid for only one time step (30s). Server tracks last accepted time step per account to prevent replay within the tolerance window. |
 | **Password storage** | Existing Argon2 hashing (via `PasswordHashingService`) is used. No changes needed. |

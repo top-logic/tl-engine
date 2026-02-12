@@ -39,7 +39,7 @@ public class ChatProcessor {
 	static final long POLL_INTERVAL_MS = 500;
 
 	/** Funny placeholder descriptions for in-progress chat tasks. */
-	static final String[] CHAT_TASK_PLACEHOLDERS = {
+	public static final String[] CHAT_TASK_PLACEHOLDERS = {
 		"Flabbergasting...",
 		"Contemplating...",
 		"Warming up neurons...",

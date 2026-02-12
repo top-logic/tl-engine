@@ -80,6 +80,7 @@ public class ChatSSEHandler {
 	private int _lastTimelineSeq = 0;
 	private String _lastTaskId = null;
 	private ChatTask.TaskStatus _lastTaskStatus = null;
+	private String _lastTaskDescription = null;
 	private long _lastHeartbeatTime = 0;
 
 	/** Tracks agent call result summaries to detect updates (key = event index "e0", "e1", etc.). */
@@ -269,12 +270,15 @@ public class ChatSSEHandler {
 					}
 				}
 
-				// Emit task status change
+				// Emit task status change, or re-emit when description changes (placeholder rotation)
+				String currentDescription = descriptionFor(task);
 				if (_lastTaskId == null || !_lastTaskId.equals(currentTaskId) ||
-					_lastTaskStatus != task.getStatus()) {
-					emitTaskStatus(task);
+					_lastTaskStatus != task.getStatus() ||
+					!currentDescription.equals(_lastTaskDescription)) {
+					emitTaskStatus(task, currentDescription);
 					_lastTaskId = currentTaskId;
 					_lastTaskStatus = task.getStatus();
+					_lastTaskDescription = currentDescription;
 				}
 			}
 		} else {
@@ -284,13 +288,14 @@ public class ChatSSEHandler {
 				ChatTask task = _tracker.getTask(_lastTaskId);
 				if (task != null && _lastTaskStatus != task.getStatus()) {
 					// Emit the final status change (e.g. IN_PROGRESS -> COMPLETED)
-					emitTaskStatus(task);
+					emitTaskStatus(task, descriptionFor(task));
 					_lastTaskStatus = task.getStatus();
 				}
 				// Reset for next task
 				_lastTimelineSeq = 0;
 				_lastTaskId = null;
 				_lastTaskStatus = null;
+				_lastTaskDescription = null;
 				_agentCallResults.clear();
 			}
 		}
@@ -317,16 +322,42 @@ public class ChatSSEHandler {
 		}
 	}
 
-	private void emitTaskStatus(ChatTask task) {
+	private void emitTaskStatus(ChatTask task, String description) {
 		try {
 			TaskStatusEvent status = new TaskStatusEvent(
 				task.getId(),
 				task.getStatus().name().toLowerCase(),
+				description,
 				task.getErrorMessage());
 			String data = MAPPER.writeValueAsString(status);
 			sendEvent("task_status", data);
 		} catch (Exception e) {
 			Logger.error("Failed to emit task status event", e, ChatSSEHandler.class);
+		}
+	}
+
+	/** Interval in seconds after which the in-progress placeholder message rotates. */
+	private static final int PLACEHOLDER_ROTATE_SECONDS = 25;
+
+	/**
+	 * Returns the display description for a task: "Completed"/"Failed" when done, or a rotating
+	 * placeholder while in progress. Single source of truth for placeholder text.
+	 */
+	private static String descriptionFor(ChatTask task) {
+		switch (task.getStatus()) {
+			case COMPLETED:
+				return "Completed";
+			case ERROR:
+				return "Failed";
+			case IN_PROGRESS: {
+				long elapsedSeconds = java.time.Duration.between(
+					task.getStartTime(), java.time.Instant.now()).getSeconds();
+				int index = (int) (elapsedSeconds / PLACEHOLDER_ROTATE_SECONDS)
+					% ChatProcessor.CHAT_TASK_PLACEHOLDERS.length;
+				return ChatProcessor.CHAT_TASK_PLACEHOLDERS[index];
+			}
+			default:
+				return task.getDescription();
 		}
 	}
 
@@ -365,7 +396,7 @@ public class ChatSSEHandler {
 	private record ConnectedEvent(int messageSeq, int timelineSeq, boolean processing, String taskId) {
 	}
 
-	private record TaskStatusEvent(String taskId, String status, String errorMessage) {
+	private record TaskStatusEvent(String taskId, String status, String description, String errorMessage) {
 	}
 
 	private record HeartbeatEvent(long ts) {

@@ -27,25 +27,6 @@
 	log('First load, initializing');
 
 	var SSE_RECONNECT_DELAY_MS = 2000;
-	var PLACEHOLDER_ROTATE_SECONDS = 25;
-
-	// Funny placeholder descriptions for in-progress tasks (matches server)
-	var CHAT_TASK_PLACEHOLDERS = [
-		"Flabbergasting...",
-		"Contemplating...",
-		"Warming up neurons...",
-		"Consulting the oracle...",
-		"Assembling thoughts...",
-		"Polishing the answer...",
-		"Thinking really hard...",
-		"Consulting ancient scrolls...",
-		"Loading infinite wisdom...",
-		"Brewing ideas...",
-		"Reticulating splines...",
-		"Herding cats...",
-		"Convincing the AI...",
-		"Spinning up..."
-	];
 
 	// Use TL_CHAT_BASE if set; else infer from pathname
 	if (typeof window !== 'undefined' && window.TL_CHAT_BASE === undefined && window.location && window.location.pathname) {
@@ -76,12 +57,6 @@
 		} catch (e) {
 			return str;
 		}
-	}
-
-	function getRotatingPlaceholder(startTime) {
-		var elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
-		var index = Math.floor(elapsedSeconds / PLACEHOLDER_ROTATE_SECONDS) % CHAT_TASK_PLACEHOLDERS.length;
-		return CHAT_TASK_PLACEHOLDERS[index];
 	}
 
 	function formatDuration(ms) {
@@ -167,17 +142,8 @@
 		if (existingTaskEl) {
 			existingTaskEl.setAttribute('data-status', (status || '').toLowerCase());
 			var desc = existingTaskEl.querySelector('.chat-task-description');
-			if (desc) {
-				if (status === 'in_progress') {
-					var st = parseInt(existingTaskEl.getAttribute('data-start-time') || Date.now());
-					desc.textContent = getRotatingPlaceholder(st);
-				} else if (status === 'completed') {
-					desc.textContent = 'Completed';
-				} else if (status === 'error') {
-					desc.textContent = 'Failed';
-				} else if (description) {
-					desc.textContent = description;
-				}
+			if (desc && description) {
+				desc.textContent = description;
 			}
 			var icon = existingTaskEl.querySelector('.chat-task-icon');
 			if (icon) icon.textContent = getTaskIcon(status);
@@ -229,7 +195,7 @@
 
 		var descSpan = document.createElement('span');
 		descSpan.className = 'chat-task-description';
-		descSpan.textContent = status === 'in_progress' ? getRotatingPlaceholder(now) : (description || 'Processing...');
+		descSpan.textContent = description || 'Processing...';
 
 		var arrow = document.createElement('span');
 		arrow.className = 'chat-task-expand';
@@ -424,9 +390,6 @@
 			if (conn.reconnectTimer) {
 				clearTimeout(conn.reconnectTimer);
 			}
-			if (conn.placeholderTimer) {
-				clearInterval(conn.placeholderTimer);
-			}
 			activeConnections.delete(root);
 		}
 	}
@@ -455,7 +418,6 @@
 		var state = {
 			eventSource: null,
 			reconnectTimer: null,
-			placeholderTimer: null,
 			currentTaskId: null,
 			currentTaskBody: null,
 			currentTaskStartTime: null,
@@ -463,23 +425,6 @@
 			destroyed: false
 		};
 		activeConnections.set(root, state);
-
-		// Timer to update rotating placeholder text
-		function startPlaceholderRotation() {
-			if (state.placeholderTimer) clearInterval(state.placeholderTimer);
-			state.placeholderTimer = setInterval(function() {
-				if (state.currentTaskId && state.processing) {
-					var taskEl = el.messages.querySelector('.chat-task[data-task-id="' + state.currentTaskId + '"]');
-					if (taskEl && taskEl.getAttribute('data-status') === 'in_progress') {
-						var desc = taskEl.querySelector('.chat-task-description');
-						var startTime = parseInt(taskEl.getAttribute('data-start-time') || Date.now());
-						if (desc) {
-							desc.textContent = getRotatingPlaceholder(startTime);
-						}
-					}
-				}
-			}, 1000); // Check every second
-		}
 
 		function getCurrentTaskBody() {
 			if (state.currentTaskId && !state.currentTaskBody) {
@@ -519,7 +464,6 @@
 					state.processing = data.processing;
 					if (data.processing && data.taskId) {
 						state.currentTaskId = data.taskId;
-						startPlaceholderRotation();
 					}
 					if (!state.processing) {
 						el.input.disabled = false;
@@ -583,15 +527,11 @@
 						var taskBody = ensureTaskCard(
 							el.messages,
 							status.taskId,
-							null,
+							status.description,
 							status.status,
 							state.currentTaskStartTime
 						);
 						state.currentTaskBody = taskBody;
-
-						if (status.status === 'in_progress') {
-							startPlaceholderRotation();
-						}
 					}
 
 					if (status.status === 'completed' || status.status === 'error') {
@@ -599,10 +539,6 @@
 						state.currentTaskId = null;
 						state.currentTaskBody = null;
 						state.currentTaskStartTime = null;
-						if (state.placeholderTimer) {
-							clearInterval(state.placeholderTimer);
-							state.placeholderTimer = null;
-						}
 						el.input.disabled = false;
 						el.button.disabled = false;
 					}
@@ -676,7 +612,6 @@
 					if (data.taskId) {
 						var taskBody = ensureTaskCard(el.messages, data.taskId, null, 'in_progress', state.currentTaskStartTime);
 						state.currentTaskBody = taskBody;
-						startPlaceholderRotation();
 					}
 					scrollToBottom(el.messages);
 				})

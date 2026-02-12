@@ -5,9 +5,9 @@
  */
 package com.top_logic.ai.vector.index;
 
-import static io.qdrant.client.PointIdFactory.*;
-import static io.qdrant.client.ValueFactory.*;
-import static io.qdrant.client.VectorsFactory.*;
+//import static io.qdrant.client.PointIdFactory.*;
+//import static io.qdrant.client.ValueFactory.*;
+//import static io.qdrant.client.VectorsFactory.*;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -16,7 +16,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
+//import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -39,7 +39,7 @@ import com.top_logic.knowledge.indexing.ContentObject;
 import com.top_logic.knowledge.indexing.IndexException;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeObject;
-import com.top_logic.knowledge.searching.SearchException;
+//import com.top_logic.knowledge.searching.SearchException;
 import com.top_logic.knowledge.service.HistoryManager;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -51,20 +51,22 @@ import dev.langchain4j.community.store.embedding.jvector.JVectorEmbeddingStore;
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.mistralai.MistralAiEmbeddingModel;
+import dev.langchain4j.store.embedding.EmbeddingMatch;
+import dev.langchain4j.store.embedding.EmbeddingSearchRequest;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import dev.langchain4j.store.embedding.qdrant.QdrantEmbeddingStore;
-import io.qdrant.client.QdrantClient;
-import io.qdrant.client.QdrantGrpcClient;
-import io.qdrant.client.grpc.Collections.Distance;
-import io.qdrant.client.grpc.Collections.VectorParams;
-import io.qdrant.client.grpc.Common.PointId;
-import io.qdrant.client.grpc.JsonWithInt;
-import io.qdrant.client.grpc.Points.PointStruct;
-import io.qdrant.client.grpc.Points.Vectors;
-import nl.dannyj.mistral.MistralClient;
-import nl.dannyj.mistral.models.embedding.EmbeddingRequest;
-import nl.dannyj.mistral.models.embedding.EmbeddingResponse;
-import nl.dannyj.mistral.models.embedding.FloatEmbedding;
+//import io.qdrant.client.QdrantClient;
+//import io.qdrant.client.QdrantGrpcClient;
+//import io.qdrant.client.grpc.Collections.Distance;
+//import io.qdrant.client.grpc.Collections.VectorParams;
+//import io.qdrant.client.grpc.Common.PointId;
+//import io.qdrant.client.grpc.JsonWithInt;
+//import io.qdrant.client.grpc.Points.PointStruct;
+//import io.qdrant.client.grpc.Points.Vectors;
+//import nl.dannyj.mistral.MistralClient;
+//import nl.dannyj.mistral.models.embedding.EmbeddingRequest;
+//import nl.dannyj.mistral.models.embedding.EmbeddingResponse;
+//import nl.dannyj.mistral.models.embedding.FloatEmbedding;
 
 class QdrantCollection {
 	public final String collectionName;
@@ -91,12 +93,12 @@ class QdrantCollection {
 	PersonManager.Module.class,
 	PersistencyLayer.Module.class,
 })
-public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.VectorConfig> {
+public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.VectorIndexingConfig> {
 	
 	/**
 	 * Configuration for {@link VectorIndex}.
 	 */
-	public static interface VectorConfig extends ConfiguredManagedClass.Config<VectorIndex> {
+	public static interface VectorIndexingConfig extends ConfiguredManagedClass.Config<VectorIndex> {
 
 		/**
 		 * The Qdrant database Hostname
@@ -193,7 +195,7 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
      */
     private Maybe<Long> timestampShutdownRequest = Maybe.none();
 
-	private final VectorConfig config;
+	private final VectorIndexingConfig config;
 
 	private final String qdrantDbHostname;
 
@@ -209,11 +211,11 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 
 	private final List<String> vectorIndexModels;
 
-	private final List<String> noVectorIndexModels;
+//	private final List<String> noVectorIndexModels;
 
-	private QdrantClient qdrantClient;
+//	private QdrantClient qdrantClient;
 
-	private final MistralClient mistralClient;
+//	private final MistralClient mistralClient;
 
 	private final MistralAiEmbeddingModel lc4jMistralEmbedClient;
 
@@ -225,7 +227,7 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 	 * Protected constructor for singleton pattern. Initialization with a given index location.
 	 * Creates the Vector index in case it does not exist yet.
 	 */
-	public VectorIndex(InstantiationContext context, VectorConfig config) throws ConfigurationException {
+	public VectorIndex(InstantiationContext context, VectorIndexingConfig config) throws ConfigurationException {
 		super(context, config);
 		this.config = config;
 		
@@ -237,13 +239,13 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		this.mistralEmbedModel = config.getMistralEmbedModel();
 		this.vectorIndexModels =
 			Stream.of(config.getVectorIndexModels().split(",")).map(String::trim).collect(Collectors.toList());
-		this.noVectorIndexModels =
-			Stream.of(config.getNoVectorIndexModels().split(",")).map(String::trim).collect(Collectors.toList());
+//		this.noVectorIndexModels =
+//			Stream.of(config.getNoVectorIndexModels().split(",")).map(String::trim).collect(Collectors.toList());
 
 		Logger.info("Create a Qdrant Client for Qdrant database at " + this.qdrantDbHostname + ":"
 			+ this.qdrantDbPort, VectorThread.class);
-		try {
-			this.qdrantClient = this.getQdrandClient();
+//		try {
+//			this.qdrantClient = this.getQdrandClient();
 
 			this.qdrantEmbeddingStore =
 				QdrantEmbeddingStore.builder()
@@ -258,16 +260,16 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 				.build();
 
 
-		} catch (InterruptedException | ExecutionException ex) {
-			// TODO Auto-generated catch block
-			ex.printStackTrace();
-		}
+//		} catch (InterruptedException | ExecutionException ex) {
+//			// TODO Auto-generated catch block
+//			ex.printStackTrace();
+//		}
 
 		Logger.info("Check for collection", VectorThread.class);
 		this.verifyQdrantCollection();
 
-		Logger.info("Initiate Mistral Client", VectorThread.class);
-		this.mistralClient = new MistralClient(this.mistralApiKey);
+//		Logger.info("Initiate Mistral Client", VectorThread.class);
+//		this.mistralClient = new MistralClient(this.mistralApiKey);
 		
 		MistralAiEmbeddingModel.MistralAiEmbeddingModelBuilder mistralEmbedBuilder =
 			new MistralAiEmbeddingModel.MistralAiEmbeddingModelBuilder();
@@ -332,15 +334,15 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		return this.vectorIndexModels;
 	}
 
-	/**
-	 * Vector No Index models - FQN of all models to be added as points to the Qdrant DB, but
-	 * without vectors (no embedding). These points can be used for AI model context storage.
-	 * 
-	 * @return List of FQNs of models to be indexed
-	 */
-	public List<String> getNoVectorIndexModels() {
-		return this.noVectorIndexModels;
-	}
+//	/**
+//	 * Vector No Index models - FQN of all models to be added as points to the Qdrant DB, but
+//	 * without vectors (no embedding). These points can be used for AI model context storage.
+//	 * 
+//	 * @return List of FQNs of models to be indexed
+//	 */
+//	public List<String> getNoVectorIndexModels() {
+//		return this.noVectorIndexModels;
+//	}
 
 	void init(InstantiationContext context) {
 		Logger.info("Initiating VectorIndex", VectorIndex.class);
@@ -362,16 +364,16 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
     
 
     
-	/**
-	 * Get a Vector index searcher for searching in a Vector index.
-	 * 
-	 * @return The Vector index searcher
-	 * @throws SearchException
-	 *         if the index could not be opened
-	 */
-	public QdrantClient getSearcher() throws SearchException {
-		return new QdrantClient(QdrantGrpcClient.newBuilder(this.getQdrantDbHostname()).build());
-    }
+//	/**
+//	 * Get a Vector index searcher for searching in a Vector index.
+//	 * 
+//	 * @return The Vector index searcher
+//	 * @throws SearchException
+//	 *         if the index could not be opened
+//	 */
+//	public QdrantClient getSearcher() throws SearchException {
+//		return new QdrantClient(QdrantGrpcClient.newBuilder(this.getQdrantDbHostname()).build());
+//    }
     
     /** 
      * number of outstanding Objects in the Queues.
@@ -533,23 +535,23 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 			joContent.put(indexKey, fd.getAttributeValue(key).toString());
 		}
 		joContent.put("_text", content);
-		
+
 		content = joContent.toJSONString();
 		
-		HashMap<String, ArrayList<JsonWithInt.Value>> associations = new HashMap<>();
+		HashMap<String, ArrayList<String>> associations = new HashMap<>();
 
-		HashMap<String, JsonWithInt.Value> associationsHashMap = new HashMap<>();
+		HashMap<String, String> associationsHashMap = new HashMap<>();
 
 		Iterator<KnowledgeAssociation> outgoingAssociations = aDoc.getOutgoingAssociations();
 		Iterator<KnowledgeAssociation> incomingAssociations = aDoc.getIncomingAssociations();
 
 		KnowledgeAssociation association;
 		String associationKeyName;
-		ArrayList<JsonWithInt.Value> prev;
+		ArrayList<String> prev;
 
 		while (outgoingAssociations.hasNext()) {
 			association = outgoingAssociations.next();
-			if(! association.getDestinationObject().getWrapper().tType().toString().equals("tl.model:TLClassifier")) {
+			if (!association.getDestinationObject().getWrapper().tType().toString().equals("tl.model:TLClassifier")) {
 				associationKeyName = "Association-" +
 					association.getDestinationObject().getWrapper().tType().toString();
 
@@ -557,7 +559,7 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 				if (prev == null) {
 					prev = new ArrayList<>();
 				}
-				prev.add(value(this.getDocumentUUID(association.getDestinationIdentity().toString()).toString()));
+				prev.add(this.getDocumentUUID(association.getDestinationIdentity().toString()).toString());
 
 				associations
 					.put(associationKeyName, prev);
@@ -574,7 +576,7 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 				if (prev == null) {
 					prev = new ArrayList<>();
 				}
-				prev.add(value(this.getDocumentUUID(association.getSourceIdentity().toString()).toString()));
+				prev.add(this.getDocumentUUID(association.getSourceIdentity().toString()).toString());
 				associations.put(associationKeyName, prev);
 			}
 		}
@@ -582,7 +584,7 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		for (String key : associations.keySet()) {
 			if (associations.get(key).size() > 1) {
 				Integer i = 0;
-				for (JsonWithInt.Value value : associations.get(key)) {
+				for (String value : associations.get(key)) {
 					associationsHashMap.put(key + "[" + (i++).toString() + "]", value);
 				}
 			} else {
@@ -591,24 +593,24 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 
 		}
 
-		HashMap<String, JsonWithInt.Value> payload = new HashMap<>();
+//		HashMap<String, String> payload = new HashMap<>();
+
+//		Map plMap = Map.of(
+//			"objectId", documentId,
+//			"id", this.getDocumentUUID(documentId).toString(),
+//			// "internalId", value(payload.get(associationKeyName)),
+//			"description", description,
+//			"TopLogic-type", aDoc.getWrapper().tType().toString(),
+//			"TLObject-creation-date", aDoc.getWrapper().tCreationDate().toString(),
+//			"TLObject-modification-date", aDoc.getWrapper().tLastModificationDate().toString(),
+//			"content", content);
+
+//		payload.putAll(plMap);
 
 		Map plMap = Map.of(
-			"objectId", value(documentId),
-			"id", value(this.getDocumentUUID(documentId).toString()),
-//			"internalId", value(payload.get(associationKeyName)),
-			"description", value(description),
-			"TopLogic-type", value(aDoc.getWrapper().tType().toString()),
-			"TLObject-creation-date", value(aDoc.getWrapper().tCreationDate().toString()),
-			"TLObject-modification-date", value(aDoc.getWrapper().tLastModificationDate().toString()),
-			"content", value(content));
-
-		payload.putAll(plMap);
-
-		plMap = Map.of(
 			"objectId", documentId,
 			"id", this.getDocumentUUID(documentId).toString(),
-//			"internalId", value(payload.get(associationKeyName)),
+			// "internalId", value(payload.get(associationKeyName)),
 			"description", description,
 			"TopLogic-type", aDoc.getWrapper().tType().toString(),
 			"TLObject-creation-date", aDoc.getWrapper().tCreationDate().toString(),
@@ -619,30 +621,50 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 
 		String internalId = joContent.get("internalId").toString();
 		if (internalId != null) {
-			payload.put("internalId", value(internalId));
+//			payload.put("internalId", internalId);
 			jo.put("internalId", internalId);
 		}
 
-		payload.putAll(associationsHashMap);
+//		payload.putAll(associationsHashMap);
 		jo.putAll(associationsHashMap);
 
-		List<FloatEmbedding> embeddings = new ArrayList<>();
-		embeddings.add(new FloatEmbedding());
-		String collectionName = this.qdrantDbCollectionNameNoVector;
+//		List<FloatEmbedding> embeddings = new ArrayList<>();
+//		embeddings.add(new FloatEmbedding());
+//		String collectionName = this.qdrantDbCollectionNameNoVector;
 
 		/* Do not embed ApplicationModel objects - they are huge and embedding does not give us any
 		 * value as we want to fetch them for every request as initial prompt context they contain
 		 * overall information about the application.
 		 * 
 		 * These objects shall be store in the _noVector collection. */
-		if (!this.getNoVectorIndexModels().contains(aDoc.getWrapper().tType().toString())) {
-			embeddings = this.getDocumentEmbeddings(payload.toString());
-			collectionName = this.qdrantDbCollectionName;
-		}
+//		if (!this.getNoVectorIndexModels().contains(aDoc.getWrapper().tType().toString())) {
+//			embeddings = this.getDocumentEmbeddings(payload.toString());
+//			collectionName = this.qdrantDbCollectionName;
+//		}
 
-		this.storeVectorIndexToQdrantDb(documentId, embeddings, payload, collectionName);
+//		this.storeVectorIndexToQdrantDb(documentId, embeddings, payload, collectionName);
 		this.storeVectorIndexToQdrantDb_(documentId, jo);
 	}
+
+//	/**
+//	 * Delete document from index
+//	 * 
+//	 * @param key
+//	 *        The key of vector point to be deleted
+//	 */
+//	protected void deleteDocument(ObjectKey key) {
+//		try {
+//			this.qdrantClient.deleteAsync(
+//				this.qdrantDbCollectionName, List.of(id(this.getDocumentUUID(key.toString()))))
+//				.get();
+//		} catch (InterruptedException ex) {
+//			// TODO Auto-generated catch block
+//			ex.printStackTrace();
+//		} catch (ExecutionException ex) {
+//			// TODO Auto-generated catch block
+//			ex.printStackTrace();
+//		}
+//	}
 
 	/**
 	 * Delete document from index
@@ -651,43 +673,30 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 	 *        The key of vector point to be deleted
 	 */
 	protected void deleteDocument(ObjectKey key) {
-		try {
-			this.qdrantClient.deleteAsync(
-				this.qdrantDbCollectionName, List.of(id(this.getDocumentUUID(key.toString()))))
-				.get();
-		} catch (InterruptedException ex) {
-			// TODO Auto-generated catch block
-			ex.printStackTrace();
-		} catch (ExecutionException ex) {
-			// TODO Auto-generated catch block
-			ex.printStackTrace();
-		}
+		this.qdrantEmbeddingStore.remove(key.toString());
+		this.jVectorEmbeddingStore.remove(key.toString());
 	}
 
-//	protected void deleteDocument_(ObjectKey key) {
-//		this.embeddingStore.remove(key.toString());
+//	private List<FloatEmbedding> getDocumentEmbeddings(String content) {
+//		Logger.info("Embed the content with Mistral Embedding client...", VectorThread.class);
+//
+//		List<String> contentList = List.of(content);
+//
+//		EmbeddingRequest embeddingRequest = EmbeddingRequest.builder()
+//			.model(this.getMistralEmbedModel()) // mistral-embed is currently the only model
+//												// available for embedding
+//			.input(contentList)
+//			.build();
+//
+//		EmbeddingResponse embeddingsResponse = this.mistralClient.createEmbedding(embeddingRequest);
+//		// Embeddings are returned as a list of FloatEmbedding objects. FloatEmbedding objects
+//		// contain a list of floats per input string.
+//		// See the Mistral documentation for more information:
+//		// https://docs.mistral.ai/capabilities/embeddings/
+//
+//		return embeddingsResponse.getData();
+//
 //	}
-
-	private List<FloatEmbedding> getDocumentEmbeddings(String content) {
-		Logger.info("Embed the content with Mistral Embedding client...", VectorThread.class);
-
-		List<String> contentList = List.of(content);
-
-		EmbeddingRequest embeddingRequest = EmbeddingRequest.builder()
-			.model(this.getMistralEmbedModel()) // mistral-embed is currently the only model
-												// available for embedding
-			.input(contentList)
-			.build();
-
-		EmbeddingResponse embeddingsResponse = this.mistralClient.createEmbedding(embeddingRequest);
-		// Embeddings are returned as a list of FloatEmbedding objects. FloatEmbedding objects
-		// contain a list of floats per input string.
-		// See the Mistral documentation for more information:
-		// https://docs.mistral.ai/capabilities/embeddings/
-
-		return embeddingsResponse.getData();
-
-	}
 
 	private Embedding getDocumentEmbedding(String content) {
 		Logger.info("Embed the content with Mistral Embedding client...", VectorThread.class);
@@ -697,37 +706,44 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		return embeddingsResponse;
 	}
 
-	private void storeVectorIndexToQdrantDb(String documentId, List<FloatEmbedding> embeddings,
-			Map payload, String collectionName) {
-		PointId pointId = id(this.getDocumentUUID(documentId));
 
-		embeddings.forEach(embedding -> {
-			Vectors vectors;
-			try {
-				vectors = vectors(embedding.getEmbedding());
-				Logger.info(embedding.getEmbedding().toString(), VectorThread.class);
-			} catch (Exception ex) {
-				vectors = vectors(0);
-			}
-			try {
-				List<PointStruct> points = List.of(
-					PointStruct.newBuilder()
-						.setId(pointId)
-						.setVectors(vectors)
-						.putAllPayload(payload)
-						.build());
+//	private void storeVectorIndexToQdrantDb(String documentId, List<FloatEmbedding> embeddings,
+//			Map payload, String collectionName) {
+//		PointId pointId = id(this.getDocumentUUID(documentId));
+//
+//		embeddings.forEach(embedding -> {
+//			Vectors vectors;
+//			try {
+//				vectors = vectors(embedding.getEmbedding());
+//				Logger.info(embedding.getEmbedding().toString(), VectorThread.class);
+//			} catch (Exception ex) {
+//				vectors = vectors(0);
+//			}
+//			try {
+//				List<PointStruct> points = List.of(
+//					PointStruct.newBuilder()
+//						.setId(pointId)
+//						.setVectors(vectors)
+//						.putAllPayload(payload)
+//						.build());
+//
+//				this.qdrantClient.upsertAsync(collectionName, points).get();
+//			} catch (InterruptedException ex) {
+//				// TODO Auto-generated catch block
+//				ex.printStackTrace();
+//			} catch (ExecutionException ex) {
+//				// TODO Auto-generated catch block
+//				ex.printStackTrace();
+//			}
+//		});
+//	}
 
-				this.qdrantClient.upsertAsync(collectionName, points).get();
-			} catch (InterruptedException ex) {
-				// TODO Auto-generated catch block
-				ex.printStackTrace();
-			} catch (ExecutionException ex) {
-				// TODO Auto-generated catch block
-				ex.printStackTrace();
-			}
-		});
-	}
-
+	/**
+	 * @param documentId
+	 *        id of document to add to the index
+	 * @param payload
+	 *        document payload
+	 */
 	public void storeVectorIndexToQdrantDb_(String documentId, JSONObject payload) {
 		String pl = payload.toJSONString();
 		this.qdrantEmbeddingStore.addAll(List.of(this.getDocumentUUID(documentId).toString()),
@@ -741,8 +757,34 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		((JVectorEmbeddingStore) this.jVectorEmbeddingStore).save();
 	}
 
+	/**
+	 * @param documentId
+	 *        id of document to return UUID of
+	 * @return UUID object
+	 */
 	public UUID getDocumentUUID(String documentId) {
 		return UUID.nameUUIDFromBytes(documentId.getBytes(StandardCharsets.UTF_8));
+	}
+
+	/**
+	 * @param query
+	 *        vector index search query
+	 * @return list of embedding matches
+	 */
+	public List<EmbeddingMatch<TextSegment>> searchVectorIndex(String query) {
+		Embedding queryEmbedding = this.getDocumentEmbedding(query);
+
+		EmbeddingSearchRequest embeddingSearchRequest = EmbeddingSearchRequest.builder()
+			.queryEmbedding(queryEmbedding)
+			.maxResults(5)
+			.build();
+
+		List<EmbeddingMatch<TextSegment>> qdrantEmbeddingStoreMatches =
+			this.qdrantEmbeddingStore.search(embeddingSearchRequest).matches();
+		List<EmbeddingMatch<TextSegment>> jvectorEmbeddingStoreMatches =
+			this.qdrantEmbeddingStore.search(embeddingSearchRequest).matches();
+
+		return jvectorEmbeddingStoreMatches;
 	}
 
 	/** @see VectorThread#isIndexUntrustworthy() */
@@ -764,12 +806,12 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 	}
 
 
-	/** @see VectorConfig#getTimeoutAbortIndexingForShutdown() */
+	/** @see VectorIndexingConfig#getTimeoutAbortIndexingForShutdown() */
 	public int getTimeoutAbortIndexingForShutdown() {
 		return config.getTimeoutAbortIndexingForShutdown();
 	}
 
-	/** @see VectorConfig#getWarnQueueSize() */
+	/** @see VectorIndexingConfig#getWarnQueueSize() */
 	public int getWarnQueueSize() {
 		return config.getWarnQueueSize();
 	}
@@ -803,7 +845,7 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		
 		timestampShutdownRequest = Maybe.none();
 		
-		this.qdrantClient.close();
+//		this.qdrantClient.close();
 
 		Logger.info("Stopped Vector Indexer", VectorIndex.class);
 		super.shutDown();
@@ -815,49 +857,41 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		List.of(new QdrantCollection(this.qdrantDbCollectionName, 1024),
 			new QdrantCollection(this.qdrantDbCollectionNameNoVector, 1))
 			.forEach(collection -> {
-				try {
-					if (!this.qdrantClient.collectionExistsAsync(collection.collectionName).get()) {
-						this.createQdrantCollection(collection.collectionName, collection.vectorSize);
-					}
-				} catch (InterruptedException ex) {
-					// TODO Auto-generated catch block
-					ex.printStackTrace();
-				} catch (ExecutionException ex) {
-					// TODO Auto-generated catch block
-					ex.printStackTrace();
-			}
+//				if (!this.qdrantClient.collectionExistsAsync(collection.collectionName).get()) {
+//					this.createQdrantCollection(collection.collectionName, collection.vectorSize);
+//				}
 			});
 
 		return true;
 	}
 
-	private void createQdrantCollection(String collectionName, Integer vectorSize) {
-		try {
-			if (!this.qdrantClient.collectionExistsAsync(collectionName).get()) {
-				this.qdrantClient.createCollectionAsync(
-					collectionName,
-					VectorParams.newBuilder()
-						.setDistance(Distance.Cosine)
-						.setSize(vectorSize)
-						.build())
-					.get();
-			}
-		} catch (InterruptedException ex) {
-			// TODO Auto-generated catch block
-			ex.printStackTrace();
-		} catch (ExecutionException ex) {
-			// TODO Auto-generated catch block
-			ex.printStackTrace();
-		}
-	}
+//	private void createQdrantCollection(String collectionName, Integer vectorSize) {
+//		try {
+//			if (!this.qdrantClient.collectionExistsAsync(collectionName).get()) {
+//				this.qdrantClient.createCollectionAsync(
+//					collectionName,
+//					VectorParams.newBuilder()
+//						.setDistance(Distance.Cosine)
+//						.setSize(vectorSize)
+//						.build())
+//					.get();
+//			}
+//		} catch (InterruptedException ex) {
+//			// TODO Auto-generated catch block
+//			ex.printStackTrace();
+//		} catch (ExecutionException ex) {
+//			// TODO Auto-generated catch block
+//			ex.printStackTrace();
+//		}
+//	}
 
-	private QdrantClient getQdrandClient() throws InterruptedException, ExecutionException {
-		QdrantClient client = new QdrantClient(
-			QdrantGrpcClient.newBuilder(this.qdrantDbHostname, this.qdrantDbPort, false)
-				.build());
-
-		return client;
-	}
+//	private QdrantClient getQdrandClient() throws InterruptedException, ExecutionException {
+//		QdrantClient client = new QdrantClient(
+//			QdrantGrpcClient.newBuilder(this.qdrantDbHostname, this.qdrantDbPort, false)
+//				.build());
+//
+//		return client;
+//	}
 
 	/**
 	 * {@link TypedRuntimeModule} for access to the {@link VectorIndex}.

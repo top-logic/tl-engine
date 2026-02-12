@@ -4,8 +4,6 @@
 
 <root>
 	<alias>
-		<!-- Folder to create the Vector index in. -->
-        <entry name="%VECTOR_PATH%" value="%VAR_PATH%/vector_index" />
 	</alias>
 
 </root>

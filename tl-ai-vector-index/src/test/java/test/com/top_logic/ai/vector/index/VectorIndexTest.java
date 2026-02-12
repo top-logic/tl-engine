@@ -7,6 +7,7 @@ package test.com.top_logic.ai.vector.index;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -17,6 +18,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import junit.framework.Test;
+import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 import org.json.simple.JSONObject;
@@ -26,24 +28,44 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.ai.vector.index.VectorIndex;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.TupleFactory.Pair;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.layout.provider.LabelProviderService;
 import com.top_logic.util.model.ModelService;
 
+import dev.langchain4j.data.segment.TextSegment;
+import dev.langchain4j.store.embedding.EmbeddingMatch;
+
 /**
  * Test cases for {@link VectorIndex}.
  */
 public class VectorIndexTest extends BasicTestCase {
-	private final VectorIndex vectorIndex = VectorIndex.getInstance();
+	private VectorIndex vectorIndex;
 
 	/* Constants definitions go here */
 	private final String filesDir = "src/test/java/test/com/top_logic/ai/vector/index/testdata";
+	
+	
+	/* Test suite for Vector indexing
+	 * 
+	 * 1. Test indexing text files; 1.1 Load text files from filesDir; 1.2 Index the texts contained
+	 * in these files; 1.3 Search the vector store to verify that texts are loaded in the database
+	 * and indexed; 1.3.1 Search by document id; 1.3.2 Search by keywords, specific to particular
+	 * content and verify scores; 1.4 Clean the vector database - delete the points loaded in 1.2;
+	 * 
+	 * 2. Test model instance indexing; 2.1 Configuration preparation - verify that the
+	 * VectorIndexing service has configuration for models to index with vectors and store to vector
+	 * database without vector embedding; 2.2 Data preparation; 2.2.1 Create vector indexing test
+	 * model; 2.2.2 Create no-vector test model; 2.2.3 Create test model which should not be indexed
+	 * or stored to the database; 2.2.4 Create instance(s) in each of the models above; 2.3 Verify
+	 * the index by document id; 2.4 Verify the index by search string; verify score; 2.5 Delete the
+	 * instances; 2.6 Verify points deletion in the vector store; 2.7 Clean - delete any remaining
+	 * instances and models; */
+	
 
 	private List<Pair<String, JSONObject>> loadTestFiles() {
 		List<Pair<String, JSONObject>> contents = new ArrayList<>();
-
-//		List<String> contents = new ArrayList<>();
 
 		Set<String> filenames =
 			Stream.of(new File(this.filesDir).listFiles())
@@ -55,7 +77,9 @@ public class VectorIndexTest extends BasicTestCase {
 			try {
 				JSONObject jo = new JSONObject();
 
-				jo.put("content", new String(Files.readAllBytes(Paths.get(this.filesDir + "/" + filename))));
+				String content = Files.readString(Paths.get(this.filesDir + "/" + filename), StandardCharsets.UTF_8);
+
+				jo.put("content", content);
 
 				contents.add(new Pair(filename, jo));
 			} catch (IOException ex) {
@@ -72,6 +96,8 @@ public class VectorIndexTest extends BasicTestCase {
 	public void testIndexText() {
 		List<Pair<String, JSONObject>> contentsToIndex = this.loadTestFiles();
 		
+		this.vectorIndex = VectorIndex.getInstance();
+
 		for (Pair<String, JSONObject> content : contentsToIndex) {
 			this.vectorIndex.storeVectorIndexToQdrantDb_(
 				this.vectorIndex.getDocumentUUID(content.getFirst().toString()).toString(),
@@ -79,13 +105,67 @@ public class VectorIndexTest extends BasicTestCase {
 		}
 	}
 
+	public void testSearchVectorStore() {
+		this.vectorIndex = VectorIndex.getInstance();
+
+		List<String> searchQueries = List.of(
+			"Sights of ancient empire remains",
+			"Remarkable architecture",
+			"Oriental spirit");
+
+		for (String query : searchQueries) {
+			Logger.info("=============== Search Vector index for matches for query \"" + query + "\"", this.getClass());
+			List<EmbeddingMatch<TextSegment>> matches = this.vectorIndex.searchVectorIndex(query);
+
+			for (EmbeddingMatch<TextSegment> match : matches) {
+				Logger.info(match.toString(), this.getClass());
+			}
+		}
+	}
+
+	/**
+	 * Creates a TestCase for a specific test method.
+	 */
+	private static TestCase createTest(String methodName) {
+		return new VectorIndexTest(methodName);
+	}
+
+	/**
+	 * Constructor to create a test case for a specific method.
+	 */
+	public VectorIndexTest(String testName) {
+		super(testName);
+	}
+
 	/**
 	 * Creates the test suite with required service dependencies.
 	 */
 	public static Test suite() {
-		return suite(VectorIndexTest.class);
+		TestSuite suite = new TestSuite(VectorIndexTest.class.getName());
+
+		// Add tests in explicit order to ensure test ZZZ runs last
+		// Using {@link TestSuite#addTestSuite(Class)} with a custom suite that only contains
+		// specific methods
+		try {
+			suite.addTest(createTest("testIndexText"));
+			suite.addTest(createTest("testSearchVectorStore"));
+		} catch (Exception ex) {
+			throw new RuntimeException("Failed to create ordered test suite", ex);
+		}
+
+		// Wrap with service setup
+		BasicRuntimeModule<?>[] modules = VectorIndexTest.getModules();
+		return KBSetup.getSingleKBTest(
+			ServiceTestSetup.createSetup(suite, modules));
 	}
 
+	/**
+	 * @param test
+	 *        test
+	 * @param additionalModules
+	 *        additional modules
+	 * @return Test
+	 */
 	protected static Test suite(Class<? extends Test> test, BasicRuntimeModule<?>... additionalModules) {
 		BasicRuntimeModule<?>[] modules = getModules(additionalModules);
 
@@ -100,6 +180,7 @@ public class VectorIndexTest extends BasicTestCase {
 
 		modules.add(ModelService.Module.INSTANCE);
 		modules.add(LabelProviderService.Module.INSTANCE);
+		modules.add(com.top_logic.ai.vector.index.VectorIndexingService.Module.INSTANCE);
 
 		modules.addAll(Arrays.asList(additionalModules));
 

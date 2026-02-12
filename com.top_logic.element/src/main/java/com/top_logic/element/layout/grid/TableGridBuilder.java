@@ -302,7 +302,7 @@ public class TableGridBuilder<R> extends ListModelBuilderProxy
 
 	@Override
 	public boolean handleTLObjectCreations(GridComponent grid, Stream<? extends TLObject> creations) {
-		List<TLObject> relevantCreations = Collections.emptyList();
+		List<TLObject> relevantCreations = null;
 
 		for (Iterator<? extends TLObject> it = creations.iterator(); it.hasNext();) {
 			TLObject newObject = it.next();
@@ -315,15 +315,16 @@ public class TableGridBuilder<R> extends ListModelBuilderProxy
 					if (!Utils.equals(grid.getModel(), retrieveModelFromListElement(grid, newObject))) {
 						continue;
 					}
-					if (!relevantCreations.isEmpty()) {
-						relevantCreations.add(newObject);
-						continue;
+					if (relevantCreations == null) {
+						// newObject is the first object to add to list.
+						if (!grid.isVisible()) {
+							/* Grid is not visible. No incremental update possible: Recreate
+							 * list. */
+							grid.invalidate();
+							return true;
+						}
+						relevantCreations = new ArrayList<>();
 					}
-					if (!grid.isVisible()) {
-						grid.invalidate();
-						return true;
-					}
-					relevantCreations = new ArrayList<>();
 					relevantCreations.add(newObject);
 					continue;
 				case UNKNOWN:
@@ -336,7 +337,7 @@ public class TableGridBuilder<R> extends ListModelBuilderProxy
 			throw new IllegalArgumentException("Uncovered case: " + updateDecision);
 		}
 
-		if (relevantCreations.isEmpty()) {
+		if (relevantCreations == null) {
 			return false;
 		}
 		grid.getHandler().addNewRows(relevantCreations);

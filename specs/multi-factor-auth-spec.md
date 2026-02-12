@@ -161,75 +161,88 @@ The dependency graph is:
 
 #### 3.1.1 Purpose
 
-Provide a TOTP (Time-Based One-Time Password, RFC 6238) implementation as a new type of
-security device. This device is designed to serve as a **second factor** alongside a primary
-authentication device (typically `DBAuthenticationAccessDevice`).
+Provide a TOTP (Time-Based One-Time Password, RFC 6238) implementation as a standard
+`AuthenticationDevice`. The TOTP device can serve as:
 
-#### 3.1.2 New Interface: `SecondFactorDevice`
+- A **second authentication factor** alongside a primary device (typically
+  `DBAuthenticationAccessDevice`), or
+- A **standalone primary device** for accounts that authenticate by TOTP code alone.
 
-The existing `AuthenticationDevice` interface is oriented toward password-based primary
-authentication (methods like `allowPwdChange()`, `setPassword()`, `getPasswordValidator()`
-are specific to passwords). A second factor has fundamentally different semantics.
+#### 3.1.2 Design Approach: TOTP as AuthenticationDevice
 
-A new interface is introduced:
+TOTP authentication is conceptually the same as password authentication: the user provides
+a credential (a time-based code instead of a memorized password), and the device verifies
+it. The existing `AuthenticationDevice` interface already accommodates devices where the
+password-management methods are not applicable -- `LDAPAuthenticationAccessDevice` returns
+`false` for `allowPwdChange()` and does not support `setPassword()`. A TOTP device follows
+the same pattern:
+
+| Method | TOTP behavior |
+|--------|---------------|
+| `authentify(LoginCredentials)` | Validates the TOTP code (passed via the password field in `LoginCredentials`). |
+| `allowPwdChange()` | Returns `false`. |
+| `setPassword()` | Throws `UnsupportedOperationException`. |
+| `getPasswordValidator()` | Throws `UnsupportedOperationException`. |
+| `expirePassword()` | No-op. |
+| `isPasswordChangeRequested()` | Returns `false`. |
+
+This means **no new device interface is needed** for the core authentication flow. The
+existing `AuthenticationDevice` is sufficient, and the `TLSecurityDeviceManager` already
+supports registering any number of `AuthenticationDevice` instances by ID.
+
+#### 3.1.3 Enrollment: `EnrollableDevice` Mix-In Interface
+
+Authentication devices like TOTP require an **enrollment** step (generating a secret,
+showing a QR code, confirming the first code) that has no equivalent in
+`AuthenticationDevice`. This is a provisioning concern, not an authentication concern.
+
+A small mix-in interface is introduced in **tl-core**:
 
 ```java
 package com.top_logic.base.security.device.interfaces;
 
 /**
- * A security device that provides a second authentication factor.
+ * Optional mix-in for {@link AuthenticationDevice} implementations that require
+ * an explicit enrollment step before authentication can succeed.
  *
  * <p>
- * Unlike {@link AuthenticationDevice}, which handles primary authentication (typically
- * password-based), a {@code SecondFactorDevice} provides an additional verification
- * step. It operates on {@link Person} accounts that are already associated with a
- * primary {@link AuthenticationDevice}.
+ * For example, a TOTP device requires generating a shared secret and having
+ * the user confirm it via an authenticator app before the device can
+ * authenticate the user. A password-based device does not need this -- password
+ * setup is handled via {@link AuthenticationDevice#setPassword}.
+ * </p>
+ *
+ * <p>
+ * Code that needs enrollment capabilities (registration flows, self-service
+ * TOTP reset) checks {@code device instanceof EnrollableDevice}.
  * </p>
  */
-public interface SecondFactorDevice extends SecurityDevice {
+public interface EnrollableDevice {
 
     /**
-     * Whether the given account has a second factor enrolled.
-     *
-     * @param account the person to check.
-     * @return {@code true} if a second factor is configured for this account.
+     * Whether the given account has completed enrollment for this device.
      */
     boolean isEnrolled(Person account);
 
     /**
-     * Verifies a second-factor code for the given account.
-     *
-     * @param account the person to verify.
-     * @param code    the code entered by the user (e.g. a 6-digit TOTP code).
-     * @return {@code true} if the code is valid.
-     */
-    boolean verify(Person account, String code);
-
-    /**
-     * Initiates enrollment for the given account. Returns an {@link Enrollment}
-     * object containing the information needed for the user to set up their
-     * second factor (e.g. a QR code URI for TOTP).
-     *
-     * @param account the person to enroll.
-     * @return enrollment information; never {@code null}.
+     * Initiates enrollment. Returns an {@link Enrollment} containing the
+     * information the user needs to set up their factor (e.g. a QR code URI).
      */
     Enrollment beginEnrollment(Person account);
 
     /**
      * Confirms enrollment by verifying a code produced with the newly enrolled
-     * factor. After successful confirmation, the factor is active for the account.
+     * factor. After successful confirmation, the device can authenticate the
+     * account.
      *
-     * @param account    the person being enrolled.
-     * @param enrollment the enrollment previously returned by {@link #beginEnrollment}.
-     * @param code       the verification code from the user.
-     * @return {@code true} if enrollment is confirmed and the factor is now active.
+     * @return {@code true} if the code is valid and enrollment is now active.
      */
     boolean confirmEnrollment(Person account, Enrollment enrollment, String code);
 
     /**
-     * Removes the second factor for the given account.
-     *
-     * @param account the person whose second factor is to be removed.
+     * Removes enrollment for the given account. After this call,
+     * {@link #isEnrolled} returns {@code false} and authentication will fail
+     * until re-enrollment.
      */
     void unenroll(Person account);
 }
@@ -241,13 +254,14 @@ The `Enrollment` object:
 package com.top_logic.base.security.device.interfaces;
 
 /**
- * Information needed by the user to complete second-factor enrollment.
+ * Information needed by the user to complete enrollment for an
+ * {@link EnrollableDevice}.
  */
 public interface Enrollment {
 
     /**
      * A URI suitable for encoding as a QR code (e.g. an {@code otpauth://} URI
-     * for TOTP). May be {@code null} if the factor type does not use QR codes.
+     * for TOTP). May be {@code null} if the device type does not use QR codes.
      */
     String getProvisioningUri();
 
@@ -259,29 +273,32 @@ public interface Enrollment {
 
     /**
      * An opaque token identifying this enrollment session. Used internally to
-     * correlate {@link SecondFactorDevice#confirmEnrollment} with the
-     * corresponding {@link SecondFactorDevice#beginEnrollment} call.
+     * correlate {@link EnrollableDevice#confirmEnrollment} with the
+     * corresponding {@link EnrollableDevice#beginEnrollment} call.
      */
     String getEnrollmentToken();
 }
 ```
 
-**Placement:** Both interfaces are added to the existing package
-`com.top_logic.base.security.device.interfaces` in **tl-core**, alongside
-`SecurityDevice` and `AuthenticationDevice`. This allows the core login flow (section 3.2)
-to reference `SecondFactorDevice` without depending on the TOTP module.
+**Placement:** `EnrollableDevice` and `Enrollment` are added to
+`com.top_logic.base.security.device.interfaces` in **tl-core**. They are small
+interfaces with no dependencies beyond `Person`.
 
-#### 3.1.3 TOTP Device Implementation
+#### 3.1.4 TOTP Device Implementation
 
 A new module **`com.top_logic.security.auth.totp`** provides:
 
-**`TOTPSecondFactorDevice`** implements `SecondFactorDevice`:
+**`TOTPAuthenticationDevice`** implements both `AuthenticationDevice` and
+`EnrollableDevice`:
 
 - **TOTP generation and validation** per RFC 6238 / RFC 4226.
   - Algorithm: HMAC-SHA1 (default, configurable to SHA-256 or SHA-512).
   - Time step: 30 seconds (default, configurable).
   - Code length: 6 digits (default, configurable).
   - Clock skew tolerance: +/- 1 time step (configurable).
+- **`authentify(LoginCredentials)`:** Extracts the TOTP code from
+  `credentials.getPassword()` (as a char array), converts to String, and validates
+  against the stored secret.
 - **Secret storage:** TOTP secrets are stored in a new database table (similar to the
   existing `Password` table used by `DBAuthenticationAccessDevice`):
 
@@ -304,7 +321,7 @@ A new module **`com.top_logic.security.auth.totp`** provides:
 **Configuration:**
 
 ```java
-public interface Config extends SecondFactorDevice.Config<TOTPSecondFactorDevice> {
+public interface Config extends AuthenticationDevice.Config<TOTPAuthenticationDevice> {
 
     /** HMAC algorithm: HmacSHA1, HmacSHA256, HmacSHA512. */
     @Name("algorithm")
@@ -341,15 +358,9 @@ public interface Config extends SecondFactorDevice.Config<TOTPSecondFactorDevice
 
 **Registration in `TLSecurityDeviceManager`:**
 
-The `TLSecurityDeviceManager` configuration is extended to accept `SecondFactorDevice`
-instances alongside existing `AuthenticationDevice` and `PersonDataAccessDevice`
-instances. Since all three extend `SecurityDevice`, the existing `security-devices` map
-already supports this. A new accessor is added:
-
-```java
-// In TLSecurityDeviceManager:
-public SecondFactorDevice getSecondFactorDevice(String deviceID) { ... }
-```
+No changes needed. Since `TOTPAuthenticationDevice` implements `AuthenticationDevice`,
+it is registered in the existing `security-devices` map and is accessible via the
+existing `getAuthenticationDevice(deviceID)` method.
 
 **Example configuration:**
 
@@ -361,14 +372,23 @@ public SecondFactorDevice getSecondFactorDevice(String deviceID) { ... }
         ...
     </security-device>
 
-    <!-- New TOTP second factor device -->
+    <!-- TOTP device (usable as primary or secondary auth device) -->
     <security-device id="totp"
-        class="com.top_logic.security.auth.totp.TOTPSecondFactorDevice"
+        class="com.top_logic.security.auth.totp.TOTPAuthenticationDevice"
         issuer="MyApplication"
         encryption-key="%TOTP_ENCRYPTION_KEY%"
     />
 </security-devices>
 ```
+
+**Usage scenarios:**
+
+- *TOTP as second factor:* Person has `authDeviceID = "dbSecurity"` and
+  `secondAuthDeviceID = "totp"`. Login requires password, then TOTP code.
+- *TOTP as sole factor:* Person has `authDeviceID = "totp"` and no
+  `secondAuthDeviceID`. Login requires only a TOTP code.
+- *Password only:* Person has `authDeviceID = "dbSecurity"` and no
+  `secondAuthDeviceID`. Existing behavior, unchanged.
 
 #### 3.1.4 External Dependencies
 
@@ -396,32 +416,36 @@ A new attribute is added to `Person`:
 
 ```java
 // In Person.java:
-public static final String SECOND_FACTOR_DEVICE_ID = "secondFactorDeviceID";
+public static final String SECOND_AUTH_DEVICE_ID = "secondAuthDeviceID";
 
 /**
- * The ID of the {@link SecondFactorDevice} for this account, or {@code null}
- * if no second factor is required.
+ * The ID of the secondary {@link AuthenticationDevice} for this account,
+ * or {@code null} if no second factor is required.
  */
-public String getSecondFactorDeviceID() {
-    return tGetDataString(SECOND_FACTOR_DEVICE_ID);
+public String getSecondAuthDeviceID() {
+    return tGetDataString(SECOND_AUTH_DEVICE_ID);
 }
 
 /**
- * Resolves the {@link SecondFactorDevice} for this account.
+ * Resolves the secondary {@link AuthenticationDevice} for this account.
  *
- * @return the second factor device, or {@code null} if none is configured.
+ * @return the second authentication device, or {@code null} if none is
+ *         configured.
  */
-public SecondFactorDevice getSecondFactorDevice() {
-    String deviceId = getSecondFactorDeviceID();
+public AuthenticationDevice getSecondAuthDevice() {
+    String deviceId = getSecondAuthDeviceID();
     if (StringServices.isEmpty(deviceId)) {
         return null;
     }
-    return TLSecurityDeviceManager.getInstance().getSecondFactorDevice(deviceId);
+    return TLSecurityDeviceManager.getInstance()
+        .getAuthenticationDevice(deviceId);
 }
 ```
 
 This follows the same pattern as the existing `authDeviceID` /
-`getAuthenticationDevice()` pair.
+`getAuthenticationDevice()` pair. Both the primary and secondary device are standard
+`AuthenticationDevice` instances -- the framework does not distinguish between device
+types. The "second factor" semantic is purely a matter of how the Person is configured.
 
 #### 3.2.3 Login Flow Extension
 
@@ -435,8 +459,7 @@ Browser                    LoginPageServlet / Login
   |                              |  1. Resolve Person
   |                              |  2. authDevice.authentify(credentials)
   |                              |
-  |                              |  3. Check: secondFactorDeviceID set?
-  |                              |     AND device.isEnrolled(person)?
+  |                              |  3. Check: secondAuthDeviceID set?
   |                              |
   |                              |  --- If NO second factor required ---
   |                              |  4a. SessionService.loginUser()
@@ -450,7 +473,7 @@ Browser                    LoginPageServlet / Login
   |  POST totp-code              |
   |----------------------------->|
   |                              |  5. Retrieve partial auth state
-  |                              |  6. secondFactorDevice.verify(person, code)
+  |                              |  6. secondAuthDevice.authentify(credentials)
   |                              |
   |                              |  --- If valid ---
   |                              |  7. SessionService.loginUser()
@@ -490,33 +513,40 @@ Browser                    LoginPageServlet / Login
 
 #### 3.2.4 Changes to `Login`
 
-A new method is added:
+New methods are added:
 
 ```java
 /**
- * Verifies the second factor for a partially authenticated user.
+ * Verifies the second authentication factor for a partially authenticated
+ * user.
  *
- * @param person the person (already authenticated by primary factor).
- * @param code   the second-factor code entered by the user.
+ * @param person the person (already authenticated by primary device).
+ * @param code   the code entered by the user.
  * @return {@code true} if the code is valid.
- * @throws LoginDeniedException if the person has no second factor enrolled.
+ * @throws LoginDeniedException if the person has no second auth device.
  */
 public boolean verifySecondFactor(Person person, String code) {
-    SecondFactorDevice device = person.getSecondFactorDevice();
-    if (device == null || !device.isEnrolled(person)) {
-        throw new LoginDeniedException("No second factor enrolled.");
+    AuthenticationDevice device = person.getSecondAuthDevice();
+    if (device == null) {
+        throw new LoginDeniedException("No second auth device configured.");
     }
-    return device.verify(person, code);
+    try (LoginCredentials credentials =
+            LoginCredentials.fromUserAndPassword(person, code.toCharArray())) {
+        return device.authentify(credentials);
+    }
 }
 
 /**
- * Whether the given person requires a second authentication factor.
+ * Whether the given person requires a second authentication step.
  */
 public boolean requiresSecondFactor(Person person) {
-    SecondFactorDevice device = person.getSecondFactorDevice();
-    return device != null && device.isEnrolled(person);
+    return person.getSecondAuthDevice() != null;
 }
 ```
+
+Note that `verifySecondFactor` uses the standard `authentify(LoginCredentials)`
+method -- the second device is just another `AuthenticationDevice` and receives the
+code via the password field in `LoginCredentials`.
 
 #### 3.2.5 Changes to `LoginPageServlet`
 
@@ -724,7 +754,7 @@ User                      System
  |                           | -- If Person has second factor enrolled --
  | 6. Enter TOTP code        |
  |-------------------------->|
- |                           | 7. SecondFactorDevice.verify(person, code)
+ |                           | 7. secondAuthDevice.authentify(credentials)
  |                           |
  | 8. Enter new password     |
  |    (+ confirmation)       |
@@ -764,15 +794,15 @@ User                      System
  |-------------------------->|
  |                           | 6. OTPService.validate(session, code)
  |                           |
- |                           | 7. SecondFactorDevice.unenroll(person)
- |                           | 8. SecondFactorDevice.beginEnrollment(person)
+ |                           | 7. enrollableDevice.unenroll(person)
+ |                           | 8. enrollableDevice.beginEnrollment(person)
  |                           |
  |   <-- QR code page --     |
  |                           |
  | 9. Scan QR code,          |
  |    enter TOTP code        |
  |-------------------------->|
- |                           | 10. SecondFactorDevice.confirmEnrollment()
+ |                           | 10. enrollableDevice.confirmEnrollment()
  |                           |
  |   <-- Success page --     |
 ```
@@ -1303,7 +1333,7 @@ public interface Config extends ConfiguredManagedClass.Config<RegistrationServic
      */
     @Name("second-factor-device-id")
     @Nullable
-    String getSecondFactorDeviceId();
+    String getSecondAuthDeviceId();
 }
 ```
 
@@ -1396,12 +1426,12 @@ List<String> getBlockedEmailDomains();
 
 | File / Component | Change |
 |---|---|
-| `SecurityDevice.java` | No change (already generic enough) |
+| `SecurityDevice.java` | No change |
 | `AuthenticationDevice.java` | No change |
-| **New:** `SecondFactorDevice.java` | New interface in same package |
-| **New:** `Enrollment.java` | New interface in same package |
-| `TLSecurityDeviceManager.java` | Add `getSecondFactorDevice(String)` method |
-| `Person.java` | Add `secondFactorDeviceID` attribute and accessor methods |
+| **New:** `EnrollableDevice.java` | Mix-in interface for devices requiring enrollment (e.g. TOTP) |
+| **New:** `Enrollment.java` | Enrollment information interface (QR code URI, manual key, session token) |
+| `TLSecurityDeviceManager.java` | No change (TOTP device registered as standard `AuthenticationDevice`) |
+| `Person.java` | Add `secondAuthDeviceID` attribute and accessor methods |
 | `Login.java` | Add `verifySecondFactor()`, `requiresSecondFactor()` methods |
 | `Login.Config` | Add `second-factor-timeout` option, `self-service` sub-config |
 | `LoginPageServlet.java` | Extend `checkRequest()` for second-factor flow branch |
@@ -1414,7 +1444,7 @@ List<String> getBlockedEmailDomains();
 
 | Module | Artifact ID | Key Contents |
 |---|---|---|
-| `com.top_logic.security.auth.totp` | `tl-security-auth-totp` | `TOTPSecondFactorDevice`, TOTP generation/validation, secret storage |
+| `com.top_logic.security.auth.totp` | `tl-security-auth-totp` | `TOTPAuthenticationDevice` (implements `AuthenticationDevice` + `EnrollableDevice`), TOTP generation/validation, secret storage |
 | `com.top_logic.security.otp` | `tl-security-otp` | `OTPService`, OTP generation/validation, email delivery |
 | `com.top_logic.security.selfservice` | `tl-security-selfservice` | `SelfServiceServlet`, password-reset flow, TOTP-reset flow, `AccountResolver` |
 | `com.top_logic.security.register` | `tl-security-register` | `RegistrationServlet`, `RegistrationStep` framework, `RegistrationHandler`, `InvitationService` (invitation + open self-registration) |
@@ -1457,6 +1487,6 @@ List<String> getBlockedEmailDomains();
 
 5. **Person vs. separate external user entity:** The current design creates standard
    `Person` objects for self-registered users (with appropriate `authDeviceID` and
-   `secondFactorDeviceID`). An alternative would be a separate `ExternalUser` entity type.
+   `secondAuthDeviceID`). An alternative would be a separate `ExternalUser` entity type.
    Using `Person` is simpler and reuses existing infrastructure; a separate type provides
    clearer separation but requires duplicating authorization hooks.

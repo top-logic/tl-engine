@@ -13,12 +13,15 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /**
  * In-memory container holding chat entries in order: messages and task traces.
  * <p>
- * Order is preserved so the UI can render: user message → task trace → agent response.
+ * Order is preserved so the UI can render: user message -> task trace -> agent response.
  * Obtained from {@link TaskProgressTracker#getChat()} so the same instance is used when adding
  * (in poll) and when rendering.
  * </p>
  */
 public class Chat {
+
+	/** Maximum number of entries to keep in memory. Oldest entries are evicted first. */
+	private static final int MAX_ENTRIES = 500;
 
 	private final List<ChatEntry> _entries = new CopyOnWriteArrayList<>();
 	private boolean _welcomeAdded;
@@ -28,6 +31,7 @@ public class Chat {
 	 */
 	public void addMessage(ChatMessage message) {
 		_entries.add(new ChatEntry.MessageEntry(message));
+		enforceMaxSize();
 	}
 
 	/**
@@ -46,10 +50,18 @@ public class Chat {
 	 */
 	public void addTask(String taskId) {
 		_entries.add(new ChatEntry.TaskEntry(taskId));
+		enforceMaxSize();
 	}
 
 	/**
 	 * Adds a completed task as a stored snapshot so the trace persists (no lookup at render time).
+	 *
+	 * <p>
+	 * This deliberately duplicates the task data that also exists in
+	 * {@link TaskProgressTracker#getTask(String)}. The snapshot freezes the task trace at
+	 * completion time so that tracker LRU eviction (which removes old tasks to bound memory)
+	 * does not cause rendered timeline entries to disappear.
+	 * </p>
 	 *
 	 * @param task
 	 *        The task to store; will be rendered as the tool/agent trace.
@@ -57,6 +69,7 @@ public class Chat {
 	public void addTaskSnapshot(ChatTask task) {
 		if (task != null) {
 			_entries.add(new ChatEntry.TaskSnapshotEntry(task));
+			enforceMaxSize();
 		}
 	}
 
@@ -78,6 +91,15 @@ public class Chat {
 			}
 		}
 		return Collections.unmodifiableList(messages);
+	}
+
+	/**
+	 * Removes oldest entries when the list exceeds {@link #MAX_ENTRIES}.
+	 */
+	private void enforceMaxSize() {
+		while (_entries.size() > MAX_ENTRIES) {
+			_entries.remove(0);
+		}
 	}
 
 }

@@ -5,10 +5,7 @@
  */
 package com.top_logic.ai.chat.layout;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.nio.charset.StandardCharsets;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -96,22 +93,6 @@ public class ChatControl extends AbstractControlBase {
 		return CHAT_TASK_PLACEHOLDERS[ThreadLocalRandom.current().nextInt(CHAT_TASK_PLACEHOLDERS.length)];
 	}
 
-	// #region agent log
-	private static final String DEBUG_LOG_PATH = "/home/jhu/git/tl-ai/.cursor/debug.log";
-
-	private static void debugLog(String hypothesisId, String location, String message, String dataStr) {
-		try {
-			String dataEsc = dataStr == null ? "null" : "\"" + dataStr.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
-			String msgEsc = message.replace("\\", "\\\\").replace("\"", "\\\"");
-			String json = "{\"hypothesisId\":\"" + hypothesisId + "\",\"location\":\"" + location + "\",\"message\":\"" + msgEsc + "\",\"data\":" + dataEsc + ",\"timestamp\":" + System.currentTimeMillis() + "}\n";
-			try (OutputStreamWriter w = new OutputStreamWriter(new FileOutputStream(DEBUG_LOG_PATH, true), StandardCharsets.UTF_8)) {
-				w.write(json);
-			}
-		} catch (Throwable ignored) {
-		}
-	}
-	// #endregion
-
 	/** Background thread pool for AI operations */
 	private static final ExecutorService BACKGROUND_EXECUTOR =
 		Executors.newCachedThreadPool(new ThreadFactory() {
@@ -141,9 +122,6 @@ public class ChatControl extends AbstractControlBase {
 		super(COMMANDS);
 		_chat = chat;
 		_taskTracker = taskTracker;
-		// #region agent log
-		debugLog("B", "ChatControl.<init>", "ChatControl created", "entries=" + chat.getEntries().size());
-		// #endregion
 	}
 
 	@Override
@@ -168,10 +146,6 @@ public class ChatControl extends AbstractControlBase {
 
 	@Override
 	protected void internalDetach() {
-		// #region agent log
-		boolean had = _processingState != null;
-		debugLog("A", "ChatControl.internalDetach", "internalDetach called", "hadProcessingState=" + had);
-		// #endregion
 		// Do NOT cancel processing on detach: state lives in tracker so navigation away and back
 		// still shows in-progress task and agent answer when it arrives.
 		_processingState = null;
@@ -213,11 +187,6 @@ public class ChatControl extends AbstractControlBase {
 	}
 
 	private void writeMessages(DisplayContext context, TagWriter out) throws IOException {
-		// #region agent log
-		int entriesCount = _chat.getEntries().size();
-		boolean hasState = _processingState != null;
-		debugLog("C", "ChatControl.writeMessages", "writeMessages", "hasProcessingState=" + hasState + " entriesCount=" + entriesCount);
-		// #endregion
 		String messagesId = getID() + "-messages";
 		out.beginBeginTag(DIV);
 		out.writeAttribute(CLASS_ATTR, "chat-messages");
@@ -1137,9 +1106,6 @@ public class ChatControl extends AbstractControlBase {
 			: (AIProcessingState) _taskTracker.getCurrentProcessingState();
 
 		if (state == null) {
-			// #region agent log
-			debugLog("E", "ChatControl.pollForUpdates", "pollForUpdates state null early return", null);
-			// #endregion
 			return;
 		}
 

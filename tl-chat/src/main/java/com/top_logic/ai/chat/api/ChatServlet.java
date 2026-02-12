@@ -7,8 +7,6 @@ package com.top_logic.ai.chat.api;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.StandardOpenOption;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.top_logic.ai.chat.layout.ChatControl;
@@ -70,12 +68,6 @@ public class ChatServlet extends HttpServlet {
 	}
 
 	private void handleSend(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-		// #region agent log
-		try {
-			String line = "{\"hypothesisId\":\"E\",\"message\":\"handleSend entered\",\"data\":{},\"timestamp\":" + System.currentTimeMillis() + ",\"sessionId\":\"debug-session\",\"location\":\"ChatServlet.handleSend\"}\n";
-			Files.write(java.nio.file.Paths.get("/home/jhu/git/tl-ai/.cursor/debug.log"), line.getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.APPEND);
-		} catch (Exception ignored) { }
-		// #endregion
 		ChatSendRequest body;
 		try {
 			body = MAPPER.readValue(req.getInputStream(), ChatSendRequest.class);

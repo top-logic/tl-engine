@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2024 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
@@ -43,6 +43,15 @@ public interface TLReferenceBase extends com.top_logic.model.TLStructuredTypePar
 	 * </p>
 	 */
 	String COMPOSITE_ATTR = "composite";
+
+	/**
+	 * Part <code>deletionPolicy</code> of <code>TLReference</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.model:DeletionPolicy</code> in configuration.
+	 * </p>
+	 */
+	String DELETION_POLICY_ATTR = "deletionPolicy";
 
 	/**
 	 * Part <code>end</code> of <code>TLReference</code>

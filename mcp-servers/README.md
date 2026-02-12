@@ -1,154 +1,69 @@
-# Trac MCP Server Setup
+# MCP Servers for Claude Code
 
-This MCP server allows Claude Code to interact with the Trac ticket system at `http://tl/trac/`.
+MCP server integrations for Trac (tickets), Jenkins (CI/CD), and Gitea (git hosting).
 
-## Prerequisites
+## Setup
 
-1. **Python 3.7+** with the MCP SDK installed
-2. **Credentials in ~/.netrc** for the 'tl.bos.local' machine
-
-## Installation
-
-### Step 1: Install Python Dependencies
+Prerequisites: Python 3.7+ with venv, curl or wget, OS keyring (GNOME Keyring, KWallet, macOS Keychain).
 
 ```bash
-pip install mcp
+# Set up all servers (interactive)
+./mcp-servers/scripts/setup-mcp.sh
+
+# Or set up a specific server
+./mcp-servers/scripts/setup-mcp.sh trac
+./mcp-servers/scripts/setup-mcp.sh jenkins
+./mcp-servers/scripts/setup-mcp.sh gitea
 ```
 
-### Step 2: Verify ~/.netrc Configuration
+The script creates a Python venv (`.venv`), installs tools, and stores credentials in your OS keyring.
 
-Your `~/.netrc` file should contain credentials for the 'tl.bos.local' machine:
+After setup, restart Claude Code and run `/mcp` to verify. You can also check with `claude mcp list`.
 
-```
-machine tl.bos.local
-  login your-username
-  password your-password
-```
+### Credentials
 
-Make sure the file has proper permissions:
+- **Trac**: username + password
+- **Jenkins**: username + API token (generate in Jenkins: User > Configure > API Token)
+- **Gitea**: access token (generate in Gitea: Settings > Applications > Generate New Token)
 
-```bash
-chmod 600 ~/.netrc
-```
+To update credentials, re-run the setup script for that service.
 
-### Step 3: Add to Claude Code (Team-Shared)
+### Service URLs
 
-The MCP server script is located in `mcp-servers/trac-mcp-server.py` in the repository.
+Override defaults via environment variables:
 
-Add it with **project scope** so it's shared with the whole team via `.mcp.json`:
-
-```bash
-cd /path/to/tl-engine
-claude mcp add --scope project trac -- python3 mcp-servers/trac-mcp-server.py
-```
-
-This creates a `.mcp.json` file in the repository root that team members will automatically use when they work in this repository.
-
-**Alternative: Personal installation only (not shared)**
-
-If you prefer to use it only locally without sharing:
-
-```bash
-claude mcp add trac -- python3 mcp-servers/trac-mcp-server.py
-```
-
-### Step 4: Test the Script (Optional)
-
-You can test the script manually to ensure it connects properly:
-
-```bash
-python3 mcp-servers/trac-mcp-server.py
-```
-
-Press Ctrl+C to exit after verifying it starts without errors.
-
-### Step 5: Verify Installation
-
-```bash
-claude mcp list
-```
-
-You should see 'trac' in the list of configured MCP servers.
-
-In Claude Code, type `/mcp` to check the server status.
-
-## Available Tools
-
-Once installed, Claude Code will have access to these Trac tools:
-
-- **get_ticket** - Get complete details of a ticket by number
-  - Example: "Show me ticket #29053"
-
-- **search_tickets** - Search for tickets using Trac query syntax
-  - Example: "Find all tickets in milestone 7.10.0 with status=new"
-  - Example: "Search for tickets with component=BPE"
-
-- **get_ticket_changelog** - Get the complete change history for a ticket
-  - Example: "Show me the changelog for ticket #29053"
-
-- **create_ticket** - Create a new Trac ticket
-  - Example: "Create a ticket for fixing null formatting in PDFs"
-
-- **update_ticket** - Update an existing ticket (change status, add comment)
-  - Example: "Close ticket #29053 with resolution fixed"
-
-- **get_milestones** - List all milestones
-  - Example: "What milestones do we have?"
-
-- **get_components** - List all components
-  - Example: "List all Trac components"
+| Variable | Default |
+|----------|---------|
+| `TRAC_URL` | `http://tl/trac/login/xmlrpc` |
+| `JENKINS_URL` | `http://jenkins:8090/` |
+| `GITEA_HOST` | `https://git.top-logic.com` |
 
 ## Usage Examples
 
-Once configured, you can ask Claude Code:
+Once connected, ask Claude Code things like:
 
-- "What's ticket #29053 about?"
-- "Find all open tickets assigned to me"
-- "Show me all tickets in the BPE component"
-- "Create a ticket for the bug I just found"
-- "Add a comment to ticket #29053 saying the fix is ready"
-- "What milestones are we tracking?"
+- "Show me ticket #29053" (Trac: `get_ticket`)
+- "Find open tickets in milestone 7.10.0" (Trac: `search_tickets`)
+- "Show the build status of the last CI run" (Jenkins)
+- "List open pull requests" (Gitea)
+
+**Note**: Trac uses WikiFormatting (not Markdown) for descriptions/comments: headings `= Title =`, bold `'''text'''`, code blocks `{{{ }}}`.
 
 ## Troubleshooting
 
-### Error: "No credentials found for 'tl.bos.local' in ~/.netrc"
+| Error | Fix |
+|-------|-----|
+| "Virtual environment not found" | Run `./mcp-servers/scripts/setup-mcp.sh all` |
+| "Missing credentials in OS keyring" | Re-run `./mcp-servers/scripts/setup-mcp.sh <service>` |
+| "gitea-mcp: command not found" | Ensure `~/.local/bin` is in your PATH: `export PATH="$PATH:$HOME/.local/bin"` |
+| Server not showing in Claude Code | Check `claude mcp list`, verify `.mcp.json` exists, restart Claude Code |
 
-Add the credentials to your `~/.netrc` file:
+## File Locations
 
-```bash
-echo "machine tl.bos.local" >> ~/.netrc
-echo "  login your-username" >> ~/.netrc
-echo "  password your-password" >> ~/.netrc
-chmod 600 ~/.netrc
-```
-
-### Error: "MCP SDK not installed"
-
-Install the MCP Python package:
-
-```bash
-pip install mcp
-```
-
-### Error: "XML-RPC Error: TICKET_VIEW permission required"
-
-Check that:
-1. Your credentials in ~/.netrc are correct
-2. Your Trac user has the necessary permissions
-3. The Trac XML-RPC plugin is enabled at http://tl/trac/login/xmlrpc
-
-### MCP server not showing up in Claude Code
-
-1. Verify installation: `claude mcp list`
-2. Check server status in Claude Code: `/mcp`
-3. Try removing and re-adding:
-   ```bash
-   claude mcp remove trac
-   claude mcp add --scope project trac -- python3 mcp-servers/trac-mcp-server.py
-   ```
-
-## Removing the MCP Server
-
-```bash
-claude mcp remove trac
-```
+| File | Purpose |
+|------|---------|
+| `.mcp.json` | Server configuration (shared via git) |
+| `mcp-servers/trac-mcp-server.py` | Trac server implementation |
+| `mcp-servers/scripts/setup-mcp.sh` | Setup script |
+| `mcp-servers/scripts/mcp-*-wrapper.sh` | Credential wrapper scripts |
+| `.venv/` | Python venv (local, not in git) |

@@ -21,24 +21,11 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.top_logic.ai.service.AIService;
-import com.top_logic.ai.service.agents.ModelExplorer;
 import com.top_logic.ai.service.agents.OrchestratorAgent;
-import com.top_logic.ai.service.agents.TLScriptAgent;
-import com.top_logic.ai.service.agents.UMLSpecificationAgent;
 import com.top_logic.ai.service.scripting.Converters;
-import com.top_logic.ai.service.scripting.OpenAIScriptFunctions;
 import com.top_logic.ai.service.tools.ToolCallTracker;
 import com.top_logic.ai.service.tools.ToolCallTracking;
 import com.top_logic.ai.service.tools.TraceEntry;
-import com.top_logic.ai.service.tools.help.RequestModelExplorationTool;
-import com.top_logic.ai.service.tools.help.TLScriptReferenceTool;
-import com.top_logic.ai.service.tools.model.AnnotationDefinitionExplorerTool;
-import com.top_logic.ai.service.tools.model.InstanceBrowserTool;
-import com.top_logic.ai.service.tools.model.ModelAnnotationBrowserTool;
-import com.top_logic.ai.service.tools.model.ModelBrowserTool;
-import com.top_logic.ai.service.tools.model.ModelSearchTool;
-import com.top_logic.ai.service.tools.model.TypeAnalysisTool;
 import com.top_logic.ai.service.tools.util.JsonPrettyPrint;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.thread.ThreadContextManager;
@@ -52,9 +39,6 @@ import com.top_logic.layout.basic.ControlCommand;
 import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.TLContext;
-
-import dev.langchain4j.agentic.AgenticServices;
-import dev.langchain4j.model.chat.ChatModel;
 
 /**
  * A minimal chat control displaying messages and allowing user input.
@@ -430,13 +414,6 @@ public class ChatControl extends AbstractControlBase {
 		out.endTag(DIV);
 	}
 
-	private static String truncateForDisplay(String s, int maxLen) {
-		if (s == null) {
-			return "";
-		}
-		return s.length() <= maxLen ? s : s.substring(0, maxLen - 3) + "...";
-	}
-
 	private static ChatTimelineEvent toChatTimelineEvent(TraceEntry entry, ToolCallTracker tracker) {
 		if (entry instanceof TraceEntry.ToolCallTraceEntry tc) {
 			String resultJson = tracker.getRawResultJsons().get(tc.resultRef());
@@ -594,54 +571,6 @@ public class ChatControl extends AbstractControlBase {
 		return sb.toString();
 	}
 
-	/**
-	 * Formats tool calls for display in the chat.
-	 *
-	 * @param tracker
-	 *        The tool tracker containing recorded tool calls.
-	 * @return A formatted string listing all tool calls with their raw JSON results.
-	 */
-	private String formatToolCalls(ToolCallTracker tracker) {
-		StringBuilder sb = new StringBuilder();
-		sb.append("## Tool Calls\n\n");
-
-		for (ToolCallTracker.ToolCall call : tracker.getToolCalls()) {
-			sb.append("- **").append(call.getTool()).append("**");
-			if (!call.getArgs().isEmpty()) {
-				sb.append("(");
-				boolean first = true;
-				for (Map.Entry<String, Object> arg : call.getArgs().entrySet()) {
-					if (!first) {
-						sb.append(", ");
-					}
-					sb.append(arg.getKey()).append("=");
-					Object value = arg.getValue();
-					if (value instanceof String) {
-						String str = (String) value;
-						if (str.length() > 50) {
-							sb.append("\"").append(str.substring(0, 47)).append("...\"");
-						} else {
-							sb.append("\"").append(str).append("\"");
-						}
-					} else {
-						sb.append(value);
-					}
-					first = false;
-				}
-				sb.append(")");
-			}
-			sb.append(" -> [").append(call.getResultRef()).append("]\n\n");
-
-			// Add the raw JSON result
-			String rawJson = tracker.getRawResultJsons().get(call.getResultRef());
-			if (rawJson != null) {
-				sb.append("  ```json\n  ").append(rawJson.replace("\n", "\n  ")).append("\n  ```\n\n");
-			}
-		}
-
-		return sb.toString();
-	}
-
 	private void writeInputSection(TagWriter out) throws IOException {
 		String controlId = getID();
 		String inputId = getInputId();
@@ -723,48 +652,6 @@ public class ChatControl extends AbstractControlBase {
 	}
 
 	/**
-	 * Checks if the given text is a model creation command.
-	 */
-	private boolean isModelCreationCommand(String text) {
-		return text != null && text.startsWith("/model-creation");
-	}
-
-	/**
-	 * Extracts business requirements from a model creation command.
-	 */
-	private String extractBusinessRequirements(String command) {
-		return command.substring("/model-creation".length()).trim();
-	}
-
-	/**
-	 * Checks if the given text is a model exploration command.
-	 */
-	private boolean isModelExplorationCommand(String text) {
-		return text != null && text.startsWith("/explore-model");
-	}
-
-	/**
-	 * Extracts the exploration question from a model exploration command.
-	 */
-	private String extractExplorationQuestion(String command) {
-		return command.substring("/explore-model".length()).trim();
-	}
-
-	/**
-	 * Checks if the given text is a TLScript reference command.
-	 */
-	private boolean isTLScriptCommand(String text) {
-		return text != null && text.startsWith("/tlscript");
-	}
-
-	/**
-	 * Extracts the question from a TLScript reference command.
-	 */
-	private String extractTLScriptQuestion(String command) {
-		return command.substring("/tlscript".length()).trim();
-	}
-
-	/**
 	 * Executes user message through OrchestratorAgent (single chat entrypoint).
 	 * Sets trace so AgentCall and ToolCall events are visible in the UI timeline.
 	 * Uses state from tracker; taskId must already be set on state (by sendMessage / ChatSendService).
@@ -798,227 +685,6 @@ public class ChatControl extends AbstractControlBase {
 		} finally {
 			ToolCallTracking.setTracker(null);
 			state.setToolCallTracker(null);
-		}
-	}
-
-	/**
-	 * Executes a regular chat request in the background thread with progress tracking.
-	 * 
-	 * @deprecated Orchestrator is the single entrypoint.
-	 */
-	@Deprecated
-	private void executeRegularChat(String userMessage) throws Exception {
-		// Start task
-		String taskDescription = "Chat: " +
-			(userMessage.length() > 50 ? userMessage.substring(0, 47) + "..." : userMessage);
-		String taskId = _taskTracker.startTask(taskDescription);
-		_processingState.setCurrentTaskId(taskId);
-
-		try {
-			// Convert message history to OpenAI format
-			List<Object> messages = new ArrayList<>();
-			for (ChatMessage msg : _chat.getMessages()) {
-				// Skip the current user message as it's already been added
-				if (msg.getText().equals(userMessage) && !"AI".equals(msg.getUser())) {
-					continue;
-				}
-
-				Map<String, Object> messageMap = Map.of(
-					"role", "AI".equals(msg.getUser()) ? "assistant" : "user",
-					"content", msg.getText()
-				);
-				messages.add(messageMap);
-			}
-
-			// Add the current user message
-			messages.add(Map.of("role", "user", "content", userMessage));
-
-			// Call OpenAI API (this is the blocking operation)
-			String aiResponse = OpenAIScriptFunctions.chat(messages, null, null, null);
-
-			// Add result to pending messages
-			_processingState.addPendingMessage(new ChatMessage("AI", aiResponse));
-
-			// Complete task successfully
-			_taskTracker.completeTask(taskId);
-
-		} catch (Exception ex) {
-			// Fail the task with error
-			_taskTracker.failTask(taskId, ex.getMessage());
-			throw ex;
-		} finally {
-			_processingState.setCurrentTaskId(null);
-		}
-	}
-
-	/**
-	 * Executes a model creation command in the background thread with progress tracking.
-	 */
-	private void executeModelCreation(String command) throws Exception {
-		String requirements = extractBusinessRequirements(command);
-
-		// Start task
-		String taskDescription = "Model creation: " +
-			(requirements.length() > 50 ? requirements.substring(0, 47) + "..." : requirements);
-		String taskId = _taskTracker.startTask(taskDescription);
-		_processingState.setCurrentTaskId(taskId);
-
-		try {
-			Logger.info("ChatControl: Starting workflow execution in thread: " + Thread.currentThread().getName(),
-				ChatControl.class);
-
-			// Execute the workflow
-			String result = UMLSpecificationAgent.execute(requirements);
-
-			_processingState.addPendingMessage(new ChatMessage("Agent", result));
-
-			// Complete task successfully
-			_taskTracker.completeTask(taskId);
-
-		} catch (Exception ex) {
-			// Fail the task with error
-			_taskTracker.failTask(taskId, ex.getMessage());
-			throw ex;
-		} finally {
-			_processingState.setCurrentTaskId(null);
-		}
-	}
-
-	/**
-	 * Executes a model exploration command in the background thread with progress tracking.
-	 */
-	private void executeModelExploration(String command) throws Exception {
-		String explorationQuestion = extractExplorationQuestion(command);
-
-		// Start task
-		String taskDescription = "Exploring: " +
-			(explorationQuestion.length() > 50 ? explorationQuestion.substring(0, 47) + "..." : explorationQuestion);
-		String taskId = _taskTracker.startTask(taskDescription);
-		_processingState.setCurrentTaskId(taskId);
-
-		try {
-			// Set up tool tracking
-			ToolCallTracker tracker = new ToolCallTracker();
-			ToolCallTracking.setTracker(tracker);
-
-			// Store tracker in processing state for real-time polling
-			_processingState.setToolCallTracker(tracker);
-
-			try {
-				Logger.info("ChatControl: Starting model exploration in thread: " + Thread.currentThread().getName(),
-					ChatControl.class);
-
-				// Get the model from AIService
-				AIService aiService = AIService.getInstance();
-				if (aiService == null) {
-					throw new RuntimeException("AIService is not available. Please ensure the service is started.");
-				}
-
-				// Use mistral-large-latest model
-				ChatModel explorationModel = aiService.getChatModel("mistral-large-latest");
-
-				// Create internal tool instances
-				ModelBrowserTool browserTool = new ModelBrowserTool();
-				InstanceBrowserTool instanceTool = new InstanceBrowserTool();
-				TypeAnalysisTool analysisTool = new TypeAnalysisTool();
-				ModelSearchTool searchTool = new ModelSearchTool();
-				ModelAnnotationBrowserTool annotationTool = new ModelAnnotationBrowserTool();
-				AnnotationDefinitionExplorerTool definitionTool = new AnnotationDefinitionExplorerTool();
-
-				// Build the ModelExplorer agent
-				ModelExplorer explorer = AgenticServices.agentBuilder(ModelExplorer.class)
-					.chatModel(explorationModel)
-					.tools(browserTool, instanceTool, analysisTool, searchTool, annotationTool, definitionTool)
-					.build();
-
-				// Execute the exploration (tool calls will be detected by polling)
-				String result = explorer.explore(explorationQuestion);
-
-				// Add final result
-				_processingState.addPendingMessage(new ChatMessage("Agent", result));
-
-				// Complete task successfully
-				_taskTracker.completeTask(taskId);
-
-			} finally {
-				// Always clear the tracker
-				ToolCallTracking.setTracker(null);
-			}
-
-		} catch (Exception ex) {
-			// Fail the task with error
-			_taskTracker.failTask(taskId, ex.getMessage());
-			throw ex;
-		} finally {
-			_processingState.setCurrentTaskId(null);
-			_processingState.setToolCallTracker(null);
-		}
-	}
-
-	/**
-	 * Executes a TLScript reference command in the background thread with progress tracking.
-	 */
-	private void executeTLScript(String command) throws Exception {
-		String question = extractTLScriptQuestion(command);
-
-		// Start task
-		String taskDescription = "TLScript: " +
-			(question.length() > 50 ? question.substring(0, 47) + "..." : question);
-		String taskId = _taskTracker.startTask(taskDescription);
-		_processingState.setCurrentTaskId(taskId);
-
-		try {
-			// Set up tool tracking
-			ToolCallTracker tracker = new ToolCallTracker();
-			ToolCallTracking.setTracker(tracker);
-
-			// Store tracker in processing state for real-time polling
-			_processingState.setToolCallTracker(tracker);
-
-			try {
-				Logger.info("ChatControl: Starting TLScript reference in thread: " + Thread.currentThread().getName(),
-					ChatControl.class);
-
-				// Get the model from AIService
-				AIService aiService = AIService.getInstance();
-				if (aiService == null) {
-					throw new RuntimeException("AIService is not available. Please ensure the service is started.");
-				}
-
-				// Use mistral-large-latest model
-				ChatModel tlscriptModel = aiService.getChatModel("mistral-large-latest");
-
-				// Create TLScript reference tool and Request Model Exploration tool (structured handoff)
-				TLScriptReferenceTool tlscriptTool = new TLScriptReferenceTool();
-				RequestModelExplorationTool requestExplorationTool = new RequestModelExplorationTool();
-
-				// Build the TLScriptAgent
-				TLScriptAgent agent = AgenticServices.agentBuilder(TLScriptAgent.class)
-					.chatModel(tlscriptModel)
-					.tools(tlscriptTool, requestExplorationTool)
-					.build();
-
-				// Execute the agent (tool calls will be detected by polling)
-				String result = agent.answer(question);
-
-				// Add final result
-				_processingState.addPendingMessage(new ChatMessage("Agent", result));
-
-				// Complete task successfully
-				_taskTracker.completeTask(taskId);
-
-			} finally {
-				// Always clear the tracker
-				ToolCallTracking.setTracker(null);
-			}
-
-		} catch (Exception ex) {
-			// Fail the task with error
-			_taskTracker.failTask(taskId, ex.getMessage());
-			throw ex;
-		} finally {
-			_processingState.setCurrentTaskId(null);
-			_processingState.setToolCallTracker(null);
 		}
 	}
 

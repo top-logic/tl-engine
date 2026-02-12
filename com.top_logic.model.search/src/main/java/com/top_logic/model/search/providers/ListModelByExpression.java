@@ -10,6 +10,8 @@ import java.util.Collection;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
+import com.top_logic.basic.config.ConfigUtil;
+import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
@@ -28,6 +30,7 @@ import com.top_logic.model.TLModel;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -133,16 +136,16 @@ public class ListModelByExpression<C extends ListModelByExpression.Config<?>>
 		 * <ul>
 		 * <li>When the component supports the configuration of row types, the potential list
 		 * element's type is checked beforehand.</li>
-		 * <li>When the method returns <code>true</code>, the updated or created element is included
-		 * within the elements.</li>
-		 * <li>When the method returns <code>false</code>, an updated element is removed from the
-		 * elements and a newly created element is not added.</li>
-		 * <li>When the method returns <code>{@value ListModelByExpression#UPDATE_NO_CHANGE}</code>,
-		 * the element does not trigger any change in the table.</li>
-		 * <li>When the method returns <code>{@value ListModelByExpression#UPDATE_UNKNOWN}</code>,
-		 * it cannot be determined whether the element must be added to or removed from the list. In
-		 * this case, the list is recreated and the function {@link #getElements()} decides whether
-		 * the object in question is added to the list.</li>
+		 * <li>When the method returns <code>true</code> or <code>"add"</code>, the updated or
+		 * created element is included within the elements.</li>
+		 * <li>When the method returns <code>false</code> or <code>"remove"</code>, an updated
+		 * element is removed from the elements and a newly created element is not added.</li>
+		 * <li>When the method returns <code>"no-change"</code>, the element does not trigger any
+		 * change in the table.</li>
+		 * <li>When the method returns <code>"unknown"</code>, it cannot be determined whether the
+		 * element must be added to or removed from the list. In this case, the list is recreated
+		 * and the function {@link #getElements()} decides whether the object in question is added
+		 * to the list.</li>
 		 * </ul>
 		 * </p>
 		 * 
@@ -254,11 +257,16 @@ public class ListModelByExpression<C extends ListModelByExpression.Config<?>>
 			return ElementUpdate.UNKNOWN;
 		}
 		Object result = _supportsElement.execute(element, aComponent.getModel());
-		if (result == null || UPDATE_NO_CHANGE.equals(result)) {
-			return ElementUpdate.NO_CHANGE;
+		if (result instanceof CharSequence updateString) {
+			try {
+				return ConfigUtil.getEnum(ElementUpdate.class, updateString.toString());
+			} catch (ConfigurationException ex) {
+				throw new TopLogicException(
+					I18NConstants.INVALID_UPDATE_TYPE__FUN_EX.fill(_supportsElement.getSearch(), ex.getErrorKey()));
+			}
 		}
-		if (UPDATE_UNKNOWN.equals(result)) {
-			return ElementUpdate.UNKNOWN;
+		if (result == null) {
+			return ElementUpdate.NO_CHANGE;
 		}
 		return ElementUpdate.fromDecision(SearchExpression.asBoolean(result));
 	}

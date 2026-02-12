@@ -5,6 +5,8 @@
  */
 package com.top_logic.mig.html;
 
+import com.top_logic.basic.config.annotation.Name;
+
 /**
  * Decision about adding or removing an object to/from a current view.
  */
@@ -13,11 +15,13 @@ public enum ElementUpdate {
 	/**
 	 * Ignore the change and keep the current view as is.
 	 */
+	@Name("no-change")
 	NO_CHANGE,
 
 	/**
 	 * Display the object in the current view.
 	 */
+	@Name("add")
 	ADD() {
 		@Override
 		public boolean shouldAdd() {
@@ -28,6 +32,7 @@ public enum ElementUpdate {
 	/**
 	 * Remove the object from the current view.
 	 */
+	@Name("remove")
 	REMOVE() {
 		@Override
 		public boolean shouldRemove() {
@@ -36,6 +41,7 @@ public enum ElementUpdate {
 	},
 
 	/** It is unknown whether the object will be displayed in the current view. */
+	@Name("unknown")
 	UNKNOWN,
 
 	;

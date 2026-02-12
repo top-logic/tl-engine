@@ -8,6 +8,7 @@ package com.top_logic.ai.chat.layout;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * In-memory container holding chat entries in order: messages and task traces.
@@ -19,7 +20,7 @@ import java.util.List;
  */
 public class Chat {
 
-	private final List<ChatEntry> _entries = new ArrayList<>();
+	private final List<ChatEntry> _entries = new CopyOnWriteArrayList<>();
 	private boolean _welcomeAdded;
 
 	/**
@@ -63,7 +64,7 @@ public class Chat {
 	 * Returns all entries in order (messages and task references) for rendering.
 	 */
 	public List<ChatEntry> getEntries() {
-		return Collections.unmodifiableList(_entries);
+		return _entries;
 	}
 
 	/**

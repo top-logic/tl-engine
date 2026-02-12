@@ -13,7 +13,7 @@
     },
     "jenkins": {
       "type": "stdio",
-      "command": "./scripts/mcp-jenkins-wrapper.sh",
+      "command": "./mcp-servers/scripts/mcp-jenkins-wrapper.sh",
       "env": {
         "JENKINS_URL": "http://jenkins:8090/",
         "JENKINS_KEYRING_SERVICE": "tl-engine-jenkins-mcp",
@@ -23,7 +23,7 @@
     },
     "gitea": {
       "type": "stdio",
-      "command": "./scripts/mcp-gitea-wrapper.sh",
+      "command": "./mcp-servers/scripts/mcp-gitea-wrapper.sh",
       "env": {
         "GITEA_HOST": "https://git.top-logic.com",
         "GITEA_KEYRING_SERVICE": "tl-engine-gitea-mcp",

@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>com.top-logic</groupId>
 		<artifactId>tl-parent-all</artifactId>
-		<version>0.0.5-CWS_27514_TL_7.9.5-SNAPSHOT</version>
+		<version>0.0.9-SollAna_TL_7.9.5</version>
 		
 		<relativePath>../tl-parent-all</relativePath>	
 	</parent>

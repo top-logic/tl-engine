@@ -107,8 +107,8 @@ public class ChatServlet extends HttpServlet {
 		String[] currentTaskId = new String[1];
 		ThreadContextManager.inSystemInteraction(ChatServlet.class, () -> {
 			// Sync timeline events from ToolCallTracker to TaskProgressTracker before returning updates
-			Object stateObj = tracker.getCurrentProcessingState();
-			if (stateObj instanceof ChatProcessor.AIProcessingState state) {
+			ChatProcessor.AIProcessingState state = tracker.getCurrentProcessingState();
+			if (state != null) {
 				ChatProcessor.applyPollUpdates(state, tracker.getChat(), tracker);
 			}
 			processing[0] = ChatProcessor.isProcessing(tracker);

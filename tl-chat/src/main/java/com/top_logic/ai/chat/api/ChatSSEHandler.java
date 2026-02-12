@@ -195,8 +195,8 @@ public class ChatSSEHandler {
 		try {
 			ThreadContextManager.inSystemInteraction(ChatSSEHandler.class, () -> {
 				// Sync timeline events from ToolCallTracker to TaskProgressTracker
-				Object stateObj = _tracker.getCurrentProcessingState();
-				if (stateObj instanceof ChatProcessor.AIProcessingState state) {
+				ChatProcessor.AIProcessingState state = _tracker.getCurrentProcessingState();
+				if (state != null) {
 					ChatProcessor.applyPollUpdates(state, _tracker.getChat(), _tracker);
 				}
 

@@ -253,7 +253,7 @@ public class ChatProcessor {
 			try {
 				ScheduledFuture<?> pollingTask = uiExecutor.scheduleWithFixedDelay(
 					() -> {
-						AIProcessingState s = (AIProcessingState) tracker.getCurrentProcessingState();
+						AIProcessingState s = tracker.getCurrentProcessingState();
 						if (s == null) {
 							return;
 						}
@@ -280,16 +280,16 @@ public class ChatProcessor {
 	 * Returns whether an AI task is currently in progress for the given tracker.
 	 */
 	public static boolean isProcessing(TaskProgressTracker tracker) {
-		Object state = tracker.getCurrentProcessingState();
-		return state instanceof AIProcessingState s && s.isProcessing();
+		AIProcessingState state = tracker.getCurrentProcessingState();
+		return state != null && state.isProcessing();
 	}
 
 	/**
 	 * Returns the current task ID for the given tracker, or null if none.
 	 */
 	public static String getCurrentTaskId(TaskProgressTracker tracker) {
-		Object state = tracker.getCurrentProcessingState();
-		return state instanceof AIProcessingState s ? s.getCurrentTaskId() : null;
+		AIProcessingState state = tracker.getCurrentProcessingState();
+		return state != null ? state.getCurrentTaskId() : null;
 	}
 
 	/**
@@ -306,7 +306,7 @@ public class ChatProcessor {
 
 		@Override
 		public void run() {
-			AIProcessingState state = (AIProcessingState) _taskTracker.getCurrentProcessingState();
+			AIProcessingState state = _taskTracker.getCurrentProcessingState();
 			if (state == null) {
 				return;
 			}

@@ -142,7 +142,7 @@ public class ChatControl extends AbstractControlBase {
 			}
 			// Show in-progress task (not yet in entries) so trace appears after user message.
 			ChatProcessor.AIProcessingState state = _processingState != null ? _processingState
-				: (ChatProcessor.AIProcessingState) _taskTracker.getCurrentProcessingState();
+				: _taskTracker.getCurrentProcessingState();
 			if (state != null) {
 				String currentTaskId = state.getCurrentTaskId();
 				if (currentTaskId != null) {
@@ -589,8 +589,7 @@ public class ChatControl extends AbstractControlBase {
 						chatControl._taskTracker, userName, trimmedText,
 						() -> chatControl.requestRepaint(), null);
 					if (result.getTaskId() != null) {
-						chatControl._processingState =
-							(ChatProcessor.AIProcessingState) chatControl._taskTracker.getCurrentProcessingState();
+						chatControl._processingState = chatControl._taskTracker.getCurrentProcessingState();
 						chatControl.requestRepaint();
 					} else if (!result.isBusy()) {
 						chatControl._chat.addMessage(new ChatMessage("System", "Failed to start AI processing"));

@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.function.Consumer;
 
+import com.top_logic.ai.chat.layout.ChatProcessor.AIProcessingState;
 import com.top_logic.layout.WindowScope;
 
 /**
@@ -39,7 +40,7 @@ public class TaskProgressTracker {
 	private final Chat _chat = new Chat();
 
 	/** Current AI processing state (survives navigation); cleared when processing finishes. */
-	private volatile Object _currentProcessingState = null;
+	private volatile AIProcessingState _currentProcessingState = null;
 
 	/** Called when polling has updates to request a repaint of the chat view. */
 	private volatile Runnable _repaintRequester = null;
@@ -58,7 +59,7 @@ public class TaskProgressTracker {
 	 * Returns the current AI processing state, or null if none. Survives navigation so returning
 	 * to the chat view shows in-progress task and tool trace.
 	 */
-	public Object getCurrentProcessingState() {
+	public AIProcessingState getCurrentProcessingState() {
 		return _currentProcessingState;
 	}
 
@@ -66,7 +67,7 @@ public class TaskProgressTracker {
 	 * Sets the current AI processing state (called when sending a message). Cleared when
 	 * processing completes or fails.
 	 */
-	public void setCurrentProcessingState(Object state) {
+	public void setCurrentProcessingState(AIProcessingState state) {
 		_currentProcessingState = state;
 	}
 

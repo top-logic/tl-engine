@@ -19,6 +19,7 @@ import com.top_logic.ai.chat.layout.ChatTask;
 import com.top_logic.ai.chat.layout.ChatTimelineEvent;
 import com.top_logic.ai.chat.layout.ChatToolCall;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
+import com.top_logic.ai.service.scripting.Converters;
 
 /**
  * Maps chat domain objects to JSON DTOs for the chat API.
@@ -78,6 +79,8 @@ public final class DtoMapper {
 			dto.setRole("system");
 		} else if ("Agent".equals(user) || "AI".equals(user)) {
 			dto.setRole("agent");
+			// Pre-render markdown to HTML so the client can insert directly
+			dto.setContentHtml(Converters.markdownToHtmlString(msg.getText()));
 		} else {
 			dto.setRole("user");
 		}

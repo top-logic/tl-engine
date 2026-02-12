@@ -14,6 +14,7 @@ public class MessageDto {
 	private String _role;
 	private String _userName;
 	private String _content;
+	private String _contentHtml;
 	private String _time;
 
 	public String getId() {
@@ -47,6 +48,15 @@ public class MessageDto {
 
 	public void setContent(String content) {
 		_content = content;
+	}
+
+	/** Pre-rendered HTML for the message content (agent messages only; null for user/system). */
+	public String getContentHtml() {
+		return _contentHtml;
+	}
+
+	public void setContentHtml(String contentHtml) {
+		_contentHtml = contentHtml;
 	}
 
 	public String getTime() {

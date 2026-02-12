@@ -78,51 +78,6 @@
 		}
 	}
 
-	// Simple markdown to HTML converter
-	function markdownToHtml(text) {
-		if (!text) return '';
-		var html = escapeHtml(text);
-
-		// Code blocks (```lang\n...\n```)
-		html = html.replace(/```(\w*)\n([\s\S]*?)```/g, function(match, lang, code) {
-			return '<pre><code class="language-' + (lang || 'text') + '">' + code.trim() + '</code></pre>';
-		});
-
-		// Inline code (`...`)
-		html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
-
-		// Headers (## ... at start of line)
-		html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
-		html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
-		html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
-
-		// Bold (**...**)
-		html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-
-		// Italic (*...*)
-		html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-
-		// Links [text](url)
-		html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
-
-		// Bullet lists (- item)
-		html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
-		html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
-
-		// Numbered lists (1. item)
-		html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
-
-		// Line breaks (double newline = paragraph)
-		html = html.replace(/\n\n/g, '</p><p>');
-		html = '<p>' + html + '</p>';
-		html = html.replace(/<p><\/p>/g, '');
-
-		// Single newlines to <br> within paragraphs
-		html = html.replace(/\n/g, '<br>');
-
-		return html;
-	}
-
 	function getRotatingPlaceholder(startTime) {
 		var elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
 		var index = Math.floor(elapsedSeconds / PLACEHOLDER_ROTATE_SECONDS) % CHAT_TASK_PLACEHOLDERS.length;
@@ -203,9 +158,9 @@
 
 		var text = document.createElement('span');
 		text.className = 'chat-text';
-		// Use markdown rendering for agent messages
-		if (msg.role === 'agent' || msg.userName === 'Agent' || msg.userName === 'AI') {
-			text.innerHTML = markdownToHtml(msg.content || '');
+		// Use server-pre-rendered HTML for agent messages when available
+		if (msg.contentHtml) {
+			text.innerHTML = msg.contentHtml;
 		} else {
 			text.innerHTML = escapeHtml(msg.content || '');
 		}

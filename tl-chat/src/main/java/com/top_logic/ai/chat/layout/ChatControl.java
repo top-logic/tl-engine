@@ -10,7 +10,6 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ScheduledExecutorService;
 
 import com.top_logic.ai.service.scripting.Converters;
 import com.top_logic.ai.service.tools.util.JsonPrettyPrint;
@@ -21,7 +20,6 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.UpdateQueue;
 import com.top_logic.layout.basic.AbstractControlBase;
 import com.top_logic.layout.basic.ControlCommand;
-import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.TLContext;
 
@@ -37,7 +35,7 @@ import com.top_logic.util.TLContext;
 public class ChatControl extends AbstractControlBase {
 
 	private static final Map<String, ControlCommand> COMMANDS =
-		createCommandMap(SendMessage.INSTANCE, PollAIProgress.INSTANCE);
+		createCommandMap(SendMessage.INSTANCE);
 
 	private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm:ss");
 
@@ -497,39 +495,23 @@ public class ChatControl extends AbstractControlBase {
 	}
 
 	private void writeInputSection(TagWriter out) throws IOException {
-		String controlId = getID();
-		String inputId = getInputId();
-		// Only use TL path when script has not inited (data-tl-chat-inited); else script handles send
-		String sendOnClick = "var root=document.getElementById('" + controlId + "');"
-			+ "if(root&&root.getAttribute('data-tl-chat-inited')==='true')return;"
-			+ "var inp=document.getElementById('" + inputId + "');var t=inp?inp.value.trim():'';"
-			+ "if(t){if(typeof services!=='undefined'&&services.ajax){services.ajax.execute('dispatchControlCommand',"
-			+ "{controlCommand:'sendMessage',controlID:'" + controlId + "',text:t});}inp.value='';}";
-		String sendOnKeypress = "if(event.key==='Enter'){event.preventDefault();"
-			+ "var root=document.getElementById('" + controlId + "');"
-			+ "if(root&&root.getAttribute('data-tl-chat-inited')==='true')return;"
-			+ "var inp=document.getElementById('" + inputId + "');var t=inp?inp.value.trim():'';"
-			+ "if(t){if(typeof services!=='undefined'&&services.ajax){services.ajax.execute('dispatchControlCommand',"
-			+ "{controlCommand:'sendMessage',controlID:'" + controlId + "',text:t});}inp.value='';}}";
-
+		// Render clean HTML; chat-client.js handles sending via JSON API and SSE.
 		out.beginBeginTag(DIV);
 		out.writeAttribute(CLASS_ATTR, "chat-input-section");
 		out.endBeginTag();
 		{
 			out.beginBeginTag(INPUT);
 			out.writeAttribute(TYPE_ATTR, "text");
-			out.writeAttribute(ID_ATTR, inputId);
+			out.writeAttribute(ID_ATTR, getInputId());
 			out.writeAttribute(NAME_ATTR, "message");
 			out.writeAttribute(CLASS_ATTR, "chat-input");
 			out.writeAttribute(PLACEHOLDER_ATTR, "Type a message...");
-			out.writeAttribute("onkeypress", sendOnKeypress);
 			out.endEmptyTag();
 
 			out.beginBeginTag(BUTTON);
 			out.writeAttribute(ID_ATTR, getButtonId());
 			out.writeAttribute(TYPE_ATTR, "button");
 			out.writeAttribute(CLASS_ATTR, "chat-button");
-			out.writeAttribute(ONCLICK_ATTR, sendOnClick);
 			out.endBeginTag();
 			out.writeText("Send");
 			out.endTag(BUTTON);
@@ -577,27 +559,8 @@ public class ChatControl extends AbstractControlBase {
 	}
 
 	/**
-	 * Polls for AI processing updates and updates the UI.
-	 */
-	private void pollForUpdates() {
-		ChatProcessor.AIProcessingState state = _processingState != null ? _processingState
-			: (ChatProcessor.AIProcessingState) _taskTracker.getCurrentProcessingState();
-
-		if (state == null) {
-			return;
-		}
-
-		boolean hasUpdates = ChatProcessor.applyPollUpdates(state, _chat, _taskTracker);
-		if (hasUpdates) {
-			requestRepaint();
-		}
-		if (_taskTracker.getCurrentProcessingState() == null) {
-			_processingState = null;
-		}
-	}
-
-	/**
-	 * Command that sends a chat message.
+	 * Command that sends a chat message (TL AJAX fallback).
+	 * Primary send path is the JSON API via {@code chat-client.js}.
 	 */
 	private static class SendMessage extends ControlCommand {
 
@@ -621,16 +584,10 @@ public class ChatControl extends AbstractControlBase {
 				String trimmedText = text.trim();
 				if (!trimmedText.isEmpty()) {
 					String userName = getCurrentUserName();
-					ScheduledExecutorService uiExecutor;
-					try {
-						MainLayout mainLayout = commandContext.getLayoutContext().getMainLayout();
-						uiExecutor = mainLayout.getWindowScope().getUIExecutor();
-					} catch (Exception ex) {
-						uiExecutor = null;
-					}
+					// No UIExecutor polling: the client uses SSE for real-time updates.
 					ChatProcessor.SendResult result = ChatProcessor.sendMessage(
 						chatControl._taskTracker, userName, trimmedText,
-						() -> chatControl.requestRepaint(), uiExecutor);
+						() -> chatControl.requestRepaint(), null);
 					if (result.getTaskId() != null) {
 						chatControl._processingState =
 							(ChatProcessor.AIProcessingState) chatControl._taskTracker.getCurrentProcessingState();
@@ -662,33 +619,6 @@ public class ChatControl extends AbstractControlBase {
 		@Override
 		public ResKey getI18NKey() {
 			return ResKey.text("chat.sendMessage");
-		}
-	}
-
-	/**
-	 * Command that polls for AI processing updates using TopLogic's UI Executor.
-	 */
-	private static class PollAIProgress extends ControlCommand {
-
-		static final ControlCommand INSTANCE = new PollAIProgress();
-
-		static final String COMMAND_ID = "pollAIProgress";
-
-		PollAIProgress() {
-			super(COMMAND_ID);
-		}
-
-		@Override
-		protected HandlerResult execute(DisplayContext context, Control control,
-				Map<String, Object> arguments) {
-			ChatControl chatControl = (ChatControl) control;
-			chatControl.pollForUpdates();
-			return HandlerResult.DEFAULT_RESULT;
-		}
-
-		@Override
-		public ResKey getI18NKey() {
-			return ResKey.text("chat.pollAIProgress");
 		}
 	}
 

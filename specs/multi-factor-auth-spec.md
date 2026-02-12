@@ -126,7 +126,7 @@ Five groups of changes are proposed:
 | 3.2 | Multi-Factor Login Flow | Core login extension | No (changes to `com.top_logic` / tl-core) |
 | 3.3 | OTP Email Verification Service | New platform service | Yes: `com.top_logic.security.otp` (or part of tl-core) |
 | 3.4 | Self-Service Account Management | Password/TOTP reset flows | Yes: `com.top_logic.security.selfservice` |
-| 3.5 | Invitation & Self-Registration | Token-based onboarding | Yes: `com.top_logic.security.invite` |
+| 3.5 | Registration Framework | Invitation-based and open self-registration | Yes: `com.top_logic.security.register` |
 
 The dependency graph is:
 
@@ -144,8 +144,8 @@ The dependency graph is:
               com.top_logic.security.selfservice
               [3.4: Password/TOTP reset]
                           |
-              com.top_logic.security.invite
-              [3.5: Invitation & registration]
+              com.top_logic.security.register
+              [3.5: Registration framework]
 ```
 
 ---
@@ -873,13 +873,22 @@ module can provide an implementation that also searches by email or queries
 
 ---
 
-### 3.5 Invitation and Self-Registration Framework
+### 3.5 Registration Framework
 
 #### 3.5.1 Purpose
 
-Provide a platform-level framework that allows existing (authenticated) users to invite
-external parties by email. The invited party follows a token-secured link to register an
-account through a configurable multi-step process.
+Provide a platform-level registration framework that supports two modes:
+
+- **Invitation-based registration:** An authenticated user invites an external party
+  by email. The invited party follows a token-secured link to register an account
+  through a configurable multi-step process.
+- **Open self-registration:** Anyone can register an account directly from the login
+  page, without an invitation. This mode is useful for development systems, demo
+  instances, or applications where user acquisition should be frictionless.
+
+Both modes share the same multi-step registration flow engine and the same
+`RegistrationStep` plugin architecture. The difference lies in how the flow is
+initiated (invitation token vs. direct access) and what verification is required.
 
 This is a *framework* -- the platform provides the core mechanics (token generation,
 email delivery, registration flow orchestration), while applications customize the
@@ -887,13 +896,76 @@ specific registration steps and the resulting account configuration.
 
 #### 3.5.2 Module
 
-New module: **`com.top_logic.security.invite`**
+New module: **`com.top_logic.security.register`**
 Dependencies: `tl-core`, `com.top_logic.security.otp`, `com.top_logic.security.auth.totp`
 (optional, for TOTP enrollment step), `tl-mail-smtp`
 
-#### 3.5.3 Invitation Token Model
+#### 3.5.3 Registration Modes
 
-The platform manages invitation tokens as persistent objects:
+The framework supports two modes, controlled by configuration:
+
+| Mode | Entry Point | Token Required | Typical Use Case |
+|------|-------------|----------------|------------------|
+| **Invitation** | Email link with token | Yes | Production systems with controlled user onboarding |
+| **Open** | "Register" link on login page | No | Development systems, demos, open communities |
+
+Both modes can be enabled simultaneously (an application can allow both open
+registration and invitation-based registration), or individually.
+
+**Open registration flow:**
+
+```
+User                      System
+ |                           |
+ | 1. Click "Register"       |
+ |    on login page          |
+ |-------------------------->|
+ |                           |
+ |   <-- Registration page   |
+ |       (email input)  --   |
+ |                           |
+ | 2. Enter email address    |
+ |-------------------------->|
+ |                           | 3. Check: email already registered?
+ |                           |    If yes -> show message (no account details leaked)
+ |                           |    If no  -> OTPService.generate(email, "registration")
+ |   <-- OTP email sent --   |
+ |                           |
+ | 4. Enter OTP code         |
+ |-------------------------->|
+ |                           | 5. OTPService.validate(session, code)
+ |                           |    -> email ownership verified
+ |                           |
+ |   Proceed with remaining  |
+ |   registration steps      |
+ |   (password, TOTP, etc.)  |
+```
+
+**Invitation-based flow:**
+
+```
+User                      System
+ |                           |
+ | 1. Click invitation link  |
+ |    (/servlet/register     |
+ |     ?token=<token>)       |
+ |-------------------------->|
+ |                           | 2. Validate token
+ |                           |    (exists, not expired, not revoked)
+ |                           |
+ |   Proceed with configured |
+ |   registration steps      |
+ |   (email verify, password,|
+ |   TOTP, etc.)             |
+```
+
+In the invitation flow the email address is pre-filled from the invitation token. The
+`EmailVerificationStep` still sends an OTP to verify email ownership, but the user does
+not need to type the address.
+
+#### 3.5.4 Invitation Token Model
+
+For the invitation mode, the platform manages invitation tokens as persistent objects:
 
 ```
 InvitationToken
@@ -911,7 +983,7 @@ InvitationToken
 The `context` field allows applications to attach arbitrary data to an invitation
 (e.g., which resources the invited user should have access to, which roles to assign).
 The platform does not interpret this field; it passes it to the application-provided
-`RegistrationHandler` (see 3.5.5).
+`RegistrationHandler` (see 3.5.8).
 
 **`InvitationStatus`:**
 
@@ -922,10 +994,10 @@ The platform does not interpret this field; it passes it to the application-prov
 | `EXPIRED` | Token validity has elapsed |
 | `REVOKED` | Token manually revoked by an authorized user |
 
-#### 3.5.4 Invitation Service
+#### 3.5.5 Invitation Service
 
 ```java
-package com.top_logic.security.invite;
+package com.top_logic.security.register;
 
 /**
  * Service for creating and managing invitation tokens.
@@ -984,18 +1056,18 @@ public class InvitationValidationResult {
 }
 ```
 
-#### 3.5.5 Registration Flow
+#### 3.5.6 Registration Flow Engine
 
 The registration flow is a multi-step process orchestrated by a `RegistrationServlet`.
 The steps are configurable via a **`RegistrationStep`** plugin interface:
 
 ```java
-package com.top_logic.security.invite;
+package com.top_logic.security.register;
 
 /**
- * A single step in the self-registration flow. Steps are executed in
- * configured order. Each step renders a page, processes the form submission,
- * and signals whether to proceed to the next step or re-display with errors.
+ * A single step in the registration flow. Steps are executed in configured
+ * order. Each step renders a page, processes the form submission, and signals
+ * whether to proceed to the next step or re-display with errors.
  */
 public interface RegistrationStep extends ConfiguredInstance<RegistrationStep.Config<?>> {
 
@@ -1004,6 +1076,23 @@ public interface RegistrationStep extends ConfiguredInstance<RegistrationStep.Co
         @Name("name")
         @Mandatory
         String getName();
+    }
+
+    /**
+     * Whether this step applies to the current registration context.
+     *
+     * <p>
+     * Steps can be conditionally skipped based on the registration mode
+     * or other context properties. For example, a CAPTCHA step might only
+     * apply in open registration mode, while an invitation-context step
+     * might only apply in invitation mode.
+     * </p>
+     *
+     * @param context the current registration context.
+     * @return {@code true} if this step should be executed; {@code false} to skip.
+     */
+    default boolean appliesTo(RegistrationContext context) {
+        return true;
     }
 
     /**
@@ -1030,35 +1119,76 @@ create the account:
 
 ```java
 public class RegistrationContext {
-    private InvitationToken _invitation;
+    private RegistrationMode _mode;     // INVITATION or OPEN
+    private InvitationToken _invitation; // non-null only in INVITATION mode
     private String _email;              // verified email
     private String _displayName;
     private char[] _password;           // set during password step
     private Enrollment _totpEnrollment; // set during TOTP step (optional)
     private Map<String, Object> _attributes; // extensible
+
+    public enum RegistrationMode { INVITATION, OPEN }
     ...
 }
 ```
 
-#### 3.5.6 Standard Registration Steps
+The `_mode` field allows registration steps to behave differently depending on how
+the flow was initiated. For example, the `EmailVerificationStep` pre-fills the email
+in invitation mode but asks the user to enter it in open mode.
+
+#### 3.5.7 Standard Registration Steps
 
 The platform provides the following standard steps. Applications configure which steps
 to include and in which order.
 
-| Step | Name | Description |
-|------|------|-------------|
-| `EmailVerificationStep` | `email-verify` | Sends OTP to the invitation's email, verifies code. Confirms email ownership. |
-| `PasswordSetupStep` | `password-setup` | User chooses a password (with confirmation). Validates against `PasswordValidator`. |
-| `TOTPEnrollmentStep` | `totp-enroll` | Generates TOTP secret, displays QR code, verifies initial code. |
-| `AccountCreationStep` | `account-create` | Final step: creates Person, sets password, activates TOTP, invokes application callback. |
+| Step | Name | Description | Mode Behavior |
+|------|------|-------------|---------------|
+| `EmailInputStep` | `email-input` | User enters email address. | Skipped in invitation mode (email comes from token). |
+| `EmailVerificationStep` | `email-verify` | Sends OTP to email, verifies code. Confirms email ownership. | In invitation mode, uses the token's email. In open mode, uses the email from `EmailInputStep`. |
+| `ProfileStep` | `profile` | User enters display name and optional profile fields. | Same in both modes. |
+| `PasswordSetupStep` | `password-setup` | User chooses a password (with confirmation). Validates against `PasswordValidator`. | Same in both modes. |
+| `TOTPEnrollmentStep` | `totp-enroll` | Generates TOTP secret, displays QR code, verifies initial code. | Same in both modes. |
+| `AccountCreationStep` | `account-create` | Final step: creates Person, sets password, activates TOTP, invokes application callback. | Same in both modes. |
 
 An application can:
-- Omit steps (e.g., skip `totp-enroll` if TOTP is not required).
-- Add custom steps (e.g., a step collecting additional profile information, or a
-  terms-of-service acceptance step).
+- Omit steps (e.g., skip `totp-enroll` for open registration on a dev system).
+- Add custom steps (e.g., a CAPTCHA step for open registration, a terms-of-service
+  acceptance step, or a step collecting application-specific profile data).
 - Reorder steps.
+- Use `appliesTo(RegistrationContext)` to conditionally include steps based on mode.
 
-#### 3.5.7 Application Callback: `RegistrationHandler`
+**Example configurations:**
+
+*Production system (invitation only, with TOTP):*
+```xml
+<registration-steps>
+    <step name="email-verify"    class="...EmailVerificationStep" />
+    <step name="password-setup"  class="...PasswordSetupStep" />
+    <step name="totp-enroll"     class="...TOTPEnrollmentStep" />
+    <step name="account-create"  class="...AccountCreationStep" />
+</registration-steps>
+```
+
+*Development system (open registration, no TOTP):*
+```xml
+<registration-steps>
+    <step name="email-input"     class="...EmailInputStep" />
+    <step name="email-verify"    class="...EmailVerificationStep" />
+    <step name="password-setup"  class="...PasswordSetupStep" />
+    <step name="account-create"  class="...AccountCreationStep" />
+</registration-steps>
+```
+
+*Minimal development system (open registration, no email verification):*
+```xml
+<registration-steps>
+    <step name="profile"         class="...ProfileStep" />
+    <step name="password-setup"  class="...PasswordSetupStep" />
+    <step name="account-create"  class="...AccountCreationStep" />
+</registration-steps>
+```
+
+#### 3.5.8 Application Callback: `RegistrationHandler`
 
 After the `AccountCreationStep` creates the Person object, the platform invokes a
 configurable application callback:
@@ -1066,11 +1196,14 @@ configurable application callback:
 ```java
 /**
  * Application-specific callback invoked after a new account is created
- * through the invitation flow.
+ * through the registration flow.
  *
  * <p>
  * Implementations can assign roles, create application-specific objects,
- * link the person to domain entities, etc.
+ * link the person to domain entities, etc. The callback receives the
+ * {@link RegistrationContext} which includes the registration mode and,
+ * in invitation mode, the invitation token with its application-specific
+ * context.
  * </p>
  */
 public interface RegistrationHandler
@@ -1084,35 +1217,45 @@ public interface RegistrationHandler
      * Called after the Person has been created and persisted.
      *
      * @param person  the newly created Person.
-     * @param context the registration context (contains invitation, email, etc.).
+     * @param context the registration context (contains mode, invitation, email, etc.).
      */
     void onRegistrationComplete(Person person, RegistrationContext context);
 }
 ```
 
 The default `RegistrationHandler` does nothing. Applications override it to perform
-domain-specific setup (e.g., linking the person to a `ContentShare` or assigning
-roles).
+domain-specific setup. The handler can distinguish between invitation-based and open
+registrations via `context.getMode()`:
 
-#### 3.5.8 Invitation Email
+- **Invitation mode:** The handler can read `context.getInvitation().getContext()`
+  to retrieve application-specific data (e.g., which resources to grant access to).
+- **Open mode:** The handler can assign default roles, send a welcome notification,
+  or perform other onboarding logic.
 
-The invitation email is rendered from a configurable template. The platform provides
-a default template; applications can override it.
-
-**Configuration:**
+#### 3.5.9 Configuration
 
 ```java
-public interface Config extends ConfiguredManagedClass.Config<InvitationServiceImpl> {
+public interface Config extends ConfiguredManagedClass.Config<RegistrationServiceImpl> {
 
-    /** Maximum allowed validity in days (caps user-specified values). */
-    @Name("max-validity-days")
+    /** Whether open self-registration (without invitation) is enabled. */
+    @Name("open-registration-enabled")
+    @BooleanDefault(false)
+    boolean getOpenRegistrationEnabled();
+
+    /** Whether invitation-based registration is enabled. */
+    @Name("invitation-registration-enabled")
+    @BooleanDefault(false)
+    boolean getInvitationRegistrationEnabled();
+
+    /** Maximum allowed invitation validity in days (caps user-specified values). */
+    @Name("max-invitation-validity-days")
     @IntDefault(30)
-    int getMaxValidityDays();
+    int getMaxInvitationValidityDays();
 
-    /** Default validity in days (when not specified by the inviter). */
-    @Name("default-validity-days")
+    /** Default invitation validity in days (when not specified by the inviter). */
+    @Name("default-invitation-validity-days")
     @IntDefault(7)
-    int getDefaultValidityDays();
+    int getDefaultInvitationValidityDays();
 
     /** URL path for the registration servlet. */
     @Name("registration-path")
@@ -1136,25 +1279,48 @@ public interface Config extends ConfiguredManagedClass.Config<InvitationServiceI
     /** Email body template for invitation emails. */
     @Name("invitation-email-body-template")
     String getInvitationEmailBodyTemplate();
+
+    /**
+     * Authentication device ID assigned to newly registered accounts.
+     * Defaults to the system's default authentication device.
+     */
+    @Name("auth-device-id")
+    @Nullable
+    String getAuthDeviceId();
+
+    /**
+     * Second-factor device ID assigned to newly registered accounts.
+     * If null, no second factor is configured (unless the registration
+     * steps include TOTP enrollment, in which case the TOTP device ID
+     * is used automatically).
+     */
+    @Name("second-factor-device-id")
+    @Nullable
+    String getSecondFactorDeviceId();
 }
 ```
 
-#### 3.5.9 Registration Servlet
+#### 3.5.10 Registration Servlet
 
 ```java
-package com.top_logic.security.invite;
+package com.top_logic.security.register;
 
 /**
- * Servlet handling the self-registration flow for invited users.
- * Operates outside the authenticated session context.
+ * Servlet handling self-registration flows. Operates outside the
+ * authenticated session context. Supports two entry points:
+ *
+ * <ul>
+ *   <li><b>Invitation mode:</b>
+ *       {@code /servlet/register?token=<invitation-token>}</li>
+ *   <li><b>Open mode:</b>
+ *       {@code /servlet/register} (no token parameter)</li>
+ * </ul>
  *
  * <p>
- * URL pattern: {@code /servlet/register?token=<invitation-token>}
- * </p>
- *
- * <p>
- * The servlet validates the token, then orchestrates the configured
- * registration steps sequentially.
+ * The servlet determines the mode from the presence or absence of the
+ * {@code token} parameter, validates the token (in invitation mode),
+ * creates a {@link RegistrationContext}, and orchestrates the configured
+ * {@link RegistrationStep}s sequentially.
  * </p>
  */
 public class RegistrationServlet extends NoContextServlet {
@@ -1162,7 +1328,19 @@ public class RegistrationServlet extends NoContextServlet {
 }
 ```
 
-#### 3.5.10 Repeated Invitation (Known Email)
+**Login page integration:** When open registration is enabled, the login page shows a
+"Register" link pointing to the registration servlet (without a token). This link is
+rendered conditionally based on `Config.getOpenRegistrationEnabled()`.
+
+```java
+// Addition to SelfServiceConfig (from section 3.4):
+/** Whether the "Register" link is shown on the login page. */
+@Name("open-registration-enabled")
+@BooleanDefault(false)
+boolean getOpenRegistrationEnabled();
+```
+
+#### 3.5.11 Repeated Invitation (Known Email)
 
 If the `recipientEmail` already corresponds to an existing Person (or an existing
 registered external user), the `InvitationService.createInvitation()` method can detect
@@ -1174,6 +1352,36 @@ this. The behavior is configurable:
 - **Alternative:** Skip the registration flow entirely and directly invoke the
   `RegistrationHandler` (for applications where no user interaction is needed for
   repeated invitations).
+
+#### 3.5.12 Open Registration: Abuse Prevention
+
+Open registration introduces the risk of automated account creation (spam, bots). The
+framework provides the following mitigations:
+
+- **Email verification (required):** In open mode, the `EmailVerificationStep` is
+  strongly recommended (though technically optional for minimal dev setups). It
+  ensures that each registration corresponds to a real, accessible email address.
+- **Rate limiting:** The `RegistrationServlet` enforces rate limits on registration
+  attempts per IP address (configurable, default: 5 registrations per hour per IP).
+- **CAPTCHA step (optional):** Applications can add a `CaptchaStep` to the
+  registration flow. The platform does not provide a built-in CAPTCHA implementation
+  (this depends on external services like reCAPTCHA or hCaptcha), but the
+  `RegistrationStep` interface makes it straightforward to integrate one.
+- **Email domain restrictions (optional):** Applications can configure an allowed list
+  or blocked list of email domains for open registration:
+
+```java
+// Optional addition to Config:
+/** Allowed email domains for open registration (empty = all allowed). */
+@Name("allowed-email-domains")
+@Format(CommaSeparatedStrings.class)
+List<String> getAllowedEmailDomains();
+
+/** Blocked email domains for open registration. */
+@Name("blocked-email-domains")
+@Format(CommaSeparatedStrings.class)
+List<String> getBlockedEmailDomains();
+```
 
 ---
 
@@ -1192,7 +1400,7 @@ this. The behavior is configurable:
 | `LoginPageServlet.java` | Extend `checkRequest()` for second-factor flow branch |
 | `LoginCredentials.java` | No change |
 | `ApplicationPages` | Add `getSecondFactorPage()`, `getPasswordResetPage()`, `getTotpResetPage()` |
-| `login.jsp` | Add optional links for password reset and TOTP reset |
+| `login.jsp` | Add optional links for password reset, TOTP reset, and open registration |
 | **New:** `secondFactor.jsp` | Second-factor code entry page |
 
 ## 5. New Modules Summary
@@ -1202,7 +1410,7 @@ this. The behavior is configurable:
 | `com.top_logic.security.auth.totp` | `tl-security-auth-totp` | `TOTPSecondFactorDevice`, TOTP generation/validation, secret storage |
 | `com.top_logic.security.otp` | `tl-security-otp` | `OTPService`, OTP generation/validation, email delivery |
 | `com.top_logic.security.selfservice` | `tl-security-selfservice` | `SelfServiceServlet`, password-reset flow, TOTP-reset flow, `AccountResolver` |
-| `com.top_logic.security.invite` | `tl-security-invite` | `InvitationService`, `RegistrationServlet`, `RegistrationStep` framework, `RegistrationHandler` callback |
+| `com.top_logic.security.register` | `tl-security-register` | `RegistrationServlet`, `RegistrationStep` framework, `RegistrationHandler`, `InvitationService` (invitation + open self-registration) |
 
 ---
 
@@ -1218,6 +1426,7 @@ this. The behavior is configurable:
 | **TOTP replay** | Each TOTP code is valid for only one time step (30s). Server tracks last accepted time step per account to prevent replay within the tolerance window. |
 | **Password storage** | Existing Argon2 hashing (via `PasswordHashingService`) is used. No changes needed. |
 | **OTP code storage** | OTP codes are hashed before storage (using `PasswordHashingService`). Never stored in plain text. |
+| **Open registration abuse** | Rate limiting per IP (default: 5/hour). Email verification required. Optional CAPTCHA step and email domain restrictions. Open registration disabled by default. |
 
 ---
 

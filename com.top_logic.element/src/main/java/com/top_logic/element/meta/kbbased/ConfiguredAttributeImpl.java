@@ -33,13 +33,4 @@ public abstract class ConfiguredAttributeImpl extends KBBasedMetaAttribute {
 		return (StorageImplementation) tGetData(STORAGE_IMPLEMENTATION_ATTRIBUTE);
 	}
 
-	@Override
-	public boolean isDerived() {
-		StorageImplementation storageImplementation = getStorageImplementation();
-		if (storageImplementation == null) {
-			return false;
-		}
-		return storageImplementation.isReadOnly();
-	}
-
 }

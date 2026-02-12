@@ -561,7 +561,7 @@
 						<implementation-binding interface-name="com.top_logic.model.TLStructuredTypePart"/>
 					</annotations>
 					<generalizations>
-						<generalization type="TLTypePart"/>
+						<generalization type="DerivedTLTypePart"/>
 					</generalizations>
 					<attributes>
 						<reference name="owner"
@@ -708,7 +708,6 @@
 					</annotations>
 					<generalizations>
 						<generalization type="TLStructuredTypePart"/>
-						<generalization type="DerivedTLTypePart"/>
 					</generalizations>
 					<attributes>
 						<reference name="end"
@@ -942,7 +941,6 @@
 					</annotations>
 					<generalizations>
 						<generalization type="TLStructuredTypePart"/>
-						<generalization type="DerivedTLTypePart"/>
 					</generalizations>
 				</class>
 

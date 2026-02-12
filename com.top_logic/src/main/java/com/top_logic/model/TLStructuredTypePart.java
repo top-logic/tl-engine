@@ -119,6 +119,16 @@ public interface TLStructuredTypePart extends DerivedTLTypePart, TLStructuredTyp
 	StorageDetail getStorageImplementation();
 
 	@Override
+	default boolean isDerived() {
+		StorageDetail storage = getStorageImplementation();
+		if (storage == null) {
+			/* Happens during tests in "com.top_logic". */
+			return false;
+		}
+		return storage.isReadOnly();
+	}
+
+	@Override
 	default <T extends TLAnnotation> T getAnnotation(Class<T> annotationInterface) {
 		T attributeAnnotation = getAnnotationLocal(annotationInterface);
 		if (attributeAnnotation != null) {

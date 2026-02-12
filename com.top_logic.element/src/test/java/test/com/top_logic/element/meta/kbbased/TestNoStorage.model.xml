@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="testNoStorage">
+		<datatype name="String"
+			db_type="varchar"
+			kind="String"
+		>
+			<storage-mapping class="com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping"
+				application-type="java.lang.String"
+			/>
+		</datatype>
+
+		<!-- Base class with an abstract attribute -->
+		<class name="Base">
+			<attributes>
+				<property name="abstractAttr"
+					abstract="true"
+					type="String"
+				/>
+			</attributes>
+		</class>
+
+		<!-- Subclass that provides concrete implementation -->
+		<class name="Ext">
+			<generalizations>
+				<generalization type="Base"/>
+			</generalizations>
+			<attributes>
+				<property name="abstractAttr"
+					override="true"
+					type="String"
+				/>
+			</attributes>
+		</class>
+	</module>
+</model>

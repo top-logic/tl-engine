@@ -33,6 +33,12 @@ public interface TLAssociationEnd extends TLAssociationEndBase, TLAssociationPar
 	@Reference(other="end")
 	TLReference getReference();
 
+	@Override
+	default boolean isDerived() {
+		TLReference ref = getReference();
+		return ref == null ? false : ref.isDerived();
+	}
+
 	/**
 	 * Whether this reference points to the composite part of an aggregation association.
 	 */

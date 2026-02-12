@@ -427,7 +427,13 @@ public class ChatProcessor {
 
 		public void setToolCallTracker(ToolCallTracker tracker) {
 			_toolCallTracker = tracker;
-			_lastSeenToolCallCount.set(0);
+			if (tracker != null) {
+				// Reset only when starting a new processing round (non-null tracker).
+				// Do NOT reset when clearing (null) to avoid a race where the SSE poller
+				// reads the tracker reference before it becomes null but reads the count
+				// after it was reset to 0, causing all events to be re-added as duplicates.
+				_lastSeenToolCallCount.set(0);
+			}
 		}
 
 		public ToolCallTracker getToolCallTracker() {

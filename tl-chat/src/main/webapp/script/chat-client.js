@@ -144,9 +144,24 @@
 		var existingMsg = container.querySelector('[data-message-id="' + (msg.id || '') + '"]');
 		if (existingMsg) return;
 
+		// If this is a server-delivered user message, absorb it into the pending optimistic message.
+		// Only update the canonical message ID (for deduplication); keep the client-provided
+		// userName and time which are already correct on the optimistic element.
+		if (msg.role === 'user' && !msg.optimistic) {
+			var optimistic = container.querySelector('.chat-message[data-optimistic="true"]');
+			if (optimistic) {
+				optimistic.setAttribute('data-message-id', msg.id || ('m' + container.children.length));
+				optimistic.removeAttribute('data-optimistic');
+				return;
+			}
+		}
+
 		var div = document.createElement('div');
 		div.className = 'chat-message';
 		div.setAttribute('data-message-id', msg.id || ('m' + container.children.length));
+		if (msg.optimistic) {
+			div.setAttribute('data-optimistic', 'true');
+		}
 
 		var user = document.createElement('span');
 		user.className = 'chat-user';
@@ -652,14 +667,15 @@
 		el.input.disabled = true;
 		el.button.disabled = true;
 
-		// Optimistically add user message to UI immediately
+		// Optimistically add user message to UI immediately (replaced by server message via SSE)
 		var tempMsgId = 'user-' + Date.now();
 		appendMessage(el.messages, {
 			id: tempMsgId,
 			role: 'user',
 			userName: 'User',
 			content: text,
-			time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+			time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+			optimistic: true
 		});
 		scrollToBottom(el.messages);
 

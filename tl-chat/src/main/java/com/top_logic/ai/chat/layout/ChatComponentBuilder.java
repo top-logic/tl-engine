@@ -19,6 +19,7 @@ import com.top_logic.layout.form.model.HiddenField;
 import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.mig.html.ModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.util.TLContext;
 
 import jakarta.servlet.http.HttpSession;
 
@@ -47,6 +48,9 @@ public class ChatComponentBuilder implements ModelBuilder {
 		final Chat chat = taskTracker.getChat();
 		chat.ensureWelcomeMessage();
 
+		// Store user name from TLContext (available here) so ChatServlet can use it as fallback
+		storeUserName(taskTracker);
+
 		// So the JSON API (ChatServlet) uses the same tracker as this UI when in the same session
 		registerTrackerWithSession(component, taskTracker);
 
@@ -72,6 +76,22 @@ public class ChatComponentBuilder implements ModelBuilder {
 	@Override
 	public boolean supportsModel(Object model, LayoutComponent component) {
 		return true;
+	}
+
+	/**
+	 * Stores the current user's display name on the tracker. Called in TL framework context where
+	 * {@link TLContext} is available, so that {@code ChatServlet} (which may not have TLContext)
+	 * can fall back to this stored name.
+	 */
+	private static void storeUserName(TaskProgressTracker taskTracker) {
+		try {
+			TLContext context = TLContext.getContext();
+			if (context != null && context.getPerson() != null) {
+				taskTracker.setUserName(context.getPerson().getName());
+			}
+		} catch (Exception e) {
+			Logger.debug("Could not resolve user name from TLContext", e, ChatComponentBuilder.class);
+		}
 	}
 
 	/**

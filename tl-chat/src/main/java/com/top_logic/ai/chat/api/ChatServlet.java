@@ -82,10 +82,10 @@ public class ChatServlet extends HttpServlet {
 		}
 		final String messageText = text.trim();
 
-		// Get user name BEFORE entering system interaction (TLContext from servlet filter is still available)
-		final String userName = getCurrentUserName();
-
 		TaskProgressTracker tracker = ChatSessionRegistry.getOrCreate(req.getSession(false));
+
+		// Get user name: try TLContext first (if behind TL filter), then tracker's stored name
+		final String userName = getCurrentUserName(tracker);
 		ChatProcessor.SendResult result = ThreadContextManager.inSystemInteraction(ChatServlet.class, () -> {
 			return ChatSendService.send(tracker, userName, messageText, null, null);
 		});
@@ -138,7 +138,7 @@ public class ChatServlet extends HttpServlet {
 		handler.start();
 	}
 
-	private static String getCurrentUserName() {
+	private static String getCurrentUserName(TaskProgressTracker tracker) {
 		try {
 			TLContext context = TLContext.getContext();
 			if (context != null && context.getPerson() != null) {
@@ -146,6 +146,11 @@ public class ChatServlet extends HttpServlet {
 			}
 		} catch (Exception ignored) {
 			// fallback
+		}
+		// Fall back to the name stored on the tracker (set by ChatComponentBuilder in TL context)
+		String storedName = tracker.getUserName();
+		if (storedName != null) {
+			return storedName;
 		}
 		return "Anonymous";
 	}

@@ -44,6 +44,9 @@ public class TaskProgressTracker {
 	/** Called when polling has updates to request a repaint of the chat view. */
 	private volatile Runnable _repaintRequester = null;
 
+	/** User display name resolved from TLContext (set where context is available, used as fallback elsewhere). */
+	private volatile String _userName = null;
+
 	/**
 	 * Returns the chat for this window. Same instance for add and render so task traces persist.
 	 */
@@ -94,6 +97,28 @@ public class TaskProgressTracker {
 			} catch (Throwable ignored) {
 			}
 		}
+	}
+
+	/**
+	 * Returns the user display name stored on this tracker, or null if not yet set.
+	 *
+	 * <p>
+	 * Set from contexts where {@code TLContext} is available (e.g. during component creation). Used
+	 * as fallback in contexts where {@code TLContext} is not available (e.g. ChatServlet).
+	 * </p>
+	 */
+	public String getUserName() {
+		return _userName;
+	}
+
+	/**
+	 * Stores the user display name on this tracker for cross-context resolution.
+	 *
+	 * @param userName
+	 *        The display name of the current user.
+	 */
+	public void setUserName(String userName) {
+		_userName = userName;
 	}
 
 	/**

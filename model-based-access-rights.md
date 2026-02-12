@@ -231,16 +231,16 @@ Introduce a model-level access rights definition that answers these questions di
 
 #### 2.3.1 Operations
 
-The model defines four fundamental operations, aligned with the existing `CommandGroupType`:
+Operations in the model-based access rights system are `BoundCommandGroup`s -- the same type already used in the existing system. The built-in command groups cover fundamental data access:
 
-| Operation | Maps to CommandGroupType | Meaning |
-|-----------|--------------------------|---------|
-| `READ` | `CommandGroupType.READ` | View/query instances and their attribute values |
-| `WRITE` | `CommandGroupType.WRITE` | Modify attribute values of existing instances |
-| `CREATE` | `CommandGroupType.WRITE` | Create new instances (see section 2.3.6) |
-| `DELETE` | `CommandGroupType.DELETE` | Delete instances |
+| BoundCommandGroup | CommandGroupType | Meaning |
+|-------------------|------------------|---------|
+| `Read` | READ | View/query instances and their attribute values |
+| `Write` | WRITE | Modify attribute values of existing instances |
+| `Create` | WRITE | Create new instances (see section 2.3.6) |
+| `Delete` | DELETE | Delete instances |
 
-In addition, types can declare **custom business operations** beyond these built-in ones. See section 2.3.7.
+In addition, types can declare **custom business operations** (e.g. `Approve`, `Cancel`) using custom `BoundCommandGroup`s. See section 2.3.7.
 
 #### 2.3.2 Type-Level Access Rules
 
@@ -248,10 +248,10 @@ A **type access rule** defines which roles are permitted to perform which operat
 
 ```
 TypeAccessRule:
-  type:       TLClass          -- The model type this rule applies to
-  operation:  Operation         -- READ, WRITE, CREATE, DELETE
-  roles:      Set<BoundedRole>  -- Roles that are permitted
-  inherit:    boolean           -- Whether the rule applies to sub-types
+  type:          TLClass            -- The model type this rule applies to
+  commandGroup:  BoundCommandGroup   -- Read, Write, Delete, or a custom command group
+  roles:         Set<BoundedRole>    -- Roles that are permitted
+  inherit:       boolean             -- Whether the rule applies to sub-types
 ```
 
 Example:
@@ -280,9 +280,9 @@ An **attribute access rule** refines permissions for individual attributes:
 
 ```
 AttributeAccessRule:
-  attribute:  TLStructuredTypePart  -- The specific attribute
-  operation:  Operation              -- READ or WRITE
-  roles:      Set<BoundedRole>       -- Roles that are permitted
+  attribute:     TLStructuredTypePart  -- The specific attribute
+  commandGroup:  BoundCommandGroup      -- Typically Read or Write
+  roles:         Set<BoundedRole>       -- Roles that are permitted
 ```
 
 Attribute-level rules **restrict** the type-level permissions. If no attribute-level rule exists, the type-level rule applies. If an attribute-level rule exists, only the roles listed in the attribute-level rule have access, provided they also have the corresponding type-level access.
@@ -306,9 +306,9 @@ Access rules can be defined at the **module level** as defaults for all types wi
 
 ```
 ModuleAccessDefault:
-  module:     TLModule          -- The model module
-  operation:  Operation
-  roles:      Set<BoundedRole>
+  module:        TLModule            -- The model module
+  commandGroup:  BoundCommandGroup    -- The command group
+  roles:         Set<BoundedRole>
 ```
 
 Precedence (most specific wins):
@@ -323,9 +323,9 @@ The model-based access rules define **which roles are needed** for an operation 
 This separation is key: the new type-level rules only replace the view-based `PersBoundComp` configuration -- the part that was previously tied to the UI. The instance-level role assignments (direct `hasRole` records, rule-based role derivation via `RoleRule`, and security parent chain inheritance) remain unchanged. This means access control stays fine-grained at the instance level. For example, if user U has the `Editor` role on Customer instance C1 (via a direct assignment or a role rule) but not on Customer instance C2, then U can modify C1 but not C2 -- even though both are of type `Customer` and the type-level rule permits `Editor` to write `Customer` instances.
 
 ```
-Access check for "Can user U perform operation O on instance I of type T?":
+Access check for "Can user U perform command group G on instance I of type T?":
 
-1. Look up TypeAccessRule(T, O) → required roles R
+1. Look up TypeAccessRule(T, G) → required roles R
    (Falls back to module default if no type-level rule exists)
 
 2. AccessManager.hasRole(U, I, R) → true/false
@@ -334,11 +334,11 @@ Access check for "Can user U perform operation O on instance I of type T?":
 
 For attribute-level checks:
 ```
-Access check for "Can user U perform operation O on attribute A of instance I?":
+Access check for "Can user U perform command group G on attribute A of instance I?":
 
-1. Look up AttributeAccessRule(A, O)
+1. Look up AttributeAccessRule(A, G)
    - If exists: required roles R = intersection(TypeAccessRule.roles, AttributeAccessRule.roles)
-   - If not: required roles R = TypeAccessRule(A.owner, O).roles
+   - If not: required roles R = TypeAccessRule(A.owner, G).roles
 
 2. AccessManager.hasRole(U, I, R) → true/false
 ```
@@ -409,25 +409,17 @@ Real-world applications often have complex operations that go beyond simple data
 - **The permission is semantically distinct from the data it touches.** A regular Editor might be allowed to modify `Order#status` in general (e.g., changing it to "in progress"), but "Approve" requires the `Approver` role -- not because of *which* data is modified, but because of the *business meaning* of the action.
 - **Deriving permissions from atomic operations is impractical.** It would require analyzing all data modifications the operation performs in advance, and the intersection of the role sets for each atomic operation might be too restrictive, too permissive, or simply not what the application intends.
 
-The solution is to allow **custom operations on types**, analogous to the existing custom `BoundCommandGroup` mechanism. A type can declare domain-specific operations with their own role sets. The access check for a custom operation is a single check against the context instance -- the same mechanism as READ/WRITE/DELETE, just with a custom operation name. No decomposition into atomic operations is needed.
-
-```
-CustomOperationRule:
-  type:       TLClass          -- The type this operation applies to
-  operation:  String            -- Custom operation name (e.g. "approve", "cancel")
-  roles:      Set<BoundedRole>  -- Roles that are permitted
-  inherit:    boolean           -- Whether the rule applies to sub-types
-```
+The solution is to allow **custom `BoundCommandGroup`s on types**. Since both built-in operations (Read, Write, Delete) and custom business operations (Approve, Cancel) are `BoundCommandGroup`s, they use the same `TypeAccessRule` structure (see section 2.3.2). Custom command groups simply appear as additional grants in the type's access rights configuration. The access check is a single check against the context instance -- the same mechanism as for Read/Write/Delete. No decomposition into atomic operations is needed.
 
 Example:
 ```
 type: myapp:Order
-operation: approve
+commandGroup: Approve
 roles: {Manager, Approver}
 inherit: false
 
 type: myapp:Order
-operation: cancel
+commandGroup: Cancel
 roles: {Manager}
 inherit: false
 ```
@@ -436,13 +428,13 @@ The access check:
 ```
 "Can user U approve Order instance O?"
 
-  1. Look up CustomOperationRule(Order, "approve") → required roles R = {Manager, Approver}
+  1. Look up TypeAccessRule(Order, Approve) → required roles R = {Manager, Approver}
 
   2. AccessManager.hasRole(U, O, R) → true/false
      (Same instance-level check as for data access operations)
 ```
 
-This maps directly to the existing `BoundCommandGroup` system: each custom operation corresponds to a `BoundCommandGroup`. The difference is that the `(operation → roles)` mapping lives on the model type, not on a view. A custom command group like `Approve` in the current system becomes a custom operation `approve` on type `Order` in the model-based system.
+The difference to the current system is that the `(BoundCommandGroup → roles)` mapping lives on the model type, not on a view. A command group like `Approve` configured in a view's `PersBoundComp` today becomes a grant on the `Order` type in the model-based system.
 
 **Three levels of access rights** emerge:
 
@@ -543,7 +535,7 @@ View "Customer Details" displays type "myapp:Customer"
 View "Order Processing" displays type "myapp:Order"
   → Read commands require: TypeAccessRule(Order, READ).roles = {Viewer, Editor, Manager, Approver}
   → Write commands require: TypeAccessRule(Order, WRITE).roles = {Editor, Manager}
-  → "Approve" commands require: CustomOperationRule(Order, "approve").roles = {Manager, Approver}
+  → "Approve" commands require: TypeAccessRule(Order, Approve).roles = {Manager, Approver}
 ```
 
 Custom `BoundCommandGroup`s in views are mapped to custom operations on the displayed type. This replaces the per-view `PersBoundComp` configuration for views that follow the standard pattern. Views with special requirements can still override with explicit view-level configuration.
@@ -552,66 +544,57 @@ Custom `BoundCommandGroup`s in views are mapped to custom operations on the disp
 
 A new service interface provides programmatic access to model-based permissions:
 
+Since built-in operations (Read, Write, Delete) and custom business operations (Approve, Cancel, ...) are both `BoundCommandGroup`s, the API uses `BoundCommandGroup` as the unified operation type. There is no need for a separate `Operation` enum.
+
 ```java
 public interface ModelAccessRights {
 
     /**
-     * Returns the roles that are permitted to perform the given operation
-     * on instances of the given type.
+     * Returns the roles that are permitted to perform the given command group
+     * on instances of the given type. Applies to both built-in command groups
+     * (Read, Write, Delete) and custom business operations (Approve, Cancel, etc.).
      */
-    Set<BoundedRole> getAllowedRoles(TLClass type, Operation operation);
+    Set<BoundedRole> getAllowedRoles(TLClass type, BoundCommandGroup commandGroup);
 
     /**
-     * Returns the roles that are permitted to perform the given operation
-     * on the given attribute.
+     * Returns the roles that are permitted to perform the given command group
+     * on the given attribute. Relevant for READ and WRITE command groups to
+     * implement attribute-level access restrictions.
      */
-    Set<BoundedRole> getAllowedRoles(TLStructuredTypePart attribute, Operation operation);
+    Set<BoundedRole> getAllowedRoles(TLStructuredTypePart attribute,
+                                     BoundCommandGroup commandGroup);
 
     /**
-     * Checks whether the given person can perform the given operation
-     * on the given instance.
+     * Checks whether the given person can perform the given command group
+     * on the given instance. Works for both built-in and custom operations.
      */
-    boolean isAllowed(Person person, TLObject instance, Operation operation);
+    boolean isAllowed(Person person, TLObject instance,
+                      BoundCommandGroup commandGroup);
 
     /**
-     * Checks whether the given person can perform the given operation
+     * Checks whether the given person can perform the given command group
      * on the given attribute of the given instance.
      */
     boolean isAllowed(Person person, TLObject instance,
-                      TLStructuredTypePart attribute, Operation operation);
+                      TLStructuredTypePart attribute,
+                      BoundCommandGroup commandGroup);
 
     /**
      * Checks whether the given person can create a new child object in
      * the given composition attribute of the given parent instance.
      *
-     * This is equivalent to isAllowed(person, parent, compositionAttribute, WRITE)
-     * but provides a semantically clear entry point for creation checks.
+     * Convenience method equivalent to
+     * isAllowed(person, parent, compositionAttribute, SimpleBoundCommandGroup.WRITE).
      */
     boolean isAllowedCreate(Person person, TLObject parent,
                             TLStructuredTypePart compositionAttribute);
 
     /**
-     * Checks whether the given person can perform a custom business
-     * operation on the given instance.
-     *
-     * @param customOperation  The operation name (e.g. "approve", "cancel").
-     *                         Must match a custom operation declared on the
-     *                         instance's type.
-     */
-    boolean isAllowed(Person person, TLObject instance, String customOperation);
-
-    /**
-     * Returns the roles that are permitted to perform a custom business
-     * operation on instances of the given type.
-     */
-    Set<BoundedRole> getAllowedRoles(TLClass type, String customOperation);
-
-    /**
      * Returns all types that the given person can perform the given
-     * operation on (based on type-level rules; instance-level checks
+     * command group on (based on type-level rules; instance-level checks
      * still required for specific objects).
      */
-    Set<TLClass> getAccessibleTypes(Person person, Operation operation);
+    Set<TLClass> getAccessibleTypes(Person person, BoundCommandGroup commandGroup);
 }
 ```
 
@@ -620,19 +603,19 @@ public interface ModelAccessRights {
 #### 2.7.1 AI Assistant
 
 The AI assistant uses the `ModelAccessRights` API directly:
-- Before reading data: `isAllowed(currentUser, instance, READ)`
-- Before modifying data: `isAllowed(currentUser, instance, WRITE)`
+- Before reading data: `isAllowed(currentUser, instance, Read)`
+- Before modifying data: `isAllowed(currentUser, instance, Write)`
 - Before creating objects: `isAllowedCreate(currentUser, parent, compositionAttr)`
-- Before business operations: `isAllowed(currentUser, instance, "approve")`
-- To explain permissions: `getAllowedRoles(type, operation)` → map to users
+- Before business operations: `isAllowed(currentUser, instance, Approve)`
+- To explain permissions: `getAllowedRoles(type, commandGroup)` → map to users
 
 #### 2.7.2 REST API / OpenAPI
 
 REST endpoints check model-level permissions instead of simulating view access:
-- GET: `isAllowed(user, instance, READ)`
-- PUT/PATCH: `isAllowed(user, instance, attribute, WRITE)` for each modified attribute
+- GET: `isAllowed(user, instance, Read)`
+- PUT/PATCH: `isAllowed(user, instance, attribute, Write)` for each modified attribute
 - POST: `isAllowedCreate(user, parent, compositionAttribute)`
-- DELETE: `isAllowed(user, instance, DELETE)`
+- DELETE: `isAllowed(user, instance, Delete)`
 
 #### 2.7.3 Existing UI
 
@@ -666,16 +649,16 @@ canExecute($instance, $customOperation)
 With model-based access rights in place:
 
 **"Which users can read instances of type Customer?"**
-→ `getAllowedRoles(Customer, READ)` gives the roles. Cross-referencing with role assignments on specific instances gives the users.
+→ `getAllowedRoles(Customer, Read)` gives the roles. Cross-referencing with role assignments on specific instances gives the users.
 
 **"Why can't user Meier edit this order?"**
-→ `getAllowedRoles(Order, WRITE)` = {Editor, Manager}. `AccessManager.getRoles(Meier, thisOrder)` = {Viewer}. Meier lacks the Editor or Manager role on this order.
+→ `getAllowedRoles(Order, Write)` = {Editor, Manager}. `AccessManager.getRoles(Meier, thisOrder)` = {Viewer}. Meier lacks the Editor or Manager role on this order.
 
 **"Which data can the AI assistant access for the current user?"**
-→ `getAccessibleTypes(currentUser, READ)` gives all readable types. For each type, instance-level checks filter to the specific objects the user can see.
+→ `getAccessibleTypes(currentUser, Read)` gives all readable types. For each type, instance-level checks filter to the specific objects the user can see.
 
 **"Who can approve orders?"**
-→ `getAllowedRoles(Order, "approve")` = {Manager, Approver}. The permission for the complex "approve" operation is defined directly on the Order type, independent of which views offer an Approve button.
+→ `getAllowedRoles(Order, Approve)` = {Manager, Approver}. The permission for the complex "approve" operation is defined directly on the Order type, independent of which views offer an Approve button.
 
 **"What would change if we give role X write access to type T?"**
 → The impact is immediately visible: all users with role X on any T instance would gain write access. No need to trace through view configurations.

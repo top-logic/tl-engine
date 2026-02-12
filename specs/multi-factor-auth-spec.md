@@ -15,11 +15,18 @@ username/password or external SSO. Specific needs include:
   external identity provider.
 - **Self-service account management** (password reset, TOTP reset) without administrator
   intervention.
-- **Invitation-based self-registration**, where existing users can invite external parties
+- **Invitation-based registration**, where existing users can invite external parties
   who then create their own accounts through a guided, token-secured process.
+- **Open self-registration**, where users can create their own accounts directly from
+  the login page -- useful for development systems, demo instances, and applications
+  where user acquisition should be frictionless.
 
-These are general-purpose platform capabilities. This specification describes additions to the
-existing TopLogic authentication model to support them.
+These are general-purpose platform capabilities that benefit multiple application
+scenarios. For example, a production application may use invitation-based registration
+with mandatory TOTP for external users, while the TopLogic development system could
+enable open self-registration with minimal friction. This specification describes
+additions to the existing TopLogic authentication model to support these use cases
+through a unified, configurable framework.
 
 ---
 

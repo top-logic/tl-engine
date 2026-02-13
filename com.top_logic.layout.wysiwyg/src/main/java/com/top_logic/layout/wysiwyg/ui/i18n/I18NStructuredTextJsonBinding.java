@@ -30,6 +30,8 @@ import com.top_logic.layout.wysiwyg.ui.StructuredTextJsonBinding;
  * language tags and values are {@link StructuredText} objects as serialized by
  * {@link StructuredTextJsonBinding}.
  * </p>
+ *
+ * @see I18NStructuredTextValueBinding
  */
 public class I18NStructuredTextJsonBinding implements JsonValueBinding<I18NStructuredText> {
 

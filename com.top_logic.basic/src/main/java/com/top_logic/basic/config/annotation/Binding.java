@@ -20,8 +20,9 @@ import com.top_logic.basic.config.ConfigurationValueBinding;
  * an annotated class.
  * </p>
  * 
+ * @see com.top_logic.basic.config.json.JsonBinding
  * @see Format
- * 
+ *
  * @since 5.7.3
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>

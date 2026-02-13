@@ -18,8 +18,13 @@ import com.top_logic.basic.config.annotation.TagName;
  * Annotation for configuration {@link PropertyDescriptor properties} to define a <i>JSON</i>
  * serialization of values of the annotated property.
  * 
+ * <p>
+ * When annotating a type with this annotation, also consider providing a corresponding XML
+ * {@link Binding} for XML configuration serialization.
+ * </p>
+ *
  * @see Binding
- * 
+ *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 @Target({ ElementType.METHOD, ElementType.TYPE })

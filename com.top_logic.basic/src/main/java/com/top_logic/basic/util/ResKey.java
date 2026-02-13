@@ -1866,6 +1866,8 @@ public abstract class ResKey {
 
 	/**
 	 * {@link ConfigurationValueBinding} for (potentially literal) {@link ResKey}s.
+	 *
+	 * @see ResKeyJsonBinding
 	 */
 	public static class ValueBinding extends AbstractConfigurationValueBinding<ResKey> {
 

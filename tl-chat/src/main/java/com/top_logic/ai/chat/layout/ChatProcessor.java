@@ -148,63 +148,69 @@ public class ChatProcessor {
 		if (state == null) {
 			return false;
 		}
-		boolean hasUpdates = false;
-		String currentTaskId = state.getCurrentTaskId();
 
-		// Check for new messages (agent response when task completes)
-		List<ChatMessage> newMessages = state.consumePendingMessages();
-		if (!newMessages.isEmpty()) {
-			if (currentTaskId != null) {
-				ChatTask task = taskTracker.getTask(currentTaskId);
-				chat.addTaskSnapshot(task);
-			}
-			for (ChatMessage msg : newMessages) {
-				chat.addMessage(msg);
-			}
-			hasUpdates = true;
-		}
+		// Synchronize on the state to prevent concurrent calls (from SSE handler poll,
+		// /chat/updates servlet, or overlapping SSE reconnects) from reading the same
+		// lastSeenToolCallCount and adding duplicate timeline events.
+		synchronized (state) {
+			boolean hasUpdates = false;
+			String currentTaskId = state.getCurrentTaskId();
 
-		// Check for new timeline events (tool calls and agent calls) in real-time
-		ToolCallTracker tracker = state.getToolCallTracker();
-		if (currentTaskId != null && tracker != null) {
-			List<TraceEntry> timeline = tracker.getTimeline();
-			int currentCount = timeline.size();
-			int lastSeen = state.getLastSeenToolCallCount();
-			if (currentCount > lastSeen) {
-				for (int i = lastSeen; i < currentCount; i++) {
-					TraceEntry entry = timeline.get(i);
-					ChatTimelineEvent chatEv = toChatTimelineEvent(entry, tracker);
-					if (chatEv != null) {
-						taskTracker.addTimelineEvent(currentTaskId, chatEv);
-					}
-				}
-				state.setLastSeenToolCallCount(currentCount);
-				hasUpdates = true;
-			}
-		}
-
-		// Check for completion
-		if (!state.isProcessing()) {
-			if (state._pollingTask != null) {
-				state._pollingTask.cancel(false);
-				state._pollingTask = null;
-			}
-			Throwable error = state.getError();
-			if (error != null) {
+			// Check for new messages (agent response when task completes)
+			List<ChatMessage> newMessages = state.consumePendingMessages();
+			if (!newMessages.isEmpty()) {
 				if (currentTaskId != null) {
 					ChatTask task = taskTracker.getTask(currentTaskId);
 					chat.addTaskSnapshot(task);
 				}
-				String errorMsg = "Error: " + error.getMessage();
-				if (error instanceof InterruptedException) {
-					errorMsg = "Processing was cancelled";
+				for (ChatMessage msg : newMessages) {
+					chat.addMessage(msg);
 				}
-				chat.addMessage(new ChatMessage("AI", errorMsg));
 				hasUpdates = true;
 			}
-			taskTracker.clearCurrentProcessingState();
+
+			// Check for new timeline events (tool calls and agent calls) in real-time
+			ToolCallTracker tracker = state.getToolCallTracker();
+			if (currentTaskId != null && tracker != null) {
+				List<TraceEntry> timeline = tracker.getTimeline();
+				int currentCount = timeline.size();
+				int lastSeen = state.getLastSeenToolCallCount();
+				if (currentCount > lastSeen) {
+					for (int i = lastSeen; i < currentCount; i++) {
+						TraceEntry entry = timeline.get(i);
+						ChatTimelineEvent chatEv = toChatTimelineEvent(entry, tracker);
+						if (chatEv != null) {
+							taskTracker.addTimelineEvent(currentTaskId, chatEv);
+						}
+					}
+					state.setLastSeenToolCallCount(currentCount);
+					hasUpdates = true;
+				}
+			}
+
+			// Check for completion
+			if (!state.isProcessing()) {
+				if (state._pollingTask != null) {
+					state._pollingTask.cancel(false);
+					state._pollingTask = null;
+				}
+				Throwable error = state.getError();
+				if (error != null) {
+					if (currentTaskId != null) {
+						ChatTask task = taskTracker.getTask(currentTaskId);
+						chat.addTaskSnapshot(task);
+					}
+					String errorMsg = "Error: " + error.getMessage();
+					if (error instanceof InterruptedException) {
+						errorMsg = "Processing was cancelled";
+					}
+					chat.addMessage(new ChatMessage("AI", errorMsg));
+					hasUpdates = true;
+				}
+				taskTracker.clearCurrentProcessingState();
+			}
+			return hasUpdates;
 		}
-		return hasUpdates;
 	}
 
 	/**

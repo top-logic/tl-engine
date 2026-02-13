@@ -166,8 +166,10 @@ public class ChatControl extends AbstractControlBase {
 
 	private void writeMessage(DisplayContext context, TagWriter out, ChatMessage msg, int messageIndex)
 			throws IOException {
+		String role = getRoleForUser(msg.getUser());
+
 		out.beginBeginTag(DIV);
-		out.writeAttribute(CLASS_ATTR, "chat-message");
+		out.writeAttribute(CLASS_ATTR, "chat-message chat-message-" + role);
 		out.writeAttribute("data-message-id", "m" + messageIndex);
 		out.endBeginTag();
 		{
@@ -178,25 +180,37 @@ public class ChatControl extends AbstractControlBase {
 			out.writeText(msg.getUser());
 			out.endTag(SPAN);
 
-			out.writeText(" ");
+			// Bubble wrapper around message text
+			out.beginBeginTag(DIV);
+			out.writeAttribute(CLASS_ATTR, "chat-bubble");
+			out.endBeginTag();
+			{
+				out.beginBeginTag(SPAN);
+				out.writeAttribute(CLASS_ATTR, "chat-text");
+				out.endBeginTag();
+				Converters.markdownToHtml(msg.getText()).write(context, out);
+				out.endTag(SPAN);
+			}
+			out.endTag(DIV);
 
 			// Timestamp
 			out.beginBeginTag(SPAN);
 			out.writeAttribute(CLASS_ATTR, "chat-time");
 			out.endBeginTag();
-			out.writeText("(" + TIME_FORMAT.format(msg.getTimestamp().atZone(ZoneId.systemDefault())) + ")");
-			out.endTag(SPAN);
-
-			out.writeText(": ");
-
-			// Message text
-			out.beginBeginTag(SPAN);
-			out.writeAttribute(CLASS_ATTR, "chat-text");
-			out.endBeginTag();
-			Converters.markdownToHtml(msg.getText()).write(context, out);
+			out.writeText(TIME_FORMAT.format(msg.getTimestamp().atZone(ZoneId.systemDefault())));
 			out.endTag(SPAN);
 		}
 		out.endTag(DIV);
+	}
+
+	private static String getRoleForUser(String user) {
+		if ("Agent".equals(user) || "AI".equals(user)) {
+			return "agent";
+		}
+		if ("System".equals(user)) {
+			return "system";
+		}
+		return "user";
 	}
 
 	private void writeTask(DisplayContext context, TagWriter out, ChatTask task) throws IOException {
@@ -215,12 +229,17 @@ public class ChatControl extends AbstractControlBase {
 	}
 
 	private void writeTaskHeader(TagWriter out, ChatTask task, String taskDivId) throws IOException {
-		String arrowId = taskDivId + "-arrow";
-		String bodyId = taskDivId + "-body";
+		boolean isFinished =
+			task.getStatus() == ChatTask.TaskStatus.COMPLETED || task.getStatus() == ChatTask.TaskStatus.ERROR;
 
 		out.beginBeginTag(DIV);
 		out.writeAttribute(CLASS_ATTR, "chat-task-header");
-		out.writeAttribute(ONCLICK_ATTR, "toggleTaskExpand('" + bodyId + "', '" + arrowId + "')");
+		if (isFinished) {
+			String bodyId = taskDivId + "-body";
+			String arrowId = taskDivId + "-arrow";
+			out.writeAttribute(ONCLICK_ATTR,
+				"toggleTaskExpand('" + bodyId + "', '" + arrowId + "')");
+		}
 		out.endBeginTag();
 		{
 			// Status icon
@@ -230,7 +249,7 @@ public class ChatControl extends AbstractControlBase {
 			out.writeText(getTaskIcon(task.getStatus()));
 			out.endTag(SPAN);
 
-			// Description: funny placeholder while in progress, "Completed"/"Failed" when done
+			// Description
 			String headerText = getTaskHeaderDescription(task);
 			out.beginBeginTag(SPAN);
 			out.writeAttribute(CLASS_ATTR, "chat-task-description");
@@ -248,12 +267,12 @@ public class ChatControl extends AbstractControlBase {
 				out.endTag(SPAN);
 			}
 
-			// Expand arrow
+			// Expand arrow (visible for completed/error tasks via CSS)
 			out.beginBeginTag(SPAN);
 			out.writeAttribute(CLASS_ATTR, "chat-task-expand");
-			out.writeAttribute(ID_ATTR, arrowId);
+			out.writeAttribute(ID_ATTR, taskDivId + "-arrow");
 			out.endBeginTag();
-			out.writeText("\u25BC");
+			out.writeText(isFinished ? "\u25B6" : ""); // ▶ collapsed indicator
 			out.endTag(SPAN);
 		}
 		out.endTag(DIV);
@@ -261,20 +280,42 @@ public class ChatControl extends AbstractControlBase {
 
 	private void writeTaskBody(DisplayContext context, TagWriter out, ChatTask task, String taskDivId)
 			throws IOException {
+		boolean isFinished =
+			task.getStatus() == ChatTask.TaskStatus.COMPLETED || task.getStatus() == ChatTask.TaskStatus.ERROR;
+
 		out.beginBeginTag(DIV);
 		out.writeAttribute(CLASS_ATTR, "chat-task-body");
 		out.writeAttribute(ID_ATTR, taskDivId + "-body");
+		if (isFinished) {
+			out.writeAttribute("style", "display: none");
+		}
 		out.endBeginTag();
 		{
-			// Timeline: agent calls and tool calls in order
+			// Timeline: group tool calls under their parent agent calls.
+			// Tool calls that follow an agent_call belong to that agent;
+			// tool calls before any agent_call are top-level (orchestrator's own).
 			List<ChatTimelineEvent> events = task.getTimelineEvents();
-			for (int i = 0; i < events.size(); i++) {
+			int i = 0;
+			while (i < events.size()) {
 				ChatTimelineEvent ev = events.get(i);
-				String eventId = "e" + i;
-				if (ev.getKind() == ChatTimelineEvent.Kind.TOOL_CALL && ev.getToolCall() != null) {
-					writeToolCall(out, ev.getToolCall(), eventId);
-				} else if (ev.getKind() == ChatTimelineEvent.Kind.AGENT_CALL) {
-					writeAgentCall(out, ev, taskDivId + "-agent-" + i, eventId);
+				if (ev.getKind() == ChatTimelineEvent.Kind.AGENT_CALL) {
+					// Collect subsequent tool calls that belong to this agent
+					List<ChatTimelineEvent> childTools = new java.util.ArrayList<>();
+					List<String> childToolIds = new java.util.ArrayList<>();
+					int j = i + 1;
+					while (j < events.size()
+						&& events.get(j).getKind() == ChatTimelineEvent.Kind.TOOL_CALL) {
+						childTools.add(events.get(j));
+						childToolIds.add("e" + j);
+						j++;
+					}
+					writeAgentCall(out, ev, taskDivId + "-agent-" + i, "e" + i, childTools, childToolIds);
+					i = j;
+				} else if (ev.getKind() == ChatTimelineEvent.Kind.TOOL_CALL && ev.getToolCall() != null) {
+					writeToolCall(out, ev.getToolCall(), "e" + i);
+					i++;
+				} else {
+					i++;
 				}
 			}
 
@@ -290,8 +331,8 @@ public class ChatControl extends AbstractControlBase {
 		out.endTag(DIV);
 	}
 
-	private void writeAgentCall(TagWriter out, ChatTimelineEvent ev, String agentCallId, String eventId)
-			throws IOException {
+	private void writeAgentCall(TagWriter out, ChatTimelineEvent ev, String agentCallId, String eventId,
+			List<ChatTimelineEvent> childTools, List<String> childToolIds) throws IOException {
 		String bodyId = agentCallId + "-body";
 		String arrowId = agentCallId + "-arrow";
 
@@ -315,16 +356,15 @@ public class ChatControl extends AbstractControlBase {
 				out.writeAttribute(CLASS_ATTR, "chat-agent-call-expand");
 				out.writeAttribute(ID_ATTR, arrowId);
 				out.endBeginTag();
-				out.writeText("\u25B6");
+				out.writeText("\u25BE"); // ▾ expanded by default
 				out.endTag(SPAN);
 			}
 			out.endTag(DIV);
 
-			// Collapsible body: full input and result (no truncation)
+			// Collapsible body (expanded by default so nested tools are visible)
 			out.beginBeginTag(DIV);
 			out.writeAttribute(CLASS_ATTR, "chat-agent-call-body");
 			out.writeAttribute(ID_ATTR, bodyId);
-			out.writeAttribute("style", "display: none");
 			out.endBeginTag();
 			{
 				if (ev.getInputSummary() != null && !ev.getInputSummary().isEmpty()) {
@@ -339,6 +379,21 @@ public class ChatControl extends AbstractControlBase {
 					out.writeText(ev.getInputSummary());
 					out.endTag(PRE);
 				}
+
+				// Nested tool calls from this agent
+				if (!childTools.isEmpty()) {
+					out.beginBeginTag(DIV);
+					out.writeAttribute(CLASS_ATTR, "chat-agent-call-tools");
+					out.endBeginTag();
+					for (int t = 0; t < childTools.size(); t++) {
+						ChatTimelineEvent toolEv = childTools.get(t);
+						if (toolEv.getToolCall() != null) {
+							writeToolCall(out, toolEv.getToolCall(), childToolIds.get(t));
+						}
+					}
+					out.endTag(DIV);
+				}
+
 				if (ev.getResultSummary() != null && !ev.getResultSummary().isEmpty()) {
 					out.beginBeginTag(DIV);
 					out.writeAttribute(CLASS_ATTR, "chat-agent-call-result-label");
@@ -400,7 +455,7 @@ public class ChatControl extends AbstractControlBase {
 			out.writeAttribute(CLASS_ATTR, "chat-tool-expand");
 			out.writeAttribute(ID_ATTR, arrowId);
 			out.endBeginTag();
-			out.writeText("\u25B6");
+			out.writeText("\u203A"); // › collapsed chevron
 			out.endTag(SPAN);
 		}
 		out.endTag(DIV);
@@ -511,7 +566,7 @@ public class ChatControl extends AbstractControlBase {
 			out.writeAttribute(TYPE_ATTR, "button");
 			out.writeAttribute(CLASS_ATTR, "chat-button");
 			out.endBeginTag();
-			out.writeText("Send");
+			out.writeText("\u2191");
 			out.endTag(BUTTON);
 		}
 		out.endTag(DIV);

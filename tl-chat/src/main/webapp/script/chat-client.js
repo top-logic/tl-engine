@@ -94,10 +94,10 @@
 		if (result && arrow) {
 			if (result.style.display === 'none' || result.style.display === '') {
 				result.style.display = 'block';
-				arrow.textContent = '\u25bc'; // ▼
+				arrow.textContent = '\u25be'; // ▾
 			} else {
 				result.style.display = 'none';
-				arrow.textContent = '\u25b6'; // ▶
+				arrow.textContent = '\u203a'; // ›
 			}
 		}
 	};
@@ -136,8 +136,9 @@
 			}
 		}
 
+		var role = msg.role || 'user';
 		var div = document.createElement('div');
-		div.className = 'chat-message';
+		div.className = 'chat-message chat-message-' + role;
 		div.setAttribute('data-message-id', msg.id || ('m' + container.children.length));
 		if (msg.optimistic) {
 			div.setAttribute('data-optimistic', 'true');
@@ -147,9 +148,8 @@
 		user.className = 'chat-user';
 		user.textContent = msg.userName || msg.role || '';
 
-		var time = document.createElement('span');
-		time.className = 'chat-time';
-		time.textContent = msg.time ? '(' + msg.time + ')' : '';
+		var bubble = document.createElement('div');
+		bubble.className = 'chat-bubble';
 
 		var text = document.createElement('span');
 		text.className = 'chat-text';
@@ -159,12 +159,15 @@
 		} else {
 			text.innerHTML = escapeHtml(msg.content || '');
 		}
+		bubble.appendChild(text);
+
+		var time = document.createElement('span');
+		time.className = 'chat-time';
+		time.textContent = msg.time || '';
 
 		div.appendChild(user);
-		div.appendChild(document.createTextNode(' '));
+		div.appendChild(bubble);
 		div.appendChild(time);
-		div.appendChild(document.createTextNode(': '));
-		div.appendChild(text);
 		container.appendChild(div);
 	}
 
@@ -192,12 +195,7 @@
 					dur.textContent = formatDuration(Date.now() - st);
 					var header = existingTaskEl.querySelector('.chat-task-header');
 					if (header) {
-						var arrow = header.querySelector('.chat-task-expand');
-						if (arrow) {
-							header.insertBefore(dur, arrow);
-						} else {
-							header.appendChild(dur);
-						}
+						header.appendChild(dur);
 					}
 				}
 			}
@@ -205,9 +203,8 @@
 			return existingTaskEl.querySelector('.chat-task-body') || existingTaskEl;
 		}
 
-		// Create new task card
+		// Create new task card (borderless inline activity feed)
 		var taskDivId = 'task-' + (taskId || 'current');
-		var arrowId = taskDivId + '-arrow';
 		var bodyId = taskDivId + '-body';
 		var now = startTime || Date.now();
 
@@ -217,9 +214,9 @@
 		wrap.setAttribute('data-status', (status || 'in_progress').toLowerCase());
 		wrap.setAttribute('data-start-time', now);
 
+		// Subtle status header (no box, just icon + text)
 		var header = document.createElement('div');
 		header.className = 'chat-task-header';
-		header.setAttribute('onclick', "toggleTaskExpand('" + bodyId + "', '" + arrowId + "')");
 
 		var icon = document.createElement('span');
 		icon.className = 'chat-task-icon';
@@ -229,16 +226,18 @@
 		descSpan.className = 'chat-task-description';
 		descSpan.textContent = description || 'Processing...';
 
+		// Expand arrow (hidden while in_progress, shown when task finishes)
 		var arrow = document.createElement('span');
 		arrow.className = 'chat-task-expand';
-		arrow.id = arrowId;
-		arrow.textContent = '\u25bc'; // ▼ (expanded by default)
+		arrow.id = taskDivId + '-arrow';
+		arrow.textContent = '\u25b6'; // ▶ (collapsed indicator)
 
 		header.appendChild(icon);
 		header.appendChild(descSpan);
 		header.appendChild(arrow);
 		wrap.appendChild(header);
 
+		// Activity body (always visible, no collapse)
 		var body = document.createElement('div');
 		body.className = 'chat-task-body';
 		body.id = bodyId;
@@ -313,7 +312,7 @@
 			var toolArrow = document.createElement('span');
 			toolArrow.className = 'chat-tool-expand';
 			toolArrow.id = arrowId;
-			toolArrow.textContent = '\u25b6'; // ▶ (collapsed by default)
+			toolArrow.textContent = '\u203a'; // › (collapsed by default)
 
 			toolHeader.appendChild(toolName);
 			toolHeader.appendChild(toolArgs);
@@ -358,17 +357,16 @@
 			var agentArrow = document.createElement('span');
 			agentArrow.className = 'chat-agent-call-expand';
 			agentArrow.id = arrowId;
-			agentArrow.textContent = '\u25b6'; // ▶ (collapsed by default)
+			agentArrow.textContent = '\u25be'; // ▾ (expanded by default)
 
 			agentHeader.appendChild(agentLabel);
 			agentHeader.appendChild(agentArrow);
 			agentWrap.appendChild(agentHeader);
 
-			// Collapsible body
+			// Collapsible body (expanded by default so nested tools are visible)
 			var agentBody = document.createElement('div');
 			agentBody.className = 'chat-agent-call-body';
 			agentBody.id = bodyId;
-			agentBody.style.display = 'none';
 
 			if (ev.inputSummary) {
 				var inputLabel = document.createElement('div');
@@ -380,6 +378,12 @@
 				inputPre.textContent = ev.inputSummary;
 				agentBody.appendChild(inputPre);
 			}
+
+			// Container for nested tool calls from this agent
+			var toolsContainer = document.createElement('div');
+			toolsContainer.className = 'chat-agent-call-tools';
+			agentBody.appendChild(toolsContainer);
+
 			if (ev.resultSummary) {
 				var resultLabel = document.createElement('div');
 				resultLabel.className = 'chat-agent-call-result-label';
@@ -454,6 +458,7 @@
 			currentTaskId: null,
 			currentTaskBody: null,
 			currentTaskStartTime: null,
+			currentAgentCallToolsBody: null,
 			processing: false,
 			destroyed: false
 		};
@@ -524,9 +529,10 @@
 				try {
 					var ev = JSON.parse(e.data);
 					ev.type = 'tool_call';
-					var body = getCurrentTaskBody();
-					if (body) {
-						appendTimelineEvent(body, ev);
+					// Nest inside current agent call if one is active, else use task body
+					var targetBody = state.currentAgentCallToolsBody || getCurrentTaskBody();
+					if (targetBody) {
+						appendTimelineEvent(targetBody, ev);
 						scrollToBottom(el.messages);
 					}
 				} catch (err) {
@@ -534,20 +540,38 @@
 				}
 			});
 
-			eventSource.addEventListener('agent_call', function (e) {
-				if (state.destroyed) return;
-				try {
-					var ev = JSON.parse(e.data);
-					ev.type = 'agent_call';
-					var body = getCurrentTaskBody();
-					if (body) {
-						appendTimelineEvent(body, ev);
-						scrollToBottom(el.messages);
+		eventSource.addEventListener('agent_call', function (e) {
+			if (state.destroyed) return;
+			try {
+				var ev = JSON.parse(e.data);
+				ev.type = 'agent_call';
+				var body = getCurrentTaskBody();
+				if (body) {
+					appendTimelineEvent(body, ev);
+					scrollToBottom(el.messages);
+
+					// Track the current agent call's tools container for nesting
+					var agentEl = body.querySelector('.chat-agent-call[data-event-id="' + (ev.id || '') + '"]');
+					if (agentEl) {
+						var toolsContainer = agentEl.querySelector('.chat-agent-call-tools');
+						if (toolsContainer && !ev.resultSummary) {
+							// New agent call starting - track its tools container
+							state.currentAgentCallToolsBody = toolsContainer;
+						} else if (ev.resultSummary) {
+							// Agent call completed - only clear if THIS agent's
+							// container is still the active one. An older agent_call
+							// re-emitted with its result must not wipe the container
+							// of a newer, still-active agent.
+							if (state.currentAgentCallToolsBody === toolsContainer) {
+								state.currentAgentCallToolsBody = null;
+							}
+						}
 					}
-				} catch (err) {
-					log('SSE agent_call parse error', err);
 				}
-			});
+			} catch (err) {
+				log('SSE agent_call parse error', err);
+			}
+		});
 
 			eventSource.addEventListener('task_status', function (e) {
 				log('SSE task_status event', e.data);
@@ -570,12 +594,48 @@
 					if (status.status === 'completed' || status.status === 'error') {
 						state.processing = false;
 						state.currentTaskId = null;
-						state.currentTaskBody = null;
 						state.currentTaskStartTime = null;
+						state.currentAgentCallToolsBody = null;
 						el.input.disabled = false;
 						el.button.disabled = false;
+
+						// Collapse the task trace and make it expandable
+						var collapsedTaskEl = null;
+						if (state.currentTaskBody) {
+							var taskEl = state.currentTaskBody.closest('.chat-task');
+							if (taskEl) {
+								collapsedTaskEl = taskEl;
+								var bodyId = state.currentTaskBody.id;
+								var arrowId = bodyId.replace(/-body$/, '-arrow');
+								// Collapse the body
+								state.currentTaskBody.style.display = 'none';
+								// Make header clickable
+								var header = taskEl.querySelector('.chat-task-header');
+								if (header) {
+									header.setAttribute('onclick',
+										"toggleTaskExpand('" + bodyId + "', '" + arrowId + "')");
+									header.style.cursor = 'pointer';
+								}
+								// Show the expand arrow
+								var arrowEl = document.getElementById(arrowId);
+								if (arrowEl) {
+									arrowEl.style.display = '';
+								}
+							}
+						}
+						state.currentTaskBody = null;
+
+						// Scroll so the collapsed task header is visible at the top,
+						// giving the user a clear view of the completion status and
+						// the agent response that follows.
+						if (collapsedTaskEl) {
+							collapsedTaskEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+						} else {
+							scrollToBottom(el.messages);
+						}
+					} else {
+						scrollToBottom(el.messages);
 					}
-					scrollToBottom(el.messages);
 				} catch (err) {
 					log('SSE task_status parse error', err);
 				}

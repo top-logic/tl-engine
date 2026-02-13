@@ -23,6 +23,8 @@ import com.top_logic.common.json.gstream.JsonWriter;
  * Delegates to {@link ResKeyJsonBinding} for the actual serialization, wrapping and unwrapping the
  * {@link ResKey} in a {@link DefaultHtmlResKey}.
  * </p>
+ *
+ * @see DefaultHtmlResKey.ValueBinding
  */
 public class HtmlResKeyJsonBinding implements JsonValueBinding<HtmlResKey> {
 

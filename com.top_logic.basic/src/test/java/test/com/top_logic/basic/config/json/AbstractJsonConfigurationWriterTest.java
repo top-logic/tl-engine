@@ -6,9 +6,11 @@
 package test.com.top_logic.basic.config.json;
 
 import java.io.StringWriter;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
-import test.com.top_logic.basic.config.AbstractConfigurationWriterTest;
+import test.com.top_logic.basic.config.AbstractTypedConfigurationTestCase;
 
 import com.networknt.schema.InputFormat;
 import com.networknt.schema.SchemaRegistry;
@@ -22,6 +24,7 @@ import com.top_logic.basic.config.json.JsonConfigSchemaBuilder;
 import com.top_logic.basic.config.json.JsonConfigurationReader;
 import com.top_logic.basic.config.json.JsonConfigurationWriter;
 import com.top_logic.basic.io.character.CharacterContent;
+import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.json.schema.JsonSchemaWriter;
 import com.top_logic.basic.json.schema.model.Schema;
 
@@ -30,12 +33,37 @@ import com.top_logic.basic.json.schema.model.Schema;
  *
  * <p>
  * Provides common functionality for writing configurations to JSON and validating them against
- * generated JSON schemas.
+ * generated JSON schemas. This class only provides utility methods and does not define any test
+ * cases.
  * </p>
  */
-public abstract class AbstractJsonConfigurationWriterTest extends AbstractConfigurationWriterTest {
+public abstract class AbstractJsonConfigurationWriterTest extends AbstractTypedConfigurationTestCase {
 
 	@Override
+	protected Map<String, ConfigurationDescriptor> getDescriptors() {
+		return Collections.emptyMap();
+	}
+
+	/**
+	 * Serializes the given {@link ConfigurationItem} to JSON, deserializes that JSON and checks that
+	 * the deserialized {@link ConfigurationItem} is equal to the given one.
+	 *
+	 * @return the deserialized {@link ConfigurationItem}
+	 */
+	protected ConfigurationItem doReadWrite(String localName, ConfigurationDescriptor staticType,
+			ConfigurationItem item) throws Exception {
+		String serialized = writeConfigurationItem(localName, staticType, item);
+
+		CharacterContent content = CharacterContents.newContent(serialized);
+		ConfigurationItem copy = readConfigItem(localName, staticType, content);
+
+		assertEquals(item, copy);
+		return copy;
+	}
+
+	/**
+	 * Reads a {@link ConfigurationItem} from the given JSON content.
+	 */
 	protected ConfigurationItem readConfigItem(String localName, ConfigurationDescriptor expectedType,
 			CharacterContent content) throws ConfigurationException {
 		return new JsonConfigurationReader(context, expectedType)
@@ -44,7 +72,10 @@ public abstract class AbstractJsonConfigurationWriterTest extends AbstractConfig
 			.read();
 	}
 
-	@Override
+	/**
+	 * Writes the given {@link ConfigurationItem} to JSON and validates the result against the
+	 * generated schema.
+	 */
 	protected String writeConfigurationItem(String localName, ConfigurationDescriptor staticType,
 			ConfigurationItem item) throws Exception {
 		String configJson = writeJson(staticType, item);

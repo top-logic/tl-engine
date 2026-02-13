@@ -13,6 +13,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.copy.ConfigCopier;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.layout.formeditor.builder.ConfiguredDynamicFormBuilder;
 import com.top_logic.element.layout.formeditor.builder.FormDefinitionUtil;
@@ -306,7 +307,10 @@ public abstract class AbstractConfigureFormDefinitionCommand extends AbstractCom
 	protected ApplicationAction createAction(LayoutComponent component, FormDefinition formDefinition,
 			String type, boolean standardForm) {
 		ConfigureFormDefinitionAction action = TypedConfiguration.newConfigItem(ConfigureFormDefinitionAction.class);
-		action.setFormDefinition(formDefinition);
+		/* The form definition is part of the original config, therefore it can bot be part of the
+		 * action => store copy of form definition. */
+		FormDefinition formCopy = ConfigCopier.copy(formDefinition);
+		action.setFormDefinition(formCopy);
 		action.setLayoutComponent(component.getName());
 		action.setType(type);
 		action.setStandardForm(standardForm);

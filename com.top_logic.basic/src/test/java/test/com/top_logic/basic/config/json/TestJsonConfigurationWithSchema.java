@@ -5,9 +5,11 @@
  */
 package test.com.top_logic.basic.config.json;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Random;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -27,6 +29,10 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.json.JsonConfigSchemaBuilder;
 import com.top_logic.basic.config.json.JsonConfigurationWriter;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.basic.io.StreamUtilities;
+import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.io.binary.BinaryDataFactory;
+import com.top_logic.basic.io.binary.BinaryDataJsonBinding;
 import com.top_logic.basic.util.ResKey;
 
 /**
@@ -382,6 +388,72 @@ public class TestJsonConfigurationWithSchema extends AbstractJsonConfigurationWr
 
 		doReadWrite("config",
 			TypedConfiguration.getConfigurationDescriptor(ResKeyItem.class), config);
+	}
+
+	public interface BinaryDataItem extends ConfigurationItem {
+		BinaryData getData();
+
+		void setData(BinaryData value);
+	}
+
+	/**
+	 * Tests that a {@link BinaryData} value is correctly serialized to and from JSON using
+	 * {@link BinaryDataJsonBinding}.
+	 */
+	public void testBinaryData() throws Exception {
+		BinaryDataItem config = TypedConfiguration.newConfigItem(BinaryDataItem.class);
+		config.setData(
+			BinaryDataFactory.createBinaryData("Hello world!".getBytes("utf-8"), "text/plain", "test.txt"));
+
+		BinaryDataItem copy = (BinaryDataItem) doReadWrite("config",
+			TypedConfiguration.getConfigurationDescriptor(BinaryDataItem.class), config);
+
+		assertBinaryDataEquals(config.getData(), copy.getData());
+	}
+
+	/**
+	 * Tests JSON round-trip for large {@link BinaryData} values.
+	 */
+	public void testBinaryDataLarge() throws Exception {
+		BinaryDataItem config = TypedConfiguration.newConfigItem(BinaryDataItem.class);
+		byte[] bytes = new byte[1024 * 10 + 13];
+		new Random(42).nextBytes(bytes);
+		config.setData(BinaryDataFactory.createBinaryData(bytes, "application/octet-stream", "large.bin"));
+
+		BinaryDataItem copy = (BinaryDataItem) doReadWrite("config",
+			TypedConfiguration.getConfigurationDescriptor(BinaryDataItem.class), config);
+
+		assertBinaryDataEquals(config.getData(), copy.getData());
+	}
+
+	/**
+	 * Tests JSON round-trip for empty {@link BinaryData} values.
+	 */
+	public void testBinaryDataEmpty() throws Exception {
+		BinaryDataItem config = TypedConfiguration.newConfigItem(BinaryDataItem.class);
+		config.setData(BinaryDataFactory.createBinaryData(new byte[0], "application/octet-stream", "empty.bin"));
+
+		BinaryDataItem copy = (BinaryDataItem) doReadWrite("config",
+			TypedConfiguration.getConfigurationDescriptor(BinaryDataItem.class), config);
+
+		assertBinaryDataEquals(config.getData(), copy.getData());
+	}
+
+	/**
+	 * Tests JSON round-trip for a null {@link BinaryData} value.
+	 */
+	public void testBinaryDataNull() throws Exception {
+		BinaryDataItem config = TypedConfiguration.newConfigItem(BinaryDataItem.class);
+
+		doReadWrite("config",
+			TypedConfiguration.getConfigurationDescriptor(BinaryDataItem.class), config);
+	}
+
+	private void assertBinaryDataEquals(BinaryData expected, BinaryData actual) throws IOException {
+		assertNotNull(actual);
+		assertEquals(expected.getName(), actual.getName());
+		assertEquals(expected.getContentType(), actual.getContentType());
+		assertTrue(StreamUtilities.equalsStreamContents(expected.getStream(), actual.getStream()));
 	}
 
 	public static Test suite() {

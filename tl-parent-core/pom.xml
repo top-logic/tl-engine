@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>com.top-logic</groupId>
 		<artifactId>tl-parent-build</artifactId>
-		<version>7.9.10</version>
+		<version>7.9.11-SNAPSHOT</version>
 
 		<relativePath>../tl-parent-build</relativePath>
 	</parent>
@@ -119,7 +119,7 @@
 			<plugin>
 				<groupId>com.top-logic</groupId>
 				<artifactId>tl-maven-plugin</artifactId>
-				<version>7.9.10</version>
+				<version>7.9.11-SNAPSHOT</version>
 
 				<executions>
 					<execution>
@@ -172,7 +172,7 @@
 					<dependency>
 						<groupId>com.top-logic</groupId>
 						<artifactId>tl-build-processor</artifactId>
-						<version>7.9.10</version>
+						<version>7.9.11-SNAPSHOT</version>
 						<classifier>jar-with-dependencies</classifier>
 					</dependency>
 				</dependencies>

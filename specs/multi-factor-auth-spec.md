@@ -22,13 +22,51 @@ username/password or external SSO. Specific needs include:
 - **Open self-registration**, where users can create their own accounts directly from
   the login page -- useful for development systems, demo instances, and applications
   where user acquisition should be frictionless.
+- **Anonymous browsing**, where unauthenticated visitors can interact with an application
+  in a restricted way -- for example, browsing releases and tickets on the TopLogic
+  development system without logging in, and only authenticating when they want to
+  comment or create content.
 
 These are general-purpose platform capabilities that benefit multiple application
 scenarios. For example, a production application may use invitation-based registration
 with mandatory TOTP for external users, while the TopLogic development system could
-enable open self-registration with minimal friction. This specification describes
-additions to the existing TopLogic authentication model to support these use cases
-through a unified, configurable framework.
+enable open self-registration with minimal friction and anonymous read access.
+
+### Architectural Tension: The JSP Boundary
+
+The current login flow creates a hard boundary between two worlds:
+
+- The **unauthenticated "JSP world"** (`login.jsp`, `LoginPageServlet`) -- stateless
+  HTML forms with hard-coded logic, no component model, no layout framework.
+- The **authenticated "layout component world"** (`TopLogicServlet`, `TLLayoutServlet`)
+  -- the full TopLogic component framework with declarative configuration, permissions,
+  and model-driven UI.
+
+`TopLogicServlet` enforces this boundary: if no `TLSessionContext` exists, the request
+is redirected to `login.jsp`. This means every pre-authentication UI must be
+implemented as raw JSPs outside the layout framework.
+
+Adding multi-factor authentication makes this tension acute. After primary authentication
+succeeds but before second-factor verification completes, the user is in a **limbo
+state** -- neither fully unauthenticated nor authenticated. The current architecture
+offers two bad options:
+
+1. **More JSPs** -- inflexible, duplicates UI patterns, hard to customize, no component
+   reuse. Each new authentication step (TOTP code entry, enrollment QR code, email OTP
+   code, password reset forms) would require another hand-coded JSP page.
+2. **Load the layout with a "partially authenticated" session** -- breaks the fundamental
+   invariant that `TLSessionContext` implies full authentication. Every security check
+   in the platform would need to distinguish "partially authenticated" from "fully
+   authenticated", with enormous blast radius.
+
+The same tension applies to self-service flows: a password reset triggered from the
+login screen (unauthenticated) and a password change from personal settings
+(authenticated) need the same UI, but would require separate implementations -- JSP
+for one, layout component for the other.
+
+This specification solves this tension by introducing **anonymous sessions** (section
+3.2), which eliminate the unauthenticated JSP world entirely. All authentication,
+self-service, and registration UIs become layout components within a unified framework.
 
 ---
 
@@ -127,21 +165,22 @@ SecurityDevice                     (base interface, Config has id + disabled)
 
 ### 3.0 Overview
 
-Five groups of changes are proposed:
+Six groups of changes are proposed:
 
 | # | Feature | Scope | New Module? |
 |---|---------|-------|-------------|
 | 3.1 | Authentication Device Types | New security device types (TOTP, Email OTP) | Yes: `com.top_logic.security.auth.totp`; Email OTP in `com.top_logic.security.otp` |
-| 3.2 | Multi-Factor Login Flow | Core login extension | No (changes to `com.top_logic` / tl-core) |
+| 3.2 | Anonymous Sessions and Login Transition | Core platform change: anonymous user, layout-based login | No (changes to `com.top_logic` / tl-core) |
 | 3.3 | OTP Email Verification Service | New platform service | Yes: `com.top_logic.security.otp` |
-| 3.4 | Self-Service Account Management | Password/TOTP reset flows | Yes: `com.top_logic.security.selfservice` |
+| 3.4 | Self-Service Account Management | Password/TOTP reset components | Yes: `com.top_logic.security.selfservice` |
 | 3.5 | Registration Framework | Invitation-based and open self-registration | Yes: `com.top_logic.security.register` |
 
 The dependency graph is:
 
 ```
                     com.top_logic (tl-core)
-                    [3.2: MFA login flow,
+                    [3.2: Anonymous sessions,
+                     LoginComponent,
                      EnrollableDevice,
                      ChallengeResponseDevice]
                           |
@@ -154,10 +193,10 @@ The dependency graph is:
               +-----------+-----------+
                           |
               com.top_logic.security.selfservice
-              [3.4: Password/TOTP reset]
+              [3.4: Password/TOTP reset components]
                           |
               com.top_logic.security.register
-              [3.5: Registration framework]
+              [3.5: Registration components]
 ```
 
 ---
@@ -319,7 +358,7 @@ package com.top_logic.base.security.device.interfaces;
  *
  * <p>
  * The login flow checks {@code device instanceof ChallengeResponseDevice}
- * and calls {@link #sendChallenge} before presenting the code input page.
+ * and calls {@link #sendChallenge} before presenting the code input form.
  * </p>
  */
 public interface ChallengeResponseDevice {
@@ -342,8 +381,8 @@ public interface ChallengeResponseDevice {
 
     /**
      * Returns a user-facing message describing where the challenge was sent
-     * (e.g., "A code was sent to j***@example.com"). Used by the login page
-     * to inform the user.
+     * (e.g., "A code was sent to j***@example.com"). Used by the login
+     * component to inform the user.
      *
      * @param account the person.
      * @return an I18N resource key for the message.
@@ -386,7 +425,7 @@ A new module **`com.top_logic.security.auth.totp`** provides:
 
 - **QR code generation:** The `beginEnrollment()` method generates a standard
   `otpauth://totp/...` provisioning URI. QR code rendering is the responsibility of the
-  UI layer (the module provides the URI string; a JSP or component renders it as a QR
+  UI layer (the module provides the URI string; a layout component renders it as a QR
   code image using a client-side library or a server-side renderer).
 - **Secret encryption at rest:** TOTP secrets are encrypted before storage using a
   configurable symmetric key (application secret). The key is configured via the
@@ -462,8 +501,8 @@ existing `getAuthenticationDevice(deviceID)` method.
 - *TOTP as sole factor:* Person has `authDeviceID = "totp"` and no
   `secondAuthDeviceID`. Login requires only a TOTP code.
 - *Email OTP as sole factor ("login by email"):* Person has `authDeviceID = "emailOtp"`
-  and no `secondAuthDeviceID`. Login page asks for username, system sends code to email,
-  user enters code.
+  and no `secondAuthDeviceID`. Login component asks for username, system sends code to
+  email, user enters code.
 - *Email OTP as second factor:* Person has `authDeviceID = "dbSecurity"` and
   `secondAuthDeviceID = "emailOtp"`. Login requires password, then email code.
 - *Password only:* Person has `authDeviceID = "dbSecurity"` and no
@@ -552,15 +591,161 @@ on the OTP infrastructure.
 
 ---
 
-### 3.2 Multi-Factor Login Flow
+### 3.2 Anonymous Sessions and Login Transition
 
 #### 3.2.1 Purpose
 
-Extend the core login flow so that a Person may require a second authentication factor in
-addition to the primary `AuthenticationDevice`. The current flow is single-step; the new
-flow supports an optional second step.
+Eliminate the boundary between the unauthenticated JSP world and the authenticated
+layout component world. Instead of maintaining a separate login UI stack (`login.jsp`,
+`LoginPageServlet`, `changePwd.jsp`, and any new 2FA pages), every visitor immediately
+receives a layout session as a technical **anonymous user**. Login, multi-factor
+authentication, enrollment, self-service, and registration all become layout components
+within the standard TopLogic framework.
 
-#### 3.2.2 Person Model Extension
+This serves two goals:
+
+1. **Unified UI framework.** All user-facing pages -- including login, 2FA, password
+   reset, registration -- are layout components. Applications customize them using the
+   same tools (layout configuration, component configuration, CSS themes) they use for
+   everything else. The `login.jsp` approach is retired.
+
+2. **Anonymous browsing.** Applications can grant anonymous users read access to
+   selected content. For example, the TopLogic development system can allow anonymous
+   users to browse releases and tickets, requiring login only for write actions like
+   commenting or creating tickets. The permission system controls what anonymous users
+   can see and do -- no new access control mechanism is needed.
+
+#### 3.2.2 The Anonymous Person
+
+A well-known technical `Person` account named **`anonymous`** is introduced:
+
+- Exists in every TopLogic application by default (created during initial data setup,
+  similar to the `root` account).
+- Cannot be deleted or disabled.
+- Cannot be the target of a direct login (no password, no `authDeviceID`).
+- Has **minimal default permissions** -- effectively nothing, unless the application
+  explicitly grants permissions to the anonymous user or a role it belongs to.
+- The anonymous Person is the inverse of `root`: where `root` can do everything, the
+  anonymous user can do almost nothing.
+
+Applications configure what anonymous users can see and do using the standard
+role/permission system:
+
+- An application that wants no anonymous access at all configures the anonymous layout
+  to show only the login component (equivalent to today's `login.jsp`, but as a
+  component).
+- An application that wants anonymous browsing grants the anonymous user (or an
+  "anonymous" role) read access to specific types/views. The layout shows navigation,
+  content areas, and a "Login" button. After login, the layout reloads with the
+  authenticated user's permissions, revealing additional functionality.
+
+#### 3.2.3 Session Lifecycle
+
+```
+Browser requests any URL
+    |
+    v
+TopLogicServlet: no session exists
+    |
+    v
+SessionService creates anonymous session:
+  - New HttpSession
+  - TLSessionContext with anonymous Person
+  - Anonymous layout loaded
+    |
+    v
+Anonymous user sees the anonymous layout:
+  - Login component visible (permission-controlled)
+  - Application content per anonymous permissions
+    |
+    v
+User interacts with Login component:
+  - Enters username + password
+  - If primary device is ChallengeResponseDevice:
+    component sends challenge, shows code input
+  - If 2FA needed: component shows second-factor step
+  - If enrollment needed: component shows enrollment step
+    |
+    v
+All authentication factors verified.
+Session upgrade:
+  1. Current HttpSession invalidated (session fixation protection)
+  2. New HttpSession created
+  3. New TLSessionContext with authenticated Person
+  4. Full page reload
+    |
+    v
+Authenticated user sees the authenticated layout:
+  - Login component hidden
+  - Full application per user's permissions
+```
+
+**Key property:** The session is *never* in a "partially authenticated" state at the
+`TLSessionContext` level. Either the session belongs to the anonymous Person, or it
+belongs to a fully authenticated Person. The multi-step login interaction (password,
+2FA, enrollment) happens entirely within the anonymous session's layout, managed by
+the `LoginComponent`'s internal state. Only when all factors are verified does the
+session transition occur.
+
+#### 3.2.4 Anonymous Layout
+
+Applications configure a **separate layout** for anonymous sessions. This allows:
+
+- **Minimal layout:** Just the `LoginComponent` -- equivalent to today's `login.jsp`
+  but built with layout components. Application styling, logo, and theme apply
+  automatically. This is the default for applications that do not want anonymous
+  browsing.
+- **Content layout:** Navigation, read-only content areas, and a login button. For
+  applications where anonymous users should be able to browse content.
+
+The anonymous layout is loaded when the anonymous session is created. After login
+(session upgrade + full page reload), the authenticated user's layout is loaded.
+
+**Configuration:**
+
+```java
+// In SessionService.Config or a new AnonymousSessionConfig:
+
+/**
+ * Layout definition for anonymous sessions. This layout is loaded when
+ * a visitor without an active session accesses the application.
+ *
+ * <p>
+ * The default anonymous layout shows only a login component.
+ * Applications can configure a richer layout with read-only content
+ * areas for anonymous browsing.
+ * </p>
+ */
+@Name("anonymous-layout")
+@Mandatory
+String getAnonymousLayout();
+```
+
+**Relation to `ApplicationPages`:** The existing `ApplicationPages.getLoginPage()` and
+related paths become obsolete. The anonymous layout definition replaces them.
+
+#### 3.2.5 Changes to `TopLogicServlet`
+
+Today, `TopLogicServlet.getSession()` redirects to `login.jsp` when no session exists.
+The change:
+
+```
+Today:
+  Request arrives -> no TLSessionContext? -> redirect to login.jsp
+
+New:
+  Request arrives -> no TLSessionContext? -> create anonymous session
+                                          -> load anonymous layout
+                                          -> proceed normally
+```
+
+The `TopLogicServlet` creates an anonymous session on demand (via `SessionService`)
+when it encounters a request without a valid session. From that point on, the request
+is handled exactly like any other authenticated request -- the layout framework loads,
+components render, permissions are evaluated. The only difference is that the Person in
+the session context is the anonymous Person.
+
+#### 3.2.6 Person Model Extension
 
 A new attribute is added to `Person`:
 
@@ -597,183 +782,169 @@ This follows the same pattern as the existing `authDeviceID` /
 `AuthenticationDevice` instances -- the framework does not distinguish between device
 types. The "second factor" semantic is purely a matter of how the Person is configured.
 
-#### 3.2.3 Login Flow Extension
+#### 3.2.7 Login Component
 
-The login flow is extended in two dimensions:
+A new layout component **`LoginComponent`** replaces `LoginPageServlet` and `login.jsp`.
+It is a standard TopLogic `LayoutComponent` that:
 
-1. **Primary device may be a `ChallengeResponseDevice`:** If the primary
-   `AuthenticationDevice` implements `ChallengeResponseDevice`, the servlet must send
-   a challenge (e.g., email OTP) before the user can enter a code. This changes the
-   first step of the login from "submit username + password" to "submit username →
-   receive challenge → submit code".
+- Is visible only to the anonymous Person (controlled via component visibility /
+  security configuration).
+- Renders the login form and manages the complete multi-step authentication flow
+  internally.
+- On successful completion of all authentication factors, triggers a session upgrade
+  and full page reload.
 
-2. **Second factor handling (unchanged from before):** After primary authentication
-   succeeds, the flow checks `secondAuthDeviceID` and branches on enrollment state.
-   If the second device is also a `ChallengeResponseDevice`, `sendChallenge()` is
-   called before showing the code page.
+**Component state machine:**
 
-**Complete decision tree:**
-
-```
-1. Resolve Person, determine primary authDevice
-
-   authDevice instanceof ChallengeResponseDevice?
-   │
-   ├── YES → sendChallenge(person)
-   │         → redirect to primary code page
-   │         User enters code → authDevice.authentify()
-   │
-   └── NO  → authDevice.authentify(username + password)
-             (existing single-step behavior)
-
-2. Primary auth succeeded. secondAuthDeviceID set?
-   │
-   ├── NO
-   │   └── Check password expiry → session established (existing behavior)
-   │
-   └── YES
-       │
-       ├── device instanceof EnrollableDevice AND !isEnrolled(person)?
-       │   YES → Redirect to enrollment page
-       │         (analogous to forced password change)
-       │         User completes enrollment → session established
-       │
-       └── NO (device is ready to authenticate)
-           │
-           ├── device instanceof ChallengeResponseDevice?
-           │   YES → sendChallenge(person)
-           │         → redirect to second-factor code page
-           │         User enters code → device.authentify() → session
-           │
-           └── NO  → redirect to second-factor code page
-                     User enters code → device.authentify() → session
-```
-
-**Scenario A -- Password primary, TOTP second (most common MFA):**
+The `LoginComponent` manages a linear state machine. Each state renders a different
+form. The user progresses forward through form submissions; the component validates
+each step before advancing.
 
 ```
-Browser                    LoginPageServlet / Login
-  |                              |
-  |  POST username + password    |
-  |----------------------------->|
-  |                              |  1. Resolve Person
-  |                              |  2. authDevice.authentify(credentials)
-  |                              |  3. secondAuthDevice = TOTP, enrolled
-  |                              |  4. Store partial auth in session
-  |  <-- redirect to 2FA page --|
-  |                              |
-  |  POST totp-code              |
-  |----------------------------->|
-  |                              |  5. secondAuthDevice.authentify(credentials)
-  |                              |  6. SessionService.loginUser()
-  |  <-- redirect to start --   |
+CREDENTIALS
+  |
+  +--> [if primary is ChallengeResponseDevice] --> PRIMARY_CHALLENGE
+  |                                                    |
+  |                                                    v
+  +--> [if primary is standard device] ----------> PRIMARY_DONE
+                                                       |
+       +-----------------------------------------------+
+       |
+       +--> [no secondAuthDeviceID] --> COMPLETE
+       |
+       +--> [secondAuthDevice, enrolled] --> SECOND_FACTOR --> COMPLETE
+       |
+       +--> [secondAuthDevice, not enrolled] --> ENROLLMENT --> COMPLETE
+       |
+       +--> [secondAuthDevice is ChallengeResponseDevice] --> SECOND_CHALLENGE
+                                                                  |
+                                                                  v
+                                                            SECOND_FACTOR --> COMPLETE
 ```
 
-**Scenario B -- Password primary, Email OTP second (challenge-response):**
+**States:**
+
+| State | Renders | User Action |
+|-------|---------|-------------|
+| `CREDENTIALS` | Username + password fields (or username-only if primary device is `ChallengeResponseDevice`). | Submit credentials. |
+| `PRIMARY_CHALLENGE` | Message from `ChallengeResponseDevice.getChallengeMessage()` + code input field. | Enter code received via email. |
+| `SECOND_FACTOR` | Code input field (for TOTP or other second device). | Enter TOTP code or email code. |
+| `SECOND_CHALLENGE` | Message from second device's `getChallengeMessage()` + code input field. | Enter code received via email. |
+| `ENROLLMENT` | QR code (from `Enrollment.getProvisioningUri()`), manual entry key, + confirmation code input. | Scan QR code, enter confirmation code. |
+| `COMPLETE` | (Not rendered -- triggers session upgrade.) | -- |
+
+The `CREDENTIALS` state adapts its rendering based on the primary device type. If the
+application only uses standard password authentication, the form looks identical to
+today's `login.jsp` -- username field, password field, submit button.
+
+**Rate limiting:** The component reuses the existing `LoginFailure` mechanism. Failed
+authentication attempts (wrong password, wrong TOTP code, wrong email OTP code) are
+tracked per username + IP address, with the same exponential backoff as today. For
+`ChallengeResponseDevice` primary usage, rate limiting also bounds the number of
+challenge emails per username (configurable, see 3.2.12).
+
+**Error display:** Validation errors (wrong code, expired code, rate-limited) are
+displayed inline in the component, not via page redirects.
+
+#### 3.2.8 Login Scenarios
+
+**Scenario A -- Password only (existing behavior, no second factor):**
 
 ```
-Browser                    LoginPageServlet / Login
-  |                              |
-  |  POST username + password    |
-  |----------------------------->|
-  |                              |  1. Resolve Person
-  |                              |  2. authDevice.authentify(credentials)
-  |                              |  3. secondAuthDevice = EmailOTP
-  |                              |  4. sendChallenge(person) → email sent
-  |                              |  5. Store partial auth in session
-  |  <-- redirect to 2FA page --|
-  |     (shows "code sent to    |
-  |      j***@example.com")     |
-  |                              |
-  |  POST email-otp-code         |
-  |----------------------------->|
-  |                              |  6. secondAuthDevice.authentify(credentials)
-  |                              |  7. SessionService.loginUser()
-  |  <-- redirect to start --   |
+Anonymous session active, LoginComponent in CREDENTIALS state.
+
+User enters username + password -> Submit
+  LoginComponent:
+    1. Resolve Person by username
+    2. authDevice.authentify(credentials) -> success
+    3. No secondAuthDeviceID
+    4. -> COMPLETE -> session upgrade -> reload
 ```
 
-**Scenario C -- Email OTP as sole primary device ("login by email"):**
+**Scenario B -- Password + TOTP (most common MFA):**
 
 ```
-Browser                    LoginPageServlet / Login
-  |                              |
-  |  POST username               |
-  |  (password field empty       |
-  |   or absent)                 |
-  |----------------------------->|
-  |                              |  1. Resolve Person
-  |                              |  2. authDevice is ChallengeResponseDevice
-  |                              |  3. sendChallenge(person) → email sent
-  |                              |  4. Store partial auth in session
-  |  <-- redirect to code page --|
-  |     (shows "code sent to    |
-  |      j***@example.com")     |
-  |                              |
-  |  POST email-otp-code         |
-  |----------------------------->|
-  |                              |  5. authDevice.authentify(credentials)
-  |                              |  6. No secondAuthDeviceID
-  |                              |  7. SessionService.loginUser()
-  |  <-- redirect to start --   |
+Anonymous session active, LoginComponent in CREDENTIALS state.
+
+User enters username + password -> Submit
+  LoginComponent:
+    1. Resolve Person
+    2. authDevice.authentify(credentials) -> success
+    3. secondAuthDevice = TOTP, isEnrolled = true
+    4. -> SECOND_FACTOR state (renders TOTP code input)
+
+User enters TOTP code -> Submit
+  LoginComponent:
+    5. secondAuthDevice.authentify(code) -> success
+    6. -> COMPLETE -> session upgrade -> reload
 ```
 
-Note: In scenario C, the user has not yet proven their identity when `sendChallenge()`
+**Scenario C -- Password + Email OTP second factor:**
+
+```
+Anonymous session active, LoginComponent in CREDENTIALS state.
+
+User enters username + password -> Submit
+  LoginComponent:
+    1. Resolve Person
+    2. authDevice.authentify(credentials) -> success
+    3. secondAuthDevice = EmailOTP (ChallengeResponseDevice)
+    4. sendChallenge(person) -> email sent
+    5. -> SECOND_CHALLENGE state (shows "Code sent to j***@example.com")
+
+User enters email code -> Submit
+  LoginComponent:
+    6. secondAuthDevice.authentify(code) -> success
+    7. -> COMPLETE -> session upgrade -> reload
+```
+
+**Scenario D -- Email OTP as sole primary device ("login by email"):**
+
+```
+Anonymous session active, LoginComponent in CREDENTIALS state.
+(LoginComponent detects primary device is ChallengeResponseDevice
+ and renders username-only input.)
+
+User enters username -> Submit
+  LoginComponent:
+    1. Resolve Person
+    2. Primary device is ChallengeResponseDevice
+    3. sendChallenge(person) -> email sent
+    4. -> PRIMARY_CHALLENGE state (shows "Code sent to j***@example.com")
+
+User enters email code -> Submit
+  LoginComponent:
+    5. authDevice.authentify(code) -> success
+    6. No secondAuthDeviceID
+    7. -> COMPLETE -> session upgrade -> reload
+```
+
+Note: In scenario D, the user has not yet proven their identity when `sendChallenge()`
 is called (the username alone is not a credential). This is acceptable because the
 challenge is sent to the registered email -- an attacker who enters a valid username
 only triggers an email to the legitimate owner. To prevent abuse, rate limiting applies
-(see section 3.2.8).
+(see section 3.2.12).
 
-**Scenario D -- Enrollment required (second factor not yet set up):**
+**Scenario E -- Enrollment required (second factor not yet set up):**
 
 ```
-Browser                    LoginPageServlet / Login
-  |                              |
-  |  POST username + password    |
-  |----------------------------->|
-  |                              |  1. Resolve Person
-  |                              |  2. authDevice.authentify(credentials)
-  |                              |  3. secondAuthDevice set, NOT enrolled
-  |                              |  4. Store partial auth in session
-  |  <-- redirect to            |
-  |     enrollment page    --   |
-  |                              |
-  |  (enrollment flow:           |
-  |   QR code displayed,         |
-  |   user scans + enters code)  |
-  |  POST enrollment-code        |
-  |----------------------------->|
-  |                              |  5. enrollableDevice.confirmEnrollment()
-  |                              |  6. SessionService.loginUser()
-  |  <-- redirect to start --   |
+Anonymous session active, LoginComponent in CREDENTIALS state.
+
+User enters username + password -> Submit
+  LoginComponent:
+    1. Resolve Person
+    2. authDevice.authentify(credentials) -> success
+    3. secondAuthDevice = TOTP, isEnrolled = false
+    4. beginEnrollment(person) -> Enrollment with QR code URI
+    5. -> ENROLLMENT state (shows QR code + manual key + code input)
+
+User scans QR code, enters confirmation code -> Submit
+  LoginComponent:
+    6. confirmEnrollment(person, enrollment, code) -> success
+    7. -> COMPLETE -> session upgrade -> reload
 ```
 
-**Key design decisions:**
-
-- **ChallengeResponseDevice on primary:** When the primary `AuthenticationDevice`
-  implements `ChallengeResponseDevice`, the `LoginPageServlet` detects this after
-  resolving the Person (step 1) and calls `sendChallenge()` instead of
-  `authentify()`. The password field in the login form is ignored (or may be absent).
-  The code entry page is reused for both primary-challenge and second-factor flows.
-
-- **Partial authentication state:** After successful primary authentication (or after
-  sending a primary challenge) but before second-factor verification, a temporary
-  marker is stored in the HTTP session. This is *not* a full TopLogic session (no
-  `TLSessionContext` is installed). The marker contains the Person reference, a
-  timestamp, and original request parameters. It has a configurable timeout
-  (default: 5 minutes).
-
-- **Rate limiting:** The existing `LoginFailure` mechanism in `LoginPageServlet` is
-  reused. Failed second-factor and challenge-response attempts count toward the same
-  failure tracking. For primary `ChallengeResponseDevice` usage, rate limiting also
-  bounds the number of challenge emails that can be triggered per username.
-
-- **No changes for SSO users:** The `ExternalAuthenticationServlet` path
-  (`loginFromExternalAuth`) is not affected.
-
-- **LoginHook compatibility:** The existing `LoginHook` is invoked *after* successful
-  completion of all authentication factors, preserving existing behavior.
-
-#### 3.2.4 TOTP Enrollment Use Cases
+#### 3.2.9 TOTP Enrollment Use Cases
 
 The `EnrollableDevice` interface and the TOTP enrollment flow serve three distinct
 use cases. All three use the same `beginEnrollment()` / `confirmEnrollment()` methods
@@ -785,7 +956,7 @@ A logged-in user with only a primary auth device decides to add a second factor.
 
 1. User navigates to personal settings (within authenticated session).
 2. Clicks "Set up two-factor authentication".
-3. System calls `beginEnrollment(person)` → shows QR code.
+3. System calls `beginEnrollment(person)` -> shows QR code.
 4. User scans QR code, enters confirmation code.
 5. System calls `confirmEnrollment(person, enrollment, code)`.
 6. On success, system sets `secondAuthDeviceID = "totp"` on the Person.
@@ -799,11 +970,11 @@ authenticated session and is initiated by the user.
 An administrator (or a provisioning system) configures `secondAuthDeviceID = "totp"` on
 a Person before the user has enrolled. On the next login:
 
-1. User enters username + password → primary auth succeeds.
-2. System detects `secondAuthDeviceID` is set but `isEnrolled()` is `false`.
-3. System stores partial auth state and redirects to enrollment page.
-4. User completes enrollment (QR code → confirmation code).
-5. System calls `confirmEnrollment()` → session established.
+1. User enters username + password -> primary auth succeeds.
+2. `LoginComponent` detects `secondAuthDeviceID` is set but `isEnrolled()` is `false`.
+3. Component transitions to ENROLLMENT state.
+4. User completes enrollment (QR code -> confirmation code).
+5. `confirmEnrollment()` succeeds -> session upgrade -> reload.
 
 This is analogous to the existing forced password change on first login. The
 administrator sets the requirement; the user fulfills it during login.
@@ -811,36 +982,35 @@ administrator sets the requirement; the user fulfills it during login.
 **Use case C: Enrollment during invitation/registration**
 
 A new user going through the registration flow (section 3.5) encounters the
-`TOTPEnrollmentStep`:
+TOTP enrollment component:
 
 1. Registration flow reaches the TOTP enrollment step.
-2. System calls `beginEnrollment(person)` → shows QR code.
+2. System calls `beginEnrollment(person)` -> shows QR code.
 3. User scans QR code, enters confirmation code.
-4. System calls `confirmEnrollment()` → step complete, flow continues.
+4. System calls `confirmEnrollment()` -> step complete, flow continues.
 
-This is the same enrollment logic, just executed within the registration step
-pipeline (section 3.5.7) rather than the login flow. The `AccountCreationStep`
-sets `secondAuthDeviceID` on the newly created Person.
+This is the same enrollment logic, just executed within the registration component
+rather than the login component.
 
 **Summary:**
 
 | Use case | Trigger | Context | Analog |
 |---|---|---|---|
 | A: Voluntary | User-initiated from settings | Authenticated session | Voluntary password change |
-| B: Enforced | `secondAuthDeviceID` set, not enrolled | Login flow (after primary auth) | Forced password change (expired password) |
-| C: Registration | Registration step pipeline | Unauthenticated (registration flow) | Initial password setup during registration |
+| B: Enforced | `secondAuthDeviceID` set, not enrolled | Login component (anonymous session) | Forced password change (expired password) |
+| C: Registration | Registration flow | Anonymous session (registration) | Initial password setup during registration |
 
 All three use cases call the same `EnrollableDevice` methods. The only difference is
 where and when the flow is triggered.
 
-#### 3.2.5 Changes to `Login`
+#### 3.2.10 Changes to `Login`
 
 New methods are added:
 
 ```java
 /**
- * Verifies the second authentication factor for a partially authenticated
- * user.
+ * Verifies the second authentication factor for a user in the process
+ * of logging in.
  *
  * @param person the person (already authenticated by primary device).
  * @param code   the code entered by the user.
@@ -898,69 +1068,46 @@ public boolean requiresPrimaryChallenge(Person person) {
 }
 ```
 
-#### 3.2.6 Changes to `LoginPageServlet`
+#### 3.2.11 Session Upgrade Mechanics
 
-The servlet is extended to handle three new request parameters:
+When the `LoginComponent` reaches the COMPLETE state (all factors verified), it
+triggers a session upgrade:
 
-```java
-public static final String CHALLENGE_CODE_PARAMETER = "challengeCode";
-public static final String SECOND_FACTOR_CODE_PARAMETER = "secondFactorCode";
-public static final String ENROLLMENT_CODE_PARAMETER = "enrollmentCode";
-```
+1. **Invalidate the current HttpSession.** This is the anonymous session. Invalidation
+   destroys all session-scoped state, including the anonymous `TLSessionContext`. This
+   is the standard defense against session fixation attacks.
+2. **Create a new HttpSession** via `SessionService.loginUser(request, response, person)`.
+   This follows the existing code path: new HttpSession, new `TLSessionContext` with
+   the authenticated Person, secure cookie configuration.
+3. **Full page reload.** The response directs the browser to reload the application
+   entry point. The browser sends a new request with the new session cookie. The
+   `TopLogicServlet` finds a valid session for the authenticated Person and loads the
+   authenticated layout.
 
-The `checkRequest()` method gains three new branches:
+The reload is a clean break. No state carries over from the anonymous session to the
+authenticated session. The authenticated layout loads fresh, as if the user had just
+arrived. This is equivalent to today's redirect from `LoginPageServlet` to the start
+page, but within the layout framework.
 
-1. **Primary challenge-response:** If the Person's primary device is a
-   `ChallengeResponseDevice`, the servlet calls `sendChallenge(person)`, stores a
-   partial-auth marker (without full authentication), and redirects to the code page.
-   When the user submits the `challengeCode`, the servlet calls
-   `authDevice.authentify()` to complete primary authentication.
-2. **Second-factor code:** If a `secondFactorCode` parameter is present (and a valid
-   partial-auth marker exists after primary auth), the servlet performs second-factor
-   verification. If the second device is a `ChallengeResponseDevice`, `sendChallenge()`
-   was already called when the second-factor page was rendered.
-3. **Enrollment code:** If an `enrollmentCode` parameter is present (and a valid
-   partial-auth marker with pending enrollment exists), the servlet performs enrollment
-   confirmation via `EnrollableDevice.confirmEnrollment()`.
+**LoginHook compatibility:** The existing `LoginHook` is invoked during the session
+upgrade, after all authentication factors have been verified but before the
+authenticated session is created. If the hook denies login, the `LoginComponent`
+displays the denial reason and remains in the anonymous session.
 
-The decision between branches is driven by the state stored in the partial-auth session
-marker and the request parameters present.
+**No changes for SSO users:** The `ExternalAuthenticationServlet` path
+(`loginFromExternalAuth`) is not affected. SSO users bypass the anonymous session
+entirely -- the external auth servlet creates the authenticated session directly.
 
-#### 3.2.7 JSP Pages
+#### 3.2.12 Configuration
 
-Three new JSP pages are provided:
-
-- **`challengeCode.jsp`** -- Displays a message from `ChallengeResponseDevice.getChallengeMessage()`
-  (e.g., "A code was sent to j\*\*\*@example.com") and a single input field for the code.
-  Used when the primary device is a `ChallengeResponseDevice`, or when the second device
-  is a `ChallengeResponseDevice` (the same page is reused with different messaging).
-- **`secondFactor.jsp`** -- Displays a single input field for the TOTP code.
-  Used when the second device is already enrolled and is not a `ChallengeResponseDevice`.
-- **`secondFactorEnroll.jsp`** -- Displays a QR code (from `Enrollment.getProvisioningUri()`)
-  and a manual-entry key (from `Enrollment.getManualEntryKey()`), plus an input field
-  for the confirmation code. Used when enrollment is required.
-
-All pages carry the original `startPage` and other parameters as hidden fields and
-submit to the same `LoginPageServlet`.
-
-The page paths are registered in `ApplicationPages`:
-
-```java
-// New methods in ApplicationPages:
-String getChallengePage();           // Default: "/jsp/auth/challengeCode.jsp"
-String getSecondFactorPage();        // Default: "/jsp/auth/secondFactor.jsp"
-String getSecondFactorEnrollPage();  // Default: "/jsp/auth/secondFactorEnroll.jsp"
-```
-
-#### 3.2.8 Configuration
-
-New options in `Login.Config`:
+New options:
 
 ```java
 /**
- * Maximum time in seconds between successful primary authentication (or
- * challenge send) and second-factor submission or enrollment completion.
- * If exceeded, the user must re-authenticate from the beginning.
+ * Maximum time in seconds the LoginComponent allows between successful
+ * primary authentication and second-factor submission or enrollment
+ * completion. If exceeded, the component resets to the CREDENTIALS state
+ * and the user must re-authenticate from the beginning.
  */
 @Name("second-factor-timeout")
 @IntDefault(300)
@@ -1119,6 +1266,20 @@ Since `MailSenderService` is in `tl-mail-smtp` (a separate module), a new module
 Provide platform-level flows for users to reset their own passwords and TOTP enrollment
 without administrator intervention, using email verification as the identity proof.
 
+Because all pre-authentication UI now operates within the layout framework (via
+anonymous sessions, section 3.2), self-service flows are implemented as **layout
+components**. The same components work in both contexts:
+
+- **From the anonymous session:** Accessible via a "Forgot password?" or "Reset
+  authenticator" link in the anonymous layout, next to the login component.
+- **From an authenticated session:** Accessible via personal settings, where a
+  logged-in user can change their own password or re-enroll their TOTP device.
+
+This eliminates the need for a separate servlet with JSP pages. The password reset
+component used by an anonymous user is the *same* component used by an authenticated
+user in personal settings -- only the initial identity-proof steps differ (anonymous
+users must verify via email OTP; authenticated users are already identified).
+
 #### 3.4.2 Module
 
 New module: **`com.top_logic.security.selfservice`**
@@ -1154,7 +1315,7 @@ User                      System
  |                           | 9. PasswordValidator.validatePassword()
  |                           | 10. AuthenticationDevice.setPassword()
  |                           |
- |   <-- Success page --     |
+ |   <-- Success message --  |
 ```
 
 **Design notes:**
@@ -1189,14 +1350,14 @@ User                      System
  |                           | 7. enrollableDevice.unenroll(person)
  |                           | 8. enrollableDevice.beginEnrollment(person)
  |                           |
- |   <-- QR code page --     |
+ |   <-- QR code display --  |
  |                           |
  | 9. Scan QR code,          |
  |    enter TOTP code        |
  |-------------------------->|
  |                           | 10. enrollableDevice.confirmEnrollment()
  |                           |
- |   <-- Success page --     |
+ |   <-- Success message --  |
 ```
 
 **Design notes:**
@@ -1204,62 +1365,56 @@ User                      System
   requires both password knowledge and email access. An attacker needs to compromise
   both to reset the TOTP.
 
-#### 3.4.5 Implementation: Servlet-Based
+#### 3.4.5 Implementation: Layout Components
 
-The self-service flows are implemented as a dedicated servlet (or set of servlets) with
-corresponding JSP pages, following the same pattern as `LoginPageServlet`:
+The self-service flows are implemented as layout components with internal state machines,
+following the same pattern as the `LoginComponent` (section 3.2.7):
 
-```java
-package com.top_logic.security.selfservice;
+- **`PasswordResetComponent`** -- Multi-step component managing the password reset
+  flow. Each step (email/username input, OTP verification, optional TOTP verification,
+  new password entry) is a state in the component's state machine.
 
-/**
- * Servlet handling self-service account management flows (password reset,
- * TOTP reset). Operates outside the authenticated session context.
- */
-public class SelfServiceServlet extends NoContextServlet {
+- **`TOTPResetComponent`** -- Multi-step component managing the TOTP reset flow.
+  Steps: username + password, OTP verification, new enrollment (QR code + confirmation).
 
-    /** Request parameter identifying the flow. */
-    public static final String PARAM_FLOW = "flow";
+Both components operate in the anonymous session context (the anonymous Person has
+permission to use them). They do not require an authenticated session because the
+identity proof comes from email OTP + optional TOTP verification, not from an existing
+session.
 
-    /** Request parameter for the current step within a flow. */
-    public static final String PARAM_STEP = "step";
+When used from an authenticated session (personal settings), the same components can
+skip the initial identity-proof steps since the user is already authenticated.
 
-    // Flow identifiers
-    public static final String FLOW_PASSWORD_RESET = "password-reset";
-    public static final String FLOW_TOTP_RESET = "totp-reset";
+**Layout configuration in the anonymous layout:**
 
-    ...
-}
+```xml
+<layout>
+    <!-- Login area -->
+    <component class="...LoginComponent" />
+
+    <!-- Self-service links (visible to anonymous) -->
+    <component class="...PasswordResetComponent"
+        visibility="anonymous-only" />
+    <component class="...TOTPResetComponent"
+        visibility="anonymous-only" />
+</layout>
 ```
 
-Each flow is a state machine. The current state is tracked in the HTTP session (unauthenticated
-session, similar to the partial-auth state in section 3.2). State transitions are driven by
-form submissions.
+The exact layout structure (tabs, dialogs, inline sections) is an application-level
+decision. The components provide the logic; the layout configuration determines the
+presentation.
 
-**Configuration in `ApplicationPages`:**
-
-```java
-/** Page for initiating a password reset. */
-String getPasswordResetPage();  // Default: "/jsp/auth/passwordReset.jsp"
-
-/** Page for initiating a TOTP reset. */
-String getTotpResetPage();      // Default: "/jsp/auth/totpReset.jsp"
-```
-
-**Links on the login page:** The existing `login.jsp` is extended with optional links to
-the password-reset and TOTP-reset pages. These links are configurable (can be
-enabled/disabled per application):
+**Enablement configuration:**
 
 ```java
-// In a new SelfServiceConfig, referenced from Login.Config:
 interface SelfServiceConfig extends ConfigurationItem {
 
-    /** Whether the password reset link is shown on the login page. */
+    /** Whether password reset is available from the anonymous layout. */
     @Name("password-reset-enabled")
     @BooleanDefault(false)
     boolean getPasswordResetEnabled();
 
-    /** Whether the TOTP reset link is shown on the login page. */
+    /** Whether TOTP reset is available from the anonymous layout. */
     @Name("totp-reset-enabled")
     @BooleanDefault(false)
     boolean getTotpResetEnabled();
@@ -1311,17 +1466,21 @@ Provide a platform-level registration framework that supports two modes:
 - **Invitation-based registration:** An authenticated user invites an external party
   by email. The invited party follows a token-secured link to register an account
   through a configurable multi-step process.
-- **Open self-registration:** Anyone can register an account directly from the login
-  page, without an invitation. This mode is useful for development systems, demo
-  instances, or applications where user acquisition should be frictionless.
+- **Open self-registration:** Anyone can register an account directly from the
+  anonymous layout, without an invitation. This mode is useful for development systems,
+  demo instances, or applications where user acquisition should be frictionless.
 
-Both modes share the same multi-step registration flow engine and the same
-`RegistrationStep` plugin architecture. The difference lies in how the flow is
-initiated (invitation token vs. direct access) and what verification is required.
+Both modes share the same multi-step registration flow and the same component
+architecture. The difference lies in how the flow is initiated (invitation token vs.
+direct access) and what verification is required.
 
 This is a *framework* -- the platform provides the core mechanics (token generation,
 email delivery, registration flow orchestration), while applications customize the
 specific registration steps and the resulting account configuration.
+
+Because registration operates within the anonymous session's layout framework (section
+3.2), all registration UI is built with standard layout components. Applications
+customize the registration experience using the same tools they use for any other UI.
 
 #### 3.5.2 Module
 
@@ -1336,7 +1495,7 @@ The framework supports two modes, controlled by configuration:
 | Mode | Entry Point | Token Required | Typical Use Case |
 |------|-------------|----------------|------------------|
 | **Invitation** | Email link with token | Yes | Production systems with controlled user onboarding |
-| **Open** | "Register" link on login page | No | Development systems, demos, open communities |
+| **Open** | "Register" button in anonymous layout | No | Development systems, demos, open communities |
 
 Both modes can be enabled simultaneously (an application can allow both open
 registration and invitation-based registration), or individually.
@@ -1347,11 +1506,11 @@ registration and invitation-based registration), or individually.
 User                      System
  |                           |
  | 1. Click "Register"       |
- |    on login page          |
+ |    in anonymous layout    |
  |-------------------------->|
  |                           |
- |   <-- Registration page   |
- |       (email input)  --   |
+ |   <-- Registration        |
+ |       component shown --  |
  |                           |
  | 2. Enter email address    |
  |-------------------------->|
@@ -1376,11 +1535,15 @@ User                      System
 User                      System
  |                           |
  | 1. Click invitation link  |
- |    (/servlet/register     |
- |     ?token=<token>)       |
+ |    (URL with token)       |
  |-------------------------->|
- |                           | 2. Validate token
+ |                           | 2. Anonymous session created (if none)
+ |                           | 3. Validate token
  |                           |    (exists, not expired, not revoked)
+ |                           |
+ |   Registration component  |
+ |   shown with pre-filled   |
+ |   email from token.       |
  |                           |
  |   Proceed with configured |
  |   registration steps      |
@@ -1388,9 +1551,10 @@ User                      System
  |   TOTP, etc.)             |
 ```
 
-In the invitation flow the email address is pre-filled from the invitation token. The
-`EmailVerificationStep` still sends an OTP to verify email ownership, but the user does
-not need to type the address.
+In the invitation flow, the invitation link creates an anonymous session (if none
+exists) and opens the registration component with the invitation context. The email
+address is pre-filled from the invitation token. The `EmailVerificationStep` still
+sends an OTP to verify email ownership, but the user does not need to type the address.
 
 #### 3.5.4 Invitation Token Model
 
@@ -1487,16 +1651,18 @@ public class InvitationValidationResult {
 
 #### 3.5.6 Registration Flow Engine
 
-The registration flow is a multi-step process orchestrated by a `RegistrationServlet`.
-The steps are configurable via a **`RegistrationStep`** plugin interface:
+The registration flow is a multi-step process orchestrated by a
+**`RegistrationComponent`** -- a layout component that manages a configurable pipeline
+of registration steps. The steps are configurable via a **`RegistrationStep`** plugin
+interface:
 
 ```java
 package com.top_logic.security.register;
 
 /**
  * A single step in the registration flow. Steps are executed in configured
- * order. Each step renders a page, processes the form submission, and signals
- * whether to proceed to the next step or re-display with errors.
+ * order. Each step provides a form model for the component to render and
+ * processes the user's input.
  */
 public interface RegistrationStep extends ConfiguredInstance<RegistrationStep.Config<?>> {
 
@@ -1525,19 +1691,23 @@ public interface RegistrationStep extends ConfiguredInstance<RegistrationStep.Co
     }
 
     /**
-     * The JSP page to render for this step.
-     */
-    String getPagePath();
-
-    /**
-     * Processes the form submission for this step.
+     * Creates the form model for this step. The {@link RegistrationComponent}
+     * renders this model using the standard form rendering mechanism.
      *
      * @param context the registration context (accumulates data across steps).
-     * @param request the HTTP request.
-     * @return {@code null} if the step is complete and the flow should proceed;
-     *         otherwise a {@link ResKey} error message to re-display the page.
+     * @return the form model for this step.
      */
-    ResKey process(RegistrationContext context, HttpServletRequest request);
+    FormContext createFormContext(RegistrationContext context);
+
+    /**
+     * Processes the submitted form for this step.
+     *
+     * @param context the registration context (accumulates data across steps).
+     * @param formContext the form context with user input.
+     * @return {@code null} if the step is complete and the flow should proceed;
+     *         otherwise a {@link ResKey} error message to re-display the form.
+     */
+    ResKey process(RegistrationContext context, FormContext formContext);
 }
 ```
 
@@ -1661,7 +1831,15 @@ registrations via `context.getMode()`:
 - **Open mode:** The handler can assign default roles, send a welcome notification,
   or perform other onboarding logic.
 
-#### 3.5.9 Configuration
+#### 3.5.9 Registration Completes with Login
+
+When account creation completes and the `RegistrationHandler` has run, the registration
+component triggers a session upgrade: the anonymous session is invalidated, a new
+authenticated session is created for the newly registered Person, and a full page
+reload loads the authenticated layout. The user is immediately logged in without
+needing to go through the login flow again.
+
+#### 3.5.10 Configuration
 
 ```java
 public interface Config extends ConfiguredManagedClass.Config<RegistrationServiceImpl> {
@@ -1685,11 +1863,6 @@ public interface Config extends ConfiguredManagedClass.Config<RegistrationServic
     @Name("default-invitation-validity-days")
     @IntDefault(7)
     int getDefaultInvitationValidityDays();
-
-    /** URL path for the registration servlet. */
-    @Name("registration-path")
-    @StringDefault("/servlet/register")
-    String getRegistrationPath();
 
     /** Ordered list of registration steps. */
     @Name("registration-steps")
@@ -1729,46 +1902,6 @@ public interface Config extends ConfiguredManagedClass.Config<RegistrationServic
 }
 ```
 
-#### 3.5.10 Registration Servlet
-
-```java
-package com.top_logic.security.register;
-
-/**
- * Servlet handling self-registration flows. Operates outside the
- * authenticated session context. Supports two entry points:
- *
- * <ul>
- *   <li><b>Invitation mode:</b>
- *       {@code /servlet/register?token=<invitation-token>}</li>
- *   <li><b>Open mode:</b>
- *       {@code /servlet/register} (no token parameter)</li>
- * </ul>
- *
- * <p>
- * The servlet determines the mode from the presence or absence of the
- * {@code token} parameter, validates the token (in invitation mode),
- * creates a {@link RegistrationContext}, and orchestrates the configured
- * {@link RegistrationStep}s sequentially.
- * </p>
- */
-public class RegistrationServlet extends NoContextServlet {
-    ...
-}
-```
-
-**Login page integration:** When open registration is enabled, the login page shows a
-"Register" link pointing to the registration servlet (without a token). This link is
-rendered conditionally based on `Config.getOpenRegistrationEnabled()`.
-
-```java
-// Addition to SelfServiceConfig (from section 3.4):
-/** Whether the "Register" link is shown on the login page. */
-@Name("open-registration-enabled")
-@BooleanDefault(false)
-boolean getOpenRegistrationEnabled();
-```
-
 #### 3.5.11 Repeated Invitation (Known Email)
 
 If the `recipientEmail` already corresponds to an existing Person (or an existing
@@ -1790,7 +1923,7 @@ framework provides the following mitigations:
 - **Email verification (required):** In open mode, the `EmailVerificationStep` is
   strongly recommended (though technically optional for minimal dev setups). It
   ensures that each registration corresponds to a real, accessible email address.
-- **Rate limiting:** The `RegistrationServlet` enforces rate limits on registration
+- **Rate limiting:** The `RegistrationComponent` enforces rate limits on registration
   attempts per IP address (configurable, default: 5 registrations per hour per IP).
 - **CAPTCHA step (optional):** Applications can add a `CaptchaStep` to the
   registration flow. The platform does not provide a built-in CAPTCHA implementation
@@ -1824,16 +1957,15 @@ List<String> getBlockedEmailDomains();
 | **New:** `Enrollment.java` | Enrollment information interface (QR code URI, manual key, session token) |
 | **New:** `ChallengeResponseDevice.java` | Mix-in interface for devices that send a server-side challenge before authentication (e.g. Email OTP) |
 | `TLSecurityDeviceManager.java` | No change (new devices registered as standard `AuthenticationDevice`) |
-| `Person.java` | Add `secondAuthDeviceID` attribute and accessor methods |
+| `Person.java` | Add `secondAuthDeviceID` attribute and accessor methods. Add well-known `anonymous` Person. |
 | `Login.java` | Add `verifySecondFactor()`, `requiresSecondFactor()`, `requiresSecondFactorEnrollment()`, `requiresPrimaryChallenge()` methods |
-| `Login.Config` | Add `second-factor-timeout` option, `self-service` sub-config |
-| `LoginPageServlet.java` | Extend `checkRequest()` for challenge-response primary, second-factor, and enrollment branches |
+| `TopLogicServlet.java` | Create anonymous session on demand when no session exists (instead of redirecting to `login.jsp`) |
+| `SessionService.java` | Support anonymous session creation. Add `anonymous-layout` configuration. Session upgrade (invalidate anonymous + create authenticated). |
 | `LoginCredentials.java` | No change |
-| `ApplicationPages` | Add `getChallengePage()`, `getSecondFactorPage()`, `getSecondFactorEnrollPage()`, `getPasswordResetPage()`, `getTotpResetPage()` |
-| `login.jsp` | Add optional links for password reset, TOTP reset, and open registration |
-| **New:** `challengeCode.jsp` | Challenge-response code entry page (used for Email OTP and other `ChallengeResponseDevice` types) |
-| **New:** `secondFactor.jsp` | Second-factor code entry page (TOTP and similar offline devices) |
-| **New:** `secondFactorEnroll.jsp` | Enrollment page (QR code + confirmation for `EnrollableDevice` types) |
+| **New:** `LoginComponent` | Layout component replacing `LoginPageServlet` + `login.jsp`. Manages multi-step login flow (credentials, challenge, 2FA, enrollment). |
+| `LoginPageServlet.java` | Retired. Functionality moved to `LoginComponent`. |
+| `login.jsp` | Retired. Replaced by anonymous layout with `LoginComponent`. |
+| `ApplicationPages` | `getLoginPage()` and related paths become obsolete, replaced by anonymous layout configuration. |
 
 ## 5. New Modules Summary
 
@@ -1841,8 +1973,8 @@ List<String> getBlockedEmailDomains();
 |---|---|---|
 | `com.top_logic.security.auth.totp` | `tl-security-auth-totp` | `TOTPAuthenticationDevice` (implements `AuthenticationDevice` + `EnrollableDevice`), TOTP generation/validation, secret storage |
 | `com.top_logic.security.otp` | `tl-security-otp` | `OTPService`, OTP generation/validation, email delivery; `EmailOTPAuthenticationDevice` (implements `AuthenticationDevice` + `ChallengeResponseDevice`) |
-| `com.top_logic.security.selfservice` | `tl-security-selfservice` | `SelfServiceServlet`, password-reset flow, TOTP-reset flow, `AccountResolver` |
-| `com.top_logic.security.register` | `tl-security-register` | `RegistrationServlet`, `RegistrationStep` framework, `RegistrationHandler`, `InvitationService` (invitation + open self-registration) |
+| `com.top_logic.security.selfservice` | `tl-security-selfservice` | `PasswordResetComponent`, `TOTPResetComponent`, `AccountResolver` |
+| `com.top_logic.security.register` | `tl-security-register` | `RegistrationComponent`, `RegistrationStep` framework, `RegistrationHandler`, `InvitationService` (invitation + open self-registration) |
 
 ---
 
@@ -1850,12 +1982,14 @@ List<String> getBlockedEmailDomains();
 
 | Concern | Mitigation |
 |---|---|
+| **Anonymous session cost** | Anonymous sessions are lightweight (minimal layout, no heavy component tree). The anonymous layout should be configured to load only essential components. Session timeouts apply normally. |
+| **Anonymous session abuse** | Anonymous sessions have no write access by default. Rate limiting applies to login attempts, challenge sends, and registration. The anonymous Person's permissions are minimal. |
 | **TOTP secret exposure** | Secrets encrypted at rest with configurable symmetric key. Never exposed in logs or API responses. |
-| **OTP brute force** | OTPs invalidated after configurable max attempts (default: 5). Rate limiting on the servlet level. |
+| **OTP brute force** | OTPs invalidated after configurable max attempts (default: 5). Rate limiting on the component level. |
 | **Invitation token guessing** | Tokens generated with >= 256 bits of cryptographic randomness (e.g., `SecureRandom`). URL-safe encoding (Base64url). |
 | **User enumeration** | Password-reset flow does not reveal whether an account exists. Always shows "code sent" message. Primary ChallengeResponseDevice login also does not reveal account existence (challenge is "sent" regardless). |
 | **Challenge flooding** | When Email OTP is used as primary device, an attacker could trigger emails to arbitrary users. Mitigated by rate limiting (`max-challenges-per-window`, default: 5) tied to the existing `LoginFailure` mechanism. |
-| **Partial auth session hijacking** | Partial-auth markers have short timeout (default: 5 minutes). Bound to the HTTP session (not transferable). Cleared on use. |
+| **Session fixation** | Session upgrade invalidates the anonymous HttpSession and creates a new one. No state carries over. |
 | **TOTP replay** | Each TOTP code is valid for only one time step (30s). Server tracks last accepted time step per account to prevent replay within the tolerance window. |
 | **Password storage** | Existing Argon2 hashing (via `PasswordHashingService`) is used. No changes needed. |
 | **OTP code storage** | OTP codes are hashed before storage (using `PasswordHashingService`). Never stored in plain text. |
@@ -1876,13 +2010,18 @@ List<String> getBlockedEmailDomains();
    merging `otp` + `selfservice`, or merging all into one `tl-security-mfa` module).
    More modules give finer dependency control; fewer modules reduce complexity.
 
-4. **JSP vs. layout components:** The self-service and registration pages operate outside
-   the authenticated TopLogic layout framework. JSP pages (like the existing `login.jsp`)
-   are the natural choice. Should there be a lightweight template mechanism for
-   application-specific styling, or is JSP customization sufficient?
-
-5. **Person vs. separate external user entity:** The current design creates standard
+4. **Person vs. separate external user entity:** The current design creates standard
    `Person` objects for self-registered users (with appropriate `authDeviceID` and
    `secondAuthDeviceID`). An alternative would be a separate `ExternalUser` entity type.
    Using `Person` is simpler and reuses existing infrastructure; a separate type provides
    clearer separation but requires duplicating authorization hooks.
+
+5. **Anonymous session timeout:** Should anonymous sessions have a shorter idle timeout
+   than authenticated sessions? A shorter timeout reduces server resource consumption
+   from abandoned anonymous sessions (e.g., search engine crawlers), but too short a
+   timeout could frustrate users filling out registration forms.
+
+6. **LoginComponent rendering:** Should the `LoginComponent` render as an inline form
+   within the layout, as a modal dialog overlay, or should this be configurable per
+   application? The component provides the logic; the rendering mode is a presentation
+   concern.

@@ -17,6 +17,7 @@ import org.jsoup.nodes.Document;
 
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.annotation.Binding;
+import com.top_logic.basic.config.json.JsonBinding;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.tools.NameBuilder;
 import com.top_logic.element.structured.StructuredElement;
@@ -29,6 +30,7 @@ import com.top_logic.knowledge.searching.FullTextSearchable;
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
 @Binding(StructuredTextValueBinding.class)
+@JsonBinding(StructuredTextJsonBinding.class)
 public class StructuredText implements FullTextSearchable {
 
 	private String _sourceCode;

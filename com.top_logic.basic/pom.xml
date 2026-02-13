@@ -106,7 +106,6 @@
 	<dependency>
 		<groupId>com.networknt</groupId>
 		<artifactId>json-schema-validator</artifactId>
-		<version>3.0.0</version>
 		<scope>test</scope>
 	</dependency>		
     

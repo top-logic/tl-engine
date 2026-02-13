@@ -35,6 +35,8 @@ import com.top_logic.common.json.gstream.JsonWriter;
  * Non-literal {@link ResKey}s (resource key references) are serialized as a plain JSON string, e.g.
  * <code>"my.resource.key"</code>.
  * </p>
+ *
+ * @see com.top_logic.basic.util.ResKey.ValueBinding
  */
 public class ResKeyJsonBinding implements JsonValueBinding<ResKey> {
 

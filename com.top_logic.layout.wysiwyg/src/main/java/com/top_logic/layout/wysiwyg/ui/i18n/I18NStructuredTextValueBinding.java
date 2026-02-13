@@ -23,6 +23,8 @@ import com.top_logic.layout.wysiwyg.ui.StructuredTextValueBinding;
 
 /**
  * {@link ConfigurationValueBinding} for storing {@link I18NStructuredText} to configuration.
+ *
+ * @see I18NStructuredTextJsonBinding
  */
 public class I18NStructuredTextValueBinding extends AbstractConfigurationValueBinding<I18NStructuredText> {
 

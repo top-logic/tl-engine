@@ -29,6 +29,8 @@ import com.top_logic.common.json.gstream.JsonWriter;
  * <li><code>content-type</code> - The MIME content type.</li>
  * <li><code>data</code> - The base64-encoded binary content.</li>
  * </ul>
+ *
+ * @see BinaryDataBinding
  */
 public class BinaryDataJsonBinding implements JsonValueBinding<BinaryData> {
 

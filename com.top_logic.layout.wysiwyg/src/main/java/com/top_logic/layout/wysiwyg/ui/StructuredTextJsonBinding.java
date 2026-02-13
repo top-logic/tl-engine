@@ -34,6 +34,8 @@ import com.top_logic.common.json.gstream.JsonWriter;
  * <li><code>images</code> - An object mapping image names to objects with <code>content-type</code>
  * and base64-encoded <code>data</code>.</li>
  * </ul>
+ *
+ * @see StructuredTextValueBinding
  */
 public class StructuredTextJsonBinding implements JsonValueBinding<StructuredText> {
 

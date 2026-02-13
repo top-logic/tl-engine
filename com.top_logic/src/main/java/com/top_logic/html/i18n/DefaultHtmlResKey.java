@@ -122,9 +122,11 @@ public class DefaultHtmlResKey implements HtmlResKey, HtmlResKey1, HtmlResKey2, 
 
 	/**
 	 * {@link ValueBinding} for {@link HtmlResKey}.
-	 * 
+	 *
 	 * @implNote The binding expects only {@link DefaultHtmlResKey} implementations.
-	 * 
+	 *
+	 * @see HtmlResKeyJsonBinding
+	 *
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
 	public static class ValueBinding extends AbstractConfigurationValueBinding<HtmlResKey> {

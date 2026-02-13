@@ -29,7 +29,7 @@
 
 /* Messages container with scrolling */
 .chat-messages {
-	height: 80vh;
+	height: 75vh;
 	overflow-y: auto;
 	padding: 16px;
 	margin-bottom: 10px;

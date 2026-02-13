@@ -27,7 +27,12 @@
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
-    
+    <dependency>
+      <groupId>com.networknt</groupId>
+      <artifactId>json-schema-validator</artifactId>
+      <scope>test</scope>
+    </dependency>
+
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-tools-resources</artifactId>

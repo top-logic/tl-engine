@@ -4,7 +4,7 @@
 	
 	<parent>
 		<groupId>com.top-logic</groupId>
-		<version>7.9.10-SNAPSHOT</version>
+		<version>7.9.10</version>
 		<artifactId>tl-parent-all</artifactId>
 		<relativePath>..</relativePath>
 	</parent>
@@ -84,7 +84,7 @@
 						<groupId>com.top-logic</groupId>
 						<artifactId>tl-build-doclet</artifactId>
 						<classifier>jar-with-dependencies</classifier>
-						<version>7.9.10-SNAPSHOT</version>
+						<version>7.9.10</version>
 					</dependency>
 				</dependencies>            
 			</plugin>
@@ -92,7 +92,7 @@
 			<plugin>
 				<groupId>com.top-logic</groupId>
 				<artifactId>tl-maven-plugin</artifactId>
-				<version>7.9.10-SNAPSHOT</version>
+				<version>7.9.10</version>
 				<executions>
 					<execution>
 						<id>translate-system-messages</id>

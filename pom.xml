@@ -4,7 +4,7 @@
 
 	<groupId>com.top-logic</groupId>
 	<artifactId>tl-parent-all</artifactId>
-	<version>7.9.10-SNAPSHOT</version>
+	<version>7.9.10</version>
 
 	<name>${project.artifactId}</name>
 	<description>Aggregator module that builds the complete TopLogic application engine.</description>
@@ -29,7 +29,7 @@
     </licenses>
 
 	<properties>
-		<tl.version>7.9.10-SNAPSHOT</tl.version>
+		<tl.version>7.9.10</tl.version>
 		<jetty.version>12.0.32</jetty.version>
 		<poi.version>5.4.1</poi.version>
 		<kafka.version>3.9.1</kafka.version>
@@ -67,7 +67,7 @@
 		<connection>scm:git:https://github.com/top-logic/tl-engine.git</connection>
 		<developerConnection>scm:git:https://git.top-logic.com/TopLogic/tl-engine-7.git</developerConnection>
 		<url>https://github.com/top-logic/tl-engine</url>
-		<tag>HEAD</tag>
+		<tag>TL_7.9.10</tag>
 	</scm>
 	
 	<modules>

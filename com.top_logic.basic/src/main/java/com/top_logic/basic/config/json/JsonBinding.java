@@ -15,8 +15,8 @@ import com.top_logic.basic.config.annotation.Binding;
 import com.top_logic.basic.config.annotation.TagName;
 
 /**
- * Annotation for configuration {@link PropertyDescriptor properties} to define a Json serialization
- * of values of the annotated property.
+ * Annotation for configuration {@link PropertyDescriptor properties} to define a <i>JSON</i>
+ * serialization of values of the annotated property.
  * 
  * @see Binding
  * 

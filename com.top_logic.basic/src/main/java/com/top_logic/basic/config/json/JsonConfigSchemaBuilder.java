@@ -13,6 +13,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.ConfigUtil;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
@@ -948,6 +949,11 @@ public class JsonConfigSchemaBuilder {
 	 * Builds a schema for a single property.
 	 */
 	private Schema buildPropertySchema(PropertyDescriptor property) {
+		JsonValueBinding<?> valueBinding = fetchValueBinding(property);
+		if (valueBinding != null) {
+			return nullable(property, valueBinding.buildSchema(property));
+		}
+
 		switch (property.kind()) {
 			case PLAIN:
 				return nullable(property, buildPlainPropertySchema(property));
@@ -1059,6 +1065,30 @@ public class JsonConfigSchemaBuilder {
 	private Schema buildComplexPropertySchema(PropertyDescriptor property) {
 		Logger.warn("Ignoring complex property '" + property + "' (only supported in XML).", JsonConfigSchemaBuilder.class);
 		return null;
+	}
+
+	/**
+	 * Resolves a {@link JsonValueBinding} for the given property, checking for {@link JsonBinding}
+	 * annotations on the property getter and the value type.
+	 *
+	 * @return The {@link JsonValueBinding} or {@code null} if no {@link JsonBinding} annotation is
+	 *         present.
+	 */
+	private JsonValueBinding<?> fetchValueBinding(PropertyDescriptor property) {
+		JsonBinding annotation = property.getAnnotation(JsonBinding.class);
+		if (annotation == null) {
+			annotation = property.getType().getAnnotation(JsonBinding.class);
+		}
+		if (annotation == null) {
+			return null;
+		}
+		try {
+			return ConfigUtil.getInstance(annotation.value());
+		} catch (ConfigurationException ex) {
+			Logger.error("Failed to instantiate JsonBinding for property '" + property + "'.", ex,
+				JsonConfigSchemaBuilder.class);
+			return null;
+		}
 	}
 
 	/**

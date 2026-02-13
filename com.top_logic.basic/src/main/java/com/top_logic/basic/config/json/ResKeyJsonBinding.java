@@ -11,6 +11,11 @@ import java.util.Locale;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.PropertyDescriptor;
+import com.top_logic.basic.json.schema.model.AnyOfSchema;
+import com.top_logic.basic.json.schema.model.EnumSchema;
+import com.top_logic.basic.json.schema.model.ObjectSchema;
+import com.top_logic.basic.json.schema.model.Schema;
+import com.top_logic.basic.json.schema.model.StringSchema;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKeyUtil;
 import com.top_logic.basic.util.ResourcesModule;
@@ -78,6 +83,26 @@ public class ResKeyJsonBinding implements JsonValueBinding<ResKey> {
 			}
 		}
 		out.endObject();
+	}
+
+	@Override
+	public Schema buildSchema(PropertyDescriptor property) {
+		// Literal ResKeys are serialized as objects: {"de": "...", "en": "..."}
+		ObjectSchema objectSchema = ObjectSchema.create();
+		objectSchema.setAdditionalProperties(StringSchema.create());
+
+		// Constrain property names to the supported locales of the application.
+		EnumSchema localeEnum = EnumSchema.create();
+		for (Locale locale : ResourcesModule.getInstance().getSupportedLocales()) {
+			localeEnum.addEnumLiteral(locale.toString());
+		}
+		objectSchema.setPropertyNames(localeEnum);
+
+		// Non-literal ResKeys are serialized as plain strings: "my.resource.key"
+		AnyOfSchema schema = AnyOfSchema.create();
+		schema.addAnyOf(StringSchema.create());
+		schema.addAnyOf(objectSchema);
+		return schema;
 	}
 
 	@Override

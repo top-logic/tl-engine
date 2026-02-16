@@ -4,7 +4,7 @@
 
 	<parent>
 		<groupId>com.top-logic</groupId>
-		<version>7.11.0-SNAPSHOT</version>
+		<version>0.0.1-AI</version>
 		<artifactId>tl-parent-all</artifactId>
 		<relativePath>..</relativePath>
 	</parent>
@@ -152,7 +152,7 @@
 			<plugin>
 		        <groupId>com.top-logic</groupId>
 		        <artifactId>tl-maven-plugin</artifactId>
-		        <version>7.11.0-SNAPSHOT</version>
+		        <version>0.0.1-AI</version>
 		        
 		        <executions>
 					<execution>

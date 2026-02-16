@@ -80,5 +80,15 @@ public abstract class AbstractTLStructuredType<P extends TLStructuredTypePart> e
 		}
 
 	}
+
+	@Override
+	public Object tValue(TLStructuredTypePart part) {
+		switch (part.getName()) {
+			case LOCAL_PARTS_ATTR:
+				return getLocalParts();
+			default:
+				return super.tValue(part);
+		}
+	}
 	
 }

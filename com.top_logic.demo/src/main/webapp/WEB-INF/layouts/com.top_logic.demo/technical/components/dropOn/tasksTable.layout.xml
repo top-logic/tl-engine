@@ -19,7 +19,7 @@
 		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
 			elements="model->all(`test.dnd.dropon:WorkItem`).filter(w -> $w.get(`test.dnd.dropon:WorkItem#processedBy`).isEmpty())"
 			modelForElement="null"
-			supportsElement="element->$element.instanceOf(`test.dnd.dropon:WorkItem`) &amp;&amp; $element.get(`test.dnd.dropon:WorkItem#processedBy`).isEmpty()"
+			supportsElement="element->$element.get(`test.dnd.dropon:WorkItem#processedBy`).isEmpty()"
 			supportsModel="true"
 		/>
 		<dragSource class="com.top_logic.model.search.providers.TableDragSourceByExpression"

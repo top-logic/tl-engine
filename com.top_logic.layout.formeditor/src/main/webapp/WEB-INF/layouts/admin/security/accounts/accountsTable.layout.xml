@@ -19,7 +19,7 @@
 		</name>
 		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
 			elements="model->all(`Contacts:PersonContact`)"
-			supportsElement="element->$element.instanceOf(`Contacts:PersonContact`)"
+			supportsElement="true"
 		/>
 		<configurationProviders>
 			<configurationProvider class="com.top_logic.model.search.providers.ComputedColumnProviderByExpression"

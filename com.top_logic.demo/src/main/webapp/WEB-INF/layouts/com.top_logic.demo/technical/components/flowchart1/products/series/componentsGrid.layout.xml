@@ -15,7 +15,6 @@
 		</name>
 		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
 			elements="model->$model.get(`test.flowchart:Product#parts`)"
-			supportsElement="element->$element.instanceOf(`test.flowchart:Part`)"
 		/>
 		<buttons>
 			<button id="exportExcelGrid"

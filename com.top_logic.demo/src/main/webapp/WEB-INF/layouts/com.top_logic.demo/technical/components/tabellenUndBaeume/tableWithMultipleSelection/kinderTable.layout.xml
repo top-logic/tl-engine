@@ -23,7 +23,6 @@
 		</model>
 		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
 			elements="x -> $x[1].inRevision($x[0]).get(`tl.element:StructuredElementContainer#children`)"
-			supportsElement="element->$element.instanceOf(`DemoTypes:DemoTypes.All`)"
 		/>
 		<selectionFilter class="com.top_logic.model.search.providers.ScriptedFilter">
 			<predicate>x -&gt; !$x.get(`DemoTypes:A#name`).stringEndsWith("-final")</predicate>

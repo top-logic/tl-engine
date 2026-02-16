@@ -7,6 +7,7 @@ package com.top_logic.model.impl;
 
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLNamedPart;
+import com.top_logic.model.TLStructuredTypePart;
 
 /**
  * Default base implementation of {@link TLNamedPart}
@@ -31,6 +32,16 @@ public abstract class AbstractTLNamedPart extends AbstractTLModelPart implements
 	@Override
 	public void setName(String value) {
 		this.name = value;
+	}
+
+	@Override
+	public Object tValue(TLStructuredTypePart part) {
+		switch (part.getName()) {
+			case NAME_ATTR:
+				return getName();
+			default:
+				return super.tValue(part);
+		}
 	}
 
 }

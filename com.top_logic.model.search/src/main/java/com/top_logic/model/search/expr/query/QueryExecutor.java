@@ -46,6 +46,27 @@ public abstract class QueryExecutor {
 	/**
 	 * Creates a {@link QueryExecutor} from the textual XML representation of a search expression.
 	 * 
+	 * @param kb
+	 *        The {@link KnowledgeBase} to execute in.
+	 * @param model
+	 *        The {@link TLModel} the given search is formulated in.
+	 * @param expr
+	 *        The textual XML representation of the search, or <code>null</code>.
+	 * @return The {@link QueryExecutor} that can execute the search, or <code>null</code>, if the
+	 *         argument was null.
+	 * 
+	 * @see #compile(KnowledgeBase, TLModel, SearchExpression)
+	 */
+	public static QueryExecutor compileOptional(KnowledgeBase kb, TLModel model, Expr expr) {
+		if (expr == null) {
+			return null;
+		}
+		return compile(kb, model, expr);
+	}
+
+	/**
+	 * Creates a {@link QueryExecutor} from the textual XML representation of a search expression.
+	 * 
 	 * @param expr
 	 *        The textual XML representation of the search.
 	 * @return The {@link QueryExecutor} that can execute the search, see

@@ -10,6 +10,7 @@ import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.model.TLAssociation;
 import com.top_logic.model.TLAssociationEnd;
 import com.top_logic.model.TLReference;
+import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 
 /**
@@ -100,4 +101,25 @@ public class TLAssociationEndImpl extends AbstractStructuredTypePart<TLAssociati
 		_deletionPolicy = value;
 	}
 
+	@Override
+	public Object tValue(TLStructuredTypePart part) {
+		switch (part.getName()) {
+			case AGGREGATE_ATTR:
+				return isAggregate();
+			case COMPOSITE_ATTR:
+				return isComposite();
+			case END_INDEX_ATTR:
+				return getEndIndex();
+			case HISTORY_TYPE_ATTR:
+				return getHistoryType();
+			case DELETION_POLICY_ATTR:
+				return getDeletionPolicy();
+			case NAVIGATE_ATTR:
+				return canNavigate();
+			case REFERENCE_ATTR:
+				return getReference();
+			default:
+				return super.tValue(part);
+		}
+	}
 }

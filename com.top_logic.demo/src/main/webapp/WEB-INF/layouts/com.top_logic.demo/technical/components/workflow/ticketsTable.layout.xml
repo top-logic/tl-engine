@@ -19,7 +19,6 @@
 		</name>
 		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
 			elements="model->$model.get(`test.process:Project#tickets`)"
-			supportsElement="element->$element.instanceOf(`test.process:Ticket`)"
 		/>
 		<configurationProviders>
 			<configurationProvider class="com.top_logic.layout.table.provider.ButtonColumnProvider"

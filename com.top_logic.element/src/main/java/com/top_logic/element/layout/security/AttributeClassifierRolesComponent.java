@@ -20,6 +20,7 @@ import java.util.Set;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.IdentifierUtil;
+import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.defaults.NullDefault;
@@ -56,11 +57,15 @@ import com.top_logic.layout.table.model.TableConfigurationProvider;
 import com.top_logic.mig.html.layout.CommandRegistry;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLModel;
 import com.top_logic.model.TLNamed;
+import com.top_logic.model.impl.TransientModelFactory;
 import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.util.Resources;
+import com.top_logic.util.TLContext;
+import com.top_logic.util.model.ModelService;
 
 /**
  * {@link LayoutComponent} assigning access rights for roles on attribute classifications.
@@ -94,13 +99,7 @@ public class AttributeClassifierRolesComponent extends EditComponent {
 		}
 	}
 
-	/**
-	 * Place holder for the global domain. This constant is used as model of the
-	 * {@link AttributeClassifierRolesComponent} to configure the global attribute roles.
-	 * 
-	 * @see I18NConstants#GLOBAL_DOMAIN
-	 */
-	public static final Object GLOBAL_DOMAIN = GlobalDomain.INSTANCE;
+	private static final Property<TLClass> GLOBAL_DOMAIN = TypedAnnotatable.property(TLClass.class, "global domain");
 
     private Map generators;
 
@@ -132,13 +131,35 @@ public class AttributeClassifierRolesComponent extends EditComponent {
 
     @Override
 	protected boolean supportsInternalModel(Object anObject) {
-		return anObject == GLOBAL_DOMAIN || anObject instanceof TLClass;
+		return anObject instanceof TLClass;
+	}
+
+	/**
+	 * Place holder for the global domain. This {@link TLClass} is used as model of the
+	 * {@link AttributeClassifierRolesComponent} to configure the global attribute roles.
+	 * 
+	 * @see I18NConstants#GLOBAL_DOMAIN
+	 */
+	public static TLClass globalDomain() {
+		TLContext context = TLContext.getContext();
+		TLClass globalDomain = context.get(GLOBAL_DOMAIN);
+		if (globalDomain == null) {
+			TLModel model = ModelService.getApplicationModel();
+			String name = Resources.getInstance().getString(I18NConstants.GLOBAL_DOMAIN);
+			globalDomain = TransientModelFactory.createTransientClass(model, name);
+			TLClass formerValue = context.setIfAbsent(GLOBAL_DOMAIN, globalDomain);
+			if (formerValue != null) {
+				// Concurrent thread already initialized variable.
+				globalDomain = formerValue;
+			}
+		}
+		return globalDomain;
 	}
 
 	@Override
 	public boolean validateModel(DisplayContext context) {
 		if (getModel() == null) {
-			setModel(GLOBAL_DOMAIN);
+			setModel(globalDomain());
 			return true;
 		}
 		return super.validateModel(context);
@@ -150,11 +171,11 @@ public class AttributeClassifierRolesComponent extends EditComponent {
 
 	/**
 	 * The {@link TLClass} model of this component or <code>null</code> when model is
-	 *         {@link #GLOBAL_DOMAIN}.
+	 * {@link #globalDomain()}.
 	 */
 	public TLClass getMetaElement() {
 		Object model = getModel();
-		if (model == GLOBAL_DOMAIN) {
+		if (model == globalDomain()) {
 			return null;
 		}
 		return (TLClass) model;

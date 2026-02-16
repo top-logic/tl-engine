@@ -18,7 +18,7 @@
 		</name>
 		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
 			elements="model->all(`test.process:Project`)"
-			supportsElement="element->$element.instanceOf(`test.process:Project`)"
+			supportsElement="true"
 		/>
 		<configurationProviders>
 			<configurationProvider class="com.top_logic.layout.table.provider.ButtonColumnProvider"

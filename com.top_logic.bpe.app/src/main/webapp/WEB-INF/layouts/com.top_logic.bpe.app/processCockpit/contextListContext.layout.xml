@@ -6,11 +6,12 @@
 >
 	<arguments name="%LAYOUT_RESPREFIX%tileName"
 		securityObject="securityRoot"
+		types="tl.bpe.bpml:Collaboration"
 	>
 		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
 			elements="all(`tl.bpe.bpml:Collaboration`).filter(x -> $x.get(`tl.bpe.bpml:Collaboration#state`) != `tl.bpe.bpml:ApprovalState#Development`)"
 			modelForElement="null"
-			supportsElement="true"
+			supportsElement="element->$element.get(`tl.bpe.bpml:Collaboration#state`) != `tl.bpe.bpml:ApprovalState#Development`"
 			supportsModel="true"
 		/>
 		<preview class="com.top_logic.bpe.app.layout.tiles.CollaborationNumberPreview"

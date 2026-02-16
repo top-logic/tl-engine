@@ -15,7 +15,6 @@
 		</name>
 		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
 			elements="release->all(`test.tiles:Ticket`).filter(t -> $t.get(`test.tiles:Ticket#planedIn`).containsElement($release))"
-			supportsElement="element->$element.instanceOf(`test.tiles:Ticket`)"
 			supportsModel="true"
 		>
 			<modelForElement><![CDATA[t -> model -> {

@@ -12,16 +12,12 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.dob.MOAttribute;
 import com.top_logic.knowledge.objects.KnowledgeObject;
-import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModelPart;
-import com.top_logic.model.TLModule;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.annotate.AnnotatedConfig;
 import com.top_logic.model.annotate.TLAnnotation;
-import com.top_logic.model.impl.generated.TlModelFactory;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper;
-import com.top_logic.util.model.ModelService;
 
 /**
  * Base class for persistent versions of {@link TLModelPart} implementations.
@@ -148,19 +144,7 @@ public abstract class PersistentModelPart extends AbstractBoundWrapper implement
 
 	@Override
 	public TLStructuredType tType() {
-		TLModel applicationModel = ModelService.getApplicationModel();
-		if (applicationModel == null) {
-			// Bootstrap...
-			return null;
-		}
-		TLModule module = applicationModel.getModule(TlModelFactory.TL_MODEL_STRUCTURE);
-		if (module == null) {
-			/* May occur when the application does not include the "tl.model" structure. This should
-			 * actually not happen in almost all cases but ist possible for tests in
-			 * com.top_logic. */
-			return null;
-		}
-		return visit(TTypeVisitor.INSTANCE, module);
+		return TTypeVisitor.getTType(this);
 	}
 
 }

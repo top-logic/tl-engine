@@ -21,6 +21,17 @@ public class OrchestratorTools {
 
 	private static final String FROM_AGENT = "Orchestrator";
 
+	/**
+	 * Delegate to the Model Explorer for read-only model exploration.
+	 *
+	 * @param goal
+	 *        Short intent (e.g. "List application modules and types")
+	 * @param task
+	 *        Concrete question or instruction (e.g. "What parts does sales:Order have?")
+	 * @param context
+	 *        Optional: type/part/module names, entity hints
+	 * @return The explorer's answer
+	 */
 	@Tool("Delegate to the Model Explorer. Call when the user wants to explore, understand, or inspect the TopLogic application model: modules, types, parts, annotations, where-is-X-defined, list modules/types, model structure, read-only questions. Provide goal (short intent), task (concrete question or instruction), context (type/part/module names if known). Do NOT paste the full user message; distill a clear exploration request.")
 	public String delegateToModelExplorer(
 			@P("Short intent, e.g. 'List application modules and types'") String goal,
@@ -30,6 +41,17 @@ public class OrchestratorTools {
 		return AgentInvoker.invokeExplorer(FROM_AGENT, workOrder);
 	}
 
+	/**
+	 * Delegate to the Model Creator for model creation or modification.
+	 *
+	 * @param goal
+	 *        Short intent (e.g. "Create Order type with properties")
+	 * @param task
+	 *        Concrete instructions or requirements (UML, JSON, or natural language)
+	 * @param context
+	 *        Optional: target module/type names
+	 * @return The creator workflow result
+	 */
 	@Tool("Delegate to the Model Creator. Call when the user wants to create or modify the TopLogic model: add types, properties, references, annotations, change relationships, create from UML/requirements. Provide goal (short intent), task (concrete instructions or requirements text), context (module/type names if relevant). Do NOT paste the full user message; distill the creation/modification request.")
 	public String delegateToModelCreator(
 			@P("Short intent, e.g. 'Create Order type with properties'") String goal,
@@ -39,6 +61,17 @@ public class OrchestratorTools {
 		return AgentInvoker.invokeCreator(FROM_AGENT, workOrder);
 	}
 
+	/**
+	 * Delegate to the TLScript specialist for TLScript questions and validation.
+	 *
+	 * @param goal
+	 *        Short intent (e.g. "Explain get vs set in TLScript")
+	 * @param task
+	 *        Concrete question or code to validate
+	 * @param context
+	 *        Optional: type/part names if the question mentions model elements
+	 * @return The TLScript agent's answer
+	 */
 	@Tool("Delegate to the TLScript specialist. Call when the user asks about TLScript: syntax, how to write expressions, what functions exist, function docs, script validation, get/set/chaining, how to do X in TLScript. Provide goal (short intent), task (concrete question or code snippet to validate), context (type/part names if the question refers to model elements). Do NOT paste the full user message; distill the TLScript question.")
 	public String delegateToTLScriptSpecialist(
 			@P("Short intent, e.g. 'Explain get vs set in TLScript'") String goal,

@@ -10,18 +10,23 @@ package com.top_logic.ai.service.agents.handoff;
  * not the full user prompt.
  *
  * <p>
- * Used when Orchestrator (or TLScript) delegates to ModelExplorer, ModelCreator, or
- * TLScriptAgent. Prevents prompt dumping and ensures clear handoff.
+ * Used when Orchestrator (or TLScript) delegates to {@code ModelExplorer}, {@code ModelCreator}, or
+ * {@code TLScriptAgent}. Prevents prompt dumping and ensures clear handoff.
  * </p>
+ *
+ * @param goal
+ *        Short intent (e.g. "list types in application modules").
+ * @param task
+ *        Concrete question or instruction.
+ * @param context
+ *        Context: model id, entity hints, relevant type/part names.
+ * @param expectedOutputFormat
+ *        Expected output format (e.g. "JSON with {@code elementIds}, fields, annotations, notes").
  */
 public record AgentWorkOrder(
-	/** Short intent (e.g. "list types in application modules"). */
 	String goal,
-	/** Concrete question or instruction. */
 	String task,
-	/** Context: model id, entity hints, relevant type/part names. */
 	String context,
-	/** Expected output format (e.g. "JSON with {@code elementIds}, fields, annotations, notes"). */
 	String expectedOutputFormat) {
 
 	/**

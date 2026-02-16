@@ -10,7 +10,7 @@ package com.top_logic.ai.service.tools;
  */
 public enum TraceEventKind {
 
-	/** A tool was invoked (toolName, args, result). */
+	/** A tool was invoked ({@code toolName}, args, result). */
 	TOOL_CALL,
 
 	/** One agent delegated to another ({@code fromAgent}, {@code toAgent}, work order summary, result summary). */

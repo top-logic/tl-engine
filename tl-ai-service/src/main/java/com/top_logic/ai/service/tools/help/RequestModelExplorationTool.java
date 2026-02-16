@@ -14,10 +14,10 @@ import dev.langchain4j.agent.tool.Tool;
 /**
  * Tool for requesting model exploration via a structured work order.
  * <p>
- * Used by TLScriptAgent (and similar agents) when they need model context. Accepts
+ * Used by {@code TLScriptAgent} (and similar agents) when they need model context. Accepts
  * <b>goal</b>, <b>task</b>, and <b>context</b> so the LLM fills structured fields
  * instead of pasting the full user prompt. Delegates to {@link AgentInvoker#invokeExplorer}
- * and records an agent-call trace event (TLScriptAgent → ModelExplorer).
+ * and records an agent-call trace event ({@code TLScriptAgent} → {@code ModelExplorer}).
  * </p>
  */
 public class RequestModelExplorationTool {
@@ -37,7 +37,7 @@ public class RequestModelExplorationTool {
 	 *        Concrete question or instruction (e.g. "List annotations on sales:Order#total").
 	 * @param context
 	 *        Optional hints: type/part names, module, entity ids.
-	 * @return The ModelExplorer's answer.
+	 * @return The {@code ModelExplorer}'s answer.
 	 */
 	@Tool("Request model exploration with a structured work order. Provide goal (short intent), task (concrete question or instruction), and context (type/part names, module hints). Do NOT paste the full user message; distill a clear, specific exploration request.")
 	public String requestModelExploration(

@@ -20,7 +20,7 @@ import com.top_logic.basic.json.JSON;
  * Records tool name, arguments, and results with result references (T1, T2, etc.)
  * for various purposes such as debugging, monitoring, analysis, and judge scoring.
  * Also records agent-to-agent delegations for a unified execution timeline
- * (AgentCall vs ToolCall) usable by the UI.
+ * ({@code AgentCall} vs {@code ToolCall}) usable by the UI.
  * </p>
  * 
  * @author jhu

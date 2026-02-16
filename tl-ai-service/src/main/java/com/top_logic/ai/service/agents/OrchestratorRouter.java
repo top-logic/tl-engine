@@ -18,6 +18,13 @@ import dev.langchain4j.service.V;
  */
 public interface OrchestratorRouter {
 
+	/**
+	 * Chat method for orchestrating AI responses with specialist delegation.
+	 *
+	 * @param userMessage
+	 *        The user's message
+	 * @return The orchestrated response after delegating to appropriate specialists
+	 */
 	@SystemMessage("""
 		You are the **Orchestrator** for a TopLogic AI assistant. You do not answer from your own knowledge. Your job is to think, plan, call specialists when needed (zero, one, or several), and synthesize a final answer.
 

@@ -24,7 +24,7 @@ import dev.langchain4j.model.chat.ChatModel;
  * Internal component for agent-to-agent calls.
  * <p>
  * Used by Orchestrator (and by TLScript's "request exploration" path) to invoke
- * ModelExplorer, ModelCreator, or TLScriptAgent. Records {@link com.top_logic.ai.service.tools.TraceEntry.AgentCallTraceEntry}
+ * {@code ModelExplorer}, {@code ModelCreator}, or {@code TLScriptAgent}. Records {@link com.top_logic.ai.service.tools.TraceEntry.AgentCallTraceEntry}
  * events via the current run's trace (see {@link com.top_logic.ai.service.tools.ToolCallTracking}).
  * No agent is exposed as a @Tool to another agent.
  * </p>
@@ -35,7 +35,7 @@ public final class AgentInvoker {
 	private static final int RESULT_SUMMARY_MAX_LEN = 100_000;
 
 	/**
-	 * Invokes the ModelExplorer with a work-order-derived prompt.
+	 * Invokes the {@code ModelExplorer} with a work-order-derived prompt.
 	 *
 	 * @param fromAgent
 	 *        Name of the calling agent (e.g. "Orchestrator").
@@ -67,7 +67,7 @@ public final class AgentInvoker {
 	}
 
 	/**
-	 * Invokes the TLScriptAgent with a work-order-derived user message.
+	 * Invokes the {@code TLScriptAgent} with a work-order-derived user message.
 	 *
 	 * @param fromAgent
 	 *        Name of the calling agent (e.g. "Orchestrator").
@@ -108,7 +108,7 @@ public final class AgentInvoker {
 	}
 
 	/**
-	 * Invokes the model-creation path (UMLSpecificationAgent workflow) with work-order input.
+	 * Invokes the model-creation path ({@code UMLSpecificationAgent} workflow) with work-order input.
 	 *
 	 * @param fromAgent
 	 *        Name of the calling agent (e.g. "Orchestrator").

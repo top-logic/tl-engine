@@ -22,6 +22,13 @@ public sealed interface TraceEntry permits TraceEntry.ToolCallTraceEntry, TraceE
 
 	/**
 	 * Tool-call entry: name, args, result reference.
+	 *
+	 * @param toolName
+	 *        The name of the tool that was called.
+	 * @param args
+	 *        The arguments passed to the tool.
+	 * @param resultRef
+	 *        The result reference (e.g., "T1", "T2") for this tool call.
 	 */
 	record ToolCallTraceEntry(String toolName, Map<String, Object> args, String resultRef)
 			implements TraceEntry {
@@ -34,6 +41,15 @@ public sealed interface TraceEntry permits TraceEntry.ToolCallTraceEntry, TraceE
 
 	/**
 	 * Agent-call entry: caller, callee, input summary, result summary.
+	 *
+	 * @param fromAgent
+	 *        Name of the calling agent (e.g. "Orchestrator").
+	 * @param toAgent
+	 *        Name of the called agent (e.g. "ModelExplorer").
+	 * @param inputSummary
+	 *        Short summary of the work order or input sent.
+	 * @param resultSummary
+	 *        Short summary of the result returned.
 	 */
 	record AgentCallTraceEntry(String fromAgent, String toAgent, String inputSummary, String resultSummary)
 			implements TraceEntry {
@@ -67,22 +83,40 @@ public sealed interface TraceEntry permits TraceEntry.ToolCallTraceEntry, TraceE
 			return TraceEventKind.AGENT_CALL;
 		}
 
+		/**
+		 * Name of the calling agent (e.g. "Orchestrator").
+		 */
 		public String fromAgent() {
 			return _fromAgent;
 		}
 
+		/**
+		 * Name of the called agent (e.g. "ModelExplorer").
+		 */
 		public String toAgent() {
 			return _toAgent;
 		}
 
+		/**
+		 * Short summary of the work order or input sent.
+		 */
 		public String inputSummary() {
 			return _inputSummary;
 		}
 
+		/**
+		 * Short summary of the result returned.
+		 */
 		public String resultSummary() {
 			return _resultSummary;
 		}
 
+		/**
+		 * Sets the result summary when the agent call completes.
+		 *
+		 * @param resultSummary
+		 *        Short summary of the result returned.
+		 */
 		public void setResultSummary(String resultSummary) {
 			_resultSummary = resultSummary != null ? resultSummary : "";
 		}

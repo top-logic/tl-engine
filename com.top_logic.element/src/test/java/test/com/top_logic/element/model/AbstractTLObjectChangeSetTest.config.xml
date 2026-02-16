@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application>
+	<services/>
+	<defaults>
+		<config interface="com.top_logic.knowledge.service.KnowledgeBaseConfiguration">
+			<property name="context-factory"
+				value="test.com.top_logic.element.knowledge.TestingElementContextFactory"
+			/>
+		</config>
+	</defaults>
+</application>

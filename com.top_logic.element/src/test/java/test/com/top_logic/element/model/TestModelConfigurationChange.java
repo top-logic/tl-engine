@@ -31,7 +31,7 @@ import com.top_logic.model.annotate.TLI18NKey;
 import com.top_logic.util.model.ModelService;
 
 /**
- * Test that applying a changed configuration to an exisint in-app model works as expected.
+ * Test that applying a changed configuration to an existing in-app model works as expected.
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

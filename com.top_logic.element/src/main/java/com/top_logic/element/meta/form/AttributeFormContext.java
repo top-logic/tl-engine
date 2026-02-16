@@ -416,7 +416,7 @@ public class AttributeFormContext extends FormContext {
 	 * @param overlay
 	 *        The {@link TLFormObject} to check.
 	 * @return Whether a {@link FormContainer} was created via
-	 *         {#createFormContainerForOverlay(TLFormObject)}.
+	 *         {@link #createFormContainerForOverlay(TLFormObject)}.
 	 * 
 	 * @see #createFormContainerForOverlay(TLFormObject)
 	 * @see TLFormObject#getFormContainer()

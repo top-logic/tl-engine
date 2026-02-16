@@ -21,7 +21,7 @@ public record AgentWorkOrder(
 	String task,
 	/** Context: model id, entity hints, relevant type/part names. */
 	String context,
-	/** Expected output format (e.g. "JSON with elementIds, fields, annotations, notes"). */
+	/** Expected output format (e.g. "JSON with {@code elementIds}, fields, annotations, notes"). */
 	String expectedOutputFormat) {
 
 	/**

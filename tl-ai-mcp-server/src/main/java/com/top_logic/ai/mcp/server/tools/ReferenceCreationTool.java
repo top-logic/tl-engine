@@ -401,7 +401,7 @@ public class ReferenceCreationTool {
 	}
 
 	/**
-	 * Validates that the reference name meets the naming requirements.
+	 * Validates that the {@code referenceName} meets the naming requirements.
 	 * <p>
 	 * The name must start with a letter or underscore. It may only consist of letters (including
 	 * umlauts), digits, dots, underscores, and minus signs and must not end with a dot.

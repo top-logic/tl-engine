@@ -51,13 +51,13 @@ public class ToolCallTracking {
 
 	/**
 	 * Records a tool call if tracking is enabled in the current thread.
-	 * 
+	 *
 	 * <p>
 	 * This method is safe to call even when tracking is not enabled - it will simply do nothing.
 	 * </p>
-	 * 
+	 *
 	 * @param toolName
-	 *        The name of the tool method (e.g., "listTypes", "listTypeParts")
+	 *        The name of the tool method (e.g., {@code listTypes}, {@code listTypeParts})
 	 * @param args
 	 *        The arguments passed to the tool
 	 * @param resultJson
@@ -127,14 +127,14 @@ public class ToolCallTracking {
 
 	/**
 	 * Formats a tool call for logging purposes.
-	 * 
+	 *
 	 * <p>
 	 * Returns a human-readable string representation of the tool call including the tool name,
 	 * arguments, and optionally a result summary.
 	 * </p>
-	 * 
+	 *
 	 * @param toolName
-	 *        The name of the tool method (e.g., "listTypes", "listTypeParts")
+	 *        The name of the tool method (e.g., {@code listTypes}, {@code listTypeParts})
 	 * @param args
 	 *        The arguments passed to the tool
 	 * @param resultJson

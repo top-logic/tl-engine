@@ -461,7 +461,7 @@ public class EnumerationUpdateTool {
 			List<ClassifierUpdate> updateClassifiers,
 			String defaultClassifierName) {
 
-		// Check for duplicate names in addClassifiers
+		// Check for duplicate names in {@code addClassifiers}
 		Set<String> addNames = new HashSet<>();
 		for (ClassifierUpdate add : addClassifiers) {
 			if (addNames.contains(add.name)) {

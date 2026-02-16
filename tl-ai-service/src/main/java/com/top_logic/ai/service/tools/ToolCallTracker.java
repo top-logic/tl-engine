@@ -74,7 +74,7 @@ public class ToolCallTracker {
 	 * Records a tool call and its result.
 	 *
 	 * @param toolName
-	 *        The name of the tool (e.g., "listTypes", "listTypeParts")
+	 *        The name of the tool (e.g., {@code listTypes}, {@code listTypeParts})
 	 * @param args
 	 *        The arguments passed to the tool
 	 * @param resultJson

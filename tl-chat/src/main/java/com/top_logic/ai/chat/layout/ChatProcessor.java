@@ -81,7 +81,7 @@ public class ChatProcessor {
 	/**
 	 * Executes user message through OrchestratorAgent (single chat entrypoint).
 	 * Sets trace so AgentCall and ToolCall events are visible in the UI timeline.
-	 * Uses state from tracker; taskId must already be set on state.
+	 * Uses state from tracker; {@code taskId} must already be set on state.
 	 */
 	static void executeOrchestrator(TaskProgressTracker taskTracker, AIProcessingState state,
 			String userMessage) throws Exception {
@@ -135,7 +135,7 @@ public class ChatProcessor {
 	}
 
 	/**
-	 * Applies poll updates for the given state to chat and taskTracker. Clears tracker and
+	 * Applies poll updates for the given state to chat and {@code taskTracker}. Clears tracker and
 	 * cancels polling when processing is done.
 	 *
 	 * <p>
@@ -151,7 +151,7 @@ public class ChatProcessor {
 
 		// Synchronize on the state to prevent concurrent calls (from SSE handler poll,
 		// /chat/updates servlet, or overlapping SSE reconnects) from reading the same
-		// lastSeenToolCallCount and adding duplicate timeline events.
+		// {@code lastSeenToolCallCount} and adding duplicate timeline events.
 		synchronized (state) {
 			boolean hasUpdates = false;
 			String currentTaskId = state.getCurrentTaskId();

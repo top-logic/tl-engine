@@ -127,7 +127,7 @@ public class TLScriptValidationTool {
 	 *
 	 * @param errorMessage
 	 *        The error message describing the failure.
-	 * @return The error result with isError flag set to true.
+	 * @return The error result with {@code isError} flag set to true.
 	 */
 	private static McpSchema.CallToolResult createToolErrorResult(String errorMessage) {
 		String errorJson = JsonResponseBuilder.buildToolErrorJson(errorMessage);

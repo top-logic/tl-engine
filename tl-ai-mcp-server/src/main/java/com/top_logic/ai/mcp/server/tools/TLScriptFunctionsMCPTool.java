@@ -153,7 +153,7 @@ public class TLScriptFunctionsMCPTool {
 			}
 		}
 
-		// If functionName is missing or invalid, pass null to let the tool handle the error
+		// If {@code functionName} is missing or invalid, pass null to let the tool handle the error
 		String jsonResult = _toolInstance.getTLScriptFunctionDocumentation(functionName);
 		return new McpSchema.CallToolResult(jsonResult, false);
 	}

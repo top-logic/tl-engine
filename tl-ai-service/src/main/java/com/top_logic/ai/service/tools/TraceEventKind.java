@@ -13,6 +13,6 @@ public enum TraceEventKind {
 	/** A tool was invoked (toolName, args, result). */
 	TOOL_CALL,
 
-	/** One agent delegated to another (fromAgent, toAgent, work order summary, result summary). */
+	/** One agent delegated to another ({@code fromAgent}, {@code toAgent}, work order summary, result summary). */
 	AGENT_CALL
 }

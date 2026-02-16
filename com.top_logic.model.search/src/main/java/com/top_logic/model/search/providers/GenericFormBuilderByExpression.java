@@ -144,8 +144,7 @@ public class GenericFormBuilderByExpression extends ConfiguredDynamicFormBuilder
 		TLStructuredType type = formObject.tType();
 		TLFormObject formOverlay = formContext.editObject(formObject);
 
-		FormContainer editorGroup = formContext.createFormContainerForOverlay(formOverlay);
-		formContext.addMember(editorGroup);
+		FormContainer editorGroup = formContext.addFormContainerForOverlay(formOverlay);
 		TypedForm typedForm = TypedForm.lookup(getConfiguredForms(), type);
 		setDisplayedTypedForm(typedForm);
 		FormEditorContext context = new FormEditorContext.Builder()

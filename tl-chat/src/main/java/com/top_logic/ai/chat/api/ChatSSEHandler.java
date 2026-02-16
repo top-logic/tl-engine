@@ -20,8 +20,11 @@ import jakarta.servlet.AsyncContext;
 import jakarta.servlet.AsyncEvent;
 import jakarta.servlet.AsyncListener;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
+import com.top_logic.ai.chat.api.messages.ConnectedEvent;
+import com.top_logic.ai.chat.api.messages.HeartbeatEvent;
+import com.top_logic.ai.chat.api.messages.MessageDto;
+import com.top_logic.ai.chat.api.messages.TaskStatusEvent;
+import com.top_logic.ai.chat.api.messages.TimelineEventDto;
 import com.top_logic.ai.chat.layout.Chat;
 import com.top_logic.ai.chat.layout.ChatEntry;
 import com.top_logic.ai.chat.layout.ChatProcessor;
@@ -56,8 +59,6 @@ public class ChatSSEHandler {
 
 	private static final long POLL_INTERVAL_MS = 200;
 	private static final long HEARTBEAT_INTERVAL_MS = 15000;
-
-	private static final ObjectMapper MAPPER = new ObjectMapper();
 
 	private static final AtomicInteger SSE_THREAD_COUNTER = new AtomicInteger();
 
@@ -186,8 +187,12 @@ public class ChatSSEHandler {
 		boolean processing = ChatProcessor.isProcessing(_tracker);
 
 		try {
-			String data = MAPPER.writeValueAsString(new ConnectedEvent(messageCount, timelineCount, processing, currentTaskId));
-			sendEvent("connected", data);
+			ConnectedEvent event = ConnectedEvent.create()
+				.setMessageSeq(messageCount)
+				.setTimelineSeq(timelineCount)
+				.setProcessing(processing)
+				.setTaskId(currentTaskId != null ? currentTaskId : "");
+			sendEvent("connected", DtoMapper.toJson(event));
 		} catch (Exception e) {
 			Logger.error("Failed to send connected event", e, ChatSSEHandler.class);
 		}
@@ -304,8 +309,7 @@ public class ChatSSEHandler {
 	private void emitMessage(ChatMessage msg, String id) {
 		try {
 			MessageDto dto = DtoMapper.toMessageDto(msg, id);
-			String data = MAPPER.writeValueAsString(dto);
-			sendEvent("message", data);
+			sendEvent("message", DtoMapper.toJson(dto));
 		} catch (Exception e) {
 			Logger.error("Failed to emit message event", e, ChatSSEHandler.class);
 		}
@@ -315,8 +319,7 @@ public class ChatSSEHandler {
 		try {
 			TimelineEventDto dto = DtoMapper.toTimelineEventDto(ev, id);
 			String eventType = ev.getKind() == ChatTimelineEvent.Kind.TOOL_CALL ? "tool_call" : "agent_call";
-			String data = MAPPER.writeValueAsString(dto);
-			sendEvent(eventType, data);
+			sendEvent(eventType, DtoMapper.toJson(dto));
 		} catch (Exception e) {
 			Logger.error("Failed to emit timeline event", e, ChatSSEHandler.class);
 		}
@@ -324,13 +327,12 @@ public class ChatSSEHandler {
 
 	private void emitTaskStatus(ChatTask task, String description) {
 		try {
-			TaskStatusEvent status = new TaskStatusEvent(
-				task.getId(),
-				task.getStatus().name().toLowerCase(),
-				description,
-				task.getErrorMessage());
-			String data = MAPPER.writeValueAsString(status);
-			sendEvent("task_status", data);
+			TaskStatusEvent status = TaskStatusEvent.create()
+				.setTaskId(task.getId())
+				.setStatus(task.getStatus().name().toLowerCase())
+				.setDescription(description)
+				.setErrorMessage(task.getErrorMessage() != null ? task.getErrorMessage() : "");
+			sendEvent("task_status", DtoMapper.toJson(status));
 		} catch (Exception e) {
 			Logger.error("Failed to emit task status event", e, ChatSSEHandler.class);
 		}
@@ -363,8 +365,9 @@ public class ChatSSEHandler {
 
 	private void sendHeartbeat() {
 		try {
-			String data = MAPPER.writeValueAsString(new HeartbeatEvent(System.currentTimeMillis()));
-			sendEvent("heartbeat", data);
+			HeartbeatEvent event = HeartbeatEvent.create()
+				.setTs(System.currentTimeMillis());
+			sendEvent("heartbeat", DtoMapper.toJson(event));
 		} catch (Exception e) {
 			Logger.error("Failed to send heartbeat", e, ChatSSEHandler.class);
 		}
@@ -389,16 +392,5 @@ public class ChatSSEHandler {
 			Logger.error("Failed to write SSE event", e, ChatSSEHandler.class);
 			stop();
 		}
-	}
-
-	// Event DTOs for SSE
-
-	private record ConnectedEvent(int messageSeq, int timelineSeq, boolean processing, String taskId) {
-	}
-
-	private record TaskStatusEvent(String taskId, String status, String description, String errorMessage) {
-	}
-
-	private record HeartbeatEvent(long ts) {
 	}
 }

@@ -8,11 +8,16 @@ package com.top_logic.ai.chat.api;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.top_logic.ai.chat.api.messages.ChatSendRequest;
+import com.top_logic.ai.chat.api.messages.ChatSendResponse;
+import com.top_logic.ai.chat.api.messages.ChatUpdatesResponse;
 import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.basic.thread.ThreadContextManager;
+
+import de.haumacher.msgbuf.io.StringR;
+import de.haumacher.msgbuf.json.JsonReader;
 
 import jakarta.servlet.AsyncContext;
 import jakarta.servlet.ServletException;
@@ -36,8 +41,6 @@ public class ChatServlet extends HttpServlet {
 	private static final String PATH_EVENTS = "/events";
 	private static final String CONTENT_TYPE_JSON = "application/json; charset=UTF-8";
 	private static final String CONTENT_TYPE_SSE = "text/event-stream";
-
-	private static final ObjectMapper MAPPER = new ObjectMapper();
 
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -74,7 +77,9 @@ public class ChatServlet extends HttpServlet {
 	private void handleSend(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		ChatSendRequest body;
 		try {
-			body = MAPPER.readValue(req.getInputStream(), ChatSendRequest.class);
+			String jsonBody = new String(req.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+			JsonReader reader = new JsonReader(new StringR(jsonBody));
+			body = ChatSendRequest.readChatSendRequest(reader);
 		} catch (Exception e) {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid JSON body: " + e.getMessage());
 			return;
@@ -98,11 +103,15 @@ public class ChatServlet extends HttpServlet {
 		resp.setContentType(CONTENT_TYPE_JSON);
 		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
 		if (result.getTaskId() == null) {
-			MAPPER.writeValue(resp.getOutputStream(),
-				new ChatSendResponse(null, result.isBusy() ? "busy" : "error"));
+			ChatSendResponse sendResponse = ChatSendResponse.create()
+				.setStatus(result.isBusy() ? "busy" : "error");
+			resp.getWriter().write(DtoMapper.toJson(sendResponse));
 			return;
 		}
-		MAPPER.writeValue(resp.getOutputStream(), new ChatSendResponse(result.getTaskId(), "processing"));
+		ChatSendResponse sendResponse = ChatSendResponse.create()
+			.setTaskId(result.getTaskId())
+			.setStatus("processing");
+		resp.getWriter().write(DtoMapper.toJson(sendResponse));
 	}
 
 	private void handleUpdates(HttpServletRequest req, HttpServletResponse resp) throws IOException {
@@ -125,7 +134,7 @@ public class ChatServlet extends HttpServlet {
 		resp.setStatus(HttpServletResponse.SC_OK);
 		resp.setContentType(CONTENT_TYPE_JSON);
 		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
-		MAPPER.writeValue(resp.getOutputStream(), response);
+		resp.getWriter().write(DtoMapper.toJson(response));
 	}
 
 	private void handleSSE(HttpServletRequest req, HttpServletResponse resp) throws IOException {

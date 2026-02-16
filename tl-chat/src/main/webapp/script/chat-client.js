@@ -298,9 +298,13 @@
 
 			var toolArgs = document.createElement('span');
 			toolArgs.className = 'chat-tool-args';
-			if (ev.args && Object.keys(ev.args).length) {
-				var argsStr = Object.keys(ev.args).map(function(k) {
-					var v = ev.args[k];
+			var parsedArgs = null;
+			if (ev.argsJson && ev.argsJson !== '{}') {
+				try { parsedArgs = JSON.parse(ev.argsJson); } catch(e) { parsedArgs = null; }
+			}
+			if (parsedArgs && Object.keys(parsedArgs).length) {
+				var argsStr = Object.keys(parsedArgs).map(function(k) {
+					var v = parsedArgs[k];
 					if (typeof v === 'string' && v.length > 50) {
 						return k + '="' + v.substring(0, 47) + '..."';
 					}

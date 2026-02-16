@@ -126,9 +126,7 @@ public class KBChangeAnalzyer {
 			Map<String, AssociationStorageDescriptor> descriptors = _modelTables.getDescriptorsForTable(table);
 			if (!descriptors.isEmpty()) {
 				// Table is used to store value of foreign objects.
-				Map<String, Object> values = creation.getValues();
-				analyzeTechnicalUpdate(descriptors, table, createdKeys,
-					value(values), noValue(), part(values), noPart());
+				analyzeTechnicalCreation(descriptors, table, createdKeys, creation);
 			}
 
 			List<TLClass> classes = _modelTables.getClassesForTable(table);
@@ -155,14 +153,11 @@ public class KBChangeAnalzyer {
 		Map<ObjectKey, KnowledgeItem> updatedObjects = _event.getUpdatedObjects();
 		for (ItemUpdate update : _event.getChanges().getUpdates()) {
 			MetaObject table = update.getObjectType();
-			Map<String, Object> values = update.getValues();
-			Map<String, Object> oldValues = update.getOldValues();
 
 			Map<String, AssociationStorageDescriptor> descriptors = _modelTables.getDescriptorsForTable(table);
 			if (!descriptors.isEmpty()) {
 				// Table is used to store value of foreign objects.
-				analyzeTechnicalUpdate(descriptors, table, Collections.emptySet(),
-					value(values), value(oldValues), part(values), part(oldValues));
+				analyzeTechnicalUpdate(descriptors, table, update);
 			}
 
 			List<TLClass> classes = _modelTables.getClassesForTable(table);
@@ -179,6 +174,8 @@ public class KBChangeAnalzyer {
 			TLStructuredType type = newObject.tType();
 
 			// TLStructuredTypeParts that store in the table of the KnowledgeItem
+			Map<String, Object> values = update.getValues();
+			Map<String, Object> oldValues = update.getOldValues();
 			Map<String, TLStructuredTypePart> partByColumn = _modelTables.lookupColumnBinding(type);
 			for (Entry<String, Object> valueUpdate : values.entrySet()) {
 				String storageAttribute = valueUpdate.getKey();
@@ -226,9 +223,7 @@ public class KBChangeAnalzyer {
 			Map<String, AssociationStorageDescriptor> descriptors = _modelTables.getDescriptorsForTable(table);
 			if (!descriptors.isEmpty()) {
 				// Table is used to store value of foreign objects.
-				Map<String, Object> oldValues = deletion.getValues();
-				analyzeTechnicalUpdate(descriptors, table, deletedKeys,
-					noValue(), value(oldValues), noPart(), part(oldValues));
+				analyzeTechnicalDeletion(descriptors, table, deletedKeys, deletion);
 			}
 
 			ObjectKey deletedKey = objectKey(deletion);
@@ -291,10 +286,35 @@ public class KBChangeAnalzyer {
 
 	}
 
+	private void analyzeTechnicalCreation(Map<String, AssociationStorageDescriptor> descriptors, MetaObject table,
+			Set<ObjectKey> createdKeys, ObjectCreation creation) {
+		Map<String, Object> values = creation.getValues();
+		analyzeTechnicalUpdate(descriptors, table, createdKeys,
+			value(values), part(values),
+			noValue(), noPart());
+	}
+
+	private void analyzeTechnicalDeletion(Map<String, AssociationStorageDescriptor> descriptors, MetaObject table, Set<ObjectKey> deletedKeys,
+			ItemDeletion deletion) {
+		Map<String, Object> oldValues = deletion.getValues();
+		analyzeTechnicalUpdate(descriptors, table, deletedKeys,
+			noValue(), noPart(),
+			value(oldValues), part(oldValues));
+	}
+
+	private void analyzeTechnicalUpdate(Map<String, AssociationStorageDescriptor> descriptors, MetaObject table,
+			ItemUpdate update) {
+		Map<String, Object> values = update.getValues();
+		Map<String, Object> oldValues = update.getOldValues();
+		analyzeTechnicalUpdate(descriptors, table, Collections.emptySet(),
+			value(values), part(values),
+			value(oldValues), part(oldValues));
+	}
+
 	private void analyzeTechnicalUpdate(Map<String, AssociationStorageDescriptor> descriptors, MetaObject table,
 			Set<ObjectKey> createdDeletedKeys, Function<AssociationStorageDescriptor, ObjectKey> newValue,
-			Function<AssociationStorageDescriptor, ObjectKey> oldValue,
 			Function<AssociationStorageDescriptor, ObjectKey> newPart,
+			Function<AssociationStorageDescriptor, ObjectKey> oldValue,
 			Function<AssociationStorageDescriptor, ObjectKey> oldPart) {
 		for (AssociationStorageDescriptor descriptor : descriptors.values()) {
 			// A row that stores (part of) an attribute value of some object.
@@ -312,24 +332,24 @@ public class KBChangeAnalzyer {
 				if (oldId == null) {
 					continue;
 				} else {
-					enterChange(table, createdDeletedKeys, descriptor, oldId, oldPartId);
+					enterChange(table, createdDeletedKeys, descriptor, oldId, oldPartId, true);
 				}
 			} else {
 				if (oldId == null) {
-					enterChange(table, createdDeletedKeys, descriptor, newId, newPartId);
+					enterChange(table, createdDeletedKeys, descriptor, newId, newPartId, false);
 				} else if (oldId.equals(newId) && oldPartId.equals(newPartId)) {
 					// No change in descriptor.
 					continue;
 				} else {
-					enterChange(table, createdDeletedKeys, descriptor, oldId, oldPartId);
-					enterChange(table, createdDeletedKeys, descriptor, newId, newPartId);
+					enterChange(table, createdDeletedKeys, descriptor, oldId, oldPartId, true);
+					enterChange(table, createdDeletedKeys, descriptor, newId, newPartId, false);
 				}
 			}
 		}
 	}
 
 	private void enterChange(MetaObject table, Set<ObjectKey> createdDeletedKeys,
-			AssociationStorageDescriptor descriptor, ObjectKey objId, ObjectKey partId) {
+			AssociationStorageDescriptor descriptor, ObjectKey objId, ObjectKey partId, boolean oldValue) {
 		if (createdDeletedKeys.contains(objId)) {
 			// Part of a deleted or created object, no additional change.
 			return;
@@ -346,32 +366,34 @@ public class KBChangeAnalzyer {
 			return;
 		}
 
-		TLStructuredTypePart part;
-		KnowledgeItem partKI = resolve(partId);
-		if (partKI == null) {
-			// part is deleted, but not the object itself
-			assert createdDeletedKeys.contains(partId) : "Part " + partId
-					+ " can not be resolved whereas it was not deleted: " + createdDeletedKeys;
-			part = kb().withoutModifications(
-				() -> {
-					TLStructuredTypePart deleted = resolve(partId).getWrapper();
-					if (isPersistentCacheAttribute(deleted)) {
-						return null;
-					}
-					return deleted;
 
-				});
-			if (part == null) {
-				return;
+		TLStructuredTypePart part;
+
+		if (oldValue) {
+			Set<ObjectKey> deletedKeys = createdDeletedKeys;
+			if (deletedKeys.contains(partId)) {
+				part = kb().withoutModifications(() -> resolvePart(partId));
+			} else {
+				part = resolvePart(partId);
 			}
 		} else {
-			part = partKI.getWrapper();
-			if (isPersistentCacheAttribute(part)) {
-				// Value is just a persistent cache, ignore.
-				return;
-			}
+			part = resolvePart(partId);
+		}
+
+		if (part == null) {
+			// just a persistent cache attribute!
+			return;
 		}
 		enter(object).add(part);
+	}
+
+	private TLStructuredTypePart resolvePart(ObjectKey key) {
+		KnowledgeItem partKI = kb().resolveObjectKey(key);
+		TLStructuredTypePart part = partKI.getWrapper();
+		if (isPersistentCacheAttribute(part)) {
+			return null;
+		}
+		return part;
 	}
 
 	private void registerChange(TLObjectChange change) {

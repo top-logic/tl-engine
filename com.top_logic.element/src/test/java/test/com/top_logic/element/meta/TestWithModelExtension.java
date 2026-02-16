@@ -89,23 +89,33 @@ public abstract class TestWithModelExtension extends BasicTestCase {
 	}
 
 	protected TLModule addModule(String name) {
-		Transaction tx = _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
-		TLModule module = TLModelUtil.addModule(ModelService.getApplicationModel(), name);
-		tx.commit();
-		return module;
+		try (Transaction tx = beginTX()) {
+			TLModule module = TLModelUtil.addModule(ModelService.getApplicationModel(), name);
+			tx.commit();
+			return module;
+		}
+	}
+
+	protected Transaction beginTX() {
+		return _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 	}
 
 	protected TLClass addClass(TLModule module, String name) {
-		Transaction tx = _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
-		TLClass clazz = TLModelUtil.addClass(module, name);
-		tx.commit();
-		return clazz;
+		try (Transaction tx = beginTX()) {
+			TLClass clazz = TLModelUtil.addClass(module, name);
+			tx.commit();
+			return clazz;
+		}
 	}
 
 	protected void delete(TLObject... elements) {
-		Transaction tx = _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
+		Transaction tx = beginTX();
 		ArrayUtil.forEach(elements,TLObject::tDelete);
 		tx.commit();
+	}
+
+	protected TLClass findClass(TLModule module, String name) {
+		return (TLClass) module.getType(name);
 	}
 
 	protected void extendApplicationModel(Class<?> testClass, String suffix) {

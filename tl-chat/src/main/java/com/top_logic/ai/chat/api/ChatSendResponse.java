@@ -23,6 +23,7 @@ public class ChatSendResponse {
 		return _taskId;
 	}
 
+	/** @see #getTaskId() */
 	public void setTaskId(String taskId) {
 		_taskId = taskId;
 	}
@@ -32,6 +33,7 @@ public class ChatSendResponse {
 		return _status;
 	}
 
+	/** @see #getStatus() */
 	public void setStatus(String status) {
 		_status = status;
 	}

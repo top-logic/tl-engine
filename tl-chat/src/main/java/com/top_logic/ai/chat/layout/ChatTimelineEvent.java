@@ -12,7 +12,7 @@ import java.util.function.Supplier;
  *
  * <p>
  * Used by the chat UI to render a unified timeline that clearly distinguishes
- * AgentCall vs ToolCall.
+ * {@code AgentCall} vs {@code ToolCall}.
  * </p>
  */
 public class ChatTimelineEvent {
@@ -71,6 +71,9 @@ public class ChatTimelineEvent {
 			resultSummarySupplier);
 	}
 
+	/**
+	 * The kind of timeline event.
+	 */
 	public Kind getKind() {
 		return _kind;
 	}

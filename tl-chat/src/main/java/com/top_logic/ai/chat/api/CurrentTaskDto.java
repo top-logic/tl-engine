@@ -18,10 +18,12 @@ public class CurrentTaskDto {
 	private List<TimelineEventDto> _timeline;
 	private String _errorMessage;
 
+	/** Unique task identifier. */
 	public String getTaskId() {
 		return _taskId;
 	}
 
+	/** @see #getTaskId() */
 	public void setTaskId(String taskId) {
 		_taskId = taskId;
 	}
@@ -31,30 +33,37 @@ public class CurrentTaskDto {
 		return _status;
 	}
 
+	/** @see #getStatus() */
 	public void setStatus(String status) {
 		_status = status;
 	}
 
+	/** Human-readable task description. */
 	public String getDescription() {
 		return _description;
 	}
 
+	/** @see #getDescription() */
 	public void setDescription(String description) {
 		_description = description;
 	}
 
+	/** List of timeline events (tool calls and agent calls) for this task. */
 	public List<TimelineEventDto> getTimeline() {
 		return _timeline;
 	}
 
+	/** @see #getTimeline() */
 	public void setTimeline(List<TimelineEventDto> timeline) {
 		_timeline = timeline;
 	}
 
+	/** Error message if status is "error"; null otherwise. */
 	public String getErrorMessage() {
 		return _errorMessage;
 	}
 
+	/** @see #getErrorMessage() */
 	public void setErrorMessage(String errorMessage) {
 		_errorMessage = errorMessage;
 	}

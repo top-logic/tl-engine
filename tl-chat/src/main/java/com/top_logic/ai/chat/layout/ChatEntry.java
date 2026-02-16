@@ -13,17 +13,30 @@ package com.top_logic.ai.chat.layout;
  */
 public sealed interface ChatEntry permits ChatEntry.MessageEntry, ChatEntry.TaskEntry, ChatEntry.TaskSnapshotEntry {
 
-	/** A chat message (user or agent). */
+	/**
+	 * A chat message (user or agent).
+	 *
+	 * @param message
+	 *        The chat message.
+	 */
 	record MessageEntry(ChatMessage message) implements ChatEntry {
 	}
 
-	/** Reference to a task by id (for in-progress task rendered at end). */
+	/**
+	 * Reference to a task by id (for in-progress task rendered at end).
+	 *
+	 * @param taskId
+	 *        The task identifier.
+	 */
 	record TaskEntry(String taskId) implements ChatEntry {
 	}
 
 	/**
 	 * Stored copy of a completed task so the trace persists regardless of tracker lookups.
-	 * Rendered as the tool/agent trace (same as TaskEntry but data lives in the chat).
+	 * Rendered as the tool/agent trace (same as {@code TaskEntry} but data lives in the chat).
+	 *
+	 * @param task
+	 *        The completed task snapshot.
 	 */
 	record TaskSnapshotEntry(ChatTask task) implements ChatEntry {
 	}

@@ -105,7 +105,7 @@ public class TaskProgressTracker {
 	 *
 	 * <p>
 	 * Set from contexts where {@code TLContext} is available (e.g. during component creation). Used
-	 * as fallback in contexts where {@code TLContext} is not available (e.g. ChatServlet).
+	 * as fallback in contexts where {@code TLContext} is not available (e.g. {@code ChatServlet}).
 	 * </p>
 	 */
 	public String getUserName() {

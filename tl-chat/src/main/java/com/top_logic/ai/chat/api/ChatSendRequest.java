@@ -17,6 +17,7 @@ public class ChatSendRequest {
 		return _text;
 	}
 
+	/** @see #getText() */
 	public void setText(String text) {
 		_text = text;
 	}

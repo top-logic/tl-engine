@@ -16,26 +16,32 @@ public class ChatUpdatesResponse {
 	private List<MessageDto> _messages;
 	private CurrentTaskDto _currentTask;
 
+	/** Whether an AI task is currently in progress. */
 	public boolean isProcessing() {
 		return _processing;
 	}
 
+	/** @see #isProcessing() */
 	public void setProcessing(boolean processing) {
 		_processing = processing;
 	}
 
+	/** All messages in the chat. */
 	public List<MessageDto> getMessages() {
 		return _messages;
 	}
 
+	/** @see #getMessages() */
 	public void setMessages(List<MessageDto> messages) {
 		_messages = messages;
 	}
 
+	/** Current or most recent task; null if no task. */
 	public CurrentTaskDto getCurrentTask() {
 		return _currentTask;
 	}
 
+	/** @see #getCurrentTask() */
 	public void setCurrentTask(CurrentTaskDto currentTask) {
 		_currentTask = currentTask;
 	}

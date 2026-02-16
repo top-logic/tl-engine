@@ -68,6 +68,15 @@ public final class DtoMapper {
 		return response;
 	}
 
+	/**
+	 * Converts a {@link ChatMessage} to a {@link MessageDto}.
+	 *
+	 * @param msg
+	 *        The chat message to convert.
+	 * @param id
+	 *        The message ID.
+	 * @return The message DTO.
+	 */
 	public static MessageDto toMessageDto(ChatMessage msg, String id) {
 		MessageDto dto = new MessageDto();
 		dto.setId(id);
@@ -87,6 +96,13 @@ public final class DtoMapper {
 		return dto;
 	}
 
+	/**
+	 * Converts a {@link ChatTask} to a {@link CurrentTaskDto}.
+	 *
+	 * @param task
+	 *        The chat task to convert.
+	 * @return The current task DTO.
+	 */
 	public static CurrentTaskDto toCurrentTaskDto(ChatTask task) {
 		CurrentTaskDto dto = new CurrentTaskDto();
 		dto.setTaskId(task.getId());
@@ -114,6 +130,15 @@ public final class DtoMapper {
 		return task.getDescription();
 	}
 
+	/**
+	 * Converts a {@link ChatTimelineEvent} to a {@link TimelineEventDto}.
+	 *
+	 * @param ev
+	 *        The timeline event to convert.
+	 * @param id
+	 *        The event ID.
+	 * @return The timeline event DTO.
+	 */
 	public static TimelineEventDto toTimelineEventDto(ChatTimelineEvent ev, String id) {
 		TimelineEventDto dto = new TimelineEventDto();
 		dto.setId(id);

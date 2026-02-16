@@ -224,7 +224,7 @@ public class ChatProcessor {
 	 * @param userMessage
 	 *        The message text.
 	 * @param repaintRequester
-	 *        Called when polling has updates (e.g. requestRepaint); may be null for API-only.
+	 *        Called when polling has updates (e.g. {@code requestRepaint}); may be null for API-only.
 	 * @param uiExecutor
 	 *        TopLogic UI executor for server-side polling; if null, no polling is scheduled
 	 *        (client polls via SSE).
@@ -364,12 +364,14 @@ public class ChatProcessor {
 		volatile Future<?> _backgroundTask = null;
 		volatile ScheduledFuture<?> _pollingTask = null;
 
+		/** Whether AI is currently processing (not yet completed). */
 		public boolean isProcessing() {
 			synchronized (_lock) {
 				return _processing && !_completed;
 			}
 		}
 
+		/** Starts a new AI processing session. */
 		public void startProcessing() {
 			synchronized (_lock) {
 				_processing = true;
@@ -379,12 +381,23 @@ public class ChatProcessor {
 			}
 		}
 
+		/**
+		 * Adds a pending message to the queue.
+		 *
+		 * @param message
+		 *        The message to add.
+		 */
 		public void addPendingMessage(ChatMessage message) {
 			synchronized (_lock) {
 				_pendingMessages.add(message);
 			}
 		}
 
+		/**
+		 * Consumes all pending messages and clears the queue.
+		 *
+		 * @return The list of pending messages.
+		 */
 		public List<ChatMessage> consumePendingMessages() {
 			synchronized (_lock) {
 				List<ChatMessage> result = new ArrayList<>(_pendingMessages);
@@ -393,6 +406,7 @@ public class ChatProcessor {
 			}
 		}
 
+		/** Marks processing as successfully completed. */
 		public void completeSuccessfully() {
 			synchronized (_lock) {
 				_processing = false;
@@ -400,6 +414,12 @@ public class ChatProcessor {
 			}
 		}
 
+		/**
+		 * Marks processing as completed with an error.
+		 *
+		 * @param error
+		 *        The error that occurred.
+		 */
 		public void completeWithError(Throwable error) {
 			synchronized (_lock) {
 				_processing = false;
@@ -408,6 +428,7 @@ public class ChatProcessor {
 			}
 		}
 
+		/** Cancels the background task and polling task. */
 		public void cancel() {
 			synchronized (_lock) {
 				if (_backgroundTask != null) {
@@ -419,18 +440,32 @@ public class ChatProcessor {
 			}
 		}
 
+		/** The error if processing failed; null otherwise. */
 		public Throwable getError() {
 			return _error;
 		}
 
+		/**
+		 * Sets the current task ID.
+		 *
+		 * @param taskId
+		 *        The task ID.
+		 */
 		public void setCurrentTaskId(String taskId) {
 			_currentTaskId = taskId;
 		}
 
+		/** The current task ID. */
 		public String getCurrentTaskId() {
 			return _currentTaskId;
 		}
 
+		/**
+		 * Sets the tool call tracker for monitoring real-time tool call events.
+		 *
+		 * @param tracker
+		 *        The tool call tracker; may be null.
+		 */
 		public void setToolCallTracker(ToolCallTracker tracker) {
 			_toolCallTracker = tracker;
 			if (tracker != null) {
@@ -442,20 +477,28 @@ public class ChatProcessor {
 			}
 		}
 
+		/** The tool call tracker; may be null. */
 		public ToolCallTracker getToolCallTracker() {
 			return _toolCallTracker;
 		}
 
+		/** The number of tool calls last seen by the polling mechanism. */
 		public int getLastSeenToolCallCount() {
 			return _lastSeenToolCallCount.get();
 		}
 
+		/**
+		 * Updates the last seen tool call count.
+		 *
+		 * @param count
+		 *        The new count.
+		 */
 		public void setLastSeenToolCallCount(int count) {
 			_lastSeenToolCallCount.set(count);
 		}
 	}
 
-	/** Result of a send attempt: success (taskId), busy (already processing), or error. */
+	/** Result of a send attempt: success ({@code taskId}), busy (already processing), or error. */
 	public static final class SendResult {
 		private final String _taskId;
 		private final boolean _busy;
@@ -465,22 +508,32 @@ public class ChatProcessor {
 			_busy = busy;
 		}
 
+		/**
+		 * Creates a successful send result with the given task ID.
+		 *
+		 * @param taskId
+		 *        The task ID.
+		 */
 		public static SendResult ok(String taskId) {
 			return new SendResult(taskId, false);
 		}
 
+		/** Creates a busy send result (AI is already processing). */
 		public static SendResult busy() {
 			return new SendResult(null, true);
 		}
 
+		/** Creates an error send result (send failed). */
 		public static SendResult error() {
 			return new SendResult(null, false);
 		}
 
+		/** The task ID if successful; null otherwise. */
 		public String getTaskId() {
 			return _taskId;
 		}
 
+		/** Whether the send was rejected because AI is already processing. */
 		public boolean isBusy() {
 			return _busy;
 		}

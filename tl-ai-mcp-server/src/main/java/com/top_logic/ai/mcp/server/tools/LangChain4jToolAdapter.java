@@ -89,7 +89,7 @@ public class LangChain4jToolAdapter {
 	/**
 	 * Creates MCP tool specifications for all tools registered in the {@link ToolRegistry}.
 	 * <p>
-	 * This method should only be called when the ToolRegistry is active.
+	 * This method should only be called when the {@link ToolRegistry} is active.
 	 * </p>
 	 *
 	 * @return List of MCP tool specifications for all registered langchain4j tools.

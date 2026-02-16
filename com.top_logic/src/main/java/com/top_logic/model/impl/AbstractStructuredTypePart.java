@@ -248,4 +248,25 @@ public abstract class AbstractStructuredTypePart<O extends TLStructuredType> ext
 		return getDefaultsFromPrimaryGeneralization(annotationInterface, primaryGeneralization);
 	}
 
+	@Override
+	public Object tValue(TLStructuredTypePart part) {
+		switch (part.getName()) {
+			case ABSTRACT_ATTR:
+				return isAbstract();
+			case BAG_ATTR:
+				return isBag();
+			case DEFINITION_ATTR:
+				return getDefinition();
+			case MANDATORY_ATTR:
+				return isMandatory();
+			case MULTIPLE_ATTR:
+				return isMultiple();
+			case ORDERED_ATTR:
+				return isOrdered();
+			case OVERRIDE_ATTR:
+				return isOverride();
+			default:
+				return super.tValue(part);
+		}
+	}
 }

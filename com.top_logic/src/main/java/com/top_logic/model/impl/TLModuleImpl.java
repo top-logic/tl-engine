@@ -19,6 +19,7 @@ import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLScope;
+import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.impl.util.TypeFilteredCollection;
 
@@ -27,7 +28,7 @@ import com.top_logic.model.impl.util.TypeFilteredCollection;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class TLModuleImpl extends AbstractTLModelPart implements TLModule {
+public class TLModuleImpl extends AbstractTLNamedPart implements TLModule {
 
 	private static final Mapping<TLType, Object> TYPE_NAME_MAPPING = new Mapping<>() {
 		@Override
@@ -40,11 +41,6 @@ public class TLModuleImpl extends AbstractTLModelPart implements TLModule {
 		}
 	};
 
-	/**
-	 * @see #getName()
-	 */
-	private String name;
-	
 	/**
 	 * Storage implementation of all types in this module.
 	 */
@@ -131,18 +127,7 @@ public class TLModuleImpl extends AbstractTLModelPart implements TLModule {
 	private final Collection<TLClass> classes = new TypeFilteredCollection<>(types, TLClass.class);
 
 	/*package protected*/ TLModuleImpl(TLModelImpl model, String name) {
-		super(model);
-		this.name = name;
-	}
-	
-	@Override
-	public String getName() {
-		return this.name;
-	}
-
-	@Override
-	public void setName(String value) {
-		this.name = value;
+		super(model, name);
 	}
 	
 	@Override
@@ -173,6 +158,18 @@ public class TLModuleImpl extends AbstractTLModelPart implements TLModule {
 	@Override
 	public TLType getType(String name) {
 		return this.typeByName.get(name);
+	}
+
+	@Override
+	public Object tValue(TLStructuredTypePart part) {
+		switch (part.getName()) {
+			case TYPES_ATTR:
+				return getTypes();
+			case SINGLETONS_ATTR:
+				return getSingletons();
+			default:
+				return super.tValue(part);
+		}
 	}
 
 }

@@ -4,14 +4,17 @@
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 	template="com.top_logic/tileList.template.xml"
 >
-	<arguments helpID="ID_8e0fd981_0bd3_4579_9147_2e3a4c393322">
+	<arguments
+		helpID="ID_8e0fd981_0bd3_4579_9147_2e3a4c393322"
+		types="test.flowchart:Product"
+	>
 		<name key="dynamic.79c3a320-6689-427b-8e31-25cb21b7f4bf">
 			<en>Products</en>
 			<de>Produkte</de>
 		</name>
 		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
 			elements="model->all(`test.flowchart:Product`)"
-			supportsElement="element->$element.instanceOf(`test.flowchart:Product`)"
+			supportsElement="true"
 		/>
 		<preview class="com.top_logic.model.search.tiles.ModelBasedTilePreview">
 			<label class="com.top_logic.model.search.tiles.DynamicTilePreviewText"

@@ -16,7 +16,7 @@
 		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
 			elements="model->all(`test.override:I`)"
 			modelForElement="null"
-			supportsElement="element->$element.instanceOf(`test.override:I`)"
+			supportsElement="true"
 			supportsModel="true"
 		/>
 		<buttons>

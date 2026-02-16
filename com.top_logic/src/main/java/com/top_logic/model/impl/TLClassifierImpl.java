@@ -7,6 +7,7 @@ package com.top_logic.model.impl;
 
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
+import com.top_logic.model.TLStructuredTypePart;
 
 /**
  * Default implementation of {@link TLClassifier}.
@@ -32,6 +33,18 @@ public class TLClassifierImpl extends AbstractTLTypePart<TLEnumeration> implemen
 	@Override
 	public void setDefault(boolean b) {
 		_default = b;
+	}
+
+	@Override
+	public Object tValue(TLStructuredTypePart part) {
+		switch (part.getName()) {
+			case DEFAULT_ATTR:
+				return isDefault();
+			case INDEX_ATTR:
+				return getIndex();
+			default:
+				return super.tValue(part);
+		}
 	}
 
 }

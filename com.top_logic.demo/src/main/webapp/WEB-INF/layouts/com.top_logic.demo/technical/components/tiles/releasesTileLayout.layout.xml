@@ -20,7 +20,6 @@
 		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
 			elements="model->$model.get(`test.tiles:Product#releases`)"
 			modelForElement="model->$model.referers(`test.tiles:Product#releases`).singleElement()"
-			supportsElement="element->$element.instanceOf(`test.tiles:Release`)"
 			supportsModel="true"
 		/>
 		<buttons>

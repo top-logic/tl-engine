@@ -7,7 +7,7 @@
 	<arguments
 		defaultSelection="false"
 		size="300px"
-		type="DemoTypes:DemoTypes.All"
+		type="DemoTypes:A"
 	>
 		<dialogs>
 			<layout-reference resource="com.top_logic.demo/technical/components/generalForms/createObject/dialog.layout.xml"/>
@@ -18,7 +18,7 @@
 		</name>
 		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
 			elements="model->all(`DemoTypes:A`)"
-			supportsElement="element->$element.instanceOf(`DemoTypes:DemoTypes.All`)"
+			supportsElement="true"
 		/>
 		<buttons>
 			<button id="exportExcel"

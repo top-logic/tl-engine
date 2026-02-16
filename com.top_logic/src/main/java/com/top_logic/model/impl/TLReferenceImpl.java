@@ -14,6 +14,7 @@ import com.top_logic.model.TLAssociationEnd;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
+import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.util.error.TopLogicException;
 
@@ -172,5 +173,27 @@ public class TLReferenceImpl extends AbstractStructuredTypePart<TLClass> impleme
 	@Override
 	public AccessChecker getAccessChecker() {
 		return getEnd().getAccessChecker();
+	}
+
+	@Override
+	public Object tValue(TLStructuredTypePart part) {
+		switch (part.getName()) {
+			case AGGREGATE_ATTR:
+				return isAggregate();
+			case COMPOSITE_ATTR:
+				return isComposite();
+			case BACKWARDS_ATTR:
+				return isBackwards();
+			case HISTORY_TYPE_ATTR:
+				return getHistoryType();
+			case END_ATTR:
+				return getEnd();
+			case OPPOSITE_ATTR:
+				return getOpposite();
+			case OPPOSITE_END_ATTR:
+				return getOppositeEnd();
+			default:
+				return super.tValue(part);
+		}
 	}
 }

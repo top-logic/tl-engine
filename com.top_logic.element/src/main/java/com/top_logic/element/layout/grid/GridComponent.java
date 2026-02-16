@@ -41,6 +41,7 @@ import com.top_logic.basic.Log;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.UnreachableAssertion;
+import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.factory.CollectionFactory;
@@ -163,6 +164,7 @@ import com.top_logic.layout.table.component.BuilderComponent;
 import com.top_logic.layout.table.component.ColumnsChannel;
 import com.top_logic.layout.table.component.ComponentRowSource;
 import com.top_logic.layout.table.component.ComponentTableConfigProvider;
+import com.top_logic.layout.table.component.CorrectTypeFilter;
 import com.top_logic.layout.table.component.TableComponent;
 import com.top_logic.layout.table.component.WithCustomConfigKey;
 import com.top_logic.layout.table.control.SelectionVetoListener;
@@ -533,6 +535,13 @@ public class GridComponent extends EditComponent implements
 	private IFunction2<String, Object, String> _configKeyBuilder;
 
 	/**
+	 * Filter that checks whether a potential list element has the correct {@link TLType}. If no
+	 * {@link Config#getElementTypes() types} are configured, all elements are potentially part of
+	 * the list.
+	 */
+	private Filter<Object> _rowTypeFilter;
+
+	/**
 	 * Create a new GridComponent from XML.
 	 */
 	public GridComponent(InstantiationContext context, Config config) throws ConfigurationException {
@@ -554,6 +563,8 @@ public class GridComponent extends EditComponent implements
 		_addTechnicalColumn = config.getAddTechnicalColumn();
 		_onSelectionChange = context.getInstance(config.getOnSelectionChange());
 		_configKeyBuilder = context.getInstance(config.getCustomConfigKey());
+		_rowTypeFilter = CorrectTypeFilter.newTypeFilter(getConfiguredTypes());
+
 	}
 
 	@Override
@@ -971,9 +982,19 @@ public class GridComponent extends EditComponent implements
 		}
 		gridBuilder().receiveModelChangedEvent(this, aModel);
 		invalidateSelection();
+
+		if (!_rowTypeFilter.accept(aModel)) {
+			// model has an unsupported item type.
+			return false;
+		}
+
 		ElementUpdate decision = supportsRow(aModel);
 		if (decision == ElementUpdate.NO_CHANGE) {
 			return false;
+		}
+		if (decision == ElementUpdate.UNKNOWN) {
+			invalidate();
+			return true;
 		}
 
 		FormGroup formGroup = getRowGroup(aModel);
@@ -1252,14 +1273,14 @@ public class GridComponent extends EditComponent implements
 
 	}
 
-    /** 
-     * Return the names of the elements supported by this grid.
-     * 
-     * This information can be used in the {@link ListModelBuilder} for a generic
-     * {@link ListModelBuilder#getModel(Object, LayoutComponent)} approach.
-     * 
-     * @return   The requested names of the supported elements, be <code>null</code>.
-     */
+    /**
+	 * Return the names of the elements supported by this grid.
+	 * 
+	 * This information can be used in the {@link ListModelBuilder} for a generic
+	 * {@link ListModelBuilder#getModel(Object, LayoutComponent)} approach.
+	 * 
+	 * @return The names of the supported elements, not <code>null</code>.
+	 */
     public String[] getElementNames() {
         return this.nodeTypes;
     }

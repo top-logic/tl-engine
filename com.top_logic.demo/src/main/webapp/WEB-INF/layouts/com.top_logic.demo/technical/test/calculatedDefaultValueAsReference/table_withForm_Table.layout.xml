@@ -18,7 +18,7 @@
 		</name>
 		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
 			elements="model->all(`test.defaultValue:ReferringObject`)"
-			supportsElement="element->$element.instanceOf(`test.defaultValue:ReferringObject`)"
+			supportsElement="true"
 		/>
 		<buttons>
 			<button id="exportExcel"

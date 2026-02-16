@@ -25,13 +25,12 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import org.apache.commons.collections4.CollectionUtils;
-
 import com.top_logic.basic.ArrayUtil;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.col.FilterUtil;
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.ConfigurationException;
@@ -100,6 +99,7 @@ import com.top_logic.layout.table.model.TableModelListener;
 import com.top_logic.layout.table.model.TableUtil;
 import com.top_logic.layout.table.provider.GenericTableConfigurationProvider;
 import com.top_logic.layout.toolbar.ToolBar;
+import com.top_logic.mig.html.ElementUpdate;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.mig.html.SelectionModelConfig;
@@ -322,27 +322,39 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 	};
 
 	private static final ChannelValueFilter SELECTION_FILTER = new ChannelValueFilter() {
+
 		@Override
 		public boolean accept(ComponentChannel sender, Object oldValue, Object newValue) {
 			TableComponent self = (TableComponent) sender.getComponent();
 
-			if (!ComponentUtil.isValid(newValue)) {
-				self.showErrorSelectedObjectDeleted();
-				return false;
-			}
-
-			if (newValue != null) {
-				if (newValue instanceof Collection) {
-					for (Object selectedObject : (Collection<?>) newValue) {
-						if (self.getListBuilder().supportsListElement(self, selectedObject).shouldRemove()) {
-							return false;
-						}
-					}
-				} else {
-					if (self.getListBuilder().supportsListElement(self, newValue).shouldRemove()) {
+			if (newValue instanceof Collection) {
+				for (Object selectedObject : (Collection<?>) newValue) {
+					if (!checkSelectedSingleValue(self, selectedObject)) {
 						return false;
 					}
 				}
+				return true;
+			} else if (newValue != null) {
+				return checkSelectedSingleValue(self, newValue);
+			} else {
+				return true;
+			}
+		}
+
+		private boolean checkSelectedSingleValue(TableComponent self, Object selectedObject) {
+			if (!ComponentUtil.isValid(selectedObject)) {
+				/* At this point, it cannot be determined whether the element was deleted by the
+				 * user or whether the deletion originated from another session. */
+//				self.showErrorSelectedObjectDeleted();
+				return false;
+			}
+			if (!self._rowTypeFilter.accept(selectedObject)) {
+				/* Type of the selected element is incompatible with the rows types of
+				 * the table. */
+				return false;
+			}
+			if (self.getListBuilder().supportsListElement(self, selectedObject).shouldRemove()) {
+				return false;
 			}
 			return true;
 		}
@@ -445,11 +457,18 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 	private IFunction2<String, Object, String> _configKeyBuilder;
 
 	/**
+	 * Filter that checks whether a potential list element has the correct {@link TLType}. If no
+	 * {@link #getTypes() types} are configured, all elements are potentially part of the list.
+	 */
+	private Filter<Object> _rowTypeFilter;
+
+	/**
 	 * Create a {@link TableComponent}.
 	 */
 	public TableComponent(final InstantiationContext context, final Config config) throws ConfigurationException {
 		super(context, config);
 		_types = resolveTypes(context, config);
+		_rowTypeFilter = CorrectTypeFilter.newTypeFilter(_types);
 		this.useFooterForPaging = config.getUseFooterForPaging();
 
 		this.selectable = config.getSelectable();
@@ -603,8 +622,10 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 	}
 
 	private boolean isObjectSelectable(TableModel tableModel, Object object) {
-		return tableModel.containsRowObject(object) && _selectionModel.isSelectable(object)
-			&& !getListBuilder().supportsListElement(this, object).shouldRemove();
+		return tableModel.containsRowObject(object)
+				&& _selectionModel.isSelectable(object)
+				&& _rowTypeFilter.accept(object)
+				&& !getListBuilder().supportsListElement(this, object).shouldRemove();
 	}
 
 	private boolean validateRows() {
@@ -768,12 +789,26 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
             return true;
         }
 
-        EditableRowTableModel tableModel = getTableModel();
+		if (!_rowTypeFilter.accept(aModel)) {
+			// model has a invalid row type. It will never be displayed as list element.
+			return false;
+		}
+		
+		ElementUpdate decision = this.getListBuilder().supportsListElement(this, aModel);
+		if (decision == ElementUpdate.NO_CHANGE) {
+			return false;
+		}
+		if (decision == ElementUpdate.UNKNOWN) {
+			invalidate();
+			return true;
+		}
+
+		EditableRowTableModel tableModel = getTableModel();
 		int row = tableModel.getRowOfObject(aModel);
         if (row < 0) {
 			// The changed model is not within the displayed rows.
 
-			if (this.getListBuilder().supportsListElement(this, aModel).shouldAdd()) {
+			if (decision.shouldAdd()) {
 				// The element is now part of this table.
             	addNewRowObject(aModel);
             	return true;
@@ -783,7 +818,7 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
             	return false;
             }
         } else {
-			if (this.getListBuilder().supportsListElement(this, aModel).shouldRemove()) {
+			if (decision.shouldRemove()) {
 				// The element is no longer part of this table.
 				removeRow(tableModel, aModel, row);
 				invalidateSelection();
@@ -809,10 +844,25 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
             return false;
         }
 
-		if (this.getListBuilder().supportsListElement(this, aModel).shouldAdd()) {
-			addNewRowObject(aModel);
-			return true;
-        }
+		if (_rowTypeFilter.accept(aModel)) {
+			// model has a valid row type. It may be displayed as list element.
+
+			ElementUpdate updateDecision = this.getListBuilder().supportsListElement(this, aModel);
+			switch (updateDecision) {
+				case ADD:
+					addNewRowObject(aModel);
+					return true;
+				case UNKNOWN:
+					invalidate();
+					return true;
+				case NO_CHANGE:
+				case REMOVE:
+					return false;
+			}
+
+			throw new IllegalArgumentException("Uncovered case: " + updateDecision);
+		}
+
 
 		return false;
     }
@@ -897,7 +947,7 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 			if (this.listValid) {
 				List<?> displayedRows = getTableModel().getDisplayedRows();
 
-				if (!CollectionUtils.isEmpty(displayedRows) && getTableControl().isSelectable()) {
+				if (!CollectionUtil.isEmpty(displayedRows) && getTableControl().isSelectable()) {
 					return getDefaultSelection(displayedRows);
 				}
 			}
@@ -1171,7 +1221,7 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 				case 0:
 					return setSelected(null);
 				case 1:
-					return setSelected(CollectionUtils.extractSingleton(newSelection));
+					return setSelected(newSelection.iterator().next());
 				default:
 					throw new IllegalArgumentException(
 						"Multiple selection " + newSelection + " for single selection table: " + this);

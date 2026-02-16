@@ -15,7 +15,7 @@
 		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
 			elements="model->all(`DemoTypes:DemoTypes.All`)"
 			modelForElement="null"
-			supportsElement="element->$element.instanceOf(`DemoTypes:DemoTypes.All`)"
+			supportsElement="true"
 			supportsModel="true"
 		/>
 		<dragSource class="com.top_logic.model.search.providers.TableDragSourceByExpression"

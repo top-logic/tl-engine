@@ -8,6 +8,7 @@
 	<arguments
 		helpID="ID_b5160ea3_07b3_46e4_b56c_a52f40a9ff47"
 		securityDomain="SecurityStructure"
+		types="test.tiles:Product"
 	>
 		<name key="dynamic.f093db8a-ab73-4168-a0b9-af031bb37168">
 			<en>Products</en>
@@ -16,7 +17,7 @@
 		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
 			elements="model->all(`test.tiles:Product`)"
 			modelForElement="null"
-			supportsElement="element->$element.instanceOf(`test.tiles:Product`)"
+			supportsElement="true"
 			supportsModel="true"
 		/>
 		<preview class="com.top_logic.model.search.tiles.ModelBasedTilePreview">

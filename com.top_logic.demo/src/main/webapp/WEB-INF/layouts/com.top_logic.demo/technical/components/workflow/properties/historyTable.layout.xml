@@ -13,9 +13,7 @@
 			<en>History</en>
 			<de>Verlauf</de>
 		</name>
-		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
-			supportsElement="element->$element.instanceOf(`tl.bpe.execution:Token`)"
-		>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression">
 			<elements><![CDATA[model->$model
     .get(`tl.bpe.execution:Token#processExecution`)
     .get(`tl.bpe.execution:ProcessExecution#allTokens`)]]></elements>

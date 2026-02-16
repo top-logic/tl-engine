@@ -16,7 +16,7 @@
 		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
 			elements="model->all(`test.dynamictable:Development`)"
 			modelForElement="null"
-			supportsElement="element->$element.instanceOf(`test.dynamictable:Development`)"
+			supportsElement="true"
 			supportsModel="true"
 		/>
 		<configurationProviders>

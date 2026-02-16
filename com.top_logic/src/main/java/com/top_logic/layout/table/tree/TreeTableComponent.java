@@ -35,6 +35,7 @@ import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.annotation.FrameworkInternal;
+import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.col.FilterUtil;
 import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.col.TypedAnnotatable;
@@ -80,6 +81,7 @@ import com.top_logic.layout.table.TableViewModel;
 import com.top_logic.layout.table.component.ComponentRowSource;
 import com.top_logic.layout.table.component.ComponentSelectionVetoListener;
 import com.top_logic.layout.table.component.ComponentTableConfigProvider;
+import com.top_logic.layout.table.component.CorrectTypeFilter;
 import com.top_logic.layout.table.component.InvalidSelectionVeto;
 import com.top_logic.layout.table.component.TableComponent;
 import com.top_logic.layout.table.component.TableComponentTableConfigProvider;
@@ -318,13 +320,21 @@ public class TreeTableComponent extends BoundComponent
 	private CommandHandler _onSelectionChange;
 
 	private IFunction2<String, Object, String> _configKeyBuilder;
+
 	/**
-	 * Legacy constructor for creating an {@link TreeTableComponent} via {@link Config}.
+	 * Filter that checks whether a potential list element has the correct {@link TLType}. If no
+	 * {@link #getTypes() types} are configured, all elements are potentially part of the list.
+	 */
+	private Filter<Object> _rowTypeFilter;
+
+	/**
+	 * Creates a {@link TreeTableComponent} via {@link Config}.
 	 */
 	@CalledByReflection
 	public TreeTableComponent(InstantiationContext context, Config config) throws ConfigurationException {
 		super(context, config);
 		_types = resolveTypes(context, config);
+		_rowTypeFilter = CorrectTypeFilter.newTypeFilter(_types);
 		_rootVisible = config.isRootVisible();
 		_treeBuilder = context.getInstance(config.getTreeBuilder());
 		_expandSelected = config.getExpandSelected();
@@ -566,7 +576,12 @@ public class TreeTableComponent extends BoundComponent
 	}
 
 	private void updateNodeObject(Object nodeObject) {
+		if (!_rowTypeFilter.accept(nodeObject)) {
+			// Object has incorrect row type.
+			return;
+		}
 		TreeModelBuilder<Object> treeModelBuilder = getTreeModelBuilder();
+
 		if (treeModelBuilder != null && treeModelBuilder.supportsNode(this, nodeObject)) {
 			Maybe<AbstractTreeTableNode<?>> node = findNodeOfBusinessObject(nodeObject);
 			if (node.hasValue()) {

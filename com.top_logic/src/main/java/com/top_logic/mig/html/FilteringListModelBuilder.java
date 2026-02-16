@@ -70,7 +70,7 @@ public class FilteringListModelBuilder extends ProxyListModelBuilder<FilteringLi
 	@Override
 	public ElementUpdate supportsListElement(LayoutComponent contextComponent, Object listElement) {
 		ElementUpdate unfilteredSupports = super.supportsListElement(contextComponent, listElement);
-		if (unfilteredSupports == ElementUpdate.NO_CHANGE) {
+		if (unfilteredSupports == ElementUpdate.NO_CHANGE || unfilteredSupports == ElementUpdate.UNKNOWN) {
 			return unfilteredSupports;
 		}
 

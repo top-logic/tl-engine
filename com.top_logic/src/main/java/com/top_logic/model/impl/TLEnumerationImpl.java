@@ -11,6 +11,7 @@ import com.top_logic.basic.col.ObservableList;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLModel;
+import com.top_logic.model.TLStructuredTypePart;
 
 /**
  * Default implementation of {@link TLEnumeration}.
@@ -41,4 +42,13 @@ public class TLEnumerationImpl extends AbstractTLType implements TLEnumeration {
 		return this.classifiers;
 	}
 
+	@Override
+	public Object tValue(TLStructuredTypePart part) {
+		switch (part.getName()) {
+			case CLASSIFIERS_ATTR:
+				return getClassifiers();
+			default:
+				return super.tValue(part);
+		}
+	}
 }

@@ -14,7 +14,7 @@
 		</name>
 		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
 			elements="model->all(`DemoTypes:A`)"
-			supportsElement="element->$element.instanceOf(`DemoTypes:A`)"
+			supportsElement="true"
 		/>
 		<buttons>
 			<button id="exportExcel"

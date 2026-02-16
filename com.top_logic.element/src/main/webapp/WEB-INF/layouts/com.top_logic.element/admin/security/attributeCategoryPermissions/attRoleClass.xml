@@ -27,17 +27,6 @@
 					columnWidth="372px"
 					filterProvider="com.top_logic.layout.table.filter.LabelFilterProvider"
 				/>
-
-				<columns>
-					<column name="name"
-						accessor="com.top_logic.layout.IdentityAccessor"
-						labelProvider="com.top_logic.element.layout.security.AttSecMetaElementLabelProvider"
-					>
-						<sortKeyProvider class="com.top_logic.layout.LabelMapping"
-							labels="com.top_logic.element.layout.security.AttSecMetaElementLabelProvider"
-						/>
-					</column>
-				</columns>
 			</table>
 		</tableView>
 		<component class="com.top_logic.element.layout.security.AttributeClassifierRolesComponent"

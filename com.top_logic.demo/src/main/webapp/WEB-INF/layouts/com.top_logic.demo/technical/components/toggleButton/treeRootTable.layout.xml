@@ -14,7 +14,6 @@
 		</name>
 		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
 			elements="model->`DemoTypes#ROOT`.get(`tl.element:StructuredElementContainer#children`)"
-			supportsElement="element->$element.instanceOf(`DemoTypes:DemoTypes.BC`)"
 		/>
 		<buttons>
 			<button id="exportExcel"

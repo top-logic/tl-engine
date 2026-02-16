@@ -788,21 +788,29 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 		public static TLObject mkEditContext(AttributeUpdateContainer updateContainer, FormContainer contentGroup,
 				TLObject editedObject, Collection<String> readOnlyColumns) {
 			TLFormObject existingOverlay = updateContainer.getExistingOverlay(editedObject);
+			TLFormObject overlay;
 			if (existingOverlay != null) {
-				return existingOverlay;
+				overlay = existingOverlay;
+			} else {
+				overlay = updateContainer.editObject(editedObject);
+			}
+			
+			AttributeFormContext context = updateContainer.getFormContext();
+			if (context.hasOwnFormContainer(overlay)) {
+				// overlay already initialized.
+				return overlay;
 			}
 
-			TLFormObject newOverlay = updateContainer.editObject(editedObject);
-			FormContainer rowGroup = updateContainer.getFormContext().createFormContainerForOverlay(newOverlay);
+			FormContainer rowGroup = context.createFormContainerForOverlay(overlay);
 			rowGroup.setStableIdSpecialCaseMarker(editedObject);
 			contentGroup.addMember(rowGroup);
 			for (TLStructuredTypePart attribute : editedObject.tType().getAllParts()) {
 				if (DisplayAnnotations.isHidden(attribute)) {
 					continue;
 				}
-				addFieldForEditContext(updateContainer, rowGroup, newOverlay, attribute, readOnlyColumns);
+				addFieldForEditContext(updateContainer, rowGroup, overlay, attribute, readOnlyColumns);
 			}
-			return newOverlay;
+			return overlay;
 		}
 
 		/**

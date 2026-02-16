@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.top_logic.ai.mcp.server.completions.ModuleNameCompletion;
 import com.top_logic.ai.mcp.server.dynamic.ConfigurableResourceTemplate;
 import com.top_logic.ai.mcp.server.dynamic.DynamicResource;
+import com.top_logic.ai.mcp.server.resources.ConfigSchemaResource;
 import com.top_logic.ai.mcp.server.resources.EnumerationClassifiersResource;
 import com.top_logic.ai.mcp.server.resources.InstanceResource;
 import com.top_logic.ai.mcp.server.resources.ModelModulesResource;
@@ -38,6 +39,8 @@ import com.top_logic.ai.mcp.server.tools.ReferenceCreationTool;
 import com.top_logic.ai.mcp.server.tools.TLScriptExecutionTool;
 import com.top_logic.ai.mcp.server.tools.TLScriptFunctionsMCPTool;
 import com.top_logic.ai.mcp.server.tools.TLScriptValidationTool;
+import com.top_logic.ai.mcp.server.tools.LangChain4jToolAdapter;
+import com.top_logic.ai.service.tools.registry.ToolRegistry;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
@@ -82,7 +85,8 @@ import io.modelcontextprotocol.spec.McpSchema.ServerCapabilities;
  * @author Bernhard Haumacher
  */
 @ServiceDependencies({
-	ServletContextService.Module.class
+	ServletContextService.Module.class,
+	ToolRegistry.Module.class
 })
 public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Config<?>> {
 
@@ -302,6 +306,9 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 		// Register resource template for finding usages of a specific type
 		builder.resourceTemplates(TypeUsagesResource.createSpecification());
 
+		// Register resource template for configuration interface JSON schemas
+		builder.resourceTemplates(ConfigSchemaResource.createSpecification());
+
 		// Register completion handler for module name parameter
 		builder.completions(ModuleNameCompletion.createSpecification());
 
@@ -355,6 +362,12 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 		for (PolymorphicConfiguration<? extends DynamicResource> resourceConfig : getConfig().getDynamicResources()) {
 			DynamicResource resource = context.getInstance(resourceConfig);
 			builder.resourceTemplates(resource.createSpecification());
+		}
+
+		// Register langchain4j tools from ToolRegistry (if available)
+		for (io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification adaptedTool :
+				LangChain4jToolAdapter.adaptAllTools()) {
+			builder.tools(adaptedTool);
 		}
 	}
 

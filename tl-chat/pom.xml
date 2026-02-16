@@ -3,9 +3,9 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>com.top-logic</groupId>
-		<artifactId>tl-parent-app</artifactId>
-		<version>7.10.0-SNAPSHOT</version>	
+		<groupId>com.top-logic</groupId>	
+		<artifactId>tl-parent-core</artifactId>
+		<version>0.0.1-AI</version>
 	</parent>
 	
 	<artifactId>tl-chat</artifactId>

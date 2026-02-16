@@ -65,6 +65,16 @@
 							tool-class="com.top_logic.ai.service.tools.model.TypeAnalysisTool"
 						/>
 					</factory>
+					<factory name="config-schema">
+						<implementation class="com.top_logic.ai.service.tools.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.ai.service.tools.config.ConfigSchemaTool"
+						/>
+					</factory>
+					<factory name="layout-templates">
+						<implementation class="com.top_logic.ai.service.tools.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.ai.service.tools.layout.LayoutTemplateTool"
+						/>
+					</factory>
 
 					<!-- Example configuration with ReflectiveToolFactory:
 					<factory name="mytools">

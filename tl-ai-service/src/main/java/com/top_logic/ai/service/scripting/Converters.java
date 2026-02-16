@@ -50,16 +50,24 @@ public class Converters extends TLScriptFunctions {
 	 * @return HTML fragment that can be rendered.
 	 */
 	public static HTMLFragment markdownToHtml(@Mandatory String markdown) {
+		return Fragments.htmlSource(markdownToHtmlString(markdown));
+	}
+
+	/**
+	 * Converts <i>Markdown</i> to an HTML string.
+	 *
+	 * @param markdown
+	 *        Text in <i>Markdown</i> format.
+	 * @return HTML string.
+	 */
+	public static String markdownToHtmlString(@Mandatory String markdown) {
 		MutableDataSet options = DEFAULT_OPTIONS;
 
 		Parser parser = Parser.builder(options).build();
 		HtmlRenderer renderer = HtmlRenderer.builder(options).build();
 
-		// You can re-use parser and renderer instances
 		Node document = parser.parse(markdown);
-		String html = renderer.render(document);
-
-		return Fragments.htmlSource(html);
+		return renderer.render(document);
 	}
 
 	/**

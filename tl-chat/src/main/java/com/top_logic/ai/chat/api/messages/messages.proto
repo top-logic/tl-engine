@@ -1,0 +1,232 @@
+package com.top_logic.ai.chat.api.messages;
+
+option NoBinary;
+option NoVisit;
+option NoListener;
+option NoInterfaces;
+option NoXml;
+
+/**
+ * One message in the chat.
+ */
+message MessageDto {
+	/**
+	 * Message ID.
+	 */
+	string id;
+
+	/**
+	 * "user", "agent", or "system".
+	 */
+	string role;
+
+	/**
+	 * Display name of the user who sent this message.
+	 */
+	string userName;
+
+	/**
+	 * Message text content.
+	 */
+	string content;
+
+	/**
+	 * Pre-rendered HTML for the message content (agent messages only; null for user/system).
+	 */
+	string contentHtml;
+
+	/**
+	 * Formatted timestamp string.
+	 */
+	string time;
+}
+
+/**
+ * One timeline event (tool call or agent call).
+ */
+message TimelineEventDto {
+	/**
+	 * Event identifier.
+	 */
+	string id;
+
+	/**
+	 * Event type: "tool_call" or "agent_call".
+	 */
+	string type;
+
+	/**
+	 * Tool name (for tool_call events).
+	 */
+	string toolName;
+
+	/**
+	 * Event name.
+	 */
+	string name;
+
+	/**
+	 * Tool arguments as JSON string (for tool_call events).
+	 */
+	string argsJson;
+
+	/**
+	 * Tool result (for tool_call events).
+	 */
+	string result;
+
+	/**
+	 * Source agent name (for agent_call events).
+	 */
+	string fromAgent;
+
+	/**
+	 * Target agent name (for agent_call events).
+	 */
+	string toAgent;
+
+	/**
+	 * Input summary (for agent_call events).
+	 */
+	string inputSummary;
+
+	/**
+	 * Result summary (for agent_call events).
+	 */
+	string resultSummary;
+}
+
+/**
+ * Current (in-progress or just-finished) task.
+ */
+message CurrentTaskDto {
+	/**
+	 * Unique task identifier.
+	 */
+	string taskId;
+
+	/**
+	 * "in_progress", "completed", "error".
+	 */
+	string status;
+
+	/**
+	 * Human-readable task description.
+	 */
+	string description;
+
+	/**
+	 * Error message if status is "error"; null otherwise.
+	 */
+	string errorMessage;
+
+	/**
+	 * List of timeline events (tool calls and agent calls) for this task.
+	 */
+	repeated TimelineEventDto timeline;
+}
+
+/**
+ * Response body for GET /chat/updates.
+ */
+message ChatUpdatesResponse {
+	/**
+	 * Whether an AI task is currently in progress.
+	 */
+	boolean processing;
+
+	/**
+	 * All messages in the chat.
+	 */
+	repeated MessageDto messages;
+
+	/**
+	 * Current or most recent task; null if no task.
+	 */
+	CurrentTaskDto currentTask;
+}
+
+/**
+ * Request body for POST /chat/send.
+ */
+message ChatSendRequest {
+	/**
+	 * User message text.
+	 */
+	string text;
+}
+
+/**
+ * Response body for POST /chat/send.
+ */
+message ChatSendResponse {
+	/**
+	 * Task ID for polling updates.
+	 */
+	string taskId;
+
+	/**
+	 * e.g. "processing".
+	 */
+	string status;
+}
+
+/**
+ * SSE connected event payload.
+ */
+message ConnectedEvent {
+	/**
+	 * Current message sequence number.
+	 */
+	int messageSeq;
+
+	/**
+	 * Current timeline sequence number.
+	 */
+	int timelineSeq;
+
+	/**
+	 * Whether an AI task is currently in progress.
+	 */
+	boolean processing;
+
+	/**
+	 * Current task ID, or null if none.
+	 */
+	string taskId;
+}
+
+/**
+ * SSE task status event payload.
+ */
+message TaskStatusEvent {
+	/**
+	 * Task identifier.
+	 */
+	string taskId;
+
+	/**
+	 * Task status string (e.g. "in_progress", "completed", "error").
+	 */
+	string status;
+
+	/**
+	 * Human-readable task description.
+	 */
+	string description;
+
+	/**
+	 * Error message if status is "error"; null otherwise.
+	 */
+	string errorMessage;
+}
+
+/**
+ * SSE heartbeat event payload.
+ */
+message HeartbeatEvent {
+	/**
+	 * Current server timestamp in milliseconds.
+	 */
+	long ts;
+}

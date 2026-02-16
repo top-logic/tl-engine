@@ -8,27 +8,11 @@ package com.top_logic.ai.chat.layout;
 import java.io.IOException;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import com.top_logic.ai.service.AIService;
-import com.top_logic.ai.service.agents.ModelExplorer;
-import com.top_logic.ai.service.agents.TLScriptAgent;
-import com.top_logic.ai.service.agents.UMLSpecificationAgent;
 import com.top_logic.ai.service.scripting.Converters;
-import com.top_logic.ai.service.scripting.OpenAIScriptFunctions;
-import com.top_logic.ai.service.tools.model.AnnotationDefinitionExplorerTool;
-import com.top_logic.ai.service.tools.model.InstanceBrowserTool;
-import com.top_logic.ai.service.tools.model.ModelAnnotationBrowserTool;
-import com.top_logic.ai.service.tools.model.ModelBrowserTool;
-import com.top_logic.ai.service.tools.model.ModelSearchTool;
-import com.top_logic.ai.service.tools.model.TypeAnalysisTool;
-import com.top_logic.ai.service.tools.ToolCallTracker;
-import com.top_logic.ai.service.tools.ToolCallTracking;
-import com.top_logic.ai.service.tools.help.ModelExplorerTool;
-import com.top_logic.ai.service.tools.help.TLScriptReferenceTool;
-import com.top_logic.basic.Logger;
+import com.top_logic.ai.service.tools.util.JsonPrettyPrint;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Control;
@@ -37,36 +21,38 @@ import com.top_logic.layout.UpdateQueue;
 import com.top_logic.layout.basic.AbstractControlBase;
 import com.top_logic.layout.basic.ControlCommand;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.TLContext;
-
-import dev.langchain4j.agentic.AgenticServices;
-import dev.langchain4j.model.chat.ChatModel;
 
 /**
- * A minimal chat control displaying messages and allowing user input.
+ * Chat control that renders messages, task traces, and an input section.
  *
- * @author jhu
+ * <p>
+ * All background processing logic (AI execution, polling, state management) lives in
+ * {@link ChatProcessor}. This class is responsible only for rendering and the thin
+ * {@link SendMessage} command fallback.
+ * </p>
  */
 public class ChatControl extends AbstractControlBase {
 
 	private static final Map<String, ControlCommand> COMMANDS =
-		createCommandMap(SendMessage.INSTANCE, AIResponse.INSTANCE);
+		createCommandMap(SendMessage.INSTANCE);
 
 	private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm:ss");
 
 	private final Chat _chat;
 
-	private boolean _scheduleAIResponse = false;
+	/** Shared state for background processing (null when not processing) */
+	private ChatProcessor.AIProcessingState _processingState = null;
 
-	/** List to hold notifier messages for progress updates */
-	private final List<ChatNotifier> _notifiers = new ArrayList<>();
+	/** Session-scoped task progress tracker */
+	private final TaskProgressTracker _taskTracker;
 
 	/**
 	 * Creates a new {@link ChatControl}.
 	 */
-	public ChatControl(Chat chat) {
+	public ChatControl(Chat chat, TaskProgressTracker taskTracker) {
 		super(COMMANDS);
 		_chat = chat;
+		_taskTracker = taskTracker;
 	}
 
 	@Override
@@ -90,9 +76,23 @@ public class ChatControl extends AbstractControlBase {
 	}
 
 	@Override
+	protected void internalDetach() {
+		// Do NOT cancel processing on detach: state lives in tracker so navigation away and back
+		// still shows in-progress task and agent answer when it arrives.
+		_processingState = null;
+		super.internalDetach();
+	}
+
+	@Override
 	protected void internalWrite(DisplayContext context, TagWriter out) throws IOException {
 		out.beginBeginTag(DIV);
 		writeControlAttributes(context, out);
+		out.writeAttribute("data-tl-chat", "v1");
+		out.writeAttribute("data-chat-messages-id", getID() + "-messages");
+		out.writeAttribute("data-chat-input-id", getID() + "-input");
+		out.writeAttribute("data-chat-button-id", getID() + "-button");
+		out.writeAttribute("data-chat-user-name",
+			_taskTracker.getUserName() != null ? _taskTracker.getUserName() : "User");
 		out.endBeginTag();
 		{
 			writeMessages(context, out);
@@ -100,22 +100,14 @@ public class ChatControl extends AbstractControlBase {
 		}
 		out.endTag(DIV);
 
-		if (_scheduleAIResponse) {
-			_scheduleAIResponse = false;
-			out.beginScript();
-			out.append("setTimeout(function() {");
-			out.append("services.ajax.execute('dispatchControlCommand', {");
-			out.append("controlID: '");
-			out.append(getID());
-			out.append("',");
-			out.append("controlCommand: '");
-			out.append(AIResponse.COMMAND_ID);
-			out.append("',");
-			out.append("userMessage: ''"); // Will be populated from command
-			out.append("});");
-			out.append("}, 100);"); // Short delay to allow UI update
-			out.endScript();
-		}
+		// Load chat client via inline script so it runs when fragment is AJAX-injected
+		// (browsers do not execute <script src="..."> in injected HTML)
+		String contextPath = context.getContextPath();
+		out.beginScript();
+		out.append("(function(){var s=document.createElement('script');s.src='");
+		out.append(contextPath);
+		out.append("/script/chat-client.js';s.type='text/javascript';(document.head||document.documentElement).appendChild(s);})();");
+		out.endScript();
 	}
 
 	@Override
@@ -131,14 +123,32 @@ public class ChatControl extends AbstractControlBase {
 		out.writeAttribute(ID_ATTR, messagesId);
 		out.endBeginTag();
 		{
-			// Render regular chat messages
-			for (ChatMessage msg : _chat.getMessages()) {
-				writeMessage(context, out, msg);
+			// Render entries in order: user message -> task trace -> agent response
+			int messageIndex = 0;
+			for (ChatEntry entry : _chat.getEntries()) {
+				if (entry instanceof ChatEntry.MessageEntry me) {
+					writeMessage(context, out, me.message(), messageIndex);
+					messageIndex++;
+				} else if (entry instanceof ChatEntry.TaskEntry te) {
+					ChatTask task = _taskTracker.getTask(te.taskId());
+					if (task != null) {
+						writeTask(context, out, task);
+					}
+				} else if (entry instanceof ChatEntry.TaskSnapshotEntry tse) {
+					writeTask(context, out, tse.task());
+				}
 			}
-
-			// Render notifier messages
-			for (ChatNotifier notifier : _notifiers) {
-				writeNotifierMessage(out, notifier);
+			// Show in-progress task (not yet in entries) so trace appears after user message.
+			ChatProcessor.AIProcessingState state = _processingState != null ? _processingState
+				: _taskTracker.getCurrentProcessingState();
+			if (state != null) {
+				String currentTaskId = state.getCurrentTaskId();
+				if (currentTaskId != null) {
+					ChatTask task = _taskTracker.getTask(currentTaskId);
+					if (task != null && task.getStatus() == ChatTask.TaskStatus.IN_PROGRESS) {
+						writeTask(context, out, task);
+					}
+				}
 			}
 		}
 		out.endTag(DIV);
@@ -154,9 +164,13 @@ public class ChatControl extends AbstractControlBase {
 		out.endScript();
 	}
 
-	private void writeMessage(DisplayContext context, TagWriter out, ChatMessage msg) throws IOException {
+	private void writeMessage(DisplayContext context, TagWriter out, ChatMessage msg, int messageIndex)
+			throws IOException {
+		String role = getRoleForUser(msg.getUser());
+
 		out.beginBeginTag(DIV);
-		out.writeAttribute(CLASS_ATTR, "chat-message");
+		out.writeAttribute(CLASS_ATTR, "chat-message chat-message-" + role);
+		out.writeAttribute("data-message-id", "m" + messageIndex);
 		out.endBeginTag();
 		{
 			// User name
@@ -166,147 +180,393 @@ public class ChatControl extends AbstractControlBase {
 			out.writeText(msg.getUser());
 			out.endTag(SPAN);
 
-			out.writeText(" ");
+			// Bubble wrapper around message text
+			out.beginBeginTag(DIV);
+			out.writeAttribute(CLASS_ATTR, "chat-bubble");
+			out.endBeginTag();
+			{
+				out.beginBeginTag(SPAN);
+				out.writeAttribute(CLASS_ATTR, "chat-text");
+				out.endBeginTag();
+				Converters.markdownToHtml(msg.getText()).write(context, out);
+				out.endTag(SPAN);
+			}
+			out.endTag(DIV);
 
 			// Timestamp
 			out.beginBeginTag(SPAN);
 			out.writeAttribute(CLASS_ATTR, "chat-time");
 			out.endBeginTag();
-			out.writeText("(" + TIME_FORMAT.format(msg.getTimestamp().atZone(ZoneId.systemDefault())) + ")");
-			out.endTag(SPAN);
-
-			out.writeText(": ");
-
-			// Message text
-			out.beginBeginTag(SPAN);
-			out.writeAttribute(CLASS_ATTR, "chat-text");
-			out.endBeginTag();
-			Converters.markdownToHtml(msg.getText()).write(context, out);
+			out.writeText(TIME_FORMAT.format(msg.getTimestamp().atZone(ZoneId.systemDefault())));
 			out.endTag(SPAN);
 		}
 		out.endTag(DIV);
 	}
 
-	private void writeNotifierMessage(TagWriter out, ChatNotifier notifier) throws IOException {
+	private static String getRoleForUser(String user) {
+		if ("Agent".equals(user) || "AI".equals(user)) {
+			return "agent";
+		}
+		if ("System".equals(user)) {
+			return "system";
+		}
+		return "user";
+	}
+
+	private void writeTask(DisplayContext context, TagWriter out, ChatTask task) throws IOException {
+		String taskDivId = "task-" + task.getId();
+
 		out.beginBeginTag(DIV);
-		out.writeAttribute(CLASS_ATTR, "chat-notifier");
+		out.writeAttribute(CLASS_ATTR, "chat-task");
+		out.writeAttribute("data-task-id", task.getId());
+		out.writeAttribute("data-status", task.getStatus().name().toLowerCase());
 		out.endBeginTag();
 		{
-			// Icon and source
+			writeTaskHeader(out, task, taskDivId);
+			writeTaskBody(context, out, task, taskDivId);
+		}
+		out.endTag(DIV);
+	}
+
+	private void writeTaskHeader(TagWriter out, ChatTask task, String taskDivId) throws IOException {
+		boolean isFinished =
+			task.getStatus() == ChatTask.TaskStatus.COMPLETED || task.getStatus() == ChatTask.TaskStatus.ERROR;
+
+		out.beginBeginTag(DIV);
+		out.writeAttribute(CLASS_ATTR, "chat-task-header");
+		if (isFinished) {
+			String bodyId = taskDivId + "-body";
+			String arrowId = taskDivId + "-arrow";
+			out.writeAttribute(ONCLICK_ATTR,
+				"toggleTaskExpand('" + bodyId + "', '" + arrowId + "')");
+		}
+		out.endBeginTag();
+		{
+			// Status icon
 			out.beginBeginTag(SPAN);
-			out.writeAttribute(CLASS_ATTR, "chat-notifier-source");
+			out.writeAttribute(CLASS_ATTR, "chat-task-icon");
 			out.endBeginTag();
-			out.writeText(notifier.getIcon() + " " + notifier.getSource());
+			out.writeText(getTaskIcon(task.getStatus()));
 			out.endTag(SPAN);
 
-			out.writeText(" ");
-
-			// Timestamp
+			// Description
+			String headerText = getTaskHeaderDescription(task);
 			out.beginBeginTag(SPAN);
-			out.writeAttribute(CLASS_ATTR, "chat-notifier-time");
+			out.writeAttribute(CLASS_ATTR, "chat-task-description");
 			out.endBeginTag();
-			out.writeText("(" + TIME_FORMAT.format(notifier.getTimestamp().atZone(ZoneId.systemDefault())) + ")");
+			out.writeText(headerText);
 			out.endTag(SPAN);
 
-			out.writeText(": ");
+			// Duration
+			if (task.getEndTime() != null) {
+				long durationMs = java.time.Duration.between(task.getStartTime(), task.getEndTime()).toMillis();
+				out.beginBeginTag(SPAN);
+				out.writeAttribute(CLASS_ATTR, "chat-task-time");
+				out.endBeginTag();
+				out.writeText(formatDuration(durationMs));
+				out.endTag(SPAN);
+			}
 
-			// Message text with type-specific styling
+			// Expand arrow (visible for completed/error tasks via CSS)
 			out.beginBeginTag(SPAN);
-			out.writeAttribute(CLASS_ATTR, getNotifierTextClass(notifier.getType()));
+			out.writeAttribute(CLASS_ATTR, "chat-task-expand");
+			out.writeAttribute(ID_ATTR, taskDivId + "-arrow");
 			out.endBeginTag();
-			out.writeText(notifier.getMessage());
+			out.writeText(isFinished ? "\u25B6" : ""); // ▶ collapsed indicator
 			out.endTag(SPAN);
 		}
 		out.endTag(DIV);
 	}
 
-	private String getNotifierTextClass(ChatNotifier.NotificationType type) {
-		switch (type) {
-			case INFO:
-				return "chat-notifier-text-info";
-			case PROGRESS:
-				return "chat-notifier-text-progress";
-			case SUCCESS:
-				return "chat-notifier-text-success";
+	private void writeTaskBody(DisplayContext context, TagWriter out, ChatTask task, String taskDivId)
+			throws IOException {
+		boolean isFinished =
+			task.getStatus() == ChatTask.TaskStatus.COMPLETED || task.getStatus() == ChatTask.TaskStatus.ERROR;
+
+		out.beginBeginTag(DIV);
+		out.writeAttribute(CLASS_ATTR, "chat-task-body");
+		out.writeAttribute(ID_ATTR, taskDivId + "-body");
+		if (isFinished) {
+			out.writeAttribute("style", "display: none");
+		}
+		out.endBeginTag();
+		{
+			// Timeline: group tool calls under their parent agent calls.
+			// Tool calls that follow an agent_call belong to that agent;
+			// tool calls before any agent_call are top-level (orchestrator's own).
+			List<ChatTimelineEvent> events = task.getTimelineEvents();
+			int i = 0;
+			while (i < events.size()) {
+				ChatTimelineEvent ev = events.get(i);
+				if (ev.getKind() == ChatTimelineEvent.Kind.AGENT_CALL) {
+					// Collect subsequent tool calls that belong to this agent
+					List<ChatTimelineEvent> childTools = new java.util.ArrayList<>();
+					List<String> childToolIds = new java.util.ArrayList<>();
+					int j = i + 1;
+					while (j < events.size()
+						&& events.get(j).getKind() == ChatTimelineEvent.Kind.TOOL_CALL) {
+						childTools.add(events.get(j));
+						childToolIds.add("e" + j);
+						j++;
+					}
+					writeAgentCall(out, ev, taskDivId + "-agent-" + i, "e" + i, childTools, childToolIds);
+					i = j;
+				} else if (ev.getKind() == ChatTimelineEvent.Kind.TOOL_CALL && ev.getToolCall() != null) {
+					writeToolCall(out, ev.getToolCall(), "e" + i);
+					i++;
+				} else {
+					i++;
+				}
+			}
+
+			// Error message if failed
+			if (task.getStatus() == ChatTask.TaskStatus.ERROR && task.getErrorMessage() != null) {
+				out.beginBeginTag(DIV);
+				out.writeAttribute(CLASS_ATTR, "chat-task-error");
+				out.endBeginTag();
+				out.writeText("Error: " + task.getErrorMessage());
+				out.endTag(DIV);
+			}
+		}
+		out.endTag(DIV);
+	}
+
+	private void writeAgentCall(TagWriter out, ChatTimelineEvent ev, String agentCallId, String eventId,
+			List<ChatTimelineEvent> childTools, List<String> childToolIds) throws IOException {
+		String bodyId = agentCallId + "-body";
+		String arrowId = agentCallId + "-arrow";
+
+		out.beginBeginTag(DIV);
+		out.writeAttribute(CLASS_ATTR, "chat-agent-call");
+		out.writeAttribute("data-event-id", eventId);
+		out.endBeginTag();
+		{
+			// Clickable header: label + expand arrow
+			out.beginBeginTag(DIV);
+			out.writeAttribute(CLASS_ATTR, "chat-agent-call-header");
+			out.writeAttribute(ONCLICK_ATTR, "toggleToolExpand('" + bodyId + "', '" + arrowId + "')");
+			out.endBeginTag();
+			{
+				out.beginBeginTag(SPAN);
+				out.writeAttribute(CLASS_ATTR, "chat-agent-call-label");
+				out.endBeginTag();
+				out.writeText(ev.getFromAgent() + " \u2192 " + ev.getToAgent());
+				out.endTag(SPAN);
+				out.beginBeginTag(SPAN);
+				out.writeAttribute(CLASS_ATTR, "chat-agent-call-expand");
+				out.writeAttribute(ID_ATTR, arrowId);
+				out.endBeginTag();
+				out.writeText("\u25BE"); // ▾ expanded by default
+				out.endTag(SPAN);
+			}
+			out.endTag(DIV);
+
+			// Collapsible body (expanded by default so nested tools are visible)
+			out.beginBeginTag(DIV);
+			out.writeAttribute(CLASS_ATTR, "chat-agent-call-body");
+			out.writeAttribute(ID_ATTR, bodyId);
+			out.endBeginTag();
+			{
+				if (ev.getInputSummary() != null && !ev.getInputSummary().isEmpty()) {
+					out.beginBeginTag(DIV);
+					out.writeAttribute(CLASS_ATTR, "chat-agent-call-input-label");
+					out.endBeginTag();
+					out.writeText("Input:");
+					out.endTag(DIV);
+					out.beginBeginTag(PRE);
+					out.writeAttribute(CLASS_ATTR, "chat-agent-call-input");
+					out.endBeginTag();
+					out.writeText(ev.getInputSummary());
+					out.endTag(PRE);
+				}
+
+				// Nested tool calls from this agent
+				if (!childTools.isEmpty()) {
+					out.beginBeginTag(DIV);
+					out.writeAttribute(CLASS_ATTR, "chat-agent-call-tools");
+					out.endBeginTag();
+					for (int t = 0; t < childTools.size(); t++) {
+						ChatTimelineEvent toolEv = childTools.get(t);
+						if (toolEv.getToolCall() != null) {
+							writeToolCall(out, toolEv.getToolCall(), childToolIds.get(t));
+						}
+					}
+					out.endTag(DIV);
+				}
+
+				if (ev.getResultSummary() != null && !ev.getResultSummary().isEmpty()) {
+					out.beginBeginTag(DIV);
+					out.writeAttribute(CLASS_ATTR, "chat-agent-call-result-label");
+					out.endBeginTag();
+					out.writeText("Result:");
+					out.endTag(DIV);
+					out.beginBeginTag(PRE);
+					out.writeAttribute(CLASS_ATTR, "chat-agent-call-result");
+					out.endBeginTag();
+					out.writeText(ev.getResultSummary());
+					out.endTag(PRE);
+				}
+			}
+			out.endTag(DIV);
+		}
+		out.endTag(DIV);
+	}
+
+	private void writeToolCall(TagWriter out, ChatToolCall toolCall, String eventId) throws IOException {
+		String toolDivId = "tool-" + toolCall.getId();
+
+		out.beginBeginTag(DIV);
+		out.writeAttribute(CLASS_ATTR, "chat-tool-call");
+		out.writeAttribute("data-event-id", eventId);
+		out.writeAttribute("data-status", toolCall.getStatus().name().toLowerCase());
+		out.endBeginTag();
+		{
+			writeToolHeader(out, toolCall, toolDivId);
+			writeToolResult(out, toolCall, toolDivId);
+		}
+		out.endTag(DIV);
+	}
+
+	private void writeToolHeader(TagWriter out, ChatToolCall toolCall, String toolDivId) throws IOException {
+		String arrowId = toolDivId + "-arrow";
+		String resultId = toolDivId + "-result";
+
+		out.beginBeginTag(DIV);
+		out.writeAttribute(CLASS_ATTR, "chat-tool-header");
+		out.writeAttribute(ONCLICK_ATTR, "toggleToolExpand('" + resultId + "', '" + arrowId + "')");
+		out.endBeginTag();
+		{
+			// Tool name
+			out.beginBeginTag(SPAN);
+			out.writeAttribute(CLASS_ATTR, "chat-tool-name");
+			out.endBeginTag();
+			out.writeText(toolCall.getToolName());
+			out.endTag(SPAN);
+
+			// Full arguments (no truncation)
+			out.beginBeginTag(SPAN);
+			out.writeAttribute(CLASS_ATTR, "chat-tool-args");
+			out.endBeginTag();
+			out.writeText(formatArgsFull(toolCall.getArgs()));
+			out.endTag(SPAN);
+
+			// Expand arrow
+			out.beginBeginTag(SPAN);
+			out.writeAttribute(CLASS_ATTR, "chat-tool-expand");
+			out.writeAttribute(ID_ATTR, arrowId);
+			out.endBeginTag();
+			out.writeText("\u203A"); // › collapsed chevron
+			out.endTag(SPAN);
+		}
+		out.endTag(DIV);
+	}
+
+	private void writeToolResult(TagWriter out, ChatToolCall toolCall, String toolDivId) throws IOException {
+		out.beginBeginTag(DIV);
+		out.writeAttribute(CLASS_ATTR, "chat-tool-result");
+		out.writeAttribute(ID_ATTR, toolDivId + "-result");
+		out.writeAttribute("style", "display: none");
+		out.endBeginTag();
+		{
+			if (toolCall.getResultJson() != null) {
+				String prettyJson = JsonPrettyPrint.prettyPrint(toolCall.getResultJson());
+				out.beginBeginTag(PRE);
+				out.endBeginTag();
+				{
+					out.beginBeginTag(CODE);
+					out.writeAttribute(CLASS_ATTR, "language-json");
+					out.endBeginTag();
+					out.writeText(prettyJson);
+					out.endTag(CODE);
+				}
+				out.endTag(PRE);
+			}
+		}
+		out.endTag(DIV);
+	}
+
+	private String getTaskIcon(ChatTask.TaskStatus status) {
+		switch (status) {
+			case COMPLETED:
+				return "\u2713";
 			case ERROR:
-				return "chat-notifier-text-error";
+				return "\u2717";
+			case IN_PROGRESS:
+				return "\u23F3";
+			case PENDING:
+				return "\u25CB";
 			default:
-				return "chat-notifier-text-info";
+				return "\u25CB";
 		}
 	}
 
-	/**
-	 * Formats tool calls for display in the chat.
-	 *
-	 * @param tracker
-	 *        The tool tracker containing recorded tool calls.
-	 * @return A formatted string listing all tool calls with their raw JSON results.
-	 */
-	private String formatToolCalls(ToolCallTracker tracker) {
-		StringBuilder sb = new StringBuilder();
-		sb.append("## Tool Calls\n\n");
+	/** Interval in seconds after which the in-progress placeholder message rotates. */
+	private static final int PLACEHOLDER_ROTATE_SECONDS = 25;
 
-		for (ToolCallTracker.ToolCall call : tracker.getToolCalls()) {
-			sb.append("- **").append(call.getTool()).append("**");
-			if (!call.getArgs().isEmpty()) {
-				sb.append("(");
-				boolean first = true;
-				for (Map.Entry<String, Object> arg : call.getArgs().entrySet()) {
-					if (!first) {
-						sb.append(", ");
-					}
-					sb.append(arg.getKey()).append("=");
-					Object value = arg.getValue();
-					if (value instanceof String) {
-						String str = (String) value;
-						if (str.length() > 50) {
-							sb.append("\"").append(str.substring(0, 47)).append("...\"");
-						} else {
-							sb.append("\"").append(str).append("\"");
-						}
-					} else {
-						sb.append(value);
-					}
-					first = false;
-				}
-				sb.append(")");
+	private static String getTaskHeaderDescription(ChatTask task) {
+		switch (task.getStatus()) {
+			case COMPLETED:
+				return "Completed";
+			case ERROR:
+				return "Failed";
+			case IN_PROGRESS: {
+				long elapsedSeconds = java.time.Duration.between(task.getStartTime(), java.time.Instant.now()).getSeconds();
+				int index = (int) (elapsedSeconds / PLACEHOLDER_ROTATE_SECONDS) % ChatProcessor.CHAT_TASK_PLACEHOLDERS.length;
+				return ChatProcessor.CHAT_TASK_PLACEHOLDERS[index];
 			}
-			sb.append(" -> [").append(call.getResultRef()).append("]\n\n");
-
-			// Add the raw JSON result
-			String rawJson = tracker.getRawResultJsons().get(call.getResultRef());
-			if (rawJson != null) {
-				sb.append("  ```json\n  ").append(rawJson.replace("\n", "\n  ")).append("\n  ```\n\n");
-			}
+			default:
+				return task.getDescription();
 		}
+	}
 
+	private String formatDuration(long ms) {
+		return String.format("%.1fs", ms / 1000.0);
+	}
+
+	private String formatArgsFull(Map<String, Object> args) {
+		if (args == null || args.isEmpty()) {
+			return "()";
+		}
+		StringBuilder sb = new StringBuilder("(");
+		boolean first = true;
+		for (Map.Entry<String, Object> entry : args.entrySet()) {
+			if (!first) {
+				sb.append(", ");
+			}
+			sb.append(entry.getKey()).append("=");
+			Object value = entry.getValue();
+			if (value instanceof String) {
+				String str = (String) value;
+				sb.append("\"").append(str.replace("\\", "\\\\").replace("\"", "\\\"")).append("\"");
+			} else {
+				sb.append(value);
+			}
+			first = false;
+		}
+		sb.append(")");
 		return sb.toString();
 	}
 
 	private void writeInputSection(TagWriter out) throws IOException {
+		// Render clean HTML; chat-client.js handles sending via JSON API and SSE.
 		out.beginBeginTag(DIV);
 		out.writeAttribute(CLASS_ATTR, "chat-input-section");
 		out.endBeginTag();
 		{
-			// Text input
 			out.beginBeginTag(INPUT);
 			out.writeAttribute(TYPE_ATTR, "text");
 			out.writeAttribute(ID_ATTR, getInputId());
 			out.writeAttribute(NAME_ATTR, "message");
 			out.writeAttribute(CLASS_ATTR, "chat-input");
 			out.writeAttribute(PLACEHOLDER_ATTR, "Type a message...");
-			out.writeAttribute(ONKEYPRESS_ATTR,
-				"if(event.keyCode == 13 || event.key == 'Enter') { " + getSendCommandJS() + " return false; }");
 			out.endEmptyTag();
 
-			// Send button
 			out.beginBeginTag(BUTTON);
 			out.writeAttribute(ID_ATTR, getButtonId());
 			out.writeAttribute(TYPE_ATTR, "button");
 			out.writeAttribute(CLASS_ATTR, "chat-button");
-			out.writeAttribute(ONCLICK_ATTR, getSendCommandJS());
 			out.endBeginTag();
-			out.writeText("Send");
+			out.writeText("\u2191");
 			out.endTag(BUTTON);
 		}
 		out.endTag(DIV);
@@ -320,265 +580,10 @@ public class ChatControl extends AbstractControlBase {
 		return getID() + "-button";
 	}
 
-	private String getSendCommandJS() {
-		return "var input = document.getElementById('" + getInputId() + "');" +
-			"var text = input.value.trim();" +
-			"if (text) {" +
-			"  services.ajax.execute('dispatchControlCommand', {" +
-			"    controlID: '" + getID() + "'," +
-			"    controlCommand: '" + SendMessage.COMMAND_ID + "'," +
-			"    text: text" +
-			"  });" +
-			"  input.value = '';" +
-			"}" +
-			"return false;";
-	}
 
 	/**
-	 * Checks if the given text is a model creation command.
-	 */
-	private boolean isModelCreationCommand(String text) {
-		return text != null && text.startsWith("/model-creation");
-	}
-
-	/**
-	 * Extracts business requirements from a model creation command.
-	 */
-	private String extractBusinessRequirements(String command) {
-		return command.substring("/model-creation".length()).trim();
-	}
-
-	/**
-	 * Checks if the given text is a model exploration command.
-	 */
-	private boolean isModelExplorationCommand(String text) {
-		return text != null && text.startsWith("/explore-model");
-	}
-
-	/**
-	 * Extracts the exploration question from a model exploration command.
-	 */
-	private String extractExplorationQuestion(String command) {
-		return command.substring("/explore-model".length()).trim();
-	}
-
-	/**
-	 * Checks if the given text is a TLScript reference command.
-	 */
-	private boolean isTLScriptCommand(String text) {
-		return text != null && text.startsWith("/tlscript");
-	}
-
-	/**
-	 * Extracts the question from a TLScript reference command.
-	 */
-	private String extractTLScriptQuestion(String command) {
-		return command.substring("/tlscript".length()).trim();
-	}
-
-	/**
-	 * Handles a model creation command synchronously.
-	 */
-	private void handleModelCreationCommand(String command, String userName) {
-		// Clear any previous notifiers
-		_notifiers.clear();
-
-		String businessRequirements = extractBusinessRequirements(command);
-
-		try {
-			Logger.info("ChatControl: Starting workflow execution in thread: " + Thread.currentThread().getName(),
-				ChatControl.class);
-			// Execute the workflow synchronously
-			String result = UMLSpecificationAgent.execute(businessRequirements);
-			// Add final result as Agent message
-			_chat.addMessage(new ChatMessage("Agent", result));
-			requestRepaint();
-
-		} catch (Exception e) {
-			Logger.error(
-				"ChatControl: Workflow execution failed: " + e.getClass().getSimpleName() + ": " + e.getMessage(),
-				ChatControl.class);
-			// Handle workflow failure
-			_chat.addMessage(new ChatMessage("Agent", "❌ Workflow execution failed: " + e.getMessage()));
-			requestRepaint();
-		}
-	}
-
-	/**
-	 * Handles a model exploration command synchronously.
-	 */
-	private void handleModelExplorationCommand(String command, String userName) {
-		// Clear any previous notifiers
-		_notifiers.clear();
-
-		String explorationQuestion = extractExplorationQuestion(command);
-
-		// Set up tool tracking
-		ToolCallTracker tracker = new ToolCallTracker();
-		ToolCallTracking.setTracker(tracker);
-
-		try {
-			Logger.info("ChatControl: Starting model exploration in thread: " + Thread.currentThread().getName(),
-				ChatControl.class);
-			// Get the model from AIService (uses environment variable configuration)
-			AIService aiService = AIService.getInstance();
-			if (aiService == null) {
-				throw new RuntimeException("AIService is not available. Please ensure the service is started.");
-			}
-
-			// Use mistral-large-latest model (configured in tl-ai-service)
-			ChatModel explorationModel = aiService.getChatModel("mistral-large-latest");
-
-			// Create internal tool instances (no HTTP overhead)
-			ModelBrowserTool browserTool = new ModelBrowserTool();
-			InstanceBrowserTool instanceTool = new InstanceBrowserTool();
-			TypeAnalysisTool analysisTool = new TypeAnalysisTool();
-			ModelSearchTool searchTool = new ModelSearchTool();
-			ModelAnnotationBrowserTool annotationTool = new ModelAnnotationBrowserTool();
-			AnnotationDefinitionExplorerTool definitionTool = new AnnotationDefinitionExplorerTool();
-
-			// Build the ModelExplorer agent with direct tools
-			ModelExplorer explorer = AgenticServices.agentBuilder(ModelExplorer.class)
-				.chatModel(explorationModel)
-				.tools(browserTool, instanceTool, analysisTool, searchTool, annotationTool, definitionTool)
-				.build();
-
-			// Execute the exploration
-			String result = explorer.explore(explorationQuestion);
-
-			// Add tool calls as a system message if there were any
-			if (!tracker.getToolCalls().isEmpty()) {
-				String toolCallsMessage = formatToolCalls(tracker);
-				_chat.addMessage(new ChatMessage("System", toolCallsMessage));
-			}
-
-			// Add final result as Agent message
-			_chat.addMessage(new ChatMessage("Agent", result));
-			requestRepaint();
-
-		} catch (Exception e) {
-			Logger.error(
-				"ChatControl: Model exploration failed: " + e.getClass().getSimpleName() + ": " + e.getMessage(),
-				ChatControl.class);
-			// Handle exploration failure
-			_chat.addMessage(new ChatMessage("Agent", "❌ Model exploration failed: " + e.getMessage()));
-			requestRepaint();
-		} finally {
-			// Always clear the tracker
-			ToolCallTracking.setTracker(null);
-		}
-	}
-
-	/**
-	 * Handles a TLScript reference command synchronously.
-	 */
-	private void handleTLScriptCommand(String command, String userName) {
-		// Clear any previous notifiers
-		_notifiers.clear();
-
-		String question = extractTLScriptQuestion(command);
-
-		// Set up tool tracking
-		ToolCallTracker tracker = new ToolCallTracker();
-		ToolCallTracking.setTracker(tracker);
-
-		try {
-			Logger.info("ChatControl: Starting TLScript reference in thread: " + Thread.currentThread().getName(),
-				ChatControl.class);
-			// Get the model from AIService (uses environment variable configuration)
-			AIService aiService = AIService.getInstance();
-			if (aiService == null) {
-				throw new RuntimeException("AIService is not available. Please ensure the service is started.");
-			}
-
-			// Use mistral-large-latest model (configured in tl-ai-service)
-			ChatModel tlscriptModel = aiService.getChatModel("mistral-large-latest");
-
-			// Create TLScript reference tool and ModelExplorer tool
-			TLScriptReferenceTool tlscriptTool = new TLScriptReferenceTool();
-			ModelExplorerTool modelExplorerTool = new ModelExplorerTool();
-
-			// Build the TLScriptAgent with both tools
-			TLScriptAgent agent = AgenticServices.agentBuilder(TLScriptAgent.class)
-				.chatModel(tlscriptModel)
-				.tools(tlscriptTool, modelExplorerTool)
-				.build();
-
-			// Execute the agent
-			String result = agent.answer(question);
-
-			// Add tool calls as a system message if there were any
-			if (!tracker.getToolCalls().isEmpty()) {
-				String toolCallsMessage = formatToolCalls(tracker);
-				_chat.addMessage(new ChatMessage("System", toolCallsMessage));
-			}
-
-			// Add final result as Agent message
-			_chat.addMessage(new ChatMessage("Agent", result));
-			requestRepaint();
-
-		} catch (Exception e) {
-			Logger.error("ChatControl: TLScript reference failed: " + e.getClass().getSimpleName() + ": " + e.getMessage(), ChatControl.class);
-			// Handle failure
-			_chat.addMessage(new ChatMessage("Agent", "❌ TLScript reference failed: " + e.getMessage()));
-			requestRepaint();
-		} finally {
-			// Always clear the tracker
-			ToolCallTracking.setTracker(null);
-		}
-	}
-
-	/**
-	 * Adds a notifier message and triggers UI repaint.
-	 */
-	private void addNotifierMessage(ChatNotifier notifier) {
-		_notifiers.add(notifier);
-		requestRepaint();
-	}
-
-	/**
-	 * Handles AI response processing for user messages.
-	 */
-	private void handleAIResponse(String userMessage) {
-		// Add processing notifier
-		addNotifierMessage(new ChatNotifier("Processing your request...",
-			ChatNotifier.NotificationType.PROGRESS, "AI"));
-
-		// Convert message history to OpenAI format
-		List<Object> messages = new ArrayList<>();
-		for (ChatMessage msg : _chat.getMessages()) {
-			// Skip the current user message as it's already been added
-			if (msg.getText().equals(userMessage) && !"AI".equals(msg.getUser())) {
-				continue;
-			}
-
-			Map<String, Object> messageMap = Map.of(
-				"role", "AI".equals(msg.getUser()) ? "assistant" : "user",
-				"content", msg.getText()
-			);
-			messages.add(messageMap);
-		}
-
-		// Add the current user message
-		messages.add(Map.of("role", "user", "content", userMessage));
-
-		try {
-			// Call OpenAI API
-			String aiResponse = OpenAIScriptFunctions.chat(messages, null, null, null);
-
-			// Clear processing notifier and add AI response
-			_notifiers.clear();
-			_chat.addMessage(new ChatMessage("AI", aiResponse));
-		} catch (Exception e) {
-			// Clear processing notifier and add error message
-			_notifiers.clear();
-			_chat.addMessage(new ChatMessage("AI", "Sorry, I encountered an error: " + e.getMessage()));
-		}
-		requestRepaint();
-	}
-
-	/**
-	 * Command that sends a chat message.
+	 * Command that sends a chat message (TL AJAX fallback).
+	 * Primary send path is the JSON API via {@code chat-client.js}.
 	 */
 	private static class SendMessage extends ControlCommand {
 
@@ -601,26 +606,20 @@ public class ChatControl extends AbstractControlBase {
 			if (text != null) {
 				String trimmedText = text.trim();
 				if (!trimmedText.isEmpty()) {
-					String userName = getCurrentUserName();
-					ChatMessage message = new ChatMessage(userName, trimmedText);
-					chatControl._chat.addMessage(message);
-
-					// Show user message immediately
-					chatControl.requestRepaint();
-
-					// Check if this is a model creation command
-					if (chatControl.isModelCreationCommand(trimmedText)) {
-						// Handle model creation workflow
-						chatControl.handleModelCreationCommand(trimmedText, userName);
-					} else if (chatControl.isModelExplorationCommand(trimmedText)) {
-						// Handle model exploration workflow
-						chatControl.handleModelExplorationCommand(trimmedText, userName);
-					} else if (chatControl.isTLScriptCommand(trimmedText)) {
-						// Handle TLScript reference workflow
-						chatControl.handleTLScriptCommand(trimmedText, userName);
+						String storedName = chatControl._taskTracker.getUserName();
+					String userName = storedName != null ? storedName : "Anonymous";
+					// No UIExecutor polling: the client uses SSE for real-time updates.
+					ChatProcessor.SendResult result = ChatProcessor.sendMessage(
+						chatControl._taskTracker, userName, trimmedText,
+						() -> chatControl.requestRepaint(), null);
+					if (result.getTaskId() != null) {
+						chatControl._processingState = chatControl._taskTracker.getCurrentProcessingState();
+						chatControl.requestRepaint();
+					} else if (!result.isBusy()) {
+						chatControl._chat.addMessage(new ChatMessage("System", "Failed to start AI processing"));
+						chatControl.requestRepaint();
 					} else {
-						// Regular chat - schedule AI response via JavaScript
-						chatControl._scheduleAIResponse = true;
+						chatControl.requestRepaint();
 					}
 				}
 			}
@@ -628,63 +627,9 @@ public class ChatControl extends AbstractControlBase {
 			return HandlerResult.DEFAULT_RESULT;
 		}
 
-		private String getCurrentUserName() {
-			try {
-				TLContext context = TLContext.getContext();
-				if (context != null && context.getPerson() != null) {
-					return context.getPerson().getName();
-				}
-			} catch (Exception e) {
-				// Fallback if person not available
-			}
-			return "Anonymous";
-		}
-
 		@Override
 		public ResKey getI18NKey() {
 			return ResKey.text("chat.sendMessage");
-		}
-	}
-
-	/**
-	 * Command that sends an AI response.
-	 */
-	private static class AIResponse extends ControlCommand {
-
-		static final ControlCommand INSTANCE = new AIResponse();
-
-		static final String COMMAND_ID = "aiResponse";
-
-		AIResponse() {
-			super(COMMAND_ID);
-		}
-
-		@Override
-		protected HandlerResult execute(DisplayContext commandContext, Control control,
-				Map<String, Object> arguments) {
-			ChatControl chatControl = (ChatControl) control;
-			// Get the last user message from chat since JavaScript can't easily pass it
-			String lastUserMessage = getLastUserMessage(chatControl);
-
-			chatControl.handleAIResponse(lastUserMessage);
-
-			return HandlerResult.DEFAULT_RESULT;
-		}
-
-		private String getLastUserMessage(ChatControl chatControl) {
-			List<ChatMessage> messages = chatControl._chat.getMessages();
-			for (int i = messages.size() - 1; i >= 0; i--) {
-				ChatMessage msg = messages.get(i);
-				if (!"AI".equals(msg.getUser())) {
-					return msg.getText();
-				}
-			}
-			return "";
-		}
-
-		@Override
-		public ResKey getI18NKey() {
-			return ResKey.text("chat.aiResponse");
 		}
 	}
 

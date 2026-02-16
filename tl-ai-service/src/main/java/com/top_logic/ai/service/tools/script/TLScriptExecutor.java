@@ -433,7 +433,7 @@ public class TLScriptExecutor {
 	}
 
 	/**
-	 * Executes the script with transaction control based on withCommit flag.
+	 * Executes the script with transaction control based on {@code withCommit} flag.
 	 */
 	private static Object executeWithTransactionControl(QueryExecutor executor, Args scriptArgs,
 			boolean withCommit, KnowledgeBase kb) {

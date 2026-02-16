@@ -300,7 +300,7 @@ public class BackwardReferenceCreationTool {
 			backwardRef.setBag(forwardRef.isBag());
 			backwardRef.setAbstract(forwardRef.isAbstract());
 
-			// Note: History type and deletion policy are already configured on backwardEnd
+			// Note: History type and deletion policy are already configured on {@code backwardEnd}
 			// (they were set when the forward reference was created)
 
 			tx.commit();

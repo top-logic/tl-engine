@@ -4,12 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a TopLogic-based AI application with MCP (Model Context Protocol) server integration. The project is a multi-module Maven build consisting of:
+This is a TopLogic-based AI application with MCP (Model Context Protocol) server integration, AI service layer, and chat UI. The project is a multi-module Maven build consisting of:
 
-- **tl-ai-mcp-server**: Core MCP server module that provides AI integration capabilities through the TopLogic framework
-- **tl-ai-demo**: Demo application showcasing the MCP server functionality
+- **tl-ai-mcp-server**: MCP server module that exposes TopLogic model data to AI agents via the Model Context Protocol
+- **tl-ai-service**: Core AI service module providing LLM integration through LangChain4j, with multi-agent orchestration, tool call tracking, and TL-Script integration
+- **tl-chat**: Chat UI module providing a real-time agentic chat interface with SSE-based progress tracking
+- **tl-ai-demo**: Demo application that bundles all modules into a deployable TopLogic application
 
-Both modules extend the TopLogic platform (version 7.10.0-SNAPSHOT), a Java-based enterprise application framework with model-driven development capabilities.
+All modules extend the TopLogic platform (version 7.10.0-SNAPSHOT), a Java-based enterprise application framework with model-driven development capabilities.
 
 ## Build Commands
 
@@ -21,6 +23,8 @@ mvn clean install
 ### Build a specific module
 ```bash
 mvn clean install -pl tl-ai-mcp-server
+mvn clean install -pl tl-ai-service
+mvn clean install -pl tl-chat
 mvn clean install -pl tl-ai-demo
 ```
 
@@ -32,6 +36,8 @@ mvn test
 ### Run tests for a specific module
 ```bash
 mvn test -pl tl-ai-mcp-server
+mvn test -pl tl-ai-service
+mvn test -pl tl-chat
 mvn test -pl tl-ai-demo
 ```
 
@@ -50,13 +56,24 @@ mvn package
 ### Module Architecture
 
 - **Parent POM** (`pom.xml`): Defines the multi-module structure
-  - **tl-ai-mcp-server**: Core library module
+  - **tl-ai-mcp-server**: MCP server library module
     - Parent: `tl-parent-core` (TopLogic core parent)
-    - Provides MCP server functionality
+    - Provides MCP server functionality (model browsing, search, type analysis)
     - Dependencies: `tl-model-search`, `tl-contact`
-  - **tl-ai-demo**: Application module
+  - **tl-ai-service**: AI service library module
+    - Parent: `tl-parent-core` (TopLogic core parent)
+    - Provides LLM integration via LangChain4j with multi-provider support
+    - Multi-agent orchestration (OrchestratorAgent, ModelExplorer, TLScriptAgent, etc.)
+    - Tool call tracking and tracing infrastructure
+    - Dependencies: LangChain4j, Apache Commons Pool
+  - **tl-chat**: Chat UI application module
     - Parent: `tl-parent-app` (TopLogic application parent)
-    - Depends on `tl-ai-mcp-server`
+    - Real-time chat interface with SSE-based progress tracking
+    - JSON API (`ChatServlet`) and server-side rendering (`ChatControl`)
+    - Dependencies: `tl-core`, `tl-ai-service`
+  - **tl-ai-demo**: Demo application module
+    - Parent: `tl-parent-app` (TopLogic application parent)
+    - Bundles all modules into a deployable application
     - Includes full TopLogic application stack (themes, BPE, monitoring, etc.)
 
 ### Source Layout
@@ -66,18 +83,19 @@ Each module follows standard Maven structure:
 <module>/
 ├── src/main/java/com/top_logic/ai/<module>/  # Java source code
 ├── src/main/webapp/WEB-INF/                    # Web application resources
-│   ├── web-fragment.xml                        # Servlet registration (modules only)
 │   ├── conf/                                   # Application configuration
 │   ├── model/                                  # TopLogic model definitions
 │   ├── autoconf/                               # Auto-configuration
 │   ├── kbase/                                  # Knowledge base
 │   ├── layouts/                                # UI layouts
 │   └── data/                                   # Application data
+├── src/main/resources/META-INF/                # Module metadata
+│   └── web-fragment.xml                        # Servlet registration (modules only)
 ├── src/test/java/                              # Test sources
 └── src/test/webapp/WEB-INF/                    # Test configurations
 ```
 
-**Important:** TopLogic modules must use `web-fragment.xml` for servlet registration, not `web.xml`. Only top-level applications should have a `web.xml` deployment descriptor.
+**Important:** TopLogic modules must use `web-fragment.xml` (in `src/main/resources/META-INF/`) for servlet registration, not `web.xml`. Only top-level applications should have a `web.xml` deployment descriptor.
 
 ### Key Configuration Files
 
@@ -125,25 +143,25 @@ The `tl-ai-mcp-server` module uses a `web-fragment.xml` file (not `web.xml`) to 
 The servlet mapping controls which URL patterns are routed to the MCP servlet:
 
 ```xml
-<web-fragment xmlns="http://java.sun.com/xml/ns/javaee"
-  xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-fragment_3_0.xsd"
-  version="3.0">
+<web-fragment xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+  xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-fragment_3_1.xsd"
+  version="3.1">
     <name>tl-ai-mcp-server</name>
 
     <servlet>
-        <servlet-name>MCPServlet</servlet-name>
-        <servlet-class>com.top_logic.ai.mcp.server.MCPServlet</servlet-class>
+        <servlet-name>MCPTransportServlet</servlet-name>
+        <servlet-class>com.top_logic.ai.mcp.server.MCPTransportServlet</servlet-class>
         <async-supported>true</async-supported>
     </servlet>
 
     <servlet-mapping>
-        <servlet-name>MCPServlet</servlet-name>
+        <servlet-name>MCPTransportServlet</servlet-name>
         <url-pattern>/mcp/*</url-pattern>
     </servlet-mapping>
 </web-fragment>
 ```
 
-**Location:** `tl-ai-mcp-server/src/main/webapp/WEB-INF/web-fragment.xml`
+**Location:** `tl-ai-mcp-server/src/main/resources/META-INF/web-fragment.xml`
 
 ### Service Configuration (conf.config.xml)
 
@@ -310,6 +328,107 @@ User prompts:
 > a description when creating a module. Use this description as
 > additional information in the modules resource.
 ```
+
+## Data Transfer Objects (DTOs) and JSON Serialization
+
+**DO NOT** create hand-written POJO DTOs with getters/setters for JSON serialization. Instead, use the **msgbuf** library (`de.haumacher.msgbuf`) to define message types in `.proto` files and generate data classes automatically.
+
+**DO NOT** use Jackson (`ObjectMapper`) for JSON serialization/deserialization. Use msgbuf's built-in `JsonWriter`/`JsonReader` instead.
+
+### How to define DTOs
+
+1. Create a `messages.proto` file in a `messages` subpackage:
+
+```proto
+package com.top_logic.ai.<module>.path.messages;
+
+option NoBinary;
+option NoVisit;
+option NoListener;
+option NoInterfaces;
+option NoXml;
+
+message MyResponse {
+    string name;
+    bool active;
+    int count;
+    repeated MyItem items;
+}
+
+message MyItem {
+    string id;
+    string label;
+}
+```
+
+2. Add the msgbuf generator plugin to the module's `pom.xml`:
+
+```xml
+<build>
+    <plugins>
+        <plugin>
+            <groupId>de.haumacher.msgbuf</groupId>
+            <artifactId>msgbuf-generator-maven-plugin</artifactId>
+            <version>${msgbuf.version}</version>
+            <executions>
+                <execution>
+                    <id>generate-protocols</id>
+                    <goals>
+                        <goal>generate</goal>
+                    </goals>
+                </execution>
+            </executions>
+        </plugin>
+    </plugins>
+</build>
+```
+
+3. Run `mvn compile` to generate Java classes from the `.proto` file.
+
+4. Add a `TestComment` exclusion for the generated package in the module's test config (`src/test/webapp/WEB-INF/conf/<module>.test.config.xml`):
+
+```xml
+<config config:interface="test.com.top_logic.basic.TestComment$Config">
+    <ignore>
+        <entry value="com.top_logic.ai.<module>.path.messages" />
+    </ignore>
+</config>
+```
+
+### Using generated classes
+
+```java
+// Create with fluent setters
+MyResponse response = MyResponse.create()
+    .setName("example")
+    .setActive(true)
+    .setCount(42);
+
+// Serialize to JSON string
+StringW buffer = new StringW();
+try (JsonWriter json = new JsonWriter(buffer)) {
+    response.writeTo(json);
+}
+String jsonString = buffer.toString();
+
+// Deserialize from JSON string
+JsonReader reader = new JsonReader(new StringR(jsonString));
+MyResponse parsed = MyResponse.readMyResponse(reader);
+```
+
+For tool responses in `tl-ai-service`, use `DataClassSerializer.toJson()` which adds error handling and optional tool call tracking.
+
+### Important constraints
+
+- msgbuf does not support `map<string, Object>`. If you need a map with mixed value types, serialize it to a JSON string field (e.g., `string argsJson`) and parse it on the client side.
+- Generated classes have `protected` constructors — always use the static `create()` factory method.
+- The `.proto` file must be placed in the same package directory as where the generated classes will live.
+
+### Existing examples
+
+- `tl-ai-service/src/main/java/com/top_logic/ai/service/tools/model/messages/messages.proto` — largest example with 26+ message types
+- `tl-ai-service/src/main/java/com/top_logic/ai/service/tools/help/messages/messages.proto` — simple example
+- `tl-chat/src/main/java/com/top_logic/ai/chat/api/messages/messages.proto` — chat API DTOs and SSE event payloads
 
 ## Notes
 

@@ -89,7 +89,7 @@ public class ModuleNameCompletion {
 				new McpSchema.CompleteResult.CompleteCompletion(
 					completions,
 					completions.size(),
-					false // hasMore - we return all matches
+					false // {@code hasMore} - we return all matches
 				);
 
 			return new McpSchema.CompleteResult(completion);

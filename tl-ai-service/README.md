@@ -101,6 +101,18 @@ Configure AI response structure:
 
 ## Architecture
 
+### Multi-Agent Orchestrator (Chat Entrypoint)
+
+The chat UI sends user messages to **OrchestratorAgent** as the single entrypoint. The orchestrator is **LLM-based**: an LLM infers intent from the user message (no keyword matching) and calls exactly one specialist tool with a distilled work order (goal, task, context).
+
+- **OrchestratorAgent.chat(userMessage)** – Builds **OrchestratorRouter** (LLM + three delegate tools), runs **router.chat(userMessage)**. The LLM decides Explorer / Creator / TLScript and fills goal/task/context.
+- **OrchestratorRouter** – Interface with system prompt defining routing rules, work-order discipline, and behavior. See `OrchestratorRouter.java`. Prompt style follows orchestrator-pattern and Cursor-style clarity ([orchestrator pattern](https://dev.to/akshaygupta1996/the-orchestrator-pattern-routing-conversations-to-specialized-ai-agents-33h8), [system-prompts-and-models-of-ai-tools](https://github.com/x1xhlol/system-prompts-and-models-of-ai-tools)).
+- **OrchestratorTools** – Three @Tool methods (delegateToModelExplorer, delegateToModelCreator, delegateToTLScriptSpecialist) that call **AgentInvoker**.
+- **AgentInvoker** – Internal component for agent-to-agent calls. Records **AgentCall** events (fromAgent → toAgent) in the run’s trace. No agent is exposed as a @Tool to another agent.
+- **AgentWorkOrder** (`com.top_logic.ai.service.agents.handoff`) – Structured handoff: `goal`, `task`, `context`, `expectedOutputFormat`.
+- **Execution timeline** – **ToolCallTracker.getTimeline()** returns an ordered list of **TraceEntry** (TOOL_CALL or AGENT_CALL). The chat UI (tl-chat) renders “Orchestrator → ModelExplorer” vs “listModules(...)” so AgentCall and ToolCall are clearly distinguished. The caller must set **ToolCallTracking.setTracker(tracker)** before calling the orchestrator so tools and agent calls write into the same trace.
+- **TLScriptAgent** – When it needs model context, it uses **RequestModelExplorationTool** with goal/task/context; that tool calls **AgentInvoker.invokeExplorer("TLScriptAgent", workOrder)** so the handoff is structured, not the full user prompt.
+
 ### Core Components
 
 #### AIService

@@ -16,6 +16,7 @@
 				<entry value="com.top_logic.ai.service.tools.model.messages" />
 				<entry value="com.top_logic.ai.service.tools.help.messages" />
 				<entry value="com.top_logic.ai.service.tools.script.messages" />
+				<entry value="com.top_logic.ai.service.agents.handoff" />
 			</ignore>
 		</config>
 	</configs>

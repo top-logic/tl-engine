@@ -100,6 +100,11 @@ public abstract class FormObjectOverlay extends TransientObject implements TLFor
 	}
 
 	@Override
+	public FormContainer internalContainer() {
+		return _formContainer;
+	}
+
+	@Override
 	public final Iterable<AttributeUpdate> getUpdates() {
 		return _updates.values();
 	}

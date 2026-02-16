@@ -411,6 +411,21 @@ public class AttributeFormContext extends FormContext {
 	}
 
 	/**
+	 * Determines whether a special {@link FormContainer} was created for the given overlay.
+	 * 
+	 * @param overlay
+	 *        The {@link TLFormObject} to check.
+	 * @return Whether a {@link FormContainer} was created via
+	 *         {#createFormContainerForOverlay(TLFormObject)}.
+	 * 
+	 * @see #createFormContainerForOverlay(TLFormObject)
+	 * @see TLFormObject#getFormContainer()
+	 */
+	public boolean hasOwnFormContainer(TLFormObject overlay) {
+		return overlay.internalContainer() != null;
+	}
+
+	/**
 	 * Finds the {@link FormContainer} associated with the given {@link TLFormObject}.
 	 * 
 	 * @see #createFormContainerForOverlay(TLFormObject)

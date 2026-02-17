@@ -52,7 +52,7 @@ import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
 
 /**
- * LangChain4j tool for creating and updating TopLogic model elements.
+ * <code>LangChain4j</code> tool for creating and updating TopLogic model elements.
  *
  * <p>
  * This tool provides methods for creating and updating modules, classes, properties, references,
@@ -1026,7 +1026,7 @@ public class ModelCreatorTool {
 	 * @param descDe
 	 *        German description (optional).
 	 * @param classifiersJson
-	 *        JSON array of classifier objects. Each with: classifierName, default (boolean),
+	 *        JSON array of classifier objects. Each with: <code>classifierName</code>, default (boolean),
 	 *        label (object with en/de), description (object with en/de). Pass null for none.
 	 * @return JSON with enumeration details.
 	 */

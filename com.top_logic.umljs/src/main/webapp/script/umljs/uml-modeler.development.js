@@ -1863,153 +1863,6 @@
     }
   }
 
-  /**
-   * Serialization util
-   */
-
-  var TEXT_ENTITIES = /([&<>]{1})/g;
-  var ATTR_ENTITIES = /([&<>\n\r"]{1})/g;
-
-  var ENTITY_REPLACEMENT = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '\''
-  };
-
-  function escape(str, pattern) {
-
-    function replaceFn(match, entity) {
-      return ENTITY_REPLACEMENT[entity] || entity;
-    }
-
-    return str.replace(pattern, replaceFn);
-  }
-
-  function serialize(node, output) {
-
-    var i, len, attrMap, attrNode, childNodes;
-
-    switch (node.nodeType) {
-
-    // TEXT
-    case 3:
-
-      // replace special XML characters
-      output.push(escape(node.textContent, TEXT_ENTITIES));
-      break;
-
-    // ELEMENT
-    case 1:
-      output.push('<', node.tagName);
-
-      if (node.hasAttributes()) {
-        attrMap = node.attributes;
-        for (i = 0, len = attrMap.length; i < len; ++i) {
-          attrNode = attrMap.item(i);
-          output.push(' ', attrNode.name, '="', escape(attrNode.value, ATTR_ENTITIES), '"');
-        }
-      }
-
-      if (node.hasChildNodes()) {
-        output.push('>');
-        childNodes = node.childNodes;
-        for (i = 0, len = childNodes.length; i < len; ++i) {
-          serialize(childNodes.item(i), output);
-        }
-        output.push('</', node.tagName, '>');
-      } else {
-        output.push('/>');
-      }
-      break;
-
-    // COMMENT
-    case 8:
-      output.push('<!--', escape(node.nodeValue, TEXT_ENTITIES), '-->');
-      break;
-
-    // CDATA
-    case 4:
-      output.push('<![CDATA[', node.nodeValue, ']]>');
-      break;
-
-    default:
-      throw new Error('unable to handle node ' + node.nodeType);
-    }
-
-    return output;
-  }
-
-  /**
-   * innerHTML like functionality for SVG elements.
-   * based on innerSVG (https://code.google.com/p/innersvg)
-   */
-
-
-
-  function set$1(element, svg) {
-
-    var parsed = parse(svg);
-
-    // clear element contents
-    clear(element);
-
-    if (!svg) {
-      return;
-    }
-
-    if (!isFragment(parsed)) {
-
-      // extract <svg> from parsed document
-      parsed = parsed.documentElement;
-    }
-
-    var nodes = slice$1(parsed.childNodes);
-
-    // import + append each node
-    for (var i = 0; i < nodes.length; i++) {
-      appendTo(nodes[i], element);
-    }
-
-  }
-
-  function get(element) {
-    var child = element.firstChild,
-        output = [];
-
-    while (child) {
-      serialize(child, output);
-      child = child.nextSibling;
-    }
-
-    return output.join('');
-  }
-
-  function isFragment(node) {
-    return node.nodeName === '#document-fragment';
-  }
-
-  function innerSVG(element, svg) {
-
-    if (svg !== undefined) {
-
-      try {
-        set$1(element, svg);
-      } catch (e) {
-        throw new Error('error parsing SVG: ' + e.message);
-      }
-
-      return element;
-    } else {
-      return get(element);
-    }
-  }
-
-
-  function slice$1(arr) {
-    return Array.prototype.slice.call(arr);
-  }
-
   function remove$1(element) {
     var parent = element.parentNode;
 
@@ -21217,7 +21070,7 @@
 
     if('stereotypes' in element) {
       element.stereotypes.forEach(function(stereotype) {
-        var svgStereotype = drawText(parentGfx, '&lt;&lt;' + stereotype + '&gt;&gt;', centerLabelStyle, textRenderer);
+        var svgStereotype = drawText(parentGfx, '<<' + stereotype + '>>', centerLabelStyle, textRenderer);
 
         centerLabelStyle.y += svgStereotype.getBBox().height;
       });
@@ -21475,12 +21328,11 @@
 
   TextRenderer.prototype.createText = function(text, options) {
     var svgText = create$1('text');
+    svgText.textContent = text;
 
     var options = assign$1(options, this._style);
 
     attr(svgText, options);
-
-    innerSVG(svgText, text);
 
     return svgText;
   };

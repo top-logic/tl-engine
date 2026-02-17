@@ -25,20 +25,6 @@ import com.top_logic.ai.mcp.server.resources.ModuleTypesResource;
 import com.top_logic.ai.mcp.server.resources.TypeInstancesResource;
 import com.top_logic.ai.mcp.server.resources.TypePartsResource;
 import com.top_logic.ai.mcp.server.resources.TypeUsagesResource;
-import com.top_logic.ai.mcp.server.tools.BackwardReferenceCreationTool;
-import com.top_logic.ai.mcp.server.tools.ClassCreationTool;
-import com.top_logic.ai.mcp.server.tools.ClassUpdateTool;
-import com.top_logic.ai.mcp.server.tools.EnumerationCreationTool;
-import com.top_logic.ai.mcp.server.tools.EnumerationUpdateTool;
-import com.top_logic.ai.mcp.server.tools.ModuleCreationTool;
-import com.top_logic.ai.mcp.server.tools.ModuleUpdateTool;
-import com.top_logic.ai.mcp.server.tools.ModelSearchTool;
-import com.top_logic.ai.mcp.server.tools.PropertyCreationTool;
-import com.top_logic.ai.mcp.server.tools.PropertyUpdateTool;
-import com.top_logic.ai.mcp.server.tools.ReferenceCreationTool;
-import com.top_logic.ai.mcp.server.tools.TLScriptExecutionTool;
-import com.top_logic.ai.mcp.server.tools.TLScriptFunctionsMCPTool;
-import com.top_logic.ai.mcp.server.tools.TLScriptValidationTool;
 import com.top_logic.ai.mcp.server.tools.LangChain4jToolAdapter;
 import com.top_logic.ai.service.tools.registry.ToolRegistry;
 import com.top_logic.basic.config.InstantiationContext;
@@ -271,9 +257,12 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 	 * <li>{@link EnumerationClassifiersResource} - Lists classifiers within an enumeration (dynamic resource template)</li>
 	 * <li>{@link TypeUsagesResource} - Finds usages of a specific type (dynamic resource template)</li>
 	 * <li>{@link ModuleNameCompletion} - Provides completions for module name parameters</li>
-	 * <li>{@link ModuleCreationTool} - Creates new TopLogic modules</li>
-	 * <li>{@link TLScriptFunctionsMCPTool} - Lists TLScript functions and retrieves function documentation</li>
 	 * </ul>
+	 *
+	 * <p>
+	 * All tools are provided by the {@link LangChain4jToolAdapter} which adapts tools from the
+	 * {@link ToolRegistry} to MCP tool specifications.
+	 * </p>
 	 *
 	 * <p>
 	 * Additionally registers any configured resource templates from the service configuration.
@@ -311,51 +300,6 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 
 		// Register completion handler for module name parameter
 		builder.completions(ModuleNameCompletion.createSpecification());
-
-		// Register tool for creating modules
-		builder.tools(ModuleCreationTool.createSpecification());
-
-		// Register tool for updating modules
-		builder.tools(ModuleUpdateTool.createSpecification());
-
-		// Register tool for creating classes
-		builder.tools(ClassCreationTool.createSpecification());
-
-		// Register tool for updating classes
-		builder.tools(ClassUpdateTool.createSpecification());
-
-		// Register tool for creating properties
-		builder.tools(PropertyCreationTool.createSpecification());
-
-		// Register tool for updating properties
-		builder.tools(PropertyUpdateTool.createSpecification());
-
-		// Register tool for creating references
-		builder.tools(ReferenceCreationTool.createSpecification());
-
-		// Register tool for creating backward references
-		builder.tools(BackwardReferenceCreationTool.createSpecification());
-
-		// Register tool for creating enumerations
-		builder.tools(EnumerationCreationTool.createSpecification());
-
-		// Register tool for updating enumerations
-		builder.tools(EnumerationUpdateTool.createSpecification());
-
-		// Register tool for validating TLScript
-		builder.tools(TLScriptValidationTool.createSpecification());
-
-		// Register tool for executing TLScript
-		builder.tools(TLScriptExecutionTool.createSpecification());
-
-		// Register tool for searching the model
-		builder.tools(ModelSearchTool.createSpecification());
-
-		// Register tool for listing TLScript functions
-		builder.tools(TLScriptFunctionsMCPTool.createListFunctionsSpecification());
-
-		// Register tool for getting TLScript function documentation
-		builder.tools(TLScriptFunctionsMCPTool.createGetFunctionDocSpecification());
 
 		// Register configured dynamic resources
 		InstantiationContext context = new com.top_logic.basic.config.DefaultInstantiationContext(getClass());

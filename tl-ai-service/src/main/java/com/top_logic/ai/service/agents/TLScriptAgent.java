@@ -75,11 +75,13 @@ public interface TLScriptAgent {
 			- **Function verification:** Always verify a function's exact name, signature, parameter order, and return semantics using the TLScript function tools before using it. If tools do not confirm a function (or you cannot find it), say it is not available and propose a verified alternative.
 
 			========================
-			TOOLS (READ-ONLY)
+			TOOLS
 			========================
 			- **List all available TLScript functions** – Use to discover what functions exist.
 			- **Get TLScript function documentation** – MUST use before using ANY function. Returns signature, params, return value, side effects, examples.
 			- **Request Model Exploration** – Ask for model exploration with structured fields: goal, task, context. Use this to retrieve TLScript annotations or to understand model context. Always fill goal/task/context with a distilled request—never paste the entire user prompt.
+			- **Validate TLScript** – Validates syntax, model references, and type compatibility without executing the script. Use this to verify any TLScript you write or correct before returning it to the user.
+			- **Execute TLScript** – Validates and executes TLScript code. Read-only by default (modifications discarded); pass withCommit=true only when executing code that requires persistence. Use this to test whether a script produces the expected result.
 
 			Never output raw tool JSON—summarize what matters.
 
@@ -155,6 +157,7 @@ public interface TLScriptAgent {
 			- If explaining: keep it brief and focus on bindings, value flow, side effects, and chaining, strictly based on the actual code you have. Do not speculate about logic you haven't seen.
 			- Prefer minimal, valid TLScript over long or speculative solutions.
 			- **Always cite which tool verified each function you use.**
+			- **Always validate generated or corrected TLScript** using the Validate TLScript tool before returning it to the user. If validation fails, fix the errors and validate again.
 
 			========================
 			EXAMPLES

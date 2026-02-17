@@ -8,6 +8,7 @@ package com.top_logic.ai.service.agents;
 import com.top_logic.ai.service.AIService;
 import com.top_logic.ai.service.agents.handoff.AgentWorkOrder;
 import com.top_logic.ai.service.tools.ToolCallTracking;
+import com.top_logic.ai.service.tools.help.RequestModelExplorationTool;
 import com.top_logic.ai.service.tools.help.TLScriptReferenceTool;
 import com.top_logic.ai.service.tools.model.AnnotationDefinitionExplorerTool;
 import com.top_logic.ai.service.tools.model.InstanceBrowserTool;
@@ -15,6 +16,7 @@ import com.top_logic.ai.service.tools.model.ModelAnnotationBrowserTool;
 import com.top_logic.ai.service.tools.model.ModelBrowserTool;
 import com.top_logic.ai.service.tools.model.ModelSearchTool;
 import com.top_logic.ai.service.tools.model.TypeAnalysisTool;
+import com.top_logic.ai.service.tools.script.TLScriptTool;
 import com.top_logic.basic.thread.ThreadContextManager;
 
 import dev.langchain4j.agentic.AgenticServices;
@@ -93,7 +95,7 @@ public final class AgentInvoker {
 			ChatModel tlscriptModel = aiService.getChatModel("mistral-large-latest");
 			final TLScriptAgent agent = AgenticServices.agentBuilder(TLScriptAgent.class)
 				.chatModel(tlscriptModel)
-				.tools(new TLScriptReferenceTool())
+				.tools(new TLScriptReferenceTool(), new RequestModelExplorationTool(), new TLScriptTool())
 				.build();
 			result = ThreadContextManager.inSystemInteraction(AgentInvoker.class,
 				() -> agent.answer(messageForLambda));

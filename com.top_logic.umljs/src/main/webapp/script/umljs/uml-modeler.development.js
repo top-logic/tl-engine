@@ -5,7 +5,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  *
- * Date: 2026-01-16
+ * Date: 2026-02-17
  */
 
 (function (global, factory) {
@@ -19,7 +19,7 @@
    *
    * @template T
    *
-   * @param {T[][]} arr
+   * @param {T[][] | T[] | null} [arr]
    *
    * @return {T[]}
    */
@@ -99,7 +99,7 @@
    * @return {Boolean}
    */
   function has$1(target, key) {
-    return nativeHasOwnProperty$1.call(target, key);
+    return !isNil(target) && nativeHasOwnProperty$1.call(target, key);
   }
 
   /**
@@ -715,9 +715,11 @@
   /**
    * Flatten array, one level deep.
    *
-   * @param {Array<?>} arr
+   * @template T
    *
-   * @return {Array<?>}
+   * @param {T[][] | T[] | null} [arr]
+   *
+   * @return {T[]}
    */
 
   const nativeToString = Object.prototype.toString;
@@ -748,10 +750,11 @@
    * Iterate over collection; returning something
    * (non-undefined) will stop iteration.
    *
-   * @param  {Array|Object} collection
-   * @param  {Function} iterator
+   * @template T
+   * @param {Collection<T>} collection
+   * @param { ((item: T, idx: number) => (boolean|void)) | ((item: T, key: string) => (boolean|void)) } iterator
    *
-   * @return {Object} return result that stopped the iteration
+   * @return {T} return result that stopped the iteration
    */
   function forEach(collection, iterator) {
 
@@ -974,51 +977,37 @@
   };
 
   /**
-   * Remove all children from the given element.
+   * Clear utility
    */
-  function clear$1(el) {
-
-    var c;
-
-    while (el.childNodes.length) {
-      c = el.childNodes[0];
-      el.removeChild(c);
-    }
-
-    return el;
-  }
 
   /**
-   * @param { HTMLElement } element
-   * @param { String } selector
+   * Removes all children from the given element
    *
-   * @return { boolean }
+   * @param {Element} element
+   *
+   * @return {Element} the element (for chaining)
    */
-  function matches(element, selector) {
-    return element && typeof element.matches === 'function' && element.matches(selector);
+  function clear$1(element) {
+    var child;
+
+    while ((child = element.firstChild)) {
+      element.removeChild(child);
+    }
+
+    return element;
   }
 
   /**
    * Closest
    *
    * @param {Element} el
-   * @param {String} selector
-   * @param {Boolean} checkYourSelf (optional)
+   * @param {string} selector
+   * @param {boolean} checkYourSelf (optional)
    */
   function closest(element, selector, checkYourSelf) {
-    var currentElem = checkYourSelf ? element : element.parentNode;
+    var actualElement = checkYourSelf ? element : element.parentNode;
 
-    while (currentElem && currentElem.nodeType !== document.DOCUMENT_NODE &&
-        currentElem.nodeType !== document.DOCUMENT_FRAGMENT_NODE) {
-
-      if (matches(currentElem, selector)) {
-        return currentElem;
-      }
-
-      currentElem = currentElem.parentNode;
-    }
-
-    return matches(currentElem, selector) ? currentElem : null;
+    return actualElement && typeof actualElement.closest === 'function' && actualElement.closest(selector) || null;
   }
 
   var componentEvent = {};
@@ -1244,6 +1233,16 @@
 
   var domify$1 = domify;
 
+  /**
+   * @param { HTMLElement } element
+   * @param { String } selector
+   *
+   * @return { boolean }
+   */
+  function matches(element, selector) {
+    return element && typeof element.matches === 'function' && element.matches(selector) || false;
+  }
+
   function query(selector, el) {
     el = el || document;
 
@@ -1397,6 +1396,7 @@
    * appendTo utility
    */
 
+
   /**
    * Append a node to a target element and return the appended node.
    *
@@ -1412,6 +1412,7 @@
   /**
    * append utility
    */
+
 
   /**
    * Append a node to an element
@@ -1685,16 +1686,6 @@
      return this.list.contains(name);
    };
 
-  function remove$1(element) {
-    var parent = element.parentNode;
-
-    if (parent) {
-      parent.removeChild(element);
-    }
-
-    return element;
-  }
-
   /**
    * Clear utility
    */
@@ -1702,14 +1693,14 @@
   /**
    * Removes all children from the given element
    *
-   * @param  {DOMElement} element
-   * @return {DOMElement} the element (for chaining)
+   * @param  {SVGElement} element
+   * @return {Element} the element (for chaining)
    */
   function clear(element) {
     var child;
 
     while ((child = element.firstChild)) {
-      remove$1(child);
+      element.removeChild(child);
     }
 
     return element;
@@ -1726,6 +1717,7 @@
   /**
    * DOM parsing utility
    */
+
 
   var SVG_START = '<svg xmlns="' + ns.svg + '"';
 
@@ -1778,6 +1770,7 @@
    */
 
 
+
   /**
    * Create a specific type from name or SVG markup.
    *
@@ -1788,6 +1781,8 @@
    */
   function create$1(name, attrs) {
     var element;
+
+    name = name.trim();
 
     if (name.charAt(0) === '<') {
       element = parse(name).firstChild;
@@ -1806,6 +1801,7 @@
   /**
    * Geometry helpers
    */
+
 
   // fake node used to instantiate svg geometry elements
   var node = null;
@@ -1872,7 +1868,7 @@
    */
 
   var TEXT_ENTITIES = /([&<>]{1})/g;
-  var ATTR_ENTITIES = /([\n\r"]{1})/g;
+  var ATTR_ENTITIES = /([&<>\n\r"]{1})/g;
 
   var ENTITY_REPLACEMENT = {
     '&': '&amp;',
@@ -1950,6 +1946,7 @@
    */
 
 
+
   function set$1(element, svg) {
 
     var parsed = parse(svg);
@@ -2011,6 +2008,16 @@
 
   function slice$1(arr) {
     return Array.prototype.slice.call(arr);
+  }
+
+  function remove$1(element) {
+    var parent = element.parentNode;
+
+    if (parent) {
+      parent.removeChild(element);
+    }
+
+    return element;
   }
 
   /**
@@ -3081,6 +3088,8 @@
 
   var LOW_PRIORITY$7 = 500;
 
+  var DEFAULT_PRIORITY$4 = 1000;
+
   /**
    * @typedef {import('../../model/Types').Element} Element
    *
@@ -3099,24 +3108,29 @@
    */
   function Outline(eventBus, styles) {
 
-    this.offset = 6;
+    this._eventBus = eventBus;
+
+    this.offset = 5;
 
     var OUTLINE_STYLE = styles.cls('djs-outline', [ 'no-fill' ]);
 
     var self = this;
 
-    function createOutline(gfx, bounds) {
+    /**
+     * @param {SVGElement} gfx
+     *
+     * @return {SVGElement} outline
+     */
+    function createOutline(gfx) {
       var outline = create$1('rect');
 
       attr(outline, assign$1({
-        x: 10,
-        y: 10,
+        x: 0,
+        y: 0,
         rx: 4,
         width: 100,
         height: 100
       }, OUTLINE_STYLE));
-
-      append(gfx, outline);
 
       return outline;
     }
@@ -3130,7 +3144,8 @@
       var outline = query('.djs-outline', gfx);
 
       if (!outline) {
-        outline = createOutline(gfx);
+        outline = self.getOutline(element) || createOutline();
+        append(gfx, outline);
       }
 
       self.updateShapeOutline(outline, element);
@@ -3143,7 +3158,8 @@
       var outline = query('.djs-outline', gfx);
 
       if (!outline) {
-        outline = createOutline(gfx);
+        outline = createOutline();
+        append(gfx, outline);
       }
 
       self.updateConnectionOutline(outline, element);
@@ -3160,25 +3176,34 @@
    */
   Outline.prototype.updateShapeOutline = function(outline, element) {
 
-    attr(outline, {
-      x: -this.offset,
-      y: -this.offset,
-      width: element.width + this.offset * 2,
-      height: element.height + this.offset * 2
-    });
+    var updated = false;
+    var providers = this._getProviders();
 
+    if (providers.length) {
+      forEach$1(providers, function(provider) {
+        updated = updated || provider.updateOutline(element, outline);
+      });
+    }
+
+    if (!updated) {
+      attr(outline, {
+        x: -this.offset,
+        y: -this.offset,
+        width: element.width + this.offset * 2,
+        height: element.height + this.offset * 2
+      });
+    }
   };
-
 
   /**
    * Updates the outline of a connection respecting the bounding box of
    * the connection and an outline offset.
+   * Register an outline provider with the given priority.
    *
    * @param {SVGElement} outline
    * @param {Element} connection
    */
   Outline.prototype.updateConnectionOutline = function(outline, connection) {
-
     var bbox = getBBox(connection);
 
     attr(outline, {
@@ -3187,9 +3212,61 @@
       width: bbox.width + this.offset * 2,
       height: bbox.height + this.offset * 2
     });
-
   };
 
+  /**
+   * Register an outline provider with the given priority.
+   *
+   * @param {number} priority
+   * @param {OutlineProvider} provider
+   */
+  Outline.prototype.registerProvider = function(priority, provider) {
+    if (!provider) {
+      provider = priority;
+      priority = DEFAULT_PRIORITY$4;
+    }
+
+    this._eventBus.on('outline.getProviders', priority, function(event) {
+      event.providers.push(provider);
+    });
+  };
+
+  /**
+   * Returns the registered outline providers.
+   *
+   * @returns {OutlineProvider[]}
+   */
+  Outline.prototype._getProviders = function() {
+    var event = this._eventBus.createEvent({
+      type: 'outline.getProviders',
+      providers: []
+    });
+
+    this._eventBus.fire(event);
+
+    return event.providers;
+  };
+
+  /**
+   * Returns the outline for an element.
+   *
+   * @param {Element} element
+   **/
+  Outline.prototype.getOutline = function(element) {
+    var outline;
+    var providers = this._getProviders();
+
+    forEach$1(providers, function(provider) {
+
+      if (!isFunction(provider.getOutline)) {
+        return;
+      }
+
+      outline = outline || provider.getOutline(element);
+    });
+
+    return outline;
+  };
 
   Outline.$inject = [ 'eventBus', 'styles', 'elementRegistry' ];
 
@@ -4537,11 +4614,7 @@
     var self = this;
 
     eventBus.on('drag.cleanup', function() {
-      forEach$1(self._clonedMarkers, function(clonedMarker) {
-        remove$1(clonedMarker);
-      });
-
-      self._clonedMarkers = {};
+      self.cleanUp();
     });
   }
 
@@ -4552,6 +4625,15 @@
     'styles'
   ];
 
+  PreviewSupport.prototype.cleanUp = function() {
+    var self = this;
+
+    forEach$1(self._clonedMarkers, function(clonedMarker) {
+      remove$1(clonedMarker);
+    });
+
+    self._clonedMarkers = {};
+  };
 
   /**
    * Returns graphics of an element.
@@ -4570,23 +4652,26 @@
    * @param {Element} element The element to be moved.
    * @param {SVGElement} group The SVG group to add the preview to.
    * @param {SVGElement} [gfx] The optional graphical element of the element.
+   * @param {string} [className="djs-dragger"] The optional class name to add to the preview.
    *
    * @return {SVGElement} The preview.
    */
-  PreviewSupport.prototype.addDragger = function(element, group, gfx) {
+  PreviewSupport.prototype.addDragger = function(element, group, gfx, className = 'djs-dragger') {
     gfx = gfx || this.getGfx(element);
 
     var dragger = clone$1(gfx);
     var bbox = gfx.getBoundingClientRect();
 
-    this._cloneMarkers(getVisual(dragger));
+    this._cloneMarkers(getVisual(dragger), className);
 
-    attr(dragger, this._styles.cls('djs-dragger', [], {
+    attr(dragger, this._styles.cls(className, [], {
       x: bbox.top,
       y: bbox.left
     }));
 
     append(group, dragger);
+
+    attr(dragger, 'data-preview-support-element-id', element.id);
 
     return dragger;
   };
@@ -4611,6 +4696,8 @@
 
     append(group, frame);
 
+    attr(frame, 'data-preview-support-element-id', shape.id);
+
     return frame;
   };
 
@@ -4618,8 +4705,9 @@
    * Clone all markers referenced by a node and its child nodes.
    *
    * @param {SVGElement} gfx
+   * @param {string} [className="djs-dragger"]
    */
-  PreviewSupport.prototype._cloneMarkers = function(gfx) {
+  PreviewSupport.prototype._cloneMarkers = function(gfx, className = 'djs-dragger') {
     var self = this;
 
     if (gfx.childNodes) {
@@ -4628,7 +4716,7 @@
       for (var i = 0; i < gfx.childNodes.length; i++) {
 
         // recursively clone markers of child nodes
-        self._cloneMarkers(gfx.childNodes[ i ]);
+        self._cloneMarkers(gfx.childNodes[ i ], className);
       }
     }
 
@@ -4640,7 +4728,7 @@
       if (attr(gfx, markerType)) {
         var marker = getMarker(gfx, markerType, self._canvas.getContainer());
 
-        self._cloneMarker(gfx, marker, markerType);
+        self._cloneMarker(gfx, marker, markerType, className);
       }
     });
   };
@@ -4651,9 +4739,10 @@
    * @param {SVGElement} gfx
    * @param {SVGElement} marker
    * @param {string} markerType
+   * @param {string} [className="djs-dragger"]
    */
-  PreviewSupport.prototype._cloneMarker = function(gfx, marker, markerType) {
-    var markerId = marker.id;
+  PreviewSupport.prototype._cloneMarker = function(gfx, marker, markerType, className = 'djs-dragger') {
+    var markerId = marker.id + '-' + className;
 
     var clonedMarker = this._clonedMarkers[ markerId ];
 
@@ -4664,9 +4753,7 @@
 
       clonedMarker.id = clonedMarkerId;
 
-      classes(clonedMarker)
-        .add('djs-dragger')
-        .add('djs-dragger-marker');
+      classes(clonedMarker).add(className);
 
       this._clonedMarkers[ markerId ] = clonedMarker;
 
@@ -7590,6 +7677,7 @@
 
   var DEFAULT_PRIORITY$2 = 1000;
   var CONTEXT_PAD_PADDING = 12;
+  var HOVER_DELAY = 300;
 
   /**
    * A context pad that displays element specific, contextual actions next
@@ -7764,11 +7852,25 @@
     entry = attr$1(button, 'data-action');
     originalEvent = event.originalEvent || event;
 
+    if (action === 'mouseover') {
+      this._timeout = setTimeout(() => {
+        this._mouseout = this.triggerEntry(entry, 'hover', originalEvent, autoActivate);
+      }, HOVER_DELAY);
+    } else if (action === 'mouseout') {
+      clearTimeout(this._timeout);
+
+      if (this._mouseout) {
+        this._mouseout();
+
+        this._mouseout = null;
+      }
+    }
+
     return this.triggerEntry(entry, action, originalEvent, autoActivate);
   };
 
   /**
-   * Trigger context pad entry entry.
+   * Trigger action on context pad entry entry, e.g. click, mouseover or mouseout.
    *
    * @param {string} entryId
    * @param {string} action
@@ -7926,6 +8028,14 @@
       self.trigger('dragstart', event);
     });
 
+    delegate.bind(html, entrySelector, 'mouseover', function(event) {
+      self.trigger('mouseover', event);
+    });
+
+    delegate.bind(html, entrySelector, 'mouseout', function(event) {
+      self.trigger('mouseout', event);
+    });
+
     // stop propagation of mouse events
     event.bind(html, 'mousedown', function(event) {
       event.stopPropagation();
@@ -7953,6 +8063,8 @@
     if (!this.isOpen()) {
       return;
     }
+
+    clearTimeout(this._timeout);
 
     this._overlays.remove(this._overlayId);
 
@@ -8017,11 +8129,19 @@
   /**
    * Get contex pad position.
    *
+   * If target is a connection, the context pad will be placed according to the
+   * connection's last waypoint.
+   *
+   * If multiple targets, the context pad will be placed according to the bounding
+   * box containing all targets.
+   *
    * @param {ContextPadTarget} target
    *
    * @return {Rect}
    */
   ContextPad.prototype._getPosition = function(target) {
+
+    target = isConnection(target) ? getLastWaypoint(target) : target;
 
     var elements = isArray$3(target) ? target : [ target ];
     var bBox = getBBox(elements);
@@ -8055,6 +8175,10 @@
    */
   function includes$2(array, item) {
     return array.indexOf(item) !== -1;
+  }
+
+  function getLastWaypoint(connection) {
+    return connection.waypoints[connection.waypoints.length - 1];
   }
 
   /**
@@ -10479,7 +10603,7 @@
       MARKER_NOT_OK$2 = 'connect-not-ok',
       MARKER_CONNECT_HOVER$1 = 'connect-hover',
       MARKER_CONNECT_UPDATING$1 = 'djs-updating',
-      MARKER_ELEMENT_HIDDEN = 'djs-element-hidden';
+      MARKER_DRAGGER = 'djs-dragging';
 
   var HIGH_PRIORITY$2 = 1100;
 
@@ -10519,7 +10643,7 @@
 
       classes(draggerGfx).add('djs-dragging');
 
-      canvas.addMarker(connection, MARKER_ELEMENT_HIDDEN);
+      canvas.addMarker(connection, MARKER_DRAGGER);
       canvas.addMarker(connection, MARKER_CONNECT_UPDATING$1);
     });
 
@@ -10649,7 +10773,7 @@
       remove$1(draggerGfx);
 
       canvas.removeMarker(connection, MARKER_CONNECT_UPDATING$1);
-      canvas.removeMarker(connection, MARKER_ELEMENT_HIDDEN);
+      canvas.removeMarker(connection, MARKER_DRAGGER);
 
       if (hover) {
         canvas.removeMarker(hover, MARKER_OK$2);
@@ -20551,7 +20675,7 @@
     // pinch to zoom is mapped to wheel + ctrlKey = true
     // in modern browsers (!)
 
-    var isZoom = event.ctrlKey;
+    var isZoom = event.ctrlKey || (isMac() && event.metaKey);
 
     var isHorizontalScroll = event.shiftKey;
 
@@ -24688,13 +24812,14 @@
    *
    * @param {SVGElement} visual The graphical element.
    * @param {ShapeLike} element The shape.
+   * @param {Object} attrs Optional attributes.
    *
    * @return {SVGElement}
    */
-  GraphicsFactory.prototype.drawShape = function(visual, element) {
+  GraphicsFactory.prototype.drawShape = function(visual, element, attrs = {}) {
     var eventBus = this._eventBus;
 
-    return eventBus.fire('render.shape', { gfx: visual, element: element });
+    return eventBus.fire('render.shape', { gfx: visual, element, attrs });
   };
 
   /**
@@ -24715,13 +24840,14 @@
    *
    * @param {SVGElement} visual The graphical element.
    * @param {ConnectionLike} element The connection.
+   * @param {Object} attrs Optional attributes.
    *
    * @return {SVGElement}
    */
-  GraphicsFactory.prototype.drawConnection = function(visual, element) {
+  GraphicsFactory.prototype.drawConnection = function(visual, element, attrs = {}) {
     var eventBus = this._eventBus;
 
-    return eventBus.fire('render.connection', { gfx: visual, element: element });
+    return eventBus.fire('render.connection', { gfx: visual, element, attrs });
   };
 
   /**

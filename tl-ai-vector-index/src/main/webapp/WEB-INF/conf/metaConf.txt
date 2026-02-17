@@ -1,1 +1,5 @@
+<<<<<<< HEAD
 aiVectorIndexingConf.xml
+=======
+
+>>>>>>> ae52e85 (Fix configuration errors and enable local tests)

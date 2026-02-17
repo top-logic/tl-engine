@@ -1,1 +1,1 @@
-testAiVectorIndexingConf.xml
+testAiVectorIndexingConf.config.xml

@@ -9,7 +9,7 @@
 		           <module key="com.top_logic.base.services.SearchFactory$Module" value="true" />
 		           <module key="com.top_logic.ai.vector.index.VectorIndex$Module" value="true" />
 		           <module key="com.top_logic.knowledge.analyze.DefaultAnalyzeService$Module" value="true" />
-		           <module key="com.top_logic.knowledge.indexing.DefaultIndexingService$Module" value="true" />
+		           <module key="com.top_logic.ai.vector.index.VectorIndexingService$Module" value="true" />
 				</modules>
 			</instance>
 		</config>
@@ -39,7 +39,7 @@
 		</config>
 		
 		
-		<config service-class="com.top_logic.knowledge.indexing.DefaultIndexingService" >
+		<config service-class="com.top_logic.knowledge.indexing.IndexingService" >
 			<instance class="com.top_logic.ai.vector.index.VectorIndexingService">
 				<protocols>
 					<protocol value="knowledgerepository" />
@@ -63,10 +63,15 @@
 			config:override="true"
 		>
 			<instance class="com.top_logic.ai.vector.index.VectorIndex"
-				mistral-api-key="P1goty1qMtk6IJl8XmgHxPg7JqHlbtFs"
-				no-vector-index-models=" tl.ai.demo:TestNoVector"
-				qdrant-db-collection-name="boris-test"
-				vector-index-models="tl.ai.demo:Test,  tl.ai.demo:TestNoVector"
+				vector-store-type="jvector"
+				local-store-path="tmp/test-jvector"
+				vector-dimension="1024"
+				mistral-api-key="TEST_API_KEY"
+				mistral-embed-model="mistral-embed"
+				embedding-model-type="local"
+				vector-index-models=""
+				timeout-abort-indexing-for-shutdown="5000"
+				warn-queue-size="100"
 			/>
 		</config>
 	</services>

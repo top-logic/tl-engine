@@ -13,6 +13,7 @@ import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.knowledge.indexing.ContentObject;
 import com.top_logic.knowledge.indexing.DefaultIndexingService;
 import com.top_logic.knowledge.indexing.IndexException;
+import com.top_logic.basic.module.TypedRuntimeModule;
 
 /**
  * Vector Index implementation of the {@link com.top_logic.knowledge.indexing.IndexingService}.
@@ -37,43 +38,56 @@ public class VectorIndexingService extends DefaultIndexingService {
 
 	@Override
 	public boolean prepareService() {
-        return false;
-    }
+		return false;
+	}
 
-    @Override
+	@Override
 	public boolean serviceAvailable() {
-        return true;
-    }
+		return true;
+	}
 
-    @Override
+	@Override
 	public boolean containsContent(ObjectKey key) throws IndexException {
-        return this.index.containsContent(key);
-    }
-    
-    @Override
+		return this.index.containsContent(key);
+	}
+
+	@Override
 	public void indexContent(ContentObject content) throws IndexException {
-        this.index.addContent(content);
-    }
-    
-    @Override
+		this.index.addContent(content);
+	}
+
+	@Override
 	public void removeContent(ObjectKey key) throws IndexException {
-        this.index.deleteContent(key);
-    }
-    
+		this.index.deleteContent(key);
+	}
+
 	@Override
 	public void resetIndex() {
 		Logger.info("Start resetting Vector index", DefaultIndexingService.class);
 		index.resetIndex();
 		Logger.info("Finished resetting Vector index", DefaultIndexingService.class);
 	}
-	
+
 	@Override
 	public void startIndex() {
 		index.init(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY);
 	}
-	
+
 	@Override
 	public void stopIndex() {
 		index.shutDown();
+	}
+
+	public static final class Module extends TypedRuntimeModule<VectorIndexingService> {
+		public static final Module INSTANCE = new Module();
+
+		private Module() {
+			// singleton
+		}
+
+		@Override
+		public Class<VectorIndexingService> getImplementation() {
+			return VectorIndexingService.class;
+		}
 	}
 }

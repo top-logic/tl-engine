@@ -45,33 +45,30 @@ public class VectorIndexTest extends BasicTestCase {
 
 	/* Constants definitions go here */
 	private final String filesDir = "src/test/java/test/com/top_logic/ai/vector/index/testdata";
-	
-	
+
 	/* Test suite for Vector indexing
 	 * 
-	 * 1. Test indexing text files; 1.1 Load text files from filesDir; 1.2 Index the texts contained
-	 * in these files; 1.3 Search the vector store to verify that texts are loaded in the database
-	 * and indexed; 1.3.1 Search by document id; 1.3.2 Search by keywords, specific to particular
-	 * content and verify scores; 1.4 Clean the vector database - delete the points loaded in 1.2;
+	 * 1. Test indexing text files; 1.1 Load text files from filesDir; 1.2 Index the texts contained in
+	 * these files; 1.3 Search the vector store to verify that texts are loaded in the database and
+	 * indexed; 1.3.1 Search by document id; 1.3.2 Search by keywords, specific to particular content
+	 * and verify scores; 1.4 Clean the vector database - delete the points loaded in 1.2;
 	 * 
-	 * 2. Test model instance indexing; 2.1 Configuration preparation - verify that the
-	 * VectorIndexing service has configuration for models to index with vectors and store to vector
-	 * database without vector embedding; 2.2 Data preparation; 2.2.1 Create vector indexing test
-	 * model; 2.2.2 Create no-vector test model; 2.2.3 Create test model which should not be indexed
-	 * or stored to the database; 2.2.4 Create instance(s) in each of the models above; 2.3 Verify
-	 * the index by document id; 2.4 Verify the index by search string; verify score; 2.5 Delete the
-	 * instances; 2.6 Verify points deletion in the vector store; 2.7 Clean - delete any remaining
-	 * instances and models; */
-	
+	 * 2. Test model instance indexing; 2.1 Configuration preparation - verify that the VectorIndexing
+	 * service has configuration for models to index with vectors and store to vector database without
+	 * vector embedding; 2.2 Data preparation; 2.2.1 Create vector indexing test model; 2.2.2 Create
+	 * no-vector test model; 2.2.3 Create test model which should not be indexed or stored to the
+	 * database; 2.2.4 Create instance(s) in each of the models above; 2.3 Verify the index by document
+	 * id; 2.4 Verify the index by search string; verify score; 2.5 Delete the instances; 2.6 Verify
+	 * points deletion in the vector store; 2.7 Clean - delete any remaining instances and models; */
 
 	private List<Pair<String, JSONObject>> loadTestFiles() {
 		List<Pair<String, JSONObject>> contents = new ArrayList<>();
 
 		Set<String> filenames =
 			Stream.of(new File(this.filesDir).listFiles())
-			.filter(file -> !file.isDirectory())
-			.map(File::getName)
-			.collect(Collectors.toSet());
+				.filter(file -> !file.isDirectory())
+				.map(File::getName)
+				.collect(Collectors.toSet());
 
 		for (String filename : filenames) {
 			try {
@@ -95,11 +92,11 @@ public class VectorIndexTest extends BasicTestCase {
 	 */
 	public void testIndexText() {
 		List<Pair<String, JSONObject>> contentsToIndex = this.loadTestFiles();
-		
+
 		this.vectorIndex = VectorIndex.getInstance();
 
 		for (Pair<String, JSONObject> content : contentsToIndex) {
-			this.vectorIndex.storeVectorIndexToQdrantDb_(
+			this.vectorIndex.storeToVectorStore(
 				this.vectorIndex.getDocumentUUID(content.getFirst().toString()).toString(),
 				content.getSecond());
 		}
@@ -161,9 +158,9 @@ public class VectorIndexTest extends BasicTestCase {
 
 	/**
 	 * @param test
-	 *        test
+	 *                          test
 	 * @param additionalModules
-	 *        additional modules
+	 *                          additional modules
 	 * @return Test
 	 */
 	protected static Test suite(Class<? extends Test> test, BasicRuntimeModule<?>... additionalModules) {

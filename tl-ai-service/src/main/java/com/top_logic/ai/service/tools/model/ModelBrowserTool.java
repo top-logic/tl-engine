@@ -218,6 +218,10 @@ public class ModelBrowserTool {
 							for (TLClass specialization : tlClass.getSpecializations()) {
 								typeInfo.addSpecialization(TLModelUtil.qualifiedName(specialization));
 							}
+
+							// Add abstract and final flags
+							typeInfo.setAbstract(tlClass.isAbstract());
+							typeInfo.setFinal(tlClass.isFinal());
 						}
 
 						// Add label and description from type resource key

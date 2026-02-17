@@ -36,6 +36,12 @@ public class TypeInfo extends de.haumacher.msgbuf.data.AbstractDataObject implem
 	/** @see #getSpecializations() */
 	public static final String SPECIALIZATIONS__PROP = "specializations";
 
+	/** @see #isAbstract() */
+	public static final String ABSTRACT__PROP = "abstract";
+
+	/** @see #isFinal() */
+	public static final String FINAL__PROP = "final";
+
 	/** @see #getLabel() */
 	public static final String LABEL__PROP = "label";
 
@@ -55,6 +61,10 @@ public class TypeInfo extends de.haumacher.msgbuf.data.AbstractDataObject implem
 	private final java.util.List<String> _generalizations = new java.util.ArrayList<>();
 
 	private final java.util.List<String> _specializations = new java.util.ArrayList<>();
+
+	private boolean _abstract = false;
+
+	private boolean _final = false;
 
 	private String _label = "";
 
@@ -252,6 +262,46 @@ public class TypeInfo extends de.haumacher.msgbuf.data.AbstractDataObject implem
 	}
 
 	/**
+	 * Whether the class is abstract (cannot be instantiated directly). Only set for classes.
+	 */
+	public final boolean isAbstract() {
+		return _abstract;
+	}
+
+	/**
+	 * @see #isAbstract()
+	 */
+	public com.top_logic.ai.service.tools.model.messages.TypeInfo setAbstract(boolean value) {
+		internalSetAbstract(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #isAbstract()} without chain call utility. */
+	protected final void internalSetAbstract(boolean value) {
+		_abstract = value;
+	}
+
+	/**
+	 * Whether the class is final (cannot be specialized). Only set for classes.
+	 */
+	public final boolean isFinal() {
+		return _final;
+	}
+
+	/**
+	 * @see #isFinal()
+	 */
+	public com.top_logic.ai.service.tools.model.messages.TypeInfo setFinal(boolean value) {
+		internalSetFinal(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #isFinal()} without chain call utility. */
+	protected final void internalSetFinal(boolean value) {
+		_final = value;
+	}
+
+	/**
 	 * Localized label for the type.
 	 */
 	public final String getLabel() {
@@ -306,6 +356,8 @@ public class TypeInfo extends de.haumacher.msgbuf.data.AbstractDataObject implem
 			PART_COUNT__PROP, 
 			GENERALIZATIONS__PROP, 
 			SPECIALIZATIONS__PROP, 
+			ABSTRACT__PROP, 
+			FINAL__PROP, 
 			LABEL__PROP, 
 			DESCRIPTION__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
@@ -339,6 +391,8 @@ public class TypeInfo extends de.haumacher.msgbuf.data.AbstractDataObject implem
 			case PART_COUNT__PROP: return getPartCount();
 			case GENERALIZATIONS__PROP: return getGeneralizations();
 			case SPECIALIZATIONS__PROP: return getSpecializations();
+			case ABSTRACT__PROP: return isAbstract();
+			case FINAL__PROP: return isFinal();
 			case LABEL__PROP: return getLabel();
 			case DESCRIPTION__PROP: return getDescription();
 			default: return null;
@@ -355,6 +409,8 @@ public class TypeInfo extends de.haumacher.msgbuf.data.AbstractDataObject implem
 			case PART_COUNT__PROP: internalSetPartCount((int) value); break;
 			case GENERALIZATIONS__PROP: internalSetGeneralizations(de.haumacher.msgbuf.util.Conversions.asList(String.class, value)); break;
 			case SPECIALIZATIONS__PROP: internalSetSpecializations(de.haumacher.msgbuf.util.Conversions.asList(String.class, value)); break;
+			case ABSTRACT__PROP: internalSetAbstract((boolean) value); break;
+			case FINAL__PROP: internalSetFinal((boolean) value); break;
 			case LABEL__PROP: internalSetLabel((String) value); break;
 			case DESCRIPTION__PROP: internalSetDescription((String) value); break;
 		}
@@ -397,6 +453,10 @@ public class TypeInfo extends de.haumacher.msgbuf.data.AbstractDataObject implem
 			out.value(x);
 		}
 		out.endArray();
+		out.name(ABSTRACT__PROP);
+		out.value(isAbstract());
+		out.name(FINAL__PROP);
+		out.value(isFinal());
 		out.name(LABEL__PROP);
 		out.value(getLabel());
 		out.name(DESCRIPTION__PROP);
@@ -431,6 +491,8 @@ public class TypeInfo extends de.haumacher.msgbuf.data.AbstractDataObject implem
 				setSpecializations(newValue);
 			}
 			break;
+			case ABSTRACT__PROP: setAbstract(in.nextBoolean()); break;
+			case FINAL__PROP: setFinal(in.nextBoolean()); break;
 			case LABEL__PROP: setLabel(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case DESCRIPTION__PROP: setDescription(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);

@@ -3,10 +3,9 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.ai.mcp.server.tools;
+package com.top_logic.ai.service.tools.util;
 
 import java.util.Locale;
-import java.util.Map;
 
 import com.top_logic.base.config.i18n.Internationalized;
 import com.top_logic.basic.config.TypedConfiguration;
@@ -17,11 +16,11 @@ import com.top_logic.element.layout.meta.TLMetaModelUtil;
 import com.top_logic.model.TLNamedPart;
 
 /**
- * Utility class for handling internationalization (I18N) in MCP tools.
+ * Utility class for handling internationalization (I18N) in <code>LangChain4j</code> tools.
  *
  * <p>
- * This class provides helper methods to extract localized label and description
- * values from MCP tool arguments and apply them to TopLogic model elements.
+ * This class provides helper methods to apply localized label and description values to TopLogic
+ * model elements from flat string parameters (as used by {@code @Tool} methods).
  * </p>
  */
 public class ToolI18NUtil {
@@ -77,38 +76,38 @@ public class ToolI18NUtil {
 	}
 
 	/**
-	 * Extracts label/description (en/de) from standard MCP arguments.
+	 * Creates a {@link LocalizedTexts} from flat string parameters.
+	 *
+	 * @param labelEn
+	 *        English label (may be null).
+	 * @param labelDe
+	 *        German label (may be null).
+	 * @param descEn
+	 *        English description (may be null).
+	 * @param descDe
+	 *        German description (may be null).
+	 * @return A {@link LocalizedTexts} holding the values.
 	 */
-	public static LocalizedTexts extractFromArguments(Map<String, Object> arguments) {
-		if (arguments == null) {
-			return new LocalizedTexts(null, null, null, null);
-		}
-		String labelEn = extract(arguments, "label", "en");
-		String labelDe = extract(arguments, "label", "de");
-		String descEn = extract(arguments, "description", "en");
-		String descDe = extract(arguments, "description", "de");
-		return new LocalizedTexts(labelEn, labelDe, descEn, descDe);
-	}
-
-	@SuppressWarnings("unchecked")
-	private static String extract(Map<String, Object> arguments, String objectKey, String languageKey) {
-		Object nestedObj = arguments.get(objectKey);
-		if (nestedObj instanceof Map) {
-			Map<String, Object> nestedMap = (Map<String, Object>) nestedObj;
-			Object value = nestedMap.get(languageKey);
-			if (value != null) {
-				String s = value.toString().trim();
-				return s.isEmpty() ? null : s;
-			}
-		}
-		return null;
+	public static LocalizedTexts create(String labelEn, String labelDe, String descEn, String descDe) {
+		return new LocalizedTexts(
+			trimToNull(labelEn),
+			trimToNull(labelDe),
+			trimToNull(descEn),
+			trimToNull(descDe));
 	}
 
 	/**
 	 * Applies I18N to the given model element if anything is present.
 	 *
-	 * The {@code modelElement} can be a module, class, property, etc. – any type
-	 * that {@link TLMetaModelUtil#saveI18NForPart} accepts.
+	 * <p>
+	 * The {@code part} can be a module, class, property, classifier, etc. - any type that
+	 * {@link TLMetaModelUtil#saveI18NForPart} accepts.
+	 * </p>
+	 *
+	 * @param part
+	 *        The model element to apply I18N to.
+	 * @param texts
+	 *        The localized texts to apply.
 	 */
 	public static void applyIfPresent(TLNamedPart part, LocalizedTexts texts) {
 		if (texts == null || !texts.hasAny()) {
@@ -145,5 +144,13 @@ public class ToolI18NUtil {
 			TLMetaModelUtil.saveI18NForPart(part, i18N, tx);
 			tx.commit();
 		}
+	}
+
+	private static String trimToNull(String value) {
+		if (value == null) {
+			return null;
+		}
+		String trimmed = value.trim();
+		return trimmed.isEmpty() ? null : trimmed;
 	}
 }

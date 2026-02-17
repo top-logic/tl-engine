@@ -25,7 +25,7 @@ export function drawClass(parentGfx, element, textRenderer) {
 
   if('stereotypes' in element) {
     element.stereotypes.forEach(function(stereotype) {
-      var svgStereotype = drawText(parentGfx, '&lt;&lt;' + stereotype + '&gt;&gt;', centerLabelStyle, textRenderer);
+      var svgStereotype = drawText(parentGfx, '<<' + stereotype + '>>', centerLabelStyle, textRenderer);
 
       centerLabelStyle.y += svgStereotype.getBBox().height;
     });

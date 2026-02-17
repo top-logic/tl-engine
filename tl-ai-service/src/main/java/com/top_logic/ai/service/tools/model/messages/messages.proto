@@ -99,6 +99,16 @@ message TypeInfo {
 	repeated string specializations;
 
 	/**
+	 * Whether the class is abstract (cannot be instantiated directly). Only set for classes.
+	 */
+	bool `abstract`;
+
+	/**
+	 * Whether the class is final (cannot be specialized). Only set for classes.
+	 */
+	bool `final`;
+
+	/**
 	 * Localized label for the type.
 	 */
 	string label;

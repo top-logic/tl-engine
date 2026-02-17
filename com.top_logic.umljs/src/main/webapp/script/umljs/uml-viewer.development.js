@@ -5,7 +5,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  *
- * Date: 2026-01-16
+ * Date: 2026-02-17
  */
 
 (function (global, factory) {
@@ -32,9 +32,11 @@
   /**
    * Flatten array, one level deep.
    *
-   * @param {Array<?>} arr
+   * @template T
    *
-   * @return {Array<?>}
+   * @param {T[][] | T[] | null} [arr]
+   *
+   * @return {T[]}
    */
 
   const nativeToString$1 = Object.prototype.toString;
@@ -65,10 +67,11 @@
    * Iterate over collection; returning something
    * (non-undefined) will stop iteration.
    *
-   * @param  {Array|Object} collection
-   * @param  {Function} iterator
+   * @template T
+   * @param {Collection<T>} collection
+   * @param { ((item: T, idx: number) => (boolean|void)) | ((item: T, key: string) => (boolean|void)) } iterator
    *
-   * @return {Object} return result that stopped the iteration
+   * @return {T} return result that stopped the iteration
    */
   function forEach$1(collection, iterator) {
 
@@ -265,51 +268,37 @@
   };
 
   /**
-   * Remove all children from the given element.
+   * Clear utility
    */
-  function clear$1(el) {
-
-    var c;
-
-    while (el.childNodes.length) {
-      c = el.childNodes[0];
-      el.removeChild(c);
-    }
-
-    return el;
-  }
 
   /**
-   * @param { HTMLElement } element
-   * @param { String } selector
+   * Removes all children from the given element
    *
-   * @return { boolean }
+   * @param {Element} element
+   *
+   * @return {Element} the element (for chaining)
    */
-  function matches(element, selector) {
-    return element && typeof element.matches === 'function' && element.matches(selector);
+  function clear$1(element) {
+    var child;
+
+    while ((child = element.firstChild)) {
+      element.removeChild(child);
+    }
+
+    return element;
   }
 
   /**
    * Closest
    *
    * @param {Element} el
-   * @param {String} selector
-   * @param {Boolean} checkYourSelf (optional)
+   * @param {string} selector
+   * @param {boolean} checkYourSelf (optional)
    */
   function closest(element, selector, checkYourSelf) {
-    var currentElem = checkYourSelf ? element : element.parentNode;
+    var actualElement = checkYourSelf ? element : element.parentNode;
 
-    while (currentElem && currentElem.nodeType !== document.DOCUMENT_NODE &&
-        currentElem.nodeType !== document.DOCUMENT_FRAGMENT_NODE) {
-
-      if (matches(currentElem, selector)) {
-        return currentElem;
-      }
-
-      currentElem = currentElem.parentNode;
-    }
-
-    return matches(currentElem, selector) ? currentElem : null;
+    return actualElement && typeof actualElement.closest === 'function' && actualElement.closest(selector) || null;
   }
 
   var componentEvent = {};
@@ -539,12 +528,16 @@
     return Math.max(range.min, Math.min(range.max, scale));
   }
 
+  function isMac() {
+    return (/mac/i).test(navigator.platform);
+  }
+
   /**
    * Flatten array, one level deep.
    *
    * @template T
    *
-   * @param {T[][]} arr
+   * @param {T[][] | T[] | null} [arr]
    *
    * @return {T[]}
    */
@@ -554,6 +547,10 @@
 
   function isUndefined(obj) {
     return obj === undefined;
+  }
+
+  function isNil(obj) {
+    return obj == null;
   }
 
   function isArray$1(obj) {
@@ -594,7 +591,7 @@
    * @return {Boolean}
    */
   function has(target, key) {
-    return nativeHasOwnProperty.call(target, key);
+    return !isNil(target) && nativeHasOwnProperty.call(target, key);
   }
 
   /**
@@ -990,7 +987,7 @@
     // pinch to zoom is mapped to wheel + ctrlKey = true
     // in modern browsers (!)
 
-    var isZoom = event.ctrlKey;
+    var isZoom = event.ctrlKey || (isMac() && event.metaKey);
 
     var isHorizontalScroll = event.shiftKey;
 
@@ -1436,6 +1433,7 @@
    * appendTo utility
    */
 
+
   /**
    * Append a node to a target element and return the appended node.
    *
@@ -1451,6 +1449,7 @@
   /**
    * append utility
    */
+
 
   /**
    * Append a node to an element
@@ -1724,16 +1723,6 @@
      return this.list.contains(name);
    };
 
-  function remove$1(element) {
-    var parent = element.parentNode;
-
-    if (parent) {
-      parent.removeChild(element);
-    }
-
-    return element;
-  }
-
   /**
    * Clear utility
    */
@@ -1741,14 +1730,14 @@
   /**
    * Removes all children from the given element
    *
-   * @param  {DOMElement} element
-   * @return {DOMElement} the element (for chaining)
+   * @param  {SVGElement} element
+   * @return {Element} the element (for chaining)
    */
   function clear(element) {
     var child;
 
     while ((child = element.firstChild)) {
-      remove$1(child);
+      element.removeChild(child);
     }
 
     return element;
@@ -1761,6 +1750,7 @@
   /**
    * DOM parsing utility
    */
+
 
   var SVG_START = '<svg xmlns="' + ns.svg + '"';
 
@@ -1813,6 +1803,7 @@
    */
 
 
+
   /**
    * Create a specific type from name or SVG markup.
    *
@@ -1823,6 +1814,8 @@
    */
   function create$1(name, attrs) {
     var element;
+
+    name = name.trim();
 
     if (name.charAt(0) === '<') {
       element = parse(name).firstChild;
@@ -1841,6 +1834,7 @@
   /**
    * Geometry helpers
    */
+
 
   // fake node used to instantiate svg geometry elements
   var node = null;
@@ -1907,7 +1901,7 @@
    */
 
   var TEXT_ENTITIES = /([&<>]{1})/g;
-  var ATTR_ENTITIES = /([\n\r"]{1})/g;
+  var ATTR_ENTITIES = /([&<>\n\r"]{1})/g;
 
   var ENTITY_REPLACEMENT = {
     '&': '&amp;',
@@ -1985,6 +1979,7 @@
    */
 
 
+
   function set(element, svg) {
 
     var parsed = parse(svg);
@@ -2046,6 +2041,16 @@
 
   function slice$1(arr) {
     return Array.prototype.slice.call(arr);
+  }
+
+  function remove$1(element) {
+    var parent = element.parentNode;
+
+    if (parent) {
+      parent.removeChild(element);
+    }
+
+    return element;
   }
 
   /**
@@ -7451,13 +7456,14 @@
    *
    * @param {SVGElement} visual The graphical element.
    * @param {ShapeLike} element The shape.
+   * @param {Object} attrs Optional attributes.
    *
    * @return {SVGElement}
    */
-  GraphicsFactory.prototype.drawShape = function(visual, element) {
+  GraphicsFactory.prototype.drawShape = function(visual, element, attrs = {}) {
     var eventBus = this._eventBus;
 
-    return eventBus.fire('render.shape', { gfx: visual, element: element });
+    return eventBus.fire('render.shape', { gfx: visual, element, attrs });
   };
 
   /**
@@ -7478,13 +7484,14 @@
    *
    * @param {SVGElement} visual The graphical element.
    * @param {ConnectionLike} element The connection.
+   * @param {Object} attrs Optional attributes.
    *
    * @return {SVGElement}
    */
-  GraphicsFactory.prototype.drawConnection = function(visual, element) {
+  GraphicsFactory.prototype.drawConnection = function(visual, element, attrs = {}) {
     var eventBus = this._eventBus;
 
-    return eventBus.fire('render.connection', { gfx: visual, element: element });
+    return eventBus.fire('render.connection', { gfx: visual, element, attrs });
   };
 
   /**

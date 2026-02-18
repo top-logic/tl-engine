@@ -364,7 +364,7 @@ mvn exec:java@migrate-ticket28336
 
 ## Repository Structure
 
-- **tl-parent-all/** - Root aggregator POM
+- **./** - Root aggregator POM
 - **tl-parent-engine/** - Aggregates all runtime modules (103 modules)
 - **com.top_logic/** - Core engine (tl-core artifact)
 - **com.top_logic.basic/** - Foundation utilities
@@ -397,7 +397,11 @@ Available tools include:
 
 See `mcp-servers/README.md` for setup instructions.
 
-## Git Commit Message Convention
+## VCS
+
+TopLogic uses Git as Version Control System
+
+### Git Commit Message Convention
 
 Commit messages in this project must follow a specific format:
 
@@ -405,6 +409,21 @@ Commit messages in this project must follow a specific format:
 - **Example**: `Ticket #28934: Add data URI SVG support to SVGReplacedElementFactory.`
 - **Important**: Do NOT include "Generated with Claude Code", "Co-Authored-By: Claude", or any AI-generation attribution lines
 - Keep the message plain and focused on describing the change
+
+### Git PR Conventions
+
+**Branch naming:**
+- Format: `CWS/CWS_<ticket-number>_<short-description>` (e.g., `CWS/CWS_28934_svg_data_uri`)
+- The short description is optional but recommended
+
+**PR title:**
+- Must start with `Ticket #<number>: <description>` (same format as commit messages)
+- Example: `Ticket #28934: Add data URI SVG support to SVGReplacedElementFactory.`
+- To get the correct issue/ticket for a PR it must be determined from the PR title. In rare cases, when the title is wrong, the correct issue can be determined from the commit messages.
+
+**CI:** Jenkins automatically builds each PR and posts the result as a review (APPROVED on success, REQUEST_CHANGES on failure).
+
+**After merge:** The source branch is deleted automatically.
 
 ## Additional Resources
 

@@ -6,6 +6,7 @@
 package com.top_logic.ai.service.skills;
 
 import com.top_logic.ai.service.agents.ModelExplorer;
+import com.top_logic.ai.service.agents.OrchestratorRouter;
 
 /**
  * Production configuration mapping agents to their ordered skill lists.
@@ -41,6 +42,13 @@ public final class SkillConfig {
 			"explorer/fact-rules",
 			"explorer/output-format",
 			"explorer/examples");
+
+		registry.registerAgentSkills(OrchestratorRouter.class,
+			"orchestrator/identity",
+			"orchestrator/delegation-rules",
+			"orchestrator/chained-delegation",
+			"orchestrator/work-order-discipline",
+			"orchestrator/behavior");
 
 		return registry;
 	}

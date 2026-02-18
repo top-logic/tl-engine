@@ -16,6 +16,7 @@ import com.top_logic.ai.service.tools.model.ModelBrowserTool;
 import com.top_logic.ai.service.tools.model.ModelEditorTool;
 import com.top_logic.ai.service.tools.model.ModelSearchTool;
 import com.top_logic.ai.service.tools.model.TypeAnalysisTool;
+import com.top_logic.ai.service.skills.SkillConfig;
 import com.top_logic.ai.service.tools.script.TLScriptTool;
 import com.top_logic.basic.thread.ThreadContextManager;
 
@@ -171,8 +172,10 @@ public final class AgentInvoker {
 		ModelSearchTool searchTool = new ModelSearchTool();
 		ModelAnnotationBrowserTool annotationTool = new ModelAnnotationBrowserTool();
 		AnnotationDefinitionExplorerTool definitionTool = new AnnotationDefinitionExplorerTool();
+		String systemMessage = SkillConfig.getInstance().composeSystemMessage(ModelExplorer.class);
 		return AgenticServices.agentBuilder(ModelExplorer.class)
 			.chatModel(explorationModel)
+			.systemMessageProvider(memoryId -> systemMessage)
 			.tools(browserTool, instanceTool, analysisTool, searchTool, annotationTool, definitionTool)
 			.build();
 	}

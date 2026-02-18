@@ -163,7 +163,8 @@
 						<annotationProcessorPath>
 							<groupId>com.top-logic</groupId>
 							<artifactId>tl-build-processor</artifactId>
-						    <version>7.11.0-SNAPSHOT</version>
+							<!-- Concrete version is not updated in "mvn release:prepare" :-( -->
+						    <version>${tl.version}</version>
 							<classifier>jar-with-dependencies</classifier>
 						</annotationProcessorPath>
 					</annotationProcessorPaths>

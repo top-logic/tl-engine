@@ -5,6 +5,8 @@
  */
 package com.top_logic.ai.service.skills;
 
+import java.util.List;
+
 import com.top_logic.ai.service.agents.ModelEditor;
 import com.top_logic.ai.service.agents.ModelExplorer;
 import com.top_logic.ai.service.agents.OrchestratorRouter;
@@ -145,6 +147,25 @@ public class TestSkillRegistry extends TestCase {
 		Skill skill = registry.getSkill("test/sample-skill");
 		assertEquals(SkillTier.CORE, skill.tier());
 		assertEquals("test/sample-skill", skill.description());
+	}
+
+	public void testGetOnDemandSkillsFor() {
+		SkillRegistry registry = new SkillRegistry();
+		registry.registerAgentSkills(TestAgent.class,
+			"test/frontmatter-skill", "test/on-demand-skill");
+		List<Skill> onDemand = registry.getOnDemandSkillsFor(TestAgent.class);
+		assertEquals(1, onDemand.size());
+		assertEquals("test/on-demand-skill", onDemand.get(0).name());
+		assertEquals(SkillTier.ON_DEMAND, onDemand.get(0).tier());
+	}
+
+	public void testComposeSystemMessageOnlyIncludesCoreSkills() {
+		SkillRegistry registry = new SkillRegistry();
+		registry.registerAgentSkills(TestAgent.class,
+			"test/frontmatter-skill", "test/on-demand-skill");
+		String message = registry.composeSystemMessage(TestAgent.class);
+		assertTrue("Should contain core skill content", message.contains("FRONTMATTER RULE"));
+		assertFalse("Should NOT contain on-demand skill content", message.contains("ON-DEMAND CONTENT"));
 	}
 
 	interface TestAgent {

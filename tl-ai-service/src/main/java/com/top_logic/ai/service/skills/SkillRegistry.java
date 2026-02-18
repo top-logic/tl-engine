@@ -83,7 +83,26 @@ public class SkillRegistry {
 	}
 
 	/**
-	 * Composes the system prompt for an agent by concatenating its skills in order.
+	 * Returns the on-demand skills configured for the given agent class.
+	 *
+	 * @param agentClass
+	 *        The agent interface class.
+	 * @return On-demand skills in registration order.
+	 */
+	public List<Skill> getOnDemandSkillsFor(Class<?> agentClass) {
+		return getSkillsFor(agentClass).stream()
+			.filter(skill -> skill.tier() == SkillTier.ON_DEMAND)
+			.toList();
+	}
+
+	/**
+	 * Composes the system prompt for an agent by concatenating its {@link SkillTier#CORE} skills
+	 * in order.
+	 *
+	 * <p>
+	 * {@link SkillTier#ON_DEMAND} skills are excluded from the composed prompt; they can be
+	 * retrieved separately via {@link #getOnDemandSkillsFor(Class)}.
+	 * </p>
 	 *
 	 * @param agentClass
 	 *        The agent interface class.
@@ -93,6 +112,9 @@ public class SkillRegistry {
 		List<Skill> skills = getSkillsFor(agentClass);
 		StringBuilder sb = new StringBuilder();
 		for (Skill skill : skills) {
+			if (skill.tier() != SkillTier.CORE) {
+				continue;
+			}
 			if (sb.length() > 0) {
 				sb.append(SKILL_SEPARATOR);
 			}

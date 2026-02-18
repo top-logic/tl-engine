@@ -13,7 +13,7 @@ import com.top_logic.ai.service.tools.model.AnnotationDefinitionExplorerTool;
 import com.top_logic.ai.service.tools.model.InstanceBrowserTool;
 import com.top_logic.ai.service.tools.model.ModelAnnotationBrowserTool;
 import com.top_logic.ai.service.tools.model.ModelBrowserTool;
-import com.top_logic.ai.service.tools.model.ModelCreatorTool;
+import com.top_logic.ai.service.tools.model.ModelEditorTool;
 import com.top_logic.ai.service.tools.model.ModelSearchTool;
 import com.top_logic.ai.service.tools.model.TypeAnalysisTool;
 import com.top_logic.ai.service.tools.script.TLScriptTool;
@@ -26,7 +26,7 @@ import dev.langchain4j.model.chat.ChatModel;
  * Internal component for agent-to-agent calls.
  * <p>
  * Used by Orchestrator (and by TLScript's "request exploration" path) to invoke
- * {@code ModelExplorer}, {@code ModelCreator}, or {@code TLScriptAgent}. Records {@link com.top_logic.ai.service.tools.TraceEntry.AgentCallTraceEntry}
+ * {@code ModelExplorer}, {@code ModelEditor}, or {@code TLScriptAgent}. Records {@link com.top_logic.ai.service.tools.TraceEntry.AgentCallTraceEntry}
  * events via the current run's trace (see {@link com.top_logic.ai.service.tools.ToolCallTracking}).
  * No agent is exposed as a @Tool to another agent.
  * </p>
@@ -110,7 +110,7 @@ public final class AgentInvoker {
 	}
 
 	/**
-	 * Invokes the {@code ModelCreator} agent with work-order-derived requirements.
+	 * Invokes the {@code ModelEditor} agent with work-order-derived requirements.
 	 *
 	 * @param fromAgent
 	 *        Name of the calling agent (e.g. "Orchestrator").
@@ -126,7 +126,7 @@ public final class AgentInvoker {
 			requirements = requirements + "\n\nContext: " + workOrder.context();
 		}
 		final String requirementsForLambda = requirements;
-		ToolCallTracking.recordAgentCallStartIfTracking(fromAgent, "ModelCreator", requirementsForLambda);
+		ToolCallTracking.recordAgentCallStartIfTracking(fromAgent, "ModelEditor", requirementsForLambda);
 		String result;
 		try {
 			AIService aiService = AIService.getInstance();
@@ -134,7 +134,7 @@ public final class AgentInvoker {
 				throw new RuntimeException("AIService is not available.");
 			}
 			ChatModel creationModel = aiService.getChatModel("mistral-large-latest");
-			ModelCreator creator = buildModelCreator(creationModel);
+			ModelEditor creator = buildModelEditor(creationModel);
 			result = ThreadContextManager.inSystemInteraction(AgentInvoker.class,
 				() -> creator.createModel(requirementsForLambda));
 		} catch (Exception e) {
@@ -177,10 +177,10 @@ public final class AgentInvoker {
 			.build();
 	}
 
-	private static ModelCreator buildModelCreator(ChatModel creationModel) {
-		return AgenticServices.agentBuilder(ModelCreator.class)
+	private static ModelEditor buildModelEditor(ChatModel creationModel) {
+		return AgenticServices.agentBuilder(ModelEditor.class)
 			.chatModel(creationModel)
-			.tools(new ModelCreatorTool(), new AgentDelegationTools.TLScript("ModelCreator"))
+			.tools(new ModelEditorTool(), new AgentDelegationTools.TLScript("ModelEditor"))
 			.build();
 	}
 

@@ -810,7 +810,7 @@ message SearchResponse {
 	string error;
 }
 
-// ===== ModelCreatorTool Messages =====
+// ===== ModelEditorTool Messages =====
 
 /**
  * Response for module creation/update operations.

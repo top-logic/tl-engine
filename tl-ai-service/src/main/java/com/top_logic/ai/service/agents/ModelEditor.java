@@ -13,7 +13,7 @@ import dev.langchain4j.service.V;
 /**
  * Agent for creating and modifying TopLogic model elements from natural language requirements.
  */
-public interface ModelCreator {
+public interface ModelEditor {
 
 	/**
 	 * Creates TopLogic model elements from natural language requirements.

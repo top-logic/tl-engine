@@ -108,16 +108,53 @@ public class SkillRegistry {
 		return new ArrayList<>(_skills.keySet());
 	}
 
+	private static final String FRONTMATTER_DELIMITER = "---";
+
 	private Skill loadSkill(String name) {
 		String resourcePath = RESOURCE_BASE + name + ".md";
 		try (InputStream is = getClass().getClassLoader().getResourceAsStream(resourcePath)) {
 			if (is == null) {
 				throw new IllegalArgumentException("Skill resource not found: " + resourcePath);
 			}
-			String content = new String(is.readAllBytes(), StandardCharsets.UTF_8).trim();
-			return new Skill(name, name, SkillTier.CORE, content);
+			String raw = new String(is.readAllBytes(), StandardCharsets.UTF_8).trim();
+			return parseSkill(name, raw);
 		} catch (IOException e) {
 			throw new RuntimeException("Failed to load skill: " + resourcePath, e);
 		}
+	}
+
+	private Skill parseSkill(String name, String raw) {
+		if (!raw.startsWith(FRONTMATTER_DELIMITER)) {
+			return new Skill(name, name, SkillTier.CORE, raw);
+		}
+
+		int endIndex = raw.indexOf(FRONTMATTER_DELIMITER, FRONTMATTER_DELIMITER.length());
+		if (endIndex < 0) {
+			return new Skill(name, name, SkillTier.CORE, raw);
+		}
+
+		String frontmatter = raw.substring(FRONTMATTER_DELIMITER.length(), endIndex).trim();
+		String content = raw.substring(endIndex + FRONTMATTER_DELIMITER.length()).trim();
+
+		String description = name;
+		SkillTier tier = SkillTier.CORE;
+
+		for (String line : frontmatter.split("\n")) {
+			int colonIndex = line.indexOf(':');
+			if (colonIndex < 0) {
+				continue;
+			}
+			String key = line.substring(0, colonIndex).trim();
+			String value = line.substring(colonIndex + 1).trim();
+			switch (key) {
+				case "description":
+					description = value;
+					break;
+				case "tier":
+					tier = SkillTier.fromString(value);
+					break;
+			}
+		}
+		return new Skill(name, description, tier, content);
 	}
 }

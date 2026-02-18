@@ -123,6 +123,30 @@ public class TestSkillRegistry extends TestCase {
 		assertTrue("tool-first before zero-knowledge", toolFirstIdx < zeroKnowledgeIdx);
 	}
 
+	public void testFrontmatterParsing() {
+		SkillRegistry registry = new SkillRegistry();
+		Skill skill = registry.getSkill("test/frontmatter-skill");
+		assertEquals("A test skill with frontmatter", skill.description());
+		assertEquals(SkillTier.CORE, skill.tier());
+		assertTrue(skill.content().contains("FRONTMATTER RULE"));
+		assertFalse("Frontmatter should be stripped from content", skill.content().contains("description:"));
+	}
+
+	public void testOnDemandFrontmatter() {
+		SkillRegistry registry = new SkillRegistry();
+		Skill skill = registry.getSkill("test/on-demand-skill");
+		assertEquals("An on-demand test skill", skill.description());
+		assertEquals(SkillTier.ON_DEMAND, skill.tier());
+		assertTrue(skill.content().contains("ON-DEMAND CONTENT"));
+	}
+
+	public void testSkillWithoutFrontmatterDefaultsToCore() {
+		SkillRegistry registry = new SkillRegistry();
+		Skill skill = registry.getSkill("test/sample-skill");
+		assertEquals(SkillTier.CORE, skill.tier());
+		assertEquals("test/sample-skill", skill.description());
+	}
+
 	interface TestAgent {
 		String chat(String msg);
 	}

@@ -5,6 +5,7 @@
  */
 package com.top_logic.ai.service.skills;
 
+import com.top_logic.ai.service.agents.ModelEditor;
 import com.top_logic.ai.service.agents.ModelExplorer;
 import com.top_logic.ai.service.agents.OrchestratorRouter;
 import com.top_logic.ai.service.agents.TLScriptAgent;
@@ -58,6 +59,11 @@ public final class SkillConfig {
 			"tlscript/verification-rules",
 			"tlscript/grammar-rules",
 			"tlscript/response-rules");
+
+		registry.registerAgentSkills(ModelEditor.class,
+			"editor/identity",
+			"editor/creation-rules",
+			"editor/output-format");
 
 		return registry;
 	}

@@ -183,8 +183,10 @@ public final class AgentInvoker {
 	}
 
 	private static ModelEditor buildModelEditor(ChatModel creationModel) {
+		String systemMessage = SkillConfig.getInstance().composeSystemMessage(ModelEditor.class);
 		return AgenticServices.agentBuilder(ModelEditor.class)
 			.chatModel(creationModel)
+			.systemMessageProvider(memoryId -> systemMessage)
 			.tools(new ModelEditorTool(), new AgentDelegationTools.TLScript("ModelEditor"))
 			.build();
 	}

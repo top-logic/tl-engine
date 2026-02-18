@@ -4,435 +4,49 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a TopLogic-based AI application with MCP (Model Context Protocol) server integration, AI service layer, and chat UI. The project is a multi-module Maven build consisting of:
+This is a TopLogic-based AI application with MCP server integration, AI service layer, and chat UI. Multi-module Maven build on TopLogic 7.10.0-SNAPSHOT.
 
-- **tl-ai-mcp-server**: MCP server module that exposes TopLogic model data to AI agents via the Model Context Protocol
-- **tl-ai-service**: Core AI service module providing LLM integration through LangChain4j, with multi-agent orchestration, tool call tracking, and TL-Script integration
-- **tl-chat**: Chat UI module providing a real-time agentic chat interface with SSE-based progress tracking
-- **tl-ai-demo**: Demo application that bundles all modules into a deployable TopLogic application
-
-All modules extend the TopLogic platform (version 7.10.0-SNAPSHOT), a Java-based enterprise application framework with model-driven development capabilities.
+- **tl-ai-mcp-server**: MCP server exposing TopLogic model data to AI agents
+- **tl-ai-service**: Core AI service with LangChain4j, multi-agent orchestration, tool call tracking
+- **tl-chat**: Real-time agentic chat interface with SSE-based progress tracking
+- **tl-ai-demo**: Demo application bundling all modules
 
 ## Build Commands
 
-### Build the entire project
 ```bash
-mvn clean install
-```
-
-### Build a specific module
-```bash
-mvn clean install -pl tl-ai-mcp-server
-mvn clean install -pl tl-ai-service
-mvn clean install -pl tl-chat
-mvn clean install -pl tl-ai-demo
-```
-
-### Run tests
-```bash
-mvn test
-```
-
-### Run tests for a specific module
-```bash
-mvn test -pl tl-ai-mcp-server
-mvn test -pl tl-ai-service
-mvn test -pl tl-chat
-mvn test -pl tl-ai-demo
-```
-
-### Skip tests during build
-```bash
-mvn clean install -DskipTests
-```
-
-### Package application
-```bash
-mvn package
+mvn clean install                      # Build entire project
+mvn clean install -pl tl-ai-service    # Build specific module
+mvn test                               # Run all tests
+mvn test -pl tl-ai-service             # Test specific module
+mvn clean install -DskipTests          # Skip tests
 ```
 
 ## Project Structure
 
-### Module Architecture
-
-- **Parent POM** (`pom.xml`): Defines the multi-module structure
-  - **tl-ai-mcp-server**: MCP server library module
-    - Parent: `tl-parent-core` (TopLogic core parent)
-    - Provides MCP server functionality (model browsing, search, type analysis)
-    - Dependencies: `tl-model-search`, `tl-contact`
-  - **tl-ai-service**: AI service library module
-    - Parent: `tl-parent-core` (TopLogic core parent)
-    - Provides LLM integration via LangChain4j with multi-provider support
-    - Multi-agent orchestration (OrchestratorAgent, ModelExplorer, TLScriptAgent, etc.)
-    - Tool call tracking and tracing infrastructure
-    - Dependencies: LangChain4j, Apache Commons Pool
-  - **tl-chat**: Chat UI application module
-    - Parent: `tl-parent-app` (TopLogic application parent)
-    - Real-time chat interface with SSE-based progress tracking
-    - JSON API (`ChatServlet`) and server-side rendering (`ChatControl`)
-    - Dependencies: `tl-core`, `tl-ai-service`
-  - **tl-ai-demo**: Demo application module
-    - Parent: `tl-parent-app` (TopLogic application parent)
-    - Bundles all modules into a deployable application
-    - Includes full TopLogic application stack (themes, BPE, monitoring, etc.)
-
-### Source Layout
-
-Each module follows standard Maven structure:
-```
-<module>/
-├── src/main/java/com/top_logic/ai/<module>/  # Java source code
-├── src/main/webapp/WEB-INF/                    # Web application resources
-│   ├── conf/                                   # Application configuration
-│   ├── model/                                  # TopLogic model definitions
-│   ├── autoconf/                               # Auto-configuration
-│   ├── kbase/                                  # Knowledge base
-│   ├── layouts/                                # UI layouts
-│   └── data/                                   # Application data
-├── src/main/resources/META-INF/                # Module metadata
-│   └── web-fragment.xml                        # Servlet registration (modules only)
-├── src/test/java/                              # Test sources
-└── src/test/webapp/WEB-INF/                    # Test configurations
-```
-
-**Important:** TopLogic modules must use `web-fragment.xml` (in `src/main/resources/META-INF/`) for servlet registration, not `web.xml`. Only top-level applications should have a `web.xml` deployment descriptor.
-
-### Key Configuration Files
-
-- **Model Definition**: `src/main/webapp/WEB-INF/model/tl.ai.<module>.model.xml`
-  - Defines application types using TopLogic's dynamic type system
-  - Uses XML schema at `http://www.top-logic.com/ns/dynamic-types/6.0`
-  - Generated code goes to `com.top_logic.ai.<module>.model` (interface) and `.impl` (implementation)
-
-- **Application Configuration**: `src/main/webapp/WEB-INF/conf/tl-ai-<module>.conf.xml`
-  - Main configuration file for the application
-
-- **Auto-configuration**: `src/main/webapp/WEB-INF/autoconf/model.tl.ai.<module>.config.xml`
-  - Automatic configuration for model integration
-
-### TopLogic Framework Integration
-
-This project builds on the TopLogic platform, which provides:
-- Model-driven development with XML-based type definitions
-- Dynamic type system for runtime type creation
-- Web application framework with layouts and themes
-- Knowledge base and migration support
-- Internationalization (German and English resources)
-
-The framework uses a parent POM hierarchy where modules inherit from either:
-- `tl-parent-core`: For library/core modules
-- `tl-parent-app`: For deployable application modules
-
-## Development Workflow
-
-1. **Adding Application Types**: Edit the model XML file in `src/main/webapp/WEB-INF/model/` to define new types
-2. **Configuration Changes**: Update files in `src/main/webapp/WEB-INF/conf/`
-3. **Custom Java Code**: Add to `src/main/java/com/top_logic/ai/<module>/`
-4. **Tests**: Place in `src/test/java/com/top_logic/ai/<module>/`
-
-## MCP Server Configuration
-
-The MCP (Model Context Protocol) server is configured through two separate mechanisms:
-
-### Servlet Mapping (web-fragment.xml)
-
-The `tl-ai-mcp-server` module uses a `web-fragment.xml` file (not `web.xml`) to register its servlet. This follows TopLogic's modular architecture where:
-- **Modules** use `web-fragment.xml` to register servlets and filters
-- **Applications** use `web.xml` as the main deployment descriptor
-
-The servlet mapping controls which URL patterns are routed to the MCP servlet:
-
-```xml
-<web-fragment xmlns="http://xmlns.jcp.org/xml/ns/javaee"
-  xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-fragment_3_1.xsd"
-  version="3.1">
-    <name>tl-ai-mcp-server</name>
-
-    <servlet>
-        <servlet-name>MCPTransportServlet</servlet-name>
-        <servlet-class>com.top_logic.ai.mcp.server.MCPTransportServlet</servlet-class>
-        <async-supported>true</async-supported>
-    </servlet>
-
-    <servlet-mapping>
-        <servlet-name>MCPTransportServlet</servlet-name>
-        <url-pattern>/mcp/*</url-pattern>
-    </servlet-mapping>
-</web-fragment>
-```
-
-**Location:** `tl-ai-mcp-server/src/main/resources/META-INF/web-fragment.xml`
-
-### Service Configuration (conf.config.xml)
-
-Controls the MCP server behavior:
-
-```xml
-<config service-class="com.top_logic.ai.mcp.server.MCPServerService">
-    <instance class="com.top_logic.ai.mcp.server.MCPServerService"
-        server-name="TopLogic MCP Server"
-        server-version="1.0.0"
-        keep-alive-interval="30"
-    />
-</config>
-```
-
-**Important:** Endpoint paths (`/mcp/sse` and `/mcp/message`) are hardcoded in `MCPServerService` to match the servlet mapping in `web-fragment.xml`. Do not configure endpoints separately to avoid configuration redundancy and potential mismatches.
-
-## Build Artifacts
-
-Build output includes:
-- Standard JAR/WAR files in `target/`
-- Packaged applications in `target/<module>-<version>-SNAPSHOT-app/`
-- Docker build scripts in `src/main/docker/`
-- Debian package configurations in `src/main/deb/`
-
-## Coding Conventions
-
-### Internationalization (I18N)
-
-**DO NOT** manually edit internationalization message files (`messages_en.properties`, `messages_de.properties`). These files are automatically generated and updated by the build process. The build system extracts configuration property names, class names, and other metadata to generate appropriate I18N keys and default messages.
-
-### JavaDoc
-
-**DO NOT** add `@author` tags to class JavaDoc. Author information should be tracked through version control (git), not in source code comments.
-
-### Configuration Property Constants
-
-When defining configuration property name constants in service configuration interfaces, always include a `@see` JavaDoc reference to the corresponding getter method.
-
-**Pattern:**
-```java
-public interface Config<I extends MyService> extends ConfiguredManagedClass.Config<I> {
-
-    /**
-     * Configuration property name for my property.
-     *
-     * @see #getMyProperty()
-     */
-    String MY_PROPERTY = "my-property";
-
-    /**
-     * Description of what this property does.
-     */
-    @Name(MY_PROPERTY)
-    @StringDefault("default value")
-    String getMyProperty();
-}
-```
-
-**Rationale:** This creates bidirectional documentation between the property name constant and its getter, making it easier to navigate and understand the configuration interface.
-
-### Exception Handling in Services
-
-When implementing TopLogic services (classes extending `ConfiguredManagedClass`), use appropriate exceptions for error handling:
-
-- **ConfigurationError / ConfigurationException**: ONLY for reporting problems to end-users of the application (e.g., invalid user input, configuration errors that users can fix)
-- **RuntimeException**: For technical errors in service initialization and operation (e.g., startup failures, resource initialization errors)
-
-**Pattern for Service Startup:**
-```java
-@Override
-protected void startUp() {
-    super.startUp();
-
-    try {
-        // Service initialization code
-        someResource.init();
-
-    } catch (RuntimeException ex) {
-        // Re-throw RuntimeExceptions as-is
-        throw ex;
-    } catch (Exception ex) {
-        // Wrap checked exceptions in RuntimeException
-        throw new RuntimeException("Failed to start service: " + ex.getMessage(), ex);
-    }
-}
-```
-
-**Rationale:** Service errors are technical issues not visible to end-users. `ConfigurationError` and `ConfigurationException` are reserved for user-facing validation and configuration problems. Using `RuntimeException` for service errors ensures proper separation of concerns between technical failures and user-actionable errors.
-
-### Accessing Servlet Context Information
-
-When implementing services that need access to the web application context (e.g., context path, servlet context), use the `ServletContextService`:
-
-**Pattern:**
-```java
-import com.top_logic.basic.module.ServiceDependencies;
-import com.top_logic.basic.module.services.ServletContextService;
-
-@ServiceDependencies({
-    ServletContextService.Module.class
-})
-public class MyService extends ConfiguredManagedClass<MyService.Config<?>> {
-
-    @Override
-    protected void startUp() {
-        super.startUp();
-
-        // Get the application context path
-        String contextPath = ServletContextService.getInstance().getServletContext().getContextPath();
-
-        // Use context path in service initialization
-        String fullUrl = contextPath + "/my/endpoint";
-    }
-}
-```
-
-**Important:** When one service uses another service, you **must** declare the dependency using the `@ServiceDependencies` annotation. This ensures proper startup order - the `ServletContextService` will be started before your service.
-
-**Rationale:** The `ServletContextService` provides access to servlet context information even outside of HTTP request handling. This is essential for services that need to construct URLs or access deployment-specific information during initialization. Declaring the dependency ensures that the servlet context is available when your service starts up.
-
-## Git Commit Messages
-
-When creating commit messages, follow these conventions:
-
-**Structure:**
-```
-Short summary line (imperative mood, max 50 chars)
-
-Detailed explanation of what changed and why (wrap at 72 chars).
-Can span multiple paragraphs if needed.
-
-- Bullet points for key changes
-- Another change
-
-User prompts:
-> Original user request that led to this change
-> Additional user clarification or feedback
-```
-
-**Important Rules:**
-- **DO NOT** add Claude signature lines like "🤖 Generated with Claude Code" or "Co-Authored-By: Claude"
-- **DO** include the user prompts that produced the commit as the last section
-- Use imperative mood in the summary ("Add feature" not "Added feature")
-- Separate summary from body with a blank line
-- Wrap body text at 72 characters
-- Use bullet points for listing multiple changes
-
-**Example:**
-```
-Add module description to ModelModulesResource
-
-Enhance the model modules resource to include module descriptions by
-retrieving them from TLI18NKey annotations. This provides more context
-for AI agents browsing the TopLogic model structure.
-
-- Retrieve TLI18NKey annotation from each module
-- Resolve the resource key to get the localized description
-- Include description field in JSON output when available
-
-User prompts:
-> A TLModule actually has a description. Unfortunately this is not
-> available as property or getter. In the UI it is possible to enter
-> a description when creating a module. Use this description as
-> additional information in the modules resource.
-```
-
-## Data Transfer Objects (DTOs) and JSON Serialization
-
-**DO NOT** create hand-written POJO DTOs with getters/setters for JSON serialization. Instead, use the **msgbuf** library (`de.haumacher.msgbuf`) to define message types in `.proto` files and generate data classes automatically.
-
-**DO NOT** use Jackson (`ObjectMapper`) for JSON serialization/deserialization. Use msgbuf's built-in `JsonWriter`/`JsonReader` instead.
-
-### How to define DTOs
-
-1. Create a `messages.proto` file in a `messages` subpackage:
-
-```proto
-package com.top_logic.ai.<module>.path.messages;
-
-option NoBinary;
-option NoVisit;
-option NoListener;
-option NoInterfaces;
-option NoXml;
-
-message MyResponse {
-    string name;
-    bool active;
-    int count;
-    repeated MyItem items;
-}
-
-message MyItem {
-    string id;
-    string label;
-}
-```
-
-2. Add the msgbuf generator plugin to the module's `pom.xml`:
-
-```xml
-<build>
-    <plugins>
-        <plugin>
-            <groupId>de.haumacher.msgbuf</groupId>
-            <artifactId>msgbuf-generator-maven-plugin</artifactId>
-            <version>${msgbuf.version}</version>
-            <executions>
-                <execution>
-                    <id>generate-protocols</id>
-                    <goals>
-                        <goal>generate</goal>
-                    </goals>
-                </execution>
-            </executions>
-        </plugin>
-    </plugins>
-</build>
-```
-
-3. Run `mvn compile` to generate Java classes from the `.proto` file.
-
-4. Add a `TestComment` exclusion for the generated package in the module's test config (`src/test/webapp/WEB-INF/conf/<module>.test.config.xml`):
-
-```xml
-<config config:interface="test.com.top_logic.basic.TestComment$Config">
-    <ignore>
-        <entry value="com.top_logic.ai.<module>.path.messages" />
-    </ignore>
-</config>
-```
-
-### Using generated classes
-
-```java
-// Create with fluent setters
-MyResponse response = MyResponse.create()
-    .setName("example")
-    .setActive(true)
-    .setCount(42);
-
-// Serialize to JSON string
-StringW buffer = new StringW();
-try (JsonWriter json = new JsonWriter(buffer)) {
-    response.writeTo(json);
-}
-String jsonString = buffer.toString();
-
-// Deserialize from JSON string
-JsonReader reader = new JsonReader(new StringR(jsonString));
-MyResponse parsed = MyResponse.readMyResponse(reader);
-```
-
-For tool responses in `tl-ai-service`, use `DataClassSerializer.toJson()` which adds error handling and optional tool call tracking.
-
-### Important constraints
-
-- msgbuf does not support `map<string, Object>`. If you need a map with mixed value types, serialize it to a JSON string field (e.g., `string argsJson`) and parse it on the client side.
-- Generated classes have `protected` constructors — always use the static `create()` factory method.
-- The `.proto` file must be placed in the same package directory as where the generated classes will live.
-
-### Existing examples
-
-- `tl-ai-service/src/main/java/com/top_logic/ai/service/tools/model/messages/messages.proto` — largest example with 26+ message types
-- `tl-ai-service/src/main/java/com/top_logic/ai/service/tools/help/messages/messages.proto` — simple example
-- `tl-chat/src/main/java/com/top_logic/ai/chat/api/messages/messages.proto` — chat API DTOs and SSE event payloads
+Standard Maven layout per module: `src/main/java/com/top_logic/ai/<module>/`, `src/main/webapp/WEB-INF/` (conf, model, autoconf, layouts), `src/test/java/`.
+
+**Key config files:**
+- Model definition: `src/main/webapp/WEB-INF/model/tl.ai.<module>.model.xml`
+- Application config: `src/main/webapp/WEB-INF/conf/tl-ai-<module>.conf.xml`
+- Auto-config: `src/main/webapp/WEB-INF/autoconf/model.tl.ai.<module>.config.xml`
+
+**TopLogic parent POMs:** `tl-parent-core` for library modules, `tl-parent-app` for application modules.
+
+**Important:** Modules use `web-fragment.xml` (in `src/main/resources/META-INF/`) for servlet registration, not `web.xml`. Only top-level applications use `web.xml`.
+
+## Coding Rules
+
+- **DO NOT** manually edit `messages_en.properties` / `messages_de.properties` (auto-generated by build)
+- **DO NOT** add `@author` tags to JavaDoc (use git history)
+- **DO NOT** create hand-written POJO DTOs — use msgbuf `.proto` files (see `/create-dto` skill)
+- **DO NOT** use Jackson (`ObjectMapper`) — use msgbuf `JsonWriter`/`JsonReader`
+- **DO NOT** add Claude signatures or `Co-Authored-By` lines to commits
+- **DO** include user prompts as the last section of commit messages (see `/commit` command)
+- **DO** include `@see` on config property constants pointing to getter (see `/toplogic-service` skill)
+- Use `RuntimeException` for service startup errors, `ConfigurationError` only for user-facing errors (see `/toplogic-service` skill)
 
 ## Notes
 
-- Build artifacts are excluded from Git (in `.gitignore`)
-- Temporary files go in `tmp/` directory (also excluded from Git)
-- The project uses UTF-8 encoding throughout
-- Test framework is JUnit (via TestCase base class)
+- Build artifacts excluded from Git (`.gitignore`)
+- UTF-8 encoding throughout
+- Test framework: JUnit (via TestCase base class)

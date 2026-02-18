@@ -18,7 +18,7 @@ import dev.langchain4j.model.chat.ChatModel;
  * do any need a specialist? It may call zero tools (e.g. ask for clarification), one, or multiple in sequence
  * (e.g. Explorer for model context, then TLScript for how to use it). After each tool result it reasons: is it
  * enough? When satisfied, it synthesizes and returns the final answer. See {@link OrchestratorRouter} for the
- * system prompt and {@link OrchestratorTools} for the three delegate tools.
+ * system prompt and {@link AgentDelegationTools} for the delegate tools.
  * </p>
  * <p>
  * The caller must set the run's trace (e.g. {@link com.top_logic.ai.service.tools.ToolCallTracking#setTracker})
@@ -46,10 +46,12 @@ public final class OrchestratorAgent {
 		}
 
 		ChatModel model = aiService.getChatModel("mistral-large-latest");
-		OrchestratorTools tools = new OrchestratorTools();
 		OrchestratorRouter router = AgenticServices.agentBuilder(OrchestratorRouter.class)
 			.chatModel(model)
-			.tools(tools)
+			.tools(
+				new AgentDelegationTools.Exploration("Orchestrator"),
+				new AgentDelegationTools.Creation("Orchestrator"),
+				new AgentDelegationTools.TLScript("Orchestrator"))
 			.build();
 
 		return ThreadContextManager.inSystemInteraction(OrchestratorAgent.class,

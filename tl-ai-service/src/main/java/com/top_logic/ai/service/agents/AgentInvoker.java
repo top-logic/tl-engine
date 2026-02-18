@@ -8,12 +8,12 @@ package com.top_logic.ai.service.agents;
 import com.top_logic.ai.service.AIService;
 import com.top_logic.ai.service.agents.handoff.AgentWorkOrder;
 import com.top_logic.ai.service.tools.ToolCallTracking;
-import com.top_logic.ai.service.tools.help.RequestModelExplorationTool;
 import com.top_logic.ai.service.tools.help.TLScriptReferenceTool;
 import com.top_logic.ai.service.tools.model.AnnotationDefinitionExplorerTool;
 import com.top_logic.ai.service.tools.model.InstanceBrowserTool;
 import com.top_logic.ai.service.tools.model.ModelAnnotationBrowserTool;
 import com.top_logic.ai.service.tools.model.ModelBrowserTool;
+import com.top_logic.ai.service.tools.model.ModelCreatorTool;
 import com.top_logic.ai.service.tools.model.ModelSearchTool;
 import com.top_logic.ai.service.tools.model.TypeAnalysisTool;
 import com.top_logic.ai.service.tools.script.TLScriptTool;
@@ -95,7 +95,7 @@ public final class AgentInvoker {
 			ChatModel tlscriptModel = aiService.getChatModel("mistral-large-latest");
 			final TLScriptAgent agent = AgenticServices.agentBuilder(TLScriptAgent.class)
 				.chatModel(tlscriptModel)
-				.tools(new TLScriptReferenceTool(), new RequestModelExplorationTool(), new TLScriptTool())
+				.tools(new TLScriptReferenceTool(), new AgentDelegationTools.Exploration("TLScriptAgent"), new TLScriptTool())
 				.build();
 			result = ThreadContextManager.inSystemInteraction(AgentInvoker.class,
 				() -> agent.answer(messageForLambda));
@@ -110,22 +110,33 @@ public final class AgentInvoker {
 	}
 
 	/**
-	 * Invokes the model-creation path ({@code UMLSpecificationAgent} workflow) with work-order input.
+	 * Invokes the {@code ModelCreator} agent with work-order-derived requirements.
 	 *
 	 * @param fromAgent
 	 *        Name of the calling agent (e.g. "Orchestrator").
 	 * @param workOrder
-	 *        Task holds the business requirements or JSON spec.
-	 * @return The workflow result.
+	 *        Task holds the business requirements.
+	 * @return The creation result.
 	 */
 	public static String invokeCreator(String fromAgent, AgentWorkOrder workOrder) {
 		String requirements = workOrder.task() != null && !workOrder.task().isEmpty()
 			? workOrder.task()
 			: workOrder.goal();
-		ToolCallTracking.recordAgentCallStartIfTracking(fromAgent, "ModelCreator", requirements);
+		if (workOrder.context() != null && !workOrder.context().isEmpty()) {
+			requirements = requirements + "\n\nContext: " + workOrder.context();
+		}
+		final String requirementsForLambda = requirements;
+		ToolCallTracking.recordAgentCallStartIfTracking(fromAgent, "ModelCreator", requirementsForLambda);
 		String result;
 		try {
-			result = UMLSpecificationAgent.execute(requirements);
+			AIService aiService = AIService.getInstance();
+			if (aiService == null) {
+				throw new RuntimeException("AIService is not available.");
+			}
+			ChatModel creationModel = aiService.getChatModel("mistral-large-latest");
+			ModelCreator creator = buildModelCreator(creationModel);
+			result = ThreadContextManager.inSystemInteraction(AgentInvoker.class,
+				() -> creator.createModel(requirementsForLambda));
 		} catch (Exception e) {
 			result = "Error: " + e.getMessage();
 			ToolCallTracking.recordAgentCallCompleteIfTracking(truncate(result, RESULT_SUMMARY_MAX_LEN));
@@ -163,6 +174,13 @@ public final class AgentInvoker {
 		return AgenticServices.agentBuilder(ModelExplorer.class)
 			.chatModel(explorationModel)
 			.tools(browserTool, instanceTool, analysisTool, searchTool, annotationTool, definitionTool)
+			.build();
+	}
+
+	private static ModelCreator buildModelCreator(ChatModel creationModel) {
+		return AgenticServices.agentBuilder(ModelCreator.class)
+			.chatModel(creationModel)
+			.tools(new ModelCreatorTool(), new AgentDelegationTools.TLScript("ModelCreator"))
 			.build();
 	}
 

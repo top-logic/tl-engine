@@ -63,7 +63,7 @@ import dev.langchain4j.agent.tool.Tool;
  * All methods return JSON-formatted strings for consumption by AI agents.
  * </p>
  */
-public class ModelCreatorTool {
+public class ModelEditorTool {
 
 	private static final Pattern CLASS_NAME_PATTERN = Pattern.compile("^[A-Z][a-zA-Z0-9_]*$");
 
@@ -103,16 +103,16 @@ public class ModelCreatorTool {
 
 		try {
 			ModuleResponse response = ThreadContextManager.inSystemInteraction(
-				ModelCreatorTool.class,
+				ModelEditorTool.class,
 				() -> doCreateModule(moduleName, labelEn, labelDe, descEn, descDe));
 
-			return DataClassSerializer.toJson(response, ModelCreatorTool.class, "createModule()",
+			return DataClassSerializer.toJson(response, ModelEditorTool.class, "createModule()",
 				buildArgs("moduleName", moduleName));
 		} catch (Exception ex) {
-			Logger.error("createModule() error: " + ex.getMessage(), ex, ModelCreatorTool.class);
+			Logger.error("createModule() error: " + ex.getMessage(), ex, ModelEditorTool.class);
 			return DataClassSerializer.errorToJson(
 				"Failed to create module: " + ex.getMessage(),
-				ModelCreatorTool.class, "createModule()",
+				ModelEditorTool.class, "createModule()",
 				buildArgs("moduleName", moduleName));
 		}
 	}
@@ -178,16 +178,16 @@ public class ModelCreatorTool {
 
 		try {
 			ModuleResponse response = ThreadContextManager.inSystemInteraction(
-				ModelCreatorTool.class,
+				ModelEditorTool.class,
 				() -> doUpdateModule(moduleName, labelEn, labelDe, descEn, descDe));
 
-			return DataClassSerializer.toJson(response, ModelCreatorTool.class, "updateModule()",
+			return DataClassSerializer.toJson(response, ModelEditorTool.class, "updateModule()",
 				buildArgs("moduleName", moduleName));
 		} catch (Exception ex) {
-			Logger.error("updateModule() error: " + ex.getMessage(), ex, ModelCreatorTool.class);
+			Logger.error("updateModule() error: " + ex.getMessage(), ex, ModelEditorTool.class);
 			return DataClassSerializer.errorToJson(
 				"Failed to update module: " + ex.getMessage(),
-				ModelCreatorTool.class, "updateModule()",
+				ModelEditorTool.class, "updateModule()",
 				buildArgs("moduleName", moduleName));
 		}
 	}
@@ -262,17 +262,17 @@ public class ModelCreatorTool {
 
 		try {
 			ClassResponse response = ThreadContextManager.inSystemInteraction(
-				ModelCreatorTool.class,
+				ModelEditorTool.class,
 				() -> doCreateClass(moduleName, className, labelEn, labelDe, descEn, descDe,
 					isAbstract, isFinal, generalizations));
 
-			return DataClassSerializer.toJson(response, ModelCreatorTool.class, "createClass()",
+			return DataClassSerializer.toJson(response, ModelEditorTool.class, "createClass()",
 				buildArgs("moduleName", moduleName, "className", className));
 		} catch (Exception ex) {
-			Logger.error("createClass() error: " + ex.getMessage(), ex, ModelCreatorTool.class);
+			Logger.error("createClass() error: " + ex.getMessage(), ex, ModelEditorTool.class);
 			return DataClassSerializer.errorToJson(
 				"Failed to create class: " + ex.getMessage(),
-				ModelCreatorTool.class, "createClass()",
+				ModelEditorTool.class, "createClass()",
 				buildArgs("moduleName", moduleName, "className", className));
 		}
 	}
@@ -372,17 +372,17 @@ public class ModelCreatorTool {
 
 		try {
 			ClassResponse response = ThreadContextManager.inSystemInteraction(
-				ModelCreatorTool.class,
+				ModelEditorTool.class,
 				() -> doUpdateClass(moduleName, className, labelEn, labelDe, descEn, descDe,
 					isAbstract, isFinal, generalizations));
 
-			return DataClassSerializer.toJson(response, ModelCreatorTool.class, "updateClass()",
+			return DataClassSerializer.toJson(response, ModelEditorTool.class, "updateClass()",
 				buildArgs("moduleName", moduleName, "className", className));
 		} catch (Exception ex) {
-			Logger.error("updateClass() error: " + ex.getMessage(), ex, ModelCreatorTool.class);
+			Logger.error("updateClass() error: " + ex.getMessage(), ex, ModelEditorTool.class);
 			return DataClassSerializer.errorToJson(
 				"Failed to update class: " + ex.getMessage(),
-				ModelCreatorTool.class, "updateClass()",
+				ModelEditorTool.class, "updateClass()",
 				buildArgs("moduleName", moduleName, "className", className));
 		}
 	}
@@ -495,17 +495,17 @@ public class ModelCreatorTool {
 
 		try {
 			PropertyResponse response = ThreadContextManager.inSystemInteraction(
-				ModelCreatorTool.class,
+				ModelEditorTool.class,
 				() -> doCreateProperty(moduleName, className, propertyName, propertyType,
 					labelEn, labelDe, descEn, descDe, mandatory, multiple, ordered, bag, isAbstract));
 
-			return DataClassSerializer.toJson(response, ModelCreatorTool.class, "createProperty()",
+			return DataClassSerializer.toJson(response, ModelEditorTool.class, "createProperty()",
 				buildArgs("moduleName", moduleName, "className", className, "propertyName", propertyName));
 		} catch (Exception ex) {
-			Logger.error("createProperty() error: " + ex.getMessage(), ex, ModelCreatorTool.class);
+			Logger.error("createProperty() error: " + ex.getMessage(), ex, ModelEditorTool.class);
 			return DataClassSerializer.errorToJson(
 				"Failed to create property: " + ex.getMessage(),
-				ModelCreatorTool.class, "createProperty()",
+				ModelEditorTool.class, "createProperty()",
 				buildArgs("moduleName", moduleName, "className", className, "propertyName", propertyName));
 		}
 	}
@@ -622,17 +622,17 @@ public class ModelCreatorTool {
 
 		try {
 			PropertyResponse response = ThreadContextManager.inSystemInteraction(
-				ModelCreatorTool.class,
+				ModelEditorTool.class,
 				() -> doUpdateProperty(moduleName, className, propertyName,
 					labelEn, labelDe, descEn, descDe, mandatory, multiple, ordered, bag, isAbstract));
 
-			return DataClassSerializer.toJson(response, ModelCreatorTool.class, "updateProperty()",
+			return DataClassSerializer.toJson(response, ModelEditorTool.class, "updateProperty()",
 				buildArgs("moduleName", moduleName, "className", className, "propertyName", propertyName));
 		} catch (Exception ex) {
-			Logger.error("updateProperty() error: " + ex.getMessage(), ex, ModelCreatorTool.class);
+			Logger.error("updateProperty() error: " + ex.getMessage(), ex, ModelEditorTool.class);
 			return DataClassSerializer.errorToJson(
 				"Failed to update property: " + ex.getMessage(),
-				ModelCreatorTool.class, "updateProperty()",
+				ModelEditorTool.class, "updateProperty()",
 				buildArgs("moduleName", moduleName, "className", className, "propertyName", propertyName));
 		}
 	}
@@ -763,20 +763,20 @@ public class ModelCreatorTool {
 
 		try {
 			ReferenceResponse response = ThreadContextManager.inSystemInteraction(
-				ModelCreatorTool.class,
+				ModelEditorTool.class,
 				() -> doCreateReference(moduleName, className, referenceName,
 					targetModuleName, targetClassName,
 					labelEn, labelDe, descEn, descDe,
 					mandatory, multiple, ordered, bag, isAbstract,
 					composite, aggregate, navigate, historyType, deletionPolicy));
 
-			return DataClassSerializer.toJson(response, ModelCreatorTool.class, "createReference()",
+			return DataClassSerializer.toJson(response, ModelEditorTool.class, "createReference()",
 				buildArgs("moduleName", moduleName, "className", className, "referenceName", referenceName));
 		} catch (Exception ex) {
-			Logger.error("createReference() error: " + ex.getMessage(), ex, ModelCreatorTool.class);
+			Logger.error("createReference() error: " + ex.getMessage(), ex, ModelEditorTool.class);
 			return DataClassSerializer.errorToJson(
 				"Failed to create reference: " + ex.getMessage(),
-				ModelCreatorTool.class, "createReference()",
+				ModelEditorTool.class, "createReference()",
 				buildArgs("moduleName", moduleName, "className", className, "referenceName", referenceName));
 		}
 	}
@@ -910,20 +910,20 @@ public class ModelCreatorTool {
 
 		try {
 			BackwardReferenceResponse response = ThreadContextManager.inSystemInteraction(
-				ModelCreatorTool.class,
+				ModelEditorTool.class,
 				() -> doCreateBackwardReference(moduleName, className,
 					forwardReferenceName, backwardReferenceName,
 					labelEn, labelDe, descEn, descDe, navigate));
 
-			return DataClassSerializer.toJson(response, ModelCreatorTool.class, "createBackwardReference()",
+			return DataClassSerializer.toJson(response, ModelEditorTool.class, "createBackwardReference()",
 				buildArgs("moduleName", moduleName, "className", className,
 					"forwardReferenceName", forwardReferenceName,
 					"backwardReferenceName", backwardReferenceName));
 		} catch (Exception ex) {
-			Logger.error("createBackwardReference() error: " + ex.getMessage(), ex, ModelCreatorTool.class);
+			Logger.error("createBackwardReference() error: " + ex.getMessage(), ex, ModelEditorTool.class);
 			return DataClassSerializer.errorToJson(
 				"Failed to create backward reference: " + ex.getMessage(),
-				ModelCreatorTool.class, "createBackwardReference()",
+				ModelEditorTool.class, "createBackwardReference()",
 				buildArgs("moduleName", moduleName, "className", className));
 		}
 	}
@@ -1042,16 +1042,16 @@ public class ModelCreatorTool {
 
 		try {
 			EnumResponse response = ThreadContextManager.inSystemInteraction(
-				ModelCreatorTool.class,
+				ModelEditorTool.class,
 				() -> doCreateEnumeration(moduleName, enumName, labelEn, labelDe, descEn, descDe, classifiersJson));
 
-			return DataClassSerializer.toJson(response, ModelCreatorTool.class, "createEnumeration()",
+			return DataClassSerializer.toJson(response, ModelEditorTool.class, "createEnumeration()",
 				buildArgs("moduleName", moduleName, "enumName", enumName));
 		} catch (Exception ex) {
-			Logger.error("createEnumeration() error: " + ex.getMessage(), ex, ModelCreatorTool.class);
+			Logger.error("createEnumeration() error: " + ex.getMessage(), ex, ModelEditorTool.class);
 			return DataClassSerializer.errorToJson(
 				"Failed to create enumeration: " + ex.getMessage(),
-				ModelCreatorTool.class, "createEnumeration()",
+				ModelEditorTool.class, "createEnumeration()",
 				buildArgs("moduleName", moduleName, "enumName", enumName));
 		}
 	}
@@ -1193,17 +1193,17 @@ public class ModelCreatorTool {
 
 		try {
 			EnumResponse response = ThreadContextManager.inSystemInteraction(
-				ModelCreatorTool.class,
+				ModelEditorTool.class,
 				() -> doUpdateEnumeration(moduleName, enumName, labelEn, labelDe, descEn, descDe,
 					addClassifiersJson, updateClassifiersJson, defaultClassifier));
 
-			return DataClassSerializer.toJson(response, ModelCreatorTool.class, "updateEnumeration()",
+			return DataClassSerializer.toJson(response, ModelEditorTool.class, "updateEnumeration()",
 				buildArgs("moduleName", moduleName, "enumName", enumName));
 		} catch (Exception ex) {
-			Logger.error("updateEnumeration() error: " + ex.getMessage(), ex, ModelCreatorTool.class);
+			Logger.error("updateEnumeration() error: " + ex.getMessage(), ex, ModelEditorTool.class);
 			return DataClassSerializer.errorToJson(
 				"Failed to update enumeration: " + ex.getMessage(),
-				ModelCreatorTool.class, "updateEnumeration()",
+				ModelEditorTool.class, "updateEnumeration()",
 				buildArgs("moduleName", moduleName, "enumName", enumName));
 		}
 	}

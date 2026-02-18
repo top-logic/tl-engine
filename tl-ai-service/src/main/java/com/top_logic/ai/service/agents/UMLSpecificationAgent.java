@@ -74,7 +74,7 @@ public class UMLSpecificationAgent {
 
 		McpToolProvider toolProvider = createMCPToolProvider();
 
-		ModelCreator modelCreator = AgenticServices.agentBuilder(ModelCreator.class)
+		ModelEditor modelCreator = AgenticServices.agentBuilder(ModelEditor.class)
 			.chatModel(MISTRAL_LARGE_MODEL)
 			.outputKey("result")
 			.toolProvider(toolProvider)

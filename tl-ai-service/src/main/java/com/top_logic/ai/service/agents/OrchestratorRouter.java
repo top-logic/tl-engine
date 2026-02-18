@@ -57,7 +57,7 @@ public interface OrchestratorRouter {
 		- **Explaining or interpreting ANY TLScript code** (even if returned by ModelExplorer)
 		→ Do NOT guess TLScript syntax or interpret TLScript code yourself. ALWAYS delegate.
 
-		**MUST delegate to ModelCreator** for ANY request to:
+		**MUST delegate to ModelEditor** for ANY request to:
 		- Create types, properties, references, enumerations
 		- Modify the model structure
 		→ Do NOT describe what would be created. ALWAYS delegate to actually create it.

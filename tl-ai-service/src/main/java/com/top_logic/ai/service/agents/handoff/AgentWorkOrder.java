@@ -10,7 +10,7 @@ package com.top_logic.ai.service.agents.handoff;
  * not the full user prompt.
  *
  * <p>
- * Used when Orchestrator (or TLScript) delegates to {@code ModelExplorer}, {@code ModelCreator}, or
+ * Used when Orchestrator (or TLScript) delegates to {@code ModelExplorer}, {@code ModelEditor}, or
  * {@code TLScriptAgent}. Prevents prompt dumping and ensures clear handoff.
  * </p>
  *

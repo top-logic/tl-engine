@@ -23,9 +23,9 @@ import dev.langchain4j.agent.tool.Tool;
  * </p>
  *
  * <pre>
- * // ModelCreator gets exploration + TLScript delegation
- * .tools(creatorTool, new AgentDelegationTools.Exploration("ModelCreator"),
- *     new AgentDelegationTools.TLScript("ModelCreator"))
+ * // ModelEditor gets exploration + TLScript delegation
+ * .tools(creatorTool, new AgentDelegationTools.Exploration("ModelEditor"),
+ *     new AgentDelegationTools.TLScript("ModelEditor"))
  *
  * // TLScriptAgent gets exploration delegation only
  * .tools(scriptTool, new AgentDelegationTools.Exploration("TLScriptAgent"))
@@ -70,7 +70,7 @@ public final class AgentDelegationTools {
 	}
 
 	/**
-	 * Delegates to the {@link ModelCreator} for model creation or modification.
+	 * Delegates to the {@link ModelEditor} for model creation or modification.
 	 */
 	public static final class Creation {
 

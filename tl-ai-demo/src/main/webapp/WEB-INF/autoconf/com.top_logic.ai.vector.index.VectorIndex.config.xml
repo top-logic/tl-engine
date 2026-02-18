@@ -10,7 +10,7 @@
 			<instance class="com.top_logic.ai.vector.index.VectorIndex"
 				mistral-api-key="P1goty1qMtk6IJl8XmgHxPg7JqHlbtFs"
 				no-vector-index-models=" tl.ai.demo:TestNoVector"
-				qdrant-db-collection-name="boris-test"
+				vector-store-collection-name="boris-test"
 				vector-index-models="tl.ai.demo:Test,  tl.ai.demo:TestNoVector"
 			/>
 		</config>

@@ -35,6 +35,10 @@ import com.top_logic.knowledge.indexing.ContentObject;
 import com.top_logic.knowledge.indexing.IndexException;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeObject;
+<<<<<<< HEAD
+=======
+
+>>>>>>> b8e20cd (additional fixes versions missmatch)
 import com.top_logic.knowledge.service.HistoryManager;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -64,10 +68,17 @@ import dev.langchain4j.store.embedding.qdrant.QdrantEmbeddingStore;
  * @author <a href=mailto:jst@top-logic.com>Jan Stolzenburg</a>
  */
 @ServiceDependencies({
+<<<<<<< HEAD
         FormatConverterFactory.Module.class,
         MimeTypes.Module.class,
         PersonManager.Module.class,
         PersistencyLayer.Module.class,
+=======
+		FormatConverterFactory.Module.class,
+		MimeTypes.Module.class,
+		PersonManager.Module.class,
+		PersistencyLayer.Module.class,
+>>>>>>> b8e20cd (additional fixes versions missmatch)
 })
 public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.VectorIndexingConfig> {
 
@@ -850,7 +861,8 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		 * {@link VectorIndexingService} was {@link #shutDown() shut down}.
 		 * 
 		 * <p>
-		 * <b>Warning:</b> The index will be incomplete when indexing is aborted! After a forced shutdown,
+		 * <b>Warning:</b> The index will be incomplete when indexing is aborted! After
+		 * a forced shutdown,
 		 * the index must be administratively rebuilt.
 		 * </p>
 		 */
@@ -894,7 +906,8 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 	private VectorThread myThread;
 
 	/**
-	 * Is used for timeouts when the shutdown was requested but there is still work to do.
+	 * Is used for timeouts when the shutdown was requested but there is still work
+	 * to do.
 	 */
 	private Maybe<Long> timestampShutdownRequest = Maybe.none();
 
@@ -923,7 +936,8 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 	private EmbeddingStore<TextSegment> vectorStore;
 
 	/**
-	 * Protected constructor for singleton pattern. Initialization with a given index location. Creates
+	 * Protected constructor for singleton pattern. Initialization with a given
+	 * index location. Creates
 	 * the Vector index in case it does not exist yet.
 	 */
 	public VectorIndex(InstantiationContext context, VectorIndexingConfig config) throws ConfigurationException {
@@ -938,12 +952,10 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		this.vectorDimension = config.getVectorDimension();
 		this.mistralApiKey = config.getMistralApiKey();
 		this.mistralEmbedModel = config.getMistralEmbedModel();
-		this.vectorIndexModels =
-			Stream.of(config.getVectorIndexModels().split(",")).map(String::trim).collect(Collectors.toList());
+		this.vectorIndexModels = Stream.of(config.getVectorIndexModels().split(",")).map(String::trim)
+				.collect(Collectors.toList());
 
 		Logger.info("Initializing Vector Index with store type: " + this.vectorStoreType, VectorIndex.class);
-
-		this.vectorStore = buildVectorStore(this.vectorStoreType, config);
 
 		this.vectorStore = buildVectorStore(this.vectorStoreType, config);
 
@@ -951,8 +963,7 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 			this.embeddingModel = new DummyEmbeddingModel(this.vectorDimension);
 			Logger.info("Using Dummy/Local embedding model", VectorIndex.class);
 		} else {
-			MistralAiEmbeddingModel.MistralAiEmbeddingModelBuilder mistralEmbedBuilder =
-				new MistralAiEmbeddingModel.MistralAiEmbeddingModelBuilder();
+			MistralAiEmbeddingModel.MistralAiEmbeddingModelBuilder mistralEmbedBuilder = new MistralAiEmbeddingModel.MistralAiEmbeddingModelBuilder();
 			mistralEmbedBuilder.apiKey(this.mistralApiKey).modelName(this.mistralEmbedModel);
 			this.embeddingModel = new MistralAiEmbeddingModel(mistralEmbedBuilder);
 			Logger.info("Using Mistral embedding model", VectorIndex.class);
@@ -978,7 +989,7 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 				return buildJVectorStore(config);
 			default:
 				throw new IllegalArgumentException("Unsupported vector store type: " + storeType
-					+ ". Supported types: qdrant, jvector");
+						+ ". Supported types: qdrant, jvector");
 		}
 	}
 
@@ -987,13 +998,13 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 	 */
 	private QdrantEmbeddingStore buildQdrantStore(VectorIndexingConfig config) {
 		Logger.info("Creating Qdrant embedding store at " + config.getVectorStoreHost() + ":"
-			+ config.getVectorStorePort(), VectorIndex.class);
+				+ config.getVectorStorePort(), VectorIndex.class);
 
 		return QdrantEmbeddingStore.builder()
-			.host(config.getVectorStoreHost())
-			.port(config.getVectorStorePort())
-			.collectionName(config.getVectorStoreCollectionName())
-			.build();
+				.host(config.getVectorStoreHost())
+				.port(config.getVectorStorePort())
+				.collectionName(config.getVectorStoreCollectionName())
+				.build();
 	}
 
 	/**
@@ -1001,12 +1012,12 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 	 */
 	private JVectorEmbeddingStore buildJVectorStore(VectorIndexingConfig config) {
 		Logger.info("Creating JVector embedding store at path: " + config.getLocalStorePath(),
-			VectorIndex.class);
+				VectorIndex.class);
 
 		return JVectorEmbeddingStore.builder()
-			.dimension(config.getVectorDimension())
-			.persistencePath(config.getLocalStorePath())
-			.build();
+				.dimension(config.getVectorDimension())
+				.persistencePath(config.getLocalStorePath())
+				.build();
 	}
 
 	/**
@@ -1064,7 +1075,8 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 	}
 
 	/**
-	 * Vector Index models - FQN of all models to be included in the indexing. Only objects of these
+	 * Vector Index models - FQN of all models to be included in the indexing. Only
+	 * objects of these
 	 * models shall be indexed
 	 * 
 	 * @return List of FQNs of models to be indexed
@@ -1072,16 +1084,6 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 	public List<String> getVectorIndexModels() {
 		return this.vectorIndexModels;
 	}
-
-	// /**
-	// * Vector No Index models - FQN of all models to be added as points to the Qdrant DB, but
-	// * without vectors (no embedding). These points can be used for AI model context storage.
-	// *
-	// * @return List of FQNs of models to be indexed
-	// */
-	// public List<String> getNoVectorIndexModels() {
-	// return this.noVectorIndexModels;
-	// }
 
 	void init(InstantiationContext context) {
 		Logger.info("Initiating VectorIndex", VectorIndex.class);
@@ -1091,25 +1093,14 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 
 	private void createAndStartThread() {
 		Logger.info(
-			"Will verify that there is a connection to the configured Qdrant DB, that the collection exists and uises the correct vector embedding (size).",
-			VectorIndex.class);
+				"Will verify that there is a connection to the configured Qdrant DB, that the collection exists and uises the correct vector embedding (size).",
+				VectorIndex.class);
 
 		HistoryManager historyManager = HistoryUtils.getHistoryManager(PersistencyLayer.getKnowledgeBase());
 		this.myThread = new VectorThread(this, this, historyManager);
 		this.myThread.start();
 		Logger.info("Initiated Vector", VectorIndex.class);
 	}
-
-	// /**
-	// * Get a Vector index searcher for searching in a Vector index.
-	// *
-	// * @return The Vector index searcher
-	// * @throws SearchException
-	// * if the index could not be opened
-	// */
-	// public QdrantClient getSearcher() throws SearchException {
-	// return new QdrantClient(QdrantGrpcClient.newBuilder(this.getQdrantDbHostname()).build());
-	// }
 
 	/**
 	 * number of outstanding Objects in the Queues.
@@ -1202,7 +1193,8 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 	}
 
 	/**
-	 * Force a reset of the {@link VectorIndex}. All indexes will be reset to initial empty state.
+	 * Force a reset of the {@link VectorIndex}. All indexes will be reset to
+	 * initial empty state.
 	 * <b>Use with caution.</b>
 	 * 
 	 * @see #createIndex()
@@ -1229,7 +1221,8 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 	}
 
 	/**
-	 * Add document to Vector index. The document's content is given through the additional parameter
+	 * Add document to Vector index. The document's content is given through the
+	 * additional parameter
 	 * 'content'.
 	 * 
 	 * @param aDoc
@@ -1287,7 +1280,7 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 			association = outgoingAssociations.next();
 			if (!association.getDestinationObject().getWrapper().tType().toString().equals("tl.model:TLClassifier")) {
 				associationKeyName = "Association-" +
-					association.getDestinationObject().getWrapper().tType().toString();
+						association.getDestinationObject().getWrapper().tType().toString();
 
 				prev = associations.get(associationKeyName);
 				if (prev == null) {
@@ -1296,7 +1289,7 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 				prev.add(this.getDocumentUUID(association.getDestinationIdentity().toString()).toString());
 
 				associations
-					.put(associationKeyName, prev);
+						.put(associationKeyName, prev);
 			}
 		}
 
@@ -1304,7 +1297,7 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 			association = incomingAssociations.next();
 			if (!association.getSourceObject().getWrapper().tType().toString().equals("tl.model:TLClassifier")) {
 				associationKeyName = "Association-" +
-					association.getSourceObject().getWrapper().tType().toString();
+						association.getSourceObject().getWrapper().tType().toString();
 
 				prev = associations.get(associationKeyName);
 				if (prev == null) {
@@ -1327,29 +1320,15 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 
 		}
 
-		// HashMap<String, String> payload = new HashMap<>();
-
-		// Map plMap = Map.of(
-		// "objectId", documentId,
-		// "id", this.getDocumentUUID(documentId).toString(),
-		// // "internalId", value(payload.get(associationKeyName)),
-		// "description", description,
-		// "TopLogic-type", aDoc.getWrapper().tType().toString(),
-		// "TLObject-creation-date", aDoc.getWrapper().tCreationDate().toString(),
-		// "TLObject-modification-date", aDoc.getWrapper().tLastModificationDate().toString(),
-		// "content", content);
-
-		// payload.putAll(plMap);
-
 		Map plMap = Map.of(
-			"objectId", documentId,
-			"id", this.getDocumentUUID(documentId).toString(),
-			// "internalId", value(payload.get(associationKeyName)),
-			"description", description,
-			"TopLogic-type", aDoc.getWrapper().tType().toString(),
-			"TLObject-creation-date", aDoc.getWrapper().tCreationDate().toString(),
-			"TLObject-modification-date", aDoc.getWrapper().tLastModificationDate().toString(),
-			"content", joContent);
+				"objectId", documentId,
+				"id", this.getDocumentUUID(documentId).toString(),
+				// "internalId", value(payload.get(associationKeyName)),
+				"description", description,
+				"TopLogic-type", aDoc.getWrapper().tType().toString(),
+				"TLObject-creation-date", aDoc.getWrapper().tCreationDate().toString(),
+				"TLObject-modification-date", aDoc.getWrapper().tLastModificationDate().toString(),
+				"content", joContent);
 
 		jo.putAll(plMap);
 
@@ -1362,43 +1341,18 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		// payload.putAll(associationsHashMap);
 		jo.putAll(associationsHashMap);
 
-		// List<FloatEmbedding> embeddings = new ArrayList<>();
-		// embeddings.add(new FloatEmbedding());
-		// String collectionName = this.qdrantDbCollectionNameNoVector;
-
-		/* Do not embed ApplicationModel objects - they are huge and embedding does not give us any value as
-		 * we want to fetch them for every request as initial prompt context they contain overall
+		/*
+		 * Do not embed ApplicationModel objects - they are huge and embedding does not
+		 * give us any value as
+		 * we want to fetch them for every request as initial prompt context they
+		 * contain overall
 		 * information about the application.
 		 * 
-		 * These objects shall be store in the _noVector collection. */
-		// if (!this.getNoVectorIndexModels().contains(aDoc.getWrapper().tType().toString())) {
-		// embeddings = this.getDocumentEmbeddings(payload.toString());
-		// collectionName = this.qdrantDbCollectionName;
-		// }
+		 * These objects shall be store in the _noVector collection.
+		 */
 
-		// this.storeVectorIndexToQdrantDb(documentId, embeddings, payload, collectionName);
 		this.storeToVectorStore(documentId, jo);
 	}
-
-	// /**
-	// * Delete document from index
-	// *
-	// * @param key
-	// * The key of vector point to be deleted
-	// */
-	// protected void deleteDocument(ObjectKey key) {
-	// try {
-	// this.qdrantClient.deleteAsync(
-	// this.qdrantDbCollectionName, List.of(id(this.getDocumentUUID(key.toString()))))
-	// .get();
-	// } catch (InterruptedException ex) {
-	// // TODO Auto-generated catch block
-	// ex.printStackTrace();
-	// } catch (ExecutionException ex) {
-	// // TODO Auto-generated catch block
-	// ex.printStackTrace();
-	// }
-	// }
 
 	/**
 	 * Delete document from vector index
@@ -1410,27 +1364,6 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		this.vectorStore.remove(key.toString());
 	}
 
-	// private List<FloatEmbedding> getDocumentEmbeddings(String content) {
-	// Logger.info("Embed the content with Mistral Embedding client...", VectorThread.class);
-	//
-	// List<String> contentList = List.of(content);
-	//
-	// EmbeddingRequest embeddingRequest = EmbeddingRequest.builder()
-	// .model(this.getMistralEmbedModel()) // mistral-embed is currently the only model
-	// // available for embedding
-	// .input(contentList)
-	// .build();
-	//
-	// EmbeddingResponse embeddingsResponse = this.mistralClient.createEmbedding(embeddingRequest);
-	// // Embeddings are returned as a list of FloatEmbedding objects. FloatEmbedding objects
-	// // contain a list of floats per input string.
-	// // See the Mistral documentation for more information:
-	// // https://docs.mistral.ai/capabilities/embeddings/
-	//
-	// return embeddingsResponse.getData();
-	//
-	// }
-
 	private Embedding getDocumentEmbedding(String content) {
 		Logger.info("Embed the content with Mistral Embedding client...", VectorThread.class);
 
@@ -1438,37 +1371,6 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 
 		return embeddingsResponse;
 	}
-
-	// private void storeVectorIndexToQdrantDb(String documentId, List<FloatEmbedding> embeddings,
-	// Map payload, String collectionName) {
-	// PointId pointId = id(this.getDocumentUUID(documentId));
-	//
-	// embeddings.forEach(embedding -> {
-	// Vectors vectors;
-	// try {
-	// vectors = vectors(embedding.getEmbedding());
-	// Logger.info(embedding.getEmbedding().toString(), VectorThread.class);
-	// } catch (Exception ex) {
-	// vectors = vectors(0);
-	// }
-	// try {
-	// List<PointStruct> points = List.of(
-	// PointStruct.newBuilder()
-	// .setId(pointId)
-	// .setVectors(vectors)
-	// .putAllPayload(payload)
-	// .build());
-	//
-	// this.qdrantClient.upsertAsync(collectionName, points).get();
-	// } catch (InterruptedException ex) {
-	// // TODO Auto-generated catch block
-	// ex.printStackTrace();
-	// } catch (ExecutionException ex) {
-	// // TODO Auto-generated catch block
-	// ex.printStackTrace();
-	// }
-	// });
-	// }
 
 	/**
 	 * Stores document with its embedding to the configured vector store.
@@ -1482,9 +1384,9 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		String pl = payload.toJSONString();
 
 		this.vectorStore.addAll(
-			List.of(this.getDocumentUUID(documentId).toString()),
-			List.of(this.getDocumentEmbedding(pl)),
-			List.of(TextSegment.from(pl)));
+				List.of(this.getDocumentUUID(documentId).toString()),
+				List.of(this.getDocumentEmbedding(pl)),
+				List.of(TextSegment.from(pl)));
 
 		// Persist to disk if using JVector
 		if (vectorStore instanceof JVectorEmbeddingStore) {
@@ -1512,9 +1414,9 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		Embedding queryEmbedding = this.getDocumentEmbedding(query);
 
 		EmbeddingSearchRequest embeddingSearchRequest = EmbeddingSearchRequest.builder()
-			.queryEmbedding(queryEmbedding)
-			.maxResults(5)
-			.build();
+				.queryEmbedding(queryEmbedding)
+				.maxResults(5)
+				.build();
 
 		return this.vectorStore.search(embeddingSearchRequest).matches();
 	}
@@ -1575,8 +1477,6 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 
 		timestampShutdownRequest = Maybe.none();
 
-		// this.qdrantClient.close();
-
 		Logger.info("Stopped Vector Indexer", VectorIndex.class);
 		super.shutDown();
 	}
@@ -1620,7 +1520,8 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 			List<Embedding> embeddings = new ArrayList<>();
 			for (TextSegment seg : textSegments) {
 				float[] vector = new float[dimension];
-				// Fill with some deterministic values to avoid all zeros if needed, but zeros are fine for testing
+				// Fill with some deterministic values to avoid all zeros if needed, but zeros
+				// are fine for testing
 				// structure
 				for (int i = 0; i < dimension; i++) {
 					vector[i] = 0.1f;

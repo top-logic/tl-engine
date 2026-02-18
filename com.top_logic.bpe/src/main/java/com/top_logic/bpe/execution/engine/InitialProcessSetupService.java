@@ -8,8 +8,10 @@ package com.top_logic.bpe.execution.engine;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
-import java.util.List;
-import java.util.function.Predicate;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import javax.xml.stream.XMLStreamException;
 import javax.xml.transform.Source;
@@ -41,6 +43,7 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
+import com.top_logic.tool.boundsec.config.AccessConfigurationSetupService;
 import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;
@@ -48,8 +51,14 @@ import com.top_logic.xio.importer.binding.ApplicationModelBinding;
 import com.top_logic.xio.importer.binding.ModelBinding;
 
 /**
- * {@link ManagedClass} loading initial BPML workflow definitions files from
- * <code>WEB-INF/workflow</code> during application startup.
+ * {@link ManagedClass} that imports BPML and BPMN workflow definition files from
+ * {@value #DATA_PATH} during application startup.
+ *
+ * <p>
+ * Each file is imported when it is encountered for the first time or when its content has changed
+ * since the last import. The content hash of each file is persisted so that unchanged files are
+ * skipped on subsequent startups.
+ * </p>
  */
 @ServiceDependencies({
 	ModelService.Module.class,
@@ -59,76 +68,127 @@ import com.top_logic.xio.importer.binding.ModelBinding;
 })
 public class InitialProcessSetupService extends ManagedClass {
 
+	/**
+	 * Marker value stored in {@link DBProperties} in legacy installations to indicate that a
+	 * workflow file was imported, before hash-based change detection was introduced. When this value
+	 * is found instead of a hash, the workflow is re-imported so that the proper hash gets written.
+	 *
+	 * @deprecated The content hash of the workflow file is stored instead.
+	 */
+	@Deprecated
+	private static final String LOADED = "loaded";
+
+	/** Prefix for the {@link DBProperties} keys used to store the per-file content hashes. */
 	private static final String INITIAL_WORKFLOW_PROPERTY_PREFIX = "initial-workflow.";
 
+	/** Webapp-relative directory from which workflow definition files are loaded. */
 	private static final String DATA_PATH = "/WEB-INF/workflow/";
 
 	/**
-	 * File name suffix required for initial data files to be automatically picked up.
+	 * File name suffixes that identify workflow definition files in {@value #DATA_PATH} for
+	 * automatic import.
 	 */
 	public static final String[] FILE_SUFFIXES = { ".bpml", ".bpmn", ".bpml.xml", ".bpmn.xml" };
 
 	@Override
 	protected void startUp() {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+
+		ArrayList<Resource> resources = FileManager.getInstance()
+			.getResourcePaths(DATA_PATH)
+			.stream()
+			.map(s -> s.substring(DATA_PATH.length()))
+			.filter(InitialProcessSetupService::isWorkflowFile)
+			.sorted()
+			.map(Resource::loadResource)
+			.filter(Objects::nonNull)
+			.collect(Collectors.toCollection(ArrayList::new));
+		if (resources.isEmpty()) {
+			return;
+		}
+
 		ConnectionPool pool = KBUtils.getConnectionPool(kb);
 		PooledConnection readCon = pool.borrowReadConnection();
-
-		Predicate<? super String> requiresLoading = name -> {
-			try {
-				return DBProperties.getProperty(readCon, DBProperties.GLOBAL_PROPERTY,
-					INITIAL_WORKFLOW_PROPERTY_PREFIX + name) == null;
-			} catch (SQLException ex) {
-				Logger.error("Cannot test whether data is already loaded.", ex, InitialProcessSetupService.class);
-				return false;
-			}
-		};
-
-		List<String> resourceNames;
 		try {
-			resourceNames = FileManager.getInstance()
-				.getResourcePaths(DATA_PATH)
-				.stream()
-				.map(s -> s.substring(DATA_PATH.length()))
-				.filter(InitialProcessSetupService::isWorkflowFile)
-				.filter(requiresLoading)
-				.sorted()
-				.toList();
+			for (Iterator<Resource> resourcesIt = resources.iterator(); resourcesIt.hasNext();) {
+				Resource resource = resourcesIt.next();
+				String storedHash;
+				try {
+					storedHash = loadHash(readCon, resource);
+				} catch (SQLException ex) {
+					Logger.error("Cannot test whether data is already loaded.", ex, InitialProcessSetupService.class);
+					resourcesIt.remove();
+					continue;
+				}
+				if (LOADED.equals(storedHash)) {
+					// legacy. Update data.
+					continue;
+				}
+				if (storedHash == null) {
+					// not yet loaded
+					continue;
+				}
+				if (storedHash.equals(resource.hash())) {
+					// Same hash. File content has not changed.
+					resourcesIt.remove();
+				}
+			}
 		} finally {
 			pool.releaseReadConnection(readCon);
 		}
 
-		if (!resourceNames.isEmpty()) {
-			try (Transaction tx = kb.beginTransaction(I18NConstants.IMPORTED_WORKFLOWS)) {
-				CommitContext commitContext = KBUtils.getCurrentContext(kb);
-				PooledConnection commitCon = commitContext.getConnection();
-
-				for (String name : resourceNames) {
-					String resource = DATA_PATH + name;
-					Logger.info("Loading initial workflow: " + resource, InitialProcessSetupService.class);
-
-					try {
-						BinaryData bpml = FileManager.getInstance().getData(resource);
-
-						importWorkflow(kb, bpml);
-					} catch (Exception ex) {
-						Logger.error("Cannot load initial workflow: " + resource, ex, InitialProcessSetupService.class);
-					}
-
-					try {
-						DBProperties.setProperty(commitCon, DBProperties.GLOBAL_PROPERTY,
-							INITIAL_WORKFLOW_PROPERTY_PREFIX + name, "loaded");
-					} catch (SQLException ex) {
-						Logger.error("Cannot mark as loaded: " + resource, ex, InitialProcessSetupService.class);
-					}
-				}
-
-				tx.commit();
-			}
+		if (resources.isEmpty()) {
+			Logger.info("No updated workflow found in " + DATA_PATH + ".", InitialProcessSetupService.class);
+			return;
 		}
 
+		try (Transaction tx = kb.beginTransaction(I18NConstants.IMPORTED_WORKFLOWS)) {
+			CommitContext commitContext = KBUtils.getCurrentContext(kb);
+			PooledConnection commitCon = commitContext.getConnection();
+			
+			for (Resource resource : resources) {
+				String resourcePath = DATA_PATH + resource.name();
+				Logger.info("Loading initial workflow: " + resourcePath, InitialProcessSetupService.class);
+
+				try {
+					importWorkflow(kb, resource.data());
+				} catch (Exception ex) {
+					Logger.error("Cannot load initial workflow: " + resourcePath, ex, InitialProcessSetupService.class);
+				}
+
+				try {
+					storeHash(commitCon, resource);
+				} catch (SQLException ex) {
+					Logger.error("Cannot mark as loaded: " + resourcePath, ex, InitialProcessSetupService.class);
+				}
+			}
+
+			tx.commit();
+		}
 	}
 
+	/**
+	 * Persists the content hash of the given resource in {@link DBProperties} so that the file can
+	 * be skipped on the next startup if its content has not changed.
+	 */
+	private static void storeHash(PooledConnection commitCon, Resource resource) throws SQLException {
+		DBProperties.setProperty(commitCon, DBProperties.GLOBAL_PROPERTY, propertyName(resource), resource.hash());
+	}
+
+	/**
+	 * Returns the content hash stored for the given resource in {@link DBProperties}, or
+	 * <code>null</code> if the file has not been imported before.
+	 */
+	private static String loadHash(PooledConnection readCon, Resource resource) throws SQLException {
+		return DBProperties.getProperty(readCon, DBProperties.GLOBAL_PROPERTY, propertyName(resource));
+	}
+
+	/** Returns the {@link DBProperties} key used to store the content hash of the given resource. */
+	private static String propertyName(Resource resource) {
+		return INITIAL_WORKFLOW_PROPERTY_PREFIX + resource.name();
+	}
+
+	/** Returns whether the given file name ends with one of the known {@link #FILE_SUFFIXES}. */
 	private static boolean isWorkflowFile(String fileName) {
 		for (String suffix : FILE_SUFFIXES) {
 			if (fileName.endsWith(suffix)) {
@@ -139,7 +199,21 @@ public class InitialProcessSetupService extends ManagedClass {
 	}
 
 	/**
-	 * Creates a new {@link Collaboration} from the given BPML data.
+	 * Parses the given BPML file and creates a new {@link Collaboration} in the
+	 * {@link KnowledgeBase}.
+	 *
+	 * <p>
+	 * If the parsed collaboration has no name, the file name (stripped of path and extension) is
+	 * used as a fallback.
+	 * </p>
+	 *
+	 * @param kb
+	 *        The target {@link KnowledgeBase}.
+	 * @param bpml
+	 *        The BPML source file.
+	 * @return The newly created {@link Collaboration}.
+	 * 
+	 * @see #importBPML(DisplayContext, KnowledgeBase, BinaryContent)
 	 */
 	public static Object importWorkflow(KnowledgeBase kb, BinaryData bpml) {
 		Collaboration collaboration;
@@ -157,14 +231,15 @@ public class InitialProcessSetupService extends ManagedClass {
 	}
 
 	/**
-	 * Loads the BPML from the given data and creates a {@link Collaboration}.
+	 * Parses the given BPML content and creates a new {@link Collaboration} in the
+	 * {@link KnowledgeBase}.
 	 *
 	 * @param context
-	 *        The command context.
+	 *        The current display context.
 	 * @param kb
 	 *        The target {@link KnowledgeBase}.
 	 * @param data
-	 *        The BPML source code.
+	 *        The BPML source to parse.
 	 * @return The newly created {@link Collaboration}.
 	 */
 	public static Collaboration importBPML(DisplayContext context, KnowledgeBase kb, BinaryContent data)
@@ -176,11 +251,16 @@ public class InitialProcessSetupService extends ManagedClass {
 	}
 
 	/**
-	 * Loads the BPML from the given data and creates a {@link Collaboration}.
+	 * Parses the given BPML source and creates a new {@link Collaboration} using the provided model
+	 * binding.
 	 *
 	 * @param source
-	 *        The BPML source code.
+	 *        The BPML source to parse.
+	 * @param binding
+	 *        The {@link ModelBinding} used to resolve and create model objects.
 	 * @return The newly created {@link Collaboration}.
+	 * @throws XMLStreamException
+	 *         If the BPML source contains errors that prevent a valid import.
 	 */
 	public static Collaboration importBPML(Source source, ModelBinding binding) throws XMLStreamException {
 		BufferingI18NLog errors = new BufferingI18NLog();
@@ -196,6 +276,10 @@ public class InitialProcessSetupService extends ManagedClass {
 		return newCollaboration;
 	}
 
+	/**
+	 * Strips the leading path and the first dot-separated extension from the given resource name,
+	 * returning a plain base name suitable for use as a workflow display name.
+	 */
 	private static String strip(String name) {
 		int slashIndex = name.lastIndexOf('/');
 		if (slashIndex >= 0) {
@@ -206,6 +290,33 @@ public class InitialProcessSetupService extends ManagedClass {
 			name = name.substring(0, dotIndex);
 		}
 		return name;
+	}
+
+	/**
+	 * A workflow resource file to be imported, identified by its name, binary content, and content
+	 * hash.
+	 */
+	record Resource(String name, BinaryData data, String hash) {
+
+		/**
+		 * Loads the workflow file with the given name from {@value InitialProcessSetupService#DATA_PATH}
+		 * and computes its content hash.
+		 *
+		 * @param name
+		 *        File name relative to {@value InitialProcessSetupService#DATA_PATH}.
+		 * @return The loaded {@link Resource}, or <code>null</code> if the content hash could not be
+		 *         computed due to an I/O error.
+		 */
+		static Resource loadResource(String name) {
+			BinaryData data = FileManager.getInstance().getData(DATA_PATH + name);
+			String hash = AccessConfigurationSetupService.hash(data);
+			if (hash == null) {
+				// Error occurred. Was already logged.
+				return null;
+			}
+			return new Resource(name, data, hash);
+		}
+
 	}
 
 	/**

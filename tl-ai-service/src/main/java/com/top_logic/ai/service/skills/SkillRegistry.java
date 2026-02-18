@@ -115,7 +115,7 @@ public class SkillRegistry {
 				throw new IllegalArgumentException("Skill resource not found: " + resourcePath);
 			}
 			String content = new String(is.readAllBytes(), StandardCharsets.UTF_8).trim();
-			return new Skill(name, name, content);
+			return new Skill(name, name, SkillTier.CORE, content);
 		} catch (IOException e) {
 			throw new RuntimeException("Failed to load skill: " + resourcePath, e);
 		}

@@ -6,6 +6,7 @@
 package com.top_logic.ai.service.agents;
 
 import dev.langchain4j.agentic.Agent;
+import dev.langchain4j.memory.ChatMemory;
 import dev.langchain4j.service.SystemMessage;
 import dev.langchain4j.service.UserMessage;
 import dev.langchain4j.service.V;
@@ -14,7 +15,7 @@ import dev.langchain4j.service.V;
  * LLM-based orchestrator: infers what the user wants, plans steps, calls zero, one, or
  * multiple specialists in sequence, and synthesizes a final answer when it has enough.
  *
- * @see OrchestratorAgent#chat(String)
+ * @see OrchestratorAgent#chat(ChatMemory, String)
  */
 public interface OrchestratorRouter {
 

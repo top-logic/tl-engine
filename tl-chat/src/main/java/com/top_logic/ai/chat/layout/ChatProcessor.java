@@ -24,6 +24,8 @@ import com.top_logic.ai.service.tools.TraceEntry;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.thread.ThreadContextManager;
 
+import dev.langchain4j.memory.ChatMemory;
+
 /**
  * Background processing logic for the chat component.
  *
@@ -84,7 +86,7 @@ public class ChatProcessor {
 	 * Uses state from tracker; {@code taskId} must already be set on state.
 	 */
 	static void executeOrchestrator(TaskProgressTracker taskTracker, AIProcessingState state,
-			String userMessage) throws Exception {
+			ChatMemory chatMemory, String userMessage) throws Exception {
 		if (state == null) {
 			return;
 		}
@@ -101,7 +103,7 @@ public class ChatProcessor {
 			Logger.info("ChatProcessor: Starting Orchestrator in thread: " + Thread.currentThread().getName(),
 				ChatProcessor.class);
 
-			String result = OrchestratorAgent.chat(userMessage);
+			String result = OrchestratorAgent.chat(chatMemory, userMessage);
 
 			state.addPendingMessage(new ChatMessage("Agent", result));
 			taskTracker.completeTask(taskId);
@@ -252,7 +254,8 @@ public class ChatProcessor {
 			tracker.setRepaintRequester(repaintRequester);
 		}
 
-		Future<?> future = BACKGROUND_EXECUTOR.submit(new AIBackgroundTask(tracker, userMessage));
+		ChatMemory chatMemory = tracker.getChatMemory();
+		Future<?> future = BACKGROUND_EXECUTOR.submit(new AIBackgroundTask(tracker, chatMemory, userMessage));
 		state._backgroundTask = future;
 
 		if (uiExecutor != null) {
@@ -303,10 +306,12 @@ public class ChatProcessor {
 	 */
 	static class AIBackgroundTask implements Runnable {
 		private final TaskProgressTracker _taskTracker;
+		private final ChatMemory _chatMemory;
 		private final String _userMessage;
 
-		AIBackgroundTask(TaskProgressTracker taskTracker, String userMessage) {
+		AIBackgroundTask(TaskProgressTracker taskTracker, ChatMemory chatMemory, String userMessage) {
 			_taskTracker = taskTracker;
+			_chatMemory = chatMemory;
 			_userMessage = userMessage;
 		}
 
@@ -319,7 +324,7 @@ public class ChatProcessor {
 			try {
 				ThreadContextManager.inSystemInteraction(ChatProcessor.class, () -> {
 					try {
-						executeOrchestrator(_taskTracker, state, _userMessage);
+						executeOrchestrator(_taskTracker, state, _chatMemory, _userMessage);
 						state.completeSuccessfully();
 						return null;
 					} catch (InterruptedException ex) {

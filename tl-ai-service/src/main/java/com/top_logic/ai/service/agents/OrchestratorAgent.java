@@ -9,6 +9,7 @@ import com.top_logic.ai.service.AIService;
 import com.top_logic.basic.thread.ThreadContextManager;
 
 import dev.langchain4j.agentic.AgenticServices;
+import dev.langchain4j.memory.ChatMemory;
 import dev.langchain4j.model.chat.ChatModel;
 
 /**
@@ -22,7 +23,7 @@ import dev.langchain4j.model.chat.ChatModel;
  * </p>
  * <p>
  * The caller must set the run's trace (e.g. {@link com.top_logic.ai.service.tools.ToolCallTracking#setTracker})
- * before calling {@link #chat(String)} so agent and tool calls are recorded.
+ * before calling {@link #chat(ChatMemory, String)} so agent and tool calls are recorded.
  * </p>
  */
 public final class OrchestratorAgent {
@@ -30,11 +31,15 @@ public final class OrchestratorAgent {
 	/**
 	 * Handles a user message: LLM plans steps, calls zero/one/multiple specialist tools as needed, synthesizes result.
 	 *
+	 * @param chatMemory
+	 *        Conversation memory that persists across messages in this session. The orchestrator's
+	 *        {@code @SystemMessage} is always retained; older user/assistant turns are evicted when
+	 *        the window is full.
 	 * @param userMessage
 	 *        Raw user input (may include legacy prefixes like /explore-model or /tlscript).
 	 * @return The delegated specialist's answer, or a short fallback.
 	 */
-	public static String chat(String userMessage) {
+	public static String chat(ChatMemory chatMemory, String userMessage) {
 		if (userMessage == null || userMessage.trim().isEmpty()) {
 			return "Please ask a question about the model, TLScript, or model creation.";
 		}
@@ -48,6 +53,7 @@ public final class OrchestratorAgent {
 		ChatModel model = aiService.getChatModel("mistral-large-latest");
 		OrchestratorRouter router = AgenticServices.agentBuilder(OrchestratorRouter.class)
 			.chatModel(model)
+			.chatMemory(chatMemory)
 			.tools(
 				new AgentDelegationTools.Exploration("Orchestrator"),
 				new AgentDelegationTools.Creation("Orchestrator"),

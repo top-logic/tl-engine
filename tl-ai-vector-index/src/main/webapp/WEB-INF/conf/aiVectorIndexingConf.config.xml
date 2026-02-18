@@ -59,6 +59,7 @@
 				</modules>
 			</instance>
 		</config>
+		<config service-class="com.top_logic.ai.vector.index.VectorIndex">
 			<instance class="com.top_logic.ai.vector.index.VectorIndex"
 				vector-store-type="qdrant"
 				vector-store-host="localhost"
@@ -71,5 +72,6 @@
 				timeout-abort-indexing-for-shutdown="30000"
 				warn-queue-size="1000"
 			/>
+		</config>
 	</services>
 </application>

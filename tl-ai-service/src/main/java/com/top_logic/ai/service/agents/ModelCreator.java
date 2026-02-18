@@ -38,12 +38,9 @@ public interface ModelCreator {
 
 			---
 
-			### ZERO PRIOR KNOWLEDGE RULE
+			### IDEMPOTENT CREATION
 
-			Treat yourself as having ZERO knowledge about the current application model.
-			- You do not know what modules exist → use exploration tools to check first.
-			- You do not know what types exist → use exploration tools to verify before creating.
-			- Before creating anything, verify the current state so you don't create duplicates or miss dependencies.
+			All creation tools are **idempotent**: if an element already exists, the tool returns it without creating a duplicate. You do NOT need to check what exists before creating. Just call the creation tools directly — they handle deduplication.
 
 			---
 
@@ -58,13 +55,8 @@ public interface ModelCreator {
 			- `createEnumeration` — Create an enumeration with classifiers
 			- `updateModule`, `updateClass`, `updateProperty`, `updateEnumeration` — Update existing elements
 
-			**Exploration tools** (for inspecting current model state):
-			- `listModules` — List all modules
-			- `listTypes` — List types in a module
-			- `listTypeParts` — List parts (properties, references) of a type
-			- `searchModel` — Search model by name
-			- `listAnnotations` — List annotations on model elements
-			- `findTypeUsages` — Find where a type is used
+			**Delegation tools** (for calling specialist agents):
+			- `requestTLScriptHelp` — Delegate to the **TLScriptAgent** for TLScript syntax, function docs, script validation, or code generation.
 
 			---
 
@@ -72,7 +64,7 @@ public interface ModelCreator {
 
 			You MUST create elements in this strict order:
 
-			1. **Modules first** — Create or verify the target module exists
+			1. **Modules first** — Create the target module (returns existing if it already exists)
 			2. **Enumerations** — Create any enumerations before classes that reference them
 			3. **Classes** — Create all classes before adding properties/references
 			4. **Properties** — Add primitive properties to classes
@@ -81,16 +73,6 @@ public interface ModelCreator {
 
 			Never create a property or reference before its owning class exists.
 			Never create a reference before its target class exists.
-
-			---
-
-			### READ-BEFORE-WRITE STRATEGY
-
-			For each creation step:
-			1. **Check** — Use exploration tools to see what already exists
-			2. **Plan** — Determine what needs to be created vs. what already exists
-			3. **Create** — Call creation tools for missing elements
-			4. **Verify** — Tools return existing elements if they already exist (idempotent)
 
 			---
 

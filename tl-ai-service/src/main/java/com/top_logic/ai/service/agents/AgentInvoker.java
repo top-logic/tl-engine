@@ -8,15 +8,14 @@ package com.top_logic.ai.service.agents;
 import com.top_logic.ai.service.AIService;
 import com.top_logic.ai.service.agents.handoff.AgentWorkOrder;
 import com.top_logic.ai.service.tools.ToolCallTracking;
-import com.top_logic.ai.service.tools.help.RequestModelExplorationTool;
 import com.top_logic.ai.service.tools.help.TLScriptReferenceTool;
 import com.top_logic.ai.service.tools.model.AnnotationDefinitionExplorerTool;
 import com.top_logic.ai.service.tools.model.InstanceBrowserTool;
 import com.top_logic.ai.service.tools.model.ModelAnnotationBrowserTool;
 import com.top_logic.ai.service.tools.model.ModelBrowserTool;
+import com.top_logic.ai.service.tools.model.ModelCreatorTool;
 import com.top_logic.ai.service.tools.model.ModelSearchTool;
 import com.top_logic.ai.service.tools.model.TypeAnalysisTool;
-import com.top_logic.ai.service.tools.model.ModelCreatorTool;
 import com.top_logic.ai.service.tools.script.TLScriptTool;
 import com.top_logic.basic.thread.ThreadContextManager;
 
@@ -96,7 +95,7 @@ public final class AgentInvoker {
 			ChatModel tlscriptModel = aiService.getChatModel("mistral-large-latest");
 			final TLScriptAgent agent = AgenticServices.agentBuilder(TLScriptAgent.class)
 				.chatModel(tlscriptModel)
-				.tools(new TLScriptReferenceTool(), new RequestModelExplorationTool(), new TLScriptTool())
+				.tools(new TLScriptReferenceTool(), new AgentDelegationTools.Exploration("TLScriptAgent"), new TLScriptTool())
 				.build();
 			result = ThreadContextManager.inSystemInteraction(AgentInvoker.class,
 				() -> agent.answer(messageForLambda));
@@ -179,16 +178,9 @@ public final class AgentInvoker {
 	}
 
 	private static ModelCreator buildModelCreator(ChatModel creationModel) {
-		ModelCreatorTool creatorTool = new ModelCreatorTool();
-		ModelBrowserTool browserTool = new ModelBrowserTool();
-		InstanceBrowserTool instanceTool = new InstanceBrowserTool();
-		TypeAnalysisTool analysisTool = new TypeAnalysisTool();
-		ModelSearchTool searchTool = new ModelSearchTool();
-		ModelAnnotationBrowserTool annotationTool = new ModelAnnotationBrowserTool();
-		AnnotationDefinitionExplorerTool definitionTool = new AnnotationDefinitionExplorerTool();
 		return AgenticServices.agentBuilder(ModelCreator.class)
 			.chatModel(creationModel)
-			.tools(creatorTool, browserTool, instanceTool, analysisTool, searchTool, annotationTool, definitionTool)
+			.tools(new ModelCreatorTool(), new AgentDelegationTools.TLScript("ModelCreator"))
 			.build();
 	}
 

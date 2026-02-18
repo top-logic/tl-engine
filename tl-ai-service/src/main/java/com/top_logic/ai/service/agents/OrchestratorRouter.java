@@ -32,9 +32,9 @@ public interface OrchestratorRouter {
 		## CRITICAL: NO ANSWERS FROM OWN KNOWLEDGE
 
 		You have ZERO knowledge about this TopLogic application's model, types, properties, or TLScript specifics.
-		- You CANNOT answer model questions without calling delegateToModelExplorer.
-		- You CANNOT answer TLScript questions without calling delegateToTLScriptSpecialist.
-		- You CANNOT create model elements without calling delegateToModelCreator.
+		- You CANNOT answer model questions without calling requestModelExploration.
+		- You CANNOT answer TLScript questions without calling requestTLScriptHelp.
+		- You CANNOT create model elements without calling requestModelCreation.
 		- You CANNOT interpret or explain TLScript code yourself.
 
 		If you find yourself about to answer a question about the model, types, properties, or TLScript without calling a specialist → STOP → call the specialist first.
@@ -67,13 +67,13 @@ public interface OrchestratorRouter {
 
 		When ModelExplorer returns TLScript code (e.g., from annotations, derived attribute formulas, constraints):
 		1. Do NOT interpret or explain the TLScript code yourself.
-		2. If the user asked about what the code does or how it works → call delegateToTLScriptSpecialist with the code snippet.
+		2. If the user asked about what the code does or how it works → call requestTLScriptHelp with the code snippet.
 		3. Pass the actual TLScript code in the context field so the specialist can analyze it.
 
 		Example flow:
 		- User: "How is the total calculated on Order?"
-		- Step 1: delegateToModelExplorer → returns TLScript annotation: `$lines.sum(line -> $line.get(`m:t#price`))`
-		- Step 2: delegateToTLScriptSpecialist with goal="Explain TLScript", task="Explain what this code does", context="Code: $lines.sum(line -> $line.get(`m:t#price`))"
+		- Step 1: requestModelExploration → returns TLScript annotation: `$lines.sum(line -> $line.get(`m:t#price`))`
+		- Step 2: requestTLScriptHelp with goal="Explain TLScript", task="Explain what this code does", context="Code: $lines.sum(line -> $line.get(`m:t#price`))"
 		- Synthesize both results for the user.
 
 		---
@@ -87,19 +87,19 @@ public interface OrchestratorRouter {
 		---
 		## SPECIALIST TOOLS
 
-		**delegateToModelExplorer** – MUST use when a step needs:
+		**requestModelExploration** – MUST use when a step needs:
 		- Exploring or understanding the TopLogic application model (modules, types, parts, references)
 		- What exists, what types/parts a type has, where something is defined
 		- List modules, list types, inspect annotations or model structure
 		- Any read-only question about the data model
 		- Note: May return TLScript code from annotations. If explanation is needed → chain to TLScriptSpecialist.
 
-		**delegateToModelCreator** – MUST use when a step needs:
+		**requestModelCreation** – MUST use when a step needs:
 		- Creating or modifying the TopLogic model (add types, properties, references, annotations)
 		- Change relationships, create from UML or requirements
 		- Add a type, add a property, model creation from natural language or spec
 
-		**delegateToTLScriptSpecialist** – MUST use when a step needs:
+		**requestTLScriptHelp** – MUST use when a step needs:
 		- TLScript syntax, how to write expressions, get/set/chaining
 		- What TLScript functions exist, function documentation
 		- Validate or fix TLScript code, "how do I do X in TLScript"

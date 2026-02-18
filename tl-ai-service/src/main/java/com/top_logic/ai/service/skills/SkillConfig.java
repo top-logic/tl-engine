@@ -7,6 +7,7 @@ package com.top_logic.ai.service.skills;
 
 import com.top_logic.ai.service.agents.ModelExplorer;
 import com.top_logic.ai.service.agents.OrchestratorRouter;
+import com.top_logic.ai.service.agents.TLScriptAgent;
 
 /**
  * Production configuration mapping agents to their ordered skill lists.
@@ -49,6 +50,14 @@ public final class SkillConfig {
 			"orchestrator/chained-delegation",
 			"orchestrator/work-order-discipline",
 			"orchestrator/behavior");
+
+		registry.registerAgentSkills(TLScriptAgent.class,
+			"tlscript/identity",
+			"tlscript/tool-first-rule",
+			"tlscript/zero-knowledge",
+			"tlscript/verification-rules",
+			"tlscript/grammar-rules",
+			"tlscript/response-rules");
 
 		return registry;
 	}

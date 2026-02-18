@@ -94,8 +94,10 @@ public final class AgentInvoker {
 				throw new RuntimeException("AIService is not available.");
 			}
 			ChatModel tlscriptModel = aiService.getChatModel("mistral-large-latest");
+			String systemMessage = SkillConfig.getInstance().composeSystemMessage(TLScriptAgent.class);
 			final TLScriptAgent agent = AgenticServices.agentBuilder(TLScriptAgent.class)
 				.chatModel(tlscriptModel)
+				.systemMessageProvider(memoryId -> systemMessage)
 				.tools(new TLScriptReferenceTool(), new AgentDelegationTools.Exploration("TLScriptAgent"), new TLScriptTool())
 				.build();
 			result = ThreadContextManager.inSystemInteraction(AgentInvoker.class,

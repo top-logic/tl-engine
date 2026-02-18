@@ -384,6 +384,8 @@ A Trac MCP server is configured in `.mcp.json` to allow Claude Code to interact 
 
 **When discussing "tickets" in this project, always use the Trac MCP server tools to retrieve ticket information.**
 
+**Issue tracking is maintained in Trac, PR review comments are maintained in Gitea.** When asked for "issue comments" for a PR, automatically derive the ticket number from the PR title and look it up in Trac (e.g. via `get_ticket_changelog`) — do not use Gitea issue APIs for this.
+
 Available tools include:
 - `get_ticket` - Get complete ticket details
 - `search_tickets` - Search for tickets using Trac query syntax

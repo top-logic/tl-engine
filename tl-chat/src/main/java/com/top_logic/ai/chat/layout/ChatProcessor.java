@@ -17,14 +17,12 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.service.agents.OrchestratorAgent;
 import com.top_logic.ai.service.tools.ToolCallTracker;
 import com.top_logic.ai.service.tools.ToolCallTracking;
 import com.top_logic.ai.service.tools.TraceEntry;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.thread.ThreadContextManager;
-import com.top_logic.model.TLObject;
 
 import dev.langchain4j.memory.ChatMemory;
 
@@ -253,6 +251,11 @@ public class ChatProcessor {
 		ChatMessage message = new ChatMessage(userName, userMessage);
 		tracker.getChat().addMessage(message);
 
+		// Persist user message before AI processing starts
+		if (tracker.getActiveSessionId() != null) {
+			persistMessages(tracker, tracker.getActiveSessionId());
+		}
+
 		AIProcessingState state = new AIProcessingState();
 		state.startProcessing();
 		String taskId = tracker.startTask(randomChatTaskPlaceholder());
@@ -310,33 +313,14 @@ public class ChatProcessor {
 	}
 
 	/**
-	 * Persists the current chat messages to the active session in the KnowledgeBase.
+	 * Persists the current chat state (messages + task snapshots) to the active session.
 	 */
 	static void persistMessages(TaskProgressTracker tracker, String sessionId) {
 		try {
-			List<ChatMessage> messages = tracker.getChat().getMessages();
-			StringBuilder json = new StringBuilder("[");
-			for (int i = 0; i < messages.size(); i++) {
-				ChatMessage msg = messages.get(i);
-				if (i > 0) json.append(",");
-				json.append("{\"role\":\"").append(escapeJson(msg.getUser())).append("\"");
-				json.append(",\"text\":\"").append(escapeJson(msg.getText())).append("\"");
-				json.append(",\"timestamp\":\"").append(msg.getTimestamp().toString()).append("\"}");
-			}
-			json.append("]");
-
-			TLObject session = ChatHistoryService.findSessionById(sessionId);
-			if (session != null) {
-				ChatHistoryService.saveMessages(session, json.toString());
-			}
+			tracker.getSessionManager().persistActiveSession();
 		} catch (Exception ex) {
 			Logger.error("Failed to persist chat messages: " + ex.getMessage(), ex, ChatProcessor.class);
 		}
-	}
-
-	private static String escapeJson(String value) {
-		if (value == null) return "";
-		return value.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t");
 	}
 
 	/**

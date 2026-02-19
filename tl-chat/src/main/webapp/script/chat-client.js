@@ -405,6 +405,39 @@
 		}
 	}
 
+	function renderTaskSnapshot(container, taskDto) {
+		if (!taskDto || !taskDto.taskId) return;
+
+		var taskBody = ensureTaskCard(
+			container,
+			taskDto.taskId,
+			taskDto.description || 'Completed',
+			taskDto.status || 'completed',
+			null
+		);
+
+		// Render timeline events (tool calls and agent calls)
+		if (taskDto.timeline && taskDto.timeline.length > 0) {
+			taskDto.timeline.forEach(function(ev, idx) {
+				ev.id = ev.id || ('e' + idx);
+				appendTimelineEvent(taskBody, ev);
+			});
+		}
+
+		// Collapse the task (it's historical, show collapsed by default)
+		var taskEl = taskBody.closest ? taskBody.closest('.chat-task') : taskBody.parentElement;
+		if (taskEl) {
+			var bodyId = taskBody.id;
+			var arrowId = bodyId ? bodyId.replace(/-body$/, '-arrow') : null;
+			taskBody.style.display = 'none';
+			var header = taskEl.querySelector('.chat-task-header');
+			if (header && bodyId) {
+				header.setAttribute('onclick', "toggleTaskExpand('" + bodyId + "', '" + arrowId + "')");
+				header.style.cursor = 'pointer';
+			}
+		}
+	}
+
 	function scrollToBottom(container) {
 		if (container) container.scrollTop = container.scrollHeight;
 	}
@@ -865,17 +898,55 @@
 
 			// Load session messages
 			loadSessionApi(sessionId).then(function (data) {
-				if (data && data.messagesJson) {
-					try {
-						var messages = JSON.parse(data.messagesJson);
-						messages.forEach(function (msg) {
+				// Try structured entries first (includes task snapshots)
+				if (data && data.entries && data.entries.length > 0) {
+					data.entries.forEach(function(entry) {
+						if (entry.type === 'message' && entry.messageData) {
+							var msg = entry.messageData;
 							appendMessage(el.messages, {
-								role: msg.role === 'Agent' || msg.role === 'AI' ? 'agent' : msg.role.toLowerCase(),
-								content: msg.text,
-								userName: msg.role,
-								time: msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString() : ''
+								id: msg.id,
+								role: msg.role || 'user',
+								content: msg.content,
+								contentHtml: msg.contentHtml,
+								userName: msg.userName,
+								time: msg.time || ''
 							});
-						});
+						} else if (entry.type === 'task_snapshot' && entry.taskData) {
+							renderTaskSnapshot(el.messages, entry.taskData);
+						}
+					});
+					scrollToBottom(el.messages);
+				} else if (data && data.messagesJson) {
+					// Fallback: try parsing messagesJson as structured format
+					try {
+						var parsed = JSON.parse(data.messagesJson);
+						if (parsed.entries) {
+							parsed.entries.forEach(function(entry) {
+								if (entry.type === 'message' && entry.messageData) {
+									var msg = entry.messageData;
+									appendMessage(el.messages, {
+										id: msg.id,
+										role: msg.role || 'user',
+										content: msg.content,
+										contentHtml: msg.contentHtml,
+										userName: msg.userName,
+										time: msg.time || ''
+									});
+								} else if (entry.type === 'task_snapshot' && entry.taskData) {
+									renderTaskSnapshot(el.messages, entry.taskData);
+								}
+							});
+						} else if (Array.isArray(parsed)) {
+							// Legacy format: [{role, text, timestamp}, ...]
+							parsed.forEach(function (msg) {
+								appendMessage(el.messages, {
+									role: msg.role === 'Agent' || msg.role === 'AI' ? 'agent' : msg.role.toLowerCase(),
+									content: msg.text,
+									userName: msg.role,
+									time: msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString() : ''
+								});
+							});
+						}
 						scrollToBottom(el.messages);
 					} catch (e) {
 						console.error('Failed to parse session messages:', e);

@@ -12,9 +12,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import java.util.LinkedHashMap;
+
 import com.top_logic.ai.chat.api.messages.ChatUpdatesResponse;
 import com.top_logic.ai.chat.api.messages.CurrentTaskDto;
 import com.top_logic.ai.chat.api.messages.MessageDto;
+import com.top_logic.ai.chat.api.messages.PersistedChat;
+import com.top_logic.ai.chat.api.messages.PersistedChatEntry;
 import com.top_logic.ai.chat.api.messages.TimelineEventDto;
 import com.top_logic.ai.chat.layout.Chat;
 import com.top_logic.ai.chat.layout.ChatEntry;
@@ -26,7 +30,9 @@ import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.ai.service.scripting.Converters;
 
 import de.haumacher.msgbuf.data.DataObject;
+import de.haumacher.msgbuf.io.StringR;
 import de.haumacher.msgbuf.io.StringW;
+import de.haumacher.msgbuf.json.JsonReader;
 import de.haumacher.msgbuf.json.JsonWriter;
 
 /**
@@ -215,5 +221,197 @@ public final class DtoMapper {
 		} else {
 			json.value(String.valueOf(value));
 		}
+	}
+
+	/**
+	 * Serializes a list of {@link ChatEntry} objects to a JSON string for persistence.
+	 *
+	 * @param entries
+	 *        The chat entries (messages and task snapshots).
+	 * @return JSON string suitable for storing in the ChatSession.messages CLOB.
+	 */
+	public static String serializeEntries(List<ChatEntry> entries) {
+		PersistedChat chat = PersistedChat.create();
+		int messageIndex = 0;
+		for (ChatEntry entry : entries) {
+			PersistedChatEntry dto = PersistedChatEntry.create();
+			if (entry instanceof ChatEntry.MessageEntry me) {
+				dto.setType("message");
+				dto.setMessageData(toMessageDto(me.message(), "m" + messageIndex));
+				messageIndex++;
+			} else if (entry instanceof ChatEntry.TaskSnapshotEntry tse) {
+				dto.setType("task_snapshot");
+				dto.setTaskData(toCurrentTaskDto(tse.task()));
+			} else {
+				continue;
+			}
+			chat.addEntry(dto);
+		}
+		return toJson(chat);
+	}
+
+	/**
+	 * Deserializes a JSON string (from ChatSession.messages CLOB) back into {@link ChatEntry}
+	 * objects.
+	 *
+	 * @param json
+	 *        The JSON string. May be null or empty.
+	 * @return List of chat entries, never null.
+	 */
+	public static List<ChatEntry> deserializeEntries(String json) {
+		if (json == null || json.isEmpty()) {
+			return new ArrayList<>();
+		}
+
+		List<ChatEntry> result = new ArrayList<>();
+		try {
+			PersistedChat chat = PersistedChat.readPersistedChat(new JsonReader(new StringR(json)));
+			for (PersistedChatEntry entry : chat.getEntries()) {
+				if ("message".equals(entry.getType()) && entry.getMessageData() != null) {
+					MessageDto msg = entry.getMessageData();
+					ChatMessage chatMsg = new ChatMessage(
+						msg.getUserName() != null ? msg.getUserName() : msg.getRole(),
+						msg.getContent());
+					result.add(new ChatEntry.MessageEntry(chatMsg));
+				} else if ("task_snapshot".equals(entry.getType()) && entry.getTaskData() != null) {
+					ChatTask task = fromCurrentTaskDto(entry.getTaskData());
+					result.add(new ChatEntry.TaskSnapshotEntry(task));
+				}
+			}
+		} catch (Exception ex) {
+			// Fall back to legacy format (plain message array)
+			result.addAll(deserializeLegacyMessages(json));
+		}
+		return result;
+	}
+
+	/**
+	 * Converts a {@link CurrentTaskDto} back to a {@link ChatTask} (for loading persisted
+	 * snapshots).
+	 */
+	static ChatTask fromCurrentTaskDto(CurrentTaskDto dto) {
+		ChatTask task = new ChatTask(dto.getDescription() != null ? dto.getDescription() : "");
+		ChatTask.Builder builder = task.toBuilder();
+		builder.withStatus(parseTaskStatus(dto.getStatus()));
+		if (dto.getErrorMessage() != null) {
+			builder.withError(dto.getErrorMessage());
+		}
+		for (TimelineEventDto evDto : dto.getTimeline()) {
+			ChatTimelineEvent event = fromTimelineEventDto(evDto);
+			if (event != null) {
+				builder.addTimelineEvent(event);
+			}
+		}
+		return builder.build();
+	}
+
+	private static ChatTask.TaskStatus parseTaskStatus(String status) {
+		if (status == null) {
+			return ChatTask.TaskStatus.COMPLETED;
+		}
+		switch (status) {
+			case "in_progress":
+				return ChatTask.TaskStatus.IN_PROGRESS;
+			case "error":
+				return ChatTask.TaskStatus.ERROR;
+			case "pending":
+				return ChatTask.TaskStatus.PENDING;
+			default:
+				return ChatTask.TaskStatus.COMPLETED;
+		}
+	}
+
+	private static ChatTimelineEvent fromTimelineEventDto(TimelineEventDto dto) {
+		if ("tool_call".equals(dto.getType())) {
+			Map<String, Object> args = new LinkedHashMap<>();
+			if (dto.getArgsJson() != null && !dto.getArgsJson().isEmpty()) {
+				try {
+					args = parseJsonToMap(dto.getArgsJson());
+				} catch (Exception ignored) {
+					// Use empty args on parse failure.
+				}
+			}
+			ChatToolCall toolCall = new ChatToolCall(
+				dto.getToolName() != null ? dto.getToolName() : dto.getName(),
+				args,
+				dto.getResult());
+			return ChatTimelineEvent.toolCall(toolCall);
+		} else if ("agent_call".equals(dto.getType())) {
+			return ChatTimelineEvent.agentCall(
+				dto.getFromAgent(), dto.getToAgent(),
+				dto.getInputSummary(), dto.getResultSummary());
+		}
+		return null;
+	}
+
+	private static Map<String, Object> parseJsonToMap(String jsonStr) {
+		Map<String, Object> result = new LinkedHashMap<>();
+		try {
+			JsonReader reader = new JsonReader(new StringR(jsonStr));
+			reader.beginObject();
+			while (reader.hasNext()) {
+				String key = reader.nextName();
+				Object value = readJsonValue(reader);
+				result.put(key, value);
+			}
+			reader.endObject();
+		} catch (Exception ignored) {
+			// Return partial result on parse failure.
+		}
+		return result;
+	}
+
+	private static Object readJsonValue(JsonReader reader) throws IOException {
+		switch (reader.peek()) {
+			case STRING:
+				return reader.nextString();
+			case NUMBER:
+				return reader.nextDouble();
+			case BOOLEAN:
+				return reader.nextBoolean();
+			case NULL:
+				reader.nextNull();
+				return null;
+			default:
+				reader.skipValue();
+				return null;
+		}
+	}
+
+	/**
+	 * Parses the legacy message-only JSON format: [{role, text, timestamp}, ...].
+	 */
+	private static List<ChatEntry> deserializeLegacyMessages(String json) {
+		List<ChatEntry> result = new ArrayList<>();
+		try {
+			JsonReader reader = new JsonReader(new StringR(json));
+			reader.beginArray();
+			while (reader.hasNext()) {
+				reader.beginObject();
+				String role = null, text = null;
+				while (reader.hasNext()) {
+					String name = reader.nextName();
+					switch (name) {
+						case "role":
+							role = reader.nextString();
+							break;
+						case "text":
+							text = reader.nextString();
+							break;
+						default:
+							reader.skipValue();
+							break;
+					}
+				}
+				reader.endObject();
+				if (role != null && text != null) {
+					result.add(new ChatEntry.MessageEntry(new ChatMessage(role, text)));
+				}
+			}
+			reader.endArray();
+		} catch (Exception ignored) {
+			// Return partial result on parse failure.
+		}
+		return result;
 	}
 }

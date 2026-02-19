@@ -19,8 +19,10 @@ import com.top_logic.ai.chat.api.messages.ChatSessionDto;
 import com.top_logic.ai.chat.api.messages.ChatSessionListResponse;
 import com.top_logic.ai.chat.api.messages.ChatUpdatesResponse;
 import com.top_logic.ai.chat.api.messages.CreateSessionRequest;
+import com.top_logic.ai.chat.api.messages.PersistedChatEntry;
 import com.top_logic.ai.chat.api.messages.SaveMessagesRequest;
 import com.top_logic.ai.chat.api.messages.UpdateTitleRequest;
+import com.top_logic.ai.chat.layout.ChatEntry;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
@@ -238,19 +240,55 @@ public class ChatServlet extends HttpServlet {
 			return;
 		}
 
-		// GET /chat/sessions/{id} — load single session
+		// GET /chat/sessions/{id} — load single session + activate server-side
 		String sessionId = extractSessionId(pathInfo);
 		if (sessionId != null && !sessionId.contains("/")) {
 			final ChatSessionDetailResponse[] result = new ChatSessionDetailResponse[1];
+			TaskProgressTracker tracker = ChatSessionRegistry.getOrCreate(req.getSession(false));
 			ThreadContextManager.inSystemInteraction(ChatServlet.class, () -> {
 				TLObject session = ChatHistoryService.findSessionById(sessionId);
 				if (session == null || !ChatHistoryService.isOwnedByCurrentUser(session)) {
 					return null;
 				}
-				result[0] = ChatSessionDetailResponse.create()
+
+				// Activate session on the tracker (switches Chat + ChatMemory)
+				if (tracker != null) {
+					tracker.getSessionManager().switchSession(sessionId);
+				}
+
+				// Build response with structured entries
+				ChatSessionDetailResponse response = ChatSessionDetailResponse.create()
 					.setId(sessionId)
-					.setTitle(ChatHistoryService.getTitle(session))
-					.setMessagesJson(ChatHistoryService.getMessagesJson(session));
+					.setTitle(ChatHistoryService.getTitle(session));
+
+				// Return serialized entries from the now-active Chat
+				if (tracker != null) {
+					String entriesJson = DtoMapper.serializeEntries(tracker.getChat().getEntries());
+					response.setMessagesJson(entriesJson);
+				} else {
+					response.setMessagesJson(ChatHistoryService.getMessagesJson(session));
+				}
+
+				// Also populate structured entries field
+				String messagesJson = ChatHistoryService.getMessagesJson(session);
+				if (messagesJson != null) {
+					List<ChatEntry> entries = DtoMapper.deserializeEntries(messagesJson);
+					int msgIndex = 0;
+					for (ChatEntry entry : entries) {
+						PersistedChatEntry dto = PersistedChatEntry.create();
+						if (entry instanceof ChatEntry.MessageEntry me) {
+							dto.setType("message");
+							dto.setMessageData(DtoMapper.toMessageDto(me.message(), "m" + msgIndex));
+							msgIndex++;
+						} else if (entry instanceof ChatEntry.TaskSnapshotEntry tse) {
+							dto.setType("task_snapshot");
+							dto.setTaskData(DtoMapper.toCurrentTaskDto(tse.task()));
+						}
+						response.addEntry(dto);
+					}
+				}
+
+				result[0] = response;
 				return null;
 			});
 			if (result[0] == null) {

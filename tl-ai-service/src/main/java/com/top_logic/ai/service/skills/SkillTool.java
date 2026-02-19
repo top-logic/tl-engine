@@ -15,11 +15,11 @@ import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
 
 /**
- * LangChain4j tool that allows agents to discover and load on-demand skills at runtime.
+ * Tool that allows agents to discover and load on-demand skills at runtime.
  *
  * <p>
- * Each instance is scoped to a specific agent class, exposing only the skills
- * registered for that agent.
+ * Each instance is scoped to a specific agent class, exposing only the skills registered for that
+ * agent.
  * </p>
  */
 public class SkillTool {

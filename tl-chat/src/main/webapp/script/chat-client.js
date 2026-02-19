@@ -36,6 +36,7 @@
 	var BASE = (typeof window !== 'undefined' && window.TL_CHAT_BASE) || '';
 	var CHAT_SEND_URL = BASE + '/chat/send';
 	var CHAT_EVENTS_URL = BASE + '/chat/events';
+	var CHAT_SESSIONS_URL = BASE + '/chat/sessions';
 
 	// Track active SSE connections per chat root
 	var activeConnections = new WeakMap();
@@ -434,6 +435,34 @@
 		}
 	}
 
+	// ── Session Management ──────────────────────────────────────
+
+	function fetchSessions() {
+		return fetchJson(CHAT_SESSIONS_URL, { method: 'GET' });
+	}
+
+	function createSessionApi(title) {
+		return fetchJson(CHAT_SESSIONS_URL, {
+			method: 'POST',
+			body: { title: title || 'New Chat' }
+		});
+	}
+
+	function loadSessionApi(sessionId) {
+		return fetchJson(CHAT_SESSIONS_URL + '/' + sessionId, { method: 'GET' });
+	}
+
+	function renameSessionApi(sessionId, newTitle) {
+		return fetchJson(CHAT_SESSIONS_URL + '/' + sessionId + '/title', {
+			method: 'PUT',
+			body: { title: newTitle }
+		});
+	}
+
+	function deleteSessionApi(sessionId) {
+		return fetchJson(CHAT_SESSIONS_URL + '/' + sessionId, { method: 'DELETE' });
+	}
+
 	// ==================== Main Initialization ====================
 
 	function initOne(root) {
@@ -737,7 +766,160 @@
 			}
 		});
 
-		connectSSE();
+		// ── History Panel ──────────────────────────────────────────
+
+		var historyList = root.querySelector('.chat-history-list');
+		var newChatBtn = root.querySelector('.chat-new-session-btn');
+		var currentSessionId = null;
+
+		function renderSessionList(sessions) {
+			if (!historyList) return;
+			historyList.innerHTML = '';
+			sessions.forEach(function (s) {
+				historyList.appendChild(createSessionItem(s));
+			});
+		}
+
+		function createSessionItem(session) {
+			var item = document.createElement('div');
+			item.className = 'chat-history-item' + (session.id === currentSessionId ? ' active' : '');
+			item.setAttribute('data-session-id', session.id);
+
+			var title = document.createElement('span');
+			title.className = 'chat-history-title';
+			title.setAttribute('contenteditable', 'true');
+			title.textContent = session.title || 'Untitled';
+			title.addEventListener('blur', function () {
+				var newTitle = title.textContent.trim();
+				if (newTitle && newTitle !== session.title) {
+					session.title = newTitle;
+					renameSessionApi(session.id, newTitle);
+				}
+			});
+			title.addEventListener('keydown', function (e) {
+				if (e.key === 'Enter') {
+					e.preventDefault();
+					title.blur();
+				}
+			});
+
+			var deleteBtn = document.createElement('button');
+			deleteBtn.className = 'chat-history-delete-btn';
+			deleteBtn.textContent = '\u00D7';
+			deleteBtn.addEventListener('click', function (e) {
+				e.stopPropagation();
+				if (confirm('Delete this chat?')) {
+					deleteSessionApi(session.id).then(function () {
+						item.remove();
+						if (session.id === currentSessionId) {
+							var next = historyList.querySelector('.chat-history-item');
+							if (next) {
+								switchToSession(next.getAttribute('data-session-id'));
+							} else {
+								handleNewChat();
+							}
+						}
+					});
+				}
+			});
+
+			item.addEventListener('click', function (e) {
+				if (e.target === deleteBtn || e.target === title) return;
+				switchToSession(session.id);
+			});
+
+			item.appendChild(title);
+			item.appendChild(deleteBtn);
+			return item;
+		}
+
+		function setActiveItem(sessionId) {
+			if (!historyList) return;
+			var items = historyList.querySelectorAll('.chat-history-item');
+			items.forEach(function (item) {
+				item.classList.toggle('active', item.getAttribute('data-session-id') === sessionId);
+			});
+		}
+
+		function switchToSession(sessionId) {
+			if (sessionId === currentSessionId) return;
+			currentSessionId = sessionId;
+			setActiveItem(sessionId);
+
+			// Clear current messages
+			if (el.messages) {
+				el.messages.innerHTML = '';
+			}
+
+			// Close existing SSE connection
+			if (state.eventSource) {
+				state.eventSource.close();
+				state.eventSource = null;
+			}
+			if (state.reconnectTimer) {
+				clearTimeout(state.reconnectTimer);
+				state.reconnectTimer = null;
+			}
+
+			// Load session messages
+			loadSessionApi(sessionId).then(function (data) {
+				if (data && data.messagesJson) {
+					try {
+						var messages = JSON.parse(data.messagesJson);
+						messages.forEach(function (msg) {
+							appendMessage(el.messages, {
+								role: msg.role === 'Agent' || msg.role === 'AI' ? 'agent' : msg.role.toLowerCase(),
+								content: msg.text,
+								userName: msg.role,
+								time: msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString() : ''
+							});
+						});
+						scrollToBottom(el.messages);
+					} catch (e) {
+						console.error('Failed to parse session messages:', e);
+					}
+				}
+				// Reconnect SSE
+				connectSSE();
+			}).catch(function (err) {
+				console.error('Failed to load session:', err);
+				connectSSE();
+			});
+		}
+
+		function handleNewChat() {
+			createSessionApi('New Chat').then(function (session) {
+				if (session && session.id) {
+					var item = createSessionItem(session);
+					if (historyList && historyList.firstChild) {
+						historyList.insertBefore(item, historyList.firstChild);
+					} else if (historyList) {
+						historyList.appendChild(item);
+					}
+					switchToSession(session.id);
+				}
+			});
+		}
+
+		// Wire up New Chat button
+		if (newChatBtn) {
+			newChatBtn.addEventListener('click', handleNewChat);
+		}
+
+		// Load sessions on init — do NOT call connectSSE() directly here;
+		// it will be called by switchToSession after loading the first session
+		fetchSessions().then(function (data) {
+			var sessions = (data && data.sessions) ? data.sessions : [];
+			if (sessions.length > 0) {
+				renderSessionList(sessions);
+				switchToSession(sessions[0].id);
+			} else {
+				handleNewChat();
+			}
+		}).catch(function (err) {
+			console.error('Failed to load sessions:', err);
+			handleNewChat();
+		});
 	}
 
 	function init() {

@@ -42,11 +42,8 @@ public class ChatComponentBuilder implements ModelBuilder {
 	public Object getModel(Object businessModel, LayoutComponent component) {
 		FormContext context = new FormContext(component);
 
-		// Chat lives inside the tracker so add (in poll) and render use the same instance
 		final TaskProgressTracker taskTracker = TaskProgressTracker.getInstance(
 			component.getMainLayout().getWindowScope());
-		final Chat chat = taskTracker.getChat();
-		chat.ensureWelcomeMessage();
 
 		// Store user name from TLContext (available here) so ChatServlet can use it as fallback
 		storeUserName(taskTracker);
@@ -54,7 +51,12 @@ public class ChatComponentBuilder implements ModelBuilder {
 		// So the JSON API (ChatServlet) uses the same tracker as this UI when in the same session
 		registerTrackerWithSession(component, taskTracker);
 
-		// Create hidden field with custom ControlProvider that embeds ChatControl
+		// Ensure the active chat has a welcome message
+		taskTracker.getChat().ensureWelcomeMessage();
+
+		// Create hidden field with custom ControlProvider that embeds ChatControl.
+		// ChatControl gets its Chat from taskTracker.getChat() which delegates to
+		// ChatSessionManager, so it always renders the active session's entries.
 		HiddenField chatField = FormFactory.newHiddenField("chat");
 		chatField.setControlProvider(new ControlProvider() {
 			@Override
@@ -62,7 +64,7 @@ public class ChatComponentBuilder implements ModelBuilder {
 				return new FragmentControl(new HTMLFragment() {
 					@Override
 					public void write(DisplayContext context, TagWriter out) throws IOException {
-						new ChatControl(chat, taskTracker).write(context, out);
+						new ChatControl(taskTracker.getChat(), taskTracker).write(context, out);
 					}
 				});
 			}

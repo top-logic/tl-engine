@@ -5,6 +5,7 @@
  */
 package com.top_logic.ai.service.skills;
 
+import com.top_logic.ai.service.agents.OrchestratorRouter;
 import com.top_logic.ai.service.agents.TLScriptAgent;
 
 /**
@@ -30,8 +31,11 @@ public final class SkillConfig {
 	private static SkillRegistry createRegistry() {
 		SkillRegistry registry = new SkillRegistry();
 
+		registry.registerAgentSkills(OrchestratorRouter.class,
+			"shared/prompting-model-explorer");
+
 		registry.registerAgentSkills(TLScriptAgent.class,
-			"tlscript/enum-comparison");
+			"shared/prompting-model-explorer");
 
 		return registry;
 	}

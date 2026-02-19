@@ -11,15 +11,17 @@ package com.top_logic.ai.service.skills;
  *
  * <p>
  * Skills are loaded from classpath resource files ({@code .md}) with optional YAML frontmatter
- * for the description, and managed by {@link SkillRegistry}.
+ * for metadata, and managed by {@link SkillRegistry}.
  * </p>
  *
- * @param name
- *        Unique skill identifier (e.g. {@code "tlscript/enum-comparison"}).
+ * @param id
+ *        Unique skill identifier derived from the resource path (e.g. {@code "tlscript/enum-comparison"}).
+ *        Used by the agent to call {@code loadSkill(id)}.
  * @param description
  *        Human-readable description from YAML frontmatter.
+ *        Defaults to the id if not specified.
  * @param content
  *        The actual prompt text (frontmatter stripped).
  */
-public record Skill(String name, String description, String content) {
+public record Skill(String id, String description, String content) {
 }

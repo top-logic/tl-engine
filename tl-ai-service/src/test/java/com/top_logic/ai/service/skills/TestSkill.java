@@ -11,7 +11,7 @@ public class TestSkill extends TestCase {
 
 	public void testSkillCreation() {
 		Skill skill = new Skill("test-skill", "A test skill", "You are a test agent.");
-		assertEquals("test-skill", skill.name());
+		assertEquals("test-skill", skill.id());
 		assertEquals("A test skill", skill.description());
 		assertEquals("You are a test agent.", skill.content());
 	}

@@ -113,7 +113,7 @@ public class SkillRegistry {
 		sb.append("The following skills can be loaded on-demand using the `loadSkill` tool. ");
 		sb.append("Load a skill when you need its specialized instructions for the current task.\n\n");
 		for (Skill skill : skills) {
-			sb.append("- `").append(skill.name()).append("`: ").append(skill.description()).append("\n");
+			sb.append("- `").append(skill.id()).append("`: ").append(skill.description()).append("\n");
 		}
 		return sb.toString();
 	}
@@ -144,9 +144,9 @@ public class SkillRegistry {
 		}
 	}
 
-	private Skill parseSkill(String name, String raw) {
+	private Skill parseSkill(String id, String raw) {
 		if (!raw.startsWith(FRONTMATTER_DELIMITER)) {
-			return new Skill(name, name, raw);
+			return new Skill(id, id, raw);
 		}
 
 		String closingDelimiter = "\n" + FRONTMATTER_DELIMITER + "\n";
@@ -156,13 +156,13 @@ public class SkillRegistry {
 			endIndex = raw.indexOf(closingDelimiter, FRONTMATTER_DELIMITER.length());
 		}
 		if (endIndex < 0) {
-			return new Skill(name, name, raw);
+			return new Skill(id, id, raw);
 		}
 
 		String frontmatter = raw.substring(FRONTMATTER_DELIMITER.length(), endIndex).trim();
 		String content = raw.substring(endIndex + closingDelimiter.length()).trim();
 
-		String description = name;
+		String description = id;
 
 		for (String line : frontmatter.split("\n")) {
 			int colonIndex = line.indexOf(':');
@@ -175,6 +175,6 @@ public class SkillRegistry {
 				description = value;
 			}
 		}
-		return new Skill(name, description, content);
+		return new Skill(id, description, content);
 	}
 }

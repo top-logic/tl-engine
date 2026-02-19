@@ -45,22 +45,24 @@ public class TestSkillRegistry extends TestCase {
 	public void testFrontmatterParsing() {
 		SkillRegistry registry = new SkillRegistry();
 		Skill skill = registry.getSkill("test/frontmatter-skill");
+		assertEquals("test/frontmatter-skill", skill.id());
 		assertEquals("A test skill with frontmatter", skill.description());
 		assertTrue(skill.content().contains("FRONTMATTER RULE"));
 		assertFalse("Frontmatter should be stripped from content", skill.content().contains("description:"));
 	}
 
-	public void testSkillWithoutFrontmatterDefaultsNameAsDescription() {
+	public void testSkillWithoutFrontmatterDefaultsIdAsDescription() {
 		SkillRegistry registry = new SkillRegistry();
 		Skill skill = registry.getSkill("test/sample-skill");
+		assertEquals("test/sample-skill", skill.id());
 		assertEquals("test/sample-skill", skill.description());
 	}
 
 	public void testAllProductionSkillsLoadSuccessfully() {
 		SkillRegistry registry = SkillConfig.getInstance();
 		for (Skill skill : registry.getSkillsFor(TLScriptAgent.class)) {
-			assertNotNull("Skill content should not be null: " + skill.name(), skill.content());
-			assertFalse("Skill content should not be empty: " + skill.name(),
+			assertNotNull("Skill content should not be null: " + skill.id(), skill.content());
+			assertFalse("Skill content should not be empty: " + skill.id(),
 				skill.content().isEmpty());
 		}
 	}
@@ -84,7 +86,7 @@ public class TestSkillRegistry extends TestCase {
 		String prompt = registry.buildSystemPrompt(TestAgent.class);
 		assertTrue("Should contain base system message", prompt.contains("TEST SYSTEM PROMPT"));
 		assertTrue("Should contain skill catalog header", prompt.contains("Available Skills"));
-		assertTrue("Should contain skill name", prompt.contains("test/frontmatter-skill"));
+		assertTrue("Should contain skill id", prompt.contains("test/frontmatter-skill"));
 		assertTrue("Should contain skill description", prompt.contains("A test skill with frontmatter"));
 		assertTrue("Should mention loadSkill", prompt.contains("loadSkill"));
 	}

@@ -9,10 +9,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.ai.service.tools.ToolCallTracking;
+
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
-
-import com.top_logic.ai.service.tools.ToolCallTracking;
 
 /**
  * LangChain4j tool that allows agents to discover and load on-demand skills at runtime.
@@ -55,9 +55,9 @@ public class SkillTool {
 			return result;
 		}
 		StringBuilder sb = new StringBuilder();
-		sb.append("Available skills (use loadSkill to load one):\n");
+		sb.append("Available skills (use loadSkill with the skill id to load one):\n");
 		for (Skill skill : skills) {
-			sb.append("- ").append(skill.name()).append(": ").append(skill.description()).append("\n");
+			sb.append("- `").append(skill.id()).append("`: ").append(skill.description()).append("\n");
 		}
 		String result = sb.toString();
 		ToolCallTracking.recordIfTracking("listAvailableSkills", Collections.emptyMap(), result);
@@ -65,24 +65,24 @@ public class SkillTool {
 	}
 
 	/**
-	 * Loads a skill by name, returning its full content.
+	 * Loads a skill by its id, returning its full content.
 	 *
-	 * @param skillName
-	 *        The skill name from the catalog (e.g. {@code "tlscript/enum-comparison"}).
+	 * @param skillId
+	 *        The skill id from the catalog (e.g. {@code "tlscript/enum-comparison"}).
 	 * @return The full skill content, or an error message if not available.
 	 */
-	@Tool("Loads a skill by name, returning its full content. Call after listAvailableSkills to load instructions you need for the current task.")
-	public String loadSkill(@P("Skill name from the catalog, e.g. 'tlscript/enum-comparison'") String skillName) {
-		Map<String, Object> args = Map.of("skillName", skillName);
+	@Tool("Loads a skill by its id, returning its full content. Call after listAvailableSkills to load instructions you need for the current task.")
+	public String loadSkill(@P("Skill id from the catalog, e.g. 'shared/prompting-model-explorer'") String skillId) {
+		Map<String, Object> args = Map.of("skillId", skillId);
 		List<Skill> skills = _registry.getSkillsFor(_agentClass);
 		for (Skill skill : skills) {
-			if (skill.name().equals(skillName)) {
+			if (skill.id().equals(skillId)) {
 				String result = skill.content();
 				ToolCallTracking.recordIfTracking("loadSkill", args, result);
 				return result;
 			}
 		}
-		String result = "Skill '" + skillName + "' is not available for this agent.";
+		String result = "Skill '" + skillId + "' is not available for this agent.";
 		ToolCallTracking.recordIfTracking("loadSkill", args, result);
 		return result;
 	}

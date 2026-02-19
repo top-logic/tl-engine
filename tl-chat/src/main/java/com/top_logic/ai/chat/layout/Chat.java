@@ -94,6 +94,26 @@ public class Chat {
 	}
 
 	/**
+	 * Removes all entries from this chat. Used when switching to a different session.
+	 */
+	public void clear() {
+		_entries.clear();
+		_welcomeAdded = false;
+	}
+
+	/**
+	 * Replaces all entries with the given list. Used when loading a persisted session.
+	 *
+	 * @param entries
+	 *        The entries to load.
+	 */
+	public void loadEntries(List<ChatEntry> entries) {
+		_entries.clear();
+		_entries.addAll(entries);
+		_welcomeAdded = true;
+	}
+
+	/**
 	 * Removes oldest entries when the list exceeds {@link #MAX_ENTRIES}.
 	 */
 	private void enforceMaxSize() {

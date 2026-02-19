@@ -230,3 +230,83 @@ message HeartbeatEvent {
 	 */
 	long ts;
 }
+
+/**
+ * Summary of a chat session for the history panel.
+ */
+message ChatSessionDto {
+	/**
+	 * Session ID (KnowledgeObject ID).
+	 */
+	string id;
+
+	/**
+	 * User-editable session title.
+	 */
+	string title;
+
+	/**
+	 * ISO-8601 timestamp of last update.
+	 */
+	string lastUpdated;
+}
+
+/**
+ * Response body for GET /chat/sessions.
+ */
+message ChatSessionListResponse {
+	/**
+	 * All sessions for the current user, sorted by lastUpdated descending.
+	 */
+	repeated ChatSessionDto sessions;
+}
+
+/**
+ * Request body for POST /chat/sessions.
+ */
+message CreateSessionRequest {
+	/**
+	 * Title for the new session.
+	 */
+	string title;
+}
+
+/**
+ * Request body for PUT /chat/sessions/{id}/title.
+ */
+message UpdateTitleRequest {
+	/**
+	 * New title for the session.
+	 */
+	string title;
+}
+
+/**
+ * Response body for GET /chat/sessions/{id} (full session load).
+ */
+message ChatSessionDetailResponse {
+	/**
+	 * Session ID.
+	 */
+	string id;
+
+	/**
+	 * Session title.
+	 */
+	string title;
+
+	/**
+	 * Messages JSON blob (raw string, parsed by client).
+	 */
+	string messagesJson;
+}
+
+/**
+ * Request body for PUT /chat/sessions/{id}/messages.
+ */
+message SaveMessagesRequest {
+	/**
+	 * Messages JSON blob to save.
+	 */
+	string messagesJson;
+}

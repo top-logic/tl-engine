@@ -168,6 +168,30 @@ public class TestSkillRegistry extends TestCase {
 		assertFalse("Should NOT contain on-demand skill content", message.contains("ON-DEMAND CONTENT"));
 	}
 
+	public void testOnDemandSkillsAvailableForAllAgents() {
+		SkillRegistry registry = SkillConfig.getInstance();
+		assertFalse("ModelExplorer should have on-demand skills",
+			registry.getOnDemandSkillsFor(ModelExplorer.class).isEmpty());
+		assertFalse("OrchestratorRouter should have on-demand skills",
+			registry.getOnDemandSkillsFor(OrchestratorRouter.class).isEmpty());
+		assertFalse("TLScriptAgent should have on-demand skills",
+			registry.getOnDemandSkillsFor(TLScriptAgent.class).isEmpty());
+		assertFalse("ModelEditor should have on-demand skills",
+			registry.getOnDemandSkillsFor(ModelEditor.class).isEmpty());
+	}
+
+	public void testAllSkillDescriptionsAreNotJustNames() {
+		SkillRegistry registry = SkillConfig.getInstance();
+		Class<?>[] agents = {ModelExplorer.class, OrchestratorRouter.class,
+			TLScriptAgent.class, ModelEditor.class};
+		for (Class<?> agentClass : agents) {
+			for (Skill skill : registry.getSkillsFor(agentClass)) {
+				assertFalse("Skill " + skill.name() + " should have a real description (not just its name)",
+					skill.name().equals(skill.description()));
+			}
+		}
+	}
+
 	interface TestAgent {
 		String chat(String msg);
 	}

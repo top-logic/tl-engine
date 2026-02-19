@@ -54,6 +54,9 @@ public class TaskProgressTracker {
 	/** Conversation memory for the orchestrator agent. Lazily created, persists across messages. */
 	private volatile ChatMemory _chatMemory;
 
+	/** The ID of the active ChatSession for persistence; null if no session is selected. */
+	private volatile String _activeSessionId;
+
 	/**
 	 * Returns the chat for this window. Same instance for add and render so task traces persist.
 	 */
@@ -126,6 +129,23 @@ public class TaskProgressTracker {
 	 */
 	public void setUserName(String userName) {
 		_userName = userName;
+	}
+
+	/**
+	 * Returns the active session ID for persistence, or null if no session is selected.
+	 */
+	public String getActiveSessionId() {
+		return _activeSessionId;
+	}
+
+	/**
+	 * Sets the active session ID for persistence.
+	 *
+	 * @param sessionId
+	 *        The session ID; null to clear.
+	 */
+	public void setActiveSessionId(String sessionId) {
+		_activeSessionId = sessionId;
 	}
 
 	/**

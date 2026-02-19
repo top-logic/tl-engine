@@ -18,7 +18,12 @@ public class ChatSendRequest extends de.haumacher.msgbuf.data.AbstractDataObject
 	/** @see #getText() */
 	public static final String TEXT__PROP = "text";
 
+	/** @see #getSessionId() */
+	public static final String SESSION_ID__PROP = "sessionId";
+
 	private String _text = "";
+
+	private String _sessionId = "";
 
 	/**
 	 * Creates a {@link ChatSendRequest} instance.
@@ -49,6 +54,26 @@ public class ChatSendRequest extends de.haumacher.msgbuf.data.AbstractDataObject
 		_text = value;
 	}
 
+	/**
+	 * Active session ID; if set, messages will be persisted to this session.
+	 */
+	public final String getSessionId() {
+		return _sessionId;
+	}
+
+	/**
+	 * @see #getSessionId()
+	 */
+	public com.top_logic.ai.chat.api.messages.ChatSendRequest setSessionId(String value) {
+		internalSetSessionId(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getSessionId()} without chain call utility. */
+	protected final void internalSetSessionId(String value) {
+		_sessionId = value;
+	}
+
 	@Override
 	public String jsonType() {
 		return CHAT_SEND_REQUEST__TYPE;
@@ -57,7 +82,8 @@ public class ChatSendRequest extends de.haumacher.msgbuf.data.AbstractDataObject
 	static final java.util.List<String> PROPERTIES;
 	static {
 		java.util.List<String> local = java.util.Arrays.asList(
-			TEXT__PROP);
+			TEXT__PROP, 
+			SESSION_ID__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -83,6 +109,7 @@ public class ChatSendRequest extends de.haumacher.msgbuf.data.AbstractDataObject
 	public Object get(String field) {
 		switch (field) {
 			case TEXT__PROP: return getText();
+			case SESSION_ID__PROP: return getSessionId();
 			default: return null;
 		}
 	}
@@ -91,6 +118,7 @@ public class ChatSendRequest extends de.haumacher.msgbuf.data.AbstractDataObject
 	public void set(String field, Object value) {
 		switch (field) {
 			case TEXT__PROP: internalSetText((String) value); break;
+			case SESSION_ID__PROP: internalSetSessionId((String) value); break;
 		}
 	}
 
@@ -111,12 +139,15 @@ public class ChatSendRequest extends de.haumacher.msgbuf.data.AbstractDataObject
 		super.writeFields(out);
 		out.name(TEXT__PROP);
 		out.value(getText());
+		out.name(SESSION_ID__PROP);
+		out.value(getSessionId());
 	}
 
 	@Override
 	protected void readField(de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
 		switch (field) {
 			case TEXT__PROP: setText(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case SESSION_ID__PROP: setSessionId(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}
 	}

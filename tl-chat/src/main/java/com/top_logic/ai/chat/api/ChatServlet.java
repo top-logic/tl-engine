@@ -140,8 +140,17 @@ public class ChatServlet extends HttpServlet {
 			return;
 		}
 		final String messageText = text.trim();
+		String sessionId = body.getSessionId();
+		if (sessionId != null && sessionId.trim().isEmpty()) {
+			sessionId = null;
+		}
+		final String activeSessionId = sessionId;
 
 		TaskProgressTracker tracker = ChatSessionRegistry.getOrCreate(req.getSession(false));
+
+		if (activeSessionId != null) {
+			tracker.setActiveSessionId(activeSessionId);
+		}
 
 		String storedName = tracker.getUserName();
 		final String userName = storedName != null ? storedName : "Anonymous";

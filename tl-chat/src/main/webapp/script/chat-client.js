@@ -714,7 +714,9 @@
 		});
 		scrollToBottom(el.messages);
 
-		fetchJson(CHAT_SEND_URL, { method: 'POST', body: { text: text } })
+		var sendBody = { text: text };
+		if (currentSessionId) sendBody.sessionId = currentSessionId;
+		fetchJson(CHAT_SEND_URL, { method: 'POST', body: sendBody })
 				.then(function (data) {
 					if (data && data.status === 'busy') {
 						el.input.disabled = false;

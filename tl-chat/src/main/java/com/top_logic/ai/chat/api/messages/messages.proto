@@ -154,6 +154,11 @@ message ChatSendRequest {
 	 * User message text.
 	 */
 	string text;
+
+	/**
+	 * Active session ID; if set, messages will be persisted to this session.
+	 */
+	string sessionId;
 }
 
 /**

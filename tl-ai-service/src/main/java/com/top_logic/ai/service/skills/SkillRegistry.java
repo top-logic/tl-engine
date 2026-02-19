@@ -150,13 +150,18 @@ public class SkillRegistry {
 			return new Skill(name, name, SkillTier.CORE, raw);
 		}
 
-		int endIndex = raw.indexOf(FRONTMATTER_DELIMITER, FRONTMATTER_DELIMITER.length());
+		String closingDelimiter = "\n" + FRONTMATTER_DELIMITER + "\n";
+		int endIndex = raw.indexOf(closingDelimiter, FRONTMATTER_DELIMITER.length());
+		if (endIndex < 0) {
+			closingDelimiter = "\n" + FRONTMATTER_DELIMITER;
+			endIndex = raw.indexOf(closingDelimiter, FRONTMATTER_DELIMITER.length());
+		}
 		if (endIndex < 0) {
 			return new Skill(name, name, SkillTier.CORE, raw);
 		}
 
 		String frontmatter = raw.substring(FRONTMATTER_DELIMITER.length(), endIndex).trim();
-		String content = raw.substring(endIndex + FRONTMATTER_DELIMITER.length()).trim();
+		String content = raw.substring(endIndex + closingDelimiter.length()).trim();
 
 		String description = name;
 		SkillTier tier = SkillTier.CORE;

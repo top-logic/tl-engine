@@ -97,11 +97,11 @@ public class SkillRegistry {
 
 	/**
 	 * Composes the system prompt for an agent by concatenating its {@link SkillTier#CORE} skills
-	 * in order.
+	 * in order, followed by a catalog of available {@link SkillTier#ON_DEMAND} skills.
 	 *
 	 * <p>
-	 * {@link SkillTier#ON_DEMAND} skills are excluded from the composed prompt; they can be
-	 * retrieved separately via {@link #getOnDemandSkillsFor(Class)}.
+	 * The on-demand catalog lists skill names and descriptions so the agent knows what
+	 * specialized knowledge it can load via the {@code loadSkill} tool.
 	 * </p>
 	 *
 	 * @param agentClass
@@ -120,7 +120,22 @@ public class SkillRegistry {
 			}
 			sb.append(skill.content());
 		}
+		appendSkillCatalog(agentClass, sb);
 		return sb.toString();
+	}
+
+	private void appendSkillCatalog(Class<?> agentClass, StringBuilder sb) {
+		List<Skill> onDemand = getOnDemandSkillsFor(agentClass);
+		if (onDemand.isEmpty()) {
+			return;
+		}
+		sb.append(SKILL_SEPARATOR);
+		sb.append("## Available Skills\n\n");
+		sb.append("The following skills can be loaded on-demand using the `loadSkill` tool. ");
+		sb.append("Load a skill when you need its specialized instructions for the current task.\n\n");
+		for (Skill skill : onDemand) {
+			sb.append("- `").append(skill.name()).append("`: ").append(skill.description()).append("\n");
+		}
 	}
 
 	/**

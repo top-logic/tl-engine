@@ -159,13 +159,40 @@ public class TestSkillRegistry extends TestCase {
 		assertEquals(SkillTier.ON_DEMAND, onDemand.get(0).tier());
 	}
 
-	public void testComposeSystemMessageOnlyIncludesCoreSkills() {
+	public void testComposeSystemMessageOnlyIncludesCoreSkillContent() {
 		SkillRegistry registry = new SkillRegistry();
 		registry.registerAgentSkills(TestAgent.class,
 			"test/frontmatter-skill", "test/on-demand-skill");
 		String message = registry.composeSystemMessage(TestAgent.class);
 		assertTrue("Should contain core skill content", message.contains("FRONTMATTER RULE"));
-		assertFalse("Should NOT contain on-demand skill content", message.contains("ON-DEMAND CONTENT"));
+		assertFalse("Should NOT contain on-demand skill body", message.contains("ON-DEMAND CONTENT"));
+	}
+
+	public void testComposeSystemMessageIncludesSkillCatalog() {
+		SkillRegistry registry = new SkillRegistry();
+		registry.registerAgentSkills(TestAgent.class,
+			"test/frontmatter-skill", "test/on-demand-skill");
+		String message = registry.composeSystemMessage(TestAgent.class);
+		assertTrue("Should contain catalog header", message.contains("Available Skills"));
+		assertTrue("Should contain on-demand skill name in catalog",
+			message.contains("test/on-demand-skill"));
+		assertTrue("Should contain on-demand skill description in catalog",
+			message.contains("An on-demand test skill"));
+		assertTrue("Should contain loadSkill instruction",
+			message.contains("loadSkill"));
+	}
+
+	public void testAllAgentPromptsContainSkillCatalog() {
+		SkillRegistry registry = SkillConfig.getInstance();
+		Class<?>[] agents = {ModelExplorer.class, OrchestratorRouter.class,
+			TLScriptAgent.class, ModelEditor.class};
+		for (Class<?> agentClass : agents) {
+			String prompt = registry.composeSystemMessage(agentClass);
+			assertTrue(agentClass.getSimpleName() + " prompt should contain skill catalog",
+				prompt.contains("Available Skills"));
+			assertTrue(agentClass.getSimpleName() + " prompt should mention loadSkill",
+				prompt.contains("loadSkill"));
+		}
 	}
 
 	public void testOnDemandSkillsAvailableForAllAgents() {

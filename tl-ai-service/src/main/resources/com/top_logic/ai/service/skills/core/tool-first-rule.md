@@ -1,4 +1,7 @@
 ---
+description: Hard gate requiring at least one tool call before any answer
+tier: core
+---
 
 ### TOOL-FIRST RULE (HARD GATE - READ THIS FIRST)
 

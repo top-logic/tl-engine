@@ -1,3 +1,7 @@
+---
+description: Strict output format for model creation summaries
+tier: on-demand
+---
 ### OUTPUT FORMAT (STRICT)
 
 After all creation steps, respond with a structured summary:

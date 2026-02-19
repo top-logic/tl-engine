@@ -1,4 +1,7 @@
 ---
+description: Context resolution rules for ambiguous type and module references
+tier: on-demand
+---
 
 ### CONTEXT RESOLUTION (no guessing)
 

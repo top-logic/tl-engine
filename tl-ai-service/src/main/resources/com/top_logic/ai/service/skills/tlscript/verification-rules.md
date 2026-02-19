@@ -1,3 +1,7 @@
+---
+description: Mandatory verification, script context rules, and tool descriptions
+tier: core
+---
 ========================
 MANDATORY VERIFICATION RULES
 ========================

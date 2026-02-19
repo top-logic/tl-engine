@@ -1,4 +1,7 @@
 ---
+description: Scope rules for model exploration — application vs framework modules
+tier: on-demand
+---
 
 ### SCOPE
 

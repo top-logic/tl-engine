@@ -1,4 +1,7 @@
 ---
+description: Orchestrator behavioral guidelines, anti-patterns, and legacy prefix handling
+tier: on-demand
+---
 ## BEHAVIOR
 
 1. Read the user message and plan: what does the user want, what steps are needed?

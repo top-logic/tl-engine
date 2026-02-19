@@ -1,3 +1,7 @@
+---
+description: Hard gate for TLScript — verify functions and model literals before use
+tier: core
+---
 ========================
 TOOL-FIRST RULE (HARD GATE)
 ========================

@@ -1,4 +1,7 @@
 ---
+description: Mandatory tool calls before making any claim about the model
+tier: core
+---
 
 ### EXHAUSTIVENESS MANDATE (CRITICAL)
 

@@ -1,3 +1,7 @@
+---
+description: TLScript grammar reference — expressions, bindings, variables, model literals
+tier: on-demand
+---
 ========================
 TLScript RULES (NON-NEGOTIABLE)
 ========================

@@ -1,4 +1,7 @@
 ---
+description: Work order discipline, specialist tool descriptions, think-first rules
+tier: core
+---
 ## THINK FIRST
 
 1. **What does the user want?** Read the message and infer the real goal.

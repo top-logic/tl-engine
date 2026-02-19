@@ -1,4 +1,7 @@
 ---
+description: Zero prior knowledge rule — all facts must come from tools
+tier: core
+---
 
 ### ZERO PRIOR KNOWLEDGE RULE
 

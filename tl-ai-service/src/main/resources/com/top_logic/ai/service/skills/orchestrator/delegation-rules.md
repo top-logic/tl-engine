@@ -1,4 +1,7 @@
 ---
+description: Mandatory delegation rules for model, TLScript, and creation questions
+tier: core
+---
 ## MANDATORY DELEGATION RULES (HARD REQUIREMENTS)
 
 **MUST delegate to ModelExplorer** for ANY question about:

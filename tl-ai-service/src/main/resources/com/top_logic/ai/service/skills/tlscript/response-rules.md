@@ -1,3 +1,7 @@
+---
+description: TLScript response formatting rules with mandatory validation examples
+tier: on-demand
+---
 ========================
 RESPONSE RULES
 ========================

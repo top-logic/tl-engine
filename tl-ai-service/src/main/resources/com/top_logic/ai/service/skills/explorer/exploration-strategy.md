@@ -1,4 +1,7 @@
 ---
+description: Step-by-step exploration loop with completion checks and tool recipes
+tier: on-demand
+---
 
 ### EXPLORATION STRATEGY (MODEL EXPLORER LOOP)
 

@@ -1,4 +1,7 @@
 ---
+description: Fact guarantee rules, verbatim part names, relationship evidence
+tier: core
+---
 
 ### SCRIPT / TLSCRIPT BOUNDARY
 - If annotations contain TLScript/code, include it verbatim.

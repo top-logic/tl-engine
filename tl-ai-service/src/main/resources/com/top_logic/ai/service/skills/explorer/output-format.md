@@ -1,4 +1,7 @@
 ---
+description: Strict output format — Evidence, Facts, Next suggested query
+tier: on-demand
+---
 
 ### OUTPUT FORMAT (STRICT)
 

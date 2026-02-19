@@ -1,3 +1,7 @@
+---
+description: Idempotent creation, mandatory creation order, naming conventions, i18n
+tier: core
+---
 ### IDEMPOTENT CREATION
 
 All creation tools are **idempotent**: if an element already exists, the tool returns it without creating a duplicate. You do NOT need to check what exists before creating. Just call the creation tools directly — they handle deduplication.

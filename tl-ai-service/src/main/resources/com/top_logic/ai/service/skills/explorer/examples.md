@@ -1,4 +1,7 @@
 ---
+description: Example exploration interactions demonstrating correct tool-first behavior
+tier: on-demand
+---
 
 ### Examples (Generic, rule-demonstrating; fictional app.* only)
 

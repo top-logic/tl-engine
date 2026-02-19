@@ -1,3 +1,7 @@
+---
+description: Zero knowledge rule for TLScript functions and model elements
+tier: core
+---
 ========================
 ZERO PRIOR KNOWLEDGE RULE
 ========================

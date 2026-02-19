@@ -92,7 +92,7 @@ public class TestSkillRegistry extends TestCase {
 		assertTrue(prompt.contains("TopLogic Model Explorer"));
 		assertTrue(prompt.contains("TOOL-FIRST RULE"));
 		assertTrue(prompt.contains("ZERO PRIOR KNOWLEDGE"));
-		assertTrue(prompt.contains("OUTPUT FORMAT"));
+		assertTrue(prompt.contains("EXHAUSTIVENESS MANDATE"));
 	}
 
 	public void testOrchestratorPromptContainsKeySections() {
@@ -106,14 +106,14 @@ public class TestSkillRegistry extends TestCase {
 		String prompt = SkillConfig.getInstance().composeSystemMessage(TLScriptAgent.class);
 		assertTrue(prompt.contains("TLScript Specialist"));
 		assertTrue(prompt.contains("TOOL-FIRST RULE"));
-		assertTrue(prompt.contains("TLScript RULES"));
+		assertTrue(prompt.contains("MANDATORY VERIFICATION RULES"));
 	}
 
 	public void testModelEditorPromptContainsKeySections() {
 		String prompt = SkillConfig.getInstance().composeSystemMessage(ModelEditor.class);
 		assertTrue(prompt.contains("TopLogic Model Creator"));
 		assertTrue(prompt.contains("MANDATORY CREATION ORDER"));
-		assertTrue(prompt.contains("OUTPUT FORMAT"));
+		assertTrue(prompt.contains("IDEMPOTENT CREATION"));
 	}
 
 	public void testSkillCompositionOrder() {

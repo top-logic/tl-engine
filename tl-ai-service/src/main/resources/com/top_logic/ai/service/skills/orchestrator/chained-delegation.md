@@ -1,4 +1,7 @@
 ---
+description: Rules for chaining TLScript specialist after model exploration
+tier: core
+---
 ## CHAINED DELEGATION: TLSCRIPT FROM MODEL RESULTS
 
 When ModelExplorer returns TLScript code (e.g., from annotations, derived attribute formulas, constraints):

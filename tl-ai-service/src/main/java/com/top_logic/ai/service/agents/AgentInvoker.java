@@ -17,6 +17,7 @@ import com.top_logic.ai.service.tools.model.ModelEditorTool;
 import com.top_logic.ai.service.tools.model.ModelSearchTool;
 import com.top_logic.ai.service.tools.model.TypeAnalysisTool;
 import com.top_logic.ai.service.skills.SkillConfig;
+import com.top_logic.ai.service.skills.SkillTool;
 import com.top_logic.ai.service.tools.script.TLScriptTool;
 import com.top_logic.basic.thread.ThreadContextManager;
 
@@ -95,10 +96,11 @@ public final class AgentInvoker {
 			}
 			ChatModel tlscriptModel = aiService.getChatModel("mistral-large-latest");
 			String systemMessage = SkillConfig.getInstance().composeSystemMessage(TLScriptAgent.class);
+			SkillTool skillTool = new SkillTool(SkillConfig.getInstance(), TLScriptAgent.class);
 			final TLScriptAgent agent = AgenticServices.agentBuilder(TLScriptAgent.class)
 				.chatModel(tlscriptModel)
 				.systemMessageProvider(memoryId -> systemMessage)
-				.tools(new TLScriptReferenceTool(), new AgentDelegationTools.Exploration("TLScriptAgent"), new TLScriptTool())
+				.tools(new TLScriptReferenceTool(), new AgentDelegationTools.Exploration("TLScriptAgent"), new TLScriptTool(), skillTool)
 				.build();
 			result = ThreadContextManager.inSystemInteraction(AgentInvoker.class,
 				() -> agent.answer(messageForLambda));
@@ -175,19 +177,21 @@ public final class AgentInvoker {
 		ModelAnnotationBrowserTool annotationTool = new ModelAnnotationBrowserTool();
 		AnnotationDefinitionExplorerTool definitionTool = new AnnotationDefinitionExplorerTool();
 		String systemMessage = SkillConfig.getInstance().composeSystemMessage(ModelExplorer.class);
+		SkillTool skillTool = new SkillTool(SkillConfig.getInstance(), ModelExplorer.class);
 		return AgenticServices.agentBuilder(ModelExplorer.class)
 			.chatModel(explorationModel)
 			.systemMessageProvider(memoryId -> systemMessage)
-			.tools(browserTool, instanceTool, analysisTool, searchTool, annotationTool, definitionTool)
+			.tools(browserTool, instanceTool, analysisTool, searchTool, annotationTool, definitionTool, skillTool)
 			.build();
 	}
 
 	private static ModelEditor buildModelEditor(ChatModel creationModel) {
 		String systemMessage = SkillConfig.getInstance().composeSystemMessage(ModelEditor.class);
+		SkillTool skillTool = new SkillTool(SkillConfig.getInstance(), ModelEditor.class);
 		return AgenticServices.agentBuilder(ModelEditor.class)
 			.chatModel(creationModel)
 			.systemMessageProvider(memoryId -> systemMessage)
-			.tools(new ModelEditorTool(), new AgentDelegationTools.TLScript("ModelEditor"))
+			.tools(new ModelEditorTool(), new AgentDelegationTools.TLScript("ModelEditor"), skillTool)
 			.build();
 	}
 

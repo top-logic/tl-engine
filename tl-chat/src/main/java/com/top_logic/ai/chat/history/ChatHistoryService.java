@@ -204,14 +204,23 @@ public class ChatHistoryService {
 	 * @return the session object, or null if not found.
 	 */
 	public static TLObject findSessionById(String objectId) {
+		if (objectId == null || objectId.isEmpty()) {
+			return null;
+		}
+		long id;
+		try {
+			id = Long.parseLong(objectId);
+		} catch (NumberFormatException ex) {
+			return null; // Invalid ID format from client — not a server error
+		}
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		try {
-			KnowledgeObject ko = kb.getKnowledgeObject(TABLE_NAME, LongID.valueOf(Long.parseLong(objectId)));
+			KnowledgeObject ko = kb.getKnowledgeObject(TABLE_NAME, LongID.valueOf(id));
 			if (ko != null) {
 				return ko.getWrapper();
 			}
 		} catch (Exception ex) {
-			Logger.error("Failed to find chat session: " + ex.getMessage(), ex, ChatHistoryService.class);
+			Logger.error("Failed to find chat session " + objectId + ": " + ex.getMessage(), ex, ChatHistoryService.class);
 		}
 		return null;
 	}

@@ -13,6 +13,9 @@ import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.function.Consumer;
 
+import dev.langchain4j.memory.ChatMemory;
+import dev.langchain4j.memory.chat.MessageWindowChatMemory;
+
 import com.top_logic.ai.chat.layout.ChatProcessor.AIProcessingState;
 import com.top_logic.layout.WindowScope;
 
@@ -47,6 +50,9 @@ public class TaskProgressTracker {
 
 	/** User display name resolved from TLContext (set where context is available, used as fallback elsewhere). */
 	private volatile String _userName = null;
+
+	/** Conversation memory for the orchestrator agent. Lazily created, persists across messages. */
+	private volatile ChatMemory _chatMemory;
 
 	/**
 	 * Returns the chat for this window. Same instance for add and render so task traces persist.
@@ -120,6 +126,25 @@ public class TaskProgressTracker {
 	 */
 	public void setUserName(String userName) {
 		_userName = userName;
+	}
+
+	/**
+	 * Returns the conversation memory for this session, creating it on first access.
+	 * The memory keeps the last 20 messages (user + assistant turns) so the orchestrator
+	 * can follow multi-turn conversations.
+	 */
+	public ChatMemory getChatMemory() {
+		ChatMemory memory = _chatMemory;
+		if (memory == null) {
+			synchronized (_lock) {
+				memory = _chatMemory;
+				if (memory == null) {
+					memory = MessageWindowChatMemory.withMaxMessages(20);
+					_chatMemory = memory;
+				}
+			}
+		}
+		return memory;
 	}
 
 	/**

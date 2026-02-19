@@ -16,6 +16,9 @@ import com.top_logic.ai.service.tools.model.ModelBrowserTool;
 import com.top_logic.ai.service.tools.model.ModelEditorTool;
 import com.top_logic.ai.service.tools.model.ModelSearchTool;
 import com.top_logic.ai.service.tools.model.TypeAnalysisTool;
+import com.top_logic.ai.service.skills.SkillConfig;
+import com.top_logic.ai.service.skills.SkillRegistry;
+import com.top_logic.ai.service.skills.SkillTool;
 import com.top_logic.ai.service.tools.script.TLScriptTool;
 import com.top_logic.basic.thread.ThreadContextManager;
 
@@ -93,9 +96,13 @@ public final class AgentInvoker {
 				throw new RuntimeException("AIService is not available.");
 			}
 			ChatModel tlscriptModel = aiService.getChatModel("mistral-large-latest");
+			SkillRegistry registry = SkillConfig.getInstance();
+			String systemPrompt = registry.buildSystemPrompt(TLScriptAgent.class);
 			final TLScriptAgent agent = AgenticServices.agentBuilder(TLScriptAgent.class)
 				.chatModel(tlscriptModel)
-				.tools(new TLScriptReferenceTool(), new AgentDelegationTools.Exploration("TLScriptAgent"), new TLScriptTool())
+				.systemMessageProvider(memoryId -> systemPrompt)
+				.tools(new TLScriptReferenceTool(), new AgentDelegationTools.Exploration("TLScriptAgent"),
+					new TLScriptTool(), new SkillTool(registry, TLScriptAgent.class))
 				.build();
 			result = ThreadContextManager.inSystemInteraction(AgentInvoker.class,
 				() -> agent.answer(messageForLambda));
@@ -134,7 +141,14 @@ public final class AgentInvoker {
 				throw new RuntimeException("AIService is not available.");
 			}
 			ChatModel creationModel = aiService.getChatModel("mistral-large-latest");
-			ModelEditor creator = buildModelEditor(creationModel);
+			SkillRegistry registry = SkillConfig.getInstance();
+			String systemPrompt = registry.buildSystemPrompt(ModelEditor.class);
+			ModelEditor creator = AgenticServices.agentBuilder(ModelEditor.class)
+				.chatModel(creationModel)
+				.systemMessageProvider(memoryId -> systemPrompt)
+				.tools(new ModelEditorTool(), new AgentDelegationTools.TLScript("ModelEditor"),
+					new SkillTool(registry, ModelEditor.class))
+				.build();
 			result = ThreadContextManager.inSystemInteraction(AgentInvoker.class,
 				() -> creator.createModel(requirementsForLambda));
 		} catch (Exception e) {
@@ -171,16 +185,13 @@ public final class AgentInvoker {
 		ModelSearchTool searchTool = new ModelSearchTool();
 		ModelAnnotationBrowserTool annotationTool = new ModelAnnotationBrowserTool();
 		AnnotationDefinitionExplorerTool definitionTool = new AnnotationDefinitionExplorerTool();
+		SkillRegistry registry = SkillConfig.getInstance();
+		String systemPrompt = registry.buildSystemPrompt(ModelExplorer.class);
 		return AgenticServices.agentBuilder(ModelExplorer.class)
 			.chatModel(explorationModel)
-			.tools(browserTool, instanceTool, analysisTool, searchTool, annotationTool, definitionTool)
-			.build();
-	}
-
-	private static ModelEditor buildModelEditor(ChatModel creationModel) {
-		return AgenticServices.agentBuilder(ModelEditor.class)
-			.chatModel(creationModel)
-			.tools(new ModelEditorTool(), new AgentDelegationTools.TLScript("ModelEditor"))
+			.systemMessageProvider(memoryId -> systemPrompt)
+			.tools(browserTool, instanceTool, analysisTool, searchTool, annotationTool, definitionTool,
+				new SkillTool(registry, ModelExplorer.class))
 			.build();
 	}
 

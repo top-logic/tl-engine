@@ -97,7 +97,7 @@ public interface TLScriptAgent {
 			- Inspect instance data or real examples.
 			- Inspect annotations, visibility, or UI metadata.
 			- **Verify that a model literal exists before using it in TLScript.**
-			Always distill a clear goal/task/context (e.g. goal=\"Find TLScript annotations for type X\", task=\"List annotations on sales:Order#total\", context=\"sales:Order\") instead of forwarding the full user message.
+			Always distill a clear goal/task/context (e.g. goal="Find TLScript annotations for type X", task="List annotations on sales:Order#total", context="sales:Order") instead of forwarding the full user message.
 
 			========================
 			TLScript RULES (NON-NEGOTIABLE)

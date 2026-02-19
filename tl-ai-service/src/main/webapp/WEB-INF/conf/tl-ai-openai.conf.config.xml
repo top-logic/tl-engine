@@ -77,7 +77,7 @@
 					</factory>
 					<factory name="model-modification">
 						<implementation class="com.top_logic.ai.service.tools.registry.ReflectiveToolFactory"
-							tool-class="com.top_logic.ai.service.tools.model.ModelCreatorTool"
+							tool-class="com.top_logic.ai.service.tools.model.ModelEditorTool"
 						/>
 					</factory>
 

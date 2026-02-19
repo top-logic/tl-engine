@@ -307,8 +307,9 @@ public abstract class AbstractConfigureFormDefinitionCommand extends AbstractCom
 	protected ApplicationAction createAction(LayoutComponent component, FormDefinition formDefinition,
 			String type, boolean standardForm) {
 		ConfigureFormDefinitionAction action = TypedConfiguration.newConfigItem(ConfigureFormDefinitionAction.class);
-		/* The form definition is part of the original config, therefore it can bot be part of the
-		 * action => store copy of form definition. */
+		/* As the form definition is part of the original configuration, it cannot be part of the
+		 * action. A configuration item can only have one container, so a copy of the form
+		 * definition must be stored. */
 		FormDefinition formCopy = ConfigCopier.copy(formDefinition);
 		action.setFormDefinition(formCopy);
 		action.setLayoutComponent(component.getName());

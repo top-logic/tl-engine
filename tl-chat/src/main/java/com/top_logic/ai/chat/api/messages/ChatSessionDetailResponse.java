@@ -24,11 +24,16 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 	/** @see #getMessagesJson() */
 	public static final String MESSAGES_JSON__PROP = "messagesJson";
 
+	/** @see #getEntries() */
+	public static final String ENTRIES__PROP = "entries";
+
 	private String _id = "";
 
 	private String _title = "";
 
 	private String _messagesJson = "";
+
+	private final java.util.List<com.top_logic.ai.chat.api.messages.PersistedChatEntry> _entries = new java.util.ArrayList<>();
 
 	/**
 	 * Creates a {@link ChatSessionDetailResponse} instance.
@@ -99,6 +104,48 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 		_messagesJson = value;
 	}
 
+	/**
+	 * Structured entries (messages + task snapshots). Preferred over messagesJson.
+	 */
+	public final java.util.List<com.top_logic.ai.chat.api.messages.PersistedChatEntry> getEntries() {
+		return _entries;
+	}
+
+	/**
+	 * @see #getEntries()
+	 */
+	public com.top_logic.ai.chat.api.messages.ChatSessionDetailResponse setEntries(java.util.List<? extends com.top_logic.ai.chat.api.messages.PersistedChatEntry> value) {
+		internalSetEntries(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getEntries()} without chain call utility. */
+	protected final void internalSetEntries(java.util.List<? extends com.top_logic.ai.chat.api.messages.PersistedChatEntry> value) {
+		if (value == null) throw new IllegalArgumentException("Property 'entries' cannot be null.");
+		_entries.clear();
+		_entries.addAll(value);
+	}
+
+	/**
+	 * Adds a value to the {@link #getEntries()} list.
+	 */
+	public com.top_logic.ai.chat.api.messages.ChatSessionDetailResponse addEntry(com.top_logic.ai.chat.api.messages.PersistedChatEntry value) {
+		internalAddEntry(value);
+		return this;
+	}
+
+	/** Implementation of {@link #addEntry(com.top_logic.ai.chat.api.messages.PersistedChatEntry)} without chain call utility. */
+	protected final void internalAddEntry(com.top_logic.ai.chat.api.messages.PersistedChatEntry value) {
+		_entries.add(value);
+	}
+
+	/**
+	 * Removes a value from the {@link #getEntries()} list.
+	 */
+	public final void removeEntry(com.top_logic.ai.chat.api.messages.PersistedChatEntry value) {
+		_entries.remove(value);
+	}
+
 	@Override
 	public String jsonType() {
 		return CHAT_SESSION_DETAIL_RESPONSE__TYPE;
@@ -109,7 +156,8 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 		java.util.List<String> local = java.util.Arrays.asList(
 			ID__PROP, 
 			TITLE__PROP, 
-			MESSAGES_JSON__PROP);
+			MESSAGES_JSON__PROP, 
+			ENTRIES__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -137,6 +185,7 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 			case ID__PROP: return getId();
 			case TITLE__PROP: return getTitle();
 			case MESSAGES_JSON__PROP: return getMessagesJson();
+			case ENTRIES__PROP: return getEntries();
 			default: return null;
 		}
 	}
@@ -147,6 +196,7 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 			case ID__PROP: internalSetId((String) value); break;
 			case TITLE__PROP: internalSetTitle((String) value); break;
 			case MESSAGES_JSON__PROP: internalSetMessagesJson((String) value); break;
+			case ENTRIES__PROP: internalSetEntries(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.ai.chat.api.messages.PersistedChatEntry.class, value)); break;
 		}
 	}
 
@@ -171,6 +221,12 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 		out.value(getTitle());
 		out.name(MESSAGES_JSON__PROP);
 		out.value(getMessagesJson());
+		out.name(ENTRIES__PROP);
+		out.beginArray();
+		for (com.top_logic.ai.chat.api.messages.PersistedChatEntry x : getEntries()) {
+			x.writeTo(out);
+		}
+		out.endArray();
 	}
 
 	@Override
@@ -179,6 +235,16 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 			case ID__PROP: setId(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case TITLE__PROP: setTitle(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case MESSAGES_JSON__PROP: setMessagesJson(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case ENTRIES__PROP: {
+				java.util.List<com.top_logic.ai.chat.api.messages.PersistedChatEntry> newValue = new java.util.ArrayList<>();
+				in.beginArray();
+				while (in.hasNext()) {
+					newValue.add(com.top_logic.ai.chat.api.messages.PersistedChatEntry.readPersistedChatEntry(in));
+				}
+				in.endArray();
+				setEntries(newValue);
+			}
+			break;
 			default: super.readField(in, field);
 		}
 	}

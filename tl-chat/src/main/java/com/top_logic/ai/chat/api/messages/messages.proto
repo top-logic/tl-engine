@@ -304,6 +304,11 @@ message ChatSessionDetailResponse {
 	 * Messages JSON blob (raw string, parsed by client).
 	 */
 	string messagesJson;
+
+	/**
+	 * Structured entries (messages + task snapshots). Preferred over messagesJson.
+	 */
+	repeated PersistedChatEntry entries;
 }
 
 /**
@@ -314,4 +319,34 @@ message SaveMessagesRequest {
 	 * Messages JSON blob to save.
 	 */
 	string messagesJson;
+}
+
+/**
+ * One entry in a persisted chat: either a message or a completed task snapshot.
+ */
+message PersistedChatEntry {
+	/**
+	 * Entry type: "message" or "task_snapshot".
+	 */
+	string type;
+
+	/**
+	 * The message data (populated when type="message").
+	 */
+	MessageDto messageData;
+
+	/**
+	 * The task snapshot data (populated when type="task_snapshot").
+	 */
+	CurrentTaskDto taskData;
+}
+
+/**
+ * Full persisted chat state: ordered list of entries (messages interleaved with task snapshots).
+ */
+message PersistedChat {
+	/**
+	 * All entries in display order.
+	 */
+	repeated PersistedChatEntry entries;
 }

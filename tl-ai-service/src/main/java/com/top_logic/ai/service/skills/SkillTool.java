@@ -5,17 +5,21 @@
  */
 package com.top_logic.ai.service.skills;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
+
+import com.top_logic.ai.service.tools.ToolCallTracking;
 
 /**
  * LangChain4j tool that allows agents to discover and load on-demand skills at runtime.
  *
  * <p>
- * Each instance is scoped to a specific agent class, exposing only the on-demand skills
- * registered for that agent. Core skills are excluded — they are already in the system prompt.
+ * Each instance is scoped to a specific agent class, exposing only the skills
+ * registered for that agent.
  * </p>
  */
 public class SkillTool {
@@ -44,33 +48,42 @@ public class SkillTool {
 	 */
 	@Tool("Lists all on-demand skills available. Returns skill names with descriptions. Call to discover specialized knowledge you can load for the current task.")
 	public String listAvailableSkills() {
-		List<Skill> skills = _registry.getOnDemandSkillsFor(_agentClass);
+		List<Skill> skills = _registry.getSkillsFor(_agentClass);
 		if (skills.isEmpty()) {
-			return "No on-demand skills available for this agent.";
+			String result = "No on-demand skills available for this agent.";
+			ToolCallTracking.recordIfTracking("listAvailableSkills", Collections.emptyMap(), result);
+			return result;
 		}
 		StringBuilder sb = new StringBuilder();
 		sb.append("Available skills (use loadSkill to load one):\n");
 		for (Skill skill : skills) {
 			sb.append("- ").append(skill.name()).append(": ").append(skill.description()).append("\n");
 		}
-		return sb.toString();
+		String result = sb.toString();
+		ToolCallTracking.recordIfTracking("listAvailableSkills", Collections.emptyMap(), result);
+		return result;
 	}
 
 	/**
 	 * Loads a skill by name, returning its full content.
 	 *
 	 * @param skillName
-	 *        The skill name from the catalog (e.g. {@code "explorer/scope"}).
+	 *        The skill name from the catalog (e.g. {@code "tlscript/enum-comparison"}).
 	 * @return The full skill content, or an error message if not available.
 	 */
 	@Tool("Loads a skill by name, returning its full content. Call after listAvailableSkills to load instructions you need for the current task.")
-	public String loadSkill(@P("Skill name from the catalog, e.g. 'explorer/scope'") String skillName) {
-		List<Skill> onDemand = _registry.getOnDemandSkillsFor(_agentClass);
-		for (Skill skill : onDemand) {
+	public String loadSkill(@P("Skill name from the catalog, e.g. 'tlscript/enum-comparison'") String skillName) {
+		Map<String, Object> args = Map.of("skillName", skillName);
+		List<Skill> skills = _registry.getSkillsFor(_agentClass);
+		for (Skill skill : skills) {
 			if (skill.name().equals(skillName)) {
-				return skill.content();
+				String result = skill.content();
+				ToolCallTracking.recordIfTracking("loadSkill", args, result);
+				return result;
 			}
 		}
-		return "Skill '" + skillName + "' is not available as an on-demand skill for this agent.";
+		String result = "Skill '" + skillName + "' is not available for this agent.";
+		ToolCallTracking.recordIfTracking("loadSkill", args, result);
+		return result;
 	}
 }

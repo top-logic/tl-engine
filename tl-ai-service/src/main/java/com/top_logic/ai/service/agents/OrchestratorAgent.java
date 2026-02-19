@@ -7,6 +7,7 @@ package com.top_logic.ai.service.agents;
 
 import com.top_logic.ai.service.AIService;
 import com.top_logic.ai.service.skills.SkillConfig;
+import com.top_logic.ai.service.skills.SkillRegistry;
 import com.top_logic.ai.service.skills.SkillTool;
 import com.top_logic.basic.thread.ThreadContextManager;
 
@@ -53,17 +54,17 @@ public final class OrchestratorAgent {
 		}
 
 		ChatModel model = aiService.getChatModel("mistral-large-latest");
-		String systemMessage = SkillConfig.getInstance().composeSystemMessage(OrchestratorRouter.class);
-		SkillTool skillTool = new SkillTool(SkillConfig.getInstance(), OrchestratorRouter.class);
+		SkillRegistry registry = SkillConfig.getInstance();
+		String systemPrompt = registry.buildSystemPrompt(OrchestratorRouter.class);
 		OrchestratorRouter router = AgenticServices.agentBuilder(OrchestratorRouter.class)
 			.chatModel(model)
 			.chatMemory(chatMemory)
-			.systemMessageProvider(memoryId -> systemMessage)
+			.systemMessageProvider(memoryId -> systemPrompt)
 			.tools(
 				new AgentDelegationTools.Exploration("Orchestrator"),
 				new AgentDelegationTools.Creation("Orchestrator"),
 				new AgentDelegationTools.TLScript("Orchestrator"),
-				skillTool)
+				new SkillTool(registry, OrchestratorRouter.class))
 			.build();
 
 		return ThreadContextManager.inSystemInteraction(OrchestratorAgent.class,

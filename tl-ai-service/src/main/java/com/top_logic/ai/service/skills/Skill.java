@@ -6,22 +6,20 @@
 package com.top_logic.ai.service.skills;
 
 /**
- * A reusable behavioral instruction fragment that can be composed into an agent's system prompt
- * or loaded on demand by the AI via {@link SkillTool}.
+ * An on-demand instruction fragment that can be loaded by an AI agent at runtime
+ * via {@link SkillTool}.
  *
  * <p>
- * Skills are loaded from classpath resource files ({@code .md}) with YAML frontmatter
- * and assembled by {@link SkillRegistry}.
+ * Skills are loaded from classpath resource files ({@code .md}) with optional YAML frontmatter
+ * for the description, and managed by {@link SkillRegistry}.
  * </p>
  *
  * @param name
- *        Unique skill identifier (e.g. {@code "core/zero-knowledge"}).
+ *        Unique skill identifier (e.g. {@code "tlscript/enum-comparison"}).
  * @param description
  *        Human-readable description from YAML frontmatter.
- * @param tier
- *        Whether this skill is {@link SkillTier#CORE} or {@link SkillTier#ON_DEMAND}.
  * @param content
  *        The actual prompt text (frontmatter stripped).
  */
-public record Skill(String name, String description, SkillTier tier, String content) {
+public record Skill(String name, String description, String content) {
 }

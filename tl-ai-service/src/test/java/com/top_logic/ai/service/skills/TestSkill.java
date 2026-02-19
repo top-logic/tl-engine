@@ -10,20 +10,14 @@ import junit.framework.TestCase;
 public class TestSkill extends TestCase {
 
 	public void testSkillCreation() {
-		Skill skill = new Skill("test-skill", "A test skill", SkillTier.CORE, "You are a test agent.");
+		Skill skill = new Skill("test-skill", "A test skill", "You are a test agent.");
 		assertEquals("test-skill", skill.name());
 		assertEquals("A test skill", skill.description());
-		assertEquals(SkillTier.CORE, skill.tier());
 		assertEquals("You are a test agent.", skill.content());
 	}
 
 	public void testSkillContentNonEmpty() {
-		Skill skill = new Skill("s", "d", SkillTier.CORE, "content");
+		Skill skill = new Skill("s", "d", "content");
 		assertFalse(skill.content().isEmpty());
-	}
-
-	public void testSkillWithOnDemandTier() {
-		Skill skill = new Skill("test-skill", "A test skill", SkillTier.ON_DEMAND, "You are a test agent.");
-		assertEquals(SkillTier.ON_DEMAND, skill.tier());
 	}
 }

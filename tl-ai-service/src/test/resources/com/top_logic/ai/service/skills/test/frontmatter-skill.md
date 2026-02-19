@@ -1,6 +1,5 @@
 ---
 description: A test skill with frontmatter
-tier: core
 ---
 ### FRONTMATTER RULE
 

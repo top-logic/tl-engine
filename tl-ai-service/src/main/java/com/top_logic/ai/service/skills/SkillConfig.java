@@ -5,18 +5,15 @@
  */
 package com.top_logic.ai.service.skills;
 
-import com.top_logic.ai.service.agents.ModelEditor;
-import com.top_logic.ai.service.agents.ModelExplorer;
-import com.top_logic.ai.service.agents.OrchestratorRouter;
 import com.top_logic.ai.service.agents.TLScriptAgent;
 
 /**
- * Production configuration mapping agents to their ordered skill lists.
+ * Production configuration mapping agents to their available on-demand skills.
  *
  * <p>
- * Each agent is mapped to a list of skill names in composition order.
- * The {@link SkillRegistry} loads the corresponding {@code .md} resource files and
- * concatenates them to produce the agent's system prompt.
+ * Each agent is mapped to a list of skill names that it can load on demand via
+ * {@link SkillTool}. The {@link SkillRegistry} loads the corresponding {@code .md}
+ * resource files from the classpath.
  * </p>
  */
 public final class SkillConfig {
@@ -33,37 +30,8 @@ public final class SkillConfig {
 	private static SkillRegistry createRegistry() {
 		SkillRegistry registry = new SkillRegistry();
 
-		registry.registerAgentSkills(ModelExplorer.class,
-			"explorer/identity",
-			"core/tool-first-rule",
-			"core/zero-knowledge",
-			"explorer/exhaustiveness-mandate",
-			"explorer/scope",
-			"explorer/exploration-strategy",
-			"explorer/context-resolution",
-			"explorer/fact-rules",
-			"explorer/output-format",
-			"explorer/examples");
-
-		registry.registerAgentSkills(OrchestratorRouter.class,
-			"orchestrator/identity",
-			"orchestrator/delegation-rules",
-			"orchestrator/chained-delegation",
-			"orchestrator/work-order-discipline",
-			"orchestrator/behavior");
-
 		registry.registerAgentSkills(TLScriptAgent.class,
-			"tlscript/identity",
-			"tlscript/tool-first-rule",
-			"tlscript/zero-knowledge",
-			"tlscript/verification-rules",
-			"tlscript/grammar-rules",
-			"tlscript/response-rules");
-
-		registry.registerAgentSkills(ModelEditor.class,
-			"editor/identity",
-			"editor/creation-rules",
-			"editor/output-format");
+			"tlscript/enum-comparison");
 
 		return registry;
 	}

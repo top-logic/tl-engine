@@ -7,6 +7,7 @@ package com.top_logic.ai.service.skills;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -15,22 +16,20 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import dev.langchain4j.service.SystemMessage;
+
 /**
- * Registry that loads skill prompt fragments from classpath resources and composes them into
- * system prompts for agents.
+ * Registry that loads on-demand skill prompt fragments from classpath resources and makes them
+ * available to agents via {@link SkillTool}.
  *
  * <p>
  * Skills are loaded from {@code com/top_logic/ai/service/skills/<name>.md} on the classpath.
- * Each agent class is mapped to an ordered list of skill names. The
- * {@link #composeSystemMessage(Class)} method concatenates all skills for an agent in order,
- * separated by section dividers.
+ * Each agent class is mapped to an ordered list of skill names that it can load on demand.
  * </p>
  */
 public class SkillRegistry {
 
 	private static final String RESOURCE_BASE = "com/top_logic/ai/service/skills/";
-
-	private static final String SKILL_SEPARATOR = "\n\n---\n\n";
 
 	private final Map<String, Skill> _skills = new LinkedHashMap<>();
 
@@ -45,7 +44,7 @@ public class SkillRegistry {
 	 * </p>
 	 *
 	 * @param name
-	 *        The skill name (e.g. {@code "core/zero-knowledge"}).
+	 *        The skill name (e.g. {@code "tlscript/enum-comparison"}).
 	 * @return The loaded skill.
 	 * @throws IllegalArgumentException
 	 *         if the skill resource is not found.
@@ -55,19 +54,19 @@ public class SkillRegistry {
 	}
 
 	/**
-	 * Registers the ordered list of skills for an agent class.
+	 * Registers the ordered list of on-demand skills for an agent class.
 	 *
 	 * @param agentClass
 	 *        The agent interface class.
 	 * @param skillNames
-	 *        Skill names in composition order.
+	 *        Skill names available on demand.
 	 */
 	public void registerAgentSkills(Class<?> agentClass, String... skillNames) {
 		_agentSkills.put(agentClass, Arrays.asList(skillNames));
 	}
 
 	/**
-	 * Returns the ordered skills configured for the given agent class.
+	 * Returns the on-demand skills configured for the given agent class.
 	 *
 	 * @param agentClass
 	 *        The agent interface class.
@@ -83,66 +82,51 @@ public class SkillRegistry {
 	}
 
 	/**
-	 * Returns the on-demand skills configured for the given agent class.
-	 *
-	 * @param agentClass
-	 *        The agent interface class.
-	 * @return On-demand skills in registration order.
-	 */
-	public List<Skill> getOnDemandSkillsFor(Class<?> agentClass) {
-		return getSkillsFor(agentClass).stream()
-			.filter(skill -> skill.tier() == SkillTier.ON_DEMAND)
-			.toList();
-	}
-
-	/**
-	 * Composes the system prompt for an agent by concatenating its {@link SkillTier#CORE} skills
-	 * in order, followed by a catalog of available {@link SkillTier#ON_DEMAND} skills.
-	 *
-	 * <p>
-	 * The on-demand catalog lists skill names and descriptions so the agent knows what
-	 * specialized knowledge it can load via the {@code loadSkill} tool.
-	 * </p>
-	 *
-	 * @param agentClass
-	 *        The agent interface class.
-	 * @return The composed system prompt string.
-	 */
-	public String composeSystemMessage(Class<?> agentClass) {
-		List<Skill> skills = getSkillsFor(agentClass);
-		StringBuilder sb = new StringBuilder();
-		for (Skill skill : skills) {
-			if (skill.tier() != SkillTier.CORE) {
-				continue;
-			}
-			if (sb.length() > 0) {
-				sb.append(SKILL_SEPARATOR);
-			}
-			sb.append(skill.content());
-		}
-		appendSkillCatalog(agentClass, sb);
-		return sb.toString();
-	}
-
-	private void appendSkillCatalog(Class<?> agentClass, StringBuilder sb) {
-		List<Skill> onDemand = getOnDemandSkillsFor(agentClass);
-		if (onDemand.isEmpty()) {
-			return;
-		}
-		sb.append(SKILL_SEPARATOR);
-		sb.append("## Available Skills\n\n");
-		sb.append("The following skills can be loaded on-demand using the `loadSkill` tool. ");
-		sb.append("Load a skill when you need its specialized instructions for the current task.\n\n");
-		for (Skill skill : onDemand) {
-			sb.append("- `").append(skill.name()).append("`: ").append(skill.description()).append("\n");
-		}
-	}
-
-	/**
 	 * Returns all registered skill names.
 	 */
 	public List<String> allSkillNames() {
 		return new ArrayList<>(_skills.keySet());
+	}
+
+	/**
+	 * Builds the full system prompt for an agent by reading its {@link SystemMessage} annotation
+	 * and appending a catalog of available on-demand skills (if any are registered).
+	 *
+	 * <p>
+	 * If the agent has no registered skills, the original {@link SystemMessage} text is returned
+	 * unchanged.
+	 * </p>
+	 *
+	 * @param agentClass
+	 *        The agent interface class (must have a method annotated with {@link SystemMessage}).
+	 * @return The complete system prompt.
+	 */
+	public String buildSystemPrompt(Class<?> agentClass) {
+		String basePrompt = readSystemMessageAnnotation(agentClass);
+		List<Skill> skills = getSkillsFor(agentClass);
+		if (skills.isEmpty()) {
+			return basePrompt;
+		}
+		StringBuilder sb = new StringBuilder(basePrompt);
+		sb.append("\n\n---\n\n");
+		sb.append("## Available Skills\n\n");
+		sb.append("The following skills can be loaded on-demand using the `loadSkill` tool. ");
+		sb.append("Load a skill when you need its specialized instructions for the current task.\n\n");
+		for (Skill skill : skills) {
+			sb.append("- `").append(skill.name()).append("`: ").append(skill.description()).append("\n");
+		}
+		return sb.toString();
+	}
+
+	private static String readSystemMessageAnnotation(Class<?> agentClass) {
+		for (Method method : agentClass.getDeclaredMethods()) {
+			SystemMessage annotation = method.getAnnotation(SystemMessage.class);
+			if (annotation != null) {
+				return String.join("\n", annotation.value());
+			}
+		}
+		throw new IllegalArgumentException(
+			"No @SystemMessage annotation found on " + agentClass.getSimpleName());
 	}
 
 	private static final String FRONTMATTER_DELIMITER = "---";
@@ -162,7 +146,7 @@ public class SkillRegistry {
 
 	private Skill parseSkill(String name, String raw) {
 		if (!raw.startsWith(FRONTMATTER_DELIMITER)) {
-			return new Skill(name, name, SkillTier.CORE, raw);
+			return new Skill(name, name, raw);
 		}
 
 		String closingDelimiter = "\n" + FRONTMATTER_DELIMITER + "\n";
@@ -172,14 +156,13 @@ public class SkillRegistry {
 			endIndex = raw.indexOf(closingDelimiter, FRONTMATTER_DELIMITER.length());
 		}
 		if (endIndex < 0) {
-			return new Skill(name, name, SkillTier.CORE, raw);
+			return new Skill(name, name, raw);
 		}
 
 		String frontmatter = raw.substring(FRONTMATTER_DELIMITER.length(), endIndex).trim();
 		String content = raw.substring(endIndex + closingDelimiter.length()).trim();
 
 		String description = name;
-		SkillTier tier = SkillTier.CORE;
 
 		for (String line : frontmatter.split("\n")) {
 			int colonIndex = line.indexOf(':');
@@ -188,15 +171,10 @@ public class SkillRegistry {
 			}
 			String key = line.substring(0, colonIndex).trim();
 			String value = line.substring(colonIndex + 1).trim();
-			switch (key) {
-				case "description":
-					description = value;
-					break;
-				case "tier":
-					tier = SkillTier.fromString(value);
-					break;
+			if ("description".equals(key)) {
+				description = value;
 			}
 		}
-		return new Skill(name, description, tier, content);
+		return new Skill(name, description, content);
 	}
 }

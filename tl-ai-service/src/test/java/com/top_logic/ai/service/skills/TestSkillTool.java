@@ -15,21 +15,21 @@ public class TestSkillTool extends TestCase {
 	protected void setUp() {
 		_registry = new SkillRegistry();
 		_registry.registerAgentSkills(TestAgent.class,
-			"test/frontmatter-skill", "test/on-demand-skill");
+			"test/frontmatter-skill", "test/sample-skill");
 	}
 
-	public void testListAvailableSkillsReturnsOnDemandOnly() {
+	public void testListAvailableSkills() {
 		SkillTool tool = new SkillTool(_registry, TestAgent.class);
 		String result = tool.listAvailableSkills();
-		assertTrue("Should list on-demand skill", result.contains("test/on-demand-skill"));
-		assertTrue("Should include description", result.contains("An on-demand test skill"));
-		assertFalse("Should NOT list core skill", result.contains("test/frontmatter-skill"));
+		assertTrue("Should list frontmatter skill", result.contains("test/frontmatter-skill"));
+		assertTrue("Should include description", result.contains("A test skill with frontmatter"));
+		assertTrue("Should list sample skill", result.contains("test/sample-skill"));
 	}
 
 	public void testLoadSkillReturnsContent() {
 		SkillTool tool = new SkillTool(_registry, TestAgent.class);
-		String result = tool.loadSkill("test/on-demand-skill");
-		assertTrue("Should contain skill content", result.contains("ON-DEMAND CONTENT"));
+		String result = tool.loadSkill("test/frontmatter-skill");
+		assertTrue("Should contain skill content", result.contains("FRONTMATTER RULE"));
 		assertFalse("Should NOT contain frontmatter", result.contains("description:"));
 	}
 
@@ -39,16 +39,9 @@ public class TestSkillTool extends TestCase {
 		assertTrue("Should return error message", result.contains("not available"));
 	}
 
-	public void testLoadSkillRejectsCoreSkill() {
-		SkillTool tool = new SkillTool(_registry, TestAgent.class);
-		String result = tool.loadSkill("test/frontmatter-skill");
-		assertTrue("Should reject core skill",
-			result.contains("not available") || result.contains("already loaded"));
-	}
-
-	public void testListAvailableSkillsEmptyWhenNoOnDemand() {
+	public void testListAvailableSkillsEmptyWhenNoneRegistered() {
 		SkillRegistry registry = new SkillRegistry();
-		registry.registerAgentSkills(TestAgent.class, "test/frontmatter-skill");
+		registry.registerAgentSkills(TestAgent.class);
 		SkillTool tool = new SkillTool(registry, TestAgent.class);
 		String result = tool.listAvailableSkills();
 		assertTrue("Should indicate no skills available",

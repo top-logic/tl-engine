@@ -5,12 +5,9 @@
  */
 package com.top_logic.ai.service.skills;
 
-import java.util.List;
-
-import com.top_logic.ai.service.agents.ModelEditor;
-import com.top_logic.ai.service.agents.ModelExplorer;
-import com.top_logic.ai.service.agents.OrchestratorRouter;
 import com.top_logic.ai.service.agents.TLScriptAgent;
+
+import dev.langchain4j.service.SystemMessage;
 
 import junit.framework.TestCase;
 
@@ -33,193 +30,75 @@ public class TestSkillRegistry extends TestCase {
 		}
 	}
 
-	public void testComposeSystemMessage() {
+	public void testGetSkillsFor() {
 		SkillRegistry registry = new SkillRegistry();
 		registry.registerAgentSkills(TestAgent.class, "test/sample-skill");
-		String message = registry.composeSystemMessage(TestAgent.class);
-		assertTrue(message.contains("SAMPLE RULE"));
+		assertEquals(1, registry.getSkillsFor(TestAgent.class).size());
+		assertTrue(registry.getSkillsFor(TestAgent.class).get(0).content().contains("SAMPLE RULE"));
 	}
 
-	public void testComposeMultipleSkills() {
+	public void testGetSkillsForUnregisteredAgent() {
 		SkillRegistry registry = new SkillRegistry();
-		registry.registerAgentSkills(TestAgent.class, "test/sample-skill", "test/sample-skill");
-		String message = registry.composeSystemMessage(TestAgent.class);
-		int firstIdx = message.indexOf("SAMPLE RULE");
-		int secondIdx = message.indexOf("SAMPLE RULE", firstIdx + 1);
-		assertTrue("Should contain skill content twice", secondIdx > firstIdx);
-		assertTrue("Should contain separator", message.contains("---"));
-	}
-
-	public void testAllAgentsHaveSkills() {
-		SkillRegistry registry = SkillConfig.getInstance();
-		assertFalse("ModelExplorer should have skills",
-			registry.getSkillsFor(ModelExplorer.class).isEmpty());
-		assertFalse("OrchestratorRouter should have skills",
-			registry.getSkillsFor(OrchestratorRouter.class).isEmpty());
-		assertFalse("TLScriptAgent should have skills",
-			registry.getSkillsFor(TLScriptAgent.class).isEmpty());
-		assertFalse("ModelEditor should have skills",
-			registry.getSkillsFor(ModelEditor.class).isEmpty());
-	}
-
-	public void testAllSkillResourcesLoadSuccessfully() {
-		SkillRegistry registry = SkillConfig.getInstance();
-		Class<?>[] agents = {ModelExplorer.class, OrchestratorRouter.class,
-			TLScriptAgent.class, ModelEditor.class};
-		for (Class<?> agentClass : agents) {
-			for (Skill skill : registry.getSkillsFor(agentClass)) {
-				assertNotNull("Skill content should not be null: " + skill.name(), skill.content());
-				assertFalse("Skill content should not be empty: " + skill.name(),
-					skill.content().isEmpty());
-			}
-		}
-	}
-
-	public void testNoAgentInterfaceHasSystemMessageAnnotation() {
-		Class<?>[] agents = {ModelExplorer.class, OrchestratorRouter.class,
-			TLScriptAgent.class, ModelEditor.class};
-		for (Class<?> agentClass : agents) {
-			for (java.lang.reflect.Method method : agentClass.getDeclaredMethods()) {
-				assertNull("Agent " + agentClass.getSimpleName() + "." + method.getName()
-					+ " should not have @SystemMessage",
-					method.getAnnotation(dev.langchain4j.service.SystemMessage.class));
-			}
-		}
-	}
-
-	public void testModelExplorerPromptContainsKeySections() {
-		String prompt = SkillConfig.getInstance().composeSystemMessage(ModelExplorer.class);
-		assertTrue(prompt.contains("TopLogic Model Explorer"));
-		assertTrue(prompt.contains("TOOL-FIRST RULE"));
-		assertTrue(prompt.contains("ZERO PRIOR KNOWLEDGE"));
-		assertTrue(prompt.contains("EXHAUSTIVENESS MANDATE"));
-	}
-
-	public void testOrchestratorPromptContainsKeySections() {
-		String prompt = SkillConfig.getInstance().composeSystemMessage(OrchestratorRouter.class);
-		assertTrue(prompt.contains("Orchestrator"));
-		assertTrue(prompt.contains("MANDATORY DELEGATION"));
-		assertTrue(prompt.contains("WORK ORDER DISCIPLINE"));
-	}
-
-	public void testTLScriptPromptContainsKeySections() {
-		String prompt = SkillConfig.getInstance().composeSystemMessage(TLScriptAgent.class);
-		assertTrue(prompt.contains("TLScript Specialist"));
-		assertTrue(prompt.contains("TOOL-FIRST RULE"));
-		assertTrue(prompt.contains("MANDATORY VERIFICATION RULES"));
-	}
-
-	public void testModelEditorPromptContainsKeySections() {
-		String prompt = SkillConfig.getInstance().composeSystemMessage(ModelEditor.class);
-		assertTrue(prompt.contains("TopLogic Model Creator"));
-		assertTrue(prompt.contains("MANDATORY CREATION ORDER"));
-		assertTrue(prompt.contains("IDEMPOTENT CREATION"));
-	}
-
-	public void testSkillCompositionOrder() {
-		String prompt = SkillConfig.getInstance().composeSystemMessage(ModelExplorer.class);
-		int identityIdx = prompt.indexOf("TopLogic Model Explorer");
-		int toolFirstIdx = prompt.indexOf("TOOL-FIRST RULE");
-		int zeroKnowledgeIdx = prompt.indexOf("ZERO PRIOR KNOWLEDGE");
-		assertTrue("identity before tool-first", identityIdx < toolFirstIdx);
-		assertTrue("tool-first before zero-knowledge", toolFirstIdx < zeroKnowledgeIdx);
+		assertTrue(registry.getSkillsFor(TestAgent.class).isEmpty());
 	}
 
 	public void testFrontmatterParsing() {
 		SkillRegistry registry = new SkillRegistry();
 		Skill skill = registry.getSkill("test/frontmatter-skill");
 		assertEquals("A test skill with frontmatter", skill.description());
-		assertEquals(SkillTier.CORE, skill.tier());
 		assertTrue(skill.content().contains("FRONTMATTER RULE"));
 		assertFalse("Frontmatter should be stripped from content", skill.content().contains("description:"));
 	}
 
-	public void testOnDemandFrontmatter() {
-		SkillRegistry registry = new SkillRegistry();
-		Skill skill = registry.getSkill("test/on-demand-skill");
-		assertEquals("An on-demand test skill", skill.description());
-		assertEquals(SkillTier.ON_DEMAND, skill.tier());
-		assertTrue(skill.content().contains("ON-DEMAND CONTENT"));
-	}
-
-	public void testSkillWithoutFrontmatterDefaultsToCore() {
+	public void testSkillWithoutFrontmatterDefaultsNameAsDescription() {
 		SkillRegistry registry = new SkillRegistry();
 		Skill skill = registry.getSkill("test/sample-skill");
-		assertEquals(SkillTier.CORE, skill.tier());
 		assertEquals("test/sample-skill", skill.description());
 	}
 
-	public void testGetOnDemandSkillsFor() {
-		SkillRegistry registry = new SkillRegistry();
-		registry.registerAgentSkills(TestAgent.class,
-			"test/frontmatter-skill", "test/on-demand-skill");
-		List<Skill> onDemand = registry.getOnDemandSkillsFor(TestAgent.class);
-		assertEquals(1, onDemand.size());
-		assertEquals("test/on-demand-skill", onDemand.get(0).name());
-		assertEquals(SkillTier.ON_DEMAND, onDemand.get(0).tier());
-	}
-
-	public void testComposeSystemMessageOnlyIncludesCoreSkillContent() {
-		SkillRegistry registry = new SkillRegistry();
-		registry.registerAgentSkills(TestAgent.class,
-			"test/frontmatter-skill", "test/on-demand-skill");
-		String message = registry.composeSystemMessage(TestAgent.class);
-		assertTrue("Should contain core skill content", message.contains("FRONTMATTER RULE"));
-		assertFalse("Should NOT contain on-demand skill body", message.contains("ON-DEMAND CONTENT"));
-	}
-
-	public void testComposeSystemMessageIncludesSkillCatalog() {
-		SkillRegistry registry = new SkillRegistry();
-		registry.registerAgentSkills(TestAgent.class,
-			"test/frontmatter-skill", "test/on-demand-skill");
-		String message = registry.composeSystemMessage(TestAgent.class);
-		assertTrue("Should contain catalog header", message.contains("Available Skills"));
-		assertTrue("Should contain on-demand skill name in catalog",
-			message.contains("test/on-demand-skill"));
-		assertTrue("Should contain on-demand skill description in catalog",
-			message.contains("An on-demand test skill"));
-		assertTrue("Should contain loadSkill instruction",
-			message.contains("loadSkill"));
-	}
-
-	public void testAllAgentPromptsContainSkillCatalog() {
+	public void testAllProductionSkillsLoadSuccessfully() {
 		SkillRegistry registry = SkillConfig.getInstance();
-		Class<?>[] agents = {ModelExplorer.class, OrchestratorRouter.class,
-			TLScriptAgent.class, ModelEditor.class};
-		for (Class<?> agentClass : agents) {
-			String prompt = registry.composeSystemMessage(agentClass);
-			assertTrue(agentClass.getSimpleName() + " prompt should contain skill catalog",
-				prompt.contains("Available Skills"));
-			assertTrue(agentClass.getSimpleName() + " prompt should mention loadSkill",
-				prompt.contains("loadSkill"));
+		for (Skill skill : registry.getSkillsFor(TLScriptAgent.class)) {
+			assertNotNull("Skill content should not be null: " + skill.name(), skill.content());
+			assertFalse("Skill content should not be empty: " + skill.name(),
+				skill.content().isEmpty());
 		}
 	}
 
-	public void testOnDemandSkillsAvailableForAllAgents() {
+	public void testTLScriptAgentHasSkills() {
 		SkillRegistry registry = SkillConfig.getInstance();
-		assertFalse("ModelExplorer should have on-demand skills",
-			registry.getOnDemandSkillsFor(ModelExplorer.class).isEmpty());
-		assertFalse("OrchestratorRouter should have on-demand skills",
-			registry.getOnDemandSkillsFor(OrchestratorRouter.class).isEmpty());
-		assertFalse("TLScriptAgent should have on-demand skills",
-			registry.getOnDemandSkillsFor(TLScriptAgent.class).isEmpty());
-		assertFalse("ModelEditor should have on-demand skills",
-			registry.getOnDemandSkillsFor(ModelEditor.class).isEmpty());
+		assertFalse("TLScriptAgent should have skills",
+			registry.getSkillsFor(TLScriptAgent.class).isEmpty());
 	}
 
-	public void testAllSkillDescriptionsAreNotJustNames() {
+	public void testBuildSystemPromptWithoutSkills() {
+		SkillRegistry registry = new SkillRegistry();
+		String prompt = registry.buildSystemPrompt(TestAgent.class);
+		assertTrue("Should contain base system message", prompt.contains("TEST SYSTEM PROMPT"));
+		assertFalse("Should NOT contain skill catalog", prompt.contains("Available Skills"));
+	}
+
+	public void testBuildSystemPromptWithSkills() {
+		SkillRegistry registry = new SkillRegistry();
+		registry.registerAgentSkills(TestAgent.class, "test/frontmatter-skill");
+		String prompt = registry.buildSystemPrompt(TestAgent.class);
+		assertTrue("Should contain base system message", prompt.contains("TEST SYSTEM PROMPT"));
+		assertTrue("Should contain skill catalog header", prompt.contains("Available Skills"));
+		assertTrue("Should contain skill name", prompt.contains("test/frontmatter-skill"));
+		assertTrue("Should contain skill description", prompt.contains("A test skill with frontmatter"));
+		assertTrue("Should mention loadSkill", prompt.contains("loadSkill"));
+	}
+
+	public void testBuildSystemPromptForTLScriptAgent() {
 		SkillRegistry registry = SkillConfig.getInstance();
-		Class<?>[] agents = {ModelExplorer.class, OrchestratorRouter.class,
-			TLScriptAgent.class, ModelEditor.class};
-		for (Class<?> agentClass : agents) {
-			for (Skill skill : registry.getSkillsFor(agentClass)) {
-				assertFalse("Skill " + skill.name() + " should have a real description (not just its name)",
-					skill.name().equals(skill.description()));
-			}
-		}
+		String prompt = registry.buildSystemPrompt(TLScriptAgent.class);
+		assertTrue("Should contain TLScript system message", prompt.contains("TLScript Specialist"));
+		assertTrue("Should contain skill catalog", prompt.contains("Available Skills"));
+		assertTrue("Should contain enum-comparison skill", prompt.contains("tlscript/enum-comparison"));
 	}
 
 	interface TestAgent {
+		@SystemMessage("TEST SYSTEM PROMPT")
 		String chat(String msg);
 	}
 }

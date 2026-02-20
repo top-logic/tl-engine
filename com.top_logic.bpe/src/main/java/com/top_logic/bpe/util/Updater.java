@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.bpe.modeler.upload;
+package com.top_logic.bpe.util;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -45,7 +45,7 @@ public class Updater {
 	private boolean _updateExtensions;
 
 	/**
-	 * Creates a {@link com.top_logic.bpe.modeler.upload.Updater}.
+	 * Creates a {@link com.top_logic.bpe.util.Updater}.
 	 *
 	 * @param orig
 	 *        The original object being updated (containing BPML extensions to be preserved, if

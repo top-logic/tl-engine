@@ -1,6 +1,6 @@
 # tl-ai-service
 
-Core TopLogic module providing AI integration via LangChain4j 1.9.1 with thread-safe client pooling, multi-agent orchestration, and TL-Script integration.
+Core TopLogic module providing AI integration via LangChain4j 1.10.0 with thread-safe client pooling, multi-agent orchestration, and TL-Script integration.
 
 ## Core Architecture
 
@@ -30,19 +30,20 @@ flowchart TB
         U --> Send[SendMessage]
         Send --> Exec[executeOrchestrator]
         Exec --> Tracker["new ToolCallTracker()<br/>ToolCallTracking.setTracker(tracker)"]
-        Tracker --> OChat["OrchestratorAgent.chat(userMessage)"]
+        Tracker --> OChat["OrchestratorAgent.chat(chatMemory, userMessage)"]
         Poll["PollAIProgress"] --> Timeline["tracker.getTimeline()"]
         Timeline --> Render["Render AgentCall / ToolCall<br/>+ final answer"]
     end
 
     subgraph Orch["tl-ai-service: Orchestrator"]
-        OChat --> Build["Build OrchestratorRouter<br/>+ OrchestratorTools<br/>+ mistral-large-latest"]
+        OChat --> Build["Build OrchestratorRouter<br/>+ AgentDelegationTools + SkillTool<br/>+ mistral-large-latest"]
         Build --> Router["OrchestratorRouter.chat(trimmed)"]
         Router --> LLM["LLM: plan steps"]
         LLM --> Tool["Call 0..N tools in sequence<br/>goal, task, context per call"]
-        Tool --> T1[delegateToModelExplorer]
-        Tool --> T2[delegateToModelCreator]
-        Tool --> T3[delegateToTLScriptSpecialist]
+        Tool --> T1[requestModelExploration]
+        Tool --> T2[requestModelCreation]
+        Tool --> T3[requestTLScriptHelp]
+        Tool --> T4[SkillTool]
     end
 
     subgraph Invoker["AgentInvoker (handoff; records AgentCall)"]
@@ -56,7 +57,7 @@ flowchart TB
 
     subgraph Specialists["Specialist agents"]
         ME[ModelExplorer.explore]
-        MC[UMLSpecificationAgent.execute]
+        MC[ModelEditor.create]
         TL[TLScriptAgent.answer]
     end
 
@@ -101,7 +102,7 @@ Service config in `src/main/webapp/WEB-INF/conf/tl-ai-openai.conf.config.xml`:
 </config>
 ```
 
-API keys via environment variables: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `MISTRAL_API_KEY`.
+API keys via environment variables: `tl_openai_apikey`, `tl_anthropic_api_key`, `tl_mistral_api_key`.
 
 ## Notes
 

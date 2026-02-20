@@ -103,15 +103,15 @@ Configure AI response structure:
 
 ### Multi-Agent Orchestrator (Chat Entrypoint)
 
-The chat UI sends user messages to **OrchestratorAgent** as the single entrypoint. The orchestrator is **LLM-based**: an LLM infers intent from the user message (no keyword matching) and calls exactly one specialist tool with a distilled work order (goal, task, context).
+The chat UI sends user messages to **OrchestratorAgent** as the single entrypoint. The orchestrator is **LLM-based**: an LLM infers intent from the user message (no keyword matching) and calls specialist tools with a distilled work order (goal, task, context).
 
-- **OrchestratorAgent.chat(userMessage)** – Builds **OrchestratorRouter** (LLM + three delegate tools), runs **router.chat(userMessage)**. The LLM decides Explorer / Creator / TLScript and fills goal/task/context.
+- **OrchestratorAgent.chat(chatMemory, userMessage)** – Builds **OrchestratorRouter** (LLM + four tools), runs the router with the user message. The LLM decides Explorer / Creator / TLScript / Skill and fills goal/task/context.
 - **OrchestratorRouter** – Interface with system prompt defining routing rules, work-order discipline, and behavior. See `OrchestratorRouter.java`. Prompt style follows orchestrator-pattern and Cursor-style clarity ([orchestrator pattern](https://dev.to/akshaygupta1996/the-orchestrator-pattern-routing-conversations-to-specialized-ai-agents-33h8), [system-prompts-and-models-of-ai-tools](https://github.com/x1xhlol/system-prompts-and-models-of-ai-tools)).
-- **OrchestratorTools** – Three @Tool methods (delegateToModelExplorer, delegateToModelCreator, delegateToTLScriptSpecialist) that call **AgentInvoker**.
+- **AgentDelegationTools** – Three inner classes (Exploration, Creation, TLScript) with `@Tool` methods (`requestModelExploration`, `requestModelCreation`, `requestTLScriptHelp`) that call **AgentInvoker**. A fourth tool, **SkillTool**, provides on-demand skill lookup.
 - **AgentInvoker** – Internal component for agent-to-agent calls. Records **AgentCall** events (fromAgent → toAgent) in the run’s trace. No agent is exposed as a @Tool to another agent.
 - **AgentWorkOrder** (`com.top_logic.ai.service.agents.handoff`) – Structured handoff: `goal`, `task`, `context`, `expectedOutputFormat`.
 - **Execution timeline** – **ToolCallTracker.getTimeline()** returns an ordered list of **TraceEntry** (TOOL_CALL or AGENT_CALL). The chat UI (tl-chat) renders “Orchestrator → ModelExplorer” vs “listModules(...)” so AgentCall and ToolCall are clearly distinguished. The caller must set **ToolCallTracking.setTracker(tracker)** before calling the orchestrator so tools and agent calls write into the same trace.
-- **TLScriptAgent** – When it needs model context, it uses **RequestModelExplorationTool** with goal/task/context; that tool calls **AgentInvoker.invokeExplorer("TLScriptAgent", workOrder)** so the handoff is structured, not the full user prompt.
+- **TLScriptAgent** – When it needs model context, it uses **RequestModelExplorationTool** with goal/task/context; that tool calls **AgentInvoker.invokeExplorer(“TLScriptAgent”, workOrder)** so the handoff is structured, not the full user prompt.
 
 ### Core Components
 
@@ -150,7 +150,7 @@ Utility for converting TL-Script maps to LangChain4j JSON schemas.
 
 ### Service Configuration
 
-See service configuration `com.top_logic.ai.service.AIService` in `tl-ai-service.config.xml`:
+See service configuration `com.top_logic.ai.service.AIService` in `tl-ai-openai.conf.config.xml`:
 
 ### Environment Variables
 
@@ -158,8 +158,8 @@ Set API keys as environment variables:
 
 ```bash
 export tl_openai_apikey="sk-..."
-export tl_antropic_apikey="sk-ant-..."
-export tl_mistral_apikey="..."
+export tl_anthropic_api_key="sk-ant-..."
+export tl_mistral_api_key="..."
 ```
 
 Or pass corresponding system properties to the application.

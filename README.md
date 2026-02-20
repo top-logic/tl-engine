@@ -11,7 +11,7 @@ AI service integration providing LLM access through LangChain4j with support for
 Model Context Protocol (MCP) server implementation enabling AI agents to interact with TopLogic's model structure, metadata, and business logic through standardized resources and tools.
 
 ### [tl-chat](tl-chat/)
-Chat UI components and model definitions for building conversational interfaces within TopLogic applications. Chat messages are handled by **OrchestratorAgent** (tl-ai-service), which routes to specialist agents (ModelExplorer, TLScriptAgent, ModelCreator) via **AgentInvoker** and a structured work-order handoff; the UI shows a unified execution timeline (AgentCall vs ToolCall).
+Chat UI components and model definitions for building conversational interfaces within TopLogic applications. Chat messages are handled by **OrchestratorAgent** (tl-ai-service), which routes to specialist agents (ModelExplorer, ModelEditor, TLScriptAgent) via **AgentInvoker** and a structured work-order handoff; the UI shows a unified execution timeline (AgentCall vs ToolCall). Includes persistent chat sessions with per-user history stored in the KnowledgeBase.
 
 ### [tl-ai-demo](tl-ai-demo/)
 Demo application showcasing AI integration features including chat interactions, MCP server capabilities, and AI-powered business logic.
@@ -37,11 +37,11 @@ Set your API keys as environment variables:
 
 ```bash
 export tl_openai_apikey="sk-..."
-export tl_antropic_apikey="sk-ant-..."
-export tl_mistral_apikey="..."
+export tl_anthropic_api_key="sk-ant-..."
+export tl_mistral_api_key="..."
 ```
 
-Configure AI models in `tl-ai-service/src/main/webapp/WEB-INF/conf/tl-ai-service.config.xml`.
+Configure AI models in `tl-ai-service/src/main/webapp/WEB-INF/conf/tl-ai-openai.conf.config.xml`.
 
 ### Run Demo
 

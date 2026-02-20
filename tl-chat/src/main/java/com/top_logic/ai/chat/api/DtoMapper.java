@@ -228,7 +228,7 @@ public final class DtoMapper {
 	 *
 	 * @param entries
 	 *        The chat entries (messages and task snapshots).
-	 * @return JSON string suitable for storing in the ChatSession.messages CLOB.
+	 * @return JSON string suitable for storing in the <code>ChatSession.messages</code> CLOB.
 	 */
 	public static String serializeEntries(List<ChatEntry> entries) {
 		PersistedChat chat = PersistedChat.create();
@@ -251,7 +251,7 @@ public final class DtoMapper {
 	}
 
 	/**
-	 * Deserializes a JSON string (from ChatSession.messages CLOB) back into {@link ChatEntry}
+	 * Deserializes a JSON string (from <code>ChatSession.messages</code> CLOB) back into {@link ChatEntry}
 	 * objects.
 	 *
 	 * @param json

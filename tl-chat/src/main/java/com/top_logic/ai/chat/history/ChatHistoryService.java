@@ -28,11 +28,11 @@ import com.top_logic.model.factory.TLFactory;
 import com.top_logic.util.model.ModelService;
 
 /**
- * Service for CRUD operations on persistent ChatSession objects.
+ * Service for CRUD operations on persistent <code>ChatSession</code> objects.
  *
  * <p>
- * Each ChatSession belongs to a user (via owner attribute) and stores chat messages as a JSON blob
- * in a CLOB attribute. All methods that perform KnowledgeBase operations wrap themselves in
+ * Each <code>ChatSession</code> belongs to a user (via owner attribute) and stores chat messages as a JSON blob
+ * in a CLOB attribute. All methods that perform {@link KnowledgeBase} operations wrap themselves in
  * {@link ThreadContextManager#inSystemInteraction} so they can be called from any thread context
  * (servlet threads, background threads, etc.).
  * </p>
@@ -60,7 +60,7 @@ public class ChatHistoryService {
 	}
 
 	/**
-	 * Returns all chat sessions owned by the given person, sorted by lastUpdated descending.
+	 * Returns all chat sessions owned by the given person, sorted by <code>lastUpdated</code> descending.
 	 *
 	 * @param person
 	 *        the owner to filter by.
@@ -245,7 +245,7 @@ public class ChatHistoryService {
 	}
 
 	/**
-	 * Finds a ChatSession by its KnowledgeObject ID.
+	 * Finds a <code>ChatSession</code> by its {@link KnowledgeObject} ID.
 	 *
 	 * @param objectId
 	 *        the string representation of the object ID.

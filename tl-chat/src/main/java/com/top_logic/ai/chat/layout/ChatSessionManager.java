@@ -24,7 +24,7 @@ import dev.langchain4j.memory.chat.MessageWindowChatMemory;
  *
  * <p>
  * Each chat session gets its own {@link Chat} (message container) and {@link ChatMemory}
- * (LangChain4j conversation context). When the user switches sessions, this manager persists the
+ * (<code>LangChain4j</code> conversation context). When the user switches sessions, this manager persists the
  * current session, loads the target session from the database (or LRU cache), and rebuilds the AI's
  * conversation memory from the persisted messages.
  * </p>

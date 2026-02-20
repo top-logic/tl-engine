@@ -50,7 +50,7 @@ import jakarta.servlet.http.HttpSession;
  *
  * <p>
  * Uses {@link SessionService} to resolve the authenticated user from the HTTP session. All
- * KnowledgeBase operations are performed via {@link ChatHistoryService}, which manages its own
+ * <code>KnowledgeBase</code> operations are performed via {@link ChatHistoryService}, which manages its own
  * thread context internally.
  * </p>
  *

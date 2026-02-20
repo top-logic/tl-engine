@@ -9,9 +9,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 import javax.xml.stream.XMLStreamException;
 import javax.xml.transform.Source;
@@ -35,8 +36,10 @@ import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.sql.CommitContext;
 import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.PooledConnection;
+import com.top_logic.bpe.BPEUtil;
 import com.top_logic.bpe.bpml.importer.BPMLImporter;
 import com.top_logic.bpe.bpml.model.Collaboration;
+import com.top_logic.bpe.util.Updater;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -94,7 +97,7 @@ public class InitialProcessSetupService extends ManagedClass {
 	protected void startUp() {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 
-		ArrayList<Resource> resources = FileManager.getInstance()
+		Resource[] resources = FileManager.getInstance()
 			.getResourcePaths(DATA_PATH)
 			.stream()
 			.map(s -> s.substring(DATA_PATH.length()))
@@ -102,43 +105,48 @@ public class InitialProcessSetupService extends ManagedClass {
 			.sorted()
 			.map(Resource::loadResource)
 			.filter(Objects::nonNull)
-			.collect(Collectors.toCollection(ArrayList::new));
-		if (resources.isEmpty()) {
+			.toArray(Resource[]::new);
+		if (resources.length == 0) {
+			Logger.info("No workflows found in " + DATA_PATH + ".", InitialProcessSetupService.class);
 			return;
 		}
+
+		List<Resource> newProcesses = new ArrayList<>();
+		List<Resource> updatedProcesses = new ArrayList<>();
 
 		ConnectionPool pool = KBUtils.getConnectionPool(kb);
 		PooledConnection readCon = pool.borrowReadConnection();
 		try {
-			for (Iterator<Resource> resourcesIt = resources.iterator(); resourcesIt.hasNext();) {
-				Resource resource = resourcesIt.next();
+			for (Resource resource : resources) {
 				String storedHash;
 				try {
 					storedHash = loadHash(readCon, resource);
 				} catch (SQLException ex) {
 					Logger.error("Cannot test whether data is already loaded.", ex, InitialProcessSetupService.class);
-					resourcesIt.remove();
 					continue;
 				}
 				if (LOADED.equals(storedHash)) {
 					// legacy. Update data.
+					updatedProcesses.add(resource);
 					continue;
 				}
 				if (storedHash == null) {
 					// not yet loaded
+					newProcesses.add(resource);
 					continue;
 				}
-				if (storedHash.equals(resource.hash())) {
-					// Same hash. File content has not changed.
-					resourcesIt.remove();
+				if (!storedHash.equals(resource.hash())) {
+					// Hash has changed => file content has changed.
+					updatedProcesses.add(resource);
+					continue;
 				}
 			}
 		} finally {
 			pool.releaseReadConnection(readCon);
 		}
 
-		if (resources.isEmpty()) {
-			Logger.info("No updated workflow found in " + DATA_PATH + ".", InitialProcessSetupService.class);
+		if (newProcesses.isEmpty() && updatedProcesses.isEmpty()) {
+			Logger.info("All workflows in " + DATA_PATH + " are up to date.", InitialProcessSetupService.class);
 			return;
 		}
 
@@ -146,20 +154,65 @@ public class InitialProcessSetupService extends ManagedClass {
 			CommitContext commitContext = KBUtils.getCurrentContext(kb);
 			PooledConnection commitCon = commitContext.getConnection();
 			
-			for (Resource resource : resources) {
-				String resourcePath = DATA_PATH + resource.name();
-				Logger.info("Loading initial workflow: " + resourcePath, InitialProcessSetupService.class);
+			if (!newProcesses.isEmpty()) {
+				for (Resource resource : newProcesses) {
+					String resourcePath = DATA_PATH + resource.name();
+					Logger.info("Loading initial workflow: " + resourcePath, InitialProcessSetupService.class);
 
-				try {
-					importWorkflow(kb, resource.data());
-				} catch (Exception ex) {
-					Logger.error("Cannot load initial workflow: " + resourcePath, ex, InitialProcessSetupService.class);
+					try {
+						importWorkflow(kb, resource.data());
+					} catch (Exception ex) {
+						Logger.error("Cannot load initial workflow: " + resourcePath, ex,
+							InitialProcessSetupService.class);
+					}
+
+					try {
+						storeHash(commitCon, resource);
+					} catch (SQLException ex) {
+						Logger.error("Cannot mark as loaded: " + resourcePath, ex, InitialProcessSetupService.class);
+					}
 				}
+			}
 
-				try {
-					storeHash(commitCon, resource);
-				} catch (SQLException ex) {
-					Logger.error("Cannot mark as loaded: " + resourcePath, ex, InitialProcessSetupService.class);
+			if (!updatedProcesses.isEmpty()) {
+				Map<String, List<Collaboration>> collaborationsByName = BPEUtil.collaborationsByName();
+				for (Resource resource : updatedProcesses) {
+					String resourcePath = DATA_PATH + resource.name();
+					BinaryData data = resource.data();
+
+					Collaboration processToUpdate;
+					String collaborationName = defaultCollaborationName(data);
+					List<Collaboration> collaborations =
+						collaborationsByName.getOrDefault(collaborationName, Collections.emptyList());
+					switch (collaborations.size()) {
+						case 0:
+							Logger.warn("No workflow with name '" + collaborationName
+								+ "' found. This may happen when the collaboration has a name which defers from the name of its definition file: "
+								+ resourcePath, InitialProcessSetupService.class);
+							continue;
+						case 1:
+							processToUpdate = collaborations.get(0);
+							Logger.info("Update initial workflow: " + resourcePath, InitialProcessSetupService.class);
+							break;
+						default:
+							Logger.warn("Multiple workflows with name '" + collaborationName
+								+ "' found: " + resourcePath, InitialProcessSetupService.class);
+							continue;
+					}
+
+					try {
+						Collaboration newWorkflow = importWorkflow(kb, data);
+						new Updater(processToUpdate, newWorkflow, true).update();
+					} catch (Exception ex) {
+						Logger.error("Cannot load workflow to update: " + resourcePath, ex,
+							InitialProcessSetupService.class);
+					}
+
+					try {
+						storeHash(commitCon, resource);
+					} catch (SQLException ex) {
+						Logger.error("Cannot mark as loaded: " + resourcePath, ex, InitialProcessSetupService.class);
+					}
 				}
 			}
 
@@ -215,7 +268,7 @@ public class InitialProcessSetupService extends ManagedClass {
 	 * 
 	 * @see #importBPML(DisplayContext, KnowledgeBase, BinaryContent)
 	 */
-	public static Object importWorkflow(KnowledgeBase kb, BinaryData bpml) {
+	public static Collaboration importWorkflow(KnowledgeBase kb, BinaryData bpml) {
 		Collaboration collaboration;
 		try {
 			collaboration = importBPML(DefaultDisplayContext.getDisplayContext(), kb, bpml);
@@ -224,10 +277,14 @@ public class InitialProcessSetupService extends ManagedClass {
 				.initSeverity(ErrorSeverity.WARNING);
 		}
 		if (StringServices.isEmpty(collaboration.getName())) {
-			collaboration.setName(strip(bpml.getName()));
+			collaboration.setName(defaultCollaborationName(bpml));
 		}
 
 		return collaboration;
+	}
+
+	private static String defaultCollaborationName(BinaryData bpml) {
+		return strip(bpml.getName());
 	}
 
 	/**

@@ -50,6 +50,9 @@ public class TaskProgressTracker {
 	/** User display name resolved from TLContext (set where context is available, used as fallback elsewhere). */
 	private volatile String _userName = null;
 
+	/** User's first name for the welcome screen greeting. */
+	private volatile String _welcomeName = null;
+
 	/**
 	 * Returns the chat for this window. Same instance for add and render so task traces persist.
 	 */
@@ -122,6 +125,23 @@ public class TaskProgressTracker {
 	 */
 	public void setUserName(String userName) {
 		_userName = userName;
+	}
+
+	/**
+	 * Returns the welcome name (first name) for the welcome screen greeting, or null if not set.
+	 */
+	public String getWelcomeName() {
+		return _welcomeName;
+	}
+
+	/**
+	 * Stores the welcome name (first name) for the welcome screen greeting.
+	 *
+	 * @param welcomeName
+	 *        The first name to display in the welcome greeting.
+	 */
+	public void setWelcomeName(String welcomeName) {
+		_welcomeName = welcomeName;
 	}
 
 	/**

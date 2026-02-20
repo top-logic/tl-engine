@@ -121,28 +121,44 @@ public class ChatControl extends AbstractControlBase {
 	}
 
 	private void writeHistoryPanel(TagWriter out) throws IOException {
-		// Sidebar toggle button (always visible)
-		out.beginBeginTag(BUTTON);
-		out.writeAttribute(TYPE_ATTR, "button");
-		out.writeAttribute(CLASS_ATTR, "chat-sidebar-toggle");
-		out.endBeginTag();
-		out.writeText("\u2630"); // ☰ hamburger
-		out.endTag(BUTTON);
-
 		out.beginBeginTag(DIV);
 		out.writeAttribute(CLASS_ATTR, "chat-history-panel");
 		out.endBeginTag();
 		{
-			// Header with New Chat button
+			// Sidebar header with toggle and new chat
 			out.beginBeginTag(DIV);
-			out.writeAttribute(CLASS_ATTR, "chat-history-header");
+			out.writeAttribute(CLASS_ATTR, "chat-sidebar-header");
 			out.endBeginTag();
 			{
-				out.beginBeginTag("button");
+				// Toggle button (hamburger → X animation via CSS)
+				out.beginBeginTag(BUTTON);
+				out.writeAttribute(TYPE_ATTR, "button");
+				out.writeAttribute(CLASS_ATTR, "chat-sidebar-toggle");
+				out.endBeginTag();
+				{
+					writeToggleBar(out);
+					writeToggleBar(out);
+					writeToggleBar(out);
+				}
+				out.endTag(BUTTON);
+
+				// New Chat button with icon + label
+				out.beginBeginTag(BUTTON);
+				out.writeAttribute(TYPE_ATTR, "button");
 				out.writeAttribute(CLASS_ATTR, "chat-new-session-btn");
 				out.endBeginTag();
-				out.writeText("+ New Chat");
-				out.endTag("button");
+				{
+					out.beginBeginTag(SPAN);
+					out.writeAttribute(CLASS_ATTR, "chat-new-session-icon");
+					out.endBeginTag();
+					out.endTag(SPAN);
+					out.beginBeginTag(SPAN);
+					out.writeAttribute(CLASS_ATTR, "chat-new-session-label");
+					out.endBeginTag();
+					out.writeText("New Chat");
+					out.endTag(SPAN);
+				}
+				out.endTag(BUTTON);
 			}
 			out.endTag(DIV);
 
@@ -154,6 +170,13 @@ public class ChatControl extends AbstractControlBase {
 			out.endTag(DIV);
 		}
 		out.endTag(DIV);
+	}
+
+	private void writeToggleBar(TagWriter out) throws IOException {
+		out.beginBeginTag(SPAN);
+		out.writeAttribute(CLASS_ATTR, "chat-toggle-bar");
+		out.endBeginTag();
+		out.endTag(SPAN);
 	}
 
 	private void writeWelcomeScreen(TagWriter out) throws IOException {

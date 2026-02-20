@@ -434,6 +434,7 @@
 					type="tl.core:String"
 				>
 					<annotations>
+						<size-constraint/>
 						<visibility value="hidden"/>
 					</annotations>
 				</property>
@@ -805,7 +806,7 @@
 				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.StartEventImpl"/>
 			</annotations>
 			<attributes>
-			    <property name="requireReview"
+				<property name="requireReview"
 					type="tl.core:Boolean"
 				>
 					<annotations>

@@ -51,9 +51,6 @@ public class ChatComponentBuilder implements ModelBuilder {
 		// So the JSON API (ChatServlet) uses the same tracker as this UI when in the same session
 		registerTrackerWithSession(component, taskTracker);
 
-		// Ensure the active chat has a welcome message
-		taskTracker.getChat().ensureWelcomeMessage();
-
 		// Create hidden field with custom ControlProvider that embeds ChatControl.
 		// ChatControl gets its Chat from taskTracker.getChat() which delegates to
 		// ChatSessionManager, so it always renders the active session's entries.

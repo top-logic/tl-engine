@@ -95,17 +95,18 @@ public class ChatControl extends AbstractControlBase {
 			_taskTracker.getUserName() != null ? _taskTracker.getUserName() : "User");
 		out.endBeginTag();
 		{
-			// Main chat area (messages + input)
+			// Main chat area (welcome + messages + input)
 			out.beginBeginTag(DIV);
 			out.writeAttribute(CLASS_ATTR, "chat-main");
 			out.endBeginTag();
 			{
+				writeWelcomeScreen(out);
 				writeMessages(context, out);
 				writeInputSection(out);
 			}
 			out.endTag(DIV);
 
-			// History panel
+			// History panel (right side, collapsible)
 			writeHistoryPanel(out);
 		}
 		out.endTag(DIV);
@@ -120,6 +121,14 @@ public class ChatControl extends AbstractControlBase {
 	}
 
 	private void writeHistoryPanel(TagWriter out) throws IOException {
+		// Sidebar toggle button (always visible)
+		out.beginBeginTag(BUTTON);
+		out.writeAttribute(TYPE_ATTR, "button");
+		out.writeAttribute(CLASS_ATTR, "chat-sidebar-toggle");
+		out.endBeginTag();
+		out.writeText("\u2630"); // ☰ hamburger
+		out.endTag(BUTTON);
+
 		out.beginBeginTag(DIV);
 		out.writeAttribute(CLASS_ATTR, "chat-history-panel");
 		out.endBeginTag();
@@ -145,6 +154,70 @@ public class ChatControl extends AbstractControlBase {
 			out.endTag(DIV);
 		}
 		out.endTag(DIV);
+	}
+
+	private void writeWelcomeScreen(TagWriter out) throws IOException {
+		out.beginBeginTag(DIV);
+		out.writeAttribute(CLASS_ATTR, "chat-welcome");
+		out.endBeginTag();
+		{
+			// Heading
+			out.beginBeginTag("h1");
+			out.writeAttribute(CLASS_ATTR, "chat-welcome-heading");
+			out.endBeginTag();
+			out.writeText("Welcome to TopLogic AI");
+			out.endTag("h1");
+
+			// Subtitle
+			out.beginBeginTag("p");
+			out.writeAttribute(CLASS_ATTR, "chat-welcome-subtitle");
+			out.endBeginTag();
+			out.writeText("How can I help you today?");
+			out.endTag("p");
+
+			// Example prompts
+			out.beginBeginTag(DIV);
+			out.writeAttribute(CLASS_ATTR, "chat-welcome-prompts");
+			out.endBeginTag();
+			{
+				writePromptChip(out, "Show me the data model");
+				writePromptChip(out, "Find all Person objects");
+				writePromptChip(out, "Explain the current schema");
+			}
+			out.endTag(DIV);
+
+			// Large textarea input
+			out.beginBeginTag(DIV);
+			out.writeAttribute(CLASS_ATTR, "chat-welcome-input-section");
+			out.endBeginTag();
+			{
+				out.beginBeginTag("textarea");
+				out.writeAttribute(CLASS_ATTR, "chat-welcome-input");
+				out.writeAttribute("rows", "4");
+				out.writeAttribute(PLACEHOLDER_ATTR, "Ask anything...");
+				out.endBeginTag();
+				out.endTag("textarea");
+
+				out.beginBeginTag(BUTTON);
+				out.writeAttribute(TYPE_ATTR, "button");
+				out.writeAttribute(CLASS_ATTR, "chat-welcome-send-btn");
+				out.endBeginTag();
+				out.writeText("\u2191");
+				out.endTag(BUTTON);
+			}
+			out.endTag(DIV);
+		}
+		out.endTag(DIV);
+	}
+
+	private void writePromptChip(TagWriter out, String text) throws IOException {
+		out.beginBeginTag(BUTTON);
+		out.writeAttribute(TYPE_ATTR, "button");
+		out.writeAttribute(CLASS_ATTR, "chat-prompt-chip");
+		out.writeAttribute("data-prompt", text);
+		out.endBeginTag();
+		out.writeText(text);
+		out.endTag(BUTTON);
 	}
 
 	@Override

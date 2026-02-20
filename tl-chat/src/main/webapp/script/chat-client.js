@@ -620,26 +620,37 @@
       });
     }
 
-    function sendFromWelcome(text) {
-      createSessionApi("New Chat").then(function (session) {
-        if (session && session.id) {
-          var item = createSessionItem(session);
-          if (historyList && historyList.firstChild) {
-            historyList.insertBefore(item, historyList.firstChild);
-          } else if (historyList) {
-            historyList.appendChild(item);
-          }
-          currentSessionId = session.id;
-          setActiveItem(session.id);
-          showChat();
-          if (el.messages) el.messages.innerHTML = "";
-          connectSSE();
+    var welcomeSending = false;
 
-          // Send the message via the normal input path
-          el.input.value = text;
-          sendMessage();
-        }
-      });
+    function sendFromWelcome(text) {
+      if (welcomeSending) return;
+      welcomeSending = true;
+      createSessionApi("New Chat")
+        .then(function (session) {
+          welcomeSending = false;
+          if (session && session.id) {
+            var item = createSessionItem(session);
+            if (historyList && historyList.firstChild) {
+              historyList.insertBefore(item, historyList.firstChild);
+            } else if (historyList) {
+              historyList.appendChild(item);
+            }
+            currentSessionId = session.id;
+            setActiveItem(session.id);
+            showChat();
+            if (el.welcomeInput) el.welcomeInput.value = "";
+            if (el.messages) el.messages.innerHTML = "";
+            connectSSE();
+
+            // Send the message via the normal input path
+            el.input.value = text;
+            sendMessage();
+          }
+        })
+        .catch(function (err) {
+          welcomeSending = false;
+          console.error("Failed to create session:", err);
+        });
     }
 
     if (el.promptChips) {
@@ -1171,8 +1182,7 @@
       newChatBtn.addEventListener("click", handleNewChat);
     }
 
-    // Load sessions on init — do NOT call connectSSE() directly here;
-    // it will be called by switchToSession after loading the first session
+    // Load sessions on init — always start on welcome screen
     fetchSessions()
       .then(function (data) {
         var sessions = data && data.sessions ? data.sessions : [];

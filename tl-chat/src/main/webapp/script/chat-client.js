@@ -590,7 +590,82 @@
       return;
     }
     var userName = root.getAttribute("data-chat-user-name") || "User";
+    el.welcome = root.querySelector(".chat-welcome");
+    el.welcomeInput = root.querySelector(".chat-welcome-input");
+    el.welcomeSendBtn = root.querySelector(".chat-welcome-send-btn");
+    el.promptChips = root.querySelectorAll(".chat-prompt-chip");
+    el.sidebarToggle = root.querySelector(".chat-sidebar-toggle");
+    el.historyPanel = root.querySelector(".chat-history-panel");
     log("Elements found, initializing");
+
+    function showWelcome() {
+      if (el.welcome) el.welcome.classList.remove("hidden");
+      if (el.messages) el.messages.style.display = "none";
+      var inputSection = root.querySelector(".chat-input-section");
+      if (inputSection) inputSection.style.display = "none";
+      currentSessionId = null;
+      setActiveItem(null);
+    }
+
+    function showChat() {
+      if (el.welcome) el.welcome.classList.add("hidden");
+      if (el.messages) el.messages.style.display = "";
+      var inputSection = root.querySelector(".chat-input-section");
+      if (inputSection) inputSection.style.display = "";
+    }
+
+    if (el.sidebarToggle && el.historyPanel) {
+      el.sidebarToggle.addEventListener("click", function () {
+        el.historyPanel.classList.toggle("open");
+      });
+    }
+
+    function sendFromWelcome(text) {
+      createSessionApi("New Chat").then(function (session) {
+        if (session && session.id) {
+          var item = createSessionItem(session);
+          if (historyList && historyList.firstChild) {
+            historyList.insertBefore(item, historyList.firstChild);
+          } else if (historyList) {
+            historyList.appendChild(item);
+          }
+          currentSessionId = session.id;
+          setActiveItem(session.id);
+          showChat();
+          if (el.messages) el.messages.innerHTML = "";
+          connectSSE();
+
+          // Send the message via the normal input path
+          el.input.value = text;
+          sendMessage();
+        }
+      });
+    }
+
+    if (el.promptChips) {
+      for (var i = 0; i < el.promptChips.length; i++) {
+        (function (chip) {
+          chip.addEventListener("click", function () {
+            var text = chip.getAttribute("data-prompt");
+            if (text) sendFromWelcome(text);
+          });
+        })(el.promptChips[i]);
+      }
+    }
+
+    if (el.welcomeSendBtn && el.welcomeInput) {
+      el.welcomeSendBtn.addEventListener("click", function () {
+        var text = (el.welcomeInput.value || "").trim();
+        if (text) sendFromWelcome(text);
+      });
+      el.welcomeInput.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          var text = (el.welcomeInput.value || "").trim();
+          if (text) sendFromWelcome(text);
+        }
+      });
+    }
 
     var state = {
       eventSource: null,
@@ -953,7 +1028,7 @@
               if (next) {
                 switchToSession(next.getAttribute("data-session-id"));
               } else {
-                handleNewChat();
+                showWelcome();
               }
             }
           });
@@ -982,9 +1057,14 @@
     }
 
     function switchToSession(sessionId) {
-      if (sessionId === currentSessionId) return;
+      if (sessionId === currentSessionId) {
+        // Deselect: clicking active session returns to welcome
+        showWelcome();
+        return;
+      }
       currentSessionId = sessionId;
       setActiveItem(sessionId);
+      showChat();
 
       // Clear current messages
       if (el.messages) {
@@ -1098,14 +1178,15 @@
         var sessions = data && data.sessions ? data.sessions : [];
         if (sessions.length > 0) {
           renderSessionList(sessions);
-          switchToSession(sessions[0].id);
-        } else {
-          handleNewChat();
         }
+        // Always start on welcome screen
+        showWelcome();
+        connectSSE();
       })
       .catch(function (err) {
         console.error("Failed to load sessions:", err);
-        handleNewChat();
+        showWelcome();
+        connectSSE();
       });
   }
 

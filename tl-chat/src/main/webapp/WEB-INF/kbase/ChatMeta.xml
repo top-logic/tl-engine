@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<objectlist>
+	<metaobject
+		object_name="ChatSession"
+		object_type="MOKnowledgeObject"
+		super_class="TLObject"
+	>
+		<mo_attribute
+			att_name="title"
+			att_type="String"
+			db_size="500"
+			mandatory="true"
+		/>
+		<mo_attribute
+			att_name="messages"
+			att_type="String"
+			db_size="1000000"
+			db_type="clob"
+			mandatory="false"
+		/>
+	</metaobject>
+</objectlist>

@@ -165,7 +165,8 @@ public class ChatControl extends AbstractControlBase {
 			out.beginBeginTag("h1");
 			out.writeAttribute(CLASS_ATTR, "chat-welcome-heading");
 			out.endBeginTag();
-			out.writeText("Welcome to TopLogic AI");
+			String welcomeName = _taskTracker.getWelcomeName();
+			out.writeText(welcomeName != null ? "Welcome, " + welcomeName : "Welcome");
 			out.endTag("h1");
 
 			// Subtitle

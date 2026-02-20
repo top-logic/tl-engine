@@ -86,11 +86,37 @@ public class ChatComponentBuilder implements ModelBuilder {
 		try {
 			TLContext context = TLContext.getContext();
 			if (context != null && context.getPerson() != null) {
-				taskTracker.setUserName(context.getPerson().getName());
+				String loginName = context.getPerson().getName();
+				taskTracker.setUserName(loginName);
+
+				String firstName = resolveFirstName(context.getPerson());
+				taskTracker.setWelcomeName(firstName);
 			}
 		} catch (Exception e) {
 			Logger.debug("Could not resolve user name from TLContext", e, ChatComponentBuilder.class);
 		}
+	}
+
+	/**
+	 * Extracts the first name from a Person for the welcome greeting.
+	 *
+	 * <p>
+	 * Tries {@code Person.getFullName()} first and takes the first word. Falls back to
+	 * {@code Person.getName()} (login name).
+	 * </p>
+	 */
+	private static String resolveFirstName(com.top_logic.knowledge.wrap.person.Person person) {
+		try {
+			String fullName = person.getFullName();
+			if (fullName != null && !fullName.isBlank()) {
+				String trimmed = fullName.trim();
+				int space = trimmed.indexOf(' ');
+				return space > 0 ? trimmed.substring(0, space) : trimmed;
+			}
+		} catch (Exception ignored) {
+			// getFullName() may not be available on all Person implementations
+		}
+		return person.getName();
 	}
 
 	/**

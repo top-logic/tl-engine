@@ -12,6 +12,7 @@ import java.util.List;
 
 import com.top_logic.basic.LongID;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.knowledge.objects.KnowledgeObject;
@@ -24,15 +25,16 @@ import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.factory.TLFactory;
-import com.top_logic.util.TLContext;
 import com.top_logic.util.model.ModelService;
 
 /**
  * Service for CRUD operations on persistent ChatSession objects.
  *
  * <p>
- * Each ChatSession belongs to a user (via WithOwner) and stores chat messages
- * as a JSON blob in a CLOB attribute.
+ * Each ChatSession belongs to a user (via owner attribute) and stores chat messages as a JSON blob
+ * in a CLOB attribute. All methods that perform KnowledgeBase operations wrap themselves in
+ * {@link ThreadContextManager#inSystemInteraction} so they can be called from any thread context
+ * (servlet threads, background threads, etc.).
  * </p>
  */
 public class ChatHistoryService {
@@ -58,66 +60,80 @@ public class ChatHistoryService {
 	}
 
 	/**
-	 * Returns all chat sessions owned by the current user, sorted by lastUpdated descending.
+	 * Returns all chat sessions owned by the given person, sorted by lastUpdated descending.
+	 *
+	 * @param person
+	 *        the owner to filter by.
+	 * @return list of sessions, never null.
 	 */
-	public static List<TLObject> getSessionsForCurrentUser() {
-		Person currentPerson = TLContext.getContext().getCurrentPersonWrapper();
-		if (currentPerson == null) {
+	public static List<TLObject> getSessionsForUser(Person person) {
+		if (person == null) {
 			return Collections.emptyList();
 		}
+		try {
+			return ThreadContextManager.inSystemInteraction(ChatHistoryService.class, () -> {
+				TLClass sessionType = getChatSessionType();
+				if (sessionType == null) {
+					return Collections.emptyList();
+				}
 
-		TLClass sessionType = getChatSessionType();
-		if (sessionType == null) {
+				List<TLObject> allInstances = MetaElementUtil.getAllInstancesOf(sessionType, TLObject.class);
+				List<TLObject> userSessions = new ArrayList<>();
+				for (TLObject obj : allInstances) {
+					Object owner = obj.tValueByName(ATTR_OWNER);
+					if (person.equals(owner)) {
+						userSessions.add(obj);
+					}
+				}
+
+				userSessions.sort((a, b) -> {
+					Date dateA = (Date) a.tValueByName(ATTR_LAST_UPDATED);
+					Date dateB = (Date) b.tValueByName(ATTR_LAST_UPDATED);
+					if (dateA == null && dateB == null) return 0;
+					if (dateA == null) return 1;
+					if (dateB == null) return -1;
+					return dateB.compareTo(dateA);
+				});
+
+				return userSessions;
+			});
+		} catch (RuntimeException ex) {
+			Logger.error("Failed to get sessions: " + ex.getMessage(), ex, ChatHistoryService.class);
 			return Collections.emptyList();
 		}
-
-		List<TLObject> allInstances = MetaElementUtil.getAllInstancesOf(sessionType, TLObject.class);
-		List<TLObject> userSessions = new ArrayList<>();
-		for (TLObject obj : allInstances) {
-			Object owner = obj.tValueByName(ATTR_OWNER);
-			if (currentPerson.equals(owner)) {
-				userSessions.add(obj);
-			}
-		}
-
-		userSessions.sort((a, b) -> {
-			Date dateA = (Date) a.tValueByName(ATTR_LAST_UPDATED);
-			Date dateB = (Date) b.tValueByName(ATTR_LAST_UPDATED);
-			if (dateA == null && dateB == null) return 0;
-			if (dateA == null) return 1;
-			if (dateB == null) return -1;
-			return dateB.compareTo(dateA);
-		});
-
-		return userSessions;
 	}
 
 	/**
-	 * Creates a new chat session for the current user.
+	 * Creates a new chat session with the given owner.
 	 *
 	 * @param title
 	 *        the session title.
+	 * @param owner
+	 *        the person who owns this session.
 	 * @return the created session object, or null on failure.
 	 */
-	public static TLObject createSession(String title) {
-		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		try (Transaction tx = kb.beginTransaction(ResKey.text("Create chat session"))) {
-			TLClass sessionType = getChatSessionType();
-			if (sessionType == null) {
-				return null;
-			}
+	public static TLObject createSession(String title, Person owner) {
+		try {
+			return ThreadContextManager.inSystemInteraction(ChatHistoryService.class, () -> {
+				KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+				try (Transaction tx = kb.beginTransaction(ResKey.text("Create chat session"))) {
+					TLClass sessionType = getChatSessionType();
+					if (sessionType == null) {
+						return null;
+					}
 
-			TLFactory factory = ModelService.getInstance().getFactory();
-			TLObject session = factory.createObject(sessionType);
-			Person currentPerson = TLContext.getContext().getCurrentPersonWrapper();
+					TLFactory factory = ModelService.getInstance().getFactory();
+					TLObject session = factory.createObject(sessionType);
 
-			session.tUpdateByName(ATTR_TITLE, title);
-			session.tUpdateByName(ATTR_CREATED_AT, new Date());
-			session.tUpdateByName(ATTR_LAST_UPDATED, new Date());
-			session.tUpdateByName(ATTR_OWNER, currentPerson);
+					session.tUpdateByName(ATTR_TITLE, title);
+					session.tUpdateByName(ATTR_CREATED_AT, new Date());
+					session.tUpdateByName(ATTR_LAST_UPDATED, new Date());
+					session.tUpdateByName(ATTR_OWNER, owner);
 
-			tx.commit();
-			return session;
+					tx.commit();
+					return session;
+				}
+			});
 		} catch (Exception ex) {
 			Logger.error("Failed to create chat session: " + ex.getMessage(), ex, ChatHistoryService.class);
 			return null;
@@ -133,14 +149,17 @@ public class ChatHistoryService {
 	 *        the new title.
 	 */
 	public static void updateTitle(TLObject session, String newTitle) {
-		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		try (Transaction tx = kb.beginTransaction(ResKey.text("Update chat session title"))) {
-			session.tUpdateByName(ATTR_TITLE, newTitle);
-			session.tUpdateByName(ATTR_LAST_UPDATED, new Date());
-			tx.commit();
-		} catch (Exception ex) {
-			Logger.error("Failed to update chat session title: " + ex.getMessage(), ex, ChatHistoryService.class);
-		}
+		ThreadContextManager.inSystemInteraction(ChatHistoryService.class, () -> {
+			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+			try (Transaction tx = kb.beginTransaction(ResKey.text("Update chat session title"))) {
+				session.tUpdateByName(ATTR_TITLE, newTitle);
+				session.tUpdateByName(ATTR_LAST_UPDATED, new Date());
+				tx.commit();
+			} catch (Exception ex) {
+				Logger.error("Failed to update chat session title: " + ex.getMessage(), ex,
+					ChatHistoryService.class);
+			}
+		});
 	}
 
 	/**
@@ -152,14 +171,16 @@ public class ChatHistoryService {
 	 *        the JSON string of messages.
 	 */
 	public static void saveMessages(TLObject session, String messagesJson) {
-		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		try (Transaction tx = kb.beginTransaction(ResKey.text("Save chat messages"))) {
-			session.tUpdateByName(ATTR_MESSAGES, messagesJson);
-			session.tUpdateByName(ATTR_LAST_UPDATED, new Date());
-			tx.commit();
-		} catch (Exception ex) {
-			Logger.error("Failed to save chat messages: " + ex.getMessage(), ex, ChatHistoryService.class);
-		}
+		ThreadContextManager.inSystemInteraction(ChatHistoryService.class, () -> {
+			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+			try (Transaction tx = kb.beginTransaction(ResKey.text("Save chat messages"))) {
+				session.tUpdateByName(ATTR_MESSAGES, messagesJson);
+				session.tUpdateByName(ATTR_LAST_UPDATED, new Date());
+				tx.commit();
+			} catch (Exception ex) {
+				Logger.error("Failed to save chat messages: " + ex.getMessage(), ex, ChatHistoryService.class);
+			}
+		});
 	}
 
 	/**
@@ -169,13 +190,15 @@ public class ChatHistoryService {
 	 *        the session object.
 	 */
 	public static void deleteSession(TLObject session) {
-		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		try (Transaction tx = kb.beginTransaction(ResKey.text("Delete chat session"))) {
-			session.tDelete();
-			tx.commit();
-		} catch (Exception ex) {
-			Logger.error("Failed to delete chat session: " + ex.getMessage(), ex, ChatHistoryService.class);
-		}
+		ThreadContextManager.inSystemInteraction(ChatHistoryService.class, () -> {
+			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+			try (Transaction tx = kb.beginTransaction(ResKey.text("Delete chat session"))) {
+				session.tDelete();
+				tx.commit();
+			} catch (Exception ex) {
+				Logger.error("Failed to delete chat session: " + ex.getMessage(), ex, ChatHistoryService.class);
+			}
+		});
 	}
 
 	/**
@@ -186,14 +209,39 @@ public class ChatHistoryService {
 	 * @return the messages JSON string, or null.
 	 */
 	public static String getMessagesJson(TLObject session) {
-		return (String) session.tValueByName(ATTR_MESSAGES);
+		try {
+			return ThreadContextManager.inSystemInteraction(ChatHistoryService.class,
+				() -> (String) session.tValueByName(ATTR_MESSAGES));
+		} catch (Exception ex) {
+			Logger.error("Failed to get messages JSON: " + ex.getMessage(), ex, ChatHistoryService.class);
+			return null;
+		}
 	}
 
 	/**
 	 * Returns the title of a session.
 	 */
 	public static String getTitle(TLObject session) {
-		return (String) session.tValueByName(ATTR_TITLE);
+		try {
+			return ThreadContextManager.inSystemInteraction(ChatHistoryService.class,
+				() -> (String) session.tValueByName(ATTR_TITLE));
+		} catch (Exception ex) {
+			Logger.error("Failed to get session title: " + ex.getMessage(), ex, ChatHistoryService.class);
+			return null;
+		}
+	}
+
+	/**
+	 * Returns the last updated date of a session.
+	 */
+	public static Date getLastUpdated(TLObject session) {
+		try {
+			return ThreadContextManager.inSystemInteraction(ChatHistoryService.class,
+				() -> (Date) session.tValueByName(ATTR_LAST_UPDATED));
+		} catch (Exception ex) {
+			Logger.error("Failed to get last updated: " + ex.getMessage(), ex, ChatHistoryService.class);
+			return null;
+		}
 	}
 
 	/**
@@ -209,29 +257,53 @@ public class ChatHistoryService {
 		}
 		long id;
 		try {
-			id = Long.parseLong(objectId);
+			// Handle both plain numbers ("9002") and TLID format ("ID(9002)")
+			String numStr = objectId;
+			if (numStr.startsWith("ID(") && numStr.endsWith(")")) {
+				numStr = numStr.substring(3, numStr.length() - 1);
+			}
+			id = Long.parseLong(numStr);
 		} catch (NumberFormatException ex) {
 			return null; // Invalid ID format from client — not a server error
 		}
-		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		try {
-			KnowledgeObject ko = kb.getKnowledgeObject(TABLE_NAME, LongID.valueOf(id));
-			if (ko != null) {
-				return ko.getWrapper();
-			}
+			return ThreadContextManager.inSystemInteraction(ChatHistoryService.class, () -> {
+				KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+				KnowledgeObject ko = kb.getKnowledgeObject(TABLE_NAME, LongID.valueOf(id));
+				if (ko != null) {
+					return ko.getWrapper();
+				}
+				return null;
+			});
 		} catch (Exception ex) {
-			Logger.error("Failed to find chat session " + objectId + ": " + ex.getMessage(), ex, ChatHistoryService.class);
+			Logger.error("Failed to find chat session " + objectId + ": " + ex.getMessage(), ex,
+				ChatHistoryService.class);
+			return null;
 		}
-		return null;
 	}
 
 	/**
-	 * Checks if the given session is owned by the current user.
+	 * Checks if the given session is owned by the given person.
+	 *
+	 * @param session
+	 *        the session object.
+	 * @param person
+	 *        the person to check ownership against.
+	 * @return true if the person owns the session.
 	 */
-	public static boolean isOwnedByCurrentUser(TLObject session) {
-		Person currentPerson = TLContext.getContext().getCurrentPersonWrapper();
-		Object owner = session.tValueByName(ATTR_OWNER);
-		return currentPerson != null && currentPerson.equals(owner);
+	public static boolean isOwnedBy(TLObject session, Person person) {
+		if (person == null) {
+			return false;
+		}
+		try {
+			return ThreadContextManager.inSystemInteraction(ChatHistoryService.class, () -> {
+				Object owner = session.tValueByName(ATTR_OWNER);
+				return person.equals(owner);
+			});
+		} catch (Exception ex) {
+			Logger.error("Failed to check session ownership: " + ex.getMessage(), ex, ChatHistoryService.class);
+			return false;
+		}
 	}
 
 	private static TLClass getChatSessionType() {

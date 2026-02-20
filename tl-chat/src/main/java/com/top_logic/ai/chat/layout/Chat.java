@@ -24,7 +24,6 @@ public class Chat {
 	private static final int MAX_ENTRIES = 500;
 
 	private final List<ChatEntry> _entries = new CopyOnWriteArrayList<>();
-	private boolean _welcomeAdded;
 
 	/**
 	 * Adds a message to this chat.
@@ -32,17 +31,6 @@ public class Chat {
 	public void addMessage(ChatMessage message) {
 		_entries.add(new ChatEntry.MessageEntry(message));
 		enforceMaxSize();
-	}
-
-	/**
-	 * Ensures the welcome message is added once per chat instance.
-	 */
-	public void ensureWelcomeMessage() {
-		if (_welcomeAdded) {
-			return;
-		}
-		_welcomeAdded = true;
-		_entries.add(new ChatEntry.MessageEntry(new ChatMessage("System", "Welcome to TopLogic Chat Demo!")));
 	}
 
 	/**
@@ -98,7 +86,6 @@ public class Chat {
 	 */
 	public void clear() {
 		_entries.clear();
-		_welcomeAdded = false;
 	}
 
 	/**
@@ -110,7 +97,6 @@ public class Chat {
 	public void loadEntries(List<ChatEntry> entries) {
 		_entries.clear();
 		_entries.addAll(entries);
-		_welcomeAdded = true;
 	}
 
 	/**

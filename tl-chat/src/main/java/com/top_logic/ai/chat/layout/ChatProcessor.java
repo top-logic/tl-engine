@@ -108,6 +108,12 @@ public class ChatProcessor {
 			state.addPendingMessage(new ChatMessage("Agent", result));
 			taskTracker.completeTask(taskId);
 
+			// Persist messages to the active session
+			String activeSessionId = taskTracker.getActiveSessionId();
+			if (activeSessionId != null) {
+				persistMessages(taskTracker, activeSessionId);
+			}
+
 		} catch (Exception ex) {
 			taskTracker.failTask(taskId, ex.getMessage());
 			throw ex;
@@ -245,6 +251,11 @@ public class ChatProcessor {
 		ChatMessage message = new ChatMessage(userName, userMessage);
 		tracker.getChat().addMessage(message);
 
+		// Persist user message before AI processing starts
+		if (tracker.getActiveSessionId() != null) {
+			persistMessages(tracker, tracker.getActiveSessionId());
+		}
+
 		AIProcessingState state = new AIProcessingState();
 		state.startProcessing();
 		String taskId = tracker.startTask(randomChatTaskPlaceholder());
@@ -299,6 +310,17 @@ public class ChatProcessor {
 	public static String getCurrentTaskId(TaskProgressTracker tracker) {
 		AIProcessingState state = tracker.getCurrentProcessingState();
 		return state != null ? state.getCurrentTaskId() : null;
+	}
+
+	/**
+	 * Persists the current chat state (messages + task snapshots) to the active session.
+	 */
+	static void persistMessages(TaskProgressTracker tracker, String sessionId) {
+		try {
+			tracker.getSessionManager().persistActiveSession();
+		} catch (Exception ex) {
+			Logger.error("Failed to persist chat messages: " + ex.getMessage(), ex, ChatProcessor.class);
+		}
 	}
 
 	/**

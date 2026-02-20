@@ -95,19 +95,56 @@ public class ChatControl extends AbstractControlBase {
 			_taskTracker.getUserName() != null ? _taskTracker.getUserName() : "User");
 		out.endBeginTag();
 		{
-			writeMessages(context, out);
-			writeInputSection(out);
+			// Main chat area (messages + input)
+			out.beginBeginTag(DIV);
+			out.writeAttribute(CLASS_ATTR, "chat-main");
+			out.endBeginTag();
+			{
+				writeMessages(context, out);
+				writeInputSection(out);
+			}
+			out.endTag(DIV);
+
+			// History panel
+			writeHistoryPanel(out);
 		}
 		out.endTag(DIV);
 
 		// Load chat client via inline script so it runs when fragment is AJAX-injected
-		// (browsers do not execute <script src="..."> in injected HTML)
 		String contextPath = context.getContextPath();
 		out.beginScript();
 		out.append("(function(){var s=document.createElement('script');s.src='");
 		out.append(contextPath);
 		out.append("/script/chat-client.js';s.type='text/javascript';(document.head||document.documentElement).appendChild(s);})();");
 		out.endScript();
+	}
+
+	private void writeHistoryPanel(TagWriter out) throws IOException {
+		out.beginBeginTag(DIV);
+		out.writeAttribute(CLASS_ATTR, "chat-history-panel");
+		out.endBeginTag();
+		{
+			// Header with New Chat button
+			out.beginBeginTag(DIV);
+			out.writeAttribute(CLASS_ATTR, "chat-history-header");
+			out.endBeginTag();
+			{
+				out.beginBeginTag("button");
+				out.writeAttribute(CLASS_ATTR, "chat-new-session-btn");
+				out.endBeginTag();
+				out.writeText("+ New Chat");
+				out.endTag("button");
+			}
+			out.endTag(DIV);
+
+			// Session list container (populated by JS)
+			out.beginBeginTag(DIV);
+			out.writeAttribute(CLASS_ATTR, "chat-history-list");
+			out.writeAttribute("id", getID() + "-history-list");
+			out.endBeginTag();
+			out.endTag(DIV);
+		}
+		out.endTag(DIV);
 	}
 
 	@Override

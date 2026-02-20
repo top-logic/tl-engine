@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="tl.ai.chat">
+		<types>
+			<class name="ChatSession">
+				<annotations>
+					<table name="ChatSession"/>
+				</annotations>
+				<generalizations>
+					<generalization type="tl.accounts:WithOwner"/>
+				</generalizations>
+				<attributes>
+					<property name="title"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<property name="messages"
+						type="tl.core:Text"
+					/>
+					<property name="createdAt"
+						mandatory="true"
+						type="tl.core:DateTime"
+					/>
+					<property name="lastUpdated"
+						type="tl.core:DateTime"
+					/>
+				</attributes>
+			</class>
+		</types>
+	</module>
+</model>

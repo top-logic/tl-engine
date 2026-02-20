@@ -423,7 +423,7 @@ public class ChatServlet extends HttpServlet {
 		TLObject session = ChatHistoryService.findSessionById(sessionId);
 		if (session != null && ChatHistoryService.isOwnedBy(session, person)) {
 			ChatHistoryService.deleteSession(session);
-			resp.setStatus(HttpServletResponse.SC_OK);
+			resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
 		} else {
 			resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
 		}

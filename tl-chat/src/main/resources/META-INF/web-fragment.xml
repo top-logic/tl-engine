@@ -6,13 +6,13 @@
 	<name>tl-chat</name>
 
 	<filter>
-		<filter-name>chatSessionCheckingFilter</filter-name>
-		<filter-class>com.top_logic.base.accesscontrol.SessionCheckingFilter</filter-class>
+		<filter-name>chatSessionFilter</filter-name>
+		<filter-class>com.top_logic.ai.chat.api.ChatSessionFilter</filter-class>
 		<async-supported>true</async-supported>
 	</filter>
 
 	<filter-mapping>
-		<filter-name>chatSessionCheckingFilter</filter-name>
+		<filter-name>chatSessionFilter</filter-name>
 		<url-pattern>/chat/*</url-pattern>
 	</filter-mapping>
 

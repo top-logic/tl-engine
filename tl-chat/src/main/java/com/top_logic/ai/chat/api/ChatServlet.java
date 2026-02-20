@@ -29,6 +29,8 @@ import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSessionContext;
+import com.top_logic.basic.Logger;
+import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
@@ -164,6 +166,20 @@ public class ChatServlet extends HttpServlet {
 		}
 
 		String storedName = tracker.getUserName();
+		if (storedName == null) {
+			Person person = resolveCurrentPerson(req);
+			if (person != null) {
+				try {
+					storedName = ThreadContextManager.inSystemInteraction(ChatServlet.class,
+						() -> person.getName());
+				} catch (Exception ex) {
+					Logger.error("Failed to resolve person name", ex, ChatServlet.class);
+				}
+				if (storedName != null) {
+					tracker.setUserName(storedName);
+				}
+			}
+		}
 		final String userName = storedName != null ? storedName : "Anonymous";
 		ChatProcessor.SendResult result = ChatProcessor.sendMessage(tracker, userName, messageText, null, null);
 

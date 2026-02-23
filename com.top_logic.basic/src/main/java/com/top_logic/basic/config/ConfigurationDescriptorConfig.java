@@ -33,10 +33,17 @@ public interface ConfigurationDescriptorConfig extends ConfigurationItem {
 
 	/**
 	 * Whether the {@link ConfigurationDescriptor} is abstract.
-	 * 
+	 *
 	 * @see ConfigurationDescriptor#isAbstract()
 	 */
 	boolean isAbstract();
+
+	/**
+	 * Whether the {@link ConfigurationDescriptor} is final.
+	 *
+	 * @see ConfigurationDescriptor#isFinal()
+	 */
+	boolean isFinal();
 	
 	/**
 	 * A resource prefix to get internationalised names for the properties of the configured

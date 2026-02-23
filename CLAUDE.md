@@ -427,6 +427,43 @@ Commit messages in this project must follow a specific format:
 
 **After merge:** The source branch is deleted automatically.
 
+## msgbuf Library
+
+The project uses the [msgbuf](https://github.com/msgbuf/msgbuf) library (version 1.1.11) for type-safe protocol message generation from `.proto` files.
+
+### Key Pitfall: Writer Types
+
+`de.haumacher.msgbuf.json.JsonWriter` takes `de.haumacher.msgbuf.io.Writer` — **not** `java.io.Writer`. The compiler error "StringWriter cannot be converted to Writer" is misleading because `StringWriter` IS a `java.io.Writer`, but the constructor expects the msgbuf `Writer` interface. The error omits the package, making it look like a standard Java type.
+
+**Correct usage:**
+
+```java
+// For in-memory string serialization:
+import de.haumacher.msgbuf.io.StringW;
+import de.haumacher.msgbuf.json.JsonWriter;
+
+StringW out = new StringW();
+try (JsonWriter writer = new JsonWriter(out)) {
+    myMessage.writeTo(writer);
+}
+String json = out.toString();
+
+// To wrap a java.io.Writer (server-side only):
+import de.haumacher.msgbuf.server.io.WriterAdapter;
+
+try (JsonWriter writer = new JsonWriter(new WriterAdapter(javaIoWriter))) {
+    myMessage.writeTo(writer);
+}
+```
+
+### Generator Plugin
+
+The msgbuf Maven plugin generates Java classes from `.proto` files. Note that its default lifecycle phase is **not** `generate-sources`, so `mvn generate-sources` alone won't trigger it. It runs during `mvn compile`. To run it in isolation, invoke explicitly:
+
+```bash
+mvn de.haumacher.msgbuf:msgbuf-generator-maven-plugin:1.1.11:generate
+```
+
 ## Additional Resources
 
 - **Main Repository**: https://github.com/top-logic/tl-engine

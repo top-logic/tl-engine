@@ -65,20 +65,6 @@ public class ReactControl extends AbstractVisibleControl {
 		this(model, reactModule, Collections.emptyMap());
 	}
 
-	/**
-	 * The {@link SSEUpdateQueue} used for delivering state updates.
-	 */
-	public SSEUpdateQueue getSSEQueue() {
-		return _sseQueue;
-	}
-
-	/**
-	 * Configures the {@link SSEUpdateQueue} for this control.
-	 */
-	public void setSSEQueue(SSEUpdateQueue queue) {
-		_sseQueue = queue;
-	}
-
 	@Override
 	public Object getModel() {
 		return _model;

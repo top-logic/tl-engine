@@ -110,7 +110,7 @@ public abstract class AbstractJsonConfigurationWriterTest extends AbstractTypedC
 	 */
 	protected String buildSchemaJson(ConfigurationDescriptor descriptor) {
 		Schema schemaDoc = new JsonConfigSchemaBuilder().setInline(true).buildConfigSchema(descriptor);
-		return JsonSchemaWriter.toJson(schemaDoc);
+		return JsonSchemaWriter.toJson(schemaDoc, true);
 	}
 
 	/**

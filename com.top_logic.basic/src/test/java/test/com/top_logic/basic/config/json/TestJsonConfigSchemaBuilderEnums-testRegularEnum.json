@@ -1,0 +1,19 @@
+{
+	"type": "object",
+	"required": [
+		"$type"
+	],
+	"properties": {
+		"$type": {
+			"const": "test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderEnums$ConfigWithRegularEnum"
+		},
+		"regular-enum": {
+			"enum": [
+				"VALUE_ONE",
+				"VALUE_TWO",
+				"VALUE_THREE"
+			]
+		}
+	},
+	"additionalProperties": false
+}

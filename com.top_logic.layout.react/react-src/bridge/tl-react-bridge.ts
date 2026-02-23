@@ -43,6 +43,7 @@ class ControlStateStore {
 
 interface TLControlContextValue {
   controlId: string;
+  windowName: string;
   store: ControlStateStore;
 }
 
@@ -57,7 +58,8 @@ const _mounts = new Map<string, { root: Root; store: ControlStateStore }>();
 export function mount(
   controlId: string,
   moduleName: string,
-  initialState: Record<string, unknown>
+  initialState: Record<string, unknown>,
+  windowName?: string
 ): void {
   const element = document.getElementById(controlId);
   if (!element) {
@@ -84,11 +86,13 @@ export function mount(
   const root = createRoot(element);
   _mounts.set(controlId, { root, store });
 
+  const resolvedWindowName = windowName ?? '';
+
   const Wrapper = () => {
     const state = useSyncExternalStore(store.subscribeStore, store.getSnapshot);
     return React.createElement(
       TLControlContext.Provider,
-      { value: { controlId, store } },
+      { value: { controlId, windowName: resolvedWindowName, store } },
       React.createElement(Component, { controlId, state })
     );
   };
@@ -140,12 +144,14 @@ export function useTLCommand(): (command: string, args?: Record<string, unknown>
     throw new Error('useTLCommand must be used inside a TLReact-mounted component.');
   }
   const controlId = ctx.controlId;
+  const windowName = ctx.windowName;
 
   return useCallback(
     async (command: string, args?: Record<string, unknown>) => {
       const body = JSON.stringify({
         controlId,
         command,
+        windowName,
         arguments: args ?? {},
       });
       try {
@@ -161,7 +167,7 @@ export function useTLCommand(): (command: string, args?: Record<string, unknown>
         console.error('[TLReact] Command error:', e);
       }
     },
-    [controlId]
+    [controlId, windowName]
   );
 }
 

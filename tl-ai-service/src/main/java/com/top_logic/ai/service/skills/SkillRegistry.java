@@ -7,24 +7,20 @@ package com.top_logic.ai.service.skills;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import dev.langchain4j.service.SystemMessage;
-
 /**
- * Registry that loads on-demand skill prompt fragments from classpath resources and makes them
- * available to agents via {@link SkillTool}.
+ * Registry that loads skill prompt fragments from classpath resources and makes them available to
+ * agents via {@link SkillTool}.
  *
  * <p>
- * Skills are loaded from {@code com/top_logic/ai/service/skills/<name>.md} on the classpath.
- * Each agent class is mapped to an ordered list of skill names that it can load on demand.
+ * Skills are loaded from {@code com/top_logic/ai/service/skills/<name>.md} on the classpath. Each
+ * agent is mapped by name to an ordered list of skill names. Skills are cached after first load.
  * </p>
  */
 public class SkillRegistry {
@@ -33,16 +29,14 @@ public class SkillRegistry {
 
 	private final Map<String, Skill> _skills = new LinkedHashMap<>();
 
-	private final Map<Class<?>, List<String>> _agentSkills = new LinkedHashMap<>();
-
 	private final Map<String, List<String>> _namedAgentSkills = new LinkedHashMap<>();
 
 	/**
 	 * Loads and returns the skill with the given name.
 	 *
 	 * <p>
-	 * The skill is loaded from {@code com/top_logic/ai/service/skills/<name>.md} on the
-	 * classpath. Skills are cached after first load.
+	 * The skill is loaded from {@code com/top_logic/ai/service/skills/<name>.md} on the classpath.
+	 * Skills are cached after first load.
 	 * </p>
 	 *
 	 * @param name
@@ -53,34 +47,6 @@ public class SkillRegistry {
 	 */
 	public Skill getSkill(String name) {
 		return _skills.computeIfAbsent(name, this::loadSkill);
-	}
-
-	/**
-	 * Registers the ordered list of on-demand skills for an agent class.
-	 *
-	 * @param agentClass
-	 *        The agent interface class.
-	 * @param skillNames
-	 *        Skill names available on demand.
-	 */
-	public void registerAgentSkills(Class<?> agentClass, String... skillNames) {
-		_agentSkills.put(agentClass, Arrays.asList(skillNames));
-	}
-
-	/**
-	 * Returns the on-demand skills configured for the given agent class.
-	 *
-	 * @param agentClass
-	 *        The agent interface class.
-	 * @return Ordered list of skills, or empty list if none configured.
-	 */
-	public List<Skill> getSkillsFor(Class<?> agentClass) {
-		List<String> names = _agentSkills.getOrDefault(agentClass, Collections.emptyList());
-		List<Skill> result = new ArrayList<>(names.size());
-		for (String name : names) {
-			result.add(getSkill(name));
-		}
-		return result;
 	}
 
 	/**
@@ -116,9 +82,9 @@ public class SkillRegistry {
 	 * given base prompt.
 	 *
 	 * <p>
-	 * If the base prompt contains the {@link #SKILLS_PLACEHOLDER} marker, the skill catalog replaces
-	 * the marker at that position. Otherwise, the catalog is appended at the end. If the agent has no
-	 * registered skills, the marker is removed (or nothing is appended).
+	 * If the base prompt contains the {@link #SKILLS_PLACEHOLDER} marker, the skill catalog
+	 * replaces the marker at that position. Otherwise, the catalog is appended at the end. If the
+	 * agent has no registered skills, the marker is removed (or nothing is appended).
 	 * </p>
 	 *
 	 * @param agentName
@@ -149,46 +115,15 @@ public class SkillRegistry {
 	}
 
 	/**
-	 * Placeholder marker that can be placed in a {@link SystemMessage} annotation to control where
-	 * the skill catalog is injected. If the marker is not present, the catalog is appended at the
-	 * end.
+	 * Placeholder marker that can be placed in a system prompt to control where the skill catalog
+	 * is injected. If the marker is not present, the catalog is appended at the end.
 	 *
 	 * <p>
 	 * Note: Uses angle brackets ({@code <<...>>}) instead of curly braces because
-	 * <i>LangChain4j</i> interprets {@code &#123;&#123;...&#125;&#125;} as template variables in
-	 * {@link SystemMessage} annotations.
+	 * <i>LangChain4j</i> interprets {@code &#123;&#123;...&#125;&#125;} as template variables.
 	 * </p>
 	 */
 	public static final String SKILLS_PLACEHOLDER = "<<AVAILABLE_SKILLS>>";
-
-	/**
-	 * Builds the full system prompt for an agent by reading its {@link SystemMessage} annotation
-	 * and injecting a catalog of available on-demand skills.
-	 *
-	 * <p>
-	 * If the base prompt contains the {@link #SKILLS_PLACEHOLDER} marker, the skill catalog
-	 * replaces the marker at that position. Otherwise, the catalog is appended at the end. If the
-	 * agent has no registered skills, the marker is removed (or nothing is appended).
-	 * </p>
-	 *
-	 * @param agentClass
-	 *        The agent interface class (must have a method annotated with {@link SystemMessage}).
-	 * @return The complete system prompt.
-	 */
-	public String buildSystemPrompt(Class<?> agentClass) {
-		String basePrompt = readSystemMessageAnnotation(agentClass);
-		List<Skill> skills = getSkillsFor(agentClass);
-		String skillSection = buildSkillSection(skills);
-
-		if (basePrompt.contains(SKILLS_PLACEHOLDER)) {
-			return basePrompt.replace(SKILLS_PLACEHOLDER, skillSection);
-		}
-
-		if (skills.isEmpty()) {
-			return basePrompt;
-		}
-		return basePrompt + "\n\n---\n\n" + skillSection;
-	}
 
 	private String buildSkillSection(List<Skill> skills) {
 		if (skills.isEmpty()) {
@@ -222,17 +157,6 @@ public class SkillRegistry {
 		}
 
 		return sb.toString();
-	}
-
-	private static String readSystemMessageAnnotation(Class<?> agentClass) {
-		for (Method method : agentClass.getDeclaredMethods()) {
-			SystemMessage annotation = method.getAnnotation(SystemMessage.class);
-			if (annotation != null) {
-				return String.join("\n", annotation.value());
-			}
-		}
-		throw new IllegalArgumentException(
-			"No @SystemMessage annotation found on " + agentClass.getSimpleName());
 	}
 
 	private static final String FRONTMATTER_DELIMITER = "---";

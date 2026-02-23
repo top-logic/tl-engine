@@ -69,6 +69,20 @@
     return (ms / 1000).toFixed(1) + "s";
   }
 
+  function formatTime(isoString) {
+    if (!isoString) return "";
+    try {
+      var d = new Date(isoString);
+      if (isNaN(d.getTime())) return isoString;
+      var h = String(d.getHours()).padStart(2, "0");
+      var m = String(d.getMinutes()).padStart(2, "0");
+      var s = String(d.getSeconds()).padStart(2, "0");
+      return h + ":" + m + ":" + s;
+    } catch (e) {
+      return isoString;
+    }
+  }
+
   function getTaskIcon(status) {
     switch (status) {
       case "completed":
@@ -195,7 +209,7 @@
 
     var time = document.createElement("span");
     time.className = "chat-time";
-    time.textContent = msg.time || "";
+    time.textContent = formatTime(msg.time);
 
     div.appendChild(user);
     div.appendChild(bubble);
@@ -917,12 +931,7 @@
         role: "user",
         userName: userName,
         content: text,
-        time: new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-          hour12: false,
-        }),
+        time: new Date().toISOString(),
         optimistic: true,
       });
       scrollToBottom(el.messages);
@@ -1143,9 +1152,7 @@
                         : msg.role.toLowerCase(),
                     content: msg.text,
                     userName: msg.role,
-                    time: msg.timestamp
-                      ? new Date(msg.timestamp).toLocaleTimeString()
-                      : "",
+                    time: msg.timestamp || "",
                   });
                 });
               }

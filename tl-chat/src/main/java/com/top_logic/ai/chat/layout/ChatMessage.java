@@ -20,12 +20,19 @@ public class ChatMessage {
 	private final Instant _timestamp;
 
 	/**
-	 * Creates a new {@link ChatMessage}.
+	 * Creates a new {@link ChatMessage} with the current time.
 	 */
 	public ChatMessage(String user, String text) {
+		this(user, text, Instant.now());
+	}
+
+	/**
+	 * Creates a new {@link ChatMessage} with the given timestamp.
+	 */
+	public ChatMessage(String user, String text, Instant timestamp) {
 		_user = user;
 		_text = text;
-		_timestamp = Instant.now();
+		_timestamp = timestamp;
 	}
 
 	/**

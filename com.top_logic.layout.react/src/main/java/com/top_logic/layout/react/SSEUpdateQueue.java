@@ -8,6 +8,8 @@ package com.top_logic.layout.react;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -15,6 +17,7 @@ import jakarta.servlet.AsyncContext;
 import jakarta.servlet.http.HttpSession;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.layout.CommandListener;
 import com.top_logic.layout.react.protocol.SSEEvent;
 
 import de.haumacher.msgbuf.io.StringW;
@@ -36,6 +39,8 @@ public class SSEUpdateQueue {
 
 	private final List<AsyncContext> _connections = new CopyOnWriteArrayList<>();
 
+	private final Map<String, CommandListener> _controls = new ConcurrentHashMap<>();
+
 	/**
 	 * Retrieves or creates the {@link SSEUpdateQueue} for the given session.
 	 */
@@ -46,6 +51,23 @@ public class SSEUpdateQueue {
 			session.setAttribute(SESSION_ATTRIBUTE_KEY, queue);
 		}
 		return queue;
+	}
+
+	/**
+	 * Registers a {@link CommandListener} (typically a {@link ReactControl}) so that it can be
+	 * looked up by ID for command dispatch.
+	 */
+	public void registerControl(CommandListener control) {
+		_controls.put(control.getID(), control);
+	}
+
+	/**
+	 * Looks up a previously registered control by its ID.
+	 *
+	 * @return The control, or {@code null} if not found.
+	 */
+	public CommandListener getControl(String controlId) {
+		return _controls.get(controlId);
 	}
 
 	/**

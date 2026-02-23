@@ -39,6 +39,8 @@ public class ReactControl extends AbstractVisibleControl {
 
 	private Map<String, Object> _reactState;
 
+	private SSEUpdateQueue _sseQueue;
+
 	/**
 	 * Creates a new {@link ReactControl}.
 	 *
@@ -63,6 +65,20 @@ public class ReactControl extends AbstractVisibleControl {
 		this(model, reactModule, Collections.emptyMap());
 	}
 
+	/**
+	 * The {@link SSEUpdateQueue} used for delivering state updates.
+	 */
+	public SSEUpdateQueue getSSEQueue() {
+		return _sseQueue;
+	}
+
+	/**
+	 * Configures the {@link SSEUpdateQueue} for this control.
+	 */
+	public void setSSEQueue(SSEUpdateQueue queue) {
+		_sseQueue = queue;
+	}
+
 	@Override
 	public Object getModel() {
 		return _model;
@@ -80,6 +96,38 @@ public class ReactControl extends AbstractVisibleControl {
 	 */
 	public Map<String, Object> getReactState() {
 		return _reactState;
+	}
+
+	/**
+	 * Replaces the full React state and sends a {@link StateEvent} via the configured SSE queue.
+	 *
+	 * @param newState
+	 *        The new state.
+	 * @throws IllegalStateException
+	 *         if no {@link SSEUpdateQueue} has been configured.
+	 */
+	public void setReactState(Map<String, Object> newState) {
+		setReactState(requireSSEQueue(), newState);
+	}
+
+	/**
+	 * Applies a partial patch to the React state and sends a {@link PatchEvent} via the configured
+	 * SSE queue.
+	 *
+	 * @param patch
+	 *        The partial state update.
+	 * @throws IllegalStateException
+	 *         if no {@link SSEUpdateQueue} has been configured.
+	 */
+	public void patchReactState(Map<String, Object> patch) {
+		patchReactState(requireSSEQueue(), patch);
+	}
+
+	private SSEUpdateQueue requireSSEQueue() {
+		if (_sseQueue == null) {
+			throw new IllegalStateException("No SSEUpdateQueue configured on this ReactControl.");
+		}
+		return _sseQueue;
 	}
 
 	/**

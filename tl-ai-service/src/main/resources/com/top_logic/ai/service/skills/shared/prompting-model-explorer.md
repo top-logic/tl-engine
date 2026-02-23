@@ -1,5 +1,6 @@
 ---
-description: Best practices for prompting the ModelExplorer agent via requestModelExploration
+description: Best practices for writing effective work orders to the ModelExplorer agent.
+mode: auto
 ---
 # How to Prompt the Model Explorer
 

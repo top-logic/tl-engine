@@ -44,9 +44,13 @@ public class SkillTool {
 	/**
 	 * Lists all on-demand skills available for this agent.
 	 *
+	 * <p>
+	 * This method is used internally by the system prompt builder to generate the skill catalog. It
+	 * is not exposed as a tool because the catalog is already present in the system prompt.
+	 * </p>
+	 *
 	 * @return Formatted skill catalog with names and descriptions.
 	 */
-	@Tool("Lists all on-demand skills available. Returns skill names with descriptions. Call to discover specialized knowledge you can load for the current task.")
 	public String listAvailableSkills() {
 		List<Skill> skills = _registry.getSkillsFor(_agentClass);
 		if (skills.isEmpty()) {
@@ -68,10 +72,10 @@ public class SkillTool {
 	 * Loads a skill by its id, returning its full content.
 	 *
 	 * @param skillId
-	 *        The skill id from the catalog (e.g. {@code "tlscript/enum-comparison"}).
+	 *        The skill id from the catalog (e.g. {@code "shared/prompting-model-explorer"}).
 	 * @return The full skill content, or an error message if not available.
 	 */
-	@Tool("Loads a skill by its id, returning its full content. Call after listAvailableSkills to load instructions you need for the current task.")
+	@Tool("Loads a skill by its id. Returns specialized instructions you MUST follow for the related task. Check the Available Skills section in your system instructions for skill ids and when to use them.")
 	public String loadSkill(@P("Skill id from the catalog, e.g. 'shared/prompting-model-explorer'") String skillId) {
 		Map<String, Object> args = Map.of("skillId", skillId);
 		List<Skill> skills = _registry.getSkillsFor(_agentClass);

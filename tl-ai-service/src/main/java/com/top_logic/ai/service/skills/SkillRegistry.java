@@ -44,7 +44,7 @@ public class SkillRegistry {
 	 * </p>
 	 *
 	 * @param name
-	 *        The skill name (e.g. {@code "tlscript/enum-comparison"}).
+	 *        The skill name (e.g. {@code "shared/prompting-model-explorer"}).
 	 * @return The loaded skill.
 	 * @throws IllegalArgumentException
 	 *         if the skill resource is not found.
@@ -89,12 +89,26 @@ public class SkillRegistry {
 	}
 
 	/**
-	 * Builds the full system prompt for an agent by reading its {@link SystemMessage} annotation
-	 * and appending a catalog of available on-demand skills (if any are registered).
+	 * Placeholder marker that can be placed in a {@link SystemMessage} annotation to control where
+	 * the skill catalog is injected. If the marker is not present, the catalog is appended at the
+	 * end.
 	 *
 	 * <p>
-	 * If the agent has no registered skills, the original {@link SystemMessage} text is returned
-	 * unchanged.
+	 * Note: Uses angle brackets ({@code <<...>>}) instead of curly braces because
+	 * <i>LangChain4j</i> interprets {@code &#123;&#123;...&#125;&#125;} as template variables in
+	 * {@link SystemMessage} annotations.
+	 * </p>
+	 */
+	public static final String SKILLS_PLACEHOLDER = "<<AVAILABLE_SKILLS>>";
+
+	/**
+	 * Builds the full system prompt for an agent by reading its {@link SystemMessage} annotation
+	 * and injecting a catalog of available on-demand skills.
+	 *
+	 * <p>
+	 * If the base prompt contains the {@link #SKILLS_PLACEHOLDER} marker, the skill catalog
+	 * replaces the marker at that position. Otherwise, the catalog is appended at the end. If the
+	 * agent has no registered skills, the marker is removed (or nothing is appended).
 	 * </p>
 	 *
 	 * @param agentClass
@@ -104,17 +118,49 @@ public class SkillRegistry {
 	public String buildSystemPrompt(Class<?> agentClass) {
 		String basePrompt = readSystemMessageAnnotation(agentClass);
 		List<Skill> skills = getSkillsFor(agentClass);
+		String skillSection = buildSkillSection(skills);
+
+		if (basePrompt.contains(SKILLS_PLACEHOLDER)) {
+			return basePrompt.replace(SKILLS_PLACEHOLDER, skillSection);
+		}
+
 		if (skills.isEmpty()) {
 			return basePrompt;
 		}
-		StringBuilder sb = new StringBuilder(basePrompt);
-		sb.append("\n\n---\n\n");
-		sb.append("## Available Skills\n\n");
-		sb.append("The following skills can be loaded on-demand using the `loadSkill` tool. ");
-		sb.append("Load a skill when you need its specialized instructions for the current task.\n\n");
-		for (Skill skill : skills) {
-			sb.append("- `").append(skill.id()).append("`: ").append(skill.description()).append("\n");
+		return basePrompt + "\n\n---\n\n" + skillSection;
+	}
+
+	private String buildSkillSection(List<Skill> skills) {
+		if (skills.isEmpty()) {
+			return "";
 		}
+
+		List<Skill> autoSkills = skills.stream()
+			.filter(s -> s.mode() == Skill.Mode.AUTO)
+			.toList();
+		List<Skill> onDemandSkills = skills.stream()
+			.filter(s -> s.mode() == Skill.Mode.ON_DEMAND)
+			.toList();
+
+		StringBuilder sb = new StringBuilder();
+
+		// Auto skills: inject full content directly
+		for (Skill skill : autoSkills) {
+			sb.append("### ").append(skill.description()).append("\n\n");
+			sb.append(skill.content()).append("\n\n");
+		}
+
+		// On-demand skills: catalog with loadSkill instructions
+		if (!onDemandSkills.isEmpty()) {
+			sb.append("### Available Skills (IMPORTANT)\n\n");
+			sb.append("You have specialized skills that improve your work. ");
+			sb.append(
+				"Load a skill BEFORE performing the related action by calling `loadSkill(\"skill-id\")`.\n\n");
+			for (Skill skill : onDemandSkills) {
+				sb.append("- `").append(skill.id()).append("`: ").append(skill.description()).append("\n");
+			}
+		}
+
 		return sb.toString();
 	}
 
@@ -146,7 +192,7 @@ public class SkillRegistry {
 
 	private Skill parseSkill(String id, String raw) {
 		if (!raw.startsWith(FRONTMATTER_DELIMITER)) {
-			return new Skill(id, id, raw);
+			return new Skill(id, id, Skill.Mode.ON_DEMAND, raw);
 		}
 
 		String closingDelimiter = "\n" + FRONTMATTER_DELIMITER + "\n";
@@ -156,13 +202,14 @@ public class SkillRegistry {
 			endIndex = raw.indexOf(closingDelimiter, FRONTMATTER_DELIMITER.length());
 		}
 		if (endIndex < 0) {
-			return new Skill(id, id, raw);
+			return new Skill(id, id, Skill.Mode.ON_DEMAND, raw);
 		}
 
 		String frontmatter = raw.substring(FRONTMATTER_DELIMITER.length(), endIndex).trim();
 		String content = raw.substring(endIndex + closingDelimiter.length()).trim();
 
 		String description = id;
+		Skill.Mode mode = Skill.Mode.ON_DEMAND;
 
 		for (String line : frontmatter.split("\n")) {
 			int colonIndex = line.indexOf(':');
@@ -173,8 +220,10 @@ public class SkillRegistry {
 			String value = line.substring(colonIndex + 1).trim();
 			if ("description".equals(key)) {
 				description = value;
+			} else if ("mode".equals(key)) {
+				mode = Skill.Mode.parse(value);
 			}
 		}
-		return new Skill(id, description, content);
+		return new Skill(id, description, mode, content);
 	}
 }

@@ -106,6 +106,8 @@ public interface OrchestratorRouter {
 		- Validate or fix TLScript code, "how do I do X in TLScript"
 		- **Explaining ANY TLScript code** (including code returned by ModelExplorer)
 
+		<<AVAILABLE_SKILLS>>
+
 		---
 		## WORK ORDER DISCIPLINE (for every tool call)
 

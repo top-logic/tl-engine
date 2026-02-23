@@ -6,10 +6,9 @@
 package test.com.top_logic.basic.config.json;
 
 import junit.framework.Test;
-import junit.framework.TestCase;
+import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.BasicTestSetup;
-import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationItem;
@@ -17,17 +16,12 @@ import com.top_logic.basic.config.ExternallyNamed;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.json.JsonConfigSchemaBuilder;
-import com.top_logic.basic.json.schema.JsonSchemaWriter;
-import com.top_logic.basic.json.schema.model.EnumSchema;
-import com.top_logic.basic.json.schema.model.ObjectSchema;
-import com.top_logic.basic.json.schema.model.Schema;
-import com.top_logic.basic.thread.ThreadContextManager;
 
 /**
  * Test case for {@link JsonConfigSchemaBuilder} enum handling.
  */
 @SuppressWarnings("javadoc")
-public class TestJsonConfigSchemaBuilderEnums extends TestCase {
+public class TestJsonConfigSchemaBuilderEnums extends AbstractJsonConfigurationWriterTest {
 
 	/**
 	 * Regular enum using standard Java names.
@@ -135,108 +129,68 @@ public class TestJsonConfigSchemaBuilderEnums extends TestCase {
 	/**
 	 * Tests that regular enum uses Java constant names.
 	 */
-	public void testRegularEnum() {
-		JsonConfigSchemaBuilder builder = new JsonConfigSchemaBuilder();
+	public void testRegularEnum() throws Exception {
 		ConfigurationDescriptor descriptor = TypedConfiguration.getConfigurationDescriptor(ConfigWithRegularEnum.class);
 
-		Schema schema = builder.buildConfigSchema(descriptor);
+		String actualJson = buildSchemaJson(descriptor);
+		String expectedJson = loadExpectedSchema("TestJsonConfigSchemaBuilderEnums-testRegularEnum.json", actualJson);
 
-		assertTrue("Should be ObjectSchema", schema instanceof ObjectSchema);
-		ObjectSchema objectSchema = (ObjectSchema) schema;
-
-		Schema enumProperty = objectSchema.getProperties().get("regular-enum");
-		assertNotNull("Should have regular-enum property", enumProperty);
-		assertTrue("Should be EnumSchema", enumProperty instanceof EnumSchema);
-
-		EnumSchema enumSchema = (EnumSchema) enumProperty;
-		assertEquals("Should have 3 values", 3, enumSchema.getEnumLiterals().size());
-		assertTrue("Should contain VALUE_ONE", enumSchema.getEnumLiterals().contains("VALUE_ONE"));
-		assertTrue("Should contain VALUE_TWO", enumSchema.getEnumLiterals().contains("VALUE_TWO"));
-		assertTrue("Should contain VALUE_THREE", enumSchema.getEnumLiterals().contains("VALUE_THREE"));
-
-		System.out.println("Regular Enum Schema:");
-		System.out.println(JsonSchemaWriter.toJson(enumSchema, true));
+		assertEquals(expectedJson, actualJson);
 	}
 
 	/**
 	 * Tests that ExternallyNamed enum uses external names.
 	 */
-	public void testExternallyNamedEnum() {
-		JsonConfigSchemaBuilder builder = new JsonConfigSchemaBuilder();
+	public void testExternallyNamedEnum() throws Exception {
 		ConfigurationDescriptor descriptor = TypedConfiguration.getConfigurationDescriptor(ConfigWithExternalEnum.class);
 
-		Schema schema = builder.buildConfigSchema(descriptor);
+		String actualJson = buildSchemaJson(descriptor);
+		String expectedJson =
+			loadExpectedSchema("TestJsonConfigSchemaBuilderEnums-testExternallyNamedEnum.json", actualJson);
 
-		assertTrue("Should be ObjectSchema", schema instanceof ObjectSchema);
-		ObjectSchema objectSchema = (ObjectSchema) schema;
-
-		Schema enumProperty = objectSchema.getProperties().get("external-enum");
-		assertNotNull("Should have external-enum property", enumProperty);
-		assertTrue("Should be EnumSchema", enumProperty instanceof EnumSchema);
-
-		EnumSchema enumSchema = (EnumSchema) enumProperty;
-		assertEquals("Should have 3 values", 3, enumSchema.getEnumLiterals().size());
-		assertTrue("Should contain option-a", enumSchema.getEnumLiterals().contains("option-a"));
-		assertTrue("Should contain option-b", enumSchema.getEnumLiterals().contains("option-b"));
-		assertTrue("Should contain option-c", enumSchema.getEnumLiterals().contains("option-c"));
-
-		System.out.println("ExternallyNamed Enum Schema:");
-		System.out.println(JsonSchemaWriter.toJson(enumSchema, true));
+		assertEquals(expectedJson, actualJson);
 	}
 
 	/**
 	 * Tests that ProtocolEnum uses protocol names.
 	 */
-	public void testProtocolEnum() {
-		JsonConfigSchemaBuilder builder = new JsonConfigSchemaBuilder();
-		ConfigurationDescriptor descriptor = TypedConfiguration.getConfigurationDescriptor(ConfigWithProtocolEnum.class);
+	public void testProtocolEnum() throws Exception {
+		ConfigurationDescriptor descriptor =
+			TypedConfiguration.getConfigurationDescriptor(ConfigWithProtocolEnum.class);
 
-		Schema schema = builder.buildConfigSchema(descriptor);
+		String actualJson = buildSchemaJson(descriptor);
+		String expectedJson =
+			loadExpectedSchema("TestJsonConfigSchemaBuilderEnums-testProtocolEnum.json", actualJson);
 
-		assertTrue("Should be ObjectSchema", schema instanceof ObjectSchema);
-		ObjectSchema objectSchema = (ObjectSchema) schema;
-
-		Schema enumProperty = objectSchema.getProperties().get("protocol-enum");
-		assertNotNull("Should have protocol-enum property", enumProperty);
-		assertTrue("Should be EnumSchema", enumProperty instanceof EnumSchema);
-
-		EnumSchema enumSchema = (EnumSchema) enumProperty;
-		assertEquals("Should have 3 values", 3, enumSchema.getEnumLiterals().size());
-		assertTrue("Should contain left", enumSchema.getEnumLiterals().contains("left"));
-		assertTrue("Should contain center", enumSchema.getEnumLiterals().contains("center"));
-		assertTrue("Should contain right", enumSchema.getEnumLiterals().contains("right"));
-
-		System.out.println("ProtocolEnum Schema:");
-		System.out.println(JsonSchemaWriter.toJson(enumSchema, true));
+		assertEquals(expectedJson, actualJson);
 	}
 
 	/**
 	 * Tests that Name-annotated enum uses annotation values.
 	 */
-	public void testNameAnnotatedEnum() {
-		JsonConfigSchemaBuilder builder = new JsonConfigSchemaBuilder();
+	public void testNameAnnotatedEnum() throws Exception {
 		ConfigurationDescriptor descriptor =
 			TypedConfiguration.getConfigurationDescriptor(ConfigWithNameAnnotatedEnum.class);
 
-		Schema schema = builder.buildConfigSchema(descriptor);
+		String actualJson = buildSchemaJson(descriptor);
+		String expectedJson =
+			loadExpectedSchema("TestJsonConfigSchemaBuilderEnums-testNameAnnotatedEnum.json", actualJson);
 
-		assertTrue("Should be ObjectSchema", schema instanceof ObjectSchema);
-		ObjectSchema objectSchema = (ObjectSchema) schema;
+		assertEquals(expectedJson, actualJson);
+	}
 
-		Schema enumProperty = objectSchema.getProperties().get("name-annotated-enum");
-		assertNotNull("Should have name-annotated-enum property", enumProperty);
-		assertTrue("Should be EnumSchema", enumProperty instanceof EnumSchema);
-
-		EnumSchema enumSchema = (EnumSchema) enumProperty;
-		assertEquals("Should have 3 values", 3, enumSchema.getEnumLiterals().size());
-		assertTrue("Should contain first-option", enumSchema.getEnumLiterals().contains("first-option"));
-		assertTrue("Should contain second-option", enumSchema.getEnumLiterals().contains("second-option"));
-		assertTrue("Should contain third-option", enumSchema.getEnumLiterals().contains("third-option"));
+	private String loadExpectedSchema(String resourceName, String actualSchema) throws Exception {
+		java.io.InputStream in = getClass().getResourceAsStream(resourceName);
+		if (in == null) {
+			fail("Expected schema resource not found: " + resourceName +
+				". Create this file with the expected schema. Actual schema: \n" + actualSchema);
+			return "";
+		} else {
+			return new String(in.readAllBytes(), "UTF-8");
+		}
 	}
 
 	public static Test suite() {
-		return BasicTestSetup.createBasicTestSetup(
-			ServiceTestSetup.createSetup(
-				TestJsonConfigSchemaBuilderEnums.class, ThreadContextManager.Module.INSTANCE));
+		return BasicTestSetup.createBasicTestSetup(new TestSuite(TestJsonConfigSchemaBuilderEnums.class));
 	}
 }

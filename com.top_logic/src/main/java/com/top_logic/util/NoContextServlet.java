@@ -29,7 +29,7 @@ import com.top_logic.layout.basic.DefaultDisplayContext;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class NoContextServlet extends HttpServlet {
+public class NoContextServlet extends AbstractTopLogicServlet {
 
 	private static final String ACCEPT_LANGUAGE_HEADER = "accept-language";
 

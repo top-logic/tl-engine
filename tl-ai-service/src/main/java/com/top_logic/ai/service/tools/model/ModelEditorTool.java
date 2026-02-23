@@ -77,6 +77,13 @@ public class ModelEditorTool {
 	}
 
 	/**
+	 * Creates a new {@link ModelEditorTool}.
+	 */
+	public ModelEditorTool() {
+		// stateless tool
+	}
+
+	/**
 	 * Creates a new {@link ModelEditorTool} from configuration.
 	 */
 	@CalledByReflection

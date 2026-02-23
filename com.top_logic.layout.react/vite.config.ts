@@ -10,7 +10,7 @@ export default defineConfig({
       fileName: () => 'tl-react-bridge.js',
       formats: ['iife'],
     },
-    outDir: 'src/main/webapp/react',
+    outDir: 'src/main/webapp/script',
     emptyOutDir: false,
     rollupOptions: {
       output: {

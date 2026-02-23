@@ -9,31 +9,40 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Map;
 
-import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
+import com.top_logic.base.context.TLSessionContext;
+import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.layout.CommandListener;
+import com.top_logic.layout.ContentHandlersRegistry;
 import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.basic.DummyDisplayContext;
+import com.top_logic.layout.basic.DefaultDisplayContext;
+import com.top_logic.layout.internal.SubsessionHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.TLContextManager;
+import com.top_logic.util.TopLogicServlet;
 
 /**
  * Servlet that handles React client commands.
  *
  * <p>
- * The client sends JSON-encoded command requests via POST. The servlet validates the session,
- * resolves the target control from the session-scoped {@link SSEUpdateQueue}, and dispatches the
- * command. Any resulting state updates are delivered via SSE.
+ * Extends {@link TopLogicServlet} to get a proper {@link DisplayContext} with session and subsession
+ * setup. The client sends JSON-encoded command requests via POST. The servlet resolves the target
+ * control from the session-scoped {@link SSEUpdateQueue} and dispatches the command. Any resulting
+ * state updates are delivered via SSE.
  * </p>
  */
-public class ReactServlet extends HttpServlet {
+public class ReactServlet extends TopLogicServlet {
 
 	@Override
-	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
+	protected void doPost(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
 		HttpSession session = request.getSession(false);
 		if (session == null) {
 			sendError(response, HttpServletResponse.SC_UNAUTHORIZED, "No session.");
@@ -86,6 +95,7 @@ public class ReactServlet extends HttpServlet {
 		Map<String, Object> commandData = (Map<String, Object>) parsed;
 		String controlId = (String) commandData.get("controlId");
 		String commandName = (String) commandData.get("command");
+		String windowName = (String) commandData.get("windowName");
 		Map<String, Object> arguments = (Map<String, Object>) commandData.get("arguments");
 
 		if (controlId == null || commandName == null) {
@@ -104,7 +114,22 @@ public class ReactServlet extends HttpServlet {
 			return;
 		}
 
-		DisplayContext displayContext = new DummyDisplayContext(request.getServletContext());
+		// Obtain the real DisplayContext set up by TopLogicServlet.
+		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
+
+		// Install subsession context if the client sent the window name.
+		if (!StringServices.isEmpty(windowName)) {
+			TLSessionContext sessionContext = TLContextManager.getSession();
+			if (sessionContext != null) {
+				ContentHandlersRegistry handlersRegistry = sessionContext.getHandlersRegistry();
+				SubsessionHandler rootHandler = handlersRegistry.getContentHandler(windowName);
+				if (rootHandler != null) {
+					TLSubSessionContext subSession = sessionContext.getSubSession(windowName);
+					displayContext.installSubSessionContext(subSession);
+				}
+			}
+		}
+
 		HandlerResult result = control.executeCommand(displayContext, commandName, arguments);
 
 		if (result.isSuccess()) {

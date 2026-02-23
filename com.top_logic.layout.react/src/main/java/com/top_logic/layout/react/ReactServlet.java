@@ -16,14 +16,18 @@ import jakarta.servlet.http.HttpSession;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.json.JSON;
+import com.top_logic.layout.CommandListener;
+import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.basic.DummyDisplayContext;
+import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * Servlet that handles React client commands.
  *
  * <p>
  * The client sends JSON-encoded command requests via POST. The servlet validates the session,
- * resolves the target control, and dispatches the command. Any resulting state updates are delivered
- * via SSE.
+ * resolves the target control from the session-scoped {@link SSEUpdateQueue}, and dispatches the
+ * command. Any resulting state updates are delivered via SSE.
  * </p>
  */
 public class ReactServlet extends HttpServlet {
@@ -93,13 +97,24 @@ public class ReactServlet extends HttpServlet {
 			arguments = Map.of();
 		}
 
-		// TODO: Resolve control from FrameScope via subsession, dispatch command, collect updates.
-		// For now, log and return success.
-		Logger.info("React command: controlId=" + controlId + ", command=" + commandName, ReactServlet.class);
+		SSEUpdateQueue queue = SSEUpdateQueue.forSession(session);
+		CommandListener control = queue.getControl(controlId);
+		if (control == null) {
+			sendError(response, HttpServletResponse.SC_NOT_FOUND, "Control not found: " + controlId);
+			return;
+		}
 
-		sendSuccess(response);
+		DisplayContext displayContext = new DummyDisplayContext(request.getServletContext());
+		HandlerResult result = control.executeCommand(displayContext, commandName, arguments);
+
+		if (result.isSuccess()) {
+			sendSuccess(response);
+		} else {
+			sendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Command failed.");
+		}
 	}
 
+	@SuppressWarnings("unchecked")
 	private void handleState(HttpServletRequest request, HttpServletResponse response, HttpSession session)
 			throws IOException {
 		String controlId = request.getParameter("controlId");
@@ -108,11 +123,16 @@ public class ReactServlet extends HttpServlet {
 			return;
 		}
 
-		// TODO: Resolve control from FrameScope, return getReactState().
-		// For now, return empty state.
-		PrintWriter writer = response.getWriter();
-		writer.write("{}");
-		writer.flush();
+		SSEUpdateQueue queue = SSEUpdateQueue.forSession(session);
+		CommandListener control = queue.getControl(controlId);
+		if (control instanceof ReactControl) {
+			ReactControl reactControl = (ReactControl) control;
+			PrintWriter writer = response.getWriter();
+			writer.write(ReactControl.toJsonString(reactControl.getReactState()));
+			writer.flush();
+		} else {
+			sendError(response, HttpServletResponse.SC_NOT_FOUND, "Control not found: " + controlId);
+		}
 	}
 
 	private void sendSuccess(HttpServletResponse response) throws IOException {

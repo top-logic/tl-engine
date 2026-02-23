@@ -130,6 +130,10 @@
       <groupId>com.top-logic</groupId>
       <artifactId>tl-kafka</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-layout-react</artifactId>
+    </dependency>
   </dependencies>
   
 	<build>

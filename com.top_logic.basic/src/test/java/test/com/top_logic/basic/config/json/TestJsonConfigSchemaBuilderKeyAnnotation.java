@@ -94,6 +94,18 @@ public class TestJsonConfigSchemaBuilderKeyAnnotation extends AbstractJsonConfig
 	}
 
 	/**
+	 * A configuration with a direct Organization property (not polymorphic).
+	 */
+	public interface ConfigWithDirectOrganization extends ConfigurationItem {
+		String ORG = "org";
+
+		@Name(ORG)
+		Organization getOrg();
+
+		void setOrg(Organization value);
+	}
+
+	/**
 	 * A configuration with a map of polymorphic named items.
 	 */
 	public interface ConfigWithPolymorphicMap extends ConfigurationItem {
@@ -301,6 +313,40 @@ public class TestJsonConfigSchemaBuilderKeyAnnotation extends AbstractJsonConfig
 		// Serialize configuration to JSON and validate against schema
 		ConfigurationDescriptor descriptor =
 			TypedConfiguration.getConfigurationDescriptor(ConfigWithPolymorphicMap.class);
+		String configJson = writeJson(descriptor, config);
+		validateAgainstSchema(descriptor, configJson);
+	}
+
+	/**
+	 * Tests that a @Final type used directly (not polymorphically) does not include $type.
+	 */
+	public void testFinalTypeDirectUsage() throws Exception {
+		ConfigurationDescriptor descriptor =
+			TypedConfiguration.getConfigurationDescriptor(ConfigWithDirectOrganization.class);
+
+		Schema schema = new JsonConfigSchemaBuilder().setInline(true).buildConfigSchema(descriptor);
+		String actualJson = JsonSchemaWriter.toJson(schema, true);
+
+		String expectedJson = loadExpectedSchema(
+			"TestJsonConfigSchemaBuilderKeyAnnotation-testFinalTypeDirectUsage.json", actualJson);
+
+		assertEquals(expectedJson, actualJson);
+	}
+
+	/**
+	 * Tests that a @Final type used directly validates correctly (no $type needed in JSON).
+	 */
+	public void testFinalTypeDirectUsageValidation() throws Exception {
+		ConfigWithDirectOrganization config =
+			TypedConfiguration.newConfigItem(ConfigWithDirectOrganization.class);
+
+		Organization org = TypedConfiguration.newConfigItem(Organization.class);
+		org.setName("Acme");
+		org.setEmployeeCount(100);
+		config.setOrg(org);
+
+		ConfigurationDescriptor descriptor =
+			TypedConfiguration.getConfigurationDescriptor(ConfigWithDirectOrganization.class);
 		String configJson = writeJson(descriptor, config);
 		validateAgainstSchema(descriptor, configJson);
 	}

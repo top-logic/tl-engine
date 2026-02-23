@@ -541,12 +541,6 @@ public class JsonConfigSchemaBuilder {
 		if (typeId.equals(ConfigurationItem.class.getName())) {
 			// Safety: Do not iterate the world.
 			result = allConfigs();
-		} else if (descriptor.isFinal()) {
-			// Final types: no $type annotation, no subtypes considered.
-			result = buildPropertiesSchema(descriptor, excludeProperty);
-			if (result instanceof ObjectSchema objSchema) {
-				objSchema.setAdditionalProperties(NONE);
-			}
 		} else {
 			result = NONE;
 
@@ -1014,8 +1008,41 @@ public class JsonConfigSchemaBuilder {
 		// Get the configuration descriptor for the nested interface
 		ConfigurationDescriptor valueDescriptor = property.getValueDescriptor();
 
+		if (valueDescriptor.isFinal()) {
+			// Final type used directly: no $type needed since the type is known and cannot be
+			// subtyped. Build a reusable properties-only schema definition.
+			return buildFinalDirectSchema(valueDescriptor, excludeProperty);
+		}
+
 		// Recursively build schema for the nested configuration
 		return buildConfigValueSchema(valueDescriptor, excludeProperty);
+	}
+
+	/**
+	 * Builds a properties-only schema for a {@link ConfigurationDescriptor#isFinal() final} type
+	 * used directly (not in a polymorphic context). The schema omits the <code>$type</code>
+	 * property since the type is known and cannot be subtyped.
+	 *
+	 * <p>
+	 * The schema is cached and reused for all properties that directly reference the same final
+	 * type.
+	 * </p>
+	 */
+	private Schema buildFinalDirectSchema(ConfigurationDescriptor descriptor, String excludeProperty) {
+		String finalSchemaId = schemaId(descriptor, excludeProperty) + "#final";
+
+		if (!_schemaCache.containsKey(finalSchemaId)) {
+			_schemaCache.put(finalSchemaId, null);
+
+			Schema result = buildPropertiesSchema(descriptor, excludeProperty);
+			if (result instanceof ObjectSchema objSchema) {
+				objSchema.setAdditionalProperties(NONE);
+			}
+
+			_schemaCache.put(finalSchemaId, result);
+		}
+
+		return ref(finalSchemaId, descriptor.getConfigurationInterface());
 	}
 
 	/**

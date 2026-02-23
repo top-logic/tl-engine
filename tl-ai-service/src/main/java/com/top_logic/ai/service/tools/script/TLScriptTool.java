@@ -7,6 +7,10 @@ package com.top_logic.ai.service.tools.script;
 
 import java.util.List;
 
+import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+
 import com.top_logic.ai.service.tools.help.messages.ErrorResult;
 import com.top_logic.ai.service.tools.script.TLScriptExecutor.ExecutionResult;
 import com.top_logic.ai.service.tools.script.messages.ValidationResult;
@@ -32,6 +36,21 @@ import dev.langchain4j.agent.tool.Tool;
  * </p>
  */
 public class TLScriptTool {
+
+	/**
+	 * Configuration for {@link TLScriptTool}.
+	 */
+	public interface Config extends PolymorphicConfiguration<TLScriptTool> {
+		// no additional properties
+	}
+
+	/**
+	 * Creates a new {@link TLScriptTool} from configuration.
+	 */
+	@CalledByReflection
+	public TLScriptTool(InstantiationContext context, Config config) {
+		// no-op for stateless tools
+	}
 
 	/**
 	 * Validates TLScript code without executing it.

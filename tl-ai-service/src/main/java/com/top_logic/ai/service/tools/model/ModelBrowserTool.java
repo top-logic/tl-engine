@@ -11,6 +11,10 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 
+import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+
 import com.top_logic.ai.service.tools.model.messages.ClassifierInfo;
 import com.top_logic.ai.service.tools.model.messages.EnumerationResponse;
 import com.top_logic.ai.service.tools.model.messages.ErrorResponse;
@@ -65,6 +69,28 @@ import dev.langchain4j.agent.tool.Tool;
  * @author jhu
  */
 public class ModelBrowserTool {
+
+	/**
+	 * Configuration for {@link ModelBrowserTool}.
+	 */
+	public interface Config extends PolymorphicConfiguration<ModelBrowserTool> {
+		// no additional properties
+	}
+
+	/**
+	 * Creates a new {@link ModelBrowserTool}.
+	 */
+	public ModelBrowserTool() {
+		// stateless tool
+	}
+
+	/**
+	 * Creates a new {@link ModelBrowserTool} from configuration.
+	 */
+	@CalledByReflection
+	public ModelBrowserTool(InstantiationContext context, Config config) {
+		// no-op for stateless tools
+	}
 
 	/**
 	 * Lists all modules in the TopLogic application model.

@@ -5,7 +5,7 @@
 		<config service-class="com.top_logic.ai.service.agents.AgentRegistry">
 			<instance class="com.top_logic.ai.service.agents.AgentRegistry">
 				<agent name="orchestrator" model="claude-opus-4-6"
-					   thinking-type="adaptive" max-tokens="16000">
+					   thinking-type="ADAPTIVE" max-tokens="16000">
 					<system-prompt><![CDATA[You are the **Orchestrator** for a TopLogic AI assistant. You do not answer from your own knowledge. Your job is to think, plan, call specialists when needed (zero, one, or several), and synthesize a final answer.
 
 ---
@@ -122,12 +122,9 @@ Example flow:
 
 If the user message starts with "/explore-model", "/tlscript", or "/model-creation", treat the rest as the main question. The prefix is a hint; your planning and steps still decide whether to call one or multiple tools.]]></system-prompt>
 					<tools>
-						<tool class="com.top_logic.ai.service.agents.AgentDelegationTools$Exploration"
-							from-agent="Orchestrator"/>
-						<tool class="com.top_logic.ai.service.agents.AgentDelegationTools$Creation"
-							from-agent="Orchestrator"/>
-						<tool class="com.top_logic.ai.service.agents.AgentDelegationTools$TLScript"
-							from-agent="Orchestrator"/>
+						<exploration from-agent="Orchestrator"/>
+						<creation from-agent="Orchestrator"/>
+						<tlscript-delegation from-agent="Orchestrator"/>
 					</tools>
 					<skills>shared/prompting-model-explorer</skills>
 				</agent>
@@ -575,12 +572,12 @@ Facts
   - customer (reference, target=app.customers:Customer)
   - lines (reference, target=app.orders:OrderLine, multiple=true)]]></system-prompt>
 					<tools>
-						<tool class="com.top_logic.ai.service.tools.model.ModelBrowserTool"/>
-						<tool class="com.top_logic.ai.service.tools.model.InstanceBrowserTool"/>
-						<tool class="com.top_logic.ai.service.tools.model.TypeAnalysisTool"/>
-						<tool class="com.top_logic.ai.service.tools.model.ModelSearchTool"/>
-						<tool class="com.top_logic.ai.service.tools.model.ModelAnnotationBrowserTool"/>
-						<tool class="com.top_logic.ai.service.tools.model.AnnotationDefinitionExplorerTool"/>
+						<model-browser/>
+						<instance-browser/>
+						<type-analysis/>
+						<model-search/>
+						<annotation-browser/>
+						<annotation-explorer/>
 					</tools>
 				</agent>
 
@@ -679,9 +676,8 @@ After all creation steps, respond with a structured summary:
 
 Do NOT include long explanations. Be concise and factual.]]></system-prompt>
 					<tools>
-						<tool class="com.top_logic.ai.service.tools.model.ModelEditorTool"/>
-						<tool class="com.top_logic.ai.service.agents.AgentDelegationTools$TLScript"
-							from-agent="ModelEditor"/>
+						<model-editor/>
+						<tlscript-delegation from-agent="ModelEditor"/>
 					</tools>
 				</agent>
 
@@ -860,10 +856,9 @@ Bad: "You can use the sum() function to add values..."
 
 Good: [First call get-function-doc("sum")] → "The sum() function (verified) takes a collection and returns..."]]></system-prompt>
 					<tools>
-						<tool class="com.top_logic.ai.service.tools.help.TLScriptReferenceTool"/>
-						<tool class="com.top_logic.ai.service.agents.AgentDelegationTools$Exploration"
-							from-agent="TLScriptAgent"/>
-						<tool class="com.top_logic.ai.service.tools.script.TLScriptTool"/>
+						<tlscript-reference/>
+						<exploration from-agent="TLScriptAgent"/>
+						<tlscript/>
 					</tools>
 					<skills>shared/prompting-model-explorer</skills>
 				</agent>

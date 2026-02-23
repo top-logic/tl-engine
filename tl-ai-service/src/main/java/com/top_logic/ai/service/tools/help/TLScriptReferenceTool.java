@@ -12,6 +12,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+
 import com.top_logic.ai.service.scripting.Converters;
 import com.top_logic.ai.service.tools.help.messages.FunctionDocResult;
 import com.top_logic.ai.service.tools.help.messages.FunctionListResult;
@@ -35,6 +39,21 @@ import dev.langchain4j.agent.tool.Tool;
  * </p>
  */
 public class TLScriptReferenceTool {
+
+	/**
+	 * Configuration for {@link TLScriptReferenceTool}.
+	 */
+	public interface Config extends PolymorphicConfiguration<TLScriptReferenceTool> {
+		// no additional properties
+	}
+
+	/**
+	 * Creates a new {@link TLScriptReferenceTool} from configuration.
+	 */
+	@CalledByReflection
+	public TLScriptReferenceTool(InstantiationContext context, Config config) {
+		// no-op for stateless tools
+	}
 
 	/**
 	 * Lists all available TLScript functions and methods.

@@ -15,6 +15,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+
 import com.top_logic.ai.service.tools.model.messages.BackwardReferenceResponse;
 import com.top_logic.ai.service.tools.model.messages.ClassResponse;
 import com.top_logic.ai.service.tools.model.messages.EnumClassifierInfo;
@@ -64,6 +68,21 @@ import dev.langchain4j.agent.tool.Tool;
  * </p>
  */
 public class ModelEditorTool {
+
+	/**
+	 * Configuration for {@link ModelEditorTool}.
+	 */
+	public interface Config extends PolymorphicConfiguration<ModelEditorTool> {
+		// no additional properties
+	}
+
+	/**
+	 * Creates a new {@link ModelEditorTool} from configuration.
+	 */
+	@CalledByReflection
+	public ModelEditorTool(InstantiationContext context, Config config) {
+		// no-op for stateless tools
+	}
 
 	private static final Pattern CLASS_NAME_PATTERN = Pattern.compile("^[A-Z][a-zA-Z0-9_]*$");
 

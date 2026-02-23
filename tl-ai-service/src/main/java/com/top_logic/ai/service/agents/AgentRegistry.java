@@ -229,10 +229,10 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	 *
 	 * <p>
 	 * Reads the base prompt from {@link AgentConfig#getSystemPrompt()}, resolves the agent's
-	 * {@link AgentConfig#getSkills() skills}, and injects skill sections: {@link Skill.Mode#AUTO
-	 * AUTO} skills are injected in full, {@link Skill.Mode#ON_DEMAND ON_DEMAND} skills appear as a
-	 * catalog. If the base prompt contains {@link SkillRegistry#SKILLS_PLACEHOLDER}, the skill
-	 * section replaces it; otherwise, it is appended.
+	 * {@link AgentConfig#getSkills() skills}, and injects skill sections: auto skills are injected
+	 * in full, on demand skills appear as a catalog. If the base prompt contains
+	 * {@link SkillRegistry#SKILLS_PLACEHOLDER}, the skill section replaces it; otherwise, it is
+	 * appended.
 	 * </p>
 	 *
 	 * @param config
@@ -388,7 +388,7 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 			.modelName(config.getModel());
 
 		if (config.getThinkingType() != null) {
-			builder.thinkingType(config.getThinkingType());
+			builder.thinkingType(config.getThinkingType().getValue());
 			builder.returnThinking(config.getReturnThinking());
 			builder.sendThinking(config.getSendThinking());
 		}

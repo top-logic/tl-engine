@@ -143,11 +143,7 @@ public interface OrchestratorRouter {
 
 		If the user message starts with "/explore-model", "/tlscript", or "/model-creation", treat the rest as the main question. The prefix is a hint; your planning and steps still decide whether to call one or multiple tools.
 		""")
-	@UserMessage("""
-		User message: {{userMessage}}
-
-		Think: what does the user want, what steps are needed, do any need a specialist? Call zero, one, or several specialist tools as needed. After each result, ask yourself: is it enough? When you have enough, synthesize and respond to the user.
-		""")
+	@UserMessage("{{userMessage}}")
 	@Agent("Orchestrator: plans steps, calls Model Explorer / Model Creator / TLScript specialist as needed (0..N), synthesizes answer")
 	String chat(@V("userMessage") String userMessage);
 }

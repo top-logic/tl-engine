@@ -6,6 +6,8 @@
 package com.top_logic.ai.service.agents;
 
 import com.top_logic.ai.service.AIService;
+import com.top_logic.ai.service.ChatModelFactory;
+import com.top_logic.ai.service.providers.AnthropicChatModelFactory;
 import com.top_logic.ai.service.skills.SkillConfig;
 import com.top_logic.ai.service.skills.SkillRegistry;
 import com.top_logic.ai.service.skills.SkillTool;
@@ -13,6 +15,7 @@ import com.top_logic.basic.thread.ThreadContextManager;
 
 import dev.langchain4j.agentic.AgenticServices;
 import dev.langchain4j.memory.ChatMemory;
+import dev.langchain4j.model.anthropic.AnthropicChatModel;
 import dev.langchain4j.model.chat.ChatModel;
 
 /**
@@ -53,7 +56,7 @@ public final class OrchestratorAgent {
 			return "AIService is not available. Please ensure the service is started.";
 		}
 
-		ChatModel model = aiService.getChatModel("claude-opus-4-6");
+		ChatModel model = createThinkingModel(aiService);
 		SkillRegistry registry = SkillConfig.getInstance();
 		String systemPrompt = registry.buildSystemPrompt(OrchestratorRouter.class);
 		OrchestratorRouter router = AgenticServices.agentBuilder(OrchestratorRouter.class)
@@ -69,6 +72,36 @@ public final class OrchestratorAgent {
 
 		return ThreadContextManager.inSystemInteraction(OrchestratorAgent.class,
 			() -> router.chat(trimmed));
+	}
+
+	private static final String ORCHESTRATOR_MODEL = "claude-opus-4-6";
+
+	/**
+	 * Creates a dedicated Anthropic model with adaptive thinking enabled.
+	 *
+	 * <p>
+	 * This builds an unpooled model specifically for the orchestrator so that thinking is
+	 * structurally separated from the response text. The model decides autonomously when and how
+	 * much to think based on query complexity.
+	 * </p>
+	 */
+	private static ChatModel createThinkingModel(AIService aiService) {
+		ChatModelFactory factory = aiService.getFactory(ORCHESTRATOR_MODEL);
+		if (!(factory instanceof AnthropicChatModelFactory)) {
+			// Fallback to pooled model if factory is not Anthropic
+			return aiService.getChatModel(ORCHESTRATOR_MODEL);
+		}
+
+		AnthropicChatModelFactory.Config config = ((AnthropicChatModelFactory) factory).getConfig();
+		return AnthropicChatModel.builder()
+			.apiKey(config.getApiKey())
+			.baseUrl(config.getBaseUrl())
+			.modelName(ORCHESTRATOR_MODEL)
+			.thinkingType("adaptive")
+			.maxTokens(16000)
+			.returnThinking(false)
+			.sendThinking(true)
+			.build();
 	}
 
 	private OrchestratorAgent() {

@@ -60,7 +60,7 @@ public class ResKeyJsonBinding implements JsonValueBinding<ResKey> {
 		while (in.hasNext()) {
 			String localeName = in.nextName();
 			String translation = in.nextString();
-			builder.add(new Locale(localeName), translation);
+			builder.add(Locale.forLanguageTag(localeName), translation);
 		}
 		in.endObject();
 		return builder.build();
@@ -80,7 +80,7 @@ public class ResKeyJsonBinding implements JsonValueBinding<ResKey> {
 		for (Locale locale : ResourcesModule.getInstance().getSupportedLocales()) {
 			String translation = ResKeyUtil.getTranslation(item, locale);
 			if (!StringServices.isEmpty(translation)) {
-				out.name(locale.toString());
+				out.name(locale.toLanguageTag());
 				out.value(translation);
 			}
 		}
@@ -96,7 +96,7 @@ public class ResKeyJsonBinding implements JsonValueBinding<ResKey> {
 		// Constrain property names to the supported locales of the application.
 		EnumSchema localeEnum = EnumSchema.create();
 		for (Locale locale : ResourcesModule.getInstance().getSupportedLocales()) {
-			localeEnum.addEnumLiteral(locale.toString());
+			localeEnum.addEnumLiteral(locale.toLanguageTag());
 		}
 		objectSchema.setPropertyNames(localeEnum);
 

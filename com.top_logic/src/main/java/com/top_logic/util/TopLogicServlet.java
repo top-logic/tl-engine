@@ -57,7 +57,7 @@ import com.top_logic.util.filter.CompressionServletResponseWrapper;
  *                                      invalidate
  * @author    <a href="mailto:karsten.buch@top-logic.com">Karsten Buch</a>
  */
-public class TopLogicServlet extends HttpServlet {
+public class TopLogicServlet extends AbstractTopLogicServlet {
 
 	/**
 	 * The name of log mark for the session id.

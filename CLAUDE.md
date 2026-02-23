@@ -243,6 +243,40 @@ Types are defined in XML files (`*.model.xml`):
 </model>
 ```
 
+### UI Labels and I18N
+
+TopLogic generates UI labels from configuration interface properties. The `messages_en.properties` and `messages_de.properties` files in `src/main/java/META-INF/` are **generated during `mvn install`** from JavaDoc comments.
+
+**Do NOT edit `messages.properties` files directly** - changes will be overwritten on next build.
+
+**To change a UI label:**
+
+1. **Add a `@Label` annotation** to the configuration property:
+
+```java
+@Name("cssClassOverride")
+@Label("CSS class override")  // Overrides auto-generated label
+boolean getCssClassOverride();
+```
+
+2. **Run `mvn install`** on the module to regenerate the properties files
+
+3. **Commit both** the Java source change AND the regenerated `messages_*.properties` files
+
+**How labels are generated:**
+- Default label is derived from the property name (e.g., `cssClassOverride` → "Css class override")
+- `@Label` annotation overrides the auto-generated label
+- Tooltips are generated from JavaDoc comments on the getter method
+
+**Example regeneration workflow:**
+```bash
+cd com.top_logic
+mvn install
+git diff src/main/java/META-INF/messages_en.properties  # Verify changes
+git add src/main/java/META-INF/messages_*.properties
+git commit -m "Ticket #XXXXX: Regenerate messages with label fixes."
+```
+
 ### Exception Handling
 
 TopLogic uses **`TopLogicException`** for user-visible errors that should be displayed with internationalized messages:
@@ -330,7 +364,7 @@ mvn exec:java@migrate-ticket28336
 
 ## Repository Structure
 
-- **tl-parent-all/** - Root aggregator POM
+- **./** - Root aggregator POM
 - **tl-parent-engine/** - Aggregates all runtime modules (103 modules)
 - **com.top_logic/** - Core engine (tl-core artifact)
 - **com.top_logic.basic/** - Foundation utilities
@@ -340,7 +374,36 @@ mvn exec:java@migrate-ticket28336
 - **bos-settings/** - Build settings and configuration
 - **tl-doc/** - Documentation and JavaDoc output
 
-## Git Commit Message Convention
+## Trac Ticket System
+
+This project uses **Trac** for issue tracking. Tickets are referenced using the format `#<number>` (e.g., `#29053`).
+
+### MCP Server Integration
+
+A Trac MCP server is configured in `.mcp.json` to allow Claude Code to interact with tickets at `http://tl/trac/`.
+
+**When discussing "tickets" in this project, always use the Trac MCP server tools to retrieve ticket information.**
+
+**Issue tracking is maintained in Trac, PR review comments are maintained in Gitea.** When asked for "issue comments" for a PR, automatically derive the ticket number from the PR title and look it up in Trac (e.g. via `get_ticket_changelog`) — do not use Gitea issue APIs for this.
+
+Available tools include:
+- `get_ticket` - Get complete ticket details
+- `search_tickets` - Search for tickets using Trac query syntax
+- `get_ticket_changelog` - Get ticket change history
+- `create_ticket` / `update_ticket` - Create or update tickets
+
+**Important**: Trac uses WikiFormatting syntax (not Markdown) for ticket descriptions and comments. Key syntax:
+- Headings: `= Title =`, `== Subtitle ==`
+- Bold: `'''text'''`
+- Code blocks: `{{{` ... `}}}` with optional syntax highlighting `{{{#!java`
+
+See `mcp-servers/README.md` for setup instructions.
+
+## VCS
+
+TopLogic uses Git as Version Control System
+
+### Git Commit Message Convention
 
 Commit messages in this project must follow a specific format:
 
@@ -348,6 +411,21 @@ Commit messages in this project must follow a specific format:
 - **Example**: `Ticket #28934: Add data URI SVG support to SVGReplacedElementFactory.`
 - **Important**: Do NOT include "Generated with Claude Code", "Co-Authored-By: Claude", or any AI-generation attribution lines
 - Keep the message plain and focused on describing the change
+
+### Git PR Conventions
+
+**Branch naming:**
+- Format: `CWS/CWS_<ticket-number>_<short-description>` (e.g., `CWS/CWS_28934_svg_data_uri`)
+- The short description is optional but recommended
+
+**PR title:**
+- Must start with `Ticket #<number>: <description>` (same format as commit messages)
+- Example: `Ticket #28934: Add data URI SVG support to SVGReplacedElementFactory.`
+- To get the correct issue/ticket for a PR it must be determined from the PR title. In rare cases, when the title is wrong, the correct issue can be determined from the commit messages.
+
+**CI:** Jenkins automatically builds each PR and posts the result as a review (APPROVED on success, REQUEST_CHANGES on failure).
+
+**After merge:** The source branch is deleted automatically.
 
 ## Additional Resources
 

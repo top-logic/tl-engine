@@ -1,0 +1,34 @@
+{
+  "mcpServers": {
+    "trac": {
+      "type": "stdio",
+      "command": "./.venv/bin/python",
+      "args": ["mcp-servers/trac-mcp-server.py"],
+      "env": {
+        "TRAC_URL": "http://tl/trac/login/xmlrpc",
+        "TRAC_KEYRING_SERVICE": "tl-engine-trac-mcp",
+        "TRAC_KEYRING_ACCOUNT_USER": "username",
+        "TRAC_KEYRING_ACCOUNT_PASS": "password"
+      }
+    },
+    "jenkins": {
+      "type": "stdio",
+      "command": "./mcp-servers/scripts/mcp-jenkins-wrapper.sh",
+      "env": {
+        "JENKINS_URL": "http://jenkins:8090/",
+        "JENKINS_KEYRING_SERVICE": "tl-engine-jenkins-mcp",
+        "JENKINS_KEYRING_ACCOUNT_USER": "username",
+        "JENKINS_KEYRING_ACCOUNT_PASS": "password"
+      }
+    },
+    "gitea": {
+      "type": "stdio",
+      "command": "./mcp-servers/scripts/mcp-gitea-wrapper.sh",
+      "env": {
+        "GITEA_HOST": "https://git.top-logic.com",
+        "GITEA_KEYRING_SERVICE": "tl-engine-gitea-mcp",
+        "GITEA_KEYRING_ACCOUNT_TOKEN": "token"
+      }
+    }
+  }
+}

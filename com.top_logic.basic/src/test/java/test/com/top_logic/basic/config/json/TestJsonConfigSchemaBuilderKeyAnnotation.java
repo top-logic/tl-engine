@@ -14,6 +14,7 @@ import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Abstract;
+import com.top_logic.basic.config.annotation.Final;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
@@ -82,6 +83,7 @@ public class TestJsonConfigSchemaBuilderKeyAnnotation extends AbstractJsonConfig
 	/**
 	 * An organization with a name and employee count.
 	 */
+	@Final
 	public interface Organization extends Named {
 		String EMPLOYEE_COUNT = "employee-count";
 

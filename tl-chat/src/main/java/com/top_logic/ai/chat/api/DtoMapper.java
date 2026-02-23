@@ -6,8 +6,7 @@
 package com.top_logic.ai.chat.api;
 
 import java.io.IOException;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -39,9 +38,6 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * Maps chat domain objects to msgbuf DTOs for the chat API.
  */
 public final class DtoMapper {
-
-	private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm:ss")
-		.withZone(ZoneId.systemDefault());
 
 	private DtoMapper() {
 	}
@@ -95,7 +91,7 @@ public final class DtoMapper {
 		String user = msg.getUser();
 		dto.setUserName(user);
 		dto.setContent(msg.getText());
-		dto.setTime(TIME_FORMAT.format(msg.getTimestamp()));
+		dto.setTime(msg.getTimestamp().toString());
 		if ("System".equals(user)) {
 			dto.setRole("system");
 		} else if ("Agent".equals(user) || "AI".equals(user)) {
@@ -269,9 +265,11 @@ public final class DtoMapper {
 			for (PersistedChatEntry entry : chat.getEntries()) {
 				if ("message".equals(entry.getType()) && entry.getMessageData() != null) {
 					MessageDto msg = entry.getMessageData();
+					Instant timestamp = parseTimestamp(msg.getTime());
 					ChatMessage chatMsg = new ChatMessage(
 						msg.getUserName() != null ? msg.getUserName() : msg.getRole(),
-						msg.getContent());
+						msg.getContent(),
+						timestamp);
 					result.add(new ChatEntry.MessageEntry(chatMsg));
 				} else if ("task_snapshot".equals(entry.getType()) && entry.getTaskData() != null) {
 					ChatTask task = fromCurrentTaskDto(entry.getTaskData());
@@ -413,5 +411,20 @@ public final class DtoMapper {
 			// Return partial result on parse failure.
 		}
 		return result;
+	}
+
+	/**
+	 * Parses a timestamp string (ISO-8601) to an {@link Instant}. Falls back to
+	 * {@link Instant#now()} if parsing fails or the value is null.
+	 */
+	private static Instant parseTimestamp(String time) {
+		if (time == null || time.isEmpty()) {
+			return Instant.now();
+		}
+		try {
+			return Instant.parse(time);
+		} catch (Exception ex) {
+			return Instant.now();
+		}
 	}
 }

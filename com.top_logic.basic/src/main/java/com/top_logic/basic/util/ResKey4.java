@@ -7,6 +7,8 @@ package com.top_logic.basic.util;
 
 import com.top_logic.basic.config.annotation.Binding;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.json.JsonBinding;
+import com.top_logic.basic.config.json.ResKeyJsonBinding;
 import com.top_logic.basic.i18n.I18NConstantsBase;
 
 /**
@@ -23,6 +25,7 @@ import com.top_logic.basic.i18n.I18NConstantsBase;
  */
 @Format(ResKey.ValueFormat.class)
 @Binding(ResKey.ValueBinding.class)
+@JsonBinding(ResKeyJsonBinding.class)
 public interface ResKey4 extends ResKeyTemplate {
 
 	/**

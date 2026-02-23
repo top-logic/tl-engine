@@ -19,7 +19,6 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ConfigurationValueBinding;
 import com.top_logic.basic.config.DefaultConfigConstructorScheme;
-import com.top_logic.basic.config.ExternallyNamed;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
@@ -1201,15 +1200,7 @@ public class JsonConfigSchemaBuilder {
 			Object constant = constants[i];
 
 			// Determine the literal value
-			String literalValue;
-			if (constant instanceof ExternallyNamed) {
-				literalValue = ((ExternallyNamed) constant).getExternalName();
-			} else if (constant instanceof de.haumacher.msgbuf.data.ProtocolEnum) {
-				literalValue = ((de.haumacher.msgbuf.data.ProtocolEnum) constant).protocolName();
-			} else {
-				literalValue = ((Enum<?>) constant).name();
-			}
-			literals[i] = literalValue;
+			literals[i] = ConfigUtil.getEnumExternalName((Enum<?>) constant);
 
 			// Look up documentation
 			ResKey labelKey = ResKey.forClass(enumType).suffix(((Enum<?>) constant).name());

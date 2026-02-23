@@ -4,7 +4,96 @@
 	<services>
 		<config service-class="com.top_logic.ai.service.agents.AgentRegistry">
 			<instance class="com.top_logic.ai.service.agents.AgentRegistry">
+				<skills>
+					<skill name="shared/prompting-model-explorer"
+						   description="Best practices for writing effective work orders to the ModelExplorer agent."
+						   mode="AUTO">
+						<content><![CDATA[# How to Prompt the Model Explorer
+
+The `requestModelExploration` tool delegates to the ModelExplorer agent which has
+read-only access to the TopLogic application model. It takes three fields:
+
+- **goal** — One-line intent (what you want to achieve)
+- **task** — Concrete question or instruction (what the explorer should do)
+- **context** — Optional hints: module names, type names, part names
+
+## Golden Rules
+
+1. **Never paste the user message verbatim.** Distill it into goal + task + context.
+2. **Be specific.** "List all types in module sales" beats "Tell me about sales."
+3. **Name entities when known.** If you already know a module or type name, put it in context.
+4. **One question per call.** Ask "What parts does Order have?" separately from "Where is Order used?"
+5. **Chain calls.** Use the result of one call to refine the next (e.g., resolve a type first, then list its parts).
+
+## Available Explorer Tools (what it can do)
+
+| Tool | Use when you need |
+|------|-------------------|
+| `listModules` | Overview of all modules (names, type counts) |
+| `listTypes` | All types in a specific module |
+| `listTypeParts` | Properties and references of a type |
+| `listClassifiers` | Enum values of an enumeration |
+| `searchModel` | Find a type/part by name (fuzzy search) |
+| `findTypeUsages` | Where a type is used as property type or reference target |
+| `findPartUsages` | Where a specific part is defined and inherited |
+| `listAnnotations` | Annotations on a type, part, or classifier |
+| `describeAnnotation` | Schema of an annotation config interface |
+| `listInstances` | Paginated instance data for a type |
+| `getInstance` | Single instance details by TID |
+
+## Prompting Patterns
+
+### Pattern 1: Resolve before inspecting
+
+When the user mentions a type name without a module prefix, ask the explorer
+to search first, then inspect.
+
+**Call 1 — resolve:**
+- goal: "Find type Order in application modules"
+- task: "Search for type named 'Order' in application modules (not framework)"
+- context: ""
+
+**Call 2 — inspect (using result from call 1):**
+- goal: "List all parts of Order"
+- task: "List all properties and references of type Order, including inherited"
+- context: "module: sales, type: Order"
+
+### Pattern 2: Module overview
+
+- goal: "List application modules"
+- task: "List all modules that are not framework modules, with their type counts"
+- context: ""
+
+### Pattern 3: Type usage / impact analysis
+
+- goal: "Find where Customer is used"
+- task: "Find all usages of type Customer — which types reference it, which types extend it"
+- context: "sales:Customer"
+
+### Pattern 4: Enum values
+
+- goal: "List enum values of Priority"
+- task: "List all classifiers of the Priority enumeration"
+- context: "module: sales, enum: Priority"
+
+### Pattern 5: Annotations and scripts
+
+- goal: "Find TLScript on Order#total"
+- task: "List all annotations on the 'total' part of type Order"
+- context: "sales:Order#total"
+
+## Anti-Patterns (avoid these)
+
+- **Vague goal:** "Look at the model" → Too broad, explorer won't know what to focus on.
+- **Full user prompt dump:** Copying the entire user message into task → Noisy, confusing.
+- **Multiple questions in one call:** "List types and also find usages of Order" → Split into two calls.
+- **Guessing qualified names:** Don't invent "sales:Order" if you haven't confirmed it — let the explorer search first.
+- **Asking for TLScript interpretation:** The explorer returns code verbatim but does not explain it. Delegate TLScript explanation to the TLScript specialist.]]></content>
+					</skill>
+				</skills>
+
 				<agent name="orchestrator" model="claude-opus-4-6"
+					   description="Orchestrator that plans, delegates to specialists, and synthesizes answers"
 					   thinking-type="ADAPTIVE" max-tokens="16000">
 					<system-prompt><![CDATA[You are the **Orchestrator** for a TopLogic AI assistant. You do not answer from your own knowledge. Your job is to think, plan, call specialists when needed (zero, one, or several), and synthesize a final answer.
 
@@ -121,15 +210,12 @@ Example flow:
 ## LEGACY PREFIXES
 
 If the user message starts with "/explore-model", "/tlscript", or "/model-creation", treat the rest as the main question. The prefix is a hint; your planning and steps still decide whether to call one or multiple tools.]]></system-prompt>
-					<tools>
-						<exploration from-agent="Orchestrator"/>
-						<creation from-agent="Orchestrator"/>
-						<tlscript-delegation from-agent="Orchestrator"/>
-					</tools>
+					<delegations>model-explorer,model-editor,tlscript</delegations>
 					<skills>shared/prompting-model-explorer</skills>
 				</agent>
 
-				<agent name="model-explorer" model="mistral-large-latest">
+				<agent name="model-explorer" model="mistral-large-latest"
+					   description="Read-only model inspection: explore modules, types, parts, annotations, usages, and instances">
 					<system-prompt><![CDATA[You are a **TopLogic Model Explorer** agent. Your job is to answer user questions by **thoroughly navigating and exploring a TopLogic application model** (modules → types → parts/relationships → usages → optional instances). You are an **exploration specialist**: you do not guess. You locate evidence in the model using tools, then show it clearly and concisely.
 
 ---
@@ -571,17 +657,11 @@ Facts
   - total (property, type=Float, derived=true)
   - customer (reference, target=app.customers:Customer)
   - lines (reference, target=app.orders:OrderLine, multiple=true)]]></system-prompt>
-					<tools>
-						<model-browser/>
-						<instance-browser/>
-						<type-analysis/>
-						<model-search/>
-						<annotation-browser/>
-						<annotation-explorer/>
-					</tools>
+					<tools>model-browser,instance-browser,type-analysis,model-search,annotation-browser,annotation-explorer</tools>
 				</agent>
 
-				<agent name="model-editor" model="mistral-large-latest">
+				<agent name="model-editor" model="mistral-large-latest"
+					   description="Model creation and modification: create modules, types, properties, references, enumerations">
 					<system-prompt><![CDATA[You are a **TopLogic Model Creator** agent. Your job is to create and modify TopLogic application model elements (modules, classes, properties, references, enumerations) based on natural language requirements. You are a **creation specialist**: you translate user requirements into concrete model elements using tools.
 
 ---
@@ -675,13 +755,12 @@ After all creation steps, respond with a structured summary:
 ```
 
 Do NOT include long explanations. Be concise and factual.]]></system-prompt>
-					<tools>
-						<model-editor/>
-						<tlscript-delegation from-agent="ModelEditor"/>
-					</tools>
+					<tools>model-editor</tools>
+					<delegations>tlscript</delegations>
 				</agent>
 
-				<agent name="tlscript" model="mistral-large-latest">
+				<agent name="tlscript" model="mistral-large-latest"
+					   description="TLScript specialist: syntax help, function documentation, script validation, code generation and explanation">
 					<system-prompt><![CDATA[You are a TLScript Specialist Agent for the TopLogic platform.
 
 Your job: analyze, explain, validate, correct, and author TLScript expressions. Top priority is correctness: do not guess TLScript syntax, semantics, or available host functions.
@@ -855,11 +934,8 @@ Bad: "You can use the sum() function to add values..."
 → WRONG: Did you call get-function-doc for sum()? If not, this is hallucination.
 
 Good: [First call get-function-doc("sum")] → "The sum() function (verified) takes a collection and returns..."]]></system-prompt>
-					<tools>
-						<tlscript-reference/>
-						<exploration from-agent="TLScriptAgent"/>
-						<tlscript/>
-					</tools>
+					<tools>tlscript-reference,tlscript</tools>
+					<delegations>model-explorer</delegations>
 					<skills>shared/prompting-model-explorer</skills>
 				</agent>
 			</instance>

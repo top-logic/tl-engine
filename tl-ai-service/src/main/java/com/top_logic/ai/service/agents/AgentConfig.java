@@ -10,41 +10,65 @@ import java.util.Collections;
 import java.util.List;
 
 import com.top_logic.ai.service.AIService;
-import com.top_logic.ai.service.skills.SkillRegistry;
-import com.top_logic.ai.service.tools.help.TLScriptReferenceTool;
-import com.top_logic.ai.service.tools.model.AnnotationDefinitionExplorerTool;
-import com.top_logic.ai.service.tools.model.InstanceBrowserTool;
-import com.top_logic.ai.service.tools.model.ModelAnnotationBrowserTool;
-import com.top_logic.ai.service.tools.model.ModelBrowserTool;
-import com.top_logic.ai.service.tools.model.ModelEditorTool;
-import com.top_logic.ai.service.tools.model.ModelSearchTool;
-import com.top_logic.ai.service.tools.model.TypeAnalysisTool;
-import com.top_logic.ai.service.tools.script.TLScriptTool;
+import com.top_logic.ai.service.ChatModelFactory;
+import com.top_logic.ai.service.providers.AnthropicChatModelFactory;
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.NamedConfigMandatory;
-import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Derived;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
-import com.top_logic.basic.config.annotation.Subtypes;
-import com.top_logic.basic.config.annotation.Subtypes.Subtype;
+import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
+import com.top_logic.basic.config.constraint.algorithm.GenericValueDependency;
+import com.top_logic.basic.config.constraint.algorithm.PropertyModel;
+import com.top_logic.basic.config.constraint.annotation.Constraint;
+import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.func.Function0;
+import com.top_logic.basic.func.Function1;
+import com.top_logic.basic.func.Function2;
+import com.top_logic.layout.form.model.FieldMode;
 import com.top_logic.layout.form.values.MultiLineText;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
+import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 
 /**
  * Configuration for a single agent in the {@link AgentRegistry}.
  *
  * <p>
- * Each agent is identified by a unique name (provided by {@link NamedConfigMandatory}) and
- * defines the LLM model, optional thinking parameters, system prompt, and available tools
- * and skills.
+ * Each agent is identified by a unique name (provided by {@link NamedConfigMandatory}) and defines
+ * the LLM model, optional thinking parameters, system prompt, and available tools and skills.
+ * </p>
+ *
+ * <p>
+ * Thinking parameters ({@link #getThinkingType()}, {@link #getThinkingBudgetTokens()},
+ * {@link #getReturnThinking()}, {@link #getSendThinking()}) are only visible when the selected
+ * model supports extended thinking (currently Anthropic models). When {@link ThinkingType#ENABLED}
+ * is selected, {@link #getThinkingBudgetTokens()} and {@link #getMaxTokens()} become mandatory.
  * </p>
  */
+@DisplayOrder({
+	AgentConfig.NAME_ATTRIBUTE,
+	AgentConfig.DESCRIPTION,
+	AgentConfig.MODEL,
+	AgentConfig.SYSTEM_PROMPT,
+	AgentConfig.THINKING_TYPE,
+	AgentConfig.THINKING_BUDGET_TOKENS,
+	AgentConfig.MAX_TOKENS,
+	AgentConfig.TEMPERATURE,
+	AgentConfig.RETURN_THINKING,
+	AgentConfig.SEND_THINKING,
+	AgentConfig.TOOLS,
+	AgentConfig.DELEGATIONS,
+	AgentConfig.SKILLS,
+})
 public interface AgentConfig extends NamedConfigMandatory {
+
+	/** @see #getDescription() */
+	String DESCRIPTION = "description";
 
 	/** @see #getModel() */
 	String MODEL = "model";
@@ -73,8 +97,25 @@ public interface AgentConfig extends NamedConfigMandatory {
 	/** @see #getTools() */
 	String TOOLS = "tools";
 
+	/** @see #getDelegations() */
+	String DELEGATIONS = "delegations";
+
 	/** @see #getSkills() */
 	String SKILLS = "skills";
+
+	/** @see #isThinkingCapable() */
+	String IS_THINKING_CAPABLE = "is-thinking-capable";
+
+	/**
+	 * Short description of this agent's purpose.
+	 *
+	 * <p>
+	 * Used as the tool description when other agents delegate to this agent. For example:
+	 * {@code "Read-only model inspection: modules, types, parts, annotations, search"}.
+	 * </p>
+	 */
+	@Name(DESCRIPTION)
+	String getDescription();
 
 	/**
 	 * The LLM model name to use for this agent (e.g. {@code "claude-sonnet-4-20250514"}).
@@ -89,9 +130,23 @@ public interface AgentConfig extends NamedConfigMandatory {
 	String getModel();
 
 	/**
+	 * Whether the currently selected {@link #getModel() model} supports extended thinking.
+	 *
+	 * <p>
+	 * This derived property is {@code true} when the model's provider is
+	 * {@link AnthropicChatModelFactory}. It controls the visibility of thinking-related fields.
+	 * </p>
+	 */
+	@Name(IS_THINKING_CAPABLE)
+	@Derived(fun = IsThinkingCapable.class, args = @Ref(MODEL))
+	@Hidden
+	boolean isThinkingCapable();
+
+	/**
 	 * The thinking type for extended thinking support.
 	 *
 	 * <p>
+	 * Only visible when the selected model supports thinking (Anthropic models).
 	 * {@link ThinkingType#ADAPTIVE} lets the model decide when to think.
 	 * {@link ThinkingType#ENABLED} forces thinking on every request and requires
 	 * {@link #getThinkingBudgetTokens()} to be set.
@@ -101,28 +156,37 @@ public interface AgentConfig extends NamedConfigMandatory {
 	 */
 	@Name(THINKING_TYPE)
 	@Nullable
+	@DynamicMode(fun = ActiveIfThinkingCapable.class, args = @Ref(IS_THINKING_CAPABLE))
 	ThinkingType getThinkingType();
 
 	/**
 	 * The maximum number of tokens the model may use for its internal thinking.
 	 *
 	 * <p>
-	 * Required when {@link #getThinkingType()} is {@link ThinkingType#ENABLED}.
+	 * Required when {@link #getThinkingType()} is {@link ThinkingType#ENABLED}. Only visible when
+	 * the model supports thinking and a thinking type is selected.
 	 * </p>
 	 *
 	 * @return The thinking budget in tokens, or {@code null} if not set.
 	 */
 	@Name(THINKING_BUDGET_TOKENS)
 	@Nullable
+	@DynamicMode(fun = ActiveIfThinkingConfigured.class, args = { @Ref(IS_THINKING_CAPABLE), @Ref(THINKING_TYPE) })
+	@Constraint(value = ThinkingBudgetRequiredConstraint.class, args = @Ref(THINKING_TYPE))
 	Integer getThinkingBudgetTokens();
 
 	/**
 	 * The maximum number of output tokens for the model response.
 	 *
+	 * <p>
+	 * Required when {@link #getThinkingType()} is {@link ThinkingType#ENABLED}.
+	 * </p>
+	 *
 	 * @return The max output tokens, or {@code null} to use the model default.
 	 */
 	@Name(MAX_TOKENS)
 	@Nullable
+	@Constraint(value = MaxTokensRequiredConstraint.class, args = @Ref(THINKING_TYPE))
 	Integer getMaxTokens();
 
 	/**
@@ -142,23 +206,27 @@ public interface AgentConfig extends NamedConfigMandatory {
 	 * Whether to include the model's thinking in the response.
 	 *
 	 * <p>
-	 * When {@code true}, the thinking content is included alongside the response text.
+	 * Only visible when the model supports thinking and a thinking type is selected. When
+	 * {@code true}, the thinking content is included alongside the response text.
 	 * </p>
 	 */
 	@Name(RETURN_THINKING)
 	@BooleanDefault(false)
+	@DynamicMode(fun = ActiveIfThinkingConfigured.class, args = { @Ref(IS_THINKING_CAPABLE), @Ref(THINKING_TYPE) })
 	boolean getReturnThinking();
 
 	/**
 	 * Whether to send previous thinking blocks in follow-up messages.
 	 *
 	 * <p>
-	 * When {@code true}, the thinking content from previous turns is included in the
-	 * conversation history sent to the model.
+	 * Only visible when the model supports thinking and a thinking type is selected. When
+	 * {@code true}, the thinking content from previous turns is included in the conversation
+	 * history sent to the model.
 	 * </p>
 	 */
 	@Name(SEND_THINKING)
 	@BooleanDefault(true)
+	@DynamicMode(fun = ActiveIfThinkingConfigured.class, args = { @Ref(IS_THINKING_CAPABLE), @Ref(THINKING_TYPE) })
 	boolean getSendThinking();
 
 	/**
@@ -170,35 +238,37 @@ public interface AgentConfig extends NamedConfigMandatory {
 	String getSystemPrompt();
 
 	/**
-	 * The tool configurations available to this agent.
+	 * The standard tools available to this agent, selected by name.
 	 *
 	 * <p>
-	 * Each entry is a polymorphic configuration of a tool class to be instantiated and made
-	 * available to the agent during conversation.
+	 * Each name maps to a well-known tool class (e.g. {@code "model-browser"},
+	 * {@code "tlscript"}). Tools are instantiated at runtime by the {@link AgentRegistry}.
 	 * </p>
 	 */
 	@Name(TOOLS)
-	@Subtypes({
-		@Subtype(tag = "model-browser", type = ModelBrowserTool.Config.class),
-		@Subtype(tag = "instance-browser", type = InstanceBrowserTool.Config.class),
-		@Subtype(tag = "type-analysis", type = TypeAnalysisTool.Config.class),
-		@Subtype(tag = "model-search", type = ModelSearchTool.Config.class),
-		@Subtype(tag = "annotation-browser", type = ModelAnnotationBrowserTool.Config.class),
-		@Subtype(tag = "annotation-explorer", type = AnnotationDefinitionExplorerTool.Config.class),
-		@Subtype(tag = "model-editor", type = ModelEditorTool.Config.class),
-		@Subtype(tag = "tlscript-reference", type = TLScriptReferenceTool.Config.class),
-		@Subtype(tag = "tlscript", type = TLScriptTool.Config.class),
-		@Subtype(tag = "exploration", type = AgentDelegationTools.Exploration.Config.class),
-		@Subtype(tag = "creation", type = AgentDelegationTools.Creation.Config.class),
-		@Subtype(tag = "tlscript-delegation", type = AgentDelegationTools.TLScript.Config.class),
-	})
-	List<PolymorphicConfiguration<?>> getTools();
+	@Format(CommaSeparatedStrings.class)
+	@Options(fun = AllToolNames.class)
+	List<String> getTools();
+
+	/**
+	 * Other agents this agent can delegate to, selected by name.
+	 *
+	 * <p>
+	 * For each target agent name listed here, a dedicated {@code delegate_to_<name>} tool with a
+	 * self-describing {@link dev.langchain4j.agent.tool.ToolSpecification} is created at runtime by
+	 * the {@link AgentRegistry}.
+	 * </p>
+	 */
+	@Name(DELEGATIONS)
+	@Format(CommaSeparatedStrings.class)
+	@Options(fun = AllAgentNames.class)
+	List<String> getDelegations();
 
 	/**
 	 * Comma-separated list of skill IDs available to this agent.
 	 *
 	 * <p>
-	 * Skills are referenced by their registered name in the {@link SkillRegistry}
+	 * Skills are referenced by their registered name in the {@link AgentRegistry} configuration
 	 * (e.g. {@code "shared/prompting-model-explorer"}).
 	 * </p>
 	 */
@@ -206,6 +276,8 @@ public interface AgentConfig extends NamedConfigMandatory {
 	@Format(CommaSeparatedStrings.class)
 	@Options(fun = AllSkillNames.class)
 	List<String> getSkills();
+
+	// --- Option provider functions ---
 
 	/**
 	 * Provides all model names registered in {@link AIService} as selection options.
@@ -223,18 +295,137 @@ public interface AgentConfig extends NamedConfigMandatory {
 	}
 
 	/**
-	 * Provides all skill names from the {@link AgentRegistry}'s {@link SkillRegistry} as
-	 * selection options.
+	 * Provides all skill names from the {@link AgentRegistry}'s configuration as selection options.
 	 */
 	class AllSkillNames extends Function0<List<String>> {
 
 		@Override
 		public List<String> apply() {
 			AgentRegistry registry = AgentRegistry.getInstance();
-			if (registry == null || registry.getSkillRegistry() == null) {
+			if (registry == null) {
 				return Collections.emptyList();
 			}
-			return registry.getSkillRegistry().allSkillNames();
+			return new ArrayList<>(registry.getConfig().getSkills().keySet());
+		}
+	}
+
+	/**
+	 * Provides the well-known tool names as selection options.
+	 */
+	class AllToolNames extends Function0<List<String>> {
+
+		@Override
+		public List<String> apply() {
+			return new ArrayList<>(AgentRegistry.TOOL_NAMES);
+		}
+	}
+
+	/**
+	 * Provides all agent names from the {@link AgentRegistry} as delegation targets.
+	 */
+	class AllAgentNames extends Function0<List<String>> {
+
+		@Override
+		public List<String> apply() {
+			AgentRegistry registry = AgentRegistry.getInstance();
+			if (registry == null) {
+				return Collections.emptyList();
+			}
+			return new ArrayList<>(registry.getConfig().getAgents().keySet());
+		}
+	}
+
+	// --- Derived property functions ---
+
+	/**
+	 * Checks if the selected model supports extended thinking (Anthropic provider).
+	 */
+	class IsThinkingCapable extends Function1<Boolean, String> {
+
+		@Override
+		public Boolean apply(String modelName) {
+			if (modelName == null || modelName.isEmpty()) {
+				return Boolean.FALSE;
+			}
+			AIService service = AIService.getInstance();
+			if (service == null) {
+				return Boolean.FALSE;
+			}
+			ChatModelFactory factory = service.getFactory(modelName);
+			return Boolean.valueOf(factory instanceof AnthropicChatModelFactory);
+		}
+	}
+
+	// --- DynamicMode functions ---
+
+	/**
+	 * Shows the field as {@link FieldMode#ACTIVE} when the model supports thinking,
+	 * {@link FieldMode#INVISIBLE} otherwise.
+	 */
+	class ActiveIfThinkingCapable extends Function1<FieldMode, Boolean> {
+
+		@Override
+		public FieldMode apply(Boolean thinkingCapable) {
+			return Boolean.TRUE.equals(thinkingCapable) ? FieldMode.ACTIVE : FieldMode.INVISIBLE;
+		}
+	}
+
+	/**
+	 * Shows the field as {@link FieldMode#ACTIVE} when the model supports thinking AND a thinking
+	 * type is selected, {@link FieldMode#INVISIBLE} otherwise.
+	 */
+	class ActiveIfThinkingConfigured extends Function2<FieldMode, Boolean, ThinkingType> {
+
+		@Override
+		public FieldMode apply(Boolean thinkingCapable, ThinkingType thinkingType) {
+			if (Boolean.TRUE.equals(thinkingCapable) && thinkingType != null) {
+				return FieldMode.ACTIVE;
+			}
+			return FieldMode.INVISIBLE;
+		}
+	}
+
+	// --- Constraint algorithms ---
+
+	/**
+	 * Validates that {@link AgentConfig#getThinkingBudgetTokens()} is set when
+	 * {@link AgentConfig#getThinkingType()} is {@link ThinkingType#ENABLED}.
+	 */
+	class ThinkingBudgetRequiredConstraint extends GenericValueDependency<Integer, ThinkingType> {
+
+		/**
+		 * Creates a new {@link ThinkingBudgetRequiredConstraint}.
+		 */
+		public ThinkingBudgetRequiredConstraint() {
+			super(Integer.class, ThinkingType.class);
+		}
+
+		@Override
+		protected void checkValue(PropertyModel<Integer> budget, PropertyModel<ThinkingType> type) {
+			if (type.getValue() == ThinkingType.ENABLED && budget.getValue() == null) {
+				budget.setProblemDescription(I18NConstants.THINKING_BUDGET_REQUIRED_WHEN_ENABLED);
+			}
+		}
+	}
+
+	/**
+	 * Validates that {@link AgentConfig#getMaxTokens()} is set when
+	 * {@link AgentConfig#getThinkingType()} is {@link ThinkingType#ENABLED}.
+	 */
+	class MaxTokensRequiredConstraint extends GenericValueDependency<Integer, ThinkingType> {
+
+		/**
+		 * Creates a new {@link MaxTokensRequiredConstraint}.
+		 */
+		public MaxTokensRequiredConstraint() {
+			super(Integer.class, ThinkingType.class);
+		}
+
+		@Override
+		protected void checkValue(PropertyModel<Integer> maxTokens, PropertyModel<ThinkingType> type) {
+			if (type.getValue() == ThinkingType.ENABLED && maxTokens.getValue() == null) {
+				maxTokens.setProblemDescription(I18NConstants.MAX_TOKENS_REQUIRED_WHEN_THINKING_ENABLED);
+			}
 		}
 	}
 }

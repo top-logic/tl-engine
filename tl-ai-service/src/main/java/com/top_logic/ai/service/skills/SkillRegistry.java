@@ -14,6 +14,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.ai.service.agents.SkillConfig;
+
 /**
  * Registry that loads skill prompt fragments from classpath resources and makes them available to
  * agents via {@link SkillTool}.
@@ -105,6 +107,29 @@ public class SkillRegistry {
 			return basePrompt;
 		}
 		return basePrompt + "\n\n---\n\n" + skillSection;
+	}
+
+	/**
+	 * Registers skills from XML configuration entries.
+	 *
+	 * <p>
+	 * Each {@link SkillConfig} is converted to a {@link Skill} and stored in the registry. This
+	 * makes skills available before any agent requests them, fixing the empty-options problem in the
+	 * configuration UI.
+	 * </p>
+	 *
+	 * @param skillConfigs
+	 *        The skill configurations keyed by name.
+	 */
+	public void registerSkillsFromConfig(Map<String, SkillConfig> skillConfigs) {
+		for (Map.Entry<String, SkillConfig> entry : skillConfigs.entrySet()) {
+			SkillConfig sc = entry.getValue();
+			_skills.put(sc.getName(), new Skill(
+				sc.getName(),
+				sc.getDescription(),
+				sc.getMode(),
+				sc.getContent()));
+		}
 	}
 
 	/**

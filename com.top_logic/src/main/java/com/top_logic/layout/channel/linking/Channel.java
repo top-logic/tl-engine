@@ -26,7 +26,7 @@ import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.mig.html.layout.ComponentReference;
 
 /**
- * The model is take from a certain channel of another component.
+ * The model is taken from a certain channel of another component.
  * 
  * @see DirectLinking
  */

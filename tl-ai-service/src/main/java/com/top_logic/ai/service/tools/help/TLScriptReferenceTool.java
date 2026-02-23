@@ -48,6 +48,13 @@ public class TLScriptReferenceTool {
 	}
 
 	/**
+	 * Creates a new {@link TLScriptReferenceTool}.
+	 */
+	public TLScriptReferenceTool() {
+		// stateless tool
+	}
+
+	/**
 	 * Creates a new {@link TLScriptReferenceTool} from configuration.
 	 */
 	@CalledByReflection

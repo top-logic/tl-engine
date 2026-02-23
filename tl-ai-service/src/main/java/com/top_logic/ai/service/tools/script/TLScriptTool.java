@@ -45,6 +45,13 @@ public class TLScriptTool {
 	}
 
 	/**
+	 * Creates a new {@link TLScriptTool}.
+	 */
+	public TLScriptTool() {
+		// stateless tool
+	}
+
+	/**
 	 * Creates a new {@link TLScriptTool} from configuration.
 	 */
 	@CalledByReflection

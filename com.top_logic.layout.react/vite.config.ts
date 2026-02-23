@@ -14,7 +14,9 @@ export default defineConfig({
     emptyOutDir: false,
     rollupOptions: {
       output: {
-        extend: true,
+        // Ensure the IIFE assigns to 'window' explicitly, not 'this' (which is
+        // undefined in strict mode).
+        footer: 'window.TLReact = TLReact;',
       },
     },
   },

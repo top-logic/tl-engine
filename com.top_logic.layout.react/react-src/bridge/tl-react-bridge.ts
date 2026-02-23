@@ -155,7 +155,7 @@ export function useTLCommand(): (command: string, args?: Record<string, unknown>
         arguments: args ?? {},
       });
       try {
-        const resp = await fetch('/react-api/command', {
+        const resp = await fetch(getBasePath() + 'react-api/command', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body,
@@ -188,11 +188,16 @@ export function useTLFieldValue(): [unknown, (newValue: unknown) => void] {
   return [state.value, setValue];
 }
 
+// --- Utilities ---
+
+function getBasePath(): string {
+  return document.querySelector('base')?.getAttribute('href') ?? '';
+}
+
 // --- Auto-connect SSE on load ---
 
 function initSSE(): void {
-  const basePath = document.querySelector('base')?.getAttribute('href') ?? '';
-  connect(basePath + 'react-api/events');
+  connect(getBasePath() + 'react-api/events');
 }
 
 // --- MutationObserver for auto-unmount ---

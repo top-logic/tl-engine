@@ -17,10 +17,12 @@ DOM subtree managed by React, while participating fully in TopLogic's control li
 
 A central part of this specification is the introduction of **Server-Sent Events (SSE)**
 as a server-push mechanism for TopLogic. Today, all client updates are piggybacked on
-command responses (request-response only). The SSE event stream introduced here serves
-React controls initially, but is designed as a general-purpose update channel that can
-deliver updates for *any* control -- React or traditional -- opening the door for future
-migration of all server-to-client updates away from the XML/SOAP response piggybacking.
+command responses (request-response only). The SSE event stream introduced here is the
+**universal delivery channel for all control updates** -- both React controls (which
+receive JSON state patches) and traditional controls (whose `ClientAction`s are
+JSON-wrapped and delivered through the same stream). When a React command triggers a
+server-side model change that affects both React and non-React controls, all updates are
+collected via the standard `RevalidationVisitor` and delivered uniformly through SSE.
 
 ### Design Rationale
 
@@ -84,39 +86,58 @@ control by a React chart, etc.
 |  | TableControl                 |  |  | React Component Tree  |   |   |
 |  | ...                          |  |  | (MyChart, MyEditor..) |   |   |
 |  |                              |  |  +-----------------------+   |   |
-|  +--------+---------------------+  +------+-----------+-----------+   |
-|           |                               |           |               |
-|   dispatchControlCommand           POST command    SSE updates        |
-|   (XML/SOAP, existing)            (JSON, new)     (JSON stream)      |
-|           |                               |           ^               |
-+-----------+-------------------------------+-----------+---------------+
-            |                               |           |
-            v                               v           |
+|  +--------+---------------------+  +------+----------------------+   |
+|           |                               |                          |
+|   dispatchControlCommand           POST command                      |
+|   (XML/SOAP, existing)            (JSON, new)                       |
+|           |                               |                          |
+|           |    SSE event stream (JSON) -- delivers ALL updates       |
+|           |    <----------------------------------------------------+|
+|           |    DOM actions for traditional controls (JSON-wrapped)   ||
+|           |    State patches for React controls                     ||
+|           |                               |                          |
++-----------+-------------------------------+--------------------------+
+            |                               |
+            v                               v
 +----------------------------------------------------------------------+
 |  TopLogic Server (Servlet Container)                                  |
 |                                                                       |
 |  +-----------------+  +------------------+  +---------------------+   |
-|  | AJAXServlet     |  | ReactServlet     |  | SSE EventServlet    |   |
+|  | AJAXServlet     |  | ReactServlet     |  | SSEServlet          |   |
 |  | /ajax           |  | /react-api/*     |  | /react-api/events   |   |
 |  |                 |  |                  |  |                     |   |
-|  | XML/SOAP        |  | JSON commands    |  | Server-push stream  |   |
-|  | DOM actions     |  | JSON responses   |  | JSON event frames   |   |
+|  | XML/SOAP        |  | JSON commands +  |  | Persistent push     |   |
+|  | DOM actions     |  | revalidation     |  | connection          |   |
 |  +---------+-------+  +--------+---------+  +----------+----------+   |
-|            |                   |                       |              |
-|            +-------+-----------+-----------+-----------+              |
-|                    |                       |                          |
-|         +----------+----------+   +--------+---------+               |
-|         | AbstractControlBase |   | SSEUpdateQueue   |               |
-|         | - command dispatch   |   | - per-session     |               |
-|         | - model listeners   |   | - any control can  |               |
-|         | - attach/detach     |   |   enqueue updates  |               |
-|         +---------------------+   +------------------+               |
+|            |                   |                       ^              |
+|            |                   |   +-------------------+              |
+|            |                   |   |                                  |
+|            |              +----+---+-------+                         |
+|            |              | Revalidation   |                         |
+|            |              | Visitor        |                         |
+|            |              | (collects ALL  |                         |
+|            |              |  control       |                         |
+|            |              |  updates)      |                         |
+|            |              +----+-----------+                         |
+|            |                   |                                     |
+|            |              +----+----------+                          |
+|            |              | SSEUpdateQueue|                          |
+|            |              | - per session |                          |
+|            |              | - JSON-wraps  |                          |
+|            |              |   all actions |                          |
+|            |              +---------------+                          |
+|            |                                                         |
+|            +--------------------+                                    |
+|                                 |                                    |
+|         +----------+----------+ |                                    |
+|         | AbstractControlBase +-+                                    |
+|         +---------------------+                                      |
 |                    |                                                  |
 |     +--------------+--------------+                                  |
 |     |                             |                                  |
 |  +--+---------------+  +----------+---------+                        |
 |  | TextInputControl |  | ReactControl       |                        |
-|  | (HTML + XML)     |  | (mount div + JSON) |                        |
+|  | (HTML updates)   |  | (JSON state)       |                        |
 |  +------------------+  +--------------------+                        |
 +----------------------------------------------------------------------+
 ```
@@ -127,16 +148,18 @@ control by a React chart, etc.
    `AbstractFormFieldControl`), registers `ControlCommand`s, and lives within a
    `ControlScope`.
 
-2. **Updates flow through SSE, not SOAP.** When a `ReactControl`'s state changes (from
-   a model listener, a channel update, or as a side effect of another command), the update
-   is enqueued on the session's `SSEUpdateQueue` and delivered to the client via the SSE
-   stream. This decouples update delivery from the request-response cycle.
+2. **SSE is the universal update delivery channel.** After command execution, the
+   `ReactServlet` runs the standard `RevalidationVisitor` to collect updates from *all*
+   controls -- React and traditional. React control updates are delivered as JSON state
+   patches. Traditional control updates (`ContentReplacement`, `PropertyUpdate`,
+   `JSSnipplet`, etc.) are JSON-wrapped and delivered through the same SSE stream. The
+   client-side SSE handler dispatches each event type to the appropriate processor.
 
-3. **SSE is a general-purpose mechanism.** While this spec focuses on React controls, the
-   SSE infrastructure can deliver JSON-encoded updates for traditional controls too. A
-   traditional control could enqueue a JSON-wrapped `ContentReplacement` or
-   `PropertyUpdate` for delivery via SSE, providing server-push for the entire UI
-   in the future.
+3. **The ReactServlet is a full peer of the AJAXServlet.** Both servlets execute commands
+   and trigger revalidation. The difference is the transport: the AJAXServlet delivers
+   updates in the XML/SOAP response; the ReactServlet delegates delivery to the SSE
+   stream. When a React command causes traditional controls to update, those updates
+   reach the client immediately via SSE -- no secondary AJAX round-trip needed.
 
 4. **Controls do not manage transactions.** Transaction boundaries are established by
    `LayoutComponent`-level `CommandHandler`s. `ControlCommand`s execute within whatever
@@ -611,85 +634,215 @@ public class SSEUpdateQueue {
 
 ### 5.4 `SSEEvent`
 
-The event envelope. Serialized as an SSE `data:` frame containing JSON.
+The event envelope. Serialized as an SSE `data:` frame containing JSON. There are two
+categories of events: **React state updates** (patches/full state for React controls) and
+**DOM actions** (JSON-wrapped traditional `ClientAction`s for non-React controls).
 
 ```java
 public class SSEEvent {
 
-    /** Full state replacement for a control. */
+    // --- React control events ---
+
+    /** Full state replacement for a React control. */
     public static SSEEvent fullState(String controlId,
             Map<String, Object> state) { ... }
 
-    /** Incremental patch for a control. */
+    /** Incremental patch for a React control. */
     public static SSEEvent patch(String controlId,
             Map<String, Object> patch) { ... }
 
+    // --- Traditional control events (JSON-wrapped ClientActions) ---
+
+    /** JSON-wrap a ContentReplacement action. */
+    public static SSEEvent contentReplacement(String elementId,
+            String htmlFragment) { ... }
+
+    /** JSON-wrap an ElementReplacement action. */
+    public static SSEEvent elementReplacement(String elementId,
+            String htmlFragment) { ... }
+
+    /** JSON-wrap a PropertyUpdate action. */
+    public static SSEEvent propertyUpdate(String elementId,
+            List<Map<String, String>> properties) { ... }
+
+    /** JSON-wrap a CssClassUpdate action. */
+    public static SSEEvent cssClassUpdate(String elementId,
+            String cssClass) { ... }
+
+    /** JSON-wrap a FragmentInsertion action. */
+    public static SSEEvent fragmentInsertion(String elementId,
+            String position, String htmlFragment) { ... }
+
+    /** JSON-wrap a RangeReplacement action. */
+    public static SSEEvent rangeReplacement(String startId,
+            String stopId, String htmlFragment) { ... }
+
+    /** JSON-wrap a JSSnipplet action. */
+    public static SSEEvent jsSnipplet(String code) { ... }
+
+    /** JSON-wrap a JSFunctionCall action. */
+    public static SSEEvent jsFunctionCall(String elementId,
+            String functionRef, String functionName,
+            Object[] arguments) { ... }
+
     /**
      * Serialize as SSE text frame.
-     *
-     * Output format:
-     *   event: update
-     *   data: {"controlId":"ctrl-123","type":"patch","patch":{"value":"x"}}
-     *
-     *   (blank line terminates event)
      */
     public void writeTo(Writer out) throws IOException { ... }
 }
 ```
 
-### 5.5 SSE Wire Format
+### 5.5 Converting Traditional ClientActions to SSEEvents
 
-Each SSE frame is a JSON object on a `data:` line:
+After the `ReactServlet` runs the `RevalidationVisitor`, it collects all `ClientAction`s
+from the `UpdateQueue`. Each action is converted to an `SSEEvent`:
 
-**Incremental patch** (most common -- only changed keys):
+```java
+/**
+ * Converts traditional ClientActions (which would normally be serialized as
+ * XML in the SOAP response) into JSON SSEEvents for delivery via the event
+ * stream.
+ */
+public class ClientActionConverter {
+
+    public SSEEvent convert(ClientAction action) {
+        if (action instanceof ContentReplacement cr) {
+            return SSEEvent.contentReplacement(
+                cr.getElementId(), renderFragment(cr));
+        } else if (action instanceof ElementReplacement er) {
+            return SSEEvent.elementReplacement(
+                er.getElementId(), renderFragment(er));
+        } else if (action instanceof PropertyUpdate pu) {
+            return SSEEvent.propertyUpdate(
+                pu.getElementId(), pu.getProperties());
+        } else if (action instanceof JSSnipplet js) {
+            return SSEEvent.jsSnipplet(js.getCode());
+        } else if (action instanceof ReactUpdate ru) {
+            // Already a React event -- pass through
+            return ru.toSSEEvent();
+        }
+        // ... other action types
+    }
+
+    /** Render an HTMLFragment to an HTML string. */
+    private String renderFragment(DOMModification mod) {
+        StringWriter sw = new StringWriter();
+        TagWriter tw = new TagWriter(sw);
+        mod.getFragment().write(displayContext, tw);
+        return sw.toString();
+    }
+}
+```
+
+This conversion is the key bridge: traditional controls continue to produce their normal
+`ClientAction`s (they don't know about SSE). The `ReactServlet` converts these to JSON
+and delivers them. The traditional controls require **zero changes**.
+
+### 5.6 SSE Wire Format
+
+Each SSE frame is a JSON object on a `data:` line. The `event:` field distinguishes
+React state updates from DOM actions:
+
+**React state patch** (incremental, only changed keys):
 
 ```
-event: update
+event: state
 data: {"controlId":"ctrl-123","type":"patch","patch":{"value":"new text","hasError":false}}
 
 ```
 
-**Full state replacement** (on mount, reconnect, or explicit reset):
+**React full state** (on mount, reconnect, or explicit reset):
 
 ```
-event: update
-data: {"controlId":"ctrl-123","type":"state","state":{"value":"x","editable":true,"disabled":false,"mandatory":true,"hasError":false,"label":"Name","tooltip":"Enter name"}}
+event: state
+data: {"controlId":"ctrl-123","type":"full","state":{"value":"x","editable":true,"disabled":false}}
 
 ```
 
-**Keepalive** (prevents connection timeout, sent periodically):
+**DOM action -- ContentReplacement:**
+
+```
+event: domAction
+data: {"type":"ContentReplacement","elementId":"ctrl-456","fragment":"<span>new content</span>"}
+
+```
+
+**DOM action -- ElementReplacement:**
+
+```
+event: domAction
+data: {"type":"ElementReplacement","elementId":"ctrl-456","fragment":"<div id='ctrl-456'>replaced</div>"}
+
+```
+
+**DOM action -- PropertyUpdate:**
+
+```
+event: domAction
+data: {"type":"PropertyUpdate","elementId":"input-789","properties":[{"name":"value","value":"hello"},{"name":"disabled","value":"false"}]}
+
+```
+
+**DOM action -- CssClassUpdate:**
+
+```
+event: domAction
+data: {"type":"CssClassUpdate","elementId":"ctrl-456","cssClass":"tlControl active selected"}
+
+```
+
+**DOM action -- FragmentInsertion:**
+
+```
+event: domAction
+data: {"type":"FragmentInsertion","elementId":"list-1","position":"beforeend","fragment":"<li>new item</li>"}
+
+```
+
+**DOM action -- RangeReplacement:**
+
+```
+event: domAction
+data: {"type":"RangeReplacement","startId":"row-1","stopId":"row-5","fragment":"<tr>...</tr>"}
+
+```
+
+**DOM action -- JSSnipplet:**
+
+```
+event: domAction
+data: {"type":"JSSnipplet","code":"services.form.TableControl.init('tbl-1');"}
+
+```
+
+**DOM action -- JSFunctionCall:**
+
+```
+event: domAction
+data: {"type":"FunctionCall","elementId":"ctrl-1","functionRef":"BAL","functionName":"setStyle","arguments":["color: red;"]}
+
+```
+
+**Keepalive** (prevents proxy/connection timeout):
 
 ```
 : keepalive
 
 ```
 
-### 5.6 Reconnection
+### 5.7 Reconnection
 
 The `EventSource` API in the browser handles reconnection automatically. On reconnect:
 
 1. The client sends a `Last-Event-ID` header (if the server set `id:` on events).
 2. The server can replay missed events from a short buffer, or:
-3. The client re-fetches full state for all mounted controls via
+3. The client re-fetches full state for all mounted React controls via
    `POST /react-api/state`.
 
 For the initial implementation, option (3) is sufficient -- no server-side event buffering
-is needed. The client simply re-mounts all active React controls on reconnect.
-
-### 5.7 SSE for Non-React Controls (Future Path)
-
-A traditional control (e.g., `TextInputControl`) could also enqueue SSE events:
-
-```java
-// Hypothetical future use in a traditional control:
-SSEUpdateQueue.forCurrentSession().enqueue(
-    SSEEvent.domAction("ctrl-456", new PropertyUpdate(
-        inputId, "value", newDisplayValue)));
-```
-
-The client-side SSE handler would then apply the DOM action directly, without waiting for
-the next AJAX response. This is not part of the initial implementation but the
-architecture explicitly supports it.
+is needed. The client re-fetches state for mounted React controls on reconnect. For
+traditional controls, the server can trigger a full repaint of the visible component
+tree on reconnect to ensure consistency.
 
 ---
 
@@ -700,15 +853,17 @@ architecture explicitly supports it.
 The `ReactServlet` provides a **JSON-based command endpoint** for React controls. It
 handles two operations:
 
-- **Command dispatch**: Execute a `ControlCommand` on a `ReactControl`, return a JSON
-  response.
+- **Command dispatch**: Execute a `ControlCommand` on a `ReactControl`, then run the
+  `RevalidationVisitor` to collect updates from *all* controls (React and traditional),
+  convert them to `SSEEvent`s, and enqueue them on the SSE stream.
 - **State fetch**: Retrieve the current full state of a `ReactControl` (used on mount and
   reconnect).
 
-Note: **Server-to-client updates are NOT part of command responses.** They flow
-exclusively through the SSE channel. The command response only contains the direct result
-of the command (success/error), not side-effect updates. Side effects (model changes
-triggering other controls to update) are delivered asynchronously via SSE.
+**Server-to-client updates are NOT part of command responses.** The command response only
+indicates success or error. All side effects -- including updates to the command's own
+control, other React controls, and traditional controls -- are delivered via the SSE
+stream. This clean separation means the React client never needs to parse update payloads
+from command responses.
 
 ### 6.2 Registration
 
@@ -793,18 +948,39 @@ are delivered via the SSE stream.
 ### 6.5 Request Lifecycle
 
 ```
-1. Parse JSON request body
-2. Extract HTTP session (same session cookie as main TopLogic app)
-3. Validate session is active, user is authenticated
-4. Resolve the FrameScope from the session's MainLayout
-5. Look up the target control by controlId in the FrameScope's CommandListener registry
-6. Verify the control is a ReactControl (reject otherwise)
-7. Route:
-   - "command" -> control.executeCommand(context, commandName, arguments)
-                  (any state updates are enqueued on SSEUpdateQueue as side effects)
-   - "state"   -> control.getReactState()
-8. Return JSON response (success/error only for commands, state for fetches)
+For /react-api/command:
+
+  1. Parse JSON request body
+  2. Extract HTTP session (same session cookie as main TopLogic app)
+  3. Validate session is active, user is authenticated
+  4. Acquire the session's RequestLock (writer lock)
+  5. Resolve the FrameScope from the session's MainLayout
+  6. Look up the target control by controlId in the FrameScope's CommandListener registry
+  7. Verify the control is a ReactControl (reject otherwise)
+  8. Execute: control.executeCommand(context, commandName, arguments)
+  9. Run RevalidationVisitor on the MainLayout
+     - Visits ALL components/controls, not just the targeted one
+     - Collects ClientActions from all invalid controls
+     - React controls: produce ReactUpdate events (already on SSE queue)
+     - Traditional controls: produce ContentReplacement, PropertyUpdate, etc.
+ 10. Convert traditional ClientActions to SSEEvents via ClientActionConverter
+ 11. Enqueue all SSEEvents on the session's SSEUpdateQueue
+ 12. Release the RequestLock
+ 13. Return JSON response: {"success": true} or {"success": false, "error": {...}}
+     (updates are delivered asynchronously via SSE, not in this response)
+
+For /react-api/state:
+
+  1. Parse JSON request body
+  2. Validate session
+  3. Resolve control by controlId
+  4. Return: {"success": true, "state": control.getReactState()}
 ```
+
+The critical step is **9**: by running the `RevalidationVisitor`, the `ReactServlet`
+ensures that all controls affected by the command -- regardless of type -- have their
+updates collected and delivered. This is the same visitor that the `AJAXServlet` runs
+after command execution (see `AJAXServlet.validate()`), ensuring identical semantics.
 
 ### 6.6 Session and Security
 
@@ -841,41 +1017,123 @@ Security is enforced at two levels:
 
 ### 7.2 SSE Connection Manager
 
-The bridge establishes a single `EventSource` connection on page load:
+The bridge establishes a single `EventSource` connection on page load. It handles two
+event types: `state` events (for React controls) and `domAction` events (for traditional
+controls whose updates were triggered by a React command).
 
 ```typescript
 class SSEClient {
     private _source: EventSource;
-    private _listeners: Map<string, (event: SSEUpdateEvent) => void>;
+    private _stateListeners: Map<string, (event: SSEStateEvent) => void>;
 
     connect(url: string): void {
         this._source = new EventSource(url);
 
-        this._source.addEventListener('update', (e: MessageEvent) => {
-            const event: SSEUpdateEvent = JSON.parse(e.data);
-            const listener = this._listeners.get(event.controlId);
+        // React control state updates (patches and full state)
+        this._source.addEventListener('state', (e: MessageEvent) => {
+            const event: SSEStateEvent = JSON.parse(e.data);
+            const listener = this._stateListeners.get(event.controlId);
             if (listener) {
                 listener(event);
             }
         });
 
+        // Traditional control DOM actions (JSON-wrapped ClientActions)
+        this._source.addEventListener('domAction', (e: MessageEvent) => {
+            const action: DOMActionEvent = JSON.parse(e.data);
+            DOMActionProcessor.apply(action);
+        });
+
         this._source.onerror = () => {
             // EventSource reconnects automatically.
-            // On reconnect, re-fetch state for all mounted controls.
+            // On reconnect, re-fetch state for all mounted React controls.
             this.refetchAll();
         };
     }
 
     subscribe(controlId: string,
-              callback: (event: SSEUpdateEvent) => void): void {
-        this._listeners.set(controlId, callback);
+              callback: (event: SSEStateEvent) => void): void {
+        this._stateListeners.set(controlId, callback);
     }
 
     unsubscribe(controlId: string): void {
-        this._listeners.delete(controlId);
+        this._stateListeners.delete(controlId);
+    }
+}
+
+/**
+ * Applies JSON-wrapped DOM actions to the page.
+ * This is the JSON equivalent of what simpleajax.js does for XML actions.
+ */
+class DOMActionProcessor {
+    static apply(action: DOMActionEvent): void {
+        switch (action.type) {
+            case 'ContentReplacement': {
+                const el = document.getElementById(action.elementId);
+                if (el) el.innerHTML = action.fragment;
+                break;
+            }
+            case 'ElementReplacement': {
+                const el = document.getElementById(action.elementId);
+                if (el) el.outerHTML = action.fragment;
+                break;
+            }
+            case 'PropertyUpdate': {
+                const el = document.getElementById(action.elementId);
+                if (el) {
+                    for (const prop of action.properties) {
+                        (el as any)[prop.name] = coerceValue(prop.value);
+                    }
+                }
+                break;
+            }
+            case 'CssClassUpdate': {
+                const el = document.getElementById(action.elementId);
+                if (el) el.className = action.cssClass;
+                break;
+            }
+            case 'FragmentInsertion': {
+                const el = document.getElementById(action.elementId);
+                if (el) el.insertAdjacentHTML(action.position, action.fragment);
+                break;
+            }
+            case 'RangeReplacement': {
+                // Replace all siblings from startId to stopId
+                const start = document.getElementById(action.startId);
+                const stop = document.getElementById(action.stopId);
+                if (start && stop) {
+                    start.insertAdjacentHTML('beforebegin', action.fragment);
+                    // Remove nodes from start to stop (inclusive)
+                    let node = start;
+                    while (node && node !== stop) {
+                        const next = node.nextSibling;
+                        node.remove();
+                        node = next as Element;
+                    }
+                    stop.remove();
+                }
+                break;
+            }
+            case 'JSSnipplet': {
+                eval(action.code);
+                break;
+            }
+            case 'FunctionCall': {
+                const el = document.getElementById(action.elementId);
+                const obj = eval(action.functionRef);
+                obj[action.functionName].apply(obj, [el, ...action.arguments]);
+                break;
+            }
+        }
     }
 }
 ```
+
+This means that when a React button click triggers a server command that causes a
+traditional `SelectControl` to update its options, the `PropertyUpdate` or
+`ContentReplacement` for that `SelectControl` arrives via SSE and is applied to the DOM
+immediately -- the user sees both the React control and the traditional control update
+together, without any additional user interaction.
 
 ### 7.3 Bridge API
 
@@ -1311,37 +1569,61 @@ controls explicitly decide what data to expose.
                                            - import("/react/controls/TLChart.js")
                                            - ReactDOM.createRoot(div).render(...)
 
-                                        3. User interacts
+                                        3. User clicks React button
                                            -> useTLCommand().execute("save", {...})
 
  4. ReactServlet receives               <-- POST /react-api/command
+    -> acquires RequestLock
     -> resolves control by ID
     -> dispatches ControlCommand
-    -> command calls patchReactState()
-       -> enqueued on SSEUpdateQueue
-    -> returns success                   --> {"success": true}
+    -> command modifies model
+       (affects React AND traditional
+        controls)
 
- 5. SSEUpdateQueue flushes               --> SSE: event: update
-    (asynchronous, immediate)                data: {"controlId":"ctrl-123",
+ 5. ReactServlet runs
+    RevalidationVisitor
+    -> visits entire component tree
+    -> ReactControl: patchReactState()
+       -> SSEEvent.patch("ctrl-123",...)
+    -> TextInputControl: addUpdate(
+         PropertyUpdate("input-456",...))
+       -> ClientActionConverter converts
+          to SSEEvent.propertyUpdate(...)
+    -> SelectControl: requestRepaint()
+       -> renders HTML, creates
+          ContentReplacement
+       -> ClientActionConverter converts
+          to SSEEvent.contentReplacement()
+    -> all events enqueued on
+       SSEUpdateQueue
+
+ 6. ReactServlet returns                 --> {"success": true}
+    (updates NOT in response)
+
+ 7. SSEUpdateQueue flushes               --> SSE: event: state
+    (immediate, all events)                  data: {"controlId":"ctrl-123",
                                                     "type":"patch",
                                                     "patch":{"name":"New"}}
 
-                                        6. SSEClient receives event
-                                           -> ControlStateStore.applyPatch()
-                                           -> React re-renders
+                                             SSE: event: domAction
+                                             data: {"type":"PropertyUpdate",
+                                                    "elementId":"input-456",
+                                                    "properties":[...]}
 
- --- Cross-control updates ---
+                                             SSE: event: domAction
+                                             data: {"type":"ContentReplacement",
+                                                    "elementId":"select-789",
+                                                    "fragment":"<select>...</select>"}
 
- 7. Another command changes a model
-    that a ReactControl listens to
-    -> listener fires
-    -> control.patchReactState(...)
-    -> enqueued on SSEUpdateQueue
-    -> delivered via SSE immediately      --> SSE: event: update
-                                              data: {"controlId":"ctrl-456",...}
+                                        8. SSEClient dispatches:
+                                           - "state" -> ControlStateStore.applyPatch()
+                                             -> React re-renders ctrl-123
+                                           - "domAction" -> DOMActionProcessor.apply()
+                                             -> DOM updates input-456, select-789
 
-                                        8. React re-renders affected control
-                                           (no user interaction required!)
+                                        Result: ALL controls update together,
+                                        both React and traditional, from a
+                                        single React button click.
 ```
 
 ---
@@ -1350,9 +1632,10 @@ controls explicitly decide what data to expose.
 
 Considered in the architecture but out of scope for the initial implementation:
 
-- **SSE for traditional controls**: Deliver `ContentReplacement`, `PropertyUpdate`, and
-  `JSFunctionCall` actions via SSE (JSON-wrapped), eliminating the need to piggyback
-  updates on command responses for the entire UI.
+- **SSE as delivery channel for AJAXServlet commands**: Currently, only commands routed
+  through the `ReactServlet` deliver updates via SSE. A future step could have the
+  `AJAXServlet` also enqueue updates on the SSE stream, unifying the delivery path
+  entirely and eliminating the XML/SOAP response for updates.
 - **TypeScript type generation** from TopLogic model definitions (`*.model.xml`).
 - **React form control library**: Systematic React replacements for all standard form
   field controls (text, select, date, checkbox, etc.).
@@ -1361,6 +1644,8 @@ Considered in the architecture but out of scope for the initial implementation:
 - **Nested patch depth**: Support for deep merging in patches (e.g., patching
   `{"items[3].status": "done"}` within a table state) if the flat key-value patch model
   proves insufficient.
+- **SSE event buffering and replay**: Server-side event log enabling replay on reconnect
+  instead of full state refetch.
 
 ---
 
@@ -1368,10 +1653,11 @@ Considered in the architecture but out of scope for the initial implementation:
 
 | Decision | Resolution | Rationale |
 |---|---|---|
-| Update delivery path | Dedicated SSE stream, separate from XML/SOAP | Clean separation; enables server-push for the first time |
+| Update delivery path | SSE stream delivers ALL updates (React + traditional) | ReactServlet runs RevalidationVisitor, JSON-wraps traditional ClientActions; no stranded updates |
 | Control ID stability | Use generated IDs (from `FrameScope.createNewID()`) | Stable while control is displayed; on detach, control is not reused |
 | Transaction scope | Controls do not manage transactions | Transactions are a LayoutComponent concern, out of scope for Controls |
 | I18N | Server resolves all labels, included in state | Simplest approach; no client-side resource bundles needed |
 | Theme integration | CSS custom properties + programmatic access via `useTLTheme()` | Consistent look when desired, third-party libs work unchanged |
 | State update granularity | Incremental patches (only changed keys) | Required for large state (tables); `patchReactState()` + `setReactState()` |
-| SSE scope | General-purpose (any control can enqueue) | Enables future migration of all controls to server-push |
+| SSE scope | Universal: delivers React patches AND JSON-wrapped DOM actions | Mixed React/traditional views work correctly from day one |
+| Revalidation in ReactServlet | Full RevalidationVisitor run after each command | Same semantics as AJAXServlet; traditional controls get updates immediately |

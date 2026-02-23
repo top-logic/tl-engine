@@ -17,6 +17,8 @@
 					<module key="com.top_logic.ai.service.AIService$Module" value="true"/>
 					<!-- Tool Registry for managing AI tool providers -->
 					<module key="com.top_logic.ai.service.tools.registry.ToolRegistry$Module" value="true"/>
+					<!-- Agent Registry for runtime-configurable agent definitions -->
+					<module key="com.top_logic.ai.service.agents.AgentRegistry$Module" value="true"/>
 				</modules>
 			</instance>
 		</config>

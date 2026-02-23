@@ -1,0 +1,42 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.layout.react;
+
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKey1;
+import com.top_logic.layout.I18NConstantsBase;
+
+/**
+ * I18N constants for the React integration module.
+ */
+@SuppressWarnings("javadoc")
+public class I18NConstants extends I18NConstantsBase {
+
+	/**
+	 * @en React control value changed.
+	 */
+	public static ResKey REACT_VALUE_CHANGED;
+
+	/**
+	 * @en Control not found: {0}
+	 */
+	public static ResKey1 ERROR_CONTROL_NOT_FOUND__ID;
+
+	/**
+	 * @en Command execution failed: {0}
+	 */
+	public static ResKey1 ERROR_COMMAND_FAILED__MSG;
+
+	/**
+	 * @en Internal error in React integration.
+	 */
+	public static ResKey ERROR_INTERNAL;
+
+	static {
+		initConstants(I18NConstants.class);
+	}
+
+}

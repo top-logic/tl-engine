@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-fragment
+	xmlns="http://java.sun.com/xml/ns/javaee"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee/web-fragment_3_0.xsd"
+	id="tl-layout-react"
+	version="3.0"
+	metadata-complete="true"
+>
+	<name>tl-layout-react</name>
+
+	<servlet>
+		<servlet-name>ReactServlet</servlet-name>
+		<servlet-class>com.top_logic.layout.react.ReactServlet</servlet-class>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>ReactServlet</servlet-name>
+		<url-pattern>/react-api/*</url-pattern>
+	</servlet-mapping>
+
+	<servlet>
+		<servlet-name>SSEServlet</servlet-name>
+		<servlet-class>com.top_logic.layout.react.SSEServlet</servlet-class>
+		<async-supported>true</async-supported>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>SSEServlet</servlet-name>
+		<url-pattern>/react-api/events</url-pattern>
+	</servlet-mapping>
+
+</web-fragment>

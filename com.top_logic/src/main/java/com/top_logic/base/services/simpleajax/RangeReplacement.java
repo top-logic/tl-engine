@@ -19,7 +19,14 @@ public class RangeReplacement extends DOMModification {
 	public static final String RANGE_REPLACEMENT_XSI_TYPE = "RangeReplacement";
 	
 	String stopID;
-	
+
+	/**
+	 * The ID of the last element in the range to replace.
+	 */
+	public String getStopID() {
+		return stopID;
+	}
+
 	/**
 	 * Replaces the range that starts immediately before the element identified by
 	 * <code>startID</code> and that stops immediately after the element identified by

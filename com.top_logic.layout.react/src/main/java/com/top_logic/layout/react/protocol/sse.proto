@@ -1,0 +1,116 @@
+package com.top_logic.layout.react.protocol;
+
+option NoReflection;
+option NoBinary;
+option NoXml;
+
+/** Base type for all SSE events sent from server to client. */
+abstract message SSEEvent {}
+
+/** Full state replacement for a React control. */
+message StateEvent extends SSEEvent {
+	/** The control ID this state belongs to. */
+	string controlId;
+
+	/** The full state object serialized as a JSON string. */
+	string state;
+}
+
+/** Incremental patch to a React control's state. */
+message PatchEvent extends SSEEvent {
+	/** The control ID this patch applies to. */
+	string controlId;
+
+	/** A JSON Merge Patch (RFC 7396) serialized as a string. */
+	string patch;
+}
+
+/** Replaces the inner content of an element. */
+message ContentReplacement extends SSEEvent {
+	/** The ID of the target element. */
+	string elementId;
+
+	/** The new inner HTML. */
+	string html;
+}
+
+/** Replaces an entire element. */
+message ElementReplacement extends SSEEvent {
+	/** The ID of the element to replace. */
+	string elementId;
+
+	/** The replacement HTML. */
+	string html;
+}
+
+/** Updates one or more properties on an element. */
+message PropertyUpdate extends SSEEvent {
+	/** The ID of the target element. */
+	string elementId;
+
+	/** The properties to update. */
+	repeated Property properties;
+}
+
+/** A single property name-value pair. */
+message Property {
+	/** The property name. */
+	string name;
+
+	/** The property value rendered as a string. */
+	string value;
+}
+
+/** Updates the CSS class attribute of an element. */
+message CssClassUpdate extends SSEEvent {
+	/** The ID of the target element. */
+	string elementId;
+
+	/** The new CSS class string. */
+	string cssClass;
+}
+
+/** Inserts an HTML fragment relative to an element. */
+message FragmentInsertion extends SSEEvent {
+	/** The ID of the reference element. */
+	string elementId;
+
+	/** The position relative to the element (beforeBegin, afterBegin, beforeEnd, afterEnd). */
+	string position;
+
+	/** The HTML to insert. */
+	string html;
+}
+
+/** Replaces a range of elements from startId to stopId. */
+message RangeReplacement extends SSEEvent {
+	/** The ID of the first element in the range. */
+	string startId;
+
+	/** The ID of the last element in the range. */
+	string stopId;
+
+	/** The replacement HTML. */
+	string html;
+}
+
+/** Executes a JavaScript code snippet. */
+message JSSnipplet extends SSEEvent {
+	/** The JavaScript code to execute. */
+	string code;
+}
+
+/** Calls a JavaScript function. */
+message FunctionCall extends SSEEvent {
+	/** The ID of the context element. */
+	string elementId;
+
+	/** The object reference containing the function (e.g. "BAL"). */
+	string functionRef;
+
+	/** The name of the function to call. */
+	string functionName;
+
+	/** The arguments serialized as a JSON array string. */
+	string arguments;
+}

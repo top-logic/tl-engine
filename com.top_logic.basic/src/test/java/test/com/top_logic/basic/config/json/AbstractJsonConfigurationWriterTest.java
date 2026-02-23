@@ -148,7 +148,7 @@ public abstract class AbstractJsonConfigurationWriterTest extends AbstractTypedC
 			executionContext.executionConfig(executionConfig -> executionConfig.formatAssertionsEnabled(true));
 		});
 
-		assertTrue("Validation errors: " + errors, errors.isEmpty());
+		assertTrue("Validation errors: " + errors + "\nSchema was: \n" + schemaJson, errors.isEmpty());
 	}
 
 }

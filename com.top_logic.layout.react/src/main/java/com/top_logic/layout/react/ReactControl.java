@@ -190,6 +190,11 @@ public class ReactControl extends AbstractVisibleControl {
 		out.append(contextPath);
 		out.append("');");
 		HTMLUtil.endScriptAfterRendering(out);
+
+		// Retrieve the SSE queue from the session and register this control for command dispatch.
+		SSEUpdateQueue queue = SSEUpdateQueue.forSession(context.asRequest().getSession());
+		_sseQueue = queue;
+		queue.registerControl(this);
 	}
 
 	@Override

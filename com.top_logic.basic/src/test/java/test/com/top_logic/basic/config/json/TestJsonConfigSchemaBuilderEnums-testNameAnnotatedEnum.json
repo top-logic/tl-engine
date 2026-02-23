@@ -1,0 +1,19 @@
+{
+	"type": "object",
+	"required": [
+		"$type"
+	],
+	"properties": {
+		"$type": {
+			"const": "test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderEnums$ConfigWithNameAnnotatedEnum"
+		},
+		"name-annotated-enum": {
+			"enum": [
+				"first-option",
+				"second-option",
+				"third-option"
+			]
+		}
+	},
+	"additionalProperties": false
+}

@@ -53,7 +53,7 @@ public final class OrchestratorAgent {
 			return "AIService is not available. Please ensure the service is started.";
 		}
 
-		ChatModel model = aiService.getChatModel("mistral-large-latest");
+		ChatModel model = aiService.getChatModel("claude-opus-4-6");
 		SkillRegistry registry = SkillConfig.getInstance();
 		String systemPrompt = registry.buildSystemPrompt(OrchestratorRouter.class);
 		OrchestratorRouter router = AgenticServices.agentBuilder(OrchestratorRouter.class)

@@ -18,14 +18,14 @@
 					models="gpt-4o,gpt-4o-mini,gpt-3.5-turbo"
 				/>
 				<factory class="com.top_logic.ai.service.providers.AnthropicChatModelFactory"
-					api-key=""
+					api-key="L7ae_bCQsnEN4QPEXBXLm8d7Sp5Hq5L_CkuiCIWlrzju3wjz6j-PouVmxFn12Xlm0MrmSaymRxNcQrpLTd-LfjB-yZ44Ij_OrEEPg6oc4Ocvb8W0M2GUEheHWXc4It5qRWD4PwgpYEQRKiYz1oZbH8bKAQbb-cJwMxCCcw"
 					base-url="https://api.anthropic.com/v1"
 					max-idle-models="5"
 					max-pool-size="10"
-					models="claude-3-5-sonnet-20241022,claude-3-5-haiku-20241022,claude-3-opus-20240229"
+					models="claude-opus-4-6,claude-sonnet-4-6,claude-haiku-4-5-20251001"
 				/>
 				<factory class="com.top_logic.ai.service.providers.MistralChatModelFactory"
-					api-key="WQEoIYXs3QRfcBUoOzKD8Af72vlpCulP9tWKp_Avk7R_k4VylWtyuqC0UJr7ho2o"
+					api-key="7SVKFQmU_uU-CBdAe-rUF_VXbFHQwQgN4MtlDf2ib4NvO4lHdIoptWIjZx8PQbJd"
 					base-url="https://api.mistral.ai/v1"
 					max-idle-models="5"
 					max-pool-size="10"

@@ -12,7 +12,13 @@
 		},
 		"test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$Organization#map:name": {
 			"type": "object",
+			"required": [
+				"$type"
+			],
 			"properties": {
+				"$type": {
+					"const": "test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$Organization"
+				},
 				"employee-count": {
 					"type": "integer"
 				}

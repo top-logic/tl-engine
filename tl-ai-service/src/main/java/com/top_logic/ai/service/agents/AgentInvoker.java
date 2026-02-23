@@ -5,25 +5,9 @@
  */
 package com.top_logic.ai.service.agents;
 
-import com.top_logic.ai.service.AIService;
 import com.top_logic.ai.service.agents.handoff.AgentWorkOrder;
 import com.top_logic.ai.service.tools.ToolCallTracking;
-import com.top_logic.ai.service.tools.help.TLScriptReferenceTool;
-import com.top_logic.ai.service.tools.model.AnnotationDefinitionExplorerTool;
-import com.top_logic.ai.service.tools.model.InstanceBrowserTool;
-import com.top_logic.ai.service.tools.model.ModelAnnotationBrowserTool;
-import com.top_logic.ai.service.tools.model.ModelBrowserTool;
-import com.top_logic.ai.service.tools.model.ModelEditorTool;
-import com.top_logic.ai.service.tools.model.ModelSearchTool;
-import com.top_logic.ai.service.tools.model.TypeAnalysisTool;
-import com.top_logic.ai.service.skills.SkillConfig;
-import com.top_logic.ai.service.skills.SkillRegistry;
-import com.top_logic.ai.service.skills.SkillTool;
-import com.top_logic.ai.service.tools.script.TLScriptTool;
 import com.top_logic.basic.thread.ThreadContextManager;
-
-import dev.langchain4j.agentic.AgenticServices;
-import dev.langchain4j.model.chat.ChatModel;
 
 /**
  * Internal component for agent-to-agent calls.
@@ -53,12 +37,11 @@ public final class AgentInvoker {
 		ToolCallTracking.recordAgentCallStartIfTracking(fromAgent, "ModelExplorer", prompt);
 		String result;
 		try {
-			AIService aiService = AIService.getInstance();
-			if (aiService == null) {
-				throw new RuntimeException("AIService is not available.");
+			AgentRegistry registry = AgentRegistry.getInstance();
+			if (registry == null) {
+				throw new RuntimeException("AgentRegistry is not available.");
 			}
-			ChatModel explorationModel = aiService.getChatModel("mistral-large-latest");
-			ModelExplorer explorer = buildModelExplorer(explorationModel);
+			ModelExplorer explorer = registry.buildAgent("model-explorer", ModelExplorer.class);
 			result = ThreadContextManager.inSystemInteraction(AgentInvoker.class,
 				() -> explorer.explore(prompt));
 		} catch (Exception e) {
@@ -91,19 +74,11 @@ public final class AgentInvoker {
 		ToolCallTracking.recordAgentCallStartIfTracking(fromAgent, "TLScriptAgent", messageForLambda);
 		String result;
 		try {
-			AIService aiService = AIService.getInstance();
-			if (aiService == null) {
-				throw new RuntimeException("AIService is not available.");
+			AgentRegistry registry = AgentRegistry.getInstance();
+			if (registry == null) {
+				throw new RuntimeException("AgentRegistry is not available.");
 			}
-			ChatModel tlscriptModel = aiService.getChatModel("mistral-large-latest");
-			SkillRegistry registry = SkillConfig.getInstance();
-			String systemPrompt = registry.buildSystemPrompt(TLScriptAgent.class);
-			final TLScriptAgent agent = AgenticServices.agentBuilder(TLScriptAgent.class)
-				.chatModel(tlscriptModel)
-				.systemMessageProvider(memoryId -> systemPrompt)
-				.tools(new TLScriptReferenceTool(), new AgentDelegationTools.Exploration("TLScriptAgent"),
-					new TLScriptTool(), new SkillTool(registry, TLScriptAgent.class))
-				.build();
+			TLScriptAgent agent = registry.buildAgent("tlscript", TLScriptAgent.class);
 			result = ThreadContextManager.inSystemInteraction(AgentInvoker.class,
 				() -> agent.answer(messageForLambda));
 		} catch (Exception e) {
@@ -136,19 +111,11 @@ public final class AgentInvoker {
 		ToolCallTracking.recordAgentCallStartIfTracking(fromAgent, "ModelEditor", requirementsForLambda);
 		String result;
 		try {
-			AIService aiService = AIService.getInstance();
-			if (aiService == null) {
-				throw new RuntimeException("AIService is not available.");
+			AgentRegistry registry = AgentRegistry.getInstance();
+			if (registry == null) {
+				throw new RuntimeException("AgentRegistry is not available.");
 			}
-			ChatModel creationModel = aiService.getChatModel("mistral-large-latest");
-			SkillRegistry registry = SkillConfig.getInstance();
-			String systemPrompt = registry.buildSystemPrompt(ModelEditor.class);
-			ModelEditor creator = AgenticServices.agentBuilder(ModelEditor.class)
-				.chatModel(creationModel)
-				.systemMessageProvider(memoryId -> systemPrompt)
-				.tools(new ModelEditorTool(), new AgentDelegationTools.TLScript("ModelEditor"),
-					new SkillTool(registry, ModelEditor.class))
-				.build();
+			ModelEditor creator = registry.buildAgent("model-editor", ModelEditor.class);
 			result = ThreadContextManager.inSystemInteraction(AgentInvoker.class,
 				() -> creator.createModel(requirementsForLambda));
 		} catch (Exception e) {
@@ -176,23 +143,6 @@ public final class AgentInvoker {
 			sb.append("Expected output format: ").append(workOrder.expectedOutputFormat()).append("\n");
 		}
 		return sb.length() > 0 ? sb.toString() : workOrder.task();
-	}
-
-	private static ModelExplorer buildModelExplorer(ChatModel explorationModel) {
-		ModelBrowserTool browserTool = new ModelBrowserTool();
-		InstanceBrowserTool instanceTool = new InstanceBrowserTool();
-		TypeAnalysisTool analysisTool = new TypeAnalysisTool();
-		ModelSearchTool searchTool = new ModelSearchTool();
-		ModelAnnotationBrowserTool annotationTool = new ModelAnnotationBrowserTool();
-		AnnotationDefinitionExplorerTool definitionTool = new AnnotationDefinitionExplorerTool();
-		SkillRegistry registry = SkillConfig.getInstance();
-		String systemPrompt = registry.buildSystemPrompt(ModelExplorer.class);
-		return AgenticServices.agentBuilder(ModelExplorer.class)
-			.chatModel(explorationModel)
-			.systemMessageProvider(memoryId -> systemPrompt)
-			.tools(browserTool, instanceTool, analysisTool, searchTool, annotationTool, definitionTool,
-				new SkillTool(registry, ModelExplorer.class))
-			.build();
 	}
 
 	private static String truncate(String s, int maxLen) {

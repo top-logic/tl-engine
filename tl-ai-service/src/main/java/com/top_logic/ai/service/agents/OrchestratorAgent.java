@@ -5,18 +5,9 @@
  */
 package com.top_logic.ai.service.agents;
 
-import com.top_logic.ai.service.AIService;
-import com.top_logic.ai.service.ChatModelFactory;
-import com.top_logic.ai.service.providers.AnthropicChatModelFactory;
-import com.top_logic.ai.service.skills.SkillConfig;
-import com.top_logic.ai.service.skills.SkillRegistry;
-import com.top_logic.ai.service.skills.SkillTool;
 import com.top_logic.basic.thread.ThreadContextManager;
 
-import dev.langchain4j.agentic.AgenticServices;
 import dev.langchain4j.memory.ChatMemory;
-import dev.langchain4j.model.anthropic.AnthropicChatModel;
-import dev.langchain4j.model.chat.ChatModel;
 
 /**
  * Single entrypoint for chat: the LLM plans steps and delegates to specialists as needed (zero, one, or several).
@@ -25,7 +16,7 @@ import dev.langchain4j.model.chat.ChatModel;
  * do any need a specialist? It may call zero tools (e.g. ask for clarification), one, or multiple in sequence
  * (e.g. Explorer for model context, then TLScript for how to use it). After each tool result it reasons: is it
  * enough? When satisfied, it synthesizes and returns the final answer. See {@link OrchestratorRouter} for the
- * system prompt and {@link AgentDelegationTools} for the delegate tools.
+ * agent interface and {@link AgentDelegationTools} for the delegate tools.
  * </p>
  * <p>
  * The caller must set the run's trace (e.g. {@link com.top_logic.ai.service.tools.ToolCallTracking#setTracker})
@@ -39,7 +30,7 @@ public final class OrchestratorAgent {
 	 *
 	 * @param chatMemory
 	 *        Conversation memory that persists across messages in this session. The orchestrator's
-	 *        {@code @SystemMessage} is always retained; older user/assistant turns are evicted when
+	 *        system prompt is always retained; older user/assistant turns are evicted when
 	 *        the window is full.
 	 * @param userMessage
 	 *        Raw user input (may include legacy prefixes like /explore-model or /tlscript).
@@ -51,57 +42,16 @@ public final class OrchestratorAgent {
 		}
 		String trimmed = userMessage.trim();
 
-		AIService aiService = AIService.getInstance();
-		if (aiService == null) {
-			return "AIService is not available. Please ensure the service is started.";
+		AgentRegistry agentRegistry = AgentRegistry.getInstance();
+		if (agentRegistry == null) {
+			return "AgentRegistry is not available. Please ensure the service is started.";
 		}
 
-		ChatModel model = createThinkingModel(aiService);
-		SkillRegistry registry = SkillConfig.getInstance();
-		String systemPrompt = registry.buildSystemPrompt(OrchestratorRouter.class);
-		OrchestratorRouter router = AgenticServices.agentBuilder(OrchestratorRouter.class)
-			.chatModel(model)
-			.chatMemory(chatMemory)
-			.systemMessageProvider(memoryId -> systemPrompt)
-			.tools(
-				new AgentDelegationTools.Exploration("Orchestrator"),
-				new AgentDelegationTools.Creation("Orchestrator"),
-				new AgentDelegationTools.TLScript("Orchestrator"),
-				new SkillTool(registry, OrchestratorRouter.class))
-			.build();
+		OrchestratorRouter router = agentRegistry.buildAgent(
+			"orchestrator", OrchestratorRouter.class, chatMemory);
 
 		return ThreadContextManager.inSystemInteraction(OrchestratorAgent.class,
 			() -> router.chat(trimmed));
-	}
-
-	private static final String ORCHESTRATOR_MODEL = "claude-opus-4-6";
-
-	/**
-	 * Creates a dedicated Anthropic model with adaptive thinking enabled.
-	 *
-	 * <p>
-	 * This builds an unpooled model specifically for the orchestrator so that thinking is
-	 * structurally separated from the response text. The model decides autonomously when and how
-	 * much to think based on query complexity.
-	 * </p>
-	 */
-	private static ChatModel createThinkingModel(AIService aiService) {
-		ChatModelFactory factory = aiService.getFactory(ORCHESTRATOR_MODEL);
-		if (!(factory instanceof AnthropicChatModelFactory)) {
-			// Fallback to pooled model if factory is not Anthropic
-			return aiService.getChatModel(ORCHESTRATOR_MODEL);
-		}
-
-		AnthropicChatModelFactory.Config config = ((AnthropicChatModelFactory) factory).getConfig();
-		return AnthropicChatModel.builder()
-			.apiKey(config.getApiKey())
-			.baseUrl(config.getBaseUrl())
-			.modelName(ORCHESTRATOR_MODEL)
-			.thinkingType("adaptive")
-			.maxTokens(16000)
-			.returnThinking(false)
-			.sendThinking(true)
-			.build();
 	}
 
 	private OrchestratorAgent() {

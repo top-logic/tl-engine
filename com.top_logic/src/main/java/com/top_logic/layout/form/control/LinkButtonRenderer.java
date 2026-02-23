@@ -141,7 +141,7 @@ public class LinkButtonRenderer extends AbstractButtonRenderer<LinkButtonRendere
 		if (!button.isRepaintRequested()) {
 			addUpdate(button, new AbstractCssClassUpdate(button.getID()) {
 				@Override
-				protected void writeCssClassContent(DisplayContext context, Appendable out) throws IOException {
+				public void writeCssClassContent(DisplayContext context, Appendable out) throws IOException {
 					appendControlCSSClasses(out, button);
 				}
 			});

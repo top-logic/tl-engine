@@ -483,7 +483,7 @@ public abstract class AbstractControlBase extends PropertyObservableBase impleme
 	protected final ClientAction createCssUpdate() {
 		AbstractCssClassUpdate update = new AbstractCssClassUpdate(getID()) {
 			@Override
-			protected void writeCssClassContent(DisplayContext context, Appendable out) throws IOException {
+			public void writeCssClassContent(DisplayContext context, Appendable out) throws IOException {
 				writeControlClassesContent(out);
 			}
 		};

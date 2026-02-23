@@ -13,7 +13,6 @@ import java.util.List;
 import com.top_logic.base.services.simpleajax.AbstractCssClassUpdate;
 import com.top_logic.base.services.simpleajax.ClientAction;
 import com.top_logic.base.services.simpleajax.ContentReplacement;
-import com.top_logic.base.services.simpleajax.DOMModification;
 import com.top_logic.base.services.simpleajax.ElementReplacement;
 import com.top_logic.base.services.simpleajax.FragmentInsertion;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
@@ -132,35 +131,15 @@ public class ClientActionConverter {
 	}
 
 	private CssClassUpdate convertCssClassUpdate(AbstractCssClassUpdate action) {
-		// writeCssClassContent is protected, so we render the full action to XML and extract the
-		// class attribute value. As a simple approach, we render using writeAsXML and parse out
-		// the class value from the output.
+		StringBuilder sb = new StringBuilder();
 		try {
-			StringWriter sw = new StringWriter();
-			TagWriter tw = new TagWriter(sw);
-			action.writeAsXML(_context, tw);
-			tw.flushBuffer();
-			String xml = sw.toString();
-			// Extract class attribute value from the rendered XML.
-			// Format: <... class="value" ...>
-			int classStart = xml.indexOf("class=\"");
-			if (classStart >= 0) {
-				classStart += 7;
-				int classEnd = xml.indexOf('"', classStart);
-				if (classEnd >= 0) {
-					String cssClass = xml.substring(classStart, classEnd);
-					return CssClassUpdate.create()
-						.setElementId(action.getElementID())
-						.setCssClass(cssClass);
-				}
-			}
+			action.writeCssClassContent(_context, sb);
 		} catch (IOException ex) {
 			Logger.error("Failed to render CSS class update.", ex, ClientActionConverter.class);
 		}
-
 		return CssClassUpdate.create()
 			.setElementId(action.getElementID())
-			.setCssClass("");
+			.setCssClass(sb.toString());
 	}
 
 	private com.top_logic.layout.react.protocol.JSSnipplet convertJSSnipplet(JSSnipplet action) {

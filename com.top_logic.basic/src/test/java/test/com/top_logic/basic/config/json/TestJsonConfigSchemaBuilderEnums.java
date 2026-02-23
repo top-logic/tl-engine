@@ -79,6 +79,20 @@ public class TestJsonConfigSchemaBuilderEnums extends TestCase {
 	}
 
 	/**
+	 * Enum using {@link Name} annotations for custom serialization names.
+	 */
+	public enum NameAnnotatedEnum {
+		@Name("first-option")
+		FIRST,
+
+		@Name("second-option")
+		SECOND,
+
+		@Name("third-option")
+		THIRD
+	}
+
+	/**
 	 * Configuration interface with regular enum property.
 	 */
 	public interface ConfigWithRegularEnum extends ConfigurationItem {
@@ -106,6 +120,16 @@ public class TestJsonConfigSchemaBuilderEnums extends TestCase {
 
 		@Name(PROTOCOL_ENUM)
 		ProtocolEnum getProtocolEnum();
+	}
+
+	/**
+	 * Configuration interface with Name-annotated enum property.
+	 */
+	public interface ConfigWithNameAnnotatedEnum extends ConfigurationItem {
+		String NAME_ANNOTATED_ENUM = "name-annotated-enum";
+
+		@Name(NAME_ANNOTATED_ENUM)
+		NameAnnotatedEnum getNameAnnotatedEnum();
 	}
 
 	/**
@@ -186,9 +210,33 @@ public class TestJsonConfigSchemaBuilderEnums extends TestCase {
 		System.out.println(JsonSchemaWriter.toJson(enumSchema, true));
 	}
 
+	/**
+	 * Tests that Name-annotated enum uses annotation values.
+	 */
+	public void testNameAnnotatedEnum() {
+		JsonConfigSchemaBuilder builder = new JsonConfigSchemaBuilder();
+		ConfigurationDescriptor descriptor =
+			TypedConfiguration.getConfigurationDescriptor(ConfigWithNameAnnotatedEnum.class);
+
+		Schema schema = builder.buildConfigSchema(descriptor);
+
+		assertTrue("Should be ObjectSchema", schema instanceof ObjectSchema);
+		ObjectSchema objectSchema = (ObjectSchema) schema;
+
+		Schema enumProperty = objectSchema.getProperties().get("name-annotated-enum");
+		assertNotNull("Should have name-annotated-enum property", enumProperty);
+		assertTrue("Should be EnumSchema", enumProperty instanceof EnumSchema);
+
+		EnumSchema enumSchema = (EnumSchema) enumProperty;
+		assertEquals("Should have 3 values", 3, enumSchema.getEnumLiterals().size());
+		assertTrue("Should contain first-option", enumSchema.getEnumLiterals().contains("first-option"));
+		assertTrue("Should contain second-option", enumSchema.getEnumLiterals().contains("second-option"));
+		assertTrue("Should contain third-option", enumSchema.getEnumLiterals().contains("third-option"));
+	}
+
 	public static Test suite() {
 		return BasicTestSetup.createBasicTestSetup(
 			ServiceTestSetup.createSetup(
-				TestJsonConfigSchemaBuilderKeyAnnotation.class, ThreadContextManager.Module.INSTANCE));
+				TestJsonConfigSchemaBuilderEnums.class, ThreadContextManager.Module.INSTANCE));
 	}
 }

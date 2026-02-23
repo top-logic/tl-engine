@@ -70,6 +70,7 @@ public class DemoReactCounterComponent extends LayoutComponent {
 	 */
 	public static class DemoCounterControl extends ReactControl {
 
+		/** State key for the current counter value. */
 		private static final String COUNT = "count";
 
 		private static final Map<String, ControlCommand> COMMANDS = createCommandMap(

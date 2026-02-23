@@ -16,6 +16,7 @@ import com.top_logic.ai.service.providers.MistralChatModelFactory;
 import com.top_logic.ai.service.providers.OpenAIChatModelFactory;
 import com.top_logic.ai.service.skills.Skill;
 import com.top_logic.ai.service.skills.SkillRegistry;
+import com.top_logic.ai.service.skills.SkillTool;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.DefaultInstantiationContext;
@@ -131,11 +132,12 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 			}
 		}
 
-		// Build a shared SkillRegistry and pre-load skills for each agent
+		// Build a shared SkillRegistry, register and pre-load skills for each agent
 		_skillRegistry = new SkillRegistry();
 		for (Map.Entry<String, AgentConfig> entry : getConfig().getAgents().entrySet()) {
 			List<String> skillNames = entry.getValue().getSkills();
 			if (!skillNames.isEmpty()) {
+				_skillRegistry.registerAgentSkills(entry.getKey(), skillNames);
 				// Pre-load all referenced skills so errors surface at startup
 				for (String skillName : skillNames) {
 					try {
@@ -297,10 +299,20 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 				config.getName() + "': " + ex.getMessage(), ex);
 		}
 
-		// TODO: Wire SkillTool once name-based SkillRegistry support is added (Task 5).
-		// For now, skills are only injected into the system prompt (AUTO) or listed as catalog
-		// (ON_DEMAND). The SkillTool for on-demand loading will be added when the registry
-		// supports agent-name-based lookups.
+		// Auto-add SkillTool when the agent has on-demand skills configured
+		if (!config.getSkills().isEmpty() && _skillRegistry != null) {
+			boolean hasOnDemand = config.getSkills().stream()
+				.anyMatch(name -> {
+					try {
+						return _skillRegistry.getSkill(name).mode() == Skill.Mode.ON_DEMAND;
+					} catch (IllegalArgumentException ex) {
+						return false;
+					}
+				});
+			if (hasOnDemand) {
+				tools.add(new SkillTool(_skillRegistry, config.getName()));
+			}
+		}
 
 		return tools;
 	}

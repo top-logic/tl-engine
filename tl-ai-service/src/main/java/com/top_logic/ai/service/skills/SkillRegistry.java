@@ -35,6 +35,8 @@ public class SkillRegistry {
 
 	private final Map<Class<?>, List<String>> _agentSkills = new LinkedHashMap<>();
 
+	private final Map<String, List<String>> _namedAgentSkills = new LinkedHashMap<>();
+
 	/**
 	 * Loads and returns the skill with the given name.
 	 *
@@ -79,6 +81,64 @@ public class SkillRegistry {
 			result.add(getSkill(name));
 		}
 		return result;
+	}
+
+	/**
+	 * Registers the ordered list of skills for an agent identified by name.
+	 *
+	 * @param agentName
+	 *        The agent name as declared in the agent configuration.
+	 * @param skillNames
+	 *        Skill names available to this agent.
+	 */
+	public void registerAgentSkills(String agentName, List<String> skillNames) {
+		_namedAgentSkills.put(agentName, skillNames);
+	}
+
+	/**
+	 * Returns the skills configured for the given agent name.
+	 *
+	 * @param agentName
+	 *        The agent name as declared in the agent configuration.
+	 * @return Ordered list of skills, or empty list if none configured.
+	 */
+	public List<Skill> getSkillsFor(String agentName) {
+		List<String> names = _namedAgentSkills.getOrDefault(agentName, Collections.emptyList());
+		List<Skill> result = new ArrayList<>(names.size());
+		for (String name : names) {
+			result.add(getSkill(name));
+		}
+		return result;
+	}
+
+	/**
+	 * Builds the full system prompt for an agent by injecting a catalog of available skills into the
+	 * given base prompt.
+	 *
+	 * <p>
+	 * If the base prompt contains the {@link #SKILLS_PLACEHOLDER} marker, the skill catalog replaces
+	 * the marker at that position. Otherwise, the catalog is appended at the end. If the agent has no
+	 * registered skills, the marker is removed (or nothing is appended).
+	 * </p>
+	 *
+	 * @param agentName
+	 *        The agent name as declared in the agent configuration.
+	 * @param basePrompt
+	 *        The base system prompt (typically from XML config).
+	 * @return The complete system prompt.
+	 */
+	public String buildSystemPrompt(String agentName, String basePrompt) {
+		List<Skill> skills = getSkillsFor(agentName);
+		String skillSection = buildSkillSection(skills);
+
+		if (basePrompt.contains(SKILLS_PLACEHOLDER)) {
+			return basePrompt.replace(SKILLS_PLACEHOLDER, skillSection);
+		}
+
+		if (skills.isEmpty()) {
+			return basePrompt;
+		}
+		return basePrompt + "\n\n---\n\n" + skillSection;
 	}
 
 	/**

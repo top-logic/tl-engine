@@ -186,6 +186,7 @@ com.top_logic.layout.react/
 |   |   |       +-- SSEUpdateQueue.java            # Per-session SSE event queue
 |   |   |       +-- ClientActionConverter.java     # Converts ClientActions to SSEEvents
 |   |   |       +-- ReactControlRenderer.java      # Renders the mount <div> + bootstrap
+|   |   |       +-- ReactComponentRegistry.java   # TLType -> React module name mapping
 |   |   |       +-- I18NConstants.java
 |   |   |       +-- package-info.java
 |   |   |       +-- protocol/
@@ -214,11 +215,16 @@ com.top_logic.layout.react/
 |   +-- bridge/
 |   |   +-- tl-react-bridge.ts             # Client-side bridge API
 |   |   +-- sse-client.ts                  # SSE connection manager
+|   |   +-- registry.ts                    # Component registry
 |   |   +-- types.ts                       # Shared type definitions
 |   +-- controls/
-|   |   +-- TLTextInput.tsx                # Example: React-based text input
-|   |   +-- TLChart.tsx                    # Example: React chart control
-|   +-- index.ts                           # Control registry
+|   |   +-- TLTextInput.tsx                # Text input (tl.core:String)
+|   |   +-- TLNumberInput.tsx              # Number input (tl.core:Integer, etc.)
+|   |   +-- TLDatePicker.tsx               # Date picker (tl.core:Date)
+|   |   +-- TLSelect.tsx                   # Select box (references)
+|   |   +-- TLCheckbox.tsx                 # Checkbox (tl.core:Boolean)
+|   |   +-- TLTable.tsx                    # Model-driven table (composite)
+|   +-- index.ts                           # Registers all built-in controls
 +-- README.md
 ```
 
@@ -1402,11 +1408,36 @@ together, without any additional user interaction.
 ### 7.3 Bridge API
 
 ```typescript
+// --- Component Registry ---
+
+/**
+ * Register a React component under a module name.
+ * Called at load time by each control bundle's entry point.
+ *
+ * The module name is the key used by the server to reference
+ * this component (in ReactControl's reactModule parameter,
+ * in table column cellModule, etc.).
+ */
+function register(
+    moduleName: string,
+    component: React.ComponentType<any>
+): void;
+
+/**
+ * Look up a registered component by module name.
+ * Used by composite controls (e.g., TLTable) to resolve
+ * server-declared component names to React component types.
+ *
+ * Throws if the module name is not registered.
+ */
+function getComponent(moduleName: string): React.ComponentType<any>;
+
 // --- Mount/Unmount ---
 
 /**
  * Mount a React component into the control's DOM element.
  * Called from server-rendered inline script.
+ * Resolves reactModule via the component registry.
  */
 function mount(
     controlId: string,
@@ -1416,6 +1447,7 @@ function mount(
 
 /**
  * Mount a form-field-bound React component.
+ * Resolves reactModule via the component registry.
  */
 function mountField(
     controlId: string,
@@ -1539,9 +1571,490 @@ ensuring efficient re-renders only when state actually changes.
 
 ---
 
-## 8. Theme Integration
+## 8. Model-Driven Composition
 
-### 8.1 CSS Custom Properties
+### 8.1 Principle
+
+TopLogic is a model-based framework: the UI is derived from the data model. A table
+displaying objects of type `MyContact` automatically shows columns for each attribute,
+and each column's editor is determined by the attribute's type -- `tl.core:String`
+produces a text input, `tl.core:Date` a date picker, a reference type a select box. The
+developer configures the **model**; the framework assembles the UI.
+
+This principle must carry over to React. A React table must not hardcode which React
+component renders in each cell. Instead:
+
+1. The **server** determines the React module name per column, based on the property
+   type, through a configurable registry (`ReactComponentRegistry`).
+2. The server sends module names **as part of the control state** alongside the data.
+3. The **client** resolves module names to React component types via the
+   **Component Registry** (`TLReact.getComponent()`).
+
+This means adding a new property type with a custom React editor requires only:
+- Registering a new React component under a module name.
+- Mapping the property type to that module name in the server-side registry.
+
+No existing composite controls (table, form, detail view) need modification.
+
+### 8.2 Client-Side Component Registry
+
+The registry is a simple name-to-component map populated at load time:
+
+```typescript
+// registry.ts
+
+const _components = new Map<string, React.ComponentType<any>>();
+
+/**
+ * Register a React component under a module name.
+ * Called at load time by each bundle's entry point.
+ */
+export function register(
+    moduleName: string,
+    component: React.ComponentType<any>
+): void {
+    if (_components.has(moduleName)) {
+        console.warn(`Overriding existing component: ${moduleName}`);
+    }
+    _components.set(moduleName, component);
+}
+
+/**
+ * Resolve a module name to a React component type.
+ * Used by mount() and by composite controls (table, form).
+ */
+export function getComponent(
+    moduleName: string
+): React.ComponentType<any> {
+    const component = _components.get(moduleName);
+    if (!component) {
+        throw new Error(
+            `Unknown React module: "${moduleName}". ` +
+            `Registered: [${[..._components.keys()].join(', ')}]`);
+    }
+    return component;
+}
+```
+
+Each module's entry point registers its components:
+
+```typescript
+// index.ts (com.top_logic.layout.react built-in controls)
+
+import { register } from './bridge/registry';
+import TLTextInput from './controls/TLTextInput';
+import TLNumberInput from './controls/TLNumberInput';
+import TLDatePicker from './controls/TLDatePicker';
+import TLSelect from './controls/TLSelect';
+import TLCheckbox from './controls/TLCheckbox';
+import TLTable from './controls/TLTable';
+
+register('controls/TLTextInput', TLTextInput);
+register('controls/TLNumberInput', TLNumberInput);
+register('controls/TLDatePicker', TLDatePicker);
+register('controls/TLSelect', TLSelect);
+register('controls/TLCheckbox', TLCheckbox);
+register('controls/TLTable', TLTable);
+```
+
+### 8.3 Server-Side: `ReactComponentRegistry`
+
+The server-side counterpart maps model property types to React module names. This is
+analogous to how `ControlProvider` determines which Java `Control` to create for a
+given `FormField` type.
+
+```java
+/**
+ * Maps {@link TLType}s to React component module names.
+ *
+ * <p>Used by composite {@link ReactControl}s (tables, forms) to determine
+ * which React component should render a cell or field for a given model
+ * property. This is the React equivalent of the {@link ControlProvider}
+ * mechanism.</p>
+ */
+public class ReactComponentRegistry
+        extends ConfiguredManagedClass<ReactComponentRegistry.Config<?>> {
+
+    /**
+     * Configuration for {@link ReactComponentRegistry}.
+     */
+    public interface Config<I extends ReactComponentRegistry>
+            extends ConfiguredManagedClass.Config<I> {
+
+        /** Default mappings from type names to React module names. */
+        @Key(TypeMapping.TYPE)
+        Map<String, TypeMapping> getTypeMappings();
+    }
+
+    /**
+     * Maps a single {@link TLType} to a React module and optional
+     * component-specific configuration.
+     */
+    public interface TypeMapping extends ConfigurationItem {
+        /** Configuration name for {@link #getType()}. */
+        String TYPE = "type";
+
+        /** Qualified type name (e.g., "tl.core:String"). */
+        @Name(TYPE)
+        String getType();
+
+        /** React module name (e.g., "controls/TLTextInput"). */
+        @Mandatory
+        String getModule();
+
+        /**
+         * Optional type-specific configuration passed to the React
+         * component as {@code cellConfig}.
+         */
+        Map<String, Object> getConfig();
+    }
+
+    /**
+     * Look up the React module name for rendering a property.
+     *
+     * @param property the model property to render
+     * @return the React module name, or {@code null} if no mapping exists
+     */
+    public String getCellModule(TLStructuredTypePart property) {
+        TypeMapping mapping = config().getTypeMappings()
+            .get(property.getType().toString());
+        return mapping != null ? mapping.getModule() : null;
+    }
+
+    /**
+     * Get type-specific configuration for the cell component.
+     */
+    public Map<String, Object> getCellConfig(
+            TLStructuredTypePart property) {
+        TypeMapping mapping = config().getTypeMappings()
+            .get(property.getType().toString());
+        return mapping != null ? mapping.getConfig()
+            : Collections.emptyMap();
+    }
+}
+```
+
+Default configuration (in `react.conf.xml`):
+
+```xml
+<react-component-registry
+    class="com.top_logic.layout.react.ReactComponentRegistry">
+  <type-mappings>
+    <type-mapping type="tl.core:String"  module="controls/TLTextInput"/>
+    <type-mapping type="tl.core:Integer" module="controls/TLNumberInput"/>
+    <type-mapping type="tl.core:Float"   module="controls/TLNumberInput">
+      <config><entry key="decimal" value="true"/></config>
+    </type-mapping>
+    <type-mapping type="tl.core:Date"    module="controls/TLDatePicker"/>
+    <type-mapping type="tl.core:Boolean" module="controls/TLCheckbox"/>
+    <!-- Reference types use TLSelect by default -->
+  </type-mappings>
+</react-component-registry>
+```
+
+Application modules can override or extend this configuration to map custom types
+to custom React components.
+
+### 8.4 Composite Controls: The Model-Driven Table
+
+A `ReactTableControl` uses the `ReactComponentRegistry` to build column metadata.
+The server does not decide *how* each cell looks (that's the React component's job) --
+it decides *which* React component renders each cell, based on the model.
+
+```java
+public class ReactTableControl extends ReactControl {
+
+    private final ReactComponentRegistry _registry;
+    private final List<TLStructuredTypePart> _columns;
+
+    public ReactTableControl(Object model,
+            List<TLStructuredTypePart> columns,
+            ReactComponentRegistry registry) {
+        super(model, "controls/TLTable", COMMANDS);
+        _columns = columns;
+        _registry = registry;
+    }
+
+    /** Build the full table state from the model. */
+    protected Map<String, Object> buildTableState(
+            Collection<? extends TLObject> rows) {
+        return Map.of(
+            "columns", buildColumnDescriptors(),
+            "rows", buildRowData(rows),
+            "page", 0,
+            "pageSize", 20
+        );
+    }
+
+    private List<Map<String, Object>> buildColumnDescriptors() {
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (TLStructuredTypePart part : _columns) {
+            Map<String, Object> col = new LinkedHashMap<>();
+            col.put("key", part.getName());
+            col.put("label",
+                MetaLabelProvider.INSTANCE.getLabel(part));
+            col.put("cellModule",
+                _registry.getCellModule(part));
+            col.put("cellConfig",
+                _registry.getCellConfig(part));
+            col.put("editable", isEditable(part));
+            col.put("sortable", isSortable(part));
+            result.add(col);
+        }
+        return result;
+    }
+
+    private List<Map<String, Object>> buildRowData(
+            Collection<? extends TLObject> rows) {
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (TLObject obj : rows) {
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("id", obj.tId().toString());
+            for (TLStructuredTypePart part : _columns) {
+                Object value = obj.tValueByName(part.getName());
+                row.put(part.getName(), toJsonValue(value));
+            }
+            result.add(row);
+        }
+        return result;
+    }
+}
+```
+
+The resulting state looks like:
+
+```json
+{
+  "columns": [
+    {"key": "name", "label": "Name",
+     "cellModule": "controls/TLTextInput",
+     "cellConfig": {}, "editable": true, "sortable": true},
+    {"key": "birthday", "label": "Birthday",
+     "cellModule": "controls/TLDatePicker",
+     "cellConfig": {"format": "dd.MM.yyyy"}, "editable": true, "sortable": true},
+    {"key": "department", "label": "Department",
+     "cellModule": "controls/TLSelect",
+     "cellConfig": {"options": [
+       {"value": "eng", "label": "Engineering"},
+       {"value": "sales", "label": "Sales"}
+     ]}, "editable": true, "sortable": false}
+  ],
+  "rows": [
+    {"id": "obj-42", "name": "Alice", "birthday": "1990-03-15",
+     "department": "eng"},
+    {"id": "obj-43", "name": "Bob", "birthday": "1985-11-02",
+     "department": "sales"}
+  ],
+  "page": 0, "pageSize": 20
+}
+```
+
+The React `TLTable` component resolves `cellModule` via the registry:
+
+```tsx
+// TLTable.tsx — model-driven, no hardcoded cell types
+
+import { useTLState, useTLCommand } from '../bridge/tl-react-bridge';
+import { getComponent } from '../bridge/registry';
+
+interface Column {
+    key: string;
+    label: string;
+    cellModule: string;
+    cellConfig: Record<string, unknown>;
+    editable: boolean;
+    sortable: boolean;
+}
+
+interface TableState {
+    columns: Column[];
+    rows: Record<string, unknown>[];
+    page: number;
+    pageSize: number;
+}
+
+export default function TLTable() {
+    const state = useTLState<TableState>();
+    const { execute } = useTLCommand();
+
+    return (
+        <table className="tl-react-table">
+            <thead>
+                <tr>
+                    {state.columns.map(col => (
+                        <th key={col.key}>{col.label}</th>
+                    ))}
+                </tr>
+            </thead>
+            <tbody>
+                {state.rows.map(row => (
+                    <tr key={row.id as string}>
+                        {state.columns.map(col => (
+                            <td key={col.key}>
+                                <TLTableCell
+                                    column={col}
+                                    row={row}
+                                    onCellChange={(value) =>
+                                        execute('cellValueChanged', {
+                                            rowId: row.id,
+                                            column: col.key,
+                                            value
+                                        })
+                                    }
+                                />
+                            </td>
+                        ))}
+                    </tr>
+                ))}
+            </tbody>
+        </table>
+    );
+}
+
+/**
+ * Renders a single cell by resolving the column's cellModule
+ * from the component registry.
+ *
+ * The resolved component receives a standardized props interface:
+ * value, config, editable, and onChange.
+ */
+function TLTableCell({ column, row, onCellChange }: {
+    column: Column;
+    row: Record<string, unknown>;
+    onCellChange: (value: unknown) => void;
+}) {
+    const CellComponent = getComponent(column.cellModule);
+    return (
+        <CellComponent
+            value={row[column.key]}
+            config={column.cellConfig}
+            editable={column.editable}
+            onChange={onCellChange}
+        />
+    );
+}
+```
+
+Note that `TLTable` itself never imports `TLTextInput`, `TLDatePicker`, or `TLSelect`.
+It resolves them at runtime from the registry based on server-provided module names.
+Adding a new property type with a new React cell renderer requires **zero changes** to
+`TLTable`.
+
+### 8.5 Cell Component Contract
+
+All cell components used inside composite controls follow a common props interface:
+
+```typescript
+/**
+ * Standard props for cell/field components used inside composite
+ * controls like TLTable or TLForm.
+ *
+ * Components that want to be usable as table cells or form fields
+ * must accept these props. They may accept additional props via
+ * the config object.
+ */
+interface TLCellProps {
+    /** Current value (type depends on the component). */
+    value: unknown;
+    /** Type-specific configuration from the server. */
+    config: Record<string, unknown>;
+    /** Whether the cell is editable. */
+    editable: boolean;
+    /** Callback when the user changes the value. */
+    onChange: (newValue: unknown) => void;
+}
+```
+
+A cell component that conforms to this contract can be used in any composite context --
+tables, forms, detail views -- without modification. Example:
+
+```tsx
+// TLTextInput.tsx — works both as standalone (via useTLFieldValue)
+// and as a table cell (via TLCellProps)
+
+function TLTextInput(props: TLCellProps) {
+    return (
+        <input
+            type="text"
+            value={(props.value as string) ?? ''}
+            onChange={e => props.onChange(e.target.value)}
+            disabled={!props.editable}
+            maxLength={props.config.maxLength as number | undefined}
+        />
+    );
+}
+```
+
+When the same component is used as a standalone `ReactFormFieldControl`, the bridge
+wraps it with an adapter that maps `useTLFieldValue()` state to `TLCellProps`.
+
+### 8.6 Application Module Contributions
+
+Application modules can contribute additional React components without modifying
+`com.top_logic.layout.react`. The pattern mirrors how TopLogic Java modules
+contribute `ControlProvider`s today:
+
+**1. React source and build:**
+
+The application module includes its own `react-src/` directory and Vite build:
+
+```
+com.top_logic.my_app/
++-- react-src/
+|   +-- controls/
+|   |   +-- RichTextEditor.tsx          # Custom editor component
+|   +-- index.ts                        # Registers custom components
++-- src/main/webapp/react/
+|   +-- my-app-controls.js              # Vite build output
+```
+
+**2. Component registration:**
+
+```typescript
+// my-app index.ts
+import { register } from '@toplogic/react-bridge';
+import RichTextEditor from './controls/RichTextEditor';
+
+register('my-app/RichTextEditor', RichTextEditor);
+```
+
+**3. Server-side type mapping:**
+
+The application module extends the `ReactComponentRegistry` configuration:
+
+```xml
+<!-- my-app react.conf.xml (merged with base configuration) -->
+<react-component-registry>
+  <type-mappings>
+    <type-mapping type="my.module:RichText"
+                  module="my-app/RichTextEditor"/>
+  </type-mappings>
+</react-component-registry>
+```
+
+**4. Script loading:**
+
+The application module's React bundle is declared in its theme configuration
+so that it is loaded alongside the base bridge:
+
+```xml
+<!-- theme.xml -->
+<theme>
+  <styles>
+    <js path="/react/my-app-controls.js"/>
+  </styles>
+</theme>
+```
+
+With this in place, any table displaying a `my.module:RichText` property
+automatically renders the `RichTextEditor` component in that column -- no
+changes to the table, the bridge, or the base module.
+
+---
+
+## 9. Theme Integration
+
+### 9.1 CSS Custom Properties
 
 The TopLogic theme system exports its design tokens as CSS custom properties on the
 `:root` element. React controls can use these for a consistent look:
@@ -1583,7 +2096,7 @@ React controls use these in their CSS:
 }
 ```
 
-### 8.2 Third-Party React Libraries
+### 9.2 Third-Party React Libraries
 
 Third-party React components (e.g., Recharts, React Select, MUI) bring their own
 styling. This is explicitly supported -- the theme CSS custom properties are available
@@ -1614,9 +2127,9 @@ function useTLTheme(): {
 
 ---
 
-## 9. Usage Patterns
+## 10. Usage Patterns
 
-### 9.1 Replacing a Form Field Control
+### 10.1 Replacing a Form Field Control
 
 ```java
 // Java: ControlProvider returns a ReactFormFieldControl
@@ -1652,34 +2165,48 @@ export default function TLTextInput() {
 }
 ```
 
-### 9.2 Custom Visualization with Third-Party Library
+### 10.2 Model-Driven Table
+
+A table displaying model objects, where cell renderers are determined by property types
+through the `ReactComponentRegistry` (see Section 8.4).
 
 ```java
-// Java: ControlProvider for a chart
-public class ChartControlProvider implements LayoutControlProvider {
+// Java: ControlProvider creates a model-driven ReactTableControl
+public class ReactTableControlProvider implements ControlProvider {
+
     @Override
-    public LayoutControl createLayoutControl(Strategy strategy,
-            LayoutComponent component) {
-        ReactControl chart = new ReactControl(
-            component.getModel(), "controls/TLChart", ReactControl.COMMANDS);
-        chart.setReactState(buildChartData(component.getModel()));
-        return chart;
+    public Control createControl(Object model, String style) {
+        TableData tableData = (TableData) model;
+        TLType rowType = tableData.getTableModel().getRowType();
+        List<TLStructuredTypePart> columns =
+            rowType.getAllParts().stream()
+                .filter(part -> isDisplayed(part))
+                .collect(Collectors.toList());
+
+        ReactComponentRegistry registry =
+            ReactComponentRegistry.Module.INSTANCE.getImplementationInstance();
+
+        ReactTableControl table = new ReactTableControl(
+            model, columns, registry);
+        table.setReactState(
+            table.buildTableState(tableData.getDisplayedRows()));
+        return table;
     }
 }
 ```
 
-```tsx
-// React: TLChart.tsx (using Recharts)
-import { useTLState } from '../bridge/tl-react-bridge';
-import { BarChart, Bar, XAxis, YAxis } from 'recharts';
+The server sends column metadata with `cellModule` names resolved from the model.
+The React `TLTable` component (shown in Section 8.4) resolves these module names
+via the component registry -- it never hardcodes which component renders which cell.
 
-export default function TLChart() {
-    const { labels, series } = useTLState<ChartData>();
-    // ... render chart
-}
-```
+Adding a custom property type with a custom editor (e.g., a color picker for a
+`my.module:Color` type) requires only:
+1. A React component (`ColorPicker.tsx`) registered under a module name.
+2. A server-side type mapping in `react.conf.xml`.
 
-### 9.3 Interactive Control with Custom Commands
+No changes to `TLTable` or any other composite control.
+
+### 10.3 Interactive Control with Custom Commands
 
 ```java
 // Java: custom ControlCommands for save/delete
@@ -1753,7 +2280,7 @@ export default function ItemEditor() {
 
 ---
 
-## 10. JSON Serialization
+## 11. JSON Serialization
 
 The `ReactServlet` uses TopLogic's JSON utilities
 (`com.top_logic.common.json.gstream.JsonWriter`) for request/response handling.
@@ -1777,7 +2304,7 @@ controls explicitly decide what data to expose.
 
 ---
 
-## 11. Error Handling
+## 12. Error Handling
 
 ### Server-Side
 
@@ -1805,7 +2332,7 @@ controls explicitly decide what data to expose.
 
 ---
 
-## 12. Lifecycle Summary
+## 13. Lifecycle Summary
 
 ```
  Server                                Client
@@ -1886,7 +2413,7 @@ controls explicitly decide what data to expose.
 
 ---
 
-## 13. Future Extensions
+## 14. Future Extensions
 
 Considered in the architecture but out of scope for the initial implementation:
 
@@ -1894,20 +2421,30 @@ Considered in the architecture but out of scope for the initial implementation:
   through the `ReactServlet` deliver updates via SSE. A future step could have the
   `AJAXServlet` also enqueue updates on the SSE stream, unifying the delivery path
   entirely and eliminating the XML/SOAP response for updates.
-- **TypeScript type generation** from TopLogic model definitions (`*.model.xml`).
-- **React form control library**: Systematic React replacements for all standard form
-  field controls (text, select, date, checkbox, etc.).
+- **TypeScript type generation** from TopLogic model definitions (`*.model.xml`),
+  producing TypeScript interfaces for row types and property value types. This would
+  provide compile-time safety for React components that display model data.
+- **Model-driven React form**: A composite `ReactFormControl` analogous to
+  `ReactTableControl` that renders an entire form from model metadata. The server sends
+  field descriptors with module names per field type, and a generic `TLForm` React
+  component resolves cell components from the registry -- the same pattern as the
+  model-driven table (Section 8.4) applied to form layout.
 - **Hot module replacement**: Vite dev server proxied through TopLogic for instant React
   reload during development.
-- **Nested patch depth**: Support for deep merging in patches (e.g., patching
-  `{"items[3].status": "done"}` within a table state) if the flat key-value patch model
-  proves insufficient.
+- **Nested patch depth / JSON Patch (RFC 6902)**: Support for structured patch
+  operations (e.g., `{"op":"replace","path":"/rows/3/status","value":"done"}`) to
+  enable fine-grained updates within deeply nested state. The current flat key-value
+  patch model works well for top-level keys; for large tables, a row-keyed naming
+  convention (see Section 8.4) provides an interim solution.
 - **SSE event buffering and replay**: Server-side event log enabling replay on reconnect
   instead of full state refetch.
+- **Lazy component loading**: Extend the component registry to support asynchronous
+  loading (`React.lazy()` / dynamic `import()`) for application modules with many
+  components, avoiding loading all component bundles upfront.
 
 ---
 
-## 14. Resolved Design Decisions
+## 15. Resolved Design Decisions
 
 | Decision | Resolution | Rationale |
 |---|---|---|
@@ -1920,3 +2457,4 @@ Considered in the architecture but out of scope for the initial implementation:
 | SSE scope | Universal: delivers React patches AND JSON-wrapped DOM actions | Mixed React/traditional views work correctly from day one |
 | Revalidation in ReactServlet | Full RevalidationVisitor run after each command | Same semantics as AJAXServlet; traditional controls get updates immediately |
 | SSE wire protocol | msgbuf (`de.haumacher.msgbuf`) with `.proto` schema | Type-safe generated code, Visitor pattern for dispatch, compact JSON with `@Name` abbreviations, already used in TopLogic |
+| Component composition | Model-driven via `ReactComponentRegistry` + client-side Component Registry | Server determines which React component renders per property type; same principle as `ControlProvider`; composite controls (table, form) resolve at runtime, not compile time |

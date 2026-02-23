@@ -61,23 +61,25 @@ public class DemoReactCounterComponent extends LayoutComponent {
 		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
 
 		if (_counterControl == null) {
-			_counterControl = createCounterControl(request);
+			_counterControl = createCounterControl();
 		}
 
+		SSEUpdateQueue queue = SSEUpdateQueue.forSession(request.getSession());
+		_counterControl.setSSEQueue(queue);
+
 		_counterControl.write(displayContext, out);
+
+		// Register after write(), because the control ID is only assigned during write.
+		queue.registerControl(_counterControl);
 	}
 
-	private ReactControl createCounterControl(HttpServletRequest request) {
+	private ReactControl createCounterControl() {
 		Map<String, ControlCommand> commands = new HashMap<>();
 		commands.put(IncrementCommand.COMMAND, new IncrementCommand());
 		commands.put(DecrementCommand.COMMAND, new DecrementCommand());
 
 		ReactControl control = new ReactControl(null, "TLCounter", commands);
 		control.getReactState().put("count", 0);
-
-		SSEUpdateQueue queue = SSEUpdateQueue.forSession(request.getSession());
-		control.setSSEQueue(queue);
-		queue.registerControl(control);
 
 		return control;
 	}

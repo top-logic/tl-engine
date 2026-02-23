@@ -2444,7 +2444,209 @@ Considered in the architecture but out of scope for the initial implementation:
 
 ---
 
-## 15. Resolved Design Decisions
+## 15. Architectural Trajectory: From Islands to Server-Driven UI
+
+### 15.1 The Separation That Matters
+
+The TopLogic server today performs two fundamentally different tasks in a single pass:
+
+1. **UI logic**: Decides *what* to show -- which components are visible, which columns a
+   table has, which fields are editable, what labels to display, which buttons are enabled.
+   This is driven by the data model, security, navigation state, and application
+   configuration.
+
+2. **HTML rendering**: Decides *how* to show it -- writes `<div>`, `<table>`, `<input>`,
+   CSS classes, inline scripts. This is the mechanical translation of UI decisions into
+   browser-consumable markup.
+
+These two tasks are interleaved throughout the current codebase: a `Control` both decides
+what its state is *and* writes the HTML for it. The React integration introduced in this
+spec begins to separate them. A `ReactControl` still participates in (1) but delegates
+(2) entirely to the client.
+
+### 15.2 Three Levels of React Adoption
+
+The architecture in this spec naturally supports three levels of adoption. Each level
+is a strict superset of the previous one -- no rewriting, only expanding scope.
+
+**Level 1: React Islands (this spec)**
+
+Individual controls are replaced by React equivalents. The server renders the page
+structure (layout splits, tab bars, component frames) as HTML. React controls appear
+as islands within that structure, each with its own mount point and state.
+
+```
+Server renders HTML page structure
+  └── <div id="ctrl-1"/>  → React island (table)
+  └── <div id="ctrl-2"/>  → React island (form field)
+  └── Traditional controls (server-rendered HTML)
+```
+
+The `ReactServlet`, SSE, component registry, and model-driven composition (Section 8)
+are all introduced at this level. Traditional and React controls coexist on the same
+page, updates for both are delivered through SSE.
+
+**Level 2: Composite React Views**
+
+Entire component views are rendered by React. A `LayoutComponent`'s view is a single
+`ReactControl` whose state describes a composite UI -- a form with fields, a table
+with toolbar, a master-detail split. The server no longer writes HTML for these views;
+it produces a **UI descriptor** that the client renders.
+
+The server sends component descriptors with module names:
+
+```json
+{
+  "module": "views/MasterDetail",
+  "children": {
+    "master": {
+      "module": "controls/TLTable",
+      "props": { "columns": [...], "rows": [...] }
+    },
+    "detail": {
+      "module": "views/TLForm",
+      "props": { "fields": [
+        { "module": "controls/TLTextInput",
+          "props": { "label": "Name", "value": "Alice", "editable": true }},
+        { "module": "controls/TLDatePicker",
+          "props": { "label": "Birthday", "value": "1990-03-15" }}
+      ]}
+    }
+  }
+}
+```
+
+The React client recursively resolves module names from the registry and renders the
+tree. The same component registry, the same SSE channel, the same `ReactServlet` --
+the infrastructure from Level 1 carries over unchanged. What changes is the
+**granularity**: the mount point moves from individual controls to entire views.
+
+At this level, the page still has a server-rendered frame (navigation bar, layout
+splits between components), but each component's *content* is fully React-rendered.
+Traditional components and React components can coexist at the `LayoutComponent` level.
+
+**Level 3: Server-Driven UI**
+
+The entire visible page is described by a single recursive JSON state. The server
+produces a **UI model** -- a tree of component descriptors -- and the client is a
+**generic renderer** that interprets it. The server decides what to show; the client
+decides how to render it into the DOM.
+
+```json
+{
+  "module": "layout/Application",
+  "props": { "title": "My App" },
+  "children": {
+    "navigation": {
+      "module": "layout/Sidebar",
+      "props": { "items": [...], "selected": "contacts" }
+    },
+    "content": {
+      "module": "layout/VSplit",
+      "props": { "ratio": 0.3 },
+      "children": {
+        "left": {
+          "module": "controls/TLTree",
+          "props": { "nodes": [...], "selected": "node-5" }
+        },
+        "right": {
+          "module": "layout/Tabbar",
+          "props": { "tabs": ["Table", "Form"], "activeTab": 0 },
+          "children": [
+            { "module": "controls/TLTable",
+              "props": { "columns": [...], "rows": [...] } },
+            { "module": "views/TLForm",
+              "props": { "fields": [...] } }
+          ]
+        }
+      }
+    }
+  }
+}
+```
+
+At this level, the server is a **UI model server**. It no longer produces HTML at all.
+The `AJAXServlet` and its XML/SOAP protocol become unnecessary. All communication flows
+through the `ReactServlet` (commands) and SSE (state updates). The server-side
+`LayoutComponent` tree still exists -- it manages model access, security, navigation
+channels, and transaction boundaries -- but its output is a JSON UI descriptor, not
+HTML.
+
+### 15.3 What Changes at Each Level
+
+| Concern | Level 1 (Islands) | Level 2 (Composite Views) | Level 3 (Server-Driven UI) |
+|---|---|---|---|
+| Page structure | Server HTML | Server HTML | Client-rendered from JSON |
+| Component content | Mixed (React islands + server HTML) | React-rendered from JSON descriptor | React-rendered from JSON descriptor |
+| Layout splits, tabs | Server-rendered `LayoutControl`s | Server-rendered frames, React content | React-rendered from layout descriptors |
+| Navigation | Server-side (page reload / AJAX) | Server-side, React views swap | Client-side routing, server state swap |
+| AJAXServlet | Active (traditional controls) | Active (page structure) | Retired |
+| HTML generation on server | Most controls | Page frame only | None |
+
+### 15.4 The Path Is Incremental
+
+The critical insight is that each level is **reached incrementally**, not through a
+rewrite:
+
+- Level 1 → Level 2: Replace individual `ControlProvider`s that return server-rendered
+  controls with ones that return composite `ReactControl`s. Each component view can be
+  migrated independently. The `ReactComponentRegistry` and component descriptors are
+  already in place from Level 1.
+
+- Level 2 → Level 3: Replace the server-side `LayoutControlProvider` for page structure
+  (splits, tabs, navigation) with React layout components. Add layout modules
+  (`layout/VSplit`, `layout/Tabbar`, `layout/Sidebar`) to the registry. The
+  `LayoutComponent` tree on the server shifts from producing HTML to producing JSON
+  descriptors -- its responsibility for model access, security, and channels is
+  unchanged.
+
+At no point is a "big bang" migration required. A Level 2 application can have some
+component views still server-rendered (Level 1) while others are fully React-rendered.
+A Level 3 application can fall back to server-rendered HTML for specific components
+that have not yet been migrated.
+
+### 15.5 What the Server Becomes
+
+At Level 3, the TopLogic server's role is:
+
+- **Model access**: Knowledge Base queries, type system, model builders.
+- **Security**: Authentication, authorization, `BoundChecker` enforcement.
+- **Navigation state**: Component channels, component visibility, selection propagation.
+- **Transaction management**: Begin/commit/rollback around command execution.
+- **UI model generation**: Translate the above into a JSON component descriptor tree.
+- **Incremental updates**: Detect what changed, produce patches, deliver via SSE.
+
+This is precisely what TopLogic already does -- minus the HTML generation. The framework's
+strengths (model-driven configuration, security model, type system, declarative layout)
+remain fully in play. What migrates to the client is solely the DOM rendering, which is
+the part that benefits most from React's component model, ecosystem, and developer
+tooling.
+
+### 15.6 Implications for This Spec
+
+This spec (Level 1) is designed so that every decision made here remains valid at
+Levels 2 and 3:
+
+- The **component registry** scales from resolving cell renderers to resolving entire
+  page layouts.
+- The **SSE channel** already delivers updates for the full page.
+- The **`ReactServlet`** already runs full-page revalidation.
+- The **msgbuf protocol** already supports all update types (state, patches, DOM actions).
+- The **`TLCellProps` contract** (Section 8.5) generalizes to a universal component
+  props interface for server-driven descriptors.
+
+The only additions needed for Level 2/3 are:
+- A recursive component descriptor format (the `module` + `props` + `children` pattern
+  shown above).
+- React layout components (`VSplit`, `Tabbar`, `Sidebar`) in the registry.
+- A server-side `LayoutComponent` rendering path that produces JSON instead of HTML.
+
+None of these require changes to the Level 1 infrastructure. The foundation built here
+is the foundation for the full trajectory.
+
+---
+
+## 16. Resolved Design Decisions
 
 | Decision | Resolution | Rationale |
 |---|---|---|

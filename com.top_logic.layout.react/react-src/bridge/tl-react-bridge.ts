@@ -52,6 +52,19 @@ const TLControlContext = createContext<TLControlContextValue | null>(null);
 /** Map of mounted control IDs to their React roots and state stores. */
 const _mounts = new Map<string, { root: Root; store: ControlStateStore }>();
 
+/** The application context path (e.g. "/demo"), set on first mount(). */
+let _contextPath = '';
+
+/** Whether SSE has been connected. */
+let _sseConnected = false;
+
+/**
+ * Returns the API base URL (context path with trailing slash).
+ */
+function getApiBase(): string {
+  return _contextPath + '/';
+}
+
 /**
  * Mounts a React component into the given DOM element.
  */
@@ -59,8 +72,19 @@ export function mount(
   controlId: string,
   moduleName: string,
   initialState: Record<string, unknown>,
-  windowName?: string
+  windowName?: string,
+  contextPath?: string
 ): void {
+  // Store context path from the first mount call.
+  if (contextPath !== undefined) {
+    _contextPath = contextPath;
+  }
+
+  // Connect SSE on first mount (now that we know the context path).
+  if (!_sseConnected) {
+    _sseConnected = true;
+    connect(getApiBase() + 'react-api/events');
+  }
   const element = document.getElementById(controlId);
   if (!element) {
     console.error('[TLReact] Mount point not found:', controlId);
@@ -155,7 +179,7 @@ export function useTLCommand(): (command: string, args?: Record<string, unknown>
         arguments: args ?? {},
       });
       try {
-        const resp = await fetch(getBasePath() + 'react-api/command', {
+        const resp = await fetch(getApiBase() + 'react-api/command', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body,
@@ -188,18 +212,6 @@ export function useTLFieldValue(): [unknown, (newValue: unknown) => void] {
   return [state.value, setValue];
 }
 
-// --- Utilities ---
-
-function getBasePath(): string {
-  return document.querySelector('base')?.getAttribute('href') ?? '';
-}
-
-// --- Auto-connect SSE on load ---
-
-function initSSE(): void {
-  connect(getBasePath() + 'react-api/events');
-}
-
 // --- MutationObserver for auto-unmount ---
 
 function setupAutoUnmount(): void {
@@ -225,13 +237,11 @@ function setupAutoUnmount(): void {
   observer.observe(document.body, { childList: true, subtree: true });
 }
 
-// Initialize when DOM is ready.
+// Initialize auto-unmount when DOM is ready.
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
-    initSSE();
     setupAutoUnmount();
   });
 } else {
-  initSSE();
   setupAutoUnmount();
 }

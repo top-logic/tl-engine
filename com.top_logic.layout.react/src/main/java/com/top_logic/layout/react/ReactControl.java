@@ -175,6 +175,7 @@ public class ReactControl extends AbstractVisibleControl {
 
 		// Resolve the window name so the client can send it back with command requests.
 		String windowName = context.getLayoutContext().getWindowId().getWindowName();
+		String contextPath = context.getContextPath();
 
 		HTMLUtil.beginScriptAfterRendering(out);
 		out.append("TLReact.mount('");
@@ -185,6 +186,8 @@ public class ReactControl extends AbstractVisibleControl {
 		writeJsonLiteral(out, _reactState);
 		out.append(", '");
 		out.append(windowName);
+		out.append("', '");
+		out.append(contextPath);
 		out.append("');");
 		HTMLUtil.endScriptAfterRendering(out);
 	}

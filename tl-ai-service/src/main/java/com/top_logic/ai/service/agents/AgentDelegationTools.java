@@ -6,6 +6,9 @@
 package com.top_logic.ai.service.agents;
 
 import com.top_logic.ai.service.agents.handoff.AgentWorkOrder;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Name;
 
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
@@ -38,7 +41,29 @@ public final class AgentDelegationTools {
 	 */
 	public static final class Exploration {
 
+		/**
+		 * Configuration for XML-based instantiation.
+		 */
+		public interface Config extends PolymorphicConfiguration<Exploration> {
+
+			/** @see #getFromAgent() */
+			String FROM_AGENT = "from-agent";
+
+			/**
+			 * Name of the calling agent for trace recording.
+			 */
+			@Name(FROM_AGENT)
+			String getFromAgent();
+		}
+
 		private final String _fromAgent;
+
+		/**
+		 * Creates from configuration.
+		 */
+		public Exploration(InstantiationContext context, Config config) {
+			_fromAgent = config.getFromAgent();
+		}
 
 		/**
 		 * @param fromAgent
@@ -74,7 +99,29 @@ public final class AgentDelegationTools {
 	 */
 	public static final class Creation {
 
+		/**
+		 * Configuration for XML-based instantiation.
+		 */
+		public interface Config extends PolymorphicConfiguration<Creation> {
+
+			/** @see #getFromAgent() */
+			String FROM_AGENT = "from-agent";
+
+			/**
+			 * Name of the calling agent for trace recording.
+			 */
+			@Name(FROM_AGENT)
+			String getFromAgent();
+		}
+
 		private final String _fromAgent;
+
+		/**
+		 * Creates from configuration.
+		 */
+		public Creation(InstantiationContext context, Config config) {
+			_fromAgent = config.getFromAgent();
+		}
 
 		/**
 		 * @param fromAgent
@@ -110,7 +157,29 @@ public final class AgentDelegationTools {
 	 */
 	public static final class TLScript {
 
+		/**
+		 * Configuration for XML-based instantiation.
+		 */
+		public interface Config extends PolymorphicConfiguration<TLScript> {
+
+			/** @see #getFromAgent() */
+			String FROM_AGENT = "from-agent";
+
+			/**
+			 * Name of the calling agent for trace recording.
+			 */
+			@Name(FROM_AGENT)
+			String getFromAgent();
+		}
+
 		private final String _fromAgent;
+
+		/**
+		 * Creates from configuration.
+		 */
+		public TLScript(InstantiationContext context, Config config) {
+			_fromAgent = config.getFromAgent();
+		}
 
 		/**
 		 * @param fromAgent

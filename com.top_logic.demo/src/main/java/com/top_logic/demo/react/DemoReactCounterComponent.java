@@ -70,6 +70,8 @@ public class DemoReactCounterComponent extends LayoutComponent {
 	 */
 	public static class DemoCounterControl extends ReactControl {
 
+		private static final String COUNT = "count";
+
 		private static final Map<String, ControlCommand> COMMANDS = createCommandMap(
 			new IncrementCommand(),
 			new DecrementCommand());
@@ -77,7 +79,7 @@ public class DemoReactCounterComponent extends LayoutComponent {
 		/** Creates a new {@link DemoCounterControl}. */
 		public DemoCounterControl() {
 			super(null, "TLCounter", COMMANDS);
-			getReactState().put("count", 0);
+			getReactState().put(COUNT, 0);
 		}
 
 		/**
@@ -100,8 +102,8 @@ public class DemoReactCounterComponent extends LayoutComponent {
 			@Override
 			protected HandlerResult execute(DisplayContext context, Control control, Map<String, Object> arguments) {
 				ReactControl reactControl = (ReactControl) control;
-				int count = ((Number) reactControl.getReactState().get("count")).intValue();
-				reactControl.patchReactState(Collections.singletonMap("count", count + 1));
+				int count = ((Number) reactControl.getReactState().get(COUNT)).intValue();
+				reactControl.patchReactState(Collections.singletonMap(COUNT, count + 1));
 				return HandlerResult.DEFAULT_RESULT;
 			}
 		}
@@ -126,8 +128,8 @@ public class DemoReactCounterComponent extends LayoutComponent {
 			@Override
 			protected HandlerResult execute(DisplayContext context, Control control, Map<String, Object> arguments) {
 				ReactControl reactControl = (ReactControl) control;
-				int count = ((Number) reactControl.getReactState().get("count")).intValue();
-				reactControl.patchReactState(Collections.singletonMap("count", count - 1));
+				int count = ((Number) reactControl.getReactState().get(COUNT)).intValue();
+				reactControl.patchReactState(Collections.singletonMap(COUNT, count - 1));
 				return HandlerResult.DEFAULT_RESULT;
 			}
 		}

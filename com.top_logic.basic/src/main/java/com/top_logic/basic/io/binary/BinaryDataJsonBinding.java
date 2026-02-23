@@ -19,7 +19,7 @@ import com.top_logic.common.json.gstream.JsonReader;
 import com.top_logic.common.json.gstream.JsonWriter;
 
 /**
- * {@link JsonValueBinding} for {@link BinaryData} values.
+ * {@link JsonValueBinding} for {@link BinaryDataSource} values.
  *
  * <p>
  * Binary data is serialized as a JSON object with the following properties:
@@ -32,7 +32,7 @@ import com.top_logic.common.json.gstream.JsonWriter;
  *
  * @see BinaryDataBinding
  */
-public class BinaryDataJsonBinding implements JsonValueBinding<BinaryData> {
+public class BinaryDataJsonBinding implements JsonValueBinding<BinaryDataSource> {
 
 	private static final String NAME = "name";
 
@@ -41,7 +41,7 @@ public class BinaryDataJsonBinding implements JsonValueBinding<BinaryData> {
 	private static final String DATA = "data";
 
 	@Override
-	public BinaryData loadConfigItem(PropertyDescriptor property, JsonReader in, BinaryData baseValue)
+	public BinaryDataSource loadConfigItem(PropertyDescriptor property, JsonReader in, BinaryDataSource baseValue)
 			throws IOException, ConfigurationException {
 		String name = null;
 		String contentType = BinaryDataSource.CONTENT_TYPE_OCTET_STREAM;
@@ -76,7 +76,7 @@ public class BinaryDataJsonBinding implements JsonValueBinding<BinaryData> {
 	}
 
 	@Override
-	public void saveConfigItem(PropertyDescriptor property, JsonWriter out, BinaryData item) throws IOException {
+	public void saveConfigItem(PropertyDescriptor property, JsonWriter out, BinaryDataSource item) throws IOException {
 		out.beginObject();
 
 		out.name(NAME);
@@ -110,11 +110,11 @@ public class BinaryDataJsonBinding implements JsonValueBinding<BinaryData> {
 
 	@Override
 	public boolean isLegalValue(Object value) {
-		return value == null || value instanceof BinaryData;
+		return value == null || value instanceof BinaryDataSource;
 	}
 
 	@Override
-	public BinaryData defaultValue() {
+	public BinaryDataSource defaultValue() {
 		return null;
 	}
 

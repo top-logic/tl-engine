@@ -26,6 +26,21 @@
   window._tlChatClientLoaded = true;
   log("First load, initializing");
 
+  // Global event delegation for sidebar toggle. Registered once on document
+  // so it survives TopLogic's DOM cloning/replacement of the chat control.
+  document.addEventListener("click", function (e) {
+    var toggle = e.target.closest(".chat-sidebar-toggle");
+    if (toggle) {
+      var root = toggle.closest('[data-tl-chat="v1"]');
+      if (root) {
+        var panel = root.querySelector(".chat-history-panel");
+        if (panel) {
+          panel.classList.toggle("open");
+        }
+      }
+    }
+  });
+
   var SSE_RECONNECT_DELAY_MS = 2000;
 
   // Use TL_CHAT_BASE if set; else infer from pathname
@@ -626,12 +641,6 @@
       if (el.messages) el.messages.style.display = "";
       var inputSection = root.querySelector(".chat-input-section");
       if (inputSection) inputSection.style.display = "";
-    }
-
-    if (el.sidebarToggle && el.historyPanel) {
-      el.sidebarToggle.addEventListener("click", function () {
-        el.historyPanel.classList.toggle("open");
-      });
     }
 
     var welcomeSending = false;

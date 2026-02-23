@@ -434,14 +434,6 @@ public class LoginPageServlet extends NoContextServlet {
     }
 
     /**
-     * Forwards the request to the LoginPageServlet; no other target possible.
-     */
-	protected void forwardToLogin(HttpServletRequest req, HttpServletResponse res) {
-		this.forwardPage(ApplicationPages.getInstance().getLoginPage(), req, res);
-    }
-
-
-    /**
 	 * Forwards the request to the LoginPageServlet; no other target possible.
 	 */
 	protected void forwardToLoginRetry(HttpServletRequest req, HttpServletResponse res) {

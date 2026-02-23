@@ -19,5 +19,13 @@
 				</modules>
 			</instance>
 		</config>
+
+		<config service-class="com.top_logic.gui.JSFileCompiler">
+			<instance>
+				<additional-files>
+					<file resource="tl-react-bridge.js" />
+				</additional-files>
+			</instance>
+		</config>
 	</services>
 </application>

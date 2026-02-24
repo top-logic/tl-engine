@@ -6,6 +6,7 @@
 package com.top_logic.service.openapi.common.document;
 
 import com.top_logic.basic.config.NamedConfiguration;
+import com.top_logic.basic.config.annotation.Final;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
@@ -16,11 +17,12 @@ import com.top_logic.basic.config.order.DisplayOrder;
 
 /**
  * Contact information for the exposed API.
- * 
+ *
  * @see "https://spec.openapis.org/oas/v3.0.3#contact-object"
- * 
+ *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@Final
 @DisplayOrder({
 	ContactObject.NAME_ATTRIBUTE,
 	ContactObject.EMAIL,

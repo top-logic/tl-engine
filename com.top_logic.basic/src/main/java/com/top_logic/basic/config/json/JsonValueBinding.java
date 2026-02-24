@@ -10,6 +10,8 @@ import java.io.IOException;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationValueCheck;
 import com.top_logic.basic.config.PropertyDescriptor;
+import com.top_logic.basic.json.schema.model.Schema;
+import com.top_logic.basic.json.schema.model.TrueSchema;
 import com.top_logic.common.json.gstream.JsonReader;
 import com.top_logic.common.json.gstream.JsonWriter;
 
@@ -53,6 +55,22 @@ public interface JsonValueBinding<T> extends ConfigurationValueCheck<T> {
 	 *        The configuration value to write.
 	 */
 	void saveConfigItem(PropertyDescriptor property, JsonWriter out, T item) throws IOException;
+
+	/**
+	 * Builds a JSON {@link Schema} describing the values produced by this binding.
+	 *
+	 * <p>
+	 * The default implementation returns {@link TrueSchema} (accepts any value). Implementations
+	 * should override this method to provide a more precise schema for better validation support.
+	 * </p>
+	 *
+	 * @param property
+	 *        The {@link PropertyDescriptor} to build the schema for.
+	 * @return The JSON Schema describing the value format of this binding.
+	 */
+	default Schema buildSchema(PropertyDescriptor property) {
+		return TrueSchema.create();
+	}
 
 }
 

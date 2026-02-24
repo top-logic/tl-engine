@@ -11,6 +11,7 @@ import java.io.OutputStream;
 import com.top_logic.basic.Named;
 import com.top_logic.basic.config.annotation.Binding;
 import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.config.json.JsonBinding;
 
 /**
  * Binary data that is actively produced to a given stream.
@@ -21,6 +22,7 @@ import com.top_logic.basic.config.annotation.Label;
  */
 @Label("Binary data")
 @Binding(BinaryDataBinding.class)
+@JsonBinding(BinaryDataJsonBinding.class)
 public interface BinaryDataSource extends Named {
 
 	/**

@@ -44,8 +44,19 @@ import com.top_logic.common.json.gstream.JsonWriter;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class JsonConfigurationWriter {
-	
+
+	/**
+	 * Meta-property that links a configuration to its configuration type.
+	 * 
+	 * <p>
+	 * For schema-aware serialization, this property is mandatory.
+	 * </p>
+	 */
+	private static final String TYPE_PROPERTY = "$type";
+
 	private JsonWriter _out;
+
+	private boolean _schemaAware;
 
 	/**
 	 * Creates a {@link JsonConfigurationWriter}.
@@ -69,6 +80,18 @@ public class JsonConfigurationWriter {
 	 */
 	public JsonConfigurationWriter prettyPrint() {
 		return indent("\t");
+	}
+
+	/**
+	 * Use JSON schema aware serialization format.
+	 * 
+	 * <p>
+	 * The default format is optimized for stream processing.
+	 * </p>
+	 */
+	public JsonConfigurationWriter schemaAware() {
+		_schemaAware = true;
+		return this;
 	}
 
 	/**
@@ -107,6 +130,26 @@ public class JsonConfigurationWriter {
 	}
 
 	/**
+	 * Resolves the type identifier string for a type annotation.
+	 *
+	 * <p>
+	 * This method is called when writing a type annotation ({@value #TYPE_PROPERTY} in
+	 * schema-aware mode, or the array type tag in default mode). The default implementation
+	 * returns the Java class name. Subclasses may override this to produce custom type
+	 * identifiers, e.g. schema URIs for dynamic configuration descriptors.
+	 * </p>
+	 *
+	 * @param itemDescriptor
+	 *        The {@link ConfigurationDescriptor} of the item being serialized.
+	 * @param typeClass
+	 *        The Java class that was resolved as type annotation.
+	 * @return The string to use as type identifier.
+	 */
+	protected String resolveTypeId(ConfigurationDescriptor itemDescriptor, Class<?> typeClass) {
+		return typeClass.getName();
+	}
+
+	/**
 	 * Writes the given {@link ConfigurationItem} with context informations when the actually
 	 * expected type would be the given static type.
 	 * 
@@ -120,57 +163,95 @@ public class JsonConfigurationWriter {
 	protected void writeContent(ConfigurationDescriptor staticType, ConfigurationItem item,
 			Set<String> skippedProperties) throws IOException {
 		ConfigurationDescriptor descriptor = item.descriptor();
-		
+
 		final PropertyDescriptor implClassProperty;
 		if (item instanceof PolymorphicConfiguration<?>) {
 			implClassProperty = descriptor.getProperty(PolymorphicConfiguration.IMPLEMENTATION_CLASS_NAME);
 		} else {
 			implClassProperty = null;
 		}
+
+		// Check if the static type is final - if so, no type annotation is needed.
+		boolean staticTypeFinal = staticType.isFinal();
+
 		// Check, whether the concrete configuration interface cannot be
 		// reconstructed from from the content.
-		Class<?> annotationClass;
-		if (descriptor == staticType) {
-			annotationClass = null;
-		} else if (implClassProperty != null) {
-			Class<?> implementationClass = (Class<?>) item.value(implClassProperty);
-			if (implementationClass != null) {
-				boolean staticPolymorph =
-					PolymorphicConfiguration.class.isAssignableFrom(staticType.getConfigurationInterface());
-				if (!staticPolymorph) {
-					/* Assume the static type is not polymorph and a class is set. If no config
-					 * interface is written, then the reader expects a simple ConfigurationItem
-					 * which has no property class. */
-
-					annotationClass = descriptor.getConfigurationInterface();
-				} else {
-					try {
-						Class<?> expectedConfigurationInterface =
-							DefaultConfigConstructorScheme.getFactory(implementationClass).getConfigurationInterface();
-						if (!expectedConfigurationInterface.equals(descriptor.getConfigurationInterface())) {
-							annotationClass = descriptor.getConfigurationInterface();
-						} else {
-							annotationClass = implementationClass;
-						}
-					} catch (ConfigurationException ex) {
-						throw new IOException(
-							"Cannot serialize configuration, invalid implementation class '"
-								+ implementationClass.getName() + "'.",
-							ex);
+		Class<?> typeAnnotation;
+		if (staticTypeFinal) {
+			// Final types never need type annotations - the expected type is always used.
+			typeAnnotation = null;
+		} else if (descriptor == staticType) {
+			if (_schemaAware) {
+				if (implClassProperty != null) {
+					Class<?> implementationClass = (Class<?>) item.value(implClassProperty);
+					if (implementationClass != null) {
+						typeAnnotation = implementationClass;
+					} else {
+						typeAnnotation = staticType.getInstanceType();
 					}
+				} else {
+					typeAnnotation = staticType.getConfigurationInterface();
 				}
 			} else {
-				annotationClass = descriptor.getConfigurationInterface();
+				typeAnnotation = null;
 			}
 		} else {
-			annotationClass = descriptor.getConfigurationInterface();
+			Class<?> expectedConfigurationInterface = descriptor.getConfigurationInterface();
+			if (implClassProperty != null) {
+				Class<?> implementationClass = (Class<?>) item.value(implClassProperty);
+				if (implementationClass != null) {
+					boolean staticPolymorph =
+						PolymorphicConfiguration.class.isAssignableFrom(staticType.getConfigurationInterface());
+					if (!staticPolymorph) {
+						/* Assume the static type is not polymorphic and a class is set. If no
+						 * config interface is written, then the reader expects a simple
+						 * ConfigurationItem which does not accept an implementation class. */
+						typeAnnotation = expectedConfigurationInterface;
+					} else {
+						try {
+							// Configuration type that is required to instantiate the requested
+							// implementation class.
+							Class<?> requiredConfigurationInterface =
+								DefaultConfigConstructorScheme.getFactory(implementationClass)
+									.getConfigurationInterface();
+							if (requiredConfigurationInterface == expectedConfigurationInterface
+								|| expectedConfigurationInterface.isAssignableFrom(requiredConfigurationInterface)) {
+								typeAnnotation = implementationClass;
+							} else {
+								if (_schemaAware) {
+									// A configuration type does not match the schema, if it is
+									// statically an configured implementation.
+									typeAnnotation = implementationClass;
+								} else {
+									typeAnnotation = expectedConfigurationInterface;
+								}
+							}
+						} catch (ConfigurationException ex) {
+							throw new IOException(
+								"Cannot serialize configuration, invalid implementation class '"
+									+ implementationClass.getName() + "'.",
+								ex);
+						}
+					}
+				} else {
+					typeAnnotation = expectedConfigurationInterface;
+				}
+			} else {
+				typeAnnotation = expectedConfigurationInterface;
+			}
 		}
-		
-		if (annotationClass != null) {
-			_out.beginArray();
-			_out.value(annotationClass.getName());
+
+		if (!_schemaAware) {
+			if (typeAnnotation != null) {
+				_out.beginArray();
+				_out.value(resolveTypeId(descriptor, typeAnnotation));
+			}
 		}
 		_out.beginObject();
+		if (_schemaAware && typeAnnotation != null) {
+			_out.name(TYPE_PROPERTY);
+			_out.value(resolveTypeId(descriptor, typeAnnotation));
+		}
 		
 		List<PropertyDescriptor> properties =
 			new DefaultOrderStrategy.Collector(NoCustomizations.INSTANCE, descriptor) {
@@ -198,18 +279,20 @@ public class JsonConfigurationWriter {
 
 			}.collect();
 
-		if (implClassProperty != null && !implClassAnnotated(annotationClass)) {
-			// The implementation class property must be written first to prevent it from being
-			// serialized as sub-tag, if another property serialized before cannot be written as
-			// attribute.
-			writePlain(staticType, item, implClassProperty);
+		if (!_schemaAware) {
+			if (implClassProperty != null && !implClassAnnotated(typeAnnotation)) {
+				// The implementation class property must be written first to prevent it from being
+				// serialized as sub-tag, if another property serialized before cannot be written as
+				// attribute.
+				writePlain(staticType, item, implClassProperty);
+			}
 		}
 		for (PropertyDescriptor property : properties) {
 			if (skippedProperties.contains(property.getPropertyName())) {
 				continue;
 			}
 			if (property == implClassProperty) {
-				// Already written as first property.
+				// Already written as first property, or not written at all.
 				continue;
 			}
 			JsonValueBinding valueBinding = fetchValueBinding(property);
@@ -218,7 +301,6 @@ public class JsonConfigurationWriter {
 				if (value != null) {
 					writeName(property);
 					valueBinding.saveConfigItem(property, _out, value);
-					System.out.println();
 				}
 				continue;
 			}
@@ -242,8 +324,11 @@ public class JsonConfigurationWriter {
 		}
 		
 		_out.endObject();
-		if (annotationClass != null) {
-			_out.endArray();
+
+		if (!_schemaAware) {
+			if (typeAnnotation != null) {
+				_out.endArray();
+			}
 		}
 	}
 
@@ -404,18 +489,20 @@ public class JsonConfigurationWriter {
 	}
 
 	private JsonValueBinding fetchValueBinding(PropertyDescriptor property) throws ConfigurationError {
-		JsonValueBinding valueBinding;
 		JsonBinding annotation = property.getAnnotation(JsonBinding.class);
 		if (annotation == null) {
-			valueBinding = null;
-		} else {
-			try {
-				valueBinding = ConfigUtil.getInstance(annotation.value());
-			} catch (ConfigurationException ex) {
-				throw new ConfigurationError(ex);
-			}
+			// Fall back to value type annotation, analogous to how @Format and @Binding are
+			// resolved from the type when not present on the property getter.
+			annotation = property.getType().getAnnotation(JsonBinding.class);
 		}
-		return valueBinding;
+		if (annotation == null) {
+			return null;
+		}
+		try {
+			return ConfigUtil.getInstance(annotation.value());
+		} catch (ConfigurationException ex) {
+			throw new ConfigurationError(ex);
+		}
 	}
 
 	private void writeName(PropertyDescriptor property) throws IOException {
@@ -580,14 +667,13 @@ public class JsonConfigurationWriter {
 	 * @see #write(ConfigurationDescriptor, ConfigurationItem)
 	 */
 	public void writeMap(PropertyDescriptor property, Map<?, ?> value) throws IOException {
-		if (property.isDefaultContainer()) {
-			writeMapContents(property, value);
-		} else {
-			writeName(property);
-			_out.beginObject();
-			writeMapContents(property, value);
-			_out.endObject();
-		}
+		// Note: No special handling for default containers here. In XML, default container maps
+		// inline their entries into the parent element without a wrapper tag. In JSON, this is not
+		// possible - a map always requires a named object property with {...} brackets.
+		writeName(property);
+		_out.beginObject();
+		writeMapContents(property, value);
+		_out.endObject();
 	}
 
 	private void writeMapContents(PropertyDescriptor property, Map<?, ?> value) throws IOException {
@@ -649,14 +735,13 @@ public class JsonConfigurationWriter {
 	 * @see #write(ConfigurationDescriptor, ConfigurationItem)
 	 */
 	public void writeList(PropertyDescriptor property, List<?> value) throws IOException {
-		if (property.isDefaultContainer()) {
-			writeCollectionContents(property, value);
-		} else {
-			writeName(property);
-			_out.beginArray();
-			writeCollectionContents(property, value);
-			_out.endArray();
-		}
+		// Note: No special handling for default containers here. In XML, default container lists
+		// inline their elements into the parent element without a wrapper tag. In JSON, this is not
+		// possible - a list always requires a named array property with [...] brackets.
+		writeName(property);
+		_out.beginArray();
+		writeCollectionContents(property, value);
+		_out.endArray();
 	}
 
 	private void writeCollectionContents(PropertyDescriptor property, List<?> value) throws IOException {

@@ -17,6 +17,7 @@ import com.top_logic.ai.service.AIService;
 import com.top_logic.ai.service.ChatModelFactory;
 import com.top_logic.ai.service.providers.AnthropicChatModelFactory;
 import com.top_logic.ai.service.providers.MistralChatModelFactory;
+import com.top_logic.ai.service.providers.ModelCapability;
 import com.top_logic.ai.service.providers.OpenAIChatModelFactory;
 import com.top_logic.ai.service.skills.Skill;
 import com.top_logic.ai.service.skills.SkillRegistry;
@@ -681,13 +682,13 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 			.baseUrl(fc.getBaseUrl())
 			.modelName(config.getModel());
 
-		if (config.getThinkingType() != null) {
+		if (config.getThinkingType() != null && config.isThinkingCapable()) {
 			builder.thinkingType(config.getThinkingType().getValue());
+			if (config.getThinkingBudgetTokens() != null) {
+				builder.thinkingBudgetTokens(config.getThinkingBudgetTokens());
+			}
 			builder.returnThinking(config.getReturnThinking());
 			builder.sendThinking(config.getSendThinking());
-		}
-		if (config.getThinkingBudgetTokens() != null) {
-			builder.thinkingBudgetTokens(config.getThinkingBudgetTokens());
 		}
 		if (config.getMaxTokens() != null) {
 			builder.maxTokens(config.getMaxTokens());
@@ -780,7 +781,8 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		if (config.getSeed() != null) {
 			builder.seed(config.getSeed());
 		}
-		if (config.getReasoningEffort() != null) {
+		if (config.getReasoningEffort() != null
+			&& factory.getModelCapabilities(config.getModel()).contains(ModelCapability.REASONING_EFFORT)) {
 			builder.reasoningEffort(config.getReasoningEffort().getValue());
 		}
 		ResponseFormat responseFormat = mapResponseFormat(config.getResponseFormat());

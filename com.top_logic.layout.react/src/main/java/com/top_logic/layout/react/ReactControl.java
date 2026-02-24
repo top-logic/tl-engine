@@ -10,9 +10,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.FrameScope;
 import com.top_logic.layout.UpdateQueue;
 import com.top_logic.layout.basic.AbstractVisibleControl;
 import com.top_logic.layout.basic.ControlCommand;
@@ -153,6 +155,10 @@ public class ReactControl extends AbstractVisibleControl {
 
 	@Override
 	protected void internalWrite(DisplayContext context, TagWriter out) throws IOException {
+		// Assign IDs to child ReactControls before serialization so their controlIds are available.
+		FrameScope frameScope = getScope().getFrameScope();
+		forEachChildControl(_reactState, child -> child.fetchID(frameScope));
+
 		out.beginBeginTag(HTMLConstants.DIV);
 		writeControlAttributes(context, out);
 		out.writeAttribute("data-react-module", _reactModule);
@@ -182,6 +188,7 @@ public class ReactControl extends AbstractVisibleControl {
 		SSEUpdateQueue queue = SSEUpdateQueue.forSession(context.asRequest().getSession());
 		_sseQueue = queue;
 		queue.registerControl(this);
+		forEachChildControl(_reactState, queue::registerControl);
 	}
 
 	@Override
@@ -189,6 +196,7 @@ public class ReactControl extends AbstractVisibleControl {
 		SSEUpdateQueue queue = _sseQueue;
 		if (queue != null) {
 			queue.unregisterControl(this);
+			forEachChildControl(_reactState, queue::unregisterControl);
 			_sseQueue = null;
 		}
 		super.internalDetach();
@@ -243,6 +251,16 @@ public class ReactControl extends AbstractVisibleControl {
 			writer.value((Boolean) value);
 		} else if (value instanceof Map) {
 			writeJsonMap(writer, (Map<String, Object>) value);
+		} else if (value instanceof ReactControl) {
+			ReactControl child = (ReactControl) value;
+			writer.beginObject();
+			writer.name("controlId");
+			writer.value(child.getID());
+			writer.name("module");
+			writer.value(child.getReactModule());
+			writer.name("state");
+			writeJsonMap(writer, child.getReactState());
+			writer.endObject();
 		} else if (value instanceof List) {
 			writer.beginArray();
 			for (Object element : (List<?>) value) {
@@ -251,6 +269,25 @@ public class ReactControl extends AbstractVisibleControl {
 			writer.endArray();
 		} else {
 			writer.value(value.toString());
+		}
+	}
+
+	/**
+	 * Recursively walks the given value and applies the action to every {@link ReactControl} found
+	 * (as direct value, List element, or Map value).
+	 */
+	@SuppressWarnings("unchecked")
+	static void forEachChildControl(Object value, Consumer<ReactControl> action) {
+		if (value instanceof ReactControl) {
+			action.accept((ReactControl) value);
+		} else if (value instanceof Map) {
+			for (Object entry : ((Map<?, ?>) value).values()) {
+				forEachChildControl(entry, action);
+			}
+		} else if (value instanceof List) {
+			for (Object element : (List<?>) value) {
+				forEachChildControl(element, action);
+			}
 		}
 	}
 

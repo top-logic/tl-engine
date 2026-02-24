@@ -7,13 +7,16 @@ package com.top_logic.ai.service.agents;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 import com.top_logic.ai.service.AIService;
 import com.top_logic.ai.service.ChatModelFactory;
 import com.top_logic.ai.service.tools.registry.ToolRegistry;
 import com.top_logic.ai.service.providers.AnthropicChatModelFactory;
 import com.top_logic.ai.service.providers.MistralChatModelFactory;
+import com.top_logic.ai.service.providers.ModelCapability;
 import com.top_logic.ai.service.providers.OpenAIChatModelFactory;
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.NamedConfigMandatory;
@@ -60,20 +63,21 @@ import com.top_logic.layout.form.values.edit.annotation.Options;
 	AgentConfig.SYSTEM_PROMPT,
 	AgentConfig.THINKING_TYPE,
 	AgentConfig.THINKING_BUDGET_TOKENS,
+	AgentConfig.RETURN_THINKING,
+	AgentConfig.SEND_THINKING,
+	AgentConfig.REASONING_EFFORT,
 	AgentConfig.MAX_TOKENS,
 	AgentConfig.TEMPERATURE,
 	AgentConfig.TOP_P,
 	AgentConfig.STOP_SEQUENCES,
-	AgentConfig.TIMEOUT_SECONDS,
-	AgentConfig.MAX_RETRIES,
 	AgentConfig.RESPONSE_FORMAT,
 	AgentConfig.TOP_K,
 	AgentConfig.DISABLE_PARALLEL_TOOL_USE,
 	AgentConfig.PRESENCE_PENALTY,
 	AgentConfig.FREQUENCY_PENALTY,
 	AgentConfig.SEED,
-	AgentConfig.RETURN_THINKING,
-	AgentConfig.SEND_THINKING,
+	AgentConfig.TIMEOUT_SECONDS,
+	AgentConfig.MAX_RETRIES,
 	AgentConfig.TOOLS,
 	AgentConfig.DELEGATIONS,
 	AgentConfig.SKILLS,
@@ -149,14 +153,23 @@ public interface AgentConfig extends NamedConfigMandatory {
 	/** @see #isThinkingCapable() */
 	String IS_THINKING_CAPABLE = "is-thinking-capable";
 
-	/** @see #isOpenAICapable() */
-	String IS_OPENAI_CAPABLE = "is-openai-capable";
+	/** @see #isOpenAIProvider() */
+	String IS_OPENAI_PROVIDER = "is-openai-provider";
 
-	/** @see #isAnthropicCapable() */
-	String IS_ANTHROPIC_CAPABLE = "is-anthropic-capable";
+	/** @see #isAnthropicProvider() */
+	String IS_ANTHROPIC_PROVIDER = "is-anthropic-provider";
 
-	/** @see #isMistralCapable() */
-	String IS_MISTRAL_CAPABLE = "is-mistral-capable";
+	/** @see #isMistralProvider() */
+	String IS_MISTRAL_PROVIDER = "is-mistral-provider";
+
+	/** @see #isAdaptiveThinkingCapable() */
+	String IS_ADAPTIVE_THINKING_CAPABLE = "is-adaptive-thinking-capable";
+
+	/** @see #isReasoningEffortCapable() */
+	String IS_REASONING_EFFORT_CAPABLE = "is-reasoning-effort-capable";
+
+	/** @see #getReasoningEffort() */
+	String REASONING_EFFORT = "reasoning-effort";
 
 	/**
 	 * Short description of this agent's purpose.
@@ -185,8 +198,9 @@ public interface AgentConfig extends NamedConfigMandatory {
 	 * Whether the currently selected {@link #getModel() model} supports extended thinking.
 	 *
 	 * <p>
-	 * This derived property is {@code true} when the model's provider is
-	 * {@link AnthropicChatModelFactory}. It controls the visibility of thinking-related fields.
+	 * This derived property is {@code true} when the model supports
+	 * {@link ModelCapability#THINKING_ENABLED} or {@link ModelCapability#THINKING_ADAPTIVE}. It
+	 * controls the visibility of thinking-related fields.
 	 * </p>
 	 */
 	@Name(IS_THINKING_CAPABLE)
@@ -197,26 +211,42 @@ public interface AgentConfig extends NamedConfigMandatory {
 	/**
 	 * Whether the selected model belongs to the OpenAI provider.
 	 */
-	@Name(IS_OPENAI_CAPABLE)
-	@Derived(fun = IsOpenAICapable.class, args = @Ref(MODEL))
+	@Name(IS_OPENAI_PROVIDER)
+	@Derived(fun = IsOpenAIProvider.class, args = @Ref(MODEL))
 	@Hidden
-	boolean isOpenAICapable();
+	boolean isOpenAIProvider();
 
 	/**
 	 * Whether the selected model belongs to the Anthropic provider.
 	 */
-	@Name(IS_ANTHROPIC_CAPABLE)
-	@Derived(fun = IsAnthropicCapable.class, args = @Ref(MODEL))
+	@Name(IS_ANTHROPIC_PROVIDER)
+	@Derived(fun = IsAnthropicProvider.class, args = @Ref(MODEL))
 	@Hidden
-	boolean isAnthropicCapable();
+	boolean isAnthropicProvider();
 
 	/**
 	 * Whether the selected model belongs to the Mistral provider.
 	 */
-	@Name(IS_MISTRAL_CAPABLE)
-	@Derived(fun = IsMistralCapable.class, args = @Ref(MODEL))
+	@Name(IS_MISTRAL_PROVIDER)
+	@Derived(fun = IsMistralProvider.class, args = @Ref(MODEL))
 	@Hidden
-	boolean isMistralCapable();
+	boolean isMistralProvider();
+
+	/**
+	 * Whether the selected model supports adaptive thinking.
+	 */
+	@Name(IS_ADAPTIVE_THINKING_CAPABLE)
+	@Derived(fun = IsAdaptiveThinkingCapable.class, args = @Ref(MODEL))
+	@Hidden
+	boolean isAdaptiveThinkingCapable();
+
+	/**
+	 * Whether the selected model supports reasoning effort.
+	 */
+	@Name(IS_REASONING_EFFORT_CAPABLE)
+	@Derived(fun = IsReasoningEffortCapable.class, args = @Ref(MODEL))
+	@Hidden
+	boolean isReasoningEffortCapable();
 
 	/**
 	 * The thinking type for extended thinking support.
@@ -233,6 +263,8 @@ public interface AgentConfig extends NamedConfigMandatory {
 	@Name(THINKING_TYPE)
 	@Nullable
 	@DynamicMode(fun = ActiveIfThinkingCapable.class, args = @Ref(IS_THINKING_CAPABLE))
+	@Options(fun = AvailableThinkingTypes.class, args = @Ref(MODEL))
+	@Constraint(value = ThinkingTypeSupportsAdaptiveConstraint.class, args = @Ref(IS_ADAPTIVE_THINKING_CAPABLE))
 	ThinkingType getThinkingType();
 
 	/**
@@ -263,6 +295,7 @@ public interface AgentConfig extends NamedConfigMandatory {
 	@Name(MAX_TOKENS)
 	@Nullable
 	@Constraint(value = MaxTokensRequiredConstraint.class, args = @Ref(THINKING_TYPE))
+	@Constraint(value = MaxTokensGreaterThanBudgetConstraint.class, args = @Ref(THINKING_BUDGET_TOKENS))
 	Integer getMaxTokens();
 
 	/**
@@ -323,7 +356,7 @@ public interface AgentConfig extends NamedConfigMandatory {
 	 */
 	@Name(RESPONSE_FORMAT)
 	@Nullable
-	@DynamicMode(fun = ActiveIfOpenAiOrMistralCapable.class, args = { @Ref(IS_OPENAI_CAPABLE), @Ref(IS_MISTRAL_CAPABLE) })
+	@DynamicMode(fun = ActiveIfOpenAiOrMistralProvider.class, args = { @Ref(IS_OPENAI_PROVIDER), @Ref(IS_MISTRAL_PROVIDER) })
 	ResponseFormatOption getResponseFormat();
 
 	/**
@@ -335,7 +368,7 @@ public interface AgentConfig extends NamedConfigMandatory {
 	 */
 	@Name(TOP_K)
 	@Nullable
-	@DynamicMode(fun = ActiveIfAnthropicCapable.class, args = @Ref(IS_ANTHROPIC_CAPABLE))
+	@DynamicMode(fun = ActiveIfAnthropicProvider.class, args = @Ref(IS_ANTHROPIC_PROVIDER))
 	Integer getTopK();
 
 	/**
@@ -347,7 +380,7 @@ public interface AgentConfig extends NamedConfigMandatory {
 	 */
 	@Name(DISABLE_PARALLEL_TOOL_USE)
 	@BooleanDefault(false)
-	@DynamicMode(fun = ActiveIfAnthropicCapable.class, args = @Ref(IS_ANTHROPIC_CAPABLE))
+	@DynamicMode(fun = ActiveIfAnthropicProvider.class, args = @Ref(IS_ANTHROPIC_PROVIDER))
 	boolean getDisableParallelToolUse();
 
 	/**
@@ -359,7 +392,7 @@ public interface AgentConfig extends NamedConfigMandatory {
 	 */
 	@Name(PRESENCE_PENALTY)
 	@Nullable
-	@DynamicMode(fun = ActiveIfOpenAICapable.class, args = @Ref(IS_OPENAI_CAPABLE))
+	@DynamicMode(fun = ActiveIfOpenAIProvider.class, args = @Ref(IS_OPENAI_PROVIDER))
 	Double getPresencePenalty();
 
 	/**
@@ -371,7 +404,7 @@ public interface AgentConfig extends NamedConfigMandatory {
 	 */
 	@Name(FREQUENCY_PENALTY)
 	@Nullable
-	@DynamicMode(fun = ActiveIfOpenAICapable.class, args = @Ref(IS_OPENAI_CAPABLE))
+	@DynamicMode(fun = ActiveIfOpenAIProvider.class, args = @Ref(IS_OPENAI_PROVIDER))
 	Double getFrequencyPenalty();
 
 	/**
@@ -383,7 +416,7 @@ public interface AgentConfig extends NamedConfigMandatory {
 	 */
 	@Name(SEED)
 	@Nullable
-	@DynamicMode(fun = ActiveIfOpenAICapable.class, args = @Ref(IS_OPENAI_CAPABLE))
+	@DynamicMode(fun = ActiveIfOpenAIProvider.class, args = @Ref(IS_OPENAI_PROVIDER))
 	Integer getSeed();
 
 	/**
@@ -412,6 +445,20 @@ public interface AgentConfig extends NamedConfigMandatory {
 	@BooleanDefault(true)
 	@DynamicMode(fun = ActiveIfThinkingConfigured.class, args = { @Ref(IS_THINKING_CAPABLE), @Ref(THINKING_TYPE) })
 	boolean getSendThinking();
+
+	/**
+	 * The reasoning effort level for OpenAI reasoning models.
+	 *
+	 * <p>
+	 * Only visible for models that support reasoning effort (OpenAI o-series, GPT-5).
+	 * </p>
+	 *
+	 * @return The reasoning effort, or {@code null} to use the provider default.
+	 */
+	@Name(REASONING_EFFORT)
+	@Nullable
+	@DynamicMode(fun = ActiveIfReasoningEffortCapable.class, args = @Ref(IS_REASONING_EFFORT_CAPABLE))
+	ReasoningEffort getReasoningEffort();
 
 	/**
 	 * The system prompt that defines this agent's behavior and instructions.
@@ -462,6 +509,31 @@ public interface AgentConfig extends NamedConfigMandatory {
 	List<String> getSkills();
 
 	// --- Option provider functions ---
+
+	/**
+	 * Provides only the {@link ThinkingType} values supported by the currently selected model.
+	 *
+	 * <p>
+	 * For models with {@link ModelCapability#THINKING_ADAPTIVE}, both values are shown. For models
+	 * with only {@link ModelCapability#THINKING_ENABLED}, only {@link ThinkingType#ENABLED} is
+	 * shown.
+	 * </p>
+	 */
+	class AvailableThinkingTypes extends Function1<List<ThinkingType>, String> {
+
+		@Override
+		public List<ThinkingType> apply(String modelName) {
+			Set<ModelCapability> caps = getCapabilities(modelName);
+			List<ThinkingType> result = new ArrayList<>();
+			if (caps.contains(ModelCapability.THINKING_ADAPTIVE)) {
+				result.add(ThinkingType.ADAPTIVE);
+			}
+			if (caps.contains(ModelCapability.THINKING_ENABLED)) {
+				result.add(ThinkingType.ENABLED);
+			}
+			return result;
+		}
+	}
 
 	/**
 	 * Provides all model names registered in {@link AIService} as selection options.
@@ -525,17 +597,15 @@ public interface AgentConfig extends NamedConfigMandatory {
 	// --- Derived property functions ---
 
 	/**
-	 * Checks if the selected model supports extended thinking (Anthropic provider).
+	 * Checks if the selected model supports any form of extended thinking.
 	 */
 	class IsThinkingCapable extends Function1<Boolean, String> {
 
 		@Override
 		public Boolean apply(String modelName) {
-			if (modelName == null || modelName.isEmpty()) {
-				return Boolean.FALSE;
-			}
-			ChatModelFactory factory = getFactory(modelName);
-			return Boolean.valueOf(factory instanceof AnthropicChatModelFactory);
+			Set<ModelCapability> caps = getCapabilities(modelName);
+			return Boolean.valueOf(
+				caps.contains(ModelCapability.THINKING_ENABLED) || caps.contains(ModelCapability.THINKING_ADAPTIVE));
 		}
 	}
 
@@ -556,7 +626,7 @@ public interface AgentConfig extends NamedConfigMandatory {
 	/**
 	 * Checks whether the selected model is served by {@link OpenAIChatModelFactory}.
 	 */
-	class IsOpenAICapable extends IsProviderCapable {
+	class IsOpenAIProvider extends IsProviderCapable {
 
 		@Override
 		protected Class<? extends ChatModelFactory> providerType() {
@@ -567,7 +637,7 @@ public interface AgentConfig extends NamedConfigMandatory {
 	/**
 	 * Checks whether the selected model is served by {@link AnthropicChatModelFactory}.
 	 */
-	class IsAnthropicCapable extends IsProviderCapable {
+	class IsAnthropicProvider extends IsProviderCapable {
 
 		@Override
 		protected Class<? extends ChatModelFactory> providerType() {
@@ -578,11 +648,33 @@ public interface AgentConfig extends NamedConfigMandatory {
 	/**
 	 * Checks whether the selected model is served by {@link MistralChatModelFactory}.
 	 */
-	class IsMistralCapable extends IsProviderCapable {
+	class IsMistralProvider extends IsProviderCapable {
 
 		@Override
 		protected Class<? extends ChatModelFactory> providerType() {
 			return MistralChatModelFactory.class;
+		}
+	}
+
+	/**
+	 * Checks if the selected model supports adaptive thinking.
+	 */
+	class IsAdaptiveThinkingCapable extends Function1<Boolean, String> {
+
+		@Override
+		public Boolean apply(String modelName) {
+			return Boolean.valueOf(getCapabilities(modelName).contains(ModelCapability.THINKING_ADAPTIVE));
+		}
+	}
+
+	/**
+	 * Checks if the selected model supports reasoning effort.
+	 */
+	class IsReasoningEffortCapable extends Function1<Boolean, String> {
+
+		@Override
+		public Boolean apply(String modelName) {
+			return Boolean.valueOf(getCapabilities(modelName).contains(ModelCapability.REASONING_EFFORT));
 		}
 	}
 
@@ -618,7 +710,7 @@ public interface AgentConfig extends NamedConfigMandatory {
 	/**
 	 * Shows the field as {@link FieldMode#ACTIVE} when the model is OpenAI, invisible otherwise.
 	 */
-	class ActiveIfOpenAICapable extends Function1<FieldMode, Boolean> {
+	class ActiveIfOpenAIProvider extends Function1<FieldMode, Boolean> {
 
 		@Override
 		public FieldMode apply(Boolean openAICapable) {
@@ -629,7 +721,7 @@ public interface AgentConfig extends NamedConfigMandatory {
 	/**
 	 * Shows the field as {@link FieldMode#ACTIVE} when the model is Anthropic, invisible otherwise.
 	 */
-	class ActiveIfAnthropicCapable extends Function1<FieldMode, Boolean> {
+	class ActiveIfAnthropicProvider extends Function1<FieldMode, Boolean> {
 
 		@Override
 		public FieldMode apply(Boolean anthropicCapable) {
@@ -640,13 +732,24 @@ public interface AgentConfig extends NamedConfigMandatory {
 	/**
 	 * Shows the field as {@link FieldMode#ACTIVE} when model is OpenAI or Mistral.
 	 */
-	class ActiveIfOpenAiOrMistralCapable extends Function2<FieldMode, Boolean, Boolean> {
+	class ActiveIfOpenAiOrMistralProvider extends Function2<FieldMode, Boolean, Boolean> {
 
 		@Override
 		public FieldMode apply(Boolean openAICapable, Boolean mistralCapable) {
 			return (Boolean.TRUE.equals(openAICapable) || Boolean.TRUE.equals(mistralCapable))
 				? FieldMode.ACTIVE
 				: FieldMode.INVISIBLE;
+		}
+	}
+
+	/**
+	 * Shows the field when the model supports reasoning effort.
+	 */
+	class ActiveIfReasoningEffortCapable extends Function1<FieldMode, Boolean> {
+
+		@Override
+		public FieldMode apply(Boolean capable) {
+			return Boolean.TRUE.equals(capable) ? FieldMode.ACTIVE : FieldMode.INVISIBLE;
 		}
 	}
 
@@ -668,6 +771,14 @@ public interface AgentConfig extends NamedConfigMandatory {
 			return null;
 		}
 		return service.getFactory(modelName);
+	}
+
+	private static Set<ModelCapability> getCapabilities(String modelName) {
+		ChatModelFactory factory = getFactory(modelName);
+		if (factory == null) {
+			return EnumSet.noneOf(ModelCapability.class);
+		}
+		return factory.getModelCapabilities(modelName);
 	}
 
 	// --- Constraint algorithms ---
@@ -710,6 +821,50 @@ public interface AgentConfig extends NamedConfigMandatory {
 		protected void checkValue(PropertyModel<Integer> maxTokens, PropertyModel<ThinkingType> type) {
 			if (type.getValue() == ThinkingType.ENABLED && maxTokens.getValue() == null) {
 				maxTokens.setProblemDescription(I18NConstants.MAX_TOKENS_REQUIRED_WHEN_THINKING_ENABLED);
+			}
+		}
+	}
+
+	/**
+	 * Validates that {@link AgentConfig#getMaxTokens()} is greater than
+	 * {@link AgentConfig#getThinkingBudgetTokens()} when both are set.
+	 */
+	class MaxTokensGreaterThanBudgetConstraint extends GenericValueDependency<Integer, Integer> {
+
+		/**
+		 * Creates a new {@link MaxTokensGreaterThanBudgetConstraint}.
+		 */
+		public MaxTokensGreaterThanBudgetConstraint() {
+			super(Integer.class, Integer.class);
+		}
+
+		@Override
+		protected void checkValue(PropertyModel<Integer> maxTokens, PropertyModel<Integer> budget) {
+			Integer maxVal = maxTokens.getValue();
+			Integer budgetVal = budget.getValue();
+			if (maxVal != null && budgetVal != null && maxVal <= budgetVal) {
+				maxTokens.setProblemDescription(I18NConstants.MAX_TOKENS_MUST_EXCEED_THINKING_BUDGET);
+			}
+		}
+	}
+
+	/**
+	 * Validates that {@link ThinkingType#ADAPTIVE} is only selected when the model supports it.
+	 */
+	class ThinkingTypeSupportsAdaptiveConstraint extends GenericValueDependency<ThinkingType, Boolean> {
+
+		/**
+		 * Creates a new {@link ThinkingTypeSupportsAdaptiveConstraint}.
+		 */
+		public ThinkingTypeSupportsAdaptiveConstraint() {
+			super(ThinkingType.class, Boolean.class);
+		}
+
+		@Override
+		protected void checkValue(PropertyModel<ThinkingType> thinkingType, PropertyModel<Boolean> adaptiveCapable) {
+			if (thinkingType.getValue() == ThinkingType.ADAPTIVE
+				&& !Boolean.TRUE.equals(adaptiveCapable.getValue())) {
+				thinkingType.setProblemDescription(I18NConstants.ADAPTIVE_THINKING_NOT_SUPPORTED);
 			}
 		}
 	}

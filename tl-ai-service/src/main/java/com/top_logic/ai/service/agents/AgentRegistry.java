@@ -749,6 +749,9 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		if (config.getSeed() != null) {
 			builder.seed(config.getSeed());
 		}
+		if (config.getReasoningEffort() != null) {
+			builder.reasoningEffort(config.getReasoningEffort().getValue());
+		}
 		ResponseFormat responseFormat = mapResponseFormat(config.getResponseFormat());
 		if (responseFormat != null) {
 			builder.responseFormat(responseFormat);

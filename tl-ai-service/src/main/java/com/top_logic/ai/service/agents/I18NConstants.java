@@ -19,6 +19,12 @@ public class I18NConstants extends I18NConstantsBase {
 	/** @en Maximum tokens is required when thinking type is ENABLED. */
 	public static ResKey MAX_TOKENS_REQUIRED_WHEN_THINKING_ENABLED;
 
+	/** @en Maximum tokens must be greater than thinking budget tokens. */
+	public static ResKey MAX_TOKENS_MUST_EXCEED_THINKING_BUDGET;
+
+	/** @en Adaptive thinking is not supported by this model. Use 'ENABLED' instead. */
+	public static ResKey ADAPTIVE_THINKING_NOT_SUPPORTED;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

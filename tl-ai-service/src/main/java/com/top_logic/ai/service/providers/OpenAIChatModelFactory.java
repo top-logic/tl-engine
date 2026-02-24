@@ -5,7 +5,9 @@
  */
 package com.top_logic.ai.service.providers;
 
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 import com.top_logic.ai.service.ChatModelFactory;
 import com.top_logic.basic.config.InstantiationContext;
@@ -144,5 +146,57 @@ public class OpenAIChatModelFactory extends ChatModelFactory {
 		}
 
 		return extractModelNames(builder.build().listModels());
+	}
+
+	@Override
+	public Set<ModelCapability> getModelCapabilities(String modelName) {
+		return openAIModelCapabilities(modelName);
+	}
+
+	/**
+	 * Determines the set of {@link ModelCapability capabilities} for the given <i>OpenAI</i> model
+	 * name.
+	 *
+	 * <p>
+	 * Package-private for testability.
+	 * </p>
+	 *
+	 * @param modelName
+	 *        The model name to check (e.g. {@code "o3-mini"}, {@code "gpt-5"}). May be
+	 *        {@code null}.
+	 * @return The capabilities supported by the model, never {@code null}.
+	 */
+	static Set<ModelCapability> openAIModelCapabilities(String modelName) {
+		if (modelName == null) {
+			return EnumSet.noneOf(ModelCapability.class);
+		}
+
+		String name = modelName.toLowerCase();
+
+		// o3*, o4-mini* → reasoning effort
+		if (name.startsWith("o3") || name.startsWith("o4-mini")) {
+			return EnumSet.of(ModelCapability.REASONING_EFFORT);
+		}
+
+		// o1 exact or o1- prefix (but NOT o1-mini, o1-preview)
+		if (name.equals("o1") || name.startsWith("o1-")) {
+			if (name.startsWith("o1-mini") || name.startsWith("o1-preview")) {
+				return EnumSet.noneOf(ModelCapability.class);
+			}
+			return EnumSet.of(ModelCapability.REASONING_EFFORT);
+		}
+
+		// gpt-5*
+		if (name.startsWith("gpt-5")) {
+			return EnumSet.of(ModelCapability.REASONING_EFFORT);
+		}
+
+		// codex-mini*
+		if (name.startsWith("codex-mini")) {
+			return EnumSet.of(ModelCapability.REASONING_EFFORT);
+		}
+
+		// gpt-4o*, gpt-4-*, everything else
+		return EnumSet.noneOf(ModelCapability.class);
 	}
 }

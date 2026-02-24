@@ -5,14 +5,17 @@
  */
 package com.top_logic.ai.service;
 
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.pool.ObjectPool;
 import org.apache.commons.pool.impl.GenericObjectPool;
 
 import com.top_logic.ai.service.providers.AnthropicChatModelFactory;
+import com.top_logic.ai.service.providers.ModelCapability;
 import com.top_logic.ai.service.providers.MistralChatModelFactory;
 import com.top_logic.ai.service.providers.OpenAIChatModelFactory;
 import com.top_logic.basic.config.CommaSeparatedStrings;
@@ -241,4 +244,22 @@ public abstract class ChatModelFactory implements ConfiguredInstance<ChatModelFa
 	 *         If the model list cannot be retrieved.
 	 */
 	protected abstract List<String> getAvailableModels() throws Exception;
+
+	/**
+	 * Returns the set of capabilities supported by the given model.
+	 *
+	 * <p>
+	 * Override in provider-specific subclasses to report model-level capabilities such as extended
+	 * thinking or reasoning effort. The default implementation returns an empty set.
+	 * </p>
+	 *
+	 * @param modelName
+	 *        The name of the model to query.
+	 * @return The set of capabilities the model supports, never {@code null}.
+	 *
+	 * @see ModelCapability
+	 */
+	public Set<ModelCapability> getModelCapabilities(String modelName) {
+		return EnumSet.noneOf(ModelCapability.class);
+	}
 }

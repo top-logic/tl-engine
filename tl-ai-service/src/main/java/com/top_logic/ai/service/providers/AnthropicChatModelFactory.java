@@ -5,7 +5,9 @@
  */
 package com.top_logic.ai.service.providers;
 
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 import com.top_logic.ai.service.ChatModelFactory;
 import com.top_logic.basic.config.InstantiationContext;
@@ -140,5 +142,48 @@ public class AnthropicChatModelFactory extends ChatModelFactory {
 		}
 
 		return extractModelNames(builder.build().listModels());
+	}
+
+	@Override
+	public Set<ModelCapability> getModelCapabilities(String modelName) {
+		return anthropicModelCapabilities(modelName);
+	}
+
+	/**
+	 * Determines the set of {@link ModelCapability capabilities} for the given Anthropic model name.
+	 *
+	 * <p>
+	 * Package-private for testability.
+	 * </p>
+	 *
+	 * @param modelName
+	 *        The model name to check (e.g. {@code "claude-opus-4-6-20260401"}).
+	 * @return The capabilities supported by the model, never {@code null}.
+	 */
+	static Set<ModelCapability> anthropicModelCapabilities(String modelName) {
+		String name = modelName.toLowerCase();
+
+		// Opus 4.6 / Sonnet 4.6 — adaptive thinking (must be checked before opus-4 / sonnet-4)
+		if (name.contains("opus-4-6") || name.contains("sonnet-4-6")) {
+			return EnumSet.of(ModelCapability.THINKING_ENABLED, ModelCapability.THINKING_ADAPTIVE);
+		}
+
+		// Opus 4.x / Sonnet 4.x (including 4-5, 4-0, etc.)
+		if (name.contains("opus-4") || name.contains("sonnet-4")) {
+			return EnumSet.of(ModelCapability.THINKING_ENABLED);
+		}
+
+		// Haiku 4.5
+		if (name.contains("haiku-4-5")) {
+			return EnumSet.of(ModelCapability.THINKING_ENABLED);
+		}
+
+		// Claude 3.7 Sonnet
+		if (name.contains("claude-3-7-sonnet")) {
+			return EnumSet.of(ModelCapability.THINKING_ENABLED);
+		}
+
+		// Claude 3.5 and older — no thinking support
+		return EnumSet.noneOf(ModelCapability.class);
 	}
 }

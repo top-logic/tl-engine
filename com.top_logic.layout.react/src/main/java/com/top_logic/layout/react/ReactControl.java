@@ -184,13 +184,13 @@ public class ReactControl extends AbstractVisibleControl {
 	}
 
 	@Override
-	protected void detachInvalidated() {
+	protected void internalDetach() {
 		SSEUpdateQueue queue = _sseQueue;
 		if (queue != null) {
 			queue.unregisterControl(this);
 			_sseQueue = null;
 		}
-		super.detachInvalidated();
+		super.internalDetach();
 	}
 
 	@Override

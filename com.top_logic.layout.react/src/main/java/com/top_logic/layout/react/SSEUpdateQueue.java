@@ -17,6 +17,8 @@ import java.util.concurrent.TimeUnit;
 
 import jakarta.servlet.AsyncContext;
 import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpSessionBindingEvent;
+import jakarta.servlet.http.HttpSessionBindingListener;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.sched.SchedulerService;
@@ -40,7 +42,7 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * connections, leaving half-open connections that neither the server nor the client can detect.
  * </p>
  */
-public class SSEUpdateQueue {
+public class SSEUpdateQueue implements HttpSessionBindingListener {
 
 	private static final String SESSION_ATTRIBUTE_KEY = "tl.react.sseQueue";
 
@@ -142,6 +144,25 @@ public class SSEUpdateQueue {
 			_heartbeatTask.cancel(false);
 			_heartbeatTask = null;
 		}
+	}
+
+	@Override
+	public void valueUnbound(HttpSessionBindingEvent event) {
+		synchronized (this) {
+			if (_heartbeatTask != null) {
+				_heartbeatTask.cancel(false);
+				_heartbeatTask = null;
+			}
+		}
+		for (AsyncContext ctx : _connections) {
+			try {
+				ctx.complete();
+			} catch (Exception ex) {
+				// Connection already closed, ignore.
+			}
+		}
+		_connections.clear();
+		_controls.clear();
 	}
 
 	private void sendHeartbeat() {

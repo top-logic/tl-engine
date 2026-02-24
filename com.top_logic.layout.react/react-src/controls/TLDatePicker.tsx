@@ -1,6 +1,7 @@
-import React, { useCallback } from 'react';
+import { React, useTLFieldValue } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import { useTLFieldValue } from 'tl-react-bridge';
+
+const { useCallback } = React;
 
 /**
  * A date picker field rendered via React.

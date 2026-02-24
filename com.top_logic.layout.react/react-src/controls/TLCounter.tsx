@@ -1,5 +1,4 @@
-import React from 'react';
-import { useTLState, useTLCommand } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const TLCounter: React.FC<TLCellProps> = () => {

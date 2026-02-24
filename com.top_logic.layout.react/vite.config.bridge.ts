@@ -9,18 +9,10 @@ export default defineConfig({
   build: {
     lib: {
       entry: 'react-src/bridge-entry.ts',
-      name: 'TLReact',
       fileName: () => 'tl-react-bridge.js',
-      formats: ['iife'],
+      formats: ['es'],
     },
     outDir: 'src/main/webapp/script',
     emptyOutDir: false,
-    rollupOptions: {
-      output: {
-        // Ensure the IIFE assigns to 'window' explicitly, not 'this' (which is
-        // undefined in strict mode).
-        footer: 'window.TLReact = TLReact;',
-      },
-    },
   },
 });

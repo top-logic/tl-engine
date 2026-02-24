@@ -10,6 +10,7 @@ import TLButton from './controls/TLButton';
 import TLToggleButton from './controls/TLToggleButton';
 import TLCounter from './controls/TLCounter';
 import TLTabBar from './controls/TLTabBar';
+import TLFieldList from './controls/TLFieldList';
 
 register('TLButton', TLButton);
 register('TLToggleButton', TLToggleButton);
@@ -21,3 +22,4 @@ register('TLCheckbox', TLCheckbox);
 register('TLTable', TLTable);
 register('TLCounter', TLCounter);
 register('TLTabBar', TLTabBar);
+register('TLFieldList', TLFieldList);

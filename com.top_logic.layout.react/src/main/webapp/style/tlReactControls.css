@@ -138,20 +138,20 @@ button.tlCounter__button:focus {
 
 /* --- TLTabBar ---------------------------------------------------------- */
 
-.tlTabBar {
+.tlReactTabBar {
 	display: flex;
 	flex-direction: column;
 	font-family: var(--font-family);
 }
 
-.tlTabBar__tabs {
+.tlReactTabBar__tabs {
 	display: flex;
 	gap: var(--spacing-02);
 	border-bottom: 1px solid var(--border-subtle-01);
 	padding: 0 var(--spacing-03);
 }
 
-.tlTabBar__tab {
+.tlReactTabBar__tab {
 	padding: var(--spacing-03) var(--spacing-04);
 	border: none;
 	border-bottom: 2px solid transparent;
@@ -163,22 +163,44 @@ button.tlCounter__button:focus {
 	white-space: nowrap;
 }
 
-.tlTabBar__tab:hover {
+.tlReactTabBar__tab:hover {
 	color: var(--text-primary);
 	border-bottom-color: var(--border-subtle-01);
 }
 
-.tlTabBar__tab:focus {
+.tlReactTabBar__tab:focus {
 	outline: 2px solid var(--focus);
 	outline-offset: -2px;
 }
 
-.tlTabBar__tab--active {
+.tlReactTabBar__tab--active {
 	color: var(--text-primary);
 	border-bottom-color: var(--button-primary);
 	font-weight: bold;
 }
 
-.tlTabBar__content {
+.tlReactTabBar__content {
 	padding: var(--spacing-04);
+}
+
+/* --- TLFieldList ------------------------------------------------------- */
+
+.tlFieldList {
+	font-family: var(--font-family);
+}
+
+.tlFieldList__title {
+	margin: 0 0 var(--spacing-04) 0;
+	color: var(--text-primary);
+}
+
+.tlFieldList__fields {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-04);
+}
+
+.tlFieldList__item {
+	padding-bottom: var(--spacing-03);
+	border-bottom: 1px solid var(--border-subtle-01);
 }

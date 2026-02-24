@@ -12,6 +12,8 @@ import java.util.List;
 import com.top_logic.ai.service.AIService;
 import com.top_logic.ai.service.ChatModelFactory;
 import com.top_logic.ai.service.providers.AnthropicChatModelFactory;
+import com.top_logic.ai.service.providers.MistralChatModelFactory;
+import com.top_logic.ai.service.providers.OpenAIChatModelFactory;
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.annotation.Derived;
@@ -59,6 +61,16 @@ import com.top_logic.layout.form.values.edit.annotation.Options;
 	AgentConfig.THINKING_BUDGET_TOKENS,
 	AgentConfig.MAX_TOKENS,
 	AgentConfig.TEMPERATURE,
+	AgentConfig.TOP_P,
+	AgentConfig.STOP_SEQUENCES,
+	AgentConfig.TIMEOUT_SECONDS,
+	AgentConfig.MAX_RETRIES,
+	AgentConfig.RESPONSE_FORMAT,
+	AgentConfig.TOP_K,
+	AgentConfig.DISABLE_PARALLEL_TOOL_USE,
+	AgentConfig.PRESENCE_PENALTY,
+	AgentConfig.FREQUENCY_PENALTY,
+	AgentConfig.SEED,
 	AgentConfig.RETURN_THINKING,
 	AgentConfig.SEND_THINKING,
 	AgentConfig.TOOLS,
@@ -85,6 +97,36 @@ public interface AgentConfig extends NamedConfigMandatory {
 	/** @see #getTemperature() */
 	String TEMPERATURE = "temperature";
 
+	/** @see #getTopP() */
+	String TOP_P = "top-p";
+
+	/** @see #getStopSequences() */
+	String STOP_SEQUENCES = "stop-sequences";
+
+	/** @see #getTimeoutSeconds() */
+	String TIMEOUT_SECONDS = "timeout-seconds";
+
+	/** @see #getMaxRetries() */
+	String MAX_RETRIES = "max-retries";
+
+	/** @see #getResponseFormat() */
+	String RESPONSE_FORMAT = "response-format";
+
+	/** @see #getTopK() */
+	String TOP_K = "top-k";
+
+	/** @see #getDisableParallelToolUse() */
+	String DISABLE_PARALLEL_TOOL_USE = "disable-parallel-tool-use";
+
+	/** @see #getPresencePenalty() */
+	String PRESENCE_PENALTY = "presence-penalty";
+
+	/** @see #getFrequencyPenalty() */
+	String FREQUENCY_PENALTY = "frequency-penalty";
+
+	/** @see #getSeed() */
+	String SEED = "seed";
+
 	/** @see #getReturnThinking() */
 	String RETURN_THINKING = "return-thinking";
 
@@ -105,6 +147,15 @@ public interface AgentConfig extends NamedConfigMandatory {
 
 	/** @see #isThinkingCapable() */
 	String IS_THINKING_CAPABLE = "is-thinking-capable";
+
+	/** @see #isOpenAICapable() */
+	String IS_OPENAI_CAPABLE = "is-openai-capable";
+
+	/** @see #isAnthropicCapable() */
+	String IS_ANTHROPIC_CAPABLE = "is-anthropic-capable";
+
+	/** @see #isMistralCapable() */
+	String IS_MISTRAL_CAPABLE = "is-mistral-capable";
 
 	/**
 	 * Short description of this agent's purpose.
@@ -141,6 +192,30 @@ public interface AgentConfig extends NamedConfigMandatory {
 	@Derived(fun = IsThinkingCapable.class, args = @Ref(MODEL))
 	@Hidden
 	boolean isThinkingCapable();
+
+	/**
+	 * Whether the selected model belongs to the OpenAI provider.
+	 */
+	@Name(IS_OPENAI_CAPABLE)
+	@Derived(fun = IsOpenAICapable.class, args = @Ref(MODEL))
+	@Hidden
+	boolean isOpenAICapable();
+
+	/**
+	 * Whether the selected model belongs to the Anthropic provider.
+	 */
+	@Name(IS_ANTHROPIC_CAPABLE)
+	@Derived(fun = IsAnthropicCapable.class, args = @Ref(MODEL))
+	@Hidden
+	boolean isAnthropicCapable();
+
+	/**
+	 * Whether the selected model belongs to the Mistral provider.
+	 */
+	@Name(IS_MISTRAL_CAPABLE)
+	@Derived(fun = IsMistralCapable.class, args = @Ref(MODEL))
+	@Hidden
+	boolean isMistralCapable();
 
 	/**
 	 * The thinking type for extended thinking support.
@@ -201,6 +276,114 @@ public interface AgentConfig extends NamedConfigMandatory {
 	@Name(TEMPERATURE)
 	@Nullable
 	Double getTemperature();
+
+	/**
+	 * The nucleus sampling parameter (0.0 to 1.0).
+	 *
+	 * @return The top-p value, or {@code null} to use the model default.
+	 */
+	@Name(TOP_P)
+	@Nullable
+	Double getTopP();
+
+	/**
+	 * Optional stop sequences that terminate generation when encountered.
+	 *
+	 * @return The configured stop sequences, or an empty list when not set.
+	 */
+	@Name(STOP_SEQUENCES)
+	@Format(CommaSeparatedStrings.class)
+	List<String> getStopSequences();
+
+	/**
+	 * Request timeout in seconds.
+	 *
+	 * @return Timeout in seconds, or {@code null} to use provider defaults.
+	 */
+	@Name(TIMEOUT_SECONDS)
+	@Nullable
+	Integer getTimeoutSeconds();
+
+	/**
+	 * Maximum retries for transient provider/API failures.
+	 *
+	 * @return Max retries, or {@code null} to use provider defaults.
+	 */
+	@Name(MAX_RETRIES)
+	@Nullable
+	Integer getMaxRetries();
+
+	/**
+	 * Response format preference.
+	 *
+	 * <p>
+	 * Only visible for providers that support response-format control.
+	 * </p>
+	 */
+	@Name(RESPONSE_FORMAT)
+	@Nullable
+	@DynamicMode(fun = ActiveIfOpenAiOrMistralCapable.class, args = { @Ref(IS_OPENAI_CAPABLE), @Ref(IS_MISTRAL_CAPABLE) })
+	ResponseFormatOption getResponseFormat();
+
+	/**
+	 * Top-k sampling parameter.
+	 *
+	 * <p>
+	 * Only visible for Anthropic models.
+	 * </p>
+	 */
+	@Name(TOP_K)
+	@Nullable
+	@DynamicMode(fun = ActiveIfAnthropicCapable.class, args = @Ref(IS_ANTHROPIC_CAPABLE))
+	Integer getTopK();
+
+	/**
+	 * Whether Anthropic may execute tool calls in parallel.
+	 *
+	 * <p>
+	 * Only visible for Anthropic models.
+	 * </p>
+	 */
+	@Name(DISABLE_PARALLEL_TOOL_USE)
+	@BooleanDefault(false)
+	@DynamicMode(fun = ActiveIfAnthropicCapable.class, args = @Ref(IS_ANTHROPIC_CAPABLE))
+	boolean getDisableParallelToolUse();
+
+	/**
+	 * OpenAI presence penalty.
+	 *
+	 * <p>
+	 * Only visible for OpenAI models.
+	 * </p>
+	 */
+	@Name(PRESENCE_PENALTY)
+	@Nullable
+	@DynamicMode(fun = ActiveIfOpenAICapable.class, args = @Ref(IS_OPENAI_CAPABLE))
+	Double getPresencePenalty();
+
+	/**
+	 * OpenAI frequency penalty.
+	 *
+	 * <p>
+	 * Only visible for OpenAI models.
+	 * </p>
+	 */
+	@Name(FREQUENCY_PENALTY)
+	@Nullable
+	@DynamicMode(fun = ActiveIfOpenAICapable.class, args = @Ref(IS_OPENAI_CAPABLE))
+	Double getFrequencyPenalty();
+
+	/**
+	 * OpenAI deterministic seed.
+	 *
+	 * <p>
+	 * Only visible for OpenAI models.
+	 * </p>
+	 */
+	@Name(SEED)
+	@Nullable
+	@DynamicMode(fun = ActiveIfOpenAICapable.class, args = @Ref(IS_OPENAI_CAPABLE))
+	Integer getSeed();
 
 	/**
 	 * Whether to include the model's thinking in the response.
@@ -347,12 +530,55 @@ public interface AgentConfig extends NamedConfigMandatory {
 			if (modelName == null || modelName.isEmpty()) {
 				return Boolean.FALSE;
 			}
-			AIService service = AIService.getInstance();
-			if (service == null) {
-				return Boolean.FALSE;
-			}
-			ChatModelFactory factory = service.getFactory(modelName);
+			ChatModelFactory factory = getFactory(modelName);
 			return Boolean.valueOf(factory instanceof AnthropicChatModelFactory);
+		}
+	}
+
+	/**
+	 * Generic provider capability check for the selected model.
+	 */
+	abstract class IsProviderCapable extends Function1<Boolean, String> {
+
+		protected abstract Class<? extends ChatModelFactory> providerType();
+
+		@Override
+		public Boolean apply(String modelName) {
+			ChatModelFactory factory = getFactory(modelName);
+			return Boolean.valueOf(factory != null && providerType().isInstance(factory));
+		}
+	}
+
+	/**
+	 * Checks whether the selected model is served by {@link OpenAIChatModelFactory}.
+	 */
+	class IsOpenAICapable extends IsProviderCapable {
+
+		@Override
+		protected Class<? extends ChatModelFactory> providerType() {
+			return OpenAIChatModelFactory.class;
+		}
+	}
+
+	/**
+	 * Checks whether the selected model is served by {@link AnthropicChatModelFactory}.
+	 */
+	class IsAnthropicCapable extends IsProviderCapable {
+
+		@Override
+		protected Class<? extends ChatModelFactory> providerType() {
+			return AnthropicChatModelFactory.class;
+		}
+	}
+
+	/**
+	 * Checks whether the selected model is served by {@link MistralChatModelFactory}.
+	 */
+	class IsMistralCapable extends IsProviderCapable {
+
+		@Override
+		protected Class<? extends ChatModelFactory> providerType() {
+			return MistralChatModelFactory.class;
 		}
 	}
 
@@ -383,6 +609,61 @@ public interface AgentConfig extends NamedConfigMandatory {
 			}
 			return FieldMode.INVISIBLE;
 		}
+	}
+
+	/**
+	 * Shows the field as {@link FieldMode#ACTIVE} when the model is OpenAI, invisible otherwise.
+	 */
+	class ActiveIfOpenAICapable extends Function1<FieldMode, Boolean> {
+
+		@Override
+		public FieldMode apply(Boolean openAICapable) {
+			return Boolean.TRUE.equals(openAICapable) ? FieldMode.ACTIVE : FieldMode.INVISIBLE;
+		}
+	}
+
+	/**
+	 * Shows the field as {@link FieldMode#ACTIVE} when the model is Anthropic, invisible otherwise.
+	 */
+	class ActiveIfAnthropicCapable extends Function1<FieldMode, Boolean> {
+
+		@Override
+		public FieldMode apply(Boolean anthropicCapable) {
+			return Boolean.TRUE.equals(anthropicCapable) ? FieldMode.ACTIVE : FieldMode.INVISIBLE;
+		}
+	}
+
+	/**
+	 * Shows the field as {@link FieldMode#ACTIVE} when model is OpenAI or Mistral.
+	 */
+	class ActiveIfOpenAiOrMistralCapable extends Function2<FieldMode, Boolean, Boolean> {
+
+		@Override
+		public FieldMode apply(Boolean openAICapable, Boolean mistralCapable) {
+			return (Boolean.TRUE.equals(openAICapable) || Boolean.TRUE.equals(mistralCapable))
+				? FieldMode.ACTIVE
+				: FieldMode.INVISIBLE;
+		}
+	}
+
+	/**
+	 * Response format options supported by OpenAI/Mistral builders.
+	 */
+	enum ResponseFormatOption {
+		DEFAULT,
+		TEXT,
+		JSON
+	}
+
+	private static ChatModelFactory getFactory(String modelName) {
+		if (modelName == null || modelName.isEmpty()) {
+			return null;
+		}
+		AIService service = AIService.getInstance();
+		if (service == null) {
+			return null;
+		}
+		return service.getFactory(modelName);
 	}
 
 	// --- Constraint algorithms ---

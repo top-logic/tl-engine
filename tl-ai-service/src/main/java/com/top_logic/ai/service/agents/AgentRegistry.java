@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.time.Duration;
 import java.util.function.Supplier;
 
 import com.top_logic.ai.service.AIService;
@@ -49,6 +50,7 @@ import dev.langchain4j.agentic.UntypedAgent;
 import dev.langchain4j.memory.ChatMemory;
 import dev.langchain4j.model.anthropic.AnthropicChatModel;
 import dev.langchain4j.model.chat.ChatModel;
+import dev.langchain4j.model.chat.request.ResponseFormat;
 import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import dev.langchain4j.model.mistralai.MistralAiChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
@@ -637,6 +639,24 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		if (config.getTemperature() != null) {
 			builder.temperature(config.getTemperature());
 		}
+		if (config.getTopP() != null) {
+			builder.topP(config.getTopP());
+		}
+		if (config.getTopK() != null) {
+			builder.topK(config.getTopK());
+		}
+		if (config.getStopSequences() != null && !config.getStopSequences().isEmpty()) {
+			builder.stopSequences(config.getStopSequences());
+		}
+		if (config.getDisableParallelToolUse()) {
+			builder.disableParallelToolUse(Boolean.TRUE);
+		}
+		if (config.getTimeoutSeconds() != null) {
+			builder.timeout(toTimeoutDuration(config.getTimeoutSeconds()));
+		}
+		if (config.getMaxRetries() != null) {
+			builder.maxRetries(config.getMaxRetries());
+		}
 		String version = fc.getVersion();
 		if (version != null) {
 			builder.version(version);
@@ -657,6 +677,22 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		if (config.getTemperature() != null) {
 			builder.temperature(config.getTemperature());
 		}
+		if (config.getTopP() != null) {
+			builder.topP(config.getTopP());
+		}
+		if (config.getStopSequences() != null && !config.getStopSequences().isEmpty()) {
+			builder.stopSequences(config.getStopSequences());
+		}
+		ResponseFormat responseFormat = mapResponseFormat(config.getResponseFormat());
+		if (responseFormat != null) {
+			builder.responseFormat(responseFormat);
+		}
+		if (config.getTimeoutSeconds() != null) {
+			builder.timeout(toTimeoutDuration(config.getTimeoutSeconds()));
+		}
+		if (config.getMaxRetries() != null) {
+			builder.maxRetries(config.getMaxRetries());
+		}
 		return builder.build();
 	}
 
@@ -673,11 +709,50 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		if (config.getTemperature() != null) {
 			builder.temperature(config.getTemperature());
 		}
+		if (config.getTopP() != null) {
+			builder.topP(config.getTopP());
+		}
+		if (config.getStopSequences() != null && !config.getStopSequences().isEmpty()) {
+			builder.stop(config.getStopSequences());
+		}
+		if (config.getPresencePenalty() != null) {
+			builder.presencePenalty(config.getPresencePenalty());
+		}
+		if (config.getFrequencyPenalty() != null) {
+			builder.frequencyPenalty(config.getFrequencyPenalty());
+		}
+		if (config.getSeed() != null) {
+			builder.seed(config.getSeed());
+		}
+		ResponseFormat responseFormat = mapResponseFormat(config.getResponseFormat());
+		if (responseFormat != null) {
+			builder.responseFormat(responseFormat);
+		}
+		if (config.getTimeoutSeconds() != null) {
+			builder.timeout(toTimeoutDuration(config.getTimeoutSeconds()));
+		}
+		if (config.getMaxRetries() != null) {
+			builder.maxRetries(config.getMaxRetries());
+		}
 		String org = fc.getOrganization();
 		if (org != null) {
 			builder.organizationId(org);
 		}
 		return builder.build();
+	}
+
+	static ResponseFormat mapResponseFormat(AgentConfig.ResponseFormatOption option) {
+		if (option == null || option == AgentConfig.ResponseFormatOption.DEFAULT) {
+			return null;
+		}
+		if (option == AgentConfig.ResponseFormatOption.JSON) {
+			return ResponseFormat.JSON;
+		}
+		return ResponseFormat.TEXT;
+	}
+
+	static Duration toTimeoutDuration(Integer timeoutSeconds) {
+		return timeoutSeconds == null ? null : Duration.ofSeconds(timeoutSeconds);
 	}
 
 	private String buildSkillSection(List<Skill> skills) {

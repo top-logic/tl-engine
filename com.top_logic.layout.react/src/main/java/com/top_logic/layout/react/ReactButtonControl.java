@@ -10,6 +10,7 @@ import java.util.Map;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.ControlCommand;
 import com.top_logic.tool.boundsec.HandlerResult;
 
@@ -18,14 +19,14 @@ import com.top_logic.tool.boundsec.HandlerResult;
  *
  * <p>
  * When the button is clicked on the client, the {@code "click"} command is dispatched to the
- * server, which invokes the {@link ClickAction} provided at construction time.
+ * server, which invokes the {@link Command} provided at construction time.
  * </p>
  */
 public class ReactButtonControl extends ReactControl {
 
 	private static final Map<String, ControlCommand> COMMANDS = createCommandMap(new ClickCommand());
 
-	private final ClickAction _action;
+	private final Command _action;
 
 	/**
 	 * Creates a new {@link ReactButtonControl}.
@@ -33,27 +34,12 @@ public class ReactButtonControl extends ReactControl {
 	 * @param label
 	 *        The button label.
 	 * @param action
-	 *        The action to execute when the button is clicked.
+	 *        The {@link Command} to execute when the button is clicked.
 	 */
-	public ReactButtonControl(String label, ClickAction action) {
+	public ReactButtonControl(String label, Command action) {
 		super(null, "TLButton", COMMANDS);
 		_action = action;
 		getReactState().put("label", label);
-	}
-
-	/**
-	 * Action to execute when a {@link ReactButtonControl} is clicked.
-	 */
-	@FunctionalInterface
-	public interface ClickAction {
-
-		/**
-		 * Executes the button action.
-		 *
-		 * @param context
-		 *        The display context.
-		 */
-		void execute(DisplayContext context);
 	}
 
 	/**
@@ -72,8 +58,7 @@ public class ReactButtonControl extends ReactControl {
 
 		@Override
 		protected HandlerResult execute(DisplayContext context, Control control, Map<String, Object> arguments) {
-			((ReactButtonControl) control)._action.execute(context);
-			return HandlerResult.DEFAULT_RESULT;
+			return ((ReactButtonControl) control)._action.executeCommand(context);
 		}
 	}
 

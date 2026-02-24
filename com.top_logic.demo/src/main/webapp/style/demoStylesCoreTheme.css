@@ -10,3 +10,9 @@
 	margin-top: 0;
 }
 /*	End */
+
+.tlFieldToggles {
+	display: flex;
+	gap: var(--spacing-01);
+	margin-top: var(--spacing-02);
+}

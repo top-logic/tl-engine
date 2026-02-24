@@ -6,13 +6,14 @@
 package com.top_logic.layout.react;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.UpdateQueue;
 import com.top_logic.layout.VetoException;
 import com.top_logic.layout.basic.ControlCommand;
 import com.top_logic.layout.form.FormField;
@@ -41,6 +42,8 @@ public class ReactFormFieldControl extends AbstractFormFieldControl {
 		createCommandMap(new ControlCommand[] { ValueChanged.INSTANCE });
 
 	private final String _reactModule;
+
+	private SSEUpdateQueue _sseQueue;
 
 	/**
 	 * Creates a new {@link ReactFormFieldControl}.
@@ -84,6 +87,25 @@ public class ReactFormFieldControl extends AbstractFormFieldControl {
 		ReactControl.writeJsonLiteral(out, state);
 		out.append(");");
 		HTMLUtil.endScriptAfterRendering(out);
+
+		SSEUpdateQueue queue = SSEUpdateQueue.forSession(context.asRequest().getSession());
+		_sseQueue = queue;
+		queue.registerControl(this);
+	}
+
+	@Override
+	protected void internalDetach() {
+		SSEUpdateQueue queue = _sseQueue;
+		if (queue != null) {
+			queue.unregisterControl(this);
+			_sseQueue = null;
+		}
+		super.internalDetach();
+	}
+
+	@Override
+	protected void internalRevalidate(DisplayContext context, UpdateQueue actions) {
+		// Updates are delivered via SSE, not through the standard revalidation path.
 	}
 
 	/**
@@ -105,12 +127,58 @@ public class ReactFormFieldControl extends AbstractFormFieldControl {
 
 	@Override
 	protected void internalHandleValueChanged(FormField field, Object oldValue, Object newValue) {
-		requestRepaint();
+		Map<String, Object> patch = new HashMap<>();
+		patch.put("value", field.hasValue() ? field.getValue() : null);
+		sendPatch(patch);
 	}
 
 	@Override
 	protected void internalHandleDisabledEvent(FormMember sender, Boolean oldValue, Boolean newValue) {
-		requestRepaint();
+		Map<String, Object> patch = new HashMap<>();
+		patch.put("disabled", newValue);
+		sendPatch(patch);
+	}
+
+	@Override
+	public Bubble handleMandatoryChanged(FormField sender, Boolean oldValue, Boolean newValue) {
+		if (!skipEvent(sender)) {
+			Map<String, Object> patch = new HashMap<>();
+			patch.put("mandatory", newValue);
+			sendPatch(patch);
+		}
+		return Bubble.BUBBLE;
+	}
+
+	@Override
+	public Bubble hasErrorChanged(FormField sender, Boolean oldError, Boolean newError) {
+		if (!skipEvent(sender)) {
+			Map<String, Object> patch = new HashMap<>();
+			patch.put("hasError", newError);
+			patch.put("errorMessage", Boolean.TRUE.equals(newError) ? sender.getError().toString() : null);
+			sendPatch(patch);
+		}
+		return Bubble.BUBBLE;
+	}
+
+	@Override
+	public Bubble handleImmutableChanged(FormMember sender, Boolean oldValue, Boolean newValue) {
+		if (!skipEvent(sender)) {
+			Map<String, Object> patch = new HashMap<>();
+			patch.put("editable", !Boolean.TRUE.equals(newValue));
+			sendPatch(patch);
+		}
+		return Bubble.BUBBLE;
+	}
+
+	private void sendPatch(Map<String, Object> patch) {
+		SSEUpdateQueue queue = _sseQueue;
+		if (queue == null) {
+			return;
+		}
+		PatchEvent event = PatchEvent.create()
+			.setControlId(getID())
+			.setPatch(ReactControl.toJsonString(patch));
+		queue.enqueue(event);
 	}
 
 	/**

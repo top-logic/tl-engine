@@ -25,20 +25,19 @@ import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
-import com.top_logic.layout.react.ReactButtonControl;
 import com.top_logic.layout.react.ReactFormFieldControl;
 import com.top_logic.layout.react.ReactSelectFormFieldControl;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * Demo {@link LayoutComponent} that showcases all React form field types.
  *
  * <p>
  * Demonstrates {@code TLTextInput}, {@code TLCheckbox}, {@code TLNumberInput}, {@code TLDatePicker}
- * and {@code TLSelect} rendered via {@link ReactFormFieldControl}, with toggle buttons to exercise
- * the SSE patch handlers for disabled, immutable, and mandatory state changes.
+ * and {@code TLSelect} rendered via {@link ReactFormFieldControl}, with a
+ * {@link DemoFieldTogglesControl} composite React control to exercise the SSE patch handlers for
+ * disabled, immutable, and mandatory state changes.
  * </p>
  */
 public class DemoReactFormFieldsComponent extends LayoutComponent {
@@ -88,14 +87,7 @@ public class DemoReactFormFieldsComponent extends LayoutComponent {
 			out.endTag(HTMLConstants.H3);
 
 			demo._fieldControl.write(displayContext, out);
-
-			out.beginBeginTag(HTMLConstants.DIV);
-			out.writeAttribute(HTMLConstants.STYLE_ATTR, "margin-top: 0.5em;");
-			out.endBeginTag();
-			demo._toggleDisabled.write(displayContext, out);
-			demo._toggleImmutable.write(displayContext, out);
-			demo._toggleMandatory.write(displayContext, out);
-			out.endTag(HTMLConstants.DIV);
+			demo._togglesControl.write(displayContext, out);
 
 			out.endTag(HTMLConstants.DIV);
 		}
@@ -159,7 +151,7 @@ public class DemoReactFormFieldsComponent extends LayoutComponent {
 	}
 
 	/**
-	 * Groups a form field with its React field control and toggle button controls.
+	 * Groups a form field with its React field control and toggle control.
 	 */
 	private static class FieldDemo {
 
@@ -167,27 +159,12 @@ public class DemoReactFormFieldsComponent extends LayoutComponent {
 
 		final ReactFormFieldControl _fieldControl;
 
-		final ReactButtonControl _toggleDisabled;
-
-		final ReactButtonControl _toggleImmutable;
-
-		final ReactButtonControl _toggleMandatory;
+		final DemoFieldTogglesControl _togglesControl;
 
 		FieldDemo(String label, FormField field, ReactFormFieldControl fieldControl) {
 			_label = label;
 			_fieldControl = fieldControl;
-			_toggleDisabled = new ReactButtonControl("Toggle Disabled", context -> {
-				field.setDisabled(!field.isDisabled());
-				return HandlerResult.DEFAULT_RESULT;
-			});
-			_toggleImmutable = new ReactButtonControl("Toggle Immutable", context -> {
-				field.setImmutable(!field.isImmutable());
-				return HandlerResult.DEFAULT_RESULT;
-			});
-			_toggleMandatory = new ReactButtonControl("Toggle Mandatory", context -> {
-				field.setMandatory(!field.isMandatory());
-				return HandlerResult.DEFAULT_RESULT;
-			});
+			_togglesControl = new DemoFieldTogglesControl(field);
 		}
 	}
 

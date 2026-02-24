@@ -7,9 +7,11 @@ import TLSelect from './controls/TLSelect';
 import TLCheckbox from './controls/TLCheckbox';
 import TLTable from './controls/TLTable';
 import TLButton from './controls/TLButton';
+import TLToggleButton from './controls/TLToggleButton';
 import TLCounter from './controls/TLCounter';
 
 register('TLButton', TLButton);
+register('TLToggleButton', TLToggleButton);
 register('TLTextInput', TLTextInput);
 register('TLNumberInput', TLNumberInput);
 register('TLDatePicker', TLDatePicker);

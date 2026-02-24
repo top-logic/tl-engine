@@ -58,6 +58,7 @@ import com.top_logic.layout.form.values.edit.annotation.Options;
  */
 @DisplayOrder({
 	AgentConfig.NAME_ATTRIBUTE,
+	AgentConfig.ENTRY_POINT,
 	AgentConfig.DESCRIPTION,
 	AgentConfig.MODEL,
 	AgentConfig.SYSTEM_PROMPT,
@@ -149,6 +150,9 @@ public interface AgentConfig extends NamedConfigMandatory {
 
 	/** @see #getSkills() */
 	String SKILLS = "skills";
+
+	/** @see #isEntryPoint() */
+	String ENTRY_POINT = "entry-point";
 
 	/** @see #isThinkingCapable() */
 	String IS_THINKING_CAPABLE = "is-thinking-capable";
@@ -507,6 +511,18 @@ public interface AgentConfig extends NamedConfigMandatory {
 	@Format(CommaSeparatedStrings.class)
 	@Options(fun = AllSkillNames.class)
 	List<String> getSkills();
+
+	/**
+	 * Whether this agent is the chat entry point.
+	 *
+	 * <p>
+	 * Exactly one agent in the {@link AgentRegistry} must be marked as the entry point. The chat
+	 * system uses this agent to handle incoming user messages.
+	 * </p>
+	 */
+	@Name(ENTRY_POINT)
+	@BooleanDefault(false)
+	boolean isEntryPoint();
 
 	// --- Option provider functions ---
 

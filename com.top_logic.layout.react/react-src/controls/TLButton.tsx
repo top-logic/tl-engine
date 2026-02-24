@@ -45,7 +45,6 @@ const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ command, label, disab
       onClick={handleClick}
       disabled={resolvedDisabled}
       className="tlReactButton"
-      style={{ padding: '4px 8px', marginRight: '4px', cursor: 'pointer' }}
     >
       {resolvedLabel}
     </button>

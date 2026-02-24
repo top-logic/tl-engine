@@ -1,0 +1,137 @@
+/*
+ * Styles for React-based controls provided by the tl-layout-react module.
+ *
+ * Uses the same design tokens as coreButtons.css so that React controls
+ * integrate visually with the rest of the TL UI.
+ */
+
+/* --- TLButton ----------------------------------------------------------- */
+
+.tlReactButton {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	height: 2rem;
+	padding: 0 var(--spacing-03);
+	border: none;
+	border-radius: var(--corner-radius);
+	font-family: var(--font-family);
+	font-weight: bold;
+	font-size: var(--heading-compact-02-font-size);
+	line-height: var(--heading-compact-02-line-height);
+	letter-spacing: var(--heading-compact-02-letter-spacing);
+	cursor: pointer;
+	background: transparent;
+	box-shadow: inset 0px 0px 0px 2px var(--button-secondary);
+	color: var(--button-secondary);
+	white-space: nowrap;
+}
+
+.tlReactButton:hover {
+	background: var(--button-secondary-hover);
+	box-shadow: inset 0px 0px 0px 2px var(--button-secondary-hover);
+	color: var(--text-on-color);
+}
+
+.tlReactButton:focus {
+	box-shadow: inset 0px 0px 0px 2px var(--focus), inset 0px 0px 0px 3px var(--focus-inset);
+	background: var(--button-secondary-hover);
+	color: var(--text-on-color);
+	outline: none;
+}
+
+.tlReactButton:active {
+	background: var(--button-secondary-active);
+	box-shadow: inset 0px 0px 0px 2px var(--focus), inset 0px 0px 0px 3px var(--focus-inset);
+	color: var(--text-on-color);
+}
+
+.tlReactButton:disabled {
+	cursor: default;
+	background: none;
+	box-shadow: inset 0px 0px 0px 2px var(--button-disabled);
+	color: var(--text-disabled);
+}
+
+/* --- TLToggleButton (active state) -------------------------------------- */
+
+.tlReactButton.tlReactButtonActive {
+	background: var(--button-primary);
+	box-shadow: inset 0px 0px 0px 2px var(--button-primary);
+	color: var(--text-on-color);
+}
+
+.tlReactButton.tlReactButtonActive:hover {
+	background: var(--button-primary-hover);
+	box-shadow: inset 0px 0px 0px 2px var(--button-primary-hover);
+}
+
+.tlReactButton.tlReactButtonActive:focus {
+	box-shadow: inset 0px 0px 0px 2px var(--focus), inset 0px 0px 0px 3px var(--focus-inset);
+}
+
+.tlReactButton.tlReactButtonActive:active {
+	background: var(--button-primary-active);
+}
+
+.tlReactButton.tlReactButtonActive:disabled {
+	background: var(--button-disabled);
+	box-shadow: inset 0px 0px 0px 2px var(--button-disabled);
+	color: var(--text-on-color-disabled);
+}
+
+/* --- TLCounter ---------------------------------------------------------- */
+
+.tlCounter {
+	padding: var(--spacing-04);
+	font-family: var(--font-family);
+}
+
+.tlCounter__title {
+	margin: 0 0 var(--spacing-03) 0;
+}
+
+.tlCounter__controls {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-03);
+}
+
+.tlCounter__button {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	width: 2.5rem;
+	height: 2.5rem;
+	font-size: 1.25rem;
+	cursor: pointer;
+	border-radius: var(--corner-radius);
+	border: none;
+	background: transparent;
+	box-shadow: inset 0px 0px 0px 2px var(--button-secondary);
+	color: var(--button-secondary);
+}
+
+.tlCounter__button:hover {
+	background: var(--button-secondary-hover);
+	box-shadow: inset 0px 0px 0px 2px var(--button-secondary-hover);
+	color: var(--text-on-color);
+}
+
+.tlCounter__button:focus {
+	box-shadow: inset 0px 0px 0px 2px var(--focus), inset 0px 0px 0px 3px var(--focus-inset);
+	outline: none;
+}
+
+.tlCounter__value {
+	font-size: 2rem;
+	min-width: 3.75rem;
+	text-align: center;
+	color: var(--text-primary);
+}
+
+.tlCounter__description {
+	margin-top: var(--spacing-03);
+	color: var(--text-secondary);
+	font-size: var(--body-compact-01-font-size);
+}

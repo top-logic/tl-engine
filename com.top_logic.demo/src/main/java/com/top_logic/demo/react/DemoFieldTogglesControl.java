@@ -7,7 +7,7 @@ package com.top_logic.demo.react;
 
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.react.ReactControl;
-import com.top_logic.layout.react.ReactToggleButtonControl;
+import com.top_logic.layout.react.control.toggle.ReactToggleButtonControl;
 
 /**
  * A composite {@link ReactControl} that renders the {@code TLFieldToggles} React component.

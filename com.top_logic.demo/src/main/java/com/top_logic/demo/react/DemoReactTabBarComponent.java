@@ -21,11 +21,11 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
-import com.top_logic.layout.react.ReactButtonControl;
 import com.top_logic.layout.react.ReactControl;
-import com.top_logic.layout.react.ReactFieldListControl;
-import com.top_logic.layout.react.ReactTabBarControl;
-import com.top_logic.layout.react.TabDefinition;
+import com.top_logic.layout.react.control.ReactButtonControl;
+import com.top_logic.layout.react.control.ReactFieldListControl;
+import com.top_logic.layout.react.control.tabbar.ReactTabBarControl;
+import com.top_logic.layout.react.control.tabbar.TabDefinition;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.HandlerResult;
 

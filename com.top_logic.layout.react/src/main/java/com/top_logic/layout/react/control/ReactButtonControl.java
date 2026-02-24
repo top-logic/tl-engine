@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.layout.react;
+package com.top_logic.layout.react.control;
 
 import java.util.Map;
 
@@ -12,6 +12,8 @@ import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.ControlCommand;
+import com.top_logic.layout.react.I18NConstants;
+import com.top_logic.layout.react.ReactControl;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -23,6 +25,9 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * </p>
  */
 public class ReactButtonControl extends ReactControl {
+
+	/** State key for the button label. */
+	private static final String LABEL = "label";
 
 	private static final Map<String, ControlCommand> COMMANDS = createCommandMap(new ClickCommand());
 
@@ -39,7 +44,17 @@ public class ReactButtonControl extends ReactControl {
 	public ReactButtonControl(String label, Command action) {
 		super(null, "TLButton", COMMANDS);
 		_action = action;
-		getReactState().put("label", label);
+		putState(LABEL, label);
+	}
+
+	/**
+	 * Updates the button label.
+	 *
+	 * @param label
+	 *        The new label text.
+	 */
+	public void setLabel(String label) {
+		putState(LABEL, label);
 	}
 
 	/**

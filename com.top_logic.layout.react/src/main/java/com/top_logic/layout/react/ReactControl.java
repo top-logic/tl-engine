@@ -88,6 +88,27 @@ public class ReactControl extends AbstractVisibleControl {
 	}
 
 	/**
+	 * Sets a single value in the React state.
+	 *
+	 * <p>
+	 * If this control is already attached to an SSE queue (i.e. rendered), a {@link PatchEvent} is
+	 * sent to the client. Otherwise the value is stored for inclusion in the initial render.
+	 * </p>
+	 *
+	 * @param key
+	 *        The state key.
+	 * @param value
+	 *        The state value.
+	 */
+	protected void putState(String key, Object value) {
+		if (_sseQueue != null) {
+			patchReactState(Collections.singletonMap(key, value));
+		} else {
+			_reactState.put(key, value);
+		}
+	}
+
+	/**
 	 * Replaces the full React state and sends a {@link StateEvent} via the configured SSE queue.
 	 *
 	 * @param newState
@@ -216,7 +237,7 @@ public class ReactControl extends AbstractVisibleControl {
 	/**
 	 * Serializes a map to a JSON string.
 	 */
-	static String toJsonString(Map<String, Object> map) {
+	public static String toJsonString(Map<String, Object> map) {
 		try {
 			StringW sw = new StringW();
 			try (JsonWriter writer = new JsonWriter(sw)) {
@@ -231,7 +252,7 @@ public class ReactControl extends AbstractVisibleControl {
 	/**
 	 * Writes a JSON map literal directly to a {@link TagWriter}.
 	 */
-	static void writeJsonLiteral(TagWriter out, Map<String, Object> map) throws IOException {
+	public static void writeJsonLiteral(TagWriter out, Map<String, Object> map) throws IOException {
 		out.append(toJsonString(map));
 	}
 
@@ -246,7 +267,7 @@ public class ReactControl extends AbstractVisibleControl {
 	}
 
 	@SuppressWarnings("unchecked")
-	static void writeJsonValue(JsonWriter writer, Object value) throws IOException {
+	public static void writeJsonValue(JsonWriter writer, Object value) throws IOException {
 		if (value == null) {
 			writer.nullValue();
 		} else if (value instanceof String) {
@@ -290,7 +311,7 @@ public class ReactControl extends AbstractVisibleControl {
 	 * @param child
 	 *        The child control to register.
 	 */
-	void registerChildControl(ReactControl child) {
+	protected void registerChildControl(ReactControl child) {
 		SSEUpdateQueue queue = _sseQueue;
 		if (queue != null && child._sseQueue == null) {
 			child._sseQueue = queue;
@@ -304,7 +325,7 @@ public class ReactControl extends AbstractVisibleControl {
 	 * @param child
 	 *        The child control to unregister.
 	 */
-	void unregisterChildControl(ReactControl child) {
+	protected void unregisterChildControl(ReactControl child) {
 		SSEUpdateQueue queue = _sseQueue;
 		if (queue != null) {
 			queue.unregisterControl(child);
@@ -317,7 +338,7 @@ public class ReactControl extends AbstractVisibleControl {
 	 * (as direct value, List element, or Map value).
 	 */
 	@SuppressWarnings("unchecked")
-	static void forEachChildControl(Object value, Consumer<ReactControl> action) {
+	protected static void forEachChildControl(Object value, Consumer<ReactControl> action) {
 		if (value instanceof ReactControl) {
 			action.accept((ReactControl) value);
 		} else if (value instanceof Map) {

@@ -3,10 +3,12 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.layout.react;
+package com.top_logic.layout.react.control;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import com.top_logic.layout.react.ReactControl;
 
 /**
  * A {@link ReactControl} that renders a vertical list of child controls via the {@code TLFieldList}
@@ -24,6 +26,12 @@ public class ReactFieldListControl extends ReactControl {
 
 	private static final String REACT_MODULE = "TLFieldList";
 
+	/** State key for the heading text. */
+	private static final String TITLE = "title";
+
+	/** State key for the list of child control descriptors. */
+	private static final String FIELDS = "fields";
+
 	/**
 	 * Creates a new {@link ReactFieldListControl}.
 	 *
@@ -35,9 +43,9 @@ public class ReactFieldListControl extends ReactControl {
 	public ReactFieldListControl(String title, List<? extends ReactControl> children) {
 		super(null, REACT_MODULE);
 		if (title != null) {
-			getReactState().put("title", title);
+			putState(TITLE, title);
 		}
-		getReactState().put("fields", new ArrayList<>(children));
+		putState(FIELDS, new ArrayList<>(children));
 	}
 
 	/**
@@ -48,6 +56,16 @@ public class ReactFieldListControl extends ReactControl {
 	 */
 	public ReactFieldListControl(List<? extends ReactControl> children) {
 		this(null, children);
+	}
+
+	/**
+	 * Updates the heading text.
+	 *
+	 * @param title
+	 *        The new heading, or {@code null} to remove it.
+	 */
+	public void setTitle(String title) {
+		putState(TITLE, title);
 	}
 
 }

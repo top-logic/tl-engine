@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.layout.react;
+package com.top_logic.layout.react.control.tabbar;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -17,6 +17,8 @@ import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.FrameScope;
 import com.top_logic.layout.basic.ControlCommand;
+import com.top_logic.layout.react.I18NConstants;
+import com.top_logic.layout.react.ReactControl;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -47,6 +49,15 @@ public class ReactTabBarControl extends ReactControl {
 
 	private static final String ACTIVE_CONTENT = "activeContent";
 
+	/** Tab info key for the tab identifier. */
+	private static final String TAB_ID = "id";
+
+	/** Tab info key for the tab display label. */
+	private static final String TAB_LABEL = "label";
+
+	/** Command argument key for the selected tab ID. */
+	private static final String TAB_ID_ARG = "tabId";
+
 	private static final Map<String, ControlCommand> COMMANDS = createCommandMap(
 		new SelectTabCommand());
 
@@ -75,8 +86,8 @@ public class ReactTabBarControl extends ReactControl {
 		List<Map<String, Object>> tabList = new ArrayList<>();
 		for (TabDefinition tab : _tabDefinitions) {
 			Map<String, Object> tabInfo = new HashMap<>();
-			tabInfo.put("id", tab.getId());
-			tabInfo.put("label", tab.getLabel());
+			tabInfo.put(TAB_ID, tab.getId());
+			tabInfo.put(TAB_LABEL, tab.getLabel());
 			tabList.add(tabInfo);
 		}
 		getReactState().put(TABS, tabList);
@@ -204,7 +215,7 @@ public class ReactTabBarControl extends ReactControl {
 		@Override
 		protected HandlerResult execute(DisplayContext context, Control control, Map<String, Object> arguments) {
 			ReactTabBarControl tabBar = (ReactTabBarControl) control;
-			String tabId = (String) arguments.get("tabId");
+			String tabId = (String) arguments.get(TAB_ID_ARG);
 			tabBar.selectTab(tabId);
 			return HandlerResult.DEFAULT_RESULT;
 		}

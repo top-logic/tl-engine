@@ -25,8 +25,8 @@ import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
-import com.top_logic.layout.react.ReactFormFieldControl;
-import com.top_logic.layout.react.ReactSelectFormFieldControl;
+import com.top_logic.layout.react.control.form.ReactFormFieldControl;
+import com.top_logic.layout.react.control.form.ReactSelectFormFieldControl;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.layout.LayoutComponent;
 

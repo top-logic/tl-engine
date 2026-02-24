@@ -184,6 +184,16 @@ public class ReactControl extends AbstractVisibleControl {
 	}
 
 	@Override
+	protected void detachInvalidated() {
+		SSEUpdateQueue queue = _sseQueue;
+		if (queue != null) {
+			queue.unregisterControl(this);
+			_sseQueue = null;
+		}
+		super.detachInvalidated();
+	}
+
+	@Override
 	protected void internalRevalidate(DisplayContext context, UpdateQueue actions) {
 		// Updates are delivered via SSE, not through the standard revalidation path.
 	}

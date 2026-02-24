@@ -1,67 +1,22 @@
-import {
-  React,
-  useTLState,
-  getComponent,
-  createChildContext,
-  TLControlContext,
-} from 'tl-react-bridge';
-
-const { useMemo } = React;
-
-interface ChildDescriptor {
-  controlId: string;
-  state: Record<string, unknown>;
-}
+import { React, useTLState, TLChild } from 'tl-react-bridge';
+import type { ChildDescriptor } from 'tl-react-bridge';
 
 /**
- * A composite React control that renders three {@code TLButton} sub-components
- * for toggling a form field's disabled, immutable, and mandatory properties.
+ * A composite React control that renders three toggle buttons for a form field's
+ * disabled, immutable, and mandatory properties.
  *
- * <p>Demonstrates React-level composition: each child {@code TLButton} is wrapped in its own
- * {@code TLControlContext.Provider} so that {@code useTLCommand()} inside each button routes
- * commands to the correct server-side {@code ReactButtonControl}.  The child control IDs and
- * initial states are passed from the server via this component's state.</p>
+ * <p>Each child button is a named slot in the server state. The generic {@code TLChild}
+ * component handles all context wiring and component lookup.</p>
  */
 const TLFieldToggles: React.FC = () => {
   const state = useTLState();
-  const TLButton = getComponent('TLButton');
-
-  if (!TLButton) {
-    return React.createElement('span', null, '[TLButton not registered]');
-  }
-
-  const children = (state.children ?? []) as ChildDescriptor[];
 
   return (
     <div style={{ marginTop: '0.5em', display: 'flex', gap: '4px' }}>
-      {children.map((child) => (
-        <ChildButton
-          key={child.controlId}
-          childDescriptor={child}
-          ButtonComponent={TLButton}
-        />
-      ))}
+      <TLChild descriptor={state.disabledButton as ChildDescriptor} />
+      <TLChild descriptor={state.immutableButton as ChildDescriptor} />
+      <TLChild descriptor={state.mandatoryButton as ChildDescriptor} />
     </div>
-  );
-};
-
-/**
- * Renders a single TLButton child wrapped in its own TLControlContext so that
- * commands are dispatched to the child's server-side ReactButtonControl.
- */
-const ChildButton: React.FC<{
-  childDescriptor: ChildDescriptor;
-  ButtonComponent: React.ComponentType<any>;
-}> = ({ childDescriptor, ButtonComponent }) => {
-  const childCtx = useMemo(
-    () => createChildContext(childDescriptor.controlId, childDescriptor.state),
-    [childDescriptor.controlId]
-  );
-
-  return (
-    <TLControlContext.Provider value={childCtx}>
-      <ButtonComponent controlId={childDescriptor.controlId} state={childDescriptor.state} />
-    </TLControlContext.Provider>
   );
 };
 

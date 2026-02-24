@@ -29,7 +29,7 @@ Authentication enforced by TopLogic's `ChatSessionFilter` mapped to `/chat/*`.
 
 1. User sends message via `POST /chat/send` or TopLogic AJAX command
 2. `ChatProcessor.sendMessage()` adds message to `Chat`, creates `ChatTask`, submits `AIBackgroundTask`
-3. Background task calls `OrchestratorAgent.chat(userMessage)` with `ToolCallTracker` bound via `ToolCallTracking.setTracker()`
+3. Background task resolves entry point agent from `AgentRegistry.getEntryPointAgentName()`, builds it with `buildUntypedAgent()`, and invokes it with `ToolCallTracker` bound via `ToolCallTracking.setTracker()`
 4. Tool calls and agent handoffs appear in tracker's timeline as they happen
 5. `ChatProcessor.applyPollUpdates()` syncs `TraceEntry` objects into `ChatTimelineEvent` objects
 6. SSE handler (or polling endpoint) delivers updates to client in real-time

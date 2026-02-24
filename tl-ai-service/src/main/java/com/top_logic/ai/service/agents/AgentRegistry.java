@@ -126,6 +126,8 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 
 	private Map<String, String> _agentNameIndex;
 
+	private String _entryPointAgentName;
+
 	/**
 	 * Creates a new {@link AgentRegistry} from configuration.
 	 *
@@ -197,6 +199,25 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 			}
 		}
 
+		// Validate that exactly one agent is marked as entry point
+		List<String> entryPoints = new ArrayList<>();
+		for (Map.Entry<String, AgentConfig> entry : getConfig().getAgents().entrySet()) {
+			if (entry.getValue().isEntryPoint()) {
+				entryPoints.add(entry.getKey());
+			}
+		}
+		if (entryPoints.isEmpty()) {
+			throw new RuntimeException(
+				"No agent is marked as entry point. Exactly one agent must have entry-point=\"true\". " +
+					"Available agents: " + getConfig().getAgents().keySet());
+		}
+		if (entryPoints.size() > 1) {
+			throw new RuntimeException(
+				"Multiple agents are marked as entry point: " + entryPoints +
+					". Exactly one agent must have entry-point=\"true\".");
+		}
+		_entryPointAgentName = entryPoints.get(0);
+
 		Logger.info("AgentRegistry started with " + getConfig().getAgents().size() + " agent(s) and " +
 			skillConfigs.size() + " skill(s).",
 			AgentRegistry.class);
@@ -208,6 +229,7 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 			_instance = null;
 			_skillRegistry = null;
 			_agentNameIndex = null;
+			_entryPointAgentName = null;
 		} finally {
 			super.shutDown();
 		}
@@ -237,6 +259,15 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 					agents.keySet());
 		}
 		return config;
+	}
+
+	/**
+	 * Returns the name of the agent marked as the chat entry point.
+	 *
+	 * @return The entry point agent name, never {@code null}.
+	 */
+	public String getEntryPointAgentName() {
+		return _entryPointAgentName;
 	}
 
 	private static Map<String, String> buildAgentNameIndex(Map<String, AgentConfig> agents) {

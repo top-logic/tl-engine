@@ -10,9 +10,14 @@ import java.io.InputStream;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import javax.xml.stream.XMLStreamException;
 import javax.xml.transform.Source;
@@ -23,6 +28,7 @@ import com.top_logic.basic.FileManager;
 import com.top_logic.basic.LogProtocol;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.col.map.MultiMaps;
 import com.top_logic.basic.db.schema.properties.DBProperties;
 import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.i18n.log.BufferingI18NLog;
@@ -93,6 +99,8 @@ public class InitialProcessSetupService extends ManagedClass {
 	 */
 	public static final String[] FILE_SUFFIXES = { ".bpml", ".bpmn", ".bpml.xml", ".bpmn.xml" };
 
+	private static final Pattern NAME_HASH_PATTERN = Pattern.compile("^(?<name>.+):(?<hash>[A-Za-z0-9/+=]+)$");
+
 	@Override
 	protected void startUp() {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
@@ -112,7 +120,7 @@ public class InitialProcessSetupService extends ManagedClass {
 		}
 
 		List<Resource> newProcesses = new ArrayList<>();
-		List<Resource> updatedProcesses = new ArrayList<>();
+		Map<String, List<Resource>> updatedProcesses = new HashMap<>();
 		List<Resource> initHashesProcesses = new ArrayList<>();
 
 		ConnectionPool pool = KBUtils.getConnectionPool(kb);
@@ -136,9 +144,18 @@ public class InitialProcessSetupService extends ManagedClass {
 					newProcesses.add(resource);
 					continue;
 				}
-				if (!storedHash.equals(resource.hash())) {
+				Matcher matcher = NAME_HASH_PATTERN.matcher(storedHash);
+				if (!matcher.matches()) {
+					Logger.error(
+						"Unexpected stored hash format. Expected is the format <name>:<hash>, where <name> is the name of the workflow, and <hash> is the Base64 encoded hash of the data: "
+							+ storedHash,
+						InitialProcessSetupService.class);
+					continue;
+				}
+				if (!matcher.group("hash").equals(resource.hash())) {
 					// Hash has changed => file content has changed.
-					updatedProcesses.add(resource);
+					String wfName = matcher.group("name");
+					MultiMaps.add(updatedProcesses, wfName, resource, ArrayList::new);
 					continue;
 				}
 			}
@@ -160,15 +177,18 @@ public class InitialProcessSetupService extends ManagedClass {
 					String resourcePath = resourcePath(resource);
 					Logger.info("Loading initial workflow: " + resourcePath, InitialProcessSetupService.class);
 
+					String wfName;
 					try {
-						importWorkflow(kb, resource.data());
+						Collaboration newWorkflow = importWorkflow(kb, resource.data());
+						wfName = newWorkflow.getName();
 					} catch (Exception ex) {
 						Logger.error("Cannot load initial workflow: " + resourcePath, ex,
 							InitialProcessSetupService.class);
+						continue;
 					}
 
 					try {
-						storeHash(commitCon, resource);
+						storeHash(commitCon, resource, wfName);
 					} catch (SQLException ex) {
 						Logger.error("Cannot mark as loaded: " + resourcePath, ex, InitialProcessSetupService.class);
 					}
@@ -180,8 +200,20 @@ public class InitialProcessSetupService extends ManagedClass {
 					String resourcePath = resourcePath(resource);
 					Logger.info("Setting initial hash for workflow: " + resourcePath, InitialProcessSetupService.class);
 
+					String wfName;
 					try {
-						storeHash(commitCon, resource);
+						/* Workaround to get the correct name of the workflow if it had been
+						 * created. */
+						Collaboration newWorkflow = importWorkflow(kb, resource.data());
+						wfName = newWorkflow.getName();
+						newWorkflow.tDelete();
+					} catch (Exception ex) {
+						Logger.error("Cannot load workflow to get name: " + resourcePath, ex,
+							InitialProcessSetupService.class);
+						continue;
+					}
+					try {
+						storeHash(commitCon, resource, wfName);
 					} catch (SQLException ex) {
 						Logger.error("Cannot initialize hash: " + resourcePath, ex, InitialProcessSetupService.class);
 					}
@@ -190,19 +222,31 @@ public class InitialProcessSetupService extends ManagedClass {
 
 			if (!updatedProcesses.isEmpty()) {
 				Map<String, List<Collaboration>> collaborationsByName = BPEUtil.collaborationsByName();
-				for (Resource resource : updatedProcesses) {
+				for (Entry<String, List<Resource>> nameAndResource : updatedProcesses.entrySet()) {
+					Resource resource;
+					if (nameAndResource.getValue().size() == 1) {
+						resource = nameAndResource.getValue().get(0);
+					} else {
+						Logger.warn("Multiple resources ("
+							+ nameAndResource.getValue().stream().map(this::resourcePath)
+								.collect(Collectors.joining(", "))
+							+ ") created a workflow with name '" + nameAndResource.getKey()
+							+ "'. No updated is executed.", InitialProcessSetupService.class);
+						continue;
+					}
+
 					String resourcePath = resourcePath(resource);
 					BinaryData data = resource.data();
 
-					Collaboration processToUpdate;
-					String collaborationName = defaultCollaborationName(data);
+					String collaborationName = nameAndResource.getKey();
 					List<Collaboration> collaborations =
 						collaborationsByName.getOrDefault(collaborationName, Collections.emptyList());
+					Collaboration processToUpdate;
 					switch (collaborations.size()) {
 						case 0:
-							Logger.warn("No workflow with name '" + collaborationName
-								+ "' found. This may happen when the collaboration has a name which defers from the name of its definition file: "
-								+ resourcePath, InitialProcessSetupService.class);
+							Logger.warn(
+								"No workflow with name '" + collaborationName + "' found for resource: " + resourcePath,
+								InitialProcessSetupService.class);
 							continue;
 						case 1:
 							processToUpdate = collaborations.get(0);
@@ -214,16 +258,19 @@ public class InitialProcessSetupService extends ManagedClass {
 							continue;
 					}
 
+					String wfName;
 					try {
 						Collaboration newWorkflow = importWorkflow(kb, data);
 						new Updater(processToUpdate, newWorkflow, true).update();
+						wfName = processToUpdate.getName();
 					} catch (Exception ex) {
 						Logger.error("Cannot load workflow to update: " + resourcePath, ex,
 							InitialProcessSetupService.class);
+						continue;
 					}
 
 					try {
-						storeHash(commitCon, resource);
+						storeHash(commitCon, resource, wfName);
 					} catch (SQLException ex) {
 						Logger.error("Cannot mark as loaded: " + resourcePath, ex, InitialProcessSetupService.class);
 					}
@@ -242,8 +289,10 @@ public class InitialProcessSetupService extends ManagedClass {
 	 * Persists the content hash of the given resource in {@link DBProperties} so that the file can
 	 * be skipped on the next startup if its content has not changed.
 	 */
-	private static void storeHash(PooledConnection commitCon, Resource resource) throws SQLException {
-		DBProperties.setProperty(commitCon, DBProperties.GLOBAL_PROPERTY, propertyName(resource), resource.hash());
+	private static void storeHash(PooledConnection commitCon, Resource resource, String wfName) throws SQLException {
+		// See NAME_HASH_PATTERN
+		String value = wfName + ":" + resource.hash();
+		DBProperties.setProperty(commitCon, DBProperties.GLOBAL_PROPERTY, propertyName(resource), value);
 	}
 
 	/**

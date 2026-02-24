@@ -1,12 +1,22 @@
-import { useTLState as a, getComponent as r, React as e, register as m } from "tl-react-bridge";
-const s = () => {
-  const t = a(), l = r("TLButton");
-  if (!l)
+import { React as e, useTLState as l, getComponent as a, createChildContext as s, TLControlContext as c, register as m } from "tl-react-bridge";
+const { useMemo: d } = e, u = () => {
+  const t = l(), n = a("TLButton");
+  if (!n)
     return e.createElement("span", null, "[TLButton not registered]");
-  const n = (o) => ({
-    fontWeight: o ? "bold" : "normal",
-    backgroundColor: o ? "#e0e0e0" : ""
-  });
-  return /* @__PURE__ */ e.createElement("div", { style: { marginTop: "0.5em" } }, /* @__PURE__ */ e.createElement("span", { style: n(t.disabled === !0) }, /* @__PURE__ */ e.createElement(l, { controlId: "", state: t, command: "toggleDisabled", label: "Disabled" })), /* @__PURE__ */ e.createElement("span", { style: n(t.immutable === !0) }, /* @__PURE__ */ e.createElement(l, { controlId: "", state: t, command: "toggleImmutable", label: "Immutable" })), /* @__PURE__ */ e.createElement("span", { style: n(t.mandatory === !0) }, /* @__PURE__ */ e.createElement(l, { controlId: "", state: t, command: "toggleMandatory", label: "Mandatory" })));
+  const o = t.children ?? [];
+  return /* @__PURE__ */ e.createElement("div", { style: { marginTop: "0.5em", display: "flex", gap: "4px" } }, o.map((r) => /* @__PURE__ */ e.createElement(
+    T,
+    {
+      key: r.controlId,
+      childDescriptor: r,
+      ButtonComponent: n
+    }
+  )));
+}, T = ({ childDescriptor: t, ButtonComponent: n }) => {
+  const o = d(
+    () => s(t.controlId, t.state),
+    [t.controlId]
+  );
+  return /* @__PURE__ */ e.createElement(c.Provider, { value: o }, /* @__PURE__ */ e.createElement(n, { controlId: t.controlId, state: t.state }));
 };
-m("TLFieldToggles", s);
+m("TLFieldToggles", u);

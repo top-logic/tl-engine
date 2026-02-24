@@ -5,35 +5,34 @@
  */
 package com.top_logic.demo.react;
 
-import java.util.Collections;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
-import com.top_logic.basic.util.ResKey;
-import com.top_logic.layout.Control;
+import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.basic.ControlCommand;
+import com.top_logic.layout.UpdateQueue;
 import com.top_logic.layout.form.FormField;
+import com.top_logic.layout.react.ReactButtonControl;
 import com.top_logic.layout.react.ReactControl;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
- * A composite {@link ReactControl} that renders toggle buttons for a {@link FormField}'s disabled,
- * immutable, and mandatory properties via the {@code TLFieldToggles} React component.
+ * A composite {@link ReactControl} that renders the {@code TLFieldToggles} React component.
  *
  * <p>
- * Demonstrates how to build a composite control with multiple commands dispatched from a single
- * React component. The React state reflects the current field properties so that buttons can show
- * active/inactive styling.
+ * Demonstrates React-level composition: the {@code TLFieldToggles} React component receives the
+ * control IDs of three child {@link ReactButtonControl}s and composes them as {@code TLButton}
+ * sub-components, each wrapped in its own {@code TLControlContext}. This way each button sends
+ * commands to its own server-side {@link ReactButtonControl}, which delegates to a plain
+ * {@link com.top_logic.layout.basic.Command Command}.
  * </p>
  */
 public class DemoFieldTogglesControl extends ReactControl {
 
-	private static final Map<String, ControlCommand> COMMANDS = createCommandMap(
-		new ToggleDisabledCommand(),
-		new ToggleImmutableCommand(),
-		new ToggleMandatoryCommand());
-
-	private final FormField _field;
+	private final List<ReactButtonControl> _childButtons;
 
 	/**
 	 * Creates a new {@link DemoFieldTogglesControl}.
@@ -42,90 +41,51 @@ public class DemoFieldTogglesControl extends ReactControl {
 	 *        The form field whose properties are toggled.
 	 */
 	public DemoFieldTogglesControl(FormField field) {
-		super(field, "TLFieldToggles", COMMANDS);
-		_field = field;
-		syncState();
-	}
+		super(field, "TLFieldToggles");
 
-	private void syncState() {
-		getReactState().put("disabled", _field.isDisabled());
-		getReactState().put("immutable", _field.isImmutable());
-		getReactState().put("mandatory", _field.isMandatory());
-	}
+		_childButtons = new ArrayList<>();
 
-	/**
-	 * Toggles the disabled state of the field and pushes the updated state via SSE.
-	 */
-	public static class ToggleDisabledCommand extends ControlCommand {
-
-		/** Creates a {@link ToggleDisabledCommand}. */
-		public ToggleDisabledCommand() {
-			super("toggleDisabled");
-		}
-
-		@Override
-		public ResKey getI18NKey() {
-			return ResKey.legacy("demo.react.formFields.toggleDisabled");
-		}
-
-		@Override
-		protected HandlerResult execute(DisplayContext context, Control control, Map<String, Object> arguments) {
-			DemoFieldTogglesControl toggles = (DemoFieldTogglesControl) control;
-			FormField field = toggles._field;
+		_childButtons.add(new ReactButtonControl("Disabled", context -> {
 			field.setDisabled(!field.isDisabled());
-			toggles.patchReactState(Collections.singletonMap("disabled", field.isDisabled()));
 			return HandlerResult.DEFAULT_RESULT;
-		}
-	}
+		}));
 
-	/**
-	 * Toggles the immutable state of the field and pushes the updated state via SSE.
-	 */
-	public static class ToggleImmutableCommand extends ControlCommand {
-
-		/** Creates a {@link ToggleImmutableCommand}. */
-		public ToggleImmutableCommand() {
-			super("toggleImmutable");
-		}
-
-		@Override
-		public ResKey getI18NKey() {
-			return ResKey.legacy("demo.react.formFields.toggleImmutable");
-		}
-
-		@Override
-		protected HandlerResult execute(DisplayContext context, Control control, Map<String, Object> arguments) {
-			DemoFieldTogglesControl toggles = (DemoFieldTogglesControl) control;
-			FormField field = toggles._field;
+		_childButtons.add(new ReactButtonControl("Immutable", context -> {
 			field.setImmutable(!field.isImmutable());
-			toggles.patchReactState(Collections.singletonMap("immutable", field.isImmutable()));
 			return HandlerResult.DEFAULT_RESULT;
-		}
+		}));
+
+		_childButtons.add(new ReactButtonControl("Mandatory", context -> {
+			field.setMandatory(!field.isMandatory());
+			return HandlerResult.DEFAULT_RESULT;
+		}));
 	}
 
-	/**
-	 * Toggles the mandatory state of the field and pushes the updated state via SSE.
-	 */
-	public static class ToggleMandatoryCommand extends ControlCommand {
-
-		/** Creates a {@link ToggleMandatoryCommand}. */
-		public ToggleMandatoryCommand() {
-			super("toggleMandatory");
+	@Override
+	protected void internalWrite(DisplayContext context, TagWriter out) throws IOException {
+		// Write each child button control so it gets a DOM mount point and SSE registration.
+		// The child divs are hidden because TLFieldToggles will compose TLButton visually.
+		for (ReactButtonControl child : _childButtons) {
+			child.write(context, out);
 		}
 
-		@Override
-		public ResKey getI18NKey() {
-			return ResKey.legacy("demo.react.formFields.toggleMandatory");
+		// Build the children descriptor for the React component.
+		List<Map<String, Object>> children = new ArrayList<>();
+		for (ReactButtonControl child : _childButtons) {
+			Map<String, Object> childDesc = new LinkedHashMap<>();
+			childDesc.put("controlId", child.getID());
+			childDesc.put("state", child.getReactState());
+			children.add(childDesc);
 		}
+		getReactState().put("children", children);
 
-		@Override
-		protected HandlerResult execute(DisplayContext context, Control control, Map<String, Object> arguments) {
-			DemoFieldTogglesControl toggles = (DemoFieldTogglesControl) control;
-			FormField field = toggles._field;
-			field.setMandatory(!field.isMandatory());
-			toggles.patchReactState(Collections.singletonMap("mandatory", field.isMandatory()));
-			return HandlerResult.DEFAULT_RESULT;
-		}
+		// Write the composite mount point.
+		super.internalWrite(context, out);
+	}
+
+	@Override
+	protected void internalRevalidate(DisplayContext context, UpdateQueue actions) {
+		// Children handle their own revalidation via SSE.
 	}
 
 }

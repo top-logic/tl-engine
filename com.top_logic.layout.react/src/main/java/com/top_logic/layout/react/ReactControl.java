@@ -279,6 +279,40 @@ public class ReactControl extends AbstractVisibleControl {
 	}
 
 	/**
+	 * Registers a dynamically created child {@link ReactControl} with this control's SSE queue so
+	 * that it can receive state updates and dispatch commands.
+	 *
+	 * <p>
+	 * If this control has no SSE queue yet (not rendered), the method is a no-op; the child will
+	 * be registered when this control is written.
+	 * </p>
+	 *
+	 * @param child
+	 *        The child control to register.
+	 */
+	void registerChildControl(ReactControl child) {
+		SSEUpdateQueue queue = _sseQueue;
+		if (queue != null && child._sseQueue == null) {
+			child._sseQueue = queue;
+			queue.registerControl(child);
+		}
+	}
+
+	/**
+	 * Unregisters a dynamically created child {@link ReactControl} from this control's SSE queue.
+	 *
+	 * @param child
+	 *        The child control to unregister.
+	 */
+	void unregisterChildControl(ReactControl child) {
+		SSEUpdateQueue queue = _sseQueue;
+		if (queue != null) {
+			queue.unregisterControl(child);
+			child._sseQueue = null;
+		}
+	}
+
+	/**
 	 * Recursively walks the given value and applies the action to every {@link ReactControl} found
 	 * (as direct value, List element, or Map value).
 	 */

@@ -135,3 +135,50 @@ button.tlCounter__button:focus {
 	color: var(--text-secondary);
 	font-size: var(--body-compact-01-font-size);
 }
+
+/* --- TLTabBar ---------------------------------------------------------- */
+
+.tlTabBar {
+	display: flex;
+	flex-direction: column;
+	font-family: var(--font-family);
+}
+
+.tlTabBar__tabs {
+	display: flex;
+	gap: var(--spacing-02);
+	border-bottom: 1px solid var(--border-subtle-01);
+	padding: 0 var(--spacing-03);
+}
+
+.tlTabBar__tab {
+	padding: var(--spacing-03) var(--spacing-04);
+	border: none;
+	border-bottom: 2px solid transparent;
+	background: transparent;
+	font-family: var(--font-family);
+	font-size: var(--body-compact-01-font-size);
+	color: var(--text-secondary);
+	cursor: pointer;
+	white-space: nowrap;
+}
+
+.tlTabBar__tab:hover {
+	color: var(--text-primary);
+	border-bottom-color: var(--border-subtle-01);
+}
+
+.tlTabBar__tab:focus {
+	outline: 2px solid var(--focus);
+	outline-offset: -2px;
+}
+
+.tlTabBar__tab--active {
+	color: var(--text-primary);
+	border-bottom-color: var(--button-primary);
+	font-weight: bold;
+}
+
+.tlTabBar__content {
+	padding: var(--spacing-04);
+}

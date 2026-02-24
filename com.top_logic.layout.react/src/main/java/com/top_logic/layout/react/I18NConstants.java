@@ -45,6 +45,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey ERROR_INTERNAL;
 
+	/**
+	 * @en Tab selected.
+	 */
+	public static ResKey REACT_TAB_SELECTED;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

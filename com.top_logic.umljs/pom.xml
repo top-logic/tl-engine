@@ -10,7 +10,7 @@
 
   <artifactId>tl-umljs</artifactId>
 	<name>${project.artifactId}</name>
-	<description>JavaSCript library for UML diagram rendering.</description>
+	<description>JavaScript library for UML diagram rendering.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>

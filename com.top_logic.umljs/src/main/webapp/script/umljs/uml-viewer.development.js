@@ -1,11 +1,11 @@
 /*!
- * uml-js - uml-viewer v1.0.0
+ * uml-js - uml-viewer v1.1.0
  *
  * SPDX-FileCopyrightText: 2019 (c) Business Operation Systems GmbH <info@top-logic.com>
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  *
- * Date: 2026-01-16
+ * Date: 2026-02-24
  */
 
 (function (global, factory) {
@@ -14,537 +14,12 @@
   (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.UmlJS = factory());
 })(this, (function () { 'use strict';
 
-  function _mergeNamespaces$1(n, m) {
-    m.forEach(function (e) {
-      e && typeof e !== 'string' && !Array.isArray(e) && Object.keys(e).forEach(function (k) {
-        if (k !== 'default' && !(k in n)) {
-          var d = Object.getOwnPropertyDescriptor(e, k);
-          Object.defineProperty(n, k, d.get ? d : {
-            enumerable: true,
-            get: function () { return e[k]; }
-          });
-        }
-      });
-    });
-    return Object.freeze(n);
-  }
-
-  /**
-   * Flatten array, one level deep.
-   *
-   * @param {Array<?>} arr
-   *
-   * @return {Array<?>}
-   */
-
-  const nativeToString$1 = Object.prototype.toString;
-  const nativeHasOwnProperty$1 = Object.prototype.hasOwnProperty;
-
-  function isUndefined$1(obj) {
-    return obj === undefined;
-  }
-
-  function isArray$2(obj) {
-    return nativeToString$1.call(obj) === '[object Array]';
-  }
-
-  /**
-   * Return true, if target owns a property with the given key.
-   *
-   * @param {Object} target
-   * @param {String} key
-   *
-   * @return {Boolean}
-   */
-  function has$1(target, key) {
-    return nativeHasOwnProperty$1.call(target, key);
-  }
-
-
-  /**
-   * Iterate over collection; returning something
-   * (non-undefined) will stop iteration.
-   *
-   * @param  {Array|Object} collection
-   * @param  {Function} iterator
-   *
-   * @return {Object} return result that stopped the iteration
-   */
-  function forEach$1(collection, iterator) {
-
-    let val,
-        result;
-
-    if (isUndefined$1(collection)) {
-      return;
-    }
-
-    const convertKey = isArray$2(collection) ? toNum$1 : identity$1;
-
-    for (let key in collection) {
-
-      if (has$1(collection, key)) {
-        val = collection[key];
-
-        result = iterator(val, convertKey(key));
-
-        if (result === false) {
-          return val;
-        }
-      }
-    }
-  }
-
-
-  function identity$1(arg) {
-    return arg;
-  }
-
-  function toNum$1(arg) {
-    return Number(arg);
-  }
-
-  /**
-   * Assigns style attributes in a style-src compliant way.
-   *
-   * @param {Element} element
-   * @param {...Object} styleSources
-   *
-   * @return {Element} the element
-   */
-  function assign$1(element, ...styleSources) {
-    const target = element.style;
-
-    forEach$1(styleSources, function(style) {
-      if (!style) {
-        return;
-      }
-
-      forEach$1(style, function(value, key) {
-        target[key] = value;
-      });
-    });
-
-    return element;
-  }
-
-  /**
-   * Taken from https://github.com/component/classes
-   *
-   * Without the component bits.
-   */
-
-  /**
-   * toString reference.
-   */
-
-  const toString$1 = Object.prototype.toString;
-
-  /**
-   * Wrap `el` in a `ClassList`.
-   *
-   * @param {Element} el
-   * @return {ClassList}
-   * @api public
-   */
-
-  function classes$1(el) {
-    return new ClassList$1(el);
-  }
-
-  /**
-   * Initialize a new ClassList for `el`.
-   *
-   * @param {Element} el
-   * @api private
-   */
-
-  function ClassList$1(el) {
-    if (!el || !el.nodeType) {
-      throw new Error('A DOM element reference is required');
-    }
-    this.el = el;
-    this.list = el.classList;
-  }
-
-  /**
-   * Add class `name` if not already present.
-   *
-   * @param {String} name
-   * @return {ClassList}
-   * @api public
-   */
-
-  ClassList$1.prototype.add = function(name) {
-    this.list.add(name);
-    return this;
-  };
-
-  /**
-   * Remove class `name` when present, or
-   * pass a regular expression to remove
-   * any which match.
-   *
-   * @param {String|RegExp} name
-   * @return {ClassList}
-   * @api public
-   */
-
-  ClassList$1.prototype.remove = function(name) {
-    if ('[object RegExp]' == toString$1.call(name)) {
-      return this.removeMatching(name);
-    }
-
-    this.list.remove(name);
-    return this;
-  };
-
-  /**
-   * Remove all classes matching `re`.
-   *
-   * @param {RegExp} re
-   * @return {ClassList}
-   * @api private
-   */
-
-  ClassList$1.prototype.removeMatching = function(re) {
-    const arr = this.array();
-    for (let i = 0; i < arr.length; i++) {
-      if (re.test(arr[i])) {
-        this.remove(arr[i]);
-      }
-    }
-    return this;
-  };
-
-  /**
-   * Toggle class `name`, can force state via `force`.
-   *
-   * For browsers that support classList, but do not support `force` yet,
-   * the mistake will be detected and corrected.
-   *
-   * @param {String} name
-   * @param {Boolean} force
-   * @return {ClassList}
-   * @api public
-   */
-
-  ClassList$1.prototype.toggle = function(name, force) {
-    if ('undefined' !== typeof force) {
-      if (force !== this.list.toggle(name, force)) {
-        this.list.toggle(name); // toggle again to correct
-      }
-    } else {
-      this.list.toggle(name);
-    }
-    return this;
-  };
-
-  /**
-   * Return an array of classes.
-   *
-   * @return {Array}
-   * @api public
-   */
-
-  ClassList$1.prototype.array = function() {
-    return Array.from(this.list);
-  };
-
-  /**
-   * Check if class `name` is present.
-   *
-   * @param {String} name
-   * @return {ClassList}
-   * @api public
-   */
-
-  ClassList$1.prototype.has =
-  ClassList$1.prototype.contains = function(name) {
-    return this.list.contains(name);
-  };
-
-  /**
-   * Remove all children from the given element.
-   */
-  function clear$1(el) {
-
-    var c;
-
-    while (el.childNodes.length) {
-      c = el.childNodes[0];
-      el.removeChild(c);
-    }
-
-    return el;
-  }
-
-  /**
-   * @param { HTMLElement } element
-   * @param { String } selector
-   *
-   * @return { boolean }
-   */
-  function matches(element, selector) {
-    return element && typeof element.matches === 'function' && element.matches(selector);
-  }
-
-  /**
-   * Closest
-   *
-   * @param {Element} el
-   * @param {String} selector
-   * @param {Boolean} checkYourSelf (optional)
-   */
-  function closest(element, selector, checkYourSelf) {
-    var currentElem = checkYourSelf ? element : element.parentNode;
-
-    while (currentElem && currentElem.nodeType !== document.DOCUMENT_NODE &&
-        currentElem.nodeType !== document.DOCUMENT_FRAGMENT_NODE) {
-
-      if (matches(currentElem, selector)) {
-        return currentElem;
-      }
-
-      currentElem = currentElem.parentNode;
-    }
-
-    return matches(currentElem, selector) ? currentElem : null;
-  }
-
-  var componentEvent = {};
-
-  var bind$1, unbind$1, prefix;
-
-  function detect () {
-    bind$1 = window.addEventListener ? 'addEventListener' : 'attachEvent';
-    unbind$1 = window.removeEventListener ? 'removeEventListener' : 'detachEvent';
-    prefix = bind$1 !== 'addEventListener' ? 'on' : '';
-  }
-
-  /**
-   * Bind `el` event `type` to `fn`.
-   *
-   * @param {Element} el
-   * @param {String} type
-   * @param {Function} fn
-   * @param {Boolean} capture
-   * @return {Function}
-   * @api public
-   */
-
-  var bind_1 = componentEvent.bind = function(el, type, fn, capture){
-    if (!bind$1) detect();
-    el[bind$1](prefix + type, fn, capture || false);
-    return fn;
-  };
-
-  /**
-   * Unbind `el` event `type`'s callback `fn`.
-   *
-   * @param {Element} el
-   * @param {String} type
-   * @param {Function} fn
-   * @param {Boolean} capture
-   * @return {Function}
-   * @api public
-   */
-
-  var unbind_1 = componentEvent.unbind = function(el, type, fn, capture){
-    if (!unbind$1) detect();
-    el[unbind$1](prefix + type, fn, capture || false);
-    return fn;
-  };
-
-  var event = /*#__PURE__*/_mergeNamespaces$1({
-    __proto__: null,
-    bind: bind_1,
-    unbind: unbind_1,
-    'default': componentEvent
-  }, [componentEvent]);
-
-  /**
-   * Expose `parse`.
-   */
-
-  var domify = parse$1;
-
-  /**
-   * Tests for browser support.
-   */
-
-  var innerHTMLBug = false;
-  var bugTestDiv;
-  if (typeof document !== 'undefined') {
-    bugTestDiv = document.createElement('div');
-    // Setup
-    bugTestDiv.innerHTML = '  <link/><table></table><a href="/a">a</a><input type="checkbox"/>';
-    // Make sure that link elements get serialized correctly by innerHTML
-    // This requires a wrapper element in IE
-    innerHTMLBug = !bugTestDiv.getElementsByTagName('link').length;
-    bugTestDiv = undefined;
-  }
-
-  /**
-   * Wrap map from jquery.
-   */
-
-  var map = {
-    legend: [1, '<fieldset>', '</fieldset>'],
-    tr: [2, '<table><tbody>', '</tbody></table>'],
-    col: [2, '<table><tbody></tbody><colgroup>', '</colgroup></table>'],
-    // for script/link/style tags to work in IE6-8, you have to wrap
-    // in a div with a non-whitespace character in front, ha!
-    _default: innerHTMLBug ? [1, 'X<div>', '</div>'] : [0, '', '']
-  };
-
-  map.td =
-  map.th = [3, '<table><tbody><tr>', '</tr></tbody></table>'];
-
-  map.option =
-  map.optgroup = [1, '<select multiple="multiple">', '</select>'];
-
-  map.thead =
-  map.tbody =
-  map.colgroup =
-  map.caption =
-  map.tfoot = [1, '<table>', '</table>'];
-
-  map.polyline =
-  map.ellipse =
-  map.polygon =
-  map.circle =
-  map.text =
-  map.line =
-  map.path =
-  map.rect =
-  map.g = [1, '<svg xmlns="http://www.w3.org/2000/svg" version="1.1">','</svg>'];
-
-  /**
-   * Parse `html` and return a DOM Node instance, which could be a TextNode,
-   * HTML DOM Node of some kind (<div> for example), or a DocumentFragment
-   * instance, depending on the contents of the `html` string.
-   *
-   * @param {String} html - HTML string to "domify"
-   * @param {Document} doc - The `document` instance to create the Node for
-   * @return {DOMNode} the TextNode, DOM Node, or DocumentFragment instance
-   * @api private
-   */
-
-  function parse$1(html, doc) {
-    if ('string' != typeof html) throw new TypeError('String expected');
-
-    // default to the global `document` object
-    if (!doc) doc = document;
-
-    // tag name
-    var m = /<([\w:]+)/.exec(html);
-    if (!m) return doc.createTextNode(html);
-
-    html = html.replace(/^\s+|\s+$/g, ''); // Remove leading/trailing whitespace
-
-    var tag = m[1];
-
-    // body support
-    if (tag == 'body') {
-      var el = doc.createElement('html');
-      el.innerHTML = html;
-      return el.removeChild(el.lastChild);
-    }
-
-    // wrap map
-    var wrap = Object.prototype.hasOwnProperty.call(map, tag) ? map[tag] : map._default;
-    var depth = wrap[0];
-    var prefix = wrap[1];
-    var suffix = wrap[2];
-    var el = doc.createElement('div');
-    el.innerHTML = prefix + html + suffix;
-    while (depth--) el = el.lastChild;
-
-    // one element
-    if (el.firstChild == el.lastChild) {
-      return el.removeChild(el.firstChild);
-    }
-
-    // several elements
-    var fragment = doc.createDocumentFragment();
-    while (el.firstChild) {
-      fragment.appendChild(el.removeChild(el.firstChild));
-    }
-
-    return fragment;
-  }
-
-  var domify$1 = domify;
-
-  function query(selector, el) {
-    el = el || document;
-
-    return el.querySelector(selector);
-  }
-
-  /**
-   * @typedef {import('../util/Types').Point} Point
-   * @typedef {import('../util/Types').Rect} Rect
-   */
-
-
-
-  /**
-   * @param {Point} a
-   * @param {Point} b
-   * @return {Point}
-   */
-  function delta(a, b) {
-    return {
-      x: a.x - b.x,
-      y: a.y - b.y
-    };
-  }
-
-  /**
-   * Get the logarithm of x with base 10.
-   *
-   * @param {number} x
-   */
-  function log10(x) {
-    return Math.log(x) / Math.log(10);
-  }
-
-  /**
-   * Get step size for given range and number of steps.
-   *
-   * @param {Object} range
-   * @param {number} range.min
-   * @param {number} range.max
-   * @param {number} steps
-   */
-  function getStepSize(range, steps) {
-
-    var minLinearRange = log10(range.min),
-        maxLinearRange = log10(range.max);
-
-    var absoluteLinearRange = Math.abs(minLinearRange) + Math.abs(maxLinearRange);
-
-    return absoluteLinearRange / steps;
-  }
-
-  /**
-   * @param {Object} range
-   * @param {number} range.min
-   * @param {number} range.max
-   * @param {number} scale
-   */
-  function cap(range, scale) {
-    return Math.max(range.min, Math.min(range.max, scale));
-  }
-
   /**
    * Flatten array, one level deep.
    *
    * @template T
    *
-   * @param {T[][]} arr
+   * @param {T[][] | T[] | null} [arr]
    *
    * @return {T[]}
    */
@@ -554,6 +29,10 @@
 
   function isUndefined(obj) {
     return obj === undefined;
+  }
+
+  function isNil(obj) {
+    return obj == null;
   }
 
   function isArray$1(obj) {
@@ -594,7 +73,7 @@
    * @return {Boolean}
    */
   function has(target, key) {
-    return nativeHasOwnProperty.call(target, key);
+    return !isNil(target) && nativeHasOwnProperty.call(target, key);
   }
 
   /**
@@ -772,8 +251,6 @@
     return Number(arg);
   }
 
-  /* global setTimeout clearTimeout */
-
   /**
    * @typedef { {
    *   (...args: any[]): any;
@@ -879,8 +356,448 @@
    *
    * @return {Object} the target
    */
-  function assign(target, ...others) {
+  function assign$1(target, ...others) {
     return Object.assign(target, ...others);
+  }
+
+  /* eslint-disable no-multi-assign */
+
+  const wrapMap = {
+  	legend: [1, '<fieldset>', '</fieldset>'],
+  	tr: [2, '<table><tbody>', '</tbody></table>'],
+  	col: [2, '<table><tbody></tbody><colgroup>', '</colgroup></table>'],
+  	_default: [0, '', ''],
+  };
+
+  wrapMap.td
+  = wrapMap.th = [3, '<table><tbody><tr>', '</tr></tbody></table>'];
+
+  wrapMap.option
+  = wrapMap.optgroup = [1, '<select multiple="multiple">', '</select>'];
+
+  wrapMap.thead
+  = wrapMap.tbody
+  = wrapMap.colgroup
+  = wrapMap.caption
+  = wrapMap.tfoot = [1, '<table>', '</table>'];
+
+  wrapMap.polyline
+  = wrapMap.ellipse
+  = wrapMap.polygon
+  = wrapMap.circle
+  = wrapMap.text
+  = wrapMap.line
+  = wrapMap.path
+  = wrapMap.rect
+  = wrapMap.g = [1, '<svg xmlns="http://www.w3.org/2000/svg" version="1.1">', '</svg>'];
+
+  function domify(htmlString, document = globalThis.document) {
+  	if (typeof htmlString !== 'string') {
+  		throw new TypeError('String expected');
+  	}
+
+  	// Handle comment nodes
+  	const commentMatch = /^<!--(.*?)-->$/s.exec(htmlString);
+  	if (commentMatch) {
+  		return document.createComment(commentMatch[1]);
+  	}
+
+  	const tagName = /<([\w:]+)/.exec(htmlString)?.[1];
+
+  	if (!tagName) {
+  		return document.createTextNode(htmlString);
+  	}
+
+  	htmlString = htmlString.trim();
+
+  	// Body support
+  	if (tagName === 'body') {
+  		const element = document.createElement('html');
+  		element.innerHTML = htmlString;
+  		const {lastChild} = element;
+  		lastChild.remove();
+  		return lastChild;
+  	}
+
+  	// Wrap map
+  	let [depth, prefix, suffix] = Object.hasOwn(wrapMap, tagName) ? wrapMap[tagName] : wrapMap._default;
+  	let element = document.createElement('div');
+  	element.innerHTML = prefix + htmlString + suffix;
+  	while (depth--) {
+  		element = element.lastChild;
+  	}
+
+  	// One element
+  	if (element.firstChild === element.lastChild) {
+  		const {firstChild} = element;
+  		firstChild.remove();
+  		return firstChild;
+  	}
+
+  	// Several elements
+  	const fragment = document.createDocumentFragment();
+  	fragment.append(...element.childNodes);
+
+  	return fragment;
+  }
+
+  function _mergeNamespaces$1(n, m) {
+    m.forEach(function (e) {
+      e && typeof e !== 'string' && !Array.isArray(e) && Object.keys(e).forEach(function (k) {
+        if (k !== 'default' && !(k in n)) {
+          var d = Object.getOwnPropertyDescriptor(e, k);
+          Object.defineProperty(n, k, d.get ? d : {
+            enumerable: true,
+            get: function () { return e[k]; }
+          });
+        }
+      });
+    });
+    return Object.freeze(n);
+  }
+
+  /**
+   * Assigns style attributes in a style-src compliant way.
+   *
+   * @param {Element} element
+   * @param {...Object} styleSources
+   *
+   * @return {Element} the element
+   */
+  function assign(element, ...styleSources) {
+    const target = element.style;
+
+    forEach(styleSources, function(style) {
+      if (!style) {
+        return;
+      }
+
+      forEach(style, function(value, key) {
+        target[key] = value;
+      });
+    });
+
+    return element;
+  }
+
+  /**
+   * Set attribute `name` to `val`, or get attr `name`.
+   *
+   * @param {Element} el
+   * @param {String} name
+   * @param {String} [val]
+   * @api public
+   */
+  function attr$1(el, name, val) {
+
+    // get
+    if (arguments.length == 2) {
+      return el.getAttribute(name);
+    }
+
+    // set
+    el.setAttribute(name, val);
+
+    return el;
+  }
+
+  /**
+   * Taken from https://github.com/component/classes
+   *
+   * Without the component bits.
+   */
+
+  /**
+   * toString reference.
+   */
+
+  const toString$1 = Object.prototype.toString;
+
+  /**
+   * Wrap `el` in a `ClassList`.
+   *
+   * @param {Element} el
+   * @return {ClassList}
+   * @api public
+   */
+
+  function classes$1(el) {
+    return new ClassList$1(el);
+  }
+
+  /**
+   * Initialize a new ClassList for `el`.
+   *
+   * @param {Element} el
+   * @api private
+   */
+
+  function ClassList$1(el) {
+    if (!el || !el.nodeType) {
+      throw new Error('A DOM element reference is required');
+    }
+    this.el = el;
+    this.list = el.classList;
+  }
+
+  /**
+   * Add class `name` if not already present.
+   *
+   * @param {String} name
+   * @return {ClassList}
+   * @api public
+   */
+
+  ClassList$1.prototype.add = function(name) {
+    this.list.add(name);
+    return this;
+  };
+
+  /**
+   * Remove class `name` when present, or
+   * pass a regular expression to remove
+   * any which match.
+   *
+   * @param {String|RegExp} name
+   * @return {ClassList}
+   * @api public
+   */
+
+  ClassList$1.prototype.remove = function(name) {
+    if ('[object RegExp]' == toString$1.call(name)) {
+      return this.removeMatching(name);
+    }
+
+    this.list.remove(name);
+    return this;
+  };
+
+  /**
+   * Remove all classes matching `re`.
+   *
+   * @param {RegExp} re
+   * @return {ClassList}
+   * @api private
+   */
+
+  ClassList$1.prototype.removeMatching = function(re) {
+    const arr = this.array();
+    for (let i = 0; i < arr.length; i++) {
+      if (re.test(arr[i])) {
+        this.remove(arr[i]);
+      }
+    }
+    return this;
+  };
+
+  /**
+   * Toggle class `name`, can force state via `force`.
+   *
+   * For browsers that support classList, but do not support `force` yet,
+   * the mistake will be detected and corrected.
+   *
+   * @param {String} name
+   * @param {Boolean} force
+   * @return {ClassList}
+   * @api public
+   */
+
+  ClassList$1.prototype.toggle = function(name, force) {
+    if ('undefined' !== typeof force) {
+      if (force !== this.list.toggle(name, force)) {
+        this.list.toggle(name); // toggle again to correct
+      }
+    } else {
+      this.list.toggle(name);
+    }
+    return this;
+  };
+
+  /**
+   * Return an array of classes.
+   *
+   * @return {Array}
+   * @api public
+   */
+
+  ClassList$1.prototype.array = function() {
+    return Array.from(this.list);
+  };
+
+  /**
+   * Check if class `name` is present.
+   *
+   * @param {String} name
+   * @return {ClassList}
+   * @api public
+   */
+
+  ClassList$1.prototype.has =
+  ClassList$1.prototype.contains = function(name) {
+    return this.list.contains(name);
+  };
+
+  /**
+   * Clear utility
+   */
+
+  /**
+   * Removes all children from the given element
+   *
+   * @param {Element} element
+   *
+   * @return {Element} the element (for chaining)
+   */
+  function clear(element) {
+    var child;
+
+    while ((child = element.firstChild)) {
+      element.removeChild(child);
+    }
+
+    return element;
+  }
+
+  /**
+   * Closest
+   *
+   * @param {Element} el
+   * @param {string} selector
+   * @param {boolean} checkYourSelf (optional)
+   */
+  function closest(element, selector, checkYourSelf) {
+    var actualElement = element.parentNode;
+
+    return actualElement && typeof actualElement.closest === 'function' && actualElement.closest(selector) || null;
+  }
+
+  function getDefaultExportFromCjs$1 (x) {
+  	return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, 'default') ? x['default'] : x;
+  }
+
+  var componentEvent = {};
+
+  var hasRequiredComponentEvent;
+
+  function requireComponentEvent () {
+  	if (hasRequiredComponentEvent) return componentEvent;
+  	hasRequiredComponentEvent = 1;
+  	var bind, unbind, prefix;
+
+  	function detect () {
+  	  bind = window.addEventListener ? 'addEventListener' : 'attachEvent';
+  	  unbind = window.removeEventListener ? 'removeEventListener' : 'detachEvent';
+  	  prefix = bind !== 'addEventListener' ? 'on' : '';
+  	}
+
+  	/**
+  	 * Bind `el` event `type` to `fn`.
+  	 *
+  	 * @param {Element} el
+  	 * @param {String} type
+  	 * @param {Function} fn
+  	 * @param {Boolean} capture
+  	 * @return {Function}
+  	 * @api public
+  	 */
+
+  	componentEvent.bind = function(el, type, fn, capture){
+  	  if (!bind) detect();
+  	  el[bind](prefix + type, fn, capture || false);
+  	  return fn;
+  	};
+
+  	/**
+  	 * Unbind `el` event `type`'s callback `fn`.
+  	 *
+  	 * @param {Element} el
+  	 * @param {String} type
+  	 * @param {Function} fn
+  	 * @param {Boolean} capture
+  	 * @return {Function}
+  	 * @api public
+  	 */
+
+  	componentEvent.unbind = function(el, type, fn, capture){
+  	  if (!unbind) detect();
+  	  el[unbind](prefix + type, fn, capture || false);
+  	  return fn;
+  	};
+  	return componentEvent;
+  }
+
+  var componentEventExports = requireComponentEvent();
+  var index = /*@__PURE__*/getDefaultExportFromCjs$1(componentEventExports);
+
+  var event = /*#__PURE__*/_mergeNamespaces$1({
+    __proto__: null,
+    default: index
+  }, [componentEventExports]);
+
+  function query(selector, el) {
+    el = el || document;
+
+    return el.querySelector(selector);
+  }
+
+  /**
+   * @typedef {import('../util/Types').Point} Point
+   * @typedef {import('../util/Types').Rect} Rect
+   */
+
+
+
+  /**
+   * @param {Point} a
+   * @param {Point} b
+   * @return {Point}
+   */
+  function delta(a, b) {
+    return {
+      x: a.x - b.x,
+      y: a.y - b.y
+    };
+  }
+
+  /**
+   * Get the logarithm of x with base 10.
+   *
+   * @param {number} x
+   */
+  function log10(x) {
+    return Math.log(x) / Math.log(10);
+  }
+
+  /**
+   * Get step size for given range and number of steps.
+   *
+   * @param {Object} range
+   * @param {number} range.min
+   * @param {number} range.max
+   * @param {number} steps
+   */
+  function getStepSize(range, steps) {
+
+    var minLinearRange = log10(range.min),
+        maxLinearRange = log10(range.max);
+
+    var absoluteLinearRange = Math.abs(minLinearRange) + Math.abs(maxLinearRange);
+
+    return absoluteLinearRange / steps;
+  }
+
+  /**
+   * @param {Object} range
+   * @param {number} range.min
+   * @param {number} range.max
+   * @param {number} scale
+   */
+  function cap(range, scale) {
+    return Math.max(range.min, Math.min(range.max, scale));
+  }
+
+  function isMac() {
+    return (/mac/i).test(navigator.platform);
   }
 
   /**
@@ -888,6 +805,7 @@
    * @typedef {import('../../core/EventBus').default} EventBus
    *
    * @typedef {import('../../util/Types').Point} Point
+   * @typedef {import('../../util/Types').ScrollDelta} ScrollDelta
    */
 
   var sign = Math.sign || function(n) {
@@ -930,9 +848,14 @@
 
     var self = this;
 
-    eventBus.on('canvas.init', function(e) {
+    eventBus.on('canvas.mouseover', function() {
       self._init(config.enabled !== false);
     });
+
+    eventBus.on('canvas.mouseout', function() {
+      self._init(false);
+    });
+
   }
 
   ZoomScroll.$inject = [
@@ -942,7 +865,7 @@
   ];
 
   /**
-   * @param {Point} delta
+   * @param {ScrollDelta} delta
    */
   ZoomScroll.prototype.scroll = function scroll(delta) {
     this._canvas.scroll(delta);
@@ -978,8 +901,7 @@
 
   ZoomScroll.prototype._handleWheel = function handleWheel(event) {
 
-    // event is already handled by '.djs-scrollable'
-    if (closest(event.target, '.djs-scrollable', true)) {
+    if (!this._enabled) {
       return;
     }
 
@@ -990,7 +912,7 @@
     // pinch to zoom is mapped to wheel + ctrlKey = true
     // in modern browsers (!)
 
-    var isZoom = event.ctrlKey;
+    var isZoom = event.ctrlKey || (isMac() && event.metaKey);
 
     var isHorizontalScroll = event.shiftKey;
 
@@ -1042,7 +964,7 @@
    * Zoom with fixed step size.
    *
    * @param {number} delta Zoom delta (1 for zooming in, -1 for zooming out).
-   * @param {Point} position
+   * @param {Point} [position]
    */
   ZoomScroll.prototype.stepZoom = function stepZoom(delta, position) {
 
@@ -1056,7 +978,7 @@
    * Zoom in/out given a step size.
    *
    * @param {number} delta
-   * @param {Point} position
+   * @param {Point} [position]
    * @param {number} stepSize
    */
   ZoomScroll.prototype._zoom = function(delta, position, stepSize) {
@@ -1127,7 +1049,7 @@
   /**
    * @param {string} mode
    */
-  function set$1(mode) {
+  function set(mode) {
     var classes = classes$1(document.body);
 
     classes.removeMatching(CURSOR_CLS_PATTERN);
@@ -1138,11 +1060,11 @@
   }
 
   function unset() {
-    set$1(null);
+    set(null);
   }
 
   /**
-   * @typedef {import('../core/EventBus').EventBus} EventBus
+   * @typedef {import('../core/EventBus').default} EventBus
    */
 
   var TRAP_PRIORITY = 5000;
@@ -1214,12 +1136,19 @@
 
     var context;
 
+    function handleMousedown(event) {
+      return handleStart(event.originalEvent);
+    }
 
     // listen for move on element mouse down;
     // allow others to hook into the event before us though
     // (dragging / element moving will do this)
-    eventBus.on('element.mousedown', 500, function(e) {
-      return handleStart(e.originalEvent);
+    eventBus.on('canvas.focus.changed', function(event) {
+      if (event.focused) {
+        eventBus.on('element.mousedown', 500, handleMousedown);
+      } else {
+        eventBus.off('element.mousedown', handleMousedown);
+      }
     });
 
 
@@ -1237,7 +1166,7 @@
           install(eventBus);
         }
 
-        set$1('grab');
+        set('grab');
       }
 
       if (context.dragging) {
@@ -1436,6 +1365,7 @@
    * appendTo utility
    */
 
+
   /**
    * Append a node to a target element and return the appended node.
    *
@@ -1451,6 +1381,7 @@
   /**
    * append utility
    */
+
 
   /**
    * Append a node to an element
@@ -1724,36 +1655,6 @@
      return this.list.contains(name);
    };
 
-  function remove$1(element) {
-    var parent = element.parentNode;
-
-    if (parent) {
-      parent.removeChild(element);
-    }
-
-    return element;
-  }
-
-  /**
-   * Clear utility
-   */
-
-  /**
-   * Removes all children from the given element
-   *
-   * @param  {DOMElement} element
-   * @return {DOMElement} the element (for chaining)
-   */
-  function clear(element) {
-    var child;
-
-    while ((child = element.firstChild)) {
-      remove$1(child);
-    }
-
-    return element;
-  }
-
   var ns = {
     svg: 'http://www.w3.org/2000/svg'
   };
@@ -1761,6 +1662,7 @@
   /**
    * DOM parsing utility
    */
+
 
   var SVG_START = '<svg xmlns="' + ns.svg + '"';
 
@@ -1813,6 +1715,7 @@
    */
 
 
+
   /**
    * Create a specific type from name or SVG markup.
    *
@@ -1823,6 +1726,8 @@
    */
   function create$1(name, attrs) {
     var element;
+
+    name = name.trim();
 
     if (name.charAt(0) === '<') {
       element = parse(name).firstChild;
@@ -1841,6 +1746,7 @@
   /**
    * Geometry helpers
    */
+
 
   // fake node used to instantiate svg geometry elements
   var node = null;
@@ -1895,157 +1801,19 @@
   }
 
   function createTransform(matrix) {
-    if (matrix) {
-      return getNode().createSVGTransformFromMatrix(matrix);
-    } else {
+    {
       return getNode().createSVGTransform();
     }
   }
 
-  /**
-   * Serialization util
-   */
+  function remove$1(element) {
+    var parent = element.parentNode;
 
-  var TEXT_ENTITIES = /([&<>]{1})/g;
-  var ATTR_ENTITIES = /([\n\r"]{1})/g;
-
-  var ENTITY_REPLACEMENT = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '\''
-  };
-
-  function escape(str, pattern) {
-
-    function replaceFn(match, entity) {
-      return ENTITY_REPLACEMENT[entity] || entity;
+    if (parent) {
+      parent.removeChild(element);
     }
 
-    return str.replace(pattern, replaceFn);
-  }
-
-  function serialize(node, output) {
-
-    var i, len, attrMap, attrNode, childNodes;
-
-    switch (node.nodeType) {
-
-    // TEXT
-    case 3:
-
-      // replace special XML characters
-      output.push(escape(node.textContent, TEXT_ENTITIES));
-      break;
-
-    // ELEMENT
-    case 1:
-      output.push('<', node.tagName);
-
-      if (node.hasAttributes()) {
-        attrMap = node.attributes;
-        for (i = 0, len = attrMap.length; i < len; ++i) {
-          attrNode = attrMap.item(i);
-          output.push(' ', attrNode.name, '="', escape(attrNode.value, ATTR_ENTITIES), '"');
-        }
-      }
-
-      if (node.hasChildNodes()) {
-        output.push('>');
-        childNodes = node.childNodes;
-        for (i = 0, len = childNodes.length; i < len; ++i) {
-          serialize(childNodes.item(i), output);
-        }
-        output.push('</', node.tagName, '>');
-      } else {
-        output.push('/>');
-      }
-      break;
-
-    // COMMENT
-    case 8:
-      output.push('<!--', escape(node.nodeValue, TEXT_ENTITIES), '-->');
-      break;
-
-    // CDATA
-    case 4:
-      output.push('<![CDATA[', node.nodeValue, ']]>');
-      break;
-
-    default:
-      throw new Error('unable to handle node ' + node.nodeType);
-    }
-
-    return output;
-  }
-
-  /**
-   * innerHTML like functionality for SVG elements.
-   * based on innerSVG (https://code.google.com/p/innersvg)
-   */
-
-
-  function set(element, svg) {
-
-    var parsed = parse(svg);
-
-    // clear element contents
-    clear(element);
-
-    if (!svg) {
-      return;
-    }
-
-    if (!isFragment(parsed)) {
-
-      // extract <svg> from parsed document
-      parsed = parsed.documentElement;
-    }
-
-    var nodes = slice$1(parsed.childNodes);
-
-    // import + append each node
-    for (var i = 0; i < nodes.length; i++) {
-      appendTo(nodes[i], element);
-    }
-
-  }
-
-  function get(element) {
-    var child = element.firstChild,
-        output = [];
-
-    while (child) {
-      serialize(child, output);
-      child = child.nextSibling;
-    }
-
-    return output.join('');
-  }
-
-  function isFragment(node) {
-    return node.nodeName === '#document-fragment';
-  }
-
-  function innerSVG(element, svg) {
-
-    if (svg !== undefined) {
-
-      try {
-        set(element, svg);
-      } catch (e) {
-        throw new Error('error parsing SVG: ' + e.message);
-      }
-
-      return element;
-    } else {
-      return get(element);
-    }
-  }
-
-
-  function slice$1(arr) {
-    return Array.prototype.slice.call(arr);
+    return element;
   }
 
   /**
@@ -2113,7 +1881,7 @@
    * @return {string}
    */
   function componentsToPath(elements) {
-    return elements.flat().join(',').replace(/,?([A-z]),?/g, '$1');
+    return elements.flat().join(',').replace(/,?([A-Za-z]),?/g, '$1');
   }
 
   /**
@@ -2445,7 +2213,7 @@
 
     if('stereotypes' in element) {
       element.stereotypes.forEach(function(stereotype) {
-        var svgStereotype = drawText(parentGfx, '&lt;&lt;' + stereotype + '&gt;&gt;', centerLabelStyle, textRenderer);
+        var svgStereotype = drawText(parentGfx, '<<' + stereotype + '>>', centerLabelStyle, textRenderer);
 
         centerLabelStyle.y += svgStereotype.getBBox().height;
       });
@@ -2488,7 +2256,7 @@
     });
   }
   function getCenterLabelStyle(element) {
-    return assign(getGeneralLabelStyle(), {
+    return assign$1(getGeneralLabelStyle(), {
       x: element.width / 2,
       'text-anchor': 'middle',
     });
@@ -2688,17 +2456,24 @@
   	return inherits_browser.exports;
   }
 
-  try {
-    var util = require('util');
-    /* istanbul ignore next */
-    if (typeof util.inherits !== 'function') throw '';
-    inherits$1.exports = util.inherits;
-  } catch (e) {
-    /* istanbul ignore next */
-    inherits$1.exports = requireInherits_browser();
+  var hasRequiredInherits;
+
+  function requireInherits () {
+  	if (hasRequiredInherits) return inherits$1.exports;
+  	hasRequiredInherits = 1;
+  	try {
+  	  var util = require('util');
+  	  /* istanbul ignore next */
+  	  if (typeof util.inherits !== 'function') throw '';
+  	  inherits$1.exports = util.inherits;
+  	} catch (e) {
+  	  /* istanbul ignore next */
+  	  inherits$1.exports = requireInherits_browser();
+  	}
+  	return inherits$1.exports;
   }
 
-  var inheritsExports = inherits$1.exports;
+  var inheritsExports = requireInherits();
   var inherits = /*@__PURE__*/getDefaultExportFromCjs(inheritsExports);
 
   inherits(UmlRenderer, BaseRenderer);
@@ -2759,12 +2534,11 @@
 
   TextRenderer.prototype.createText = function(text, options) {
     var svgText = create$1('text');
+    svgText.textContent = text;
 
-    var options = assign(options, this._style);
+    var options = assign$1(options, this._style);
 
     attr(svgText, options);
-
-    innerSVG(svgText, text);
 
     return svgText;
   };
@@ -2865,10 +2639,6 @@
    */
   function pointsOnLine(p, q, r, accuracy) {
 
-    if (typeof accuracy === 'undefined') {
-      accuracy = 5;
-    }
-
     if (!p || !q || !r) {
       return false;
     }
@@ -2909,7 +2679,7 @@
    * @param {Rect} reference
    * @param {Point|number} padding
    *
-   * @return {DirectionTRBL} the orientation; one of top, top-left, left, ..., bottom, right or intersect.
+   * @return {DirectionTRBL|Intersection} the orientation; one of top, top-left, left, ..., bottom, right or intersect.
    */
   function getOrientation(rect, reference, padding) {
 
@@ -3282,7 +3052,7 @@
         waypoints: getWaypoints(edge, nodeMap)
       };
 
-      assign(attrs, getEdgeLabels(edge));
+      assign$1(attrs, getEdgeLabels(edge));
 
       modeling.createConnection(nodeMap.get(edge.source), nodeMap.get(edge.target), attrs, root);
     });
@@ -3371,7 +3141,7 @@
   }
 
   /**
-   * @typedef {import('./index').InjectAnnotated } InjectAnnotated
+   * @typedef {import('./index.js').InjectAnnotated } InjectAnnotated
    */
 
   /**
@@ -3441,19 +3211,22 @@
   }
 
   /**
-   * @typedef { import('./index').ModuleDeclaration } ModuleDeclaration
-   * @typedef { import('./index').ModuleDefinition } ModuleDefinition
-   * @typedef { import('./index').InjectorContext } InjectorContext
+   * @typedef { import('./index.js').ModuleDeclaration } ModuleDeclaration
+   * @typedef { import('./index.js').ModuleDefinition } ModuleDefinition
+   * @typedef { import('./index.js').InjectorContext } InjectorContext
+   *
+   * @typedef { import('./index.js').TypedDeclaration<any, any> } TypedDeclaration
    */
 
   /**
    * Create a new injector with the given modules.
    *
    * @param {ModuleDefinition[]} modules
-   * @param {InjectorContext} [parent]
+   * @param {InjectorContext} [_parent]
    */
-  function Injector(modules, parent) {
-    parent = parent || {
+  function Injector(modules, _parent) {
+
+    const parent = _parent || /** @type InjectorContext */ ({
       get: function(name, strict) {
         currentlyResolving.push(name);
 
@@ -3463,7 +3236,7 @@
           throw error(`No provider for "${ name }"!`);
         }
       }
-    };
+    });
 
     const currentlyResolving = [];
     const providers = this._providers = Object.create(parent._providers || null);
@@ -3486,12 +3259,13 @@
      * @return {any}
      */
     function get(name, strict) {
-      if (!providers[name] && name.indexOf('.') !== -1) {
+      if (!providers[name] && name.includes('.')) {
+
         const parts = name.split('.');
-        let pivot = get(parts.shift());
+        let pivot = get(/** @type { string } */ (parts.shift()));
 
         while (parts.length) {
-          pivot = pivot[parts.shift()];
+          pivot = pivot[/** @type { string } */ (parts.shift())];
         }
 
         return pivot;
@@ -3531,6 +3305,9 @@
         }
       }
 
+      /**
+       * @type {string[]}
+       */
       const inject = fn.$inject || parseAnnotations(fn);
       const dependencies = inject.map(dep => {
         if (hasOwnProp(locals, dep)) {
@@ -3542,22 +3319,42 @@
 
       return {
         fn: fn,
-        dependencies: dependencies
+        dependencies
       };
     }
 
-    function instantiate(Type) {
+    /**
+     * Instantiate the given type, injecting dependencies.
+     *
+     * @template T
+     *
+     * @param { Function | [...string[], Function ]} type
+     *
+     * @return T
+     */
+    function instantiate(type) {
       const {
         fn,
         dependencies
-      } = fnDef(Type);
+      } = fnDef(type);
 
       // instantiate var args constructor
-      const Constructor = Function.prototype.bind.apply(fn, [ null ].concat(dependencies));
+      const Constructor = Function.prototype.bind.call(fn, null, ...dependencies);
 
       return new Constructor();
     }
 
+    /**
+     * Invoke the given function, injecting dependencies. Return the result.
+     *
+     * @template T
+     *
+     * @param { Function | [...string[], Function ]} func
+     * @param { Object } [context]
+     * @param { Object } [locals]
+     *
+     * @return {T} invocation result
+     */
     function invoke(func, context, locals) {
       const {
         fn,
@@ -3722,13 +3519,17 @@
           return;
         }
 
-        if (moduleDefinition[key][2] === 'private') {
-          providers[key] = moduleDefinition[key];
+        const typeDeclaration = /** @type { TypedDeclaration } */ (
+          moduleDefinition[key]
+        );
+
+        if (typeDeclaration[2] === 'private') {
+          providers[key] = typeDeclaration;
           return;
         }
 
-        const type = moduleDefinition[key][0];
-        const value = moduleDefinition[key][1];
+        const type = typeDeclaration[0];
+        const value = typeDeclaration[1];
 
         providers[key] = [ factoryMap[type], arrayUnwrap(type, value), type ];
       });
@@ -3803,7 +3604,7 @@
     return value;
   }
 
-  function e(e,t){t&&(e.super_=t,e.prototype=Object.create(t.prototype,{constructor:{value:e,enumerable:!1,writable:!0,configurable:!0}}));}
+  function e(e,t){t&&(e.super_=t,e.prototype=Object.create(t.prototype,{constructor:{value:e,enumerable:false,writable:true,configurable:true}}));}
 
   /**
    * Returns the surrounding bbox for all elements in
@@ -3939,9 +3740,9 @@
     });
 
     if (isFrameElement(element)) {
-      attr(rect, assign({}, this.FRAME_STYLE, attrs || {}));
+      attr(rect, assign$1({}, this.FRAME_STYLE, attrs || {}));
     } else {
-      attr(rect, assign({}, this.SHAPE_STYLE, attrs || {}));
+      attr(rect, assign$1({}, this.SHAPE_STYLE, attrs || {}));
     }
 
     append(visuals, rect);
@@ -3954,7 +3755,7 @@
    */
   DefaultRenderer.prototype.drawConnection = function drawConnection(visuals, connection, attrs) {
 
-    var line = createLine(connection.waypoints, assign({}, this.CONNECTION_STYLE, attrs || {}));
+    var line = createLine(connection.waypoints, assign$1({}, this.CONNECTION_STYLE, attrs || {}));
     append(visuals, line);
 
     return line;
@@ -4036,7 +3837,7 @@
     this.cls = function(className, traits, additionalAttrs) {
       var attrs = this.style(traits, additionalAttrs);
 
-      return assign(attrs, { 'class': className });
+      return assign$1(attrs, { 'class': className });
     };
 
     /**
@@ -4056,10 +3857,10 @@
       }
 
       var attrs = reduce(traits, function(attrs, t) {
-        return assign(attrs, defaultTraits[t] || {});
+        return assign$1(attrs, defaultTraits[t] || {});
       }, {});
 
-      return additionalAttrs ? assign(attrs, additionalAttrs) : attrs;
+      return additionalAttrs ? assign$1(attrs, additionalAttrs) : attrs;
     };
 
 
@@ -4079,7 +3880,7 @@
         traits = [];
       }
 
-      return self.style(traits || [], assign({}, defaultStyles, custom || {}));
+      return self.style(traits || [], assign$1({}, defaultStyles, custom || {}));
     };
   }
 
@@ -4177,6 +3978,7 @@
    *   deferUpdate?: boolean;
    *   width?: number;
    *   height?: number;
+   *   autoFocus?: boolean;
    * } } CanvasConfig
    * @typedef { {
    *   group: SVGElement;
@@ -4204,6 +4006,7 @@
    * @typedef {import('../util/Types').Point} Point
    * @typedef {import('../util/Types').Rect} Rect
    * @typedef {import('../util/Types').RectTRBL} RectTRBL
+   * @typedef {import('../util/Types').ScrollDelta} ScrollDelta
    */
 
   function round(number, resolution) {
@@ -4232,7 +4035,7 @@
    */
   function createContainer(options) {
 
-    options = assign({}, { width: '100%', height: '100%' }, options);
+    options = assign$1({}, { width: '100%', height: '100%' }, options);
 
     const container = options.container || document.body;
 
@@ -4242,7 +4045,7 @@
     const parent = document.createElement('div');
     parent.setAttribute('class', 'djs-container djs-parent');
 
-    assign$1(parent, {
+    assign(parent, {
       position: 'relative',
       overflow: 'hidden',
       width: ensurePx(options.width),
@@ -4317,6 +4120,11 @@
      */
     this._rootElement = null;
 
+    /**
+     * @type {boolean}
+     */
+    this._focused = false;
+
     this._init(config || {});
   }
 
@@ -4343,14 +4151,43 @@
    * @param {CanvasConfig} config
    */
   Canvas.prototype._init = function(config) {
-
     const eventBus = this._eventBus;
 
     // html container
     const container = this._container = createContainer(config);
 
     const svg = this._svg = create$1('svg');
-    attr(svg, { width: '100%', height: '100%' });
+
+    attr(svg, {
+      width: '100%',
+      height: '100%'
+    });
+
+    attr$1(svg, 'tabindex', 0);
+
+    config.autoFocus && eventBus.on('element.hover', () => {
+      this.restoreFocus();
+    });
+
+    eventBus.on('element.mousedown', 500, (event) => {
+      this.focus();
+    });
+
+    svg.addEventListener('focusin', () => {
+      this._setFocused(true);
+    });
+
+    svg.addEventListener('focusout', () => {
+      this._setFocused(false);
+    });
+
+    svg.addEventListener('mouseover', () => {
+      this._eventBus.fire('canvas.mouseover');
+    });
+
+    svg.addEventListener('mouseout', () => {
+      this._eventBus.fire('canvas.mouseout');
+    });
 
     append(container, svg);
 
@@ -4419,6 +4256,17 @@
     delete this._viewport;
   };
 
+  Canvas.prototype._setFocused = function(focused) {
+
+    if (focused == this._focused) {
+      return;
+    }
+
+    this._focused = focused;
+
+    this._eventBus.fire('canvas.focus.changed', { focused });
+  };
+
   Canvas.prototype._clear = function() {
 
     const allElements = this._elementRegistry.getAll();
@@ -4440,6 +4288,33 @@
 
     // force recomputation of view box
     delete this._cachedViewbox;
+  };
+
+  /**
+   * Sets focus on the canvas SVG element.
+   */
+  Canvas.prototype.focus = function() {
+    this._svg.focus({ preventScroll: true });
+
+    this._setFocused(true);
+  };
+
+  /**
+  * Sets focus on the canvas SVG element if `document.body` is currently focused.
+  */
+  Canvas.prototype.restoreFocus = function() {
+    if (document.activeElement === document.body) {
+      this.focus();
+    }
+  };
+
+  /**
+  * Returns true if the canvas is focused.
+  *
+  * @return {boolean}
+  */
+  Canvas.prototype.isFocused = function() {
+    return this._focused;
   };
 
   /**
@@ -4689,6 +4564,8 @@
       element = this._elementRegistry.get(element);
     }
 
+    element.markers = element.markers || new Set();
+
     // we need to access all
     container = this._elementRegistry._elements[element.id];
 
@@ -4701,8 +4578,10 @@
 
         // invoke either addClass or removeClass based on mode
         if (add) {
+          element.markers.add(marker);
           classes(gfx).add(marker);
         } else {
+          element.markers.delete(marker);
           classes(gfx).remove(marker);
         }
       }
@@ -4770,9 +4649,11 @@
       element = this._elementRegistry.get(element);
     }
 
-    const gfx = this.getGraphics(element);
+    if (!element.markers) {
+      return false;
+    }
 
-    return classes(gfx).has(marker);
+    return element.markers.has(marker);
   };
 
   /**
@@ -4904,7 +4785,7 @@
   Canvas.prototype.setRootElement = function(rootElement) {
 
     if (rootElement === this._rootElement) {
-      return;
+      return rootElement;
     }
 
     let plane;
@@ -5275,7 +5156,7 @@
   Canvas.prototype.viewbox = function(box) {
 
     if (box === undefined && this._cachedViewbox) {
-      return this._cachedViewbox;
+      return structuredClone(this._cachedViewbox);
     }
 
     const viewport = this._viewport,
@@ -5339,7 +5220,7 @@
   /**
    * Gets or sets the scroll of the canvas.
    *
-   * @param {Point} [delta] The scroll to be set.
+   * @param {ScrollDelta} [delta] The scroll to be set.
    *
    * @return {Point}
    */
@@ -5350,7 +5231,7 @@
 
     if (delta) {
       this._changeViewbox(function() {
-        delta = assign({ dx: 0, dy: 0 }, delta || {});
+        delta = assign$1({ dx: 0, dy: 0 }, delta || {});
 
         matrix = this._svg.createSVGMatrix().translate(delta.dx, delta.dy).multiply(matrix);
 
@@ -5549,7 +5430,7 @@
     const currentScale = currentMatrix.a;
 
     if (center) {
-      centerPoint = assign(point, center);
+      centerPoint = assign$1(point, center);
 
       // revert applied viewport transformations
       originalPoint = centerPoint.matrixTransform(currentMatrix.inverse());
@@ -5914,32 +5795,17 @@
     }
   };
 
-  var objectRefs = {exports: {}};
-
-  var collection = {};
-
-  /**
-   * An empty collection stub. Use {@link RefsCollection.extend} to extend a
-   * collection with ref semantics.
-   *
-   * @class RefsCollection
-   */
-
   /**
    * Extends a collection with {@link Refs} aware methods
    *
-   * @memberof RefsCollection
-   * @static
-   *
-   * @param  {Array<Object>} collection
-   * @param  {Refs} refs instance
-   * @param  {Object} property represented by the collection
-   * @param  {Object} target object the collection is attached to
+   * @param {Array<Object>} collection
+   * @param {Refs} refs instance
+   * @param {Object} property represented by the collection
+   * @param {Object} target object the collection is attached to
    *
    * @return {RefsCollection<Object>} the extended array
    */
   function extend(collection, refs, property, target) {
-
     var inverseProperty = property.inverse;
 
     /**
@@ -5950,7 +5816,7 @@
      * @param {Object} element the element to remove
      */
     Object.defineProperty(collection, 'remove', {
-      value: function(element) {
+      value: function (element) {
         var idx = this.indexOf(element);
         if (idx !== -1) {
           this.splice(idx, 1);
@@ -5958,7 +5824,6 @@
           // unset inverse
           refs.unset(element, inverseProperty, target);
         }
-
         return element;
       }
     });
@@ -5971,7 +5836,7 @@
      * @param {Object} element the element to check for
      */
     Object.defineProperty(collection, 'contains', {
-      value: function(element) {
+      value: function (element) {
         return this.indexOf(element) !== -1;
       }
     });
@@ -5986,12 +5851,9 @@
      *                 (possibly moving other elements around)
      */
     Object.defineProperty(collection, 'add', {
-      value: function(element, idx) {
-
+      value: function (element, idx) {
         var currentIdx = this.indexOf(element);
-
         if (typeof idx === 'undefined') {
-
           if (currentIdx !== -1) {
             // element already in collection (!)
             return;
@@ -6003,14 +5865,12 @@
 
         // handle already in collection
         if (currentIdx !== -1) {
-
           // remove element from currentIdx
           this.splice(currentIdx, 1);
         }
 
         // add element at idx
         this.splice(idx, 0, element);
-
         if (currentIdx === -1) {
           // set inverse, unless element was
           // in collection already
@@ -6024,69 +5884,53 @@
     Object.defineProperty(collection, '__refs_collection', {
       value: true
     });
-
     return collection;
   }
 
-
+  /**
+   * Checks if a given collection is extended
+   *
+   * @param {Array<Object>} collection
+   *
+   * @return {boolean}
+   */
   function isExtended(collection) {
     return collection.__refs_collection === true;
   }
 
-  collection.extend = extend;
-
-  collection.isExtended = isExtended;
-
-  var Collection = collection;
-
   function hasOwnProperty(e, property) {
     return Object.prototype.hasOwnProperty.call(e, property.name || property);
   }
-
   function defineCollectionProperty(ref, property, target) {
-
-    var collection = Collection.extend(target[property.name] || [], ref, property, target);
-
+    var collection = extend(target[property.name] || [], ref, property, target);
     Object.defineProperty(target, property.name, {
       enumerable: property.enumerable,
       value: collection
     });
-
     if (collection.length) {
-
-      collection.forEach(function(o) {
+      collection.forEach(function (o) {
         ref.set(o, property.inverse, target);
       });
     }
   }
-
-
   function defineProperty(ref, property, target) {
-
     var inverseProperty = property.inverse;
-
     var _value = target[property.name];
-
     Object.defineProperty(target, property.name, {
       configurable: property.configurable,
       enumerable: property.enumerable,
-
-      get: function() {
+      get: function () {
         return _value;
       },
-
-      set: function(value) {
-
+      set: function (value) {
         // return if we already performed all changes
         if (value === _value) {
           return;
         }
-
         var old = _value;
 
         // temporary set null
         _value = null;
-
         if (old) {
           ref.unset(old, inverseProperty, target);
         }
@@ -6098,7 +5942,6 @@
         ref.set(_value, inverseProperty, target);
       }
     });
-
   }
 
   /**
@@ -6144,16 +5987,14 @@
    *
    * wheels[0].car // undefined
    */
-  function Refs$1(a, b) {
-
-    if (!(this instanceof Refs$1)) {
-      return new Refs$1(a, b);
+  function Refs(a, b) {
+    if (!(this instanceof Refs)) {
+      return new Refs(a, b);
     }
 
     // link
     a.inverse = b;
     b.inverse = a;
-
     this.props = {};
     this.props[a.name] = a;
     this.props[b.name] = b;
@@ -6168,43 +6009,34 @@
    * @param  {Object} target
    * @param  {String} property
    */
-  Refs$1.prototype.bind = function(target, property) {
+  Refs.prototype.bind = function (target, property) {
     if (typeof property === 'string') {
       if (!this.props[property]) {
         throw new Error('no property <' + property + '> in ref');
       }
       property = this.props[property];
     }
-
     if (property.collection) {
       defineCollectionProperty(this, property, target);
     } else {
       defineProperty(this, property, target);
     }
   };
-
-  Refs$1.prototype.ensureRefsCollection = function(target, property) {
-
+  Refs.prototype.ensureRefsCollection = function (target, property) {
     var collection = target[property.name];
-
-    if (!Collection.isExtended(collection)) {
+    if (!isExtended(collection)) {
       defineCollectionProperty(this, property, target);
     }
-
     return collection;
   };
-
-  Refs$1.prototype.ensureBound = function(target, property) {
+  Refs.prototype.ensureBound = function (target, property) {
     if (!hasOwnProperty(target, property)) {
       this.bind(target, property);
     }
   };
-
-  Refs$1.prototype.unset = function(target, property, value) {
-
+  Refs.prototype.unset = function (target, property, value) {
     if (target) {
       this.ensureBound(target, property);
-
       if (property.collection) {
         this.ensureRefsCollection(target, property).remove(value);
       } else {
@@ -6212,12 +6044,9 @@
       }
     }
   };
-
-  Refs$1.prototype.set = function(target, property, value) {
-
+  Refs.prototype.set = function (target, property, value) {
     if (target) {
       this.ensureBound(target, property);
-
       if (property.collection) {
         this.ensureRefsCollection(target, property).add(value);
       } else {
@@ -6225,15 +6054,6 @@
       }
     }
   };
-
-  var refs = Refs$1;
-
-  objectRefs.exports = refs;
-
-  objectRefs.exports.Collection = collection;
-
-  var objectRefsExports = objectRefs.exports;
-  var Refs = /*@__PURE__*/getDefaultExportFromCjs(objectRefsExports);
 
   var parentRefs = new Refs({ name: 'children', enumerable: true, collection: true }, { name: 'parent' }),
       labelRefs = new Refs({ name: 'labels', enumerable: true, collection: true }, { name: 'labelTarget' }),
@@ -6550,7 +6370,7 @@
     if (!Type) {
       throw new Error('unknown type: <' + type + '>');
     }
-    return assign(new Type(), attrs);
+    return assign$1(new Type(), attrs);
   }
 
   /**
@@ -6650,7 +6470,7 @@
    */
   ElementFactory.prototype.create = function(type, attrs) {
 
-    attrs = assign({}, attrs || {});
+    attrs = assign$1({}, attrs || {});
 
     if (!attrs.id) {
       attrs.id = type + '_' + (this._uid++);
@@ -6771,6 +6591,8 @@
    * var sum = eventBus.fire('sum', 1, 2);
    * console.log(sum); // 3
    * ```
+   *
+   * @template [EventMap=null]
    */
   function EventBus() {
 
@@ -6784,8 +6606,9 @@
     this.on('diagram.destroy', 1, this._destroy, this);
   }
 
-
   /**
+   * @overlord
+   *
    * Register an event listener for events with the given name.
    *
    * The callback will be invoked with `event, ...additionalArguments`
@@ -6802,6 +6625,25 @@
    * @param {string|string[]} events to subscribe to
    * @param {number} [priority=1000] listen priority
    * @param {EventBusEventCallback<T>} callback
+   * @param {any} [that] callback context
+   */
+  /**
+   * Register an event listener for events with the given name.
+   *
+   * The callback will be invoked with `event, ...additionalArguments`
+   * that have been passed to {@link EventBus#fire}.
+   *
+   * Returning false from a listener will prevent the events default action
+   * (if any is specified). To stop an event from being processed further in
+   * other listeners execute {@link Event#stopPropagation}.
+   *
+   * Returning anything but `undefined` from a listener will stop the listener propagation.
+   *
+   * @template {keyof EventMap} EventName
+   *
+   * @param {EventName} events to subscribe to
+   * @param {number} [priority=1000] listen priority
+   * @param {EventBusEventCallback<EventMap[EventName]>} callback
    * @param {any} [that] callback context
    */
   EventBus.prototype.on = function(events, priority, callback, that) {
@@ -6841,6 +6683,8 @@
   };
 
   /**
+   * @overlord
+   *
    * Register an event listener that is called only once.
    *
    * @template T
@@ -6848,6 +6692,16 @@
    * @param {string|string[]} events to subscribe to
    * @param {number} [priority=1000] the listen priority
    * @param {EventBusEventCallback<T>} callback
+   * @param {any} [that] callback context
+   */
+  /**
+   * Register an event listener that is called only once.
+   *
+   * @template {keyof EventMap} EventName
+   *
+   * @param {EventName} events to subscribe to
+   * @param {number} [priority=1000] listen priority
+   * @param {EventBusEventCallback<EventMap[EventName]>} callback
    * @param {any} [that] callback context
    */
   EventBus.prototype.once = function(events, priority, callback, that) {
@@ -6888,7 +6742,7 @@
    * If no callback is given, all listeners for a given event name are being removed.
    *
    * @param {string|string[]} events
-   * @param {EventBusEventCallback} [callback]
+   * @param {EventBusEventCallback<unknown>} [callback]
    */
   EventBus.prototype.off = function(events, callback) {
 
@@ -7217,7 +7071,7 @@
   };
 
   InternalEvent.prototype.init = function(data) {
-    assign(this, data || {});
+    assign$1(this, data || {});
   };
 
 
@@ -7328,7 +7182,7 @@
   GraphicsFactory.prototype._clear = function(gfx) {
     var visual = getVisual(gfx);
 
-    clear$1(visual);
+    clear(visual);
 
     return visual;
   };
@@ -7451,13 +7305,14 @@
    *
    * @param {SVGElement} visual The graphical element.
    * @param {ShapeLike} element The shape.
+   * @param {Object} attrs Optional attributes.
    *
    * @return {SVGElement}
    */
-  GraphicsFactory.prototype.drawShape = function(visual, element) {
+  GraphicsFactory.prototype.drawShape = function(visual, element, attrs = {}) {
     var eventBus = this._eventBus;
 
-    return eventBus.fire('render.shape', { gfx: visual, element: element });
+    return eventBus.fire('render.shape', { gfx: visual, element, attrs });
   };
 
   /**
@@ -7478,13 +7333,14 @@
    *
    * @param {SVGElement} visual The graphical element.
    * @param {ConnectionLike} element The connection.
+   * @param {Object} attrs Optional attributes.
    *
    * @return {SVGElement}
    */
-  GraphicsFactory.prototype.drawConnection = function(visual, element) {
+  GraphicsFactory.prototype.drawConnection = function(visual, element, attrs = {}) {
     var eventBus = this._eventBus;
 
-    return eventBus.fire('render.connection', { gfx: visual, element: element });
+    return eventBus.fire('render.connection', { gfx: visual, element, attrs });
   };
 
   /**
@@ -7522,8 +7378,7 @@
 
       // update positioning
       translate(gfx, element.x, element.y);
-    } else
-    if (type === 'connection') {
+    } else if (type === 'connection') {
       this.drawConnection(visual, element);
     } else {
       throw new Error('unknown type: ' + type);
@@ -7587,6 +7442,16 @@
    */
 
   /**
+   * @template T
+   * @typedef {import('didi').FactoryFunction<T>} FactoryFunction
+   */
+
+  /**
+   * @template T
+   * @typedef {import('didi').ArrayFunc<T>} ArrayFunc
+   */
+
+  /**
    * Bootstrap an injector from a list of modules, instantiating a number of default components
    *
    * @param {ModuleDeclaration[]} modules
@@ -7604,9 +7469,10 @@
   /**
    * Creates an injector from passed options.
    *
+   * @template ServiceMap
    * @param {DiagramOptions} [options]
    *
-   * @return {Injector}
+   * @return {Injector<ServiceMap>}
    */
   function createInjector(options) {
 
@@ -7633,6 +7499,7 @@
    *
    * @class
    * @constructor
+   * @template [ServiceMap=null]
    *
    * @example Creating a plug-in that logs whenever a shape is added to the canvas.
    *
@@ -7671,43 +7538,16 @@
    * ```
    *
    * @param {DiagramOptions} [options]
-   * @param {Injector} [injector] An (optional) injector to bootstrap the diagram with.
+   * @param {Injector<ServiceMap>} [injector] An (optional) injector to bootstrap the diagram with.
    */
   function Diagram(options, injector) {
 
-    this._injector = injector = injector || createInjector(options);
-
-    // API
-
     /**
-     * Resolves a diagram service.
-     *
-     * @template T
-     *
-     * @param {string} name The name of the service to get.
-     * @param {boolean} [strict=true] If false, resolve missing services to null.
-     *
-     * @return {T|null}
+     * @type {Injector<ServiceMap>}
      */
-    this.get = injector.get;
-
-    /**
-     * Executes a function with its dependencies injected.
-     *
-     * @template T
-     *
-     * @param {Function} func function to be invoked
-     * @param {InjectionContext} [context] context of the invocation
-     * @param {LocalsMap} [locals] locals provided
-     *
-     * @return {T|null}
-     */
-    this.invoke = injector.invoke;
+    this._injector = injector || createInjector(options);
 
     // init
-
-    // indicate via event
-
 
     /**
      * An event indicating that all plug-ins are loaded.
@@ -7731,6 +7571,82 @@
     this.get('eventBus').fire('diagram.init');
   }
 
+  /**
+   * @overlord
+   *
+   * Resolves a diagram service.
+   *
+   * @template T
+   *
+   * @param {string} name The name of the service to get.
+   *
+   * @return {T}
+   */
+  /**
+   * @overlord
+   *
+   * Resolves a diagram service.
+   *
+   * @template T
+   *
+   * @param {string} name The name of the service to get.
+   * @param {true} strict If false, resolve missing services to null.
+   *
+   * @return {T}
+   */
+  /**
+   * @overlord
+   *
+   * Resolves a diagram service.
+   *
+   * @template T
+   *
+   * @param {string} name The name of the service to get.
+   * @param {boolean} strict If false, resolve missing services to null.
+   *
+   * @return {T|null}
+   */
+  /**
+   * Resolves a diagram service.
+   *
+   * @template {keyof ServiceMap} Name
+   *
+   * @param {Name} name The name of the service to get.
+   *
+   * @return {ServiceMap[Name]}
+   */
+  Diagram.prototype.get = function(name, strict) {
+    return this._injector.get(name, strict);
+  };
+
+  /**
+   * @overlord
+   *
+   * Invoke the given function, injecting dependencies. Return the result.
+   *
+   * @template T
+   *
+   * @param {FactoryFunction<T>} func
+   * @param {InjectionContext} [context]
+   * @param {LocalsMap} [locals]
+   *
+   * @return {T}
+   */
+  /**
+   * Invoke the given function, injecting dependencies provided in
+   * array notation. Return the result.
+   *
+   * @template T
+   *
+   * @param {ArrayFunc<T>} func function to be invoked
+   * @param {InjectionContext} [context] context of the invocation
+   * @param {LocalsMap} [locals] locals provided
+   *
+   * @return {T}
+   */
+  Diagram.prototype.invoke = function(func, context, locals) {
+    return this._injector.invoke(func, context, locals);
+  };
 
   /**
    * Destroys the diagram
@@ -7776,12 +7692,12 @@
     var container;
 
     if('containerID' in options) {
-      container = domify$1('<div id="' + options.containerID + '"class="umljs-container"></div>');
+      container = domify('<div id="' + options.containerID + '"class="umljs-container"></div>');
     } else {
-      container = domify$1('<div class="umljs-container"></div>');
+      container = domify('<div class="umljs-container"></div>');
     }
 
-    assign(container.style, {
+    assign$1(container.style, {
       width: '100%',
       height: '100%',
       position: 'relative'

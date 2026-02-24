@@ -1,6 +1,5 @@
-import { React, useTLState } from 'tl-react-bridge';
+import { React, useTLState, TLChild } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import TLChild from '../bridge/TLChild';
 
 /**
  * Simple container component that renders a title and a vertical list of child controls.

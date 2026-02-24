@@ -1,6 +1,5 @@
-import { React, useTLState, useTLCommand } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import TLChild from '../bridge/TLChild';
 
 interface TabInfo {
   id: string;

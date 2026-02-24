@@ -30,6 +30,7 @@ import com.top_logic.layout.react.ReactFormFieldControl;
 import com.top_logic.layout.react.ReactSelectFormFieldControl;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * Demo {@link LayoutComponent} that showcases all React form field types.
@@ -175,12 +176,18 @@ public class DemoReactFormFieldsComponent extends LayoutComponent {
 		FieldDemo(String label, FormField field, ReactFormFieldControl fieldControl) {
 			_label = label;
 			_fieldControl = fieldControl;
-			_toggleDisabled = new ReactButtonControl("Toggle Disabled",
-				context -> field.setDisabled(!field.isDisabled()));
-			_toggleImmutable = new ReactButtonControl("Toggle Immutable",
-				context -> field.setImmutable(!field.isImmutable()));
-			_toggleMandatory = new ReactButtonControl("Toggle Mandatory",
-				context -> field.setMandatory(!field.isMandatory()));
+			_toggleDisabled = new ReactButtonControl("Toggle Disabled", context -> {
+				field.setDisabled(!field.isDisabled());
+				return HandlerResult.DEFAULT_RESULT;
+			});
+			_toggleImmutable = new ReactButtonControl("Toggle Immutable", context -> {
+				field.setImmutable(!field.isImmutable());
+				return HandlerResult.DEFAULT_RESULT;
+			});
+			_toggleMandatory = new ReactButtonControl("Toggle Mandatory", context -> {
+				field.setMandatory(!field.isMandatory());
+				return HandlerResult.DEFAULT_RESULT;
+			});
 		}
 	}
 

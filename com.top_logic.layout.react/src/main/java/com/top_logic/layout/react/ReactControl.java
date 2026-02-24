@@ -188,7 +188,10 @@ public class ReactControl extends AbstractVisibleControl {
 		SSEUpdateQueue queue = SSEUpdateQueue.forSession(context.asRequest().getSession());
 		_sseQueue = queue;
 		queue.registerControl(this);
-		forEachChildControl(_reactState, queue::registerControl);
+		forEachChildControl(_reactState, child -> {
+			child._sseQueue = queue;
+			queue.registerControl(child);
+		});
 	}
 
 	@Override
@@ -196,7 +199,10 @@ public class ReactControl extends AbstractVisibleControl {
 		SSEUpdateQueue queue = _sseQueue;
 		if (queue != null) {
 			queue.unregisterControl(this);
-			forEachChildControl(_reactState, queue::unregisterControl);
+			forEachChildControl(_reactState, child -> {
+				queue.unregisterControl(child);
+				child._sseQueue = null;
+			});
 			_sseQueue = null;
 		}
 		super.internalDetach();

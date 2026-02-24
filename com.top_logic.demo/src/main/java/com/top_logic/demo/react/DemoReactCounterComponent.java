@@ -77,10 +77,23 @@ public class DemoReactCounterComponent extends LayoutComponent {
 			new IncrementCommand(),
 			new DecrementCommand());
 
-		/** Creates a new {@link DemoCounterControl}. */
+		/** Creates a new {@link DemoCounterControl} with default label. */
 		public DemoCounterControl() {
+			this(null);
+		}
+
+		/**
+		 * Creates a new {@link DemoCounterControl}.
+		 *
+		 * @param label
+		 *        The display label, or {@code null} for the default.
+		 */
+		public DemoCounterControl(String label) {
 			super(null, "TLCounter", COMMANDS);
 			getReactState().put(COUNT, 0);
+			if (label != null) {
+				getReactState().put("label", label);
+			}
 		}
 
 		/**

@@ -45,6 +45,7 @@ import com.top_logic.basic.thread.ThreadContextManager;
 
 import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.agentic.AgenticServices;
+import dev.langchain4j.agentic.UntypedAgent;
 import dev.langchain4j.memory.ChatMemory;
 import dev.langchain4j.model.anthropic.AnthropicChatModel;
 import dev.langchain4j.model.chat.ChatModel;
@@ -52,7 +53,6 @@ import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import dev.langchain4j.model.mistralai.MistralAiChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.service.tool.ToolExecutor;
-import dev.langchain4j.service.tool.ToolProviderResult;
 
 /**
  * Registry of runtime-configurable agents and skills.
@@ -437,6 +437,45 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		return result;
 	}
 
+	/**
+	 * Builds an {@link UntypedAgent} from the named configuration.
+	 *
+	 * <p>
+	 * Uses the no-arg {@link AgenticServices#agentBuilder()} to create an agent purely from
+	 * configuration data — no Java interface is required. The agent accepts a single
+	 * {@code "message"} input and returns a {@link String}.
+	 * </p>
+	 *
+	 * @param name
+	 *        The agent name as declared in the configuration.
+	 * @return A fully configured untyped agent instance.
+	 */
+	public UntypedAgent buildUntypedAgent(String name) {
+		AgentConfig config = getAgentConfig(name);
+		ChatModel model = buildChatModel(config);
+		String systemPrompt = getSystemPrompt(config);
+		List<Object> tools = buildTools(config);
+		List<ToolImplementation> delegationTools = buildDelegationTools(config);
+
+		var builder = AgenticServices.agentBuilder()
+			.chatModel(model)
+			.systemMessage(systemPrompt)
+			.userMessage("{{message}}")
+			.inputKey(String.class, "message")
+			.returnType(String.class)
+			.tools(tools.toArray());
+
+		if (!delegationTools.isEmpty()) {
+			Map<ToolSpecification, ToolExecutor> specMap = new LinkedHashMap<>();
+			for (ToolImplementation impl : delegationTools) {
+				specMap.put(impl.getSpecification(), impl.getExecutor());
+			}
+			builder.tools(specMap);
+		}
+
+		return builder.build();
+	}
+
 	private ToolExecutor createDelegationExecutor(String fromAgent, String targetName) {
 		return (request, memoryId) -> {
 			Map<String, Object> args;
@@ -467,9 +506,9 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 
 			ToolCallTracking.recordAgentCallStartIfTracking(fromAgent, targetName, message);
 			try {
-				GenericAgent agent = buildAgent(targetName, GenericAgent.class);
-				String result = ThreadContextManager.inSystemInteraction(AgentRegistry.class,
-					() -> agent.invoke(message));
+				UntypedAgent agent = buildUntypedAgent(targetName);
+				String result = (String) ThreadContextManager.inSystemInteraction(AgentRegistry.class,
+					() -> agent.invoke(Map.of("message", message)));
 				ToolCallTracking.recordAgentCallCompleteIfTracking(truncate(result));
 				return result;
 			} catch (Exception e) {
@@ -541,7 +580,7 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 			for (ToolImplementation impl : delegationTools) {
 				specMap.put(impl.getSpecification(), impl.getExecutor());
 			}
-			builder.toolProvider(request -> new ToolProviderResult(specMap));
+			builder.tools(specMap);
 		}
 
 		if (memory != null) {

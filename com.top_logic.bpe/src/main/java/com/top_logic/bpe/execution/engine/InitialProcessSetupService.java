@@ -113,6 +113,7 @@ public class InitialProcessSetupService extends ManagedClass {
 
 		List<Resource> newProcesses = new ArrayList<>();
 		List<Resource> updatedProcesses = new ArrayList<>();
+		List<Resource> initHashesProcesses = new ArrayList<>();
 
 		ConnectionPool pool = KBUtils.getConnectionPool(kb);
 		PooledConnection readCon = pool.borrowReadConnection();
@@ -127,7 +128,7 @@ public class InitialProcessSetupService extends ManagedClass {
 				}
 				if (LOADED.equals(storedHash)) {
 					// legacy. Update data.
-					updatedProcesses.add(resource);
+					initHashesProcesses.add(resource);
 					continue;
 				}
 				if (storedHash == null) {
@@ -145,7 +146,7 @@ public class InitialProcessSetupService extends ManagedClass {
 			pool.releaseReadConnection(readCon);
 		}
 
-		if (newProcesses.isEmpty() && updatedProcesses.isEmpty()) {
+		if (newProcesses.isEmpty() && updatedProcesses.isEmpty() && initHashesProcesses.isEmpty()) {
 			Logger.info("All workflows in " + DATA_PATH + " are up to date.", InitialProcessSetupService.class);
 			return;
 		}
@@ -156,7 +157,7 @@ public class InitialProcessSetupService extends ManagedClass {
 			
 			if (!newProcesses.isEmpty()) {
 				for (Resource resource : newProcesses) {
-					String resourcePath = DATA_PATH + resource.name();
+					String resourcePath = resourcePath(resource);
 					Logger.info("Loading initial workflow: " + resourcePath, InitialProcessSetupService.class);
 
 					try {
@@ -174,10 +175,23 @@ public class InitialProcessSetupService extends ManagedClass {
 				}
 			}
 
+			if (!initHashesProcesses.isEmpty()) {
+				for (Resource resource : initHashesProcesses) {
+					String resourcePath = resourcePath(resource);
+					Logger.info("Setting initial hash for workflow: " + resourcePath, InitialProcessSetupService.class);
+
+					try {
+						storeHash(commitCon, resource);
+					} catch (SQLException ex) {
+						Logger.error("Cannot initialize hash: " + resourcePath, ex, InitialProcessSetupService.class);
+					}
+				}
+			}
+
 			if (!updatedProcesses.isEmpty()) {
 				Map<String, List<Collaboration>> collaborationsByName = BPEUtil.collaborationsByName();
 				for (Resource resource : updatedProcesses) {
-					String resourcePath = DATA_PATH + resource.name();
+					String resourcePath = resourcePath(resource);
 					BinaryData data = resource.data();
 
 					Collaboration processToUpdate;
@@ -218,6 +232,10 @@ public class InitialProcessSetupService extends ManagedClass {
 
 			tx.commit();
 		}
+	}
+
+	private String resourcePath(Resource resource) {
+		return DATA_PATH + resource.name();
 	}
 
 	/**

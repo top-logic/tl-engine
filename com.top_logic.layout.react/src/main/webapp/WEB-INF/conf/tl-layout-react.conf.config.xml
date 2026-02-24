@@ -24,6 +24,7 @@
 			<instance>
 				<additional-files>
 					<file resource="tl-react-bridge.js" />
+					<file resource="tl-react-controls.js" />
 				</additional-files>
 			</instance>
 		</config>

@@ -10,6 +10,7 @@
 			<instance class="com.top_logic.ai.service.agents.AgentRegistry">
 				<agent name="orchestrator"
 					delegations="ModelExplorer,TLScriptAgent"
+					entry-point="true"
 					model="mistral-large-latest"
 					skills="promptModelExplorer"
 					tools=""

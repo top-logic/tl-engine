@@ -109,8 +109,9 @@ public class ReactTabBarControl extends ReactControl {
 
 	@Override
 	protected void internalDetach() {
-		// Unregister all cached content controls before detaching.
+		// Unregister all cached content controls (and their nested children) before detaching.
 		for (ReactControl cached : _contentCache.values()) {
+			forEachChildControl(cached.getReactState(), this::unregisterChildControl);
 			unregisterChildControl(cached);
 		}
 		_contentCache.clear();
@@ -143,6 +144,7 @@ public class ReactTabBarControl extends ReactControl {
 
 		ReactControl content = getOrCreateContent(tabId, frameScope);
 		registerChildControl(content);
+		forEachChildControl(content.getReactState(), this::registerChildControl);
 
 		Map<String, Object> patch = new HashMap<>();
 		patch.put(ACTIVE_TAB_ID, tabId);
@@ -159,6 +161,8 @@ public class ReactTabBarControl extends ReactControl {
 		TabDefinition tabDef = findTab(tabId);
 		ReactControl content = tabDef.getContentFactory().get();
 		content.fetchID(frameScope);
+		// Also assign IDs to any nested ReactControl children in the content's state.
+		forEachChildControl(content.getReactState(), child -> child.fetchID(frameScope));
 		_contentCache.put(tabId, content);
 		return content;
 	}

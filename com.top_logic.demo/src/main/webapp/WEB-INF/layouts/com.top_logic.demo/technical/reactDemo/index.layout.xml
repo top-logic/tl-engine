@@ -11,6 +11,7 @@
 		</tabLabel>
 		<components>
 			<layout-reference resource="com.top_logic.demo/technical/reactDemo/counter.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/reactDemo/formFields.layout.xml"/>
 		</components>
 	</arguments>
 </config:template-call>

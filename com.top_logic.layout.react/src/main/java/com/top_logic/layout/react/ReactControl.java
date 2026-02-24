@@ -8,6 +8,7 @@ package com.top_logic.layout.react;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.top_logic.basic.xml.TagWriter;
@@ -242,6 +243,12 @@ public class ReactControl extends AbstractVisibleControl {
 			writer.value((Boolean) value);
 		} else if (value instanceof Map) {
 			writeJsonMap(writer, (Map<String, Object>) value);
+		} else if (value instanceof List) {
+			writer.beginArray();
+			for (Object element : (List<?>) value) {
+				writeJsonValue(writer, element);
+			}
+			writer.endArray();
 		} else {
 			writer.value(value.toString());
 		}

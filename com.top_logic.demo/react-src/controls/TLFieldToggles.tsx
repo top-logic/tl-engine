@@ -11,7 +11,7 @@ const TLFieldToggles: React.FC = () => {
   const state = useTLState();
 
   return (
-    <div style={{ marginTop: '0.5em', display: 'flex', gap: '4px' }}>
+    <div className="tlFieldToggles">
       <TLChild control={state.disabledButton} />
       <TLChild control={state.immutableButton} />
       <TLChild control={state.mandatoryButton} />

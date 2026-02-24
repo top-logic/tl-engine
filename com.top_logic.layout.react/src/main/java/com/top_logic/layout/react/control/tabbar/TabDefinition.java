@@ -3,9 +3,11 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.layout.react;
+package com.top_logic.layout.react.control.tabbar;
 
 import java.util.function.Supplier;
+
+import com.top_logic.layout.react.ReactControl;
 
 /**
  * Definition of a single tab in a {@link ReactTabBarControl}.

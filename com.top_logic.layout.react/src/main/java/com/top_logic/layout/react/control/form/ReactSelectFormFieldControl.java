@@ -3,8 +3,9 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.layout.react;
+package com.top_logic.layout.react.control.form;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -21,7 +22,10 @@ import com.top_logic.layout.form.FormField;
  */
 public class ReactSelectFormFieldControl extends ReactFormFieldControl {
 
-	private final List<Map<String, Object>> _options;
+	/** State key for the select options list. */
+	private static final String OPTIONS = "options";
+
+	private List<Map<String, Object>> _options;
 
 	/**
 	 * Creates a new {@link ReactSelectFormFieldControl}.
@@ -36,10 +40,21 @@ public class ReactSelectFormFieldControl extends ReactFormFieldControl {
 		_options = options;
 	}
 
+	/**
+	 * Updates the available options.
+	 *
+	 * @param options
+	 *        The new select options.
+	 */
+	public void setOptions(List<Map<String, Object>> options) {
+		_options = options;
+		sendPatch(Collections.singletonMap(OPTIONS, _options));
+	}
+
 	@Override
 	protected Map<String, Object> buildFullFieldState() {
 		Map<String, Object> state = super.buildFullFieldState();
-		state.put("options", _options);
+		state.put(OPTIONS, _options);
 		return state;
 	}
 

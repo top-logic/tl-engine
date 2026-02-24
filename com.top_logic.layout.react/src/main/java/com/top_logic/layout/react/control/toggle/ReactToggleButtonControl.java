@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.layout.react;
+package com.top_logic.layout.react.control.toggle;
 
 import java.util.Map;
 
@@ -11,6 +11,8 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.ControlCommand;
+import com.top_logic.layout.react.I18NConstants;
+import com.top_logic.layout.react.ReactControl;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -23,6 +25,12 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * </p>
  */
 public class ReactToggleButtonControl extends ReactControl {
+
+	/** State key for the button label. */
+	private static final String LABEL = "label";
+
+	/** State key for the active/inactive toggle state. */
+	private static final String ACTIVE = "active";
 
 	private static final Map<String, ControlCommand> COMMANDS = createCommandMap(new ToggleCommand());
 
@@ -44,8 +52,29 @@ public class ReactToggleButtonControl extends ReactControl {
 		super(null, "TLToggleButton", COMMANDS);
 		_action = action;
 		_active = initialActive;
-		getReactState().put("label", label);
-		getReactState().put("active", Boolean.valueOf(initialActive));
+		putState(LABEL, label);
+		putState(ACTIVE, Boolean.valueOf(initialActive));
+	}
+
+	/**
+	 * Updates the button label.
+	 *
+	 * @param label
+	 *        The new label text.
+	 */
+	public void setLabel(String label) {
+		putState(LABEL, label);
+	}
+
+	/**
+	 * Programmatically sets the active state.
+	 *
+	 * @param active
+	 *        The new active state.
+	 */
+	public void setActive(boolean active) {
+		_active = active;
+		putState(ACTIVE, Boolean.valueOf(active));
 	}
 
 	/**
@@ -67,7 +96,7 @@ public class ReactToggleButtonControl extends ReactControl {
 			ReactToggleButtonControl toggle = (ReactToggleButtonControl) control;
 			boolean newActive = toggle._action.toggle(context, toggle._active);
 			toggle._active = newActive;
-			toggle.patchReactState(Map.of("active", Boolean.valueOf(newActive)));
+			toggle.patchReactState(Map.of(ACTIVE, Boolean.valueOf(newActive)));
 			return HandlerResult.DEFAULT_RESULT;
 		}
 	}

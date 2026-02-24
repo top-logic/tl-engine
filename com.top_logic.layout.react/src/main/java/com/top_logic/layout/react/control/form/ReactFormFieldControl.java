@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.layout.react;
+package com.top_logic.layout.react.control.form;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -20,6 +20,9 @@ import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.control.AbstractFormFieldControl;
 import com.top_logic.layout.form.model.FormFieldInternals;
+import com.top_logic.layout.react.I18NConstants;
+import com.top_logic.layout.react.ReactControl;
+import com.top_logic.layout.react.SSEUpdateQueue;
 import com.top_logic.layout.react.protocol.PatchEvent;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.HTMLUtil;
@@ -35,6 +38,30 @@ import com.top_logic.util.error.TopLogicException;
  * </p>
  */
 public class ReactFormFieldControl extends AbstractFormFieldControl {
+
+	/** State key for the field value. */
+	protected static final String VALUE = "value";
+
+	/** State key for whether the field is editable. */
+	protected static final String EDITABLE = "editable";
+
+	/** State key for whether the field is disabled. */
+	protected static final String DISABLED = "disabled";
+
+	/** State key for whether the field is mandatory. */
+	protected static final String MANDATORY = "mandatory";
+
+	/** State key for whether the field has a validation error. */
+	protected static final String HAS_ERROR = "hasError";
+
+	/** State key for the error message text. */
+	protected static final String ERROR_MESSAGE = "errorMessage";
+
+	/** State key for the field label. */
+	protected static final String LABEL = "label";
+
+	/** State key for the tooltip text. */
+	protected static final String TOOLTIP = "tooltip";
 
 	private static final String VALUE_CHANGED_COMMAND = "valueChanged";
 
@@ -119,28 +146,28 @@ public class ReactFormFieldControl extends AbstractFormFieldControl {
 	protected Map<String, Object> buildFullFieldState() {
 		FormField field = getFieldModel();
 		Map<String, Object> state = new HashMap<>();
-		state.put("value", field.hasValue() ? field.getValue() : null);
-		state.put("editable", !field.isImmutable());
-		state.put("disabled", field.isDisabled());
-		state.put("mandatory", field.isMandatory());
-		state.put("hasError", field.hasError());
-		state.put("errorMessage", field.hasError() ? field.getError().toString() : null);
-		state.put("label", field.hasLabel() ? field.getLabel() : null);
-		state.put("tooltip", field.getTooltip() != null ? field.getTooltip().toString() : null);
+		state.put(VALUE, field.hasValue() ? field.getValue() : null);
+		state.put(EDITABLE, !field.isImmutable());
+		state.put(DISABLED, field.isDisabled());
+		state.put(MANDATORY, field.isMandatory());
+		state.put(HAS_ERROR, field.hasError());
+		state.put(ERROR_MESSAGE, field.hasError() ? field.getError().toString() : null);
+		state.put(LABEL, field.hasLabel() ? field.getLabel() : null);
+		state.put(TOOLTIP, field.getTooltip() != null ? field.getTooltip().toString() : null);
 		return state;
 	}
 
 	@Override
 	protected void internalHandleValueChanged(FormField field, Object oldValue, Object newValue) {
 		Map<String, Object> patch = new HashMap<>();
-		patch.put("value", field.hasValue() ? field.getValue() : null);
+		patch.put(VALUE, field.hasValue() ? field.getValue() : null);
 		sendPatch(patch);
 	}
 
 	@Override
 	protected void internalHandleDisabledEvent(FormMember sender, Boolean oldValue, Boolean newValue) {
 		Map<String, Object> patch = new HashMap<>();
-		patch.put("disabled", newValue);
+		patch.put(DISABLED, newValue);
 		sendPatch(patch);
 	}
 
@@ -148,7 +175,7 @@ public class ReactFormFieldControl extends AbstractFormFieldControl {
 	public Bubble handleMandatoryChanged(FormField sender, Boolean oldValue, Boolean newValue) {
 		if (!skipEvent(sender)) {
 			Map<String, Object> patch = new HashMap<>();
-			patch.put("mandatory", newValue);
+			patch.put(MANDATORY, newValue);
 			sendPatch(patch);
 		}
 		return Bubble.BUBBLE;
@@ -158,8 +185,8 @@ public class ReactFormFieldControl extends AbstractFormFieldControl {
 	public Bubble hasErrorChanged(FormField sender, Boolean oldError, Boolean newError) {
 		if (!skipEvent(sender)) {
 			Map<String, Object> patch = new HashMap<>();
-			patch.put("hasError", newError);
-			patch.put("errorMessage", Boolean.TRUE.equals(newError) ? sender.getError().toString() : null);
+			patch.put(HAS_ERROR, newError);
+			patch.put(ERROR_MESSAGE, Boolean.TRUE.equals(newError) ? sender.getError().toString() : null);
 			sendPatch(patch);
 		}
 		return Bubble.BUBBLE;
@@ -169,13 +196,13 @@ public class ReactFormFieldControl extends AbstractFormFieldControl {
 	public Bubble handleImmutableChanged(FormMember sender, Boolean oldValue, Boolean newValue) {
 		if (!skipEvent(sender)) {
 			Map<String, Object> patch = new HashMap<>();
-			patch.put("editable", !Boolean.TRUE.equals(newValue));
+			patch.put(EDITABLE, !Boolean.TRUE.equals(newValue));
 			sendPatch(patch);
 		}
 		return Bubble.BUBBLE;
 	}
 
-	private void sendPatch(Map<String, Object> patch) {
+	protected void sendPatch(Map<String, Object> patch) {
 		SSEUpdateQueue queue = _sseQueue;
 		if (queue == null) {
 			return;
@@ -208,7 +235,7 @@ public class ReactFormFieldControl extends AbstractFormFieldControl {
 				Control control, Map<String, Object> arguments) {
 			ReactFormFieldControl reactControl = (ReactFormFieldControl) control;
 			FormField field = reactControl.getFieldModel();
-			Object newValue = arguments.get("value");
+			Object newValue = arguments.get(VALUE);
 
 			// Form fields expect raw string input (as from HTML forms). The React client sends
 			// JSON-typed values (Integer, Boolean, etc.), so convert to String for parsing.

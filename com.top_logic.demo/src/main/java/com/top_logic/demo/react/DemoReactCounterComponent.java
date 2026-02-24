@@ -73,6 +73,9 @@ public class DemoReactCounterComponent extends LayoutComponent {
 		/** State key for the current counter value. */
 		private static final String COUNT = "count";
 
+		/** State key for the display label. */
+		private static final String LABEL = "label";
+
 		private static final Map<String, ControlCommand> COMMANDS = createCommandMap(
 			new IncrementCommand(),
 			new DecrementCommand());
@@ -90,9 +93,9 @@ public class DemoReactCounterComponent extends LayoutComponent {
 		 */
 		public DemoCounterControl(String label) {
 			super(null, "TLCounter", COMMANDS);
-			getReactState().put(COUNT, 0);
+			putState(COUNT, 0);
 			if (label != null) {
-				getReactState().put("label", label);
+				putState(LABEL, label);
 			}
 		}
 

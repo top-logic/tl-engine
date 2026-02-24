@@ -17,8 +17,12 @@ export interface ChildDescriptor {
  * <p>Handles component lookup, child context creation, and context wrapping so that
  * composite React components never need to touch {@code createChildContext} or
  * {@code TLControlContext.Provider} directly.</p>
+ *
+ * <p>The {@code control} prop accepts the raw state value (typed as {@code unknown})
+ * so that callers can write {@code <TLChild control={state.foo} />} without a cast.</p>
  */
-const TLChild: React.FC<{ descriptor: ChildDescriptor }> = ({ descriptor }) => {
+const TLChild: React.FC<{ control: unknown }> = ({ control }) => {
+  const descriptor = control as ChildDescriptor;
   const Component = getComponent(descriptor.module);
 
   const childCtx = useMemo(

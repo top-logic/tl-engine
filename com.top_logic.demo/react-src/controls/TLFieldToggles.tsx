@@ -1,5 +1,4 @@
 import { React, useTLState, TLChild } from 'tl-react-bridge';
-import type { ChildDescriptor } from 'tl-react-bridge';
 
 /**
  * A composite React control that renders three toggle buttons for a form field's
@@ -13,9 +12,9 @@ const TLFieldToggles: React.FC = () => {
 
   return (
     <div style={{ marginTop: '0.5em', display: 'flex', gap: '4px' }}>
-      <TLChild descriptor={state.disabledButton as ChildDescriptor} />
-      <TLChild descriptor={state.immutableButton as ChildDescriptor} />
-      <TLChild descriptor={state.mandatoryButton as ChildDescriptor} />
+      <TLChild control={state.disabledButton} />
+      <TLChild control={state.immutableButton} />
+      <TLChild control={state.mandatoryButton} />
     </div>
   );
 };

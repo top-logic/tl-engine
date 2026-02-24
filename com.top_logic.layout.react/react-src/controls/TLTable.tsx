@@ -1,6 +1,6 @@
 import React from 'react';
-import type { TLCellProps } from '../bridge/types';
-import { getComponent } from '../bridge/registry';
+import type { TLCellProps } from 'tl-react-bridge';
+import { getComponent } from 'tl-react-bridge';
 
 interface ColumnDef {
   name: string;

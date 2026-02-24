@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
-import type { TLCellProps } from '../bridge/types';
-import { useTLFieldValue } from '../bridge/tl-react-bridge';
+import type { TLCellProps } from 'tl-react-bridge';
+import { useTLFieldValue } from 'tl-react-bridge';
 
 /**
  * A text input field rendered via React.

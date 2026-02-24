@@ -8,7 +8,7 @@ export default defineConfig({
   },
   build: {
     lib: {
-      entry: 'react-src/index.ts',
+      entry: 'react-src/bridge-entry.ts',
       name: 'TLReact',
       fileName: () => 'tl-react-bridge.js',
       formats: ['iife'],

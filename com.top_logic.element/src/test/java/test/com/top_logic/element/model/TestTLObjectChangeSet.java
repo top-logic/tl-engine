@@ -68,32 +68,31 @@ public class TestTLObjectChangeSet extends AbstractTLObjectChangeSetTest {
 		TLClass aType = (TLClass) _testModule.getType("A");
 		TLClass bType = (TLClass) _testModule.getType("B");
 
-		AtomicReference<TLObject> aRef = new AtomicReference<>();
-		AtomicReference<TLObject> bRef = new AtomicReference<>();
+		TLObject a;
+		TLObject b;
 		try (Transaction tx = beginTX()) {
-			TLObject a = factory.createObject(aType);
+			a = factory.createObject(aType);
 			a.tUpdateByName("name", "a1");
-			aRef.set(a);
-			TLObject b = factory.createObject(bType, a);
+			b = factory.createObject(bType, a);
 			b.tUpdateByName("name", "b1");
-			bRef.set(b);
 			tx.commit();
 		}
 		
 		testNextCommit(change -> {
 			Map<TLObject, TLObjectUpdate> updates = toMap(change.updates());
-			TLObjectUpdate update = updates.get(aRef.get());
+			TLObjectUpdate update = updates.get(a);
 			TLStructuredTypePart bRefPart = aType.getPart("otherB");
-			assertEquals(bRef.get(), update.newValues().get(bRefPart));
+			assertEquals(b, update.newValues().get(bRefPart));
 			assertEmpty(true, update.oldValues().keySet());
 		});
 		try (Transaction tx = beginTX()) {
 			TLModelUtil.addReference(aType, "otherB", bType, "sourceA");
-			aRef.get().tUpdateByName("otherB", bRef.get());
+			a.tUpdateByName("otherB", b);
 			tx.commit();
 		}
-		
-	}		
+
+	}
+
 	/**
 	 * Test deleting references.
 	 */
@@ -103,15 +102,13 @@ public class TestTLObjectChangeSet extends AbstractTLObjectChangeSetTest {
 		TLClass aType = (TLClass) _testModule.getType("A");
 		TLClass bType = (TLClass) _testModule.getType("B");
 
-		AtomicReference<TLObject> aRef = new AtomicReference<>();
-		AtomicReference<TLObject> bRef = new AtomicReference<>();
+		TLObject a;
+		TLObject b;
 		try (Transaction tx = beginTX()) {
-			TLObject a = factory.createObject(aType);
+			a = factory.createObject(aType);
 			a.tUpdateByName("name", "a1");
-			aRef.set(a);
-			TLObject b = factory.createObject(bType, a);
+			b = factory.createObject(bType, a);
 			b.tUpdateByName("name", "b1");
-			bRef.set(b);
 			a.tUpdateByName("b", b);
 			tx.commit();
 		}
@@ -123,8 +120,8 @@ public class TestTLObjectChangeSet extends AbstractTLObjectChangeSetTest {
 			Map<TLObject, TLObjectUpdate> updates = toMap(change.updates());
 			TLObjectUpdate typeUpdate = updates.get(aType);
 			assertNull("Reference to deleted part is just a back reference, therefore not reported!", typeUpdate);
-			TLObjectUpdate objectUpdate = updates.get(aRef.get());
-			assertEquals(bRef.get(), objectUpdate.oldValues().get(bReference));
+			TLObjectUpdate objectUpdate = updates.get(a);
+			assertEquals(b, objectUpdate.oldValues().get(bReference));
 			assertNull(objectUpdate.newValues().get(bReference));
 			assertFalse("Attribute was deleted.", objectUpdate.newValues().containsKey(bReference));
 
@@ -137,8 +134,8 @@ public class TestTLObjectChangeSet extends AbstractTLObjectChangeSetTest {
 			bReference.tDelete();
 			tx.commit();
 		}
-		assertTrue(aRef.get().tValid());
-		assertTrue(bRef.get().tValid());
+		assertTrue(a.tValid());
+		assertTrue(b.tValid());
 
 	}
 

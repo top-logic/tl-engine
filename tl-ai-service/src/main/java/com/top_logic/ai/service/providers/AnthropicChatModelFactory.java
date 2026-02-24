@@ -5,7 +5,6 @@
  */
 package com.top_logic.ai.service.providers;
 
-import java.util.Collections;
 import java.util.List;
 
 import com.top_logic.ai.service.ChatModelFactory;
@@ -16,6 +15,7 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 
 import dev.langchain4j.model.anthropic.AnthropicChatModel;
+import dev.langchain4j.model.anthropic.AnthropicModelCatalog;
 import dev.langchain4j.model.chat.ChatModel;
 
 /**
@@ -128,7 +128,17 @@ public class AnthropicChatModelFactory extends ChatModelFactory {
 
 	@Override
 	protected List<String> getAvailableModels() throws Exception {
-		// Model listing not available for Anthropic.
-		return Collections.emptyList();
+		Config config = getConfig();
+
+		AnthropicModelCatalog.Builder builder = AnthropicModelCatalog.builder()
+			.apiKey(config.getApiKey())
+			.baseUrl(config.getBaseUrl());
+
+		String version = config.getVersion();
+		if (version != null) {
+			builder.version(version);
+		}
+
+		return extractModelNames(builder.build().listModels());
 	}
 }

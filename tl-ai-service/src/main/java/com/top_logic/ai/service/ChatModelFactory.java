@@ -6,6 +6,8 @@
 package com.top_logic.ai.service;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.apache.commons.pool.ObjectPool;
 import org.apache.commons.pool.impl.GenericObjectPool;
@@ -22,6 +24,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 
 import dev.langchain4j.model.chat.ChatModel;
+import dev.langchain4j.model.catalog.ModelDescription;
 
 /**
  * Abstract factory for creating and managing pooled {@link ChatModel} instances.
@@ -210,6 +213,19 @@ public abstract class ChatModelFactory implements ConfiguredInstance<ChatModelFa
 	 *         If the model cannot be created.
 	 */
 	protected abstract ChatModel createModel(String modelName) throws Exception;
+
+	/**
+	 * Extracts stable model names from model catalog entries.
+	 */
+	protected static List<String> extractModelNames(List<ModelDescription> models) {
+		return models.stream()
+			.map(ModelDescription::name)
+			.filter(Objects::nonNull)
+			.filter(modelName -> !modelName.isBlank())
+			.distinct()
+			.sorted()
+			.collect(Collectors.toList());
+	}
 
 	/**
 	 * Returns the list of available models from the provider.

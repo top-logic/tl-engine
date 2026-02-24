@@ -5,7 +5,6 @@
  */
 package com.top_logic.ai.service.providers;
 
-import java.util.Collections;
 import java.util.List;
 
 import com.top_logic.ai.service.ChatModelFactory;
@@ -16,6 +15,7 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 
 import dev.langchain4j.model.chat.ChatModel;
+import dev.langchain4j.model.openai.OpenAiModelCatalog;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 
 /**
@@ -132,7 +132,17 @@ public class OpenAIChatModelFactory extends ChatModelFactory {
 
 	@Override
 	protected List<String> getAvailableModels() throws Exception {
-		// Model listing not available for OpenAI.
-		return Collections.emptyList();
+		Config config = getConfig();
+
+		OpenAiModelCatalog.Builder builder = OpenAiModelCatalog.builder()
+			.apiKey(config.getApiKey())
+			.baseUrl(config.getBaseUrl());
+
+		String organization = config.getOrganization();
+		if (organization != null) {
+			builder.organizationId(organization);
+		}
+
+		return extractModelNames(builder.build().listModels());
 	}
 }

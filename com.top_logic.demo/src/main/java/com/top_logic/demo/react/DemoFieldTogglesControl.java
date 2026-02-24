@@ -6,17 +6,16 @@
 package com.top_logic.demo.react;
 
 import com.top_logic.layout.form.FormField;
-import com.top_logic.layout.react.ReactButtonControl;
 import com.top_logic.layout.react.ReactControl;
-import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.layout.react.ReactToggleButtonControl;
 
 /**
  * A composite {@link ReactControl} that renders the {@code TLFieldToggles} React component.
  *
  * <p>
  * Demonstrates React-level composition with named child slots: the server puts each child
- * {@link ReactButtonControl} directly into the React state. The framework automatically handles ID
- * allocation, SSE registration, serialization as child descriptors, and cleanup.
+ * {@link ReactToggleButtonControl} directly into the React state. The framework automatically
+ * handles ID allocation, SSE registration, serialization as child descriptors, and cleanup.
  * </p>
  */
 public class DemoFieldTogglesControl extends ReactControl {
@@ -30,19 +29,19 @@ public class DemoFieldTogglesControl extends ReactControl {
 	public DemoFieldTogglesControl(FormField field) {
 		super(field, "TLFieldToggles");
 
-		getReactState().put("disabledButton", new ReactButtonControl("Disabled", context -> {
-			field.setDisabled(!field.isDisabled());
-			return HandlerResult.DEFAULT_RESULT;
+		getReactState().put("disabledButton", new ReactToggleButtonControl("Disabled", field.isDisabled(), (ctx, active) -> {
+			field.setDisabled(!active);
+			return !active;
 		}));
 
-		getReactState().put("immutableButton", new ReactButtonControl("Immutable", context -> {
-			field.setImmutable(!field.isImmutable());
-			return HandlerResult.DEFAULT_RESULT;
+		getReactState().put("immutableButton", new ReactToggleButtonControl("Immutable", field.isImmutable(), (ctx, active) -> {
+			field.setImmutable(!active);
+			return !active;
 		}));
 
-		getReactState().put("mandatoryButton", new ReactButtonControl("Mandatory", context -> {
-			field.setMandatory(!field.isMandatory());
-			return HandlerResult.DEFAULT_RESULT;
+		getReactState().put("mandatoryButton", new ReactToggleButtonControl("Mandatory", field.isMandatory(), (ctx, active) -> {
+			field.setMandatory(!active);
+			return !active;
 		}));
 	}
 

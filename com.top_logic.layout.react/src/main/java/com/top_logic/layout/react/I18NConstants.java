@@ -36,6 +36,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey REACT_BUTTON_CLICK;
 
 	/**
+	 * @en React toggle button clicked.
+	 */
+	public static ResKey REACT_TOGGLE_BUTTON_CLICK;
+
+	/**
 	 * @en Internal error in React integration.
 	 */
 	public static ResKey ERROR_INTERNAL;

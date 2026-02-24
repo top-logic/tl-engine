@@ -16,14 +16,18 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.react.ReactButtonControl;
 import com.top_logic.layout.react.ReactControl;
+import com.top_logic.layout.react.ReactFieldListControl;
 import com.top_logic.layout.react.ReactTabBarControl;
 import com.top_logic.layout.react.TabDefinition;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * Demo {@link LayoutComponent} that showcases {@link ReactTabBarControl} with lazy tab content.
@@ -73,28 +77,29 @@ public class DemoReactTabBarComponent extends LayoutComponent {
 	}
 
 	private ReactControl createCounterA() {
-		return new DemoReactCounterComponent.DemoCounterControl();
+		DemoReactCounterComponent.DemoCounterControl counter = new DemoReactCounterComponent.DemoCounterControl();
+		counter.getReactState().put("label", "Counter A");
+		return counter;
 	}
 
 	private ReactControl createCounterB() {
-		return new DemoReactCounterComponent.DemoCounterControl();
+		DemoReactCounterComponent.DemoCounterControl counter = new DemoReactCounterComponent.DemoCounterControl();
+		counter.getReactState().put("label", "Counter B");
+		return counter;
 	}
 
 	private ReactControl createButtonsTab() {
-		List<Object> buttons = new ArrayList<>();
+		List<ReactControl> buttons = new ArrayList<>();
 		buttons.add(new ReactButtonControl("Say Hello", (context) -> {
-			com.top_logic.basic.Logger.info("Hello from React tab bar button!", DemoReactTabBarComponent.class);
-			return com.top_logic.tool.boundsec.HandlerResult.DEFAULT_RESULT;
+			InfoService.showInfo(ResKey.text("Hello from the React tab bar!"));
+			return HandlerResult.DEFAULT_RESULT;
 		}));
 		buttons.add(new ReactButtonControl("Say Goodbye", (context) -> {
-			com.top_logic.basic.Logger.info("Goodbye from React tab bar button!", DemoReactTabBarComponent.class);
-			return com.top_logic.tool.boundsec.HandlerResult.DEFAULT_RESULT;
+			InfoService.showInfo(ResKey.text("Goodbye from the React tab bar!"));
+			return HandlerResult.DEFAULT_RESULT;
 		}));
 
-		ReactControl container = new ReactControl(null, "TLFieldList");
-		container.getReactState().put("title", "Button Controls");
-		container.getReactState().put("fields", buttons);
-		return container;
+		return new ReactFieldListControl("Button Controls", buttons);
 	}
 
 }

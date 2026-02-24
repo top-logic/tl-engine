@@ -102,6 +102,14 @@
 			</instance>
 		</config>
 
+		<config service-class="com.top_logic.gui.JSFileCompiler">
+			<instance>
+				<additional-files>
+					<file resource="tl-demo-controls.js" type="module" />
+				</additional-files>
+			</instance>
+		</config>
+
 		<config service-class="com.top_logic.basic.util.ResourcesModule">
 			<instance
 				error-on-missing-key="true"

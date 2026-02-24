@@ -12,8 +12,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -21,6 +19,7 @@ import jakarta.servlet.AsyncContext;
 import jakarta.servlet.http.HttpSession;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.layout.CommandListener;
 import com.top_logic.layout.react.protocol.SSEEvent;
 
@@ -53,13 +52,6 @@ public class SSEUpdateQueue {
 
 	/** Interval between heartbeat messages in seconds. */
 	private static final long HEARTBEAT_INTERVAL_SECONDS = 30;
-
-	private static final ScheduledExecutorService HEARTBEAT_EXECUTOR =
-		Executors.newSingleThreadScheduledExecutor(r -> {
-			Thread t = new Thread(r, "SSE-Heartbeat");
-			t.setDaemon(true);
-			return t;
-		});
 
 	private final ConcurrentLinkedQueue<SSEEvent> _pendingEvents = new ConcurrentLinkedQueue<>();
 
@@ -140,7 +132,7 @@ public class SSEUpdateQueue {
 
 	private synchronized void ensureHeartbeat() {
 		if (_heartbeatTask == null || _heartbeatTask.isDone()) {
-			_heartbeatTask = HEARTBEAT_EXECUTOR.scheduleAtFixedRate(
+			_heartbeatTask = SchedulerService.getInstance().scheduleAtFixedRate(
 				this::sendHeartbeat, HEARTBEAT_INTERVAL_SECONDS, HEARTBEAT_INTERVAL_SECONDS, TimeUnit.SECONDS);
 		}
 	}

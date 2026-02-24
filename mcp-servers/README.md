@@ -18,6 +18,12 @@ Prerequisites: Python 3.7+ with venv, curl or wget, OS keyring (GNOME Keyring, K
 
 The script creates a Python venv (`.venv`), installs tools, and stores credentials in your OS keyring.
 
+Credentials are stored system-wide in the OS keyring, so you only need to enter them once. When setting up a new workspace, the script detects existing credentials and skips the prompts. To re-enter credentials (e.g., after a password change), use `--force`:
+
+```bash
+./mcp-servers/scripts/setup-mcp.sh --force trac
+```
+
 After setup, restart Claude Code and run `/mcp` to verify. You can also check with `claude mcp list`.
 
 ### Credentials
@@ -54,7 +60,7 @@ Once connected, ask Claude Code things like:
 | Error | Fix |
 |-------|-----|
 | "Virtual environment not found" | Run `./mcp-servers/scripts/setup-mcp.sh all` |
-| "Missing credentials in OS keyring" | Re-run `./mcp-servers/scripts/setup-mcp.sh <service>` |
+| "Missing credentials in OS keyring" | Re-run `./mcp-servers/scripts/setup-mcp.sh --force <service>` |
 | "gitea-mcp: command not found" | Ensure `~/.local/bin` is in your PATH: `export PATH="$PATH:$HOME/.local/bin"` |
 | Server not showing in Claude Code | Check `claude mcp list`, verify `.mcp.json` exists, restart Claude Code |
 

@@ -8,13 +8,20 @@
 #   ./mcp-servers/scripts/setup-mcp.sh jenkins  # Set up only Jenkins
 #   ./mcp-servers/scripts/setup-mcp.sh gitea    # Set up only Gitea
 #
+#   Add --force to re-enter credentials even if they already exist in the keyring:
+#   ./mcp-servers/scripts/setup-mcp.sh --force all
+#   ./mcp-servers/scripts/setup-mcp.sh --force trac
+#
 # This script:
 #   - Creates/reuses a project .venv with all Python dependencies
 #   - Downloads binary tools (gitea-mcp) to ~/.local/bin and installs mcp-jenkins via pip
-#   - Prompts for credentials and stores them in the OS keyring
+#   - Reuses existing credentials from the OS keyring (skips prompts)
+#   - Prompts only for missing credentials (use --force to re-enter)
 #   - Validates connections where possible
 #
 set -euo pipefail
+
+FORCE_CREDENTIALS=false
 
 # --- Configuration ---
 VENV_DIR="${VENV_DIR:-.venv}"
@@ -142,18 +149,29 @@ setup_trac() {
         die "Cannot find mcp-servers/trac-mcp-server.py. Run from repo root."
     fi
 
-    # Prompt for credentials
-    read -r -p "Trac username: " TRAC_USERNAME
-    [ -n "$TRAC_USERNAME" ] || die "Username cannot be empty."
+    # Check for existing credentials in keyring
+    local existing_user existing_pass
+    existing_user=$(get_from_keyring "$TRAC_KEYRING_SERVICE" "username")
+    existing_pass=$(get_from_keyring "$TRAC_KEYRING_SERVICE" "password")
 
-    read -r -s -p "Trac password (stored in OS keyring): " TRAC_PASSWORD
-    echo
-    [ -n "$TRAC_PASSWORD" ] || die "Password cannot be empty."
+    if [[ -n "$existing_user" && -n "$existing_pass" ]] && [ "$FORCE_CREDENTIALS" = false ]; then
+        info "Trac credentials already in keyring (user: $existing_user). Skipping prompt."
+        TRAC_USERNAME="$existing_user"
+        TRAC_PASSWORD="$existing_pass"
+    else
+        # Prompt for credentials
+        read -r -p "Trac username: " TRAC_USERNAME
+        [ -n "$TRAC_USERNAME" ] || die "Username cannot be empty."
 
-    # Store credentials
-    info "Storing Trac credentials in keyring (service: $TRAC_KEYRING_SERVICE)"
-    store_in_keyring "$TRAC_KEYRING_SERVICE" "username" "$TRAC_USERNAME"
-    store_in_keyring "$TRAC_KEYRING_SERVICE" "password" "$TRAC_PASSWORD"
+        read -r -s -p "Trac password (stored in OS keyring): " TRAC_PASSWORD
+        echo
+        [ -n "$TRAC_PASSWORD" ] || die "Password cannot be empty."
+
+        # Store credentials
+        info "Storing Trac credentials in keyring (service: $TRAC_KEYRING_SERVICE)"
+        store_in_keyring "$TRAC_KEYRING_SERVICE" "username" "$TRAC_USERNAME"
+        store_in_keyring "$TRAC_KEYRING_SERVICE" "password" "$TRAC_PASSWORD"
+    fi
 
     # Validate connection
     info "Validating Trac connection: $TRAC_URL"
@@ -232,18 +250,27 @@ WRAPPER
         info "mcp-jenkins already installed."
     fi
 
-    # Prompt for credentials
-    read -r -p "Jenkins username: " JENKINS_USERNAME
-    [ -n "$JENKINS_USERNAME" ] || die "Username cannot be empty."
+    # Check for existing credentials in keyring
+    local existing_user existing_pass
+    existing_user=$(get_from_keyring "$JENKINS_KEYRING_SERVICE" "username")
+    existing_pass=$(get_from_keyring "$JENKINS_KEYRING_SERVICE" "password")
 
-    read -r -s -p "Jenkins API token (stored in OS keyring): " JENKINS_PASSWORD
-    echo
-    [ -n "$JENKINS_PASSWORD" ] || die "API token cannot be empty."
+    if [[ -n "$existing_user" && -n "$existing_pass" ]] && [ "$FORCE_CREDENTIALS" = false ]; then
+        info "Jenkins credentials already in keyring (user: $existing_user). Skipping prompt."
+    else
+        # Prompt for credentials
+        read -r -p "Jenkins username: " JENKINS_USERNAME
+        [ -n "$JENKINS_USERNAME" ] || die "Username cannot be empty."
 
-    # Store credentials
-    info "Storing Jenkins credentials in keyring (service: $JENKINS_KEYRING_SERVICE)"
-    store_in_keyring "$JENKINS_KEYRING_SERVICE" "username" "$JENKINS_USERNAME"
-    store_in_keyring "$JENKINS_KEYRING_SERVICE" "password" "$JENKINS_PASSWORD"
+        read -r -s -p "Jenkins API token (stored in OS keyring): " JENKINS_PASSWORD
+        echo
+        [ -n "$JENKINS_PASSWORD" ] || die "API token cannot be empty."
+
+        # Store credentials
+        info "Storing Jenkins credentials in keyring (service: $JENKINS_KEYRING_SERVICE)"
+        store_in_keyring "$JENKINS_KEYRING_SERVICE" "username" "$JENKINS_USERNAME"
+        store_in_keyring "$JENKINS_KEYRING_SERVICE" "password" "$JENKINS_PASSWORD"
+    fi
 
     echo "  Jenkins setup complete."
 }
@@ -308,14 +335,22 @@ setup_gitea() {
         fi
     fi
 
-    # Prompt for token
-    read -r -s -p "Gitea access token (stored in OS keyring): " GITEA_TOKEN
-    echo
-    [ -n "$GITEA_TOKEN" ] || die "Access token cannot be empty."
+    # Check for existing credentials in keyring
+    local existing_token
+    existing_token=$(get_from_keyring "$GITEA_KEYRING_SERVICE" "token")
 
-    # Store credentials
-    info "Storing Gitea token in keyring (service: $GITEA_KEYRING_SERVICE)"
-    store_in_keyring "$GITEA_KEYRING_SERVICE" "token" "$GITEA_TOKEN"
+    if [[ -n "$existing_token" ]] && [ "$FORCE_CREDENTIALS" = false ]; then
+        info "Gitea token already in keyring. Skipping prompt."
+    else
+        # Prompt for token
+        read -r -s -p "Gitea access token (stored in OS keyring): " GITEA_TOKEN
+        echo
+        [ -n "$GITEA_TOKEN" ] || die "Access token cannot be empty."
+
+        # Store credentials
+        info "Storing Gitea token in keyring (service: $GITEA_KEYRING_SERVICE)"
+        store_in_keyring "$GITEA_KEYRING_SERVICE" "token" "$GITEA_TOKEN"
+    fi
 
     echo "  Gitea setup complete."
 }
@@ -366,6 +401,14 @@ main() {
         *) warn "$BIN_DIR is not in your PATH. Add it with: export PATH=\"\$PATH:$BIN_DIR\"" ;;
     esac
 
+    # Parse --force flag
+    while [[ "${1:-}" == --* ]]; do
+        case "$1" in
+            --force) FORCE_CREDENTIALS=true; shift ;;
+            *) die "Unknown option: $1" ;;
+        esac
+    done
+
     case "${1:-}" in
         all)
             setup_all
@@ -383,7 +426,7 @@ main() {
             interactive_menu
             ;;
         *)
-            echo "Usage: $0 [all|trac|jenkins|gitea]"
+            echo "Usage: $0 [--force] [all|trac|jenkins|gitea]"
             exit 1
             ;;
     esac

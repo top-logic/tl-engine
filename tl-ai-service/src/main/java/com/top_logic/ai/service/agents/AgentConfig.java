@@ -315,9 +315,16 @@ public interface AgentConfig extends NamedConfigMandatory {
 	Double getTemperature();
 
 	/**
-	 * The nucleus sampling parameter (0.0 to 1.0).
+	 * Top-P (nucleus sampling) limits token selection to the smallest set whose cumulative
+	 * probability exceeds this threshold (0.0 to 1.0).
 	 *
-	 * @return The top-p value, or {@code null} to use the model default.
+	 * <p>
+	 * Lower values (e.g. 0.1) make the output more focused by considering only the most likely
+	 * tokens. Higher values (e.g. 0.9) allow more diversity. Usually only one of
+	 * {@link #getTemperature()} or Top-P should be changed at a time.
+	 * </p>
+	 *
+	 * @return The Top-P value, or {@code null} to use the model default.
 	 */
 	@Name(TOP_P)
 	@Nullable
@@ -363,10 +370,11 @@ public interface AgentConfig extends NamedConfigMandatory {
 	ResponseFormatOption getResponseFormat();
 
 	/**
-	 * Top-k sampling parameter.
+	 * Top-K sampling limits token selection to the K most likely next tokens.
 	 *
 	 * <p>
-	 * Only visible for Anthropic models.
+	 * Lower values (e.g. 10) make the output more focused, higher values (e.g. 100) allow more
+	 * variety. Only visible for Anthropic models.
 	 * </p>
 	 */
 	@Name(TOP_K)
@@ -387,10 +395,12 @@ public interface AgentConfig extends NamedConfigMandatory {
 	boolean getDisableParallelToolUse();
 
 	/**
-	 * OpenAI presence penalty.
+	 * Presence penalty penalizes tokens that have already appeared in the text, encouraging the
+	 * model to talk about new topics (-2.0 to 2.0).
 	 *
 	 * <p>
-	 * Only visible for OpenAI models.
+	 * Positive values increase the likelihood of exploring new subjects. Only visible for OpenAI
+	 * models.
 	 * </p>
 	 */
 	@Name(PRESENCE_PENALTY)
@@ -399,9 +409,11 @@ public interface AgentConfig extends NamedConfigMandatory {
 	Double getPresencePenalty();
 
 	/**
-	 * OpenAI frequency penalty.
+	 * Frequency penalty penalizes tokens proportionally to how often they have already appeared,
+	 * reducing repetition (-2.0 to 2.0).
 	 *
 	 * <p>
+	 * Positive values decrease the likelihood of the model repeating the same phrases verbatim.
 	 * Only visible for OpenAI models.
 	 * </p>
 	 */
@@ -411,10 +423,11 @@ public interface AgentConfig extends NamedConfigMandatory {
 	Double getFrequencyPenalty();
 
 	/**
-	 * OpenAI deterministic seed.
+	 * Seed for deterministic output. When set, repeated requests with the same seed and parameters
+	 * should return similar results.
 	 *
 	 * <p>
-	 * Only visible for OpenAI models.
+	 * Useful for testing and debugging. Only visible for OpenAI models.
 	 * </p>
 	 */
 	@Name(SEED)

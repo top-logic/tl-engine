@@ -7,6 +7,7 @@ package com.top_logic.layout.react;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.List;
 import java.util.Map;
 
 import jakarta.servlet.ServletException;
@@ -16,14 +17,18 @@ import jakarta.servlet.http.HttpSession;
 
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.json.JSON;
+import com.top_logic.event.infoservice.InfoService;
+import com.top_logic.event.infoservice.InfoServiceXMLStringConverter;
 import com.top_logic.layout.CommandListener;
 import com.top_logic.layout.ContentHandlersRegistry;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.internal.SubsessionHandler;
+import com.top_logic.layout.react.protocol.JSSnipplet;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.TopLogicServlet;
@@ -132,6 +137,9 @@ public class ReactServlet extends TopLogicServlet {
 
 		HandlerResult result = control.executeCommand(displayContext, commandName, arguments);
 
+		// Forward any InfoService messages that were added during command execution via SSE.
+		forwardInfoServiceMessages(displayContext, queue);
+
 		if (result.isSuccess()) {
 			sendSuccess(response);
 		} else {
@@ -157,6 +165,17 @@ public class ReactServlet extends TopLogicServlet {
 			writer.flush();
 		} else {
 			sendError(response, HttpServletResponse.SC_NOT_FOUND, "Control not found: " + controlId);
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	private void forwardInfoServiceMessages(DisplayContext displayContext, SSEUpdateQueue queue) {
+		if (displayContext.isSet(InfoService.INFO_SERVICE_ENTRIES)) {
+			List<HTMLFragment> entries = displayContext.get(InfoService.INFO_SERVICE_ENTRIES);
+			if (!entries.isEmpty()) {
+				String jsCode = InfoServiceXMLStringConverter.getJSInvocation(displayContext, entries);
+				queue.enqueue(JSSnipplet.create().setCode(jsCode));
+			}
 		}
 	}
 

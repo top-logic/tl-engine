@@ -269,7 +269,7 @@ public interface AgentConfig extends NamedConfigMandatory {
 	 *
 	 * <p>
 	 * Skills are referenced by their registered name in the {@link AgentRegistry} configuration
-	 * (e.g. {@code "shared/prompting-model-explorer"}).
+	 * (e.g. {@code "shared/prompting-ModelExplorer"}).
 	 * </p>
 	 */
 	@Name(SKILLS)

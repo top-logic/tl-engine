@@ -5,15 +5,19 @@
  */
 package com.top_logic.ai.service.agents;
 
+import java.util.Map;
+
 import com.top_logic.ai.service.agents.handoff.AgentWorkOrder;
 import com.top_logic.ai.service.tools.ToolCallTracking;
 import com.top_logic.basic.thread.ThreadContextManager;
+
+import dev.langchain4j.agentic.UntypedAgent;
 
 /**
  * Internal component for agent-to-agent calls.
  * <p>
  * Used by Orchestrator (and by TLScript's "request exploration" path) to invoke
- * {@code ModelExplorer}, {@code ModelEditor}, or {@code TLScriptAgent}. Records {@link com.top_logic.ai.service.tools.TraceEntry.AgentCallTraceEntry}
+ * other configured agents. Records {@link com.top_logic.ai.service.tools.TraceEntry.AgentCallTraceEntry}
  * events via the current run's trace (see {@link com.top_logic.ai.service.tools.ToolCallTracking}).
  * No agent is exposed as a @Tool to another agent.
  * </p>
@@ -41,9 +45,9 @@ public final class AgentInvoker {
 			if (registry == null) {
 				throw new RuntimeException("AgentRegistry is not available.");
 			}
-			ModelExplorer explorer = registry.buildAgent("model-explorer", ModelExplorer.class);
+			UntypedAgent explorer = registry.buildUntypedAgent("ModelExplorer");
 			result = ThreadContextManager.inSystemInteraction(AgentInvoker.class,
-				() -> explorer.explore(prompt));
+				() -> (String) explorer.invoke(Map.of("message", prompt)));
 		} catch (Exception e) {
 			result = "Error: " + e.getMessage();
 			ToolCallTracking.recordAgentCallCompleteIfTracking(truncate(result, RESULT_SUMMARY_MAX_LEN));
@@ -78,9 +82,9 @@ public final class AgentInvoker {
 			if (registry == null) {
 				throw new RuntimeException("AgentRegistry is not available.");
 			}
-			TLScriptAgent agent = registry.buildAgent("tlscript", TLScriptAgent.class);
+			UntypedAgent agent = registry.buildUntypedAgent("tlscript");
 			result = ThreadContextManager.inSystemInteraction(AgentInvoker.class,
-				() -> agent.answer(messageForLambda));
+				() -> (String) agent.invoke(Map.of("message", messageForLambda)));
 		} catch (Exception e) {
 			result = "Error: " + e.getMessage();
 			ToolCallTracking.recordAgentCallCompleteIfTracking(truncate(result, RESULT_SUMMARY_MAX_LEN));
@@ -115,9 +119,9 @@ public final class AgentInvoker {
 			if (registry == null) {
 				throw new RuntimeException("AgentRegistry is not available.");
 			}
-			ModelEditor creator = registry.buildAgent("model-editor", ModelEditor.class);
+			UntypedAgent creator = registry.buildUntypedAgent("model-editor");
 			result = ThreadContextManager.inSystemInteraction(AgentInvoker.class,
-				() -> creator.createModel(requirementsForLambda));
+				() -> (String) creator.invoke(Map.of("message", requirementsForLambda)));
 		} catch (Exception e) {
 			result = "Error: " + e.getMessage();
 			ToolCallTracking.recordAgentCallCompleteIfTracking(truncate(result, RESULT_SUMMARY_MAX_LEN));

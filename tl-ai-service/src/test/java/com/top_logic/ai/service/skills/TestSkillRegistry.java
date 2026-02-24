@@ -58,7 +58,7 @@ public class TestSkillRegistry extends TestCase {
 
 	public void testAllProductionSkillsLoadSuccessfully() {
 		SkillRegistry registry = new SkillRegistry();
-		registry.registerAgentSkills("tlscript", List.of("shared/prompting-model-explorer"));
+		registry.registerAgentSkills("tlscript", List.of("shared/prompting-ModelExplorer"));
 		for (Skill skill : registry.getSkillsFor("tlscript")) {
 			assertNotNull("Skill content should not be null: " + skill.id(), skill.content());
 			assertFalse("Skill content should not be empty: " + skill.id(),
@@ -68,7 +68,7 @@ public class TestSkillRegistry extends TestCase {
 
 	public void testAgentWithSkillsRegistered() {
 		SkillRegistry registry = new SkillRegistry();
-		registry.registerAgentSkills("tlscript", List.of("shared/prompting-model-explorer"));
+		registry.registerAgentSkills("tlscript", List.of("shared/prompting-ModelExplorer"));
 		assertFalse("Agent should have skills",
 			registry.getSkillsFor("tlscript").isEmpty());
 	}
@@ -122,10 +122,10 @@ public class TestSkillRegistry extends TestCase {
 
 	public void testBuildSystemPromptWithProductionSkills() {
 		SkillRegistry registry = new SkillRegistry();
-		registry.registerAgentSkills("tlscript", List.of("shared/prompting-model-explorer"));
+		registry.registerAgentSkills("tlscript", List.of("shared/prompting-ModelExplorer"));
 		String prompt = registry.buildSystemPrompt("tlscript", "You are a TLScript Specialist Agent.");
 		assertTrue("Should contain base system message", prompt.contains("TLScript Specialist"));
-		// prompting-model-explorer is now auto mode — content should be injected
+		// prompting-ModelExplorer is now auto mode — content should be injected
 		assertTrue("Should contain auto-injected skill content",
 			prompt.contains("How to Prompt the Model Explorer"));
 	}

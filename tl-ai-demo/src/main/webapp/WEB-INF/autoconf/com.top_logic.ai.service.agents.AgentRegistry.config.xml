@@ -759,6 +759,10 @@
 
 			Good: [First call get-function-doc("sum")] → "The sum() function (verified) takes a collection and returns..."]]></system-prompt>
 				</agent>
+				<agent name="TestAgent1234"
+					model="claude-haiku-4-5"
+					system-prompt="test"
+				/>
 				<skills>
 					<skill name="promptModelExplorer"
 						description="Best practices for writing effective work orders to the ModelExplorer agent."

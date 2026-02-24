@@ -451,6 +451,19 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	 * @return A fully configured untyped agent instance.
 	 */
 	public UntypedAgent buildUntypedAgent(String name) {
+		return buildUntypedAgent(name, null);
+	}
+
+	/**
+	 * Builds an {@link UntypedAgent} from the named configuration.
+	 *
+	 * @param name
+	 *        The agent name as declared in the configuration.
+	 * @param memory
+	 *        Optional conversation memory, or {@code null} for stateless agents.
+	 * @return A fully configured untyped agent instance.
+	 */
+	public UntypedAgent buildUntypedAgent(String name, ChatMemory memory) {
 		AgentConfig config = getAgentConfig(name);
 		ChatModel model = buildChatModel(config);
 		String systemPrompt = getSystemPrompt(config);
@@ -471,6 +484,10 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 				specMap.put(impl.getSpecification(), impl.getExecutor());
 			}
 			builder.tools(specMap);
+		}
+
+		if (memory != null) {
+			builder.chatMemory(memory);
 		}
 
 		return builder.build();

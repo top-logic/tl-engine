@@ -15,7 +15,7 @@ package com.top_logic.ai.service.skills;
  * </p>
  *
  * @param id
- *        Unique skill identifier derived from the resource path (e.g. {@code "shared/prompting-model-explorer"}).
+ *        Unique skill identifier derived from the resource path (e.g. {@code "shared/prompting-ModelExplorer"}).
  *        Used by the agent to call {@code loadSkill(id)}.
  * @param description
  *        Human-readable description from YAML frontmatter.

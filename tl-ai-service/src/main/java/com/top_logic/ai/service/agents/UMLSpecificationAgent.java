@@ -27,6 +27,71 @@ import dev.langchain4j.model.mistralai.MistralAiChatModel;
  * </p>
  */
 public class UMLSpecificationAgent {
+	private static final String UML_DESIGNER_SYSTEM = """
+			You are a UML system architect for TopLogic model creation.
+			Create or revise a UML specification that can be executed by TopLogic tools.
+			Follow strict modeling rules:
+			- Properties use only primitive types (STRING, INT, BOOLEAN, FLOAT, DATE, TRISTATE, BINARY).
+			- Enumerations are linked via references, never used as property types.
+			- References must declare role name, target, multiplicity, and kind (association/composition).
+			- Use composition only for true ownership/lifecycle containment.
+			Return only the UML specification.
+			""";
+
+	private static final String UML_DESIGNER_USER = """
+			You are a UML system architect. Generate or revise a UML specification.
+
+			Requirements: {{businessRequirement}}
+
+			Current UML specification:
+			{{umlSpec}}
+
+			Critique:
+			{{critique}}
+
+			If critique is empty, create an initial specification from requirements.
+			Otherwise, revise the current UML spec by fixing the critique issues.
+			""";
+
+	private static final String UML_CRITIC_SYSTEM = """
+			You are a TopLogic UML reviewer.
+			Evaluate UML specs for compliance and requirement coverage.
+			Focus on hard-rule violations and return structured JSON review.
+			Critical examples:
+			- enum used as property type
+			- missing reference metadata (kind/multiplicity)
+			- invalid composition ownership
+			""";
+
+	private static final String UML_CRITIC_USER = """
+			Critically evaluate the UML specification and return JSON critique.
+
+			UML specification: {{umlSpec}}
+			Requirements: {{businessRequirement}}
+			""";
+
+	private static final String UML_SCORER_USER = """
+			Given a JSON critique of a UML specification, compute a score between 0.0 and 1.0.
+			Heuristic:
+			- if there are critical issues, return below 0.5
+			- with no critical issues, reduce from 1.0 by 0.05 per important issue
+			- if there are no issues, return 1.0
+			Return only the numeric score.
+
+			Critique: {{critique}}
+			""";
+
+	private static final String UML_PARSER_SYSTEM = """
+			You are a deterministic parser for TopLogic UML specifications.
+			Return JSON only. Do not invent missing model elements.
+			Extract modules, classes, properties, references, enums, and global constraints.
+			""";
+
+	private static final String UML_PARSER_USER = """
+			Parse this UML design specification and extract all information into structured JSON:
+			{{umlSpec}}
+			""";
+
 	private static final ChatModel PIXTRAL_MODEL = MistralAiChatModel.builder()
 		.apiKey("xxx")
 		.baseUrl("https://api.mistral.ai/v1")
@@ -52,30 +117,48 @@ public class UMLSpecificationAgent {
 	 */
 	public static String execute(String businessRequirement) {
 		// Step 1: build the agents
-		UMLDesigner designer = AgenticServices.agentBuilder(UMLDesigner.class)
+		UntypedAgent designer = AgenticServices.agentBuilder()
 			.chatModel(MISTRAL_LARGE_MODEL)
+			.systemMessage(UML_DESIGNER_SYSTEM)
+			.userMessage(UML_DESIGNER_USER)
+			.inputKeys(String.class, "businessRequirement", String.class, "critique", String.class, "umlSpec")
+			.returnType(String.class)
 			.outputKey("umlSpec") // the designer writes its spec here
 			.build();
 
-		UMLCritic critic = AgenticServices.agentBuilder(UMLCritic.class)
+		UntypedAgent critic = AgenticServices.agentBuilder()
 			.chatModel(MISTRAL_LARGE_MODEL)
+			.systemMessage(UML_CRITIC_SYSTEM)
+			.userMessage(UML_CRITIC_USER)
+			.inputKeys(String.class, "umlSpec", String.class, "businessRequirement")
+			.returnType(String.class)
 			.outputKey("critique") // the critic writes its JSON feedback here
 			.build();
 
-		UMLScorer scorer = AgenticServices.agentBuilder(UMLScorer.class)
+		UntypedAgent scorer = AgenticServices.agentBuilder()
 			.chatModel(PIXTRAL_MODEL)
+			.userMessage(UML_SCORER_USER)
+			.inputKey(String.class, "critique")
+			.returnType(Double.class)
 			.outputKey("score") // the scorer writes its numeric score here
 			.build();
 
-		UMLParser umlParser = AgenticServices.agentBuilder(UMLParser.class)
+		UntypedAgent umlParser = AgenticServices.agentBuilder()
 			.chatModel(PIXTRAL_MODEL)
+			.systemMessage(UML_PARSER_SYSTEM)
+			.userMessage(UML_PARSER_USER)
+			.inputKey(String.class, "umlSpec")
+			.returnType(String.class)
 			.outputKey("modelRequirements")
 			.build();
 
 		McpToolProvider toolProvider = createMCPToolProvider();
 
-		ModelEditor modelCreator = AgenticServices.agentBuilder(ModelEditor.class)
+		UntypedAgent modelCreator = AgenticServices.agentBuilder()
 			.chatModel(MISTRAL_LARGE_MODEL)
+			.userMessage("Create or modify TopLogic model elements based on these requirements: {{message}}")
+			.inputKey(String.class, "message")
+			.returnType(String.class)
 			.outputKey("result")
 			.toolProvider(toolProvider)
 			.build();

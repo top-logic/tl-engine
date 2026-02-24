@@ -8,27 +8,20 @@ package com.top_logic.ai.service.tools.help;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.top_logic.ai.service.AIService;
-import com.top_logic.ai.service.agents.ModelExplorer;
+import com.top_logic.ai.service.agents.AgentRegistry;
 import com.top_logic.ai.service.tools.help.messages.ModelExplorerResponse;
-import com.top_logic.ai.service.tools.model.AnnotationDefinitionExplorerTool;
-import com.top_logic.ai.service.tools.model.InstanceBrowserTool;
-import com.top_logic.ai.service.tools.model.ModelAnnotationBrowserTool;
-import com.top_logic.ai.service.tools.model.ModelBrowserTool;
-import com.top_logic.ai.service.tools.model.ModelSearchTool;
-import com.top_logic.ai.service.tools.model.TypeAnalysisTool;
 import com.top_logic.ai.service.tools.util.DataClassSerializer;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.thread.ThreadContextManager;
 
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
-import dev.langchain4j.agentic.AgenticServices;
+import dev.langchain4j.agentic.UntypedAgent;
 
 /**
  * Tool for exploring the TopLogic application model.
  * <p>
- * This tool wraps the {@link ModelExplorer} agent to allow TL-Script agents to delegate model
+ * This tool wraps the configured {@code ModelExplorer} agent to allow TL-Script agents to delegate model
  * exploration questions when users ask about the actual application structure.
  * </p>
  */
@@ -74,35 +67,19 @@ public class ModelExplorerTool {
 				return DataClassSerializer.errorToJson(error, ModelExplorerTool.class, "exploreModel()", args);
 			}
 
-			// Get the model from AIService
-			AIService aiService = AIService.getInstance();
-			if (aiService == null) {
-				String error = "AIService is not available";
+			AgentRegistry registry = AgentRegistry.getInstance();
+			if (registry == null) {
+				String error = "AgentRegistry is not available";
 				Logger.error("exploreModel() error: " + error, ModelExplorerTool.class);
 				return DataClassSerializer.errorToJson(error, ModelExplorerTool.class, "exploreModel()", args);
 			}
 
-			// Use mistral-large-latest model (same as TLScriptAgent)
-			var explorationModel = aiService.getChatModel("mistral-large-latest");
-
-			// Create internal tool instances
-			ModelBrowserTool browserTool = new ModelBrowserTool();
-			InstanceBrowserTool instanceTool = new InstanceBrowserTool();
-			TypeAnalysisTool analysisTool = new TypeAnalysisTool();
-			ModelSearchTool searchTool = new ModelSearchTool();
-			ModelAnnotationBrowserTool annotationTool = new ModelAnnotationBrowserTool();
-			AnnotationDefinitionExplorerTool definitionTool = new AnnotationDefinitionExplorerTool();
-
-			// Build the ModelExplorer agent with all required tools
-			ModelExplorer explorer = AgenticServices.agentBuilder(ModelExplorer.class)
-				.chatModel(explorationModel)
-				.tools(browserTool, instanceTool, analysisTool, searchTool, annotationTool, definitionTool)
-				.build();
+			UntypedAgent explorer = registry.buildUntypedAgent("ModelExplorer");
 
 			// Execute the exploration
 			String result = ThreadContextManager.inSystemInteraction(
 				ModelExplorerTool.class,
-				() -> explorer.explore(question));
+				() -> (String) explorer.invoke(Map.of("message", question)));
 
 			// Create response object with the exploration result
 			ModelExplorerResponse response = ModelExplorerResponse.create();

@@ -7,6 +7,7 @@ package com.top_logic.ai.service.agents;
 
 import com.top_logic.basic.thread.ThreadContextManager;
 
+import dev.langchain4j.agentic.UntypedAgent;
 import dev.langchain4j.memory.ChatMemory;
 
 /**
@@ -15,8 +16,8 @@ import dev.langchain4j.memory.ChatMemory;
  * The chat UI sends user messages here. The orchestrator thinks: what does the user want, what steps are needed,
  * do any need a specialist? It may call zero tools (e.g. ask for clarification), one, or multiple in sequence
  * (e.g. Explorer for model context, then TLScript for how to use it). After each tool result it reasons: is it
- * enough? When satisfied, it synthesizes and returns the final answer. See {@link OrchestratorRouter} for the
- * agent interface and {@link AgentDelegationTools} for the delegate tools.
+ * enough? When satisfied, it synthesizes and returns the final answer. See {@link AgentDelegationTools}
+ * for delegate tool examples.
  * </p>
  * <p>
  * The caller must set the run's trace (e.g. {@link com.top_logic.ai.service.tools.ToolCallTracking#setTracker})
@@ -47,11 +48,10 @@ public final class OrchestratorAgent {
 			return "AgentRegistry is not available. Please ensure the service is started.";
 		}
 
-		OrchestratorRouter router = agentRegistry.buildAgent(
-			"orchestrator", OrchestratorRouter.class, chatMemory);
+		UntypedAgent router = agentRegistry.buildUntypedAgent("orchestrator", chatMemory);
 
 		return ThreadContextManager.inSystemInteraction(OrchestratorAgent.class,
-			() -> router.chat(trimmed));
+			() -> (String) router.invoke(java.util.Map.of("message", trimmed)));
 	}
 
 	private OrchestratorAgent() {

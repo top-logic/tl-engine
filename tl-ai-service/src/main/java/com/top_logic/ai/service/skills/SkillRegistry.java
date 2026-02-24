@@ -42,7 +42,7 @@ public class SkillRegistry {
 	 * </p>
 	 *
 	 * @param name
-	 *        The skill name (e.g. {@code "shared/prompting-model-explorer"}).
+	 *        The skill name (e.g. {@code "shared/prompting-ModelExplorer"}).
 	 * @return The loaded skill.
 	 * @throws IllegalArgumentException
 	 *         if the skill resource is not found.

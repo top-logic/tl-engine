@@ -37,7 +37,7 @@ import dev.langchain4j.agent.tool.Tool;
 public final class AgentDelegationTools {
 
 	/**
-	 * Delegates to the {@link ModelExplorer} for read-only model inspection.
+	 * Delegates to the ModelExplorer agent for read-only model inspection.
 	 */
 	public static final class Exploration {
 
@@ -95,7 +95,7 @@ public final class AgentDelegationTools {
 	}
 
 	/**
-	 * Delegates to the {@link ModelEditor} for model creation or modification.
+	 * Delegates to the model-editor agent for model creation or modification.
 	 */
 	public static final class Creation {
 
@@ -153,7 +153,7 @@ public final class AgentDelegationTools {
 	}
 
 	/**
-	 * Delegates to the {@link TLScriptAgent} for TLScript questions and validation.
+	 * Delegates to the tlscript agent for TLScript questions and validation.
 	 */
 	public static final class TLScript {
 

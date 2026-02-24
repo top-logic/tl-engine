@@ -72,11 +72,11 @@ public class SkillTool {
 	 * Loads a skill by its id, returning its full content.
 	 *
 	 * @param skillId
-	 *        The skill id from the catalog (e.g. {@code "shared/prompting-model-explorer"}).
+	 *        The skill id from the catalog (e.g. {@code "shared/prompting-ModelExplorer"}).
 	 * @return The full skill content, or an error message if not available.
 	 */
 	@Tool("Loads a skill by its id. Returns specialized instructions you MUST follow for the related task. Check the Available Skills section in your system instructions for skill ids and when to use them.")
-	public String loadSkill(@P("Skill id from the catalog, e.g. 'shared/prompting-model-explorer'") String skillId) {
+	public String loadSkill(@P("Skill id from the catalog, e.g. 'shared/prompting-ModelExplorer'") String skillId) {
 		Map<String, Object> args = Map.of("skillId", skillId);
 		List<Skill> skills = _registry.getSkillsFor(_agentName);
 		for (Skill skill : skills) {

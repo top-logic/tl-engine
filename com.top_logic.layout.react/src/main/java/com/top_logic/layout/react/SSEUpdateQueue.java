@@ -84,6 +84,13 @@ public class SSEUpdateQueue implements HttpSessionBindingListener {
 	}
 
 	/**
+	 * Unregisters a previously registered control.
+	 */
+	public void unregisterControl(CommandListener control) {
+		_controls.remove(control.getID(), control);
+	}
+
+	/**
 	 * Looks up a previously registered control by its ID.
 	 *
 	 * @return The control, or {@code null} if not found.

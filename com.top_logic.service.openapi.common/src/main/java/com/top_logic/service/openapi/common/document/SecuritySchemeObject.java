@@ -11,6 +11,7 @@ import java.net.URL;
 import java.util.Map;
 
 import com.top_logic.basic.config.URLFormat;
+import com.top_logic.basic.config.annotation.Final;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
@@ -25,11 +26,12 @@ import com.top_logic.service.openapi.common.authentication.apikey.APIKeyPosition
  * authentication, an API key (either as a header, a cookie parameter or as a query parameter),
  * OAuth2's common flows (implicit, password, client credentials and authorization code) as defined
  * in [RFC6749], and <i>OpenID Connect Discovery</i>.
- * 
+ *
  * @see "https://spec.openapis.org/oas/v3.0.3.html#security-scheme-object"
- * 
+ *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@Final
 @DisplayOrder({
 	SecuritySchemeObject.SCHEMA_NAME,
 	SecuritySchemeObject.TYPE,

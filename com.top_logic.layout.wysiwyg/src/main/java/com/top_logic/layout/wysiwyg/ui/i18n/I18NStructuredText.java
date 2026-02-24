@@ -18,6 +18,7 @@ import java.util.Set;
 
 import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.config.annotation.Binding;
+import com.top_logic.basic.config.json.JsonBinding;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.tools.NameBuilder;
 import com.top_logic.basic.util.I18NBundleSPI;
@@ -39,6 +40,7 @@ import com.top_logic.util.Resources;
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
 @Binding(I18NStructuredTextValueBinding.class)
+@JsonBinding(I18NStructuredTextJsonBinding.class)
 public class I18NStructuredText implements FullTextSearchable {
 
 	/**

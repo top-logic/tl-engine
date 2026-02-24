@@ -24,6 +24,8 @@ import com.top_logic.basic.xml.XmlTextWriter;
 /**
  * {@link ConfigurationValueBinding} for {@link BinaryData} and {@link BinaryDataSource}.
  *
+ * @see BinaryDataJsonBinding
+ *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class BinaryDataBinding extends AbstractConfigurationValueBinding<BinaryDataSource> {

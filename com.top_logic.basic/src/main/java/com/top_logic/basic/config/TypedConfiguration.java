@@ -952,6 +952,9 @@ public class TypedConfiguration {
 		if (config.isAbstract()) {
 			configDescriptor.setAbstract();
 		}
+		if (config.isFinal()) {
+			configDescriptor.setFinal();
+		}
 		String resPrefix = config.getResPrefix();
 		if (resPrefix != null) {
 			if (resPrefix.charAt(resPrefix.length() - 1) != '.') {

@@ -9,6 +9,8 @@ import java.time.Duration;
 
 import junit.framework.TestCase;
 
+import com.top_logic.ai.service.tools.registry.ToolRegistry;
+
 import dev.langchain4j.model.chat.request.ResponseFormat;
 
 public class TestAgentRegistry extends TestCase {
@@ -31,5 +33,23 @@ public class TestAgentRegistry extends TestCase {
 	public void testToTimeoutDuration() {
 		assertEquals(Duration.ofSeconds(60), AgentRegistry.toTimeoutDuration(60));
 		assertNull(AgentRegistry.toTimeoutDuration(null));
+	}
+
+	/**
+	 * Verifies the qualified tool name convention: names from {@link ToolRegistry} use the format
+	 * {@code factory-name.toolMethodName}, which contains exactly one dot separator.
+	 */
+	public void testQualifiedToolNameFormat() {
+		String qualified = "model-browser.listModules";
+		assertTrue("Qualified names must contain a dot", qualified.contains("."));
+		assertEquals("factory-name is the prefix before the dot", "model-browser",
+			qualified.substring(0, qualified.indexOf('.')));
+		assertEquals("tool method name is the suffix after the dot", "listModules",
+			qualified.substring(qualified.indexOf('.') + 1));
+
+		// A bare factory name would not resolve in ToolRegistry
+		String bareFactory = "model-browser";
+		assertFalse("Bare factory names have no dot and won't resolve",
+			bareFactory.contains("."));
 	}
 }

@@ -11,6 +11,7 @@ import java.util.List;
 
 import com.top_logic.ai.service.AIService;
 import com.top_logic.ai.service.ChatModelFactory;
+import com.top_logic.ai.service.tools.registry.ToolRegistry;
 import com.top_logic.ai.service.providers.AnthropicChatModelFactory;
 import com.top_logic.ai.service.providers.MistralChatModelFactory;
 import com.top_logic.ai.service.providers.OpenAIChatModelFactory;
@@ -499,7 +500,10 @@ public interface AgentConfig extends NamedConfigMandatory {
 
 		@Override
 		public List<String> apply() {
-			return new ArrayList<>(AgentRegistry.TOOL_NAMES);
+			if (!ToolRegistry.Module.INSTANCE.isActive()) {
+				return Collections.emptyList();
+			}
+			return new ArrayList<>(ToolRegistry.getInstance().getToolNames());
 		}
 	}
 

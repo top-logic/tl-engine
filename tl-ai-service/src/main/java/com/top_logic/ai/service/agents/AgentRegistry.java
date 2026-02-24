@@ -5,14 +5,13 @@
  */
 package com.top_logic.ai.service.agents;
 
+import java.lang.reflect.Method;
+import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.time.Duration;
-import java.util.function.Supplier;
 
 import com.top_logic.ai.service.AIService;
 import com.top_logic.ai.service.ChatModelFactory;
@@ -23,16 +22,8 @@ import com.top_logic.ai.service.skills.Skill;
 import com.top_logic.ai.service.skills.SkillRegistry;
 import com.top_logic.ai.service.skills.SkillTool;
 import com.top_logic.ai.service.tools.ToolCallTracking;
-import com.top_logic.ai.service.tools.help.TLScriptReferenceTool;
-import com.top_logic.ai.service.tools.model.AnnotationDefinitionExplorerTool;
-import com.top_logic.ai.service.tools.model.InstanceBrowserTool;
-import com.top_logic.ai.service.tools.model.ModelAnnotationBrowserTool;
-import com.top_logic.ai.service.tools.model.ModelBrowserTool;
-import com.top_logic.ai.service.tools.model.ModelEditorTool;
-import com.top_logic.ai.service.tools.model.ModelSearchTool;
-import com.top_logic.ai.service.tools.model.TypeAnalysisTool;
 import com.top_logic.ai.service.tools.registry.ToolImplementation;
-import com.top_logic.ai.service.tools.script.TLScriptTool;
+import com.top_logic.ai.service.tools.registry.ToolRegistry;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
@@ -46,6 +37,7 @@ import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.thread.ThreadContextManager;
 
 import dev.langchain4j.agent.tool.ToolSpecification;
+import dev.langchain4j.agent.tool.ToolSpecifications;
 import dev.langchain4j.agentic.AgenticServices;
 import dev.langchain4j.agentic.UntypedAgent;
 import dev.langchain4j.memory.ChatMemory;
@@ -55,6 +47,7 @@ import dev.langchain4j.model.chat.request.ResponseFormat;
 import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import dev.langchain4j.model.mistralai.MistralAiChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
+import dev.langchain4j.service.tool.DefaultToolExecutor;
 import dev.langchain4j.service.tool.ToolExecutor;
 
 /**
@@ -80,28 +73,6 @@ import dev.langchain4j.service.tool.ToolExecutor;
  * @see AIService
  */
 public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?>> {
-
-	private static final Map<String, Supplier<Object>> TOOL_REGISTRY;
-
-	/**
-	 * Unmodifiable list of well-known tool names selectable from the configuration UI.
-	 */
-	public static final List<String> TOOL_NAMES;
-
-	static {
-		Map<String, Supplier<Object>> registry = new LinkedHashMap<>();
-		registry.put("model-browser", ModelBrowserTool::new);
-		registry.put("instance-browser", InstanceBrowserTool::new);
-		registry.put("type-analysis", TypeAnalysisTool::new);
-		registry.put("model-search", ModelSearchTool::new);
-		registry.put("annotation-browser", ModelAnnotationBrowserTool::new);
-		registry.put("annotation-explorer", AnnotationDefinitionExplorerTool::new);
-		registry.put("model-editor", ModelEditorTool::new);
-		registry.put("tlscript-reference", TLScriptReferenceTool::new);
-		registry.put("tlscript", TLScriptTool::new);
-		TOOL_REGISTRY = Collections.unmodifiableMap(registry);
-		TOOL_NAMES = List.copyOf(registry.keySet());
-	}
 
 	/**
 	 * Configuration interface for {@link AgentRegistry}.
@@ -362,29 +333,30 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	}
 
 	/**
-	 * Instantiates the standard (annotation-based) tool objects for the given agent configuration.
+	 * Resolves tools for the given agent configuration from the {@link ToolRegistry}.
 	 *
 	 * <p>
-	 * Tools from {@link AgentConfig#getTools()} are instantiated by name from
-	 * {@link #TOOL_REGISTRY}. On-demand skill tools are added automatically when the agent has
-	 * skills of that mode. Delegation tools are handled separately by
+	 * Each qualified name in {@link AgentConfig#getTools()} is looked up in the
+	 * {@link ToolRegistry}. On-demand skill tools are added when the agent has skills of
+	 * that mode. Delegation tools are handled separately by
 	 * {@link #buildDelegationTools(AgentConfig)}.
 	 * </p>
 	 *
 	 * @param config
 	 *        The agent configuration.
-	 * @return A list of instantiated tool objects with {@code @Tool}-annotated methods.
+	 * @return A list of resolved tool implementations.
 	 */
-	public List<Object> buildTools(AgentConfig config) {
-		List<Object> tools = new ArrayList<>();
+	public List<ToolImplementation> buildTools(AgentConfig config) {
+		List<ToolImplementation> tools = new ArrayList<>();
 
-		for (String toolName : config.getTools()) {
-			Supplier<Object> factory = TOOL_REGISTRY.get(toolName);
-			if (factory != null) {
-				tools.add(factory.get());
+		ToolRegistry toolRegistry = ToolRegistry.getInstance();
+		for (String qualifiedName : config.getTools()) {
+			ToolImplementation tool = toolRegistry.getTool(qualifiedName);
+			if (tool != null) {
+				tools.add(tool);
 			} else {
-				Logger.warn("Agent '" + config.getName() + "' references unknown tool '" + toolName +
-					"'. Available: " + TOOL_NAMES, AgentRegistry.class);
+				Logger.warn("Agent '" + config.getName() + "' references unknown tool '" + qualifiedName +
+					"'. Available: " + toolRegistry.getToolNames(), AgentRegistry.class);
 			}
 		}
 
@@ -398,11 +370,32 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 					}
 				});
 			if (hasOnDemand) {
-				tools.add(new SkillTool(_skillRegistry, config.getName()));
+				SkillTool skillTool = new SkillTool(_skillRegistry, config.getName());
+				for (ToolSpecification spec : ToolSpecifications.toolSpecificationsFrom(skillTool)) {
+					Method method = findMethodForToolSpec(SkillTool.class, spec.name());
+					if (method != null) {
+						ToolExecutor executor = new DefaultToolExecutor(skillTool, method);
+						tools.add(new ToolImplementation(spec, executor));
+					}
+				}
 			}
 		}
 
 		return tools;
+	}
+
+	private static Method findMethodForToolSpec(Class<?> clazz, String toolName) {
+		for (Method method : clazz.getDeclaredMethods()) {
+			dev.langchain4j.agent.tool.Tool toolAnnotation =
+				method.getAnnotation(dev.langchain4j.agent.tool.Tool.class);
+			if (toolAnnotation != null) {
+				String name = toolAnnotation.name().isEmpty() ? method.getName() : toolAnnotation.name();
+				if (name.equals(toolName)) {
+					return method;
+				}
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -495,23 +488,26 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		AgentConfig config = getAgentConfig(name);
 		ChatModel model = buildChatModel(config);
 		String systemPrompt = getSystemPrompt(config);
-		List<Object> tools = buildTools(config);
+		List<ToolImplementation> tools = buildTools(config);
 		List<ToolImplementation> delegationTools = buildDelegationTools(config);
+
+		Map<ToolSpecification, ToolExecutor> allTools = new LinkedHashMap<>();
+		for (ToolImplementation impl : tools) {
+			allTools.put(impl.getSpecification(), impl.getExecutor());
+		}
+		for (ToolImplementation impl : delegationTools) {
+			allTools.put(impl.getSpecification(), impl.getExecutor());
+		}
 
 		var builder = AgenticServices.agentBuilder()
 			.chatModel(model)
 			.systemMessage(systemPrompt)
 			.userMessage("{{message}}")
 			.inputKey(String.class, "message")
-			.returnType(String.class)
-			.tools(tools.toArray());
+			.returnType(String.class);
 
-		if (!delegationTools.isEmpty()) {
-			Map<ToolSpecification, ToolExecutor> specMap = new LinkedHashMap<>();
-			for (ToolImplementation impl : delegationTools) {
-				specMap.put(impl.getSpecification(), impl.getExecutor());
-			}
-			builder.tools(specMap);
+		if (!allTools.isEmpty()) {
+			builder.tools(allTools);
 		}
 
 		if (memory != null) {
@@ -612,20 +608,23 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		AgentConfig config = getAgentConfig(name);
 		ChatModel model = buildChatModel(config);
 		String systemPrompt = getSystemPrompt(config);
-		List<Object> tools = buildTools(config);
+		List<ToolImplementation> tools = buildTools(config);
 		List<ToolImplementation> delegationTools = buildDelegationTools(config);
+
+		Map<ToolSpecification, ToolExecutor> allTools = new LinkedHashMap<>();
+		for (ToolImplementation impl : tools) {
+			allTools.put(impl.getSpecification(), impl.getExecutor());
+		}
+		for (ToolImplementation impl : delegationTools) {
+			allTools.put(impl.getSpecification(), impl.getExecutor());
+		}
 
 		var builder = AgenticServices.agentBuilder(agentInterface)
 			.chatModel(model)
-			.systemMessageProvider(memoryId -> systemPrompt)
-			.tools(tools.toArray());
+			.systemMessageProvider(memoryId -> systemPrompt);
 
-		if (!delegationTools.isEmpty()) {
-			Map<ToolSpecification, ToolExecutor> specMap = new LinkedHashMap<>();
-			for (ToolImplementation impl : delegationTools) {
-				specMap.put(impl.getSpecification(), impl.getExecutor());
-			}
-			builder.tools(specMap);
+		if (!allTools.isEmpty()) {
+			builder.tools(allTools);
 		}
 
 		if (memory != null) {

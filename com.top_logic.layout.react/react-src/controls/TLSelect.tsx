@@ -21,7 +21,7 @@ const TLSelect: React.FC<TLCellProps> = ({ state, config }) => {
     [setValue]
   );
 
-  const options = (config?.options as SelectOption[]) ?? [];
+  const options = ((state.options ?? config?.options) as SelectOption[]) ?? [];
 
   return (
     <select

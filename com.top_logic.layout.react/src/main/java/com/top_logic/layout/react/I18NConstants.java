@@ -31,6 +31,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_COMMAND_FAILED__MSG;
 
 	/**
+	 * @en React button clicked.
+	 */
+	public static ResKey REACT_BUTTON_CLICK;
+
+	/**
 	 * @en Internal error in React integration.
 	 */
 	public static ResKey ERROR_INTERNAL;

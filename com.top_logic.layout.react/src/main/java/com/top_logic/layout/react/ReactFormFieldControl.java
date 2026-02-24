@@ -110,8 +110,13 @@ public class ReactFormFieldControl extends AbstractFormFieldControl {
 
 	/**
 	 * Builds the full field state as a map.
+	 *
+	 * <p>
+	 * Subclasses may override this method to add additional state entries (e.g. options for select
+	 * fields).
+	 * </p>
 	 */
-	Map<String, Object> buildFullFieldState() {
+	protected Map<String, Object> buildFullFieldState() {
 		FormField field = getFieldModel();
 		Map<String, Object> state = new HashMap<>();
 		state.put("value", field.hasValue() ? field.getValue() : null);
@@ -205,8 +210,12 @@ public class ReactFormFieldControl extends AbstractFormFieldControl {
 			FormField field = reactControl.getFieldModel();
 			Object newValue = arguments.get("value");
 
+			// Form fields expect raw string input (as from HTML forms). The React client sends
+			// JSON-typed values (Integer, Boolean, etc.), so convert to String for parsing.
+			String rawValue = newValue != null ? newValue.toString() : null;
+
 			try {
-				FormFieldInternals.updateFieldNoClientUpdate(field, newValue);
+				FormFieldInternals.updateFieldNoClientUpdate(field, rawValue);
 			} catch (VetoException ex) {
 				throw new TopLogicException(I18NConstants.ERROR_COMMAND_FAILED__MSG.fill(ex.getMessage()), ex);
 			}

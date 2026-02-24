@@ -22,21 +22,21 @@ const TLTabBar: React.FC<TLCellProps> = () => {
   }, [sendCommand, activeTabId]);
 
   return (
-    <div className="tlTabBar">
-      <div className="tlTabBar__tabs" role="tablist">
+    <div className="tlReactTabBar">
+      <div className="tlReactTabBar__tabs" role="tablist">
         {tabs.map(tab => (
           <button
             key={tab.id}
             role="tab"
             aria-selected={tab.id === activeTabId}
-            className={'tlTabBar__tab' + (tab.id === activeTabId ? ' tlTabBar__tab--active' : '')}
+            className={'tlReactTabBar__tab' + (tab.id === activeTabId ? ' tlReactTabBar__tab--active' : '')}
             onClick={() => handleTabClick(tab.id)}
           >
             {tab.label}
           </button>
         ))}
       </div>
-      <div className="tlTabBar__content" role="tabpanel">
+      <div className="tlReactTabBar__content" role="tabpanel">
         {state.activeContent && <TLChild control={state.activeContent} />}
       </div>
     </div>

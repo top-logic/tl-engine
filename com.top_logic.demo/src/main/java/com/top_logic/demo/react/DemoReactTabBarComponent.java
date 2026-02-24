@@ -77,15 +77,11 @@ public class DemoReactTabBarComponent extends LayoutComponent {
 	}
 
 	private ReactControl createCounterA() {
-		DemoReactCounterComponent.DemoCounterControl counter = new DemoReactCounterComponent.DemoCounterControl();
-		counter.getReactState().put("label", "Counter A");
-		return counter;
+		return new DemoReactCounterComponent.DemoCounterControl("Counter A");
 	}
 
 	private ReactControl createCounterB() {
-		DemoReactCounterComponent.DemoCounterControl counter = new DemoReactCounterComponent.DemoCounterControl();
-		counter.getReactState().put("label", "Counter B");
-		return counter;
+		return new DemoReactCounterComponent.DemoCounterControl("Counter B");
 	}
 
 	private ReactControl createButtonsTab() {

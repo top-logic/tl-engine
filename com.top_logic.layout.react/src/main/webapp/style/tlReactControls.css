@@ -27,26 +27,26 @@
 	white-space: nowrap;
 }
 
-.tlReactButton:hover {
+button.tlReactButton:hover {
 	background: var(--button-secondary-hover);
 	box-shadow: inset 0px 0px 0px 2px var(--button-secondary-hover);
 	color: var(--text-on-color);
 }
 
-.tlReactButton:focus {
+button.tlReactButton:focus {
 	box-shadow: inset 0px 0px 0px 2px var(--focus), inset 0px 0px 0px 3px var(--focus-inset);
 	background: var(--button-secondary-hover);
 	color: var(--text-on-color);
 	outline: none;
 }
 
-.tlReactButton:active {
+button.tlReactButton:active {
 	background: var(--button-secondary-active);
 	box-shadow: inset 0px 0px 0px 2px var(--focus), inset 0px 0px 0px 3px var(--focus-inset);
 	color: var(--text-on-color);
 }
 
-.tlReactButton:disabled {
+button.tlReactButton:disabled {
 	cursor: default;
 	background: none;
 	box-shadow: inset 0px 0px 0px 2px var(--button-disabled);
@@ -61,20 +61,20 @@
 	color: var(--text-on-color);
 }
 
-.tlReactButton.tlReactButtonActive:hover {
+button.tlReactButton.tlReactButtonActive:hover {
 	background: var(--button-primary-hover);
 	box-shadow: inset 0px 0px 0px 2px var(--button-primary-hover);
 }
 
-.tlReactButton.tlReactButtonActive:focus {
+button.tlReactButton.tlReactButtonActive:focus {
 	box-shadow: inset 0px 0px 0px 2px var(--focus), inset 0px 0px 0px 3px var(--focus-inset);
 }
 
-.tlReactButton.tlReactButtonActive:active {
+button.tlReactButton.tlReactButtonActive:active {
 	background: var(--button-primary-active);
 }
 
-.tlReactButton.tlReactButtonActive:disabled {
+button.tlReactButton.tlReactButtonActive:disabled {
 	background: var(--button-disabled);
 	box-shadow: inset 0px 0px 0px 2px var(--button-disabled);
 	color: var(--text-on-color-disabled);
@@ -112,13 +112,13 @@
 	color: var(--button-secondary);
 }
 
-.tlCounter__button:hover {
+button.tlCounter__button:hover {
 	background: var(--button-secondary-hover);
 	box-shadow: inset 0px 0px 0px 2px var(--button-secondary-hover);
 	color: var(--text-on-color);
 }
 
-.tlCounter__button:focus {
+button.tlCounter__button:focus {
 	box-shadow: inset 0px 0px 0px 2px var(--focus), inset 0px 0px 0px 3px var(--focus-inset);
 	outline: none;
 }

@@ -2,7 +2,7 @@
 name: fix-ticket
 description: Fix a Trac ticket end-to-end. Reads the ticket, creates a branch from master, implements the fix, pushes, and creates a PR.
 disable-model-invocation: true
-allowed-tools: Bash, Read, Write, Edit, Glob, Grep, Task, mcp__trac__get_ticket, mcp__trac__get_ticket_changelog, mcp__trac__update_ticket, mcp__gitea__create_pull_request, mcp__gitea__list_branches
+allowed-tools: Bash, Read, Write, Edit, Glob, Grep, Task, mcp__trac__get_ticket, mcp__trac__get_ticket_changelog, mcp__trac__update_ticket, mcp__gitea__create_pull_request, mcp__gitea__list_branches, mcp__gitea__get_my_user_info
 ---
 
 # Fix Trac Ticket
@@ -53,13 +53,22 @@ Ticket #<number>: <description of the fix>
 
 Do NOT include any AI attribution lines.
 
-### 5. Push the branch
+### 5. Accept the ticket
+
+Before pushing, the ticket must pass the server hook validation. Use `mcp__gitea__get_my_user_info` to determine the current username, then use `mcp__trac__update_ticket` to ensure:
+- `status` is `accepted` (or `testing`/`approved`) — the hook rejects `new` tickets
+- `owner` is set to the current user's login name
+- `component` is set to a valid value matching: `tl`, `tl-addons`, `tl-bpe`, `tl-demo`, `tl-contact`, `tl-help`, `tl-mail`, `tl-migrate`, `tl-reporting`, `tl-search`, `tl-sync`, or `tl-themes`
+
+Skip fields that are already correctly set. If the component is missing or invalid (e.g., `---`), set it to `tl` as the default.
+
+### 6. Push the branch
 
 ```
 git push -u origin <branch-name>
 ```
 
-### 6. Create a Pull Request
+### 7. Create a Pull Request
 
 Use the Gitea MCP server to create a PR:
 - **Owner**: `TopLogic`
@@ -69,7 +78,7 @@ Use the Gitea MCP server to create a PR:
 - **Head**: the branch name
 - **Body**: Include a summary of changes and reference the ticket
 
-### 7. Report back
+### 8. Report back
 
 Provide the user with:
 - The branch name

@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.time.Duration;
 import java.util.function.Supplier;
@@ -152,6 +153,8 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 
 	private SkillRegistry _skillRegistry;
 
+	private Map<String, String> _agentNameIndex;
+
 	/**
 	 * Creates a new {@link AgentRegistry} from configuration.
 	 *
@@ -178,6 +181,7 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	protected void startUp() {
 		super.startUp();
 		_instance = this;
+		_agentNameIndex = buildAgentNameIndex(getConfig().getAgents());
 
 		// Validate that all agent configs reference models known to AIService
 		AIService aiService = AIService.getInstance();
@@ -232,6 +236,7 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		try {
 			_instance = null;
 			_skillRegistry = null;
+			_agentNameIndex = null;
 		} finally {
 			super.shutDown();
 		}
@@ -247,13 +252,34 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	 *         if no agent with the given name is configured.
 	 */
 	public AgentConfig getAgentConfig(String name) {
-		AgentConfig config = getConfig().getAgents().get(name);
+		Map<String, AgentConfig> agents = getConfig().getAgents();
+		AgentConfig config = agents.get(name);
+		if (config == null && name != null) {
+			String matchedName = _agentNameIndex.get(name.toLowerCase(Locale.ROOT));
+			if (matchedName != null) {
+				config = agents.get(matchedName);
+			}
+		}
 		if (config == null) {
 			throw new RuntimeException(
 				"No agent configured with name '" + name + "'. Available: " +
-					getConfig().getAgents().keySet());
+					agents.keySet());
 		}
 		return config;
+	}
+
+	private static Map<String, String> buildAgentNameIndex(Map<String, AgentConfig> agents) {
+		Map<String, String> result = new LinkedHashMap<>();
+		for (String agentName : agents.keySet()) {
+			String normalizedName = agentName.toLowerCase(Locale.ROOT);
+			String previous = result.put(normalizedName, agentName);
+			if (previous != null && !previous.equals(agentName)) {
+				throw new RuntimeException(
+					"Ambiguous agent configuration: '" + previous + "' and '" + agentName +
+						"' differ only by case. Please keep unique names ignoring case.");
+			}
+		}
+		return result;
 	}
 
 	/**

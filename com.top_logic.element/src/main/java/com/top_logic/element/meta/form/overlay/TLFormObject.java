@@ -65,6 +65,17 @@ public interface TLFormObject extends TLFormObjectBase, UpdateFactory {
 	void initContainer(FormContainer formContainer);
 
 	/**
+	 * Access to the {@link FormContainer} set in {@link #initContainer(FormContainer)}.
+	 * 
+	 * <p>
+	 * May be <code>null</code> when {@link #initContainer(FormContainer)} was not called yet.
+	 * Otherwise the same value as in {@link #getFormContainer()}.
+	 * </p>
+	 */
+	@FrameworkInternal
+	FormContainer internalContainer();
+
+	/**
 	 * Where the for is written to.
 	 */
 	default Media getOutputMedia() {

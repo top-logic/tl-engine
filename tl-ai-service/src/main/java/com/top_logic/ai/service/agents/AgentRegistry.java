@@ -12,6 +12,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 import com.top_logic.ai.service.AIService;
 import com.top_logic.ai.service.ChatModelFactory;
@@ -683,12 +684,19 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 			.modelName(config.getModel());
 
 		if (config.getThinkingType() != null && config.isThinkingCapable()) {
-			builder.thinkingType(config.getThinkingType().getValue());
-			if (config.getThinkingBudgetTokens() != null) {
-				builder.thinkingBudgetTokens(config.getThinkingBudgetTokens());
+			ThinkingType thinkingType = config.getThinkingType();
+			Set<ModelCapability> caps = factory.getModelCapabilities(config.getModel());
+			boolean supported = (thinkingType == ThinkingType.ADAPTIVE)
+				? caps.contains(ModelCapability.THINKING_ADAPTIVE)
+				: caps.contains(ModelCapability.THINKING_ENABLED);
+			if (supported) {
+				builder.thinkingType(thinkingType.getValue());
+				if (config.getThinkingBudgetTokens() != null) {
+					builder.thinkingBudgetTokens(config.getThinkingBudgetTokens());
+				}
+				builder.returnThinking(config.getReturnThinking());
+				builder.sendThinking(config.getSendThinking());
 			}
-			builder.returnThinking(config.getReturnThinking());
-			builder.sendThinking(config.getSendThinking());
 		}
 		if (config.getMaxTokens() != null) {
 			builder.maxTokens(config.getMaxTokens());

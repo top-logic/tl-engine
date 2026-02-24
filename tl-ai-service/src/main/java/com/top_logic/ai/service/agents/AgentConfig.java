@@ -268,7 +268,6 @@ public interface AgentConfig extends NamedConfigMandatory {
 	@Nullable
 	@DynamicMode(fun = ActiveIfThinkingCapable.class, args = @Ref(IS_THINKING_CAPABLE))
 	@Options(fun = AvailableThinkingTypes.class, args = @Ref(MODEL))
-	@Constraint(value = ThinkingTypeSupportsAdaptiveConstraint.class, args = @Ref(IS_ADAPTIVE_THINKING_CAPABLE))
 	ThinkingType getThinkingType();
 
 	/**
@@ -866,6 +865,13 @@ public interface AgentConfig extends NamedConfigMandatory {
 
 	/**
 	 * Validates that {@link ThinkingType#ADAPTIVE} is only selected when the model supports it.
+	 *
+	 * <p>
+	 * Note: This constraint is <b>not</b> attached to the property annotation because the
+	 * framework defaults nullable enum properties to their first constant
+	 * ({@link ThinkingType#ADAPTIVE}) even when the user did not set a value. Validation happens at
+	 * runtime in {@link AgentRegistry} instead.
+	 * </p>
 	 */
 	class ThinkingTypeSupportsAdaptiveConstraint extends GenericValueDependency<ThinkingType, Boolean> {
 

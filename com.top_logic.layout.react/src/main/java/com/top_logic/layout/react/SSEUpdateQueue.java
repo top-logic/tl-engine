@@ -12,6 +12,10 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import jakarta.servlet.AsyncContext;
 import jakarta.servlet.http.HttpSession;
@@ -30,16 +34,40 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * Each HTTP session has one {@link SSEUpdateQueue} stored as a session attribute. SSE connections
  * register with the queue and receive events as they are enqueued.
  * </p>
+ *
+ * <p>
+ * A periodic heartbeat is sent to all connections to keep them alive and to detect dead connections
+ * early. Without the heartbeat, intermediaries (proxies, load balancers) may silently drop idle
+ * connections, leaving half-open connections that neither the server nor the client can detect.
+ * </p>
  */
 public class SSEUpdateQueue {
 
 	private static final String SESSION_ATTRIBUTE_KEY = "tl.react.sseQueue";
+
+	/**
+	 * Heartbeat message sent as a regular SSE data event so the client can track connection
+	 * liveness.
+	 */
+	private static final String HEARTBEAT_MESSAGE = "data: [\"Heartbeat\",{}]\n\n";
+
+	/** Interval between heartbeat messages in seconds. */
+	private static final long HEARTBEAT_INTERVAL_SECONDS = 30;
+
+	private static final ScheduledExecutorService HEARTBEAT_EXECUTOR =
+		Executors.newSingleThreadScheduledExecutor(r -> {
+			Thread t = new Thread(r, "SSE-Heartbeat");
+			t.setDaemon(true);
+			return t;
+		});
 
 	private final ConcurrentLinkedQueue<SSEEvent> _pendingEvents = new ConcurrentLinkedQueue<>();
 
 	private final List<AsyncContext> _connections = new CopyOnWriteArrayList<>();
 
 	private final Map<String, CommandListener> _controls = new ConcurrentHashMap<>();
+
+	private volatile ScheduledFuture<?> _heartbeatTask;
 
 	/**
 	 * Retrieves or creates the {@link SSEUpdateQueue} for the given session.
@@ -75,6 +103,7 @@ public class SSEUpdateQueue {
 	 */
 	public void addConnection(AsyncContext asyncContext) {
 		_connections.add(asyncContext);
+		ensureHeartbeat();
 	}
 
 	/**
@@ -82,6 +111,7 @@ public class SSEUpdateQueue {
 	 */
 	public void removeConnection(AsyncContext asyncContext) {
 		_connections.remove(asyncContext);
+		cancelHeartbeatIfEmpty();
 	}
 
 	/**
@@ -98,23 +128,76 @@ public class SSEUpdateQueue {
 	public void flush() {
 		SSEEvent event;
 		while ((event = _pendingEvents.poll()) != null) {
-			String json = toJson(event);
-			if (json == null) {
+			String message = toDataMessage(toJson(event));
+			if (message == null) {
 				continue;
 			}
 			for (AsyncContext ctx : _connections) {
-				try {
-					PrintWriter writer = ctx.getResponse().getWriter();
-					writer.write("data: ");
-					writer.write(json);
-					writer.write("\n\n");
-					writer.flush();
-				} catch (IOException ex) {
-					Logger.warn("Failed to write SSE event, removing connection.", ex, SSEUpdateQueue.class);
-					_connections.remove(ctx);
-				}
+				writeOrRemove(ctx, message);
 			}
 		}
+	}
+
+	private synchronized void ensureHeartbeat() {
+		if (_heartbeatTask == null || _heartbeatTask.isDone()) {
+			_heartbeatTask = HEARTBEAT_EXECUTOR.scheduleAtFixedRate(
+				this::sendHeartbeat, HEARTBEAT_INTERVAL_SECONDS, HEARTBEAT_INTERVAL_SECONDS, TimeUnit.SECONDS);
+		}
+	}
+
+	private synchronized void cancelHeartbeatIfEmpty() {
+		if (_connections.isEmpty() && _heartbeatTask != null) {
+			_heartbeatTask.cancel(false);
+			_heartbeatTask = null;
+		}
+	}
+
+	private void sendHeartbeat() {
+		for (AsyncContext ctx : _connections) {
+			writeOrRemove(ctx, HEARTBEAT_MESSAGE);
+		}
+		cancelHeartbeatIfEmpty();
+	}
+
+	/**
+	 * Writes a message to the given connection, removing it if the write fails.
+	 */
+	private void writeOrRemove(AsyncContext ctx, String message) {
+		try {
+			writeToConnection(ctx, message);
+		} catch (IOException ex) {
+			Logger.warn("SSE write failed, removing dead connection.", ex, SSEUpdateQueue.class);
+			_connections.remove(ctx);
+		}
+	}
+
+	/**
+	 * Writes a complete SSE message to a connection.
+	 *
+	 * <p>
+	 * Synchronizes on the {@link AsyncContext} to prevent interleaving between heartbeat writes and
+	 * event writes from different threads.
+	 * </p>
+	 *
+	 * @throws IOException
+	 *         If the write fails, indicating a dead connection.
+	 */
+	private static void writeToConnection(AsyncContext ctx, String message) throws IOException {
+		synchronized (ctx) {
+			PrintWriter writer = ctx.getResponse().getWriter();
+			writer.write(message);
+			writer.flush();
+			if (writer.checkError()) {
+				throw new IOException("SSE write failed (PrintWriter error flag set).");
+			}
+		}
+	}
+
+	private static String toDataMessage(String json) {
+		if (json == null) {
+			return null;
+		}
+		return "data: " + json + "\n\n";
 	}
 
 	private static String toJson(SSEEvent event) {

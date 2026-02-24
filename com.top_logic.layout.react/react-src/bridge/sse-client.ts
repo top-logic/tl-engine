@@ -15,18 +15,49 @@ type StateListener = (state: Record<string, unknown>) => void;
 
 const _listeners = new Map<string, Set<StateListener>>();
 let _eventSource: EventSource | null = null;
+let _url: string | null = null;
+let _lastMessageTime: number = 0;
+let _heartbeatCheckInterval: ReturnType<typeof setInterval> | null = null;
+
+/** Must exceed the server-side heartbeat interval (30 s) to avoid false reconnects. */
+const HEARTBEAT_TIMEOUT_MS = 45_000;
+
+/** How often to check for missing heartbeats. */
+const HEARTBEAT_CHECK_INTERVAL_MS = 15_000;
 
 /**
  * Connects to the SSE endpoint. Should be called once on page load.
  */
 export function connect(url: string): void {
+  _url = url;
+
+  if (_heartbeatCheckInterval) {
+    clearInterval(_heartbeatCheckInterval);
+  }
+
+  createEventSource(url);
+
+  _heartbeatCheckInterval = setInterval(() => {
+    if (_lastMessageTime > 0 && Date.now() - _lastMessageTime > HEARTBEAT_TIMEOUT_MS) {
+      console.warn('[TLReact] No heartbeat received, reconnecting SSE.');
+      createEventSource(_url!);
+    }
+  }, HEARTBEAT_CHECK_INTERVAL_MS);
+}
+
+/**
+ * Creates (or re-creates) the EventSource connection.
+ */
+function createEventSource(url: string): void {
   if (_eventSource) {
     _eventSource.close();
   }
 
   _eventSource = new EventSource(url);
+  _lastMessageTime = Date.now();
 
   _eventSource.onmessage = (event: MessageEvent) => {
+    _lastMessageTime = Date.now();
     try {
       const data = JSON.parse(event.data);
       dispatch(data);
@@ -89,6 +120,9 @@ function dispatch(data: unknown): void {
   const payload = data[1] as Record<string, unknown>;
 
   switch (typeCode) {
+    case 'Heartbeat':
+      // Server keep-alive, no action needed.
+      break;
     case 'StateEvent':
       handleStateEvent(payload as unknown as StateEventData);
       break;

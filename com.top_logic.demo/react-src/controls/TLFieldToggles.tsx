@@ -1,17 +1,26 @@
-import { React, useTLState, getComponent } from 'tl-react-bridge';
+import {
+  React,
+  useTLState,
+  getComponent,
+  createChildContext,
+  TLControlContext,
+} from 'tl-react-bridge';
+
+const { useMemo } = React;
+
+interface ChildDescriptor {
+  controlId: string;
+  state: Record<string, unknown>;
+}
 
 /**
  * A composite React control that renders three {@code TLButton} sub-components
  * for toggling a form field's disabled, immutable, and mandatory properties.
  *
- * <p>Demonstrates how to compose existing registered components (here {@code TLButton})
- * inside a higher-level control.  Each button sends a different command
- * ({@code toggleDisabled}, {@code toggleImmutable}, {@code toggleMandatory}) to the
- * server-side {@code DemoFieldTogglesControl}, which dispatches them accordingly.</p>
- *
- * <p>Because all sub-components share the parent's {@code TLControlContext}, the
- * {@code useTLCommand()} hook inside each {@code TLButton} automatically routes
- * commands to the enclosing control.</p>
+ * <p>Demonstrates React-level composition: each child {@code TLButton} is wrapped in its own
+ * {@code TLControlContext.Provider} so that {@code useTLCommand()} inside each button routes
+ * commands to the correct server-side {@code ReactButtonControl}.  The child control IDs and
+ * initial states are passed from the server via this component's state.</p>
  */
 const TLFieldToggles: React.FC = () => {
   const state = useTLState();
@@ -21,23 +30,38 @@ const TLFieldToggles: React.FC = () => {
     return React.createElement('span', null, '[TLButton not registered]');
   }
 
-  const buttonStyle = (active: boolean): React.CSSProperties => ({
-    fontWeight: active ? 'bold' : 'normal',
-    backgroundColor: active ? '#e0e0e0' : '',
-  });
+  const children = (state.children ?? []) as ChildDescriptor[];
 
   return (
-    <div style={{ marginTop: '0.5em' }}>
-      <span style={buttonStyle(state.disabled === true)}>
-        <TLButton controlId="" state={state} command="toggleDisabled" label="Disabled" />
-      </span>
-      <span style={buttonStyle(state.immutable === true)}>
-        <TLButton controlId="" state={state} command="toggleImmutable" label="Immutable" />
-      </span>
-      <span style={buttonStyle(state.mandatory === true)}>
-        <TLButton controlId="" state={state} command="toggleMandatory" label="Mandatory" />
-      </span>
+    <div style={{ marginTop: '0.5em', display: 'flex', gap: '4px' }}>
+      {children.map((child) => (
+        <ChildButton
+          key={child.controlId}
+          childDescriptor={child}
+          ButtonComponent={TLButton}
+        />
+      ))}
     </div>
+  );
+};
+
+/**
+ * Renders a single TLButton child wrapped in its own TLControlContext so that
+ * commands are dispatched to the child's server-side ReactButtonControl.
+ */
+const ChildButton: React.FC<{
+  childDescriptor: ChildDescriptor;
+  ButtonComponent: React.ComponentType<any>;
+}> = ({ childDescriptor, ButtonComponent }) => {
+  const childCtx = useMemo(
+    () => createChildContext(childDescriptor.controlId, childDescriptor.state),
+    [childDescriptor.controlId]
+  );
+
+  return (
+    <TLControlContext.Provider value={childCtx}>
+      <ButtonComponent controlId={childDescriptor.controlId} state={childDescriptor.state} />
+    </TLControlContext.Provider>
   );
 };
 

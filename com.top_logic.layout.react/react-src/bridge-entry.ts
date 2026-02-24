@@ -8,6 +8,8 @@ export {
   useTLState,
   useTLCommand,
   useTLFieldValue,
+  createChildContext,
+  TLControlContext,
 } from './bridge/tl-react-bridge';
 export type { TLCellProps } from './bridge/types';
 

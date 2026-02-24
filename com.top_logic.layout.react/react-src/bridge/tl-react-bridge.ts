@@ -111,6 +111,7 @@ export function mount(
   _mounts.set(controlId, { root, store });
 
   const resolvedWindowName = windowName ?? '';
+  _lastWindowName = resolvedWindowName;
 
   const Wrapper = () => {
     const state = useSyncExternalStore(store.subscribeStore, store.getSnapshot);
@@ -147,6 +148,52 @@ export function unmount(controlId: string): void {
 }
 
 // --- Hooks ---
+
+/**
+ * The React context that provides control identity and state to TopLogic React components.
+ *
+ * Exported so that composite controls can wrap child components in a
+ * {@code TLControlContext.Provider} pointing to a different (child) control.
+ */
+export { TLControlContext };
+export type { TLControlContextValue };
+
+/**
+ * Creates a child control context value suitable for wrapping a sub-component in a
+ * {@code TLControlContext.Provider}.
+ *
+ * <p>The child gets its own {@link ControlStateStore} and SSE subscription so that it can
+ * independently receive state/patch events from the server.</p>
+ *
+ * @param childControlId the server-side control ID of the child control
+ * @param initialState   the initial state sent by the server for the child
+ * @returns a context value to be passed to {@code TLControlContext.Provider}
+ */
+export function createChildContext(
+  childControlId: string,
+  initialState: Record<string, unknown>
+): TLControlContextValue {
+  // Re-use an existing mount entry if the child was independently mounted.
+  let entry = _mounts.get(childControlId);
+  if (!entry) {
+    const store = new ControlStateStore(initialState);
+    const sseListener = (data: Record<string, unknown>) => {
+      store.applyPatch(data);
+    };
+    subscribe(childControlId, sseListener);
+    // Track it so we can clean up on unmount.
+    _mounts.set(childControlId, { root: null as unknown as Root, store });
+    entry = _mounts.get(childControlId)!;
+  }
+
+  // Inherit windowName from the parent context if available.
+  const parentWindowName = _lastWindowName;
+
+  return { controlId: childControlId, windowName: parentWindowName, store: entry.store };
+}
+
+/** Tracks the last windowName used in mount() for child context inheritance. */
+let _lastWindowName = '';
 
 /**
  * Returns the current state of the enclosing TopLogic control.

@@ -213,7 +213,7 @@ public interface AgentConfig extends NamedConfigMandatory {
 	boolean isThinkingCapable();
 
 	/**
-	 * Whether the selected model belongs to the OpenAI provider.
+	 * Whether the selected model belongs to the {@code OpenAI} provider.
 	 */
 	@Name(IS_OPENAI_PROVIDER)
 	@Derived(fun = IsOpenAIProvider.class, args = @Ref(MODEL))
@@ -399,8 +399,8 @@ public interface AgentConfig extends NamedConfigMandatory {
 	 * model to talk about new topics (-2.0 to 2.0).
 	 *
 	 * <p>
-	 * Positive values increase the likelihood of exploring new subjects. Only visible for OpenAI
-	 * models.
+	 * Positive values increase the likelihood of exploring new subjects. Only visible for
+	 * {@code OpenAI} models.
 	 * </p>
 	 */
 	@Name(PRESENCE_PENALTY)
@@ -414,7 +414,7 @@ public interface AgentConfig extends NamedConfigMandatory {
 	 *
 	 * <p>
 	 * Positive values decrease the likelihood of the model repeating the same phrases verbatim.
-	 * Only visible for OpenAI models.
+	 * Only visible for {@code OpenAI} models.
 	 * </p>
 	 */
 	@Name(FREQUENCY_PENALTY)
@@ -427,7 +427,7 @@ public interface AgentConfig extends NamedConfigMandatory {
 	 * should return similar results.
 	 *
 	 * <p>
-	 * Useful for testing and debugging. Only visible for OpenAI models.
+	 * Useful for testing and debugging. Only visible for {@code OpenAI} models.
 	 * </p>
 	 */
 	@Name(SEED)
@@ -463,10 +463,10 @@ public interface AgentConfig extends NamedConfigMandatory {
 	boolean getSendThinking();
 
 	/**
-	 * The reasoning effort level for OpenAI reasoning models.
+	 * The reasoning effort level for {@code OpenAI} reasoning models.
 	 *
 	 * <p>
-	 * Only visible for models that support reasoning effort (OpenAI o-series, GPT-5).
+	 * Only visible for models that support reasoning effort ({@code OpenAI} o-series, GPT-5).
 	 * </p>
 	 *
 	 * @return The reasoning effort, or {@code null} to use the provider default.
@@ -642,6 +642,9 @@ public interface AgentConfig extends NamedConfigMandatory {
 	 */
 	abstract class IsProviderCapable extends Function1<Boolean, String> {
 
+		/**
+		 * The provider type to check for.
+		 */
 		protected abstract Class<? extends ChatModelFactory> providerType();
 
 		@Override
@@ -736,7 +739,8 @@ public interface AgentConfig extends NamedConfigMandatory {
 	}
 
 	/**
-	 * Shows the field as {@link FieldMode#ACTIVE} when the model is OpenAI, invisible otherwise.
+	 * Shows the field as {@link FieldMode#ACTIVE} when the model is {@code OpenAI}, invisible
+	 * otherwise.
 	 */
 	class ActiveIfOpenAIProvider extends Function1<FieldMode, Boolean> {
 
@@ -758,7 +762,7 @@ public interface AgentConfig extends NamedConfigMandatory {
 	}
 
 	/**
-	 * Shows the field as {@link FieldMode#ACTIVE} when model is OpenAI or Mistral.
+	 * Shows the field as {@link FieldMode#ACTIVE} when model is {@code OpenAI} or Mistral.
 	 */
 	class ActiveIfOpenAiOrMistralProvider extends Function2<FieldMode, Boolean, Boolean> {
 
@@ -782,11 +786,17 @@ public interface AgentConfig extends NamedConfigMandatory {
 	}
 
 	/**
-	 * Response format options supported by OpenAI/Mistral builders.
+	 * Response format options supported by {@code OpenAI}/Mistral builders.
 	 */
 	enum ResponseFormatOption {
+
+		/** Use the provider default response format. */
 		DEFAULT,
+
+		/** Plain text response format. */
 		TEXT,
+
+		/** JSON response format. */
 		JSON
 	}
 

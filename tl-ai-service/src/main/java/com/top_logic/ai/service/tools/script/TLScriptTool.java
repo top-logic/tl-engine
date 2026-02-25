@@ -27,16 +27,12 @@ import dev.langchain4j.agent.tool.Tool;
  * Langchain4j tool for validating and executing TLScript code.
  *
  * <p>
- * This tool provides two methods for working with TLScript:
+ * This tool provides validation and execution of TLScript. Both methods use the shared
+ * {@link TLScriptExecutor} for core validation and execution logic.
  * </p>
- * <ul>
- * <li>{@link #validateTLScript(String)} - Validates syntax, model references, and types</li>
- * <li>{@link #executeTLScript(String, Boolean, List)} - Validates and executes TLScript code</li>
- * </ul>
  *
- * <p>
- * Both methods use the shared {@link TLScriptExecutor} for core validation and execution logic.
- * </p>
+ * @see #validateTLScript(String)
+ * @see #executeTLScript(String, Boolean, List)
  */
 public class TLScriptTool {
 

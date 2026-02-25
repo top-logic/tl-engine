@@ -6,7 +6,7 @@
 package com.top_logic.ai.service.agents;
 
 /**
- * Reasoning effort levels supported by OpenAI reasoning models (o-series, GPT-5).
+ * Reasoning effort levels supported by {@code OpenAI} reasoning models (o-series, GPT-5).
  *
  * <p>
  * This is a superset of all known values across model families. Not every model supports every

@@ -55,18 +55,13 @@ import dev.langchain4j.agent.tool.Tool;
  * Tool for accessing TopLogic instance data from the knowledge base.
  *
  * <p>
- * This tool provides two methods for working with instances:
- * <ul>
- * <li>{@link #listInstances(String, String, Integer, String)} - Lists all TIDs for a type</li>
- * <li>{@link #getInstance(String)} - Gets detailed info for a specific instance</li>
- * </ul>
+ * This tool provides methods for listing instances of a type with pagination and retrieving
+ * detailed information about individual instances. All methods return JSON-formatted strings for
+ * consumption by AI agents.
  * </p>
  *
- * <p>
- * All methods return JSON-formatted strings for consumption by AI agents.
- * </p>
- * 
- * @author jhu
+ * @see #listInstances(String, String, Integer, String)
+ * @see #getInstance(String)
  */
 public class InstanceBrowserTool {
 

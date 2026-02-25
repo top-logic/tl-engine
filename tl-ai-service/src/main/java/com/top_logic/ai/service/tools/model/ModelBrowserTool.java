@@ -54,19 +54,14 @@ import dev.langchain4j.agent.tool.Tool;
  * Tool for browsing TopLogic model structure (modules, types, parts).
  *
  * <p>
- * This tool provides three methods that form the natural hierarchy for model exploration:
- * <ul>
- * <li>{@link #listModules()} - Lists all modules in the application</li>
- * <li>{@link #listTypes(String)} - Lists types within a specific module</li>
- * <li>{@link #listTypeParts(String, String, Boolean)} - Lists properties/references of a type</li>
- * </ul>
+ * This tool provides three methods that form the natural hierarchy for model exploration: listing
+ * all modules, listing types within a module, and listing properties/references of a type. All
+ * methods return JSON-formatted strings for consumption by AI agents.
  * </p>
  *
- * <p>
- * All methods return JSON-formatted strings for consumption by AI agents.
- * </p>
- * 
- * @author jhu
+ * @see #listModules()
+ * @see #listTypes(String)
+ * @see #listTypeParts(String, String, Boolean)
  */
 public class ModelBrowserTool {
 

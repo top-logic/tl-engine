@@ -40,18 +40,13 @@ import dev.langchain4j.agent.tool.Tool;
  * Tool for analyzing TopLogic type dependencies and relationships.
  *
  * <p>
- * This tool provides methods for understanding how types are used throughout the model:
- * <ul>
- * <li>{@link #findTypeUsages(String)} - Finds all usages of a type</li>
- * <li>{@link #findPartUsages(String, String)} - Finds where a part is defined and inherited</li>
- * </ul>
+ * This tool provides methods for understanding how types are used throughout the model: finding all
+ * usages of a type and finding where a part is defined and inherited. All methods return
+ * JSON-formatted strings for consumption by AI agents.
  * </p>
  *
- * <p>
- * All methods return JSON-formatted strings for consumption by AI agents.
- * </p>
- * 
- * @author jhu
+ * @see #findTypeUsages(String)
+ * @see #findPartUsages(String, String)
  */
 public class TypeAnalysisTool {
 

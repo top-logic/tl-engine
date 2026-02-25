@@ -9,9 +9,8 @@ package com.top_logic.ai.service.providers;
  * Capabilities that an LLM model may support, beyond basic text generation.
  *
  * <p>
- * Used by {@link com.top_logic.ai.service.ChatModelFactory#getModelCapabilities(String)} to report
- * per-model capabilities. The agent configuration UI uses these to control field visibility and
- * validate parameter combinations.
+ * The agent configuration UI uses these to control field visibility and validate parameter
+ * combinations.
  * </p>
  *
  * @see com.top_logic.ai.service.ChatModelFactory#getModelCapabilities(String)
@@ -41,7 +40,7 @@ public enum ModelCapability {
 	 * Supports the reasoning effort parameter.
 	 *
 	 * <p>
-	 * OpenAI {@code reasoning_effort} for o-series and GPT-5 models.
+	 * {@code OpenAI} {@code reasoning_effort} for o-series and GPT-5 models.
 	 * </p>
 	 */
 	REASONING_EFFORT;

@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import com.top_logic.base.accesscontrol.SessionService;
+import com.top_logic.base.accesscontrol.SessionService.UserEventListener;
 import com.top_logic.base.bus.UserEvent;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.UnreachableAssertion;
@@ -25,6 +27,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
@@ -44,7 +47,8 @@ import com.top_logic.knowledge.wrap.person.Person;
  * 
  * @author    <a href="mailto:mga@top-logic.com"></a>
  */
-public class UserMonitor extends KBBasedManagedClass<UserMonitor.Config> {
+@ServiceDependencies(SessionService.Module.class)
+public class UserMonitor extends KBBasedManagedClass<UserMonitor.Config> implements UserEventListener {
 
 	/** Number of milliseconds that {@link UserSession}s will looked up in the past. */
 	public static final long THREE_DAYS = TimeUnit.DAYS.toMillis(3);
@@ -55,6 +59,9 @@ public class UserMonitor extends KBBasedManagedClass<UserMonitor.Config> {
     
 	/** User names to exclude from automatic deleting. */
 	private final Set<String> excludeUIDs;
+
+	/** The {@link SessionService} on which this service depends. */
+	private final SessionService _sessionService;
 
 	/**
 	 * Configuration for {@link UserMonitor}.
@@ -81,11 +88,13 @@ public class UserMonitor extends KBBasedManagedClass<UserMonitor.Config> {
 		super(context, config);
 
 		excludeUIDs = config.getExcludeUIDs();
+		_sessionService = SessionService.getInstance();
 	}
 
 	/**
 	 * Notifies this {@link UserMonitor} about the given {@link UserEvent}.
 	 */
+	@Override
 	public void notifyUserEvent(UserEvent evt) {
 		switch (evt.type()) {
 			case LOGGED_IN:
@@ -163,6 +172,18 @@ public class UserMonitor extends KBBasedManagedClass<UserMonitor.Config> {
     public Iterator<UserSession> getOpenSessionsIterated(KnowledgeBase aBase) {
         return (new OpenSessionIterator(this.getUserSessions(aBase).iterator()));
     }
+
+    @Override
+    protected void startUp() {
+    	super.startUp();
+		_sessionService.addUserEventConsumer(this);
+    }
+
+	@Override
+	protected void shutDown() {
+		_sessionService.removeUserEventConsumer(this);
+		super.shutDown();
+	}
 
     /**
      * Handle the login of a user.

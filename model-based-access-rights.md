@@ -133,7 +133,7 @@ The following aspects are already model-based and independent of views:
 
 1. **Role assignments** on business objects (hasRole records).
 2. **Role rules** configured per TLClass that derive roles from object attributes and relationships.
-3. **Security parent hierarchy** that enables role inheritance along object structures.
+3. **Security parent hierarchy walk** that enables role inheritance along object structures. However, which object is the security parent of a given instance is currently defined in Java code (`BoundObject.getSecurityParent()`), not declaratively -- see section 1.4.
 4. **Role scoping** to TLModules.
 
 ### 1.4 What is View-Based (The Gap)
@@ -150,6 +150,8 @@ The critical missing link is **step 2** of the security check: the mapping from 
 - There is no single place that says "Role X can read/write/create/delete instances of type T." This information is scattered across view configurations.
 
 - For non-UI access paths (AI assistants, REST APIs, batch jobs), there is no natural view context to evaluate.
+
+- The **security parent relationship** is hardcoded in Java (`BoundObject.getSecurityParent()`). Which object is the security parent of a given instance cannot be configured declaratively. Moreover, only a single security parent per object is supported, which is insufficient when an object participates in multiple overlapping contexts.
 
 ### 1.5 Architectural Diagram of the Status Quo
 
@@ -267,12 +269,15 @@ roles: {Editor, Manager}
 inherit: true
 
 type: myapp:Customer
+operation: CREATE
+roles: {Editor, Manager}
+inherit: false
+
+type: myapp:Customer
 operation: DELETE
 roles: {Manager}
 inherit: false
 ```
-
-Note: `CREATE` is not listed as a type-level operation here. Object creation is context-dependent and handled through attribute-level WRITE permissions on the composition reference of the parent object. See section 2.3.6 for details.
 
 #### 2.3.3 Attribute-Level Access Rules
 
@@ -343,35 +348,59 @@ Access check for "Can user U perform command group G on attribute A of instance 
 2. AccessManager.hasRole(U, I, R) → true/false
 ```
 
-#### 2.3.6 Object Creation as Modification of the Composition Context
+#### 2.3.6 Object Creation
 
-Object creation poses a unique challenge for model-based access rights: when a new instance is being created, there is no target instance yet to check roles against. In the view-based system, this is hidden by the fact that the view's `SecurityObjectProvider` resolves a context object (e.g., the current Project) for the role check. A naive type-level rule like "Role Editor can CREATE Milestone" would be context-free and could not distinguish between creating a Milestone in Project P1 (allowed) and in Project P2 (forbidden).
+Creating an object requires satisfying two conditions that are checked independently:
 
-The key observation is that **creating an object in a context is really a modification of that context**. Creating a Milestone for a Project means adding it to the Project's `milestones` composition reference -- this is a write operation on the Project instance, not an isolated act on the Milestone type.
-
-Therefore, object creation is modeled as a **WRITE operation on the parent's composition attribute**:
+**Condition 1 — CREATE right on the target type**: The user must hold a role that is granted the `Create` command group on the type being created. This is a standard type-level check (section 2.3.5), with the composition parent as the context object (or the module's security root when no parent exists):
 
 ```
-"Can user U create a Milestone in Project P?"
-
-  ≡ "Can user U write attribute Project#milestones on instance P?"
-
-  1. Look up AttributeAccessRule(Project#milestones, WRITE) → required roles R
-     (Falls back to TypeAccessRule(Project, WRITE) if no attribute-level rule)
-
-  2. AccessManager.hasRole(U, P, R) → true/false
+TypeAccessRule(myapp:Milestone, Create) → required roles R_create
+AccessManager.hasRole(U, contextObject, R_create)
 ```
 
-This approach has several advantages:
+**Condition 2 — WRITE right on the composition context** (only when a parent object exists): The user must additionally hold a write right on the parent that will contain the new object. This is the standard attribute-level check from section 2.3.5, with `A = Project#milestones` and `G = Write`:
 
-- **Context-dependent**: The check is against the parent instance (P), so user U may be allowed to create milestones in P1 (where U has the Editor role) but not in P2 (where U only has Viewer). This naturally falls out of the existing instance-level role mechanism.
-- **Attribute-level granularity**: Different composition references on the same type can have different permissions. A user might be allowed to add milestones to a project (`Project#milestones`) but not sub-projects (`Project#subProjects`), controlled by separate attribute-level rules.
-- **No special CREATE semantics needed**: Creation is a WRITE, using the same mechanism as all other modifications.
+```
+AttributeAccessRule(Project#milestones, Write) defined?
+  → required roles R_write = intersection(TypeAccessRule(Project, Write), AttributeAccessRule(..., Write))
+else
+  → required roles R_write = TypeAccessRule(Project, Write).roles
 
-For **top-level objects** that have no composition parent (e.g., creating a new top-level Project), the creation check falls back to a WRITE check on the module's security root or a configured context object, analogous to today's `SecurityObjectProvider` with the `securityRoot` strategy.
+AccessManager.hasRole(U, P, R_write)
+```
 
-Example configuration:
+Both conditions must be satisfied. Full example:
+
+```
+"Can user U create a Milestone in Project P (via Project#milestones)?"
+
+  Condition 1: TypeAccessRule(myapp:Milestone, Create) → R_create
+               AccessManager.hasRole(U, P, R_create)
+
+  Condition 2: attribute-level Write check on Project#milestones → R_write
+               AccessManager.hasRole(U, P, R_write)
+
+  → ALLOW only if both are true
+```
+
+**Top-level objects**: When no composition parent exists (e.g., creating a top-level Project), only condition 1 applies, using the module's security root as the context object. Condition 2 is vacuously satisfied since there is no containing object. The model is consistent across both cases: condition 1 is always required; condition 2 adds the container check whenever a container is present.
+
+This design preserves context-sensitivity: user U may be permitted to create Milestones in general (condition 1) but only in projects where U holds a sufficient role (condition 2). Attribute-level granularity is also preserved: a user might be allowed to add milestones to a project (`Project#milestones`) but not sub-projects (`Project#subProjects`), controlled by separate attribute-level WRITE rules on the parent.
+
+Configuration:
 ```xml
+<class name="Milestone">
+    <annotations>
+        <access-rights>
+            <grant operation="read"   roles="Viewer, Editor, Manager"/>
+            <grant operation="write"  roles="Editor, Manager"/>
+            <grant operation="create" roles="Editor, Manager"/>
+            <grant operation="delete" roles="Manager"/>
+        </access-rights>
+    </annotations>
+</class>
+
 <class name="Project">
     <annotations>
         <access-rights>
@@ -384,7 +413,7 @@ Example configuration:
                    composition="true">
             <annotations>
                 <access-rights>
-                    <!-- Who can add/remove milestones in a project -->
+                    <!-- Condition 2: who can add/remove milestones in a project -->
                     <grant operation="write" roles="Editor, Manager"/>
                 </access-rights>
             </annotations>
@@ -458,6 +487,153 @@ Configuration example:
 ```
 
 The AI assistant or REST API uses the data access operations (READ, WRITE, DELETE) and attribute-level restrictions for general data access. When invoking a specific business operation (e.g., through a tool or endpoint that corresponds to "approve this order"), it checks the custom operation.
+
+#### 2.3.8 Configurable Security Parent Rules
+
+The security parent hierarchy determines how role assignments are inherited across object structures: if user U has a role on a parent object, U implicitly has that role on all descendants. Currently the parent relationship is a Java method (`BoundObject.getSecurityParent()`) that must be overridden per type, making the security hierarchy opaque and inflexible.
+
+Model-based access rights introduce **security parent rules** that define the parent relationship declaratively, using the same path navigation mechanism already used by role rules.
+
+A **security parent rule** specifies, for instances of a given type, which related objects act as security parents:
+
+```
+SecurityParentRule:
+  type:     TLClass            -- The model type this rule applies to
+  path:     List<PathElement>  -- Attribute path from the instance to its security parent(s)
+  inherit:  boolean            -- Whether the rule applies to sub-types
+```
+
+Multiple security parent rules for the same type yield multiple security parents per instance. This is essential when an object participates in multiple overlapping contexts:
+
+```xml
+<!-- Milestone's security parent is its Project -->
+<security-parent-rule meta-element="myapp:Milestone" inherit="false">
+    <path>
+        <step attribute="project" inverse="false" meta-element="myapp:Milestone"/>
+    </path>
+</security-parent-rule>
+
+<!-- Task has two security parents: its Milestone AND its Sprint -->
+<security-parent-rule meta-element="myapp:Task" inherit="false">
+    <path>
+        <step attribute="milestone" inverse="false" meta-element="myapp:Task"/>
+    </path>
+</security-parent-rule>
+
+<security-parent-rule meta-element="myapp:Task" inherit="false">
+    <path>
+        <step attribute="sprint" inverse="false" meta-element="myapp:Task"/>
+    </path>
+</security-parent-rule>
+```
+
+Paths follow the same `PathElement` semantics as role rules: `inverse="false"` follows a forward reference (the attribute value), `inverse="true"` navigates backwards (objects referencing this instance via the named attribute). Multi-step paths are supported.
+
+**Multiple security parents and DAG traversal**
+
+With multiple security parents, the security context forms a directed acyclic graph (DAG) rather than a chain. All places that previously walked the parent chain linearly become a breadth-first traversal over this DAG, with a visited-set guard against cycles:
+
+```
+Role check for instance I:
+  1. Initialize queue = {I}, visited = {}
+  2. While queue is not empty:
+     a. Dequeue current object C
+     b. If C is already in visited: skip
+     c. Add C to visited
+     d. Accumulate role assignments on C
+     e. Enqueue all security parents of C
+  3. Result: union of roles found at any visited node
+```
+
+**Backward compatibility**
+
+If no security parent rule is configured for a type, the existing Java-based `BoundObject.getSecurityParent()` is used as a fallback. The `BoundObject` interface gains a default `getSecurityParents()` method:
+
+```java
+default Collection<? extends BoundObject> getSecurityParents() {
+    BoundObject single = getSecurityParent();  // legacy fallback
+    return single == null ? Collections.emptyList() : Collections.singletonList(single);
+}
+```
+
+`AbstractBoundWrapper` overrides `getSecurityParents()` to consult configured `SecurityParentRule`s via `ElementAccessManager` first, and falls back to `getSecurityParent()` only when no rules are configured for the type.
+
+**Integration with `ElementAccessManager`**
+
+The `ElementAccessManager` loads and manages security parent rules alongside role rules: it resolves the `inherit` flag, propagates rules to sub-types, caches rules per `TLClass` for efficient lookup, and tracks which attributes participate in security parent paths so that cached role computations can be invalidated when those attributes change.
+
+**Model annotation form**
+
+Following the model-first principle, security parent rules can also be expressed as annotations on `TLClass` definitions in `*.model.xml` files:
+
+```xml
+<class name="Task">
+    <annotations>
+        <security-parents>
+            <parent-path>
+                <step attribute="milestone"/>
+            </parent-path>
+            <parent-path>
+                <step attribute="sprint"/>
+            </parent-path>
+        </security-parents>
+    </annotations>
+</class>
+```
+
+Model annotations take precedence over config-file-based rules, consistent with the precedence rule in section 2.4.3.
+
+#### 2.3.9 PersBoundComp as a TL Model Type
+
+Some UI components have no typed domain model -- navigation menus, dashboards, administration panels, workflow overview screens. Because no `TLClass` is associated with these views, the type-level access rules from section 2.3.2 cannot be used directly.
+
+**One class for all components**
+
+The solution is to introduce a single new `TLClass` -- `tl.accounts:BoundComponent` -- and make every `PersBoundComp` instance in the knowledge base an instance of this class. This integrates `PersBoundComp` into the TL model without requiring one class per component.
+
+`tl.accounts:BoundComponent` is a regular `TLClass` defined once in the `tl.accounts` model module. It carries the attributes that the existing `PersBoundComp` mechanism already maintains per instance:
+
+| Attribute | Type | Meaning |
+|-----------|------|---------|
+| `name` | `String` | The component's identity key |
+| `commandGroupRoles` | association | Per-instance mapping of command group → allowed roles (replaces the existing `needsRole` association) |
+| `roleRules` | association | Per-instance role rules (see below) |
+| `securityParent` | `tl.accounts:BoundComponent` | Parent component for role inheritance (section 2.3.8) |
+
+**Per-instance access rights**
+
+For domain types, access rights are defined at the type level via `TypeAccessRule` and shared by all instances. For `BoundComponent`, the access rights are **per-instance**: each component instance carries its own `(commandGroup → roles)` mapping stored in `commandGroupRoles`. This matches the existing `PersBoundComp` semantics exactly -- the `TypeAccessRule` mechanism is not used for `BoundComponent` instances.
+
+The admin UI manages `BoundComponent` instances through the standard TL model tooling, just like any other business object.
+
+**Per-instance role rules**
+
+Role rules for a `BoundComponent` instance are stored as associations on the instance (in `roleRules`) and evaluated by `ElementAccessManager`. Two rule kinds are supported:
+
+| Rule kind | Meaning |
+|-----------|---------|
+| `group-role` | All members of a named group receive a given role on this component instance |
+| `type-role` | Users who hold a given role on any instance of a specified domain type receive a target role on this component instance |
+
+**Security parent chain**
+
+The `securityParent` attribute points from one `BoundComponent` instance to another, enabling role inheritance up the component hierarchy. The DAG traversal from section 2.3.8 applies unchanged.
+
+**Security check**
+
+The `SecurityObjectProvider` for a model-free component returns the `BoundComponent` instance identified by the component's name. The access check then proceeds as:
+
+```
+1. SecurityObjectProvider returns the BoundComponent instance P
+
+2. Look up P.commandGroupRoles[commandGroup] → required roles R
+   (per-instance lookup, not a TypeAccessRule)
+
+3. AccessManager.hasRole(user, P, R)
+   ├─ Checks direct hasRole records on P
+   ├─ Evaluates role rules stored in P.roleRules
+   └─ Walks P.securityParent chain (DAG traversal, section 2.3.8)
+```
 
 ### 2.4 Configuration Model
 
@@ -636,7 +812,7 @@ canExecute($instance, $customOperation)
 
 ### 2.8 Migration Path
 
-1. **Phase 1 -- Introduce model-based access rules**: Add the annotation-based configuration and the `ModelAccessRights` API. Both systems coexist; views continue to use `PersBoundComp`.
+1. **Phase 1 -- Introduce model-based access rules**: Add the annotation-based configuration and the `ModelAccessRights` API. Both systems coexist; views continue to use `PersBoundComp`. Also introduce `SecurityParentRule` configuration and the `getSecurityParents()` API; existing Java overrides of `getSecurityParent()` continue to work as a fallback.
 
 2. **Phase 2 -- AI and API integration**: The AI assistant and REST APIs use `ModelAccessRights` for their access checks.
 

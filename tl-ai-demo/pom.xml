@@ -84,17 +84,17 @@
         <dependency>
             <groupId>com.top-logic</groupId>
             <artifactId>tl-ai-mcp-server</artifactId>
-            <version>${tl.version}</version>
+            <version>0.0.1-AI</version>
         </dependency>
         <dependency>
             <groupId>com.top-logic</groupId>
             <artifactId>tl-chat</artifactId>
-            <version>${tl.version}</version>
+            <version>0.0.1-AI</version>
         </dependency>
         <dependency>
             <groupId>com.top-logic</groupId>
             <artifactId>tl-ai-service</artifactId>
-            <version>${tl.version}</version>
+            <version>0.0.1-AI</version>
         </dependency>
         <dependency>
             <groupId>com.top-logic</groupId>

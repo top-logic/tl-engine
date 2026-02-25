@@ -159,20 +159,21 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		_instance = this;
 		_agentNameIndex = buildAgentNameIndex(getConfig().getAgents());
 
-		// Validate that all agent configs reference models known to AIService
+		// Validate agent model references against AIService (informational only)
 		AIService aiService = AIService.getInstance();
-		if (aiService != null) {
-			List<String> availableModels = aiService.getModelNames();
-			for (Map.Entry<String, AgentConfig> entry : getConfig().getAgents().entrySet()) {
-				String agentName = entry.getKey();
-				AgentConfig agentConfig = entry.getValue();
-				String model = agentConfig.getModel();
-				if (!availableModels.contains(model)) {
-					Logger.warn(
-						"Agent '" + agentName + "' references model '" + model +
-							"' which is not registered in AIService. Available: " + availableModels,
-						AgentRegistry.class);
-				}
+		for (Map.Entry<String, AgentConfig> entry : getConfig().getAgents().entrySet()) {
+			String agentName = entry.getKey();
+			String model = entry.getValue().getModel();
+			if (model == null || model.isEmpty()) {
+				Logger.info(
+					"Agent '" + agentName + "' has no model configured. " +
+						"It will use the AIService default model when invoked.",
+					AgentRegistry.class);
+			} else if (aiService != null && !aiService.getModelNames().contains(model)) {
+				Logger.warn(
+					"Agent '" + agentName + "' references model '" + model +
+						"' which is not registered in AIService. Available: " + aiService.getModelNames(),
+					AgentRegistry.class);
 			}
 		}
 

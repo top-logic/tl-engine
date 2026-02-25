@@ -10,10 +10,10 @@ erfahrener Berater, der die Anwendung kennt.
 
 Dabei gibt es drei Einsatzformen:
 
-- **TL Copilot**: Ein KI-Assistent direkt in der Anwendung, über
+- **Interaktiver Agent**: Ein Copilot direkt in der Anwendung, über
   den Anwender Fragen stellen und Aufgaben ausführen lassen können.
 
-- **Interne Agenten**: Spezialisierte KI-Agenten innerhalb der
+- **Autonome Agenten**: Spezialisierte KI-Agenten innerhalb der
   Anwendung, die eigenständig wiederkehrende Aufgaben übernehmen.
   Interne Agenten können dabei auch externe Werkzeuge (Anwendungen) verwenden.
   Die Spezialisierung solcher Agenten manifestiert sind in ihren "Skills", 

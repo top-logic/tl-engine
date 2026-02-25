@@ -18,12 +18,12 @@ Dabei gibt es drei Einsatzformen:
   Interne Agenten können dabei auch externe Werkzeuge (Anwendungen) verwenden.
   Die Spezialisierung solcher Agenten manifestiert sind in ihren "Skills", 
   also ihren konkreten Fähigkeiten.
-  ### Development Agenten
+  - **Development Agenten**  
   Agenten zur Unterstützung der Anwendungsentwicklung.
   Trigger: User-Prompt (Copilot)
   Fokus: Applikationsmodell, Konfiguration, Layout
   Typische Skills: Modellteile suchen, analysieren, modifzieren, Layouts konfigurieren...
-  ### Fachliche Agenten
+  - **Fachliche Agenten**  
   Agenten zur Interaktion mit Anwendungsdaten
   Trigger: User-Prompt (Copilot), Zeitgesteuert, Ereignissgesteuert, durch externe Agenten
   Fokus: Applikationsdaten, lokal und Systemübergreifend

@@ -210,9 +210,11 @@ public abstract class BasicRuntimeModule<M extends ManagedClass> {
 				BasicRuntimeModule.class);
 
 		notifyShutdownListeners(oldInstance);
+		/* Reset impl before shutdown instance to ensure module is not active, also when shutdown
+		 * fails for some reason. */
+		impl = null;
 		try {
 			shutDownImplementation(oldInstance);
-			impl = null;
 			Logger.info("Service '" + getImplementation().getName() + "' successfully shut down .",
 				BasicRuntimeModule.class);
 		} catch (Exception ex) {

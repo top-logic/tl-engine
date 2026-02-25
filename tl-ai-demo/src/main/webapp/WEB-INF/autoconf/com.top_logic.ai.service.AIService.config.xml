@@ -8,6 +8,7 @@
 			config:override="true"
 		>
 			<instance class="com.top_logic.ai.service.AIService"
+				default-model="mistral-large-latest"
 			>
 				<factory class="com.top_logic.ai.service.providers.OpenAIChatModelFactory"
 					api-key="%OPENAI_API_KEY%"

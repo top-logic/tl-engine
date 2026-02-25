@@ -194,7 +194,7 @@ public interface AgentConfig extends NamedConfigMandatory {
 	 * </p>
 	 */
 	@Name(MODEL)
-	@Mandatory
+	@Nullable
 	@Options(fun = AllModelNames.class)
 	String getModel();
 

@@ -307,9 +307,16 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 			throw new RuntimeException("AIService is not available.");
 		}
 
-		ChatModelFactory factory = aiService.getFactory(config.getModel());
+		String modelName = config.getModel();
+
+		// Fall back to AIService default model when agent has no model configured
+		if (modelName == null || modelName.isEmpty()) {
+			return aiService.getChatModel(null);
+		}
+
+		ChatModelFactory factory = aiService.getFactory(modelName);
 		if (factory == null) {
-			return aiService.getChatModel(config.getModel());
+			return aiService.getChatModel(modelName);
 		}
 
 		if (factory instanceof AnthropicChatModelFactory) {
@@ -322,7 +329,7 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 			return buildOpenAIModel((OpenAIChatModelFactory) factory, config);
 		}
 
-		return aiService.getChatModel(config.getModel());
+		return aiService.getChatModel(modelName);
 	}
 
 	/**

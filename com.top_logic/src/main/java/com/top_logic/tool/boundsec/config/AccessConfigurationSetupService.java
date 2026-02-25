@@ -22,6 +22,7 @@ import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.db.schema.properties.DBProperties;
+import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
@@ -113,11 +114,25 @@ public class AccessConfigurationSetupService extends ManagedClass {
 		}
 	}
 
-	private static String hash(BinaryData accessData) {
+	/**
+	 * Computes an MD5 hash of the given {@link BinaryContent} and returns it as a Base64-encoded
+	 * string.
+	 *
+	 * <p>
+	 * The hash is used to detect whether the content has changed since it was last processed, so
+	 * that re-importing can be skipped when the file is unchanged.
+	 * </p>
+	 *
+	 * @param data
+	 *        The content to hash.
+	 * @return Base64-encoded MD5 digest of the content, or <code>null</code> if an error occurred
+	 *         while reading the data.
+	 */
+	public static String hash(BinaryContent data) {
 		try {
 			MessageDigest digest = MessageDigest.getInstance("md5");
 			byte[] buffer = new byte[4096];
-			try (InputStream in = accessData.getStream()) {
+			try (InputStream in = data.getStream()) {
 				while (true) {
 					int direct = in.read(buffer);
 					if (direct < 0) {
@@ -128,7 +143,7 @@ public class AccessConfigurationSetupService extends ManagedClass {
 			}
 			return Base64.getEncoder().encodeToString(digest.digest());
 		} catch (IOException | NoSuchAlgorithmException ex) {
-			Logger.error("Cannot hash access configuration.", ex, AccessConfigurationSetupService.class);
+			Logger.error("Cannot hash data.", ex, AccessConfigurationSetupService.class);
 			return null;
 		}
 	}

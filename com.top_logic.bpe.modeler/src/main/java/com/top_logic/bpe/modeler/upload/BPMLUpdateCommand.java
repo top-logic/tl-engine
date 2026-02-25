@@ -19,6 +19,7 @@ import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.bpe.bpml.model.Collaboration;
 import com.top_logic.bpe.execution.engine.InitialProcessSetupService;
+import com.top_logic.bpe.util.Updater;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
 import com.top_logic.knowledge.service.Transaction;

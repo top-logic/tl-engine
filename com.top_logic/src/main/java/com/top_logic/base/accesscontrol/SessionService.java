@@ -12,7 +12,6 @@ import java.util.Enumeration;
 import java.util.EventListener;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -28,6 +27,9 @@ import com.top_logic.basic.InteractionContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.SubSessionContext;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.NamedConfigMandatory;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
@@ -94,6 +96,24 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 		@Name(SECURE_SESSION_COOKIE)
 		@Mandatory
 		boolean getSecureSessionCookie();
+
+		/**
+		 * Configuration of user event listeners to react on login and logout.
+		 */
+		List<UserEventListenerConfig> getListeners();
+	}
+
+	/**
+	 * {@link NamedConfigMandatory} holding the configuration of an {@link UserEventListener}.
+	 * 
+	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+	 */
+	public interface UserEventListenerConfig extends NamedConfigMandatory {
+
+		/**
+		 * Configuration of the event listener.
+		 */
+		PolymorphicConfiguration<? extends UserEventListener> getImpl();
 	}
 
 	/**
@@ -131,7 +151,7 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 	/**
 	 * Consumers to consume {@link UserEvent}.
 	 */
-	private List<UserEventListener> _userEventListeners = new ArrayList<>();
+	private final List<UserEventListener> _userEventListeners;
 
 	private final ThreadContextManager _threadContextManager;
 
@@ -141,6 +161,9 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 	public SessionService(InstantiationContext context, Config config) {
 		super(context, config);
 		_threadContextManager = ThreadContextManager.getManager();
+		List<? extends PolymorphicConfiguration<? extends UserEventListener>> listenerConfigs =
+			config.getListeners().stream().map(UserEventListenerConfig::getImpl).toList();
+		_userEventListeners = TypedConfiguration.getInstanceListReadOnly(context, listenerConfigs);
 	}
 
     //------------------PUBLIC METHODS----------------------
@@ -600,24 +623,6 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
         }
     }
 
-	/**
-	 * Installs the listener to be informed about user events.
-	 * 
-	 * @see #removeUserEventConsumer(UserEventListener)
-	 */
-	public void addUserEventConsumer(UserEventListener l) {
-		_userEventListeners.add(Objects.requireNonNull(l));
-	}
-
-	/**
-	 * Removes a formerly installed listener.
-	 * 
-	 * @see #addUserEventConsumer(UserEventListener)
-	 */
-	public void removeUserEventConsumer(UserEventListener l) {
-		_userEventListeners.remove(l);
-	}
-
     /**
 	 * The singleton {@link SessionService} instance.
 	 */
@@ -631,7 +636,6 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 			invalidateSession(info.getSessionId());
 		}
 		_sessionMap.clear();
-		_userEventListeners.clear();
 		super.shutDown();
 	}
 	

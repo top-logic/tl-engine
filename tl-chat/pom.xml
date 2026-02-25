@@ -27,7 +27,7 @@
 		<dependency>
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-ai-service</artifactId>
-			<version>${tl.version}</version>
+			<version>${project.version}</version>
 		</dependency>
 		<!-- Tests -->
 		<dependency>

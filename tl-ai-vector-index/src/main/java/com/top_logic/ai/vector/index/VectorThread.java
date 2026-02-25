@@ -20,20 +20,19 @@ import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.HistoryManager;
 import com.top_logic.knowledge.service.merge.MergeConflictException;
 
-
 /**
  * Daemon thread for adding/deleting knowledge objects to index machine.
  * 
  * @author <a href=mailto:jst@top-logic.com>Jan Stolzenburg</a>
  */
 public class VectorThread extends Thread {
-    
+
 	private static final boolean DEBUG = Logger.isDebugEnabled(VectorThread.class);
-    
+
 	private final double AFTER_ERROR_START_SLEEP_TIME = 1000; // In milliseconds
-	
+
 	private final double AFTER_ERROR_MAX_SLEEP_TIME = 1000 * 60 * 15; // 15 minutes in milliseconds
-	
+
 	/** The {@link VectorIndex} which created and uses this thread */
 	private final VectorIndex vectorIndex;
 
@@ -43,25 +42,26 @@ public class VectorThread extends Thread {
 	 * Use only synchronized on monitor {@link #monitor}
 	 * </p>
 	 */
-    private final LinkedList<ContentObject>  addQueue;
+	private final LinkedList<ContentObject> addQueue;
 
-    /** The queue containing the documents to be deleted
-    * <p>
-    * Use only synchronized on monitor {@link #monitor}
-    * </p>
-    */
-    private final LinkedList<ObjectKey> deleteQueue;
+	/**
+	 * The queue containing the documents to be deleted
+	 * <p>
+	 * Use only synchronized on monitor {@link #monitor}
+	 * </p>
+	 */
+	private final LinkedList<ObjectKey> deleteQueue;
 
 	/** Whether this thread is currently waiting for new work and queues are empty. */
 	private volatile boolean _idle = false;
 
-    /** Is the thread going to stop its work? */
-    private volatile boolean stopping;
+	/** Is the thread going to stop its work? */
+	private volatile boolean stopping;
 
 	private volatile boolean isIndexUntrustworthy = false;
 
 	private final Object monitor;
-	
+
 	private final AtomicInteger _failsInSuccession = new AtomicInteger();
 
 	private ExponentialBackoff sleepTimeGenerator =
@@ -71,13 +71,13 @@ public class VectorThread extends Thread {
 
 	/**
 	 * @param vectorIndex
-	 *        the index which created this thread
+	 *                    the index which created this thread
 	 * @param monitor
-	 *        the Object which is used by the {@link VectorIndex} to synchronize accesses to this
-	 *        thread
+	 *                    the Object which is used by the {@link VectorIndex} to synchronize accesses to
+	 *                    this thread
 	 * @param hm
-	 *        The {@link HistoryManager} to update session revision to ensure that data of newly
-	 *        created items are found.
+	 *                    The {@link HistoryManager} to update session revision to ensure that data of
+	 *                    newly created items are found.
 	 */
 	public VectorThread(VectorIndex vectorIndex, Object monitor, HistoryManager hm) {
 		super("VectorThread");
@@ -86,11 +86,11 @@ public class VectorThread extends Thread {
 
 		this.monitor = monitor;
 		_historyManager = hm;
-        this.addQueue    = new LinkedList<>();
-        this.deleteQueue = new LinkedList<>();
-    }
+		this.addQueue = new LinkedList<>();
+		this.deleteQueue = new LinkedList<>();
+	}
 
-    @Override
+	@Override
 	public void run() {
 		Logger.info(Thread.currentThread().getName() + " has started.", VectorThread.class);
 		work();
@@ -166,21 +166,21 @@ public class VectorThread extends Thread {
 		if (DEBUG && deleted > 0) {
 			Logger.debug("#" + deleted + " objects deleted in " + deleteStopWatch, VectorThread.class);
 		}
-		
+
 		StopWatch indexStopWatch = StopWatch.createStartedWatch();
 		int indexed = indexQueue();
 		if (DEBUG && indexed > 0) {
 			Logger.debug("#" + indexed + " objects indexed in " + indexStopWatch, VectorThread.class);
 		}
 	}
-	
+
 	/**
-	 * This method checks whether some work is to do and in case noting is to do
-	 * it forces the current thread to wait.
+	 * This method checks whether some work is to do and in case noting is to do it forces the current
+	 * thread to wait.
 	 */
 	private void waitForWork() {
 		synchronized (monitor) {
-			while (areQueuesEmpty() && ! isStopping()) {
+			while (areQueuesEmpty() && !isStopping()) {
 				_idle = true;
 				try {
 					monitor.wait();
@@ -200,60 +200,61 @@ public class VectorThread extends Thread {
 		return _idle;
 	}
 
-    /** 
-     * Cleanup when we stop.
-     */
-    protected void handleStop() {
-        int deletes;
-        int adds;
-        synchronized (monitor) {
-            deletes = deleteQueue.size();
-            adds    = addQueue.size();
-        }
-		Logger.info("Finished indexing/deleting with VectorThread", this);
-        if ((deletes > 0) || (adds > 0)) {
-			String message = "Vector Index has stopped, but there are still '" + deletes
-        		+ "' elements to delete and '" + adds + "' elements to index."
-        		+ " Therefore: Index is incomplete!";
-            indexIsUntrustworthy(new IllegalStateException(message));
+	/**
+	 * Cleanup when we stop.
+	 */
+	protected void handleStop() {
+		int deletes;
+		int adds;
+		synchronized (monitor) {
+			deletes = deleteQueue.size();
+			adds = addQueue.size();
 		}
-    }
-    
-    /**
-     * Stop the indexing service queue.
-     */
-    public void stopIndexing() {
+		Logger.info("Finished indexing/deleting with VectorThread", this);
+		if ((deletes > 0) || (adds > 0)) {
+			String message = "Vector Index has stopped, but there are still '" + deletes
+				+ "' elements to delete and '" + adds + "' elements to index."
+				+ " Therefore: Index is incomplete!";
+			indexIsUntrustworthy(new IllegalStateException(message));
+		}
+	}
+
+	/**
+	 * Stop the indexing service queue.
+	 */
+	public void stopIndexing() {
 		stopping = true;
 		synchronized (monitor) {
-    		monitor.notifyAll();
+			monitor.notifyAll();
 		}
-    }
+	}
 
-    /**
-     * Is this indexing/delete thread going to stop?
-     * 
-     * @return true if so
-     */ 
-    boolean isStopping() {
-   		return stopping;
-    }
-    
-    /** 
-     * number of outstanding Objects in the Queues.
-     */
-    public int queueSizes() {
-    	synchronized (monitor) {
-    		return deleteQueue.size() + addQueue.size();
-    	}
-    }
-    
-    /**
-     * Add a document (KO) to the indexing queue
-     * 
-     * @param    anObject    The object to be indexed.
-     */
-    public void add(ContentObject anObject) {
-        if (isStopping()) {
+	/**
+	 * Is this indexing/delete thread going to stop?
+	 * 
+	 * @return true if so
+	 */
+	boolean isStopping() {
+		return stopping;
+	}
+
+	/**
+	 * number of outstanding Objects in the Queues.
+	 */
+	public int queueSizes() {
+		synchronized (monitor) {
+			return deleteQueue.size() + addQueue.size();
+		}
+	}
+
+	/**
+	 * Add a document (KO) to the indexing queue
+	 * 
+	 * @param anObject
+	 *                 The object to be indexed.
+	 */
+	public void add(ContentObject anObject) {
+		if (isStopping()) {
 			String message = "Module dependencies are wrong."
 				+ " Something actually depends on Vector Index but is not configured like that."
 				+ " Details: "
@@ -261,36 +262,36 @@ public class VectorThread extends Thread {
 				+ " When Vector Index is shutting down, everything (every module) depending on Vector Index should already be shut down."
 				+ " And only modules depending on Vector Index are allowed to tell Vector Index to index something."
 				+ " Object, that should be indexed: " + anObject;
-            IllegalStateException exception = new IllegalStateException(message);
-            indexIsUntrustworthy(exception);
+			IllegalStateException exception = new IllegalStateException(message);
+			indexIsUntrustworthy(exception);
 			throw exception;
-        }
-        if (anObject == null) {
+		}
+		if (anObject == null) {
 			throw new NullPointerException("Vector Index can not index null.");
-        }
-        
-        synchronized (monitor) {
-            addQueue.addLast(anObject);
+		}
+
+		synchronized (monitor) {
+			addQueue.addLast(anObject);
 			_idle = false;
-            monitor.notifyAll();
-        }
-    }
+			monitor.notifyAll();
+		}
+	}
 
 	private ObjectKey getKey(ContentObject object) {
 		try {
 			return object.getKnowledgeObject().tId();
-		}
-		catch (Throwable exception) {
+		} catch (Throwable exception) {
 			throw new ContentRetrievalFailedException("Trying to get the object key failed!", exception);
 		}
 	}
-    
-    /**
-     * Add an object to the delete queue to be deleted
-     * 
-     * @param    key    The object to be indexed.
-     */
-    public void delete(ObjectKey key) {
+
+	/**
+	 * Add an object to the delete queue to be deleted
+	 * 
+	 * @param key
+	 *            The object to be indexed.
+	 */
+	public void delete(ObjectKey key) {
 		if (isStopping()) {
 			String message = "Module dependencies are wrong."
 				+ " Something actually depends on Vector Index but is not configured like that."
@@ -299,26 +300,26 @@ public class VectorThread extends Thread {
 				+ " When Vector Index is shutting down, everything (every module) depending on Vector Index should already be shut down."
 				+ " And only modules depending on Vector Index are allowed to tell Vector Index to delete something."
 				+ " Key of Object, that should be delete: " + key;
-            IllegalStateException exception = new IllegalStateException(message);
-            indexIsUntrustworthy(exception);
+			IllegalStateException exception = new IllegalStateException(message);
+			indexIsUntrustworthy(exception);
 			throw exception;
 		}
 		if (key == null) {
 			throw new NullPointerException("Vector Index can not delete null.");
 		}
-		
+
 		synchronized (monitor) {
 			removeFromAddQueue(key);
-			/* Must always add key to delete queue, because "addQueue" is also used for
-			 * modifications, i.e. the object may be indexed before. */
+			/* Must always add key to delete queue, because "addQueue" is also used for modifications, i.e. the
+			 * object may be indexed before. */
 			deleteQueue.addLast(key);
 			_idle = false;
 			monitor.notifyAll();
 		}
-    }
+	}
 
 	private boolean removeFromAddQueue(ObjectKey key) {
-		switch(addQueue.size()) {
+		switch (addQueue.size()) {
 			case 0:
 				break;
 			case 1:
@@ -344,51 +345,50 @@ public class VectorThread extends Thread {
 		return false;
 	}
 
-    // Private and protected methods
+	// Private and protected methods
 
-    /**
+	/**
 	 * Index all objects in the two queues.
 	 * 
 	 * @return The number of newly indexed objects.
 	 */
 	int indexQueue() {
-    	StopWatch stopWatch = StopWatch.createStartedWatch();
-    	
-        ContentObject theObject = removeFirstToAdd();
-        if (theObject == null) {
-        	// stop indexing
-        	return 0;
-        }
-        int count = 0;
-        
-        while (theObject != null) {
+		StopWatch stopWatch = StopWatch.createStartedWatch();
+
+		ContentObject theObject = removeFirstToAdd();
+		if (theObject == null) {
+			// stop indexing
+			return 0;
+		}
+		int count = 0;
+
+		while (theObject != null) {
 			if (abortWorkingForShutdown()) {
 				Logger.error(
 					"Vector Index aborted indexing as timeout was reached. The index is therefore incomplete. REBUILD the INDEX!",
 					VectorThread.class);
 				break;
 			}
-			
-            try {
+
+			try {
 				indexContent(theObject);
-                count ++;
-            }
-            catch (ContentRetrievalFailedException ex) {
+				count++;
+			} catch (ContentRetrievalFailedException ex) {
 				String message = "Indexing of an object failed. It will be skipped. Object: " + theObject;
 				Logger.error(message, ex, VectorThread.class);
-            }
-            
+			}
+
 			if (stopWatch.getElapsedMillis() > VectorIndex.INDEX_MILLIS) {
 				String message = "Indexing of object " + theObject + " took unexpectedly long: " + stopWatch;
-				Logger.info(message, this);  
-            }
+				Logger.info(message, this);
+			}
 			stopWatch = StopWatch.createStartedWatch();
-            theObject = removeFirstToAdd();
-        }
-        return count;
-    }
+			theObject = removeFirstToAdd();
+		}
+		return count;
+	}
 
-	/** 
+	/**
 	 * This method returns the next element to add. <code>null</code> indicates to stop adding now.
 	 */
 	private ContentObject removeFirstToAdd() {
@@ -403,14 +403,14 @@ public class VectorThread extends Thread {
 				}
 				addObject = addQueue.removeFirst();
 			}
-			/* Update session revision to ensure that this thread is up-to-date when checking object
-			 * for alive. */
+			/* Update session revision to ensure that this thread is up-to-date when checking object for
+			 * alive. */
 			updateSessionRevision();
 
 			if (!addObject.getKnowledgeObject().isAlive()) {
-				/* The object was deleted in between. This may happen, because between the deletion
-				 * of the object and the request for deletion (i.e. adding to delete queue and
-				 * removing from add queue), some time may went by. */
+				/* The object was deleted in between. This may happen, because between the deletion of the object
+				 * and the request for deletion (i.e. adding to delete queue and removing from add queue), some time
+				 * may went by. */
 				continue;
 			}
 			return addObject;
@@ -427,21 +427,20 @@ public class VectorThread extends Thread {
 	}
 
 	private void indexContent(ContentObject content) {
-	    KnowledgeObject ko = content.getKnowledgeObject();
+		KnowledgeObject ko = content.getKnowledgeObject();
 
 		if (!ko.isAlive()) {
 			// No longer valid, deleted in the meantime.
 			return;
 		}
-        
+
 		vectorIndex.addDocumentOnly(ko, getContent(content), getDescription(content));
 	}
 
 	private String getDescription(ContentObject content) {
 		try {
 			return content.getDescription();
-		}
-		catch (Throwable exception) {
+		} catch (Throwable exception) {
 			throw new ContentRetrievalFailedException("Retrieving the description failed!", exception);
 		}
 	}
@@ -449,79 +448,78 @@ public class VectorThread extends Thread {
 	private String getContent(ContentObject content) {
 		try {
 			return content.getContent();
-		}
-		catch (Throwable exception) {
+		} catch (Throwable exception) {
 			throw new ContentRetrievalFailedException("Retrieving the content failed!", exception);
 		}
 	}
 
-    /**
-     * Delete all objects from index currently occurring in queue.
-     * 
-     * @return The number of deletions processed.
-     */
+	/**
+	 * Delete all objects from index currently occurring in queue.
+	 * 
+	 * @return The number of deletions processed.
+	 */
 	int deleteQueue() {
 		StopWatch stopWatch = StopWatch.createStartedWatch();
-    	
-    	ObjectKey key = removeFirstToDelete();
-        if (key == null) {
-        	// nothing to delete
-        	return 0;
-        }
-        
-        int count = 0;
-        
-        while (key != null) {
-        	if (abortWorkingForShutdown()) {
+
+		ObjectKey key = removeFirstToDelete();
+		if (key == null) {
+			// nothing to delete
+			return 0;
+		}
+
+		int count = 0;
+
+		while (key != null) {
+			if (abortWorkingForShutdown()) {
 				Logger.error(
 					"Vector Index aborted indexing as timeout was reached. The index is therefore incomplete. REBUILD the INDEX!",
 					VectorThread.class);
-        		break;
-        	}
-        	
-            try {
+				break;
+			}
+
+			try {
 				this.deleteContent(key);
-                count ++;
-            }
-            catch (ContentRetrievalFailedException ex) {
+				count++;
+			} catch (ContentRetrievalFailedException ex) {
 				String message = "Deleting of an object failed. It will be skipped. Object: " + key;
 				Logger.error(message, ex, VectorThread.class);
-            }
-            
+			}
+
 			if (stopWatch.getElapsedMillis() > VectorIndex.DELETE_MILLIS) {
 				String message = "Deleting of object with key " + key + " took unexpectedly long: " + stopWatch;
-				Logger.info(message, this);  
-            }
+				Logger.info(message, this);
+			}
 			stopWatch = StopWatch.createStartedWatch();
-        	key = removeFirstToDelete();
-        }
-        
-        return count;
-    }
+			key = removeFirstToDelete();
+		}
 
-    /** 
-     * This method returns the next element to delete. <code>null</code> indicates that all elements are deleted.
-     */
-    private ObjectKey removeFirstToDelete() {
+		return count;
+	}
+
+	/**
+	 * This method returns the next element to delete. <code>null</code> indicates that all elements are
+	 * deleted.
+	 */
+	private ObjectKey removeFirstToDelete() {
 		ObjectKey toDelete;
-    	synchronized (monitor) {
-    		if (deleteQueue.isEmpty()) {
-    			return null; // nothing to delete
-    		} else {
+		synchronized (monitor) {
+			if (deleteQueue.isEmpty()) {
+				return null; // nothing to delete
+			} else {
 				toDelete = deleteQueue.removeFirst();
-    		}
-    	}
+			}
+		}
 		updateSessionRevision();
 		return toDelete;
-    }
-    
+	}
+
 	private void deleteContent(ObjectKey key) {
 		this.vectorIndex.deleteDocument(key);
-    }
+	}
 
 	private void indexIsUntrustworthy(Throwable cause) {
 		isIndexUntrustworthy = true;
-		
+
 		String message = "Vector Index index might be corrrupted."
 			+ " Please FIX the PROBLEM and REBUILD the INDEX. Cause: " + cause.getMessage();
 		Logger.error(message, cause, VectorThread.class);
@@ -533,7 +531,7 @@ public class VectorThread extends Thread {
 	public boolean isIndexUntrustworthy() {
 		return isIndexUntrustworthy;
 	}
-	
+
 	private boolean abortWorkingForShutdown() {
 		if (!vectorIndex.getTimestampShutdownRequest().hasValue()) {
 			return false;
@@ -541,7 +539,7 @@ public class VectorThread extends Thread {
 		return System.currentTimeMillis() > vectorIndex.getTimestampShutdownRequest().get()
 			+ vectorIndex.getTimeoutAbortIndexingForShutdown();
 	}
-	
+
 	/**
 	 * The number of times Vector Index has failed in succession.
 	 */

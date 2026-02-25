@@ -591,11 +591,16 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 			if (key.equals("id")) {
 				indexKey = "internalId";
 			}
-			joContent.put(indexKey, fd.getAttributeValue(key).toString());
+			Object val = fd.getAttributeValue(key);
+			joContent.put(indexKey, val == null ? null : val.toString());
 		}
 		joContent.put("_text", content);
-
 		content = joContent.toJSONString();
+
+		System.out
+			.println("DEBUG: [VectorIndex] Indexing document id=" + documentId + " name=" + joContent.get("name"));
+		System.out.println("DEBUG: [VectorIndex] Content preview: "
+			+ (content.length() > 50 ? content.substring(0, 50) + "..." : content));
 
 		HashMap<String, ArrayList<String>> associations = new HashMap<>();
 
@@ -664,10 +669,10 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 
 		jo.putAll(plMap);
 
-		String internalId = joContent.get("internalId").toString();
+		Object internalId = joContent.get("internalId");
 		if (internalId != null) {
 			// payload.put("internalId", internalId);
-			jo.put("internalId", internalId);
+			jo.put("internalId", internalId.toString());
 		}
 
 		// payload.putAll(associationsHashMap);
@@ -679,6 +684,7 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		 * 
 		 * These objects shall be store in the _noVector collection. */
 
+		this.deleteDocument(aDoc.tId());
 		this.storeToVectorStore(documentId, jo);
 	}
 
@@ -689,7 +695,19 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 	 *            The key of vector point to be deleted
 	 */
 	protected void deleteDocument(ObjectKey key) {
-		this.vectorStore.remove(key.toString());
+		String uuid = this.getDocumentUUID(key.toString()).toString();
+		System.out.println("DEBUG: Removing document from vector store: " + key + " (UUID: " + uuid + ")");
+		this.vectorStore.remove(uuid);
+
+		// Persist to disk if using JVector
+		if (vectorStore instanceof JVectorEmbeddingStore) {
+			try {
+				((JVectorEmbeddingStore) vectorStore).save();
+			} catch (IllegalStateException e) {
+				// JVector throws IllegalStateException if the store is empty.
+				// In this case, there is nothing to save.
+			}
+		}
 	}
 
 	private Embedding getDocumentEmbedding(String content) {
@@ -710,7 +728,9 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 	 */
 	public void storeToVectorStore(String documentId, JSONObject payload) {
 		String pl = payload.toJSONString();
-
+		String uuid = this.getDocumentUUID(documentId).toString();
+		System.out.println("DEBUG: Storing document to vector store: " + documentId + " (UUID: " + uuid + ")");
+		System.out.println("DEBUG: Content: " + pl);
 		this.vectorStore.addAll(
 			List.of(this.getDocumentUUID(documentId).toString()),
 			List.of(this.getDocumentEmbedding(pl)),
@@ -743,7 +763,7 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 
 		EmbeddingSearchRequest embeddingSearchRequest = EmbeddingSearchRequest.builder()
 			.queryEmbedding(queryEmbedding)
-			.maxResults(5)
+			.maxResults(10)
 			.build();
 
 		return this.vectorStore.search(embeddingSearchRequest).matches();
@@ -847,11 +867,9 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 			List<Embedding> embeddings = new ArrayList<>();
 			for (TextSegment seg : textSegments) {
 				float[] vector = new float[dimension];
-				// Fill with some deterministic values to avoid all zeros if needed, but zeros
-				// are fine for testing
-				// structure
+				int hash = seg.text().hashCode();
 				for (int i = 0; i < dimension; i++) {
-					vector[i] = 0.1f;
+					vector[i] = (float) (hash + i) / Integer.MAX_VALUE;
 				}
 				embeddings.add(Embedding.from(vector));
 			}

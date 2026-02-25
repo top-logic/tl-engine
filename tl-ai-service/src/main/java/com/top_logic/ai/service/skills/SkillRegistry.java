@@ -14,8 +14,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.top_logic.ai.service.agents.SkillConfig;
-
 /**
  * Registry that loads skill prompt fragments from classpath resources and makes them available to
  * agents via {@link SkillTool}.

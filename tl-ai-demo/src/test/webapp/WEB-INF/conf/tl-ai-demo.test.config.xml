@@ -10,7 +10,7 @@
 				default-model="mistral-large-latest"
 			>
 				<factories>
-					<!-- Mistral AI models factory for ModelExplorerTool -->
+					<!-- Mistral AI models factory for ModelExplorer agent -->
 					<factory
 						class="com.top_logic.ai.service.providers.MistralChatModelFactory"
 						api-key="unencrypted:xxx"

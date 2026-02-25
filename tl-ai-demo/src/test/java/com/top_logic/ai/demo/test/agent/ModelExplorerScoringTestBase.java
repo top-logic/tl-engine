@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import junit.framework.TestCase;
 
@@ -23,9 +24,12 @@ import com.top_logic.ai.demo.test.agent.scorer.NeutralScorerResult;
 import com.top_logic.ai.service.AIService;
 import com.top_logic.ai.service.agents.AgentRegistry;
 import com.top_logic.basic.module.BasicRuntimeModule;
+import com.top_logic.basic.thread.ThreadContextManager;
 
 import de.haumacher.msgbuf.io.StringW;
 import de.haumacher.msgbuf.json.JsonWriter;
+
+import dev.langchain4j.agentic.UntypedAgent;
 
 /**
  * Base class for Model Explorer scoring tests containing shared helper methods.
@@ -336,6 +340,24 @@ public abstract class ModelExplorerScoringTestBase extends TestCase {
 	}
 
 	/**
+	 * Runs the ModelExplorer agent with the given prompt and returns the result.
+	 *
+	 * @param prompt
+	 *        The user prompt to send to the agent.
+	 * @return The agent's answer as a string.
+	 */
+	protected String runModelExplorer(String prompt) {
+		AgentRegistry registry = AgentRegistry.getInstance();
+		if (registry == null) {
+			throw new RuntimeException("AgentRegistry is not available");
+		}
+		UntypedAgent explorer = registry.buildUntypedAgent("ModelExplorer");
+		return ThreadContextManager.inSystemInteraction(
+			ModelExplorerScoringTestBase.class,
+			() -> (String) explorer.invoke(Map.of("message", prompt)));
+	}
+
+	/**
 	 * Loads the ModelExplorer system prompt from {@link AgentRegistry} configuration.
 	 */
 	protected String loadModelExplorerSystemPrompt() {
@@ -363,6 +385,7 @@ public abstract class ModelExplorerScoringTestBase extends TestCase {
 		modules.add(com.top_logic.util.model.ModelService.Module.INSTANCE);
 		modules.add(com.top_logic.layout.provider.LabelProviderService.Module.INSTANCE);
 		modules.add(AIService.Module.INSTANCE);
+		modules.add(AgentRegistry.Module.INSTANCE);
 
 		modules.addAll(Arrays.asList(additionalModules));
 

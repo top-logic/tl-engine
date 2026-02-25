@@ -21,6 +21,7 @@ import com.top_logic.ai.service.providers.MistralChatModelFactory;
 import com.top_logic.ai.service.providers.ModelCapability;
 import com.top_logic.ai.service.providers.OpenAIChatModelFactory;
 import com.top_logic.ai.service.skills.Skill;
+import com.top_logic.ai.service.skills.SkillConfig;
 import com.top_logic.ai.service.skills.SkillRegistry;
 import com.top_logic.ai.service.skills.SkillTool;
 import com.top_logic.ai.service.tools.ToolCallTracking;
@@ -457,7 +458,7 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		String fromAgent = config.getName();
 
 		JsonObjectSchema parameters = JsonObjectSchema.builder()
-			.addStringProperty("goal", "Short intent, e.g. 'Explore model structure'")
+			.addStringProperty("goal", "Short intent")
 			.addStringProperty("task", "Concrete question or instruction")
 			.addStringProperty("context", "Optional: relevant context or hints")
 			.required("task")

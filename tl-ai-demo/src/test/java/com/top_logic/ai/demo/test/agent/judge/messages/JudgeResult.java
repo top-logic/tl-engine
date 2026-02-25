@@ -1,7 +1,7 @@
 package com.top_logic.ai.demo.test.agent.judge.messages;
 
 /**
- * Result from AI judge scoring ModelExplorerTool output.
+ * Result from AI judge scoring ModelExplorer agent output.
  */
 public class JudgeResult extends de.haumacher.msgbuf.data.AbstractDataObject implements de.haumacher.msgbuf.data.ReflectiveDataObject {
 

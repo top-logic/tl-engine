@@ -3,9 +3,9 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.ai.service.agents;
+package com.top_logic.ai.service.skills;
 
-import com.top_logic.ai.service.skills.Skill;
+import com.top_logic.ai.service.agents.AgentRegistry;
 import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;

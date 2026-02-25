@@ -25,6 +25,13 @@
 			<artifactId>tl-contact</artifactId>
 		</dependency>
 
+		<!-- tl-common-json 0.0.1-AI from tl-parent-core lacks JsonConfigSchemaBuilder$SchemaResolver -->
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-common-json</artifactId>
+			<version>7.10.0-SNAPSHOT</version>
+		</dependency>
+
 		<!-- LangChain4j for AI integration -->
 		<dependency>
 			<groupId>dev.langchain4j</groupId>

@@ -54,37 +54,47 @@ public class PersonManager extends KBBasedManagedClass<PersonManager.Config> {
 	public interface Config extends KBBasedManagedClass.Config<PersonManager> {
 
 		/**
-		 * @see #getUserNamePattern()
+		 * Configuration name for {@link #getUserNamePattern()}.
 		 */
-		static final String XML_KEY_PATTERN = "person-name-pattern";
+		String XML_KEY_PATTERN = "person-name-pattern";
 
 		/**
-		 * default of @see #getUserNamePattern()
+		 * Default value for {@link #getUserNamePattern()}.
 		 */
-		static final String DEFAULT_PATTERN = "[a-zA-Z]\\w*";
+		String DEFAULT_PATTERN = "[a-zA-Z]\\w*";
 
 		/**
-		 * @see #getPersonNameMaxLength()
+		 * Configuration name for {@link #getPersonNameMaxLength()}.
 		 */
-		static final String XML_KEY_LENGTH = "person-name-max-length";
+		String XML_KEY_LENGTH = "person-name-max-length";
 
 		/**
-		 * default of @see #getPersonNameMaxLength()
+		 * Default value for {@link #getPersonNameMaxLength()}.
 		 */
-		static final int DEFAULT_MAX_PERSON_NAME_LENGTH = 128;
+		int DEFAULT_MAX_PERSON_NAME_LENGTH = 128;
 
 		/**
-		 * @see #getSuperUserName()
+		 * Configuration name for {@link #getSuperUserName()}.
 		 */
-		static final String XML_KEY_SUPERUSERNAME = "super-user-name";
+		String XML_KEY_SUPERUSERNAME = "super-user-name";
 
 		/**
-		 * default of @see #getSuperUserName()
+		 * Default value for {@link #getSuperUserName()}.
 		 */
-		static final String DEFAULT_SUPER_USER_NAME = "root";
+		String DEFAULT_SUPER_USER_NAME = "root";
 
 		/**
-		 * pattern, which user names must follow
+		 * Configuration name for {@link #getAnonymousUserName()}.
+		 */
+		String ANONYMOUS_USER_NAME = "anonymous-user-name";
+
+		/**
+		 * Default value for {@link #getAnonymousUserName()}.
+		 */
+		String DEFAULT_ANONYMOUS_USER_NAME = "anonymous";
+
+		/**
+		 * Pattern, which user names must follow.
 		 */
 		@FormattedDefault(DEFAULT_PATTERN)
 		@Format(RegExpValueProvider.class)
@@ -92,18 +102,25 @@ public class PersonManager extends KBBasedManagedClass<PersonManager.Config> {
 		Pattern getUserNamePattern();
 
 		/**
-		 * maximum length of person name
+		 * The maximum length of a person name.
 		 */
 		@IntDefault(DEFAULT_MAX_PERSON_NAME_LENGTH)
 		@Name(XML_KEY_LENGTH)
 		int getPersonNameMaxLength();
 
 		/**
-		 * name of the super user
+		 * The name of the super user.
 		 */
 		@StringDefault(DEFAULT_SUPER_USER_NAME)
 		@Name(XML_KEY_SUPERUSERNAME)
 		String getSuperUserName();
+
+		/**
+		 * The name of the anonymous user.
+		 */
+		@StringDefault(DEFAULT_ANONYMOUS_USER_NAME)
+		@Name(ANONYMOUS_USER_NAME)
+		String getAnonymousUserName();
 	}
 
 	/**
@@ -131,6 +148,17 @@ public class PersonManager extends KBBasedManagedClass<PersonManager.Config> {
 	 */
 	public String getSuperUserName() {
 		return getConfig().getSuperUserName();
+	}
+
+	/**
+	 * The anonymous user. This user is used when navigating the application without login.
+	 */
+	public Person getAnonymous() {
+		return Person.byName(kb(), getAnonymousUserName());
+	}
+
+	private String getAnonymousUserName() {
+		return getConfig().getAnonymousUserName();
 	}
 
 	/**
@@ -206,6 +234,22 @@ public class PersonManager extends KBBasedManagedClass<PersonManager.Config> {
 		super.startUp();
 		internalStartUp();
 		ensureRootAccount();
+		ensureAnonymousAccount();
+	}
+
+	private void ensureAnonymousAccount() {
+		String loginName = getAnonymousUserName();
+		Person existingAccount = Person.byName(loginName);
+		if (existingAccount == null) {
+			try (Transaction tx = kb().beginTransaction(I18NConstants.CREATED_ANONYMOUS_ACCOUNT)) {
+				// No login for anonymous user.
+				String deviceID = null;
+				Person anonymous = Person.create(kb(), loginName, deviceID);
+				anonymous.setRestrictedUser(true);
+
+				tx.commit();
+			}
+		}
 	}
 
 	private void ensureRootAccount() {

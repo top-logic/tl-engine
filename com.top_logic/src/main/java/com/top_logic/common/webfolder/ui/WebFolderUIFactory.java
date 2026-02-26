@@ -68,7 +68,6 @@ import com.top_logic.layout.tree.breadcrumb.BreadcrumbRenderer;
 import com.top_logic.layout.tree.breadcrumb.DefaultBreadcrumbRenderer;
 import com.top_logic.layout.tree.model.TreeBuilder;
 import com.top_logic.tool.execution.ExecutableState;
-import com.top_logic.util.Resources;
 
 /**
  * The WebFolderUIFactory provides methods to create stuff for displaying a WebFolder
@@ -323,7 +322,7 @@ public class WebFolderUIFactory extends ConfiguredManagedClass<WebFolderUIFactor
 		ZipDownloadExecutable executable = new ZipDownloadExecutable(selectionModel);
 		CommandField field =
 			WebFolderFieldProvider.createField(fieldName, executable, executableImage, disabledImage);
-		field.setTooltip(Resources.getInstance().getString(I18NConstants.ZIP_DOWNLOAD_FOLDER_TOOLTIP));
+		field.setTooltip(I18NConstants.ZIP_DOWNLOAD_FOLDER_TOOLTIP);
 
 		// When the corresponding form context is immutable it would be not
 		// possible to execute the command. As download is essentially the

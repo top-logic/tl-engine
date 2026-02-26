@@ -33,7 +33,6 @@ import com.top_logic.layout.table.TableData;
 import com.top_logic.layout.table.TableViewModel;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
-import com.top_logic.util.Resources;
 import com.top_logic.util.Utils;
 
 /**
@@ -104,17 +103,16 @@ public class FilterOptionsUtil {
 				includeParentsValue, includeParentsImmutable);
 			includeParentsField.setLabel(I18NConstants.FILTER_OPTIONS_INCLUDE_PARENTS);
 			if (_viewModel.isFiniteTree()) {
-				includeParentsField.setTooltip(translate(I18NConstants.FILTER_OPTIONS_INCLUDE_PARENTS_TOOLTIP));
+				includeParentsField.setTooltip(I18NConstants.FILTER_OPTIONS_INCLUDE_PARENTS_TOOLTIP);
 			} else {
-				includeParentsField
-					.setTooltip(translate(I18NConstants.FILTER_OPTIONS_INCLUDE_PARENTS_TOOLTIP_INFINITE_TREE));
+				includeParentsField.setTooltip(I18NConstants.FILTER_OPTIONS_INCLUDE_PARENTS_TOOLTIP_INFINITE_TREE);
 			}
 			context.addMember(includeParentsField);
 
 			BooleanField includeChildrenField = FormFactory.newBooleanField(INCLUDE_CHILDREN_FIELD_NAME,
 				Boolean.valueOf(_viewModel.isFilterIncludeChildren()), false);
 			includeChildrenField.setLabel(I18NConstants.FILTER_OPTIONS_INCLUDE_CHILDREN);
-			includeChildrenField.setTooltip(translate(I18NConstants.FILTER_OPTIONS_INCLUDE_CHILDREN_TOOLTIP));
+			includeChildrenField.setTooltip(I18NConstants.FILTER_OPTIONS_INCLUDE_CHILDREN_TOOLTIP);
 			context.addMember(includeChildrenField);
 		}
 
@@ -125,10 +123,6 @@ public class FilterOptionsUtil {
 			buttons.add(ok);
 
 			addCancel(buttons);
-		}
-
-		private String translate(ResKey i18nKey) {
-			return Resources.getInstance().getString(i18nKey);
 		}
 
 	}

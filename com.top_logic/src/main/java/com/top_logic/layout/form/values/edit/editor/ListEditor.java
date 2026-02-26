@@ -629,8 +629,8 @@ public class ListEditor implements Editor {
 			}
 		}
 
-		private String createTooltipText(ConfigurationItem configuration) {
-			return Resources.getInstance().getString(ResKey.forConfig(configuration).tooltipOptional());
+		private ResKey createTooltipText(ConfigurationItem configuration) {
+			return ResKey.forConfig(configuration).tooltipOptional();
 		}
 	}
 

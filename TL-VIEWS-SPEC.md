@@ -106,28 +106,48 @@ Here `<vbox>` is `PolymorphicConfiguration<VBox>`, `<heading>` is
 `PolymorphicConfiguration<Heading>`, etc. Each implementation class (`VBox`, `Heading`,
 `Button`, ...) implements `UIElement` and produces the corresponding `Control`.
 
-## 2. Channels: Unified Reactive Data Flow
+## 2. View Identity: File Path, Not Names
 
-There is a single concept for reactive data flow: **channels**. Channels serve both for
-intra-view communication (what the previous draft called "state") and for inter-view
-communication. There is no separate "state" concept.
+### The Naming Problem
 
-### Channel Declaration
+In the current system, LayoutComponents have explicit names. When components are created
+by templates, names must be parameterized. This leads to concatenated names mixed from
+constants and template parameters, making it nearly impossible to find where a
+component/channel is defined.
 
-Channels are declared at the view level and are scoped to that view. They can optionally
-be exposed for cross-view linking:
+### Solution: File Path as Identity
+
+A view has **no explicit name**. Each view is defined in a `*.view.xml` file, and the
+file path (relative to the application's well-known layout base folder) *is* the view's
+identity. This makes views directly searchable in the filesystem.
 
 ```xml
-<view name="customerMasterDetail">
-  <!-- Internal channel: links table selection to detail form -->
+<!-- File: customers/masterDetail.view.xml -->
+<!-- The view's identity is "customers/masterDetail.view.xml" -->
+<view>
   <channel name="selectedCustomer" type="tl.customers:Customer" />
 
-  <!-- Exposed channel: can be linked from other views -->
-  <channel name="currentOrganization" type="tl.customers:Organization"
-           direction="in" source="organizationSelector.selection" />
+  <split direction="horizontal" ratio="30:70">
+    ...
+  </split>
+</view>
+```
+
+### Cross-View Channel References
+
+Remote channels are referenced directly by file path and channel name, using the syntax
+`channel:path/to/view.view.xml#channelName`. No intermediate binding declarations or
+direction annotations are needed:
+
+```xml
+<!-- File: customers/masterDetail.view.xml -->
+<view>
+  <channel name="selectedCustomer" type="tl.customers:Customer" />
 
   <split direction="horizontal" ratio="30:70">
-    <table model="channel:currentOrganization" selection="channel:selectedCustomer">
+    <!-- Read a channel from another view by its file path -->
+    <table model="channel:organization/selector.view.xml#currentOrganization"
+           selection="channel:selectedCustomer">
       <model-builder class="com.top_logic.model.search.providers.ListModelByExpression"
         elements="model -> $model.get(`tl.customers:Organization#customers`)"
         supportsElement="element -> $element.instanceOf(`tl.customers:Customer`)"
@@ -141,6 +161,51 @@ be exposed for cross-view linking:
       <field attribute="phone" />
     </form>
   </split>
+</view>
+```
+
+### Advantages
+
+- **No naming conflicts with templates**: Templates never need to generate view names.
+  The file path is fixed and unique regardless of how many times a template is used.
+- **Searchable**: `grep -r "organization/selector.view.xml"` instantly finds all
+  references to that view's channels.
+- **No indirection**: No need for `direction="in"`, `source="viewName.channelName"`,
+  or local alias channels. A remote channel is used directly where it is needed.
+- **Consistent with current system**: The current system already uses `*.layout.xml`
+  file names as component name scopes. This simplifies and extends that pattern.
+
+### Channel Reference Syntax
+
+```
+channel:<channelName>                              -- local channel in the same view
+channel:<path/to/view.view.xml>#<channelName>      -- remote channel in another view
+```
+
+When an expression references a channel (e.g., in `visible` attributes), the same syntax
+applies within TL-Script expressions:
+
+```xml
+<panel visible="channel:selectedCustomer != null">
+```
+
+## 3. Channels: Unified Reactive Data Flow
+
+There is a single concept for reactive data flow: **channels**. Channels serve both for
+intra-view communication and for inter-view communication. There is no separate "state"
+concept - a channel *is* the reactive state.
+
+### Channel Declaration
+
+Channels are declared at the view level:
+
+```xml
+<view>
+  <!-- A channel holding the currently selected customer -->
+  <channel name="selectedCustomer" type="tl.customers:Customer" />
+
+  <!-- A derived channel computed from other channels -->
+  <channel name="hasSelection" expr="$selectedCustomer != null" />
 </view>
 ```
 
@@ -172,14 +237,17 @@ public interface ViewChannel {
 
 ### Channel Bindings on Elements
 
-Elements reference channels via `channel:channelName` in their configuration attributes.
-The binding direction depends on the attribute semantics:
+Elements reference channels in their configuration attributes. The binding direction
+depends on the attribute semantics:
 
 - **`model="channel:selectedCustomer"`** - The element *reads* from this channel (input).
   When the channel value changes, the element receives a new model.
 - **`selection="channel:selectedCustomer"`** - The element *writes* to this channel
   (output). When the user selects something, the channel is updated.
 - Some attributes are bidirectional (both read and write).
+
+Local channels (same view) use the short form `channel:channelName`. Remote channels
+(other view) use the full path form `channel:path/to/view.view.xml#channelName`.
 
 ### Derived Channels
 
@@ -192,31 +260,11 @@ Channels can be computed from expressions over other channels:
                && $currentUser.hasRole(`admin`)" />
 ```
 
-These are read-only channels whose values update reactively when their dependencies change.
-The expressions use TL-Script.
+These are read-only channels whose values update reactively when their dependencies
+change. The expressions use TL-Script. Within channel expressions, `$channelName`
+references sibling channels in the same view.
 
-### Inter-View Channel Linking
-
-When a channel declares `direction="in"` or `direction="out"`, it becomes part of the
-view's external interface. Views hosted within the same LayoutComponent tree can link
-channels across view boundaries, analogous to how ComponentChannels link today:
-
-```xml
-<!-- View A exposes a selection -->
-<view name="customerSelector">
-  <channel name="selection" type="tl.customers:Customer" direction="out" />
-  <table selection="channel:selection">...</table>
-</view>
-
-<!-- View B consumes it -->
-<view name="customerEditor">
-  <channel name="customer" type="tl.customers:Customer" direction="in"
-           source="customerSelector.selection" />
-  <form model="channel:customer">...</form>
-</view>
-```
-
-## 3. Model Builders: Complex Model Derivation
+## 4. Model Builders: Complex Model Derivation
 
 For complex UI elements like tables and trees, a static value from a channel is not
 sufficient. The element needs logic to:
@@ -253,7 +301,7 @@ Here:
 - **`selection="channel:selectedCustomer"`** - The table's selection output is bound to
   a channel for consumption by other elements.
 
-### Why Not Invent a New Model Abstraction?
+### Why Reuse Existing Model Builders?
 
 The existing model builders (`ListModelByExpression`, `TreeModelByExpression`, etc.)
 already solve the hard problems:
@@ -281,7 +329,7 @@ Simple elements that just display a channel value directly do not need a model b
 </form>
 ```
 
-## 4. Built-in UIElement Types
+## 5. Built-in UIElement Types
 
 ### Layout Elements
 
@@ -330,7 +378,7 @@ Complex elements that use model builders to derive data from channel values:
 | `<link>`    | Clickable link                               |
 | `<menu>`    | Dropdown menu                                |
 
-## 5. Templates: Reusing the Existing Template System
+## 6. Templates: Reusing the Existing Template System
 
 The template system follows the existing `*.template.xml` pattern closely. A view
 template defines:
@@ -407,34 +455,38 @@ template defines:
 - Templates are discovered by `DynamicComponentService` (extended to scan
   `*.view.template.xml` alongside `*.template.xml`).
 - Assistant templates work the same way: a parameterized wrapper around a base template.
+- **Templates never generate view names**: Since view identity comes from the file path,
+  templates produce UIElement configurations that are embedded into a `*.view.xml` file.
+  The file path provides the identity - the template content is anonymous.
 
-## 6. View Definition and Hosting
+## 7. View Definition and Hosting
 
 ### What Is a View?
 
-A `<view>` is the top-level container that:
+A `<view>` is the top-level container defined in a `*.view.xml` file. It:
 
 1. Declares the channels available to its element tree.
 2. Contains a root `UIElement` (its content).
-3. Can be hosted inside a `LayoutComponent` for backward compatibility.
+3. Is identified by its file path (no explicit `name` attribute).
+4. Can be hosted inside a `LayoutComponent` for backward compatibility.
 
 ```java
 /**
  * A view is a self-contained UI definition with its own channel scope.
+ *
+ * <p>The view's identity is its file path relative to the application's layout
+ * base folder (e.g., "customers/masterDetail.view.xml"). This identity is used
+ * for cross-view channel references.</p>
  */
 public interface ViewDefinition {
 
     interface Config extends ConfigurationItem {
 
-        /** Name of this view (for referencing in channel links). */
-        @Name("name")
-        String getName();
-
         /** Channel declarations. */
         @Name("channels")
         List<ViewChannelConfig> getChannels();
 
-        /** The root UI element. */
+        /** The root UI element tree. */
         @Name("content")
         @Mandatory
         PolymorphicConfiguration<UIElement> getContent();
@@ -446,6 +498,26 @@ public interface ViewDefinition {
 }
 ```
 
+Note: No `getName()` - the identity comes from the file system.
+
+### File Structure
+
+```
+WEB-INF/views/                          -- well-known base folder
+  customers/
+    masterDetail.view.xml               -- identity: customers/masterDetail.view.xml
+    selector.view.xml                   -- identity: customers/selector.view.xml
+  organization/
+    overview.view.xml                   -- identity: organization/overview.view.xml
+```
+
+A channel in `customers/masterDetail.view.xml` named `selectedCustomer` is referenced
+from anywhere as:
+
+```
+channel:customers/masterDetail.view.xml#selectedCustomer
+```
+
 ### Hosting in the Existing System
 
 A bridge `LayoutComponent` hosts a view inside the existing component tree:
@@ -453,36 +525,17 @@ A bridge `LayoutComponent` hosts a view inside the existing component tree:
 ```xml
 <!-- In a classic .layout.xml -->
 <component class="com.top_logic.layout.view.ViewHostComponent">
-  <view name="customers">
-    <channels>
-      <channel name="organization" direction="in"
-               source="orgSelector.selection" />
-      <channel name="selectedCustomer" />
-    </channels>
-    <content>
-      <split direction="horizontal" ratio="30:70">
-        <table model="channel:organization"
-               selection="channel:selectedCustomer">
-          <model-builder
-            class="com.top_logic.model.search.providers.ListModelByExpression"
-            elements="model -> $model.get(`tl.customers:Organization#customers`)"
-          />
-        </table>
-        <form model="channel:selectedCustomer">
-          <field attribute="name" />
-          <field attribute="email" />
-        </form>
-      </split>
-    </content>
-  </view>
+  <view ref="customers/masterDetail.view.xml" />
 </component>
 ```
 
 `ViewHostComponent` bridges the two worlds:
 
 - It is a `LayoutComponent` (participates in the existing component tree).
-- It instantiates the view's channels and connects `direction="in"` channels to
-  the corresponding `ComponentChannel` sources in the LayoutComponent tree.
+- It loads and instantiates the referenced `*.view.xml` file.
+- It resolves cross-view channel references
+  (`channel:other/view.view.xml#channelName`) by locating the target view's runtime
+  channel instance within the same application.
 - It calls `UIElement.createControl(viewContext)` on the root element to produce
   the Control tree for rendering.
 
@@ -491,23 +544,22 @@ A bridge `LayoutComponent` hosts a view inside the existing component tree:
 Conversely, an existing `LayoutComponent` can be embedded inside a view:
 
 ```xml
-<view name="mixed">
-  <content>
-    <vbox>
-      <heading text="Overview" />
-      <legacy-component
-          class="com.top_logic.layout.table.component.TableComponent">
-        <!-- Full existing LayoutComponent config -->
-      </legacy-component>
-    </vbox>
-  </content>
+<!-- File: mixed/overview.view.xml -->
+<view>
+  <vbox>
+    <heading text="Overview" />
+    <legacy-component
+        class="com.top_logic.layout.table.component.TableComponent">
+      <!-- Full existing LayoutComponent config -->
+    </legacy-component>
+  </vbox>
 </view>
 ```
 
 `<legacy-component>` is a `UIElement` that wraps an existing `LayoutComponent`,
 adapting it into the new element tree.
 
-## 7. Styling
+## 8. Styling
 
 Elements support styling through direct attributes and CSS class references:
 
@@ -527,12 +579,13 @@ Elements support styling through direct attributes and CSS class references:
 - This avoids inventing a parallel styling system - the existing theme infrastructure
   is reused.
 
-## 8. Commands and Actions
+## 9. Commands and Actions
 
 Commands are declared at the view level and referenced from interaction elements:
 
 ```xml
-<view name="customerEdit">
+<!-- File: customers/edit.view.xml -->
+<view>
   <commands>
     <command name="save"
              class="com.example.customers.SaveCustomerHandler" />
@@ -540,16 +593,15 @@ Commands are declared at the view level and referenced from interaction elements
              class="com.example.customers.DeleteCustomerHandler"
              confirm="true" />
   </commands>
-  <content>
-    <form model="channel:customer">
-      <field attribute="name" />
-      <field attribute="email" />
-      <hbox>
-        <button command="save" />
-        <button command="delete" />
-      </hbox>
-    </form>
-  </content>
+
+  <form model="channel:selectedCustomer">
+    <field attribute="name" />
+    <field attribute="email" />
+    <hbox>
+      <button command="save" />
+      <button command="delete" />
+    </hbox>
+  </form>
 </view>
 ```
 
@@ -557,7 +609,7 @@ Command handlers are `PolymorphicConfiguration<? extends CommandHandler>`, reusi
 existing command infrastructure. The view's `ViewContext` resolves command references and
 provides the execution environment.
 
-## 9. Security
+## 10. Security
 
 Security is opt-in per element:
 
@@ -577,8 +629,9 @@ in security evaluation regardless of need.
 
 ```
 +------------------------------------------------------------------+
-|  View Definition (.view.xml / .view.template.xml)                |
-|  - Channels (reactive data flow)                                 |
+|  View Definition (*.view.xml / *.view.template.xml)              |
+|  - Identity = file path (no explicit names)                      |
+|  - Channels (reactive data flow, locally and cross-view)         |
 |  - UIElement tree (PolymorphicConfiguration<UIElement>)           |
 |  - Commands                                                      |
 +------------------------------------------------------------------+
@@ -595,8 +648,8 @@ in security evaluation regardless of need.
         v
 +------------------------------------------------------------------+
 |  ViewHostComponent (bridge to existing LayoutComponent tree)     |
-|  - Hosts a View inside a LayoutComponent                         |
-|  - Maps ViewChannels <-> ComponentChannels                       |
+|  - Hosts a *.view.xml inside a LayoutComponent                   |
+|  - Resolves cross-view channel references                        |
 +------------------------------------------------------------------+
         |
         v
@@ -609,15 +662,72 @@ in security evaluation regardless of need.
 
 | Capability             | Current System            | New System                             |
 |------------------------|---------------------------|----------------------------------------|
+| Identity               | Component name (in config)| File path (*.view.xml)                 |
 | Rendering              | Every LayoutComponent     | Every UIElement (lightweight)          |
 | Layout                 | Fixed splitter panels     | CSS Flex/Grid (flexible)               |
 | Model binding          | Mandatory ModelBuilder    | Opt-in `<model-builder>` child         |
-| Data flow              | ComponentChannel wiring   | Channels (unified intra/inter-view)    |
+| Data flow              | ComponentChannel wiring   | Channels (local + path#name refs)      |
 | Security               | Per-component mandatory   | Per-element opt-in `secure` attr       |
 | Commands               | Per-component             | Per-view, invoked from any element     |
 | Composition            | *.template.xml            | *.view.template.xml (same mechanism)   |
 | Extensibility          | LayoutComponent subclass  | New UIElement + Config pair (modular)   |
 | Backward compat        | N/A                       | ViewHostComponent / legacy-component   |
+
+## Complete Example
+
+Three views collaborating via cross-view channel references:
+
+```xml
+<!-- File: organization/selector.view.xml -->
+<view>
+  <channel name="currentOrganization" type="tl.customers:Organization" />
+
+  <tree selection="channel:currentOrganization">
+    <model-builder class="com.top_logic.model.search.providers.TreeModelByExpression"
+      rootNode="all(`tl.customers:Organization`).filter(o -> $o.get(`parent`) == null)"
+    />
+  </tree>
+</view>
+```
+
+```xml
+<!-- File: customers/list.view.xml -->
+<view>
+  <channel name="selectedCustomer" type="tl.customers:Customer" />
+
+  <table model="channel:organization/selector.view.xml#currentOrganization"
+         selection="channel:selectedCustomer">
+    <model-builder class="com.top_logic.model.search.providers.ListModelByExpression"
+      elements="model -> $model.get(`tl.customers:Organization#customers`)"
+      supportsElement="element -> $element.instanceOf(`tl.customers:Customer`)"
+    />
+    <columns>
+      <column attribute="name" />
+      <column attribute="email" />
+      <column attribute="status" />
+    </columns>
+  </table>
+</view>
+```
+
+```xml
+<!-- File: customers/detail.view.xml -->
+<view>
+  <channel name="canEdit"
+           expr="channel:customers/list.view.xml#selectedCustomer != null" />
+
+  <form model="channel:customers/list.view.xml#selectedCustomer"
+        visible="channel:canEdit">
+    <field attribute="name" />
+    <field attribute="email" />
+    <field attribute="phone" />
+    <field attribute="status" />
+  </form>
+</view>
+```
+
+All three views reference each other's channels by file path. No names to invent, no
+conflicts possible, and `grep` finds all usages instantly.
 
 ## Open Questions
 
@@ -640,6 +750,12 @@ in security evaluation regardless of need.
 
 5. **Toolbar integration**: LayoutComponents participate in the toolbar system
    (`ToolBarOwner`). How should view-level commands appear in the application toolbar?
+
+6. **Channel resolution at runtime**: When view A references
+   `channel:viewB.view.xml#foo`, how is the runtime instance of view B located? The
+   application must maintain a registry of active view instances indexed by file path.
+   What happens if the same `*.view.xml` is instantiated multiple times (e.g., in
+   different tabs)?
 
 ## Additional Ideas
 

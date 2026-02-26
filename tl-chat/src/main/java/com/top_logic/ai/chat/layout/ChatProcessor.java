@@ -5,7 +5,9 @@
  */
 package com.top_logic.ai.chat.layout;
 
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -18,6 +20,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.top_logic.ai.chat.api.messages.AttachmentDto;
 import com.top_logic.ai.service.agents.AgentRegistry;
 import com.top_logic.ai.service.tools.ToolCallTracker;
 import com.top_logic.ai.service.tools.ToolCallTracking;
@@ -26,6 +29,10 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.thread.ThreadContextManager;
 
 import dev.langchain4j.agentic.UntypedAgent;
+import dev.langchain4j.data.message.Content;
+import dev.langchain4j.data.message.ImageContent;
+import dev.langchain4j.data.message.PdfFileContent;
+import dev.langchain4j.data.message.TextContent;
 import dev.langchain4j.memory.ChatMemory;
 
 /**
@@ -88,7 +95,7 @@ public class ChatProcessor {
 	 * Uses state from tracker; {@code taskId} must already be set on state.
 	 */
 	static void executeOrchestrator(TaskProgressTracker taskTracker, AIProcessingState state,
-			ChatMemory chatMemory, String userMessage) throws Exception {
+			ChatMemory chatMemory, String userMessage, List<AttachmentDto> attachments) throws Exception {
 		if (state == null) {
 			return;
 		}
@@ -112,6 +119,16 @@ public class ChatProcessor {
 			}
 			String trimmed = userMessage.trim();
 
+			// Wrap ChatMemory to inject multimodal content if attachments are present
+			ChatMemory effectiveMemory = chatMemory;
+			if (attachments != null && !attachments.isEmpty()) {
+				List<Content> attachmentContents = new ArrayList<>();
+				for (AttachmentDto att : attachments) {
+					attachmentContents.add(toContent(att));
+				}
+				effectiveMemory = new MultimodalChatMemoryWrapper(chatMemory, attachmentContents);
+			}
+
 			AgentRegistry agentRegistry = AgentRegistry.getInstance();
 			if (agentRegistry == null) {
 				state.addPendingMessage(
@@ -121,7 +138,7 @@ public class ChatProcessor {
 			}
 
 			String entryPointAgent = agentRegistry.getEntryPointAgentName();
-			UntypedAgent agent = agentRegistry.buildUntypedAgent(entryPointAgent, chatMemory);
+			UntypedAgent agent = agentRegistry.buildUntypedAgent(entryPointAgent, effectiveMemory);
 			String result = ThreadContextManager.inSystemInteraction(ChatProcessor.class,
 				() -> (String) agent.invoke(Map.of("message", trimmed)));
 
@@ -251,6 +268,8 @@ public class ChatProcessor {
 	 *        Display name of the user sending the message.
 	 * @param userMessage
 	 *        The message text.
+	 * @param attachments
+	 *        File attachments sent with the message; may be null or empty.
 	 * @param repaintRequester
 	 *        Called when polling has updates (e.g. {@code requestRepaint}); may be null for API-only.
 	 * @param uiExecutor
@@ -259,6 +278,7 @@ public class ChatProcessor {
 	 * @return The send result (task ID, or busy/error); never null.
 	 */
 	public static SendResult sendMessage(TaskProgressTracker tracker, String userName, String userMessage,
+			List<AttachmentDto> attachments,
 			Runnable repaintRequester, ScheduledExecutorService uiExecutor) {
 		if (isProcessing(tracker)) {
 			tracker.getChat().addMessage(new ChatMessage("System", "Please wait for the current response to complete."));
@@ -268,7 +288,15 @@ public class ChatProcessor {
 			return SendResult.busy();
 		}
 
-		ChatMessage message = new ChatMessage(userName, userMessage);
+		List<ChatMessage.AttachmentMetadata> attachmentMeta = Collections.emptyList();
+		if (attachments != null && !attachments.isEmpty()) {
+			attachmentMeta = new ArrayList<>();
+			for (AttachmentDto att : attachments) {
+				attachmentMeta.add(new ChatMessage.AttachmentMetadata(
+					att.getFileName(), att.getMimeType(), att.getSize()));
+			}
+		}
+		ChatMessage message = new ChatMessage(userName, userMessage, Instant.now(), attachmentMeta);
 		tracker.getChat().addMessage(message);
 
 		// Persist user message before AI processing starts
@@ -286,7 +314,7 @@ public class ChatProcessor {
 		}
 
 		ChatMemory chatMemory = tracker.getChatMemory();
-		Future<?> future = BACKGROUND_EXECUTOR.submit(new AIBackgroundTask(tracker, chatMemory, userMessage));
+		Future<?> future = BACKGROUND_EXECUTOR.submit(new AIBackgroundTask(tracker, chatMemory, userMessage, attachments));
 		state._backgroundTask = future;
 
 		if (uiExecutor != null) {
@@ -344,17 +372,39 @@ public class ChatProcessor {
 	}
 
 	/**
+	 * Converts an {@link AttachmentDto} to a LangChain4j {@link Content} object.
+	 *
+	 * <p>
+	 * Images are converted to {@link ImageContent}, PDFs to {@link PdfFileContent}. Unsupported
+	 * types produce a placeholder {@link TextContent}.
+	 * </p>
+	 */
+	private static Content toContent(AttachmentDto att) {
+		String mimeType = att.getMimeType();
+		String base64 = att.getBase64Data();
+		if (mimeType != null && mimeType.startsWith("image/")) {
+			return new ImageContent(base64, mimeType);
+		} else if ("application/pdf".equals(mimeType)) {
+			return new PdfFileContent(base64, mimeType);
+		}
+		return new TextContent("[Unsupported attachment: " + att.getFileName() + "]");
+	}
+
+	/**
 	 * Background task for AI processing with detailed progress tracking.
 	 */
 	static class AIBackgroundTask implements Runnable {
 		private final TaskProgressTracker _taskTracker;
 		private final ChatMemory _chatMemory;
 		private final String _userMessage;
+		private final List<AttachmentDto> _attachments;
 
-		AIBackgroundTask(TaskProgressTracker taskTracker, ChatMemory chatMemory, String userMessage) {
+		AIBackgroundTask(TaskProgressTracker taskTracker, ChatMemory chatMemory,
+				String userMessage, List<AttachmentDto> attachments) {
 			_taskTracker = taskTracker;
 			_chatMemory = chatMemory;
 			_userMessage = userMessage;
+			_attachments = attachments;
 		}
 
 		@Override
@@ -366,7 +416,7 @@ public class ChatProcessor {
 			try {
 				ThreadContextManager.inSystemInteraction(ChatProcessor.class, () -> {
 					try {
-						executeOrchestrator(_taskTracker, state, _chatMemory, _userMessage);
+						executeOrchestrator(_taskTracker, state, _chatMemory, _userMessage, _attachments);
 						state.completeSuccessfully();
 						return null;
 					} catch (InterruptedException ex) {

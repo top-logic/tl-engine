@@ -15,5 +15,4 @@
     <stringAttribute key="org.eclipse.jdt.launching.MODULE_NAME" value="tl-ai-mcp-server"/>
     <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-out src/main/java&#13;&#10;-languages de,en&#13;&#10;-module tl.ai.mcp.server"/>
     <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="tl-ai-mcp-server"/>
-    <stringAttribute key="org.eclipse.jdt.launching.SOURCE_PATH_PROVIDER" value="org.eclipse.m2e.launchconfig.sourcepathProvider"/>
 </launchConfiguration>

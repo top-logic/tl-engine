@@ -14,6 +14,7 @@
 		<project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
 	</properties>
 
+
 	<dependencies>
 		<!-- TopLogic -->
 		<dependency>
@@ -84,17 +85,17 @@
         <dependency>
             <groupId>com.top-logic</groupId>
             <artifactId>tl-ai-mcp-server</artifactId>
-            <version>0.0.1-AI</version>
+            <version>${tl.version}</version>
         </dependency>
         <dependency>
             <groupId>com.top-logic</groupId>
             <artifactId>tl-chat</artifactId>
-            <version>0.0.1-AI</version>
+            <version>${tl.version}</version>
         </dependency>
         <dependency>
             <groupId>com.top-logic</groupId>
             <artifactId>tl-ai-service</artifactId>
-            <version>0.0.1-AI</version>
+            <version>${tl.version}</version>
         </dependency>
         <dependency>
             <groupId>com.top-logic</groupId>

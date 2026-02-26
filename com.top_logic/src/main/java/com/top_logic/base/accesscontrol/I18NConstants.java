@@ -20,7 +20,7 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey COMMIT_FAILED;
 
-	public static ResKey ERROR_AUTHENTICATE = legacyKey("logout.messages.errorauthenticate");
+	public static ResKey1 ERROR_AUTHENTICATE = legacyKey1("logout.messages.errorauthenticate");
 
 	public static ResKey1 ERROR_AUTHENTICATE_MAINTENANCE_MODE =
 		legacyKey1("logout.messages.errorauthenticatemaintenancemode");

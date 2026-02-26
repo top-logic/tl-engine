@@ -24,6 +24,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey LOGOUT;
 
+	/**
+	 * @en Login
+	 */
+	public static ResKey LOGIN;
+
 	public static ResKey1 RELOAD_FAILED__NAMES;
 
 	public static ResKey1 RESTART_OF_THEME_FACTORY_FAILED__PROBLEM;

@@ -10,10 +10,17 @@
 			<de>React</de>
 		</tabLabel>
 		<components>
-			<layout-reference resource="com.top_logic.demo/technical/reactDemo/counter.layout.xml"/>
-			<layout-reference resource="com.top_logic.demo/technical/reactDemo/formFields.layout.xml"/>
-			<layout-reference resource="com.top_logic.demo/technical/reactDemo/tabBar.layout.xml"/>
-			<layout-reference resource="com.top_logic.demo/technical/reactDemo/audioRecorder.layout.xml"/>
+			<config:template-call template="com.top_logic/tabbar.template.xml">
+				<arguments>
+					<components>
+						<layout-reference resource="com.top_logic.demo/technical/reactDemo/counter.layout.xml"/>
+						<layout-reference resource="com.top_logic.demo/technical/reactDemo/formFields.layout.xml"/>
+						<layout-reference resource="com.top_logic.demo/technical/reactDemo/tabBar.layout.xml"/>
+						<layout-reference resource="com.top_logic.demo/technical/reactDemo/audioRecorder.layout.xml"/>
+						<layout-reference resource="com.top_logic.demo/technical/reactDemo/fileUpload.layout.xml"/>
+					</components>
+				</arguments>
+			</config:template-call>
 		</components>
 	</arguments>
 </config:template-call>

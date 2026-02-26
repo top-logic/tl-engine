@@ -55,6 +55,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey AUDIO_UPLOAD_FAILED;
 
+	/**
+	 * @en File upload failed.
+	 */
+	public static ResKey FILE_UPLOAD_FAILED;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

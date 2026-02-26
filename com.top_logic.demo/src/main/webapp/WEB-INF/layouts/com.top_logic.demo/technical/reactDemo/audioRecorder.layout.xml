@@ -1,6 +1,19 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
-<component
-	class="com.top_logic.demo.react.DemoAudioRecorderComponent"
-	name="reactAudioRecorderDemo"
-/>
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments>
+		<tabLabel key="dynamic.reactDemo.audioRecorder.tab">
+			<en>Audio Recorder</en>
+			<de>Audiorekorder</de>
+		</tabLabel>
+		<components>
+			<component
+				class="com.top_logic.demo.react.DemoAudioRecorderComponent"
+				name="reactAudioRecorderDemo"
+			/>
+		</components>
+	</arguments>
+</config:template-call>

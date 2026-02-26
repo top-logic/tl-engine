@@ -5,14 +5,14 @@
 	template="com.top_logic/tab.template.xml"
 >
 	<arguments>
-		<tabLabel key="dynamic.reactDemo.tabBar.tab">
-			<en>Tab Bar</en>
-			<de>Tableiste</de>
+		<tabLabel key="dynamic.reactDemo.fileUpload.tab">
+			<en>File Upload</en>
+			<de>Datei-Upload</de>
 		</tabLabel>
 		<components>
 			<component
-				class="com.top_logic.demo.react.DemoReactTabBarComponent"
-				name="reactTabBarDemo"
+				class="com.top_logic.demo.react.DemoFileUploadComponent"
+				name="reactFileUploadDemo"
 			/>
 		</components>
 	</arguments>

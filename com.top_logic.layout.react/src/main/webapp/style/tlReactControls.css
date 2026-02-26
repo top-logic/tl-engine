@@ -193,42 +193,62 @@ button.tlCounter__button:focus {
 }
 
 .tlAudioRecorder__button {
+	position: relative;
 	display: inline-flex;
 	justify-content: center;
 	align-items: center;
-	height: 2rem;
-	padding: 0 var(--spacing-03);
+	width: 2.5rem;
+	height: 2.5rem;
 	border: none;
-	border-radius: var(--corner-radius);
-	font-family: var(--font-family);
-	font-weight: bold;
-	font-size: var(--heading-compact-02-font-size);
-	line-height: var(--heading-compact-02-line-height);
+	border-radius: 50%;
 	cursor: pointer;
 	background: transparent;
 	box-shadow: inset 0px 0px 0px 2px var(--button-secondary);
-	color: var(--button-secondary);
-	white-space: nowrap;
 }
 
 button.tlAudioRecorder__button:hover {
 	background: var(--button-secondary-hover);
 	box-shadow: inset 0px 0px 0px 2px var(--button-secondary-hover);
-	color: var(--text-on-color);
+}
+
+button.tlAudioRecorder__button:hover .tlAudioRecorder__icon {
+	background: var(--text-on-color);
+}
+
+button.tlAudioRecorder__button:focus {
+	box-shadow: inset 0px 0px 0px 2px var(--focus), inset 0px 0px 0px 3px var(--focus-inset);
+	outline: none;
 }
 
 button.tlAudioRecorder__button:disabled {
 	cursor: default;
 	background: none;
 	box-shadow: inset 0px 0px 0px 2px var(--button-disabled);
-	color: var(--text-disabled);
 }
 
+button.tlAudioRecorder__button:disabled .tlAudioRecorder__icon {
+	background: var(--text-disabled);
+}
+
+/* Icon: filled red circle (record) */
+.tlAudioRecorder__icon {
+	display: block;
+	width: 0.75rem;
+	height: 0.75rem;
+	border-radius: 50%;
+	background: var(--button-danger);
+}
+
+/* Icon: white square (stop) */
+.tlAudioRecorder__icon--stop {
+	border-radius: 2px;
+	background: var(--text-on-color);
+}
+
+/* Recording state */
 .tlAudioRecorder__button--recording {
-	background: var(--button-danger-primary);
-	box-shadow: inset 0px 0px 0px 2px var(--button-danger-primary);
-	color: var(--text-on-color);
-	animation: tlAudioRecorderPulse 1.5s ease-in-out infinite;
+	background: var(--button-danger);
+	box-shadow: inset 0px 0px 0px 2px var(--button-danger);
 }
 
 button.tlAudioRecorder__button--recording:hover {
@@ -236,9 +256,36 @@ button.tlAudioRecorder__button--recording:hover {
 	box-shadow: inset 0px 0px 0px 2px var(--button-danger-hover);
 }
 
-@keyframes tlAudioRecorderPulse {
-	0%, 100% { opacity: 1; }
-	50% { opacity: 0.7; }
+/* Ripple rings animation during recording */
+.tlAudioRecorder__button--recording::before,
+.tlAudioRecorder__button--recording::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	border-radius: 50%;
+	border: 2px solid var(--button-danger);
+	animation: tlAudioRecorderRipple 2s ease-out infinite;
+	pointer-events: none;
+}
+
+.tlAudioRecorder__button--recording::after {
+	animation-delay: 1s;
+}
+
+@keyframes tlAudioRecorderRipple {
+	0%   { transform: scale(1); opacity: 0.6; }
+	100% { transform: scale(2); opacity: 0; }
+}
+
+/* Uploading state: wobble animation */
+.tlAudioRecorder__button--uploading {
+	animation: tlAudioRecorderWobble 0.5s ease-in-out infinite;
+}
+
+@keyframes tlAudioRecorderWobble {
+	0%, 100% { transform: rotate(0deg); }
+	25%      { transform: rotate(-10deg); }
+	75%      { transform: rotate(10deg); }
 }
 
 .tlAudioRecorder__status {

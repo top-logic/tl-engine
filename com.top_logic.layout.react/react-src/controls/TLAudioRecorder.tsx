@@ -76,26 +76,29 @@ const TLAudioRecorder: React.FC<TLCellProps> = () => {
     }
   }, [localStatus, upload]);
 
-  const buttonLabel =
-    effectiveStatus === 'recording' ? 'Stop' :
+  const ariaLabel =
+    effectiveStatus === 'recording' ? 'Stop recording' :
     effectiveStatus === 'uploading' ? 'Uploading\u2026' :
-    'Record';
+    'Record audio';
 
   const isDisabled = effectiveStatus === 'uploading';
+
+  const buttonClasses = ['tlAudioRecorder__button'];
+  if (effectiveStatus === 'recording') buttonClasses.push('tlAudioRecorder__button--recording');
+  if (effectiveStatus === 'uploading') buttonClasses.push('tlAudioRecorder__button--uploading');
 
   return (
     <div className="tlAudioRecorder">
       <button
         type="button"
-        className={`tlAudioRecorder__button${effectiveStatus === 'recording' ? ' tlAudioRecorder__button--recording' : ''}`}
+        className={buttonClasses.join(' ')}
         onClick={handleToggle}
         disabled={isDisabled}
+        title={ariaLabel}
+        aria-label={ariaLabel}
       >
-        {buttonLabel}
+        <span className={`tlAudioRecorder__icon${effectiveStatus === 'recording' ? ' tlAudioRecorder__icon--stop' : ''}`} />
       </button>
-      {effectiveStatus !== 'idle' && effectiveStatus !== 'recording' && (
-        <span className="tlAudioRecorder__status">{effectiveStatus}</span>
-      )}
       {serverError && (
         <span className="tlAudioRecorder__status tlAudioRecorder__status--error">{serverError}</span>
       )}

@@ -28,7 +28,12 @@ public class ReactAudioPlayerControl extends ReactControl implements DataProvide
 	/** State key indicating whether audio data is available. */
 	private static final String HAS_AUDIO = "hasAudio";
 
+	/** State key whose value increments each time audio data is replaced. */
+	private static final String DATA_REVISION = "dataRevision";
+
 	private BinaryData _audioData;
+
+	private int _dataRevision;
 
 	/**
 	 * Creates a new {@link ReactAudioPlayerControl}.
@@ -40,6 +45,7 @@ public class ReactAudioPlayerControl extends ReactControl implements DataProvide
 		super(null, "TLAudioPlayer");
 		_audioData = audioData;
 		putState(HAS_AUDIO, audioData != null);
+		putState(DATA_REVISION, _dataRevision);
 	}
 
 	/**
@@ -55,7 +61,9 @@ public class ReactAudioPlayerControl extends ReactControl implements DataProvide
 	 */
 	public void setAudioData(BinaryData audioData) {
 		_audioData = audioData;
+		_dataRevision++;
 		putState(HAS_AUDIO, audioData != null);
+		putState(DATA_REVISION, _dataRevision);
 	}
 
 	@Override

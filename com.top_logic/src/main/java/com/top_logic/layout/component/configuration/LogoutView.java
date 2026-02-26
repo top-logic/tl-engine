@@ -20,7 +20,9 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.AbstractDisplayValue;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.FrameScope;
@@ -33,19 +35,16 @@ import com.top_logic.layout.basic.link.Link;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.util.Resources;
+import com.top_logic.util.TLContext;
 
 /**
- * The class {@link LogoutView} renders the LogoutCommand.
+ * The view displays the command to log the user out or to log in if the user is not yet logged in.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class LogoutView extends AbstractConfiguredInstance<LogoutView.Config>
 		implements ViewConfiguration, View, HTMLConstants, Link {
 
-	private static final String XML_ATTRIBUTE_IMAGE = "image";
-	private static final String XML_ATTRIBUTE_CSS_CLASS = "cssClass";
-
-	private ThemeImage image;
 	private String cssClass;
 
     /**
@@ -53,16 +52,31 @@ public class LogoutView extends AbstractConfiguredInstance<LogoutView.Config>
      */
 	public interface Config extends PolymorphicConfiguration<LogoutView> {
 
+		/** Configuration name for {@link #getImage()}. */
+		String LOGOUT_IMAGE = "image";
+
+		/** Configuration name for {@link #getLoginImage()} */
+		String LOGIN_IMAGE = "login-image";
+
+		/** Configuration name for {@link #getCssClass()} */
+		String CSS_CLASS = "cssClass";
+
 		/**
-		 * The icon to display.
+		 * The icon to display to log out the user.
 		 */
-		@Name(LogoutView.XML_ATTRIBUTE_IMAGE)
+		@Name(LOGOUT_IMAGE)
 		ThemeImage getImage();
+
+		/**
+		 * The icon to display when the user is not yet logged in.
+		 */
+		@Name(LOGIN_IMAGE)
+		ThemeImage getLoginImage();
 
 		/**
 		 * The CSS class to add to the view.
 		 */
-		@Name(LogoutView.XML_ATTRIBUTE_CSS_CLASS)
+		@Name(CSS_CLASS)
 		String getCssClass();
 		
 		/**
@@ -85,7 +99,6 @@ public class LogoutView extends AbstractConfiguredInstance<LogoutView.Config>
 	public LogoutView(InstantiationContext context, LogoutView.Config config) {
 		super(context, config);
 		
-		this.image = config.getImage();
 		this.cssClass = StringServices.nonEmpty(config.getCssClass());
 	}
 
@@ -112,6 +125,10 @@ public class LogoutView extends AbstractConfiguredInstance<LogoutView.Config>
 		getConfig().getRenderer().write(context, out, this);
 	}
 
+	private boolean isNotLoggedIn() {
+		return TLContext.getContext().getCurrentPersonWrapper().equals(PersonManager.getManager().getAnonymous());
+	}
+
 	@Override
 	public void writeCssClassesContent(Appendable out) throws IOException {
 		out.append(cssClass);
@@ -129,7 +146,13 @@ public class LogoutView extends AbstractConfiguredInstance<LogoutView.Config>
 
 	@Override
 	public String getLabel() {
-		return Resources.getInstance().getString(I18NConstants.LOGOUT);
+		ResKey key;
+		if (isNotLoggedIn()) {
+			key = I18NConstants.LOGIN;
+		} else {
+			key = I18NConstants.LOGOUT;
+		}
+		return Resources.getInstance().getString(key);
 	}
 
 	@Override
@@ -139,7 +162,7 @@ public class LogoutView extends AbstractConfiguredInstance<LogoutView.Config>
 
 	@Override
 	public ThemeImage getImage() {
-		return image;
+		return isNotLoggedIn() ? getConfig().getLoginImage() : getConfig().getImage();
 	}
 
 	@Override
@@ -149,15 +172,29 @@ public class LogoutView extends AbstractConfiguredInstance<LogoutView.Config>
 
 	@Override
 	public String getOnclick() {
-		StringBuilder out = new StringBuilder();
 		DisplayContext context = DefaultDisplayContext.getDisplayContext();
-		try {
-			appendLogoutAction(context, out, context.getExecutionScope().getFrameScope());
-		} catch (IOException ex) {
-			throw new IOError(ex);
+		if (isNotLoggedIn()) {
+			StringBuilder out = new StringBuilder();
+			try {
+				out.append("services.ajax.logout('");
+				out.append(ApplicationPages.getInstance().getLoginPage());
+				out.append("');");
+				context.getWindowScope().appendCloseAllWindowsCommand(out, context.getExecutionScope().getFrameScope());
+			} catch (IOException ex) {
+				throw new IOError(ex);
+			}
+			out.append("return false;");
+			return out.toString();
+		} else {
+			StringBuilder out = new StringBuilder();
+			try {
+				appendLogoutAction(context, out, context.getExecutionScope().getFrameScope());
+			} catch (IOException ex) {
+				throw new IOError(ex);
+			}
+			out.append("return false;");
+			return out.toString();
 		}
-		out.append("return false;");
-		return out.toString();
 	}
 
 	/**

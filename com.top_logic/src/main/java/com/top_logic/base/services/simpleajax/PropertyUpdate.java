@@ -46,6 +46,20 @@ public class PropertyUpdate extends DOMAction {
 		this.value = value;
 	}
 
+	/**
+	 * The name of the property to update.
+	 */
+	public String getProperty() {
+		return property;
+	}
+
+	/**
+	 * The new value of the property.
+	 */
+	public DynamicText getValue() {
+		return value;
+	}
+
     /**
      * Return some reasonable String for debugging or logging.
      */

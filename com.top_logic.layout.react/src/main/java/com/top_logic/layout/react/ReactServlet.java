@@ -8,7 +8,7 @@ package com.top_logic.layout.react;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -22,11 +22,16 @@ import jakarta.servlet.http.Part;
 
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
+import com.top_logic.base.services.simpleajax.AbstractCssClassUpdate;
 import com.top_logic.base.services.simpleajax.ClientAction;
 import com.top_logic.base.services.simpleajax.ContentReplacement;
 import com.top_logic.base.services.simpleajax.DOMModification;
 import com.top_logic.base.services.simpleajax.ElementReplacement;
+import com.top_logic.base.services.simpleajax.FragmentInsertion;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
+import com.top_logic.base.services.simpleajax.JSFunctionCall;
+import com.top_logic.base.services.simpleajax.PropertyUpdate;
+import com.top_logic.base.services.simpleajax.RangeReplacement;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.json.JSON;
@@ -36,10 +41,13 @@ import com.top_logic.event.infoservice.InfoServiceXMLStringConverter;
 import com.top_logic.layout.CommandListener;
 import com.top_logic.layout.ContentHandlersRegistry;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.DynamicText;
 import com.top_logic.layout.UpdateWriter;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.internal.SubsessionHandler;
+import com.top_logic.layout.react.protocol.FunctionCall;
 import com.top_logic.layout.react.protocol.JSSnipplet;
+import com.top_logic.layout.react.protocol.Property;
 import com.top_logic.layout.react.protocol.SSEEvent;
 import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.mig.html.layout.RevalidationVisitor;
@@ -285,11 +293,12 @@ public class ReactServlet extends TopLogicServlet {
 	 * forwards them as SSE events.
 	 *
 	 * <p>
-	 * This mirrors the revalidation step in AJAXServlet, but instead of serializing the
-	 * {@link ClientAction}s to XML, the actions are converted to SSE protocol events
-	 * ({@link com.top_logic.layout.react.protocol.ElementReplacement},
-	 * {@link com.top_logic.layout.react.protocol.ContentReplacement}) and delivered via the SSE
-	 * channel.
+	 * Each {@link ClientAction} is converted to its SSE equivalent <em>inside</em> the
+	 * {@link SSEForwardingUpdateWriter#add(ClientAction)} callback, because at that point the
+	 * {@link DisplayContext#getExecutionScope() execution scope} is still set to the control's
+	 * {@link com.top_logic.layout.ControlScope} by
+	 * {@link com.top_logic.layout.ControlSupport#revalidate}. Rendering the fragment later
+	 * (after the scope is restored) would cause an "already attached to another scope" crash.
 	 * </p>
 	 */
 	private void forwardLegacyControlUpdates(DisplayContext displayContext, SubsessionHandler rootHandler,
@@ -302,54 +311,9 @@ public class ReactServlet extends TopLogicServlet {
 			return;
 		}
 
-		CollectingUpdateWriter collector =
-			new CollectingUpdateWriter(displayContext, new TagWriter(new StringWriter()), "UTF-8", null);
-		RevalidationVisitor.runValidation(mainLayout, collector);
-
-		for (ClientAction action : collector.getCollectedActions()) {
-			SSEEvent event = toSSEEvent(displayContext, action);
-			if (event != null) {
-				queue.enqueue(event);
-			}
-		}
-	}
-
-	/**
-	 * Converts a traditional {@link ClientAction} to the corresponding SSE protocol event.
-	 *
-	 * @return The SSE event, or {@code null} if the action type is not supported.
-	 */
-	private SSEEvent toSSEEvent(DisplayContext context, ClientAction action) {
-		if (action instanceof DOMModification) {
-			DOMModification mod = (DOMModification) action;
-			String elementId = mod.getElementID();
-			String html = renderFragment(context, mod.getFragment());
-
-			if (action instanceof ElementReplacement) {
-				return com.top_logic.layout.react.protocol.ElementReplacement.create()
-					.setElementId(elementId)
-					.setHtml(html);
-			}
-			if (action instanceof ContentReplacement) {
-				return com.top_logic.layout.react.protocol.ContentReplacement.create()
-					.setElementId(elementId)
-					.setHtml(html);
-			}
-		}
-		return null;
-	}
-
-	private String renderFragment(DisplayContext context, HTMLFragment fragment) {
-		StringWriter sw = new StringWriter();
-		TagWriter tw = new TagWriter(sw);
-		try {
-			fragment.write(context, tw);
-			tw.flush();
-		} catch (IOException ex) {
-			Logger.error("Failed to render legacy control fragment.", ex, ReactServlet.class);
-			return "";
-		}
-		return sw.toString();
+		SSEForwardingUpdateWriter forwarder =
+			new SSEForwardingUpdateWriter(displayContext, new TagWriter(new StringWriter()), "UTF-8", null, queue);
+		RevalidationVisitor.runValidation(mainLayout, forwarder);
 	}
 
 	private void sendSuccess(HttpServletResponse response) throws IOException {
@@ -368,26 +332,157 @@ public class ReactServlet extends TopLogicServlet {
 	}
 
 	/**
-	 * An {@link UpdateWriter} that collects {@link ClientAction} objects instead of serializing
-	 * them to XML.
+	 * An {@link UpdateWriter} that converts each {@link ClientAction} to an SSE event immediately
+	 * inside {@link #add(ClientAction)}.
+	 *
+	 * <p>
+	 * This is critical for correctness: during {@code add()}, the {@link DisplayContext} still has
+	 * the correct {@link com.top_logic.layout.ControlScope execution scope} set by
+	 * {@link com.top_logic.layout.ControlSupport#revalidate}. Rendering a
+	 * {@link DOMModification#getFragment() fragment} at this point calls
+	 * {@link com.top_logic.layout.basic.AbstractControlBase#attach attach(scope)} which sees the
+	 * same scope the control is already attached to and returns without error. Deferring the
+	 * rendering to after revalidation would cause an "already attached to another scope" crash.
+	 * </p>
 	 */
-	private static class CollectingUpdateWriter extends UpdateWriter {
+	private static class SSEForwardingUpdateWriter extends UpdateWriter {
 
-		private final List<ClientAction> _collected = new ArrayList<>();
+		private final SSEUpdateQueue _queue;
 
-		CollectingUpdateWriter(DisplayContext context, TagWriter out, String encoding, Integer sequence) {
+		SSEForwardingUpdateWriter(DisplayContext context, TagWriter out, String encoding, Integer sequence,
+				SSEUpdateQueue queue) {
 			super(context, out, encoding, sequence);
+			_queue = queue;
 		}
 
 		@Override
 		public void add(ClientAction action) {
-			if (action != null) {
-				_collected.add(action);
+			if (action == null) {
+				return;
+			}
+
+			DisplayContext context = getDisplayContext();
+			SSEEvent event = toSSEEvent(context, action);
+			if (event != null) {
+				_queue.enqueue(event);
 			}
 		}
 
-		List<ClientAction> getCollectedActions() {
-			return _collected;
+		private SSEEvent toSSEEvent(DisplayContext context, ClientAction action) {
+			// DOMModification subtypes: render the fragment to HTML while the scope is correct.
+			if (action instanceof DOMModification) {
+				DOMModification mod = (DOMModification) action;
+				String elementId = mod.getElementID();
+				String html = renderFragment(context, mod.getFragment());
+
+				if (action instanceof ElementReplacement) {
+					return com.top_logic.layout.react.protocol.ElementReplacement.create()
+						.setElementId(elementId)
+						.setHtml(html);
+				}
+				if (action instanceof ContentReplacement) {
+					return com.top_logic.layout.react.protocol.ContentReplacement.create()
+						.setElementId(elementId)
+						.setHtml(html);
+				}
+				if (action instanceof RangeReplacement) {
+					RangeReplacement range = (RangeReplacement) action;
+					return com.top_logic.layout.react.protocol.RangeReplacement.create()
+						.setStartId(elementId)
+						.setStopId(range.getStopID())
+						.setHtml(html);
+				}
+				if (action instanceof FragmentInsertion) {
+					FragmentInsertion insertion = (FragmentInsertion) action;
+					return com.top_logic.layout.react.protocol.FragmentInsertion.create()
+						.setElementId(elementId)
+						.setPosition(insertion.getPosition())
+						.setHtml(html);
+				}
+			}
+
+			// PropertyUpdate: evaluate DynamicText value to string.
+			if (action instanceof PropertyUpdate) {
+				PropertyUpdate propUpdate = (PropertyUpdate) action;
+				String value = evaluateDynamicText(context, propUpdate.getValue());
+				return com.top_logic.layout.react.protocol.PropertyUpdate.create()
+					.setElementId(propUpdate.getElementID())
+					.addProperty(Property.create()
+						.setName(propUpdate.getProperty())
+						.setValue(value));
+			}
+
+			// CssClassUpdate: evaluate CSS class content to string.
+			if (action instanceof AbstractCssClassUpdate) {
+				AbstractCssClassUpdate cssUpdate = (AbstractCssClassUpdate) action;
+				StringBuilder sb = new StringBuilder();
+				try {
+					cssUpdate.writeCssClassContent(context, sb);
+				} catch (IOException ex) {
+					Logger.error("Failed to evaluate CSS class update.", ex, ReactServlet.class);
+				}
+				return com.top_logic.layout.react.protocol.CssClassUpdate.create()
+					.setElementId(cssUpdate.getElementID())
+					.setCssClass(sb.toString());
+			}
+
+			// JSFunctionCall: extract fields and serialize arguments as JSON.
+			if (action instanceof JSFunctionCall) {
+				JSFunctionCall call = (JSFunctionCall) action;
+				String argsJson;
+				try {
+					argsJson = JSON.toString(Arrays.asList(call.getArguments()));
+				} catch (Exception ex) {
+					Logger.error("Failed to serialize JSFunctionCall arguments.", ex, ReactServlet.class);
+					argsJson = "[]";
+				}
+				return FunctionCall.create()
+					.setElementId(call.getElementID())
+					.setFunctionRef(call.getFunctionReference())
+					.setFunctionName(call.getFunctionName())
+					.setArguments(argsJson);
+			}
+
+			// JSSnipplet: evaluate code or code fragment.
+			if (action instanceof com.top_logic.base.services.simpleajax.JSSnipplet) {
+				com.top_logic.base.services.simpleajax.JSSnipplet snipplet =
+					(com.top_logic.base.services.simpleajax.JSSnipplet) action;
+				String code;
+				DynamicText codeFragment = snipplet.getCodeFragment();
+				if (codeFragment != null) {
+					code = evaluateDynamicText(context, codeFragment);
+				} else {
+					code = snipplet.getCode();
+				}
+				return JSSnipplet.create().setCode(code);
+			}
+
+			Logger.warn("Unsupported legacy ClientAction type for SSE forwarding: " + action.getClass().getName(),
+				ReactServlet.class);
+			return null;
+		}
+
+		private String renderFragment(DisplayContext context, HTMLFragment fragment) {
+			StringWriter sw = new StringWriter();
+			TagWriter tw = new TagWriter(sw);
+			try {
+				fragment.write(context, tw);
+				tw.flush();
+			} catch (IOException ex) {
+				Logger.error("Failed to render legacy control fragment.", ex, ReactServlet.class);
+				return "";
+			}
+			return sw.toString();
+		}
+
+		private String evaluateDynamicText(DisplayContext context, DynamicText text) {
+			StringBuilder sb = new StringBuilder();
+			try {
+				text.append(context, sb);
+			} catch (IOException ex) {
+				Logger.error("Failed to evaluate DynamicText.", ex, ReactServlet.class);
+			}
+			return sb.toString();
 		}
 	}
 

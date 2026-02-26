@@ -14,17 +14,16 @@ import com.top_logic.contact.business.ContactFactory;
 import com.top_logic.contact.business.PersonContact;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
-import com.top_logic.knowledge.wrap.person.TLPersonManager;
 
 /**
  * {@link PersonManager} that initializes new accounts with contact information.
  */
-public class ContactPersonManager extends TLPersonManager {
+public class ContactPersonManager extends PersonManager {
 
 	/**
 	 * Configuration options for {@link ContactPersonManager}.
 	 */
-	public interface Config<I extends ContactPersonManager> extends TLPersonManager.Config {
+	public interface Config<I extends ContactPersonManager> extends PersonManager.Config {
 		/**
 		 * Whether a contact that was assigned to an account is re-used for a newly created account,
 		 * if the login names match.

@@ -804,6 +804,182 @@ Three views collaborating via cross-view channel references:
 All three views reference each other's channels by file path. No names to invent, no
 conflicts possible, and `grep` finds all usages instantly.
 
+## Configuration Plug-in Interface Migration
+
+The current LayoutComponent/CommandHandler system uses numerous plug-in interfaces
+(`PolymorphicConfiguration<? extends SomeInterface>`) for customization. Many of these
+take `LayoutComponent` as a parameter and cannot be reused in the new view system. This
+section inventories all such interfaces and proposes migration strategies.
+
+### Interfaces Dependent on LayoutComponent (need new equivalents)
+
+These interfaces have `LayoutComponent` in their method signatures and require new
+view-based counterparts.
+
+#### 1. ExecutabilityRule
+
+- **Current**: `isExecutable(LayoutComponent component, Object model, Map args)`
+- **Used in**: `CommandHandler.Config` (`getExecutability()` property)
+- **Purpose**: Determines if a command is executable (enabled/disabled/hidden)
+- **Implementations**: AlwaysExecutable, NullModelDisabled, InEditModeExecutable,
+  HistoricDataExecRule, CombinedExecutabilityRule, DelegateRule, RuleReference, etc.
+- **New equivalent**: `isExecutable(ViewContext context, Map args)` - The model comes
+  from channels (accessible through ViewContext), not from the component. Most existing
+  rules check `component.getModel()` or component state (edit mode, visibility) - both
+  available through ViewContext.
+
+#### 2. CommandConfirmation
+
+- **Current**: `getConfirmation(LayoutComponent component, ResKey label, Object model, Map args)`
+- **Used in**: `CommandHandler.Config` (`getConfirmation()` property)
+- **Purpose**: Provides confirmation message before command execution
+- **Implementations**: DefaultConfirmation, DefaultDeleteConfirmation,
+  CustomConfirmation, ScriptedConfirmation
+- **New equivalent**: `getConfirmation(ViewContext context, ResKey label, Map args)` -
+  Same pattern, ViewContext replaces LayoutComponent.
+
+#### 3. CheckScopeProvider
+
+- **Current**: `getCheckScope(LayoutComponent component)`
+- **Used in**: `CommandHandler.Config` (`getCheckScopeProvider()` property)
+- **Purpose**: Identifies components to check for unsaved changes before execution
+- **New equivalent**: Needs rethinking. The current concept navigates the LayoutComponent
+  tree to find dirty forms. In the new system, forms could track their own dirty state
+  via channels, and the view could aggregate dirty state in a derived channel. The
+  command's check could then be a simple channel-value check rather than a tree walk.
+
+#### 4. ModelBuilder / ListModelBuilder / TreeModelBuilder
+
+- **Current**: `getModel(Object businessModel, LayoutComponent component)`
+- **Used in**: `BuilderComponent.Config`, `TableComponent.Config`, `TreeComponent.Config`
+- **Purpose**: Derives GUI model (table rows, tree nodes) from a business model object
+- **New equivalent**: Already covered in the spec (Section 4). New implementations
+  against a channel-based API with explicit `inputs`. Configuration patterns
+  (property names, expression semantics) carried over; implementations rewritten.
+
+#### 5. LayoutControlProvider
+
+- **Current**: Creates LayoutControl for a LayoutComponent
+- **Used in**: `LayoutComponent.Config` (`getComponentControlProvider()` property)
+- **Purpose**: Produces the visual representation of a component
+- **New equivalent**: Replaced entirely by `UIElement.createControl(ViewContext)`.
+  The UIElement *is* the control provider. This interface has no counterpart in the
+  new system.
+
+#### 6. ComponentResolver
+
+- **Current**: Resolves/initializes components during loading
+- **Used in**: `LayoutComponent.Config`
+- **Purpose**: Post-processing of component tree after instantiation
+- **New equivalent**: Likely not needed. Views are simpler (no component resolution
+  phase). If needed, a view-level initialization hook could be added.
+
+#### 7. PostCreateAction
+
+- **Current**: `handleNew(LayoutComponent component, Object newModel)`
+- **Used in**: `OpenModalDialogCommandHandler.Config` (`getPostCreateActions()`)
+- **Purpose**: Actions after object creation (set model, close dialog, navigate, etc.)
+- **Implementations**: SetModel, SetEditMode, CloseDialog, ShowComponent,
+  UpdateComponent, DeliverAsDownload, InTransaction
+- **New equivalent**: `handleNew(ViewContext context, Object newModel)` - Most actions
+  translate directly: SetModel becomes a channel write, CloseDialog stays the same,
+  ShowComponent becomes view navigation. The InTransaction wrapper works unchanged.
+
+#### 8. ValueTransformation
+
+- **Current**: `transform(LayoutComponent component, Object value)`
+- **Used in**: `PostCreateAction.WithTransform.Config` (`getInput()` property)
+- **Purpose**: Transforms command result before passing to PostCreateActions
+- **New equivalent**: Could be simplified to `Function<Object, Object>` since most
+  transforms don't actually need the component. If context is needed:
+  `transform(ViewContext context, Object value)`.
+
+#### 9. TitleProvider
+
+- **Current**: `createTitle(LayoutComponent component)`
+- **Used in**: DialogInfo configuration
+- **Purpose**: Computes dialog/component title
+- **New equivalent**: Could be a derived channel or a TL-Script expression. A title is
+  just a computed value from model data - no dedicated interface needed if the view
+  system supports expression-based attribute values.
+
+#### 10. SecurityPath
+
+- **Current**: `nextComponent(LayoutComponent, int, int)` and
+  `getModel(LayoutComponent, Object, BoundCommandGroup, int, int)`
+- **Used in**: `PathSecurityObjectProvider.Config` (`getPath()` property)
+- **Purpose**: Navigation steps (Master, Parent, Opener, Selection, etc.) through the
+  LayoutComponent tree to find the security-relevant object
+- **Implementations**: Component, Model, Selection, Master, Parent, Opener, Window,
+  SelectableMaster, CurrentObject
+- **New equivalent**: Most of this navigation becomes unnecessary. In the new system,
+  the security object is typically the value of a channel (reachable directly by channel
+  reference). The SecurityObjectProvider on a command can reference a channel instead of
+  walking a component tree. Complex tree navigation (Parent, Opener, Window) is a
+  LayoutComponent concept that has no direct equivalent in views.
+
+#### 11. ContextMenuFactory
+
+- **Current**: Creates context menus tied to component context
+- **Used in**: `TreeComponent.Config`, `WithContextMenuFactory`
+- **Purpose**: Provides context menu entries for tree/table elements
+- **New equivalent**: Could become a configuration property on data elements (`<table>`,
+  `<tree>`) that produces context menus from commands and the current selection. The
+  factory would take ViewContext instead of a component reference.
+
+### Interfaces Independent of LayoutComponent (reusable as-is)
+
+These interfaces do not reference `LayoutComponent` in their signatures and can be
+reused in the new view system without changes.
+
+| Interface                  | Used In            | Purpose                                  |
+|----------------------------|--------------------|------------------------------------------|
+| **SecurityObjectProvider** | CommandHandler     | Determines security check target          |
+| **BoundCommandGroup**      | CommandHandler     | Security classification (READ/WRITE/...)  |
+| **TableFilterProvider**    | Column config      | Filter implementations for columns        |
+| **TableConfigurationProvider** | Table config   | Dynamic table configuration               |
+| **TableDragSource**        | Table/Tree config  | Drag source for rows                      |
+| **TableDropTarget**        | Table/Tree config  | Drop target for rows                      |
+| **ResourceProvider**       | Column/Tree config | Labels, images, tooltips for objects      |
+| **LabelProvider**          | Column/filter      | Text labels for values                    |
+| **Renderer**               | Column config      | Generic value rendering                   |
+| **CellRenderer**           | Column config      | Table cell rendering                      |
+| **ControlProvider**        | Column/form config | Creates controls for form fields          |
+| **FieldProvider**          | Column config      | Creates form fields for values            |
+| **Accessor**               | Column config      | Accesses parts of row objects             |
+| **Comparator**             | Column config      | Sorting                                   |
+| **CellExistenceTester**    | Column config      | Whether a cell should render              |
+| **ExcelCellRenderer**      | Column config      | Export rendering (Excel)                  |
+| **PDFRenderer**            | Column config      | Export rendering (PDF)                    |
+| **RowClassProvider**       | Table config       | Dynamic CSS classes for rows              |
+| **ColumnConfigurator**     | Column config      | Additional column config logic            |
+| **TableCommandProvider**   | Table config       | Commands for table elements               |
+| **TableDataExport**        | Table config       | Export functionality                      |
+
+Note: `SecurityObjectProvider` uses `BoundChecker` (which wraps LayoutComponent), so it
+may need a thin adapter but the core interface is not LayoutComponent-specific.
+
+### Migration Strategy Summary
+
+The general pattern for migrating LayoutComponent-dependent interfaces:
+
+1. **Replace `LayoutComponent` parameter with `ViewContext`** in the method signature.
+   ViewContext provides access to channels, commands, security context, and locale.
+
+2. **Replace component model access with channel access**. Instead of
+   `component.getModel()`, read from a named channel via ViewContext.
+
+3. **Replace component tree navigation with channel references**. Instead of walking
+   Parent/Master/Opener, reference channels directly by `path/to/view.view.xml#name`.
+
+4. **Eliminate interfaces that become unnecessary**. LayoutControlProvider,
+   ComponentResolver, and TitleProvider have no direct equivalents because their
+   concerns are handled differently in the new architecture.
+
+5. **Carry over configuration patterns**. Property names, expression semantics, and
+   PolymorphicConfiguration extensibility remain the same. Users familiar with
+   `ListModelByExpression` configuration will recognize the new equivalents immediately.
+
 ## Open Questions
 
 1. **ViewContext API**: What exactly should the `ViewContext` provide to

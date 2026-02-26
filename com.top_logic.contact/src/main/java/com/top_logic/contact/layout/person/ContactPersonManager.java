@@ -23,7 +23,7 @@ public class ContactPersonManager extends PersonManager {
 	/**
 	 * Configuration options for {@link ContactPersonManager}.
 	 */
-	public interface Config<I extends ContactPersonManager> extends PersonManager.Config {
+	public interface Config extends PersonManager.Config {
 		/**
 		 * Whether a contact that was assigned to an account is re-used for a newly created account,
 		 * if the login names match.
@@ -33,15 +33,16 @@ public class ContactPersonManager extends PersonManager {
 		boolean reuseContacts();
 	}
 
-	private final boolean _reuseContacts;
-
 	/**
 	 * Creates a {@link ContactPersonManager}.
 	 */
 	public ContactPersonManager(InstantiationContext context, Config config) {
 		super(context, config);
+	}
 
-		_reuseContacts = config.reuseContacts();
+	@Override
+	public Config getConfig() {
+		return (Config) super.getConfig();
 	}
 
 	@Override
@@ -49,7 +50,7 @@ public class ContactPersonManager extends PersonManager {
 		String loginName = account.getName();
 
 		PersonContact user = null;
-		if (_reuseContacts) {
+		if (getConfig().reuseContacts()) {
 			for (Object existing : ContactFactory.getInstance().getAllContactsWithAttribute(ContactFactory.PERSON_TYPE,
 				AbstractContact.FKEY_ATTRIBUTE, loginName, false)) {
 				if (existing instanceof PersonContact existingContact) {

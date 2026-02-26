@@ -92,11 +92,16 @@ which form model to resolve its attribute against) without breaking the uniform
 
 ```java
 /**
- * Immutable, hierarchical context for UIElement control creation.
+ * Hierarchical context for UIElement control creation.
  *
  * <p>Container elements create derived contexts that add information for their
- * descendants. Child contexts inherit everything from parent contexts. Contexts
- * are never mutated - a new derived instance is created instead.</p>
+ * descendants. Child contexts inherit everything from parent contexts. Scoped
+ * values (channels, form group, form model) are set by creating a new derived
+ * instance - the context itself is not mutated for these.</p>
+ *
+ * <p>The one exception is {@link #registerCommand(CommandHandler)}, which is a
+ * collection point: child elements contribute commands upward to the nearest
+ * enclosing command scope (panel or dialog).</p>
  */
 public interface ViewContext {
 
@@ -105,6 +110,16 @@ public interface ViewContext {
 
     /** Look up a command by name (from the enclosing panel/dialog scope). */
     CommandHandler getCommand(String name);
+
+    /**
+     * Register a command with the nearest enclosing command scope (panel or dialog).
+     *
+     * <p>Used by elements that contribute implicit commands (e.g., a table contributes
+     * "search" and "reset filters" commands to the enclosing panel's toolbar). The
+     * panel collects these during control creation and displays them alongside its
+     * explicitly declared commands.</p>
+     */
+    void registerCommand(CommandHandler command);
 
     /** Security context for access checks. */
     SecurityContext getSecurityContext();
@@ -620,8 +635,16 @@ the escape hatch for placing a command in a non-standard location:
 </panel>
 ```
 
-**Panels without commands**: A `<panel>` without `<commands>` is purely structural
-(collapsible section, titled region). Not every panel needs commands.
+**Implicit commands from children**: In addition to explicitly declared commands, a panel
+collects implicit commands contributed by its child elements via
+`ViewContext.registerCommand()`. For example, a `<table>` inside a panel contributes
+search/filter/export commands to the panel's toolbar or burger menu. See Section 9
+(Implicit Commands) for details.
+
+**Panels without explicit commands**: A `<panel>` without `<commands>` can still display
+implicit commands from its children (e.g., a panel containing only a table will show
+the table's search/filter buttons). A panel with neither explicit nor implicit commands
+is purely structural (collapsible section, titled region).
 
 ### Navigation Elements
 
@@ -1402,12 +1425,57 @@ its commit/cancel commands:
 </dialog>
 ```
 
+### Implicit Commands
+
+Not all commands are explicitly declared in `<commands>`. Some elements contribute
+**implicit commands** - commands that are inherent to the element's functionality and
+need to appear in the nearest enclosing command scope (panel or dialog).
+
+**Panel and dialog implicit commands**:
+- `<panel collapsible="true">` contributes a collapse/expand toggle command to its own
+  toolbar (or burger menu).
+- `<dialog>` contributes a close/cancel command to its own button bar.
+
+These are self-contained: the element contributes commands to itself.
+
+**Child element implicit commands**:
+Elements within a panel can contribute commands that bubble up to the enclosing panel's
+display areas. Examples:
+
+| Element    | Implicit Commands                                        | Default Placement |
+|------------|----------------------------------------------------------|-------------------|
+| `<table>`  | Search, reset filters, column configuration, export      | `burger-menu`     |
+| `<tree>`   | Expand all, collapse all                                 | `burger-menu`     |
+| `<form>`   | (potentially) reset form                                 | `burger-menu`     |
+
+These elements call `ViewContext.registerCommand()` during control creation. The
+enclosing panel collects all registered commands and displays them according to their
+placement, alongside the panel's explicitly declared commands.
+
+```java
+// Inside TableElement.createControl(ViewContext context):
+
+// Register implicit table commands with the enclosing panel
+context.registerCommand(new TableSearchCommand(tableModel));
+context.registerCommand(new ResetFiltersCommand(tableModel));
+context.registerCommand(new ColumnConfigCommand(tableModel));
+```
+
+This mechanism generalizes the current system where `TableComponent` adds toolbar
+buttons for search/filter/export. The difference is that the element does not need to
+know *where* or *how* the commands are displayed - it just registers them, and the
+enclosing panel handles placement.
+
+**Ordering**: Explicitly declared commands appear first (in declaration order), followed
+by implicit commands contributed by children (in tree order). Within each group,
+placement determines the display area.
+
 ### Command Resolution
 
 Command handlers are `PolymorphicConfiguration<? extends CommandHandler>`, reusing the
 existing command infrastructure. The panel's `ViewContext` resolves command references
 and provides the execution environment. A `<button command="name">` is resolved against
-the commands of the nearest enclosing panel or dialog.
+the commands of the nearest enclosing panel or dialog (both explicit and implicit).
 
 ## 10. Security
 

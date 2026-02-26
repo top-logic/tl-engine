@@ -82,6 +82,100 @@ The existing `Control` interface (`com.top_logic.layout.Control`) is reused as-i
 new layer sits above it: where today a `LayoutComponent` creates Controls internally, a
 `UIElement` *is* the thing that creates the Control - nothing more.
 
+### ViewContext: Hierarchical Scoping
+
+The `ViewContext` passed to `createControl()` is not a flat, global object. It is an
+**immutable, hierarchical scope** that container elements can enrich for their children.
+This solves the problem of contextual dependencies (e.g., `<field>` needing to know
+which form model to resolve its attribute against) without breaking the uniform
+`UIElement` interface.
+
+```java
+/**
+ * Immutable, hierarchical context for UIElement control creation.
+ *
+ * <p>Container elements create derived contexts that add information for their
+ * descendants. Child contexts inherit everything from parent contexts. Contexts
+ * are never mutated - a new derived instance is created instead.</p>
+ */
+public interface ViewContext {
+
+    /** Resolve a local or remote channel reference to its runtime channel. */
+    ViewChannel resolveChannel(ChannelRef ref);
+
+    /** Look up a command by name. */
+    CommandHandler getCommand(String name);
+
+    /** Security context for access checks. */
+    SecurityContext getSecurityContext();
+
+    /** Locale and theme for rendering. */
+    RenderContext getRenderContext();
+
+    /** The form group set by an enclosing {@code <form>} element, or null. */
+    FormGroup getFormGroup();
+
+    /** The form model object set by an enclosing {@code <form>} element, or null. */
+    Object getFormModel();
+
+    /**
+     * Create a derived context with additional scoped information.
+     * The derived context inherits all values from this context.
+     */
+    ViewContext derive();
+}
+```
+
+**How scoping works**: When a container element processes its children, it can create a
+derived context that carries additional information:
+
+```java
+// Inside Form.createControl(ViewContext parentContext):
+
+// 1. Resolve the model from the channel
+Object model = parentContext.resolveChannel(getConfig().getModel()).get();
+
+// 2. Create a FormGroup for field state (dirty tracking, validation)
+FormGroup formGroup = createFormGroup(model);
+
+// 3. Create an enriched child context
+ViewContext formContext = parentContext.derive()
+    .withFormModel(model)
+    .withFormGroup(formGroup);
+
+// 4. Children see the form model through their context
+for (UIElement child : getChildren()) {
+    child.createControl(formContext);
+}
+```
+
+A `<field>` element then queries the form context:
+
+```java
+// Inside Field.createControl(ViewContext context):
+
+FormGroup formGroup = context.getFormGroup();
+Object model = context.getFormModel();
+String attribute = getConfig().getAttribute();
+
+// Resolve attribute against the model, create and register form field
+FormField field = formGroup.createField(model, attribute);
+return field.createControl();
+```
+
+**This pattern is not form-specific.** Any container element can enrich the context for
+its children:
+
+- `<form>` pushes the form model and form group
+- `<for-each>` could push the current iteration variable
+- `<switch>` could push the matched case value
+- A hypothetical `<with-model>` could scope a model for any subtree
+
+**Validation**: Elements that depend on context (like `<field>` requiring an enclosing
+`<form>`) should be validated at configuration parse time. If a `<field>` appears outside
+a `<form>`, this is a configuration error detected early, even though the `UIElement` type
+signature does not enforce it.
+
 ### Element Tree in XML
 
 Because each XML element maps to a `PolymorphicConfiguration<? extends UIElement>`, the
@@ -1119,10 +1213,10 @@ The general pattern for migrating LayoutComponent-dependent interfaces:
 
 ## Open Questions
 
-1. **ViewContext API**: What exactly should the `ViewContext` provide to
-   `UIElement.createControl()`? At minimum: resolved channel values, command registry,
-   security context, theme/locale. Should it also carry a reference to the enclosing
-   `LayoutComponent` (for bridge scenarios)?
+1. **ViewContext completeness**: The ViewContext API is sketched in Section 1 (channel
+   resolution, commands, security, rendering, form scoping). Should it also carry a
+   reference to the enclosing `LayoutComponent` (for bridge scenarios via
+   ViewHostComponent)?
 
 2. **Form integration**: How deep should the form system integrate? Should `<form>` be a
    UIElement that internally creates a `FormContext` / `FormGroup`, or should individual

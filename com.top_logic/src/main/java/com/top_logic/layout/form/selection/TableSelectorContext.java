@@ -142,7 +142,6 @@ public class TableSelectorContext extends FormContext implements DynamicRecordab
 	}
 
 	private void createTitle() {
-		Resources resources = Resources.getInstance();
 		ConstantField title = new ConstantField(SelectorContext.TITLE_FIELD_NAME, !AbstractFormField.IMMUTABLE) {
 			@Override
 			public <R, A> R visit(FormMemberVisitor<R, A> v, A arg) {
@@ -150,7 +149,7 @@ public class TableSelectorContext extends FormContext implements DynamicRecordab
 			}
 		};
 		String targetFieldLabel = _targetSelectField.getLabel();
-		title.setLabel(resources.getString(I18NConstants.POPUP_SELECT_TITLE__FIELD.fill(targetFieldLabel)));
+		title.setLabel(I18NConstants.POPUP_SELECT_TITLE__FIELD.fill(targetFieldLabel));
 		addMember(title);
 
 	}

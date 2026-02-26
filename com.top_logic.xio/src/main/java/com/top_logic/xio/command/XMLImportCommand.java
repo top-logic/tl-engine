@@ -67,7 +67,6 @@ import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
-import com.top_logic.util.Resources;
 import com.top_logic.util.model.ModelService;
 import com.top_logic.xio.importer.XmlImporter;
 import com.top_logic.xio.importer.binding.ApplicationModelBinding;
@@ -364,7 +363,7 @@ public class XMLImportCommand extends AbstractCommandHandler implements WithPost
 			@Override
 			protected void fillFormContext(FormContext context) {
 				_dataField = FormFactory.newDataField(INPUT_FIELD, false);
-				_dataField.setLabel(Resources.getInstance().getString(I18NConstants.UPLOAD_FIELD_LABEL));
+				_dataField.setLabel(I18NConstants.UPLOAD_FIELD_LABEL);
 				_dataField.setMandatory(true);
 				config().applyAcceptedTypes(_dataField);
 				context.addMember(_dataField);

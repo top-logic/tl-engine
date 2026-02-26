@@ -121,14 +121,19 @@ public class ChatProcessor {
 			}
 			String trimmed = hasText ? userMessage.trim() : "[See attached files]";
 
-			// Wrap ChatMemory to inject multimodal content if attachments are present
+			// Build attachment content list for multimodal injection
 			ChatMemory effectiveMemory = chatMemory;
-			if (attachments != null && !attachments.isEmpty()) {
+			java.util.function.UnaryOperator<dev.langchain4j.model.chat.ChatModel> modelDecorator = null;
+			if (hasAttachments) {
 				List<Content> attachmentContents = new ArrayList<>();
 				for (AttachmentDto att : attachments) {
 					attachmentContents.add(toContent(att));
 				}
+				// Wrap ChatMemory so multimodal content is persisted for future conversation turns
 				effectiveMemory = new MultimodalChatMemoryWrapper(chatMemory, attachmentContents);
+				// Wrap ChatModel so the FIRST LLM request includes multimodal content
+				List<Content> modelContents = new ArrayList<>(attachmentContents);
+				modelDecorator = model -> new MultimodalChatModelWrapper(model, modelContents);
 			}
 
 			AgentRegistry agentRegistry = AgentRegistry.getInstance();
@@ -140,7 +145,7 @@ public class ChatProcessor {
 			}
 
 			String entryPointAgent = agentRegistry.getEntryPointAgentName();
-			UntypedAgent agent = agentRegistry.buildUntypedAgent(entryPointAgent, effectiveMemory);
+			UntypedAgent agent = agentRegistry.buildUntypedAgent(entryPointAgent, effectiveMemory, modelDecorator);
 			String result = ThreadContextManager.inSystemInteraction(ChatProcessor.class,
 				() -> (String) agent.invoke(Map.of("message", trimmed)));
 

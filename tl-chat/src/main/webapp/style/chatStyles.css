@@ -1148,9 +1148,16 @@
     width: 100%;
     max-width: 600px;
     display: flex;
-    flex-direction: row;
-    align-items: flex-end;
+    flex-direction: column;
     gap: 8px;
+}
+
+.chat-welcome-button-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    justify-content: flex-end;
 }
 
 .chat-welcome-input {

@@ -218,6 +218,12 @@ public class ChatControl extends AbstractControlBase {
 			out.writeAttribute(CLASS_ATTR, "chat-welcome-input-section");
 			out.endBeginTag();
 			{
+				// Attachment preview strip (populated by JS)
+				out.beginBeginTag(DIV);
+				out.writeAttribute(CLASS_ATTR, "chat-attachment-preview chat-welcome-attachment-preview");
+				out.endBeginTag();
+				out.endTag(DIV);
+
 				out.beginBeginTag("textarea");
 				out.writeAttribute(CLASS_ATTR, "chat-welcome-input");
 				out.writeAttribute("rows", "4");
@@ -225,12 +231,36 @@ public class ChatControl extends AbstractControlBase {
 				out.endBeginTag();
 				out.endTag("textarea");
 
-				out.beginBeginTag(BUTTON);
-				out.writeAttribute(TYPE_ATTR, "button");
-				out.writeAttribute(CLASS_ATTR, "chat-welcome-send-btn");
+				// Hidden file input
+				out.beginBeginTag(INPUT);
+				out.writeAttribute(TYPE_ATTR, "file");
+				out.writeAttribute(CLASS_ATTR, "chat-welcome-file-input");
+				out.writeAttribute("accept", "image/*,.pdf");
+				out.writeAttribute("multiple", "multiple");
+				out.writeAttribute("style", "display:none");
+				out.endEmptyTag();
+
+				// Button row: attach + send
+				out.beginBeginTag(DIV);
+				out.writeAttribute(CLASS_ATTR, "chat-welcome-button-row");
 				out.endBeginTag();
-				out.writeText("\u2191");
-				out.endTag(BUTTON);
+				{
+					out.beginBeginTag(BUTTON);
+					out.writeAttribute(TYPE_ATTR, "button");
+					out.writeAttribute(CLASS_ATTR, "chat-attach-button chat-welcome-attach-btn");
+					out.writeAttribute("title", "Attach files");
+					out.endBeginTag();
+					writePaperclipSvg(out);
+					out.endTag(BUTTON);
+
+					out.beginBeginTag(BUTTON);
+					out.writeAttribute(TYPE_ATTR, "button");
+					out.writeAttribute(CLASS_ATTR, "chat-welcome-send-btn");
+					out.endBeginTag();
+					out.writeText("\u2191");
+					out.endTag(BUTTON);
+				}
+				out.endTag(DIV);
 			}
 			out.endTag(DIV);
 		}
@@ -718,10 +748,7 @@ public class ChatControl extends AbstractControlBase {
 				out.writeAttribute(CLASS_ATTR, "chat-attach-button");
 				out.writeAttribute("title", "Attach files");
 				out.endBeginTag();
-				// Paperclip SVG icon
-				out.append("<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\">");
-				out.append("<path d=\"M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48\"/>");
-				out.append("</svg>");
+				writePaperclipSvg(out);
 				out.endTag(BUTTON);
 
 				// Text input
@@ -745,6 +772,27 @@ public class ChatControl extends AbstractControlBase {
 			out.endTag(DIV);
 		}
 		out.endTag(DIV);
+	}
+
+	private void writePaperclipSvg(TagWriter out) throws IOException {
+		out.beginBeginTag("svg");
+		out.writeAttribute("xmlns", "http://www.w3.org/2000/svg");
+		out.writeAttribute("width", "20");
+		out.writeAttribute("height", "20");
+		out.writeAttribute("viewBox", "0 0 24 24");
+		out.writeAttribute("fill", "none");
+		out.writeAttribute("stroke", "currentColor");
+		out.writeAttribute("stroke-width", "2");
+		out.writeAttribute("stroke-linecap", "round");
+		out.writeAttribute("stroke-linejoin", "round");
+		out.endBeginTag();
+		{
+			out.beginBeginTag("path");
+			out.writeAttribute("d",
+				"M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48");
+			out.endEmptyTag();
+		}
+		out.endTag("svg");
 	}
 
 	private String getInputId() {

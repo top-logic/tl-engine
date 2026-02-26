@@ -48,7 +48,6 @@ import com.top_logic.model.form.definition.FormDefinition;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.Resources;
 
 /**
  * {@link Editor} for a {@link FormDefinition} property of a typed configuration item.
@@ -99,7 +98,7 @@ public class FormDefinitionEditor implements Editor {
 			setNotExecutableImage(Icons.OPEN_GUI_EDITOR_DISABLED);
 			// Reason key when whole form is not editable.
 			setNotExecutableReasonKey(com.top_logic.common.webfolder.ui.I18NConstants.FIELD_DISABLED);
-			setTooltip(Resources.getInstance().getString(I18NConstants.OPEN_FORM_EDITOR_DIALOG));
+			setTooltip(I18NConstants.OPEN_FORM_EDITOR_DIALOG);
 			/* Ensure that the command can be executed, also when the owner group is in view mode to
 			 * allow the user to view the actual form definition. */
 			setInheritDeactivation(false);

@@ -46,7 +46,6 @@ import com.top_logic.layout.messagebox.SimpleFormDialog;
 import com.top_logic.layout.structure.DialogModel;
 import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -220,7 +219,7 @@ public class UpdateDialog extends AbstractFormPageDialog {
 		context.addMember(updateData);
 
 		updateData.setLabel(I18NConstants.UPDATE_DIALOG_FILE);
-		updateData.setTooltip(Resources.getInstance().getString(I18NConstants.UPDATE_DIALOG_FILE.tooltip()));
+		updateData.setTooltip(I18NConstants.UPDATE_DIALOG_FILE.tooltip());
 
 		StringField stringField = WebFolderUtils.createDescriptionField(DocumentVersion.DESCRIPTION, 5);
 		stringField.initializeField(document.getDocumentVersion().getDescription());

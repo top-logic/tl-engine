@@ -28,6 +28,7 @@ import com.top_logic.knowledge.service.Branch;
 import com.top_logic.knowledge.service.HistoryManager;
 import com.top_logic.knowledge.service.db2.UpdateChainLink;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 import com.top_logic.knowledge.wrap.person.PersonalConfigurationWrapper;
 import com.top_logic.knowledge.wrap.person.TransientPersonalConfiguration;
@@ -339,6 +340,26 @@ public class TLContext extends ThreadContext implements TLSubSessionContext {
 			return context.getPerson();
 	    }
 		return null;
+	}
+
+	/**
+	 * Whether no user or the anonymous user is used.
+	 */
+	public boolean isAnonymousUser() {
+		Person person = getPerson();
+		return person == null || person.equals(PersonManager.getManager().getAnonymous());
+	}
+
+	/**
+	 * Whether there is no context or no user or the anonymous user is used.
+	 */
+	public static boolean isAnonymous() {
+		TLContext context = getContext();
+
+		if (context != null) {
+			return context.isAnonymousUser();
+		}
+		return true;
 	}
 
 	/**

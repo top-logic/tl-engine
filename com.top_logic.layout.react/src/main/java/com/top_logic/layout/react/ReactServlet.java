@@ -136,8 +136,7 @@ public class ReactServlet extends TopLogicServlet {
 		try {
 			HandlerResult result = control.executeCommand(displayContext, commandName, arguments);
 
-			// Forward any InfoService messages that were added during command execution via SSE.
-			forwardInfoServiceMessages(displayContext, queue);
+			forwardPendingUpdates(displayContext, queue);
 
 			if (result.isSuccess()) {
 				sendSuccess(response);
@@ -199,7 +198,7 @@ public class ReactServlet extends TopLogicServlet {
 			Collection<Part> parts = request.getParts();
 			HandlerResult result = ((UploadHandler) control).handleUpload(displayContext, parts);
 
-			forwardInfoServiceMessages(displayContext, queue);
+			forwardPendingUpdates(displayContext, queue);
 
 			if (result.isSuccess()) {
 				sendSuccess(response);
@@ -235,8 +234,17 @@ public class ReactServlet extends TopLogicServlet {
 		return rootHandler;
 	}
 
+	/**
+	 * Forwards any pending side effects from command execution via SSE.
+	 *
+	 * <p>
+	 * This includes {@link InfoService} messages and a trigger for the traditional AJAX
+	 * revalidation cycle to pick up any pending control repaints (e.g. when a React command
+	 * modifies a legacy form field).
+	 * </p>
+	 */
 	@SuppressWarnings("unchecked")
-	private void forwardInfoServiceMessages(DisplayContext displayContext, SSEUpdateQueue queue) {
+	private void forwardPendingUpdates(DisplayContext displayContext, SSEUpdateQueue queue) {
 		if (displayContext.isSet(InfoService.INFO_SERVICE_ENTRIES)) {
 			List<HTMLFragment> entries = displayContext.get(InfoService.INFO_SERVICE_ENTRIES);
 			if (!entries.isEmpty()) {
@@ -244,6 +252,10 @@ public class ReactServlet extends TopLogicServlet {
 				queue.enqueue(JSSnipplet.create().setCode(jsCode));
 			}
 		}
+
+		// Trigger the traditional AJAX revalidation cycle so that legacy controls whose models
+		// were modified during this React command/upload get their pending repaints delivered.
+		queue.enqueue(JSSnipplet.create().setCode("services.ajax.execute('noOpAJAXCommand', {});"));
 	}
 
 	private void sendSuccess(HttpServletResponse response) throws IOException {

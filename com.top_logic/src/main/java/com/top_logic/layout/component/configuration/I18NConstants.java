@@ -19,7 +19,10 @@ import com.top_logic.layout.ResPrefix;
 @SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
-	public static ResKey LOGOUT = legacyKey("tl.logout");
+	/**
+	 * @en Logout
+	 */
+	public static ResKey LOGOUT;
 
 	public static ResKey1 RELOAD_FAILED__NAMES;
 

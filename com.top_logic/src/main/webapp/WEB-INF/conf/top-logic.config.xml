@@ -1173,7 +1173,7 @@
 					<handler id="logout" class="com.top_logic.layout.component.configuration.LogoutCommandHandler"
 						group="System"
 						image="theme:IMAGE_BUTTONS_LOGOUT22"
-						resourceKey="tl.logout"
+						resourceKey="class.com.top_logic.layout.component.configuration.I18NConstants.LOGOUT"
 					/>
 					<handler id="exportPowerpoint" class="com.top_logic.tool.export.PowerpointExportHandler"
 						clique="exportButtons"/>

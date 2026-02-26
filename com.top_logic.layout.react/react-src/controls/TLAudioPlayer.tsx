@@ -8,10 +8,12 @@ const TLAudioPlayer: React.FC<TLCellProps> = () => {
   const dataUrl = useTLDataUrl();
 
   const hasAudio = !!state.hasAudio;
+  const dataRevision: number = state.dataRevision ?? 0;
 
   const [status, setStatus] = React.useState<PlayerStatus>(hasAudio ? 'idle' : 'disabled');
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
   const blobUrlRef = React.useRef<string | null>(null);
+  const prevRevisionRef = React.useRef<number>(dataRevision);
 
   // Sync disabled state when server-side hasAudio changes.
   React.useEffect(() => {
@@ -30,6 +32,29 @@ const TLAudioPlayer: React.FC<TLCellProps> = () => {
       setStatus('idle');
     }
   }, [hasAudio]);
+
+  // Invalidate cached blob when server-side audio data is replaced.
+  React.useEffect(() => {
+    if (dataRevision === prevRevisionRef.current) {
+      return;
+    }
+    prevRevisionRef.current = dataRevision;
+
+    // Stop current playback.
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    // Release cached blob.
+    if (blobUrlRef.current) {
+      URL.revokeObjectURL(blobUrlRef.current);
+      blobUrlRef.current = null;
+    }
+    // Reset to idle (the hasAudio effect will handle disabled if needed).
+    if (status === 'playing' || status === 'paused' || status === 'loading') {
+      setStatus('idle');
+    }
+  }, [dataRevision]);
 
   // Cleanup blob URL on unmount.
   React.useEffect(() => {

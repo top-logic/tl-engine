@@ -508,16 +508,18 @@ of a single object directly.
 
 ## 5. Built-in UIElement Types
 
+All built-in elements are `PolymorphicConfiguration<? extends UIElement>`. Custom modules
+can add new element types by providing new configuration + implementation pairs.
+
 ### Layout Elements
 
-These are container UIElements that arrange their children using CSS layout:
+Container UIElements that arrange their children using CSS layout:
 
 | Element     | CSS Model    | Description                              |
 |-------------|--------------|------------------------------------------|
 | `<vbox>`    | Flexbox col  | Vertical flex container                  |
 | `<hbox>`    | Flexbox row  | Horizontal flex container                |
 | `<grid>`    | CSS Grid     | Grid layout with rows/columns            |
-| `<stack>`   | Stacking     | Overlapping layers (tabs, cards)         |
 | `<split>`   | Flex + drag  | Resizable split (like today, but opt-in) |
 | `<scroll>`  | Overflow     | Scrollable region                        |
 | `<panel>`   | Block        | Collapsible panel with header            |
@@ -526,26 +528,92 @@ Each of these is a `PolymorphicConfiguration<? extends ContainerElement>` where
 `ContainerElement extends UIElement` and has a `List<PolymorphicConfiguration<UIElement>>`
 property for children.
 
-### Content Elements
+### Navigation Elements
 
-| Element       | Description                    |
-|---------------|--------------------------------|
-| `<heading>`   | Text heading (h1-h6)          |
-| `<text>`      | Static or channel-bound text   |
-| `<icon>`      | Theme icon display             |
-| `<image>`     | Image display                  |
-| `<separator>` | Visual separator               |
-| `<spacer>`    | Flexible space                 |
+These elements present a set of named children where one (or more) are visible at a time.
+They share the same underlying mechanics (a list of children, a selection determining
+which is active) but differ in visual presentation and configuration:
+
+| Element      | Current Equivalent  | Description                                  |
+|--------------|---------------------|----------------------------------------------|
+| `<tabs>`     | TabComponent        | Tab bar with tab pages                       |
+| `<sidebar>`  | Sidebar layout      | Side navigation panel selecting content area |
+| `<tiles>`    | TileListComponent   | Card/tile grid, selecting one tile for detail |
+
+All three follow the same pattern: they contain named children, one of which is active.
+The active child can be written to a channel. However, each has its own configuration
+because the visual requirements differ significantly:
+
+**`<tabs>`** - Tab bar with labeled pages:
+
+```xml
+<tabs selection="activeTab">
+  <tab label="i18n:customers.overview" icon="people">
+    <include view="customers/overview.view.xml" />
+  </tab>
+  <tab label="i18n:customers.orders" icon="shopping-cart">
+    <include view="customers/orders.view.xml" />
+  </tab>
+  <tab label="i18n:customers.history" icon="clock">
+    <include view="customers/history.view.xml" />
+  </tab>
+</tabs>
+```
+
+Configuration: tab labels (i18n), icons, closable tabs, lazy loading, dynamic
+tab visibility.
+
+**`<sidebar>`** - Side navigation selecting a content area:
+
+```xml
+<sidebar selection="activePage" position="left" width="250px">
+  <entry label="i18n:nav.customers" icon="people">
+    <include view="customers/list.view.xml" />
+  </entry>
+  <entry label="i18n:nav.orders" icon="shopping-cart">
+    <include view="orders/list.view.xml" />
+  </entry>
+  <group label="i18n:nav.admin">
+    <entry label="i18n:nav.users" icon="person-gear">
+      <include view="admin/users.view.xml" />
+    </entry>
+  </group>
+</sidebar>
+```
+
+Configuration: position (left/right), width, collapsible, grouped entries.
+
+**`<tiles>`** - Card grid with model-builder-driven content:
+
+```xml
+<tiles selection="selectedProject" columns="3">
+  <model-builder class="..."
+    inputs="organization/selector.view.xml#currentOrganization"
+    elements="orga -> $orga.get(`tl.projects:Organization#projects`)"
+  />
+  <tile-preview>
+    <vbox padding="16px">
+      <heading text="tile:name" />
+      <text value="tile:description" />
+      <text css-class="status" value="tile:status" />
+    </vbox>
+  </tile-preview>
+</tiles>
+```
+
+Configuration: column count, tile preview template, model builder for tile objects.
+Unlike `<tabs>` and `<sidebar>` which have statically configured children, `<tiles>`
+derives its entries from a model builder (like `<table>` derives rows).
 
 ### Conditional Elements
 
 | Element     | Description                                              |
 |-------------|----------------------------------------------------------|
-| `<switch>`  | Selects one child based on a condition (see below)       |
+| `<switch>`  | Selects one child based on a condition                   |
 
 `<switch>` provides generic conditional element selection. It evaluates conditions
 against channel values and renders the matching case. This is a general-purpose
-mechanism that works for any UIElement, not just forms:
+mechanism that works for any UIElement:
 
 ```xml
 <switch>
@@ -556,18 +624,6 @@ mechanism that works for any UIElement, not just forms:
       <form model="customers/list.view.xml#selectedCustomer">
         <field attribute="specialDiscount" />
         <field attribute="vipLevel" />
-        <field attribute="name" />
-        <field attribute="email" />
-      </form>
-    </content>
-  </case>
-  <case>
-    <condition input="customers/list.view.xml#selectedCustomer"
-               expr="c -> $c.instanceOf(`tl.customers:BusinessCustomer`)" />
-    <content>
-      <form model="customers/list.view.xml#selectedCustomer">
-        <field attribute="companyName" />
-        <field attribute="taxId" />
         <field attribute="name" />
         <field attribute="email" />
       </form>
@@ -585,14 +641,109 @@ mechanism that works for any UIElement, not just forms:
 The `<condition>` element follows the same `input`/`inputs` + expression pattern as
 derived channels and model builders.
 
+### Composition Elements
+
+| Element      | Description                                            |
+|--------------|--------------------------------------------------------|
+| `<include>`  | Include another `*.view.xml` inline                    |
+| `<dialog>`   | Defines modal dialog content, opened by commands       |
+
+**`<include>`** embeds another view file inline. This is the primary composition
+mechanism beyond templates:
+
+```xml
+<split direction="horizontal" ratio="30:70">
+  <include view="organization/selector.view.xml" />
+  <include view="customers/detail.view.xml" />
+</split>
+```
+
+The included view's channels become reachable via the included file's path, as with
+any cross-view channel reference.
+
+**`<dialog>`** defines modal dialog content within a view. The dialog is not rendered
+inline - it is opened by a command and closed explicitly:
+
+```xml
+<view>
+  <channel name="selectedCustomer" type="tl.customers:Customer" />
+
+  <dialog name="editDialog" title="i18n:customers.edit.title">
+    <form model="selectedCustomer">
+      <field attribute="name" />
+      <field attribute="email" />
+    </form>
+    <hbox>
+      <button command="save" />
+      <button command="cancelDialog" />
+    </hbox>
+  </dialog>
+
+  <table selection="selectedCustomer">
+    ...
+  </table>
+  <toolbar>
+    <button command="openEdit" opens-dialog="editDialog" />
+  </toolbar>
+</view>
+```
+
 ### Data Elements
 
 Complex elements that use model builders to derive data from channel values:
 
-| Element    | Model Builder Type  | Description                           |
-|------------|---------------------|---------------------------------------|
-| `<table>`  | ListModelBuilder    | Table with columns, sorting, filters  |
-| `<tree>`   | TreeModelBuilder    | Tree with expand/collapse             |
+| Element        | Model Builder Type   | Description                                |
+|----------------|----------------------|--------------------------------------------|
+| `<table>`      | ListModelBuilder     | Table with columns, sorting, filters       |
+| `<tree>`       | TreeModelBuilder     | Tree with expand/collapse, single/multi-select |
+| `<tree-table>` | TreeModelBuilder     | Tree with table columns (hierarchical grid)|
+| `<selector>`   | ListModelBuilder     | Single-select dropdown from derived options|
+
+**`<tree>`** - Hierarchical navigation with selection:
+
+```xml
+<tree selection="selectedNode">
+  <model-builder class="..."
+    inputs="organization/selector.view.xml#currentOrganization"
+    rootNode="orga -> $orga"
+    children="node -> $node.get(`tl.org:OrgUnit#children`)"
+  />
+</tree>
+```
+
+Configuration: root visibility, selection mode (single/multi), expand depth,
+drag-drop support, context menu.
+
+**`<tree-table>`** - Combines tree hierarchy with table columns:
+
+```xml
+<tree-table selection="selectedNode">
+  <model-builder class="..."
+    inputs="rootChannel"
+    rootNode="root -> $root"
+    children="node -> $node.get(`tl.org:OrgUnit#children`)"
+  />
+  <columns>
+    <column attribute="name" />
+    <column attribute="budget" />
+    <column attribute="headcount" />
+  </columns>
+</tree-table>
+```
+
+**`<selector>`** - Lightweight single-select dropdown:
+
+```xml
+<selector selection="selectedStatus">
+  <model-builder class="..."
+    inputs="..."
+    elements="model -> all(`tl.core:Status`)"
+  />
+</selector>
+```
+
+Unlike `<table>`, a `<selector>` renders as a compact dropdown, not a full grid. It
+is the appropriate element for picking one value from a small option set.
 
 #### Forms
 
@@ -673,13 +824,93 @@ by a form-specific mechanism. Use `<switch>` when completely different layouts a
 per type. Use `<dynamic-attributes>` when the base layout is stable and subtypes only
 add fields.
 
+**Edit/view mode**: The current TopLogic system has an EditComponent with explicit mode
+switching (view mode shows read-only text, edit mode shows input fields). How edit/view
+mode works in the new system is an open question - it could be a configuration property
+on `<form>` (e.g., `mode="channel:editMode"`), a mode in the ViewContext, or a separate
+mechanism. See Open Questions.
+
 ### Interaction Elements
 
-| Element     | Description                                 |
-|-------------|---------------------------------------------|
-| `<button>`  | Action trigger, references a command         |
-| `<link>`    | Clickable link                               |
-| `<menu>`    | Dropdown menu                                |
+| Element      | Description                                 |
+|--------------|---------------------------------------------|
+| `<button>`   | Action trigger, references a command         |
+| `<link>`     | Clickable link                               |
+| `<menu>`     | Dropdown menu                                |
+| `<toolbar>`  | Groups commands in a toolbar area            |
+
+**`<toolbar>`** renders a horizontal bar of command buttons, typically at the top of a
+view or panel:
+
+```xml
+<toolbar>
+  <button command="create" />
+  <button command="edit" />
+  <button command="delete" />
+</toolbar>
+```
+
+### Wizard Elements
+
+| Element      | Current Equivalent        | Description                          |
+|--------------|---------------------------|--------------------------------------|
+| `<wizard>`   | AssistentComponent        | Multi-step workflow with progress    |
+
+```xml
+<wizard selection="currentStep">
+  <step label="i18n:wizard.step1" icon="1">
+    <form model="wizardData">
+      <field attribute="name" />
+      <field attribute="type" />
+    </form>
+  </step>
+  <step label="i18n:wizard.step2" icon="2">
+    <form model="wizardData">
+      <field attribute="details" />
+      <field attribute="options" />
+    </form>
+  </step>
+  <step label="i18n:wizard.step3" icon="3">
+    <vbox>
+      <heading text="Summary" />
+      <text value="..." />
+    </vbox>
+  </step>
+</wizard>
+```
+
+Configuration: step labels, step validation, linear vs. free navigation, progress
+display.
+
+### Content Elements
+
+| Element       | Description                    |
+|---------------|--------------------------------|
+| `<heading>`   | Text heading (h1-h6)          |
+| `<text>`      | Static or channel-bound text   |
+| `<icon>`      | Theme icon display             |
+| `<image>`     | Image display                  |
+| `<separator>` | Visual separator               |
+| `<spacer>`    | Flexible space                 |
+| `<breadcrumb>`| Navigation trail               |
+
+**`<breadcrumb>`** displays a navigation trail based on the current view/selection
+hierarchy:
+
+```xml
+<breadcrumb input="selectedNode" />
+```
+
+### Extension Elements (from feature modules)
+
+These elements are not part of the core framework but provided by optional modules:
+
+| Element    | Module               | Description                           |
+|------------|----------------------|---------------------------------------|
+| `<chart>`  | com.top_logic.reporting | Data visualization (bar, line, pie) |
+
+Extension modules register their element types via `PolymorphicConfiguration`, making
+them available in view XML like any built-in element.
 
 ## 6. Templates: Reusing the Existing Template System
 
@@ -1230,15 +1461,27 @@ The general pattern for migrating LayoutComponent-dependent interfaces:
 4. **Personalization**: The current system stores user-specific layout sizes. How should
    personalization work for the new flexible layout elements?
 
-5. **Toolbar integration**: LayoutComponents participate in the toolbar system
-   (`ToolBarOwner`). How should view-level commands appear in the application toolbar?
+5. **Edit/view mode**: The current system has EditComponent with explicit mode
+   switching. How should this work in views? Options: (a) a `mode` attribute on
+   `<form>` bound to a channel, (b) a mode in ViewContext that `<field>` elements
+   respect, (c) a separate `<editor>` wrapper element. This also affects dirty
+   tracking and save/cancel command patterns.
 
-6. **Channel resolution at runtime**: When view A references
+6. **Toolbar integration**: LayoutComponents participate in the toolbar system
+   (`ToolBarOwner`). The new system has an explicit `<toolbar>` element, but how
+   does it interact with the application-level toolbar (e.g., in ViewHostComponent)?
+
+7. **Dialog lifecycle**: `<dialog>` declares content, but the full lifecycle (opening
+   with a model, passing results back, stacking multiple dialogs) needs definition.
+   How does the dialog interact with channels? Does opening a dialog push a
+   ViewContext scope?
+
+8. **Channel resolution at runtime**: When view A references
    `viewB.view.xml#foo`, how is the runtime instance of view B located? The application
    must maintain a registry of active view instances indexed by file path. What happens
    if the same `*.view.xml` is instantiated multiple times (e.g., in different tabs)?
 
-7. **Model builder input type**: The `inputs` property on model builders is a list of
+9. **Model builder input type**: The `inputs` property on model builders is a list of
    channel references. Should this be `List<ChannelRef>` in the configuration, or a
    comma-separated string for conciseness in XML? The comma-separated form is more
    readable but less type-safe.

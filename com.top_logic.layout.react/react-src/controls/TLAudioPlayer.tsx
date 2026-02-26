@@ -95,26 +95,30 @@ const TLAudioPlayer: React.FC<TLCellProps> = () => {
     setStatus('playing');
   }, [status, dataUrl]);
 
-  const buttonLabel =
+  const ariaLabel =
     status === 'loading' ? 'Loading\u2026' :
-    status === 'playing' ? 'Pause' :
-    'Play';
+    status === 'playing' ? 'Pause audio' :
+    status === 'disabled' ? 'No audio' :
+    'Play audio';
 
   const isDisabled = status === 'disabled' || status === 'loading';
+
+  const buttonClasses = ['tlAudioPlayer__button'];
+  if (status === 'playing') buttonClasses.push('tlAudioPlayer__button--playing');
+  if (status === 'loading') buttonClasses.push('tlAudioPlayer__button--loading');
 
   return (
     <div className="tlAudioPlayer">
       <button
         type="button"
-        className={`tlAudioPlayer__button${status === 'playing' ? ' tlAudioPlayer__button--playing' : ''}`}
+        className={buttonClasses.join(' ')}
         onClick={handleClick}
         disabled={isDisabled}
+        title={ariaLabel}
+        aria-label={ariaLabel}
       >
-        {buttonLabel}
+        <span className={`tlAudioPlayer__icon${status === 'playing' ? ' tlAudioPlayer__icon--pause' : ''}`} />
       </button>
-      {status === 'loading' && (
-        <span className="tlAudioPlayer__status">Loading\u2026</span>
-      )}
     </div>
   );
 };

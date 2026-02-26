@@ -205,8 +205,8 @@ type `List<PolymorphicConfiguration<? extends UIElement>>`:
     <field attribute="email" />
   </form>
   <hbox gap="8px">
-    <button label="Save" command="save" />
-    <button label="Cancel" command="cancel" />
+    <button command="save" />
+    <button command="cancel" />
   </hbox>
 </vbox>
 ```
@@ -637,7 +637,7 @@ the escape hatch for placing a command in a non-standard location:
   <form model="selectedCustomer">
     <field attribute="name" />
     <!-- Also render the command as an inline button inside the form -->
-    <button command="specialAction" label="i18n:do.special" />
+    <button command="specialAction" />
   </form>
 </panel>
 ```
@@ -655,7 +655,7 @@ Use `placement="none"` for commands that should *only* appear where an explicit
     <field attribute="name" />
     <field attribute="status" />
     <!-- This is the only place the command appears -->
-    <button command="quickApprove" label="i18n:approve" />
+    <button command="quickApprove" />
   </form>
 </panel>
 ```
@@ -1048,11 +1048,12 @@ mechanism. See Open Questions.
 | `<popup-menu>` | Button that opens a popup menu with multiple commands     |
 | `<link>`       | Clickable link                                            |
 
-**`<button>`** renders a single command as a clickable button. Used for explicit
-placement of a command within the content area (see `placement="none"`):
+**`<button>`** renders a single command as a clickable button. The button's label,
+icon, and tooltip are taken from the command definition - the `<button>` element only
+references the command by name:
 
 ```xml
-<button command="approve" label="i18n:approve" icon="check" />
+<button command="approve" />
 ```
 
 **`<popup-menu>`** renders a button that opens a popup menu containing multiple
@@ -1669,7 +1670,7 @@ of its declared placement. This is the escape hatch for non-standard layouts:
   <form model="selectedCustomer">
     <field attribute="name" />
     <!-- Render the command inline, in addition to its toolbar button -->
-    <button command="approve" label="i18n:approve.now" />
+    <button command="approve" />
   </form>
 </panel>
 ```

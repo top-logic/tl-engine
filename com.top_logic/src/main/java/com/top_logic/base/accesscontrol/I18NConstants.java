@@ -22,7 +22,7 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey COMMIT_FAILED;
 
 	@CustomKey("logout.messages.errorauthenticate")
-	public static ResKey ERROR_AUTHENTICATE;
+	public static ResKey1 ERROR_AUTHENTICATE;
 
 	@CustomKey("logout.messages.errorauthenticatemaintenancemode")
 	public static ResKey1 ERROR_AUTHENTICATE_MAINTENANCE_MODE;

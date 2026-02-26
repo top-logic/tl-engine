@@ -1042,16 +1042,43 @@ mechanism. See Open Questions.
 
 ### Interaction Elements
 
-| Element      | Description                                 |
-|--------------|---------------------------------------------|
-| `<button>`   | Action trigger, references a command         |
-| `<link>`     | Clickable link                               |
-| `<menu>`     | Dropdown menu                                |
+| Element        | Description                                              |
+|----------------|----------------------------------------------------------|
+| `<button>`     | Action trigger, references a single command               |
+| `<popup-menu>` | Button that opens a popup menu with multiple commands     |
+| `<link>`       | Clickable link                                            |
+
+**`<button>`** renders a single command as a clickable button. Used for explicit
+placement of a command within the content area (see `placement="none"`):
+
+```xml
+<button command="approve" label="i18n:approve" icon="check" />
+```
+
+**`<popup-menu>`** renders a button that opens a popup menu containing multiple
+commands. This is the explicit-placement counterpart to menu cliques - where a menu
+clique automatically collapses commands in a toolbar, `<popup-menu>` lets you manually
+place a command menu anywhere in the content:
+
+```xml
+<popup-menu label="i18n:actions" icon="lightning">
+  <command ref="edit" />
+  <command ref="duplicate" />
+  <separator />
+  <command ref="archive" />
+  <command ref="delete" />
+</popup-menu>
+```
+
+The `<command ref="...">` entries reference commands by name from the enclosing
+command scope (panel/dialog). A `<separator>` creates visual separation between
+command groups within the popup. Commands in the popup respect their executability
+rules (disabled/hidden as appropriate).
 
 Note: There is no standalone `<toolbar>` element. Toolbars and button bars are display
 areas of `<panel>` (and `<dialog>`), automatically populated from the panel's commands
-based on their placement. An explicit `<button>` can place any command anywhere as an
-override (see `<panel>` in Layout Elements).
+based on their placement. `<button>` and `<popup-menu>` are for explicit placement
+of commands within the content area.
 
 ### Wizard Elements
 

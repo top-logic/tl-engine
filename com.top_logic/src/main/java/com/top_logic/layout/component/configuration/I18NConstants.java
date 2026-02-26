@@ -5,7 +5,6 @@
  */
 package com.top_logic.layout.component.configuration;
 
-import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.I18NConstantsBase;
@@ -20,7 +19,9 @@ import com.top_logic.layout.ResPrefix;
 @SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
-	@CustomKey("tl.logout")
+	/**
+	 * @en Logout
+	 */
 	public static ResKey LOGOUT;
 
 	public static ResKey1 RELOAD_FAILED__NAMES;

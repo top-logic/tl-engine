@@ -295,7 +295,7 @@ public abstract class UploadDialog extends AbstractFormPageDialog {
 		DataField dataField = FormFactory.newDataField(SimpleFormDialog.INPUT_FIELD, true, fileNamesStrategy);
 
 		dataField.setLabel(I18NConstants.UPLOAD_DIALOG_FILES);
-		dataField.setTooltip(Resources.getInstance().getString(I18NConstants.UPLOAD_DIALOG_FILES.tooltip()));
+		dataField.setTooltip(I18NConstants.UPLOAD_DIALOG_FILES.tooltip());
 
 		dataField.setDownload(false);
 		dataField.setMaxUploadSize(_maxUploadSize);

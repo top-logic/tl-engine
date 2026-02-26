@@ -356,13 +356,12 @@ public class InternationalizationEditor implements Editor {
 		CommandField button = button(container, DISPLAY_DERIVED_FIELD, icon, command);
 		/* Let the user display the derived resources, also when they can not be changed. */
 		button.setInheritDeactivation(false);
-		Resources resources = Resources.getInstance();
 		if (initiallyVisible) {
 			button.setLabel(I18NConstants.HIDE_DERIVED_RESOURCES);
-			button.setTooltip(resources.getString(I18NConstants.HIDE_DERIVED_RESOURCES.tooltipOptional()));
+			button.setTooltip(I18NConstants.HIDE_DERIVED_RESOURCES.tooltipOptional());
 		} else {
 			button.setLabel(I18NConstants.DISPLAY_DERIVED_RESOURCES);
-			button.setTooltip(resources.getString(I18NConstants.DISPLAY_DERIVED_RESOURCES.tooltipOptional()));
+			button.setTooltip(I18NConstants.DISPLAY_DERIVED_RESOURCES.tooltipOptional());
 		}
 
 	}

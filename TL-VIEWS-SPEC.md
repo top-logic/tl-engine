@@ -158,15 +158,52 @@ concept - a channel *is* the reactive state.
 
 ### Channel Declaration
 
-Channels are declared at the view level:
+Channels are declared at the view level. There are two kinds:
+
+**Value channels** hold a mutable value, typically written by a UI element:
+
+```xml
+<channel name="selectedCustomer" type="tl.customers:Customer" />
+```
+
+**Derived channels** are read-only, computed from other channels via an expression.
+They follow the same `inputs` + expression pattern as model builders - inputs are
+declared explicitly and map 1:1 to expression parameters:
+
+```xml
+<derived-channel name="detailTitle"
+    inputs="customers/list.view.xml#selectedCustomer"
+    expr="customer -> if($customer != null,
+             $customer.get(`tl.customers:Customer#name`),
+             `No selection`)" />
+```
+
+Multi-input derived channels work naturally:
+
+```xml
+<derived-channel name="orgMismatch"
+    inputs="organization/selector.view.xml#currentOrganization,
+            customers/list.view.xml#selectedCustomer"
+    expr="orga -> customer ->
+        $customer != null
+        && $customer.get(`tl.customers:Customer#organization`) != $orga" />
+```
+
+Example usage:
 
 ```xml
 <view>
-  <!-- A channel holding the currently selected customer -->
   <channel name="selectedCustomer" type="tl.customers:Customer" />
 
-  <!-- A derived channel computed from other channels -->
-  <channel name="hasSelection" expr="$selectedCustomer != null" />
+  <derived-channel name="detailTitle"
+      inputs="selectedCustomer"
+      expr="customer -> if($customer != null,
+               $customer.get(`tl.customers:Customer#name`),
+               `No selection`)" />
+
+  ...
+  <heading text="detailTitle" />
+  ...
 </view>
 ```
 
@@ -236,18 +273,24 @@ The binding direction depends on the attribute semantics:
 
 ### Derived Channels
 
-Channels can be computed from expressions over other channels:
+Derived channels are read-only channels whose values are computed from other channels.
+They use the same explicit `inputs` + expression pattern as model builders:
 
 ```xml
-<channel name="hasSelection" expr="$selectedCustomer != null" />
-<channel name="canDelete"
-         expr="$selectedCustomer != null
-               && $currentUser.hasRole(`admin`)" />
+<derived-channel name="detailTitle"
+    inputs="selectedCustomer"
+    expr="customer -> if($customer != null,
+             $customer.get(`tl.customers:Customer#name`),
+             `No selection`)" />
 ```
 
-These are read-only channels whose values update reactively when their dependencies
-change. The expressions use TL-Script. Within channel expressions, `$channelName`
-references sibling channels in the same view.
+The `inputs` property lists channel references (local or remote). Each input maps
+positionally to a function parameter in the expression. The expression uses TL-Script.
+
+This avoids embedding implicit variable references (like `$selectedCustomer`) in the
+expression, which would not work well with remote channel references that have complex
+path-based names. Instead, the inputs are declared separately and the expression uses
+short, meaningful parameter names.
 
 ## 4. Model Builders: Complex Model Derivation
 
@@ -274,6 +317,9 @@ In the new system, the model builder itself declares which channels it reads fro
 ```xml
 <view>
   <channel name="selectedCustomer" type="tl.customers:Customer" />
+  <derived-channel name="hasSelection"
+      inputs="selectedCustomer"
+      expr="c -> $c != null" />
 
   <split direction="horizontal" ratio="30:70">
     <table selection="selectedCustomer">
@@ -288,7 +334,7 @@ In the new system, the model builder itself declares which channels it reads fro
     </table>
 
     <form model="selectedCustomer"
-          visible="selectedCustomer != null">
+          visible="hasSelection">
       <field attribute="name" />
       <field attribute="email" />
       <field attribute="phone" />
@@ -732,11 +778,12 @@ Three views collaborating via cross-view channel references:
 ```xml
 <!-- File: customers/detail.view.xml -->
 <view>
-  <channel name="canEdit"
-           expr="customers/list.view.xml#selectedCustomer != null" />
+  <derived-channel name="hasSelection"
+      inputs="customers/list.view.xml#selectedCustomer"
+      expr="customer -> $customer != null" />
 
   <form model="customers/list.view.xml#selectedCustomer"
-        visible="canEdit">
+        visible="hasSelection">
     <field attribute="name" />
     <field attribute="email" />
     <field attribute="phone" />

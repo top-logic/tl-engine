@@ -39,7 +39,7 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey ERROR_MAXIMUM_USERS_REACHED;
 
-	public static ResKey PASSWORD_FIELD_TOOLTIP;
+	public static ResKey2 PASSWORD_FIELD_TOOLTIP;
 
 	@CustomKey("admin.person.edit.noSelfDelete")
 	public static ResKey ERROR_CANNOT_DELETE_SELF;

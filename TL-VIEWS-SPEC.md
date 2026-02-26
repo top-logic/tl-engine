@@ -354,28 +354,36 @@ Here:
   This is on the table element itself, not the model builder, because selection is a UI
   concern independent of model derivation.
 
-### Why This Is Better
+### Comparison with the Current System
 
-| Aspect           | Old: Single model channel               | New: Model builder inputs               |
+| Aspect           | Old: LayoutComponent model builders     | New: View model builders                |
 |------------------|-----------------------------------------|-----------------------------------------|
 | Multiple inputs  | Composite channel workaround            | Direct: `inputs="channelA, channelB"`   |
 | Expression args  | `$model[0]`, `$model[1]`               | Named: `orga -> division -> ...`        |
-| Coupling         | Element mediates between channel + builder | Builder declares its own dependencies |
-| Reuse            | Builder tied to component's model shape | Builder self-contained with inputs      |
+| Coupling         | Builder coupled to LayoutComponent      | Builder depends only on channels        |
+| Input binding    | Implicit (component's model channel)    | Explicit (`inputs` property)            |
+| Configuration    | Proven patterns (reuse design)          | Same property names and semantics       |
+| Implementation   | Tied to LayoutComponent API             | New impl against channel-based API      |
 
-### Reusing Existing Model Builders
+### Relationship to Existing Model Builders
 
-The existing model builders (`ListModelByExpression`, `TreeModelByExpression`, etc.)
-already solve the hard problems:
+The existing model builder implementations (`ListModelByExpression`,
+`TreeModelByExpression`, etc.) are tightly coupled to `LayoutComponent` and cannot be
+reused directly. However, their **configuration patterns** and **design concepts** are
+proven and should be carried over into the new system:
 
+- Expression-based declarative configuration (`elements`, `supportsElement`, etc.)
 - Incremental update detection (via `supportsElement`, `ElementUpdate`)
-- Expression-based declarative configuration
-- Support for both simple and complex derivation logic
-- Extensibility via `PolymorphicConfiguration`
+- The `PolymorphicConfiguration` extensibility pattern
 
-The `inputs` property is a new addition to the model builder configuration interface.
-Existing builders gain multi-input support by extending their configuration with this
-property. Single-input builders continue to work with a single entry in `inputs`.
+The new model builder implementations will be written from scratch against a new
+interface that takes channel inputs instead of a `LayoutComponent` reference. The
+configuration interfaces can largely mirror the existing ones (same property names,
+same expression semantics), making migration straightforward for users familiar with
+the current system.
+
+The `inputs` property is the key new addition: it replaces the implicit single-model
+dependency on the component with an explicit list of channel references.
 
 ### Elements Without Model Builders
 
@@ -703,10 +711,11 @@ in security evaluation regardless of need.
         | createControl()                    | model-builder (owns its inputs)
         v                                    v
 +------------------------+    +--------------------------------+
-|  Control (existing)    |    |  ModelBuilder (existing)        |
+|  Control (existing)    |    |  ModelBuilder (new impl)         |
 |  - Renders HTML        |    |  - inputs = channel ref list    |
 |  - Handles updates     |    |  - expressions map 1:1 to      |
 |  - Processes events    |    |    input parameters             |
+|                        |    |  - config patterns from existing |
 +------------------------+    +--------------------------------+
         |
         v

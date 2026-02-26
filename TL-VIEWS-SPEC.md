@@ -91,7 +91,7 @@ type `List<PolymorphicConfiguration<? extends UIElement>>`:
 ```xml
 <vbox>
   <heading text="Customer Details" />
-  <form model="channel:selectedCustomer">
+  <form model="selectedCustomer">
     <field attribute="name" />
     <field attribute="email" />
   </form>
@@ -107,15 +107,6 @@ Here `<vbox>` is `PolymorphicConfiguration<VBox>`, `<heading>` is
 `Button`, ...) implements `UIElement` and produces the corresponding `Control`.
 
 ## 2. View Identity: File Path, Not Names
-
-### The Naming Problem
-
-In the current system, LayoutComponents have explicit names. When components are created
-by templates, names must be parameterized. This leads to concatenated names mixed from
-constants and template parameters, making it nearly impossible to find where a
-component/channel is defined.
-
-### Solution: File Path as Identity
 
 A view has **no explicit name**. Each view is defined in a `*.view.xml` file, and the
 file path (relative to the application's well-known layout base folder) *is* the view's
@@ -133,61 +124,31 @@ identity. This makes views directly searchable in the filesystem.
 </view>
 ```
 
-### Cross-View Channel References
+### Why Not Explicit Names?
 
-Remote channels are referenced directly by file path and channel name, using the syntax
-`channel:path/to/view.view.xml#channelName`. No intermediate binding declarations or
-direction annotations are needed:
-
-```xml
-<!-- File: customers/masterDetail.view.xml -->
-<view>
-  <channel name="selectedCustomer" type="tl.customers:Customer" />
-
-  <split direction="horizontal" ratio="30:70">
-    <!-- Read a channel from another view by its file path -->
-    <table model="channel:organization/selector.view.xml#currentOrganization"
-           selection="channel:selectedCustomer">
-      <model-builder class="com.top_logic.model.search.providers.ListModelByExpression"
-        elements="model -> $model.get(`tl.customers:Organization#customers`)"
-        supportsElement="element -> $element.instanceOf(`tl.customers:Customer`)"
-      />
-    </table>
-
-    <form model="channel:selectedCustomer"
-          visible="channel:selectedCustomer != null">
-      <field attribute="name" />
-      <field attribute="email" />
-      <field attribute="phone" />
-    </form>
-  </split>
-</view>
-```
-
-### Advantages
+In the current system, LayoutComponents have explicit names. When components are created
+by templates, names must be parameterized. This leads to concatenated names mixed from
+constants and template parameters, making it nearly impossible to find where a
+component/channel is defined. File-path-as-identity eliminates this entire class of
+problems:
 
 - **No naming conflicts with templates**: Templates never need to generate view names.
   The file path is fixed and unique regardless of how many times a template is used.
 - **Searchable**: `grep -r "organization/selector.view.xml"` instantly finds all
   references to that view's channels.
-- **No indirection**: No need for `direction="in"`, `source="viewName.channelName"`,
-  or local alias channels. A remote channel is used directly where it is needed.
 - **Consistent with current system**: The current system already uses `*.layout.xml`
   file names as component name scopes. This simplifies and extends that pattern.
 
-### Channel Reference Syntax
+### Cross-View Channel References
+
+Remote channels are referenced directly by file path and channel name:
 
 ```
-channel:<channelName>                              -- local channel in the same view
-channel:<path/to/view.view.xml>#<channelName>      -- remote channel in another view
+path/to/view.view.xml#channelName
 ```
 
-When an expression references a channel (e.g., in `visible` attributes), the same syntax
-applies within TL-Script expressions:
-
-```xml
-<panel visible="channel:selectedCustomer != null">
-```
+No intermediate binding declarations or direction annotations are needed. See the
+channel section below for details.
 
 ## 3. Channels: Unified Reactive Data Flow
 
@@ -235,19 +196,43 @@ public interface ViewChannel {
 }
 ```
 
+### Channel References: No Prefix
+
+Configuration attributes that expect channel references are typed as such in the
+configuration interface. There is no `channel:` prefix - the attribute type makes it
+unambiguous that a channel reference is expected:
+
+```xml
+<!-- "selectedCustomer" is a channel reference, not an expression -->
+<table selection="selectedCustomer">
+
+<!-- "customers/list.view.xml#selectedCustomer" is a remote channel reference -->
+<form model="customers/list.view.xml#selectedCustomer">
+```
+
+The syntax is:
+
+```
+<channelName>                              -- local channel in the same view
+<path/to/view.view.xml>#<channelName>      -- remote channel in another view
+```
+
+This is unambiguous because:
+
+- Attributes that accept channel references are declared with a channel-reference type in
+  their configuration interface (e.g., `ChannelRef` rather than `String`).
+- Channel references and TL-Script expressions are never mixed in the same attribute.
+  An attribute is either a channel reference *or* an expression, determined by its type.
+
 ### Channel Bindings on Elements
 
-Elements reference channels in their configuration attributes. The binding direction
-depends on the attribute semantics:
+The binding direction depends on the attribute semantics:
 
-- **`model="channel:selectedCustomer"`** - The element *reads* from this channel (input).
+- **`model="selectedCustomer"`** - The element *reads* from this channel (input).
   When the channel value changes, the element receives a new model.
-- **`selection="channel:selectedCustomer"`** - The element *writes* to this channel
-  (output). When the user selects something, the channel is updated.
+- **`selection="selectedCustomer"`** - The element *writes* to this channel (output).
+  When the user selects something, the channel is updated.
 - Some attributes are bidirectional (both read and write).
-
-Local channels (same view) use the short form `channel:channelName`. Remote channels
-(other view) use the full path form `channel:path/to/view.view.xml#channelName`.
 
 ### Derived Channels
 
@@ -273,35 +258,66 @@ sufficient. The element needs logic to:
 - React to model changes (object creation/deletion) with incremental updates
 - Determine whether a given object belongs to the element's data set
 
-This is exactly what the existing `ModelBuilder` / `ListModelBuilder` /
-`TreeModelBuilder` infrastructure already provides. The new system reuses these directly
-as `PolymorphicConfiguration` children of the element:
+### The Multi-Input Problem
+
+In the current LayoutComponent system, a model builder receives a single "model" value
+from its component's model channel. When a builder needs multiple inputs (e.g., data from
+two different channels), the workaround is a "composite" channel that merges multiple
+values into a list/pair. The builder then has to decompose `$model[0]` and `$model[1]`
+instead of working with named parameters. This is cumbersome and error-prone.
+
+### Solution: Model Builders Declare Their Own Inputs
+
+In the new system, the model builder itself declares which channels it reads from via an
+`inputs` property. The expression function parameters map 1:1 to these inputs:
 
 ```xml
-<table model="channel:selectedOrganization" selection="channel:selectedCustomer">
-  <model-builder class="com.top_logic.model.search.providers.ListModelByExpression"
-    elements="model -> $model.get(`tl.customers:Organization#customers`)"
-    supportsElement="element -> $element.instanceOf(`tl.customers:Customer`)"
-  />
-  <columns>
-    <column attribute="name" />
-    <column attribute="email" />
-    <column attribute="status" />
-  </columns>
-</table>
+<view>
+  <channel name="selectedCustomer" type="tl.customers:Customer" />
+
+  <split direction="horizontal" ratio="30:70">
+    <table selection="selectedCustomer">
+      <model-builder class="com.top_logic.model.search.providers.ListModelByExpression"
+        inputs="organization/selector.view.xml#currentOrganization,
+                organization/division.view.xml#selection"
+        elements="orga -> division ->
+            $orga.get(`tl.customers:Organization#customers`)
+                 .filter(c -> $c.get(`tl.customers:Customer#division`) == $division)"
+        supportsElement="element -> $element.instanceOf(`tl.customers:Customer`)"
+      />
+    </table>
+
+    <form model="selectedCustomer"
+          visible="selectedCustomer != null">
+      <field attribute="name" />
+      <field attribute="email" />
+      <field attribute="phone" />
+    </form>
+  </split>
+</view>
 ```
 
 Here:
 
-- **`model="channel:selectedOrganization"`** - The channel provides the *input model*
-  (a single Organization object) that is fed into the model builder.
-- **`<model-builder>`** - A `PolymorphicConfiguration<? extends ListModelBuilder>` that
-  derives table rows from the input model. This is the existing `ListModelByExpression`
-  used unchanged.
-- **`selection="channel:selectedCustomer"`** - The table's selection output is bound to
-  a channel for consumption by other elements.
+- **`inputs="..., ..."`** - A list of channel references (local or remote) that feed the
+  model builder. Each input maps to a function parameter in order.
+- **`elements="orga -> division -> ..."`** - The first parameter `orga` receives the
+  value of the first input (currentOrganization), `division` receives the second input.
+  The expression works with named, meaningful parameters instead of indexed composites.
+- **`selection="selectedCustomer"`** - The table's selection output is bound to a channel.
+  This is on the table element itself, not the model builder, because selection is a UI
+  concern independent of model derivation.
 
-### Why Reuse Existing Model Builders?
+### Why This Is Better
+
+| Aspect           | Old: Single model channel               | New: Model builder inputs               |
+|------------------|-----------------------------------------|-----------------------------------------|
+| Multiple inputs  | Composite channel workaround            | Direct: `inputs="channelA, channelB"`   |
+| Expression args  | `$model[0]`, `$model[1]`               | Named: `orga -> division -> ...`        |
+| Coupling         | Element mediates between channel + builder | Builder declares its own dependencies |
+| Reuse            | Builder tied to component's model shape | Builder self-contained with inputs      |
+
+### Reusing Existing Model Builders
 
 The existing model builders (`ListModelByExpression`, `TreeModelByExpression`, etc.)
 already solve the hard problems:
@@ -311,23 +327,25 @@ already solve the hard problems:
 - Support for both simple and complex derivation logic
 - Extensibility via `PolymorphicConfiguration`
 
-Reusing them avoids reinventing this and provides immediate access to the full existing
-library of model builder implementations.
+The `inputs` property is a new addition to the model builder configuration interface.
+Existing builders gain multi-input support by extending their configuration with this
+property. Single-input builders continue to work with a single entry in `inputs`.
 
 ### Elements Without Model Builders
 
 Simple elements that just display a channel value directly do not need a model builder:
 
 ```xml
-<!-- Simple text display - no model builder needed -->
-<text value="channel:selectedCustomer.get(`tl.customers:Customer#name`)" />
-
 <!-- Form bound to a channel value - no model builder needed -->
-<form model="channel:selectedCustomer">
+<form model="selectedCustomer">
   <field attribute="name" />
   <field attribute="email" />
 </form>
 ```
+
+For simple elements like `<form>`, the `model` attribute is a direct channel reference.
+The form reads the channel value and uses it as its model object without any derivation.
+This is the common case for detail/edit views.
 
 ## 5. Built-in UIElement Types
 
@@ -428,15 +446,16 @@ template defines:
 <config:template-call template="masterDetail.view.template.xml">
   <arguments title="i18n:customers.title" masterRatio="40:60">
     <masterContent>
-      <table model="channel:organization" selection="channel:selectedCustomer">
+      <table selection="selectedCustomer">
         <model-builder class="com.top_logic.model.search.providers.ListModelByExpression"
+          inputs="organization"
           elements="model -> all(`tl.customers:Customer`)"
           supportsElement="element -> $element.instanceOf(`tl.customers:Customer`)"
         />
       </table>
     </masterContent>
     <detailContent>
-      <form model="channel:selectedCustomer">
+      <form model="selectedCustomer">
         <field attribute="name" />
         <field attribute="email" />
       </form>
@@ -515,7 +534,7 @@ A channel in `customers/masterDetail.view.xml` named `selectedCustomer` is refer
 from anywhere as:
 
 ```
-channel:customers/masterDetail.view.xml#selectedCustomer
+customers/masterDetail.view.xml#selectedCustomer
 ```
 
 ### Hosting in the Existing System
@@ -533,8 +552,7 @@ A bridge `LayoutComponent` hosts a view inside the existing component tree:
 
 - It is a `LayoutComponent` (participates in the existing component tree).
 - It loads and instantiates the referenced `*.view.xml` file.
-- It resolves cross-view channel references
-  (`channel:other/view.view.xml#channelName`) by locating the target view's runtime
+- It resolves cross-view channel references by locating the target view's runtime
   channel instance within the same application.
 - It calls `UIElement.createControl(viewContext)` on the root element to produce
   the Control tree for rendering.
@@ -568,7 +586,7 @@ Elements support styling through direct attributes and CSS class references:
   <text css-class="tlHeadingLarge">Title</text>
   <hbox gap="4px" align="center">
     <icon name="person" />
-    <text value="channel:selectedCustomer.get(`tl.customers:Customer#name`)" />
+    <text css-class="tlBody">Some text</text>
   </hbox>
 </vbox>
 ```
@@ -594,7 +612,7 @@ Commands are declared at the view level and referenced from interaction elements
              confirm="true" />
   </commands>
 
-  <form model="channel:selectedCustomer">
+  <form model="selectedCustomer">
     <field attribute="name" />
     <field attribute="email" />
     <hbox>
@@ -636,13 +654,13 @@ in security evaluation regardless of need.
 |  - Commands                                                      |
 +------------------------------------------------------------------+
         |                                    |
-        | createControl()                    | model-builder
+        | createControl()                    | model-builder (owns its inputs)
         v                                    v
 +------------------------+    +--------------------------------+
 |  Control (existing)    |    |  ModelBuilder (existing)        |
-|  - Renders HTML        |    |  - ListModelByExpression        |
-|  - Handles updates     |    |  - TreeModelByExpression        |
-|  - Processes events    |    |  - Custom implementations       |
+|  - Renders HTML        |    |  - inputs = channel ref list    |
+|  - Handles updates     |    |  - expressions map 1:1 to      |
+|  - Processes events    |    |    input parameters             |
 +------------------------+    +--------------------------------+
         |
         v
@@ -665,8 +683,9 @@ in security evaluation regardless of need.
 | Identity               | Component name (in config)| File path (*.view.xml)                 |
 | Rendering              | Every LayoutComponent     | Every UIElement (lightweight)          |
 | Layout                 | Fixed splitter panels     | CSS Flex/Grid (flexible)               |
-| Model binding          | Mandatory ModelBuilder    | Opt-in `<model-builder>` child         |
+| Model binding          | Mandatory ModelBuilder    | Opt-in, builder declares own inputs    |
 | Data flow              | ComponentChannel wiring   | Channels (local + path#name refs)      |
+| Multi-input models     | Composite channel hack    | Builder `inputs` with named params     |
 | Security               | Per-component mandatory   | Per-element opt-in `secure` attr       |
 | Commands               | Per-component             | Per-view, invoked from any element     |
 | Composition            | *.template.xml            | *.view.template.xml (same mechanism)   |
@@ -682,7 +701,7 @@ Three views collaborating via cross-view channel references:
 <view>
   <channel name="currentOrganization" type="tl.customers:Organization" />
 
-  <tree selection="channel:currentOrganization">
+  <tree selection="currentOrganization">
     <model-builder class="com.top_logic.model.search.providers.TreeModelByExpression"
       rootNode="all(`tl.customers:Organization`).filter(o -> $o.get(`parent`) == null)"
     />
@@ -695,10 +714,10 @@ Three views collaborating via cross-view channel references:
 <view>
   <channel name="selectedCustomer" type="tl.customers:Customer" />
 
-  <table model="channel:organization/selector.view.xml#currentOrganization"
-         selection="channel:selectedCustomer">
+  <table selection="selectedCustomer">
     <model-builder class="com.top_logic.model.search.providers.ListModelByExpression"
-      elements="model -> $model.get(`tl.customers:Organization#customers`)"
+      inputs="organization/selector.view.xml#currentOrganization"
+      elements="orga -> $orga.get(`tl.customers:Organization#customers`)"
       supportsElement="element -> $element.instanceOf(`tl.customers:Customer`)"
     />
     <columns>
@@ -714,10 +733,10 @@ Three views collaborating via cross-view channel references:
 <!-- File: customers/detail.view.xml -->
 <view>
   <channel name="canEdit"
-           expr="channel:customers/list.view.xml#selectedCustomer != null" />
+           expr="customers/list.view.xml#selectedCustomer != null" />
 
-  <form model="channel:customers/list.view.xml#selectedCustomer"
-        visible="channel:canEdit">
+  <form model="customers/list.view.xml#selectedCustomer"
+        visible="canEdit">
     <field attribute="name" />
     <field attribute="email" />
     <field attribute="phone" />
@@ -752,10 +771,14 @@ conflicts possible, and `grep` finds all usages instantly.
    (`ToolBarOwner`). How should view-level commands appear in the application toolbar?
 
 6. **Channel resolution at runtime**: When view A references
-   `channel:viewB.view.xml#foo`, how is the runtime instance of view B located? The
-   application must maintain a registry of active view instances indexed by file path.
-   What happens if the same `*.view.xml` is instantiated multiple times (e.g., in
-   different tabs)?
+   `viewB.view.xml#foo`, how is the runtime instance of view B located? The application
+   must maintain a registry of active view instances indexed by file path. What happens
+   if the same `*.view.xml` is instantiated multiple times (e.g., in different tabs)?
+
+7. **Model builder input type**: The `inputs` property on model builders is a list of
+   channel references. Should this be `List<ChannelRef>` in the configuration, or a
+   comma-separated string for conciseness in XML? The comma-separated form is more
+   readable but less type-safe.
 
 ## Additional Ideas
 
@@ -779,10 +802,10 @@ Conditional element selection based on device/context:
 Declarative iteration over a collection channel:
 
 ```xml
-<for-each items="channel:customer.get(`tl.customers:Customer#orders`)" var="order">
+<for-each items="customer.get(`tl.customers:Customer#orders`)" var="order">
   <card>
-    <text value="channel:order.get(`tl.orders:Order#description`)" />
-    <text value="channel:order.get(`tl.orders:Order#amount`)" />
+    <text value="$order.get(`tl.orders:Order#description`)" />
+    <text value="$order.get(`tl.orders:Order#amount`)" />
   </card>
 </for-each>
 ```

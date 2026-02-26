@@ -183,6 +183,73 @@ button.tlCounter__button:focus {
 	padding: var(--spacing-04);
 }
 
+/* --- TLAudioRecorder --------------------------------------------------- */
+
+.tlAudioRecorder {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-03);
+	font-family: var(--font-family);
+}
+
+.tlAudioRecorder__button {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	height: 2rem;
+	padding: 0 var(--spacing-03);
+	border: none;
+	border-radius: var(--corner-radius);
+	font-family: var(--font-family);
+	font-weight: bold;
+	font-size: var(--heading-compact-02-font-size);
+	line-height: var(--heading-compact-02-line-height);
+	cursor: pointer;
+	background: transparent;
+	box-shadow: inset 0px 0px 0px 2px var(--button-secondary);
+	color: var(--button-secondary);
+	white-space: nowrap;
+}
+
+button.tlAudioRecorder__button:hover {
+	background: var(--button-secondary-hover);
+	box-shadow: inset 0px 0px 0px 2px var(--button-secondary-hover);
+	color: var(--text-on-color);
+}
+
+button.tlAudioRecorder__button:disabled {
+	cursor: default;
+	background: none;
+	box-shadow: inset 0px 0px 0px 2px var(--button-disabled);
+	color: var(--text-disabled);
+}
+
+.tlAudioRecorder__button--recording {
+	background: var(--button-danger-primary);
+	box-shadow: inset 0px 0px 0px 2px var(--button-danger-primary);
+	color: var(--text-on-color);
+	animation: tlAudioRecorderPulse 1.5s ease-in-out infinite;
+}
+
+button.tlAudioRecorder__button--recording:hover {
+	background: var(--button-danger-hover);
+	box-shadow: inset 0px 0px 0px 2px var(--button-danger-hover);
+}
+
+@keyframes tlAudioRecorderPulse {
+	0%, 100% { opacity: 1; }
+	50% { opacity: 0.7; }
+}
+
+.tlAudioRecorder__status {
+	font-size: var(--body-compact-01-font-size);
+	color: var(--text-secondary);
+}
+
+.tlAudioRecorder__status--error {
+	color: var(--text-error);
+}
+
 /* --- TLFieldList ------------------------------------------------------- */
 
 .tlFieldList {

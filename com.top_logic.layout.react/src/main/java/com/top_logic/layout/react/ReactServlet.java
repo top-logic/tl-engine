@@ -7,13 +7,16 @@ package com.top_logic.layout.react;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.Part;
 
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
@@ -43,6 +46,7 @@ import com.top_logic.util.TopLogicServlet;
  * state updates are delivered via SSE.
  * </p>
  */
+@MultipartConfig
 public class ReactServlet extends TopLogicServlet {
 
 	@Override
@@ -70,6 +74,9 @@ public class ReactServlet extends TopLogicServlet {
 					break;
 				case "/state":
 					handleState(request, response, session);
+					break;
+				case "/upload":
+					handleUpload(request, response, session);
 					break;
 				default:
 					sendError(response, HttpServletResponse.SC_NOT_FOUND, "Unknown path: " + pathInfo);
@@ -122,28 +129,25 @@ public class ReactServlet extends TopLogicServlet {
 		// Obtain the real DisplayContext set up by TopLogicServlet.
 		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
 
-		// Install subsession context if the client sent the window name.
-		if (!StringServices.isEmpty(windowName)) {
-			TLSessionContext sessionContext = TLContextManager.getSession();
-			if (sessionContext != null) {
-				ContentHandlersRegistry handlersRegistry = sessionContext.getHandlersRegistry();
-				SubsessionHandler rootHandler = handlersRegistry.getContentHandler(windowName);
-				if (rootHandler != null) {
-					TLSubSessionContext subSession = sessionContext.getSubSession(windowName);
-					displayContext.installSubSessionContext(subSession);
-				}
+		// Install subsession context and enable command phase.
+		SubsessionHandler rootHandler = installSubSession(displayContext, windowName);
+
+		boolean updateBefore = rootHandler != null ? rootHandler.enableUpdate(true) : false;
+		try {
+			HandlerResult result = control.executeCommand(displayContext, commandName, arguments);
+
+			// Forward any InfoService messages that were added during command execution via SSE.
+			forwardInfoServiceMessages(displayContext, queue);
+
+			if (result.isSuccess()) {
+				sendSuccess(response);
+			} else {
+				sendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Command failed.");
 			}
-		}
-
-		HandlerResult result = control.executeCommand(displayContext, commandName, arguments);
-
-		// Forward any InfoService messages that were added during command execution via SSE.
-		forwardInfoServiceMessages(displayContext, queue);
-
-		if (result.isSuccess()) {
-			sendSuccess(response);
-		} else {
-			sendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Command failed.");
+		} finally {
+			if (rootHandler != null) {
+				rootHandler.enableUpdate(updateBefore);
+			}
 		}
 	}
 
@@ -166,6 +170,69 @@ public class ReactServlet extends TopLogicServlet {
 		} else {
 			sendError(response, HttpServletResponse.SC_NOT_FOUND, "Control not found: " + controlId);
 		}
+	}
+
+	private void handleUpload(HttpServletRequest request, HttpServletResponse response, HttpSession session)
+			throws IOException, ServletException {
+		String controlId = request.getParameter("controlId");
+		String windowName = request.getParameter("windowName");
+		if (controlId == null) {
+			sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Missing controlId parameter.");
+			return;
+		}
+
+		SSEUpdateQueue queue = SSEUpdateQueue.forSession(session);
+		CommandListener control = queue.getControl(controlId);
+		if (!(control instanceof UploadHandler)) {
+			sendError(response, HttpServletResponse.SC_NOT_FOUND,
+				"Control does not support uploads: " + controlId);
+			return;
+		}
+
+		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
+
+		// Install subsession context and enable command phase.
+		SubsessionHandler rootHandler = installSubSession(displayContext, windowName);
+
+		boolean updateBefore = rootHandler != null ? rootHandler.enableUpdate(true) : false;
+		try {
+			Collection<Part> parts = request.getParts();
+			HandlerResult result = ((UploadHandler) control).handleUpload(displayContext, parts);
+
+			forwardInfoServiceMessages(displayContext, queue);
+
+			if (result.isSuccess()) {
+				sendSuccess(response);
+			} else {
+				sendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Upload handling failed.");
+			}
+		} finally {
+			if (rootHandler != null) {
+				rootHandler.enableUpdate(updateBefore);
+			}
+		}
+	}
+
+	/**
+	 * Installs the subsession context for the given window name.
+	 *
+	 * @return The {@link SubsessionHandler} if found, or {@code null}.
+	 */
+	private SubsessionHandler installSubSession(DisplayContext displayContext, String windowName) {
+		if (StringServices.isEmpty(windowName)) {
+			return null;
+		}
+		TLSessionContext sessionContext = TLContextManager.getSession();
+		if (sessionContext == null) {
+			return null;
+		}
+		ContentHandlersRegistry handlersRegistry = sessionContext.getHandlersRegistry();
+		SubsessionHandler rootHandler = handlersRegistry.getContentHandler(windowName);
+		if (rootHandler != null) {
+			TLSubSessionContext subSession = sessionContext.getSubSession(windowName);
+			displayContext.installSubSessionContext(subSession);
+		}
+		return rootHandler;
 	}
 
 	@SuppressWarnings("unchecked")

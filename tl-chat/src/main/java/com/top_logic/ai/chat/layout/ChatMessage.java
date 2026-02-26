@@ -6,6 +6,8 @@
 package com.top_logic.ai.chat.layout;
 
 import java.time.Instant;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Immutable message in a chat.
@@ -13,26 +15,42 @@ import java.time.Instant;
  */
 public class ChatMessage {
 
+	/**
+	 * Metadata about a file attached to a {@link ChatMessage}.
+	 */
+	public record AttachmentMetadata(String fileName, String mimeType, int size) {
+	}
+
 	private final String _user;
 
 	private final String _text;
 
 	private final Instant _timestamp;
 
+	private final List<AttachmentMetadata> _attachments;
+
 	/**
-	 * Creates a new {@link ChatMessage} with the current time.
+	 * Creates a new {@link ChatMessage} with the current time and no attachments.
 	 */
 	public ChatMessage(String user, String text) {
 		this(user, text, Instant.now());
 	}
 
 	/**
-	 * Creates a new {@link ChatMessage} with the given timestamp.
+	 * Creates a new {@link ChatMessage} with the given timestamp and no attachments.
 	 */
 	public ChatMessage(String user, String text, Instant timestamp) {
+		this(user, text, timestamp, Collections.emptyList());
+	}
+
+	/**
+	 * Creates a new {@link ChatMessage} with the given timestamp and attachments.
+	 */
+	public ChatMessage(String user, String text, Instant timestamp, List<AttachmentMetadata> attachments) {
 		_user = user;
 		_text = text;
 		_timestamp = timestamp;
+		_attachments = List.copyOf(attachments);
 	}
 
 	/**
@@ -54,6 +72,13 @@ public class ChatMessage {
 	 */
 	public Instant getTimestamp() {
 		return _timestamp;
+	}
+
+	/**
+	 * The attachment metadata for files attached to this message, never null.
+	 */
+	public List<AttachmentMetadata> getAttachments() {
+		return _attachments;
 	}
 
 }

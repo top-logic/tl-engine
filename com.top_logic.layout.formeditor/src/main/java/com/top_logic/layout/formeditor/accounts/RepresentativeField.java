@@ -48,7 +48,7 @@ public class RepresentativeField extends ForeignAttributeTemplateProvider {
 
 		FormMember displayingField = getDelegate().getMember();
 		if (displayingField != null) {
-			displayingField.setLabel(Resources.getInstance().getString(I18NConstants.REPRESENTATIVES));
+			displayingField.setLabel(I18NConstants.REPRESENTATIVES);
 			displayingField.setTooltip(Resources.getInstance().getString(I18NConstants.REPRESENTATIVES.tooltip()));
 		}
 

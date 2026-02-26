@@ -13,7 +13,7 @@ Dabei gibt es drei Einsatzformen:
 - **Interaktiver Agent**: Ein Copilot direkt in der Anwendung, über
   den Anwender Fragen stellen und Aufgaben ausführen lassen können.
 
-- **Autonome Agenten**: Spezialisierte KI-Agenten innerhalb der
+- **Autonome Agenten**: KI-Agenten innerhalb der
   Anwendung, die eigenständig wiederkehrende Aufgaben übernehmen.
   Interne Agenten können dabei auch externe Werkzeuge (Anwendungen) verwenden.
   Die Spezialisierung solcher Agenten manifestiert sind in ihren "Skills", 

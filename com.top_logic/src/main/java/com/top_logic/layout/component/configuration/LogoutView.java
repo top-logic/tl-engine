@@ -22,7 +22,6 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.AbstractDisplayValue;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.FrameScope;
@@ -126,7 +125,7 @@ public class LogoutView extends AbstractConfiguredInstance<LogoutView.Config>
 	}
 
 	private boolean isNotLoggedIn() {
-		return TLContext.getContext().getCurrentPersonWrapper().equals(PersonManager.getManager().getAnonymous());
+		return TLContext.isAnonymous();
 	}
 
 	@Override

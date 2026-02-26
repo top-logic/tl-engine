@@ -1037,7 +1037,8 @@
 
     function renderAttachmentPreview() {
       // Render into the active preview container (welcome or chat)
-      var isWelcomeVisible = el.welcome && !el.welcome.classList.contains("hidden");
+      var isWelcomeVisible =
+        el.welcome && !el.welcome.classList.contains("hidden");
       var container = isWelcomeVisible ? el.welcomePreview : el.preview;
       // Clear both containers
       if (el.preview) {
@@ -1210,6 +1211,26 @@
       inputSection.addEventListener("drop", function (e) {
         e.preventDefault();
         inputSection.classList.remove("drag-over");
+        if (e.dataTransfer.files.length > 0) {
+          addFiles(e.dataTransfer.files);
+        }
+      });
+    }
+
+    // Drag and drop on welcome input section
+    var welcomeInputSection = root.querySelector(".chat-welcome-input-section");
+    if (welcomeInputSection) {
+      welcomeInputSection.addEventListener("dragover", function (e) {
+        e.preventDefault();
+        welcomeInputSection.classList.add("drag-over");
+      });
+      welcomeInputSection.addEventListener("dragleave", function (e) {
+        e.preventDefault();
+        welcomeInputSection.classList.remove("drag-over");
+      });
+      welcomeInputSection.addEventListener("drop", function (e) {
+        e.preventDefault();
+        welcomeInputSection.classList.remove("drag-over");
         if (e.dataTransfer.files.length > 0) {
           addFiles(e.dataTransfer.files);
         }

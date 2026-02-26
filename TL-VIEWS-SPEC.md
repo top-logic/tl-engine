@@ -240,10 +240,10 @@ configuration interface. There is no `channel:` prefix - the attribute type make
 unambiguous that a channel reference is expected:
 
 ```xml
-<!-- "selectedCustomer" is a channel reference, not an expression -->
+<!-- "selectedCustomer" is a channel reference -->
 <table selection="selectedCustomer">
 
-<!-- "customers/list.view.xml#selectedCustomer" is a remote channel reference -->
+<!-- Remote channel reference -->
 <form model="customers/list.view.xml#selectedCustomer">
 ```
 
@@ -263,13 +263,23 @@ This is unambiguous because:
 
 ### Channel Bindings on Elements
 
-The binding direction depends on the attribute semantics:
+Channel references on UI elements are primarily for **output** - writing user interaction
+results back to a channel:
 
-- **`model="selectedCustomer"`** - The element *reads* from this channel (input).
-  When the channel value changes, the element receives a new model.
-- **`selection="selectedCustomer"`** - The element *writes* to this channel (output).
-  When the user selects something, the channel is updated.
-- Some attributes are bidirectional (both read and write).
+- **`selection="selectedCustomer"`** - The element *writes* to this channel. When the
+  user selects something in a table or tree, the channel is updated.
+
+**Input** to complex elements (tables, trees) comes through the model builder's `inputs`
+property, not through a channel attribute on the element itself (see Section 4).
+
+Simple elements like `<form>` that don't use a model builder still accept a `model`
+channel reference for direct binding to a single channel value:
+
+```xml
+<form model="customers/list.view.xml#selectedCustomer">
+```
+
+This is the exception, not the rule - most data derivation goes through model builders.
 
 ### Derived Channels
 

@@ -17,21 +17,18 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
-import com.top_logic.layout.form.control.DataItemControl;
-import com.top_logic.layout.form.model.DataField;
-import com.top_logic.layout.form.model.FormContext;
-import com.top_logic.layout.form.model.FormFactory;
+import com.top_logic.layout.react.control.audio.ReactAudioPlayerControl;
 import com.top_logic.layout.react.control.audio.ReactAudioRecorderControl;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
- * Demo {@link LayoutComponent} that showcases the audio recorder React control.
+ * Demo {@link LayoutComponent} that showcases the audio recorder and audio player React controls.
  *
  * <p>
  * Provides a {@link ReactAudioRecorderControl} that records audio from the user's microphone. The
- * recorded audio is stored in a {@link DataField} which is rendered below the recorder, allowing
- * the user to download the recorded audio file.
+ * recorded audio is fed into a {@link ReactAudioPlayerControl} rendered below the recorder,
+ * allowing the user to play back the recording directly in the browser.
  * </p>
  */
 public class DemoAudioRecorderComponent extends LayoutComponent {
@@ -45,9 +42,7 @@ public class DemoAudioRecorderComponent extends LayoutComponent {
 
 	private ReactAudioRecorderControl _recorderControl;
 
-	private DataField _audioField;
-
-	private DataItemControl _audioFieldControl;
+	private ReactAudioPlayerControl _playerControl;
 
 	/**
 	 * Creates a new {@link DemoAudioRecorderComponent}.
@@ -62,14 +57,10 @@ public class DemoAudioRecorderComponent extends LayoutComponent {
 		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
 
 		if (_recorderControl == null) {
-			FormContext formContext = new FormContext(this);
-			_audioField = FormFactory.newDataField("audio");
-			formContext.addMember(_audioField);
-
-			_audioFieldControl = new DataItemControl(_audioField);
+			_playerControl = new ReactAudioPlayerControl(null);
 
 			_recorderControl = new ReactAudioRecorderControl(data -> {
-				_audioField.setValue(data);
+				_playerControl.setAudioData(data);
 			});
 		}
 
@@ -80,7 +71,7 @@ public class DemoAudioRecorderComponent extends LayoutComponent {
 		out.beginTag(HTMLConstants.PARAGRAPH);
 		out.writeText("Click 'Record' to start recording audio from your microphone. "
 			+ "Click 'Stop' to finish and upload the recording. "
-			+ "The recorded audio will appear in the file field below.");
+			+ "Use the player below to play back the recorded audio.");
 		out.endTag(HTMLConstants.PARAGRAPH);
 
 		out.beginBeginTag(HTMLConstants.DIV);
@@ -90,10 +81,10 @@ public class DemoAudioRecorderComponent extends LayoutComponent {
 		out.endTag(HTMLConstants.DIV);
 
 		out.beginTag(HTMLConstants.H3);
-		out.writeText("Recorded Audio");
+		out.writeText("Playback");
 		out.endTag(HTMLConstants.H3);
 
-		_audioFieldControl.write(displayContext, out);
+		_playerControl.write(displayContext, out);
 	}
 
 }

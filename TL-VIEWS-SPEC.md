@@ -1050,11 +1050,24 @@ mechanism. See Open Questions.
 
 **`<button>`** renders a single command as a clickable button. The button's label,
 icon, and tooltip are taken from the command definition - the `<button>` element only
-references the command by name:
+references the command by name. Display style properties control *how* the command
+is rendered:
 
 ```xml
 <button command="approve" />
+<button command="delete" style="icon" />
+<button command="save" style="primary" size="large" />
 ```
+
+| Property  | Values                                    | Default     |
+|-----------|-------------------------------------------|-------------|
+| `style`   | `default`, `primary`, `icon`, `link`      | `default`   |
+| `size`    | `small`, `default`, `large`               | `default`   |
+
+- `default`: Standard button with label and optional icon.
+- `primary`: Visually emphasized (e.g., filled/accent color).
+- `icon`: Icon only, label shown as tooltip.
+- `link`: Rendered as a text link rather than a button.
 
 **`<popup-menu>`** renders a button that opens a popup menu containing multiple
 commands. This is the explicit-placement counterpart to menu cliques - where a menu

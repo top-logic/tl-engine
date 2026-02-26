@@ -1332,6 +1332,7 @@
                   contentHtml: msg.contentHtml,
                   userName: msg.userName,
                   time: msg.time || "",
+                  attachments: msg.attachments,
                 });
               } else if (entry.type === "task_snapshot" && entry.taskData) {
                 renderTaskSnapshot(el.messages, entry.taskData);
@@ -1353,6 +1354,7 @@
                       contentHtml: msg.contentHtml,
                       userName: msg.userName,
                       time: msg.time || "",
+                      attachments: msg.attachments,
                     });
                   } else if (entry.type === "task_snapshot" && entry.taskData) {
                     renderTaskSnapshot(el.messages, entry.taskData);

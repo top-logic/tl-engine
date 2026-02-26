@@ -103,7 +103,7 @@ public interface ViewContext {
     /** Resolve a local or remote channel reference to its runtime channel. */
     ViewChannel resolveChannel(ChannelRef ref);
 
-    /** Look up a command by name. */
+    /** Look up a command by name (from the enclosing panel/dialog scope). */
     CommandHandler getCommand(String name);
 
     /** Security context for access checks. */
@@ -522,11 +522,106 @@ Container UIElements that arrange their children using CSS layout:
 | `<grid>`    | CSS Grid     | Grid layout with rows/columns            |
 | `<split>`   | Flex + drag  | Resizable split (like today, but opt-in) |
 | `<scroll>`  | Overflow     | Scrollable region                        |
-| `<panel>`   | Block        | Collapsible panel with header            |
+| `<panel>`   | Block        | Display panel - the command-defining element |
 
 Each of these is a `PolymorphicConfiguration<? extends ContainerElement>` where
 `ContainerElement extends UIElement` and has a `List<PolymorphicConfiguration<UIElement>>`
 property for children.
+
+#### `<panel>` - Command Scope and Display Region
+
+`<panel>` is the primary command-defining element. A panel represents a self-contained
+display region with optional header, toolbar, and button bar. Commands are always defined
+on a panel because the panel provides the display areas (toolbar, button bar) where
+command buttons appear.
+
+```java
+public interface PanelElement extends ContainerElement {
+
+    interface Config extends ContainerElement.Config {
+
+        /** Panel title (i18n). */
+        @Name("title")
+        ResKey getTitle();
+
+        /** Whether a toolbar area is rendered above the content. */
+        @Name("toolbar")
+        boolean getToolbar();
+
+        /** Whether a button bar is rendered below the content. */
+        @Name("button-bar")
+        boolean getButtonBar();
+
+        /** Whether the panel is collapsible. */
+        @Name("collapsible")
+        boolean getCollapsible();
+
+        /** Commands scoped to this panel. */
+        @Name("commands")
+        List<PolymorphicConfiguration<CommandHandler>> getCommands();
+    }
+}
+```
+
+Commands on a panel declare a **placement** that determines where they appear:
+
+```xml
+<panel title="i18n:customers.detail" toolbar="true" button-bar="true">
+  <commands>
+    <!-- placement defaults from command type, can be overridden -->
+    <command class="com.example.EditCommandHandler" />       <!-- toolbar (default) -->
+    <command class="com.example.DeleteCommandHandler" />     <!-- toolbar (default) -->
+    <command class="com.example.SaveCommandHandler" />       <!-- button-bar (default) -->
+    <command class="com.example.CancelCommandHandler" />     <!-- button-bar (default) -->
+    <command class="com.example.ExportCommandHandler"
+             placement="burger-menu" />                      <!-- explicit override -->
+  </commands>
+
+  <form model="selectedCustomer">
+    <field attribute="name" />
+    <field attribute="email" />
+  </form>
+</panel>
+```
+
+**Placement** determines where the command's button is rendered:
+
+| Placement      | Location                                   | Default for                    |
+|----------------|--------------------------------------------|--------------------------------|
+| `toolbar`      | Horizontal bar above panel content         | Most action commands (edit, delete, create) |
+| `button-bar`   | Horizontal bar below panel content         | Commit/cancel commands (save, apply, cancel) |
+| `context-menu` | Right-click menu on data elements          | Row-specific actions           |
+| `burger-menu`  | Overflow/hamburger menu in toolbar area    | Secondary/rare actions (export, print) |
+
+Each command type/implementation defines its own default placement. The `placement`
+attribute on a command declaration overrides this default. This way, standard commands
+work out of the box, but any command can be placed anywhere.
+
+**Context menu commands**: Commands with `placement="context-menu"` are collected by
+data elements (`<table>`, `<tree>`) within the panel. When the user right-clicks a row,
+the table/tree builds a context menu from all context-menu-placed commands of its
+enclosing panel.
+
+**Explicit `<button>` override**: A `<button>` element anywhere in the panel content
+can explicitly render any command, regardless of its declared placement. This is
+the escape hatch for placing a command in a non-standard location:
+
+```xml
+<panel toolbar="true">
+  <commands>
+    <command name="specialAction" class="..." placement="toolbar" />
+  </commands>
+
+  <form model="selectedCustomer">
+    <field attribute="name" />
+    <!-- Also render the command as an inline button inside the form -->
+    <button command="specialAction" label="i18n:do.special" />
+  </form>
+</panel>
+```
+
+**Panels without commands**: A `<panel>` without `<commands>` is purely structural
+(collapsible section, titled region). Not every panel needs commands.
 
 ### Navigation Elements
 
@@ -701,32 +796,42 @@ mechanism beyond templates:
 The included view's channels become reachable via the included file's path, as with
 any cross-view channel reference.
 
-**`<dialog>`** defines modal dialog content within a view. The dialog is not rendered
-inline - it is opened by a command and closed explicitly:
+**`<dialog>`** defines modal dialog content within a view. Like `<panel>`, a dialog is
+a command-defining element - it has its own `<commands>` section and a button bar where
+commit/cancel buttons appear. The dialog is not rendered inline - it is opened by a
+command and closed explicitly:
 
 ```xml
 <view>
   <channel name="selectedCustomer" type="tl.customers:Customer" />
 
   <dialog name="editDialog" title="i18n:customers.edit.title">
+    <commands>
+      <command class="com.example.SaveCustomerHandler" />     <!-- button-bar (default) -->
+      <command class="com.example.CancelDialogHandler" />     <!-- button-bar (default) -->
+    </commands>
+
     <form model="selectedCustomer">
       <field attribute="name" />
       <field attribute="email" />
     </form>
-    <hbox>
-      <button command="save" />
-      <button command="cancelDialog" />
-    </hbox>
   </dialog>
 
-  <table selection="selectedCustomer">
-    ...
-  </table>
-  <toolbar>
-    <button command="openEdit" opens-dialog="editDialog" />
-  </toolbar>
+  <panel toolbar="true">
+    <commands>
+      <command name="openEdit" class="com.example.OpenEditHandler"
+               opens-dialog="editDialog" />
+    </commands>
+
+    <table selection="selectedCustomer">
+      ...
+    </table>
+  </panel>
 </view>
 ```
+
+A dialog always renders a button bar for its commands (the dialog's commit/cancel
+buttons). No explicit `button-bar="true"` is needed - this is inherent to dialogs.
 
 ### Data Elements
 
@@ -877,18 +982,11 @@ mechanism. See Open Questions.
 | `<button>`   | Action trigger, references a command         |
 | `<link>`     | Clickable link                               |
 | `<menu>`     | Dropdown menu                                |
-| `<toolbar>`  | Groups commands in a toolbar area            |
 
-**`<toolbar>`** renders a horizontal bar of command buttons, typically at the top of a
-view or panel:
-
-```xml
-<toolbar>
-  <button command="create" />
-  <button command="edit" />
-  <button command="delete" />
-</toolbar>
-```
+Note: There is no standalone `<toolbar>` element. Toolbars and button bars are display
+areas of `<panel>` (and `<dialog>`), automatically populated from the panel's commands
+based on their placement. An explicit `<button>` can place any command anywhere as an
+override (see `<panel>` in Layout Elements).
 
 ### Wizard Elements
 
@@ -1065,15 +1163,15 @@ public interface ViewDefinition {
         @Name("content")
         @Mandatory
         PolymorphicConfiguration<UIElement> getContent();
-
-        /** Command definitions scoped to this view. */
-        @Name("commands")
-        List<PolymorphicConfiguration<CommandHandler>> getCommands();
     }
 }
 ```
 
-Note: No `getName()` - the identity comes from the file system.
+Note: No `getCommands()` - commands are defined on `<panel>` and `<dialog>` elements
+within the content tree, not at the view level. Each panel is a self-contained command
+scope with its own toolbar/button-bar display areas.
+
+No `getName()` - the identity comes from the file system.
 
 ### File Structure
 
@@ -1155,33 +1253,161 @@ Elements support styling through direct attributes and CSS class references:
 
 ## 9. Commands and Actions
 
-Commands are declared at the view level and referenced from interaction elements:
+### Panel-Scoped Commands
+
+Commands are defined on `<panel>` elements, not at the view level. Each panel is a
+self-contained command scope: the panel owns the commands and provides the display areas
+(toolbar, button bar) where they appear.
 
 ```xml
-<!-- File: customers/edit.view.xml -->
+<!-- File: customers/detail.view.xml -->
 <view>
+  <channel name="selectedCustomer" type="tl.customers:Customer" />
+
+  <panel title="i18n:customers.detail" toolbar="true" button-bar="true">
+    <commands>
+      <command class="com.example.EditCommandHandler" />
+      <command class="com.example.DeleteCommandHandler" />
+      <command class="com.example.SaveCommandHandler" />
+      <command class="com.example.CancelCommandHandler" />
+    </commands>
+
+    <form model="selectedCustomer">
+      <field attribute="name" />
+      <field attribute="email" />
+    </form>
+  </panel>
+</view>
+```
+
+This design solves the master-detail problem: in a view with two panels side by side,
+each panel has its own commands displayed in its own toolbar/button-bar. There is no
+ambiguity about which commands belong where.
+
+### Command Placement
+
+Each command declares where it should appear via the `placement` property. Every command
+type/implementation defines a **default placement** so that standard commands work out
+of the box without explicit placement configuration:
+
+```java
+public interface CommandHandler {
+
+    interface Config extends PolymorphicConfiguration<CommandHandler> {
+
+        /** Where this command's button appears. Default is defined by the implementation. */
+        @Name("placement")
+        CommandPlacement getPlacement();
+    }
+}
+
+public enum CommandPlacement {
+    /** Toolbar above panel content (default for most action commands). */
+    TOOLBAR,
+    /** Button bar below panel content (default for commit/cancel commands). */
+    BUTTON_BAR,
+    /** Context menu on data elements (default for row-specific actions). */
+    CONTEXT_MENU,
+    /** Overflow/hamburger menu in toolbar area (for secondary actions). */
+    BURGER_MENU
+}
+```
+
+The default placement is part of the command's implementation:
+
+```java
+public class SaveCommandHandler extends AbstractCommandHandler {
+
+    public interface Config extends AbstractCommandHandler.Config {
+        @Override
+        default CommandPlacement getPlacement() {
+            return CommandPlacement.BUTTON_BAR;  // Save goes in button bar by default
+        }
+    }
+}
+```
+
+A command's placement can always be overridden in the panel's `<commands>` declaration:
+
+```xml
+<panel toolbar="true">
   <commands>
-    <command name="save"
-             class="com.example.customers.SaveCustomerHandler" />
-    <command name="delete"
-             class="com.example.customers.DeleteCustomerHandler"
-             confirm="true" />
+    <!-- ExportHandler defaults to TOOLBAR, move it to burger-menu -->
+    <command class="com.example.ExportHandler" placement="burger-menu" />
+  </commands>
+  ...
+</panel>
+```
+
+### Context Menu Commands
+
+Commands with `placement="context-menu"` are not rendered in the toolbar or button bar.
+Instead, data elements (`<table>`, `<tree>`) within the panel collect these commands
+and present them when the user right-clicks a row:
+
+```xml
+<panel toolbar="true">
+  <commands>
+    <command class="com.example.EditRowHandler" placement="context-menu" />
+    <command class="com.example.DeleteRowHandler" placement="context-menu" />
+    <command class="com.example.CreateHandler" />  <!-- toolbar (default) -->
+  </commands>
+
+  <table selection="selectedCustomer">
+    <model-builder class="..." inputs="..." elements="..." />
+    <columns>
+      <column attribute="name" />
+      <column attribute="email" />
+    </columns>
+  </table>
+</panel>
+```
+
+The table automatically builds its context menu from the enclosing panel's context-menu
+commands. The command's executability rule determines which entries are enabled/visible
+for the right-clicked row.
+
+### Explicit Button Override
+
+An explicit `<button>` anywhere in the panel content can render any command, regardless
+of its declared placement. This is the escape hatch for non-standard layouts:
+
+```xml
+<panel toolbar="true">
+  <commands>
+    <command name="approve" class="com.example.ApproveHandler" />
   </commands>
 
   <form model="selectedCustomer">
     <field attribute="name" />
-    <field attribute="email" />
-    <hbox>
-      <button command="save" />
-      <button command="delete" />
-    </hbox>
+    <!-- Render the command inline, in addition to its toolbar button -->
+    <button command="approve" label="i18n:approve.now" />
   </form>
-</view>
+</panel>
 ```
 
+### Dialog Commands
+
+Dialogs are also command-defining elements. A dialog always renders a button bar for
+its commit/cancel commands:
+
+```xml
+<dialog name="confirmDelete" title="i18n:confirm.delete">
+  <commands>
+    <command class="com.example.ConfirmDeleteHandler" />   <!-- button-bar -->
+    <command class="com.example.CancelDialogHandler" />    <!-- button-bar -->
+  </commands>
+
+  <text value="i18n:confirm.delete.message" />
+</dialog>
+```
+
+### Command Resolution
+
 Command handlers are `PolymorphicConfiguration<? extends CommandHandler>`, reusing the
-existing command infrastructure. The view's `ViewContext` resolves command references and
-provides the execution environment.
+existing command infrastructure. The panel's `ViewContext` resolves command references
+and provides the execution environment. A `<button command="name">` is resolved against
+the commands of the nearest enclosing panel or dialog.
 
 ## 10. Security
 
@@ -1207,7 +1433,7 @@ in security evaluation regardless of need.
 |  - Identity = file path (no explicit names)                      |
 |  - Channels (reactive data flow, locally and cross-view)         |
 |  - UIElement tree (PolymorphicConfiguration<UIElement>)           |
-|  - Commands                                                      |
+|  - Commands (scoped to <panel> and <dialog>)                      |
 +------------------------------------------------------------------+
         |                                    |
         | createControl()                    | model-builder (owns its inputs)
@@ -1244,25 +1470,31 @@ in security evaluation regardless of need.
 | Data flow              | ComponentChannel wiring   | Channels (local + path#name refs)      |
 | Multi-input models     | Composite channel hack    | Builder `inputs` with named params     |
 | Security               | Per-component mandatory   | Per-element opt-in `secure` attr       |
-| Commands               | Per-component             | Per-view, invoked from any element     |
+| Commands               | Per-component             | Per-panel, with placement-based display |
 | Composition            | *.template.xml            | *.view.template.xml (same mechanism)   |
 | Extensibility          | LayoutComponent subclass  | New UIElement + Config pair (modular)   |
 | Backward compat        | N/A                       | ViewHostComponent / legacy-component   |
 
 ## Complete Example
 
-Three views collaborating via cross-view channel references:
+Three views collaborating via cross-view channel references, with panel-scoped commands:
 
 ```xml
 <!-- File: organization/selector.view.xml -->
 <view>
   <channel name="currentOrganization" type="tl.customers:Organization" />
 
-  <tree selection="currentOrganization">
-    <model-builder class="com.top_logic.model.search.providers.TreeModelByExpression"
-      rootNode="all(`tl.customers:Organization`).filter(o -> $o.get(`parent`) == null)"
-    />
-  </tree>
+  <panel title="i18n:organizations" toolbar="true">
+    <commands>
+      <command class="com.example.CreateOrganizationHandler" />
+    </commands>
+
+    <tree selection="currentOrganization">
+      <model-builder class="com.top_logic.model.search.providers.TreeModelByExpression"
+        rootNode="all(`tl.customers:Organization`).filter(o -> $o.get(`parent`) == null)"
+      />
+    </tree>
+  </panel>
 </view>
 ```
 
@@ -1271,18 +1503,26 @@ Three views collaborating via cross-view channel references:
 <view>
   <channel name="selectedCustomer" type="tl.customers:Customer" />
 
-  <table selection="selectedCustomer">
-    <model-builder class="com.top_logic.model.search.providers.ListModelByExpression"
-      inputs="organization/selector.view.xml#currentOrganization"
-      elements="orga -> $orga.get(`tl.customers:Organization#customers`)"
-      supportsElement="element -> $element.instanceOf(`tl.customers:Customer`)"
-    />
-    <columns>
-      <column attribute="name" />
-      <column attribute="email" />
-      <column attribute="status" />
-    </columns>
-  </table>
+  <panel title="i18n:customers" toolbar="true">
+    <commands>
+      <command class="com.example.CreateCustomerHandler" />
+      <command class="com.example.EditCustomerHandler" placement="context-menu" />
+      <command class="com.example.DeleteCustomerHandler" placement="context-menu" />
+    </commands>
+
+    <table selection="selectedCustomer">
+      <model-builder class="com.top_logic.model.search.providers.ListModelByExpression"
+        inputs="organization/selector.view.xml#currentOrganization"
+        elements="orga -> $orga.get(`tl.customers:Organization#customers`)"
+        supportsElement="element -> $element.instanceOf(`tl.customers:Customer`)"
+      />
+      <columns>
+        <column attribute="name" />
+        <column attribute="email" />
+        <column attribute="status" />
+      </columns>
+    </table>
+  </panel>
 </view>
 ```
 
@@ -1293,18 +1533,28 @@ Three views collaborating via cross-view channel references:
       inputs="customers/list.view.xml#selectedCustomer"
       expr="customer -> $customer != null" />
 
-  <form model="customers/list.view.xml#selectedCustomer"
-        visible="hasSelection">
-    <field attribute="name" />
-    <field attribute="email" />
-    <field attribute="phone" />
-    <field attribute="status" />
-  </form>
+  <panel title="i18n:customer.detail" toolbar="true" button-bar="true"
+         visible="hasSelection">
+    <commands>
+      <command class="com.example.EditCommandHandler" />
+      <command class="com.example.SaveCommandHandler" />
+      <command class="com.example.CancelCommandHandler" />
+    </commands>
+
+    <form model="customers/list.view.xml#selectedCustomer">
+      <field attribute="name" />
+      <field attribute="email" />
+      <field attribute="phone" />
+      <field attribute="status" />
+    </form>
+  </panel>
 </view>
 ```
 
 All three views reference each other's channels by file path. No names to invent, no
-conflicts possible, and `grep` finds all usages instantly.
+conflicts possible, and `grep` finds all usages instantly. Each panel owns its commands
+and displays them in its own toolbar/button-bar - there is no ambiguity about which
+commands belong to which part of the UI.
 
 ## Configuration Plug-in Interface Migration
 
@@ -1425,9 +1675,11 @@ view-based counterparts.
 - **Current**: Creates context menus tied to component context
 - **Used in**: `TreeComponent.Config`, `WithContextMenuFactory`
 - **Purpose**: Provides context menu entries for tree/table elements
-- **New equivalent**: Could become a configuration property on data elements (`<table>`,
-  `<tree>`) that produces context menus from commands and the current selection. The
-  factory would take ViewContext instead of a component reference.
+- **New equivalent**: Replaced by the panel-scoped command model. Context menus on data
+  elements (`<table>`, `<tree>`) are built automatically from commands with
+  `placement="context-menu"` on the enclosing `<panel>`. No dedicated factory interface
+  is needed - the panel's command list and each command's executability rule determine
+  the context menu entries.
 
 ### Interfaces Independent of LayoutComponent (reusable as-is)
 
@@ -1507,9 +1759,11 @@ The general pattern for migrating LayoutComponent-dependent interfaces:
    respect, (c) a separate `<editor>` wrapper element. This also affects dirty
    tracking and save/cancel command patterns.
 
-6. **Toolbar integration**: LayoutComponents participate in the toolbar system
-   (`ToolBarOwner`). The new system has an explicit `<toolbar>` element, but how
-   does it interact with the application-level toolbar (e.g., in ViewHostComponent)?
+6. **Application-level toolbar**: LayoutComponents participate in the toolbar system
+   (`ToolBarOwner`). In the new system, commands are scoped to `<panel>` elements. When
+   a view is hosted in a ViewHostComponent, how does the panel's toolbar interact with
+   the application-level toolbar? Does the topmost panel's toolbar merge into the
+   application toolbar, or is it always rendered independently?
 
 7. **Dialog lifecycle**: `<dialog>` declares content, but the full lifecycle (opening
    with a model, passing results back, stacking multiple dialogs) needs definition.

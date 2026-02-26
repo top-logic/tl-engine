@@ -24,7 +24,7 @@ import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.format.RegExpValueProvider;
 import com.top_logic.basic.encryption.SecureRandomService;
-import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.util.ResourcesModule;
@@ -49,9 +49,12 @@ import com.top_logic.util.license.LicenseTool;
 	InitialGroupManager.Module.class,
 	ResourcesModule.Module.class,
 })
-public class PersonManager extends ManagedClass {
+public class PersonManager extends ConfiguredManagedClass<PersonManager.Config> {
 
-	public interface Config extends ServiceConfiguration<PersonManager> {
+	/**
+	 * Configuration for the account manager.
+	 */
+	public interface Config extends ConfiguredManagedClass.Config<PersonManager> {
 
 		/**
 		 * @see #getUserNamePattern()
@@ -106,12 +109,6 @@ public class PersonManager extends ManagedClass {
 		String getSuperUserName();
 	}
 
-	private final Pattern userNamePattern;
-
-	private final int maxPersonNameLength;
-
-	private final String superUserName;
-	
 	/**
 	 * Creates a {@link PersonManager} from configuration.
 	 * 
@@ -122,30 +119,28 @@ public class PersonManager extends ManagedClass {
 	 */
 	@CalledByReflection
 	public PersonManager(InstantiationContext context, Config config) {
-		userNamePattern = config.getUserNamePattern();
-		maxPersonNameLength = config.getPersonNameMaxLength();
-		superUserName = config.getSuperUserName();
+		super(context, config);
 	}
 
 	/**
 	 * The system root. Should always be there so should never return null.
 	 */
 	public Person getRoot() {
-		return Person.byName(superUserName);
+		return Person.byName(getSuperUserName());
 	}
 
 	/**
 	 * The name of the system root. Should always be there so should never return null.
 	 */
 	public String getSuperUserName() {
-		return superUserName;
+		return getConfig().getSuperUserName();
 	}
 
 	/**
 	 * true if the given name is valid for usage as TL person name according to the configured pattern
 	 */
 	public boolean validatePersonName(String aPersonName) {
-		if (!StringServices.isEmpty(aPersonName) && aPersonName.length() < this.maxPersonNameLength) {
+		if (!StringServices.isEmpty(aPersonName) && aPersonName.length() < this.getPersonNameMaxLength()) {
 			try {
 				return getPersonNamePattern().matcher(aPersonName).matches();
 			} catch (Exception ex) {
@@ -158,11 +153,11 @@ public class PersonManager extends ManagedClass {
 	}
 
 	public Pattern getPersonNamePattern() {
-		return this.userNamePattern;
+		return this.getConfig().getUserNamePattern();
 	}
 
 	public int getPersonNameMaxLength() {
-		return this.maxPersonNameLength;
+		return this.getConfig().getPersonNameMaxLength();
 	}
 	
 	/**

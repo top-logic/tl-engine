@@ -609,6 +609,7 @@ Commands on a panel declare a **placement** that determines where they appear:
 | `toolbar`      | Horizontal bar above panel content         | Most action commands (edit, delete, create) |
 | `button-bar`   | Horizontal bar below panel content         | Commit/cancel commands (save, apply, cancel) |
 | `context-menu` | Right-click menu on data elements          | Row-specific actions           |
+| `none`         | Not displayed automatically                | Commands placed only via explicit `<button>` |
 
 Each command type/implementation defines its own default placement. The `placement`
 attribute on a command declaration overrides this default. This way, standard commands
@@ -637,6 +638,24 @@ the escape hatch for placing a command in a non-standard location:
     <field attribute="name" />
     <!-- Also render the command as an inline button inside the form -->
     <button command="specialAction" label="i18n:do.special" />
+  </form>
+</panel>
+```
+
+Use `placement="none"` for commands that should *only* appear where an explicit
+`<button>` places them, and nowhere else:
+
+```xml
+<panel>
+  <commands>
+    <command name="quickApprove" class="..." placement="none" />
+  </commands>
+
+  <form model="selectedItem">
+    <field attribute="name" />
+    <field attribute="status" />
+    <!-- This is the only place the command appears -->
+    <button command="quickApprove" label="i18n:approve" />
   </form>
 </panel>
 ```
@@ -1366,7 +1385,9 @@ public enum CommandPlacement {
     /** Button bar below panel content (default for commit/cancel commands). */
     BUTTON_BAR,
     /** Context menu on data elements (default for row-specific actions). */
-    CONTEXT_MENU
+    CONTEXT_MENU,
+    /** Not displayed automatically; only rendered where an explicit {@code <button>} places it. */
+    NONE
 }
 ```
 

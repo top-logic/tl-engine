@@ -21,7 +21,6 @@ import com.top_logic.layout.form.model.FormGroup;
 import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.form.model.StringField;
 import com.top_logic.layout.provider.DefaultLabelProvider;
-import com.top_logic.util.Resources;
 import com.top_logic.util.TLCollator;
 
 /**
@@ -76,12 +75,12 @@ public class TextFilterViewBuilder implements FilterViewBuilder<TextFilterConfig
 		/* Definition of the filter settings */
 		// "whole field" setting
 		BooleanField wholeFieldCheckbox = createWholeFieldCheckbox(config.isWholeField());
-		wholeFieldCheckbox.setLabel(Resources.getInstance().getString(WHOLE_FIELD_CHECKBOX));
+		wholeFieldCheckbox.setLabel(WHOLE_FIELD_CHECKBOX);
 		filterSettings.addMember(wholeFieldCheckbox);
 
 		// "case sensitive" setting
 		BooleanField caseSensitiveCheckbox = createCaseSensitiveCheckbox(config.isCaseSensitive());
-		caseSensitiveCheckbox.setLabel(Resources.getInstance().getString(CASE_SENSITIVE_CHECKBOX));
+		caseSensitiveCheckbox.setLabel(CASE_SENSITIVE_CHECKBOX);
 		filterSettings.addMember(caseSensitiveCheckbox);
 
 		// "filter string" setting
@@ -91,7 +90,7 @@ public class TextFilterViewBuilder implements FilterViewBuilder<TextFilterConfig
 		// "regular expression" setting
 		if (_useRegularExpressions) {
 			BooleanField regExpCheckbox = createRegExpCheckbox(config.isRegExp());
-			regExpCheckbox.setLabel(Resources.getInstance().getString(REG_EXP_CHECKBOX));
+			regExpCheckbox.setLabel(REG_EXP_CHECKBOX);
 			filterSettings.addMember(regExpCheckbox);
 			ValidRegExpDependency validRegExpDependency = new ValidRegExpDependency(regExpCheckbox, textField);
 			validRegExpDependency.attach();
@@ -126,7 +125,7 @@ public class TextFilterViewBuilder implements FilterViewBuilder<TextFilterConfig
 			FormFactory.newSelectField(TextFilterView.SELECTABLE_VALUES_FIELD, options, true, false);
 		optionsField.setOptionComparator(new TLCollator());
 		optionsField.setOptionLabelProvider(DefaultLabelProvider.INSTANCE);
-		optionsField.setLabel(Resources.getInstance().getString(I18NConstants.FILTER_VALUES));
+		optionsField.setLabel(I18NConstants.FILTER_VALUES);
 		return optionsField;
 	}
 }

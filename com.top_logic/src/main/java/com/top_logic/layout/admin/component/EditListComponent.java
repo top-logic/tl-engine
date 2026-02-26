@@ -1191,7 +1191,7 @@ public class EditListComponent extends EditComponent implements RowObjectCreator
 	 */
 	protected Collection createDescriptionField(String aName, String aValue, FormContainer aGroup) {
 		StringField theField = fieldHelper.createStringField(aName, aValue, null, aGroup, false, !MANDATORY);
-		theField.setLabel(Resources.getInstance().getString(getResPrefix().key(COLUMN_DESCRIPTION)));
+		theField.setLabel(getResPrefix().key(COLUMN_DESCRIPTION));
 		theField.addConstraint(ELEMENT_DESCRIPTION_LENGTH_CONSTRAINT);
 		return fieldHelper.createControls(theField, this);
 	}
@@ -1214,7 +1214,7 @@ public class EditListComponent extends EditComponent implements RowObjectCreator
     protected List createStringField(String aName, String aValue, FormContainer aGroup, boolean aNameFieldFlag) {
         StringField theField = fieldHelper.createStringField(aName, aValue, null, aGroup, false, aNameFieldFlag);
         if (aNameFieldFlag) {
-			theField.setLabel(Resources.getInstance().getString(getResPrefix().key(COLUMN_NAME)));
+			theField.setLabel(getResPrefix().key(COLUMN_NAME));
 			theField.addConstraint(ELEMENT_NAME_LENGTH_CONSTRAINT);
             theField.addConstraint(ALLOWED_CHARS_CONSTRAINT);
             constraints.add(theField);

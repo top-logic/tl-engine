@@ -16,16 +16,15 @@ Dabei gibt es drei Einsatzformen:
 - **Autonome Agenten**: KI-Agenten innerhalb der
   Anwendung, die eigenständig wiederkehrende Aufgaben übernehmen.
   Interne Agenten können dabei auch externe Werkzeuge (Anwendungen) verwenden.
+  Die Aktivierung erfolgt eigenständig durch User-Prompt (Copilot), Zeitgesteuert, Ereignissgesteuert, durch (externe) Agenten.
   Die Spezialisierung solcher Agenten manifestiert sind in ihren "Skills", 
   also ihren konkreten Fähigkeiten.
   - **Development Agenten**  
   Agenten zur Unterstützung der Anwendungsentwicklung.
-  Trigger: User-Prompt (Copilot)
   Fokus: Applikationsmodell, Konfiguration, Layout
   Typische Skills: Modellteile suchen, analysieren, modifzieren, Layouts konfigurieren...
   - **Fachliche Agenten**  
   Agenten zur Interaktion mit Anwendungsdaten
-  Trigger: User-Prompt (Copilot), Zeitgesteuert, Ereignissgesteuert, durch externe Agenten
   Fokus: Applikationsdaten, lokal und Systemübergreifend
   Typische Skills: Daten auswerten, überwachen, Datensätze anlegen und ändern, 
   Aktionen in Fremdsystemen anstoßen, Mails versenden ...

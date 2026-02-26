@@ -642,7 +642,16 @@
     var rootId = root.id || root.getAttribute("data-tl-chat");
     log("initOne called", { rootId: rootId });
 
-    // Always clean up any existing connection for this root ID (handles DOM replacement)
+    // Guard: skip if this exact DOM element was already initialized.
+    // This prevents duplicate event listeners when both the MutationObserver
+    // and the script-reload guard (window._tlChatInit) call initOne on the
+    // same newly added element.
+    if (root.getAttribute("data-tl-chat-inited") === "true") {
+      log("Already initialized, skipping", { rootId: rootId });
+      return;
+    }
+
+    // Clean up any existing connection for this root ID (handles DOM replacement)
     cleanupConnection(rootId);
     root.setAttribute("data-tl-chat-inited", "true");
 
@@ -788,7 +797,7 @@
       if (!document.body.contains(root)) {
         log("Root not in DOM, destroying");
         state.destroyed = true;
-        cleanupConnection(root);
+        cleanupConnection(rootId);
         return;
       }
 
@@ -974,7 +983,7 @@
         if (!document.body.contains(root)) {
           log("Root not in DOM after error, destroying");
           state.destroyed = true;
-          cleanupConnection(root);
+          cleanupConnection(rootId);
           return;
         }
 
@@ -1073,6 +1082,7 @@
     }
 
     function sendMessage() {
+      if (state.destroyed) return;
       var text = (el.input.value || "").trim();
       if (!text && pendingAttachments.length === 0) return;
       el.input.disabled = true;
@@ -1470,13 +1480,18 @@
             removedNode.getAttribute &&
             removedNode.getAttribute("data-tl-chat") === "v1"
           ) {
-            cleanupConnection(removedNode);
+            var removedId =
+              removedNode.id || removedNode.getAttribute("data-tl-chat");
+            cleanupConnection(removedId);
           }
           var removedRoots = removedNode.querySelectorAll
             ? removedNode.querySelectorAll('[data-tl-chat="v1"]')
             : [];
           for (var rr = 0; rr < removedRoots.length; rr++) {
-            cleanupConnection(removedRoots[rr]);
+            var rrId =
+              removedRoots[rr].id ||
+              removedRoots[rr].getAttribute("data-tl-chat");
+            cleanupConnection(rrId);
           }
         }
       }
@@ -1502,7 +1517,8 @@
   window.addEventListener("beforeunload", function () {
     var roots = document.querySelectorAll('[data-tl-chat="v1"]');
     for (var i = 0; i < roots.length; i++) {
-      cleanupConnection(roots[i]);
+      var rid = roots[i].id || roots[i].getAttribute("data-tl-chat");
+      cleanupConnection(rid);
     }
   });
 

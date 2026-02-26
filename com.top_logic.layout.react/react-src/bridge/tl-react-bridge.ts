@@ -243,6 +243,40 @@ export function useTLCommand(): (command: string, args?: Record<string, unknown>
 }
 
 /**
+ * Returns a function to upload a FormData to the server for the enclosing control.
+ *
+ * <p>The control ID and window name are appended automatically. The server dispatches
+ * to controls implementing the {@code UploadHandler} interface.</p>
+ */
+export function useTLUpload(): (formData: FormData) => Promise<void> {
+  const ctx = useContext(TLControlContext);
+  if (!ctx) {
+    throw new Error('useTLUpload must be used inside a TLReact-mounted component.');
+  }
+  const controlId = ctx.controlId;
+  const windowName = ctx.windowName;
+
+  return useCallback(
+    async (formData: FormData) => {
+      formData.append('controlId', controlId);
+      formData.append('windowName', windowName);
+      try {
+        const resp = await fetch(getApiBase() + 'react-api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+        if (!resp.ok) {
+          console.error('[TLReact] Upload failed:', resp.status, await resp.text());
+        }
+      } catch (e) {
+        console.error('[TLReact] Upload error:', e);
+      }
+    },
+    [controlId, windowName]
+  );
+}
+
+/**
  * Convenience hook for form field value + setter.
  */
 export function useTLFieldValue(): [unknown, (newValue: unknown) => void] {

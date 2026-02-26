@@ -7,6 +7,7 @@ export {
   unmount,
   useTLState,
   useTLCommand,
+  useTLUpload,
   useTLFieldValue,
   createChildContext,
   TLControlContext,
@@ -15,7 +16,15 @@ export type { TLCellProps } from './bridge/types';
 export { default as TLChild } from './bridge/TLChild';
 export type { ChildDescriptor } from './bridge/TLChild';
 
-// Expose React for downstream bundles that externalize it.
+// Re-export React so that control bundles use the SAME React instance.
+//
+// IMPORTANT: Controls in tl-react-controls.js MUST import React from 'tl-react-bridge',
+// NOT from 'react' directly.  Importing from 'react' bundles a second copy of React into
+// the controls bundle, which causes "useState is null" errors at runtime because hooks
+// only work when called against the same React instance that rendered the component tree.
+//
+// Correct:   import { React, useTLState } from 'tl-react-bridge';
+// WRONG:     import React, { useState } from 'react';   // <-- duplicates React!
 import React from 'react';
 import ReactDOM from 'react-dom';
 export { React, ReactDOM };

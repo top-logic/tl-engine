@@ -13,6 +13,11 @@
 	<servlet>
 		<servlet-name>ReactServlet</servlet-name>
 		<servlet-class>com.top_logic.layout.react.ReactServlet</servlet-class>
+		<multipart-config>
+			<max-file-size>52428800</max-file-size>
+			<max-request-size>52428800</max-request-size>
+			<file-size-threshold>8192</file-size-threshold>
+		</multipart-config>
 	</servlet>
 
 	<servlet-mapping>

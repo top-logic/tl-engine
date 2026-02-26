@@ -50,6 +50,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey REACT_TAB_SELECTED;
 
+	/**
+	 * @en Audio upload failed.
+	 */
+	public static ResKey AUDIO_UPLOAD_FAILED;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

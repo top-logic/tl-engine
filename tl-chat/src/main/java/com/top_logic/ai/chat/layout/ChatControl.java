@@ -91,6 +91,9 @@ public class ChatControl extends AbstractControlBase {
 		out.writeAttribute("data-chat-messages-id", getID() + "-messages");
 		out.writeAttribute("data-chat-input-id", getID() + "-input");
 		out.writeAttribute("data-chat-button-id", getID() + "-button");
+		out.writeAttribute("data-chat-file-input-id", getID() + "-file-input");
+		out.writeAttribute("data-chat-attach-btn-id", getID() + "-attach-btn");
+		out.writeAttribute("data-chat-preview-id", getID() + "-attachment-preview");
 		out.writeAttribute("data-chat-user-name",
 			_taskTracker.getUserName() != null ? _taskTracker.getUserName() : "User");
 		out.endBeginTag();
@@ -682,26 +685,64 @@ public class ChatControl extends AbstractControlBase {
 	}
 
 	private void writeInputSection(TagWriter out) throws IOException {
-		// Render clean HTML; chat-client.js handles sending via JSON API and SSE.
 		out.beginBeginTag(DIV);
 		out.writeAttribute(CLASS_ATTR, "chat-input-section");
 		out.endBeginTag();
 		{
-			out.beginBeginTag(INPUT);
-			out.writeAttribute(TYPE_ATTR, "text");
-			out.writeAttribute(ID_ATTR, getInputId());
-			out.writeAttribute(NAME_ATTR, "message");
-			out.writeAttribute(CLASS_ATTR, "chat-input");
-			out.writeAttribute(PLACEHOLDER_ATTR, "Type a message...");
-			out.endEmptyTag();
-
-			out.beginBeginTag(BUTTON);
-			out.writeAttribute(ID_ATTR, getButtonId());
-			out.writeAttribute(TYPE_ATTR, "button");
-			out.writeAttribute(CLASS_ATTR, "chat-button");
+			// Attachment preview strip (hidden when empty, populated by JS)
+			out.beginBeginTag(DIV);
+			out.writeAttribute(CLASS_ATTR, "chat-attachment-preview");
+			out.writeAttribute(ID_ATTR, getID() + "-attachment-preview");
 			out.endBeginTag();
-			out.writeText("\u2191");
-			out.endTag(BUTTON);
+			out.endTag(DIV);
+
+			// Input row: attach + text input + send
+			out.beginBeginTag(DIV);
+			out.writeAttribute(CLASS_ATTR, "chat-input-row");
+			out.endBeginTag();
+			{
+				// Hidden file input
+				out.beginBeginTag(INPUT);
+				out.writeAttribute(TYPE_ATTR, "file");
+				out.writeAttribute(ID_ATTR, getID() + "-file-input");
+				out.writeAttribute(CLASS_ATTR, "chat-file-input");
+				out.writeAttribute("accept", "image/*,.pdf");
+				out.writeAttribute("multiple", "multiple");
+				out.writeAttribute("style", "display:none");
+				out.endEmptyTag();
+
+				// Attach button (paperclip)
+				out.beginBeginTag(BUTTON);
+				out.writeAttribute(ID_ATTR, getID() + "-attach-btn");
+				out.writeAttribute(TYPE_ATTR, "button");
+				out.writeAttribute(CLASS_ATTR, "chat-attach-button");
+				out.writeAttribute("title", "Attach files");
+				out.endBeginTag();
+				// Paperclip SVG icon
+				out.append("<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\">");
+				out.append("<path d=\"M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48\"/>");
+				out.append("</svg>");
+				out.endTag(BUTTON);
+
+				// Text input
+				out.beginBeginTag(INPUT);
+				out.writeAttribute(TYPE_ATTR, "text");
+				out.writeAttribute(ID_ATTR, getInputId());
+				out.writeAttribute(NAME_ATTR, "message");
+				out.writeAttribute(CLASS_ATTR, "chat-input");
+				out.writeAttribute(PLACEHOLDER_ATTR, "Type a message...");
+				out.endEmptyTag();
+
+				// Send button
+				out.beginBeginTag(BUTTON);
+				out.writeAttribute(ID_ATTR, getButtonId());
+				out.writeAttribute(TYPE_ATTR, "button");
+				out.writeAttribute(CLASS_ATTR, "chat-button");
+				out.endBeginTag();
+				out.writeText("\u2191");
+				out.endTag(BUTTON);
+			}
+			out.endTag(DIV);
 		}
 		out.endTag(DIV);
 	}

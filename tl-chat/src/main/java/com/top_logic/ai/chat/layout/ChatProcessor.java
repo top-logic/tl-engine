@@ -654,7 +654,7 @@ public class ChatProcessor {
 			return _sessionId;
 		}
 
-		/** Sets the session ID (called once in sendMessage). */
+		/** Sets the session ID (called once in {@link ChatProcessor#sendMessage}). */
 		public void setSessionId(String sessionId) {
 			_sessionId = sessionId;
 		}
@@ -664,7 +664,7 @@ public class ChatProcessor {
 			return _chat;
 		}
 
-		/** Sets the captured Chat reference (called once in sendMessage). */
+		/** Sets the captured Chat reference (called once in {@link ChatProcessor#sendMessage}). */
 		public void setChat(Chat chat) {
 			_chat = chat;
 		}

@@ -3,3 +3,5 @@
 com.top_logic.ai.chat.api.messages.ChatSessionDetailResponse.java: Invalid camel case word 'messagesJson', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.ai.chat.api.messages.ChatSessionDto.java: Invalid camel case word 'KnowledgeObject', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.ai.chat.api.messages.ChatSessionListResponse.java: Invalid camel case word 'lastUpdated', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.ai.chat.api.messages.AttachmentDto.java: Invalid camel case word 'ChatSendRequest', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.ai.chat.api.messages.AttachmentDto.java: Invalid camel case word 'MessageDto', this may only be used within JavaDoc links or HTML code tags.

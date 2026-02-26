@@ -17,6 +17,10 @@ public class ChatMessage {
 
 	/**
 	 * Metadata about a file attached to a {@link ChatMessage}.
+	 *
+	 * @param fileName the original name of the file
+	 * @param mimeType the MIME type of the file
+	 * @param size     the file size in bytes
 	 */
 	public record AttachmentMetadata(String fileName, String mimeType, int size) {
 	}

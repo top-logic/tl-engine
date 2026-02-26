@@ -3,7 +3,7 @@
 <!-- Main configuration file -->
 <root>
 	<alias>
-		<entry name="%OPENAI_API_KEY%" value="${env:tl_openai_apikey:}"/>
+		<entry name="%OPENAI_API_KEY%" value="${env:tl_openai_api_key:}"/>
 		<entry name="%ANTHROPIC_API_KEY%" value="${env:tl_anthropic_api_key:}"/>
 		<entry name="%MISTRAL_API_KEY%" value="${env:tl_mistral_api_key:}"/>
 	</alias>

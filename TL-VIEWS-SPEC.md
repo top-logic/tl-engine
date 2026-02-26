@@ -397,19 +397,20 @@ dependency on the component with an explicit list of channel references.
 
 ### Elements Without Model Builders
 
-Simple elements that just display a channel value directly do not need a model builder:
+Not all data elements need model builders. A `<form>` binds directly to a channel value
+via its `model` attribute - the channel provides the object whose attributes are
+displayed. No derivation is needed:
 
 ```xml
-<!-- Form bound to a channel value - no model builder needed -->
 <form model="selectedCustomer">
   <field attribute="name" />
   <field attribute="email" />
 </form>
 ```
 
-For simple elements like `<form>`, the `model` attribute is a direct channel reference.
-The form reads the channel value and uses it as its model object without any derivation.
-This is the common case for detail/edit views.
+Model builders are for elements that need to **derive** a collection or tree from an
+input (e.g., a table deriving rows from an organization object). Forms display attributes
+of a single object directly.
 
 ## 5. Built-in UIElement Types
 
@@ -442,6 +443,54 @@ property for children.
 | `<separator>` | Visual separator               |
 | `<spacer>`    | Flexible space                 |
 
+### Conditional Elements
+
+| Element     | Description                                              |
+|-------------|----------------------------------------------------------|
+| `<switch>`  | Selects one child based on a condition (see below)       |
+
+`<switch>` provides generic conditional element selection. It evaluates conditions
+against channel values and renders the matching case. This is a general-purpose
+mechanism that works for any UIElement, not just forms:
+
+```xml
+<switch>
+  <case>
+    <condition input="customers/list.view.xml#selectedCustomer"
+               expr="c -> $c.instanceOf(`tl.customers:SpecialCustomer`)" />
+    <content>
+      <form model="customers/list.view.xml#selectedCustomer">
+        <field attribute="specialDiscount" />
+        <field attribute="vipLevel" />
+        <field attribute="name" />
+        <field attribute="email" />
+      </form>
+    </content>
+  </case>
+  <case>
+    <condition input="customers/list.view.xml#selectedCustomer"
+               expr="c -> $c.instanceOf(`tl.customers:BusinessCustomer`)" />
+    <content>
+      <form model="customers/list.view.xml#selectedCustomer">
+        <field attribute="companyName" />
+        <field attribute="taxId" />
+        <field attribute="name" />
+        <field attribute="email" />
+      </form>
+    </content>
+  </case>
+  <default>
+    <form model="customers/list.view.xml#selectedCustomer">
+      <field attribute="name" />
+      <field attribute="email" />
+    </form>
+  </default>
+</switch>
+```
+
+The `<condition>` element follows the same `input`/`inputs` + expression pattern as
+derived channels and model builders.
+
 ### Data Elements
 
 Complex elements that use model builders to derive data from channel values:
@@ -450,7 +499,85 @@ Complex elements that use model builders to derive data from channel values:
 |------------|---------------------|---------------------------------------|
 | `<table>`  | ListModelBuilder    | Table with columns, sorting, filters  |
 | `<tree>`   | TreeModelBuilder    | Tree with expand/collapse             |
-| `<form>`   | (direct binding)    | Form fields bound to a model object   |
+
+#### Forms
+
+`<form>` is a container UIElement that displays and edits attributes of a model object.
+It is more complex than a simple field list:
+
+**Basic form**: Explicit fields in explicit layout.
+
+```xml
+<form model="selectedCustomer">
+  <vbox>
+    <heading text="Contact Information" />
+    <grid columns="2">
+      <field attribute="name" />
+      <field attribute="email" />
+      <field attribute="phone" />
+      <field attribute="address" />
+    </grid>
+  </vbox>
+</form>
+```
+
+Forms are containers: they can embed arbitrary UIElements (layout elements, headings,
+tables, etc.) alongside `<field>` elements. A `<field>` resolves its attribute against
+the form's model object.
+
+**Form with dynamic attributes**: Explicit fields for known base type attributes plus
+a catch-all group for additional attributes defined by the concrete subtype.
+
+```xml
+<form model="selectedCustomer">
+  <vbox>
+    <grid columns="2">
+      <!-- Explicitly laid out base type fields -->
+      <field attribute="name" />
+      <field attribute="email" />
+      <field attribute="phone" />
+    </grid>
+
+    <!-- All remaining attributes of the concrete subtype -->
+    <dynamic-attributes />
+  </vbox>
+</form>
+```
+
+`<dynamic-attributes>` renders all attributes of the model object's concrete type that
+are not already displayed by an explicit `<field>` element in the same form. This handles
+the common pattern of a stable base layout plus whatever extras a subtype adds, without
+enumerating all possible subtypes.
+
+**Form with embedded complex structure**:
+
+```xml
+<form model="selectedCustomer">
+  <vbox>
+    <grid columns="2">
+      <field attribute="name" />
+      <field attribute="email" />
+    </grid>
+
+    <heading text="Orders" />
+    <table selection="selectedOrder">
+      <model-builder class="..."
+        inputs="selectedCustomer"
+        elements="customer -> $customer.get(`tl.customers:Customer#orders`)"
+      />
+      <columns>
+        <column attribute="date" />
+        <column attribute="amount" />
+      </columns>
+    </table>
+  </vbox>
+</form>
+```
+
+**Polymorphic forms** are handled by the generic `<switch>` element (see above), not
+by a form-specific mechanism. Use `<switch>` when completely different layouts are needed
+per type. Use `<dynamic-attributes>` when the base layout is stable and subtypes only
+add fields.
 
 ### Interaction Elements
 

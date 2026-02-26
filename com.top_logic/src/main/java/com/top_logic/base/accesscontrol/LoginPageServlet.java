@@ -331,7 +331,7 @@ public class LoginPageServlet extends NoContextServlet {
 				request.setAttribute("errorMessage", Resources.getInstance().getString(anotherReason));
 			} else {
 				request.setAttribute("errorMessage",
-					Resources.getInstance().getString(I18NConstants.ERROR_AUTHENTICATE) + " \"" + userName + "\"");
+					Resources.getInstance().getString(I18NConstants.ERROR_AUTHENTICATE.fill(userName)));
 			}
                 
 			LoginFailure failure = _failures.get(userKey);

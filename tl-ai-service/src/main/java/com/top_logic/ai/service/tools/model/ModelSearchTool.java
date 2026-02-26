@@ -13,6 +13,10 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 
+import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+
 import com.top_logic.ai.service.tools.model.messages.SearchResponse;
 import com.top_logic.ai.service.tools.model.messages.SearchResult;
 import com.top_logic.ai.service.tools.util.DataClassSerializer;
@@ -48,6 +52,28 @@ import dev.langchain4j.agent.tool.Tool;
  * @author jhu
  */
 public class ModelSearchTool {
+
+	/**
+	 * Configuration for {@link ModelSearchTool}.
+	 */
+	public interface Config extends PolymorphicConfiguration<ModelSearchTool> {
+		// no additional properties
+	}
+
+	/**
+	 * Creates a new {@link ModelSearchTool}.
+	 */
+	public ModelSearchTool() {
+		// stateless tool
+	}
+
+	/**
+	 * Creates a new {@link ModelSearchTool} from configuration.
+	 */
+	@CalledByReflection
+	public ModelSearchTool(InstantiationContext context, Config config) {
+		// no-op for stateless tools
+	}
 
 	/** Maximum number of results to return. */
 	private static final int MAX_RESULTS = 10;

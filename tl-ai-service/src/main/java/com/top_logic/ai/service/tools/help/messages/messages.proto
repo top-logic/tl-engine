@@ -56,14 +56,3 @@ message ErrorResult {
 	 */
 	string error;
 }
-
-/**
- * Result message containing the Model Explorer's text response.
- */
-message ModelExplorerResponse {
-	/**
-	 * The exploration result as formatted text with bullet points,
-	 * optional next step suggestions, and source citations.
-	 */
-	string result;
-}

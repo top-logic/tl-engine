@@ -14,6 +14,10 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 
+import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+
 import com.top_logic.ai.service.tools.model.messages.InstanceListResponse;
 import com.top_logic.ai.service.tools.model.messages.InstanceMetadata;
 import com.top_logic.ai.service.tools.model.messages.InstanceResponse;
@@ -51,20 +55,37 @@ import dev.langchain4j.agent.tool.Tool;
  * Tool for accessing TopLogic instance data from the knowledge base.
  *
  * <p>
- * This tool provides two methods for working with instances:
- * <ul>
- * <li>{@link #listInstances(String, String, Integer, String)} - Lists all TIDs for a type</li>
- * <li>{@link #getInstance(String)} - Gets detailed info for a specific instance</li>
- * </ul>
+ * This tool provides methods for listing instances of a type with pagination and retrieving
+ * detailed information about individual instances. All methods return JSON-formatted strings for
+ * consumption by AI agents.
  * </p>
  *
- * <p>
- * All methods return JSON-formatted strings for consumption by AI agents.
- * </p>
- * 
- * @author jhu
+ * @see #listInstances(String, String, Integer, String)
+ * @see #getInstance(String)
  */
 public class InstanceBrowserTool {
+
+	/**
+	 * Configuration for {@link InstanceBrowserTool}.
+	 */
+	public interface Config extends PolymorphicConfiguration<InstanceBrowserTool> {
+		// no additional properties
+	}
+
+	/**
+	 * Creates a new {@link InstanceBrowserTool}.
+	 */
+	public InstanceBrowserTool() {
+		// stateless tool
+	}
+
+	/**
+	 * Creates a new {@link InstanceBrowserTool} from configuration.
+	 */
+	@CalledByReflection
+	public InstanceBrowserTool(InstantiationContext context, Config config) {
+		// no-op for stateless tools
+	}
 
 	/** Default number of instances per page. */
 	private static final int DEFAULT_LIMIT = 100;

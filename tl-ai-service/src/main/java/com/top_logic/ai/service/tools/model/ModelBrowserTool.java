@@ -11,6 +11,10 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 
+import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+
 import com.top_logic.ai.service.tools.model.messages.ClassifierInfo;
 import com.top_logic.ai.service.tools.model.messages.EnumerationResponse;
 import com.top_logic.ai.service.tools.model.messages.ErrorResponse;
@@ -50,21 +54,38 @@ import dev.langchain4j.agent.tool.Tool;
  * Tool for browsing TopLogic model structure (modules, types, parts).
  *
  * <p>
- * This tool provides three methods that form the natural hierarchy for model exploration:
- * <ul>
- * <li>{@link #listModules()} - Lists all modules in the application</li>
- * <li>{@link #listTypes(String)} - Lists types within a specific module</li>
- * <li>{@link #listTypeParts(String, String, Boolean)} - Lists properties/references of a type</li>
- * </ul>
+ * This tool provides three methods that form the natural hierarchy for model exploration: listing
+ * all modules, listing types within a module, and listing properties/references of a type. All
+ * methods return JSON-formatted strings for consumption by AI agents.
  * </p>
  *
- * <p>
- * All methods return JSON-formatted strings for consumption by AI agents.
- * </p>
- * 
- * @author jhu
+ * @see #listModules()
+ * @see #listTypes(String)
+ * @see #listTypeParts(String, String, Boolean)
  */
 public class ModelBrowserTool {
+
+	/**
+	 * Configuration for {@link ModelBrowserTool}.
+	 */
+	public interface Config extends PolymorphicConfiguration<ModelBrowserTool> {
+		// no additional properties
+	}
+
+	/**
+	 * Creates a new {@link ModelBrowserTool}.
+	 */
+	public ModelBrowserTool() {
+		// stateless tool
+	}
+
+	/**
+	 * Creates a new {@link ModelBrowserTool} from configuration.
+	 */
+	@CalledByReflection
+	public ModelBrowserTool(InstantiationContext context, Config config) {
+		// no-op for stateless tools
+	}
 
 	/**
 	 * Lists all modules in the TopLogic application model.

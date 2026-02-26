@@ -15,7 +15,7 @@
 	<properties>
 		<project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
 		
-		<langchain4j.version>1.10.0</langchain4j.version>
+		<langchain4j.version>1.11.0</langchain4j.version>
 		<msgbuf.version>1.1.11</msgbuf.version>
 	</properties>
 
@@ -57,14 +57,14 @@
 		<dependency>
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-agentic</artifactId>
-            <version>1.9.1-beta17</version>
+            <version>1.11.0-beta19</version>
         </dependency>
         
 		<!-- LangChain4j MCP integration -->
 		<dependency>
 		    <groupId>dev.langchain4j</groupId>
 		    <artifactId>langchain4j-mcp</artifactId>
-		    <version>1.9.1-beta17</version>
+		    <version>1.11.0-beta19</version>
 		</dependency>
 		
 		<!-- Apache Commons Pool for model pooling -->

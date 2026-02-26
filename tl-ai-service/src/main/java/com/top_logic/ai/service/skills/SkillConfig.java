@@ -1,46 +1,63 @@
 /*
- * SPDX-FileCopyrightText: 2025 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
 package com.top_logic.ai.service.skills;
 
-import com.top_logic.ai.service.agents.OrchestratorRouter;
-import com.top_logic.ai.service.agents.TLScriptAgent;
+import com.top_logic.ai.service.agents.AgentRegistry;
+import com.top_logic.basic.config.NamedConfigMandatory;
+import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.layout.form.values.MultiLineText;
+import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 
 /**
- * Production configuration mapping agents to their available on-demand skills.
+ * Configuration for a single skill in the {@link AgentRegistry}.
  *
  * <p>
- * Each agent is mapped to a list of skill names that it can load on demand via
- * {@link SkillTool}. The {@link SkillRegistry} loads the corresponding {@code .md}
- * resource files from the classpath.
+ * A skill is an instruction fragment that can be injected into an AI agent's context, either
+ * automatically via the system prompt auto or on demand via a tool call on demand.
  * </p>
  */
-public final class SkillConfig {
+@DisplayOrder({
+	SkillConfig.NAME_ATTRIBUTE,
+	SkillConfig.DESCRIPTION,
+	SkillConfig.MODE,
+	SkillConfig.CONTENT,
+})
+public interface SkillConfig extends NamedConfigMandatory {
 
-	private static final SkillRegistry INSTANCE = createRegistry();
+	/** @see #getDescription() */
+	String DESCRIPTION = "description";
+
+	/** @see #getMode() */
+	String MODE = "mode";
+
+	/** @see #getContent() */
+	String CONTENT = "content";
 
 	/**
-	 * Returns the singleton production skill registry.
+	 * Human-readable description of this skill's purpose.
 	 */
-	public static SkillRegistry getInstance() {
-		return INSTANCE;
-	}
+	@Name(DESCRIPTION)
+	@Mandatory
+	String getDescription();
 
-	private static SkillRegistry createRegistry() {
-		SkillRegistry registry = new SkillRegistry();
+	/**
+	 * Whether this skill is injected automatically into the system prompt auto or loaded on demand
+	 * via tool call on demand.
+	 */
+	@Name(MODE)
+	@Mandatory
+	Skill.Mode getMode();
 
-		registry.registerAgentSkills(OrchestratorRouter.class,
-			"shared/prompting-model-explorer");
-
-		registry.registerAgentSkills(TLScriptAgent.class,
-			"shared/prompting-model-explorer");
-
-		return registry;
-	}
-
-	private SkillConfig() {
-		// utility
-	}
+	/**
+	 * The actual prompt text of this skill.
+	 */
+	@Name(CONTENT)
+	@Mandatory
+	@ControlProvider(MultiLineText.class)
+	String getContent();
 }

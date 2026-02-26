@@ -7,7 +7,7 @@ option NoInterfaces;
 option NoXml;
 
 /**
- * Result from AI judge scoring ModelExplorerTool output.
+ * Result from AI judge scoring ModelExplorer agent output.
  */
 message JudgeResult {
 	/**

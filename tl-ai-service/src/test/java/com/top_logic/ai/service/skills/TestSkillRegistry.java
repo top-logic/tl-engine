@@ -5,9 +5,7 @@
  */
 package com.top_logic.ai.service.skills;
 
-import com.top_logic.ai.service.agents.TLScriptAgent;
-
-import dev.langchain4j.service.SystemMessage;
+import java.util.List;
 
 import junit.framework.TestCase;
 
@@ -32,14 +30,14 @@ public class TestSkillRegistry extends TestCase {
 
 	public void testGetSkillsFor() {
 		SkillRegistry registry = new SkillRegistry();
-		registry.registerAgentSkills(TestAgent.class, "test/sample-skill");
-		assertEquals(1, registry.getSkillsFor(TestAgent.class).size());
-		assertTrue(registry.getSkillsFor(TestAgent.class).get(0).content().contains("SAMPLE RULE"));
+		registry.registerAgentSkills("test-agent", List.of("test/sample-skill"));
+		assertEquals(1, registry.getSkillsFor("test-agent").size());
+		assertTrue(registry.getSkillsFor("test-agent").get(0).content().contains("SAMPLE RULE"));
 	}
 
 	public void testGetSkillsForUnregisteredAgent() {
 		SkillRegistry registry = new SkillRegistry();
-		assertTrue(registry.getSkillsFor(TestAgent.class).isEmpty());
+		assertTrue(registry.getSkillsFor("test-agent").isEmpty());
 	}
 
 	public void testFrontmatterParsing() {
@@ -59,31 +57,33 @@ public class TestSkillRegistry extends TestCase {
 	}
 
 	public void testAllProductionSkillsLoadSuccessfully() {
-		SkillRegistry registry = SkillConfig.getInstance();
-		for (Skill skill : registry.getSkillsFor(TLScriptAgent.class)) {
+		SkillRegistry registry = new SkillRegistry();
+		registry.registerAgentSkills("tlscript", List.of("shared/prompting-ModelExplorer"));
+		for (Skill skill : registry.getSkillsFor("tlscript")) {
 			assertNotNull("Skill content should not be null: " + skill.id(), skill.content());
 			assertFalse("Skill content should not be empty: " + skill.id(),
 				skill.content().isEmpty());
 		}
 	}
 
-	public void testTLScriptAgentHasSkills() {
-		SkillRegistry registry = SkillConfig.getInstance();
-		assertFalse("TLScriptAgent should have skills",
-			registry.getSkillsFor(TLScriptAgent.class).isEmpty());
+	public void testAgentWithSkillsRegistered() {
+		SkillRegistry registry = new SkillRegistry();
+		registry.registerAgentSkills("tlscript", List.of("shared/prompting-ModelExplorer"));
+		assertFalse("Agent should have skills",
+			registry.getSkillsFor("tlscript").isEmpty());
 	}
 
 	public void testBuildSystemPromptWithoutSkills() {
 		SkillRegistry registry = new SkillRegistry();
-		String prompt = registry.buildSystemPrompt(TestAgent.class);
+		String prompt = registry.buildSystemPrompt("test-agent", "TEST SYSTEM PROMPT");
 		assertTrue("Should contain base system message", prompt.contains("TEST SYSTEM PROMPT"));
 		assertFalse("Should NOT contain skill catalog", prompt.contains("Available Skills"));
 	}
 
 	public void testBuildSystemPromptWithOnDemandSkills() {
 		SkillRegistry registry = new SkillRegistry();
-		registry.registerAgentSkills(TestAgent.class, "test/frontmatter-skill");
-		String prompt = registry.buildSystemPrompt(TestAgent.class);
+		registry.registerAgentSkills("test-agent", List.of("test/frontmatter-skill"));
+		String prompt = registry.buildSystemPrompt("test-agent", "TEST SYSTEM PROMPT");
 		assertTrue("Should contain base system message", prompt.contains("TEST SYSTEM PROMPT"));
 		assertTrue("Should contain skill catalog header", prompt.contains("Available Skills (IMPORTANT)"));
 		assertTrue("Should contain skill id", prompt.contains("test/frontmatter-skill"));
@@ -94,8 +94,8 @@ public class TestSkillRegistry extends TestCase {
 
 	public void testBuildSystemPromptWithAutoSkills() {
 		SkillRegistry registry = new SkillRegistry();
-		registry.registerAgentSkills(TestAgent.class, "test/auto-skill");
-		String prompt = registry.buildSystemPrompt(TestAgent.class);
+		registry.registerAgentSkills("test-agent", List.of("test/auto-skill"));
+		String prompt = registry.buildSystemPrompt("test-agent", "TEST SYSTEM PROMPT");
 		assertTrue("Should contain base system message", prompt.contains("TEST SYSTEM PROMPT"));
 		assertTrue("Should contain auto skill content", prompt.contains("AUTO RULE"));
 		assertTrue("Should contain auto skill description as heading",
@@ -106,8 +106,8 @@ public class TestSkillRegistry extends TestCase {
 
 	public void testBuildSystemPromptWithMixedSkills() {
 		SkillRegistry registry = new SkillRegistry();
-		registry.registerAgentSkills(TestAgent.class, "test/auto-skill", "test/frontmatter-skill");
-		String prompt = registry.buildSystemPrompt(TestAgent.class);
+		registry.registerAgentSkills("test-agent", List.of("test/auto-skill", "test/frontmatter-skill"));
+		String prompt = registry.buildSystemPrompt("test-agent", "TEST SYSTEM PROMPT");
 		// Auto skill content is injected
 		assertTrue("Should contain auto skill content", prompt.contains("AUTO RULE"));
 		// On-demand skill is in catalog
@@ -120,19 +120,21 @@ public class TestSkillRegistry extends TestCase {
 		assertTrue("Auto content should appear before on-demand catalog", autoIndex < catalogIndex);
 	}
 
-	public void testBuildSystemPromptForTLScriptAgent() {
-		SkillRegistry registry = SkillConfig.getInstance();
-		String prompt = registry.buildSystemPrompt(TLScriptAgent.class);
-		assertTrue("Should contain TLScript system message", prompt.contains("TLScript Specialist"));
-		// prompting-model-explorer is now auto mode — content should be injected
+	public void testBuildSystemPromptWithProductionSkills() {
+		SkillRegistry registry = new SkillRegistry();
+		registry.registerAgentSkills("tlscript", List.of("shared/prompting-ModelExplorer"));
+		String prompt = registry.buildSystemPrompt("tlscript", "You are a TLScript Specialist Agent.");
+		assertTrue("Should contain base system message", prompt.contains("TLScript Specialist"));
+		// prompting-ModelExplorer is now auto mode — content should be injected
 		assertTrue("Should contain auto-injected skill content",
 			prompt.contains("How to Prompt the Model Explorer"));
 	}
 
 	public void testPlaceholderInjectionWithOnDemandSkill() {
 		SkillRegistry registry = new SkillRegistry();
-		registry.registerAgentSkills(PlaceholderAgent.class, "test/frontmatter-skill");
-		String prompt = registry.buildSystemPrompt(PlaceholderAgent.class);
+		registry.registerAgentSkills("placeholder-agent", List.of("test/frontmatter-skill"));
+		String prompt = registry.buildSystemPrompt("placeholder-agent",
+			"TOOLS SECTION\n<<AVAILABLE_SKILLS>>\nWORK ORDER SECTION");
 		assertTrue("Should contain base text before placeholder",
 			prompt.contains("TOOLS SECTION"));
 		assertTrue("Should contain skill catalog at placeholder position",
@@ -152,8 +154,9 @@ public class TestSkillRegistry extends TestCase {
 
 	public void testPlaceholderInjectionWithAutoSkill() {
 		SkillRegistry registry = new SkillRegistry();
-		registry.registerAgentSkills(PlaceholderAgent.class, "test/auto-skill");
-		String prompt = registry.buildSystemPrompt(PlaceholderAgent.class);
+		registry.registerAgentSkills("placeholder-agent", List.of("test/auto-skill"));
+		String prompt = registry.buildSystemPrompt("placeholder-agent",
+			"TOOLS SECTION\n<<AVAILABLE_SKILLS>>\nWORK ORDER SECTION");
 		assertTrue("Auto skill content should be injected at placeholder",
 			prompt.contains("AUTO RULE"));
 		assertFalse("Placeholder marker should be removed",
@@ -168,8 +171,9 @@ public class TestSkillRegistry extends TestCase {
 
 	public void testPlaceholderRemovedWhenNoSkills() {
 		SkillRegistry registry = new SkillRegistry();
-		// No skills registered for PlaceholderAgent
-		String prompt = registry.buildSystemPrompt(PlaceholderAgent.class);
+		// No skills registered for placeholder-agent
+		String prompt = registry.buildSystemPrompt("placeholder-agent",
+			"TOOLS SECTION\n<<AVAILABLE_SKILLS>>\nWORK ORDER SECTION");
 		assertFalse("Placeholder should be removed even without skills",
 			prompt.contains("<<AVAILABLE_SKILLS>>"));
 		assertFalse("Should not contain skill catalog",
@@ -186,15 +190,5 @@ public class TestSkillRegistry extends TestCase {
 
 		Skill noFrontmatter = registry.getSkill("test/sample-skill");
 		assertEquals(Skill.Mode.ON_DEMAND, noFrontmatter.mode());
-	}
-
-	interface TestAgent {
-		@SystemMessage("TEST SYSTEM PROMPT")
-		String chat(String msg);
-	}
-
-	interface PlaceholderAgent {
-		@SystemMessage("TOOLS SECTION\n<<AVAILABLE_SKILLS>>\nWORK ORDER SECTION")
-		String chat(String msg);
 	}
 }

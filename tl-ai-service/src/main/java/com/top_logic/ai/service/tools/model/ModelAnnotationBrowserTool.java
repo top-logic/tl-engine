@@ -12,6 +12,10 @@ import java.util.List;
 import java.util.Map;
 
 
+import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+
 import com.top_logic.ai.service.tools.model.messages.AnnotationInfo;
 import com.top_logic.ai.service.tools.model.messages.AnnotationListResponse;
 import com.top_logic.ai.service.tools.util.DataClassSerializer;
@@ -84,6 +88,28 @@ import dev.langchain4j.agent.tool.Tool;
  * @author jhu
  */
 public class ModelAnnotationBrowserTool {
+
+	/**
+	 * Configuration for {@link ModelAnnotationBrowserTool}.
+	 */
+	public interface Config extends PolymorphicConfiguration<ModelAnnotationBrowserTool> {
+		// no additional properties
+	}
+
+	/**
+	 * Creates a new {@link ModelAnnotationBrowserTool}.
+	 */
+	public ModelAnnotationBrowserTool() {
+		// stateless tool
+	}
+
+	/**
+	 * Creates a new {@link ModelAnnotationBrowserTool} from configuration.
+	 */
+	@CalledByReflection
+	public ModelAnnotationBrowserTool(InstantiationContext context, Config config) {
+		// no-op for stateless tools
+	}
 
 	/**
 	 * Lists all annotations on a model element (module, type, enumeration, part, classifier) with

@@ -11,6 +11,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+
 import com.top_logic.ai.service.tools.model.messages.PartUsageResponse;
 import com.top_logic.ai.service.tools.model.messages.PropertyUsage;
 import com.top_logic.ai.service.tools.model.messages.ReferenceUsage;
@@ -36,20 +40,37 @@ import dev.langchain4j.agent.tool.Tool;
  * Tool for analyzing TopLogic type dependencies and relationships.
  *
  * <p>
- * This tool provides methods for understanding how types are used throughout the model:
- * <ul>
- * <li>{@link #findTypeUsages(String)} - Finds all usages of a type</li>
- * <li>{@link #findPartUsages(String, String)} - Finds where a part is defined and inherited</li>
- * </ul>
+ * This tool provides methods for understanding how types are used throughout the model: finding all
+ * usages of a type and finding where a part is defined and inherited. All methods return
+ * JSON-formatted strings for consumption by AI agents.
  * </p>
  *
- * <p>
- * All methods return JSON-formatted strings for consumption by AI agents.
- * </p>
- * 
- * @author jhu
+ * @see #findTypeUsages(String)
+ * @see #findPartUsages(String, String)
  */
 public class TypeAnalysisTool {
+
+	/**
+	 * Configuration for {@link TypeAnalysisTool}.
+	 */
+	public interface Config extends PolymorphicConfiguration<TypeAnalysisTool> {
+		// no additional properties
+	}
+
+	/**
+	 * Creates a new {@link TypeAnalysisTool}.
+	 */
+	public TypeAnalysisTool() {
+		// stateless tool
+	}
+
+	/**
+	 * Creates a new {@link TypeAnalysisTool} from configuration.
+	 */
+	@CalledByReflection
+	public TypeAnalysisTool(InstantiationContext context, Config config) {
+		// no-op for stateless tools
+	}
 
 	/**
 	 * Finds all usages of a specific type in the model.

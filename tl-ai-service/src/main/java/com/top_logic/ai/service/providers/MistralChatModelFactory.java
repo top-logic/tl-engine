@@ -6,7 +6,6 @@
 package com.top_logic.ai.service.providers;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import com.top_logic.ai.service.ChatModelFactory;
 import com.top_logic.basic.config.InstantiationContext;
@@ -16,7 +15,7 @@ import com.top_logic.basic.config.annotation.defaults.StringDefault;
 
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.mistralai.MistralAiChatModel;
-import dev.langchain4j.model.mistralai.internal.client.DefaultMistralAiClient;
+import dev.langchain4j.model.mistralai.MistralAiModelCatalog;
 
 /**
  * Factory for creating Mistral AI chat model instances.
@@ -105,15 +104,11 @@ public class MistralChatModelFactory extends ChatModelFactory {
 	protected List<String> getAvailableModels() throws Exception {
 		Config config = getConfig();
 
-		// Create a Mistral AI client to list available models
-		DefaultMistralAiClient client = DefaultMistralAiClient.builder()
+		MistralAiModelCatalog modelCatalog = MistralAiModelCatalog.builder()
 			.apiKey(config.getApiKey())
 			.baseUrl(config.getBaseUrl())
 			.build();
 
-		// Query the API for available models and extract their IDs
-		return client.listModels().getData().stream()
-			.map(model -> model.getId())
-			.collect(Collectors.toList());
+		return extractModelNames(modelCatalog.listModels());
 	}
 }

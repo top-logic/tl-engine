@@ -18,7 +18,7 @@ import dev.langchain4j.agent.tool.Tool;
  * Tool that allows agents to discover and load on-demand skills at runtime.
  *
  * <p>
- * Each instance is scoped to a specific agent class, exposing only the skills registered for that
+ * Each instance is scoped to a specific agent name, exposing only the skills registered for that
  * agent.
  * </p>
  */
@@ -26,19 +26,19 @@ public class SkillTool {
 
 	private final SkillRegistry _registry;
 
-	private final Class<?> _agentClass;
+	private final String _agentName;
 
 	/**
-	 * Creates a skill tool scoped to the given agent.
+	 * Creates a skill tool scoped to the given agent name.
 	 *
 	 * @param registry
 	 *        The skill registry.
-	 * @param agentClass
-	 *        The agent class whose on-demand skills are exposed.
+	 * @param agentName
+	 *        The agent name as declared in the agent configuration.
 	 */
-	public SkillTool(SkillRegistry registry, Class<?> agentClass) {
+	public SkillTool(SkillRegistry registry, String agentName) {
 		_registry = registry;
-		_agentClass = agentClass;
+		_agentName = agentName;
 	}
 
 	/**
@@ -52,7 +52,7 @@ public class SkillTool {
 	 * @return Formatted skill catalog with names and descriptions.
 	 */
 	public String listAvailableSkills() {
-		List<Skill> skills = _registry.getSkillsFor(_agentClass);
+		List<Skill> skills = _registry.getSkillsFor(_agentName);
 		if (skills.isEmpty()) {
 			String result = "No on-demand skills available for this agent.";
 			ToolCallTracking.recordIfTracking("listAvailableSkills", Collections.emptyMap(), result);
@@ -72,13 +72,13 @@ public class SkillTool {
 	 * Loads a skill by its id, returning its full content.
 	 *
 	 * @param skillId
-	 *        The skill id from the catalog (e.g. {@code "shared/prompting-model-explorer"}).
+	 *        The skill id from the catalog (e.g. {@code "shared/prompting-ModelExplorer"}).
 	 * @return The full skill content, or an error message if not available.
 	 */
 	@Tool("Loads a skill by its id. Returns specialized instructions you MUST follow for the related task. Check the Available Skills section in your system instructions for skill ids and when to use them.")
-	public String loadSkill(@P("Skill id from the catalog, e.g. 'shared/prompting-model-explorer'") String skillId) {
+	public String loadSkill(@P("Skill id from the catalog, e.g. 'shared/prompting-ModelExplorer'") String skillId) {
 		Map<String, Object> args = Map.of("skillId", skillId);
-		List<Skill> skills = _registry.getSkillsFor(_agentClass);
+		List<Skill> skills = _registry.getSkillsFor(_agentName);
 		for (Skill skill : skills) {
 			if (skill.id().equals(skillId)) {
 				String result = skill.content();

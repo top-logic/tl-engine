@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import junit.framework.TestCase;
 
@@ -21,10 +22,14 @@ import com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult;
 import com.top_logic.ai.demo.test.agent.scorer.NeutralScorer;
 import com.top_logic.ai.demo.test.agent.scorer.NeutralScorerResult;
 import com.top_logic.ai.service.AIService;
+import com.top_logic.ai.service.agents.AgentRegistry;
 import com.top_logic.basic.module.BasicRuntimeModule;
+import com.top_logic.basic.thread.ThreadContextManager;
 
 import de.haumacher.msgbuf.io.StringW;
 import de.haumacher.msgbuf.json.JsonWriter;
+
+import dev.langchain4j.agentic.UntypedAgent;
 
 /**
  * Base class for Model Explorer scoring tests containing shared helper methods.
@@ -335,30 +340,37 @@ public abstract class ModelExplorerScoringTestBase extends TestCase {
 	}
 
 	/**
-	 * Loads the ModelExplorer system prompt using reflection to read the @SystemMessage annotation.
+	 * Runs the ModelExplorer agent with the given prompt and returns the result.
+	 *
+	 * @param prompt
+	 *        The user prompt to send to the agent.
+	 * @return The agent's answer as a string.
+	 */
+	protected String runModelExplorer(String prompt) {
+		AgentRegistry registry = AgentRegistry.getInstance();
+		if (registry == null) {
+			throw new RuntimeException("AgentRegistry is not available");
+		}
+		UntypedAgent explorer = registry.buildUntypedAgent("ModelExplorer");
+		return ThreadContextManager.inSystemInteraction(
+			ModelExplorerScoringTestBase.class,
+			() -> (String) explorer.invoke(Map.of("message", prompt)));
+	}
+
+	/**
+	 * Loads the ModelExplorer system prompt from {@link AgentRegistry} configuration.
 	 */
 	protected String loadModelExplorerSystemPrompt() {
 		try {
-			// Use reflection to get the @SystemMessage annotation from the ModelExplorer interface
-			Class<?> modelExplorerClass = com.top_logic.ai.service.agents.ModelExplorer.class;
-			java.lang.reflect.Method exploreMethod = modelExplorerClass.getMethod("explore", String.class);
-			
-			// Get the SystemMessage annotation
-			dev.langchain4j.service.SystemMessage systemMessageAnnotation = 
-				exploreMethod.getAnnotation(dev.langchain4j.service.SystemMessage.class);
-			
-			if (systemMessageAnnotation == null) {
-				throw new RuntimeException("Could not find @SystemMessage annotation on ModelExplorer.explore()");
+			AgentRegistry registry = AgentRegistry.getInstance();
+			if (registry == null) {
+				throw new RuntimeException("AgentRegistry is not available");
 			}
-			
-			// Get the value from the annotation (returns String[])
-			String[] values = systemMessageAnnotation.value();
-			if (values == null || values.length == 0) {
-				throw new RuntimeException("@SystemMessage annotation has no value");
+			String systemPrompt = registry.getAgentConfig("ModelExplorer").getSystemPrompt();
+			if (systemPrompt == null || systemPrompt.isEmpty()) {
+				throw new RuntimeException("ModelExplorer system prompt is empty");
 			}
-			
-			// Join multiple values if present (though typically there's only one)
-			return String.join("", values);
+			return systemPrompt;
 		} catch (Exception ex) {
 			throw new RuntimeException("Failed to load ModelExplorer system prompt: " + ex.getMessage(), ex);
 		}
@@ -373,6 +385,7 @@ public abstract class ModelExplorerScoringTestBase extends TestCase {
 		modules.add(com.top_logic.util.model.ModelService.Module.INSTANCE);
 		modules.add(com.top_logic.layout.provider.LabelProviderService.Module.INSTANCE);
 		modules.add(AIService.Module.INSTANCE);
+		modules.add(AgentRegistry.Module.INSTANCE);
 
 		modules.addAll(Arrays.asList(additionalModules));
 

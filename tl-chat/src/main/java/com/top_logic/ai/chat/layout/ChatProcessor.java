@@ -7,6 +7,7 @@ package com.top_logic.ai.chat.layout;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -17,13 +18,14 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.top_logic.ai.service.agents.OrchestratorAgent;
+import com.top_logic.ai.service.agents.AgentRegistry;
 import com.top_logic.ai.service.tools.ToolCallTracker;
 import com.top_logic.ai.service.tools.ToolCallTracking;
 import com.top_logic.ai.service.tools.TraceEntry;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.thread.ThreadContextManager;
 
+import dev.langchain4j.agentic.UntypedAgent;
 import dev.langchain4j.memory.ChatMemory;
 
 /**
@@ -81,7 +83,7 @@ public class ChatProcessor {
 	}
 
 	/**
-	 * Executes user message through OrchestratorAgent (single chat entrypoint).
+	 * Executes user message through the AgentRegistry entry point agent.
 	 * Sets trace so AgentCall and ToolCall events are visible in the UI timeline.
 	 * Uses state from tracker; {@code taskId} must already be set on state.
 	 */
@@ -100,10 +102,28 @@ public class ChatProcessor {
 		state.setToolCallTracker(tracker);
 
 		try {
-			Logger.info("ChatProcessor: Starting Orchestrator in thread: " + Thread.currentThread().getName(),
+			Logger.info("ChatProcessor: Starting agent in thread: " + Thread.currentThread().getName(),
 				ChatProcessor.class);
 
-			String result = OrchestratorAgent.chat(chatMemory, userMessage);
+			if (userMessage == null || userMessage.trim().isEmpty()) {
+				state.addPendingMessage(new ChatMessage("Agent", "Please provide a message."));
+				taskTracker.completeTask(taskId);
+				return;
+			}
+			String trimmed = userMessage.trim();
+
+			AgentRegistry agentRegistry = AgentRegistry.getInstance();
+			if (agentRegistry == null) {
+				state.addPendingMessage(
+					new ChatMessage("Agent", "AgentRegistry is not available. Please ensure the service is started."));
+				taskTracker.completeTask(taskId);
+				return;
+			}
+
+			String entryPointAgent = agentRegistry.getEntryPointAgentName();
+			UntypedAgent agent = agentRegistry.buildUntypedAgent(entryPointAgent, chatMemory);
+			String result = ThreadContextManager.inSystemInteraction(ChatProcessor.class,
+				() -> (String) agent.invoke(Map.of("message", trimmed)));
 
 			state.addPendingMessage(new ChatMessage("Agent", result));
 			taskTracker.completeTask(taskId);

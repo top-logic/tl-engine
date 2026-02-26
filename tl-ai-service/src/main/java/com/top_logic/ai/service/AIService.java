@@ -107,6 +107,8 @@ public class AIService extends ConfiguredManagedClass<AIService.Config<?>> {
 
 	private Map<String, ObjectPool<ChatModel>> _modelPools = new HashMap<>();
 
+	private Map<String, ChatModelFactory> _factories = new HashMap<>();
+
 	private List<String> _modelNames;
 
 	private String _defaultModel;
@@ -187,6 +189,7 @@ public class AIService extends ConfiguredManagedClass<AIService.Config<?>> {
 					// Create the pool for this specific model
 					ObjectPool<ChatModel> pool = factory.createPool(modelName);
 					_modelPools.put(modelName, pool);
+					_factories.put(modelName, factory);
 				}
 			}
 
@@ -234,6 +237,7 @@ public class AIService extends ConfiguredManagedClass<AIService.Config<?>> {
 				}
 			}
 			_modelPools.clear();
+			_factories.clear();
 			_defaultModel = null;
 
 		} finally {
@@ -337,6 +341,22 @@ public class AIService extends ConfiguredManagedClass<AIService.Config<?>> {
 		contextModels.put(effectiveModelName, newModel);
 
 		return newModel;
+	}
+
+	/**
+	 * Returns the {@link ChatModelFactory} responsible for the given model name.
+	 *
+	 * <p>
+	 * This allows callers to access the factory configuration (e.g. API keys, base URL) for
+	 * building customized model instances outside the pool.
+	 * </p>
+	 *
+	 * @param modelName
+	 *        The model name.
+	 * @return The factory, or {@code null} if no factory is registered for the given model.
+	 */
+	public ChatModelFactory getFactory(String modelName) {
+		return _factories.get(modelName);
 	}
 
 	/**

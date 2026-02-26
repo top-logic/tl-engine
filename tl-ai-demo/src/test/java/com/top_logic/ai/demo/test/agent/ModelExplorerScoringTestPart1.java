@@ -22,7 +22,6 @@ import com.top_logic.ai.demo.test.agent.scorer.NeutralScorerResult;
 import com.top_logic.ai.service.AIService;
 import com.top_logic.ai.service.tools.ToolCallTracker;
 import com.top_logic.ai.service.tools.ToolCallTracking;
-import com.top_logic.ai.service.tools.help.ModelExplorerTool;
 import com.top_logic.basic.module.BasicRuntimeModule;
 
 /**
@@ -68,8 +67,7 @@ public class ModelExplorerScoringTestPart1 extends ModelExplorerScoringTestBase 
 		ToolCallTracker tracker = new ToolCallTracker();
 		ToolCallTracking.setTracker(tracker);
 		try {
-			ModelExplorerTool agent = new ModelExplorerTool();
-			String agentAnswer = agent.exploreModel(prompt);
+			String agentAnswer = runModelExplorer(prompt);
 			
 			// 2b. Extract and minimize tool results
 			Map<String, Object> toolResults = ToolResultMinimizer.minimizeToolResults(tracker.getToolResults());
@@ -119,8 +117,7 @@ public class ModelExplorerScoringTestPart1 extends ModelExplorerScoringTestBase 
 		ToolCallTracker tracker = new ToolCallTracker();
 		ToolCallTracking.setTracker(tracker);
 		try {
-			ModelExplorerTool agent = new ModelExplorerTool();
-			String agentAnswer = agent.exploreModel(prompt);
+			String agentAnswer = runModelExplorer(prompt);
 			
 			// 2b. Extract and minimize tool results
 			Map<String, Object> toolResults = ToolResultMinimizer.minimizeToolResults(tracker.getToolResults());
@@ -170,8 +167,7 @@ public class ModelExplorerScoringTestPart1 extends ModelExplorerScoringTestBase 
 		ToolCallTracker tracker = new ToolCallTracker();
 		ToolCallTracking.setTracker(tracker);
 		try {
-			ModelExplorerTool agent = new ModelExplorerTool();
-			String agentAnswer = agent.exploreModel(prompt);
+			String agentAnswer = runModelExplorer(prompt);
 			
 			// 2b. Extract and minimize tool results
 			Map<String, Object> toolResults = ToolResultMinimizer.minimizeToolResults(tracker.getToolResults());
@@ -221,8 +217,7 @@ public class ModelExplorerScoringTestPart1 extends ModelExplorerScoringTestBase 
 		ToolCallTracker tracker = new ToolCallTracker();
 		ToolCallTracking.setTracker(tracker);
 		try {
-			ModelExplorerTool agent = new ModelExplorerTool();
-			String agentAnswer = agent.exploreModel(prompt);
+			String agentAnswer = runModelExplorer(prompt);
 			
 			// 2b. Extract and minimize tool results
 			Map<String, Object> toolResults = ToolResultMinimizer.minimizeToolResults(tracker.getToolResults());
@@ -272,8 +267,7 @@ public class ModelExplorerScoringTestPart1 extends ModelExplorerScoringTestBase 
 		ToolCallTracker tracker = new ToolCallTracker();
 		ToolCallTracking.setTracker(tracker);
 		try {
-			ModelExplorerTool agent = new ModelExplorerTool();
-			String agentAnswer = agent.exploreModel(prompt);
+			String agentAnswer = runModelExplorer(prompt);
 			
 			// 2b. Extract and minimize tool results
 			Map<String, Object> toolResults = ToolResultMinimizer.minimizeToolResults(tracker.getToolResults());

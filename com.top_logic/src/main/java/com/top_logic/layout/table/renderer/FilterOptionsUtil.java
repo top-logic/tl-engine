@@ -102,7 +102,7 @@ public class FilterOptionsUtil {
 			boolean includeParentsImmutable = !_viewModel.isFiniteTree();
 			BooleanField includeParentsField = FormFactory.newBooleanField(INCLUDE_PARENTS_FIELD_NAME,
 				includeParentsValue, includeParentsImmutable);
-			includeParentsField.setLabel(translate(I18NConstants.FILTER_OPTIONS_INCLUDE_PARENTS));
+			includeParentsField.setLabel(I18NConstants.FILTER_OPTIONS_INCLUDE_PARENTS);
 			if (_viewModel.isFiniteTree()) {
 				includeParentsField.setTooltip(translate(I18NConstants.FILTER_OPTIONS_INCLUDE_PARENTS_TOOLTIP));
 			} else {
@@ -113,7 +113,7 @@ public class FilterOptionsUtil {
 
 			BooleanField includeChildrenField = FormFactory.newBooleanField(INCLUDE_CHILDREN_FIELD_NAME,
 				Boolean.valueOf(_viewModel.isFilterIncludeChildren()), false);
-			includeChildrenField.setLabel(translate(I18NConstants.FILTER_OPTIONS_INCLUDE_CHILDREN));
+			includeChildrenField.setLabel(I18NConstants.FILTER_OPTIONS_INCLUDE_CHILDREN);
 			includeChildrenField.setTooltip(translate(I18NConstants.FILTER_OPTIONS_INCLUDE_CHILDREN_TOOLTIP));
 			context.addMember(includeChildrenField);
 		}

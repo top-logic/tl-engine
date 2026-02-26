@@ -27,6 +27,7 @@ import com.top_logic.basic.col.ComparableComparator;
 import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.col.filter.FilterFactory;
 import com.top_logic.basic.col.filter.SetFilter;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.Renderer;
 import com.top_logic.layout.ResPrefix;
@@ -69,7 +70,6 @@ import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.ReferencedSelectionModel;
 import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.mig.html.SelectionModelOwner;
-import com.top_logic.util.Resources;
 
 /**
  * Base class for {@link FormContext} implementations of a OptionTreeSelector view.
@@ -143,8 +143,6 @@ public class TreeSelectorContext extends FormContext implements DynamicRecordabl
 		selectionOrder = ((selectionOrder = targetSelectField.getOptionComparator()) != null) ? selectionOrder : ComparableComparator.INSTANCE;
 		init();
 		
-		Resources resources = Resources.getInstance();
-		
 		// Check the contract of this class.
 		if (multiSelect) {
 			assert SELECTION_FIELD_NAME.equals(selectionList.getName());
@@ -155,16 +153,16 @@ public class TreeSelectorContext extends FormContext implements DynamicRecordabl
 		addMember(optionTree);
 		
 		if (multiSelect) {
-			String rightArrowLabel = resources.getString(I18NConstants.SELECT_ARROW_RIGHT, HTMLConstants.RIGHT_ARROW);
-			String rightArrowDoubleLabel =
-				resources.getString(I18NConstants.SELECT_ARROW_DOUBLE_RIGHT, HTMLConstants.RIGHT_ARROW
-					+ HTMLConstants.RIGHT_ARROW);
-			String leftArrowLabel = resources.getString(I18NConstants.SELECT_ARROW_LEFT, HTMLConstants.LEFT_ARROW);
-			String leftArrowDoubleLabel =
-				resources.getString(I18NConstants.SELECT_ARROW_DOUBLE_LEFT, HTMLConstants.LEFT_ARROW
-					+ HTMLConstants.LEFT_ARROW);
+			ResKey rightArrowLabel = I18NConstants.SELECT_ARROW_RIGHT
+				.fallback(ResKey.text(HTMLConstants.RIGHT_ARROW));
+			ResKey rightArrowDoubleLabel = I18NConstants.SELECT_ARROW_DOUBLE_RIGHT
+				.fallback(ResKey.text(HTMLConstants.RIGHT_ARROW + HTMLConstants.RIGHT_ARROW));
+			ResKey leftArrowLabel = I18NConstants.SELECT_ARROW_LEFT
+				.fallback(ResKey.text(HTMLConstants.LEFT_ARROW));
+			ResKey leftArrowDoubleLabel = I18NConstants.SELECT_ARROW_DOUBLE_LEFT
+				.fallback(ResKey.text(HTMLConstants.LEFT_ARROW + HTMLConstants.LEFT_ARROW));
 
-			String addLabel, addAllLabel, removeLabel, removeAllLabel;
+			ResKey addLabel, addAllLabel, removeLabel, removeAllLabel;
 			if (config.isLeftToRight()) {
 				addLabel = rightArrowLabel;
 				addAllLabel = rightArrowDoubleLabel;
@@ -219,7 +217,7 @@ public class TreeSelectorContext extends FormContext implements DynamicRecordabl
 				return v.visitFormMember(this, arg);
 			}
 		};
-		title.setLabel(resources.getString(I18NConstants.POPUP_SELECT_TITLE__FIELD.fill(targetFieldLabel)));
+		title.setLabel(I18NConstants.POPUP_SELECT_TITLE__FIELD.fill(targetFieldLabel));
 		addMember(title);
 		
 		updateButtonsState();
@@ -251,7 +249,6 @@ public class TreeSelectorContext extends FormContext implements DynamicRecordabl
 	protected void init() {
 		final Filter<Object> selectableOptionsFilter = getSelectableOptionsFilter(targetSelectField);
 		
-		Resources resources = Resources.getInstance();
 		String targetFieldLabel = targetSelectField.getLabel();
 		
 		// Create a renderer that only renders plain labels, even if the
@@ -267,7 +264,7 @@ public class TreeSelectorContext extends FormContext implements DynamicRecordabl
 			new DefaultRestrictedListSelectionModel(displayedSelection, selectableOptionsFilter);
 		selectionList = FormFactory.newListField(SELECTION_FIELD_NAME, displayedSelection, selectedSelection);
 		selectionList.setItemRenderer(optionLabelRenderer);
-		selectionList.setLabel(resources.getString(I18NConstants.POPUP_SELECT_SELECTED__FIELD.fill(targetFieldLabel)));
+		selectionList.setLabel(I18NConstants.POPUP_SELECT_SELECTED__FIELD.fill(targetFieldLabel));
 		
 		// Ensure that the list of selected options uses the same sort order
 		// as the list of all options. This is necessary to have a newly
@@ -310,8 +307,7 @@ public class TreeSelectorContext extends FormContext implements DynamicRecordabl
 			new DefaultStructureTreeUIModel<>(optionsAsTree.getBaseModel(), optionsAsTree.showRootNode());
 
 		TreeField optionTree = FormFactory.newTreeField(OPTIONS_FIELD_NAME, treeModel, selectionModel, renderer);
-		optionTree.setLabel(
-			Resources.getInstance().getString(I18NConstants.POPUP_SELECT_OPTIONS__FIELD.fill(targetSelectField.getLabel())));
+		optionTree.setLabel(I18NConstants.POPUP_SELECT_OPTIONS__FIELD.fill(targetSelectField.getLabel()));
 		ScriptingRecorder.annotateAsDontRecord(optionTree);
 		// Markup referenced selection in option tree
 		List<?> currentSelection = (List<?>) FormFieldInternals.getStoredValue(targetSelectField);
@@ -413,8 +409,7 @@ public class TreeSelectorContext extends FormContext implements DynamicRecordabl
 
 	private void createPatternField(String targetFieldLabel) {
 		this.pattern = FormFactory.newStringField(PATTERN_FIELD_NAME);
-		Resources resources = Resources.getInstance();
-		pattern.setLabel(resources.getString(I18NConstants.POPUP_SELECT_FILTER__FIELD.fill(targetFieldLabel)));
+		pattern.setLabel(I18NConstants.POPUP_SELECT_FILTER__FIELD.fill(targetFieldLabel));
 		addMember(pattern);
 	}
 

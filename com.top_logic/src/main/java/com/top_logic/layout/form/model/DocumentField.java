@@ -11,6 +11,7 @@ import org.w3c.dom.Document;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.io.binary.BinaryDataSource;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.DOMUtil;
 import com.top_logic.common.webfolder.ui.NotExecutableListener;
 import com.top_logic.layout.Control;
@@ -78,14 +79,14 @@ public class DocumentField extends CompositeField {
 		template.setImmutable(true);
 
 		CommandField lock = FormFactory.newCommandField(LOCK_FIELD, lockAction);
-		lock.setLabel(null);
+		lock.setLabel((ResKey) null);
 		lock.setImage(Icons.DOC_LOCKED);
 		lock.setNotExecutableImage(Icons.DOC_LOCKED_DISABLED);
 		lock.setCssClasses(FormConstants.FIXED_RIGHT_CSS_CLASS);
 		addMember(lock);
 
 		CommandField unlock = FormFactory.newCommandField(UNLOCK_FIELD, unlockAction);
-		unlock.setLabel(null);
+		unlock.setLabel((ResKey) null);
 		unlock.setImage(Icons.DOC_UNLOCK);
 		unlock.setNotExecutableImage(Icons.DOC_UNLOCK_DISABLED);
 		unlock.setCssClasses(FormConstants.FIXED_RIGHT_CSS_CLASS);

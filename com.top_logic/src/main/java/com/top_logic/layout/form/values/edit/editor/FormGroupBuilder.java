@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.top_logic.basic.config.PropertyDescriptor;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.form.FormContainer;
@@ -30,7 +31,6 @@ import com.top_logic.layout.form.values.edit.Icons;
 import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.layout.form.values.edit.ValueModel;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.Resources;
 
 /**
  * General builder creating {@link FormMember}s for a given input.
@@ -118,10 +118,10 @@ public abstract class FormGroupBuilder {
 		bindVisible(addButton, not(or(readOnly, Fields.isImmutable(list))));
 	}
 
-	private String createAddEntryLabel(ValueModel valueModel) {
+	private ResKey createAddEntryLabel(ValueModel valueModel) {
 		String propertyLabel = Labels.propertyLabel(valueModel);
 
-		return Resources.getInstance().getString(I18NConstants.ADD_ELEMENT__PROPERTY.fill(propertyLabel));
+		return I18NConstants.ADD_ELEMENT__PROPERTY.fill(propertyLabel);
 	}
 
 	/**

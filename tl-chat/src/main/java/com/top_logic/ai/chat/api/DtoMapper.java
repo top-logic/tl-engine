@@ -13,6 +13,7 @@ import java.util.Map;
 
 import java.util.LinkedHashMap;
 
+import com.top_logic.ai.chat.api.messages.AttachmentDto;
 import com.top_logic.ai.chat.api.messages.ChatUpdatesResponse;
 import com.top_logic.ai.chat.api.messages.CurrentTaskDto;
 import com.top_logic.ai.chat.api.messages.MessageDto;
@@ -99,6 +100,15 @@ public final class DtoMapper {
 			dto.setContentHtml(Converters.markdownToHtmlString(msg.getText()));
 		} else {
 			dto.setRole("user");
+		}
+		List<ChatMessage.AttachmentMetadata> attachments = msg.getAttachments();
+		if (attachments != null && !attachments.isEmpty()) {
+			for (ChatMessage.AttachmentMetadata att : attachments) {
+				dto.addAttachment(AttachmentDto.create()
+					.setFileName(att.fileName())
+					.setMimeType(att.mimeType())
+					.setSize(att.size()));
+			}
 		}
 		return dto;
 	}
@@ -266,10 +276,16 @@ public final class DtoMapper {
 				if ("message".equals(entry.getType()) && entry.getMessageData() != null) {
 					MessageDto msg = entry.getMessageData();
 					Instant timestamp = parseTimestamp(msg.getTime());
+					List<ChatMessage.AttachmentMetadata> attachments = new ArrayList<>();
+					for (AttachmentDto att : msg.getAttachments()) {
+						attachments.add(new ChatMessage.AttachmentMetadata(
+							att.getFileName(), att.getMimeType(), att.getSize()));
+					}
 					ChatMessage chatMsg = new ChatMessage(
 						msg.getUserName() != null ? msg.getUserName() : msg.getRole(),
 						msg.getContent(),
-						timestamp);
+						timestamp,
+						attachments);
 					result.add(new ChatEntry.MessageEntry(chatMsg));
 				} else if ("task_snapshot".equals(entry.getType()) && entry.getTaskData() != null) {
 					ChatTask task = fromCurrentTaskDto(entry.getTaskData());

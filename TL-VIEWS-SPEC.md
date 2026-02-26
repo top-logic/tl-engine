@@ -1484,6 +1484,17 @@ public interface ViewCommand {
         @Name("confirmation")
         PolymorphicConfiguration<? extends ViewCommandConfirmation> getConfirmation();
 
+        // --- Dirty handling ---
+
+        /**
+         * Scope of dirty checking before command execution.
+         *
+         * <p>Replaces the legacy {@code CheckScopeProvider} which navigated the
+         * LayoutComponent tree. See Section 11 (Dirty Handling) for details.</p>
+         */
+        @Name("check-dirty")
+        DirtyCheckScope getCheckDirty();
+
         // --- Security ---
 
         /** Security command group (READ, WRITE, DELETE, ...) for access control. */
@@ -1586,7 +1597,7 @@ public class DeleteCustomerHandler implements ViewCommand {
 | `confirmation`          | `confirmation`          | New `ViewCommandConfirmation` interface    |
 | `group`                 | `group`                 | Unchanged (BoundCommandGroup)             |
 | `security-object`       | `securityObject`        | New `ViewSecurityObjectProvider` interface |
-| (removed)               | `checkScopeProvider`    | Replaced by channel-based dirty tracking  |
+| `check-dirty`           | `checkScopeProvider`    | Declarative scope enum replaces pluggable tree walk |
 
 A command's placement and clique can always be overridden in the panel's `<commands>`
 declaration:
@@ -1910,6 +1921,168 @@ Elements without a `secure` attribute are always visible (subject to their paren
 visibility). This replaces the current system where every `LayoutComponent` participates
 in security evaluation regardless of need.
 
+## 11. Dirty Handling
+
+Dirty handling prevents users from losing unsaved form changes. When a user has modified
+a form and then tries to execute a command or navigate away, the system intervenes with
+a confirmation dialog offering to apply, discard, or cancel the action.
+
+### ChangeHandler
+
+The `<form>` element is inherently a `ChangeHandler` - it knows whether it has unsaved
+changes and can apply or discard them:
+
+```java
+/**
+ * Anything that can have unsaved changes.
+ *
+ * <p>In the view system, {@code <form>} elements implement this interface.
+ * The interface is unchanged from the legacy system.</p>
+ */
+public interface ChangeHandler extends CanApply {
+
+    /** Whether this handler has unsaved changes. */
+    boolean isChanged();
+
+    /** Whether the current state has validation errors. */
+    boolean hasError();
+
+    /** Human-readable description of what changed (for the confirmation dialog). */
+    String getChangeDescription();
+}
+
+public interface CanApply {
+
+    /** Command to save/apply the changes, or null if not applicable. */
+    Command getApplyClosure();
+
+    /** Command to discard the changes. */
+    Command getDiscardClosure();
+}
+```
+
+### Two Triggers
+
+Dirty handling is triggered in two distinct situations:
+
+#### 1. Command Execution
+
+Before a command executes, the system checks for dirty forms within the command's
+declared scope. The `check-dirty` property on `ViewCommand.Config` declares this scope:
+
+```java
+public enum DirtyCheckScope {
+    /** Check forms within the enclosing panel (default). */
+    SELF,
+    /** Check all forms in the entire view. */
+    VIEW,
+    /** Skip dirty checking (e.g., for cancel/discard commands). */
+    NONE
+}
+```
+
+```xml
+<panel toolbar="true" button-bar="true">
+  <commands>
+    <!-- Delete checks forms in this panel (default) -->
+    <command class="com.example.DeleteHandler" />
+
+    <!-- Save skips dirty check (it IS the apply action) -->
+    <command class="com.example.SaveHandler" check-dirty="none" />
+
+    <!-- Navigate checks all forms in the view -->
+    <command class="com.example.NavigateHandler" check-dirty="view" />
+  </commands>
+  ...
+</panel>
+```
+
+The runtime flow:
+
+```
+Command about to execute
+    ↓
+Resolve check-dirty scope → collect ChangeHandlers (forms)
+    ↓
+Any ChangeHandler.isChanged() == true?
+    ↓ no                    ↓ yes
+Execute command         Show confirmation dialog
+                            ├─ "Apply Changes"  → apply all, then execute command
+                            ├─ "Discard Changes" → discard all, then execute command
+                            └─ "Cancel"          → abort, stay as-is
+```
+
+`SELF` (the default) collects all forms within the command's enclosing panel. This is
+the direct replacement for the legacy `ChildrenCheckScopeProvider` - but instead of
+walking a component tree, the panel already knows its form descendants.
+
+`VIEW` collects all forms in the entire view. This replaces the legacy pattern of
+commands that checked the whole window.
+
+`NONE` skips dirty checking entirely. Used for commands that are themselves the
+apply/discard action (save, cancel), or for read-only commands that don't affect state.
+
+#### 2. Navigation
+
+Navigation elements (`<tabs>`, `<sidebar>`, `<tiles>`) automatically check for dirty
+forms **in the child being navigated away from** before switching. This is inherent
+behavior - no per-command configuration is needed.
+
+```
+User clicks a different tab
+    ↓
+Collect ChangeHandlers from the CURRENTLY ACTIVE tab's content
+    ↓
+Any ChangeHandler.isChanged() == true?
+    ↓ no                    ↓ yes
+Switch tab              Show confirmation dialog
+                            ├─ "Apply Changes"  → apply all, then switch
+                            ├─ "Discard Changes" → discard all, then switch
+                            └─ "Cancel"          → stay on current tab
+```
+
+This applies uniformly to all navigation elements:
+
+| Element      | Checks dirty state of...                          |
+|--------------|---------------------------------------------------|
+| `<tabs>`     | The currently active tab's content                |
+| `<sidebar>`  | The currently active entry's content              |
+| `<tiles>`    | The currently selected tile's detail content      |
+
+The dirty check on navigation is always equivalent to `SELF` scope on the child being
+left - it checks all forms within that child's subtree.
+
+### Confirmation Dialog
+
+The confirmation dialog is the same for both triggers. It presents three options:
+
+- **Apply Changes**: Calls `getApplyClosure()` on each dirty `ChangeHandler`, then
+  proceeds with the original action (command execution or navigation).
+- **Discard Changes**: Calls `getDiscardClosure()` on each dirty `ChangeHandler`, then
+  proceeds.
+- **Cancel**: Aborts the action entirely. No changes are applied or discarded.
+
+The "Apply Changes" button is disabled if any dirty form has validation errors
+(`hasError() == true`), preventing invalid data from being saved.
+
+### Simplification over Legacy System
+
+The legacy system uses:
+- `CheckScopeProvider` (pluggable, navigates LayoutComponent tree)
+- `ChildrenCheckScopeProvider`, `SelfCheckProvider`, `NoCheckScopeProvider` (implementations)
+- `DefaultTabSwitchVetoListener` (separate mechanism for tab switching)
+- `DirtyHandlingVeto` / `VetoException` pattern
+
+The new system replaces all of this with:
+- A `DirtyCheckScope` enum on commands (`self`, `view`, `none`)
+- Built-in dirty checking on navigation elements
+- The same `ChangeHandler` interface and confirmation dialog
+
+The pluggable `CheckScopeProvider` with its component tree navigation is eliminated.
+The `VetoException` pattern for tab switching is replaced by the navigation element's
+built-in behavior. The confirmation dialog and `ChangeHandler` interface remain
+essentially unchanged.
+
 ## Summary: Architecture Layers
 
 ```
@@ -2080,10 +2253,10 @@ view-based counterparts.
 - **Current**: `getCheckScope(LayoutComponent component)`
 - **Used in**: `CommandHandler.Config` (`getCheckScopeProvider()` property)
 - **Purpose**: Identifies components to check for unsaved changes before execution
-- **New equivalent**: Needs rethinking. The current concept navigates the LayoutComponent
-  tree to find dirty forms. In the new system, forms could track their own dirty state
-  via channels, and the view could aggregate dirty state in a derived channel. The
-  command's check could then be a simple channel-value check rather than a tree walk.
+- **New equivalent**: Replaced by the `check-dirty` property on `ViewCommand.Config`
+  with a `DirtyCheckScope` enum (`self`, `view`, `none`). The pluggable tree-walking
+  provider is eliminated. Navigation elements (`<tabs>`, `<sidebar>`, `<tiles>`) have
+  built-in dirty checking on switch. See Section 11 (Dirty Handling) for full details.
 
 #### 4. ModelBuilder / ListModelBuilder / TreeModelBuilder
 

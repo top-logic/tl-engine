@@ -592,8 +592,7 @@ Commands on a panel declare a **placement** that determines where they appear:
     <command class="com.example.DeleteCommandHandler" />     <!-- toolbar (default) -->
     <command class="com.example.SaveCommandHandler" />       <!-- button-bar (default) -->
     <command class="com.example.CancelCommandHandler" />     <!-- button-bar (default) -->
-    <command class="com.example.ExportCommandHandler"
-             placement="burger-menu" />                      <!-- explicit override -->
+    <command class="com.example.ExportCommandHandler" />       <!-- clique: export (menu) -->
   </commands>
 
   <form model="selectedCustomer">
@@ -603,18 +602,21 @@ Commands on a panel declare a **placement** that determines where they appear:
 </panel>
 ```
 
-**Placement** determines where the command's button is rendered:
+**Placement** determines which display area the command's button appears in:
 
 | Placement      | Location                                   | Default for                    |
 |----------------|--------------------------------------------|--------------------------------|
 | `toolbar`      | Horizontal bar above panel content         | Most action commands (edit, delete, create) |
 | `button-bar`   | Horizontal bar below panel content         | Commit/cancel commands (save, apply, cancel) |
 | `context-menu` | Right-click menu on data elements          | Row-specific actions           |
-| `burger-menu`  | Overflow/hamburger menu in toolbar area    | Secondary/rare actions (export, print) |
 
 Each command type/implementation defines its own default placement. The `placement`
 attribute on a command declaration overrides this default. This way, standard commands
 work out of the box, but any command can be placed anywhere.
+
+Note: There is no `burger-menu` placement. What was traditionally an "overflow" or
+"hamburger" menu is simply a menu clique (see Command Cliques) within the `toolbar`
+placement. Commands in a menu clique are collapsed into a single dropdown button.
 
 **Context menu commands**: Commands with `placement="context-menu"` are collected by
 data elements (`<table>`, `<tree>`) within the panel. When the user right-clicks a row,
@@ -642,7 +644,7 @@ the escape hatch for placing a command in a non-standard location:
 **Implicit commands from children**: In addition to explicitly declared commands, a panel
 collects implicit commands contributed by its child elements via
 `ViewContext.registerCommand()`. For example, a `<table>` inside a panel contributes
-search/filter/export commands to the panel's toolbar or burger menu. See Section 9
+search/filter/export commands to the panel's toolbar. See Section 9
 (Implicit Commands) for details.
 
 **Panels without explicit commands**: A `<panel>` without `<commands>` can still display
@@ -1304,7 +1306,7 @@ The primary command-defining elements are:
 
 | Element      | Display Areas                                              |
 |--------------|------------------------------------------------------------|
-| `<panel>`    | Toolbar (above content), button bar (below content), burger menu |
+| `<panel>`    | Toolbar (above content), button bar (below content)        |
 | `<dialog>`   | Button bar (always present)                                |
 | `<tabs>`     | Buttons at the right side of the tab bar                   |
 | `<sidebar>`  | Additional entries below the navigation entries            |
@@ -1364,9 +1366,7 @@ public enum CommandPlacement {
     /** Button bar below panel content (default for commit/cancel commands). */
     BUTTON_BAR,
     /** Context menu on data elements (default for row-specific actions). */
-    CONTEXT_MENU,
-    /** Overflow/hamburger menu in toolbar area (for secondary actions). */
-    BURGER_MENU
+    CONTEXT_MENU
 }
 ```
 
@@ -1395,10 +1395,10 @@ declaration:
 ```xml
 <panel toolbar="true">
   <commands>
-    <!-- ExportHandler defaults to TOOLBAR, move it to burger-menu -->
-    <command class="com.example.ExportHandler" placement="burger-menu" />
     <!-- Override clique for a specific command -->
     <command class="com.example.DuplicateHandler" clique="create" />
+    <!-- ExportHandler defaults to 'export' clique (menu display) -->
+    <command class="com.example.ExportHandler" />
   </commands>
   ...
 </panel>
@@ -1406,10 +1406,22 @@ declaration:
 
 ### Command Cliques
 
-Commands within a placement area (toolbar, button bar, burger menu, context menu) are
-ordered and visually grouped by **cliques**. A clique defines a semantic category for
-a command. Commands in the same clique appear together; different cliques are separated
-visually (e.g., by a separator line or spacing).
+Commands within a placement area (toolbar, button bar, context menu) are ordered and
+visually grouped by **cliques**. A clique defines a semantic category for a command.
+Commands in the same clique appear together; different cliques are separated visually
+(e.g., by a separator line or spacing).
+
+#### Clique Display Mode
+
+Each clique has a **display mode** that controls how its commands are presented:
+
+- **`inline`** (default): Commands are shown directly in the display area, separated
+  from adjacent cliques by visual separators.
+- **`menu`**: Commands are collapsed into a single button/entry that opens a submenu
+  or dropdown. The clique defines a `label` and `icon` for the trigger.
+
+This generalizes what was traditionally a "burger menu" or "overflow menu". Any clique
+can be a menu clique - there is no special `burger-menu` placement.
 
 #### Standard Cliques
 
@@ -1417,24 +1429,79 @@ A small, well-known set of standard cliques covers most business application nee
 Each command type defines a default clique, so developers rarely need to specify one
 explicitly:
 
-| Clique      | Typical Commands                         | Order |
-|-------------|------------------------------------------|-------|
-| `create`    | New, import, duplicate                   | 1     |
-| `edit`      | Edit, lock, unlock                       | 2     |
-| `delete`    | Delete, remove                           | 3     |
-| `commit`    | Save, apply, cancel                      | 4     |
-| `navigate`  | Open, goto, back                         | 5     |
-| `view`      | Search, reset filters, column config     | 6     |
-| `export`    | Excel, PDF, print                        | 7     |
+| Clique      | Typical Commands                         | Display  | Order |
+|-------------|------------------------------------------|----------|-------|
+| `create`    | New, import, duplicate                   | `inline` | 1     |
+| `edit`      | Edit, lock, unlock                       | `inline` | 2     |
+| `delete`    | Delete, remove                           | `inline` | 3     |
+| `commit`    | Save, apply, cancel                      | `inline` | 4     |
+| `navigate`  | Open, goto, back                         | `inline` | 5     |
+| `view`      | Search, reset filters, column config     | `menu`   | 6     |
+| `export`    | Excel, PDF, print                        | `menu`   | 7     |
+| `more`      | Settings, help, about                    | `menu`   | 8     |
 
 The clique order determines the display order within a placement area. Commands within
 the same clique appear in their declaration order (explicit commands) or registration
-order (implicit commands). Adjacent cliques are separated visually.
+order (implicit commands). Inline cliques are separated visually; menu cliques are
+rendered as dropdown buttons.
 
 ```
-Toolbar:  [New] [Import]  |  [Edit] [Lock]  |  [Delete]  |  [Search] [Reset]
-           ---- create ---    --- edit ---      - delete -    ----- view -----
+Toolbar:  [New] [Import]  |  [Edit] [Lock]  |  [Delete]  |  [View ▾]  [Export ▾]
+           ---- create ---    --- edit ---      - delete -    - view -    - export -
 ```
+
+Menu cliques like `view` and `export` collapse their commands into dropdowns. If a
+menu clique contains only a single command, it can be rendered as a direct button
+instead of a dropdown (implementation choice).
+
+#### Nested Cliques
+
+Menu cliques can contain **sub-cliques** to organize their dropdown content into
+visually separated groups:
+
+```xml
+<panel toolbar="true">
+  <cliques>
+    <clique name="export">
+      <!-- Sub-cliques within the 'export' menu -->
+      <clique name="export.document" />
+      <clique name="export.labels" />
+    </clique>
+  </cliques>
+
+  <commands>
+    <command class="com.example.ExportExcelHandler" clique="export.document" />
+    <command class="com.example.ExportPdfHandler" clique="export.document" />
+    <command class="com.example.PrintLabelsHandler" clique="export.labels" />
+  </commands>
+  ...
+</panel>
+```
+
+```
+Toolbar:  ...  [Export ▾]
+                ├─ Excel
+                ├─ PDF
+                ├───────── (separator)
+                └─ Print labels
+```
+
+Sub-cliques within a menu create separator-divided groups in the dropdown. This works
+recursively - a sub-clique can itself be a menu clique, producing nested submenus:
+
+```
+Context menu:  Edit
+               Delete
+               ─────────
+               Export  ►  ├─ Excel
+                          ├─ PDF
+                          ├─────────
+                          └─ Print labels
+```
+
+This eliminates the need for a dedicated "burger menu" concept. What was traditionally
+an overflow menu is simply the last menu clique(s) in the toolbar (e.g., `view`,
+`export`, `more`).
 
 #### Default Cliques
 
@@ -1486,6 +1553,31 @@ Toolbar:  [Edit]  |  [Approve] [Reject] [Escalate]  |  [Delete]
 Local cliques are scoped to the panel that defines them. They use `after` (or `before`)
 to specify their position relative to standard cliques. This avoids polluting the
 global list while still allowing custom grouping where needed.
+
+Local cliques can also use `display="menu"` to collapse their commands into a dropdown:
+
+```xml
+<panel toolbar="true">
+  <cliques>
+    <clique name="workflow" after="edit" display="menu"
+            label="i18n:workflow" icon="workflow" />
+  </cliques>
+
+  <commands>
+    <command class="com.example.ApproveHandler" clique="workflow" />
+    <command class="com.example.RejectHandler" clique="workflow" />
+    <command class="com.example.EscalateHandler" clique="workflow" />
+  </commands>
+  ...
+</panel>
+```
+
+```
+Toolbar:  [Edit]  |  [Workflow ▾]  |  [Delete]
+                     ├─ Approve
+                     ├─ Reject
+                     └─ Escalate
+```
 
 ### Context Menu Commands
 
@@ -1558,7 +1650,7 @@ need to appear in the nearest enclosing command scope (panel or dialog).
 
 **Panel and dialog implicit commands**:
 - `<panel collapsible="true">` contributes a collapse/expand toggle command to its own
-  toolbar (or burger menu).
+  toolbar.
 - `<dialog>` contributes a close/cancel command to its own button bar.
 
 These are self-contained: the element contributes commands to itself.
@@ -1569,9 +1661,9 @@ display areas. Examples:
 
 | Element    | Implicit Commands                                | Default Placement | Default Clique |
 |------------|--------------------------------------------------|-------------------|----------------|
-| `<table>`  | Search, reset filters, column config, export     | `burger-menu`     | `view`/`export`|
-| `<tree>`   | Expand all, collapse all                         | `burger-menu`     | `view`         |
-| `<form>`   | (potentially) reset form                         | `burger-menu`     | `view`         |
+| `<table>`  | Search, reset filters, column config, export     | `toolbar`         | `view`/`export`|
+| `<tree>`   | Expand all, collapse all                         | `toolbar`         | `view`         |
+| `<form>`   | (potentially) reset form                         | `toolbar`         | `view`         |
 
 These elements call `ViewContext.registerCommand()` during control creation. The
 enclosing panel collects all registered commands and displays them according to their

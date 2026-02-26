@@ -1434,11 +1434,6 @@ public interface ViewCommand {
         @Nullable
         ThemeImage getImage();
 
-        /** Icon displayed when the command is disabled. */
-        @Name("disabled-image")
-        @Nullable
-        ThemeImage getDisabledImage();
-
         /** CSS classes for the command button. */
         @Name("css-classes")
         @Nullable
@@ -1582,7 +1577,7 @@ public class DeleteCustomerHandler implements ViewCommand {
 | `name`                  | `id`                    | Renamed for clarity                       |
 | `label`                 | `resourceKey`           | Same concept, renamed                     |
 | `image`                 | `image`                 | Unchanged                                 |
-| `disabled-image`        | `disabledImage`         | Unchanged                                 |
+| (removed)               | `disabledImage`         | Obsolete (PNG-era legacy)                 |
 | `css-classes`           | `cssClasses`            | Unchanged                                 |
 | `placement`             | (new)                   | New in view system                        |
 | `clique`                | `clique`                | Same concept, now typed enum              |

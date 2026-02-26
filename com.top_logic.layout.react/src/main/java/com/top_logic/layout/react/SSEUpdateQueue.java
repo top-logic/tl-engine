@@ -24,6 +24,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.layout.CommandListener;
 import com.top_logic.layout.react.protocol.SSEEvent;
+import com.top_logic.layout.react.protocol.StateEvent;
 
 import de.haumacher.msgbuf.io.StringW;
 import de.haumacher.msgbuf.json.JsonWriter;
@@ -104,7 +105,32 @@ public class SSEUpdateQueue implements HttpSessionBindingListener {
 	 */
 	public void addConnection(AsyncContext asyncContext) {
 		_connections.add(asyncContext);
+		sendFullState(asyncContext);
 		ensureHeartbeat();
+	}
+
+	/**
+	 * Sends the full state of all registered {@link ReactControl}s to the given connection.
+	 *
+	 * <p>
+	 * This is called when a new SSE connection is established (including reconnects) to ensure the
+	 * client has the current state of all controls, recovering any state that may have been lost
+	 * while the connection was down.
+	 * </p>
+	 */
+	private void sendFullState(AsyncContext ctx) {
+		for (CommandListener control : _controls.values()) {
+			if (control instanceof ReactControl) {
+				ReactControl rc = (ReactControl) control;
+				StateEvent event = StateEvent.create()
+					.setControlId(rc.getID())
+					.setState(ReactControl.toJsonString(rc.getReactState()));
+				String message = toDataMessage(toJson(event));
+				if (message != null) {
+					writeOrRemove(ctx, message);
+				}
+			}
+		}
 	}
 
 	/**

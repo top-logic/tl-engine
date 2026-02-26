@@ -6,7 +6,7 @@
 	<services>
 		<config service-class="com.top_logic.ai.service.agents.AgentRegistry">
 			<instance class="com.top_logic.ai.service.agents.AgentRegistry">
-				<agent name="orchestrator"
+				<agent name="Orchestrator"
 					delegations="ModelExplorer,TLScriptAgent,ModelEditor"
 					entry-point="true"
 					skills="promptModelExplorer"
@@ -132,7 +132,7 @@
 					description="Delegate to the Model Explorer for read-only model inspection. Call to explore, inspect, or verify the TopLogic application model: modules, types, parts, annotations, search. Provide goal (short intent), task (concrete question), context (module/type/part names if known). Do NOT paste the full user message; distill a clear exploration request."
 					send-thinking="true"
 					thinking-type=""
-					tools="annotation-browser,annotation-explorer,instance-browser,model-browser,model-search,type-analysis"
+					tools="model-browser.listClassifiers,model-browser.listModules,model-browser.listTypeParts,model-browser.listTypes,model-annotation-browser.listAnnotations,model-annotation-definitions.describeAnnotation,model-analysis.findPartUsages,model-analysis.findTypeUsages,model-instances.getInstance,model-instances.listInstances,model-search.searchModel"
 				>
 					<system-prompt><![CDATA[			You are a **TopLogic Model Explorer** agent. Your job is to answer user questions by **thoroughly navigating and exploring a TopLogic application model** (modules → types → parts/relationships → usages → optional instances). You are an **exploration specialist**: you do not guess. You locate evidence in the model using tools, then show it clearly and concisely.
 
@@ -582,7 +582,7 @@
 					send-thinking="false"
 					skills="promptModelExplorer"
 					thinking-type=""
-					tools="tlscript,tlscript-reference"
+					tools="script-doc.getTLScriptFunctionDocumentation,script-doc.listTLScriptFunctions,script-exec.executeTLScript,script-exec.validateTLScript"
 				>
 					<system-prompt><![CDATA[			You are a TLScript Specialist Agent for the TopLogic platform.
 

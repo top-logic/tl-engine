@@ -571,6 +571,10 @@ public interface PanelElement extends ContainerElement {
         @Name("collapsible")
         boolean getCollapsible();
 
+        /** Local clique definitions for application-specific command grouping. */
+        @Name("cliques")
+        List<LocalCliqueConfig> getCliques();
+
         /** Commands scoped to this panel. */
         @Name("commands")
         List<PolymorphicConfiguration<CommandHandler>> getCommands();
@@ -1321,6 +1325,10 @@ public interface CommandHandler {
         /** Where this command's button appears. Default is defined by the implementation. */
         @Name("placement")
         CommandPlacement getPlacement();
+
+        /** Which clique this command belongs to (for ordering and visual grouping). */
+        @Name("clique")
+        CommandClique getClique();
     }
 }
 
@@ -1336,7 +1344,7 @@ public enum CommandPlacement {
 }
 ```
 
-The default placement is part of the command's implementation:
+The default placement and clique are part of the command's implementation:
 
 ```java
 public class SaveCommandHandler extends AbstractCommandHandler {
@@ -1344,23 +1352,114 @@ public class SaveCommandHandler extends AbstractCommandHandler {
     public interface Config extends AbstractCommandHandler.Config {
         @Override
         default CommandPlacement getPlacement() {
-            return CommandPlacement.BUTTON_BAR;  // Save goes in button bar by default
+            return CommandPlacement.BUTTON_BAR;
+        }
+
+        @Override
+        default CommandClique getClique() {
+            return CommandClique.COMMIT;
         }
     }
 }
 ```
 
-A command's placement can always be overridden in the panel's `<commands>` declaration:
+A command's placement and clique can always be overridden in the panel's `<commands>`
+declaration:
 
 ```xml
 <panel toolbar="true">
   <commands>
     <!-- ExportHandler defaults to TOOLBAR, move it to burger-menu -->
     <command class="com.example.ExportHandler" placement="burger-menu" />
+    <!-- Override clique for a specific command -->
+    <command class="com.example.DuplicateHandler" clique="create" />
   </commands>
   ...
 </panel>
 ```
+
+### Command Cliques
+
+Commands within a placement area (toolbar, button bar, burger menu, context menu) are
+ordered and visually grouped by **cliques**. A clique defines a semantic category for
+a command. Commands in the same clique appear together; different cliques are separated
+visually (e.g., by a separator line or spacing).
+
+#### Standard Cliques
+
+A small, well-known set of standard cliques covers most business application needs.
+Each command type defines a default clique, so developers rarely need to specify one
+explicitly:
+
+| Clique      | Typical Commands                         | Order |
+|-------------|------------------------------------------|-------|
+| `create`    | New, import, duplicate                   | 1     |
+| `edit`      | Edit, lock, unlock                       | 2     |
+| `delete`    | Delete, remove                           | 3     |
+| `commit`    | Save, apply, cancel                      | 4     |
+| `navigate`  | Open, goto, back                         | 5     |
+| `view`      | Search, reset filters, column config     | 6     |
+| `export`    | Excel, PDF, print                        | 7     |
+
+The clique order determines the display order within a placement area. Commands within
+the same clique appear in their declaration order (explicit commands) or registration
+order (implicit commands). Adjacent cliques are separated visually.
+
+```
+Toolbar:  [New] [Import]  |  [Edit] [Lock]  |  [Delete]  |  [Search] [Reset]
+           ---- create ---    --- edit ---      - delete -    ----- view -----
+```
+
+#### Default Cliques
+
+Like placement, the default clique is defined by the command's implementation:
+
+```java
+public class DeleteCommandHandler extends AbstractCommandHandler {
+
+    public interface Config extends AbstractCommandHandler.Config {
+        @Override
+        default CommandClique getClique() {
+            return CommandClique.DELETE;
+        }
+    }
+}
+```
+
+Implicit commands from child elements (e.g., table search, tree expand-all) also
+declare their clique. Standard implicit commands default to `view`.
+
+#### Local Cliques
+
+Panels can define **local cliques** for application-specific groupings that don't
+warrant a global standard clique:
+
+```xml
+<panel toolbar="true">
+  <cliques>
+    <!-- Local clique, ordered between 'edit' and 'delete' -->
+    <clique name="workflow" after="edit" />
+  </cliques>
+
+  <commands>
+    <command class="com.example.ApproveHandler" clique="workflow" />
+    <command class="com.example.RejectHandler" clique="workflow" />
+    <command class="com.example.EscalateHandler" clique="workflow" />
+    <command class="com.example.EditHandler" />     <!-- clique: edit (default) -->
+    <command class="com.example.DeleteHandler" />   <!-- clique: delete (default) -->
+  </commands>
+  ...
+</panel>
+```
+
+```
+Toolbar:  [Edit]  |  [Approve] [Reject] [Escalate]  |  [Delete]
+          - edit -   ---------- workflow -----------    - delete -
+```
+
+Local cliques are scoped to the panel that defines them. They use `after` (or `before`)
+to specify their position relative to standard cliques. This avoids polluting the
+global list while still allowing custom grouping where needed.
 
 ### Context Menu Commands
 
@@ -1442,11 +1541,11 @@ These are self-contained: the element contributes commands to itself.
 Elements within a panel can contribute commands that bubble up to the enclosing panel's
 display areas. Examples:
 
-| Element    | Implicit Commands                                        | Default Placement |
-|------------|----------------------------------------------------------|-------------------|
-| `<table>`  | Search, reset filters, column configuration, export      | `burger-menu`     |
-| `<tree>`   | Expand all, collapse all                                 | `burger-menu`     |
-| `<form>`   | (potentially) reset form                                 | `burger-menu`     |
+| Element    | Implicit Commands                                | Default Placement | Default Clique |
+|------------|--------------------------------------------------|-------------------|----------------|
+| `<table>`  | Search, reset filters, column config, export     | `burger-menu`     | `view`/`export`|
+| `<tree>`   | Expand all, collapse all                         | `burger-menu`     | `view`         |
+| `<form>`   | (potentially) reset form                         | `burger-menu`     | `view`         |
 
 These elements call `ViewContext.registerCommand()` during control creation. The
 enclosing panel collects all registered commands and displays them according to their
@@ -1466,9 +1565,10 @@ buttons for search/filter/export. The difference is that the element does not ne
 know *where* or *how* the commands are displayed - it just registers them, and the
 enclosing panel handles placement.
 
-**Ordering**: Explicitly declared commands appear first (in declaration order), followed
-by implicit commands contributed by children (in tree order). Within each group,
-placement determines the display area.
+**Ordering**: Both explicit and implicit commands are ordered by their clique (see
+Command Cliques). Within a clique, explicit commands appear in declaration order,
+followed by implicit commands in registration order. Placement determines the display
+area; clique determines position and grouping within that area.
 
 ### Command Resolution
 

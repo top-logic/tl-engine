@@ -41,9 +41,6 @@ public class ReactFileUploadControl extends ReactControl implements UploadHandle
 	/** State key for an error message. */
 	private static final String ERROR = "error";
 
-	/** State key for the uploaded file name. */
-	private static final String FILE_NAME = "fileName";
-
 	/** State key for the accepted MIME type filter. */
 	private static final String ACCEPT = "accept";
 
@@ -101,7 +98,6 @@ public class ReactFileUploadControl extends ReactControl implements UploadHandle
 			BinaryData data = BinaryDataFactory.createBinaryData(fileData, contentType, fileName);
 			_dataHandler.accept(data);
 
-			putState(FILE_NAME, fileName);
 			putState(ERROR, null);
 			putState(STATUS, "idle");
 		} catch (IOException ex) {

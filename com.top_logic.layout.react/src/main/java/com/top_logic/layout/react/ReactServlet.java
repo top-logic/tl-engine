@@ -7,6 +7,8 @@ package com.top_logic.layout.react;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -20,18 +22,27 @@ import jakarta.servlet.http.Part;
 
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
+import com.top_logic.base.services.simpleajax.ClientAction;
+import com.top_logic.base.services.simpleajax.ContentReplacement;
+import com.top_logic.base.services.simpleajax.DOMModification;
+import com.top_logic.base.services.simpleajax.ElementReplacement;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.json.JSON;
+import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.event.infoservice.InfoServiceXMLStringConverter;
 import com.top_logic.layout.CommandListener;
 import com.top_logic.layout.ContentHandlersRegistry;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.UpdateWriter;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.internal.SubsessionHandler;
 import com.top_logic.layout.react.protocol.JSSnipplet;
+import com.top_logic.layout.react.protocol.SSEEvent;
+import com.top_logic.mig.html.layout.MainLayout;
+import com.top_logic.mig.html.layout.RevalidationVisitor;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.TopLogicServlet;
@@ -44,6 +55,13 @@ import com.top_logic.util.TopLogicServlet;
  * setup. The client sends JSON-encoded command requests via POST. The servlet resolves the target
  * control from the session-scoped {@link SSEUpdateQueue} and dispatches the command. Any resulting
  * state updates are delivered via SSE.
+ * </p>
+ *
+ * <p>
+ * When a React command or upload modifies the model of a traditional (legacy) control, that
+ * control's pending repaint is collected via the standard {@link RevalidationVisitor} and forwarded
+ * as SSE {@link com.top_logic.layout.react.protocol.ElementReplacement} events, so the browser DOM
+ * is updated without an extra AJAX round-trip.
  * </p>
  */
 @MultipartConfig
@@ -132,21 +150,23 @@ public class ReactServlet extends TopLogicServlet {
 		// Install subsession context and enable command phase.
 		SubsessionHandler rootHandler = installSubSession(displayContext, windowName);
 
+		HandlerResult result;
 		boolean updateBefore = rootHandler != null ? rootHandler.enableUpdate(true) : false;
 		try {
-			HandlerResult result = control.executeCommand(displayContext, commandName, arguments);
-
-			forwardPendingUpdates(displayContext, queue);
-
-			if (result.isSuccess()) {
-				sendSuccess(response);
-			} else {
-				sendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Command failed.");
-			}
+			result = control.executeCommand(displayContext, commandName, arguments);
 		} finally {
 			if (rootHandler != null) {
 				rootHandler.enableUpdate(updateBefore);
 			}
+		}
+
+		// Forward side effects: InfoService messages and legacy control repaints.
+		forwardPendingUpdates(displayContext, rootHandler, queue);
+
+		if (result.isSuccess()) {
+			sendSuccess(response);
+		} else {
+			sendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Command failed.");
 		}
 	}
 
@@ -193,22 +213,24 @@ public class ReactServlet extends TopLogicServlet {
 		// Install subsession context and enable command phase.
 		SubsessionHandler rootHandler = installSubSession(displayContext, windowName);
 
+		HandlerResult result;
 		boolean updateBefore = rootHandler != null ? rootHandler.enableUpdate(true) : false;
 		try {
 			Collection<Part> parts = request.getParts();
-			HandlerResult result = ((UploadHandler) control).handleUpload(displayContext, parts);
-
-			forwardPendingUpdates(displayContext, queue);
-
-			if (result.isSuccess()) {
-				sendSuccess(response);
-			} else {
-				sendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Upload handling failed.");
-			}
+			result = ((UploadHandler) control).handleUpload(displayContext, parts);
 		} finally {
 			if (rootHandler != null) {
 				rootHandler.enableUpdate(updateBefore);
 			}
+		}
+
+		// Forward side effects: InfoService messages and legacy control repaints.
+		forwardPendingUpdates(displayContext, rootHandler, queue);
+
+		if (result.isSuccess()) {
+			sendSuccess(response);
+		} else {
+			sendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Upload handling failed.");
 		}
 	}
 
@@ -238,13 +260,14 @@ public class ReactServlet extends TopLogicServlet {
 	 * Forwards any pending side effects from command execution via SSE.
 	 *
 	 * <p>
-	 * This includes {@link InfoService} messages and a trigger for the traditional AJAX
-	 * revalidation cycle to pick up any pending control repaints (e.g. when a React command
-	 * modifies a legacy form field).
+	 * This includes {@link InfoService} messages and pending repaints from traditional (legacy)
+	 * controls whose models were modified during the React command or upload.
 	 * </p>
 	 */
 	@SuppressWarnings("unchecked")
-	private void forwardPendingUpdates(DisplayContext displayContext, SSEUpdateQueue queue) {
+	private void forwardPendingUpdates(DisplayContext displayContext, SubsessionHandler rootHandler,
+			SSEUpdateQueue queue) {
+		// Forward InfoService messages.
 		if (displayContext.isSet(InfoService.INFO_SERVICE_ENTRIES)) {
 			List<HTMLFragment> entries = displayContext.get(InfoService.INFO_SERVICE_ENTRIES);
 			if (!entries.isEmpty()) {
@@ -253,9 +276,80 @@ public class ReactServlet extends TopLogicServlet {
 			}
 		}
 
-		// Trigger the traditional AJAX revalidation cycle so that legacy controls whose models
-		// were modified during this React command/upload get their pending repaints delivered.
-		queue.enqueue(JSSnipplet.create().setCode("services.ajax.execute('noOpAJAXCommand', {});"));
+		// Collect and forward pending legacy control repaints.
+		forwardLegacyControlUpdates(displayContext, rootHandler, queue);
+	}
+
+	/**
+	 * Runs the standard {@link RevalidationVisitor} to collect pending control repaints and
+	 * forwards them as SSE events.
+	 *
+	 * <p>
+	 * This mirrors the revalidation step in AJAXServlet, but instead of serializing the
+	 * {@link ClientAction}s to XML, the actions are converted to SSE protocol events
+	 * ({@link com.top_logic.layout.react.protocol.ElementReplacement},
+	 * {@link com.top_logic.layout.react.protocol.ContentReplacement}) and delivered via the SSE
+	 * channel.
+	 * </p>
+	 */
+	private void forwardLegacyControlUpdates(DisplayContext displayContext, SubsessionHandler rootHandler,
+			SSEUpdateQueue queue) {
+		if (rootHandler == null) {
+			return;
+		}
+		MainLayout mainLayout = rootHandler.getMainLayout();
+		if (mainLayout == null) {
+			return;
+		}
+
+		CollectingUpdateWriter collector =
+			new CollectingUpdateWriter(displayContext, new TagWriter(new StringWriter()), "UTF-8", null);
+		RevalidationVisitor.runValidation(mainLayout, collector);
+
+		for (ClientAction action : collector.getCollectedActions()) {
+			SSEEvent event = toSSEEvent(displayContext, action);
+			if (event != null) {
+				queue.enqueue(event);
+			}
+		}
+	}
+
+	/**
+	 * Converts a traditional {@link ClientAction} to the corresponding SSE protocol event.
+	 *
+	 * @return The SSE event, or {@code null} if the action type is not supported.
+	 */
+	private SSEEvent toSSEEvent(DisplayContext context, ClientAction action) {
+		if (action instanceof DOMModification) {
+			DOMModification mod = (DOMModification) action;
+			String elementId = mod.getElementID();
+			String html = renderFragment(context, mod.getFragment());
+
+			if (action instanceof ElementReplacement) {
+				return com.top_logic.layout.react.protocol.ElementReplacement.create()
+					.setElementId(elementId)
+					.setHtml(html);
+			}
+			if (action instanceof ContentReplacement) {
+				return com.top_logic.layout.react.protocol.ContentReplacement.create()
+					.setElementId(elementId)
+					.setHtml(html);
+			}
+		}
+		return null;
+	}
+
+	private String renderFragment(DisplayContext context, HTMLFragment fragment) {
+		StringWriter sw = new StringWriter();
+		TagWriter tw = new TagWriter(sw);
+		try {
+			fragment.write(context, tw);
+			tw.flush();
+		} catch (IOException ex) {
+			Logger.error("Failed to render legacy control fragment.", ex, ReactServlet.class);
+			return "";
+		}
+		return sw.toString();
 	}
 
 	private void sendSuccess(HttpServletResponse response) throws IOException {
@@ -271,6 +365,30 @@ public class ReactServlet extends TopLogicServlet {
 		PrintWriter writer = response.getWriter();
 		writer.write("{\"success\":false,\"error\":\"" + message.replace("\"", "\\\"") + "\"}");
 		writer.flush();
+	}
+
+	/**
+	 * An {@link UpdateWriter} that collects {@link ClientAction} objects instead of serializing
+	 * them to XML.
+	 */
+	private static class CollectingUpdateWriter extends UpdateWriter {
+
+		private final List<ClientAction> _collected = new ArrayList<>();
+
+		CollectingUpdateWriter(DisplayContext context, TagWriter out, String encoding, Integer sequence) {
+			super(context, out, encoding, sequence);
+		}
+
+		@Override
+		public void add(ClientAction action) {
+			if (action != null) {
+				_collected.add(action);
+			}
+		}
+
+		List<ClientAction> getCollectedActions() {
+			return _collected;
+		}
 	}
 
 }

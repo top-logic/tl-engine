@@ -965,6 +965,9 @@
 	<icon name="IMAGE_BUTTONS_LOGOUT22"
 		value="css:fa-solid fa-arrow-right-from-bracket"
 	/>
+	<icon name="IMAGE_BUTTONS_LOGIN"
+		value="css:fa-solid fa-arrow-right-to-bracket"
+	/>
 	<icon name="IMAGE_BUTTONS_DOC"
 		value="css:fa-solid fa-book-open"
 	/>

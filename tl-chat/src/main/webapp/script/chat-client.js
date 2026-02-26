@@ -163,7 +163,26 @@
     var button =
       (buttonId && doc.getElementById(buttonId)) ||
       root.querySelector(".chat-button");
-    return { messages: messages, input: input, button: button };
+    var fileInput =
+      (root.getAttribute("data-chat-file-input-id") &&
+        doc.getElementById(root.getAttribute("data-chat-file-input-id"))) ||
+      root.querySelector(".chat-file-input");
+    var attachBtn =
+      (root.getAttribute("data-chat-attach-btn-id") &&
+        doc.getElementById(root.getAttribute("data-chat-attach-btn-id"))) ||
+      root.querySelector(".chat-attach-button");
+    var preview =
+      (root.getAttribute("data-chat-preview-id") &&
+        doc.getElementById(root.getAttribute("data-chat-preview-id"))) ||
+      root.querySelector(".chat-attachment-preview");
+    return {
+      messages: messages,
+      input: input,
+      button: button,
+      fileInput: fileInput,
+      attachBtn: attachBtn,
+      preview: preview,
+    };
   }
 
   function appendMessage(container, msg) {
@@ -221,6 +240,30 @@
       text.innerHTML = escapeHtml(msg.content || "");
     }
     bubble.appendChild(text);
+
+    // Render attachments in bubble
+    if (msg.attachments && msg.attachments.length > 0) {
+      var attachDiv = document.createElement("div");
+      attachDiv.className = "chat-message-attachments";
+      msg.attachments.forEach(function (att) {
+        if (att.previewUrl) {
+          var img = document.createElement("img");
+          img.src = att.previewUrl;
+          img.alt = att.fileName || att.name || "image";
+          img.style.maxWidth = "200px";
+          img.style.maxHeight = "150px";
+          img.style.borderRadius = "8px";
+          attachDiv.appendChild(img);
+        } else {
+          var badge = document.createElement("span");
+          badge.className = "chat-attachment-badge";
+          badge.textContent =
+            "\uD83D\uDCC4 " + (att.fileName || att.name || "file");
+          attachDiv.appendChild(badge);
+        }
+      });
+      bubble.appendChild(attachDiv);
+    }
 
     var time = document.createElement("span");
     time.className = "chat-time";
@@ -610,6 +653,9 @@
     root.setAttribute("data-tl-chat-inited", "true");
 
     var el = getElements(root);
+    var pendingAttachments = [];
+    var MAX_ATTACHMENTS = 5;
+    var MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
     if (!el.messages || !el.input || !el.button) {
       log("Missing elements", {
         messages: !!el.messages,
@@ -927,11 +973,103 @@
       };
     }
 
+    function isAllowedFile(file) {
+      if (!file.type.startsWith("image/") && file.type !== "application/pdf") {
+        return "Unsupported file type: " + file.type;
+      }
+      if (file.size > MAX_FILE_SIZE) {
+        return "File too large: " + file.name + " (max 10 MB)";
+      }
+      return null;
+    }
+
+    function addFiles(files) {
+      var remaining = MAX_ATTACHMENTS - pendingAttachments.length;
+      var toAdd = Array.prototype.slice.call(files, 0, remaining);
+      toAdd.forEach(function (file) {
+        var error = isAllowedFile(file);
+        if (error) {
+          log("File rejected: " + error);
+          return;
+        }
+        var reader = new FileReader();
+        reader.onload = function (e) {
+          var base64Full = e.target.result;
+          var base64Data = base64Full.split(",")[1];
+          var previewUrl = file.type.startsWith("image/") ? base64Full : null;
+          pendingAttachments.push({
+            file: file,
+            name: file.name,
+            mimeType: file.type,
+            base64: base64Data,
+            previewUrl: previewUrl,
+            size: file.size,
+          });
+          renderAttachmentPreview();
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function removeAttachment(index) {
+      pendingAttachments.splice(index, 1);
+      renderAttachmentPreview();
+    }
+
+    function renderAttachmentPreview() {
+      if (!el.preview) return;
+      el.preview.innerHTML = "";
+      if (pendingAttachments.length === 0) {
+        el.preview.classList.remove("has-items");
+        return;
+      }
+      el.preview.classList.add("has-items");
+      pendingAttachments.forEach(function (att, idx) {
+        var item = document.createElement("div");
+        item.className = "chat-attachment-preview-item";
+        if (att.previewUrl) {
+          var img = document.createElement("img");
+          img.src = att.previewUrl;
+          img.alt = att.name;
+          item.appendChild(img);
+        } else {
+          var icon = document.createElement("span");
+          icon.textContent = "\uD83D\uDCC4";
+          icon.style.fontSize = "1.5em";
+          item.appendChild(icon);
+        }
+        var nameSpan = document.createElement("span");
+        nameSpan.className = "chat-attachment-name";
+        nameSpan.textContent = att.name;
+        item.appendChild(nameSpan);
+        var removeBtn = document.createElement("button");
+        removeBtn.className = "chat-attachment-remove";
+        removeBtn.textContent = "\u00D7";
+        (function (capturedIdx) {
+          removeBtn.onclick = function () {
+            removeAttachment(capturedIdx);
+          };
+        })(idx);
+        item.appendChild(removeBtn);
+        el.preview.appendChild(item);
+      });
+    }
+
     function sendMessage() {
       var text = (el.input.value || "").trim();
-      if (!text) return;
+      if (!text && pendingAttachments.length === 0) return;
       el.input.disabled = true;
       el.button.disabled = true;
+
+      // Capture attachment metadata for the optimistic message
+      var optimisticAttachments = pendingAttachments.map(function (att) {
+        return {
+          fileName: att.name,
+          mimeType: att.mimeType,
+          size: att.size,
+          previewUrl: att.previewUrl,
+        };
+      });
 
       // Optimistically add user message to UI immediately (replaced by server message via SSE)
       var tempMsgId = "user-" + Date.now();
@@ -942,11 +1080,24 @@
         content: text,
         time: new Date().toISOString(),
         optimistic: true,
+        attachments: optimisticAttachments,
       });
       scrollToBottom(el.messages);
 
-      var sendBody = { text: text };
+      var sendBody = { text: text || " " };
       if (currentSessionId) sendBody.sessionId = currentSessionId;
+      if (pendingAttachments.length > 0) {
+        sendBody.attachments = pendingAttachments.map(function (att) {
+          return {
+            fileName: att.name,
+            mimeType: att.mimeType,
+            base64Data: att.base64,
+            size: att.size,
+          };
+        });
+      }
+      pendingAttachments = [];
+      renderAttachmentPreview();
       fetchJson(CHAT_SEND_URL, { method: "POST", body: sendBody })
         .then(function (data) {
           if (data && data.status === "busy") {
@@ -1004,6 +1155,39 @@
         sendMessage();
       }
     });
+
+    // Attach button click
+    if (el.attachBtn && el.fileInput) {
+      el.attachBtn.addEventListener("click", function () {
+        el.fileInput.click();
+      });
+      el.fileInput.addEventListener("change", function () {
+        if (el.fileInput.files.length > 0) {
+          addFiles(el.fileInput.files);
+          el.fileInput.value = "";
+        }
+      });
+    }
+
+    // Drag and drop on input section
+    var inputSection = root.querySelector(".chat-input-section");
+    if (inputSection) {
+      inputSection.addEventListener("dragover", function (e) {
+        e.preventDefault();
+        inputSection.classList.add("drag-over");
+      });
+      inputSection.addEventListener("dragleave", function (e) {
+        e.preventDefault();
+        inputSection.classList.remove("drag-over");
+      });
+      inputSection.addEventListener("drop", function (e) {
+        e.preventDefault();
+        inputSection.classList.remove("drag-over");
+        if (e.dataTransfer.files.length > 0) {
+          addFiles(e.dataTransfer.files);
+        }
+      });
+    }
 
     // ── History Panel ──────────────────────────────────────────
 

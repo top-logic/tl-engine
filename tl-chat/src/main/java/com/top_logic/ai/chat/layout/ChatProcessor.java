@@ -20,12 +20,15 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.top_logic.ai.chat.api.DtoMapper;
 import com.top_logic.ai.chat.api.messages.AttachmentDto;
+import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.service.agents.AgentRegistry;
 import com.top_logic.ai.service.tools.ToolCallTracker;
 import com.top_logic.ai.service.tools.ToolCallTracking;
 import com.top_logic.ai.service.tools.TraceEntry;
 import com.top_logic.basic.Logger;
+import com.top_logic.model.TLObject;
 import com.top_logic.basic.thread.ThreadContextManager;
 
 import dev.langchain4j.agentic.UntypedAgent;
@@ -154,12 +157,19 @@ public class ChatProcessor {
 
 			// Flush pending messages (including agent response) into Chat before persisting,
 			// so the persisted data includes the agent's response.
-			applyPollUpdates(state, taskTracker.getChat(), taskTracker);
+			Chat chat = state.getChat();
+			if (chat == null) {
+				chat = taskTracker.getChat();
+			}
+			applyPollUpdates(state, chat, taskTracker);
 
-			// Persist messages to the active session
-			String activeSessionId = taskTracker.getActiveSessionId();
-			if (activeSessionId != null) {
-				persistMessages(taskTracker, activeSessionId);
+			// Persist messages to the session this task was started for (not the currently active one)
+			String sessionId = state.getSessionId();
+			if (sessionId == null) {
+				sessionId = taskTracker.getActiveSessionId();
+			}
+			if (sessionId != null) {
+				persistMessagesForSession(sessionId, chat);
 			}
 
 		} catch (Exception ex) {
@@ -320,6 +330,14 @@ public class ChatProcessor {
 		String taskId = tracker.startTask(randomChatTaskPlaceholder());
 		state.setCurrentTaskId(taskId);
 		tracker.setCurrentProcessingState(state);
+
+		// Capture session context so background task writes to the correct Chat,
+		// even if the user switches sessions before the task completes.
+		Chat capturedChat = tracker.getChat();
+		String capturedSessionId = tracker.getActiveSessionId();
+		state.setChat(capturedChat);
+		state.setSessionId(capturedSessionId);
+
 		if (repaintRequester != null) {
 			tracker.setRepaintRequester(repaintRequester);
 		}
@@ -336,7 +354,7 @@ public class ChatProcessor {
 						if (s == null) {
 							return;
 						}
-						boolean hasUpdates = applyPollUpdates(s, tracker.getChat(), tracker);
+						boolean hasUpdates = applyPollUpdates(s, s.getChat(), tracker);
 						if (hasUpdates) {
 							tracker.requestRepaintIfNeeded();
 						}
@@ -379,6 +397,27 @@ public class ChatProcessor {
 			tracker.getSessionManager().persistActiveSession();
 		} catch (Exception ex) {
 			Logger.error("Failed to persist chat messages: " + ex.getMessage(), ex, ChatProcessor.class);
+		}
+	}
+
+	/**
+	 * Persists the given chat's entries to a specific session by ID.
+	 * Used by the background task to persist to the correct session even if the user has
+	 * switched sessions.
+	 */
+	static void persistMessagesForSession(String sessionId, Chat chat) {
+		try {
+			ThreadContextManager.inSystemInteraction(ChatProcessor.class, () -> {
+				TLObject session = ChatHistoryService.findSessionById(sessionId);
+				if (session != null) {
+					String json = DtoMapper.serializeEntries(chat.getEntries());
+					ChatHistoryService.saveMessages(session, json);
+				}
+				return null;
+			});
+		} catch (Exception ex) {
+			Logger.error("Failed to persist chat messages for session " + sessionId + ": " + ex.getMessage(),
+				ex, ChatProcessor.class);
 		}
 	}
 
@@ -464,6 +503,11 @@ public class ChatProcessor {
 		// Tool call tracking for real-time updates
 		private volatile ToolCallTracker _toolCallTracker = null;
 		private final AtomicInteger _lastSeenToolCallCount = new AtomicInteger(0);
+
+		// Session context: captured at creation, never changes.
+		// Ensures background task writes to the correct Chat even if the user switches sessions.
+		private volatile String _sessionId = null;
+		private volatile Chat _chat = null;
 
 		// Result accumulation
 		private final List<ChatMessage> _pendingMessages = new ArrayList<>();
@@ -603,6 +647,26 @@ public class ChatProcessor {
 		 */
 		public void setLastSeenToolCallCount(int count) {
 			_lastSeenToolCallCount.set(count);
+		}
+
+		/** The session ID this processing state belongs to; set once at creation. */
+		public String getSessionId() {
+			return _sessionId;
+		}
+
+		/** Sets the session ID (called once in sendMessage). */
+		public void setSessionId(String sessionId) {
+			_sessionId = sessionId;
+		}
+
+		/** The Chat this processing state writes to; set once at creation. */
+		public Chat getChat() {
+			return _chat;
+		}
+
+		/** Sets the captured Chat reference (called once in sendMessage). */
+		public void setChat(Chat chat) {
+			_chat = chat;
 		}
 	}
 

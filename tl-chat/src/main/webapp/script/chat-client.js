@@ -1306,6 +1306,17 @@
       setActiveItem(sessionId);
       showChat();
 
+      // Reset processing state so the "thinking" indicator from the previous
+      // session doesn't bleed into the new one. The SSE connected event from
+      // the new connection will set the correct state.
+      state.processing = false;
+      state.currentTaskId = null;
+      state.currentTaskBody = null;
+      state.currentTaskStartTime = null;
+      state.currentAgentCallToolsBody = null;
+      el.input.disabled = false;
+      el.button.disabled = false;
+
       // Clear current messages
       if (el.messages) {
         el.messages.innerHTML = "";

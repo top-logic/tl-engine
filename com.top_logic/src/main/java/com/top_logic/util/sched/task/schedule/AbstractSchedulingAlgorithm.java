@@ -171,7 +171,7 @@ public abstract class AbstractSchedulingAlgorithm<C extends PolymorphicConfigura
 			TypedConfiguration.getConfigurationDescriptor(configItem).getProperty(propertyName);
 		ResKey label = Labels.propertyLabelKey(property);
 		Resources resources = com.top_logic.util.Resources.getInstance();
-		member.setLabel(resources.getString(label));
+		member.setLabel(label);
 		member.setTooltip(resources.getString(label.tooltipOptional()));
 		return member;
 	}

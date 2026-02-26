@@ -439,7 +439,7 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 	public static void initLabel(FormMember result, EditContext editContext) {
 		ResKey resKey = editContext.getLabelKey();
 		Resources resources = Resources.getInstance();
-		result.setLabel(resources.getString(resKey));
+		result.setLabel(resKey);
 		result.setTooltip(resources.getString(resKey.tooltipOptional()));
 		result.setTooltipCaption(resources.getString(resKey.suffix(FormMember.TOOLTIP_CAPTION_SUFFIX), null));
 	}

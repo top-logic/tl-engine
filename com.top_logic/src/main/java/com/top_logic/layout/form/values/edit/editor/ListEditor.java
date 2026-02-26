@@ -177,9 +177,7 @@ public class ListEditor implements Editor {
 			CommandField sortButton = button(list, LIST_SORT, Icons.SORT_ELEMENTS, openSortDialog);
 			sortButton.setControlProvider(Buttons.SORT_BUTTON);
 			sortButton.setNotExecutableImage(Icons.SORT_ELEMENTS_DISABLED);
-			sortButton.setLabel(Resources.getInstance().getString(
-				I18NConstants.OPEN_SORT_DIALOG__PROPERTY.fill(
-					Labels.propertyLabel(valueModel))));
+			sortButton.setLabel(I18NConstants.OPEN_SORT_DIALOG__PROPERTY.fill(Labels.propertyLabel(valueModel)));
 			ScriptingRecorder.annotateAsDontRecord(sortButton);
 			bindExecutability(sortButton, map(members(content), new Mapping<List<?>, ExecutableState>() {
 				@Override

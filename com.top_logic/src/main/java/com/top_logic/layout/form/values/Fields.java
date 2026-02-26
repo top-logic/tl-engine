@@ -345,7 +345,7 @@ public class Fields {
 
 		@Override
 		public void handleChange(Value<?> target) {
-			_dest.setLabel(Resources.getInstance().getString(_value.get()));
+			_dest.setLabel(_value.get());
 		}
 	}
 

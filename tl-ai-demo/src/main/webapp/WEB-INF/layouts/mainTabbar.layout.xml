@@ -2,16 +2,12 @@
 
 <config:template-call
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
-	final="true"
 	template="com.top_logic/maintabbar.template.xml"
 >
 	<arguments>
 		<components>
 			<layout-reference resource="tl-ai-demo/invoices/tabLayout.layout.xml"/>
-			<layout-reference resource="com.top_logic.bpe.app/processCockpit/cockpitTab.layout.xml"/>
-			<layout-reference resource="com.top_logic.model.search/search/modelSearch.layout.xml"/>
 			<layout-reference resource="admin/index.layout.xml"/>
-			<layout-reference resource="tl-ai-demo/chat/tabLayout.layout.xml"/>
 		</components>
 		<dialogs>
 			<layout-reference resource="com.top_logic.monitoring/admin/technical/logs/logLines.sessionDialog.layout.xml">

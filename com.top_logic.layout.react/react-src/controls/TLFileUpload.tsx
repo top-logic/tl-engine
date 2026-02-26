@@ -8,20 +8,16 @@ const TLFileUpload: React.FC<TLCellProps> = () => {
   const upload = useTLUpload();
 
   const [localStatus, setLocalStatus] = React.useState<LocalStatus>('idle');
-  const [selectedFileName, setSelectedFileName] = React.useState<string | null>(null);
   const [isDragOver, setIsDragOver] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
 
   const serverStatus = (state.status as string) ?? 'idle';
   const serverError = state.error as string | null;
-  const serverFileName = state.fileName as string | null;
   const accept = (state.accept as string) ?? '';
 
   const effectiveStatus = serverStatus === 'received' ? 'idle' : (localStatus !== 'idle' ? localStatus : serverStatus);
-  const displayFileName = selectedFileName ?? serverFileName;
 
   const doUpload = React.useCallback(async (file: File) => {
-    setSelectedFileName(file.name);
     setLocalStatus('uploading');
     const formData = new FormData();
     formData.append('file', file, file.name);
@@ -88,9 +84,6 @@ const TLFileUpload: React.FC<TLCellProps> = () => {
       >
         {effectiveStatus === 'uploading' ? 'Uploading\u2026' : 'Choose File'}
       </button>
-      {displayFileName && (
-        <span className="tlFileUpload__fileName">{displayFileName}</span>
-      )}
       {serverError && (
         <span className="tlFileUpload__status tlFileUpload__status--error">{serverError}</span>
       )}

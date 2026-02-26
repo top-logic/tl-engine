@@ -24,12 +24,10 @@ import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.format.RegExpValueProvider;
 import com.top_logic.basic.encryption.SecureRandomService;
-import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.util.ResourcesModule;
-import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.KBBasedManagedClass;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.tool.boundsec.wrap.Group;
 import com.top_logic.util.AbstractStartStopListener;
@@ -42,19 +40,18 @@ import com.top_logic.util.license.LicenseTool;
  * @author <a href="mailto:tri@top-logic.com">Thomas Richter </a>
  */
 @ServiceDependencies({
-	PersistencyLayer.Module.class, 
 	ApplicationConfig.Module.class,
 	LockService.Module.class,
 	TLSecurityDeviceManager.Module.class,
 	InitialGroupManager.Module.class,
 	ResourcesModule.Module.class,
 })
-public class PersonManager extends ConfiguredManagedClass<PersonManager.Config> {
+public class PersonManager extends KBBasedManagedClass<PersonManager.Config> {
 
 	/**
 	 * Configuration for the account manager.
 	 */
-	public interface Config extends ConfiguredManagedClass.Config<PersonManager> {
+	public interface Config extends KBBasedManagedClass.Config<PersonManager> {
 
 		/**
 		 * @see #getUserNamePattern()
@@ -126,7 +123,7 @@ public class PersonManager extends ConfiguredManagedClass<PersonManager.Config> 
 	 * The system root. Should always be there so should never return null.
 	 */
 	public Person getRoot() {
-		return Person.byName(getSuperUserName());
+		return Person.byName(kb(), getSuperUserName());
 	}
 
 	/**
@@ -173,8 +170,8 @@ public class PersonManager extends ConfiguredManagedClass<PersonManager.Config> 
 	 */
 	public boolean personNameAlreadyUsed(String name) {
 		{
-			Person p = Person.byName(name);
-			Group g = Group.getGroupByName(name);
+			Person p = Person.byName(kb(), name);
+			Group g = Group.getGroupByName(kb(), name);
 			if (p == null && g != null) {
 				return true;
 			} else if (p != null && p.isAlive()) {
@@ -212,15 +209,13 @@ public class PersonManager extends ConfiguredManagedClass<PersonManager.Config> 
 	}
 
 	private void ensureRootAccount() {
-		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-
 		String loginName = getSuperUserName();
-		Person existingAccount = Person.byName(loginName);
+		Person existingAccount = Person.byName(kb(), loginName);
 		if (existingAccount == null) {
-			try (Transaction tx = kb.beginTransaction(I18NConstants.CREATED_ROOT_ACCOUNT)) {
+			try (Transaction tx = kb().beginTransaction(I18NConstants.CREATED_ROOT_ACCOUNT)) {
 				AuthenticationDevice device = TLSecurityDeviceManager.getInstance().getDefaultAuthenticationDevice();
 				String deviceID = device.getDeviceID();
-				Person root = Person.create(kb, loginName, deviceID);
+				Person root = Person.create(kb(), loginName, deviceID);
 				root.setAdmin(true);
 
 				setupRootPassword(root, loginName);
@@ -231,7 +226,7 @@ public class PersonManager extends ConfiguredManagedClass<PersonManager.Config> 
 			boolean passwordReset =
 				Environment.getSystemPropertyOrEnvironmentVariable("tl_reset_password", null) != null;
 			if (passwordReset) {
-				try (Transaction tx = kb.beginTransaction(I18NConstants.RESETTING_ROOT_PASSWORD)) {
+				try (Transaction tx = kb().beginTransaction(I18NConstants.RESETTING_ROOT_PASSWORD)) {
 					setupRootPassword(existingAccount, loginName);
 					tx.commit();
 				}

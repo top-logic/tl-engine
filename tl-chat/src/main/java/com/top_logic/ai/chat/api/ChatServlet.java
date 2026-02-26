@@ -12,6 +12,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
 
+import com.top_logic.ai.chat.api.messages.AttachmentDto;
 import com.top_logic.ai.chat.api.messages.ChatSendRequest;
 import com.top_logic.ai.chat.api.messages.ChatSendResponse;
 import com.top_logic.ai.chat.api.messages.ChatSessionDetailResponse;
@@ -68,6 +69,9 @@ public class ChatServlet extends HttpServlet {
 	private static final String PATH_SESSIONS = "/sessions";
 	private static final String CONTENT_TYPE_JSON = "application/json; charset=UTF-8";
 	private static final String CONTENT_TYPE_SSE = "text/event-stream";
+
+	private static final int MAX_ATTACHMENTS = 5;
+	private static final long MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024; // 10 MB
 
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -159,6 +163,15 @@ public class ChatServlet extends HttpServlet {
 		}
 		final String activeSessionId = sessionId;
 
+		List<AttachmentDto> attachments = body.getAttachments();
+		if (attachments != null && !attachments.isEmpty()) {
+			String validationError = validateAttachments(attachments);
+			if (validationError != null) {
+				resp.sendError(HttpServletResponse.SC_BAD_REQUEST, validationError);
+				return;
+			}
+		}
+
 		TaskProgressTracker tracker = ChatSessionRegistry.getOrCreate(req.getSession(false));
 
 		if (activeSessionId != null) {
@@ -181,7 +194,7 @@ public class ChatServlet extends HttpServlet {
 			}
 		}
 		final String userName = storedName != null ? storedName : "Anonymous";
-		ChatProcessor.SendResult result = ChatProcessor.sendMessage(tracker, userName, messageText, null, null, null);
+		ChatProcessor.SendResult result = ChatProcessor.sendMessage(tracker, userName, messageText, attachments, null, null);
 
 		resp.setStatus(HttpServletResponse.SC_OK);
 		resp.setContentType(CONTENT_TYPE_JSON);
@@ -427,6 +440,29 @@ public class ChatServlet extends HttpServlet {
 		} else {
 			resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
 		}
+	}
+
+	private static String validateAttachments(List<AttachmentDto> attachments) {
+		if (attachments.size() > MAX_ATTACHMENTS) {
+			return "Too many attachments (max " + MAX_ATTACHMENTS + ")";
+		}
+		for (AttachmentDto att : attachments) {
+			if (att.getMimeType() == null || !isAllowedMimeType(att.getMimeType())) {
+				return "Unsupported file type: " + att.getMimeType()
+					+ ". Allowed: images (PNG, JPEG, GIF, WebP) and PDF.";
+			}
+			if (att.getBase64Data() != null) {
+				long decodedSize = att.getBase64Data().length() * 3L / 4;
+				if (decodedSize > MAX_ATTACHMENT_SIZE) {
+					return "File too large: " + att.getFileName() + " (max 10 MB)";
+				}
+			}
+		}
+		return null;
+	}
+
+	private static boolean isAllowedMimeType(String mimeType) {
+		return mimeType.startsWith("image/") || "application/pdf".equals(mimeType);
 	}
 
 	/**

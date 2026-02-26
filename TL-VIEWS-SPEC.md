@@ -607,13 +607,16 @@ derives its entries from a model builder (like `<table>` derives rows).
 
 ### Conditional Elements
 
-| Element     | Description                                              |
-|-------------|----------------------------------------------------------|
-| `<switch>`  | Selects one child based on a condition                   |
+| Element        | Description                                              |
+|----------------|----------------------------------------------------------|
+| `<switch>`     | Selects one child based on a channel-driven condition    |
+| `<responsive>` | Selects one child based on viewport size                 |
 
-`<switch>` provides generic conditional element selection. It evaluates conditions
-against channel values and renders the matching case. This is a general-purpose
-mechanism that works for any UIElement:
+Both are conditional elements that render exactly one child from a set of candidates.
+They differ in what drives the condition: `<switch>` evaluates channel values,
+`<responsive>` evaluates the client viewport.
+
+**`<switch>`** - Channel-driven conditional:
 
 ```xml
 <switch>
@@ -640,6 +643,43 @@ mechanism that works for any UIElement:
 
 The `<condition>` element follows the same `input`/`inputs` + expression pattern as
 derived channels and model builders.
+
+**`<responsive>`** - Viewport-driven conditional:
+
+```xml
+<responsive>
+  <when max-width="768px">
+    <!-- Mobile: stacked layout -->
+    <vbox>
+      <include view="customers/selector.view.xml" />
+      <include view="customers/detail.view.xml" />
+    </vbox>
+  </when>
+  <when max-width="1200px">
+    <!-- Tablet: narrow split -->
+    <split direction="horizontal" ratio="40:60">
+      <include view="customers/selector.view.xml" />
+      <include view="customers/detail.view.xml" />
+    </split>
+  </when>
+  <otherwise>
+    <!-- Desktop: wide split with sidebar -->
+    <sidebar position="left" width="250px">
+      <entry label="i18n:nav.customers">
+        <split direction="horizontal" ratio="30:70">
+          <include view="customers/selector.view.xml" />
+          <include view="customers/detail.view.xml" />
+        </split>
+      </entry>
+    </sidebar>
+  </otherwise>
+</responsive>
+```
+
+`<responsive>` evaluates on the client side and re-evaluates when the viewport is
+resized. The `<when>` conditions are checked in order; the first match wins.
+`<otherwise>` is the fallback. This enables the same view definition to serve mobile,
+tablet, and desktop layouts without separate view files.
 
 ### Composition Elements
 
@@ -1487,21 +1527,6 @@ The general pattern for migrating LayoutComponent-dependent interfaces:
    readable but less type-safe.
 
 ## Additional Ideas
-
-### View Variants
-
-Conditional element selection based on device/context:
-
-```xml
-<responsive>
-  <when max-width="768px">
-    <vbox><!-- stacked mobile layout --></vbox>
-  </when>
-  <otherwise>
-    <hbox><!-- side-by-side desktop layout --></hbox>
-  </otherwise>
-</responsive>
-```
 
 ### List Rendering
 

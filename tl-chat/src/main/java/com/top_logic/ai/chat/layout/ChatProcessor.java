@@ -112,12 +112,14 @@ public class ChatProcessor {
 			Logger.info("ChatProcessor: Starting agent in thread: " + Thread.currentThread().getName(),
 				ChatProcessor.class);
 
-			if (userMessage == null || userMessage.trim().isEmpty()) {
+			boolean hasAttachments = attachments != null && !attachments.isEmpty();
+			boolean hasText = userMessage != null && !userMessage.trim().isEmpty();
+			if (!hasText && !hasAttachments) {
 				state.addPendingMessage(new ChatMessage("Agent", "Please provide a message."));
 				taskTracker.completeTask(taskId);
 				return;
 			}
-			String trimmed = userMessage.trim();
+			String trimmed = hasText ? userMessage.trim() : "[See attached files]";
 
 			// Wrap ChatMemory to inject multimodal content if attachments are present
 			ChatMemory effectiveMemory = chatMemory;

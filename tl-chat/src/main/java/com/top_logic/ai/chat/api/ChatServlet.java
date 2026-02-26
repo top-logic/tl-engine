@@ -152,18 +152,18 @@ public class ChatServlet extends HttpServlet {
 			return;
 		}
 		String text = body.getText();
-		if (text == null || text.trim().isEmpty()) {
+		List<AttachmentDto> attachments = body.getAttachments();
+		boolean hasAttachments = attachments != null && !attachments.isEmpty();
+		if ((text == null || text.trim().isEmpty()) && !hasAttachments) {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing or empty 'text'");
 			return;
 		}
-		final String messageText = text.trim();
+		final String messageText = text != null ? text.trim() : "";
 		String sessionId = body.getSessionId();
 		if (sessionId != null && sessionId.trim().isEmpty()) {
 			sessionId = null;
 		}
 		final String activeSessionId = sessionId;
-
-		List<AttachmentDto> attachments = body.getAttachments();
 		if (attachments != null && !attachments.isEmpty()) {
 			String validationError = validateAttachments(attachments);
 			if (validationError != null) {
@@ -442,27 +442,27 @@ public class ChatServlet extends HttpServlet {
 		}
 	}
 
+	private static final java.util.Set<String> ALLOWED_MIME_TYPES = java.util.Set.of(
+		"image/png", "image/jpeg", "image/gif", "image/webp", "application/pdf");
+
 	private static String validateAttachments(List<AttachmentDto> attachments) {
 		if (attachments.size() > MAX_ATTACHMENTS) {
 			return "Too many attachments (max " + MAX_ATTACHMENTS + ")";
 		}
 		for (AttachmentDto att : attachments) {
-			if (att.getMimeType() == null || !isAllowedMimeType(att.getMimeType())) {
+			if (att.getMimeType() == null || !ALLOWED_MIME_TYPES.contains(att.getMimeType())) {
 				return "Unsupported file type: " + att.getMimeType()
-					+ ". Allowed: images (PNG, JPEG, GIF, WebP) and PDF.";
+					+ ". Allowed: PNG, JPEG, GIF, WebP, and PDF.";
 			}
-			if (att.getBase64Data() != null) {
-				long decodedSize = att.getBase64Data().length() * 3L / 4;
-				if (decodedSize > MAX_ATTACHMENT_SIZE) {
-					return "File too large: " + att.getFileName() + " (max 10 MB)";
-				}
+			if (att.getBase64Data() == null || att.getBase64Data().isEmpty()) {
+				return "Missing file data for: " + att.getFileName();
+			}
+			long decodedSize = att.getBase64Data().length() * 3L / 4;
+			if (decodedSize > MAX_ATTACHMENT_SIZE) {
+				return "File too large: " + att.getFileName() + " (max 10 MB)";
 			}
 		}
 		return null;
-	}
-
-	private static boolean isAllowedMimeType(String mimeType) {
-		return mimeType.startsWith("image/") || "application/pdf".equals(mimeType);
 	}
 
 	/**

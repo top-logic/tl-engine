@@ -99,7 +99,7 @@ which form model to resolve its attribute against) without breaking the uniform
  * values (channels, form group, form model) are set by creating a new derived
  * instance - the context itself is not mutated for these.</p>
  *
- * <p>The one exception is {@link #registerCommand(CommandHandler)}, which is a
+ * <p>The one exception is {@link #registerCommand(ViewCommand)}, which is a
  * collection point: child elements contribute commands upward to the nearest
  * enclosing command scope (panel or dialog).</p>
  */
@@ -109,7 +109,7 @@ public interface ViewContext {
     ViewChannel resolveChannel(ChannelRef ref);
 
     /** Look up a command by name (from the enclosing panel/dialog scope). */
-    CommandHandler getCommand(String name);
+    ViewCommand getCommand(String name);
 
     /**
      * Register a command with the nearest enclosing command scope (panel or dialog).
@@ -119,7 +119,7 @@ public interface ViewContext {
      * panel collects these during control creation and displays them alongside its
      * explicitly declared commands.</p>
      */
-    void registerCommand(CommandHandler command);
+    void registerCommand(ViewCommand command);
 
     /** Security context for access checks. */
     SecurityContext getSecurityContext();
@@ -577,7 +577,7 @@ public interface PanelElement extends ContainerElement {
 
         /** Commands scoped to this panel. */
         @Name("commands")
-        List<PolymorphicConfiguration<CommandHandler>> getCommands();
+        List<PolymorphicConfiguration<ViewCommand>> getCommands();
     }
 }
 ```
@@ -1406,18 +1406,109 @@ type/implementation defines a **default placement** so that standard commands wo
 of the box without explicit placement configuration:
 
 ```java
-public interface CommandHandler {
+/**
+ * A command in the view system.
+ *
+ * <p>Replaces the legacy {@code CommandHandler} which depends on {@code LayoutComponent}.
+ * The interface is new, but the configuration properties mirror the legacy system where
+ * possible. The key difference is that the command's input (what it operates on) is
+ * declared explicitly via channel references instead of implicitly derived from a
+ * component's model.</p>
+ */
+public interface ViewCommand {
 
-    interface Config extends PolymorphicConfiguration<CommandHandler> {
+    interface Config extends PolymorphicConfiguration<ViewCommand> {
 
-        /** Where this command's button appears. Default is defined by the implementation. */
+        // --- Identity and display ---
+
+        /** Command name for referencing from {@code <button command="...">}. */
+        @Name("name")
+        String getName();
+
+        /** Internationalized label (button text, menu entry text). */
+        @Name("label")
+        ResKey getLabel();
+
+        /** Icon displayed on the command button. */
+        @Name("image")
+        @Nullable
+        ThemeImage getImage();
+
+        /** Icon displayed when the command is disabled. */
+        @Name("disabled-image")
+        @Nullable
+        ThemeImage getDisabledImage();
+
+        /** CSS classes for the command button. */
+        @Name("css-classes")
+        @Nullable
+        String getCssClasses();
+
+        // --- Placement and grouping ---
+
+        /** Where this command's button appears. Default defined by implementation. */
         @Name("placement")
         CommandPlacement getPlacement();
 
-        /** Which clique this command belongs to (for ordering and visual grouping). */
+        /** Which clique this command belongs to (ordering and visual grouping). */
         @Name("clique")
         CommandClique getClique();
+
+        // --- Input (replaces legacy TargetConfig) ---
+
+        /**
+         * Channel references providing the input values this command operates on.
+         *
+         * <p>Replaces the legacy {@code target} property which used component-relative
+         * navigation expressions like {@code model(self())} or {@code selection(self())}.
+         * In the view system, inputs are explicit channel references, just like model
+         * builder inputs.</p>
+         *
+         * <p>If empty, the command operates without a model input (e.g., a "create new"
+         * command). The expression parameters of the command's handler method map 1:1
+         * to the input list.</p>
+         */
+        @Name("inputs")
+        List<ChannelRef> getInputs();
+
+        // --- Executability ---
+
+        /**
+         * Rules determining if the command is executable (enabled/disabled/hidden).
+         *
+         * <p>Same concept as legacy {@code ExecutabilityRule}, but implementations
+         * receive {@code ViewContext} instead of {@code LayoutComponent}.</p>
+         */
+        @Name("executability")
+        @EntryTag("rule")
+        List<PolymorphicConfiguration<? extends ViewExecutabilityRule>> getExecutability();
+
+        // --- Confirmation ---
+
+        /** Confirmation dialog shown before command execution. */
+        @Name("confirmation")
+        PolymorphicConfiguration<? extends ViewCommandConfirmation> getConfirmation();
+
+        // --- Security ---
+
+        /** Security command group (READ, WRITE, DELETE, ...) for access control. */
+        @Name("group")
+        CommandGroupReference getGroup();
+
+        /** Algorithm to determine the object on which security is checked. */
+        @Name("security-object")
+        PolymorphicConfiguration<? extends ViewSecurityObjectProvider> getSecurityObject();
     }
+
+    /**
+     * Execute the command.
+     *
+     * @param context The view context providing access to channels and services.
+     * @param inputs  The resolved input values (from {@code Config.getInputs()}).
+     * @param args    Additional arguments (e.g., from UI interaction).
+     * @return The command result.
+     */
+    HandlerResult execute(ViewContext context, List<Object> inputs, Map<String, Object> args);
 }
 
 public enum CommandPlacement {
@@ -1427,29 +1518,80 @@ public enum CommandPlacement {
     BUTTON_BAR,
     /** Context menu on data elements (default for row-specific actions). */
     CONTEXT_MENU,
-    /** Not displayed automatically; only rendered where an explicit {@code <button>} places it. */
+    /** Not displayed automatically; only rendered where explicit {@code <button>} places it. */
     NONE
 }
 ```
 
-The default placement and clique are part of the command's implementation:
+#### Inputs vs. Legacy Target
+
+The legacy `CommandHandler` uses a `target` property with component-relative navigation
+expressions (`model(self())`, `selection(self())`, `model(dialogParent())`). These
+navigate the `LayoutComponent` tree to find the object the command operates on.
+
+In the view system, this is replaced by explicit `inputs` - a list of channel
+references, just like model builder inputs:
+
+```xml
+<panel toolbar="true">
+  <commands>
+    <!-- Delete command operates on the selected customer -->
+    <command class="com.example.DeleteCustomerHandler"
+             inputs="selectedCustomer" />
+
+    <!-- Transfer command needs two inputs: source and target account -->
+    <command class="com.example.TransferHandler"
+             inputs="selectedSource, selectedTarget" />
+
+    <!-- Create command needs no input -->
+    <command class="com.example.CreateCustomerHandler" />
+  </commands>
+  ...
+</panel>
+```
+
+The handler receives the resolved input values as parameters:
 
 ```java
-public class SaveCommandHandler extends AbstractCommandHandler {
+public class DeleteCustomerHandler implements ViewCommand {
 
-    public interface Config extends AbstractCommandHandler.Config {
+    public interface Config extends ViewCommand.Config {
         @Override
         default CommandPlacement getPlacement() {
-            return CommandPlacement.BUTTON_BAR;
+            return CommandPlacement.TOOLBAR;
         }
 
         @Override
         default CommandClique getClique() {
-            return CommandClique.COMMIT;
+            return CommandClique.DELETE;
         }
+    }
+
+    @Override
+    public HandlerResult execute(ViewContext context, List<Object> inputs, Map<String, Object> args) {
+        Object customer = inputs.get(0);  // resolved from 'selectedCustomer' channel
+        // ... delete logic
     }
 }
 ```
+
+#### Properties Carried Over from Legacy CommandHandler
+
+| View System Property    | Legacy Property         | Change                                    |
+|-------------------------|-------------------------|-------------------------------------------|
+| `name`                  | `id`                    | Renamed for clarity                       |
+| `label`                 | `resourceKey`           | Same concept, renamed                     |
+| `image`                 | `image`                 | Unchanged                                 |
+| `disabled-image`        | `disabledImage`         | Unchanged                                 |
+| `css-classes`           | `cssClasses`            | Unchanged                                 |
+| `placement`             | (new)                   | New in view system                        |
+| `clique`                | `clique`                | Same concept, now typed enum              |
+| `inputs`                | `target`                | Explicit channel refs replace component navigation |
+| `executability`         | `executability`         | New `ViewExecutabilityRule` interface      |
+| `confirmation`          | `confirmation`          | New `ViewCommandConfirmation` interface    |
+| `group`                 | `group`                 | Unchanged (BoundCommandGroup)             |
+| `security-object`       | `securityObject`        | New `ViewSecurityObjectProvider` interface |
+| (removed)               | `checkScopeProvider`    | Replaced by channel-based dirty tracking  |
 
 A command's placement and clique can always be overridden in the panel's `<commands>`
 declaration:
@@ -1570,9 +1712,9 @@ an overflow menu is simply the last menu clique(s) in the toolbar (e.g., `view`,
 Like placement, the default clique is defined by the command's implementation:
 
 ```java
-public class DeleteCommandHandler extends AbstractCommandHandler {
+public class DeleteCommandHandler implements ViewCommand {
 
-    public interface Config extends AbstractCommandHandler.Config {
+    public interface Config extends ViewCommand.Config {
         @Override
         default CommandClique getClique() {
             return CommandClique.DELETE;
@@ -1752,11 +1894,10 @@ area; clique determines position and grouping within that area.
 
 ### Command Resolution
 
-Command handlers are `PolymorphicConfiguration<? extends CommandHandler>`, reusing the
-existing command infrastructure. The enclosing element's `ViewContext` resolves command
-references and provides the execution environment. A `<button command="name">` is
-resolved against the commands of the nearest enclosing command-defining element (panel,
-dialog, tabs, or sidebar) - both explicit and implicit.
+Commands are `PolymorphicConfiguration<? extends ViewCommand>`. The enclosing element's
+`ViewContext` resolves command references and provides the execution environment. A
+`<button command="name">` is resolved against the commands of the nearest enclosing
+command-defining element (panel, dialog, tabs, or sidebar) - both explicit and implicit.
 
 ## 10. Security
 

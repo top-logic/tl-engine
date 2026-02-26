@@ -527,8 +527,29 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	 * @return A fully configured untyped agent instance.
 	 */
 	public UntypedAgent buildUntypedAgent(String name, ChatMemory memory) {
+		return buildUntypedAgent(name, memory, null);
+	}
+
+	/**
+	 * Builds an {@link UntypedAgent} from the named configuration with an optional
+	 * {@link ChatModel} decorator.
+	 *
+	 * @param name
+	 *        The agent name as declared in the configuration.
+	 * @param memory
+	 *        Optional conversation memory, or {@code null} for stateless agents.
+	 * @param chatModelDecorator
+	 *        Optional decorator applied to the {@link ChatModel} before building. Useful for
+	 *        injecting multimodal content into LLM requests. May be {@code null}.
+	 * @return A fully configured untyped agent instance.
+	 */
+	public UntypedAgent buildUntypedAgent(String name, ChatMemory memory,
+			java.util.function.UnaryOperator<ChatModel> chatModelDecorator) {
 		AgentConfig config = getAgentConfig(name);
 		ChatModel model = buildChatModel(config);
+		if (chatModelDecorator != null) {
+			model = chatModelDecorator.apply(model);
+		}
 		String systemPrompt = getSystemPrompt(config);
 		List<ToolImplementation> tools = buildTools(config);
 		List<ToolImplementation> delegationTools = buildDelegationTools(config);

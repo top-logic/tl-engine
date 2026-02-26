@@ -167,8 +167,8 @@
 
 .chat-input-section {
 	display: flex;
+	flex-direction: column;
 	gap: 8px;
-	align-items: center;
 	padding: 0 4px;
 }
 
@@ -219,6 +219,134 @@
 .chat-button:disabled {
 	background-color: var(--chat-text-muted);
 	cursor: not-allowed;
+}
+
+/* ========================================
+ * Input Row (contains attach + input + send)
+ * ======================================== */
+
+.chat-input-row {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+}
+
+/* ========================================
+ * Attachment UI
+ * ======================================== */
+
+.chat-attach-button {
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+	border: 1px solid var(--chat-border);
+	background-color: var(--chat-bg);
+	color: var(--chat-text-secondary);
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	transition: border-color 0.2s, color 0.2s;
+	padding: 0;
+}
+
+.chat-attach-button:hover {
+	border-color: var(--chat-accent);
+	color: var(--chat-accent);
+}
+
+.chat-attachment-preview {
+	display: none;
+	flex-wrap: wrap;
+	gap: 8px;
+	padding: 8px 0;
+}
+
+.chat-attachment-preview.has-items {
+	display: flex;
+}
+
+.chat-attachment-preview-item {
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 6px 10px;
+	border: 1px solid var(--chat-border);
+	border-radius: var(--chat-radius-sm);
+	background: var(--chat-surface);
+	font-size: 0.85em;
+	max-width: 200px;
+}
+
+.chat-attachment-preview-item img {
+	width: 40px;
+	height: 40px;
+	object-fit: cover;
+	border-radius: 4px;
+}
+
+.chat-attachment-preview-item .chat-attachment-name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	color: var(--chat-text-primary);
+}
+
+.chat-attachment-preview-item .chat-attachment-remove {
+	position: absolute;
+	top: -6px;
+	right: -6px;
+	width: 18px;
+	height: 18px;
+	border-radius: 50%;
+	border: none;
+	background: var(--chat-text-secondary);
+	color: #fff;
+	font-size: 10px;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	line-height: 1;
+}
+
+.chat-attachment-preview-item .chat-attachment-remove:hover {
+	background: #ef4444;
+}
+
+/* Attachment indicators in message bubbles */
+.chat-message-attachments {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin-top: 8px;
+}
+
+.chat-attachment-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 4px 8px;
+	border-radius: var(--chat-radius-sm);
+	background: var(--chat-surface);
+	font-size: 0.8em;
+	color: var(--chat-text-secondary);
+}
+
+.chat-attachment-badge svg {
+	width: 14px;
+	height: 14px;
+}
+
+/* Drag-and-drop overlay */
+.chat-input-section.drag-over,
+.chat-welcome-input-section.drag-over {
+	outline: 2px dashed var(--chat-accent);
+	outline-offset: -2px;
+	background: rgba(99, 102, 241, 0.05);
+	border-radius: var(--chat-radius-sm);
 }
 
 /* ========================================
@@ -1021,9 +1149,16 @@
     width: 100%;
     max-width: 600px;
     display: flex;
-    flex-direction: row;
-    align-items: flex-end;
+    flex-direction: column;
     gap: 8px;
+}
+
+.chat-welcome-button-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    justify-content: flex-end;
 }
 
 .chat-welcome-input {

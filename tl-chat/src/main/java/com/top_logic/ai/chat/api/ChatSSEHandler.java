@@ -184,7 +184,16 @@ public class ChatSSEHandler {
 		_lastTaskId = currentTaskId;
 		_lastTaskStatus = currentTaskStatus;
 
-		boolean processing = ChatProcessor.isProcessing(_tracker);
+		boolean processing = false;
+		ChatProcessor.AIProcessingState procState = _tracker.getCurrentProcessingState();
+		if (procState != null && procState.isProcessing()) {
+			// Only report processing if it belongs to the currently active session
+			String procSessionId = procState.getSessionId();
+			String activeSessionId = _tracker.getActiveSessionId();
+			if (procSessionId == null || procSessionId.equals(activeSessionId)) {
+				processing = true;
+			}
+		}
 
 		try {
 			ConnectedEvent event = ConnectedEvent.create()
@@ -208,7 +217,11 @@ public class ChatSSEHandler {
 				// Sync timeline events from ToolCallTracker to TaskProgressTracker
 				ChatProcessor.AIProcessingState state = _tracker.getCurrentProcessingState();
 				if (state != null) {
-					ChatProcessor.applyPollUpdates(state, _tracker.getChat(), _tracker);
+					Chat stateChat = state.getChat();
+					if (stateChat == null) {
+						stateChat = _tracker.getChat();
+					}
+					ChatProcessor.applyPollUpdates(state, stateChat, _tracker);
 				}
 
 				emitDeltas();
@@ -244,6 +257,17 @@ public class ChatSSEHandler {
 
 		// Emit timeline events and task status
 		String currentTaskId = ChatProcessor.getCurrentTaskId(_tracker);
+
+		// Only emit task/timeline events if processing belongs to the active session
+		ChatProcessor.AIProcessingState procState = _tracker.getCurrentProcessingState();
+		if (procState != null) {
+			String procSessionId = procState.getSessionId();
+			String activeSessionId = _tracker.getActiveSessionId();
+			if (procSessionId != null && !procSessionId.equals(activeSessionId)) {
+				currentTaskId = null; // Suppress task events for a different session
+			}
+		}
+
 		if (currentTaskId != null) {
 			ChatTask task = _tracker.getTask(currentTaskId);
 			if (task != null) {

@@ -39,6 +39,11 @@ message MessageDto {
 	 * Formatted timestamp string.
 	 */
 	string time;
+
+	/**
+	 * Attachment metadata (file name, type, size). Binary data is NOT persisted.
+	 */
+	repeated AttachmentDto attachments;
 }
 
 /**
@@ -147,6 +152,31 @@ message ChatUpdatesResponse {
 }
 
 /**
+ * File attachment metadata and optional binary data.
+ */
+message AttachmentDto {
+	/**
+	 * Original file name.
+	 */
+	string fileName;
+
+	/**
+	 * MIME type (e.g. "image/png", "application/pdf").
+	 */
+	string mimeType;
+
+	/**
+	 * Base64-encoded file content. Present in ChatSendRequest (upload); null in persisted MessageDto.
+	 */
+	string base64Data;
+
+	/**
+	 * File size in bytes.
+	 */
+	int size;
+}
+
+/**
  * Request body for POST /chat/send.
  */
 message ChatSendRequest {
@@ -159,6 +189,11 @@ message ChatSendRequest {
 	 * Active session ID; if set, messages will be persisted to this session.
 	 */
 	string sessionId;
+
+	/**
+	 * File attachments (images, PDFs). Max 5, each max 10 MB.
+	 */
+	repeated AttachmentDto attachments;
 }
 
 /**

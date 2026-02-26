@@ -33,6 +33,9 @@ public class MessageDto extends de.haumacher.msgbuf.data.AbstractDataObject impl
 	/** @see #getTime() */
 	public static final String TIME__PROP = "time";
 
+	/** @see #getAttachments() */
+	public static final String ATTACHMENTS__PROP = "attachments";
+
 	private String _id = "";
 
 	private String _role = "";
@@ -44,6 +47,8 @@ public class MessageDto extends de.haumacher.msgbuf.data.AbstractDataObject impl
 	private String _contentHtml = "";
 
 	private String _time = "";
+
+	private final java.util.List<com.top_logic.ai.chat.api.messages.AttachmentDto> _attachments = new java.util.ArrayList<>();
 
 	/**
 	 * Creates a {@link MessageDto} instance.
@@ -174,6 +179,48 @@ public class MessageDto extends de.haumacher.msgbuf.data.AbstractDataObject impl
 		_time = value;
 	}
 
+	/**
+	 * Attachment metadata (file name, type, size). Binary data is NOT persisted.
+	 */
+	public final java.util.List<com.top_logic.ai.chat.api.messages.AttachmentDto> getAttachments() {
+		return _attachments;
+	}
+
+	/**
+	 * @see #getAttachments()
+	 */
+	public com.top_logic.ai.chat.api.messages.MessageDto setAttachments(java.util.List<? extends com.top_logic.ai.chat.api.messages.AttachmentDto> value) {
+		internalSetAttachments(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getAttachments()} without chain call utility. */
+	protected final void internalSetAttachments(java.util.List<? extends com.top_logic.ai.chat.api.messages.AttachmentDto> value) {
+		if (value == null) throw new IllegalArgumentException("Property 'attachments' cannot be null.");
+		_attachments.clear();
+		_attachments.addAll(value);
+	}
+
+	/**
+	 * Adds a value to the {@link #getAttachments()} list.
+	 */
+	public com.top_logic.ai.chat.api.messages.MessageDto addAttachment(com.top_logic.ai.chat.api.messages.AttachmentDto value) {
+		internalAddAttachment(value);
+		return this;
+	}
+
+	/** Implementation of {@link #addAttachment(com.top_logic.ai.chat.api.messages.AttachmentDto)} without chain call utility. */
+	protected final void internalAddAttachment(com.top_logic.ai.chat.api.messages.AttachmentDto value) {
+		_attachments.add(value);
+	}
+
+	/**
+	 * Removes a value from the {@link #getAttachments()} list.
+	 */
+	public final void removeAttachment(com.top_logic.ai.chat.api.messages.AttachmentDto value) {
+		_attachments.remove(value);
+	}
+
 	@Override
 	public String jsonType() {
 		return MESSAGE_DTO__TYPE;
@@ -187,7 +234,8 @@ public class MessageDto extends de.haumacher.msgbuf.data.AbstractDataObject impl
 			USER_NAME__PROP, 
 			CONTENT__PROP, 
 			CONTENT_HTML__PROP, 
-			TIME__PROP);
+			TIME__PROP, 
+			ATTACHMENTS__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -218,6 +266,7 @@ public class MessageDto extends de.haumacher.msgbuf.data.AbstractDataObject impl
 			case CONTENT__PROP: return getContent();
 			case CONTENT_HTML__PROP: return getContentHtml();
 			case TIME__PROP: return getTime();
+			case ATTACHMENTS__PROP: return getAttachments();
 			default: return null;
 		}
 	}
@@ -231,6 +280,7 @@ public class MessageDto extends de.haumacher.msgbuf.data.AbstractDataObject impl
 			case CONTENT__PROP: internalSetContent((String) value); break;
 			case CONTENT_HTML__PROP: internalSetContentHtml((String) value); break;
 			case TIME__PROP: internalSetTime((String) value); break;
+			case ATTACHMENTS__PROP: internalSetAttachments(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.ai.chat.api.messages.AttachmentDto.class, value)); break;
 		}
 	}
 
@@ -261,6 +311,12 @@ public class MessageDto extends de.haumacher.msgbuf.data.AbstractDataObject impl
 		out.value(getContentHtml());
 		out.name(TIME__PROP);
 		out.value(getTime());
+		out.name(ATTACHMENTS__PROP);
+		out.beginArray();
+		for (com.top_logic.ai.chat.api.messages.AttachmentDto x : getAttachments()) {
+			x.writeTo(out);
+		}
+		out.endArray();
 	}
 
 	@Override
@@ -272,6 +328,16 @@ public class MessageDto extends de.haumacher.msgbuf.data.AbstractDataObject impl
 			case CONTENT__PROP: setContent(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case CONTENT_HTML__PROP: setContentHtml(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case TIME__PROP: setTime(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case ATTACHMENTS__PROP: {
+				java.util.List<com.top_logic.ai.chat.api.messages.AttachmentDto> newValue = new java.util.ArrayList<>();
+				in.beginArray();
+				while (in.hasNext()) {
+					newValue.add(com.top_logic.ai.chat.api.messages.AttachmentDto.readAttachmentDto(in));
+				}
+				in.endArray();
+				setAttachments(newValue);
+			}
+			break;
 			default: super.readField(in, field);
 		}
 	}

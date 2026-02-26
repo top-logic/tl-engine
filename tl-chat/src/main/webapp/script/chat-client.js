@@ -58,8 +58,8 @@
   var CHAT_EVENTS_URL = BASE + "/chat/events";
   var CHAT_SESSIONS_URL = BASE + "/chat/sessions";
 
-  // Track active SSE connections per chat root
-  var activeConnections = new WeakMap();
+  // Track active SSE connections per chat root ID (not DOM reference, which changes on re-render)
+  var activeConnections = {};
 
   // ==================== Utility Functions ====================
 
@@ -163,7 +163,26 @@
     var button =
       (buttonId && doc.getElementById(buttonId)) ||
       root.querySelector(".chat-button");
-    return { messages: messages, input: input, button: button };
+    var fileInput =
+      (root.getAttribute("data-chat-file-input-id") &&
+        doc.getElementById(root.getAttribute("data-chat-file-input-id"))) ||
+      root.querySelector(".chat-file-input");
+    var attachBtn =
+      (root.getAttribute("data-chat-attach-btn-id") &&
+        doc.getElementById(root.getAttribute("data-chat-attach-btn-id"))) ||
+      root.querySelector(".chat-attach-button");
+    var preview =
+      (root.getAttribute("data-chat-preview-id") &&
+        doc.getElementById(root.getAttribute("data-chat-preview-id"))) ||
+      root.querySelector(".chat-attachment-preview");
+    return {
+      messages: messages,
+      input: input,
+      button: button,
+      fileInput: fileInput,
+      attachBtn: attachBtn,
+      preview: preview,
+    };
   }
 
   function appendMessage(container, msg) {
@@ -221,6 +240,30 @@
       text.innerHTML = escapeHtml(msg.content || "");
     }
     bubble.appendChild(text);
+
+    // Render attachments in bubble
+    if (msg.attachments && msg.attachments.length > 0) {
+      var attachDiv = document.createElement("div");
+      attachDiv.className = "chat-message-attachments";
+      msg.attachments.forEach(function (att) {
+        if (att.previewUrl) {
+          var img = document.createElement("img");
+          img.src = att.previewUrl;
+          img.alt = att.fileName || att.name || "image";
+          img.style.maxWidth = "200px";
+          img.style.maxHeight = "150px";
+          img.style.borderRadius = "8px";
+          attachDiv.appendChild(img);
+        } else {
+          var badge = document.createElement("span");
+          badge.className = "chat-attachment-badge";
+          badge.textContent =
+            "\uD83D\uDCC4 " + (att.fileName || att.name || "file");
+          attachDiv.appendChild(badge);
+        }
+      });
+      bubble.appendChild(attachDiv);
+    }
 
     var time = document.createElement("span");
     time.className = "chat-time";
@@ -546,16 +589,18 @@
     });
   }
 
-  function cleanupConnection(root) {
-    var conn = activeConnections.get(root);
+  function cleanupConnection(rootId) {
+    var conn = activeConnections[rootId];
     if (conn) {
+      log("Cleaning up connection for " + rootId);
       if (conn.eventSource) {
         conn.eventSource.close();
       }
       if (conn.reconnectTimer) {
         clearTimeout(conn.reconnectTimer);
       }
-      activeConnections.delete(root);
+      conn.destroyed = true;
+      delete activeConnections[rootId];
     }
   }
 
@@ -594,22 +639,26 @@
   // ==================== Main Initialization ====================
 
   function initOne(root) {
-    log("initOne called", { rootId: root.id });
+    var rootId = root.id || root.getAttribute("data-tl-chat");
+    log("initOne called", { rootId: rootId });
 
-    var existingConn = activeConnections.get(root);
-    if (
-      existingConn &&
-      existingConn.eventSource &&
-      existingConn.eventSource.readyState !== EventSource.CLOSED
-    ) {
-      log("Already initialized and connected, skipping");
+    // Guard: skip if this exact DOM element was already initialized.
+    // This prevents duplicate event listeners when both the MutationObserver
+    // and the script-reload guard (window._tlChatInit) call initOne on the
+    // same newly added element.
+    if (root.getAttribute("data-tl-chat-inited") === "true") {
+      log("Already initialized, skipping", { rootId: rootId });
       return;
     }
 
-    cleanupConnection(root);
+    // Clean up any existing connection for this root ID (handles DOM replacement)
+    cleanupConnection(rootId);
     root.setAttribute("data-tl-chat-inited", "true");
 
     var el = getElements(root);
+    var pendingAttachments = [];
+    var MAX_ATTACHMENTS = 5;
+    var MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
     if (!el.messages || !el.input || !el.button) {
       log("Missing elements", {
         messages: !!el.messages,
@@ -622,6 +671,9 @@
     el.welcome = root.querySelector(".chat-welcome");
     el.welcomeInput = root.querySelector(".chat-welcome-input");
     el.welcomeSendBtn = root.querySelector(".chat-welcome-send-btn");
+    el.welcomeFileInput = root.querySelector(".chat-welcome-file-input");
+    el.welcomeAttachBtn = root.querySelector(".chat-welcome-attach-btn");
+    el.welcomePreview = root.querySelector(".chat-welcome-attachment-preview");
     el.promptChips = root.querySelectorAll(".chat-prompt-chip");
     el.sidebarToggle = root.querySelector(".chat-sidebar-toggle");
     el.historyPanel = root.querySelector(".chat-history-panel");
@@ -647,6 +699,7 @@
 
     function sendFromWelcome(text) {
       if (welcomeSending) return;
+      if (!text && pendingAttachments.length === 0) return;
       welcomeSending = true;
       createSessionApi("New Chat")
         .then(function (session) {
@@ -665,8 +718,8 @@
             if (el.messages) el.messages.innerHTML = "";
             connectSSE();
 
-            // Send the message via the normal input path
-            el.input.value = text;
+            // Send the message via the normal input path (attachments carried via pendingAttachments)
+            el.input.value = text || "";
             sendMessage();
           }
         })
@@ -690,13 +743,25 @@
     if (el.welcomeSendBtn && el.welcomeInput) {
       el.welcomeSendBtn.addEventListener("click", function () {
         var text = (el.welcomeInput.value || "").trim();
-        if (text) sendFromWelcome(text);
+        if (text || pendingAttachments.length > 0) sendFromWelcome(text);
       });
       el.welcomeInput.addEventListener("keydown", function (e) {
         if (e.key === "Enter" && !e.shiftKey) {
           e.preventDefault();
           var text = (el.welcomeInput.value || "").trim();
-          if (text) sendFromWelcome(text);
+          if (text || pendingAttachments.length > 0) sendFromWelcome(text);
+        }
+      });
+    }
+    // Welcome page attachment button
+    if (el.welcomeAttachBtn && el.welcomeFileInput) {
+      el.welcomeAttachBtn.addEventListener("click", function () {
+        el.welcomeFileInput.click();
+      });
+      el.welcomeFileInput.addEventListener("change", function () {
+        if (el.welcomeFileInput.files.length > 0) {
+          addFiles(el.welcomeFileInput.files);
+          el.welcomeFileInput.value = "";
         }
       });
     }
@@ -711,7 +776,7 @@
       processing: false,
       destroyed: false,
     };
-    activeConnections.set(root, state);
+    activeConnections[rootId] = state;
 
     function getCurrentTaskBody() {
       if (state.currentTaskId && !state.currentTaskBody) {
@@ -732,7 +797,7 @@
       if (!document.body.contains(root)) {
         log("Root not in DOM, destroying");
         state.destroyed = true;
-        cleanupConnection(root);
+        cleanupConnection(rootId);
         return;
       }
 
@@ -918,7 +983,7 @@
         if (!document.body.contains(root)) {
           log("Root not in DOM after error, destroying");
           state.destroyed = true;
-          cleanupConnection(root);
+          cleanupConnection(rootId);
           return;
         }
 
@@ -927,11 +992,112 @@
       };
     }
 
+    function isAllowedFile(file) {
+      if (!file.type.startsWith("image/") && file.type !== "application/pdf") {
+        return "Unsupported file type: " + file.type;
+      }
+      if (file.size > MAX_FILE_SIZE) {
+        return "File too large: " + file.name + " (max 10 MB)";
+      }
+      return null;
+    }
+
+    function addFiles(files) {
+      var remaining = MAX_ATTACHMENTS - pendingAttachments.length;
+      var toAdd = Array.prototype.slice.call(files, 0, remaining);
+      toAdd.forEach(function (file) {
+        var error = isAllowedFile(file);
+        if (error) {
+          log("File rejected: " + error);
+          return;
+        }
+        var reader = new FileReader();
+        reader.onload = function (e) {
+          var base64Full = e.target.result;
+          var base64Data = base64Full.split(",")[1];
+          var previewUrl = file.type.startsWith("image/") ? base64Full : null;
+          pendingAttachments.push({
+            file: file,
+            name: file.name,
+            mimeType: file.type,
+            base64: base64Data,
+            previewUrl: previewUrl,
+            size: file.size,
+          });
+          renderAttachmentPreview();
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function removeAttachment(index) {
+      pendingAttachments.splice(index, 1);
+      renderAttachmentPreview();
+    }
+
+    function renderAttachmentPreview() {
+      // Render into the active preview container (welcome or chat)
+      var isWelcomeVisible =
+        el.welcome && !el.welcome.classList.contains("hidden");
+      var container = isWelcomeVisible ? el.welcomePreview : el.preview;
+      // Clear both containers
+      if (el.preview) {
+        el.preview.innerHTML = "";
+        el.preview.classList.remove("has-items");
+      }
+      if (el.welcomePreview) {
+        el.welcomePreview.innerHTML = "";
+        el.welcomePreview.classList.remove("has-items");
+      }
+      if (!container || pendingAttachments.length === 0) return;
+      container.classList.add("has-items");
+      pendingAttachments.forEach(function (att, idx) {
+        var item = document.createElement("div");
+        item.className = "chat-attachment-preview-item";
+        if (att.previewUrl) {
+          var img = document.createElement("img");
+          img.src = att.previewUrl;
+          img.alt = att.name;
+          item.appendChild(img);
+        } else {
+          var icon = document.createElement("span");
+          icon.textContent = "\uD83D\uDCC4";
+          icon.style.fontSize = "1.5em";
+          item.appendChild(icon);
+        }
+        var nameSpan = document.createElement("span");
+        nameSpan.className = "chat-attachment-name";
+        nameSpan.textContent = att.name;
+        item.appendChild(nameSpan);
+        var removeBtn = document.createElement("button");
+        removeBtn.className = "chat-attachment-remove";
+        removeBtn.textContent = "\u00D7";
+        (function (capturedIdx) {
+          removeBtn.onclick = function () {
+            removeAttachment(capturedIdx);
+          };
+        })(idx);
+        item.appendChild(removeBtn);
+        container.appendChild(item);
+      });
+    }
+
     function sendMessage() {
+      if (state.destroyed) return;
       var text = (el.input.value || "").trim();
-      if (!text) return;
+      if (!text && pendingAttachments.length === 0) return;
       el.input.disabled = true;
       el.button.disabled = true;
+
+      // Capture attachment metadata for the optimistic message
+      var optimisticAttachments = pendingAttachments.map(function (att) {
+        return {
+          fileName: att.name,
+          mimeType: att.mimeType,
+          size: att.size,
+          previewUrl: att.previewUrl,
+        };
+      });
 
       // Optimistically add user message to UI immediately (replaced by server message via SSE)
       var tempMsgId = "user-" + Date.now();
@@ -942,11 +1108,24 @@
         content: text,
         time: new Date().toISOString(),
         optimistic: true,
+        attachments: optimisticAttachments,
       });
       scrollToBottom(el.messages);
 
-      var sendBody = { text: text };
+      var sendBody = { text: text || " " };
       if (currentSessionId) sendBody.sessionId = currentSessionId;
+      if (pendingAttachments.length > 0) {
+        sendBody.attachments = pendingAttachments.map(function (att) {
+          return {
+            fileName: att.name,
+            mimeType: att.mimeType,
+            base64Data: att.base64,
+            size: att.size,
+          };
+        });
+      }
+      pendingAttachments = [];
+      renderAttachmentPreview();
       fetchJson(CHAT_SEND_URL, { method: "POST", body: sendBody })
         .then(function (data) {
           if (data && data.status === "busy") {
@@ -1004,6 +1183,59 @@
         sendMessage();
       }
     });
+
+    // Attach button click
+    if (el.attachBtn && el.fileInput) {
+      el.attachBtn.addEventListener("click", function () {
+        el.fileInput.click();
+      });
+      el.fileInput.addEventListener("change", function () {
+        if (el.fileInput.files.length > 0) {
+          addFiles(el.fileInput.files);
+          el.fileInput.value = "";
+        }
+      });
+    }
+
+    // Drag and drop on input section
+    var inputSection = root.querySelector(".chat-input-section");
+    if (inputSection) {
+      inputSection.addEventListener("dragover", function (e) {
+        e.preventDefault();
+        inputSection.classList.add("drag-over");
+      });
+      inputSection.addEventListener("dragleave", function (e) {
+        e.preventDefault();
+        inputSection.classList.remove("drag-over");
+      });
+      inputSection.addEventListener("drop", function (e) {
+        e.preventDefault();
+        inputSection.classList.remove("drag-over");
+        if (e.dataTransfer.files.length > 0) {
+          addFiles(e.dataTransfer.files);
+        }
+      });
+    }
+
+    // Drag and drop on welcome input section
+    var welcomeInputSection = root.querySelector(".chat-welcome-input-section");
+    if (welcomeInputSection) {
+      welcomeInputSection.addEventListener("dragover", function (e) {
+        e.preventDefault();
+        welcomeInputSection.classList.add("drag-over");
+      });
+      welcomeInputSection.addEventListener("dragleave", function (e) {
+        e.preventDefault();
+        welcomeInputSection.classList.remove("drag-over");
+      });
+      welcomeInputSection.addEventListener("drop", function (e) {
+        e.preventDefault();
+        welcomeInputSection.classList.remove("drag-over");
+        if (e.dataTransfer.files.length > 0) {
+          addFiles(e.dataTransfer.files);
+        }
+      });
+    }
 
     // ── History Panel ──────────────────────────────────────────
 
@@ -1095,6 +1327,17 @@
       setActiveItem(sessionId);
       showChat();
 
+      // Reset processing state so the "thinking" indicator from the previous
+      // session doesn't bleed into the new one. The SSE connected event from
+      // the new connection will set the correct state.
+      state.processing = false;
+      state.currentTaskId = null;
+      state.currentTaskBody = null;
+      state.currentTaskStartTime = null;
+      state.currentAgentCallToolsBody = null;
+      el.input.disabled = false;
+      el.button.disabled = false;
+
       // Clear current messages
       if (el.messages) {
         el.messages.innerHTML = "";
@@ -1125,6 +1368,7 @@
                   contentHtml: msg.contentHtml,
                   userName: msg.userName,
                   time: msg.time || "",
+                  attachments: msg.attachments,
                 });
               } else if (entry.type === "task_snapshot" && entry.taskData) {
                 renderTaskSnapshot(el.messages, entry.taskData);
@@ -1146,6 +1390,7 @@
                       contentHtml: msg.contentHtml,
                       userName: msg.userName,
                       time: msg.time || "",
+                      attachments: msg.attachments,
                     });
                   } else if (entry.type === "task_snapshot" && entry.taskData) {
                     renderTaskSnapshot(el.messages, entry.taskData);
@@ -1267,13 +1512,18 @@
             removedNode.getAttribute &&
             removedNode.getAttribute("data-tl-chat") === "v1"
           ) {
-            cleanupConnection(removedNode);
+            var removedId =
+              removedNode.id || removedNode.getAttribute("data-tl-chat");
+            cleanupConnection(removedId);
           }
           var removedRoots = removedNode.querySelectorAll
             ? removedNode.querySelectorAll('[data-tl-chat="v1"]')
             : [];
           for (var rr = 0; rr < removedRoots.length; rr++) {
-            cleanupConnection(removedRoots[rr]);
+            var rrId =
+              removedRoots[rr].id ||
+              removedRoots[rr].getAttribute("data-tl-chat");
+            cleanupConnection(rrId);
           }
         }
       }
@@ -1299,7 +1549,8 @@
   window.addEventListener("beforeunload", function () {
     var roots = document.querySelectorAll('[data-tl-chat="v1"]');
     for (var i = 0; i < roots.length; i++) {
-      cleanupConnection(roots[i]);
+      var rid = roots[i].id || roots[i].getAttribute("data-tl-chat");
+      cleanupConnection(rid);
     }
   });
 

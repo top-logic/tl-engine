@@ -5,7 +5,9 @@
  */
 package com.top_logic.ai.chat.layout;
 
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -18,14 +20,22 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.top_logic.ai.chat.api.DtoMapper;
+import com.top_logic.ai.chat.api.messages.AttachmentDto;
+import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.service.agents.AgentRegistry;
 import com.top_logic.ai.service.tools.ToolCallTracker;
 import com.top_logic.ai.service.tools.ToolCallTracking;
 import com.top_logic.ai.service.tools.TraceEntry;
 import com.top_logic.basic.Logger;
+import com.top_logic.model.TLObject;
 import com.top_logic.basic.thread.ThreadContextManager;
 
 import dev.langchain4j.agentic.UntypedAgent;
+import dev.langchain4j.data.message.Content;
+import dev.langchain4j.data.message.ImageContent;
+import dev.langchain4j.data.message.PdfFileContent;
+import dev.langchain4j.data.message.TextContent;
 import dev.langchain4j.memory.ChatMemory;
 
 /**
@@ -88,7 +98,7 @@ public class ChatProcessor {
 	 * Uses state from tracker; {@code taskId} must already be set on state.
 	 */
 	static void executeOrchestrator(TaskProgressTracker taskTracker, AIProcessingState state,
-			ChatMemory chatMemory, String userMessage) throws Exception {
+			ChatMemory chatMemory, String userMessage, List<AttachmentDto> attachments) throws Exception {
 		if (state == null) {
 			return;
 		}
@@ -105,12 +115,29 @@ public class ChatProcessor {
 			Logger.info("ChatProcessor: Starting agent in thread: " + Thread.currentThread().getName(),
 				ChatProcessor.class);
 
-			if (userMessage == null || userMessage.trim().isEmpty()) {
+			boolean hasAttachments = attachments != null && !attachments.isEmpty();
+			boolean hasText = userMessage != null && !userMessage.trim().isEmpty();
+			if (!hasText && !hasAttachments) {
 				state.addPendingMessage(new ChatMessage("Agent", "Please provide a message."));
 				taskTracker.completeTask(taskId);
 				return;
 			}
-			String trimmed = userMessage.trim();
+			String trimmed = hasText ? userMessage.trim() : "[See attached files]";
+
+			// Build attachment content list for multimodal injection
+			ChatMemory effectiveMemory = chatMemory;
+			java.util.function.UnaryOperator<dev.langchain4j.model.chat.ChatModel> modelDecorator = null;
+			if (hasAttachments) {
+				List<Content> attachmentContents = new ArrayList<>();
+				for (AttachmentDto att : attachments) {
+					attachmentContents.add(toContent(att));
+				}
+				// Wrap ChatMemory so multimodal content is persisted for future conversation turns
+				effectiveMemory = new MultimodalChatMemoryWrapper(chatMemory, attachmentContents);
+				// Wrap ChatModel so the FIRST LLM request includes multimodal content
+				List<Content> modelContents = new ArrayList<>(attachmentContents);
+				modelDecorator = model -> new MultimodalChatModelWrapper(model, modelContents);
+			}
 
 			AgentRegistry agentRegistry = AgentRegistry.getInstance();
 			if (agentRegistry == null) {
@@ -121,17 +148,28 @@ public class ChatProcessor {
 			}
 
 			String entryPointAgent = agentRegistry.getEntryPointAgentName();
-			UntypedAgent agent = agentRegistry.buildUntypedAgent(entryPointAgent, chatMemory);
+			UntypedAgent agent = agentRegistry.buildUntypedAgent(entryPointAgent, effectiveMemory, modelDecorator);
 			String result = ThreadContextManager.inSystemInteraction(ChatProcessor.class,
 				() -> (String) agent.invoke(Map.of("message", trimmed)));
 
 			state.addPendingMessage(new ChatMessage("Agent", result));
 			taskTracker.completeTask(taskId);
 
-			// Persist messages to the active session
-			String activeSessionId = taskTracker.getActiveSessionId();
-			if (activeSessionId != null) {
-				persistMessages(taskTracker, activeSessionId);
+			// Flush pending messages (including agent response) into Chat before persisting,
+			// so the persisted data includes the agent's response.
+			Chat chat = state.getChat();
+			if (chat == null) {
+				chat = taskTracker.getChat();
+			}
+			applyPollUpdates(state, chat, taskTracker);
+
+			// Persist messages to the session this task was started for (not the currently active one)
+			String sessionId = state.getSessionId();
+			if (sessionId == null) {
+				sessionId = taskTracker.getActiveSessionId();
+			}
+			if (sessionId != null) {
+				persistMessagesForSession(sessionId, chat);
 			}
 
 		} catch (Exception ex) {
@@ -251,6 +289,8 @@ public class ChatProcessor {
 	 *        Display name of the user sending the message.
 	 * @param userMessage
 	 *        The message text.
+	 * @param attachments
+	 *        File attachments sent with the message; may be null or empty.
 	 * @param repaintRequester
 	 *        Called when polling has updates (e.g. {@code requestRepaint}); may be null for API-only.
 	 * @param uiExecutor
@@ -259,6 +299,7 @@ public class ChatProcessor {
 	 * @return The send result (task ID, or busy/error); never null.
 	 */
 	public static SendResult sendMessage(TaskProgressTracker tracker, String userName, String userMessage,
+			List<AttachmentDto> attachments,
 			Runnable repaintRequester, ScheduledExecutorService uiExecutor) {
 		if (isProcessing(tracker)) {
 			tracker.getChat().addMessage(new ChatMessage("System", "Please wait for the current response to complete."));
@@ -268,7 +309,15 @@ public class ChatProcessor {
 			return SendResult.busy();
 		}
 
-		ChatMessage message = new ChatMessage(userName, userMessage);
+		List<ChatMessage.AttachmentMetadata> attachmentMeta = Collections.emptyList();
+		if (attachments != null && !attachments.isEmpty()) {
+			attachmentMeta = new ArrayList<>();
+			for (AttachmentDto att : attachments) {
+				attachmentMeta.add(new ChatMessage.AttachmentMetadata(
+					att.getFileName(), att.getMimeType(), att.getSize()));
+			}
+		}
+		ChatMessage message = new ChatMessage(userName, userMessage, Instant.now(), attachmentMeta);
 		tracker.getChat().addMessage(message);
 
 		// Persist user message before AI processing starts
@@ -281,12 +330,20 @@ public class ChatProcessor {
 		String taskId = tracker.startTask(randomChatTaskPlaceholder());
 		state.setCurrentTaskId(taskId);
 		tracker.setCurrentProcessingState(state);
+
+		// Capture session context so background task writes to the correct Chat,
+		// even if the user switches sessions before the task completes.
+		Chat capturedChat = tracker.getChat();
+		String capturedSessionId = tracker.getActiveSessionId();
+		state.setChat(capturedChat);
+		state.setSessionId(capturedSessionId);
+
 		if (repaintRequester != null) {
 			tracker.setRepaintRequester(repaintRequester);
 		}
 
 		ChatMemory chatMemory = tracker.getChatMemory();
-		Future<?> future = BACKGROUND_EXECUTOR.submit(new AIBackgroundTask(tracker, chatMemory, userMessage));
+		Future<?> future = BACKGROUND_EXECUTOR.submit(new AIBackgroundTask(tracker, chatMemory, userMessage, attachments));
 		state._backgroundTask = future;
 
 		if (uiExecutor != null) {
@@ -297,7 +354,7 @@ public class ChatProcessor {
 						if (s == null) {
 							return;
 						}
-						boolean hasUpdates = applyPollUpdates(s, tracker.getChat(), tracker);
+						boolean hasUpdates = applyPollUpdates(s, s.getChat(), tracker);
 						if (hasUpdates) {
 							tracker.requestRepaintIfNeeded();
 						}
@@ -344,17 +401,60 @@ public class ChatProcessor {
 	}
 
 	/**
+	 * Persists the given chat's entries to a specific session by ID.
+	 * Used by the background task to persist to the correct session even if the user has
+	 * switched sessions.
+	 */
+	static void persistMessagesForSession(String sessionId, Chat chat) {
+		try {
+			ThreadContextManager.inSystemInteraction(ChatProcessor.class, () -> {
+				TLObject session = ChatHistoryService.findSessionById(sessionId);
+				if (session != null) {
+					String json = DtoMapper.serializeEntries(chat.getEntries());
+					ChatHistoryService.saveMessages(session, json);
+				}
+				return null;
+			});
+		} catch (Exception ex) {
+			Logger.error("Failed to persist chat messages for session " + sessionId + ": " + ex.getMessage(),
+				ex, ChatProcessor.class);
+		}
+	}
+
+	/**
+	 * Converts an {@link AttachmentDto} to a LangChain4j {@link Content} object.
+	 *
+	 * <p>
+	 * Images are converted to {@link ImageContent}, PDFs to {@link PdfFileContent}. Unsupported
+	 * types produce a placeholder {@link TextContent}.
+	 * </p>
+	 */
+	private static Content toContent(AttachmentDto att) {
+		String mimeType = att.getMimeType();
+		String base64 = att.getBase64Data();
+		if (mimeType != null && mimeType.startsWith("image/")) {
+			return new ImageContent(base64, mimeType);
+		} else if ("application/pdf".equals(mimeType)) {
+			return new PdfFileContent(base64, mimeType);
+		}
+		return new TextContent("[Unsupported attachment: " + att.getFileName() + "]");
+	}
+
+	/**
 	 * Background task for AI processing with detailed progress tracking.
 	 */
 	static class AIBackgroundTask implements Runnable {
 		private final TaskProgressTracker _taskTracker;
 		private final ChatMemory _chatMemory;
 		private final String _userMessage;
+		private final List<AttachmentDto> _attachments;
 
-		AIBackgroundTask(TaskProgressTracker taskTracker, ChatMemory chatMemory, String userMessage) {
+		AIBackgroundTask(TaskProgressTracker taskTracker, ChatMemory chatMemory,
+				String userMessage, List<AttachmentDto> attachments) {
 			_taskTracker = taskTracker;
 			_chatMemory = chatMemory;
 			_userMessage = userMessage;
+			_attachments = attachments;
 		}
 
 		@Override
@@ -366,7 +466,7 @@ public class ChatProcessor {
 			try {
 				ThreadContextManager.inSystemInteraction(ChatProcessor.class, () -> {
 					try {
-						executeOrchestrator(_taskTracker, state, _chatMemory, _userMessage);
+						executeOrchestrator(_taskTracker, state, _chatMemory, _userMessage, _attachments);
 						state.completeSuccessfully();
 						return null;
 					} catch (InterruptedException ex) {
@@ -403,6 +503,11 @@ public class ChatProcessor {
 		// Tool call tracking for real-time updates
 		private volatile ToolCallTracker _toolCallTracker = null;
 		private final AtomicInteger _lastSeenToolCallCount = new AtomicInteger(0);
+
+		// Session context: captured at creation, never changes.
+		// Ensures background task writes to the correct Chat even if the user switches sessions.
+		private volatile String _sessionId = null;
+		private volatile Chat _chat = null;
 
 		// Result accumulation
 		private final List<ChatMessage> _pendingMessages = new ArrayList<>();
@@ -542,6 +647,26 @@ public class ChatProcessor {
 		 */
 		public void setLastSeenToolCallCount(int count) {
 			_lastSeenToolCallCount.set(count);
+		}
+
+		/** The session ID this processing state belongs to; set once at creation. */
+		public String getSessionId() {
+			return _sessionId;
+		}
+
+		/** Sets the session ID (called once in {@link ChatProcessor#sendMessage}). */
+		public void setSessionId(String sessionId) {
+			_sessionId = sessionId;
+		}
+
+		/** The Chat this processing state writes to; set once at creation. */
+		public Chat getChat() {
+			return _chat;
+		}
+
+		/** Sets the captured Chat reference (called once in {@link ChatProcessor#sendMessage}). */
+		public void setChat(Chat chat) {
+			_chat = chat;
 		}
 	}
 

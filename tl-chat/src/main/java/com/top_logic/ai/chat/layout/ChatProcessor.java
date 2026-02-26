@@ -152,6 +152,10 @@ public class ChatProcessor {
 			state.addPendingMessage(new ChatMessage("Agent", result));
 			taskTracker.completeTask(taskId);
 
+			// Flush pending messages (including agent response) into Chat before persisting,
+			// so the persisted data includes the agent's response.
+			applyPollUpdates(state, taskTracker.getChat(), taskTracker);
+
 			// Persist messages to the active session
 			String activeSessionId = taskTracker.getActiveSessionId();
 			if (activeSessionId != null) {

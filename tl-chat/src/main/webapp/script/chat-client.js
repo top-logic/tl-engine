@@ -58,8 +58,8 @@
   var CHAT_EVENTS_URL = BASE + "/chat/events";
   var CHAT_SESSIONS_URL = BASE + "/chat/sessions";
 
-  // Track active SSE connections per chat root
-  var activeConnections = new WeakMap();
+  // Track active SSE connections per chat root ID (not DOM reference, which changes on re-render)
+  var activeConnections = {};
 
   // ==================== Utility Functions ====================
 
@@ -589,16 +589,18 @@
     });
   }
 
-  function cleanupConnection(root) {
-    var conn = activeConnections.get(root);
+  function cleanupConnection(rootId) {
+    var conn = activeConnections[rootId];
     if (conn) {
+      log("Cleaning up connection for " + rootId);
       if (conn.eventSource) {
         conn.eventSource.close();
       }
       if (conn.reconnectTimer) {
         clearTimeout(conn.reconnectTimer);
       }
-      activeConnections.delete(root);
+      conn.destroyed = true;
+      delete activeConnections[rootId];
     }
   }
 
@@ -637,19 +639,11 @@
   // ==================== Main Initialization ====================
 
   function initOne(root) {
-    log("initOne called", { rootId: root.id });
+    var rootId = root.id || root.getAttribute("data-tl-chat");
+    log("initOne called", { rootId: rootId });
 
-    var existingConn = activeConnections.get(root);
-    if (
-      existingConn &&
-      existingConn.eventSource &&
-      existingConn.eventSource.readyState !== EventSource.CLOSED
-    ) {
-      log("Already initialized and connected, skipping");
-      return;
-    }
-
-    cleanupConnection(root);
+    // Always clean up any existing connection for this root ID (handles DOM replacement)
+    cleanupConnection(rootId);
     root.setAttribute("data-tl-chat-inited", "true");
 
     var el = getElements(root);
@@ -773,7 +767,7 @@
       processing: false,
       destroyed: false,
     };
-    activeConnections.set(root, state);
+    activeConnections[rootId] = state;
 
     function getCurrentTaskBody() {
       if (state.currentTaskId && !state.currentTaskBody) {

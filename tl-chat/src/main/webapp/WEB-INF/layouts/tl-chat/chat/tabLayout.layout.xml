@@ -13,7 +13,7 @@
 			<de>Chat</de>
 		</tabLabel>
 		<components>
-			<layout-reference resource="tl-chat/chat/chatDemo.layout.xml"/>
+			<layout-reference resource="tl-chat/chat/agent.layout.xml"/>
 		</components>
 	</arguments>
 </config:template-call>

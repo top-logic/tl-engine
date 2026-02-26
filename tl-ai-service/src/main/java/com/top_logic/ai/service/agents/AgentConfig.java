@@ -13,11 +13,11 @@ import java.util.Set;
 
 import com.top_logic.ai.service.AIService;
 import com.top_logic.ai.service.ChatModelFactory;
-import com.top_logic.ai.service.tools.registry.ToolRegistry;
 import com.top_logic.ai.service.providers.AnthropicChatModelFactory;
 import com.top_logic.ai.service.providers.MistralChatModelFactory;
 import com.top_logic.ai.service.providers.ModelCapability;
 import com.top_logic.ai.service.providers.OpenAIChatModelFactory;
+import com.top_logic.ai.service.tools.registry.ToolRegistry;
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.annotation.Derived;
@@ -39,7 +39,9 @@ import com.top_logic.layout.form.model.FieldMode;
 import com.top_logic.layout.form.values.MultiLineText;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
+import com.top_logic.layout.form.values.edit.annotation.LabelPositioning;
 import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.model.annotate.LabelPosition;
 
 /**
  * Configuration for a single agent in the {@link AgentRegistry}.
@@ -482,6 +484,7 @@ public interface AgentConfig extends NamedConfigMandatory {
 	@Name(SYSTEM_PROMPT)
 	@Mandatory
 	@ControlProvider(MultiLineText.class)
+	@LabelPositioning(LabelPosition.ABOVE)
 	String getSystemPrompt();
 
 	/**

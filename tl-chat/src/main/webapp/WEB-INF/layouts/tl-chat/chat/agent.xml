@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
-<form name="DemoChatContent"
-	resPrefix="chat.layout.demoChat"
+<form name="AgentContent"
+	resPrefix="chat.layout.agent"
 >
 	<modelBuilder class="com.top_logic.ai.chat.layout.ChatComponentBuilder"/>
 </form>

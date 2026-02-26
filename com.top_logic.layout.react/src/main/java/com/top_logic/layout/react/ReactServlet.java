@@ -6,6 +6,7 @@
 package com.top_logic.layout.react;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Arrays;
@@ -22,6 +23,7 @@ import jakarta.servlet.http.Part;
 
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
+import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.base.services.simpleajax.AbstractCssClassUpdate;
 import com.top_logic.base.services.simpleajax.ClientAction;
 import com.top_logic.base.services.simpleajax.ContentReplacement;
@@ -74,6 +76,56 @@ import com.top_logic.util.TopLogicServlet;
  */
 @MultipartConfig
 public class ReactServlet extends TopLogicServlet {
+
+	@Override
+	protected void doGet(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		HttpSession session = request.getSession(false);
+		if (session == null) {
+			sendError(response, HttpServletResponse.SC_UNAUTHORIZED, "No session.");
+			return;
+		}
+
+		String pathInfo = request.getPathInfo();
+		if ("/data".equals(pathInfo)) {
+			handleDataDownload(request, response, session);
+		} else {
+			sendError(response, HttpServletResponse.SC_NOT_FOUND, "Unknown path: " + pathInfo);
+		}
+	}
+
+	private void handleDataDownload(HttpServletRequest request, HttpServletResponse response, HttpSession session)
+			throws IOException {
+		String controlId = request.getParameter("controlId");
+		if (controlId == null) {
+			sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Missing controlId parameter.");
+			return;
+		}
+
+		SSEUpdateQueue queue = SSEUpdateQueue.forSession(session);
+		CommandListener control = queue.getControl(controlId);
+		if (!(control instanceof DataProvider)) {
+			sendError(response, HttpServletResponse.SC_NOT_FOUND,
+				"Control does not provide data: " + controlId);
+			return;
+		}
+
+		BinaryData data = ((DataProvider) control).getDownloadData();
+		if (data == null) {
+			response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+			return;
+		}
+
+		response.setContentType(data.getContentType());
+		long size = data.getSize();
+		if (size >= 0) {
+			response.setContentLengthLong(size);
+		}
+
+		try (OutputStream out = response.getOutputStream()) {
+			data.deliverTo(out);
+		}
+	}
 
 	@Override
 	protected void doPost(HttpServletRequest request, HttpServletResponse response)

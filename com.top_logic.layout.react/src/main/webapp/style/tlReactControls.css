@@ -250,6 +250,63 @@ button.tlAudioRecorder__button--recording:hover {
 	color: var(--text-error);
 }
 
+/* --- TLAudioPlayer ----------------------------------------------------- */
+
+.tlAudioPlayer {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-03);
+	font-family: var(--font-family);
+}
+
+.tlAudioPlayer__button {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	height: 2rem;
+	padding: 0 var(--spacing-03);
+	border: none;
+	border-radius: var(--corner-radius);
+	font-family: var(--font-family);
+	font-weight: bold;
+	font-size: var(--heading-compact-02-font-size);
+	line-height: var(--heading-compact-02-line-height);
+	cursor: pointer;
+	background: transparent;
+	box-shadow: inset 0px 0px 0px 2px var(--button-secondary);
+	color: var(--button-secondary);
+	white-space: nowrap;
+}
+
+button.tlAudioPlayer__button:hover {
+	background: var(--button-secondary-hover);
+	box-shadow: inset 0px 0px 0px 2px var(--button-secondary-hover);
+	color: var(--text-on-color);
+}
+
+button.tlAudioPlayer__button:disabled {
+	cursor: default;
+	background: none;
+	box-shadow: inset 0px 0px 0px 2px var(--button-disabled);
+	color: var(--text-disabled);
+}
+
+.tlAudioPlayer__button--playing {
+	background: var(--button-primary);
+	box-shadow: inset 0px 0px 0px 2px var(--button-primary);
+	color: var(--text-on-color);
+}
+
+button.tlAudioPlayer__button--playing:hover {
+	background: var(--button-primary-hover);
+	box-shadow: inset 0px 0px 0px 2px var(--button-primary-hover);
+}
+
+.tlAudioPlayer__status {
+	font-size: var(--body-compact-01-font-size);
+	color: var(--text-secondary);
+}
+
 /* --- TLFieldList ------------------------------------------------------- */
 
 .tlFieldList {

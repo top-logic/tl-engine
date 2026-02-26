@@ -8,6 +8,7 @@ export {
   useTLState,
   useTLCommand,
   useTLUpload,
+  useTLDataUrl,
   useTLFieldValue,
   createChildContext,
   TLControlContext,

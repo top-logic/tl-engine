@@ -21,6 +21,7 @@ import TLCounter from './controls/TLCounter';
 import TLTabBar from './controls/TLTabBar';
 import TLFieldList from './controls/TLFieldList';
 import TLAudioRecorder from './controls/TLAudioRecorder';
+import TLAudioPlayer from './controls/TLAudioPlayer';
 import TLFileUpload from './controls/TLFileUpload';
 
 register('TLButton', TLButton);
@@ -35,4 +36,5 @@ register('TLCounter', TLCounter);
 register('TLTabBar', TLTabBar);
 register('TLFieldList', TLFieldList);
 register('TLAudioRecorder', TLAudioRecorder);
+register('TLAudioPlayer', TLAudioPlayer);
 register('TLFileUpload', TLFileUpload);

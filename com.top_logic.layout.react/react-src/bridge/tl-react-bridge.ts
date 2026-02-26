@@ -277,6 +277,17 @@ export function useTLUpload(): (formData: FormData) => Promise<void> {
 }
 
 /**
+ * Returns a URL for fetching binary data from the enclosing control's DataProvider.
+ */
+export function useTLDataUrl(): string {
+  const ctx = useContext(TLControlContext);
+  if (!ctx) {
+    throw new Error('useTLDataUrl must be used inside a TLReact-mounted component.');
+  }
+  return getApiBase() + 'react-api/data?controlId=' + encodeURIComponent(ctx.controlId);
+}
+
+/**
  * Convenience hook for form field value + setter.
  */
 export function useTLFieldValue(): [unknown, (newValue: unknown) => void] {

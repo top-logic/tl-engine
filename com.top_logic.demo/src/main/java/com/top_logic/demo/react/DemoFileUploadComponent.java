@@ -17,21 +17,18 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
-import com.top_logic.layout.form.control.DataItemControl;
-import com.top_logic.layout.form.model.DataField;
-import com.top_logic.layout.form.model.FormContext;
-import com.top_logic.layout.form.model.FormFactory;
+import com.top_logic.layout.react.control.audio.ReactAudioPlayerControl;
 import com.top_logic.layout.react.control.upload.ReactFileUploadControl;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
- * Demo {@link LayoutComponent} that showcases the file upload React control.
+ * Demo {@link LayoutComponent} that showcases the file upload and audio player React controls.
  *
  * <p>
- * Provides a {@link ReactFileUploadControl} that allows the user to select and upload a file. The
- * uploaded file is stored in a {@link DataField} which is rendered below the upload control,
- * allowing the user to download the uploaded file.
+ * Provides a {@link ReactFileUploadControl} that allows the user to select and upload an audio
+ * file. The uploaded file is fed into a {@link ReactAudioPlayerControl} rendered below the upload
+ * control, allowing the user to play back the uploaded audio directly in the browser.
  * </p>
  */
 public class DemoFileUploadComponent extends LayoutComponent {
@@ -45,9 +42,7 @@ public class DemoFileUploadComponent extends LayoutComponent {
 
 	private ReactFileUploadControl _uploadControl;
 
-	private DataField _fileField;
-
-	private DataItemControl _fileFieldControl;
+	private ReactAudioPlayerControl _playerControl;
 
 	/**
 	 * Creates a new {@link DemoFileUploadComponent}.
@@ -62,24 +57,21 @@ public class DemoFileUploadComponent extends LayoutComponent {
 		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
 
 		if (_uploadControl == null) {
-			FormContext formContext = new FormContext(this);
-			_fileField = FormFactory.newDataField("file");
-			formContext.addMember(_fileField);
-
-			_fileFieldControl = new DataItemControl(_fileField);
+			_playerControl = new ReactAudioPlayerControl(null);
 
 			_uploadControl = new ReactFileUploadControl(data -> {
-				_fileField.setValue(data);
+				_playerControl.setAudioData(data);
 			});
+			_uploadControl.setAccept("audio/*");
 		}
 
 		out.beginTag(HTMLConstants.H2);
-		out.writeText("File Upload Demo");
+		out.writeText("File Upload & Audio Player Demo");
 		out.endTag(HTMLConstants.H2);
 
 		out.beginTag(HTMLConstants.PARAGRAPH);
-		out.writeText("Click 'Choose File' or drag and drop a file onto the upload area. "
-			+ "The uploaded file will appear in the file field below.");
+		out.writeText("Upload an audio file using the upload control below. "
+			+ "The audio player will then allow you to play back the uploaded file.");
 		out.endTag(HTMLConstants.PARAGRAPH);
 
 		out.beginBeginTag(HTMLConstants.DIV);
@@ -89,10 +81,10 @@ public class DemoFileUploadComponent extends LayoutComponent {
 		out.endTag(HTMLConstants.DIV);
 
 		out.beginTag(HTMLConstants.H3);
-		out.writeText("Uploaded File");
+		out.writeText("Audio Playback");
 		out.endTag(HTMLConstants.H3);
 
-		_fileFieldControl.write(displayContext, out);
+		_playerControl.write(displayContext, out);
 	}
 
 }

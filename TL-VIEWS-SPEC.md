@@ -664,12 +664,23 @@ which is active) but differ in visual presentation and configuration:
 
 All three follow the same pattern: they contain named children, one of which is active.
 The active child can be written to a channel. However, each has its own configuration
-because the visual requirements differ significantly:
+because the visual requirements differ significantly.
+
+Like `<panel>`, navigation elements can also define commands. The display area depends
+on the element type:
+
+- **`<tabs>`**: Commands appear as buttons at the right side of the tab bar.
+- **`<sidebar>`**: Commands appear as additional entries below the navigation entries.
 
 **`<tabs>`** - Tab bar with labeled pages:
 
 ```xml
 <tabs selection="activeTab">
+  <commands>
+    <command class="com.example.AddTabHandler" />        <!-- tab-bar button -->
+    <command class="com.example.CloseAllTabsHandler" />  <!-- tab-bar button -->
+  </commands>
+
   <tab label="i18n:customers.overview" icon="people">
     <include view="customers/overview.view.xml" />
   </tab>
@@ -683,12 +694,17 @@ because the visual requirements differ significantly:
 ```
 
 Configuration: tab labels (i18n), icons, closable tabs, lazy loading, dynamic
-tab visibility.
+tab visibility. Commands on `<tabs>` render as buttons at the right end of the tab bar.
 
 **`<sidebar>`** - Side navigation selecting a content area:
 
 ```xml
 <sidebar selection="activePage" position="left" width="250px">
+  <commands>
+    <command class="com.example.CreateProjectHandler" />  <!-- sidebar entry -->
+    <command class="com.example.SettingsHandler" />       <!-- sidebar entry -->
+  </commands>
+
   <entry label="i18n:nav.customers" icon="people">
     <include view="customers/list.view.xml" />
   </entry>
@@ -703,7 +719,8 @@ tab visibility.
 </sidebar>
 ```
 
-Configuration: position (left/right), width, collapsible, grouped entries.
+Configuration: position (left/right), width, collapsible, grouped entries. Commands
+on `<sidebar>` render as additional entries below the navigation entries.
 
 **`<tiles>`** - Card grid with model-builder-driven content:
 
@@ -1280,11 +1297,20 @@ Elements support styling through direct attributes and CSS class references:
 
 ## 9. Commands and Actions
 
-### Panel-Scoped Commands
+### Command-Defining Elements
 
-Commands are defined on `<panel>` elements, not at the view level. Each panel is a
-self-contained command scope: the panel owns the commands and provides the display areas
-(toolbar, button bar) where they appear.
+Commands are defined on elements that have display areas for them, not at the view level.
+The primary command-defining elements are:
+
+| Element      | Display Areas                                              |
+|--------------|------------------------------------------------------------|
+| `<panel>`    | Toolbar (above content), button bar (below content), burger menu |
+| `<dialog>`   | Button bar (always present)                                |
+| `<tabs>`     | Buttons at the right side of the tab bar                   |
+| `<sidebar>`  | Additional entries below the navigation entries            |
+
+Each command-defining element is a self-contained command scope: it owns the commands
+and provides the display areas where they appear. The most common case is `<panel>`:
 
 ```xml
 <!-- File: customers/detail.view.xml -->
@@ -1573,9 +1599,10 @@ area; clique determines position and grouping within that area.
 ### Command Resolution
 
 Command handlers are `PolymorphicConfiguration<? extends CommandHandler>`, reusing the
-existing command infrastructure. The panel's `ViewContext` resolves command references
-and provides the execution environment. A `<button command="name">` is resolved against
-the commands of the nearest enclosing panel or dialog (both explicit and implicit).
+existing command infrastructure. The enclosing element's `ViewContext` resolves command
+references and provides the execution environment. A `<button command="name">` is
+resolved against the commands of the nearest enclosing command-defining element (panel,
+dialog, tabs, or sidebar) - both explicit and implicit.
 
 ## 10. Security
 

@@ -21,6 +21,7 @@ import com.top_logic.layout.form.control.DataItemControl;
 import com.top_logic.layout.form.model.DataField;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
+import com.top_logic.layout.react.control.download.ReactDownloadControl;
 import com.top_logic.layout.react.control.upload.ReactFileUploadControl;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.layout.LayoutComponent;
@@ -42,6 +43,8 @@ public class DemoFileUploadComponent extends LayoutComponent {
 	public interface Config extends LayoutComponent.Config {
 		// No additional configuration needed.
 	}
+
+	private ReactDownloadControl _downloadControl;
 
 	private ReactFileUploadControl _uploadControl;
 
@@ -68,8 +71,11 @@ public class DemoFileUploadComponent extends LayoutComponent {
 
 			_fileFieldControl = new DataItemControl(_fileField);
 
+			_downloadControl = new ReactDownloadControl(null, null);
+
 			_uploadControl = new ReactFileUploadControl(data -> {
 				_fileField.setValue(data);
+				_downloadControl.setData(data, data.getName());
 			});
 		}
 
@@ -79,12 +85,13 @@ public class DemoFileUploadComponent extends LayoutComponent {
 
 		out.beginTag(HTMLConstants.PARAGRAPH);
 		out.writeText("Click 'Choose File' or drag and drop a file onto the upload area. "
-			+ "The uploaded file will appear in the file field below.");
+			+ "After uploading, use the download button to retrieve the file.");
 		out.endTag(HTMLConstants.PARAGRAPH);
 
 		out.beginBeginTag(HTMLConstants.DIV);
 		out.writeAttribute(HTMLConstants.STYLE_ATTR, "margin-bottom: 1em;");
 		out.endBeginTag();
+		_downloadControl.write(displayContext, out);
 		_uploadControl.write(displayContext, out);
 		out.endTag(HTMLConstants.DIV);
 

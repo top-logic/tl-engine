@@ -395,6 +395,99 @@ button.tlAudioPlayer__button--playing:hover .tlAudioPlayer__icon--pause {
 	to { transform: rotate(360deg); }
 }
 
+/* --- TLDownload -------------------------------------------------------- */
+
+.tlDownload {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	font-family: var(--font-family);
+	height: 2rem;
+}
+
+.tlDownload--empty {
+	color: var(--text-disabled);
+}
+
+/* File name label */
+.tlDownload__fileName {
+	font-size: var(--body-compact-01-font-size);
+	color: var(--text-primary);
+	max-width: 20rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.tlDownload__fileName--empty {
+	color: var(--text-disabled);
+	font-style: italic;
+}
+
+/* Download button */
+.tlDownload__downloadBtn {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	width: 2rem;
+	height: 2rem;
+	border: none;
+	border-radius: var(--corner-radius);
+	cursor: pointer;
+	background: transparent;
+	color: var(--button-secondary);
+	padding: 0;
+}
+
+button.tlDownload__downloadBtn:hover {
+	background: var(--button-secondary-hover);
+	color: var(--text-on-color);
+}
+
+button.tlDownload__downloadBtn:focus {
+	box-shadow: inset 0px 0px 0px 2px var(--focus), inset 0px 0px 0px 3px var(--focus-inset);
+	outline: none;
+}
+
+button.tlDownload__downloadBtn:disabled {
+	cursor: default;
+	color: var(--text-disabled);
+}
+
+/* Downloading state: spinning icon */
+.tlDownload__downloadBtn--downloading .tlDownload__downloadIcon {
+	animation: tlDownloadSpin 0.8s linear infinite;
+}
+
+@keyframes tlDownloadSpin {
+	to { transform: rotate(360deg); }
+}
+
+/* Clear button */
+.tlDownload__clearBtn {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	width: 1.5rem;
+	height: 1.5rem;
+	border: none;
+	border-radius: var(--corner-radius);
+	cursor: pointer;
+	background: transparent;
+	color: var(--text-secondary);
+	padding: 0;
+}
+
+button.tlDownload__clearBtn:hover {
+	background: var(--button-danger-hover);
+	color: var(--text-on-color);
+}
+
+button.tlDownload__clearBtn:focus {
+	box-shadow: inset 0px 0px 0px 2px var(--focus), inset 0px 0px 0px 3px var(--focus-inset);
+	outline: none;
+}
+
 /* --- TLFieldList ------------------------------------------------------- */
 
 .tlFieldList {

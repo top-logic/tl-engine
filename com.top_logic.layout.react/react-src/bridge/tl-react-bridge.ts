@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useSyncExternalStore, useCallback } from 'react';
+import React, { createContext, useContext, useSyncExternalStore, useCallback, useLayoutEffect } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { flushSync } from 'react-dom';
 import type { TLCellProps } from './types';
@@ -100,6 +100,11 @@ export function mount(
 
   const store = new ControlStateStore(initialState);
 
+  // Hide the mount point eagerly to prevent a visible flash when the control starts hidden.
+  if (initialState.hidden === true) {
+    element.style.display = 'none';
+  }
+
   // Listen for SSE updates.
   const sseListener = (data: Record<string, unknown>) => {
     // PatchEvents send partial state, StateEvents send full state.
@@ -116,6 +121,13 @@ export function mount(
 
   const Wrapper = () => {
     const state = useSyncExternalStore(store.subscribeStore, store.getSnapshot);
+
+    // Toggle visibility via display style when the server sends hidden state changes.
+    // useLayoutEffect prevents any visible flash on state transitions.
+    useLayoutEffect(() => {
+      element.style.display = state.hidden === true ? 'none' : '';
+    }, [state.hidden]);
+
     return React.createElement(
       TLControlContext.Provider,
       { value: { controlId, windowName: resolvedWindowName, store } },

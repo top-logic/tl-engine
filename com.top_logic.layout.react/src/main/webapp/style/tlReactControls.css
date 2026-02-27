@@ -326,7 +326,7 @@ button.tlAudioPlayer__button:hover {
 }
 
 button.tlAudioPlayer__button:hover .tlAudioPlayer__icon {
-	border-left-color: var(--text-on-color);
+	border-left-color: #42be65;
 }
 
 button.tlAudioPlayer__button:focus {
@@ -351,31 +351,31 @@ button.tlAudioPlayer__button:disabled .tlAudioPlayer__icon {
 	height: 0;
 	border-top: 0.4rem solid transparent;
 	border-bottom: 0.4rem solid transparent;
-	border-left: 0.65rem solid var(--button-primary);
+	border-left: 0.65rem solid #198038;
 	margin-left: 0.1rem;
 }
 
 /* Icon: pause (two vertical bars) */
 .tlAudioPlayer__icon--pause {
-	width: 0.6rem;
+	width: 0.35rem;
 	height: 0.7rem;
 	margin-left: 0;
 	border-top: none;
 	border-bottom: none;
-	border-left: 0.2rem solid var(--text-on-color);
-	border-right: 0.2rem solid var(--text-on-color);
+	border-left: 0.15rem solid var(--text-on-color);
+	border-right: 0.15rem solid var(--text-on-color);
 	background: transparent;
 }
 
 /* Playing state */
 .tlAudioPlayer__button--playing {
-	background: var(--button-primary);
-	box-shadow: inset 0px 0px 0px 2px var(--button-primary);
+	background: #198038;
+	box-shadow: inset 0px 0px 0px 2px #198038;
 }
 
 button.tlAudioPlayer__button--playing:hover {
-	background: var(--button-primary-hover);
-	box-shadow: inset 0px 0px 0px 2px var(--button-primary-hover);
+	background: #24a148;
+	box-shadow: inset 0px 0px 0px 2px #24a148;
 }
 
 button.tlAudioPlayer__button--playing:hover .tlAudioPlayer__icon--pause {
@@ -387,7 +387,7 @@ button.tlAudioPlayer__button--playing:hover .tlAudioPlayer__icon--pause {
 .tlAudioPlayer__button--loading {
 	box-shadow: none;
 	border: 2px solid var(--button-disabled);
-	border-top-color: var(--button-primary);
+	border-top-color: #198038;
 	animation: tlAudioPlayerSpin 0.8s linear infinite;
 }
 

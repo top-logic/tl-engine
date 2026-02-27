@@ -488,6 +488,193 @@ button.tlDownload__clearBtn:focus {
 	outline: none;
 }
 
+/* --- TLPhotoCapture ---------------------------------------------------- */
+
+.tlPhotoCapture {
+	display: inline-flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: var(--spacing-03);
+	font-family: var(--font-family);
+}
+
+.tlPhotoCapture__controls {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-03);
+}
+
+.tlPhotoCapture__cameraBtn {
+	position: relative;
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	width: 2.5rem;
+	height: 2.5rem;
+	border: none;
+	border-radius: 50%;
+	cursor: pointer;
+	background: transparent;
+	box-shadow: inset 0px 0px 0px 2px var(--button-secondary);
+}
+
+button.tlPhotoCapture__cameraBtn:hover {
+	background: var(--button-secondary-hover);
+	box-shadow: inset 0px 0px 0px 2px var(--button-secondary-hover);
+}
+
+button.tlPhotoCapture__cameraBtn:hover .tlPhotoCapture__cameraIcon {
+	border-color: var(--text-on-color);
+}
+
+button.tlPhotoCapture__cameraBtn:hover .tlPhotoCapture__cameraIcon::before {
+	background: var(--text-on-color);
+}
+
+button.tlPhotoCapture__cameraBtn:focus {
+	box-shadow: inset 0px 0px 0px 2px var(--focus), inset 0px 0px 0px 3px var(--focus-inset);
+	outline: none;
+}
+
+button.tlPhotoCapture__cameraBtn:disabled {
+	cursor: default;
+	background: none;
+	box-shadow: inset 0px 0px 0px 2px var(--button-disabled);
+}
+
+button.tlPhotoCapture__cameraBtn:disabled .tlPhotoCapture__cameraIcon {
+	border-color: var(--text-disabled);
+}
+
+button.tlPhotoCapture__cameraBtn:disabled .tlPhotoCapture__cameraIcon::before {
+	background: var(--text-disabled);
+}
+
+/* Camera icon: rectangle with circle lens */
+.tlPhotoCapture__cameraIcon {
+	display: block;
+	width: 0.9rem;
+	height: 0.65rem;
+	border: 1.5px solid var(--button-secondary);
+	border-radius: 2px;
+	position: relative;
+}
+
+.tlPhotoCapture__cameraIcon::before {
+	content: '';
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 0.3rem;
+	height: 0.3rem;
+	border-radius: 50%;
+	background: var(--button-secondary);
+	transform: translate(-50%, -50%);
+}
+
+/* Active camera state */
+.tlPhotoCapture__cameraBtn--active {
+	background: var(--button-primary);
+	box-shadow: inset 0px 0px 0px 2px var(--button-primary);
+}
+
+.tlPhotoCapture__cameraBtn--active .tlPhotoCapture__cameraIcon {
+	border-color: var(--text-on-color);
+}
+
+.tlPhotoCapture__cameraBtn--active .tlPhotoCapture__cameraIcon::before {
+	background: var(--text-on-color);
+}
+
+button.tlPhotoCapture__cameraBtn--active:hover {
+	background: var(--button-primary-hover);
+	box-shadow: inset 0px 0px 0px 2px var(--button-primary-hover);
+}
+
+/* Capture button */
+.tlPhotoCapture__captureBtn {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	width: 2.5rem;
+	height: 2.5rem;
+	border: none;
+	border-radius: 50%;
+	cursor: pointer;
+	background: transparent;
+	box-shadow: inset 0px 0px 0px 2px var(--button-danger);
+}
+
+button.tlPhotoCapture__captureBtn:hover {
+	background: var(--button-danger-hover);
+	box-shadow: inset 0px 0px 0px 2px var(--button-danger-hover);
+}
+
+button.tlPhotoCapture__captureBtn:hover .tlPhotoCapture__captureIcon {
+	background: var(--text-on-color);
+}
+
+button.tlPhotoCapture__captureBtn:focus {
+	box-shadow: inset 0px 0px 0px 2px var(--focus), inset 0px 0px 0px 3px var(--focus-inset);
+	outline: none;
+}
+
+/* Capture icon: filled circle */
+.tlPhotoCapture__captureIcon {
+	display: block;
+	width: 1rem;
+	height: 1rem;
+	border-radius: 50%;
+	background: var(--button-danger);
+}
+
+/* Uploading state: wobble animation */
+.tlPhotoCapture__captureBtn--uploading {
+	animation: tlPhotoCaptureWobble 0.5s ease-in-out infinite;
+}
+
+@keyframes tlPhotoCaptureWobble {
+	0%, 100% { transform: rotate(0deg); }
+	25%      { transform: rotate(-10deg); }
+	75%      { transform: rotate(10deg); }
+}
+
+/* Video preview */
+.tlPhotoCapture__preview {
+	max-width: 320px;
+	max-height: 240px;
+	border-radius: var(--corner-radius);
+	background: var(--background);
+}
+
+.tlPhotoCapture__status {
+	font-size: var(--body-compact-01-font-size);
+	color: var(--text-secondary);
+}
+
+.tlPhotoCapture__status--error {
+	color: var(--text-error);
+}
+
+/* --- TLPhotoViewer ----------------------------------------------------- */
+
+.tlPhotoViewer {
+	display: inline-flex;
+	align-items: center;
+	font-family: var(--font-family);
+}
+
+.tlPhotoViewer__image {
+	max-width: 320px;
+	border-radius: var(--corner-radius);
+	object-fit: cover;
+}
+
+.tlPhotoViewer__placeholder {
+	width: 320px;
+	height: 0;
+}
+
 /* --- TLFieldList ------------------------------------------------------- */
 
 .tlFieldList {

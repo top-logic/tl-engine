@@ -15,6 +15,7 @@
 				<layout-reference resource="com.top_logic.demo/technical/reactDemo/formFields.layout.xml"/>
 				<layout-reference resource="com.top_logic.demo/technical/reactDemo/tabBar.layout.xml"/>
 				<layout-reference resource="com.top_logic.demo/technical/reactDemo/audioRecorder.layout.xml"/>
+				<layout-reference resource="com.top_logic.demo/technical/reactDemo/photoCapture.layout.xml"/>
 				<layout-reference resource="com.top_logic.demo/technical/reactDemo/fileUpload.layout.xml"/>
 			</tabbar>
 		</components>

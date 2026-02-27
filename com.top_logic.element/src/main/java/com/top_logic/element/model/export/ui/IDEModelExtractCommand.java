@@ -264,7 +264,7 @@ public class IDEModelExtractCommand extends AbstractCommandHandler {
 			throw new RuntimeException(ex);
 		}
 
-		displaycontext.getWindowScope().getTopLevelFrameScope().addClientAction(MainLayout.createFullReload());
+		MainLayout.addFullReload(displaycontext);
 
 		return HandlerResult.DEFAULT_RESULT;
 	}

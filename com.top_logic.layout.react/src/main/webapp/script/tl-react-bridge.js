@@ -1,9 +1,9 @@
-const Qy = /* @__PURE__ */ new Map();
+const Xy = /* @__PURE__ */ new Map();
 function Gd(m, _) {
-  Qy.set(m, _);
+  Xy.set(m, _);
 }
-function jy(m) {
-  return Qy.get(m);
+function Qy(m) {
+  return Xy.get(m);
 }
 const _e = /* @__PURE__ */ new Map();
 let ze = null, Ay = null, Vn = 0, yi = null;
@@ -26,7 +26,7 @@ function _y(m) {
     console.warn("[TLReact] SSE connection error, will reconnect automatically.");
   };
 }
-function Zy(m, _) {
+function jy(m, _) {
   let O = _e.get(m);
   O || (O = /* @__PURE__ */ new Set(), _e.set(m, O)), O.add(_);
 }
@@ -34,7 +34,7 @@ function Xd(m, _) {
   const O = _e.get(m);
   O && (O.delete(_), O.size === 0 && _e.delete(m));
 }
-function Ly(m, _) {
+function Zy(m, _) {
   const O = _e.get(m);
   if (O)
     for (const v of O)
@@ -85,11 +85,11 @@ function zd(m) {
 }
 function Ed(m) {
   const _ = JSON.parse(m.state);
-  Ly(m.controlId, _);
+  Zy(m.controlId, _);
 }
 function Ad(m) {
   const _ = JSON.parse(m.patch);
-  Ly(m.controlId, _);
+  Zy(m.controlId, _);
 }
 const Tu = {
   contentReplacement(m) {
@@ -139,7 +139,7 @@ const Tu = {
     }
   }
 };
-function xy(m) {
+function Ly(m) {
   return m && m.__esModule && Object.prototype.hasOwnProperty.call(m, "default") ? m.default : m;
 }
 var vi = { exports: {} }, G = {};
@@ -516,7 +516,7 @@ function Ti() {
   return My || (My = 1, vi.exports = _d()), vi.exports;
 }
 var St = Ti();
-const mi = /* @__PURE__ */ xy(St);
+const mi = /* @__PURE__ */ Ly(St);
 var di = { exports: {} }, Ee = {}, hi = { exports: {} }, Si = {};
 /**
  * @license React
@@ -895,7 +895,7 @@ function pd() {
   }, Hl.version = "19.2.4", Hl;
 }
 var Ry;
-function Vy() {
+function xy() {
   if (Ry) return gi.exports;
   Ry = 1;
   function m() {
@@ -921,7 +921,7 @@ var Ny;
 function Dd() {
   if (Ny) return Ee;
   Ny = 1;
-  var m = Md(), _ = Ti(), O = Vy();
+  var m = Md(), _ = Ti(), O = xy();
   function v(l) {
     var t = "https://react.dev/errors/" + l;
     if (1 < arguments.length) {
@@ -10704,7 +10704,8 @@ function Ud() {
   }
   return m(), di.exports = Dd(), di.exports;
 }
-var Cy = Ud();
+var Rd = Ud(), Vy = xy();
+const Qd = /* @__PURE__ */ Ly(Vy);
 class Ky {
   constructor(_) {
     this._subscribers = /* @__PURE__ */ new Set(), this.getSnapshot = () => this._state, this.subscribeStore = (O) => (this._subscribers.add(O), () => this._subscribers.delete(O)), this._state = { ..._ };
@@ -10721,27 +10722,27 @@ class Ky {
   }
 }
 const pa = St.createContext(null), zu = /* @__PURE__ */ new Map();
-let Jy = "", qy = !1;
+let Jy = "", Cy = !1;
 function Kn() {
   return Jy + "/";
 }
 function wy(m, _, O, v, Y) {
-  Y !== void 0 && (Jy = Y), qy || (qy = !0, Td(Kn() + "react-api/events"));
+  Y !== void 0 && (Jy = Y), Cy || (Cy = !0, Td(Kn() + "react-api/events"));
   const k = document.getElementById(m);
   if (!k) {
     console.error("[TLReact] Mount point not found:", m);
     return;
   }
-  const ul = jy(_);
+  const ul = Qy(_);
   if (!ul) {
     console.error("[TLReact] Component not registered:", _);
     return;
   }
   const hl = new Ky(O);
-  Zy(m, (al) => {
+  jy(m, (al) => {
     hl.applyPatch(al);
   });
-  const A = Cy.createRoot(k);
+  const A = Rd.createRoot(k);
   zu.set(m, { root: A, store: hl });
   const W = v ?? "";
   Wy = W;
@@ -10753,35 +10754,35 @@ function wy(m, _, O, v, Y) {
       mi.createElement(ul, { controlId: m, state: al })
     );
   };
-  Cy.flushSync(() => {
+  Vy.flushSync(() => {
     A.render(mi.createElement(q));
   });
 }
-function Rd(m, _, O) {
+function Nd(m, _, O) {
   wy(m, _, O);
 }
-function By(m) {
+function qy(m) {
   const _ = zu.get(m);
   _ && (_.root.unmount(), zu.delete(m));
 }
-function Nd(m, _) {
+function Hd(m, _) {
   let O = zu.get(m);
   if (!O) {
     const Y = new Ky(_);
-    Zy(m, (ul) => {
+    jy(m, (ul) => {
       Y.applyPatch(ul);
     }), zu.set(m, { root: null, store: Y }), O = zu.get(m);
   }
   return { controlId: m, windowName: Wy, store: O.store };
 }
 let Wy = "";
-function Hd() {
+function Cd() {
   const m = St.useContext(pa);
   if (!m)
     throw new Error("useTLState must be used inside a TLReact-mounted component.");
   return St.useSyncExternalStore(m.store.subscribeStore, m.store.getSnapshot);
 }
-function Cd() {
+function qd() {
   const m = St.useContext(pa);
   if (!m)
     throw new Error("useTLCommand must be used inside a TLReact-mounted component.");
@@ -10808,7 +10809,7 @@ function Cd() {
     [_, O]
   );
 }
-function Qd() {
+function jd() {
   const m = St.useContext(pa);
   if (!m)
     throw new Error("useTLUpload must be used inside a TLReact-mounted component.");
@@ -10829,14 +10830,14 @@ function Qd() {
     [_, O]
   );
 }
-function jd() {
+function Zd() {
   const m = St.useContext(pa);
   if (!m)
     throw new Error("useTLDataUrl must be used inside a TLReact-mounted component.");
   return Kn() + "react-api/data?controlId=" + encodeURIComponent(m.controlId);
 }
-function Zd() {
-  const m = Hd(), _ = Cd(), O = St.useCallback(
+function Ld() {
+  const m = Cd(), _ = qd(), O = St.useCallback(
     (v) => {
       _("valueChanged", { value: v });
     },
@@ -10844,21 +10845,21 @@ function Zd() {
   );
   return [m.value, O];
 }
-function Yy() {
+function By() {
   new MutationObserver((_) => {
     for (const O of _)
       for (const v of O.removedNodes)
         if (v instanceof HTMLElement) {
           const Y = v.id;
-          Y && zu.has(Y) && By(Y);
+          Y && zu.has(Y) && qy(Y);
           for (const [k] of zu)
-            v.querySelector("#" + CSS.escape(k)) && By(k);
+            v.querySelector("#" + CSS.escape(k)) && qy(k);
         }
   }).observe(document.body, { childList: !0, subtree: !0 });
 }
 document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", () => {
-  Yy();
-}) : Yy();
+  By();
+}) : By();
 var ri = { exports: {} }, Ae = {};
 /**
  * @license React
@@ -10869,10 +10870,10 @@ var ri = { exports: {} }, Ae = {};
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
-var Gy;
-function qd() {
-  if (Gy) return Ae;
-  Gy = 1;
+var Yy;
+function Bd() {
+  if (Yy) return Ae;
+  Yy = 1;
   var m = Symbol.for("react.transitional.element"), _ = Symbol.for("react.fragment");
   function O(v, Y, k) {
     var ul = null;
@@ -10891,14 +10892,14 @@ function qd() {
   }
   return Ae.Fragment = _, Ae.jsx = O, Ae.jsxs = O, Ae;
 }
-var Xy;
-function Bd() {
-  return Xy || (Xy = 1, ri.exports = qd()), ri.exports;
+var Gy;
+function Yd() {
+  return Gy || (Gy = 1, ri.exports = Bd()), ri.exports;
 }
-var bi = Bd();
-const Ld = ({ control: m }) => {
-  const _ = m, O = jy(_.module), v = St.useMemo(
-    () => Nd(_.controlId, _.state),
+var bi = Yd();
+const xd = ({ control: m }) => {
+  const _ = m, O = Qy(_.module), v = St.useMemo(
+    () => Hd(_.controlId, _.state),
     [_.controlId]
   );
   return O ? /* @__PURE__ */ bi.jsx(pa.Provider, { value: v, children: /* @__PURE__ */ bi.jsx(O, { controlId: _.controlId, state: _.state }) }) : /* @__PURE__ */ bi.jsxs("span", { children: [
@@ -10907,26 +10908,24 @@ const Ld = ({ control: m }) => {
     "]"
   ] });
 };
-var Yd = Vy();
-const xd = /* @__PURE__ */ xy(Yd);
-window.TLReact = { mount: wy, mountField: Rd };
+window.TLReact = { mount: wy, mountField: Nd };
 export {
   mi as React,
-  xd as ReactDOM,
-  Ld as TLChild,
+  Qd as ReactDOM,
+  xd as TLChild,
   pa as TLControlContext,
   Td as connect,
-  Nd as createChildContext,
-  jy as getComponent,
+  Hd as createChildContext,
+  Qy as getComponent,
   wy as mount,
-  Rd as mountField,
+  Nd as mountField,
   Gd as register,
-  Zy as subscribe,
-  By as unmount,
+  jy as subscribe,
+  qy as unmount,
   Xd as unsubscribe,
-  Cd as useTLCommand,
-  jd as useTLDataUrl,
-  Zd as useTLFieldValue,
-  Hd as useTLState,
-  Qd as useTLUpload
+  qd as useTLCommand,
+  Zd as useTLDataUrl,
+  Ld as useTLFieldValue,
+  Cd as useTLState,
+  jd as useTLUpload
 };

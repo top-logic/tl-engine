@@ -488,6 +488,63 @@ button.tlDownload__clearBtn:focus {
 	outline: none;
 }
 
+/* --- TLFileUpload ------------------------------------------------------ */
+
+.tlFileUpload {
+	display: inline-flex;
+	align-items: center;
+	height: 2rem;
+}
+
+.tlFileUpload__button {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	width: 2rem;
+	height: 2rem;
+	border: none;
+	border-radius: var(--corner-radius);
+	cursor: pointer;
+	background: transparent;
+	color: var(--button-secondary);
+	padding: 0;
+}
+
+button.tlFileUpload__button:hover {
+	background: var(--button-secondary-hover);
+	color: var(--text-on-color);
+}
+
+button.tlFileUpload__button:focus {
+	box-shadow: inset 0px 0px 0px 2px var(--focus), inset 0px 0px 0px 3px var(--focus-inset);
+	outline: none;
+}
+
+button.tlFileUpload__button:disabled {
+	cursor: default;
+	color: var(--text-disabled);
+}
+
+.tlFileUpload__button--uploading .tlFileUpload__icon {
+	animation: tlUploadSpin 0.8s linear infinite;
+}
+
+@keyframes tlUploadSpin {
+	to { transform: rotate(360deg); }
+}
+
+.tlFileUpload__status--error {
+	font-size: var(--body-compact-01-font-size);
+	color: var(--text-error, #da1e28);
+	margin-left: var(--spacing-02);
+}
+
+.tlFileUpload--dragover {
+	outline: 2px dashed var(--focus);
+	outline-offset: 2px;
+	border-radius: var(--corner-radius);
+}
+
 /* --- TLPhotoCapture ---------------------------------------------------- */
 
 .tlPhotoCapture {

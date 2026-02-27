@@ -87,7 +87,7 @@ public class DemoFileUploadComponent extends LayoutComponent {
 		out.endTag(HTMLConstants.PARAGRAPH);
 
 		out.beginBeginTag(HTMLConstants.DIV);
-		out.writeAttribute(HTMLConstants.STYLE_ATTR, "margin-bottom: 1em;");
+		out.writeAttribute(HTMLConstants.STYLE_ATTR, "display: inline-flex; align-items: center; margin-bottom: 1em;");
 		out.endBeginTag();
 		_downloadControl.write(displayContext, out);
 		_uploadControl.write(displayContext, out);

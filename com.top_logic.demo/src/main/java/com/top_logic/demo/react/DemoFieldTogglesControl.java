@@ -43,6 +43,11 @@ public class DemoFieldTogglesControl extends ReactControl {
 			field.setMandatory(!active);
 			return !active;
 		}));
+
+		getReactState().put("hiddenButton", new ReactToggleButtonControl("Hidden", !field.isVisible(), (ctx, active) -> {
+			field.setVisible(active);
+			return !active;
+		}));
 	}
 
 }

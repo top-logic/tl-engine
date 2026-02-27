@@ -15,6 +15,7 @@ const TLFieldToggles: React.FC = () => {
       <TLChild control={state.disabledButton} />
       <TLChild control={state.immutableButton} />
       <TLChild control={state.mandatoryButton} />
+      <TLChild control={state.hiddenButton} />
     </div>
   );
 };

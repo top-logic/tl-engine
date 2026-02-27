@@ -19,6 +19,7 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.react.control.audio.ReactAudioPlayerControl;
 import com.top_logic.layout.react.control.audio.ReactAudioRecorderControl;
+import com.top_logic.layout.react.control.download.ReactDownloadControl;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
@@ -44,6 +45,8 @@ public class DemoAudioRecorderComponent extends LayoutComponent {
 
 	private ReactAudioPlayerControl _playerControl;
 
+	private ReactDownloadControl _downloadControl;
+
 	/**
 	 * Creates a new {@link DemoAudioRecorderComponent}.
 	 */
@@ -58,9 +61,11 @@ public class DemoAudioRecorderComponent extends LayoutComponent {
 
 		if (_recorderControl == null) {
 			_playerControl = new ReactAudioPlayerControl(null);
+			_downloadControl = new ReactDownloadControl(null, null);
 
 			_recorderControl = new ReactAudioRecorderControl(data -> {
 				_playerControl.setAudioData(data);
+				_downloadControl.setData(data, data.getName());
 			});
 		}
 
@@ -71,12 +76,13 @@ public class DemoAudioRecorderComponent extends LayoutComponent {
 		out.beginTag(HTMLConstants.PARAGRAPH);
 		out.writeText("Click 'Record' to start recording audio from your microphone. "
 			+ "Click 'Stop' to finish and upload the recording. "
-			+ "Use the player below to play back the recorded audio.");
+			+ "Use the download button to save the recording or the player below to play it back.");
 		out.endTag(HTMLConstants.PARAGRAPH);
 
 		out.beginBeginTag(HTMLConstants.DIV);
 		out.writeAttribute(HTMLConstants.STYLE_ATTR, "margin-bottom: 1em;");
 		out.endBeginTag();
+		_downloadControl.write(displayContext, out);
 		_recorderControl.write(displayContext, out);
 		out.endTag(HTMLConstants.DIV);
 

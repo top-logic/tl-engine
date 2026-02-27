@@ -63,6 +63,9 @@ public class ReactFormFieldControl extends AbstractFormFieldControl {
 	/** State key for the tooltip text. */
 	protected static final String TOOLTIP = "tooltip";
 
+	/** State key for whether the control is hidden on the client. */
+	protected static final String HIDDEN = "hidden";
+
 	private static final String VALUE_CHANGED_COMMAND = "valueChanged";
 
 	private static final Map<String, ControlCommand> COMMANDS =
@@ -71,6 +74,8 @@ public class ReactFormFieldControl extends AbstractFormFieldControl {
 	private final String _reactModule;
 
 	private SSEUpdateQueue _sseQueue;
+
+	private boolean _hidden;
 
 	/**
 	 * Creates a new {@link ReactFormFieldControl}.
@@ -83,6 +88,34 @@ public class ReactFormFieldControl extends AbstractFormFieldControl {
 	public ReactFormFieldControl(FormField model, String reactModule) {
 		super(model, COMMANDS);
 		_reactModule = reactModule;
+	}
+
+	/**
+	 * Sets whether this control is hidden on the client.
+	 *
+	 * <p>
+	 * When hidden, the mount-point element gets {@code display:none} applied by the bridge,
+	 * preserving the React component tree and its local state.
+	 * </p>
+	 *
+	 * @param hidden
+	 *        {@code true} to hide, {@code false} to show.
+	 */
+	public void setHidden(boolean hidden) {
+		if (_hidden == hidden) {
+			return;
+		}
+		_hidden = hidden;
+		Map<String, Object> patch = new HashMap<>();
+		patch.put(HIDDEN, Boolean.valueOf(hidden));
+		sendPatch(patch);
+	}
+
+	/**
+	 * Whether this control is currently hidden on the client.
+	 */
+	public boolean isHidden() {
+		return _hidden;
 	}
 
 	@Override
@@ -154,6 +187,7 @@ public class ReactFormFieldControl extends AbstractFormFieldControl {
 		state.put(ERROR_MESSAGE, field.hasError() ? field.getError().toString() : null);
 		state.put(LABEL, field.hasLabel() ? field.getLabel() : null);
 		state.put(TOOLTIP, field.getTooltip() != null ? field.getTooltip().toString() : null);
+		state.put(HIDDEN, Boolean.valueOf(_hidden));
 		return state;
 	}
 

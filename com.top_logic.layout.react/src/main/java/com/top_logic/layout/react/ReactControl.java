@@ -36,6 +36,9 @@ import de.haumacher.msgbuf.json.JsonWriter;
  */
 public class ReactControl extends AbstractVisibleControl {
 
+	/** State key for whether the control is hidden on the client. */
+	private static final String HIDDEN = "hidden";
+
 	private final Object _model;
 
 	private final String _reactModule;
@@ -85,6 +88,21 @@ public class ReactControl extends AbstractVisibleControl {
 	 */
 	public Map<String, Object> getReactState() {
 		return _reactState;
+	}
+
+	/**
+	 * Sets whether this control is hidden on the client.
+	 *
+	 * <p>
+	 * When hidden, the mount-point element gets {@code display:none} applied by the bridge,
+	 * preserving the React component tree and its local state.
+	 * </p>
+	 *
+	 * @param hidden
+	 *        {@code true} to hide, {@code false} to show.
+	 */
+	public void setHidden(boolean hidden) {
+		putState(HIDDEN, Boolean.valueOf(hidden));
 	}
 
 	/**

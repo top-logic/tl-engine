@@ -107,7 +107,7 @@ public class ReactFormFieldControl extends AbstractFormFieldControl {
 		}
 		_hidden = hidden;
 		Map<String, Object> patch = new HashMap<>();
-		patch.put(HIDDEN, Boolean.valueOf(hidden));
+		patch.put(HIDDEN, Boolean.valueOf(isEffectivelyHidden()));
 		sendPatch(patch);
 	}
 
@@ -116,6 +116,14 @@ public class ReactFormFieldControl extends AbstractFormFieldControl {
 	 */
 	public boolean isHidden() {
 		return _hidden;
+	}
+
+	/**
+	 * Whether this control is effectively hidden, considering both the explicit hidden flag and the
+	 * field's visibility.
+	 */
+	private boolean isEffectivelyHidden() {
+		return _hidden || !getFieldModel().isVisible();
 	}
 
 	@Override
@@ -187,7 +195,7 @@ public class ReactFormFieldControl extends AbstractFormFieldControl {
 		state.put(ERROR_MESSAGE, field.hasError() ? field.getError().toString() : null);
 		state.put(LABEL, field.hasLabel() ? field.getLabel() : null);
 		state.put(TOOLTIP, field.getTooltip() != null ? field.getTooltip().toString() : null);
-		state.put(HIDDEN, Boolean.valueOf(_hidden));
+		state.put(HIDDEN, Boolean.valueOf(isEffectivelyHidden()));
 		return state;
 	}
 
@@ -231,6 +239,16 @@ public class ReactFormFieldControl extends AbstractFormFieldControl {
 		if (!skipEvent(sender)) {
 			Map<String, Object> patch = new HashMap<>();
 			patch.put(EDITABLE, !Boolean.TRUE.equals(newValue));
+			sendPatch(patch);
+		}
+		return Bubble.BUBBLE;
+	}
+
+	@Override
+	public Bubble handleVisibilityChange(Object sender, Boolean oldVisibility, Boolean newVisibility) {
+		if (!skipEvent(sender)) {
+			Map<String, Object> patch = new HashMap<>();
+			patch.put(HIDDEN, Boolean.valueOf(isEffectivelyHidden()));
 			sendPatch(patch);
 		}
 		return Bubble.BUBBLE;

@@ -41,6 +41,7 @@ import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.annotation.LabelPositioning;
 import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.layout.form.values.edit.annotation.RenderWholeLine;
 import com.top_logic.model.annotate.LabelPosition;
 
 /**
@@ -61,8 +62,8 @@ import com.top_logic.model.annotate.LabelPosition;
 @DisplayOrder({
 	AgentConfig.NAME_ATTRIBUTE,
 	AgentConfig.ENTRY_POINT,
-	AgentConfig.DESCRIPTION,
 	AgentConfig.MODEL,
+	AgentConfig.DESCRIPTION,
 	AgentConfig.SYSTEM_PROMPT,
 	AgentConfig.THINKING_TYPE,
 	AgentConfig.THINKING_BUDGET_TOKENS,
@@ -186,6 +187,8 @@ public interface AgentConfig extends NamedConfigMandatory {
 	 * </p>
 	 */
 	@Name(DESCRIPTION)
+	@RenderWholeLine
+	@ControlProvider(MultiLineText.class)
 	@LabelPositioning(LabelPosition.ABOVE)
 	String getDescription();
 
@@ -484,6 +487,7 @@ public interface AgentConfig extends NamedConfigMandatory {
 	 */
 	@Name(SYSTEM_PROMPT)
 	@Mandatory
+	@RenderWholeLine
 	@ControlProvider(MultiLineText.class)
 	@LabelPositioning(LabelPosition.ABOVE)
 	String getSystemPrompt();
@@ -492,8 +496,8 @@ public interface AgentConfig extends NamedConfigMandatory {
 	 * The standard tools available to this agent, selected by name.
 	 *
 	 * <p>
-	 * Each name maps to a well-known tool class (e.g. {@code "model-browser"},
-	 * {@code "tlscript"}). Tools are instantiated at runtime by the {@link AgentRegistry}.
+	 * Each name maps to a well-known tool class. Tools are instantiated at runtime by the
+	 * {@link AgentRegistry}.
 	 * </p>
 	 */
 	@Name(TOOLS)
@@ -519,9 +523,9 @@ public interface AgentConfig extends NamedConfigMandatory {
 	 * Comma-separated list of skill IDs available to this agent.
 	 *
 	 * <p>
-	 * Skills are referenced by their registered name in the {@link AgentRegistry} configuration
-	 * (e.g. {@code "shared/prompting-ModelExplorer"}).
+	 * Skills are referenced by their registered name in the {@link AgentRegistry} configuration.
 	 * </p>
+	 * 
 	 */
 	@Name(SKILLS)
 	@Format(CommaSeparatedStrings.class)

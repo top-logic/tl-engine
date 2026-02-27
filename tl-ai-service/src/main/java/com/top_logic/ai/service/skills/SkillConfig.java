@@ -13,6 +13,7 @@ import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.layout.form.values.MultiLineText;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.LabelPositioning;
+import com.top_logic.layout.form.values.edit.annotation.RenderWholeLine;
 import com.top_logic.model.annotate.LabelPosition;
 
 /**
@@ -49,6 +50,7 @@ public interface SkillConfig extends NamedConfigMandatory {
 	 */
 	@Name(CONTENT)
 	@Mandatory
+	@RenderWholeLine
 	@ControlProvider(MultiLineText.class)
 	@LabelPositioning(LabelPosition.ABOVE)
 	String getContent();

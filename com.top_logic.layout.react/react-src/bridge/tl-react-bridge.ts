@@ -84,10 +84,16 @@ export function mount(
     _contextPath = contextPath;
   }
 
-  // Connect SSE on first mount (now that we know the context path).
+  // Connect SSE on first mount, or reconnect on page reload.
+  // When contextPath is provided (from internalWrite()), a fresh page render is happening.
+  // After an AJAX page reload, the JS module state persists (_sseConnected = true) but the
+  // server-side AsyncContext for the old EventSource may have become invalid. Force a
+  // reconnect to establish a fresh SSE connection.
   if (!_sseConnected) {
     _sseConnected = true;
     setI18NApiBase(getApiBase());
+    connect(getApiBase() + 'react-api/events');
+  } else if (contextPath !== undefined) {
     connect(getApiBase() + 'react-api/events');
   }
 

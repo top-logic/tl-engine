@@ -34,10 +34,8 @@ button.tlReactButton:hover {
 }
 
 button.tlReactButton:focus-visible {
-	box-shadow: inset 0px 0px 0px 2px var(--focus), inset 0px 0px 0px 3px var(--focus-inset);
-	background: var(--button-secondary-hover);
-	color: var(--text-on-color);
-	outline: none;
+	outline: 2px solid var(--focus);
+	outline-offset: 1px;
 }
 
 button.tlReactButton:active {
@@ -67,7 +65,10 @@ button.tlReactButton.tlReactButtonActive:hover {
 }
 
 button.tlReactButton.tlReactButtonActive:focus-visible {
-	box-shadow: inset 0px 0px 0px 2px var(--focus), inset 0px 0px 0px 3px var(--focus-inset);
+	box-shadow: inset 0px 0px 0px 2px var(--button-primary), 0 0 0 2px var(--focus-inset);
+	outline: 2px solid var(--focus);
+	outline-offset: 2px;
+	color: var(--text-on-color);
 }
 
 button.tlReactButton.tlReactButtonActive:active {

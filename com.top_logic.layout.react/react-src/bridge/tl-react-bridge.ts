@@ -51,8 +51,10 @@ interface TLControlContextValue {
 
 const TLControlContext = createContext<TLControlContextValue | null>(null);
 
-/** Map of mounted control IDs to their React roots and state stores. */
-const _mounts = new Map<string, { root: Root; store: ControlStateStore }>();
+type StateListener = (state: Record<string, unknown>) => void;
+
+/** Map of mounted control IDs to their React roots, state stores, and SSE listeners. */
+const _mounts = new Map<string, { root: Root | null; store: ControlStateStore; sseListener: StateListener }>();
 
 /** The application context path (e.g. "/demo"), set on first mount(). */
 let _contextPath = '';
@@ -106,6 +108,9 @@ export function mount(
     return;
   }
 
+  // Clean up any existing mount for this controlId (e.g. after AJAX page reload).
+  unmount(controlId);
+
   const store = new ControlStateStore(initialState);
 
   // Hide the mount point eagerly to prevent a visible flash when the control starts hidden.
@@ -122,7 +127,7 @@ export function mount(
   subscribe(controlId, sseListener);
 
   const root = createRoot(element);
-  _mounts.set(controlId, { root, store });
+  _mounts.set(controlId, { root, store, sseListener });
 
   _lastWindowName = resolvedWindowName;
 
@@ -159,12 +164,15 @@ export function mountField(
 }
 
 /**
- * Unmounts a React component by control ID.
+ * Unmounts a React component by control ID, cleaning up its SSE subscription.
  */
 export function unmount(controlId: string): void {
   const entry = _mounts.get(controlId);
   if (entry) {
-    entry.root.unmount();
+    unsubscribe(controlId, entry.sseListener);
+    if (entry.root) {
+      entry.root.unmount();
+    }
     _mounts.delete(controlId);
   }
 }
@@ -204,8 +212,8 @@ export function createChildContext(
     };
     subscribe(childControlId, sseListener);
     // Track it so we can clean up on unmount.
-    _mounts.set(childControlId, { root: null as unknown as Root, store });
-    entry = _mounts.get(childControlId)!;
+    entry = { root: null, store, sseListener };
+    _mounts.set(childControlId, entry);
   }
 
   // Inherit windowName from the parent context if available.

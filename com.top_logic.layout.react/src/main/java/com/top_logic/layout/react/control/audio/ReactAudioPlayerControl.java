@@ -6,6 +6,8 @@
 package com.top_logic.layout.react.control.audio;
 
 import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.io.binary.BinaryDataValue;
+import com.top_logic.basic.listener.Listener;
 import com.top_logic.layout.react.DataProvider;
 import com.top_logic.layout.react.ReactControl;
 
@@ -19,8 +21,8 @@ import com.top_logic.layout.react.ReactControl;
  * </p>
  *
  * <p>
- * The audio data is set via {@link #setAudioData(BinaryData)} and served to the client through the
- * {@link DataProvider} interface.
+ * The control observes a shared {@link BinaryDataValue} model. When the model data changes (e.g.
+ * because a new recording was made), the player UI updates automatically.
  * </p>
  */
 public class ReactAudioPlayerControl extends ReactControl implements DataProvider {
@@ -31,44 +33,42 @@ public class ReactAudioPlayerControl extends ReactControl implements DataProvide
 	/** State key whose value increments each time audio data is replaced. */
 	private static final String DATA_REVISION = "dataRevision";
 
-	private BinaryData _audioData;
+	private final BinaryDataValue _model;
+
+	private final Listener<BinaryData> _modelListener = this::handleModelChanged;
 
 	private int _dataRevision;
 
 	/**
 	 * Creates a new {@link ReactAudioPlayerControl}.
 	 *
-	 * @param audioData
-	 *        The initial audio data, or {@code null} if no audio is available yet.
+	 * @param model
+	 *        The shared data model to observe.
 	 */
-	public ReactAudioPlayerControl(BinaryData audioData) {
+	public ReactAudioPlayerControl(BinaryDataValue model) {
 		super(null, "TLAudioPlayer");
-		_audioData = audioData;
-		putState(HAS_AUDIO, audioData != null);
+		_model = model;
+		BinaryData data = model.getData();
+		putState(HAS_AUDIO, data != null);
 		putState(DATA_REVISION, _dataRevision);
-	}
-
-	/**
-	 * Sets the audio data to play.
-	 *
-	 * <p>
-	 * If the control is already rendered, a state patch is sent to the client so that the play
-	 * button is enabled or disabled accordingly.
-	 * </p>
-	 *
-	 * @param audioData
-	 *        The audio data, or {@code null} to clear.
-	 */
-	public void setAudioData(BinaryData audioData) {
-		_audioData = audioData;
-		_dataRevision++;
-		putState(HAS_AUDIO, audioData != null);
-		putState(DATA_REVISION, _dataRevision);
+		model.addListener(_modelListener);
 	}
 
 	@Override
 	public BinaryData getDownloadData() {
-		return _audioData;
+		return _model.getData();
+	}
+
+	@Override
+	protected void internalDetach() {
+		_model.removeListener(_modelListener);
+		super.internalDetach();
+	}
+
+	private void handleModelChanged(BinaryData data) {
+		_dataRevision++;
+		putState(HAS_AUDIO, data != null);
+		putState(DATA_REVISION, _dataRevision);
 	}
 
 }

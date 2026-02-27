@@ -11,6 +11,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -37,6 +38,7 @@ import com.top_logic.base.services.simpleajax.RangeReplacement;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.json.JSON;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.event.infoservice.InfoServiceXMLStringConverter;
@@ -54,6 +56,7 @@ import com.top_logic.layout.react.protocol.SSEEvent;
 import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.mig.html.layout.RevalidationVisitor;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.Resources;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.TopLogicServlet;
 
@@ -89,6 +92,8 @@ public class ReactServlet extends TopLogicServlet {
 		String pathInfo = request.getPathInfo();
 		if ("/data".equals(pathInfo)) {
 			handleDataDownload(request, response, session);
+		} else if ("/i18n".equals(pathInfo)) {
+			handleI18N(request, response);
 		} else {
 			sendError(response, HttpServletResponse.SC_NOT_FOUND, "Unknown path: " + pathInfo);
 		}
@@ -125,6 +130,39 @@ public class ReactServlet extends TopLogicServlet {
 		try (OutputStream out = response.getOutputStream()) {
 			data.deliverTo(out);
 		}
+	}
+
+	private void handleI18N(HttpServletRequest request, HttpServletResponse response)
+			throws IOException {
+		String keysParam = request.getParameter("keys");
+		if (keysParam == null || keysParam.isEmpty()) {
+			sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Missing keys parameter.");
+			return;
+		}
+
+		// Install subsession so Resources.getInstance() resolves the user's locale.
+		String windowName = request.getParameter("windowName");
+		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
+		installSubSession(displayContext, windowName);
+
+		response.setContentType("application/json");
+		response.setCharacterEncoding("UTF-8");
+
+		Resources resources = Resources.getInstance();
+		Map<String, Object> result = new LinkedHashMap<>();
+		for (String key : keysParam.split(",")) {
+			String trimmed = key.trim();
+			if (trimmed.isEmpty()) {
+				continue;
+			}
+			ResKey resKey = ResKey.internalCreate(trimmed);
+			String value = resources.getString(resKey);
+			result.put(trimmed, value);
+		}
+
+		PrintWriter writer = response.getWriter();
+		writer.write(JSON.toString(result));
+		writer.flush();
 	}
 
 	@Override

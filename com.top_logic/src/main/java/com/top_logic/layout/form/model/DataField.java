@@ -380,7 +380,15 @@ public class DataField extends AbstractFormField implements BinaryDataValue {
 
 	@Override
 	public void addListener(Listener<? super BinaryData> listener) {
-		ValueListener adapter = (field, oldValue, newValue) -> listener.notify((BinaryData) newValue);
+		ValueListener adapter = (field, oldValue, newValue) -> {
+			BinaryData data;
+			if (newValue instanceof Collection<?>) {
+				data = cast(CollectionUtil.getSingleValueFrom(newValue));
+			} else {
+				data = cast(newValue);
+			}
+			listener.notify(data);
+		};
 		if (_binaryDataListeners == null) {
 			_binaryDataListeners = new HashMap<>();
 		}

@@ -55,6 +55,9 @@ public class FailedLogin extends AbstractWrapper {
     public static final String REASON_USER_NOT_VALID = "userNotValid";
     public static final String REASON_MAINTENANCE_MODE = "maintenanceMode";
 
+	/** Message in case the configured hook has rejected the login. */
+	public static final String REASON_CONFIGURED_HOOK = "configuredHook";
+
 	public static final String NO_CLIENT_IP = "noClientIP";
 
 	public static final String EMPTY_USER_NAME = "empty_user_name";

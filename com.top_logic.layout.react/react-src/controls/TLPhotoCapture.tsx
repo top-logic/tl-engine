@@ -1,5 +1,12 @@
-import { React, useTLState, useTLUpload } from 'tl-react-bridge';
+import { React, useTLState, useTLUpload, useI18N } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
+
+const I18N_KEYS = {
+  'js.photoCapture.open': 'Open camera',
+  'js.photoCapture.close': 'Close camera',
+  'js.photoCapture.capture': 'Capture photo',
+  'js.uploading': 'Uploading\u2026',
+};
 
 type LocalStatus = 'idle' | 'previewing' | 'uploading';
 
@@ -102,10 +109,11 @@ const TLPhotoCapture: React.FC<TLCellProps> = () => {
     };
   }, []);
 
+  const t = useI18N(I18N_KEYS);
   const cameraLabel =
-    localStatus === 'previewing' ? 'Close camera' :
-    localStatus === 'uploading' ? 'Uploading\u2026' :
-    'Open camera';
+    localStatus === 'previewing' ? t['js.photoCapture.close'] :
+    localStatus === 'uploading' ? t['js.uploading'] :
+    t['js.photoCapture.open'];
 
   const isCameraDisabled = localStatus === 'uploading';
 
@@ -133,8 +141,8 @@ const TLPhotoCapture: React.FC<TLCellProps> = () => {
             type="button"
             className={captureBtnClasses.join(' ')}
             onClick={handleCapture}
-            title="Capture photo"
-            aria-label="Capture photo"
+            title={t['js.photoCapture.capture']}
+            aria-label={t['js.photoCapture.capture']}
           >
             <span className="tlPhotoCapture__captureIcon" />
           </button>

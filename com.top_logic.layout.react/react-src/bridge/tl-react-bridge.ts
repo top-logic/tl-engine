@@ -4,6 +4,7 @@ import { flushSync } from 'react-dom';
 import type { TLCellProps } from './types';
 import { getComponent } from './registry';
 import { connect, subscribe, unsubscribe } from './sse-client';
+import { setI18NApiBase, setI18NWindowName } from './i18n';
 
 /**
  * Per-control state store compatible with React's useSyncExternalStore.
@@ -84,8 +85,15 @@ export function mount(
   // Connect SSE on first mount (now that we know the context path).
   if (!_sseConnected) {
     _sseConnected = true;
+    setI18NApiBase(getApiBase());
     connect(getApiBase() + 'react-api/events');
   }
+
+  const resolvedWindowName = windowName ?? '';
+
+  // Always update windowName (it may change between mount calls).
+  setI18NWindowName(resolvedWindowName);
+
   const element = document.getElementById(controlId);
   if (!element) {
     console.error('[TLReact] Mount point not found:', controlId);
@@ -116,7 +124,6 @@ export function mount(
   const root = createRoot(element);
   _mounts.set(controlId, { root, store });
 
-  const resolvedWindowName = windowName ?? '';
   _lastWindowName = resolvedWindowName;
 
   const Wrapper = () => {

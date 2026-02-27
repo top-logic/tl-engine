@@ -7,6 +7,7 @@ package com.top_logic.base.accesscontrol;
 
 import java.util.Set;
 
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -24,9 +25,11 @@ import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
+import com.top_logic.basic.exception.I18NException;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.monitor.FailedLogin;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.mig.html.layout.ComponentName;
@@ -221,6 +224,8 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 
 	private final BoundCommandGroup _commandGroupLeavingMaintenanceMode;
 
+	private LoginHook _loginHook;
+
 	/**
 	 * Creates a {@link Login} from configuration.
 	 */
@@ -241,6 +246,7 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 			}
 		}
 		_commandGroupLeavingMaintenanceMode = leavingCommandGoup;
+		_loginHook = context.getInstance(config.getLoginHook());
 	}
 
     /**
@@ -256,7 +262,7 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
     }
 
     public boolean login(String userName, HttpServletRequest aRequest, HttpServletResponse response)
-			throws InMaintenanceModeException, MaxUsersExceededException {
+			throws InMaintenanceModeException, MaxUsersExceededException, LoginHookFailedException {
 		char[] thePassword = StringServices.nonNull(aRequest.getParameter(PASSWORD)).toCharArray();
 
 		if (StringServices.isEmpty(userName)) {
@@ -366,11 +372,13 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 	 * @return true if successful, else false
 	 * @throws InMaintenanceModeException
 	 *         to indicate that login failed because of maintenance mode
+	 * @throws LoginHookFailedException
+	 *         to indicate that login failed because of configured hook
 	 *
 	 *         #author Michael Eriksson #author Thomas Richter
 	 */
 	public boolean login(HttpServletRequest aRequest, HttpServletResponse response, LoginCredentials login)
-			throws InMaintenanceModeException, MaxUsersExceededException {
+			throws InMaintenanceModeException, MaxUsersExceededException, LoginHookFailedException {
 		Person person = login.getPerson();
 		AuthenticationDevice authDevice = person.getAuthenticationDevice();
 		if (authDevice == null) {
@@ -381,6 +389,7 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 			boolean authenticated = authDevice.authentify(login);
 			if (authenticated) {
 				checkAllowedGroups(person);
+				checkConfiguredHook(aRequest, response);
 				HttpSession loginUser = SessionService.getInstance().loginUser(aRequest, response, person);
 				if (loginUser == null) {
 					noLogin(person, aRequest, FailedLogin.REASON_MAX_USERS_EXCEEDED);
@@ -395,6 +404,9 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 			throw e;
 		} catch (MaxUsersExceededException e) {
 			noLogin(person, aRequest, FailedLogin.REASON_MAX_USERS_EXCEEDED);
+			throw e;
+		} catch (LoginHookFailedException e) {
+			noLogin(person, aRequest, FailedLogin.REASON_CONFIGURED_HOOK);
 			throw e;
 		} catch (Exception e) {
 			Logger.error("Unable to authenticate person " + person.getName(), e, this);
@@ -411,6 +423,16 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 			FailedLogin.storeNewFailedLogin(userName, SessionService.clientHost(request), reason);
 		}
 		return false;
+	}
+
+	private void checkConfiguredHook(HttpServletRequest aRequest, HttpServletResponse response)
+			throws ServletException, LoginHookFailedException {
+		if (_loginHook != null) {
+			ResKey reason = _loginHook.check(aRequest, response);
+			if (reason != null) {
+				throw new LoginHookFailedException(reason);
+			}
+		}
 	}
 
     /**
@@ -534,6 +556,20 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
         }
     }
 
+
+	/**
+	 * Exception to indicate that login failed due to configured {@link LoginHook}.
+	 */
+	public static class LoginHookFailedException extends I18NException {
+
+		/**
+		 * Creates a new {@link LoginHookFailedException}.
+		 */
+		public LoginHookFailedException(ResKey errorKey) {
+			super(errorKey);
+		}
+
+	}
 
     /**
      * Exception to indicate that login failed because system is in maintenance mode.

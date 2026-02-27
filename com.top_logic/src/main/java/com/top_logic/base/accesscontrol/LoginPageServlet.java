@@ -20,18 +20,16 @@ import java.util.concurrent.ConcurrentMap;
 import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
-import jakarta.servlet.UnavailableException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
+import com.top_logic.base.accesscontrol.Login.LoginHookFailedException;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.basic.DebugHelper;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.MapUtil;
-import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.StopWatch;
 import com.top_logic.basic.xml.TagUtil;
@@ -133,30 +131,9 @@ public class LoginPageServlet extends NoContextServlet {
 		PARAM_LOGIN_ERROR_PAGE,
 		ENABLE_SESSION_CHECK));
 
-	/**
-	 * @see #getConfiguredLoginHook()
-	 * @see Login.Config#getLoginHook()
-	 */
-	private LoginHook loginHook;
-
 	private boolean _enableChecks;
 
 	private ConcurrentMap<String, LoginFailure> _failures = new ConcurrentHashMap<>();
-
-    @Override
-	public void init () throws ServletException {
-        try {
-			loginHook = getConfiguredLoginHook();
-		} catch (Exception e) {
-			// If an ConfigurationException is thrown, the servlet could not be
-			// initialized and nobody can login. If in this case a
-			// ServletException is thrown the browser just shows the login.jsp
-			// again, without any informations. So an UnavailableException will
-			// be thrown, to bring the browser to show a 503-error.
-			Logger.error("Invalid configuration: " + e.getMessage(), e, this);
-			throw new UnavailableException("Invalid configuration: " + e.getMessage());
-		}
-    }
 
 	@Override
 	public void init(ServletConfig config) throws ServletException {
@@ -165,19 +142,6 @@ public class LoginPageServlet extends NoContextServlet {
 		String value = config.getInitParameter(DISABLE_SECURE_HEADER_CHECK);
 		_enableChecks = !"true".equals(value);
 	}
-
-	/**
-	 * The hook method being invoked during a login process.
-	 * 
-	 * @return The configured {@link LoginHook}.
-	 * 
-	 * @see Login.Config#getLoginHook() Configuration option.
-	 */
-	public static LoginHook getConfiguredLoginHook() {
-		PolymorphicConfiguration<LoginHook> configuration = Login.getInstance().getConfiguration().getLoginHook();
-		return SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(configuration);
-	}
-
 
    /**
 	* doGet is just forwarded to {@link #doPost(HttpServletRequest, HttpServletResponse)} 
@@ -276,6 +240,7 @@ public class LoginPageServlet extends NoContextServlet {
 			}
 		}
 
+		ResKey anotherReason = null;
 		if (KnowledgeBaseFactory.Module.INSTANCE.isActive()) {
 			try {
 				// Will eventually reset the TLContext with a valid Person
@@ -284,6 +249,8 @@ public class LoginPageServlet extends NoContextServlet {
 				deniedByMaintenanceMode = true;
 			} catch (Login.MaxUsersExceededException e) {
 				maxUsersExceeded = true;
+			} catch (LoginHookFailedException ex) {
+				anotherReason = ex.getErrorKey();
 			}
 		} else {
 			authenticated = false;
@@ -308,16 +275,6 @@ public class LoginPageServlet extends NoContextServlet {
                 }
             }
         }
-
-		// if authentication ok so far, check if there is another (configured) reason to prevent
-		// authentication
-		ResKey anotherReason = null;
-		if (authenticated) {
-			anotherReason = this.checkRequestHook(request, response);
-			if (anotherReason != null) {
-				authenticated = false;
-			}
-		}
 
 		// not authenticated :
 
@@ -517,21 +474,6 @@ public class LoginPageServlet extends NoContextServlet {
 				return ex.getErrorKey();
 			}
 	    }
-	}
-
-	/**
-	 * Invokes the configured additional login processing.
-	 * 
-	 * @see #getConfiguredLoginHook()
-	 * 
-	 * @return a reason To prevent login.
-	 */
-	protected final ResKey checkRequestHook(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException {
-		if (loginHook != null){
-			return loginHook.check(request, response);
-		}
-		return null;
 	}
 
 	/**

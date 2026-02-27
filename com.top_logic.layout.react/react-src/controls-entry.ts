@@ -23,6 +23,9 @@ import TLFieldList from './controls/TLFieldList';
 import TLAudioRecorder from './controls/TLAudioRecorder';
 import TLAudioPlayer from './controls/TLAudioPlayer';
 import TLFileUpload from './controls/TLFileUpload';
+import TLDownload from './controls/TLDownload';
+import TLPhotoCapture from './controls/TLPhotoCapture';
+import TLPhotoViewer from './controls/TLPhotoViewer';
 
 register('TLButton', TLButton);
 register('TLToggleButton', TLToggleButton);
@@ -38,3 +41,6 @@ register('TLFieldList', TLFieldList);
 register('TLAudioRecorder', TLAudioRecorder);
 register('TLAudioPlayer', TLAudioPlayer);
 register('TLFileUpload', TLFileUpload);
+register('TLDownload', TLDownload);
+register('TLPhotoCapture', TLPhotoCapture);
+register('TLPhotoViewer', TLPhotoViewer);

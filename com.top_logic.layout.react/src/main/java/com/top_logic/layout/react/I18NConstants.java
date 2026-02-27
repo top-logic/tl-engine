@@ -65,6 +65,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey REACT_DOWNLOAD_CLEAR;
 
+	/**
+	 * @en Photo upload failed.
+	 */
+	public static ResKey PHOTO_UPLOAD_FAILED;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

@@ -1,4 +1,4 @@
-import { React as e, useTLFieldValue as R, getComponent as D, useTLState as L, useTLCommand as T, TLChild as N, useTLUpload as y, useTLDataUrl as w, register as b } from "tl-react-bridge";
+import { React as e, useTLFieldValue as R, getComponent as D, useTLState as L, useTLCommand as T, TLChild as N, useTLUpload as w, useTLDataUrl as y, register as b } from "tl-react-bridge";
 const { useCallback: P } = e, U = ({ state: o }) => {
   const [r, a] = R(), n = P(
     (t) => {
@@ -153,7 +153,7 @@ const { useCallback: P } = e, U = ({ state: o }) => {
   const o = L(), r = o.title, a = o.fields ?? [];
   return /* @__PURE__ */ e.createElement("div", { className: "tlFieldList" }, r && /* @__PURE__ */ e.createElement("h3", { className: "tlFieldList__title" }, r), /* @__PURE__ */ e.createElement("div", { className: "tlFieldList__fields" }, a.map((n, t) => /* @__PURE__ */ e.createElement("div", { key: t, className: "tlFieldList__item" }, /* @__PURE__ */ e.createElement(N, { control: n })))));
 }, K = () => {
-  const o = L(), r = y(), [a, n] = e.useState("idle"), t = e.useRef(null), l = e.useRef([]), s = e.useRef(null), c = o.status ?? "idle", i = o.error, p = c === "received" ? "idle" : a !== "idle" ? a : c, v = e.useCallback(async () => {
+  const o = L(), r = w(), [a, n] = e.useState("idle"), t = e.useRef(null), l = e.useRef([]), s = e.useRef(null), c = o.status ?? "idle", i = o.error, p = c === "received" ? "idle" : a !== "idle" ? a : c, v = e.useCallback(async () => {
     if (a === "recording") {
       const d = t.current;
       d && d.state !== "inactive" && d.stop();
@@ -194,7 +194,7 @@ const { useCallback: P } = e, U = ({ state: o }) => {
     /* @__PURE__ */ e.createElement("span", { className: `tlAudioRecorder__icon${p === "recording" ? " tlAudioRecorder__icon--stop" : ""}` })
   ), i && /* @__PURE__ */ e.createElement("span", { className: "tlAudioRecorder__status tlAudioRecorder__status--error" }, i));
 }, Q = () => {
-  const o = L(), r = w(), a = !!o.hasAudio, n = o.dataRevision ?? 0, [t, l] = e.useState(a ? "idle" : "disabled"), s = e.useRef(null), c = e.useRef(null), i = e.useRef(n);
+  const o = L(), r = y(), a = !!o.hasAudio, n = o.dataRevision ?? 0, [t, l] = e.useState(a ? "idle" : "disabled"), s = e.useRef(null), c = e.useRef(null), i = e.useRef(n);
   e.useEffect(() => {
     a ? t === "disabled" && l("idle") : (s.current && (s.current.pause(), s.current = null), c.current && (URL.revokeObjectURL(c.current), c.current = null), l("disabled"));
   }, [a]), e.useEffect(() => {
@@ -246,7 +246,7 @@ const { useCallback: P } = e, U = ({ state: o }) => {
     /* @__PURE__ */ e.createElement("span", { className: `tlAudioPlayer__icon${t === "playing" ? " tlAudioPlayer__icon--pause" : ""}` })
   ));
 }, X = () => {
-  const o = L(), r = y(), [a, n] = e.useState("idle"), [t, l] = e.useState(!1), s = e.useRef(null), c = o.status ?? "idle", i = o.error, p = o.accept ?? "", v = c === "received" ? "idle" : a !== "idle" ? a : c, f = e.useCallback(async (m) => {
+  const o = L(), r = w(), [a, n] = e.useState("idle"), [t, l] = e.useState(!1), s = e.useRef(null), c = o.status ?? "idle", i = o.error, p = o.accept ?? "", v = c === "received" ? "idle" : a !== "idle" ? a : c, f = e.useCallback(async (m) => {
     n("uploading");
     const _ = new FormData();
     _.append("file", m, m.name), await r(_), n("idle");
@@ -298,7 +298,7 @@ const { useCallback: P } = e, U = ({ state: o }) => {
     i && /* @__PURE__ */ e.createElement("span", { className: "tlFileUpload__status tlFileUpload__status--error" }, i)
   );
 }, Y = () => {
-  const o = L(), r = w(), a = T(), n = !!o.hasData, t = o.dataRevision ?? 0, l = o.fileName ?? "download", s = !!o.clearable, [c, i] = e.useState(!1), p = e.useCallback(async () => {
+  const o = L(), r = y(), a = T(), n = !!o.hasData, t = o.dataRevision ?? 0, l = o.fileName ?? "download", s = !!o.clearable, [c, i] = e.useState(!1), p = e.useCallback(async () => {
     if (!(!n || c)) {
       i(!0);
       try {
@@ -341,7 +341,7 @@ const { useCallback: P } = e, U = ({ state: o }) => {
     /* @__PURE__ */ e.createElement("svg", { className: "tlDownload__clearIcon", viewBox: "0 0 16 16", width: "14", height: "14", "aria-hidden": "true" }, /* @__PURE__ */ e.createElement("path", { d: "M4 4l8 8M12 4l-8 8", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round" }))
   )) : /* @__PURE__ */ e.createElement("div", { className: "tlDownload tlDownload--empty" }, /* @__PURE__ */ e.createElement("span", { className: "tlDownload__fileName tlDownload__fileName--empty" }, "No file"));
 }, Z = () => {
-  const o = L(), r = y(), [a, n] = e.useState("idle"), t = e.useRef(null), l = e.useRef(null), s = e.useRef(null), c = o.error, i = e.useCallback(() => {
+  const o = L(), r = w(), [a, n] = e.useState("idle"), t = e.useRef(null), l = e.useRef(null), s = e.useRef(null), c = o.error, i = e.useCallback(() => {
     l.current && (l.current.getTracks().forEach((u) => u.stop()), l.current = null), t.current && (t.current.srcObject = null);
   }, []), p = e.useCallback(async () => {
     if (a !== "uploading") {
@@ -353,7 +353,7 @@ const { useCallback: P } = e, U = ({ state: o }) => {
         const u = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: "environment" }
         });
-        l.current = u, t.current && (t.current.srcObject = u), n("previewing");
+        l.current = u, n("previewing");
       } catch (u) {
         console.error("[TLPhotoCapture] Camera access denied or unavailable:", u), n("idle");
       }
@@ -375,7 +375,9 @@ const { useCallback: P } = e, U = ({ state: o }) => {
       _.append("photo", m, "capture.jpg"), await r(_), n("idle");
     }, "image/jpeg", 0.85));
   }, [a, r, i]);
-  e.useEffect(() => () => {
+  e.useEffect(() => {
+    a === "previewing" && t.current && l.current && (t.current.srcObject = l.current);
+  }, [a]), e.useEffect(() => () => {
     l.current && (l.current.getTracks().forEach((u) => u.stop()), l.current = null);
   }, []);
   const f = a === "previewing" ? "Close camera" : a === "uploading" ? "Uploading…" : "Open camera", C = a === "uploading", h = ["tlPhotoCapture__cameraBtn"];
@@ -413,7 +415,7 @@ const { useCallback: P } = e, U = ({ state: o }) => {
     }
   ), /* @__PURE__ */ e.createElement("canvas", { ref: s, style: { display: "none" } }), c && /* @__PURE__ */ e.createElement("span", { className: "tlPhotoCapture__status tlPhotoCapture__status--error" }, c));
 }, ee = () => {
-  const o = L(), r = w(), a = !!o.hasPhoto, n = o.dataRevision ?? 0, [t, l] = e.useState(null), s = e.useRef(n);
+  const o = L(), r = y(), a = !!o.hasPhoto, n = o.dataRevision ?? 0, [t, l] = e.useState(null), s = e.useRef(n);
   return e.useEffect(() => {
     if (!a) {
       t && (URL.revokeObjectURL(t), l(null));

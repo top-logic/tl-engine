@@ -42,9 +42,6 @@ const TLPhotoCapture: React.FC<TLCellProps> = () => {
         video: { facingMode: 'environment' }
       });
       streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
       setLocalStatus('previewing');
     } catch (err) {
       console.error('[TLPhotoCapture] Camera access denied or unavailable:', err);
@@ -87,6 +84,13 @@ const TLPhotoCapture: React.FC<TLCellProps> = () => {
       setLocalStatus('idle');
     }, 'image/jpeg', 0.85);
   }, [localStatus, upload, stopCamera]);
+
+  // Wire stream to video element after React renders the <video>.
+  React.useEffect(() => {
+    if (localStatus === 'previewing' && videoRef.current && streamRef.current) {
+      videoRef.current.srcObject = streamRef.current;
+    }
+  }, [localStatus]);
 
   // Cleanup: stop camera on unmount.
   React.useEffect(() => {

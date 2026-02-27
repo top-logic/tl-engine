@@ -70,6 +70,9 @@ export interface JSSnippletData {
   code: string;
 }
 
+/** I18N cache invalidation has no payload fields. */
+export type I18NCacheInvalidationData = Record<string, never>;
+
 export interface FunctionCallData {
   elementId: string;
   functionRef: string;

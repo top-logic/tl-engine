@@ -100,6 +100,9 @@ message JSSnipplet extends SSEEvent {
 	string code;
 }
 
+/** Tells the client to clear its i18n translation cache. */
+message I18NCacheInvalidation extends SSEEvent {}
+
 /** Calls a JavaScript function. */
 message FunctionCall extends SSEEvent {
 	/** The ID of the context element. */

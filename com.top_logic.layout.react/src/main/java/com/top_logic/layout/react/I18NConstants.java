@@ -70,6 +70,134 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey PHOTO_UPLOAD_FAILED;
 
+	// -- Client-side i18n keys (js.* prefix, names match keys used by React controls) --
+
+	/**
+	 * @en Play audio
+	 * @de Audio abspielen
+	 */
+	public static ResKey JS_AUDIO_PLAYER_PLAY = ResKey.internalCreate("js.audioPlayer.play");
+
+	/**
+	 * @en Pause audio
+	 * @de Audio pausieren
+	 */
+	public static ResKey JS_AUDIO_PLAYER_PAUSE = ResKey.internalCreate("js.audioPlayer.pause");
+
+	/**
+	 * @en No audio
+	 * @de Kein Audio
+	 */
+	public static ResKey JS_AUDIO_PLAYER_NO_AUDIO = ResKey.internalCreate("js.audioPlayer.noAudio");
+
+	/**
+	 * @en Loading\u2026
+	 * @de Laden\u2026
+	 */
+	public static ResKey JS_LOADING = ResKey.internalCreate("js.loading");
+
+	/**
+	 * @en Uploading\u2026
+	 * @de Hochladen\u2026
+	 */
+	public static ResKey JS_UPLOADING = ResKey.internalCreate("js.uploading");
+
+	/**
+	 * @en Record audio
+	 * @de Audio aufnehmen
+	 */
+	public static ResKey JS_AUDIO_RECORDER_RECORD = ResKey.internalCreate("js.audioRecorder.record");
+
+	/**
+	 * @en Stop recording
+	 * @de Aufnahme stoppen
+	 */
+	public static ResKey JS_AUDIO_RECORDER_STOP = ResKey.internalCreate("js.audioRecorder.stop");
+
+	/**
+	 * @en No file
+	 * @de Keine Datei
+	 */
+	public static ResKey JS_DOWNLOAD_NO_FILE = ResKey.internalCreate("js.download.noFile");
+
+	/**
+	 * @en Download {0}
+	 * @de {0} herunterladen
+	 */
+	public static ResKey JS_DOWNLOAD_FILE = ResKey.internalCreate("js.download.file");
+
+	/**
+	 * @en Downloading\u2026
+	 * @de Herunterladen\u2026
+	 */
+	public static ResKey JS_DOWNLOADING = ResKey.internalCreate("js.downloading");
+
+	/**
+	 * @en Clear
+	 * @de Entfernen
+	 */
+	public static ResKey JS_DOWNLOAD_CLEAR = ResKey.internalCreate("js.download.clear");
+
+	/**
+	 * @en Clear file
+	 * @de Datei entfernen
+	 */
+	public static ResKey JS_DOWNLOAD_CLEAR_FILE = ResKey.internalCreate("js.download.clearFile");
+
+	/**
+	 * @en Choose file
+	 * @de Datei ausw\u00e4hlen
+	 */
+	public static ResKey JS_FILE_UPLOAD_CHOOSE = ResKey.internalCreate("js.fileUpload.choose");
+
+	/**
+	 * @en Open camera
+	 * @de Kamera \u00f6ffnen
+	 */
+	public static ResKey JS_PHOTO_CAPTURE_OPEN = ResKey.internalCreate("js.photoCapture.open");
+
+	/**
+	 * @en Close camera
+	 * @de Kamera schlie\u00dfen
+	 */
+	public static ResKey JS_PHOTO_CAPTURE_CLOSE = ResKey.internalCreate("js.photoCapture.close");
+
+	/**
+	 * @en Capture photo
+	 * @de Foto aufnehmen
+	 */
+	public static ResKey JS_PHOTO_CAPTURE_CAPTURE = ResKey.internalCreate("js.photoCapture.capture");
+
+	/**
+	 * @en Captured photo
+	 * @de Aufgenommenes Foto
+	 */
+	public static ResKey JS_PHOTO_VIEWER_ALT = ResKey.internalCreate("js.photoViewer.alt");
+
+	/**
+	 * @en Camera requires a secure connection (HTTPS).
+	 * @de Kamera erfordert eine sichere Verbindung (HTTPS).
+	 */
+	public static ResKey JS_PHOTO_CAPTURE_ERROR_INSECURE = ResKey.internalCreate("js.photoCapture.error.insecure");
+
+	/**
+	 * @en Camera access denied or unavailable.
+	 * @de Kamerazugriff verweigert oder nicht verf\u00fcgbar.
+	 */
+	public static ResKey JS_PHOTO_CAPTURE_ERROR_DENIED = ResKey.internalCreate("js.photoCapture.error.denied");
+
+	/**
+	 * @en Microphone requires a secure connection (HTTPS).
+	 * @de Mikrofon erfordert eine sichere Verbindung (HTTPS).
+	 */
+	public static ResKey JS_AUDIO_RECORDER_ERROR_INSECURE = ResKey.internalCreate("js.audioRecorder.error.insecure");
+
+	/**
+	 * @en Microphone access denied or unavailable.
+	 * @de Mikrofonzugriff verweigert oder nicht verf\u00fcgbar.
+	 */
+	public static ResKey JS_AUDIO_RECORDER_ERROR_DENIED = ResKey.internalCreate("js.audioRecorder.error.denied");
+
 	static {
 		initConstants(I18NConstants.class);
 	}

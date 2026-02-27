@@ -1,5 +1,9 @@
-import { React, useTLState, useTLDataUrl } from 'tl-react-bridge';
+import { React, useTLState, useTLDataUrl, useI18N } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
+
+const I18N_KEYS = {
+  'js.photoViewer.alt': 'Captured photo',
+};
 
 const TLPhotoViewer: React.FC<TLCellProps> = () => {
   const state = useTLState();
@@ -65,6 +69,8 @@ const TLPhotoViewer: React.FC<TLCellProps> = () => {
     };
   }, []);
 
+  const t = useI18N(I18N_KEYS);
+
   if (!hasPhoto || !imageUrl) {
     return (
       <div className="tlPhotoViewer">
@@ -78,7 +84,7 @@ const TLPhotoViewer: React.FC<TLCellProps> = () => {
       <img
         className="tlPhotoViewer__image"
         src={imageUrl}
-        alt="Captured photo"
+        alt={t['js.photoViewer.alt']}
       />
     </div>
   );

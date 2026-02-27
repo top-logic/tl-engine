@@ -1,5 +1,12 @@
-import { React, useTLState, useTLDataUrl } from 'tl-react-bridge';
+import { React, useTLState, useTLDataUrl, useI18N } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
+
+const I18N_KEYS = {
+  'js.audioPlayer.play': 'Play audio',
+  'js.audioPlayer.pause': 'Pause audio',
+  'js.audioPlayer.noAudio': 'No audio',
+  'js.loading': 'Loading\u2026',
+};
 
 type PlayerStatus = 'disabled' | 'idle' | 'loading' | 'playing' | 'paused';
 
@@ -120,11 +127,12 @@ const TLAudioPlayer: React.FC<TLCellProps> = () => {
     setStatus('playing');
   }, [status, dataUrl]);
 
+  const t = useI18N(I18N_KEYS);
   const ariaLabel =
-    status === 'loading' ? 'Loading\u2026' :
-    status === 'playing' ? 'Pause audio' :
-    status === 'disabled' ? 'No audio' :
-    'Play audio';
+    status === 'loading' ? t['js.loading'] :
+    status === 'playing' ? t['js.audioPlayer.pause'] :
+    status === 'disabled' ? t['js.audioPlayer.noAudio'] :
+    t['js.audioPlayer.play'];
 
   const isDisabled = status === 'disabled' || status === 'loading';
 

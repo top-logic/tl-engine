@@ -10,6 +10,7 @@ import type {
   RangeReplacementData,
   StateEventData,
 } from './types';
+import { clearI18NCache } from './i18n';
 
 type StateListener = (state: Record<string, unknown>) => void;
 
@@ -55,6 +56,9 @@ function createEventSource(url: string): void {
 
   _eventSource = new EventSource(url);
   _lastMessageTime = Date.now();
+
+  // Clear i18n cache on reconnect to ensure fresh translations.
+  clearI18NCache();
 
   _eventSource.onmessage = (event: MessageEvent) => {
     _lastMessageTime = Date.now();
@@ -152,6 +156,9 @@ function dispatch(data: unknown): void {
       break;
     case 'FunctionCall':
       DOMActionProcessor.functionCall(payload as unknown as FunctionCallData);
+      break;
+    case 'I18NCacheInvalidation':
+      clearI18NCache();
       break;
     default:
       console.warn('[TLReact] Unknown SSE event type:', typeCode);

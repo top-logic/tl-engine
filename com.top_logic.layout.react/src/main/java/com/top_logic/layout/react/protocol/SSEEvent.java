@@ -35,6 +35,9 @@ public interface SSEEvent extends de.haumacher.msgbuf.data.DataObject, de.haumac
 		/** Type literal for {@link com.top_logic.layout.react.protocol.JSSnipplet}. */
 		JSSNIPPLET,
 
+		/** Type literal for {@link com.top_logic.layout.react.protocol.I18NCacheInvalidation}. */
+		I_18_NCACHE_INVALIDATION,
+
 		/** Type literal for {@link com.top_logic.layout.react.protocol.FunctionCall}. */
 		FUNCTION_CALL,
 		;
@@ -71,6 +74,9 @@ public interface SSEEvent extends de.haumacher.msgbuf.data.DataObject, de.haumac
 		/** Visit case for {@link com.top_logic.layout.react.protocol.JSSnipplet}.*/
 		R visit(com.top_logic.layout.react.protocol.JSSnipplet self, A arg) throws E;
 
+		/** Visit case for {@link com.top_logic.layout.react.protocol.I18NCacheInvalidation}.*/
+		R visit(com.top_logic.layout.react.protocol.I18NCacheInvalidation self, A arg) throws E;
+
 		/** Visit case for {@link com.top_logic.layout.react.protocol.FunctionCall}.*/
 		R visit(com.top_logic.layout.react.protocol.FunctionCall self, A arg) throws E;
 
@@ -100,6 +106,7 @@ public interface SSEEvent extends de.haumacher.msgbuf.data.DataObject, de.haumac
 			case FragmentInsertion.FRAGMENT_INSERTION__TYPE: result = com.top_logic.layout.react.protocol.FragmentInsertion.readFragmentInsertion(in); break;
 			case RangeReplacement.RANGE_REPLACEMENT__TYPE: result = com.top_logic.layout.react.protocol.RangeReplacement.readRangeReplacement(in); break;
 			case JSSnipplet.JSSNIPPLET__TYPE: result = com.top_logic.layout.react.protocol.JSSnipplet.readJSSnipplet(in); break;
+			case I18NCacheInvalidation.I_18_NCACHE_INVALIDATION__TYPE: result = com.top_logic.layout.react.protocol.I18NCacheInvalidation.readI18NCacheInvalidation(in); break;
 			case FunctionCall.FUNCTION_CALL__TYPE: result = com.top_logic.layout.react.protocol.FunctionCall.readFunctionCall(in); break;
 			default: in.skipValue(); result = null; break;
 		}

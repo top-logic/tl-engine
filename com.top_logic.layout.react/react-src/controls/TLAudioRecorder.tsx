@@ -1,5 +1,11 @@
-import { React, useTLState, useTLUpload } from 'tl-react-bridge';
+import { React, useTLState, useTLUpload, useI18N } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
+
+const I18N_KEYS = {
+  'js.audioRecorder.record': 'Record audio',
+  'js.audioRecorder.stop': 'Stop recording',
+  'js.uploading': 'Uploading\u2026',
+};
 
 type LocalStatus = 'idle' | 'recording' | 'uploading';
 
@@ -76,10 +82,11 @@ const TLAudioRecorder: React.FC<TLCellProps> = () => {
     }
   }, [localStatus, upload]);
 
+  const t = useI18N(I18N_KEYS);
   const ariaLabel =
-    effectiveStatus === 'recording' ? 'Stop recording' :
-    effectiveStatus === 'uploading' ? 'Uploading\u2026' :
-    'Record audio';
+    effectiveStatus === 'recording' ? t['js.audioRecorder.stop'] :
+    effectiveStatus === 'uploading' ? t['js.uploading'] :
+    t['js.audioRecorder.record'];
 
   const isDisabled = effectiveStatus === 'uploading';
 

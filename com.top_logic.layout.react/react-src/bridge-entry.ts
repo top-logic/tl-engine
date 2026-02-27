@@ -14,6 +14,7 @@ export {
   TLControlContext,
 } from './bridge/tl-react-bridge';
 export type { TLCellProps } from './bridge/types';
+export { useI18N } from './bridge/i18n';
 export { default as TLChild } from './bridge/TLChild';
 export type { ChildDescriptor } from './bridge/TLChild';
 

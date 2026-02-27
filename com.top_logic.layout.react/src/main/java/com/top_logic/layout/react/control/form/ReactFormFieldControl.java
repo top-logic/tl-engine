@@ -136,6 +136,14 @@ public class ReactFormFieldControl extends AbstractFormFieldControl {
 		writeMountPoint(context, out);
 	}
 
+	@Override
+	protected void writeInvisible(DisplayContext context, TagWriter out) throws IOException {
+		// Always render the React mount point, even when the field is invisible. The bridge
+		// handles visibility via display:none (based on the "hidden" state key), preserving the
+		// SSE connection so that subsequent show/hide toggles are delivered to the client.
+		writeMountPoint(context, out);
+	}
+
 	private void writeMountPoint(DisplayContext context, TagWriter out) throws IOException {
 		Map<String, Object> state = buildFullFieldState();
 

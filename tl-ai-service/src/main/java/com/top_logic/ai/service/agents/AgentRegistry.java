@@ -78,6 +78,18 @@ import dev.langchain4j.service.tool.ToolExecutor;
 public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?>> {
 
 	/**
+	 * Placeholder marker for the tool catalog in system prompts. When present, the catalog of
+	 * available tools replaces this marker. Otherwise, the catalog is appended at the end.
+	 */
+	public static final String TOOLS_PLACEHOLDER = "<<AVAILABLE_TOOLS>>";
+
+	/**
+	 * Placeholder marker for the delegation catalog in system prompts. When present, the catalog
+	 * of delegation targets replaces this marker. Otherwise, the catalog is appended at the end.
+	 */
+	public static final String DELEGATES_PLACEHOLDER = "<<AVAILABLE_DELEGATES>>";
+
+	/**
 	 * Configuration interface for {@link AgentRegistry}.
 	 */
 	public interface Config<I extends AgentRegistry> extends ConfiguredManagedClass.Config<I> {
@@ -348,30 +360,48 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	 * @return The fully-resolved system prompt.
 	 */
 	public String getSystemPrompt(AgentConfig config) {
-		String basePrompt = config.getSystemPrompt();
+		String prompt = config.getSystemPrompt();
 
+		// Build skill section
+		String skillSection = buildSkillSectionForAgent(config);
+
+		// Build tool section
+		String toolSection = buildToolSection(config);
+
+		// Build delegation section
+		String delegationSection = buildDelegationSection(config);
+
+		// Process all three placeholders using replacePlaceholderOrAppend
+		prompt = replacePlaceholderOrAppend(prompt, SkillRegistry.SKILLS_PLACEHOLDER, skillSection);
+		prompt = replacePlaceholderOrAppend(prompt, TOOLS_PLACEHOLDER, toolSection);
+		prompt = replacePlaceholderOrAppend(prompt, DELEGATES_PLACEHOLDER, delegationSection);
+
+		return prompt;
+	}
+
+	/**
+	 * Resolves the skills for the given agent configuration and builds the skill section content.
+	 *
+	 * @param config
+	 *        The agent configuration whose {@link AgentConfig#getSkills() skills} to resolve.
+	 * @return The formatted skill section, or empty string if the agent has no skills.
+	 */
+	private String buildSkillSectionForAgent(AgentConfig config) {
 		List<String> skillNames = config.getSkills();
-		String skillSection = "";
-		if (!skillNames.isEmpty()) {
-			List<Skill> skills = new ArrayList<>(skillNames.size());
-			for (String skillName : skillNames) {
-				try {
-					skills.add(_skillRegistry.getSkill(skillName));
-				} catch (IllegalArgumentException ex) {
-					Logger.warn("Skipping unavailable skill '" + skillName + "': " + ex.getMessage(),
-						AgentRegistry.class);
-				}
+		if (skillNames.isEmpty()) {
+			return "";
+		}
+
+		List<Skill> skills = new ArrayList<>(skillNames.size());
+		for (String skillName : skillNames) {
+			try {
+				skills.add(_skillRegistry.getSkill(skillName));
+			} catch (IllegalArgumentException ex) {
+				Logger.warn("Skipping unavailable skill '" + skillName + "': " + ex.getMessage(),
+					AgentRegistry.class);
 			}
-			skillSection = buildSkillSection(skills);
 		}
-
-		if (basePrompt.contains(SkillRegistry.SKILLS_PLACEHOLDER)) {
-			basePrompt = basePrompt.replace(SkillRegistry.SKILLS_PLACEHOLDER, skillSection);
-		} else if (!skillSection.isEmpty()) {
-			basePrompt = basePrompt + "\n\n---\n\n" + skillSection;
-		}
-
-		return basePrompt;
+		return buildSkillSection(skills);
 	}
 
 	/**
@@ -485,7 +515,7 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 				desc = "Specialist agent";
 			}
 
-			String toolName = "delegate_to_" + targetName.replace('-', '_');
+			String toolName = delegationToolName(targetName);
 
 			ToolSpecification spec = ToolSpecification.builder()
 				.name(toolName)
@@ -578,6 +608,18 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		}
 
 		return builder.build();
+	}
+
+	/**
+	 * Computes the canonical tool name for delegating to the given target agent.
+	 *
+	 * @param targetName
+	 *        The target agent name as declared in the configuration.
+	 * @return The tool name in the format {@code delegate_to_<name>} with hyphens replaced by
+	 *         underscores.
+	 */
+	static String delegationToolName(String targetName) {
+		return "delegate_to_" + targetName.replace('-', '_');
 	}
 
 	private ToolExecutor createDelegationExecutor(String fromAgent, String targetName) {
@@ -854,6 +896,116 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		return timeoutSeconds == null ? null : Duration.ofSeconds(timeoutSeconds);
 	}
 
+	/**
+	 * Replaces the given placeholder in the prompt with the section content, or appends the section
+	 * at the end if the placeholder is not present. If the section is empty, the placeholder is
+	 * removed without inserting anything.
+	 *
+	 * @param prompt
+	 *        The base prompt text.
+	 * @param placeholder
+	 *        The placeholder marker to search for (e.g. {@code "<<AVAILABLE_TOOLS>>"}).
+	 * @param section
+	 *        The content to inject, or empty string if nothing to inject.
+	 * @return The prompt with the placeholder replaced or section appended.
+	 */
+	static String replacePlaceholderOrAppend(String prompt, String placeholder, String section) {
+		if (prompt.contains(placeholder)) {
+			return prompt.replace(placeholder, section);
+		}
+		if (!section.isEmpty()) {
+			return prompt + "\n\n---\n\n" + section;
+		}
+		return prompt;
+	}
+
+	/**
+	 * Builds a markdown catalog of the tools available to the given agent.
+	 *
+	 * @param config
+	 *        The agent configuration.
+	 * @return A formatted tool catalog section, or empty string if the agent has no tools.
+	 */
+	private String buildToolSection(AgentConfig config) {
+		List<String> toolNames = config.getTools();
+		if (toolNames.isEmpty()) {
+			return "";
+		}
+
+		ToolRegistry toolRegistry = ToolRegistry.getInstance();
+		StringBuilder sb = new StringBuilder();
+		sb.append("# Available Tools\n\n");
+		sb.append("You have the following tools available. Use them frequently to gather information ");
+		sb.append("and perform actions. NEVER guess when a tool can give you the answer.\n\n");
+
+		for (String qualifiedName : toolNames) {
+			ToolImplementation tool = toolRegistry.getTool(qualifiedName);
+			if (tool != null) {
+				ToolSpecification spec = tool.getSpecification();
+				sb.append("- **").append(spec.name()).append("**: ").append(spec.description()).append("\n");
+			} else {
+				Logger.warn("buildToolSection: agent '" + config.getName() +
+					"' references unknown tool '" + qualifiedName + "' — omitted from prompt catalog.",
+					AgentRegistry.class);
+			}
+		}
+
+		return sb.toString();
+	}
+
+	/**
+	 * Builds an XML-style catalog of delegation targets for the given agent.
+	 *
+	 * @param config
+	 *        The agent configuration.
+	 * @return A formatted delegation catalog section, or empty string if the agent has no
+	 *         delegations.
+	 */
+	private String buildDelegationSection(AgentConfig config) {
+		List<String> delegations = config.getDelegations();
+		if (delegations.isEmpty()) {
+			return "";
+		}
+
+		StringBuilder sb = new StringBuilder();
+		sb.append("# Available Sub-Agents\n\n");
+		sb.append("You MUST delegate tasks to the sub-agent with the most relevant expertise.\n\n");
+		sb.append("### Strategic Orchestration\n");
+		sb.append("Your own context window is your most precious resource. When you delegate, the sub-agent's\n");
+		sb.append("entire execution is consolidated into a single result in your history, keeping your main loop lean.\n\n");
+		sb.append("<available_agents>\n");
+
+		for (String targetName : delegations) {
+			AgentConfig targetConfig = getConfig().getAgents().get(targetName);
+			if (targetConfig == null) {
+				continue;
+			}
+			String desc = targetConfig.getDescription();
+			if (desc == null || desc.isEmpty()) {
+				desc = "Specialist agent";
+			}
+			String toolName = delegationToolName(targetName);
+
+			sb.append("  <agent>\n");
+			sb.append("    <name>").append(targetName).append("</name>\n");
+			sb.append("    <tool>").append(toolName).append("</tool>\n");
+			sb.append("    <description>").append(escapeXml(desc)).append("</description>\n");
+			sb.append("  </agent>\n");
+		}
+
+		sb.append("</available_agents>");
+		return sb.toString();
+	}
+
+	/**
+	 * Builds the skill section for injection into a system prompt. Auto skills are injected inline
+	 * with their full content. On demand skills are rendered as an XML-style
+	 * {@code <available_skills>} catalog with enforcement language for calling {@code loadSkill()}.
+	 *
+	 * @param skills
+	 *        The resolved skills for the agent.
+	 * @return The formatted skill section, or empty string if no skills.
+	 */
 	private String buildSkillSection(List<Skill> skills) {
 		if (skills.isEmpty()) {
 			return "";
@@ -868,22 +1020,43 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 
 		StringBuilder sb = new StringBuilder();
 
+		// AUTO skills: inject inline (unchanged)
 		for (Skill skill : autoSkills) {
 			sb.append("### ").append(skill.description()).append("\n\n");
 			sb.append(skill.content()).append("\n\n");
 		}
 
+		// ON_DEMAND skills: XML-style catalog with strong enforcement
 		if (!onDemandSkills.isEmpty()) {
-			sb.append("### Available Skills (IMPORTANT)\n\n");
-			sb.append("You have specialized skills that improve your work. ");
-			sb.append(
-				"Load a skill BEFORE performing the related action by calling `loadSkill(\"skill-id\")`.\n\n");
+			sb.append("# Available Skills\n\n");
+			sb.append("You MUST call `loadSkill(\"skill-id\")` BEFORE performing any task that matches ");
+			sb.append("a skill description. Loading the skill gives you specialized instructions ");
+			sb.append("that dramatically improve your output quality.\n\n");
+
+			sb.append("<available_skills>\n");
 			for (Skill skill : onDemandSkills) {
-				sb.append("- `").append(skill.id()).append("`: ").append(skill.description()).append("\n");
+				sb.append("  <skill>\n");
+				sb.append("    <id>").append(escapeXml(skill.id())).append("</id>\n");
+				sb.append("    <description>").append(escapeXml(skill.description())).append("</description>\n");
+				sb.append("  </skill>\n");
 			}
+			sb.append("</available_skills>\n\n");
+
+			sb.append("**Rule:** If a task even partially matches a skill description, call `loadSkill()` first. ");
+			sb.append("Do NOT attempt the task without loading the relevant skill.");
 		}
 
 		return sb.toString();
+	}
+
+	/**
+	 * Escapes XML special characters in text content that will be embedded in XML-style tags within
+	 * system prompts.
+	 */
+	private static String escapeXml(String s) {
+		return s.replace("&", "&amp;")
+			.replace("<", "&lt;")
+			.replace(">", "&gt;");
 	}
 
 	/**

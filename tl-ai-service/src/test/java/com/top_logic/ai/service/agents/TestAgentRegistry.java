@@ -53,6 +53,40 @@ public class TestAgentRegistry extends TestCase {
 			bareFactory.contains("."));
 	}
 
+	public void testReplacePlaceholderOrAppend_replaces() {
+		String prompt = "Before\n<<AVAILABLE_TOOLS>>\nAfter";
+		String result = AgentRegistry.replacePlaceholderOrAppend(prompt, "<<AVAILABLE_TOOLS>>", "TOOLS HERE");
+		assertEquals("Before\nTOOLS HERE\nAfter", result);
+	}
+
+	public void testReplacePlaceholderOrAppend_appendsWhenMissing() {
+		String prompt = "No placeholder here";
+		String result = AgentRegistry.replacePlaceholderOrAppend(prompt, "<<AVAILABLE_TOOLS>>", "TOOLS HERE");
+		assertEquals("No placeholder here\n\n---\n\nTOOLS HERE", result);
+	}
+
+	public void testReplacePlaceholderOrAppend_removesPlaceholderWhenEmpty() {
+		String prompt = "Before\n<<AVAILABLE_TOOLS>>\nAfter";
+		String result = AgentRegistry.replacePlaceholderOrAppend(prompt, "<<AVAILABLE_TOOLS>>", "");
+		assertEquals("Before\n\nAfter", result);
+	}
+
+	public void testReplacePlaceholderOrAppend_noChangeWhenBothEmpty() {
+		String prompt = "No placeholder here";
+		String result = AgentRegistry.replacePlaceholderOrAppend(prompt, "<<AVAILABLE_TOOLS>>", "");
+		assertEquals("No placeholder here", result);
+	}
+
+	public void testDelegationToolName() {
+		assertEquals("delegate_to_ModelExplorer", AgentRegistry.delegationToolName("ModelExplorer"));
+		assertEquals("delegate_to_TLScript_Agent", AgentRegistry.delegationToolName("TLScript-Agent"));
+	}
+
+	public void testPlaceholderConstants() {
+		assertEquals("<<AVAILABLE_TOOLS>>", AgentRegistry.TOOLS_PLACEHOLDER);
+		assertEquals("<<AVAILABLE_DELEGATES>>", AgentRegistry.DELEGATES_PLACEHOLDER);
+	}
+
 	/**
 	 * Documents the entry-point validation contract: exactly one agent must be marked.
 	 * The actual validation runs in {@link AgentRegistry#startUp()}.

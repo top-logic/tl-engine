@@ -6,6 +6,8 @@ const I18N_KEYS = {
   'js.photoCapture.close': 'Close camera',
   'js.photoCapture.capture': 'Capture photo',
   'js.uploading': 'Uploading\u2026',
+  'js.photoCapture.error.insecure': 'Camera requires a secure connection (HTTPS).',
+  'js.photoCapture.error.denied': 'Camera access denied or unavailable.',
 };
 
 type LocalStatus = 'idle' | 'previewing' | 'uploading';
@@ -15,6 +17,7 @@ const TLPhotoCapture: React.FC<TLCellProps> = () => {
   const upload = useTLUpload();
 
   const [localStatus, setLocalStatus] = React.useState<LocalStatus>('idle');
+  const [localError, setLocalError] = React.useState<string | null>(null);
   const videoRef = React.useRef<HTMLVideoElement | null>(null);
   const streamRef = React.useRef<MediaStream | null>(null);
   const canvasRef = React.useRef<HTMLCanvasElement | null>(null);
@@ -44,6 +47,13 @@ const TLPhotoCapture: React.FC<TLCellProps> = () => {
     }
 
     // Start camera.
+    setLocalError(null);
+
+    if (!window.isSecureContext || !navigator.mediaDevices) {
+      setLocalError('js.photoCapture.error.insecure');
+      return;
+    }
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'environment' }
@@ -52,6 +62,7 @@ const TLPhotoCapture: React.FC<TLCellProps> = () => {
       setLocalStatus('previewing');
     } catch (err) {
       console.error('[TLPhotoCapture] Camera access denied or unavailable:', err);
+      setLocalError('js.photoCapture.error.denied');
       setLocalStatus('idle');
     }
   }, [localStatus, stopCamera]);
@@ -158,6 +169,9 @@ const TLPhotoCapture: React.FC<TLCellProps> = () => {
         />
       )}
       <canvas ref={canvasRef} style={{ display: 'none' }} />
+      {localError && (
+        <span className="tlPhotoCapture__status tlPhotoCapture__status--error">{t[localError]}</span>
+      )}
       {serverError && (
         <span className="tlPhotoCapture__status tlPhotoCapture__status--error">{serverError}</span>
       )}

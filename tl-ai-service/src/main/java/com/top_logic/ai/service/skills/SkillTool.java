@@ -15,7 +15,7 @@ import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
 
 /**
- * Tool that allows agents to discover and load on-demand skills at runtime.
+ * Tool that allows agents to discover and load skills at runtime.
  *
  * <p>
  * Each instance is scoped to a specific agent name, exposing only the skills registered for that
@@ -42,7 +42,7 @@ public class SkillTool {
 	}
 
 	/**
-	 * Lists all on-demand skills available for this agent.
+	 * Lists all skills available for this agent.
 	 *
 	 * <p>
 	 * This method is used internally by the system prompt builder to generate the skill catalog. It
@@ -54,7 +54,7 @@ public class SkillTool {
 	public String listAvailableSkills() {
 		List<Skill> skills = _registry.getSkillsFor(_agentName);
 		if (skills.isEmpty()) {
-			String result = "No on-demand skills available for this agent.";
+			String result = "No skills available for this agent.";
 			ToolCallTracking.recordIfTracking("listAvailableSkills", Collections.emptyMap(), result);
 			return result;
 		}

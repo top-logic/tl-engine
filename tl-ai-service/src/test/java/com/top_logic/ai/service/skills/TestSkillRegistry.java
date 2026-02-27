@@ -58,7 +58,7 @@ public class TestSkillRegistry extends TestCase {
 
 	public void testAllProductionSkillsLoadSuccessfully() {
 		SkillRegistry registry = new SkillRegistry();
-		registry.registerAgentSkills("tlscript", List.of("shared/prompting-ModelExplorer"));
+		registry.registerAgentSkills("tlscript", List.of("shared/prompting-model-explorer"));
 		for (Skill skill : registry.getSkillsFor("tlscript")) {
 			assertNotNull("Skill content should not be null: " + skill.id(), skill.content());
 			assertFalse("Skill content should not be empty: " + skill.id(),
@@ -68,7 +68,7 @@ public class TestSkillRegistry extends TestCase {
 
 	public void testAgentWithSkillsRegistered() {
 		SkillRegistry registry = new SkillRegistry();
-		registry.registerAgentSkills("tlscript", List.of("shared/prompting-ModelExplorer"));
+		registry.registerAgentSkills("tlscript", List.of("shared/prompting-model-explorer"));
 		assertFalse("Agent should have skills",
 			registry.getSkillsFor("tlscript").isEmpty());
 	}
@@ -80,7 +80,7 @@ public class TestSkillRegistry extends TestCase {
 		assertFalse("Should NOT contain skill catalog", prompt.contains("Available Skills"));
 	}
 
-	public void testBuildSystemPromptWithOnDemandSkills() {
+	public void testBuildSystemPromptWithSkills() {
 		SkillRegistry registry = new SkillRegistry();
 		registry.registerAgentSkills("test-agent", List.of("test/frontmatter-skill"));
 		String prompt = registry.buildSystemPrompt("test-agent", "TEST SYSTEM PROMPT");
@@ -89,48 +89,33 @@ public class TestSkillRegistry extends TestCase {
 		assertTrue("Should contain skill id", prompt.contains("test/frontmatter-skill"));
 		assertTrue("Should contain skill description", prompt.contains("A test skill with frontmatter"));
 		assertTrue("Should mention loadSkill", prompt.contains("loadSkill"));
-		assertFalse("Should NOT contain on-demand skill content", prompt.contains("FRONTMATTER RULE"));
+		assertFalse("Should NOT contain skill content inline", prompt.contains("FRONTMATTER RULE"));
 	}
 
-	public void testBuildSystemPromptWithAutoSkills() {
-		SkillRegistry registry = new SkillRegistry();
-		registry.registerAgentSkills("test-agent", List.of("test/auto-skill"));
-		String prompt = registry.buildSystemPrompt("test-agent", "TEST SYSTEM PROMPT");
-		assertTrue("Should contain base system message", prompt.contains("TEST SYSTEM PROMPT"));
-		assertTrue("Should contain auto skill content", prompt.contains("AUTO RULE"));
-		assertTrue("Should contain auto skill description as heading",
-			prompt.contains("An auto-injected test skill"));
-		assertFalse("Should NOT contain on-demand catalog", prompt.contains("Available Skills (IMPORTANT)"));
-		assertFalse("Should NOT mention loadSkill", prompt.contains("loadSkill"));
-	}
-
-	public void testBuildSystemPromptWithMixedSkills() {
+	public void testBuildSystemPromptWithMultipleSkills() {
 		SkillRegistry registry = new SkillRegistry();
 		registry.registerAgentSkills("test-agent", List.of("test/auto-skill", "test/frontmatter-skill"));
 		String prompt = registry.buildSystemPrompt("test-agent", "TEST SYSTEM PROMPT");
-		// Auto skill content is injected
-		assertTrue("Should contain auto skill content", prompt.contains("AUTO RULE"));
-		// On-demand skill is in catalog
-		assertTrue("Should contain on-demand catalog", prompt.contains("Available Skills (IMPORTANT)"));
-		assertTrue("Should contain on-demand skill id", prompt.contains("test/frontmatter-skill"));
-		assertFalse("Should NOT contain on-demand skill content", prompt.contains("FRONTMATTER RULE"));
-		// Auto content appears before on-demand catalog
-		int autoIndex = prompt.indexOf("AUTO RULE");
-		int catalogIndex = prompt.indexOf("Available Skills");
-		assertTrue("Auto content should appear before on-demand catalog", autoIndex < catalogIndex);
+		// Both skills appear in catalog
+		assertTrue("Should contain catalog", prompt.contains("Available Skills (IMPORTANT)"));
+		assertTrue("Should contain auto-skill id", prompt.contains("test/auto-skill"));
+		assertTrue("Should contain frontmatter-skill id", prompt.contains("test/frontmatter-skill"));
+		// Neither skill's content is inlined
+		assertFalse("Should NOT contain auto skill content inline", prompt.contains("AUTO RULE"));
+		assertFalse("Should NOT contain frontmatter skill content inline", prompt.contains("FRONTMATTER RULE"));
 	}
 
 	public void testBuildSystemPromptWithProductionSkills() {
 		SkillRegistry registry = new SkillRegistry();
-		registry.registerAgentSkills("tlscript", List.of("shared/prompting-ModelExplorer"));
+		registry.registerAgentSkills("tlscript", List.of("shared/prompting-model-explorer"));
 		String prompt = registry.buildSystemPrompt("tlscript", "You are a TLScript Specialist Agent.");
 		assertTrue("Should contain base system message", prompt.contains("TLScript Specialist"));
-		// prompting-ModelExplorer is now auto mode — content should be injected
-		assertTrue("Should contain auto-injected skill content",
-			prompt.contains("How to Prompt the Model Explorer"));
+		// Skill appears as catalog entry, not inlined
+		assertTrue("Should contain skill catalog", prompt.contains("Available Skills (IMPORTANT)"));
+		assertTrue("Should contain skill id", prompt.contains("shared/prompting-model-explorer"));
 	}
 
-	public void testPlaceholderInjectionWithOnDemandSkill() {
+	public void testPlaceholderInjectionWithSkill() {
 		SkillRegistry registry = new SkillRegistry();
 		registry.registerAgentSkills("placeholder-agent", List.of("test/frontmatter-skill"));
 		String prompt = registry.buildSystemPrompt("placeholder-agent",
@@ -152,23 +137,6 @@ public class TestSkillRegistry extends TestCase {
 		assertTrue("Skills should appear before WORK ORDER", skillsIndex < workOrderIndex);
 	}
 
-	public void testPlaceholderInjectionWithAutoSkill() {
-		SkillRegistry registry = new SkillRegistry();
-		registry.registerAgentSkills("placeholder-agent", List.of("test/auto-skill"));
-		String prompt = registry.buildSystemPrompt("placeholder-agent",
-			"TOOLS SECTION\n<<AVAILABLE_SKILLS>>\nWORK ORDER SECTION");
-		assertTrue("Auto skill content should be injected at placeholder",
-			prompt.contains("AUTO RULE"));
-		assertFalse("Placeholder marker should be removed",
-			prompt.contains("<<AVAILABLE_SKILLS>>"));
-
-		int toolsIndex = prompt.indexOf("TOOLS SECTION");
-		int autoIndex = prompt.indexOf("AUTO RULE");
-		int workOrderIndex = prompt.indexOf("WORK ORDER SECTION");
-		assertTrue("Auto content should appear after TOOLS", autoIndex > toolsIndex);
-		assertTrue("Auto content should appear before WORK ORDER", autoIndex < workOrderIndex);
-	}
-
 	public void testPlaceholderRemovedWhenNoSkills() {
 		SkillRegistry registry = new SkillRegistry();
 		// No skills registered for placeholder-agent
@@ -180,15 +148,22 @@ public class TestSkillRegistry extends TestCase {
 			prompt.contains("Available Skills"));
 	}
 
-	public void testSkillModeParsingFromFrontmatter() {
+	public void testFrontmatterModeIgnored() {
 		SkillRegistry registry = new SkillRegistry();
+		// auto-skill.md has "mode: auto" in frontmatter — should be silently ignored
 		Skill autoSkill = registry.getSkill("test/auto-skill");
-		assertEquals(Skill.Mode.AUTO, autoSkill.mode());
+		assertNotNull(autoSkill);
+		assertEquals("An auto-injected test skill", autoSkill.description());
+		assertTrue(autoSkill.content().contains("AUTO RULE"));
 
+		// frontmatter-skill.md has no mode — should also work
 		Skill onDemandSkill = registry.getSkill("test/frontmatter-skill");
-		assertEquals(Skill.Mode.ON_DEMAND, onDemandSkill.mode());
+		assertNotNull(onDemandSkill);
+		assertEquals("A test skill with frontmatter", onDemandSkill.description());
 
+		// sample-skill.md has no frontmatter at all
 		Skill noFrontmatter = registry.getSkill("test/sample-skill");
-		assertEquals(Skill.Mode.ON_DEMAND, noFrontmatter.mode());
+		assertNotNull(noFrontmatter);
+		assertEquals("test/sample-skill", noFrontmatter.description());
 	}
 }

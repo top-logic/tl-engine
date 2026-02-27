@@ -403,8 +403,7 @@ Do NOT include long explanations. Be concise and factual.]]></system-prompt>
 				</agent>
 				<skills>
 					<skill name="promptModelExplorer"
-						description="Best practices for writing effective delegation work orders to sub-agents."
-						mode="ON_DEMAND"
+						description="How to delegate to ModelExplorer for raw model context only—especially extracting TLScript from annotations verbatim—then chain analysis to the appropriate agent."
 					>
 						<content><![CDATA[# How to Write Effective Delegation Work Orders (ModelExplorer Caller)
 

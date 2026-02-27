@@ -186,6 +186,7 @@ public interface AgentConfig extends NamedConfigMandatory {
 	 * </p>
 	 */
 	@Name(DESCRIPTION)
+	@LabelPositioning(LabelPosition.ABOVE)
 	String getDescription();
 
 	/**

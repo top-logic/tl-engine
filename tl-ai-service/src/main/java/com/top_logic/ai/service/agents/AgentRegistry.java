@@ -125,7 +125,7 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		 * The configured skills, keyed by {@link SkillConfig#getName() skill name}.
 		 *
 		 * <p>
-		 * Each entry defines a reusable skill with its description, mode, and prompt content. Skills
+		 * Each entry defines a reusable skill with its description and prompt content. Skills
 		 * are referenced by name from {@link AgentConfig#getSkills()}.
 		 * </p>
 		 */
@@ -349,8 +349,8 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	 *
 	 * <p>
 	 * Reads the base prompt from {@link AgentConfig#getSystemPrompt()}, resolves the agent's
-	 * {@link AgentConfig#getSkills() skills}, and injects them into the prompt. Auto skills are
-	 * injected in full, on-demand skills appear as a catalog. Delegation targets are not mentioned
+	 * {@link AgentConfig#getSkills() skills}, and injects them into the prompt. Skills appear as a
+	 * catalog that the agent can load on demand via {@code loadSkill()}. Delegation targets are not mentioned
 	 * in the system prompt because each delegation tool carries its own self-describing
 	 * {@link ToolSpecification}.
 	 * </p>
@@ -433,22 +433,12 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		}
 
 		if (!config.getSkills().isEmpty() && _skillRegistry != null) {
-			boolean hasOnDemand = config.getSkills().stream()
-				.anyMatch(name -> {
-					try {
-						return _skillRegistry.getSkill(name).mode() == Skill.Mode.ON_DEMAND;
-					} catch (IllegalArgumentException ex) {
-						return false;
-					}
-				});
-			if (hasOnDemand) {
-				SkillTool skillTool = new SkillTool(_skillRegistry, config.getName());
-				for (ToolSpecification spec : ToolSpecifications.toolSpecificationsFrom(skillTool)) {
-					Method method = findMethodForToolSpec(SkillTool.class, spec.name());
-					if (method != null) {
-						ToolExecutor executor = new DefaultToolExecutor(skillTool, method);
-						tools.add(new ToolImplementation(spec, executor));
-					}
+			SkillTool skillTool = new SkillTool(_skillRegistry, config.getName());
+			for (ToolSpecification spec : ToolSpecifications.toolSpecificationsFrom(skillTool)) {
+				Method method = findMethodForToolSpec(SkillTool.class, spec.name());
+				if (method != null) {
+					ToolExecutor executor = new DefaultToolExecutor(skillTool, method);
+					tools.add(new ToolImplementation(spec, executor));
 				}
 			}
 		}
@@ -998,9 +988,9 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	}
 
 	/**
-	 * Builds the skill section for injection into a system prompt. Auto skills are injected inline
-	 * with their full content. On demand skills are rendered as an XML-style
-	 * {@code <available_skills>} catalog with enforcement language for calling {@code loadSkill()}.
+	 * Builds an XML-style skill catalog for injection into a system prompt. All skills are rendered
+	 * as {@code <available_skills>} catalog entries with enforcement language for calling
+	 * {@code loadSkill()}.
 	 *
 	 * @param skills
 	 *        The resolved skills for the agent.
@@ -1011,40 +1001,23 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 			return "";
 		}
 
-		List<Skill> autoSkills = skills.stream()
-			.filter(s -> s.mode() == Skill.Mode.AUTO)
-			.toList();
-		List<Skill> onDemandSkills = skills.stream()
-			.filter(s -> s.mode() == Skill.Mode.ON_DEMAND)
-			.toList();
-
 		StringBuilder sb = new StringBuilder();
+		sb.append("# Available Skills\n\n");
+		sb.append("You MUST call `loadSkill(\"skill-id\")` BEFORE performing any task that matches ");
+		sb.append("a skill description. Loading the skill gives you specialized instructions ");
+		sb.append("that dramatically improve your output quality.\n\n");
 
-		// AUTO skills: inject inline (unchanged)
-		for (Skill skill : autoSkills) {
-			sb.append("### ").append(skill.description()).append("\n\n");
-			sb.append(skill.content()).append("\n\n");
+		sb.append("<available_skills>\n");
+		for (Skill skill : skills) {
+			sb.append("  <skill>\n");
+			sb.append("    <id>").append(escapeXml(skill.id())).append("</id>\n");
+			sb.append("    <description>").append(escapeXml(skill.description())).append("</description>\n");
+			sb.append("  </skill>\n");
 		}
+		sb.append("</available_skills>\n\n");
 
-		// ON_DEMAND skills: XML-style catalog with strong enforcement
-		if (!onDemandSkills.isEmpty()) {
-			sb.append("# Available Skills\n\n");
-			sb.append("You MUST call `loadSkill(\"skill-id\")` BEFORE performing any task that matches ");
-			sb.append("a skill description. Loading the skill gives you specialized instructions ");
-			sb.append("that dramatically improve your output quality.\n\n");
-
-			sb.append("<available_skills>\n");
-			for (Skill skill : onDemandSkills) {
-				sb.append("  <skill>\n");
-				sb.append("    <id>").append(escapeXml(skill.id())).append("</id>\n");
-				sb.append("    <description>").append(escapeXml(skill.description())).append("</description>\n");
-				sb.append("  </skill>\n");
-			}
-			sb.append("</available_skills>\n\n");
-
-			sb.append("**Rule:** If a task even partially matches a skill description, call `loadSkill()` first. ");
-			sb.append("Do NOT attempt the task without loading the relevant skill.");
-		}
+		sb.append("**Rule:** If a task even partially matches a skill description, call `loadSkill()` first. ");
+		sb.append("Do NOT attempt the task without loading the relevant skill.");
 
 		return sb.toString();
 	}

@@ -98,7 +98,7 @@ public class NavigationDecorator extends AbstractConfiguredInstance<NavigationDe
 				out.writeText(theContext.getCurrentPersonWrapper().getFullName());
 				out.endTag(DIV);
 
-				if (getConfig().getLogoutTimer()) {
+				if (getConfig().getLogoutTimer() && !theContext.isAnonymousUser()) {
 					out.beginBeginTag(DIV);
 					out.writeAttribute(CLASS_ATTR, "Right");
 					out.endBeginTag();

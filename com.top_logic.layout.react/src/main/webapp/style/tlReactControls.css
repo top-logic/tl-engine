@@ -27,7 +27,7 @@
 	white-space: nowrap;
 }
 
-button.tlReactButton:hover {
+button.tlReactButton:not(:disabled):hover {
 	background: var(--button-secondary-hover);
 	box-shadow: inset 0px 0px 0px 2px var(--button-secondary-hover);
 	color: var(--text-on-color);
@@ -38,7 +38,7 @@ button.tlReactButton:focus-visible {
 	outline-offset: 1px;
 }
 
-button.tlReactButton:active {
+button.tlReactButton:not(:disabled):active {
 	background: var(--button-secondary-active);
 	box-shadow: inset 0px 0px 0px 2px var(--focus), inset 0px 0px 0px 3px var(--focus-inset);
 	color: var(--text-on-color);

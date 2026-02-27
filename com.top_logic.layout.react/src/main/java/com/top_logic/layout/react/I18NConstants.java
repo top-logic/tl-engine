@@ -187,6 +187,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_PHOTO_CAPTURE_ERROR_DENIED = ResKey.internalCreate("js.photoCapture.error.denied");
 
 	/**
+	 * @en Mirror camera
+	 * @de Kamera spiegeln
+	 */
+	public static ResKey JS_PHOTO_CAPTURE_MIRROR = ResKey.internalCreate("js.photoCapture.mirror");
+
+	/**
 	 * @en Microphone requires a secure connection (HTTPS).
 	 * @de Mikrofon erfordert eine sichere Verbindung (HTTPS).
 	 */

@@ -648,45 +648,8 @@ button.tlPhotoCapture__cameraBtn--active:hover {
 	box-shadow: inset 0px 0px 0px 2px var(--button-primary-hover);
 }
 
-/* Capture button */
-.tlPhotoCapture__captureBtn {
-	display: inline-flex;
-	justify-content: center;
-	align-items: center;
-	width: 2.5rem;
-	height: 2.5rem;
-	border: none;
-	border-radius: 50%;
-	cursor: pointer;
-	background: transparent;
-	box-shadow: inset 0px 0px 0px 2px var(--button-danger);
-}
-
-button.tlPhotoCapture__captureBtn:hover {
-	background: var(--button-danger-hover);
-	box-shadow: inset 0px 0px 0px 2px var(--button-danger-hover);
-}
-
-button.tlPhotoCapture__captureBtn:hover .tlPhotoCapture__captureIcon {
-	background: var(--text-on-color);
-}
-
-button.tlPhotoCapture__captureBtn:focus {
-	box-shadow: inset 0px 0px 0px 2px var(--focus), inset 0px 0px 0px 3px var(--focus-inset);
-	outline: none;
-}
-
-/* Capture icon: filled circle */
-.tlPhotoCapture__captureIcon {
-	display: block;
-	width: 1rem;
-	height: 1rem;
-	border-radius: 50%;
-	background: var(--button-danger);
-}
-
-/* Uploading state: wobble animation */
-.tlPhotoCapture__captureBtn--uploading {
+/* Uploading state: wobble animation on camera button */
+.tlPhotoCapture__cameraBtn--uploading {
 	animation: tlPhotoCaptureWobble 0.5s ease-in-out infinite;
 }
 
@@ -696,12 +659,123 @@ button.tlPhotoCapture__captureBtn:focus {
 	75%      { transform: rotate(10deg); }
 }
 
-/* Video preview */
-.tlPhotoCapture__preview {
-	max-width: 320px;
-	max-height: 240px;
-	border-radius: var(--corner-radius);
-	background: var(--background);
+/* Fullscreen overlay */
+.tlPhotoCapture__overlay {
+	position: fixed;
+	inset: 0;
+	z-index: 10000;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	outline: none;
+}
+
+.tlPhotoCapture__overlayBackdrop {
+	position: absolute;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.85);
+}
+
+.tlPhotoCapture__overlayContent {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	height: 100%;
+}
+
+.tlPhotoCapture__overlayVideo {
+	flex: 1 1 0;
+	min-height: 0;
+	width: 100%;
+	object-fit: contain;
+	background: #000;
+}
+
+.tlPhotoCapture__overlayVideo--mirrored {
+	transform: scaleX(-1);
+}
+
+/* Toolbar: three buttons centered at bottom */
+.tlPhotoCapture__overlayToolbar {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 1.5rem;
+	padding: 1.5rem 1rem;
+	background: rgba(0, 0, 0, 0.6);
+	flex-shrink: 0;
+}
+
+/* Mirror & close buttons: 3rem circles */
+.tlPhotoCapture__mirrorBtn,
+.tlPhotoCapture__overlayCloseBtn {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	width: 3rem;
+	height: 3rem;
+	border: 2px solid rgba(255, 255, 255, 0.5);
+	border-radius: 50%;
+	background: transparent;
+	color: rgba(255, 255, 255, 0.8);
+	cursor: pointer;
+	padding: 0;
+}
+
+button.tlPhotoCapture__mirrorBtn:hover,
+button.tlPhotoCapture__overlayCloseBtn:hover {
+	background: rgba(255, 255, 255, 0.15);
+	color: #fff;
+	border-color: rgba(255, 255, 255, 0.8);
+}
+
+button.tlPhotoCapture__mirrorBtn:focus-visible,
+button.tlPhotoCapture__overlayCloseBtn:focus-visible {
+	box-shadow: 0 0 0 2px var(--focus, #0f62fe);
+	outline: none;
+}
+
+.tlPhotoCapture__mirrorBtn--active {
+	background: rgba(255, 255, 255, 0.2);
+	border-color: #fff;
+	color: #fff;
+}
+
+/* Capture button: large 4.5rem circle with red inner disc */
+.tlPhotoCapture__overlayCaptureBtn {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	width: 4.5rem;
+	height: 4.5rem;
+	border: 4px solid #fff;
+	border-radius: 50%;
+	background: transparent;
+	cursor: pointer;
+	padding: 0;
+}
+
+button.tlPhotoCapture__overlayCaptureBtn:hover {
+	background: rgba(255, 255, 255, 0.1);
+}
+
+button.tlPhotoCapture__overlayCaptureBtn:focus-visible {
+	box-shadow: 0 0 0 2px var(--focus, #0f62fe);
+	outline: none;
+}
+
+.tlPhotoCapture__overlayCaptureIcon {
+	display: block;
+	width: 3rem;
+	height: 3rem;
+	border-radius: 50%;
+	background: var(--button-danger, #da1e28);
+}
+
+button.tlPhotoCapture__overlayCaptureBtn:active .tlPhotoCapture__overlayCaptureIcon {
+	transform: scale(0.9);
 }
 
 .tlPhotoCapture__status {

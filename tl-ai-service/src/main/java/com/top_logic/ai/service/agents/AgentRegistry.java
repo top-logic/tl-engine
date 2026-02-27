@@ -8,6 +8,7 @@ package com.top_logic.ai.service.agents;
 import java.lang.reflect.Method;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -44,6 +45,7 @@ import dev.langchain4j.agent.tool.ToolSpecifications;
 import dev.langchain4j.agentic.AgenticServices;
 import dev.langchain4j.agentic.UntypedAgent;
 import dev.langchain4j.memory.ChatMemory;
+import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.anthropic.AnthropicChatModel;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.request.ResponseFormat;
@@ -88,6 +90,13 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	 * of delegation targets replaces this marker. Otherwise, the catalog is appended at the end.
 	 */
 	public static final String DELEGATES_PLACEHOLDER = "<<AVAILABLE_DELEGATES>>";
+
+	/**
+	 * Maximum number of messages retained in each sub-agent's conversation memory. Uses a sliding
+	 * window so that repeated calls to the same sub-agent within (or across) user messages preserve
+	 * recent conversation history.
+	 */
+	static final int SUB_AGENT_MEMORY_MAX_MESSAGES = 20;
 
 	/**
 	 * Configuration interface for {@link AgentRegistry}.
@@ -477,10 +486,34 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	 *         has no delegations.
 	 */
 	public List<ToolImplementation> buildDelegationTools(AgentConfig config) {
+		return buildDelegationTools(config, null);
+	}
+
+	/**
+	 * Builds delegation tools with session-scoped sub-agent memory.
+	 *
+	 * <p>
+	 * Each delegation target gets a {@link ChatMemory} from the provided map (created on first
+	 * access). When the orchestrator calls the same sub-agent multiple times, the sub-agent sees
+	 * its previous conversation history.
+	 * </p>
+	 *
+	 * @param config
+	 *        The source agent configuration.
+	 * @param subAgentMemories
+	 *        Optional session-scoped map of sub-agent memories. If {@code null}, a local map is
+	 *        created for within-invocation memory only.
+	 * @return A list of {@link ToolImplementation}s, one per delegation target.
+	 */
+	public List<ToolImplementation> buildDelegationTools(AgentConfig config,
+			Map<String, ChatMemory> subAgentMemories) {
 		List<String> delegations = config.getDelegations();
 		if (delegations.isEmpty()) {
 			return List.of();
 		}
+
+		Map<String, ChatMemory> effectiveMemories =
+			subAgentMemories != null ? subAgentMemories : new HashMap<>();
 
 		List<ToolImplementation> result = new ArrayList<>(delegations.size());
 		String fromAgent = config.getName();
@@ -513,7 +546,7 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 				.parameters(parameters)
 				.build();
 
-			ToolExecutor executor = createDelegationExecutor(fromAgent, targetName);
+			ToolExecutor executor = createDelegationExecutor(fromAgent, targetName, effectiveMemories);
 			result.add(new ToolImplementation(spec, executor));
 		}
 
@@ -554,6 +587,13 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	 * Builds an {@link UntypedAgent} from the named configuration with an optional
 	 * {@link ChatModel} decorator.
 	 *
+	 * <p>
+	 * Delegates to
+	 * {@link #buildUntypedAgent(String, ChatMemory, java.util.function.UnaryOperator, Map)} with a
+	 * fresh (invocation-scoped) sub-agent memory map, so that sub-agents called multiple times
+	 * within the same orchestrator loop retain their conversation context.
+	 * </p>
+	 *
 	 * @param name
 	 *        The agent name as declared in the configuration.
 	 * @param memory
@@ -565,6 +605,41 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	 */
 	public UntypedAgent buildUntypedAgent(String name, ChatMemory memory,
 			java.util.function.UnaryOperator<ChatModel> chatModelDecorator) {
+		return buildUntypedAgent(name, memory, chatModelDecorator, null);
+	}
+
+	/**
+	 * Builds an {@link UntypedAgent} from the named configuration with session-scoped sub-agent
+	 * memory.
+	 *
+	 * <p>
+	 * When {@code subAgentMemories} is provided, delegation targets (sub-agents) share their
+	 * {@link ChatMemory} across invocations via this map, keyed by agent name. This allows
+	 * sub-agents to retain conversation context when the orchestrator calls them multiple times
+	 * — both within a single orchestrator loop and across user messages within the same session.
+	 * </p>
+	 *
+	 * <p>
+	 * If {@code subAgentMemories} is {@code null}, a fresh map is created internally so that
+	 * sub-agents still retain context within a single orchestrator invocation (within-message
+	 * scope).
+	 * </p>
+	 *
+	 * @param name
+	 *        The agent name as declared in the configuration.
+	 * @param memory
+	 *        Optional conversation memory, or {@code null} for stateless agents.
+	 * @param chatModelDecorator
+	 *        Optional decorator applied to the {@link ChatModel} before building. Useful for
+	 *        injecting multimodal content into LLM requests. May be {@code null}.
+	 * @param subAgentMemories
+	 *        Optional session-scoped map of sub-agent conversation memories, keyed by agent name.
+	 *        If {@code null}, a local map is created for within-invocation memory only.
+	 * @return A fully configured untyped agent instance.
+	 */
+	public UntypedAgent buildUntypedAgent(String name, ChatMemory memory,
+			java.util.function.UnaryOperator<ChatModel> chatModelDecorator,
+			Map<String, ChatMemory> subAgentMemories) {
 		AgentConfig config = getAgentConfig(name);
 		ChatModel model = buildChatModel(config);
 		if (chatModelDecorator != null) {
@@ -572,7 +647,7 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		}
 		String systemPrompt = getSystemPrompt(config);
 		List<ToolImplementation> tools = buildTools(config);
-		List<ToolImplementation> delegationTools = buildDelegationTools(config);
+		List<ToolImplementation> delegationTools = buildDelegationTools(config, subAgentMemories);
 
 		Map<ToolSpecification, ToolExecutor> allTools = new LinkedHashMap<>();
 		for (ToolImplementation impl : tools) {
@@ -612,7 +687,8 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		return "delegate_to_" + targetName.replace('-', '_');
 	}
 
-	private ToolExecutor createDelegationExecutor(String fromAgent, String targetName) {
+	private ToolExecutor createDelegationExecutor(String fromAgent, String targetName,
+			Map<String, ChatMemory> subAgentMemories) {
 		return (request, memoryId) -> {
 			Map<String, Object> args;
 			try {
@@ -640,9 +716,12 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 
 			String message = prompt.length() > 0 ? prompt.toString() : task;
 
+			ChatMemory agentMemory = subAgentMemories.computeIfAbsent(targetName,
+				k -> MessageWindowChatMemory.withMaxMessages(SUB_AGENT_MEMORY_MAX_MESSAGES));
+
 			ToolCallTracking.recordAgentCallStartIfTracking(fromAgent, targetName, message);
 			try {
-				UntypedAgent agent = buildUntypedAgent(targetName);
+				UntypedAgent agent = buildUntypedAgent(targetName, agentMemory);
 				String result = (String) ThreadContextManager.inSystemInteraction(AgentRegistry.class,
 					() -> agent.invoke(Map.of("message", message)));
 				ToolCallTracking.recordAgentCallCompleteIfTracking(truncate(result));

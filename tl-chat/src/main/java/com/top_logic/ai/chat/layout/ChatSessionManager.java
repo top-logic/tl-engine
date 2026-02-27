@@ -8,6 +8,7 @@ package com.top_logic.ai.chat.layout;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.top_logic.ai.chat.api.DtoMapper;
 import com.top_logic.ai.chat.history.ChatHistoryService;
@@ -58,6 +59,13 @@ public class ChatSessionManager {
 
 		ChatMemory _chatMemory;
 
+		/**
+		 * Session-scoped conversation memories for sub-agents, keyed by agent name. When the
+		 * orchestrator delegates to a sub-agent multiple times (within or across user messages), the
+		 * sub-agent retains its conversation history via this map.
+		 */
+		final Map<String, ChatMemory> _subAgentMemories = new ConcurrentHashMap<>();
+
 		SessionState(Chat chat, ChatMemory chatMemory) {
 			_chat = chat;
 			_chatMemory = chatMemory;
@@ -92,6 +100,25 @@ public class ChatSessionManager {
 				return state._chatMemory;
 			}
 			return MessageWindowChatMemory.withMaxMessages(CHAT_MEMORY_MAX_MESSAGES);
+		}
+	}
+
+	/**
+	 * Returns the active session's sub-agent memory map. Sub-agents use this map to retain
+	 * conversation context across multiple delegations within the same session.
+	 *
+	 * <p>
+	 * If no session is active, returns a fresh map (transient, same as
+	 * {@link #getActiveChatMemory()}).
+	 * </p>
+	 */
+	public Map<String, ChatMemory> getActiveSubAgentMemories() {
+		synchronized (_lock) {
+			SessionState state = _activeSessionId != null ? _sessions.get(_activeSessionId) : null;
+			if (state != null) {
+				return state._subAgentMemories;
+			}
+			return new ConcurrentHashMap<>();
 		}
 	}
 

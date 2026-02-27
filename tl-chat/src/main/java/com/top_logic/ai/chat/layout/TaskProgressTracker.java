@@ -179,6 +179,14 @@ public class TaskProgressTracker {
 	}
 
 	/**
+	 * Returns the session-scoped sub-agent memory map. Sub-agents retain conversation context
+	 * across multiple delegations within the same session via this map.
+	 */
+	public Map<String, ChatMemory> getSubAgentMemories() {
+		return _sessionManager.getActiveSubAgentMemories();
+	}
+
+	/**
 	 * Gets or creates a {@link TaskProgressTracker} from the given {@link WindowScope}.
 	 *
 	 * @param windowScope

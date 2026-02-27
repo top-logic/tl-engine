@@ -148,7 +148,9 @@ public class ChatProcessor {
 			}
 
 			String entryPointAgent = agentRegistry.getEntryPointAgentName();
-			UntypedAgent agent = agentRegistry.buildUntypedAgent(entryPointAgent, effectiveMemory, modelDecorator);
+			java.util.Map<String, ChatMemory> subAgentMemories = taskTracker.getSubAgentMemories();
+			UntypedAgent agent = agentRegistry.buildUntypedAgent(
+				entryPointAgent, effectiveMemory, modelDecorator, subAgentMemories);
 			String result = ThreadContextManager.inSystemInteraction(ChatProcessor.class,
 				() -> (String) agent.invoke(Map.of("message", trimmed)));
 

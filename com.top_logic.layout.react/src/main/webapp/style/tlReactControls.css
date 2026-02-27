@@ -28,9 +28,7 @@
 }
 
 button.tlReactButton:not(:disabled):hover {
-	background: var(--button-secondary-hover);
-	box-shadow: inset 0px 0px 0px 2px var(--button-secondary-hover);
-	color: var(--text-on-color);
+	background: var(--layer-hover);
 }
 
 button.tlReactButton:focus-visible {

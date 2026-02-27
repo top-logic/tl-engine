@@ -784,14 +784,20 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
     }
     
 	/**
-	 * Factory method for creating a snipplet that reloads the complete
-	 * application.
+	 * Factory method for creating a snipplet that reloads the complete application.
 	 */
 	public static JSSnipplet createFullReload() {
 		// Note: Must not use a constant, because JSSnipplet is not immutable.
 		return new JSSnipplet("services.ajax.mainLayout." + SKIP_NOTIFY_UNLOAD_JS_VARIABLE + "=true;services.ajax.mainLayout.location.reload()");
 	}
     
+	/**
+	 * Adds a {@link #createFullReload() full reload snipplet} to the given {@link DisplayContext}.
+	 */
+	public static void addFullReload(DisplayContext context) {
+		context.getWindowScope().getTopLevelFrameScope().addClientAction(createFullReload());
+	}
+
     /** Access the MainLayout, which is this. */
     @Override
 	public MainLayout getMainLayout() {

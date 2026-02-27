@@ -16,12 +16,20 @@ const TLDatePicker: React.FC<TLCellProps> = ({ state }) => {
     [setValue]
   );
 
+  if (state.editable === false) {
+    return (
+      <span className="tlReactDatePicker tlReactDatePicker--immutable">
+        {(value as string) ?? ''}
+      </span>
+    );
+  }
+
   return (
     <input
       type="date"
       value={(value as string) ?? ''}
       onChange={handleChange}
-      disabled={state.disabled === true || state.editable === false}
+      disabled={state.disabled === true}
       className="tlReactDatePicker"
     />
   );

@@ -16,12 +16,23 @@ const TLCheckbox: React.FC<TLCellProps> = ({ state }) => {
     [setValue]
   );
 
+  if (state.editable === false) {
+    return (
+      <input
+        type="checkbox"
+        checked={value === true}
+        disabled
+        className="tlReactCheckbox tlReactCheckbox--immutable"
+      />
+    );
+  }
+
   return (
     <input
       type="checkbox"
       checked={value === true}
       onChange={handleChange}
-      disabled={state.disabled === true || state.editable === false}
+      disabled={state.disabled === true}
       className="tlReactCheckbox"
     />
   );

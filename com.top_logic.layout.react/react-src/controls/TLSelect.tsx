@@ -23,11 +23,20 @@ const TLSelect: React.FC<TLCellProps> = ({ state, config }) => {
 
   const options = ((state.options ?? config?.options) as SelectOption[]) ?? [];
 
+  if (state.editable === false) {
+    const selectedLabel = options.find((opt) => opt.value === value)?.label ?? '';
+    return (
+      <span className="tlReactSelect tlReactSelect--immutable">
+        {selectedLabel}
+      </span>
+    );
+  }
+
   return (
     <select
       value={(value as string) ?? ''}
       onChange={handleChange}
-      disabled={state.disabled === true || state.editable === false}
+      disabled={state.disabled === true}
       className="tlReactSelect"
     >
       <option value=""></option>

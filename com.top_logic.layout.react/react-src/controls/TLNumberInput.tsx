@@ -20,13 +20,21 @@ const TLNumberInput: React.FC<TLCellProps> = ({ state, config }) => {
 
   const step = config?.decimal ? '0.01' : '1';
 
+  if (state.editable === false) {
+    return (
+      <span className="tlReactNumberInput tlReactNumberInput--immutable">
+        {value != null ? String(value) : ''}
+      </span>
+    );
+  }
+
   return (
     <input
       type="number"
       value={value != null ? String(value) : ''}
       onChange={handleChange}
       step={step}
-      disabled={state.disabled === true || state.editable === false}
+      disabled={state.disabled === true}
       className="tlReactNumberInput"
     />
   );

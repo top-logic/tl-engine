@@ -1,112 +1,112 @@
-import { React as e, useTLFieldValue as T, getComponent as U, useTLState as E, useTLCommand as N, TLChild as P, useTLUpload as j, useI18N as R, useTLDataUrl as D, register as v } from "tl-react-bridge";
-const { useCallback: S } = e, F = ({ state: o }) => {
-  const [r, a] = T(), n = S(
-    (t) => {
-      a(t.target.value);
+import { React as e, useTLFieldValue as T, getComponent as U, useTLState as k, useTLCommand as N, TLChild as D, useTLUpload as j, useI18N as y, useTLDataUrl as P, register as v } from "tl-react-bridge";
+const { useCallback: S } = e, A = ({ state: n }) => {
+  const [s, t] = T(), o = S(
+    (a) => {
+      t(a.target.value);
     },
-    [a]
+    [t]
   );
   return /* @__PURE__ */ e.createElement(
     "input",
     {
       type: "text",
-      value: r ?? "",
-      onChange: n,
-      disabled: o.disabled === !0 || o.editable === !1,
+      value: s ?? "",
+      onChange: o,
+      disabled: n.disabled === !0 || n.editable === !1,
       className: "tlReactTextInput"
     }
   );
-}, { useCallback: B } = e, A = ({ state: o, config: r }) => {
-  const [a, n] = T(), t = B(
-    (s) => {
-      const c = s.target.value, i = c === "" ? null : Number(c);
-      n(i);
+}, { useCallback: F } = e, B = ({ state: n, config: s }) => {
+  const [t, o] = T(), a = F(
+    (r) => {
+      const c = r.target.value, i = c === "" ? null : Number(c);
+      o(i);
     },
-    [n]
-  ), l = r != null && r.decimal ? "0.01" : "1";
+    [o]
+  ), l = s != null && s.decimal ? "0.01" : "1";
   return /* @__PURE__ */ e.createElement(
     "input",
     {
       type: "number",
-      value: a != null ? String(a) : "",
-      onChange: t,
+      value: t != null ? String(t) : "",
+      onChange: a,
       step: l,
-      disabled: o.disabled === !0 || o.editable === !1,
+      disabled: n.disabled === !0 || n.editable === !1,
       className: "tlReactNumberInput"
     }
   );
-}, { useCallback: I } = e, O = ({ state: o }) => {
-  const [r, a] = T(), n = I(
-    (t) => {
-      a(t.target.value || null);
+}, { useCallback: I } = e, M = ({ state: n }) => {
+  const [s, t] = T(), o = I(
+    (a) => {
+      t(a.target.value || null);
     },
-    [a]
+    [t]
   );
   return /* @__PURE__ */ e.createElement(
     "input",
     {
       type: "date",
-      value: r ?? "",
-      onChange: n,
-      disabled: o.disabled === !0 || o.editable === !1,
+      value: s ?? "",
+      onChange: o,
+      disabled: n.disabled === !0 || n.editable === !1,
       className: "tlReactDatePicker"
     }
   );
-}, { useCallback: V } = e, M = ({ state: o, config: r }) => {
-  const [a, n] = T(), t = V(
-    (s) => {
-      n(s.target.value || null);
+}, { useCallback: O } = e, V = ({ state: n, config: s }) => {
+  const [t, o] = T(), a = O(
+    (r) => {
+      o(r.target.value || null);
     },
-    [n]
-  ), l = o.options ?? (r == null ? void 0 : r.options) ?? [];
+    [o]
+  ), l = n.options ?? (s == null ? void 0 : s.options) ?? [];
   return /* @__PURE__ */ e.createElement(
     "select",
     {
-      value: a ?? "",
-      onChange: t,
-      disabled: o.disabled === !0 || o.editable === !1,
+      value: t ?? "",
+      onChange: a,
+      disabled: n.disabled === !0 || n.editable === !1,
       className: "tlReactSelect"
     },
     /* @__PURE__ */ e.createElement("option", { value: "" }),
-    l.map((s) => /* @__PURE__ */ e.createElement("option", { key: s.value, value: s.value }, s.label))
+    l.map((r) => /* @__PURE__ */ e.createElement("option", { key: r.value, value: r.value }, r.label))
   );
-}, { useCallback: $ } = e, x = ({ state: o }) => {
-  const [r, a] = T(), n = $(
-    (t) => {
-      a(t.target.checked);
+}, { useCallback: $ } = e, x = ({ state: n }) => {
+  const [s, t] = T(), o = $(
+    (a) => {
+      t(a.target.checked);
     },
-    [a]
+    [t]
   );
   return /* @__PURE__ */ e.createElement(
     "input",
     {
       type: "checkbox",
-      checked: r === !0,
-      onChange: n,
-      disabled: o.disabled === !0 || o.editable === !1,
+      checked: s === !0,
+      onChange: o,
+      disabled: n.disabled === !0 || n.editable === !1,
       className: "tlReactCheckbox"
     }
   );
-}, K = ({ controlId: o, state: r }) => {
-  const a = r.columns ?? [], n = r.rows ?? [];
-  return /* @__PURE__ */ e.createElement("table", { className: "tlReactTable" }, /* @__PURE__ */ e.createElement("thead", null, /* @__PURE__ */ e.createElement("tr", null, a.map((t) => /* @__PURE__ */ e.createElement("th", { key: t.name }, t.label)))), /* @__PURE__ */ e.createElement("tbody", null, n.map((t, l) => /* @__PURE__ */ e.createElement("tr", { key: l }, a.map((s) => {
-    const c = s.cellModule ? U(s.cellModule) : void 0, i = t[s.name];
+}, K = ({ controlId: n, state: s }) => {
+  const t = s.columns ?? [], o = s.rows ?? [];
+  return /* @__PURE__ */ e.createElement("table", { className: "tlReactTable" }, /* @__PURE__ */ e.createElement("thead", null, /* @__PURE__ */ e.createElement("tr", null, t.map((a) => /* @__PURE__ */ e.createElement("th", { key: a.name }, a.label)))), /* @__PURE__ */ e.createElement("tbody", null, o.map((a, l) => /* @__PURE__ */ e.createElement("tr", { key: l }, t.map((r) => {
+    const c = r.cellModule ? U(r.cellModule) : void 0, i = a[r.name];
     if (c) {
-      const u = { value: i, editable: r.editable };
-      return /* @__PURE__ */ e.createElement("td", { key: s.name }, /* @__PURE__ */ e.createElement(
+      const m = { value: i, editable: s.editable };
+      return /* @__PURE__ */ e.createElement("td", { key: r.name }, /* @__PURE__ */ e.createElement(
         c,
         {
-          controlId: o + "-" + l + "-" + s.name,
-          state: u
+          controlId: n + "-" + l + "-" + r.name,
+          state: m
         }
       ));
     }
-    return /* @__PURE__ */ e.createElement("td", { key: s.name }, i != null ? String(i) : "");
+    return /* @__PURE__ */ e.createElement("td", { key: r.name }, i != null ? String(i) : "");
   })))));
-}, { useCallback: Y } = e, W = ({ command: o, label: r, disabled: a }) => {
-  const n = E(), t = N(), l = o ?? "click", s = r ?? n.label, c = a ?? n.disabled === !0, i = Y(() => {
-    t(l);
-  }, [t, l]);
+}, { useCallback: Y } = e, W = ({ command: n, label: s, disabled: t }) => {
+  const o = k(), a = N(), l = n ?? "click", r = s ?? o.label, c = t ?? o.disabled === !0, i = Y(() => {
+    a(l);
+  }, [a, l]);
   return /* @__PURE__ */ e.createElement(
     "button",
     {
@@ -115,185 +115,192 @@ const { useCallback: S } = e, F = ({ state: o }) => {
       disabled: c,
       className: "tlReactButton"
     },
-    s
+    r
   );
-}, { useCallback: z } = e, H = ({ command: o, label: r, active: a, disabled: n }) => {
-  const t = E(), l = N(), s = o ?? "click", c = r ?? t.label, i = a ?? t.active === !0, u = n ?? t.disabled === !0, f = z(() => {
-    l(s);
-  }, [l, s]);
+}, { useCallback: H } = e, q = ({ command: n, label: s, active: t, disabled: o }) => {
+  const a = k(), l = N(), r = n ?? "click", c = s ?? a.label, i = t ?? a.active === !0, m = o ?? a.disabled === !0, d = H(() => {
+    l(r);
+  }, [l, r]);
   return /* @__PURE__ */ e.createElement(
     "button",
     {
       type: "button",
-      onClick: f,
-      disabled: u,
+      onClick: d,
+      disabled: m,
       className: "tlReactButton" + (i ? " tlReactButtonActive" : "")
     },
     c
   );
-}, q = () => {
-  const o = E(), r = N(), a = o.count ?? 0, n = o.label ?? "React Counter";
-  return /* @__PURE__ */ e.createElement("div", { className: "tlCounter" }, /* @__PURE__ */ e.createElement("h3", { className: "tlCounter__title" }, n), /* @__PURE__ */ e.createElement("div", { className: "tlCounter__controls" }, /* @__PURE__ */ e.createElement("button", { className: "tlCounter__button", onClick: () => r("decrement") }, "−"), /* @__PURE__ */ e.createElement("span", { className: "tlCounter__value" }, a), /* @__PURE__ */ e.createElement("button", { className: "tlCounter__button", onClick: () => r("increment") }, "+")), /* @__PURE__ */ e.createElement("p", { className: "tlCounter__description" }, "State is managed on the server. Each click dispatches a command via POST, and the updated count is pushed back via SSE."));
+}, z = () => {
+  const n = k(), s = N(), t = n.count ?? 0, o = n.label ?? "React Counter";
+  return /* @__PURE__ */ e.createElement("div", { className: "tlCounter" }, /* @__PURE__ */ e.createElement("h3", { className: "tlCounter__title" }, o), /* @__PURE__ */ e.createElement("div", { className: "tlCounter__controls" }, /* @__PURE__ */ e.createElement("button", { className: "tlCounter__button", onClick: () => s("decrement") }, "−"), /* @__PURE__ */ e.createElement("span", { className: "tlCounter__value" }, t), /* @__PURE__ */ e.createElement("button", { className: "tlCounter__button", onClick: () => s("increment") }, "+")), /* @__PURE__ */ e.createElement("p", { className: "tlCounter__description" }, "State is managed on the server. Each click dispatches a command via POST, and the updated count is pushed back via SSE."));
 }, { useCallback: G } = e, J = () => {
-  const o = E(), r = N(), a = o.tabs ?? [], n = o.activeTabId, t = G((l) => {
-    l !== n && r("selectTab", { tabId: l });
-  }, [r, n]);
-  return /* @__PURE__ */ e.createElement("div", { className: "tlReactTabBar" }, /* @__PURE__ */ e.createElement("div", { className: "tlReactTabBar__tabs", role: "tablist" }, a.map((l) => /* @__PURE__ */ e.createElement(
+  const n = k(), s = N(), t = n.tabs ?? [], o = n.activeTabId, a = G((l) => {
+    l !== o && s("selectTab", { tabId: l });
+  }, [s, o]);
+  return /* @__PURE__ */ e.createElement("div", { className: "tlReactTabBar" }, /* @__PURE__ */ e.createElement("div", { className: "tlReactTabBar__tabs", role: "tablist" }, t.map((l) => /* @__PURE__ */ e.createElement(
     "button",
     {
       key: l.id,
       role: "tab",
-      "aria-selected": l.id === n,
-      className: "tlReactTabBar__tab" + (l.id === n ? " tlReactTabBar__tab--active" : ""),
-      onClick: () => t(l.id)
+      "aria-selected": l.id === o,
+      className: "tlReactTabBar__tab" + (l.id === o ? " tlReactTabBar__tab--active" : ""),
+      onClick: () => a(l.id)
     },
     l.label
-  ))), /* @__PURE__ */ e.createElement("div", { className: "tlReactTabBar__content", role: "tabpanel" }, o.activeContent && /* @__PURE__ */ e.createElement(P, { control: o.activeContent })));
+  ))), /* @__PURE__ */ e.createElement("div", { className: "tlReactTabBar__content", role: "tabpanel" }, n.activeContent && /* @__PURE__ */ e.createElement(D, { control: n.activeContent })));
 }, Q = () => {
-  const o = E(), r = o.title, a = o.fields ?? [];
-  return /* @__PURE__ */ e.createElement("div", { className: "tlFieldList" }, r && /* @__PURE__ */ e.createElement("h3", { className: "tlFieldList__title" }, r), /* @__PURE__ */ e.createElement("div", { className: "tlFieldList__fields" }, a.map((n, t) => /* @__PURE__ */ e.createElement("div", { key: t, className: "tlFieldList__item" }, /* @__PURE__ */ e.createElement(P, { control: n })))));
+  const n = k(), s = n.title, t = n.fields ?? [];
+  return /* @__PURE__ */ e.createElement("div", { className: "tlFieldList" }, s && /* @__PURE__ */ e.createElement("h3", { className: "tlFieldList__title" }, s), /* @__PURE__ */ e.createElement("div", { className: "tlFieldList__fields" }, t.map((o, a) => /* @__PURE__ */ e.createElement("div", { key: a, className: "tlFieldList__item" }, /* @__PURE__ */ e.createElement(D, { control: o })))));
 }, X = {
   "js.audioRecorder.record": "Record audio",
   "js.audioRecorder.stop": "Stop recording",
-  "js.uploading": "Uploading…"
+  "js.uploading": "Uploading…",
+  "js.audioRecorder.error.insecure": "Microphone requires a secure connection (HTTPS).",
+  "js.audioRecorder.error.denied": "Microphone access denied or unavailable."
 }, Z = () => {
-  const o = E(), r = j(), [a, n] = e.useState("idle"), t = e.useRef(null), l = e.useRef([]), s = e.useRef(null), c = o.status ?? "idle", i = o.error, u = c === "received" ? "idle" : a !== "idle" ? a : c, f = e.useCallback(async () => {
-    if (a === "recording") {
-      const p = t.current;
-      p && p.state !== "inactive" && p.stop();
+  const n = k(), s = j(), [t, o] = e.useState("idle"), [a, l] = e.useState(null), r = e.useRef(null), c = e.useRef([]), i = e.useRef(null), m = n.status ?? "idle", d = n.error, p = m === "received" ? "idle" : t !== "idle" ? t : m, w = e.useCallback(async () => {
+    if (t === "recording") {
+      const h = r.current;
+      h && h.state !== "inactive" && h.stop();
       return;
     }
-    if (a !== "uploading")
+    if (t !== "uploading") {
+      if (l(null), !window.isSecureContext || !navigator.mediaDevices) {
+        l("js.audioRecorder.error.insecure");
+        return;
+      }
       try {
-        const p = await navigator.mediaDevices.getUserMedia({ audio: !0 });
-        s.current = p, l.current = [];
-        const m = MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "", h = new MediaRecorder(p, m ? { mimeType: m } : void 0);
-        t.current = h, h.ondataavailable = (L) => {
-          L.data.size > 0 && l.current.push(L.data);
-        }, h.onstop = async () => {
-          p.getTracks().forEach((b) => b.stop()), s.current = null;
-          const L = new Blob(l.current, { type: h.mimeType || "audio/webm" });
-          if (l.current = [], L.size === 0) {
-            n("idle");
+        const h = await navigator.mediaDevices.getUserMedia({ audio: !0 });
+        i.current = h, c.current = [];
+        const f = MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "", g = new MediaRecorder(h, f ? { mimeType: f } : void 0);
+        r.current = g, g.ondataavailable = (u) => {
+          u.data.size > 0 && c.current.push(u.data);
+        }, g.onstop = async () => {
+          h.getTracks().forEach((R) => R.stop()), i.current = null;
+          const u = new Blob(c.current, { type: g.mimeType || "audio/webm" });
+          if (c.current = [], u.size === 0) {
+            o("idle");
             return;
           }
-          n("uploading");
-          const k = new FormData();
-          k.append("audio", L, "recording.webm"), await r(k), n("idle");
-        }, h.start(), n("recording");
-      } catch (p) {
-        console.error("[TLAudioRecorder] Microphone access denied or unavailable:", p), n("idle");
+          o("uploading");
+          const _ = new FormData();
+          _.append("audio", u, "recording.webm"), await s(_), o("idle");
+        }, g.start(), o("recording");
+      } catch (h) {
+        console.error("[TLAudioRecorder] Microphone access denied or unavailable:", h), l("js.audioRecorder.error.denied"), o("idle");
       }
-  }, [a, r]), d = R(X), _ = u === "recording" ? d["js.audioRecorder.stop"] : u === "uploading" ? d["js.uploading"] : d["js.audioRecorder.record"], C = u === "uploading", g = ["tlAudioRecorder__button"];
-  return u === "recording" && g.push("tlAudioRecorder__button--recording"), u === "uploading" && g.push("tlAudioRecorder__button--uploading"), /* @__PURE__ */ e.createElement("div", { className: "tlAudioRecorder" }, /* @__PURE__ */ e.createElement(
+    }
+  }, [t, s]), b = y(X), C = p === "recording" ? b["js.audioRecorder.stop"] : p === "uploading" ? b["js.uploading"] : b["js.audioRecorder.record"], E = p === "uploading", L = ["tlAudioRecorder__button"];
+  return p === "recording" && L.push("tlAudioRecorder__button--recording"), p === "uploading" && L.push("tlAudioRecorder__button--uploading"), /* @__PURE__ */ e.createElement("div", { className: "tlAudioRecorder" }, /* @__PURE__ */ e.createElement(
     "button",
     {
       type: "button",
-      className: g.join(" "),
-      onClick: f,
-      disabled: C,
-      title: _,
-      "aria-label": _
+      className: L.join(" "),
+      onClick: w,
+      disabled: E,
+      title: C,
+      "aria-label": C
     },
-    /* @__PURE__ */ e.createElement("span", { className: `tlAudioRecorder__icon${u === "recording" ? " tlAudioRecorder__icon--stop" : ""}` })
-  ), i && /* @__PURE__ */ e.createElement("span", { className: "tlAudioRecorder__status tlAudioRecorder__status--error" }, i));
+    /* @__PURE__ */ e.createElement("span", { className: `tlAudioRecorder__icon${p === "recording" ? " tlAudioRecorder__icon--stop" : ""}` })
+  ), a && /* @__PURE__ */ e.createElement("span", { className: "tlAudioRecorder__status tlAudioRecorder__status--error" }, b[a]), d && /* @__PURE__ */ e.createElement("span", { className: "tlAudioRecorder__status tlAudioRecorder__status--error" }, d));
 }, ee = {
   "js.audioPlayer.play": "Play audio",
   "js.audioPlayer.pause": "Pause audio",
   "js.audioPlayer.noAudio": "No audio",
   "js.loading": "Loading…"
 }, te = () => {
-  const o = E(), r = D(), a = !!o.hasAudio, n = o.dataRevision ?? 0, [t, l] = e.useState(a ? "idle" : "disabled"), s = e.useRef(null), c = e.useRef(null), i = e.useRef(n);
+  const n = k(), s = P(), t = !!n.hasAudio, o = n.dataRevision ?? 0, [a, l] = e.useState(t ? "idle" : "disabled"), r = e.useRef(null), c = e.useRef(null), i = e.useRef(o);
   e.useEffect(() => {
-    a ? t === "disabled" && l("idle") : (s.current && (s.current.pause(), s.current = null), c.current && (URL.revokeObjectURL(c.current), c.current = null), l("disabled"));
-  }, [a]), e.useEffect(() => {
-    n !== i.current && (i.current = n, s.current && (s.current.pause(), s.current = null), c.current && (URL.revokeObjectURL(c.current), c.current = null), (t === "playing" || t === "paused" || t === "loading") && l("idle"));
-  }, [n]), e.useEffect(() => () => {
-    s.current && (s.current.pause(), s.current = null), c.current && (URL.revokeObjectURL(c.current), c.current = null);
+    t ? a === "disabled" && l("idle") : (r.current && (r.current.pause(), r.current = null), c.current && (URL.revokeObjectURL(c.current), c.current = null), l("disabled"));
+  }, [t]), e.useEffect(() => {
+    o !== i.current && (i.current = o, r.current && (r.current.pause(), r.current = null), c.current && (URL.revokeObjectURL(c.current), c.current = null), (a === "playing" || a === "paused" || a === "loading") && l("idle"));
+  }, [o]), e.useEffect(() => () => {
+    r.current && (r.current.pause(), r.current = null), c.current && (URL.revokeObjectURL(c.current), c.current = null);
   }, []);
-  const u = e.useCallback(async () => {
-    if (t === "disabled" || t === "loading")
+  const m = e.useCallback(async () => {
+    if (a === "disabled" || a === "loading")
       return;
-    if (t === "playing") {
-      s.current && s.current.pause(), l("paused");
+    if (a === "playing") {
+      r.current && r.current.pause(), l("paused");
       return;
     }
-    if (t === "paused" && s.current) {
-      s.current.play(), l("playing");
+    if (a === "paused" && r.current) {
+      r.current.play(), l("playing");
       return;
     }
     if (!c.current) {
       l("loading");
       try {
-        const p = await fetch(r);
-        if (!p.ok) {
-          console.error("[TLAudioPlayer] Failed to fetch audio:", p.status), l("idle");
+        const E = await fetch(s);
+        if (!E.ok) {
+          console.error("[TLAudioPlayer] Failed to fetch audio:", E.status), l("idle");
           return;
         }
-        const m = await p.blob();
-        c.current = URL.createObjectURL(m);
-      } catch (p) {
-        console.error("[TLAudioPlayer] Fetch error:", p), l("idle");
+        const L = await E.blob();
+        c.current = URL.createObjectURL(L);
+      } catch (E) {
+        console.error("[TLAudioPlayer] Fetch error:", E), l("idle");
         return;
       }
     }
-    const g = new Audio(c.current);
-    s.current = g, g.onended = () => {
+    const C = new Audio(c.current);
+    r.current = C, C.onended = () => {
       l("idle");
-    }, g.play(), l("playing");
-  }, [t, r]), f = R(ee), d = t === "loading" ? f["js.loading"] : t === "playing" ? f["js.audioPlayer.pause"] : t === "disabled" ? f["js.audioPlayer.noAudio"] : f["js.audioPlayer.play"], _ = t === "disabled" || t === "loading", C = ["tlAudioPlayer__button"];
-  return t === "playing" && C.push("tlAudioPlayer__button--playing"), t === "loading" && C.push("tlAudioPlayer__button--loading"), /* @__PURE__ */ e.createElement("div", { className: "tlAudioPlayer" }, /* @__PURE__ */ e.createElement(
+    }, C.play(), l("playing");
+  }, [a, s]), d = y(ee), p = a === "loading" ? d["js.loading"] : a === "playing" ? d["js.audioPlayer.pause"] : a === "disabled" ? d["js.audioPlayer.noAudio"] : d["js.audioPlayer.play"], w = a === "disabled" || a === "loading", b = ["tlAudioPlayer__button"];
+  return a === "playing" && b.push("tlAudioPlayer__button--playing"), a === "loading" && b.push("tlAudioPlayer__button--loading"), /* @__PURE__ */ e.createElement("div", { className: "tlAudioPlayer" }, /* @__PURE__ */ e.createElement(
     "button",
     {
       type: "button",
-      className: C.join(" "),
-      onClick: u,
-      disabled: _,
-      title: d,
-      "aria-label": d
+      className: b.join(" "),
+      onClick: m,
+      disabled: w,
+      title: p,
+      "aria-label": p
     },
-    /* @__PURE__ */ e.createElement("span", { className: `tlAudioPlayer__icon${t === "playing" ? " tlAudioPlayer__icon--pause" : ""}` })
+    /* @__PURE__ */ e.createElement("span", { className: `tlAudioPlayer__icon${a === "playing" ? " tlAudioPlayer__icon--pause" : ""}` })
   ));
 }, ae = {
   "js.fileUpload.choose": "Choose file",
   "js.uploading": "Uploading…"
-}, le = () => {
-  const o = E(), r = j(), [a, n] = e.useState("idle"), [t, l] = e.useState(!1), s = e.useRef(null), c = o.status ?? "idle", i = o.error, u = o.accept ?? "", f = c === "received" ? "idle" : a !== "idle" ? a : c, d = e.useCallback(async (b) => {
-    n("uploading");
-    const w = new FormData();
-    w.append("file", b, b.name), await r(w), n("idle");
-  }, [r]), _ = e.useCallback((b) => {
-    var y;
-    const w = (y = b.target.files) == null ? void 0 : y[0];
-    w && d(w);
-  }, [d]), C = e.useCallback(() => {
-    var b;
-    a !== "uploading" && ((b = s.current) == null || b.click());
-  }, [a]), g = e.useCallback((b) => {
-    b.preventDefault(), b.stopPropagation(), l(!0);
-  }, []), p = e.useCallback((b) => {
-    b.preventDefault(), b.stopPropagation(), l(!1);
-  }, []), m = e.useCallback((b) => {
-    var y;
-    if (b.preventDefault(), b.stopPropagation(), l(!1), a === "uploading") return;
-    const w = (y = b.dataTransfer.files) == null ? void 0 : y[0];
-    w && d(w);
-  }, [a, d]), h = f === "uploading", L = R(ae), k = f === "uploading" ? L["js.uploading"] : L["js.fileUpload.choose"];
+}, oe = () => {
+  const n = k(), s = j(), [t, o] = e.useState("idle"), [a, l] = e.useState(!1), r = e.useRef(null), c = n.status ?? "idle", i = n.error, m = n.accept ?? "", d = c === "received" ? "idle" : t !== "idle" ? t : c, p = e.useCallback(async (u) => {
+    o("uploading");
+    const _ = new FormData();
+    _.append("file", u, u.name), await s(_), o("idle");
+  }, [s]), w = e.useCallback((u) => {
+    var R;
+    const _ = (R = u.target.files) == null ? void 0 : R[0];
+    _ && p(_);
+  }, [p]), b = e.useCallback(() => {
+    var u;
+    t !== "uploading" && ((u = r.current) == null || u.click());
+  }, [t]), C = e.useCallback((u) => {
+    u.preventDefault(), u.stopPropagation(), l(!0);
+  }, []), E = e.useCallback((u) => {
+    u.preventDefault(), u.stopPropagation(), l(!1);
+  }, []), L = e.useCallback((u) => {
+    var R;
+    if (u.preventDefault(), u.stopPropagation(), l(!1), t === "uploading") return;
+    const _ = (R = u.dataTransfer.files) == null ? void 0 : R[0];
+    _ && p(_);
+  }, [t, p]), h = d === "uploading", f = y(ae), g = d === "uploading" ? f["js.uploading"] : f["js.fileUpload.choose"];
   return /* @__PURE__ */ e.createElement(
     "div",
     {
-      className: `tlFileUpload${t ? " tlFileUpload--dragover" : ""}`,
-      onDragOver: g,
-      onDragLeave: p,
-      onDrop: m
+      className: `tlFileUpload${a ? " tlFileUpload--dragover" : ""}`,
+      onDragOver: C,
+      onDragLeave: E,
+      onDrop: L
     },
     /* @__PURE__ */ e.createElement(
       "input",
       {
-        ref: s,
+        ref: r,
         type: "file",
-        accept: u || void 0,
-        onChange: _,
+        accept: m || void 0,
+        onChange: w,
         style: { display: "none" }
       }
     ),
@@ -301,65 +308,65 @@ const { useCallback: S } = e, F = ({ state: o }) => {
       "button",
       {
         type: "button",
-        className: "tlFileUpload__button" + (f === "uploading" ? " tlFileUpload__button--uploading" : ""),
-        onClick: C,
+        className: "tlFileUpload__button" + (d === "uploading" ? " tlFileUpload__button--uploading" : ""),
+        onClick: b,
         disabled: h,
-        title: k,
-        "aria-label": k
+        title: g,
+        "aria-label": g
       },
       /* @__PURE__ */ e.createElement("svg", { className: "tlFileUpload__icon", viewBox: "0 0 16 16", width: "16", height: "16", "aria-hidden": "true" }, /* @__PURE__ */ e.createElement("path", { d: "M8 10V1m0 0L4.5 4.5M8 1l3.5 3.5M2 13h12", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", fill: "none" }))
     ),
     i && /* @__PURE__ */ e.createElement("span", { className: "tlFileUpload__status tlFileUpload__status--error" }, i)
   );
-}, ne = {
+}, le = {
   "js.download.noFile": "No file",
   "js.download.file": "Download {0}",
   "js.downloading": "Downloading…",
   "js.download.clear": "Clear",
   "js.download.clearFile": "Clear file"
-}, oe = () => {
-  const o = E(), r = D(), a = N(), n = !!o.hasData, t = o.dataRevision ?? 0, l = o.fileName ?? "download", s = !!o.clearable, [c, i] = e.useState(!1), u = e.useCallback(async () => {
-    if (!(!n || c)) {
+}, ne = () => {
+  const n = k(), s = P(), t = N(), o = !!n.hasData, a = n.dataRevision ?? 0, l = n.fileName ?? "download", r = !!n.clearable, [c, i] = e.useState(!1), m = e.useCallback(async () => {
+    if (!(!o || c)) {
       i(!0);
       try {
-        const C = r + (r.includes("?") ? "&" : "?") + "rev=" + t, g = await fetch(C);
-        if (!g.ok) {
-          console.error("[TLDownload] Failed to fetch data:", g.status);
+        const b = s + (s.includes("?") ? "&" : "?") + "rev=" + a, C = await fetch(b);
+        if (!C.ok) {
+          console.error("[TLDownload] Failed to fetch data:", C.status);
           return;
         }
-        const p = await g.blob(), m = URL.createObjectURL(p), h = document.createElement("a");
-        h.href = m, h.download = l, h.style.display = "none", document.body.appendChild(h), h.click(), document.body.removeChild(h), URL.revokeObjectURL(m);
-      } catch (C) {
-        console.error("[TLDownload] Fetch error:", C);
+        const E = await C.blob(), L = URL.createObjectURL(E), h = document.createElement("a");
+        h.href = L, h.download = l, h.style.display = "none", document.body.appendChild(h), h.click(), document.body.removeChild(h), URL.revokeObjectURL(L);
+      } catch (b) {
+        console.error("[TLDownload] Fetch error:", b);
       } finally {
         i(!1);
       }
     }
-  }, [n, c, r, t, l]), f = e.useCallback(async () => {
-    n && await a("clear");
-  }, [n, a]), d = R(ne);
-  if (!n)
-    return /* @__PURE__ */ e.createElement("div", { className: "tlDownload tlDownload--empty" }, /* @__PURE__ */ e.createElement("span", { className: "tlDownload__fileName tlDownload__fileName--empty" }, d["js.download.noFile"]));
-  const _ = c ? d["js.downloading"] : d["js.download.file"].replace("{0}", l);
+  }, [o, c, s, a, l]), d = e.useCallback(async () => {
+    o && await t("clear");
+  }, [o, t]), p = y(le);
+  if (!o)
+    return /* @__PURE__ */ e.createElement("div", { className: "tlDownload tlDownload--empty" }, /* @__PURE__ */ e.createElement("span", { className: "tlDownload__fileName tlDownload__fileName--empty" }, p["js.download.noFile"]));
+  const w = c ? p["js.downloading"] : p["js.download.file"].replace("{0}", l);
   return /* @__PURE__ */ e.createElement("div", { className: "tlDownload" }, /* @__PURE__ */ e.createElement(
     "button",
     {
       type: "button",
       className: "tlDownload__downloadBtn" + (c ? " tlDownload__downloadBtn--downloading" : ""),
-      onClick: u,
+      onClick: m,
       disabled: c,
-      title: _,
-      "aria-label": _
+      title: w,
+      "aria-label": w
     },
     /* @__PURE__ */ e.createElement("svg", { className: "tlDownload__downloadIcon", viewBox: "0 0 16 16", width: "16", height: "16", "aria-hidden": "true" }, /* @__PURE__ */ e.createElement("path", { d: "M8 1v9m0 0L4.5 6.5M8 10l3.5-3.5M2 13h12", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", fill: "none" }))
-  ), /* @__PURE__ */ e.createElement("span", { className: "tlDownload__fileName", title: l }, l), s && /* @__PURE__ */ e.createElement(
+  ), /* @__PURE__ */ e.createElement("span", { className: "tlDownload__fileName", title: l }, l), r && /* @__PURE__ */ e.createElement(
     "button",
     {
       type: "button",
       className: "tlDownload__clearBtn",
-      onClick: f,
-      title: d["js.download.clear"],
-      "aria-label": d["js.download.clearFile"]
+      onClick: d,
+      title: p["js.download.clear"],
+      "aria-label": p["js.download.clearFile"]
     },
     /* @__PURE__ */ e.createElement("svg", { className: "tlDownload__clearIcon", viewBox: "0 0 16 16", width: "14", height: "14", "aria-hidden": "true" }, /* @__PURE__ */ e.createElement("path", { d: "M4 4l8 8M12 4l-8 8", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round" }))
   ));
@@ -367,136 +374,142 @@ const { useCallback: S } = e, F = ({ state: o }) => {
   "js.photoCapture.open": "Open camera",
   "js.photoCapture.close": "Close camera",
   "js.photoCapture.capture": "Capture photo",
-  "js.uploading": "Uploading…"
+  "js.uploading": "Uploading…",
+  "js.photoCapture.error.insecure": "Camera requires a secure connection (HTTPS).",
+  "js.photoCapture.error.denied": "Camera access denied or unavailable."
 }, se = () => {
-  const o = E(), r = j(), [a, n] = e.useState("idle"), t = e.useRef(null), l = e.useRef(null), s = e.useRef(null), c = o.error, i = e.useCallback(() => {
-    l.current && (l.current.getTracks().forEach((m) => m.stop()), l.current = null), t.current && (t.current.srcObject = null);
-  }, []), u = e.useCallback(async () => {
-    if (a !== "uploading") {
-      if (a === "previewing") {
-        i(), n("idle");
+  const n = k(), s = j(), [t, o] = e.useState("idle"), [a, l] = e.useState(null), r = e.useRef(null), c = e.useRef(null), i = e.useRef(null), m = n.error, d = e.useCallback(() => {
+    c.current && (c.current.getTracks().forEach((f) => f.stop()), c.current = null), r.current && (r.current.srcObject = null);
+  }, []), p = e.useCallback(async () => {
+    if (t !== "uploading") {
+      if (t === "previewing") {
+        d(), o("idle");
+        return;
+      }
+      if (l(null), !window.isSecureContext || !navigator.mediaDevices) {
+        l("js.photoCapture.error.insecure");
         return;
       }
       try {
-        const m = await navigator.mediaDevices.getUserMedia({
+        const f = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: "environment" }
         });
-        l.current = m, n("previewing");
-      } catch (m) {
-        console.error("[TLPhotoCapture] Camera access denied or unavailable:", m), n("idle");
+        c.current = f, o("previewing");
+      } catch (f) {
+        console.error("[TLPhotoCapture] Camera access denied or unavailable:", f), l("js.photoCapture.error.denied"), o("idle");
       }
     }
-  }, [a, i]), f = e.useCallback(async () => {
-    if (a !== "previewing")
+  }, [t, d]), w = e.useCallback(async () => {
+    if (t !== "previewing")
       return;
-    const m = t.current, h = s.current;
-    if (!m || !h)
+    const f = r.current, g = i.current;
+    if (!f || !g)
       return;
-    h.width = m.videoWidth, h.height = m.videoHeight;
-    const L = h.getContext("2d");
-    L && (L.drawImage(m, 0, 0), i(), n("uploading"), h.toBlob(async (k) => {
-      if (!k) {
-        n("idle");
+    g.width = f.videoWidth, g.height = f.videoHeight;
+    const u = g.getContext("2d");
+    u && (u.drawImage(f, 0, 0), d(), o("uploading"), g.toBlob(async (_) => {
+      if (!_) {
+        o("idle");
         return;
       }
-      const b = new FormData();
-      b.append("photo", k, "capture.jpg"), await r(b), n("idle");
+      const R = new FormData();
+      R.append("photo", _, "capture.jpg"), await s(R), o("idle");
     }, "image/jpeg", 0.85));
-  }, [a, r, i]);
+  }, [t, s, d]);
   e.useEffect(() => {
-    a === "previewing" && t.current && l.current && (t.current.srcObject = l.current);
-  }, [a]), e.useEffect(() => () => {
-    l.current && (l.current.getTracks().forEach((m) => m.stop()), l.current = null);
+    t === "previewing" && r.current && c.current && (r.current.srcObject = c.current);
+  }, [t]), e.useEffect(() => () => {
+    c.current && (c.current.getTracks().forEach((f) => f.stop()), c.current = null);
   }, []);
-  const d = R(re), _ = a === "previewing" ? d["js.photoCapture.close"] : a === "uploading" ? d["js.uploading"] : d["js.photoCapture.open"], C = a === "uploading", g = ["tlPhotoCapture__cameraBtn"];
-  a === "previewing" && g.push("tlPhotoCapture__cameraBtn--active");
-  const p = ["tlPhotoCapture__captureBtn"];
-  return a === "uploading" && p.push("tlPhotoCapture__captureBtn--uploading"), /* @__PURE__ */ e.createElement("div", { className: "tlPhotoCapture" }, /* @__PURE__ */ e.createElement("div", { className: "tlPhotoCapture__controls" }, /* @__PURE__ */ e.createElement(
+  const b = y(re), C = t === "previewing" ? b["js.photoCapture.close"] : t === "uploading" ? b["js.uploading"] : b["js.photoCapture.open"], E = t === "uploading", L = ["tlPhotoCapture__cameraBtn"];
+  t === "previewing" && L.push("tlPhotoCapture__cameraBtn--active");
+  const h = ["tlPhotoCapture__captureBtn"];
+  return t === "uploading" && h.push("tlPhotoCapture__captureBtn--uploading"), /* @__PURE__ */ e.createElement("div", { className: "tlPhotoCapture" }, /* @__PURE__ */ e.createElement("div", { className: "tlPhotoCapture__controls" }, /* @__PURE__ */ e.createElement(
     "button",
     {
       type: "button",
-      className: g.join(" "),
-      onClick: u,
-      disabled: C,
-      title: _,
-      "aria-label": _
+      className: L.join(" "),
+      onClick: p,
+      disabled: E,
+      title: C,
+      "aria-label": C
     },
     /* @__PURE__ */ e.createElement("span", { className: "tlPhotoCapture__cameraIcon" })
-  ), a === "previewing" && /* @__PURE__ */ e.createElement(
+  ), t === "previewing" && /* @__PURE__ */ e.createElement(
     "button",
     {
       type: "button",
-      className: p.join(" "),
-      onClick: f,
-      title: d["js.photoCapture.capture"],
-      "aria-label": d["js.photoCapture.capture"]
+      className: h.join(" "),
+      onClick: w,
+      title: b["js.photoCapture.capture"],
+      "aria-label": b["js.photoCapture.capture"]
     },
     /* @__PURE__ */ e.createElement("span", { className: "tlPhotoCapture__captureIcon" })
-  )), a === "previewing" && /* @__PURE__ */ e.createElement(
+  )), t === "previewing" && /* @__PURE__ */ e.createElement(
     "video",
     {
-      ref: t,
+      ref: r,
       className: "tlPhotoCapture__preview",
       autoPlay: !0,
       muted: !0,
       playsInline: !0
     }
-  ), /* @__PURE__ */ e.createElement("canvas", { ref: s, style: { display: "none" } }), c && /* @__PURE__ */ e.createElement("span", { className: "tlPhotoCapture__status tlPhotoCapture__status--error" }, c));
+  ), /* @__PURE__ */ e.createElement("canvas", { ref: i, style: { display: "none" } }), a && /* @__PURE__ */ e.createElement("span", { className: "tlPhotoCapture__status tlPhotoCapture__status--error" }, b[a]), m && /* @__PURE__ */ e.createElement("span", { className: "tlPhotoCapture__status tlPhotoCapture__status--error" }, m));
 }, ce = {
   "js.photoViewer.alt": "Captured photo"
 }, ie = () => {
-  const o = E(), r = D(), a = !!o.hasPhoto, n = o.dataRevision ?? 0, [t, l] = e.useState(null), s = e.useRef(n);
+  const n = k(), s = P(), t = !!n.hasPhoto, o = n.dataRevision ?? 0, [a, l] = e.useState(null), r = e.useRef(o);
   e.useEffect(() => {
-    if (!a) {
-      t && (URL.revokeObjectURL(t), l(null));
+    if (!t) {
+      a && (URL.revokeObjectURL(a), l(null));
       return;
     }
-    if (n === s.current && t)
+    if (o === r.current && a)
       return;
-    s.current = n, t && (URL.revokeObjectURL(t), l(null));
+    r.current = o, a && (URL.revokeObjectURL(a), l(null));
     let i = !1;
     return (async () => {
       try {
-        const u = await fetch(r);
-        if (!u.ok) {
-          console.error("[TLPhotoViewer] Failed to fetch image:", u.status);
+        const m = await fetch(s);
+        if (!m.ok) {
+          console.error("[TLPhotoViewer] Failed to fetch image:", m.status);
           return;
         }
-        const f = await u.blob();
-        i || l(URL.createObjectURL(f));
-      } catch (u) {
-        console.error("[TLPhotoViewer] Fetch error:", u);
+        const d = await m.blob();
+        i || l(URL.createObjectURL(d));
+      } catch (m) {
+        console.error("[TLPhotoViewer] Fetch error:", m);
       }
     })(), () => {
       i = !0;
     };
-  }, [a, n, r]), e.useEffect(() => () => {
-    t && URL.revokeObjectURL(t);
+  }, [t, o, s]), e.useEffect(() => () => {
+    a && URL.revokeObjectURL(a);
   }, []);
-  const c = R(ce);
-  return !a || !t ? /* @__PURE__ */ e.createElement("div", { className: "tlPhotoViewer" }, /* @__PURE__ */ e.createElement("div", { className: "tlPhotoViewer__placeholder" })) : /* @__PURE__ */ e.createElement("div", { className: "tlPhotoViewer" }, /* @__PURE__ */ e.createElement(
+  const c = y(ce);
+  return !t || !a ? /* @__PURE__ */ e.createElement("div", { className: "tlPhotoViewer" }, /* @__PURE__ */ e.createElement("div", { className: "tlPhotoViewer__placeholder" })) : /* @__PURE__ */ e.createElement("div", { className: "tlPhotoViewer" }, /* @__PURE__ */ e.createElement(
     "img",
     {
       className: "tlPhotoViewer__image",
-      src: t,
+      src: a,
       alt: c["js.photoViewer.alt"]
     }
   ));
 };
 v("TLButton", W);
-v("TLToggleButton", H);
-v("TLTextInput", F);
-v("TLNumberInput", A);
-v("TLDatePicker", O);
-v("TLSelect", M);
+v("TLToggleButton", q);
+v("TLTextInput", A);
+v("TLNumberInput", B);
+v("TLDatePicker", M);
+v("TLSelect", V);
 v("TLCheckbox", x);
 v("TLTable", K);
-v("TLCounter", q);
+v("TLCounter", z);
 v("TLTabBar", J);
 v("TLFieldList", Q);
 v("TLAudioRecorder", Z);
 v("TLAudioPlayer", te);
-v("TLFileUpload", le);
-v("TLDownload", oe);
+v("TLFileUpload", oe);
+v("TLDownload", ne);
 v("TLPhotoCapture", se);
 v("TLPhotoViewer", ie);

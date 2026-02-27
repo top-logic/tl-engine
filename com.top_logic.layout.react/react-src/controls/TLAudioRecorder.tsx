@@ -5,6 +5,8 @@ const I18N_KEYS = {
   'js.audioRecorder.record': 'Record audio',
   'js.audioRecorder.stop': 'Stop recording',
   'js.uploading': 'Uploading\u2026',
+  'js.audioRecorder.error.insecure': 'Microphone requires a secure connection (HTTPS).',
+  'js.audioRecorder.error.denied': 'Microphone access denied or unavailable.',
 };
 
 type LocalStatus = 'idle' | 'recording' | 'uploading';
@@ -14,6 +16,7 @@ const TLAudioRecorder: React.FC<TLCellProps> = () => {
   const upload = useTLUpload();
 
   const [localStatus, setLocalStatus] = React.useState<LocalStatus>('idle');
+  const [localError, setLocalError] = React.useState<string | null>(null);
   const mediaRecorderRef = React.useRef<MediaRecorder | null>(null);
   const chunksRef = React.useRef<Blob[]>([]);
   const streamRef = React.useRef<MediaStream | null>(null);
@@ -39,6 +42,13 @@ const TLAudioRecorder: React.FC<TLCellProps> = () => {
     }
 
     // Start recording.
+    setLocalError(null);
+
+    if (!window.isSecureContext || !navigator.mediaDevices) {
+      setLocalError('js.audioRecorder.error.insecure');
+      return;
+    }
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
@@ -78,6 +88,7 @@ const TLAudioRecorder: React.FC<TLCellProps> = () => {
       setLocalStatus('recording');
     } catch (err) {
       console.error('[TLAudioRecorder] Microphone access denied or unavailable:', err);
+      setLocalError('js.audioRecorder.error.denied');
       setLocalStatus('idle');
     }
   }, [localStatus, upload]);
@@ -106,6 +117,9 @@ const TLAudioRecorder: React.FC<TLCellProps> = () => {
       >
         <span className={`tlAudioRecorder__icon${effectiveStatus === 'recording' ? ' tlAudioRecorder__icon--stop' : ''}`} />
       </button>
+      {localError && (
+        <span className="tlAudioRecorder__status tlAudioRecorder__status--error">{t[localError]}</span>
+      )}
       {serverError && (
         <span className="tlAudioRecorder__status tlAudioRecorder__status--error">{serverError}</span>
       )}

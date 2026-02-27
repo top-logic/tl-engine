@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useSyncExternalStore, useCallback } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
+import { createRoot, flushSync, type Root } from 'react-dom/client';
 import type { TLCellProps } from './types';
 import { getComponent } from './registry';
 import { connect, subscribe, unsubscribe } from './sse-client';
@@ -122,7 +122,9 @@ export function mount(
     );
   };
 
-  root.render(React.createElement(Wrapper));
+  flushSync(() => {
+    root.render(React.createElement(Wrapper));
+  });
 }
 
 /**

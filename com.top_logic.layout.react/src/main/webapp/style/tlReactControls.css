@@ -33,7 +33,7 @@ button.tlReactButton:hover {
 	color: var(--text-on-color);
 }
 
-button.tlReactButton:focus {
+button.tlReactButton:focus-visible {
 	box-shadow: inset 0px 0px 0px 2px var(--focus), inset 0px 0px 0px 3px var(--focus-inset);
 	background: var(--button-secondary-hover);
 	color: var(--text-on-color);
@@ -66,7 +66,7 @@ button.tlReactButton.tlReactButtonActive:hover {
 	box-shadow: inset 0px 0px 0px 2px var(--button-primary-hover);
 }
 
-button.tlReactButton.tlReactButtonActive:focus {
+button.tlReactButton.tlReactButtonActive:focus-visible {
 	box-shadow: inset 0px 0px 0px 2px var(--focus), inset 0px 0px 0px 3px var(--focus-inset);
 }
 

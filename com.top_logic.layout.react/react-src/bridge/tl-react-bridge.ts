@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useSyncExternalStore, useCallback } from 'react';
-import { createRoot, flushSync, type Root } from 'react-dom/client';
+import { createRoot, type Root } from 'react-dom/client';
+import { flushSync } from 'react-dom';
 import type { TLCellProps } from './types';
 import { getComponent } from './registry';
 import { connect, subscribe, unsubscribe } from './sse-client';

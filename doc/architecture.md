@@ -13,7 +13,7 @@ Dabei gibt es drei Einsatzformen:
 - **Interaktiver Agent**: Ein Copilot direkt in der Anwendung, über
   den Anwender Fragen stellen und Aufgaben ausführen lassen können.
 
-- **Aktive Agenten**: KI-Agenten innerhalb der
+- **Proaktive Agenten**: KI-Agenten innerhalb der
   Anwendung, die eigenständig wiederkehrende Aufgaben übernehmen.
   Interne Agenten können dabei auch externe Werkzeuge (Anwendungen) verwenden.
   Die Aktivierung erfolgt eigenständig durch User-Prompt (Copilot), Zeitgesteuert, Ereignissgesteuert, durch (externe) Agenten.

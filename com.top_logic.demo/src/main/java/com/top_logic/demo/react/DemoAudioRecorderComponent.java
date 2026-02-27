@@ -14,6 +14,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.io.binary.SimpleBinaryDataValue;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
@@ -60,13 +61,12 @@ public class DemoAudioRecorderComponent extends LayoutComponent {
 		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
 
 		if (_recorderControl == null) {
-			_playerControl = new ReactAudioPlayerControl(null);
-			_downloadControl = new ReactDownloadControl(null, null);
-
-			_recorderControl = new ReactAudioRecorderControl(data -> {
-				_playerControl.setAudioData(data);
-				_downloadControl.setData(data, data.getName());
-			});
+			// Three controls, one model, zero callbacks.
+			SimpleBinaryDataValue audioModel = new SimpleBinaryDataValue();
+			_recorderControl = new ReactAudioRecorderControl(audioModel);
+			_playerControl = new ReactAudioPlayerControl(audioModel);
+			_downloadControl = new ReactDownloadControl(audioModel);
+			_downloadControl.setClearable(true);
 		}
 
 		out.beginTag(HTMLConstants.H2);

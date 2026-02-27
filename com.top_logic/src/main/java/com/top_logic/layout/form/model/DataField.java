@@ -7,19 +7,24 @@ package com.top_logic.layout.form.model;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataSource;
+import com.top_logic.basic.io.binary.BinaryDataValue;
 import com.top_logic.basic.listener.EventType;
+import com.top_logic.basic.listener.Listener;
 import com.top_logic.basic.shared.collection.CollectionUtilShared;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.CheckException;
 import com.top_logic.layout.form.Constraint;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMemberVisitor;
+import com.top_logic.layout.form.ValueListener;
 import com.top_logic.mig.html.HTMLConstants;
 
 /**
@@ -27,7 +32,7 @@ import com.top_logic.mig.html.HTMLConstants;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class DataField extends AbstractFormField {
+public class DataField extends AbstractFormField implements BinaryDataValue {
 	
 	/**
 	 * Property is fired when the 'read only' property has changed
@@ -82,6 +87,8 @@ public class DataField extends AbstractFormField {
 	private String _acceptedTypes;
 
 	private long _maxUploadSize;
+
+	private Map<Listener<? super BinaryData>, ValueListener> _binaryDataListeners;
 
 	DataField(String name, boolean isMultiple) {
 		super(name, !MANDATORY, !IMMUTABLE, NORMALIZE, NO_CONSTRAINT);
@@ -359,6 +366,37 @@ public class DataField extends AbstractFormField {
 	@Override
 	protected DataField self() {
 		return this;
+	}
+
+	@Override
+	public BinaryData getData() {
+		return getDataItem();
+	}
+
+	@Override
+	public void setData(BinaryData data) {
+		setValue(data);
+	}
+
+	@Override
+	public void addListener(Listener<? super BinaryData> listener) {
+		ValueListener adapter = (field, oldValue, newValue) -> listener.notify((BinaryData) newValue);
+		if (_binaryDataListeners == null) {
+			_binaryDataListeners = new HashMap<>();
+		}
+		_binaryDataListeners.put(listener, adapter);
+		addValueListener(adapter);
+	}
+
+	@Override
+	public void removeListener(Listener<? super BinaryData> listener) {
+		if (_binaryDataListeners == null) {
+			return;
+		}
+		ValueListener adapter = _binaryDataListeners.remove(listener);
+		if (adapter != null) {
+			removeValueListener(adapter);
+		}
 	}
 
 	/**

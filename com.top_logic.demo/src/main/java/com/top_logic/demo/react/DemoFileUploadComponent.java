@@ -71,12 +71,10 @@ public class DemoFileUploadComponent extends LayoutComponent {
 
 			_fileFieldControl = new DataItemControl(_fileField);
 
-			_downloadControl = new ReactDownloadControl(null, null);
-
-			_uploadControl = new ReactFileUploadControl(data -> {
-				_fileField.setValue(data);
-				_downloadControl.setData(data, data.getName());
-			});
+			// DataField IS a BinaryDataValue - all controls share it.
+			_downloadControl = new ReactDownloadControl(_fileField);
+			_downloadControl.setClearable(true);
+			_uploadControl = new ReactFileUploadControl(_fileField);
 		}
 
 		out.beginTag(HTMLConstants.H2);

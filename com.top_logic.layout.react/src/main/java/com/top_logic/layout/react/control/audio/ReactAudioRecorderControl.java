@@ -7,13 +7,13 @@ package com.top_logic.layout.react.control.audio;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.function.Consumer;
 
 import jakarta.servlet.http.Part;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
+import com.top_logic.basic.io.binary.BinaryDataValue;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.react.ReactControl;
 import com.top_logic.layout.react.UploadHandler;
@@ -30,8 +30,8 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * </p>
  *
  * <p>
- * The {@code _dataHandler} callback receives the audio as {@link BinaryData}, allowing the
- * embedding component to store it (e.g. in a {@code DataField}).
+ * The recorded audio is written to a shared {@link BinaryDataValue} model, allowing all controls
+ * observing the same model to update automatically.
  * </p>
  */
 public class ReactAudioRecorderControl extends ReactControl implements UploadHandler {
@@ -42,17 +42,17 @@ public class ReactAudioRecorderControl extends ReactControl implements UploadHan
 	/** State key for an error message. */
 	private static final String ERROR = "error";
 
-	private final Consumer<BinaryData> _dataHandler;
+	private final BinaryDataValue _model;
 
 	/**
 	 * Creates a new {@link ReactAudioRecorderControl}.
 	 *
-	 * @param dataHandler
-	 *        Callback that receives the recorded audio as {@link BinaryData}.
+	 * @param model
+	 *        The shared data model to write recorded audio to.
 	 */
-	public ReactAudioRecorderControl(Consumer<BinaryData> dataHandler) {
+	public ReactAudioRecorderControl(BinaryDataValue model) {
 		super(null, "TLAudioRecorder");
-		_dataHandler = dataHandler;
+		_model = model;
 		putState(STATUS, "idle");
 	}
 
@@ -83,7 +83,7 @@ public class ReactAudioRecorderControl extends ReactControl implements UploadHan
 			}
 
 			BinaryData data = BinaryDataFactory.createBinaryData(audioData, contentType, fileName);
-			_dataHandler.accept(data);
+			_model.setData(data);
 
 			putState(ERROR, null);
 			putState(STATUS, "idle");

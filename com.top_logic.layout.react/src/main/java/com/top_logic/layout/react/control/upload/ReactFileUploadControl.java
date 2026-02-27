@@ -7,13 +7,13 @@ package com.top_logic.layout.react.control.upload;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.function.Consumer;
 
 import jakarta.servlet.http.Part;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
+import com.top_logic.basic.io.binary.BinaryDataValue;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.react.ReactControl;
 import com.top_logic.layout.react.UploadHandler;
@@ -29,8 +29,8 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * </p>
  *
  * <p>
- * The {@code _dataHandler} callback receives the uploaded file as {@link BinaryData}, allowing the
- * embedding component to store it (e.g. in a {@code DataField}).
+ * The uploaded file is written to a shared {@link BinaryDataValue} model, allowing all controls
+ * observing the same model to update automatically.
  * </p>
  */
 public class ReactFileUploadControl extends ReactControl implements UploadHandler {
@@ -44,17 +44,17 @@ public class ReactFileUploadControl extends ReactControl implements UploadHandle
 	/** State key for the accepted MIME type filter. */
 	private static final String ACCEPT = "accept";
 
-	private final Consumer<BinaryData> _dataHandler;
+	private final BinaryDataValue _model;
 
 	/**
 	 * Creates a new {@link ReactFileUploadControl}.
 	 *
-	 * @param dataHandler
-	 *        Callback that receives the uploaded file as {@link BinaryData}.
+	 * @param model
+	 *        The shared data model to write uploaded files to.
 	 */
-	public ReactFileUploadControl(Consumer<BinaryData> dataHandler) {
+	public ReactFileUploadControl(BinaryDataValue model) {
 		super(null, "TLFileUpload");
-		_dataHandler = dataHandler;
+		_model = model;
 		putState(STATUS, "idle");
 	}
 
@@ -96,7 +96,7 @@ public class ReactFileUploadControl extends ReactControl implements UploadHandle
 			}
 
 			BinaryData data = BinaryDataFactory.createBinaryData(fileData, contentType, fileName);
-			_dataHandler.accept(data);
+			_model.setData(data);
 
 			putState(ERROR, null);
 			putState(STATUS, "idle");

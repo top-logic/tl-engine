@@ -8,6 +8,8 @@ package com.top_logic.layout.react.control.download;
 import java.util.Map;
 
 import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.io.binary.BinaryDataValue;
+import com.top_logic.basic.listener.Listener;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
@@ -27,9 +29,13 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * </p>
  *
  * <p>
+ * The control observes a shared {@link BinaryDataValue} model. When the model data changes (e.g.
+ * because a file was uploaded or audio was recorded), the download UI updates automatically.
+ * </p>
+ *
+ * <p>
  * If {@link #setClearable(boolean) clearable} is enabled, a clear button is rendered next to the
- * file name, allowing the user to remove the current data. The {@link ClearListener} is notified
- * when the user clears the data.
+ * file name, allowing the user to remove the current data by setting the model to {@code null}.
  * </p>
  */
 public class ReactDownloadControl extends ReactControl implements DataProvider {
@@ -48,59 +54,27 @@ public class ReactDownloadControl extends ReactControl implements DataProvider {
 
 	private static final Map<String, ControlCommand> COMMANDS = createCommandMap(new ClearCommand());
 
-	private BinaryData _data;
+	private final BinaryDataValue _model;
+
+	private final Listener<BinaryData> _modelListener = this::handleModelChanged;
 
 	private int _dataRevision;
-
-	private ClearListener _clearListener;
-
-	/**
-	 * Listener that is notified when the user clears the download data.
-	 */
-	public interface ClearListener {
-
-		/**
-		 * Called when the user clicks the clear button.
-		 */
-		void handleClear();
-	}
 
 	/**
 	 * Creates a new {@link ReactDownloadControl}.
 	 *
-	 * @param data
-	 *        The initial download data, or {@code null} if no data is available yet.
-	 * @param fileName
-	 *        The suggested file name for the download, or {@code null}.
+	 * @param model
+	 *        The shared data model to observe.
 	 */
-	public ReactDownloadControl(BinaryData data, String fileName) {
+	public ReactDownloadControl(BinaryDataValue model) {
 		super(null, "TLDownload", COMMANDS);
-		_data = data;
+		_model = model;
+		BinaryData data = model.getData();
 		putState(HAS_DATA, data != null);
 		putState(DATA_REVISION, _dataRevision);
-		putState(FILE_NAME, fileName);
+		putState(FILE_NAME, data != null ? data.getName() : null);
 		putState(CLEARABLE, false);
-	}
-
-	/**
-	 * Sets the data to download.
-	 *
-	 * <p>
-	 * If the control is already rendered, a state patch is sent to the client so that the download
-	 * button is enabled or disabled accordingly.
-	 * </p>
-	 *
-	 * @param data
-	 *        The binary data, or {@code null} to clear.
-	 * @param fileName
-	 *        The suggested file name for the download, or {@code null}.
-	 */
-	public void setData(BinaryData data, String fileName) {
-		_data = data;
-		_dataRevision++;
-		putState(HAS_DATA, data != null);
-		putState(DATA_REVISION, _dataRevision);
-		putState(FILE_NAME, fileName);
+		model.addListener(_modelListener);
 	}
 
 	/**
@@ -113,19 +87,22 @@ public class ReactDownloadControl extends ReactControl implements DataProvider {
 		putState(CLEARABLE, clearable);
 	}
 
-	/**
-	 * Sets the listener that is notified when the user clears the download data.
-	 *
-	 * @param listener
-	 *        The listener, or {@code null} to remove.
-	 */
-	public void setClearListener(ClearListener listener) {
-		_clearListener = listener;
+	@Override
+	public BinaryData getDownloadData() {
+		return _model.getData();
 	}
 
 	@Override
-	public BinaryData getDownloadData() {
-		return _data;
+	protected void internalDetach() {
+		_model.removeListener(_modelListener);
+		super.internalDetach();
+	}
+
+	private void handleModelChanged(BinaryData data) {
+		_dataRevision++;
+		putState(HAS_DATA, data != null);
+		putState(DATA_REVISION, _dataRevision);
+		putState(FILE_NAME, data != null ? data.getName() : null);
 	}
 
 	/**
@@ -145,11 +122,7 @@ public class ReactDownloadControl extends ReactControl implements DataProvider {
 		@Override
 		protected HandlerResult execute(DisplayContext context, Control control, Map<String, Object> arguments) {
 			ReactDownloadControl downloadControl = (ReactDownloadControl) control;
-			downloadControl.setData(null, null);
-			ClearListener listener = downloadControl._clearListener;
-			if (listener != null) {
-				listener.handleClear();
-			}
+			downloadControl._model.setData(null);
 			return HandlerResult.DEFAULT_RESULT;
 		}
 	}

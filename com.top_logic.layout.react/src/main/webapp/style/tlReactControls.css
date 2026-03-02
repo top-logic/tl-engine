@@ -831,3 +831,105 @@ button.tlPhotoCapture__overlayCaptureBtn:active .tlPhotoCapture__overlayCaptureI
 	padding-bottom: var(--spacing-03);
 	border-bottom: 1px solid var(--border-subtle-01);
 }
+
+/* --- TLPanel ----------------------------------------------------------- */
+
+.tlPanel {
+	font-family: var(--font-family);
+}
+
+.tlPanel__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
+	gap: var(--spacing-02);
+	padding: var(--spacing-02) var(--spacing-03);
+	box-sizing: border-box;
+	flex-shrink: 0;
+}
+
+.tlPanel__title {
+	font-weight: bold;
+	font-size: var(--heading-compact-02-font-size);
+	line-height: var(--heading-compact-02-line-height);
+	letter-spacing: var(--heading-compact-02-letter-spacing);
+	color: var(--text-inverse);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.tlPanel__toolbar {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-01);
+	flex-shrink: 0;
+}
+
+.tlPanel__actionButton {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	width: 1.75rem;
+	height: 1.75rem;
+	border: none;
+	border-radius: var(--corner-radius);
+	background: transparent;
+	color: var(--layer-accent-icon, var(--text-inverse));
+	cursor: pointer;
+	padding: 0;
+	flex-shrink: 0;
+}
+
+button.tlPanel__actionButton:hover {
+	background: rgba(255, 255, 255, 0.15);
+}
+
+button.tlPanel__actionButton:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: -2px;
+}
+
+.tlPanel__actionButton svg {
+	width: 1rem;
+	height: 1rem;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+
+.tlPanel__content {
+	flex: 1;
+	overflow: auto;
+	position: relative;
+}
+
+.tlPanel--maximized {
+	background: var(--background);
+}
+
+/* --- TLSplitPanel ------------------------------------------------------ */
+
+.tlSplitPanel__splitter {
+	flex-shrink: 0;
+	background: var(--border-subtle);
+}
+
+.tlSplitPanel__splitter--horizontal {
+	width: 4px;
+	cursor: col-resize;
+}
+
+.tlSplitPanel__splitter--vertical {
+	height: 4px;
+	cursor: row-resize;
+}
+
+.tlSplitPanel__splitter:hover {
+	background: var(--border-interactive);
+}

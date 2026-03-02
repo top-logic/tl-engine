@@ -45,7 +45,6 @@ const TLSplitPanel: React.FC<TLCellProps> = () => {
   const computeChildStyle = useCallback((child: ChildDescriptor, localSize?: number): React.CSSProperties => {
     const style: React.CSSProperties = {
       overflow: child.scrolling || 'auto',
-      position: 'relative',
     };
 
     if (child.collapsed) {

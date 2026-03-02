@@ -996,7 +996,7 @@ button.tlPanel__actionButton:focus-visible {
 }
 
 .tlSidebar--collapsed .tlSidebar__nav {
-	width: 3.5rem;
+	width: 2.5rem;
 }
 
 .tlSidebar__content {
@@ -1009,11 +1009,17 @@ button.tlPanel__actionButton:focus-visible {
 .tlSidebar__footerSlot {
 	flex-shrink: 0;
 	border-bottom: 1px solid var(--border-subtle);
+	overflow: hidden;
 }
 
 .tlSidebar__footerSlot {
 	border-bottom: none;
 	border-top: 1px solid var(--border-subtle);
+}
+
+.tlSidebar--collapsed .tlSidebar__headerSlot,
+.tlSidebar--collapsed .tlSidebar__footerSlot {
+	display: none;
 }
 
 .tlSidebar__items {
@@ -1153,9 +1159,9 @@ button.tlSidebar__groupHeader:focus-visible {
 /* Icon */
 .tlSidebar__icon {
 	flex-shrink: 0;
-	width: 1.25rem;
+	width: 1rem;
 	text-align: center;
-	font-size: 1.125rem;
+	font-size: 1rem;
 }
 
 /* Label */
@@ -1163,6 +1169,26 @@ button.tlSidebar__groupHeader:focus-visible {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+}
+
+/* --- Collapsed mode: center icon-only items --- */
+
+.tlSidebar--collapsed .tlSidebar__navItem,
+.tlSidebar--collapsed .tlSidebar__commandItem,
+.tlSidebar--collapsed .tlSidebar__groupHeader,
+.tlSidebar--collapsed .tlSidebar__headerItem {
+	justify-content: center;
+	padding: var(--spacing-03) 0;
+	border-left: none;
+	gap: 0;
+}
+
+.tlSidebar--collapsed .tlSidebar__navItem--active {
+	background: var(--layer-selected-01);
+}
+
+.tlSidebar--collapsed .tlSidebar__separator {
+	margin: var(--spacing-02) var(--spacing-02);
 }
 
 /* Collapse toggle button */

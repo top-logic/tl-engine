@@ -195,7 +195,7 @@ const TLSidebar: React.FC<TLCellProps> = () => {
   return (
     <div className={'tlSidebar' + (collapsed ? ' tlSidebar--collapsed' : '')}>
       <nav className="tlSidebar__nav">
-        {state.headerContent && (
+        {!collapsed && state.headerContent && (
           <div className="tlSidebar__headerSlot">
             <TLChild control={state.headerContent} />
           </div>
@@ -215,7 +215,7 @@ const TLSidebar: React.FC<TLCellProps> = () => {
           ))}
         </div>
 
-        {state.footerContent && (
+        {!collapsed && state.footerContent && (
           <div className="tlSidebar__footerSlot">
             <TLChild control={state.footerContent} />
           </div>

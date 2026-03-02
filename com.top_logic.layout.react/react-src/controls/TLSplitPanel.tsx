@@ -164,7 +164,7 @@ const TLSplitPanel: React.FC<TLCellProps> = () => {
     elements.push(
       <div
         key={`child-${i}`}
-        className="tlSplitPanel__child"
+        className={`tlSplitPanel__child${child.collapsed && effectiveHorizontal ? ' tlSplitPanel__child--collapsedHorizontal' : ''}`}
         style={computeChildStyle(child)}
       >
         <TLChild control={child.control} />

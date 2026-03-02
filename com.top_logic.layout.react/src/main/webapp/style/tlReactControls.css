@@ -1017,9 +1017,13 @@ button.tlPanel__actionButton:focus-visible {
 	border-top: 1px solid var(--border-subtle);
 }
 
-.tlSidebar--collapsed .tlSidebar__headerSlot,
-.tlSidebar--collapsed .tlSidebar__footerSlot {
-	display: none;
+.tlSidebar__headerSlot--collapsed,
+.tlSidebar__footerSlot--collapsed {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	padding: var(--spacing-02);
+	overflow: hidden;
 }
 
 .tlSidebar__items {

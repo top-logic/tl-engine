@@ -43,8 +43,12 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * <li>{@code activeItemId} - the currently selected navigation item ID</li>
  * <li>{@code collapsed} - whether the sidebar nav panel is collapsed</li>
  * <li>{@code activeContent} - the active item's content as a child control descriptor</li>
- * <li>{@code headerContent} - optional header slot child control descriptor</li>
- * <li>{@code footerContent} - optional footer slot child control descriptor</li>
+ * <li>{@code headerContent} - optional header slot child control descriptor (expanded mode)</li>
+ * <li>{@code headerCollapsedContent} - optional header slot child control descriptor (collapsed
+ * mode)</li>
+ * <li>{@code footerContent} - optional footer slot child control descriptor (expanded mode)</li>
+ * <li>{@code footerCollapsedContent} - optional footer slot child control descriptor (collapsed
+ * mode)</li>
  * </ul>
  */
 public class ReactSidebarControl extends ReactControl {
@@ -62,6 +66,10 @@ public class ReactSidebarControl extends ReactControl {
 	private static final String HEADER_CONTENT = "headerContent";
 
 	private static final String FOOTER_CONTENT = "footerContent";
+
+	private static final String HEADER_COLLAPSED_CONTENT = "headerCollapsedContent";
+
+	private static final String FOOTER_COLLAPSED_CONTENT = "footerCollapsedContent";
 
 	private static final String ITEM_ID_ARG = "itemId";
 
@@ -81,7 +89,11 @@ public class ReactSidebarControl extends ReactControl {
 
 	private final ReactControl _headerContent;
 
+	private final ReactControl _headerCollapsedContent;
+
 	private final ReactControl _footerContent;
+
+	private final ReactControl _footerCollapsedContent;
 
 	private final LinkedHashMap<String, ReactControl> _contentCache = new LinkedHashMap<>();
 
@@ -103,18 +115,27 @@ public class ReactSidebarControl extends ReactControl {
 	 * @param defaultCollapsed
 	 *        Default collapse state (before personal config override).
 	 * @param headerContent
-	 *        Optional header slot control, or {@code null}.
+	 *        Optional header slot control shown when expanded, or {@code null}.
+	 * @param headerCollapsedContent
+	 *        Optional header slot control shown when collapsed, or {@code null}. If {@code null}
+	 *        and {@code headerContent} is non-null, the header slot is hidden when collapsed.
 	 * @param footerContent
-	 *        Optional footer slot control, or {@code null}.
+	 *        Optional footer slot control shown when expanded, or {@code null}.
+	 * @param footerCollapsedContent
+	 *        Optional footer slot control shown when collapsed, or {@code null}. If {@code null}
+	 *        and {@code footerContent} is non-null, the footer slot is hidden when collapsed.
 	 */
 	public ReactSidebarControl(String personalizationKey, List<SidebarItem> items, String initialActiveItemId,
-			boolean defaultCollapsed, ReactControl headerContent, ReactControl footerContent) {
+			boolean defaultCollapsed, ReactControl headerContent, ReactControl headerCollapsedContent,
+			ReactControl footerContent, ReactControl footerCollapsedContent) {
 		super(null, REACT_MODULE, COMMANDS);
 		_personalizationKey = personalizationKey;
 		_items = new ArrayList<>(items);
 		_defaultCollapsed = defaultCollapsed;
 		_headerContent = headerContent;
+		_headerCollapsedContent = headerCollapsedContent;
 		_footerContent = footerContent;
+		_footerCollapsedContent = footerCollapsedContent;
 
 		// Load persisted collapse state.
 		_collapsed = PersonalizingExpandable.loadCollapsed(personalizationKey + ".collapsed", defaultCollapsed);
@@ -144,10 +165,30 @@ public class ReactSidebarControl extends ReactControl {
 		if (_headerContent != null) {
 			getReactState().put(HEADER_CONTENT, _headerContent);
 		}
+		if (_headerCollapsedContent != null) {
+			getReactState().put(HEADER_COLLAPSED_CONTENT, _headerCollapsedContent);
+		}
 		if (_footerContent != null) {
 			getReactState().put(FOOTER_CONTENT, _footerContent);
 		}
+		if (_footerCollapsedContent != null) {
+			getReactState().put(FOOTER_COLLAPSED_CONTENT, _footerCollapsedContent);
+		}
 		// activeContent is null until writeAsChild creates it.
+	}
+
+	/**
+	 * Convenience constructor without collapsed-mode slot alternatives.
+	 *
+	 * <p>
+	 * Equivalent to calling the full constructor with {@code null} for both collapsed content
+	 * parameters. The header and footer slots will be hidden when the sidebar is collapsed.
+	 * </p>
+	 */
+	public ReactSidebarControl(String personalizationKey, List<SidebarItem> items, String initialActiveItemId,
+			boolean defaultCollapsed, ReactControl headerContent, ReactControl footerContent) {
+		this(personalizationKey, items, initialActiveItemId, defaultCollapsed,
+			headerContent, null, footerContent, null);
 	}
 
 	@Override
@@ -169,8 +210,14 @@ public class ReactSidebarControl extends ReactControl {
 		if (_headerContent != null) {
 			_headerContent.cleanupTree();
 		}
+		if (_headerCollapsedContent != null) {
+			_headerCollapsedContent.cleanupTree();
+		}
 		if (_footerContent != null) {
 			_footerContent.cleanupTree();
+		}
+		if (_footerCollapsedContent != null) {
+			_footerCollapsedContent.cleanupTree();
 		}
 	}
 

@@ -5,17 +5,14 @@
  */
 package com.top_logic.layout.react.control.layout;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayUnit;
-import com.top_logic.layout.FrameScope;
 import com.top_logic.layout.basic.ControlCommand;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactControl;
@@ -129,9 +126,8 @@ public class ReactSplitPanelControl extends ReactControl {
 		ChildEntry removed = _children.remove(index);
 		childList().remove(index);
 
-		// Unregister removed child from SSE.
-		unregisterChildControl(removed._control);
-		forEachChildControl(removed._control.getReactState(), this::unregisterChildControl);
+		// Unregister removed child and its subtree from SSE.
+		removed._control.cleanupTree();
 
 		// Update parent indices for subsequent children.
 		for (int i = index; i < _children.size(); i++) {
@@ -214,38 +210,10 @@ public class ReactSplitPanelControl extends ReactControl {
 	}
 
 	@Override
-	protected void internalWrite(DisplayContext context, TagWriter out) throws IOException {
-		FrameScope frameScope = getScope().getFrameScope();
-
-		// Assign IDs to all child controls.
+	protected void cleanupChildren() {
 		for (ChildEntry entry : _children) {
-			entry._control.fetchID(frameScope);
-			forEachChildControl(entry._control.getReactState(), child -> child.fetchID(frameScope));
+			entry._control.cleanupTree();
 		}
-
-		// Rebuild the child list to include assigned IDs.
-		List<Map<String, Object>> list = childList();
-		list.clear();
-		for (ChildEntry entry : _children) {
-			list.add(entry.toDescriptor());
-		}
-
-		super.internalWrite(context, out);
-
-		// Register all child controls with the SSE queue.
-		for (ChildEntry entry : _children) {
-			registerChildControl(entry._control);
-			forEachChildControl(entry._control.getReactState(), this::registerChildControl);
-		}
-	}
-
-	@Override
-	protected void internalDetach() {
-		for (ChildEntry entry : _children) {
-			forEachChildControl(entry._control.getReactState(), this::unregisterChildControl);
-			unregisterChildControl(entry._control);
-		}
-		super.internalDetach();
 	}
 
 	@SuppressWarnings("unchecked")

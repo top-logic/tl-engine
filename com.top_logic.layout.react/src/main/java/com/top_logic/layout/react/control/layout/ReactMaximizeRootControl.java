@@ -5,12 +5,8 @@
  */
 package com.top_logic.layout.react.control.layout;
 
-import java.io.IOException;
 import java.util.Collections;
 
-import com.top_logic.basic.xml.TagWriter;
-import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.FrameScope;
 import com.top_logic.layout.react.ReactControl;
 
 /**
@@ -83,22 +79,7 @@ public class ReactMaximizeRootControl extends ReactControl {
 	}
 
 	@Override
-	protected void internalWrite(DisplayContext context, TagWriter out) throws IOException {
-		FrameScope frameScope = getScope().getFrameScope();
-
-		_child.fetchID(frameScope);
-		forEachChildControl(_child.getReactState(), child -> child.fetchID(frameScope));
-
-		super.internalWrite(context, out);
-
-		registerChildControl(_child);
-		forEachChildControl(_child.getReactState(), this::registerChildControl);
-	}
-
-	@Override
-	protected void internalDetach() {
-		forEachChildControl(_child.getReactState(), this::unregisterChildControl);
-		unregisterChildControl(_child);
-		super.internalDetach();
+	protected void cleanupChildren() {
+		_child.cleanupTree();
 	}
 }

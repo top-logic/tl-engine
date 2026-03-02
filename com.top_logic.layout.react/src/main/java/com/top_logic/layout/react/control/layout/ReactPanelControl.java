@@ -5,15 +5,12 @@
  */
 package com.top_logic.layout.react.control.layout;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.FrameScope;
 import com.top_logic.layout.basic.ControlCommand;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactControl;
@@ -144,45 +141,11 @@ public class ReactPanelControl extends ReactControl {
 	}
 
 	@Override
-	protected void internalWrite(DisplayContext context, TagWriter out) throws IOException {
-		FrameScope frameScope = getScope().getFrameScope();
-
-		// Assign IDs to child and toolbar buttons.
-		_child.fetchID(frameScope);
-		forEachChildControl(_child.getReactState(), child -> child.fetchID(frameScope));
-
+	protected void cleanupChildren() {
+		_child.cleanupTree();
 		for (ReactControl button : _toolbarButtons) {
-			button.fetchID(frameScope);
-			forEachChildControl(button.getReactState(), child -> child.fetchID(frameScope));
+			button.cleanupTree();
 		}
-
-		// Rebuild toolbar button list with assigned IDs.
-		List<Object> list = toolbarButtonList();
-		list.clear();
-		list.addAll(_toolbarButtons);
-
-		super.internalWrite(context, out);
-
-		// Register child and toolbar buttons with SSE queue.
-		registerChildControl(_child);
-		forEachChildControl(_child.getReactState(), this::registerChildControl);
-
-		for (ReactControl button : _toolbarButtons) {
-			registerChildControl(button);
-			forEachChildControl(button.getReactState(), this::registerChildControl);
-		}
-	}
-
-	@Override
-	protected void internalDetach() {
-		forEachChildControl(_child.getReactState(), this::unregisterChildControl);
-		unregisterChildControl(_child);
-
-		for (ReactControl button : _toolbarButtons) {
-			forEachChildControl(button.getReactState(), this::unregisterChildControl);
-			unregisterChildControl(button);
-		}
-		super.internalDetach();
 	}
 
 	@SuppressWarnings("unchecked")

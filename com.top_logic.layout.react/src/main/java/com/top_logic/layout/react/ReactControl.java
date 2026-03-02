@@ -33,6 +33,14 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * The control renders a mount-point {@code <div>} and a bootstrap script that calls
  * {@code TLReact.mount()} on the client. State updates are delivered via SSE.
  * </p>
+ *
+ * <p>
+ * Child {@link ReactControl}s embedded in the state are automatically initialized (ID assigned, SSE
+ * registered) when they are serialized during the initial render. This is done by delegating to
+ * {@link #writeAsChild(JsonWriter, FrameScope, SSEUpdateQueue)} from {@link #writeJsonValue}. Each
+ * control thus manages its own lifecycle, analogous to {@code child.write(context, out)} in
+ * traditional controls.
+ * </p>
  */
 public class ReactControl extends AbstractVisibleControl {
 
@@ -46,6 +54,8 @@ public class ReactControl extends AbstractVisibleControl {
 	private Map<String, Object> _reactState;
 
 	private SSEUpdateQueue _sseQueue;
+
+	private FrameScope _frameScope;
 
 	/**
 	 * Creates a new {@link ReactControl}.
@@ -88,6 +98,18 @@ public class ReactControl extends AbstractVisibleControl {
 	 */
 	public Map<String, Object> getReactState() {
 		return _reactState;
+	}
+
+	/**
+	 * Whether this control is attached to an SSE queue (i.e., has been rendered).
+	 *
+	 * <p>
+	 * Subclasses use this to decide whether state changes should produce a patch event or just
+	 * update the pre-render state map.
+	 * </p>
+	 */
+	protected boolean isSSEAttached() {
+		return _sseQueue != null;
 	}
 
 	/**
@@ -178,6 +200,12 @@ public class ReactControl extends AbstractVisibleControl {
 	/**
 	 * Applies a partial patch to the React state and sends a {@link PatchEvent} via SSE.
 	 *
+	 * <p>
+	 * Any child {@link ReactControl}s in the patch are automatically initialized (ID assigned, SSE
+	 * registered) during serialization if a {@link FrameScope} and {@link SSEUpdateQueue} are
+	 * available on this control.
+	 * </p>
+	 *
 	 * @param queue
 	 *        The SSE queue to deliver the update to.
 	 * @param patch
@@ -188,20 +216,25 @@ public class ReactControl extends AbstractVisibleControl {
 
 		PatchEvent event = PatchEvent.create()
 			.setControlId(getID())
-			.setPatch(toJsonString(patch));
+			.setPatch(toJsonString(patch, _frameScope, queue));
 		queue.enqueue(event);
 	}
 
 	@Override
 	protected void internalWrite(DisplayContext context, TagWriter out) throws IOException {
-		// Assign IDs to child ReactControls before serialization so their controlIds are available.
 		FrameScope frameScope = getScope().getFrameScope();
-		forEachChildControl(_reactState, child -> child.fetchID(frameScope));
+		SSEUpdateQueue queue = SSEUpdateQueue.forSession(context.asRequest().getSession());
+
+		// Initialize THIS control (the root). Children auto-initialize during serialization.
+		_frameScope = frameScope;
+		fetchID(frameScope);
+		_sseQueue = queue;
+		queue.registerControl(this);
 
 		out.beginBeginTag(HTMLConstants.DIV);
 		writeControlAttributes(context, out);
 		out.writeAttribute("data-react-module", _reactModule);
-		out.writeAttribute("data-react-state", toJsonString(_reactState));
+		out.writeAttribute("data-react-state", toJsonString(_reactState, frameScope, queue));
 		out.endBeginTag();
 		out.endTag(HTMLConstants.DIV);
 
@@ -215,35 +248,18 @@ public class ReactControl extends AbstractVisibleControl {
 		out.append("', '");
 		out.append(_reactModule);
 		out.append("', ");
-		writeJsonLiteral(out, _reactState);
+		writeJsonLiteral(out, _reactState, frameScope, queue);
 		out.append(", '");
 		out.append(windowName);
 		out.append("', '");
 		out.append(contextPath);
 		out.append("');");
 		HTMLUtil.endScriptAfterRendering(out);
-
-		// Retrieve the SSE queue from the session and register this control for command dispatch.
-		SSEUpdateQueue queue = SSEUpdateQueue.forSession(context.asRequest().getSession());
-		_sseQueue = queue;
-		queue.registerControl(this);
-		forEachChildControl(_reactState, child -> {
-			child._sseQueue = queue;
-			queue.registerControl(child);
-		});
 	}
 
 	@Override
 	protected void internalDetach() {
-		SSEUpdateQueue queue = _sseQueue;
-		if (queue != null) {
-			queue.unregisterControl(this);
-			forEachChildControl(_reactState, child -> {
-				queue.unregisterControl(child);
-				child._sseQueue = null;
-			});
-			_sseQueue = null;
-		}
+		cleanupTree();
 		super.internalDetach();
 	}
 
@@ -253,13 +269,87 @@ public class ReactControl extends AbstractVisibleControl {
 	}
 
 	/**
-	 * Serializes a map to a JSON string.
+	 * Writes this control as a child descriptor to JSON, ensuring it is properly initialized (ID
+	 * assigned, SSE registered) before serialization.
+	 *
+	 * <p>
+	 * Composite controls override this to prepare lazy children before serialization (e.g.,
+	 * {@link com.top_logic.layout.react.control.layout.ReactDeckPaneControl} creates its active
+	 * child).
+	 * </p>
+	 *
+	 * @param writer
+	 *        The JSON writer to write to.
+	 * @param frameScope
+	 *        The frame scope for ID assignment, or {@code null} if controls are already
+	 *        initialized.
+	 * @param queue
+	 *        The SSE queue for registration, or {@code null} if controls are already registered.
 	 */
-	public static String toJsonString(Map<String, Object> map) {
+	protected void writeAsChild(JsonWriter writer, FrameScope frameScope, SSEUpdateQueue queue)
+			throws IOException {
+		if (frameScope != null) {
+			_frameScope = frameScope;
+			fetchID(frameScope);
+		}
+		if (queue != null && _sseQueue == null) {
+			_sseQueue = queue;
+			queue.registerControl(this);
+		}
+
+		writer.beginObject();
+		writer.name("controlId");
+		writer.value(getID());
+		writer.name("module");
+		writer.value(_reactModule);
+		writer.name("state");
+		writeJsonMap(writer, getReactState(), frameScope, queue);
+		writer.endObject();
+	}
+
+	/**
+	 * Hook for composite controls to clean up their children during detach.
+	 *
+	 * <p>
+	 * Composite controls override this to call {@link #cleanupTree()} on each of their children.
+	 * The default implementation does nothing (leaf controls have no children).
+	 * </p>
+	 */
+	protected void cleanupChildren() {
+		// Leaf controls have no children.
+	}
+
+	/**
+	 * Unregisters this control and all its children from SSE. Called during
+	 * {@link #internalDetach()} and when dynamically removing a child.
+	 */
+	public final void cleanupTree() {
+		cleanupChildren();
+		SSEUpdateQueue queue = _sseQueue;
+		if (queue != null) {
+			queue.unregisterControl(this);
+			_sseQueue = null;
+		}
+		_frameScope = null;
+	}
+
+	// -- Context-aware serialization methods --
+
+	/**
+	 * Serializes a map to a JSON string with context for child initialization.
+	 *
+	 * @param map
+	 *        The map to serialize.
+	 * @param frameScope
+	 *        The frame scope for ID assignment, or {@code null}.
+	 * @param queue
+	 *        The SSE queue for registration, or {@code null}.
+	 */
+	public static String toJsonString(Map<String, Object> map, FrameScope frameScope, SSEUpdateQueue queue) {
 		try {
 			StringW sw = new StringW();
 			try (JsonWriter writer = new JsonWriter(sw)) {
-				writeJsonMap(writer, map);
+				writeJsonMap(writer, map, frameScope, queue);
 			}
 			return sw.toString();
 		} catch (IOException ex) {
@@ -268,24 +358,27 @@ public class ReactControl extends AbstractVisibleControl {
 	}
 
 	/**
-	 * Writes a JSON map literal directly to a {@link TagWriter}.
+	 * Writes a JSON map literal directly to a {@link TagWriter} with context for child
+	 * initialization.
 	 */
-	public static void writeJsonLiteral(TagWriter out, Map<String, Object> map) throws IOException {
-		out.append(toJsonString(map));
+	public static void writeJsonLiteral(TagWriter out, Map<String, Object> map, FrameScope frameScope,
+			SSEUpdateQueue queue) throws IOException {
+		out.append(toJsonString(map, frameScope, queue));
 	}
 
-	@SuppressWarnings("unchecked")
-	private static void writeJsonMap(JsonWriter writer, Map<String, Object> map) throws IOException {
+	static void writeJsonMap(JsonWriter writer, Map<String, Object> map, FrameScope frameScope,
+			SSEUpdateQueue queue) throws IOException {
 		writer.beginObject();
 		for (Map.Entry<String, Object> entry : map.entrySet()) {
 			writer.name(entry.getKey());
-			writeJsonValue(writer, entry.getValue());
+			writeJsonValue(writer, entry.getValue(), frameScope, queue);
 		}
 		writer.endObject();
 	}
 
 	@SuppressWarnings("unchecked")
-	public static void writeJsonValue(JsonWriter writer, Object value) throws IOException {
+	static void writeJsonValue(JsonWriter writer, Object value, FrameScope frameScope,
+			SSEUpdateQueue queue) throws IOException {
 		if (value == null) {
 			writer.nullValue();
 		} else if (value instanceof String) {
@@ -295,26 +388,43 @@ public class ReactControl extends AbstractVisibleControl {
 		} else if (value instanceof Boolean) {
 			writer.value((Boolean) value);
 		} else if (value instanceof Map) {
-			writeJsonMap(writer, (Map<String, Object>) value);
+			writeJsonMap(writer, (Map<String, Object>) value, frameScope, queue);
 		} else if (value instanceof ReactControl) {
-			ReactControl child = (ReactControl) value;
-			writer.beginObject();
-			writer.name("controlId");
-			writer.value(child.getID());
-			writer.name("module");
-			writer.value(child.getReactModule());
-			writer.name("state");
-			writeJsonMap(writer, child.getReactState());
-			writer.endObject();
+			((ReactControl) value).writeAsChild(writer, frameScope, queue);
 		} else if (value instanceof List) {
 			writer.beginArray();
 			for (Object element : (List<?>) value) {
-				writeJsonValue(writer, element);
+				writeJsonValue(writer, element, frameScope, queue);
 			}
 			writer.endArray();
 		} else {
 			writer.value(value.toString());
 		}
+	}
+
+	// -- Backward-compatible no-context methods (used for patches/reconnection where controls are
+	// already initialized) --
+
+	/**
+	 * Serializes a map to a JSON string.
+	 */
+	public static String toJsonString(Map<String, Object> map) {
+		return toJsonString(map, null, null);
+	}
+
+	/**
+	 * Writes a JSON map literal directly to a {@link TagWriter}.
+	 */
+	public static void writeJsonLiteral(TagWriter out, Map<String, Object> map) throws IOException {
+		writeJsonLiteral(out, map, null, null);
+	}
+
+	/**
+	 * Writes a single value to JSON.
+	 */
+	@SuppressWarnings("unchecked")
+	public static void writeJsonValue(JsonWriter writer, Object value) throws IOException {
+		writeJsonValue(writer, value, null, null);
 	}
 
 	/**

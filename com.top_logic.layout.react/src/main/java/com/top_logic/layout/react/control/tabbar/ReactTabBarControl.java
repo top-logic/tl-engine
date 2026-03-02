@@ -12,14 +12,16 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.FrameScope;
 import com.top_logic.layout.basic.ControlCommand;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactControl;
+import com.top_logic.layout.react.SSEUpdateQueue;
 import com.top_logic.tool.boundsec.HandlerResult;
+
+import de.haumacher.msgbuf.json.JsonWriter;
 
 /**
  * A {@link ReactControl} that renders a tab bar with lazily created content.
@@ -92,7 +94,7 @@ public class ReactTabBarControl extends ReactControl {
 		}
 		getReactState().put(TABS, tabList);
 		getReactState().put(ACTIVE_TAB_ID, _activeTabId);
-		// activeContent is null until internalWrite creates it.
+		// activeContent is null until writeAsChild creates it.
 	}
 
 	/**
@@ -103,30 +105,21 @@ public class ReactTabBarControl extends ReactControl {
 	}
 
 	@Override
-	protected void internalWrite(DisplayContext context, TagWriter out) throws IOException {
-		FrameScope frameScope = getScope().getFrameScope();
-
-		// Create the active tab's content (lazy init).
-		ReactControl activeContent = getOrCreateContent(_activeTabId, frameScope);
-		getReactState().put(ACTIVE_CONTENT, activeContent);
-
-		super.internalWrite(context, out);
-
-		// Register all cached content controls with the SSE queue.
-		for (ReactControl cached : _contentCache.values()) {
-			registerChildControl(cached);
+	protected void writeAsChild(JsonWriter writer, FrameScope frameScope, SSEUpdateQueue queue)
+			throws IOException {
+		if (getReactState().get(ACTIVE_CONTENT) == null) {
+			ReactControl activeContent = getOrCreateContent(_activeTabId);
+			getReactState().put(ACTIVE_CONTENT, activeContent);
 		}
+		super.writeAsChild(writer, frameScope, queue);
 	}
 
 	@Override
-	protected void internalDetach() {
-		// Unregister all cached content controls (and their nested children) before detaching.
+	protected void cleanupChildren() {
 		for (ReactControl cached : _contentCache.values()) {
-			forEachChildControl(cached.getReactState(), this::unregisterChildControl);
-			unregisterChildControl(cached);
+			cached.cleanupTree();
 		}
 		_contentCache.clear();
-		super.internalDetach();
 	}
 
 	/**
@@ -145,17 +138,13 @@ public class ReactTabBarControl extends ReactControl {
 		}
 		_activeTabId = tabId;
 
-		// Check if we have a FrameScope (i.e., we've been rendered).
-		FrameScope frameScope = getFrameScopeOrNull();
-		if (frameScope == null) {
+		if (!isSSEAttached()) {
 			// Not yet rendered; just update state for deferred rendering.
 			getReactState().put(ACTIVE_TAB_ID, _activeTabId);
 			return;
 		}
 
-		ReactControl content = getOrCreateContent(tabId, frameScope);
-		registerChildControl(content);
-		forEachChildControl(content.getReactState(), this::registerChildControl);
+		ReactControl content = getOrCreateContent(tabId);
 
 		Map<String, Object> patch = new HashMap<>();
 		patch.put(ACTIVE_TAB_ID, tabId);
@@ -163,7 +152,7 @@ public class ReactTabBarControl extends ReactControl {
 		patchReactState(patch);
 	}
 
-	private ReactControl getOrCreateContent(String tabId, FrameScope frameScope) {
+	private ReactControl getOrCreateContent(String tabId) {
 		ReactControl cached = _contentCache.get(tabId);
 		if (cached != null) {
 			return cached;
@@ -171,9 +160,6 @@ public class ReactTabBarControl extends ReactControl {
 
 		TabDefinition tabDef = findTab(tabId);
 		ReactControl content = tabDef.getContentFactory().get();
-		content.fetchID(frameScope);
-		// Also assign IDs to any nested ReactControl children in the content's state.
-		forEachChildControl(content.getReactState(), child -> child.fetchID(frameScope));
 		_contentCache.put(tabId, content);
 		return content;
 	}
@@ -185,14 +171,6 @@ public class ReactTabBarControl extends ReactControl {
 			}
 		}
 		throw new IllegalArgumentException("Unknown tab ID: " + tabId);
-	}
-
-	private FrameScope getFrameScopeOrNull() {
-		try {
-			return getScope() != null ? getScope().getFrameScope() : null;
-		} catch (Exception ex) {
-			return null;
-		}
 	}
 
 	/**

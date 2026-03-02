@@ -467,9 +467,9 @@ message AnnotationInfo {
 	string definedIn;
 
 	/**
-	 * Annotation configuration as XML string.
+	 * Annotation configuration as JSON (serialized via {@code JsonConfigurationWriter} with schema references).
 	 */
-	string configXml;
+	string configJson;
 }
 
 /**

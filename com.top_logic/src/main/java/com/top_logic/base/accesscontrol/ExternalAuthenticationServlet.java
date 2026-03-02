@@ -135,23 +135,22 @@ public abstract class ExternalAuthenticationServlet extends LoginPageServlet {
 			Logger.warn(message, ExternalAuthenticationServlet.class);
 			throw new LoginDeniedException(message);
 		}
-		try (LoginCredentials credentials = retrieveLoginCredentials(request, response)) {
-			checkLoginCredentials(credentials, request, response);
-			if (reuseSession) {
-				HttpSession existingSession = SessionService.getInstance().getSession(request);
-				if (existingSession != null) {
-					String message = "Reusing an existing session for user '" + credentials.getUsername() + "'.";
-					Logger.debug(message, ExternalAuthenticationServlet.class);
-					forwardToStartPage(request, response);
-					return;
-				} else {
-					String message = "No existing session found for user '" + credentials.getUsername()
+		LoginCredentials credentials = retrieveLoginCredentials(request, response);
+		checkLoginCredentials(credentials, request, response);
+		if (reuseSession) {
+			HttpSession existingSession = SessionService.getInstance().getSession(request);
+			if (existingSession != null) {
+				String message = "Reusing an existing session for user '" + credentials.getUsername() + "'.";
+				Logger.debug(message, ExternalAuthenticationServlet.class);
+				forwardToStartPage(request, response);
+				return;
+			} else {
+				String message = "No existing session found for user '" + credentials.getUsername()
 						+ "', creating a new one.";
-					Logger.debug(message, ExternalAuthenticationServlet.class);
-				}
+				Logger.debug(message, ExternalAuthenticationServlet.class);
 			}
-			loginUser(credentials.getPerson(), request, response);
 		}
+		loginUser(credentials.getPerson(), request, response);
 		forwardToStartPage(request, response);
 	}
 

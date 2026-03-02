@@ -309,9 +309,8 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 			// no such person known to the system or person not longer alive
 			return this.noLogin(userName, aRequest, FailedLogin.REASON_UNKNOWN_PERSON);
 		}
-		try (LoginCredentials login = LoginCredentials.fromUserAndPassword(thePerson, password)) {
-			return this.checkLoginCredentials(login, aRequest, response);
-		}
+		LoginCredentials login = LoginCredentials.fromUserAndPassword(thePerson, password);
+		return this.checkLoginCredentials(login, aRequest, response);
 	}
 
 	/**

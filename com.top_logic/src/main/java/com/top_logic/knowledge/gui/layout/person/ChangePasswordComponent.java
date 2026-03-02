@@ -184,11 +184,14 @@ public class ChangePasswordComponent extends FormComponent {
 			if (formContext.hasMember(OLD_PASSWORD)) {
 				char[] oldPassword = ((String) formContext.getField(OLD_PASSWORD).getValue()).toCharArray();
 
-				try (LoginCredentials login = LoginCredentials.fromUserAndPassword(account, oldPassword)) {
+				LoginCredentials login = LoginCredentials.fromUserAndPassword(account, oldPassword);
+				try {
 					boolean oldPasswordValid = device.authentify(login);
 					if (!oldPasswordValid) {
 						return error(I18NConstants.WRONG_OLD_PASSWORD);
 					}
+				} finally {
+					login.clearPassword();
 				}
 			}
 
@@ -202,7 +205,8 @@ public class ChangePasswordComponent extends FormComponent {
 			if (StringServices.isEmpty(newPassword1)) {
 				return error(I18NConstants.EMPTY_PASSWORD_DISALLOWED);
 			}
-			try (LoginCredentials newLogin = LoginCredentials.fromUserAndPassword(account, newPassword1.toCharArray())) {
+			LoginCredentials newLogin = LoginCredentials.fromUserAndPassword(account, newPassword1.toCharArray());
+			try {
 				Transaction tx =
 					PersistencyLayer.getKnowledgeBase()
 						.beginTransaction(I18NConstants.CHANGED_PASSWORD__USER.fill(account.getName()));
@@ -221,6 +225,8 @@ public class ChangePasswordComponent extends FormComponent {
 				} finally {
 					tx.rollback();
 				}
+			} finally {
+				newLogin.clearPassword();
 			}
 
 			// Make sure to drop sensitive data.

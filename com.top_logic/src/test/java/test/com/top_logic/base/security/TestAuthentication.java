@@ -75,9 +75,8 @@ public class TestAuthentication extends BasicTestCase {
      * @param    aName    The name to be tested.
      */
 	private void doTest(String aName, char[] aPass) {
-		try (LoginCredentials login = login(aName, aPass)) {
-			assertTrue(this.authentication.authentify(login));
-		}
+		LoginCredentials login = login(aName, aPass);
+		assertTrue(this.authentication.authentify(login));
     }
 
     /**
@@ -86,9 +85,8 @@ public class TestAuthentication extends BasicTestCase {
      * @param    aName    The name to be tested.
      */
 	private void doTestFail(String aName, char[] aPass) {
-		try (LoginCredentials login = login(aName, aPass)) {
-			assertFalse(this.authentication.authentify(login));
-		}
+		LoginCredentials login = login(aName, aPass);
+		assertFalse(this.authentication.authentify(login));
     }
 
 	private LoginCredentials login(String user, char[] password) {

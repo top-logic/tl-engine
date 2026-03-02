@@ -24,6 +24,10 @@
     "rollup": "^4.59.0",
     "rollup-plugin-license": "^3.7.0"
   },
+  "overrides": {
+    "minimatch": "^10.2.4",
+    "serialize-javascript": "^7.0.3"
+  },
   "dependencies": {
     "cross-spawn": "^7.0.6",
     "diagram-js": "^15.9.1",

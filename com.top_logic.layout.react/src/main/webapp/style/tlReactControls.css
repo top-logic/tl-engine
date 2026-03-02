@@ -944,3 +944,30 @@ button.tlPanel__actionButton:focus-visible {
 .tlSplitPanel--allCollapsed > .tlSplitPanel__child {
 	overflow: hidden;
 }
+
+/* --- Collapsed panel in horizontal split ------------------------------- */
+
+.tlSplitPanel__child--collapsedHorizontal .tlPanel__header {
+	flex-direction: column-reverse;
+	justify-content: start;
+	align-items: unset;
+	height: 100%;
+}
+
+.tlSplitPanel__child--collapsedHorizontal .tlPanel__title {
+	display: block;
+	transform: rotate(90deg);
+	overflow: visible;
+	padding-left: var(--spacing-01);
+}
+
+.tlSplitPanel__child--collapsedHorizontal .tlPanel__toolbar {
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	padding-top: var(--spacing-03);
+}
+
+.tlSplitPanel__child--collapsedHorizontal .tlPanel__actionButton {
+	margin-left: 0;
+}

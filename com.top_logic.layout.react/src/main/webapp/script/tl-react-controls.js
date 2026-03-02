@@ -18,8 +18,8 @@ const { useCallback: W } = e, q = ({ state: l }) => {
   );
 }, { useCallback: X } = e, Z = ({ state: l, config: r }) => {
   const [a, o] = U(), t = X(
-    (s) => {
-      const c = s.target.value, u = c === "" ? null : Number(c);
+    (c) => {
+      const s = c.target.value, u = s === "" ? null : Number(s);
       o(u);
     },
     [o]
@@ -53,16 +53,16 @@ const { useCallback: W } = e, q = ({ state: l }) => {
     }
   );
 }, { useCallback: Q } = e, ee = ({ state: l, config: r }) => {
-  var s;
+  var c;
   const [a, o] = U(), t = Q(
-    (c) => {
-      o(c.target.value || null);
+    (s) => {
+      o(s.target.value || null);
     },
     [o]
   ), n = l.options ?? (r == null ? void 0 : r.options) ?? [];
   if (l.editable === !1) {
-    const c = ((s = n.find((u) => u.value === a)) == null ? void 0 : s.label) ?? "";
-    return /* @__PURE__ */ e.createElement("span", { className: "tlReactSelect tlReactSelect--immutable" }, c);
+    const s = ((c = n.find((u) => u.value === a)) == null ? void 0 : c.label) ?? "";
+    return /* @__PURE__ */ e.createElement("span", { className: "tlReactSelect tlReactSelect--immutable" }, s);
   }
   return /* @__PURE__ */ e.createElement(
     "select",
@@ -73,7 +73,7 @@ const { useCallback: W } = e, q = ({ state: l }) => {
       className: "tlReactSelect"
     },
     /* @__PURE__ */ e.createElement("option", { value: "" }),
-    n.map((c) => /* @__PURE__ */ e.createElement("option", { key: c.value, value: c.value }, c.label))
+    n.map((s) => /* @__PURE__ */ e.createElement("option", { key: s.value, value: s.value }, s.label))
   );
 }, { useCallback: te } = e, ae = ({ state: l }) => {
   const [r, a] = U(), o = te(
@@ -102,22 +102,22 @@ const { useCallback: W } = e, q = ({ state: l }) => {
   );
 }, le = ({ controlId: l, state: r }) => {
   const a = r.columns ?? [], o = r.rows ?? [];
-  return /* @__PURE__ */ e.createElement("table", { className: "tlReactTable" }, /* @__PURE__ */ e.createElement("thead", null, /* @__PURE__ */ e.createElement("tr", null, a.map((t) => /* @__PURE__ */ e.createElement("th", { key: t.name }, t.label)))), /* @__PURE__ */ e.createElement("tbody", null, o.map((t, n) => /* @__PURE__ */ e.createElement("tr", { key: n }, a.map((s) => {
-    const c = s.cellModule ? K(s.cellModule) : void 0, u = t[s.name];
-    if (c) {
+  return /* @__PURE__ */ e.createElement("table", { className: "tlReactTable" }, /* @__PURE__ */ e.createElement("thead", null, /* @__PURE__ */ e.createElement("tr", null, a.map((t) => /* @__PURE__ */ e.createElement("th", { key: t.name }, t.label)))), /* @__PURE__ */ e.createElement("tbody", null, o.map((t, n) => /* @__PURE__ */ e.createElement("tr", { key: n }, a.map((c) => {
+    const s = c.cellModule ? K(c.cellModule) : void 0, u = t[c.name];
+    if (s) {
       const m = { value: u, editable: r.editable };
-      return /* @__PURE__ */ e.createElement("td", { key: s.name }, /* @__PURE__ */ e.createElement(
-        c,
+      return /* @__PURE__ */ e.createElement("td", { key: c.name }, /* @__PURE__ */ e.createElement(
+        s,
         {
-          controlId: l + "-" + n + "-" + s.name,
+          controlId: l + "-" + n + "-" + c.name,
           state: m
         }
       ));
     }
-    return /* @__PURE__ */ e.createElement("td", { key: s.name }, u != null ? String(u) : "");
+    return /* @__PURE__ */ e.createElement("td", { key: c.name }, u != null ? String(u) : "");
   })))));
 }, { useCallback: ne } = e, oe = ({ command: l, label: r, disabled: a }) => {
-  const o = L(), t = M(), n = l ?? "click", s = r ?? o.label, c = a ?? o.disabled === !0, u = ne(() => {
+  const o = L(), t = M(), n = l ?? "click", c = r ?? o.label, s = a ?? o.disabled === !0, u = ne(() => {
     t(n);
   }, [t, n]);
   return /* @__PURE__ */ e.createElement(
@@ -125,15 +125,15 @@ const { useCallback: W } = e, q = ({ state: l }) => {
     {
       type: "button",
       onClick: u,
-      disabled: c,
+      disabled: s,
       className: "tlReactButton"
     },
-    s
+    c
   );
 }, { useCallback: re } = e, se = ({ command: l, label: r, active: a, disabled: o }) => {
-  const t = L(), n = M(), s = l ?? "click", c = r ?? t.label, u = a ?? t.active === !0, m = o ?? t.disabled === !0, p = re(() => {
-    n(s);
-  }, [n, s]);
+  const t = L(), n = M(), c = l ?? "click", s = r ?? t.label, u = a ?? t.active === !0, m = o ?? t.disabled === !0, p = re(() => {
+    n(c);
+  }, [n, c]);
   return /* @__PURE__ */ e.createElement(
     "button",
     {
@@ -142,7 +142,7 @@ const { useCallback: W } = e, q = ({ state: l }) => {
       disabled: m,
       className: "tlReactButton" + (u ? " tlReactButtonActive" : "")
     },
-    c
+    s
   );
 }, ce = () => {
   const l = L(), r = M(), a = l.count ?? 0, o = l.label ?? "React Counter";
@@ -172,9 +172,9 @@ const { useCallback: W } = e, q = ({ state: l }) => {
   "js.audioRecorder.error.insecure": "Microphone requires a secure connection (HTTPS).",
   "js.audioRecorder.error.denied": "Microphone access denied or unavailable."
 }, pe = () => {
-  const l = L(), r = F(), [a, o] = e.useState("idle"), [t, n] = e.useState(null), s = e.useRef(null), c = e.useRef([]), u = e.useRef(null), m = l.status ?? "idle", p = l.error, f = m === "received" ? "idle" : a !== "idle" ? a : m, k = e.useCallback(async () => {
+  const l = L(), r = F(), [a, o] = e.useState("idle"), [t, n] = e.useState(null), c = e.useRef(null), s = e.useRef([]), u = e.useRef(null), m = l.status ?? "idle", p = l.error, f = m === "received" ? "idle" : a !== "idle" ? a : m, k = e.useCallback(async () => {
     if (a === "recording") {
-      const E = s.current;
+      const E = c.current;
       E && E.state !== "inactive" && E.stop();
       return;
     }
@@ -185,14 +185,14 @@ const { useCallback: W } = e, q = ({ state: l }) => {
       }
       try {
         const E = await navigator.mediaDevices.getUserMedia({ audio: !0 });
-        u.current = E, c.current = [];
+        u.current = E, s.current = [];
         const P = MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "", N = new MediaRecorder(E, P ? { mimeType: P } : void 0);
-        s.current = N, N.ondataavailable = (d) => {
-          d.data.size > 0 && c.current.push(d.data);
+        c.current = N, N.ondataavailable = (d) => {
+          d.data.size > 0 && s.current.push(d.data);
         }, N.onstop = async () => {
           E.getTracks().forEach((R) => R.stop()), u.current = null;
-          const d = new Blob(c.current, { type: N.mimeType || "audio/webm" });
-          if (c.current = [], d.size === 0) {
+          const d = new Blob(s.current, { type: N.mimeType || "audio/webm" });
+          if (s.current = [], d.size === 0) {
             o("idle");
             return;
           }
@@ -223,26 +223,26 @@ const { useCallback: W } = e, q = ({ state: l }) => {
   "js.audioPlayer.noAudio": "No audio",
   "js.loading": "Loading…"
 }, be = () => {
-  const l = L(), r = O(), a = !!l.hasAudio, o = l.dataRevision ?? 0, [t, n] = e.useState(a ? "idle" : "disabled"), s = e.useRef(null), c = e.useRef(null), u = e.useRef(o);
+  const l = L(), r = O(), a = !!l.hasAudio, o = l.dataRevision ?? 0, [t, n] = e.useState(a ? "idle" : "disabled"), c = e.useRef(null), s = e.useRef(null), u = e.useRef(o);
   e.useEffect(() => {
-    a ? t === "disabled" && n("idle") : (s.current && (s.current.pause(), s.current = null), c.current && (URL.revokeObjectURL(c.current), c.current = null), n("disabled"));
+    a ? t === "disabled" && n("idle") : (c.current && (c.current.pause(), c.current = null), s.current && (URL.revokeObjectURL(s.current), s.current = null), n("disabled"));
   }, [a]), e.useEffect(() => {
-    o !== u.current && (u.current = o, s.current && (s.current.pause(), s.current = null), c.current && (URL.revokeObjectURL(c.current), c.current = null), (t === "playing" || t === "paused" || t === "loading") && n("idle"));
+    o !== u.current && (u.current = o, c.current && (c.current.pause(), c.current = null), s.current && (URL.revokeObjectURL(s.current), s.current = null), (t === "playing" || t === "paused" || t === "loading") && n("idle"));
   }, [o]), e.useEffect(() => () => {
-    s.current && (s.current.pause(), s.current = null), c.current && (URL.revokeObjectURL(c.current), c.current = null);
+    c.current && (c.current.pause(), c.current = null), s.current && (URL.revokeObjectURL(s.current), s.current = null);
   }, []);
   const m = e.useCallback(async () => {
     if (t === "disabled" || t === "loading")
       return;
     if (t === "playing") {
-      s.current && s.current.pause(), n("paused");
+      c.current && c.current.pause(), n("paused");
       return;
     }
-    if (t === "paused" && s.current) {
-      s.current.play(), n("playing");
+    if (t === "paused" && c.current) {
+      c.current.play(), n("playing");
       return;
     }
-    if (!c.current) {
+    if (!s.current) {
       n("loading");
       try {
         const h = await fetch(r);
@@ -251,14 +251,14 @@ const { useCallback: W } = e, q = ({ state: l }) => {
           return;
         }
         const b = await h.blob();
-        c.current = URL.createObjectURL(b);
+        s.current = URL.createObjectURL(b);
       } catch (h) {
         console.error("[TLAudioPlayer] Fetch error:", h), n("idle");
         return;
       }
     }
-    const i = new Audio(c.current);
-    s.current = i, i.onended = () => {
+    const i = new Audio(s.current);
+    c.current = i, i.onended = () => {
       n("idle");
     }, i.play(), n("playing");
   }, [t, r]), p = B(he), f = t === "loading" ? p["js.loading"] : t === "playing" ? p["js.audioPlayer.pause"] : t === "disabled" ? p["js.audioPlayer.noAudio"] : p["js.audioPlayer.play"], k = t === "disabled" || t === "loading", y = ["tlAudioPlayer__button"];
@@ -278,7 +278,7 @@ const { useCallback: W } = e, q = ({ state: l }) => {
   "js.fileUpload.choose": "Choose file",
   "js.uploading": "Uploading…"
 }, ve = () => {
-  const l = L(), r = F(), [a, o] = e.useState("idle"), [t, n] = e.useState(!1), s = e.useRef(null), c = l.status ?? "idle", u = l.error, m = l.accept ?? "", p = c === "received" ? "idle" : a !== "idle" ? a : c, f = e.useCallback(async (d) => {
+  const l = L(), r = F(), [a, o] = e.useState("idle"), [t, n] = e.useState(!1), c = e.useRef(null), s = l.status ?? "idle", u = l.error, m = l.accept ?? "", p = s === "received" ? "idle" : a !== "idle" ? a : s, f = e.useCallback(async (d) => {
     o("uploading");
     const g = new FormData();
     g.append("file", d, d.name), await r(g), o("idle");
@@ -288,7 +288,7 @@ const { useCallback: W } = e, q = ({ state: l }) => {
     g && f(g);
   }, [f]), y = e.useCallback(() => {
     var d;
-    a !== "uploading" && ((d = s.current) == null || d.click());
+    a !== "uploading" && ((d = c.current) == null || d.click());
   }, [a]), i = e.useCallback((d) => {
     d.preventDefault(), d.stopPropagation(), n(!0);
   }, []), h = e.useCallback((d) => {
@@ -310,7 +310,7 @@ const { useCallback: W } = e, q = ({ state: l }) => {
     /* @__PURE__ */ e.createElement(
       "input",
       {
-        ref: s,
+        ref: c,
         type: "file",
         accept: m || void 0,
         onChange: k,
@@ -338,8 +338,8 @@ const { useCallback: W } = e, q = ({ state: l }) => {
   "js.download.clear": "Clear",
   "js.download.clearFile": "Clear file"
 }, Ee = () => {
-  const l = L(), r = O(), a = M(), o = !!l.hasData, t = l.dataRevision ?? 0, n = l.fileName ?? "download", s = !!l.clearable, [c, u] = e.useState(!1), m = e.useCallback(async () => {
-    if (!(!o || c)) {
+  const l = L(), r = O(), a = M(), o = !!l.hasData, t = l.dataRevision ?? 0, n = l.fileName ?? "download", c = !!l.clearable, [s, u] = e.useState(!1), m = e.useCallback(async () => {
+    if (!(!o || s)) {
       u(!0);
       try {
         const y = r + (r.includes("?") ? "&" : "?") + "rev=" + t, i = await fetch(y);
@@ -355,24 +355,24 @@ const { useCallback: W } = e, q = ({ state: l }) => {
         u(!1);
       }
     }
-  }, [o, c, r, t, n]), p = e.useCallback(async () => {
+  }, [o, s, r, t, n]), p = e.useCallback(async () => {
     o && await a("clear");
   }, [o, a]), f = B(Ce);
   if (!o)
     return /* @__PURE__ */ e.createElement("div", { className: "tlDownload tlDownload--empty" }, /* @__PURE__ */ e.createElement("span", { className: "tlDownload__fileName tlDownload__fileName--empty" }, f["js.download.noFile"]));
-  const k = c ? f["js.downloading"] : f["js.download.file"].replace("{0}", n);
+  const k = s ? f["js.downloading"] : f["js.download.file"].replace("{0}", n);
   return /* @__PURE__ */ e.createElement("div", { className: "tlDownload" }, /* @__PURE__ */ e.createElement(
     "button",
     {
       type: "button",
-      className: "tlDownload__downloadBtn" + (c ? " tlDownload__downloadBtn--downloading" : ""),
+      className: "tlDownload__downloadBtn" + (s ? " tlDownload__downloadBtn--downloading" : ""),
       onClick: m,
-      disabled: c,
+      disabled: s,
       title: k,
       "aria-label": k
     },
     /* @__PURE__ */ e.createElement("svg", { className: "tlDownload__downloadIcon", viewBox: "0 0 16 16", width: "16", height: "16", "aria-hidden": "true" }, /* @__PURE__ */ e.createElement("path", { d: "M8 1v9m0 0L4.5 6.5M8 10l3.5-3.5M2 13h12", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", fill: "none" }))
-  ), /* @__PURE__ */ e.createElement("span", { className: "tlDownload__fileName", title: n }, n), s && /* @__PURE__ */ e.createElement(
+  ), /* @__PURE__ */ e.createElement("span", { className: "tlDownload__fileName", title: n }, n), c && /* @__PURE__ */ e.createElement(
     "button",
     {
       type: "button",
@@ -391,7 +391,7 @@ const { useCallback: W } = e, q = ({ state: l }) => {
   "js.uploading": "Uploading…",
   "js.photoCapture.error.denied": "Camera access denied or unavailable."
 }, _e = () => {
-  const l = L(), r = F(), [a, o] = e.useState("idle"), [t, n] = e.useState(null), [s, c] = e.useState(!1), u = e.useRef(null), m = e.useRef(null), p = e.useRef(null), f = e.useRef(null), k = e.useRef(null), y = l.error, i = e.useMemo(
+  const l = L(), r = F(), [a, o] = e.useState("idle"), [t, n] = e.useState(null), [c, s] = e.useState(!1), u = e.useRef(null), m = e.useRef(null), p = e.useRef(null), f = e.useRef(null), k = e.useRef(null), y = l.error, i = e.useMemo(
     () => {
       var v;
       return !!(window.isSecureContext && ((v = navigator.mediaDevices) != null && v.getUserMedia));
@@ -463,9 +463,9 @@ const { useCallback: W } = e, q = ({ state: l }) => {
   const d = B(ye), g = a === "uploading" ? d["js.uploading"] : d["js.photoCapture.open"], R = ["tlPhotoCapture__cameraBtn"];
   a === "uploading" && R.push("tlPhotoCapture__cameraBtn--uploading");
   const T = ["tlPhotoCapture__overlayVideo"];
-  s && T.push("tlPhotoCapture__overlayVideo--mirrored");
+  c && T.push("tlPhotoCapture__overlayVideo--mirrored");
   const w = ["tlPhotoCapture__mirrorBtn"];
-  return s && w.push("tlPhotoCapture__mirrorBtn--active"), /* @__PURE__ */ e.createElement("div", { className: "tlPhotoCapture" }, /* @__PURE__ */ e.createElement("div", { className: "tlPhotoCapture__controls" }, /* @__PURE__ */ e.createElement(
+  return c && w.push("tlPhotoCapture__mirrorBtn--active"), /* @__PURE__ */ e.createElement("div", { className: "tlPhotoCapture" }, /* @__PURE__ */ e.createElement("div", { className: "tlPhotoCapture__controls" }, /* @__PURE__ */ e.createElement(
     "button",
     {
       type: "button",
@@ -510,7 +510,7 @@ const { useCallback: W } = e, q = ({ state: l }) => {
       {
         type: "button",
         className: w.join(" "),
-        onClick: () => c((v) => !v),
+        onClick: () => s((v) => !v),
         title: d["js.photoCapture.mirror"],
         "aria-label": d["js.photoCapture.mirror"]
       },
@@ -540,15 +540,15 @@ const { useCallback: W } = e, q = ({ state: l }) => {
 }, ge = {
   "js.photoViewer.alt": "Captured photo"
 }, ke = () => {
-  const l = L(), r = O(), a = !!l.hasPhoto, o = l.dataRevision ?? 0, [t, n] = e.useState(null), s = e.useRef(o);
+  const l = L(), r = O(), a = !!l.hasPhoto, o = l.dataRevision ?? 0, [t, n] = e.useState(null), c = e.useRef(o);
   e.useEffect(() => {
     if (!a) {
       t && (URL.revokeObjectURL(t), n(null));
       return;
     }
-    if (o === s.current && t)
+    if (o === c.current && t)
       return;
-    s.current = o, t && (URL.revokeObjectURL(t), n(null));
+    c.current = o, t && (URL.revokeObjectURL(t), n(null));
     let u = !1;
     return (async () => {
       try {
@@ -568,22 +568,22 @@ const { useCallback: W } = e, q = ({ state: l }) => {
   }, [a, o, r]), e.useEffect(() => () => {
     t && URL.revokeObjectURL(t);
   }, []);
-  const c = B(ge);
+  const s = B(ge);
   return !a || !t ? /* @__PURE__ */ e.createElement("div", { className: "tlPhotoViewer" }, /* @__PURE__ */ e.createElement("div", { className: "tlPhotoViewer__placeholder" })) : /* @__PURE__ */ e.createElement("div", { className: "tlPhotoViewer" }, /* @__PURE__ */ e.createElement(
     "img",
     {
       className: "tlPhotoViewer__image",
       src: t,
-      alt: c["js.photoViewer.alt"]
+      alt: s["js.photoViewer.alt"]
     }
   ));
 }, { useCallback: Y, useRef: I } = e, we = () => {
-  const l = L(), r = M(), a = l.orientation, o = l.resizable === !0, t = l.children ?? [], n = a === "horizontal", s = t.length > 0 && t.every((i) => i.collapsed), c = s ? !n : n, u = I(null), m = I(null), p = I(null), f = Y((i, h) => {
+  const l = L(), r = M(), a = l.orientation, o = l.resizable === !0, t = l.children ?? [], n = a === "horizontal", c = t.length > 0 && t.every((i) => i.collapsed), s = c ? !n : n, u = I(null), m = I(null), p = I(null), f = Y((i, h) => {
     const b = {
       overflow: i.scrolling || "auto"
     };
-    return i.collapsed ? s ? b.flex = "1 0 0%" : b.flex = `0 0 ${i.size}px` : h !== void 0 ? b.flex = `0 0 ${h}px` : i.unit === "%" ? b.flex = `${i.size} 0 0%` : b.flex = `0 0 ${i.size}px`, i.minSize > 0 && !i.collapsed && (b.minWidth = n ? i.minSize : void 0, b.minHeight = n ? void 0 : i.minSize), b;
-  }, [n, s]), k = Y((i, h) => {
+    return i.collapsed ? c ? b.flex = "1 0 0%" : b.flex = `0 0 ${i.size}px` : h !== void 0 ? b.flex = `0 0 ${h}px` : i.unit === "%" ? b.flex = `${i.size} 0 0%` : b.flex = `0 0 ${i.size}px`, i.minSize > 0 && !i.collapsed && (b.minWidth = n ? i.minSize : void 0, b.minHeight = n ? void 0 : i.minSize), b;
+  }, [n, c]), k = Y((i, h) => {
     i.preventDefault();
     const b = u.current;
     if (!b) return;
@@ -624,7 +624,7 @@ const { useCallback: W } = e, q = ({ state: l }) => {
         "div",
         {
           key: `child-${h}`,
-          className: "tlSplitPanel__child",
+          className: `tlSplitPanel__child${i.collapsed && s ? " tlSplitPanel__child--collapsedHorizontal" : ""}`,
           style: f(i)
         },
         /* @__PURE__ */ e.createElement(D, { control: i.control })
@@ -646,10 +646,10 @@ const { useCallback: W } = e, q = ({ state: l }) => {
     "div",
     {
       ref: u,
-      className: `tlSplitPanel tlSplitPanel--${a}${s ? " tlSplitPanel--allCollapsed" : ""}`,
+      className: `tlSplitPanel tlSplitPanel--${a}${c ? " tlSplitPanel--allCollapsed" : ""}`,
       style: {
         display: "flex",
-        flexDirection: c ? "row" : "column",
+        flexDirection: s ? "row" : "column",
         width: "100%",
         height: "100%"
       }
@@ -662,7 +662,7 @@ const { useCallback: W } = e, q = ({ state: l }) => {
   "js.panel.restore": "Restore",
   "js.panel.popOut": "Pop out"
 }, Re = () => /* @__PURE__ */ e.createElement("svg", { viewBox: "0 0 24 24" }, /* @__PURE__ */ e.createElement("line", { x1: "6", y1: "12", x2: "18", y2: "12" })), Ne = () => /* @__PURE__ */ e.createElement("svg", { viewBox: "0 0 24 24" }, /* @__PURE__ */ e.createElement("rect", { x: "6", y: "9", width: "12", height: "10", rx: "1" }), /* @__PURE__ */ e.createElement("polyline", { points: "9,7 12,4 15,7" })), Pe = () => /* @__PURE__ */ e.createElement("svg", { viewBox: "0 0 24 24" }, /* @__PURE__ */ e.createElement("rect", { x: "4", y: "4", width: "16", height: "16", rx: "1" })), Te = () => /* @__PURE__ */ e.createElement("svg", { viewBox: "0 0 24 24" }, /* @__PURE__ */ e.createElement("rect", { x: "4", y: "8", width: "12", height: "12", rx: "1" }), /* @__PURE__ */ e.createElement("polyline", { points: "8,8 8,4 20,4 20,16 16,16" })), je = () => /* @__PURE__ */ e.createElement("svg", { viewBox: "0 0 24 24" }, /* @__PURE__ */ e.createElement("polyline", { points: "15,3 21,3 21,9" }), /* @__PURE__ */ e.createElement("line", { x1: "21", y1: "3", x2: "12", y2: "12" }), /* @__PURE__ */ e.createElement("path", { d: "M18 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h6" })), xe = () => {
-  const l = L(), r = M(), a = B(Le), o = l.title, t = l.expansionState ?? "NORMALIZED", n = l.showMinimize === !0, s = l.showMaximize === !0, c = l.showPopOut === !0, u = l.toolbarButtons ?? [], m = t === "MINIMIZED", p = t === "MAXIMIZED", f = t === "HIDDEN", k = A(() => {
+  const l = L(), r = M(), a = B(Le), o = l.title, t = l.expansionState ?? "NORMALIZED", n = l.showMinimize === !0, c = l.showMaximize === !0, s = l.showPopOut === !0, u = l.toolbarButtons ?? [], m = t === "MINIMIZED", p = t === "MAXIMIZED", f = t === "HIDDEN", k = A(() => {
     r("toggleMinimize");
   }, [r]), y = A(() => {
     r("toggleMaximize");
@@ -687,7 +687,7 @@ const { useCallback: W } = e, q = ({ state: l }) => {
         title: m ? a["js.panel.restore"] : a["js.panel.minimize"]
       },
       m ? /* @__PURE__ */ e.createElement(Ne, null) : /* @__PURE__ */ e.createElement(Re, null)
-    ), s && /* @__PURE__ */ e.createElement(
+    ), c && /* @__PURE__ */ e.createElement(
       "button",
       {
         type: "button",
@@ -696,7 +696,7 @@ const { useCallback: W } = e, q = ({ state: l }) => {
         title: p ? a["js.panel.restore"] : a["js.panel.maximize"]
       },
       p ? /* @__PURE__ */ e.createElement(Te, null) : /* @__PURE__ */ e.createElement(Pe, null)
-    ), c && /* @__PURE__ */ e.createElement(
+    ), s && /* @__PURE__ */ e.createElement(
       "button",
       {
         type: "button",

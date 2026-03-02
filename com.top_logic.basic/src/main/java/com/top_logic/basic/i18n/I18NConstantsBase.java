@@ -307,12 +307,18 @@ public class I18NConstantsBase {
 			try {
 				Object formerValue = constantField.get(null);
 				if (formerValue == null) {
-					String constantFieldName = constantField.getName();
 					StringBuilder qualifiedKeyBuilder = new StringBuilder();
-					qualifiedKeyBuilder.append("class.");
-					qualifiedKeyBuilder.append(i18nClass.getName());
-					qualifiedKeyBuilder.append('.');
-					qualifiedKeyBuilder.append(constantFieldName);
+
+					CustomKey customKey = constantField.getAnnotation(CustomKey.class);
+					if (customKey != null) {
+						qualifiedKeyBuilder.append(customKey.value());
+					} else {
+						String constantFieldName = constantField.getName();
+						qualifiedKeyBuilder.append("class.");
+						qualifiedKeyBuilder.append(i18nClass.getName());
+						qualifiedKeyBuilder.append('.');
+						qualifiedKeyBuilder.append(constantFieldName);
+					}
 
 					init(constantField, qualifiedKeyBuilder);
 				}

@@ -26,6 +26,10 @@ import TLFileUpload from './controls/TLFileUpload';
 import TLDownload from './controls/TLDownload';
 import TLPhotoCapture from './controls/TLPhotoCapture';
 import TLPhotoViewer from './controls/TLPhotoViewer';
+import TLSplitPanel from './controls/TLSplitPanel';
+import TLPanel from './controls/TLPanel';
+import TLMaximizeRoot from './controls/TLMaximizeRoot';
+import TLDeckPane from './controls/TLDeckPane';
 
 register('TLButton', TLButton);
 register('TLToggleButton', TLToggleButton);
@@ -44,3 +48,7 @@ register('TLFileUpload', TLFileUpload);
 register('TLDownload', TLDownload);
 register('TLPhotoCapture', TLPhotoCapture);
 register('TLPhotoViewer', TLPhotoViewer);
+register('TLSplitPanel', TLSplitPanel);
+register('TLPanel', TLPanel);
+register('TLMaximizeRoot', TLMaximizeRoot);
+register('TLDeckPane', TLDeckPane);

@@ -1,0 +1,210 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.layout.react.control.layout;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.layout.Control;
+import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.FrameScope;
+import com.top_logic.layout.basic.ControlCommand;
+import com.top_logic.layout.react.I18NConstants;
+import com.top_logic.layout.react.ReactControl;
+import com.top_logic.tool.boundsec.HandlerResult;
+
+/**
+ * A {@link ReactControl} that shows one child at a time from a list, driven by a server-side
+ * active index.
+ *
+ * <p>
+ * Previously visited children are cached so that re-selecting them preserves their state. This
+ * follows the same lazy-creation pattern as {@code ReactTabBarControl}.
+ * </p>
+ *
+ * <p>
+ * The React component {@code TLDeckPane} receives the following state:
+ * </p>
+ * <ul>
+ * <li>{@code activeIndex} - the index of the currently active child</li>
+ * <li>{@code activeChild} - the active child's control descriptor (or {@code null})</li>
+ * <li>{@code childCount} - total number of children</li>
+ * </ul>
+ */
+public class ReactDeckPaneControl extends ReactControl {
+
+	private static final String REACT_MODULE = "TLDeckPane";
+
+	private static final String ACTIVE_INDEX = "activeIndex";
+
+	private static final String ACTIVE_CHILD = "activeChild";
+
+	private static final String CHILD_COUNT = "childCount";
+
+	private static final String INDEX_ARG = "index";
+
+	private static final Map<String, ControlCommand> COMMANDS = createCommandMap(
+		new SelectChildCommand());
+
+	/**
+	 * The child definitions. Each entry provides a factory for lazy creation.
+	 */
+	public interface ChildFactory {
+
+		/**
+		 * Creates the child control.
+		 */
+		ReactControl create();
+	}
+
+	private final List<ChildFactory> _childFactories = new ArrayList<>();
+
+	private final LinkedHashMap<Integer, ReactControl> _childCache = new LinkedHashMap<>();
+
+	private int _activeIndex;
+
+	/**
+	 * Creates a new {@link ReactDeckPaneControl}.
+	 *
+	 * @param childFactories
+	 *        The factories for lazily creating child controls. Must not be empty.
+	 * @param initialActiveIndex
+	 *        The initially active child index.
+	 */
+	public ReactDeckPaneControl(List<ChildFactory> childFactories, int initialActiveIndex) {
+		super(null, REACT_MODULE, COMMANDS);
+		_childFactories.addAll(childFactories);
+		_activeIndex = initialActiveIndex;
+
+		getReactState().put(ACTIVE_INDEX, Integer.valueOf(_activeIndex));
+		getReactState().put(CHILD_COUNT, Integer.valueOf(_childFactories.size()));
+		// activeChild is null until internalWrite creates it.
+	}
+
+	/**
+	 * Creates a new {@link ReactDeckPaneControl} with the first child active.
+	 */
+	public ReactDeckPaneControl(List<ChildFactory> childFactories) {
+		this(childFactories, 0);
+	}
+
+	/**
+	 * Selects the child at the given index.
+	 *
+	 * @param index
+	 *        The index of the child to select.
+	 */
+	public void selectChild(int index) {
+		if (index == _activeIndex) {
+			return;
+		}
+		if (index < 0 || index >= _childFactories.size()) {
+			throw new IllegalArgumentException("Index out of bounds: " + index);
+		}
+		_activeIndex = index;
+
+		FrameScope frameScope = getFrameScopeOrNull();
+		if (frameScope == null) {
+			getReactState().put(ACTIVE_INDEX, Integer.valueOf(_activeIndex));
+			return;
+		}
+
+		ReactControl content = getOrCreateChild(index, frameScope);
+		registerChildControl(content);
+		forEachChildControl(content.getReactState(), this::registerChildControl);
+
+		Map<String, Object> patch = new HashMap<>();
+		patch.put(ACTIVE_INDEX, Integer.valueOf(index));
+		patch.put(ACTIVE_CHILD, content);
+		patchReactState(patch);
+	}
+
+	/**
+	 * The currently active child index.
+	 */
+	public int getActiveIndex() {
+		return _activeIndex;
+	}
+
+	@Override
+	protected void internalWrite(DisplayContext context, TagWriter out) throws IOException {
+		FrameScope frameScope = getScope().getFrameScope();
+
+		ReactControl activeChild = getOrCreateChild(_activeIndex, frameScope);
+		getReactState().put(ACTIVE_CHILD, activeChild);
+
+		super.internalWrite(context, out);
+
+		for (ReactControl cached : _childCache.values()) {
+			registerChildControl(cached);
+			forEachChildControl(cached.getReactState(), this::registerChildControl);
+		}
+	}
+
+	@Override
+	protected void internalDetach() {
+		for (ReactControl cached : _childCache.values()) {
+			forEachChildControl(cached.getReactState(), this::unregisterChildControl);
+			unregisterChildControl(cached);
+		}
+		_childCache.clear();
+		super.internalDetach();
+	}
+
+	private ReactControl getOrCreateChild(int index, FrameScope frameScope) {
+		ReactControl cached = _childCache.get(Integer.valueOf(index));
+		if (cached != null) {
+			return cached;
+		}
+
+		ReactControl child = _childFactories.get(index).create();
+		child.fetchID(frameScope);
+		forEachChildControl(child.getReactState(), c -> c.fetchID(frameScope));
+		_childCache.put(Integer.valueOf(index), child);
+		return child;
+	}
+
+	private FrameScope getFrameScopeOrNull() {
+		try {
+			return getScope() != null ? getScope().getFrameScope() : null;
+		} catch (Exception ex) {
+			return null;
+		}
+	}
+
+	/**
+	 * Command sent by the React client when a child is selected.
+	 */
+	public static class SelectChildCommand extends ControlCommand {
+
+		static final String COMMAND = "selectChild";
+
+		/** Creates a new {@link SelectChildCommand}. */
+		public SelectChildCommand() {
+			super(COMMAND);
+		}
+
+		@Override
+		public com.top_logic.basic.util.ResKey getI18NKey() {
+			return I18NConstants.REACT_DECK_PANE_SELECT;
+		}
+
+		@Override
+		protected HandlerResult execute(DisplayContext context, Control control, Map<String, Object> arguments) {
+			ReactDeckPaneControl deckPane = (ReactDeckPaneControl) control;
+			Object indexObj = arguments.get(INDEX_ARG);
+			if (indexObj instanceof Number) {
+				deckPane.selectChild(((Number) indexObj).intValue());
+			}
+			return HandlerResult.DEFAULT_RESULT;
+		}
+	}
+}

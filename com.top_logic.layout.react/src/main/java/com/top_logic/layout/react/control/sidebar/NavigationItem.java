@@ -24,8 +24,10 @@ public class NavigationItem extends SidebarItem {
 
 	private final Supplier<ReactControl> _contentFactory;
 
+	private final String _badge;
+
 	/**
-	 * Creates a new {@link NavigationItem}.
+	 * Creates a new {@link NavigationItem} without a badge.
 	 *
 	 * @param id
 	 *        The unique identifier.
@@ -37,10 +39,29 @@ public class NavigationItem extends SidebarItem {
 	 *        Factory for lazily creating the content control.
 	 */
 	public NavigationItem(String id, String label, String icon, Supplier<ReactControl> contentFactory) {
+		this(id, label, icon, contentFactory, null);
+	}
+
+	/**
+	 * Creates a new {@link NavigationItem}.
+	 *
+	 * @param id
+	 *        The unique identifier.
+	 * @param label
+	 *        The display label.
+	 * @param icon
+	 *        The icon CSS class (e.g. "bi-speedometer2"), or {@code null} for no icon.
+	 * @param contentFactory
+	 *        Factory for lazily creating the content control.
+	 * @param badge
+	 *        Optional badge text (e.g. "3"), or {@code null} for no badge.
+	 */
+	public NavigationItem(String id, String label, String icon, Supplier<ReactControl> contentFactory, String badge) {
 		super(id);
 		_label = label;
 		_icon = icon;
 		_contentFactory = contentFactory;
+		_badge = badge;
 	}
 
 	/**
@@ -64,6 +85,13 @@ public class NavigationItem extends SidebarItem {
 		return _contentFactory;
 	}
 
+	/**
+	 * Optional badge text (e.g. "3"), or {@code null} for no badge.
+	 */
+	public String getBadge() {
+		return _badge;
+	}
+
 	@Override
 	public String getType() {
 		return TYPE_NAV;
@@ -75,6 +103,9 @@ public class NavigationItem extends SidebarItem {
 		map.put(LABEL, _label);
 		if (_icon != null) {
 			map.put(ICON, _icon);
+		}
+		if (_badge != null) {
+			map.put("badge", _badge);
 		}
 		return map;
 	}

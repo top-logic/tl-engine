@@ -12,6 +12,7 @@ interface SidebarItemBase {
 
 interface NavItem extends SidebarItemBase {
   type: 'nav';
+  badge?: string;
 }
 
 interface CommandItemInfo extends SidebarItemBase {
@@ -52,8 +53,16 @@ const SidebarNavItem: React.FC<{
     onClick={() => onSelect(item.id)}
     title={collapsed ? item.label : undefined}
   >
-    <SidebarIcon icon={item.icon} />
+    {collapsed && item.badge ? (
+      <span className="tlSidebar__iconWrap">
+        <SidebarIcon icon={item.icon} />
+        <span className="tlSidebar__badge tlSidebar__badge--collapsed">{item.badge}</span>
+      </span>
+    ) : (
+      <SidebarIcon icon={item.icon} />
+    )}
     {!collapsed && <span className="tlSidebar__label">{item.label}</span>}
+    {!collapsed && item.badge && <span className="tlSidebar__badge">{item.badge}</span>}
   </button>
 );
 

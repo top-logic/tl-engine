@@ -1122,6 +1122,40 @@ button.tlSidebar__navItem--active:hover {
 	white-space: nowrap;
 }
 
+/* Badge */
+.tlSidebar__badge {
+	margin-left: auto;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 1.25rem;
+	height: 1.25rem;
+	padding: 0 var(--spacing-02);
+	border-radius: 0.625rem;
+	background: var(--button-primary);
+	color: var(--text-on-color);
+	font-size: 0.6875rem;
+	font-weight: 600;
+	line-height: 1;
+	flex-shrink: 0;
+}
+
+.tlSidebar__iconWrap {
+	position: relative;
+	display: inline-flex;
+}
+
+.tlSidebar__badge--collapsed {
+	position: absolute;
+	top: -0.375rem;
+	right: -0.5rem;
+	margin-left: 0;
+	min-width: 0.875rem;
+	height: 0.875rem;
+	padding: 0 0.1875rem;
+	font-size: 0.5625rem;
+}
+
 /* --- Collapsed mode: center icon-only items --- */
 
 .tlSidebar--collapsed .tlSidebar__item,

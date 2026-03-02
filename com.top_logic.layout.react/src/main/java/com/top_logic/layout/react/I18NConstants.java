@@ -66,6 +66,31 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey REACT_DOWNLOAD_CLEAR;
 
 	/**
+	 * @en Split panel resized.
+	 */
+	public static ResKey REACT_SPLIT_PANEL_RESIZE;
+
+	/**
+	 * @en Deck pane child selected.
+	 */
+	public static ResKey REACT_DECK_PANE_SELECT;
+
+	/**
+	 * @en Panel minimize toggled.
+	 */
+	public static ResKey REACT_PANEL_TOGGLE_MINIMIZE;
+
+	/**
+	 * @en Panel maximize toggled.
+	 */
+	public static ResKey REACT_PANEL_TOGGLE_MAXIMIZE;
+
+	/**
+	 * @en Panel popped out.
+	 */
+	public static ResKey REACT_PANEL_POP_OUT;
+
+	/**
 	 * @en Photo upload failed.
 	 */
 	public static ResKey PHOTO_UPLOAD_FAILED;
@@ -191,6 +216,30 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @de Kamera spiegeln
 	 */
 	public static ResKey JS_PHOTO_CAPTURE_MIRROR = ResKey.internalCreate("js.photoCapture.mirror");
+
+	/**
+	 * @en Minimize
+	 * @de Minimieren
+	 */
+	public static ResKey JS_PANEL_MINIMIZE = ResKey.internalCreate("js.panel.minimize");
+
+	/**
+	 * @en Maximize
+	 * @de Maximieren
+	 */
+	public static ResKey JS_PANEL_MAXIMIZE = ResKey.internalCreate("js.panel.maximize");
+
+	/**
+	 * @en Restore
+	 * @de Wiederherstellen
+	 */
+	public static ResKey JS_PANEL_RESTORE = ResKey.internalCreate("js.panel.restore");
+
+	/**
+	 * @en Pop out
+	 * @de Auskoppeln
+	 */
+	public static ResKey JS_PANEL_POP_OUT = ResKey.internalCreate("js.panel.popOut");
 
 	/**
 	 * @en Microphone requires a secure connection (HTTPS).

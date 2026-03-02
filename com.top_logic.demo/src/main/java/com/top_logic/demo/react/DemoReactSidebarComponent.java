@@ -97,14 +97,17 @@ public class DemoReactSidebarComponent extends LayoutComponent {
 			return HandlerResult.DEFAULT_RESULT;
 		}));
 
-		// Header slot: a simple branding control.
+		// Header slot: expanded shows branding text, collapsed shows compact icon.
 		ReactControl headerSlot = createBrandingControl();
+		ReactControl headerCollapsedSlot = createBrandingCollapsedControl();
 
-		// Footer slot: a simple info control.
+		// Footer slot: expanded shows user info text, collapsed shows compact icon.
 		ReactControl footerSlot = createFooterControl();
+		ReactControl footerCollapsedSlot = createFooterCollapsedControl();
 
 		return new ReactSidebarControl(
-			"demo.sidebar", items, "dashboard", false, headerSlot, footerSlot);
+			"demo.sidebar", items, "dashboard", false,
+			headerSlot, headerCollapsedSlot, footerSlot, footerCollapsedSlot);
 	}
 
 	private ReactControl createDashboard() {
@@ -146,6 +149,13 @@ public class DemoReactSidebarComponent extends LayoutComponent {
 		return new ReactFieldListControl("Branding", fields);
 	}
 
+	private ReactControl createBrandingCollapsedControl() {
+		return new ReactButtonControl("\u2B22", (context) -> {
+			InfoService.showInfo(ResKey.text("Logo clicked!"));
+			return HandlerResult.DEFAULT_RESULT;
+		});
+	}
+
 	private ReactControl createFooterControl() {
 		List<ReactControl> fields = new ArrayList<>();
 		fields.add(new ReactButtonControl("User Info", (context) -> {
@@ -153,6 +163,13 @@ public class DemoReactSidebarComponent extends LayoutComponent {
 			return HandlerResult.DEFAULT_RESULT;
 		}));
 		return new ReactFieldListControl("Footer", fields);
+	}
+
+	private ReactControl createFooterCollapsedControl() {
+		return new ReactButtonControl("\u263A", (context) -> {
+			InfoService.showInfo(ResKey.text("User info clicked!"));
+			return HandlerResult.DEFAULT_RESULT;
+		});
 	}
 
 }

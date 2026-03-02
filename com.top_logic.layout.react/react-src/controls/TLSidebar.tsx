@@ -195,10 +195,18 @@ const TLSidebar: React.FC<TLCellProps> = () => {
   return (
     <div className={'tlSidebar' + (collapsed ? ' tlSidebar--collapsed' : '')}>
       <nav className="tlSidebar__nav">
-        {!collapsed && state.headerContent && (
-          <div className="tlSidebar__headerSlot">
-            <TLChild control={state.headerContent} />
-          </div>
+        {collapsed ? (
+          state.headerCollapsedContent && (
+            <div className="tlSidebar__headerSlot tlSidebar__headerSlot--collapsed">
+              <TLChild control={state.headerCollapsedContent} />
+            </div>
+          )
+        ) : (
+          state.headerContent && (
+            <div className="tlSidebar__headerSlot">
+              <TLChild control={state.headerContent} />
+            </div>
+          )
         )}
 
         <div className="tlSidebar__items">
@@ -215,10 +223,18 @@ const TLSidebar: React.FC<TLCellProps> = () => {
           ))}
         </div>
 
-        {!collapsed && state.footerContent && (
-          <div className="tlSidebar__footerSlot">
-            <TLChild control={state.footerContent} />
-          </div>
+        {collapsed ? (
+          state.footerCollapsedContent && (
+            <div className="tlSidebar__footerSlot tlSidebar__footerSlot--collapsed">
+              <TLChild control={state.footerCollapsedContent} />
+            </div>
+          )
+        ) : (
+          state.footerContent && (
+            <div className="tlSidebar__footerSlot">
+              <TLChild control={state.footerContent} />
+            </div>
+          )
         )}
 
         <button className="tlSidebar__collapseBtn" onClick={handleToggleCollapse}

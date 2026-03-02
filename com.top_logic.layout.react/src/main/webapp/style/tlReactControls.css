@@ -1033,8 +1033,8 @@ button.tlPanel__actionButton:focus-visible {
 	padding: var(--spacing-02) 0;
 }
 
-/* Navigation item */
-.tlSidebar__navItem {
+/* Shared base for interactive sidebar items */
+.tlSidebar__item {
 	display: flex;
 	align-items: center;
 	gap: var(--spacing-03);
@@ -1050,16 +1050,17 @@ button.tlPanel__actionButton:focus-visible {
 	text-align: left;
 }
 
-button.tlSidebar__navItem:hover {
+button.tlSidebar__item:hover {
 	background: var(--layer-hover);
 	color: var(--text-primary);
 }
 
-button.tlSidebar__navItem:focus-visible {
+button.tlSidebar__item:focus-visible {
 	outline: 2px solid var(--focus);
 	outline-offset: -2px;
 }
 
+/* Navigation item */
 .tlSidebar__navItem--active {
 	background: var(--layer-selected-01);
 	border-left-color: var(--button-primary);
@@ -1069,33 +1070,6 @@ button.tlSidebar__navItem:focus-visible {
 
 button.tlSidebar__navItem--active:hover {
 	background: var(--layer-selected-hover-01, var(--layer-selected-01));
-}
-
-/* Command item */
-.tlSidebar__commandItem {
-	display: flex;
-	align-items: center;
-	gap: var(--spacing-03);
-	width: 100%;
-	padding: var(--spacing-03) var(--spacing-04);
-	border: none;
-	border-left: 3px solid transparent;
-	background: transparent;
-	color: var(--text-secondary);
-	font-size: var(--body-compact-01-font-size);
-	font-family: var(--font-family);
-	cursor: pointer;
-	text-align: left;
-}
-
-button.tlSidebar__commandItem:hover {
-	background: var(--layer-hover);
-	color: var(--text-primary);
-}
-
-button.tlSidebar__commandItem:focus-visible {
-	outline: 2px solid var(--focus);
-	outline-offset: -2px;
 }
 
 /* Header item */
@@ -1117,33 +1091,6 @@ button.tlSidebar__commandItem:focus-visible {
 	border: none;
 	border-top: 1px solid var(--border-subtle);
 	margin: var(--spacing-02) var(--spacing-04);
-}
-
-/* Group */
-.tlSidebar__groupHeader {
-	display: flex;
-	align-items: center;
-	gap: var(--spacing-03);
-	width: 100%;
-	padding: var(--spacing-03) var(--spacing-04);
-	border: none;
-	border-left: 3px solid transparent;
-	background: transparent;
-	color: var(--text-secondary);
-	font-size: var(--body-compact-01-font-size);
-	font-family: var(--font-family);
-	cursor: pointer;
-	text-align: left;
-}
-
-button.tlSidebar__groupHeader:hover {
-	background: var(--layer-hover);
-	color: var(--text-primary);
-}
-
-button.tlSidebar__groupHeader:focus-visible {
-	outline: 2px solid var(--focus);
-	outline-offset: -2px;
 }
 
 .tlSidebar__chevron {
@@ -1177,9 +1124,7 @@ button.tlSidebar__groupHeader:focus-visible {
 
 /* --- Collapsed mode: center icon-only items --- */
 
-.tlSidebar--collapsed .tlSidebar__navItem,
-.tlSidebar--collapsed .tlSidebar__commandItem,
-.tlSidebar--collapsed .tlSidebar__groupHeader,
+.tlSidebar--collapsed .tlSidebar__item,
 .tlSidebar--collapsed .tlSidebar__headerItem {
 	justify-content: center;
 	padding: var(--spacing-03) 0;

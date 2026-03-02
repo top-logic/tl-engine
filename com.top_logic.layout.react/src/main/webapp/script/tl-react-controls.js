@@ -724,7 +724,7 @@ const { useCallback: Z } = e, J = ({ state: t }) => {
 }, { useCallback: U, useState: Ue } = e, F = ({ icon: t }) => t ? /* @__PURE__ */ e.createElement("i", { className: "tlSidebar__icon " + t, "aria-hidden": "true" }) : null, Ae = ({ item: t, active: n, collapsed: a, onSelect: o }) => /* @__PURE__ */ e.createElement(
   "button",
   {
-    className: "tlSidebar__navItem" + (n ? " tlSidebar__navItem--active" : ""),
+    className: "tlSidebar__item tlSidebar__navItem" + (n ? " tlSidebar__navItem--active" : ""),
     onClick: () => o(t.id),
     title: a ? t.label : void 0
   },
@@ -733,7 +733,7 @@ const { useCallback: Z } = e, J = ({ state: t }) => {
 ), Fe = ({ item: t, collapsed: n, onExecute: a }) => /* @__PURE__ */ e.createElement(
   "button",
   {
-    className: "tlSidebar__commandItem",
+    className: "tlSidebar__item tlSidebar__commandItem",
     onClick: () => a(t.id),
     title: n ? t.label : void 0
   },
@@ -747,7 +747,7 @@ const { useCallback: Z } = e, J = ({ state: t }) => {
   return /* @__PURE__ */ e.createElement("div", { className: "tlSidebar__group" }, /* @__PURE__ */ e.createElement(
     "button",
     {
-      className: "tlSidebar__groupHeader",
+      className: "tlSidebar__item tlSidebar__groupHeader",
       onClick: d,
       title: a ? t.label : void 0
     },

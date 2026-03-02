@@ -48,7 +48,7 @@ const SidebarNavItem: React.FC<{
   onSelect: (id: string) => void;
 }> = ({ item, active, collapsed, onSelect }) => (
   <button
-    className={'tlSidebar__navItem' + (active ? ' tlSidebar__navItem--active' : '')}
+    className={'tlSidebar__item tlSidebar__navItem' + (active ? ' tlSidebar__navItem--active' : '')}
     onClick={() => onSelect(item.id)}
     title={collapsed ? item.label : undefined}
   >
@@ -63,7 +63,7 @@ const SidebarCommandItem: React.FC<{
   onExecute: (id: string) => void;
 }> = ({ item, collapsed, onExecute }) => (
   <button
-    className="tlSidebar__commandItem"
+    className="tlSidebar__item tlSidebar__commandItem"
     onClick={() => onExecute(item.id)}
     title={collapsed ? item.label : undefined}
   >
@@ -105,7 +105,7 @@ const SidebarGroup: React.FC<{
   return (
     <div className="tlSidebar__group">
       <button
-        className="tlSidebar__groupHeader"
+        className="tlSidebar__item tlSidebar__groupHeader"
         onClick={handleToggle}
         title={collapsed ? item.label : undefined}
       >

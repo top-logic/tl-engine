@@ -61,6 +61,7 @@ public class TestSessionService extends BasicTestCase {
         ThreadContext.pushSuperUser();
         try {
 			HttpServletResponse response = ic.getResponse();
+			SessionService myService;
 			try (LoginCredentials login =
 				LoginCredentials.fromUserAndPassword(PersonManager.getManager().getRoot(),
 					SecureRandomService.getInstance().getRandomString().toCharArray())) {
@@ -70,10 +71,12 @@ public class TestSessionService extends BasicTestCase {
 					tx.commit();
 				}
 
-				Login.getInstance().login(servletRequest, response, login);
+				boolean checkLoginCredentials = Login.getInstance().checkLoginCredentials(login, servletRequest, response);
+				assertTrue(checkLoginCredentials);
+				myService = SessionService.getInstance();
+				myService.loginUser(servletRequest, response, login.getPerson());
 			}
             
-    		SessionService myService = SessionService.getInstance();
     		
     		assertTrue(myService.validateSession(servletRequest));
     		

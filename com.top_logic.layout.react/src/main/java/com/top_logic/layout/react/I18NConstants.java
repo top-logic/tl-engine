@@ -95,6 +95,26 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey PHOTO_UPLOAD_FAILED;
 
+	/**
+	 * @en Sidebar item selected.
+	 */
+	public static ResKey REACT_SIDEBAR_ITEM_SELECTED;
+
+	/**
+	 * @en Sidebar command executed.
+	 */
+	public static ResKey REACT_SIDEBAR_COMMAND_EXECUTED;
+
+	/**
+	 * @en Sidebar collapse toggled.
+	 */
+	public static ResKey REACT_SIDEBAR_COLLAPSE_TOGGLED;
+
+	/**
+	 * @en Sidebar group toggled.
+	 */
+	public static ResKey REACT_SIDEBAR_GROUP_TOGGLED;
+
 	// -- Client-side i18n keys (js.* prefix, names match keys used by React controls) --
 
 	/**

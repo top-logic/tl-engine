@@ -30,6 +30,7 @@ import TLSplitPanel from './controls/TLSplitPanel';
 import TLPanel from './controls/TLPanel';
 import TLMaximizeRoot from './controls/TLMaximizeRoot';
 import TLDeckPane from './controls/TLDeckPane';
+import TLSidebar from './controls/TLSidebar';
 
 register('TLButton', TLButton);
 register('TLToggleButton', TLToggleButton);
@@ -52,3 +53,4 @@ register('TLSplitPanel', TLSplitPanel);
 register('TLPanel', TLPanel);
 register('TLMaximizeRoot', TLMaximizeRoot);
 register('TLDeckPane', TLDeckPane);
+register('TLSidebar', TLSidebar);

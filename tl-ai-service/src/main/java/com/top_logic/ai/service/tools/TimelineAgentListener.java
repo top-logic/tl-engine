@@ -14,7 +14,7 @@ import dev.langchain4j.agentic.observability.AgentListener;
 import dev.langchain4j.service.tool.ToolExecution;
 
 /**
- * Bridges LangChain4j's {@link AgentListener} tool execution events to
+ * Bridges {@code LangChain4j}'s {@link AgentListener} tool execution events to
  * {@link ToolCallTracker} for the chat timeline.
  *
  * <p>

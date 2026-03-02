@@ -678,7 +678,7 @@ const { useCallback: W } = e, q = ({ state: l }) => {
       className: `tlPanel tlPanel--${t.toLowerCase()}`,
       style: h
     },
-    /* @__PURE__ */ e.createElement("div", { className: "tlPanel__header" }, /* @__PURE__ */ e.createElement("span", { className: "tlPanel__title" }, o), /* @__PURE__ */ e.createElement("div", { className: "tlPanel__toolbar" }, u.map((b, E) => /* @__PURE__ */ e.createElement("span", { key: E, className: "tlPanel__toolbarButton" }, /* @__PURE__ */ e.createElement(D, { control: b }))), n && /* @__PURE__ */ e.createElement(
+    /* @__PURE__ */ e.createElement("div", { className: "tlPanel__header" }, /* @__PURE__ */ e.createElement("span", { className: "tlPanel__title" }, o), /* @__PURE__ */ e.createElement("div", { className: "tlPanel__toolbar" }, u.map((b, E) => /* @__PURE__ */ e.createElement("span", { key: E, className: "tlPanel__toolbarButton" }, /* @__PURE__ */ e.createElement(D, { control: b }))), n && !p && /* @__PURE__ */ e.createElement(
       "button",
       {
         type: "button",
@@ -687,7 +687,7 @@ const { useCallback: W } = e, q = ({ state: l }) => {
         title: m ? a["js.panel.restore"] : a["js.panel.minimize"]
       },
       m ? /* @__PURE__ */ e.createElement(Ne, null) : /* @__PURE__ */ e.createElement(Re, null)
-    ), c && /* @__PURE__ */ e.createElement(
+    ), c && !m && /* @__PURE__ */ e.createElement(
       "button",
       {
         type: "button",

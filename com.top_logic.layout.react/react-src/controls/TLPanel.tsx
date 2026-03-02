@@ -108,7 +108,7 @@ const TLPanel: React.FC<TLCellProps> = () => {
               <TLChild control={btn} />
             </span>
           ))}
-          {showMinimize && (
+          {showMinimize && !isMaximized && (
             <button
               type="button"
               className="tlPanel__actionButton"
@@ -118,7 +118,7 @@ const TLPanel: React.FC<TLCellProps> = () => {
               {isMinimized ? <IconRestoreFromMin /> : <IconMinimize />}
             </button>
           )}
-          {showMaximize && (
+          {showMaximize && !isMinimized && (
             <button
               type="button"
               className="tlPanel__actionButton"

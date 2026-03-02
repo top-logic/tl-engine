@@ -125,7 +125,6 @@ public class SkillRegistry {
 			_skills.put(sc.getName(), new Skill(
 				sc.getName(),
 				sc.getDescription(),
-				sc.getMode(),
 				sc.getContent()));
 		}
 	}
@@ -148,35 +147,22 @@ public class SkillRegistry {
 	 */
 	public static final String SKILLS_PLACEHOLDER = "<<AVAILABLE_SKILLS>>";
 
+	/**
+	 * Builds a skill catalog section listing all skills with their id and description. The agent
+	 * loads a skill at runtime by calling {@code loadSkill("skill-id")}.
+	 */
 	private String buildSkillSection(List<Skill> skills) {
 		if (skills.isEmpty()) {
 			return "";
 		}
 
-		List<Skill> autoSkills = skills.stream()
-			.filter(s -> s.mode() == Skill.Mode.AUTO)
-			.toList();
-		List<Skill> onDemandSkills = skills.stream()
-			.filter(s -> s.mode() == Skill.Mode.ON_DEMAND)
-			.toList();
-
 		StringBuilder sb = new StringBuilder();
-
-		// Auto skills: inject full content directly
-		for (Skill skill : autoSkills) {
-			sb.append("### ").append(skill.description()).append("\n\n");
-			sb.append(skill.content()).append("\n\n");
-		}
-
-		// On-demand skills: catalog with loadSkill instructions
-		if (!onDemandSkills.isEmpty()) {
-			sb.append("### Available Skills (IMPORTANT)\n\n");
-			sb.append("You have specialized skills that improve your work. ");
-			sb.append(
-				"Load a skill BEFORE performing the related action by calling `loadSkill(\"skill-id\")`.\n\n");
-			for (Skill skill : onDemandSkills) {
-				sb.append("- `").append(skill.id()).append("`: ").append(skill.description()).append("\n");
-			}
+		sb.append("### Available Skills (IMPORTANT)\n\n");
+		sb.append("You have specialized skills that improve your work. ");
+		sb.append(
+			"Load a skill BEFORE performing the related action by calling `loadSkill(\"skill-id\")`.\n\n");
+		for (Skill skill : skills) {
+			sb.append("- `").append(skill.id()).append("`: ").append(skill.description()).append("\n");
 		}
 
 		return sb.toString();
@@ -199,7 +185,7 @@ public class SkillRegistry {
 
 	private Skill parseSkill(String id, String raw) {
 		if (!raw.startsWith(FRONTMATTER_DELIMITER)) {
-			return new Skill(id, id, Skill.Mode.ON_DEMAND, raw);
+			return new Skill(id, id, raw);
 		}
 
 		String closingDelimiter = "\n" + FRONTMATTER_DELIMITER + "\n";
@@ -209,14 +195,13 @@ public class SkillRegistry {
 			endIndex = raw.indexOf(closingDelimiter, FRONTMATTER_DELIMITER.length());
 		}
 		if (endIndex < 0) {
-			return new Skill(id, id, Skill.Mode.ON_DEMAND, raw);
+			return new Skill(id, id, raw);
 		}
 
 		String frontmatter = raw.substring(FRONTMATTER_DELIMITER.length(), endIndex).trim();
 		String content = raw.substring(endIndex + closingDelimiter.length()).trim();
 
 		String description = id;
-		Skill.Mode mode = Skill.Mode.ON_DEMAND;
 
 		for (String line : frontmatter.split("\n")) {
 			int colonIndex = line.indexOf(':');
@@ -227,10 +212,9 @@ public class SkillRegistry {
 			String value = line.substring(colonIndex + 1).trim();
 			if ("description".equals(key)) {
 				description = value;
-			} else if ("mode".equals(key)) {
-				mode = Skill.Mode.parse(value);
 			}
+			// "mode" key in frontmatter is silently ignored for backward compatibility
 		}
-		return new Skill(id, description, mode, content);
+		return new Skill(id, description, content);
 	}
 }

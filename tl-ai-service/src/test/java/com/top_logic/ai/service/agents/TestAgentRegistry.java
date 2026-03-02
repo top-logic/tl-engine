@@ -6,11 +6,15 @@
 package com.top_logic.ai.service.agents;
 
 import java.time.Duration;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import junit.framework.TestCase;
 
 import com.top_logic.ai.service.tools.registry.ToolRegistry;
 
+import dev.langchain4j.memory.ChatMemory;
+import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.request.ResponseFormat;
 
 public class TestAgentRegistry extends TestCase {
@@ -51,6 +55,67 @@ public class TestAgentRegistry extends TestCase {
 		String bareFactory = "model-browser";
 		assertFalse("Bare factory names have no dot and won't resolve",
 			bareFactory.contains("."));
+	}
+
+	public void testReplacePlaceholderOrAppend_replaces() {
+		String prompt = "Before\n<<AVAILABLE_TOOLS>>\nAfter";
+		String result = AgentRegistry.replacePlaceholderOrAppend(prompt, "<<AVAILABLE_TOOLS>>", "TOOLS HERE");
+		assertEquals("Before\nTOOLS HERE\nAfter", result);
+	}
+
+	public void testReplacePlaceholderOrAppend_appendsWhenMissing() {
+		String prompt = "No placeholder here";
+		String result = AgentRegistry.replacePlaceholderOrAppend(prompt, "<<AVAILABLE_TOOLS>>", "TOOLS HERE");
+		assertEquals("No placeholder here\n\n---\n\nTOOLS HERE", result);
+	}
+
+	public void testReplacePlaceholderOrAppend_removesPlaceholderWhenEmpty() {
+		String prompt = "Before\n<<AVAILABLE_TOOLS>>\nAfter";
+		String result = AgentRegistry.replacePlaceholderOrAppend(prompt, "<<AVAILABLE_TOOLS>>", "");
+		assertEquals("Before\n\nAfter", result);
+	}
+
+	public void testReplacePlaceholderOrAppend_noChangeWhenBothEmpty() {
+		String prompt = "No placeholder here";
+		String result = AgentRegistry.replacePlaceholderOrAppend(prompt, "<<AVAILABLE_TOOLS>>", "");
+		assertEquals("No placeholder here", result);
+	}
+
+	public void testDelegationToolName() {
+		assertEquals("delegate_to_ModelExplorer", AgentRegistry.delegationToolName("ModelExplorer"));
+		assertEquals("delegate_to_TLScript_Agent", AgentRegistry.delegationToolName("TLScript-Agent"));
+	}
+
+	public void testPlaceholderConstants() {
+		assertEquals("<<AVAILABLE_TOOLS>>", AgentRegistry.TOOLS_PLACEHOLDER);
+		assertEquals("<<AVAILABLE_DELEGATES>>", AgentRegistry.DELEGATES_PLACEHOLDER);
+	}
+
+	public void testSubAgentMemoryConstant() {
+		assertEquals(20, AgentRegistry.SUB_AGENT_MEMORY_MAX_MESSAGES);
+	}
+
+	/**
+	 * Verifies that the sub-agent memory map correctly provides a shared {@link ChatMemory}
+	 * per agent name, so repeated delegations to the same sub-agent reuse the same memory.
+	 */
+	public void testSubAgentMemoryMapSharing() {
+		Map<String, ChatMemory> memories = new ConcurrentHashMap<>();
+
+		// First access creates a new memory
+		ChatMemory first = memories.computeIfAbsent("ModelEditor",
+			k -> MessageWindowChatMemory.withMaxMessages(AgentRegistry.SUB_AGENT_MEMORY_MAX_MESSAGES));
+		assertNotNull(first);
+
+		// Second access returns the same instance
+		ChatMemory second = memories.computeIfAbsent("ModelEditor",
+			k -> MessageWindowChatMemory.withMaxMessages(AgentRegistry.SUB_AGENT_MEMORY_MAX_MESSAGES));
+		assertSame("Repeated calls for same agent should return same ChatMemory", first, second);
+
+		// Different agent gets different memory
+		ChatMemory other = memories.computeIfAbsent("TLScriptAgent",
+			k -> MessageWindowChatMemory.withMaxMessages(AgentRegistry.SUB_AGENT_MEMORY_MAX_MESSAGES));
+		assertNotSame("Different agents should get separate ChatMemory instances", first, other);
 	}
 
 	/**

@@ -8,6 +8,7 @@ package com.top_logic.ai.service.agents;
 import java.lang.reflect.Method;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -44,6 +45,7 @@ import dev.langchain4j.agent.tool.ToolSpecifications;
 import dev.langchain4j.agentic.AgenticServices;
 import dev.langchain4j.agentic.UntypedAgent;
 import dev.langchain4j.memory.ChatMemory;
+import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.anthropic.AnthropicChatModel;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.request.ResponseFormat;
@@ -76,6 +78,25 @@ import dev.langchain4j.service.tool.ToolExecutor;
  * @see AIService
  */
 public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?>> {
+
+	/**
+	 * Placeholder marker for the tool catalog in system prompts. When present, the catalog of
+	 * available tools replaces this marker. Otherwise, the catalog is appended at the end.
+	 */
+	public static final String TOOLS_PLACEHOLDER = "<<AVAILABLE_TOOLS>>";
+
+	/**
+	 * Placeholder marker for the delegation catalog in system prompts. When present, the catalog
+	 * of delegation targets replaces this marker. Otherwise, the catalog is appended at the end.
+	 */
+	public static final String DELEGATES_PLACEHOLDER = "<<AVAILABLE_DELEGATES>>";
+
+	/**
+	 * Maximum number of messages retained in each sub-agent's conversation memory. Uses a sliding
+	 * window so that repeated calls to the same sub-agent within (or across) user messages preserve
+	 * recent conversation history.
+	 */
+	static final int SUB_AGENT_MEMORY_MAX_MESSAGES = 20;
 
 	/**
 	 * Configuration interface for {@link AgentRegistry}.
@@ -113,7 +134,7 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		 * The configured skills, keyed by {@link SkillConfig#getName() skill name}.
 		 *
 		 * <p>
-		 * Each entry defines a reusable skill with its description, mode, and prompt content. Skills
+		 * Each entry defines a reusable skill with its description and prompt content. Skills
 		 * are referenced by name from {@link AgentConfig#getSkills()}.
 		 * </p>
 		 */
@@ -337,8 +358,8 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	 *
 	 * <p>
 	 * Reads the base prompt from {@link AgentConfig#getSystemPrompt()}, resolves the agent's
-	 * {@link AgentConfig#getSkills() skills}, and injects them into the prompt. Auto skills are
-	 * injected in full, on-demand skills appear as a catalog. Delegation targets are not mentioned
+	 * {@link AgentConfig#getSkills() skills}, and injects them into the prompt. Skills appear as a
+	 * catalog that the agent can load on demand via {@code loadSkill()}. Delegation targets are not mentioned
 	 * in the system prompt because each delegation tool carries its own self-describing
 	 * {@link ToolSpecification}.
 	 * </p>
@@ -348,30 +369,48 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	 * @return The fully-resolved system prompt.
 	 */
 	public String getSystemPrompt(AgentConfig config) {
-		String basePrompt = config.getSystemPrompt();
+		String prompt = config.getSystemPrompt();
 
+		// Build skill section
+		String skillSection = buildSkillSectionForAgent(config);
+
+		// Build tool section
+		String toolSection = buildToolSection(config);
+
+		// Build delegation section
+		String delegationSection = buildDelegationSection(config);
+
+		// Process all three placeholders using replacePlaceholderOrAppend
+		prompt = replacePlaceholderOrAppend(prompt, SkillRegistry.SKILLS_PLACEHOLDER, skillSection);
+		prompt = replacePlaceholderOrAppend(prompt, TOOLS_PLACEHOLDER, toolSection);
+		prompt = replacePlaceholderOrAppend(prompt, DELEGATES_PLACEHOLDER, delegationSection);
+
+		return prompt;
+	}
+
+	/**
+	 * Resolves the skills for the given agent configuration and builds the skill section content.
+	 *
+	 * @param config
+	 *        The agent configuration whose {@link AgentConfig#getSkills() skills} to resolve.
+	 * @return The formatted skill section, or empty string if the agent has no skills.
+	 */
+	private String buildSkillSectionForAgent(AgentConfig config) {
 		List<String> skillNames = config.getSkills();
-		String skillSection = "";
-		if (!skillNames.isEmpty()) {
-			List<Skill> skills = new ArrayList<>(skillNames.size());
-			for (String skillName : skillNames) {
-				try {
-					skills.add(_skillRegistry.getSkill(skillName));
-				} catch (IllegalArgumentException ex) {
-					Logger.warn("Skipping unavailable skill '" + skillName + "': " + ex.getMessage(),
-						AgentRegistry.class);
-				}
+		if (skillNames.isEmpty()) {
+			return "";
+		}
+
+		List<Skill> skills = new ArrayList<>(skillNames.size());
+		for (String skillName : skillNames) {
+			try {
+				skills.add(_skillRegistry.getSkill(skillName));
+			} catch (IllegalArgumentException ex) {
+				Logger.warn("Skipping unavailable skill '" + skillName + "': " + ex.getMessage(),
+					AgentRegistry.class);
 			}
-			skillSection = buildSkillSection(skills);
 		}
-
-		if (basePrompt.contains(SkillRegistry.SKILLS_PLACEHOLDER)) {
-			basePrompt = basePrompt.replace(SkillRegistry.SKILLS_PLACEHOLDER, skillSection);
-		} else if (!skillSection.isEmpty()) {
-			basePrompt = basePrompt + "\n\n---\n\n" + skillSection;
-		}
-
-		return basePrompt;
+		return buildSkillSection(skills);
 	}
 
 	/**
@@ -403,22 +442,12 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		}
 
 		if (!config.getSkills().isEmpty() && _skillRegistry != null) {
-			boolean hasOnDemand = config.getSkills().stream()
-				.anyMatch(name -> {
-					try {
-						return _skillRegistry.getSkill(name).mode() == Skill.Mode.ON_DEMAND;
-					} catch (IllegalArgumentException ex) {
-						return false;
-					}
-				});
-			if (hasOnDemand) {
-				SkillTool skillTool = new SkillTool(_skillRegistry, config.getName());
-				for (ToolSpecification spec : ToolSpecifications.toolSpecificationsFrom(skillTool)) {
-					Method method = findMethodForToolSpec(SkillTool.class, spec.name());
-					if (method != null) {
-						ToolExecutor executor = new DefaultToolExecutor(skillTool, method);
-						tools.add(new ToolImplementation(spec, executor));
-					}
+			SkillTool skillTool = new SkillTool(_skillRegistry, config.getName());
+			for (ToolSpecification spec : ToolSpecifications.toolSpecificationsFrom(skillTool)) {
+				Method method = findMethodForToolSpec(SkillTool.class, spec.name());
+				if (method != null) {
+					ToolExecutor executor = new DefaultToolExecutor(skillTool, method);
+					tools.add(new ToolImplementation(spec, executor));
 				}
 			}
 		}
@@ -457,10 +486,34 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	 *         has no delegations.
 	 */
 	public List<ToolImplementation> buildDelegationTools(AgentConfig config) {
+		return buildDelegationTools(config, null);
+	}
+
+	/**
+	 * Builds delegation tools with session-scoped sub-agent memory.
+	 *
+	 * <p>
+	 * Each delegation target gets a {@link ChatMemory} from the provided map (created on first
+	 * access). When the orchestrator calls the same sub-agent multiple times, the sub-agent sees
+	 * its previous conversation history.
+	 * </p>
+	 *
+	 * @param config
+	 *        The source agent configuration.
+	 * @param subAgentMemories
+	 *        Optional session-scoped map of sub-agent memories. If {@code null}, a local map is
+	 *        created for within-invocation memory only.
+	 * @return A list of {@link ToolImplementation}s, one per delegation target.
+	 */
+	public List<ToolImplementation> buildDelegationTools(AgentConfig config,
+			Map<String, ChatMemory> subAgentMemories) {
 		List<String> delegations = config.getDelegations();
 		if (delegations.isEmpty()) {
 			return List.of();
 		}
+
+		Map<String, ChatMemory> effectiveMemories =
+			subAgentMemories != null ? subAgentMemories : new HashMap<>();
 
 		List<ToolImplementation> result = new ArrayList<>(delegations.size());
 		String fromAgent = config.getName();
@@ -485,7 +538,7 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 				desc = "Specialist agent";
 			}
 
-			String toolName = "delegate_to_" + targetName.replace('-', '_');
+			String toolName = delegationToolName(targetName);
 
 			ToolSpecification spec = ToolSpecification.builder()
 				.name(toolName)
@@ -493,7 +546,7 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 				.parameters(parameters)
 				.build();
 
-			ToolExecutor executor = createDelegationExecutor(fromAgent, targetName);
+			ToolExecutor executor = createDelegationExecutor(fromAgent, targetName, effectiveMemories);
 			result.add(new ToolImplementation(spec, executor));
 		}
 
@@ -534,6 +587,13 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	 * Builds an {@link UntypedAgent} from the named configuration with an optional
 	 * {@link ChatModel} decorator.
 	 *
+	 * <p>
+	 * Delegates to
+	 * {@link #buildUntypedAgent(String, ChatMemory, java.util.function.UnaryOperator, Map)} with a
+	 * fresh (invocation-scoped) sub-agent memory map, so that sub-agents called multiple times
+	 * within the same orchestrator loop retain their conversation context.
+	 * </p>
+	 *
 	 * @param name
 	 *        The agent name as declared in the configuration.
 	 * @param memory
@@ -545,6 +605,41 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	 */
 	public UntypedAgent buildUntypedAgent(String name, ChatMemory memory,
 			java.util.function.UnaryOperator<ChatModel> chatModelDecorator) {
+		return buildUntypedAgent(name, memory, chatModelDecorator, null);
+	}
+
+	/**
+	 * Builds an {@link UntypedAgent} from the named configuration with session-scoped sub-agent
+	 * memory.
+	 *
+	 * <p>
+	 * When {@code subAgentMemories} is provided, delegation targets (sub-agents) share their
+	 * {@link ChatMemory} across invocations via this map, keyed by agent name. This allows
+	 * sub-agents to retain conversation context when the orchestrator calls them multiple times
+	 * — both within a single orchestrator loop and across user messages within the same session.
+	 * </p>
+	 *
+	 * <p>
+	 * If {@code subAgentMemories} is {@code null}, a fresh map is created internally so that
+	 * sub-agents still retain context within a single orchestrator invocation (within-message
+	 * scope).
+	 * </p>
+	 *
+	 * @param name
+	 *        The agent name as declared in the configuration.
+	 * @param memory
+	 *        Optional conversation memory, or {@code null} for stateless agents.
+	 * @param chatModelDecorator
+	 *        Optional decorator applied to the {@link ChatModel} before building. Useful for
+	 *        injecting multimodal content into LLM requests. May be {@code null}.
+	 * @param subAgentMemories
+	 *        Optional session-scoped map of sub-agent conversation memories, keyed by agent name.
+	 *        If {@code null}, a local map is created for within-invocation memory only.
+	 * @return A fully configured untyped agent instance.
+	 */
+	public UntypedAgent buildUntypedAgent(String name, ChatMemory memory,
+			java.util.function.UnaryOperator<ChatModel> chatModelDecorator,
+			Map<String, ChatMemory> subAgentMemories) {
 		AgentConfig config = getAgentConfig(name);
 		ChatModel model = buildChatModel(config);
 		if (chatModelDecorator != null) {
@@ -552,7 +647,7 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		}
 		String systemPrompt = getSystemPrompt(config);
 		List<ToolImplementation> tools = buildTools(config);
-		List<ToolImplementation> delegationTools = buildDelegationTools(config);
+		List<ToolImplementation> delegationTools = buildDelegationTools(config, subAgentMemories);
 
 		Map<ToolSpecification, ToolExecutor> allTools = new LinkedHashMap<>();
 		for (ToolImplementation impl : tools) {
@@ -580,7 +675,20 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		return builder.build();
 	}
 
-	private ToolExecutor createDelegationExecutor(String fromAgent, String targetName) {
+	/**
+	 * Computes the canonical tool name for delegating to the given target agent.
+	 *
+	 * @param targetName
+	 *        The target agent name as declared in the configuration.
+	 * @return The tool name in the format {@code delegate_to_<name>} with hyphens replaced by
+	 *         underscores.
+	 */
+	static String delegationToolName(String targetName) {
+		return "delegate_to_" + targetName.replace('-', '_');
+	}
+
+	private ToolExecutor createDelegationExecutor(String fromAgent, String targetName,
+			Map<String, ChatMemory> subAgentMemories) {
 		return (request, memoryId) -> {
 			Map<String, Object> args;
 			try {
@@ -608,9 +716,12 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 
 			String message = prompt.length() > 0 ? prompt.toString() : task;
 
+			ChatMemory agentMemory = subAgentMemories.computeIfAbsent(targetName,
+				k -> MessageWindowChatMemory.withMaxMessages(SUB_AGENT_MEMORY_MAX_MESSAGES));
+
 			ToolCallTracking.recordAgentCallStartIfTracking(fromAgent, targetName, message);
 			try {
-				UntypedAgent agent = buildUntypedAgent(targetName);
+				UntypedAgent agent = buildUntypedAgent(targetName, agentMemory);
 				String result = (String) ThreadContextManager.inSystemInteraction(AgentRegistry.class,
 					() -> agent.invoke(Map.of("message", message)));
 				ToolCallTracking.recordAgentCallCompleteIfTracking(truncate(result));
@@ -854,36 +965,150 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		return timeoutSeconds == null ? null : Duration.ofSeconds(timeoutSeconds);
 	}
 
+	/**
+	 * Replaces the given placeholder in the prompt with the section content, or appends the section
+	 * at the end if the placeholder is not present. If the section is empty, the placeholder is
+	 * removed without inserting anything.
+	 *
+	 * @param prompt
+	 *        The base prompt text.
+	 * @param placeholder
+	 *        The placeholder marker to search for (e.g. {@code "<<AVAILABLE_TOOLS>>"}).
+	 * @param section
+	 *        The content to inject, or empty string if nothing to inject.
+	 * @return The prompt with the placeholder replaced or section appended.
+	 */
+	static String replacePlaceholderOrAppend(String prompt, String placeholder, String section) {
+		if (prompt.contains(placeholder)) {
+			return prompt.replace(placeholder, section);
+		}
+		if (!section.isEmpty()) {
+			return prompt + "\n\n---\n\n" + section;
+		}
+		return prompt;
+	}
+
+	/**
+	 * Builds a markdown catalog of the tools available to the given agent.
+	 *
+	 * @param config
+	 *        The agent configuration.
+	 * @return A formatted tool catalog section, or empty string if the agent has no tools.
+	 */
+	private String buildToolSection(AgentConfig config) {
+		List<String> toolNames = config.getTools();
+		if (toolNames.isEmpty()) {
+			return "";
+		}
+
+		ToolRegistry toolRegistry = ToolRegistry.getInstance();
+		StringBuilder sb = new StringBuilder();
+		sb.append("# Available Tools\n\n");
+		sb.append("You have the following tools available. Use them frequently to gather information ");
+		sb.append("and perform actions. NEVER guess when a tool can give you the answer.\n\n");
+
+		for (String qualifiedName : toolNames) {
+			ToolImplementation tool = toolRegistry.getTool(qualifiedName);
+			if (tool != null) {
+				ToolSpecification spec = tool.getSpecification();
+				sb.append("- **").append(spec.name()).append("**: ").append(spec.description()).append("\n");
+			} else {
+				Logger.warn("buildToolSection: agent '" + config.getName() +
+					"' references unknown tool '" + qualifiedName + "' — omitted from prompt catalog.",
+					AgentRegistry.class);
+			}
+		}
+
+		return sb.toString();
+	}
+
+	/**
+	 * Builds an XML-style catalog of delegation targets for the given agent.
+	 *
+	 * @param config
+	 *        The agent configuration.
+	 * @return A formatted delegation catalog section, or empty string if the agent has no
+	 *         delegations.
+	 */
+	private String buildDelegationSection(AgentConfig config) {
+		List<String> delegations = config.getDelegations();
+		if (delegations.isEmpty()) {
+			return "";
+		}
+
+		StringBuilder sb = new StringBuilder();
+		sb.append("# Available Sub-Agents\n\n");
+		sb.append("You MUST delegate tasks to the sub-agent with the most relevant expertise.\n\n");
+		sb.append("### Strategic Orchestration\n");
+		sb.append("Your own context window is your most precious resource. When you delegate, the sub-agent's\n");
+		sb.append("entire execution is consolidated into a single result in your history, keeping your main loop lean.\n\n");
+		sb.append("<available_agents>\n");
+
+		for (String targetName : delegations) {
+			AgentConfig targetConfig = getConfig().getAgents().get(targetName);
+			if (targetConfig == null) {
+				continue;
+			}
+			String desc = targetConfig.getDescription();
+			if (desc == null || desc.isEmpty()) {
+				desc = "Specialist agent";
+			}
+			String toolName = delegationToolName(targetName);
+
+			sb.append("  <agent>\n");
+			sb.append("    <name>").append(targetName).append("</name>\n");
+			sb.append("    <tool>").append(toolName).append("</tool>\n");
+			sb.append("    <description>").append(escapeXml(desc)).append("</description>\n");
+			sb.append("  </agent>\n");
+		}
+
+		sb.append("</available_agents>");
+		return sb.toString();
+	}
+
+	/**
+	 * Builds an XML-style skill catalog for injection into a system prompt. All skills are rendered
+	 * as {@code <available_skills>} catalog entries with enforcement language for calling
+	 * {@code loadSkill()}.
+	 *
+	 * @param skills
+	 *        The resolved skills for the agent.
+	 * @return The formatted skill section, or empty string if no skills.
+	 */
 	private String buildSkillSection(List<Skill> skills) {
 		if (skills.isEmpty()) {
 			return "";
 		}
 
-		List<Skill> autoSkills = skills.stream()
-			.filter(s -> s.mode() == Skill.Mode.AUTO)
-			.toList();
-		List<Skill> onDemandSkills = skills.stream()
-			.filter(s -> s.mode() == Skill.Mode.ON_DEMAND)
-			.toList();
-
 		StringBuilder sb = new StringBuilder();
+		sb.append("# Available Skills\n\n");
+		sb.append("You MUST call `loadSkill(\"skill-id\")` BEFORE performing any task that matches ");
+		sb.append("a skill description. Loading the skill gives you specialized instructions ");
+		sb.append("that dramatically improve your output quality.\n\n");
 
-		for (Skill skill : autoSkills) {
-			sb.append("### ").append(skill.description()).append("\n\n");
-			sb.append(skill.content()).append("\n\n");
+		sb.append("<available_skills>\n");
+		for (Skill skill : skills) {
+			sb.append("  <skill>\n");
+			sb.append("    <id>").append(escapeXml(skill.id())).append("</id>\n");
+			sb.append("    <description>").append(escapeXml(skill.description())).append("</description>\n");
+			sb.append("  </skill>\n");
 		}
+		sb.append("</available_skills>\n\n");
 
-		if (!onDemandSkills.isEmpty()) {
-			sb.append("### Available Skills (IMPORTANT)\n\n");
-			sb.append("You have specialized skills that improve your work. ");
-			sb.append(
-				"Load a skill BEFORE performing the related action by calling `loadSkill(\"skill-id\")`.\n\n");
-			for (Skill skill : onDemandSkills) {
-				sb.append("- `").append(skill.id()).append("`: ").append(skill.description()).append("\n");
-			}
-		}
+		sb.append("**Rule:** If a task even partially matches a skill description, call `loadSkill()` first. ");
+		sb.append("Do NOT attempt the task without loading the relevant skill.");
 
 		return sb.toString();
+	}
+
+	/**
+	 * Escapes XML special characters in text content that will be embedded in XML-style tags within
+	 * system prompts.
+	 */
+	private static String escapeXml(String s) {
+		return s.replace("&", "&amp;")
+			.replace("<", "&lt;")
+			.replace(">", "&gt;");
 	}
 
 	/**

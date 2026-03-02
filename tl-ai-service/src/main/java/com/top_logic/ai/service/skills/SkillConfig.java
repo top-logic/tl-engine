@@ -12,28 +12,27 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.layout.form.values.MultiLineText;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
+import com.top_logic.layout.form.values.edit.annotation.LabelPositioning;
+import com.top_logic.layout.form.values.edit.annotation.RenderWholeLine;
+import com.top_logic.model.annotate.LabelPosition;
 
 /**
  * Configuration for a single skill in the {@link AgentRegistry}.
  *
  * <p>
- * A skill is an instruction fragment that can be injected into an AI agent's context, either
- * automatically via the system prompt auto or on demand via a tool call on demand.
+ * A skill is an instruction fragment that agents can load on demand via {@code loadSkill(id)}. The
+ * skill's id and description appear in the system prompt catalog so the agent knows when to load it.
  * </p>
  */
 @DisplayOrder({
 	SkillConfig.NAME_ATTRIBUTE,
 	SkillConfig.DESCRIPTION,
-	SkillConfig.MODE,
 	SkillConfig.CONTENT,
 })
 public interface SkillConfig extends NamedConfigMandatory {
 
 	/** @see #getDescription() */
 	String DESCRIPTION = "description";
-
-	/** @see #getMode() */
-	String MODE = "mode";
 
 	/** @see #getContent() */
 	String CONTENT = "content";
@@ -43,21 +42,16 @@ public interface SkillConfig extends NamedConfigMandatory {
 	 */
 	@Name(DESCRIPTION)
 	@Mandatory
+	@LabelPositioning(LabelPosition.ABOVE)
 	String getDescription();
-
-	/**
-	 * Whether this skill is injected automatically into the system prompt auto or loaded on demand
-	 * via tool call on demand.
-	 */
-	@Name(MODE)
-	@Mandatory
-	Skill.Mode getMode();
 
 	/**
 	 * The actual prompt text of this skill.
 	 */
 	@Name(CONTENT)
 	@Mandatory
+	@RenderWholeLine
 	@ControlProvider(MultiLineText.class)
+	@LabelPositioning(LabelPosition.ABOVE)
 	String getContent();
 }

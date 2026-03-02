@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments>
+		<tabLabel key="dynamic.reactDemo.layout.tab">
+			<en>Layout</en>
+			<de>Layout</de>
+		</tabLabel>
+		<components>
+			<component
+				class="com.top_logic.demo.react.DemoReactLayoutComponent"
+				name="reactLayoutDemo"
+			/>
+		</components>
+	</arguments>
+</config:template-call>

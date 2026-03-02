@@ -5,6 +5,7 @@
  */
 package com.top_logic.util.sched;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.I18NConstantsBase;
@@ -34,11 +35,14 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey1 CLEANUP_SUCCESS__COUNT;
 
-	public static ResKey MEMORY_CHART_AXIS_TIME = legacyKey("admin.sys.memoryObserver.chart.labelX");
+	@CustomKey("admin.sys.memoryObserver.chart.labelX")
+	public static ResKey MEMORY_CHART_AXIS_TIME;
 
-	public static ResKey MEMORY_CHART_AXIS_VALUE = legacyKey("admin.sys.memoryObserver.chart.labelY");
+	@CustomKey("admin.sys.memoryObserver.chart.labelY")
+	public static ResKey MEMORY_CHART_AXIS_VALUE;
 
-	public static ResKey MEMORY_CHART_TITLE = legacyKey("admin.sys.memoryObserver.chart.title");
+	@CustomKey("admin.sys.memoryObserver.chart.title")
+	public static ResKey MEMORY_CHART_TITLE;
 
 	/**
 	 * @en Cleaned task log: {0}

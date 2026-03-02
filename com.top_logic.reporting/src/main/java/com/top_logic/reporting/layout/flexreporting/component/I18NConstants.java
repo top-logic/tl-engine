@@ -5,6 +5,7 @@
  */
 package com.top_logic.reporting.layout.flexreporting.component;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.layout.ResPrefix;
@@ -23,7 +24,8 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey ERROR_COMMIT_FAILED;
 
-	public static ResKey ERROR_CREATE_FAILED = legacyKey("reporting.create.failed");
+	@CustomKey("reporting.create.failed")
+	public static ResKey ERROR_CREATE_FAILED;
 
 	static {
 		initConstants(I18NConstants.class);

@@ -5,6 +5,7 @@
  */
 package com.top_logic.contact.mandatoraware.layout;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.I18NConstantsBase;
 
@@ -20,7 +21,8 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey CREATE_CONTACTS_NOT_ALLOWED;
 
-	public static ResKey ERROR_SYSTEM_CONTACT_NOT_EDITABLE = legacyKey("tl.executable.disabled.systemContact.notEditable");
+	@CustomKey("tl.executable.disabled.systemContact.notEditable")
+	public static ResKey ERROR_SYSTEM_CONTACT_NOT_EDITABLE;
 
 	static {
 		initConstants(I18NConstants.class);

@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.history;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.layout.ResPrefix;
@@ -20,9 +21,11 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static final ResPrefix HISTORY_DIALOGS = legacyPrefix("layout.history.");
 
-	public static ResKey LOGOUT_DIALOG_TITLE = legacyKey("layout.history.logoutDialogTitle");
+	@CustomKey("layout.history.logoutDialogTitle")
+	public static ResKey LOGOUT_DIALOG_TITLE;
 
-	public static ResKey NOT_UNDOABLE_DIALOG_TITLE = legacyKey("layout.history.notUndoableDialogTitle");
+	@CustomKey("layout.history.notUndoableDialogTitle")
+	public static ResKey NOT_UNDOABLE_DIALOG_TITLE;
 
 	public static ResKey HISTORY_CHANGED;
 

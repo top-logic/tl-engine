@@ -5,6 +5,7 @@
  */
 package com.top_logic.knowledge.gui.layout;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.layout.ResPrefix;
@@ -18,13 +19,17 @@ import com.top_logic.layout.ResPrefix;
 @SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
-	public static ResKey WINDOW_CROSS_REFERENCE = legacyKey("layout.windowbar.crossreference");
+	@CustomKey("layout.windowbar.crossreference")
+	public static ResKey WINDOW_CROSS_REFERENCE;
 
-	public static ResKey WINDOW_MAXIMIZE = legacyKey("layout.windowbar.maximize");
+	@CustomKey("layout.windowbar.maximize")
+	public static ResKey WINDOW_MAXIMIZE;
 
-	public static ResKey WINDOW_RESTORE = legacyKey("layout.windowbar.restore");
+	@CustomKey("layout.windowbar.restore")
+	public static ResKey WINDOW_RESTORE;
 
-	public static ResKey TOGGLE_SHOW_HELP = legacyKey("tl.command.help.toggle");
+	@CustomKey("tl.command.help.toggle")
+	public static ResKey TOGGLE_SHOW_HELP;
 
 	/** @en Update of visible button count */
 	public static ResKey VISIBLE_BUTTON_COUNT;

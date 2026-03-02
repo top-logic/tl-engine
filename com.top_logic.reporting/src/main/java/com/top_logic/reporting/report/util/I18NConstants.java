@@ -5,6 +5,7 @@
  */
 package com.top_logic.reporting.report.util;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.layout.ResPrefix;
@@ -18,21 +19,29 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResPrefix CHART = legacyPrefix("reporting.chart.");
 
-	public static ResKey CALENDAR_WEEK = legacyKey("element.search.calendarweek");
+	@CustomKey("element.search.calendarweek")
+	public static ResKey CALENDAR_WEEK;
 
-	public static ResKey WATERFALL_CHART_TOTAL = legacyKey("reporting.chart.waterfall-chart.total");
+	@CustomKey("reporting.chart.waterfall-chart.total")
+	public static ResKey WATERFALL_CHART_TOTAL;
 
-	public static ResKey GRANULARITY_DAYS = legacyKey("reporting.timePeriod.days");
+	@CustomKey("reporting.timePeriod.days")
+	public static ResKey GRANULARITY_DAYS;
 
-	public static ResKey GRANULARITY_WEEKS = legacyKey("reporting.timePeriod.weeks");
+	@CustomKey("reporting.timePeriod.weeks")
+	public static ResKey GRANULARITY_WEEKS;
 
-	public static ResKey GRANULARITY_MONTHS = legacyKey("reporting.timePeriod.months");
+	@CustomKey("reporting.timePeriod.months")
+	public static ResKey GRANULARITY_MONTHS;
 
-	public static ResKey GRANULARITY_QUARTERS = legacyKey("reporting.timePeriod.quarters");
+	@CustomKey("reporting.timePeriod.quarters")
+	public static ResKey GRANULARITY_QUARTERS;
 
-	public static ResKey GRANULARITY_HALF_YEARS = legacyKey("reporting.timePeriod.halfyears");
+	@CustomKey("reporting.timePeriod.halfyears")
+	public static ResKey GRANULARITY_HALF_YEARS;
 
-	public static ResKey GRANULARITY_YEARS = legacyKey("reporting.timePeriod.years");
+	@CustomKey("reporting.timePeriod.years")
+	public static ResKey GRANULARITY_YEARS;
 
 	static {
 		initConstants(I18NConstants.class);

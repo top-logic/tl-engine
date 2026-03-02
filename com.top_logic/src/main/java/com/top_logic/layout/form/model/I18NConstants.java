@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.form.model;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.I18NConstantsBase;
@@ -23,9 +24,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResPrefix DOCUMENT_FIELD;
 
-	public static ResKey FIXED_OPTIONS_ADDED = legacyKey("layout.form.selection.fixedOptionsAdded");
+	@CustomKey("layout.form.selection.fixedOptionsAdded")
+	public static ResKey FIXED_OPTIONS_ADDED;
 
-	public static ResKey FIXED_OPTIONS_REMOVED = legacyKey("layout.form.selection.fixedOptionsRemoved");
+	@CustomKey("layout.form.selection.fixedOptionsRemoved")
+	public static ResKey FIXED_OPTIONS_REMOVED;
 
 	public static ResPrefix DATE_TIME_FIELD;
 

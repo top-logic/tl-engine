@@ -5,6 +5,7 @@
  */
 package com.top_logic.reporting.flex.search.chart;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.layout.ResPrefix;
@@ -15,7 +16,8 @@ import com.top_logic.layout.ResPrefix;
 @SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
-	public static ResKey DATE_PARTITION_FIRST = legacyKey("timeseries.chart.constraint.datePartitionFirst");
+	@CustomKey("timeseries.chart.constraint.datePartitionFirst")
+	public static ResKey DATE_PARTITION_FIRST;
 
 	public static ResKey EXCEEDS_MAX_DIMENSIONS__MIN_MIN1_MAX_MAX1_PARTITIONS_AGGREGATIONS;
 

@@ -5,6 +5,7 @@
  */
 package com.top_logic.tool.boundsec.commandhandlers;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
@@ -29,7 +30,8 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey2 BOOKMARK_OBJECT_NOT_FOUND__ID__TYPE;
 
-	public static ResKey UPLOAD = legacyKey("tl.command.upload");
+	@CustomKey("tl.command.upload")
+	public static ResKey UPLOAD;
 
 	static {
 		initConstants(I18NConstants.class);

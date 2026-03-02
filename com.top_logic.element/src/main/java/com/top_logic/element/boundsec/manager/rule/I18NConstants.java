@@ -5,6 +5,7 @@
  */
 package com.top_logic.element.boundsec.manager.rule;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.layout.ResPrefix;
@@ -18,9 +19,11 @@ import com.top_logic.layout.ResPrefix;
 @SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
-	public static ResKey ROLE_RULE_TOOLTIP = legacyKey("tl.roleRule.tooltip");
+	@CustomKey("tl.roleRule.tooltip")
+	public static ResKey ROLE_RULE_TOOLTIP;
 
-	public static ResKey SIMPLE_TOOLTIP = legacyKey("tl.roleRule.simple.tooltip");
+	@CustomKey("tl.roleRule.simple.tooltip")
+	public static ResKey SIMPLE_TOOLTIP;
 
 	static {
 		initConstants(I18NConstants.class);

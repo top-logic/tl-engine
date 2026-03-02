@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.admin.component;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.I18NConstantsBase;
@@ -40,11 +41,14 @@ public class I18NConstants extends I18NConstantsBase {
 	/** @see I18NConstantsBase */
 	public static ResKey DUPLICATE_LIST_NAME;
 	
-	public static ResKey ERROR_INVALID_GROUP_NAME = legacyKey("group.name.invalid");
+	@CustomKey("group.name.invalid")
+	public static ResKey ERROR_INVALID_GROUP_NAME;
 
-	public static ResKey ERROR_NOT_IN_MAINTENANCE_MODE = legacyKey("tl.executable.inMaintenanceModeOnly");
+	@CustomKey("tl.executable.inMaintenanceModeOnly")
+	public static ResKey ERROR_NOT_IN_MAINTENANCE_MODE;
 
-	public static ResKey ERROR_SYSTEM_GROUP_CANNOT_BE_DELETED = legacyKey("admin.group.edit.deleteGroup.disabled.isSystem");
+	@CustomKey("admin.group.edit.deleteGroup.disabled.isSystem")
+	public static ResKey ERROR_SYSTEM_GROUP_CANNOT_BE_DELETED;
 
 	/**
 	 * Error message if the restart of the top-logic service failed.

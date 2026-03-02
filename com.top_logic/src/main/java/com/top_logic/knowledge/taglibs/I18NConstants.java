@@ -5,6 +5,7 @@
  */
 package com.top_logic.knowledge.taglibs;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.layout.ResPrefix;
@@ -18,9 +19,11 @@ import com.top_logic.layout.ResPrefix;
 @SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
-	public static ResKey FALSE_LABEL = legacyKey("false");
+	@CustomKey("false")
+	public static ResKey FALSE_LABEL;
 
-	public static ResKey TRUE_LABEL = legacyKey("true");
+	@CustomKey("true")
+	public static ResKey TRUE_LABEL;
 
 	static {
 		initConstants(I18NConstants.class);

@@ -5,6 +5,7 @@
  */
 package com.top_logic.util.sched.layout;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.I18NConstantsBase;
@@ -55,13 +56,17 @@ public final class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey1 TASK_IS_NOT_TOP_LEVEL__TASK;
 
-	public static ResKey STOP_TASK_CONFIRM = legacyKey("tl.task.stop.confirm");
+	@CustomKey("tl.task.stop.confirm")
+	public static ResKey STOP_TASK_CONFIRM;
 
-	public static ResKey TASK_NO_LOG_FILE = legacyKey("tl.task.logFile.none");
+	@CustomKey("tl.task.logFile.none")
+	public static ResKey TASK_NO_LOG_FILE;
 
-	public static ResKey LOG_FILE_NOT_AVAILABLE__FILE = legacyKey("tl.task.logFile.notAvailable");
+	@CustomKey("tl.task.logFile.notAvailable")
+	public static ResKey LOG_FILE_NOT_AVAILABLE__FILE;
 
-	public static ResKey TASK_STOP_SIGNALED = legacyKey("tl.task.stop.signaled");
+	@CustomKey("tl.task.stop.signaled")
+	public static ResKey TASK_STOP_SIGNALED;
 
 	/**
 	 * @en Released cluster lock for task: {0}

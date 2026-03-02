@@ -5,6 +5,7 @@
  */
 package com.top_logic.element.meta.gui;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
@@ -20,9 +21,11 @@ import com.top_logic.layout.ResPrefix;
 @SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
-	public static ResKey1 ERROR_IS_REFERENCED__ATTRIBUTE = legacyKey1("element.rule.isReferredTo");
+	@CustomKey("element.rule.isReferredTo")
+	public static ResKey1 ERROR_IS_REFERENCED__ATTRIBUTE;
 
-	public static ResKey ARE_REFERRED_TO = legacyKey("element.rule.areReferredTo");
+	@CustomKey("element.rule.areReferredTo")
+	public static ResKey ARE_REFERRED_TO;
 
 	public static ResKey2 ERROR_CREATE_UNIQUEID__NUMBER_HANDLER__ATTRIBUTED;
 

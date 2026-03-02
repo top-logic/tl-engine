@@ -5,6 +5,7 @@
  */
 package com.top_logic.element.layout.grid;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.I18NConstantsBase;
@@ -39,57 +40,83 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey WRONG_SELECTION;
 
-	public static ResKey ALL_MARKED = legacyKey("tl.grid.executable.allMarked");
+	@CustomKey("tl.grid.executable.allMarked")
+	public static ResKey ALL_MARKED;
 
-	public static ResKey BOOLEAN_EMPTY = legacyKey("tl.import.data.boolean.empty");
+	@CustomKey("tl.import.data.boolean.empty")
+	public static ResKey BOOLEAN_EMPTY;
 
-	public static ResKey BOOLEAN_FORMAT = legacyKey("tl.import.data.boolean.format");
+	@CustomKey("tl.import.data.boolean.format")
+	public static ResKey BOOLEAN_FORMAT;
 
-	public static ResKey DATE_EMPTY = legacyKey("tl.import.data.date.empty");
+	@CustomKey("tl.import.data.date.empty")
+	public static ResKey DATE_EMPTY;
 
-	public static ResKey DATE_FORMAT = legacyKey("tl.import.data.date.format");
+	@CustomKey("tl.import.data.date.format")
+	public static ResKey DATE_FORMAT;
 
-	public static ResKey DISABLED = legacyKey("tl.grid.spacer.disabled");
+	@CustomKey("tl.grid.spacer.disabled")
+	public static ResKey DISABLED;
 
-	public static ResKey ERROR = legacyKey("tl.import.config.error");
+	@CustomKey("tl.import.config.error")
+	public static ResKey ERROR;
 
-	public static ResKey ERROR_PARAM = legacyKey("tl.import.config.error.param");
+	@CustomKey("tl.import.config.error.param")
+	public static ResKey ERROR_PARAM;
 
-	public static ResKey EXCEPTION = legacyKey("tl.import.exception");
+	@CustomKey("tl.import.exception")
+	public static ResKey EXCEPTION;
 
-	public static ResKey EXCEPTION_PARAM = legacyKey("tl.import.exception.param");
+	@CustomKey("tl.import.exception.param")
+	public static ResKey EXCEPTION_PARAM;
 
-	public static ResKey GRID_GOTO = legacyKey("tl.command.gridGoto");
+	@CustomKey("tl.command.gridGoto")
+	public static ResKey GRID_GOTO;
 
-	public static ResKey MANDATORY_NOT_FOUND = legacyKey("tl.import.column.mandatory.notFound");
+	@CustomKey("tl.import.column.mandatory.notFound")
+	public static ResKey MANDATORY_NOT_FOUND;
 
-	public static ResKey NONE = legacyKey("tl.grid.executable.tokenContext.none");
+	@CustomKey("tl.grid.executable.tokenContext.none")
+	public static ResKey NONE;
 
-	public static ResKey NOT_CHANGED = legacyKey("tl.grid.executable.notChanged");
+	@CustomKey("tl.grid.executable.notChanged")
+	public static ResKey NOT_CHANGED;
 
-	public static ResKey NOT_MARKED = legacyKey("tl.grid.executable.notMarked");
+	@CustomKey("tl.grid.executable.notMarked")
+	public static ResKey NOT_MARKED;
 
-	public static ResKey NULL = legacyKey("tl.import.data.value.null");
+	@CustomKey("tl.import.data.value.null")
+	public static ResKey NULL;
 
-	public static ResKey NUMBER_EMPTY = legacyKey("tl.import.data.number.empty");
+	@CustomKey("tl.import.data.number.empty")
+	public static ResKey NUMBER_EMPTY;
 
-	public static ResKey NUMBER_FORMAT = legacyKey("tl.import.data.number.format");
+	@CustomKey("tl.import.data.number.format")
+	public static ResKey NUMBER_FORMAT;
 
-	public static ResKey STRING_EMPTY = legacyKey("tl.import.data.string.empty");
+	@CustomKey("tl.import.data.string.empty")
+	public static ResKey STRING_EMPTY;
 
-	public static ResKey STRING_FORMAT = legacyKey("tl.import.data.string.format");
+	@CustomKey("tl.import.data.string.format")
+	public static ResKey STRING_FORMAT;
 
-	public static ResKey SUCCEED = legacyKey("tl.import.process.row.succeed");
+	@CustomKey("tl.import.process.row.succeed")
+	public static ResKey SUCCEED;
 
-	public static ResKey TAB_EMPTY = legacyKey("tl.import.tab.empty");
+	@CustomKey("tl.import.tab.empty")
+	public static ResKey TAB_EMPTY;
 
-	public static ResKey TOO_LONG = legacyKey("tl.import.data.string.tooLong");
+	@CustomKey("tl.import.data.string.tooLong")
+	public static ResKey TOO_LONG;
 
-	public static ResKey TOO_SHORT = legacyKey("tl.import.data.string.tooShort");
+	@CustomKey("tl.import.data.string.tooShort")
+	public static ResKey TOO_SHORT;
 
-	public static ResKey VALUES = legacyKey("tl.import.tab.missing.values");
+	@CustomKey("tl.import.tab.missing.values")
+	public static ResKey VALUES;
 
-	public static ResKey VALUE_NOT_FOUND = legacyKey("tl.import.data.value.notFound");
+	@CustomKey("tl.import.data.value.notFound")
+	public static ResKey VALUE_NOT_FOUND;
 
 	public static ResPrefix COMPARE_DIALOG;
 

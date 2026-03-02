@@ -5,6 +5,7 @@
  */
 package com.top_logic.reporting.report.view.component;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.layout.ResPrefix;
@@ -20,11 +21,14 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResPrefix TL = legacyPrefix("tl.");
 
-	public static ResKey DATE_LABEL = legacyKey("reporting.chart.export.date.label");
+	@CustomKey("reporting.chart.export.date.label")
+	public static ResKey DATE_LABEL;
 
-	public static ResKey TITLE_LABEL = legacyKey("reporting.chart.export.title.label");
+	@CustomKey("reporting.chart.export.title.label")
+	public static ResKey TITLE_LABEL;
 
-	public static ResKey USER_LABEL = legacyKey("reporting.chart.export.user.label");
+	@CustomKey("reporting.chart.export.user.label")
+	public static ResKey USER_LABEL;
 
 	static {
 		initConstants(I18NConstants.class);

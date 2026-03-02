@@ -7,6 +7,7 @@ package com.top_logic.layout.form.component;
 
 import com.top_logic.base.services.simpleajax.JavaScriptResKey;
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
@@ -42,13 +43,17 @@ public class I18NConstants extends I18NConstantsBase {
 	@JavaScriptResKey
 	public static ResKey NO_BOOKMARK_SUPPORT;
 	
-	public static ResKey APPLY = legacyKey("tl.command.apply");
+	@CustomKey("tl.command.apply")
+	public static ResKey APPLY;
 
-	public static ResKey CANCEL = legacyKey("tl.command.cancel");
+	@CustomKey("tl.command.cancel")
+	public static ResKey CANCEL;
 
-	public static ResKey DELETE = legacyKey("tl.command.delete");
+	@CustomKey("tl.command.delete")
+	public static ResKey DELETE;
 
-	public static ResKey DISCARD = legacyKey("tl.command.discard");
+	@CustomKey("tl.command.discard")
+	public static ResKey DISCARD;
 
 	/**
 	 * @en Reload
@@ -57,11 +62,14 @@ public class I18NConstants extends I18NConstantsBase {
 	@CalledByReflection
 	public static ResKey INVALIDATE;
 
-	public static ResKey NEW = legacyKey("tl.command.new");
+	@CustomKey("tl.command.new")
+	public static ResKey NEW;
 
-	public static ResKey SAVE = legacyKey("tl.command.save");
+	@CustomKey("tl.command.save")
+	public static ResKey SAVE;
 
-	public static ResKey SWITCH_TO_EDIT = legacyKey("tl.command.switchToEdit");
+	@CustomKey("tl.command.switchToEdit")
+	public static ResKey SWITCH_TO_EDIT;
 
 	public static ResKey ERROR_DELETE_NOT_POSSIBLE;
 

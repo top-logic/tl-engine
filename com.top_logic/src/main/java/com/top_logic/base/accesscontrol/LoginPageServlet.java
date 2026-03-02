@@ -12,10 +12,7 @@ import java.io.Writer;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletException;
@@ -29,7 +26,6 @@ import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.basic.DebugHelper;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
-import com.top_logic.basic.col.MapUtil;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.StopWatch;
 import com.top_logic.basic.xml.TagUtil;
@@ -133,11 +129,13 @@ public class LoginPageServlet extends NoContextServlet {
 
 	private boolean _enableChecks;
 
-	private ConcurrentMap<String, LoginFailure> _failures = new ConcurrentHashMap<>();
+	private LoginFailuresModule<?> _failures;
 
 	@Override
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
+
+		_failures = LoginFailuresModule.Module.INSTANCE.getImplementationInstance();
 
 		String value = config.getInitParameter(DISABLE_SECURE_HEADER_CHECK);
 		_enableChecks = !"true".equals(value);
@@ -230,7 +228,7 @@ public class LoginPageServlet extends NoContextServlet {
 		// credentials).
 		String userKey = userName.toLowerCase() + '@' + request.getRemoteAddr();
 
-		LoginFailure lastFailure = _failures.get(userKey);
+		LoginFailure lastFailure = _failures.getFailureFor(userKey);
 		if (lastFailure != null) {
 			if (!lastFailure.allowRetry()) {
 				this.redirectToLoginError(request, response, lastFailure.retryTimeout());
@@ -290,25 +288,7 @@ public class LoginPageServlet extends NoContextServlet {
 					Resources.getInstance().getString(I18NConstants.ERROR_AUTHENTICATE.fill(userName)));
 			}
                 
-			LoginFailure failure = _failures.get(userKey);
-			if (failure != null && failure.timedOut()) {
-				_failures.remove(userKey, failure);
-				failure = null;
-			}
-			if (failure == null) {
-				failure = new LoginFailure(userKey);
-				failure = MapUtil.putIfAbsent(_failures, userKey, failure);
-			}
-			failure.incFailures();
-
-			// Clean up outdated entries to prevent denial of service attacks by flooding
-			// the server with nonsense authentication failures for random user names.
-			for (Iterator<LoginFailure> it = _failures.values().iterator(); it.hasNext();) {
-				if (it.next().timedOut()) {
-					it.remove();
-				}
-			}
-
+			LoginFailure failure = _failures.notifyLoginFailed(userKey);
 			long delay = failure.retryDelay();
 			if (delay <= 0) {
 				this.forwardToLoginRetry(request, response);
@@ -332,7 +312,7 @@ public class LoginPageServlet extends NoContextServlet {
 		}
 
 		// Clear any login failures.
-		_failures.remove(userKey);
+		_failures.notifyLoginSuccessed(userKey);
 
 		// removing login counter from the request, because login was successful
 		request.removeAttribute(SessionAttributeKeys.LOGIN_COUNT);
@@ -610,116 +590,5 @@ public class LoginPageServlet extends NoContextServlet {
         }
 
         return result;
-	}
-
-	private static class LoginFailure {
-
-		private static final int MILLISECONDS = 1;
-
-		private static final int SECONDS = 1000 * MILLISECONDS;
-
-		private static final long MINUTES = 60 * SECONDS;
-
-		/**
-		 * Number of retries without delay.
-		 */
-		private static final int DIRECT_RETRY_CNT = 3;
-
-		/**
-		 * Initial delay after {@link #DIRECT_RETRY_CNT} failures.
-		 */
-		private static final double INITIAL_DELAY = 5 * SECONDS;
-
-		/**
-		 * The maximum delay.
-		 */
-		private static final long MAX_DELAY = 10 * MINUTES;
-
-		private final String _key;
-
-		private long _lastFailure;
-
-		private int _cntFailures;
-
-		/**
-		 * Creates a {@link LoginFailure}.
-		 *
-		 * @param key
-		 *        See {@link #getKey()}.
-		 */
-		public LoginFailure(String key) {
-			_key = key;
-		}
-
-		/**
-		 * The user name key.
-		 */
-		public String getKey() {
-			return _key;
-		}
-
-		/**
-		 * Whether this entry can be dropped since no further failed login occurred during an
-		 * extended period of time.
-		 */
-		public boolean timedOut() {
-			return now() > noRetryBefore() + MAX_DELAY;
-		}
-
-		/**
-		 * The required wait time in milliseconds before the next login retry is accepted.
-		 */
-		public long retryDelay() {
-			int failureCnt = getFailureCnt();
-			if (failureCnt < DIRECT_RETRY_CNT) {
-				return 0;
-			}
-
-			return Math.min(MAX_DELAY, (long) (INITIAL_DELAY * Math.pow(1.5, failureCnt - DIRECT_RETRY_CNT)));
-		}
-
-		/**
-		 * Whether the required {@link #retryTimeout()} has been elapsed.
-		 */
-		public boolean allowRetry() {
-			return now() >= noRetryBefore();
-		}
-
-		/**
-		 * The timeout in milliseconds the user has to wait before the next login retry is accepted.
-		 */
-		public long retryTimeout() {
-			return noRetryBefore() - now();
-		}
-
-		/**
-		 * The absolute time in milliseconds since epoch when the next login retry can be performed.
-		 */
-		private synchronized long noRetryBefore() {
-			return _lastFailure + retryDelay();
-		}
-
-		/**
-		 * Adds another login failure.
-		 */
-		public synchronized void incFailures() {
-			_cntFailures++;
-			_lastFailure = now();
-		}
-
-		/**
-		 * The current system time in milliseconds since epoch.
-		 */
-		private long now() {
-			long now = System.currentTimeMillis();
-			return now;
-		}
-
-		/**
-		 * The number of failed logins without an intermediate successful login.
-		 */
-		public synchronized int getFailureCnt() {
-			return _cntFailures;
-		}
 	}
 }

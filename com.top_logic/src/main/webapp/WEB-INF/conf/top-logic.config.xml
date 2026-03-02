@@ -65,6 +65,7 @@
 			       <module key="com.top_logic.util.LayoutBasedSecurity$Module" value="true"/>
 			       <module key="com.top_logic.knowledge.service.db2.InitialDataSetupService$Module" value="true"/>
 			       <module key="com.top_logic.base.office.excel.handler.POITypeProvider$Module" value="true"/>
+			       <module key="com.top_logic.base.accesscontrol.LoginFailuresModule$Module" value="true"/>
 				</modules>
 			</instance>
 		</config>

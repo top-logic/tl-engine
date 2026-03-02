@@ -108,6 +108,7 @@ const SidebarGroup: React.FC<{
         className="tlSidebar__item tlSidebar__groupHeader"
         onClick={handleToggle}
         title={collapsed ? item.label : undefined}
+        aria-expanded={expanded}
       >
         <SidebarIcon icon={item.icon} />
         {!collapsed && <span className="tlSidebar__label">{item.label}</span>}
@@ -194,7 +195,7 @@ const TLSidebar: React.FC<TLCellProps> = () => {
 
   return (
     <div className={'tlSidebar' + (collapsed ? ' tlSidebar--collapsed' : '')}>
-      <nav className="tlSidebar__nav">
+      <nav className="tlSidebar__nav" aria-label="Sidebar navigation">
         {collapsed ? (
           state.headerCollapsedContent && (
             <div className="tlSidebar__headerSlot tlSidebar__headerSlot--collapsed">

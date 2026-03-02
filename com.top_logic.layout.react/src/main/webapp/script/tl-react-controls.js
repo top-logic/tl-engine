@@ -749,7 +749,8 @@ const { useCallback: Z } = e, J = ({ state: t }) => {
     {
       className: "tlSidebar__item tlSidebar__groupHeader",
       onClick: d,
-      title: a ? t.label : void 0
+      title: a ? t.label : void 0,
+      "aria-expanded": s
     },
     /* @__PURE__ */ e.createElement(F, { icon: t.icon }),
     !a && /* @__PURE__ */ e.createElement("span", { className: "tlSidebar__label" }, t.label),
@@ -829,7 +830,7 @@ const { useCallback: Z } = e, J = ({ state: t }) => {
   }, [n]), d = U((i, v) => {
     n("toggleGroup", { itemId: i, expanded: v });
   }, [n]);
-  return /* @__PURE__ */ e.createElement("div", { className: "tlSidebar" + (l ? " tlSidebar--collapsed" : "") }, /* @__PURE__ */ e.createElement("nav", { className: "tlSidebar__nav" }, l ? t.headerCollapsedContent && /* @__PURE__ */ e.createElement("div", { className: "tlSidebar__headerSlot tlSidebar__headerSlot--collapsed" }, /* @__PURE__ */ e.createElement(R, { control: t.headerCollapsedContent })) : t.headerContent && /* @__PURE__ */ e.createElement("div", { className: "tlSidebar__headerSlot" }, /* @__PURE__ */ e.createElement(R, { control: t.headerContent })), /* @__PURE__ */ e.createElement("div", { className: "tlSidebar__items" }, a.map((i) => /* @__PURE__ */ e.createElement(
+  return /* @__PURE__ */ e.createElement("div", { className: "tlSidebar" + (l ? " tlSidebar--collapsed" : "") }, /* @__PURE__ */ e.createElement("nav", { className: "tlSidebar__nav", "aria-label": "Sidebar navigation" }, l ? t.headerCollapsedContent && /* @__PURE__ */ e.createElement("div", { className: "tlSidebar__headerSlot tlSidebar__headerSlot--collapsed" }, /* @__PURE__ */ e.createElement(R, { control: t.headerCollapsedContent })) : t.headerContent && /* @__PURE__ */ e.createElement("div", { className: "tlSidebar__headerSlot" }, /* @__PURE__ */ e.createElement(R, { control: t.headerContent })), /* @__PURE__ */ e.createElement("div", { className: "tlSidebar__items" }, a.map((i) => /* @__PURE__ */ e.createElement(
     G,
     {
       key: i.id,

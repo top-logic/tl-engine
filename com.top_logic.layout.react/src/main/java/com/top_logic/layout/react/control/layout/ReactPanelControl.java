@@ -194,6 +194,12 @@ public class ReactPanelControl extends ReactControl {
 			boolean wasMinimized = panel._expansionState == ExpansionState.MINIMIZED;
 			boolean collapsed = !wasMinimized;
 
+			// Prevent collapse when it would leave a root split panel with all children collapsed.
+			if (collapsed && panel._parentSplitPanel != null
+					&& !panel._parentSplitPanel.canChildCollapse(panel._indexInParent)) {
+				return HandlerResult.DEFAULT_RESULT;
+			}
+
 			panel.setExpansionState(collapsed ? ExpansionState.MINIMIZED : ExpansionState.NORMALIZED);
 
 			if (panel._parentSplitPanel != null) {

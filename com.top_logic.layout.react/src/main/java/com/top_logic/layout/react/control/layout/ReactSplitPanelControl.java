@@ -197,6 +197,36 @@ public class ReactSplitPanelControl extends ReactControl {
 	}
 
 	/**
+	 * Checks whether the child at the given index is allowed to collapse.
+	 *
+	 * <p>
+	 * Returns {@code false} only when collapsing the child would make ALL children collapsed AND the
+	 * collapse cannot escalate to a parent split panel (i.e. this is the root). This prevents the
+	 * display from becoming broken when no visible panel remains.
+	 * </p>
+	 *
+	 * @param childIndex
+	 *        The index of the child that wants to collapse.
+	 * @return {@code true} if the collapse is allowed, {@code false} if it must be prevented.
+	 */
+	boolean canChildCollapse(int childIndex) {
+		int nonCollapsedOthers = 0;
+		for (int i = 0; i < _children.size(); i++) {
+			if (i != childIndex && !_children.get(i)._collapsed) {
+				nonCollapsedOthers++;
+			}
+		}
+		if (nonCollapsedOthers > 0) {
+			return true;
+		}
+		// All siblings already collapsed — this would make ALL children collapsed.
+		if (_parentSplitPanel == null) {
+			return false; // Root: cannot escalate.
+		}
+		return _parentSplitPanel.canChildCollapse(_indexInParent);
+	}
+
+	/**
 	 * Sets the parent split panel for cascading collapse.
 	 *
 	 * @param parent

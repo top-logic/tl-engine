@@ -12,14 +12,16 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.FrameScope;
 import com.top_logic.layout.basic.ControlCommand;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactControl;
+import com.top_logic.layout.react.SSEUpdateQueue;
 import com.top_logic.tool.boundsec.HandlerResult;
+
+import de.haumacher.msgbuf.json.JsonWriter;
 
 /**
  * A {@link ReactControl} that shows one child at a time from a list, driven by a server-side
@@ -86,7 +88,7 @@ public class ReactDeckPaneControl extends ReactControl {
 
 		getReactState().put(ACTIVE_INDEX, Integer.valueOf(_activeIndex));
 		getReactState().put(CHILD_COUNT, Integer.valueOf(_childFactories.size()));
-		// activeChild is null until internalWrite creates it.
+		// activeChild is null until writeAsChild creates it.
 	}
 
 	/**
@@ -111,15 +113,12 @@ public class ReactDeckPaneControl extends ReactControl {
 		}
 		_activeIndex = index;
 
-		FrameScope frameScope = getFrameScopeOrNull();
-		if (frameScope == null) {
+		if (!isSSEAttached()) {
 			getReactState().put(ACTIVE_INDEX, Integer.valueOf(_activeIndex));
 			return;
 		}
 
-		ReactControl content = getOrCreateChild(index, frameScope);
-		registerChildControl(content);
-		forEachChildControl(content.getReactState(), this::registerChildControl);
+		ReactControl content = getOrCreateChild(index);
 
 		Map<String, Object> patch = new HashMap<>();
 		patch.put(ACTIVE_INDEX, Integer.valueOf(index));
@@ -135,49 +134,32 @@ public class ReactDeckPaneControl extends ReactControl {
 	}
 
 	@Override
-	protected void internalWrite(DisplayContext context, TagWriter out) throws IOException {
-		FrameScope frameScope = getScope().getFrameScope();
-
-		ReactControl activeChild = getOrCreateChild(_activeIndex, frameScope);
-		getReactState().put(ACTIVE_CHILD, activeChild);
-
-		super.internalWrite(context, out);
-
-		for (ReactControl cached : _childCache.values()) {
-			registerChildControl(cached);
-			forEachChildControl(cached.getReactState(), this::registerChildControl);
+	protected void writeAsChild(JsonWriter writer, FrameScope frameScope, SSEUpdateQueue queue)
+			throws IOException {
+		if (getReactState().get(ACTIVE_CHILD) == null) {
+			ReactControl activeChild = getOrCreateChild(_activeIndex);
+			getReactState().put(ACTIVE_CHILD, activeChild);
 		}
+		super.writeAsChild(writer, frameScope, queue);
 	}
 
 	@Override
-	protected void internalDetach() {
+	protected void cleanupChildren() {
 		for (ReactControl cached : _childCache.values()) {
-			forEachChildControl(cached.getReactState(), this::unregisterChildControl);
-			unregisterChildControl(cached);
+			cached.cleanupTree();
 		}
 		_childCache.clear();
-		super.internalDetach();
 	}
 
-	private ReactControl getOrCreateChild(int index, FrameScope frameScope) {
+	private ReactControl getOrCreateChild(int index) {
 		ReactControl cached = _childCache.get(Integer.valueOf(index));
 		if (cached != null) {
 			return cached;
 		}
 
 		ReactControl child = _childFactories.get(index).create();
-		child.fetchID(frameScope);
-		forEachChildControl(child.getReactState(), c -> c.fetchID(frameScope));
 		_childCache.put(Integer.valueOf(index), child);
 		return child;
-	}
-
-	private FrameScope getFrameScopeOrNull() {
-		try {
-			return getScope() != null ? getScope().getFrameScope() : null;
-		} catch (Exception ex) {
-			return null;
-		}
 	}
 
 	/**

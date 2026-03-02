@@ -353,15 +353,8 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 
     /**
 	 * <p>
-	 * This method creates a new session for the given request and binds the given user to it. If
-	 * the given request already has a session, or the given user is null it will return null. This
-	 * method should be called by the LoginPageServlet only.
-	 * </p>
-	 * <p>
-	 * If the license is demo only single login is possible.
-	 * </p>
-	 * <p>
-	 * If there are more users in the system as the license allowed, only root can login single.
+	 * This method creates a new session for the given request and binds the given user to it. This
+	 * method should be called by the {@link LoginPageServlet} only.
 	 * </p>
 	 *
 	 * @param request
@@ -370,7 +363,6 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 	 *        The current response.
 	 * @param aUser
 	 *        Owner of the new session
-	 * @return a HttpSession or null
 	 */
 	public HttpSession loginUser(HttpServletRequest request, HttpServletResponse response, Person aUser) {
 		return login(request, response, aUser);

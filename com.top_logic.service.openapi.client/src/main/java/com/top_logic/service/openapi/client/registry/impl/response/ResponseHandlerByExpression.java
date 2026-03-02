@@ -162,7 +162,7 @@ public class ResponseHandlerByExpression extends AbstractConfiguredInstance<Resp
 						result = null;
 					} else {
 						String body = EntityUtils.toString(entity);
-						if (body.isEmpty()) {
+						if (body == null || body.isEmpty()) {
 							result = null;
 						} else {
 							result = JSON.fromString(body);

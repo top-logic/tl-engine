@@ -36,7 +36,7 @@
 		<zookeeper.version>3.9.4</zookeeper.version>
 		<slf4j.version>2.0.17</slf4j.version>
 		<log4j.version>2.25.3</log4j.version>
-		<fasterxml.version>2.19.4</fasterxml.version>
+		<fasterxml.version>2.21.1</fasterxml.version>
 		<msgbuf.version>1.1.12</msgbuf.version>
 		<bouncycastle.version>1.79</bouncycastle.version>
 		<batik.version>1.19</batik.version>
@@ -1080,29 +1080,11 @@
 				</exclusions>
 			</dependency>
 			<dependency>
-			    <groupId>com.fasterxml.jackson.core</groupId>
-			    <artifactId>jackson-core</artifactId>
-			    <version>${fasterxml.version}</version>
-			</dependency>
-			<dependency>
-			    <groupId>com.fasterxml.jackson.core</groupId>
-			    <artifactId>jackson-databind</artifactId>
-			    <version>${fasterxml.version}</version>
-			</dependency>
-			<dependency>
-			    <groupId>com.fasterxml.jackson.dataformat</groupId>
-			    <artifactId>jackson-dataformat-yaml</artifactId>
-			    <version>${fasterxml.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>com.fasterxml.jackson.core</groupId>
-				<artifactId>jackson-annotations</artifactId>
-			    <version>${fasterxml.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>com.fasterxml.jackson.dataformat</groupId>
-				<artifactId>jackson-dataformat-csv</artifactId>
-			    <version>${fasterxml.version}</version>
+				<groupId>com.fasterxml.jackson</groupId>
+				<artifactId>jackson-bom</artifactId>
+				<version>${fasterxml.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
 			</dependency>
 			<dependency>
 			    <groupId>org.yaml</groupId>
@@ -1406,6 +1388,26 @@
 			<artifactId>maven-model-builder</artifactId>
 			<scope>test</scope>
 	  	</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-annotations</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.dataformat</groupId>
+			<artifactId>jackson-dataformat-yaml</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.dataformat</groupId>
+			<artifactId>jackson-dataformat-csv</artifactId>
+		</dependency>
 	</dependencies>
 
 	<build>

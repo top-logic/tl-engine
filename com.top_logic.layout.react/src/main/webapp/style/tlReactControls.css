@@ -5,6 +5,13 @@
  * integrate visually with the rest of the TL UI.
  */
 
+/* --- React mount point ------------------------------------------------- */
+
+[data-react-module] {
+	width: 100%;
+	height: 100%;
+}
+
 /* --- TLButton ----------------------------------------------------------- */
 
 .tlReactButton {
@@ -932,4 +939,8 @@ button.tlPanel__actionButton:focus-visible {
 
 .tlSplitPanel__splitter:hover {
 	background: var(--border-interactive);
+}
+
+.tlSplitPanel--allCollapsed > .tlSplitPanel__child {
+	overflow: hidden;
 }

@@ -62,10 +62,10 @@ public class TestSessionService extends BasicTestCase {
         try {
 			HttpServletResponse response = ic.getResponse();
 			SessionService myService;
-			try (LoginCredentials login =
+			LoginCredentials login =
 				LoginCredentials.fromUserAndPassword(PersonManager.getManager().getRoot(),
-					SecureRandomService.getInstance().getRandomString().toCharArray())) {
-
+					SecureRandomService.getInstance().getRandomString().toCharArray());
+			try {
 				try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 					login.getPerson().getAuthenticationDevice().setPassword(login.getPerson(), login.getPassword());
 					tx.commit();
@@ -75,6 +75,8 @@ public class TestSessionService extends BasicTestCase {
 				assertTrue(checkLoginCredentials);
 				myService = SessionService.getInstance();
 				myService.loginUser(servletRequest, response, login.getPerson());
+			} finally {
+				login.clearPassword();
 			}
             
     		

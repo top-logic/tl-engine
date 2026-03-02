@@ -961,14 +961,12 @@ button.tlPanel__actionButton:focus-visible {
 	overflow: visible;
 	white-space: nowrap;
 	transform: rotate(90deg);
-	transform-origin: 0 0;
 }
 
 .tlSplitPanel__child--collapsedHorizontal .tlPanel__toolbar {
 	flex-direction: column;
 	justify-content: center;
 	align-items: center;
-	padding-top: var(--spacing-03);
 }
 
 .tlSplitPanel__child--collapsedHorizontal .tlPanel__actionButton {

@@ -244,7 +244,11 @@ public class LoginPageServlet extends NoContextServlet {
 		if (KnowledgeBaseFactory.Module.INSTANCE.isActive()) {
 			try {
 				// Will eventually reset the TLContext with a valid Person
-				authenticated = Login.getInstance().login(userName, request, response);
+				char[] password = StringServices.nonNull(request.getParameter(Login.PASSWORD)).toCharArray();
+				authenticated = Login.getInstance().checkUserPassword(userName, password, request, response);
+				if (authenticated) {
+					SessionService.getInstance().loginUser(request, response, Person.byName(userName));
+				}
 			} catch (Login.InMaintenanceModeException e) {
 				deniedByMaintenanceMode = true;
 			} catch (LoginHookFailedException ex) {

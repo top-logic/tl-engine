@@ -260,26 +260,42 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
                         "]";
     }
 
-    public boolean login(String userName, HttpServletRequest aRequest, HttpServletResponse response)
-			throws InMaintenanceModeException, LoginHookFailedException {
-		char[] thePassword = StringServices.nonNull(aRequest.getParameter(PASSWORD)).toCharArray();
-
+	/**
+	 * Checks whether the given combination of username and password are valid, and the user may be
+	 * logged in.
+	 * 
+	 * <p>
+	 * The actual login happens by calling
+	 * {@link SessionService#loginUser(HttpServletRequest, HttpServletResponse, Person)}
+	 * </p>
+	 * 
+	 * @param userName
+	 *        The name of the user to login.
+	 * @param password
+	 *        The password for the user to check.
+	 * @return Whether the {@link Person} with the given username is valid and may be
+	 *         {@link SessionService#loginUser(HttpServletRequest, HttpServletResponse, Person)
+	 *         logged in}. If <code>null</code>, then the combination of username and password does
+	 *         not authorize login to the application.
+	 */
+	public boolean checkUserPassword(String userName, char[] password, HttpServletRequest aRequest,
+			HttpServletResponse response) throws InMaintenanceModeException, LoginHookFailedException {
 		if (StringServices.isEmpty(userName)) {
 			// don't authenticate for empty UserName
 			return noLogin(userName, aRequest, FailedLogin.REASON_NO_PERSON);
 		}
-		if (thePassword.length == 0) {
+		if (password.length == 0) {
 			// don't authenticate for empty Password
 			return noLogin(userName, aRequest, FailedLogin.REASON_NO_PASSWORD);
 		}
-		if (userName.length() > MAXINPUT_LEN || thePassword.length > MAXINPUT_LEN) {
+		if (userName.length() > MAXINPUT_LEN || password.length > MAXINPUT_LEN) {
 			String reason = null;
 			if (userName.length() > MAXINPUT_LEN) {
 				Logger.warn("User name too long (" + userName.length() + ") ignored", Login.class);
 				reason = FailedLogin.REASON_PERSON_TOO_LONG;
 			}
-			if (thePassword.length > MAXINPUT_LEN) {
-				Logger.warn("Password too long (" + thePassword.length + ") ignored", Login.class);
+			if (password.length > MAXINPUT_LEN) {
+				Logger.warn("Password too long (" + password.length + ") ignored", Login.class);
 				reason = reason == null ? FailedLogin.REASON_PWD_TOO_LONG : FailedLogin.REASON_BOTH_TOO_LONG;
 			}
 			try {
@@ -293,8 +309,8 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 			// no such person known to the system or person not longer alive
 			return this.noLogin(userName, aRequest, FailedLogin.REASON_UNKNOWN_PERSON);
 		}
-		try (LoginCredentials login = LoginCredentials.fromUserAndPassword(thePerson, thePassword)) {
-			return this.login(aRequest, response, login);
+		try (LoginCredentials login = LoginCredentials.fromUserAndPassword(thePerson, password)) {
+			return this.checkLoginCredentials(login, aRequest, response);
 		}
 	}
 
@@ -360,13 +376,13 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 
 	/**
 	 * Attempt to login the specified user.
-	 *
+	 * 
+	 * @param login
+	 *        The user name and password information.
 	 * @param aRequest
 	 *        the request of the user; must not be null
 	 * @param response
 	 *        the current response
-	 * @param login
-	 *        The user name and password information.
 	 *
 	 * @return true if successful, else false
 	 * @throws InMaintenanceModeException
@@ -376,7 +392,7 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 	 *
 	 *         #author Michael Eriksson #author Thomas Richter
 	 */
-	public boolean login(HttpServletRequest aRequest, HttpServletResponse response, LoginCredentials login)
+	public boolean checkLoginCredentials(LoginCredentials login, HttpServletRequest aRequest, HttpServletResponse response)
 			throws InMaintenanceModeException, LoginHookFailedException {
 		Person person = login.getPerson();
 		AuthenticationDevice authDevice = person.getAuthenticationDevice();
@@ -389,7 +405,6 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 			if (authenticated) {
 				checkAllowedGroups(person);
 				checkConfiguredHook(aRequest, response);
-				SessionService.getInstance().loginUser(aRequest, response, person);
 				return true;
 			} else {
 				return noLogin(person, aRequest, FailedLogin.REASON_PWD_VALIDATION_FAILED);

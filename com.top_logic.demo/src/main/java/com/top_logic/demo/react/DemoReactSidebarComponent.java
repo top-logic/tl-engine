@@ -77,7 +77,8 @@ public class DemoReactSidebarComponent extends LayoutComponent {
 
 		// Top-level navigation items.
 		items.add(new NavigationItem("dashboard", "Dashboard", "bi bi-speedometer2", this::createDashboard));
-		items.add(new NavigationItem("reports", "Reports", "bi bi-bar-chart", this::createReports));
+		items.add(new NavigationItem("reports", "Reports", "bi bi-bar-chart", this::createReports, "3"));
+		items.add(new NavigationItem("notifications", "Notifications", "bi bi-bell", this::createNotifications, "12"));
 
 		// A collapsible group with child navigation items.
 		List<SidebarItem> settingsChildren = new ArrayList<>();
@@ -125,6 +126,15 @@ public class DemoReactSidebarComponent extends LayoutComponent {
 			return HandlerResult.DEFAULT_RESULT;
 		}));
 		return new ReactFieldListControl("Reports", buttons);
+	}
+
+	private ReactControl createNotifications() {
+		List<ReactControl> buttons = new ArrayList<>();
+		buttons.add(new ReactButtonControl("Mark All Read", (context) -> {
+			InfoService.showInfo(ResKey.text("All notifications marked as read!"));
+			return HandlerResult.DEFAULT_RESULT;
+		}));
+		return new ReactFieldListControl("Notifications", buttons);
 	}
 
 	private ReactControl createGeneral() {

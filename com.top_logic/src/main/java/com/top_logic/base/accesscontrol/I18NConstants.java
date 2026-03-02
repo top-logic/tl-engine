@@ -17,8 +17,6 @@ import com.top_logic.layout.I18NConstantsBase;
 @SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
-	public static ResKey MAX_USERS_EXCEEDED;
-
 	public static ResKey COMMIT_FAILED;
 
 	@CustomKey("logout.messages.errorauthenticate")

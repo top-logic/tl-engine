@@ -217,7 +217,7 @@ public class LoginPageServlet extends NoContextServlet {
 			return;
 		}
 
-		boolean authenticated = false, deniedByMaintenanceMode = false, maxUsersExceeded = false;
+		boolean authenticated = false, deniedByMaintenanceMode = false;
 
 		String userName = request.getParameter(Login.USER_NAME);
 		if (userName == null || userName.isBlank()) {
@@ -247,8 +247,6 @@ public class LoginPageServlet extends NoContextServlet {
 				authenticated = Login.getInstance().login(userName, request, response);
 			} catch (Login.InMaintenanceModeException e) {
 				deniedByMaintenanceMode = true;
-			} catch (Login.MaxUsersExceededException e) {
-				maxUsersExceeded = true;
 			} catch (LoginHookFailedException ex) {
 				anotherReason = ex.getErrorKey();
 			}
@@ -281,9 +279,6 @@ public class LoginPageServlet extends NoContextServlet {
 		if (!authenticated) {
             if (deniedByMaintenanceMode) {
                 request.setAttribute("errorMessage", Login.getI18NedMaintenanceMessage(userName));
-			} else if (maxUsersExceeded) {
-				request.setAttribute("errorMessage",
-					Resources.getInstance().getString(I18NConstants.MAX_USERS_EXCEEDED));
 			} else if (anotherReason != null) {
 				request.setAttribute("errorMessage", Resources.getInstance().getString(anotherReason));
 			} else {

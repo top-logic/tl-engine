@@ -10,7 +10,6 @@ import java.util.Set;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 
 import com.top_logic.base.administration.MaintenanceWindowManager;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
@@ -262,7 +261,7 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
     }
 
     public boolean login(String userName, HttpServletRequest aRequest, HttpServletResponse response)
-			throws InMaintenanceModeException, MaxUsersExceededException, LoginHookFailedException {
+			throws InMaintenanceModeException, LoginHookFailedException {
 		char[] thePassword = StringServices.nonNull(aRequest.getParameter(PASSWORD)).toCharArray();
 
 		if (StringServices.isEmpty(userName)) {
@@ -378,7 +377,7 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 	 *         #author Michael Eriksson #author Thomas Richter
 	 */
 	public boolean login(HttpServletRequest aRequest, HttpServletResponse response, LoginCredentials login)
-			throws InMaintenanceModeException, MaxUsersExceededException, LoginHookFailedException {
+			throws InMaintenanceModeException, LoginHookFailedException {
 		Person person = login.getPerson();
 		AuthenticationDevice authDevice = person.getAuthenticationDevice();
 		if (authDevice == null) {
@@ -390,20 +389,13 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 			if (authenticated) {
 				checkAllowedGroups(person);
 				checkConfiguredHook(aRequest, response);
-				HttpSession loginUser = SessionService.getInstance().loginUser(aRequest, response, person);
-				if (loginUser == null) {
-					noLogin(person, aRequest, FailedLogin.REASON_MAX_USERS_EXCEEDED);
-					throw new MaxUsersExceededException(person);
-				}
+				SessionService.getInstance().loginUser(aRequest, response, person);
 				return true;
 			} else {
 				return noLogin(person, aRequest, FailedLogin.REASON_PWD_VALIDATION_FAILED);
 			}
 		} catch (InMaintenanceModeException e) {
 			noLogin(person, aRequest, FailedLogin.REASON_MAINTENANCE_MODE);
-			throw e;
-		} catch (MaxUsersExceededException e) {
-			noLogin(person, aRequest, FailedLogin.REASON_MAX_USERS_EXCEEDED);
 			throw e;
 		} catch (LoginHookFailedException e) {
 			noLogin(person, aRequest, FailedLogin.REASON_CONFIGURED_HOOK);
@@ -609,48 +601,6 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
         }
 
     }
-
-	/**
-	 * Exception to indicate that login failed because there are more users in system than the
-	 * license allows.
-	 *
-	 * @author <a href=mailto:msi@top-logic.com>msi</a>
-	 */
-	public static class MaxUsersExceededException extends Exception {
-
-		/** The person that tried to login. If the person is not known, <code>null</code>. */
-		private final Person person;
-
-		/**
-		 * Creates a new {@link MaxUsersExceededException} without a message.
-		 * 
-		 * @param person
-		 *        The person that tried to login. If the person is not known, <code>null</code>.
-		 */
-		public MaxUsersExceededException(Person person) {
-            super();
-			this.person = person;
-        }
-
-		/**
-		 * Creates a new {@link MaxUsersExceededException} with the given message.
-		 *
-		 * @param aMessage
-		 *        the message of the Exception
-		 */
-		public MaxUsersExceededException(Person person, String aMessage) {
-            super(aMessage);
-			this.person = person;
-		}
-
-		/**
-		 * The person that tried to login. If the person is not known, <code>null</code>.
-		 */
-		public Person getPerson() {
-			return person;
-		}
-
-	}
 
 	/**
 	 * Singleton reference for {@link Login} service.

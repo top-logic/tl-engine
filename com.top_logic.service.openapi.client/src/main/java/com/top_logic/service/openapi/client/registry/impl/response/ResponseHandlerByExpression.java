@@ -1,11 +1,10 @@
 /*
  * SPDX-FileCopyrightText: 2021 (c) Business Operation Systems GmbH <info@top-logic.com>
- * 
+ *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
 package com.top_logic.service.openapi.client.registry.impl.response;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -65,7 +64,7 @@ public class ResponseHandlerByExpression extends AbstractConfiguredInstance<Resp
 
 		/**
 		 * The format in which the response must be processed.
-		 * 
+		 *
 		 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 		 */
 		enum ResponseFormat {
@@ -90,13 +89,13 @@ public class ResponseHandlerByExpression extends AbstractConfiguredInstance<Resp
 
 		/**
 		 * Function computing the actual result of the service method invocation.
-		 * 
+		 *
 		 * <p>
 		 * The function expects the response object in the configured {@link #getFormat()} from the
 		 * external API as first argument. If {@link #getAdditionalArguments()} are configured they
 		 * are also passed to this function.
 		 * </p>
-		 * 
+		 *
 		 * <p>
 		 * If no function is specified, the formatted response is returned directly.
 		 * </p>
@@ -113,7 +112,7 @@ public class ResponseHandlerByExpression extends AbstractConfiguredInstance<Resp
 
 	/**
 	 * Creates a {@link ResponseHandlerByExpression} from configuration.
-	 * 
+	 *
 	 * @param context
 	 *        The context for instantiating sub configurations.
 	 * @param config
@@ -160,10 +159,14 @@ public class ResponseHandlerByExpression extends AbstractConfiguredInstance<Resp
 			switch (_format) {
 				case JSON:
 					if (entity == null) {
-						result = new HashMap<>();
+						result = null;
 					} else {
 						String body = EntityUtils.toString(entity);
-						result = JSON.fromString(body);
+						if (body == null || body.isEmpty()) {
+							result = null;
+						} else {
+							result = JSON.fromString(body);
+						}
 					}
 					break;
 				case BINARY:

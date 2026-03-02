@@ -10,6 +10,43 @@ const I18N_KEYS = {
   'js.panel.popOut': 'Pop out',
 };
 
+/* Inline SVG icon components (stroke-based, 24x24 viewBox). */
+
+/** Horizontal line: minimize indicator. */
+const IconMinimize = () => (
+  <svg viewBox="0 0 24 24"><line x1="6" y1="12" x2="18" y2="12" /></svg>
+);
+
+/** Small box with upward chevron: restore from minimized. */
+const IconRestoreFromMin = () => (
+  <svg viewBox="0 0 24 24">
+    <rect x="6" y="9" width="12" height="10" rx="1" />
+    <polyline points="9,7 12,4 15,7" />
+  </svg>
+);
+
+/** Full box outline: maximize indicator. */
+const IconMaximize = () => (
+  <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="1" /></svg>
+);
+
+/** Two overlapping boxes: restore from maximized. */
+const IconRestoreFromMax = () => (
+  <svg viewBox="0 0 24 24">
+    <rect x="4" y="8" width="12" height="12" rx="1" />
+    <polyline points="8,8 8,4 20,4 20,16 16,16" />
+  </svg>
+);
+
+/** Arrow pointing out of a box: pop-out indicator. */
+const IconPopOut = () => (
+  <svg viewBox="0 0 24 24">
+    <polyline points="15,3 21,3 21,9" />
+    <line x1="21" y1="3" x2="12" y2="12" />
+    <path d="M18 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h6" />
+  </svg>
+);
+
 /**
  * A panel with a titled toolbar header wrapping a single child content area.
  *
@@ -78,7 +115,7 @@ const TLPanel: React.FC<TLCellProps> = () => {
               onClick={handleMinimize}
               title={isMinimized ? i18n['js.panel.restore'] : i18n['js.panel.minimize']}
             >
-              {isMinimized ? '\u25A1' : '\u2500'}
+              {isMinimized ? <IconRestoreFromMin /> : <IconMinimize />}
             </button>
           )}
           {showMaximize && (
@@ -88,7 +125,7 @@ const TLPanel: React.FC<TLCellProps> = () => {
               onClick={handleMaximize}
               title={isMaximized ? i18n['js.panel.restore'] : i18n['js.panel.maximize']}
             >
-              {isMaximized ? '\u29C9' : '\u25A1'}
+              {isMaximized ? <IconRestoreFromMax /> : <IconMaximize />}
             </button>
           )}
           {showPopOut && (
@@ -98,13 +135,13 @@ const TLPanel: React.FC<TLCellProps> = () => {
               onClick={handlePopOut}
               title={i18n['js.panel.popOut']}
             >
-              {'\u2197'}
+              <IconPopOut />
             </button>
           )}
         </div>
       </div>
       {!isMinimized && (
-        <div className="tlPanel__content" style={{ flex: 1, overflow: 'auto', position: 'relative' }}>
+        <div className="tlPanel__content">
           <TLChild control={state.child} />
         </div>
       )}

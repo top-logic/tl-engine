@@ -5,6 +5,7 @@
  */
 package com.top_logic.knowledge.gui.layout.person;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
@@ -40,9 +41,11 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey PASSWORD_FIELD_TOOLTIP;
 
-	public static ResKey ERROR_CANNOT_DELETE_SELF = legacyKey("admin.person.edit.noSelfDelete");
+	@CustomKey("admin.person.edit.noSelfDelete")
+	public static ResKey ERROR_CANNOT_DELETE_SELF;
 
-	public static ResKey READONLY_DEVICE = legacyKey("admin.person.edit.readonlyDevice");
+	@CustomKey("admin.person.edit.readonlyDevice")
+	public static ResKey READONLY_DEVICE;
 
 	public static ResKey NO_WRITEABLE_SECURITY_DEVICE;
 

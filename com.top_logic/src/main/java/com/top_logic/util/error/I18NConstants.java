@@ -5,6 +5,7 @@
  */
 package com.top_logic.util.error;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
@@ -35,7 +36,8 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey NO_EXCEPTION_MESSAGE;
 
-	public static ResKey REASON_IS = legacyKey("error.reasonIs");
+	@CustomKey("error.reasonIs")
+	public static ResKey REASON_IS;
 
 	static {
 		initConstants(I18NConstants.class);

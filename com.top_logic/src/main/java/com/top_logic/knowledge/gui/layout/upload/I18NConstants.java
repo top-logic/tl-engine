@@ -5,6 +5,7 @@
  */
 package com.top_logic.knowledge.gui.layout.upload;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
@@ -21,14 +22,17 @@ import com.top_logic.layout.ResPrefix;
 @SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
-	public static ResKey1 ERROR_FILENAME_WITH_INVALID_CHAR = legacyKey1("constraint.filename.containsInvalid");
+	@CustomKey("constraint.filename.containsInvalid")
+	public static ResKey1 ERROR_FILENAME_WITH_INVALID_CHAR;
 
-	public static ResKey1 ERROR_WRONG_FILENAME__FILENAMES = legacyKey1("constraint.filename.mustBe");
+	@CustomKey("constraint.filename.mustBe")
+	public static ResKey1 ERROR_WRONG_FILENAME__FILENAMES;
 
-	public static ResKey1 ERROR_FILENAME_WITH_UNSUPPORTED_EXTENSION__EXTENSIONS =
-		legacyKey1("constraint.filename.mustEndWith");
+	@CustomKey("constraint.filename.mustEndWith")
+	public static ResKey1 ERROR_FILENAME_WITH_UNSUPPORTED_EXTENSION__EXTENSIONS;
 
-	public static ResKey1 ERROR_WRONG_FILENAME__DISALLOWED = legacyKey1("constraint.filename.mustNotBe");
+	@CustomKey("constraint.filename.mustNotBe")
+	public static ResKey1 ERROR_WRONG_FILENAME__DISALLOWED;
 
 	public static ResKey FORBIDDEN_FILE_NAME_EMPTY;
 

@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
@@ -30,8 +31,8 @@ public class I18NConstants extends I18NConstantsBase {
 	 * {@link Icons#HIDE_APP_TITLE_ON_LOGIN_PAGE}.
 	 * </p>
 	 */
-	@SuppressWarnings("deprecation")
-	public static ResKey APPLICATION_TITLE = legacyKey("tl.title");
+	@CustomKey("tl.title")
+	public static ResKey APPLICATION_TITLE;
 
 	/**
 	 * @en The target control {0} was not found while delivering the command "{1}" with the

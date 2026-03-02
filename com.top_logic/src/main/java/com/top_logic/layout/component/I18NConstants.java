@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.component;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.I18NConstantsBase;
@@ -30,7 +31,8 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey ERROR_SELECTED_OBJECT_DELETED;
 
-	public static ResKey GENERIC_DELETE = legacyKey("tl.command.delete");
+	@CustomKey("tl.command.delete")
+	public static ResKey GENERIC_DELETE;
 
 	/**
 	 * @en The view was newly created. To remove the view use "delete view".

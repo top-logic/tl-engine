@@ -6,6 +6,7 @@
 package com.top_logic.base.accesscontrol;
 
 import com.top_logic.basic.CalledFromJSP;
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.I18NConstantsBase;
@@ -20,17 +21,20 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey COMMIT_FAILED;
 
-	public static ResKey ERROR_AUTHENTICATE = legacyKey("logout.messages.errorauthenticate");
+	@CustomKey("logout.messages.errorauthenticate")
+	public static ResKey ERROR_AUTHENTICATE;
 
-	public static ResKey1 ERROR_AUTHENTICATE_MAINTENANCE_MODE =
-		legacyKey1("logout.messages.errorauthenticatemaintenancemode");
+	@CustomKey("logout.messages.errorauthenticatemaintenancemode")
+	public static ResKey1 ERROR_AUTHENTICATE_MAINTENANCE_MODE;
 
-	public static ResKey1 ERROR_AUTHENTICATE_MAINTENANCE_MODE_SOON =
-		legacyKey1("logout.messages.errorauthenticatemaintenancemodesoon");
+	@CustomKey("logout.messages.errorauthenticatemaintenancemodesoon")
+	public static ResKey1 ERROR_AUTHENTICATE_MAINTENANCE_MODE_SOON;
 
-	public static ResKey SESSION_INVALID = legacyKey("logout.messages.invalidated");
+	@CustomKey("logout.messages.invalidated")
+	public static ResKey SESSION_INVALID;
 
-	public static ResKey SESSION_NOT_FOUND = legacyKey("logout.messages.logout");
+	@CustomKey("logout.messages.logout")
+	public static ResKey SESSION_NOT_FOUND;
 
 	/**
 	 * @en Password change required
@@ -127,11 +131,14 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey PWD_CHANGE_SUBMIT;
 
-	public static ResKey ERROR_NTLM_AUTHEMTICATION_FAILED = legacyKey("logout.messages.errorauthenticate.ntlm");
+	@CustomKey("logout.messages.errorauthenticate.ntlm")
+	public static ResKey ERROR_NTLM_AUTHEMTICATION_FAILED;
 
-	public static ResKey ERROR_BASIC_AUTHENTICATION_FAILED = legacyKey("com.top_logic.base.accesscontrol.BasicAuthenticationServlet.noAuthorizationSent.redirectText");
+	@CustomKey("com.top_logic.base.accesscontrol.BasicAuthenticationServlet.noAuthorizationSent.redirectText")
+	public static ResKey ERROR_BASIC_AUTHENTICATION_FAILED;
 
-	public static ResKey ERROR_SESSION_TIMED_OUT = legacyKey("logout.messages.timeout");
+	@CustomKey("logout.messages.timeout")
+	public static ResKey ERROR_SESSION_TIMED_OUT;
 
 	/**
 	 * @en The application {0} is buzzy. Please wait a moment and then try reloading the page.

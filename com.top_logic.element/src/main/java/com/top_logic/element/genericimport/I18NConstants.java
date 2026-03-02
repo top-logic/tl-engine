@@ -5,6 +5,7 @@
  */
 package com.top_logic.element.genericimport;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.layout.ResPrefix;
@@ -18,9 +19,11 @@ import com.top_logic.layout.ResPrefix;
 @SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
-	public static ResKey ERROR_NOT_NULL = legacyKey("genericImport.attributeError.notNull");
+	@CustomKey("genericImport.attributeError.notNull")
+	public static ResKey ERROR_NOT_NULL;
 
-	public static ResKey ERROR_READ_ONLY = legacyKey("genericImport.attributeError.readOnly");
+	@CustomKey("genericImport.attributeError.readOnly")
+	public static ResKey ERROR_READ_ONLY;
 
 	static {
 		initConstants(I18NConstants.class);

@@ -5,6 +5,7 @@
  */
 package com.top_logic.reporting.layout.meta.search;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.layout.ResPrefix;
@@ -18,13 +19,16 @@ import com.top_logic.layout.ResPrefix;
 @SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
-	public static ResKey DELETE_REPORT = legacyKey("reporting.report.delete");
+	@CustomKey("reporting.report.delete")
+	public static ResKey DELETE_REPORT;
 
 	public static ResKey ERROR_DELETE_FAILED;
 
-	public static ResKey ERROR_NO_REPORT = legacyKey("tl.executable.disabled.noReport");
+	@CustomKey("tl.executable.disabled.noReport")
+	public static ResKey ERROR_NO_REPORT;
 
-	public static ResKey CHART_DETAILS_TAB = legacyKey("reporting.chart.chart.details.tabber");
+	@CustomKey("reporting.chart.chart.details.tabber")
+	public static ResKey CHART_DETAILS_TAB;
 
 	static {
 		initConstants(I18NConstants.class);

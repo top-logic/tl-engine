@@ -5,6 +5,7 @@
  */
 package com.top_logic.element.boundsec.manager;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
@@ -21,30 +22,31 @@ import com.top_logic.layout.ResPrefix;
 @SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
-	public static ResKey1 ABSTRACT_SOURCE_TYPE =
-		legacyKey1("admin.security.import.roleRules.problem.abstractSourceType");
+	@CustomKey("admin.security.import.roleRules.problem.abstractSourceType")
+	public static ResKey1 ABSTRACT_SOURCE_TYPE;
 
-	public static ResKey1 ABSTRACT_TYPE_WITHOUT_INHERITANCE =
-		legacyKey1("admin.security.import.roleRules.problem.abstractTypeWithoutInheritance");
+	@CustomKey("admin.security.import.roleRules.problem.abstractTypeWithoutInheritance")
+	public static ResKey1 ABSTRACT_TYPE_WITHOUT_INHERITANCE;
 
-	public static ResKey1 AUTHORIZATION_PROBLEM_UNKNOWN_CLASSIFIER =
-		legacyKey1("admin.security.import.authorization.problem.unknownClassifier");
+	@CustomKey("admin.security.import.authorization.problem.unknownClassifier")
+	public static ResKey1 AUTHORIZATION_PROBLEM_UNKNOWN_CLASSIFIER;
 
 	/**
 	 * @en Role {1} for classification {0} not found (available roles: {2}). The rule is not used.
 	 */
 	public static ResKey3 AUTHORIZATION_PROBLEM_UNKNOWN_ROLE;
 
-	public static ResKey3 CLASSIFICATIONS_PROBLEM_UNKNOWN_CLASSIFIER =
-		legacyKey3("admin.security.import.classifications.problem.unknownClassifier");
+	@CustomKey("admin.security.import.classifications.problem.unknownClassifier")
+	public static ResKey3 CLASSIFICATIONS_PROBLEM_UNKNOWN_CLASSIFIER;
 
-	public static ResKey1 DUPLICATE_META_ELEMENT =
-		legacyKey1("admin.security.import.classifications.problem.duplicateMetaElement");
+	@CustomKey("admin.security.import.classifications.problem.duplicateMetaElement")
+	public static ResKey1 DUPLICATE_META_ELEMENT;
 
-	public static ResKey2 DUPLICATE_ROLE = legacyKey2("admin.security.import.authorization.problem.duplicateRole");
+	@CustomKey("admin.security.import.authorization.problem.duplicateRole")
+	public static ResKey2 DUPLICATE_ROLE;
 
-	public static ResKey2 ILLEGAL_META_ELEMENT =
-		legacyKey2("admin.security.import.roleRules.problem.illegalMetaElement");
+	@CustomKey("admin.security.import.roleRules.problem.illegalMetaElement")
+	public static ResKey2 ILLEGAL_META_ELEMENT;
 
 
 	/**
@@ -63,13 +65,14 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey3 ROLE_RULES_PROBLEM_UNKNOWN_ROLE;
 
-	public static ResKey2 UNKNOWN_ATTRIBUTE = legacyKey2("admin.security.import.roleRules.problem.unknownAttribute");
+	@CustomKey("admin.security.import.roleRules.problem.unknownAttribute")
+	public static ResKey2 UNKNOWN_ATTRIBUTE;
 
-	public static ResKey2 UNKNOWN_META_ATTRIBUTE =
-		legacyKey2("admin.security.import.classifications.problem.unknownMetaAttribute");
+	@CustomKey("admin.security.import.classifications.problem.unknownMetaAttribute")
+	public static ResKey2 UNKNOWN_META_ATTRIBUTE;
 
-	public static ResKey1 UNKNOWN_META_ELEMENT =
-		legacyKey1("admin.security.import.roleRules.problem.unknownMetaElement");
+	@CustomKey("admin.security.import.roleRules.problem.unknownMetaElement")
+	public static ResKey1 UNKNOWN_META_ELEMENT;
 
 	static {
 		initConstants(I18NConstants.class);

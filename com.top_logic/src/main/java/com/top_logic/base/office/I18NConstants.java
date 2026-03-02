@@ -5,6 +5,7 @@
  */
 package com.top_logic.base.office;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.layout.ResPrefix;
@@ -18,7 +19,8 @@ import com.top_logic.layout.ResPrefix;
 @SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
-	public static ResKey OFFICE_SUPPORT_BUZZY = legacyKey("tl.office.notready");
+	@CustomKey("tl.office.notready")
+	public static ResKey OFFICE_SUPPORT_BUZZY;
 
 	static {
 		initConstants(I18NConstants.class);

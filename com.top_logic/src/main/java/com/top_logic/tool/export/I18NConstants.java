@@ -5,6 +5,7 @@
  */
 package com.top_logic.tool.export;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.I18NConstantsBase;
@@ -21,21 +22,29 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 ENQUEUE_FAILED__MSG;
 
-	public static ResKey EXPORT_TABLE_COMMAND = legacyKey("export.table.dialog");
+	@CustomKey("export.table.dialog")
+	public static ResKey EXPORT_TABLE_COMMAND;
 
-	public static ResKey ERROR_INTERNAL_ERROR = legacyKey("export.failed.progress.exception");
+	@CustomKey("export.failed.progress.exception")
+	public static ResKey ERROR_INTERNAL_ERROR;
 
-	public static ResKey EXPORT_COMMAND = legacyKey("tl.command.export");
+	@CustomKey("tl.command.export")
+	public static ResKey EXPORT_COMMAND;
 
-	public static ResKey ERROR_WRITE_FAILED = legacyKey("export.failed.ioexeption");
+	@CustomKey("export.failed.ioexeption")
+	public static ResKey ERROR_WRITE_FAILED;
 
-	public static ResKey ERROR_NO_DOCUMENT = legacyKey("export.disabled.download.noDocument");
+	@CustomKey("export.disabled.download.noDocument")
+	public static ResKey ERROR_NO_DOCUMENT;
 
-	public static ResKey ERROR_UNKNOWN_ERROR = legacyKey("export.failed.unexpected");
+	@CustomKey("export.failed.unexpected")
+	public static ResKey ERROR_UNKNOWN_ERROR;
 
-	public static ResKey ERROR_IN_QUEUED_STATE = legacyKey("export.disabled.state.QUEUED");
+	@CustomKey("export.disabled.state.QUEUED")
+	public static ResKey ERROR_IN_QUEUED_STATE;
 
-	public static ResKey ERROR_IN_RUNNING_STATE = legacyKey("export.disabled.state.RUNNING");
+	@CustomKey("export.disabled.state.RUNNING")
+	public static ResKey ERROR_IN_RUNNING_STATE;
 
 	static {
 		initConstants(I18NConstants.class);

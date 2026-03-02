@@ -5,6 +5,7 @@
  */
 package com.top_logic.knowledge.gui.layout.webfolder;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.layout.ResPrefix;
@@ -43,23 +44,30 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey ADD_TO_CLIPBOARD_FAILED;
 	
-	public static ResKey ALREADY_IN_CLIPBOARD = legacyKey("tl.executable.disabled.alreadyInClipboard");
+	@CustomKey("tl.executable.disabled.alreadyInClipboard")
+	public static ResKey ALREADY_IN_CLIPBOARD;
 
-	public static ResKey CONFIRM_DELETE = legacyKey("base.edit.confirmDelete");
+	@CustomKey("base.edit.confirmDelete")
+	public static ResKey CONFIRM_DELETE;
 
-	public static ResKey FILE = legacyKey("tl.dialog.folder.upload.message.testFilename.file");
+	@CustomKey("tl.dialog.folder.upload.message.testFilename.file")
+	public static ResKey FILE;
 
 	public static ResKey LOCK;
 
-	public static ResKey NOT_IN_HISTORIC_STATE = legacyKey("tl.executable.disabled.notInHistoricState");
+	@CustomKey("tl.executable.disabled.notInHistoricState")
+	public static ResKey NOT_IN_HISTORIC_STATE;
 
-	public static ResKey NO_CLIPBOARD = legacyKey("tl.executable.disabled.noClipboard");
+	@CustomKey("tl.executable.disabled.noClipboard")
+	public static ResKey NO_CLIPBOARD;
 
 	public static ResKey NO_FOLDER;
 
-	public static ResKey NO_WRAPPER = legacyKey("tl.executable.disabled.noWrapper");
+	@CustomKey("tl.executable.disabled.noWrapper")
+	public static ResKey NO_WRAPPER;
 
-	public static ResKey REMOVE = legacyKey("webfolder.error.object.remove");
+	@CustomKey("webfolder.error.object.remove")
+	public static ResKey REMOVE;
 
 	/**
 	 * @en Cleared clipboard.

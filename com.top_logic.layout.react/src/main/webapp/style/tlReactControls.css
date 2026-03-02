@@ -1183,12 +1183,13 @@ button.tlSidebar__groupHeader:focus-visible {
 .tlSidebar--collapsed .tlSidebar__headerItem {
 	justify-content: center;
 	padding: var(--spacing-03) 0;
-	border-left: none;
+	border-left: 3px solid transparent;
 	gap: 0;
 }
 
 .tlSidebar--collapsed .tlSidebar__navItem--active {
 	background: var(--layer-selected-01);
+	border-left-color: var(--button-primary);
 }
 
 .tlSidebar--collapsed .tlSidebar__separator {

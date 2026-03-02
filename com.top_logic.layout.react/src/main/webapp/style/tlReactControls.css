@@ -950,15 +950,18 @@ button.tlPanel__actionButton:focus-visible {
 .tlSplitPanel__child--collapsedHorizontal .tlPanel__header {
 	flex-direction: column-reverse;
 	justify-content: start;
-	align-items: unset;
+	align-items: center;
 	height: 100%;
+	padding: var(--spacing-02);
 }
 
 .tlSplitPanel__child--collapsedHorizontal .tlPanel__title {
 	display: block;
-	transform: rotate(90deg);
+	width: 0;
 	overflow: visible;
-	padding-left: var(--spacing-01);
+	white-space: nowrap;
+	transform: rotate(90deg);
+	transform-origin: 0 0;
 }
 
 .tlSplitPanel__child--collapsedHorizontal .tlPanel__toolbar {

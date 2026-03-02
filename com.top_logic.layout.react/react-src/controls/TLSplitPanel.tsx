@@ -29,6 +29,7 @@ const TLSplitPanel: React.FC<TLCellProps> = () => {
   const children = (state.children as ChildDescriptor[]) ?? [];
   const isHorizontal = orientation === 'horizontal';
   const allCollapsed = children.length > 0 && children.every(c => c.collapsed);
+  const someCollapsed = !allCollapsed && children.some(c => c.collapsed);
   const effectiveHorizontal = allCollapsed ? !isHorizontal : isHorizontal;
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -50,15 +51,17 @@ const TLSplitPanel: React.FC<TLCellProps> = () => {
     };
 
     if (child.collapsed) {
-      if (allCollapsed) {
+      if (allCollapsed && !effectiveHorizontal) {
+        // Horizontal split, all collapsed → flipped to vertical rows: share height equally.
         style.flex = '1 0 0%';
       } else {
-        style.flex = `0 0 ${child.size}px`;
+        style.flex = '0 0 auto';
       }
     } else if (localSize !== undefined) {
       // During drag, use pixel sizes.
       style.flex = `0 0 ${localSize}px`;
-    } else if (child.unit === '%') {
+    } else if (child.unit === '%' || someCollapsed) {
+      // Use size as proportional flex-grow so non-collapsed children fill space freed by collapsed siblings.
       style.flex = `${child.size} 0 0%`;
     } else {
       style.flex = `0 0 ${child.size}px`;
@@ -70,7 +73,7 @@ const TLSplitPanel: React.FC<TLCellProps> = () => {
     }
 
     return style;
-  }, [isHorizontal, allCollapsed]);
+  }, [isHorizontal, allCollapsed, someCollapsed, effectiveHorizontal]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent, splitterIndex: number) => {
     e.preventDefault();

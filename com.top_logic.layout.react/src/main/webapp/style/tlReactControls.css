@@ -1288,3 +1288,14 @@ button.tlSidebar__flyoutItem:focus-visible {
 .tlStack--align-stretch { align-items: stretch; }
 
 .tlStack--wrap { flex-wrap: wrap; }
+
+/* --- TLGrid ---------------------------------------------------------------- */
+
+.tlGrid {
+	display: grid;
+	font-family: var(--font-family);
+}
+
+.tlGrid--gap-compact { gap: var(--spacing-02); }
+.tlGrid--gap-default { gap: var(--spacing-04); }
+.tlGrid--gap-loose   { gap: var(--spacing-06); }

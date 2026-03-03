@@ -32,6 +32,7 @@ import TLMaximizeRoot from './controls/TLMaximizeRoot';
 import TLDeckPane from './controls/TLDeckPane';
 import TLSidebar from './controls/TLSidebar';
 import TLStack from './controls/TLStack';
+import TLGrid from './controls/TLGrid';
 
 register('TLButton', TLButton);
 register('TLToggleButton', TLToggleButton);
@@ -56,3 +57,4 @@ register('TLMaximizeRoot', TLMaximizeRoot);
 register('TLDeckPane', TLDeckPane);
 register('TLSidebar', TLSidebar);
 register('TLStack', TLStack);
+register('TLGrid', TLGrid);

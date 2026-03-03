@@ -115,6 +115,26 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey REACT_SIDEBAR_GROUP_TOGGLED;
 
+	// -- Sidebar client-side i18n keys --
+
+	/**
+	 * @en Sidebar navigation
+	 * @de Seitenleisten-Navigation
+	 */
+	public static ResKey JS_SIDEBAR_ARIA_LABEL = ResKey.internalCreate("js.sidebar.ariaLabel");
+
+	/**
+	 * @en Expand sidebar
+	 * @de Seitenleiste aufklappen
+	 */
+	public static ResKey JS_SIDEBAR_EXPAND = ResKey.internalCreate("js.sidebar.expand");
+
+	/**
+	 * @en Collapse sidebar
+	 * @de Seitenleiste zuklappen
+	 */
+	public static ResKey JS_SIDEBAR_COLLAPSE = ResKey.internalCreate("js.sidebar.collapse");
+
 	// -- Client-side i18n keys (js.* prefix, names match keys used by React controls) --
 
 	/**

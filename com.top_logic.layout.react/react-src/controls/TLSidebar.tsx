@@ -1,7 +1,13 @@
-import { React, useTLState, useTLCommand, TLChild } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const { useCallback, useState } = React;
+
+const I18N_KEYS = {
+  'js.sidebar.ariaLabel': 'Sidebar navigation',
+  'js.sidebar.expand': 'Expand sidebar',
+  'js.sidebar.collapse': 'Collapse sidebar',
+};
 
 interface SidebarItemBase {
   id: string;
@@ -179,6 +185,7 @@ const SidebarItemRenderer: React.FC<{
 const TLSidebar: React.FC<TLCellProps> = () => {
   const state = useTLState();
   const sendCommand = useTLCommand();
+  const i18n = useI18N(I18N_KEYS);
 
   const items = (state.items as SidebarItemData[]) ?? [];
   const activeItemId = state.activeItemId as string;
@@ -204,7 +211,7 @@ const TLSidebar: React.FC<TLCellProps> = () => {
 
   return (
     <div className={'tlSidebar' + (collapsed ? ' tlSidebar--collapsed' : '')}>
-      <nav className="tlSidebar__nav" aria-label="Sidebar navigation">
+      <nav className="tlSidebar__nav" aria-label={i18n['js.sidebar.ariaLabel']}>
         {collapsed ? (
           state.headerCollapsedContent && (
             <div className="tlSidebar__headerSlot tlSidebar__headerSlot--collapsed">
@@ -248,7 +255,7 @@ const TLSidebar: React.FC<TLCellProps> = () => {
         )}
 
         <button className="tlSidebar__collapseBtn" onClick={handleToggleCollapse}
-          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
+          title={collapsed ? i18n['js.sidebar.expand'] : i18n['js.sidebar.collapse']}>
           <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
             <path d={collapsed ? 'M6 4l4 4-4 4' : 'M10 4l-4 4 4 4'}
               fill="none" stroke="currentColor" strokeWidth="2"

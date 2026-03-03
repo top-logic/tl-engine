@@ -44,6 +44,9 @@ import TLMenu from './controls/TLMenu';
 import TLAppShell from './controls/TLAppShell';
 import TLTextCell from './controls/TLTextCell';
 import TLTableView from './controls/TLTableView';
+import TLFormLayout from './controls/TLFormLayout';
+import TLFormGroup from './controls/TLFormGroup';
+import TLFormField from './controls/TLFormField';
 
 register('TLButton', TLButton);
 register('TLToggleButton', TLToggleButton);
@@ -80,3 +83,6 @@ register('TLMenu', TLMenu);
 register('TLAppShell', TLAppShell);
 register('TLTextCell', TLTextCell);
 register('TLTableView', TLTableView);
+register('TLFormLayout', TLFormLayout);
+register('TLFormGroup', TLFormGroup);
+register('TLFormField', TLFormField);

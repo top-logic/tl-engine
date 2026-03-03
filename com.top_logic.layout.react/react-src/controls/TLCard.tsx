@@ -11,7 +11,7 @@ import type { TLCellProps } from 'tl-react-bridge';
  * - headerActions: ChildDescriptor[]
  * - child: ChildDescriptor
  */
-const TLCard: React.FC<TLCellProps> = () => {
+const TLCard: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
 
   const title = state.title as string | null;
@@ -23,7 +23,7 @@ const TLCard: React.FC<TLCellProps> = () => {
   const hasHeader = title != null || headerActions.length > 0;
 
   return (
-    <div className={`tlCard tlCard--${variant}`}>
+    <div id={controlId} className={`tlCard tlCard--${variant}`}>
       {hasHeader && (
         <div className="tlCard__header">
           {title && <span className="tlCard__title">{title}</span>}

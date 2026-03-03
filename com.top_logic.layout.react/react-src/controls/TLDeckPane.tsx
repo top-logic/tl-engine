@@ -9,11 +9,11 @@ import type { TLCellProps } from 'tl-react-bridge';
  * - activeChild: ChildDescriptor | null
  * - childCount: number
  */
-const TLDeckPane: React.FC<TLCellProps> = () => {
+const TLDeckPane: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
 
   return (
-    <div className="tlDeckPane" style={{ width: '100%', height: '100%' }}>
+    <div id={controlId} className="tlDeckPane" style={{ width: '100%', height: '100%' }}>
       {state.activeChild && <TLChild control={state.activeChild} />}
     </div>
   );

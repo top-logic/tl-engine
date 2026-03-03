@@ -370,7 +370,7 @@ const SidebarItemRenderer: React.FC<{
 
 /* ---------- Main component ---------- */
 
-const TLSidebar: React.FC<TLCellProps> = () => {
+const TLSidebar: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
   const i18n = useI18N(I18N_KEYS);
@@ -555,7 +555,7 @@ const TLSidebar: React.FC<TLCellProps> = () => {
       handleSelect, handleExecute, handleToggleGroup, handleOpenFlyout, handleCloseFlyout]);
 
   return (
-    <div className={'tlSidebar' + (collapsed ? ' tlSidebar--collapsed' : '')}>
+    <div id={controlId} className={'tlSidebar' + (collapsed ? ' tlSidebar--collapsed' : '')}>
       <nav className="tlSidebar__nav" aria-label={i18n['js.sidebar.ariaLabel']}>
         {collapsed ? (
           state.headerCollapsedContent && (

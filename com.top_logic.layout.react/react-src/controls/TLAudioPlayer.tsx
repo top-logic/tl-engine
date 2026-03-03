@@ -10,7 +10,7 @@ const I18N_KEYS = {
 
 type PlayerStatus = 'disabled' | 'idle' | 'loading' | 'playing' | 'paused';
 
-const TLAudioPlayer: React.FC<TLCellProps> = () => {
+const TLAudioPlayer: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const dataUrl = useTLDataUrl();
 
@@ -141,7 +141,7 @@ const TLAudioPlayer: React.FC<TLCellProps> = () => {
   if (status === 'loading') buttonClasses.push('tlAudioPlayer__button--loading');
 
   return (
-    <div className="tlAudioPlayer">
+    <div id={controlId} className="tlAudioPlayer">
       <button
         type="button"
         className={buttonClasses.join(' ')}

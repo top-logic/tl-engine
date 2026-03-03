@@ -11,11 +11,12 @@ import type { TLCellProps } from 'tl-react-bridge';
  * - child: ChildDescriptor (the normal content tree)
  * - maximized: boolean
  */
-const TLMaximizeRoot: React.FC<TLCellProps> = () => {
+const TLMaximizeRoot: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
 
   return (
     <div
+      id={controlId}
       className={`tlMaximizeRoot${state.maximized === true ? ' tlMaximizeRoot--maximized' : ''}`}
       style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}
     >

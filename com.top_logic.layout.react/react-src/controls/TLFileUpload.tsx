@@ -8,7 +8,7 @@ const I18N_KEYS = {
 
 type LocalStatus = 'idle' | 'uploading';
 
-const TLFileUpload: React.FC<TLCellProps> = () => {
+const TLFileUpload: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const upload = useTLUpload();
 
@@ -71,6 +71,7 @@ const TLFileUpload: React.FC<TLCellProps> = () => {
 
   return (
     <div
+      id={controlId}
       className={`tlFileUpload${isDragOver ? ' tlFileUpload--dragover' : ''}`}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}

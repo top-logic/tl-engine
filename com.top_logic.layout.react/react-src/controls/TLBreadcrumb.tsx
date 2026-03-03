@@ -14,7 +14,7 @@ interface BreadcrumbItem {
  * State:
  * - items: { id, label }[]  (last item = current page)
  */
-const TLBreadcrumb: React.FC<TLCellProps> = () => {
+const TLBreadcrumb: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
 
@@ -25,7 +25,7 @@ const TLBreadcrumb: React.FC<TLCellProps> = () => {
   }, [sendCommand]);
 
   return (
-    <nav className="tlBreadcrumb" aria-label="Breadcrumb">
+    <nav id={controlId} className="tlBreadcrumb" aria-label="Breadcrumb">
       <ol className="tlBreadcrumb__list">
         {items.map((item, index) => {
           const isLast = index === items.length - 1;

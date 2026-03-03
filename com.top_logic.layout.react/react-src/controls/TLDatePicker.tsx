@@ -6,7 +6,7 @@ const { useCallback } = React;
 /**
  * A date picker field rendered via React.
  */
-const TLDatePicker: React.FC<TLCellProps> = ({ state }) => {
+const TLDatePicker: React.FC<TLCellProps> = ({ controlId, state }) => {
   const [value, setValue] = useTLFieldValue();
 
   const handleChange = useCallback(
@@ -18,7 +18,7 @@ const TLDatePicker: React.FC<TLCellProps> = ({ state }) => {
 
   if (state.editable === false) {
     return (
-      <span className="tlReactDatePicker tlReactDatePicker--immutable">
+      <span id={controlId} className="tlReactDatePicker tlReactDatePicker--immutable">
         {(value as string) ?? ''}
       </span>
     );
@@ -27,6 +27,7 @@ const TLDatePicker: React.FC<TLCellProps> = ({ state }) => {
   return (
     <input
       type="date"
+      id={controlId}
       value={(value as string) ?? ''}
       onChange={handleChange}
       disabled={state.disabled === true}

@@ -46,7 +46,30 @@ public class ReactTreeControl extends ReactControl {
 	private static final Map<String, ControlCommand> COMMANDS = createCommandMap(
 		new ExpandCommand(),
 		new CollapseCommand(),
-		new SelectCommand());
+		new SelectCommand(),
+		new ContextMenuCommand());
+
+	// -- Nested interfaces --
+
+	/**
+	 * Provider for opening context menus on tree nodes.
+	 */
+	@FunctionalInterface
+	public interface ContextMenuProvider {
+		/**
+		 * Opens a context menu for the given node at the specified coordinates.
+		 *
+		 * @param tree
+		 *        The tree control.
+		 * @param node
+		 *        The node that was right-clicked.
+		 * @param x
+		 *        The client X coordinate.
+		 * @param y
+		 *        The client Y coordinate.
+		 */
+		void openContextMenu(ReactTreeControl tree, Object node, int x, int y);
+	}
 
 	// -- Fields --
 
@@ -62,6 +85,8 @@ public class ReactTreeControl extends ReactControl {
 	private boolean _dragEnabled;
 
 	private boolean _dropEnabled;
+
+	private ContextMenuProvider _contextMenuProvider;
 
 	/** Index into the flat visible node list of the last anchor-setting click, or -1. */
 	private int _selectionAnchor = -1;
@@ -121,6 +146,13 @@ public class ReactTreeControl extends ReactControl {
 	public void setDropEnabled(boolean enabled) {
 		_dropEnabled = enabled;
 		putState(DROP_ENABLED, Boolean.valueOf(enabled));
+	}
+
+	/**
+	 * Sets the context menu provider.
+	 */
+	public void setContextMenuProvider(ContextMenuProvider provider) {
+		_contextMenuProvider = provider;
 	}
 
 	// -- State building --
@@ -412,6 +444,36 @@ public class ReactTreeControl extends ReactControl {
 		@Override
 		public ResKey getI18NKey() {
 			return ResKey.legacy("react.tree.select");
+		}
+	}
+
+	/**
+	 * Opens a context menu at the given coordinates for a tree node.
+	 */
+	static class ContextMenuCommand extends ControlCommand {
+
+		private static final String COMMAND_NAME = "contextMenu";
+
+		ContextMenuCommand() {
+			super(COMMAND_NAME);
+		}
+
+		@Override
+		protected HandlerResult execute(DisplayContext context, Control control, Map<String, Object> arguments) {
+			ReactTreeControl tree = (ReactTreeControl) control;
+			String nodeId = (String) arguments.get("nodeId");
+			Object node = tree.findNodeById(nodeId);
+			if (node != null && tree._contextMenuProvider != null) {
+				int x = ((Number) arguments.get("x")).intValue();
+				int y = ((Number) arguments.get("y")).intValue();
+				tree._contextMenuProvider.openContextMenu(tree, node, x, y);
+			}
+			return HandlerResult.DEFAULT_RESULT;
+		}
+
+		@Override
+		public ResKey getI18NKey() {
+			return ResKey.legacy("react.tree.contextMenu");
 		}
 	}
 }

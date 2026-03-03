@@ -1396,7 +1396,7 @@ const U = ({ icon: o }) => o ? /* @__PURE__ */ e.createElement("i", { className:
     let j;
     !g || g === "desc" ? j = "asc" : j = "desc", t("sort", { column: p, direction: j });
   }, [t]), u = e.useCallback((p, g) => {
-    t("select", {
+    g.shiftKey && g.preventDefault(), t("select", {
       rowIndex: p,
       ctrlKey: g.ctrlKey || g.metaKey,
       shiftKey: g.shiftKey

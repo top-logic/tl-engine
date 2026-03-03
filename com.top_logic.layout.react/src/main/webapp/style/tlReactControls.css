@@ -1904,6 +1904,7 @@ button.tlMenu__item--disabled:hover {
 	border-bottom: 1px solid var(--border-subtle, #e0e0e0);
 	box-sizing: border-box;
 	cursor: pointer;
+	user-select: none;
 }
 
 .tlTableView__row:hover {

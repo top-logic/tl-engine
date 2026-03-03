@@ -92,8 +92,11 @@ public class ReactTableControl extends ReactControl {
 
 	private boolean _selectionForced;
 
-	/** Index into {@code _displayedRows} of the last plain-clicked row, or -1. */
+	/** Index into {@code _displayedRows} of the last anchor-setting click, or -1. */
 	private int _selectionAnchor = -1;
+
+	/** Whether the last anchor-setting action was an add ({@code true}) or remove ({@code false}). */
+	private boolean _anchorAdded = true;
 
 	/**
 	 * Cache of cell controls for currently visible rows. Keyed by row object, then column name.
@@ -366,19 +369,17 @@ public class ReactTableControl extends ReactControl {
 
 			if ("multi".equals(table._selectionMode)) {
 				if (shiftKey && table._selectionAnchor >= 0) {
-					// Additive/subtractive range from anchor to clicked row.
+					// Additive/subtractive range based on what the anchor action did.
 					int from = Math.min(table._selectionAnchor, rowIndex);
 					int to = Math.max(table._selectionAnchor, rowIndex);
-					Object anchorObject = table._displayedRows.get(table._selectionAnchor);
-					boolean deselect = table._selectedRows.contains(anchorObject);
 					for (int i = from; i <= to; i++) {
 						Object row = table._displayedRows.get(i);
-						if (deselect) {
+						if (table._anchorAdded) {
+							table._selectedRows.add(row);
+						} else {
 							if (!table._selectionForced || table._selectedRows.size() > 1) {
 								table._selectedRows.remove(row);
 							}
-						} else {
-							table._selectedRows.add(row);
 						}
 					}
 				} else if (ctrlKey) {
@@ -386,9 +387,11 @@ public class ReactTableControl extends ReactControl {
 					if (table._selectedRows.contains(rowObject)) {
 						if (!table._selectionForced || table._selectedRows.size() > 1) {
 							table._selectedRows.remove(rowObject);
+							table._anchorAdded = false;
 						}
 					} else {
 						table._selectedRows.add(rowObject);
+						table._anchorAdded = true;
 					}
 					table._selectionAnchor = rowIndex;
 				} else {
@@ -396,6 +399,7 @@ public class ReactTableControl extends ReactControl {
 					table._selectedRows.clear();
 					table._selectedRows.add(rowObject);
 					table._selectionAnchor = rowIndex;
+					table._anchorAdded = true;
 				}
 			} else {
 				// Single mode.

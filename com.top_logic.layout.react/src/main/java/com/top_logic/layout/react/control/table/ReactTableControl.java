@@ -67,7 +67,8 @@ public class ReactTableControl extends ReactControl {
 		new SortCommand(),
 		new SelectCommand(),
 		new SelectAllCommand(),
-		new ColumnResizeCommand());
+		new ColumnResizeCommand(),
+		new ColumnReorderCommand());
 
 	// -- Fields --
 
@@ -486,6 +487,50 @@ public class ReactTableControl extends ReactControl {
 
 			// Push updated column definitions to client.
 			table.putState(COLUMNS, table.buildColumnsState());
+			return HandlerResult.DEFAULT_RESULT;
+		}
+	}
+
+	/**
+	 * Handles column reorder from the client.
+	 */
+	static class ColumnReorderCommand extends ControlCommand {
+
+		ColumnReorderCommand() {
+			super("columnReorder");
+		}
+
+		@Override
+		public ResKey getI18NKey() {
+			return ResKey.legacy("react.table.columnReorder");
+		}
+
+		@Override
+		protected HandlerResult execute(DisplayContext context, Control control,
+				Map<String, Object> arguments) {
+			ReactTableControl table = (ReactTableControl) control;
+			String column = (String) arguments.get("column");
+			int targetIndex = ((Number) arguments.get("targetIndex")).intValue();
+
+			// Find and remove the column.
+			ColumnDef moved = null;
+			for (int i = 0; i < table._columnDefs.size(); i++) {
+				if (table._columnDefs.get(i).getName().equals(column)) {
+					moved = table._columnDefs.remove(i);
+					break;
+				}
+			}
+
+			if (moved == null) {
+				return HandlerResult.DEFAULT_RESULT;
+			}
+
+			// Clamp target index and insert.
+			int insertAt = Math.max(0, Math.min(targetIndex, table._columnDefs.size()));
+			table._columnDefs.add(insertAt, moved);
+
+			// Rebuild columns and viewport (cell order in rows changes).
+			table.buildFullState();
 			return HandlerResult.DEFAULT_RESULT;
 		}
 	}

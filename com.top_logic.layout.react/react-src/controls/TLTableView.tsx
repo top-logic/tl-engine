@@ -44,6 +44,10 @@ const TLTableView: React.FC<TLCellProps> = () => {
   const resizeRef = React.useRef<{ column: string; startX: number; startWidth: number } | null>(null);
   const justResizedRef = React.useRef(false);
 
+  // -- Drag reorder state --
+  const dragColumnRef = React.useRef<string | null>(null);
+  const [dragOver, setDragOver] = React.useState<{ column: string; side: 'left' | 'right' } | null>(null);
+
   // Clear overrides when server pushes updated columns (resize confirmed).
   React.useEffect(() => {
     if (!resizeRef.current) {
@@ -116,6 +120,64 @@ const TLTableView: React.FC<TLCellProps> = () => {
     sendCommand('sort', { column: columnName, direction: newDirection });
   }, [sendCommand]);
 
+  // -- Drag reorder handlers --
+  const handleDragStart = React.useCallback((columnName: string, event: React.DragEvent) => {
+    dragColumnRef.current = columnName;
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', columnName);
+  }, []);
+
+  const handleDragOver = React.useCallback((columnName: string, event: React.DragEvent) => {
+    if (!dragColumnRef.current || dragColumnRef.current === columnName) {
+      setDragOver(null);
+      return;
+    }
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    const side = (event.clientX < rect.left + rect.width / 2) ? 'left' : 'right';
+    setDragOver({ column: columnName, side });
+  }, []);
+
+  const handleDragLeave = React.useCallback(() => {
+    setDragOver(null);
+  }, []);
+
+  const handleDrop = React.useCallback((event: React.DragEvent) => {
+    event.preventDefault();
+    const draggedName = dragColumnRef.current;
+    if (!draggedName || !dragOver) {
+      dragColumnRef.current = null;
+      setDragOver(null);
+      return;
+    }
+
+    // Compute target index based on drop side.
+    let targetIndex = columns.findIndex((c) => c.name === dragOver.column);
+    if (targetIndex < 0) {
+      dragColumnRef.current = null;
+      setDragOver(null);
+      return;
+    }
+    const draggedIndex = columns.findIndex((c) => c.name === draggedName);
+    if (dragOver.side === 'right') {
+      targetIndex++;
+    }
+    // Adjust for removal: if dragged is before target, removal shifts indices down.
+    if (draggedIndex < targetIndex) {
+      targetIndex--;
+    }
+
+    sendCommand('columnReorder', { column: draggedName, targetIndex });
+    dragColumnRef.current = null;
+    setDragOver(null);
+  }, [columns, dragOver, sendCommand]);
+
+  const handleDragEnd = React.useCallback(() => {
+    dragColumnRef.current = null;
+    setDragOver(null);
+  }, []);
+
   // -- Selection handlers --
   const handleRowClick = React.useCallback((rowIndex: number, event: React.MouseEvent) => {
     if (event.shiftKey) {
@@ -170,12 +232,23 @@ const TLTableView: React.FC<TLCellProps> = () => {
           )}
           {columns.map((col) => {
             const w = getColWidth(col);
+            let cellClass = 'tlTableView__headerCell';
+            if (col.sortable) cellClass += ' tlTableView__headerCell--sortable';
+            if (dragOver && dragOver.column === col.name) {
+              cellClass += ' tlTableView__headerCell--dragOver-' + dragOver.side;
+            }
             return (
               <div
                 key={col.name}
-                className={'tlTableView__headerCell' + (col.sortable ? ' tlTableView__headerCell--sortable' : '')}
+                className={cellClass}
                 style={{ width: w, minWidth: w, position: 'relative' }}
+                draggable={true}
                 onClick={col.sortable ? () => handleSort(col.name, col.sortDirection) : undefined}
+                onDragStart={(e) => handleDragStart(col.name, e)}
+                onDragOver={(e) => handleDragOver(col.name, e)}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                onDragEnd={handleDragEnd}
               >
                 <span className="tlTableView__headerLabel">{col.label}</span>
                 {col.sortDirection && (

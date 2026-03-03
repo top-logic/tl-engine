@@ -32,6 +32,7 @@ const TLTableView: React.FC<TLCellProps> = () => {
   const rowHeight = (state.rowHeight as number) ?? 36;
   const selectionMode = (state.selectionMode as string) ?? 'single';
   const selectedCount = (state.selectedCount as number) ?? 0;
+  const frozenColumnCount = (state.frozenColumnCount as number) ?? 0;
 
   const isMulti = selectionMode === 'multi';
   const checkboxWidth = 40;
@@ -56,9 +57,19 @@ const TLTableView: React.FC<TLCellProps> = () => {
     }
   }, [columns]);
 
-  const getColWidth = (col: ColumnState): number => {
+  const getColWidth = React.useCallback((col: ColumnState): number => {
     return columnWidthOverrides[col.name] ?? col.width;
-  };
+  }, [columnWidthOverrides]);
+
+  const frozenOffsets = React.useMemo(() => {
+    const offsets: number[] = [];
+    let left = isMulti && frozenColumnCount > 0 ? checkboxWidth : 0;
+    for (let i = 0; i < frozenColumnCount && i < columns.length; i++) {
+      offsets.push(left);
+      left += getColWidth(columns[i]);
+    }
+    return offsets;
+  }, [columns, frozenColumnCount, isMulti, checkboxWidth, getColWidth]);
 
   const totalHeight = totalRowCount * rowHeight;
 
@@ -241,8 +252,12 @@ const TLTableView: React.FC<TLCellProps> = () => {
       <div className="tlTableView__header" ref={headerRef}>
         <div className="tlTableView__headerRow" style={{ minWidth: tableWidth }}>
           {isMulti && (
-            <div className="tlTableView__headerCell tlTableView__checkboxCell"
-              style={{ width: checkboxWidth, minWidth: checkboxWidth }}
+            <div className={'tlTableView__headerCell tlTableView__checkboxCell'
+                + (frozenColumnCount > 0 ? ' tlTableView__headerCell--frozen' : '')}
+              style={{
+                width: checkboxWidth, minWidth: checkboxWidth,
+                ...(frozenColumnCount > 0 ? { position: 'sticky' as const, left: 0, zIndex: 2 } : {}),
+              }}
               onDragOver={(e) => {
                 if (!dragColumnRef.current) return;
                 e.preventDefault();
@@ -269,13 +284,21 @@ const TLTableView: React.FC<TLCellProps> = () => {
             if (dragOver && dragOver.column === col.name) {
               cellClass += ' tlTableView__headerCell--dragOver-' + dragOver.side;
             }
+            const isFrozen = colIdx < frozenColumnCount;
+            const isFrozenLast = colIdx === frozenColumnCount - 1;
+            if (isFrozen) cellClass += ' tlTableView__headerCell--frozen';
+            if (isFrozenLast) cellClass += ' tlTableView__headerCell--frozenLast';
             return (
               <div
                 key={col.name}
                 className={cellClass}
-                style={isLast
-                  ? { flex: '1 0 auto', minWidth: w, position: 'relative' }
-                  : { width: w, minWidth: w, position: 'relative' }}
+                style={{
+                  ...(isLast && !isFrozen
+                    ? { flex: '1 0 auto', minWidth: w }
+                    : { width: w, minWidth: w }),
+                  position: isFrozen ? 'sticky' as const : 'relative' as const,
+                  ...(isFrozen ? { left: frozenOffsets[colIdx], zIndex: 2 } : {}),
+                }}
                 draggable={true}
                 onClick={col.sortable ? () => handleSort(col.name, col.sortDirection) : undefined}
                 onDragStart={(e) => handleDragStart(col.name, e)}
@@ -340,8 +363,12 @@ const TLTableView: React.FC<TLCellProps> = () => {
               onClick={(e) => handleRowClick(row.index, e)}
             >
               {isMulti && (
-                <div className="tlTableView__cell tlTableView__checkboxCell"
-                  style={{ width: checkboxWidth, minWidth: checkboxWidth }}
+                <div className={'tlTableView__cell tlTableView__checkboxCell'
+                    + (frozenColumnCount > 0 ? ' tlTableView__cell--frozen' : '')}
+                  style={{
+                    width: checkboxWidth, minWidth: checkboxWidth,
+                    ...(frozenColumnCount > 0 ? { position: 'sticky' as const, left: 0, zIndex: 2 } : {}),
+                  }}
                   onClick={(e) => e.stopPropagation()}>
                   <input
                     type="checkbox"
@@ -356,13 +383,21 @@ const TLTableView: React.FC<TLCellProps> = () => {
               {columns.map((col, colIdx) => {
                 const w = getColWidth(col);
                 const isLast = colIdx === columns.length - 1;
+                const isFrozen = colIdx < frozenColumnCount;
+                const isFrozenLast = colIdx === frozenColumnCount - 1;
+                let cellClass = 'tlTableView__cell';
+                if (isFrozen) cellClass += ' tlTableView__cell--frozen';
+                if (isFrozenLast) cellClass += ' tlTableView__cell--frozenLast';
                 return (
                   <div
                     key={col.name}
-                    className="tlTableView__cell"
-                    style={isLast
-                      ? { flex: '1 0 auto', minWidth: w }
-                      : { width: w, minWidth: w }}
+                    className={cellClass}
+                    style={{
+                      ...(isLast && !isFrozen
+                        ? { flex: '1 0 auto', minWidth: w }
+                        : { width: w, minWidth: w }),
+                      ...(isFrozen ? { position: 'sticky' as const, left: frozenOffsets[colIdx], zIndex: 2 } : {}),
+                    }}
                   >
                     <TLChild control={row.cells[col.name]} />
                   </div>

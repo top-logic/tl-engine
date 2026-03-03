@@ -47,6 +47,7 @@ import TLTableView from './controls/TLTableView';
 import TLFormLayout from './controls/TLFormLayout';
 import TLFormGroup from './controls/TLFormGroup';
 import TLFormField from './controls/TLFormField';
+import TLResourceCell from './controls/TLResourceCell';
 import TLTreeView from './controls/TLTreeView';
 
 register('TLButton', TLButton);
@@ -87,4 +88,5 @@ register('TLTableView', TLTableView);
 register('TLFormLayout', TLFormLayout);
 register('TLFormGroup', TLFormGroup);
 register('TLFormField', TLFormField);
+register('TLResourceCell', TLResourceCell);
 register('TLTreeView', TLTreeView);

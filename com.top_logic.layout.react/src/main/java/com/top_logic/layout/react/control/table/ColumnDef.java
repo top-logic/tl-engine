@@ -28,6 +28,8 @@ public class ColumnDef {
 
 	private String _sortDirection;
 
+	private int _sortPriority;
+
 	/**
 	 * Creates a new {@link ColumnDef}.
 	 *
@@ -76,6 +78,14 @@ public class ColumnDef {
 	}
 
 	/**
+	 * Sets the sort priority (1-based position in the multi-sort chain, or 0 for unsorted).
+	 */
+	public ColumnDef setSortPriority(int priority) {
+		_sortPriority = priority;
+		return this;
+	}
+
+	/**
 	 * Converts this column definition to a map suitable for JSON serialization in the React state.
 	 */
 	public Map<String, Object> toStateMap() {
@@ -86,6 +96,9 @@ public class ColumnDef {
 		map.put("sortable", Boolean.valueOf(_sortable));
 		if (_sortDirection != null) {
 			map.put("sortDirection", _sortDirection);
+		}
+		if (_sortPriority > 0) {
+			map.put("sortPriority", Integer.valueOf(_sortPriority));
 		}
 		return map;
 	}

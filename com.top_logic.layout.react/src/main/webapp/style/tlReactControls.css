@@ -1968,6 +1968,22 @@ button.tlMenu__item--disabled:hover {
 	opacity: 0.3;
 }
 
+.tlTableView__headerCell[draggable] {
+	cursor: grab;
+}
+
+.tlTableView__headerCell[draggable]:active {
+	cursor: grabbing;
+}
+
+.tlTableView__headerCell--dragOver-left {
+	border-left: 2px solid var(--interactive, #0f62fe);
+}
+
+.tlTableView__headerCell--dragOver-right {
+	border-right: 2px solid var(--interactive, #0f62fe);
+}
+
 /* --- TLFormLayout ------------------------------------------------------ */
 
 .tlFormLayout {

@@ -1345,3 +1345,54 @@ button.tlSidebar__flyoutItem:focus-visible {
 .tlCard__body--pad-none    { padding: 0; }
 .tlCard__body--pad-compact { padding: var(--spacing-03); }
 .tlCard__body--pad-default { padding: var(--spacing-04); }
+
+/* --- TLAppBar -------------------------------------------------------------- */
+
+.tlAppBar {
+	display: flex;
+	align-items: center;
+	height: 3.5rem;
+	padding: 0 var(--spacing-03);
+	gap: var(--spacing-02);
+	font-family: var(--font-family);
+	flex-shrink: 0;
+	box-sizing: border-box;
+}
+
+.tlAppBar--primary {
+	background: var(--layer-accent);
+	color: var(--layer-accent-text);
+}
+
+.tlAppBar--surface {
+	background: var(--layer-01);
+	color: var(--text-primary);
+	border-bottom: 1px solid var(--border-subtle);
+}
+
+.tlAppBar--elevated {
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.tlAppBar__leading {
+	flex-shrink: 0;
+}
+
+.tlAppBar__title {
+	flex: 1;
+	margin: 0;
+	font-weight: bold;
+	font-size: var(--heading-compact-02-font-size);
+	line-height: var(--heading-compact-02-line-height);
+	letter-spacing: var(--heading-compact-02-letter-spacing);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.tlAppBar__actions {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-01);
+	flex-shrink: 0;
+}

@@ -1746,3 +1746,72 @@ button.tlDrawer__closeBtn:focus-visible {
 	from { opacity: 1; }
 	to   { opacity: 0; }
 }
+
+/* --- TLMenu ---------------------------------------------------------------- */
+
+.tlMenu {
+	z-index: 10000;
+	min-width: 10rem;
+	background: var(--layer-01);
+	border: 1px solid var(--border-subtle);
+	border-radius: var(--border-radius-02, 4px);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	padding: var(--spacing-02) 0;
+	font-family: var(--font-family);
+	outline: none;
+}
+
+.tlMenu__item {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-03);
+	width: 100%;
+	padding: var(--spacing-03) var(--spacing-04);
+	border: none;
+	background: transparent;
+	color: var(--text-secondary);
+	font-size: var(--body-compact-01-font-size);
+	font-family: var(--font-family);
+	cursor: pointer;
+	text-align: left;
+}
+
+button.tlMenu__item:hover,
+.tlMenu__item--focused {
+	background: var(--layer-hover);
+	color: var(--text-primary);
+}
+
+button.tlMenu__item:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: -2px;
+}
+
+.tlMenu__item--disabled {
+	color: var(--text-disabled);
+	cursor: default;
+}
+
+button.tlMenu__item--disabled:hover {
+	background: transparent;
+	color: var(--text-disabled);
+}
+
+.tlMenu__separator {
+	border: none;
+	border-top: 1px solid var(--border-subtle);
+	margin: var(--spacing-02) var(--spacing-04);
+}
+
+.tlMenu__icon {
+	flex-shrink: 0;
+	width: 1rem;
+	text-align: center;
+	font-size: 1rem;
+}
+
+.tlMenu__label {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}

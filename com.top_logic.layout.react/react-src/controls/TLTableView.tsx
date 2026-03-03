@@ -147,6 +147,7 @@ const TLTableView: React.FC<TLCellProps> = () => {
 
   const handleDrop = React.useCallback((event: React.DragEvent) => {
     event.preventDefault();
+    event.stopPropagation();
     const draggedName = dragColumnRef.current;
     if (!draggedName || !dragOver) {
       dragColumnRef.current = null;
@@ -219,6 +220,8 @@ const TLTableView: React.FC<TLCellProps> = () => {
     <div className="tlTableView"
       onDragOver={(e) => {
         if (!dragColumnRef.current) return;
+        e.preventDefault();
+        // Auto-scroll horizontally during column drag.
         const body = scrollContainerRef.current;
         const header = headerRef.current;
         if (!body) return;
@@ -232,13 +235,23 @@ const TLTableView: React.FC<TLCellProps> = () => {
         }
         if (header) header.scrollLeft = body.scrollLeft;
       }}
+      onDrop={handleDrop}
     >
       {/* Header */}
       <div className="tlTableView__header" ref={headerRef}>
         <div className="tlTableView__headerRow" style={{ minWidth: tableWidth }}>
           {isMulti && (
             <div className="tlTableView__headerCell tlTableView__checkboxCell"
-              style={{ width: checkboxWidth, minWidth: checkboxWidth }}>
+              style={{ width: checkboxWidth, minWidth: checkboxWidth }}
+              onDragOver={(e) => {
+                if (!dragColumnRef.current) return;
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                if (columns.length > 0 && columns[0].name !== dragColumnRef.current) {
+                  setDragOver({ column: columns[0].name, side: 'left' });
+                }
+              }}
+            >
               <input
                 type="checkbox"
                 ref={headerCheckboxRef}

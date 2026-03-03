@@ -989,7 +989,7 @@ button.tlPanel__actionButton:focus-visible {
 	width: 16rem;
 	flex-shrink: 0;
 	border-right: 1px solid var(--border-subtle);
-	background: var(--layer-01);
+	background: var(--layer-01, #fff);
 	overflow-y: auto;
 	overflow-x: hidden;
 	transition: width 0.2s ease;
@@ -1211,7 +1211,7 @@ button.tlSidebar__collapseBtn:focus-visible {
 	top: 0;
 	z-index: 1000;
 	min-width: 12rem;
-	background: var(--layer-01);
+	background: var(--layer-01, #fff);
 	border: 1px solid var(--border-subtle);
 	border-radius: var(--border-radius-02, 4px);
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -1305,7 +1305,7 @@ button.tlSidebar__flyoutItem:focus-visible {
 .tlCard {
 	border-radius: var(--border-radius-02, 4px);
 	font-family: var(--font-family);
-	background: var(--layer-01);
+	background: var(--layer-01, #fff);
 	overflow: hidden;
 }
 
@@ -1365,7 +1365,7 @@ button.tlSidebar__flyoutItem:focus-visible {
 }
 
 .tlAppBar--surface {
-	background: var(--layer-01);
+	background: var(--layer-01, #fff);
 	color: var(--text-primary);
 	border-bottom: 1px solid var(--border-subtle);
 }
@@ -1454,7 +1454,7 @@ button.tlSidebar__flyoutItem:focus-visible {
 	align-items: stretch;
 	height: 3.5rem;
 	border-top: 1px solid var(--border-subtle);
-	background: var(--layer-01);
+	background: var(--layer-01, #fff);
 	font-family: var(--font-family);
 	flex-shrink: 0;
 }
@@ -1537,7 +1537,7 @@ button.tlBottomBar__item:hover {
 }
 
 .tlDialog {
-	background: var(--layer-01);
+	background: var(--layer-01, #fff);
 	border-radius: var(--border-radius-02, 4px);
 	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
 	display: flex;
@@ -1615,7 +1615,7 @@ button.tlDialog__closeBtn:focus-visible {
 .tlDrawer {
 	position: fixed;
 	z-index: 9000;
-	background: var(--layer-01);
+	background: var(--layer-01, #fff);
 	box-shadow: -2px 0 8px rgba(0, 0, 0, 0.15);
 	display: flex;
 	flex-direction: column;
@@ -1770,7 +1770,7 @@ button.tlDrawer__closeBtn:focus-visible {
 .tlMenu {
 	z-index: 10000;
 	min-width: 10rem;
-	background: var(--layer-01);
+	background: var(--layer-01, #fff);
 	border: 1px solid var(--border-subtle);
 	border-radius: var(--border-radius-02, 4px);
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);

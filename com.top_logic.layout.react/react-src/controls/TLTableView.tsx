@@ -81,6 +81,11 @@ const TLTableView: React.FC<TLCellProps> = () => {
     });
   }, [sendCommand]);
 
+  const handleCheckboxClick = React.useCallback((rowIndex: number, event: React.MouseEvent) => {
+    event.stopPropagation();
+    sendCommand('select', { rowIndex, ctrlKey: true, shiftKey: false });
+  }, [sendCommand]);
+
   const handleSelectAll = React.useCallback(() => {
     const allSelected = selectedCount === totalRowCount && totalRowCount > 0;
     sendCommand('selectAll', { selected: !allSelected });
@@ -160,12 +165,14 @@ const TLTableView: React.FC<TLCellProps> = () => {
             >
               {isMulti && (
                 <div className="tlTableView__cell tlTableView__checkboxCell"
-                  style={{ width: checkboxWidth, minWidth: checkboxWidth }}>
+                  style={{ width: checkboxWidth, minWidth: checkboxWidth }}
+                  onClick={(e) => e.stopPropagation()}>
                   <input
                     type="checkbox"
                     className="tlTableView__checkbox"
                     checked={row.selected}
-                    readOnly
+                    onChange={() => {/* handled by onClick */}}
+                    onClick={(e) => handleCheckboxClick(row.index, e)}
                     tabIndex={-1}
                   />
                 </div>

@@ -1267,3 +1267,24 @@ button.tlSidebar__flyoutItem:focus-visible {
 	text-transform: uppercase;
 	letter-spacing: 0.04em;
 }
+
+/* --- TLStack --------------------------------------------------------------- */
+
+.tlStack {
+	display: flex;
+	font-family: var(--font-family);
+}
+
+.tlStack--column { flex-direction: column; }
+.tlStack--row    { flex-direction: row; }
+
+.tlStack--gap-compact { gap: var(--spacing-02); }
+.tlStack--gap-default { gap: var(--spacing-04); }
+.tlStack--gap-loose   { gap: var(--spacing-06); }
+
+.tlStack--align-start   { align-items: flex-start; }
+.tlStack--align-center  { align-items: center; }
+.tlStack--align-end     { align-items: flex-end; }
+.tlStack--align-stretch { align-items: stretch; }
+
+.tlStack--wrap { flex-wrap: wrap; }

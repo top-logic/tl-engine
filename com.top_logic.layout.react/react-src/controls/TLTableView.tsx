@@ -42,6 +42,7 @@ const TLTableView: React.FC<TLCellProps> = () => {
   // -- Resize state --
   const [columnWidthOverrides, setColumnWidthOverrides] = React.useState<Record<string, number>>({});
   const resizeRef = React.useRef<{ column: string; startX: number; startWidth: number } | null>(null);
+  const justResizedRef = React.useRef(false);
 
   const getColWidth = (col: ColumnState): number => {
     return columnWidthOverrides[col.name] ?? col.width;
@@ -75,6 +76,8 @@ const TLTableView: React.FC<TLCellProps> = () => {
           return next;
         });
         resizeRef.current = null;
+        justResizedRef.current = true;
+        requestAnimationFrame(() => { justResizedRef.current = false; });
       }
     };
 
@@ -99,6 +102,7 @@ const TLTableView: React.FC<TLCellProps> = () => {
 
   // -- Sort handler --
   const handleSort = React.useCallback((columnName: string, currentDirection?: string) => {
+    if (justResizedRef.current) return;
     let newDirection: string;
     if (!currentDirection || currentDirection === 'desc') {
       newDirection = 'asc';

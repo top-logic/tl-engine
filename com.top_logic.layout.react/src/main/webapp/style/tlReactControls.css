@@ -1938,3 +1938,15 @@ button.tlMenu__item--disabled:hover {
 	font-size: var(--body-compact-01-font-size, 0.875rem);
 	color: var(--text-primary, #161616);
 }
+
+.tlTableView__checkboxCell {
+	justify-content: center;
+	flex-shrink: 0;
+}
+
+.tlTableView__checkbox {
+	cursor: pointer;
+	width: 1rem;
+	height: 1rem;
+	accent-color: var(--interactive, #0f62fe);
+}

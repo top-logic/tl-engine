@@ -243,6 +243,70 @@ public class ReactSidebarControl extends ReactControl {
 		patchReactState(patch);
 	}
 
+	/**
+	 * Updates the badge on a navigation item.
+	 *
+	 * @param itemId
+	 *        The ID of the navigation item to update.
+	 * @param badge
+	 *        The new badge text, or {@code null} to remove the badge.
+	 */
+	public void updateBadge(String itemId, String badge) {
+		NavigationItem navItem = findNavItem(itemId, _items);
+		if (navItem == null) {
+			return;
+		}
+		navItem.setBadge(badge);
+		pushItemsUpdate();
+	}
+
+	private void pushItemsUpdate() {
+		List<Map<String, Object>> itemList = new ArrayList<>();
+		Map<String, Boolean> persistedGroups = loadGroupStates();
+		for (SidebarItem item : _items) {
+			Map<String, Object> itemMap = item.toStateMap();
+			if (item instanceof GroupItem && persistedGroups != null) {
+				Boolean persisted = persistedGroups.get(item.getId());
+				if (persisted != null) {
+					itemMap.put(GroupItem.EXPANDED, persisted);
+				}
+			}
+			itemList.add(itemMap);
+		}
+
+		if (isSSEAttached()) {
+			patchReactState(Map.of(ITEMS, itemList));
+		} else {
+			getReactState().put(ITEMS, itemList);
+		}
+	}
+
+	/**
+	 * Finds a sidebar item by ID, searching recursively into groups.
+	 *
+	 * @param itemId
+	 *        The item ID to search for.
+	 * @return The item, or {@code null} if not found.
+	 */
+	public SidebarItem findItem(String itemId) {
+		return findItemRecursive(itemId, _items);
+	}
+
+	private static SidebarItem findItemRecursive(String itemId, List<SidebarItem> items) {
+		for (SidebarItem item : items) {
+			if (item.getId().equals(itemId)) {
+				return item;
+			}
+			if (item instanceof GroupItem) {
+				SidebarItem found = findItemRecursive(itemId, ((GroupItem) item).getChildren());
+				if (found != null) {
+					return found;
+				}
+			}
+		}
+		return null;
+	}
+
 	private ReactControl getOrCreateContent(String itemId) {
 		ReactControl cached = _contentCache.get(itemId);
 		if (cached != null) {

@@ -131,7 +131,16 @@ public class DemoReactSidebarComponent extends LayoutComponent {
 	private ReactControl createNotifications() {
 		List<ReactControl> buttons = new ArrayList<>();
 		buttons.add(new ReactButtonControl("Mark All Read", (context) -> {
+			_sidebarControl.updateBadge("notifications", null);
 			InfoService.showInfo(ResKey.text("All notifications marked as read!"));
+			return HandlerResult.DEFAULT_RESULT;
+		}));
+		buttons.add(new ReactButtonControl("Add Notification", (context) -> {
+			NavigationItem navItem = (NavigationItem) _sidebarControl.findItem("notifications");
+			String current = navItem != null ? navItem.getBadge() : null;
+			int count = current != null ? Integer.parseInt(current) : 0;
+			_sidebarControl.updateBadge("notifications", String.valueOf(count + 1));
+			InfoService.showInfo(ResKey.text("Notification added!"));
 			return HandlerResult.DEFAULT_RESULT;
 		}));
 		return new ReactFieldListControl("Notifications", buttons);

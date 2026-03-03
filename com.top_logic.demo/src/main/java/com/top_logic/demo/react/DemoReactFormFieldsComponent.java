@@ -22,10 +22,12 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.react.ReactControl;
+import com.top_logic.layout.react.control.ReactButtonControl;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.layout.ReactFormGroupControl;
 import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * Demo {@link LayoutComponent} that showcases the React form layout system.
@@ -95,8 +97,11 @@ public class DemoReactFormFieldsComponent extends LayoutComponent {
 		ReactFormFieldChromeControl activeField = new ReactFormFieldChromeControl(
 			"Active", false, false, null, null, null, false, true, activeInput);
 
+		ReactButtonControl editButton = new ReactButtonControl("Edit", c -> HandlerResult.DEFAULT_RESULT);
+		ReactButtonControl resetButton = new ReactButtonControl("Reset", c -> HandlerResult.DEFAULT_RESULT);
+
 		ReactFormGroupControl personalGroup = new ReactFormGroupControl(
-			"Personal Information", true, false, "subtle", true, List.of(),
+			"Personal Information", true, false, "subtle", true, List.of(editButton, resetButton),
 			List.of(nameField, emailField, phoneField, dobField, bioField, activeField));
 
 		// -- Preferences group (outlined border, not collapsible) --
@@ -120,8 +125,10 @@ public class DemoReactFormFieldsComponent extends LayoutComponent {
 		ReactFormFieldChromeControl themeField = new ReactFormFieldChromeControl(
 			"Theme", false, false, null, null, null, false, true, themeInput);
 
+		ReactButtonControl addPrefButton = new ReactButtonControl("Add", c -> HandlerResult.DEFAULT_RESULT);
+
 		ReactFormGroupControl prefsGroup = new ReactFormGroupControl(
-			"Preferences", true, false, "outlined", true, List.of(),
+			"Preferences", true, false, "outlined", true, List.of(addPrefButton),
 			List.of(langField, notifField, themeField));
 
 		// -- Top-level form layout: 3 columns, auto label position --

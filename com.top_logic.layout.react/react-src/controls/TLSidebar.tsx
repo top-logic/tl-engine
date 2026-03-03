@@ -90,12 +90,15 @@ const SidebarCommandItem: React.FC<{
 const SidebarHeaderItem: React.FC<{
   item: HeaderItemInfo;
   collapsed: boolean;
-}> = ({ item, collapsed }) => (
-  <div className="tlSidebar__headerItem" title={collapsed ? item.label : undefined}>
-    <SidebarIcon icon={item.icon} />
-    {!collapsed && <span className="tlSidebar__label">{item.label}</span>}
-  </div>
-);
+}> = ({ item, collapsed }) => {
+  if (collapsed && !item.icon) return null;
+  return (
+    <div className="tlSidebar__headerItem" title={collapsed ? item.label : undefined}>
+      <SidebarIcon icon={item.icon} />
+      {!collapsed && <span className="tlSidebar__label">{item.label}</span>}
+    </div>
+  );
+};
 
 const SidebarSeparator: React.FC = () => (
   <hr className="tlSidebar__separator" />

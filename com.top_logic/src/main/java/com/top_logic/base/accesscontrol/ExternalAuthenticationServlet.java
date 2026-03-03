@@ -16,13 +16,17 @@ import jakarta.servlet.http.HttpSession;
 import com.top_logic.base.accesscontrol.Login.InMaintenanceModeException;
 import com.top_logic.base.accesscontrol.Login.LoginDeniedException;
 import com.top_logic.base.accesscontrol.Login.LoginFailedException;
+import com.top_logic.basic.DebugHelper;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.SessionContext;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.util.StopWatch;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.util.DispatchException;
+import com.top_logic.util.DeferredBootUtil;
+import com.top_logic.util.NoContextServlet;
 import com.top_logic.util.Resources;
 
 /**
@@ -30,7 +34,7 @@ import com.top_logic.util.Resources;
  * 
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
-public abstract class ExternalAuthenticationServlet extends LoginPageServlet {
+public abstract class ExternalAuthenticationServlet extends NoContextServlet {
 
 	/**
 	 * This exception can be thrown in certain methods (subclass hooks), to indicate that the user
@@ -94,16 +98,45 @@ public abstract class ExternalAuthenticationServlet extends LoginPageServlet {
 		reuseSession = cfg.getReuseSession();
 	}
 
+	/**
+	 * {@link #doGet(HttpServletRequest, HttpServletResponse)} is just forwarded to
+	 * {@link #doPost(HttpServletRequest, HttpServletResponse)}.
+	 */
 	@Override
-	protected final synchronized void checkRequest(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException, DispatchException {
+	public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		this.doPost(request, response);
+	}
+
+	/**
+	 * {@link #checkRequest(HttpServletRequest, HttpServletResponse)} and care for the Environment.
+	 */
+	@Override
+	public void doPost(final HttpServletRequest request, final HttpServletResponse response)
+			throws IOException, ServletException {
+		/* interpret content as UTF-8, independent of the default encoding of the container. The
+		 * login.jsp delivers the content in UTF-8, so the content is expected to be in UTF-8. */
+		request.setCharacterEncoding(StringServices.UTF8);
+
+		if (DeferredBootUtil.redirectOnPendingBoot(request, response)) {
+			return;
+		}
+
+		StopWatch watch = StopWatch.createStartedWatch();
+
+		checkRequest(request, response);
+
+		DebugHelper.logTiming(request, "Login user", watch, 100, ExternalAuthenticationServlet.class);
+	}
+
+	private final synchronized void checkRequest(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
 		try {
 			internalCheckRequest(request, response);
 		} catch (BreakCheckRequestException exception) {
 			Logger.debug("Breaking 'checkRequest(...)'.", ExternalAuthenticationServlet.class);
 		} catch (ForwardRequiredException exception) {
 			Logger.debug("Forwarding user to: " + exception.getTarget(), ExternalAuthenticationServlet.class);
-			forwardPage(exception.getTarget(), request, response);
+			forwardToPage(exception.getTarget(), request, response);
 		} catch (InMaintenanceModeException exception) {
 			String userName = exception.getPerson() == null ? "null" : getLoginName(exception.getPerson());
 			String message = "User " + userName + " tried to login while the system was in maintenance mode.";
@@ -142,7 +175,7 @@ public abstract class ExternalAuthenticationServlet extends LoginPageServlet {
 			if (existingSession != null) {
 				String message = "Reusing an existing session for user '" + credentials.getUsername() + "'.";
 				Logger.debug(message, ExternalAuthenticationServlet.class);
-				forwardToStartPage(request, response);
+				redirectToStartPage(request, response);
 				return;
 			} else {
 				String message = "No existing session found for user '" + credentials.getUsername()
@@ -151,7 +184,7 @@ public abstract class ExternalAuthenticationServlet extends LoginPageServlet {
 			}
 		}
 		loginUser(credentials.getPerson(), request, response);
-		forwardToStartPage(request, response);
+		redirectToStartPage(request, response);
 	}
 
 	protected boolean isExtAuthEnabled() {
@@ -161,8 +194,9 @@ public abstract class ExternalAuthenticationServlet extends LoginPageServlet {
 	/**
 	 * Forwards the configured login failed page for SSO logins
 	 */
-	protected void forwardToSSOLoginFailed(HttpServletRequest req, HttpServletResponse res) {
-		forwardToTarget(ApplicationPages.getInstance().getLoginRetrySSOPage(), req, res);
+	protected void forwardToSSOLoginFailed(HttpServletRequest req, HttpServletResponse res)
+			throws IOException, ServletException {
+		forwardToPage(ApplicationPages.getInstance().getLoginRetrySSOPage(), req, res);
 	}
 
 	/**

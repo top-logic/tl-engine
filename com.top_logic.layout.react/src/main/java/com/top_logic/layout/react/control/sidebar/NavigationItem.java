@@ -24,7 +24,7 @@ public class NavigationItem extends SidebarItem {
 
 	private final Supplier<ReactControl> _contentFactory;
 
-	private final String _badge;
+	private String _badge;
 
 	/**
 	 * Creates a new {@link NavigationItem} without a badge.
@@ -90,6 +90,16 @@ public class NavigationItem extends SidebarItem {
 	 */
 	public String getBadge() {
 		return _badge;
+	}
+
+	/**
+	 * Sets the badge text.
+	 *
+	 * @param badge
+	 *        Badge text (e.g. "5"), or {@code null} to remove the badge.
+	 */
+	public void setBadge(String badge) {
+		_badge = badge;
 	}
 
 	@Override

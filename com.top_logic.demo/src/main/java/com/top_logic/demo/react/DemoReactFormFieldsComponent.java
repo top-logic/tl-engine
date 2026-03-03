@@ -24,8 +24,11 @@ import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.react.control.ReactButtonControl;
-import com.top_logic.layout.react.control.form.ReactFormFieldControl;
+import com.top_logic.layout.react.control.form.ReactCheckboxControl;
+import com.top_logic.layout.react.control.form.ReactDatePickerControl;
+import com.top_logic.layout.react.control.form.ReactNumberInputControl;
 import com.top_logic.layout.react.control.form.ReactSelectFormFieldControl;
+import com.top_logic.layout.react.control.form.ReactTextInputControl;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.layout.ReactFormGroupControl;
 import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
@@ -76,33 +79,33 @@ public class DemoReactFormFieldsComponent extends LayoutComponent {
 		// -- Personal Information group (collapsible, subtle border, full line) --
 
 		FormField nameField = FormFactory.newStringField("name", "John Doe", false);
-		ReactFormFieldControl nameInput = new ReactFormFieldControl(nameField, "TLTextInput");
+		ReactTextInputControl nameInput = new ReactTextInputControl(nameField);
 		ReactFormFieldChromeControl nameChrome = new ReactFormFieldChromeControl(
 			"Full Name", true, false, null, "Enter your full legal name", null, false, true, nameInput);
 
 		FormField emailField = FormFactory.newStringField("email", "john@example.com", false);
-		ReactFormFieldControl emailInput = new ReactFormFieldControl(emailField, "TLTextInput");
+		ReactTextInputControl emailInput = new ReactTextInputControl(emailField);
 		ReactFormFieldChromeControl emailChrome = new ReactFormFieldChromeControl(
 			"Email", true, true, null, null, null, false, true, emailInput);
 
 		FormField phoneField = FormFactory.newStringField("phone", "", false);
-		ReactFormFieldControl phoneInput = new ReactFormFieldControl(phoneField, "TLTextInput");
+		ReactTextInputControl phoneInput = new ReactTextInputControl(phoneField);
 		ReactFormFieldChromeControl phoneChrome = new ReactFormFieldChromeControl(
 			"Phone", false, false, "Please enter a valid phone number", null, null, false, true, phoneInput);
 
 		FormField dobField = FormFactory.newStringField("dob", "1990-06-15", false);
-		ReactFormFieldControl dobInput = new ReactFormFieldControl(dobField, "TLDatePicker");
+		ReactDatePickerControl dobInput = new ReactDatePickerControl(dobField);
 		ReactFormFieldChromeControl dobChrome = new ReactFormFieldChromeControl(
 			"Date of Birth", false, false, null, null, null, false, true, dobInput);
 
 		FormField bioField = FormFactory.newStringField("bio", "Software developer with 10 years experience...", false);
-		ReactFormFieldControl bioInput = new ReactFormFieldControl(bioField, "TLTextInput");
+		ReactTextInputControl bioInput = new ReactTextInputControl(bioField);
 		ReactFormFieldChromeControl bioChrome = new ReactFormFieldChromeControl(
 			"Biography", false, false, null, "A short description of yourself",
 			"top", true, true, bioInput);
 
 		FormField activeField = FormFactory.newBooleanField("active", Boolean.TRUE, false);
-		ReactFormFieldControl activeInput = new ReactFormFieldControl(activeField, "TLCheckbox");
+		ReactCheckboxControl activeInput = new ReactCheckboxControl(activeField);
 		ReactFormFieldChromeControl activeChrome = new ReactFormFieldChromeControl(
 			"Active", false, false, null, null, null, false, true, activeInput);
 
@@ -126,7 +129,7 @@ public class DemoReactFormFieldsComponent extends LayoutComponent {
 			"Language", true, false, null, "Select your preferred language", null, false, true, langInput);
 
 		FormField notifField = FormFactory.newIntField("notificationLimit", Integer.valueOf(5), false);
-		ReactFormFieldControl notifInput = new ReactFormFieldControl(notifField, "TLNumberInput");
+		ReactNumberInputControl notifInput = new ReactNumberInputControl(notifField, 0);
 		ReactFormFieldChromeControl notifChrome = new ReactFormFieldChromeControl(
 			"Notification Limit", false, false, null, "Maximum notifications per day", null, false, true, notifInput);
 

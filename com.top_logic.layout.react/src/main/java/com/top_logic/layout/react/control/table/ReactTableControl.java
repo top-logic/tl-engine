@@ -51,6 +51,10 @@ public class ReactTableControl extends ReactControl {
 
 	private static final String SELECTION_MODE = "selectionMode";
 
+	private static final String SELECTION_FORCED = "selectionForced";
+
+	private static final String SELECTED_COUNT = "selectedCount";
+
 	// -- Configuration --
 
 	/** Number of rows to prefetch above and below the visible area. */
@@ -61,7 +65,8 @@ public class ReactTableControl extends ReactControl {
 	private static final Map<String, ControlCommand> COMMANDS = createCommandMap(
 		new ScrollCommand(),
 		new SortCommand(),
-		new SelectCommand());
+		new SelectCommand(),
+		new SelectAllCommand());
 
 	// -- Fields --
 
@@ -84,6 +89,11 @@ public class ReactTableControl extends ReactControl {
 	private Set<Object> _selectedRows = new HashSet<>();
 
 	private String _selectionMode = "single";
+
+	private boolean _selectionForced;
+
+	/** Index into {@code _displayedRows} of the last plain-clicked row, or -1. */
+	private int _selectionAnchor = -1;
 
 	/**
 	 * Cache of cell controls for currently visible rows. Keyed by row object, then column name.
@@ -119,11 +129,19 @@ public class ReactTableControl extends ReactControl {
 	 * Sets the selection mode.
 	 *
 	 * @param mode
-	 *        One of {@code "single"}, {@code "multi"}, {@code "range"}.
+	 *        One of {@code "single"}, {@code "multi"}.
 	 */
 	public void setSelectionMode(String mode) {
 		_selectionMode = mode;
 		putState(SELECTION_MODE, mode);
+	}
+
+	/**
+	 * Sets whether the selection is forced (at least one row must remain selected).
+	 */
+	public void setSelectionForced(boolean forced) {
+		_selectionForced = forced;
+		putState(SELECTION_FORCED, Boolean.valueOf(forced));
 	}
 
 	/**
@@ -220,6 +238,7 @@ public class ReactTableControl extends ReactControl {
 
 		putState(VIEWPORT_START, Integer.valueOf(bufferedStart));
 		putState(ROWS, rowStates);
+		putState(SELECTED_COUNT, Integer.valueOf(_selectedRows.size()));
 	}
 
 	private Map<String, ReactControl> createCellControls(Object rowObject) {
@@ -340,20 +359,86 @@ public class ReactTableControl extends ReactControl {
 				return HandlerResult.DEFAULT_RESULT;
 			}
 
+			boolean ctrlKey = Boolean.TRUE.equals(arguments.get("ctrlKey"));
+			boolean shiftKey = Boolean.TRUE.equals(arguments.get("shiftKey"));
+
 			Object rowObject = table._displayedRows.get(rowIndex);
 
-			if ("single".equals(table._selectionMode)) {
-				table._selectedRows.clear();
-				table._selectedRows.add(rowObject);
-			} else {
-				if (table._selectedRows.contains(rowObject)) {
-					table._selectedRows.remove(rowObject);
+			if ("multi".equals(table._selectionMode)) {
+				if (shiftKey && table._selectionAnchor >= 0) {
+					// Range selection from anchor to clicked row.
+					int from = Math.min(table._selectionAnchor, rowIndex);
+					int to = Math.max(table._selectionAnchor, rowIndex);
+					if (!ctrlKey) {
+						// Plain shift: replace selection with range.
+						table._selectedRows.clear();
+					}
+					// Ctrl+shift: add range to existing selection.
+					for (int i = from; i <= to; i++) {
+						table._selectedRows.add(table._displayedRows.get(i));
+					}
+				} else if (ctrlKey) {
+					// Toggle individual row.
+					if (table._selectedRows.contains(rowObject)) {
+						if (!table._selectionForced || table._selectedRows.size() > 1) {
+							table._selectedRows.remove(rowObject);
+						}
+					} else {
+						table._selectedRows.add(rowObject);
+					}
+					table._selectionAnchor = rowIndex;
 				} else {
+					// Plain click: replace selection, set anchor.
+					table._selectedRows.clear();
+					table._selectedRows.add(rowObject);
+					table._selectionAnchor = rowIndex;
+				}
+			} else {
+				// Single mode.
+				if (ctrlKey && table._selectedRows.contains(rowObject) && !table._selectionForced) {
+					table._selectedRows.clear();
+				} else {
+					table._selectedRows.clear();
 					table._selectedRows.add(rowObject);
 				}
 			}
 
-			// Update selection state in the current viewport rows.
+			table.updateViewport(table._viewportStart, table._viewportCount);
+			return HandlerResult.DEFAULT_RESULT;
+		}
+	}
+
+	/**
+	 * Handles select-all / deselect-all from the header checkbox.
+	 */
+	static class SelectAllCommand extends ControlCommand {
+
+		SelectAllCommand() {
+			super("selectAll");
+		}
+
+		@Override
+		public ResKey getI18NKey() {
+			return ResKey.legacy("react.table.selectAll");
+		}
+
+		@Override
+		protected HandlerResult execute(DisplayContext context, Control control,
+				Map<String, Object> arguments) {
+			ReactTableControl table = (ReactTableControl) control;
+			boolean selected = Boolean.TRUE.equals(arguments.get("selected"));
+
+			if (selected) {
+				table._selectedRows.addAll(table._displayedRows);
+			} else {
+				if (table._selectionForced && !table._displayedRows.isEmpty()) {
+					table._selectedRows.clear();
+					table._selectedRows.add(table._displayedRows.get(0));
+				} else {
+					table._selectedRows.clear();
+				}
+			}
+
 			table.updateViewport(table._viewportStart, table._viewportCount);
 			return HandlerResult.DEFAULT_RESULT;
 		}

@@ -19,6 +19,7 @@
 				<layout-reference resource="com.top_logic.demo/technical/reactDemo/fileUpload.layout.xml"/>
 				<layout-reference resource="com.top_logic.demo/technical/reactDemo/layout.layout.xml"/>
 				<layout-reference resource="com.top_logic.demo/technical/reactDemo/sidebar.layout.xml"/>
+				<layout-reference resource="com.top_logic.demo/technical/reactDemo/app.layout.xml"/>
 			</tabbar>
 		</components>
 	</arguments>

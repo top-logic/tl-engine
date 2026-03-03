@@ -1989,6 +1989,10 @@ button.tlMenu__item--disabled:hover {
 	grid-column: 1 / -1;
 }
 
+.tlFormGroup--collapsed > .tlFormGroup__body {
+	display: none;
+}
+
 .tlFormGroup--border-subtle {
 	border: 1px solid var(--border-subtle, #e0e0e0);
 	border-radius: var(--border-radius-02, 4px);

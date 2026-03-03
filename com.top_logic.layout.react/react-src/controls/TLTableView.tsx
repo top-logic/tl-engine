@@ -74,6 +74,9 @@ const TLTableView: React.FC<TLCellProps> = () => {
   }, [sendCommand]);
 
   const handleRowClick = React.useCallback((rowIndex: number, event: React.MouseEvent) => {
+    if (event.shiftKey) {
+      event.preventDefault();
+    }
     sendCommand('select', {
       rowIndex,
       ctrlKey: event.ctrlKey || event.metaKey,

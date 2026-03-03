@@ -107,6 +107,7 @@ public class DemoReactTableComponent extends LayoutComponent {
 
 		ReactTableControl table = new ReactTableControl(rows, columns, cellProvider);
 		table.setSelectionMode("multi");
+		table.setFrozenColumnCount(2);
 		return table;
 	}
 }

@@ -1609,3 +1609,80 @@ button.tlDialog__closeBtn:focus-visible {
 	border-top: 1px solid var(--border-subtle);
 	flex-shrink: 0;
 }
+
+/* --- TLDrawer -------------------------------------------------------------- */
+
+.tlDrawer {
+	position: fixed;
+	z-index: 9000;
+	background: var(--layer-01);
+	box-shadow: -2px 0 8px rgba(0, 0, 0, 0.15);
+	display: flex;
+	flex-direction: column;
+	transition: transform 0.25s ease;
+	font-family: var(--font-family);
+}
+
+.tlDrawer--left, .tlDrawer--right { top: 0; bottom: 0; }
+.tlDrawer--left   { left: 0;  transform: translateX(-100%); }
+.tlDrawer--right  { right: 0; transform: translateX(100%); }
+.tlDrawer--bottom { left: 0; right: 0; bottom: 0; transform: translateY(100%); }
+
+.tlDrawer--left.tlDrawer--open   { transform: translateX(0); }
+.tlDrawer--right.tlDrawer--open  { transform: translateX(0); }
+.tlDrawer--bottom.tlDrawer--open { transform: translateY(0); }
+
+.tlDrawer--narrow { width: 16rem; }
+.tlDrawer--medium { width: 24rem; }
+.tlDrawer--wide   { width: 36rem; }
+.tlDrawer--bottom.tlDrawer--narrow { width: auto; height: 16rem; }
+.tlDrawer--bottom.tlDrawer--medium { width: auto; height: 24rem; }
+.tlDrawer--bottom.tlDrawer--wide   { width: auto; height: 36rem; }
+
+.tlDrawer__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: var(--spacing-03) var(--spacing-04);
+	border-bottom: 1px solid var(--border-subtle);
+	flex-shrink: 0;
+}
+
+.tlDrawer__title {
+	font-weight: 600;
+	font-size: var(--heading-compact-02-font-size);
+	color: var(--text-primary);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.tlDrawer__closeBtn {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	width: 2rem;
+	height: 2rem;
+	border: none;
+	border-radius: var(--corner-radius);
+	background: transparent;
+	color: var(--text-secondary);
+	cursor: pointer;
+	padding: 0;
+}
+
+button.tlDrawer__closeBtn:hover {
+	background: var(--layer-hover);
+	color: var(--text-primary);
+}
+
+button.tlDrawer__closeBtn:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: -2px;
+}
+
+.tlDrawer__body {
+	flex: 1;
+	overflow-y: auto;
+	padding: var(--spacing-04);
+}

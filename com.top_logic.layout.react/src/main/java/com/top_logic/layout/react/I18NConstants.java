@@ -130,6 +130,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey REACT_DIALOG_CLOSE;
 
+	/**
+	 * @en Drawer closed.
+	 */
+	public static ResKey REACT_DRAWER_CLOSE;
+
 	// -- Sidebar client-side i18n keys --
 
 	/**
@@ -157,6 +162,14 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @de Schlie\u00dfen
 	 */
 	public static ResKey JS_DIALOG_CLOSE = ResKey.internalCreate("js.dialog.close");
+
+	// -- Drawer client-side i18n keys --
+
+	/**
+	 * @en Close
+	 * @de Schlie\u00dfen
+	 */
+	public static ResKey JS_DRAWER_CLOSE = ResKey.internalCreate("js.drawer.close");
 
 	// -- Client-side i18n keys (js.* prefix, names match keys used by React controls) --
 

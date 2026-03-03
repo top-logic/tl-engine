@@ -2040,6 +2040,12 @@ button.tlMenu__item--disabled:hover {
 	border-bottom: none;
 }
 
+.tlFormGroup--collapsed > .tlFormGroup__header {
+	padding-bottom: 0;
+	border-bottom: none;
+	margin-bottom: 0;
+}
+
 .tlFormGroup__title {
 	font-weight: 600;
 	font-size: var(--heading-compact-02-font-size, 0.875rem);

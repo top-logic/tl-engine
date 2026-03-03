@@ -1199,3 +1199,71 @@ button.tlSidebar__collapseBtn:focus-visible {
 	outline: 2px solid var(--focus);
 	outline-offset: -2px;
 }
+
+/* Group flyout (collapsed-mode popover) */
+.tlSidebar__group {
+	position: relative;
+}
+
+.tlSidebar__flyout {
+	position: absolute;
+	left: 100%;
+	top: 0;
+	z-index: 1000;
+	min-width: 12rem;
+	background: var(--layer-01);
+	border: 1px solid var(--border-subtle);
+	border-radius: var(--border-radius-02, 4px);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	padding: var(--spacing-02) 0;
+	overflow-y: auto;
+	max-height: 20rem;
+}
+
+.tlSidebar__flyoutHeader {
+	padding: var(--spacing-03) var(--spacing-04);
+	color: var(--text-primary);
+	font-size: var(--label-01-font-size);
+	font-weight: 600;
+	border-bottom: 1px solid var(--border-subtle);
+	margin-bottom: var(--spacing-02);
+}
+
+.tlSidebar__flyoutItem {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-03);
+	width: 100%;
+	padding: var(--spacing-03) var(--spacing-04);
+	border: none;
+	background: transparent;
+	color: var(--text-secondary);
+	font-size: var(--body-compact-01-font-size);
+	font-family: var(--font-family);
+	cursor: pointer;
+	text-align: left;
+}
+
+button.tlSidebar__flyoutItem:hover {
+	background: var(--layer-hover);
+	color: var(--text-primary);
+}
+
+button.tlSidebar__flyoutItem:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: -2px;
+}
+
+.tlSidebar__flyoutItem--active {
+	color: var(--text-primary);
+	font-weight: 600;
+}
+
+.tlSidebar__flyoutSectionHeader {
+	padding: var(--spacing-02) var(--spacing-04);
+	color: var(--text-primary);
+	font-size: var(--label-01-font-size);
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}

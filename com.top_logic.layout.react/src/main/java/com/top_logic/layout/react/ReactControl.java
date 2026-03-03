@@ -442,6 +442,10 @@ public class ReactControl extends AbstractVisibleControl {
 	protected void registerChildControl(ReactControl child) {
 		SSEUpdateQueue queue = _sseQueue;
 		if (queue != null && child._sseQueue == null) {
+			if (_frameScope != null) {
+				child._frameScope = _frameScope;
+				child.fetchID(_frameScope);
+			}
 			child._sseQueue = queue;
 			queue.registerControl(child);
 		}

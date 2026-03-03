@@ -15,22 +15,40 @@ import com.top_logic.layout.ResourceProvider;
 import com.top_logic.layout.basic.ControlCommand;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.ReactControl;
-import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.mig.html.layout.MainLayout;
-import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.tool.boundsec.commandhandlers.GotoHandler;
 
 /**
  * A cell control that displays a business object using a {@link ResourceProvider}.
  *
  * <p>
  * Resolves label, icon, CSS class, tooltip, and link availability from the provider and sends them
- * as flat state to the {@code TLResourceCell} React component. Supports goto navigation via a
- * server command.
+ * as flat state to the {@code TLResourceCell} React component.
+ * </p>
+ *
+ * <p>
+ * Navigation on click is handled by an external {@link GotoListener} set via
+ * {@link #setGotoListener(GotoListener)}. This keeps the control decoupled from the component
+ * layer.
  * </p>
  */
 public class ReactResourceCellControl extends ReactControl {
+
+	/**
+	 * Listener that is notified when the user clicks a linked resource cell.
+	 */
+	public interface GotoListener {
+
+		/**
+		 * Called when the user requests navigation to the given object.
+		 *
+		 * @param context
+		 *        The current display context.
+		 * @param target
+		 *        The business object to navigate to.
+		 * @return The handler result.
+		 */
+		HandlerResult handleGoto(DisplayContext context, Object target);
+	}
 
 	// -- State keys --
 
@@ -68,6 +86,8 @@ public class ReactResourceCellControl extends ReactControl {
 
 	private Object _rowObject;
 
+	private GotoListener _gotoListener;
+
 	/**
 	 * Creates a new {@link ReactResourceCellControl}.
 	 *
@@ -98,6 +118,16 @@ public class ReactResourceCellControl extends ReactControl {
 	 */
 	public ReactResourceCellControl(Object value, ResourceProvider provider) {
 		this(value, provider, true, true, true);
+	}
+
+	/**
+	 * Sets the listener that handles goto navigation when the user clicks a linked resource.
+	 *
+	 * @param listener
+	 *        The goto listener, or {@code null} to disable navigation.
+	 */
+	public void setGotoListener(GotoListener listener) {
+		_gotoListener = listener;
 	}
 
 	/**
@@ -154,7 +184,7 @@ public class ReactResourceCellControl extends ReactControl {
 	}
 
 	/**
-	 * Handles goto navigation when the user clicks the resource link.
+	 * Dispatches the goto click to the configured {@link GotoListener}.
 	 */
 	static class GotoCommand extends ControlCommand {
 
@@ -172,14 +202,11 @@ public class ReactResourceCellControl extends ReactControl {
 				Map<String, Object> arguments) {
 			ReactResourceCellControl cell = (ReactResourceCellControl) control;
 			Object target = cell._rowObject;
-			if (target == null) {
+			GotoListener listener = cell._gotoListener;
+			if (target == null || listener == null) {
 				return HandlerResult.DEFAULT_RESULT;
 			}
-
-			GotoHandler gotoHandler =
-				(GotoHandler) CommandHandlerFactory.getInstance().getHandler(GotoHandler.COMMAND);
-			LayoutComponent contextComponent = MainLayout.getComponent(context);
-			return gotoHandler.executeGoto(context, contextComponent, null, target);
+			return listener.handleGoto(context, target);
 		}
 	}
 }

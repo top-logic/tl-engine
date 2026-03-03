@@ -95,7 +95,7 @@ public class ReactFormFieldControl extends ReactControl
 	 * @param reactModule
 	 *        The React module identifier (e.g. "TLTextInput").
 	 */
-	public ReactFormFieldControl(FormField model, String reactModule) {
+	protected ReactFormFieldControl(FormField model, String reactModule) {
 		super(model, reactModule, COMMANDS);
 		initFieldState(model);
 	}

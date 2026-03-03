@@ -28,6 +28,7 @@ import com.top_logic.layout.react.control.layout.ReactCardControl;
 import com.top_logic.layout.react.control.layout.ReactGridControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.react.control.nav.ReactAppBarControl;
+import com.top_logic.layout.react.control.nav.ReactAppShellControl;
 import com.top_logic.layout.react.control.nav.ReactBottomBarControl;
 import com.top_logic.layout.react.control.nav.ReactBottomBarControl.BottomBarEntry;
 import com.top_logic.layout.react.control.nav.ReactBreadcrumbControl;
@@ -36,7 +37,6 @@ import com.top_logic.layout.react.control.overlay.ReactDialogControl;
 import com.top_logic.layout.react.control.overlay.ReactDrawerControl;
 import com.top_logic.layout.react.control.overlay.ReactMenuControl;
 import com.top_logic.layout.react.control.overlay.ReactMenuControl.MenuEntry;
-import com.top_logic.layout.react.control.overlay.ReactSnackbarControl;
 import com.top_logic.layout.react.control.sidebar.CommandItem;
 import com.top_logic.layout.react.control.sidebar.NavigationItem;
 import com.top_logic.layout.react.control.sidebar.ReactSidebarControl;
@@ -46,13 +46,13 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
- * Demo {@link LayoutComponent} showcasing all 10 new React controls in a "Task Manager" mini-app.
+ * Demo {@link LayoutComponent} showcasing all new React controls in a "Task Manager" mini-app.
  *
  * <p>
- * Composes {@link ReactAppBarControl}, {@link ReactBreadcrumbControl}, {@link ReactSidebarControl},
- * {@link ReactBottomBarControl}, {@link ReactDialogControl}, {@link ReactDrawerControl},
- * {@link ReactSnackbarControl}, {@link ReactMenuControl}, {@link ReactGridControl},
- * {@link ReactCardControl}, and {@link ReactStackControl} into a realistic application layout.
+ * Uses {@link ReactAppShellControl} as the single root control with header (app bar + breadcrumb),
+ * content (sidebar with pages), and footer (bottom bar). The built-in snackbar provides
+ * notifications. Overlay controls (dialog, drawer, menu) are owned by the content components that
+ * trigger them.
  * </p>
  */
 public class DemoReactAppComponent extends LayoutComponent {
@@ -70,7 +70,7 @@ public class DemoReactAppComponent extends LayoutComponent {
 
 	private static final String PAGE_SETTINGS = "settings";
 
-	private ReactAppBarControl _appBar;
+	private ReactAppShellControl _appShell;
 
 	private ReactBreadcrumbControl _breadcrumb;
 
@@ -82,13 +82,9 @@ public class DemoReactAppComponent extends LayoutComponent {
 
 	private ReactDrawerControl _drawer;
 
-	private ReactSnackbarControl _snackbar;
-
 	private ReactMenuControl _menu;
 
 	private ReactButtonControl _moreButton;
-
-	private boolean _initialized;
 
 	/**
 	 * Creates a new {@link DemoReactAppComponent}.
@@ -102,51 +98,19 @@ public class DemoReactAppComponent extends LayoutComponent {
 			TagWriter out) throws IOException, ServletException {
 		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
 
-		if (!_initialized) {
+		if (_appShell == null) {
 			initControls();
-			_initialized = true;
 		}
 
-		// Root flex column (full height).
-		out.beginBeginTag("div");
-		out.writeAttribute("style", "display:flex;flex-direction:column;height:100%");
-		out.endBeginTag();
-
-		_appBar.write(displayContext, out);
-
-		out.beginBeginTag("div");
-		out.writeAttribute("style", "padding:0.25rem 1rem");
-		out.endBeginTag();
-		_breadcrumb.write(displayContext, out);
-		out.endTag("div");
-
-		out.beginBeginTag("div");
-		out.writeAttribute("style", "flex:1;min-height:0;overflow:hidden");
-		out.endBeginTag();
-		_sidebar.write(displayContext, out);
-		out.endTag("div");
-
-		_bottomBar.write(displayContext, out);
-
-		out.endTag("div");
-
-		// Overlay portals (fixed/absolute positioned).
-		_dialog.write(displayContext, out);
-		_drawer.write(displayContext, out);
-		_snackbar.write(displayContext, out);
-		_menu.write(displayContext, out);
+		_appShell.write(displayContext, out);
 	}
 
 	private void initControls() {
-		// Snackbar (shared for all toast notifications).
-		_snackbar = new ReactSnackbarControl("", "success", () -> { /* no-op on dismiss */ });
-
-		// Drawer (reusable slide-in panel).
-		_drawer = new ReactDrawerControl("Details", "right", "medium", () -> { /* no-op on close */ });
+		// Overlay controls (created first so content factories can reference them).
+		_drawer = new ReactDrawerControl("Details", "right", "medium", () -> { /* no-op */ });
 		_drawer.setChild(createDrawerContent());
 
-		// Dialog (New Task modal).
-		_dialog = new ReactDialogControl("New Task", () -> { /* no-op on close */ });
+		_dialog = new ReactDialogControl("New Task", () -> { /* no-op */ });
 		_dialog.setChild(createDialogContent());
 		_dialog.setActions(List.of(
 			new ReactButtonControl("Cancel", (context) -> {
@@ -155,20 +119,19 @@ public class DemoReactAppComponent extends LayoutComponent {
 			}),
 			new ReactButtonControl("Create", (context) -> {
 				_dialog.close();
-				_snackbar.show("Task created!");
+				_appShell.showSnackbar("Task created!");
 				return HandlerResult.DEFAULT_RESULT;
 			})
 		));
 
-		// Menu (AppBar overflow).
 		List<MenuEntry> menuItems = List.of(
 			MenuEntry.item("refresh", "Refresh", "bi bi-arrow-clockwise"),
 			MenuEntry.separator(),
 			MenuEntry.item("about", "About", "bi bi-info-circle")
 		);
-		_menu = new ReactMenuControl("_", menuItems, this::handleMenuSelect, () -> { /* no-op on close */ });
+		_menu = new ReactMenuControl("_", menuItems, this::handleMenuSelect, () -> { /* no-op */ });
 
-		// AppBar action buttons.
+		// Header: AppBar + Breadcrumb in a compact stack, plus invisible overlays (menu, drawer).
 		ReactButtonControl infoButton = new ReactButtonControl("Info", (context) -> {
 			_drawer.setTitle("App Info");
 			_drawer.open();
@@ -179,24 +142,27 @@ public class DemoReactAppComponent extends LayoutComponent {
 			_menu.open();
 			return HandlerResult.DEFAULT_RESULT;
 		});
+		ReactAppBarControl appBar = new ReactAppBarControl("Task Manager", List.of(infoButton, _moreButton));
 
-		// AppBar.
-		_appBar = new ReactAppBarControl("Task Manager", List.of(infoButton, _moreButton));
-
-		// Breadcrumb.
 		_breadcrumb = new ReactBreadcrumbControl(
 			breadcrumbItems(PAGE_DASHBOARD), this::handleBreadcrumbNavigate);
 
-		// Sidebar.
+		ReactControl header = new ReactStackControl("column", "compact", "stretch", false,
+			List.of(appBar, _breadcrumb, _menu, _drawer));
+
+		// Content: Sidebar.
 		_sidebar = createSidebar();
 
-		// BottomBar.
+		// Footer: BottomBar.
 		List<BottomBarEntry> bottomItems = List.of(
 			new BottomBarEntry(PAGE_DASHBOARD, "Dashboard", "bi bi-speedometer2"),
 			new BottomBarEntry(PAGE_MESSAGES, "Messages", "bi bi-chat-dots"),
 			new BottomBarEntry(PAGE_SETTINGS, "Settings", "bi bi-gear")
 		);
 		_bottomBar = new ReactBottomBarControl(bottomItems, PAGE_DASHBOARD, this::handleBottomBarSelect);
+
+		// Assemble the shell.
+		_appShell = new ReactAppShellControl(header, _sidebar, _bottomBar);
 	}
 
 	// -- Sidebar --
@@ -232,7 +198,7 @@ public class DemoReactAppComponent extends LayoutComponent {
 	private ReactControl createDashboardPage() {
 		// Card 1: Active Tasks (elevated) with counter and "Complete" header action.
 		ReactButtonControl completeBtn = new ReactButtonControl("Complete", (context) -> {
-			_snackbar.show("Task completed!");
+			_appShell.showSnackbar("Task completed!");
 			return HandlerResult.DEFAULT_RESULT;
 		});
 		ReactCardControl activeTasksCard = new ReactCardControl(
@@ -252,7 +218,7 @@ public class DemoReactAppComponent extends LayoutComponent {
 		ReactCardControl teamNotesCard = new ReactCardControl("Team Notes",
 			new ReactFieldListControl(List.of(detailsBtn)));
 
-		// Card 4: Quick Add (outlined) with "+ New Task" button.
+		// Card 4: Quick Add (outlined) with "+ New Task" button that opens the dialog.
 		ReactButtonControl newTaskBtn = new ReactButtonControl("+ New Task", (context) -> {
 			_dialog.open();
 			return HandlerResult.DEFAULT_RESULT;
@@ -260,15 +226,18 @@ public class DemoReactAppComponent extends LayoutComponent {
 		ReactCardControl quickAddCard = new ReactCardControl("Quick Add",
 			new ReactFieldListControl(List.of(newTaskBtn)));
 
-		// Dashboard grid.
-		return new ReactGridControl("16rem", "default",
-			List.of(activeTasksCard, inReviewCard, teamNotesCard, quickAddCard));
+		// Dashboard grid with the dialog as an invisible overlay child.
+		return new ReactStackControl(List.of(
+			new ReactGridControl("16rem", "default",
+				List.of(activeTasksCard, inReviewCard, teamNotesCard, quickAddCard)),
+			_dialog
+		));
 	}
 
 	private ReactControl createMessagesPage() {
 		// Card 1: Feature Request.
 		ReactButtonControl archiveBtn1 = new ReactButtonControl("Archive", (context) -> {
-			_snackbar.show("Feature request archived!");
+			_appShell.showSnackbar("Feature request archived!");
 			return HandlerResult.DEFAULT_RESULT;
 		});
 		ReactCardControl featureCard = new ReactCardControl("Feature Request",
@@ -276,7 +245,7 @@ public class DemoReactAppComponent extends LayoutComponent {
 
 		// Card 2: Bug Report #42.
 		ReactButtonControl archiveBtn2 = new ReactButtonControl("Archive", (context) -> {
-			_snackbar.show("Bug report archived!");
+			_appShell.showSnackbar("Bug report archived!");
 			return HandlerResult.DEFAULT_RESULT;
 		});
 		ReactCardControl bugCard = new ReactCardControl("Bug Report #42",
@@ -288,15 +257,15 @@ public class DemoReactAppComponent extends LayoutComponent {
 	private ReactControl createSettingsPage() {
 		List<ReactControl> buttons = new ArrayList<>();
 		buttons.add(new ReactButtonControl("Clear Cache", (context) -> {
-			_snackbar.show("Cache cleared!");
+			_appShell.showSnackbar("Cache cleared!");
 			return HandlerResult.DEFAULT_RESULT;
 		}));
 		buttons.add(new ReactButtonControl("Reset Preferences", (context) -> {
-			_snackbar.show("Preferences reset!");
+			_appShell.showSnackbar("Preferences reset!");
 			return HandlerResult.DEFAULT_RESULT;
 		}));
 		buttons.add(new ReactButtonControl("Export Data", (context) -> {
-			_snackbar.show("Data exported!");
+			_appShell.showSnackbar("Data exported!");
 			return HandlerResult.DEFAULT_RESULT;
 		}));
 		return new ReactFieldListControl("Settings", buttons);
@@ -332,7 +301,7 @@ public class DemoReactAppComponent extends LayoutComponent {
 	private void handleMenuSelect(String itemId) {
 		switch (itemId) {
 			case "refresh":
-				_snackbar.show("Refreshed!");
+				_appShell.showSnackbar("Refreshed!");
 				break;
 			case "about":
 				_drawer.setTitle("About Task Manager");
@@ -345,13 +314,13 @@ public class DemoReactAppComponent extends LayoutComponent {
 
 	private void handleBottomBarSelect(String itemId) {
 		_sidebar.selectItem(itemId);
-		_snackbar.show("Switched to " + labelForPage(itemId));
+		_appShell.showSnackbar("Switched to " + labelForPage(itemId));
 	}
 
 	private void handleBreadcrumbNavigate(String itemId) {
 		if ("home".equals(itemId)) {
 			_sidebar.selectItem(PAGE_DASHBOARD);
-			_snackbar.show("Navigated to Home");
+			_appShell.showSnackbar("Navigated to Home");
 		}
 	}
 

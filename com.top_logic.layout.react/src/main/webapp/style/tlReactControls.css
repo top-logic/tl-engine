@@ -1747,6 +1747,24 @@ button.tlDrawer__closeBtn:focus-visible {
 	to   { opacity: 0; }
 }
 
+/* --- TLAppShell ------------------------------------------------------------ */
+
+.tlAppShell {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+}
+
+.tlAppShell__content {
+	flex: 1;
+	min-height: 0;
+	overflow: hidden;
+}
+
+.tlAppShell .tlBreadcrumb {
+	padding: var(--spacing-02) var(--spacing-05);
+}
+
 /* --- TLMenu ---------------------------------------------------------------- */
 
 .tlMenu {

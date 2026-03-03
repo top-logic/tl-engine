@@ -33,6 +33,7 @@ import TLDeckPane from './controls/TLDeckPane';
 import TLSidebar from './controls/TLSidebar';
 import TLStack from './controls/TLStack';
 import TLGrid from './controls/TLGrid';
+import TLCard from './controls/TLCard';
 
 register('TLButton', TLButton);
 register('TLToggleButton', TLToggleButton);
@@ -58,3 +59,4 @@ register('TLDeckPane', TLDeckPane);
 register('TLSidebar', TLSidebar);
 register('TLStack', TLStack);
 register('TLGrid', TLGrid);
+register('TLCard', TLCard);

@@ -10,7 +10,7 @@ import type { TLCellProps } from 'tl-react-bridge';
  * - gap: "compact" | "default" | "loose"  (default: "default")
  * - children: ChildDescriptor[]
  */
-const TLGrid: React.FC<TLCellProps> = () => {
+const TLGrid: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
 
   const columns = state.columns as number | null;
@@ -26,7 +26,7 @@ const TLGrid: React.FC<TLCellProps> = () => {
   }
 
   return (
-    <div className={`tlGrid tlGrid--gap-${gap}`} style={style}>
+    <div id={controlId} className={`tlGrid tlGrid--gap-${gap}`} style={style}>
       {children.map((child, i) => (
         <TLChild key={i} control={child} />
       ))}

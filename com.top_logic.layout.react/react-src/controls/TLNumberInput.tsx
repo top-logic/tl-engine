@@ -6,7 +6,7 @@ const { useCallback } = React;
 /**
  * A number input field rendered via React.
  */
-const TLNumberInput: React.FC<TLCellProps> = ({ state, config }) => {
+const TLNumberInput: React.FC<TLCellProps> = ({ controlId, state, config }) => {
   const [value, setValue] = useTLFieldValue();
 
   const handleChange = useCallback(
@@ -22,7 +22,7 @@ const TLNumberInput: React.FC<TLCellProps> = ({ state, config }) => {
 
   if (state.editable === false) {
     return (
-      <span className="tlReactNumberInput tlReactNumberInput--immutable">
+      <span id={controlId} className="tlReactNumberInput tlReactNumberInput--immutable">
         {value != null ? String(value) : ''}
       </span>
     );
@@ -31,6 +31,7 @@ const TLNumberInput: React.FC<TLCellProps> = ({ state, config }) => {
   return (
     <input
       type="number"
+      id={controlId}
       value={value != null ? String(value) : ''}
       onChange={handleChange}
       step={step}

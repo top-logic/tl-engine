@@ -11,7 +11,7 @@ const I18N_KEYS = {
 
 type LocalStatus = 'idle' | 'recording' | 'uploading';
 
-const TLAudioRecorder: React.FC<TLCellProps> = () => {
+const TLAudioRecorder: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const upload = useTLUpload();
 
@@ -106,7 +106,7 @@ const TLAudioRecorder: React.FC<TLCellProps> = () => {
   if (effectiveStatus === 'uploading') buttonClasses.push('tlAudioRecorder__button--uploading');
 
   return (
-    <div className="tlAudioRecorder">
+    <div id={controlId} className="tlAudioRecorder">
       <button
         type="button"
         className={buttonClasses.join(' ')}

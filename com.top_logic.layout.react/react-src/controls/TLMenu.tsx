@@ -19,7 +19,7 @@ interface MenuItem {
  * - anchorId: string
  * - items: MenuItem[]
  */
-const TLMenu: React.FC<TLCellProps> = () => {
+const TLMenu: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
 
@@ -105,6 +105,7 @@ const TLMenu: React.FC<TLCellProps> = () => {
 
   return (
     <div
+      id={controlId}
       className="tlMenu"
       role="menu"
       ref={menuRef}

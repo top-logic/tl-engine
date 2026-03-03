@@ -20,7 +20,7 @@ interface ChildDescriptor {
  * - resizable: boolean
  * - children: ChildDescriptor[]
  */
-const TLSplitPanel: React.FC<TLCellProps> = () => {
+const TLSplitPanel: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
 
@@ -193,6 +193,7 @@ const TLSplitPanel: React.FC<TLCellProps> = () => {
   return (
     <div
       ref={containerRef}
+      id={controlId}
       className={`tlSplitPanel tlSplitPanel--${orientation}${allCollapsed ? ' tlSplitPanel--allCollapsed' : ''}`}
       style={{
         display: 'flex',

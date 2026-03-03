@@ -10,7 +10,7 @@ import type { TLCellProps } from 'tl-react-bridge';
  * - footer:   ChildDescriptor | null  (optional, fixed height)
  * - snackbar: ChildDescriptor         (built-in notification service)
  */
-const TLAppShell: React.FC<TLCellProps> = () => {
+const TLAppShell: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
 
   const header = state.header as unknown;
@@ -19,7 +19,7 @@ const TLAppShell: React.FC<TLCellProps> = () => {
   const snackbar = state.snackbar as unknown;
 
   return (
-    <div className="tlAppShell">
+    <div id={controlId} className="tlAppShell">
       {header && (
         <div className="tlAppShell__header">
           <TLChild control={header} />

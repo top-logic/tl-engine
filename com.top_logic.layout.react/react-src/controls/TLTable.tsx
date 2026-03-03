@@ -18,7 +18,7 @@ const TLTable: React.FC<TLCellProps> = ({ controlId, state }) => {
   const rows = (state.rows as Record<string, unknown>[]) ?? [];
 
   return (
-    <table className="tlReactTable">
+    <table id={controlId} className="tlReactTable">
       <thead>
         <tr>
           {columns.map((col) => (

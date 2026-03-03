@@ -17,7 +17,7 @@ interface BottomBarItem {
  * - items: { id, label, icon, badge? }[]
  * - activeItemId: string
  */
-const TLBottomBar: React.FC<TLCellProps> = () => {
+const TLBottomBar: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
 
@@ -31,7 +31,7 @@ const TLBottomBar: React.FC<TLCellProps> = () => {
   }, [sendCommand, activeItemId]);
 
   return (
-    <nav className="tlBottomBar" aria-label="Bottom navigation">
+    <nav id={controlId} className="tlBottomBar" aria-label="Bottom navigation">
       {items.map(item => {
         const isActive = item.id === activeItemId;
         return (

@@ -18,7 +18,7 @@ const I18N_KEYS = {
  * - actions: ChildDescriptor[]  (footer buttons)
  * - child: ChildDescriptor
  */
-const TLDialog: React.FC<TLCellProps> = () => {
+const TLDialog: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
   const i18n = useI18N(I18N_KEYS);
@@ -66,7 +66,7 @@ const TLDialog: React.FC<TLCellProps> = () => {
   const titleId = 'tlDialog-title';
 
   return (
-    <div className="tlDialog__backdrop" onClick={handleBackdropClick}>
+    <div id={controlId} className="tlDialog__backdrop" onClick={handleBackdropClick}>
       <div
         className={`tlDialog tlDialog--${size}`}
         role="dialog"

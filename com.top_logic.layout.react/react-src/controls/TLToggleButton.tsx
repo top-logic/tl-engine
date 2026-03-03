@@ -29,7 +29,7 @@ export interface TLToggleButtonProps {
  * <p>When composed inside another React component, the parent passes {@code command},
  * {@code label}, {@code active}, and {@code disabled} as props to customise behaviour.</p>
  */
-const TLToggleButton: React.FC<TLCellProps & TLToggleButtonProps> = ({ command, label, active, disabled }) => {
+const TLToggleButton: React.FC<TLCellProps & TLToggleButtonProps> = ({ controlId, command, label, active, disabled }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
 
@@ -45,6 +45,7 @@ const TLToggleButton: React.FC<TLCellProps & TLToggleButtonProps> = ({ command, 
   return (
     <button
       type="button"
+      id={controlId}
       onClick={handleClick}
       disabled={resolvedDisabled}
       className={'tlReactButton' + (resolvedActive ? ' tlReactButtonActive' : '')}

@@ -5,7 +5,7 @@ const I18N_KEYS = {
   'js.photoViewer.alt': 'Captured photo',
 };
 
-const TLPhotoViewer: React.FC<TLCellProps> = () => {
+const TLPhotoViewer: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const dataUrl = useTLDataUrl();
 
@@ -73,14 +73,14 @@ const TLPhotoViewer: React.FC<TLCellProps> = () => {
 
   if (!hasPhoto || !imageUrl) {
     return (
-      <div className="tlPhotoViewer">
+      <div id={controlId} className="tlPhotoViewer">
         <div className="tlPhotoViewer__placeholder" />
       </div>
     );
   }
 
   return (
-    <div className="tlPhotoViewer">
+    <div id={controlId} className="tlPhotoViewer">
       <img
         className="tlPhotoViewer__image"
         src={imageUrl}

@@ -11,7 +11,7 @@ import type { TLCellProps } from 'tl-react-bridge';
  * - wrap: boolean  (default: false)
  * - children: ChildDescriptor[]
  */
-const TLStack: React.FC<TLCellProps> = () => {
+const TLStack: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
 
   const direction = (state.direction as string) ?? 'column';
@@ -29,7 +29,7 @@ const TLStack: React.FC<TLCellProps> = () => {
   ].filter(Boolean).join(' ');
 
   return (
-    <div className={className}>
+    <div id={controlId} className={className}>
       {children.map((child, i) => (
         <TLChild key={i} control={child} />
       ))}

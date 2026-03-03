@@ -17,7 +17,7 @@ const I18N_KEYS = {
  * - title: string | null  (null = no header)
  * - child: ChildDescriptor
  */
-const TLDrawer: React.FC<TLCellProps> = () => {
+const TLDrawer: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
   const i18n = useI18N(I18N_KEYS);
@@ -52,7 +52,7 @@ const TLDrawer: React.FC<TLCellProps> = () => {
   ].filter(Boolean).join(' ');
 
   return (
-    <aside className={className} aria-hidden={!open}>
+    <aside id={controlId} className={className} aria-hidden={!open}>
       {title !== null && (
         <div className="tlDrawer__header">
           <span className="tlDrawer__title">{title}</span>

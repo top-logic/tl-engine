@@ -6,7 +6,7 @@ const { useCallback } = React;
 /**
  * A text input field rendered via React.
  */
-const TLTextInput: React.FC<TLCellProps> = ({ state }) => {
+const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
   const [value, setValue] = useTLFieldValue();
 
   const handleChange = useCallback(
@@ -18,7 +18,7 @@ const TLTextInput: React.FC<TLCellProps> = ({ state }) => {
 
   if (state.editable === false) {
     return (
-      <span className="tlReactTextInput tlReactTextInput--immutable">
+      <span id={controlId} className="tlReactTextInput tlReactTextInput--immutable">
         {(value as string) ?? ''}
       </span>
     );
@@ -27,6 +27,7 @@ const TLTextInput: React.FC<TLCellProps> = ({ state }) => {
   return (
     <input
       type="text"
+      id={controlId}
       value={(value as string) ?? ''}
       onChange={handleChange}
       disabled={state.disabled === true}

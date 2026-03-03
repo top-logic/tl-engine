@@ -8,7 +8,7 @@ interface TabInfo {
 
 const { useCallback } = React;
 
-const TLTabBar: React.FC<TLCellProps> = () => {
+const TLTabBar: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
   const tabs = (state.tabs as TabInfo[]) ?? [];
@@ -21,7 +21,7 @@ const TLTabBar: React.FC<TLCellProps> = () => {
   }, [sendCommand, activeTabId]);
 
   return (
-    <div className="tlReactTabBar">
+    <div id={controlId} className="tlReactTabBar">
       <div className="tlReactTabBar__tabs" role="tablist">
         {tabs.map(tab => (
           <button

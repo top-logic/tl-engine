@@ -13,7 +13,7 @@ const { useCallback, useEffect, useState } = React;
  * - duration: number  (ms, 0 = sticky)
  * - visible: boolean
  */
-const TLSnackbar: React.FC<TLCellProps> = () => {
+const TLSnackbar: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
 
@@ -50,7 +50,7 @@ const TLSnackbar: React.FC<TLCellProps> = () => {
   if (!visible && !exiting) return null;
 
   return (
-    <div className={`tlSnackbar tlSnackbar--${variant}${exiting ? ' tlSnackbar--exiting' : ''}`}
+    <div id={controlId} className={`tlSnackbar tlSnackbar--${variant}${exiting ? ' tlSnackbar--exiting' : ''}`}
       role="status" aria-live="polite">
       <span className="tlSnackbar__message">{message}</span>
       {action && (

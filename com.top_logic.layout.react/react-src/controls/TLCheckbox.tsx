@@ -6,7 +6,7 @@ const { useCallback } = React;
 /**
  * A checkbox field rendered via React.
  */
-const TLCheckbox: React.FC<TLCellProps> = ({ state }) => {
+const TLCheckbox: React.FC<TLCellProps> = ({ controlId, state }) => {
   const [value, setValue] = useTLFieldValue();
 
   const handleChange = useCallback(
@@ -20,6 +20,7 @@ const TLCheckbox: React.FC<TLCellProps> = ({ state }) => {
     return (
       <input
         type="checkbox"
+        id={controlId}
         checked={value === true}
         disabled
         className="tlReactCheckbox tlReactCheckbox--immutable"
@@ -30,6 +31,7 @@ const TLCheckbox: React.FC<TLCellProps> = ({ state }) => {
   return (
     <input
       type="checkbox"
+      id={controlId}
       checked={value === true}
       onChange={handleChange}
       disabled={state.disabled === true}

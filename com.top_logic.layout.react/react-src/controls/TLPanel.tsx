@@ -59,7 +59,7 @@ const IconPopOut = () => (
  * - toolbarButtons: ChildDescriptor[]
  * - child: ChildDescriptor
  */
-const TLPanel: React.FC<TLCellProps> = () => {
+const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
   const i18n = useI18N(I18N_KEYS);
@@ -97,6 +97,7 @@ const TLPanel: React.FC<TLCellProps> = () => {
 
   return (
     <div
+      id={controlId}
       className={`tlPanel tlPanel--${expansionState.toLowerCase()}`}
       style={panelStyle}
     >

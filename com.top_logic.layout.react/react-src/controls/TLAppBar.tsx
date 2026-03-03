@@ -11,7 +11,7 @@ import type { TLCellProps } from 'tl-react-bridge';
  * - variant: "flat" | "elevated"  (default: "flat")
  * - color: "primary" | "surface"  (default: "primary")
  */
-const TLAppBar: React.FC<TLCellProps> = () => {
+const TLAppBar: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
 
   const title = (state.title as string) ?? '';
@@ -27,7 +27,7 @@ const TLAppBar: React.FC<TLCellProps> = () => {
   ].filter(Boolean).join(' ');
 
   return (
-    <header className={className}>
+    <header id={controlId} className={className}>
       {leading && (
         <div className="tlAppBar__leading">
           <TLChild control={leading} />

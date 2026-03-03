@@ -12,7 +12,7 @@ const I18N_KEYS = {
 
 type LocalStatus = 'idle' | 'overlayOpen' | 'uploading';
 
-const TLPhotoCapture: React.FC<TLCellProps> = () => {
+const TLPhotoCapture: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const upload = useTLUpload();
 
@@ -181,7 +181,7 @@ const TLPhotoCapture: React.FC<TLCellProps> = () => {
   if (mirrored) mirrorBtnClasses.push('tlPhotoCapture__mirrorBtn--active');
 
   return (
-    <div className="tlPhotoCapture">
+    <div id={controlId} className="tlPhotoCapture">
       <div className="tlPhotoCapture__controls">
         <button
           type="button"

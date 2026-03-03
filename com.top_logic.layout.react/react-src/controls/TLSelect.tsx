@@ -11,7 +11,7 @@ interface SelectOption {
 /**
  * A select dropdown rendered via React.
  */
-const TLSelect: React.FC<TLCellProps> = ({ state, config }) => {
+const TLSelect: React.FC<TLCellProps> = ({ controlId, state, config }) => {
   const [value, setValue] = useTLFieldValue();
 
   const handleChange = useCallback(
@@ -26,7 +26,7 @@ const TLSelect: React.FC<TLCellProps> = ({ state, config }) => {
   if (state.editable === false) {
     const selectedLabel = options.find((opt) => opt.value === value)?.label ?? '';
     return (
-      <span className="tlReactSelect tlReactSelect--immutable">
+      <span id={controlId} className="tlReactSelect tlReactSelect--immutable">
         {selectedLabel}
       </span>
     );
@@ -34,6 +34,7 @@ const TLSelect: React.FC<TLCellProps> = ({ state, config }) => {
 
   return (
     <select
+      id={controlId}
       value={(value as string) ?? ''}
       onChange={handleChange}
       disabled={state.disabled === true}

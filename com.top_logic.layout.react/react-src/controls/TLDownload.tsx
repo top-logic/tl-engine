@@ -9,7 +9,7 @@ const I18N_KEYS = {
   'js.download.clearFile': 'Clear file',
 };
 
-const TLDownload: React.FC<TLCellProps> = () => {
+const TLDownload: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const dataUrl = useTLDataUrl();
   const sendCommand = useTLCommand();
@@ -63,7 +63,7 @@ const TLDownload: React.FC<TLCellProps> = () => {
 
   if (!hasData) {
     return (
-      <div className="tlDownload tlDownload--empty">
+      <div id={controlId} className="tlDownload tlDownload--empty">
         <span className="tlDownload__fileName tlDownload__fileName--empty">{t['js.download.noFile']}</span>
       </div>
     );
@@ -74,7 +74,7 @@ const TLDownload: React.FC<TLCellProps> = () => {
     : t['js.download.file'].replace('{0}', fileName);
 
   return (
-    <div className="tlDownload">
+    <div id={controlId} className="tlDownload">
       <button
         type="button"
         className={'tlDownload__downloadBtn' + (downloading ? ' tlDownload__downloadBtn--downloading' : '')}

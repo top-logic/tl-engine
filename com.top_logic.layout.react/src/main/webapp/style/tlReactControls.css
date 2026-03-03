@@ -2203,15 +2203,15 @@ button.tlMenu__item--disabled:hover {
 	display: none;
 }
 
-/* Dirty indicator bar */
-.tlFormField__dirtyBar {
-	position: absolute;
-	left: -2px;
-	top: 0;
-	bottom: 0;
-	width: 3px;
+/* Dirty indicator dot next to label */
+.tlFormField__dirtyDot {
+	display: inline-block;
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
 	background: var(--layer-accent, #0f62fe);
-	border-radius: 2px;
+	margin-left: 2px;
+	vertical-align: middle;
 }
 
 /* Label area */

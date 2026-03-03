@@ -16,6 +16,7 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.ControlCommand;
 import com.top_logic.layout.react.ReactControl;
 import com.top_logic.layout.react.ReactControlProvider;
+import com.top_logic.layout.tree.dnd.TreeDropTarget;
 import com.top_logic.layout.tree.model.TreeUIModel;
 import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -41,13 +42,20 @@ public class ReactTreeControl extends ReactControl {
 
 	private static final String DROP_ENABLED = "dropEnabled";
 
+	private static final String DROP_INDICATOR_NODE_ID = "dropIndicatorNodeId";
+
+	private static final String DROP_INDICATOR_POSITION = "dropIndicatorPosition";
+
 	// -- Commands --
 
 	private static final Map<String, ControlCommand> COMMANDS = createCommandMap(
 		new ExpandCommand(),
 		new CollapseCommand(),
 		new SelectCommand(),
-		new ContextMenuCommand());
+		new ContextMenuCommand(),
+		new DragOverCommand(),
+		new DropCommand(),
+		new DragEndCommand());
 
 	// -- Nested interfaces --
 
@@ -87,6 +95,14 @@ public class ReactTreeControl extends ReactControl {
 	private boolean _dropEnabled;
 
 	private ContextMenuProvider _contextMenuProvider;
+
+	private List<TreeDropTarget> _dropTargets = new ArrayList<>();
+
+	/** The node ID currently showing a drop indicator, or null. */
+	private String _dropIndicatorNodeId;
+
+	/** The current drop position indicator. */
+	private String _dropIndicatorPosition;
 
 	/** Index into the flat visible node list of the last anchor-setting click, or -1. */
 	private int _selectionAnchor = -1;
@@ -153,6 +169,13 @@ public class ReactTreeControl extends ReactControl {
 	 */
 	public void setContextMenuProvider(ContextMenuProvider provider) {
 		_contextMenuProvider = provider;
+	}
+
+	/**
+	 * Adds a drop target to this tree.
+	 */
+	public void addDropTarget(TreeDropTarget target) {
+		_dropTargets.add(target);
 	}
 
 	// -- State building --
@@ -474,6 +497,104 @@ public class ReactTreeControl extends ReactControl {
 		@Override
 		public ResKey getI18NKey() {
 			return ResKey.legacy("react.tree.contextMenu");
+		}
+	}
+
+	/**
+	 * Evaluates whether a drop is allowed at the given position and updates the drop indicator
+	 * state.
+	 */
+	static class DragOverCommand extends ControlCommand {
+
+		private static final String COMMAND_NAME = "dragOver";
+
+		DragOverCommand() {
+			super(COMMAND_NAME);
+		}
+
+		@Override
+		protected HandlerResult execute(DisplayContext context, Control control, Map<String, Object> arguments) {
+			ReactTreeControl tree = (ReactTreeControl) control;
+			String nodeId = (String) arguments.get("nodeId");
+			String position = (String) arguments.get("position");
+			Object node = tree.findNodeById(nodeId);
+			if (node != null) {
+				tree._dropIndicatorNodeId = nodeId;
+				tree._dropIndicatorPosition = position;
+				tree.putState(DROP_INDICATOR_NODE_ID, nodeId);
+				tree.putState(DROP_INDICATOR_POSITION, position);
+			}
+			return HandlerResult.DEFAULT_RESULT;
+		}
+
+		@Override
+		public ResKey getI18NKey() {
+			return ResKey.legacy("react.tree.dragOver");
+		}
+	}
+
+	/**
+	 * Handles a drop event on a tree node. Clears drop indicators and processes the drop.
+	 */
+	static class DropCommand extends ControlCommand {
+
+		private static final String COMMAND_NAME = "drop";
+
+		DropCommand() {
+			super(COMMAND_NAME);
+		}
+
+		@Override
+		protected HandlerResult execute(DisplayContext context, Control control, Map<String, Object> arguments) {
+			ReactTreeControl tree = (ReactTreeControl) control;
+			String nodeId = (String) arguments.get("nodeId");
+			String position = (String) arguments.get("position");
+			Object node = tree.findNodeById(nodeId);
+
+			// Clear drop indicators.
+			tree._dropIndicatorNodeId = null;
+			tree._dropIndicatorPosition = null;
+			tree.putState(DROP_INDICATOR_NODE_ID, null);
+			tree.putState(DROP_INDICATOR_POSITION, null);
+
+			if (node != null) {
+				// TODO: Integrate with full DnD framework (DndData, TreeDropTarget.handleDrop).
+				// For now, the drop event is received but not processed. Full integration
+				// requires a TreeData adapter for the React tree.
+			}
+			return HandlerResult.DEFAULT_RESULT;
+		}
+
+		@Override
+		public ResKey getI18NKey() {
+			return ResKey.legacy("react.tree.drop");
+		}
+	}
+
+	/**
+	 * Clears the drop indicator state when a drag operation ends.
+	 */
+	static class DragEndCommand extends ControlCommand {
+
+		private static final String COMMAND_NAME = "dragEnd";
+
+		DragEndCommand() {
+			super(COMMAND_NAME);
+		}
+
+		@Override
+		protected HandlerResult execute(DisplayContext context, Control control, Map<String, Object> arguments) {
+			ReactTreeControl tree = (ReactTreeControl) control;
+			tree._dropIndicatorNodeId = null;
+			tree._dropIndicatorPosition = null;
+			tree.putState(DROP_INDICATOR_NODE_ID, null);
+			tree.putState(DROP_INDICATOR_POSITION, null);
+			return HandlerResult.DEFAULT_RESULT;
+		}
+
+		@Override
+		public ResKey getI18NKey() {
+			return ResKey.legacy("react.tree.dragEnd");
 		}
 	}
 }

@@ -25,6 +25,8 @@ const TLTreeView: React.FC<TLCellProps> = () => {
   const selectionMode = (state.selectionMode as string) ?? 'single';
   const dragEnabled = (state.dragEnabled as boolean) ?? false;
   const dropEnabled = (state.dropEnabled as boolean) ?? false;
+  const dropIndicatorNodeId = (state.dropIndicatorNodeId as string) ?? null;
+  const dropIndicatorPosition = (state.dropIndicatorPosition as string) ?? null;
 
   // Focus tracking (client-side only).
   const [focusIndex, setFocusIndex] = React.useState(-1);
@@ -45,6 +47,56 @@ const TLTreeView: React.FC<TLCellProps> = () => {
   const handleContextMenu = React.useCallback((nodeId: string, e: React.MouseEvent) => {
     e.preventDefault();
     sendCommand('contextMenu', { nodeId, x: e.clientX, y: e.clientY });
+  }, [sendCommand]);
+
+  // -- Drag-and-drop handlers --
+
+  const dragOverTimerRef = React.useRef<number | null>(null);
+
+  const computeDropPosition = React.useCallback((e: React.DragEvent, element: HTMLElement): string => {
+    const rect = element.getBoundingClientRect();
+    const y = e.clientY - rect.top;
+    const third = rect.height / 3;
+    if (y < third) return 'above';
+    if (y > third * 2) return 'below';
+    return 'within';
+  }, []);
+
+  const handleDragStart = React.useCallback((nodeId: string, e: React.DragEvent) => {
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', nodeId);
+  }, []);
+
+  const handleDragOver = React.useCallback((nodeId: string, e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    const position = computeDropPosition(e, e.currentTarget as HTMLElement);
+    // Debounce: only send command if position or node changed.
+    if (dragOverTimerRef.current != null) {
+      window.clearTimeout(dragOverTimerRef.current);
+    }
+    dragOverTimerRef.current = window.setTimeout(() => {
+      sendCommand('dragOver', { nodeId, position });
+      dragOverTimerRef.current = null;
+    }, 50);
+  }, [sendCommand, computeDropPosition]);
+
+  const handleDrop = React.useCallback((nodeId: string, e: React.DragEvent) => {
+    e.preventDefault();
+    if (dragOverTimerRef.current != null) {
+      window.clearTimeout(dragOverTimerRef.current);
+      dragOverTimerRef.current = null;
+    }
+    const position = computeDropPosition(e, e.currentTarget as HTMLElement);
+    sendCommand('drop', { nodeId, position });
+  }, [sendCommand, computeDropPosition]);
+
+  const handleDragEnd = React.useCallback(() => {
+    if (dragOverTimerRef.current != null) {
+      window.clearTimeout(dragOverTimerRef.current);
+      dragOverTimerRef.current = null;
+    }
+    sendCommand('dragEnd');
   }, [sendCommand]);
 
   const handleKeyDown = React.useCallback((e: React.KeyboardEvent) => {
@@ -149,10 +201,18 @@ const TLTreeView: React.FC<TLCellProps> = () => {
             'tlTreeView__node',
             node.selected ? 'tlTreeView__node--selected' : '',
             index === focusIndex ? 'tlTreeView__node--focused' : '',
+            dropIndicatorNodeId === node.id && dropIndicatorPosition === 'above' ? 'tlTreeView__node--drop-above' : '',
+            dropIndicatorNodeId === node.id && dropIndicatorPosition === 'within' ? 'tlTreeView__node--drop-within' : '',
+            dropIndicatorNodeId === node.id && dropIndicatorPosition === 'below' ? 'tlTreeView__node--drop-below' : '',
           ].filter(Boolean).join(' ')}
           style={{ paddingLeft: node.depth * INDENT_PX }}
+          draggable={dragEnabled}
           onClick={(e) => handleSelect(node.id, e)}
           onContextMenu={(e) => handleContextMenu(node.id, e)}
+          onDragStart={(e) => handleDragStart(node.id, e)}
+          onDragOver={dropEnabled ? (e) => handleDragOver(node.id, e) : undefined}
+          onDrop={dropEnabled ? (e) => handleDrop(node.id, e) : undefined}
+          onDragEnd={handleDragEnd}
         >
           {node.expandable ? (
             <button

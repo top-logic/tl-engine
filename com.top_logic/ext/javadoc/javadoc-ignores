@@ -15,19 +15,8 @@ com.top_logic.base.accesscontrol.ExternalAuthenticationServlet.java: Missing doc
 com.top_logic.base.accesscontrol.ExternalAuthenticationServlet.java: Missing documentation: com.top_logic.base.accesscontrol.ExternalAuthenticationServlet.isExtAuthEnabled
 com.top_logic.base.accesscontrol.Login.java: Invalid camel case word 'InMaintenanceModeException', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.accesscontrol.Login.java: Missing documentation: com.top_logic.base.accesscontrol.Login.login
-com.top_logic.base.accesscontrol.LoginPageServlet.java: Invalid camel case word 'AuthenticationService', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.accesscontrol.LoginPageServlet.java: Invalid camel case word 'DispatcherService', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.accesscontrol.LoginPageServlet.java: Invalid camel case word 'LoginErrorPage', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.accesscontrol.LoginPageServlet.java: Invalid camel case word 'LoginPage', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.accesscontrol.LoginPageServlet.java: Invalid camel case word 'LoginPageServlet', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.accesscontrol.LoginPageServlet.java: Invalid camel case word 'doGet', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.accesscontrol.LoginPageServlet.java: Missing documentation: com.top_logic.base.accesscontrol.LoginPageServlet.MESSAGE_ATTR
-com.top_logic.base.accesscontrol.LoginPageServlet.java: Missing documentation: com.top_logic.base.accesscontrol.LoginPageServlet.forwardToTarget
-com.top_logic.base.accesscontrol.SessionAttributeKeys.java: Invalid camel case word 'LoginPageServlet', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.accesscontrol.SessionAttributeKeys.java: Invalid camel case word 'MigrateBean', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.accesscontrol.SessionCheckingFilter.java: Invalid camel case word 'ServletException', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.accesscontrol.SessionService.java: Invalid camel case word 'HttpSession', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.accesscontrol.SessionService.java: Invalid camel case word 'LoginPageServlet', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.accesscontrol.SessionService.java: Invalid camel case word 'SessionIDs', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.accesscontrol.SessionService.java: Invalid camel case word 'SessionService', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.accesscontrol.SessionService.java: Invalid camel case word 'validateSession', this may only be used within JavaDoc links or HTML code tags.
@@ -5505,7 +5494,6 @@ com.top_logic.util.TopLogicJspBase.java: Invalid camel case word '_jspDestroy', 
 com.top_logic.util.TopLogicJspBase.java: Invalid camel case word '_jspInit', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.util.TopLogicJspBase.java: Invalid camel case word 'jspDestroy', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.util.TopLogicJspBase.java: Invalid camel case word 'jspInit', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.util.TopLogicServlet.java: Invalid camel case word 'LoginPageServlet', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.util.TopLogicServlet.java: Invalid camel case word 'maxServiceTime', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.util.VariableReplaceTag.java: Invalid camel case word 'bodyText', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.util.WebMimeTypes.java: Invalid camel case word 'MimeType', this may only be used within JavaDoc links or HTML code tags.

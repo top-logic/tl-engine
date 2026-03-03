@@ -116,19 +116,20 @@ const { useCallback: se } = e, ce = ({ state: t }) => {
     }
     return /* @__PURE__ */ e.createElement("td", { key: c.name }, i != null ? String(i) : "");
   })))));
-}, { useCallback: ve } = e, _e = ({ command: t, label: o, disabled: l }) => {
-  const r = w(), n = B(), a = t ?? "click", c = o ?? r.label, s = l ?? r.disabled === !0, i = ve(() => {
-    n(a);
-  }, [n, a]);
+}, { useCallback: ve } = e, _e = ({ controlId: t, command: o, label: l, disabled: r }) => {
+  const n = w(), a = B(), c = o ?? "click", s = l ?? n.label, i = r ?? n.disabled === !0, m = ve(() => {
+    a(c);
+  }, [a, c]);
   return /* @__PURE__ */ e.createElement(
     "button",
     {
       type: "button",
-      onClick: i,
-      disabled: s,
+      id: t,
+      onClick: m,
+      disabled: i,
       className: "tlReactButton"
     },
-    c
+    s
   );
 }, { useCallback: ge } = e, ye = ({ command: t, label: o, active: l, disabled: r }) => {
   const n = w(), a = B(), c = t ?? "click", s = o ?? n.label, i = l ?? n.active === !0, m = r ?? n.disabled === !0, b = ge(() => {

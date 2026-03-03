@@ -1,0 +1,147 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.layout.react.control.nav;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
+
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.Control;
+import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.basic.ControlCommand;
+import com.top_logic.layout.react.I18NConstants;
+import com.top_logic.layout.react.ReactControl;
+import com.top_logic.tool.boundsec.HandlerResult;
+
+/**
+ * Bottom navigation bar for mobile screens.
+ *
+ * <p>
+ * Renders 3-5 navigation items with icons and labels. The active item is highlighted. Supports
+ * optional badge display on items.
+ * </p>
+ */
+public class ReactBottomBarControl extends ReactControl {
+
+	private static final String REACT_MODULE = "TLBottomBar";
+
+	private static final String ITEMS = "items";
+
+	private static final String ACTIVE_ITEM_ID = "activeItemId";
+
+	private static final String ITEM_ID_ARG = "itemId";
+
+	private static final Map<String, ControlCommand> COMMANDS = createCommandMap(
+		new SelectItemCommand());
+
+	private final Consumer<String> _selectHandler;
+
+	/**
+	 * Creates a bottom navigation bar.
+	 *
+	 * @param items
+	 *        The navigation items.
+	 * @param activeItemId
+	 *        The ID of the currently active item.
+	 * @param selectHandler
+	 *        Called with the item ID when an item is tapped.
+	 */
+	public ReactBottomBarControl(List<BottomBarEntry> items, String activeItemId,
+			Consumer<String> selectHandler) {
+		super(null, REACT_MODULE, COMMANDS);
+		_selectHandler = selectHandler;
+		updateItems(items);
+		setActiveItem(activeItemId);
+	}
+
+	/**
+	 * Updates the navigation items.
+	 *
+	 * @param items
+	 *        The new navigation items.
+	 */
+	public void updateItems(List<BottomBarEntry> items) {
+		List<Map<String, Object>> itemList = new ArrayList<>();
+		for (BottomBarEntry entry : items) {
+			Map<String, Object> map = new HashMap<>();
+			map.put("id", entry.id());
+			map.put("label", entry.label());
+			map.put("icon", entry.icon());
+			if (entry.badge() != null) {
+				map.put("badge", entry.badge());
+			}
+			itemList.add(map);
+		}
+		putState(ITEMS, itemList);
+	}
+
+	/**
+	 * Sets the active item.
+	 *
+	 * @param activeItemId
+	 *        The ID of the item to mark as active.
+	 */
+	public void setActiveItem(String activeItemId) {
+		putState(ACTIVE_ITEM_ID, activeItemId);
+	}
+
+	/**
+	 * A single entry in the bottom navigation bar.
+	 *
+	 * @param id
+	 *        The entry identifier.
+	 * @param label
+	 *        The display label.
+	 * @param icon
+	 *        The CSS icon class.
+	 * @param badge
+	 *        Optional badge text, or {@code null}.
+	 */
+	public record BottomBarEntry(String id, String label, String icon, String badge) {
+
+		/**
+		 * Creates an entry without a badge.
+		 *
+		 * @param id
+		 *        The entry identifier.
+		 * @param label
+		 *        The display label.
+		 * @param icon
+		 *        The CSS icon class.
+		 */
+		public BottomBarEntry(String id, String label, String icon) {
+			this(id, label, icon, null);
+		}
+	}
+
+	/**
+	 * Command sent when a bottom bar item is selected.
+	 */
+	public static class SelectItemCommand extends ControlCommand {
+
+		/** Creates a {@link SelectItemCommand}. */
+		public SelectItemCommand() {
+			super("selectItem");
+		}
+
+		@Override
+		public ResKey getI18NKey() {
+			return I18NConstants.REACT_BOTTOM_BAR_SELECT;
+		}
+
+		@Override
+		protected HandlerResult execute(DisplayContext context, Control control, Map<String, Object> arguments) {
+			ReactBottomBarControl bar = (ReactBottomBarControl) control;
+			String itemId = (String) arguments.get(ITEM_ID_ARG);
+			bar._selectHandler.accept(itemId);
+			return HandlerResult.DEFAULT_RESULT;
+		}
+	}
+
+}

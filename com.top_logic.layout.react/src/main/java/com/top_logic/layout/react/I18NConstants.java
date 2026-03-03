@@ -120,6 +120,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey REACT_SIDEBAR_GROUP_TOGGLED;
 
+	/**
+	 * @en Bottom bar item selected.
+	 */
+	public static ResKey REACT_BOTTOM_BAR_SELECT;
+
 	// -- Sidebar client-side i18n keys --
 
 	/**

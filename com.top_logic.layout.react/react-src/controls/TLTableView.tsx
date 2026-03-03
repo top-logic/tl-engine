@@ -36,6 +36,7 @@ const TLTableView: React.FC<TLCellProps> = () => {
   const isMulti = selectionMode === 'multi';
   const checkboxWidth = 40;
 
+  const headerRef = React.useRef<HTMLDivElement>(null);
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = React.useRef<number | null>(null);
 
@@ -95,6 +96,11 @@ const TLTableView: React.FC<TLCellProps> = () => {
 
   // -- Scroll handler --
   const handleScroll = React.useCallback(() => {
+    // Sync header horizontal scroll immediately.
+    if (headerRef.current && scrollContainerRef.current) {
+      headerRef.current.scrollLeft = scrollContainerRef.current.scrollLeft;
+    }
+    // Debounced vertical scroll command.
     if (scrollTimeoutRef.current !== null) {
       clearTimeout(scrollTimeoutRef.current);
     }
@@ -210,10 +216,26 @@ const TLTableView: React.FC<TLCellProps> = () => {
   }, [someSelected]);
 
   return (
-    <div className="tlTableView">
+    <div className="tlTableView"
+      onDragOver={(e) => {
+        if (!dragColumnRef.current) return;
+        const body = scrollContainerRef.current;
+        const header = headerRef.current;
+        if (!body) return;
+        const rect = body.getBoundingClientRect();
+        const threshold = 40;
+        const speed = 8;
+        if (e.clientX < rect.left + threshold) {
+          body.scrollLeft = Math.max(0, body.scrollLeft - speed);
+        } else if (e.clientX > rect.right - threshold) {
+          body.scrollLeft += speed;
+        }
+        if (header) header.scrollLeft = body.scrollLeft;
+      }}
+    >
       {/* Header */}
-      <div className="tlTableView__header" style={{ minWidth: tableWidth }}>
-        <div className="tlTableView__headerRow">
+      <div className="tlTableView__header" ref={headerRef}>
+        <div className="tlTableView__headerRow" style={{ minWidth: tableWidth }}>
           {isMulti && (
             <div className="tlTableView__headerCell tlTableView__checkboxCell"
               style={{ width: checkboxWidth, minWidth: checkboxWidth }}>
@@ -287,7 +309,7 @@ const TLTableView: React.FC<TLCellProps> = () => {
         onScroll={handleScroll}
       >
         {/* Spacer for virtual scrolling */}
-        <div style={{ height: totalHeight, position: 'relative' }}>
+        <div style={{ height: totalHeight, position: 'relative', minWidth: tableWidth }}>
           {rows.map((row) => (
             <div
               key={row.id}

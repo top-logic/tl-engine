@@ -42,6 +42,7 @@ import TLDrawer from './controls/TLDrawer';
 import TLSnackbar from './controls/TLSnackbar';
 import TLMenu from './controls/TLMenu';
 import TLAppShell from './controls/TLAppShell';
+import TLTextCell from './controls/TLTextCell';
 
 register('TLButton', TLButton);
 register('TLToggleButton', TLToggleButton);
@@ -76,3 +77,4 @@ register('TLDrawer', TLDrawer);
 register('TLSnackbar', TLSnackbar);
 register('TLMenu', TLMenu);
 register('TLAppShell', TLAppShell);
+register('TLTextCell', TLTextCell);

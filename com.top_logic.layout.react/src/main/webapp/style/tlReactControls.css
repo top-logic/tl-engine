@@ -1396,3 +1396,53 @@ button.tlSidebar__flyoutItem:focus-visible {
 	gap: var(--spacing-01);
 	flex-shrink: 0;
 }
+
+/* --- TLBreadcrumb ---------------------------------------------------------- */
+
+.tlBreadcrumb {
+	font-family: var(--font-family);
+	font-size: var(--body-compact-01-font-size);
+}
+
+.tlBreadcrumb__list {
+	display: flex;
+	align-items: center;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	gap: var(--spacing-01);
+}
+
+.tlBreadcrumb__entry {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-01);
+}
+
+.tlBreadcrumb__separator {
+	color: var(--text-secondary);
+	flex-shrink: 0;
+}
+
+.tlBreadcrumb__item {
+	border: none;
+	background: transparent;
+	padding: 0;
+	color: var(--link-primary, var(--button-primary));
+	font-family: var(--font-family);
+	font-size: var(--body-compact-01-font-size);
+	cursor: pointer;
+}
+
+.tlBreadcrumb__item:hover {
+	text-decoration: underline;
+}
+
+.tlBreadcrumb__item:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: 2px;
+}
+
+.tlBreadcrumb__current {
+	color: var(--text-primary);
+}

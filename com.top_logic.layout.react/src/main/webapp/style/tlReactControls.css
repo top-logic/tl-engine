@@ -1984,6 +1984,31 @@ button.tlMenu__item--disabled:hover {
 	border-right: 2px solid var(--interactive, #0f62fe);
 }
 
+/* -- Frozen columns -- */
+
+.tlTableView__headerCell--frozen,
+.tlTableView__cell--frozen {
+	background: var(--layer-01, #fff);
+}
+
+.tlTableView__row:hover .tlTableView__cell--frozen {
+	background: var(--layer-hover, #e8e8e8);
+}
+
+.tlTableView__row--selected .tlTableView__cell--frozen {
+	background: var(--layer-selected-01, #d0e2ff);
+}
+
+.tlTableView__row--selected:hover .tlTableView__cell--frozen {
+	background: var(--layer-selected-hover-01, #b8d4ff);
+}
+
+.tlTableView__headerCell--frozenLast,
+.tlTableView__cell--frozenLast {
+	box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1);
+	clip-path: inset(0 -4px 0 0);
+}
+
 /* --- TLFormLayout ------------------------------------------------------ */
 
 .tlFormLayout {

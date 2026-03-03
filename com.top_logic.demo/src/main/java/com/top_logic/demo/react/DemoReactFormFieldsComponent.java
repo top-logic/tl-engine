@@ -22,6 +22,7 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.form.FormField;
+import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.react.control.ReactButtonControl;
 import com.top_logic.layout.react.control.form.ReactCheckboxControl;
@@ -76,35 +77,43 @@ public class DemoReactFormFieldsComponent extends LayoutComponent {
 	}
 
 	private ReactFormLayoutControl createFormLayout() {
+		FormContext formContext = new FormContext(this);
+
 		// -- Personal Information group (collapsible, subtle border, full line) --
 
 		FormField nameField = FormFactory.newStringField("name", "John Doe", false);
+		formContext.addMember(nameField);
 		ReactTextInputControl nameInput = new ReactTextInputControl(nameField);
 		ReactFormFieldChromeControl nameChrome = new ReactFormFieldChromeControl(
 			"Full Name", true, false, null, "Enter your full legal name", null, false, true, nameInput);
 
 		FormField emailField = FormFactory.newStringField("email", "john@example.com", false);
+		formContext.addMember(emailField);
 		ReactTextInputControl emailInput = new ReactTextInputControl(emailField);
 		ReactFormFieldChromeControl emailChrome = new ReactFormFieldChromeControl(
 			"Email", true, true, null, null, null, false, true, emailInput);
 
 		FormField phoneField = FormFactory.newStringField("phone", "", false);
+		formContext.addMember(phoneField);
 		ReactTextInputControl phoneInput = new ReactTextInputControl(phoneField);
 		ReactFormFieldChromeControl phoneChrome = new ReactFormFieldChromeControl(
 			"Phone", false, false, "Please enter a valid phone number", null, null, false, true, phoneInput);
 
 		FormField dobField = FormFactory.newStringField("dob", "1990-06-15", false);
+		formContext.addMember(dobField);
 		ReactDatePickerControl dobInput = new ReactDatePickerControl(dobField);
 		ReactFormFieldChromeControl dobChrome = new ReactFormFieldChromeControl(
 			"Date of Birth", false, false, null, null, null, false, true, dobInput);
 
 		FormField bioField = FormFactory.newStringField("bio", "Software developer with 10 years experience...", false);
+		formContext.addMember(bioField);
 		ReactTextInputControl bioInput = new ReactTextInputControl(bioField);
 		ReactFormFieldChromeControl bioChrome = new ReactFormFieldChromeControl(
 			"Biography", false, false, null, "A short description of yourself",
 			"top", true, true, bioInput);
 
 		FormField activeField = FormFactory.newBooleanField("active", Boolean.TRUE, false);
+		formContext.addMember(activeField);
 		ReactCheckboxControl activeInput = new ReactCheckboxControl(activeField);
 		ReactFormFieldChromeControl activeChrome = new ReactFormFieldChromeControl(
 			"Active", false, false, null, null, null, false, true, activeInput);
@@ -119,6 +128,7 @@ public class DemoReactFormFieldsComponent extends LayoutComponent {
 		// -- Preferences group (outlined border, not collapsible) --
 
 		FormField langField = FormFactory.newStringField("language", "en", false);
+		formContext.addMember(langField);
 		ReactSelectFormFieldControl langInput = new ReactSelectFormFieldControl(langField,
 			createOptionList(
 				createOption("en", "English"),
@@ -129,11 +139,13 @@ public class DemoReactFormFieldsComponent extends LayoutComponent {
 			"Language", true, false, null, "Select your preferred language", null, false, true, langInput);
 
 		FormField notifField = FormFactory.newIntField("notificationLimit", Integer.valueOf(5), false);
+		formContext.addMember(notifField);
 		ReactNumberInputControl notifInput = new ReactNumberInputControl(notifField, 0);
 		ReactFormFieldChromeControl notifChrome = new ReactFormFieldChromeControl(
 			"Notification Limit", false, false, null, "Maximum notifications per day", null, false, true, notifInput);
 
 		FormField themeField = FormFactory.newStringField("theme", "light", false);
+		formContext.addMember(themeField);
 		ReactSelectFormFieldControl themeInput = new ReactSelectFormFieldControl(themeField,
 			createOptionList(
 				createOption("light", "Light"),

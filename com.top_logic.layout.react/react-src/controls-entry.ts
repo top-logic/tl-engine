@@ -37,6 +37,7 @@ import TLCard from './controls/TLCard';
 import TLAppBar from './controls/TLAppBar';
 import TLBreadcrumb from './controls/TLBreadcrumb';
 import TLBottomBar from './controls/TLBottomBar';
+import TLDialog from './controls/TLDialog';
 
 register('TLButton', TLButton);
 register('TLToggleButton', TLToggleButton);
@@ -66,3 +67,4 @@ register('TLCard', TLCard);
 register('TLAppBar', TLAppBar);
 register('TLBreadcrumb', TLBreadcrumb);
 register('TLBottomBar', TLBottomBar);
+register('TLDialog', TLDialog);

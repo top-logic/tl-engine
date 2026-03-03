@@ -1523,3 +1523,89 @@ button.tlBottomBar__item:hover {
 	text-overflow: ellipsis;
 	max-width: 100%;
 }
+
+/* --- TLDialog -------------------------------------------------------------- */
+
+.tlDialog__backdrop {
+	position: fixed;
+	inset: 0;
+	z-index: 10000;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: rgba(0, 0, 0, 0.5);
+}
+
+.tlDialog {
+	background: var(--layer-01);
+	border-radius: var(--border-radius-02, 4px);
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+	display: flex;
+	flex-direction: column;
+	max-height: 80vh;
+	font-family: var(--font-family);
+	outline: none;
+}
+
+.tlDialog--small  { width: 24rem; }
+.tlDialog--medium { width: 32rem; }
+.tlDialog--large  { width: 48rem; }
+
+.tlDialog__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: var(--spacing-04);
+	border-bottom: 1px solid var(--border-subtle);
+	flex-shrink: 0;
+}
+
+.tlDialog__title {
+	font-weight: bold;
+	font-size: var(--heading-compact-02-font-size);
+	line-height: var(--heading-compact-02-line-height);
+	color: var(--text-primary);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.tlDialog__closeBtn {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	width: 2rem;
+	height: 2rem;
+	border: none;
+	border-radius: var(--corner-radius);
+	background: transparent;
+	color: var(--text-secondary);
+	cursor: pointer;
+	padding: 0;
+	flex-shrink: 0;
+}
+
+button.tlDialog__closeBtn:hover {
+	background: var(--layer-hover);
+	color: var(--text-primary);
+}
+
+button.tlDialog__closeBtn:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: -2px;
+}
+
+.tlDialog__body {
+	flex: 1;
+	overflow-y: auto;
+	padding: var(--spacing-04);
+}
+
+.tlDialog__footer {
+	display: flex;
+	justify-content: flex-end;
+	gap: var(--spacing-03);
+	padding: var(--spacing-03) var(--spacing-04);
+	border-top: 1px solid var(--border-subtle);
+	flex-shrink: 0;
+}

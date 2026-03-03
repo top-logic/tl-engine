@@ -135,6 +135,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey REACT_DRAWER_CLOSE;
 
+	/**
+	 * @en Snackbar dismissed.
+	 */
+	public static ResKey REACT_SNACKBAR_DISMISS;
+
 	// -- Sidebar client-side i18n keys --
 
 	/**

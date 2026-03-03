@@ -548,17 +548,63 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
         this.allowedGroups = allowedGroups;
     }
 
+	/**
+	 * Checks whether the password for the user with the given name is valid and not expired.
+	 * 
+	 * <p>
+	 * Note: Is is not checked that the user can be authorized with the given password.
+	 * </p>
+	 * 
+	 * @see #isPasswordValidAndNotExpired(char[], Person)
+	 */
+	public static boolean isPasswordValidAndNotExpired(char[] password, String userName) {
+		return isPasswordValidAndNotExpired(password, Person.byName(userName));
+	}
 
-    /**
-     * Gets a I18Ned error message as reason for the failed login.
-     */
-    public static String getI18NedMaintenanceMessage(String userName) {
+	/**
+	 * Checks whether the password for the given user is valid and not expired.
+	 * 
+	 * <p>
+	 * Note: Is is not checked that the user can be authorized with the given password.
+	 * </p>
+	 */
+	public static boolean isPasswordValidAndNotExpired(char[] password, Person account) {
+		try{
+			AuthenticationDevice device = account.getAuthenticationDevice();
+			if (device == null) {
+				// No password change possible, cannot request for a password update.
+				return true;
+			}
+	
+			if (!device.allowPwdChange()) {
+				// No password change possible, cannot request for a password update.
+				return true;
+			}
+	
+			return !device.isPasswordChangeRequested(account, password);
+		} catch (Exception e) {
+			Logger.error("Problem checking pwd validy for Person " + account.getName(), e, Login.class);
+	    	return true; //do not spoil the login, though
+	    }
+	}
+
+	/**
+	 * Gets a I18Ned error message as reason for the failed login.
+	 */
+	public static String getI18NedMaintenanceMessage(String userName) {
+		return Resources.getInstance().getString(getMaintenanceMessage(userName));
+	}
+
+	/**
+	 * Gets a {@link ResKey} describing that login was denied by maintenance mode.
+	 */
+	public static ResKey getMaintenanceMessage(String userName) {
         int currentState = MaintenanceWindowManager.getInstance().getMaintenanceModeState();
         if (currentState == MaintenanceWindowManager.ABOUT_TO_ENTER_MAINTENANCE_MODE) {
-			return Resources.getInstance().getString(I18NConstants.ERROR_AUTHENTICATE_MAINTENANCE_MODE_SOON.fill(userName));
+			return I18NConstants.ERROR_AUTHENTICATE_MAINTENANCE_MODE_SOON.fill(userName);
         }
         else {
-			return Resources.getInstance().getString(I18NConstants.ERROR_AUTHENTICATE_MAINTENANCE_MODE.fill(userName));
+			return I18NConstants.ERROR_AUTHENTICATE_MAINTENANCE_MODE.fill(userName);
         }
     }
 

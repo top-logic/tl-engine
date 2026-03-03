@@ -5,6 +5,7 @@
  */
 package com.top_logic.base.accesscontrol;
 
+import com.top_logic.basic.CalledFromJSP;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.Mandatory;
@@ -36,6 +37,7 @@ public class ApplicationPages {
 		 */
 		@Name("startPage")
 		@Mandatory
+		@CalledFromJSP
 		String getStartPage();
 
 		/**
@@ -59,23 +61,8 @@ public class ApplicationPages {
 		 */
 		@Name("loginPage")
 		@Mandatory
+		@CalledFromJSP
 		String getLoginPage();
-
-		/**
-		 * Configuration option that determines the suffix to the applications context path to which
-		 * should be redirected in response to an final authentication failure.
-		 */
-		@Name("loginErrorPage")
-		@Mandatory
-		String getLoginErrorPage();
-
-		/**
-		 * Configuration option that determines the suffix to the applications context path to which
-		 * should be redirected in response to an authentication failure.
-		 */
-		@Name("loginRetryPage")
-		@Mandatory
-		String getLoginRetryPage();
 
 		/**
 		 * Application path that triggers a logout.
@@ -101,6 +88,7 @@ public class ApplicationPages {
 		 */
 		@Name("logoutPage")
 		@Nullable
+		@CalledFromJSP
 		String getLogoutPage();
 
 		/**
@@ -118,18 +106,5 @@ public class ApplicationPages {
 		@Mandatory
 		String getLayoutServletPath();
 
-		/**
-		 * The key under which the application local path to the layout servlet is configured.
-		 */
-		@Name("login")
-		@Mandatory
-		String getLoginServletPath();
-
-		/**
-		 * The page that is displayed, if a user is required to change his password.
-		 */
-		@Mandatory
-		@Name("changePassword")
-		String getChangePasswordPage();
 	}
 }

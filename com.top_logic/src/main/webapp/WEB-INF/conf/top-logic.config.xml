@@ -1870,18 +1870,14 @@
 		</config>
 		
 		<config config:interface="com.top_logic.base.accesscontrol.ApplicationPages$Config">
-			<login>/servlet/login</login>
-			<loginPage>/login.jsp</loginPage>
-			<loginRetryPage>/login.jsp</loginRetryPage>
-			<loginRetrySSO>/login.jsp</loginRetrySSO>
-			<loginErrorPage>/jsp/main/loginError.jsp</loginErrorPage>
+			<loginPage>/servlet/LayoutServlet</loginPage>
+			<loginRetrySSO>/servlet/LayoutServlet</loginRetrySSO>
 			<triggerLogoutPage>/jsp/main/LogoutPage.jsp</triggerLogoutPage>
-			<logoutPage>/login.jsp</logoutPage>
+			<logoutPage>/servlet/LayoutServlet</logoutPage>
 			<buzzyPage>/jsp/main/buzzyPage.jsp</buzzyPage>
 			<noCookiePage>/jsp/main/LoginErrorPage_noCookies.jsp</noCookiePage>
 			<startPage>/servlet/LayoutServlet</startPage>
 			<layout>/servlet/LayoutServlet</layout>
-			<changePassword>/jsp/util/administration/changePwd.jsp</changePassword>
 		</config>
 		
 		<config config:interface="com.top_logic.mig.html.layout.GlobalModelEventForwarder$Config">

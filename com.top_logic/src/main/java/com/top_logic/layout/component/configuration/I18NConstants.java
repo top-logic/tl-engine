@@ -29,6 +29,27 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey LOGIN;
 
+	/**
+	 * @en Name
+	 */
+	public static ResKey LOGIN_DIALOG_USERNAME_FIELD;
+
+	/**
+	 * @en Password
+	 */
+	public static ResKey LOGIN_DIALOG_PASSWORD_FIELD;
+
+	/**
+	 * @en Change password
+	 */
+	public static ResKey CHANGE_PASSWORD;
+
+	/**
+	 * @en Too much unsuccessful login attempts. The account has been temporarily deactivated.
+	 *     Please wait {0} seconds before retry.
+	 */
+	public static ResKey1 ERROR_TOO_MANY_LOGIN_ATTEMPS__TIMEOUT;
+
 	public static ResKey1 RELOAD_FAILED__NAMES;
 
 	public static ResKey1 RESTART_OF_THEME_FACTORY_FAILED__PROBLEM;

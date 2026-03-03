@@ -1686,3 +1686,63 @@ button.tlDrawer__closeBtn:focus-visible {
 	overflow-y: auto;
 	padding: var(--spacing-04);
 }
+
+/* --- TLSnackbar ------------------------------------------------------------ */
+
+.tlSnackbar {
+	position: fixed;
+	bottom: var(--spacing-04);
+	left: 50%;
+	transform: translateX(-50%) translateY(0);
+	z-index: 11000;
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-03);
+	padding: var(--spacing-03) var(--spacing-04);
+	border-radius: var(--border-radius-02, 4px);
+	font-family: var(--font-family);
+	font-size: var(--body-compact-01-font-size);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+	animation: tlSnackbarSlideUp 0.2s ease;
+	max-width: 40rem;
+}
+
+.tlSnackbar--exiting {
+	animation: tlSnackbarFadeOut 0.2s ease forwards;
+}
+
+.tlSnackbar--info    { background: var(--background-inverse, #393939); color: var(--text-inverse, #fff); }
+.tlSnackbar--success { background: var(--support-success, #198038); color: #fff; }
+.tlSnackbar--warning { background: var(--support-warning, #f1c21b); color: #000; }
+.tlSnackbar--error   { background: var(--support-error, #da1e28); color: #fff; }
+
+.tlSnackbar__message {
+	flex: 1;
+}
+
+.tlSnackbar__action {
+	border: none;
+	background: transparent;
+	color: inherit;
+	font-family: var(--font-family);
+	font-size: var(--body-compact-01-font-size);
+	font-weight: 600;
+	cursor: pointer;
+	text-decoration: underline;
+	white-space: nowrap;
+}
+
+.tlSnackbar__action:focus-visible {
+	outline: 2px solid currentColor;
+	outline-offset: 2px;
+}
+
+@keyframes tlSnackbarSlideUp {
+	from { transform: translateX(-50%) translateY(1rem); opacity: 0; }
+	to   { transform: translateX(-50%) translateY(0);    opacity: 1; }
+}
+
+@keyframes tlSnackbarFadeOut {
+	from { opacity: 1; }
+	to   { opacity: 0; }
+}

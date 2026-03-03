@@ -86,9 +86,7 @@ public class ReactTableControl extends ReactControl {
 
 	private int _viewportCount;
 
-	private String _sortColumn;
-
-	private boolean _sortAscending = true;
+	private final List<SortKey> _sortKeys = new ArrayList<>();
 
 	private Set<Object> _selectedRows = new HashSet<>();
 
@@ -109,6 +107,21 @@ public class ReactTableControl extends ReactControl {
 	 * Cache of cell controls for currently visible rows. Keyed by row object, then column name.
 	 */
 	private final Map<Object, Map<String, ReactControl>> _rowCellCache = new LinkedHashMap<>();
+
+	/**
+	 * A single entry in the multi-column sort chain.
+	 */
+	static class SortKey {
+
+		final String _columnName;
+
+		boolean _ascending;
+
+		SortKey(String columnName, boolean ascending) {
+			_columnName = columnName;
+			_ascending = ascending;
+		}
+	}
 
 	/**
 	 * Creates a new {@link ReactTableControl}.
@@ -199,6 +212,46 @@ public class ReactTableControl extends ReactControl {
 			return ((Map<String, Object>) rowObject).get(columnName);
 		}
 		return null;
+	}
+
+	/**
+	 * Updates the sort direction and priority on all column definitions from the current sort key
+	 * list.
+	 */
+	private void applySortKeysToColumnDefs() {
+		// Build a lookup from column name to sort key index.
+		Map<String, Integer> sortIndex = new LinkedHashMap<>();
+		for (int i = 0; i < _sortKeys.size(); i++) {
+			sortIndex.put(_sortKeys.get(i)._columnName, Integer.valueOf(i));
+		}
+
+		for (ColumnDef col : _columnDefs) {
+			Integer idx = sortIndex.get(col.getName());
+			if (idx != null) {
+				SortKey key = _sortKeys.get(idx.intValue());
+				col.setSortDirection(key._ascending ? "asc" : "desc");
+				col.setSortPriority(idx.intValue() + 1);
+			} else {
+				col.setSortDirection(null);
+				col.setSortPriority(0);
+			}
+		}
+	}
+
+	/**
+	 * Creates a chained comparator from the current sort key list.
+	 *
+	 * @return A comparator, or {@code null} if no sort keys are set.
+	 */
+	private Comparator<Object> createChainedComparator() {
+		Comparator<Object> result = null;
+		for (SortKey key : _sortKeys) {
+			Comparator<Object> comp = createSortComparator(key._columnName, key._ascending);
+			if (comp != null) {
+				result = result == null ? comp : result.thenComparing(comp);
+			}
+		}
+		return result;
 	}
 
 	// -- State building --
@@ -338,21 +391,32 @@ public class ReactTableControl extends ReactControl {
 			String column = (String) arguments.get("column");
 			String direction = (String) arguments.get("direction");
 			boolean ascending = !"desc".equals(direction);
+			String mode = (String) arguments.get("mode");
 
-			table._sortColumn = column;
-			table._sortAscending = ascending;
-
-			// Update sort direction in column defs.
-			for (ColumnDef col : table._columnDefs) {
-				if (col.getName().equals(column)) {
-					col.setSortDirection(ascending ? "asc" : "desc");
-				} else {
-					col.setSortDirection(null);
+			if ("add".equals(mode)) {
+				// Shift+click: add to chain or toggle existing.
+				boolean found = false;
+				for (SortKey key : table._sortKeys) {
+					if (key._columnName.equals(column)) {
+						key._ascending = ascending;
+						found = true;
+						break;
+					}
 				}
+				if (!found) {
+					table._sortKeys.add(new SortKey(column, ascending));
+				}
+			} else {
+				// Plain click: replace entire sort with single column.
+				table._sortKeys.clear();
+				table._sortKeys.add(new SortKey(column, ascending));
 			}
 
+			// Update column defs with sort metadata.
+			table.applySortKeysToColumnDefs();
+
 			// Sort the displayed rows.
-			Comparator<Object> comparator = table.createSortComparator(column, ascending);
+			Comparator<Object> comparator = table.createChainedComparator();
 			if (comparator != null) {
 				table._displayedRows.sort(comparator);
 			}

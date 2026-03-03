@@ -25,10 +25,10 @@ import com.meterware.servletunit.ServletUnitClient;
 
 import com.top_logic.base.accesscontrol.Login;
 import com.top_logic.base.accesscontrol.LoginCredentials;
-import com.top_logic.base.accesscontrol.LoginPageServlet;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.basic.encryption.SecureRandomService;
 import com.top_logic.basic.thread.ThreadContext;
+import com.top_logic.knowledge.gui.layout.TLLayoutServlet;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.PersonManager;
@@ -48,7 +48,7 @@ public class TestSessionService extends BasicTestCase {
     public void testAddRemoveSession () throws Exception {
         
         ServletRunner		sr = new ServletRunner();
-        sr.registerServlet("lpServlet", LoginPageServlet.class.getName());
+		sr.registerServlet("lpServlet", TLLayoutServlet.class.getName());
 
         ServletUnitClient   sc = sr.newClient();
 

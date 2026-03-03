@@ -344,6 +344,25 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey JS_AUDIO_RECORDER_ERROR_DENIED = ResKey.internalCreate("js.audioRecorder.error.denied");
 
+	/**
+	 * @en Form group collapse toggled.
+	 */
+	public static ResKey REACT_FORM_GROUP_TOGGLE_COLLAPSE;
+
+	// -- Form group client-side i18n keys --
+
+	/**
+	 * @en Collapse
+	 * @de Zuklappen
+	 */
+	public static ResKey JS_FORM_GROUP_COLLAPSE = ResKey.internalCreate("js.formGroup.collapse");
+
+	/**
+	 * @en Expand
+	 * @de Aufklappen
+	 */
+	public static ResKey JS_FORM_GROUP_EXPAND = ResKey.internalCreate("js.formGroup.expand");
+
 	static {
 		initConstants(I18NConstants.class);
 	}

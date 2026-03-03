@@ -497,10 +497,8 @@
 				<entry value="jsp/display/error/dumpRequest.inc.jsp" />
 				<entry value="jsp/display/error/404ErrorPage.jsp" />
 				<entry value="jsp/display/error/NoXssProtection.jsp" />
-				<entry value="jsp/main/loginError.jsp" />
 				<entry value="jsp/main/LoginErrorPage_noCookies.jsp" />
 				<entry value="jsp/main/LogoutPage.jsp" />
-				<entry value="login.jsp" />
 				<entry value="index.jsp" />
 				<entry value="SystemState.jsp" />
 				<entry value="administration/maintenance/benchmark"/>

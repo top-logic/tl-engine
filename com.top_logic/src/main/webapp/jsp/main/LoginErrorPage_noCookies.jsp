@@ -1,11 +1,11 @@
-<%@page language="java"  session="false"
+<%@page extends="com.top_logic.util.NoContextJspBase" session="false"
 %><%@taglib uri="basic" prefix="basic"
 %><%@taglib uri="util" prefix="tl"
 %>
 <basic:html>
 	<head>
 		<title>
-			Unable to set cookies
+			<tl:label nameConst="<%= com.top_logic.base.accesscontrol.I18NConstants.ERROR_SET_COOKIES %>"/>
 		</title>
 		<basic:cssLink/>
 	</head>
@@ -20,7 +20,7 @@
 					align="center"
 					bgcolor="#eeeeee"
 				>
-					<tl:label name="login.nocookies"/>
+					<tl:label nameConst="<%= com.top_logic.base.accesscontrol.I18NConstants.ERROR_SET_COOKIES.tooltip() %>"/>
 				</td>
 			</tr>
 		</table>

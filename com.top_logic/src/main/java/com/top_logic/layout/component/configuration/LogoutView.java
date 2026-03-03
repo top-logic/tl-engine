@@ -24,7 +24,10 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.AbstractDisplayValue;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.DisplayDimension;
+import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.FrameScope;
+import com.top_logic.layout.LinkGenerator;
 import com.top_logic.layout.Renderer;
 import com.top_logic.layout.View;
 import com.top_logic.layout.WindowScope;
@@ -173,17 +176,12 @@ public class LogoutView extends AbstractConfiguredInstance<LogoutView.Config>
 	public String getOnclick() {
 		DisplayContext context = DefaultDisplayContext.getDisplayContext();
 		if (isNotLoggedIn()) {
-			StringBuilder out = new StringBuilder();
-			try {
-				out.append("services.ajax.logout('");
-				out.append(ApplicationPages.getInstance().getLoginPage());
-				out.append("');");
-				context.getWindowScope().appendCloseAllWindowsCommand(out, context.getExecutionScope().getFrameScope());
-			} catch (IOException ex) {
-				throw new IOError(ex);
-			}
-			out.append("return false;");
-			return out.toString();
+			return LinkGenerator.createLink(context, executionContext -> {
+				LoginViewDialog login = new LoginViewDialog(I18NConstants.LOGIN,
+					DisplayDimension.dim(400, DisplayUnit.PIXEL),
+					DisplayDimension.dim(300, DisplayUnit.PIXEL));
+				return login.open(executionContext);
+			});
 		} else {
 			StringBuilder out = new StringBuilder();
 			try {

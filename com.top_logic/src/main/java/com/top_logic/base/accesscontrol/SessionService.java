@@ -25,6 +25,7 @@ import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.basic.InteractionContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.SubSessionContext;
+import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
@@ -338,8 +339,7 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 
     /**
 	 * <p>
-	 * This method creates a new session for the given request and binds the given user to it. This
-	 * method should be called by the {@link LoginPageServlet} only.
+	 * This method creates a new session for the given request and binds the given user to it.
 	 * </p>
 	 *
 	 * @param request
@@ -349,6 +349,7 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 	 * @param aUser
 	 *        Owner of the new session
 	 */
+	@FrameworkInternal
 	public HttpSession loginUser(HttpServletRequest request, HttpServletResponse response, Person aUser) {
 		return login(request, response, aUser);
     }

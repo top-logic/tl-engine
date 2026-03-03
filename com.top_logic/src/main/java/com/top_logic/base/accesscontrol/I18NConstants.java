@@ -154,6 +154,13 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 CHANGED_PASSWORD__USER;
 
+	/**
+	 * @en Unable to set cookies
+	 * @tooltip It is not possible to set cookies. Please check the browser settings.
+	 */
+	@CalledFromJSP
+	public static ResKey ERROR_SET_COOKIES;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

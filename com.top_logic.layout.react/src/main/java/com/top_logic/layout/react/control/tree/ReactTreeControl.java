@@ -6,9 +6,11 @@
 package com.top_logic.layout.react.control.tree;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.Control;
@@ -181,23 +183,42 @@ public class ReactTreeControl extends ReactControl {
 	// -- State building --
 
 	private void buildFullState() {
-		cleanupNodeControls();
+		// Collect the new set of visible nodes and build their state.
 		List<Map<String, Object>> nodeStates = new ArrayList<>();
+		Set<Object> newVisibleNodes = new HashSet<>();
 		Object root = _treeModel.getRoot();
 		if (_treeModel.isRootVisible()) {
+			newVisibleNodes.add(root);
 			addNodeState(nodeStates, root, 0);
 		}
 		if (!_treeModel.isRootVisible() || _treeModel.isExpanded(root)) {
-			addChildStates(nodeStates, root, _treeModel.isRootVisible() ? 1 : 0);
+			addChildStates(nodeStates, root, _treeModel.isRootVisible() ? 1 : 0, newVisibleNodes);
 		}
+
+		// Remove controls for nodes that are no longer visible.
+		List<Object> toRemove = new ArrayList<>();
+		for (Object cachedNode : _nodeControlCache.keySet()) {
+			if (!newVisibleNodes.contains(cachedNode)) {
+				toRemove.add(cachedNode);
+			}
+		}
+		for (Object node : toRemove) {
+			ReactControl control = _nodeControlCache.remove(node);
+			if (control != null) {
+				unregisterChildControl(control);
+			}
+		}
+
 		putState(NODES, nodeStates);
 	}
 
-	private void addChildStates(List<Map<String, Object>> nodeStates, Object parent, int depth) {
+	private void addChildStates(List<Map<String, Object>> nodeStates, Object parent, int depth,
+			Set<Object> visibleNodes) {
 		for (Object child : _treeModel.getChildren(parent)) {
+			visibleNodes.add(child);
 			addNodeState(nodeStates, child, depth);
 			if (_treeModel.isExpanded(child)) {
-				addChildStates(nodeStates, child, depth + 1);
+				addChildStates(nodeStates, child, depth + 1, visibleNodes);
 			}
 		}
 	}

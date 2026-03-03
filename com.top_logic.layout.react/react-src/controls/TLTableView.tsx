@@ -226,8 +226,9 @@ const TLTableView: React.FC<TLCellProps> = () => {
               />
             </div>
           )}
-          {columns.map((col) => {
+          {columns.map((col, colIdx) => {
             const w = getColWidth(col);
+            const isLast = colIdx === columns.length - 1;
             let cellClass = 'tlTableView__headerCell';
             if (col.sortable) cellClass += ' tlTableView__headerCell--sortable';
             if (dragOver && dragOver.column === col.name) {
@@ -237,7 +238,9 @@ const TLTableView: React.FC<TLCellProps> = () => {
               <div
                 key={col.name}
                 className={cellClass}
-                style={{ width: w, minWidth: w, position: 'relative' }}
+                style={isLast
+                  ? { flex: '1 0 auto', minWidth: w, position: 'relative' }
+                  : { width: w, minWidth: w, position: 'relative' }}
                 draggable={true}
                 onClick={col.sortable ? () => handleSort(col.name, col.sortDirection) : undefined}
                 onDragStart={(e) => handleDragStart(col.name, e)}
@@ -260,7 +263,7 @@ const TLTableView: React.FC<TLCellProps> = () => {
           })}
           {/* Drop zone for reordering past the last column */}
           <div
-            style={{ flex: '1 0 0', minHeight: '100%' }}
+            style={{ flex: '0 0 0', minHeight: '100%' }}
             onDragOver={(e) => {
               if (!dragColumnRef.current) return;
               if (columns.length > 0) {
@@ -296,7 +299,8 @@ const TLTableView: React.FC<TLCellProps> = () => {
                 position: 'absolute',
                 top: row.index * rowHeight,
                 height: rowHeight,
-                width: tableWidth,
+                minWidth: tableWidth,
+                width: '100%',
               }}
               onClick={(e) => handleRowClick(row.index, e)}
             >
@@ -314,13 +318,16 @@ const TLTableView: React.FC<TLCellProps> = () => {
                   />
                 </div>
               )}
-              {columns.map((col) => {
+              {columns.map((col, colIdx) => {
                 const w = getColWidth(col);
+                const isLast = colIdx === columns.length - 1;
                 return (
                   <div
                     key={col.name}
                     className="tlTableView__cell"
-                    style={{ width: w, minWidth: w }}
+                    style={isLast
+                      ? { flex: '1 0 auto', minWidth: w }
+                      : { width: w, minWidth: w }}
                   >
                     <TLChild control={row.cells[col.name]} />
                   </div>

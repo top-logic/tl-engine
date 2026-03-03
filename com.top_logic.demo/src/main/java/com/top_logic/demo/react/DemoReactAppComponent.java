@@ -108,18 +108,21 @@ public class DemoReactAppComponent extends LayoutComponent {
 		}
 
 		// Root flex column (full height).
-		out.beginTag("div");
+		out.beginBeginTag("div");
 		out.writeAttribute("style", "display:flex;flex-direction:column;height:100%");
+		out.endBeginTag();
 
 		_appBar.write(displayContext, out);
 
-		out.beginTag("div");
+		out.beginBeginTag("div");
 		out.writeAttribute("style", "padding:0.25rem 1rem");
+		out.endBeginTag();
 		_breadcrumb.write(displayContext, out);
 		out.endTag("div");
 
-		out.beginTag("div");
+		out.beginBeginTag("div");
 		out.writeAttribute("style", "flex:1;min-height:0;overflow:hidden");
+		out.endBeginTag();
 		_sidebar.write(displayContext, out);
 		out.endTag("div");
 

@@ -21,8 +21,11 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
-import com.top_logic.layout.react.ReactControl;
+import com.top_logic.layout.form.FormField;
+import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.react.control.ReactButtonControl;
+import com.top_logic.layout.react.control.form.ReactFormFieldControl;
+import com.top_logic.layout.react.control.form.ReactSelectFormFieldControl;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.layout.ReactFormGroupControl;
 import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
@@ -36,7 +39,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * Demonstrates {@link ReactFormLayoutControl} with responsive columns,
  * {@link ReactFormGroupControl} with collapsible sections, and
  * {@link ReactFormFieldChromeControl} with label, error, help text, required indicator, and dirty
- * state around React field controls.
+ * state around React field controls backed by proper {@link FormField} instances.
  * </p>
  */
 public class DemoReactFormFieldsComponent extends LayoutComponent {
@@ -72,29 +75,35 @@ public class DemoReactFormFieldsComponent extends LayoutComponent {
 	private ReactFormLayoutControl createFormLayout() {
 		// -- Personal Information group (collapsible, subtle border, full line) --
 
-		ReactControl nameInput = createField("TLTextInput", "value", "John Doe");
-		ReactFormFieldChromeControl nameField = new ReactFormFieldChromeControl(
+		FormField nameField = FormFactory.newStringField("name", "John Doe", false);
+		ReactFormFieldControl nameInput = new ReactFormFieldControl(nameField, "TLTextInput");
+		ReactFormFieldChromeControl nameChrome = new ReactFormFieldChromeControl(
 			"Full Name", true, false, null, "Enter your full legal name", null, false, true, nameInput);
 
-		ReactControl emailInput = createField("TLTextInput", "value", "john@example.com");
-		ReactFormFieldChromeControl emailField = new ReactFormFieldChromeControl(
+		FormField emailField = FormFactory.newStringField("email", "john@example.com", false);
+		ReactFormFieldControl emailInput = new ReactFormFieldControl(emailField, "TLTextInput");
+		ReactFormFieldChromeControl emailChrome = new ReactFormFieldChromeControl(
 			"Email", true, true, null, null, null, false, true, emailInput);
 
-		ReactControl phoneInput = createField("TLTextInput", "value", "");
-		ReactFormFieldChromeControl phoneField = new ReactFormFieldChromeControl(
+		FormField phoneField = FormFactory.newStringField("phone", "", false);
+		ReactFormFieldControl phoneInput = new ReactFormFieldControl(phoneField, "TLTextInput");
+		ReactFormFieldChromeControl phoneChrome = new ReactFormFieldChromeControl(
 			"Phone", false, false, "Please enter a valid phone number", null, null, false, true, phoneInput);
 
-		ReactControl dobInput = createField("TLDatePicker", "value", "1990-06-15");
-		ReactFormFieldChromeControl dobField = new ReactFormFieldChromeControl(
+		FormField dobField = FormFactory.newStringField("dob", "1990-06-15", false);
+		ReactFormFieldControl dobInput = new ReactFormFieldControl(dobField, "TLDatePicker");
+		ReactFormFieldChromeControl dobChrome = new ReactFormFieldChromeControl(
 			"Date of Birth", false, false, null, null, null, false, true, dobInput);
 
-		ReactControl bioInput = createField("TLTextInput", "value", "Software developer with 10 years experience...");
-		ReactFormFieldChromeControl bioField = new ReactFormFieldChromeControl(
+		FormField bioField = FormFactory.newStringField("bio", "Software developer with 10 years experience...", false);
+		ReactFormFieldControl bioInput = new ReactFormFieldControl(bioField, "TLTextInput");
+		ReactFormFieldChromeControl bioChrome = new ReactFormFieldChromeControl(
 			"Biography", false, false, null, "A short description of yourself",
 			"top", true, true, bioInput);
 
-		ReactControl activeInput = createField("TLCheckbox", "value", Boolean.TRUE);
-		ReactFormFieldChromeControl activeField = new ReactFormFieldChromeControl(
+		FormField activeField = FormFactory.newBooleanField("active", Boolean.TRUE, false);
+		ReactFormFieldControl activeInput = new ReactFormFieldControl(activeField, "TLCheckbox");
+		ReactFormFieldChromeControl activeChrome = new ReactFormFieldChromeControl(
 			"Active", false, false, null, null, null, false, true, activeInput);
 
 		ReactButtonControl editButton = new ReactButtonControl("Edit", c -> HandlerResult.DEFAULT_RESULT);
@@ -102,34 +111,39 @@ public class DemoReactFormFieldsComponent extends LayoutComponent {
 
 		ReactFormGroupControl personalGroup = new ReactFormGroupControl(
 			"Personal Information", true, false, "subtle", true, List.of(editButton, resetButton),
-			List.of(nameField, emailField, phoneField, dobField, bioField, activeField));
+			List.of(nameChrome, emailChrome, phoneChrome, dobChrome, bioChrome, activeChrome));
 
 		// -- Preferences group (outlined border, not collapsible) --
 
-		ReactControl langInput = createSelectField(
-			createOption("en", "English"),
-			createOption("de", "Deutsch"),
-			createOption("fr", "Fran\u00e7ais"),
-			createOption("es", "Espa\u00f1ol"));
-		ReactFormFieldChromeControl langField = new ReactFormFieldChromeControl(
+		FormField langField = FormFactory.newStringField("language", "en", false);
+		ReactSelectFormFieldControl langInput = new ReactSelectFormFieldControl(langField,
+			createOptionList(
+				createOption("en", "English"),
+				createOption("de", "Deutsch"),
+				createOption("fr", "Fran\u00e7ais"),
+				createOption("es", "Espa\u00f1ol")));
+		ReactFormFieldChromeControl langChrome = new ReactFormFieldChromeControl(
 			"Language", true, false, null, "Select your preferred language", null, false, true, langInput);
 
-		ReactControl notifInput = createField("TLNumberInput", "value", Integer.valueOf(5));
-		ReactFormFieldChromeControl notifField = new ReactFormFieldChromeControl(
+		FormField notifField = FormFactory.newIntField("notificationLimit", Integer.valueOf(5), false);
+		ReactFormFieldControl notifInput = new ReactFormFieldControl(notifField, "TLNumberInput");
+		ReactFormFieldChromeControl notifChrome = new ReactFormFieldChromeControl(
 			"Notification Limit", false, false, null, "Maximum notifications per day", null, false, true, notifInput);
 
-		ReactControl themeInput = createSelectField(
-			createOption("light", "Light"),
-			createOption("dark", "Dark"),
-			createOption("system", "System Default"));
-		ReactFormFieldChromeControl themeField = new ReactFormFieldChromeControl(
+		FormField themeField = FormFactory.newStringField("theme", "light", false);
+		ReactSelectFormFieldControl themeInput = new ReactSelectFormFieldControl(themeField,
+			createOptionList(
+				createOption("light", "Light"),
+				createOption("dark", "Dark"),
+				createOption("system", "System Default")));
+		ReactFormFieldChromeControl themeChrome = new ReactFormFieldChromeControl(
 			"Theme", false, false, null, null, null, false, true, themeInput);
 
 		ReactButtonControl addPrefButton = new ReactButtonControl("Add", c -> HandlerResult.DEFAULT_RESULT);
 
 		ReactFormGroupControl prefsGroup = new ReactFormGroupControl(
 			"Preferences", true, false, "outlined", true, List.of(addPrefButton),
-			List.of(langField, notifField, themeField));
+			List.of(langChrome, notifChrome, themeChrome));
 
 		// -- Top-level form layout: 3 columns, auto label position --
 
@@ -137,22 +151,13 @@ public class DemoReactFormFieldsComponent extends LayoutComponent {
 			List.of(personalGroup, prefsGroup));
 	}
 
-	private static ReactControl createField(String module, String stateKey, Object value) {
-		ReactControl control = new ReactControl(null, module);
-		control.getReactState().put(stateKey, value);
-		control.getReactState().put("editable", Boolean.TRUE);
-		return control;
-	}
-
-	private static ReactControl createSelectField(Map<String, Object>... options) {
-		ReactControl control = new ReactControl(null, "TLSelect");
-		List<Map<String, Object>> optionList = new ArrayList<>();
+	@SafeVarargs
+	private static List<Map<String, Object>> createOptionList(Map<String, Object>... options) {
+		List<Map<String, Object>> list = new ArrayList<>();
 		for (Map<String, Object> option : options) {
-			optionList.add(option);
+			list.add(option);
 		}
-		control.getReactState().put("options", optionList);
-		control.getReactState().put("editable", Boolean.TRUE);
-		return control;
+		return list;
 	}
 
 	private static Map<String, Object> createOption(String value, String label) {

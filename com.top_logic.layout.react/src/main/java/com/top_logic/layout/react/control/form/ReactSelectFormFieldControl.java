@@ -5,7 +5,6 @@
  */
 package com.top_logic.layout.react.control.form;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -38,6 +37,7 @@ public class ReactSelectFormFieldControl extends ReactFormFieldControl {
 	public ReactSelectFormFieldControl(FormField model, List<Map<String, Object>> options) {
 		super(model, "TLSelect");
 		_options = options;
+		putState(OPTIONS, _options);
 	}
 
 	/**
@@ -48,14 +48,7 @@ public class ReactSelectFormFieldControl extends ReactFormFieldControl {
 	 */
 	public void setOptions(List<Map<String, Object>> options) {
 		_options = options;
-		sendPatch(Collections.singletonMap(OPTIONS, _options));
-	}
-
-	@Override
-	protected Map<String, Object> buildFullFieldState() {
-		Map<String, Object> state = super.buildFullFieldState();
-		state.put(OPTIONS, _options);
-		return state;
+		putState(OPTIONS, _options);
 	}
 
 }

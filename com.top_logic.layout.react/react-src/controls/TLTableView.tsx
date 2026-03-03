@@ -7,6 +7,7 @@ interface ColumnState {
   width: number;
   sortable: boolean;
   sortDirection?: 'asc' | 'desc';
+  sortPriority?: number;
 }
 
 interface RowState {
@@ -33,6 +34,11 @@ const TLTableView: React.FC<TLCellProps> = () => {
   const selectionMode = (state.selectionMode as string) ?? 'single';
   const selectedCount = (state.selectedCount as number) ?? 0;
   const frozenColumnCount = (state.frozenColumnCount as number) ?? 0;
+
+  const sortedColumnCount = React.useMemo(
+    () => columns.filter((c) => c.sortPriority && c.sortPriority > 0).length,
+    [columns]
+  );
 
   const isMulti = selectionMode === 'multi';
   const checkboxWidth = 40;
@@ -126,7 +132,7 @@ const TLTableView: React.FC<TLCellProps> = () => {
   }, [sendCommand, rowHeight]);
 
   // -- Sort handler --
-  const handleSort = React.useCallback((columnName: string, currentDirection?: string) => {
+  const handleSort = React.useCallback((columnName: string, currentDirection: string | undefined, event: React.MouseEvent) => {
     if (justResizedRef.current) return;
     let newDirection: string;
     if (!currentDirection || currentDirection === 'desc') {
@@ -134,7 +140,8 @@ const TLTableView: React.FC<TLCellProps> = () => {
     } else {
       newDirection = 'desc';
     }
-    sendCommand('sort', { column: columnName, direction: newDirection });
+    const mode = event.shiftKey ? 'add' : 'replace';
+    sendCommand('sort', { column: columnName, direction: newDirection, mode });
   }, [sendCommand]);
 
   // -- Drag reorder handlers --
@@ -300,7 +307,7 @@ const TLTableView: React.FC<TLCellProps> = () => {
                   ...(isFrozen ? { left: frozenOffsets[colIdx], zIndex: 2 } : {}),
                 }}
                 draggable={true}
-                onClick={col.sortable ? () => handleSort(col.name, col.sortDirection) : undefined}
+                onClick={col.sortable ? (e) => handleSort(col.name, col.sortDirection, e) : undefined}
                 onDragStart={(e) => handleDragStart(col.name, e)}
                 onDragOver={(e) => handleDragOver(col.name, e)}
                 onDrop={handleDrop}
@@ -310,6 +317,9 @@ const TLTableView: React.FC<TLCellProps> = () => {
                 {col.sortDirection && (
                   <span className="tlTableView__sortIndicator">
                     {col.sortDirection === 'asc' ? '\u25B2' : '\u25BC'}
+                    {sortedColumnCount > 1 && col.sortPriority != null && col.sortPriority > 0 && (
+                      <span className="tlTableView__sortPriority">{col.sortPriority}</span>
+                    )}
                   </span>
                 )}
                 <div

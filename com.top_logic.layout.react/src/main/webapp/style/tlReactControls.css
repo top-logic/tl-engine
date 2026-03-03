@@ -1833,3 +1833,108 @@ button.tlMenu__item--disabled:hover {
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
+
+/* --- TLTableView ----------------------------------------------------------- */
+
+.tlTableView {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	height: 100%;
+	font-family: var(--font-family);
+	overflow: hidden;
+}
+
+.tlTableView__header {
+	flex-shrink: 0;
+	overflow: hidden;
+	border-bottom: 2px solid var(--border-subtle, #e0e0e0);
+}
+
+.tlTableView__headerRow {
+	display: flex;
+}
+
+.tlTableView__headerCell {
+	display: flex;
+	align-items: center;
+	padding: 0 var(--spacing-03, 0.5rem);
+	height: 2.5rem;
+	font-size: var(--body-compact-01-font-size, 0.875rem);
+	font-weight: 600;
+	color: var(--text-primary, #161616);
+	user-select: none;
+	box-sizing: border-box;
+	border-right: 1px solid var(--border-subtle, #e0e0e0);
+}
+
+.tlTableView__headerCell:last-child {
+	border-right: none;
+}
+
+.tlTableView__headerCell--sortable {
+	cursor: pointer;
+}
+
+.tlTableView__headerCell--sortable:hover {
+	background: var(--layer-hover, #e8e8e8);
+}
+
+.tlTableView__headerLabel {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.tlTableView__sortIndicator {
+	margin-left: var(--spacing-02, 0.25rem);
+	font-size: 0.625rem;
+	color: var(--text-secondary, #525252);
+	flex-shrink: 0;
+}
+
+.tlTableView__body {
+	flex: 1;
+	overflow-y: auto;
+	overflow-x: auto;
+}
+
+.tlTableView__row {
+	display: flex;
+	border-bottom: 1px solid var(--border-subtle, #e0e0e0);
+	box-sizing: border-box;
+	cursor: pointer;
+}
+
+.tlTableView__row:hover {
+	background: var(--layer-hover, #e8e8e8);
+}
+
+.tlTableView__row--selected {
+	background: var(--layer-selected-01, #d0e2ff);
+}
+
+.tlTableView__row--selected:hover {
+	background: var(--layer-selected-hover-01, #b8d4ff);
+}
+
+.tlTableView__cell {
+	display: flex;
+	align-items: center;
+	padding: 0 var(--spacing-03, 0.5rem);
+	overflow: hidden;
+	box-sizing: border-box;
+	border-right: 1px solid var(--border-subtle, #e0e0e0);
+}
+
+.tlTableView__cell:last-child {
+	border-right: none;
+}
+
+.tlTextCell {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: var(--body-compact-01-font-size, 0.875rem);
+	color: var(--text-primary, #161616);
+}

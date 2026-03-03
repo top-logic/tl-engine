@@ -96,6 +96,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey PHOTO_UPLOAD_FAILED;
 
 	/**
+	 * @en Breadcrumb item navigated.
+	 */
+	public static ResKey REACT_BREADCRUMB_NAVIGATE;
+
+	/**
 	 * @en Sidebar item selected.
 	 */
 	public static ResKey REACT_SIDEBAR_ITEM_SELECTED;

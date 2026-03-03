@@ -11,6 +11,7 @@ import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
 import com.top_logic.basic.util.ResKey3;
 import com.top_logic.layout.I18NConstantsBase;
+import com.top_logic.layout.ResPrefix;
 
 /**
  * Internationalization constants for this package.
@@ -89,6 +90,15 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en User "{0}" reset personal configuration.
 	 */
 	public static ResKey1 RESET_PERSONAL_CONFIG__USER;
+
+	/** ResPrefix that is used by the form to change the password for a user. */
+	public static ResPrefix CHANGE_PASSWORD_FORM;
+
+	/**
+	 * @en Change password
+	 * @tooltip Changes the password of the selected user account.
+	 */
+	public static ResKey CHANGE_PASSWORD_COMMAND;
 
 	static {
 		initConstants(I18NConstants.class);

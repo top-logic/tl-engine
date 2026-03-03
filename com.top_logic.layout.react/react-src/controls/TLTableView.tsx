@@ -44,6 +44,13 @@ const TLTableView: React.FC<TLCellProps> = () => {
   const resizeRef = React.useRef<{ column: string; startX: number; startWidth: number } | null>(null);
   const justResizedRef = React.useRef(false);
 
+  // Clear overrides when server pushes updated columns (resize confirmed).
+  React.useEffect(() => {
+    if (!resizeRef.current) {
+      setColumnWidthOverrides({});
+    }
+  }, [columns]);
+
   const getColWidth = (col: ColumnState): number => {
     return columnWidthOverrides[col.name] ?? col.width;
   };
@@ -70,11 +77,8 @@ const TLTableView: React.FC<TLCellProps> = () => {
       if (info) {
         const finalWidth = Math.max(MIN_COL_WIDTH, info.startWidth + (e.clientX - info.startX));
         sendCommand('columnResize', { column: info.column, width: finalWidth });
-        setColumnWidthOverrides((prev) => {
-          const next = { ...prev };
-          delete next[info.column];
-          return next;
-        });
+        // Keep the override in place — it will be naturally superseded
+        // when the server pushes the updated column width via SSE.
         resizeRef.current = null;
         justResizedRef.current = true;
         requestAnimationFrame(() => { justResizedRef.current = false; });

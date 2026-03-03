@@ -53,10 +53,10 @@ const TLFormField: React.FC<TLCellProps> = ({ controlId }) => {
 
   return (
     <div id={controlId} className={className}>
-      {dirty && <div className="tlFormField__dirtyBar" />}
       <div className="tlFormField__label">
         <span className="tlFormField__labelText">{label}</span>
         {required && !readOnly && <span className="tlFormField__required">*</span>}
+        {dirty && <span className="tlFormField__dirtyDot" />}
         {helpText && !readOnly && (
           <button type="button" className="tlFormField__helpIcon" onClick={toggleHelp}
             aria-label="Help">

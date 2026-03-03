@@ -1299,3 +1299,49 @@ button.tlSidebar__flyoutItem:focus-visible {
 .tlGrid--gap-compact { gap: var(--spacing-02); }
 .tlGrid--gap-default { gap: var(--spacing-04); }
 .tlGrid--gap-loose   { gap: var(--spacing-06); }
+
+/* --- TLCard ---------------------------------------------------------------- */
+
+.tlCard {
+	border-radius: var(--border-radius-02, 4px);
+	font-family: var(--font-family);
+	background: var(--layer-01);
+	overflow: hidden;
+}
+
+.tlCard--outlined {
+	border: 1px solid var(--border-subtle);
+}
+
+.tlCard--elevated {
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.tlCard__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: var(--spacing-03) var(--spacing-04);
+	border-bottom: 1px solid var(--border-subtle);
+}
+
+.tlCard__title {
+	font-weight: 600;
+	font-size: var(--heading-compact-02-font-size);
+	line-height: var(--heading-compact-02-line-height);
+	color: var(--text-primary);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.tlCard__headerActions {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-01);
+	flex-shrink: 0;
+}
+
+.tlCard__body--pad-none    { padding: 0; }
+.tlCard__body--pad-compact { padding: var(--spacing-03); }
+.tlCard__body--pad-default { padding: var(--spacing-04); }

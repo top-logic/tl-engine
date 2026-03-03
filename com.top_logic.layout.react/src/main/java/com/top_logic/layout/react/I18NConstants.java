@@ -140,6 +140,16 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey REACT_SNACKBAR_DISMISS;
 
+	/**
+	 * @en Menu item selected.
+	 */
+	public static ResKey REACT_MENU_SELECT;
+
+	/**
+	 * @en Menu closed.
+	 */
+	public static ResKey REACT_MENU_CLOSE;
+
 	// -- Sidebar client-side i18n keys --
 
 	/**

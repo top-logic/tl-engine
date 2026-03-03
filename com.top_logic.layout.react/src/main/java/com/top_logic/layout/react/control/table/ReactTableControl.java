@@ -66,7 +66,8 @@ public class ReactTableControl extends ReactControl {
 		new ScrollCommand(),
 		new SortCommand(),
 		new SelectCommand(),
-		new SelectAllCommand());
+		new SelectAllCommand(),
+		new ColumnResizeCommand());
 
 	// -- Fields --
 
@@ -448,6 +449,43 @@ public class ReactTableControl extends ReactControl {
 			}
 
 			table.updateViewport(table._viewportStart, table._viewportCount);
+			return HandlerResult.DEFAULT_RESULT;
+		}
+	}
+
+	/**
+	 * Handles column resize from the client.
+	 */
+	static class ColumnResizeCommand extends ControlCommand {
+
+		/** Minimum column width in pixels. */
+		private static final int MIN_WIDTH = 50;
+
+		ColumnResizeCommand() {
+			super("columnResize");
+		}
+
+		@Override
+		public ResKey getI18NKey() {
+			return ResKey.legacy("react.table.columnResize");
+		}
+
+		@Override
+		protected HandlerResult execute(DisplayContext context, Control control,
+				Map<String, Object> arguments) {
+			ReactTableControl table = (ReactTableControl) control;
+			String column = (String) arguments.get("column");
+			int width = Math.max(MIN_WIDTH, ((Number) arguments.get("width")).intValue());
+
+			for (ColumnDef col : table._columnDefs) {
+				if (col.getName().equals(column)) {
+					col.setWidth(width);
+					break;
+				}
+			}
+
+			// Push updated column definitions to client.
+			table.putState(COLUMNS, table.buildColumnsState());
 			return HandlerResult.DEFAULT_RESULT;
 		}
 	}

@@ -16,19 +16,11 @@ interface RowState {
   cells: Record<string, unknown>;
 }
 
+const MIN_COL_WIDTH = 50;
+
 /**
  * React table component with virtual scrolling, server-driven cell controls,
- * and multi-selection with checkbox column.
- *
- * State:
- * - columns: ColumnState[]
- * - totalRowCount: number
- * - viewportStart: number
- * - rows: RowState[]
- * - rowHeight: number
- * - selectionMode: 'single' | 'multi'
- * - selectionForced: boolean
- * - selectedCount: number
+ * multi-selection with checkbox column, and column resize.
  */
 const TLTableView: React.FC<TLCellProps> = () => {
   const state = useTLState();
@@ -47,8 +39,50 @@ const TLTableView: React.FC<TLCellProps> = () => {
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = React.useRef<number | null>(null);
 
+  // -- Resize state --
+  const [columnWidthOverrides, setColumnWidthOverrides] = React.useState<Record<string, number>>({});
+  const resizeRef = React.useRef<{ column: string; startX: number; startWidth: number } | null>(null);
+
+  const getColWidth = (col: ColumnState): number => {
+    return columnWidthOverrides[col.name] ?? col.width;
+  };
+
   const totalHeight = totalRowCount * rowHeight;
 
+  // -- Resize handlers --
+  const handleResizeStart = React.useCallback((columnName: string, colWidth: number, event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    resizeRef.current = { column: columnName, startX: event.clientX, startWidth: colWidth };
+
+    const onMouseMove = (e: MouseEvent) => {
+      const info = resizeRef.current;
+      if (!info) return;
+      const newWidth = Math.max(MIN_COL_WIDTH, info.startWidth + (e.clientX - info.startX));
+      setColumnWidthOverrides((prev) => ({ ...prev, [info.column]: newWidth }));
+    };
+
+    const onMouseUp = (e: MouseEvent) => {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+      const info = resizeRef.current;
+      if (info) {
+        const finalWidth = Math.max(MIN_COL_WIDTH, info.startWidth + (e.clientX - info.startX));
+        sendCommand('columnResize', { column: info.column, width: finalWidth });
+        setColumnWidthOverrides((prev) => {
+          const next = { ...prev };
+          delete next[info.column];
+          return next;
+        });
+        resizeRef.current = null;
+      }
+    };
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  }, [sendCommand]);
+
+  // -- Scroll handler --
   const handleScroll = React.useCallback(() => {
     if (scrollTimeoutRef.current !== null) {
       clearTimeout(scrollTimeoutRef.current);
@@ -63,6 +97,7 @@ const TLTableView: React.FC<TLCellProps> = () => {
     }, 80);
   }, [sendCommand, rowHeight]);
 
+  // -- Sort handler --
   const handleSort = React.useCallback((columnName: string, currentDirection?: string) => {
     let newDirection: string;
     if (!currentDirection || currentDirection === 'desc') {
@@ -73,6 +108,7 @@ const TLTableView: React.FC<TLCellProps> = () => {
     sendCommand('sort', { column: columnName, direction: newDirection });
   }, [sendCommand]);
 
+  // -- Selection handlers --
   const handleRowClick = React.useCallback((rowIndex: number, event: React.MouseEvent) => {
     if (event.shiftKey) {
       event.preventDefault();
@@ -94,14 +130,13 @@ const TLTableView: React.FC<TLCellProps> = () => {
     sendCommand('selectAll', { selected: !allSelected });
   }, [sendCommand, selectedCount, totalRowCount]);
 
-  const tableWidth = columns.reduce((sum, col) => sum + col.width, 0)
+  // -- Computed values --
+  const tableWidth = columns.reduce((sum, col) => sum + getColWidth(col), 0)
     + (isMulti ? checkboxWidth : 0);
 
-  // Header checkbox state.
   const allSelected = selectedCount === totalRowCount && totalRowCount > 0;
   const someSelected = selectedCount > 0 && selectedCount < totalRowCount;
 
-  // Ref for indeterminate state (cannot set via JSX attribute).
   const headerCheckboxRef = React.useCallback((el: HTMLInputElement | null) => {
     if (el) {
       el.indeterminate = someSelected;
@@ -125,21 +160,28 @@ const TLTableView: React.FC<TLCellProps> = () => {
               />
             </div>
           )}
-          {columns.map((col) => (
-            <div
-              key={col.name}
-              className={'tlTableView__headerCell' + (col.sortable ? ' tlTableView__headerCell--sortable' : '')}
-              style={{ width: col.width, minWidth: col.width }}
-              onClick={col.sortable ? () => handleSort(col.name, col.sortDirection) : undefined}
-            >
-              <span className="tlTableView__headerLabel">{col.label}</span>
-              {col.sortDirection && (
-                <span className="tlTableView__sortIndicator">
-                  {col.sortDirection === 'asc' ? '\u25B2' : '\u25BC'}
-                </span>
-              )}
-            </div>
-          ))}
+          {columns.map((col) => {
+            const w = getColWidth(col);
+            return (
+              <div
+                key={col.name}
+                className={'tlTableView__headerCell' + (col.sortable ? ' tlTableView__headerCell--sortable' : '')}
+                style={{ width: w, minWidth: w, position: 'relative' }}
+                onClick={col.sortable ? () => handleSort(col.name, col.sortDirection) : undefined}
+              >
+                <span className="tlTableView__headerLabel">{col.label}</span>
+                {col.sortDirection && (
+                  <span className="tlTableView__sortIndicator">
+                    {col.sortDirection === 'asc' ? '\u25B2' : '\u25BC'}
+                  </span>
+                )}
+                <div
+                  className="tlTableView__resizeHandle"
+                  onMouseDown={(e) => handleResizeStart(col.name, w, e)}
+                />
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -180,15 +222,18 @@ const TLTableView: React.FC<TLCellProps> = () => {
                   />
                 </div>
               )}
-              {columns.map((col) => (
-                <div
-                  key={col.name}
-                  className="tlTableView__cell"
-                  style={{ width: col.width, minWidth: col.width }}
-                >
-                  <TLChild control={row.cells[col.name]} />
-                </div>
-              ))}
+              {columns.map((col) => {
+                const w = getColWidth(col);
+                return (
+                  <div
+                    key={col.name}
+                    className="tlTableView__cell"
+                    style={{ width: w, minWidth: w }}
+                  >
+                    <TLChild control={row.cells[col.name]} />
+                  </div>
+                );
+              })}
             </div>
           ))}
         </div>

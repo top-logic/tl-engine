@@ -47,6 +47,7 @@ import TLTableView from './controls/TLTableView';
 import TLFormLayout from './controls/TLFormLayout';
 import TLFormGroup from './controls/TLFormGroup';
 import TLFormField from './controls/TLFormField';
+import TLTreeView from './controls/TLTreeView';
 
 register('TLButton', TLButton);
 register('TLToggleButton', TLToggleButton);
@@ -86,3 +87,4 @@ register('TLTableView', TLTableView);
 register('TLFormLayout', TLFormLayout);
 register('TLFormGroup', TLFormGroup);
 register('TLFormField', TLFormField);
+register('TLTreeView', TLTreeView);

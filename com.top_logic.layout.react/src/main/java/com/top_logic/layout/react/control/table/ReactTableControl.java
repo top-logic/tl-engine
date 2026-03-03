@@ -366,16 +366,20 @@ public class ReactTableControl extends ReactControl {
 
 			if ("multi".equals(table._selectionMode)) {
 				if (shiftKey && table._selectionAnchor >= 0) {
-					// Range selection from anchor to clicked row.
+					// Additive/subtractive range from anchor to clicked row.
 					int from = Math.min(table._selectionAnchor, rowIndex);
 					int to = Math.max(table._selectionAnchor, rowIndex);
-					if (!ctrlKey) {
-						// Plain shift: replace selection with range.
-						table._selectedRows.clear();
-					}
-					// Ctrl+shift: add range to existing selection.
+					Object anchorObject = table._displayedRows.get(table._selectionAnchor);
+					boolean deselect = table._selectedRows.contains(anchorObject);
 					for (int i = from; i <= to; i++) {
-						table._selectedRows.add(table._displayedRows.get(i));
+						Object row = table._displayedRows.get(i);
+						if (deselect) {
+							if (!table._selectionForced || table._selectedRows.size() > 1) {
+								table._selectedRows.remove(row);
+							}
+						} else {
+							table._selectedRows.add(row);
+						}
 					}
 				} else if (ctrlKey) {
 					// Toggle individual row.

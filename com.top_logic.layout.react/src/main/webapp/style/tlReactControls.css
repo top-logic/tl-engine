@@ -1893,6 +1893,23 @@ button.tlMenu__item--disabled:hover {
 	flex-shrink: 0;
 }
 
+.tlTableView__sortPriority {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 0.875rem;
+	height: 0.875rem;
+	margin-left: 2px;
+	padding: 0 2px;
+	border-radius: 0.4375rem;
+	background: var(--text-secondary, #525252);
+	color: var(--text-on-color, #fff);
+	font-size: 0.5625rem;
+	font-weight: 600;
+	line-height: 1;
+	vertical-align: middle;
+}
+
 .tlTableView__body {
 	flex: 1;
 	overflow-y: auto;

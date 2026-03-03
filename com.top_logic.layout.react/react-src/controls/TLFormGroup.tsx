@@ -73,13 +73,11 @@ const TLFormGroup: React.FC<TLCellProps> = ({ controlId }) => {
           )}
         </div>
       )}
-      {!collapsed && (
-        <div className="tlFormGroup__body">
-          {children.map((child, i) => (
-            <TLChild key={i} control={child} />
-          ))}
-        </div>
-      )}
+      <div className="tlFormGroup__body">
+        {children.map((child, i) => (
+          <TLChild key={i} control={child} />
+        ))}
+      </div>
     </div>
   );
 };

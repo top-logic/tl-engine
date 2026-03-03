@@ -6,7 +6,6 @@
 package com.top_logic.demo.react;
 
 import java.io.IOException;
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -22,22 +21,20 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
-import com.top_logic.layout.form.FormField;
-import com.top_logic.layout.form.model.FormContext;
-import com.top_logic.layout.form.model.FormFactory;
-import com.top_logic.layout.react.control.form.ReactFormFieldControl;
-import com.top_logic.layout.react.control.form.ReactSelectFormFieldControl;
-import com.top_logic.mig.html.HTMLConstants;
+import com.top_logic.layout.react.ReactControl;
+import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
+import com.top_logic.layout.react.control.layout.ReactFormGroupControl;
+import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
- * Demo {@link LayoutComponent} that showcases all React form field types.
+ * Demo {@link LayoutComponent} that showcases the React form layout system.
  *
  * <p>
- * Demonstrates {@code TLTextInput}, {@code TLCheckbox}, {@code TLNumberInput}, {@code TLDatePicker}
- * and {@code TLSelect} rendered via {@link ReactFormFieldControl}, with a
- * {@link DemoFieldTogglesControl} composite React control to exercise the SSE patch handlers for
- * disabled, immutable, and mandatory state changes.
+ * Demonstrates {@link ReactFormLayoutControl} with responsive columns,
+ * {@link ReactFormGroupControl} with collapsible sections, and
+ * {@link ReactFormFieldChromeControl} with label, error, help text, required indicator, and dirty
+ * state around React field controls.
  * </p>
  */
 public class DemoReactFormFieldsComponent extends LayoutComponent {
@@ -49,7 +46,7 @@ public class DemoReactFormFieldsComponent extends LayoutComponent {
 		// No additional configuration needed.
 	}
 
-	private List<FieldDemo> _demos;
+	private ReactFormLayoutControl _formLayout;
 
 	/**
 	 * Creates a new {@link DemoReactFormFieldsComponent}.
@@ -63,84 +60,92 @@ public class DemoReactFormFieldsComponent extends LayoutComponent {
 			TagWriter out) throws IOException, ServletException {
 		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
 
-		if (_demos == null) {
-			_demos = createDemos();
+		if (_formLayout == null) {
+			_formLayout = createFormLayout();
 		}
 
-		out.beginTag(HTMLConstants.H2);
-		out.writeText("React Form Field Demos");
-		out.endTag(HTMLConstants.H2);
+		_formLayout.write(displayContext, out);
+	}
 
-		out.beginTag(HTMLConstants.PARAGRAPH);
-		out.writeText("Each field below is rendered by a React component via ReactFormFieldControl. "
-			+ "Use the toggle buttons to change field properties; changes are pushed as SSE patches.");
-		out.endTag(HTMLConstants.PARAGRAPH);
+	private ReactFormLayoutControl createFormLayout() {
+		// -- Personal Information group (collapsible, subtle border, full line) --
 
-		for (FieldDemo demo : _demos) {
-			out.beginBeginTag(HTMLConstants.DIV);
-			out.writeAttribute(HTMLConstants.CLASS_ATTR, "demoFieldGroup");
-			out.writeAttribute(HTMLConstants.STYLE_ATTR, "margin-bottom: 1.5em;");
-			out.endBeginTag();
+		ReactControl nameInput = createField("TLTextInput", "value", "John Doe");
+		ReactFormFieldChromeControl nameField = new ReactFormFieldChromeControl(
+			"Full Name", true, false, null, "Enter your full legal name", null, false, true, nameInput);
 
-			out.beginTag(HTMLConstants.H3);
-			out.writeText(demo._label);
-			out.endTag(HTMLConstants.H3);
+		ReactControl emailInput = createField("TLTextInput", "value", "john@example.com");
+		ReactFormFieldChromeControl emailField = new ReactFormFieldChromeControl(
+			"Email", true, true, null, null, null, false, true, emailInput);
 
-			demo._fieldControl.write(displayContext, out);
-			demo._togglesControl.write(displayContext, out);
+		ReactControl phoneInput = createField("TLTextInput", "value", "");
+		ReactFormFieldChromeControl phoneField = new ReactFormFieldChromeControl(
+			"Phone", false, false, "Please enter a valid phone number", null, null, false, true, phoneInput);
 
-			out.endTag(HTMLConstants.DIV);
+		ReactControl dobInput = createField("TLDatePicker", "value", "1990-06-15");
+		ReactFormFieldChromeControl dobField = new ReactFormFieldChromeControl(
+			"Date of Birth", false, false, null, null, null, false, true, dobInput);
+
+		ReactControl bioInput = createField("TLTextInput", "value", "Software developer with 10 years experience...");
+		ReactFormFieldChromeControl bioField = new ReactFormFieldChromeControl(
+			"Biography", false, false, null, "A short description of yourself",
+			"top", true, true, bioInput);
+
+		ReactControl activeInput = createField("TLCheckbox", "value", Boolean.TRUE);
+		ReactFormFieldChromeControl activeField = new ReactFormFieldChromeControl(
+			"Active", false, false, null, null, null, false, true, activeInput);
+
+		ReactFormGroupControl personalGroup = new ReactFormGroupControl(
+			"Personal Information", true, false, "subtle", true, List.of(),
+			List.of(nameField, emailField, phoneField, dobField, bioField, activeField));
+
+		// -- Preferences group (outlined border, not collapsible) --
+
+		ReactControl langInput = createSelectField(
+			createOption("en", "English"),
+			createOption("de", "Deutsch"),
+			createOption("fr", "Fran\u00e7ais"),
+			createOption("es", "Espa\u00f1ol"));
+		ReactFormFieldChromeControl langField = new ReactFormFieldChromeControl(
+			"Language", true, false, null, "Select your preferred language", null, false, true, langInput);
+
+		ReactControl notifInput = createField("TLNumberInput", "value", Integer.valueOf(5));
+		ReactFormFieldChromeControl notifField = new ReactFormFieldChromeControl(
+			"Notification Limit", false, false, null, "Maximum notifications per day", null, false, true, notifInput);
+
+		ReactControl themeInput = createSelectField(
+			createOption("light", "Light"),
+			createOption("dark", "Dark"),
+			createOption("system", "System Default"));
+		ReactFormFieldChromeControl themeField = new ReactFormFieldChromeControl(
+			"Theme", false, false, null, null, null, false, true, themeInput);
+
+		ReactFormGroupControl prefsGroup = new ReactFormGroupControl(
+			"Preferences", true, false, "outlined", true, List.of(),
+			List.of(langField, notifField, themeField));
+
+		// -- Top-level form layout: 3 columns, auto label position --
+
+		return new ReactFormLayoutControl(3, "auto", false,
+			List.of(personalGroup, prefsGroup));
+	}
+
+	private static ReactControl createField(String module, String stateKey, Object value) {
+		ReactControl control = new ReactControl(null, module);
+		control.getReactState().put(stateKey, value);
+		control.getReactState().put("editable", Boolean.TRUE);
+		return control;
+	}
+
+	private static ReactControl createSelectField(Map<String, Object>... options) {
+		ReactControl control = new ReactControl(null, "TLSelect");
+		List<Map<String, Object>> optionList = new ArrayList<>();
+		for (Map<String, Object> option : options) {
+			optionList.add(option);
 		}
-	}
-
-	private List<FieldDemo> createDemos() {
-		FormContext formContext = new FormContext(this);
-
-		List<FieldDemo> demos = new ArrayList<>();
-
-		// Text input
-		FormField textField = FormFactory.newStringField("text", "Hello World", false);
-		formContext.addMember(textField);
-		demos.add(new FieldDemo("Text Input (TLTextInput)", textField,
-			new ReactFormFieldControl(textField, "TLTextInput")));
-
-		// Checkbox
-		FormField checkboxField = FormFactory.newBooleanField("checkbox", Boolean.FALSE, false);
-		formContext.addMember(checkboxField);
-		demos.add(new FieldDemo("Checkbox (TLCheckbox)", checkboxField,
-			new ReactFormFieldControl(checkboxField, "TLCheckbox")));
-
-		// Number input (ComplexField with integer NumberFormat)
-		NumberFormat intFormat = NumberFormat.getIntegerInstance();
-		intFormat.setGroupingUsed(false);
-		FormField numberField = FormFactory.newComplexField("number", intFormat, Integer.valueOf(42), false);
-		formContext.addMember(numberField);
-		demos.add(new FieldDemo("Number Input (TLNumberInput)", numberField,
-			new ReactFormFieldControl(numberField, "TLNumberInput")));
-
-		// Date picker (string field with ISO date format for HTML date input)
-		FormField dateField = FormFactory.newStringField("date");
-		formContext.addMember(dateField);
-		demos.add(new FieldDemo("Date Picker (TLDatePicker)", dateField,
-			new ReactFormFieldControl(dateField, "TLDatePicker")));
-
-		// Select (with options passed via state)
-		FormField selectField = FormFactory.newStringField("select");
-		formContext.addMember(selectField);
-		List<Map<String, Object>> selectOptions = createSelectOptions();
-		demos.add(new FieldDemo("Select (TLSelect)", selectField,
-			new ReactSelectFormFieldControl(selectField, selectOptions)));
-
-		return demos;
-	}
-
-	private static List<Map<String, Object>> createSelectOptions() {
-		List<Map<String, Object>> options = new ArrayList<>();
-		options.add(createOption("apple", "Apple"));
-		options.add(createOption("banana", "Banana"));
-		options.add(createOption("cherry", "Cherry"));
-		options.add(createOption("date", "Date"));
-		return options;
+		control.getReactState().put("options", optionList);
+		control.getReactState().put("editable", Boolean.TRUE);
+		return control;
 	}
 
 	private static Map<String, Object> createOption(String value, String label) {
@@ -148,24 +153,6 @@ public class DemoReactFormFieldsComponent extends LayoutComponent {
 		option.put("value", value);
 		option.put("label", label);
 		return option;
-	}
-
-	/**
-	 * Groups a form field with its React field control and toggle control.
-	 */
-	private static class FieldDemo {
-
-		final String _label;
-
-		final ReactFormFieldControl _fieldControl;
-
-		final DemoFieldTogglesControl _togglesControl;
-
-		FieldDemo(String label, FormField field, ReactFormFieldControl fieldControl) {
-			_label = label;
-			_fieldControl = fieldControl;
-			_togglesControl = new DemoFieldTogglesControl(field);
-		}
 	}
 
 }

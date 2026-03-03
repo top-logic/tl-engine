@@ -744,7 +744,7 @@ const { useCallback: Z } = e, J = ({ state: t }) => {
   },
   /* @__PURE__ */ e.createElement(A, { icon: t.icon }),
   !n && /* @__PURE__ */ e.createElement("span", { className: "tlSidebar__label" }, t.label)
-), $e = ({ item: t, collapsed: n }) => /* @__PURE__ */ e.createElement("div", { className: "tlSidebar__headerItem", title: n ? t.label : void 0 }, /* @__PURE__ */ e.createElement(A, { icon: t.icon }), !n && /* @__PURE__ */ e.createElement("span", { className: "tlSidebar__label" }, t.label)), Ve = () => /* @__PURE__ */ e.createElement("hr", { className: "tlSidebar__separator" }), He = ({ item: t, activeItemId: n, collapsed: a, onSelect: r, onExecute: l, onToggleGroup: o }) => {
+), $e = ({ item: t, collapsed: n }) => n && !t.icon ? null : /* @__PURE__ */ e.createElement("div", { className: "tlSidebar__headerItem", title: n ? t.label : void 0 }, /* @__PURE__ */ e.createElement(A, { icon: t.icon }), !n && /* @__PURE__ */ e.createElement("span", { className: "tlSidebar__label" }, t.label)), Ve = () => /* @__PURE__ */ e.createElement("hr", { className: "tlSidebar__separator" }), He = ({ item: t, activeItemId: n, collapsed: a, onSelect: r, onExecute: l, onToggleGroup: o }) => {
   const [s, c] = Ue(t.expanded), i = U(() => {
     const d = !s;
     c(d), o(t.id, d);

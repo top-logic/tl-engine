@@ -55,6 +55,8 @@ public class ReactTableControl extends ReactControl {
 
 	private static final String SELECTED_COUNT = "selectedCount";
 
+	private static final String FROZEN_COLUMN_COUNT = "frozenColumnCount";
+
 	// -- Configuration --
 
 	/** Number of rows to prefetch above and below the visible area. */
@@ -100,6 +102,9 @@ public class ReactTableControl extends ReactControl {
 	/** Whether the last anchor-setting action was an add ({@code true}) or remove ({@code false}). */
 	private boolean _anchorAdded = true;
 
+	/** Number of columns frozen on the left side. */
+	private int _frozenColumnCount;
+
 	/**
 	 * Cache of cell controls for currently visible rows. Keyed by row object, then column name.
 	 */
@@ -127,6 +132,7 @@ public class ReactTableControl extends ReactControl {
 
 		putState(ROW_HEIGHT, Integer.valueOf(36));
 		putState(SELECTION_MODE, _selectionMode);
+		putState(FROZEN_COLUMN_COUNT, Integer.valueOf(0));
 		buildFullState();
 	}
 
@@ -147,6 +153,23 @@ public class ReactTableControl extends ReactControl {
 	public void setSelectionForced(boolean forced) {
 		_selectionForced = forced;
 		putState(SELECTION_FORCED, Boolean.valueOf(forced));
+	}
+
+	/**
+	 * Sets the number of columns frozen on the left side.
+	 *
+	 * <p>
+	 * The first {@code count} columns in the column list remain visible during horizontal
+	 * scrolling. In multi-select mode, the checkbox column is automatically frozen when
+	 * {@code count > 0}.
+	 * </p>
+	 *
+	 * @param count
+	 *        The number of frozen columns, or 0 for no frozen columns.
+	 */
+	public void setFrozenColumnCount(int count) {
+		_frozenColumnCount = count;
+		putState(FROZEN_COLUMN_COUNT, Integer.valueOf(count));
 	}
 
 	/**

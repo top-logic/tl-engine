@@ -139,10 +139,6 @@ const TLTableView: React.FC<TLCellProps> = () => {
     setDragOver({ column: columnName, side });
   }, []);
 
-  const handleDragLeave = React.useCallback(() => {
-    setDragOver(null);
-  }, []);
-
   const handleDrop = React.useCallback((event: React.DragEvent) => {
     event.preventDefault();
     const draggedName = dragColumnRef.current;
@@ -216,7 +212,7 @@ const TLTableView: React.FC<TLCellProps> = () => {
   return (
     <div className="tlTableView">
       {/* Header */}
-      <div className="tlTableView__header" style={{ width: tableWidth }}>
+      <div className="tlTableView__header" style={{ minWidth: tableWidth }}>
         <div className="tlTableView__headerRow">
           {isMulti && (
             <div className="tlTableView__headerCell tlTableView__checkboxCell"
@@ -246,7 +242,6 @@ const TLTableView: React.FC<TLCellProps> = () => {
                 onClick={col.sortable ? () => handleSort(col.name, col.sortDirection) : undefined}
                 onDragStart={(e) => handleDragStart(col.name, e)}
                 onDragOver={(e) => handleDragOver(col.name, e)}
-                onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
                 onDragEnd={handleDragEnd}
               >
@@ -263,6 +258,22 @@ const TLTableView: React.FC<TLCellProps> = () => {
               </div>
             );
           })}
+          {/* Drop zone for reordering past the last column */}
+          <div
+            style={{ flex: '1 0 0', minHeight: '100%' }}
+            onDragOver={(e) => {
+              if (!dragColumnRef.current) return;
+              if (columns.length > 0) {
+                const lastCol = columns[columns.length - 1];
+                if (lastCol.name !== dragColumnRef.current) {
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = 'move';
+                  setDragOver({ column: lastCol.name, side: 'right' });
+                }
+              }
+            }}
+            onDrop={handleDrop}
+          />
         </div>
       </div>
 

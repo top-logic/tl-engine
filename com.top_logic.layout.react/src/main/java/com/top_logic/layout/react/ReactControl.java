@@ -20,7 +20,6 @@ import com.top_logic.layout.basic.ControlCommand;
 import com.top_logic.layout.react.protocol.PatchEvent;
 import com.top_logic.layout.react.protocol.StateEvent;
 import com.top_logic.mig.html.HTMLConstants;
-import com.top_logic.mig.html.HTMLUtil;
 
 import de.haumacher.msgbuf.io.StringW;
 import de.haumacher.msgbuf.json.JsonWriter;
@@ -230,6 +229,9 @@ public class ReactControl extends AbstractVisibleControl implements ViewControl 
 		// Serialize state exactly once so that child controls are allocated and registered once.
 		String stateJson = toJsonString(_reactState, context);
 
+		// Write a purely declarative mount point. A static script in tl-react-bridge discovers
+		// elements with data-react-module and mounts them, keeping the page free of inline JS
+		// (CSP-friendly).
 		out.beginBeginTag(HTMLConstants.DIV);
 		writeIdAttribute(out);
 		writeControlClasses(out);
@@ -237,20 +239,6 @@ public class ReactControl extends AbstractVisibleControl implements ViewControl 
 		out.writeAttribute("data-react-state", stateJson);
 		out.endBeginTag();
 		out.endTag(HTMLConstants.DIV);
-
-		HTMLUtil.beginScriptAfterRendering(out);
-		out.append("TLReact.mount('");
-		out.append(getID());
-		out.append("', '");
-		out.append(_reactModule);
-		out.append("', ");
-		out.append(stateJson);
-		out.append(", '");
-		out.append(context.getWindowName());
-		out.append("', '");
-		out.append(context.getContextPath());
-		out.append("');");
-		HTMLUtil.endScriptAfterRendering(out);
 	}
 
 	@Override

@@ -108,6 +108,26 @@ public class ReactFormFieldChromeControl extends ReactControl {
 	}
 
 	/**
+	 * Updates the label text.
+	 *
+	 * @param label
+	 *        The new label text.
+	 */
+	public void setLabel(String label) {
+		putState(LABEL, label);
+	}
+
+	/**
+	 * Updates the help text.
+	 *
+	 * @param helpText
+	 *        The new help text, or {@code null} to clear.
+	 */
+	public void setHelpText(String helpText) {
+		putState(HELP_TEXT, helpText);
+	}
+
+	/**
 	 * Updates the error message.
 	 *
 	 * @param error

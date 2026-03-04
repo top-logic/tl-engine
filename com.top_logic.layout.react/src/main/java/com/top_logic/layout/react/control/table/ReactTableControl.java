@@ -318,15 +318,27 @@ public class ReactTableControl extends ReactControl {
 		if (colConfig == null || !colConfig.isSortable()) {
 			return null;
 		}
-		Comparator<Object> cellComparator =
-			ascending ? colConfig.getComparator() : colConfig.getDescendingComparator();
+		Comparator<Object> cellComparator;
+		if (ascending) {
+			cellComparator = colConfig.getComparator();
+		} else {
+			cellComparator = colConfig.getDescendingComparator();
+			if (cellComparator == null) {
+				// Fall back to reversing the ascending comparator, consistent with TableViewModel.
+				Comparator<Object> ascComparator = colConfig.getComparator();
+				if (ascComparator != null) {
+					cellComparator = ascComparator.reversed();
+				}
+			}
+		}
 		if (cellComparator == null) {
 			return null;
 		}
+		Comparator<Object> comparator = cellComparator;
 		return (a, b) -> {
 			Object va = getCellValue(a, columnName);
 			Object vb = getCellValue(b, columnName);
-			return cellComparator.compare(va, vb);
+			return comparator.compare(va, vb);
 		};
 	}
 

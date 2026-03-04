@@ -115,7 +115,8 @@ public class ReactTableControl extends ReactControl {
 		new SelectAllCommand(),
 		new ColumnResizeCommand(),
 		new ColumnReorderCommand(),
-		new ExpandCommand());
+		new ExpandCommand(),
+		new SetFrozenColumnCountCommand());
 
 	// -- Fields --
 
@@ -237,6 +238,15 @@ public class ReactTableControl extends ReactControl {
 	public void setFrozenColumnCount(int count) {
 		_frozenColumnCount = count;
 		putState(FROZEN_COLUMN_COUNT, Integer.valueOf(count));
+	}
+
+	/**
+	 * The current number of frozen columns.
+	 *
+	 * @see #setFrozenColumnCount(int)
+	 */
+	public int getFrozenColumnCount() {
+		return _frozenColumnCount;
 	}
 
 	/**
@@ -828,6 +838,31 @@ public class ReactTableControl extends ReactControl {
 			}
 
 			table.buildFullState();
+			return HandlerResult.DEFAULT_RESULT;
+		}
+	}
+
+	/**
+	 * Handles freeze column count changes from the client.
+	 */
+	static class SetFrozenColumnCountCommand extends ControlCommand {
+
+		SetFrozenColumnCountCommand() {
+			super("setFrozenColumnCount");
+		}
+
+		@Override
+		public ResKey getI18NKey() {
+			return ResKey.legacy("react.table.setFrozenColumnCount");
+		}
+
+		@Override
+		protected HandlerResult execute(DisplayContext context, Control control,
+				Map<String, Object> arguments) {
+			ReactTableControl table = (ReactTableControl) control;
+			int count = ((Number) arguments.get("count")).intValue();
+			count = Math.max(0, Math.min(count, table._columnDefs.size()));
+			table.setFrozenColumnCount(count);
 			return HandlerResult.DEFAULT_RESULT;
 		}
 	}

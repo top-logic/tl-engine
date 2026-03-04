@@ -8,6 +8,10 @@ package com.top_logic.layout.react.control.table;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import com.top_logic.layout.table.model.Column;
+import com.top_logic.layout.table.model.ColumnConfiguration;
+import com.top_logic.layout.table.model.TableConfiguration;
+
 /**
  * Server-side column definition that serializes to a JSON map for the React table state.
  *
@@ -101,5 +105,32 @@ public class ColumnDef {
 			map.put("sortPriority", Integer.valueOf(_sortPriority));
 		}
 		return map;
+	}
+
+	/**
+	 * Creates a {@link ColumnDef} from a {@link ColumnConfiguration}.
+	 *
+	 * @param tableConfig
+	 *        The table configuration (used for label resolution).
+	 * @param colConfig
+	 *        The column configuration.
+	 * @param columnName
+	 *        The column name.
+	 * @return A new column definition populated from the configuration.
+	 */
+	public static ColumnDef fromColumnConfiguration(TableConfiguration tableConfig,
+			ColumnConfiguration colConfig, String columnName) {
+		String label = Column.getColumnLabel(tableConfig, colConfig, columnName);
+		ColumnDef def = new ColumnDef(columnName, label);
+		def.setSortable(colConfig.isSortable());
+		String widthStr = colConfig.getDefaultColumnWidth();
+		if (widthStr != null && !widthStr.isEmpty()) {
+			try {
+				def.setWidth(Integer.parseInt(widthStr.replaceAll("[^0-9]", "")));
+			} catch (NumberFormatException ex) {
+				// Keep default width.
+			}
+		}
+		return def;
 	}
 }

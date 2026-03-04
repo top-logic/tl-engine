@@ -10,7 +10,7 @@
 					delegations="ModelExplorer,TLScriptAgent,ModelEditor"
 					entry-point="true"
 					skills="promptModelExplorer"
-					tools=""
+					tools="task.createTask,task.updateTask,task.listTasks,task.getTask"
 				>
 					<system-prompt><![CDATA[# Preamble
 
@@ -87,7 +87,7 @@ If the question spans multiple specialties, delegate to each relevant sub-agent 
 					description="Delegate to the Model Explorer for read-only model inspection. Call to explore, inspect, or verify the TopLogic application model: modules, types, parts, annotations, search. Provide goal (short intent), task (concrete question), context (module/type/part names if known). Do NOT paste the full user message; distill a clear exploration request."
 					send-thinking="true"
 					thinking-type=""
-					tools="model-browser.listClassifiers,model-browser.listModules,model-browser.listTypeParts,model-browser.listTypes,model-annotation-browser.listAnnotations,model-annotation-definitions.describeAnnotation,model-analysis.findPartUsages,model-analysis.findTypeUsages,model-instances.getInstance,model-instances.listInstances,model-search.searchModel"
+					tools="model-browser.listClassifiers,model-browser.listModules,model-browser.listTypeParts,model-browser.listTypes,model-annotation-browser.listAnnotations,model-annotation-definitions.describeAnnotation,model-analysis.findPartUsages,model-analysis.findTypeUsages,model-instances.getInstance,model-instances.listInstances,model-search.searchModel,task.listTasks,task.updateTask,task.getTask"
 				>
 					<system-prompt><![CDATA[# Preamble
 
@@ -190,7 +190,7 @@ If you cannot fill the Evidence section → you have not called enough tools →
 					send-thinking="false"
 					skills="promptModelExplorer"
 					thinking-type=""
-					tools="script-doc.getTLScriptFunctionDocumentation,script-doc.listTLScriptFunctions,script-exec.executeTLScript,script-exec.validateTLScript"
+					tools="script-doc.getTLScriptFunctionDocumentation,script-doc.listTLScriptFunctions,script-exec.executeTLScript,script-exec.validateTLScript,task.listTasks,task.updateTask,task.getTask"
 				>
 					<system-prompt><![CDATA[# Preamble
 
@@ -302,7 +302,7 @@ B) Choosing '.' vs '..':
 					delegations=""
 					description="Delegate to the Model Editor for model modification. Call when the user wants to create or modify the TopLogic model: add types, properties, references, enumerations. Provide goal (short intent), task (concrete instructions or requirements), context (module/type names if relevant). Do NOT paste the full user message; distill the creation request."
 					thinking-type=""
-					tools="model-modification.createBackwardReference,model-modification.createClass,model-modification.createEnumeration,model-modification.createModule,model-modification.createProperty,model-modification.createReference,model-modification.updateClass,model-modification.updateEnumeration,model-modification.updateModule,model-modification.updateProperty"
+					tools="model-modification.createBackwardReference,model-modification.createClass,model-modification.createEnumeration,model-modification.createModule,model-modification.createProperty,model-modification.createReference,model-modification.updateClass,model-modification.updateEnumeration,model-modification.updateModule,model-modification.updateProperty,task.listTasks,task.updateTask,task.getTask"
 				>
 					<system-prompt><![CDATA[# Preamble
 

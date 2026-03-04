@@ -202,11 +202,12 @@ public class DemoReactAppComponent extends LayoutComponent {
 			return HandlerResult.DEFAULT_RESULT;
 		});
 		ReactCardControl activeTasksCard = new ReactCardControl(
-			"Active Tasks", "elevated", "default", List.of(completeBtn),
+			"Active Tasks", "elevated", "none", List.of(completeBtn),
 			new DemoCounterControl("Tasks"));
 
 		// Card 2: In Review (outlined) with counter.
-		ReactCardControl inReviewCard = new ReactCardControl("In Review",
+		ReactCardControl inReviewCard = new ReactCardControl(
+			"In Review", "outlined", "none", List.of(),
 			new DemoCounterControl("Reviews"));
 
 		// Card 3: Team Notes (outlined) with "Open Details" button.

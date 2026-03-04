@@ -9,7 +9,7 @@
 				<agent name="Orchestrator"
 					delegations="ModelExplorer,TLScriptAgent,ModelEditor"
 					entry-point="true"
-					skills="promptModelExplorer"
+					skills="promptModelExplorer,taskManagement"
 					tools="task.createTask,task.updateTask,task.listTasks,task.getTask"
 				>
 					<system-prompt><![CDATA[# Preamble
@@ -540,6 +540,77 @@ Then immediately re-delegate with a stricter extraction order:
 * **Guessing qualified names:** Don't invent identifiers if you haven't confirmed them — let the sub-agent search first.
 * **Asking ModelExplorer to explain TLScript:** Any “explain/interpret” wording increases summarization risk.
 * **Single-call annotation + meaning:** Don’t combine “retrieve annotation text” with “what does it mean?” in one call.
+]]></content>
+					</skill>
+					<skill name="taskManagement"
+						description="How to use task management tools (createTask, updateTask, listTasks, getTask) to organize complex multi-step work, coordinate with sub-agents, and show progress to the user."
+					>
+						<content><![CDATA[# Task Management Workflow
+
+Use task management tools to organize complex, multi-step work. Tasks are visible to the user as a live progress panel.
+
+## When to Create Tasks
+
+Create tasks when:
+- The user's request requires 3 or more distinct steps
+- You need to delegate work to multiple sub-agents in a coordinated sequence
+- The work is non-trivial and benefits from structured tracking
+
+Do NOT create tasks for:
+- Simple single-step questions or lookups
+- Trivial operations that complete in one tool call
+- Purely conversational responses
+
+## Task Lifecycle
+
+```
+createTask (status: pending)
+  → updateTask (status: in_progress)  ← before starting work
+  → updateTask (status: completed)    ← only when FULLY done
+```
+
+- Always set `in_progress` BEFORE starting work on a task
+- Only set `completed` when the task is fully accomplished
+- If you encounter errors or blockers, keep the task as `in_progress`
+- Use `deleted` to remove tasks that are no longer needed
+- After completing a task, call `listTasks` to find the next one
+
+## Naming Conventions
+
+- **subject**: Imperative form — "Create user model", "Run validation tests"
+- **activeForm**: Present continuous — "Creating user model", "Running validation tests"
+- Always provide both subject and activeForm
+
+## Coordinating with Sub-Agents
+
+When delegating multi-step work:
+1. Create all tasks upfront with `createTask`
+2. Set `owner` to the sub-agent name when assigning
+3. Set task dependencies with `addBlockedBy` if tasks must run in order
+4. Sub-agents should call `listTasks` to find their assigned work
+5. Sub-agents call `updateTask` to mark tasks `in_progress` then `completed`
+
+## Example: Multi-Agent Workflow
+
+User asks: "Create a Customer type with name and email properties"
+
+1. `createTask(subject="Create Customer type", activeForm="Creating Customer type")`
+2. `createTask(subject="Add name property", activeForm="Adding name property")`
+3. `createTask(subject="Add email property", activeForm="Adding email property")`
+4. `updateTask(taskId="1", status="in_progress")`
+5. Delegate to ModelEditor to create the type
+6. `updateTask(taskId="1", status="completed")`
+7. `updateTask(taskId="2", status="in_progress")`
+8. Delegate to ModelEditor to add name property
+9. `updateTask(taskId="2", status="completed")`
+10. Continue...
+
+## Anti-Patterns
+
+- Creating tasks AFTER the work is done (defeats the purpose of progress tracking)
+- Marking tasks completed when they failed or are only partially done
+- Creating one giant task for everything instead of breaking into steps
+- Forgetting to set `in_progress` before starting work (user sees no activity)
 ]]></content>
 					</skill>
 				</skills>

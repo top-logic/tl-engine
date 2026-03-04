@@ -67,7 +67,11 @@ public class TaskTool {
 	 *        Present continuous form shown while the task is in progress (e.g. "Running tests").
 	 * @return JSON with taskId, status, and subject.
 	 */
-	@Tool("Create a new task with status 'pending'. Returns the task ID, status, and subject.")
+	@Tool("Create a new task to track a unit of work. Use for complex multi-step operations (3+ steps)."
+		+ " Do NOT use for single, trivial tasks. Tasks start as 'pending'. Always provide activeForm."
+		+ " Use imperative form for subject (e.g. 'Create user model'),"
+		+ " present continuous for activeForm (e.g. 'Creating user model')."
+		+ " Returns the task ID for later updates via updateTask.")
 	public String createTask(
 			@P("Brief title for the task") String subject,
 			@P("Detailed description of what needs to be done") String description,
@@ -116,7 +120,12 @@ public class TaskTool {
 	 *        Task IDs to add to the blockedBy set, or null to skip.
 	 * @return JSON with updated taskId, status, and subject, or error if task not found.
 	 */
-	@Tool("Update an existing task. Only non-null parameters are applied. Returns the updated task ID, status, and subject.")
+	@Tool("Update a task's status, subject, description, owner, or dependencies."
+		+ " Set status to 'in_progress' BEFORE starting work on a task."
+		+ " Set status to 'completed' ONLY when the task is FULLY done."
+		+ " If blocked or encountering errors, keep status as 'in_progress'."
+		+ " Use 'deleted' to remove a task that is no longer needed."
+		+ " After completing a task, call listTasks to find the next one.")
 	public String updateTask(
 			@P("The ID of the task to update") String taskId,
 			@P("New status (pending, in_progress, completed, deleted)") String status,
@@ -166,7 +175,10 @@ public class TaskTool {
 	 * @return JSON with array of task summaries containing id, subject, status, owner, and
 	 *         blockedBy.
 	 */
-	@Tool("List all tasks with summary information (id, subject, status, owner, blockedBy).")
+	@Tool("List all tasks with their ID, subject, status, owner, and blockedBy dependencies."
+		+ " Use to see available work, check overall progress, or find the next task after completing one."
+		+ " Prefer working on tasks in ID order (lowest first)."
+		+ " Tasks with non-empty blockedBy cannot be started until their blockers are completed.")
 	public String listTasks() {
 
 		Map<String, Object> args = new HashMap<>();
@@ -205,7 +217,9 @@ public class TaskTool {
 	 *        The ID of the task to retrieve.
 	 * @return JSON with full task details, or error if not found.
 	 */
-	@Tool("Get detailed information about a specific task by ID.")
+	@Tool("Get full details of a task by its ID, including description, blocks, and blockedBy."
+		+ " Use before starting work on an assigned task to read its complete requirements."
+		+ " Verify the blockedBy list is empty before beginning work.")
 	public String getTask(
 			@P("The ID of the task to retrieve") String taskId) {
 

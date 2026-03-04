@@ -19,6 +19,7 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.ControlCommand;
 import com.top_logic.layout.react.ReactControl;
 import com.top_logic.layout.table.TableModel;
+import com.top_logic.layout.table.control.TableControl;
 import com.top_logic.layout.table.model.ColumnConfiguration;
 import com.top_logic.layout.table.model.TableConfiguration;
 import com.top_logic.layout.table.model.TableModelEvent;
@@ -234,6 +235,9 @@ public class ReactTableControl extends ReactControl {
 		TableConfiguration tableConfig = _tableModel.getTableConfiguration();
 		List<ColumnDef> defs = new ArrayList<>();
 		for (String name : _tableModel.getColumnNames()) {
+			if (TableControl.SELECT_COLUMN_NAME.equals(name)) {
+				continue;
+			}
 			ColumnConfiguration colConfig = _tableModel.getColumnDescription(name);
 			defs.add(ColumnDef.fromColumnConfiguration(tableConfig, colConfig, name));
 		}
@@ -287,16 +291,25 @@ public class ReactTableControl extends ReactControl {
 			return null;
 		}
 		return (a, b) -> {
-			Object va = _tableModel.getValueAt(a, columnName);
-			Object vb = _tableModel.getValueAt(b, columnName);
+			Object va = getCellValue(a, columnName);
+			Object vb = getCellValue(b, columnName);
 			return cellComparator.compare(va, vb);
 		};
 	}
 
 	/**
 	 * Extracts the cell value for a row and column from the underlying model.
+	 *
+	 * <p>
+	 * For tree tables, the business object is extracted from the tree node before calling the
+	 * model's accessor, because accessors like {@link com.top_logic.layout.MapAccessor} operate on
+	 * the data object (e.g. a {@link java.util.Map}), not on the tree node wrapper.
+	 * </p>
 	 */
 	protected Object getCellValue(Object rowObject, String columnName) {
+		if (_treeModel != null && rowObject instanceof TLTreeNode) {
+			return _tableModel.getValueAt(((TLTreeNode<?>) rowObject).getBusinessObject(), columnName);
+		}
 		return _tableModel.getValueAt(rowObject, columnName);
 	}
 

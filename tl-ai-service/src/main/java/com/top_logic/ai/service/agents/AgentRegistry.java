@@ -25,6 +25,8 @@ import com.top_logic.ai.service.skills.Skill;
 import com.top_logic.ai.service.skills.SkillConfig;
 import com.top_logic.ai.service.skills.SkillRegistry;
 import com.top_logic.ai.service.skills.SkillTool;
+import com.top_logic.ai.service.tools.TimelineAgentListener;
+import com.top_logic.ai.service.tools.ToolCallTracker;
 import com.top_logic.ai.service.tools.ToolCallTracking;
 import com.top_logic.ai.service.tools.registry.ToolImplementation;
 import com.top_logic.ai.service.tools.registry.ToolRegistry;
@@ -670,6 +672,11 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 
 		if (memory != null) {
 			builder.chatMemory(memory);
+		}
+
+		ToolCallTracker tracker = ToolCallTracking.getTracker();
+		if (tracker != null) {
+			builder.listener(new TimelineAgentListener(tracker));
 		}
 
 		return builder.build();

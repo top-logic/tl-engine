@@ -412,7 +412,11 @@ public class ReactTableControl extends ReactControl {
 			rowState.put("selected", Boolean.valueOf(_selectedRows.contains(rowObject)));
 			if (_treeModel != null && rowObject instanceof TLTreeNode) {
 				TLTreeNode<?> node = (TLTreeNode<?>) rowObject;
-				rowState.put("treeDepth", Integer.valueOf(node.getDepth()));
+				int depth = node.getDepth();
+				if (!_treeModel.isRootVisible()) {
+					depth--;
+				}
+				rowState.put("treeDepth", Integer.valueOf(depth));
 				boolean leaf = _treeModel.isLeaf(castNode(rowObject));
 				rowState.put("expandable", Boolean.valueOf(!leaf));
 				if (!leaf) {

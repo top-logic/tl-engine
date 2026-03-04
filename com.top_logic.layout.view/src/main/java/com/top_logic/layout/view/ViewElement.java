@@ -6,6 +6,7 @@
 package com.top_logic.layout.view;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
@@ -15,6 +16,8 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.Control;
+import com.top_logic.layout.react.ReactControl;
+import com.top_logic.layout.react.control.layout.ReactStackControl;
 
 /**
  * The mandatory root element of every {@code .view.xml} file.
@@ -52,7 +55,7 @@ public class ViewElement implements UIElement {
 		List<PolymorphicConfiguration<? extends UIElement>> getContent();
 	}
 
-	private final UIElement _content;
+	private final List<UIElement> _content;
 
 	/**
 	 * Creates a new {@link ViewElement} from configuration.
@@ -61,15 +64,23 @@ public class ViewElement implements UIElement {
 	public ViewElement(InstantiationContext context, Config config) {
 		List<PolymorphicConfiguration<? extends UIElement>> contentList = config.getContent();
 		if (contentList.isEmpty()) {
-			context.error("View element must have exactly one content element.");
-			_content = null;
+			context.error("View element must have at least one content element.");
+			_content = List.of();
 		} else {
-			_content = context.getInstance(contentList.get(0));
+			_content = contentList.stream()
+				.map(context::getInstance)
+				.collect(Collectors.toList());
 		}
 	}
 
 	@Override
 	public Control createControl(ViewContext context) {
-		return _content.createControl(context);
+		if (_content.size() == 1) {
+			return _content.get(0).createControl(context);
+		}
+		List<ReactControl> children = _content.stream()
+			.map(e -> (ReactControl) e.createControl(context))
+			.collect(Collectors.toList());
+		return new ReactStackControl(children);
 	}
 }

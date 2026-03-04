@@ -23,6 +23,9 @@ import com.top_logic.layout.table.model.ColumnConfiguration;
 import com.top_logic.layout.table.model.TableConfiguration;
 import com.top_logic.layout.table.model.TableModelEvent;
 import com.top_logic.layout.table.model.TableModelListener;
+import com.top_logic.layout.tree.model.TLTreeNode;
+import com.top_logic.layout.tree.model.TreeTableModel;
+import com.top_logic.layout.tree.model.TreeUIModel;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -62,6 +65,8 @@ public class ReactTableControl extends ReactControl {
 
 	private static final String FROZEN_COLUMN_COUNT = "frozenColumnCount";
 
+	private static final String TREE_MODE = "treeMode";
+
 	// -- Configuration --
 
 	/** Number of rows to prefetch above and below the visible area. */
@@ -75,7 +80,8 @@ public class ReactTableControl extends ReactControl {
 		new SelectCommand(),
 		new SelectAllCommand(),
 		new ColumnResizeCommand(),
-		new ColumnReorderCommand());
+		new ColumnReorderCommand(),
+		new ExpandCommand());
 
 	// -- Fields --
 
@@ -89,6 +95,9 @@ public class ReactTableControl extends ReactControl {
 	private boolean _suppressModelEvents;
 
 	private final TableModelListener _modelListener = this::handleModelEvent;
+
+	/** The tree UI model, or {@code null} if the model is not a tree table. */
+	private final TreeUIModel<?> _treeModel;
 
 	private int _viewportStart;
 
@@ -149,10 +158,14 @@ public class ReactTableControl extends ReactControl {
 		_columnDefs = buildColumnDefsFromModel();
 
 		_tableModel.addTableModelListener(_modelListener);
+		_treeModel = (_tableModel instanceof TreeTableModel)
+			? ((TreeTableModel) _tableModel).getTreeModel()
+			: null;
 
 		putState(ROW_HEIGHT, Integer.valueOf(36));
 		putState(SELECTION_MODE, _selectionMode);
 		putState(FROZEN_COLUMN_COUNT, Integer.valueOf(0));
+		putState(TREE_MODE, Boolean.valueOf(_treeModel != null));
 		buildFullState();
 	}
 
@@ -204,6 +217,14 @@ public class ReactTableControl extends ReactControl {
 	 */
 	private List<?> getDisplayedRows() {
 		return _tableModel.getDisplayedRows();
+	}
+
+	/**
+	 * Casts a row object to a node type compatible with the tree UI model.
+	 */
+	@SuppressWarnings("unchecked")
+	private static <N> N castNode(Object node) {
+		return (N) node;
 	}
 
 	/**
@@ -376,6 +397,15 @@ public class ReactTableControl extends ReactControl {
 			rowState.put("id", "row_" + i);
 			rowState.put("index", Integer.valueOf(i));
 			rowState.put("selected", Boolean.valueOf(_selectedRows.contains(rowObject)));
+			if (_treeModel != null && rowObject instanceof TLTreeNode) {
+				TLTreeNode<?> node = (TLTreeNode<?>) rowObject;
+				rowState.put("treeDepth", Integer.valueOf(node.getDepth()));
+				boolean leaf = _treeModel.isLeaf(castNode(rowObject));
+				rowState.put("expandable", Boolean.valueOf(!leaf));
+				if (!leaf) {
+					rowState.put("expanded", Boolean.valueOf(_treeModel.isExpanded(castNode(rowObject))));
+				}
+			}
 			rowState.put("cells", cells);
 			rowStates.add(rowState);
 		}
@@ -692,6 +722,49 @@ public class ReactTableControl extends ReactControl {
 			table._columnDefs.add(insertAt, moved);
 
 			// Rebuild columns and viewport (cell order in rows changes).
+			table.buildFullState();
+			return HandlerResult.DEFAULT_RESULT;
+		}
+	}
+
+	/**
+	 * Handles expand/collapse requests from the client.
+	 */
+	static class ExpandCommand extends ControlCommand {
+
+		ExpandCommand() {
+			super("expand");
+		}
+
+		@Override
+		public ResKey getI18NKey() {
+			return ResKey.legacy("react.table.expand");
+		}
+
+		@Override
+		protected HandlerResult execute(DisplayContext context, Control control,
+				Map<String, Object> arguments) {
+			ReactTableControl table = (ReactTableControl) control;
+			if (table._treeModel == null) {
+				return HandlerResult.DEFAULT_RESULT;
+			}
+
+			int rowIndex = ((Number) arguments.get("rowIndex")).intValue();
+			boolean expanded = Boolean.TRUE.equals(arguments.get("expanded"));
+
+			List<?> displayedRows = table.getDisplayedRows();
+			if (rowIndex < 0 || rowIndex >= displayedRows.size()) {
+				return HandlerResult.DEFAULT_RESULT;
+			}
+
+			Object rowObject = displayedRows.get(rowIndex);
+			table._suppressModelEvents = true;
+			try {
+				table._treeModel.setExpanded(castNode(rowObject), expanded);
+			} finally {
+				table._suppressModelEvents = false;
+			}
+
 			table.buildFullState();
 			return HandlerResult.DEFAULT_RESULT;
 		}

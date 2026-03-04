@@ -128,7 +128,14 @@ public abstract class AbstractControlBase extends PropertyObservableBase impleme
 	 */
 	public static final String CAN_INSPECT_CSS_CLASS = "can-inspect";
 
-	private String id;
+	/**
+	 * The unique identifier for this control's DOM element. Assigned via {@link #fetchID(FrameScope)}
+	 * or directly by subclasses that use alternative ID allocation mechanisms.
+	 *
+	 * @see #getID()
+	 * @see #fetchID(FrameScope)
+	 */
+	protected String id;
 
 	/**
 	 * {@link ControlCommand}s indexed by their command name.

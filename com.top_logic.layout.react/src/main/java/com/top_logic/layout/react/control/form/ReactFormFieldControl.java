@@ -12,7 +12,6 @@ import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.FrameScope;
 import com.top_logic.layout.VetoException;
 import com.top_logic.layout.basic.ControlCommand;
 import com.top_logic.layout.form.DisabledPropertyListener;
@@ -26,7 +25,7 @@ import com.top_logic.layout.form.model.FormFieldInternals;
 import com.top_logic.layout.form.model.VisibilityModel;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactControl;
-import com.top_logic.layout.react.SSEUpdateQueue;
+import com.top_logic.layout.react.ViewDisplayContext;
 import com.top_logic.mig.html.layout.VisibilityListener;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.error.TopLogicException;
@@ -169,10 +168,10 @@ public class ReactFormFieldControl extends ReactControl
 	}
 
 	@Override
-	protected void writeAsChild(JsonWriter writer, FrameScope frameScope, SSEUpdateQueue queue)
+	protected void writeAsChild(JsonWriter writer, ViewDisplayContext viewContext)
 			throws IOException {
 		registerFieldListeners();
-		super.writeAsChild(writer, frameScope, queue);
+		super.writeAsChild(writer, viewContext);
 	}
 
 	@Override

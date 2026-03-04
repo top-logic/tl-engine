@@ -51,17 +51,17 @@ public class TestViewElement extends TestCase {
 
 		context.checkErrors();
 		assertNotNull("Config should be parsed", config);
-		assertNotNull("Content should be set", config.getContent());
+		assertEquals("View should have one content element", 1, config.getContent().size());
 
 		// Verify the parsed structure: view -> AppShellElement -> PanelElement -> StackElement
 		assertTrue("Content should be AppShellElement config",
-			config.getContent() instanceof AppShellElement.Config);
-		AppShellElement.Config appShellConfig = (AppShellElement.Config) config.getContent();
+			config.getContent().get(0) instanceof AppShellElement.Config);
+		AppShellElement.Config appShellConfig = (AppShellElement.Config) config.getContent().get(0);
 
-		assertNotNull("AppShell content should be set", appShellConfig.getContent());
+		assertEquals("AppShell should have one content element", 1, appShellConfig.getContent().size());
 		assertTrue("AppShell content should be PanelElement config",
-			appShellConfig.getContent() instanceof PanelElement.Config);
-		PanelElement.Config panelConfig = (PanelElement.Config) appShellConfig.getContent();
+			appShellConfig.getContent().get(0) instanceof PanelElement.Config);
+		PanelElement.Config panelConfig = (PanelElement.Config) appShellConfig.getContent().get(0);
 		assertEquals("Panel title", "Test Panel", panelConfig.getTitle());
 
 		assertEquals("Panel should have one child", 1, panelConfig.getChildren().size());

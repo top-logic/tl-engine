@@ -5,10 +5,11 @@
  */
 package com.top_logic.layout.view.element;
 
+import java.util.List;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
@@ -22,7 +23,9 @@ import com.top_logic.layout.view.ViewContext;
  * UIElement that wraps {@link ReactAppShellControl}.
  *
  * <p>
- * Provides three slots: an optional header, a mandatory content area, and an optional footer.
+ * Provides three slots: an optional header, a mandatory content area, and an optional footer. Slot
+ * properties use list types so that {@code @TagName} resolution works (e.g. {@code <stack>} inside
+ * {@code <content>}).
  * </p>
  */
 public class AppShellElement implements UIElement {
@@ -50,20 +53,19 @@ public class AppShellElement implements UIElement {
 		 * Optional header element (e.g. an app bar).
 		 */
 		@Name(HEADER)
-		PolymorphicConfiguration<? extends UIElement> getHeader();
+		List<PolymorphicConfiguration<? extends UIElement>> getHeader();
 
 		/**
 		 * The main content element.
 		 */
 		@Name(CONTENT)
-		@Mandatory
-		PolymorphicConfiguration<? extends UIElement> getContent();
+		List<PolymorphicConfiguration<? extends UIElement>> getContent();
 
 		/**
 		 * Optional footer element (e.g. a bottom bar).
 		 */
 		@Name(FOOTER)
-		PolymorphicConfiguration<? extends UIElement> getFooter();
+		List<PolymorphicConfiguration<? extends UIElement>> getFooter();
 	}
 
 	private final UIElement _header;
@@ -77,9 +79,13 @@ public class AppShellElement implements UIElement {
 	 */
 	@CalledByReflection
 	public AppShellElement(InstantiationContext context, Config config) {
-		_header = config.getHeader() != null ? context.getInstance(config.getHeader()) : null;
-		_content = context.getInstance(config.getContent());
-		_footer = config.getFooter() != null ? context.getInstance(config.getFooter()) : null;
+		_header = firstOrNull(context, config.getHeader());
+		_content = firstOrNull(context, config.getContent());
+		_footer = firstOrNull(context, config.getFooter());
+
+		if (_content == null) {
+			context.error("AppShell element must have a content element.");
+		}
 	}
 
 	@Override
@@ -89,5 +95,13 @@ public class AppShellElement implements UIElement {
 		ReactControl footer = _footer != null ? (ReactControl) _footer.createControl(context) : null;
 
 		return new ReactAppShellControl(header, content, footer);
+	}
+
+	private static UIElement firstOrNull(InstantiationContext context,
+			List<PolymorphicConfiguration<? extends UIElement>> list) {
+		if (list == null || list.isEmpty()) {
+			return null;
+		}
+		return context.getInstance(list.get(0));
 	}
 }

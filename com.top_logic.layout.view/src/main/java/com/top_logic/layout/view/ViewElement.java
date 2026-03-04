@@ -5,10 +5,12 @@
  */
 package com.top_logic.layout.view;
 
+import java.util.List;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
@@ -39,10 +41,15 @@ public class ViewElement implements UIElement {
 
 		/**
 		 * The root content element of this view.
+		 *
+		 * <p>
+		 * Exactly one element is expected. The list type enables {@code @TagName} resolution so that
+		 * short element names (e.g. {@code <app-shell>}) can be used directly inside {@code <view>}.
+		 * </p>
 		 */
 		@Name(CONTENT)
-		@Mandatory
-		PolymorphicConfiguration<? extends UIElement> getContent();
+		@DefaultContainer
+		List<PolymorphicConfiguration<? extends UIElement>> getContent();
 	}
 
 	private final UIElement _content;
@@ -52,7 +59,13 @@ public class ViewElement implements UIElement {
 	 */
 	@CalledByReflection
 	public ViewElement(InstantiationContext context, Config config) {
-		_content = context.getInstance(config.getContent());
+		List<PolymorphicConfiguration<? extends UIElement>> contentList = config.getContent();
+		if (contentList.isEmpty()) {
+			context.error("View element must have exactly one content element.");
+			_content = null;
+		} else {
+			_content = context.getInstance(contentList.get(0));
+		}
 	}
 
 	@Override

@@ -202,7 +202,7 @@ public class DemoReactTableComponent extends LayoutComponent {
 			return new ReactTextCellControl(labels.getLabel(cellValue));
 		};
 
-		ReactTableControl table = new ReactTableControl(model, cellProvider);
+		ReactTableControl table = new ReactTableControl(model.getTable(), cellProvider);
 		table.setSelectionMode("multi");
 		return table;
 	}

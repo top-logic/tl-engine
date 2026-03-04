@@ -11,6 +11,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.react.ReactControl;
 import com.top_logic.layout.react.control.nav.ReactAppShellControl;
@@ -31,6 +32,10 @@ public class AppShellElement implements UIElement {
 	 */
 	@TagName("app-shell")
 	public interface Config extends UIElement.Config {
+
+		@Override
+		@ClassDefault(AppShellElement.class)
+		Class<? extends UIElement> getImplementationClass();
 
 		/** Configuration name for {@link #getHeader()}. */
 		String HEADER = "header";

@@ -7,10 +7,11 @@ package com.top_logic.layout.view;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.Control;
 
 /**
@@ -28,6 +29,10 @@ public class ViewElement implements UIElement {
 	 */
 	@TagName("view")
 	public interface Config extends UIElement.Config {
+
+		@Override
+		@ClassDefault(ViewElement.class)
+		Class<? extends UIElement> getImplementationClass();
 
 		/** Configuration name for {@link #getContent()}. */
 		String CONTENT = "content";

@@ -12,11 +12,13 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.react.ReactControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.view.ContainerElement;
+import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 
 /**
@@ -34,6 +36,10 @@ public class StackElement extends ContainerElement {
 	 */
 	@TagName("stack")
 	public interface Config extends ContainerElement.Config {
+
+		@Override
+		@ClassDefault(StackElement.class)
+		Class<? extends UIElement> getImplementationClass();
 
 		/** Configuration name for {@link #getDirection()}. */
 		String DIRECTION = "direction";

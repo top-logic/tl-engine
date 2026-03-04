@@ -22,16 +22,22 @@ import com.top_logic.layout.table.model.TableConfiguration;
  */
 public class ColumnDef {
 
+	/** @see #getName() */
 	private static final String NAME = "name";
 
+	/** @see #toStateMap() */
 	private static final String LABEL = "label";
 
+	/** @see #setWidth(int) */
 	private static final String WIDTH = "width";
 
+	/** @see #setSortable(boolean) */
 	private static final String SORTABLE = "sortable";
 
+	/** @see #setSortDirection(String) */
 	private static final String SORT_DIRECTION = "sortDirection";
 
+	/** @see #setSortPriority(int) */
 	private static final String SORT_PRIORITY = "sortPriority";
 
 	private final String _name;

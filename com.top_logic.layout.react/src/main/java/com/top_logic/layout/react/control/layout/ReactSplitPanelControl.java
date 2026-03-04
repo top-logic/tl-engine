@@ -44,26 +44,34 @@ public class ReactSplitPanelControl extends ReactControl {
 
 	private static final String REACT_MODULE = "TLSplitPanel";
 
+	/** @see #ReactSplitPanelControl(Orientation, boolean) */
 	private static final String ORIENTATION = "orientation";
 
+	/** @see #ReactSplitPanelControl(Orientation, boolean) */
 	private static final String RESIZABLE = "resizable";
 
+	/** @see #addChild(ReactControl, ChildConstraint) */
 	private static final String CHILDREN = "children";
 
-	// Child descriptor keys.
+	/** Child descriptor: the child {@link ReactControl}. */
 	private static final String CONTROL = "control";
 
+	/** Child descriptor: size in the given unit. */
 	private static final String SIZE = "size";
 
+	/** Child descriptor: size unit ({@code "px"} or {@code "%"}). */
 	private static final String UNIT = "unit";
 
+	/** Child descriptor: minimum size in pixels. */
 	private static final String MIN_SIZE = "minSize";
 
+	/** Child descriptor: CSS overflow strategy. */
 	private static final String SCROLLING = "scrolling";
 
+	/** Child descriptor: whether the child is collapsed. */
 	private static final String COLLAPSED = "collapsed";
 
-	// Command argument keys.
+	/** Command argument: map of control IDs to new pixel sizes. */
 	private static final String SIZES_ARG = "sizes";
 
 	private static final Map<String, ControlCommand> COMMANDS = createCommandMap(

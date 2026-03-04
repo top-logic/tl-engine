@@ -31,12 +31,16 @@ public class ReactBreadcrumbControl extends ReactControl {
 
 	private static final String REACT_MODULE = "TLBreadcrumb";
 
+	/** @see #updateItems(List) */
 	private static final String ITEMS = "items";
 
+	/** Entry identifier within the breadcrumb trail. */
 	private static final String ENTRY_ID = "id";
 
+	/** Entry display label. */
 	private static final String ENTRY_LABEL = "label";
 
+	/** Command argument: the navigated item identifier. */
 	private static final String ITEM_ID_ARG = "itemId";
 
 	private static final Map<String, ControlCommand> COMMANDS = createCommandMap(

@@ -31,18 +31,25 @@ public class ReactBottomBarControl extends ReactControl {
 
 	private static final String REACT_MODULE = "TLBottomBar";
 
+	/** @see #updateItems(List) */
 	private static final String ITEMS = "items";
 
+	/** @see #setActiveItem(String) */
 	private static final String ACTIVE_ITEM_ID = "activeItemId";
 
+	/** Entry identifier within the bar. */
 	private static final String ENTRY_ID = "id";
 
+	/** Entry display label. */
 	private static final String ENTRY_LABEL = "label";
 
+	/** Entry CSS icon class. */
 	private static final String ENTRY_ICON = "icon";
 
+	/** Entry badge text. */
 	private static final String ENTRY_BADGE = "badge";
 
+	/** Command argument: the selected item identifier. */
 	private static final String ITEM_ID_ARG = "itemId";
 
 	private static final Map<String, ControlCommand> COMMANDS = createCommandMap(

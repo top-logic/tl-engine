@@ -18,16 +18,16 @@ import java.util.Map;
  */
 public abstract class SidebarItem {
 
-	/** JSON key for the item identifier. */
+	/** @see #getId() */
 	static final String ID = "id";
 
-	/** JSON key for the item type discriminator. */
+	/** @see #getType() */
 	static final String TYPE = "type";
 
-	/** JSON key for the item label. */
+	/** Item display label. */
 	static final String LABEL = "label";
 
-	/** JSON key for the item icon. */
+	/** Item CSS icon class. */
 	static final String ICON = "icon";
 
 	private final String _id;

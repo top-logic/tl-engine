@@ -18,6 +18,7 @@ public class NavigationItem extends SidebarItem {
 	/** Type discriminator for navigation items. */
 	public static final String TYPE_NAV = "nav";
 
+	/** @see #setBadge(String) */
 	private static final String BADGE = "badge";
 
 	private final String _label;

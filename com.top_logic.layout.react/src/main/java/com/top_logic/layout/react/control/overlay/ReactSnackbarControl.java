@@ -27,18 +27,25 @@ public class ReactSnackbarControl extends ReactControl {
 
 	private static final String REACT_MODULE = "TLSnackbar";
 
+	/** @see #show(String) */
 	private static final String MESSAGE = "message";
 
+	/** @see #ReactSnackbarControl(String, String, int, Runnable) */
 	private static final String VARIANT = "variant";
 
+	/** @see #ReactSnackbarControl(String, String, int, Runnable) */
 	private static final String DURATION = "duration";
 
+	/** @see #show() */
 	private static final String VISIBLE = "visible";
 
+	/** @see #setAction(String, String) */
 	private static final String ACTION = "action";
 
+	/** @see #setAction(String, String) */
 	private static final String ACTION_LABEL = "label";
 
+	/** @see #setAction(String, String) */
 	private static final String ACTION_COMMAND_NAME = "commandName";
 
 	private static final Map<String, ControlCommand> COMMANDS = createCommandMap(

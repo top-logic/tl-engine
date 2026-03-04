@@ -22,6 +22,8 @@ public abstract class AbstractTLTreeNode<N extends AbstractTLTreeNode<N>> extend
 
 	private Object _businessObject;
 
+	private int _depth;
+
 	/**
 	 * Creates a {@link AbstractTLTreeNode}.
 	 *
@@ -31,6 +33,7 @@ public abstract class AbstractTLTreeNode<N extends AbstractTLTreeNode<N>> extend
 	public AbstractTLTreeNode(N parent, Object businessObject) {
 		this.parent = parent;
 		_businessObject = businessObject;
+		_depth = (parent == null) ? 0 : parent.getDepth() + 1;
 	}
 	
 	/* package protected */void initParent(N newParent) {
@@ -40,6 +43,11 @@ public abstract class AbstractTLTreeNode<N extends AbstractTLTreeNode<N>> extend
 		this.parent = newParent;
 	}
 	
+	@Override
+	public int getDepth() {
+		return _depth;
+	}
+
 	@Override
 	public N getParent() {
 		return parent;

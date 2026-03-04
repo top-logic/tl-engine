@@ -543,7 +543,7 @@ Then immediately re-delegate with a stricter extraction order:
 ]]></content>
 					</skill>
 					<skill name="taskManagement"
-						description="How to use task management tools (createTask, updateTask, listTasks, getTask) to organize complex multi-step work, coordinate with sub-agents, and show progress to the user."
+						description="Load BEFORE calling createTask for the first time in a conversation. Covers when to create tasks (3+ step operations only), task lifecycle (pending → in_progress → completed), naming conventions, sub-agent coordination, and anti-patterns. Do NOT load for simple single-step questions."
 					>
 						<content><![CDATA[# Task Management Workflow
 

@@ -35,6 +35,14 @@ public class ReactBottomBarControl extends ReactControl {
 
 	private static final String ACTIVE_ITEM_ID = "activeItemId";
 
+	private static final String ENTRY_ID = "id";
+
+	private static final String ENTRY_LABEL = "label";
+
+	private static final String ENTRY_ICON = "icon";
+
+	private static final String ENTRY_BADGE = "badge";
+
 	private static final String ITEM_ID_ARG = "itemId";
 
 	private static final Map<String, ControlCommand> COMMANDS = createCommandMap(
@@ -70,11 +78,11 @@ public class ReactBottomBarControl extends ReactControl {
 		List<Map<String, Object>> itemList = new ArrayList<>();
 		for (BottomBarEntry entry : items) {
 			Map<String, Object> map = new HashMap<>();
-			map.put("id", entry.id());
-			map.put("label", entry.label());
-			map.put("icon", entry.icon());
+			map.put(ENTRY_ID, entry.id());
+			map.put(ENTRY_LABEL, entry.label());
+			map.put(ENTRY_ICON, entry.icon());
 			if (entry.badge() != null) {
-				map.put("badge", entry.badge());
+				map.put(ENTRY_BADGE, entry.badge());
 			}
 			itemList.add(map);
 		}

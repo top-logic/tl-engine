@@ -50,6 +50,24 @@ public class ReactTreeControl extends ReactControl {
 
 	private static final String DROP_INDICATOR_POSITION = "dropIndicatorPosition";
 
+	// -- Node state keys --
+
+	private static final String NODE_ID = "id";
+
+	private static final String NODE_DEPTH = "depth";
+
+	private static final String NODE_EXPANDABLE = "expandable";
+
+	private static final String NODE_EXPANDED = "expanded";
+
+	private static final String NODE_LEAF = "leaf";
+
+	private static final String NODE_LOADING = "loading";
+
+	private static final String NODE_SELECTED = "selected";
+
+	private static final String NODE_CONTENT = "content";
+
 	// -- Commands --
 
 	private static final Map<String, ControlCommand> COMMANDS = createCommandMap(
@@ -247,14 +265,14 @@ public class ReactTreeControl extends ReactControl {
 		ReactControl contentControl = getOrCreateNodeControl(node);
 
 		Map<String, Object> nodeState = new LinkedHashMap<>();
-		nodeState.put("id", getNodeId(node));
-		nodeState.put("depth", Integer.valueOf(depth));
-		nodeState.put("expandable", Boolean.valueOf(hasChildren));
-		nodeState.put("expanded", Boolean.valueOf(expanded));
-		nodeState.put("leaf", Boolean.valueOf(_treeModel.isLeaf(node)));
-		nodeState.put("loading", Boolean.FALSE);
-		nodeState.put("selected", Boolean.valueOf(_selectionModel.isSelected(node)));
-		nodeState.put("content", contentControl);
+		nodeState.put(NODE_ID, getNodeId(node));
+		nodeState.put(NODE_DEPTH, Integer.valueOf(depth));
+		nodeState.put(NODE_EXPANDABLE, Boolean.valueOf(hasChildren));
+		nodeState.put(NODE_EXPANDED, Boolean.valueOf(expanded));
+		nodeState.put(NODE_LEAF, Boolean.valueOf(_treeModel.isLeaf(node)));
+		nodeState.put(NODE_LOADING, Boolean.FALSE);
+		nodeState.put(NODE_SELECTED, Boolean.valueOf(_selectionModel.isSelected(node)));
+		nodeState.put(NODE_CONTENT, contentControl);
 
 		nodeStates.add(nodeState);
 	}

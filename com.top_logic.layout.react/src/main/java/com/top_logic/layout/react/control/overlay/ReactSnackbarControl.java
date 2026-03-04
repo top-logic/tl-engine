@@ -27,6 +27,20 @@ public class ReactSnackbarControl extends ReactControl {
 
 	private static final String REACT_MODULE = "TLSnackbar";
 
+	private static final String MESSAGE = "message";
+
+	private static final String VARIANT = "variant";
+
+	private static final String DURATION = "duration";
+
+	private static final String VISIBLE = "visible";
+
+	private static final String ACTION = "action";
+
+	private static final String ACTION_LABEL = "label";
+
+	private static final String ACTION_COMMAND_NAME = "commandName";
+
 	private static final Map<String, ControlCommand> COMMANDS = createCommandMap(
 		new DismissCommand());
 
@@ -61,17 +75,17 @@ public class ReactSnackbarControl extends ReactControl {
 	public ReactSnackbarControl(String message, String variant, int duration, Runnable dismissHandler) {
 		super(null, REACT_MODULE, COMMANDS);
 		_dismissHandler = dismissHandler;
-		putState("message", message);
-		putState("variant", variant);
-		putState("duration", duration);
-		putState("visible", false);
+		putState(MESSAGE, message);
+		putState(VARIANT, variant);
+		putState(DURATION, duration);
+		putState(VISIBLE, false);
 	}
 
 	/**
 	 * Shows the snackbar.
 	 */
 	public void show() {
-		putState("visible", true);
+		putState(VISIBLE, true);
 	}
 
 	/**
@@ -81,15 +95,15 @@ public class ReactSnackbarControl extends ReactControl {
 	 *        The new notification message.
 	 */
 	public void show(String message) {
-		putState("message", message);
-		putState("visible", true);
+		putState(MESSAGE, message);
+		putState(VISIBLE, true);
 	}
 
 	/**
 	 * Hides the snackbar.
 	 */
 	public void hide() {
-		putState("visible", false);
+		putState(VISIBLE, false);
 	}
 
 	/**
@@ -102,9 +116,9 @@ public class ReactSnackbarControl extends ReactControl {
 	 */
 	public void setAction(String label, String commandName) {
 		Map<String, String> action = new HashMap<>();
-		action.put("label", label);
-		action.put("commandName", commandName);
-		putState("action", action);
+		action.put(ACTION_LABEL, label);
+		action.put(ACTION_COMMAND_NAME, commandName);
+		putState(ACTION, action);
 	}
 
 	/**

@@ -32,7 +32,21 @@ public class ReactMenuControl extends ReactControl {
 
 	private static final String REACT_MODULE = "TLMenu";
 
+	private static final String ANCHOR_ID = "anchorId";
+
+	private static final String OPEN = "open";
+
 	private static final String ITEMS = "items";
+
+	private static final String ENTRY_TYPE = "type";
+
+	private static final String ENTRY_ID = "id";
+
+	private static final String ENTRY_LABEL = "label";
+
+	private static final String ENTRY_ICON = "icon";
+
+	private static final String ENTRY_DISABLED = "disabled";
 
 	private static final String ITEM_ID_ARG = "itemId";
 
@@ -60,8 +74,8 @@ public class ReactMenuControl extends ReactControl {
 		super(null, REACT_MODULE, COMMANDS);
 		_selectHandler = selectHandler;
 		_closeHandler = closeHandler;
-		putState("anchorId", anchorId);
-		putState("open", false);
+		putState(ANCHOR_ID, anchorId);
+		putState(OPEN, false);
 		updateItems(items);
 	}
 
@@ -72,15 +86,15 @@ public class ReactMenuControl extends ReactControl {
 		List<Map<String, Object>> itemList = new ArrayList<>();
 		for (MenuEntry entry : items) {
 			Map<String, Object> map = new HashMap<>();
-			map.put("type", entry.type());
+			map.put(ENTRY_TYPE, entry.type());
 			if ("item".equals(entry.type())) {
-				map.put("id", entry.id());
-				map.put("label", entry.label());
+				map.put(ENTRY_ID, entry.id());
+				map.put(ENTRY_LABEL, entry.label());
 				if (entry.icon() != null) {
-					map.put("icon", entry.icon());
+					map.put(ENTRY_ICON, entry.icon());
 				}
 				if (entry.disabled()) {
-					map.put("disabled", true);
+					map.put(ENTRY_DISABLED, true);
 				}
 			}
 			itemList.add(map);
@@ -92,14 +106,14 @@ public class ReactMenuControl extends ReactControl {
 	 * Opens the menu.
 	 */
 	public void open() {
-		putState("open", true);
+		putState(OPEN, true);
 	}
 
 	/**
 	 * Closes the menu.
 	 */
 	public void close() {
-		putState("open", false);
+		putState(OPEN, false);
 	}
 
 	/**

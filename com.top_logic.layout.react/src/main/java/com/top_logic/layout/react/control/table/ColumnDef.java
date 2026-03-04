@@ -22,6 +22,18 @@ import com.top_logic.layout.table.model.TableConfiguration;
  */
 public class ColumnDef {
 
+	private static final String NAME = "name";
+
+	private static final String LABEL = "label";
+
+	private static final String WIDTH = "width";
+
+	private static final String SORTABLE = "sortable";
+
+	private static final String SORT_DIRECTION = "sortDirection";
+
+	private static final String SORT_PRIORITY = "sortPriority";
+
 	private final String _name;
 
 	private final String _label;
@@ -94,15 +106,15 @@ public class ColumnDef {
 	 */
 	public Map<String, Object> toStateMap() {
 		Map<String, Object> map = new LinkedHashMap<>();
-		map.put("name", _name);
-		map.put("label", _label);
-		map.put("width", Integer.valueOf(_width));
-		map.put("sortable", Boolean.valueOf(_sortable));
+		map.put(NAME, _name);
+		map.put(LABEL, _label);
+		map.put(WIDTH, Integer.valueOf(_width));
+		map.put(SORTABLE, Boolean.valueOf(_sortable));
 		if (_sortDirection != null) {
-			map.put("sortDirection", _sortDirection);
+			map.put(SORT_DIRECTION, _sortDirection);
 		}
 		if (_sortPriority > 0) {
-			map.put("sortPriority", Integer.valueOf(_sortPriority));
+			map.put(SORT_PRIORITY, Integer.valueOf(_sortPriority));
 		}
 		return map;
 	}

@@ -33,6 +33,10 @@ public class ReactBreadcrumbControl extends ReactControl {
 
 	private static final String ITEMS = "items";
 
+	private static final String ENTRY_ID = "id";
+
+	private static final String ENTRY_LABEL = "label";
+
 	private static final String ITEM_ID_ARG = "itemId";
 
 	private static final Map<String, ControlCommand> COMMANDS = createCommandMap(
@@ -64,8 +68,8 @@ public class ReactBreadcrumbControl extends ReactControl {
 		List<Map<String, String>> itemList = new ArrayList<>();
 		for (BreadcrumbEntry entry : items) {
 			Map<String, String> map = new HashMap<>();
-			map.put("id", entry.id());
-			map.put("label", entry.label());
+			map.put(ENTRY_ID, entry.id());
+			map.put(ENTRY_LABEL, entry.label());
 			itemList.add(map);
 		}
 		putState(ITEMS, itemList);

@@ -41,7 +41,7 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * traditional controls.
  * </p>
  */
-public class ReactControl extends AbstractVisibleControl {
+public class ReactControl extends AbstractVisibleControl implements ViewControl {
 
 	/** State key for whether the control is hidden on the client. */
 	private static final String HIDDEN = "hidden";
@@ -219,20 +219,19 @@ public class ReactControl extends AbstractVisibleControl {
 	}
 
 	@Override
-	protected void internalWrite(DisplayContext context, TagWriter out) throws IOException {
-		ViewDisplayContext viewContext = ViewDisplayContext.fromDisplayContext(context);
-
+	public void write(ViewDisplayContext context, TagWriter out) throws IOException {
 		// Initialize THIS control (the root). Children auto-initialize during serialization.
-		_viewContext = viewContext;
-		id = viewContext.allocateId();
-		SSEUpdateQueue queue = viewContext.getSSEQueue();
+		_viewContext = context;
+		id = context.allocateId();
+		SSEUpdateQueue queue = context.getSSEQueue();
 		_sseQueue = queue;
 		queue.registerControl(this);
 
 		out.beginBeginTag(HTMLConstants.DIV);
-		writeControlAttributes(context, out);
+		writeIdAttribute(out);
+		writeControlClasses(out);
 		out.writeAttribute("data-react-module", _reactModule);
-		out.writeAttribute("data-react-state", toJsonString(_reactState, viewContext));
+		out.writeAttribute("data-react-state", toJsonString(_reactState, context));
 		out.endBeginTag();
 		out.endTag(HTMLConstants.DIV);
 
@@ -242,13 +241,18 @@ public class ReactControl extends AbstractVisibleControl {
 		out.append("', '");
 		out.append(_reactModule);
 		out.append("', ");
-		writeJsonLiteral(out, _reactState, viewContext);
+		writeJsonLiteral(out, _reactState, context);
 		out.append(", '");
-		out.append(viewContext.getWindowName());
+		out.append(context.getWindowName());
 		out.append("', '");
-		out.append(viewContext.getContextPath());
+		out.append(context.getContextPath());
 		out.append("');");
 		HTMLUtil.endScriptAfterRendering(out);
+	}
+
+	@Override
+	protected void internalWrite(DisplayContext context, TagWriter out) throws IOException {
+		write(ViewDisplayContext.fromDisplayContext(context), out);
 	}
 
 	@Override

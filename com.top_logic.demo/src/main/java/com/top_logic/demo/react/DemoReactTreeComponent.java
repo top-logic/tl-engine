@@ -16,7 +16,9 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.basic.DefaultDisplayContext;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.control.table.ReactTextCellControl;
 import com.top_logic.layout.react.control.tree.ReactTreeControl;
 import com.top_logic.layout.tree.model.AbstractMutableTLTreeNode;
@@ -99,13 +101,14 @@ public class DemoReactTreeComponent extends LayoutComponent {
 		DefaultMultiSelectionModel<Object> selectionModel =
 			new DefaultMultiSelectionModel<>(SelectionModelOwner.NO_OWNER);
 
+		LabelProvider labels = MetaLabelProvider.INSTANCE;
 		ReactTreeControl tree = new ReactTreeControl(treeModel, selectionModel,
 			node -> {
 				Object businessObject = node;
 				if (node instanceof AbstractMutableTLTreeNode) {
 					businessObject = ((AbstractMutableTLTreeNode<?>) node).getBusinessObject();
 				}
-				return new ReactTextCellControl(businessObject);
+				return new ReactTextCellControl(labels.getLabel(businessObject));
 			});
 		tree.setSelectionMode("multi");
 		return tree;

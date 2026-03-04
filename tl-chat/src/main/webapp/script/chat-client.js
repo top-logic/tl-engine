@@ -790,6 +790,71 @@
       return state.currentTaskBody;
     }
 
+    /**
+     * Ensures the agent task panel container exists in the messages area.
+     */
+    function ensureAgentTaskPanel(container) {
+      var existing = container.querySelector(".chat-agent-tasks");
+      if (existing) return existing;
+      var panel = document.createElement("div");
+      panel.className = "chat-agent-tasks";
+      container.appendChild(panel);
+      return panel;
+    }
+
+    /**
+     * Appends a new agent task to the task panel.
+     */
+    function appendAgentTask(container, task) {
+      var panel = ensureAgentTaskPanel(container);
+      var el = document.createElement("div");
+      el.className = "chat-agent-task";
+      el.setAttribute("data-task-id", task.taskId);
+      var icon = document.createElement("span");
+      icon.className = "chat-agent-task-icon";
+      icon.textContent = getAgentTaskIcon(task.status);
+      var text = document.createElement("span");
+      text.className = "chat-agent-task-text";
+      text.textContent = task.activeForm || task.subject || "";
+      el.appendChild(icon);
+      el.appendChild(text);
+      panel.appendChild(el);
+    }
+
+    /**
+     * Updates an existing agent task in the task panel.
+     */
+    function updateAgentTask(container, task) {
+      var panel = container.querySelector(".chat-agent-tasks");
+      var taskEl = panel ? panel.querySelector('.chat-agent-task[data-task-id="' + task.taskId + '"]') : null;
+      if (!taskEl) {
+        appendAgentTask(container, task);
+        return;
+      }
+      var icon = taskEl.querySelector(".chat-agent-task-icon");
+      var text = taskEl.querySelector(".chat-agent-task-text");
+      if (icon) icon.textContent = getAgentTaskIcon(task.status);
+      if (text) text.textContent = task.activeForm || task.subject || "";
+      if (task.status === "completed") {
+        taskEl.classList.add("chat-agent-task-done");
+      }
+      if (task.status === "deleted") {
+        taskEl.style.display = "none";
+      }
+    }
+
+    /**
+     * Returns the status icon for an agent task.
+     */
+    function getAgentTaskIcon(status) {
+      switch (status) {
+        case "in_progress": return "\u25F4";
+        case "completed": return "\u2713";
+        case "deleted": return "";
+        default: return "\u25CB";
+      }
+    }
+
     function connectSSE() {
       log("connectSSE called", { destroyed: state.destroyed });
       if (state.destroyed) return;
@@ -969,6 +1034,27 @@
 
       eventSource.addEventListener("heartbeat", function (e) {
         // Heartbeat received - connection is alive
+      });
+
+      eventSource.addEventListener("agent_task_created", function (e) {
+        if (state.destroyed) return;
+        try {
+          var task = JSON.parse(e.data);
+          appendAgentTask(el.messages, task);
+          scrollToBottom(el.messages);
+        } catch (err) {
+          log("SSE agent_task_created parse error", err);
+        }
+      });
+
+      eventSource.addEventListener("agent_task_updated", function (e) {
+        if (state.destroyed) return;
+        try {
+          var task = JSON.parse(e.data);
+          updateAgentTask(el.messages, task);
+        } catch (err) {
+          log("SSE agent_task_updated parse error", err);
+        }
       });
 
       eventSource.onerror = function (err) {

@@ -1003,6 +1003,7 @@ button.tlPanel__actionButton:focus-visible {
 	flex: 1;
 	overflow: auto;
 	position: relative;
+	padding: var(--spacing-04);
 }
 
 .tlSidebar__headerSlot,
@@ -1314,7 +1315,7 @@ button.tlSidebar__flyoutItem:focus-visible {
 }
 
 .tlCard--elevated {
-	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08);
+	box-shadow: 0 0 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08);
 }
 
 .tlCard__header {

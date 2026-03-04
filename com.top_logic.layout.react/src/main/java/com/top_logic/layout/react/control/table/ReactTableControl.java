@@ -18,6 +18,11 @@ import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.ControlCommand;
 import com.top_logic.layout.react.ReactControl;
+import com.top_logic.layout.table.TableModel;
+import com.top_logic.layout.table.model.ColumnConfiguration;
+import com.top_logic.layout.table.model.TableConfiguration;
+import com.top_logic.layout.table.model.TableModelEvent;
+import com.top_logic.layout.table.model.TableModelListener;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -74,13 +79,16 @@ public class ReactTableControl extends ReactControl {
 
 	// -- Fields --
 
-	private final List<ColumnDef> _columnDefs;
+	private final TableModel _tableModel;
 
 	private final ReactCellControlProvider _cellProvider;
 
-	private List<Object> _allRows;
+	private List<ColumnDef> _columnDefs;
 
-	private List<Object> _displayedRows;
+	/** Suppresses model events during command execution to prevent double rebuilds. */
+	private boolean _suppressModelEvents;
+
+	private final TableModelListener _modelListener = this::handleModelEvent;
 
 	private int _viewportStart;
 
@@ -94,7 +102,7 @@ public class ReactTableControl extends ReactControl {
 
 	private boolean _selectionForced;
 
-	/** Index into {@code _displayedRows} of the last anchor-setting click, or -1. */
+	/** Index into the displayed row list of the last anchor-setting click, or -1. */
 	private int _selectionAnchor = -1;
 
 	/** Whether the last anchor-setting action was an add ({@code true}) or remove ({@code false}). */
@@ -126,22 +134,21 @@ public class ReactTableControl extends ReactControl {
 	/**
 	 * Creates a new {@link ReactTableControl}.
 	 *
-	 * @param rows
-	 *        The full list of row objects.
-	 * @param columnDefs
-	 *        The column definitions.
+	 * @param model
+	 *        The table model providing rows, columns, and sorting.
 	 * @param cellProvider
 	 *        Provider for creating cell controls.
 	 */
-	public ReactTableControl(List<?> rows, List<ColumnDef> columnDefs,
-			ReactCellControlProvider cellProvider) {
+	public ReactTableControl(TableModel model, ReactCellControlProvider cellProvider) {
 		super(null, "TLTableView", COMMANDS);
-		_allRows = new ArrayList<>(rows);
-		_displayedRows = new ArrayList<>(_allRows);
-		_columnDefs = columnDefs;
+		_tableModel = model;
 		_cellProvider = cellProvider;
 		_viewportStart = 0;
 		_viewportCount = 50;
+
+		_columnDefs = buildColumnDefsFromModel();
+
+		_tableModel.addTableModelListener(_modelListener);
 
 		putState(ROW_HEIGHT, Integer.valueOf(36));
 		putState(SELECTION_MODE, _selectionMode);
@@ -186,7 +193,60 @@ public class ReactTableControl extends ReactControl {
 	}
 
 	/**
-	 * Provides a comparator factory for sorting. Subclasses or configuration can override this.
+	 * The underlying table model.
+	 */
+	protected TableModel getTableModel() {
+		return _tableModel;
+	}
+
+	/**
+	 * Convenience accessor for the model's displayed (filtered and sorted) row list.
+	 */
+	private List<?> getDisplayedRows() {
+		return _tableModel.getDisplayedRows();
+	}
+
+	/**
+	 * Builds {@link ColumnDef} instances from the model's column configuration.
+	 */
+	private List<ColumnDef> buildColumnDefsFromModel() {
+		TableConfiguration tableConfig = _tableModel.getTableConfiguration();
+		List<ColumnDef> defs = new ArrayList<>();
+		for (String name : _tableModel.getColumnNames()) {
+			ColumnConfiguration colConfig = _tableModel.getColumnDescription(name);
+			defs.add(ColumnDef.fromColumnConfiguration(tableConfig, colConfig, name));
+		}
+		return defs;
+	}
+
+	/**
+	 * Handles events from the underlying {@link TableModel}.
+	 */
+	private void handleModelEvent(TableModelEvent event) {
+		if (_suppressModelEvents) {
+			return;
+		}
+		switch (event.getType()) {
+			case TableModelEvent.INSERT:
+			case TableModelEvent.DELETE:
+			case TableModelEvent.INVALIDATE:
+				buildFullState();
+				break;
+			case TableModelEvent.UPDATE:
+				updateViewport(_viewportStart, _viewportCount);
+				break;
+			default:
+				break;
+		}
+	}
+
+	/**
+	 * Creates a row-level comparator for sorting by a single column.
+	 *
+	 * <p>
+	 * Uses the column's {@link ColumnConfiguration#getComparator()} to compare cell values
+	 * extracted from the model.
+	 * </p>
 	 *
 	 * @param columnName
 	 *        The column to sort by.
@@ -194,24 +254,29 @@ public class ReactTableControl extends ReactControl {
 	 *        Whether to sort ascending.
 	 * @return A comparator, or {@code null} if the column is not sortable.
 	 */
+	@SuppressWarnings("unchecked")
 	protected Comparator<Object> createSortComparator(String columnName, boolean ascending) {
+		ColumnConfiguration colConfig = _tableModel.getColumnDescription(columnName);
+		if (colConfig == null || !colConfig.isSortable()) {
+			return null;
+		}
+		Comparator<Object> cellComparator =
+			ascending ? colConfig.getComparator() : colConfig.getDescendingComparator();
+		if (cellComparator == null) {
+			return null;
+		}
 		return (a, b) -> {
-			String va = String.valueOf(getCellValue(a, columnName));
-			String vb = String.valueOf(getCellValue(b, columnName));
-			int result = va.compareToIgnoreCase(vb);
-			return ascending ? result : -result;
+			Object va = _tableModel.getValueAt(a, columnName);
+			Object vb = _tableModel.getValueAt(b, columnName);
+			return cellComparator.compare(va, vb);
 		};
 	}
 
 	/**
-	 * Extracts the cell value for a row and column. Override to use model accessors.
+	 * Extracts the cell value for a row and column from the underlying model.
 	 */
-	@SuppressWarnings("unchecked")
 	protected Object getCellValue(Object rowObject, String columnName) {
-		if (rowObject instanceof Map) {
-			return ((Map<String, Object>) rowObject).get(columnName);
-		}
-		return null;
+		return _tableModel.getValueAt(rowObject, columnName);
 	}
 
 	/**
@@ -258,7 +323,7 @@ public class ReactTableControl extends ReactControl {
 
 	private void buildFullState() {
 		putState(COLUMNS, buildColumnsState());
-		putState(TOTAL_ROW_COUNT, Integer.valueOf(_displayedRows.size()));
+		putState(TOTAL_ROW_COUNT, Integer.valueOf(getDisplayedRows().size()));
 		updateViewport(_viewportStart, _viewportCount);
 	}
 
@@ -271,7 +336,8 @@ public class ReactTableControl extends ReactControl {
 	}
 
 	private void updateViewport(int start, int count) {
-		int totalRows = _displayedRows.size();
+		List<?> displayedRows = getDisplayedRows();
+		int totalRows = displayedRows.size();
 
 		// Apply prefetch buffer.
 		int bufferedStart = Math.max(0, start - PREFETCH_ROWS);
@@ -280,7 +346,7 @@ public class ReactTableControl extends ReactControl {
 		// Determine rows leaving and entering the viewport.
 		Set<Object> newRowObjects = new HashSet<>();
 		for (int i = bufferedStart; i < bufferedEnd; i++) {
-			newRowObjects.add(_displayedRows.get(i));
+			newRowObjects.add(displayedRows.get(i));
 		}
 
 		// Remove cell controls for rows that left the viewport.
@@ -299,7 +365,7 @@ public class ReactTableControl extends ReactControl {
 		// Build row state for the new viewport.
 		List<Map<String, Object>> rowStates = new ArrayList<>();
 		for (int i = bufferedStart; i < bufferedEnd; i++) {
-			Object rowObject = _displayedRows.get(i);
+			Object rowObject = displayedRows.get(i);
 			Map<String, ReactControl> cells = _rowCellCache.get(rowObject);
 			if (cells == null) {
 				cells = createCellControls(rowObject);
@@ -335,6 +401,7 @@ public class ReactTableControl extends ReactControl {
 
 	@Override
 	protected void cleanupChildren() {
+		_tableModel.removeTableModelListener(_modelListener);
 		for (Map<String, ReactControl> cells : _rowCellCache.values()) {
 			for (ReactControl cell : cells.values()) {
 				cell.cleanupTree();
@@ -415,13 +482,18 @@ public class ReactTableControl extends ReactControl {
 			// Update column defs with sort metadata.
 			table.applySortKeysToColumnDefs();
 
-			// Sort the displayed rows.
-			Comparator<Object> comparator = table.createChainedComparator();
-			if (comparator != null) {
-				table._displayedRows.sort(comparator);
+			// Delegate sorting to the model.
+			table._suppressModelEvents = true;
+			try {
+				Comparator<Object> comparator = table.createChainedComparator();
+				if (comparator != null) {
+					table._tableModel.setOrder(comparator);
+				}
+			} finally {
+				table._suppressModelEvents = false;
 			}
 
-			// Rebuild: reset viewport to top, send new columns + rows.
+			// Rebuild viewport with new sort order.
 			table.buildFullState();
 			return HandlerResult.DEFAULT_RESULT;
 		}
@@ -446,15 +518,16 @@ public class ReactTableControl extends ReactControl {
 				Map<String, Object> arguments) {
 			ReactTableControl table = (ReactTableControl) control;
 			int rowIndex = ((Number) arguments.get("rowIndex")).intValue();
+			List<?> displayedRows = table.getDisplayedRows();
 
-			if (rowIndex < 0 || rowIndex >= table._displayedRows.size()) {
+			if (rowIndex < 0 || rowIndex >= displayedRows.size()) {
 				return HandlerResult.DEFAULT_RESULT;
 			}
 
 			boolean ctrlKey = Boolean.TRUE.equals(arguments.get("ctrlKey"));
 			boolean shiftKey = Boolean.TRUE.equals(arguments.get("shiftKey"));
 
-			Object rowObject = table._displayedRows.get(rowIndex);
+			Object rowObject = displayedRows.get(rowIndex);
 
 			if ("multi".equals(table._selectionMode)) {
 				if (shiftKey && table._selectionAnchor >= 0) {
@@ -462,7 +535,7 @@ public class ReactTableControl extends ReactControl {
 					int from = Math.min(table._selectionAnchor, rowIndex);
 					int to = Math.max(table._selectionAnchor, rowIndex);
 					for (int i = from; i <= to; i++) {
-						Object row = table._displayedRows.get(i);
+						Object row = displayedRows.get(i);
 						if (table._anchorAdded) {
 							table._selectedRows.add(row);
 						} else {
@@ -525,12 +598,14 @@ public class ReactTableControl extends ReactControl {
 			ReactTableControl table = (ReactTableControl) control;
 			boolean selected = Boolean.TRUE.equals(arguments.get("selected"));
 
+			List<?> displayedRows = table.getDisplayedRows();
+
 			if (selected) {
-				table._selectedRows.addAll(table._displayedRows);
+				table._selectedRows.addAll(displayedRows);
 			} else {
-				if (table._selectionForced && !table._displayedRows.isEmpty()) {
+				if (table._selectionForced && !displayedRows.isEmpty()) {
 					table._selectedRows.clear();
-					table._selectedRows.add(table._displayedRows.get(0));
+					table._selectedRows.add(displayedRows.get(0));
 				} else {
 					table._selectedRows.clear();
 				}

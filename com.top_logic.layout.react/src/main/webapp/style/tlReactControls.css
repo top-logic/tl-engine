@@ -1062,14 +1062,14 @@ button.tlSidebar__item:focus-visible {
 
 /* Navigation item */
 .tlSidebar__navItem--active {
-	background: var(--layer-selected-01);
+	background: var(--layer-selected);
 	border-left-color: var(--button-primary);
 	color: var(--text-primary);
 	font-weight: 600;
 }
 
 button.tlSidebar__navItem--active:hover {
-	background: var(--layer-selected-hover-01, var(--layer-selected-01));
+	background: var(--layer-selected-hover, var(--layer-selected));
 }
 
 /* Header item */
@@ -1167,7 +1167,7 @@ button.tlSidebar__navItem--active:hover {
 }
 
 .tlSidebar--collapsed .tlSidebar__navItem--active {
-	background: var(--layer-selected-01);
+	background: var(--layer-selected);
 	border-left-color: var(--button-primary);
 }
 
@@ -1929,11 +1929,11 @@ button.tlMenu__item--disabled:hover {
 }
 
 .tlTableView__row--selected {
-	background: var(--layer-selected-01, #d0e2ff);
+	background: var(--layer-selected);
 }
 
 .tlTableView__row--selected:hover {
-	background: var(--layer-selected-hover-01, #b8d4ff);
+	background: var(--layer-selected-hover);
 }
 
 .tlTableView__cell {
@@ -2013,11 +2013,11 @@ button.tlMenu__item--disabled:hover {
 }
 
 .tlTableView__row--selected .tlTableView__cell--frozen {
-	background: var(--layer-selected-01, #d0e2ff);
+	background: var(--layer-selected);
 }
 
 .tlTableView__row--selected:hover .tlTableView__cell--frozen {
-	background: var(--layer-selected-hover-01, #b8d4ff);
+	background: var(--layer-selected-hover);
 }
 
 .tlTableView__headerCell--frozenLast,
@@ -2310,12 +2310,12 @@ button.tlMenu__item--disabled:hover {
 }
 
 .tlTreeView__node--selected {
-  background: var(--layer-selected-01);
+  background: var(--layer-selected);
   border-left-color: var(--interactive);
 }
 
 .tlTreeView__node--selected:hover {
-  background: var(--layer-selected-01);
+  background: var(--layer-selected-hover);
 }
 
 .tlTreeView__node--focused {

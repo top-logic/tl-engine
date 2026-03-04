@@ -111,6 +111,16 @@ public class ReactFormGroupControl extends ReactControl {
 	}
 
 	/**
+	 * Updates the group header text.
+	 *
+	 * @param header
+	 *        The new header text, or {@code null} to clear.
+	 */
+	public void setHeader(String header) {
+		putState(HEADER, header);
+	}
+
+	/**
 	 * Toggles the collapsed state.
 	 */
 	public void toggleCollapsed() {

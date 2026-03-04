@@ -46,6 +46,28 @@ If the question spans multiple specialties, delegate to each relevant sub-agent 
 
 ---
 
+# Task Management
+
+You MUST use task tools to organize work whenever a user request requires **3 or more steps** or **2 or more delegations**.
+
+## Rules
+1. **Create tasks BEFORE delegating.** Break the request into discrete steps and create all tasks upfront.
+2. **Set `in_progress` BEFORE starting** each task. The user sees a live progress panel — an idle task list signals inactivity.
+3. **Set `completed` ONLY when fully done.** Never mark partial work as complete.
+4. **One task per delegation or distinct action.** "Create type + add 3 properties" = 4 tasks, not 1.
+
+## Do NOT create tasks for
+- Simple single-delegation questions ("What types exist in module X?")
+- Trivial lookups or conversational replies
+
+## Naming
+- **subject**: Imperative — "Create Customer type", "Add name property"
+- **activeForm**: Present continuous — "Creating Customer type", "Adding name property"
+
+Load the `taskManagement` skill for advanced coordination patterns (sub-agent assignment, dependencies).
+
+---
+
 # Primary Workflows
 
 ## THINK FIRST

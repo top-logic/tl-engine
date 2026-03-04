@@ -44,15 +44,20 @@ import com.top_logic.util.TopLogicServlet;
  * </p>
  *
  * <p>
- * The servlet is mapped to {@code /view/*}. The path info determines which view file to load (e.g.,
- * {@code /view/main.view.xml} loads {@code /WEB-INF/views/main.view.xml}).
+ * The servlet is mapped to {@code /view/*}. The URL structure is:
  * </p>
+ * <ul>
+ * <li>{@code /view/} - Serves the window-name bootstrap page</li>
+ * <li>{@code /view/<windowName>/} - Renders the default view for the given tab</li>
+ * <li>{@code /view/<windowName>/some.view.xml} - Renders a specific view for the given tab</li>
+ * </ul>
  *
  * <p>
- * <b>Scope management:</b> The servlet creates a {@link DefaultViewDisplayContext} that provides ID
- * allocation and SSE queue access without depending on the traditional
- * {@link com.top_logic.mig.html.layout.MainLayout} component tree or old-world
- * {@link com.top_logic.layout.DisplayContext} scope chain.
+ * <b>Tab identity:</b> Each browser tab is identified by a unique window name. The browser's
+ * {@code window.name} property persists across page reloads (F5) but is empty in new or duplicated
+ * tabs. On the first request without a window name, the servlet serves a small JavaScript bootstrap
+ * page that checks or creates {@code window.name} and redirects to a URL that includes the window
+ * name as the first path segment. This ensures that each tab gets its own independent subsession.
  * </p>
  */
 public class ViewServlet extends TopLogicServlet {
@@ -75,7 +80,15 @@ public class ViewServlet extends TopLogicServlet {
 			return;
 		}
 
-		String viewPath = resolveViewPath(request);
+		String pathInfo = request.getPathInfo();
+		String windowName = extractWindowName(pathInfo);
+
+		if (windowName == null) {
+			writeBootstrapPage(request, response);
+			return;
+		}
+
+		String viewPath = resolveViewPath(pathInfo);
 
 		ViewElement view;
 		try {
@@ -88,7 +101,7 @@ public class ViewServlet extends TopLogicServlet {
 		}
 
 		ViewDisplayContext displayContext = new DefaultViewDisplayContext(
-			request.getContextPath(), "view", SSEUpdateQueue.forSession(session));
+			request.getContextPath(), windowName, SSEUpdateQueue.forSession(session));
 		ViewContext viewContext = new ViewContext(displayContext);
 
 		ViewControl rootControl = view.createControl(viewContext);
@@ -97,21 +110,56 @@ public class ViewServlet extends TopLogicServlet {
 	}
 
 	/**
+	 * Extracts the window name from the first path segment.
+	 *
+	 * <p>
+	 * Window names start with {@code v} followed by alphanumeric characters (generated client-side).
+	 * If the first path segment contains a dot, it is interpreted as a view file name rather than a
+	 * window name.
+	 * </p>
+	 *
+	 * @return the window name, or {@code null} if no valid window name is present.
+	 */
+	private String extractWindowName(String pathInfo) {
+		if (pathInfo == null || pathInfo.length() <= 1) {
+			return null;
+		}
+		// Remove leading slash.
+		String path = pathInfo.substring(1);
+		int slashIdx = path.indexOf('/');
+		String firstSegment = slashIdx >= 0 ? path.substring(0, slashIdx) : path;
+
+		if (firstSegment.isEmpty() || firstSegment.indexOf('.') >= 0) {
+			// Contains a dot -> view file name, not a window name.
+			return null;
+		}
+		if (firstSegment.charAt(0) != 'v') {
+			// Window names start with 'v'.
+			return null;
+		}
+
+		return firstSegment;
+	}
+
+	/**
 	 * Resolves the view file path from the request's path info.
 	 *
 	 * <p>
-	 * When no explicit path is given (e.g. {@code /view/}), falls back to the default view
-	 * configured in {@link ViewConfig#getDefaultView()}.
+	 * Skips the first path segment (window name) and uses the rest as the view file name. When no
+	 * view file is specified, falls back to the default view configured in
+	 * {@link ViewConfig#getDefaultView()}.
 	 * </p>
 	 */
-	private String resolveViewPath(HttpServletRequest request) {
-		String pathInfo = request.getPathInfo();
-		if (pathInfo != null && pathInfo.length() > 1) {
-			// Explicit path: /view/foo.view.xml -> /WEB-INF/views/foo.view.xml
-			String viewName = pathInfo.substring(1);
-			return VIEW_BASE_PATH + viewName;
+	private String resolveViewPath(String pathInfo) {
+		// pathInfo is like /v1a2b3c/ or /v1a2b3c/app.view.xml
+		String path = pathInfo.substring(1);
+		int slashIdx = path.indexOf('/');
+		if (slashIdx >= 0 && slashIdx < path.length() - 1) {
+			String viewName = path.substring(slashIdx + 1);
+			if (!viewName.isEmpty()) {
+				return VIEW_BASE_PATH + viewName;
+			}
 		}
-		// Fall back to the configured default view.
 		String defaultView = ApplicationConfig.getInstance().getConfig(ViewConfig.class).getDefaultView();
 		return VIEW_BASE_PATH + defaultView;
 	}
@@ -158,12 +206,65 @@ public class ViewServlet extends TopLogicServlet {
 	}
 
 	/**
-	 * Renders the HTML page with the root control using the {@link ViewControl#write} path.
+	 * Serves a small HTML page that checks or creates the browser's {@code window.name} and
+	 * redirects to a URL containing the window name.
 	 *
 	 * <p>
-	 * Uses the {@link ViewDisplayContext} directly, without the old-world
-	 * {@link com.top_logic.layout.DisplayContext} scope chain.
+	 * {@code window.name} persists across page reloads (F5) within the same tab, but is empty in
+	 * newly opened or duplicated tabs. This ensures that each tab gets a unique window name, while
+	 * reloads reuse the existing one.
 	 * </p>
+	 */
+	private void writeBootstrapPage(HttpServletRequest request, HttpServletResponse response)
+			throws IOException {
+		response.setContentType("text/html");
+		response.setCharacterEncoding("UTF-8");
+
+		String basePath = request.getContextPath() + request.getServletPath();
+
+		TagWriter out = new TagWriter(response.getWriter());
+		out.writeContent(HTMLConstants.DOCTYPE_HTML);
+		out.beginBeginTag(HTMLConstants.HTML);
+		out.endBeginTag();
+
+		out.beginBeginTag(HTMLConstants.HEAD);
+		out.endBeginTag();
+		out.beginBeginTag(HTMLConstants.META);
+		out.writeAttribute("charset", "UTF-8");
+		out.endEmptyTag();
+		out.endTag(HTMLConstants.HEAD);
+
+		out.beginBeginTag(HTMLConstants.BODY);
+		out.endBeginTag();
+
+		out.beginScript();
+		out.writeScript("(function() {");
+		out.writeScript("var wn = window.name;");
+		out.writeScript("if (!wn || wn.charAt(0) !== 'v') {");
+		out.writeScript("var arr = new Uint8Array(8);");
+		out.writeScript("crypto.getRandomValues(arr);");
+		out.writeScript("wn = 'v';");
+		out.writeScript("for (var i = 0; i < arr.length; i++) {");
+		out.writeScript("wn += arr[i].toString(16).padStart(2, '0');");
+		out.writeScript("}");
+		out.writeScript("window.name = wn;");
+		out.writeScript("}");
+		out.writeScript("var base = ");
+		out.writeJsString(basePath);
+		out.writeScript(";");
+		out.writeScript("var suffix = location.search + location.hash;");
+		out.writeScript("window.location.replace(base + '/' + encodeURIComponent(wn) + '/' + suffix);");
+		out.writeScript("})();");
+		out.endScript();
+
+		out.endTag(HTMLConstants.BODY);
+		out.endTag(HTMLConstants.HTML);
+
+		out.flushBuffer();
+	}
+
+	/**
+	 * Renders the HTML page with the root control using the {@link ViewControl#write} path.
 	 */
 	private void renderPage(HttpServletRequest request, HttpServletResponse response,
 			ViewControl rootControl, ViewDisplayContext viewContext) throws IOException {
@@ -194,7 +295,7 @@ public class ViewServlet extends TopLogicServlet {
 		out.endTag(HTMLConstants.TITLE);
 		// Include the React bridge script from the react module's webapp resources.
 		out.beginBeginTag(HTMLConstants.SCRIPT);
-		out.writeAttribute("src", contextPath + "/script/tl-react/tl-react-bridge.js");
+		out.writeAttribute("src", contextPath + "/script/tl-react-bridge.js");
 		out.endBeginTag();
 		out.endTag(HTMLConstants.SCRIPT);
 		out.endTag(HTMLConstants.HEAD);

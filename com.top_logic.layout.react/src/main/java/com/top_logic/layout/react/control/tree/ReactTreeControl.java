@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.react.control.tree;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -13,6 +14,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.ControlCommand;
@@ -180,6 +182,20 @@ public class ReactTreeControl extends ReactControl {
 		_dropTargets.add(target);
 	}
 
+	// -- Rendering --
+
+	@Override
+	protected void internalWrite(DisplayContext context, TagWriter out) throws IOException {
+		if (_nodeControlCache.isEmpty()) {
+			// After a detach/reattach cycle, _nodeControlCache was cleared by cleanupNodeControls()
+			// but _reactState still has stale node references. Rebuild the cache and state from the
+			// tree model. At this point _sseQueue is still null, so putState() stores locally
+			// without sending a PatchEvent.
+			buildFullState();
+		}
+		super.internalWrite(context, out);
+	}
+
 	// -- State building --
 
 	private void buildFullState() {
@@ -341,7 +357,6 @@ public class ReactTreeControl extends ReactControl {
 
 	private void cleanupNodeControls() {
 		for (ReactControl control : _nodeControlCache.values()) {
-			unregisterChildControl(control);
 			control.cleanupTree();
 		}
 		_nodeControlCache.clear();

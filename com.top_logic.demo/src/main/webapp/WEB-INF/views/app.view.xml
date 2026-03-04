@@ -1,21 +1,47 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <view xmlns:config="http://www.top-logic.com/ns/config/6.0">
 	<app-shell>
+		<header>
+			<app-bar title="Task Manager"/>
+		</header>
 		<content>
-			<stack direction="row" gap="default">
+			<stack direction="column" gap="default">
 				<children>
-					<panel title="Counter A">
+					<grid min-column-width="16rem" gap="default">
 						<children>
-							<demo-counter label="First"/>
+							<card title="Active Tasks" variant="elevated">
+								<children>
+									<demo-counter label="Tasks"/>
+								</children>
+							</card>
+							<card title="In Review">
+								<children>
+									<demo-counter label="Reviews"/>
+								</children>
+							</card>
+							<card title="Team Notes">
+								<children>
+									<button label="Open Details"/>
+								</children>
+							</card>
+							<card title="Quick Add">
+								<children>
+									<button label="+ New Task"/>
+								</children>
+							</card>
 						</children>
-					</panel>
-					<panel title="Counter B">
-						<children>
-							<demo-counter label="Second"/>
-						</children>
-					</panel>
+					</grid>
 				</children>
 			</stack>
 		</content>
+		<footer>
+			<bottom-bar active-item="dashboard">
+				<items>
+					<item id="dashboard" label="Dashboard" icon="bi bi-speedometer2"/>
+					<item id="messages" label="Messages" icon="bi bi-chat-dots"/>
+					<item id="settings" label="Settings" icon="bi bi-gear"/>
+				</items>
+			</bottom-bar>
+		</footer>
 	</app-shell>
 </view>

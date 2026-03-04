@@ -1,23 +1,21 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <view xmlns:config="http://www.top-logic.com/ns/config/6.0">
-	<content>
-		<app-shell>
-			<content>
-				<stack direction="row" gap="default">
-					<children>
-						<panel title="Counter A">
-							<children>
-								<demo-counter label="First"/>
-							</children>
-						</panel>
-						<panel title="Counter B">
-							<children>
-								<demo-counter label="Second"/>
-							</children>
-						</panel>
-					</children>
-				</stack>
-			</content>
-		</app-shell>
-	</content>
+	<app-shell>
+		<content>
+			<stack direction="row" gap="default">
+				<children>
+					<panel title="Counter A">
+						<children>
+							<demo-counter label="First"/>
+						</children>
+					</panel>
+					<panel title="Counter B">
+						<children>
+							<demo-counter label="Second"/>
+						</children>
+					</panel>
+				</children>
+			</stack>
+		</content>
+	</app-shell>
 </view>

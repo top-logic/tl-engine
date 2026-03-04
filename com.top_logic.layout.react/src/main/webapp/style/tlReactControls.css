@@ -2026,6 +2026,41 @@ button.tlMenu__item--disabled:hover {
 	clip-path: inset(0 -4px 0 0);
 }
 
+/* -- Tree table -- */
+
+.tlTableView__treeCell {
+	display: flex;
+	align-items: center;
+	overflow: hidden;
+	height: 100%;
+}
+
+.tlTableView__treeToggle {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 20px;
+	height: 20px;
+	flex-shrink: 0;
+	border: none;
+	background: none;
+	padding: 0;
+	cursor: pointer;
+	color: var(--text-secondary, #525252);
+	font-size: 12px;
+	border-radius: 3px;
+}
+
+.tlTableView__treeToggle:hover {
+	background-color: var(--layer-hover, rgba(0, 0, 0, 0.08));
+}
+
+.tlTableView__treeToggleSpacer {
+	display: inline-block;
+	width: 20px;
+	flex-shrink: 0;
+}
+
 /* --- TLFormLayout ------------------------------------------------------ */
 
 .tlFormLayout {

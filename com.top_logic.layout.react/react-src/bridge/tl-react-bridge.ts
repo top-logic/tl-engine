@@ -399,13 +399,13 @@ function autoMount(): void {
   }
 }
 
-// Initialize auto-unmount and auto-mount when DOM is ready.
+// Initialize auto-unmount when DOM is ready.
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    setupAutoUnmount();
-    autoMount();
-  });
+  document.addEventListener('DOMContentLoaded', setupAutoUnmount);
 } else {
   setupAutoUnmount();
-  autoMount();
 }
+
+// Auto-mount on window load, after ALL scripts (including the controls bundle
+// that registers components) have executed.
+window.addEventListener('load', autoMount);

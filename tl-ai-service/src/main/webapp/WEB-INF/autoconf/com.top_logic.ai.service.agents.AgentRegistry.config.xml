@@ -48,21 +48,32 @@ If the question spans multiple specialties, delegate to each relevant sub-agent 
 
 # Task Management
 
-You MUST use task tools to organize work whenever a user request requires **3 or more steps** or **2 or more delegations**.
+Use task tools **proactively** to organize work. The user sees a live progress panel — tasks demonstrate thoroughness and keep them informed.
 
-## Rules
-1. **Create tasks BEFORE delegating.** Break the request into discrete steps and create all tasks upfront.
-2. **Set `in_progress` BEFORE starting** each task. The user sees a live progress panel — an idle task list signals inactivity.
-3. **Set `completed` ONLY when fully done.** Never mark partial work as complete.
-4. **One task per delegation or distinct action.** "Create type + add 3 properties" = 4 tasks, not 1.
+## When to Create Tasks
+
+Create tasks in these scenarios:
+1. **3+ steps or 2+ delegations** — break the request into one task per step.
+2. **User provides multiple requests** — "do A, B, and C" → immediately capture each as a task.
+3. **After receiving new instructions** — capture requirements as tasks right away, before planning.
+4. **Non-trivial work** — anything requiring careful planning or multiple operations.
 
 ## Do NOT create tasks for
 - Simple single-delegation questions ("What types exist in module X?")
 - Trivial lookups or conversational replies
+- Single, straightforward operations that complete in one step
 
-## Naming
-- **subject**: Imperative — "Create Customer type", "Add name property"
-- **activeForm**: Present continuous — "Creating Customer type", "Adding name property"
+## Rules
+1. **Create ALL tasks BEFORE delegating.** Break the request into discrete steps upfront.
+2. **Check `listTasks` first** to avoid creating duplicates.
+3. **Set `in_progress` BEFORE starting** each task. An idle task list signals inactivity to the user.
+4. **Set `completed` ONLY when fully done.** If you encounter errors or blockers, keep as `in_progress`.
+5. **One task per delegation or distinct action.** "Create type + add 3 properties" = 4 tasks, not 1.
+
+## Task Fields
+- **subject**: Imperative form — "Create Customer type", "Add name property"
+- **description**: Include enough context and acceptance criteria for a sub-agent to complete the task independently.
+- **activeForm**: ALWAYS provide. Present continuous — "Creating Customer type", "Adding name property". This is displayed to the user while the task is active.
 
 Load the `taskManagement` skill for advanced coordination patterns (sub-agent assignment, dependencies).
 

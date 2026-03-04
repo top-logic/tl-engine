@@ -26,11 +26,13 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.Content;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.gui.JSFileCompiler;
 import com.top_logic.layout.react.DefaultViewDisplayContext;
 import com.top_logic.layout.react.SSEUpdateQueue;
 import com.top_logic.layout.react.ViewControl;
 import com.top_logic.layout.react.ViewDisplayContext;
 import com.top_logic.mig.html.HTMLConstants;
+import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.util.TopLogicServlet;
 
 /**
@@ -293,11 +295,10 @@ public class ViewServlet extends TopLogicServlet {
 		out.endBeginTag();
 		out.writeText("TopLogic View");
 		out.endTag(HTMLConstants.TITLE);
-		// Include the React bridge script from the react module's webapp resources.
-		out.beginBeginTag(HTMLConstants.SCRIPT);
-		out.writeAttribute("src", contextPath + "/script/tl-react-bridge.js");
-		out.endBeginTag();
-		out.endTag(HTMLConstants.SCRIPT);
+		// Load BAL (Browser Abstraction Layer) required by React control mount scripts.
+		HTMLUtil.writeJavascriptRef(out, contextPath, "/script/tl/bal.js");
+		// Load all configured scripts (compiled TL bundle, React bridge as ES6 module, etc.).
+		JSFileCompiler.getInstance().writeJavascriptRef(out, contextPath);
 		out.endTag(HTMLConstants.HEAD);
 
 		out.beginBeginTag(HTMLConstants.BODY);

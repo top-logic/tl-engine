@@ -18,6 +18,8 @@ public class NavigationItem extends SidebarItem {
 	/** Type discriminator for navigation items. */
 	public static final String TYPE_NAV = "nav";
 
+	private static final String BADGE = "badge";
+
 	private final String _label;
 
 	private final String _icon;
@@ -115,7 +117,7 @@ public class NavigationItem extends SidebarItem {
 			map.put(ICON, _icon);
 		}
 		if (_badge != null) {
-			map.put("badge", _badge);
+			map.put(BADGE, _badge);
 		}
 		return map;
 	}

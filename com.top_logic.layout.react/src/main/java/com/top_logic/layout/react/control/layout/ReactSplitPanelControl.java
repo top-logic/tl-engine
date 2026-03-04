@@ -51,6 +51,8 @@ public class ReactSplitPanelControl extends ReactControl {
 	private static final String CHILDREN = "children";
 
 	// Child descriptor keys.
+	private static final String CONTROL = "control";
+
 	private static final String SIZE = "size";
 
 	private static final String UNIT = "unit";
@@ -350,7 +352,7 @@ public class ReactSplitPanelControl extends ReactControl {
 			Map<String, Object> map = new HashMap<>();
 			// The ReactControl itself will be serialized as {controlId, module, state} by
 			// writeJsonValue.
-			map.put("control", _control);
+			map.put(CONTROL, _control);
 			map.put(SIZE, Float.valueOf(_constraint._size));
 			map.put(UNIT, _constraint._unit.getExternalName());
 			map.put(MIN_SIZE, Integer.valueOf(_constraint._minSize));

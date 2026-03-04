@@ -68,6 +68,22 @@ public class ReactTableControl extends ReactControl {
 
 	private static final String TREE_MODE = "treeMode";
 
+	// -- Row state keys --
+
+	private static final String ROW_ID = "id";
+
+	private static final String ROW_INDEX = "index";
+
+	private static final String ROW_SELECTED = "selected";
+
+	private static final String ROW_CELLS = "cells";
+
+	private static final String TREE_DEPTH = "treeDepth";
+
+	private static final String TREE_EXPANDABLE = "expandable";
+
+	private static final String TREE_EXPANDED = "expanded";
+
 	// -- Configuration --
 
 	/** Number of rows to prefetch above and below the visible area. */
@@ -407,23 +423,23 @@ public class ReactTableControl extends ReactControl {
 			}
 
 			Map<String, Object> rowState = new LinkedHashMap<>();
-			rowState.put("id", "row_" + i);
-			rowState.put("index", Integer.valueOf(i));
-			rowState.put("selected", Boolean.valueOf(_selectedRows.contains(rowObject)));
+			rowState.put(ROW_ID, "row_" + i);
+			rowState.put(ROW_INDEX, Integer.valueOf(i));
+			rowState.put(ROW_SELECTED, Boolean.valueOf(_selectedRows.contains(rowObject)));
 			if (_treeModel != null && rowObject instanceof TLTreeNode) {
 				TLTreeNode<?> node = (TLTreeNode<?>) rowObject;
 				int depth = node.getDepth();
 				if (!_treeModel.isRootVisible()) {
 					depth--;
 				}
-				rowState.put("treeDepth", Integer.valueOf(depth));
+				rowState.put(TREE_DEPTH, Integer.valueOf(depth));
 				boolean leaf = _treeModel.isLeaf(castNode(rowObject));
-				rowState.put("expandable", Boolean.valueOf(!leaf));
+				rowState.put(TREE_EXPANDABLE, Boolean.valueOf(!leaf));
 				if (!leaf) {
-					rowState.put("expanded", Boolean.valueOf(_treeModel.isExpanded(castNode(rowObject))));
+					rowState.put(TREE_EXPANDED, Boolean.valueOf(_treeModel.isExpanded(castNode(rowObject))));
 				}
 			}
-			rowState.put("cells", cells);
+			rowState.put(ROW_CELLS, cells);
 			rowStates.add(rowState);
 		}
 

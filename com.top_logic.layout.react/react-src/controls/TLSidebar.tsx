@@ -153,10 +153,11 @@ const SidebarSeparator: React.FC = () => (
 const SidebarGroupFlyout: React.FC<{
   item: GroupItemInfo;
   activeItemId: string;
+  anchorRect: DOMRect | null;
   onSelect: (id: string) => void;
   onExecute: (id: string) => void;
   onClose: () => void;
-}> = ({ item, activeItemId, onSelect, onExecute, onClose }) => {
+}> = ({ item, activeItemId, anchorRect, onSelect, onExecute, onClose }) => {
   const flyoutRef = useRef<HTMLDivElement>(null);
 
   // Close on outside click.
@@ -192,8 +193,15 @@ const SidebarGroupFlyout: React.FC<{
     }
   }, [onSelect, onExecute, onClose]);
 
+  // Position fixed relative to the anchor button's bounding rect.
+  const style: React.CSSProperties = {};
+  if (anchorRect) {
+    style.left = anchorRect.right;
+    style.top = anchorRect.top;
+  }
+
   return (
-    <div className="tlSidebar__flyout" ref={flyoutRef} role="menu">
+    <div className="tlSidebar__flyout" ref={flyoutRef} role="menu" style={style}>
       <div className="tlSidebar__flyoutHeader">{item.label}</div>
       {item.children.map(child => {
         if (child.type === 'nav' || child.type === 'command') {
@@ -252,18 +260,30 @@ const SidebarGroup: React.FC<{
        tabIndex, itemRef, onFocus, focusedId, setItemRef, onItemFocus,
        flyoutGroupId, onOpenFlyout, onCloseFlyout }) => {
 
+  const headerBtnRef = useRef<HTMLButtonElement>(null);
+  const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
+
   const handleClick = useCallback(() => {
     if (collapsed) {
       // In collapsed mode, toggle flyout instead of inline expand.
       if (flyoutGroupId === item.id) {
         onCloseFlyout();
       } else {
+        if (headerBtnRef.current) {
+          setAnchorRect(headerBtnRef.current.getBoundingClientRect());
+        }
         onOpenFlyout(item.id);
       }
     } else {
       onToggleGroup(item.id);
     }
   }, [collapsed, flyoutGroupId, item.id, onToggleGroup, onOpenFlyout, onCloseFlyout]);
+
+  // Combine refs: one for roving tabindex, one for anchor positioning.
+  const combinedRef = useCallback((el: HTMLElement | null) => {
+    (headerBtnRef as React.MutableRefObject<HTMLButtonElement | null>).current = el as HTMLButtonElement | null;
+    itemRef(el);
+  }, [itemRef]);
 
   const showFlyout = collapsed && flyoutGroupId === item.id;
 
@@ -275,7 +295,7 @@ const SidebarGroup: React.FC<{
         title={collapsed ? item.label : undefined}
         aria-expanded={collapsed ? showFlyout : expanded}
         tabIndex={tabIndex}
-        ref={itemRef}
+        ref={combinedRef}
         onFocus={() => onFocus(item.id)}
       >
         <SidebarIcon icon={item.icon} />
@@ -292,6 +312,7 @@ const SidebarGroup: React.FC<{
         <SidebarGroupFlyout
           item={item}
           activeItemId={activeItemId}
+          anchorRect={anchorRect}
           onSelect={onSelect}
           onExecute={onExecute}
           onClose={onCloseFlyout}

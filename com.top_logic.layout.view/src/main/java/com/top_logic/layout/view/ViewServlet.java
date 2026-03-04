@@ -27,6 +27,7 @@ import com.top_logic.basic.io.Content;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.gui.JSFileCompiler;
+import com.top_logic.gui.ThemeFactory;
 import com.top_logic.layout.react.DefaultViewDisplayContext;
 import com.top_logic.layout.react.SSEUpdateQueue;
 import com.top_logic.layout.react.ViewControl;
@@ -299,6 +300,8 @@ public class ViewServlet extends TopLogicServlet {
 		HTMLUtil.writeJavascriptRef(out, contextPath, "/script/tl/bal.js");
 		// Load all configured scripts (compiled TL bundle, React bridge as ES6 module, etc.).
 		JSFileCompiler.getInstance().writeJavascriptRef(out, contextPath);
+		// Load the theme stylesheet.
+		ThemeFactory.getTheme().writeStyles(contextPath, out);
 		out.endTag(HTMLConstants.HEAD);
 
 		out.beginBeginTag(HTMLConstants.BODY);

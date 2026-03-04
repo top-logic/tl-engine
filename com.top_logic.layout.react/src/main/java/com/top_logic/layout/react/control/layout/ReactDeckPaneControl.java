@@ -14,11 +14,10 @@ import java.util.Map;
 
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.FrameScope;
 import com.top_logic.layout.basic.ControlCommand;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactControl;
-import com.top_logic.layout.react.SSEUpdateQueue;
+import com.top_logic.layout.react.ViewDisplayContext;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 import de.haumacher.msgbuf.json.JsonWriter;
@@ -134,13 +133,13 @@ public class ReactDeckPaneControl extends ReactControl {
 	}
 
 	@Override
-	protected void writeAsChild(JsonWriter writer, FrameScope frameScope, SSEUpdateQueue queue)
+	protected void writeAsChild(JsonWriter writer, ViewDisplayContext viewContext)
 			throws IOException {
 		if (getReactState().get(ACTIVE_CHILD) == null) {
 			ReactControl activeChild = getOrCreateChild(_activeIndex);
 			getReactState().put(ACTIVE_CHILD, activeChild);
 		}
-		super.writeAsChild(writer, frameScope, queue);
+		super.writeAsChild(writer, viewContext);
 	}
 
 	@Override

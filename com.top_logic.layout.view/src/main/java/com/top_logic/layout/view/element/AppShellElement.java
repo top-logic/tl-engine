@@ -6,6 +6,7 @@
 package com.top_logic.layout.view.element;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
@@ -15,6 +16,7 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.react.ReactControl;
+import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.react.control.nav.ReactAppShellControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
@@ -25,7 +27,8 @@ import com.top_logic.layout.view.ViewContext;
  * <p>
  * Provides three slots: an optional header, a mandatory content area, and an optional footer. Slot
  * properties use list types so that {@code @TagName} resolution works (e.g. {@code <stack>} inside
- * {@code <content>}).
+ * {@code <content>}). If multiple elements are configured in a slot, they are wrapped in a
+ * {@link ReactStackControl}.
  * </p>
  */
 public class AppShellElement implements UIElement {
@@ -68,40 +71,55 @@ public class AppShellElement implements UIElement {
 		List<PolymorphicConfiguration<? extends UIElement>> getFooter();
 	}
 
-	private final UIElement _header;
+	private final List<UIElement> _header;
 
-	private final UIElement _content;
+	private final List<UIElement> _content;
 
-	private final UIElement _footer;
+	private final List<UIElement> _footer;
 
 	/**
 	 * Creates a new {@link AppShellElement} from configuration.
 	 */
 	@CalledByReflection
 	public AppShellElement(InstantiationContext context, Config config) {
-		_header = firstOrNull(context, config.getHeader());
-		_content = firstOrNull(context, config.getContent());
-		_footer = firstOrNull(context, config.getFooter());
+		_header = instantiateAll(context, config.getHeader());
+		_content = instantiateAll(context, config.getContent());
+		_footer = instantiateAll(context, config.getFooter());
 
-		if (_content == null) {
+		if (_content.isEmpty()) {
 			context.error("AppShell element must have a content element.");
 		}
 	}
 
 	@Override
 	public Control createControl(ViewContext context) {
-		ReactControl header = _header != null ? (ReactControl) _header.createControl(context) : null;
-		ReactControl content = (ReactControl) _content.createControl(context);
-		ReactControl footer = _footer != null ? (ReactControl) _footer.createControl(context) : null;
+		ReactControl header = createSlotControl(context, _header);
+		ReactControl content = createSlotControl(context, _content);
+		ReactControl footer = createSlotControl(context, _footer);
 
 		return new ReactAppShellControl(header, content, footer);
 	}
 
-	private static UIElement firstOrNull(InstantiationContext context,
-			List<PolymorphicConfiguration<? extends UIElement>> list) {
-		if (list == null || list.isEmpty()) {
+	private static ReactControl createSlotControl(ViewContext context, List<UIElement> elements) {
+		if (elements.isEmpty()) {
 			return null;
 		}
-		return context.getInstance(list.get(0));
+		if (elements.size() == 1) {
+			return (ReactControl) elements.get(0).createControl(context);
+		}
+		List<ReactControl> children = elements.stream()
+			.map(e -> (ReactControl) e.createControl(context))
+			.collect(Collectors.toList());
+		return new ReactStackControl(children);
+	}
+
+	private static List<UIElement> instantiateAll(InstantiationContext context,
+			List<PolymorphicConfiguration<? extends UIElement>> configs) {
+		if (configs == null || configs.isEmpty()) {
+			return List.of();
+		}
+		return configs.stream()
+			.map(context::getInstance)
+			.collect(Collectors.toList());
 	}
 }

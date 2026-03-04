@@ -7,6 +7,7 @@ package com.top_logic.demo.react;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,15 +17,21 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import com.top_logic.basic.col.ComparableComparator;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.LabelProvider;
+import com.top_logic.layout.MapAccessor;
 import com.top_logic.layout.basic.DefaultDisplayContext;
-import com.top_logic.layout.react.control.table.ColumnDef;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.control.table.ReactCellControlProvider;
 import com.top_logic.layout.react.control.table.ReactTableControl;
 import com.top_logic.layout.react.control.table.ReactTextCellControl;
+import com.top_logic.layout.table.model.ColumnConfiguration;
+import com.top_logic.layout.table.model.ObjectTableModel;
+import com.top_logic.layout.table.model.TableConfiguration;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
@@ -80,12 +87,17 @@ public class DemoReactTableComponent extends LayoutComponent {
 	}
 
 	private ReactTableControl createDemoTable() {
-		List<ColumnDef> columns = new ArrayList<>();
-		columns.add(new ColumnDef("id", "ID").setWidth(80));
-		columns.add(new ColumnDef("name", "Name").setWidth(200));
-		columns.add(new ColumnDef("department", "Department").setWidth(150));
-		columns.add(new ColumnDef("email", "Email").setWidth(250));
-		columns.add(new ColumnDef("status", "Status").setWidth(120));
+		List<String> columnNames = Arrays.asList("id", "name", "department", "email", "status");
+
+		TableConfiguration tableConfig = TableConfiguration.table();
+		tableConfig.getDefaultColumn().setAccessor(MapAccessor.INSTANCE);
+		tableConfig.getDefaultColumn().setComparator(ComparableComparator.INSTANCE);
+
+		declareColumn(tableConfig, "id", "ID", "80px");
+		declareColumn(tableConfig, "name", "Name", "200px");
+		declareColumn(tableConfig, "department", "Department", "150px");
+		declareColumn(tableConfig, "email", "Email", "250px");
+		declareColumn(tableConfig, "status", "Status", "120px");
 
 		String[] departments = { "Engineering", "Marketing", "Sales", "HR", "Finance", "Support" };
 		String[] statuses = { "Active", "Inactive", "On Leave" };
@@ -101,13 +113,22 @@ public class DemoReactTableComponent extends LayoutComponent {
 			rows.add(row);
 		}
 
+		ObjectTableModel model = new ObjectTableModel(columnNames, tableConfig, rows);
+
+		LabelProvider labels = MetaLabelProvider.INSTANCE;
 		ReactCellControlProvider cellProvider = (rowObject, columnName, cellValue) -> {
-			return new ReactTextCellControl(cellValue);
+			return new ReactTextCellControl(labels.getLabel(cellValue));
 		};
 
-		ReactTableControl table = new ReactTableControl(rows, columns, cellProvider);
+		ReactTableControl table = new ReactTableControl(model, cellProvider);
 		table.setSelectionMode("multi");
 		table.setFrozenColumnCount(2);
 		return table;
+	}
+
+	private static void declareColumn(TableConfiguration tableConfig, String name, String label, String width) {
+		ColumnConfiguration col = tableConfig.declareColumn(name);
+		col.setColumnLabel(label);
+		col.setDefaultColumnWidth(width);
 	}
 }

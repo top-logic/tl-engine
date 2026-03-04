@@ -365,11 +365,47 @@ function setupAutoUnmount(): void {
   observer.observe(document.body, { childList: true, subtree: true });
 }
 
-// Initialize auto-unmount when DOM is ready.
+// --- Auto-mount: discover declarative mount points in the DOM ---
+
+/**
+ * Discovers all elements with a {@code data-react-module} attribute and mounts them.
+ *
+ * <p>Page-level context ({@code windowName}, {@code contextPath}) is read from
+ * {@code data-window-name} and {@code data-context-path} attributes on
+ * {@code <body>}, set by the server-side {@code ViewServlet}.</p>
+ *
+ * <p>This replaces inline {@code TLReact.mount()} script calls, keeping the page
+ * free of inline JavaScript (CSP-friendly).</p>
+ */
+function autoMount(): void {
+  const body = document.body;
+  const windowName = body.dataset.windowName;
+  const contextPath = body.dataset.contextPath;
+
+  // Only auto-mount on pages that provide the view-system data attributes.
+  if (windowName === undefined || contextPath === undefined) {
+    return;
+  }
+
+  const elements = body.querySelectorAll<HTMLElement>('[data-react-module]');
+  for (const el of elements) {
+    const moduleName = el.dataset.reactModule;
+    const stateJson = el.dataset.reactState;
+    if (!moduleName || !el.id) {
+      continue;
+    }
+    const state = stateJson ? JSON.parse(stateJson) : {};
+    mount(el.id, moduleName, state, windowName, contextPath);
+  }
+}
+
+// Initialize auto-unmount and auto-mount when DOM is ready.
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
     setupAutoUnmount();
+    autoMount();
   });
 } else {
   setupAutoUnmount();
+  autoMount();
 }

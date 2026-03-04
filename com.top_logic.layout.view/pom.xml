@@ -22,5 +22,12 @@
       <groupId>com.top-logic</groupId>
       <artifactId>tl-layout-react</artifactId>
     </dependency>
+
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-basic</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 </project>

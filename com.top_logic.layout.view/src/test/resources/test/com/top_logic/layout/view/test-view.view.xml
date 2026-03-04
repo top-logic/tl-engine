@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+  <content class="com.top_logic.layout.view.element.AppShellElement">
+    <content class="com.top_logic.layout.view.element.PanelElement"
+             title="Test Panel">
+      <children>
+        <stack direction="row"
+               gap="compact" />
+      </children>
+    </content>
+  </content>
+</view>

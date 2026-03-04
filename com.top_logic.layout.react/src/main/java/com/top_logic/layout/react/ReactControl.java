@@ -227,11 +227,14 @@ public class ReactControl extends AbstractVisibleControl implements ViewControl 
 		_sseQueue = queue;
 		queue.registerControl(this);
 
+		// Serialize state exactly once so that child controls are allocated and registered once.
+		String stateJson = toJsonString(_reactState, context);
+
 		out.beginBeginTag(HTMLConstants.DIV);
 		writeIdAttribute(out);
 		writeControlClasses(out);
 		out.writeAttribute("data-react-module", _reactModule);
-		out.writeAttribute("data-react-state", toJsonString(_reactState, context));
+		out.writeAttribute("data-react-state", stateJson);
 		out.endBeginTag();
 		out.endTag(HTMLConstants.DIV);
 
@@ -241,7 +244,7 @@ public class ReactControl extends AbstractVisibleControl implements ViewControl 
 		out.append("', '");
 		out.append(_reactModule);
 		out.append("', ");
-		writeJsonLiteral(out, _reactState, context);
+		out.append(stateJson);
 		out.append(", '");
 		out.append(context.getWindowName());
 		out.append("', '");

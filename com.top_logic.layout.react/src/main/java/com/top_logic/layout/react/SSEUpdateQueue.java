@@ -66,12 +66,23 @@ public class SSEUpdateQueue implements HttpSessionBindingListener {
 
 	/**
 	 * Retrieves or creates the {@link SSEUpdateQueue} for the given session.
+	 *
+	 * <p>
+	 * Synchronizes on the session to prevent a race where two concurrent requests both see
+	 * {@code null}, create independent queues, and the second {@code setAttribute} triggers
+	 * {@code valueUnbound} on the first — clearing its registered controls.
+	 * </p>
 	 */
 	public static SSEUpdateQueue forSession(HttpSession session) {
 		SSEUpdateQueue queue = (SSEUpdateQueue) session.getAttribute(SESSION_ATTRIBUTE_KEY);
 		if (queue == null) {
-			queue = new SSEUpdateQueue();
-			session.setAttribute(SESSION_ATTRIBUTE_KEY, queue);
+			synchronized (session) {
+				queue = (SSEUpdateQueue) session.getAttribute(SESSION_ATTRIBUTE_KEY);
+				if (queue == null) {
+					queue = new SSEUpdateQueue();
+					session.setAttribute(SESSION_ATTRIBUTE_KEY, queue);
+				}
+			}
 		}
 		return queue;
 	}
@@ -81,6 +92,8 @@ public class SSEUpdateQueue implements HttpSessionBindingListener {
 	 * looked up by ID for command dispatch.
 	 */
 	public void registerControl(CommandListener control) {
+		Logger.info("SSEUpdateQueue@" + System.identityHashCode(this) + " registerControl: "
+			+ control.getID(), SSEUpdateQueue.class);
 		_controls.put(control.getID(), control);
 	}
 
@@ -97,7 +110,12 @@ public class SSEUpdateQueue implements HttpSessionBindingListener {
 	 * @return The control, or {@code null} if not found.
 	 */
 	public CommandListener getControl(String controlId) {
-		return _controls.get(controlId);
+		CommandListener control = _controls.get(controlId);
+		if (control == null) {
+			Logger.warn("SSEUpdateQueue@" + System.identityHashCode(this) + " getControl(" + controlId
+				+ ") NOT FOUND. Registered IDs: " + _controls.keySet(), SSEUpdateQueue.class);
+		}
+		return control;
 	}
 
 	/**

@@ -17,6 +17,7 @@ import jakarta.servlet.http.HttpSession;
 
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationReader;
@@ -81,11 +82,6 @@ public class ViewServlet extends TopLogicServlet {
 		}
 
 		String viewPath = resolveViewPath(request);
-		if (viewPath == null) {
-			response.sendError(HttpServletResponse.SC_BAD_REQUEST,
-				"No view path specified. Use /view/<name>.view.xml");
-			return;
-		}
 
 		ViewElement view;
 		try {
@@ -109,17 +105,21 @@ public class ViewServlet extends TopLogicServlet {
 	/**
 	 * Resolves the view file path from the request's path info.
 	 *
-	 * @return The webapp-relative path to the view XML file, or {@code null} if no path was
-	 *         specified.
+	 * <p>
+	 * When no explicit path is given (e.g. {@code /view/}), falls back to the default view
+	 * configured in {@link ViewConfig#getDefaultView()}.
+	 * </p>
 	 */
 	private String resolveViewPath(HttpServletRequest request) {
 		String pathInfo = request.getPathInfo();
-		if (pathInfo == null || pathInfo.length() <= 1) {
-			return null;
+		if (pathInfo != null && pathInfo.length() > 1) {
+			// Explicit path: /view/foo.view.xml -> /WEB-INF/views/foo.view.xml
+			String viewName = pathInfo.substring(1);
+			return VIEW_BASE_PATH + viewName;
 		}
-		// Strip leading slash from pathInfo.
-		String viewName = pathInfo.substring(1);
-		return VIEW_BASE_PATH + viewName;
+		// Fall back to the configured default view.
+		String defaultView = ApplicationConfig.getInstance().getConfig(ViewConfig.class).getDefaultView();
+		return VIEW_BASE_PATH + defaultView;
 	}
 
 	/**

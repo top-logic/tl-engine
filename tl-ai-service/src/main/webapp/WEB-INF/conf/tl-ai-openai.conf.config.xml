@@ -82,6 +82,11 @@
 							tool-class="com.top_logic.ai.service.tools.model.ModelEditorTool"
 						/>
 					</factory>
+					<factory name="task">
+						<implementation class="com.top_logic.ai.service.tools.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.ai.service.tools.task.TaskTool"
+						/>
+					</factory>
 
 					<!-- Example configuration with ReflectiveToolFactory:
 					<factory name="mytools">

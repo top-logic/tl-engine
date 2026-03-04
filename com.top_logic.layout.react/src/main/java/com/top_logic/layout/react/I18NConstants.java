@@ -363,6 +363,20 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey JS_FORM_GROUP_EXPAND = ResKey.internalCreate("js.formGroup.expand");
 
+	// -- Table client-side i18n keys --
+
+	/**
+	 * @en Freeze up to here
+	 * @de Bis hier fixieren
+	 */
+	public static ResKey JS_TABLE_FREEZE_UP_TO = ResKey.internalCreate("js.table.freezeUpTo");
+
+	/**
+	 * @en Unfreeze all
+	 * @de Alle l\u00f6sen
+	 */
+	public static ResKey JS_TABLE_UNFREEZE_ALL = ResKey.internalCreate("js.table.unfreezeAll");
+
 	static {
 		initConstants(I18NConstants.class);
 	}

@@ -11,8 +11,12 @@ import com.top_logic.layout.react.ReactControl;
  * A simple read-only cell control that displays a text value.
  *
  * <p>
- * Renders as a {@code TLTextCell} React component showing the string representation of the cell
- * value.
+ * Renders as a {@code TLTextCell} React component showing the given text string.
+ * </p>
+ *
+ * <p>
+ * The caller is responsible for converting application objects to display strings, e.g. by using a
+ * {@link com.top_logic.layout.LabelProvider}.
  * </p>
  */
 public class ReactTextCellControl extends ReactControl {
@@ -23,18 +27,21 @@ public class ReactTextCellControl extends ReactControl {
 	/**
 	 * Creates a new {@link ReactTextCellControl}.
 	 *
-	 * @param value
-	 *        The value to display, or {@code null}.
+	 * @param text
+	 *        The text to display, or {@code null}.
 	 */
-	public ReactTextCellControl(Object value) {
+	public ReactTextCellControl(String text) {
 		super(null, "TLTextCell");
-		putState(TEXT, value != null ? value.toString() : "");
+		putState(TEXT, text != null ? text : "");
 	}
 
 	/**
 	 * Updates the displayed text.
+	 *
+	 * @param text
+	 *        The new text to display, or {@code null}.
 	 */
-	public void setText(Object value) {
-		putState(TEXT, value != null ? value.toString() : "");
+	public void setText(String text) {
+		putState(TEXT, text != null ? text : "");
 	}
 }

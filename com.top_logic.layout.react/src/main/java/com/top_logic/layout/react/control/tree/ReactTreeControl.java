@@ -38,34 +38,48 @@ public class ReactTreeControl extends ReactControl {
 
 	// -- State keys --
 
+	/** @see #buildNodeStates() */
 	private static final String NODES = "nodes";
 
+	/** @see #setSelectionMode(String) */
 	private static final String SELECTION_MODE = "selectionMode";
 
+	/** @see #setDragEnabled(boolean) */
 	private static final String DRAG_ENABLED = "dragEnabled";
 
+	/** @see #setDropEnabled(boolean) */
 	private static final String DROP_ENABLED = "dropEnabled";
 
+	/** @see DragOverCommand */
 	private static final String DROP_INDICATOR_NODE_ID = "dropIndicatorNodeId";
 
+	/** @see DragOverCommand */
 	private static final String DROP_INDICATOR_POSITION = "dropIndicatorPosition";
 
-	// -- Node state keys --
+	// -- Node state keys (used in {@link #addNodeState}) --
 
+	/** Unique node identifier. */
 	private static final String NODE_ID = "id";
 
+	/** Nesting depth (0 for top-level visible nodes). */
 	private static final String NODE_DEPTH = "depth";
 
+	/** Whether the node has children and can be expanded. */
 	private static final String NODE_EXPANDABLE = "expandable";
 
+	/** Whether the node is currently expanded. */
 	private static final String NODE_EXPANDED = "expanded";
 
+	/** Whether the node is a leaf (no children). */
 	private static final String NODE_LEAF = "leaf";
 
+	/** Whether the node is currently loading children. */
 	private static final String NODE_LOADING = "loading";
 
+	/** Whether the node is selected. */
 	private static final String NODE_SELECTED = "selected";
 
+	/** The child {@link ReactControl} rendering the node content. */
 	private static final String NODE_CONTENT = "content";
 
 	// -- Commands --

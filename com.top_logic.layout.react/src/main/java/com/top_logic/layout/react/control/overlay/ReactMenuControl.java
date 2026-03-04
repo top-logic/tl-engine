@@ -32,22 +32,31 @@ public class ReactMenuControl extends ReactControl {
 
 	private static final String REACT_MODULE = "TLMenu";
 
+	/** @see #ReactMenuControl(String, List, Consumer, Runnable) */
 	private static final String ANCHOR_ID = "anchorId";
 
+	/** @see #open() */
 	private static final String OPEN = "open";
 
+	/** @see #updateItems(List) */
 	private static final String ITEMS = "items";
 
+	/** Entry type discriminator ({@code "item"} or {@code "separator"}). */
 	private static final String ENTRY_TYPE = "type";
 
+	/** Entry identifier within the menu. */
 	private static final String ENTRY_ID = "id";
 
+	/** Entry display label. */
 	private static final String ENTRY_LABEL = "label";
 
+	/** Entry CSS icon class. */
 	private static final String ENTRY_ICON = "icon";
 
+	/** Whether the entry is disabled. */
 	private static final String ENTRY_DISABLED = "disabled";
 
+	/** Command argument: the selected item identifier. */
 	private static final String ITEM_ID_ARG = "itemId";
 
 	private static final Map<String, ControlCommand> COMMANDS = createCommandMap(

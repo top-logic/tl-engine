@@ -48,40 +48,57 @@ public class ReactTableControl extends ReactControl {
 
 	// -- State keys --
 
+	/** @see #buildColumnsState() */
 	private static final String COLUMNS = "columns";
 
+	/** @see #buildFullState() */
 	private static final String TOTAL_ROW_COUNT = "totalRowCount";
 
+	/** @see #updateViewport(int, int) */
 	private static final String VIEWPORT_START = "viewportStart";
 
+	/** @see #updateViewport(int, int) */
 	private static final String ROWS = "rows";
 
+	/** @see #ReactTableControl(TableModel, ReactCellControlProvider) */
 	private static final String ROW_HEIGHT = "rowHeight";
 
+	/** @see #setSelectionMode(String) */
 	private static final String SELECTION_MODE = "selectionMode";
 
+	/** @see #setSelectionForced(boolean) */
 	private static final String SELECTION_FORCED = "selectionForced";
 
+	/** @see #updateViewport(int, int) */
 	private static final String SELECTED_COUNT = "selectedCount";
 
+	/** @see #setFrozenColumnCount(int) */
 	private static final String FROZEN_COLUMN_COUNT = "frozenColumnCount";
 
+	/** @see #ReactTableControl(TableModel, ReactCellControlProvider) */
 	private static final String TREE_MODE = "treeMode";
 
-	// -- Row state keys --
+	// -- Row state keys (used in {@link #updateViewport(int, int)}) --
 
+	/** Synthetic row identifier. */
 	private static final String ROW_ID = "id";
 
+	/** Index into the displayed row list. */
 	private static final String ROW_INDEX = "index";
 
+	/** Whether the row is selected. */
 	private static final String ROW_SELECTED = "selected";
 
+	/** Map of column name to cell {@link ReactControl}. */
 	private static final String ROW_CELLS = "cells";
 
+	/** Tree depth of the node (0 for top-level visible items). */
 	private static final String TREE_DEPTH = "treeDepth";
 
+	/** Whether the tree node can be expanded. */
 	private static final String TREE_EXPANDABLE = "expandable";
 
+	/** Whether the tree node is currently expanded. */
 	private static final String TREE_EXPANDED = "expanded";
 
 	// -- Configuration --

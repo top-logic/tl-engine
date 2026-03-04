@@ -14,8 +14,8 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
-import com.top_logic.layout.Control;
 import com.top_logic.layout.react.ReactControl;
+import com.top_logic.layout.react.ViewControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.react.control.nav.ReactAppShellControl;
 import com.top_logic.layout.view.UIElement;
@@ -92,7 +92,7 @@ public class AppShellElement implements UIElement {
 	}
 
 	@Override
-	public Control createControl(ViewContext context) {
+	public ViewControl createControl(ViewContext context) {
 		ReactControl header = createSlotControl(context, _header);
 		ReactControl content = createSlotControl(context, _content);
 		ReactControl footer = createSlotControl(context, _footer);

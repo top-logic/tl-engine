@@ -26,15 +26,11 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.Content;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.xml.TagWriter;
-import com.top_logic.layout.Control;
-import com.top_logic.layout.ControlScope;
-import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.LocalScope;
-import com.top_logic.layout.basic.DefaultDisplayContext;
-import com.top_logic.layout.internal.WindowId;
+import com.top_logic.layout.react.DefaultViewDisplayContext;
 import com.top_logic.layout.react.SSEUpdateQueue;
+import com.top_logic.layout.react.ViewControl;
+import com.top_logic.layout.react.ViewDisplayContext;
 import com.top_logic.mig.html.HTMLConstants;
-import com.top_logic.util.TLContext;
 import com.top_logic.util.TopLogicServlet;
 
 /**
@@ -44,7 +40,7 @@ import com.top_logic.util.TopLogicServlet;
  * Loads a {@code .view.xml} file, parses it via {@link TypedConfiguration} into a shared
  * {@link UIElement} tree, creates per-session control trees via
  * {@link UIElement#createControl(ViewContext)}, and renders the initial HTML page using
- * {@link TagWriter} and {@link Control#write(DisplayContext, TagWriter)}.
+ * {@link TagWriter} and {@link ViewControl#write(ViewDisplayContext, TagWriter)}.
  * </p>
  *
  * <p>
@@ -53,12 +49,10 @@ import com.top_logic.util.TopLogicServlet;
  * </p>
  *
  * <p>
- * <b>Scope management:</b> The servlet sets up a view-specific scope chain consisting of a
- * {@link ViewFrameScope} (for ID generation and command listener management), a
- * {@link ViewLayoutContext} (providing a {@link WindowId} for React client mount), and a
- * {@link LocalScope} as the root {@link ControlScope}. This allows the standard
- * {@link Control#write(DisplayContext, TagWriter)} path to work without depending on the traditional
- * {@link com.top_logic.mig.html.layout.MainLayout} component tree.
+ * <b>Scope management:</b> The servlet creates a {@link DefaultViewDisplayContext} that provides ID
+ * allocation and SSE queue access without depending on the traditional
+ * {@link com.top_logic.mig.html.layout.MainLayout} component tree or old-world
+ * {@link com.top_logic.layout.DisplayContext} scope chain.
  * </p>
  */
 public class ViewServlet extends TopLogicServlet {
@@ -93,13 +87,13 @@ public class ViewServlet extends TopLogicServlet {
 			return;
 		}
 
-		SSEUpdateQueue queue = SSEUpdateQueue.forSession(session);
-		ViewFrameScope frameScope = new ViewFrameScope();
-		ViewContext viewContext = new ViewContext(frameScope, queue);
+		ViewDisplayContext displayContext = new DefaultViewDisplayContext(
+			request.getContextPath(), "view", SSEUpdateQueue.forSession(session));
+		ViewContext viewContext = new ViewContext(displayContext);
 
-		Control rootControl = view.createControl(viewContext);
+		ViewControl rootControl = view.createControl(viewContext);
 
-		renderPage(request, response, rootControl, frameScope);
+		renderPage(request, response, rootControl, displayContext);
 	}
 
 	/**
@@ -164,30 +158,19 @@ public class ViewServlet extends TopLogicServlet {
 	}
 
 	/**
-	 * Renders the HTML page with the root control using the standard {@link Control#write} path.
+	 * Renders the HTML page with the root control using the {@link ViewControl#write} path.
 	 *
 	 * <p>
-	 * Sets up the view-specific scope chain on the current {@link DisplayContext} and delegates
-	 * rendering to the control itself via {@link Control#write(DisplayContext, TagWriter)}.
+	 * Uses the {@link ViewDisplayContext} directly, without the old-world
+	 * {@link com.top_logic.layout.DisplayContext} scope chain.
 	 * </p>
 	 */
 	private void renderPage(HttpServletRequest request, HttpServletResponse response,
-			Control rootControl, ViewFrameScope frameScope) throws IOException {
+			ViewControl rootControl, ViewDisplayContext viewContext) throws IOException {
 		response.setContentType("text/html");
 		response.setCharacterEncoding("UTF-8");
 
-		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
-
-		// Install view-specific LayoutContext on the current SubSession so that
-		// ReactControl.internalWrite() can resolve the WindowId.
-		TLContext subSession = (TLContext) displayContext.getSubSessionContext();
-		subSession.initLayoutContext(new ViewLayoutContext(new WindowId("view")));
-
-		// Set up the root ControlScope so that Control.write() can attach controls.
-		ControlScope rootScope = new LocalScope(frameScope, false);
-		displayContext.initScope(rootScope);
-
-		String contextPath = displayContext.getContextPath();
+		String contextPath = viewContext.getContextPath();
 
 		TagWriter out = new TagWriter(response.getWriter());
 
@@ -221,11 +204,12 @@ public class ViewServlet extends TopLogicServlet {
 
 		// Delegate rendering to the control itself. ReactControl.internalWrite() writes
 		// the mount-point div and the TLReact.mount() bootstrap script.
-		rootControl.write(displayContext, out);
+		rootControl.write(viewContext, out);
 
 		out.endTag(HTMLConstants.BODY);
 		out.endTag(HTMLConstants.HTML);
 
 		out.flushBuffer();
 	}
+
 }

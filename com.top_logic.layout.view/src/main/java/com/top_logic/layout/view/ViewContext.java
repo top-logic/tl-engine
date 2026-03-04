@@ -5,47 +5,35 @@
  */
 package com.top_logic.layout.view;
 
-import com.top_logic.layout.FrameScope;
-import com.top_logic.layout.react.SSEUpdateQueue;
+import com.top_logic.layout.react.ViewDisplayContext;
 
 /**
  * Hierarchical context for UIElement control creation.
  *
  * <p>
- * Provides session-scoped infrastructure needed to create and wire controls. Container elements
- * may create derived contexts that add scoped information for their children.
+ * Provides session-scoped infrastructure needed to create and wire controls. Container elements may
+ * create derived contexts that add scoped information for their children.
  * </p>
  */
 public class ViewContext {
 
-	private final FrameScope _frameScope;
-
-	private final SSEUpdateQueue _sseQueue;
+	private final ViewDisplayContext _displayContext;
 
 	/**
 	 * Creates a new {@link ViewContext}.
 	 *
-	 * @param frameScope
-	 *        Scope for allocating control IDs.
-	 * @param sseQueue
-	 *        Queue for SSE event delivery.
+	 * @param displayContext
+	 *        The view display context providing ID allocation, SSE queue and other rendering
+	 *        infrastructure.
 	 */
-	public ViewContext(FrameScope frameScope, SSEUpdateQueue sseQueue) {
-		_frameScope = frameScope;
-		_sseQueue = sseQueue;
+	public ViewContext(ViewDisplayContext displayContext) {
+		_displayContext = displayContext;
 	}
 
 	/**
-	 * The frame scope for allocating control IDs.
+	 * The {@link ViewDisplayContext} for the current session.
 	 */
-	public FrameScope getFrameScope() {
-		return _frameScope;
-	}
-
-	/**
-	 * The SSE update queue for the current session.
-	 */
-	public SSEUpdateQueue getSSEQueue() {
-		return _sseQueue;
+	public ViewDisplayContext getDisplayContext() {
+		return _displayContext;
 	}
 }

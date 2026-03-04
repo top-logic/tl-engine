@@ -15,6 +15,9 @@ interface RowState {
   index: number;
   selected: boolean;
   cells: Record<string, unknown>;
+  treeDepth?: number;
+  expandable?: boolean;
+  expanded?: boolean;
 }
 
 const MIN_COL_WIDTH = 50;
@@ -34,6 +37,7 @@ const TLTableView: React.FC<TLCellProps> = () => {
   const selectionMode = (state.selectionMode as string) ?? 'single';
   const selectedCount = (state.selectedCount as number) ?? 0;
   const frozenColumnCount = (state.frozenColumnCount as number) ?? 0;
+  const treeMode = (state.treeMode as boolean) ?? false;
 
   const sortedColumnCount = React.useMemo(
     () => columns.filter((c) => c.sortPriority && c.sortPriority > 0).length,
@@ -42,6 +46,7 @@ const TLTableView: React.FC<TLCellProps> = () => {
 
   const isMulti = selectionMode === 'multi';
   const checkboxWidth = 40;
+  const treeIndentWidth = 20;
 
   const headerRef = React.useRef<HTMLDivElement>(null);
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
@@ -221,6 +226,12 @@ const TLTableView: React.FC<TLCellProps> = () => {
     sendCommand('selectAll', { selected: !allSelected });
   }, [sendCommand, selectedCount, totalRowCount]);
 
+  // -- Expand handler --
+  const handleExpand = React.useCallback((rowIndex: number, expanded: boolean, event: React.MouseEvent) => {
+    event.stopPropagation();
+    sendCommand('expand', { rowIndex, expanded });
+  }, [sendCommand]);
+
   // -- Computed values --
   const tableWidth = columns.reduce((sum, col) => sum + getColWidth(col), 0)
     + (isMulti ? checkboxWidth : 0);
@@ -398,6 +409,8 @@ const TLTableView: React.FC<TLCellProps> = () => {
                 let cellClass = 'tlTableView__cell';
                 if (isFrozen) cellClass += ' tlTableView__cell--frozen';
                 if (isFrozenLast) cellClass += ' tlTableView__cell--frozenLast';
+                const isTreeColumn = treeMode && colIdx === 0;
+                const treeDepth = row.treeDepth ?? 0;
                 return (
                   <div
                     key={col.name}
@@ -409,7 +422,23 @@ const TLTableView: React.FC<TLCellProps> = () => {
                       ...(isFrozen ? { position: 'sticky' as const, left: frozenOffsets[colIdx], zIndex: 2 } : {}),
                     }}
                   >
-                    <TLChild control={row.cells[col.name]} />
+                    {isTreeColumn ? (
+                      <div className="tlTableView__treeCell" style={{ paddingLeft: treeDepth * treeIndentWidth }}>
+                        {row.expandable ? (
+                          <button
+                            className="tlTableView__treeToggle"
+                            onClick={(e) => handleExpand(row.index, !row.expanded, e)}
+                          >
+                            {row.expanded ? '\u25BE' : '\u25B8'}
+                          </button>
+                        ) : (
+                          <span className="tlTableView__treeToggleSpacer" />
+                        )}
+                        <TLChild control={row.cells[col.name]} />
+                      </div>
+                    ) : (
+                      <TLChild control={row.cells[col.name]} />
+                    )}
                   </div>
                 );
               })}

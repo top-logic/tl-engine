@@ -1,5 +1,10 @@
-import { React, useTLState, useTLCommand, TLChild } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
+
+const I18N_KEYS = {
+  'js.table.freezeUpTo': 'Freeze up to here',
+  'js.table.unfreezeAll': 'Unfreeze all',
+};
 
 interface ColumnState {
   name: string;
@@ -29,6 +34,7 @@ const MIN_COL_WIDTH = 50;
 const TLTableView: React.FC<TLCellProps> = () => {
   const state = useTLState();
   const sendCommand = useTLCommand();
+  const i18n = useI18N(I18N_KEYS);
 
   const columns = (state.columns as ColumnState[]) ?? [];
   const totalRowCount = (state.totalRowCount as number) ?? 0;
@@ -60,6 +66,11 @@ const TLTableView: React.FC<TLCellProps> = () => {
   // -- Drag reorder state --
   const dragColumnRef = React.useRef<string | null>(null);
   const [dragOver, setDragOver] = React.useState<{ column: string; side: 'left' | 'right' } | null>(null);
+
+  // -- Column context menu state --
+  const [contextMenu, setContextMenu] = React.useState<{
+    x: number; y: number; colIdx: number;
+  } | null>(null);
 
   // Clear overrides when server pushes updated columns (resize confirmed).
   React.useEffect(() => {
@@ -232,6 +243,38 @@ const TLTableView: React.FC<TLCellProps> = () => {
     sendCommand('expand', { rowIndex, expanded });
   }, [sendCommand]);
 
+  // -- Column context menu handlers --
+  const handleColumnContextMenu = React.useCallback((colIdx: number, event: React.MouseEvent) => {
+    event.preventDefault();
+    setContextMenu({ x: event.clientX, y: event.clientY, colIdx });
+  }, []);
+
+  const handleFreezeUpTo = React.useCallback(() => {
+    if (!contextMenu) return;
+    sendCommand('setFrozenColumnCount', { count: contextMenu.colIdx + 1 });
+    setContextMenu(null);
+  }, [contextMenu, sendCommand]);
+
+  const handleUnfreezeAll = React.useCallback(() => {
+    sendCommand('setFrozenColumnCount', { count: 0 });
+    setContextMenu(null);
+  }, [sendCommand]);
+
+  // Close context menu on outside click or Escape.
+  React.useEffect(() => {
+    if (!contextMenu) return;
+    const handleMouseDown = () => setContextMenu(null);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setContextMenu(null);
+    };
+    document.addEventListener('mousedown', handleMouseDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleMouseDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [contextMenu]);
+
   // -- Computed values --
   const tableWidth = columns.reduce((sum, col) => sum + getColWidth(col), 0)
     + (isMulti ? checkboxWidth : 0);
@@ -319,6 +362,7 @@ const TLTableView: React.FC<TLCellProps> = () => {
                 }}
                 draggable={true}
                 onClick={col.sortable ? (e) => handleSort(col.name, col.sortDirection, e) : undefined}
+                onContextMenu={(e) => handleColumnContextMenu(colIdx, e)}
                 onDragStart={(e) => handleDragStart(col.name, e)}
                 onDragOver={(e) => handleDragOver(col.name, e)}
                 onDrop={handleDrop}
@@ -446,6 +490,27 @@ const TLTableView: React.FC<TLCellProps> = () => {
           ))}
         </div>
       </div>
+
+      {/* Column context menu */}
+      {contextMenu && (
+        <div
+          className="tlMenu"
+          role="menu"
+          style={{ position: 'fixed', top: contextMenu.y, left: contextMenu.x, zIndex: 10000 }}
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          {contextMenu.colIdx + 1 !== frozenColumnCount && (
+            <button type="button" className="tlMenu__item" role="menuitem" onClick={handleFreezeUpTo}>
+              <span className="tlMenu__label">{i18n['js.table.freezeUpTo']}</span>
+            </button>
+          )}
+          {frozenColumnCount > 0 && (
+            <button type="button" className="tlMenu__item" role="menuitem" onClick={handleUnfreezeAll}>
+              <span className="tlMenu__label">{i18n['js.table.unfreezeAll']}</span>
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 };

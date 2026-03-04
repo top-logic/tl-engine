@@ -15,8 +15,8 @@ import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
-import com.top_logic.layout.Control;
 import com.top_logic.layout.react.ReactControl;
+import com.top_logic.layout.react.ViewControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
 
 /**
@@ -74,7 +74,7 @@ public class ViewElement implements UIElement {
 	}
 
 	@Override
-	public Control createControl(ViewContext context) {
+	public ViewControl createControl(ViewContext context) {
 		if (_content.size() == 1) {
 			return _content.get(0).createControl(context);
 		}

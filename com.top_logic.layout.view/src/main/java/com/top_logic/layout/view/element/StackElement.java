@@ -14,8 +14,8 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
-import com.top_logic.layout.Control;
 import com.top_logic.layout.react.ReactControl;
+import com.top_logic.layout.react.ViewControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.view.ContainerElement;
 import com.top_logic.layout.view.UIElement;
@@ -90,8 +90,8 @@ public class StackElement extends ContainerElement {
 	}
 
 	@Override
-	public Control createControl(ViewContext context) {
-		List<Control> childControls = createChildControls(context);
+	public ViewControl createControl(ViewContext context) {
+		List<ViewControl> childControls = createChildControls(context);
 
 		List<ReactControl> reactChildren = childControls.stream()
 			.map(c -> (ReactControl) c)

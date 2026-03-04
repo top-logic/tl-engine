@@ -6,14 +6,14 @@
 package com.top_logic.layout.view;
 
 import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.layout.Control;
+import com.top_logic.layout.react.ViewControl;
 
 /**
  * Base interface for all view elements.
  *
  * <p>
- * A UIElement is a stateless factory for {@link Control}. The UIElement tree is shared across all
- * sessions (parsed once from configuration). Each session gets its own control tree by calling
+ * A UIElement is a stateless factory for {@link ViewControl}. The UIElement tree is shared across
+ * all sessions (parsed once from configuration). Each session gets its own control tree by calling
  * {@link #createControl(ViewContext)}.
  * </p>
  */
@@ -32,12 +32,12 @@ public interface UIElement {
 	}
 
 	/**
-	 * Creates a {@link Control} for this element in the given session context.
+	 * Creates a {@link ViewControl} for this element in the given session context.
 	 *
 	 * @param context
 	 *        The view context providing session-scoped infrastructure.
 	 * @return A control for the current session. Typically a
 	 *         {@link com.top_logic.layout.react.ReactControl}.
 	 */
-	Control createControl(ViewContext context);
+	ViewControl createControl(ViewContext context);
 }

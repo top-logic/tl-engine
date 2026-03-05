@@ -237,6 +237,8 @@ public class ReactControl extends AbstractVisibleControl implements ViewControl 
 		writeControlClasses(out);
 		out.writeAttribute("data-react-module", _reactModule);
 		out.writeAttribute("data-react-state", stateJson);
+		out.writeAttribute("data-window-name", context.getWindowName());
+		out.writeAttribute("data-context-path", context.getContextPath());
 		out.endBeginTag();
 		out.endTag(HTMLConstants.DIV);
 	}

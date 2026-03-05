@@ -5,27 +5,16 @@
  */
 package com.top_logic.layout.view;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
-import com.top_logic.basic.FileManager;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ApplicationConfig;
-import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationException;
-import com.top_logic.basic.config.ConfigurationReader;
-import com.top_logic.basic.config.DefaultInstantiationContext;
-import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.basic.io.Content;
-import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.gui.JSFileCompiler;
 import com.top_logic.gui.ThemeFactory;
@@ -41,8 +30,7 @@ import com.top_logic.util.TopLogicServlet;
  * Servlet that bootstraps the view-based UI.
  *
  * <p>
- * Loads a {@code .view.xml} file, parses it via {@link TypedConfiguration} into a shared
- * {@link UIElement} tree, creates per-session control trees via
+ * Loads a {@code .view.xml} file via {@link ViewLoader}, creates per-session control trees via
  * {@link UIElement#createControl(ViewContext)}, and renders the initial HTML page using
  * {@link TagWriter} and {@link ViewControl#write(ViewDisplayContext, TagWriter)}.
  * </p>
@@ -66,15 +54,6 @@ import com.top_logic.util.TopLogicServlet;
  */
 public class ViewServlet extends TopLogicServlet {
 
-	/** Base path for view XML files within the webapp. */
-	private static final String VIEW_BASE_PATH = "/WEB-INF/views/";
-
-	/**
-	 * Global cache of parsed {@link ViewElement}s, keyed by view path. Each entry stores the
-	 * file's {@code lastModified} timestamp so the view is re-parsed when the file changes.
-	 */
-	private final ConcurrentHashMap<String, CachedView> _viewCache = new ConcurrentHashMap<>();
-
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
@@ -96,7 +75,7 @@ public class ViewServlet extends TopLogicServlet {
 
 		ViewElement view;
 		try {
-			view = getOrLoadView(viewPath);
+			view = ViewLoader.getOrLoadView(viewPath);
 		} catch (ConfigurationException ex) {
 			Logger.error("Failed to load view: " + viewPath, ex, ViewServlet.class);
 			response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
@@ -161,61 +140,11 @@ public class ViewServlet extends TopLogicServlet {
 		if (slashIdx >= 0 && slashIdx < path.length() - 1) {
 			String viewName = path.substring(slashIdx + 1);
 			if (!viewName.isEmpty()) {
-				return VIEW_BASE_PATH + viewName;
+				return ViewLoader.VIEW_BASE_PATH + viewName;
 			}
 		}
 		String defaultView = ApplicationConfig.getInstance().getConfig(ViewConfig.class).getDefaultView();
-		return VIEW_BASE_PATH + defaultView;
-	}
-
-	/**
-	 * Retrieves a cached {@link ViewElement} or loads and caches it from the view XML file.
-	 *
-	 * <p>
-	 * Checks the source file's modification timestamp against the cached value. If the file has
-	 * been modified since it was last parsed, the cache entry is replaced with a freshly parsed
-	 * view.
-	 * </p>
-	 */
-	private ViewElement getOrLoadView(String viewPath) throws ConfigurationException {
-		File file = FileManager.getInstance().getIDEFileOrNull(viewPath);
-		long currentModified = file != null ? file.lastModified() : 0L;
-
-		CachedView cached = _viewCache.get(viewPath);
-		if (cached != null && cached._lastModified == currentModified) {
-			return cached._view;
-		}
-
-		ViewElement view = loadView(viewPath);
-		_viewCache.put(viewPath, new CachedView(view, currentModified));
-		return view;
-	}
-
-	/**
-	 * Parses a {@code .view.xml} file into a {@link ViewElement}.
-	 */
-	private ViewElement loadView(String viewPath) throws ConfigurationException {
-		BinaryData source = FileManager.getInstance().getDataOrNull(viewPath);
-		if (source == null) {
-			throw new ConfigurationException("View file not found: " + viewPath);
-		}
-
-		Map<String, ConfigurationDescriptor> descriptors = Collections.singletonMap(
-			"view", TypedConfiguration.getConfigurationDescriptor(ViewElement.Config.class));
-
-		DefaultInstantiationContext context = new DefaultInstantiationContext(ViewServlet.class);
-		ConfigurationReader reader = new ConfigurationReader(context, descriptors);
-		reader.setSource((Content) source);
-
-		ViewElement.Config config = (ViewElement.Config) reader.read();
-		context.checkErrors();
-
-		UIElement uiElement = context.getInstance(config);
-		if (!(uiElement instanceof ViewElement)) {
-			throw new ConfigurationException(
-				"Expected ViewElement but got: " + uiElement.getClass().getName());
-		}
-		return (ViewElement) uiElement;
+		return ViewLoader.VIEW_BASE_PATH + defaultView;
 	}
 
 	/**
@@ -325,21 +254,6 @@ public class ViewServlet extends TopLogicServlet {
 		out.endTag(HTMLConstants.HTML);
 
 		out.flushBuffer();
-	}
-
-	/**
-	 * A cached view together with the source file's modification timestamp.
-	 */
-	private static final class CachedView {
-
-		final ViewElement _view;
-
-		final long _lastModified;
-
-		CachedView(ViewElement view, long lastModified) {
-			_view = view;
-			_lastModified = lastModified;
-		}
 	}
 
 }

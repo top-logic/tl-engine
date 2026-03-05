@@ -5,7 +5,9 @@
  */
 package com.top_logic.layout.view.element;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.CalledByReflection;
@@ -18,6 +20,7 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.FloatDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.react.ReactControl;
 import com.top_logic.layout.react.ViewControl;
@@ -151,17 +154,120 @@ public class SplitPanelElement implements UIElement {
 
 	@Override
 	public ViewControl createControl(ViewContext context) {
-		Orientation orientation = "vertical".equals(_orientation) ? Orientation.VERTICAL : Orientation.HORIZONTAL;
-		ReactSplitPanelControl splitPanel = new ReactSplitPanelControl(orientation, _resizable);
+		String key = resolveKey(context, "split-panel");
 
-		for (PaneEntry pane : _panes) {
+		Map<Integer, Float> persistedSizes = loadPaneSizes(key);
+
+		Orientation orientation = "vertical".equals(_orientation) ? Orientation.VERTICAL : Orientation.HORIZONTAL;
+
+		// TODO: Restore persisted collapse states per child. Currently ReactSplitPanelControl
+		// does not offer a public API to set initial collapse state per-child at construction time.
+		ReactSplitPanelControl splitPanel = new ReactSplitPanelControl(orientation, _resizable,
+			sizes -> savePaneSizes(key, sizes),
+			(idx, collapsed) -> saveCollapseState(key, idx, collapsed));
+
+		for (int i = 0; i < _panes.size(); i++) {
+			PaneEntry pane = _panes.get(i);
+			float size = persistedSizes.containsKey(Integer.valueOf(i))
+				? persistedSizes.get(Integer.valueOf(i)).floatValue() : pane._size;
+			DisplayUnit unit = persistedSizes.containsKey(Integer.valueOf(i))
+				? DisplayUnit.PIXEL : ("%".equals(pane._unit) ? DisplayUnit.PERCENT : DisplayUnit.PIXEL);
+			ChildConstraint constraint = new ChildConstraint(size, unit, pane._minSize, Scrolling.AUTO);
 			ReactControl content = createContent(pane._children, context);
-			DisplayUnit unit = "%".equals(pane._unit) ? DisplayUnit.PERCENT : DisplayUnit.PIXEL;
-			ChildConstraint constraint = new ChildConstraint(pane._size, unit, pane._minSize, Scrolling.AUTO);
 			splitPanel.addChild(content, constraint);
 		}
 
 		return splitPanel;
+	}
+
+	private static String resolveKey(ViewContext context, String defaultSegment) {
+		return context.getPersonalizationKey() + "." + defaultSegment;
+	}
+
+	@SuppressWarnings("unchecked")
+	private static Map<Integer, Float> loadPaneSizes(String key) {
+		PersonalConfiguration pc = PersonalConfiguration.getPersonalConfiguration();
+		if (pc == null) {
+			return Map.of();
+		}
+		Object value = pc.getJSONValue(key + ".sizes");
+		if (value instanceof Map) {
+			Map<String, Object> raw = (Map<String, Object>) value;
+			Map<Integer, Float> result = new HashMap<>();
+			for (Map.Entry<String, Object> entry : raw.entrySet()) {
+				try {
+					int index = Integer.parseInt(entry.getKey());
+					if (entry.getValue() instanceof Number) {
+						result.put(Integer.valueOf(index), Float.valueOf(((Number) entry.getValue()).floatValue()));
+					}
+				} catch (NumberFormatException e) {
+					// Skip corrupt entries.
+				}
+			}
+			return result;
+		}
+		return Map.of();
+	}
+
+	private static void savePaneSizes(String key, Map<String, Float> controlIdToSize) {
+		PersonalConfiguration pc = PersonalConfiguration.getPersonalConfiguration();
+		if (pc == null) {
+			return;
+		}
+		Map<String, Object> indexed = new HashMap<>();
+		int i = 0;
+		for (Map.Entry<String, Float> entry : controlIdToSize.entrySet()) {
+			indexed.put(String.valueOf(i), entry.getValue());
+			i++;
+		}
+		pc.setJSONValue(key + ".sizes", indexed);
+	}
+
+	@SuppressWarnings("unchecked")
+	private static Map<Integer, Boolean> loadCollapseStates(String key) {
+		PersonalConfiguration pc = PersonalConfiguration.getPersonalConfiguration();
+		if (pc == null) {
+			return Map.of();
+		}
+		Object value = pc.getJSONValue(key + ".collapse");
+		if (value instanceof Map) {
+			Map<String, Object> raw = (Map<String, Object>) value;
+			Map<Integer, Boolean> result = new HashMap<>();
+			for (Map.Entry<String, Object> entry : raw.entrySet()) {
+				try {
+					int index = Integer.parseInt(entry.getKey());
+					if (entry.getValue() instanceof Boolean) {
+						result.put(Integer.valueOf(index), (Boolean) entry.getValue());
+					}
+				} catch (NumberFormatException e) {
+					// Skip corrupt entries.
+				}
+			}
+			return result;
+		}
+		return Map.of();
+	}
+
+	private static void saveCollapseState(String key, int childIndex, boolean collapsed) {
+		PersonalConfiguration pc = PersonalConfiguration.getPersonalConfiguration();
+		if (pc == null) {
+			return;
+		}
+		Map<Integer, Boolean> states = loadCollapseStates(key);
+		Map<String, Object> store = new HashMap<>();
+		for (Map.Entry<Integer, Boolean> entry : states.entrySet()) {
+			store.put(entry.getKey().toString(), entry.getValue());
+		}
+		if (collapsed) {
+			store.put(String.valueOf(childIndex), Boolean.TRUE);
+		} else {
+			store.remove(String.valueOf(childIndex));
+		}
+		if (store.isEmpty()) {
+			pc.setJSONValue(key + ".collapse", null);
+		} else {
+			pc.setJSONValue(key + ".collapse", store);
+		}
 	}
 
 	private static ReactControl createContent(List<UIElement> elements, ViewContext context) {

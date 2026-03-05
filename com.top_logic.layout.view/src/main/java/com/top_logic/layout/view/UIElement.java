@@ -28,7 +28,20 @@ public interface UIElement {
 	 * </p>
 	 */
 	interface Config extends PolymorphicConfiguration<UIElement> {
-		// Common properties (css-class, visibility, etc.) will be added here later.
+
+		/** Configuration name for {@link #getPersonalizationKey()}. */
+		String PERSONALIZATION_KEY = "personalization-key";
+
+		/**
+		 * Optional override for the auto-derived personalization key.
+		 *
+		 * <p>
+		 * If set, stateful elements use this key instead of the auto-derived path from
+		 * {@link ViewContext#getPersonalizationKey()}.
+		 * </p>
+		 */
+		@com.top_logic.basic.config.annotation.Name(PERSONALIZATION_KEY)
+		String getPersonalizationKey();
 	}
 
 	/**

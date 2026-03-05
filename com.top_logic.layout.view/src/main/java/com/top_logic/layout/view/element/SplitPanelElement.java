@@ -157,24 +157,33 @@ public class SplitPanelElement implements UIElement {
 		String key = resolveKey(context, "split-panel");
 
 		Map<Integer, Float> persistedSizes = loadPaneSizes(key);
+		Map<Integer, Boolean> persistedCollapse = loadCollapseStates(key);
 
 		Orientation orientation = "vertical".equals(_orientation) ? Orientation.VERTICAL : Orientation.HORIZONTAL;
-
-		// TODO: Restore persisted collapse states per child. Currently ReactSplitPanelControl
-		// does not offer a public API to set initial collapse state per-child at construction time.
 		ReactSplitPanelControl splitPanel = new ReactSplitPanelControl(orientation, _resizable,
 			sizes -> savePaneSizes(key, sizes),
 			(idx, collapsed) -> saveCollapseState(key, idx, collapsed));
 
 		for (int i = 0; i < _panes.size(); i++) {
 			PaneEntry pane = _panes.get(i);
-			float size = persistedSizes.containsKey(Integer.valueOf(i))
-				? persistedSizes.get(Integer.valueOf(i)).floatValue() : pane._size;
-			DisplayUnit unit = persistedSizes.containsKey(Integer.valueOf(i))
+			Integer idx = Integer.valueOf(i);
+			boolean collapsed = persistedCollapse.getOrDefault(idx, Boolean.FALSE).booleanValue();
+
+			float size = persistedSizes.containsKey(idx)
+				? persistedSizes.get(idx).floatValue() : pane._size;
+			DisplayUnit unit = persistedSizes.containsKey(idx)
 				? DisplayUnit.PIXEL : ("%".equals(pane._unit) ? DisplayUnit.PERCENT : DisplayUnit.PIXEL);
 			ChildConstraint constraint = new ChildConstraint(size, unit, pane._minSize, Scrolling.AUTO);
 			ReactControl content = createContent(pane._children, context);
-			splitPanel.addChild(content, constraint);
+
+			if (collapsed) {
+				// Restore collapsed state. The constraint holds the current (collapsed) size.
+				// Pass the config default as the saved (expand-to) size.
+				DisplayUnit defaultUnit = "%".equals(pane._unit) ? DisplayUnit.PERCENT : DisplayUnit.PIXEL;
+				splitPanel.addChild(content, constraint, true, pane._size, defaultUnit);
+			} else {
+				splitPanel.addChild(content, constraint);
+			}
 		}
 
 		return splitPanel;

@@ -42,6 +42,7 @@ import com.top_logic.layout.react.control.sidebar.NavigationItem;
 import com.top_logic.layout.react.control.sidebar.ReactSidebarControl;
 import com.top_logic.layout.react.control.sidebar.SeparatorItem;
 import com.top_logic.layout.react.control.sidebar.SidebarItem;
+import com.top_logic.layout.structure.PersonalizingExpandable;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.HandlerResult;
 
@@ -179,7 +180,14 @@ public class DemoReactAppComponent extends LayoutComponent {
 			return HandlerResult.DEFAULT_RESULT;
 		}));
 
-		return new ReactSidebarControl(items, PAGE_DASHBOARD, false, null, null) {
+		boolean collapsed = PersonalizingExpandable.loadCollapsed("demo.app.collapsed", false);
+
+		return new ReactSidebarControl(
+			items, PAGE_DASHBOARD,
+			collapsed, null,
+			c -> PersonalizingExpandable.saveCollapsed("demo.app.collapsed", c, false),
+			null,
+			null, null, null, null) {
 			@Override
 			public void selectItem(String itemId) {
 				super.selectItem(itemId);

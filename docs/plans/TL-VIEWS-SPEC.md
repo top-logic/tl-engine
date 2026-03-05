@@ -703,13 +703,13 @@ on the element type:
   </commands>
 
   <tab label="i18n:customers.overview" icon="people">
-    <include view="customers/overview.view.xml" />
+    <view-ref view="customers/overview.view.xml" />
   </tab>
   <tab label="i18n:customers.orders" icon="shopping-cart">
-    <include view="customers/orders.view.xml" />
+    <view-ref view="customers/orders.view.xml" />
   </tab>
   <tab label="i18n:customers.history" icon="clock">
-    <include view="customers/history.view.xml" />
+    <view-ref view="customers/history.view.xml" />
   </tab>
 </tabs>
 ```
@@ -727,14 +727,14 @@ tab visibility. Commands on `<tabs>` render as buttons at the right end of the t
   </commands>
 
   <entry label="i18n:nav.customers" icon="people">
-    <include view="customers/list.view.xml" />
+    <view-ref view="customers/list.view.xml" />
   </entry>
   <entry label="i18n:nav.orders" icon="shopping-cart">
-    <include view="orders/list.view.xml" />
+    <view-ref view="orders/list.view.xml" />
   </entry>
   <group label="i18n:nav.admin">
     <entry label="i18n:nav.users" icon="person-gear">
-      <include view="admin/users.view.xml" />
+      <view-ref view="admin/users.view.xml" />
     </entry>
   </group>
 </sidebar>
@@ -811,15 +811,15 @@ derived channels and model builders.
   <when max-width="768px">
     <!-- Mobile: stacked layout -->
     <vbox>
-      <include view="customers/selector.view.xml" />
-      <include view="customers/detail.view.xml" />
+      <view-ref view="customers/selector.view.xml" />
+      <view-ref view="customers/detail.view.xml" />
     </vbox>
   </when>
   <when max-width="1200px">
     <!-- Tablet: narrow split -->
     <split direction="horizontal" ratio="40:60">
-      <include view="customers/selector.view.xml" />
-      <include view="customers/detail.view.xml" />
+      <view-ref view="customers/selector.view.xml" />
+      <view-ref view="customers/detail.view.xml" />
     </split>
   </when>
   <otherwise>
@@ -827,8 +827,8 @@ derived channels and model builders.
     <sidebar position="left" width="250px">
       <entry label="i18n:nav.customers">
         <split direction="horizontal" ratio="30:70">
-          <include view="customers/selector.view.xml" />
-          <include view="customers/detail.view.xml" />
+          <view-ref view="customers/selector.view.xml" />
+          <view-ref view="customers/detail.view.xml" />
         </split>
       </entry>
     </sidebar>
@@ -845,21 +845,32 @@ tablet, and desktop layouts without separate view files.
 
 | Element      | Description                                            |
 |--------------|--------------------------------------------------------|
-| `<include>`  | Include another `*.view.xml` inline                    |
+| `<view-ref>` | Embed another `*.view.xml` as an isolated component    |
 | `<dialog>`   | Defines modal dialog content, opened by commands       |
 
-**`<include>`** embeds another view file inline. This is the primary composition
-mechanism beyond templates:
+**`<view-ref>`** embeds another view file as an isolated component. Each reference
+creates an independent instance with its own channel namespace. This is the primary
+composition mechanism beyond templates:
 
 ```xml
 <split direction="horizontal" ratio="30:70">
-  <include view="organization/selector.view.xml" />
-  <include view="customers/detail.view.xml" />
+  <view-ref view="organization/selector.view.xml">
+    <bind channel="selection" to="selectedOrg" />
+  </view-ref>
+  <view-ref view="customers/detail.view.xml">
+    <bind channel="item" to="selectedOrg" />
+  </view-ref>
 </split>
 ```
 
-The included view's channels become reachable via the included file's path, as with
-any cross-view channel reference.
+Each `<view-ref>` creates a **component boundary**: the referenced view gets its own
+`ViewContext` with its own channel map. Communication across the boundary uses explicit
+`<bind>` elements that share the parent's channel instance with the child view. Unbound
+channels in the child remain private to that instance.
+
+The same view can be referenced multiple times (each gets independent state) and views
+can even reference themselves recursively, since the referenced view is loaded lazily at
+control creation time, not at configuration parse time.
 
 **`<dialog>`** defines modal dialog content within a view. Like `<panel>`, a dialog is
 a command-defining element - it has its own `<commands>` section and a button bar where

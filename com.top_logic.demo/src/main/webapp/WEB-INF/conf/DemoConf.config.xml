@@ -113,14 +113,6 @@
 			</instance>
 		</config>
 
-		<config service-class="com.top_logic.tool.boundsec.manager.AccessManager">
-			<instance>
-	            <structures>
-	            	<structure name="mandatorStructure"/>
-				</structures>
-			</instance>
-		</config>
-
 		<config service-class="com.top_logic.element.meta.kbbased.filtergen.GeneratorFactory">
 			<instance>
 				<generators>

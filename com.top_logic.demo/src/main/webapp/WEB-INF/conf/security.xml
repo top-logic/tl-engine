@@ -1224,6 +1224,5 @@
 				<commandGroup name="Write"/>
 			</view>
 		</profile>
-		<profile name="mandatorStructure.navigation"/>
 	</profiles>
 </security>

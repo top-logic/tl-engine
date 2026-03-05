@@ -11,7 +11,6 @@ import java.util.Map;
 import junit.framework.Test;
 import junit.framework.TestCase;
 
-import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.config.ConfigurationDescriptor;
@@ -82,7 +81,6 @@ public class TestViewElement extends TestCase {
 	 * Test suite requiring the {@link TypeIndex} module.
 	 */
 	public static Test suite() {
-		return ModuleTestSetup.setupModule(
-			ServiceTestSetup.createSetup(TestViewElement.class, TypeIndex.Module.INSTANCE));
+		return ServiceTestSetup.createSetup(TestViewElement.class, TypeIndex.Module.INSTANCE);
 	}
 }

@@ -97,8 +97,13 @@ public class ViewElement implements UIElement {
 	public ViewControl createControl(ViewContext context) {
 		// Phase 2a: Create and register channels.
 		for (ChannelConfig channelConfig : _channelConfigs) {
+			String name = channelConfig.getName();
+			if (context.hasChannel(name)) {
+				// Pre-bound by parent via <view-ref> binding. Skip local instantiation.
+				continue;
+			}
 			ViewChannel channel = new DefaultInstantiationContext(ViewElement.class).getInstance(channelConfig);
-			context.registerChannel(channelConfig.getName(), channel);
+			context.registerChannel(name, channel);
 		}
 
 		if (_content.size() == 1) {

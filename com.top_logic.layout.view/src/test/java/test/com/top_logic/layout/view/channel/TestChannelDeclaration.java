@@ -112,6 +112,46 @@ public class TestChannelDeclaration extends TestCase {
 	}
 
 	/**
+	 * Tests that ViewElement.createControl() skips channels already registered in the context
+	 * (pre-bound by a parent view-ref).
+	 */
+	public void testPreBoundChannelNotOverwritten() throws Exception {
+		// Parse the test-channels view (declares "selectedItem" and "editMode").
+		DefaultInstantiationContext instContext = new DefaultInstantiationContext(TestChannelDeclaration.class);
+
+		Map<String, ConfigurationDescriptor> descriptors = Collections.singletonMap(
+			"view", TypedConfiguration.getConfigurationDescriptor(ViewElement.Config.class));
+
+		BinaryContent source = new ClassRelativeBinaryContent(TestChannelDeclaration.class,
+			"test-channels.view.xml");
+
+		ConfigurationReader reader = new ConfigurationReader(instContext, descriptors);
+		reader.setSource(source);
+		ViewElement.Config config = (ViewElement.Config) reader.read();
+		instContext.checkErrors();
+		ViewElement viewElement = (ViewElement) instContext.getInstance(config);
+
+		// Pre-bind "selectedItem" channel in the context.
+		ViewContext viewContext = new ViewContext(null);
+		ViewChannel preBound = new DefaultViewChannel("selectedItem");
+		preBound.set("pre-bound-value");
+		viewContext.registerChannel("selectedItem", preBound);
+
+		// Create control — should skip "selectedItem", create "editMode".
+		viewElement.createControl(viewContext);
+
+		// The pre-bound channel must be preserved (same instance, same value).
+		ViewChannel resolved = viewContext.resolveChannel(new ChannelRef("selectedItem"));
+		assertSame("Pre-bound channel must not be replaced", preBound, resolved);
+		assertEquals("Pre-bound value must be preserved", "pre-bound-value", resolved.get());
+
+		// "editMode" should have been created fresh.
+		ViewChannel editMode = viewContext.resolveChannel(new ChannelRef("editMode"));
+		assertNotNull("editMode should be created", editMode);
+		assertNotSame("editMode should be a different instance", preBound, editMode);
+	}
+
+	/**
 	 * Test suite requiring the {@link TypeIndex} module.
 	 */
 	public static Test suite() {

@@ -140,7 +140,36 @@ public class ReactSplitPanelControl extends ReactControl {
 	 *        The layout constraint for the child.
 	 */
 	public void addChild(ReactControl child, ChildConstraint constraint) {
+		addChild(child, constraint, false, 0, null);
+	}
+
+	/**
+	 * Adds a child control with the given constraint and initial collapse state.
+	 *
+	 * <p>
+	 * Use this overload to restore a previously persisted collapse state. The {@code savedSize} and
+	 * {@code savedUnit} define the size the child will expand to when uncollapsed.
+	 * </p>
+	 *
+	 * @param child
+	 *        The child control.
+	 * @param constraint
+	 *        The layout constraint for the child (containing the current/collapsed size).
+	 * @param initialCollapsed
+	 *        Whether the child starts collapsed.
+	 * @param savedSize
+	 *        The size to restore when expanding (typically the config default).
+	 * @param savedUnit
+	 *        The unit of the saved size.
+	 */
+	public void addChild(ReactControl child, ChildConstraint constraint,
+			boolean initialCollapsed, float savedSize, DisplayUnit savedUnit) {
 		ChildEntry entry = new ChildEntry(child, constraint);
+		if (initialCollapsed) {
+			entry._collapsed = true;
+			entry._savedSize = savedSize;
+			entry._savedUnit = savedUnit;
+		}
 		_children.add(entry);
 
 		childList().add(entry.toDescriptor());

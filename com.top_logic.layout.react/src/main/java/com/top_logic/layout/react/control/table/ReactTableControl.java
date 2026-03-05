@@ -6,6 +6,7 @@
 package com.top_logic.layout.react.control.table;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -45,6 +46,20 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * </p>
  */
 public class ReactTableControl extends ReactControl {
+
+	/**
+	 * Listener notified when the set of selected rows changes.
+	 */
+	public interface SelectionListener {
+
+		/**
+		 * Called after the selection has changed.
+		 *
+		 * @param selectedRows
+		 *        The current set of selected row objects (unmodifiable).
+		 */
+		void selectionChanged(Set<Object> selectedRows);
+	}
 
 	// -- State keys --
 
@@ -155,6 +170,8 @@ public class ReactTableControl extends ReactControl {
 	/** Number of columns frozen on the left side. */
 	private int _frozenColumnCount;
 
+	private SelectionListener _selectionListener;
+
 	/**
 	 * Cache of cell controls for currently visible rows. Keyed by row object, then column name.
 	 */
@@ -247,6 +264,23 @@ public class ReactTableControl extends ReactControl {
 	 */
 	public int getFrozenColumnCount() {
 		return _frozenColumnCount;
+	}
+
+	/**
+	 * Sets the listener to be notified on selection changes.
+	 *
+	 * @param listener
+	 *        The listener, or {@code null} to remove.
+	 */
+	public void setSelectionListener(SelectionListener listener) {
+		_selectionListener = listener;
+	}
+
+	/**
+	 * The current set of selected row objects (unmodifiable).
+	 */
+	public Set<Object> getSelectedRows() {
+		return Collections.unmodifiableSet(_selectedRows);
 	}
 
 	/**
@@ -676,6 +710,9 @@ public class ReactTableControl extends ReactControl {
 			}
 
 			table.updateViewport(table._viewportStart, table._viewportCount);
+			if (table._selectionListener != null) {
+				table._selectionListener.selectionChanged(Collections.unmodifiableSet(table._selectedRows));
+			}
 			return HandlerResult.DEFAULT_RESULT;
 		}
 	}
@@ -714,6 +751,9 @@ public class ReactTableControl extends ReactControl {
 			}
 
 			table.updateViewport(table._viewportStart, table._viewportCount);
+			if (table._selectionListener != null) {
+				table._selectionListener.selectionChanged(Collections.unmodifiableSet(table._selectedRows));
+			}
 			return HandlerResult.DEFAULT_RESULT;
 		}
 	}

@@ -213,8 +213,6 @@ public class TreeElement implements UIElement {
 
 	private final QueryExecutor _childrenExecutor;
 
-	private final QueryExecutor _isLeafExecutor;
-
 	private final ReactControlProvider _nodeContentProvider;
 
 	/**
@@ -232,7 +230,6 @@ public class TreeElement implements UIElement {
 
 		_rootExecutor = QueryExecutor.compile(config.getRoot());
 		_childrenExecutor = QueryExecutor.compile(config.getChildren());
-		_isLeafExecutor = QueryExecutor.compileOptional(config.getIsLeaf());
 
 		ReactControlProvider configuredProvider = context.getInstance(config.getNodeContent());
 		_nodeContentProvider = configuredProvider != null ? configuredProvider : defaultContentProvider();

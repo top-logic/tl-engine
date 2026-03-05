@@ -38,7 +38,6 @@
 			</instance>
 		</config>
 		
-		
 		<config service-class="com.top_logic.knowledge.indexing.IndexingService" >
 			<instance class="com.top_logic.ai.vector.index.VectorIndexingService">
 				<protocols>
@@ -59,17 +58,11 @@
 				</modules>
 			</instance>
 		</config>
+
+		<!-- Production Vector Store Configuration overriding Java defaults -->
 		<config service-class="com.top_logic.ai.vector.index.VectorIndex">
 			<instance class="com.top_logic.ai.vector.index.VectorIndex"
-				vector-store-type="qdrant"
-				vector-store-host="localhost"
-				vector-store-port="6334"
-				qdrant-db-collection-name="toplogic-vectors"
-				mistral-api-key="YOUR_MISTRAL_API_KEY_HERE"
-				mistral-embed-model="mistral-embed"
-				vector-index-models=""
-				timeout-abort-indexing-for-shutdown="30000"
-				warn-queue-size="1000"
+				mistral-api-key="%MISTRAL_API_KEY%"
 			/>
 		</config>
 	</services>

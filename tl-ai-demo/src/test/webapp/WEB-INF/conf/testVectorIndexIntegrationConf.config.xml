@@ -18,11 +18,11 @@
 
 		<config service-class="com.top_logic.ai.vector.index.VectorIndex" config:override="true">
 			<instance class="com.top_logic.ai.vector.index.VectorIndex"
-				local-store-path="${tl_basic_tmp}/test-jvector"
+				local-store-path="tmp/test-jvector"
 				vector-store-type="jvector"
 				vector-index-models="luigis.pizzashop:Product"
 				mistral-embed-model="mistral-embed"
-				mistral-api-key="XXXX-XXXX-XXXX-XXXX"
+				mistral-api-key="%MISTRAL_API_KEY%"
 				embedding-model-type="mistral"
 			/>
 		</config>
@@ -30,11 +30,11 @@
 	
 	<configs>
 		<config config:interface="com.top_logic.ai.vector.index.VectorIndex$VectorIndexingConfig"
-			local-store-path="${tl_basic_tmp}/test-jvector"
+			local-store-path="tmp/test-jvector"
 			vector-store-type="jvector"
 			vector-index-models="luigis.pizzashop:Product"
 			mistral-embed-model="mistral-embed"
-			mistral-api-key="XXXX-XXXX-XXXX-XXXX"
+			mistral-api-key="%MISTRAL_API_KEY%"
 			embedding-model-type="mistral"
 		/>
 	</configs>

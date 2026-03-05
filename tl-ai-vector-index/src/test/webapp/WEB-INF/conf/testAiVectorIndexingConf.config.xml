@@ -65,7 +65,7 @@
 			<instance class="com.top_logic.ai.vector.index.VectorIndex"
 				vector-store-type="jvector"
 				local-store-path="tmp/test-jvector"
-				mistral-api-key="TEST_API_KEY"
+				mistral-api-key="%MISTRAL_API_KEY%"
 				mistral-embed-model="mistral-embed"
 				embedding-model-type="local"
 				vector-index-models=""

@@ -59,16 +59,11 @@ public class VectorIndexIntegrationTest extends BasicTestCase {
             }
             jvectorDir.delete();
         }
-
-        index = VectorIndex.getInstance();
     }
 
     public void testSemanticSearchPizza() throws Exception {
         withTestObjects(objects -> {
-            // Manually add to vector index since IndexingService configuration is tricky in
-            // tests
-            // VectorIndex index = VectorIndex.getInstance(); // Removed local declaration
-            KnowledgeBase kb = kb();
+             VectorIndex index = VectorIndex.getInstance();
 
             for (TLObject obj : objects.getObjects()) {
                 if (obj.tType().getName().equals("Product")) {
@@ -135,7 +130,6 @@ public class VectorIndexIntegrationTest extends BasicTestCase {
     public void testSemanticSearchDelete() throws Exception {
         withTestObjects(objects -> {
             VectorIndex index = VectorIndex.getInstance();
-            KnowledgeBase kb = kb();
 
             // 1. Manually add to vector index
             TLObject margheritaObj = null;
@@ -231,7 +225,6 @@ public class VectorIndexIntegrationTest extends BasicTestCase {
     public void testSemanticSearchUpdate() throws Exception {
         withTestObjects(objects -> {
             VectorIndex index = VectorIndex.getInstance();
-            KnowledgeBase kb = kb();
 
             // 1. Setup: Index a specific pizza
             TLObject margheritaObj = null;
@@ -506,6 +499,7 @@ public class VectorIndexIntegrationTest extends BasicTestCase {
     }
 
     protected static Test suite(Class<? extends Test> test, BasicRuntimeModule<?>... additionalModules) {
+
         BasicRuntimeModule<?>[] modules = getModules(additionalModules);
 
         return KBSetup.getSingleKBTest(

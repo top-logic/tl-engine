@@ -1,15 +1,9 @@
-/*
- * SPDX-FileCopyrightText: 2004 (c) Business Operation Systems GmbH <info@top-logic.com>
- * 
- * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
- */
 package com.top_logic.ai.demo.test.agent.judge.messages;
 
 /**
  * Result from AI judge scoring ModelExplorer agent output.
  */
-public class JudgeResult extends de.haumacher.msgbuf.data.AbstractDataObject
-		implements de.haumacher.msgbuf.data.ReflectiveDataObject {
+public class JudgeResult extends de.haumacher.msgbuf.data.AbstractDataObject implements de.haumacher.msgbuf.data.ReflectiveDataObject {
 
 	/**
 	 * Creates a {@link com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult} instance.
@@ -18,10 +12,7 @@ public class JudgeResult extends de.haumacher.msgbuf.data.AbstractDataObject
 		return new com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult();
 	}
 
-	/**
-	 * Identifier for the {@link com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult} type in
-	 * JSON format.
-	 */
+	/** Identifier for the {@link com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult} type in JSON format. */
 	public static final String JUDGE_RESULT__TYPE = "JudgeResult";
 
 	/** @see #getScore() */
@@ -98,8 +89,7 @@ public class JudgeResult extends de.haumacher.msgbuf.data.AbstractDataObject
 	/**
 	 * @see #getMissingFacts()
 	 */
-	public com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult setMissingFacts(
-			java.util.List<? extends String> value) {
+	public com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult setMissingFacts(java.util.List<? extends String> value) {
 		internalSetMissingFacts(value);
 		return this;
 	}
@@ -140,8 +130,7 @@ public class JudgeResult extends de.haumacher.msgbuf.data.AbstractDataObject
 	/**
 	 * @see #getIncorrectClaims()
 	 */
-	public com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult setIncorrectClaims(
-			java.util.List<? extends String> value) {
+	public com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult setIncorrectClaims(java.util.List<? extends String> value) {
 		internalSetIncorrectClaims(value);
 		return this;
 	}
@@ -182,8 +171,7 @@ public class JudgeResult extends de.haumacher.msgbuf.data.AbstractDataObject
 	/**
 	 * @see #getScopeViolations()
 	 */
-	public com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult setScopeViolations(
-			java.util.List<? extends String> value) {
+	public com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult setScopeViolations(java.util.List<? extends String> value) {
 		internalSetScopeViolations(value);
 		return this;
 	}
@@ -224,8 +212,7 @@ public class JudgeResult extends de.haumacher.msgbuf.data.AbstractDataObject
 	/**
 	 * @see #getHallucinations()
 	 */
-	public com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult setHallucinations(
-			java.util.List<? extends String> value) {
+	public com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult setHallucinations(java.util.List<? extends String> value) {
 		internalSetHallucinations(value);
 		return this;
 	}
@@ -257,9 +244,9 @@ public class JudgeResult extends de.haumacher.msgbuf.data.AbstractDataObject
 	}
 
 	/**
-	 * Claims that exist in available facts but weren't fetched with required tools. Examples: enum
-	 * literals stated without calling listClassifiers, TLScript logic explained without calling
-	 * listAnnotations.
+	 * Claims that exist in available facts but weren't fetched with required tools.
+	 * Examples: enum literals stated without calling listClassifiers, TLScript logic
+	 * explained without calling listAnnotations.
 	 */
 	public final java.util.List<String> getNotFetched() {
 		return _notFetched;
@@ -268,8 +255,7 @@ public class JudgeResult extends de.haumacher.msgbuf.data.AbstractDataObject
 	/**
 	 * @see #getNotFetched()
 	 */
-	public com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult setNotFetched(
-			java.util.List<? extends String> value) {
+	public com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult setNotFetched(java.util.List<? extends String> value) {
 		internalSetNotFetched(value);
 		return this;
 	}
@@ -310,8 +296,7 @@ public class JudgeResult extends de.haumacher.msgbuf.data.AbstractDataObject
 	/**
 	 * @see #getFormatViolations()
 	 */
-	public com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult setFormatViolations(
-			java.util.List<? extends String> value) {
+	public com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult setFormatViolations(java.util.List<? extends String> value) {
 		internalSetFormatViolations(value);
 		return this;
 	}
@@ -363,7 +348,8 @@ public class JudgeResult extends de.haumacher.msgbuf.data.AbstractDataObject
 	static final java.util.Set<String> TRANSIENT_PROPERTIES;
 	static {
 		java.util.HashSet<String> tmp = new java.util.HashSet<>();
-		tmp.addAll(java.util.Arrays.asList());
+		tmp.addAll(java.util.Arrays.asList(
+				));
 		TRANSIENT_PROPERTIES = java.util.Collections.unmodifiableSet(tmp);
 	}
 
@@ -380,57 +366,33 @@ public class JudgeResult extends de.haumacher.msgbuf.data.AbstractDataObject
 	@Override
 	public Object get(String field) {
 		switch (field) {
-			case SCORE__PROP:
-				return getScore();
-			case MISSING_FACTS__PROP:
-				return getMissingFacts();
-			case INCORRECT_CLAIMS__PROP:
-				return getIncorrectClaims();
-			case SCOPE_VIOLATIONS__PROP:
-				return getScopeViolations();
-			case HALLUCINATIONS__PROP:
-				return getHallucinations();
-			case NOT_FETCHED__PROP:
-				return getNotFetched();
-			case FORMAT_VIOLATIONS__PROP:
-				return getFormatViolations();
-			default:
-				return null;
+			case SCORE__PROP: return getScore();
+			case MISSING_FACTS__PROP: return getMissingFacts();
+			case INCORRECT_CLAIMS__PROP: return getIncorrectClaims();
+			case SCOPE_VIOLATIONS__PROP: return getScopeViolations();
+			case HALLUCINATIONS__PROP: return getHallucinations();
+			case NOT_FETCHED__PROP: return getNotFetched();
+			case FORMAT_VIOLATIONS__PROP: return getFormatViolations();
+			default: return null;
 		}
 	}
 
 	@Override
 	public void set(String field, Object value) {
 		switch (field) {
-			case SCORE__PROP:
-				internalSetScore((int) value);
-				break;
-			case MISSING_FACTS__PROP:
-				internalSetMissingFacts(de.haumacher.msgbuf.util.Conversions.asList(String.class, value));
-				break;
-			case INCORRECT_CLAIMS__PROP:
-				internalSetIncorrectClaims(de.haumacher.msgbuf.util.Conversions.asList(String.class, value));
-				break;
-			case SCOPE_VIOLATIONS__PROP:
-				internalSetScopeViolations(de.haumacher.msgbuf.util.Conversions.asList(String.class, value));
-				break;
-			case HALLUCINATIONS__PROP:
-				internalSetHallucinations(de.haumacher.msgbuf.util.Conversions.asList(String.class, value));
-				break;
-			case NOT_FETCHED__PROP:
-				internalSetNotFetched(de.haumacher.msgbuf.util.Conversions.asList(String.class, value));
-				break;
-			case FORMAT_VIOLATIONS__PROP:
-				internalSetFormatViolations(de.haumacher.msgbuf.util.Conversions.asList(String.class, value));
-				break;
+			case SCORE__PROP: internalSetScore((int) value); break;
+			case MISSING_FACTS__PROP: internalSetMissingFacts(de.haumacher.msgbuf.util.Conversions.asList(String.class, value)); break;
+			case INCORRECT_CLAIMS__PROP: internalSetIncorrectClaims(de.haumacher.msgbuf.util.Conversions.asList(String.class, value)); break;
+			case SCOPE_VIOLATIONS__PROP: internalSetScopeViolations(de.haumacher.msgbuf.util.Conversions.asList(String.class, value)); break;
+			case HALLUCINATIONS__PROP: internalSetHallucinations(de.haumacher.msgbuf.util.Conversions.asList(String.class, value)); break;
+			case NOT_FETCHED__PROP: internalSetNotFetched(de.haumacher.msgbuf.util.Conversions.asList(String.class, value)); break;
+			case FORMAT_VIOLATIONS__PROP: internalSetFormatViolations(de.haumacher.msgbuf.util.Conversions.asList(String.class, value)); break;
 		}
 	}
 
 	/** Reads a new instance from the given reader. */
-	public static com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult readJudgeResult(
-			de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
-		com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult result =
-			new com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult();
+	public static com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult readJudgeResult(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+		com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult result = new com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult();
 		result.readContent(in);
 		return result;
 	}
@@ -486,9 +448,7 @@ public class JudgeResult extends de.haumacher.msgbuf.data.AbstractDataObject
 	@Override
 	protected void readField(de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
 		switch (field) {
-			case SCORE__PROP:
-				setScore(in.nextInt());
-				break;
+			case SCORE__PROP: setScore(in.nextInt()); break;
 			case MISSING_FACTS__PROP: {
 				java.util.List<String> newValue = new java.util.ArrayList<>();
 				in.beginArray();
@@ -498,7 +458,7 @@ public class JudgeResult extends de.haumacher.msgbuf.data.AbstractDataObject
 				in.endArray();
 				setMissingFacts(newValue);
 			}
-				break;
+			break;
 			case INCORRECT_CLAIMS__PROP: {
 				java.util.List<String> newValue = new java.util.ArrayList<>();
 				in.beginArray();
@@ -508,7 +468,7 @@ public class JudgeResult extends de.haumacher.msgbuf.data.AbstractDataObject
 				in.endArray();
 				setIncorrectClaims(newValue);
 			}
-				break;
+			break;
 			case SCOPE_VIOLATIONS__PROP: {
 				java.util.List<String> newValue = new java.util.ArrayList<>();
 				in.beginArray();
@@ -518,7 +478,7 @@ public class JudgeResult extends de.haumacher.msgbuf.data.AbstractDataObject
 				in.endArray();
 				setScopeViolations(newValue);
 			}
-				break;
+			break;
 			case HALLUCINATIONS__PROP: {
 				java.util.List<String> newValue = new java.util.ArrayList<>();
 				in.beginArray();
@@ -528,7 +488,7 @@ public class JudgeResult extends de.haumacher.msgbuf.data.AbstractDataObject
 				in.endArray();
 				setHallucinations(newValue);
 			}
-				break;
+			break;
 			case NOT_FETCHED__PROP: {
 				java.util.List<String> newValue = new java.util.ArrayList<>();
 				in.beginArray();
@@ -538,7 +498,7 @@ public class JudgeResult extends de.haumacher.msgbuf.data.AbstractDataObject
 				in.endArray();
 				setNotFetched(newValue);
 			}
-				break;
+			break;
 			case FORMAT_VIOLATIONS__PROP: {
 				java.util.List<String> newValue = new java.util.ArrayList<>();
 				in.beginArray();
@@ -548,9 +508,8 @@ public class JudgeResult extends de.haumacher.msgbuf.data.AbstractDataObject
 				in.endArray();
 				setFormatViolations(newValue);
 			}
-				break;
-			default:
-				super.readField(in, field);
+			break;
+			default: super.readField(in, field);
 		}
 	}
 

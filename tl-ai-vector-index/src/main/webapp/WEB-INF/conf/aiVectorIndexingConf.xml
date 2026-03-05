@@ -1,11 +1,9 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<!-- searchVector main configuration file                         -->
-
 <root>
 	<alias>
-		<!-- Folder to create the Vector index in. -->
-        <entry name="%VECTOR_PATH%" value="%VAR_PATH%/vector_index" />
+		<!-- Mistral API Key from environment -->
+		<entry name="%MISTRAL_API_KEY%" value="${env:tl_mistral_api_key:}" />
 	</alias>
 
 </root>

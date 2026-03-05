@@ -275,7 +275,7 @@ public class ReactControl extends AbstractVisibleControl implements ViewControl 
 	 */
 	protected void writeAsChild(JsonWriter writer, ViewDisplayContext viewContext)
 			throws IOException {
-		if (viewContext != null) {
+		if (viewContext != null && id == null) {
 			_viewContext = viewContext;
 			id = viewContext.allocateId();
 			SSEUpdateQueue queue = viewContext.getSSEQueue();

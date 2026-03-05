@@ -340,10 +340,41 @@ export function useTLFieldValue(): [unknown, (newValue: unknown) => void] {
   return [state.value, setValue];
 }
 
-// --- MutationObserver for auto-unmount ---
+// --- MutationObserver for auto-mount and auto-unmount ---
 
-function setupAutoUnmount(): void {
+/**
+ * Discovers unmounted {@code [data-react-module]} elements in the given root
+ * and mounts them. Context ({@code windowName}, {@code contextPath}) is read
+ * from per-element data attributes written by {@code ReactControl.write()}.
+ *
+ * <p>Safe to call at any time and multiple times — already-mounted elements
+ * (present in {@code _mounts}) are skipped.</p>
+ */
+export function discoverAndMount(root: ParentNode = document.body): void {
+  const elements = root.querySelectorAll<HTMLElement>('[data-react-module]');
+  for (const el of elements) {
+    if (!el.id || _mounts.has(el.id)) {
+      continue;
+    }
+    const moduleName = el.dataset.reactModule;
+    const windowName = el.dataset.windowName;
+    const contextPath = el.dataset.contextPath;
+    if (!moduleName || windowName === undefined || contextPath === undefined) {
+      continue;
+    }
+    const stateJson = el.dataset.reactState;
+    const state = stateJson ? JSON.parse(stateJson) : {};
+    mount(el.id, moduleName, state, windowName, contextPath);
+  }
+}
+
+/**
+ * Combined MutationObserver that auto-mounts newly added React controls
+ * and auto-unmounts removed ones.
+ */
+function setupDOMObserver(): void {
   const observer = new MutationObserver((mutations) => {
+    // Check for removed mounts first.
     for (const mutation of mutations) {
       for (const removed of mutation.removedNodes) {
         if (removed instanceof HTMLElement) {
@@ -351,10 +382,26 @@ function setupAutoUnmount(): void {
           if (id && _mounts.has(id)) {
             unmount(id);
           }
-          // Also check children.
           for (const [mountId] of _mounts) {
             if (removed.querySelector('#' + CSS.escape(mountId))) {
               unmount(mountId);
+            }
+          }
+        }
+      }
+    }
+
+    // Check for newly added mount points.
+    for (const mutation of mutations) {
+      for (const added of mutation.addedNodes) {
+        if (added instanceof HTMLElement) {
+          // The added node itself may be a mount point.
+          if (added.dataset?.reactModule) {
+            discoverAndMount(added.parentElement ?? document.body);
+          } else {
+            // Or it may contain mount points as descendants.
+            if (added.querySelector('[data-react-module]')) {
+              discoverAndMount(added);
             }
           }
         }
@@ -365,47 +412,13 @@ function setupAutoUnmount(): void {
   observer.observe(document.body, { childList: true, subtree: true });
 }
 
-// --- Auto-mount: discover declarative mount points in the DOM ---
-
-/**
- * Discovers all elements with a {@code data-react-module} attribute and mounts them.
- *
- * <p>Page-level context ({@code windowName}, {@code contextPath}) is read from
- * {@code data-window-name} and {@code data-context-path} attributes on
- * {@code <body>}, set by the server-side {@code ViewServlet}.</p>
- *
- * <p>This replaces inline {@code TLReact.mount()} script calls, keeping the page
- * free of inline JavaScript (CSP-friendly).</p>
- */
-function autoMount(): void {
-  const body = document.body;
-  const windowName = body.dataset.windowName;
-  const contextPath = body.dataset.contextPath;
-
-  // Only auto-mount on pages that provide the view-system data attributes.
-  if (windowName === undefined || contextPath === undefined) {
-    return;
-  }
-
-  const elements = body.querySelectorAll<HTMLElement>('[data-react-module]');
-  for (const el of elements) {
-    const moduleName = el.dataset.reactModule;
-    const stateJson = el.dataset.reactState;
-    if (!moduleName || !el.id) {
-      continue;
-    }
-    const state = stateJson ? JSON.parse(stateJson) : {};
-    mount(el.id, moduleName, state, windowName, contextPath);
-  }
-}
-
-// Initialize auto-unmount when DOM is ready.
+// Start the DOM observer as soon as the DOM is ready.
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', setupAutoUnmount);
+  document.addEventListener('DOMContentLoaded', setupDOMObserver);
 } else {
-  setupAutoUnmount();
+  setupDOMObserver();
 }
 
-// Auto-mount on window load, after ALL scripts (including the controls bundle
-// that registers components) have executed.
-window.addEventListener('load', autoMount);
+// Run initial discovery after all scripts have loaded (controls bundle must
+// be registered before mount() can look up components).
+window.addEventListener('load', () => discoverAndMount());

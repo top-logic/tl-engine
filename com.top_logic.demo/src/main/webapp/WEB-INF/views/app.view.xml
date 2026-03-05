@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<channels>
+		<channel name="selectedCompany" />
+	</channels>
 	<app-shell>
 		<header>
 			<app-bar title="Task Manager"/>
@@ -94,6 +97,31 @@
 													<demo-counter label="Content"/>
 												</children>
 											</card>
+										</children>
+									</pane>
+								</panes>
+							</split-panel>
+						</children>
+					</nav-item>
+					<nav-item id="channels-demo" label="Channels Demo" icon="bi bi-table">
+						<children>
+							<split-panel orientation="horizontal" resizable="true">
+								<panes>
+									<pane size="40" unit="%" min-size="200">
+										<children>
+											<table selection="selectedCompany">
+												<rows>all(`Contacts:CompanyContact`)</rows>
+											</table>
+										</children>
+									</pane>
+									<pane size="60" unit="%">
+										<children>
+											<table>
+												<inputs>
+													<input channel="selectedCompany" />
+												</inputs>
+												<rows>company -> if($company == null, list(), $company.get(`Contacts:Contact.Company#staff`))</rows>
+											</table>
 										</children>
 									</pane>
 								</panes>

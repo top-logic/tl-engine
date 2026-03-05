@@ -19,15 +19,45 @@ public class ViewContext {
 
 	private final ViewDisplayContext _displayContext;
 
+	private final String _personalizationPath;
+
 	/**
-	 * Creates a new {@link ViewContext}.
+	 * Creates a root {@link ViewContext}.
 	 *
 	 * @param displayContext
 	 *        The view display context providing ID allocation, SSE queue and other rendering
 	 *        infrastructure.
 	 */
 	public ViewContext(ViewDisplayContext displayContext) {
+		this(displayContext, "view");
+	}
+
+	private ViewContext(ViewDisplayContext displayContext, String personalizationPath) {
 		_displayContext = displayContext;
+		_personalizationPath = personalizationPath;
+	}
+
+	/**
+	 * Creates a child context with an appended path segment.
+	 *
+	 * @param segment
+	 *        The segment to append (e.g. "sidebar", "split-panel").
+	 * @return A new context with the extended personalization path.
+	 */
+	public ViewContext childContext(String segment) {
+		return new ViewContext(_displayContext, _personalizationPath + "." + segment);
+	}
+
+	/**
+	 * The personalization key for the current position in the view tree.
+	 *
+	 * <p>
+	 * Auto-derived from the tree path (e.g. "view.sidebar", "view.split-panel"). UIElements may
+	 * override this with an explicit personalization key from configuration.
+	 * </p>
+	 */
+	public String getPersonalizationKey() {
+		return _personalizationPath;
 	}
 
 	/**

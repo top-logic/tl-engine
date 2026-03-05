@@ -109,14 +109,14 @@
 								<panes>
 									<pane size="40" unit="%" min-size="200">
 										<children>
-											<table selection="selectedCompany">
+											<table types="Contacts:CompanyContact" selection="selectedCompany">
 												<rows>all(`Contacts:CompanyContact`)</rows>
 											</table>
 										</children>
 									</pane>
 									<pane size="60" unit="%">
 										<children>
-											<table>
+											<table types="Contacts:PersonContact">
 												<inputs>
 													<input channel="selectedCompany" />
 												</inputs>

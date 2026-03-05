@@ -57,6 +57,8 @@
   var CHAT_SEND_URL = BASE + "/chat/send";
   var CHAT_EVENTS_URL = BASE + "/chat/events";
   var CHAT_SESSIONS_URL = BASE + "/chat/sessions";
+  var CHAT_RESPOND_URL = BASE + "/chat/respond";
+  var CHAT_APPROVAL_MODE_URL = BASE + "/chat/approval-mode";
 
   // Track active SSE connections per chat root ID (not DOM reference, which changes on re-render)
   var activeConnections = {};
@@ -790,6 +792,125 @@
       return state.currentTaskBody;
     }
 
+    // ==================== User Interaction Dialog ====================
+
+    function showInteractionDialog(request) {
+        var existingOverlay = document.getElementById("interaction-overlay-" + request.requestId);
+        if (existingOverlay) return;
+
+        var overlay = document.createElement("div");
+        overlay.id = "interaction-overlay-" + request.requestId;
+        overlay.className = "approval-overlay";
+
+        var contentHtml = '';
+
+        if (request.type === "approval") {
+            contentHtml =
+                '<div class="approval-dialog">' +
+                '  <div class="approval-header">' + escapeHtml(request.header || "Approval Required") + '</div>' +
+                '  <div class="approval-desc">' + escapeHtml(request.question) + '</div>' +
+                '  <div class="approval-buttons">' +
+                '    <button class="approval-btn reject" data-request-id="' + escapeHtml(request.requestId) + '" data-response="rejected">Reject</button>' +
+                '    <button class="approval-btn approve" data-request-id="' + escapeHtml(request.requestId) + '" data-response="approved">Approve</button>' +
+                '    <button class="approval-btn approve-all" data-request-id="' + escapeHtml(request.requestId) + '" data-response="approved" data-approve-all="true">Approve All</button>' +
+                '  </div>' +
+                '</div>';
+        } else if (request.type === "text") {
+            contentHtml =
+                '<div class="approval-dialog">' +
+                '  <div class="approval-header">' + escapeHtml(request.header || "Input Required") + '</div>' +
+                '  <div class="approval-desc">' + escapeHtml(request.question) + '</div>' +
+                '  <div class="interaction-input-area">' +
+                '    <textarea class="interaction-text-input" rows="3" placeholder="Type your response..."></textarea>' +
+                '  </div>' +
+                '  <div class="approval-buttons">' +
+                '    <button class="approval-btn approve interaction-submit" data-request-id="' + escapeHtml(request.requestId) + '">Submit</button>' +
+                '  </div>' +
+                '</div>';
+        } else if (request.type === "choice") {
+            var optionsHtml = '';
+            try {
+                var opts = typeof request.options === "string" ? JSON.parse(request.options) : (request.options || []);
+                opts.forEach(function (opt, idx) {
+                    optionsHtml +=
+                        '<label class="interaction-choice-option">' +
+                        '  <input type="radio" name="interaction-choice-' + escapeHtml(request.requestId) + '" value="' + escapeHtml(opt.label) + '"' + (idx === 0 ? ' checked' : '') + '>' +
+                        '  <span class="interaction-choice-label">' + escapeHtml(opt.label) + '</span>' +
+                        (opt.description ? '  <span class="interaction-choice-desc">' + escapeHtml(opt.description) + '</span>' : '') +
+                        '</label>';
+                });
+            } catch (e) {
+                optionsHtml = '<div class="interaction-error">Failed to parse options</div>';
+            }
+            contentHtml =
+                '<div class="approval-dialog">' +
+                '  <div class="approval-header">' + escapeHtml(request.header || "Choose") + '</div>' +
+                '  <div class="approval-desc">' + escapeHtml(request.question) + '</div>' +
+                '  <div class="interaction-choices">' + optionsHtml + '</div>' +
+                '  <div class="approval-buttons">' +
+                '    <button class="approval-btn approve interaction-submit-choice" data-request-id="' + escapeHtml(request.requestId) + '">Submit</button>' +
+                '  </div>' +
+                '</div>';
+        }
+
+        overlay.innerHTML = contentHtml;
+
+        overlay.addEventListener("click", function (e) {
+            var btn = e.target.closest(".approval-btn");
+            if (!btn) return;
+            var reqId = btn.getAttribute("data-request-id");
+
+            if (btn.classList.contains("interaction-submit")) {
+                var textarea = overlay.querySelector(".interaction-text-input");
+                var text = textarea ? textarea.value.trim() : "";
+                if (text) submitInteraction(reqId, text, false);
+            } else if (btn.classList.contains("interaction-submit-choice")) {
+                var selected = overlay.querySelector('input[name="interaction-choice-' + reqId + '"]:checked');
+                if (selected) submitInteraction(reqId, selected.value, false);
+            } else {
+                var response = btn.getAttribute("data-response");
+                var approveAll = btn.getAttribute("data-approve-all") === "true";
+                submitInteraction(reqId, response, approveAll);
+            }
+        });
+
+        document.body.appendChild(overlay);
+    }
+
+    function submitInteraction(requestId, response, approveAll) {
+        fetch(CHAT_RESPOND_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ requestId: requestId, response: response })
+        }).then(function (resp) {
+            if (resp.ok) {
+                var overlay = document.getElementById("interaction-overlay-" + requestId);
+                if (overlay) overlay.remove();
+                if (approveAll) {
+                    setApprovalMode("AUTO_APPROVE");
+                }
+            } else {
+                log("Interaction submit failed", resp.status);
+            }
+        }).catch(function (err) {
+            log("Interaction submit error", err);
+        });
+    }
+
+    function setApprovalMode(mode) {
+        fetch(CHAT_APPROVAL_MODE_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ mode: mode })
+        }).then(function (resp) {
+            if (!resp.ok) {
+                log("setApprovalMode failed", resp.status);
+            }
+        }).catch(function (err) {
+            log("setApprovalMode error", err);
+        });
+    }
+
     function connectSSE() {
       log("connectSSE called", { destroyed: state.destroyed });
       if (state.destroyed) return;
@@ -969,6 +1090,30 @@
 
       eventSource.addEventListener("heartbeat", function (e) {
         // Heartbeat received - connection is alive
+      });
+
+      eventSource.addEventListener("user_interaction", function (e) {
+        log("SSE user_interaction event", e.data);
+        try {
+            var request = JSON.parse(e.data);
+            showInteractionDialog(request);
+        } catch (err) {
+            log("SSE user_interaction parse error", err);
+        }
+      });
+
+      eventSource.addEventListener("approval_mode", function (e) {
+        log("SSE approval_mode event", e.data);
+        try {
+            var data = JSON.parse(e.data);
+            if (data.mode === "AUTO_APPROVE") {
+                document.querySelectorAll('[id^="interaction-overlay-"]').forEach(function (el) {
+                    el.remove();
+                });
+            }
+        } catch (err) {
+            log("SSE approval_mode parse error", err);
+        }
       });
 
       eventSource.onerror = function (err) {

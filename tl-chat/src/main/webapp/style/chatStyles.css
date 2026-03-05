@@ -1207,3 +1207,152 @@
 .chat-welcome-send-btn:hover {
     background-color: #4f46e5;
 }
+
+/* ========================================
+ * Approval / Interaction Overlay & Dialog
+ * ======================================== */
+
+.approval-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.approval-dialog {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px 28px;
+  max-width: 480px;
+  width: 90%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+}
+
+.approval-header {
+  font-size: 1.1em;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: var(--chat-text-primary);
+}
+
+.approval-desc {
+  font-size: 0.95em;
+  color: var(--chat-text-secondary);
+  line-height: 1.5;
+  margin-bottom: 16px;
+  white-space: pre-wrap;
+}
+
+.approval-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.approval-btn {
+  padding: 8px 18px;
+  border: 1px solid var(--chat-border);
+  border-radius: 8px;
+  background: var(--chat-bg);
+  color: var(--chat-text-primary);
+  font-size: 0.9em;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.approval-btn:hover {
+  border-color: var(--chat-accent);
+}
+
+.approval-btn.approve {
+  background: var(--chat-accent);
+  color: #fff;
+  border-color: var(--chat-accent);
+}
+
+.approval-btn.approve:hover {
+  background: #4f46e5;
+  border-color: #4f46e5;
+}
+
+.approval-btn.reject {
+  color: #dc2626;
+  border-color: #dc2626;
+}
+
+.approval-btn.reject:hover {
+  background: #fee2e2;
+}
+
+.approval-btn.approve-all {
+  background: transparent;
+  color: var(--chat-accent);
+  border-color: var(--chat-accent);
+}
+
+.approval-btn.approve-all:hover {
+  background: rgba(99, 102, 241, 0.08);
+}
+
+/* --- Interaction dialog: text input --- */
+.interaction-input-area {
+  margin: 12px 0;
+}
+.interaction-text-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #d0d0d0;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  box-sizing: border-box;
+}
+.interaction-text-input:focus {
+  outline: none;
+  border-color: #4a90d9;
+  box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.2);
+}
+
+/* --- Interaction dialog: choice options --- */
+.interaction-choices {
+  margin: 12px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.interaction-choice-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.interaction-choice-option:hover {
+  border-color: #4a90d9;
+}
+.interaction-choice-option input[type="radio"] {
+  margin-top: 2px;
+}
+.interaction-choice-label {
+  font-weight: 500;
+}
+.interaction-choice-desc {
+  display: block;
+  color: #666;
+  font-size: 13px;
+  margin-top: 2px;
+}
+.interaction-error {
+  color: #c0392b;
+  font-style: italic;
+}

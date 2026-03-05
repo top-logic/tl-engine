@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
@@ -69,10 +70,10 @@ public class ViewServlet extends TopLogicServlet {
 	private static final String VIEW_BASE_PATH = "/WEB-INF/views/";
 
 	/**
-	 * Global cache of parsed {@link ViewElement}s, keyed by view path. The element tree is
-	 * stateless and shared across all sessions.
+	 * Global cache of parsed {@link ViewElement}s, keyed by view path. Each entry stores the
+	 * file's {@code lastModified} timestamp so the view is re-parsed when the file changes.
 	 */
-	private final ConcurrentHashMap<String, ViewElement> _viewCache = new ConcurrentHashMap<>();
+	private final ConcurrentHashMap<String, CachedView> _viewCache = new ConcurrentHashMap<>();
 
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -169,16 +170,25 @@ public class ViewServlet extends TopLogicServlet {
 
 	/**
 	 * Retrieves a cached {@link ViewElement} or loads and caches it from the view XML file.
+	 *
+	 * <p>
+	 * Checks the source file's modification timestamp against the cached value. If the file has
+	 * been modified since it was last parsed, the cache entry is replaced with a freshly parsed
+	 * view.
+	 * </p>
 	 */
 	private ViewElement getOrLoadView(String viewPath) throws ConfigurationException {
-		ViewElement cached = _viewCache.get(viewPath);
-		if (cached != null) {
-			return cached;
+		File file = FileManager.getInstance().getIDEFileOrNull(viewPath);
+		long currentModified = file != null ? file.lastModified() : 0L;
+
+		CachedView cached = _viewCache.get(viewPath);
+		if (cached != null && cached._lastModified == currentModified) {
+			return cached._view;
 		}
 
 		ViewElement view = loadView(viewPath);
-		_viewCache.putIfAbsent(viewPath, view);
-		return _viewCache.get(viewPath);
+		_viewCache.put(viewPath, new CachedView(view, currentModified));
+		return view;
 	}
 
 	/**
@@ -315,6 +325,21 @@ public class ViewServlet extends TopLogicServlet {
 		out.endTag(HTMLConstants.HTML);
 
 		out.flushBuffer();
+	}
+
+	/**
+	 * A cached view together with the source file's modification timestamp.
+	 */
+	private static final class CachedView {
+
+		final ViewElement _view;
+
+		final long _lastModified;
+
+		CachedView(ViewElement view, long lastModified) {
+			_view = view;
+			_lastModified = lastModified;
+		}
 	}
 
 }

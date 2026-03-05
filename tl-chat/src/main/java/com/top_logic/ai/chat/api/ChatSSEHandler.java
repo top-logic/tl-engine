@@ -91,6 +91,8 @@ public class ChatSSEHandler {
 	private int _lastTaskStoreVersion = 0;
 	/** Last emitted state per agent task (key = task ID, value = state fingerprint). */
 	private final Map<String, String> _emittedTaskStates = new HashMap<>();
+	/** Reference to the last seen TaskStore instance to detect new processing rounds. */
+	private com.top_logic.ai.service.tools.task.TaskStore _lastTaskStore = null;
 
 	private ScheduledFuture<?> _pollTask;
 
@@ -379,6 +381,15 @@ public class ChatSSEHandler {
 		if (taskStore == null) {
 			return;
 		}
+
+		// Detect new processing round (new TaskStore instance = new message).
+		// Reset tracking state so tasks from the new round are emitted fresh.
+		if (taskStore != _lastTaskStore) {
+			_lastTaskStore = taskStore;
+			_lastTaskStoreVersion = 0;
+			_emittedTaskStates.clear();
+		}
+
 		int currentVersion = taskStore.getVersion();
 		if (currentVersion == _lastTaskStoreVersion) {
 			return;

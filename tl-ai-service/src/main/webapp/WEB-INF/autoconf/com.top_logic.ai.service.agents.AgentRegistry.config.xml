@@ -48,34 +48,11 @@ If the question spans multiple specialties, delegate to each relevant sub-agent 
 
 # Task Management
 
-Use task tools **proactively** to organize work. The user sees a live progress panel — tasks demonstrate thoroughness and keep them informed.
+When a request involves **3+ steps or 2+ delegations**, load the `taskManagement` skill and use task tools to track progress. The user sees a live task panel — do NOT skip task tracking for qualifying requests.
 
-## When to Create Tasks
+Do NOT create tasks for simple single-step questions, trivial lookups, or conversational replies.
 
-Create tasks in these scenarios:
-1. **3+ steps or 2+ delegations** — break the request into one task per step.
-2. **User provides multiple requests** — "do A, B, and C" → immediately capture each as a task.
-3. **After receiving new instructions** — capture requirements as tasks right away, before planning.
-4. **Non-trivial work** — anything requiring careful planning or multiple operations.
-
-## Do NOT create tasks for
-- Simple single-delegation questions ("What types exist in module X?")
-- Trivial lookups or conversational replies
-- Single, straightforward operations that complete in one step
-
-## Rules
-1. **Create ALL tasks BEFORE delegating.** Break the request into discrete steps upfront.
-2. **Check `listTasks` first** to avoid creating duplicates.
-3. **Set `in_progress` BEFORE starting** each task. An idle task list signals inactivity to the user.
-4. **Set `completed` ONLY when fully done.** If you encounter errors or blockers, keep as `in_progress`.
-5. **One task per delegation or distinct action.** "Create type + add 3 properties" = 4 tasks, not 1.
-
-## Task Fields
-- **subject**: Imperative form — "Create Customer type", "Add name property"
-- **description**: Include enough context and acceptance criteria for a sub-agent to complete the task independently.
-- **activeForm**: ALWAYS provide. Present continuous — "Creating Customer type", "Adding name property". This is displayed to the user while the task is active.
-
-Load the `taskManagement` skill for advanced coordination patterns (sub-agent assignment, dependencies).
+**COMPLETION GATE:** Do NOT respond to the user while any task is still `pending` or `in_progress`. Only respond when ALL tasks are `completed` (or explicitly failed).
 
 ---
 
@@ -107,7 +84,8 @@ Load the `taskManagement` skill for advanced coordination patterns (sub-agent as
 3. If truly ambiguous (the question does not match any sub-agent's description): ask the user to clarify what kind of help they need.
 4. Delegate with distilled goal, task, context. You may delegate to several specialists in sequence.
 5. After each result: Does it contain content another specialist should analyze? → Chain to that specialist. Is the result incomplete? → Delegate again with a refined task.
-6. When you have enough, return a clear, synthesized answer. Do not add long extra commentary; use the specialists' results as your basis.
+6. If tasks were created: follow the per-task loop from the `taskManagement` skill until all tasks are completed. Do NOT respond early.
+7. When all work is done, return a clear, synthesized answer. Do not add long extra commentary; use the specialists' results as your basis.
 
 ## ANTI-PATTERNS (FORBIDDEN)
 - Answering ANY domain-specific question without delegating → FORBIDDEN
@@ -576,74 +554,74 @@ Then immediately re-delegate with a stricter extraction order:
 ]]></content>
 					</skill>
 					<skill name="taskManagement"
-						description="Load BEFORE calling createTask for the first time in a conversation. Covers when to create tasks (3+ step operations only), task lifecycle (pending → in_progress → completed), naming conventions, sub-agent coordination, and anti-patterns. Do NOT load for simple single-step questions."
+						description="Use when a request requires 3+ steps or 2+ delegations. Use when user gives multi-part instructions like 'do A, B, and C'. Not applicable for single-step questions, trivial lookups, or conversational replies."
 					>
-						<content><![CDATA[# Task Management Workflow
+						<content><![CDATA[# Task Management
 
-Use task management tools to organize complex, multi-step work. Tasks are visible to the user as a live progress panel.
+Tracks multi-step agent work as discrete tasks visible to the user in a live progress panel. Core principle: **every task status change must be explicit** — the user sees exactly what you see.
 
-## When to Create Tasks
+## Per-Task Loop
 
-Create tasks when:
-- The user's request requires 3 or more distinct steps
-- You need to delegate work to multiple sub-agents in a coordinated sequence
-- The work is non-trivial and benefits from structured tracking
+Follow this exact sequence for EVERY task, including the last one:
 
-Do NOT create tasks for:
-- Simple single-step questions or lookups
-- Trivial operations that complete in one tool call
-- Purely conversational responses
+1. `updateTask(taskId, status="in_progress")`
+2. Delegate to the appropriate sub-agent
+3. `updateTask(taskId, status="completed")` — IMMEDIATELY after delegation returns
+4. `listTasks()` — if pending tasks remain, repeat from step 1
 
-## Task Lifecycle
+NEVER skip step 3. NEVER set the next task to `in_progress` before completing the current one. Skipping updates leaves tasks visually stuck in the user's progress panel.
+
+On errors or blockers: keep the task as `in_progress`. Use `deleted` to remove tasks that are no longer needed.
+
+## Setup
+
+- Create ALL tasks BEFORE delegating — one task per delegation or distinct action
+- Check `listTasks` first to avoid duplicates
+
+## Quick Reference
+
+| Field | Convention | Example |
+|-------|-----------|---------|
+| subject | Imperative | "Create Customer type" |
+| description | Context for sub-agent | "Create class Customer in module sales" |
+| activeForm | Present continuous (shown in UI) | "Creating Customer type" |
+| owner | Sub-agent name | "ModelEditor" |
+| addBlockedBy | Task IDs that must finish first | ["1", "2"] |
+
+## Example
+
+User: "Create a Customer type with name and email properties"
 
 ```
-createTask (status: pending)
-  → updateTask (status: in_progress)  ← before starting work
-  → updateTask (status: completed)    ← only when FULLY done
+createTask(subject="Create Customer type", activeForm="Creating Customer type")
+createTask(subject="Add name property", activeForm="Adding name property")
+createTask(subject="Add email property", activeForm="Adding email property")
+
+updateTask("1", status="in_progress")
+  → delegate to ModelEditor
+updateTask("1", status="completed")
+listTasks()                             → task 2 pending
+
+updateTask("2", status="in_progress")
+  → delegate to ModelEditor
+updateTask("2", status="completed")
+listTasks()                             → task 3 pending
+
+updateTask("3", status="in_progress")
+  → delegate to ModelEditor
+updateTask("3", status="completed")
+listTasks()                             → all done → respond
 ```
 
-- Always set `in_progress` BEFORE starting work on a task
-- Only set `completed` when the task is fully accomplished
-- If you encounter errors or blockers, keep the task as `in_progress`
-- Use `deleted` to remove tasks that are no longer needed
-- After completing a task, call `listTasks` to find the next one
+## Common Mistakes
 
-## Naming Conventions
-
-- **subject**: Imperative form — "Create user model", "Run validation tests"
-- **activeForm**: Present continuous — "Creating user model", "Running validation tests"
-- Always provide both subject and activeForm
-
-## Coordinating with Sub-Agents
-
-When delegating multi-step work:
-1. Create all tasks upfront with `createTask`
-2. Set `owner` to the sub-agent name when assigning
-3. Set task dependencies with `addBlockedBy` if tasks must run in order
-4. Sub-agents should call `listTasks` to find their assigned work
-5. Sub-agents call `updateTask` to mark tasks `in_progress` then `completed`
-
-## Example: Multi-Agent Workflow
-
-User asks: "Create a Customer type with name and email properties"
-
-1. `createTask(subject="Create Customer type", activeForm="Creating Customer type")`
-2. `createTask(subject="Add name property", activeForm="Adding name property")`
-3. `createTask(subject="Add email property", activeForm="Adding email property")`
-4. `updateTask(taskId="1", status="in_progress")`
-5. Delegate to ModelEditor to create the type
-6. `updateTask(taskId="1", status="completed")`
-7. `updateTask(taskId="2", status="in_progress")`
-8. Delegate to ModelEditor to add name property
-9. `updateTask(taskId="2", status="completed")`
-10. Continue...
-
-## Anti-Patterns
-
-- Creating tasks AFTER the work is done (defeats the purpose of progress tracking)
-- Marking tasks completed when they failed or are only partially done
-- Creating one giant task for everything instead of breaking into steps
-- Forgetting to set `in_progress` before starting work (user sees no activity)
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| Last task stuck as `in_progress` | Skipped `completed` before responding | Always call `updateTask(completed)` — even for last task |
+| Agent stops after first delegation | No loop — treated one result as final | Call `listTasks` after each delegation, continue if pending |
+| Tasks appear after work is done | Created retroactively | Create ALL tasks upfront before any delegation |
+| User sees idle progress panel | Forgot `in_progress` update | Set `in_progress` before every delegation |
+| Duplicate tasks created | Didn't check existing tasks | Call `listTasks` before `createTask` |
 ]]></content>
 					</skill>
 				</skills>

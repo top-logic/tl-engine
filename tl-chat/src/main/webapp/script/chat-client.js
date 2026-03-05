@@ -791,11 +791,31 @@
     }
 
     /**
-     * Ensures the agent task panel container exists in the messages area.
+     * Returns the container element for agent task panels.
+     * Prefers the current task card (.chat-task) so that each processing round
+     * gets its own panel. Falls back to the messages area.
+     */
+    function getAgentTaskContainer() {
+      var taskBody = getCurrentTaskBody();
+      if (taskBody) {
+        var taskCard = taskBody.closest(".chat-task");
+        if (taskCard) return taskCard;
+      }
+      return el.messages;
+    }
+
+    /**
+     * Ensures the agent task panel container exists inside the given container.
+     * Uses :scope > .chat-agent-tasks to avoid finding panels in child elements
+     * (e.g. from a previous processing round's task card).
      */
     function ensureAgentTaskPanel(container) {
-      var existing = container.querySelector(".chat-agent-tasks");
-      if (existing) return existing;
+      var children = container.children;
+      for (var i = 0; i < children.length; i++) {
+        if (children[i].classList.contains("chat-agent-tasks")) {
+          return children[i];
+        }
+      }
       var panel = document.createElement("div");
       panel.className = "chat-agent-tasks";
       container.appendChild(panel);
@@ -1040,7 +1060,7 @@
         if (state.destroyed) return;
         try {
           var task = JSON.parse(e.data);
-          appendAgentTask(el.messages, task);
+          appendAgentTask(getAgentTaskContainer(), task);
           scrollToBottom(el.messages);
         } catch (err) {
           log("SSE agent_task_created parse error", err);
@@ -1051,7 +1071,7 @@
         if (state.destroyed) return;
         try {
           var task = JSON.parse(e.data);
-          updateAgentTask(el.messages, task);
+          updateAgentTask(getAgentTaskContainer(), task);
         } catch (err) {
           log("SSE agent_task_updated parse error", err);
         }

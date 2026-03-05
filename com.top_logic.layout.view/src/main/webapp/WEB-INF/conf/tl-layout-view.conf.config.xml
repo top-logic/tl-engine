@@ -9,4 +9,10 @@
 			</instance>
 		</config>
 	</services>
+
+	<configs>
+		<config config:interface="com.top_logic.base.accesscontrol.ApplicationPages$Config">
+			<startPage>/view/</startPage>
+		</config>
+	</configs>
 </application>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.model.search/create/genericCreateDialog.template.xml"
+>
+	<arguments>
+		<title>
+			<title key="dynamic.1eaba37a-9d6f-4c50-bfb1-547e81ca6a83">
+				<en>New...</en>
+				<de>Neu...</de>
+			</title>
+		</title>
+		<open-handler id="ID_b440e417_5539_4da9_8728_c3e4fc063a54"
+			config:interface="com.top_logic.layout.editor.config.CreateDialogOpenHandlerConfig"
+			image="theme:ICONS_ADD_BUTTON"
+			targetComponent="com.top_logic.demo/structure/aspectInheritance/new___/dialog.layout.xml#Editor"
+		>
+			<resourceKey key="dynamic.1eaba37a-9d6f-4c50-bfb1-547e81ca6a83">
+				<en>New...</en>
+				<de>Neu...</de>
+			</resourceKey>
+		</open-handler>
+		<typeOptions type="tl.demo.aspect:Common"/>
+		<create-handler id="ID_69d5e028_cc7a_4626_a4e4_a08fd3afff8c"
+			target="model(com.top_logic.demo/structure/aspectInheritance/detailsForm.layout.xml#Form)"
+		>
+			<postCreateActions>
+				<setModel target="model(com.top_logic.demo/structure/aspectInheritance/detailsForm.layout.xml#Form)">
+					<input/>
+				</setModel>
+				<setModel target="editMode(com.top_logic.demo/structure/aspectInheritance/detailsForm.layout.xml#Form)">
+					<input class="com.top_logic.model.search.providers.ValueTransformationByExpression"
+						function="true"
+					/>
+				</setModel>
+			</postCreateActions>
+			<linkOperation><![CDATA[container -> newObject -> context -> 
+  $context != null ?
+    $context.add(`tl.demo.aspect:Common#children`, $newObject) :
+    `tl.demo.aspect#ROOT`.add(`tl.demo.aspect:Common#children`, $newObject)
+]]></linkOperation>
+		</create-handler>
+	</arguments>
+</config:template-call>

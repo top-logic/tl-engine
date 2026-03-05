@@ -22,31 +22,35 @@
 		>
 			<actions>
 				<action class="com.top_logic.layout.scripting.template.check.TabSelectableCheck"
+					card-name="demo.structure.tabber"
+					component-name="mainTabbar.layout.xml#mainTabber"
+					selectable="false"
+				/>
+				<action class="com.top_logic.layout.scripting.template.check.TabSelectableCheck"
+					card-name="layouts.com.top_logic.bpe.app.processCockpit.cockpitTab.tab"
+					component-name="mainTabbar.layout.xml#mainTabber"
+					selectable="false"
+				/>
+				<action class="com.top_logic.layout.scripting.template.check.TabSelectableCheck"
+					card-name="modelSearch"
+					component-name="mainTabbar.layout.xml#mainTabber"
+					selectable="false"
+				/>
+				<action class="com.top_logic.layout.scripting.template.check.TabSelectableCheck"
 					card-name="adminView"
 					component-name="mainTabbar.layout.xml#mainTabber"
 					selectable="false"
 				/>
-				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-					comment="Teste dass 'Knoten anlegen' verboten ist"
-				>
-					<actions>
-						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
-							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Strukturen > Typendemo"
-							/>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.CheckExecutabilityOp"
-							command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
-							command-label="Knoten anlegen"
-							command-name="openNewElementDialog"
-							component-implementation-comment="com.top_logic.layout.tree.component.TreeComponent"
-							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
-							reason-key="tl.executable.not.allowed"
-						>
-							<arguments/>
-						</action>
-					</actions>
-				</action>
+				<action class="com.top_logic.layout.scripting.template.check.TabSelectableCheck"
+					card-name="demo.table.tabber"
+					component-name="mainTabbar.layout.xml#mainTabber"
+					selectable="false"
+				/>
+				<action class="com.top_logic.layout.scripting.template.check.TabSelectableCheck"
+					card-name="demo.technical.tabber"
+					component-name="mainTabbar.layout.xml#mainTabber"
+					selectable="false"
+				/>
 			</actions>
 		</action>
 	</actions>

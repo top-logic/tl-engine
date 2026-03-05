@@ -21,9 +21,8 @@
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
 					command-label="Neu..."
-					command-name="openCreateDialog"
-					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
-					component-name="com.top_logic.demo/structure/demoAspect/demoAspectView.layout.xml#tl.demo.aspectEdit"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="com.top_logic.demo/structure/aspectInheritance/detailsForm.layout.xml#Form"
 					user-id="root"
 				>
 					<arguments/>
@@ -35,14 +34,13 @@
 						label="Typ"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic.demo/structure/demoAspect/demoAspectView.layout.xml#tl.demo.aspectnewElementDialog"
-							tab-path=""
+							tab-path="Anlageformular"
 						/>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 						<values>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-								label="Aspekt-B-Node"
+							<value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+								ref="tl.demo.aspect:BNode"
 							/>
 						</values>
 					</value>
@@ -54,8 +52,7 @@
 						label="Name"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic.demo/structure/demoAspect/demoAspectView.layout.xml#tl.demo.aspectnewElementDialog"
-							tab-path=""
+							tab-path="Anlageformular"
 						/>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
@@ -63,10 +60,10 @@
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementCreateHandler"
+					command-implementation-comment="com.top_logic.model.search.providers.GenericCreateHandlerByExpression"
 					command-label="Anlegen"
-					component-implementation-comment="com.top_logic.element.layout.structured.StructuredElementCreateComponent"
-					component-name="com.top_logic.demo/structure/demoAspect/demoAspectView.layout.xml#tl.demo.aspectnewElementDialog"
+					component-implementation-comment="com.top_logic.layout.form.component.AbstractCreateComponent"
+					component-name="com.top_logic.demo/structure/aspectInheritance/new___/dialog.layout.xml#Editor"
 					user-id="root"
 				>
 					<arguments/>
@@ -76,7 +73,7 @@
 					command-label="Speichern"
 					command-name="defaultSave"
 					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
-					component-name="com.top_logic.demo/structure/demoAspect/demoAspectView.layout.xml#tl.demo.aspectEdit"
+					component-name="com.top_logic.demo/structure/aspectInheritance/detailsForm.layout.xml#Form"
 					user-id="root"
 				>
 					<arguments/>

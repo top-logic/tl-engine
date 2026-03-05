@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments
+		helpID="ID_3bce3ee5_b56b_496c_8afc_89e5be61d3f8"
+	>
+		<tabLabel key="dynamic.282ac61a-a1c6-4d24-8124-482e2f659112">
+			<en>Aspect inheritance</en>
+			<de>Aspektvererbung</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/structure/aspectInheritance/innerLayout.layout.xml">
+				<content-layouting class="com.top_logic.layout.structure.ContentLayouting">
+					<contextMenuFactory class="com.top_logic.layout.basic.contextmenu.component.factory.PlainComponentContextMenuFactory">
+						<titleProvider class="com.top_logic.layout.provider.label.NoLabelProvider"/>
+						<customCommands class="com.top_logic.layout.basic.contextmenu.config.NoContextMenuCommands"/>
+					</contextMenuFactory>
+				</content-layouting>
+			</layout-reference>
+		</components>
+	</arguments>
+</config:template-call>

@@ -103,7 +103,7 @@ public class CyclicDemoTreeBuilder<C extends CyclicDemoTreeBuilder.Config<?>> ex
 
 	@Override
 	public Object getModel(Object businessModel, LayoutComponent aComponent) {
-		return DemoTypesFactory.getInstance().getRoot();
+		return DemoTypesFactory.getInstance().getRootSingleton();
 	}
 
 	@Override

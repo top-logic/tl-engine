@@ -6,6 +6,7 @@
 >
 	<arguments
 		defaultSelection="false"
+		isSecurityMaster="true"
 		rootVisible="false"
 	>
 		<name key="dynamic.f3b2d89d-eb83-4181-beff-869b09565be2">
@@ -17,6 +18,9 @@
 			nodePredicate="node->$node.instanceOf(`tl.demo.aspect:Common`)"
 			parents="node->$node.referers(`tl.element:StructuredElementContainer#children`)"
 			rootNode="`tl.demo.aspect#ROOT`"
+		/>
+		<securityObject class="com.top_logic.model.search.providers.SecurityObjectByExpression"
+			function="`DemoTypes#ROOT`"
 		/>
 	</arguments>
 </config:template-call>

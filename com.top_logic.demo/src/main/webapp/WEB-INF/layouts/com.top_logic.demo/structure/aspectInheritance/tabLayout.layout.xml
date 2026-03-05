@@ -6,6 +6,7 @@
 >
 	<arguments
 		helpID="ID_3bce3ee5_b56b_496c_8afc_89e5be61d3f8"
+		securityDomain="DemoTypes"
 	>
 		<tabLabel key="dynamic.282ac61a-a1c6-4d24-8124-482e2f659112">
 			<en>Aspect inheritance</en>

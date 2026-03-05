@@ -6,6 +6,8 @@
 package test.com.top_logic.layout.view;
 
 import java.io.File;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.Collections;
@@ -86,10 +88,10 @@ public class TestViewReload extends TestCase {
 		return config;
 	}
 
-	private File toFile(String name) {
-		java.net.URL url = TestViewReload.class.getResource(name);
+	private File toFile(String name) throws URISyntaxException {
+		URL url = TestViewReload.class.getResource(name);
 		assertNotNull("Test resource not found: " + name, url);
-		return new File(url.getFile());
+		return new File(url.toURI());
 	}
 
 	/**

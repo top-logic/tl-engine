@@ -25,7 +25,7 @@
 					</selection>
 					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
 						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic.demo/structure/demoAspect/demoAspectView.layout.xml#tl.demo.aspectTree"
+							name="com.top_logic.demo/structure/aspectInheritance/aspectTreeTree.layout.xml#Tree"
 							tab-path="Strukturen > Aspektvererbung"
 						/>
 					</selection-model-name>
@@ -33,9 +33,9 @@
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
 					command-label="Neu..."
-					command-name="openCreateDialog"
-					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
-					component-name="com.top_logic.demo/structure/demoAspect/demoAspectView.layout.xml#tl.demo.aspectEdit"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="com.top_logic.demo/structure/aspectInheritance/detailsForm.layout.xml#Form"
+					user-id="root"
 				>
 					<arguments/>
 				</action>
@@ -46,14 +46,13 @@
 						label="Typ"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic.demo/structure/demoAspect/demoAspectView.layout.xml#tl.demo.aspectnewElementDialog"
-							tab-path=""
+							tab-path="Anlageformular"
 						/>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 						<values>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-								label="Aspekt-A-Node"
+							<value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+								ref="tl.demo.aspect:ANode"
 							/>
 						</values>
 					</value>
@@ -65,8 +64,7 @@
 						label="Name"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic.demo/structure/demoAspect/demoAspectView.layout.xml#tl.demo.aspectnewElementDialog"
-							tab-path=""
+							tab-path="Anlageformular"
 						/>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
@@ -74,10 +72,10 @@
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementCreateHandler"
+					command-implementation-comment="com.top_logic.model.search.providers.GenericCreateHandlerByExpression"
 					command-label="Anlegen"
-					component-implementation-comment="com.top_logic.element.layout.structured.StructuredElementCreateComponent"
-					component-name="com.top_logic.demo/structure/demoAspect/demoAspectView.layout.xml#tl.demo.aspectnewElementDialog"
+					component-implementation-comment="com.top_logic.layout.form.component.AbstractCreateComponent"
+					component-name="com.top_logic.demo/structure/aspectInheritance/new___/dialog.layout.xml#Editor"
 					user-id="root"
 				>
 					<arguments/>
@@ -87,7 +85,7 @@
 					command-label="Speichern"
 					command-name="defaultSave"
 					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
-					component-name="com.top_logic.demo/structure/demoAspect/demoAspectView.layout.xml#tl.demo.aspectEdit"
+					component-name="com.top_logic.demo/structure/aspectInheritance/detailsForm.layout.xml#Form"
 					user-id="root"
 				>
 					<arguments/>
@@ -104,7 +102,7 @@
 							label="Überschriebenes Attribut mit gleichem Algorithmus"
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic.demo/structure/demoAspect/demoAspectView.layout.xml#tl.demo.aspectEdit"
+								name="com.top_logic.demo/structure/aspectInheritance/detailsForm.layout.xml#Form"
 								tab-path="Strukturen > Aspektvererbung"
 							/>
 						</field-name>
@@ -114,11 +112,11 @@
 					</expected-value>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent$StructuredElementSwitchEditCommandHandler"
+					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
 					command-label="Bearbeiten"
-					command-name="ElementSwitchEditCommand"
-					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
-					component-name="com.top_logic.demo/structure/demoAspect/demoAspectView.layout.xml#tl.demo.aspectEdit"
+					command-name="customEdit"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="com.top_logic.demo/structure/aspectInheritance/detailsForm.layout.xml#Form"
 					user-id="root"
 				>
 					<arguments/>
@@ -127,7 +125,7 @@
 					user-id="root"
 				>
 					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name="com.top_logic.demo/structure/demoAspect/demoAspectView.layout.xml#tl.demo.aspectEdit"
+						name="com.top_logic.demo/structure/aspectInheritance/detailsForm.layout.xml#Form"
 						tab-path="Strukturen > Aspektvererbung"
 					/>
 					<field-values>
@@ -171,7 +169,7 @@
 					command-label="Speichern"
 					command-name="defaultSave"
 					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
-					component-name="com.top_logic.demo/structure/demoAspect/demoAspectView.layout.xml#tl.demo.aspectEdit"
+					component-name="com.top_logic.demo/structure/aspectInheritance/detailsForm.layout.xml#Form"
 					user-id="root"
 				>
 					<arguments/>
@@ -188,7 +186,7 @@
 							label="Überschriebenes Attribut mit gleichem Algorithmus"
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic.demo/structure/demoAspect/demoAspectView.layout.xml#tl.demo.aspectEdit"
+								name="com.top_logic.demo/structure/aspectInheritance/detailsForm.layout.xml#Form"
 								tab-path="Strukturen > Aspektvererbung"
 							/>
 						</field-name>
@@ -221,7 +219,7 @@
 					</selection>
 					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
 						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic.demo/structure/demoAspect/demoAspectView.layout.xml#tl.demo.aspectTree"
+							name="com.top_logic.demo/structure/aspectInheritance/aspectTreeTree.layout.xml#Tree"
 							tab-path="Strukturen > Aspektvererbung"
 						/>
 					</selection-model-name>
@@ -229,9 +227,9 @@
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
 					command-label="Neu..."
-					command-name="openCreateDialog"
-					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
-					component-name="com.top_logic.demo/structure/demoAspect/demoAspectView.layout.xml#tl.demo.aspectEdit"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="com.top_logic.demo/structure/aspectInheritance/detailsForm.layout.xml#Form"
+					user-id="root"
 				>
 					<arguments/>
 				</action>
@@ -242,14 +240,13 @@
 						label="Typ"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic.demo/structure/demoAspect/demoAspectView.layout.xml#tl.demo.aspectnewElementDialog"
-							tab-path=""
+							tab-path="Anlageformular"
 						/>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 						<values>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-								label="Aspekt-C-Node"
+							<value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+								ref="tl.demo.aspect:CNode"
 							/>
 						</values>
 					</value>
@@ -261,8 +258,7 @@
 						label="Name"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic.demo/structure/demoAspect/demoAspectView.layout.xml#tl.demo.aspectnewElementDialog"
-							tab-path=""
+							tab-path="Anlageformular"
 						/>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
@@ -270,10 +266,10 @@
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementCreateHandler"
+					command-implementation-comment="com.top_logic.model.search.providers.GenericCreateHandlerByExpression"
 					command-label="Anlegen"
-					component-implementation-comment="com.top_logic.element.layout.structured.StructuredElementCreateComponent"
-					component-name="com.top_logic.demo/structure/demoAspect/demoAspectView.layout.xml#tl.demo.aspectnewElementDialog"
+					component-implementation-comment="com.top_logic.layout.form.component.AbstractCreateComponent"
+					component-name="com.top_logic.demo/structure/aspectInheritance/new___/dialog.layout.xml#Editor"
 					user-id="root"
 				>
 					<arguments/>
@@ -283,7 +279,7 @@
 					command-label="Speichern"
 					command-name="defaultSave"
 					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
-					component-name="com.top_logic.demo/structure/demoAspect/demoAspectView.layout.xml#tl.demo.aspectEdit"
+					component-name="com.top_logic.demo/structure/aspectInheritance/detailsForm.layout.xml#Form"
 					user-id="root"
 				>
 					<arguments/>
@@ -300,7 +296,7 @@
 							label="Überschreibendes Attribut mit gleichem Algorithmus"
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic.demo/structure/demoAspect/demoAspectView.layout.xml#tl.demo.aspectEdit"
+								name="com.top_logic.demo/structure/aspectInheritance/detailsForm.layout.xml#Form"
 								tab-path="Strukturen > Aspektvererbung"
 							/>
 						</field-name>
@@ -310,11 +306,11 @@
 					</expected-value>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent$StructuredElementSwitchEditCommandHandler"
+					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
 					command-label="Bearbeiten"
-					command-name="ElementSwitchEditCommand"
-					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
-					component-name="com.top_logic.demo/structure/demoAspect/demoAspectView.layout.xml#tl.demo.aspectEdit"
+					command-name="customEdit"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="com.top_logic.demo/structure/aspectInheritance/detailsForm.layout.xml#Form"
 					user-id="root"
 				>
 					<arguments/>
@@ -323,7 +319,7 @@
 					user-id="root"
 				>
 					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name="com.top_logic.demo/structure/demoAspect/demoAspectView.layout.xml#tl.demo.aspectEdit"
+						name="com.top_logic.demo/structure/aspectInheritance/detailsForm.layout.xml#Form"
 						tab-path="Strukturen > Aspektvererbung"
 					/>
 					<field-values>
@@ -371,7 +367,7 @@
 					command-label="Speichern"
 					command-name="defaultSave"
 					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
-					component-name="com.top_logic.demo/structure/demoAspect/demoAspectView.layout.xml#tl.demo.aspectEdit"
+					component-name="com.top_logic.demo/structure/aspectInheritance/detailsForm.layout.xml#Form"
 					user-id="root"
 				>
 					<arguments/>
@@ -388,7 +384,7 @@
 							label="Überschreibendes Attribut mit gleichem Algorithmus"
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic.demo/structure/demoAspect/demoAspectView.layout.xml#tl.demo.aspectEdit"
+								name="com.top_logic.demo/structure/aspectInheritance/detailsForm.layout.xml#Form"
 								tab-path="Strukturen > Aspektvererbung"
 							/>
 						</field-name>
@@ -422,26 +418,15 @@
 						<selection-state boolean="true"/>
 					</selection>
 					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name="com.top_logic.demo/structure/demoAspect/demoAspectView.layout.xml#tl.demo.aspectTree"
+						name="com.top_logic.demo/structure/aspectInheritance/aspectTreeTree.layout.xml#Tree"
 						tab-path="Strukturen > Aspektvererbung"
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent$StructuredElementSwitchEditCommandHandler"
-					command-label="Bearbeiten"
-					command-name="ElementSwitchEditCommand"
-					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
-					component-name="com.top_logic.demo/structure/demoAspect/demoAspectView.layout.xml#tl.demo.aspectEdit"
-					user-id="root"
-				>
-					<arguments/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementRemoveHandler"
-					command-label="Löschen..."
-					command-name="elementRemove"
-					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
-					component-name="com.top_logic.demo/structure/demoAspect/demoAspectView.layout.xml#tl.demo.aspectEdit"
+					command-implementation-comment="com.top_logic.layout.component.GenericDeleteCommandHandler"
+					command-label="Löschen"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="com.top_logic.demo/structure/aspectInheritance/detailsForm.layout.xml#Form"
 					user-id="root"
 				>
 					<arguments/>
@@ -456,17 +441,17 @@
 						/>
 						<selection-state boolean="true"/>
 					</selection>
-					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name="com.top_logic.demo/structure/demoAspect/demoAspectView.layout.xml#tl.demo.aspectTree"
-						tab-path="Strukturen > Aspektvererbung"
-					/>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Strukturen > Aspektvererbung > Aspekt-Baum"
+						/>
+					</selection-model-name>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementRemoveHandler"
-					command-label="Löschen..."
-					command-name="elementRemove"
-					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
-					component-name="com.top_logic.demo/structure/demoAspect/demoAspectView.layout.xml#tl.demo.aspectEdit"
+					command-implementation-comment="com.top_logic.layout.component.GenericDeleteCommandHandler"
+					command-label="Löschen"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="com.top_logic.demo/structure/aspectInheritance/detailsForm.layout.xml#Form"
 					user-id="root"
 				>
 					<arguments/>

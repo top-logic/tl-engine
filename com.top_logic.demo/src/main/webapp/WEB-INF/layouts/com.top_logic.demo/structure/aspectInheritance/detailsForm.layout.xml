@@ -27,5 +27,8 @@
 				</content-layouting>
 			</layout-reference>
 		</dialogs>
+		<securityObject class="com.top_logic.model.search.providers.SecurityObjectByExpression"
+			function="`DemoTypes#ROOT`"
+		/>
 	</arguments>
 </config:template-call>

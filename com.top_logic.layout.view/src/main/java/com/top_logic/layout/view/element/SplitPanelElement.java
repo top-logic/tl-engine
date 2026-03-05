@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
@@ -125,6 +126,7 @@ public class SplitPanelElement implements UIElement {
 		 * The content elements in this pane.
 		 */
 		@Name(CHILDREN)
+		@DefaultContainer
 		List<PolymorphicConfiguration<? extends UIElement>> getChildren();
 	}
 

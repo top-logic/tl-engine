@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
@@ -94,6 +95,7 @@ public class TabBarElement implements UIElement {
 		 * The content elements shown when this tab is active.
 		 */
 		@Name(CHILDREN)
+		@DefaultContainer
 		List<PolymorphicConfiguration<? extends UIElement>> getChildren();
 	}
 

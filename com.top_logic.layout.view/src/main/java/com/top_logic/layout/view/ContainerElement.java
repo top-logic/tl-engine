@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.layout.react.ViewControl;
 
@@ -31,6 +32,7 @@ public abstract class ContainerElement implements UIElement {
 		 * The child elements.
 		 */
 		@Name(CHILDREN)
+		@DefaultContainer
 		List<PolymorphicConfiguration<? extends UIElement>> getChildren();
 	}
 

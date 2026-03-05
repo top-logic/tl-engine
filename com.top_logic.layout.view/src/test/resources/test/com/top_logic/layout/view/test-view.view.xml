@@ -3,10 +3,8 @@
   <app-shell>
     <content>
       <panel title="Test Panel">
-        <children>
-          <stack direction="row"
-                 gap="compact" />
-        </children>
+        <stack direction="row"
+               gap="compact" />
       </panel>
     </content>
   </app-shell>

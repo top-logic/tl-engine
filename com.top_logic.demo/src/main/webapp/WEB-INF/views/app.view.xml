@@ -11,140 +11,88 @@
 			<sidebar active-item="dashboard">
 				<items>
 					<nav-item id="dashboard" label="Dashboard" icon="bi bi-speedometer2">
-						<children>
-							<stack direction="column" gap="default">
-								<children>
-									<grid min-column-width="16rem" gap="default">
-										<children>
-											<card title="Active Tasks" variant="elevated">
-												<children>
-													<demo-counter label="Tasks"/>
-												</children>
-											</card>
-											<card title="In Review">
-												<children>
-													<demo-counter label="Reviews"/>
-												</children>
-											</card>
-											<card title="Team Notes">
-												<children>
-													<button label="Open Details"/>
-												</children>
-											</card>
-											<card title="Quick Add">
-												<children>
-													<button label="+ New Task"/>
-												</children>
-											</card>
-										</children>
-									</grid>
-								</children>
-							</stack>
-						</children>
+						<stack direction="column" gap="default">
+							<grid min-column-width="16rem" gap="default">
+								<card title="Active Tasks" variant="elevated">
+									<demo-counter label="Tasks"/>
+								</card>
+								<card title="In Review">
+									<demo-counter label="Reviews"/>
+								</card>
+								<card title="Team Notes">
+									<button label="Open Details"/>
+								</card>
+								<card title="Quick Add">
+									<button label="+ New Task"/>
+								</card>
+							</grid>
+						</stack>
 					</nav-item>
 					<nav-item id="tabs-demo" label="Tabs Demo" icon="bi bi-layout-text-window-reverse">
-						<children>
-							<tab-bar active-tab="overview">
-								<tabs>
-									<tab id="overview" label="Overview">
-										<children>
-											<card title="Overview Content" variant="elevated">
-												<children>
-													<demo-counter label="Items"/>
-												</children>
-											</card>
-										</children>
-									</tab>
-									<tab id="details" label="Details">
-										<children>
-											<card title="Detail Content">
-												<children>
-													<button label="Load Details"/>
-												</children>
-											</card>
-										</children>
-									</tab>
-									<tab id="history" label="History">
-										<children>
-											<card title="History Content">
-												<children>
-													<demo-counter label="Events"/>
-												</children>
-											</card>
-										</children>
-									</tab>
-								</tabs>
-							</tab-bar>
-						</children>
+						<tab-bar active-tab="overview">
+							<tabs>
+								<tab id="overview" label="Overview">
+									<card title="Overview Content" variant="elevated">
+										<demo-counter label="Items"/>
+									</card>
+								</tab>
+								<tab id="details" label="Details">
+									<card title="Detail Content">
+										<button label="Load Details"/>
+									</card>
+								</tab>
+								<tab id="history" label="History">
+									<card title="History Content">
+										<demo-counter label="Events"/>
+									</card>
+								</tab>
+							</tabs>
+						</tab-bar>
 					</nav-item>
 					<nav-item id="split-demo" label="Split Demo" icon="bi bi-layout-split">
-						<children>
-							<split-panel orientation="horizontal" resizable="true">
-								<panes>
-									<pane size="30" unit="%" min-size="200">
-										<children>
-											<card title="Navigation" variant="elevated">
-												<children>
-													<button label="Item 1"/>
-												</children>
-											</card>
-										</children>
-									</pane>
-									<pane size="70" unit="%">
-										<children>
-											<card title="Content Area">
-												<children>
-													<demo-counter label="Content"/>
-												</children>
-											</card>
-										</children>
-									</pane>
-								</panes>
-							</split-panel>
-						</children>
+						<split-panel orientation="horizontal" resizable="true">
+							<panes>
+								<pane size="30" unit="%" min-size="200">
+									<card title="Navigation" variant="elevated">
+										<button label="Item 1"/>
+									</card>
+								</pane>
+								<pane size="70" unit="%">
+									<card title="Content Area">
+										<demo-counter label="Content"/>
+									</card>
+								</pane>
+							</panes>
+						</split-panel>
 					</nav-item>
 					<nav-item id="channels-demo" label="Channels Demo" icon="bi bi-table">
-						<children>
-							<split-panel orientation="horizontal" resizable="true">
-								<panes>
-									<pane size="40" unit="%" min-size="200">
-										<children>
-											<panel title="Companies">
-												<children>
-													<table types="Contacts:CompanyContact" selection="selectedCompany">
-														<rows>all(`Contacts:CompanyContact`)</rows>
-													</table>
-												</children>
-											</panel>
-										</children>
-									</pane>
-									<pane size="60" unit="%">
-										<children>
-											<panel title="Staff">
-												<children>
-													<table types="Contacts:PersonContact">
-														<inputs>
-															<input channel="selectedCompany" />
-														</inputs>
-														<rows>company -> if($company == null, list(), $company.get(`Contacts:Contact.Company#staff`))</rows>
-													</table>
-												</children>
-											</panel>
-										</children>
-									</pane>
-								</panes>
-							</split-panel>
-						</children>
+						<split-panel orientation="horizontal" resizable="true">
+							<panes>
+								<pane size="40" unit="%" min-size="200">
+									<panel title="Companies">
+										<table types="Contacts:CompanyContact" selection="selectedCompany">
+											<rows>all(`Contacts:CompanyContact`)</rows>
+										</table>
+									</panel>
+								</pane>
+								<pane size="60" unit="%">
+									<panel title="Staff">
+										<table types="Contacts:PersonContact">
+											<inputs>
+												<input channel="selectedCompany" />
+											</inputs>
+											<rows>company -> if($company == null, list(), $company.get(`Contacts:Contact.Company#staff`))</rows>
+										</table>
+									</panel>
+								</pane>
+							</panes>
+						</split-panel>
 					</nav-item>
 					<separator/>
 					<nav-item id="settings" label="Settings" icon="bi bi-gear">
-						<children>
-							<card title="Settings" variant="elevated">
-								<children>
-									<button label="Save Settings"/>
-								</children>
-							</card>
-						</children>
+						<card title="Settings" variant="elevated">
+							<button label="Save Settings"/>
+						</card>
 					</nav-item>
 				</items>
 			</sidebar>

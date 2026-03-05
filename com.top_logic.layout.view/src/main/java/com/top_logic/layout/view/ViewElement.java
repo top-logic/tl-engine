@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
@@ -18,6 +19,8 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.ReactControl;
 import com.top_logic.layout.react.ViewControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
+import com.top_logic.layout.view.channel.ChannelConfig;
+import com.top_logic.layout.view.channel.ViewChannel;
 
 /**
  * The mandatory root element of every {@code .view.xml} file.
@@ -39,6 +42,20 @@ public class ViewElement implements UIElement {
 		@ClassDefault(ViewElement.class)
 		Class<? extends UIElement> getImplementationClass();
 
+		/** Configuration name for {@link #getChannels()}. */
+		String CHANNELS = "channels";
+
+		/**
+		 * Channel declarations for this view.
+		 *
+		 * <p>
+		 * Channels are named reactive values that can be read and written by UI elements within
+		 * this view.
+		 * </p>
+		 */
+		@Name(CHANNELS)
+		List<ChannelConfig> getChannels();
+
 		/** Configuration name for {@link #getContent()}. */
 		String CONTENT = "content";
 
@@ -55,6 +72,8 @@ public class ViewElement implements UIElement {
 		List<PolymorphicConfiguration<? extends UIElement>> getContent();
 	}
 
+	private final List<ChannelConfig> _channelConfigs;
+
 	private final List<UIElement> _content;
 
 	/**
@@ -62,6 +81,7 @@ public class ViewElement implements UIElement {
 	 */
 	@CalledByReflection
 	public ViewElement(InstantiationContext context, Config config) {
+		_channelConfigs = config.getChannels();
 		List<PolymorphicConfiguration<? extends UIElement>> contentList = config.getContent();
 		if (contentList.isEmpty()) {
 			context.error("View element must have at least one content element.");
@@ -75,6 +95,12 @@ public class ViewElement implements UIElement {
 
 	@Override
 	public ViewControl createControl(ViewContext context) {
+		// Phase 2a: Create and register channels.
+		for (ChannelConfig channelConfig : _channelConfigs) {
+			ViewChannel channel = new DefaultInstantiationContext(ViewElement.class).getInstance(channelConfig);
+			context.registerChannel(channelConfig.getName(), channel);
+		}
+
 		if (_content.size() == 1) {
 			return _content.get(0).createControl(context);
 		}

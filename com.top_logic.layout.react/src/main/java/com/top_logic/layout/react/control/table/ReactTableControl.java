@@ -170,6 +170,7 @@ public class ReactTableControl extends ReactControl {
 	/** Number of columns frozen on the left side. */
 	private int _frozenColumnCount;
 
+	/** Optional listener notified when the row selection changes. */
 	private SelectionListener _selectionListener;
 
 	/**

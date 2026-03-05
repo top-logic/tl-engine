@@ -25,6 +25,7 @@ import com.top_logic.ai.service.skills.Skill;
 import com.top_logic.ai.service.skills.SkillConfig;
 import com.top_logic.ai.service.skills.SkillRegistry;
 import com.top_logic.ai.service.skills.SkillTool;
+import com.top_logic.ai.service.tools.AskUserTool;
 import com.top_logic.ai.service.tools.TimelineAgentListener;
 import com.top_logic.ai.service.tools.ToolCallTracker;
 import com.top_logic.ai.service.tools.ToolCallTracking;
@@ -434,6 +435,9 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 
 		ToolRegistry toolRegistry = ToolRegistry.getInstance();
 		for (String qualifiedName : config.getTools()) {
+			if ("askUser".equals(qualifiedName)) {
+				continue; // Handled separately below
+			}
 			ToolImplementation tool = toolRegistry.getTool(qualifiedName);
 			if (tool != null) {
 				tools.add(tool);
@@ -449,6 +453,18 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 				Method method = findMethodForToolSpec(SkillTool.class, spec.name());
 				if (method != null) {
 					ToolExecutor executor = new DefaultToolExecutor(skillTool, method);
+					tools.add(new ToolImplementation(spec, executor));
+				}
+			}
+		}
+
+		// Wire askUser tool if listed in agent's tools
+		if (config.getTools().contains("askUser")) {
+			AskUserTool askUserTool = new AskUserTool();
+			for (ToolSpecification spec : ToolSpecifications.toolSpecificationsFrom(askUserTool)) {
+				Method method = findMethodForToolSpec(AskUserTool.class, spec.name());
+				if (method != null) {
+					ToolExecutor executor = new DefaultToolExecutor(askUserTool, method);
 					tools.add(new ToolImplementation(spec, executor));
 				}
 			}

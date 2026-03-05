@@ -5,34 +5,113 @@
 			<app-bar title="Task Manager"/>
 		</header>
 		<content>
-			<stack direction="column" gap="default">
-				<children>
-					<grid min-column-width="16rem" gap="default">
+			<sidebar active-item="dashboard">
+				<items>
+					<nav-item id="dashboard" label="Dashboard" icon="bi bi-speedometer2">
 						<children>
-							<card title="Active Tasks" variant="elevated">
+							<stack direction="column" gap="default">
 								<children>
-									<demo-counter label="Tasks"/>
+									<grid min-column-width="16rem" gap="default">
+										<children>
+											<card title="Active Tasks" variant="elevated">
+												<children>
+													<demo-counter label="Tasks"/>
+												</children>
+											</card>
+											<card title="In Review">
+												<children>
+													<demo-counter label="Reviews"/>
+												</children>
+											</card>
+											<card title="Team Notes">
+												<children>
+													<button label="Open Details"/>
+												</children>
+											</card>
+											<card title="Quick Add">
+												<children>
+													<button label="+ New Task"/>
+												</children>
+											</card>
+										</children>
+									</grid>
 								</children>
-							</card>
-							<card title="In Review">
+							</stack>
+						</children>
+					</nav-item>
+					<nav-item id="tabs-demo" label="Tabs Demo" icon="bi bi-layout-text-window-reverse">
+						<children>
+							<tab-bar active-tab="overview">
+								<tabs>
+									<tab id="overview" label="Overview">
+										<children>
+											<card title="Overview Content" variant="elevated">
+												<children>
+													<demo-counter label="Items"/>
+												</children>
+											</card>
+										</children>
+									</tab>
+									<tab id="details" label="Details">
+										<children>
+											<card title="Detail Content">
+												<children>
+													<button label="Load Details"/>
+												</children>
+											</card>
+										</children>
+									</tab>
+									<tab id="history" label="History">
+										<children>
+											<card title="History Content">
+												<children>
+													<demo-counter label="Events"/>
+												</children>
+											</card>
+										</children>
+									</tab>
+								</tabs>
+							</tab-bar>
+						</children>
+					</nav-item>
+					<nav-item id="split-demo" label="Split Demo" icon="bi bi-layout-split">
+						<children>
+							<split-panel orientation="horizontal" resizable="true">
+								<panes>
+									<pane size="30" unit="%" min-size="200">
+										<children>
+											<card title="Navigation" variant="elevated">
+												<children>
+													<button label="Item 1"/>
+												</children>
+											</card>
+										</children>
+									</pane>
+									<pane size="70" unit="%">
+										<children>
+											<card title="Content Area">
+												<children>
+													<demo-counter label="Content"/>
+												</children>
+											</card>
+										</children>
+									</pane>
+								</panes>
+							</split-panel>
+						</children>
+					</nav-item>
+					<separator/>
+					<nav-item id="settings" label="Settings" icon="bi bi-gear">
+						<children>
+							<card title="Settings" variant="elevated">
 								<children>
-									<demo-counter label="Reviews"/>
-								</children>
-							</card>
-							<card title="Team Notes">
-								<children>
-									<button label="Open Details"/>
-								</children>
-							</card>
-							<card title="Quick Add">
-								<children>
-									<button label="+ New Task"/>
+									<button label="Save Settings"/>
 								</children>
 							</card>
 						</children>
-					</grid>
-				</children>
-			</stack>
+					</nav-item>
+				</items>
+			</sidebar>
 		</content>
 		<footer>
 			<bottom-bar active-item="dashboard">

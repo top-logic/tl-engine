@@ -8,10 +8,12 @@ package com.top_logic.layout.view.element;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
@@ -30,8 +32,11 @@ import com.top_logic.layout.table.model.ObjectTableModel;
 import com.top_logic.layout.table.model.TableConfiguration;
 import com.top_logic.layout.table.model.TableConfigurationFactory;
 import com.top_logic.layout.table.model.TableConfigurationProvider;
+import com.top_logic.layout.table.provider.GenericTableConfigurationProvider;
+import com.top_logic.model.TLClass;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
@@ -69,6 +74,9 @@ public class TableElement implements UIElement {
 
 		/** Configuration name for {@link #getModelForElement()}. */
 		String MODEL_FOR_ELEMENT = "modelForElement";
+
+		/** Configuration name for {@link #getTypes()}. */
+		String TYPES = "types";
 
 		/** Configuration name for {@link #getColumns()}. */
 		String COLUMNS = "columns";
@@ -116,6 +124,18 @@ public class TableElement implements UIElement {
 		 */
 		@Name(MODEL_FOR_ELEMENT)
 		Expr getModelForElement();
+
+		/**
+		 * Comma-separated list of qualified TL type names for automatic column derivation.
+		 *
+		 * <p>
+		 * When set, columns are derived from the type's attributes using
+		 * {@link GenericTableConfigurationProvider}. Takes priority over {@link #getColumns()}.
+		 * </p>
+		 */
+		@Name(TYPES)
+		@Format(TLModelPartRef.CommaSeparatedTLModelPartRefs.class)
+		List<TLModelPartRef> getTypes();
 
 		/**
 		 * Column configuration for the table.
@@ -175,14 +195,21 @@ public class TableElement implements UIElement {
 
 		// 3. Build table configuration.
 		TableConfiguration tableConfig;
-		if (_columnsProvider != null) {
+		List<TLModelPartRef> typeRefs = _config.getTypes();
+		if (typeRefs != null && !typeRefs.isEmpty()) {
+			Set<TLClass> types = resolveTypes(typeRefs);
+			tableConfig = TableConfigurationFactory.build(new GenericTableConfigurationProvider(types));
+		} else if (_columnsProvider != null) {
 			tableConfig = TableConfigurationFactory.build(_columnsProvider);
 		} else {
 			tableConfig = TableConfigurationFactory.table();
 		}
 
 		// 4. Build column names from configuration.
-		List<String> columnNames = new ArrayList<>(tableConfig.createColumnIndex().keySet());
+		List<String> columnNames = new ArrayList<>(tableConfig.getDefaultColumns());
+		if (columnNames.isEmpty()) {
+			columnNames = new ArrayList<>(tableConfig.createColumnIndex().keySet());
+		}
 
 		// 5. Create ObjectTableModel.
 		ObjectTableModel tableModel =
@@ -242,6 +269,18 @@ public class TableElement implements UIElement {
 			return Collections.emptyList();
 		}
 		return Collections.singletonList(result);
+	}
+
+	private static Set<TLClass> resolveTypes(List<TLModelPartRef> typeRefs) {
+		Set<TLClass> types = new HashSet<>();
+		for (TLModelPartRef ref : typeRefs) {
+			try {
+				types.add(ref.resolveClass());
+			} catch (ConfigurationException ex) {
+				throw new RuntimeException("Failed to resolve type: " + ref.qualifiedName(), ex);
+			}
+		}
+		return types;
 	}
 
 	private ReactCellControlProvider createCellProvider() {

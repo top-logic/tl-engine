@@ -6,7 +6,9 @@
 package com.top_logic.layout.view.element;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.CalledByReflection;
@@ -16,6 +18,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 import com.top_logic.layout.react.ReactControl;
 import com.top_logic.layout.react.ViewControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
@@ -23,6 +26,7 @@ import com.top_logic.layout.react.control.sidebar.NavigationItem;
 import com.top_logic.layout.react.control.sidebar.ReactSidebarControl;
 import com.top_logic.layout.react.control.sidebar.SeparatorItem;
 import com.top_logic.layout.react.control.sidebar.SidebarItem;
+import com.top_logic.layout.structure.PersonalizingExpandable;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 
@@ -217,12 +221,63 @@ public class SidebarElement implements UIElement {
 
 	@Override
 	public ViewControl createControl(ViewContext context) {
+		String key = resolveKey(context, "sidebar");
+
+		boolean collapsed = PersonalizingExpandable.loadCollapsed(key + ".collapsed", _collapsed);
+		Map<String, Boolean> groupStates = loadGroupStates(key);
+
 		List<SidebarItem> sidebarItems = new ArrayList<>();
 		for (SidebarItemElement itemElement : _items) {
 			sidebarItems.add(itemElement.createSidebarItem(context));
 		}
 		String activeItem = _activeItem != null && !_activeItem.isEmpty() ? _activeItem : null;
-		return new ReactSidebarControl("view.sidebar", sidebarItems, activeItem, _collapsed, null, null);
+		return new ReactSidebarControl(
+			sidebarItems, activeItem,
+			collapsed, groupStates,
+			c -> PersonalizingExpandable.saveCollapsed(key + ".collapsed", c, _collapsed),
+			(gid, exp) -> saveGroupState(key, gid, exp),
+			null, null, null, null);
+	}
+
+	private static String resolveKey(ViewContext context, String defaultSegment) {
+		return context.getPersonalizationKey() + "." + defaultSegment;
+	}
+
+	@SuppressWarnings("unchecked")
+	private static Map<String, Boolean> loadGroupStates(String key) {
+		PersonalConfiguration pc = PersonalConfiguration.getPersonalConfiguration();
+		if (pc == null) {
+			return null;
+		}
+		Object value = pc.getJSONValue(key + ".groups");
+		if (value instanceof Map) {
+			Map<String, Object> raw = (Map<String, Object>) value;
+			Map<String, Boolean> result = new HashMap<>();
+			for (Map.Entry<String, Object> entry : raw.entrySet()) {
+				if (entry.getValue() instanceof Boolean) {
+					result.put(entry.getKey(), (Boolean) entry.getValue());
+				}
+			}
+			return result;
+		}
+		return null;
+	}
+
+	private static void saveGroupState(String key, String groupId, boolean expanded) {
+		PersonalConfiguration pc = PersonalConfiguration.getPersonalConfiguration();
+		if (pc == null) {
+			return;
+		}
+		Map<String, Boolean> states = loadGroupStates(key);
+		if (states == null) {
+			states = new HashMap<>();
+		}
+		states.put(groupId, Boolean.valueOf(expanded));
+		if (states.isEmpty()) {
+			pc.setJSONValue(key + ".groups", null);
+		} else {
+			pc.setJSONValue(key + ".groups", states);
+		}
 	}
 
 	private static ReactControl createContent(List<UIElement> elements, ViewContext context) {

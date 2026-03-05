@@ -7,8 +7,11 @@ package com.top_logic.layout.react.control.layout;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
@@ -85,8 +88,39 @@ public class ReactSplitPanelControl extends ReactControl {
 
 	private int _indexInParent = -1;
 
+	private final Consumer<Map<String, Float>> _onSizesChanged;
+
+	private final BiConsumer<Integer, Boolean> _onChildCollapsed;
+
 	/**
-	 * Creates a new {@link ReactSplitPanelControl}.
+	 * Creates a new {@link ReactSplitPanelControl} with persistence callbacks.
+	 *
+	 * @param orientation
+	 *        The layout orientation (horizontal or vertical).
+	 * @param resizable
+	 *        Whether draggable splitters are shown between children.
+	 * @param onSizesChanged
+	 *        Called after a drag-resize with a map of control ID to new pixel size. May be
+	 *        {@code null}.
+	 * @param onChildCollapsed
+	 *        Called when a child collapses or expands, with (childIndex, collapsed). May be
+	 *        {@code null}.
+	 */
+	public ReactSplitPanelControl(Orientation orientation, boolean resizable,
+			Consumer<Map<String, Float>> onSizesChanged,
+			BiConsumer<Integer, Boolean> onChildCollapsed) {
+		super(null, REACT_MODULE, COMMANDS);
+		_resizable = resizable;
+		_onSizesChanged = onSizesChanged;
+		_onChildCollapsed = onChildCollapsed;
+
+		getReactState().put(ORIENTATION, orientation == Orientation.HORIZONTAL ? "horizontal" : "vertical");
+		getReactState().put(RESIZABLE, Boolean.valueOf(resizable));
+		getReactState().put(CHILDREN, new ArrayList<>());
+	}
+
+	/**
+	 * Creates a new {@link ReactSplitPanelControl} without persistence callbacks.
 	 *
 	 * @param orientation
 	 *        The layout orientation (horizontal or vertical).
@@ -94,12 +128,7 @@ public class ReactSplitPanelControl extends ReactControl {
 	 *        Whether draggable splitters are shown between children.
 	 */
 	public ReactSplitPanelControl(Orientation orientation, boolean resizable) {
-		super(null, REACT_MODULE, COMMANDS);
-		_resizable = resizable;
-
-		getReactState().put(ORIENTATION, orientation == Orientation.HORIZONTAL ? "horizontal" : "vertical");
-		getReactState().put(RESIZABLE, Boolean.valueOf(resizable));
-		getReactState().put(CHILDREN, new ArrayList<>());
+		this(orientation, resizable, null, null);
 	}
 
 	/**
@@ -203,6 +232,9 @@ public class ReactSplitPanelControl extends ReactControl {
 			} else if (!collapsed && wasAllCollapsed()) {
 				_parentSplitPanel.childCollapsed(_indexInParent, false, 0);
 			}
+		}
+		if (_onChildCollapsed != null) {
+			_onChildCollapsed.accept(Integer.valueOf(childIndex), Boolean.valueOf(collapsed));
 		}
 	}
 
@@ -407,6 +439,13 @@ public class ReactSplitPanelControl extends ReactControl {
 				list.clear();
 				for (ChildEntry entry : splitPanel._children) {
 					list.add(entry.toDescriptor());
+				}
+				if (splitPanel._onSizesChanged != null) {
+					Map<String, Float> sizeMap = new LinkedHashMap<>();
+					for (ChildEntry entry : splitPanel._children) {
+						sizeMap.put(entry._control.getID(), Float.valueOf(entry._constraint._size));
+					}
+					splitPanel._onSizesChanged.accept(sizeMap);
 				}
 			}
 			return HandlerResult.DEFAULT_RESULT;

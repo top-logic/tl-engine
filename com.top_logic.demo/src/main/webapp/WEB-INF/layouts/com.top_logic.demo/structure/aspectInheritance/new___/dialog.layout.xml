@@ -20,11 +20,17 @@
 				<en>New...</en>
 				<de>Neu...</de>
 			</resourceKey>
+			<securityObject class="com.top_logic.model.search.providers.SecurityObjectByExpression"
+				function="`DemoTypes#ROOT`"
+			/>
 		</open-handler>
 		<typeOptions type="tl.demo.aspect:Common"/>
 		<create-handler id="ID_69d5e028_cc7a_4626_a4e4_a08fd3afff8c"
 			target="model(com.top_logic.demo/structure/aspectInheritance/detailsForm.layout.xml#Form)"
 		>
+			<securityObject class="com.top_logic.model.search.providers.SecurityObjectByExpression"
+				function="`DemoTypes#ROOT`"
+			/>
 			<postCreateActions>
 				<setModel target="model(com.top_logic.demo/structure/aspectInheritance/detailsForm.layout.xml#Form)">
 					<input/>

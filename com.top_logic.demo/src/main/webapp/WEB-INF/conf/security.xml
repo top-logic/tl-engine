@@ -11,6 +11,12 @@
 		<profile name="DemoSecurity.navigation"/>
 		<profile name="DemoSecurity.selection"/>
 		<profile name="DemoTypes.Administrator">
+			<view name="com.top_logic.demo/structure/aspectInheritance/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
 			<view name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#createPlainCCreateAttributedDialog">
 				<commandGroup name="Create"/>
 				<commandGroup name="Read"/>
@@ -66,6 +72,12 @@
 			</view>
 		</profile>
 		<profile name="DemoTypes.Responsible">
+			<view name="com.top_logic.demo/structure/aspectInheritance/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
 			<view name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#createPlainCCreateAttributedDialog">
 				<commandGroup name="Create"/>
 				<commandGroup name="Read"/>

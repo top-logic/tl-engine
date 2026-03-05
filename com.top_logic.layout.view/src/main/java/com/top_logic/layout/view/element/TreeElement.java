@@ -52,6 +52,14 @@ import com.top_logic.layout.view.channel.ViewChannel;
  * using TL-Script expressions, and the tree structure is built lazily via a custom
  * {@link TreeBuilder}.
  * </p>
+ *
+ * <p>
+ * Note: The optional config properties {@code isLeaf}, {@code supportsNode},
+ * {@code modelForNode}, {@code parents}, and {@code nodesToUpdate} are declared for future use
+ * and currently not wired into the runtime. They parse correctly but have no effect. Leaf status
+ * is determined by whether {@code children} returns an empty list. Incremental update support
+ * will be added when the view system gains model event integration.
+ * </p>
  */
 public class TreeElement implements UIElement {
 
@@ -288,8 +296,8 @@ public class TreeElement implements UIElement {
 		ViewChannel.ChannelListener refreshListener = (sender, oldValue, newValue) -> {
 			Object[] newValues = readChannelValues(inputChannels);
 			Object newRoot = _rootExecutor.execute(newValues);
-			TreeBuilder<DefaultTreeUINode> newBuilder = createTreeBuilder(inputChannels);
-			DefaultTreeUINodeModel newTreeModel = new DefaultTreeUINodeModel(newBuilder, newRoot);
+			DefaultTreeUINodeModel newTreeModel = new DefaultTreeUINodeModel(builder, newRoot);
+			selectionModel.clear();
 			treeControl.setTreeModel(newTreeModel);
 		};
 		for (ViewChannel channel : inputChannels) {

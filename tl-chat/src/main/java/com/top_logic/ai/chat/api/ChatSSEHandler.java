@@ -7,8 +7,10 @@ package com.top_logic.ai.chat.api;
 
 import java.io.PrintWriter;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -32,6 +34,8 @@ import com.top_logic.ai.chat.layout.ChatMessage;
 import com.top_logic.ai.chat.layout.ChatTask;
 import com.top_logic.ai.chat.layout.ChatTimelineEvent;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
+import com.top_logic.ai.service.approval.UserInteractionRequest;
+import com.top_logic.ai.service.approval.UserInteractionStore;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.thread.ThreadContextManager;
 
@@ -86,6 +90,9 @@ public class ChatSSEHandler {
 
 	/** Tracks agent call result summaries to detect updates (key = event index "e0", "e1", etc.). */
 	private final Map<String, String> _agentCallResults = new HashMap<>();
+
+	/** Tracks already-emitted user interaction request IDs to avoid duplicates. */
+	private final Set<String> _emittedInteractionIds = new HashSet<>();
 
 	private ScheduledFuture<?> _pollTask;
 
@@ -310,6 +317,20 @@ public class ChatSSEHandler {
 					_lastTaskDescription = currentDescription;
 				}
 			}
+
+			// Emit pending user interaction requests
+			ChatProcessor.AIProcessingState currentState = _tracker.getCurrentProcessingState();
+			if (currentState != null) {
+				UserInteractionStore interactionStore = currentState.getUserInteractionStore();
+				if (interactionStore != null && interactionStore.hasPending()) {
+					for (UserInteractionRequest req : interactionStore.getPendingRequests()) {
+						if (!_emittedInteractionIds.contains(req.getId())) {
+							emitUserInteraction(req);
+							_emittedInteractionIds.add(req.getId());
+						}
+					}
+				}
+			}
 		} else {
 			// Processing state cleared - but we may still need to emit final status
 			// The task still exists in tracker with COMPLETED/ERROR status
@@ -326,6 +347,7 @@ public class ChatSSEHandler {
 				_lastTaskStatus = null;
 				_lastTaskDescription = null;
 				_agentCallResults.clear();
+				_emittedInteractionIds.clear();
 			}
 		}
 	}
@@ -362,6 +384,23 @@ public class ChatSSEHandler {
 		}
 	}
 
+	private void emitUserInteraction(UserInteractionRequest req) {
+		try {
+			StringBuilder json = new StringBuilder();
+			json.append("{\"requestId\":\"").append(escapeJson(req.getId())).append("\",");
+			json.append("\"question\":\"").append(escapeJson(req.getQuestion())).append("\",");
+			json.append("\"header\":\"").append(escapeJson(req.getHeader())).append("\",");
+			json.append("\"type\":\"").append(escapeJson(req.getType())).append("\"");
+			if (req.getOptions() != null && !req.getOptions().isEmpty()) {
+				json.append(",\"options\":").append(req.getOptions());
+			}
+			json.append("}");
+			sendEvent("user_interaction", json.toString());
+		} catch (Exception e) {
+			Logger.error("Failed to emit user interaction event", e, ChatSSEHandler.class);
+		}
+	}
+
 	/** Interval in seconds after which the in-progress placeholder message rotates. */
 	private static final int PLACEHOLDER_ROTATE_SECONDS = 25;
 
@@ -395,6 +434,19 @@ public class ChatSSEHandler {
 		} catch (Exception e) {
 			Logger.error("Failed to send heartbeat", e, ChatSSEHandler.class);
 		}
+	}
+
+	/** Escapes a string for safe inclusion in a JSON string value. */
+	private static String escapeJson(String value) {
+		if (value == null) {
+			return "";
+		}
+		return value
+			.replace("\\", "\\\\")
+			.replace("\"", "\\\"")
+			.replace("\n", "\\n")
+			.replace("\r", "\\r")
+			.replace("\t", "\\t");
 	}
 
 	private void sendEvent(String eventType, String data) {

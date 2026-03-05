@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.TimeZone;
 
 import com.top_logic.ai.chat.api.messages.AttachmentDto;
@@ -28,6 +29,7 @@ import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
+import com.top_logic.ai.service.approval.UserInteractionStore;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.basic.Logger;
@@ -64,6 +66,7 @@ import jakarta.servlet.http.HttpSession;
 public class ChatServlet extends HttpServlet {
 
 	private static final String PATH_SEND = "/send";
+	private static final String PATH_RESPOND = "/respond";
 	private static final String PATH_UPDATES = "/updates";
 	private static final String PATH_EVENTS = "/events";
 	private static final String PATH_SESSIONS = "/sessions";
@@ -82,6 +85,10 @@ public class ChatServlet extends HttpServlet {
 		}
 		if (pathInfo.equals(PATH_SEND) || pathInfo.equals(PATH_SEND + "/")) {
 			handleSend(req, resp);
+			return;
+		}
+		if (pathInfo.equals(PATH_RESPOND) || pathInfo.equals(PATH_RESPOND + "/")) {
+			handleRespond(req, resp);
 			return;
 		}
 		if (pathInfo.equals(PATH_SESSIONS) || pathInfo.equals(PATH_SESSIONS + "/")) {
@@ -209,6 +216,47 @@ public class ChatServlet extends HttpServlet {
 			.setTaskId(result.getTaskId())
 			.setStatus("processing");
 		resp.getWriter().write(DtoMapper.toJson(sendResponse));
+	}
+
+	private void handleRespond(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		String jsonBody = new String(req.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+
+		String requestId = null;
+		String response = null;
+		try {
+			@SuppressWarnings("unchecked")
+			Map<String, Object> parsed = (Map<String, Object>) com.top_logic.basic.json.JSON.fromString(jsonBody);
+			requestId = (String) parsed.get("requestId");
+			response = (String) parsed.get("response");
+		} catch (Exception e) {
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid JSON: " + e.getMessage());
+			return;
+		}
+
+		if (requestId == null || response == null) {
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing requestId or response");
+			return;
+		}
+
+		TaskProgressTracker tracker = ChatSessionRegistry.getOrCreate(req.getSession(false));
+		ChatProcessor.AIProcessingState state = tracker.getCurrentProcessingState();
+		if (state == null) {
+			resp.sendError(HttpServletResponse.SC_CONFLICT, "No active processing state");
+			return;
+		}
+
+		UserInteractionStore store = state.getUserInteractionStore();
+		if (store == null) {
+			resp.sendError(HttpServletResponse.SC_CONFLICT, "No interaction store available");
+			return;
+		}
+
+		store.resolve(requestId, response);
+
+		resp.setContentType("application/json");
+		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
+		String safeRequestId = requestId.replace("\\", "\\\\").replace("\"", "\\\"");
+		resp.getWriter().write("{\"status\":\"ok\",\"requestId\":\"" + safeRequestId + "\"}");
 	}
 
 	private void handleUpdates(HttpServletRequest req, HttpServletResponse resp) throws IOException {

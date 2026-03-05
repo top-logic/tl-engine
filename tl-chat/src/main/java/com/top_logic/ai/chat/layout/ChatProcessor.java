@@ -24,6 +24,8 @@ import com.top_logic.ai.chat.api.DtoMapper;
 import com.top_logic.ai.chat.api.messages.AttachmentDto;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.service.agents.AgentRegistry;
+import com.top_logic.ai.service.approval.UserInteractionStore;
+import com.top_logic.ai.service.approval.UserInteractionStoreBinding;
 import com.top_logic.ai.service.tools.ToolCallTracker;
 import com.top_logic.ai.service.tools.ToolCallTracking;
 import com.top_logic.ai.service.tools.TraceEntry;
@@ -111,6 +113,10 @@ public class ChatProcessor {
 		ToolCallTracking.setTracker(tracker);
 		state.setToolCallTracker(tracker);
 
+		UserInteractionStore interactionStore = new UserInteractionStore();
+		UserInteractionStoreBinding.setStore(interactionStore);
+		state.setUserInteractionStore(interactionStore);
+
 		try {
 			Logger.info("ChatProcessor: Starting agent in thread: " + Thread.currentThread().getName(),
 				ChatProcessor.class);
@@ -180,6 +186,8 @@ public class ChatProcessor {
 		} finally {
 			ToolCallTracking.setTracker(null);
 			state.setToolCallTracker(null);
+			UserInteractionStoreBinding.setStore(null);
+			state.setUserInteractionStore(null);
 		}
 	}
 
@@ -511,6 +519,9 @@ public class ChatProcessor {
 		private volatile String _sessionId = null;
 		private volatile Chat _chat = null;
 
+		// User interaction store for HITL flow
+		private volatile UserInteractionStore _userInteractionStore = null;
+
 		// Result accumulation
 		private final List<ChatMessage> _pendingMessages = new ArrayList<>();
 
@@ -669,6 +680,21 @@ public class ChatProcessor {
 		/** Sets the captured Chat reference (called once in {@link ChatProcessor#sendMessage}). */
 		public void setChat(Chat chat) {
 			_chat = chat;
+		}
+
+		/** The user interaction store for HITL flow; may be null when not processing. */
+		public UserInteractionStore getUserInteractionStore() {
+			return _userInteractionStore;
+		}
+
+		/**
+		 * Sets the user interaction store.
+		 *
+		 * @param store
+		 *        The store; may be null to clear.
+		 */
+		public void setUserInteractionStore(UserInteractionStore store) {
+			_userInteractionStore = store;
 		}
 	}
 

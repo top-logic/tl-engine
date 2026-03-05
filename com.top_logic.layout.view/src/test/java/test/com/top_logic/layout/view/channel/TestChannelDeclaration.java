@@ -100,6 +100,18 @@ public class TestChannelDeclaration extends TestCase {
 	}
 
 	/**
+	 * Tests that hasChannel reports registered channels correctly.
+	 */
+	public void testHasChannel() {
+		ViewContext viewContext = new ViewContext(null);
+		assertFalse("Should not have unregistered channel", viewContext.hasChannel("test"));
+
+		viewContext.registerChannel("test", new DefaultViewChannel("test"));
+		assertTrue("Should have registered channel", viewContext.hasChannel("test"));
+		assertFalse("Should not have other channel", viewContext.hasChannel("other"));
+	}
+
+	/**
 	 * Test suite requiring the {@link TypeIndex} module.
 	 */
 	public static Test suite() {

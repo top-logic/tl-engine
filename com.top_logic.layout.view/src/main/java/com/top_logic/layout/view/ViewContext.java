@@ -104,6 +104,17 @@ public class ViewContext {
 	}
 
 	/**
+	 * Whether a channel with the given name is registered.
+	 *
+	 * @param name
+	 *        The channel name to check.
+	 * @return {@code true} if a channel with this name exists.
+	 */
+	public boolean hasChannel(String name) {
+		return _channels.containsKey(name);
+	}
+
+	/**
 	 * Resolves a {@link ChannelRef} to its runtime {@link ViewChannel}.
 	 *
 	 * @param ref

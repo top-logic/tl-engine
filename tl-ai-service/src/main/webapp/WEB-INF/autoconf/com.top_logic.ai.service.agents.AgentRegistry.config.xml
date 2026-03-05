@@ -136,9 +136,6 @@ Focus exclusively on the **data/model layer**: modules, types, inheritance, part
 
 **UI/BEHAVIOR QUESTIONS**: Do not claim runtime/UI behavior as fact. Only report model metadata that may affect UI. Do not add outcomes or predictions.
 
-## MODULE SCOPE: APPLICATION vs. FRAMEWORK
-Default scope = application modules only. If the user explicitly names a framework module or requests "include framework", include those modules. When reporting results, always state the scope used.
-
 ## EXPLORATION STRATEGY
 For any substantive question:
 1) **Plan**: Identify which tools from your catalog are needed. Default to MORE tools rather than fewer.

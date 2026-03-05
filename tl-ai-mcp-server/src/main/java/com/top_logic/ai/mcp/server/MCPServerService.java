@@ -20,7 +20,6 @@ import com.top_logic.ai.mcp.server.dynamic.DynamicResource;
 import com.top_logic.ai.mcp.server.resources.ConfigSchemaResource;
 import com.top_logic.ai.mcp.server.resources.EnumerationClassifiersResource;
 import com.top_logic.ai.mcp.server.resources.InstanceResource;
-import com.top_logic.ai.mcp.server.resources.ModelModulesResource;
 import com.top_logic.ai.mcp.server.resources.ModuleTypesResource;
 import com.top_logic.ai.mcp.server.resources.TypeInstancesResource;
 import com.top_logic.ai.mcp.server.resources.TypePartsResource;
@@ -249,7 +248,6 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 	 * Default implementation registers resources for TopLogic model exploration:
 	 * </p>
 	 * <ul>
-	 * <li>{@link ModelModulesResource} - Lists available data model modules</li>
 	 * <li>{@link InstanceResource} - Retrieves detailed information about a specific instance by its TID</li>
 	 * <li>{@link TypeInstancesResource} - Retrieves all instances of a specific type</li>
 	 * <li>{@link ModuleTypesResource} - Lists types within a specific module (dynamic resource template)</li>
@@ -273,9 +271,6 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 	 */
 	protected void configureServer(McpServer.SyncSpecification<?> builder) {
 		builder.capabilities(ServerCapabilities.builder().resources(true, true).tools(true).build());
-
-		// Register resource for listing TopLogic model modules
-		builder.resources(ModelModulesResource.createSpecification());
 
 		// Register resource template for retrieving instance details by TID
 		builder.resourceTemplates(InstanceResource.createSpecification());

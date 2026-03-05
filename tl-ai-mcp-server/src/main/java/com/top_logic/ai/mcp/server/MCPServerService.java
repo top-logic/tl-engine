@@ -222,8 +222,7 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 
 			// Create MCP server builder with sync API
 			var builder = McpServer.sync(_transportProvider)
-				.serverInfo(config.getServerName(), config.getServerVersion())
-				.jsonSchemaValidator(new NoOpJsonSchemaValidator());
+				.serverInfo(config.getServerName(), config.getServerVersion());
 
 			// Configure the server with application-specific capabilities BEFORE building
 			configureServer(builder);

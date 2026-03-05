@@ -8,6 +8,7 @@ package com.top_logic.demo.react;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
@@ -21,6 +22,7 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
+import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 import com.top_logic.layout.react.ReactControl;
 import com.top_logic.layout.react.control.ReactButtonControl;
 import com.top_logic.layout.react.control.ReactFieldListControl;
@@ -31,6 +33,7 @@ import com.top_logic.layout.react.control.sidebar.NavigationItem;
 import com.top_logic.layout.react.control.sidebar.ReactSidebarControl;
 import com.top_logic.layout.react.control.sidebar.SeparatorItem;
 import com.top_logic.layout.react.control.sidebar.SidebarItem;
+import com.top_logic.layout.structure.PersonalizingExpandable;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.HandlerResult;
 
@@ -106,8 +109,14 @@ public class DemoReactSidebarComponent extends LayoutComponent {
 		ReactControl footerSlot = createFooterControl();
 		ReactControl footerCollapsedSlot = createFooterCollapsedControl();
 
+		boolean collapsed = PersonalizingExpandable.loadCollapsed("demo.sidebar.collapsed", false);
+		Map<String, Boolean> groupStates = loadGroupStates("demo.sidebar");
+
 		return new ReactSidebarControl(
-			items, "dashboard", false, null, null, null,
+			items, "dashboard",
+			collapsed, groupStates,
+			c -> PersonalizingExpandable.saveCollapsed("demo.sidebar.collapsed", c, false),
+			(gid, exp) -> saveGroupState("demo.sidebar", gid, exp),
 			headerSlot, headerCollapsedSlot, footerSlot, footerCollapsedSlot);
 	}
 
@@ -189,6 +198,43 @@ public class DemoReactSidebarComponent extends LayoutComponent {
 			InfoService.showInfo(ResKey.text("User info clicked!"));
 			return HandlerResult.DEFAULT_RESULT;
 		});
+	}
+
+	@SuppressWarnings("unchecked")
+	private static Map<String, Boolean> loadGroupStates(String key) {
+		PersonalConfiguration pc = PersonalConfiguration.getPersonalConfiguration();
+		if (pc == null) {
+			return null;
+		}
+		Object value = pc.getJSONValue(key + ".groups");
+		if (value instanceof Map) {
+			Map<String, Object> raw = (Map<String, Object>) value;
+			Map<String, Boolean> result = new java.util.HashMap<>();
+			for (Map.Entry<String, Object> entry : raw.entrySet()) {
+				if (entry.getValue() instanceof Boolean) {
+					result.put(entry.getKey(), (Boolean) entry.getValue());
+				}
+			}
+			return result;
+		}
+		return null;
+	}
+
+	private static void saveGroupState(String key, String groupId, boolean expanded) {
+		PersonalConfiguration pc = PersonalConfiguration.getPersonalConfiguration();
+		if (pc == null) {
+			return;
+		}
+		Map<String, Boolean> states = loadGroupStates(key);
+		if (states == null) {
+			states = new java.util.HashMap<>();
+		}
+		states.put(groupId, Boolean.valueOf(expanded));
+		if (states.isEmpty()) {
+			pc.setJSONValue(key + ".groups", null);
+		} else {
+			pc.setJSONValue(key + ".groups", states);
+		}
 	}
 
 }

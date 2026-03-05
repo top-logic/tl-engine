@@ -15,7 +15,6 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 
 import com.top_logic.ai.service.tools.task.TaskStore.AgentTask;
-import com.top_logic.ai.service.tools.task.messages.TaskDetail;
 import com.top_logic.ai.service.tools.task.messages.TaskListResponse;
 import com.top_logic.ai.service.tools.task.messages.TaskResponse;
 import com.top_logic.ai.service.tools.task.messages.TaskSummary;
@@ -207,54 +206,6 @@ public class TaskTool {
 			Logger.error("listTasks() error: " + ex.getMessage(), ex, TaskTool.class);
 			return DataClassSerializer.errorToJson(
 				"Failed to list tasks: " + ex.getMessage(), TaskTool.class, "listTasks()", args);
-		}
-	}
-
-	/**
-	 * Gets detailed information about a specific task.
-	 *
-	 * @param taskId
-	 *        The ID of the task to retrieve.
-	 * @return JSON with full task details, or error if not found.
-	 */
-	@Tool("Get full details of a task by its ID, including description, blocks, and blockedBy."
-		+ " Use before starting work on an assigned task to read its complete requirements."
-		+ " Verify the blockedBy list is empty before beginning work.")
-	public String getTask(
-			@P("The ID of the task to retrieve") String taskId) {
-
-		Map<String, Object> args = new HashMap<>();
-		args.put("taskId", taskId);
-
-		try {
-			TaskStore store = requireStore();
-			AgentTask task = store.getTask(taskId);
-
-			if (task == null) {
-				return DataClassSerializer.errorToJson(
-					"Task not found: " + taskId, TaskTool.class, "getTask()", args);
-			}
-
-			TaskDetail detail = TaskDetail.create()
-				.setTaskId(task.getId())
-				.setStatus(task.getStatus())
-				.setSubject(task.getSubject())
-				.setDescription(task.getDescription() != null ? task.getDescription() : "")
-				.setActiveForm(task.getActiveForm() != null ? task.getActiveForm() : "")
-				.setOwner(task.getOwner() != null ? task.getOwner() : "");
-
-			for (String blockId : task.getBlocks()) {
-				detail.addBlock(blockId);
-			}
-			for (String blockedById : task.getBlockedBy()) {
-				detail.addBlockedBy(blockedById);
-			}
-
-			return DataClassSerializer.toJson(detail, TaskTool.class, "getTask()", args);
-		} catch (Exception ex) {
-			Logger.error("getTask() error: " + ex.getMessage(), ex, TaskTool.class);
-			return DataClassSerializer.errorToJson(
-				"Failed to get task: " + ex.getMessage(), TaskTool.class, "getTask()", args);
 		}
 	}
 

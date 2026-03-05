@@ -109,19 +109,27 @@
 								<panes>
 									<pane size="40" unit="%" min-size="200">
 										<children>
-											<table types="Contacts:CompanyContact" selection="selectedCompany">
-												<rows>all(`Contacts:CompanyContact`)</rows>
-											</table>
+											<panel title="Companies">
+												<children>
+													<table types="Contacts:CompanyContact" selection="selectedCompany">
+														<rows>all(`Contacts:CompanyContact`)</rows>
+													</table>
+												</children>
+											</panel>
 										</children>
 									</pane>
 									<pane size="60" unit="%">
 										<children>
-											<table types="Contacts:PersonContact">
-												<inputs>
-													<input channel="selectedCompany" />
-												</inputs>
-												<rows>company -> if($company == null, list(), $company.get(`Contacts:Contact.Company#staff`))</rows>
-											</table>
+											<panel title="Staff">
+												<children>
+													<table types="Contacts:PersonContact">
+														<inputs>
+															<input channel="selectedCompany" />
+														</inputs>
+														<rows>company -> if($company == null, list(), $company.get(`Contacts:Contact.Company#staff`))</rows>
+													</table>
+												</children>
+											</panel>
 										</children>
 									</pane>
 								</panes>

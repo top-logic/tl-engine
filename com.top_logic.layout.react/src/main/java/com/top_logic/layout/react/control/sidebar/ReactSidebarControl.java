@@ -7,19 +7,20 @@ package com.top_logic.layout.react.control.sidebar;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
-import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.ControlCommand;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactControl;
 import com.top_logic.layout.react.ViewDisplayContext;
-import com.top_logic.layout.structure.PersonalizingExpandable;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 import de.haumacher.msgbuf.json.JsonWriter;
@@ -30,8 +31,8 @@ import de.haumacher.msgbuf.json.JsonWriter;
  *
  * <p>
  * Navigation item content is created lazily on first selection and cached for instant re-selection.
- * The sidebar collapse state and group expansion states are persisted in
- * {@link PersonalConfiguration}.
+ * State changes (collapse toggle, group expansion) are reported via callbacks so the caller can
+ * handle persistence.
  * </p>
  *
  * <p>
@@ -80,11 +81,13 @@ public class ReactSidebarControl extends ReactControl {
 		new ToggleCollapseCommand(),
 		new ToggleGroupCommand());
 
-	private final String _personalizationKey;
+	private final Consumer<Boolean> _onCollapseChanged;
+
+	private final BiConsumer<String, Boolean> _onGroupToggled;
+
+	private final Map<String, Boolean> _groupStates;
 
 	private final List<SidebarItem> _items;
-
-	private final boolean _defaultCollapsed;
 
 	private final ReactControl _headerContent;
 
@@ -103,54 +106,60 @@ public class ReactSidebarControl extends ReactControl {
 	/**
 	 * Creates a new {@link ReactSidebarControl}.
 	 *
-	 * @param personalizationKey
-	 *        Key prefix for {@link PersonalConfiguration} storage. The caller typically derives
-	 *        this from the component name.
 	 * @param items
 	 *        The navigation item list.
 	 * @param initialActiveItemId
 	 *        The initially active navigation item ID, or {@code null} to default to the first
 	 *        navigation item.
-	 * @param defaultCollapsed
-	 *        Default collapse state (before personal config override).
+	 * @param initialCollapsed
+	 *        The initial collapsed state (pre-loaded by the caller).
+	 * @param initialGroupStates
+	 *        Pre-loaded group expansion state overrides. Keys are group IDs, values are expanded
+	 *        flags. May be {@code null} or empty for defaults.
+	 * @param onCollapseChanged
+	 *        Called when the user toggles the sidebar collapse. Receives the new collapsed state.
+	 *        May be {@code null} if no persistence is desired.
+	 * @param onGroupToggled
+	 *        Called when the user toggles a group's expansion. Receives (groupId, expanded).
+	 *        May be {@code null} if no persistence is desired.
 	 * @param headerContent
 	 *        Optional header slot control shown when expanded, or {@code null}.
 	 * @param headerCollapsedContent
-	 *        Optional header slot control shown when collapsed, or {@code null}. If {@code null}
-	 *        and {@code headerContent} is non-null, the header slot is hidden when collapsed.
+	 *        Optional header slot control shown when collapsed, or {@code null}.
 	 * @param footerContent
 	 *        Optional footer slot control shown when expanded, or {@code null}.
 	 * @param footerCollapsedContent
-	 *        Optional footer slot control shown when collapsed, or {@code null}. If {@code null}
-	 *        and {@code footerContent} is non-null, the footer slot is hidden when collapsed.
+	 *        Optional footer slot control shown when collapsed, or {@code null}.
 	 */
-	public ReactSidebarControl(String personalizationKey, List<SidebarItem> items, String initialActiveItemId,
-			boolean defaultCollapsed, ReactControl headerContent, ReactControl headerCollapsedContent,
+	public ReactSidebarControl(List<SidebarItem> items, String initialActiveItemId,
+			boolean initialCollapsed, Map<String, Boolean> initialGroupStates,
+			Consumer<Boolean> onCollapseChanged, BiConsumer<String, Boolean> onGroupToggled,
+			ReactControl headerContent, ReactControl headerCollapsedContent,
 			ReactControl footerContent, ReactControl footerCollapsedContent) {
 		super(null, REACT_MODULE, COMMANDS);
-		_personalizationKey = personalizationKey;
 		_items = new ArrayList<>(items);
-		_defaultCollapsed = defaultCollapsed;
+		_collapsed = initialCollapsed;
+		_onCollapseChanged = onCollapseChanged;
+		_onGroupToggled = onGroupToggled;
 		_headerContent = headerContent;
 		_headerCollapsedContent = headerCollapsedContent;
 		_footerContent = footerContent;
 		_footerCollapsedContent = footerCollapsedContent;
 
-		// Load persisted collapse state.
-		_collapsed = PersonalizingExpandable.loadCollapsed(personalizationKey + ".collapsed", defaultCollapsed);
-
-		// Load persisted group states.
-		Map<String, Boolean> persistedGroups = loadGroupStates();
+		// Track group states in memory for pushItemsUpdate().
+		Map<String, Boolean> groupStates =
+			initialGroupStates != null ? initialGroupStates : Collections.emptyMap();
+		_groupStates = new HashMap<>(groupStates);
 
 		// Determine initial active item.
 		_activeItemId = initialActiveItemId != null ? initialActiveItemId : findFirstNavItemId(items);
 
-		// Build serialized item list, merging persisted group states.
+		// Build serialized item list, merging pre-loaded group states.
 		List<Map<String, Object>> itemList = new ArrayList<>();
 		for (SidebarItem item : _items) {
 			Map<String, Object> itemMap = item.toStateMap();
-			if (item instanceof GroupItem && persistedGroups != null) {
-				Boolean persisted = persistedGroups.get(item.getId());
+			if (item instanceof GroupItem) {
+				Boolean persisted = groupStates.get(item.getId());
 				if (persisted != null) {
 					itemMap.put(GroupItem.EXPANDED, persisted);
 				}
@@ -173,20 +182,14 @@ public class ReactSidebarControl extends ReactControl {
 		if (_footerCollapsedContent != null) {
 			getReactState().put(FOOTER_COLLAPSED_CONTENT, _footerCollapsedContent);
 		}
-		// activeContent is null until writeAsChild creates it.
 	}
 
 	/**
-	 * Convenience constructor without collapsed-mode slot alternatives.
-	 *
-	 * <p>
-	 * Equivalent to calling the full constructor with {@code null} for both collapsed content
-	 * parameters. The header and footer slots will be hidden when the sidebar is collapsed.
-	 * </p>
+	 * Convenience constructor without collapsed-mode slot alternatives and no callbacks.
 	 */
-	public ReactSidebarControl(String personalizationKey, List<SidebarItem> items, String initialActiveItemId,
-			boolean defaultCollapsed, ReactControl headerContent, ReactControl footerContent) {
-		this(personalizationKey, items, initialActiveItemId, defaultCollapsed,
+	public ReactSidebarControl(List<SidebarItem> items, String initialActiveItemId,
+			boolean initialCollapsed, ReactControl headerContent, ReactControl footerContent) {
+		this(items, initialActiveItemId, initialCollapsed, null, null, null,
 			headerContent, null, footerContent, null);
 	}
 
@@ -261,13 +264,12 @@ public class ReactSidebarControl extends ReactControl {
 
 	private void pushItemsUpdate() {
 		List<Map<String, Object>> itemList = new ArrayList<>();
-		Map<String, Boolean> persistedGroups = loadGroupStates();
 		for (SidebarItem item : _items) {
 			Map<String, Object> itemMap = item.toStateMap();
-			if (item instanceof GroupItem && persistedGroups != null) {
-				Boolean persisted = persistedGroups.get(item.getId());
-				if (persisted != null) {
-					itemMap.put(GroupItem.EXPANDED, persisted);
+			if (item instanceof GroupItem) {
+				Boolean tracked = _groupStates.get(item.getId());
+				if (tracked != null) {
+					itemMap.put(GroupItem.EXPANDED, tracked);
 				}
 			}
 			itemList.add(itemMap);
@@ -363,64 +365,6 @@ public class ReactSidebarControl extends ReactControl {
 		return null;
 	}
 
-	@SuppressWarnings("unchecked")
-	private Map<String, Boolean> loadGroupStates() {
-		PersonalConfiguration pc = PersonalConfiguration.getPersonalConfiguration();
-		if (pc == null) {
-			return null;
-		}
-		Object value = pc.getJSONValue(_personalizationKey + ".groups");
-		if (value instanceof Map) {
-			Map<String, Object> raw = (Map<String, Object>) value;
-			Map<String, Boolean> result = new HashMap<>();
-			for (Map.Entry<String, Object> entry : raw.entrySet()) {
-				if (entry.getValue() instanceof Boolean) {
-					result.put(entry.getKey(), (Boolean) entry.getValue());
-				}
-			}
-			return result;
-		}
-		return null;
-	}
-
-	private void saveGroupState(String groupId, boolean expanded) {
-		PersonalConfiguration pc = PersonalConfiguration.getPersonalConfiguration();
-		if (pc == null) {
-			return;
-		}
-
-		// Load current persisted states.
-		Map<String, Boolean> states = loadGroupStates();
-		if (states == null) {
-			states = new HashMap<>();
-		}
-
-		// Find the group's default value.
-		GroupItem group = findGroup(groupId, _items);
-		if (group != null && expanded == group.isInitiallyExpanded()) {
-			// Value matches default; remove from personalization.
-			states.remove(groupId);
-		} else {
-			states.put(groupId, Boolean.valueOf(expanded));
-		}
-
-		// Store or clear.
-		if (states.isEmpty()) {
-			pc.setJSONValue(_personalizationKey + ".groups", null);
-		} else {
-			pc.setJSONValue(_personalizationKey + ".groups", states);
-		}
-	}
-
-	private GroupItem findGroup(String groupId, List<SidebarItem> items) {
-		for (SidebarItem item : items) {
-			if (item instanceof GroupItem && item.getId().equals(groupId)) {
-				return (GroupItem) item;
-			}
-		}
-		return null;
-	}
-
 	/**
 	 * Command sent by the React client when a navigation item is clicked.
 	 */
@@ -497,8 +441,9 @@ public class ReactSidebarControl extends ReactControl {
 		protected HandlerResult execute(DisplayContext context, Control control, Map<String, Object> arguments) {
 			ReactSidebarControl sidebar = (ReactSidebarControl) control;
 			sidebar._collapsed = !sidebar._collapsed;
-			PersonalizingExpandable.saveCollapsed(
-				sidebar._personalizationKey + ".collapsed", sidebar._collapsed, sidebar._defaultCollapsed);
+			if (sidebar._onCollapseChanged != null) {
+				sidebar._onCollapseChanged.accept(Boolean.valueOf(sidebar._collapsed));
+			}
 			sidebar.patchReactState(Map.of(COLLAPSED, Boolean.valueOf(sidebar._collapsed)));
 			return HandlerResult.DEFAULT_RESULT;
 		}
@@ -527,7 +472,10 @@ public class ReactSidebarControl extends ReactControl {
 			String itemId = (String) arguments.get(ITEM_ID_ARG);
 			Object expandedObj = arguments.get(EXPANDED_ARG);
 			boolean expanded = expandedObj instanceof Boolean && ((Boolean) expandedObj).booleanValue();
-			sidebar.saveGroupState(itemId, expanded);
+			sidebar._groupStates.put(itemId, Boolean.valueOf(expanded));
+			if (sidebar._onGroupToggled != null) {
+				sidebar._onGroupToggled.accept(itemId, Boolean.valueOf(expanded));
+			}
 			return HandlerResult.DEFAULT_RESULT;
 		}
 	}

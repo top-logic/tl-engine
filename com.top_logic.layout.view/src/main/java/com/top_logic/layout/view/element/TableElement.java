@@ -133,29 +133,35 @@ public class TableElement implements UIElement {
 
 	private final Config _config;
 
+	private final QueryExecutor _rowsExecutor;
+
+	private final QueryExecutor _supportsElementExecutor;
+
+	private final QueryExecutor _modelForElementExecutor;
+
 	private final TableConfigurationProvider _columnsProvider;
 
 	/**
 	 * Creates a new {@link TableElement} from configuration.
 	 *
 	 * <p>
-	 * Expression compilation is deferred to {@link #createControl(ViewContext)} because services
-	 * like {@code PersistencyLayer} may not be available during Phase 1 (config parsing).
+	 * Expressions are compiled once here and shared across all sessions. If services like
+	 * {@code PersistencyLayer} are not yet active, {@link QueryExecutor#compile(Expr)} returns a
+	 * {@code DeferredQueryExecutor} that lazily compiles on first execution.
 	 * </p>
 	 */
 	@CalledByReflection
 	public TableElement(InstantiationContext context, Config config) {
 		_config = config;
 		_columnsProvider = context.getInstance(config.getColumns());
+
+		_rowsExecutor = QueryExecutor.compile(config.getRows());
+		_supportsElementExecutor = QueryExecutor.compileOptional(config.getSupportsElement());
+		_modelForElementExecutor = QueryExecutor.compileOptional(config.getModelForElement());
 	}
 
 	@Override
 	public ViewControl createControl(ViewContext context) {
-		// Compile expressions (defers if services are not running).
-		QueryExecutor rowsExecutor = QueryExecutor.compile(_config.getRows());
-		QueryExecutor supportsElementExecutor = QueryExecutor.compileOptional(_config.getSupportsElement());
-		QueryExecutor modelForElementExecutor = QueryExecutor.compileOptional(_config.getModelForElement());
-
 		// 1. Resolve input channels.
 		List<ChannelRef> inputRefs = _config.getInputs();
 		List<ViewChannel> inputChannels = new ArrayList<>(inputRefs.size());
@@ -165,7 +171,7 @@ public class TableElement implements UIElement {
 
 		// 2. Execute initial row query.
 		Object[] channelValues = readChannelValues(inputChannels);
-		Collection<?> rows = executeRowsQuery(rowsExecutor, channelValues);
+		Collection<?> rows = executeRowsQuery(_rowsExecutor, channelValues);
 
 		// 3. Build table configuration.
 		TableConfiguration tableConfig;
@@ -209,7 +215,7 @@ public class TableElement implements UIElement {
 		// 9. Wire input channel listeners for re-query on change.
 		ViewChannel.ChannelListener refreshListener = (sender, oldValue, newValue) -> {
 			Object[] newValues = readChannelValues(inputChannels);
-			Collection<?> newRows = executeRowsQuery(rowsExecutor, newValues);
+			Collection<?> newRows = executeRowsQuery(_rowsExecutor, newValues);
 			tableModel.setRowObjects(new ArrayList<>(newRows));
 		};
 		for (ViewChannel channel : inputChannels) {

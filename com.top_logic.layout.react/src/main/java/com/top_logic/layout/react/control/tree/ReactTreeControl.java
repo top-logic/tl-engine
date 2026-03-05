@@ -117,10 +117,10 @@ public class ReactTreeControl extends ReactControl {
 
 	// -- Fields --
 
-	private final TreeUIModel<Object> _treeModel;
+	private TreeUIModel<Object> _treeModel;
 
 	@SuppressWarnings("rawtypes")
-	private final SelectionModel _selectionModel;
+	private SelectionModel _selectionModel;
 
 	private final ReactControlProvider _contentProvider;
 
@@ -182,6 +182,30 @@ public class ReactTreeControl extends ReactControl {
 	public void setSelectionMode(String mode) {
 		_selectionMode = mode;
 		putState(SELECTION_MODE, mode);
+	}
+
+	/**
+	 * Replaces the tree model and rebuilds the control state.
+	 *
+	 * @param treeModel
+	 *        The new tree model.
+	 */
+	@SuppressWarnings("unchecked")
+	public void setTreeModel(TreeUIModel<?> treeModel) {
+		_treeModel = (TreeUIModel<Object>) treeModel;
+		_nodeControlCache.clear();
+		buildFullState();
+	}
+
+	/**
+	 * Replaces the selection model and rebuilds the control state.
+	 *
+	 * @param selectionModel
+	 *        The new selection model.
+	 */
+	public void setSelectionModel(SelectionModel<?> selectionModel) {
+		_selectionModel = selectionModel;
+		buildFullState();
 	}
 
 	/**

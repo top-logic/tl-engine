@@ -89,6 +89,17 @@
 			</instance>
 		</config>
 		
+		<config service-class="com.top_logic.tool.boundsec.SecurityObjectProviderManager">
+			<instance>
+				<providers>
+					<provider name="demoTypesRoot">
+						<impl class="com.top_logic.model.search.providers.SecurityObjectByExpression"
+							function="`DemoTypes#ROOT`"
+						/>
+					</provider>
+				</providers>
+			</instance>
+		</config>
 	</services>
 
 	<configs>

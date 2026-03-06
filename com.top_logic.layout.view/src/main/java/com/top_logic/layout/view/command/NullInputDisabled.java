@@ -24,7 +24,7 @@ public class NullInputDisabled implements ViewExecutabilityRule {
 	/**
 	 * Configuration for {@link NullInputDisabled}.
 	 */
-	@TagName("NullInputDisabled")
+	@TagName("null-input-disabled")
 	public interface Config extends ViewExecutabilityRule.Config {
 
 		@Override

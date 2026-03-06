@@ -23,8 +23,9 @@ import java.lang.annotation.Target;
  * </ol>
  *
  * <p>
- * No parameters is also valid. Return type must be
- * {@link com.top_logic.tool.boundsec.HandlerResult}.
+ * No parameters is also valid. The return type must be either
+ * {@link com.top_logic.tool.boundsec.HandlerResult} or {@code void}. A {@code void} method
+ * implicitly returns {@link com.top_logic.tool.boundsec.HandlerResult#DEFAULT_RESULT}.
  * </p>
  *
  * <p>

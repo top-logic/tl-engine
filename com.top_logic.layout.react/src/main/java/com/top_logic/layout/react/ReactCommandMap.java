@@ -77,9 +77,12 @@ class ReactCommandMap {
 					}
 				}
 
+				boolean returnsVoid = method.getReturnType() == void.class;
+
 				try {
 					MethodHandle handle = lookup.unreflect(method);
-					invokers.put(commandId, new ReactCommandInvoker(handle, needsContext, needsArgs));
+					invokers.put(commandId,
+						new ReactCommandInvoker(handle, needsContext, needsArgs, returnsVoid));
 				} catch (IllegalAccessException ex) {
 					throw new IllegalStateException(
 						"Cannot access @ReactCommand method " + method + " on " + controlClass.getName(), ex);
@@ -90,10 +93,12 @@ class ReactCommandMap {
 	}
 
 	private static void validate(Method method) {
-		if (method.getReturnType() != HandlerResult.class) {
+		Class<?> returnType = method.getReturnType();
+		if (returnType != HandlerResult.class && returnType != void.class) {
 			throw new IllegalStateException(
-				"@ReactCommand method " + method.getName() + " must return HandlerResult, but returns "
-					+ method.getReturnType().getName());
+				"@ReactCommand method " + method.getName()
+					+ " must return HandlerResult or void, but returns "
+					+ returnType.getName());
 		}
 		Class<?>[] paramTypes = method.getParameterTypes();
 		if (paramTypes.length > 2) {

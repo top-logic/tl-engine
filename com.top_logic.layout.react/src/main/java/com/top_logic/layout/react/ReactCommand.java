@@ -14,12 +14,12 @@ import java.lang.annotation.Target;
  * Marks a method as a command handler for a React client command.
  *
  * <p>
- * Annotated methods may declare any subset of these parameters in any order:
+ * Annotated methods may declare any subset of these parameters, in the order shown:
  * </p>
- * <ul>
+ * <ol>
  * <li>{@link ViewDisplayContext} - the control's stored view context</li>
  * <li>{@code Map<String, Object>} - the raw arguments from the client</li>
- * </ul>
+ * </ol>
  *
  * <p>
  * No parameters is also valid. Return type must be
@@ -27,9 +27,9 @@ import java.lang.annotation.Target;
  * </p>
  *
  * <p>
- * Resolution happens lazily on first instantiation of each {@link ReactControl} subclass and is
- * cached per class. The hot path uses {@link java.lang.invoke.MethodHandle} for zero-reflection
- * dispatch.
+ * Methods may have any visibility (including {@code private} and package-private). Resolution
+ * happens lazily on first instantiation of each {@link ReactControl} subclass and is cached per
+ * class. The hot path uses {@link java.lang.invoke.MethodHandle} for zero-reflection dispatch.
  * </p>
  */
 @Retention(RetentionPolicy.RUNTIME)

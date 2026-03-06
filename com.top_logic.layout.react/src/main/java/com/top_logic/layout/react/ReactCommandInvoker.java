@@ -8,6 +8,9 @@ package com.top_logic.layout.react;
 import java.lang.invoke.MethodHandle;
 import java.util.Map;
 
+import com.top_logic.basic.Logger;
+import com.top_logic.basic.exception.I18NFailure;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -51,6 +54,15 @@ class ReactCommandInvoker {
 
 	/**
 	 * Invokes the command method on the given control.
+	 *
+	 * <p>
+	 * Exceptions thrown by the command method are converted to error results:
+	 * </p>
+	 * <ul>
+	 * <li>{@link I18NFailure} exceptions use the
+	 * {@linkplain I18NFailure#getErrorKey() user-visible error message}.</li>
+	 * <li>Other exceptions produce a generic error result with the exception message.</li>
+	 * </ul>
 	 */
 	HandlerResult invoke(ReactControl control, ViewDisplayContext context,
 			Map<String, Object> arguments) {
@@ -64,10 +76,13 @@ class ReactCommandInvoker {
 			} else {
 				return castResult(_handle.invoke(control));
 			}
-		} catch (RuntimeException ex) {
-			throw ex;
 		} catch (Throwable ex) {
-			throw new RuntimeException("Failed to invoke @ReactCommand on " + control.getClass().getName(), ex);
+			Logger.error("@ReactCommand failed on " + control.getClass().getName(), ex,
+				ReactCommandInvoker.class);
+			if (ex instanceof I18NFailure) {
+				return HandlerResult.error(((I18NFailure) ex).getErrorKey(), ex);
+			}
+			return HandlerResult.error(ResKey.text(ex.getMessage()), ex);
 		}
 	}
 

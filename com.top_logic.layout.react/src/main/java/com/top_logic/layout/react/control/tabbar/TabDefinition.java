@@ -7,7 +7,7 @@ package com.top_logic.layout.react.control.tabbar;
 
 import java.util.function.Supplier;
 
-import com.top_logic.layout.react.ReactControl;
+import com.top_logic.layout.react.control.ReactControl;
 
 /**
  * Definition of a single tab in a {@link ReactTabBarControl}.

@@ -8,7 +8,7 @@ package com.top_logic.layout.react.control.sidebar;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import com.top_logic.layout.react.ReactControl;
+import com.top_logic.layout.react.control.ReactControl;
 
 /**
  * A sidebar item that switches the content area to a lazily created {@link ReactControl}.

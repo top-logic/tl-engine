@@ -50,7 +50,7 @@ public interface UIElement {
 	 * @param context
 	 *        The view context providing session-scoped infrastructure.
 	 * @return A control for the current session. Typically a
-	 *         {@link com.top_logic.layout.react.ReactControl}.
+	 *         {@link com.top_logic.layout.react.control.ReactControl}.
 	 */
 	ViewControl createControl(ViewContext context);
 }

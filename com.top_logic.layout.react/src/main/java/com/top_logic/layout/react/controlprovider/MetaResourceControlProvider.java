@@ -6,7 +6,7 @@
 package com.top_logic.layout.react.controlprovider;
 
 import com.top_logic.layout.provider.MetaResourceProvider;
-import com.top_logic.layout.react.ReactControl;
+import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.table.ReactResourceCellControl;
 
 /**

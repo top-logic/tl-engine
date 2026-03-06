@@ -17,6 +17,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.layout.react.control.SSEUpdateQueue;
 
 /**
  * Servlet that establishes an SSE (Server-Sent Events) connection for delivering React state

@@ -24,6 +24,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DynamicText;
+import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.protocol.CssClassUpdate;
 import com.top_logic.layout.react.protocol.FunctionCall;
 import com.top_logic.layout.react.protocol.Property;

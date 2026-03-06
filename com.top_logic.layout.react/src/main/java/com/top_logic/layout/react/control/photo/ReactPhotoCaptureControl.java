@@ -15,8 +15,8 @@ import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.io.binary.BinaryDataValue;
 import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.react.ReactControl;
 import com.top_logic.layout.react.UploadHandler;
+import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**

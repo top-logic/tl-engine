@@ -20,9 +20,9 @@ import com.top_logic.layout.form.ValueListener;
 import com.top_logic.layout.form.model.FormFieldInternals;
 import com.top_logic.layout.form.model.VisibilityModel;
 import com.top_logic.layout.react.I18NConstants;
-import com.top_logic.layout.react.ReactCommand;
-import com.top_logic.layout.react.ReactControl;
 import com.top_logic.layout.react.ViewDisplayContext;
+import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.mig.html.layout.VisibilityListener;
 import com.top_logic.util.error.TopLogicException;
 

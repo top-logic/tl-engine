@@ -3,12 +3,12 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.layout.react.control;
+package com.top_logic.layout.react.control.common;
 
-import com.top_logic.layout.react.ReactCommand;
-import com.top_logic.layout.react.ReactControl;
 import com.top_logic.layout.react.ViewCommandAction;
 import com.top_logic.layout.react.ViewDisplayContext;
+import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**

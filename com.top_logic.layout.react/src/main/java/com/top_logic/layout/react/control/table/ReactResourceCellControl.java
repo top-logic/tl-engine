@@ -8,9 +8,9 @@ package com.top_logic.layout.react.control.table;
 import com.top_logic.layout.Flavor;
 import com.top_logic.layout.ResourceProvider;
 import com.top_logic.layout.basic.ThemeImage;
-import com.top_logic.layout.react.ReactCommand;
-import com.top_logic.layout.react.ReactControl;
 import com.top_logic.layout.react.ViewDisplayContext;
+import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**

@@ -8,8 +8,8 @@ package com.top_logic.layout.react.control.overlay;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.top_logic.layout.react.ReactCommand;
-import com.top_logic.layout.react.ReactControl;
+import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactControl;
 
 /**
  * Modal dialog overlay for confirmations and focused tasks.

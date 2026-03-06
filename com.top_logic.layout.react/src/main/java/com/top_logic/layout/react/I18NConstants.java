@@ -12,7 +12,6 @@ import com.top_logic.layout.I18NConstantsBase;
 /**
  * I18N constants for the React integration module.
  */
-@SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
 	/**

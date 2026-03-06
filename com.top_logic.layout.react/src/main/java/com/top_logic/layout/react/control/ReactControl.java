@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.layout.react;
+package com.top_logic.layout.react.control;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -15,6 +15,8 @@ import java.util.function.Consumer;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.react.ViewControl;
+import com.top_logic.layout.react.ViewDisplayContext;
 import com.top_logic.layout.react.protocol.PatchEvent;
 import com.top_logic.layout.react.protocol.StateEvent;
 import com.top_logic.mig.html.HTMLConstants;

@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.react;
 
+import com.top_logic.layout.react.control.SSEUpdateQueue;
+
 /**
  * Simple implementation of {@link ViewDisplayContext} for the view system.
  */

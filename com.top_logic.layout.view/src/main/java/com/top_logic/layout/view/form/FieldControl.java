@@ -7,7 +7,7 @@ package com.top_logic.layout.view.form;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.provider.MetaLabelProvider;
-import com.top_logic.layout.react.ReactControl;
+import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;

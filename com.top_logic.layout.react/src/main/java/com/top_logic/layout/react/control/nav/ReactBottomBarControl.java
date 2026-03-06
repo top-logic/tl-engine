@@ -11,8 +11,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import com.top_logic.layout.react.ReactCommand;
-import com.top_logic.layout.react.ReactControl;
+import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactControl;
 
 /**
  * Bottom navigation bar for mobile screens.

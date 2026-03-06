@@ -8,7 +8,7 @@ package com.top_logic.layout.react.control.layout;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.top_logic.layout.react.ReactControl;
+import com.top_logic.layout.react.control.ReactControl;
 
 /**
  * A {@link ReactControl} that renders a CSS Grid container via the {@code TLGrid} React component.

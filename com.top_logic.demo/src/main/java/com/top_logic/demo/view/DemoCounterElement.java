@@ -20,7 +20,7 @@ import com.top_logic.layout.view.ViewContext;
  *
  * <p>
  * Demonstrates how application-specific elements integrate with the view system by wrapping an
- * existing {@link com.top_logic.layout.react.ReactControl}.
+ * existing {@link com.top_logic.layout.react.control.ReactControl}.
  * </p>
  */
 public class DemoCounterElement implements UIElement {

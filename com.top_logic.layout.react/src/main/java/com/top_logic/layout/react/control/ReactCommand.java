@@ -3,12 +3,14 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.layout.react;
+package com.top_logic.layout.react.control;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+
+import com.top_logic.layout.react.ViewDisplayContext;
 
 /**
  * Marks a method on a {@link ReactControl} subclass as a command handler for a {@code React}

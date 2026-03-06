@@ -12,9 +12,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.top_logic.layout.react.ReactCommand;
-import com.top_logic.layout.react.ReactControl;
 import com.top_logic.layout.react.ViewDisplayContext;
+import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactControl;
 
 import de.haumacher.msgbuf.json.JsonWriter;
 

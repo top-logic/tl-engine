@@ -6,7 +6,7 @@
 package com.top_logic.demo.react;
 
 import com.top_logic.layout.form.FormField;
-import com.top_logic.layout.react.ReactControl;
+import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.toggle.ReactToggleButtonControl;
 
 /**

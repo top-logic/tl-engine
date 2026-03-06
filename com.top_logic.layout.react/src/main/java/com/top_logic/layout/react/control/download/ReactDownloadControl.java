@@ -9,8 +9,8 @@ import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataValue;
 import com.top_logic.basic.listener.Listener;
 import com.top_logic.layout.react.DataProvider;
-import com.top_logic.layout.react.ReactCommand;
-import com.top_logic.layout.react.ReactControl;
+import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactControl;
 
 /**
  * A React control that provides a download button for binary data stored on the server.

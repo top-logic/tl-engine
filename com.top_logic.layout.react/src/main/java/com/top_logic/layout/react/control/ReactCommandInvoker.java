@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.layout.react;
+package com.top_logic.layout.react.control;
 
 import java.lang.invoke.MethodHandle;
 import java.util.Map;
@@ -11,6 +11,7 @@ import java.util.Map;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.exception.I18NFailure;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.react.ViewDisplayContext;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**

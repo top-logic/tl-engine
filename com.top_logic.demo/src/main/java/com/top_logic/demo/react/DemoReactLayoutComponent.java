@@ -18,7 +18,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
-import com.top_logic.layout.react.ReactControl;
+import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.layout.ReactDeckPaneControl;
 import com.top_logic.layout.react.control.layout.ReactMaximizeRootControl;
 import com.top_logic.layout.react.control.layout.ReactPanelControl;

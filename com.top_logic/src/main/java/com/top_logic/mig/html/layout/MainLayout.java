@@ -17,6 +17,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -140,6 +141,10 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 	 * Configuration for {@link MainLayout}. System identifiers for various document type definitions.
 	 */
 	public interface GlobalConfig extends ConfigurationItem {
+
+		/** Configuration name for {@link #getLoginHooks()}. */
+		String LOGIN_HOOKS = "login-hooks";
+
 		/**
 		 * See {@link GlobalConfig#getDocType}.
 		 */
@@ -161,6 +166,12 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 		@Name(EVENT_FORWARDER)
 		@ItemDefault(GlobalModelEventForwarder.class)
 		PolymorphicConfiguration<? extends ModelEventForwarder> getEventForwarder();
+
+		/**
+		 * The commands to execute when a user logs in.
+		 */
+		@Name(LOGIN_HOOKS)
+		List<? extends PolymorphicConfiguration<? extends LoginHook>> getLoginHooks();
 	}
 
 	/**
@@ -398,6 +409,8 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 
 	private final boolean _closeDialogOnBackgroundClick;
 
+	private List<LoginHook> _loginHooks;
+
     /** Create a MainLayout when importing from a XML-File 
      * Attributes supported here are:<ul>
      *   <li>framed               , default true </li>
@@ -414,7 +427,9 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
         icon                   = StringServices.nonEmpty(config.getIcon());
         headerIncludeFilePath  = StringServices.nonEmpty(config.getHeaderIncludeFilePath());
         postProcessorClassName = StringServices.nonEmpty(config.getPostProcessorClassName());
-		_modelEventForwarder = context.getInstance(getGlobalConfig().getEventForwarder());
+		GlobalConfig globalConfig = getGlobalConfig();
+		_modelEventForwarder = context.getInstance(globalConfig.getEventForwarder());
+		_loginHooks = TypedConfiguration.getInstanceList(context, globalConfig.getLoginHooks());
 		_closeDialogOnBackgroundClick = config.closeDialogOnBackgroundClick();
     }
     
@@ -1077,6 +1092,30 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
         this.globallyValidateModel(aContext);
     }
 
+	/**
+	 * Processes the configured {@link LoginHook}s.
+	 * 
+	 * @see GlobalConfig#getLoginHooks()
+	 */
+	protected void processLoginHooks(DisplayContext context) {
+		if (_loginHooks.isEmpty()) {
+			return;
+		}
+		Runnable callback = new Runnable() {
+
+			private final Iterator<LoginHook> _hooks = _loginHooks.iterator();
+
+			@Override
+			public void run() {
+				if (_hooks.hasNext()) {
+					_hooks.next().handleLogin(context, this);
+				}
+
+			}
+		};
+		callback.run();
+	}
+
     /**
 	 * Check, whether global state changes are allowed in this session's layout.
 	 * 
@@ -1375,6 +1414,7 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 
 				/* Initialize the models. */
 				ml.initialValidateModel(context);
+				ml.processLoginHooks(context);
 			}
 		} finally {
 			layoutContext.enableUpdate(before);

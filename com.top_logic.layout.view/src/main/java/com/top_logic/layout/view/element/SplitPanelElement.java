@@ -23,8 +23,8 @@ import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 import com.top_logic.layout.DisplayUnit;
-import com.top_logic.layout.react.ViewControl;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.layout.ReactSplitPanelControl;
 import com.top_logic.layout.react.control.layout.ReactSplitPanelControl.ChildConstraint;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
@@ -155,7 +155,7 @@ public class SplitPanelElement implements UIElement {
 	}
 
 	@Override
-	public ViewControl createControl(ViewContext context) {
+	public IReactControl createControl(ViewContext context) {
 		String key = resolveKey(context, "split-panel");
 
 		Map<Integer, Float> persistedSizes = loadPaneSizes(key);

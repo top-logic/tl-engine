@@ -18,10 +18,10 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.gui.JSFileCompiler;
 import com.top_logic.gui.ThemeFactory;
-import com.top_logic.layout.react.DefaultViewDisplayContext;
-import com.top_logic.layout.react.ViewControl;
-import com.top_logic.layout.react.ViewDisplayContext;
+import com.top_logic.layout.react.DefaultReactDisplayContext;
+import com.top_logic.layout.react.ReactDisplayContext;
 import com.top_logic.layout.react.control.SSEUpdateQueue;
+import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.util.TopLogicServlet;
@@ -32,7 +32,7 @@ import com.top_logic.util.TopLogicServlet;
  * <p>
  * Loads a {@code .view.xml} file via {@link ViewLoader}, creates per-session control trees via
  * {@link UIElement#createControl(ViewContext)}, and renders the initial HTML page using
- * {@link TagWriter} and {@link ViewControl#write(ViewDisplayContext, TagWriter)}.
+ * {@link TagWriter} and {@link IReactControl#write(ReactDisplayContext, TagWriter)}.
  * </p>
  *
  * <p>
@@ -83,11 +83,11 @@ public class ViewServlet extends TopLogicServlet {
 			return;
 		}
 
-		ViewDisplayContext displayContext = new DefaultViewDisplayContext(
+		ReactDisplayContext displayContext = new DefaultReactDisplayContext(
 			request.getContextPath(), windowName, SSEUpdateQueue.forSession(session));
 		ViewContext viewContext = new ViewContext(displayContext);
 
-		ViewControl rootControl = view.createControl(viewContext);
+		IReactControl rootControl = view.createControl(viewContext);
 
 		renderPage(request, response, rootControl, displayContext);
 	}
@@ -206,10 +206,10 @@ public class ViewServlet extends TopLogicServlet {
 	}
 
 	/**
-	 * Renders the HTML page with the root control using the {@link ViewControl#write} path.
+	 * Renders the HTML page with the root control using the {@link IReactControl#write} path.
 	 */
 	private void renderPage(HttpServletRequest request, HttpServletResponse response,
-			ViewControl rootControl, ViewDisplayContext viewContext) throws IOException {
+			IReactControl rootControl, ReactDisplayContext viewContext) throws IOException {
 		response.setContentType("text/html");
 		response.setCharacterEncoding("UTF-8");
 

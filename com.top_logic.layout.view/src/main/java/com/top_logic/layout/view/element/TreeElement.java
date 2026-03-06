@@ -24,7 +24,7 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
-import com.top_logic.layout.react.ViewControl;
+import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.tree.ReactTreeControl;
 import com.top_logic.layout.react.controlprovider.MetaResourceControlProvider;
 import com.top_logic.layout.react.controlprovider.ReactControlProvider;
@@ -243,7 +243,7 @@ public class TreeElement implements UIElement {
 	}
 
 	@Override
-	public ViewControl createControl(ViewContext context) {
+	public IReactControl createControl(ViewContext context) {
 		// 1. Resolve input channels.
 		List<ChannelRef> inputRefs = _config.getInputs();
 		List<ViewChannel> inputChannels = new ArrayList<>(inputRefs.size());

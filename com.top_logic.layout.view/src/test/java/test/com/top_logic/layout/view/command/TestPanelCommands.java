@@ -25,7 +25,7 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
 import com.top_logic.basic.reflect.TypeIndex;
-import com.top_logic.layout.react.ViewDisplayContext;
+import com.top_logic.layout.react.ReactDisplayContext;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.command.ViewCommand;
@@ -61,7 +61,7 @@ public class TestPanelCommands extends TestCase {
 		}
 
 		@Override
-		public HandlerResult execute(ViewDisplayContext context, Object input) {
+		public HandlerResult execute(ReactDisplayContext context, Object input) {
 			return HandlerResult.DEFAULT_RESULT;
 		}
 	}

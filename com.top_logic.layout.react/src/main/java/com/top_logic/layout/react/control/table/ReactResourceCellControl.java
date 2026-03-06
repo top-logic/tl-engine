@@ -8,7 +8,7 @@ package com.top_logic.layout.react.control.table;
 import com.top_logic.layout.Flavor;
 import com.top_logic.layout.ResourceProvider;
 import com.top_logic.layout.basic.ThemeImage;
-import com.top_logic.layout.react.ViewDisplayContext;
+import com.top_logic.layout.react.ReactDisplayContext;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -43,7 +43,7 @@ public class ReactResourceCellControl extends ReactControl {
 		 *        The business object to navigate to.
 		 * @return The handler result.
 		 */
-		HandlerResult handleGoto(ViewDisplayContext context, Object target);
+		HandlerResult handleGoto(ReactDisplayContext context, Object target);
 	}
 
 	// -- State keys --
@@ -181,7 +181,7 @@ public class ReactResourceCellControl extends ReactControl {
 	 * Dispatches the goto click to the configured {@link GotoListener}.
 	 */
 	@ReactCommand("goto")
-	HandlerResult handleGoto(ViewDisplayContext context) {
+	HandlerResult handleGoto(ReactDisplayContext context) {
 		Object target = _rowObject;
 		GotoListener listener = _gotoListener;
 		if (target == null || listener == null) {

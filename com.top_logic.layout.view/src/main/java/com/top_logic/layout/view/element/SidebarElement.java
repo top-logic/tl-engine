@@ -20,8 +20,8 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
-import com.top_logic.layout.react.ViewControl;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.react.control.sidebar.NavigationItem;
 import com.top_logic.layout.react.control.sidebar.ReactSidebarControl;
@@ -222,7 +222,7 @@ public class SidebarElement implements UIElement {
 	}
 
 	@Override
-	public ViewControl createControl(ViewContext context) {
+	public IReactControl createControl(ViewContext context) {
 		String key = resolveKey(context, "sidebar");
 
 		boolean collapsed = PersonalizingExpandable.loadCollapsed(key + ".collapsed", _collapsed);

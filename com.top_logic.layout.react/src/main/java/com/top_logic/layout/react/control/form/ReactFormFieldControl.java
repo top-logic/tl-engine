@@ -20,7 +20,7 @@ import com.top_logic.layout.form.ValueListener;
 import com.top_logic.layout.form.model.FormFieldInternals;
 import com.top_logic.layout.form.model.VisibilityModel;
 import com.top_logic.layout.react.I18NConstants;
-import com.top_logic.layout.react.ViewDisplayContext;
+import com.top_logic.layout.react.ReactDisplayContext;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.mig.html.layout.VisibilityListener;
@@ -153,12 +153,12 @@ public class ReactFormFieldControl extends ReactControl
 	}
 
 	@Override
-	protected void onBeforeWrite(ViewDisplayContext context) {
+	protected void onBeforeWrite(ReactDisplayContext context) {
 		registerFieldListeners();
 	}
 
 	@Override
-	protected void writeAsChild(JsonWriter writer, ViewDisplayContext viewContext)
+	protected void writeAsChild(JsonWriter writer, ReactDisplayContext viewContext)
 			throws IOException {
 		registerFieldListeners();
 		super.writeAsChild(writer, viewContext);

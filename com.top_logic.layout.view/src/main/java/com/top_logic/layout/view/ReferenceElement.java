@@ -15,7 +15,7 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
-import com.top_logic.layout.react.ViewControl;
+import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.view.channel.ChannelBindingConfig;
 import com.top_logic.layout.view.channel.ViewChannel;
 
@@ -96,7 +96,7 @@ public class ReferenceElement implements UIElement {
 	}
 
 	@Override
-	public ViewControl createControl(ViewContext parentContext) {
+	public IReactControl createControl(ViewContext parentContext) {
 		String fullPath = ViewLoader.VIEW_BASE_PATH + _viewPath;
 
 		ViewElement referencedView;

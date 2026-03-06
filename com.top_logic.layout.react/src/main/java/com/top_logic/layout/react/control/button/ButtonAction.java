@@ -3,8 +3,9 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.layout.react;
+package com.top_logic.layout.react.control.button;
 
+import com.top_logic.layout.react.ReactDisplayContext;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -12,12 +13,12 @@ import com.top_logic.tool.boundsec.HandlerResult;
  *
  * <p>
  * Replaces the old-world {@link com.top_logic.layout.basic.Command} interface for view-system
- * buttons. Receives a {@link ViewDisplayContext} instead of a
+ * buttons. Receives a {@link ReactDisplayContext} instead of a
  * {@link com.top_logic.layout.DisplayContext}.
  * </p>
  */
 @FunctionalInterface
-public interface ViewCommandAction {
+public interface ButtonAction {
 
 	/**
 	 * Executes this action.
@@ -26,5 +27,5 @@ public interface ViewCommandAction {
 	 *        The view display context.
 	 * @return The result of the command execution.
 	 */
-	HandlerResult execute(ViewDisplayContext context);
+	HandlerResult execute(ReactDisplayContext context);
 }

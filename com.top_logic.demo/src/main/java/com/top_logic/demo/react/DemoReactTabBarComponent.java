@@ -22,7 +22,7 @@ import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.react.control.ReactControl;
-import com.top_logic.layout.react.control.common.ReactButtonControl;
+import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.common.ReactFieldListControl;
 import com.top_logic.layout.react.control.tabbar.ReactTabBarControl;
 import com.top_logic.layout.react.control.tabbar.TabDefinition;

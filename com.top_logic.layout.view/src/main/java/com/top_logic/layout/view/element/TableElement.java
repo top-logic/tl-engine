@@ -24,7 +24,7 @@ import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.provider.MetaLabelProvider;
-import com.top_logic.layout.react.ViewControl;
+import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.table.ReactCellControlProvider;
 import com.top_logic.layout.react.control.table.ReactTableControl;
 import com.top_logic.layout.react.control.table.ReactTextCellControl;
@@ -175,7 +175,7 @@ public class TableElement implements UIElement {
 	}
 
 	@Override
-	public ViewControl createControl(ViewContext context) {
+	public IReactControl createControl(ViewContext context) {
 		// 1. Resolve input channels.
 		List<ChannelRef> inputRefs = _config.getInputs();
 		List<ViewChannel> inputChannels = new ArrayList<>(inputRefs.size());

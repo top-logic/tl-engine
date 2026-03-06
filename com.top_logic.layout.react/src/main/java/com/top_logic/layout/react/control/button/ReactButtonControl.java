@@ -3,10 +3,9 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.layout.react.control.common;
+package com.top_logic.layout.react.control.button;
 
-import com.top_logic.layout.react.ViewCommandAction;
-import com.top_logic.layout.react.ViewDisplayContext;
+import com.top_logic.layout.react.ReactDisplayContext;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -16,7 +15,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  *
  * <p>
  * When the button is clicked on the client, the {@code "click"} command is dispatched to the
- * server, which invokes the {@link ViewCommandAction} provided at construction time.
+ * server, which invokes the {@link ButtonAction} provided at construction time.
  * </p>
  */
 public class ReactButtonControl extends ReactControl {
@@ -27,7 +26,7 @@ public class ReactButtonControl extends ReactControl {
 	/** State key for the disabled flag. */
 	private static final String DISABLED = "disabled";
 
-	private final ViewCommandAction _action;
+	private final ButtonAction _action;
 
 	/**
 	 * Creates a new {@link ReactButtonControl}.
@@ -35,9 +34,9 @@ public class ReactButtonControl extends ReactControl {
 	 * @param label
 	 *        The button label.
 	 * @param action
-	 *        The {@link ViewCommandAction} to execute when the button is clicked.
+	 *        The {@link ButtonAction} to execute when the button is clicked.
 	 */
-	public ReactButtonControl(String label, ViewCommandAction action) {
+	public ReactButtonControl(String label, ButtonAction action) {
 		super(null, "TLButton");
 		_action = action;
 		putState(LABEL, label);
@@ -67,7 +66,7 @@ public class ReactButtonControl extends ReactControl {
 	 * Handles the click command from the React client.
 	 */
 	@ReactCommand("click")
-	HandlerResult handleClick(ViewDisplayContext context) {
+	HandlerResult handleClick(ReactDisplayContext context) {
 		return _action.execute(context);
 	}
 

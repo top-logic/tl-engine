@@ -10,13 +10,13 @@ import com.top_logic.layout.FrameScope;
 import com.top_logic.layout.react.control.SSEUpdateQueue;
 
 /**
- * Adapts an old-world {@link DisplayContext} to the lean {@link ViewDisplayContext} contract.
+ * Adapts an old-world {@link DisplayContext} to the lean {@link ReactDisplayContext} contract.
  *
  * <p>
  * Extracts the values that view-system controls need from the richer {@link DisplayContext}.
  * </p>
  */
-class DisplayContextAdapter implements ViewDisplayContext {
+class DisplayContextAdapter implements ReactDisplayContext {
 
 	private final DisplayContext _context;
 

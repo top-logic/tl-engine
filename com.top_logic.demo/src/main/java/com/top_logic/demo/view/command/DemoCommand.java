@@ -10,7 +10,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
-import com.top_logic.layout.react.ViewDisplayContext;
+import com.top_logic.layout.react.ReactDisplayContext;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.tool.boundsec.HandlerResult;
 
@@ -39,7 +39,7 @@ public class DemoCommand implements ViewCommand {
 	}
 
 	@Override
-	public HandlerResult execute(ViewDisplayContext context, Object input) {
+	public HandlerResult execute(ReactDisplayContext context, Object input) {
 		Logger.info("Demo command executed with input: " + input, DemoCommand.class);
 		return HandlerResult.DEFAULT_RESULT;
 	}

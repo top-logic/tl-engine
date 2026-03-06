@@ -13,7 +13,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
-import com.top_logic.layout.react.ViewControl;
+import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.nav.ReactBottomBarControl;
 import com.top_logic.layout.react.control.nav.ReactBottomBarControl.BottomBarEntry;
 import com.top_logic.layout.view.UIElement;
@@ -109,7 +109,7 @@ public class BottomBarElement implements UIElement {
 	}
 
 	@Override
-	public ViewControl createControl(ViewContext context) {
+	public IReactControl createControl(ViewContext context) {
 		String activeItem = _activeItem != null && !_activeItem.isEmpty()
 			? _activeItem
 			: (!_items.isEmpty() ? _items.get(0).id() : "");

@@ -16,8 +16,8 @@ import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
-import com.top_logic.layout.react.ViewControl;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.view.channel.ChannelConfig;
 import com.top_logic.layout.view.channel.ViewChannel;
@@ -94,7 +94,7 @@ public class ViewElement implements UIElement {
 	}
 
 	@Override
-	public ViewControl createControl(ViewContext context) {
+	public IReactControl createControl(ViewContext context) {
 		// Phase 2a: Create and register channels.
 		for (ChannelConfig channelConfig : _channelConfigs) {
 			String name = channelConfig.getName();

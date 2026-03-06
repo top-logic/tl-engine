@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.top_logic.layout.react.ViewDisplayContext;
+import com.top_logic.layout.react.ReactDisplayContext;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.controlprovider.ReactControlProvider;
@@ -225,7 +225,7 @@ public class ReactTreeControl extends ReactControl {
 	// -- Rendering --
 
 	@Override
-	protected void onBeforeWrite(ViewDisplayContext context) {
+	protected void onBeforeWrite(ReactDisplayContext context) {
 		if (_nodeControlCache.isEmpty()) {
 			// After a detach/reattach cycle, _nodeControlCache was cleared by cleanupNodeControls()
 			// but _reactState still has stale node references. Rebuild the cache and state from the

@@ -14,8 +14,8 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
-import com.top_logic.layout.react.ViewControl;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.layout.ReactGridControl;
 import com.top_logic.layout.view.ContainerElement;
 import com.top_logic.layout.view.UIElement;
@@ -76,7 +76,7 @@ public class GridElement extends ContainerElement {
 	}
 
 	@Override
-	public ViewControl createControl(ViewContext context) {
+	public IReactControl createControl(ViewContext context) {
 		List<ReactControl> children = createChildControls(context).stream()
 			.map(c -> (ReactControl) c)
 			.collect(Collectors.toList());

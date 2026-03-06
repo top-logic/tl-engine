@@ -24,7 +24,7 @@ import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
-import com.top_logic.layout.react.control.common.ReactButtonControl;
+import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.form.ReactCheckboxControl;
 import com.top_logic.layout.react.control.form.ReactDatePickerControl;
 import com.top_logic.layout.react.control.form.ReactNumberInputControl;

@@ -20,9 +20,9 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
-import com.top_logic.layout.react.ViewControl;
 import com.top_logic.layout.react.control.ReactControl;
-import com.top_logic.layout.react.control.common.ReactButtonControl;
+import com.top_logic.layout.react.control.IReactControl;
+import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.layout.ReactPanelControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.view.ContainerElement;
@@ -116,7 +116,7 @@ public class PanelElement extends ContainerElement {
 	}
 
 	@Override
-	public ViewControl createControl(ViewContext context) {
+	public IReactControl createControl(ViewContext context) {
 		// Phase 1: Build command models.
 		List<ViewCommandModel> commandModels = new ArrayList<>();
 		for (int i = 0; i < _commands.size() && i < _commandConfigs.size(); i++) {
@@ -144,7 +144,7 @@ public class PanelElement extends ContainerElement {
 		ViewContext derivedContext = context.withCommandScope(scope);
 
 		// Phase 3: Create child controls using derived context.
-		List<ViewControl> childControls = createChildControls(derivedContext);
+		List<IReactControl> childControls = createChildControls(derivedContext);
 
 		ReactControl content;
 		if (childControls.size() == 1) {

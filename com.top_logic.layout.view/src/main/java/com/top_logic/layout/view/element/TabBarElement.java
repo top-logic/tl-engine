@@ -16,8 +16,8 @@ import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
-import com.top_logic.layout.react.ViewControl;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.react.control.tabbar.ReactTabBarControl;
 import com.top_logic.layout.react.control.tabbar.TabDefinition;
@@ -119,7 +119,7 @@ public class TabBarElement implements UIElement {
 	}
 
 	@Override
-	public ViewControl createControl(ViewContext context) {
+	public IReactControl createControl(ViewContext context) {
 		List<TabDefinition> tabDefs = new ArrayList<>();
 		for (TabEntry entry : _tabs) {
 			tabDefs.add(new TabDefinition(entry._id, entry._label, () -> createContent(entry._children, context)));

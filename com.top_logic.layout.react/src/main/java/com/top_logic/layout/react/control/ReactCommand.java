@@ -10,7 +10,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import com.top_logic.layout.react.ViewDisplayContext;
+import com.top_logic.layout.react.ReactDisplayContext;
 
 /**
  * Marks a method on a {@link ReactControl} subclass as a command handler for a {@code React}
@@ -20,7 +20,7 @@ import com.top_logic.layout.react.ViewDisplayContext;
  * Annotated methods may declare any subset of these parameters, in the order shown:
  * </p>
  * <ol>
- * <li>{@link ViewDisplayContext} - the control's stored view context</li>
+ * <li>{@link ReactDisplayContext} - the control's stored view context</li>
  * <li>{@code Map<String, Object>} - the raw arguments from the client</li>
  * </ol>
  *

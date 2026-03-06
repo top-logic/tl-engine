@@ -19,8 +19,8 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
-import com.top_logic.layout.react.ViewControl;
-import com.top_logic.layout.react.control.common.ReactButtonControl;
+import com.top_logic.layout.react.control.IReactControl;
+import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
@@ -109,7 +109,7 @@ public class ButtonElement implements UIElement {
 	}
 
 	@Override
-	public ViewControl createControl(ViewContext context) {
+	public IReactControl createControl(ViewContext context) {
 		if (_command == null || _commandConfig == null) {
 			// No command configured - render a static button.
 			return new ReactButtonControl("", ctx -> HandlerResult.DEFAULT_RESULT);

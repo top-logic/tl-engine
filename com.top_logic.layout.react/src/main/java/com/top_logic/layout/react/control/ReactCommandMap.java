@@ -11,7 +11,7 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.top_logic.layout.react.ViewDisplayContext;
+import com.top_logic.layout.react.ReactDisplayContext;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -71,7 +71,7 @@ class ReactCommandMap {
 				boolean needsContext = false;
 				boolean needsArgs = false;
 				for (Class<?> paramType : method.getParameterTypes()) {
-					if (ViewDisplayContext.class.isAssignableFrom(paramType)) {
+					if (ReactDisplayContext.class.isAssignableFrom(paramType)) {
 						needsContext = true;
 					} else if (Map.class.isAssignableFrom(paramType)) {
 						needsArgs = true;
@@ -111,7 +111,7 @@ class ReactCommandMap {
 		boolean contextSeen = false;
 		boolean argsSeen = false;
 		for (Class<?> paramType : paramTypes) {
-			if (ViewDisplayContext.class.isAssignableFrom(paramType)) {
+			if (ReactDisplayContext.class.isAssignableFrom(paramType)) {
 				if (contextSeen) {
 					throw new IllegalStateException(
 						"@ReactCommand method " + method.getName()

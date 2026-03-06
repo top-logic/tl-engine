@@ -16,8 +16,8 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.layout.react.ViewControl;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.view.ContainerElement;
 import com.top_logic.layout.view.I18NConstants;
 import com.top_logic.layout.view.UIElement;
@@ -107,7 +107,7 @@ public class FormElement extends ContainerElement {
 	}
 
 	@Override
-	public ViewControl createControl(ViewContext context) {
+	public IReactControl createControl(ViewContext context) {
 		// 1. Resolve input channel.
 		ViewChannel inputChannel = context.resolveChannel(_config.getInput());
 
@@ -143,7 +143,7 @@ public class FormElement extends ContainerElement {
 		formContext.setFormControl(formControl);
 
 		// 6. Create child controls in the form-scoped context.
-		List<ViewControl> childControls = createChildControls(formContext);
+		List<IReactControl> childControls = createChildControls(formContext);
 
 		// 7. Convert to ReactControl list and put as state.
 		List<ReactControl> reactChildren = childControls.stream()

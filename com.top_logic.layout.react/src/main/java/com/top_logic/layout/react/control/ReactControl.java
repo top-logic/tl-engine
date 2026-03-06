@@ -15,8 +15,7 @@ import java.util.function.Consumer;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.react.ViewControl;
-import com.top_logic.layout.react.ViewDisplayContext;
+import com.top_logic.layout.react.ReactDisplayContext;
 import com.top_logic.layout.react.protocol.PatchEvent;
 import com.top_logic.layout.react.protocol.StateEvent;
 import com.top_logic.mig.html.HTMLConstants;
@@ -42,12 +41,12 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * <p>
  * Child {@link ReactControl}s embedded in the state are automatically initialized (ID assigned, SSE
  * registered) when they are serialized during the initial render. This is done by delegating to
- * {@link #writeAsChild(JsonWriter, ViewDisplayContext)} from {@link #writeJsonValue}. Each
+ * {@link #writeAsChild(JsonWriter, ReactDisplayContext)} from {@link #writeJsonValue}. Each
  * control thus manages its own lifecycle, analogous to {@code child.write(context, out)} in
  * traditional controls.
  * </p>
  */
-public class ReactControl implements HTMLFragment, ViewControl, ReactCommandTarget {
+public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTarget {
 
 	/** State key for whether the control is hidden on the client. */
 	private static final String HIDDEN = "hidden";
@@ -64,7 +63,7 @@ public class ReactControl implements HTMLFragment, ViewControl, ReactCommandTarg
 
 	private SSEUpdateQueue _sseQueue;
 
-	private ViewDisplayContext _viewContext;
+	private ReactDisplayContext _viewContext;
 
 	/**
 	 * Creates a new {@link ReactControl}.
@@ -110,9 +109,9 @@ public class ReactControl implements HTMLFragment, ViewControl, ReactCommandTarg
 	}
 
 	/**
-	 * The current {@link ViewDisplayContext}, or {@code null} if not yet rendered.
+	 * The current {@link ReactDisplayContext}, or {@code null} if not yet rendered.
 	 */
-	protected ViewDisplayContext getViewContext() {
+	protected ReactDisplayContext getViewContext() {
 		return _viewContext;
 	}
 
@@ -148,11 +147,11 @@ public class ReactControl implements HTMLFragment, ViewControl, ReactCommandTarg
 
 	@Override
 	public void write(DisplayContext context, TagWriter out) throws IOException {
-		write(ViewDisplayContext.fromDisplayContext(context), out);
+		write(ReactDisplayContext.fromDisplayContext(context), out);
 	}
 
 	@Override
-	public void write(ViewDisplayContext context, TagWriter out) throws IOException {
+	public void write(ReactDisplayContext context, TagWriter out) throws IOException {
 		_viewContext = context;
 		_id = context.allocateId();
 		SSEUpdateQueue queue = context.getSSEQueue();
@@ -182,7 +181,7 @@ public class ReactControl implements HTMLFragment, ViewControl, ReactCommandTarg
 	 * registering model listeners or rebuilding state caches.
 	 * </p>
 	 */
-	protected void onBeforeWrite(ViewDisplayContext context) {
+	protected void onBeforeWrite(ReactDisplayContext context) {
 		// Default: no-op.
 	}
 
@@ -303,7 +302,7 @@ public class ReactControl implements HTMLFragment, ViewControl, ReactCommandTarg
 	 *
 	 * <p>
 	 * Any child {@link ReactControl}s in the patch are automatically initialized (ID assigned, SSE
-	 * registered) during serialization if a {@link ViewDisplayContext} is available on this control.
+	 * registered) during serialization if a {@link ReactDisplayContext} is available on this control.
 	 * </p>
 	 *
 	 * @param queue
@@ -336,7 +335,7 @@ public class ReactControl implements HTMLFragment, ViewControl, ReactCommandTarg
 	 *        The view display context for ID allocation and SSE registration, or {@code null} if
 	 *        controls are already initialized.
 	 */
-	protected void writeAsChild(JsonWriter writer, ViewDisplayContext viewContext)
+	protected void writeAsChild(JsonWriter writer, ReactDisplayContext viewContext)
 			throws IOException {
 		if (viewContext != null && _id == null) {
 			_viewContext = viewContext;
@@ -433,7 +432,7 @@ public class ReactControl implements HTMLFragment, ViewControl, ReactCommandTarg
 	 * @param viewContext
 	 *        The view display context for ID allocation and SSE registration, or {@code null}.
 	 */
-	public static String toJsonString(Map<String, Object> map, ViewDisplayContext viewContext) {
+	public static String toJsonString(Map<String, Object> map, ReactDisplayContext viewContext) {
 		try {
 			StringW sw = new StringW();
 			try (JsonWriter writer = new JsonWriter(sw)) {
@@ -450,12 +449,12 @@ public class ReactControl implements HTMLFragment, ViewControl, ReactCommandTarg
 	 * initialization.
 	 */
 	public static void writeJsonLiteral(TagWriter out, Map<String, Object> map,
-			ViewDisplayContext viewContext) throws IOException {
+			ReactDisplayContext viewContext) throws IOException {
 		out.append(toJsonString(map, viewContext));
 	}
 
 	static void writeJsonMap(JsonWriter writer, Map<String, Object> map,
-			ViewDisplayContext viewContext) throws IOException {
+			ReactDisplayContext viewContext) throws IOException {
 		writer.beginObject();
 		for (Map.Entry<String, Object> entry : map.entrySet()) {
 			writer.name(entry.getKey());
@@ -466,7 +465,7 @@ public class ReactControl implements HTMLFragment, ViewControl, ReactCommandTarg
 
 	@SuppressWarnings("unchecked")
 	static void writeJsonValue(JsonWriter writer, Object value,
-			ViewDisplayContext viewContext) throws IOException {
+			ReactDisplayContext viewContext) throws IOException {
 		if (value == null) {
 			writer.nullValue();
 		} else if (value instanceof String) {
@@ -497,7 +496,7 @@ public class ReactControl implements HTMLFragment, ViewControl, ReactCommandTarg
 	 * Serializes a map to a JSON string.
 	 */
 	public static String toJsonString(Map<String, Object> map) {
-		return toJsonString(map, (ViewDisplayContext) null);
+		return toJsonString(map, (ReactDisplayContext) null);
 	}
 
 	/**

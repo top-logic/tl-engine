@@ -8,9 +8,9 @@ package com.top_logic.layout.react;
 import com.top_logic.layout.react.control.SSEUpdateQueue;
 
 /**
- * Simple implementation of {@link ViewDisplayContext} for the view system.
+ * Simple implementation of {@link ReactDisplayContext} for the view system.
  */
-public class DefaultViewDisplayContext implements ViewDisplayContext {
+public class DefaultReactDisplayContext implements ReactDisplayContext {
 
 	private final String _contextPath;
 
@@ -19,7 +19,7 @@ public class DefaultViewDisplayContext implements ViewDisplayContext {
 	private final SSEUpdateQueue _sseQueue;
 
 	/**
-	 * Creates a {@link DefaultViewDisplayContext}.
+	 * Creates a {@link DefaultReactDisplayContext}.
 	 *
 	 * @param contextPath
 	 *        The webapp context path.
@@ -28,7 +28,7 @@ public class DefaultViewDisplayContext implements ViewDisplayContext {
 	 * @param sseQueue
 	 *        The SSE queue for the current session.
 	 */
-	public DefaultViewDisplayContext(String contextPath, String windowName, SSEUpdateQueue sseQueue) {
+	public DefaultReactDisplayContext(String contextPath, String windowName, SSEUpdateQueue sseQueue) {
 		_contextPath = contextPath;
 		_windowName = windowName;
 		_sseQueue = sseQueue;

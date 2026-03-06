@@ -13,7 +13,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.layout.react.ViewControl;
+import com.top_logic.layout.react.control.IReactControl;
 
 /**
  * Base class for UIElements that hold a list of child elements.
@@ -58,7 +58,7 @@ public abstract class ContainerElement implements UIElement {
 	/**
 	 * Creates controls for all children.
 	 */
-	protected List<ViewControl> createChildControls(ViewContext context) {
+	protected List<IReactControl> createChildControls(ViewContext context) {
 		return _children.stream()
 			.map(child -> child.createControl(context))
 			.collect(Collectors.toList());

@@ -14,8 +14,8 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
-import com.top_logic.layout.react.ViewControl;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.layout.ReactCardControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.view.ContainerElement;
@@ -89,8 +89,8 @@ public class CardElement extends ContainerElement {
 	}
 
 	@Override
-	public ViewControl createControl(ViewContext context) {
-		List<ViewControl> childControls = createChildControls(context);
+	public IReactControl createControl(ViewContext context) {
+		List<IReactControl> childControls = createChildControls(context);
 
 		ReactControl content;
 		if (childControls.size() == 1) {

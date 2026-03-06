@@ -7,7 +7,6 @@ package com.top_logic.demo.react;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.Map;
 
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;

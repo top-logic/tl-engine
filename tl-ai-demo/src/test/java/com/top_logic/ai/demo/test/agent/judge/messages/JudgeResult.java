@@ -335,12 +335,12 @@ public class JudgeResult extends de.haumacher.msgbuf.data.AbstractDataObject imp
 	static final java.util.List<String> PROPERTIES;
 	static {
 		java.util.List<String> local = java.util.Arrays.asList(
-			SCORE__PROP,
-			MISSING_FACTS__PROP,
-			INCORRECT_CLAIMS__PROP,
-			SCOPE_VIOLATIONS__PROP,
-			HALLUCINATIONS__PROP,
-			NOT_FETCHED__PROP,
+			SCORE__PROP, 
+			MISSING_FACTS__PROP, 
+			INCORRECT_CLAIMS__PROP, 
+			SCOPE_VIOLATIONS__PROP, 
+			HALLUCINATIONS__PROP, 
+			NOT_FETCHED__PROP, 
 			FORMAT_VIOLATIONS__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}

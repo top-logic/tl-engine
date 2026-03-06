@@ -38,7 +38,8 @@ import java.lang.annotation.Target;
 public @interface ReactCommand {
 
 	/**
-	 * The command identifier sent by the React client (e.g. "click", "sort", "select").
+	 * The command identifier sent by the React client (e.g. {@code "click"}, {@code "sort"},
+	 * {@code "select"}).
 	 */
 	String value();
 }

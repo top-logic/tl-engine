@@ -82,6 +82,11 @@
 							tool-class="com.top_logic.ai.service.tools.model.ModelEditorTool"
 						/>
 					</factory>
+					<factory name="user-interaction">
+						<implementation class="com.top_logic.ai.service.tools.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.ai.service.tools.AskUserTool"
+						/>
+					</factory>
 
 					<!-- Example configuration with ReflectiveToolFactory:
 					<factory name="mytools">

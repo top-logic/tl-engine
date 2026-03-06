@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.command;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.I18NConstantsBase;
 
@@ -27,6 +28,16 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Do you really want to delete {0} elements?
 	 */
 	public static ResKey1 CONFIRM_DELETE_MULTI__COUNT;
+
+	/**
+	 * @en Unknown command reference: ''{0}''
+	 */
+	public static ResKey1 ERROR_UNKNOWN_COMMAND_REF__NAME;
+
+	/**
+	 * @en No command configured for this button.
+	 */
+	public static ResKey ERROR_NO_COMMAND_CONFIGURED;
 
 	static {
 		initConstants(I18NConstants.class);

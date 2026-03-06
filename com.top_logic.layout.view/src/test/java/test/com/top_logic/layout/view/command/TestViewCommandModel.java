@@ -119,6 +119,49 @@ public class TestViewCommandModel extends TestCase {
 			model.getExecutableState().isExecutable());
 	}
 
+	/**
+	 * Tests that executeCommand() does not call the command when not executable.
+	 */
+	public void testExecuteCommandNotExecutable() {
+		ViewChannel channel = new DefaultViewChannel("test");
+		boolean[] commandCalled = {false};
+
+		ViewCommandModel model = new ViewCommandModel(
+			(context, input) -> {
+				commandCalled[0] = true;
+				return HandlerResult.DEFAULT_RESULT;
+			},
+			createMinimalConfig(), channel, NullInputDisabled.INSTANCE, null);
+		model.attach();
+
+		// Channel is null -> not executable -> command should not be called
+		HandlerResult result = model.executeCommand(null);
+		assertFalse("Command should not be called when not executable", commandCalled[0]);
+		assertSame(HandlerResult.DEFAULT_RESULT, result);
+	}
+
+	/**
+	 * Tests that executeCommand() calls through to the command when executable.
+	 */
+	public void testExecuteCommandExecutable() {
+		ViewChannel channel = new DefaultViewChannel("test");
+		channel.set("someValue");
+		Object[] receivedInput = {null};
+
+		ViewCommandModel model = new ViewCommandModel(
+			(context, input) -> {
+				receivedInput[0] = input;
+				return HandlerResult.DEFAULT_RESULT;
+			},
+			createMinimalConfig(), channel, NullInputDisabled.INSTANCE, null);
+		model.attach();
+
+		// Channel has value -> executable -> command should be called
+		HandlerResult result = model.executeCommand(null);
+		assertEquals("Command should receive channel value", "someValue", receivedInput[0]);
+		assertSame(HandlerResult.DEFAULT_RESULT, result);
+	}
+
 	private ViewCommand.Config createMinimalConfig() {
 		return TypedConfiguration.newConfigItem(ViewCommand.Config.class);
 	}

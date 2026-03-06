@@ -9,11 +9,7 @@ import java.io.IOException;
 import java.util.Map;
 
 import com.top_logic.basic.listener.EventType.Bubble;
-import com.top_logic.basic.xml.TagWriter;
-import com.top_logic.layout.Control;
-import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.VetoException;
-import com.top_logic.layout.basic.ControlCommand;
 import com.top_logic.layout.form.DisabledPropertyListener;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
@@ -24,6 +20,7 @@ import com.top_logic.layout.form.ValueListener;
 import com.top_logic.layout.form.model.FormFieldInternals;
 import com.top_logic.layout.form.model.VisibilityModel;
 import com.top_logic.layout.react.I18NConstants;
+import com.top_logic.layout.react.ReactCommand;
 import com.top_logic.layout.react.ReactControl;
 import com.top_logic.layout.react.ViewDisplayContext;
 import com.top_logic.mig.html.layout.VisibilityListener;
@@ -77,11 +74,6 @@ public class ReactFormFieldControl extends ReactControl
 	/** State key for whether the control is hidden on the client. */
 	protected static final String HIDDEN = "hidden";
 
-	private static final String VALUE_CHANGED_COMMAND = "valueChanged";
-
-	private static final Map<String, ControlCommand> COMMANDS =
-		createCommandMap(new ControlCommand[] { ValueChanged.INSTANCE });
-
 	private boolean _hidden;
 
 	private boolean _listenersRegistered;
@@ -95,7 +87,7 @@ public class ReactFormFieldControl extends ReactControl
 	 *        The React module identifier (e.g. "TLTextInput").
 	 */
 	protected ReactFormFieldControl(FormField model, String reactModule) {
-		super(model, reactModule, COMMANDS);
+		super(model, reactModule);
 		initFieldState(model);
 	}
 
@@ -162,9 +154,8 @@ public class ReactFormFieldControl extends ReactControl
 	}
 
 	@Override
-	protected void internalWrite(DisplayContext context, TagWriter out) throws IOException {
+	protected void onBeforeWrite(ViewDisplayContext context) {
 		registerFieldListeners();
-		super.internalWrite(context, out);
 	}
 
 	@Override
@@ -274,42 +265,24 @@ public class ReactFormFieldControl extends ReactControl
 	}
 
 	/**
-	 * Command that handles value changes from the React client.
+	 * Handles value changes from the React client.
 	 */
-	public static class ValueChanged extends ControlCommand {
+	@ReactCommand("valueChanged")
+	HandlerResult handleValueChanged(Map<String, Object> arguments) {
+		FormField field = getFieldModel();
+		Object newValue = arguments.get(VALUE);
 
-		/** Singleton instance. */
-		public static final ValueChanged INSTANCE = new ValueChanged();
+		// Form fields expect raw string input (as from HTML forms). The React client sends
+		// JSON-typed values (Integer, Boolean, etc.), so convert to String for parsing.
+		String rawValue = newValue != null ? newValue.toString() : null;
 
-		private ValueChanged() {
-			super(VALUE_CHANGED_COMMAND);
+		try {
+			FormFieldInternals.updateFieldNoClientUpdate(field, rawValue);
+		} catch (VetoException ex) {
+			throw new TopLogicException(I18NConstants.ERROR_COMMAND_FAILED__MSG.fill(ex.getMessage()), ex);
 		}
 
-		@Override
-		public com.top_logic.basic.util.ResKey getI18NKey() {
-			return I18NConstants.REACT_VALUE_CHANGED;
-		}
-
-		@Override
-		protected HandlerResult execute(DisplayContext commandContext,
-				Control control, Map<String, Object> arguments) {
-			ReactFormFieldControl reactControl = (ReactFormFieldControl) control;
-			FormField field = reactControl.getFieldModel();
-			Object newValue = arguments.get(VALUE);
-
-			// Form fields expect raw string input (as from HTML forms). The React client sends
-			// JSON-typed values (Integer, Boolean, etc.), so convert to String for parsing.
-			String rawValue = newValue != null ? newValue.toString() : null;
-
-			try {
-				FormFieldInternals.updateFieldNoClientUpdate(field, rawValue);
-			} catch (VetoException ex) {
-				throw new TopLogicException(I18NConstants.ERROR_COMMAND_FAILED__MSG.fill(ex.getMessage()), ex);
-			}
-
-			return HandlerResult.DEFAULT_RESULT;
-		}
-
+		return HandlerResult.DEFAULT_RESULT;
 	}
 
 }

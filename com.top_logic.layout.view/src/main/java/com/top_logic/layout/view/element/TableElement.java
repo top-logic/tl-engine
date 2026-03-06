@@ -155,10 +155,6 @@ public class TableElement implements UIElement {
 
 	private final QueryExecutor _rowsExecutor;
 
-	private final QueryExecutor _supportsElementExecutor;
-
-	private final QueryExecutor _modelForElementExecutor;
-
 	private final TableConfigurationProvider _columnsProvider;
 
 	/**
@@ -176,8 +172,6 @@ public class TableElement implements UIElement {
 		_columnsProvider = context.getInstance(config.getColumns());
 
 		_rowsExecutor = QueryExecutor.compile(config.getRows());
-		_supportsElementExecutor = QueryExecutor.compileOptional(config.getSupportsElement());
-		_modelForElementExecutor = QueryExecutor.compileOptional(config.getModelForElement());
 	}
 
 	@Override

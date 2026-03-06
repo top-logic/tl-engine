@@ -9,11 +9,11 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.module.ServiceDependencies;
+import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.knowledge.indexing.ContentObject;
 import com.top_logic.knowledge.indexing.DefaultIndexingService;
 import com.top_logic.knowledge.indexing.IndexException;
-import com.top_logic.basic.module.TypedRuntimeModule;
 
 /**
  * Vector Index implementation of the {@link com.top_logic.knowledge.indexing.IndexingService}.
@@ -78,7 +78,13 @@ public class VectorIndexingService extends DefaultIndexingService {
 		index.shutDown();
 	}
 
+	/**
+	 * Module initialization
+	 */
 	public static final class Module extends TypedRuntimeModule<VectorIndexingService> {
+		/**
+		 * Initialize the module instance
+		 */
 		public static final Module INSTANCE = new Module();
 
 		private Module() {

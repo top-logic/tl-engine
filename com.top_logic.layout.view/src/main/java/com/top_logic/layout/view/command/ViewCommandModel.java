@@ -181,7 +181,7 @@ public class ViewCommandModel implements ViewChannel.ChannelListener {
 	private void updateExecutableState() {
 		Object input = resolveInput();
 		ExecutableState newState = _rule.isExecutable(input);
-		if (!newState.equals(_executableState)) {
+		if (newState.visibility() != _executableState.visibility()) {
 			_executableState = newState;
 			if (_stateChangeListener != null) {
 				_stateChangeListener.run();

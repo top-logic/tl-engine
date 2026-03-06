@@ -7,7 +7,6 @@ package com.top_logic.layout.view.form;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import com.top_logic.base.locking.Lock;
 import com.top_logic.base.locking.LockService;
@@ -362,7 +361,7 @@ public class FormControl extends ReactControl {
 	 * Command that enters edit mode.
 	 */
 	@ReactCommand("formEdit")
-	void handleEdit(Map<String, Object> arguments) {
+	void handleEdit() {
 		enterEditMode();
 	}
 
@@ -370,7 +369,7 @@ public class FormControl extends ReactControl {
 	 * Command that applies overlay changes without leaving edit mode.
 	 */
 	@ReactCommand("formApply")
-	void handleApply(Map<String, Object> arguments) {
+	void handleApply() {
 		executeApply();
 	}
 
@@ -378,7 +377,7 @@ public class FormControl extends ReactControl {
 	 * Command that saves changes (applies and exits edit mode).
 	 */
 	@ReactCommand("formSave")
-	void handleSave(Map<String, Object> arguments) {
+	void handleSave() {
 		executeSave();
 	}
 
@@ -386,7 +385,7 @@ public class FormControl extends ReactControl {
 	 * Command that cancels editing, discarding changes.
 	 */
 	@ReactCommand("formCancel")
-	void handleCancel(Map<String, Object> arguments) {
+	void handleCancel() {
 		executeCancel();
 	}
 }

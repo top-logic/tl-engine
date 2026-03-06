@@ -18,6 +18,26 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey FIELD_VALUE_CHANGED;
 
+	/**
+	 * @en Edit.
+	 */
+	public static ResKey FORM_EDIT;
+
+	/**
+	 * @en Apply.
+	 */
+	public static ResKey FORM_APPLY;
+
+	/**
+	 * @en Save.
+	 */
+	public static ResKey FORM_SAVE;
+
+	/**
+	 * @en Cancel.
+	 */
+	public static ResKey FORM_CANCEL;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

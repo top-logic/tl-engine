@@ -6,20 +6,19 @@
 package com.top_logic.layout.react;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.UpdateQueue;
-import com.top_logic.layout.basic.AbstractVisibleControl;
-import com.top_logic.layout.basic.ControlCommand;
 import com.top_logic.layout.react.protocol.PatchEvent;
 import com.top_logic.layout.react.protocol.StateEvent;
 import com.top_logic.mig.html.HTMLConstants;
+import com.top_logic.tool.boundsec.HandlerResult;
 
 import de.haumacher.msgbuf.io.StringW;
 import de.haumacher.msgbuf.json.JsonWriter;
@@ -40,10 +39,14 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * traditional controls.
  * </p>
  */
-public class ReactControl extends AbstractVisibleControl implements ViewControl {
+public class ReactControl implements HTMLFragment, ViewControl, ReactCommandTarget {
 
 	/** State key for whether the control is hidden on the client. */
 	private static final String HIDDEN = "hidden";
+
+	private static final ConcurrentHashMap<Class<?>, ReactCommandMap> COMMAND_MAPS = new ConcurrentHashMap<>();
+
+	private String _id;
 
 	private final Object _model;
 
@@ -62,24 +65,24 @@ public class ReactControl extends AbstractVisibleControl implements ViewControl 
 	 *        The server-side model object.
 	 * @param reactModule
 	 *        The React module identifier to mount on the client (e.g. "TLTextInput").
-	 * @param commands
-	 *        The commands this control supports.
 	 */
-	public ReactControl(Object model, String reactModule, Map<String, ControlCommand> commands) {
-		super(commands);
+	public ReactControl(Object model, String reactModule) {
 		_model = model;
 		_reactModule = reactModule;
 		_reactState = new HashMap<>();
 	}
 
-	/**
-	 * Creates a new {@link ReactControl} with no commands.
-	 */
-	public ReactControl(Object model, String reactModule) {
-		this(model, reactModule, Collections.emptyMap());
+	@Override
+	public String getID() {
+		if (_id == null) {
+			throw new IllegalStateException("Control has no ID. Call write() first.");
+		}
+		return _id;
 	}
 
-	@Override
+	/**
+	 * The server-side model object.
+	 */
 	public Object getModel() {
 		return _model;
 	}
@@ -99,6 +102,20 @@ public class ReactControl extends AbstractVisibleControl implements ViewControl 
 	}
 
 	/**
+	 * The current {@link ViewDisplayContext}, or {@code null} if not yet rendered.
+	 */
+	protected ViewDisplayContext getViewContext() {
+		return _viewContext;
+	}
+
+	/**
+	 * The current {@link SSEUpdateQueue}, or {@code null} if not yet rendered.
+	 */
+	protected SSEUpdateQueue getSSEQueue() {
+		return _sseQueue;
+	}
+
+	/**
 	 * Whether this control is attached to an SSE queue (i.e., has been rendered).
 	 *
 	 * <p>
@@ -108,6 +125,84 @@ public class ReactControl extends AbstractVisibleControl implements ViewControl 
 	 */
 	protected boolean isSSEAttached() {
 		return _sseQueue != null;
+	}
+
+	@Override
+	public HandlerResult executeCommand(String commandName, Map<String, Object> arguments) {
+		ReactCommandMap commandMap = COMMAND_MAPS.computeIfAbsent(getClass(), ReactCommandMap::forClass);
+		ReactCommandInvoker invoker = commandMap.get(commandName);
+		if (invoker == null) {
+			throw new IllegalArgumentException(
+				"No @ReactCommand(\"" + commandName + "\") on " + getClass().getName());
+		}
+		return invoker.invoke(this, _viewContext, arguments);
+	}
+
+	@Override
+	public void write(DisplayContext context, TagWriter out) throws IOException {
+		write(ViewDisplayContext.fromDisplayContext(context), out);
+	}
+
+	@Override
+	public void write(ViewDisplayContext context, TagWriter out) throws IOException {
+		_viewContext = context;
+		_id = context.allocateId();
+		SSEUpdateQueue queue = context.getSSEQueue();
+		_sseQueue = queue;
+		queue.registerControl(this);
+
+		onBeforeWrite(context);
+
+		String stateJson = toJsonString(_reactState, context);
+
+		out.beginBeginTag(HTMLConstants.DIV);
+		writeIdAttribute(out);
+		writeControlClasses(out);
+		out.writeAttribute("data-react-module", _reactModule);
+		out.writeAttribute("data-react-state", stateJson);
+		out.writeAttribute("data-window-name", context.getWindowName());
+		out.writeAttribute("data-context-path", context.getContextPath());
+		out.endBeginTag();
+		out.endTag(HTMLConstants.DIV);
+	}
+
+	/**
+	 * Hook called before the control is rendered, after ID and SSE queue are assigned.
+	 *
+	 * <p>
+	 * Subclasses override to perform initialization that must happen before rendering, such as
+	 * registering model listeners or rebuilding state caches.
+	 * </p>
+	 */
+	protected void onBeforeWrite(ViewDisplayContext context) {
+		// Default: no-op.
+	}
+
+	/**
+	 * Called when this control is removed from its SSE queue.
+	 *
+	 * <p>
+	 * Subclasses override to release model listeners or other resources.
+	 * </p>
+	 */
+	protected void onCleanup() {
+		// Default: no-op. Subclasses override.
+	}
+
+	/**
+	 * Writes the control ID as an HTML attribute.
+	 */
+	protected void writeIdAttribute(TagWriter out) throws IOException {
+		out.writeAttribute("id", _id);
+	}
+
+	/**
+	 * Writes CSS classes for this control.
+	 */
+	protected void writeControlClasses(TagWriter out) throws IOException {
+		out.beginCssClasses();
+		out.append("is-control");
+		out.endCssClasses();
 	}
 
 	/**
@@ -140,7 +235,7 @@ public class ReactControl extends AbstractVisibleControl implements ViewControl 
 	 */
 	protected void putState(String key, Object value) {
 		if (_sseQueue != null) {
-			patchReactState(Collections.singletonMap(key, value));
+			patchReactState(java.util.Collections.singletonMap(key, value));
 		} else {
 			_reactState.put(key, value);
 		}
@@ -217,48 +312,6 @@ public class ReactControl extends AbstractVisibleControl implements ViewControl 
 		queue.enqueue(event);
 	}
 
-	@Override
-	public void write(ViewDisplayContext context, TagWriter out) throws IOException {
-		// Initialize THIS control (the root). Children auto-initialize during serialization.
-		_viewContext = context;
-		id = context.allocateId();
-		SSEUpdateQueue queue = context.getSSEQueue();
-		_sseQueue = queue;
-		queue.registerControl(this);
-
-		// Serialize state exactly once so that child controls are allocated and registered once.
-		String stateJson = toJsonString(_reactState, context);
-
-		// Write a purely declarative mount point. A static script in tl-react-bridge discovers
-		// elements with data-react-module and mounts them, keeping the page free of inline JS
-		// (CSP-friendly).
-		out.beginBeginTag(HTMLConstants.DIV);
-		writeIdAttribute(out);
-		writeControlClasses(out);
-		out.writeAttribute("data-react-module", _reactModule);
-		out.writeAttribute("data-react-state", stateJson);
-		out.writeAttribute("data-window-name", context.getWindowName());
-		out.writeAttribute("data-context-path", context.getContextPath());
-		out.endBeginTag();
-		out.endTag(HTMLConstants.DIV);
-	}
-
-	@Override
-	protected void internalWrite(DisplayContext context, TagWriter out) throws IOException {
-		write(ViewDisplayContext.fromDisplayContext(context), out);
-	}
-
-	@Override
-	protected void internalDetach() {
-		cleanupTree();
-		super.internalDetach();
-	}
-
-	@Override
-	protected void internalRevalidate(DisplayContext context, UpdateQueue actions) {
-		// Updates are delivered via SSE, not through the standard revalidation path.
-	}
-
 	/**
 	 * Writes this control as a child descriptor to JSON, ensuring it is properly initialized (ID
 	 * assigned, SSE registered) before serialization.
@@ -277,9 +330,9 @@ public class ReactControl extends AbstractVisibleControl implements ViewControl 
 	 */
 	protected void writeAsChild(JsonWriter writer, ViewDisplayContext viewContext)
 			throws IOException {
-		if (viewContext != null && id == null) {
+		if (viewContext != null && _id == null) {
 			_viewContext = viewContext;
-			id = viewContext.allocateId();
+			_id = viewContext.allocateId();
 			SSEUpdateQueue queue = viewContext.getSSEQueue();
 			if (_sseQueue == null) {
 				_sseQueue = queue;
@@ -310,17 +363,56 @@ public class ReactControl extends AbstractVisibleControl implements ViewControl 
 	}
 
 	/**
-	 * Unregisters this control and all its children from SSE. Called during
-	 * {@link #internalDetach()} and when dynamically removing a child.
+	 * Unregisters this control and all its children from SSE. Called during cleanup and when
+	 * dynamically removing a child.
 	 */
 	public final void cleanupTree() {
 		cleanupChildren();
+		onCleanup();
 		SSEUpdateQueue queue = _sseQueue;
 		if (queue != null) {
 			queue.unregisterControl(this);
 			_sseQueue = null;
 		}
 		_viewContext = null;
+	}
+
+	/**
+	 * Registers a dynamically created child {@link ReactControl} with this control's SSE queue so
+	 * that it can receive state updates and dispatch commands.
+	 *
+	 * <p>
+	 * If this control has no SSE queue yet (not rendered), the method is a no-op; the child will
+	 * be registered when this control is written.
+	 * </p>
+	 *
+	 * @param child
+	 *        The child control to register.
+	 */
+	protected void registerChildControl(ReactControl child) {
+		SSEUpdateQueue queue = _sseQueue;
+		if (queue != null && child._sseQueue == null) {
+			if (_viewContext != null) {
+				child._viewContext = _viewContext;
+				child._id = _viewContext.allocateId();
+			}
+			child._sseQueue = queue;
+			queue.registerControl(child);
+		}
+	}
+
+	/**
+	 * Unregisters a dynamically created child {@link ReactControl} from this control's SSE queue.
+	 *
+	 * @param child
+	 *        The child control to unregister.
+	 */
+	protected void unregisterChildControl(ReactControl child) {
+		SSEUpdateQueue queue = _sseQueue;
+		if (queue != null) {
+			queue.unregisterControl(child);
+			child._sseQueue = null;
+		}
 	}
 
 	// -- Context-aware serialization methods --
@@ -413,44 +505,6 @@ public class ReactControl extends AbstractVisibleControl implements ViewControl 
 	@SuppressWarnings("unchecked")
 	public static void writeJsonValue(JsonWriter writer, Object value) throws IOException {
 		writeJsonValue(writer, value, null);
-	}
-
-	/**
-	 * Registers a dynamically created child {@link ReactControl} with this control's SSE queue so
-	 * that it can receive state updates and dispatch commands.
-	 *
-	 * <p>
-	 * If this control has no SSE queue yet (not rendered), the method is a no-op; the child will
-	 * be registered when this control is written.
-	 * </p>
-	 *
-	 * @param child
-	 *        The child control to register.
-	 */
-	protected void registerChildControl(ReactControl child) {
-		SSEUpdateQueue queue = _sseQueue;
-		if (queue != null && child._sseQueue == null) {
-			if (_viewContext != null) {
-				child._viewContext = _viewContext;
-				child.id = _viewContext.allocateId();
-			}
-			child._sseQueue = queue;
-			queue.registerControl(child);
-		}
-	}
-
-	/**
-	 * Unregisters a dynamically created child {@link ReactControl} from this control's SSE queue.
-	 *
-	 * @param child
-	 *        The child control to unregister.
-	 */
-	protected void unregisterChildControl(ReactControl child) {
-		SSEUpdateQueue queue = _sseQueue;
-		if (queue != null) {
-			queue.unregisterControl(child);
-			child._sseQueue = null;
-		}
 	}
 
 	/**

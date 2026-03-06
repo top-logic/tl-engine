@@ -42,7 +42,6 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.event.infoservice.InfoServiceXMLStringConverter;
-import com.top_logic.layout.CommandListener;
 import com.top_logic.layout.ContentHandlersRegistry;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DynamicText;
@@ -108,7 +107,7 @@ public class ReactServlet extends TopLogicServlet {
 		}
 
 		SSEUpdateQueue queue = SSEUpdateQueue.forSession(session);
-		CommandListener control = queue.getControl(controlId);
+		ReactCommandTarget control = queue.getControl(controlId);
 		if (!(control instanceof DataProvider)) {
 			sendError(response, HttpServletResponse.SC_NOT_FOUND,
 				"Control does not provide data: " + controlId);
@@ -236,7 +235,7 @@ public class ReactServlet extends TopLogicServlet {
 		}
 
 		SSEUpdateQueue queue = SSEUpdateQueue.forSession(session);
-		CommandListener control = queue.getControl(controlId);
+		ReactCommandTarget control = queue.getControl(controlId);
 		if (control == null) {
 			sendError(response, HttpServletResponse.SC_NOT_FOUND, "Control not found: " + controlId);
 			return;
@@ -251,7 +250,7 @@ public class ReactServlet extends TopLogicServlet {
 		HandlerResult result;
 		boolean updateBefore = rootHandler != null ? rootHandler.enableUpdate(true) : false;
 		try {
-			result = control.executeCommand(displayContext, commandName, arguments);
+			result = control.executeCommand(commandName, arguments);
 		} finally {
 			if (rootHandler != null) {
 				rootHandler.enableUpdate(updateBefore);
@@ -278,7 +277,7 @@ public class ReactServlet extends TopLogicServlet {
 		}
 
 		SSEUpdateQueue queue = SSEUpdateQueue.forSession(session);
-		CommandListener control = queue.getControl(controlId);
+		ReactCommandTarget control = queue.getControl(controlId);
 		if (control instanceof ReactControl) {
 			ReactControl reactControl = (ReactControl) control;
 			PrintWriter writer = response.getWriter();
@@ -299,7 +298,7 @@ public class ReactServlet extends TopLogicServlet {
 		}
 
 		SSEUpdateQueue queue = SSEUpdateQueue.forSession(session);
-		CommandListener control = queue.getControl(controlId);
+		ReactCommandTarget control = queue.getControl(controlId);
 		if (!(control instanceof UploadHandler)) {
 			sendError(response, HttpServletResponse.SC_NOT_FOUND,
 				"Control does not support uploads: " + controlId);

@@ -14,6 +14,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import jakarta.servlet.AsyncContext;
 import jakarta.servlet.http.HttpSession;
@@ -22,7 +23,6 @@ import jakarta.servlet.http.HttpSessionBindingListener;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.sched.SchedulerService;
-import com.top_logic.layout.CommandListener;
 import com.top_logic.layout.react.protocol.SSEEvent;
 import com.top_logic.layout.react.protocol.StateEvent;
 
@@ -60,7 +60,9 @@ public class SSEUpdateQueue implements HttpSessionBindingListener {
 
 	private final List<AsyncContext> _connections = new CopyOnWriteArrayList<>();
 
-	private final Map<String, CommandListener> _controls = new ConcurrentHashMap<>();
+	private final Map<String, ReactCommandTarget> _controls = new ConcurrentHashMap<>();
+
+	private final AtomicInteger _nextId = new AtomicInteger(1);
 
 	private volatile ScheduledFuture<?> _heartbeatTask;
 
@@ -88,10 +90,21 @@ public class SSEUpdateQueue implements HttpSessionBindingListener {
 	}
 
 	/**
-	 * Registers a {@link CommandListener} (typically a {@link ReactControl}) so that it can be
+	 * Allocates a unique control ID within this session.
+	 *
+	 * <p>
+	 * IDs are prefixed with "v" to distinguish them from old-world control IDs.
+	 * </p>
+	 */
+	public String allocateId() {
+		return "v" + _nextId.getAndIncrement();
+	}
+
+	/**
+	 * Registers a {@link ReactCommandTarget} (typically a {@link ReactControl}) so that it can be
 	 * looked up by ID for command dispatch.
 	 */
-	public void registerControl(CommandListener control) {
+	public void registerControl(ReactCommandTarget control) {
 		Logger.info("SSEUpdateQueue@" + System.identityHashCode(this) + " registerControl: "
 			+ control.getID(), SSEUpdateQueue.class);
 		_controls.put(control.getID(), control);
@@ -100,7 +113,7 @@ public class SSEUpdateQueue implements HttpSessionBindingListener {
 	/**
 	 * Unregisters a previously registered control.
 	 */
-	public void unregisterControl(CommandListener control) {
+	public void unregisterControl(ReactCommandTarget control) {
 		_controls.remove(control.getID(), control);
 	}
 
@@ -109,8 +122,8 @@ public class SSEUpdateQueue implements HttpSessionBindingListener {
 	 *
 	 * @return The control, or {@code null} if not found.
 	 */
-	public CommandListener getControl(String controlId) {
-		CommandListener control = _controls.get(controlId);
+	public ReactCommandTarget getControl(String controlId) {
+		ReactCommandTarget control = _controls.get(controlId);
 		if (control == null) {
 			Logger.warn("SSEUpdateQueue@" + System.identityHashCode(this) + " getControl(" + controlId
 				+ ") NOT FOUND. Registered IDs: " + _controls.keySet(), SSEUpdateQueue.class);
@@ -137,7 +150,7 @@ public class SSEUpdateQueue implements HttpSessionBindingListener {
 	 * </p>
 	 */
 	private void sendFullState(AsyncContext ctx) {
-		for (CommandListener control : _controls.values()) {
+		for (ReactCommandTarget control : _controls.values()) {
 			if (control instanceof ReactControl) {
 				ReactControl rc = (ReactControl) control;
 				StateEvent event = StateEvent.create()

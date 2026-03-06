@@ -12,18 +12,14 @@ import java.util.Map;
 import com.top_logic.base.locking.Lock;
 import com.top_logic.base.locking.LockService;
 import com.top_logic.basic.Logger;
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
-import com.top_logic.layout.Control;
-import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.basic.ControlCommand;
+import com.top_logic.layout.react.ReactCommand;
 import com.top_logic.layout.react.ReactControl;
 import com.top_logic.layout.view.I18NConstants;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.model.TLObject;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * Session-scoped form control managing the editing lifecycle (view/edit mode, locking, KB
@@ -54,9 +50,6 @@ public class FormControl extends ReactControl {
 	/** State key for the no-model placeholder message. */
 	private static final String NO_MODEL_MESSAGE = "noModelMessage";
 
-	private static final Map<String, ControlCommand> COMMANDS = createCommandMap(
-		EditCommand.INSTANCE, ApplyCommand.INSTANCE, SaveCommand.INSTANCE, CancelCommand.INSTANCE);
-
 	private TLObject _currentObject;
 
 	private TLObjectOverlay _overlay;
@@ -86,7 +79,7 @@ public class FormControl extends ReactControl {
 	 *        The message to display when no object is available.
 	 */
 	public FormControl(TLObject initialObject, String noModelMessage) {
-		super(initialObject, "TLFormLayout", COMMANDS);
+		super(initialObject, "TLFormLayout");
 		_currentObject = initialObject;
 		_noModelMessage = noModelMessage;
 		_editMode = false;
@@ -356,125 +349,44 @@ public class FormControl extends ReactControl {
 	}
 
 	@Override
-	protected void internalDetach() {
+	protected void onCleanup() {
 		if (_editMode) {
 			exitEditMode();
 		}
 		if (_inputChannel != null) {
 			_inputChannel.removeListener(_inputListener);
 		}
-		super.internalDetach();
 	}
 
 	/**
 	 * Command that enters edit mode.
 	 */
-	public static class EditCommand extends ControlCommand {
-
-		/** Command identifier. */
-		private static final String COMMAND_ID = "formEdit";
-
-		/** Singleton instance. */
-		public static final EditCommand INSTANCE = new EditCommand();
-
-		private EditCommand() {
-			super(COMMAND_ID);
-		}
-
-		@Override
-		public ResKey getI18NKey() {
-			return I18NConstants.FORM_EDIT;
-		}
-
-		@Override
-		protected HandlerResult execute(DisplayContext commandContext, Control control,
-				Map<String, Object> arguments) {
-			((FormControl) control).enterEditMode();
-			return HandlerResult.DEFAULT_RESULT;
-		}
+	@ReactCommand("formEdit")
+	void handleEdit(Map<String, Object> arguments) {
+		enterEditMode();
 	}
 
 	/**
 	 * Command that applies overlay changes without leaving edit mode.
 	 */
-	public static class ApplyCommand extends ControlCommand {
-
-		/** Command identifier. */
-		private static final String COMMAND_ID = "formApply";
-
-		/** Singleton instance. */
-		public static final ApplyCommand INSTANCE = new ApplyCommand();
-
-		private ApplyCommand() {
-			super(COMMAND_ID);
-		}
-
-		@Override
-		public ResKey getI18NKey() {
-			return I18NConstants.FORM_APPLY;
-		}
-
-		@Override
-		protected HandlerResult execute(DisplayContext commandContext, Control control,
-				Map<String, Object> arguments) {
-			((FormControl) control).executeApply();
-			return HandlerResult.DEFAULT_RESULT;
-		}
+	@ReactCommand("formApply")
+	void handleApply(Map<String, Object> arguments) {
+		executeApply();
 	}
 
 	/**
 	 * Command that saves changes (applies and exits edit mode).
 	 */
-	public static class SaveCommand extends ControlCommand {
-
-		/** Command identifier. */
-		private static final String COMMAND_ID = "formSave";
-
-		/** Singleton instance. */
-		public static final SaveCommand INSTANCE = new SaveCommand();
-
-		private SaveCommand() {
-			super(COMMAND_ID);
-		}
-
-		@Override
-		public ResKey getI18NKey() {
-			return I18NConstants.FORM_SAVE;
-		}
-
-		@Override
-		protected HandlerResult execute(DisplayContext commandContext, Control control,
-				Map<String, Object> arguments) {
-			((FormControl) control).executeSave();
-			return HandlerResult.DEFAULT_RESULT;
-		}
+	@ReactCommand("formSave")
+	void handleSave(Map<String, Object> arguments) {
+		executeSave();
 	}
 
 	/**
 	 * Command that cancels editing, discarding changes.
 	 */
-	public static class CancelCommand extends ControlCommand {
-
-		/** Command identifier. */
-		private static final String COMMAND_ID = "formCancel";
-
-		/** Singleton instance. */
-		public static final CancelCommand INSTANCE = new CancelCommand();
-
-		private CancelCommand() {
-			super(COMMAND_ID);
-		}
-
-		@Override
-		public ResKey getI18NKey() {
-			return I18NConstants.FORM_CANCEL;
-		}
-
-		@Override
-		protected HandlerResult execute(DisplayContext commandContext, Control control,
-				Map<String, Object> arguments) {
-			((FormControl) control).executeCancel();
-			return HandlerResult.DEFAULT_RESULT;
-		}
+	@ReactCommand("formCancel")
+	void handleCancel(Map<String, Object> arguments) {
+		executeCancel();
 	}
 }

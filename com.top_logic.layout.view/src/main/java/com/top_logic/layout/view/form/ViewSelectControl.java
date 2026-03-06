@@ -8,10 +8,9 @@ package com.top_logic.layout.view.form;
 import java.util.List;
 import java.util.Map;
 
-import com.top_logic.layout.basic.ControlCommand;
+import com.top_logic.layout.react.ReactCommand;
 import com.top_logic.layout.react.ReactControl;
 import com.top_logic.layout.view.form.ViewFieldValueChanged.ValueCallback;
-import com.top_logic.layout.view.form.ViewFieldValueChanged.ValueChangeHandler;
 
 /**
  * Lean select/dropdown control that renders via the {@code TLSelect} React component.
@@ -21,7 +20,7 @@ import com.top_logic.layout.view.form.ViewFieldValueChanged.ValueChangeHandler;
  * option map contains {@code "value"} and {@code "label"} entries.
  * </p>
  */
-public class ViewSelectControl extends ReactControl implements ValueChangeHandler {
+public class ViewSelectControl extends ReactControl {
 
 	/** State key for the field value. */
 	private static final String VALUE = "value";
@@ -31,9 +30,6 @@ public class ViewSelectControl extends ReactControl implements ValueChangeHandle
 
 	/** State key for the list of options. */
 	private static final String OPTIONS = "options";
-
-	private static final Map<String, ControlCommand> COMMANDS =
-		createCommandMap(ViewFieldValueChanged.INSTANCE);
 
 	private ValueCallback _valueCallback;
 
@@ -49,7 +45,7 @@ public class ViewSelectControl extends ReactControl implements ValueChangeHandle
 	 *        entries.
 	 */
 	public ViewSelectControl(Object value, boolean editable, List<Map<String, Object>> options) {
-		super(null, "TLSelect", COMMANDS);
+		super(null, "TLSelect");
 		putState(VALUE, value);
 		putState(EDITABLE, Boolean.valueOf(editable));
 		putState(OPTIONS, options);
@@ -96,10 +92,13 @@ public class ViewSelectControl extends ReactControl implements ValueChangeHandle
 		_valueCallback = callback;
 	}
 
-	@Override
-	public void handleValueChanged(Object rawValue) {
+	/**
+	 * Handles value change events from the client.
+	 */
+	@ReactCommand("valueChanged")
+	void handleValueChanged(Map<String, Object> arguments) {
 		if (_valueCallback != null) {
-			_valueCallback.valueChanged(rawValue);
+			_valueCallback.valueChanged(arguments.get(VALUE));
 		}
 	}
 }

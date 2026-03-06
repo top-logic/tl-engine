@@ -7,10 +7,9 @@ package com.top_logic.layout.view.form;
 
 import java.util.Map;
 
-import com.top_logic.layout.basic.ControlCommand;
+import com.top_logic.layout.react.ReactCommand;
 import com.top_logic.layout.react.ReactControl;
 import com.top_logic.layout.view.form.ViewFieldValueChanged.ValueCallback;
-import com.top_logic.layout.view.form.ViewFieldValueChanged.ValueChangeHandler;
 
 /**
  * Lean text input control that renders via the {@code TLTextInput} React component.
@@ -19,16 +18,13 @@ import com.top_logic.layout.view.form.ViewFieldValueChanged.ValueChangeHandler;
  * Works with plain {@link String} values instead of {@code FormField} objects.
  * </p>
  */
-public class ViewTextInputControl extends ReactControl implements ValueChangeHandler {
+public class ViewTextInputControl extends ReactControl {
 
 	/** State key for the field value. */
 	private static final String VALUE = "value";
 
 	/** State key for whether the field is editable. */
 	private static final String EDITABLE = "editable";
-
-	private static final Map<String, ControlCommand> COMMANDS =
-		createCommandMap(ViewFieldValueChanged.INSTANCE);
 
 	private ValueCallback _valueCallback;
 
@@ -41,7 +37,7 @@ public class ViewTextInputControl extends ReactControl implements ValueChangeHan
 	 *        Whether the field is editable.
 	 */
 	public ViewTextInputControl(String value, boolean editable) {
-		super(null, "TLTextInput", COMMANDS);
+		super(null, "TLTextInput");
 		putState(VALUE, value);
 		putState(EDITABLE, Boolean.valueOf(editable));
 	}
@@ -76,8 +72,12 @@ public class ViewTextInputControl extends ReactControl implements ValueChangeHan
 		_valueCallback = callback;
 	}
 
-	@Override
-	public void handleValueChanged(Object rawValue) {
+	/**
+	 * Handles value change events from the client.
+	 */
+	@ReactCommand("valueChanged")
+	void handleValueChanged(Map<String, Object> arguments) {
+		Object rawValue = arguments.get(VALUE);
 		String newValue = rawValue != null ? rawValue.toString() : null;
 		if (_valueCallback != null) {
 			_valueCallback.valueChanged(newValue);

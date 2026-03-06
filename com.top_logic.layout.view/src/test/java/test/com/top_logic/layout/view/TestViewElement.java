@@ -27,8 +27,9 @@ import com.top_logic.layout.view.element.PanelElement;
 import com.top_logic.layout.view.element.StackElement;
 
 /**
- * Tests parsing of a {@code .view.xml} file into a {@link ViewElement.Config} and instantiating the
- * {@link UIElement} tree (Phase 1 of the two-phase lifecycle).
+ * Tests parsing of a {@code .view.xml} file into a
+ * {@link com.top_logic.layout.view.ViewElement.Config} and instantiating the {@link UIElement} tree
+ * (Phase 1 of the two-phase lifecycle).
  */
 public class TestViewElement extends TestCase {
 

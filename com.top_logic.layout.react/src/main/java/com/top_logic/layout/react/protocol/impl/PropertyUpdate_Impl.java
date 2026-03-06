@@ -7,7 +7,7 @@ public class PropertyUpdate_Impl extends com.top_logic.layout.react.protocol.imp
 
 	private String _elementId = "";
 
-	private final java.util.List<com.top_logic.layout.react.protocol.Property> _properties = new de.haumacher.msgbuf.util.ReferenceList<com.top_logic.layout.react.protocol.Property>() {
+	private final java.util.List<com.top_logic.layout.react.protocol.Property> _properties = new de.haumacher.msgbuf.util.ReferenceList<>() {
 		@Override
 		protected void beforeAdd(int index, com.top_logic.layout.react.protocol.Property element) {
 			_listener.beforeAdd(PropertyUpdate_Impl.this, PROPERTIES__PROP, index, element);

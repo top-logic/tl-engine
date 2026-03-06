@@ -33,7 +33,7 @@ public class ReactTreeControl extends ReactControl {
 
 	// -- State keys --
 
-	/** @see #buildNodeStates() */
+	/** @see #buildFullState() */
 	private static final String NODES = "nodes";
 
 	/** @see #setSelectionMode(String) */

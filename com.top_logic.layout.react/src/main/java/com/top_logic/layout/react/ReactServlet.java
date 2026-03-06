@@ -24,7 +24,6 @@ import jakarta.servlet.http.Part;
 
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
-import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.base.services.simpleajax.AbstractCssClassUpdate;
 import com.top_logic.base.services.simpleajax.ClientAction;
 import com.top_logic.base.services.simpleajax.ContentReplacement;
@@ -37,6 +36,7 @@ import com.top_logic.base.services.simpleajax.PropertyUpdate;
 import com.top_logic.base.services.simpleajax.RangeReplacement;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
@@ -47,6 +47,7 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DynamicText;
 import com.top_logic.layout.UpdateWriter;
 import com.top_logic.layout.basic.DefaultDisplayContext;
+import com.top_logic.layout.basic.component.ControlSupport;
 import com.top_logic.layout.internal.SubsessionHandler;
 import com.top_logic.layout.react.protocol.FunctionCall;
 import com.top_logic.layout.react.protocol.JSSnipplet;
@@ -386,8 +387,9 @@ public class ReactServlet extends TopLogicServlet {
 	 * {@link SSEForwardingUpdateWriter#add(ClientAction)} callback, because at that point the
 	 * {@link DisplayContext#getExecutionScope() execution scope} is still set to the control's
 	 * {@link com.top_logic.layout.ControlScope} by
-	 * {@link com.top_logic.layout.ControlSupport#revalidate}. Rendering the fragment later
-	 * (after the scope is restored) would cause an "already attached to another scope" crash.
+	 * {@link ControlSupport#revalidate(DisplayContext, com.top_logic.layout.UpdateQueue)}.
+	 * Rendering the fragment later (after the scope is restored) would cause an "already attached
+	 * to another scope" crash.
 	 * </p>
 	 */
 	private void forwardLegacyControlUpdates(DisplayContext displayContext, SubsessionHandler rootHandler,
@@ -427,8 +429,8 @@ public class ReactServlet extends TopLogicServlet {
 	 * <p>
 	 * This is critical for correctness: during {@code add()}, the {@link DisplayContext} still has
 	 * the correct {@link com.top_logic.layout.ControlScope execution scope} set by
-	 * {@link com.top_logic.layout.ControlSupport#revalidate}. Rendering a
-	 * {@link DOMModification#getFragment() fragment} at this point calls
+	 * {@link ControlSupport#revalidate(DisplayContext, com.top_logic.layout.UpdateQueue)}.
+	 * Rendering a {@link DOMModification#getFragment() fragment} at this point calls
 	 * {@link com.top_logic.layout.basic.AbstractControlBase#attach attach(scope)} which sees the
 	 * same scope the control is already attached to and returns without error. Deferring the
 	 * rendering to after revalidation would cause an "already attached to another scope" crash.

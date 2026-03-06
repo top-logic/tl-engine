@@ -15,7 +15,6 @@ import junit.framework.TestCase;
 
 import com.top_logic.layout.view.form.TLObjectOverlay;
 import com.top_logic.model.TLObject;
-import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TransientObject;
 

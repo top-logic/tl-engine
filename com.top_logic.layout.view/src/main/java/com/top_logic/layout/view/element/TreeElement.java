@@ -32,16 +32,16 @@ import com.top_logic.layout.tree.model.AbstractMutableTLTreeModel;
 import com.top_logic.layout.tree.model.DefaultTreeUINodeModel;
 import com.top_logic.layout.tree.model.DefaultTreeUINodeModel.DefaultTreeUINode;
 import com.top_logic.layout.tree.model.TreeBuilder;
-import com.top_logic.mig.html.DefaultSingleSelectionModel;
-import com.top_logic.mig.html.SelectionModel;
-import com.top_logic.mig.html.SelectionModelOwner;
-import com.top_logic.model.search.expr.config.dom.Expr;
-import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.mig.html.DefaultSingleSelectionModel;
+import com.top_logic.mig.html.SelectionModel;
+import com.top_logic.mig.html.SelectionModelOwner;
+import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.expr.query.QueryExecutor;
 
 /**
  * Declarative {@link UIElement} that wraps a {@link ReactTreeControl}.
@@ -270,7 +270,7 @@ public class TreeElement implements UIElement {
 		ChannelRef selectionRef = _config.getSelection();
 		if (selectionRef != null) {
 			ViewChannel selectionChannel = context.resolveChannel(selectionRef);
-			selectionModel.addSelectionListener(new SelectionListener<Object>() {
+			selectionModel.addSelectionListener(new SelectionListener<>() {
 				@Override
 				public void notifySelectionChanged(SelectionModel<Object> model, SelectionEvent<Object> event) {
 					Set<?> newSelection = event.getNewSelection();
@@ -307,7 +307,7 @@ public class TreeElement implements UIElement {
 	}
 
 	private TreeBuilder<DefaultTreeUINode> createTreeBuilder(List<ViewChannel> inputChannels) {
-		return new TreeBuilder<DefaultTreeUINode>() {
+		return new TreeBuilder<>() {
 
 			@Override
 			public DefaultTreeUINode createNode(AbstractMutableTLTreeModel<DefaultTreeUINode> model,

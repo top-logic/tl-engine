@@ -244,10 +244,13 @@ public class ViewServlet extends TopLogicServlet {
 		out.endTag(HTMLConstants.HEAD);
 
 		out.beginBeginTag(HTMLConstants.BODY);
+		out.writeAttribute("data-window-name", viewContext.getWindowName());
+		out.writeAttribute("data-context-path", viewContext.getContextPath());
 		out.endBeginTag();
 
-		// Delegate rendering to the control itself. ReactControl.internalWrite() writes
-		// the mount-point div and the TLReact.mount() bootstrap script.
+		// Delegate rendering to the control itself. ReactControl.write() outputs a
+		// declarative div with data-react-module/data-react-state attributes.
+		// The static tl-react-bridge script discovers and mounts these elements.
 		rootControl.write(viewContext, out);
 
 		out.endTag(HTMLConstants.BODY);

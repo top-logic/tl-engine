@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<channels>
+		<channel name="selectedPerson" />
+	</channels>
+	<split-panel orientation="horizontal" resizable="true">
+		<panes>
+			<pane size="40" unit="%" min-size="200">
+				<panel title="Accounts">
+					<table types="tl.accounts:Person" selection="selectedPerson">
+						<rows>all(`tl.accounts:Person`)</rows>
+					</table>
+				</panel>
+			</pane>
+			<pane size="60" unit="%">
+				<panel title="Person Details">
+					<form input="selectedPerson">
+						<field attribute="firstName" />
+						<field attribute="lastName" />
+						<field attribute="admin" />
+						<field attribute="restrictedUser" />
+					</form>
+				</panel>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

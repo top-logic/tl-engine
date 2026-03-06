@@ -6,20 +6,9 @@
 		<config service-class="com.top_logic.basic.module.ModuleSystem">
 			<instance class="com.top_logic.basic.module.ModuleSystem">
 				<modules>
-		           <module key="com.top_logic.base.services.SearchFactory$Module" value="true" />
 		           <module key="com.top_logic.ai.vector.index.VectorIndex$Module" value="true" />
-		           <module key="com.top_logic.knowledge.analyze.DefaultAnalyzeService$Module" value="true" />
-		           <module key="com.top_logic.ai.vector.index.VectorIndexingService$Module" value="true" />
+		           <module key="com.top_logic.knowledge.indexing.DefaultIndexingService$Module" value="true" />
 				</modules>
-			</instance>
-		</config>
-	
- 		<config service-class="com.top_logic.base.services.SearchFactory">
-			<instance>
-				<dependencies>
-					<dependency key="com.top_logic.ai.vector.index.VectorIndex$Module" value="true"/>
-					<dependency key="com.top_logic.knowledge.service.PersistencyLayer$Module" value="true"/>
-				</dependencies>
 			</instance>
 		</config>
 	
@@ -38,6 +27,7 @@
 			</instance>
 		</config>
 		
+
 		<config service-class="com.top_logic.knowledge.indexing.IndexingService" >
 			<instance class="com.top_logic.ai.vector.index.VectorIndexingService">
 				<protocols>

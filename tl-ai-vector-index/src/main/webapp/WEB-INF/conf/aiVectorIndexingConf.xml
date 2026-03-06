@@ -1,9 +1,8 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml version="1.0" encoding="utf-8"?>
 
+<!-- Main configuration file -->
 <root>
 	<alias>
-		<!-- Mistral API Key from environment -->
-		<entry name="%MISTRAL_API_KEY%" value="${env:tl_mistral_api_key:}" />
+		<entry name="%MISTRAL_API_KEY%" value="${env:tl_mistral_api_key:}"/>
 	</alias>
-
 </root>

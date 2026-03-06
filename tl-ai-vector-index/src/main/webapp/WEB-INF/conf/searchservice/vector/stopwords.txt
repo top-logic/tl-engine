@@ -1,4 +1,0 @@
-der
-die
-das
-import

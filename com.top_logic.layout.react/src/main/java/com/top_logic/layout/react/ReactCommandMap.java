@@ -95,9 +95,37 @@ class ReactCommandMap {
 				"@ReactCommand method " + method.getName() + " must return HandlerResult, but returns "
 					+ method.getReturnType().getName());
 		}
-		for (Class<?> paramType : method.getParameterTypes()) {
-			if (!ViewDisplayContext.class.isAssignableFrom(paramType)
-				&& !Map.class.isAssignableFrom(paramType)) {
+		Class<?>[] paramTypes = method.getParameterTypes();
+		if (paramTypes.length > 2) {
+			throw new IllegalStateException(
+				"@ReactCommand method " + method.getName() + " declares " + paramTypes.length
+					+ " parameters, but at most 2 are allowed: "
+					+ "(ViewDisplayContext, Map<String, Object>).");
+		}
+		boolean contextSeen = false;
+		boolean argsSeen = false;
+		for (Class<?> paramType : paramTypes) {
+			if (ViewDisplayContext.class.isAssignableFrom(paramType)) {
+				if (contextSeen) {
+					throw new IllegalStateException(
+						"@ReactCommand method " + method.getName()
+							+ " declares ViewDisplayContext more than once.");
+				}
+				if (argsSeen) {
+					throw new IllegalStateException(
+						"@ReactCommand method " + method.getName()
+							+ " declares ViewDisplayContext after Map. "
+							+ "Required order: (ViewDisplayContext, Map<String, Object>).");
+				}
+				contextSeen = true;
+			} else if (Map.class.isAssignableFrom(paramType)) {
+				if (argsSeen) {
+					throw new IllegalStateException(
+						"@ReactCommand method " + method.getName()
+							+ " declares Map more than once.");
+				}
+				argsSeen = true;
+			} else {
 				throw new IllegalStateException(
 					"@ReactCommand method " + method.getName() + " has unsupported parameter type: "
 						+ paramType.getName()

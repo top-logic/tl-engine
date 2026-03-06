@@ -92,17 +92,13 @@ public class FieldElement implements UIElement {
 		}
 		FormControl formControl = (FormControl) formObj;
 
-		// 2. Create FieldControl.
+		// 2. Create FieldControl and register with form.
 		FieldControl fieldControl =
 			new FieldControl(formControl, _config.getAttribute(), _config.getLabel(), _config.getReadonly());
+		formControl.registerFieldControl(fieldControl);
 
 		// 3. Create the chrome-wrapped control.
 		ReactFormFieldChromeControl chrome = fieldControl.createChromeControl();
-
-		// 4. Register the chrome control with the form.
-		if (chrome != null) {
-			formControl.registerField(chrome);
-		}
 
 		return chrome;
 	}

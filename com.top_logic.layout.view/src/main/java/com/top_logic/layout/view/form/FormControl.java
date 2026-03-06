@@ -68,7 +68,7 @@ public class FormControl extends ReactControl {
 
 	private ViewChannel _dirtyChannel;
 
-	private final List<ReactControl> _fields = new ArrayList<>();
+	private final List<FieldControl> _fieldControls = new ArrayList<>();
 
 	private final ViewChannel.ChannelListener _inputListener = this::handleInputChanged;
 
@@ -169,17 +169,18 @@ public class FormControl extends ReactControl {
 	}
 
 	/**
-	 * Registers a field control with this form.
+	 * Registers a {@link FieldControl} with this form.
 	 *
 	 * <p>
-	 * Registered fields are notified when the current object changes or edit mode changes.
+	 * Registered field controls are notified when the current object changes or edit mode changes,
+	 * so they can update their inner controls' values, editability, and dirty state.
 	 * </p>
 	 *
-	 * @param field
+	 * @param fieldControl
 	 *        The field control to register.
 	 */
-	public void registerField(ReactControl field) {
-		_fields.add(field);
+	public void registerFieldControl(FieldControl fieldControl) {
+		_fieldControls.add(fieldControl);
 	}
 
 	/**
@@ -280,8 +281,8 @@ public class FormControl extends ReactControl {
 	 * Notifies all registered field controls to refresh their display.
 	 */
 	void notifyFields() {
-		for (ReactControl field : _fields) {
-			field.requestRepaint();
+		for (FieldControl field : _fieldControls) {
+			field.refresh();
 		}
 	}
 
@@ -332,9 +333,7 @@ public class FormControl extends ReactControl {
 
 	@Override
 	protected void cleanupChildren() {
-		for (ReactControl field : _fields) {
-			field.cleanupTree();
-		}
+		// No-op: child controls are managed by the React rendering tree.
 	}
 
 	@Override

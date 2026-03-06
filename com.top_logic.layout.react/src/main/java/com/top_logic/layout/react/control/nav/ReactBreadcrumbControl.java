@@ -13,7 +13,6 @@ import java.util.function.Consumer;
 
 import com.top_logic.layout.react.ReactCommand;
 import com.top_logic.layout.react.ReactControl;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * Navigation trail showing the current location in a hierarchy.
@@ -90,10 +89,9 @@ public class ReactBreadcrumbControl extends ReactControl {
 	 * Handles breadcrumb navigation from the client.
 	 */
 	@ReactCommand("navigate")
-	HandlerResult handleNavigate(Map<String, Object> arguments) {
+	void handleNavigate(Map<String, Object> arguments) {
 		String itemId = (String) arguments.get(ITEM_ID_ARG);
 		_navigateHandler.accept(itemId);
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 }

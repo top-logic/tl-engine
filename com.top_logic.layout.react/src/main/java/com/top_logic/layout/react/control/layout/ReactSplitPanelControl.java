@@ -18,7 +18,6 @@ import com.top_logic.layout.react.ReactCommand;
 import com.top_logic.layout.react.ReactControl;
 import com.top_logic.layout.structure.OrientationAware.Orientation;
 import com.top_logic.layout.structure.Scrolling;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * A {@link ReactControl} that arranges child controls along a single axis with optional drag
@@ -430,7 +429,7 @@ public class ReactSplitPanelControl extends ReactControl {
 	 */
 	@SuppressWarnings("unchecked")
 	@ReactCommand("updateSizes")
-	HandlerResult handleUpdateSizes(Map<String, Object> arguments) {
+	void handleUpdateSizes(Map<String, Object> arguments) {
 		Map<String, Object> sizes = (Map<String, Object>) arguments.get(SIZES_ARG);
 		if (sizes != null) {
 			for (int i = 0; i < _children.size(); i++) {
@@ -455,6 +454,5 @@ public class ReactSplitPanelControl extends ReactControl {
 				_onSizesChanged.accept(sizeMap);
 			}
 		}
-		return HandlerResult.DEFAULT_RESULT;
 	}
 }

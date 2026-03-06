@@ -11,7 +11,6 @@ import com.top_logic.basic.listener.Listener;
 import com.top_logic.layout.react.DataProvider;
 import com.top_logic.layout.react.ReactCommand;
 import com.top_logic.layout.react.ReactControl;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * A React control that provides a download button for binary data stored on the server.
@@ -100,9 +99,8 @@ public class ReactDownloadControl extends ReactControl implements DataProvider {
 	 * Handles the clear event from the React client, removing the current data.
 	 */
 	@ReactCommand("clear")
-	HandlerResult handleClear() {
+	void handleClear() {
 		_model.setData(null);
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 }

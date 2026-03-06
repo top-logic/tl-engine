@@ -15,7 +15,6 @@ import java.util.Map;
 import com.top_logic.layout.react.ReactCommand;
 import com.top_logic.layout.react.ReactControl;
 import com.top_logic.layout.react.ViewDisplayContext;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 import de.haumacher.msgbuf.json.JsonWriter;
 
@@ -161,11 +160,10 @@ public class ReactDeckPaneControl extends ReactControl {
 	 * Handles child selection from the client.
 	 */
 	@ReactCommand("selectChild")
-	HandlerResult handleSelectChild(Map<String, Object> arguments) {
+	void handleSelectChild(Map<String, Object> arguments) {
 		Object indexObj = arguments.get(INDEX_ARG);
 		if (indexObj instanceof Number) {
 			selectChild(((Number) indexObj).intValue());
 		}
-		return HandlerResult.DEFAULT_RESULT;
 	}
 }

@@ -22,7 +22,6 @@ import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.react.ReactCommand;
 import com.top_logic.layout.react.ReactControl;
 import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * Demo {@link LayoutComponent} that renders a React-based counter control.
@@ -94,17 +93,15 @@ public class DemoReactCounterComponent extends LayoutComponent {
 		}
 
 		@ReactCommand("increment")
-		HandlerResult handleIncrement() {
+		void handleIncrement() {
 			int count = ((Number) getReactState().get(COUNT)).intValue();
 			patchReactState(Collections.singletonMap(COUNT, count + 1));
-			return HandlerResult.DEFAULT_RESULT;
 		}
 
 		@ReactCommand("decrement")
-		HandlerResult handleDecrement() {
+		void handleDecrement() {
 			int count = ((Number) getReactState().get(COUNT)).intValue();
 			patchReactState(Collections.singletonMap(COUNT, count - 1));
-			return HandlerResult.DEFAULT_RESULT;
 		}
 	}
 

@@ -7,7 +7,6 @@ package com.top_logic.layout.react.control.overlay;
 
 import com.top_logic.layout.react.ReactCommand;
 import com.top_logic.layout.react.ReactControl;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * Slide-in panel from a screen edge.
@@ -114,10 +113,9 @@ public class ReactDrawerControl extends ReactControl {
 	 * Handles the close command sent when the drawer is closed.
 	 */
 	@ReactCommand("close")
-	HandlerResult handleClose() {
+	void handleClose() {
 		close();
 		_closeHandler.run();
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 }

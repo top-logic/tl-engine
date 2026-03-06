@@ -362,10 +362,9 @@ public class ReactSidebarControl extends ReactControl {
 	 * Handles navigation item selection from the client.
 	 */
 	@ReactCommand("selectItem")
-	HandlerResult handleSelectItem(Map<String, Object> arguments) {
+	void handleSelectItem(Map<String, Object> arguments) {
 		String itemId = (String) arguments.get(ITEM_ID_ARG);
 		selectItem(itemId);
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
@@ -385,20 +384,19 @@ public class ReactSidebarControl extends ReactControl {
 	 * Handles collapse toggle from the client.
 	 */
 	@ReactCommand("toggleCollapse")
-	HandlerResult handleToggleCollapse() {
+	void handleToggleCollapse() {
 		_collapsed = !_collapsed;
 		if (_onCollapseChanged != null) {
 			_onCollapseChanged.accept(Boolean.valueOf(_collapsed));
 		}
 		patchReactState(Map.of(COLLAPSED, Boolean.valueOf(_collapsed)));
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
 	 * Handles group expand/collapse toggle from the client.
 	 */
 	@ReactCommand("toggleGroup")
-	HandlerResult handleToggleGroup(Map<String, Object> arguments) {
+	void handleToggleGroup(Map<String, Object> arguments) {
 		String itemId = (String) arguments.get(ITEM_ID_ARG);
 		Object expandedObj = arguments.get(EXPANDED_ARG);
 		boolean expanded = expandedObj instanceof Boolean && ((Boolean) expandedObj).booleanValue();
@@ -406,7 +404,6 @@ public class ReactSidebarControl extends ReactControl {
 		if (_onGroupToggled != null) {
 			_onGroupToggled.accept(itemId, Boolean.valueOf(expanded));
 		}
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 }

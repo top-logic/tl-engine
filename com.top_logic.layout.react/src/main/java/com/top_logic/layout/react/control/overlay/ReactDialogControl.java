@@ -10,7 +10,6 @@ import java.util.List;
 
 import com.top_logic.layout.react.ReactCommand;
 import com.top_logic.layout.react.ReactControl;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * Modal dialog overlay for confirmations and focused tasks.
@@ -136,10 +135,9 @@ public class ReactDialogControl extends ReactControl {
 	 * Handles the close command sent when the dialog is closed.
 	 */
 	@ReactCommand("close")
-	HandlerResult handleClose() {
+	void handleClose() {
 		close();
 		_closeHandler.run();
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 }

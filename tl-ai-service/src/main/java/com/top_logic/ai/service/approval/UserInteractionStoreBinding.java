@@ -9,9 +9,9 @@ package com.top_logic.ai.service.approval;
  * Thread-local binding for {@link UserInteractionStore}.
  *
  * <p>
- * Follows the same pattern as {@link ApprovalStoreBinding}. The store is bound before agent
- * execution in {@code ChatProcessor#executeOrchestrator} and cleared afterward. Sub-agents
- * inherit the binding automatically since they execute on the same thread.
+ * The store is bound before agent execution in {@code ChatProcessor#executeOrchestrator} and
+ * cleared afterward. Sub-agents inherit the binding automatically since they execute on the same
+ * thread.
  * </p>
  */
 public class UserInteractionStoreBinding {

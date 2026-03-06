@@ -29,6 +29,9 @@ public class ReactButtonControl extends ReactControl {
 	/** State key for the button label. */
 	private static final String LABEL = "label";
 
+	/** State key for the disabled flag. */
+	private static final String DISABLED = "disabled";
+
 	private static final Map<String, ControlCommand> COMMANDS = createCommandMap(new ClickCommand());
 
 	private final Command _action;
@@ -55,6 +58,16 @@ public class ReactButtonControl extends ReactControl {
 	 */
 	public void setLabel(String label) {
 		putState(LABEL, label);
+	}
+
+	/**
+	 * Sets the disabled state of the button.
+	 *
+	 * @param disabled
+	 *        Whether the button should be disabled.
+	 */
+	public void setDisabled(boolean disabled) {
+		putState(DISABLED, disabled);
 	}
 
 	/**

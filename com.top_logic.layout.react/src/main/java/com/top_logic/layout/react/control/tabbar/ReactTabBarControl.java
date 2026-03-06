@@ -15,7 +15,6 @@ import java.util.Map;
 import com.top_logic.layout.react.ReactCommand;
 import com.top_logic.layout.react.ReactControl;
 import com.top_logic.layout.react.ViewDisplayContext;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 import de.haumacher.msgbuf.json.JsonWriter;
 
@@ -172,10 +171,9 @@ public class ReactTabBarControl extends ReactControl {
 	 * Handles tab selection from the client.
 	 */
 	@ReactCommand("selectTab")
-	HandlerResult handleSelectTab(Map<String, Object> arguments) {
+	void handleSelectTab(Map<String, Object> arguments) {
 		String tabId = (String) arguments.get(TAB_ID_ARG);
 		selectTab(tabId);
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 }

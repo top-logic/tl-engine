@@ -10,7 +10,6 @@ import java.util.List;
 
 import com.top_logic.layout.react.ReactCommand;
 import com.top_logic.layout.react.ReactControl;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * A {@link ReactControl} that wraps a single child with a titled toolbar header.
@@ -174,13 +173,13 @@ public class ReactPanelControl extends ReactControl {
 	 * clicked.
 	 */
 	@ReactCommand("toggleMinimize")
-	HandlerResult handleToggleMinimize() {
+	void handleToggleMinimize() {
 		boolean wasMinimized = _expansionState == ExpansionState.MINIMIZED;
 		boolean collapsed = !wasMinimized;
 
 		if (collapsed && _parentSplitPanel != null
 				&& !_parentSplitPanel.canChildCollapse(_indexInParent)) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 
 		setExpansionState(collapsed ? ExpansionState.MINIMIZED : ExpansionState.NORMALIZED);
@@ -188,8 +187,6 @@ public class ReactPanelControl extends ReactControl {
 		if (_parentSplitPanel != null) {
 			_parentSplitPanel.childCollapsed(_indexInParent, collapsed, COLLAPSED_SIZE);
 		}
-
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
@@ -197,7 +194,7 @@ public class ReactPanelControl extends ReactControl {
 	 * clicked.
 	 */
 	@ReactCommand("toggleMaximize")
-	HandlerResult handleToggleMaximize() {
+	void handleToggleMaximize() {
 		if (_expansionState == ExpansionState.MAXIMIZED) {
 			setExpansionState(ExpansionState.NORMALIZED);
 			if (_maximizeRoot != null) {
@@ -209,16 +206,13 @@ public class ReactPanelControl extends ReactControl {
 				_maximizeRoot.maximize(this);
 			}
 		}
-
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
 	 * Handles the popOut command sent by the React client when the pop-out button is clicked.
 	 */
 	@ReactCommand("popOut")
-	HandlerResult handlePopOut() {
+	void handlePopOut() {
 		setExpansionState(ExpansionState.HIDDEN);
-		return HandlerResult.DEFAULT_RESULT;
 	}
 }

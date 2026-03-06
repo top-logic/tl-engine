@@ -13,7 +13,6 @@ import java.util.function.Consumer;
 
 import com.top_logic.layout.react.ReactCommand;
 import com.top_logic.layout.react.ReactControl;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * Bottom navigation bar for mobile screens.
@@ -134,10 +133,9 @@ public class ReactBottomBarControl extends ReactControl {
 	 * Handles item selection from the client.
 	 */
 	@ReactCommand("selectItem")
-	HandlerResult handleSelectItem(Map<String, Object> arguments) {
+	void handleSelectItem(Map<String, Object> arguments) {
 		String itemId = (String) arguments.get(ITEM_ID_ARG);
 		_selectHandler.accept(itemId);
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 }

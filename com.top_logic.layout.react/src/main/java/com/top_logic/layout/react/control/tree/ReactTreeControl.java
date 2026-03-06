@@ -19,7 +19,6 @@ import com.top_logic.layout.react.ViewDisplayContext;
 import com.top_logic.layout.tree.dnd.TreeDropTarget;
 import com.top_logic.layout.tree.model.TreeUIModel;
 import com.top_logic.mig.html.SelectionModel;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * Server-side React control that renders a tree with lazy-loaded children.
@@ -413,7 +412,7 @@ public class ReactTreeControl extends ReactControl {
 	 * Expands a tree node, loading children and prefetching grandchildren.
 	 */
 	@ReactCommand("expand")
-	HandlerResult handleExpand(Map<String, Object> arguments) {
+	void handleExpand(Map<String, Object> arguments) {
 		String nodeId = (String) arguments.get("nodeId");
 		Object node = findNodeById(nodeId);
 		if (node != null && !_treeModel.isLeaf(node) && !_treeModel.isExpanded(node)) {
@@ -429,21 +428,19 @@ public class ReactTreeControl extends ReactControl {
 
 			buildFullState();
 		}
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
 	 * Collapses a tree node, removing its children from the visible list.
 	 */
 	@ReactCommand("collapse")
-	HandlerResult handleCollapse(Map<String, Object> arguments) {
+	void handleCollapse(Map<String, Object> arguments) {
 		String nodeId = (String) arguments.get("nodeId");
 		Object node = findNodeById(nodeId);
 		if (node != null && _treeModel.isExpanded(node)) {
 			_treeModel.setExpanded(node, false);
 			buildFullState();
 		}
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
@@ -451,14 +448,14 @@ public class ReactTreeControl extends ReactControl {
 	 */
 	@SuppressWarnings("unchecked")
 	@ReactCommand("select")
-	HandlerResult handleSelect(Map<String, Object> arguments) {
+	void handleSelect(Map<String, Object> arguments) {
 		String nodeId = (String) arguments.get("nodeId");
 		boolean ctrlKey = Boolean.TRUE.equals(arguments.get("ctrlKey"));
 		boolean shiftKey = Boolean.TRUE.equals(arguments.get("shiftKey"));
 
 		Object node = findNodeById(nodeId);
 		if (node == null || !_selectionModel.isSelectable(node)) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 
 		if ("multi".equals(_selectionMode)) {
@@ -498,14 +495,13 @@ public class ReactTreeControl extends ReactControl {
 		}
 
 		buildFullState();
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
 	 * Opens a context menu at the given coordinates for a tree node.
 	 */
 	@ReactCommand("contextMenu")
-	HandlerResult handleContextMenu(Map<String, Object> arguments) {
+	void handleContextMenu(Map<String, Object> arguments) {
 		String nodeId = (String) arguments.get("nodeId");
 		Object node = findNodeById(nodeId);
 		if (node != null && _contextMenuProvider != null) {
@@ -513,7 +509,6 @@ public class ReactTreeControl extends ReactControl {
 			int y = ((Number) arguments.get("y")).intValue();
 			_contextMenuProvider.openContextMenu(this, node, x, y);
 		}
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
@@ -521,7 +516,7 @@ public class ReactTreeControl extends ReactControl {
 	 * state.
 	 */
 	@ReactCommand("dragOver")
-	HandlerResult handleDragOver(Map<String, Object> arguments) {
+	void handleDragOver(Map<String, Object> arguments) {
 		String nodeId = (String) arguments.get("nodeId");
 		String position = (String) arguments.get("position");
 		Object node = findNodeById(nodeId);
@@ -531,14 +526,13 @@ public class ReactTreeControl extends ReactControl {
 			putState(DROP_INDICATOR_NODE_ID, nodeId);
 			putState(DROP_INDICATOR_POSITION, position);
 		}
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
 	 * Handles a drop event on a tree node. Clears drop indicators and processes the drop.
 	 */
 	@ReactCommand("drop")
-	HandlerResult handleDrop(Map<String, Object> arguments) {
+	void handleDrop(Map<String, Object> arguments) {
 		String nodeId = (String) arguments.get("nodeId");
 		String position = (String) arguments.get("position");
 		Object node = findNodeById(nodeId);
@@ -554,18 +548,16 @@ public class ReactTreeControl extends ReactControl {
 			// For now, the drop event is received but not processed. Full integration
 			// requires a TreeData adapter for the React tree.
 		}
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
 	 * Clears the drop indicator state when a drag operation ends.
 	 */
 	@ReactCommand("dragEnd")
-	HandlerResult handleDragEnd() {
+	void handleDragEnd() {
 		_dropIndicatorNodeId = null;
 		_dropIndicatorPosition = null;
 		putState(DROP_INDICATOR_NODE_ID, null);
 		putState(DROP_INDICATOR_POSITION, null);
-		return HandlerResult.DEFAULT_RESULT;
 	}
 }

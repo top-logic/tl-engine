@@ -10,7 +10,6 @@ import java.util.List;
 
 import com.top_logic.layout.react.ReactCommand;
 import com.top_logic.layout.react.ReactControl;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * A {@link ReactControl} that renders a nestable, optionally collapsible form section via the
@@ -141,9 +140,8 @@ public class ReactFormGroupControl extends ReactControl {
 	 * Handles the toggleCollapse command sent when the user toggles the collapse state.
 	 */
 	@ReactCommand("toggleCollapse")
-	HandlerResult handleToggleCollapse() {
+	void handleToggleCollapse() {
 		toggleCollapsed();
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 }

@@ -13,7 +13,6 @@ import java.util.function.Consumer;
 
 import com.top_logic.layout.react.ReactCommand;
 import com.top_logic.layout.react.ReactControl;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * Popup menu triggered by an anchor element.
@@ -160,21 +159,19 @@ public class ReactMenuControl extends ReactControl {
 	 * Handles the selectItem command sent when a menu item is selected.
 	 */
 	@ReactCommand("selectItem")
-	HandlerResult handleSelectItem(Map<String, Object> arguments) {
+	void handleSelectItem(Map<String, Object> arguments) {
 		String itemId = (String) arguments.get(ITEM_ID_ARG);
 		close();
 		_selectHandler.accept(itemId);
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
 	 * Handles the close command sent when the menu is closed without selection.
 	 */
 	@ReactCommand("close")
-	HandlerResult handleClose() {
+	void handleClose() {
 		close();
 		_closeHandler.run();
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 }

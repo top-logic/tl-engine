@@ -25,7 +25,6 @@ import com.top_logic.layout.table.model.TableModelListener;
 import com.top_logic.layout.tree.model.TLTreeNode;
 import com.top_logic.layout.tree.model.TreeTableModel;
 import com.top_logic.layout.tree.model.TreeUIModel;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * Server-side React control that renders a table with virtual scrolling.
@@ -541,18 +540,17 @@ public class ReactTableControl extends ReactControl {
 	 * Handles scroll requests from the client.
 	 */
 	@ReactCommand("scroll")
-	HandlerResult handleScroll(Map<String, Object> arguments) {
+	void handleScroll(Map<String, Object> arguments) {
 		int start = ((Number) arguments.get("start")).intValue();
 		int count = ((Number) arguments.get("count")).intValue();
 		updateViewport(start, count);
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
 	 * Handles sort requests from the client.
 	 */
 	@ReactCommand("sort")
-	HandlerResult handleSort(Map<String, Object> arguments) {
+	void handleSort(Map<String, Object> arguments) {
 		String column = (String) arguments.get("column");
 		String direction = (String) arguments.get("direction");
 		boolean ascending = !"desc".equals(direction);
@@ -593,19 +591,18 @@ public class ReactTableControl extends ReactControl {
 
 		// Rebuild viewport with new sort order.
 		buildFullState();
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
 	 * Handles selection requests from the client.
 	 */
 	@ReactCommand("select")
-	HandlerResult handleSelect(Map<String, Object> arguments) {
+	void handleSelect(Map<String, Object> arguments) {
 		int rowIndex = ((Number) arguments.get("rowIndex")).intValue();
 		List<?> displayedRows = getDisplayedRows();
 
 		if (rowIndex < 0 || rowIndex >= displayedRows.size()) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 
 		boolean ctrlKey = Boolean.TRUE.equals(arguments.get("ctrlKey"));
@@ -661,14 +658,13 @@ public class ReactTableControl extends ReactControl {
 		if (_selectionListener != null) {
 			_selectionListener.selectionChanged(Collections.unmodifiableSet(_selectedRows));
 		}
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
 	 * Handles select-all / deselect-all from the header checkbox.
 	 */
 	@ReactCommand("selectAll")
-	HandlerResult handleSelectAll(Map<String, Object> arguments) {
+	void handleSelectAll(Map<String, Object> arguments) {
 		boolean selected = Boolean.TRUE.equals(arguments.get("selected"));
 
 		List<?> displayedRows = getDisplayedRows();
@@ -688,14 +684,13 @@ public class ReactTableControl extends ReactControl {
 		if (_selectionListener != null) {
 			_selectionListener.selectionChanged(Collections.unmodifiableSet(_selectedRows));
 		}
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
 	 * Handles column resize from the client.
 	 */
 	@ReactCommand("columnResize")
-	HandlerResult handleColumnResize(Map<String, Object> arguments) {
+	void handleColumnResize(Map<String, Object> arguments) {
 		String column = (String) arguments.get("column");
 		int width = Math.max(MIN_WIDTH, ((Number) arguments.get("width")).intValue());
 
@@ -708,14 +703,13 @@ public class ReactTableControl extends ReactControl {
 
 		// Push updated column definitions to client.
 		putState(COLUMNS, buildColumnsState());
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
 	 * Handles column reorder from the client.
 	 */
 	@ReactCommand("columnReorder")
-	HandlerResult handleColumnReorder(Map<String, Object> arguments) {
+	void handleColumnReorder(Map<String, Object> arguments) {
 		String column = (String) arguments.get("column");
 		int targetIndex = ((Number) arguments.get("targetIndex")).intValue();
 
@@ -729,7 +723,7 @@ public class ReactTableControl extends ReactControl {
 		}
 
 		if (moved == null) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 
 		// Clamp target index and insert.
@@ -738,16 +732,15 @@ public class ReactTableControl extends ReactControl {
 
 		// Rebuild columns and viewport (cell order in rows changes).
 		buildFullState();
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
 	 * Handles expand/collapse requests from the client.
 	 */
 	@ReactCommand("expand")
-	HandlerResult handleExpand(Map<String, Object> arguments) {
+	void handleExpand(Map<String, Object> arguments) {
 		if (_treeModel == null) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 
 		int rowIndex = ((Number) arguments.get("rowIndex")).intValue();
@@ -755,7 +748,7 @@ public class ReactTableControl extends ReactControl {
 
 		List<?> displayedRows = getDisplayedRows();
 		if (rowIndex < 0 || rowIndex >= displayedRows.size()) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 
 		Object rowObject = displayedRows.get(rowIndex);
@@ -767,7 +760,6 @@ public class ReactTableControl extends ReactControl {
 		}
 
 		buildFullState();
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**

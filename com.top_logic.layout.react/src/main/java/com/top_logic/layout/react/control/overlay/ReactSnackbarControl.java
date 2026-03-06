@@ -10,7 +10,6 @@ import java.util.Map;
 
 import com.top_logic.layout.react.ReactCommand;
 import com.top_logic.layout.react.ReactControl;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * Transient notification message displayed at the bottom of the screen.
@@ -126,10 +125,9 @@ public class ReactSnackbarControl extends ReactControl {
 	 * Handles the dismiss command sent when the snackbar is dismissed (by timer or user).
 	 */
 	@ReactCommand("dismiss")
-	HandlerResult handleDismiss() {
+	void handleDismiss() {
 		hide();
 		_dismissHandler.run();
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 }

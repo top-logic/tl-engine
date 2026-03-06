@@ -24,7 +24,6 @@ import com.top_logic.layout.react.ReactCommand;
 import com.top_logic.layout.react.ReactControl;
 import com.top_logic.layout.react.ViewDisplayContext;
 import com.top_logic.mig.html.layout.VisibilityListener;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.error.TopLogicException;
 
 import de.haumacher.msgbuf.json.JsonWriter;
@@ -268,7 +267,7 @@ public class ReactFormFieldControl extends ReactControl
 	 * Handles value changes from the React client.
 	 */
 	@ReactCommand("valueChanged")
-	HandlerResult handleValueChanged(Map<String, Object> arguments) {
+	void handleValueChanged(Map<String, Object> arguments) {
 		FormField field = getFieldModel();
 		Object newValue = arguments.get(VALUE);
 
@@ -281,8 +280,6 @@ public class ReactFormFieldControl extends ReactControl
 		} catch (VetoException ex) {
 			throw new TopLogicException(I18NConstants.ERROR_COMMAND_FAILED__MSG.fill(ex.getMessage()), ex);
 		}
-
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 }

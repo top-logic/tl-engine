@@ -7,3 +7,5 @@
 /src/main/webapp/style/_*.css
 /.settings/com.gwtplugins.gwt.eclipse.core.prefs
 /**/*~
+/node
+/node_modules

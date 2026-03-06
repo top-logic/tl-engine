@@ -16,12 +16,10 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
-import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.basic.ControlCommand;
 import com.top_logic.layout.basic.DefaultDisplayContext;
+import com.top_logic.layout.react.ReactCommand;
 import com.top_logic.layout.react.ReactControl;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -76,10 +74,6 @@ public class DemoReactCounterComponent extends LayoutComponent {
 		/** State key for the display label. */
 		private static final String LABEL = "label";
 
-		private static final Map<String, ControlCommand> COMMANDS = createCommandMap(
-			new IncrementCommand(),
-			new DecrementCommand());
-
 		/** Creates a new {@link DemoCounterControl} with default label. */
 		public DemoCounterControl() {
 			this(null);
@@ -92,63 +86,25 @@ public class DemoReactCounterComponent extends LayoutComponent {
 		 *        The display label, or {@code null} for the default.
 		 */
 		public DemoCounterControl(String label) {
-			super(null, "TLCounter", COMMANDS);
+			super(null, "TLCounter");
 			putState(COUNT, 0);
 			if (label != null) {
 				putState(LABEL, label);
 			}
 		}
 
-		/**
-		 * Increments the counter.
-		 */
-		public static class IncrementCommand extends ControlCommand {
-
-			static final String COMMAND = "increment";
-
-			/** Creates an {@link IncrementCommand}. */
-			public IncrementCommand() {
-				super(COMMAND);
-			}
-
-			@Override
-			public ResKey getI18NKey() {
-				return ResKey.legacy("demo.react.counter.increment");
-			}
-
-			@Override
-			protected HandlerResult execute(DisplayContext context, Control control, Map<String, Object> arguments) {
-				ReactControl reactControl = (ReactControl) control;
-				int count = ((Number) reactControl.getReactState().get(COUNT)).intValue();
-				reactControl.patchReactState(Collections.singletonMap(COUNT, count + 1));
-				return HandlerResult.DEFAULT_RESULT;
-			}
+		@ReactCommand("increment")
+		HandlerResult handleIncrement() {
+			int count = ((Number) getReactState().get(COUNT)).intValue();
+			patchReactState(Collections.singletonMap(COUNT, count + 1));
+			return HandlerResult.DEFAULT_RESULT;
 		}
 
-		/**
-		 * Decrements the counter.
-		 */
-		public static class DecrementCommand extends ControlCommand {
-
-			static final String COMMAND = "decrement";
-
-			/** Creates a {@link DecrementCommand}. */
-			public DecrementCommand() {
-				super(COMMAND);
-			}
-
-			@Override
-			public ResKey getI18NKey() {
-				return ResKey.legacy("demo.react.counter.decrement");
-			}
-
-			@Override
-			protected HandlerResult execute(DisplayContext context, Control control, Map<String, Object> arguments) {
-				ReactControl reactControl = (ReactControl) control;
-				int count = ((Number) reactControl.getReactState().get(COUNT)).intValue();
-				reactControl.patchReactState(Collections.singletonMap(COUNT, count - 1));
-				return HandlerResult.DEFAULT_RESULT;
-			}
+		@ReactCommand("decrement")
+		HandlerResult handleDecrement() {
+			int count = ((Number) getReactState().get(COUNT)).intValue();
+			patchReactState(Collections.singletonMap(COUNT, count - 1));
+			return HandlerResult.DEFAULT_RESULT;
 		}
 	}
 

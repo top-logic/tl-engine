@@ -11,6 +11,7 @@ import java.util.Map;
 import com.top_logic.layout.react.ViewDisplayContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.command.CommandScope;
 
 /**
  * Hierarchical context for UIElement control creation.
@@ -28,6 +29,8 @@ public class ViewContext {
 
 	private final Map<String, ViewChannel> _channels;
 
+	private final CommandScope _commandScope;
+
 	/**
 	 * Creates a root {@link ViewContext}.
 	 *
@@ -36,14 +39,15 @@ public class ViewContext {
 	 *        infrastructure.
 	 */
 	public ViewContext(ViewDisplayContext displayContext) {
-		this(displayContext, "view", new HashMap<>());
+		this(displayContext, "view", new HashMap<>(), null);
 	}
 
 	private ViewContext(ViewDisplayContext displayContext, String personalizationPath,
-			Map<String, ViewChannel> channels) {
+			Map<String, ViewChannel> channels, CommandScope commandScope) {
 		_displayContext = displayContext;
 		_personalizationPath = personalizationPath;
 		_channels = channels;
+		_commandScope = commandScope;
 	}
 
 	/**
@@ -58,7 +62,7 @@ public class ViewContext {
 	 * @return A new context with the extended personalization path.
 	 */
 	public ViewContext childContext(String segment) {
-		return new ViewContext(_displayContext, _personalizationPath + "." + segment, _channels);
+		return new ViewContext(_displayContext, _personalizationPath + "." + segment, _channels, _commandScope);
 	}
 
 	/**
@@ -78,6 +82,30 @@ public class ViewContext {
 	 */
 	public ViewDisplayContext getDisplayContext() {
 		return _displayContext;
+	}
+
+	/**
+	 * The {@link CommandScope} of the nearest enclosing panel, or {@code null} if no panel is in
+	 * scope.
+	 */
+	public CommandScope getCommandScope() {
+		return _commandScope;
+	}
+
+	/**
+	 * Creates a derived context with the given {@link CommandScope}.
+	 *
+	 * <p>
+	 * Called by panel elements to establish their command scope for child elements.
+	 * </p>
+	 *
+	 * @param scope
+	 *        The command scope to set.
+	 * @return A new context with the given command scope but same display context, personalization
+	 *         path, and channels.
+	 */
+	public ViewContext withCommandScope(CommandScope scope) {
+		return new ViewContext(_displayContext, _personalizationPath, _channels, scope);
 	}
 
 	/**

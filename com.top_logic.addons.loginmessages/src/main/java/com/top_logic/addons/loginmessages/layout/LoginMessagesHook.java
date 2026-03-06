@@ -14,13 +14,11 @@ import com.top_logic.addons.loginmessages.model.LoginMessagesUtil;
 import com.top_logic.addons.loginmessages.model.intf.LoginMessage;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.CollectionUtil;
-import com.top_logic.basic.config.ApplicationConfig;
-import com.top_logic.basic.config.ConfigurationException;
-import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.xml.TagWriter;
-import com.top_logic.knowledge.gui.layout.TLMainLayout;
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
@@ -34,32 +32,35 @@ import com.top_logic.layout.messagebox.MessageBox.ButtonType;
 import com.top_logic.layout.messagebox.MessageBoxShortcuts;
 import com.top_logic.layout.structure.DefaultDialogModel;
 import com.top_logic.layout.structure.DefaultLayoutData;
+import com.top_logic.layout.structure.DialogClosedListener;
+import com.top_logic.layout.structure.DialogModel;
 import com.top_logic.layout.structure.LayoutData;
 import com.top_logic.layout.structure.Scrolling;
 import com.top_logic.layout.wysiwyg.ui.StructuredText;
 import com.top_logic.layout.wysiwyg.ui.StructuredTextControl;
 import com.top_logic.layout.wysiwyg.ui.StructuredTextFieldFactory;
 import com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText;
+import com.top_logic.mig.html.layout.LoginHook;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
- * A {@link TLMainLayout} able to show {@link LoginMessage}s.
+ * A {@link LoginHook} to show {@link LoginMessage}s.
  *
  * @author <a href="mailto:Dmitry.Ivanizki@top-logic.com">Dmitry Ivanizki</a>
  */
-public class LoginMessagesMainLayout extends TLMainLayout {
+public class LoginMessagesHook extends AbstractConfiguredInstance<LoginMessagesHook.Config> implements LoginHook {
 
 	/**
-	 * Configuration for {@link LoginMessagesMainLayout}.
+	 * Configuration for {@link LoginMessagesHook}.
 	 */
-	public interface GlobalConfig extends ConfigurationItem {
+	public interface Config extends PolymorphicConfiguration<LoginMessagesHook> {
+
 		/**
-		 * Whether to show {@link LoginMessage}s on application start. See
-		 * {@link GlobalConfig#getShowLoginMessages}.
+		 * Configuration name for {@link #getShowLoginMessages}.
 		 */
 		String SHOW_LOGIN_MESSAGES = "showLoginMessages";
 
-		/** Getter for {@link GlobalConfig#SHOW_LOGIN_MESSAGES}. */
+		/** Whether to show {@link LoginMessage}s on application start. */
 		@Name(SHOW_LOGIN_MESSAGES)
 		boolean getShowLoginMessages();
 	}
@@ -79,45 +80,65 @@ public class LoginMessagesMainLayout extends TLMainLayout {
 	private final boolean _showLoginMessages;
 
 	/**
-	 * Creates a new {@link LoginMessagesMainLayout}.
+	 * Creates a new {@link LoginMessagesHook}.
 	 */
-	public LoginMessagesMainLayout(InstantiationContext context, Config atts) throws ConfigurationException {
+	public LoginMessagesHook(InstantiationContext context, Config atts) {
 		super(context, atts);
-		_showLoginMessages = ApplicationConfig.getInstance().getConfig(GlobalConfig.class).getShowLoginMessages();
+		_showLoginMessages = atts.getShowLoginMessages();
 	}
 
-	/**
-	 * Append the goto handling to the start page.
-	 */
 	@Override
-	protected void initialValidateModel(DisplayContext aContext) {
-		super.initialValidateModel(aContext);
+	public void handleLogin(DisplayContext context, Runnable callback) {
 		if (_showLoginMessages) {
-			showLoginMessages(aContext);
+			showLoginMessages(context, callback);
+		} else {
+			callback.run();
 		}
+
 	}
 
-	private void showLoginMessages(DisplayContext aContext) {
+	private void showLoginMessages(DisplayContext aContext, Runnable callback) {
 		final PersonalConfiguration configuration = PersonalConfiguration.getPersonalConfiguration();
 		for (LoginMessage loginMessage : LoginMessagesUtil.getLoginMessagesSortedByNameDescending()) {
-			showLoginMessage(aContext, configuration, loginMessage);
+			if (loginMessage.getActive()
+				&& LoginMessagesUtil.isInTimeInterval(loginMessage)
+				&& LoginMessagesUtil.isConfirmExpired(configuration, loginMessage)) {
+
+				DialogClosedListener continuation;
+				if (callback != null) {
+					continuation = runOnDialogClose(callback);
+					// Run continuation when the first opened dialog was closed.
+					callback = null;
+				} else {
+					continuation = null;
+				}
+				showLoginMessageDialog(aContext, configuration, loginMessage, continuation);
+			}
+		}
+		if (callback != null) {
+			// No dialog was opened.
+			callback.run();
 		}
 	}
 
-	private void showLoginMessage(DisplayContext aContext, final PersonalConfiguration configuration, LoginMessage loginMessage) {
-		if (loginMessage.getActive()
-			&& LoginMessagesUtil.isInTimeInterval(loginMessage)
-			&& LoginMessagesUtil.isConfirmExpired(configuration, loginMessage)) {
-			showLoginMessageDialog(aContext, configuration, loginMessage);
-		}
+	private static DialogClosedListener runOnDialogClose(Runnable callback) {
+		return (Object sender, Boolean oldValue, Boolean newValue) -> {
+			if (newValue) {
+				callback.run();
+			}
+		};
 	}
 
 	private void showLoginMessageDialog(DisplayContext aContext, final PersonalConfiguration configuration,
-			LoginMessage loginMessage) {
+			LoginMessage loginMessage, DialogClosedListener closeListener) {
 		final DefaultDialogModel dialogModel = createLoginMessageDialogModel(loginMessage);
+		if (closeListener != null) {
+			dialogModel.addListener(DialogModel.CLOSED_PROPERTY, closeListener);
+		}
 		HTMLFragment dialogContent = createLoginMessageDialogContent(loginMessage);
 		CommandModel dialogButton = createLoginMessageDialogButton(configuration, loginMessage, dialogModel);
 		dialogModel.setDefaultCommand(dialogButton);
+
 		MessageBoxShortcuts.open(aContext, dialogModel, dialogContent, CollectionUtil.intoList(dialogButton));
 	}
 

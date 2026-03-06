@@ -5,7 +5,6 @@
  */
 package com.top_logic.layout.react.control.tree;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -13,13 +12,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.top_logic.basic.util.ResKey;
-import com.top_logic.basic.xml.TagWriter;
-import com.top_logic.layout.Control;
-import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.basic.ControlCommand;
+import com.top_logic.layout.react.ReactCommand;
 import com.top_logic.layout.react.ReactControl;
 import com.top_logic.layout.react.ReactControlProvider;
+import com.top_logic.layout.react.ViewDisplayContext;
 import com.top_logic.layout.tree.dnd.TreeDropTarget;
 import com.top_logic.layout.tree.model.TreeUIModel;
 import com.top_logic.mig.html.SelectionModel;
@@ -50,10 +46,10 @@ public class ReactTreeControl extends ReactControl {
 	/** @see #setDropEnabled(boolean) */
 	private static final String DROP_ENABLED = "dropEnabled";
 
-	/** @see DragOverCommand */
+	/** @see #handleDragOver(Map) */
 	private static final String DROP_INDICATOR_NODE_ID = "dropIndicatorNodeId";
 
-	/** @see DragOverCommand */
+	/** @see #handleDragOver(Map) */
 	private static final String DROP_INDICATOR_POSITION = "dropIndicatorPosition";
 
 	// -- Node state keys (used in {@link #addNodeState}) --
@@ -81,17 +77,6 @@ public class ReactTreeControl extends ReactControl {
 
 	/** The child {@link ReactControl} rendering the node content. */
 	private static final String NODE_CONTENT = "content";
-
-	// -- Commands --
-
-	private static final Map<String, ControlCommand> COMMANDS = createCommandMap(
-		new ExpandCommand(),
-		new CollapseCommand(),
-		new SelectCommand(),
-		new ContextMenuCommand(),
-		new DragOverCommand(),
-		new DropCommand(),
-		new DragEndCommand());
 
 	// -- Nested interfaces --
 
@@ -162,7 +147,7 @@ public class ReactTreeControl extends ReactControl {
 	@SuppressWarnings("unchecked")
 	public ReactTreeControl(TreeUIModel<?> treeModel, SelectionModel<?> selectionModel,
 			ReactControlProvider contentProvider) {
-		super(null, "TLTreeView", COMMANDS);
+		super(null, "TLTreeView");
 		_treeModel = (TreeUIModel<Object>) treeModel;
 		_selectionModel = selectionModel;
 		_contentProvider = contentProvider;
@@ -241,7 +226,7 @@ public class ReactTreeControl extends ReactControl {
 	// -- Rendering --
 
 	@Override
-	protected void internalWrite(DisplayContext context, TagWriter out) throws IOException {
+	protected void onBeforeWrite(ViewDisplayContext context) {
 		if (_nodeControlCache.isEmpty()) {
 			// After a detach/reattach cycle, _nodeControlCache was cleared by cleanupNodeControls()
 			// but _reactState still has stale node references. Rebuild the cache and state from the
@@ -249,7 +234,6 @@ public class ReactTreeControl extends ReactControl {
 			// without sending a PatchEvent.
 			buildFullState();
 		}
-		super.internalWrite(context, out);
 	}
 
 	// -- State building --
@@ -428,265 +412,160 @@ public class ReactTreeControl extends ReactControl {
 	/**
 	 * Expands a tree node, loading children and prefetching grandchildren.
 	 */
-	static class ExpandCommand extends ControlCommand {
+	@ReactCommand("expand")
+	HandlerResult handleExpand(Map<String, Object> arguments) {
+		String nodeId = (String) arguments.get("nodeId");
+		Object node = findNodeById(nodeId);
+		if (node != null && !_treeModel.isLeaf(node) && !_treeModel.isExpanded(node)) {
+			_treeModel.setExpanded(node, true);
 
-		private static final String COMMAND_NAME = "expand";
-
-		ExpandCommand() {
-			super(COMMAND_NAME);
-		}
-
-		@Override
-		protected HandlerResult execute(DisplayContext context, Control control, Map<String, Object> arguments) {
-			ReactTreeControl tree = (ReactTreeControl) control;
-			String nodeId = (String) arguments.get("nodeId");
-			Object node = tree.findNodeById(nodeId);
-			if (node != null && !tree._treeModel.isLeaf(node) && !tree._treeModel.isExpanded(node)) {
-				tree._treeModel.setExpanded(node, true);
-
-				// Prefetch grandchildren: trigger getChildren on each child.
-				for (Object child : tree._treeModel.getChildren(node)) {
-					if (!tree._treeModel.isLeaf(child)) {
-						// Access children to trigger lazy loading.
-						tree._treeModel.getChildren(child);
-					}
+			// Prefetch grandchildren: trigger getChildren on each child.
+			for (Object child : _treeModel.getChildren(node)) {
+				if (!_treeModel.isLeaf(child)) {
+					// Access children to trigger lazy loading.
+					_treeModel.getChildren(child);
 				}
-
-				tree.buildFullState();
 			}
-			return HandlerResult.DEFAULT_RESULT;
-		}
 
-		@Override
-		public ResKey getI18NKey() {
-			return ResKey.legacy("react.tree.expand");
+			buildFullState();
 		}
+		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
 	 * Collapses a tree node, removing its children from the visible list.
 	 */
-	static class CollapseCommand extends ControlCommand {
-
-		private static final String COMMAND_NAME = "collapse";
-
-		CollapseCommand() {
-			super(COMMAND_NAME);
+	@ReactCommand("collapse")
+	HandlerResult handleCollapse(Map<String, Object> arguments) {
+		String nodeId = (String) arguments.get("nodeId");
+		Object node = findNodeById(nodeId);
+		if (node != null && _treeModel.isExpanded(node)) {
+			_treeModel.setExpanded(node, false);
+			buildFullState();
 		}
-
-		@Override
-		protected HandlerResult execute(DisplayContext context, Control control, Map<String, Object> arguments) {
-			ReactTreeControl tree = (ReactTreeControl) control;
-			String nodeId = (String) arguments.get("nodeId");
-			Object node = tree.findNodeById(nodeId);
-			if (node != null && tree._treeModel.isExpanded(node)) {
-				tree._treeModel.setExpanded(node, false);
-				tree.buildFullState();
-			}
-			return HandlerResult.DEFAULT_RESULT;
-		}
-
-		@Override
-		public ResKey getI18NKey() {
-			return ResKey.legacy("react.tree.collapse");
-		}
+		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
 	 * Selects a tree node. Supports single, toggle (Ctrl), and range (Shift) selection.
 	 */
-	static class SelectCommand extends ControlCommand {
+	@SuppressWarnings("unchecked")
+	@ReactCommand("select")
+	HandlerResult handleSelect(Map<String, Object> arguments) {
+		String nodeId = (String) arguments.get("nodeId");
+		boolean ctrlKey = Boolean.TRUE.equals(arguments.get("ctrlKey"));
+		boolean shiftKey = Boolean.TRUE.equals(arguments.get("shiftKey"));
 
-		private static final String COMMAND_NAME = "select";
-
-		SelectCommand() {
-			super(COMMAND_NAME);
-		}
-
-		@SuppressWarnings("unchecked")
-		@Override
-		protected HandlerResult execute(DisplayContext context, Control control, Map<String, Object> arguments) {
-			ReactTreeControl tree = (ReactTreeControl) control;
-			String nodeId = (String) arguments.get("nodeId");
-			boolean ctrlKey = Boolean.TRUE.equals(arguments.get("ctrlKey"));
-			boolean shiftKey = Boolean.TRUE.equals(arguments.get("shiftKey"));
-
-			Object node = tree.findNodeById(nodeId);
-			if (node == null || !tree._selectionModel.isSelectable(node)) {
-				return HandlerResult.DEFAULT_RESULT;
-			}
-
-			if ("multi".equals(tree._selectionMode)) {
-				if (shiftKey && tree._selectionAnchor >= 0) {
-					// Range selection.
-					List<Object> visibleNodes = tree.collectVisibleNodes();
-					int clickedIndex = visibleNodes.indexOf(node);
-					if (clickedIndex >= 0) {
-						int from = Math.min(tree._selectionAnchor, clickedIndex);
-						int to = Math.max(tree._selectionAnchor, clickedIndex);
-						for (int i = from; i <= to; i++) {
-							Object rangeNode = visibleNodes.get(i);
-							if (tree._selectionModel.isSelectable(rangeNode)) {
-								tree._selectionModel.setSelected(rangeNode, tree._anchorAdded);
-							}
-						}
-					}
-				} else if (ctrlKey) {
-					// Toggle selection.
-					boolean wasSelected = tree._selectionModel.isSelected(node);
-					tree._selectionModel.setSelected(node, !wasSelected);
-					tree._anchorAdded = !wasSelected;
-					List<Object> visibleNodes = tree.collectVisibleNodes();
-					tree._selectionAnchor = visibleNodes.indexOf(node);
-				} else {
-					// Single click in multi mode: replace selection.
-					tree._selectionModel.clear();
-					tree._selectionModel.setSelected(node, true);
-					tree._anchorAdded = true;
-					List<Object> visibleNodes = tree.collectVisibleNodes();
-					tree._selectionAnchor = visibleNodes.indexOf(node);
-				}
-			} else {
-				// Single select mode.
-				tree._selectionModel.clear();
-				tree._selectionModel.setSelected(node, true);
-			}
-
-			tree.buildFullState();
+		Object node = findNodeById(nodeId);
+		if (node == null || !_selectionModel.isSelectable(node)) {
 			return HandlerResult.DEFAULT_RESULT;
 		}
 
-		@Override
-		public ResKey getI18NKey() {
-			return ResKey.legacy("react.tree.select");
+		if ("multi".equals(_selectionMode)) {
+			if (shiftKey && _selectionAnchor >= 0) {
+				// Range selection.
+				List<Object> visibleNodes = collectVisibleNodes();
+				int clickedIndex = visibleNodes.indexOf(node);
+				if (clickedIndex >= 0) {
+					int from = Math.min(_selectionAnchor, clickedIndex);
+					int to = Math.max(_selectionAnchor, clickedIndex);
+					for (int i = from; i <= to; i++) {
+						Object rangeNode = visibleNodes.get(i);
+						if (_selectionModel.isSelectable(rangeNode)) {
+							_selectionModel.setSelected(rangeNode, _anchorAdded);
+						}
+					}
+				}
+			} else if (ctrlKey) {
+				// Toggle selection.
+				boolean wasSelected = _selectionModel.isSelected(node);
+				_selectionModel.setSelected(node, !wasSelected);
+				_anchorAdded = !wasSelected;
+				List<Object> visibleNodes = collectVisibleNodes();
+				_selectionAnchor = visibleNodes.indexOf(node);
+			} else {
+				// Single click in multi mode: replace selection.
+				_selectionModel.clear();
+				_selectionModel.setSelected(node, true);
+				_anchorAdded = true;
+				List<Object> visibleNodes = collectVisibleNodes();
+				_selectionAnchor = visibleNodes.indexOf(node);
+			}
+		} else {
+			// Single select mode.
+			_selectionModel.clear();
+			_selectionModel.setSelected(node, true);
 		}
+
+		buildFullState();
+		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
 	 * Opens a context menu at the given coordinates for a tree node.
 	 */
-	static class ContextMenuCommand extends ControlCommand {
-
-		private static final String COMMAND_NAME = "contextMenu";
-
-		ContextMenuCommand() {
-			super(COMMAND_NAME);
+	@ReactCommand("contextMenu")
+	HandlerResult handleContextMenu(Map<String, Object> arguments) {
+		String nodeId = (String) arguments.get("nodeId");
+		Object node = findNodeById(nodeId);
+		if (node != null && _contextMenuProvider != null) {
+			int x = ((Number) arguments.get("x")).intValue();
+			int y = ((Number) arguments.get("y")).intValue();
+			_contextMenuProvider.openContextMenu(this, node, x, y);
 		}
-
-		@Override
-		protected HandlerResult execute(DisplayContext context, Control control, Map<String, Object> arguments) {
-			ReactTreeControl tree = (ReactTreeControl) control;
-			String nodeId = (String) arguments.get("nodeId");
-			Object node = tree.findNodeById(nodeId);
-			if (node != null && tree._contextMenuProvider != null) {
-				int x = ((Number) arguments.get("x")).intValue();
-				int y = ((Number) arguments.get("y")).intValue();
-				tree._contextMenuProvider.openContextMenu(tree, node, x, y);
-			}
-			return HandlerResult.DEFAULT_RESULT;
-		}
-
-		@Override
-		public ResKey getI18NKey() {
-			return ResKey.legacy("react.tree.contextMenu");
-		}
+		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
 	 * Evaluates whether a drop is allowed at the given position and updates the drop indicator
 	 * state.
 	 */
-	static class DragOverCommand extends ControlCommand {
-
-		private static final String COMMAND_NAME = "dragOver";
-
-		DragOverCommand() {
-			super(COMMAND_NAME);
+	@ReactCommand("dragOver")
+	HandlerResult handleDragOver(Map<String, Object> arguments) {
+		String nodeId = (String) arguments.get("nodeId");
+		String position = (String) arguments.get("position");
+		Object node = findNodeById(nodeId);
+		if (node != null) {
+			_dropIndicatorNodeId = nodeId;
+			_dropIndicatorPosition = position;
+			putState(DROP_INDICATOR_NODE_ID, nodeId);
+			putState(DROP_INDICATOR_POSITION, position);
 		}
-
-		@Override
-		protected HandlerResult execute(DisplayContext context, Control control, Map<String, Object> arguments) {
-			ReactTreeControl tree = (ReactTreeControl) control;
-			String nodeId = (String) arguments.get("nodeId");
-			String position = (String) arguments.get("position");
-			Object node = tree.findNodeById(nodeId);
-			if (node != null) {
-				tree._dropIndicatorNodeId = nodeId;
-				tree._dropIndicatorPosition = position;
-				tree.putState(DROP_INDICATOR_NODE_ID, nodeId);
-				tree.putState(DROP_INDICATOR_POSITION, position);
-			}
-			return HandlerResult.DEFAULT_RESULT;
-		}
-
-		@Override
-		public ResKey getI18NKey() {
-			return ResKey.legacy("react.tree.dragOver");
-		}
+		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
 	 * Handles a drop event on a tree node. Clears drop indicators and processes the drop.
 	 */
-	static class DropCommand extends ControlCommand {
+	@ReactCommand("drop")
+	HandlerResult handleDrop(Map<String, Object> arguments) {
+		String nodeId = (String) arguments.get("nodeId");
+		String position = (String) arguments.get("position");
+		Object node = findNodeById(nodeId);
 
-		private static final String COMMAND_NAME = "drop";
+		// Clear drop indicators.
+		_dropIndicatorNodeId = null;
+		_dropIndicatorPosition = null;
+		putState(DROP_INDICATOR_NODE_ID, null);
+		putState(DROP_INDICATOR_POSITION, null);
 
-		DropCommand() {
-			super(COMMAND_NAME);
+		if (node != null) {
+			// TODO: Integrate with full DnD framework (DndData, TreeDropTarget.handleDrop).
+			// For now, the drop event is received but not processed. Full integration
+			// requires a TreeData adapter for the React tree.
 		}
-
-		@Override
-		protected HandlerResult execute(DisplayContext context, Control control, Map<String, Object> arguments) {
-			ReactTreeControl tree = (ReactTreeControl) control;
-			String nodeId = (String) arguments.get("nodeId");
-			String position = (String) arguments.get("position");
-			Object node = tree.findNodeById(nodeId);
-
-			// Clear drop indicators.
-			tree._dropIndicatorNodeId = null;
-			tree._dropIndicatorPosition = null;
-			tree.putState(DROP_INDICATOR_NODE_ID, null);
-			tree.putState(DROP_INDICATOR_POSITION, null);
-
-			if (node != null) {
-				// TODO: Integrate with full DnD framework (DndData, TreeDropTarget.handleDrop).
-				// For now, the drop event is received but not processed. Full integration
-				// requires a TreeData adapter for the React tree.
-			}
-			return HandlerResult.DEFAULT_RESULT;
-		}
-
-		@Override
-		public ResKey getI18NKey() {
-			return ResKey.legacy("react.tree.drop");
-		}
+		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
 	 * Clears the drop indicator state when a drag operation ends.
 	 */
-	static class DragEndCommand extends ControlCommand {
-
-		private static final String COMMAND_NAME = "dragEnd";
-
-		DragEndCommand() {
-			super(COMMAND_NAME);
-		}
-
-		@Override
-		protected HandlerResult execute(DisplayContext context, Control control, Map<String, Object> arguments) {
-			ReactTreeControl tree = (ReactTreeControl) control;
-			tree._dropIndicatorNodeId = null;
-			tree._dropIndicatorPosition = null;
-			tree.putState(DROP_INDICATOR_NODE_ID, null);
-			tree.putState(DROP_INDICATOR_POSITION, null);
-			return HandlerResult.DEFAULT_RESULT;
-		}
-
-		@Override
-		public ResKey getI18NKey() {
-			return ResKey.legacy("react.tree.dragEnd");
-		}
+	@ReactCommand("dragEnd")
+	HandlerResult handleDragEnd() {
+		_dropIndicatorNodeId = null;
+		_dropIndicatorPosition = null;
+		putState(DROP_INDICATOR_NODE_ID, null);
+		putState(DROP_INDICATOR_POSITION, null);
+		return HandlerResult.DEFAULT_RESULT;
 	}
 }

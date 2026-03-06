@@ -60,9 +60,8 @@ public class ReactAudioPlayerControl extends ReactControl implements DataProvide
 	}
 
 	@Override
-	protected void internalDetach() {
+	protected void onCleanup() {
 		_model.removeListener(_modelListener);
-		super.internalDetach();
 	}
 
 	private void handleModelChanged(BinaryData data) {

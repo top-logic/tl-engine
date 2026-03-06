@@ -14,8 +14,8 @@ import java.util.Set;
 
 import com.top_logic.layout.react.ReactCommand;
 import com.top_logic.layout.react.ReactControl;
-import com.top_logic.layout.react.ReactControlProvider;
 import com.top_logic.layout.react.ViewDisplayContext;
+import com.top_logic.layout.react.controlprovider.ReactControlProvider;
 import com.top_logic.layout.tree.dnd.TreeDropTarget;
 import com.top_logic.layout.tree.model.TreeUIModel;
 import com.top_logic.mig.html.SelectionModel;

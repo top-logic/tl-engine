@@ -3,7 +3,9 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.layout.react;
+package com.top_logic.layout.react.controlprovider;
+
+import com.top_logic.layout.react.ReactControl;
 
 /**
  * Generic provider that creates {@link ReactControl}s for model objects.

@@ -4,7 +4,11 @@
 		<panes>
 			<pane size="30" unit="%" min-size="200">
 				<card title="Navigation" variant="elevated">
-					<button label="Item 1"/>
+					<button>
+						<action class="com.top_logic.demo.view.command.DemoCommand"
+							label="Item 1"
+						/>
+					</button>
 				</card>
 			</pane>
 			<pane size="70" unit="%">

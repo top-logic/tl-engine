@@ -9,10 +9,18 @@
 				<demo-counter label="Reviews"/>
 			</card>
 			<card title="Team Notes">
-				<button label="Open Details"/>
+				<button>
+					<action class="com.top_logic.demo.view.command.DemoCommand"
+						label="Open Details"
+					/>
+				</button>
 			</card>
 			<card title="Quick Add">
-				<button label="+ New Task"/>
+				<button>
+					<action class="com.top_logic.demo.view.command.DemoCommand"
+						label="+ New Task"
+					/>
+				</button>
 			</card>
 		</grid>
 	</stack>

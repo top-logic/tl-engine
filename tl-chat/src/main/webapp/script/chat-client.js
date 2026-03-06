@@ -802,12 +802,13 @@
     var activeInteraction = null;
 
     function showInteractionBanner(request) {
-        // 1. Render question as a temporary agent message bubble (plain text, escaped)
+        // 1. Render question as a temporary agent message bubble (with markdown rendering)
         appendMessage(el.messages, {
             id: "interaction-q-" + request.requestId,
             role: "agent",
             userName: "Agent",
             content: request.question,
+            contentHtml: request.questionHtml,
             time: new Date().toISOString(),
             interactionTemp: true
         });

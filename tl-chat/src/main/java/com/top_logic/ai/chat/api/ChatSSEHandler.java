@@ -36,6 +36,7 @@ import com.top_logic.ai.chat.layout.ChatTimelineEvent;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.ai.service.approval.UserInteractionRequest;
 import com.top_logic.ai.service.approval.UserInteractionStore;
+import com.top_logic.ai.service.scripting.Converters;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.thread.ThreadContextManager;
 
@@ -390,9 +391,12 @@ public class ChatSSEHandler {
 
 	private void emitUserInteraction(UserInteractionRequest req) {
 		try {
+			String questionHtml = Converters.markdownToHtmlString(req.getQuestion());
+
 			StringBuilder json = new StringBuilder();
 			json.append("{\"requestId\":\"").append(escapeJson(req.getId())).append("\",");
 			json.append("\"question\":\"").append(escapeJson(req.getQuestion())).append("\",");
+			json.append("\"questionHtml\":\"").append(escapeJson(questionHtml)).append("\",");
 			json.append("\"header\":\"").append(escapeJson(req.getHeader())).append("\",");
 			json.append("\"type\":\"").append(escapeJson(req.getType())).append("\"");
 			if (req.getOptions() != null && !req.getOptions().isEmpty()) {

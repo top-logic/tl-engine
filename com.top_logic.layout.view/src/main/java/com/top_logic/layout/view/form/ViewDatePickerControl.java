@@ -7,10 +7,9 @@ package com.top_logic.layout.view.form;
 
 import java.util.Map;
 
-import com.top_logic.layout.basic.ControlCommand;
+import com.top_logic.layout.react.ReactCommand;
 import com.top_logic.layout.react.ReactControl;
 import com.top_logic.layout.view.form.ViewFieldValueChanged.ValueCallback;
-import com.top_logic.layout.view.form.ViewFieldValueChanged.ValueChangeHandler;
 
 /**
  * Lean date picker control that renders via the {@code TLDatePicker} React component.
@@ -20,16 +19,13 @@ import com.top_logic.layout.view.form.ViewFieldValueChanged.ValueChangeHandler;
  * parsing is deferred to the consumer of the value callback.
  * </p>
  */
-public class ViewDatePickerControl extends ReactControl implements ValueChangeHandler {
+public class ViewDatePickerControl extends ReactControl {
 
 	/** State key for the field value. */
 	private static final String VALUE = "value";
 
 	/** State key for whether the field is editable. */
 	private static final String EDITABLE = "editable";
-
-	private static final Map<String, ControlCommand> COMMANDS =
-		createCommandMap(ViewFieldValueChanged.INSTANCE);
 
 	private ValueCallback _valueCallback;
 
@@ -42,7 +38,7 @@ public class ViewDatePickerControl extends ReactControl implements ValueChangeHa
 	 *        Whether the field is editable.
 	 */
 	public ViewDatePickerControl(Object value, boolean editable) {
-		super(null, "TLDatePicker", COMMANDS);
+		super(null, "TLDatePicker");
 		putState(VALUE, value);
 		putState(EDITABLE, Boolean.valueOf(editable));
 	}
@@ -77,10 +73,13 @@ public class ViewDatePickerControl extends ReactControl implements ValueChangeHa
 		_valueCallback = callback;
 	}
 
-	@Override
-	public void handleValueChanged(Object rawValue) {
+	/**
+	 * Handles value change events from the client.
+	 */
+	@ReactCommand("valueChanged")
+	void handleValueChanged(Map<String, Object> arguments) {
 		if (_valueCallback != null) {
-			_valueCallback.valueChanged(rawValue);
+			_valueCallback.valueChanged(arguments.get(VALUE));
 		}
 	}
 }

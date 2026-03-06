@@ -8,10 +8,9 @@ package com.top_logic.layout.view.form;
 import java.util.Collections;
 import java.util.Map;
 
-import com.top_logic.layout.basic.ControlCommand;
+import com.top_logic.layout.react.ReactCommand;
 import com.top_logic.layout.react.ReactControl;
 import com.top_logic.layout.view.form.ViewFieldValueChanged.ValueCallback;
-import com.top_logic.layout.view.form.ViewFieldValueChanged.ValueChangeHandler;
 
 /**
  * Lean number input control that renders via the {@code TLNumberInput} React component.
@@ -21,7 +20,7 @@ import com.top_logic.layout.view.form.ViewFieldValueChanged.ValueChangeHandler;
  * configurable decimal places.
  * </p>
  */
-public class ViewNumberInputControl extends ReactControl implements ValueChangeHandler {
+public class ViewNumberInputControl extends ReactControl {
 
 	/** State key for the field value. */
 	private static final String VALUE = "value";
@@ -31,9 +30,6 @@ public class ViewNumberInputControl extends ReactControl implements ValueChangeH
 
 	/** State key for the configuration map. */
 	private static final String CONFIG = "config";
-
-	private static final Map<String, ControlCommand> COMMANDS =
-		createCommandMap(ViewFieldValueChanged.INSTANCE);
 
 	private ValueCallback _valueCallback;
 
@@ -49,7 +45,7 @@ public class ViewNumberInputControl extends ReactControl implements ValueChangeH
 	 *        is sent to the React component.
 	 */
 	public ViewNumberInputControl(Number value, boolean editable, int decimalPlaces) {
-		super(null, "TLNumberInput", COMMANDS);
+		super(null, "TLNumberInput");
 		putState(VALUE, value);
 		putState(EDITABLE, Boolean.valueOf(editable));
 		if (decimalPlaces > 0) {
@@ -87,9 +83,12 @@ public class ViewNumberInputControl extends ReactControl implements ValueChangeH
 		_valueCallback = callback;
 	}
 
-	@Override
-	public void handleValueChanged(Object rawValue) {
-		Number newValue = (Number) rawValue;
+	/**
+	 * Handles value change events from the client.
+	 */
+	@ReactCommand("valueChanged")
+	void handleValueChanged(Map<String, Object> arguments) {
+		Number newValue = (Number) arguments.get(VALUE);
 		if (_valueCallback != null) {
 			_valueCallback.valueChanged(newValue);
 		}

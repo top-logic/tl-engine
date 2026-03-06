@@ -7,10 +7,9 @@ package com.top_logic.layout.view.form;
 
 import java.util.Map;
 
-import com.top_logic.layout.basic.ControlCommand;
+import com.top_logic.layout.react.ReactCommand;
 import com.top_logic.layout.react.ReactControl;
 import com.top_logic.layout.view.form.ViewFieldValueChanged.ValueCallback;
-import com.top_logic.layout.view.form.ViewFieldValueChanged.ValueChangeHandler;
 
 /**
  * Lean checkbox control that renders via the {@code TLCheckbox} React component.
@@ -19,16 +18,13 @@ import com.top_logic.layout.view.form.ViewFieldValueChanged.ValueChangeHandler;
  * Works with plain {@link Boolean} values instead of {@code FormField} objects.
  * </p>
  */
-public class ViewCheckboxControl extends ReactControl implements ValueChangeHandler {
+public class ViewCheckboxControl extends ReactControl {
 
 	/** State key for the field value. */
 	private static final String VALUE = "value";
 
 	/** State key for whether the field is editable. */
 	private static final String EDITABLE = "editable";
-
-	private static final Map<String, ControlCommand> COMMANDS =
-		createCommandMap(ViewFieldValueChanged.INSTANCE);
 
 	private ValueCallback _valueCallback;
 
@@ -41,7 +37,7 @@ public class ViewCheckboxControl extends ReactControl implements ValueChangeHand
 	 *        Whether the field is editable.
 	 */
 	public ViewCheckboxControl(boolean value, boolean editable) {
-		super(null, "TLCheckbox", COMMANDS);
+		super(null, "TLCheckbox");
 		putState(VALUE, Boolean.valueOf(value));
 		putState(EDITABLE, Boolean.valueOf(editable));
 	}
@@ -76,9 +72,12 @@ public class ViewCheckboxControl extends ReactControl implements ValueChangeHand
 		_valueCallback = callback;
 	}
 
-	@Override
-	public void handleValueChanged(Object rawValue) {
-		Boolean newValue = (Boolean) rawValue;
+	/**
+	 * Handles value change events from the client.
+	 */
+	@ReactCommand("valueChanged")
+	void handleValueChanged(Map<String, Object> arguments) {
+		Boolean newValue = (Boolean) arguments.get(VALUE);
 		if (_valueCallback != null) {
 			_valueCallback.valueChanged(newValue);
 		}

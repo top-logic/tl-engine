@@ -5,7 +5,7 @@
  */
 package com.top_logic.layout.react.control.toggle;
 
-import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.react.ViewDisplayContext;
 
 /**
  * Callback for toggling a boolean state.
@@ -21,11 +21,11 @@ public interface ToggleAction {
 	 * Toggles the state.
 	 *
 	 * @param context
-	 *        The current display context.
+	 *        The current view display context.
 	 * @param currentActive
 	 *        The current active state.
 	 * @return The new active state.
 	 */
-	boolean toggle(DisplayContext context, boolean currentActive);
+	boolean toggle(ViewDisplayContext context, boolean currentActive);
 
 }

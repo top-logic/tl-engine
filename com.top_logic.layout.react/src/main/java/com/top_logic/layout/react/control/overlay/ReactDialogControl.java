@@ -7,13 +7,8 @@ package com.top_logic.layout.react.control.overlay;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
-import com.top_logic.basic.util.ResKey;
-import com.top_logic.layout.Control;
-import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.basic.ControlCommand;
-import com.top_logic.layout.react.I18NConstants;
+import com.top_logic.layout.react.ReactCommand;
 import com.top_logic.layout.react.ReactControl;
 import com.top_logic.tool.boundsec.HandlerResult;
 
@@ -40,9 +35,6 @@ public class ReactDialogControl extends ReactControl {
 	private static final String CHILD = "child";
 
 	private static final String ACTIONS = "actions";
-
-	private static final Map<String, ControlCommand> COMMANDS = createCommandMap(
-		new CloseCommand());
 
 	private Runnable _closeHandler;
 
@@ -75,7 +67,7 @@ public class ReactDialogControl extends ReactControl {
 	 *        Called when the dialog is closed.
 	 */
 	public ReactDialogControl(String title, String size, boolean closeOnBackdrop, Runnable closeHandler) {
-		super(null, REACT_MODULE, COMMANDS);
+		super(null, REACT_MODULE);
 		_closeHandler = closeHandler;
 		_actions = new ArrayList<>();
 		putState(TITLE, title);
@@ -141,27 +133,13 @@ public class ReactDialogControl extends ReactControl {
 	}
 
 	/**
-	 * Command sent when the dialog is closed.
+	 * Handles the close command sent when the dialog is closed.
 	 */
-	public static class CloseCommand extends ControlCommand {
-
-		/** Creates a {@link CloseCommand}. */
-		public CloseCommand() {
-			super("close");
-		}
-
-		@Override
-		public ResKey getI18NKey() {
-			return I18NConstants.REACT_DIALOG_CLOSE;
-		}
-
-		@Override
-		protected HandlerResult execute(DisplayContext context, Control control, Map<String, Object> arguments) {
-			ReactDialogControl dialog = (ReactDialogControl) control;
-			dialog.close();
-			dialog._closeHandler.run();
-			return HandlerResult.DEFAULT_RESULT;
-		}
+	@ReactCommand("close")
+	HandlerResult handleClose() {
+		close();
+		_closeHandler.run();
+		return HandlerResult.DEFAULT_RESULT;
 	}
 
 }

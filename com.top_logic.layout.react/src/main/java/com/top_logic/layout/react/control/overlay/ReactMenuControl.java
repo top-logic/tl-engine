@@ -11,11 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import com.top_logic.basic.util.ResKey;
-import com.top_logic.layout.Control;
-import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.basic.ControlCommand;
-import com.top_logic.layout.react.I18NConstants;
+import com.top_logic.layout.react.ReactCommand;
 import com.top_logic.layout.react.ReactControl;
 import com.top_logic.tool.boundsec.HandlerResult;
 
@@ -59,9 +55,6 @@ public class ReactMenuControl extends ReactControl {
 	/** Command argument: the selected item identifier. */
 	private static final String ITEM_ID_ARG = "itemId";
 
-	private static final Map<String, ControlCommand> COMMANDS = createCommandMap(
-		new SelectItemCommand(), new CloseCommand());
-
 	private final Consumer<String> _selectHandler;
 
 	private Runnable _closeHandler;
@@ -80,7 +73,7 @@ public class ReactMenuControl extends ReactControl {
 	 */
 	public ReactMenuControl(String anchorId, List<MenuEntry> items,
 			Consumer<String> selectHandler, Runnable closeHandler) {
-		super(null, REACT_MODULE, COMMANDS);
+		super(null, REACT_MODULE);
 		_selectHandler = selectHandler;
 		_closeHandler = closeHandler;
 		putState(ANCHOR_ID, anchorId);
@@ -164,52 +157,24 @@ public class ReactMenuControl extends ReactControl {
 	}
 
 	/**
-	 * Command sent when a menu item is selected.
+	 * Handles the selectItem command sent when a menu item is selected.
 	 */
-	public static class SelectItemCommand extends ControlCommand {
-
-		/** Creates a {@link SelectItemCommand}. */
-		public SelectItemCommand() {
-			super("selectItem");
-		}
-
-		@Override
-		public ResKey getI18NKey() {
-			return I18NConstants.REACT_MENU_SELECT;
-		}
-
-		@Override
-		protected HandlerResult execute(DisplayContext context, Control control, Map<String, Object> arguments) {
-			ReactMenuControl menu = (ReactMenuControl) control;
-			String itemId = (String) arguments.get(ITEM_ID_ARG);
-			menu.close();
-			menu._selectHandler.accept(itemId);
-			return HandlerResult.DEFAULT_RESULT;
-		}
+	@ReactCommand("selectItem")
+	HandlerResult handleSelectItem(Map<String, Object> arguments) {
+		String itemId = (String) arguments.get(ITEM_ID_ARG);
+		close();
+		_selectHandler.accept(itemId);
+		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
-	 * Command sent when the menu is closed without selection.
+	 * Handles the close command sent when the menu is closed without selection.
 	 */
-	public static class CloseCommand extends ControlCommand {
-
-		/** Creates a {@link CloseCommand}. */
-		public CloseCommand() {
-			super("close");
-		}
-
-		@Override
-		public ResKey getI18NKey() {
-			return I18NConstants.REACT_MENU_CLOSE;
-		}
-
-		@Override
-		protected HandlerResult execute(DisplayContext context, Control control, Map<String, Object> arguments) {
-			ReactMenuControl menu = (ReactMenuControl) control;
-			menu.close();
-			menu._closeHandler.run();
-			return HandlerResult.DEFAULT_RESULT;
-		}
+	@ReactCommand("close")
+	HandlerResult handleClose() {
+		close();
+		_closeHandler.run();
+		return HandlerResult.DEFAULT_RESULT;
 	}
 
 }

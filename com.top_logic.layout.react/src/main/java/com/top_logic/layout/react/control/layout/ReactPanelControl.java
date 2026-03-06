@@ -7,12 +7,8 @@ package com.top_logic.layout.react.control.layout;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
-import com.top_logic.layout.Control;
-import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.basic.ControlCommand;
-import com.top_logic.layout.react.I18NConstants;
+import com.top_logic.layout.react.ReactCommand;
 import com.top_logic.layout.react.ReactControl;
 import com.top_logic.tool.boundsec.HandlerResult;
 
@@ -64,11 +60,6 @@ public class ReactPanelControl extends ReactControl {
 	/** Default collapsed size in pixels (toolbar header height). */
 	private static final float COLLAPSED_SIZE = 36f;
 
-	private static final Map<String, ControlCommand> COMMANDS = createCommandMap(
-		new ToggleMinimizeCommand(),
-		new ToggleMaximizeCommand(),
-		new PopOutCommand());
-
 	private final ReactControl _child;
 
 	private final List<ReactControl> _toolbarButtons = new ArrayList<>();
@@ -97,7 +88,7 @@ public class ReactPanelControl extends ReactControl {
 	 */
 	public ReactPanelControl(String title, ReactControl child,
 			boolean showMinimize, boolean showMaximize, boolean showPopOut) {
-		super(null, REACT_MODULE, COMMANDS);
+		super(null, REACT_MODULE);
 		_child = child;
 
 		getReactState().put(TITLE, title);
@@ -179,106 +170,55 @@ public class ReactPanelControl extends ReactControl {
 	}
 
 	/**
-	 * Command sent by the React client when the minimize button is clicked.
+	 * Handles the toggleMinimize command sent by the React client when the minimize button is
+	 * clicked.
 	 */
-	public static class ToggleMinimizeCommand extends ControlCommand {
+	@ReactCommand("toggleMinimize")
+	HandlerResult handleToggleMinimize() {
+		boolean wasMinimized = _expansionState == ExpansionState.MINIMIZED;
+		boolean collapsed = !wasMinimized;
 
-		static final String COMMAND = "toggleMinimize";
-
-		/** Creates a new {@link ToggleMinimizeCommand}. */
-		public ToggleMinimizeCommand() {
-			super(COMMAND);
-		}
-
-		@Override
-		public com.top_logic.basic.util.ResKey getI18NKey() {
-			return I18NConstants.REACT_PANEL_TOGGLE_MINIMIZE;
-		}
-
-		@Override
-		protected HandlerResult execute(DisplayContext context, Control control, Map<String, Object> arguments) {
-			ReactPanelControl panel = (ReactPanelControl) control;
-			boolean wasMinimized = panel._expansionState == ExpansionState.MINIMIZED;
-			boolean collapsed = !wasMinimized;
-
-			// Prevent collapse when it would leave a root split panel with all children collapsed.
-			if (collapsed && panel._parentSplitPanel != null
-					&& !panel._parentSplitPanel.canChildCollapse(panel._indexInParent)) {
-				return HandlerResult.DEFAULT_RESULT;
-			}
-
-			panel.setExpansionState(collapsed ? ExpansionState.MINIMIZED : ExpansionState.NORMALIZED);
-
-			if (panel._parentSplitPanel != null) {
-				panel._parentSplitPanel.childCollapsed(panel._indexInParent, collapsed, COLLAPSED_SIZE);
-			}
-
+		if (collapsed && _parentSplitPanel != null
+				&& !_parentSplitPanel.canChildCollapse(_indexInParent)) {
 			return HandlerResult.DEFAULT_RESULT;
 		}
+
+		setExpansionState(collapsed ? ExpansionState.MINIMIZED : ExpansionState.NORMALIZED);
+
+		if (_parentSplitPanel != null) {
+			_parentSplitPanel.childCollapsed(_indexInParent, collapsed, COLLAPSED_SIZE);
+		}
+
+		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
-	 * Command sent by the React client when the maximize button is clicked.
+	 * Handles the toggleMaximize command sent by the React client when the maximize button is
+	 * clicked.
 	 */
-	public static class ToggleMaximizeCommand extends ControlCommand {
-
-		static final String COMMAND = "toggleMaximize";
-
-		/** Creates a new {@link ToggleMaximizeCommand}. */
-		public ToggleMaximizeCommand() {
-			super(COMMAND);
-		}
-
-		@Override
-		public com.top_logic.basic.util.ResKey getI18NKey() {
-			return I18NConstants.REACT_PANEL_TOGGLE_MAXIMIZE;
-		}
-
-		@Override
-		protected HandlerResult execute(DisplayContext context, Control control, Map<String, Object> arguments) {
-			ReactPanelControl panel = (ReactPanelControl) control;
-
-			if (panel._expansionState == ExpansionState.MAXIMIZED) {
-				// Normalize.
-				panel.setExpansionState(ExpansionState.NORMALIZED);
-				if (panel._maximizeRoot != null) {
-					panel._maximizeRoot.normalize();
-				}
-			} else {
-				// Maximize.
-				panel.setExpansionState(ExpansionState.MAXIMIZED);
-				if (panel._maximizeRoot != null) {
-					panel._maximizeRoot.maximize(panel);
-				}
+	@ReactCommand("toggleMaximize")
+	HandlerResult handleToggleMaximize() {
+		if (_expansionState == ExpansionState.MAXIMIZED) {
+			setExpansionState(ExpansionState.NORMALIZED);
+			if (_maximizeRoot != null) {
+				_maximizeRoot.normalize();
 			}
-
-			return HandlerResult.DEFAULT_RESULT;
+		} else {
+			setExpansionState(ExpansionState.MAXIMIZED);
+			if (_maximizeRoot != null) {
+				_maximizeRoot.maximize(this);
+			}
 		}
+
+		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
-	 * Command sent by the React client when the pop-out button is clicked.
+	 * Handles the popOut command sent by the React client when the pop-out button is clicked.
 	 */
-	public static class PopOutCommand extends ControlCommand {
-
-		static final String COMMAND = "popOut";
-
-		/** Creates a new {@link PopOutCommand}. */
-		public PopOutCommand() {
-			super(COMMAND);
-		}
-
-		@Override
-		public com.top_logic.basic.util.ResKey getI18NKey() {
-			return I18NConstants.REACT_PANEL_POP_OUT;
-		}
-
-		@Override
-		protected HandlerResult execute(DisplayContext context, Control control, Map<String, Object> arguments) {
-			ReactPanelControl panel = (ReactPanelControl) control;
-			panel.setExpansionState(ExpansionState.HIDDEN);
-			// External window handling is left to the application layer.
-			return HandlerResult.DEFAULT_RESULT;
-		}
+	@ReactCommand("popOut")
+	HandlerResult handlePopOut() {
+		setExpansionState(ExpansionState.HIDDEN);
+		return HandlerResult.DEFAULT_RESULT;
 	}
 }

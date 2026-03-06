@@ -31,6 +31,8 @@ public class ViewContext {
 
 	private final CommandScope _commandScope;
 
+	private Object _formControl;
+
 	/**
 	 * Creates a root {@link ViewContext}.
 	 *
@@ -39,15 +41,16 @@ public class ViewContext {
 	 *        infrastructure.
 	 */
 	public ViewContext(ViewDisplayContext displayContext) {
-		this(displayContext, "view", new HashMap<>(), null);
+		this(displayContext, "view", new HashMap<>(), null, null);
 	}
 
 	private ViewContext(ViewDisplayContext displayContext, String personalizationPath,
-			Map<String, ViewChannel> channels, CommandScope commandScope) {
+			Map<String, ViewChannel> channels, CommandScope commandScope, Object formControl) {
 		_displayContext = displayContext;
 		_personalizationPath = personalizationPath;
 		_channels = channels;
 		_commandScope = commandScope;
+		_formControl = formControl;
 	}
 
 	/**
@@ -62,7 +65,8 @@ public class ViewContext {
 	 * @return A new context with the extended personalization path.
 	 */
 	public ViewContext childContext(String segment) {
-		return new ViewContext(_displayContext, _personalizationPath + "." + segment, _channels, _commandScope);
+		return new ViewContext(_displayContext, _personalizationPath + "." + segment, _channels, _commandScope,
+			_formControl);
 	}
 
 	/**
@@ -93,6 +97,27 @@ public class ViewContext {
 	}
 
 	/**
+	 * The form control of the nearest enclosing form element, or {@code null} if no form is in
+	 * scope.
+	 */
+	public Object getFormControl() {
+		return _formControl;
+	}
+
+	/**
+	 * Sets the form control for this context.
+	 *
+	 * <p>
+	 * Called by {@link com.top_logic.layout.view.element.FormElement} during
+	 * {@link UIElement#createControl(ViewContext)} to make the form available to nested field
+	 * elements.
+	 * </p>
+	 */
+	public void setFormControl(Object formControl) {
+		_formControl = formControl;
+	}
+
+	/**
 	 * Creates a derived context with the given {@link CommandScope}.
 	 *
 	 * <p>
@@ -105,7 +130,7 @@ public class ViewContext {
 	 *         path, and channels.
 	 */
 	public ViewContext withCommandScope(CommandScope scope) {
-		return new ViewContext(_displayContext, _personalizationPath, _channels, scope);
+		return new ViewContext(_displayContext, _personalizationPath, _channels, scope, _formControl);
 	}
 
 	/**

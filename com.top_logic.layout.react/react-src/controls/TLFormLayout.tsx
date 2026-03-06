@@ -23,6 +23,7 @@ const TLFormLayout: React.FC<TLCellProps> = ({ controlId }) => {
   const labelPosition = (state.labelPosition as string) ?? 'auto';
   const readOnly = state.readOnly === true;
   const children = (state.children as unknown[]) ?? [];
+  const noModelMessage = state.noModelMessage as string | null;
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [resolvedPosition, setResolvedPosition] = useState<'side' | 'top'>(
@@ -68,6 +69,14 @@ const TLFormLayout: React.FC<TLCellProps> = ({ controlId }) => {
     'tlFormLayout',
     readOnly ? 'tlFormLayout--readonly' : '',
   ].filter(Boolean).join(' ');
+
+  if (noModelMessage) {
+    return (
+      <div id={controlId} className="tlFormLayout tlFormLayout--empty" ref={containerRef}>
+        <p className="tlFormLayout__noModel">{noModelMessage}</p>
+      </div>
+    );
+  }
 
   return (
     <FormLayoutContext.Provider value={ctxValue}>

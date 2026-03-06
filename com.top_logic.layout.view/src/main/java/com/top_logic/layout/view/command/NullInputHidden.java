@@ -24,7 +24,7 @@ public class NullInputHidden implements ViewExecutabilityRule {
 	/**
 	 * Configuration for {@link NullInputHidden}.
 	 */
-	@TagName("NullInputHidden")
+	@TagName("null-input-hidden")
 	public interface Config extends ViewExecutabilityRule.Config {
 
 		@Override

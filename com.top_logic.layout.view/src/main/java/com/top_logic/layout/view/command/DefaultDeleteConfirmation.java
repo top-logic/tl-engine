@@ -44,8 +44,7 @@ public class DefaultDeleteConfirmation implements ViewCommandConfirmation {
 
 	@Override
 	public ResKey getConfirmation(ResKey commandLabel, Object input) {
-		if (input instanceof Collection<?>) {
-			Collection<?> collection = (Collection<?>) input;
+		if (input instanceof Collection<?> collection) {
 			return I18NConstants.CONFIRM_DELETE_MULTI__COUNT.fill(collection.size());
 		}
 		return I18NConstants.CONFIRM_DELETE__LABEL.fill(commandLabel);

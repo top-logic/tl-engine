@@ -15,10 +15,7 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import com.top_logic.layout.Control;
-import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.basic.ControlCommand;
-import com.top_logic.layout.react.I18NConstants;
+import com.top_logic.layout.react.ReactCommand;
 import com.top_logic.layout.react.ReactControl;
 import com.top_logic.layout.react.ViewDisplayContext;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -75,12 +72,6 @@ public class ReactSidebarControl extends ReactControl {
 
 	private static final String EXPANDED_ARG = "expanded";
 
-	private static final Map<String, ControlCommand> COMMANDS = createCommandMap(
-		new SelectItemCommand(),
-		new ExecuteCommandCommand(),
-		new ToggleCollapseCommand(),
-		new ToggleGroupCommand());
-
 	private final Consumer<Boolean> _onCollapseChanged;
 
 	private final BiConsumer<String, Boolean> _onGroupToggled;
@@ -136,7 +127,7 @@ public class ReactSidebarControl extends ReactControl {
 			Consumer<Boolean> onCollapseChanged, BiConsumer<String, Boolean> onGroupToggled,
 			ReactControl headerContent, ReactControl headerCollapsedContent,
 			ReactControl footerContent, ReactControl footerCollapsedContent) {
-		super(null, REACT_MODULE, COMMANDS);
+		super(null, REACT_MODULE);
 		_items = new ArrayList<>(items);
 		_collapsed = initialCollapsed;
 		_onCollapseChanged = onCollapseChanged;
@@ -365,119 +356,57 @@ public class ReactSidebarControl extends ReactControl {
 		return null;
 	}
 
+	// -- Commands --
+
 	/**
-	 * Command sent by the React client when a navigation item is clicked.
+	 * Handles navigation item selection from the client.
 	 */
-	public static class SelectItemCommand extends ControlCommand {
-
-		static final String COMMAND = "selectItem";
-
-		/** Creates a new {@link SelectItemCommand}. */
-		public SelectItemCommand() {
-			super(COMMAND);
-		}
-
-		@Override
-		public com.top_logic.basic.util.ResKey getI18NKey() {
-			return I18NConstants.REACT_SIDEBAR_ITEM_SELECTED;
-		}
-
-		@Override
-		protected HandlerResult execute(DisplayContext context, Control control, Map<String, Object> arguments) {
-			ReactSidebarControl sidebar = (ReactSidebarControl) control;
-			String itemId = (String) arguments.get(ITEM_ID_ARG);
-			sidebar.selectItem(itemId);
-			return HandlerResult.DEFAULT_RESULT;
-		}
+	@ReactCommand("selectItem")
+	HandlerResult handleSelectItem(Map<String, Object> arguments) {
+		String itemId = (String) arguments.get(ITEM_ID_ARG);
+		selectItem(itemId);
+		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
-	 * Command sent by the React client when a command item is clicked.
+	 * Handles command item execution from the client.
 	 */
-	public static class ExecuteCommandCommand extends ControlCommand {
-
-		static final String COMMAND = "executeCommand";
-
-		/** Creates a new {@link ExecuteCommandCommand}. */
-		public ExecuteCommandCommand() {
-			super(COMMAND);
+	@ReactCommand("executeCommand")
+	HandlerResult handleExecuteCommand(ViewDisplayContext context, Map<String, Object> arguments) {
+		String itemId = (String) arguments.get(ITEM_ID_ARG);
+		CommandItem cmdItem = findCommandItem(itemId, _items);
+		if (cmdItem != null) {
+			return cmdItem.getAction().execute(context);
 		}
-
-		@Override
-		public com.top_logic.basic.util.ResKey getI18NKey() {
-			return I18NConstants.REACT_SIDEBAR_COMMAND_EXECUTED;
-		}
-
-		@Override
-		protected HandlerResult execute(DisplayContext context, Control control, Map<String, Object> arguments) {
-			ReactSidebarControl sidebar = (ReactSidebarControl) control;
-			String itemId = (String) arguments.get(ITEM_ID_ARG);
-			CommandItem cmdItem = sidebar.findCommandItem(itemId, sidebar._items);
-			if (cmdItem != null) {
-				return cmdItem.getAction().execute(context);
-			}
-			return HandlerResult.DEFAULT_RESULT;
-		}
+		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
-	 * Command sent by the React client when the collapse toggle is clicked.
+	 * Handles collapse toggle from the client.
 	 */
-	public static class ToggleCollapseCommand extends ControlCommand {
-
-		static final String COMMAND = "toggleCollapse";
-
-		/** Creates a new {@link ToggleCollapseCommand}. */
-		public ToggleCollapseCommand() {
-			super(COMMAND);
+	@ReactCommand("toggleCollapse")
+	HandlerResult handleToggleCollapse() {
+		_collapsed = !_collapsed;
+		if (_onCollapseChanged != null) {
+			_onCollapseChanged.accept(Boolean.valueOf(_collapsed));
 		}
-
-		@Override
-		public com.top_logic.basic.util.ResKey getI18NKey() {
-			return I18NConstants.REACT_SIDEBAR_COLLAPSE_TOGGLED;
-		}
-
-		@Override
-		protected HandlerResult execute(DisplayContext context, Control control, Map<String, Object> arguments) {
-			ReactSidebarControl sidebar = (ReactSidebarControl) control;
-			sidebar._collapsed = !sidebar._collapsed;
-			if (sidebar._onCollapseChanged != null) {
-				sidebar._onCollapseChanged.accept(Boolean.valueOf(sidebar._collapsed));
-			}
-			sidebar.patchReactState(Map.of(COLLAPSED, Boolean.valueOf(sidebar._collapsed)));
-			return HandlerResult.DEFAULT_RESULT;
-		}
+		patchReactState(Map.of(COLLAPSED, Boolean.valueOf(_collapsed)));
+		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
-	 * Command sent by the React client when a group's expand/collapse is toggled.
+	 * Handles group expand/collapse toggle from the client.
 	 */
-	public static class ToggleGroupCommand extends ControlCommand {
-
-		static final String COMMAND = "toggleGroup";
-
-		/** Creates a new {@link ToggleGroupCommand}. */
-		public ToggleGroupCommand() {
-			super(COMMAND);
+	@ReactCommand("toggleGroup")
+	HandlerResult handleToggleGroup(Map<String, Object> arguments) {
+		String itemId = (String) arguments.get(ITEM_ID_ARG);
+		Object expandedObj = arguments.get(EXPANDED_ARG);
+		boolean expanded = expandedObj instanceof Boolean && ((Boolean) expandedObj).booleanValue();
+		_groupStates.put(itemId, Boolean.valueOf(expanded));
+		if (_onGroupToggled != null) {
+			_onGroupToggled.accept(itemId, Boolean.valueOf(expanded));
 		}
-
-		@Override
-		public com.top_logic.basic.util.ResKey getI18NKey() {
-			return I18NConstants.REACT_SIDEBAR_GROUP_TOGGLED;
-		}
-
-		@Override
-		protected HandlerResult execute(DisplayContext context, Control control, Map<String, Object> arguments) {
-			ReactSidebarControl sidebar = (ReactSidebarControl) control;
-			String itemId = (String) arguments.get(ITEM_ID_ARG);
-			Object expandedObj = arguments.get(EXPANDED_ARG);
-			boolean expanded = expandedObj instanceof Boolean && ((Boolean) expandedObj).booleanValue();
-			sidebar._groupStates.put(itemId, Boolean.valueOf(expanded));
-			if (sidebar._onGroupToggled != null) {
-				sidebar._onGroupToggled.accept(itemId, Boolean.valueOf(expanded));
-			}
-			return HandlerResult.DEFAULT_RESULT;
-		}
+		return HandlerResult.DEFAULT_RESULT;
 	}
 
 }

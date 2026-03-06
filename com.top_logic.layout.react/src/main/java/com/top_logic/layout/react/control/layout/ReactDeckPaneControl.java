@@ -12,10 +12,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.top_logic.layout.Control;
-import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.basic.ControlCommand;
-import com.top_logic.layout.react.I18NConstants;
+import com.top_logic.layout.react.ReactCommand;
 import com.top_logic.layout.react.ReactControl;
 import com.top_logic.layout.react.ViewDisplayContext;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -52,9 +49,6 @@ public class ReactDeckPaneControl extends ReactControl {
 
 	private static final String INDEX_ARG = "index";
 
-	private static final Map<String, ControlCommand> COMMANDS = createCommandMap(
-		new SelectChildCommand());
-
 	/**
 	 * The child definitions. Each entry provides a factory for lazy creation.
 	 */
@@ -81,7 +75,7 @@ public class ReactDeckPaneControl extends ReactControl {
 	 *        The initially active child index.
 	 */
 	public ReactDeckPaneControl(List<ChildFactory> childFactories, int initialActiveIndex) {
-		super(null, REACT_MODULE, COMMANDS);
+		super(null, REACT_MODULE);
 		_childFactories.addAll(childFactories);
 		_activeIndex = initialActiveIndex;
 
@@ -161,31 +155,17 @@ public class ReactDeckPaneControl extends ReactControl {
 		return child;
 	}
 
+	// -- Commands --
+
 	/**
-	 * Command sent by the React client when a child is selected.
+	 * Handles child selection from the client.
 	 */
-	public static class SelectChildCommand extends ControlCommand {
-
-		static final String COMMAND = "selectChild";
-
-		/** Creates a new {@link SelectChildCommand}. */
-		public SelectChildCommand() {
-			super(COMMAND);
+	@ReactCommand("selectChild")
+	HandlerResult handleSelectChild(Map<String, Object> arguments) {
+		Object indexObj = arguments.get(INDEX_ARG);
+		if (indexObj instanceof Number) {
+			selectChild(((Number) indexObj).intValue());
 		}
-
-		@Override
-		public com.top_logic.basic.util.ResKey getI18NKey() {
-			return I18NConstants.REACT_DECK_PANE_SELECT;
-		}
-
-		@Override
-		protected HandlerResult execute(DisplayContext context, Control control, Map<String, Object> arguments) {
-			ReactDeckPaneControl deckPane = (ReactDeckPaneControl) control;
-			Object indexObj = arguments.get(INDEX_ARG);
-			if (indexObj instanceof Number) {
-				deckPane.selectChild(((Number) indexObj).intValue());
-			}
-			return HandlerResult.DEFAULT_RESULT;
-		}
+		return HandlerResult.DEFAULT_RESULT;
 	}
 }

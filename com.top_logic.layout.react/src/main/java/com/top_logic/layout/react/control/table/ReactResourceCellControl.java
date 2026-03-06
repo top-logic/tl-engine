@@ -5,16 +5,12 @@
  */
 package com.top_logic.layout.react.control.table;
 
-import java.util.Map;
-
-import com.top_logic.basic.util.ResKey;
-import com.top_logic.layout.Control;
-import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.Flavor;
 import com.top_logic.layout.ResourceProvider;
-import com.top_logic.layout.basic.ControlCommand;
 import com.top_logic.layout.basic.ThemeImage;
+import com.top_logic.layout.react.ReactCommand;
 import com.top_logic.layout.react.ReactControl;
+import com.top_logic.layout.react.ViewDisplayContext;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -42,12 +38,12 @@ public class ReactResourceCellControl extends ReactControl {
 		 * Called when the user requests navigation to the given object.
 		 *
 		 * @param context
-		 *        The current display context.
+		 *        The current view display context.
 		 * @param target
 		 *        The business object to navigate to.
 		 * @return The handler result.
 		 */
-		HandlerResult handleGoto(DisplayContext context, Object target);
+		HandlerResult handleGoto(ViewDisplayContext context, Object target);
 	}
 
 	// -- State keys --
@@ -69,10 +65,6 @@ public class ReactResourceCellControl extends ReactControl {
 	private static final String CSS_PREFIX = "css:";
 
 	private static final String COLORED_CSS_PREFIX = "colored:";
-
-	// -- Commands --
-
-	private static final Map<String, ControlCommand> COMMANDS = createCommandMap(new GotoCommand());
 
 	// -- Fields --
 
@@ -104,7 +96,7 @@ public class ReactResourceCellControl extends ReactControl {
 	 */
 	public ReactResourceCellControl(Object value, ResourceProvider provider, boolean useImage, boolean useLabel,
 			boolean useLink) {
-		super(null, "TLResourceCell", COMMANDS);
+		super(null, "TLResourceCell");
 		_provider = provider;
 		_useImage = useImage;
 		_useLabel = useLabel;
@@ -183,30 +175,18 @@ public class ReactResourceCellControl extends ReactControl {
 		}
 	}
 
+	// -- Commands --
+
 	/**
 	 * Dispatches the goto click to the configured {@link GotoListener}.
 	 */
-	static class GotoCommand extends ControlCommand {
-
-		GotoCommand() {
-			super("goto");
+	@ReactCommand("goto")
+	HandlerResult handleGoto(ViewDisplayContext context) {
+		Object target = _rowObject;
+		GotoListener listener = _gotoListener;
+		if (target == null || listener == null) {
+			return HandlerResult.DEFAULT_RESULT;
 		}
-
-		@Override
-		public ResKey getI18NKey() {
-			return ResKey.legacy("react.resource.goto");
-		}
-
-		@Override
-		protected HandlerResult execute(DisplayContext context, Control control,
-				Map<String, Object> arguments) {
-			ReactResourceCellControl cell = (ReactResourceCellControl) control;
-			Object target = cell._rowObject;
-			GotoListener listener = cell._gotoListener;
-			if (target == null || listener == null) {
-				return HandlerResult.DEFAULT_RESULT;
-			}
-			return listener.handleGoto(context, target);
-		}
+		return listener.handleGoto(context, target);
 	}
 }

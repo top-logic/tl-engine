@@ -12,10 +12,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.top_logic.layout.Control;
-import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.basic.ControlCommand;
-import com.top_logic.layout.react.I18NConstants;
+import com.top_logic.layout.react.ReactCommand;
 import com.top_logic.layout.react.ReactControl;
 import com.top_logic.layout.react.ViewDisplayContext;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -59,9 +56,6 @@ public class ReactTabBarControl extends ReactControl {
 	/** Command argument key for the selected tab ID. */
 	private static final String TAB_ID_ARG = "tabId";
 
-	private static final Map<String, ControlCommand> COMMANDS = createCommandMap(
-		new SelectTabCommand());
-
 	private final List<TabDefinition> _tabDefinitions;
 
 	private final LinkedHashMap<String, ReactControl> _contentCache = new LinkedHashMap<>();
@@ -79,7 +73,7 @@ public class ReactTabBarControl extends ReactControl {
 	 *        The initially active tab ID, or {@code null} to default to the first tab.
 	 */
 	public ReactTabBarControl(Object model, List<TabDefinition> tabDefinitions, String initialActiveTabId) {
-		super(model, REACT_MODULE, COMMANDS);
+		super(model, REACT_MODULE);
 		_tabDefinitions = new ArrayList<>(tabDefinitions);
 		_activeTabId = initialActiveTabId != null ? initialActiveTabId : tabDefinitions.get(0).getId();
 
@@ -172,30 +166,16 @@ public class ReactTabBarControl extends ReactControl {
 		throw new IllegalArgumentException("Unknown tab ID: " + tabId);
 	}
 
+	// -- Commands --
+
 	/**
-	 * Command sent by the React client when a tab is clicked.
+	 * Handles tab selection from the client.
 	 */
-	public static class SelectTabCommand extends ControlCommand {
-
-		static final String COMMAND = "selectTab";
-
-		/** Creates a new {@link SelectTabCommand}. */
-		public SelectTabCommand() {
-			super(COMMAND);
-		}
-
-		@Override
-		public com.top_logic.basic.util.ResKey getI18NKey() {
-			return I18NConstants.REACT_TAB_SELECTED;
-		}
-
-		@Override
-		protected HandlerResult execute(DisplayContext context, Control control, Map<String, Object> arguments) {
-			ReactTabBarControl tabBar = (ReactTabBarControl) control;
-			String tabId = (String) arguments.get(TAB_ID_ARG);
-			tabBar.selectTab(tabId);
-			return HandlerResult.DEFAULT_RESULT;
-		}
+	@ReactCommand("selectTab")
+	HandlerResult handleSelectTab(Map<String, Object> arguments) {
+		String tabId = (String) arguments.get(TAB_ID_ARG);
+		selectTab(tabId);
+		return HandlerResult.DEFAULT_RESULT;
 	}
 
 }

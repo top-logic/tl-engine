@@ -14,10 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.top_logic.basic.util.ResKey;
-import com.top_logic.layout.Control;
-import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.basic.ControlCommand;
+import com.top_logic.layout.react.ReactCommand;
 import com.top_logic.layout.react.ReactControl;
 import com.top_logic.layout.table.TableModel;
 import com.top_logic.layout.table.control.TableControl;
@@ -121,17 +118,8 @@ public class ReactTableControl extends ReactControl {
 	/** Number of rows to prefetch above and below the visible area. */
 	private static final int PREFETCH_ROWS = 20;
 
-	// -- Commands --
-
-	private static final Map<String, ControlCommand> COMMANDS = createCommandMap(
-		new ScrollCommand(),
-		new SortCommand(),
-		new SelectCommand(),
-		new SelectAllCommand(),
-		new ColumnResizeCommand(),
-		new ColumnReorderCommand(),
-		new ExpandCommand(),
-		new SetFrozenColumnCountCommand());
+	/** Minimum column width in pixels. */
+	private static final int MIN_WIDTH = 50;
 
 	// -- Fields --
 
@@ -202,7 +190,7 @@ public class ReactTableControl extends ReactControl {
 	 *        Provider for creating cell controls.
 	 */
 	public ReactTableControl(TableModel model, ReactCellControlProvider cellProvider) {
-		super(null, "TLTableView", COMMANDS);
+		super(null, "TLTableView");
 		_tableModel = model;
 		_cellProvider = cellProvider;
 		_viewportStart = 0;
@@ -552,335 +540,234 @@ public class ReactTableControl extends ReactControl {
 	/**
 	 * Handles scroll requests from the client.
 	 */
-	static class ScrollCommand extends ControlCommand {
-
-		ScrollCommand() {
-			super("scroll");
-		}
-
-		@Override
-		public ResKey getI18NKey() {
-			return ResKey.legacy("react.table.scroll");
-		}
-
-		@Override
-		protected HandlerResult execute(DisplayContext context, Control control,
-				Map<String, Object> arguments) {
-			ReactTableControl table = (ReactTableControl) control;
-			int start = ((Number) arguments.get("start")).intValue();
-			int count = ((Number) arguments.get("count")).intValue();
-			table.updateViewport(start, count);
-			return HandlerResult.DEFAULT_RESULT;
-		}
+	@ReactCommand("scroll")
+	HandlerResult handleScroll(Map<String, Object> arguments) {
+		int start = ((Number) arguments.get("start")).intValue();
+		int count = ((Number) arguments.get("count")).intValue();
+		updateViewport(start, count);
+		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
 	 * Handles sort requests from the client.
 	 */
-	static class SortCommand extends ControlCommand {
+	@ReactCommand("sort")
+	HandlerResult handleSort(Map<String, Object> arguments) {
+		String column = (String) arguments.get("column");
+		String direction = (String) arguments.get("direction");
+		boolean ascending = !"desc".equals(direction);
+		String mode = (String) arguments.get("mode");
 
-		SortCommand() {
-			super("sort");
-		}
-
-		@Override
-		public ResKey getI18NKey() {
-			return ResKey.legacy("react.table.sort");
-		}
-
-		@Override
-		protected HandlerResult execute(DisplayContext context, Control control,
-				Map<String, Object> arguments) {
-			ReactTableControl table = (ReactTableControl) control;
-			String column = (String) arguments.get("column");
-			String direction = (String) arguments.get("direction");
-			boolean ascending = !"desc".equals(direction);
-			String mode = (String) arguments.get("mode");
-
-			if ("add".equals(mode)) {
-				// Shift+click: add to chain or toggle existing.
-				boolean found = false;
-				for (SortKey key : table._sortKeys) {
-					if (key._columnName.equals(column)) {
-						key._ascending = ascending;
-						found = true;
-						break;
-					}
+		if ("add".equals(mode)) {
+			// Shift+click: add to chain or toggle existing.
+			boolean found = false;
+			for (SortKey key : _sortKeys) {
+				if (key._columnName.equals(column)) {
+					key._ascending = ascending;
+					found = true;
+					break;
 				}
-				if (!found) {
-					table._sortKeys.add(new SortKey(column, ascending));
-				}
-			} else {
-				// Plain click: replace entire sort with single column.
-				table._sortKeys.clear();
-				table._sortKeys.add(new SortKey(column, ascending));
 			}
-
-			// Update column defs with sort metadata.
-			table.applySortKeysToColumnDefs();
-
-			// Delegate sorting to the model.
-			table._suppressModelEvents = true;
-			try {
-				Comparator<Object> comparator = table.createChainedComparator();
-				if (comparator != null) {
-					table._tableModel.setOrder(comparator);
-				}
-			} finally {
-				table._suppressModelEvents = false;
+			if (!found) {
+				_sortKeys.add(new SortKey(column, ascending));
 			}
-
-			// Rebuild viewport with new sort order.
-			table.buildFullState();
-			return HandlerResult.DEFAULT_RESULT;
+		} else {
+			// Plain click: replace entire sort with single column.
+			_sortKeys.clear();
+			_sortKeys.add(new SortKey(column, ascending));
 		}
+
+		// Update column defs with sort metadata.
+		applySortKeysToColumnDefs();
+
+		// Delegate sorting to the model.
+		_suppressModelEvents = true;
+		try {
+			Comparator<Object> comparator = createChainedComparator();
+			if (comparator != null) {
+				_tableModel.setOrder(comparator);
+			}
+		} finally {
+			_suppressModelEvents = false;
+		}
+
+		// Rebuild viewport with new sort order.
+		buildFullState();
+		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
 	 * Handles selection requests from the client.
 	 */
-	static class SelectCommand extends ControlCommand {
+	@ReactCommand("select")
+	HandlerResult handleSelect(Map<String, Object> arguments) {
+		int rowIndex = ((Number) arguments.get("rowIndex")).intValue();
+		List<?> displayedRows = getDisplayedRows();
 
-		SelectCommand() {
-			super("select");
-		}
-
-		@Override
-		public ResKey getI18NKey() {
-			return ResKey.legacy("react.table.select");
-		}
-
-		@Override
-		protected HandlerResult execute(DisplayContext context, Control control,
-				Map<String, Object> arguments) {
-			ReactTableControl table = (ReactTableControl) control;
-			int rowIndex = ((Number) arguments.get("rowIndex")).intValue();
-			List<?> displayedRows = table.getDisplayedRows();
-
-			if (rowIndex < 0 || rowIndex >= displayedRows.size()) {
-				return HandlerResult.DEFAULT_RESULT;
-			}
-
-			boolean ctrlKey = Boolean.TRUE.equals(arguments.get("ctrlKey"));
-			boolean shiftKey = Boolean.TRUE.equals(arguments.get("shiftKey"));
-
-			Object rowObject = displayedRows.get(rowIndex);
-
-			if ("multi".equals(table._selectionMode)) {
-				if (shiftKey && table._selectionAnchor >= 0) {
-					// Additive/subtractive range based on what the anchor action did.
-					int from = Math.min(table._selectionAnchor, rowIndex);
-					int to = Math.max(table._selectionAnchor, rowIndex);
-					for (int i = from; i <= to; i++) {
-						Object row = displayedRows.get(i);
-						if (table._anchorAdded) {
-							table._selectedRows.add(row);
-						} else {
-							if (!table._selectionForced || table._selectedRows.size() > 1) {
-								table._selectedRows.remove(row);
-							}
-						}
-					}
-				} else if (ctrlKey) {
-					// Toggle individual row.
-					if (table._selectedRows.contains(rowObject)) {
-						if (!table._selectionForced || table._selectedRows.size() > 1) {
-							table._selectedRows.remove(rowObject);
-							table._anchorAdded = false;
-						}
-					} else {
-						table._selectedRows.add(rowObject);
-						table._anchorAdded = true;
-					}
-					table._selectionAnchor = rowIndex;
-				} else {
-					// Plain click: replace selection, set anchor.
-					table._selectedRows.clear();
-					table._selectedRows.add(rowObject);
-					table._selectionAnchor = rowIndex;
-					table._anchorAdded = true;
-				}
-			} else {
-				// Single mode.
-				if (ctrlKey && table._selectedRows.contains(rowObject) && !table._selectionForced) {
-					table._selectedRows.clear();
-				} else {
-					table._selectedRows.clear();
-					table._selectedRows.add(rowObject);
-				}
-			}
-
-			table.updateViewport(table._viewportStart, table._viewportCount);
-			if (table._selectionListener != null) {
-				table._selectionListener.selectionChanged(Collections.unmodifiableSet(table._selectedRows));
-			}
+		if (rowIndex < 0 || rowIndex >= displayedRows.size()) {
 			return HandlerResult.DEFAULT_RESULT;
 		}
+
+		boolean ctrlKey = Boolean.TRUE.equals(arguments.get("ctrlKey"));
+		boolean shiftKey = Boolean.TRUE.equals(arguments.get("shiftKey"));
+
+		Object rowObject = displayedRows.get(rowIndex);
+
+		if ("multi".equals(_selectionMode)) {
+			if (shiftKey && _selectionAnchor >= 0) {
+				// Additive/subtractive range based on what the anchor action did.
+				int from = Math.min(_selectionAnchor, rowIndex);
+				int to = Math.max(_selectionAnchor, rowIndex);
+				for (int i = from; i <= to; i++) {
+					Object row = displayedRows.get(i);
+					if (_anchorAdded) {
+						_selectedRows.add(row);
+					} else {
+						if (!_selectionForced || _selectedRows.size() > 1) {
+							_selectedRows.remove(row);
+						}
+					}
+				}
+			} else if (ctrlKey) {
+				// Toggle individual row.
+				if (_selectedRows.contains(rowObject)) {
+					if (!_selectionForced || _selectedRows.size() > 1) {
+						_selectedRows.remove(rowObject);
+						_anchorAdded = false;
+					}
+				} else {
+					_selectedRows.add(rowObject);
+					_anchorAdded = true;
+				}
+				_selectionAnchor = rowIndex;
+			} else {
+				// Plain click: replace selection, set anchor.
+				_selectedRows.clear();
+				_selectedRows.add(rowObject);
+				_selectionAnchor = rowIndex;
+				_anchorAdded = true;
+			}
+		} else {
+			// Single mode.
+			if (ctrlKey && _selectedRows.contains(rowObject) && !_selectionForced) {
+				_selectedRows.clear();
+			} else {
+				_selectedRows.clear();
+				_selectedRows.add(rowObject);
+			}
+		}
+
+		updateViewport(_viewportStart, _viewportCount);
+		if (_selectionListener != null) {
+			_selectionListener.selectionChanged(Collections.unmodifiableSet(_selectedRows));
+		}
+		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
 	 * Handles select-all / deselect-all from the header checkbox.
 	 */
-	static class SelectAllCommand extends ControlCommand {
+	@ReactCommand("selectAll")
+	HandlerResult handleSelectAll(Map<String, Object> arguments) {
+		boolean selected = Boolean.TRUE.equals(arguments.get("selected"));
 
-		SelectAllCommand() {
-			super("selectAll");
-		}
+		List<?> displayedRows = getDisplayedRows();
 
-		@Override
-		public ResKey getI18NKey() {
-			return ResKey.legacy("react.table.selectAll");
-		}
-
-		@Override
-		protected HandlerResult execute(DisplayContext context, Control control,
-				Map<String, Object> arguments) {
-			ReactTableControl table = (ReactTableControl) control;
-			boolean selected = Boolean.TRUE.equals(arguments.get("selected"));
-
-			List<?> displayedRows = table.getDisplayedRows();
-
-			if (selected) {
-				table._selectedRows.addAll(displayedRows);
+		if (selected) {
+			_selectedRows.addAll(displayedRows);
+		} else {
+			if (_selectionForced && !displayedRows.isEmpty()) {
+				_selectedRows.clear();
+				_selectedRows.add(displayedRows.get(0));
 			} else {
-				if (table._selectionForced && !displayedRows.isEmpty()) {
-					table._selectedRows.clear();
-					table._selectedRows.add(displayedRows.get(0));
-				} else {
-					table._selectedRows.clear();
-				}
+				_selectedRows.clear();
 			}
-
-			table.updateViewport(table._viewportStart, table._viewportCount);
-			if (table._selectionListener != null) {
-				table._selectionListener.selectionChanged(Collections.unmodifiableSet(table._selectedRows));
-			}
-			return HandlerResult.DEFAULT_RESULT;
 		}
+
+		updateViewport(_viewportStart, _viewportCount);
+		if (_selectionListener != null) {
+			_selectionListener.selectionChanged(Collections.unmodifiableSet(_selectedRows));
+		}
+		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
 	 * Handles column resize from the client.
 	 */
-	static class ColumnResizeCommand extends ControlCommand {
+	@ReactCommand("columnResize")
+	HandlerResult handleColumnResize(Map<String, Object> arguments) {
+		String column = (String) arguments.get("column");
+		int width = Math.max(MIN_WIDTH, ((Number) arguments.get("width")).intValue());
 
-		/** Minimum column width in pixels. */
-		private static final int MIN_WIDTH = 50;
-
-		ColumnResizeCommand() {
-			super("columnResize");
-		}
-
-		@Override
-		public ResKey getI18NKey() {
-			return ResKey.legacy("react.table.columnResize");
-		}
-
-		@Override
-		protected HandlerResult execute(DisplayContext context, Control control,
-				Map<String, Object> arguments) {
-			ReactTableControl table = (ReactTableControl) control;
-			String column = (String) arguments.get("column");
-			int width = Math.max(MIN_WIDTH, ((Number) arguments.get("width")).intValue());
-
-			for (ColumnDef col : table._columnDefs) {
-				if (col.getName().equals(column)) {
-					col.setWidth(width);
-					break;
-				}
+		for (ColumnDef col : _columnDefs) {
+			if (col.getName().equals(column)) {
+				col.setWidth(width);
+				break;
 			}
-
-			// Push updated column definitions to client.
-			table.putState(COLUMNS, table.buildColumnsState());
-			return HandlerResult.DEFAULT_RESULT;
 		}
+
+		// Push updated column definitions to client.
+		putState(COLUMNS, buildColumnsState());
+		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
 	 * Handles column reorder from the client.
 	 */
-	static class ColumnReorderCommand extends ControlCommand {
+	@ReactCommand("columnReorder")
+	HandlerResult handleColumnReorder(Map<String, Object> arguments) {
+		String column = (String) arguments.get("column");
+		int targetIndex = ((Number) arguments.get("targetIndex")).intValue();
 
-		ColumnReorderCommand() {
-			super("columnReorder");
+		// Find and remove the column.
+		ColumnDef moved = null;
+		for (int i = 0; i < _columnDefs.size(); i++) {
+			if (_columnDefs.get(i).getName().equals(column)) {
+				moved = _columnDefs.remove(i);
+				break;
+			}
 		}
 
-		@Override
-		public ResKey getI18NKey() {
-			return ResKey.legacy("react.table.columnReorder");
-		}
-
-		@Override
-		protected HandlerResult execute(DisplayContext context, Control control,
-				Map<String, Object> arguments) {
-			ReactTableControl table = (ReactTableControl) control;
-			String column = (String) arguments.get("column");
-			int targetIndex = ((Number) arguments.get("targetIndex")).intValue();
-
-			// Find and remove the column.
-			ColumnDef moved = null;
-			for (int i = 0; i < table._columnDefs.size(); i++) {
-				if (table._columnDefs.get(i).getName().equals(column)) {
-					moved = table._columnDefs.remove(i);
-					break;
-				}
-			}
-
-			if (moved == null) {
-				return HandlerResult.DEFAULT_RESULT;
-			}
-
-			// Clamp target index and insert.
-			int insertAt = Math.max(0, Math.min(targetIndex, table._columnDefs.size()));
-			table._columnDefs.add(insertAt, moved);
-
-			// Rebuild columns and viewport (cell order in rows changes).
-			table.buildFullState();
+		if (moved == null) {
 			return HandlerResult.DEFAULT_RESULT;
 		}
+
+		// Clamp target index and insert.
+		int insertAt = Math.max(0, Math.min(targetIndex, _columnDefs.size()));
+		_columnDefs.add(insertAt, moved);
+
+		// Rebuild columns and viewport (cell order in rows changes).
+		buildFullState();
+		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
 	 * Handles expand/collapse requests from the client.
 	 */
-	static class ExpandCommand extends ControlCommand {
-
-		ExpandCommand() {
-			super("expand");
-		}
-
-		@Override
-		public ResKey getI18NKey() {
-			return ResKey.legacy("react.table.expand");
-		}
-
-		@Override
-		protected HandlerResult execute(DisplayContext context, Control control,
-				Map<String, Object> arguments) {
-			ReactTableControl table = (ReactTableControl) control;
-			if (table._treeModel == null) {
-				return HandlerResult.DEFAULT_RESULT;
-			}
-
-			int rowIndex = ((Number) arguments.get("rowIndex")).intValue();
-			boolean expanded = Boolean.TRUE.equals(arguments.get("expanded"));
-
-			List<?> displayedRows = table.getDisplayedRows();
-			if (rowIndex < 0 || rowIndex >= displayedRows.size()) {
-				return HandlerResult.DEFAULT_RESULT;
-			}
-
-			Object rowObject = displayedRows.get(rowIndex);
-			table._suppressModelEvents = true;
-			try {
-				table._treeModel.setExpanded(castNode(rowObject), expanded);
-			} finally {
-				table._suppressModelEvents = false;
-			}
-
-			table.buildFullState();
+	@ReactCommand("expand")
+	HandlerResult handleExpand(Map<String, Object> arguments) {
+		if (_treeModel == null) {
 			return HandlerResult.DEFAULT_RESULT;
 		}
+
+		int rowIndex = ((Number) arguments.get("rowIndex")).intValue();
+		boolean expanded = Boolean.TRUE.equals(arguments.get("expanded"));
+
+		List<?> displayedRows = getDisplayedRows();
+		if (rowIndex < 0 || rowIndex >= displayedRows.size()) {
+			return HandlerResult.DEFAULT_RESULT;
+		}
+
+		Object rowObject = displayedRows.get(rowIndex);
+		_suppressModelEvents = true;
+		try {
+			_treeModel.setExpanded(castNode(rowObject), expanded);
+		} finally {
+			_suppressModelEvents = false;
+		}
+
+		buildFullState();
+		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**

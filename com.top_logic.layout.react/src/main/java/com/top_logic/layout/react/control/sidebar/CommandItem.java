@@ -7,7 +7,7 @@ package com.top_logic.layout.react.control.sidebar;
 
 import java.util.Map;
 
-import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.react.ViewDisplayContext;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -34,10 +34,10 @@ public class CommandItem extends SidebarItem {
 		 * Executes the command.
 		 *
 		 * @param context
-		 *        The display context.
+		 *        The view display context.
 		 * @return The handler result.
 		 */
-		HandlerResult execute(DisplayContext context);
+		HandlerResult execute(ViewDisplayContext context);
 	}
 
 	/**

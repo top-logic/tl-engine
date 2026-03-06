@@ -23,6 +23,7 @@ import com.top_logic.html.template.TagTemplate;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
+import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.form.model.FormContext;
@@ -46,6 +47,15 @@ public class LoginViewDialog extends AbstractTemplateDialog {
 	private static final String USERNAME_FIELD = "username";
 
 	private static final String PASSWORD_FIELD = "password";
+
+	/**
+	 * Creates a new {@link LoginViewDialog} with default values.
+	 */
+	public LoginViewDialog() {
+		this(I18NConstants.LOGIN,
+			DisplayDimension.dim(400, DisplayUnit.PIXEL),
+			DisplayDimension.dim(300, DisplayUnit.PIXEL));
+	}
 
 	/**
 	 * Creates a new {@link LoginViewDialog}.

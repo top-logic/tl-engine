@@ -7,12 +7,9 @@ package com.top_logic.layout.react.control.toggle;
 
 import java.util.Map;
 
-import com.top_logic.basic.util.ResKey;
-import com.top_logic.layout.Control;
-import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.basic.ControlCommand;
-import com.top_logic.layout.react.I18NConstants;
+import com.top_logic.layout.react.ReactCommand;
 import com.top_logic.layout.react.ReactControl;
+import com.top_logic.layout.react.ViewDisplayContext;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -32,8 +29,6 @@ public class ReactToggleButtonControl extends ReactControl {
 	/** State key for the active/inactive toggle state. */
 	private static final String ACTIVE = "active";
 
-	private static final Map<String, ControlCommand> COMMANDS = createCommandMap(new ToggleCommand());
-
 	private final ToggleAction _action;
 
 	private boolean _active;
@@ -49,7 +44,7 @@ public class ReactToggleButtonControl extends ReactControl {
 	 *        The {@link ToggleAction} to execute when the button is clicked.
 	 */
 	public ReactToggleButtonControl(String label, boolean initialActive, ToggleAction action) {
-		super(null, "TLToggleButton", COMMANDS);
+		super(null, "TLToggleButton");
 		_action = action;
 		_active = initialActive;
 		putState(LABEL, label);
@@ -78,27 +73,14 @@ public class ReactToggleButtonControl extends ReactControl {
 	}
 
 	/**
-	 * Command that handles the click event from the React client.
+	 * Handles the click command from the React client.
 	 */
-	static class ToggleCommand extends ControlCommand {
-
-		ToggleCommand() {
-			super("click");
-		}
-
-		@Override
-		public ResKey getI18NKey() {
-			return I18NConstants.REACT_TOGGLE_BUTTON_CLICK;
-		}
-
-		@Override
-		protected HandlerResult execute(DisplayContext context, Control control, Map<String, Object> arguments) {
-			ReactToggleButtonControl toggle = (ReactToggleButtonControl) control;
-			boolean newActive = toggle._action.toggle(context, toggle._active);
-			toggle._active = newActive;
-			toggle.patchReactState(Map.of(ACTIVE, Boolean.valueOf(newActive)));
-			return HandlerResult.DEFAULT_RESULT;
-		}
+	@ReactCommand("click")
+	HandlerResult handleClick(ViewDisplayContext context) {
+		boolean newActive = _action.toggle(context, _active);
+		_active = newActive;
+		patchReactState(Map.of(ACTIVE, Boolean.valueOf(newActive)));
+		return HandlerResult.DEFAULT_RESULT;
 	}
 
 }

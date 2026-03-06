@@ -13,11 +13,8 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import com.top_logic.layout.Control;
-import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayUnit;
-import com.top_logic.layout.basic.ControlCommand;
-import com.top_logic.layout.react.I18NConstants;
+import com.top_logic.layout.react.ReactCommand;
 import com.top_logic.layout.react.ReactControl;
 import com.top_logic.layout.structure.OrientationAware.Orientation;
 import com.top_logic.layout.structure.Scrolling;
@@ -77,9 +74,6 @@ public class ReactSplitPanelControl extends ReactControl {
 	/** Command argument: map of control IDs to new pixel sizes. */
 	private static final String SIZES_ARG = "sizes";
 
-	private static final Map<String, ControlCommand> COMMANDS = createCommandMap(
-		new UpdateSizesCommand());
-
 	private final List<ChildEntry> _children = new ArrayList<>();
 
 	private final boolean _resizable;
@@ -109,7 +103,7 @@ public class ReactSplitPanelControl extends ReactControl {
 	public ReactSplitPanelControl(Orientation orientation, boolean resizable,
 			Consumer<Map<String, Float>> onSizesChanged,
 			BiConsumer<Integer, Boolean> onChildCollapsed) {
-		super(null, REACT_MODULE, COMMANDS);
+		super(null, REACT_MODULE);
 		_resizable = resizable;
 		_onSizesChanged = onSizesChanged;
 		_onChildCollapsed = onChildCollapsed;
@@ -290,7 +284,7 @@ public class ReactSplitPanelControl extends ReactControl {
 		if (nonCollapsedOthers > 0) {
 			return true;
 		}
-		// All siblings already collapsed — this would make ALL children collapsed.
+		// All siblings already collapsed --- this would make ALL children collapsed.
 		if (_parentSplitPanel == null) {
 			return false; // Root: cannot escalate.
 		}
@@ -432,52 +426,35 @@ public class ReactSplitPanelControl extends ReactControl {
 	}
 
 	/**
-	 * Command sent by the React client after a splitter drag operation.
+	 * Handles the updateSizes command sent by the React client after a splitter drag operation.
 	 */
-	public static class UpdateSizesCommand extends ControlCommand {
-
-		static final String COMMAND = "updateSizes";
-
-		/** Creates a new {@link UpdateSizesCommand}. */
-		public UpdateSizesCommand() {
-			super(COMMAND);
-		}
-
-		@Override
-		public com.top_logic.basic.util.ResKey getI18NKey() {
-			return I18NConstants.REACT_SPLIT_PANEL_RESIZE;
-		}
-
-		@Override
-		@SuppressWarnings("unchecked")
-		protected HandlerResult execute(DisplayContext context, Control control, Map<String, Object> arguments) {
-			ReactSplitPanelControl splitPanel = (ReactSplitPanelControl) control;
-			Map<String, Object> sizes = (Map<String, Object>) arguments.get(SIZES_ARG);
-			if (sizes != null) {
-				for (int i = 0; i < splitPanel._children.size(); i++) {
-					ChildEntry entry = splitPanel._children.get(i);
-					String controlId = entry._control.getID();
-					Object newSize = sizes.get(controlId);
-					if (newSize instanceof Number) {
-						entry._constraint._size = ((Number) newSize).floatValue();
-						entry._constraint._unit = DisplayUnit.PIXEL;
-					}
-				}
-				// Update state but don't patch back (the client already has the correct sizes).
-				List<Map<String, Object>> list = splitPanel.childList();
-				list.clear();
-				for (ChildEntry entry : splitPanel._children) {
-					list.add(entry.toDescriptor());
-				}
-				if (splitPanel._onSizesChanged != null) {
-					Map<String, Float> sizeMap = new LinkedHashMap<>();
-					for (ChildEntry entry : splitPanel._children) {
-						sizeMap.put(entry._control.getID(), Float.valueOf(entry._constraint._size));
-					}
-					splitPanel._onSizesChanged.accept(sizeMap);
+	@SuppressWarnings("unchecked")
+	@ReactCommand("updateSizes")
+	HandlerResult handleUpdateSizes(Map<String, Object> arguments) {
+		Map<String, Object> sizes = (Map<String, Object>) arguments.get(SIZES_ARG);
+		if (sizes != null) {
+			for (int i = 0; i < _children.size(); i++) {
+				ChildEntry entry = _children.get(i);
+				String controlId = entry._control.getID();
+				Object newSize = sizes.get(controlId);
+				if (newSize instanceof Number) {
+					entry._constraint._size = ((Number) newSize).floatValue();
+					entry._constraint._unit = DisplayUnit.PIXEL;
 				}
 			}
-			return HandlerResult.DEFAULT_RESULT;
+			List<Map<String, Object>> list = childList();
+			list.clear();
+			for (ChildEntry entry : _children) {
+				list.add(entry.toDescriptor());
+			}
+			if (_onSizesChanged != null) {
+				Map<String, Float> sizeMap = new LinkedHashMap<>();
+				for (ChildEntry entry : _children) {
+					sizeMap.put(entry._control.getID(), Float.valueOf(entry._constraint._size));
+				}
+				_onSizesChanged.accept(sizeMap);
+			}
 		}
+		return HandlerResult.DEFAULT_RESULT;
 	}
 }

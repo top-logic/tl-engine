@@ -9,7 +9,11 @@
 			</tab>
 			<tab id="details" label="Details">
 				<card title="Detail Content">
-					<button label="Load Details"/>
+					<button>
+						<action class="com.top_logic.demo.view.command.DemoCommand"
+							label="Load Details"
+						/>
+					</button>
 				</card>
 			</tab>
 			<tab id="history" label="History">

@@ -15,9 +15,11 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactControl;
 import com.top_logic.layout.react.ViewControl;
 import com.top_logic.layout.view.ContainerElement;
+import com.top_logic.layout.view.I18NConstants;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
@@ -25,6 +27,7 @@ import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.model.TLObject;
+import com.top_logic.util.Resources;
 
 /**
  * Declarative {@link UIElement} that wraps a {@link FormControl}.
@@ -52,6 +55,9 @@ public class FormElement extends ContainerElement {
 		/** Configuration name for {@link #getDirty()}. */
 		String DIRTY = "dirty";
 
+		/** Configuration name for {@link #getNoModelMessage()}. */
+		String NO_MODEL_MESSAGE = "noModelMessage";
+
 		@Override
 		@ClassDefault(FormElement.class)
 		Class<? extends UIElement> getImplementationClass();
@@ -77,6 +83,16 @@ public class FormElement extends ContainerElement {
 		@Name(DIRTY)
 		@Format(ChannelRefFormat.class)
 		ChannelRef getDirty();
+
+		/**
+		 * Message to display when no object is available.
+		 *
+		 * <p>
+		 * Defaults to "No object selected." if not specified.
+		 * </p>
+		 */
+		@Name(NO_MODEL_MESSAGE)
+		ResKey getNoModelMessage();
 	}
 
 	private final Config _config;
@@ -98,10 +114,17 @@ public class FormElement extends ContainerElement {
 		// 2. Get initial object from input channel.
 		TLObject initialObject = (TLObject) inputChannel.get();
 
-		// 3. Create FormControl with initial object.
-		FormControl formControl = new FormControl(initialObject);
+		// 3. Resolve no-model message.
+		ResKey messageKey = _config.getNoModelMessage();
+		if (messageKey == null) {
+			messageKey = I18NConstants.FORM_NO_MODEL;
+		}
+		String noModelMessage = Resources.getInstance().getString(messageKey);
 
-		// 4. Wire channels.
+		// 4. Create FormControl with initial object.
+		FormControl formControl = new FormControl(initialObject, noModelMessage);
+
+		// 5. Wire channels.
 		formControl.setInputChannel(inputChannel);
 
 		ChannelRef editModeRef = _config.getEditMode();
@@ -114,7 +137,7 @@ public class FormElement extends ContainerElement {
 			formControl.setDirtyChannel(context.resolveChannel(dirtyRef));
 		}
 
-		// 5. Create a child context with the form control set, so that
+		// 6. Create a child context with the form control set, so that
 		// nested FieldElements can access it without polluting the parent context.
 		ViewContext formContext = context.childContext("form");
 		formContext.setFormControl(formControl);

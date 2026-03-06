@@ -51,6 +51,9 @@ public class FormControl extends ReactControl {
 	/** State key for the dirty flag. */
 	private static final String DIRTY = "dirty";
 
+	/** State key for the no-model placeholder message. */
+	private static final String NO_MODEL_MESSAGE = "noModelMessage";
+
 	private static final Map<String, ControlCommand> COMMANDS = createCommandMap(
 		EditCommand.INSTANCE, ApplyCommand.INSTANCE, SaveCommand.INSTANCE, CancelCommand.INSTANCE);
 
@@ -72,18 +75,24 @@ public class FormControl extends ReactControl {
 
 	private final ViewChannel.ChannelListener _inputListener = this::handleInputChanged;
 
+	private final String _noModelMessage;
+
 	/**
 	 * Creates a new {@link FormControl}.
 	 *
 	 * @param initialObject
 	 *        The initial object to display, may be {@code null}.
+	 * @param noModelMessage
+	 *        The message to display when no object is available.
 	 */
-	public FormControl(TLObject initialObject) {
+	public FormControl(TLObject initialObject, String noModelMessage) {
 		super(initialObject, "TLFormLayout", COMMANDS);
 		_currentObject = initialObject;
+		_noModelMessage = noModelMessage;
 		_editMode = false;
 		putState(EDIT_MODE, Boolean.FALSE);
 		putState(DIRTY, Boolean.FALSE);
+		updateNoModelMessage();
 	}
 
 	/**
@@ -324,11 +333,20 @@ public class FormControl extends ReactControl {
 		}
 	}
 
+	private void updateNoModelMessage() {
+		if (_currentObject == null) {
+			putState(NO_MODEL_MESSAGE, _noModelMessage);
+		} else {
+			putState(NO_MODEL_MESSAGE, null);
+		}
+	}
+
 	private void handleInputChanged(ViewChannel sender, Object oldValue, Object newValue) {
 		if (_editMode) {
 			exitEditMode();
 		}
 		_currentObject = (TLObject) newValue;
+		updateNoModelMessage();
 		notifyFields();
 	}
 

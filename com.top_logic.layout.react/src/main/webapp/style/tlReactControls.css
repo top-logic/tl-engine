@@ -2069,6 +2069,19 @@ button.tlMenu__item--disabled:hover {
 	width: 100%;
 }
 
+.tlFormLayout--empty {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 4rem;
+}
+
+.tlFormLayout__noModel {
+	color: var(--text-secondary, #666);
+	font-style: italic;
+	margin: 0;
+}
+
 /* --- TLFormGroup ------------------------------------------------------- */
 
 .tlFormGroup {

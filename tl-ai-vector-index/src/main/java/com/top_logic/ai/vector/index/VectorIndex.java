@@ -12,12 +12,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import io.qdrant.client.QdrantClient;
-import io.qdrant.client.QdrantGrpcClient;
 import org.json.simple.JSONObject;
 
 import com.top_logic.basic.Logger;
@@ -55,6 +52,8 @@ import dev.langchain4j.store.embedding.EmbeddingMatch;
 import dev.langchain4j.store.embedding.EmbeddingSearchRequest;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import dev.langchain4j.store.embedding.qdrant.QdrantEmbeddingStore;
+import io.qdrant.client.QdrantClient;
+import io.qdrant.client.QdrantGrpcClient;
 
 /**
  * Representation of the Vector index.
@@ -97,26 +96,27 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		Integer getVectorStorePort();
 
 		/**
-		 * Default collection name only in case of qdrant store
+		 * Qdrant vector indexing collection. Objects with enabled vector indexing will be stored as
+		 * points in this Qdrant collection.
 		 */
 		@StringDefault("top-logic-qdrant-default-collection")
 		String getQdrantDbCollectionName();
 
 		/**
-		 * File system path for local vector stores (e.g., JVector)
+		 * File system path for local vector stores (e.g., JVector). Default is tmp/vector-store
 		 */
 		@StringDefault("tmp/vector-store")
 		String getLocalStorePath();
 
 		/**
-		 * Mistral Embedding Service API Key
+		 * Mistral API key - needed to consume Mistral service for vector embedding.
 		 */
 		@Encrypted
 		@StringDefault("EMPTY")
 		String getMistralApiKey();
 
 		/**
-		 * Mistral Embedding model
+		 * Mistral Embedding model ID
 		 */
 		@StringDefault("mistral-embed")
 		String getMistralEmbedModel();
@@ -128,13 +128,20 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		String getEmbeddingModelType();
 
 		/**
-		 * Vector Index models
+		 * Comma separated list of Fully Qualified Names (FQNs) of models to be serialized and
+		 * stored in the Qdrant databse with vector index (Embedding service shall be used on the
+		 * content of the object)
 		 */
 		@StringDefault("")
 		String getVectorIndexModels();
 
 		/**
-		 * No Vector Index models
+		 * Comma separated list of Fully Qualified Names (FQNs) of models to be serialized and
+		 * stored in the Qdrant databse. These objects shall be stored without a vector - no
+		 * embedding service shall be executed for them, just the content shall be stored in the
+		 * _noVector collection. This is useful for content that shall be used for additional
+		 * context for AI services. The models need to be present in the "Vector index models"
+		 * configuration as well in order to be indexed.
 		 */
 		@StringDefault("")
 		String getNoVectorIndexModels();

@@ -136,17 +136,6 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		String getVectorIndexModels();
 
 		/**
-		 * Comma separated list of Fully Qualified Names (FQNs) of models to be serialized and
-		 * stored in the Qdrant databse. These objects shall be stored without a vector - no
-		 * embedding service shall be executed for them, just the content shall be stored in the
-		 * _noVector collection. This is useful for content that shall be used for additional
-		 * context for AI services. The models need to be present in the "Vector index models"
-		 * configuration as well in order to be indexed.
-		 */
-		@StringDefault("")
-		String getNoVectorIndexModels();
-
-		/**
 		 * Number of millisecond to wait before aborting the indexing process after the
 		 * {@link VectorIndexingService} was {@link #shutDown() shut down}.
 		 * 
@@ -690,13 +679,6 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		// payload.putAll(associationsHashMap);
 		jo.putAll(associationsHashMap);
 
-		/* Do not embed ApplicationModel objects - they are huge and embedding does not give us any value as
-		 * we want to fetch them for every request as initial prompt context they contain overall
-		 * information about the application.
-		 * 
-		 * These objects shall be store in the _noVector collection. */
-
-		this.deleteDocument(aDoc.tId());
 		this.storeToVectorStore(documentId, jo);
 	}
 

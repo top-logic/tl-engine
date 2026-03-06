@@ -167,6 +167,20 @@ public class ReactFormFieldChromeControl extends ReactControl {
 		putState(REQUIRED, required);
 	}
 
+	/**
+	 * Replaces the child field control.
+	 *
+	 * @param field
+	 *        The new child field control.
+	 */
+	public void setField(ReactControl field) {
+		if (_field != null) {
+			_field.cleanupTree();
+		}
+		_field = field;
+		putState(FIELD, field);
+	}
+
 	@Override
 	protected void cleanupChildren() {
 		if (_field != null) {

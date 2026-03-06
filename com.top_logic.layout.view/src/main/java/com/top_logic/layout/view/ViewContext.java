@@ -12,6 +12,7 @@ import com.top_logic.layout.react.ViewDisplayContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.CommandScope;
+import com.top_logic.layout.view.form.FormControl;
 
 /**
  * Hierarchical context for UIElement control creation.
@@ -31,7 +32,7 @@ public class ViewContext {
 
 	private final CommandScope _commandScope;
 
-	private Object _formControl;
+	private FormControl _formControl;
 
 	/**
 	 * Creates a root {@link ViewContext}.
@@ -45,7 +46,7 @@ public class ViewContext {
 	}
 
 	private ViewContext(ViewDisplayContext displayContext, String personalizationPath,
-			Map<String, ViewChannel> channels, CommandScope commandScope, Object formControl) {
+			Map<String, ViewChannel> channels, CommandScope commandScope, FormControl formControl) {
 		_displayContext = displayContext;
 		_personalizationPath = personalizationPath;
 		_channels = channels;
@@ -97,10 +98,10 @@ public class ViewContext {
 	}
 
 	/**
-	 * The form control of the nearest enclosing form element, or {@code null} if no form is in
-	 * scope.
+	 * The {@link FormControl} of the nearest enclosing form element, or {@code null} if no form is
+	 * in scope.
 	 */
-	public Object getFormControl() {
+	public FormControl getFormControl() {
 		return _formControl;
 	}
 
@@ -112,8 +113,11 @@ public class ViewContext {
 	 * {@link UIElement#createControl(ViewContext)} to make the form available to nested field
 	 * elements.
 	 * </p>
+	 *
+	 * @param formControl
+	 *        The form control, or {@code null}.
 	 */
-	public void setFormControl(Object formControl) {
+	public void setFormControl(FormControl formControl) {
 		_formControl = formControl;
 	}
 

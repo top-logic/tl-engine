@@ -114,11 +114,13 @@ public class FormElement extends ContainerElement {
 			formControl.setDirtyChannel(context.resolveChannel(dirtyRef));
 		}
 
-		// 5. Store form control in context for nested FieldElements.
-		context.setFormControl(formControl);
+		// 5. Create a child context with the form control set, so that
+		// nested FieldElements can access it without polluting the parent context.
+		ViewContext formContext = context.childContext("form");
+		formContext.setFormControl(formControl);
 
-		// 6. Create child controls.
-		List<ViewControl> childControls = createChildControls(context);
+		// 6. Create child controls in the form-scoped context.
+		List<ViewControl> childControls = createChildControls(formContext);
 
 		// 7. Convert to ReactControl list and put as state.
 		List<ReactControl> reactChildren = childControls.stream()

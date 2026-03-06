@@ -184,7 +184,7 @@ public class FormControl extends ReactControl {
 	}
 
 	/**
-	 * Enters edit mode by creating an overlay, acquiring a lock, and switching fields to editable.
+	 * Enters edit mode by acquiring a lock, creating an overlay, and switching fields to editable.
 	 */
 	public void enterEditMode() {
 		if (_editMode) {
@@ -194,8 +194,9 @@ public class FormControl extends ReactControl {
 			return;
 		}
 
-		_overlay = new TLObjectOverlay(_currentObject);
+		// Acquire lock first -- if this fails, no overlay is created.
 		_lock = LockService.getInstance().acquireLock(EDIT_OPERATION, _currentObject);
+		_overlay = new TLObjectOverlay(_currentObject);
 
 		_editMode = true;
 		putState(EDIT_MODE, Boolean.TRUE);

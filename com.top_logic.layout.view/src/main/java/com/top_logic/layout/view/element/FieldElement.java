@@ -85,12 +85,11 @@ public class FieldElement implements UIElement {
 	@Override
 	public ViewControl createControl(ViewContext context) {
 		// 1. Get FormControl from context.
-		Object formObj = context.getFormControl();
-		if (formObj == null) {
+		FormControl formControl = context.getFormControl();
+		if (formControl == null) {
 			throw new IllegalStateException(
 				"FieldElement must be nested inside a FormElement. No FormControl found in ViewContext.");
 		}
-		FormControl formControl = (FormControl) formObj;
 
 		// 2. Create FieldControl and register with form.
 		FieldControl fieldControl =

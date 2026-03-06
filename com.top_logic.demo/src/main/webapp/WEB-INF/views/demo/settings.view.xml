@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<card title="Settings" variant="elevated">
+		<button label="Save Settings"/>
+	</card>
+</view>

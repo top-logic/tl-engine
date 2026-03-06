@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <view xmlns:config="http://www.top-logic.com/ns/config/6.0">
-	<channels>
-		<channel name="selectedCompany" />
-	</channels>
 	<app-shell>
 		<header>
 			<app-bar title="Task Manager"/>
@@ -11,88 +8,20 @@
 			<sidebar active-item="dashboard">
 				<items>
 					<nav-item id="dashboard" label="Dashboard" icon="bi bi-speedometer2">
-						<stack direction="column" gap="default">
-							<grid min-column-width="16rem" gap="default">
-								<card title="Active Tasks" variant="elevated">
-									<demo-counter label="Tasks"/>
-								</card>
-								<card title="In Review">
-									<demo-counter label="Reviews"/>
-								</card>
-								<card title="Team Notes">
-									<button label="Open Details"/>
-								</card>
-								<card title="Quick Add">
-									<button label="+ New Task"/>
-								</card>
-							</grid>
-						</stack>
+						<view-ref view="demo/dashboard.view.xml" />
 					</nav-item>
 					<nav-item id="tabs-demo" label="Tabs Demo" icon="bi bi-layout-text-window-reverse">
-						<tab-bar active-tab="overview">
-							<tabs>
-								<tab id="overview" label="Overview">
-									<card title="Overview Content" variant="elevated">
-										<demo-counter label="Items"/>
-									</card>
-								</tab>
-								<tab id="details" label="Details">
-									<card title="Detail Content">
-										<button label="Load Details"/>
-									</card>
-								</tab>
-								<tab id="history" label="History">
-									<card title="History Content">
-										<demo-counter label="Events"/>
-									</card>
-								</tab>
-							</tabs>
-						</tab-bar>
+						<view-ref view="demo/tabs-demo.view.xml" />
 					</nav-item>
 					<nav-item id="split-demo" label="Split Demo" icon="bi bi-layout-split">
-						<split-panel orientation="horizontal" resizable="true">
-							<panes>
-								<pane size="30" unit="%" min-size="200">
-									<card title="Navigation" variant="elevated">
-										<button label="Item 1"/>
-									</card>
-								</pane>
-								<pane size="70" unit="%">
-									<card title="Content Area">
-										<demo-counter label="Content"/>
-									</card>
-								</pane>
-							</panes>
-						</split-panel>
+						<view-ref view="demo/split-demo.view.xml" />
 					</nav-item>
 					<nav-item id="channels-demo" label="Channels Demo" icon="bi bi-table">
-						<split-panel orientation="horizontal" resizable="true">
-							<panes>
-								<pane size="40" unit="%" min-size="200">
-									<panel title="Companies">
-										<table types="Contacts:CompanyContact" selection="selectedCompany">
-											<rows>all(`Contacts:CompanyContact`)</rows>
-										</table>
-									</panel>
-								</pane>
-								<pane size="60" unit="%">
-									<panel title="Staff">
-										<table types="Contacts:PersonContact">
-											<inputs>
-												<input channel="selectedCompany" />
-											</inputs>
-											<rows>company -> if($company == null, list(), $company.get(`Contacts:Contact.Company#staff`))</rows>
-										</table>
-									</panel>
-								</pane>
-							</panes>
-						</split-panel>
+						<view-ref view="demo/channels-demo.view.xml" />
 					</nav-item>
 					<separator/>
 					<nav-item id="settings" label="Settings" icon="bi bi-gear">
-						<card title="Settings" variant="elevated">
-							<button label="Save Settings"/>
-						</card>
+						<view-ref view="demo/settings.view.xml" />
 					</nav-item>
 				</items>
 			</sidebar>

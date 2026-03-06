@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<tab-bar active-tab="overview">
+		<tabs>
+			<tab id="overview" label="Overview">
+				<card title="Overview Content" variant="elevated">
+					<demo-counter label="Items"/>
+				</card>
+			</tab>
+			<tab id="details" label="Details">
+				<card title="Detail Content">
+					<button label="Load Details"/>
+				</card>
+			</tab>
+			<tab id="history" label="History">
+				<card title="History Content">
+					<demo-counter label="Events"/>
+				</card>
+			</tab>
+		</tabs>
+	</tab-bar>
+</view>

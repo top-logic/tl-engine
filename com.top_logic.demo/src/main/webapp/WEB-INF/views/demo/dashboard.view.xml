@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<stack direction="column" gap="default">
+		<grid min-column-width="16rem" gap="default">
+			<card title="Active Tasks" variant="elevated">
+				<demo-counter label="Tasks"/>
+			</card>
+			<card title="In Review">
+				<demo-counter label="Reviews"/>
+			</card>
+			<card title="Team Notes">
+				<button label="Open Details"/>
+			</card>
+			<card title="Quick Add">
+				<button label="+ New Task"/>
+			</card>
+		</grid>
+	</stack>
+</view>

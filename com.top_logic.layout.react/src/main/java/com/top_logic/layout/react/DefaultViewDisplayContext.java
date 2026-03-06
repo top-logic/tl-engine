@@ -5,14 +5,10 @@
  */
 package com.top_logic.layout.react;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 /**
  * Simple implementation of {@link ViewDisplayContext} for the view system.
  */
 public class DefaultViewDisplayContext implements ViewDisplayContext {
-
-	private final AtomicInteger _nextId = new AtomicInteger(1);
 
 	private final String _contextPath;
 
@@ -38,7 +34,7 @@ public class DefaultViewDisplayContext implements ViewDisplayContext {
 
 	@Override
 	public String allocateId() {
-		return "v" + _nextId.getAndIncrement();
+		return _sseQueue.allocateId();
 	}
 
 	@Override

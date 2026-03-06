@@ -765,25 +765,10 @@ public class ReactTableControl extends ReactControl {
 	/**
 	 * Handles freeze column count changes from the client.
 	 */
-	static class SetFrozenColumnCountCommand extends ControlCommand {
-
-		SetFrozenColumnCountCommand() {
-			super("setFrozenColumnCount");
-		}
-
-		@Override
-		public ResKey getI18NKey() {
-			return ResKey.legacy("react.table.setFrozenColumnCount");
-		}
-
-		@Override
-		protected HandlerResult execute(DisplayContext context, Control control,
-				Map<String, Object> arguments) {
-			ReactTableControl table = (ReactTableControl) control;
-			int count = ((Number) arguments.get("count")).intValue();
-			count = Math.max(0, Math.min(count, table._columnDefs.size()));
-			table.setFrozenColumnCount(count);
-			return HandlerResult.DEFAULT_RESULT;
-		}
+	@ReactCommand("setFrozenColumnCount")
+	void handleSetFrozenColumnCount(Map<String, Object> arguments) {
+		int count = ((Number) arguments.get("count")).intValue();
+		count = Math.max(0, Math.min(count, _columnDefs.size()));
+		setFrozenColumnCount(count);
 	}
 }

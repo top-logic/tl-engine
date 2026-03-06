@@ -107,7 +107,7 @@ public class DemoReactSidebarComponent extends LayoutComponent {
 		ReactControl footerCollapsedSlot = createFooterCollapsedControl();
 
 		return new ReactSidebarControl(
-			"demo.sidebar", items, "dashboard", false,
+			items, "dashboard", false, null, null, null,
 			headerSlot, headerCollapsedSlot, footerSlot, footerCollapsedSlot);
 	}
 

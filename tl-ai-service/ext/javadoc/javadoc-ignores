@@ -8,3 +8,7 @@ com.top_logic.ai.service.tools.model.messages.ModuleInfo.java: Invalid camel cas
 com.top_logic.ai.service.tools.model.messages.ReferenceResponse.java: Invalid camel case word 'ClassName', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.ai.service.tools.model.messages.PropertyResponse.java: Invalid camel case word 'ClassName', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.ai.service.tools.model.messages.BackwardReferenceResponse.java: Invalid camel case word 'ClassName', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.ai.service.tools.task.messages.TaskDetail.java: Invalid camel case word 'getTask', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.ai.service.tools.task.messages.TaskResponse.java: Invalid camel case word 'createTask', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.ai.service.tools.task.messages.TaskResponse.java: Invalid camel case word 'updateTask', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.ai.service.tools.task.messages.TaskListResponse.java: Invalid camel case word 'listTasks', this may only be used within JavaDoc links or HTML code tags.

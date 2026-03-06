@@ -106,7 +106,7 @@ public class TaskStore {
 	 * @param addBlocks
 	 *        Task IDs to add to the blocks set, or {@code null} to skip.
 	 * @param addBlockedBy
-	 *        Task IDs to add to the blockedBy set, or {@code null} to skip.
+	 *        Task IDs to add to the {@code blockedBy} set, or {@code null} to skip.
 	 * @return The updated task, or {@code null} if no task with that ID exists.
 	 */
 	public synchronized AgentTask updateTask(String taskId, String status, String subject,
@@ -278,7 +278,7 @@ public class TaskStore {
 		/**
 		 * Task IDs that must complete before this task can start.
 		 *
-		 * @return An unmodifiable view of the blockedBy set.
+		 * @return An unmodifiable view of the {@code blockedBy} set.
 		 */
 		public Set<String> getBlockedBy() {
 			return Collections.unmodifiableSet(_blockedBy);

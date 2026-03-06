@@ -64,7 +64,7 @@ public class TaskTool {
 	 *        Detailed description of what needs to be done.
 	 * @param activeForm
 	 *        Present continuous form shown while the task is in progress (e.g. "Running tests").
-	 * @return JSON with taskId, status, and subject.
+	 * @return JSON with {@code taskId}, status, and subject.
 	 */
 	@Tool("Create a new task to track a unit of work. Use for complex multi-step operations (3+ steps)."
 		+ " Do NOT use for single, trivial tasks. Tasks start as 'pending'. Always provide activeForm."
@@ -116,8 +116,8 @@ public class TaskTool {
 	 * @param addBlocks
 	 *        Task IDs to add to the blocks set, or null to skip.
 	 * @param addBlockedBy
-	 *        Task IDs to add to the blockedBy set, or null to skip.
-	 * @return JSON with updated taskId, status, and subject, or error if task not found.
+	 *        Task IDs to add to the {@code blockedBy} set, or null to skip.
+	 * @return JSON with updated {@code taskId}, status, and subject, or error if task not found.
 	 */
 	@Tool("Update a task's status, subject, description, owner, or dependencies."
 		+ " Set status to 'in_progress' BEFORE starting work on a task."
@@ -172,7 +172,7 @@ public class TaskTool {
 	 * Lists all tasks with summary information.
 	 *
 	 * @return JSON with array of task summaries containing id, subject, status, owner, and
-	 *         blockedBy.
+	 *         {@code blockedBy}.
 	 */
 	@Tool("List all tasks with their ID, subject, status, owner, and blockedBy dependencies."
 		+ " Use to see available work, check overall progress, or find the next task after completing one."

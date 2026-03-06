@@ -16,6 +16,10 @@
   <dependencies>
     <dependency>
       <groupId>com.top-logic</groupId>
+      <artifactId>tl-layout-view</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
       <artifactId>tl-themes-core</artifactId>
     </dependency>
     <dependency>
@@ -129,14 +133,6 @@
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-kafka</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.top-logic</groupId>
-      <artifactId>tl-layout-react</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.top-logic</groupId>
-      <artifactId>tl-layout-view</artifactId>
     </dependency>
   </dependencies>
   

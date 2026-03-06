@@ -5,7 +5,7 @@
  */
 package com.top_logic.layout.react;
 
-import com.top_logic.layout.react.control.SSEUpdateQueue;
+import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 
 /**
  * Lean rendering context for the view system.

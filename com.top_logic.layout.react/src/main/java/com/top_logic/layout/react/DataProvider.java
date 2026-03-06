@@ -6,6 +6,7 @@
 package com.top_logic.layout.react;
 
 import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.layout.react.servlet.ReactServlet;
 
 /**
  * Interface for React controls that serve binary data to the client.

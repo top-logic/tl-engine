@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.layout.react;
+package com.top_logic.layout.react.servlet;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -49,9 +49,10 @@ import com.top_logic.layout.UpdateWriter;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.component.ControlSupport;
 import com.top_logic.layout.internal.SubsessionHandler;
+import com.top_logic.layout.react.DataProvider;
+import com.top_logic.layout.react.UploadHandler;
 import com.top_logic.layout.react.control.ReactCommandTarget;
 import com.top_logic.layout.react.control.ReactControl;
-import com.top_logic.layout.react.control.SSEUpdateQueue;
 import com.top_logic.layout.react.protocol.FunctionCall;
 import com.top_logic.layout.react.protocol.JSSnipplet;
 import com.top_logic.layout.react.protocol.Property;

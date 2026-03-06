@@ -18,6 +18,7 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.react.ReactDisplayContext;
 import com.top_logic.layout.react.protocol.PatchEvent;
 import com.top_logic.layout.react.protocol.StateEvent;
+import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.tool.boundsec.HandlerResult;
 

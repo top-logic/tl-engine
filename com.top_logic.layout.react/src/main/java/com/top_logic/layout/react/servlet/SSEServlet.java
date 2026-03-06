@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.layout.react;
+package com.top_logic.layout.react.servlet;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -17,7 +17,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import com.top_logic.basic.Logger;
-import com.top_logic.layout.react.control.SSEUpdateQueue;
 
 /**
  * Servlet that establishes an SSE (Server-Sent Events) connection for delivering React state

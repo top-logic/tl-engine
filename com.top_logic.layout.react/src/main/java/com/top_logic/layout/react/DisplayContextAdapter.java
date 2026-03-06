@@ -7,7 +7,7 @@ package com.top_logic.layout.react;
 
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.FrameScope;
-import com.top_logic.layout.react.control.SSEUpdateQueue;
+import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 
 /**
  * Adapts an old-world {@link DisplayContext} to the lean {@link ReactDisplayContext} contract.

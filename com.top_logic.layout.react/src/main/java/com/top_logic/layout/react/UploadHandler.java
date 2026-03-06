@@ -10,6 +10,7 @@ import java.util.Collection;
 import jakarta.servlet.http.Part;
 
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.react.servlet.ReactServlet;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**

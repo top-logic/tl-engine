@@ -24,11 +24,17 @@ import de.haumacher.msgbuf.io.StringW;
 import de.haumacher.msgbuf.json.JsonWriter;
 
 /**
- * A server-side control that mounts a React component on the client.
+ * A server-side control that mounts a {@code React} component on the client.
  *
  * <p>
  * The control renders a mount-point {@code <div>} and a bootstrap script that calls
  * {@code TLReact.mount()} on the client. State updates are delivered via SSE.
+ * </p>
+ *
+ * <p>
+ * Subclasses handle client-side commands by declaring methods annotated with
+ * {@link ReactCommand @ReactCommand}. See the annotation's documentation for the supported method
+ * signatures.
  * </p>
  *
  * <p>

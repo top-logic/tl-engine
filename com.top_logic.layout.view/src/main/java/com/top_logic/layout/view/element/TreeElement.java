@@ -24,10 +24,9 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
-import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.layout.react.MetaResourceControlProvider;
 import com.top_logic.layout.react.ReactControlProvider;
 import com.top_logic.layout.react.ViewControl;
-import com.top_logic.layout.react.control.table.ReactTextCellControl;
 import com.top_logic.layout.react.control.tree.ReactTreeControl;
 import com.top_logic.layout.tree.model.AbstractMutableTLTreeModel;
 import com.top_logic.layout.tree.model.DefaultTreeUINodeModel;
@@ -240,7 +239,7 @@ public class TreeElement implements UIElement {
 		_childrenExecutor = QueryExecutor.compile(config.getChildren());
 
 		ReactControlProvider configuredProvider = context.getInstance(config.getNodeContent());
-		_nodeContentProvider = configuredProvider != null ? configuredProvider : defaultContentProvider();
+		_nodeContentProvider = configuredProvider != null ? configuredProvider : MetaResourceControlProvider.INSTANCE;
 	}
 
 	@Override
@@ -365,9 +364,4 @@ public class TreeElement implements UIElement {
 		return Collections.singletonList(result);
 	}
 
-	private static ReactControlProvider defaultContentProvider() {
-		return (model) -> {
-			return new ReactTextCellControl(MetaLabelProvider.INSTANCE.getLabel(model));
-		};
-	}
 }

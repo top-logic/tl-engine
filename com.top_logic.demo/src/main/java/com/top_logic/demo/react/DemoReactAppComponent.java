@@ -179,7 +179,7 @@ public class DemoReactAppComponent extends LayoutComponent {
 			return HandlerResult.DEFAULT_RESULT;
 		}));
 
-		return new ReactSidebarControl("demo.app", items, PAGE_DASHBOARD, false, null, null) {
+		return new ReactSidebarControl(items, PAGE_DASHBOARD, false, null, null) {
 			@Override
 			public void selectItem(String itemId) {
 				super.selectItem(itemId);

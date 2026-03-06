@@ -5,27 +5,17 @@
  */
 package com.top_logic.layout.view.command;
 
-import com.top_logic.layout.react.ViewDisplayContext;
-import com.top_logic.tool.boundsec.HandlerResult;
-
 /**
- * A command action in the view system.
+ * Deprecated compatibility alias.
  *
  * <p>
- * Replaces the old-world {@link com.top_logic.layout.basic.Command} interface for view-system
- * buttons. Receives a {@link ViewDisplayContext} instead of a
- * {@link com.top_logic.layout.DisplayContext}.
+ * The canonical location is {@link com.top_logic.layout.react.ViewCommandAction}.
  * </p>
+ *
+ * @deprecated Use {@link com.top_logic.layout.react.ViewCommandAction} instead.
  */
+@Deprecated
 @FunctionalInterface
-public interface ViewCommandAction {
-
-	/**
-	 * Executes this action.
-	 *
-	 * @param context
-	 *        The view display context.
-	 * @return The result of the command execution.
-	 */
-	HandlerResult execute(ViewDisplayContext context);
+public interface ViewCommandAction extends com.top_logic.layout.react.ViewCommandAction {
+	// Re-export from the canonical location.
 }

@@ -22,7 +22,6 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.react.ReactControl;
 import com.top_logic.layout.react.ViewControl;
-import com.top_logic.layout.react.ViewDisplayContext;
 import com.top_logic.layout.react.control.ReactButtonControl;
 import com.top_logic.layout.react.control.layout.ReactPanelControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
@@ -164,7 +163,7 @@ public class PanelElement extends ContainerElement {
 			if (model.getPlacement() == CommandPlacement.TOOLBAR) {
 				String label = resolveLabel(model.getLabel());
 				ReactButtonControl button = new ReactButtonControl(label,
-					displayContext -> model.executeCommand(ViewDisplayContext.fromDisplayContext(displayContext)));
+					ctx -> model.executeCommand(ctx));
 				button.setDisabled(!model.getExecutableState().isExecutable());
 				model.setStateChangeListener(() -> {
 					button.setDisabled(!model.getExecutableState().isExecutable());

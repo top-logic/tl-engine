@@ -1,0 +1,131 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.layout.view.element;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.layout.react.ReactControl;
+import com.top_logic.layout.react.ViewControl;
+import com.top_logic.layout.view.ContainerElement;
+import com.top_logic.layout.view.UIElement;
+import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.ChannelRefFormat;
+import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.form.FormControl;
+import com.top_logic.model.TLObject;
+
+/**
+ * Declarative {@link UIElement} that wraps a {@link FormControl}.
+ *
+ * <p>
+ * Establishes a form scope for child elements. Resolves an input channel to obtain the object to
+ * display, creates a {@link FormControl}, and makes it available to nested {@link FieldElement}s
+ * via the {@link ViewContext}.
+ * </p>
+ */
+public class FormElement extends ContainerElement {
+
+	/**
+	 * Configuration for {@link FormElement}.
+	 */
+	@TagName("form")
+	public interface Config extends ContainerElement.Config {
+
+		/** Configuration name for {@link #getInput()}. */
+		String INPUT = "input";
+
+		/** Configuration name for {@link #getEditMode()}. */
+		String EDIT_MODE = "editMode";
+
+		/** Configuration name for {@link #getDirty()}. */
+		String DIRTY = "dirty";
+
+		@Override
+		@ClassDefault(FormElement.class)
+		Class<? extends UIElement> getImplementationClass();
+
+		/**
+		 * Reference to the channel providing the object to display in the form.
+		 */
+		@Name(INPUT)
+		@Mandatory
+		@Format(ChannelRefFormat.class)
+		ChannelRef getInput();
+
+		/**
+		 * Optional reference to a channel for publishing edit mode state.
+		 */
+		@Name(EDIT_MODE)
+		@Format(ChannelRefFormat.class)
+		ChannelRef getEditMode();
+
+		/**
+		 * Optional reference to a channel for publishing the dirty state.
+		 */
+		@Name(DIRTY)
+		@Format(ChannelRefFormat.class)
+		ChannelRef getDirty();
+	}
+
+	private final Config _config;
+
+	/**
+	 * Creates a new {@link FormElement} from configuration.
+	 */
+	@CalledByReflection
+	public FormElement(InstantiationContext context, Config config) {
+		super(context, config);
+		_config = config;
+	}
+
+	@Override
+	public ViewControl createControl(ViewContext context) {
+		// 1. Resolve input channel.
+		ViewChannel inputChannel = context.resolveChannel(_config.getInput());
+
+		// 2. Get initial object from input channel.
+		TLObject initialObject = (TLObject) inputChannel.get();
+
+		// 3. Create FormControl with initial object.
+		FormControl formControl = new FormControl(initialObject);
+
+		// 4. Wire channels.
+		formControl.setInputChannel(inputChannel);
+
+		ChannelRef editModeRef = _config.getEditMode();
+		if (editModeRef != null) {
+			formControl.setEditModeChannel(context.resolveChannel(editModeRef));
+		}
+
+		ChannelRef dirtyRef = _config.getDirty();
+		if (dirtyRef != null) {
+			formControl.setDirtyChannel(context.resolveChannel(dirtyRef));
+		}
+
+		// 5. Store form control in context for nested FieldElements.
+		context.setFormControl(formControl);
+
+		// 6. Create child controls.
+		List<ViewControl> childControls = createChildControls(context);
+
+		// 7. Convert to ReactControl list and put as state.
+		List<ReactControl> reactChildren = childControls.stream()
+			.map(c -> (ReactControl) c)
+			.collect(Collectors.toList());
+		formControl.setChildren(reactChildren);
+
+		return formControl;
+	}
+}

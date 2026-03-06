@@ -154,6 +154,21 @@ public class FormControl extends ReactControl {
 	}
 
 	/**
+	 * Sets the child controls of this form.
+	 *
+	 * <p>
+	 * Called by {@link com.top_logic.layout.view.element.FormElement} during control creation to
+	 * assign the child control list as React state.
+	 * </p>
+	 *
+	 * @param children
+	 *        The child controls.
+	 */
+	public void setChildren(List<ReactControl> children) {
+		putState("children", children);
+	}
+
+	/**
 	 * Registers a field control with this form.
 	 *
 	 * <p>

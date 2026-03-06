@@ -26,6 +26,8 @@ class ReactCommandInvoker {
 
 	private final boolean _needsArgs;
 
+	private final boolean _returnsVoid;
+
 	/**
 	 * Creates a new invoker.
 	 *
@@ -36,11 +38,15 @@ class ReactCommandInvoker {
 	 *        Whether the method declares a {@link ViewDisplayContext} parameter.
 	 * @param needsArgs
 	 *        Whether the method declares a {@code Map<String, Object>} parameter.
+	 * @param returnsVoid
+	 *        Whether the method returns {@code void} (as opposed to {@link HandlerResult}).
 	 */
-	ReactCommandInvoker(MethodHandle handle, boolean needsContext, boolean needsArgs) {
+	ReactCommandInvoker(MethodHandle handle, boolean needsContext, boolean needsArgs,
+			boolean returnsVoid) {
 		_handle = handle;
 		_needsContext = needsContext;
 		_needsArgs = needsArgs;
+		_returnsVoid = returnsVoid;
 	}
 
 	/**
@@ -50,18 +56,25 @@ class ReactCommandInvoker {
 			Map<String, Object> arguments) {
 		try {
 			if (_needsContext && _needsArgs) {
-				return (HandlerResult) _handle.invoke(control, context, arguments);
+				return castResult(_handle.invoke(control, context, arguments));
 			} else if (_needsContext) {
-				return (HandlerResult) _handle.invoke(control, context);
+				return castResult(_handle.invoke(control, context));
 			} else if (_needsArgs) {
-				return (HandlerResult) _handle.invoke(control, arguments);
+				return castResult(_handle.invoke(control, arguments));
 			} else {
-				return (HandlerResult) _handle.invoke(control);
+				return castResult(_handle.invoke(control));
 			}
 		} catch (RuntimeException ex) {
 			throw ex;
 		} catch (Throwable ex) {
 			throw new RuntimeException("Failed to invoke @ReactCommand on " + control.getClass().getName(), ex);
 		}
+	}
+
+	private HandlerResult castResult(Object result) {
+		if (_returnsVoid) {
+			return HandlerResult.DEFAULT_RESULT;
+		}
+		return (HandlerResult) result;
 	}
 }

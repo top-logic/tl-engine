@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<split-panel orientation="horizontal" resizable="true">
+		<panes>
+			<pane size="30" unit="%" min-size="200">
+				<card title="Navigation" variant="elevated">
+					<button label="Item 1"/>
+				</card>
+			</pane>
+			<pane size="70" unit="%">
+				<card title="Content Area">
+					<demo-counter label="Content"/>
+				</card>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

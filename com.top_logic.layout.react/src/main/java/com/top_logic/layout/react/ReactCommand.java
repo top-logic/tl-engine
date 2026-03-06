@@ -11,8 +11,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marks a method on a {@link ReactControl} subclass as a command handler for a React client
- * command.
+ * Marks a method on a {@link ReactControl} subclass as a command handler for a {@code React}
+ * client command.
  *
  * <p>
  * Annotated methods may declare any subset of these parameters, in the order shown:
@@ -38,7 +38,7 @@ import java.lang.annotation.Target;
 public @interface ReactCommand {
 
 	/**
-	 * The command identifier sent by the React client (e.g. {@code "click"}, {@code "sort"},
+	 * The command identifier sent by the {@code React} client (e.g. {@code "click"}, {@code "sort"},
 	 * {@code "select"}).
 	 */
 	String value();

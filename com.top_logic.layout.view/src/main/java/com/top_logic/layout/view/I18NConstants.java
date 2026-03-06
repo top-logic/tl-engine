@@ -38,6 +38,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey FORM_CANCEL;
 
+	/**
+	 * @en No object selected.
+	 */
+	public static ResKey FORM_NO_MODEL;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

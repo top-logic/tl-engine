@@ -24,8 +24,6 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.AbstractDisplayValue;
 import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.DisplayDimension;
-import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.FrameScope;
 import com.top_logic.layout.LinkGenerator;
 import com.top_logic.layout.Renderer;
@@ -176,12 +174,7 @@ public class LogoutView extends AbstractConfiguredInstance<LogoutView.Config>
 	public String getOnclick() {
 		DisplayContext context = DefaultDisplayContext.getDisplayContext();
 		if (isNotLoggedIn()) {
-			return LinkGenerator.createLink(context, executionContext -> {
-				LoginViewDialog login = new LoginViewDialog(I18NConstants.LOGIN,
-					DisplayDimension.dim(400, DisplayUnit.PIXEL),
-					DisplayDimension.dim(300, DisplayUnit.PIXEL));
-				return login.open(executionContext);
-			});
+			return LinkGenerator.createLink(context, executionContext -> new LoginViewDialog().open(executionContext));
 		} else {
 			StringBuilder out = new StringBuilder();
 			try {

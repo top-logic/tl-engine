@@ -737,7 +737,7 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 	}
 
 	/**
-	 * Returns a UUID object derived from the documentId string
+	 * Returns a UUID object derived from the document id string
 	 * 
 	 * @param documentId
 	 *        id of document to return UUID of

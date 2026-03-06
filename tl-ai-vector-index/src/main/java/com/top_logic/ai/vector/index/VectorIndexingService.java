@@ -79,11 +79,11 @@ public class VectorIndexingService extends DefaultIndexingService {
 	}
 
 	/**
-	 * Module initialization
+	 * Module initialization.
 	 */
 	public static final class Module extends TypedRuntimeModule<VectorIndexingService> {
 		/**
-		 * Initialize the module instance
+		 * Initialize the module instance.
 		 */
 		public static final Module INSTANCE = new Module();
 

@@ -74,7 +74,11 @@ public class FieldControl {
 	public ReactFormFieldChromeControl createChromeControl() {
 		TLObject current = _form.getCurrentObject();
 		if (current == null) {
-			return null;
+			// No object selected yet — create a disabled placeholder field.
+			_innerControl = new ViewTextInputControl(null, false);
+			_chrome = new ReactFormFieldChromeControl(_attributeName, false, false, null, null, null,
+				false, true, _innerControl);
+			return _chrome;
 		}
 
 		_resolvedPart = resolvePart(current);
@@ -102,12 +106,33 @@ public class FieldControl {
 	 * </p>
 	 */
 	public void refresh() {
-		if (_innerControl == null || _chrome == null || _resolvedPart == null) {
+		if (_innerControl == null || _chrome == null) {
 			return;
 		}
 
 		TLObject current = _form.getCurrentObject();
 		if (current == null) {
+			// Object gone — reset to placeholder state.
+			_resolvedPart = null;
+			updateInnerControl(null, false);
+			_chrome.setDirty(false);
+			return;
+		}
+
+		if (_resolvedPart == null) {
+			// First object arrived — resolve the attribute and recreate the inner control.
+			_resolvedPart = resolvePart(current);
+			String label = resolveLabel();
+			boolean editable = _form.isEditMode() && !_forceReadonly;
+			Object value = current.tValue(_resolvedPart);
+
+			_innerControl = FieldControlFactory.createFieldControl(_resolvedPart, value, editable);
+			setupValueCallback();
+
+			_chrome.setLabel(label);
+			_chrome.setRequired(_resolvedPart.isMandatory());
+			_chrome.setField(_innerControl);
+			_chrome.setDirty(false);
 			return;
 		}
 

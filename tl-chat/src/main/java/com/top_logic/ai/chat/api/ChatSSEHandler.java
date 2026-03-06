@@ -212,6 +212,10 @@ public class ChatSSEHandler {
 		} catch (Exception e) {
 			Logger.error("Failed to send connected event", e, ChatSSEHandler.class);
 		}
+
+		// Emit current approval mode so UI can show indicator on reconnect
+		String mode = _tracker.getApprovalMode().name();
+		sendEvent("approval_mode", "{\"mode\":\"" + mode + "\"}");
 	}
 
 	private void pollAndEmit() {
@@ -393,6 +397,9 @@ public class ChatSSEHandler {
 			json.append("\"type\":\"").append(escapeJson(req.getType())).append("\"");
 			if (req.getOptions() != null && !req.getOptions().isEmpty()) {
 				json.append(",\"options\":").append(req.getOptions());
+			}
+			if (req.isMultiSelect()) {
+				json.append(",\"multiSelect\":true");
 			}
 			json.append("}");
 			sendEvent("user_interaction", json.toString());

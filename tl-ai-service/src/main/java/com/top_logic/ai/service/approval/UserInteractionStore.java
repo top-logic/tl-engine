@@ -48,17 +48,19 @@ public class UserInteractionStore {
 	/**
 	 * Creates a new pending interaction request.
 	 *
-	 * @param question The question to present.
-	 * @param header   Short label.
-	 * @param type     Interaction type: "approval", "text", or "choice".
-	 * @param options  For "choice": JSON array of options. Null for other types.
+	 * @param question    The question to present.
+	 * @param header      Short label.
+	 * @param type        Interaction type: "approval", "text", or "choice".
+	 * @param options     For "choice": JSON array of options. Null for other types.
+	 * @param multiSelect For "choice": whether multiple selections are allowed.
 	 * @return The created request with a fresh {@link CompletableFuture}.
 	 */
-	public UserInteractionRequest createRequest(String question, String header, String type, String options) {
+	public UserInteractionRequest createRequest(String question, String header, String type,
+			String options, boolean multiSelect) {
 		String id = "interaction-" + _nextId.getAndIncrement();
 		CompletableFuture<String> future = new CompletableFuture<>();
 		UserInteractionRequest request = new UserInteractionRequest(
-			id, question, header, type, options, System.currentTimeMillis(), future);
+			id, question, header, type, options, multiSelect, System.currentTimeMillis(), future);
 		_pending.put(id, request);
 		return request;
 	}

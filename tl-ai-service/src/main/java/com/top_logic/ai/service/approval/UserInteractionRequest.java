@@ -22,6 +22,7 @@ public class UserInteractionRequest {
 	private final String _header;
 	private final String _type;
 	private final String _options;
+	private final boolean _multiSelect;
 	private final long _createdAt;
 	private final CompletableFuture<String> _future;
 
@@ -32,17 +33,19 @@ public class UserInteractionRequest {
 	 * @param question  The question to present to the user.
 	 * @param header    Short label (e.g. {@code "Approval"}, {@code "Clarify"}).
 	 * @param type      Interaction type: {@code "approval"}, {@code "text"}, or {@code "choice"}.
-	 * @param options   For {@code "choice"}: JSON array of options. {@code null} for other types.
-	 * @param createdAt Creation timestamp in milliseconds.
-	 * @param future    The future the agent thread blocks on. Completed with the user's response string.
+	 * @param options     For {@code "choice"}: JSON array of options. {@code null} for other types.
+	 * @param multiSelect For {@code "choice"}: whether multiple selections are allowed.
+	 * @param createdAt   Creation timestamp in milliseconds.
+	 * @param future      The future the agent thread blocks on. Completed with the user's response string.
 	 */
 	public UserInteractionRequest(String id, String question, String header, String type,
-			String options, long createdAt, CompletableFuture<String> future) {
+			String options, boolean multiSelect, long createdAt, CompletableFuture<String> future) {
 		_id = id;
 		_question = question;
 		_header = header;
 		_type = type;
 		_options = options;
+		_multiSelect = multiSelect;
 		_createdAt = createdAt;
 		_future = future;
 	}
@@ -61,6 +64,9 @@ public class UserInteractionRequest {
 
 	/** For "choice": JSON array of options. Null for other types. */
 	public String getOptions() { return _options; }
+
+	/** For "choice": whether multiple selections are allowed. */
+	public boolean isMultiSelect() { return _multiSelect; }
 
 	/** Creation timestamp in milliseconds. */
 	public long getCreatedAt() { return _createdAt; }

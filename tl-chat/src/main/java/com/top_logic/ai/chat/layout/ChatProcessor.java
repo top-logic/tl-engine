@@ -113,7 +113,7 @@ public class ChatProcessor {
 		ToolCallTracking.setTracker(tracker);
 		state.setToolCallTracker(tracker);
 
-		UserInteractionStore interactionStore = new UserInteractionStore();
+		UserInteractionStore interactionStore = new UserInteractionStore(taskTracker.getApprovalMode());
 		UserInteractionStoreBinding.setStore(interactionStore);
 		state.setUserInteractionStore(interactionStore);
 

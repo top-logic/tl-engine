@@ -40,6 +40,9 @@ public class AskUserTool {
 	/** Timeout for user interaction requests in minutes. */
 	private static final long INTERACTION_TIMEOUT_MINUTES = 5;
 
+	/** Maximum number of options allowed for choice interactions. */
+	private static final int MAX_CHOICE_OPTIONS = 5;
+
 	/**
 	 * Ask the user a question and wait for their response. Use for approvals before model changes,
 	 * clarifying ambiguous requests, presenting choices, or getting feedback on plans.
@@ -61,9 +64,10 @@ public class AskUserTool {
 			@P("Type: 'approval' for approve/reject buttons, "
 				+ "'text' for free text input, "
 				+ "'choice' for option selection") String type,
-			@P("For 'choice': JSON array of options, "
+			@P("For 'choice': JSON array of options (max 5), "
 				+ "e.g. [{\"label\":\"Option A\",\"description\":\"...\"}]. "
-				+ "Ignored for other types.") String options) {
+				+ "Ignored for other types.") String options,
+			@P("For 'choice': allow multiple selections. Defaults to false.") Boolean multiSelect) {
 
 		UserInteractionStore store = UserInteractionStoreBinding.getStore();
 		if (store == null) {
@@ -77,7 +81,17 @@ public class AskUserTool {
 			return "approved";
 		}
 
-		UserInteractionRequest request = store.createRequest(question, header, type, options);
+		// Validate choice options count
+		if ("choice".equals(type) && options != null && !options.isEmpty()) {
+			int optionCount = countJsonArrayElements(options);
+			if (optionCount > MAX_CHOICE_OPTIONS) {
+				return "error: Too many options (" + optionCount + "). Maximum is " + MAX_CHOICE_OPTIONS
+					+ ". Reduce the number of options and try again.";
+			}
+		}
+
+		UserInteractionRequest request = store.createRequest(
+			question, header, type, options, multiSelect != null && multiSelect);
 		Logger.info("User interaction requested (id: " + request.getId() + ", type: " + type
 			+ ", header: " + header + ")", AskUserTool.class);
 
@@ -95,5 +109,34 @@ public class AskUserTool {
 				e, AskUserTool.class);
 			return "error: " + e.getMessage();
 		}
+	}
+
+	/**
+	 * Counts top-level elements in a JSON array string by counting commas between objects. Returns 0
+	 * if the string is not a valid JSON array.
+	 */
+	private static int countJsonArrayElements(String jsonArray) {
+		String trimmed = jsonArray.trim();
+		if (!trimmed.startsWith("[") || !trimmed.endsWith("]")) {
+			return 0;
+		}
+		String inner = trimmed.substring(1, trimmed.length() - 1).trim();
+		if (inner.isEmpty()) {
+			return 0;
+		}
+		int count = 0;
+		int depth = 0;
+		for (int i = 0; i < inner.length(); i++) {
+			char c = inner.charAt(i);
+			if (c == '{' || c == '[') {
+				if (depth == 0 && c == '{') {
+					count++;
+				}
+				depth++;
+			} else if (c == '}' || c == ']') {
+				depth--;
+			}
+		}
+		return count;
 	}
 }

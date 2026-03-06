@@ -751,6 +751,15 @@ public class ChatControl extends AbstractControlBase {
 				writePaperclipSvg(out);
 				out.endTag(BUTTON);
 
+				// Auto-approve toggle
+				out.beginBeginTag(BUTTON);
+				out.writeAttribute(TYPE_ATTR, "button");
+				out.writeAttribute(CLASS_ATTR, "approval-mode-indicator");
+				out.writeAttribute("title", "Auto-approve is OFF \u2014 click to enable");
+				out.endBeginTag();
+				out.writeText("\u2713"); // ✓
+				out.endTag(BUTTON);
+
 				// Text input
 				out.beginBeginTag(INPUT);
 				out.writeAttribute(TYPE_ATTR, "text");

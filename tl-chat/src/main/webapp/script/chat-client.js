@@ -225,6 +225,9 @@
     if (msg.optimistic) {
       div.setAttribute("data-optimistic", "true");
     }
+    if (msg.interactionTemp) {
+      div.setAttribute("data-interaction-temp", "true");
+    }
 
     var user = document.createElement("span");
     user.className = "chat-user";
@@ -488,16 +491,17 @@
       var agentArrow = document.createElement("span");
       agentArrow.className = "chat-agent-call-expand";
       agentArrow.id = arrowId;
-      agentArrow.textContent = "\u25be"; // ▾ (expanded by default)
+      agentArrow.textContent = "\u203a"; // › (collapsed by default)
 
       agentHeader.appendChild(agentLabel);
       agentHeader.appendChild(agentArrow);
       agentWrap.appendChild(agentHeader);
 
-      // Collapsible body (expanded by default so nested tools are visible)
+      // Collapsible body (collapsed by default)
       var agentBody = document.createElement("div");
       agentBody.className = "chat-agent-call-body";
       agentBody.id = bodyId;
+      agentBody.style.display = "none";
 
       if (ev.inputSummary) {
         var inputLabel = document.createElement("div");
@@ -792,89 +796,192 @@
       return state.currentTaskBody;
     }
 
-    // ==================== User Interaction Dialog ====================
+    // ==================== Inline Interaction Banner ====================
 
-    function showInteractionDialog(request) {
-        var existingOverlay = document.getElementById("interaction-overlay-" + request.requestId);
-        if (existingOverlay) return;
+    // Active interaction state (null when no interaction active)
+    var activeInteraction = null;
 
-        var overlay = document.createElement("div");
-        overlay.id = "interaction-overlay-" + request.requestId;
-        overlay.className = "approval-overlay";
+    function showInteractionBanner(request) {
+        // 1. Render question as a temporary agent message bubble (plain text, escaped)
+        appendMessage(el.messages, {
+            id: "interaction-q-" + request.requestId,
+            role: "agent",
+            userName: "Agent",
+            content: request.question,
+            time: new Date().toISOString(),
+            interactionTemp: true
+        });
+        scrollToBottom(el.messages);
 
-        var contentHtml = '';
+        // 2. Remove any existing banner
+        removeInteractionBanner();
+
+        // 3. Build banner element
+        var banner = document.createElement("div");
+        banner.className = "interaction-banner";
+        banner.id = "interaction-banner-" + request.requestId;
+        banner.setAttribute("data-request-id", request.requestId);
+
+        var headerDiv = document.createElement("div");
+        headerDiv.className = "interaction-banner-header";
+        headerDiv.textContent = request.header || (request.type === "approval" ? "Confirm" :
+            request.type === "text" ? "Clarify" : "Choose");
+        banner.appendChild(headerDiv);
 
         if (request.type === "approval") {
-            contentHtml =
-                '<div class="approval-dialog">' +
-                '  <div class="approval-header">' + escapeHtml(request.header || "Approval Required") + '</div>' +
-                '  <div class="approval-desc">' + escapeHtml(request.question) + '</div>' +
-                '  <div class="approval-buttons">' +
-                '    <button class="approval-btn reject" data-request-id="' + escapeHtml(request.requestId) + '" data-response="rejected">Reject</button>' +
-                '    <button class="approval-btn approve" data-request-id="' + escapeHtml(request.requestId) + '" data-response="approved">Approve</button>' +
-                '    <button class="approval-btn approve-all" data-request-id="' + escapeHtml(request.requestId) + '" data-response="approved" data-approve-all="true">Approve All</button>' +
-                '  </div>' +
-                '</div>';
-        } else if (request.type === "text") {
-            contentHtml =
-                '<div class="approval-dialog">' +
-                '  <div class="approval-header">' + escapeHtml(request.header || "Input Required") + '</div>' +
-                '  <div class="approval-desc">' + escapeHtml(request.question) + '</div>' +
-                '  <div class="interaction-input-area">' +
-                '    <textarea class="interaction-text-input" rows="3" placeholder="Type your response..."></textarea>' +
-                '  </div>' +
-                '  <div class="approval-buttons">' +
-                '    <button class="approval-btn approve interaction-submit" data-request-id="' + escapeHtml(request.requestId) + '">Submit</button>' +
-                '  </div>' +
-                '</div>';
-        } else if (request.type === "choice") {
-            var optionsHtml = '';
-            try {
-                var opts = typeof request.options === "string" ? JSON.parse(request.options) : (request.options || []);
-                opts.forEach(function (opt, idx) {
-                    optionsHtml +=
-                        '<label class="interaction-choice-option">' +
-                        '  <input type="radio" name="interaction-choice-' + escapeHtml(request.requestId) + '" value="' + escapeHtml(opt.label) + '"' + (idx === 0 ? ' checked' : '') + '>' +
-                        '  <span class="interaction-choice-label">' + escapeHtml(opt.label) + '</span>' +
-                        (opt.description ? '  <span class="interaction-choice-desc">' + escapeHtml(opt.description) + '</span>' : '') +
-                        '</label>';
-                });
-            } catch (e) {
-                optionsHtml = '<div class="interaction-error">Failed to parse options</div>';
-            }
-            contentHtml =
-                '<div class="approval-dialog">' +
-                '  <div class="approval-header">' + escapeHtml(request.header || "Choose") + '</div>' +
-                '  <div class="approval-desc">' + escapeHtml(request.question) + '</div>' +
-                '  <div class="interaction-choices">' + optionsHtml + '</div>' +
-                '  <div class="approval-buttons">' +
-                '    <button class="approval-btn approve interaction-submit-choice" data-request-id="' + escapeHtml(request.requestId) + '">Submit</button>' +
-                '  </div>' +
-                '</div>';
-        }
+            var btnRow = document.createElement("div");
+            btnRow.className = "interaction-banner-buttons";
+            btnRow.innerHTML =
+                '<button class="approval-btn reject" data-response="rejected">Reject</button>' +
+                '<button class="approval-btn approve" data-response="approved">Approve</button>' +
+                '<button class="approval-btn approve-all" data-response="approved" data-approve-all="true">Approve All</button>';
+            banner.appendChild(btnRow);
 
-        overlay.innerHTML = contentHtml;
-
-        overlay.addEventListener("click", function (e) {
-            var btn = e.target.closest(".approval-btn");
-            if (!btn) return;
-            var reqId = btn.getAttribute("data-request-id");
-
-            if (btn.classList.contains("interaction-submit")) {
-                var textarea = overlay.querySelector(".interaction-text-input");
-                var text = textarea ? textarea.value.trim() : "";
-                if (text) submitInteraction(reqId, text, false);
-            } else if (btn.classList.contains("interaction-submit-choice")) {
-                var selected = overlay.querySelector('input[name="interaction-choice-' + reqId + '"]:checked');
-                if (selected) submitInteraction(reqId, selected.value, false);
-            } else {
+            btnRow.addEventListener("click", function (e) {
+                var btn = e.target.closest(".approval-btn");
+                if (!btn) return;
                 var response = btn.getAttribute("data-response");
                 var approveAll = btn.getAttribute("data-approve-all") === "true";
-                submitInteraction(reqId, response, approveAll);
+                handleInteractionResponse(request.requestId, response, approveAll);
+            });
+
+        } else if (request.type === "choice") {
+            var opts = [];
+            try {
+                opts = typeof request.options === "string" ? JSON.parse(request.options) : (request.options || []);
+            } catch (e) {
+                opts = [];
             }
+            var multiSelect = request.multiSelect === true;
+
+            var chipsDiv = document.createElement("div");
+            chipsDiv.className = "interaction-chips";
+
+            opts.forEach(function (opt) {
+                var chip = document.createElement("span");
+                chip.className = "interaction-chip";
+                chip.setAttribute("data-value", opt.label);
+                if (opt.description) {
+                    chip.setAttribute("title", opt.description);
+                }
+
+                if (multiSelect) {
+                    var cb = document.createElement("span");
+                    cb.className = "interaction-chip-checkbox";
+                    cb.textContent = "\u2713";
+                    chip.appendChild(cb);
+                }
+
+                var labelSpan = document.createElement("span");
+                labelSpan.textContent = opt.label;
+                chip.appendChild(labelSpan);
+
+                chip.addEventListener("click", function () {
+                    if (multiSelect) {
+                        chip.classList.toggle("selected");
+                    } else {
+                        chipsDiv.querySelectorAll(".interaction-chip").forEach(function (c) {
+                            c.classList.remove("selected");
+                        });
+                        chip.classList.add("selected");
+                    }
+                });
+
+                chipsDiv.appendChild(chip);
+            });
+            banner.appendChild(chipsDiv);
+
+            var submitRow = document.createElement("div");
+            submitRow.className = "interaction-banner-buttons";
+            submitRow.style.justifyContent = "flex-end";
+            var submitBtn = document.createElement("button");
+            submitBtn.className = "approval-btn approve";
+            submitBtn.textContent = "Submit";
+            submitBtn.addEventListener("click", function () {
+                var selected = chipsDiv.querySelectorAll(".interaction-chip.selected");
+                if (selected.length === 0) return;
+                var values = [];
+                selected.forEach(function (c) { values.push(c.getAttribute("data-value")); });
+                var response = multiSelect ? JSON.stringify(values) : values[0];
+                handleInteractionResponse(request.requestId, response, false);
+            });
+            submitRow.appendChild(submitBtn);
+            banner.appendChild(submitRow);
+
+        } else if (request.type === "text") {
+            // Text: banner is minimal, chat input is re-purposed
+            activeInteraction = {
+                requestId: request.requestId,
+                type: "text",
+                originalPlaceholder: el.input.placeholder
+            };
+            el.input.placeholder = "Reply to agent...";
+            el.input.disabled = false;
+            el.input.focus();
+        }
+
+        // 4. Insert banner between chat-messages and chat-input-section
+        var inputSection = root.querySelector(".chat-input-section");
+        if (inputSection && inputSection.parentNode) {
+            inputSection.parentNode.insertBefore(banner, inputSection);
+        }
+
+        // Store active interaction for non-text types too
+        if (request.type !== "text") {
+            activeInteraction = {
+                requestId: request.requestId,
+                type: request.type
+            };
+        }
+
+        // Auto-remove banner after 5 minutes (matches server timeout)
+        var timeoutId = setTimeout(function () {
+            if (root.querySelector("#interaction-banner-" + request.requestId)) {
+                removeInteractionBanner();
+                appendMessage(el.messages, {
+                    id: "timeout-" + request.requestId,
+                    role: "system",
+                    userName: "System",
+                    content: "Interaction timed out.",
+                    time: new Date().toISOString()
+                });
+                scrollToBottom(el.messages);
+            }
+        }, 5 * 60 * 1000);
+        banner.setAttribute("data-timeout-id", timeoutId);
+
+        scrollToBottom(el.messages);
+    }
+
+    function handleInteractionResponse(requestId, response, approveAll) {
+        // Add user's response as a temporary message bubble
+        appendMessage(el.messages, {
+            id: "interaction-r-" + requestId,
+            role: "user",
+            userName: userName || "You",
+            content: response,
+            time: new Date().toISOString(),
+            interactionTemp: true
+        });
+        scrollToBottom(el.messages);
+
+        submitInteraction(requestId, response, approveAll);
+        removeInteractionBanner();
+    }
+
+    function removeInteractionBanner() {
+        var banners = root.querySelectorAll(".interaction-banner");
+        banners.forEach(function (b) {
+            var tid = b.getAttribute("data-timeout-id");
+            if (tid) clearTimeout(parseInt(tid, 10));
+            b.remove();
         });
 
-        document.body.appendChild(overlay);
+        // Restore chat input state
+        if (activeInteraction && activeInteraction.type === "text") {
+            el.input.placeholder = activeInteraction.originalPlaceholder || "Type a message...";
+        }
+        activeInteraction = null;
     }
 
     function submitInteraction(requestId, response, approveAll) {
@@ -884,8 +991,6 @@
             body: JSON.stringify({ requestId: requestId, response: response })
         }).then(function (resp) {
             if (resp.ok) {
-                var overlay = document.getElementById("interaction-overlay-" + requestId);
-                if (overlay) overlay.remove();
                 if (approveAll) {
                     setApprovalMode("AUTO_APPROVE");
                 }
@@ -897,18 +1002,36 @@
         });
     }
 
+    // Current approval mode state
+    var approvalMode = "MANUAL";
+
     function setApprovalMode(mode) {
         fetch(CHAT_APPROVAL_MODE_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ mode: mode })
         }).then(function (resp) {
-            if (!resp.ok) {
+            if (resp.ok) {
+                approvalMode = mode;
+                updateApprovalModeIndicator();
+            } else {
                 log("setApprovalMode failed", resp.status);
             }
         }).catch(function (err) {
             log("setApprovalMode error", err);
         });
+    }
+
+    function updateApprovalModeIndicator() {
+        var indicator = root.querySelector(".approval-mode-indicator");
+        if (!indicator) return;
+        if (approvalMode === "AUTO_APPROVE") {
+            indicator.classList.add("active");
+            indicator.title = "Auto-approve is ON — click to disable";
+        } else {
+            indicator.classList.remove("active");
+            indicator.title = "Auto-approve is OFF — click to enable";
+        }
     }
 
     function connectSSE() {
@@ -1041,6 +1164,13 @@
             el.input.disabled = false;
             el.button.disabled = false;
 
+            // Remove temporary interaction messages (question + response bubbles)
+            el.messages.querySelectorAll('[data-interaction-temp="true"]').forEach(function (tempEl) {
+              tempEl.remove();
+            });
+            // Also remove any lingering interaction banner
+            removeInteractionBanner();
+
             // Collapse the task trace and make it expandable
             var collapsedTaskEl = null;
             if (state.currentTaskBody) {
@@ -1096,7 +1226,7 @@
         log("SSE user_interaction event", e.data);
         try {
             var request = JSON.parse(e.data);
-            showInteractionDialog(request);
+            showInteractionBanner(request);
         } catch (err) {
             log("SSE user_interaction parse error", err);
         }
@@ -1106,10 +1236,10 @@
         log("SSE approval_mode event", e.data);
         try {
             var data = JSON.parse(e.data);
+            approvalMode = data.mode || "MANUAL";
+            updateApprovalModeIndicator();
             if (data.mode === "AUTO_APPROVE") {
-                document.querySelectorAll('[id^="interaction-overlay-"]').forEach(function (el) {
-                    el.remove();
-                });
+                removeInteractionBanner();
             }
         } catch (err) {
             log("SSE approval_mode parse error", err);
@@ -1229,6 +1359,16 @@
 
     function sendMessage() {
       if (state.destroyed) return;
+
+      // If a text interaction is active, route to interaction response
+      if (activeInteraction && activeInteraction.type === "text") {
+        var interactionText = (el.input.value || "").trim();
+        if (!interactionText) return;
+        el.input.value = "";
+        handleInteractionResponse(activeInteraction.requestId, interactionText, false);
+        return;
+      }
+
       var text = (el.input.value || "").trim();
       if (!text && pendingAttachments.length === 0) return;
       el.input.disabled = true;
@@ -1328,6 +1468,15 @@
         sendMessage();
       }
     });
+
+    // Auto-approve toggle click
+    var approvalToggle = root.querySelector(".approval-mode-indicator");
+    if (approvalToggle) {
+      approvalToggle.addEventListener("click", function () {
+        var newMode = approvalMode === "AUTO_APPROVE" ? "MANUAL" : "AUTO_APPROVE";
+        setApprovalMode(newMode);
+      });
+    }
 
     // Attach button click
     if (el.attachBtn && el.fileInput) {

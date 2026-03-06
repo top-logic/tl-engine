@@ -67,6 +67,7 @@ public class ChatServlet extends HttpServlet {
 
 	private static final String PATH_SEND = "/send";
 	private static final String PATH_RESPOND = "/respond";
+	private static final String PATH_APPROVAL_MODE = "/approval-mode";
 	private static final String PATH_UPDATES = "/updates";
 	private static final String PATH_EVENTS = "/events";
 	private static final String PATH_SESSIONS = "/sessions";
@@ -89,6 +90,10 @@ public class ChatServlet extends HttpServlet {
 		}
 		if (pathInfo.equals(PATH_RESPOND) || pathInfo.equals(PATH_RESPOND + "/")) {
 			handleRespond(req, resp);
+			return;
+		}
+		if (pathInfo.equals(PATH_APPROVAL_MODE) || pathInfo.equals(PATH_APPROVAL_MODE + "/")) {
+			handleApprovalMode(req, resp);
 			return;
 		}
 		if (pathInfo.equals(PATH_SESSIONS) || pathInfo.equals(PATH_SESSIONS + "/")) {
@@ -257,6 +262,40 @@ public class ChatServlet extends HttpServlet {
 		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
 		String safeRequestId = requestId.replace("\\", "\\\\").replace("\"", "\\\"");
 		resp.getWriter().write("{\"status\":\"ok\",\"requestId\":\"" + safeRequestId + "\"}");
+	}
+
+	private void handleApprovalMode(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		String jsonBody = new String(req.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+
+		String mode = null;
+		try {
+			@SuppressWarnings("unchecked")
+			Map<String, Object> parsed = (Map<String, Object>) com.top_logic.basic.json.JSON.fromString(jsonBody);
+			mode = (String) parsed.get("mode");
+		} catch (Exception e) {
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid JSON: " + e.getMessage());
+			return;
+		}
+
+		if (mode == null) {
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing 'mode'");
+			return;
+		}
+
+		com.top_logic.ai.service.approval.ApprovalMode approvalMode;
+		try {
+			approvalMode = com.top_logic.ai.service.approval.ApprovalMode.valueOf(mode);
+		} catch (IllegalArgumentException e) {
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid mode: " + mode);
+			return;
+		}
+
+		TaskProgressTracker tracker = ChatSessionRegistry.getOrCreate(req.getSession(false));
+		tracker.setApprovalMode(approvalMode);
+
+		resp.setContentType("application/json");
+		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
+		resp.getWriter().write("{\"status\":\"ok\",\"mode\":\"" + approvalMode.name() + "\"}");
 	}
 
 	private void handleUpdates(HttpServletRequest req, HttpServletResponse resp) throws IOException {

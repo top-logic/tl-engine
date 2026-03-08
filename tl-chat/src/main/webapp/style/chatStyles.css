@@ -585,6 +585,12 @@
 	padding: 0 4px;
 }
 
+/* In-progress task always stays at the bottom of the chat;
+   once completed, it reverts to DOM order (above the agent answer). */
+.chat-task[data-status="in_progress"] {
+	order: 999999;
+}
+
 /* Reduce gap between task and following agent message */
 .chat-task + .chat-message-agent {
 	margin-top: -4px;

@@ -13,6 +13,7 @@ import java.util.TimeZone;
 
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
+import com.top_logic.base.security.util.Password;
 import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.ConfigurationError;
@@ -82,6 +83,15 @@ public class Person extends AbstractBoundWrapper implements Author, GroupMember 
 
 	/** The attribute "country". */
 	public static final String COUNTRY_ATTR = "country";
+
+	/**
+	 * The attribute "mfaSecret" of type {@link #PERSON_TYPE}.
+	 * 
+	 * <p>
+	 * The value is a secret that is used to enable multi-factor-authentication for the user.
+	 * </p>
+	 */
+	public static final String MFA_SECRET_ATTR = "mfaSecret";
 
 	/** Full qualified name of the {@link TLType} of a {@link Person}. */
 	public static final String PERSON_TYPE = "tl.accounts:Person";
@@ -275,6 +285,20 @@ public class Person extends AbstractBoundWrapper implements Author, GroupMember 
 		} else {
 			tSetData(COUNTRY_ATTR, newValue.getCode());
 		}
+	}
+
+	/**
+	 * Type-safe access to the value of {@link #MFA_SECRET_ATTR}.
+	 */
+	public Password getMFASecret() {
+		return (Password) tValueByName(MFA_SECRET_ATTR);
+	}
+
+	/**
+	 * Setter for {@link #getMFASecret()}.
+	 */
+	public void setMFASecret(Password secret) {
+		tUpdateByName(MFA_SECRET_ATTR, secret);
 	}
 
     /**

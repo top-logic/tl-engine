@@ -391,22 +391,8 @@ public class ChatSSEHandler {
 
 	private void emitUserInteraction(UserInteractionRequest req) {
 		try {
-			String questionHtml = Converters.markdownToHtmlString(req.getQuestion());
-
-			StringBuilder json = new StringBuilder();
-			json.append("{\"requestId\":\"").append(escapeJson(req.getId())).append("\",");
-			json.append("\"question\":\"").append(escapeJson(req.getQuestion())).append("\",");
-			json.append("\"questionHtml\":\"").append(escapeJson(questionHtml)).append("\",");
-			json.append("\"header\":\"").append(escapeJson(req.getHeader())).append("\",");
-			json.append("\"type\":\"").append(escapeJson(req.getType())).append("\"");
-			if (req.getOptions() != null && !req.getOptions().isEmpty()) {
-				json.append(",\"options\":").append(req.getOptions());
-			}
-			if (req.isMultiSelect()) {
-				json.append(",\"multiSelect\":true");
-			}
-			json.append("}");
-			sendEvent("user_interaction", json.toString());
+			sendEvent("user_interaction", DtoMapper.toJson(
+				DtoMapper.toUserInteractionEvent(req)));
 		} catch (Exception e) {
 			Logger.error("Failed to emit user interaction event", e, ChatSSEHandler.class);
 		}
@@ -447,18 +433,6 @@ public class ChatSSEHandler {
 		}
 	}
 
-	/** Escapes a string for safe inclusion in a JSON string value. */
-	private static String escapeJson(String value) {
-		if (value == null) {
-			return "";
-		}
-		return value
-			.replace("\\", "\\\\")
-			.replace("\"", "\\\"")
-			.replace("\n", "\\n")
-			.replace("\r", "\\r")
-			.replace("\t", "\\t");
-	}
 
 	private void sendEvent(String eventType, String data) {
 		if (_closed.get()) {

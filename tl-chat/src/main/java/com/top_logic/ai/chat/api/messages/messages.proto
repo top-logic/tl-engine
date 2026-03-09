@@ -385,3 +385,58 @@ message PersistedChat {
 	 */
 	repeated PersistedChatEntry entries;
 }
+
+/**
+ * SSE user interaction event payload.
+ */
+message UserInteractionEvent {
+	/**
+	 * Unique interaction request identifier (e.g. "interaction-1").
+	 */
+	string requestId;
+
+	/**
+	 * The question to present to the user (raw markdown).
+	 */
+	string question;
+
+	/**
+	 * Pre-rendered HTML for the question.
+	 */
+	string questionHtml;
+
+	/**
+	 * Short label (e.g. "Approval", "Clarify", "Choose").
+	 */
+	string header;
+
+	/**
+	 * Interaction type: "approval", "text", or "choice".
+	 */
+	string type;
+
+	/**
+	 * Available options for "choice" interactions.
+	 */
+	repeated InteractionOptionDto options;
+
+	/**
+	 * Whether multiple selections are allowed (for "choice" type).
+	 */
+	boolean multiSelect;
+}
+
+/**
+ * One selectable option in a user interaction.
+ */
+message InteractionOptionDto {
+	/**
+	 * Display label for the option.
+	 */
+	string label;
+
+	/**
+	 * Optional description / tooltip text.
+	 */
+	string description;
+}

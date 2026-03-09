@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
 		<groupId>com.top-logic</groupId>
@@ -8,26 +8,27 @@
 		<version>0.0.3-AI</version>
 	</parent>
 
-    <artifactId>tl-ai-parent</artifactId>
-    <packaging>pom</packaging>
+	<artifactId>tl-ai-parent</artifactId>
 
-    <modules>
-        <module>tl-ai-mcp-server</module>
-        <module>tl-chat</module>
-        <module>tl-ai-service</module>
-        <module>tl-ai-demo</module>
-        <module>tl-ai-vector-index</module>
-    </modules>
+	<packaging>pom</packaging>
+	
+	<modules>
+		<module>tl-ai-mcp-server</module>
+		<module>tl-chat</module>
+		<module>tl-ai-service</module>
+		<module>tl-ai-demo</module>
+		<module>tl-ai-vector-index</module>
+	</modules>
+	
+	<properties>
+		<project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
+	</properties>
 
-    <properties>
-        <project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
-    </properties>
+	<dependencies>
+	</dependencies>
 
-    <dependencies>
-    </dependencies>
-
-    <build>
-        <plugins>
-        </plugins>
-    </build>
+	<build>
+		<plugins>
+		</plugins>
+	</build>
 </project>

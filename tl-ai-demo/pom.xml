@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
 		<groupId>com.top-logic</groupId>
@@ -13,7 +13,6 @@
 	<properties>
 		<project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
 	</properties>
-
 
 	<dependencies>
 		<!-- TopLogic -->
@@ -83,110 +82,46 @@
 		</dependency>
 		<!-- Allow to integrate REST services through OpenAPI interface definitions. -->
         <dependency>
-            <groupId>com.top-logic</groupId>
-            <artifactId>tl-ai-mcp-server</artifactId>
-            <version>${tl.version}</version>
+                <groupId>com.top-logic</groupId>
+                <artifactId>tl-service-openapi-client</artifactId>
         </dependency>
+		<!-- Provide REST services through OpenAPI interface definitions. -->
         <dependency>
-            <groupId>com.top-logic</groupId>
-            <artifactId>tl-chat</artifactId>
-            <version>${tl.version}</version>
+                <groupId>com.top-logic</groupId>
+                <artifactId>tl-service-openapi-server</artifactId>
         </dependency>
-        <dependency>
-            <groupId>com.top-logic</groupId>
-            <artifactId>tl-ai-service</artifactId>
-            <version>${tl.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.top-logic</groupId>
-            <artifactId>tl-ai-vector-index</artifactId>
-            <version>${tl.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.top-logic</groupId>
-            <artifactId>tl-themes-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.top-logic</groupId>
-            <artifactId>tl-bpe-app</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.top-logic</groupId>
-            <artifactId>tl-layout-scripting-template</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.top-logic</groupId>
-            <artifactId>tl-layout-formeditor</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.top-logic</groupId>
-            <artifactId>tl-layout-themeedit</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.top-logic</groupId>
-            <artifactId>tl-graph-diagramjs-server</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.top-logic</groupId>
-            <artifactId>tl-monitoring</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.top-logic</groupId>
-            <artifactId>tl-doc</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.top-logic</groupId>
-            <artifactId>tl-model-search</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.top-logic</groupId>
-            <artifactId>tl-contact</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.top-logic</groupId>
-            <artifactId>tl-chart-chartjs</artifactId>
-        </dependency>
-        <!-- Allow to integrate REST services through OpenAPI interface definitions. -->
-        <dependency>
-            <groupId>com.top-logic</groupId>
-            <artifactId>tl-service-openapi-client</artifactId>
-        </dependency>
-        <!-- Provide REST services through OpenAPI interface definitions. -->
-        <dependency>
-            <groupId>com.top-logic</groupId>
-            <artifactId>tl-service-openapi-server</artifactId>
-        </dependency>
-        <!-- Tests -->
-        <dependency>
-            <groupId>com.top-logic</groupId>
-            <artifactId>tl-basic</artifactId>
-            <type>test-jar</type>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.top-logic</groupId>
-            <artifactId>tl-core</artifactId>
-            <type>test-jar</type>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
 
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>de.haumacher.msgbuf</groupId>
-                <artifactId>msgbuf-generator-maven-plugin</artifactId>
-                <version>${msgbuf.version}</version>
+		<!-- Tests -->
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-basic</artifactId>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-core</artifactId>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
 
-                <executions>
-                    <execution>
-                        <id>generate-protocols</id>
-                        <goals>
-                            <goal>generate</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>de.haumacher.msgbuf</groupId>
+				<artifactId>msgbuf-generator-maven-plugin</artifactId>
+				<version>${msgbuf.version}</version>
+
+				<executions>
+					<execution>
+						<id>generate-protocols</id>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
 </project>

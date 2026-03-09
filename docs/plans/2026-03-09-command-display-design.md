@@ -249,10 +249,18 @@ rendered. Adjacent separators collapse.
 
 When implicit commands change (added/removed via `CommandScope`):
 
-1. `CommandScope` fires change listeners
-2. `PanelElement`'s toolbar listener rebuilds the toolbar structure
-3. Updated `ReactToolbarControl` state is pushed via SSE
-4. `TLToolbar` re-renders with new groups
+1. A child element (e.g. `TableElement`) calls `context.getCommandScope().addCommand(model)`
+2. `CommandScope.fireChanged()` notifies listeners
+3. `PanelElement`'s listener calls `ToolbarBuilder.build()` to rebuild toolbar groups
+4. `ReactToolbarControl.replaceGroups()` swaps the groups in the existing control,
+   cleaning up old child controls and adopting new ones
+5. `putState(GROUPS, ...)` pushes a SSE patch to the client
+6. `TLToolbar` re-renders with the updated groups
+
+The key mechanism is `ReactToolbarControl.replaceGroups(newToolbar)`: it takes a
+freshly built toolbar, transfers its groups into the existing (SSE-registered)
+control, and pushes the state update. This avoids replacing the entire toolbar
+control (which would require re-registering with the SSE queue).
 
 ## 6. Rendering Examples
 

@@ -276,6 +276,34 @@ public class ReactToolbarControl extends ReactControl {
 		return _allChildren.isEmpty();
 	}
 
+	/**
+	 * Replaces all groups with the groups from another toolbar.
+	 *
+	 * <p>
+	 * Used for reactive toolbar rebuilds when the command scope changes (implicit commands
+	 * added/removed). Cleans up old children, adopts the new groups, and pushes the updated
+	 * state to the client via SSE.
+	 * </p>
+	 *
+	 * @param newToolbar
+	 *        The newly built toolbar whose groups should replace the current ones.
+	 */
+	public void replaceGroups(ReactToolbarControl newToolbar) {
+		// Clean up old children.
+		for (ReactControl child : _allChildren) {
+			child.cleanupTree();
+		}
+		_allChildren.clear();
+		groupList().clear();
+
+		// Adopt new groups from the rebuilt toolbar.
+		_allChildren.addAll(newToolbar._allChildren);
+		groupList().addAll(newToolbar.groupList());
+
+		// Push full groups state to client.
+		putState(GROUPS, groupList());
+	}
+
 	@Override
 	protected void cleanupChildren() {
 		for (ReactControl child : _allChildren) {
@@ -773,6 +801,27 @@ State sent to React:
 - `toolbar`: `ChildDescriptor` (or null) — replaces `toolbarButtons`
 - `buttonBar`: `ChildDescriptor` (or null) — new
 
+Add accessor methods for reactive toolbar updates:
+
+```java
+/**
+ * Returns the toolbar control, or {@code null}.
+ */
+public ReactToolbarControl getToolbar() {
+    return _toolbar;
+}
+
+/**
+ * Returns the button-bar control, or {@code null}.
+ */
+public ReactToolbarControl getButtonBar() {
+    return _buttonBar;
+}
+```
+
+These are needed by `PanelElement` to call `replaceGroups()` on the existing toolbar
+when the `CommandScope` changes (implicit commands added/removed).
+
 **Step 2: Commit**
 
 ```
@@ -832,7 +881,45 @@ Remove imports and code related to the old flat-button approach:
 - Remove the manual `ReactButtonControl` creation loop in phase 4
 - Remove the per-command `setStateChangeListener` wiring (moved to `ToolbarBuilder`)
 
-**Step 2: Commit**
+**Step 2: Wire CommandScope change listener for reactive toolbar rebuilds**
+
+After creating the panel, register a listener on `CommandScope` so that when implicit
+commands are added/removed by child elements, the toolbar is rebuilt and pushed to the
+client.
+
+```java
+// Phase 5: Wire reactive toolbar updates for implicit commands.
+scope.addListener(() -> {
+    // Rebuild toolbars from current scope state.
+    ReactToolbarControl newToolbar = ToolbarBuilder.build(
+        scope, CommandPlacement.TOOLBAR, registry);
+    ReactToolbarControl newButtonBar = ToolbarBuilder.build(
+        scope, CommandPlacement.BUTTON_BAR, registry);
+
+    // Replace groups in existing toolbar controls (preserves SSE registration).
+    if (panel.getToolbar() != null && newToolbar != null) {
+        panel.getToolbar().replaceGroups(newToolbar);
+    }
+    if (panel.getButtonBar() != null && newButtonBar != null) {
+        panel.getButtonBar().replaceGroups(newButtonBar);
+    }
+});
+```
+
+**How this works end-to-end:**
+
+A child element (e.g., a future `TableElement`) during its `createControl()`:
+```java
+// Inside TableElement.createControl(ViewContext context):
+ViewCommandModel reloadModel = new ViewCommandModel(reloadCommand, reloadConfig, ...);
+reloadModel.attach();
+context.getCommandScope().addCommand(reloadModel);
+```
+
+This triggers `CommandScope.fireChanged()` → PanelElement's listener → `ToolbarBuilder.build()` →
+`ReactToolbarControl.replaceGroups()` → SSE patch → `TLToolbar` re-renders with the new button.
+
+**Step 3: Commit**
 
 ```
 Ticket #29108: Update PanelElement to use ToolbarBuilder for command display.

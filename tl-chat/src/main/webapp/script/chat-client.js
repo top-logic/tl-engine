@@ -802,204 +802,236 @@
     var activeInteraction = null;
 
     function showInteractionBanner(request) {
-        // 1. Render question as a temporary agent message bubble (with markdown rendering)
-        appendMessage(el.messages, {
-            id: "interaction-q-" + request.requestId,
-            role: "agent",
-            userName: "Agent",
-            content: request.question,
-            contentHtml: request.questionHtml,
-            time: new Date().toISOString(),
-            interactionTemp: true
+      // 1. Render question as a temporary agent message bubble (with markdown rendering)
+      appendMessage(el.messages, {
+        id: "interaction-q-" + request.requestId,
+        role: "agent",
+        userName: "Agent",
+        content: request.question,
+        contentHtml: request.questionHtml,
+        time: new Date().toISOString(),
+        interactionTemp: true,
+      });
+      scrollToBottom(el.messages);
+
+      // 2. Remove any existing banner
+      removeInteractionBanner();
+
+      // 3. Build banner element
+      var banner = document.createElement("div");
+      banner.className = "interaction-banner";
+      banner.id = "interaction-banner-" + request.requestId;
+      banner.setAttribute("data-request-id", request.requestId);
+
+      var headerDiv = document.createElement("div");
+      headerDiv.className = "interaction-banner-header";
+      headerDiv.textContent =
+        request.header ||
+        (request.type === "approval"
+          ? "Confirm"
+          : request.type === "text"
+            ? "Clarify"
+            : "Choose");
+      banner.appendChild(headerDiv);
+
+      if (request.type === "approval") {
+        var btnRow = document.createElement("div");
+        btnRow.className = "interaction-banner-buttons";
+        btnRow.innerHTML =
+          '<button class="approval-btn reject" data-response="rejected">Reject</button>' +
+          '<button class="approval-btn approve" data-response="approved">Approve</button>' +
+          '<button class="approval-btn approve-all" data-response="approved" data-approve-all="true">Approve All</button>';
+        banner.appendChild(btnRow);
+
+        btnRow.addEventListener("click", function (e) {
+          var btn = e.target.closest(".approval-btn");
+          if (!btn) return;
+          var response = btn.getAttribute("data-response");
+          var approveAll = btn.getAttribute("data-approve-all") === "true";
+          handleInteractionResponse(request.requestId, response, approveAll);
         });
-        scrollToBottom(el.messages);
+      } else if (request.type === "choice") {
+        var opts = [];
+        try {
+          opts =
+            typeof request.options === "string"
+              ? JSON.parse(request.options)
+              : request.options || [];
+        } catch (e) {
+          opts = [];
+        }
+        var multiSelect = request.multiSelect === true;
 
-        // 2. Remove any existing banner
-        removeInteractionBanner();
+        var chipsDiv = document.createElement("div");
+        chipsDiv.className = "interaction-chips";
 
-        // 3. Build banner element
-        var banner = document.createElement("div");
-        banner.className = "interaction-banner";
-        banner.id = "interaction-banner-" + request.requestId;
-        banner.setAttribute("data-request-id", request.requestId);
+        opts.forEach(function (opt) {
+          var chip = document.createElement("span");
+          chip.className = "interaction-chip";
+          chip.setAttribute("data-value", opt.label);
+          if (opt.description) {
+            chip.setAttribute("title", opt.description);
+          }
 
-        var headerDiv = document.createElement("div");
-        headerDiv.className = "interaction-banner-header";
-        headerDiv.textContent = request.header || (request.type === "approval" ? "Confirm" :
-            request.type === "text" ? "Clarify" : "Choose");
-        banner.appendChild(headerDiv);
+          if (multiSelect) {
+            var cb = document.createElement("span");
+            cb.className = "interaction-chip-checkbox";
+            cb.textContent = "\u2713";
+            chip.appendChild(cb);
+          }
 
-        if (request.type === "approval") {
-            var btnRow = document.createElement("div");
-            btnRow.className = "interaction-banner-buttons";
-            btnRow.innerHTML =
-                '<button class="approval-btn reject" data-response="rejected">Reject</button>' +
-                '<button class="approval-btn approve" data-response="approved">Approve</button>' +
-                '<button class="approval-btn approve-all" data-response="approved" data-approve-all="true">Approve All</button>';
-            banner.appendChild(btnRow);
+          var labelSpan = document.createElement("span");
+          labelSpan.textContent = opt.label;
+          chip.appendChild(labelSpan);
 
-            btnRow.addEventListener("click", function (e) {
-                var btn = e.target.closest(".approval-btn");
-                if (!btn) return;
-                var response = btn.getAttribute("data-response");
-                var approveAll = btn.getAttribute("data-approve-all") === "true";
-                handleInteractionResponse(request.requestId, response, approveAll);
-            });
-
-        } else if (request.type === "choice") {
-            var opts = [];
-            try {
-                opts = typeof request.options === "string" ? JSON.parse(request.options) : (request.options || []);
-            } catch (e) {
-                opts = [];
-            }
-            var multiSelect = request.multiSelect === true;
-
-            var chipsDiv = document.createElement("div");
-            chipsDiv.className = "interaction-chips";
-
-            opts.forEach(function (opt) {
-                var chip = document.createElement("span");
-                chip.className = "interaction-chip";
-                chip.setAttribute("data-value", opt.label);
-                if (opt.description) {
-                    chip.setAttribute("title", opt.description);
-                }
-
-                if (multiSelect) {
-                    var cb = document.createElement("span");
-                    cb.className = "interaction-chip-checkbox";
-                    cb.textContent = "\u2713";
-                    chip.appendChild(cb);
-                }
-
-                var labelSpan = document.createElement("span");
-                labelSpan.textContent = opt.label;
-                chip.appendChild(labelSpan);
-
-                chip.addEventListener("click", function () {
-                    if (multiSelect) {
-                        chip.classList.toggle("selected");
-                    } else {
-                        chipsDiv.querySelectorAll(".interaction-chip").forEach(function (c) {
-                            c.classList.remove("selected");
-                        });
-                        chip.classList.add("selected");
-                    }
+          chip.addEventListener("click", function () {
+            if (multiSelect) {
+              chip.classList.toggle("selected");
+            } else {
+              chipsDiv
+                .querySelectorAll(".interaction-chip")
+                .forEach(function (c) {
+                  c.classList.remove("selected");
                 });
-
-                chipsDiv.appendChild(chip);
-            });
-            banner.appendChild(chipsDiv);
-
-            var submitRow = document.createElement("div");
-            submitRow.className = "interaction-banner-buttons";
-            submitRow.style.justifyContent = "flex-end";
-            var submitBtn = document.createElement("button");
-            submitBtn.className = "approval-btn approve";
-            submitBtn.textContent = "Submit";
-            submitBtn.addEventListener("click", function () {
-                var selected = chipsDiv.querySelectorAll(".interaction-chip.selected");
-                if (selected.length === 0) return;
-                var values = [];
-                selected.forEach(function (c) { values.push(c.getAttribute("data-value")); });
-                var response = multiSelect ? JSON.stringify(values) : values[0];
-                handleInteractionResponse(request.requestId, response, false);
-            });
-            submitRow.appendChild(submitBtn);
-            banner.appendChild(submitRow);
-
-        } else if (request.type === "text") {
-            // Text: banner is minimal, chat input is re-purposed
-            activeInteraction = {
-                requestId: request.requestId,
-                type: "text",
-                originalPlaceholder: el.input.placeholder
-            };
-            el.input.placeholder = "Reply to agent...";
-            el.input.disabled = false;
-            el.input.focus();
-        }
-
-        // 4. Insert banner between chat-messages and chat-input-section
-        var inputSection = root.querySelector(".chat-input-section");
-        if (inputSection && inputSection.parentNode) {
-            inputSection.parentNode.insertBefore(banner, inputSection);
-        }
-
-        // Store active interaction for non-text types too
-        if (request.type !== "text") {
-            activeInteraction = {
-                requestId: request.requestId,
-                type: request.type
-            };
-        }
-
-        // Auto-remove banner after 5 minutes (matches server timeout)
-        var timeoutId = setTimeout(function () {
-            if (root.querySelector("#interaction-banner-" + request.requestId)) {
-                removeInteractionBanner();
-                appendMessage(el.messages, {
-                    id: "timeout-" + request.requestId,
-                    role: "system",
-                    userName: "System",
-                    content: "Interaction timed out.",
-                    time: new Date().toISOString()
-                });
-                scrollToBottom(el.messages);
+              chip.classList.add("selected");
             }
-        }, 5 * 60 * 1000);
-        banner.setAttribute("data-timeout-id", timeoutId);
+          });
 
-        scrollToBottom(el.messages);
+          chipsDiv.appendChild(chip);
+        });
+        banner.appendChild(chipsDiv);
+
+        var submitRow = document.createElement("div");
+        submitRow.className = "interaction-banner-buttons";
+        submitRow.style.justifyContent = "flex-end";
+        var submitBtn = document.createElement("button");
+        submitBtn.className = "approval-btn approve";
+        submitBtn.textContent = "Submit";
+        submitBtn.addEventListener("click", function () {
+          var selected = chipsDiv.querySelectorAll(
+            ".interaction-chip.selected",
+          );
+          if (selected.length === 0) return;
+          var values = [];
+          selected.forEach(function (c) {
+            values.push(c.getAttribute("data-value"));
+          });
+          var response = multiSelect ? JSON.stringify(values) : values[0];
+          handleInteractionResponse(request.requestId, response, false);
+        });
+        submitRow.appendChild(submitBtn);
+        banner.appendChild(submitRow);
+
+        // Also enable the text input so the user can type a freeform answer
+        // instead of picking one of the choices.
+        activeInteraction = {
+          requestId: request.requestId,
+          type: "choice",
+          originalPlaceholder: el.input.placeholder,
+        };
+        el.input.placeholder = "Or type your own answer...";
+        el.input.disabled = false;
+      } else if (request.type === "text") {
+        // Text: banner is minimal, chat input is re-purposed
+        activeInteraction = {
+          requestId: request.requestId,
+          type: "text",
+          originalPlaceholder: el.input.placeholder,
+        };
+        el.input.placeholder = "Reply to agent...";
+        el.input.disabled = false;
+        el.input.focus();
+      }
+
+      // 4. Insert banner between chat-messages and chat-input-section
+      var inputSection = root.querySelector(".chat-input-section");
+      if (inputSection && inputSection.parentNode) {
+        inputSection.parentNode.insertBefore(banner, inputSection);
+      }
+
+      // Store active interaction for types that don't set it themselves
+      if (request.type !== "text" && request.type !== "choice") {
+        activeInteraction = {
+          requestId: request.requestId,
+          type: request.type,
+        };
+      }
+
+      // Auto-remove banner after 5 minutes (matches server timeout)
+      var timeoutId = setTimeout(
+        function () {
+          if (root.querySelector("#interaction-banner-" + request.requestId)) {
+            removeInteractionBanner();
+            appendMessage(el.messages, {
+              id: "timeout-" + request.requestId,
+              role: "system",
+              userName: "System",
+              content: "Interaction timed out.",
+              time: new Date().toISOString(),
+            });
+            scrollToBottom(el.messages);
+          }
+        },
+        5 * 60 * 1000,
+      );
+      banner.setAttribute("data-timeout-id", timeoutId);
+
+      scrollToBottom(el.messages);
     }
 
     function handleInteractionResponse(requestId, response, approveAll) {
-        // Add user's response as a temporary message bubble
-        appendMessage(el.messages, {
-            id: "interaction-r-" + requestId,
-            role: "user",
-            userName: userName || "You",
-            content: response,
-            time: new Date().toISOString(),
-            interactionTemp: true
-        });
-        scrollToBottom(el.messages);
+      // Add user's response as a temporary message bubble
+      appendMessage(el.messages, {
+        id: "interaction-r-" + requestId,
+        role: "user",
+        userName: userName || "You",
+        content: response,
+        time: new Date().toISOString(),
+        interactionTemp: true,
+      });
+      scrollToBottom(el.messages);
 
-        submitInteraction(requestId, response, approveAll);
-        removeInteractionBanner();
+      submitInteraction(requestId, response, approveAll);
+      removeInteractionBanner();
     }
 
     function removeInteractionBanner() {
-        var banners = root.querySelectorAll(".interaction-banner");
-        banners.forEach(function (b) {
-            var tid = b.getAttribute("data-timeout-id");
-            if (tid) clearTimeout(parseInt(tid, 10));
-            b.remove();
-        });
+      var banners = root.querySelectorAll(".interaction-banner");
+      banners.forEach(function (b) {
+        var tid = b.getAttribute("data-timeout-id");
+        if (tid) clearTimeout(parseInt(tid, 10));
+        b.remove();
+      });
 
-        // Restore chat input state
-        if (activeInteraction && activeInteraction.type === "text") {
-            el.input.placeholder = activeInteraction.originalPlaceholder || "Type a message...";
-        }
-        activeInteraction = null;
+      // Restore chat input state
+      if (
+        activeInteraction &&
+        (activeInteraction.type === "text" ||
+          activeInteraction.type === "choice")
+      ) {
+        el.input.placeholder =
+          activeInteraction.originalPlaceholder || "Type a message...";
+      }
+      activeInteraction = null;
     }
 
     function submitInteraction(requestId, response, approveAll) {
-        fetch(CHAT_RESPOND_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ requestId: requestId, response: response })
-        }).then(function (resp) {
-            if (resp.ok) {
-                if (approveAll) {
-                    setApprovalMode("AUTO_APPROVE");
-                }
-            } else {
-                log("Interaction submit failed", resp.status);
+      fetch(CHAT_RESPOND_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requestId: requestId, response: response }),
+      })
+        .then(function (resp) {
+          if (resp.ok) {
+            if (approveAll) {
+              setApprovalMode("AUTO_APPROVE");
             }
-        }).catch(function (err) {
-            log("Interaction submit error", err);
+          } else {
+            log("Interaction submit failed", resp.status);
+          }
+        })
+        .catch(function (err) {
+          log("Interaction submit error", err);
         });
     }
 
@@ -1007,32 +1039,34 @@
     var approvalMode = "MANUAL";
 
     function setApprovalMode(mode) {
-        fetch(CHAT_APPROVAL_MODE_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ mode: mode })
-        }).then(function (resp) {
-            if (resp.ok) {
-                approvalMode = mode;
-                updateApprovalModeIndicator();
-            } else {
-                log("setApprovalMode failed", resp.status);
-            }
-        }).catch(function (err) {
-            log("setApprovalMode error", err);
+      fetch(CHAT_APPROVAL_MODE_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: mode }),
+      })
+        .then(function (resp) {
+          if (resp.ok) {
+            approvalMode = mode;
+            updateApprovalModeIndicator();
+          } else {
+            log("setApprovalMode failed", resp.status);
+          }
+        })
+        .catch(function (err) {
+          log("setApprovalMode error", err);
         });
     }
 
     function updateApprovalModeIndicator() {
-        var indicator = root.querySelector(".approval-mode-indicator");
-        if (!indicator) return;
-        if (approvalMode === "AUTO_APPROVE") {
-            indicator.classList.add("active");
-            indicator.title = "Auto-approve is ON — click to disable";
-        } else {
-            indicator.classList.remove("active");
-            indicator.title = "Auto-approve is OFF — click to enable";
-        }
+      var indicator = root.querySelector(".approval-mode-indicator");
+      if (!indicator) return;
+      if (approvalMode === "AUTO_APPROVE") {
+        indicator.classList.add("active");
+        indicator.title = "Auto-approve is ON — click to disable";
+      } else {
+        indicator.classList.remove("active");
+        indicator.title = "Auto-approve is OFF — click to enable";
+      }
     }
 
     function connectSSE() {
@@ -1166,9 +1200,11 @@
             el.button.disabled = false;
 
             // Remove temporary interaction messages (question + response bubbles)
-            el.messages.querySelectorAll('[data-interaction-temp="true"]').forEach(function (tempEl) {
-              tempEl.remove();
-            });
+            el.messages
+              .querySelectorAll('[data-interaction-temp="true"]')
+              .forEach(function (tempEl) {
+                tempEl.remove();
+              });
             // Also remove any lingering interaction banner
             removeInteractionBanner();
 
@@ -1226,24 +1262,24 @@
       eventSource.addEventListener("user_interaction", function (e) {
         log("SSE user_interaction event", e.data);
         try {
-            var request = JSON.parse(e.data);
-            showInteractionBanner(request);
+          var request = JSON.parse(e.data);
+          showInteractionBanner(request);
         } catch (err) {
-            log("SSE user_interaction parse error", err);
+          log("SSE user_interaction parse error", err);
         }
       });
 
       eventSource.addEventListener("approval_mode", function (e) {
         log("SSE approval_mode event", e.data);
         try {
-            var data = JSON.parse(e.data);
-            approvalMode = data.mode || "MANUAL";
-            updateApprovalModeIndicator();
-            if (data.mode === "AUTO_APPROVE") {
-                removeInteractionBanner();
-            }
+          var data = JSON.parse(e.data);
+          approvalMode = data.mode || "MANUAL";
+          updateApprovalModeIndicator();
+          if (data.mode === "AUTO_APPROVE") {
+            removeInteractionBanner();
+          }
         } catch (err) {
-            log("SSE approval_mode parse error", err);
+          log("SSE approval_mode parse error", err);
         }
       });
 
@@ -1361,12 +1397,20 @@
     function sendMessage() {
       if (state.destroyed) return;
 
-      // If a text interaction is active, route to interaction response
-      if (activeInteraction && activeInteraction.type === "text") {
+      // If a text or choice interaction is active, route typed input to interaction response
+      if (
+        activeInteraction &&
+        (activeInteraction.type === "text" ||
+          activeInteraction.type === "choice")
+      ) {
         var interactionText = (el.input.value || "").trim();
         if (!interactionText) return;
         el.input.value = "";
-        handleInteractionResponse(activeInteraction.requestId, interactionText, false);
+        handleInteractionResponse(
+          activeInteraction.requestId,
+          interactionText,
+          false,
+        );
         return;
       }
 
@@ -1474,7 +1518,8 @@
     var approvalToggle = root.querySelector(".approval-mode-indicator");
     if (approvalToggle) {
       approvalToggle.addEventListener("click", function () {
-        var newMode = approvalMode === "AUTO_APPROVE" ? "MANUAL" : "AUTO_APPROVE";
+        var newMode =
+          approvalMode === "AUTO_APPROVE" ? "MANUAL" : "AUTO_APPROVE";
         setApprovalMode(newMode);
       });
     }

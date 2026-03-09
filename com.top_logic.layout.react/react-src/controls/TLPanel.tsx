@@ -56,7 +56,8 @@ const IconPopOut = () => (
  * - showMinimize: boolean
  * - showMaximize: boolean
  * - showPopOut: boolean
- * - toolbarButtons: ChildDescriptor[]
+ * - toolbar: ChildDescriptor (a TLToolbar control, may be absent)
+ * - buttonBar: ChildDescriptor (a TLToolbar control, may be absent)
  * - child: ChildDescriptor
  */
 const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
@@ -70,7 +71,6 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
   const showMaximize = state.showMaximize === true;
   const showPopOut = state.showPopOut === true;
   const fullLine = state.fullLine === true;
-  const toolbarButtons = (state.toolbarButtons as unknown[]) ?? [];
 
   const isMinimized = expansionState === 'MINIMIZED';
   const isMaximized = expansionState === 'MAXIMIZED';
@@ -105,11 +105,7 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
       <div className="tlPanel__header">
         <span className="tlPanel__title">{title}</span>
         <div className="tlPanel__toolbar">
-          {toolbarButtons.map((btn, i) => (
-            <span key={i} className="tlPanel__toolbarButton">
-              <TLChild control={btn} />
-            </span>
-          ))}
+          {state.toolbar && <TLChild control={state.toolbar} />}
           {showMinimize && !isMaximized && (
             <button
               type="button"
@@ -145,6 +141,11 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
       {!isMinimized && (
         <div className="tlPanel__content">
           <TLChild control={state.child} />
+        </div>
+      )}
+      {!isMinimized && state.buttonBar && (
+        <div className="tlPanel__buttonBar">
+          <TLChild control={state.buttonBar} />
         </div>
       )}
     </div>

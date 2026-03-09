@@ -17,6 +17,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.IReactControl;
@@ -64,6 +65,9 @@ public class FormElement extends ContainerElement {
 
 		/** Configuration name for {@link #getWithEditMode()}. */
 		String WITH_EDIT_MODE = "withEditMode";
+
+		/** Configuration name for {@link #getLockOperation()}. */
+		String LOCK_OPERATION = "lockOperation";
 
 		@Override
 		@ClassDefault(FormElement.class)
@@ -114,6 +118,18 @@ public class FormElement extends ContainerElement {
 		@Name(WITH_EDIT_MODE)
 		@BooleanDefault(false)
 		boolean getWithEditMode();
+
+		/**
+		 * The lock operation name used when acquiring a lock for editing.
+		 *
+		 * <p>
+		 * Defaults to {@code "edit"}. Different forms can use different operation names to
+		 * participate in separate lock strategies.
+		 * </p>
+		 */
+		@Name(LOCK_OPERATION)
+		@StringDefault("edit")
+		String getLockOperation();
 	}
 
 	private final Config _config;
@@ -143,7 +159,7 @@ public class FormElement extends ContainerElement {
 		String noModelMessage = Resources.getInstance().getString(messageKey);
 
 		// 4. Create FormControl with initial object.
-		FormControl formControl = new FormControl(context, initialObject, noModelMessage);
+		FormControl formControl = new FormControl(context, initialObject, noModelMessage, _config.getLockOperation());
 
 		// 5. Wire channels.
 		formControl.setInputChannel(inputChannel);

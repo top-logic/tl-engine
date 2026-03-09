@@ -38,9 +38,6 @@ import com.top_logic.model.TLObject;
  */
 public class FormControl extends ReactControl {
 
-	/** Lock operation name used when locking objects for editing. */
-	private static final String EDIT_OPERATION = "edit";
-
 	/** State key for the current edit mode. */
 	private static final String EDIT_MODE = "editMode";
 
@@ -72,6 +69,8 @@ public class FormControl extends ReactControl {
 
 	private final String _noModelMessage;
 
+	private final String _lockOperation;
+
 	/**
 	 * Creates a new {@link FormControl}.
 	 *
@@ -81,11 +80,14 @@ public class FormControl extends ReactControl {
 	 *        The initial object to display, may be {@code null}.
 	 * @param noModelMessage
 	 *        The message to display when no object is available.
+	 * @param lockOperation
+	 *        The lock operation name used when acquiring a lock for editing.
 	 */
-	public FormControl(ReactContext context, TLObject initialObject, String noModelMessage) {
+	public FormControl(ReactContext context, TLObject initialObject, String noModelMessage, String lockOperation) {
 		super(context, initialObject, "TLFormLayout");
 		_currentObject = initialObject;
 		_noModelMessage = noModelMessage;
+		_lockOperation = lockOperation;
 		_editMode = false;
 		putState(EDIT_MODE, Boolean.FALSE);
 		putState(DIRTY, Boolean.FALSE);
@@ -228,7 +230,7 @@ public class FormControl extends ReactControl {
 		}
 
 		// Acquire lock first -- if this fails, no overlay is created.
-		_lock = LockService.getInstance().acquireLock(EDIT_OPERATION, _currentObject);
+		_lock = LockService.getInstance().acquireLock(_lockOperation, _currentObject);
 		_overlay = new TLObjectOverlay(_currentObject);
 
 		_editMode = true;

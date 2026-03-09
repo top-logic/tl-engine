@@ -11,6 +11,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import dev.langchain4j.memory.ChatMemory;
@@ -41,6 +42,10 @@ public class TaskProgressTracker {
 	private final LinkedList<ChatTask> _tasks = new LinkedList<>();
 
 	private final ChatSessionManager _sessionManager = new ChatSessionManager();
+
+	private final ReviewNotificationStore _reviewNotifications = new ReviewNotificationStore();
+
+	private final AtomicBoolean _reviewInProgress = new AtomicBoolean(false);
 
 	/** Current AI processing state (survives navigation); cleared when processing finishes. */
 	private volatile AIProcessingState _currentProcessingState = null;
@@ -163,6 +168,28 @@ public class TaskProgressTracker {
 				store.setMode(mode);
 			}
 		}
+	}
+
+	/**
+	 * Returns the notification store for review agent notifications.
+	 */
+	public ReviewNotificationStore getReviewNotifications() {
+		return _reviewNotifications;
+	}
+
+	/**
+	 * Attempts to start a background review. Returns {@code true} if the review was not already in
+	 * progress and is now started, {@code false} if a review is already running (debounce).
+	 */
+	public boolean tryStartReview() {
+		return _reviewInProgress.compareAndSet(false, true);
+	}
+
+	/**
+	 * Marks the background review as finished, allowing the next review to start.
+	 */
+	public void finishReview() {
+		_reviewInProgress.set(false);
 	}
 
 	/**

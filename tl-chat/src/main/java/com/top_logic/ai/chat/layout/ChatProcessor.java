@@ -97,6 +97,21 @@ public class ChatProcessor {
 	}
 
 	/**
+	 * Submits a fire-and-forget task to the shared background executor.
+	 *
+	 * <p>
+	 * Intended for lightweight background operations such as manual review invocations from the
+	 * REST API.
+	 * </p>
+	 *
+	 * @param task
+	 *        The task to execute.
+	 */
+	public static void submitBackground(Runnable task) {
+		BACKGROUND_EXECUTOR.submit(task);
+	}
+
+	/**
 	 * Executes user message through the AgentRegistry entry point agent.
 	 * Sets trace so AgentCall and ToolCall events are visible in the UI timeline.
 	 * Uses state from tracker; {@code taskId} must already be set on state.
@@ -185,6 +200,9 @@ public class ChatProcessor {
 			if (sessionId != null) {
 				persistMessagesForSession(sessionId, chat);
 			}
+
+			// Trigger background review
+			triggerReviewAgent(taskTracker, trimmed, result, taskTracker.getTask(taskId));
 
 		} catch (Exception ex) {
 			taskTracker.failTask(taskId, formatErrorMessage(ex));
@@ -438,6 +456,75 @@ public class ChatProcessor {
 			Logger.error("Failed to persist chat messages for session " + sessionId + ": " + ex.getMessage(),
 				ex, ChatProcessor.class);
 		}
+	}
+
+	/**
+	 * Triggers a background review agent to evaluate the last agent turn.
+	 *
+	 * <p>
+	 * Uses {@link TaskProgressTracker#tryStartReview()} for debounce — if a review is already in
+	 * progress, this call is silently skipped. The review runs on {@link #BACKGROUND_EXECUTOR} as a
+	 * fire-and-forget task. If the review agent finds issues (result does not contain "No issues
+	 * found"), a {@link ReviewNotification} is added to the tracker's notification store.
+	 * </p>
+	 *
+	 * @param taskTracker
+	 *        The session-scoped tracker that owns the notification store.
+	 * @param userMessage
+	 *        The user message that triggered the agent turn.
+	 * @param agentResponse
+	 *        The agent's response text.
+	 * @param completedTask
+	 *        The completed {@link ChatTask} with timeline events; may be {@code null}.
+	 */
+	static void triggerReviewAgent(TaskProgressTracker taskTracker, String userMessage,
+			String agentResponse, ChatTask completedTask) {
+		if (!taskTracker.tryStartReview()) {
+			return;
+		}
+
+		BACKGROUND_EXECUTOR.submit(() -> {
+			try {
+				AgentRegistry agentRegistry = AgentRegistry.getInstance();
+				if (agentRegistry == null || !agentRegistry.hasAgent("ReviewAgent")) {
+					return;
+				}
+
+				String xml = ConversationSerializer.serializeLastTurn(userMessage, agentResponse, completedTask);
+
+				String result = ThreadContextManager.inSystemInteraction(ChatProcessor.class, () -> {
+					UntypedAgent reviewAgent =
+						agentRegistry.buildUntypedAgent("ReviewAgent", null, null, new java.util.HashMap<>());
+					return (String) reviewAgent.invoke(Map.of("message", xml));
+				});
+
+				if (result != null && !result.contains("No issues found")) {
+					ReviewNotification notification = new ReviewNotification(
+						summarize(result),
+						"review",
+						"warning",
+						Instant.now());
+					taskTracker.getReviewNotifications().add(notification);
+				}
+			} catch (Exception ex) {
+				Logger.error("Review agent failed: " + ex.getMessage(), ex, ChatProcessor.class);
+			} finally {
+				taskTracker.finishReview();
+			}
+		});
+	}
+
+	/**
+	 * Truncates text to 200 characters for use as a notification title.
+	 */
+	private static String summarize(String text) {
+		if (text == null) {
+			return "";
+		}
+		if (text.length() <= 200) {
+			return text;
+		}
+		return text.substring(0, 197) + "...";
 	}
 
 	/**

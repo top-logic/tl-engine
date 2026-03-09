@@ -8,6 +8,7 @@ package com.top_logic.ai.chat.api;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -24,12 +25,16 @@ import com.top_logic.ai.chat.api.messages.CreateSessionRequest;
 import com.top_logic.ai.chat.api.messages.PersistedChatEntry;
 import com.top_logic.ai.chat.api.messages.SaveMessagesRequest;
 import com.top_logic.ai.chat.api.messages.UpdateTitleRequest;
+import com.top_logic.ai.chat.layout.Chat;
 import com.top_logic.ai.chat.layout.ChatEntry;
+import com.top_logic.ai.chat.layout.ConversationSerializer;
+import com.top_logic.ai.chat.layout.ReviewNotification;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.ai.service.approval.UserInteractionStore;
+import com.top_logic.ai.service.agents.AgentRegistry;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.basic.Logger;
@@ -37,6 +42,8 @@ import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
+
+import dev.langchain4j.agentic.UntypedAgent;
 
 import de.haumacher.msgbuf.io.StringR;
 import de.haumacher.msgbuf.json.JsonReader;
@@ -71,6 +78,7 @@ public class ChatServlet extends HttpServlet {
 	private static final String PATH_UPDATES = "/updates";
 	private static final String PATH_EVENTS = "/events";
 	private static final String PATH_SESSIONS = "/sessions";
+	private static final String PATH_REVIEW = "/review";
 	private static final String CONTENT_TYPE_JSON = "application/json; charset=UTF-8";
 	private static final String CONTENT_TYPE_SSE = "text/event-stream";
 
@@ -98,6 +106,10 @@ public class ChatServlet extends HttpServlet {
 		}
 		if (pathInfo.equals(PATH_SESSIONS) || pathInfo.equals(PATH_SESSIONS + "/")) {
 			handleCreateSession(req, resp);
+			return;
+		}
+		if (pathInfo.equals(PATH_REVIEW) || pathInfo.equals(PATH_REVIEW + "/")) {
+			handleReview(req, resp);
 			return;
 		}
 		resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Unknown path: " + pathInfo);
@@ -296,6 +308,53 @@ public class ChatServlet extends HttpServlet {
 		resp.setContentType("application/json");
 		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
 		resp.getWriter().write("{\"status\":\"ok\",\"mode\":\"" + approvalMode.name() + "\"}");
+	private void handleReview(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		TaskProgressTracker tracker = ChatSessionRegistry.getOrCreate(req.getSession(false));
+		if (tracker == null) {
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "No active session");
+			return;
+		}
+
+		Chat chat = tracker.getChat();
+		if (chat == null || chat.getEntries().isEmpty()) {
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "No conversation to review");
+			return;
+		}
+
+		String xml = ConversationSerializer.serializeFullChat(chat);
+
+		ChatProcessor.submitBackground(() -> {
+			try {
+				AgentRegistry agentRegistry = AgentRegistry.getInstance();
+				if (agentRegistry == null || !agentRegistry.hasAgent("ReviewAgent")) {
+					Logger.warn("Review endpoint: ReviewAgent not available", ChatServlet.class);
+					return;
+				}
+
+				String result = ThreadContextManager.inSystemInteraction(ChatServlet.class, () -> {
+					UntypedAgent reviewAgent =
+						agentRegistry.buildUntypedAgent("ReviewAgent", null, null, new java.util.HashMap<>());
+					return (String) reviewAgent.invoke(Map.of("message", xml));
+				});
+
+				if (result != null && !result.contains("No issues found")) {
+					String title = result.length() <= 200 ? result : result.substring(0, 197) + "...";
+					ReviewNotification notification = new ReviewNotification(
+						title,
+						"manual-review",
+						"info",
+						Instant.now());
+					tracker.getReviewNotifications().add(notification);
+				}
+			} catch (Exception ex) {
+				Logger.error("Manual review failed: " + ex.getMessage(), ex, ChatServlet.class);
+			}
+		});
+
+		resp.setStatus(HttpServletResponse.SC_OK);
+		resp.setContentType(CONTENT_TYPE_JSON);
+		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
+		resp.getWriter().write("{\"status\":\"review_started\"}");
 	}
 
 	private void handleUpdates(HttpServletRequest req, HttpServletResponse resp) throws IOException {

@@ -1463,3 +1463,137 @@
 	border-color: #fff;
 	color: var(--chat-accent);
 }
+ * Review Button
+ * ======================================== */
+
+.chat-review-button {
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+	border: 1px solid var(--chat-border);
+	background-color: var(--chat-bg);
+	color: var(--chat-text-secondary);
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	transition: border-color 0.2s, color 0.2s, background-color 0.2s;
+	padding: 0;
+}
+
+.chat-review-button:hover {
+	border-color: var(--chat-accent);
+	color: var(--chat-accent);
+}
+
+.chat-review-button:disabled {
+	cursor: not-allowed;
+	opacity: 0.5;
+}
+
+.chat-review-button.chat-review-loading {
+	animation: pulse 1s ease-in-out infinite;
+	border-color: var(--chat-accent);
+	color: var(--chat-accent);
+}
+
+.chat-review-button.chat-review-started {
+	border-color: #16a34a;
+	color: #16a34a;
+	background-color: rgba(22, 163, 74, 0.05);
+}
+
+/* ========================================
+ * Review Alert Banners
+ * ======================================== */
+
+.chat-review-alerts {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	padding: 0;
+}
+
+.chat-review-alerts:empty {
+	display: none;
+}
+
+.chat-review-alert {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 10px 14px;
+	margin: 4px 16px 0 16px;
+	border-radius: var(--chat-radius-sm);
+	background-color: rgba(99, 102, 241, 0.06);
+	border: 1px solid rgba(99, 102, 241, 0.2);
+	color: var(--chat-text-primary);
+	font-size: 0.9em;
+	animation: slideDown 0.3s ease;
+}
+
+.chat-review-alert-warning {
+	background-color: rgba(245, 158, 11, 0.06);
+	border-color: rgba(245, 158, 11, 0.3);
+}
+
+.chat-review-alert-error {
+	background-color: rgba(220, 38, 38, 0.06);
+	border-color: rgba(220, 38, 38, 0.3);
+}
+
+.chat-review-alert-text {
+	flex: 1;
+	line-height: 1.4;
+	word-break: break-word;
+}
+
+.chat-review-alert-category {
+	flex-shrink: 0;
+	font-size: 0.8em;
+	padding: 2px 8px;
+	border-radius: 10px;
+	background-color: var(--chat-surface);
+	color: var(--chat-text-secondary);
+}
+
+.chat-review-alert-close {
+	flex-shrink: 0;
+	width: 24px;
+	height: 24px;
+	border: none;
+	background: transparent;
+	color: var(--chat-text-muted);
+	font-size: 1.2em;
+	cursor: pointer;
+	border-radius: 4px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: background-color 0.15s, color 0.15s;
+	padding: 0;
+	line-height: 1;
+}
+
+.chat-review-alert-close:hover {
+	background-color: var(--chat-surface);
+	color: var(--chat-text-primary);
+}
+
+.chat-review-alert-dismissed {
+	opacity: 0;
+	transform: translateY(-10px);
+	transition: opacity 0.3s, transform 0.3s;
+}
+
+@keyframes slideDown {
+	from {
+		opacity: 0;
+		transform: translateY(-10px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}

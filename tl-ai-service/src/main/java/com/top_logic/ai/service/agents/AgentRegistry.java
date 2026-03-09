@@ -263,6 +263,24 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	}
 
 	/**
+	 * Checks whether an agent with the given name is configured.
+	 *
+	 * @param name
+	 *        The agent name to check.
+	 * @return {@code true} if an agent with the given name exists, {@code false} otherwise.
+	 */
+	public boolean hasAgent(String name) {
+		if (name == null) {
+			return false;
+		}
+		Map<String, AgentConfig> agents = getConfig().getAgents();
+		if (agents.containsKey(name)) {
+			return true;
+		}
+		return _agentNameIndex.containsKey(name.toLowerCase(Locale.ROOT));
+	}
+
+	/**
 	 * Returns the {@link AgentConfig} for the given agent name.
 	 *
 	 * @param name

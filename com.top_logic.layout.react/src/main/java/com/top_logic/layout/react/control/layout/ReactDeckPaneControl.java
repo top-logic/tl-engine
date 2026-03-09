@@ -12,7 +12,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.top_logic.layout.react.ReactDisplayContext;
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
 
@@ -126,7 +126,7 @@ public class ReactDeckPaneControl extends ReactControl {
 	}
 
 	@Override
-	protected void writeAsChild(JsonWriter writer, ReactDisplayContext viewContext)
+	protected void writeAsChild(JsonWriter writer, ReactContext viewContext)
 			throws IOException {
 		if (getReactState().get(ACTIVE_CHILD) == null) {
 			ReactControl activeChild = getOrCreateChild(_activeIndex);

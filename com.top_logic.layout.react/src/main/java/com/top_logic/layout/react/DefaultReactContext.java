@@ -9,9 +9,9 @@ import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 
 /**
- * Simple implementation of {@link ReactDisplayContext} for the view system.
+ * Simple implementation of {@link ReactContext} for the view system.
  */
-public class DefaultReactDisplayContext implements ReactDisplayContext {
+public class DefaultReactContext implements ReactContext {
 
 	private final String _contextPath;
 
@@ -22,7 +22,7 @@ public class DefaultReactDisplayContext implements ReactDisplayContext {
 	private ErrorSink _errorSink;
 
 	/**
-	 * Creates a {@link DefaultReactDisplayContext}.
+	 * Creates a {@link DefaultReactContext}.
 	 *
 	 * @param contextPath
 	 *        The webapp context path.
@@ -31,7 +31,7 @@ public class DefaultReactDisplayContext implements ReactDisplayContext {
 	 * @param sseQueue
 	 *        The SSE queue for the current session.
 	 */
-	public DefaultReactDisplayContext(String contextPath, String windowName, SSEUpdateQueue sseQueue) {
+	public DefaultReactContext(String contextPath, String windowName, SSEUpdateQueue sseQueue) {
 		_contextPath = contextPath;
 		_windowName = windowName;
 		_sseQueue = sseQueue;

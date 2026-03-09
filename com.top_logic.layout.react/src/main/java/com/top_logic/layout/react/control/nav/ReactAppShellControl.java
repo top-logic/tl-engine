@@ -14,8 +14,8 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
-import com.top_logic.layout.react.DefaultReactDisplayContext;
-import com.top_logic.layout.react.ReactDisplayContext;
+import com.top_logic.layout.react.DefaultReactContext;
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.overlay.ReactSnackbarControl;
@@ -136,16 +136,16 @@ public class ReactAppShellControl extends ReactControl {
 	}
 
 	@Override
-	protected void onBeforeWrite(ReactDisplayContext context) {
-		if (context instanceof DefaultReactDisplayContext defaultContext) {
+	protected void onBeforeWrite(ReactContext context) {
+		if (context instanceof DefaultReactContext defaultContext) {
 			_previousErrorSink = defaultContext.getErrorSink();
 			defaultContext.setErrorSink(_errorSink);
 		}
 	}
 
 	@Override
-	protected void onAfterWrite(ReactDisplayContext context) {
-		if (context instanceof DefaultReactDisplayContext defaultContext) {
+	protected void onAfterWrite(ReactContext context) {
+		if (context instanceof DefaultReactContext defaultContext) {
 			defaultContext.setErrorSink(_previousErrorSink);
 			_previousErrorSink = null;
 		}

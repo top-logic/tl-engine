@@ -15,7 +15,7 @@ import java.util.function.Consumer;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.react.ReactDisplayContext;
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.protocol.PatchEvent;
 import com.top_logic.layout.react.protocol.StateEvent;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
@@ -42,7 +42,7 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * <p>
  * Child {@link ReactControl}s embedded in the state are automatically initialized (ID assigned, SSE
  * registered) when they are serialized during the initial render. This is done by delegating to
- * {@link #writeAsChild(JsonWriter, ReactDisplayContext)} from {@link #writeJsonValue}. Each
+ * {@link #writeAsChild(JsonWriter, ReactContext)} from {@link #writeJsonValue}. Each
  * control thus manages its own lifecycle, analogous to {@code child.write(context, out)} in
  * traditional controls.
  * </p>
@@ -64,7 +64,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 
 	private SSEUpdateQueue _sseQueue;
 
-	private ReactDisplayContext _viewContext;
+	private ReactContext _viewContext;
 
 	private ErrorSink _errorSink;
 
@@ -119,9 +119,9 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	}
 
 	/**
-	 * The current {@link ReactDisplayContext}, or {@code null} if not yet rendered.
+	 * The current {@link ReactContext}, or {@code null} if not yet rendered.
 	 */
-	protected ReactDisplayContext getViewContext() {
+	protected ReactContext getViewContext() {
 		return _viewContext;
 	}
 
@@ -157,11 +157,11 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 
 	@Override
 	public void write(DisplayContext context, TagWriter out) throws IOException {
-		write(ReactDisplayContext.fromDisplayContext(context), out);
+		write(ReactContext.fromDisplayContext(context), out);
 	}
 
 	@Override
-	public void write(ReactDisplayContext context, TagWriter out) throws IOException {
+	public void write(ReactContext context, TagWriter out) throws IOException {
 		_viewContext = context;
 		_errorSink = context.getErrorSink();
 		_id = context.allocateId();
@@ -193,12 +193,12 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	 * <p>
 	 * Subclasses override to perform initialization that must happen before rendering, such as
 	 * registering model listeners or rebuilding state caches. Scoped resources installed here
-	 * (e.g. on the {@link ReactDisplayContext}) can be cleaned up in {@link #onAfterWrite}.
+	 * (e.g. on the {@link ReactContext}) can be cleaned up in {@link #onAfterWrite}.
 	 * </p>
 	 *
-	 * @see #onAfterWrite(ReactDisplayContext)
+	 * @see #onAfterWrite(ReactContext)
 	 */
-	protected void onBeforeWrite(ReactDisplayContext context) {
+	protected void onBeforeWrite(ReactContext context) {
 		// Default: no-op.
 	}
 
@@ -210,9 +210,9 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	 * override to restore scoped resources modified in {@link #onBeforeWrite}.
 	 * </p>
 	 *
-	 * @see #onBeforeWrite(ReactDisplayContext)
+	 * @see #onBeforeWrite(ReactContext)
 	 */
-	protected void onAfterWrite(ReactDisplayContext context) {
+	protected void onAfterWrite(ReactContext context) {
 		// Default: no-op.
 	}
 
@@ -333,7 +333,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	 *
 	 * <p>
 	 * Any child {@link ReactControl}s in the patch are automatically initialized (ID assigned, SSE
-	 * registered) during serialization if a {@link ReactDisplayContext} is available on this control.
+	 * registered) during serialization if a {@link ReactContext} is available on this control.
 	 * </p>
 	 *
 	 * @param queue
@@ -366,7 +366,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	 *        The view display context for ID allocation and SSE registration, or {@code null} if
 	 *        controls are already initialized.
 	 */
-	protected void writeAsChild(JsonWriter writer, ReactDisplayContext viewContext)
+	protected void writeAsChild(JsonWriter writer, ReactContext viewContext)
 			throws IOException {
 		if (viewContext != null && _id == null) {
 			_viewContext = viewContext;
@@ -466,7 +466,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	 * @param viewContext
 	 *        The view display context for ID allocation and SSE registration, or {@code null}.
 	 */
-	public static String toJsonString(Map<String, Object> map, ReactDisplayContext viewContext) {
+	public static String toJsonString(Map<String, Object> map, ReactContext viewContext) {
 		try {
 			StringW sw = new StringW();
 			try (JsonWriter writer = new JsonWriter(sw)) {
@@ -483,12 +483,12 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	 * initialization.
 	 */
 	public static void writeJsonLiteral(TagWriter out, Map<String, Object> map,
-			ReactDisplayContext viewContext) throws IOException {
+			ReactContext viewContext) throws IOException {
 		out.append(toJsonString(map, viewContext));
 	}
 
 	static void writeJsonMap(JsonWriter writer, Map<String, Object> map,
-			ReactDisplayContext viewContext) throws IOException {
+			ReactContext viewContext) throws IOException {
 		writer.beginObject();
 		for (Map.Entry<String, Object> entry : map.entrySet()) {
 			writer.name(entry.getKey());
@@ -499,7 +499,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 
 	@SuppressWarnings("unchecked")
 	static void writeJsonValue(JsonWriter writer, Object value,
-			ReactDisplayContext viewContext) throws IOException {
+			ReactContext viewContext) throws IOException {
 		if (value == null) {
 			writer.nullValue();
 		} else if (value instanceof String) {
@@ -530,7 +530,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	 * Serializes a map to a JSON string.
 	 */
 	public static String toJsonString(Map<String, Object> map) {
-		return toJsonString(map, (ReactDisplayContext) null);
+		return toJsonString(map, (ReactContext) null);
 	}
 
 	/**

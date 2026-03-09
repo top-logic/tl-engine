@@ -5,7 +5,7 @@
  */
 package com.top_logic.layout.react.control.button;
 
-import com.top_logic.layout.react.ReactDisplayContext;
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -13,7 +13,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  *
  * <p>
  * Replaces the old-world {@link com.top_logic.layout.basic.Command} interface for view-system
- * buttons. Receives a {@link ReactDisplayContext} instead of a
+ * buttons. Receives a {@link ReactContext} instead of a
  * {@link com.top_logic.layout.DisplayContext}.
  * </p>
  */
@@ -27,5 +27,5 @@ public interface ButtonAction {
 	 *        The view display context.
 	 * @return The result of the command execution.
 	 */
-	HandlerResult execute(ReactDisplayContext context);
+	HandlerResult execute(ReactContext context);
 }

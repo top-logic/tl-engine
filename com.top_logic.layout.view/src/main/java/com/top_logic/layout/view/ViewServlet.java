@@ -18,8 +18,8 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.gui.JSFileCompiler;
 import com.top_logic.gui.ThemeFactory;
-import com.top_logic.layout.react.DefaultReactDisplayContext;
-import com.top_logic.layout.react.ReactDisplayContext;
+import com.top_logic.layout.react.DefaultReactContext;
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.mig.html.HTMLConstants;
@@ -32,7 +32,7 @@ import com.top_logic.util.TopLogicServlet;
  * <p>
  * Loads a {@code .view.xml} file via {@link ViewLoader}, creates per-session control trees via
  * {@link UIElement#createControl(ViewContext)}, and renders the initial HTML page using
- * {@link TagWriter} and {@link IReactControl#write(ReactDisplayContext, TagWriter)}.
+ * {@link TagWriter} and {@link IReactControl#write(ReactContext, TagWriter)}.
  * </p>
  *
  * <p>
@@ -83,7 +83,7 @@ public class ViewServlet extends TopLogicServlet {
 			return;
 		}
 
-		ReactDisplayContext displayContext = new DefaultReactDisplayContext(
+		ReactContext displayContext = new DefaultReactContext(
 			request.getContextPath(), windowName, SSEUpdateQueue.forSession(session));
 		ViewContext viewContext = new DefaultViewContext(displayContext);
 
@@ -209,7 +209,7 @@ public class ViewServlet extends TopLogicServlet {
 	 * Renders the HTML page with the root control using the {@link IReactControl#write} path.
 	 */
 	private void renderPage(HttpServletRequest request, HttpServletResponse response,
-			IReactControl rootControl, ReactDisplayContext viewContext) throws IOException {
+			IReactControl rootControl, ReactContext viewContext) throws IOException {
 		response.setContentType("text/html");
 		response.setCharacterEncoding("UTF-8");
 

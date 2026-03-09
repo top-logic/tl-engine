@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import com.top_logic.layout.react.ReactDisplayContext;
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -185,7 +185,7 @@ public class ReactSidebarControl extends ReactControl {
 	}
 
 	@Override
-	protected void writeAsChild(JsonWriter writer, ReactDisplayContext viewContext)
+	protected void writeAsChild(JsonWriter writer, ReactContext viewContext)
 			throws IOException {
 		if (getReactState().get(ACTIVE_CONTENT) == null && _activeItemId != null) {
 			ReactControl activeContent = getOrCreateContent(_activeItemId);
@@ -371,7 +371,7 @@ public class ReactSidebarControl extends ReactControl {
 	 * Handles command item execution from the client.
 	 */
 	@ReactCommand("executeCommand")
-	HandlerResult handleExecuteCommand(ReactDisplayContext context, Map<String, Object> arguments) {
+	HandlerResult handleExecuteCommand(ReactContext context, Map<String, Object> arguments) {
 		String itemId = (String) arguments.get(ITEM_ID_ARG);
 		CommandItem cmdItem = findCommandItem(itemId, _items);
 		if (cmdItem != null) {

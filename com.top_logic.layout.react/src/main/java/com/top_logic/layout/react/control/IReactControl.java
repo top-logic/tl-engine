@@ -8,7 +8,7 @@ package com.top_logic.layout.react.control;
 import java.io.IOException;
 
 import com.top_logic.basic.xml.TagWriter;
-import com.top_logic.layout.react.ReactDisplayContext;
+import com.top_logic.layout.react.ReactContext;
 
 /**
  * Rendering contract for new-world {@code React} controls.
@@ -35,5 +35,5 @@ public interface IReactControl {
 	 * @param out
 	 *        The writer to render into.
 	 */
-	void write(ReactDisplayContext context, TagWriter out) throws IOException;
+	void write(ReactContext context, TagWriter out) throws IOException;
 }

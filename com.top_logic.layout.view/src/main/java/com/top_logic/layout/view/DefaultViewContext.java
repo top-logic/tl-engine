@@ -8,7 +8,7 @@ package com.top_logic.layout.view;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.top_logic.layout.react.ReactDisplayContext;
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.CommandScope;
@@ -25,7 +25,7 @@ import com.top_logic.layout.view.form.FormControl;
  */
 public class DefaultViewContext implements ViewContext {
 
-	private final ReactDisplayContext _displayContext;
+	private final ReactContext _displayContext;
 
 	private final String _personalizationPath;
 
@@ -42,11 +42,11 @@ public class DefaultViewContext implements ViewContext {
 	 *        The view display context providing ID allocation, SSE queue and other rendering
 	 *        infrastructure.
 	 */
-	public DefaultViewContext(ReactDisplayContext displayContext) {
+	public DefaultViewContext(ReactContext displayContext) {
 		this(displayContext, "view", new HashMap<>(), null, null);
 	}
 
-	private DefaultViewContext(ReactDisplayContext displayContext, String personalizationPath,
+	private DefaultViewContext(ReactContext displayContext, String personalizationPath,
 			Map<String, ViewChannel> channels, CommandScope commandScope, FormControl formControl) {
 		_displayContext = displayContext;
 		_personalizationPath = personalizationPath;
@@ -67,7 +67,7 @@ public class DefaultViewContext implements ViewContext {
 	}
 
 	@Override
-	public ReactDisplayContext getDisplayContext() {
+	public ReactContext getReactContext() {
 		return _displayContext;
 	}
 

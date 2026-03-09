@@ -7,7 +7,7 @@ package com.top_logic.layout.view.command;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.ThemeImage;
-import com.top_logic.layout.react.ReactDisplayContext;
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
@@ -123,7 +123,7 @@ public class ViewCommandModel implements ViewChannel.ChannelListener {
 	 *        The view display context providing rendering infrastructure.
 	 * @return The result of the command execution.
 	 */
-	public HandlerResult executeCommand(ReactDisplayContext context) {
+	public HandlerResult executeCommand(ReactContext context) {
 		Object input = resolveInput();
 
 		ExecutableState state = _rule.isExecutable(input);

@@ -5,7 +5,7 @@
  */
 package com.top_logic.layout.view;
 
-import com.top_logic.layout.react.ReactDisplayContext;
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.CommandScope;
@@ -47,9 +47,9 @@ public interface ViewContext {
 	String getPersonalizationKey();
 
 	/**
-	 * The {@link ReactDisplayContext} for the current session.
+	 * The {@link ReactContext} for the current session.
 	 */
-	ReactDisplayContext getDisplayContext();
+	ReactContext getReactContext();
 
 	/**
 	 * The {@link CommandScope} of the nearest enclosing panel, or {@code null} if no panel is in

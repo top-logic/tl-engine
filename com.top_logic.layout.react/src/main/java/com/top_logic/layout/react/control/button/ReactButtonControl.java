@@ -5,7 +5,7 @@
  */
 package com.top_logic.layout.react.control.button;
 
-import com.top_logic.layout.react.ReactDisplayContext;
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -66,7 +66,7 @@ public class ReactButtonControl extends ReactControl {
 	 * Handles the click command from the React client.
 	 */
 	@ReactCommand("click")
-	HandlerResult handleClick(ReactDisplayContext context) {
+	HandlerResult handleClick(ReactContext context) {
 		return _action.execute(context);
 	}
 

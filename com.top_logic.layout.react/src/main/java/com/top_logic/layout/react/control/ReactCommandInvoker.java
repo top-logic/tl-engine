@@ -11,7 +11,7 @@ import java.util.Map;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.exception.I18NFailure;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.layout.react.ReactDisplayContext;
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -39,7 +39,7 @@ class ReactCommandInvoker {
 	 *        The method handle for the annotated method. First parameter is always the receiver
 	 *        (ReactControl subclass).
 	 * @param needsContext
-	 *        Whether the method declares a {@link ReactDisplayContext} parameter.
+	 *        Whether the method declares a {@link ReactContext} parameter.
 	 * @param needsArgs
 	 *        Whether the method declares a {@code Map<String, Object>} parameter.
 	 * @param returnsVoid
@@ -65,7 +65,7 @@ class ReactCommandInvoker {
 	 * <li>Other exceptions produce a generic error result with the exception message.</li>
 	 * </ul>
 	 */
-	HandlerResult invoke(ReactControl control, ReactDisplayContext context,
+	HandlerResult invoke(ReactControl control, ReactContext context,
 			Map<String, Object> arguments) {
 		try {
 			if (_needsContext && _needsArgs) {

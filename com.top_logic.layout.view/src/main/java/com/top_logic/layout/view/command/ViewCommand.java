@@ -14,7 +14,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.ThemeImage;
-import com.top_logic.layout.react.ReactDisplayContext;
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.tool.boundsec.CommandGroupReference;
@@ -166,5 +166,5 @@ public interface ViewCommand {
 	 *        The input value from the configured channel (may be {@code null}).
 	 * @return The result of the command execution.
 	 */
-	HandlerResult execute(ReactDisplayContext context, Object input);
+	HandlerResult execute(ReactContext context, Object input);
 }

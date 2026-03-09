@@ -107,12 +107,12 @@ public class DemoReactTreeComponent extends LayoutComponent {
 
 		LabelProvider labels = MetaLabelProvider.INSTANCE;
 		ReactTreeControl tree = new ReactTreeControl(_context, treeModel, selectionModel,
-			node -> {
+			(ctx, node) -> {
 				Object businessObject = node;
 				if (node instanceof AbstractMutableTLTreeNode) {
 					businessObject = ((AbstractMutableTLTreeNode<?>) node).getBusinessObject();
 				}
-				return new ReactTextCellControl(_context, labels.getLabel(businessObject));
+				return new ReactTextCellControl(ctx, labels.getLabel(businessObject));
 			});
 		tree.setSelectionMode("multi");
 		return tree;

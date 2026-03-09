@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.react;
 
+import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 
 /**
@@ -39,6 +40,14 @@ public interface ReactDisplayContext {
 	 * The SSE queue for pushing state updates and registering controls.
 	 */
 	SSEUpdateQueue getSSEQueue();
+
+	/**
+	 * The {@link ErrorSink} for reporting user-visible errors in the current scope, or {@code null}
+	 * if no error sink is installed (legacy mode).
+	 */
+	default ErrorSink getErrorSink() {
+		return null;
+	}
 
 	/**
 	 * Creates a {@link ReactDisplayContext} adapter from an old-world

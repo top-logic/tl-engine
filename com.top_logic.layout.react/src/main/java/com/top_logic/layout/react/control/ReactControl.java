@@ -66,6 +66,8 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 
 	private ReactDisplayContext _viewContext;
 
+	private ErrorSink _errorSink;
+
 	/**
 	 * Creates a new {@link ReactControl}.
 	 *
@@ -107,6 +109,13 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	 */
 	public Map<String, Object> getReactState() {
 		return _reactState;
+	}
+
+	/**
+	 * The {@link ErrorSink} for reporting user-visible errors, or {@code null} in legacy mode.
+	 */
+	public ErrorSink getErrorSink() {
+		return _errorSink;
 	}
 
 	/**
@@ -154,6 +163,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	@Override
 	public void write(ReactDisplayContext context, TagWriter out) throws IOException {
 		_viewContext = context;
+		_errorSink = context.getErrorSink();
 		_id = context.allocateId();
 		SSEUpdateQueue queue = context.getSSEQueue();
 		_sseQueue = queue;
@@ -340,6 +350,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 			throws IOException {
 		if (viewContext != null && _id == null) {
 			_viewContext = viewContext;
+			_errorSink = viewContext.getErrorSink();
 			_id = viewContext.allocateId();
 			SSEUpdateQueue queue = viewContext.getSSEQueue();
 			if (_sseQueue == null) {

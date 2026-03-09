@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.react;
 
+import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 
 /**
@@ -17,6 +18,8 @@ public class DefaultReactDisplayContext implements ReactDisplayContext {
 	private final String _windowName;
 
 	private final SSEUpdateQueue _sseQueue;
+
+	private ErrorSink _errorSink;
 
 	/**
 	 * Creates a {@link DefaultReactDisplayContext}.
@@ -52,5 +55,25 @@ public class DefaultReactDisplayContext implements ReactDisplayContext {
 	@Override
 	public SSEUpdateQueue getSSEQueue() {
 		return _sseQueue;
+	}
+
+	@Override
+	public ErrorSink getErrorSink() {
+		return _errorSink;
+	}
+
+	/**
+	 * Sets the {@link ErrorSink} for the current rendering scope.
+	 *
+	 * <p>
+	 * Called by the app shell control during rendering to make its snackbar available to all
+	 * descendant controls.
+	 * </p>
+	 *
+	 * @param errorSink
+	 *        The error sink.
+	 */
+	public void setErrorSink(ErrorSink errorSink) {
+		_errorSink = errorSink;
 	}
 }

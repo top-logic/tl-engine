@@ -26,7 +26,8 @@ import com.top_logic.layout.react.control.ToolbarControl;
  * <li>{@code showMinimize} - whether the minimize button is shown</li>
  * <li>{@code showMaximize} - whether the maximize button is shown</li>
  * <li>{@code showPopOut} - whether the pop-out button is shown</li>
- * <li>{@code toolbarButtons} - list of child control descriptors for custom toolbar buttons</li>
+ * <li>{@code toolbar} - child control descriptor for the toolbar (optional)</li>
+ * <li>{@code buttonBar} - child control descriptor for the button bar (optional)</li>
  * <li>{@code child} - the content child control descriptor</li>
  * </ul>
  */
@@ -40,22 +41,32 @@ public class ReactPanelControl extends ToolbarControl {
 	/** @see #setExpansionState(ExpansionState) */
 	private static final String EXPANSION_STATE = "expansionState";
 
-	/** @see #ReactPanelControl(ReactContext, String, ReactControl, boolean, boolean, boolean) */
+	/** @see #ReactPanelControl(ReactContext, String, ReactControl, ReactToolbarControl, ReactToolbarControl, boolean, boolean, boolean) */
 	private static final String SHOW_MINIMIZE = "showMinimize";
 
-	/** @see #ReactPanelControl(ReactContext, String, ReactControl, boolean, boolean, boolean) */
+	/** @see #ReactPanelControl(ReactContext, String, ReactControl, ReactToolbarControl, ReactToolbarControl, boolean, boolean, boolean) */
 	private static final String SHOW_MAXIMIZE = "showMaximize";
 
-	/** @see #ReactPanelControl(ReactContext, String, ReactControl, boolean, boolean, boolean) */
+	/** @see #ReactPanelControl(ReactContext, String, ReactControl, ReactToolbarControl, ReactToolbarControl, boolean, boolean, boolean) */
 	private static final String SHOW_POP_OUT = "showPopOut";
 
-	/** @see #ReactPanelControl(ReactContext, String, ReactControl, boolean, boolean, boolean) */
+	/** @see #getToolbar() */
+	private static final String TOOLBAR = "toolbar";
+
+	/** @see #getButtonBar() */
+	private static final String BUTTON_BAR = "buttonBar";
+
+	/** @see #ReactPanelControl(ReactContext, String, ReactControl, ReactToolbarControl, ReactToolbarControl, boolean, boolean, boolean) */
 	private static final String CHILD = "child";
 
 	/** Default collapsed size in pixels (toolbar header height). */
 	private static final float COLLAPSED_SIZE = 36f;
 
 	private final ReactControl _child;
+
+	private final ReactToolbarControl _toolbar;
+
+	private final ReactToolbarControl _buttonBar;
 
 	private ExpansionState _expansionState = ExpansionState.NORMALIZED;
 
@@ -72,6 +83,10 @@ public class ReactPanelControl extends ToolbarControl {
 	 *        The panel title.
 	 * @param child
 	 *        The content child control.
+	 * @param toolbar
+	 *        The toolbar control, or {@code null}.
+	 * @param buttonBar
+	 *        The button-bar control, or {@code null}.
 	 * @param showMinimize
 	 *        Whether the minimize button is shown.
 	 * @param showMaximize
@@ -80,15 +95,24 @@ public class ReactPanelControl extends ToolbarControl {
 	 *        Whether the pop-out button is shown.
 	 */
 	public ReactPanelControl(ReactContext context, String title, ReactControl child,
+			ReactToolbarControl toolbar, ReactToolbarControl buttonBar,
 			boolean showMinimize, boolean showMaximize, boolean showPopOut) {
 		super(context, null, REACT_MODULE);
 		_child = child;
+		_toolbar = toolbar;
+		_buttonBar = buttonBar;
 
 		setTitle(title);
 		setExpansionState(_expansionState);
 		putState(SHOW_MINIMIZE, Boolean.valueOf(showMinimize));
 		putState(SHOW_MAXIMIZE, Boolean.valueOf(showMaximize));
 		putState(SHOW_POP_OUT, Boolean.valueOf(showPopOut));
+		if (toolbar != null) {
+			putState(TOOLBAR, toolbar);
+		}
+		if (buttonBar != null) {
+			putState(BUTTON_BAR, buttonBar);
+		}
 		putState(CHILD, child);
 	}
 
@@ -105,6 +129,20 @@ public class ReactPanelControl extends ToolbarControl {
 	 */
 	public void setTitle(String title) {
 		putState(TITLE, title);
+	}
+
+	/**
+	 * Returns the toolbar control, or {@code null}.
+	 */
+	public ReactToolbarControl getToolbar() {
+		return _toolbar;
+	}
+
+	/**
+	 * Returns the button-bar control, or {@code null}.
+	 */
+	public ReactToolbarControl getButtonBar() {
+		return _buttonBar;
 	}
 
 	/**
@@ -126,6 +164,12 @@ public class ReactPanelControl extends ToolbarControl {
 	protected void cleanupChildren() {
 		_child.cleanupTree();
 		cleanupToolbarButtons();
+		if (_toolbar != null) {
+			_toolbar.cleanupTree();
+		}
+		if (_buttonBar != null) {
+			_buttonBar.cleanupTree();
+		}
 	}
 
 	/**

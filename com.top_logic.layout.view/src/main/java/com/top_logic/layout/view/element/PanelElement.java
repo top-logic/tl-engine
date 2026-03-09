@@ -65,6 +65,6 @@ public class PanelElement extends CommandScopeElement {
 	@Override
 	protected ToolbarControl createChromeControl(ViewContext context, ReactControl content) {
 		String title = _title != null ? Resources.getInstance().getString(_title) : "";
-		return new ReactPanelControl(context, title, content, false, false, false);
+		return new ReactPanelControl(context, title, content, null, null, false, false, false);
 	}
 }

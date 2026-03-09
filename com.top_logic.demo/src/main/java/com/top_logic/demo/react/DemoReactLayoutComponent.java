@@ -111,9 +111,9 @@ public class DemoReactLayoutComponent extends LayoutComponent {
 		);
 
 		// Panels with toolbar buttons.
-		ReactPanelControl navPanel = new ReactPanelControl(ctx, "Navigation", deckPane, true, true, false);
-		ReactPanelControl editorPanel = new ReactPanelControl(ctx, "Editor", counterA, true, true, false);
-		ReactPanelControl consolePanel = new ReactPanelControl(ctx, "Console", counterB, true, true, false);
+		ReactPanelControl navPanel = new ReactPanelControl(ctx, "Navigation", deckPane, null, null, true, true, false);
+		ReactPanelControl editorPanel = new ReactPanelControl(ctx, "Editor", counterA, null, null, true, true, false);
+		ReactPanelControl consolePanel = new ReactPanelControl(ctx, "Console", counterB, null, null, true, true, false);
 
 		// Inner vertical split: Editor (top) + Console (bottom).
 		ReactSplitPanelControl innerSplit = new ReactSplitPanelControl(ctx, Orientation.VERTICAL, true);

@@ -6,6 +6,7 @@
 package com.top_logic.layout.react.control;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -64,6 +65,8 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	private Map<String, Object> _reactState;
 
 	private SSEUpdateQueue _sseQueue;
+
+	private List<Runnable> _cleanupActions;
 
 	/**
 	 * Creates a new {@link ReactControl}.
@@ -211,6 +214,24 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	 */
 	protected void onCleanup() {
 		// Default: no-op. Subclasses override.
+	}
+
+	/**
+	 * Registers an action to run when this control is cleaned up.
+	 *
+	 * <p>
+	 * Use this to register external resource cleanup (e.g. detaching a model from a channel) that
+	 * cannot be handled by a subclass override of {@link #onCleanup()}.
+	 * </p>
+	 *
+	 * @param action
+	 *        The cleanup action to register.
+	 */
+	public void addCleanupAction(Runnable action) {
+		if (_cleanupActions == null) {
+			_cleanupActions = new ArrayList<>();
+		}
+		_cleanupActions.add(action);
 	}
 
 	/**
@@ -400,6 +421,10 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	public final void cleanupTree() {
 		cleanupChildren();
 		onCleanup();
+		if (_cleanupActions != null) {
+			_cleanupActions.forEach(Runnable::run);
+			_cleanupActions = null;
+		}
 		SSEUpdateQueue queue = _sseQueue;
 		if (queue != null) {
 			queue.unregisterControl(this);

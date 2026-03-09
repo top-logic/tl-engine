@@ -76,7 +76,7 @@ public class TestViewCommandModel extends TestCase {
 		ViewCommandModel model = new ViewCommandModel(
 			(context, input) -> HandlerResult.DEFAULT_RESULT,
 			createMinimalConfig(), channel, NullInputDisabled.INSTANCE, null);
-		model.setStateChangeListener(() -> callCount[0]++);
+		model.addStateChangeListener(() -> callCount[0]++);
 		model.attach();
 
 		// Initial attach fires listener because initial state was EXECUTABLE, but after

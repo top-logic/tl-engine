@@ -5,9 +5,15 @@
  */
 package com.top_logic.layout.view.command;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
@@ -20,7 +26,7 @@ import com.top_logic.tool.execution.ExecutableState;
  * re-evaluates executability when the input changes.
  * </p>
  */
-public class ViewCommandModel implements ViewChannel.ChannelListener {
+public class ViewCommandModel implements ViewChannel.ChannelListener, CommandModel {
 
 	private final ViewCommand _command;
 
@@ -34,7 +40,7 @@ public class ViewCommandModel implements ViewChannel.ChannelListener {
 
 	private ExecutableState _executableState;
 
-	private Runnable _stateChangeListener;
+	private final List<Runnable> _stateChangeListeners = new ArrayList<>();
 
 	/**
 	 * Creates a new {@link ViewCommandModel}.
@@ -67,10 +73,21 @@ public class ViewCommandModel implements ViewChannel.ChannelListener {
 		return _inputChannel != null ? _inputChannel.get() : null;
 	}
 
+	@Override
+	public String getLabel() {
+		ResKey key = _config.getLabel();
+		if (key == null) {
+			return "";
+		}
+		return ResourcesModule.getInstance()
+			.getBundle(Locale.getDefault())
+			.getString(key);
+	}
+
 	/**
-	 * The command's label.
+	 * The command's label key.
 	 */
-	public ResKey getLabel() {
+	public ResKey getLabelKey() {
 		return _config.getLabel();
 	}
 
@@ -116,13 +133,12 @@ public class ViewCommandModel implements ViewChannel.ChannelListener {
 		return _executableState;
 	}
 
-	/**
-	 * Called when the user clicks the button.
-	 *
-	 * @param context
-	 *        The view display context providing rendering infrastructure.
-	 * @return The result of the command execution.
-	 */
+	@Override
+	public boolean isExecutable() {
+		return _executableState.isExecutable();
+	}
+
+	@Override
 	public HandlerResult executeCommand(ReactContext context) {
 		Object input = resolveInput();
 
@@ -163,14 +179,14 @@ public class ViewCommandModel implements ViewChannel.ChannelListener {
 		}
 	}
 
-	/**
-	 * Set a listener that is notified when the executability state changes.
-	 *
-	 * @param listener
-	 *        The listener to notify on state changes (may be {@code null} to clear).
-	 */
-	public void setStateChangeListener(Runnable listener) {
-		_stateChangeListener = listener;
+	@Override
+	public void addStateChangeListener(Runnable listener) {
+		_stateChangeListeners.add(listener);
+	}
+
+	@Override
+	public void removeStateChangeListener(Runnable listener) {
+		_stateChangeListeners.remove(listener);
 	}
 
 	@Override
@@ -183,9 +199,13 @@ public class ViewCommandModel implements ViewChannel.ChannelListener {
 		ExecutableState newState = _rule.isExecutable(input);
 		if (newState.visibility() != _executableState.visibility()) {
 			_executableState = newState;
-			if (_stateChangeListener != null) {
-				_stateChangeListener.run();
-			}
+			fireStateChanged();
+		}
+	}
+
+	private void fireStateChanged() {
+		for (Runnable listener : _stateChangeListeners) {
+			listener.run();
 		}
 	}
 }

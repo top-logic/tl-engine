@@ -7,7 +7,6 @@ package com.top_logic.layout.view.element;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.DefaultInstantiationContext;
@@ -17,8 +16,6 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
-import com.top_logic.basic.util.ResKey;
-import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.view.UIElement;
@@ -125,23 +122,12 @@ public class ButtonElement implements UIElement {
 		// Build confirmation.
 		ViewCommandConfirmation confirmation = buildConfirmation();
 
-		// Create model.
+		// Create model and button. The button reads label/disabled from the model internally.
 		ViewCommandModel model = new ViewCommandModel(_command, _commandConfig, inputChannel, rule, confirmation);
 		model.attach();
 
-		// Resolve label.
-		String label = resolveLabel(_commandConfig.getLabel());
-
-		// Create control.
-		ReactButtonControl control = new ReactButtonControl(context, label,
-			ctx -> model.executeCommand(ctx));
-		control.setDisabled(!model.getExecutableState().isExecutable());
-
-		// Wire state change listener.
-		model.setStateChangeListener(() -> {
-			control.setDisabled(!model.getExecutableState().isExecutable());
-		});
-
+		ReactButtonControl control = new ReactButtonControl(context, model);
+		control.addCleanupAction(model::detach);
 		return control;
 	}
 
@@ -172,14 +158,5 @@ public class ButtonElement implements UIElement {
 		DefaultInstantiationContext instantiation =
 			new DefaultInstantiationContext(ButtonElement.class);
 		return instantiation.getInstance(confirmConfig);
-	}
-
-	private String resolveLabel(ResKey label) {
-		if (label == null) {
-			return "";
-		}
-		return ResourcesModule.getInstance()
-			.getBundle(Locale.getDefault())
-			.getString(label);
 	}
 }

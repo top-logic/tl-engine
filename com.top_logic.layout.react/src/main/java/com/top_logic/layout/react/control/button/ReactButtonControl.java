@@ -17,6 +17,12 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * When the button is clicked on the client, the {@code "click"} command is dispatched to the
  * server, which invokes the {@link ButtonAction} provided at construction time.
  * </p>
+ *
+ * <p>
+ * When constructed with a {@link CommandModel}, the button automatically reads the label and
+ * disabled state from the model, listens for state changes, and removes its listener during
+ * cleanup.
+ * </p>
  */
 public class ReactButtonControl extends ReactControl {
 
@@ -28,8 +34,12 @@ public class ReactButtonControl extends ReactControl {
 
 	private final ButtonAction _action;
 
+	private CommandModel _model;
+
+	private Runnable _modelChangeHandler;
+
 	/**
-	 * Creates a new {@link ReactButtonControl}.
+	 * Creates a new {@link ReactButtonControl} with a simple action.
 	 *
 	 * @param label
 	 *        The button label.
@@ -40,6 +50,29 @@ public class ReactButtonControl extends ReactControl {
 		super(context, null, "TLButton");
 		_action = action;
 		putState(LABEL, label);
+	}
+
+	/**
+	 * Creates a new {@link ReactButtonControl} backed by a {@link CommandModel}.
+	 *
+	 * <p>
+	 * The button reads its label and disabled state from the model and automatically updates when
+	 * the model's state changes. The state change listener is removed during
+	 * {@link #onCleanup() cleanup}.
+	 * </p>
+	 *
+	 * @param model
+	 *        The command model providing label, executability, and execution.
+	 */
+	public ReactButtonControl(ReactContext context, CommandModel model) {
+		super(context, null, "TLButton");
+		_model = model;
+		_action = model::executeCommand;
+		_modelChangeHandler = this::handleModelChange;
+
+		putState(LABEL, model.getLabel());
+		putState(DISABLED, Boolean.valueOf(!model.isExecutable()));
+		model.addStateChangeListener(_modelChangeHandler);
 	}
 
 	/**
@@ -68,6 +101,18 @@ public class ReactButtonControl extends ReactControl {
 	@ReactCommand("click")
 	HandlerResult handleClick(ReactContext context) {
 		return _action.execute(context);
+	}
+
+	@Override
+	protected void onCleanup() {
+		if (_model != null) {
+			_model.removeStateChangeListener(_modelChangeHandler);
+		}
+	}
+
+	private void handleModelChange() {
+		setLabel(_model.getLabel());
+		setDisabled(!_model.isExecutable());
 	}
 
 }

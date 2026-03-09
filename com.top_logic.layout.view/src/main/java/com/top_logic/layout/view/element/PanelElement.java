@@ -8,7 +8,6 @@ package com.top_logic.layout.view.element;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -20,8 +19,6 @@ import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
-import com.top_logic.basic.util.ResKey;
-import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
@@ -135,7 +132,7 @@ public class PanelElement extends ContainerElement {
 			// Build confirmation.
 			ViewCommandConfirmation confirmation = buildConfirmation(cmdConfig);
 
-			// Create and attach model.
+			// Create model (attach is deferred to button construction).
 			ViewCommandModel model = new ViewCommandModel(cmd, cmdConfig, inputChannel, rule, confirmation);
 			model.attach();
 			commandModels.add(model);
@@ -163,7 +160,8 @@ public class PanelElement extends ContainerElement {
 
 		for (ViewCommandModel model : commandModels) {
 			if (model.getPlacement() == CommandPlacement.TOOLBAR) {
-				addToolbarButtonForCommand(panel, context, model);
+				ReactButtonControl button = new ReactButtonControl(context, model);
+				panel.addToolbarButton(button);
 			}
 		}
 
@@ -183,27 +181,22 @@ public class PanelElement extends ContainerElement {
 			for (ViewCommandModel model : scope.getAllCommands()) {
 				if (!commandModels.contains(model) && !implicitButtons.containsKey(model)) {
 					if (model.getPlacement() == CommandPlacement.TOOLBAR) {
-						ReactButtonControl button = addToolbarButtonForCommand(panel, context, model);
+						ReactButtonControl button = new ReactButtonControl(context, model);
+						panel.addToolbarButton(button);
 						implicitButtons.put(model, button);
 					}
 				}
 			}
 		});
 
-		return panel;
-	}
-
-	private ReactButtonControl addToolbarButtonForCommand(ReactPanelControl panel, ViewContext context,
-			ViewCommandModel model) {
-		String label = resolveLabel(model.getLabel());
-		ReactButtonControl button = new ReactButtonControl(context, label,
-			ctx -> model.executeCommand(ctx));
-		button.setDisabled(!model.getExecutableState().isExecutable());
-		model.setStateChangeListener(() -> {
-			button.setDisabled(!model.getExecutableState().isExecutable());
+		// Phase 6: Register cleanup for model lifecycle.
+		panel.addCleanupAction(() -> {
+			for (ViewCommandModel model : commandModels) {
+				model.detach();
+			}
 		});
-		panel.addToolbarButton(button);
-		return button;
+
+		return panel;
 	}
 
 	private ViewExecutabilityRule buildExecutabilityRule(ViewCommand.Config cmdConfig) {
@@ -229,14 +222,5 @@ public class PanelElement extends ContainerElement {
 		}
 		DefaultInstantiationContext instantiation = new DefaultInstantiationContext(PanelElement.class);
 		return instantiation.getInstance(confirmConfig);
-	}
-
-	private String resolveLabel(ResKey label) {
-		if (label == null) {
-			return "";
-		}
-		return ResourcesModule.getInstance()
-			.getBundle(Locale.getDefault())
-			.getString(label);
 	}
 }

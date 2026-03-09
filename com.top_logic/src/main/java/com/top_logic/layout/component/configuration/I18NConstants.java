@@ -56,6 +56,47 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey1 NO_CONTENT_GIVEN__VIEW_NAME;
 
+	/**
+	 * @en A QR code could not be generated to initialize multi-factor authentication.
+	 */
+	public static ResKey UNABLE_TO_CREATE_QR_CODE;
+
+	/**
+	 * @en Please scan the QR code below with your preferred authenticator app to set up
+	 *     multi-factor authentication.
+	 */
+	public static ResKey INIT_AUTHENTICATOR_MESSAGE;
+
+	/**
+	 * @en MFA password updated
+	 */
+	public static ResKey MFA_PASSWORD_UPDATED;
+
+	/**
+	 * @en Enable multi-factor authentication
+	 */
+	public static ResKey ENABLE_MFA_AUTHENTICATION;
+
+	/**
+	 * @en The one-time password is wrong.
+	 */
+	public static ResKey INVALID_OTP;
+
+	/**
+	 * @en Check one-time password
+	 */
+	public static ResKey CHECK_OTP_DIALOG_TITLE;
+
+	/**
+	 * @en The one-time password
+	 */
+	public static ResKey CHECK_OTP_FIELD_LABEL;
+
+	/**
+	 * @en Please enter the one-time password from your authenticator app.
+	 */
+	public static ResKey CHECK_OTP_FIELD_MESSAGE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

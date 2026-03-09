@@ -62,6 +62,51 @@
 					<rule class="com.top_logic.knowledge.wrap.person.NoStartPageAutomatismExecutability"/>
 				</executability>
 			</button>
+			<button id="enableMFA"
+				class="com.top_logic.layout.component.configuration.EnableMFACommand"
+				clique="additional"
+				group="System"
+			>
+				<resourceKey key="dynamic.a8c9dede-6915-4619-81ea-3cf15946bdbf">
+					<en>Enable multi-factor authentication</en>
+					<de>Multi-Faktor-Authentifizierung aktivieren</de>
+				</resourceKey>
+				<target class="com.top_logic.model.search.providers.TransformLinkingByExpression"
+					function="contact -> $contact.get(`Contacts:PersonContact#account`)"
+					input="model(self())"
+				/>
+				<executability>
+					<rule-by-expression decision="account -> $account.get(`tl.accounts:Person#mfaSecret`) == null"/>
+				</executability>
+			</button>
+			<button id="ID_4e522d6b_610f_48ae_9a1d_96ec8164d60a"
+				class="com.top_logic.model.search.providers.CommandHandlerByExpression"
+				clique="additional"
+				group="System"
+				operation="account -> $account.set(`tl.accounts:Person#mfaSecret`, null)"
+			>
+				<resourceKey key="dynamic.054cf40b-4a69-42cc-a21a-fb327bade414">
+					<en>Deactivate multi-factor authentication</en>
+					<de>Multi-Faktor-Authentifizierung deaktivieren</de>
+				</resourceKey>
+				<target class="com.top_logic.model.search.providers.TransformLinkingByExpression"
+					function="contact -> $contact.get(`Contacts:PersonContact#account`)"
+					input="model(self())"
+				/>
+				<executability>
+					<rule-by-expression decision="account -> $account.get(`tl.accounts:Person#mfaSecret`) != null"/>
+				</executability>
+				<commitMessage key="dynamic.c799c59e-3b1f-4696-bc45-a146136fb627">
+					<en>Multi-factor authentication deactivated</en>
+					<de>Multi-Faktor-Authentifizierung deaktiviert</de>
+				</commitMessage>
+				<confirmation class="com.top_logic.tool.boundsec.confirm.CustomConfirmation">
+					<confirmMessage key="dynamic.281634e8-29fb-4853-9405-5412a0901ddf">
+						<en>Do you really want to deactivate multi-factor authentication?</en>
+						<de>Wollen Sie die Multi-Faktor-Authentifizierung wirklich deaktivieren?</de>
+					</confirmMessage>
+				</confirmation>
+			</button>
 		</buttons>
 		<dialogs>
 			<layout-reference resource="admin/security/accounts/userSettings/changePassword/dialog.layout.xml"/>

@@ -36,11 +36,11 @@ public class ReactButtonControl extends ReactControl {
 	/** State key for the ThemeImage encoded form (e.g. "css:fas fa-edit", "/icons/foo.png"). */
 	private static final String IMAGE = "image";
 
-	/** State key for icon-only mode (image shown, label used as tooltip). */
-	private static final String ICON_ONLY = "iconOnly";
-
 	/** State key for an explicit button tooltip (plain text). */
 	private static final String TOOLTIP = "tooltip";
+
+	/** State key for the button display mode ("icon-only", "icon-label", "label-only"). */
+	private static final String DISPLAY_MODE = "displayMode";
 
 	private final ButtonAction _action;
 
@@ -119,17 +119,20 @@ public class ReactButtonControl extends ReactControl {
 	}
 
 	/**
-	 * Sets icon-only mode: only the image is shown, the label is used as tooltip.
-	 */
-	public void setIconOnly(boolean iconOnly) {
-		putState(ICON_ONLY, iconOnly);
-	}
-
-	/**
 	 * Sets the button tooltip text. {@code null} or empty clears the tooltip.
 	 */
 	public void setTooltip(String tooltip) {
 		putState(TOOLTIP, (tooltip == null || tooltip.isEmpty()) ? null : tooltip);
+	}
+
+	/**
+	 * Sets the display mode.
+	 *
+	 * @param displayMode
+	 *        One of "icon-only", "icon-label", or "label-only".
+	 */
+	public void setDisplayMode(String displayMode) {
+		putState(DISPLAY_MODE, displayMode);
 	}
 
 	private void putImageState(ThemeImage image) {

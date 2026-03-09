@@ -6,88 +6,60 @@ const { useCallback } = React;
 
 /**
  * Props accepted when TLButton is used as a sub-component inside a composite control.
- *
- * All props are optional — when omitted, the corresponding value is read from the
- * control state (for standalone usage via ReactButtonControl).
  */
 export interface TLButtonProps {
-  /** The command name to send on click.  Defaults to {@code "click"}. */
+  /** The command name to send on click.  Defaults to "click". */
   command?: string;
-  /** The button label.  Defaults to {@code state.label}. */
+  /** The button label.  Defaults to state.label. */
   label?: string;
-  /** Whether the button is disabled.  Defaults to {@code state.disabled}. */
+  /** Encoded theme image for the button icon.  Defaults to state.image. */
+  image?: string;
+  /** Whether the button is disabled.  Defaults to state.disabled. */
   disabled?: boolean;
+  /** Display mode.  Defaults to state.displayMode or "label-only". */
+  displayMode?: 'icon-only' | 'icon-label' | 'label-only';
 }
 
 /**
  * A button rendered via React that sends a command to the server.
  *
- * <p>Supports three rendering modes based on state:</p>
+ * <p>Supports three display modes (via {@code state.displayMode} or the {@code displayMode}
+ * prop):</p>
  * <ul>
- *   <li>{@code image} + {@code iconOnly} — icon-only button (label as tooltip).</li>
- *   <li>{@code image} — icon + label side by side.</li>
- *   <li>Neither — plain text button.</li>
+ *   <li>{@code icon-only} — only the theme icon is shown, the label serves as tooltip.</li>
+ *   <li>{@code icon-label} — theme icon and label side by side.</li>
+ *   <li>{@code label-only} — plain text button.</li>
  * </ul>
+ *
+ * <p>The icon is supplied as a {@code ThemeImage} encoded form via {@code state.image} and
+ * rendered through {@link ThemeIcon}.</p>
  */
-const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, label, disabled }) => {
+const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, label, image, disabled, displayMode }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
 
   const resolvedCommand = command ?? 'click';
   const resolvedLabel = label ?? (state.label as string);
+  const resolvedImage = image ?? (state.image as string | undefined);
   const resolvedDisabled = disabled ?? state.disabled === true;
+  const resolvedMode = displayMode ?? (state.displayMode as string | undefined) ?? 'label-only';
   const resolvedHidden = state.hidden === true;
-  const image = state.image as string | undefined;
-  const iconOnly = state.iconOnly === true;
   const tooltip = state.tooltip as string | undefined;
   const hiddenStyle = resolvedHidden ? { display: 'none' as const } : undefined;
-
-  // Prefer an explicit tooltip; fall back to the label on icon-only buttons (so the label
-  // remains discoverable when the visible button has no text).
-  const iconOnlyTooltip = tooltip ?? resolvedLabel;
-  const tooltipAttr = tooltip ? `text:${tooltip}` : undefined;
 
   const handleClick = useCallback(() => {
     sendCommand(resolvedCommand);
   }, [sendCommand, resolvedCommand]);
 
-  // Icon-only: image visible, label as tooltip.
-  if (image && iconOnly) {
-    return (
-      <button
-        type="button"
-        id={controlId}
-        onClick={handleClick}
-        disabled={resolvedDisabled}
-        style={hiddenStyle}
-        className="tlReactButton tlReactButton--icon"
-        data-tooltip={iconOnlyTooltip ? `text:${iconOnlyTooltip}` : undefined}
-        aria-label={resolvedLabel}
-      >
-        <ThemeIcon encoded={image} />
-      </button>
-    );
-  }
+  const iconOnly = resolvedMode === 'icon-only';
+  const showIcon = resolvedMode === 'icon-only' || resolvedMode === 'icon-label';
+  const showLabel = resolvedMode === 'label-only' || resolvedMode === 'icon-label';
 
-  // Image + label.
-  if (image) {
-    return (
-      <button
-        type="button"
-        id={controlId}
-        onClick={handleClick}
-        disabled={resolvedDisabled}
-        style={hiddenStyle}
-        className="tlReactButton"
-        data-tooltip={tooltipAttr}
-      >
-        <ThemeIcon encoded={image} className="tlReactButton__image" />
-        <span className="tlReactButton__label">{resolvedLabel}</span>
-      </button>
-    );
-  }
+  // Prefer an explicit tooltip; on icon-only buttons fall back to the label so it stays
+  // discoverable when the visible button carries no text.
+  const tooltipText = tooltip ?? (iconOnly ? resolvedLabel : undefined);
+  const tooltipAttr = tooltipText ? `text:${tooltipText}` : undefined;
 
-  // Plain label-only.
   return (
     <button
       type="button"
@@ -95,10 +67,14 @@ const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, l
       onClick={handleClick}
       disabled={resolvedDisabled}
       style={hiddenStyle}
-      className="tlReactButton"
+      className={'tlReactButton' + (iconOnly ? ' tlReactButton--iconOnly' : '')}
       data-tooltip={tooltipAttr}
+      aria-label={iconOnly ? resolvedLabel : undefined}
     >
-      {resolvedLabel}
+      {showIcon && resolvedImage && (
+        <ThemeIcon encoded={resolvedImage} className="tlReactButton__image" />
+      )}
+      {showLabel && <span className="tlReactButton__label">{resolvedLabel}</span>}
     </button>
   );
 };

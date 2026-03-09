@@ -12,7 +12,7 @@
 
 	<servlet>
 		<servlet-name>ReactServlet</servlet-name>
-		<servlet-class>com.top_logic.layout.react.ReactServlet</servlet-class>
+		<servlet-class>com.top_logic.layout.react.servlet.ReactServlet</servlet-class>
 		<multipart-config>
 			<max-file-size>52428800</max-file-size>
 			<max-request-size>52428800</max-request-size>
@@ -27,7 +27,7 @@
 
 	<servlet>
 		<servlet-name>SSEServlet</servlet-name>
-		<servlet-class>com.top_logic.layout.react.SSEServlet</servlet-class>
+		<servlet-class>com.top_logic.layout.react.servlet.SSEServlet</servlet-class>
 		<async-supported>true</async-supported>
 	</servlet>
 

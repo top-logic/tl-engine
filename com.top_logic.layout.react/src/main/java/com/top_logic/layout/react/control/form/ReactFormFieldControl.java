@@ -158,10 +158,10 @@ public class ReactFormFieldControl extends ReactControl
 	}
 
 	@Override
-	protected void writeAsChild(JsonWriter writer, ReactContext viewContext)
+	protected void writeAsChild(ReactContext context, JsonWriter writer)
 			throws IOException {
 		registerFieldListeners();
-		super.writeAsChild(writer, viewContext);
+		super.writeAsChild(context, writer);
 	}
 
 	@Override

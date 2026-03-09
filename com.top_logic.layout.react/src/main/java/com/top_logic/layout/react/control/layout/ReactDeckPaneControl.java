@@ -126,13 +126,13 @@ public class ReactDeckPaneControl extends ReactControl {
 	}
 
 	@Override
-	protected void writeAsChild(JsonWriter writer, ReactContext viewContext)
+	protected void writeAsChild(ReactContext context, JsonWriter writer)
 			throws IOException {
 		if (getReactState().get(ACTIVE_CHILD) == null) {
 			ReactControl activeChild = getOrCreateChild(_activeIndex);
 			getReactState().put(ACTIVE_CHILD, activeChild);
 		}
-		super.writeAsChild(writer, viewContext);
+		super.writeAsChild(context, writer);
 	}
 
 	@Override

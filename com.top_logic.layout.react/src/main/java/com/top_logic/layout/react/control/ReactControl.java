@@ -10,7 +10,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Consumer;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.xml.TagWriter;
@@ -42,7 +41,7 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * <p>
  * Child {@link ReactControl}s embedded in the state are automatically initialized (ID assigned, SSE
  * registered) when they are serialized during the initial render. This is done by delegating to
- * {@link #writeAsChild(JsonWriter, ReactContext)} from {@link #writeJsonValue}. Each
+ * {@link #writeAsChild(ReactContext, JsonWriter)} from {@link #writeJsonValue}. Each
  * control thus manages its own lifecycle, analogous to {@code child.write(context, out)} in
  * traditional controls.
  * </p>
@@ -56,6 +55,8 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 
 	private String _id;
 
+	private ReactContext _reactContext;
+
 	private final Object _model;
 
 	private final String _reactModule;
@@ -63,10 +64,6 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	private Map<String, Object> _reactState;
 
 	private SSEUpdateQueue _sseQueue;
-
-	private ReactContext _viewContext;
-
-	private ErrorSink _errorSink;
 
 	/**
 	 * Creates a new {@link ReactControl}.
@@ -80,6 +77,13 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 		_model = model;
 		_reactModule = reactModule;
 		_reactState = new HashMap<>();
+	}
+
+	/**
+	 * The <code>React</code> context.
+	 */
+	public ReactContext getReactContext() {
+		return _reactContext;
 	}
 
 	@Override
@@ -107,22 +111,8 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	/**
 	 * The current React state.
 	 */
-	public Map<String, Object> getReactState() {
+	protected final Map<String, Object> getReactState() {
 		return _reactState;
-	}
-
-	/**
-	 * The {@link ErrorSink} for reporting user-visible errors, or {@code null} in legacy mode.
-	 */
-	public ErrorSink getErrorSink() {
-		return _errorSink;
-	}
-
-	/**
-	 * The current {@link ReactContext}, or {@code null} if not yet rendered.
-	 */
-	protected ReactContext getViewContext() {
-		return _viewContext;
 	}
 
 	/**
@@ -152,7 +142,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 			throw new IllegalArgumentException(
 				"No @ReactCommand(\"" + commandName + "\") on " + getClass().getName());
 		}
-		return invoker.invoke(this, _viewContext, arguments);
+		return invoker.invoke(this, _reactContext, arguments);
 	}
 
 	@Override
@@ -162,8 +152,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 
 	@Override
 	public void write(ReactContext context, TagWriter out) throws IOException {
-		_viewContext = context;
-		_errorSink = context.getErrorSink();
+		_reactContext = context;
 		_id = context.allocateId();
 		SSEUpdateQueue queue = context.getSSEQueue();
 		_sseQueue = queue;
@@ -171,7 +160,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 
 		onBeforeWrite(context);
 		try {
-			String stateJson = toJsonString(_reactState, context);
+			String stateJson = toJsonString(context, _reactState);
 
 			out.beginBeginTag(HTMLConstants.DIV);
 			writeIdAttribute(out);
@@ -324,7 +313,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 
 		StateEvent event = StateEvent.create()
 			.setControlId(getID())
-			.setState(toJsonString(_reactState));
+			.setState(stateAsJSON());
 		queue.enqueue(event);
 	}
 
@@ -346,8 +335,23 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 
 		PatchEvent event = PatchEvent.create()
 			.setControlId(getID())
-			.setPatch(toJsonString(patch, _viewContext));
+			.setPatch(toJsonString(_reactContext, patch));
 		queue.enqueue(event);
+	}
+
+	/**
+	 * Writes the <code>React</code> state to a JSON string.
+	 */
+	public final String stateAsJSON() {
+		assert _reactContext != null : "Control not yet attached.";
+
+		StringW buffer = new StringW();
+		try {
+			writeState(_reactContext, new JsonWriter(buffer));
+		} catch (IOException ex) {
+			throw new RuntimeException(ex);
+		}
+		return buffer.toString();
 	}
 
 	/**
@@ -359,20 +363,19 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	 * {@link com.top_logic.layout.react.control.layout.ReactDeckPaneControl} creates its active
 	 * child).
 	 * </p>
-	 *
-	 * @param writer
-	 *        The JSON writer to write to.
-	 * @param viewContext
+	 * 
+	 * @param context
 	 *        The view display context for ID allocation and SSE registration, or {@code null} if
 	 *        controls are already initialized.
+	 * @param writer
+	 *        The JSON writer to write to.
 	 */
-	protected void writeAsChild(JsonWriter writer, ReactContext viewContext)
+	protected void writeAsChild(ReactContext context, JsonWriter writer)
 			throws IOException {
-		if (viewContext != null && _id == null) {
-			_viewContext = viewContext;
-			_errorSink = viewContext.getErrorSink();
-			_id = viewContext.allocateId();
-			SSEUpdateQueue queue = viewContext.getSSEQueue();
+		if (context != null && _id == null) {
+			_reactContext = context;
+			_id = context.allocateId();
+			SSEUpdateQueue queue = context.getSSEQueue();
 			if (_sseQueue == null) {
 				_sseQueue = queue;
 				queue.registerControl(this);
@@ -385,8 +388,12 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 		writer.name("module");
 		writer.value(_reactModule);
 		writer.name("state");
-		writeJsonMap(writer, getReactState(), viewContext);
+		writeState(context, writer);
 		writer.endObject();
+	}
+
+	private void writeState(ReactContext context, JsonWriter writer) throws IOException {
+		writeJsonMap(context, writer, getReactState());
 	}
 
 	/**
@@ -413,8 +420,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 			queue.unregisterControl(this);
 			_sseQueue = null;
 		}
-		_viewContext = null;
-		_errorSink = null;
+		_reactContext = null;
 	}
 
 	/**
@@ -432,10 +438,9 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	protected void registerChildControl(ReactControl child) {
 		SSEUpdateQueue queue = _sseQueue;
 		if (queue != null && child._sseQueue == null) {
-			if (_viewContext != null) {
-				child._viewContext = _viewContext;
-				child._errorSink = _viewContext.getErrorSink();
-				child._id = _viewContext.allocateId();
+			if (_reactContext != null) {
+				child._reactContext = _reactContext;
+				child._id = _reactContext.allocateId();
 			}
 			child._sseQueue = queue;
 			queue.registerControl(child);
@@ -460,17 +465,17 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 
 	/**
 	 * Serializes a map to a JSON string with context for child initialization.
-	 *
+	 * 
+	 * @param context
+	 *        The view display context for ID allocation and SSE registration, or {@code null}.
 	 * @param map
 	 *        The map to serialize.
-	 * @param viewContext
-	 *        The view display context for ID allocation and SSE registration, or {@code null}.
 	 */
-	public static String toJsonString(Map<String, Object> map, ReactContext viewContext) {
+	public static String toJsonString(ReactContext context, Map<String, Object> map) {
 		try {
 			StringW sw = new StringW();
 			try (JsonWriter writer = new JsonWriter(sw)) {
-				writeJsonMap(writer, map, viewContext);
+				writeJsonMap(context, writer, map);
 			}
 			return sw.toString();
 		} catch (IOException ex) {
@@ -482,24 +487,24 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	 * Writes a JSON map literal directly to a {@link TagWriter} with context for child
 	 * initialization.
 	 */
-	public static void writeJsonLiteral(TagWriter out, Map<String, Object> map,
-			ReactContext viewContext) throws IOException {
-		out.append(toJsonString(map, viewContext));
+	public static void writeJsonLiteral(ReactContext context, TagWriter out,
+			Map<String, Object> map) throws IOException {
+		out.append(toJsonString(context, map));
 	}
 
-	static void writeJsonMap(JsonWriter writer, Map<String, Object> map,
-			ReactContext viewContext) throws IOException {
+	static void writeJsonMap(ReactContext context, JsonWriter writer,
+			Map<String, Object> map) throws IOException {
 		writer.beginObject();
 		for (Map.Entry<String, Object> entry : map.entrySet()) {
 			writer.name(entry.getKey());
-			writeJsonValue(writer, entry.getValue(), viewContext);
+			writeJsonValue(context, writer, entry.getValue());
 		}
 		writer.endObject();
 	}
 
 	@SuppressWarnings("unchecked")
-	static void writeJsonValue(JsonWriter writer, Object value,
-			ReactContext viewContext) throws IOException {
+	static void writeJsonValue(ReactContext context, JsonWriter writer,
+			Object value) throws IOException {
 		if (value == null) {
 			writer.nullValue();
 		} else if (value instanceof String) {
@@ -509,61 +514,17 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 		} else if (value instanceof Boolean) {
 			writer.value((Boolean) value);
 		} else if (value instanceof Map) {
-			writeJsonMap(writer, (Map<String, Object>) value, viewContext);
+			writeJsonMap(context, writer, (Map<String, Object>) value);
 		} else if (value instanceof ReactControl) {
-			((ReactControl) value).writeAsChild(writer, viewContext);
+			((ReactControl) value).writeAsChild(context, writer);
 		} else if (value instanceof List) {
 			writer.beginArray();
 			for (Object element : (List<?>) value) {
-				writeJsonValue(writer, element, viewContext);
+				writeJsonValue(context, writer, element);
 			}
 			writer.endArray();
 		} else {
 			writer.value(value.toString());
-		}
-	}
-
-	// -- Backward-compatible no-context methods (used for patches/reconnection where controls are
-	// already initialized) --
-
-	/**
-	 * Serializes a map to a JSON string.
-	 */
-	public static String toJsonString(Map<String, Object> map) {
-		return toJsonString(map, (ReactContext) null);
-	}
-
-	/**
-	 * Writes a JSON map literal directly to a {@link TagWriter}.
-	 */
-	public static void writeJsonLiteral(TagWriter out, Map<String, Object> map) throws IOException {
-		writeJsonLiteral(out, map, null);
-	}
-
-	/**
-	 * Writes a single value to JSON.
-	 */
-	@SuppressWarnings("unchecked")
-	public static void writeJsonValue(JsonWriter writer, Object value) throws IOException {
-		writeJsonValue(writer, value, null);
-	}
-
-	/**
-	 * Recursively walks the given value and applies the action to every {@link ReactControl} found
-	 * (as direct value, List element, or Map value).
-	 */
-	@SuppressWarnings("unchecked")
-	protected static void forEachChildControl(Object value, Consumer<ReactControl> action) {
-		if (value instanceof ReactControl) {
-			action.accept((ReactControl) value);
-		} else if (value instanceof Map) {
-			for (Object entry : ((Map<?, ?>) value).values()) {
-				forEachChildControl(entry, action);
-			}
-		} else if (value instanceof List) {
-			for (Object element : (List<?>) value) {
-				forEachChildControl(element, action);
-			}
 		}
 	}
 

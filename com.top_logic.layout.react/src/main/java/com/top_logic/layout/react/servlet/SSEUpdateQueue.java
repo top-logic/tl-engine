@@ -157,7 +157,7 @@ public class SSEUpdateQueue implements HttpSessionBindingListener {
 				ReactControl rc = (ReactControl) control;
 				StateEvent event = StateEvent.create()
 					.setControlId(rc.getID())
-					.setState(ReactControl.toJsonString(rc.getReactState()));
+					.setState(rc.stateAsJSON());
 				String message = toDataMessage(toJson(event));
 				if (message != null) {
 					writeOrRemove(ctx, message);

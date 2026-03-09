@@ -209,11 +209,11 @@ public class ViewServlet extends TopLogicServlet {
 	 * Renders the HTML page with the root control using the {@link IReactControl#write} path.
 	 */
 	private void renderPage(HttpServletRequest request, HttpServletResponse response,
-			IReactControl rootControl, ReactContext viewContext) throws IOException {
+			IReactControl rootControl, ReactContext context) throws IOException {
 		response.setContentType("text/html");
 		response.setCharacterEncoding("UTF-8");
 
-		String contextPath = viewContext.getContextPath();
+		String contextPath = context.getContextPath();
 
 		TagWriter out = new TagWriter(response.getWriter());
 
@@ -244,14 +244,14 @@ public class ViewServlet extends TopLogicServlet {
 		out.endTag(HTMLConstants.HEAD);
 
 		out.beginBeginTag(HTMLConstants.BODY);
-		out.writeAttribute("data-window-name", viewContext.getWindowName());
-		out.writeAttribute("data-context-path", viewContext.getContextPath());
+		out.writeAttribute("data-window-name", context.getWindowName());
+		out.writeAttribute("data-context-path", context.getContextPath());
 		out.endBeginTag();
 
 		// Delegate rendering to the control itself. ReactControl.write() outputs a
 		// declarative div with data-react-module/data-react-state attributes.
 		// The static tl-react-bridge script discovers and mounts these elements.
-		rootControl.write(viewContext, out);
+		rootControl.write(context, out);
 
 		out.endTag(HTMLConstants.BODY);
 		out.endTag(HTMLConstants.HTML);

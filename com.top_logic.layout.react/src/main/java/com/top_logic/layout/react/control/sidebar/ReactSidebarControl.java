@@ -185,13 +185,13 @@ public class ReactSidebarControl extends ReactControl {
 	}
 
 	@Override
-	protected void writeAsChild(JsonWriter writer, ReactContext viewContext)
+	protected void writeAsChild(ReactContext context, JsonWriter writer)
 			throws IOException {
 		if (getReactState().get(ACTIVE_CONTENT) == null && _activeItemId != null) {
 			ReactControl activeContent = getOrCreateContent(_activeItemId);
 			getReactState().put(ACTIVE_CONTENT, activeContent);
 		}
-		super.writeAsChild(writer, viewContext);
+		super.writeAsChild(context, writer);
 	}
 
 	@Override

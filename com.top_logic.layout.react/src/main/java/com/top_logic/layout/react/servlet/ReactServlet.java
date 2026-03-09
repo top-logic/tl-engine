@@ -288,7 +288,8 @@ public class ReactServlet extends TopLogicServlet {
 		if (control instanceof ReactControl) {
 			ReactControl reactControl = (ReactControl) control;
 			PrintWriter writer = response.getWriter();
-			writer.write(ReactControl.toJsonString(reactControl.getReactState()));
+			
+			writer.write(reactControl.stateAsJSON());
 			writer.flush();
 		} else {
 			sendError(response, HttpServletResponse.SC_NOT_FOUND, "Control not found: " + controlId);
@@ -375,7 +376,7 @@ public class ReactServlet extends TopLogicServlet {
 		if (displayContext.isSet(InfoService.INFO_SERVICE_ENTRIES)) {
 			List<HTMLFragment> entries = displayContext.get(InfoService.INFO_SERVICE_ENTRIES);
 			if (!entries.isEmpty()) {
-				ErrorSink errorSink = control instanceof ReactControl rc ? rc.getErrorSink() : null;
+				ErrorSink errorSink = control instanceof ReactControl rc ? rc.getReactContext().getErrorSink() : null;
 				if (errorSink != null) {
 					forwardToErrorSink(entries, errorSink);
 				} else {

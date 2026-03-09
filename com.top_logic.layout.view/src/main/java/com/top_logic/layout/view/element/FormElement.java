@@ -19,8 +19,8 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.IReactControl;
+import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.ContainerElement;
 import com.top_logic.layout.view.I18NConstants;
 import com.top_logic.layout.view.UIElement;
@@ -116,7 +116,7 @@ public class FormElement extends ContainerElement {
 		 * </p>
 		 */
 		@Name(WITH_EDIT_MODE)
-		@BooleanDefault(false)
+		@BooleanDefault(true)
 		boolean getWithEditMode();
 
 		/**

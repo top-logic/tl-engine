@@ -56,6 +56,7 @@ import TLDropdownSelect from './controls/TLDropdownSelect';
 import TLColorInput from './controls/TLColorInput';
 import TLIconSelect from './controls/TLIconSelect';
 import TLDashboard from './controls/TLDashboard';
+import TLToolbar from './controls/TLToolbar';
 
 
 register('TLButton', TLButton);
@@ -105,3 +106,4 @@ register('TLDropdownSelect', TLDropdownSelect);
 register('TLColorInput', TLColorInput);
 register('TLIconSelect', TLIconSelect);
 register('TLDashboard', TLDashboard);
+register('TLToolbar', TLToolbar);

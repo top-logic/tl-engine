@@ -18,6 +18,7 @@ import com.top_logic.base.accesscontrol.Login.LoginHookFailedException;
 import com.top_logic.base.accesscontrol.LoginFailure;
 import com.top_logic.base.accesscontrol.LoginFailuresModule;
 import com.top_logic.base.accesscontrol.SessionService;
+import com.top_logic.base.security.util.Password;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.html.template.TagTemplate;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -138,20 +139,31 @@ public class LoginViewDialog extends AbstractTemplateDialog {
 				loginFailures.notifyLoginSuccessed(userKey);
 			}
 			Person user = Person.byName(userName);
-			if (Login.isPasswordValidAndNotExpired(decryptedPassword, user)) {
-				return loginAndReload(context, user);
+			boolean withPasswordChange = !Login.isPasswordValidAndNotExpired(decryptedPassword, user);
+
+			Password mfaSecret = user.getMFASecret();
+			if (mfaSecret == null) {
+				return loginAndReload(context, user, withPasswordChange);
 			}
 
-			// Force password change
-			LayoutData ownLayout = getDialogModel().getLayoutData();
-			Command loginAndReload = ctx -> loginAndReload(ctx, user);
-			return new ChangePasswordDialog(user, loginAndReload,
-				ownLayout.getWidthDimension(),
-				ownLayout.getHeightDimension())
-					.open(context);
+			Command loginAndReload = ctx -> loginAndReload(ctx, user, withPasswordChange);
+			return new CheckOTPDialog(loginAndReload, mfaSecret).open(context);
 		} finally {
 			Arrays.fill(decryptedPassword, (char) 0);
 		}
+	}
+
+	private HandlerResult loginAndReload(DisplayContext context, Person user, boolean withPasswordChange) {
+		if (!withPasswordChange) {
+			return loginAndReload(context, user);
+		}
+
+		// Force password change
+		LayoutData ownLayout = getDialogModel().getLayoutData();
+		Command loginAndReload = ctx -> loginAndReload(ctx, user);
+		DisplayDimension width = ownLayout.getWidthDimension();
+		DisplayDimension height = ownLayout.getHeightDimension();
+		return new ChangePasswordDialog(user, loginAndReload, width, height).open(context);
 	}
 
 	private HandlerResult loginAndReload(DisplayContext context, Person user) {

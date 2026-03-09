@@ -394,6 +394,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 			_sseQueue = null;
 		}
 		_viewContext = null;
+		_errorSink = null;
 	}
 
 	/**
@@ -413,6 +414,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 		if (queue != null && child._sseQueue == null) {
 			if (_viewContext != null) {
 				child._viewContext = _viewContext;
+				child._errorSink = _viewContext.getErrorSink();
 				child._id = _viewContext.allocateId();
 			}
 			child._sseQueue = queue;

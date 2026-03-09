@@ -18,6 +18,7 @@ const TLSnackbar: React.FC<TLCellProps> = ({ controlId }) => {
   const sendCommand = useTLCommand();
 
   const message = (state.message as string) ?? '';
+  const content = (state.content as string) ?? '';
   const variant = (state.variant as string) ?? 'info';
   const action = state.action as { label: string; commandName: string } | null;
   const duration = (state.duration as number) ?? 5000;
@@ -52,7 +53,10 @@ const TLSnackbar: React.FC<TLCellProps> = ({ controlId }) => {
   return (
     <div id={controlId} className={`tlSnackbar tlSnackbar--${variant}${exiting ? ' tlSnackbar--exiting' : ''}`}
       role="status" aria-live="polite">
-      <span className="tlSnackbar__message">{message}</span>
+      {content
+        ? <span className="tlSnackbar__message" dangerouslySetInnerHTML={{ __html: content }} />
+        : <span className="tlSnackbar__message">{message}</span>
+      }
       {action && (
         <button type="button" className="tlSnackbar__action" onClick={handleAction}>
           {action.label}

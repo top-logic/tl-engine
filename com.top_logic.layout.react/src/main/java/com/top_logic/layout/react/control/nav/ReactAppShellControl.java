@@ -115,15 +115,15 @@ public class ReactAppShellControl extends ReactControl {
 	}
 
 	/**
-	 * Shows a snackbar notification.
+	 * Shows a snackbar notification with HTML content.
 	 *
-	 * @param message
-	 *        The notification message.
+	 * @param htmlContent
+	 *        The notification content as rendered HTML.
 	 * @param variant
 	 *        "info", "success", "warning", or "error".
 	 */
-	public void showSnackbar(String message, String variant) {
-		_snackbar.patchReactState(Map.of("message", message, "variant", variant, "visible", Boolean.TRUE));
+	public void showSnackbar(String htmlContent, String variant) {
+		_snackbar.patchReactState(Map.of("content", htmlContent, "variant", variant, "visible", Boolean.TRUE));
 	}
 
 	@Override

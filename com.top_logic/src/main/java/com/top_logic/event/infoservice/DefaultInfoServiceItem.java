@@ -76,6 +76,13 @@ public class DefaultInfoServiceItem extends WithPropertiesBase implements HTMLFr
 		return _headerText;
 	}
 
+	/**
+	 * The message fragment of this info service item.
+	 */
+	public HTMLFragment getMessage() {
+		return _message;
+	}
+
 	@Override
 	public void write(DisplayContext context, TagWriter out) throws IOException {
 		createItemId(context);

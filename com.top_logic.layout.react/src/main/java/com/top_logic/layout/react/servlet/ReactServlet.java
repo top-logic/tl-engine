@@ -377,7 +377,7 @@ public class ReactServlet extends TopLogicServlet {
 			if (!entries.isEmpty()) {
 				ErrorSink errorSink = control instanceof ReactControl rc ? rc.getErrorSink() : null;
 				if (errorSink != null) {
-					forwardToErrorSink(entries, errorSink);
+					forwardToErrorSink(displayContext, entries, errorSink);
 				} else {
 					String jsCode = InfoServiceXMLStringConverter.getJSInvocation(displayContext, entries);
 					queue.enqueue(JSSnipplet.create().setCode(jsCode));
@@ -389,21 +389,36 @@ public class ReactServlet extends TopLogicServlet {
 		forwardLegacyControlUpdates(displayContext, rootHandler, queue);
 	}
 
-	private void forwardToErrorSink(List<HTMLFragment> entries, ErrorSink errorSink) {
+	private void forwardToErrorSink(DisplayContext displayContext, List<HTMLFragment> entries,
+			ErrorSink errorSink) {
 		for (HTMLFragment entry : entries) {
 			if (entry instanceof DefaultInfoServiceItem item) {
-				String message = Resources.getInstance().getString(item.getHeaderText());
+				String htmlContent = renderToHtml(displayContext, item.getMessage());
 				String kindOfClass = item.getKindOfClass();
 
 				if (InfoService.ERROR_CSS.equals(kindOfClass)) {
-					errorSink.showError(message);
+					errorSink.showError(htmlContent);
 				} else if (InfoService.WARNING_CSS.equals(kindOfClass)) {
-					errorSink.showWarning(message);
+					errorSink.showWarning(htmlContent);
 				} else {
-					errorSink.showInfo(message);
+					errorSink.showInfo(htmlContent);
 				}
+			} else {
+				Logger.warn("InfoService entry is not a DefaultInfoServiceItem, cannot forward to ErrorSink: "
+					+ entry.getClass().getName(), ReactServlet.class);
 			}
 		}
+	}
+
+	private String renderToHtml(DisplayContext context, HTMLFragment fragment) {
+		StringWriter buffer = new StringWriter();
+		try {
+			TagWriter out = new TagWriter(buffer);
+			fragment.write(context, out);
+		} catch (IOException ex) {
+			Logger.error("Failed to render info service message.", ex, ReactServlet.class);
+		}
+		return buffer.toString();
 	}
 
 	/**

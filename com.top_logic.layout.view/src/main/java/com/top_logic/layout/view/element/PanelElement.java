@@ -155,41 +155,16 @@ public class PanelElement extends ContainerElement {
 			content = new ReactStackControl(context, reactChildren);
 		}
 
-		// Phase 4: Create panel and add toolbar buttons for explicit commands.
+		// Phase 4: Create panel with toolbar buttons for all TOOLBAR commands in scope.
 		ReactPanelControl panel = new ReactPanelControl(context, _title, content, false, false, false);
 
-		for (ViewCommandModel model : commandModels) {
-			if (model.getPlacement() == CommandPlacement.TOOLBAR) {
-				ReactButtonControl button = new ReactButtonControl(context, model);
-				panel.addToolbarButton(button);
-			}
-		}
+		Map<ViewCommandModel, ReactButtonControl> toolbarButtons = new HashMap<>();
+		syncToolbarButtons(panel, context, scope, toolbarButtons);
 
-		// Phase 5: Observe scope for implicit commands contributed by children.
-		Map<ViewCommandModel, ReactButtonControl> implicitButtons = new HashMap<>();
-		scope.addListener(() -> {
-			// Rebuild: remove buttons for commands no longer in scope.
-			implicitButtons.entrySet().removeIf(entry -> {
-				if (!scope.getAllCommands().contains(entry.getKey())) {
-					panel.removeToolbarButton(entry.getValue());
-					return true;
-				}
-				return false;
-			});
+		// React to scope changes (children adding/removing commands).
+		scope.addListener(() -> syncToolbarButtons(panel, context, scope, toolbarButtons));
 
-			// Add buttons for new implicit commands with TOOLBAR placement.
-			for (ViewCommandModel model : scope.getAllCommands()) {
-				if (!commandModels.contains(model) && !implicitButtons.containsKey(model)) {
-					if (model.getPlacement() == CommandPlacement.TOOLBAR) {
-						ReactButtonControl button = new ReactButtonControl(context, model);
-						panel.addToolbarButton(button);
-						implicitButtons.put(model, button);
-					}
-				}
-			}
-		});
-
-		// Phase 6: Register cleanup for model lifecycle.
+		// Phase 5: Register cleanup for model lifecycle.
 		panel.addCleanupAction(() -> {
 			for (ViewCommandModel model : commandModels) {
 				model.detach();
@@ -222,5 +197,28 @@ public class PanelElement extends ContainerElement {
 		}
 		DefaultInstantiationContext instantiation = new DefaultInstantiationContext(PanelElement.class);
 		return instantiation.getInstance(confirmConfig);
+	}
+
+	private void syncToolbarButtons(ReactPanelControl panel, ViewContext context,
+			CommandScope scope, Map<ViewCommandModel, ReactButtonControl> toolbarButtons) {
+		List<ViewCommandModel> currentCommands = scope.getAllCommands();
+
+		// Remove buttons for commands no longer in scope.
+		toolbarButtons.entrySet().removeIf(entry -> {
+			if (!currentCommands.contains(entry.getKey())) {
+				panel.removeToolbarButton(entry.getValue());
+				return true;
+			}
+			return false;
+		});
+
+		// Add buttons for new TOOLBAR commands.
+		for (ViewCommandModel model : currentCommands) {
+			if (!toolbarButtons.containsKey(model) && model.getPlacement() == CommandPlacement.TOOLBAR) {
+				ReactButtonControl button = new ReactButtonControl(context, model);
+				panel.addToolbarButton(button);
+				toolbarButtons.put(model, button);
+			}
+		}
 	}
 }

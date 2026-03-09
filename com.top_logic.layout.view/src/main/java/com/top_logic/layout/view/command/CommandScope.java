@@ -14,62 +14,56 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * Runtime container for commands owned by a panel or dialog.
  *
  * <p>
- * Holds both explicit commands (from {@code <commands>}) and implicit commands (contributed by child
- * elements like tables). Supports reactive add/remove for lazy children.
+ * Holds all commands visible in this scope, whether declared in the panel's {@code <commands>}
+ * section or contributed dynamically by child elements. Listeners are notified on every change.
  * </p>
  */
 public class CommandScope {
 
-	private final List<ViewCommandModel> _explicitCommands;
-
-	private final List<ViewCommandModel> _implicitCommands;
+	private final List<ViewCommandModel> _commands;
 
 	private final List<Runnable> _listeners;
 
 	/**
-	 * Creates a new {@link CommandScope} with the given explicit commands.
+	 * Creates a new {@link CommandScope} with the given initial commands.
 	 *
-	 * @param explicitCommands
-	 *        The commands declared in the panel's {@code <commands>} section.
+	 * @param initialCommands
+	 *        The commands to start with (typically from the panel's configuration).
 	 */
-	public CommandScope(List<ViewCommandModel> explicitCommands) {
-		_explicitCommands = new ArrayList<>(explicitCommands);
-		_implicitCommands = new CopyOnWriteArrayList<>();
+	public CommandScope(List<ViewCommandModel> initialCommands) {
+		_commands = new CopyOnWriteArrayList<>(initialCommands);
 		_listeners = new CopyOnWriteArrayList<>();
 	}
 
 	/**
-	 * Add an implicit command (called by child elements).
+	 * Adds a command to this scope.
 	 *
 	 * @param command
 	 *        The command model to add.
 	 */
 	public void addCommand(ViewCommandModel command) {
-		_implicitCommands.add(command);
+		_commands.add(command);
 		fireChanged();
 	}
 
 	/**
-	 * Remove an implicit command (called when child is destroyed).
+	 * Removes a command from this scope.
 	 *
 	 * @param command
 	 *        The command model to remove.
 	 */
 	public void removeCommand(ViewCommandModel command) {
-		_implicitCommands.remove(command);
+		_commands.remove(command);
 		fireChanged();
 	}
 
 	/**
-	 * All commands (explicit first, then implicit).
+	 * All commands in this scope.
 	 *
-	 * @return Unmodifiable list of all commands.
+	 * @return Unmodifiable snapshot of all commands.
 	 */
 	public List<ViewCommandModel> getAllCommands() {
-		List<ViewCommandModel> all = new ArrayList<>(_explicitCommands.size() + _implicitCommands.size());
-		all.addAll(_explicitCommands);
-		all.addAll(_implicitCommands);
-		return Collections.unmodifiableList(all);
+		return Collections.unmodifiableList(new ArrayList<>(_commands));
 	}
 
 	/**
@@ -80,12 +74,7 @@ public class CommandScope {
 	 * @return The command model, or {@code null} if not found.
 	 */
 	public ViewCommandModel resolveCommand(String name) {
-		for (ViewCommandModel model : _explicitCommands) {
-			if (name.equals(model.getName())) {
-				return model;
-			}
-		}
-		for (ViewCommandModel model : _implicitCommands) {
+		for (ViewCommandModel model : _commands) {
 			if (name.equals(model.getName())) {
 				return model;
 			}
@@ -94,7 +83,7 @@ public class CommandScope {
 	}
 
 	/**
-	 * Listen for changes to the command list (for toolbar re-rendering).
+	 * Registers a listener for changes to the command list.
 	 *
 	 * @param listener
 	 *        The listener to add.
@@ -104,7 +93,7 @@ public class CommandScope {
 	}
 
 	/**
-	 * Remove a listener.
+	 * Removes a previously registered listener.
 	 *
 	 * @param listener
 	 *        The listener to remove.

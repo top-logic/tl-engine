@@ -105,11 +105,22 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 		return _config.getCssClasses();
 	}
 
-	/**
-	 * The command's placement.
-	 */
-	public CommandPlacement getPlacement() {
-		return _config.getPlacement();
+	@Override
+	public String getPlacement() {
+		CommandPlacement placement = _config.getPlacement();
+		if (placement == null) {
+			return PLACEMENT_NONE;
+		}
+		switch (placement) {
+			case TOOLBAR:
+				return PLACEMENT_TOOLBAR;
+			case BUTTON_BAR:
+				return PLACEMENT_BUTTON_BAR;
+			case CONTEXT_MENU:
+				return PLACEMENT_CONTEXT_MENU;
+			default:
+				return PLACEMENT_NONE;
+		}
 	}
 
 	/**
@@ -119,9 +130,7 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 		return _config.getClique();
 	}
 
-	/**
-	 * The command's name (may be {@code null}).
-	 */
+	@Override
 	public String getName() {
 		return _config.getName();
 	}

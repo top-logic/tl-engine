@@ -29,6 +29,23 @@ import com.top_logic.tool.boundsec.HandlerResult;
  */
 public interface CommandModel {
 
+	/** Placement value: rendered in the toolbar area. */
+	String PLACEMENT_TOOLBAR = "toolbar";
+
+	/** Placement value: rendered in a button bar. */
+	String PLACEMENT_BUTTON_BAR = "buttonBar";
+
+	/** Placement value: rendered in the context menu. */
+	String PLACEMENT_CONTEXT_MENU = "contextMenu";
+
+	/** Placement value: not rendered (programmatic only). */
+	String PLACEMENT_NONE = "none";
+
+	/**
+	 * The command name for lookup via scope resolution (may be {@code null}).
+	 */
+	String getName();
+
 	/**
 	 * The resolved button label text.
 	 */
@@ -47,6 +64,16 @@ public interface CommandModel {
 	 * @return The result of the command execution.
 	 */
 	HandlerResult executeCommand(ReactContext context);
+
+	/**
+	 * Where the command should be rendered.
+	 *
+	 * <p>
+	 * Returns a placement identifier such as {@code "toolbar"}, {@code "buttonBar"}, or
+	 * {@code "contextMenu"}. Used by containers (e.g. panels) to decide where to create buttons.
+	 * </p>
+	 */
+	String getPlacement();
 
 	/**
 	 * Registers a listener that is notified when any visible state (label, executability) changes.

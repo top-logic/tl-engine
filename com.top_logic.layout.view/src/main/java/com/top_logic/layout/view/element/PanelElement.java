@@ -21,6 +21,7 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.IReactControl;
+import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.layout.ReactPanelControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
@@ -30,7 +31,6 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.CombinedViewExecutabilityRule;
-import com.top_logic.layout.view.command.CommandPlacement;
 import com.top_logic.layout.view.command.CommandScope;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandConfirmation;
@@ -158,7 +158,7 @@ public class PanelElement extends ContainerElement {
 		// Phase 4: Create panel with toolbar buttons for all TOOLBAR commands in scope.
 		ReactPanelControl panel = new ReactPanelControl(context, _title, content, false, false, false);
 
-		Map<ViewCommandModel, ReactButtonControl> toolbarButtons = new HashMap<>();
+		Map<CommandModel, ReactButtonControl> toolbarButtons = new HashMap<>();
 		syncToolbarButtons(panel, context, scope, toolbarButtons);
 
 		// React to scope changes (children adding/removing commands).
@@ -200,8 +200,8 @@ public class PanelElement extends ContainerElement {
 	}
 
 	private void syncToolbarButtons(ReactPanelControl panel, ViewContext context,
-			CommandScope scope, Map<ViewCommandModel, ReactButtonControl> toolbarButtons) {
-		List<ViewCommandModel> currentCommands = scope.getAllCommands();
+			CommandScope scope, Map<CommandModel, ReactButtonControl> toolbarButtons) {
+		List<CommandModel> currentCommands = scope.getAllCommands();
 
 		// Remove buttons for commands no longer in scope.
 		toolbarButtons.entrySet().removeIf(entry -> {
@@ -213,8 +213,9 @@ public class PanelElement extends ContainerElement {
 		});
 
 		// Add buttons for new TOOLBAR commands.
-		for (ViewCommandModel model : currentCommands) {
-			if (!toolbarButtons.containsKey(model) && model.getPlacement() == CommandPlacement.TOOLBAR) {
+		for (CommandModel model : currentCommands) {
+			if (!toolbarButtons.containsKey(model)
+				&& CommandModel.PLACEMENT_TOOLBAR.equals(model.getPlacement())) {
 				ReactButtonControl button = new ReactButtonControl(context, model);
 				panel.addToolbarButton(button);
 				toolbarButtons.put(model, button);

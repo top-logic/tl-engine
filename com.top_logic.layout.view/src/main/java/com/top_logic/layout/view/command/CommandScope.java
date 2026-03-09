@@ -10,6 +10,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import com.top_logic.layout.react.control.button.CommandModel;
+
 /**
  * Runtime container for commands owned by a panel or dialog.
  *
@@ -20,7 +22,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class CommandScope {
 
-	private final List<ViewCommandModel> _commands;
+	private final List<CommandModel> _commands;
 
 	private final List<Runnable> _listeners;
 
@@ -30,7 +32,7 @@ public class CommandScope {
 	 * @param initialCommands
 	 *        The commands to start with (typically from the panel's configuration).
 	 */
-	public CommandScope(List<ViewCommandModel> initialCommands) {
+	public CommandScope(List<? extends CommandModel> initialCommands) {
 		_commands = new CopyOnWriteArrayList<>(initialCommands);
 		_listeners = new CopyOnWriteArrayList<>();
 	}
@@ -41,7 +43,7 @@ public class CommandScope {
 	 * @param command
 	 *        The command model to add.
 	 */
-	public void addCommand(ViewCommandModel command) {
+	public void addCommand(CommandModel command) {
 		_commands.add(command);
 		fireChanged();
 	}
@@ -52,7 +54,7 @@ public class CommandScope {
 	 * @param command
 	 *        The command model to remove.
 	 */
-	public void removeCommand(ViewCommandModel command) {
+	public void removeCommand(CommandModel command) {
 		_commands.remove(command);
 		fireChanged();
 	}
@@ -62,7 +64,7 @@ public class CommandScope {
 	 *
 	 * @return Unmodifiable snapshot of all commands.
 	 */
-	public List<ViewCommandModel> getAllCommands() {
+	public List<CommandModel> getAllCommands() {
 		return Collections.unmodifiableList(new ArrayList<>(_commands));
 	}
 
@@ -73,8 +75,8 @@ public class CommandScope {
 	 *        The command name to look up.
 	 * @return The command model, or {@code null} if not found.
 	 */
-	public ViewCommandModel resolveCommand(String name) {
-		for (ViewCommandModel model : _commands) {
+	public CommandModel resolveCommand(String name) {
+		for (CommandModel model : _commands) {
 			if (name.equals(model.getName())) {
 				return model;
 			}

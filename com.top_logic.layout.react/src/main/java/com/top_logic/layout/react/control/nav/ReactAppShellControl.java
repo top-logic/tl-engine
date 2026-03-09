@@ -67,6 +67,8 @@ public class ReactAppShellControl extends ReactControl {
 
 	private final ErrorSink _errorSink;
 
+	private ErrorSink _previousErrorSink;
+
 	/**
 	 * Creates an application shell with all three slots.
 	 *
@@ -136,7 +138,16 @@ public class ReactAppShellControl extends ReactControl {
 	@Override
 	protected void onBeforeWrite(ReactDisplayContext context) {
 		if (context instanceof DefaultReactDisplayContext defaultContext) {
+			_previousErrorSink = defaultContext.getErrorSink();
 			defaultContext.setErrorSink(_errorSink);
+		}
+	}
+
+	@Override
+	protected void onAfterWrite(ReactDisplayContext context) {
+		if (context instanceof DefaultReactDisplayContext defaultContext) {
+			defaultContext.setErrorSink(_previousErrorSink);
+			_previousErrorSink = null;
 		}
 	}
 

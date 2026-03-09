@@ -170,18 +170,21 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 		queue.registerControl(this);
 
 		onBeforeWrite(context);
+		try {
+			String stateJson = toJsonString(_reactState, context);
 
-		String stateJson = toJsonString(_reactState, context);
-
-		out.beginBeginTag(HTMLConstants.DIV);
-		writeIdAttribute(out);
-		writeControlClasses(out);
-		out.writeAttribute("data-react-module", _reactModule);
-		out.writeAttribute("data-react-state", stateJson);
-		out.writeAttribute("data-window-name", context.getWindowName());
-		out.writeAttribute("data-context-path", context.getContextPath());
-		out.endBeginTag();
-		out.endTag(HTMLConstants.DIV);
+			out.beginBeginTag(HTMLConstants.DIV);
+			writeIdAttribute(out);
+			writeControlClasses(out);
+			out.writeAttribute("data-react-module", _reactModule);
+			out.writeAttribute("data-react-state", stateJson);
+			out.writeAttribute("data-window-name", context.getWindowName());
+			out.writeAttribute("data-context-path", context.getContextPath());
+			out.endBeginTag();
+			out.endTag(HTMLConstants.DIV);
+		} finally {
+			onAfterWrite(context);
+		}
 	}
 
 	/**
@@ -189,10 +192,27 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	 *
 	 * <p>
 	 * Subclasses override to perform initialization that must happen before rendering, such as
-	 * registering model listeners or rebuilding state caches.
+	 * registering model listeners or rebuilding state caches. Scoped resources installed here
+	 * (e.g. on the {@link ReactDisplayContext}) can be cleaned up in {@link #onAfterWrite}.
 	 * </p>
+	 *
+	 * @see #onAfterWrite(ReactDisplayContext)
 	 */
 	protected void onBeforeWrite(ReactDisplayContext context) {
+		// Default: no-op.
+	}
+
+	/**
+	 * Hook called after the control and all its children have been rendered.
+	 *
+	 * <p>
+	 * Guaranteed to run even if rendering throws (called from a {@code finally} block). Subclasses
+	 * override to restore scoped resources modified in {@link #onBeforeWrite}.
+	 * </p>
+	 *
+	 * @see #onBeforeWrite(ReactDisplayContext)
+	 */
+	protected void onAfterWrite(ReactDisplayContext context) {
 		// Default: no-op.
 	}
 

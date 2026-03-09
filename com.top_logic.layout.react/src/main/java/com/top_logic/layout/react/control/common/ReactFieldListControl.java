@@ -8,6 +8,7 @@ package com.top_logic.layout.react.control.common;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 
 /**
@@ -40,8 +41,8 @@ public class ReactFieldListControl extends ReactControl {
 	 * @param children
 	 *        The child controls to display.
 	 */
-	public ReactFieldListControl(String title, List<? extends ReactControl> children) {
-		super(null, REACT_MODULE);
+	public ReactFieldListControl(ReactContext context, String title, List<? extends ReactControl> children) {
+		super(context, null, REACT_MODULE);
 		if (title != null) {
 			putState(TITLE, title);
 		}
@@ -54,8 +55,8 @@ public class ReactFieldListControl extends ReactControl {
 	 * @param children
 	 *        The child controls to display.
 	 */
-	public ReactFieldListControl(List<? extends ReactControl> children) {
-		this(null, children);
+	public ReactFieldListControl(ReactContext context, List<? extends ReactControl> children) {
+		this(context, null, children);
 	}
 
 	/**

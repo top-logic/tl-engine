@@ -8,6 +8,7 @@ package com.top_logic.layout.react.control.layout;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 
 /**
@@ -47,8 +48,8 @@ public class ReactGridControl extends ReactControl {
 	 * @param children
 	 *        The child controls to arrange in the grid.
 	 */
-	public ReactGridControl(String minColumnWidth, String gap, List<? extends ReactControl> children) {
-		super(null, REACT_MODULE);
+	public ReactGridControl(ReactContext context, String minColumnWidth, String gap, List<? extends ReactControl> children) {
+		super(context, null, REACT_MODULE);
 		_children = new ArrayList<>(children);
 		putState(MIN_COLUMN_WIDTH, minColumnWidth);
 		putState(GAP, gap);
@@ -65,8 +66,8 @@ public class ReactGridControl extends ReactControl {
 	 * @param children
 	 *        The child controls to arrange in the grid.
 	 */
-	public ReactGridControl(int columns, String gap, List<? extends ReactControl> children) {
-		super(null, REACT_MODULE);
+	public ReactGridControl(ReactContext context, int columns, String gap, List<? extends ReactControl> children) {
+		super(context, null, REACT_MODULE);
 		_children = new ArrayList<>(children);
 		putState(COLUMNS, Integer.valueOf(columns));
 		putState(GAP, gap);

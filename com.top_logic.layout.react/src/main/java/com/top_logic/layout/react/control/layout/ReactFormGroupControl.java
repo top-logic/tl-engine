@@ -8,6 +8,7 @@ package com.top_logic.layout.react.control.layout;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
 
@@ -70,11 +71,11 @@ public class ReactFormGroupControl extends ReactControl {
 	 * @param children
 	 *        The child controls.
 	 */
-	public ReactFormGroupControl(String header, boolean collapsible, boolean collapsed,
+	public ReactFormGroupControl(ReactContext context, String header, boolean collapsible, boolean collapsed,
 			String border, boolean fullLine,
 			List<? extends ReactControl> headerActions,
 			List<? extends ReactControl> children) {
-		super(null, REACT_MODULE);
+		super(context, null, REACT_MODULE);
 		_collapsed = collapsed;
 		_children = new ArrayList<>(children);
 		_headerActions = new ArrayList<>(headerActions);
@@ -97,8 +98,8 @@ public class ReactFormGroupControl extends ReactControl {
 	 * @param children
 	 *        The child controls.
 	 */
-	public ReactFormGroupControl(String header, List<? extends ReactControl> children) {
-		this(header, false, false, "none", false, List.of(), children);
+	public ReactFormGroupControl(ReactContext context, String header, List<? extends ReactControl> children) {
+		this(context, header, false, false, "none", false, List.of(), children);
 	}
 
 	/**

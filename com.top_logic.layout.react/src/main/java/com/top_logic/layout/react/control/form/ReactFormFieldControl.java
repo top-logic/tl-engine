@@ -85,8 +85,8 @@ public class ReactFormFieldControl extends ReactControl
 	 * @param reactModule
 	 *        The React module identifier (e.g. "TLTextInput").
 	 */
-	protected ReactFormFieldControl(FormField model, String reactModule) {
-		super(model, reactModule);
+	protected ReactFormFieldControl(ReactContext context, FormField model, String reactModule) {
+		super(context, model, reactModule);
 		initFieldState(model);
 	}
 
@@ -153,15 +153,15 @@ public class ReactFormFieldControl extends ReactControl
 	}
 
 	@Override
-	protected void onBeforeWrite(ReactContext context) {
+	protected void onBeforeWrite() {
 		registerFieldListeners();
 	}
 
 	@Override
-	protected void writeAsChild(ReactContext context, JsonWriter writer)
+	protected void writeAsChild(JsonWriter writer)
 			throws IOException {
 		registerFieldListeners();
-		super.writeAsChild(context, writer);
+		super.writeAsChild(writer);
 	}
 
 	@Override

@@ -8,6 +8,7 @@ package com.top_logic.layout.react.control.overlay;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
 
@@ -56,8 +57,8 @@ public class ReactSnackbarControl extends ReactControl {
 	 * @param dismissHandler
 	 *        Called when the snackbar is dismissed.
 	 */
-	public ReactSnackbarControl(String message, String variant, Runnable dismissHandler) {
-		this(message, variant, 5000, dismissHandler);
+	public ReactSnackbarControl(ReactContext context, String message, String variant, Runnable dismissHandler) {
+		this(context, message, variant, 5000, dismissHandler);
 	}
 
 	/**
@@ -72,8 +73,8 @@ public class ReactSnackbarControl extends ReactControl {
 	 * @param dismissHandler
 	 *        Called when the snackbar is dismissed.
 	 */
-	public ReactSnackbarControl(String message, String variant, int duration, Runnable dismissHandler) {
-		super(null, REACT_MODULE);
+	public ReactSnackbarControl(ReactContext context, String message, String variant, int duration, Runnable dismissHandler) {
+		super(context, null, REACT_MODULE);
 		_dismissHandler = dismissHandler;
 		putState(MESSAGE, message);
 		putState(VARIANT, variant);

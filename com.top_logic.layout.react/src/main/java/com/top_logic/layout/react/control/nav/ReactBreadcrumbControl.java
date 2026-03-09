@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
 
@@ -48,8 +49,8 @@ public class ReactBreadcrumbControl extends ReactControl {
 	 * @param navigateHandler
 	 *        Called with the item ID when an ancestor is clicked.
 	 */
-	public ReactBreadcrumbControl(List<BreadcrumbEntry> items, Consumer<String> navigateHandler) {
-		super(null, REACT_MODULE);
+	public ReactBreadcrumbControl(ReactContext context, List<BreadcrumbEntry> items, Consumer<String> navigateHandler) {
+		super(context, null, REACT_MODULE);
 		_navigateHandler = navigateHandler;
 		updateItems(items);
 	}

@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.table.TableModel;
@@ -188,8 +189,8 @@ public class ReactTableControl extends ReactControl {
 	 * @param cellProvider
 	 *        Provider for creating cell controls.
 	 */
-	public ReactTableControl(TableModel model, ReactCellControlProvider cellProvider) {
-		super(null, "TLTableView");
+	public ReactTableControl(ReactContext context, TableModel model, ReactCellControlProvider cellProvider) {
+		super(context, null, "TLTableView");
 		_tableModel = model;
 		_cellProvider = cellProvider;
 		_viewportStart = 0;
@@ -516,7 +517,7 @@ public class ReactTableControl extends ReactControl {
 		Map<String, ReactControl> cells = new LinkedHashMap<>();
 		for (ColumnDef col : _columnDefs) {
 			Object cellValue = getCellValue(rowObject, col.getName());
-			ReactControl cellControl = _cellProvider.createCellControl(rowObject, col.getName(), cellValue);
+			ReactControl cellControl = _cellProvider.createCellControl(getReactContext(), rowObject, col.getName(), cellValue);
 			registerChildControl(cellControl);
 			cells.put(col.getName(), cellControl);
 		}

@@ -71,8 +71,8 @@ public class ReactTabBarControl extends ReactControl {
 	 * @param initialActiveTabId
 	 *        The initially active tab ID, or {@code null} to default to the first tab.
 	 */
-	public ReactTabBarControl(Object model, List<TabDefinition> tabDefinitions, String initialActiveTabId) {
-		super(model, REACT_MODULE);
+	public ReactTabBarControl(ReactContext context, Object model, List<TabDefinition> tabDefinitions, String initialActiveTabId) {
+		super(context, model, REACT_MODULE);
 		_tabDefinitions = new ArrayList<>(tabDefinitions);
 		_activeTabId = initialActiveTabId != null ? initialActiveTabId : tabDefinitions.get(0).getId();
 
@@ -92,18 +92,18 @@ public class ReactTabBarControl extends ReactControl {
 	/**
 	 * Creates a new {@link ReactTabBarControl} with the first tab active.
 	 */
-	public ReactTabBarControl(Object model, List<TabDefinition> tabDefinitions) {
-		this(model, tabDefinitions, null);
+	public ReactTabBarControl(ReactContext context, Object model, List<TabDefinition> tabDefinitions) {
+		this(context, model, tabDefinitions, null);
 	}
 
 	@Override
-	protected void writeAsChild(ReactContext context, JsonWriter writer)
+	protected void writeAsChild(JsonWriter writer)
 			throws IOException {
 		if (getReactState().get(ACTIVE_CONTENT) == null) {
 			ReactControl activeContent = getOrCreateContent(_activeTabId);
 			getReactState().put(ACTIVE_CONTENT, activeContent);
 		}
-		super.writeAsChild(context, writer);
+		super.writeAsChild(writer);
 	}
 
 	@Override

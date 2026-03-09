@@ -9,6 +9,7 @@ import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataValue;
 import com.top_logic.basic.listener.Listener;
 import com.top_logic.layout.react.DataProvider;
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 
 /**
@@ -44,8 +45,8 @@ public class ReactPhotoViewerControl extends ReactControl implements DataProvide
 	 * @param model
 	 *        The shared data model to observe.
 	 */
-	public ReactPhotoViewerControl(BinaryDataValue model) {
-		super(null, "TLPhotoViewer");
+	public ReactPhotoViewerControl(ReactContext context, BinaryDataValue model) {
+		super(context, null, "TLPhotoViewer");
 		_model = model;
 		BinaryData data = model.getData();
 		putState(HAS_PHOTO, data != null);

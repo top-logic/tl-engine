@@ -39,11 +39,11 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * </p>
  *
  * <p>
- * Child {@link ReactControl}s embedded in the state are automatically initialized (ID assigned, SSE
- * registered) when they are serialized during the initial render. This is done by delegating to
- * {@link #writeAsChild(ReactContext, JsonWriter)} from {@link #writeJsonValue}. Each
- * control thus manages its own lifecycle, analogous to {@code child.write(context, out)} in
- * traditional controls.
+ * The {@link ReactContext} is provided at construction time, so ID allocation and SSE registration
+ * happen immediately. Child {@link ReactControl}s embedded in the state are automatically
+ * serialized during the initial render by delegating to {@link #writeAsChild(JsonWriter)} from
+ * {@link #writeJsonValue}. Each control thus manages its own lifecycle, analogous to
+ * {@code child.write(context, out)} in traditional controls.
  * </p>
  */
 public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTarget {
@@ -53,9 +53,9 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 
 	private static final ConcurrentHashMap<Class<?>, ReactCommandMap> COMMAND_MAPS = new ConcurrentHashMap<>();
 
-	private String _id;
+	private final String _id;
 
-	private ReactContext _reactContext;
+	private final ReactContext _reactContext;
 
 	private final Object _model;
 
@@ -68,15 +68,21 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	/**
 	 * Creates a new {@link ReactControl}.
 	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
 	 * @param model
 	 *        The server-side model object.
 	 * @param reactModule
 	 *        The React module identifier to mount on the client (e.g. "TLTextInput").
 	 */
-	public ReactControl(Object model, String reactModule) {
+	public ReactControl(ReactContext context, Object model, String reactModule) {
+		_reactContext = context;
 		_model = model;
 		_reactModule = reactModule;
 		_reactState = new HashMap<>();
+		_id = context.allocateId();
+		_sseQueue = context.getSSEQueue();
+		_sseQueue.registerControl(this);
 	}
 
 	/**
@@ -88,9 +94,6 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 
 	@Override
 	public String getID() {
-		if (_id == null) {
-			throw new IllegalStateException("Control has no ID. Call write() first.");
-		}
 		return _id;
 	}
 
@@ -116,7 +119,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	}
 
 	/**
-	 * The current {@link SSEUpdateQueue}, or {@code null} if not yet rendered.
+	 * The current {@link SSEUpdateQueue}, or {@code null} if cleaned up.
 	 */
 	protected SSEUpdateQueue getSSEQueue() {
 		return _sseQueue;
@@ -147,47 +150,41 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 
 	@Override
 	public void write(DisplayContext context, TagWriter out) throws IOException {
-		write(ReactContext.fromDisplayContext(context), out);
+		write(out);
 	}
 
 	@Override
-	public void write(ReactContext context, TagWriter out) throws IOException {
-		_reactContext = context;
-		_id = context.allocateId();
-		SSEUpdateQueue queue = context.getSSEQueue();
-		_sseQueue = queue;
-		queue.registerControl(this);
-
-		onBeforeWrite(context);
+	public void write(TagWriter out) throws IOException {
+		onBeforeWrite();
 		try {
-			String stateJson = toJsonString(context, _reactState);
+			String stateJson = toJsonString(_reactContext, _reactState);
 
 			out.beginBeginTag(HTMLConstants.DIV);
 			writeIdAttribute(out);
 			writeControlClasses(out);
 			out.writeAttribute("data-react-module", _reactModule);
 			out.writeAttribute("data-react-state", stateJson);
-			out.writeAttribute("data-window-name", context.getWindowName());
-			out.writeAttribute("data-context-path", context.getContextPath());
+			out.writeAttribute("data-window-name", _reactContext.getWindowName());
+			out.writeAttribute("data-context-path", _reactContext.getContextPath());
 			out.endBeginTag();
 			out.endTag(HTMLConstants.DIV);
 		} finally {
-			onAfterWrite(context);
+			onAfterWrite();
 		}
 	}
 
 	/**
-	 * Hook called before the control is rendered, after ID and SSE queue are assigned.
+	 * Hook called before the control is rendered.
 	 *
 	 * <p>
 	 * Subclasses override to perform initialization that must happen before rendering, such as
-	 * registering model listeners or rebuilding state caches. Scoped resources installed here
-	 * (e.g. on the {@link ReactContext}) can be cleaned up in {@link #onAfterWrite}.
+	 * registering model listeners or rebuilding state caches. Scoped resources installed here can be
+	 * cleaned up in {@link #onAfterWrite()}.
 	 * </p>
 	 *
-	 * @see #onAfterWrite(ReactContext)
+	 * @see #onAfterWrite()
 	 */
-	protected void onBeforeWrite(ReactContext context) {
+	protected void onBeforeWrite() {
 		// Default: no-op.
 	}
 
@@ -196,12 +193,12 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	 *
 	 * <p>
 	 * Guaranteed to run even if rendering throws (called from a {@code finally} block). Subclasses
-	 * override to restore scoped resources modified in {@link #onBeforeWrite}.
+	 * override to restore scoped resources modified in {@link #onBeforeWrite()}.
 	 * </p>
 	 *
-	 * @see #onBeforeWrite(ReactContext)
+	 * @see #onBeforeWrite()
 	 */
-	protected void onAfterWrite(ReactContext context) {
+	protected void onAfterWrite() {
 		// Default: no-op.
 	}
 
@@ -321,8 +318,8 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	 * Applies a partial patch to the React state and sends a {@link PatchEvent} via SSE.
 	 *
 	 * <p>
-	 * Any child {@link ReactControl}s in the patch are automatically initialized (ID assigned, SSE
-	 * registered) during serialization if a {@link ReactContext} is available on this control.
+	 * Any child {@link ReactControl}s in the patch are automatically serialized during JSON
+	 * conversion.
 	 * </p>
 	 *
 	 * @param queue
@@ -343,11 +340,9 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	 * Writes the <code>React</code> state to a JSON string.
 	 */
 	public final String stateAsJSON() {
-		assert _reactContext != null : "Control not yet attached.";
-
 		StringW buffer = new StringW();
 		try {
-			writeState(_reactContext, new JsonWriter(buffer));
+			writeState(new JsonWriter(buffer));
 		} catch (IOException ex) {
 			throw new RuntimeException(ex);
 		}
@@ -355,45 +350,35 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	}
 
 	/**
-	 * Writes this control as a child descriptor to JSON, ensuring it is properly initialized (ID
-	 * assigned, SSE registered) before serialization.
+	 * Writes this control as a child descriptor to JSON.
+	 *
+	 * <p>
+	 * Since the control is fully initialized at construction time (ID assigned, SSE registered),
+	 * this method simply serializes the current state.
+	 * </p>
 	 *
 	 * <p>
 	 * Composite controls override this to prepare lazy children before serialization (e.g.,
 	 * {@link com.top_logic.layout.react.control.layout.ReactDeckPaneControl} creates its active
 	 * child).
 	 * </p>
-	 * 
-	 * @param context
-	 *        The view display context for ID allocation and SSE registration, or {@code null} if
-	 *        controls are already initialized.
+	 *
 	 * @param writer
 	 *        The JSON writer to write to.
 	 */
-	protected void writeAsChild(ReactContext context, JsonWriter writer)
-			throws IOException {
-		if (context != null && _id == null) {
-			_reactContext = context;
-			_id = context.allocateId();
-			SSEUpdateQueue queue = context.getSSEQueue();
-			if (_sseQueue == null) {
-				_sseQueue = queue;
-				queue.registerControl(this);
-			}
-		}
-
+	protected void writeAsChild(JsonWriter writer) throws IOException {
 		writer.beginObject();
 		writer.name("controlId");
 		writer.value(getID());
 		writer.name("module");
 		writer.value(_reactModule);
 		writer.name("state");
-		writeState(context, writer);
+		writeState(writer);
 		writer.endObject();
 	}
 
-	private void writeState(ReactContext context, JsonWriter writer) throws IOException {
-		writeJsonMap(context, writer, getReactState());
+	private void writeState(JsonWriter writer) throws IOException {
+		writeJsonMap(_reactContext, writer, getReactState());
 	}
 
 	/**
@@ -420,7 +405,6 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 			queue.unregisterControl(this);
 			_sseQueue = null;
 		}
-		_reactContext = null;
 	}
 
 	/**
@@ -428,8 +412,8 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	 * that it can receive state updates and dispatch commands.
 	 *
 	 * <p>
-	 * If this control has no SSE queue yet (not rendered), the method is a no-op; the child will
-	 * be registered when this control is written.
+	 * Since the child already has its context and ID from construction, this method only ensures
+	 * the child is registered with the parent's SSE queue if it is not already.
 	 * </p>
 	 *
 	 * @param child
@@ -438,10 +422,6 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	protected void registerChildControl(ReactControl child) {
 		SSEUpdateQueue queue = _sseQueue;
 		if (queue != null && child._sseQueue == null) {
-			if (_reactContext != null) {
-				child._reactContext = _reactContext;
-				child._id = _reactContext.allocateId();
-			}
 			child._sseQueue = queue;
 			queue.registerControl(child);
 		}
@@ -465,9 +445,9 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 
 	/**
 	 * Serializes a map to a JSON string with context for child initialization.
-	 * 
+	 *
 	 * @param context
-	 *        The view display context for ID allocation and SSE registration, or {@code null}.
+	 *        The view display context, or {@code null}.
 	 * @param map
 	 *        The map to serialize.
 	 */
@@ -516,7 +496,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 		} else if (value instanceof Map) {
 			writeJsonMap(context, writer, (Map<String, Object>) value);
 		} else if (value instanceof ReactControl) {
-			((ReactControl) value).writeAsChild(context, writer);
+			((ReactControl) value).writeAsChild(writer);
 		} else if (value instanceof List) {
 			writer.beginArray();
 			for (Object element : (List<?>) value) {

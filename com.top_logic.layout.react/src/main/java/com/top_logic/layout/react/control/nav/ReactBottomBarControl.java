@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
 
@@ -59,9 +60,9 @@ public class ReactBottomBarControl extends ReactControl {
 	 * @param selectHandler
 	 *        Called with the item ID when an item is tapped.
 	 */
-	public ReactBottomBarControl(List<BottomBarEntry> items, String activeItemId,
+	public ReactBottomBarControl(ReactContext context, List<BottomBarEntry> items, String activeItemId,
 			Consumer<String> selectHandler) {
-		super(null, REACT_MODULE);
+		super(context, null, REACT_MODULE);
 		_selectHandler = selectHandler;
 		updateItems(items);
 		setActiveItem(activeItemId);

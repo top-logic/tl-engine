@@ -36,8 +36,8 @@ public class ReactButtonControl extends ReactControl {
 	 * @param action
 	 *        The {@link ButtonAction} to execute when the button is clicked.
 	 */
-	public ReactButtonControl(String label, ButtonAction action) {
-		super(null, "TLButton");
+	public ReactButtonControl(ReactContext context, String label, ButtonAction action) {
+		super(context, null, "TLButton");
 		_action = action;
 		putState(LABEL, label);
 	}

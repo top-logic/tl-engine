@@ -73,8 +73,8 @@ public class ReactDeckPaneControl extends ReactControl {
 	 * @param initialActiveIndex
 	 *        The initially active child index.
 	 */
-	public ReactDeckPaneControl(List<ChildFactory> childFactories, int initialActiveIndex) {
-		super(null, REACT_MODULE);
+	public ReactDeckPaneControl(ReactContext context, List<ChildFactory> childFactories, int initialActiveIndex) {
+		super(context, null, REACT_MODULE);
 		_childFactories.addAll(childFactories);
 		_activeIndex = initialActiveIndex;
 
@@ -86,8 +86,8 @@ public class ReactDeckPaneControl extends ReactControl {
 	/**
 	 * Creates a new {@link ReactDeckPaneControl} with the first child active.
 	 */
-	public ReactDeckPaneControl(List<ChildFactory> childFactories) {
-		this(childFactories, 0);
+	public ReactDeckPaneControl(ReactContext context, List<ChildFactory> childFactories) {
+		this(context, childFactories, 0);
 	}
 
 	/**
@@ -126,13 +126,13 @@ public class ReactDeckPaneControl extends ReactControl {
 	}
 
 	@Override
-	protected void writeAsChild(ReactContext context, JsonWriter writer)
+	protected void writeAsChild(JsonWriter writer)
 			throws IOException {
 		if (getReactState().get(ACTIVE_CHILD) == null) {
 			ReactControl activeChild = getOrCreateChild(_activeIndex);
 			getReactState().put(ACTIVE_CHILD, activeChild);
 		}
-		super.writeAsChild(context, writer);
+		super.writeAsChild(writer);
 	}
 
 	@Override

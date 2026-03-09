@@ -43,8 +43,8 @@ public class ReactToggleButtonControl extends ReactControl {
 	 * @param action
 	 *        The {@link ToggleAction} to execute when the button is clicked.
 	 */
-	public ReactToggleButtonControl(String label, boolean initialActive, ToggleAction action) {
-		super(null, "TLToggleButton");
+	public ReactToggleButtonControl(ReactContext context, String label, boolean initialActive, ToggleAction action) {
+		super(context, null, "TLToggleButton");
 		_action = action;
 		_active = initialActive;
 		putState(LABEL, label);

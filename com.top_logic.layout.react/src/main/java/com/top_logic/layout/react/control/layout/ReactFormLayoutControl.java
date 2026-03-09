@@ -8,6 +8,7 @@ package com.top_logic.layout.react.control.layout;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 
 /**
@@ -56,9 +57,9 @@ public class ReactFormLayoutControl extends ReactControl {
 	 * @param children
 	 *        The child controls (TLFormGroup or TLFormField).
 	 */
-	public ReactFormLayoutControl(int maxColumns, String labelPosition, boolean readOnly,
+	public ReactFormLayoutControl(ReactContext context, int maxColumns, String labelPosition, boolean readOnly,
 			List<? extends ReactControl> children) {
-		super(null, REACT_MODULE);
+		super(context, null, REACT_MODULE);
 		_children = new ArrayList<>(children);
 		putState(MAX_COLUMNS, Integer.valueOf(maxColumns));
 		putState(LABEL_POSITION, labelPosition);
@@ -72,8 +73,8 @@ public class ReactFormLayoutControl extends ReactControl {
 	 * @param children
 	 *        The child controls.
 	 */
-	public ReactFormLayoutControl(List<? extends ReactControl> children) {
-		this(3, "auto", false, children);
+	public ReactFormLayoutControl(ReactContext context, List<? extends ReactControl> children) {
+		this(context, 3, "auto", false, children);
 	}
 
 	/**

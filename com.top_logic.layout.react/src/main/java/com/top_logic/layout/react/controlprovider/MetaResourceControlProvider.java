@@ -6,6 +6,7 @@
 package com.top_logic.layout.react.controlprovider;
 
 import com.top_logic.layout.provider.MetaResourceProvider;
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.table.ReactResourceCellControl;
 
@@ -23,7 +24,7 @@ public class MetaResourceControlProvider implements ReactControlProvider {
 	public static final MetaResourceControlProvider INSTANCE = new MetaResourceControlProvider();
 
 	@Override
-	public ReactControl createControl(Object model) {
-		return new ReactResourceCellControl(model, MetaResourceProvider.INSTANCE, true, true, false);
+	public ReactControl createControl(ReactContext context, Object model) {
+		return new ReactResourceCellControl(context, model, MetaResourceProvider.INSTANCE, true, true, false);
 	}
 }

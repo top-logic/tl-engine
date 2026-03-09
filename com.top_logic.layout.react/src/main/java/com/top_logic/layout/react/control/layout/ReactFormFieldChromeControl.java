@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.react.control.layout;
 
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 
 /**
@@ -59,8 +60,8 @@ public class ReactFormFieldChromeControl extends ReactControl {
 	 * @param field
 	 *        The child field control to wrap.
 	 */
-	public ReactFormFieldChromeControl(String label, ReactControl field) {
-		this(label, false, false, null, null, null, false, true, field);
+	public ReactFormFieldChromeControl(ReactContext context, String label, ReactControl field) {
+		this(context, label, false, false, null, null, null, false, true, field);
 	}
 
 	/**
@@ -85,10 +86,10 @@ public class ReactFormFieldChromeControl extends ReactControl {
 	 * @param field
 	 *        The child field control.
 	 */
-	public ReactFormFieldChromeControl(String label, boolean required, boolean dirty,
+	public ReactFormFieldChromeControl(ReactContext context, String label, boolean required, boolean dirty,
 			String error, String helpText, String labelPosition,
 			boolean fullLine, boolean visible, ReactControl field) {
-		super(null, REACT_MODULE);
+		super(context, null, REACT_MODULE);
 		_field = field;
 		putState(LABEL, label);
 		putState(REQUIRED, required);

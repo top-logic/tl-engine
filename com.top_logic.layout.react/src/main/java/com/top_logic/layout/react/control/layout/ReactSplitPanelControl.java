@@ -14,6 +14,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import com.top_logic.layout.DisplayUnit;
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.structure.OrientationAware.Orientation;
@@ -99,10 +100,10 @@ public class ReactSplitPanelControl extends ReactControl {
 	 *        Called when a child collapses or expands, with (childIndex, collapsed). May be
 	 *        {@code null}.
 	 */
-	public ReactSplitPanelControl(Orientation orientation, boolean resizable,
+	public ReactSplitPanelControl(ReactContext context, Orientation orientation, boolean resizable,
 			Consumer<Map<String, Float>> onSizesChanged,
 			BiConsumer<Integer, Boolean> onChildCollapsed) {
-		super(null, REACT_MODULE);
+		super(context, null, REACT_MODULE);
 		_resizable = resizable;
 		_onSizesChanged = onSizesChanged;
 		_onChildCollapsed = onChildCollapsed;
@@ -120,8 +121,8 @@ public class ReactSplitPanelControl extends ReactControl {
 	 * @param resizable
 	 *        Whether draggable splitters are shown between children.
 	 */
-	public ReactSplitPanelControl(Orientation orientation, boolean resizable) {
-		this(orientation, resizable, null, null);
+	public ReactSplitPanelControl(ReactContext context, Orientation orientation, boolean resizable) {
+		this(context, orientation, resizable, null, null);
 	}
 
 	/**

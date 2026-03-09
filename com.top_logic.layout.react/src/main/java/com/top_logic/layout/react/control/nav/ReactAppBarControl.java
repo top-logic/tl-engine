@@ -8,6 +8,7 @@ package com.top_logic.layout.react.control.nav;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 
 /**
@@ -62,9 +63,9 @@ public class ReactAppBarControl extends ReactControl {
 	 * @param actions
 	 *        Trailing action controls.
 	 */
-	public ReactAppBarControl(String title, String variant, String color,
+	public ReactAppBarControl(ReactContext context, String title, String variant, String color,
 			ReactControl leading, List<? extends ReactControl> actions) {
-		super(null, REACT_MODULE);
+		super(context, null, REACT_MODULE);
 		_leading = leading;
 		_actions = new ArrayList<>(actions);
 		putState(TITLE, title);
@@ -84,8 +85,8 @@ public class ReactAppBarControl extends ReactControl {
 	 * @param actions
 	 *        Trailing action controls.
 	 */
-	public ReactAppBarControl(String title, List<? extends ReactControl> actions) {
-		this(title, "flat", "primary", null, actions);
+	public ReactAppBarControl(ReactContext context, String title, List<? extends ReactControl> actions) {
+		this(context, title, "flat", "primary", null, actions);
 	}
 
 	/**

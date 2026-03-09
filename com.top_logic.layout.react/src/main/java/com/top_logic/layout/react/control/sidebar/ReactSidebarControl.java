@@ -122,12 +122,12 @@ public class ReactSidebarControl extends ReactControl {
 	 * @param footerCollapsedContent
 	 *        Optional footer slot control shown when collapsed, or {@code null}.
 	 */
-	public ReactSidebarControl(List<SidebarItem> items, String initialActiveItemId,
+	public ReactSidebarControl(ReactContext context, List<SidebarItem> items, String initialActiveItemId,
 			boolean initialCollapsed, Map<String, Boolean> initialGroupStates,
 			Consumer<Boolean> onCollapseChanged, BiConsumer<String, Boolean> onGroupToggled,
 			ReactControl headerContent, ReactControl headerCollapsedContent,
 			ReactControl footerContent, ReactControl footerCollapsedContent) {
-		super(null, REACT_MODULE);
+		super(context, null, REACT_MODULE);
 		_items = new ArrayList<>(items);
 		_collapsed = initialCollapsed;
 		_onCollapseChanged = onCollapseChanged;
@@ -178,20 +178,20 @@ public class ReactSidebarControl extends ReactControl {
 	/**
 	 * Convenience constructor without collapsed-mode slot alternatives and no callbacks.
 	 */
-	public ReactSidebarControl(List<SidebarItem> items, String initialActiveItemId,
+	public ReactSidebarControl(ReactContext context, List<SidebarItem> items, String initialActiveItemId,
 			boolean initialCollapsed, ReactControl headerContent, ReactControl footerContent) {
-		this(items, initialActiveItemId, initialCollapsed, null, null, null,
+		this(context, items, initialActiveItemId, initialCollapsed, null, null, null,
 			headerContent, null, footerContent, null);
 	}
 
 	@Override
-	protected void writeAsChild(ReactContext context, JsonWriter writer)
+	protected void writeAsChild(JsonWriter writer)
 			throws IOException {
 		if (getReactState().get(ACTIVE_CONTENT) == null && _activeItemId != null) {
 			ReactControl activeContent = getOrCreateContent(_activeItemId);
 			getReactState().put(ACTIVE_CONTENT, activeContent);
 		}
-		super.writeAsChild(context, writer);
+		super.writeAsChild(writer);
 	}
 
 	@Override

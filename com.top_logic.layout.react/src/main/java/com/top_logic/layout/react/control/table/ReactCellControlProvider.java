@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.react.control.table;
 
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 
 /**
@@ -20,6 +21,8 @@ public interface ReactCellControlProvider {
 	/**
 	 * Creates a {@link ReactControl} for the given cell.
 	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
 	 * @param rowObject
 	 *        The application object for the row.
 	 * @param columnName
@@ -28,5 +31,5 @@ public interface ReactCellControlProvider {
 	 *        The cell value as extracted by the column's accessor.
 	 * @return A {@link ReactControl} to render in the cell. Must not be {@code null}.
 	 */
-	ReactControl createCellControl(Object rowObject, String columnName, Object cellValue);
+	ReactControl createCellControl(ReactContext context, Object rowObject, String columnName, Object cellValue);
 }

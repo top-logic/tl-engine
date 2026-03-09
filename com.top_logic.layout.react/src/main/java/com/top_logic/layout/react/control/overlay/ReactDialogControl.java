@@ -8,6 +8,7 @@ package com.top_logic.layout.react.control.overlay;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
 
@@ -49,8 +50,8 @@ public class ReactDialogControl extends ReactControl {
 	 * @param closeHandler
 	 *        Called when the dialog is closed (via close button, Escape, or backdrop click).
 	 */
-	public ReactDialogControl(String title, Runnable closeHandler) {
-		this(title, "medium", true, closeHandler);
+	public ReactDialogControl(ReactContext context, String title, Runnable closeHandler) {
+		this(context, title, "medium", true, closeHandler);
 	}
 
 	/**
@@ -65,8 +66,8 @@ public class ReactDialogControl extends ReactControl {
 	 * @param closeHandler
 	 *        Called when the dialog is closed.
 	 */
-	public ReactDialogControl(String title, String size, boolean closeOnBackdrop, Runnable closeHandler) {
-		super(null, REACT_MODULE);
+	public ReactDialogControl(ReactContext context, String title, String size, boolean closeOnBackdrop, Runnable closeHandler) {
+		super(context, null, REACT_MODULE);
 		_closeHandler = closeHandler;
 		_actions = new ArrayList<>();
 		putState(TITLE, title);

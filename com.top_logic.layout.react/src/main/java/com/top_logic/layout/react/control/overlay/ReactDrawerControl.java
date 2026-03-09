@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.react.control.overlay;
 
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
 
@@ -40,8 +41,8 @@ public class ReactDrawerControl extends ReactControl {
 	 * @param closeHandler
 	 *        Called when the drawer is closed.
 	 */
-	public ReactDrawerControl(Runnable closeHandler) {
-		this(null, "right", "medium", closeHandler);
+	public ReactDrawerControl(ReactContext context, Runnable closeHandler) {
+		this(context, null, "right", "medium", closeHandler);
 	}
 
 	/**
@@ -56,8 +57,8 @@ public class ReactDrawerControl extends ReactControl {
 	 * @param closeHandler
 	 *        Called when the drawer is closed.
 	 */
-	public ReactDrawerControl(String title, String position, String size, Runnable closeHandler) {
-		super(null, REACT_MODULE);
+	public ReactDrawerControl(ReactContext context, String title, String position, String size, Runnable closeHandler) {
+		super(context, null, REACT_MODULE);
 		_closeHandler = closeHandler;
 		if (title != null) {
 			putState(TITLE, title);

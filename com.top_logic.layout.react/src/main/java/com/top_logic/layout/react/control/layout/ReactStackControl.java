@@ -8,6 +8,7 @@ package com.top_logic.layout.react.control.layout;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 
 /**
@@ -46,8 +47,8 @@ public class ReactStackControl extends ReactControl {
 	 * @param children
 	 *        The child controls to arrange.
 	 */
-	public ReactStackControl(List<? extends ReactControl> children) {
-		this("column", "default", "stretch", false, children);
+	public ReactStackControl(ReactContext context, List<? extends ReactControl> children) {
+		this(context, "column", "default", "stretch", false, children);
 	}
 
 	/**
@@ -64,9 +65,9 @@ public class ReactStackControl extends ReactControl {
 	 * @param children
 	 *        The child controls to arrange.
 	 */
-	public ReactStackControl(String direction, String gap, String align, boolean wrap,
+	public ReactStackControl(ReactContext context, String direction, String gap, String align, boolean wrap,
 			List<? extends ReactControl> children) {
-		super(null, REACT_MODULE);
+		super(context, null, REACT_MODULE);
 		_children = new ArrayList<>(children);
 		putState(DIRECTION, direction);
 		putState(GAP, gap);

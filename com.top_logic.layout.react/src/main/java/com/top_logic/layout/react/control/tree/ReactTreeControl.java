@@ -144,9 +144,9 @@ public class ReactTreeControl extends ReactControl {
 	 *        Provider for creating node content controls.
 	 */
 	@SuppressWarnings("unchecked")
-	public ReactTreeControl(TreeUIModel<?> treeModel, SelectionModel<?> selectionModel,
+	public ReactTreeControl(ReactContext context, TreeUIModel<?> treeModel, SelectionModel<?> selectionModel,
 			ReactControlProvider contentProvider) {
-		super(null, "TLTreeView");
+		super(context, null, "TLTreeView");
 		_treeModel = (TreeUIModel<Object>) treeModel;
 		_selectionModel = selectionModel;
 		_contentProvider = contentProvider;
@@ -225,7 +225,7 @@ public class ReactTreeControl extends ReactControl {
 	// -- Rendering --
 
 	@Override
-	protected void onBeforeWrite(ReactContext context) {
+	protected void onBeforeWrite() {
 		if (_nodeControlCache.isEmpty()) {
 			// After a detach/reattach cycle, _nodeControlCache was cleared by cleanupNodeControls()
 			// but _reactState still has stale node references. Rebuild the cache and state from the
@@ -301,7 +301,7 @@ public class ReactTreeControl extends ReactControl {
 	private ReactControl getOrCreateNodeControl(Object node) {
 		ReactControl control = _nodeControlCache.get(node);
 		if (control == null) {
-			control = _contentProvider.createControl(node);
+			control = _contentProvider.createControl(getReactContext(), node);
 			_nodeControlCache.put(node, control);
 			registerChildControl(control);
 		}

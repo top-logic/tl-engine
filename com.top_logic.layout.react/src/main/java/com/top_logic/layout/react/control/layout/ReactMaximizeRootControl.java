@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.react.control.layout;
 
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 
 /**
@@ -42,8 +43,8 @@ public class ReactMaximizeRootControl extends ReactControl {
 	 * @param child
 	 *        The content child control.
 	 */
-	public ReactMaximizeRootControl(ReactControl child) {
-		super(null, REACT_MODULE);
+	public ReactMaximizeRootControl(ReactContext context, ReactControl child) {
+		super(context, null, REACT_MODULE);
 		_child = child;
 
 		getReactState().put(CHILD, child);

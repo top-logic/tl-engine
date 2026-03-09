@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
 
@@ -70,9 +71,9 @@ public class ReactMenuControl extends ReactControl {
 	 * @param closeHandler
 	 *        called when the menu is closed
 	 */
-	public ReactMenuControl(String anchorId, List<MenuEntry> items,
+	public ReactMenuControl(ReactContext context, String anchorId, List<MenuEntry> items,
 			Consumer<String> selectHandler, Runnable closeHandler) {
-		super(null, REACT_MODULE);
+		super(context, null, REACT_MODULE);
 		_selectHandler = selectHandler;
 		_closeHandler = closeHandler;
 		putState(ANCHOR_ID, anchorId);

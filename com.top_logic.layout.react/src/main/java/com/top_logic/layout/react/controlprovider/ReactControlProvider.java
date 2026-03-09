@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.react.controlprovider;
 
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 
 /**
@@ -21,9 +22,11 @@ public interface ReactControlProvider {
 	/**
 	 * Creates a {@link ReactControl} for the given model object.
 	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
 	 * @param model
 	 *        The application model object.
 	 * @return A {@link ReactControl} to render the object. Must not be {@code null}.
 	 */
-	ReactControl createControl(Object model);
+	ReactControl createControl(ReactContext context, Object model);
 }

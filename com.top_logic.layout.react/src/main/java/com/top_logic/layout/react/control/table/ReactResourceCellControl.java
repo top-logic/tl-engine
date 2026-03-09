@@ -94,9 +94,9 @@ public class ReactResourceCellControl extends ReactControl {
 	 * @param useLink
 	 *        Whether to enable goto navigation on click.
 	 */
-	public ReactResourceCellControl(Object value, ResourceProvider provider, boolean useImage, boolean useLabel,
+	public ReactResourceCellControl(ReactContext context, Object value, ResourceProvider provider, boolean useImage, boolean useLabel,
 			boolean useLink) {
-		super(null, "TLResourceCell");
+		super(context, null, "TLResourceCell");
 		_provider = provider;
 		_useImage = useImage;
 		_useLabel = useLabel;
@@ -108,8 +108,8 @@ public class ReactResourceCellControl extends ReactControl {
 	/**
 	 * Convenience constructor with all display options enabled.
 	 */
-	public ReactResourceCellControl(Object value, ResourceProvider provider) {
-		this(value, provider, true, true, true);
+	public ReactResourceCellControl(ReactContext context, Object value, ResourceProvider provider) {
+		this(context, value, provider, true, true, true);
 	}
 
 	/**

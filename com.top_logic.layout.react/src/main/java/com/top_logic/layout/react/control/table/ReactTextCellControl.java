@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.react.control.table;
 
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 
 /**
@@ -30,8 +31,8 @@ public class ReactTextCellControl extends ReactControl {
 	 * @param text
 	 *        The text to display, or {@code null}.
 	 */
-	public ReactTextCellControl(String text) {
-		super(null, "TLTextCell");
+	public ReactTextCellControl(ReactContext context, String text) {
+		super(context, null, "TLTextCell");
 		putState(TEXT, text != null ? text : "");
 	}
 

@@ -9,6 +9,7 @@ import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataValue;
 import com.top_logic.basic.listener.Listener;
 import com.top_logic.layout.react.DataProvider;
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
 
@@ -57,8 +58,8 @@ public class ReactDownloadControl extends ReactControl implements DataProvider {
 	 * @param model
 	 *        The shared data model to observe.
 	 */
-	public ReactDownloadControl(BinaryDataValue model) {
-		super(null, "TLDownload");
+	public ReactDownloadControl(ReactContext context, BinaryDataValue model) {
+		super(context, null, "TLDownload");
 		_model = model;
 		BinaryData data = model.getData();
 		putState(HAS_DATA, data != null);

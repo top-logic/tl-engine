@@ -8,6 +8,7 @@ package com.top_logic.layout.react.control.layout;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
 
@@ -85,9 +86,9 @@ public class ReactPanelControl extends ReactControl {
 	 * @param showPopOut
 	 *        Whether the pop-out button is shown.
 	 */
-	public ReactPanelControl(String title, ReactControl child,
+	public ReactPanelControl(ReactContext context, String title, ReactControl child,
 			boolean showMinimize, boolean showMaximize, boolean showPopOut) {
-		super(null, REACT_MODULE);
+		super(context, null, REACT_MODULE);
 		_child = child;
 
 		getReactState().put(TITLE, title);

@@ -8,6 +8,7 @@ package com.top_logic.layout.react.control.layout;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 
 /**
@@ -62,9 +63,9 @@ public class ReactCardControl extends ReactControl {
 	 * @param child
 	 *        The content child control.
 	 */
-	public ReactCardControl(String title, String variant, String padding,
+	public ReactCardControl(ReactContext context, String title, String variant, String padding,
 			List<? extends ReactControl> headerActions, ReactControl child) {
-		super(null, REACT_MODULE);
+		super(context, null, REACT_MODULE);
 		_child = child;
 		_headerActions = new ArrayList<>(headerActions);
 		if (title != null) {
@@ -84,8 +85,8 @@ public class ReactCardControl extends ReactControl {
 	 * @param child
 	 *        The content child control.
 	 */
-	public ReactCardControl(String title, ReactControl child) {
-		this(title, "outlined", "default", List.of(), child);
+	public ReactCardControl(ReactContext context, String title, ReactControl child) {
+		this(context, title, "outlined", "default", List.of(), child);
 	}
 
 	/**

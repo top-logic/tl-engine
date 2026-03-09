@@ -14,7 +14,6 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
-import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.ReactControl;
@@ -67,11 +66,11 @@ public class ReactAppShellControl extends ReactControl {
 
 	private final ErrorSink _errorSink;
 
-	private ErrorSink _previousErrorSink;
-
 	/**
 	 * Creates an application shell with all three slots.
 	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
 	 * @param header
 	 *        Optional header control (e.g. app bar), or {@code null}.
 	 * @param content
@@ -79,12 +78,12 @@ public class ReactAppShellControl extends ReactControl {
 	 * @param footer
 	 *        Optional footer control (e.g. bottom bar), or {@code null}.
 	 */
-	public ReactAppShellControl(ReactControl header, ReactControl content, ReactControl footer) {
-		super(null, REACT_MODULE);
+	public ReactAppShellControl(ReactContext context, ReactControl header, ReactControl content, ReactControl footer) {
+		super(context, null, REACT_MODULE);
 		_header = header;
 		_content = content;
 		_footer = footer;
-		_snackbar = new ReactSnackbarControl("", "success", () -> { /* no-op, auto-hides */ });
+		_snackbar = new ReactSnackbarControl(context, "", "success", () -> { /* no-op, auto-hides */ });
 
 		_errorSink = new ErrorSink() {
 			@Override
@@ -114,6 +113,13 @@ public class ReactAppShellControl extends ReactControl {
 	}
 
 	/**
+	 * The {@link ErrorSink} that routes messages to this shell's snackbar.
+	 */
+	public ErrorSink getErrorSink() {
+		return _errorSink;
+	}
+
+	/**
 	 * Shows a success snackbar notification.
 	 *
 	 * @param message
@@ -133,22 +139,6 @@ public class ReactAppShellControl extends ReactControl {
 	 */
 	public void showSnackbar(String htmlContent, String variant) {
 		_snackbar.patchReactState(Map.of("content", htmlContent, "variant", variant, "visible", Boolean.TRUE));
-	}
-
-	@Override
-	protected void onBeforeWrite(ReactContext context) {
-		if (context instanceof DefaultReactContext defaultContext) {
-			_previousErrorSink = defaultContext.getErrorSink();
-			defaultContext.setErrorSink(_errorSink);
-		}
-	}
-
-	@Override
-	protected void onAfterWrite(ReactContext context) {
-		if (context instanceof DefaultReactContext defaultContext) {
-			defaultContext.setErrorSink(_previousErrorSink);
-			_previousErrorSink = null;
-		}
 	}
 
 	private String renderToHtml(HTMLFragment fragment) {

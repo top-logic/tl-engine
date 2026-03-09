@@ -15,6 +15,7 @@ import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.io.binary.BinaryDataValue;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.UploadHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -52,8 +53,8 @@ public class ReactFileUploadControl extends ReactControl implements UploadHandle
 	 * @param model
 	 *        The shared data model to write uploaded files to.
 	 */
-	public ReactFileUploadControl(BinaryDataValue model) {
-		super(null, "TLFileUpload");
+	public ReactFileUploadControl(ReactContext context, BinaryDataValue model) {
+		super(context, null, "TLFileUpload");
 		_model = model;
 		putState(STATUS, "idle");
 	}

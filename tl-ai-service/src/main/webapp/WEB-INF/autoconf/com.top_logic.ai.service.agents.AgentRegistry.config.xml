@@ -87,7 +87,8 @@ When the task requires a change (creation, modification, scripting):
 ## 4. REPORT
 When the specialist returns:
 - Summarize what was done (or what was found) to the user
-- If something went wrong or needs follow-up, loop back to step 1
+- If the specialist reports that the user **rejected** the operation, STOP. Do NOT investigate further, do NOT delegate to another specialist, do NOT loop back. Simply acknowledge the rejection and ask the user what they would like to do instead.
+- If something went wrong for a technical reason and needs follow-up, loop back to step 1
 - If the user has a new request, start fresh from step 1
 
 ---

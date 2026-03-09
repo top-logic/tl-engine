@@ -15,6 +15,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.ToolbarControl;
 import com.top_logic.layout.react.control.layout.ReactPanelControl;
+import com.top_logic.layout.react.control.layout.ReactToolbarControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.util.Resources;
@@ -25,7 +26,7 @@ import com.top_logic.util.Resources;
  * <p>
  * Renders a titled panel with a toolbar header. Commands configured in the {@code <commands>}
  * section are available to child elements via the command scope and toolbar-placed commands are
- * automatically rendered as toolbar buttons.
+ * automatically rendered as clique-grouped toolbar buttons.
  * </p>
  */
 public class PanelElement extends CommandScopeElement {
@@ -63,8 +64,9 @@ public class PanelElement extends CommandScopeElement {
 	}
 
 	@Override
-	protected ToolbarControl createChromeControl(ViewContext context, ReactControl content) {
+	protected ToolbarControl createChromeControl(ViewContext context, ReactControl content,
+			ReactToolbarControl toolbar, ReactToolbarControl buttonBar) {
 		String title = _title != null ? Resources.getInstance().getString(_title) : "";
-		return new ReactPanelControl(context, title, content, null, null, false, false, false);
+		return new ReactPanelControl(context, title, content, toolbar, buttonBar, false, false, false);
 	}
 }

@@ -23,6 +23,8 @@ const RESIZE_HANDLES: ResizeDir[] = ['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw']
  * - resizable: boolean
  * - child: ChildDescriptor
  * - actions: ChildDescriptor[]
+ * - toolbar: ChildDescriptor (clique-grouped TLToolbar for the title bar, may be absent)
+ * - buttonBar: ChildDescriptor (clique-grouped TLToolbar for the footer, may be absent)
  */
 const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
@@ -36,7 +38,8 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
   const resizable = state.resizable === true;
   const child = state.child;
   const actions = (state.actions as unknown[]) ?? [];
-  const toolbarButtons = (state.toolbarButtons as unknown[]) ?? [];
+  const toolbar = state.toolbar;
+  const buttonBar = state.buttonBar;
 
   // Local dimensions during resize (null = use server values).
   const [localWidth, setLocalWidth] = useState<number | null>(null);
@@ -269,13 +272,9 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
         onDoubleClick={handleToggleMaximize}
       >
         <span className="tlWindow__title" id={titleId}>{title}</span>
-        {toolbarButtons.length > 0 && (
+        {toolbar && (
           <div className="tlWindow__toolbar">
-            {toolbarButtons.map((btn, i) => (
-              <span key={i} className="tlWindow__toolbarButton">
-                <TLChild control={btn} />
-              </span>
-            ))}
+            <TLChild control={toolbar} />
           </div>
         )}
         <button
@@ -314,8 +313,9 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
       <div className="tlWindow__body">
         <TLChild control={child} />
       </div>
-      {actions.length > 0 && (
+      {(actions.length > 0 || buttonBar) && (
         <div className="tlWindow__footer">
+          {buttonBar && <TLChild control={buttonBar} />}
           {actions.map((action, i) => (
             <TLChild key={i} control={action} />
           ))}

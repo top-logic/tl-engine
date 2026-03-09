@@ -22,6 +22,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.ToolbarControl;
+import com.top_logic.layout.react.control.layout.ReactToolbarControl;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.control.overlay.DialogResult;
 import com.top_logic.layout.react.control.overlay.ReactWindowControl;
@@ -149,7 +150,8 @@ public class WindowElement extends CommandScopeElement {
 	}
 
 	@Override
-	protected ToolbarControl createChromeControl(ViewContext context, ReactControl content) {
+	protected ToolbarControl createChromeControl(ViewContext context, ReactControl content,
+			ReactToolbarControl toolbar, ReactToolbarControl buttonBar) {
 		DialogManager mgr = context.getDialogManager();
 		Runnable closeHandler = () -> {
 			if (mgr != null) {
@@ -164,6 +166,8 @@ public class WindowElement extends CommandScopeElement {
 		ReactWindowControl window = new ReactWindowControl(context, title, width, closeHandler, configKey);
 		window.setResizable(_resizable);
 		window.setChild(content);
+		window.setToolbar(toolbar);
+		window.setButtonBar(buttonBar);
 
 		if (!_actions.isEmpty()) {
 			List<ReactControl> actionControls = _actions.stream()

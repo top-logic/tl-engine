@@ -5,34 +5,36 @@
  */
 package com.top_logic.layout.view.element;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.ToolbarControl;
-import com.top_logic.layout.react.control.button.CommandModel;
-import com.top_logic.layout.react.control.button.ReactButtonControl;
+import com.top_logic.layout.react.control.layout.ReactToolbarControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.command.CliqueRegistry;
 import com.top_logic.layout.view.command.CommandPlacement;
 import com.top_logic.layout.view.command.CommandScope;
+import com.top_logic.layout.view.command.ToolbarBuilder;
 import com.top_logic.layout.view.command.ViewCommandModel;
 
 /**
- * Base class for {@link UIElement}s that establish a {@link CommandScope} and synchronize toolbar
- * buttons with a {@link ToolbarControl}.
+ * Base class for {@link UIElement}s that establish a {@link CommandScope} and render placed
+ * commands as structured toolbars.
  *
  * <p>
- * Subclasses implement {@link #createChromeControl(ViewContext, ReactControl)} to create their
- * specific chrome (panel, window, etc.). This class adds, on top of
+ * Subclasses implement
+ * {@link #createChromeControl(ViewContext, ReactControl, ReactToolbarControl, ReactToolbarControl)}
+ * to create their specific chrome (panel, window, etc.). This class adds, on top of
  * {@link CommandCarrierElement}:
  * </p>
  * <ul>
  * <li>Creating a {@link CommandScope} and derived {@link ViewContext}</li>
- * <li>Synchronizing toolbar-placed commands as buttons on the chrome control</li>
+ * <li>Building clique-grouped toolbars for {@link CommandPlacement#TOOLBAR} and
+ * {@link CommandPlacement#BUTTON_BAR} placed commands via {@link ToolbarBuilder}</li>
+ * <li>Rebuilding the toolbars when the set of commands changes (implicit commands)</li>
  * </ul>
  */
 public abstract class CommandScopeElement extends CommandCarrierElement {
@@ -68,15 +70,28 @@ public abstract class CommandScopeElement extends CommandCarrierElement {
 		// Phase 3: Create child content controls.
 		ReactControl content = createContent(derivedContext);
 
-		// Phase 4: Let subclass create the chrome control.
-		ToolbarControl chrome = createChromeControl(derivedContext, content);
+		// Phase 4: Build clique-grouped toolbars from placed commands.
+		CliqueRegistry registry = new CliqueRegistry();
+		ReactToolbarControl toolbar = ToolbarBuilder.build(scope, CommandPlacement.TOOLBAR, registry);
+		ReactToolbarControl buttonBar = ToolbarBuilder.build(scope, CommandPlacement.BUTTON_BAR, registry);
 
-		// Phase 5: Sync toolbar buttons.
-		Map<CommandModel, ReactButtonControl> toolbarButtons = new HashMap<>();
-		syncToolbarButtons(chrome, context, scope, toolbarButtons);
-		scope.addListener(() -> syncToolbarButtons(chrome, context, scope, toolbarButtons));
+		// Phase 5: Let subclass create the chrome control.
+		ToolbarControl chrome = createChromeControl(derivedContext, content, toolbar, buttonBar);
 
-		// Phase 6: Lazy attach on render, cleanup on dispose.
+		// Phase 6: Rebuild toolbars when implicit commands change. Groups are replaced in place so
+		// the existing toolbar controls keep their SSE registration.
+		scope.addListener(() -> {
+			ReactToolbarControl newToolbar = ToolbarBuilder.build(scope, CommandPlacement.TOOLBAR, registry);
+			ReactToolbarControl newButtonBar = ToolbarBuilder.build(scope, CommandPlacement.BUTTON_BAR, registry);
+			if (toolbar != null && newToolbar != null) {
+				toolbar.replaceGroups(newToolbar);
+			}
+			if (buttonBar != null && newButtonBar != null) {
+				buttonBar.replaceGroups(newButtonBar);
+			}
+		});
+
+		// Phase 7: Lazy attach on render, cleanup on dispose.
 		registerLifecycle(commandModels, chrome);
 
 		return chrome;
@@ -89,29 +104,14 @@ public abstract class CommandScopeElement extends CommandCarrierElement {
 	 *        The derived view context (with command scope set).
 	 * @param content
 	 *        The child content control.
-	 * @return The chrome control (panel, window, etc.) that provides toolbar button support.
+	 * @param toolbar
+	 *        The clique-grouped toolbar for {@link CommandPlacement#TOOLBAR} commands, or
+	 *        {@code null} if there are none.
+	 * @param buttonBar
+	 *        The clique-grouped button bar for {@link CommandPlacement#BUTTON_BAR} commands, or
+	 *        {@code null} if there are none.
+	 * @return The chrome control (panel, window, etc.).
 	 */
-	protected abstract ToolbarControl createChromeControl(ViewContext context, ReactControl content);
-
-	private void syncToolbarButtons(ToolbarControl chrome, ViewContext context,
-			CommandScope scope, Map<CommandModel, ReactButtonControl> toolbarButtons) {
-		List<CommandModel> currentCommands = scope.getAllCommands();
-
-		toolbarButtons.entrySet().removeIf(entry -> {
-			if (!currentCommands.contains(entry.getKey())) {
-				chrome.removeToolbarButton(entry.getValue());
-				return true;
-			}
-			return false;
-		});
-
-		for (CommandModel model : currentCommands) {
-			if (!toolbarButtons.containsKey(model)
-				&& CommandModel.PLACEMENT_TOOLBAR.equals(model.getPlacement())) {
-				ReactButtonControl button = new ReactButtonControl(context, model);
-				chrome.addToolbarButton(button);
-				toolbarButtons.put(model, button);
-			}
-		}
-	}
+	protected abstract ToolbarControl createChromeControl(ViewContext context, ReactControl content,
+			ReactToolbarControl toolbar, ReactToolbarControl buttonBar);
 }

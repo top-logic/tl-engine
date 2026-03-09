@@ -15,6 +15,7 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.ToolbarControl;
+import com.top_logic.layout.react.control.layout.ReactToolbarControl;
 import com.top_logic.layout.table.ConfigKey;
 
 /**
@@ -54,6 +55,10 @@ public class ReactWindowControl extends ToolbarControl {
 
 	private static final String ACTIONS = "actions";
 
+	private static final String TOOLBAR = "toolbar";
+
+	private static final String BUTTON_BAR = "buttonBar";
+
 	private static final String CONFIG_KEY_SIZE_SUFFIX = "reactDialogSize";
 
 	private static final String MIN_HEIGHT = "minHeight";
@@ -61,6 +66,10 @@ public class ReactWindowControl extends ToolbarControl {
 	private ReactControl _child;
 
 	private List<ReactControl> _actions = new ArrayList<>();
+
+	private ReactToolbarControl _toolbar;
+
+	private ReactToolbarControl _buttonBar;
 
 	private Runnable _closeHandler;
 
@@ -153,6 +162,26 @@ public class ReactWindowControl extends ToolbarControl {
 		putState(ACTIONS, _actions);
 	}
 
+	/**
+	 * Sets the clique-grouped title-bar toolbar, or {@code null} to remove it.
+	 */
+	public void setToolbar(ReactToolbarControl toolbar) {
+		_toolbar = toolbar;
+		if (toolbar != null) {
+			putState(TOOLBAR, toolbar);
+		}
+	}
+
+	/**
+	 * Sets the clique-grouped footer button bar, or {@code null} to remove it.
+	 */
+	public void setButtonBar(ReactToolbarControl buttonBar) {
+		_buttonBar = buttonBar;
+		if (buttonBar != null) {
+			putState(BUTTON_BAR, buttonBar);
+		}
+	}
+
 	@Override
 	protected void propagateAttach() {
 		super.propagateAttach();
@@ -161,6 +190,12 @@ public class ReactWindowControl extends ToolbarControl {
 		}
 		for (ReactControl action : _actions) {
 			action.attach();
+		}
+		if (_toolbar != null) {
+			_toolbar.attach();
+		}
+		if (_buttonBar != null) {
+			_buttonBar.attach();
 		}
 	}
 
@@ -173,6 +208,12 @@ public class ReactWindowControl extends ToolbarControl {
 		for (ReactControl action : _actions) {
 			action.detach();
 		}
+		if (_toolbar != null) {
+			_toolbar.detach();
+		}
+		if (_buttonBar != null) {
+			_buttonBar.detach();
+		}
 	}
 
 	@Override
@@ -182,6 +223,12 @@ public class ReactWindowControl extends ToolbarControl {
 		}
 		for (ReactControl action : _actions) {
 			action.cleanupTree();
+		}
+		if (_toolbar != null) {
+			_toolbar.cleanupTree();
+		}
+		if (_buttonBar != null) {
+			_buttonBar.cleanupTree();
 		}
 		cleanupToolbarButtons();
 	}

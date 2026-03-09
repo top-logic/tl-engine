@@ -18,6 +18,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.mig.html.layout.LayoutComponent;
@@ -55,7 +56,7 @@ public class DemoReactCounterComponent extends LayoutComponent {
 		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
 
 		if (_counterControl == null) {
-			_counterControl = new DemoCounterControl();
+			_counterControl = new DemoCounterControl(ReactContext.fromDisplayContext(displayContext));
 		}
 
 		_counterControl.write(displayContext, out);
@@ -72,19 +73,26 @@ public class DemoReactCounterComponent extends LayoutComponent {
 		/** State key for the display label. */
 		private static final String LABEL = "label";
 
-		/** Creates a new {@link DemoCounterControl} with default label. */
-		public DemoCounterControl() {
-			this(null);
+		/**
+		 * Creates a new {@link DemoCounterControl} with default label.
+		 *
+		 * @param context
+		 *        The React context for ID allocation and SSE registration.
+		 */
+		public DemoCounterControl(ReactContext context) {
+			this(context, null);
 		}
 
 		/**
 		 * Creates a new {@link DemoCounterControl}.
 		 *
+		 * @param context
+		 *        The React context for ID allocation and SSE registration.
 		 * @param label
 		 *        The display label, or {@code null} for the default.
 		 */
-		public DemoCounterControl(String label) {
-			super(null, "TLCounter");
+		public DemoCounterControl(ReactContext context, String label) {
+			super(context, null, "TLCounter");
 			putState(COUNT, 0);
 			if (label != null) {
 				putState(LABEL, label);

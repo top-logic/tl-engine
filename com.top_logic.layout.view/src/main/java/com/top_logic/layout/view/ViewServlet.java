@@ -32,7 +32,7 @@ import com.top_logic.util.TopLogicServlet;
  * <p>
  * Loads a {@code .view.xml} file via {@link ViewLoader}, creates per-session control trees via
  * {@link UIElement#createControl(ViewContext)}, and renders the initial HTML page using
- * {@link TagWriter} and {@link IReactControl#write(ReactContext, TagWriter)}.
+ * {@link TagWriter} and {@link IReactControl#write(TagWriter)}.
  * </p>
  *
  * <p>
@@ -251,7 +251,7 @@ public class ViewServlet extends TopLogicServlet {
 		// Delegate rendering to the control itself. ReactControl.write() outputs a
 		// declarative div with data-react-module/data-react-state attributes.
 		// The static tl-react-bridge script discovers and mounts these elements.
-		rootControl.write(context, out);
+		rootControl.write(out);
 
 		out.endTag(HTMLConstants.BODY);
 		out.endTag(HTMLConstants.HTML);

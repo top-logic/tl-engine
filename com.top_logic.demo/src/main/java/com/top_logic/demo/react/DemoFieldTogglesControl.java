@@ -6,6 +6,7 @@
 package com.top_logic.demo.react;
 
 import com.top_logic.layout.form.FormField;
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.toggle.ReactToggleButtonControl;
 
@@ -23,28 +24,30 @@ public class DemoFieldTogglesControl extends ReactControl {
 	/**
 	 * Creates a new {@link DemoFieldTogglesControl}.
 	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
 	 * @param field
 	 *        The form field whose properties are toggled.
 	 */
-	public DemoFieldTogglesControl(FormField field) {
-		super(field, "TLFieldToggles");
+	public DemoFieldTogglesControl(ReactContext context, FormField field) {
+		super(context, field, "TLFieldToggles");
 
-		getReactState().put("disabledButton", new ReactToggleButtonControl("Disabled", field.isDisabled(), (ctx, active) -> {
+		getReactState().put("disabledButton", new ReactToggleButtonControl(context, "Disabled", field.isDisabled(), (ctx, active) -> {
 			field.setDisabled(!active);
 			return !active;
 		}));
 
-		getReactState().put("immutableButton", new ReactToggleButtonControl("Immutable", field.isImmutable(), (ctx, active) -> {
+		getReactState().put("immutableButton", new ReactToggleButtonControl(context, "Immutable", field.isImmutable(), (ctx, active) -> {
 			field.setImmutable(!active);
 			return !active;
 		}));
 
-		getReactState().put("mandatoryButton", new ReactToggleButtonControl("Mandatory", field.isMandatory(), (ctx, active) -> {
+		getReactState().put("mandatoryButton", new ReactToggleButtonControl(context, "Mandatory", field.isMandatory(), (ctx, active) -> {
 			field.setMandatory(!active);
 			return !active;
 		}));
 
-		getReactState().put("hiddenButton", new ReactToggleButtonControl("Hidden", !field.isVisible(), (ctx, active) -> {
+		getReactState().put("hiddenButton", new ReactToggleButtonControl(context, "Hidden", !field.isVisible(), (ctx, active) -> {
 			field.setVisible(active);
 			return !active;
 		}));

@@ -57,6 +57,6 @@ public class DemoCounterElement implements UIElement {
 
 	@Override
 	public IReactControl createControl(ViewContext context) {
-		return new DemoCounterControl(_label);
+		return new DemoCounterControl(context, _label);
 	}
 }

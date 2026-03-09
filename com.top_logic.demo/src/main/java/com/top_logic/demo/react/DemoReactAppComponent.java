@@ -15,12 +15,15 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.demo.react.DemoReactCounterComponent.DemoCounterControl;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
+import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.common.ReactFieldListControl;
@@ -37,6 +40,7 @@ import com.top_logic.layout.react.control.overlay.ReactDialogControl;
 import com.top_logic.layout.react.control.overlay.ReactDrawerControl;
 import com.top_logic.layout.react.control.overlay.ReactMenuControl;
 import com.top_logic.layout.react.control.overlay.ReactMenuControl.MenuEntry;
+import com.top_logic.layout.react.control.overlay.ReactSnackbarControl;
 import com.top_logic.layout.react.control.sidebar.CommandItem;
 import com.top_logic.layout.react.control.sidebar.NavigationItem;
 import com.top_logic.layout.react.control.sidebar.ReactSidebarControl;
@@ -71,6 +75,8 @@ public class DemoReactAppComponent extends LayoutComponent {
 
 	private static final String PAGE_SETTINGS = "settings";
 
+	private ReactContext _context;
+
 	private ReactAppShellControl _appShell;
 
 	private ReactBreadcrumbControl _breadcrumb;
@@ -100,25 +106,46 @@ public class DemoReactAppComponent extends LayoutComponent {
 		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
 
 		if (_appShell == null) {
-			initControls();
+			initControls(ReactContext.fromDisplayContext(displayContext));
 		}
 
 		_appShell.write(displayContext, out);
 	}
 
-	private void initControls() {
+	private void initControls(ReactContext ctx) {
+		_context = ctx;
+
+		// Snackbar and error sink for the app shell.
+		ReactSnackbarControl snackbar = new ReactSnackbarControl(ctx, "", "success", () -> { /* no-op */ });
+		ErrorSink errorSink = new ErrorSink() {
+			@Override
+			public void showError(HTMLFragment content) {
+				// Simplified: use toString() for demo purposes.
+			}
+
+			@Override
+			public void showWarning(HTMLFragment content) {
+				// Simplified: no-op for demo.
+			}
+
+			@Override
+			public void showInfo(HTMLFragment content) {
+				// Simplified: no-op for demo.
+			}
+		};
+
 		// Overlay controls (created first so content factories can reference them).
-		_drawer = new ReactDrawerControl("Details", "right", "medium", () -> { /* no-op */ });
+		_drawer = new ReactDrawerControl(ctx, "Details", "right", "medium", () -> { /* no-op */ });
 		_drawer.setChild(createDrawerContent());
 
-		_dialog = new ReactDialogControl("New Task", () -> { /* no-op */ });
+		_dialog = new ReactDialogControl(ctx, "New Task", () -> { /* no-op */ });
 		_dialog.setChild(createDialogContent());
 		_dialog.setActions(List.of(
-			new ReactButtonControl("Cancel", (context) -> {
+			new ReactButtonControl(ctx, "Cancel", (context) -> {
 				_dialog.close();
 				return HandlerResult.DEFAULT_RESULT;
 			}),
-			new ReactButtonControl("Create", (context) -> {
+			new ReactButtonControl(ctx, "Create", (context) -> {
 				_dialog.close();
 				_appShell.showSnackbar("Task created!");
 				return HandlerResult.DEFAULT_RESULT;
@@ -130,25 +157,25 @@ public class DemoReactAppComponent extends LayoutComponent {
 			MenuEntry.separator(),
 			MenuEntry.item("about", "About", "bi bi-info-circle")
 		);
-		_menu = new ReactMenuControl("_", menuItems, this::handleMenuSelect, () -> { /* no-op */ });
+		_menu = new ReactMenuControl(ctx, "_", menuItems, this::handleMenuSelect, () -> { /* no-op */ });
 
 		// Header: AppBar + Breadcrumb in a compact stack, plus invisible overlays (menu, drawer).
-		ReactButtonControl infoButton = new ReactButtonControl("Info", (context) -> {
+		ReactButtonControl infoButton = new ReactButtonControl(ctx, "Info", (context) -> {
 			_drawer.setTitle("App Info");
 			_drawer.open();
 			return HandlerResult.DEFAULT_RESULT;
 		});
-		_moreButton = new ReactButtonControl("More", (context) -> {
+		_moreButton = new ReactButtonControl(ctx, "More", (context) -> {
 			_menu.patchReactState(Map.of("anchorId", _moreButton.getID()));
 			_menu.open();
 			return HandlerResult.DEFAULT_RESULT;
 		});
-		ReactAppBarControl appBar = new ReactAppBarControl("Task Manager", List.of(infoButton, _moreButton));
+		ReactAppBarControl appBar = new ReactAppBarControl(ctx, "Task Manager", List.of(infoButton, _moreButton));
 
-		_breadcrumb = new ReactBreadcrumbControl(
+		_breadcrumb = new ReactBreadcrumbControl(ctx,
 			breadcrumbItems(PAGE_DASHBOARD), this::handleBreadcrumbNavigate);
 
-		ReactControl header = new ReactStackControl("column", "compact", "stretch", false,
+		ReactControl header = new ReactStackControl(ctx, "column", "compact", "stretch", false,
 			List.of(appBar, _breadcrumb, _menu, _drawer));
 
 		// Content: Sidebar.
@@ -160,10 +187,10 @@ public class DemoReactAppComponent extends LayoutComponent {
 			new BottomBarEntry(PAGE_MESSAGES, "Messages", "bi bi-chat-dots"),
 			new BottomBarEntry(PAGE_SETTINGS, "Settings", "bi bi-gear")
 		);
-		_bottomBar = new ReactBottomBarControl(bottomItems, PAGE_DASHBOARD, this::handleBottomBarSelect);
+		_bottomBar = new ReactBottomBarControl(ctx, bottomItems, PAGE_DASHBOARD, this::handleBottomBarSelect);
 
 		// Assemble the shell.
-		_appShell = new ReactAppShellControl(header, _sidebar, _bottomBar);
+		_appShell = new ReactAppShellControl(ctx, header, _sidebar, _bottomBar, snackbar, errorSink);
 	}
 
 	// -- Sidebar --
@@ -183,7 +210,7 @@ public class DemoReactAppComponent extends LayoutComponent {
 		boolean collapsed = PersonalizingExpandable.loadCollapsed("demo.app.collapsed", false);
 
 		return new ReactSidebarControl(
-			items, PAGE_DASHBOARD,
+			_context, items, PAGE_DASHBOARD,
 			collapsed, null,
 			c -> PersonalizingExpandable.saveCollapsed("demo.app.collapsed", c, false),
 			null,
@@ -204,105 +231,115 @@ public class DemoReactAppComponent extends LayoutComponent {
 	// -- Page content factories --
 
 	private ReactControl createDashboardPage() {
+		ReactContext ctx = _context;
+
 		// Card 1: Active Tasks (elevated) with counter and "Complete" header action.
-		ReactButtonControl completeBtn = new ReactButtonControl("Complete", (context) -> {
+		ReactButtonControl completeBtn = new ReactButtonControl(ctx, "Complete", (context) -> {
 			_appShell.showSnackbar("Task completed!");
 			return HandlerResult.DEFAULT_RESULT;
 		});
-		ReactCardControl activeTasksCard = new ReactCardControl(
+		ReactCardControl activeTasksCard = new ReactCardControl(ctx,
 			"Active Tasks", "elevated", "none", List.of(completeBtn),
-			new DemoCounterControl("Tasks"));
+			new DemoCounterControl(ctx, "Tasks"));
 
 		// Card 2: In Review (outlined) with counter.
-		ReactCardControl inReviewCard = new ReactCardControl(
+		ReactCardControl inReviewCard = new ReactCardControl(ctx,
 			"In Review", "outlined", "none", List.of(),
-			new DemoCounterControl("Reviews"));
+			new DemoCounterControl(ctx, "Reviews"));
 
 		// Card 3: Team Notes (outlined) with "Open Details" button.
-		ReactButtonControl detailsBtn = new ReactButtonControl("Open Details", (context) -> {
+		ReactButtonControl detailsBtn = new ReactButtonControl(ctx, "Open Details", (context) -> {
 			_drawer.setTitle("Team Notes");
 			_drawer.open();
 			return HandlerResult.DEFAULT_RESULT;
 		});
-		ReactCardControl teamNotesCard = new ReactCardControl("Team Notes",
-			new ReactFieldListControl(List.of(detailsBtn)));
+		ReactCardControl teamNotesCard = new ReactCardControl(ctx, "Team Notes",
+			new ReactFieldListControl(ctx, List.of(detailsBtn)));
 
 		// Card 4: Quick Add (outlined) with "+ New Task" button that opens the dialog.
-		ReactButtonControl newTaskBtn = new ReactButtonControl("+ New Task", (context) -> {
+		ReactButtonControl newTaskBtn = new ReactButtonControl(ctx, "+ New Task", (context) -> {
 			_dialog.open();
 			return HandlerResult.DEFAULT_RESULT;
 		});
-		ReactCardControl quickAddCard = new ReactCardControl("Quick Add",
-			new ReactFieldListControl(List.of(newTaskBtn)));
+		ReactCardControl quickAddCard = new ReactCardControl(ctx, "Quick Add",
+			new ReactFieldListControl(ctx, List.of(newTaskBtn)));
 
 		// Dashboard grid with the dialog as an invisible overlay child.
-		return new ReactStackControl(List.of(
-			new ReactGridControl("16rem", "default",
+		return new ReactStackControl(ctx, List.of(
+			new ReactGridControl(ctx, "16rem", "default",
 				List.of(activeTasksCard, inReviewCard, teamNotesCard, quickAddCard)),
 			_dialog
 		));
 	}
 
 	private ReactControl createMessagesPage() {
+		ReactContext ctx = _context;
+
 		// Card 1: Feature Request.
-		ReactButtonControl archiveBtn1 = new ReactButtonControl("Archive", (context) -> {
+		ReactButtonControl archiveBtn1 = new ReactButtonControl(ctx, "Archive", (context) -> {
 			_appShell.showSnackbar("Feature request archived!");
 			return HandlerResult.DEFAULT_RESULT;
 		});
-		ReactCardControl featureCard = new ReactCardControl("Feature Request",
-			new ReactFieldListControl(List.of(archiveBtn1)));
+		ReactCardControl featureCard = new ReactCardControl(ctx, "Feature Request",
+			new ReactFieldListControl(ctx, List.of(archiveBtn1)));
 
 		// Card 2: Bug Report #42.
-		ReactButtonControl archiveBtn2 = new ReactButtonControl("Archive", (context) -> {
+		ReactButtonControl archiveBtn2 = new ReactButtonControl(ctx, "Archive", (context) -> {
 			_appShell.showSnackbar("Bug report archived!");
 			return HandlerResult.DEFAULT_RESULT;
 		});
-		ReactCardControl bugCard = new ReactCardControl("Bug Report #42",
-			new ReactFieldListControl(List.of(archiveBtn2)));
+		ReactCardControl bugCard = new ReactCardControl(ctx, "Bug Report #42",
+			new ReactFieldListControl(ctx, List.of(archiveBtn2)));
 
-		return new ReactStackControl(List.of(featureCard, bugCard));
+		return new ReactStackControl(ctx, List.of(featureCard, bugCard));
 	}
 
 	private ReactControl createSettingsPage() {
+		ReactContext ctx = _context;
+
 		List<ReactControl> buttons = new ArrayList<>();
-		buttons.add(new ReactButtonControl("Clear Cache", (context) -> {
+		buttons.add(new ReactButtonControl(ctx, "Clear Cache", (context) -> {
 			_appShell.showSnackbar("Cache cleared!");
 			return HandlerResult.DEFAULT_RESULT;
 		}));
-		buttons.add(new ReactButtonControl("Reset Preferences", (context) -> {
+		buttons.add(new ReactButtonControl(ctx, "Reset Preferences", (context) -> {
 			_appShell.showSnackbar("Preferences reset!");
 			return HandlerResult.DEFAULT_RESULT;
 		}));
-		buttons.add(new ReactButtonControl("Export Data", (context) -> {
+		buttons.add(new ReactButtonControl(ctx, "Export Data", (context) -> {
 			_appShell.showSnackbar("Data exported!");
 			return HandlerResult.DEFAULT_RESULT;
 		}));
-		return new ReactFieldListControl("Settings", buttons);
+		return new ReactFieldListControl(ctx, "Settings", buttons);
 	}
 
 	// -- Overlay content --
 
 	private ReactControl createDrawerContent() {
+		ReactContext ctx = _context;
+
 		List<ReactControl> items = new ArrayList<>();
-		items.add(new ReactButtonControl("Task Manager v1.0", (context) -> {
+		items.add(new ReactButtonControl(ctx, "Task Manager v1.0", (context) -> {
 			return HandlerResult.DEFAULT_RESULT;
 		}));
-		items.add(new ReactButtonControl("Close", (context) -> {
+		items.add(new ReactButtonControl(ctx, "Close", (context) -> {
 			_drawer.close();
 			return HandlerResult.DEFAULT_RESULT;
 		}));
-		return new ReactFieldListControl("Information", items);
+		return new ReactFieldListControl(ctx, "Information", items);
 	}
 
 	private ReactControl createDialogContent() {
+		ReactContext ctx = _context;
+
 		List<ReactControl> fields = new ArrayList<>();
-		fields.add(new ReactButtonControl("Task Name: (placeholder)", (context) -> {
+		fields.add(new ReactButtonControl(ctx, "Task Name: (placeholder)", (context) -> {
 			return HandlerResult.DEFAULT_RESULT;
 		}));
-		fields.add(new ReactButtonControl("Priority: Normal", (context) -> {
+		fields.add(new ReactButtonControl(ctx, "Priority: Normal", (context) -> {
 			return HandlerResult.DEFAULT_RESULT;
 		}));
-		return new ReactFieldListControl("New Task Details", fields);
+		return new ReactFieldListControl(ctx, "New Task Details", fields);
 	}
 
 	// -- Handlers --

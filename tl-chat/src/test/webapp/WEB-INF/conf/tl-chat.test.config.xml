@@ -8,6 +8,7 @@
 		<config config:interface="test.com.top_logic.basic.TestComment$Config">
 			<ignore>
 				<entry value="com.top_logic.ai.chat.api.messages" />
+				<entry value="com.top_logic.ai.chat.layout.ReviewNotification" />
 			</ignore>
 		</config>
 	</configs>

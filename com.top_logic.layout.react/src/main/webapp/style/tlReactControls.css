@@ -2806,6 +2806,60 @@ button.tlMenu__item--disabled:hover {
 	outline-offset: 1px;
 }
 
+/* --- TLToolbar ------------------------------------------------------------- */
+
+.tlToolbar {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	flex-shrink: 0;
+}
+
+.tlToolbar__separator {
+	display: block;
+	width: 1px;
+	height: 1rem;
+	background: var(--border-subtle);
+	flex-shrink: 0;
+}
+
+.tlToolbar__group--inline {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-02);
+}
+
+.tlToolbar__group--menu {
+	position: relative;
+}
+
+.tlToolbar__menuTrigger {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	height: 2rem;
+	padding: 0 var(--spacing-03);
+	border: none;
+	border-radius: var(--corner-radius);
+	background: transparent;
+	box-shadow: inset 0px 0px 0px 2px var(--button-secondary);
+	color: var(--button-secondary);
+	font-family: var(--font-family);
+	font-weight: bold;
+	font-size: var(--heading-compact-02-font-size);
+	cursor: pointer;
+	white-space: nowrap;
+}
+
+button.tlToolbar__menuTrigger:hover {
+	background: var(--layer-hover);
+}
+
+button.tlToolbar__menuTrigger:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: 1px;
+}
+
 .tlReactCheckbox:disabled,
 .tlReactCheckbox--immutable {
 	opacity: 0.6;
@@ -3973,3 +4027,77 @@ button.tlMenu__item--disabled:hover {
 }
 .tlDashboard__tile--dropBefore::before { left: -10px; }
 .tlDashboard__tile--dropAfter::after { right: -10px; }
+
+button.tlToolbar__menuTrigger[aria-expanded="true"] {
+	background: var(--layer-active, var(--layer-hover));
+}
+
+.tlToolbar__chevron {
+	width: 0.75rem;
+	height: 0.75rem;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+	flex-shrink: 0;
+}
+
+.tlToolbar__dropdown {
+	position: absolute;
+	top: calc(100% + var(--spacing-02));
+	right: 0;
+	z-index: 10000;
+	min-width: 10rem;
+	background: var(--layer-01, #fff);
+	border: 1px solid var(--border-subtle);
+	border-radius: var(--border-radius-02, 4px);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	padding: var(--spacing-02) 0;
+}
+
+.tlToolbar__dropdownItem {
+	padding: var(--spacing-03) var(--spacing-04);
+}
+
+.tlToolbar__dropdownSeparator {
+	border: none;
+	border-top: 1px solid var(--border-subtle);
+	margin: var(--spacing-02) var(--spacing-04);
+}
+
+/* --- TLButton enhancements ------------------------------------------------- */
+
+.tlReactButton--iconOnly {
+	width: 2rem;
+	padding: 0;
+}
+
+.tlReactButton__image {
+	font-size: 1rem;
+	line-height: 1;
+	flex-shrink: 0;
+}
+
+.tlReactButton__label {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* Icon + label gap */
+.tlReactButton__image + .tlReactButton__label {
+	margin-left: var(--spacing-02);
+}
+
+/* --- TLPanel button bar ---------------------------------------------------- */
+
+.tlPanel__buttonBar {
+	display: flex;
+	justify-content: flex-end;
+	align-items: center;
+	gap: var(--spacing-03);
+	padding: var(--spacing-03) var(--spacing-04);
+	border-top: 1px solid var(--border-subtle);
+	flex-shrink: 0;
+}

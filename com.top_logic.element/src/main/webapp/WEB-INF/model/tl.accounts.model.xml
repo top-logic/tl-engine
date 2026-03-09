@@ -330,6 +330,14 @@
 					navigate="true"
 					type="GroupMember"
 				/>
+				<property name="mfaSecret"
+					type="tl.core:Password"
+				>
+					<annotations>
+						<delete-protected/>
+						<visibility value="hidden"/>
+					</annotations>
+				</property>
 			</attributes>
 		</class>
 		<class name="Role">

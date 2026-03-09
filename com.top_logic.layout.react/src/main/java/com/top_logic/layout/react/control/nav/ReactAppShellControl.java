@@ -7,6 +7,9 @@ package com.top_logic.layout.react.control.nav;
 
 import java.util.Map;
 
+import com.top_logic.layout.react.DefaultReactDisplayContext;
+import com.top_logic.layout.react.ReactDisplayContext;
+import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.overlay.ReactSnackbarControl;
 
@@ -55,6 +58,8 @@ public class ReactAppShellControl extends ReactControl {
 
 	private final ReactSnackbarControl _snackbar;
 
+	private final ErrorSink _errorSink;
+
 	/**
 	 * Creates an application shell with all three slots.
 	 *
@@ -71,6 +76,23 @@ public class ReactAppShellControl extends ReactControl {
 		_content = content;
 		_footer = footer;
 		_snackbar = new ReactSnackbarControl("", "success", () -> { /* no-op, auto-hides */ });
+
+		_errorSink = new ErrorSink() {
+			@Override
+			public void showError(String message) {
+				showSnackbar(message, "error");
+			}
+
+			@Override
+			public void showWarning(String message) {
+				showSnackbar(message, "warning");
+			}
+
+			@Override
+			public void showInfo(String message) {
+				showSnackbar(message, "info");
+			}
+		};
 
 		if (header != null) {
 			putState(HEADER, header);
@@ -102,6 +124,13 @@ public class ReactAppShellControl extends ReactControl {
 	 */
 	public void showSnackbar(String message, String variant) {
 		_snackbar.patchReactState(Map.of("message", message, "variant", variant, "visible", Boolean.TRUE));
+	}
+
+	@Override
+	protected void onBeforeWrite(ReactDisplayContext context) {
+		if (context instanceof DefaultReactDisplayContext defaultContext) {
+			defaultContext.setErrorSink(_errorSink);
+		}
 	}
 
 	@Override

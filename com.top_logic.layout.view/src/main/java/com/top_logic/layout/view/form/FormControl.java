@@ -14,6 +14,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.I18NConstants;
@@ -72,13 +73,15 @@ public class FormControl extends ReactControl {
 	/**
 	 * Creates a new {@link FormControl}.
 	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
 	 * @param initialObject
 	 *        The initial object to display, may be {@code null}.
 	 * @param noModelMessage
 	 *        The message to display when no object is available.
 	 */
-	public FormControl(TLObject initialObject, String noModelMessage) {
-		super(initialObject, "TLFormLayout");
+	public FormControl(ReactContext context, TLObject initialObject, String noModelMessage) {
+		super(context, initialObject, "TLFormLayout");
 		_currentObject = initialObject;
 		_noModelMessage = noModelMessage;
 		_editMode = false;

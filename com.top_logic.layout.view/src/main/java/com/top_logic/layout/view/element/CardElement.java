@@ -99,10 +99,10 @@ public class CardElement extends ContainerElement {
 			List<ReactControl> reactChildren = childControls.stream()
 				.map(c -> (ReactControl) c)
 				.collect(Collectors.toList());
-			content = new ReactStackControl(reactChildren);
+			content = new ReactStackControl(context, reactChildren);
 		}
 
 		String title = _title != null && !_title.isEmpty() ? _title : null;
-		return new ReactCardControl(title, _variant, _padding, List.of(), content);
+		return new ReactCardControl(context, title, _variant, _padding, List.of(), content);
 	}
 }

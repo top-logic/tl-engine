@@ -112,7 +112,7 @@ public class ButtonElement implements UIElement {
 	public IReactControl createControl(ViewContext context) {
 		if (_command == null || _commandConfig == null) {
 			// No command configured - render a static button.
-			return new ReactButtonControl("", ctx -> HandlerResult.DEFAULT_RESULT);
+			return new ReactButtonControl(context, "", ctx -> HandlerResult.DEFAULT_RESULT);
 		}
 
 		// Resolve input channel.
@@ -133,7 +133,7 @@ public class ButtonElement implements UIElement {
 		String label = resolveLabel(_commandConfig.getLabel());
 
 		// Create control.
-		ReactButtonControl control = new ReactButtonControl(label,
+		ReactButtonControl control = new ReactButtonControl(context, label,
 			ctx -> model.executeCommand(ctx));
 		control.setDisabled(!model.getExecutableState().isExecutable());
 

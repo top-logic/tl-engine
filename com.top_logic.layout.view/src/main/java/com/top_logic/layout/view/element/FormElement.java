@@ -122,7 +122,7 @@ public class FormElement extends ContainerElement {
 		String noModelMessage = Resources.getInstance().getString(messageKey);
 
 		// 4. Create FormControl with initial object.
-		FormControl formControl = new FormControl(initialObject, noModelMessage);
+		FormControl formControl = new FormControl(context, initialObject, noModelMessage);
 
 		// 5. Wire channels.
 		formControl.setInputChannel(inputChannel);

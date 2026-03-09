@@ -7,6 +7,7 @@ package com.top_logic.layout.view.form;
 
 import java.util.Map;
 
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.form.ViewFieldValueChanged.ValueCallback;
@@ -31,13 +32,15 @@ public class ViewCheckboxControl extends ReactControl {
 	/**
 	 * Creates a new {@link ViewCheckboxControl}.
 	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
 	 * @param value
 	 *        The initial boolean value.
 	 * @param editable
 	 *        Whether the field is editable.
 	 */
-	public ViewCheckboxControl(boolean value, boolean editable) {
-		super(null, "TLCheckbox");
+	public ViewCheckboxControl(ReactContext context, boolean value, boolean editable) {
+		super(context, null, "TLCheckbox");
 		putState(VALUE, Boolean.valueOf(value));
 		putState(EDITABLE, Boolean.valueOf(editable));
 	}

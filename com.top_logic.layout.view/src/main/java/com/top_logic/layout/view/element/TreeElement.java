@@ -264,7 +264,7 @@ public class TreeElement implements UIElement {
 			new DefaultSingleSelectionModel<>(SelectionModelOwner.NO_OWNER);
 
 		// 5. Create ReactTreeControl.
-		ReactTreeControl treeControl = new ReactTreeControl(treeModel, selectionModel, _nodeContentProvider);
+		ReactTreeControl treeControl = new ReactTreeControl(context, treeModel, selectionModel, _nodeContentProvider);
 
 		// 6. Wire selection channel.
 		ChannelRef selectionRef = _config.getSelection();

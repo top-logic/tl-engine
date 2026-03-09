@@ -6,6 +6,7 @@
 package com.top_logic.layout.view;
 
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.CommandScope;
@@ -85,6 +86,20 @@ public interface ViewContext extends ReactContext {
 	 *         path, and channels.
 	 */
 	ViewContext withCommandScope(CommandScope scope);
+
+	/**
+	 * Creates a derived context with the given {@link ErrorSink}.
+	 *
+	 * <p>
+	 * Called by the app shell element to make its snackbar error reporting available to all
+	 * descendant elements.
+	 * </p>
+	 *
+	 * @param errorSink
+	 *        The error sink for the scope.
+	 * @return A new context with the given error sink.
+	 */
+	ViewContext withErrorSink(ErrorSink errorSink);
 
 	/**
 	 * Registers a channel in this context.

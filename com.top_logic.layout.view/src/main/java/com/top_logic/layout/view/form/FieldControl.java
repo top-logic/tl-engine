@@ -7,6 +7,7 @@ package com.top_logic.layout.view.form;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.model.TLObject;
@@ -27,6 +28,8 @@ import com.top_logic.util.Resources;
  */
 public class FieldControl {
 
+	private final ReactContext _context;
+
 	private final FormControl _form;
 
 	private final String _attributeName;
@@ -44,6 +47,8 @@ public class FieldControl {
 	/**
 	 * Creates a new {@link FieldControl}.
 	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
 	 * @param form
 	 *        The enclosing form control.
 	 * @param attributeName
@@ -53,8 +58,9 @@ public class FieldControl {
 	 * @param forceReadonly
 	 *        Whether the field should always be read-only regardless of form edit mode.
 	 */
-	public FieldControl(FormControl form, String attributeName, ResKey labelOverride,
+	public FieldControl(ReactContext context, FormControl form, String attributeName, ResKey labelOverride,
 			boolean forceReadonly) {
+		_context = context;
 		_form = form;
 		_attributeName = attributeName;
 		_labelOverride = labelOverride;
@@ -75,8 +81,8 @@ public class FieldControl {
 		TLObject current = _form.getCurrentObject();
 		if (current == null) {
 			// No object selected yet — create a disabled placeholder field.
-			_innerControl = new ViewTextInputControl(null, false);
-			_chrome = new ReactFormFieldChromeControl(_attributeName, false, false, null, null, null,
+			_innerControl = new ViewTextInputControl(_context, null, false);
+			_chrome = new ReactFormFieldChromeControl(_context, _attributeName, false, false, null, null, null,
 				false, true, _innerControl);
 			return _chrome;
 		}
@@ -86,11 +92,11 @@ public class FieldControl {
 		boolean editable = _form.isEditMode() && !_forceReadonly;
 		Object value = current.tValue(_resolvedPart);
 
-		_innerControl = FieldControlFactory.createFieldControl(_resolvedPart, value, editable);
+		_innerControl = FieldControlFactory.createFieldControl(_context, _resolvedPart, value, editable);
 		setupValueCallback();
 
 		boolean mandatory = _resolvedPart.isMandatory();
-		_chrome = new ReactFormFieldChromeControl(label, mandatory, false, null, null, null,
+		_chrome = new ReactFormFieldChromeControl(_context, label, mandatory, false, null, null, null,
 			false, true, _innerControl);
 
 		return _chrome;
@@ -126,7 +132,7 @@ public class FieldControl {
 			boolean editable = _form.isEditMode() && !_forceReadonly;
 			Object value = current.tValue(_resolvedPart);
 
-			_innerControl = FieldControlFactory.createFieldControl(_resolvedPart, value, editable);
+			_innerControl = FieldControlFactory.createFieldControl(_context, _resolvedPart, value, editable);
 			setupValueCallback();
 
 			_chrome.setLabel(label);

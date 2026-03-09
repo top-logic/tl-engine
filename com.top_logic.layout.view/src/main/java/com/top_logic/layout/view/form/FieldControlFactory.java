@@ -6,6 +6,7 @@
 package com.top_logic.layout.view.form;
 
 import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLStructuredTypePart;
@@ -23,6 +24,8 @@ public class FieldControlFactory {
 	/**
 	 * Creates the appropriate input control for the given attribute.
 	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
 	 * @param part
 	 *        The model attribute.
 	 * @param value
@@ -31,7 +34,7 @@ public class FieldControlFactory {
 	 *        Whether the field should be editable.
 	 * @return A React control for the field input widget.
 	 */
-	public static ReactControl createFieldControl(TLStructuredTypePart part, Object value,
+	public static ReactControl createFieldControl(ReactContext context, TLStructuredTypePart part, Object value,
 			boolean editable) {
 		TLType type = part.getType();
 
@@ -39,41 +42,41 @@ public class FieldControlFactory {
 			TLPrimitive primitive = (TLPrimitive) type;
 			switch (primitive.getKind()) {
 				case BOOLEAN:
-					return createCheckbox(value, editable);
+					return createCheckbox(context, value, editable);
 				case INT:
-					return createNumberInput(value, editable, 0);
+					return createNumberInput(context, value, editable, 0);
 				case FLOAT:
-					return createNumberInput(value, editable, 2);
+					return createNumberInput(context, value, editable, 2);
 				case DATE:
-					return createDatePicker(value, editable);
+					return createDatePicker(context, value, editable);
 				case STRING:
 				case TRISTATE:
 				case BINARY:
 				case CUSTOM:
 				default:
-					return createTextInput(value, editable);
+					return createTextInput(context, value, editable);
 			}
 		}
 
 		// Reference types and unknown: display as text for now.
-		return createTextInput(asLabel(value), editable);
+		return createTextInput(context, asLabel(value), editable);
 	}
 
-	private static ReactControl createTextInput(Object value, boolean editable) {
-		return new ViewTextInputControl(value != null ? value.toString() : "", editable);
+	private static ReactControl createTextInput(ReactContext context, Object value, boolean editable) {
+		return new ViewTextInputControl(context, value != null ? value.toString() : "", editable);
 	}
 
-	private static ReactControl createCheckbox(Object value, boolean editable) {
-		return new ViewCheckboxControl(Boolean.TRUE.equals(value), editable);
+	private static ReactControl createCheckbox(ReactContext context, Object value, boolean editable) {
+		return new ViewCheckboxControl(context, Boolean.TRUE.equals(value), editable);
 	}
 
-	private static ReactControl createNumberInput(Object value, boolean editable, int decimals) {
-		return new ViewNumberInputControl(value instanceof Number ? (Number) value : null,
+	private static ReactControl createNumberInput(ReactContext context, Object value, boolean editable, int decimals) {
+		return new ViewNumberInputControl(context, value instanceof Number ? (Number) value : null,
 			editable, decimals);
 	}
 
-	private static ReactControl createDatePicker(Object value, boolean editable) {
-		return new ViewDatePickerControl(value, editable);
+	private static ReactControl createDatePicker(ReactContext context, Object value, boolean editable) {
+		return new ViewDatePickerControl(context, value, editable);
 	}
 
 	private static String asLabel(Object value) {

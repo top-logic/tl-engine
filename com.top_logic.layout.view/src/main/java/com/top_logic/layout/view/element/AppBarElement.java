@@ -85,6 +85,6 @@ public class AppBarElement implements UIElement {
 
 	@Override
 	public IReactControl createControl(ViewContext context) {
-		return new ReactAppBarControl(_title, _variant, _color, null, List.of());
+		return new ReactAppBarControl(context, _title, _variant, _color, null, List.of());
 	}
 }

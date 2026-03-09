@@ -8,6 +8,7 @@ package com.top_logic.layout.view.form;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.form.ViewFieldValueChanged.ValueCallback;
@@ -36,6 +37,8 @@ public class ViewSelectControl extends ReactControl {
 	/**
 	 * Creates a new {@link ViewSelectControl}.
 	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
 	 * @param value
 	 *        The initially selected value, may be {@code null}.
 	 * @param editable
@@ -44,8 +47,8 @@ public class ViewSelectControl extends ReactControl {
 	 *        The list of option maps. Each map must contain {@code "value"} and {@code "label"}
 	 *        entries.
 	 */
-	public ViewSelectControl(Object value, boolean editable, List<Map<String, Object>> options) {
-		super(null, "TLSelect");
+	public ViewSelectControl(ReactContext context, Object value, boolean editable, List<Map<String, Object>> options) {
+		super(context, null, "TLSelect");
 		putState(VALUE, value);
 		putState(EDITABLE, Boolean.valueOf(editable));
 		putState(OPTIONS, options);

@@ -81,6 +81,6 @@ public class GridElement extends ContainerElement {
 			.map(c -> (ReactControl) c)
 			.collect(Collectors.toList());
 
-		return new ReactGridControl(_minColumnWidth, _gap, children);
+		return new ReactGridControl(context, _minColumnWidth, _gap, children);
 	}
 }

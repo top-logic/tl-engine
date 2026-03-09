@@ -93,7 +93,7 @@ public class FieldElement implements UIElement {
 
 		// 2. Create FieldControl and register with form.
 		FieldControl fieldControl =
-			new FieldControl(formControl, _config.getAttribute(), _config.getLabel(), _config.getReadonly());
+			new FieldControl(context, formControl, _config.getAttribute(), _config.getLabel(), _config.getReadonly());
 		formControl.registerFieldControl(fieldControl);
 
 		// 3. Create the chrome-wrapped control.

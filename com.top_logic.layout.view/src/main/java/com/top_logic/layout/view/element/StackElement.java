@@ -97,6 +97,6 @@ public class StackElement extends ContainerElement {
 			.map(c -> (ReactControl) c)
 			.collect(Collectors.toList());
 
-		return new ReactStackControl(_direction, _gap, _align, false, reactChildren);
+		return new ReactStackControl(context, _direction, _gap, _align, false, reactChildren);
 	}
 }

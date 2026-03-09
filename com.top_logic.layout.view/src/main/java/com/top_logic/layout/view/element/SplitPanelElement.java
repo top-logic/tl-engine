@@ -162,7 +162,7 @@ public class SplitPanelElement implements UIElement {
 		Map<Integer, Boolean> persistedCollapse = loadCollapseStates(key);
 
 		Orientation orientation = "vertical".equals(_orientation) ? Orientation.VERTICAL : Orientation.HORIZONTAL;
-		ReactSplitPanelControl splitPanel = new ReactSplitPanelControl(orientation, _resizable,
+		ReactSplitPanelControl splitPanel = new ReactSplitPanelControl(context, orientation, _resizable,
 			sizes -> savePaneSizes(key, sizes),
 			(idx, collapsed) -> saveCollapseState(key, idx, collapsed));
 
@@ -288,7 +288,7 @@ public class SplitPanelElement implements UIElement {
 		List<ReactControl> children = elements.stream()
 			.map(e -> (ReactControl) e.createControl(context))
 			.collect(Collectors.toList());
-		return new ReactStackControl(children);
+		return new ReactStackControl(context, children);
 	}
 
 	private record PaneEntry(float _size, String _unit, int _minSize, List<UIElement> _children) {

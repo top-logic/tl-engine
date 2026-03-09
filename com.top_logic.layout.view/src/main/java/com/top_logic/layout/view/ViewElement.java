@@ -112,6 +112,6 @@ public class ViewElement implements UIElement {
 		List<ReactControl> children = _content.stream()
 			.map(e -> (ReactControl) e.createControl(context))
 			.collect(Collectors.toList());
-		return new ReactStackControl(children);
+		return new ReactStackControl(context, children);
 	}
 }

@@ -210,10 +210,10 @@ public class TableElement implements UIElement {
 			new ObjectTableModel(columnNames, tableConfig, new ArrayList<>(rows));
 
 		// 6. Create cell provider.
-		ReactCellControlProvider cellProvider = createCellProvider();
+		ReactCellControlProvider cellProvider = createCellProvider(context);
 
 		// 7. Create ReactTableControl.
-		ReactTableControl tableControl = new ReactTableControl(tableModel, cellProvider);
+		ReactTableControl tableControl = new ReactTableControl(context, tableModel, cellProvider);
 
 		// 8. Wire selection channel.
 		ChannelRef selectionRef = _config.getSelection();
@@ -277,9 +277,9 @@ public class TableElement implements UIElement {
 		return types;
 	}
 
-	private ReactCellControlProvider createCellProvider() {
+	private ReactCellControlProvider createCellProvider(ViewContext context) {
 		return (rowObject, columnName, cellValue) -> {
-			return new ReactTextCellControl(MetaLabelProvider.INSTANCE.getLabel(cellValue));
+			return new ReactTextCellControl(context, MetaLabelProvider.INSTANCE.getLabel(cellValue));
 		};
 	}
 }

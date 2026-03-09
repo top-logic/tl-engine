@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ViewChannel;
@@ -34,6 +35,8 @@ public class DefaultViewContext implements ViewContext {
 
 	private final CommandScope _commandScope;
 
+	private final ErrorSink _errorSink;
+
 	private FormControl _formControl;
 
 	/**
@@ -44,22 +47,24 @@ public class DefaultViewContext implements ViewContext {
 	 *        infrastructure.
 	 */
 	public DefaultViewContext(ReactContext reactContext) {
-		this(reactContext, "view", new HashMap<>(), null, null);
+		this(reactContext, "view", new HashMap<>(), null, null, null);
 	}
 
 	private DefaultViewContext(ReactContext reactContext, String personalizationPath,
-			Map<String, ViewChannel> channels, CommandScope commandScope, FormControl formControl) {
+			Map<String, ViewChannel> channels, CommandScope commandScope, FormControl formControl,
+			ErrorSink errorSink) {
 		_reactContext = reactContext;
 		_personalizationPath = personalizationPath;
 		_channels = channels;
 		_commandScope = commandScope;
 		_formControl = formControl;
+		_errorSink = errorSink;
 	}
 
 	@Override
 	public ViewContext childContext(String segment) {
 		return new DefaultViewContext(_reactContext, _personalizationPath + "." + segment, _channels, _commandScope,
-			_formControl);
+			_formControl, _errorSink);
 	}
 
 	@Override
@@ -84,7 +89,18 @@ public class DefaultViewContext implements ViewContext {
 
 	@Override
 	public ViewContext withCommandScope(CommandScope scope) {
-		return new DefaultViewContext(_reactContext, _personalizationPath, _channels, scope, _formControl);
+		return new DefaultViewContext(_reactContext, _personalizationPath, _channels, scope, _formControl, _errorSink);
+	}
+
+	@Override
+	public ViewContext withErrorSink(ErrorSink errorSink) {
+		return new DefaultViewContext(_reactContext, _personalizationPath, _channels,
+			_commandScope, _formControl, errorSink);
+	}
+
+	@Override
+	public ErrorSink getErrorSink() {
+		return _errorSink;
 	}
 
 	@Override

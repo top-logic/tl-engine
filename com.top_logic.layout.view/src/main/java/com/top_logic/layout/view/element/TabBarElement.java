@@ -125,7 +125,7 @@ public class TabBarElement implements UIElement {
 			tabDefs.add(new TabDefinition(entry._id, entry._label, () -> createContent(entry._children, context)));
 		}
 		String activeTab = _activeTab != null && !_activeTab.isEmpty() ? _activeTab : null;
-		return new ReactTabBarControl(null, tabDefs, activeTab);
+		return new ReactTabBarControl(context, null, tabDefs, activeTab);
 	}
 
 	private static ReactControl createContent(List<UIElement> elements, ViewContext context) {
@@ -135,7 +135,7 @@ public class TabBarElement implements UIElement {
 		List<ReactControl> children = elements.stream()
 			.map(e -> (ReactControl) e.createControl(context))
 			.collect(Collectors.toList());
-		return new ReactStackControl(children);
+		return new ReactStackControl(context, children);
 	}
 
 	private record TabEntry(String _id, String _label, List<UIElement> _children) {

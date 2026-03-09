@@ -233,7 +233,7 @@ public class SidebarElement implements UIElement {
 			sidebarItems.add(itemElement.createSidebarItem(context));
 		}
 		String activeItem = _activeItem != null && !_activeItem.isEmpty() ? _activeItem : null;
-		return new ReactSidebarControl(
+		return new ReactSidebarControl(context,
 			sidebarItems, activeItem,
 			collapsed, groupStates,
 			c -> PersonalizingExpandable.saveCollapsed(key + ".collapsed", c, _collapsed),
@@ -289,6 +289,6 @@ public class SidebarElement implements UIElement {
 		List<ReactControl> children = elements.stream()
 			.map(e -> (ReactControl) e.createControl(context))
 			.collect(Collectors.toList());
-		return new ReactStackControl(children);
+		return new ReactStackControl(context, children);
 	}
 }

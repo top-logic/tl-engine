@@ -5,19 +5,29 @@
  */
 package com.top_logic.layout.view.element;
 
+import java.io.IOException;
+import java.io.StringWriter;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.basic.DefaultDisplayContext;
+import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.react.control.nav.ReactAppShellControl;
+import com.top_logic.layout.react.control.overlay.ReactSnackbarControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 
@@ -93,11 +103,55 @@ public class AppShellElement implements UIElement {
 
 	@Override
 	public IReactControl createControl(ViewContext context) {
-		ReactControl header = createSlotControl(context, _header);
-		ReactControl content = createSlotControl(context, _content);
-		ReactControl footer = createSlotControl(context, _footer);
+		// Create snackbar and error sink first.
+		ReactSnackbarControl snackbar = new ReactSnackbarControl(context, "", "success", () -> { /* no-op */ });
+		ErrorSink errorSink = createErrorSink(snackbar);
 
-		return new ReactAppShellControl(header, content, footer);
+		// Derive context with error sink for children.
+		ViewContext scopedContext = context.withErrorSink(errorSink);
+
+		// Create slot controls in the scoped context.
+		ReactControl header = createSlotControl(scopedContext, _header);
+		ReactControl content = createSlotControl(scopedContext, _content);
+		ReactControl footer = createSlotControl(scopedContext, _footer);
+
+		return new ReactAppShellControl(context, header, content, footer, snackbar, errorSink);
+	}
+
+	private static ErrorSink createErrorSink(ReactSnackbarControl snackbar) {
+		return new ErrorSink() {
+			@Override
+			public void showError(HTMLFragment content) {
+				showSnackbar(renderToHtml(content), "error");
+			}
+
+			@Override
+			public void showWarning(HTMLFragment content) {
+				showSnackbar(renderToHtml(content), "warning");
+			}
+
+			@Override
+			public void showInfo(HTMLFragment content) {
+				showSnackbar(renderToHtml(content), "info");
+			}
+
+			private void showSnackbar(String htmlContent, String variant) {
+				snackbar.patchReactState(
+					Map.of("content", htmlContent, "variant", variant, "visible", Boolean.TRUE));
+			}
+		};
+	}
+
+	private static String renderToHtml(HTMLFragment fragment) {
+		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext();
+		StringWriter buffer = new StringWriter();
+		try {
+			TagWriter out = new TagWriter(buffer);
+			fragment.write(displayContext, out);
+		} catch (IOException ex) {
+			Logger.error("Failed to render info service message.", ex, AppShellElement.class);
+		}
+		return buffer.toString();
 	}
 
 	private static ReactControl createSlotControl(ViewContext context, List<UIElement> elements) {
@@ -110,7 +164,7 @@ public class AppShellElement implements UIElement {
 		List<ReactControl> children = elements.stream()
 			.map(e -> (ReactControl) e.createControl(context))
 			.collect(Collectors.toList());
-		return new ReactStackControl(children);
+		return new ReactStackControl(context, children);
 	}
 
 	private static List<UIElement> instantiateAll(InstantiationContext context,

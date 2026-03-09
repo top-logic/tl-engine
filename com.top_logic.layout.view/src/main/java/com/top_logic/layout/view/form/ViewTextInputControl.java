@@ -7,6 +7,7 @@ package com.top_logic.layout.view.form;
 
 import java.util.Map;
 
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.form.ViewFieldValueChanged.ValueCallback;
@@ -31,13 +32,15 @@ public class ViewTextInputControl extends ReactControl {
 	/**
 	 * Creates a new {@link ViewTextInputControl}.
 	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
 	 * @param value
 	 *        The initial text value, may be {@code null}.
 	 * @param editable
 	 *        Whether the field is editable.
 	 */
-	public ViewTextInputControl(String value, boolean editable) {
-		super(null, "TLTextInput");
+	public ViewTextInputControl(ReactContext context, String value, boolean editable) {
+		super(context, null, "TLTextInput");
 		putState(VALUE, value);
 		putState(EDITABLE, Boolean.valueOf(editable));
 	}

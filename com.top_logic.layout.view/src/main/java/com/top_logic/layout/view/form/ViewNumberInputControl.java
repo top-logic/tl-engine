@@ -8,6 +8,7 @@ package com.top_logic.layout.view.form;
 import java.util.Collections;
 import java.util.Map;
 
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.form.ViewFieldValueChanged.ValueCallback;
@@ -36,6 +37,8 @@ public class ViewNumberInputControl extends ReactControl {
 	/**
 	 * Creates a new {@link ViewNumberInputControl}.
 	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
 	 * @param value
 	 *        The initial numeric value, may be {@code null}.
 	 * @param editable
@@ -44,8 +47,8 @@ public class ViewNumberInputControl extends ReactControl {
 	 *        The number of decimal places. When greater than zero, a {@code "decimal"} config key
 	 *        is sent to the React component.
 	 */
-	public ViewNumberInputControl(Number value, boolean editable, int decimalPlaces) {
-		super(null, "TLNumberInput");
+	public ViewNumberInputControl(ReactContext context, Number value, boolean editable, int decimalPlaces) {
+		super(context, null, "TLNumberInput");
 		putState(VALUE, value);
 		putState(EDITABLE, Boolean.valueOf(editable));
 		if (decimalPlaces > 0) {

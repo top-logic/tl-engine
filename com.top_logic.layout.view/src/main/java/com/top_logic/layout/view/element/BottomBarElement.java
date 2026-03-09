@@ -113,7 +113,7 @@ public class BottomBarElement implements UIElement {
 		String activeItem = _activeItem != null && !_activeItem.isEmpty()
 			? _activeItem
 			: (!_items.isEmpty() ? _items.get(0).id() : "");
-		return new ReactBottomBarControl(_items, activeItem, itemId -> {
+		return new ReactBottomBarControl(context, _items, activeItem, itemId -> {
 			// Visual-only selection in the declarative view; no server-side handler.
 		});
 	}

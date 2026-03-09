@@ -5,15 +5,8 @@
  */
 package com.top_logic.layout.react.control.nav;
 
-import java.io.IOException;
-import java.io.StringWriter;
 import java.util.Map;
 
-import com.top_logic.base.services.simpleajax.HTMLFragment;
-import com.top_logic.basic.Logger;
-import com.top_logic.basic.xml.TagWriter;
-import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.ReactControl;
@@ -77,30 +70,19 @@ public class ReactAppShellControl extends ReactControl {
 	 *        The main content control (gets {@code flex:1}).
 	 * @param footer
 	 *        Optional footer control (e.g. bottom bar), or {@code null}.
+	 * @param snackbar
+	 *        The snackbar control for notifications.
+	 * @param errorSink
+	 *        The error sink that routes messages to the snackbar.
 	 */
-	public ReactAppShellControl(ReactContext context, ReactControl header, ReactControl content, ReactControl footer) {
+	public ReactAppShellControl(ReactContext context, ReactControl header, ReactControl content, ReactControl footer,
+			ReactSnackbarControl snackbar, ErrorSink errorSink) {
 		super(context, null, REACT_MODULE);
 		_header = header;
 		_content = content;
 		_footer = footer;
-		_snackbar = new ReactSnackbarControl(context, "", "success", () -> { /* no-op, auto-hides */ });
-
-		_errorSink = new ErrorSink() {
-			@Override
-			public void showError(HTMLFragment content) {
-				showSnackbar(renderToHtml(content), "error");
-			}
-
-			@Override
-			public void showWarning(HTMLFragment content) {
-				showSnackbar(renderToHtml(content), "warning");
-			}
-
-			@Override
-			public void showInfo(HTMLFragment content) {
-				showSnackbar(renderToHtml(content), "info");
-			}
-		};
+		_snackbar = snackbar;
+		_errorSink = errorSink;
 
 		if (header != null) {
 			putState(HEADER, header);
@@ -139,18 +121,6 @@ public class ReactAppShellControl extends ReactControl {
 	 */
 	public void showSnackbar(String htmlContent, String variant) {
 		_snackbar.patchReactState(Map.of("content", htmlContent, "variant", variant, "visible", Boolean.TRUE));
-	}
-
-	private String renderToHtml(HTMLFragment fragment) {
-		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext();
-		StringWriter buffer = new StringWriter();
-		try {
-			TagWriter out = new TagWriter(buffer);
-			fragment.write(displayContext, out);
-		} catch (IOException ex) {
-			Logger.error("Failed to render info service message.", ex, ReactAppShellControl.class);
-		}
-		return buffer.toString();
 	}
 
 	@Override

@@ -153,16 +153,16 @@ public class PanelElement extends ContainerElement {
 			List<ReactControl> reactChildren = childControls.stream()
 				.map(c -> (ReactControl) c)
 				.collect(Collectors.toList());
-			content = new ReactStackControl(reactChildren);
+			content = new ReactStackControl(context, reactChildren);
 		}
 
 		// Phase 4: Create panel and add toolbar buttons.
-		ReactPanelControl panel = new ReactPanelControl(_title, content, false, false, false);
+		ReactPanelControl panel = new ReactPanelControl(context, _title, content, false, false, false);
 
 		for (ViewCommandModel model : commandModels) {
 			if (model.getPlacement() == CommandPlacement.TOOLBAR) {
 				String label = resolveLabel(model.getLabel());
-				ReactButtonControl button = new ReactButtonControl(label,
+				ReactButtonControl button = new ReactButtonControl(context, label,
 					ctx -> model.executeCommand(ctx));
 				button.setDisabled(!model.getExecutableState().isExecutable());
 				model.setStateChangeListener(() -> {

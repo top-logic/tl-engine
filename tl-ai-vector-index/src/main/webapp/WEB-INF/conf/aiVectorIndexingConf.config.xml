@@ -8,6 +8,7 @@
 				<modules>
 		           <module key="com.top_logic.ai.vector.index.VectorIndex$Module" value="true" />
 		           <module key="com.top_logic.knowledge.indexing.DefaultIndexingService$Module" value="true" />
+		           <module key="com.top_logic.ai.vector.index.VectorIndexingService$Module" value="true" />
 				</modules>
 			</instance>
 		</config>
@@ -19,14 +20,7 @@
 				</components>
 			</instance>
 		</config>
-		<config service-class="com.top_logic.basic.util.ResourcesModule">
-			<instance>
-				<bundles>
-					<bundle name="searchVectorMessages" />
-				</bundles>
-			</instance>
-		</config>
-
+		
 		<config service-class="com.top_logic.knowledge.indexing.IndexingService" >
 			<instance class="com.top_logic.ai.vector.index.VectorIndexingService">
 				<protocols>
@@ -40,14 +34,7 @@
 				</meta-objects>
 			</instance>
 		</config>
-		<config service-class="com.top_logic.knowledge.service.migration.MigrationService">
-			<instance>
-				<modules>
-					<module name="tl-ai-vector-index" />
-				</modules>
-			</instance>
-		</config>
-
+		
 		<!-- Production Vector Store Configuration overriding Java defaults -->
 		<config service-class="com.top_logic.ai.vector.index.VectorIndex">
 			<instance class="com.top_logic.ai.vector.index.VectorIndex"

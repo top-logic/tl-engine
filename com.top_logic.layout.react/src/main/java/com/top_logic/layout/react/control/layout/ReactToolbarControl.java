@@ -6,7 +6,7 @@
 package com.top_logic.layout.react.control.layout;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -55,7 +55,7 @@ public class ReactToolbarControl extends ReactControl {
 	 */
 	public void addGroup(String name, String display, String label, String icon,
 			List<ReactControl> items) {
-		Map<String, Object> group = new HashMap<>();
+		Map<String, Object> group = new LinkedHashMap<>();
 		group.put("name", name);
 		group.put("display", display);
 		if (label != null) {

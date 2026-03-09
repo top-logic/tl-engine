@@ -31,14 +31,14 @@ public class CliqueRegistry {
 
 	static {
 		List<CliqueInfo> list = new ArrayList<>();
-		list.add(new CliqueInfo(CommandCliques.CREATE, 1, DISPLAY_INLINE, null, null));
-		list.add(new CliqueInfo(CommandCliques.EDIT, 2, DISPLAY_INLINE, null, null));
-		list.add(new CliqueInfo(CommandCliques.DELETE, 3, DISPLAY_INLINE, null, null));
-		list.add(new CliqueInfo(CommandCliques.COMMIT, 4, DISPLAY_INLINE, null, null));
-		list.add(new CliqueInfo(CommandCliques.NAVIGATE, 5, DISPLAY_INLINE, null, null));
-		list.add(new CliqueInfo(CommandCliques.VIEW, 6, DISPLAY_MENU, "View", null));
-		list.add(new CliqueInfo(CommandCliques.EXPORT, 7, DISPLAY_MENU, "Export", null));
-		list.add(new CliqueInfo(CommandCliques.MORE, 8, DISPLAY_MENU, "More", null));
+		list.add(new CliqueInfo(CommandCliques.CREATE, 100, DISPLAY_INLINE, null, null));
+		list.add(new CliqueInfo(CommandCliques.EDIT, 200, DISPLAY_INLINE, null, null));
+		list.add(new CliqueInfo(CommandCliques.DELETE, 300, DISPLAY_INLINE, null, null));
+		list.add(new CliqueInfo(CommandCliques.COMMIT, 400, DISPLAY_INLINE, null, null));
+		list.add(new CliqueInfo(CommandCliques.NAVIGATE, 500, DISPLAY_INLINE, null, null));
+		list.add(new CliqueInfo(CommandCliques.VIEW, 600, DISPLAY_MENU, "View", null));
+		list.add(new CliqueInfo(CommandCliques.EXPORT, 700, DISPLAY_MENU, "Export", null));
+		list.add(new CliqueInfo(CommandCliques.MORE, 800, DISPLAY_MENU, "More", null));
 		STANDARD_CLIQUES = Collections.unmodifiableList(list);
 	}
 
@@ -106,7 +106,7 @@ public class CliqueRegistry {
 		} else if (insertIndex == 0) {
 			order = 0;
 		} else {
-			order = copy._orderedCliques.get(copy._orderedCliques.size() - 1).order() + 1;
+			order = copy._orderedCliques.get(copy._orderedCliques.size() - 1).order() + 100;
 		}
 
 		CliqueInfo info = new CliqueInfo(name, order, display != null ? display : DISPLAY_INLINE, label, null);

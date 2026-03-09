@@ -8,16 +8,15 @@ package com.top_logic.layout.view.command;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.layout.ReactToolbarControl;
 import com.top_logic.layout.view.command.CliqueRegistry.CliqueInfo;
+import com.top_logic.util.Resources;
 
 /**
  * Builds a {@link ReactToolbarControl} from a {@link CommandScope} for a given placement.
@@ -28,6 +27,28 @@ import com.top_logic.layout.view.command.CliqueRegistry.CliqueInfo;
  * </p>
  */
 public class ToolbarBuilder {
+
+	/**
+	 * Builds a toolbar for the given placement, returning an empty toolbar if no commands match.
+	 *
+	 * <p>
+	 * Use this when a non-null toolbar is required for reactive rebuilds (the returned control can
+	 * receive {@link ReactToolbarControl#replaceGroups(ReactToolbarControl)} calls later).
+	 * </p>
+	 *
+	 * @param scope
+	 *        The command scope containing explicit and implicit commands.
+	 * @param placement
+	 *        The target placement to filter commands for.
+	 * @param registry
+	 *        The clique registry (with any local cliques applied).
+	 * @return A toolbar control (never {@code null}).
+	 */
+	public static ReactToolbarControl buildOrEmpty(CommandScope scope, CommandPlacement placement,
+			CliqueRegistry registry) {
+		ReactToolbarControl result = build(scope, placement, registry);
+		return result != null ? result : new ReactToolbarControl();
+	}
 
 	/**
 	 * Builds a toolbar for the given placement from the command scope.
@@ -121,9 +142,7 @@ public class ToolbarBuilder {
 		if (label == null) {
 			return "";
 		}
-		return ResourcesModule.getInstance()
-			.getBundle(Locale.getDefault())
-			.getString(label);
+		return Resources.getInstance().getString(label);
 	}
 
 	private static String resolveIcon(ThemeImage image) {

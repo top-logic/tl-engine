@@ -70,10 +70,12 @@ public abstract class CommandScopeElement extends CommandCarrierElement {
 		// Phase 3: Create child content controls.
 		ReactControl content = createContent(derivedContext);
 
-		// Phase 4: Build clique-grouped toolbars from placed commands.
+		// Phase 4: Build clique-grouped toolbars from placed commands. The controls are always
+		// created (even when empty) so implicit commands added later have a target for the
+		// reactive rebuild.
 		CliqueRegistry registry = new CliqueRegistry();
-		ReactToolbarControl toolbar = ToolbarBuilder.build(scope, CommandPlacement.TOOLBAR, registry);
-		ReactToolbarControl buttonBar = ToolbarBuilder.build(scope, CommandPlacement.BUTTON_BAR, registry);
+		ReactToolbarControl toolbar = ToolbarBuilder.buildOrEmpty(scope, CommandPlacement.TOOLBAR, registry);
+		ReactToolbarControl buttonBar = ToolbarBuilder.buildOrEmpty(scope, CommandPlacement.BUTTON_BAR, registry);
 
 		// Phase 5: Let subclass create the chrome control.
 		ToolbarControl chrome = createChromeControl(derivedContext, content, toolbar, buttonBar);
@@ -81,14 +83,8 @@ public abstract class CommandScopeElement extends CommandCarrierElement {
 		// Phase 6: Rebuild toolbars when implicit commands change. Groups are replaced in place so
 		// the existing toolbar controls keep their SSE registration.
 		scope.addListener(() -> {
-			ReactToolbarControl newToolbar = ToolbarBuilder.build(scope, CommandPlacement.TOOLBAR, registry);
-			ReactToolbarControl newButtonBar = ToolbarBuilder.build(scope, CommandPlacement.BUTTON_BAR, registry);
-			if (toolbar != null && newToolbar != null) {
-				toolbar.replaceGroups(newToolbar);
-			}
-			if (buttonBar != null && newButtonBar != null) {
-				buttonBar.replaceGroups(newButtonBar);
-			}
+			toolbar.replaceGroups(ToolbarBuilder.buildOrEmpty(scope, CommandPlacement.TOOLBAR, registry));
+			buttonBar.replaceGroups(ToolbarBuilder.buildOrEmpty(scope, CommandPlacement.BUTTON_BAR, registry));
 		});
 
 		// Phase 7: Lazy attach on render, cleanup on dispose.
@@ -105,11 +101,11 @@ public abstract class CommandScopeElement extends CommandCarrierElement {
 	 * @param content
 	 *        The child content control.
 	 * @param toolbar
-	 *        The clique-grouped toolbar for {@link CommandPlacement#TOOLBAR} commands, or
-	 *        {@code null} if there are none.
+	 *        The clique-grouped toolbar for {@link CommandPlacement#TOOLBAR} commands (empty if
+	 *        there are none).
 	 * @param buttonBar
-	 *        The clique-grouped button bar for {@link CommandPlacement#BUTTON_BAR} commands, or
-	 *        {@code null} if there are none.
+	 *        The clique-grouped button bar for {@link CommandPlacement#BUTTON_BAR} commands (empty
+	 *        if there are none).
 	 * @return The chrome control (panel, window, etc.).
 	 */
 	protected abstract ToolbarControl createChromeControl(ViewContext context, ReactControl content,

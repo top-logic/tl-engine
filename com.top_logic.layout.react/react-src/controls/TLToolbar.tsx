@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild } from 'tl-react-bridge';
+import { React, useTLState, TLChild } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const { useCallback, useRef, useState, useEffect } = React;
@@ -38,20 +38,6 @@ const MenuGroup: React.FC<{ group: CliqueGroup }> = ({ group }) => {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const visibleItems = group.items.filter(item => item != null);
-  if (visibleItems.length === 0) return null;
-
-  // Single item: render directly without dropdown.
-  if (visibleItems.length === 1 && !group.subGroups?.length) {
-    return (
-      <div className="tlToolbar__group tlToolbar__group--inline">
-        <span className="tlToolbar__item">
-          <TLChild control={visibleItems[0]} />
-        </span>
-      </div>
-    );
-  }
-
   const handleToggle = useCallback(() => {
     setOpen(prev => !prev);
   }, []);
@@ -78,6 +64,20 @@ const MenuGroup: React.FC<{ group: CliqueGroup }> = ({ group }) => {
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [open]);
+
+  const visibleItems = group.items.filter(item => item != null);
+  if (visibleItems.length === 0) return null;
+
+  // Single item: render directly without dropdown.
+  if (visibleItems.length === 1 && !group.subGroups?.length) {
+    return (
+      <div className="tlToolbar__group tlToolbar__group--inline">
+        <span className="tlToolbar__item">
+          <TLChild control={visibleItems[0]} />
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div className="tlToolbar__group tlToolbar__group--menu">

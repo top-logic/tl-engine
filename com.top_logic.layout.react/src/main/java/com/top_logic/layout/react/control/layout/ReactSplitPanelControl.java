@@ -44,10 +44,10 @@ public class ReactSplitPanelControl extends ReactControl {
 
 	private static final String REACT_MODULE = "TLSplitPanel";
 
-	/** @see #ReactSplitPanelControl(Orientation, boolean) */
+	/** @see #ReactSplitPanelControl(ReactContext, Orientation, boolean) */
 	private static final String ORIENTATION = "orientation";
 
-	/** @see #ReactSplitPanelControl(Orientation, boolean) */
+	/** @see #ReactSplitPanelControl(ReactContext, Orientation, boolean) */
 	private static final String RESIZABLE = "resizable";
 
 	/** @see #addChild(ReactControl, ChildConstraint) */

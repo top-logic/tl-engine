@@ -42,19 +42,19 @@ public class ReactPanelControl extends ReactControl {
 	/** @see #setExpansionState(ExpansionState) */
 	private static final String EXPANSION_STATE = "expansionState";
 
-	/** @see #ReactPanelControl(String, ReactControl, boolean, boolean, boolean) */
+	/** @see #ReactPanelControl(ReactContext, String, ReactControl, boolean, boolean, boolean) */
 	private static final String SHOW_MINIMIZE = "showMinimize";
 
-	/** @see #ReactPanelControl(String, ReactControl, boolean, boolean, boolean) */
+	/** @see #ReactPanelControl(ReactContext, String, ReactControl, boolean, boolean, boolean) */
 	private static final String SHOW_MAXIMIZE = "showMaximize";
 
-	/** @see #ReactPanelControl(String, ReactControl, boolean, boolean, boolean) */
+	/** @see #ReactPanelControl(ReactContext, String, ReactControl, boolean, boolean, boolean) */
 	private static final String SHOW_POP_OUT = "showPopOut";
 
 	/** @see #addToolbarButton(ReactControl) */
 	private static final String TOOLBAR_BUTTONS = "toolbarButtons";
 
-	/** @see #ReactPanelControl(String, ReactControl, boolean, boolean, boolean) */
+	/** @see #ReactPanelControl(ReactContext, String, ReactControl, boolean, boolean, boolean) */
 	private static final String CHILD = "child";
 
 	/** Default collapsed size in pixels (toolbar header height). */

@@ -27,10 +27,10 @@ public class ReactSnackbarControl extends ReactControl {
 	/** @see #show(String) */
 	private static final String MESSAGE = "message";
 
-	/** @see #ReactSnackbarControl(String, String, int, Runnable) */
+	/** @see #ReactSnackbarControl(ReactContext, String, String, int, Runnable) */
 	private static final String VARIANT = "variant";
 
-	/** @see #ReactSnackbarControl(String, String, int, Runnable) */
+	/** @see #ReactSnackbarControl(ReactContext, String, String, int, Runnable) */
 	private static final String DURATION = "duration";
 
 	/** @see #show() */

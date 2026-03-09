@@ -72,7 +72,7 @@ public class ReactTableControl extends ReactControl {
 	/** @see #updateViewport(int, int) */
 	private static final String ROWS = "rows";
 
-	/** @see #ReactTableControl(TableModel, ReactCellControlProvider) */
+	/** @see #ReactTableControl(ReactContext, TableModel, ReactCellControlProvider) */
 	private static final String ROW_HEIGHT = "rowHeight";
 
 	/** @see #setSelectionMode(String) */
@@ -87,7 +87,7 @@ public class ReactTableControl extends ReactControl {
 	/** @see #setFrozenColumnCount(int) */
 	private static final String FROZEN_COLUMN_COUNT = "frozenColumnCount";
 
-	/** @see #ReactTableControl(TableModel, ReactCellControlProvider) */
+	/** @see #ReactTableControl(ReactContext, TableModel, ReactCellControlProvider) */
 	private static final String TREE_MODE = "treeMode";
 
 	// -- Row state keys (used in {@link #updateViewport(int, int)}) --

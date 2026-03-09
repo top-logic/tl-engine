@@ -28,7 +28,7 @@ public class ReactMenuControl extends ReactControl {
 
 	private static final String REACT_MODULE = "TLMenu";
 
-	/** @see #ReactMenuControl(String, List, Consumer, Runnable) */
+	/** @see #ReactMenuControl(ReactContext, String, List, Consumer, Runnable) */
 	private static final String ANCHOR_ID = "anchorId";
 
 	/** @see #open() */

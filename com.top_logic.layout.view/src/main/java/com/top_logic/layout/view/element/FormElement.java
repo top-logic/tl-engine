@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.element;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -14,6 +15,7 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.ReactControl;
@@ -25,6 +27,8 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.command.CommandScope;
+import com.top_logic.layout.view.form.FormCommandModel;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.model.TLObject;
 import com.top_logic.util.Resources;
@@ -57,6 +61,9 @@ public class FormElement extends ContainerElement {
 
 		/** Configuration name for {@link #getNoModelMessage()}. */
 		String NO_MODEL_MESSAGE = "noModelMessage";
+
+		/** Configuration name for {@link #getWithEditMode()}. */
+		String WITH_EDIT_MODE = "withEditMode";
 
 		@Override
 		@ClassDefault(FormElement.class)
@@ -93,6 +100,20 @@ public class FormElement extends ContainerElement {
 		 */
 		@Name(NO_MODEL_MESSAGE)
 		ResKey getNoModelMessage();
+
+		/**
+		 * Whether to create edit/save/cancel command models for this form.
+		 *
+		 * <p>
+		 * When {@code true}, command models for edit, save, and cancel are created and contributed
+		 * to the enclosing {@link CommandScope}. This allows a parent panel to render toolbar
+		 * buttons for switching between view and edit mode without the {@link FormControl} knowing
+		 * about UI elements.
+		 * </p>
+		 */
+		@Name(WITH_EDIT_MODE)
+		@BooleanDefault(false)
+		boolean getWithEditMode();
 	}
 
 	private final Config _config;
@@ -137,20 +158,49 @@ public class FormElement extends ContainerElement {
 			formControl.setDirtyChannel(context.resolveChannel(dirtyRef));
 		}
 
-		// 6. Create a child context with the form control set, so that
+		// 6. Create edit mode command models if configured.
+		if (_config.getWithEditMode()) {
+			contributeEditCommands(context, formControl);
+		}
+
+		// 7. Create a child context with the form control set, so that
 		// nested FieldElements can access it without polluting the parent context.
 		ViewContext formContext = context.childContext("form");
 		formContext.setFormControl(formControl);
 
-		// 6. Create child controls in the form-scoped context.
+		// 8. Create child controls in the form-scoped context.
 		List<IReactControl> childControls = createChildControls(formContext);
 
-		// 7. Convert to ReactControl list and put as state.
+		// 9. Convert to ReactControl list and put as state.
 		List<ReactControl> reactChildren = childControls.stream()
 			.map(c -> (ReactControl) c)
 			.collect(Collectors.toList());
 		formControl.setChildren(reactChildren);
 
 		return formControl;
+	}
+
+	private void contributeEditCommands(ViewContext context, FormControl formControl) {
+		CommandScope scope = context.getCommandScope();
+		if (scope == null) {
+			return;
+		}
+
+		List<FormCommandModel> models = new ArrayList<>();
+		models.add(FormCommandModel.editCommand(formControl));
+		models.add(FormCommandModel.saveCommand(formControl));
+		models.add(FormCommandModel.cancelCommand(formControl));
+
+		for (FormCommandModel model : models) {
+			model.attach();
+			scope.addCommand(model);
+		}
+
+		formControl.addCleanupAction(() -> {
+			for (FormCommandModel model : models) {
+				scope.removeCommand(model);
+				model.detach();
+			}
+		});
 	}
 }

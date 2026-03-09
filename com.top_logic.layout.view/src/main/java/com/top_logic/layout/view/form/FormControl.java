@@ -66,6 +66,8 @@ public class FormControl extends ReactControl {
 
 	private final List<FieldControl> _fieldControls = new ArrayList<>();
 
+	private final List<Runnable> _formStateListeners = new ArrayList<>();
+
 	private final ViewChannel.ChannelListener _inputListener = this::handleInputChanged;
 
 	private final String _noModelMessage;
@@ -188,6 +190,33 @@ public class FormControl extends ReactControl {
 	}
 
 	/**
+	 * Registers a listener that is notified when form state changes (edit mode, current object).
+	 *
+	 * @param listener
+	 *        The listener to add.
+	 */
+	public void addFormStateListener(Runnable listener) {
+		_formStateListeners.add(listener);
+	}
+
+	/**
+	 * Removes a previously registered form state listener.
+	 *
+	 * @param listener
+	 *        The listener to remove.
+	 */
+	public void removeFormStateListener(Runnable listener) {
+		_formStateListeners.remove(listener);
+	}
+
+	/**
+	 * Whether there is a current object available.
+	 */
+	public boolean hasCurrentObject() {
+		return _currentObject != null;
+	}
+
+	/**
 	 * Enters edit mode by acquiring a lock, creating an overlay, and switching fields to editable.
 	 */
 	public void enterEditMode() {
@@ -207,6 +236,7 @@ public class FormControl extends ReactControl {
 		updateEditModeChannel();
 		updateDirtyState();
 		notifyFields();
+		fireFormStateChanged();
 	}
 
 	/**
@@ -301,6 +331,7 @@ public class FormControl extends ReactControl {
 		updateEditModeChannel();
 		updateDirtyState();
 		notifyFields();
+		fireFormStateChanged();
 	}
 
 	private void releaseLock() {
@@ -312,6 +343,12 @@ public class FormControl extends ReactControl {
 			}
 		}
 		_lock = null;
+	}
+
+	private void fireFormStateChanged() {
+		for (Runnable listener : _formStateListeners) {
+			listener.run();
+		}
 	}
 
 	private void updateEditModeChannel() {
@@ -343,6 +380,7 @@ public class FormControl extends ReactControl {
 		_currentObject = (TLObject) newValue;
 		updateNoModelMessage();
 		notifyFields();
+		fireFormStateChanged();
 	}
 
 	@Override

@@ -20,6 +20,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
 import com.top_logic.basic.reflect.TypeIndex;
+import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.channel.ChannelRef;
@@ -61,7 +62,7 @@ public class TestChannelDeclaration extends TestCase {
 	 * Tests that resolving an unknown channel throws an exception.
 	 */
 	public void testResolveUnknownChannelFails() {
-		ViewContext viewContext = new ViewContext(null);
+		ViewContext viewContext = new DefaultViewContext(null);
 
 		try {
 			viewContext.resolveChannel(new ChannelRef("nonExistent"));
@@ -75,7 +76,7 @@ public class TestChannelDeclaration extends TestCase {
 	 * Tests that duplicate channel registration throws an exception.
 	 */
 	public void testDuplicateChannelFails() {
-		ViewContext viewContext = new ViewContext(null);
+		ViewContext viewContext = new DefaultViewContext(null);
 		viewContext.registerChannel("test", new DefaultViewChannel("test"));
 
 		try {
@@ -90,7 +91,7 @@ public class TestChannelDeclaration extends TestCase {
 	 * Tests basic channel registration and resolution on ViewContext.
 	 */
 	public void testRegisterAndResolve() {
-		ViewContext viewContext = new ViewContext(null);
+		ViewContext viewContext = new DefaultViewContext(null);
 		ViewChannel channel = new DefaultViewChannel("myChannel");
 
 		viewContext.registerChannel("myChannel", channel);
@@ -103,7 +104,7 @@ public class TestChannelDeclaration extends TestCase {
 	 * Tests that hasChannel reports registered channels correctly.
 	 */
 	public void testHasChannel() {
-		ViewContext viewContext = new ViewContext(null);
+		ViewContext viewContext = new DefaultViewContext(null);
 		assertFalse("Should not have unregistered channel", viewContext.hasChannel("test"));
 
 		viewContext.registerChannel("test", new DefaultViewChannel("test"));
@@ -132,7 +133,7 @@ public class TestChannelDeclaration extends TestCase {
 		ViewElement viewElement = (ViewElement) instContext.getInstance(config);
 
 		// Pre-bind "selectedItem" channel in the context.
-		ViewContext viewContext = new ViewContext(null);
+		ViewContext viewContext = new DefaultViewContext(null);
 		ViewChannel preBound = new DefaultViewChannel("selectedItem");
 		preBound.set("pre-bound-value");
 		viewContext.registerChannel("selectedItem", preBound);

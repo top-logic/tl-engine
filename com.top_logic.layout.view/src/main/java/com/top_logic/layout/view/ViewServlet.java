@@ -85,7 +85,7 @@ public class ViewServlet extends TopLogicServlet {
 
 		ReactDisplayContext displayContext = new DefaultReactDisplayContext(
 			request.getContextPath(), windowName, SSEUpdateQueue.forSession(session));
-		ViewContext viewContext = new ViewContext(displayContext);
+		ViewContext viewContext = new DefaultViewContext(displayContext);
 
 		IReactControl rootControl = view.createControl(viewContext);
 

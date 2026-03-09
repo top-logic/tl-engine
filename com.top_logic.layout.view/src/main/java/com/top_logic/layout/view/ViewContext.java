@@ -5,9 +5,6 @@
  */
 package com.top_logic.layout.view;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import com.top_logic.layout.react.ReactDisplayContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ViewChannel;
@@ -21,38 +18,10 @@ import com.top_logic.layout.view.form.FormControl;
  * Provides session-scoped infrastructure needed to create and wire controls. Container elements may
  * create derived contexts that add scoped information for their children.
  * </p>
+ *
+ * @see DefaultViewContext
  */
-public class ViewContext {
-
-	private final ReactDisplayContext _displayContext;
-
-	private final String _personalizationPath;
-
-	private final Map<String, ViewChannel> _channels;
-
-	private final CommandScope _commandScope;
-
-	private FormControl _formControl;
-
-	/**
-	 * Creates a root {@link ViewContext}.
-	 *
-	 * @param displayContext
-	 *        The view display context providing ID allocation, SSE queue and other rendering
-	 *        infrastructure.
-	 */
-	public ViewContext(ReactDisplayContext displayContext) {
-		this(displayContext, "view", new HashMap<>(), null, null);
-	}
-
-	private ViewContext(ReactDisplayContext displayContext, String personalizationPath,
-			Map<String, ViewChannel> channels, CommandScope commandScope, FormControl formControl) {
-		_displayContext = displayContext;
-		_personalizationPath = personalizationPath;
-		_channels = channels;
-		_commandScope = commandScope;
-		_formControl = formControl;
-	}
+public interface ViewContext {
 
 	/**
 	 * Creates a child context with an appended path segment.
@@ -65,10 +34,7 @@ public class ViewContext {
 	 *        The segment to append (e.g. "sidebar", "split-panel").
 	 * @return A new context with the extended personalization path.
 	 */
-	public ViewContext childContext(String segment) {
-		return new ViewContext(_displayContext, _personalizationPath + "." + segment, _channels, _commandScope,
-			_formControl);
-	}
+	ViewContext childContext(String segment);
 
 	/**
 	 * The personalization key for the current position in the view tree.
@@ -78,32 +44,24 @@ public class ViewContext {
 	 * override this with an explicit personalization key from configuration.
 	 * </p>
 	 */
-	public String getPersonalizationKey() {
-		return _personalizationPath;
-	}
+	String getPersonalizationKey();
 
 	/**
 	 * The {@link ReactDisplayContext} for the current session.
 	 */
-	public ReactDisplayContext getDisplayContext() {
-		return _displayContext;
-	}
+	ReactDisplayContext getDisplayContext();
 
 	/**
 	 * The {@link CommandScope} of the nearest enclosing panel, or {@code null} if no panel is in
 	 * scope.
 	 */
-	public CommandScope getCommandScope() {
-		return _commandScope;
-	}
+	CommandScope getCommandScope();
 
 	/**
 	 * The {@link FormControl} of the nearest enclosing form element, or {@code null} if no form is
 	 * in scope.
 	 */
-	public FormControl getFormControl() {
-		return _formControl;
-	}
+	FormControl getFormControl();
 
 	/**
 	 * Sets the form control for this context.
@@ -117,9 +75,7 @@ public class ViewContext {
 	 * @param formControl
 	 *        The form control, or {@code null}.
 	 */
-	public void setFormControl(FormControl formControl) {
-		_formControl = formControl;
-	}
+	void setFormControl(FormControl formControl);
 
 	/**
 	 * Creates a derived context with the given {@link CommandScope}.
@@ -133,9 +89,7 @@ public class ViewContext {
 	 * @return A new context with the given command scope but same display context, personalization
 	 *         path, and channels.
 	 */
-	public ViewContext withCommandScope(CommandScope scope) {
-		return new ViewContext(_displayContext, _personalizationPath, _channels, scope, _formControl);
-	}
+	ViewContext withCommandScope(CommandScope scope);
 
 	/**
 	 * Registers a channel in this context.
@@ -152,13 +106,7 @@ public class ViewContext {
 	 * @throws IllegalArgumentException
 	 *         if a channel with the given name is already registered.
 	 */
-	public void registerChannel(String name, ViewChannel channel) {
-		ViewChannel existing = _channels.put(name, channel);
-		if (existing != null) {
-			_channels.put(name, existing);
-			throw new IllegalArgumentException("Duplicate channel name: '" + name + "'");
-		}
-	}
+	void registerChannel(String name, ViewChannel channel);
 
 	/**
 	 * Whether a channel with the given name is registered.
@@ -167,9 +115,7 @@ public class ViewContext {
 	 *        The channel name to check.
 	 * @return {@code true} if a channel with this name exists.
 	 */
-	public boolean hasChannel(String name) {
-		return _channels.containsKey(name);
-	}
+	boolean hasChannel(String name);
 
 	/**
 	 * Resolves a {@link ChannelRef} to its runtime {@link ViewChannel}.
@@ -180,13 +126,5 @@ public class ViewContext {
 	 * @throws IllegalArgumentException
 	 *         if no channel with the referenced name exists.
 	 */
-	public ViewChannel resolveChannel(ChannelRef ref) {
-		ViewChannel channel = _channels.get(ref.getChannelName());
-		if (channel == null) {
-			throw new IllegalArgumentException(
-				"Unknown channel: '" + ref.getChannelName() + "'. "
-					+ "Available channels: " + _channels.keySet());
-		}
-		return channel;
-	}
+	ViewChannel resolveChannel(ChannelRef ref);
 }

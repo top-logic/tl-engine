@@ -18,6 +18,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.layout.ReactDeckPaneControl;
 import com.top_logic.layout.react.control.layout.ReactMaximizeRootControl;
@@ -46,6 +47,8 @@ public class DemoReactLayoutComponent extends LayoutComponent {
 		// No additional configuration needed.
 	}
 
+	private ReactContext _context;
+
 	private ReactControl _rootControl;
 
 	/**
@@ -61,6 +64,7 @@ public class DemoReactLayoutComponent extends LayoutComponent {
 		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
 
 		if (_rootControl == null) {
+			_context = ReactContext.fromDisplayContext(displayContext);
 			_rootControl = createLayout();
 		}
 
@@ -68,6 +72,8 @@ public class DemoReactLayoutComponent extends LayoutComponent {
 	}
 
 	private ReactControl createLayout() {
+		ReactContext ctx = _context;
+
 		// Build a nested layout to demonstrate all features:
 		//
 		// MaximizeRoot
@@ -82,20 +88,20 @@ public class DemoReactLayoutComponent extends LayoutComponent {
 
 		// Leaf content: counters for visible interactive content.
 		DemoReactCounterComponent.DemoCounterControl counterA =
-			new DemoReactCounterComponent.DemoCounterControl("Editor Content");
+			new DemoReactCounterComponent.DemoCounterControl(ctx, "Editor Content");
 		DemoReactCounterComponent.DemoCounterControl counterB =
-			new DemoReactCounterComponent.DemoCounterControl("Console Content");
+			new DemoReactCounterComponent.DemoCounterControl(ctx, "Console Content");
 
 		// Deck pane children for the navigation panel.
 		DemoReactCounterComponent.DemoCounterControl deckChild1 =
-			new DemoReactCounterComponent.DemoCounterControl("Page 1");
+			new DemoReactCounterComponent.DemoCounterControl(ctx, "Page 1");
 		DemoReactCounterComponent.DemoCounterControl deckChild2 =
-			new DemoReactCounterComponent.DemoCounterControl("Page 2");
+			new DemoReactCounterComponent.DemoCounterControl(ctx, "Page 2");
 		DemoReactCounterComponent.DemoCounterControl deckChild3 =
-			new DemoReactCounterComponent.DemoCounterControl("Page 3");
+			new DemoReactCounterComponent.DemoCounterControl(ctx, "Page 3");
 
 		// Deck pane with 3 pages.
-		ReactDeckPaneControl deckPane = new ReactDeckPaneControl(
+		ReactDeckPaneControl deckPane = new ReactDeckPaneControl(ctx,
 			List.of(
 				() -> deckChild1,
 				() -> deckChild2,
@@ -105,22 +111,22 @@ public class DemoReactLayoutComponent extends LayoutComponent {
 		);
 
 		// Panels with toolbar buttons.
-		ReactPanelControl navPanel = new ReactPanelControl("Navigation", deckPane, true, true, false);
-		ReactPanelControl editorPanel = new ReactPanelControl("Editor", counterA, true, true, false);
-		ReactPanelControl consolePanel = new ReactPanelControl("Console", counterB, true, true, false);
+		ReactPanelControl navPanel = new ReactPanelControl(ctx, "Navigation", deckPane, true, true, false);
+		ReactPanelControl editorPanel = new ReactPanelControl(ctx, "Editor", counterA, true, true, false);
+		ReactPanelControl consolePanel = new ReactPanelControl(ctx, "Console", counterB, true, true, false);
 
 		// Inner vertical split: Editor (top) + Console (bottom).
-		ReactSplitPanelControl innerSplit = new ReactSplitPanelControl(Orientation.VERTICAL, true);
+		ReactSplitPanelControl innerSplit = new ReactSplitPanelControl(ctx, Orientation.VERTICAL, true);
 		innerSplit.addChild(editorPanel, ChildConstraint.percent(60));
 		innerSplit.addChild(consolePanel, ChildConstraint.percent(40));
 
 		// Outer horizontal split: Navigation (left) + Inner split (right).
-		ReactSplitPanelControl outerSplit = new ReactSplitPanelControl(Orientation.HORIZONTAL, true);
+		ReactSplitPanelControl outerSplit = new ReactSplitPanelControl(ctx, Orientation.HORIZONTAL, true);
 		outerSplit.addChild(navPanel, ChildConstraint.percent(30));
 		outerSplit.addChild(innerSplit, ChildConstraint.percent(70));
 
 		// Maximize root wrapping the entire layout.
-		ReactMaximizeRootControl maximizeRoot = new ReactMaximizeRootControl(outerSplit);
+		ReactMaximizeRootControl maximizeRoot = new ReactMaximizeRootControl(ctx, outerSplit);
 
 		// Wire up maximize root references so panels can maximize.
 		navPanel.setMaximizeRoot(maximizeRoot);

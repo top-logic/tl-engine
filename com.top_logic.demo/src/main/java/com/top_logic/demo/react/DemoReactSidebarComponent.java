@@ -23,6 +23,7 @@ import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.common.ReactFieldListControl;
@@ -54,6 +55,8 @@ public class DemoReactSidebarComponent extends LayoutComponent {
 		// No additional configuration needed.
 	}
 
+	private ReactContext _context;
+
 	private ReactSidebarControl _sidebarControl;
 
 	/**
@@ -69,6 +72,7 @@ public class DemoReactSidebarComponent extends LayoutComponent {
 		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
 
 		if (_sidebarControl == null) {
+			_context = ReactContext.fromDisplayContext(displayContext);
 			_sidebarControl = createSidebar();
 		}
 
@@ -113,7 +117,7 @@ public class DemoReactSidebarComponent extends LayoutComponent {
 		Map<String, Boolean> groupStates = loadGroupStates("demo.sidebar");
 
 		return new ReactSidebarControl(
-			items, "dashboard",
+			_context, items, "dashboard",
 			collapsed, groupStates,
 			c -> PersonalizingExpandable.saveCollapsed("demo.sidebar.collapsed", c, false),
 			(gid, exp) -> saveGroupState("demo.sidebar", gid, exp),
@@ -121,30 +125,30 @@ public class DemoReactSidebarComponent extends LayoutComponent {
 	}
 
 	private ReactControl createDashboard() {
-		return new DemoReactCounterComponent.DemoCounterControl("Dashboard Counter");
+		return new DemoReactCounterComponent.DemoCounterControl(_context, "Dashboard Counter");
 	}
 
 	private ReactControl createReports() {
 		List<ReactControl> buttons = new ArrayList<>();
-		buttons.add(new ReactButtonControl("Generate Report", (context) -> {
+		buttons.add(new ReactButtonControl(_context, "Generate Report", (context) -> {
 			InfoService.showInfo(ResKey.text("Report generated!"));
 			return HandlerResult.DEFAULT_RESULT;
 		}));
-		buttons.add(new ReactButtonControl("Export CSV", (context) -> {
+		buttons.add(new ReactButtonControl(_context, "Export CSV", (context) -> {
 			InfoService.showInfo(ResKey.text("CSV exported!"));
 			return HandlerResult.DEFAULT_RESULT;
 		}));
-		return new ReactFieldListControl("Reports", buttons);
+		return new ReactFieldListControl(_context, "Reports", buttons);
 	}
 
 	private ReactControl createNotifications() {
 		List<ReactControl> buttons = new ArrayList<>();
-		buttons.add(new ReactButtonControl("Mark All Read", (context) -> {
+		buttons.add(new ReactButtonControl(_context, "Mark All Read", (context) -> {
 			_sidebarControl.updateBadge("notifications", null);
 			InfoService.showInfo(ResKey.text("All notifications marked as read!"));
 			return HandlerResult.DEFAULT_RESULT;
 		}));
-		buttons.add(new ReactButtonControl("Add Notification", (context) -> {
+		buttons.add(new ReactButtonControl(_context, "Add Notification", (context) -> {
 			NavigationItem navItem = (NavigationItem) _sidebarControl.findItem("notifications");
 			String current = navItem != null ? navItem.getBadge() : null;
 			int count = current != null ? Integer.parseInt(current) : 0;
@@ -152,33 +156,33 @@ public class DemoReactSidebarComponent extends LayoutComponent {
 			InfoService.showInfo(ResKey.text("Notification added!"));
 			return HandlerResult.DEFAULT_RESULT;
 		}));
-		return new ReactFieldListControl("Notifications", buttons);
+		return new ReactFieldListControl(_context, "Notifications", buttons);
 	}
 
 	private ReactControl createGeneral() {
-		return new DemoReactCounterComponent.DemoCounterControl("General Settings Counter");
+		return new DemoReactCounterComponent.DemoCounterControl(_context, "General Settings Counter");
 	}
 
 	private ReactControl createSecurity() {
 		List<ReactControl> buttons = new ArrayList<>();
-		buttons.add(new ReactButtonControl("Reset Password", (context) -> {
+		buttons.add(new ReactButtonControl(_context, "Reset Password", (context) -> {
 			InfoService.showInfo(ResKey.text("Password reset!"));
 			return HandlerResult.DEFAULT_RESULT;
 		}));
-		return new ReactFieldListControl("Security", buttons);
+		return new ReactFieldListControl(_context, "Security", buttons);
 	}
 
 	private ReactControl createBrandingControl() {
 		List<ReactControl> fields = new ArrayList<>();
-		fields.add(new ReactButtonControl("App Logo", (context) -> {
+		fields.add(new ReactButtonControl(_context, "App Logo", (context) -> {
 			InfoService.showInfo(ResKey.text("Logo clicked!"));
 			return HandlerResult.DEFAULT_RESULT;
 		}));
-		return new ReactFieldListControl("Branding", fields);
+		return new ReactFieldListControl(_context, "Branding", fields);
 	}
 
 	private ReactControl createBrandingCollapsedControl() {
-		return new ReactButtonControl("\u2B22", (context) -> {
+		return new ReactButtonControl(_context, "\u2B22", (context) -> {
 			InfoService.showInfo(ResKey.text("Logo clicked!"));
 			return HandlerResult.DEFAULT_RESULT;
 		});
@@ -186,15 +190,15 @@ public class DemoReactSidebarComponent extends LayoutComponent {
 
 	private ReactControl createFooterControl() {
 		List<ReactControl> fields = new ArrayList<>();
-		fields.add(new ReactButtonControl("User Info", (context) -> {
+		fields.add(new ReactButtonControl(_context, "User Info", (context) -> {
 			InfoService.showInfo(ResKey.text("User info clicked!"));
 			return HandlerResult.DEFAULT_RESULT;
 		}));
-		return new ReactFieldListControl("Footer", fields);
+		return new ReactFieldListControl(_context, "Footer", fields);
 	}
 
 	private ReactControl createFooterCollapsedControl() {
-		return new ReactButtonControl("\u263A", (context) -> {
+		return new ReactButtonControl(_context, "\u263A", (context) -> {
 			InfoService.showInfo(ResKey.text("User info clicked!"));
 			return HandlerResult.DEFAULT_RESULT;
 		});

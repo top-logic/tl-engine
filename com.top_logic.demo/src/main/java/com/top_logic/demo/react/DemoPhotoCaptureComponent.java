@@ -18,6 +18,7 @@ import com.top_logic.basic.io.binary.SimpleBinaryDataValue;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.download.ReactDownloadControl;
 import com.top_logic.layout.react.control.photo.ReactPhotoCaptureControl;
 import com.top_logic.layout.react.control.photo.ReactPhotoViewerControl;
@@ -61,11 +62,12 @@ public class DemoPhotoCaptureComponent extends LayoutComponent {
 		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
 
 		if (_captureControl == null) {
+			ReactContext ctx = ReactContext.fromDisplayContext(displayContext);
 			// Three controls, one model, zero callbacks.
 			SimpleBinaryDataValue photoModel = new SimpleBinaryDataValue();
-			_captureControl = new ReactPhotoCaptureControl(photoModel);
-			_viewerControl = new ReactPhotoViewerControl(photoModel);
-			_downloadControl = new ReactDownloadControl(photoModel);
+			_captureControl = new ReactPhotoCaptureControl(ctx, photoModel);
+			_viewerControl = new ReactPhotoViewerControl(ctx, photoModel);
+			_downloadControl = new ReactDownloadControl(ctx, photoModel);
 			_downloadControl.setClearable(true);
 		}
 

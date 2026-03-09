@@ -25,6 +25,7 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.MapAccessor;
 import com.top_logic.layout.basic.DefaultDisplayContext;
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.control.table.ReactCellControlProvider;
 import com.top_logic.layout.react.control.table.ReactTableControl;
@@ -55,6 +56,8 @@ public class DemoReactTableComponent extends LayoutComponent {
 		// No additional configuration needed.
 	}
 
+	private ReactContext _context;
+
 	private ReactTableControl _tableControl;
 
 	private ReactTableControl _treeTableControl;
@@ -72,6 +75,7 @@ public class DemoReactTableComponent extends LayoutComponent {
 		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
 
 		if (_tableControl == null) {
+			_context = ReactContext.fromDisplayContext(displayContext);
 			_tableControl = createDemoTable();
 		}
 
@@ -139,11 +143,11 @@ public class DemoReactTableComponent extends LayoutComponent {
 		ObjectTableModel model = new ObjectTableModel(columnNames, tableConfig, rows);
 
 		LabelProvider labels = MetaLabelProvider.INSTANCE;
-		ReactCellControlProvider cellProvider = (rowObject, columnName, cellValue) -> {
-			return new ReactTextCellControl(labels.getLabel(cellValue));
+		ReactCellControlProvider cellProvider = (ctx, rowObject, columnName, cellValue) -> {
+			return new ReactTextCellControl(ctx, labels.getLabel(cellValue));
 		};
 
-		ReactTableControl table = new ReactTableControl(model, cellProvider);
+		ReactTableControl table = new ReactTableControl(_context, model, cellProvider);
 		table.setSelectionMode("multi");
 		table.setFrozenColumnCount(2);
 		return table;
@@ -198,11 +202,11 @@ public class DemoReactTableComponent extends LayoutComponent {
 		}
 
 		LabelProvider labels = MetaLabelProvider.INSTANCE;
-		ReactCellControlProvider cellProvider = (rowObject, columnName, cellValue) -> {
-			return new ReactTextCellControl(labels.getLabel(cellValue));
+		ReactCellControlProvider cellProvider = (ctx, rowObject, columnName, cellValue) -> {
+			return new ReactTextCellControl(ctx, labels.getLabel(cellValue));
 		};
 
-		ReactTableControl table = new ReactTableControl(model.getTable(), cellProvider);
+		ReactTableControl table = new ReactTableControl(_context, model.getTable(), cellProvider);
 		table.setSelectionMode("multi");
 		return table;
 	}

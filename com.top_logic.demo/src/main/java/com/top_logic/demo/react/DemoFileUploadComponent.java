@@ -18,6 +18,7 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.form.control.DataItemControl;
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.form.model.DataField;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
@@ -65,6 +66,7 @@ public class DemoFileUploadComponent extends LayoutComponent {
 		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
 
 		if (_uploadControl == null) {
+			ReactContext ctx = ReactContext.fromDisplayContext(displayContext);
 			FormContext formContext = new FormContext(this);
 			_fileField = FormFactory.newDataField("file");
 			formContext.addMember(_fileField);
@@ -72,9 +74,9 @@ public class DemoFileUploadComponent extends LayoutComponent {
 			_fileFieldControl = new DataItemControl(_fileField);
 
 			// DataField IS a BinaryDataValue - all controls share it.
-			_downloadControl = new ReactDownloadControl(_fileField);
+			_downloadControl = new ReactDownloadControl(ctx, _fileField);
 			_downloadControl.setClearable(true);
-			_uploadControl = new ReactFileUploadControl(_fileField);
+			_uploadControl = new ReactFileUploadControl(ctx, _fileField);
 		}
 
 		out.beginTag(HTMLConstants.H2);

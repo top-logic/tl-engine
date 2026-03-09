@@ -18,6 +18,7 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.basic.DefaultDisplayContext;
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.control.table.ReactTextCellControl;
 import com.top_logic.layout.react.control.tree.ReactTreeControl;
@@ -47,6 +48,8 @@ public class DemoReactTreeComponent extends LayoutComponent {
 		// No additional configuration needed.
 	}
 
+	private ReactContext _context;
+
 	private ReactTreeControl _treeControl;
 
 	/**
@@ -62,6 +65,7 @@ public class DemoReactTreeComponent extends LayoutComponent {
 		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
 
 		if (_treeControl == null) {
+			_context = ReactContext.fromDisplayContext(displayContext);
 			_treeControl = createDemoTree();
 		}
 
@@ -102,13 +106,13 @@ public class DemoReactTreeComponent extends LayoutComponent {
 			new DefaultMultiSelectionModel<>(SelectionModelOwner.NO_OWNER);
 
 		LabelProvider labels = MetaLabelProvider.INSTANCE;
-		ReactTreeControl tree = new ReactTreeControl(treeModel, selectionModel,
+		ReactTreeControl tree = new ReactTreeControl(_context, treeModel, selectionModel,
 			node -> {
 				Object businessObject = node;
 				if (node instanceof AbstractMutableTLTreeNode) {
 					businessObject = ((AbstractMutableTLTreeNode<?>) node).getBusinessObject();
 				}
-				return new ReactTextCellControl(labels.getLabel(businessObject));
+				return new ReactTextCellControl(_context, labels.getLabel(businessObject));
 			});
 		tree.setSelectionMode("multi");
 		return tree;

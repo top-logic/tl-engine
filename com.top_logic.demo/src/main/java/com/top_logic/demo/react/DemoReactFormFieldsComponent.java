@@ -22,6 +22,7 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.form.FormField;
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
@@ -55,6 +56,8 @@ public class DemoReactFormFieldsComponent extends LayoutComponent {
 		// No additional configuration needed.
 	}
 
+	private ReactContext _context;
+
 	private ReactFormLayoutControl _formLayout;
 
 	/**
@@ -70,6 +73,7 @@ public class DemoReactFormFieldsComponent extends LayoutComponent {
 		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
 
 		if (_formLayout == null) {
+			_context = ReactContext.fromDisplayContext(displayContext);
 			_formLayout = createFormLayout();
 		}
 
@@ -77,51 +81,52 @@ public class DemoReactFormFieldsComponent extends LayoutComponent {
 	}
 
 	private ReactFormLayoutControl createFormLayout() {
+		ReactContext ctx = _context;
 		FormContext formContext = new FormContext(this);
 
 		// -- Personal Information group (collapsible, subtle border, full line) --
 
 		FormField nameField = FormFactory.newStringField("name", "John Doe", false);
 		formContext.addMember(nameField);
-		ReactTextInputControl nameInput = new ReactTextInputControl(nameField);
-		ReactFormFieldChromeControl nameChrome = new ReactFormFieldChromeControl(
+		ReactTextInputControl nameInput = new ReactTextInputControl(ctx, nameField);
+		ReactFormFieldChromeControl nameChrome = new ReactFormFieldChromeControl(ctx,
 			"Full Name", true, false, null, "Enter your full legal name", null, false, true, nameInput);
 
 		FormField emailField = FormFactory.newStringField("email", "john@example.com", false);
 		formContext.addMember(emailField);
-		ReactTextInputControl emailInput = new ReactTextInputControl(emailField);
-		ReactFormFieldChromeControl emailChrome = new ReactFormFieldChromeControl(
+		ReactTextInputControl emailInput = new ReactTextInputControl(ctx, emailField);
+		ReactFormFieldChromeControl emailChrome = new ReactFormFieldChromeControl(ctx,
 			"Email", true, true, null, null, null, false, true, emailInput);
 
 		FormField phoneField = FormFactory.newStringField("phone", "", false);
 		formContext.addMember(phoneField);
-		ReactTextInputControl phoneInput = new ReactTextInputControl(phoneField);
-		ReactFormFieldChromeControl phoneChrome = new ReactFormFieldChromeControl(
+		ReactTextInputControl phoneInput = new ReactTextInputControl(ctx, phoneField);
+		ReactFormFieldChromeControl phoneChrome = new ReactFormFieldChromeControl(ctx,
 			"Phone", false, false, "Please enter a valid phone number", null, null, false, true, phoneInput);
 
 		FormField dobField = FormFactory.newStringField("dob", "1990-06-15", false);
 		formContext.addMember(dobField);
-		ReactDatePickerControl dobInput = new ReactDatePickerControl(dobField);
-		ReactFormFieldChromeControl dobChrome = new ReactFormFieldChromeControl(
+		ReactDatePickerControl dobInput = new ReactDatePickerControl(ctx, dobField);
+		ReactFormFieldChromeControl dobChrome = new ReactFormFieldChromeControl(ctx,
 			"Date of Birth", false, false, null, null, null, false, true, dobInput);
 
 		FormField bioField = FormFactory.newStringField("bio", "Software developer with 10 years experience...", false);
 		formContext.addMember(bioField);
-		ReactTextInputControl bioInput = new ReactTextInputControl(bioField);
-		ReactFormFieldChromeControl bioChrome = new ReactFormFieldChromeControl(
+		ReactTextInputControl bioInput = new ReactTextInputControl(ctx, bioField);
+		ReactFormFieldChromeControl bioChrome = new ReactFormFieldChromeControl(ctx,
 			"Biography", false, false, null, "A short description of yourself",
 			"top", true, true, bioInput);
 
 		FormField activeField = FormFactory.newBooleanField("active", Boolean.TRUE, false);
 		formContext.addMember(activeField);
-		ReactCheckboxControl activeInput = new ReactCheckboxControl(activeField);
-		ReactFormFieldChromeControl activeChrome = new ReactFormFieldChromeControl(
+		ReactCheckboxControl activeInput = new ReactCheckboxControl(ctx, activeField);
+		ReactFormFieldChromeControl activeChrome = new ReactFormFieldChromeControl(ctx,
 			"Active", false, false, null, null, null, false, true, activeInput);
 
-		ReactButtonControl editButton = new ReactButtonControl("Edit", c -> HandlerResult.DEFAULT_RESULT);
-		ReactButtonControl resetButton = new ReactButtonControl("Reset", c -> HandlerResult.DEFAULT_RESULT);
+		ReactButtonControl editButton = new ReactButtonControl(ctx, "Edit", c -> HandlerResult.DEFAULT_RESULT);
+		ReactButtonControl resetButton = new ReactButtonControl(ctx, "Reset", c -> HandlerResult.DEFAULT_RESULT);
 
-		ReactFormGroupControl personalGroup = new ReactFormGroupControl(
+		ReactFormGroupControl personalGroup = new ReactFormGroupControl(ctx,
 			"Personal Information", true, false, "subtle", true, List.of(editButton, resetButton),
 			List.of(nameChrome, emailChrome, phoneChrome, dobChrome, bioChrome, activeChrome));
 
@@ -129,40 +134,40 @@ public class DemoReactFormFieldsComponent extends LayoutComponent {
 
 		FormField langField = FormFactory.newStringField("language", "en", false);
 		formContext.addMember(langField);
-		ReactSelectFormFieldControl langInput = new ReactSelectFormFieldControl(langField,
+		ReactSelectFormFieldControl langInput = new ReactSelectFormFieldControl(ctx, langField,
 			createOptionList(
 				createOption("en", "English"),
 				createOption("de", "Deutsch"),
 				createOption("fr", "Fran\u00e7ais"),
 				createOption("es", "Espa\u00f1ol")));
-		ReactFormFieldChromeControl langChrome = new ReactFormFieldChromeControl(
+		ReactFormFieldChromeControl langChrome = new ReactFormFieldChromeControl(ctx,
 			"Language", true, false, null, "Select your preferred language", null, false, true, langInput);
 
 		FormField notifField = FormFactory.newIntField("notificationLimit", Integer.valueOf(5), false);
 		formContext.addMember(notifField);
-		ReactNumberInputControl notifInput = new ReactNumberInputControl(notifField, 0);
-		ReactFormFieldChromeControl notifChrome = new ReactFormFieldChromeControl(
+		ReactNumberInputControl notifInput = new ReactNumberInputControl(ctx, notifField, 0);
+		ReactFormFieldChromeControl notifChrome = new ReactFormFieldChromeControl(ctx,
 			"Notification Limit", false, false, null, "Maximum notifications per day", null, false, true, notifInput);
 
 		FormField themeField = FormFactory.newStringField("theme", "light", false);
 		formContext.addMember(themeField);
-		ReactSelectFormFieldControl themeInput = new ReactSelectFormFieldControl(themeField,
+		ReactSelectFormFieldControl themeInput = new ReactSelectFormFieldControl(ctx, themeField,
 			createOptionList(
 				createOption("light", "Light"),
 				createOption("dark", "Dark"),
 				createOption("system", "System Default")));
-		ReactFormFieldChromeControl themeChrome = new ReactFormFieldChromeControl(
+		ReactFormFieldChromeControl themeChrome = new ReactFormFieldChromeControl(ctx,
 			"Theme", false, false, null, null, null, false, true, themeInput);
 
-		ReactButtonControl addPrefButton = new ReactButtonControl("Add", c -> HandlerResult.DEFAULT_RESULT);
+		ReactButtonControl addPrefButton = new ReactButtonControl(ctx, "Add", c -> HandlerResult.DEFAULT_RESULT);
 
-		ReactFormGroupControl prefsGroup = new ReactFormGroupControl(
+		ReactFormGroupControl prefsGroup = new ReactFormGroupControl(ctx,
 			"Preferences", true, false, "outlined", true, List.of(addPrefButton),
 			List.of(langChrome, notifChrome, themeChrome));
 
 		// -- Top-level form layout: 3 columns, auto label position --
 
-		return new ReactFormLayoutControl(3, "auto", false,
+		return new ReactFormLayoutControl(ctx, 3, "auto", false,
 			List.of(personalGroup, prefsGroup));
 	}
 

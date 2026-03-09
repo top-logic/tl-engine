@@ -18,6 +18,7 @@ import com.top_logic.basic.io.binary.SimpleBinaryDataValue;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.audio.ReactAudioPlayerControl;
 import com.top_logic.layout.react.control.audio.ReactAudioRecorderControl;
 import com.top_logic.layout.react.control.download.ReactDownloadControl;
@@ -61,11 +62,12 @@ public class DemoAudioRecorderComponent extends LayoutComponent {
 		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
 
 		if (_recorderControl == null) {
+			ReactContext ctx = ReactContext.fromDisplayContext(displayContext);
 			// Three controls, one model, zero callbacks.
 			SimpleBinaryDataValue audioModel = new SimpleBinaryDataValue();
-			_recorderControl = new ReactAudioRecorderControl(audioModel);
-			_playerControl = new ReactAudioPlayerControl(audioModel);
-			_downloadControl = new ReactDownloadControl(audioModel);
+			_recorderControl = new ReactAudioRecorderControl(ctx, audioModel);
+			_playerControl = new ReactAudioPlayerControl(ctx, audioModel);
+			_downloadControl = new ReactDownloadControl(ctx, audioModel);
 			_downloadControl.setClearable(true);
 		}
 

@@ -21,6 +21,7 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.common.ReactFieldListControl;
@@ -47,6 +48,8 @@ public class DemoReactTabBarComponent extends LayoutComponent {
 		// No additional configuration needed.
 	}
 
+	private ReactContext _context;
+
 	private ReactTabBarControl _tabBarControl;
 
 	/**
@@ -62,6 +65,7 @@ public class DemoReactTabBarComponent extends LayoutComponent {
 		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
 
 		if (_tabBarControl == null) {
+			_context = ReactContext.fromDisplayContext(displayContext);
 			_tabBarControl = createTabBar();
 		}
 
@@ -73,29 +77,29 @@ public class DemoReactTabBarComponent extends LayoutComponent {
 		tabs.add(new TabDefinition("counter-a", "Counter A", this::createCounterA));
 		tabs.add(new TabDefinition("counter-b", "Counter B", this::createCounterB));
 		tabs.add(new TabDefinition("buttons", "Buttons", this::createButtonsTab));
-		return new ReactTabBarControl(null, tabs);
+		return new ReactTabBarControl(_context, null, tabs);
 	}
 
 	private ReactControl createCounterA() {
-		return new DemoReactCounterComponent.DemoCounterControl("Counter A");
+		return new DemoReactCounterComponent.DemoCounterControl(_context, "Counter A");
 	}
 
 	private ReactControl createCounterB() {
-		return new DemoReactCounterComponent.DemoCounterControl("Counter B");
+		return new DemoReactCounterComponent.DemoCounterControl(_context, "Counter B");
 	}
 
 	private ReactControl createButtonsTab() {
 		List<ReactControl> buttons = new ArrayList<>();
-		buttons.add(new ReactButtonControl("Say Hello", (context) -> {
+		buttons.add(new ReactButtonControl(_context, "Say Hello", (context) -> {
 			InfoService.showInfo(ResKey.text("Hello from the React tab bar!"));
 			return HandlerResult.DEFAULT_RESULT;
 		}));
-		buttons.add(new ReactButtonControl("Say Goodbye", (context) -> {
+		buttons.add(new ReactButtonControl(_context, "Say Goodbye", (context) -> {
 			InfoService.showInfo(ResKey.text("Goodbye from the React tab bar!"));
 			return HandlerResult.DEFAULT_RESULT;
 		}));
 
-		return new ReactFieldListControl("Button Controls", buttons);
+		return new ReactFieldListControl(_context, "Button Controls", buttons);
 	}
 
 }

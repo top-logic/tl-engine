@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.react.control;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
+
 /**
  * Sink for user-visible error, warning, and info messages.
  *
@@ -13,35 +15,30 @@ package com.top_logic.layout.react.control;
  * sink is propagated through the view context so that controls can report errors to whatever
  * notification component is in scope.
  * </p>
- *
- * <p>
- * Message content is passed as pre-rendered HTML so that server-generated formatting and structure
- * is preserved on the client.
- * </p>
  */
 public interface ErrorSink {
 
 	/**
 	 * Shows an error message to the user.
 	 *
-	 * @param htmlContent
-	 *        The error message as rendered HTML.
+	 * @param content
+	 *        The error message content.
 	 */
-	void showError(String htmlContent);
+	void showError(HTMLFragment content);
 
 	/**
 	 * Shows a warning message to the user.
 	 *
-	 * @param htmlContent
-	 *        The warning message as rendered HTML.
+	 * @param content
+	 *        The warning message content.
 	 */
-	void showWarning(String htmlContent);
+	void showWarning(HTMLFragment content);
 
 	/**
 	 * Shows an informational message to the user.
 	 *
-	 * @param htmlContent
-	 *        The info message as rendered HTML.
+	 * @param content
+	 *        The info message content.
 	 */
-	void showInfo(String htmlContent);
+	void showInfo(HTMLFragment content);
 }

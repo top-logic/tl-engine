@@ -5,8 +5,15 @@
  */
 package com.top_logic.layout.react.control.nav;
 
+import java.io.IOException;
+import java.io.StringWriter;
 import java.util.Map;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
+import com.top_logic.basic.Logger;
+import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.react.DefaultReactDisplayContext;
 import com.top_logic.layout.react.ReactDisplayContext;
 import com.top_logic.layout.react.control.ErrorSink;
@@ -79,18 +86,18 @@ public class ReactAppShellControl extends ReactControl {
 
 		_errorSink = new ErrorSink() {
 			@Override
-			public void showError(String message) {
-				showSnackbar(message, "error");
+			public void showError(HTMLFragment content) {
+				showSnackbar(renderToHtml(content), "error");
 			}
 
 			@Override
-			public void showWarning(String message) {
-				showSnackbar(message, "warning");
+			public void showWarning(HTMLFragment content) {
+				showSnackbar(renderToHtml(content), "warning");
 			}
 
 			@Override
-			public void showInfo(String message) {
-				showSnackbar(message, "info");
+			public void showInfo(HTMLFragment content) {
+				showSnackbar(renderToHtml(content), "info");
 			}
 		};
 
@@ -131,6 +138,18 @@ public class ReactAppShellControl extends ReactControl {
 		if (context instanceof DefaultReactDisplayContext defaultContext) {
 			defaultContext.setErrorSink(_errorSink);
 		}
+	}
+
+	private String renderToHtml(HTMLFragment fragment) {
+		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext();
+		StringWriter buffer = new StringWriter();
+		try {
+			TagWriter out = new TagWriter(buffer);
+			fragment.write(displayContext, out);
+		} catch (IOException ex) {
+			Logger.error("Failed to render info service message.", ex, ReactAppShellControl.class);
+		}
+		return buffer.toString();
 	}
 
 	@Override

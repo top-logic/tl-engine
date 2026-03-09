@@ -6,8 +6,10 @@
 package com.top_logic.layout.view.element;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.CalledByReflection;
@@ -156,23 +158,52 @@ public class PanelElement extends ContainerElement {
 			content = new ReactStackControl(context, reactChildren);
 		}
 
-		// Phase 4: Create panel and add toolbar buttons.
+		// Phase 4: Create panel and add toolbar buttons for explicit commands.
 		ReactPanelControl panel = new ReactPanelControl(context, _title, content, false, false, false);
 
 		for (ViewCommandModel model : commandModels) {
 			if (model.getPlacement() == CommandPlacement.TOOLBAR) {
-				String label = resolveLabel(model.getLabel());
-				ReactButtonControl button = new ReactButtonControl(context, label,
-					ctx -> model.executeCommand(ctx));
-				button.setDisabled(!model.getExecutableState().isExecutable());
-				model.setStateChangeListener(() -> {
-					button.setDisabled(!model.getExecutableState().isExecutable());
-				});
-				panel.addToolbarButton(button);
+				addToolbarButtonForCommand(panel, context, model);
 			}
 		}
 
+		// Phase 5: Observe scope for implicit commands contributed by children.
+		Map<ViewCommandModel, ReactButtonControl> implicitButtons = new HashMap<>();
+		scope.addListener(() -> {
+			// Rebuild: remove buttons for commands no longer in scope.
+			implicitButtons.entrySet().removeIf(entry -> {
+				if (!scope.getAllCommands().contains(entry.getKey())) {
+					panel.removeToolbarButton(entry.getValue());
+					return true;
+				}
+				return false;
+			});
+
+			// Add buttons for new implicit commands with TOOLBAR placement.
+			for (ViewCommandModel model : scope.getAllCommands()) {
+				if (!commandModels.contains(model) && !implicitButtons.containsKey(model)) {
+					if (model.getPlacement() == CommandPlacement.TOOLBAR) {
+						ReactButtonControl button = addToolbarButtonForCommand(panel, context, model);
+						implicitButtons.put(model, button);
+					}
+				}
+			}
+		});
+
 		return panel;
+	}
+
+	private ReactButtonControl addToolbarButtonForCommand(ReactPanelControl panel, ViewContext context,
+			ViewCommandModel model) {
+		String label = resolveLabel(model.getLabel());
+		ReactButtonControl button = new ReactButtonControl(context, label,
+			ctx -> model.executeCommand(ctx));
+		button.setDisabled(!model.getExecutableState().isExecutable());
+		model.setStateChangeListener(() -> {
+			button.setDisabled(!model.getExecutableState().isExecutable());
+		});
+		panel.addToolbarButton(button);
+		return button;
 	}
 
 	private ViewExecutabilityRule buildExecutabilityRule(ViewCommand.Config cmdConfig) {

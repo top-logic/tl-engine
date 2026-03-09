@@ -124,6 +124,22 @@ public class ReactPanelControl extends ReactControl {
 	}
 
 	/**
+	 * Removes a custom toolbar button.
+	 *
+	 * @param button
+	 *        The button to remove.
+	 * @return {@code true} if the button was found and removed.
+	 */
+	public boolean removeToolbarButton(ReactControl button) {
+		boolean removed = _toolbarButtons.remove(button);
+		if (removed) {
+			toolbarButtonList().remove(button);
+			button.cleanupTree();
+		}
+		return removed;
+	}
+
+	/**
 	 * Sets the parent split panel reference for collapse notification.
 	 */
 	void setParentSplitPanel(ReactSplitPanelControl parent, int indexInParent) {

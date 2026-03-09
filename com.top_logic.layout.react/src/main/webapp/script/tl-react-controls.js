@@ -1288,27 +1288,27 @@ const X = ({ icon: l }) => l ? /* @__PURE__ */ e.createElement("i", { className:
     ))
   )), /* @__PURE__ */ e.createElement("div", { className: "tlDrawer__body" }, c && /* @__PURE__ */ e.createElement(P, { control: c })));
 }, { useCallback: be, useEffect: Ut, useState: Wt } = e, Kt = ({ controlId: l }) => {
-  const t = R(), o = A(), n = t.message ?? "", s = t.variant ?? "info", r = t.action, a = t.duration ?? 5e3, d = t.visible === !0, [c, i] = Wt(!1), h = be(() => {
-    i(!0), setTimeout(() => {
-      o("dismiss"), i(!1);
+  const t = R(), o = A(), n = t.message ?? "", s = t.content ?? "", r = t.variant ?? "info", a = t.action, d = t.duration ?? 5e3, c = t.visible === !0, [i, h] = Wt(!1), v = be(() => {
+    h(!0), setTimeout(() => {
+      o("dismiss"), h(!1);
     }, 200);
-  }, [o]), v = be(() => {
-    r && o(r.commandName), h();
-  }, [o, r, h]);
+  }, [o]), _ = be(() => {
+    a && o(a.commandName), v();
+  }, [o, a, v]);
   return Ut(() => {
-    if (!d || a === 0) return;
-    const _ = setTimeout(h, a);
-    return () => clearTimeout(_);
-  }, [d, a, h]), !d && !c ? null : /* @__PURE__ */ e.createElement(
+    if (!c || d === 0) return;
+    const L = setTimeout(v, d);
+    return () => clearTimeout(L);
+  }, [c, d, v]), !c && !i ? null : /* @__PURE__ */ e.createElement(
     "div",
     {
       id: l,
-      className: `tlSnackbar tlSnackbar--${s}${c ? " tlSnackbar--exiting" : ""}`,
+      className: `tlSnackbar tlSnackbar--${r}${i ? " tlSnackbar--exiting" : ""}`,
       role: "status",
       "aria-live": "polite"
     },
-    /* @__PURE__ */ e.createElement("span", { className: "tlSnackbar__message" }, n),
-    r && /* @__PURE__ */ e.createElement("button", { type: "button", className: "tlSnackbar__action", onClick: v }, r.label)
+    s ? /* @__PURE__ */ e.createElement("span", { className: "tlSnackbar__message", dangerouslySetInnerHTML: { __html: s } }) : /* @__PURE__ */ e.createElement("span", { className: "tlSnackbar__message" }, n),
+    a && /* @__PURE__ */ e.createElement("button", { type: "button", className: "tlSnackbar__action", onClick: _ }, a.label)
   );
 }, { useCallback: re, useEffect: se, useRef: Ht, useState: he } = e, Gt = ({ controlId: l }) => {
   const t = R(), o = A(), n = t.open === !0, s = t.anchorId, r = t.items ?? [], a = Ht(null), [d, c] = he({ top: 0, left: 0 }), [i, h] = he(0), v = r.filter((m) => m.type === "item" && !m.disabled);

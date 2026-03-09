@@ -107,7 +107,7 @@ public class ReferenceElement implements UIElement {
 		}
 
 		// Create isolated child context.
-		ViewContext childContext = new DefaultViewContext(parentContext.getReactContext());
+		ViewContext childContext = new DefaultViewContext(parentContext);
 
 		// Pre-bind parent channels into the child context.
 		for (ChannelBindingConfig binding : _bindings) {

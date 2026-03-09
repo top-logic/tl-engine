@@ -21,7 +21,7 @@ import com.top_logic.layout.view.form.FormControl;
  *
  * @see DefaultViewContext
  */
-public interface ViewContext {
+public interface ViewContext extends ReactContext {
 
 	/**
 	 * Creates a child context with an appended path segment.
@@ -45,11 +45,6 @@ public interface ViewContext {
 	 * </p>
 	 */
 	String getPersonalizationKey();
-
-	/**
-	 * The {@link ReactContext} for the current session.
-	 */
-	ReactContext getReactContext();
 
 	/**
 	 * The {@link CommandScope} of the nearest enclosing panel, or {@code null} if no panel is in

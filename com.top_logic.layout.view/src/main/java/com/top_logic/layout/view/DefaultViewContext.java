@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.CommandScope;
@@ -25,7 +26,7 @@ import com.top_logic.layout.view.form.FormControl;
  */
 public class DefaultViewContext implements ViewContext {
 
-	private final ReactContext _displayContext;
+	private final ReactContext _reactContext;
 
 	private final String _personalizationPath;
 
@@ -38,17 +39,17 @@ public class DefaultViewContext implements ViewContext {
 	/**
 	 * Creates a root {@link DefaultViewContext}.
 	 *
-	 * @param displayContext
+	 * @param reactContext
 	 *        The view display context providing ID allocation, SSE queue and other rendering
 	 *        infrastructure.
 	 */
-	public DefaultViewContext(ReactContext displayContext) {
-		this(displayContext, "view", new HashMap<>(), null, null);
+	public DefaultViewContext(ReactContext reactContext) {
+		this(reactContext, "view", new HashMap<>(), null, null);
 	}
 
-	private DefaultViewContext(ReactContext displayContext, String personalizationPath,
+	private DefaultViewContext(ReactContext reactContext, String personalizationPath,
 			Map<String, ViewChannel> channels, CommandScope commandScope, FormControl formControl) {
-		_displayContext = displayContext;
+		_reactContext = reactContext;
 		_personalizationPath = personalizationPath;
 		_channels = channels;
 		_commandScope = commandScope;
@@ -57,18 +58,13 @@ public class DefaultViewContext implements ViewContext {
 
 	@Override
 	public ViewContext childContext(String segment) {
-		return new DefaultViewContext(_displayContext, _personalizationPath + "." + segment, _channels, _commandScope,
+		return new DefaultViewContext(_reactContext, _personalizationPath + "." + segment, _channels, _commandScope,
 			_formControl);
 	}
 
 	@Override
 	public String getPersonalizationKey() {
 		return _personalizationPath;
-	}
-
-	@Override
-	public ReactContext getReactContext() {
-		return _displayContext;
 	}
 
 	@Override
@@ -88,7 +84,7 @@ public class DefaultViewContext implements ViewContext {
 
 	@Override
 	public ViewContext withCommandScope(CommandScope scope) {
-		return new DefaultViewContext(_displayContext, _personalizationPath, _channels, scope, _formControl);
+		return new DefaultViewContext(_reactContext, _personalizationPath, _channels, scope, _formControl);
 	}
 
 	@Override
@@ -114,5 +110,25 @@ public class DefaultViewContext implements ViewContext {
 					+ "Available channels: " + _channels.keySet());
 		}
 		return channel;
+	}
+
+	@Override
+	public String allocateId() {
+		return _reactContext.allocateId();
+	}
+
+	@Override
+	public String getWindowName() {
+		return _reactContext.getWindowName();
+	}
+
+	@Override
+	public String getContextPath() {
+		return _reactContext.getContextPath();
+	}
+
+	@Override
+	public SSEUpdateQueue getSSEQueue() {
+		return _reactContext.getSSEQueue();
 	}
 }

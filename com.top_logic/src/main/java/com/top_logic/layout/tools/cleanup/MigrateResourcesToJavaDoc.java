@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
 
 /**
  * Tool for migrating I18N resource translations from {@code WEB-INF/conf/resources/*_en.properties}
- * files into {@code @en} JavaDoc annotations on the corresponding {@code ResKey} fields in
+ * files into {@code @en} <code>JavaDoc</code> annotations on the corresponding {@code ResKey} fields in
  * {@code I18NConstants.java} files, see Ticket #29111.
  *
  * <p>

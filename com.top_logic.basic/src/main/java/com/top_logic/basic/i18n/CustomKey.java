@@ -32,10 +32,11 @@ import com.top_logic.basic.util.ResKey;
  * </pre>
  *
  * <p>
- * The field must <b>not</b> be pre-initialized (e.g. with {@link ResKey#internalCreate(String)}).
- * The annotation is read both at runtime (by {@link I18NConstantsBase#initConstants(Class)}) and at
- * build time (by the TLDoclet) to ensure that the JavaDoc-based localization is stored under the
- * correct key.
+ * The field must <b>not</b> be pre-initialized (e.g. with
+ * {@link ResKey#internalCreate(String) ResKey.internalCreate(String)}). The annotation is read both
+ * at runtime (by {@link I18NConstantsBase#initConstants(Class) I18NConstantsBase.initConstants()})
+ * and at build time (by the <code>TLDoclet</code>) to ensure that the <code>JavaDoc</code>-based
+ * localization is stored under the correct key.
  * </p>
  *
  * @see I18NConstantsBase

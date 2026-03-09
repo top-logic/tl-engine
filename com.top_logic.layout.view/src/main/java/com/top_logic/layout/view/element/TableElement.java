@@ -278,8 +278,8 @@ public class TableElement implements UIElement {
 	}
 
 	private ReactCellControlProvider createCellProvider(ViewContext context) {
-		return (rowObject, columnName, cellValue) -> {
-			return new ReactTextCellControl(context, MetaLabelProvider.INSTANCE.getLabel(cellValue));
+		return (ctx, rowObject, columnName, cellValue) -> {
+			return new ReactTextCellControl(ctx, MetaLabelProvider.INSTANCE.getLabel(cellValue));
 		};
 	}
 }

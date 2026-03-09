@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.top_logic.layout.form.FormField;
+import com.top_logic.layout.react.ReactContext;
 
 /**
  * A {@link ReactFormFieldControl} for select fields that includes options in the field state.
@@ -29,13 +30,15 @@ public class ReactSelectFormFieldControl extends ReactFormFieldControl {
 	/**
 	 * Creates a new {@link ReactSelectFormFieldControl}.
 	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
 	 * @param model
 	 *        The form field.
 	 * @param options
 	 *        The select options, each a map with {@code "value"} and {@code "label"} entries.
 	 */
-	public ReactSelectFormFieldControl(FormField model, List<Map<String, Object>> options) {
-		super(model, "TLSelect");
+	public ReactSelectFormFieldControl(ReactContext context, FormField model, List<Map<String, Object>> options) {
+		super(context, model, "TLSelect");
 		_options = options;
 		putState(OPTIONS, _options);
 	}

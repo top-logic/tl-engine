@@ -19,8 +19,12 @@ import com.top_logic.tool.boundsec.HandlerResult;
  *
  * <p>
  * Lifecycle management ({@code attach}/{@code detach}) is NOT part of this interface because a
- * single model may be shared between multiple buttons (e.g. a toolbar button and an inline button
- * for the same command). The model creator is responsible for lifecycle.
+ * single model may be shared between multiple buttons. This happens when a child element contributes
+ * an implicit command to a panel's {@code CommandScope}: the child creates a button for the command,
+ * and the panel adds a second toolbar button for the same model. If the toolbar button is later
+ * removed (because the command leaves the scope), it must not detach the model that the child's
+ * button still uses. The model creator is responsible for lifecycle via
+ * {@code ReactControl.addCleanupAction()}.
  * </p>
  */
 public interface CommandModel {

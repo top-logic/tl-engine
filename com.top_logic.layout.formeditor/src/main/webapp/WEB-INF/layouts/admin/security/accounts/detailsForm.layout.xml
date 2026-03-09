@@ -87,6 +87,27 @@
 					</confirmMessage>
 				</confirmation>
 			</button>
+			<button id="ID_d76c3212_847c_4a23_abb5_65f0074ca835"
+				class="com.top_logic.model.search.providers.CommandHandlerByExpression"
+				clique="delete"
+				operation="account -> $account.set(`tl.accounts:Person#mfaSecret`, null)"
+			>
+				<resourceKey key="dynamic.74a048ee-bbbd-4211-99f9-f6a10bb2824a">
+					<en>Reset multi-factor authentication</en>
+					<de>Multi-Faktor-Authentifizierung zurücksetzen</de>
+				</resourceKey>
+				<target class="com.top_logic.model.search.providers.TransformLinkingByExpression"
+					function="contact -> $contact.get(`Contacts:PersonContact#account`)"
+					input="model(self())"
+				/>
+				<executability>
+					<rule-by-expression decision="currentUser().get(`tl.accounts:Person#admin`)"/>
+				</executability>
+				<commitMessage key="dynamic.db6b6baf-eccd-4c21-9060-8c9bab4343eb">
+					<en>Multi-factor authentication deactivated</en>
+					<de>Multi-Faktor-Authentifizierung deaktiviert</de>
+				</commitMessage>
+			</button>
 		</buttons>
 		<dialogs>
 			<layout-reference resource="admin/security/accounts/changePassword/dialog.layout.xml"/>

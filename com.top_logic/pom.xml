@@ -99,6 +99,14 @@
       <artifactId>ext-com-inter-fonts</artifactId>
     </dependency>
     
+	<!-- Note: Required for multi-factor authentication. -->
+	<!-- https://github.com/samdjstevens/java-totp -->
+	<dependency>
+	  <groupId>dev.samstevens.totp</groupId>
+	  <artifactId>totp</artifactId>
+	  <version>1.7.1</version>
+	</dependency>
+
 	<dependency>
 	    <groupId>org.webjars</groupId>
 	    <artifactId>jquery</artifactId>

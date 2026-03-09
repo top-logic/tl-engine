@@ -167,6 +167,9 @@
 							<de>Gantt-Demo</de>
 						</label>
 					</nav-item>
+					<nav-item id="commands-demo" label="Commands Demo" icon="bi bi-menu-button-wide">
+						<view-ref view="demo/commands-demo.view.xml" />
+					</nav-item>
 					<separator/>
 					<!-- Intentionally NOT routed: demonstrates that items
 					     with route="" do not produce URL segments and are

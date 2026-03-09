@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<panel title="Command Display Demo">
+		<commands>
+			<command class="com.top_logic.demo.view.command.DemoCommand"
+				label="New Item"
+				clique="create"
+				placement="TOOLBAR"
+			/>
+			<command class="com.top_logic.demo.view.command.DemoCommand"
+				label="Import"
+				clique="create"
+				placement="TOOLBAR"
+			/>
+			<command class="com.top_logic.demo.view.command.DemoCommand"
+				label="Edit"
+				clique="edit"
+				placement="TOOLBAR"
+			/>
+			<command class="com.top_logic.demo.view.command.DemoCommand"
+				label="Delete"
+				clique="delete"
+				placement="TOOLBAR"
+			/>
+			<command class="com.top_logic.demo.view.command.DemoCommand"
+				label="Export Excel"
+				clique="export"
+				placement="TOOLBAR"
+			/>
+			<command class="com.top_logic.demo.view.command.DemoCommand"
+				label="Export PDF"
+				clique="export"
+				placement="TOOLBAR"
+			/>
+			<command class="com.top_logic.demo.view.command.DemoCommand"
+				label="Save"
+				clique="commit"
+				placement="BUTTON_BAR"
+			/>
+			<command class="com.top_logic.demo.view.command.DemoCommand"
+				label="Cancel"
+				clique="commit"
+				placement="BUTTON_BAR"
+			/>
+		</commands>
+
+		<stack direction="column" gap="default">
+			<card title="Panel Content" variant="elevated">
+				<demo-counter label="Items"/>
+			</card>
+		</stack>
+	</panel>
+</view>

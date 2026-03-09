@@ -40,6 +40,7 @@ import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.event.infoservice.DefaultInfoServiceItem;
 import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.event.infoservice.InfoServiceXMLStringConverter;
 import com.top_logic.layout.ContentHandlersRegistry;
@@ -51,6 +52,7 @@ import com.top_logic.layout.basic.component.ControlSupport;
 import com.top_logic.layout.internal.SubsessionHandler;
 import com.top_logic.layout.react.DataProvider;
 import com.top_logic.layout.react.UploadHandler;
+import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.ReactCommandTarget;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.protocol.FunctionCall;
@@ -263,7 +265,7 @@ public class ReactServlet extends TopLogicServlet {
 		}
 
 		// Forward side effects: InfoService messages and legacy control repaints.
-		forwardPendingUpdates(displayContext, rootHandler, queue);
+		forwardPendingUpdates(displayContext, rootHandler, queue, control);
 
 		if (result.isSuccess()) {
 			sendSuccess(response);
@@ -327,7 +329,7 @@ public class ReactServlet extends TopLogicServlet {
 		}
 
 		// Forward side effects: InfoService messages and legacy control repaints.
-		forwardPendingUpdates(displayContext, rootHandler, queue);
+		forwardPendingUpdates(displayContext, rootHandler, queue, control);
 
 		if (result.isSuccess()) {
 			sendSuccess(response);
@@ -368,18 +370,40 @@ public class ReactServlet extends TopLogicServlet {
 	 */
 	@SuppressWarnings("unchecked")
 	private void forwardPendingUpdates(DisplayContext displayContext, SubsessionHandler rootHandler,
-			SSEUpdateQueue queue) {
+			SSEUpdateQueue queue, ReactCommandTarget control) {
 		// Forward InfoService messages.
 		if (displayContext.isSet(InfoService.INFO_SERVICE_ENTRIES)) {
 			List<HTMLFragment> entries = displayContext.get(InfoService.INFO_SERVICE_ENTRIES);
 			if (!entries.isEmpty()) {
-				String jsCode = InfoServiceXMLStringConverter.getJSInvocation(displayContext, entries);
-				queue.enqueue(JSSnipplet.create().setCode(jsCode));
+				ErrorSink errorSink = control instanceof ReactControl rc ? rc.getErrorSink() : null;
+				if (errorSink != null) {
+					forwardToErrorSink(entries, errorSink);
+				} else {
+					String jsCode = InfoServiceXMLStringConverter.getJSInvocation(displayContext, entries);
+					queue.enqueue(JSSnipplet.create().setCode(jsCode));
+				}
 			}
 		}
 
 		// Collect and forward pending legacy control repaints.
 		forwardLegacyControlUpdates(displayContext, rootHandler, queue);
+	}
+
+	private void forwardToErrorSink(List<HTMLFragment> entries, ErrorSink errorSink) {
+		for (HTMLFragment entry : entries) {
+			if (entry instanceof DefaultInfoServiceItem item) {
+				String message = Resources.getInstance().getString(item.getHeaderText());
+				String kindOfClass = item.getKindOfClass();
+
+				if (InfoService.ERROR_CSS.equals(kindOfClass)) {
+					errorSink.showError(message);
+				} else if (InfoService.WARNING_CSS.equals(kindOfClass)) {
+					errorSink.showWarning(message);
+				} else {
+					errorSink.showInfo(message);
+				}
+			}
+		}
 	}
 
 	/**

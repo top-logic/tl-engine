@@ -199,6 +199,8 @@ public class FieldControl {
 			((ViewDatePickerControl) _innerControl).setValueCallback(this::handleValueChange);
 		} else if (_innerControl instanceof ViewSelectControl) {
 			((ViewSelectControl) _innerControl).setValueCallback(this::handleValueChange);
+		} else if (_innerControl instanceof ViewColorInputControl) {
+			((ViewColorInputControl) _innerControl).setValueCallback(this::handleValueChange);
 		}
 	}
 
@@ -234,6 +236,16 @@ public class FieldControl {
 			ViewSelectControl select = (ViewSelectControl) _innerControl;
 			select.setValue(value);
 			select.setEditable(editable);
+		} else if (_innerControl instanceof ViewColorInputControl) {
+			ViewColorInputControl color = (ViewColorInputControl) _innerControl;
+			String hex = null;
+			if (value instanceof java.awt.Color) {
+				hex = ViewColorInputControl.colorToHex((java.awt.Color) value);
+			} else if (value instanceof String) {
+				hex = (String) value;
+			}
+			color.setValue(hex);
+			color.setEditable(editable);
 		}
 	}
 

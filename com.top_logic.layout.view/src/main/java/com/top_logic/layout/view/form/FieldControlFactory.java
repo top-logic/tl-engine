@@ -52,7 +52,13 @@ public class FieldControlFactory {
 				case STRING:
 				case TRISTATE:
 				case BINARY:
-				case CUSTOM:
+					return createTextInput(context, value, editable);
+				case CUSTOM: {
+					if (java.awt.Color.class.getName().equals(primitive.getStorageMapping().getApplicationType().getName())) {
+						return createColorInput(context, value, editable);
+					}
+					return createTextInput(context, value, editable);
+				}
 				default:
 					return createTextInput(context, value, editable);
 			}
@@ -77,6 +83,16 @@ public class FieldControlFactory {
 
 	private static ReactControl createDatePicker(ReactContext context, Object value, boolean editable) {
 		return new ViewDatePickerControl(context, value, editable);
+	}
+
+	private static ReactControl createColorInput(ReactContext context, Object value, boolean editable) {
+		String hex = null;
+		if (value instanceof java.awt.Color) {
+			hex = ViewColorInputControl.colorToHex((java.awt.Color) value);
+		} else if (value instanceof String) {
+			hex = (String) value;
+		}
+		return new ViewColorInputControl(context, hex, editable);
 	}
 
 	private static String asLabel(Object value) {

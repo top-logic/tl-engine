@@ -1101,6 +1101,7 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 		if (_loginHooks.isEmpty()) {
 			return;
 		}
+		MainLayout mainLayout = this;
 		Runnable callback = new Runnable() {
 
 			private final Iterator<LoginHook> _hooks = _loginHooks.iterator();
@@ -1108,7 +1109,7 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 			@Override
 			public void run() {
 				if (_hooks.hasNext()) {
-					_hooks.next().handleLogin(context, this);
+					_hooks.next().handleLogin(context, mainLayout, this);
 				}
 
 			}

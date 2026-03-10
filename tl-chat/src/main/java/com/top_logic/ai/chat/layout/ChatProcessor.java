@@ -22,8 +22,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.top_logic.ai.chat.api.DtoMapper;
 import com.top_logic.ai.chat.api.messages.AttachmentDto;
+import com.top_logic.ai.chat.background.BackgroundAgentNotification;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.service.agents.AgentRegistry;
+import com.top_logic.ai.service.agents.background.AgentResult;
+import com.top_logic.ai.service.agents.background.BackgroundAgentExecutor;
+import com.top_logic.ai.service.agents.background.BackgroundConfig;
+import com.top_logic.ai.service.agents.background.context.ChatContext;
+import com.top_logic.ai.service.agents.background.trigger.PostTurnTrigger;
+import com.top_logic.ai.service.agents.background.trigger.PreTurnTrigger;
 import com.top_logic.ai.service.approval.UserInteractionStore;
 import com.top_logic.ai.service.approval.UserInteractionStoreBinding;
 import com.top_logic.ai.service.tools.ToolCallTracker;
@@ -174,6 +181,26 @@ public class ChatProcessor {
 				return;
 			}
 
+			// Execute pre-turn background agents (synchronous, can block)
+			List<String> preTurnAgents = agentRegistry.getBackgroundAgents(
+				PreTurnTrigger.class, BackgroundConfig.Scope.CHAT);
+			for (String preTurnAgent : preTurnAgents) {
+				try {
+					BackgroundAgentExecutor bgExecutor = new BackgroundAgentExecutor(agentRegistry);
+					ChatContext bgContext = ChatContext.fullChat(preTurnAgent, taskTracker.getChat());
+					AgentResult bgResult = bgExecutor.execute(preTurnAgent, bgContext);
+					if (bgResult.status() == AgentResult.Status.BLOCK) {
+						state.addPendingMessage(new ChatMessage("Agent", bgResult.message()));
+						taskTracker.completeTask(taskId);
+						return;
+					}
+				} catch (Exception ex) {
+					Logger.error("Pre-turn agent '" + preTurnAgent + "' failed: " + ex.getMessage(),
+						ex, ChatProcessor.class);
+					// fail-open: continue to Orchestrator
+				}
+			}
+
 			String entryPointAgent = agentRegistry.getEntryPointAgentName();
 			java.util.Map<String, ChatMemory> subAgentMemories = taskTracker.getSubAgentMemories();
 			UntypedAgent agent = agentRegistry.buildUntypedAgent(
@@ -201,8 +228,8 @@ public class ChatProcessor {
 				persistMessagesForSession(sessionId, chat);
 			}
 
-			// Trigger background review
-			triggerReviewAgent(taskTracker, trimmed, result, taskTracker.getTask(taskId));
+			// Trigger post-turn background agents
+			triggerPostTurnAgents(taskTracker, trimmed, result, taskTracker.getTask(taskId));
 
 		} catch (Exception ex) {
 			taskTracker.failTask(taskId, formatErrorMessage(ex));
@@ -459,72 +486,66 @@ public class ChatProcessor {
 	}
 
 	/**
-	 * Triggers a background review agent to evaluate the last agent turn.
+	 * Triggers all post-turn background agents to evaluate the completed agent turn.
 	 *
 	 * <p>
-	 * Uses {@link TaskProgressTracker#tryStartReview()} for debounce — if a review is already in
-	 * progress, this call is silently skipped. The review runs on {@link #BACKGROUND_EXECUTOR} as a
-	 * fire-and-forget task. If the review agent finds issues (result does not contain "No issues
-	 * found"), a {@link ReviewNotification} is added to the tracker's notification store.
+	 * Uses {@link TaskProgressTracker#tryStartBackgroundAgent(String)} for per-agent debounce.
+	 * Each agent runs on {@link #BACKGROUND_EXECUTOR} as a fire-and-forget task.
 	 * </p>
-	 *
-	 * @param taskTracker
-	 *        The session-scoped tracker that owns the notification store.
-	 * @param userMessage
-	 *        The user message that triggered the agent turn.
-	 * @param agentResponse
-	 *        The agent's response text.
-	 * @param completedTask
-	 *        The completed {@link ChatTask} with timeline events; may be {@code null}.
 	 */
-	static void triggerReviewAgent(TaskProgressTracker taskTracker, String userMessage,
+	static void triggerPostTurnAgents(TaskProgressTracker taskTracker, String userMessage,
 			String agentResponse, ChatTask completedTask) {
-		if (!taskTracker.tryStartReview()) {
+		AgentRegistry agentRegistry = AgentRegistry.getInstance();
+		if (agentRegistry == null) {
 			return;
 		}
 
-		BACKGROUND_EXECUTOR.submit(() -> {
-			try {
-				AgentRegistry agentRegistry = AgentRegistry.getInstance();
-				if (agentRegistry == null || !agentRegistry.hasAgent("ReviewAgent")) {
-					return;
-				}
+		List<String> postTurnAgents = agentRegistry.getBackgroundAgents(
+			PostTurnTrigger.class, BackgroundConfig.Scope.CHAT);
 
-				String xml = ConversationSerializer.serializeLastTurn(userMessage, agentResponse, completedTask);
-
-				String result = ThreadContextManager.inSystemInteraction(ChatProcessor.class, () -> {
-					UntypedAgent reviewAgent =
-						agentRegistry.buildUntypedAgent("ReviewAgent", null, null, new java.util.HashMap<>());
-					return (String) reviewAgent.invoke(Map.of("message", xml));
-				});
-
-				if (result != null && !result.contains("No issues found")) {
-					ReviewNotification notification = new ReviewNotification(
-						summarize(result),
-						"review",
-						"warning",
-						Instant.now());
-					taskTracker.getReviewNotifications().add(notification);
-				}
-			} catch (Exception ex) {
-				Logger.error("Review agent failed: " + ex.getMessage(), ex, ChatProcessor.class);
-			} finally {
-				taskTracker.finishReview();
+		for (String agentName : postTurnAgents) {
+			if (!taskTracker.tryStartBackgroundAgent(agentName)) {
+				continue; // debounce: already running
 			}
-		});
+
+			String name = agentName; // effectively final for lambda
+			BACKGROUND_EXECUTOR.submit(() -> {
+				try {
+					BackgroundAgentExecutor executor = new BackgroundAgentExecutor(agentRegistry);
+					ChatContext context = ChatContext.lastTurn(name,
+						userMessage, agentResponse, completedTask);
+					AgentResult bgResult = executor.execute(name, context);
+
+					if (bgResult.status() != AgentResult.Status.PASS) {
+						BackgroundAgentNotification notification = new BackgroundAgentNotification(
+							summarizeText(bgResult.message(), 200),
+							name,
+							bgResult.status() == AgentResult.Status.BLOCK ? "block" : "review",
+							"warning",
+							Instant.now());
+						taskTracker.getBackgroundNotifications().add(notification);
+					}
+				} catch (Exception ex) {
+					Logger.error("Background agent '" + name + "' failed: " + ex.getMessage(),
+						ex, ChatProcessor.class);
+				} finally {
+					taskTracker.finishBackgroundAgent(name);
+				}
+			});
+		}
 	}
 
 	/**
-	 * Truncates text to 200 characters for use as a notification title.
+	 * Truncates text to the specified max length for use as a notification title.
 	 */
-	private static String summarize(String text) {
+	private static String summarizeText(String text, int maxLen) {
 		if (text == null) {
 			return "";
 		}
-		if (text.length() <= 200) {
+		if (text.length() <= maxLen) {
 			return text;
 		}
-		return text.substring(0, 197) + "...";
+		return text.substring(0, maxLen - 3) + "...";
 	}
 
 	/**

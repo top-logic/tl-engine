@@ -1392,6 +1392,7 @@
         // Heartbeat received - connection is alive
       });
 
+<<<<<<< HEAD
       eventSource.addEventListener("agent_task_created", function (e) {
         if (state.destroyed) return;
         try {
@@ -1434,14 +1435,17 @@
           }
         } catch (err) {
           log("SSE approval_mode parse error", err);
-      eventSource.addEventListener("review_alert", function (e) {
-        log("SSE review_alert event", e.data);
+        }
+      });
+
+      eventSource.addEventListener("background_alert", function (e) {
+        log("SSE background_alert event", e.data);
         if (state.destroyed) return;
         try {
           var alert = JSON.parse(e.data);
           showReviewAlert(alert);
         } catch (err) {
-          log("SSE review_alert parse error", err);
+          log("SSE background_alert parse error", err);
         }
       });
 

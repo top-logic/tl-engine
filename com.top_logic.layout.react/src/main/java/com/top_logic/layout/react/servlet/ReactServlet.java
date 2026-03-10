@@ -342,7 +342,16 @@ public class ReactServlet extends TopLogicServlet {
 	/**
 	 * Installs the subsession context for the given window name.
 	 *
-	 * @return The {@link SubsessionHandler} if found, or {@code null}.
+	 * <p>
+	 * The {@link TLSubSessionContext} is created by
+	 * {@link com.top_logic.layout.view.ViewServlet ViewServlet} when the React page is first
+	 * rendered and is stored in the {@link TLSessionContext} under the window name. This method
+	 * looks it up and installs it on the {@link DisplayContext} so that
+	 * {@link com.top_logic.util.TLContext#getContext()} is available during command execution.
+	 * </p>
+	 *
+	 * @return The {@link SubsessionHandler} if found, or {@code null}. The handler is only
+	 *         present for windows that use the traditional layout engine.
 	 */
 	private SubsessionHandler installSubSession(DisplayContext displayContext, String windowName) {
 		if (StringServices.isEmpty(windowName)) {
@@ -352,13 +361,19 @@ public class ReactServlet extends TopLogicServlet {
 		if (sessionContext == null) {
 			return null;
 		}
-		ContentHandlersRegistry handlersRegistry = sessionContext.getHandlersRegistry();
-		SubsessionHandler rootHandler = handlersRegistry.getContentHandler(windowName);
-		if (rootHandler != null) {
-			TLSubSessionContext subSession = sessionContext.getSubSession(windowName);
+
+		// Install SubSession on the current interaction (created by ViewServlet at page load).
+		TLSubSessionContext subSession = sessionContext.getSubSession(windowName);
+		if (subSession != null) {
 			displayContext.installSubSessionContext(subSession);
+		} else {
+			Logger.warn("No SubSession found for window '" + windowName
+				+ "'. The view page may not have been loaded yet.", ReactServlet.class);
 		}
-		return rootHandler;
+
+		// SubsessionHandler is only present for windows with traditional layout.
+		ContentHandlersRegistry handlersRegistry = sessionContext.getHandlersRegistry();
+		return handlersRegistry.getContentHandler(windowName);
 	}
 
 	/**

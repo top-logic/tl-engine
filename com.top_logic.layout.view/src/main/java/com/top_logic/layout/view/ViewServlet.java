@@ -12,18 +12,29 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
+import com.top_logic.base.context.TLSessionContext;
+import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.gui.JSFileCompiler;
 import com.top_logic.gui.ThemeFactory;
+import com.top_logic.knowledge.service.HistoryManager;
+import com.top_logic.knowledge.service.KnowledgeBase;
+import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.db2.UpdateChainLink;
+import com.top_logic.knowledge.service.db2.UpdateChainView;
+import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.HTMLUtil;
+import com.top_logic.util.TLContextManager;
 import com.top_logic.util.TopLogicServlet;
 
 /**
@@ -71,6 +82,13 @@ public class ViewServlet extends TopLogicServlet {
 			return;
 		}
 
+		// Create or reuse the SubSession for this browser tab. On F5 (page reload) the
+		// window name is the same, so the existing SubSession is reused. In a new tab, a
+		// fresh SubSession is created. This mirrors the traditional layout system's
+		// ContentHandlersRegistry.startLogin() but without the SubsessionHandler /
+		// MainLayout setup that is specific to the traditional layout engine.
+		ensureSubSession(request, windowName);
+
 		String viewPath = resolveViewPath(pathInfo);
 
 		ViewElement view;
@@ -90,6 +108,41 @@ public class ViewServlet extends TopLogicServlet {
 		IReactControl rootControl = view.createControl(viewContext);
 
 		renderPage(request, response, rootControl, displayContext);
+	}
+
+	/**
+	 * Creates a new {@link TLSubSessionContext} for the given window name, or reuses the existing
+	 * one (e.g. on page reload).
+	 *
+	 * <p>
+	 * The SubSession is stored in the {@link TLSessionContext} under the window name so that
+	 * {@link com.top_logic.layout.react.servlet.ReactServlet} can look it up when handling
+	 * subsequent commands and uploads.
+	 * </p>
+	 */
+	private void ensureSubSession(HttpServletRequest request, String windowName) {
+		TLSessionContext sessionContext = TLContextManager.getSession();
+		if (sessionContext == null) {
+			return;
+		}
+
+		TLSubSessionContext subSession = sessionContext.getSubSession(windowName);
+		if (subSession == null) {
+			subSession = (TLSubSessionContext) ThreadContextManager.getManager().newSubSessionContext();
+			subSession.setSessionContext(sessionContext);
+			subSession = sessionContext.setIfAbsent(windowName, subSession);
+			subSession.setPerson(sessionContext.getOriginalUser());
+
+			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+			HistoryManager hm = kb.getHistoryManager();
+			UpdateChainLink lastKBRevision = ((UpdateChainView) kb.getUpdateChain()).current();
+			subSession.updateSessionRevision(hm, lastKBRevision);
+		}
+
+		// Install on the current thread so that TLContext.getContext() is available during
+		// view rendering (e.g. for locale resolution).
+		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
+		displayContext.installSubSessionContext(subSession);
 	}
 
 	/**

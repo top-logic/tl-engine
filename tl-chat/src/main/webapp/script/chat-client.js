@@ -1392,7 +1392,6 @@
         // Heartbeat received - connection is alive
       });
 
-<<<<<<< HEAD
       eventSource.addEventListener("agent_task_created", function (e) {
         if (state.destroyed) return;
         try {

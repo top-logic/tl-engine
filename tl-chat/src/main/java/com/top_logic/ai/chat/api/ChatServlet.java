@@ -11,6 +11,7 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.TimeZone;
 
 import com.top_logic.ai.chat.api.messages.AttachmentDto;
@@ -261,7 +262,6 @@ public class ChatServlet extends HttpServlet {
 		resp.getWriter().write(DtoMapper.toJson(sendResponse));
 	}
 
-<<<<<<< HEAD
 	private void handleRespond(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		String jsonBody = new String(req.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
 

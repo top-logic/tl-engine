@@ -2454,7 +2454,11 @@ function jn() {
 var Mn = jn();
 const { useState: de, useCallback: se, useRef: Se, useEffect: me, useMemo: Te } = e;
 function xe({ image: a }) {
-  return a ? a.startsWith("/") ? /* @__PURE__ */ e.createElement("img", { src: a, alt: "", className: "tlDropdownSelect__optionImage" }) : /* @__PURE__ */ e.createElement("span", { className: `tlDropdownSelect__optionIcon ${a}` }) : null;
+  if (!a) return null;
+  if (a.startsWith("/"))
+    return /* @__PURE__ */ e.createElement("img", { src: a, alt: "", className: "tlDropdownSelect__optionImage" });
+  const t = a.startsWith("css:") ? a.substring(4) : a.startsWith("colored:") ? a.substring(8) : a;
+  return /* @__PURE__ */ e.createElement("span", { className: `tlDropdownSelect__optionIcon ${t}` });
 }
 function An({
   option: a,

@@ -7,6 +7,8 @@ package com.top_logic.demo.react;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,11 +22,16 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.Flavor;
+import com.top_logic.layout.LabelProvider;
+import com.top_logic.layout.ResourceProvider;
 import com.top_logic.layout.basic.DefaultDisplayContext;
+import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.FormField;
-import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
+import com.top_logic.layout.form.model.SelectField;
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.form.ReactCheckboxControl;
 import com.top_logic.layout.react.control.form.ReactDatePickerControl;
@@ -34,6 +41,7 @@ import com.top_logic.layout.react.control.form.ReactTextInputControl;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.layout.ReactFormGroupControl;
 import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
+import com.top_logic.layout.react.control.select.ReactDropdownSelectControl;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.HandlerResult;
 
@@ -165,10 +173,101 @@ public class DemoReactFormFieldsComponent extends LayoutComponent {
 			"Preferences", true, false, "outlined", true, List.of(addPrefButton),
 			List.of(langChrome, notifChrome, themeChrome));
 
+		// -- Dropdown Select group (demonstrates the new TLDropdownSelect control) --
+
+		List<String> countryOptions = Arrays.asList(
+			"Germany", "France", "Italy", "Spain", "United Kingdom",
+			"Netherlands", "Belgium", "Austria", "Switzerland", "Sweden",
+			"Norway", "Denmark", "Finland", "Poland", "Czech Republic");
+
+		ResourceProvider countryResourceProvider = new DemoCountryResourceProvider();
+
+		SelectField countrySingle = FormFactory.newSelectField("country", countryOptions, false, false);
+		countrySingle.setOptionLabelProvider(countryResourceProvider);
+		formContext.addMember(countrySingle);
+		ReactDropdownSelectControl countrySingleInput = new ReactDropdownSelectControl(ctx, countrySingle);
+		ReactFormFieldChromeControl countrySingleChrome = new ReactFormFieldChromeControl(ctx,
+			"Country (single)", false, false, null, "Pick one country", null, false, true, countrySingleInput);
+
+		SelectField countryMulti = FormFactory.newSelectField("countries", countryOptions, true, false);
+		countryMulti.setOptionLabelProvider(countryResourceProvider);
+		countryMulti.setAsSelection(Arrays.asList("Germany", "France"));
+		formContext.addMember(countryMulti);
+		ReactDropdownSelectControl countryMultiInput = new ReactDropdownSelectControl(ctx, countryMulti);
+		ReactFormFieldChromeControl countryMultiChrome = new ReactFormFieldChromeControl(ctx,
+			"Countries (multi)", false, false, null, "Pick multiple countries", null, false, true, countryMultiInput);
+
+		SelectField countryMandatory = FormFactory.newSelectField("mandatoryCountry", countryOptions, false, true, false, null);
+		countryMandatory.setOptionLabelProvider(countryResourceProvider);
+		countryMandatory.setAsSelection(Collections.singletonList("Italy"));
+		formContext.addMember(countryMandatory);
+		ReactDropdownSelectControl countryMandatoryInput = new ReactDropdownSelectControl(ctx, countryMandatory);
+		ReactFormFieldChromeControl countryMandatoryChrome = new ReactFormFieldChromeControl(ctx,
+			"Country (mandatory)", true, false, null, "Required \u2013 clear button is hidden", null, false, true, countryMandatoryInput);
+
+		SelectField countryDisabled = FormFactory.newSelectField("disabledCountry", countryOptions, false, false);
+		countryDisabled.setOptionLabelProvider(countryResourceProvider);
+		countryDisabled.setAsSelection(Collections.singletonList("Spain"));
+		countryDisabled.setDisabled(true);
+		formContext.addMember(countryDisabled);
+		ReactDropdownSelectControl countryDisabledInput = new ReactDropdownSelectControl(ctx, countryDisabled);
+		ReactFormFieldChromeControl countryDisabledChrome = new ReactFormFieldChromeControl(ctx,
+			"Country (disabled)", false, false, null, null, null, false, true, countryDisabledInput);
+
+		SelectField countryImmutable = FormFactory.newSelectField("immutableCountry", countryOptions, false, true);
+		countryImmutable.setOptionLabelProvider(countryResourceProvider);
+		countryImmutable.setAsSelection(Collections.singletonList("Switzerland"));
+		formContext.addMember(countryImmutable);
+		ReactDropdownSelectControl countryImmutableInput = new ReactDropdownSelectControl(ctx, countryImmutable);
+		ReactFormFieldChromeControl countryImmutableChrome = new ReactFormFieldChromeControl(ctx,
+			"Country (read-only)", false, false, null, null, null, false, true, countryImmutableInput);
+
+		ReactFormGroupControl dropdownGroup = new ReactFormGroupControl(ctx,
+			"Dropdown Select", true, false, "outlined", true, List.of(),
+			List.of(countrySingleChrome, countryMultiChrome, countryMandatoryChrome,
+				countryDisabledChrome, countryImmutableChrome));
+
 		// -- Top-level form layout: 3 columns, auto label position --
 
 		return new ReactFormLayoutControl(ctx, 3, "auto", false,
-			List.of(personalGroup, prefsGroup));
+			List.of(personalGroup, prefsGroup, dropdownGroup));
+	}
+
+	/**
+	 * A simple {@link ResourceProvider} for demo country options that provides CSS icon class names
+	 * based on Bootstrap Icons.
+	 */
+	static class DemoCountryResourceProvider implements ResourceProvider {
+
+		@Override
+		public String getLabel(Object object) {
+			return (String) object;
+		}
+
+		@Override
+		public ThemeImage getImage(Object object, Flavor flavor) {
+			return ThemeImage.cssIcon("bi bi-geo-alt-fill");
+		}
+
+		@Override
+		public String getType(Object object) {
+			return "Country";
+		}
+
+		@Override
+		public String getTooltip(Object object) {
+			return null;
+		}
+
+		@Override
+		public String getLink(DisplayContext context, Object object) {
+			return null;
+		}
+
+		@Override
+		public String getCssClass(Object object) {
+			return null;
+		}
 	}
 
 	@SafeVarargs

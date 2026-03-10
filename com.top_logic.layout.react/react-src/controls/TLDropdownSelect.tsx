@@ -21,7 +21,11 @@ function OptionImage({ image }: { image?: string }) {
   if (image.startsWith('/')) {
     return <img src={image} alt="" className="tlDropdownSelect__optionImage" />;
   }
-  return <span className={`tlDropdownSelect__optionIcon ${image}`} />;
+  // Strip "css:" or "colored:" prefix from ThemeImage.toEncodedForm() output.
+  const cssClass = image.startsWith('css:') ? image.substring(4)
+    : image.startsWith('colored:') ? image.substring(8)
+    : image;
+  return <span className={`tlDropdownSelect__optionIcon ${cssClass}`} />;
 }
 
 /** Renders a selected value as a chip/tag */

@@ -10,6 +10,7 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.structure.DialogClosedListener;
 import com.top_logic.layout.structure.DialogModel;
 import com.top_logic.mig.html.layout.LoginHook;
+import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.util.TLContext;
 
 /**
@@ -20,7 +21,7 @@ import com.top_logic.util.TLContext;
 public class OpenLoginDialogHook implements LoginHook {
 
 	@Override
-	public void handleLogin(DisplayContext context, Runnable callback) {
+	public void handleLogin(DisplayContext context, MainLayout mainLayout, Runnable callback) {
 		if (!TLContext.isAnonymous()) {
 			callback.run();
 			return;

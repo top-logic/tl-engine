@@ -41,6 +41,7 @@ import com.top_logic.layout.wysiwyg.ui.StructuredTextControl;
 import com.top_logic.layout.wysiwyg.ui.StructuredTextFieldFactory;
 import com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText;
 import com.top_logic.mig.html.layout.LoginHook;
+import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -88,7 +89,7 @@ public class LoginMessagesHook extends AbstractConfiguredInstance<LoginMessagesH
 	}
 
 	@Override
-	public void handleLogin(DisplayContext context, Runnable callback) {
+	public void handleLogin(DisplayContext context, MainLayout mainLayout, Runnable callback) {
 		if (_showLoginMessages) {
 			showLoginMessages(context, callback);
 		} else {

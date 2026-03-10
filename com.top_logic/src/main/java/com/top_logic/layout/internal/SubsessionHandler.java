@@ -475,6 +475,13 @@ public class SubsessionHandler extends WindowHandler implements LayoutContext {
 				_onLoad.accept(this);
 				_onLoad = null;
 			}
+		} else {
+			/* Ensure that the context component and WindowScope are attached to the interaction:
+			 * When a bookmark link is executed in a tab with a valid session, then no new
+			 * MainLayout is created. When a dialog is opened based on the current interaction, then
+			 * a WindowScope is needed. This happens at least when the bookmark is not longer
+			 * valid. */
+			LayoutUtils.setContextComponent(displayContext, _mainLayout);
 		}
 	}
 

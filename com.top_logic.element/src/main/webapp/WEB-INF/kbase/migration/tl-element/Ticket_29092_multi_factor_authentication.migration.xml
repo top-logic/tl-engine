@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_29092_multi_factor_authentication"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29019_Removed_log_entries"
+			module="tl"
+		/>
+		<dependency name="Ticket_29073_added_derived_to_tlassociationend"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<create-property name="tl.accounts:Person#mfaSecret"
+			type="tl.core:Password"
+		>
+			<annotations>
+				<delete-protected/>
+				<visibility value="hidden"/>
+			</annotations>
+		</create-property>
+		<reorder-part name="tl.accounts:Person#mfaSecret"/>
+	</processors>
+	<post-processors/>
+</migration>

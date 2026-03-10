@@ -19,7 +19,7 @@ import com.top_logic.layout.ResourceProvider;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.react.I18NConstants;
-import com.top_logic.layout.react.ReactDisplayContext;
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -63,17 +63,19 @@ public class ReactDropdownSelectControl extends ReactControl {
 	/**
 	 * Creates a new {@link ReactDropdownSelectControl}.
 	 *
+	 * @param context
+	 *        The {@link ReactContext} for ID allocation and SSE registration.
 	 * @param selectField
 	 *        The {@link SelectField} model to wrap.
 	 */
-	public ReactDropdownSelectControl(SelectField selectField) {
-		super(selectField, "TLDropdownSelect");
+	public ReactDropdownSelectControl(ReactContext context, SelectField selectField) {
+		super(context, selectField, "TLDropdownSelect");
 		_selectField = selectField;
 	}
 
 	@Override
-	protected void onBeforeWrite(ReactDisplayContext context) {
-		super.onBeforeWrite(context);
+	protected void onBeforeWrite() {
+		super.onBeforeWrite();
 		syncState();
 	}
 

@@ -1089,7 +1089,7 @@
 			<dependency>
 			    <groupId>org.apache.pdfbox</groupId>
 	    		<artifactId>pdfbox</artifactId>
-			    <version>3.0.6</version>
+			    <version>3.0.7</version>
 			    
 			    <exclusions>
 			    	<!-- Note: Whenever pdfbox is used, jcl-over-slf4j must be added as well. -->
@@ -1107,7 +1107,7 @@
 			<dependency>
 			    <groupId>org.apache.pdfbox</groupId>
 	    		<artifactId>fontbox</artifactId>
-			    <version>3.0.6</version>
+			    <version>3.0.7</version>
 			</dependency>
 			<dependency>
 			    <groupId>org.apache.xmlgraphics</groupId>

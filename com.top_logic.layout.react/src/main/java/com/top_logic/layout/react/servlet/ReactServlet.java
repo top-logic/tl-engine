@@ -343,15 +343,14 @@ public class ReactServlet extends TopLogicServlet {
 	 * Installs the subsession context for the given window name.
 	 *
 	 * <p>
-	 * The {@link TLSubSessionContext} is created by
-	 * {@link com.top_logic.layout.view.ViewServlet ViewServlet} when the React page is first
-	 * rendered and is stored in the {@link TLSessionContext} under the window name. This method
-	 * looks it up and installs it on the {@link DisplayContext} so that
+	 * The {@link TLSubSessionContext} is created by the <code>ViewServlet</code> when the React
+	 * page is first rendered and is stored in the {@link TLSessionContext} under the window name.
+	 * This method looks it up and installs it on the {@link DisplayContext} so that
 	 * {@link com.top_logic.util.TLContext#getContext()} is available during command execution.
 	 * </p>
 	 *
-	 * @return The {@link SubsessionHandler} if found, or {@code null}. The handler is only
-	 *         present for windows that use the traditional layout engine.
+	 * @return The {@link SubsessionHandler} if found, or {@code null}. The handler is only present
+	 *         for windows that use the traditional layout engine.
 	 */
 	private SubsessionHandler installSubSession(DisplayContext displayContext, String windowName) {
 		if (StringServices.isEmpty(windowName)) {

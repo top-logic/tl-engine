@@ -30,7 +30,6 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ConfiguredManagedClass;
@@ -59,35 +58,11 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 	 * Configuration for {@link SessionService}.
 	 */
 	public interface Config extends ConfiguredManagedClass.Config<SessionService> {
-		/**
-		 * @see #getOnlyOneSession()
-		 */
-		String ONLY_ONE_SESSION = "onlyOneSession";
-
-		/**
-		 * @see #getExcludeUIDs()
-		 */
-		String EXCLUDE_UIDS = "excludeUIDs";
 
 		/**
 		 * @see #getSecureSessionCookie()
 		 */
 		String SECURE_SESSION_COOKIE = "secureSessionCookie";
-
-		/**
-		 * Flag whether to allow only one session per user. If <code>true</code>, a user gets logged
-		 * out if he is logging in a second time.
-		 */
-		@Name(ONLY_ONE_SESSION)
-		boolean getOnlyOneSession();
-
-		/**
-		 * Comma separated list without spaces of login IDs, that are excluded from
-		 * {@link #getOnlyOneSession()}.
-		 */
-		@Name(EXCLUDE_UIDS)
-		@Label("Exclude user IDs")
-		String[] getExcludeUIDs();
 
 		/**
 		 * Whether the session cookie is secured with the <code>HttpOnly</code> option and the
@@ -647,20 +622,6 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 	 */
 	public TLSessionContext getSession(HttpSession session) {
 		return (TLSessionContext) session.getAttribute(CONTEXT_NAME);
-	}
-
-	/**
-	 * @see Config#ONLY_ONE_SESSION
-	 */
-	public boolean getOnlyOneSession() {
-		return getConfig().getOnlyOneSession();
-	}
-
-	/**
-	 * @see Config#getExcludeUIDs()
-	 */
-	public String[] getExcludeUIDs() {
-		return getConfig().getExcludeUIDs();
 	}
 
 	/**

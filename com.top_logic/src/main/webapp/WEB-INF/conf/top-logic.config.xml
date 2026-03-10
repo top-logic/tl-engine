@@ -84,8 +84,6 @@
 		
 		<config service-class="com.top_logic.base.accesscontrol.SessionService">
 			<instance class="com.top_logic.base.accesscontrol.SessionService"
-				excludeUIDs=""
-				onlyOneSession="false"
 				secureSessionCookie="true"
 			>
 				<listeners>

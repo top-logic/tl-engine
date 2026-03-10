@@ -11,11 +11,13 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import dev.langchain4j.memory.ChatMemory;
 
+import com.top_logic.ai.chat.background.BackgroundNotificationStore;
 import com.top_logic.ai.chat.layout.ChatProcessor.AIProcessingState;
 import com.top_logic.ai.service.approval.ApprovalMode;
 import com.top_logic.layout.WindowScope;
@@ -43,9 +45,9 @@ public class TaskProgressTracker {
 
 	private final ChatSessionManager _sessionManager = new ChatSessionManager();
 
-	private final ReviewNotificationStore _reviewNotifications = new ReviewNotificationStore();
+	private final BackgroundNotificationStore _backgroundNotifications = new BackgroundNotificationStore();
 
-	private final AtomicBoolean _reviewInProgress = new AtomicBoolean(false);
+	private final ConcurrentHashMap<String, AtomicBoolean> _backgroundAgentInProgress = new ConcurrentHashMap<>();
 
 	/** Current AI processing state (survives navigation); cleared when processing finishes. */
 	private volatile AIProcessingState _currentProcessingState = null;
@@ -171,25 +173,30 @@ public class TaskProgressTracker {
 	}
 
 	/**
-	 * Returns the notification store for review agent notifications.
+	 * Returns the notification store for background agent notifications.
 	 */
-	public ReviewNotificationStore getReviewNotifications() {
-		return _reviewNotifications;
+	public BackgroundNotificationStore getBackgroundNotifications() {
+		return _backgroundNotifications;
 	}
 
 	/**
-	 * Attempts to start a background review. Returns {@code true} if the review was not already in
-	 * progress and is now started, {@code false} if a review is already running (debounce).
+	 * Attempts to start a background agent. Returns true if the agent was not already running.
+	 * Uses compare-and-set for thread-safe debouncing per agent.
 	 */
-	public boolean tryStartReview() {
-		return _reviewInProgress.compareAndSet(false, true);
+	public boolean tryStartBackgroundAgent(String agentName) {
+		return _backgroundAgentInProgress
+			.computeIfAbsent(agentName, k -> new AtomicBoolean(false))
+			.compareAndSet(false, true);
 	}
 
 	/**
-	 * Marks the background review as finished, allowing the next review to start.
+	 * Marks a background agent as finished, allowing it to be triggered again.
 	 */
-	public void finishReview() {
-		_reviewInProgress.set(false);
+	public void finishBackgroundAgent(String agentName) {
+		AtomicBoolean flag = _backgroundAgentInProgress.get(agentName);
+		if (flag != null) {
+			flag.set(false);
+		}
 	}
 
 	/**

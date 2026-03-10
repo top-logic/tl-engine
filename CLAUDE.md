@@ -45,6 +45,13 @@ mvn test -DskipTests=false -Dtest=ClassName#methodName
 
 **Important**: Tests require database configuration. Many tests use H2 in-memory databases, but some require specific database drivers (MySQL, Oracle, PostgreSQL, DB2, MS SQL Server).
 
+**Stale dependency jars**: If compilation fails with "cannot find symbol" for classes that DO exist in the source tree, the local Maven repository has outdated jars. Fix: run `mvn install -DskipTests=true` on the dependency modules, then recompile the failing module.
+
+**Build pitfalls**:
+- **NEVER use `mvn clean` on app modules** (e.g. `com.top_logic.demo`) that use the `tl-maven-plugin:app` goal. It causes a `PluginContainerException` / missing `com.top_logic.basic.core.log.Log` error. Use incremental compilation instead.
+- **To force recompilation without clean**: `touch` the changed `.java` files, then run `mvn compile -DskipTests=true`.
+- **Library modules** (e.g. `com.top_logic.layout.react`) can safely use `mvn clean install` — the `tl-maven-plugin:app` goal only runs in app modules.
+
 ### Other Useful Commands
 
 ```bash
@@ -200,6 +207,12 @@ public interface MyConfig extends ConfigurationItem {
 
 Configuration is typically loaded from XML files using `InstantiationContext`.
 
+**TypedConfiguration pitfalls:**
+- `@ClassDefault(MyClass.class)` is REQUIRED on Config interfaces extending `PolymorphicConfiguration<T>` — otherwise the framework tries to instantiate the base interface.
+- `@TagName("name")` only works in **list-typed** `PolymorphicConfiguration` properties. For single-valued properties, tag names do NOT work — the parser interprets child elements as property names. Fix: use a `List<>` property and extract the first element, or use `@DefaultContainer`.
+- `@Mandatory` is at `com.top_logic.basic.config.annotation.Mandatory` (not `com.top_logic.basic.config`).
+- Tests using TypedConfiguration need `TypeIndex.Module.INSTANCE` in their service setup.
+
 ### Knowledge Base Access
 
 Objects are accessed through the Knowledge Base API:
@@ -226,6 +239,22 @@ UI components extend `LayoutComponent` and are configured declaratively:
     </component>
 </layout>
 ```
+
+### React Controls (`com.top_logic.layout.react`)
+
+React controls use a bridge library (`tl-react-bridge`) that provides a single shared React instance.
+
+**Critical**: Controls MUST import `React` from `'tl-react-bridge'`, NEVER from `'react'` directly. Importing from `'react'` bundles a duplicate React copy, causing "useState is null" errors at runtime.
+
+```typescript
+// Correct:
+import { React, useTLState } from 'tl-react-bridge';
+
+// Wrong — causes runtime errors:
+import React, { useState } from 'react';
+```
+
+The JS/TS build runs via `frontend-maven-plugin` during `mvn compile`. Do NOT run `npx vite build` directly.
 
 ### Model Definitions
 
@@ -342,6 +371,26 @@ Source files use **ISO-8859-1** encoding (`project.build.sourceEncoding=ISO-8859
 - Central version: `7.10.0-SNAPSHOT` defined in `tl-parent-all`
 - Use `${tl.version}` property for internal dependencies
 - External dependencies versioned via properties (e.g., `${jetty.version}`)
+
+### New Module Setup
+
+When creating a new TopLogic module:
+- Use `tl-parent-core-internal` as the parent POM.
+- Register the module in `tl-parent-engine/pom.xml`.
+- `web-fragment.xml` goes in `src/main/java/META-INF/`.
+- Configuration files go in `src/main/webapp/WEB-INF/conf/`.
+
+### Resource File Normalization
+
+`.properties` files under `WEB-INF/conf/resources/` must be normalized (sorted keys, ISO-8859-1 encoding):
+
+```bash
+mvn tl:normalize-resource-file -Dresource=<path>
+```
+
+### Theme / CSS Reloading
+
+To reload CSS changes at runtime: Use sidebar menu "Entwickleroptionen" (Developer Options) "Theme neu laden" (Reload Theme), then **reload the page** in the browser. The theme reload alone doesn't update the browser.
 
 ### Layout Normalization
 

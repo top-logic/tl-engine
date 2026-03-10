@@ -78,6 +78,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.cs.TLObjectChangeSet;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.util.TLContext;
+import com.top_logic.util.model.ModelService;
 
 /**
  * For every {@link Transaction} in progress in the {@link DBKnowledgeBase} there is a
@@ -1196,7 +1197,7 @@ public class DefaultDBContext extends DBContext {
 	}
 	
 	protected void handleSecurityUpdate(UpdateEvent event) {
-    	if (AccessManager.Module.INSTANCE.isActive()) {
+		if (AccessManager.Module.INSTANCE.isActive() && ModelService.Module.INSTANCE.isActive()) {
 			TLObjectChangeSet modelChangeSet = createModelChangeSet(event);
 			if (modelChangeSet == null) {
 				// No model change set available,
@@ -1204,7 +1205,8 @@ public class DefaultDBContext extends DBContext {
 			}
 			AccessManager.getInstance().handleSecurityUpdate(modelChangeSet, kb);
     	} else {
-			Logger.info("Commit without access manager, security is not updated.", DefaultDBContext.class);
+			Logger.info("Commit without access manager or model service. Security is not updated.",
+				DefaultDBContext.class);
     	}
     }
 

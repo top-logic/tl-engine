@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useSyncExternalStore } from 'react';
 import { getComponent } from './registry';
 import { createChildContext, TLControlContext } from './tl-react-bridge';
 
@@ -30,13 +30,17 @@ const TLChild: React.FC<{ control: unknown }> = ({ control }) => {
     [descriptor.controlId]
   );
 
+  // Subscribe to the child's ControlStateStore so that SSE patch events (e.g. editable
+  // changing from false to true) trigger a re-render with the live state.
+  const liveState = useSyncExternalStore(childCtx.store.subscribeStore, childCtx.store.getSnapshot);
+
   if (!Component) {
     return <span>[Component not registered: {descriptor.module}]</span>;
   }
 
   return (
     <TLControlContext.Provider value={childCtx}>
-      <Component controlId={descriptor.controlId} state={descriptor.state} />
+      <Component controlId={descriptor.controlId} state={liveState} />
     </TLControlContext.Provider>
   );
 };

@@ -116,7 +116,7 @@ public interface DerivedChannelConfig extends ChannelConfig {
     @ClassDefault(DerivedChannelFactory.class)
     Class<? extends ChannelFactory> getImplementationClass();
 
-    @ListBinding(format = ChannelRefFormat.class, tag = "input", attribute = "channel")
+    @Format(CommaSeparatedChannelRefs.class)
     List<ChannelRef> getInputs();
 
     @Mandatory @NonNullable
@@ -145,7 +145,7 @@ public class DerivedChannelFactory implements ChannelFactory {
         List<ViewChannel> inputs = _inputRefs.stream()
             .map(context::resolveChannel)
             .toList();
-        channel.bind(inputs, _executor);
+        channel.bind(inputs, _executor::execute);
         return channel;
     }
 }
@@ -163,13 +163,13 @@ public class DerivedViewChannel implements ViewChannel {
         _name = name;
     }
 
-    public void bind(List<ViewChannel> inputs, QueryExecutor executor) {
+    public void bind(List<ViewChannel> inputs, Function<Object[], Object> evaluator) {
         // Eager initial evaluation.
-        _value = evaluate(executor, inputs);
+        _value = evaluate(evaluator, inputs);
 
         // Re-evaluate when any input changes.
         ChannelListener refresh = (sender, oldVal, newVal) -> {
-            Object newValue = evaluate(executor, inputs);
+            Object newValue = evaluate(evaluator, inputs);
             Object oldValue = _value;
             if (!Objects.equals(oldValue, newValue)) {
                 _value = newValue;
@@ -196,12 +196,12 @@ public class DerivedViewChannel implements ViewChannel {
     @Override
     public void removeListener(ChannelListener l) { _listeners.remove(l); }
 
-    private static Object evaluate(QueryExecutor executor, List<ViewChannel> inputs) {
+    private static Object evaluate(Function<Object[], Object> evaluator, List<ViewChannel> inputs) {
         Object[] args = new Object[inputs.size()];
         for (int i = 0; i < args.length; i++) {
             args[i] = inputs.get(i).get();
         }
-        return executor.execute(args);
+        return evaluator.apply(args);
     }
 }
 ```

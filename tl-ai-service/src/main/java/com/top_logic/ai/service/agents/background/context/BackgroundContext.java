@@ -5,20 +5,49 @@
  */
 package com.top_logic.ai.service.agents.background.context;
 
+import java.time.Instant;
+
 /**
- * Execution context for background agents.
+ * Base context for background agent execution.
  *
  * <p>
- * Provides access to the environment in which a background agent runs, including chat history,
- * session data, and other relevant information needed to gather input and produce output.
- * </p>
- *
- * <p>
- * This is a placeholder interface that will be expanded in a subsequent task with concrete context
- * implementations for different background agent scopes.
+ * Carries the agent name, trigger type, and timestamp for every background agent invocation.
  * </p>
  */
-public interface BackgroundContext {
+public class BackgroundContext {
 
-	// Will be expanded in Task 3 with concrete context methods.
+	private final String _agentName;
+
+	private final String _triggerType;
+
+	private final Instant _timestamp;
+
+	/**
+	 * Creates a new {@link BackgroundContext}.
+	 *
+	 * @param agentName
+	 *        the name of the background agent
+	 * @param triggerType
+	 *        the type of trigger that fired (e.g. "post-turn", "scheduled")
+	 */
+	public BackgroundContext(String agentName, String triggerType) {
+		_agentName = agentName;
+		_triggerType = triggerType;
+		_timestamp = Instant.now();
+	}
+
+	/** The name of the background agent being executed. */
+	public String getAgentName() {
+		return _agentName;
+	}
+
+	/** The type of trigger that started this execution. */
+	public String getTriggerType() {
+		return _triggerType;
+	}
+
+	/** When this execution started. */
+	public Instant getTimestamp() {
+		return _timestamp;
+	}
 }

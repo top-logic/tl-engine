@@ -19,6 +19,6 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 public interface ValueChannelConfig extends ChannelConfig {
 
 	@Override
-	@ClassDefault(DefaultViewChannel.class)
-	Class<? extends ViewChannel> getImplementationClass();
+	@ClassDefault(ValueChannelFactory.class)
+	Class<? extends ChannelFactory> getImplementationClass();
 }

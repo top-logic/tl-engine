@@ -6,10 +6,10 @@
 package com.top_logic.layout.view;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
@@ -20,7 +20,7 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.view.channel.ChannelConfig;
-import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.channel.ChannelFactory;
 
 /**
  * The mandatory root element of every {@code .view.xml} file.
@@ -72,7 +72,7 @@ public class ViewElement implements UIElement {
 		List<PolymorphicConfiguration<? extends UIElement>> getContent();
 	}
 
-	private final List<ChannelConfig> _channelConfigs;
+	private final List<Map.Entry<String, ChannelFactory>> _channelEntries;
 
 	private final List<UIElement> _content;
 
@@ -81,7 +81,9 @@ public class ViewElement implements UIElement {
 	 */
 	@CalledByReflection
 	public ViewElement(InstantiationContext context, Config config) {
-		_channelConfigs = config.getChannels();
+		_channelEntries = config.getChannels().stream()
+			.map(cc -> Map.entry(cc.getName(), context.getInstance(cc)))
+			.collect(Collectors.toList());
 		List<PolymorphicConfiguration<? extends UIElement>> contentList = config.getContent();
 		if (contentList.isEmpty()) {
 			context.error("View element must have at least one content element.");
@@ -95,15 +97,15 @@ public class ViewElement implements UIElement {
 
 	@Override
 	public IReactControl createControl(ViewContext context) {
-		// Phase 2a: Create and register channels.
-		for (ChannelConfig channelConfig : _channelConfigs) {
-			String name = channelConfig.getName();
+		// Phase 2a: Create and register channels via factories.
+		for (Map.Entry<String, ChannelFactory> entry : _channelEntries) {
+			String name = entry.getKey();
 			if (context.hasChannel(name)) {
 				// Pre-bound by parent via <view-ref> binding. Skip local instantiation.
 				continue;
 			}
-			ViewChannel channel = new DefaultInstantiationContext(ViewElement.class).getInstance(channelConfig);
-			context.registerChannel(name, channel);
+			ChannelFactory factory = entry.getValue();
+			context.registerChannel(name, factory.createChannel(context));
 		}
 
 		if (_content.size() == 1) {

@@ -14,10 +14,10 @@ import com.top_logic.basic.config.annotation.Name;
  *
  * <p>
  * This is polymorphic so that different channel kinds (value channels, derived channels) can extend
- * it. The implementation class determines the channel behavior at runtime.
+ * it. The implementation class determines the {@link ChannelFactory} behavior at runtime.
  * </p>
  */
-public interface ChannelConfig extends PolymorphicConfiguration<ViewChannel> {
+public interface ChannelConfig extends PolymorphicConfiguration<ChannelFactory> {
 
 	/** Configuration name for {@link #getName()}. */
 	String NAME = "name";

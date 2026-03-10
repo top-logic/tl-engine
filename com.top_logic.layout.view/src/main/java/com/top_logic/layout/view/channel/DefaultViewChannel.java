@@ -8,9 +8,6 @@ package com.top_logic.layout.view.channel;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.config.InstantiationContext;
-
 /**
  * Default {@link ViewChannel} implementation that holds a mutable value.
  *
@@ -27,19 +24,6 @@ public class DefaultViewChannel implements ViewChannel {
 	private Object _value;
 
 	private final CopyOnWriteArrayList<ChannelListener> _listeners = new CopyOnWriteArrayList<>();
-
-	/**
-	 * Creates a {@link DefaultViewChannel} from configuration.
-	 *
-	 * @param context
-	 *        The instantiation context.
-	 * @param config
-	 *        The channel configuration providing the channel name.
-	 */
-	@CalledByReflection
-	public DefaultViewChannel(InstantiationContext context, ValueChannelConfig config) {
-		_name = config.getName();
-	}
 
 	/**
 	 * Creates a {@link DefaultViewChannel} programmatically.

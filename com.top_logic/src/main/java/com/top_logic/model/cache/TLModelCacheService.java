@@ -21,6 +21,7 @@ import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.ServiceExtensionPoint;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.tools.NameBuilder;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.model.TLModel;
 import com.top_logic.util.model.CompatibilityService;
 import com.top_logic.util.model.ModelService;
@@ -31,7 +32,8 @@ import com.top_logic.util.model.ModelService;
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
 @ServiceDependencies({
-	CompatibilityService.Module.class
+	CompatibilityService.Module.class,
+	PersistencyLayer.Module.class
 })
 @ServiceExtensionPoint(ModelService.Module.class)
 public class TLModelCacheService extends ConfiguredManagedClass<TLModelCacheService.Config> {

@@ -179,6 +179,13 @@ public class ViewColorInputControl extends ReactControl {
 	 * @return The color, or {@code null}.
 	 */
 	public static Color hexToColor(String hex) {
-		return ColorChooserSelectionControl.toColor(hex);
+		if (hex == null || hex.isEmpty()) {
+			return null;
+		}
+		try {
+			return Color.decode(hex);
+		} catch (NumberFormatException ex) {
+			return null;
+		}
 	}
 }

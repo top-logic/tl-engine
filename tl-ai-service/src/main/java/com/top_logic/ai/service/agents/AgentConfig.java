@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.top_logic.ai.service.AIService;
+import com.top_logic.ai.service.agents.background.BackgroundConfig;
 import com.top_logic.ai.service.ChatModelFactory;
 import com.top_logic.ai.service.providers.AnthropicChatModelFactory;
 import com.top_logic.ai.service.providers.MistralChatModelFactory;
@@ -85,6 +86,7 @@ import com.top_logic.model.annotate.LabelPosition;
 	AgentConfig.TOOLS,
 	AgentConfig.DELEGATIONS,
 	AgentConfig.SKILLS,
+	AgentConfig.BACKGROUND,
 })
 public interface AgentConfig extends NamedConfigMandatory {
 
@@ -177,6 +179,9 @@ public interface AgentConfig extends NamedConfigMandatory {
 
 	/** @see #getReasoningEffort() */
 	String REASONING_EFFORT = "reasoning-effort";
+
+	/** @see #getBackground() */
+	String BACKGROUND = "background";
 
 	/**
 	 * Short description of this agent's purpose.
@@ -543,6 +548,21 @@ public interface AgentConfig extends NamedConfigMandatory {
 	@Name(ENTRY_POINT)
 	@BooleanDefault(false)
 	boolean isEntryPoint();
+
+	/**
+	 * Optional background agent configuration.
+	 *
+	 * <p>
+	 * When set, this agent becomes a background agent that is triggered by the framework
+	 * rather than by user messages. When {@code null}, the agent is a normal conversational
+	 * agent (unchanged behavior).
+	 * </p>
+	 *
+	 * @see BackgroundConfig
+	 */
+	@Name(BACKGROUND)
+	@Nullable
+	BackgroundConfig getBackground();
 
 	// --- Option provider functions ---
 

@@ -16,6 +16,8 @@ import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.ai.service.AIService;
+import com.top_logic.ai.service.agents.background.BackgroundConfig;
+import com.top_logic.ai.service.agents.background.trigger.TriggerConfig;
 import com.top_logic.ai.service.ChatModelFactory;
 import com.top_logic.ai.service.providers.AnthropicChatModelFactory;
 import com.top_logic.ai.service.providers.MistralChatModelFactory;
@@ -33,6 +35,7 @@ import com.top_logic.ai.service.tools.registry.ToolRegistry;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Key;
@@ -245,6 +248,23 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		}
 		_entryPointAgentName = entryPoints.get(0);
 
+		// Validate background agent configurations
+		for (Map.Entry<String, AgentConfig> entry : getConfig().getAgents().entrySet()) {
+			BackgroundConfig bg = entry.getValue().getBackground();
+			if (bg == null) continue;
+			String name = entry.getKey();
+
+			// Background agents must not be entry points
+			if (entry.getValue().isEntryPoint()) {
+				throw new RuntimeException(
+					"Agent '" + name + "' cannot be both entry-point and background agent.");
+			}
+
+			Logger.info("Background agent '" + name + "' registered: scope=" + bg.getScope()
+				+ ", authority=" + bg.getAuthority(),
+				AgentRegistry.class);
+		}
+
 		Logger.info("AgentRegistry started with " + getConfig().getAgents().size() + " agent(s) and " +
 			skillConfigs.size() + " skill(s).",
 			AgentRegistry.class);
@@ -304,6 +324,42 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 					agents.keySet());
 		}
 		return config;
+	}
+
+	/**
+	 * Returns the names of all background agents matching the given trigger type and scope.
+	 *
+	 * @param triggerType
+	 *        The trigger configuration class to match (e.g. {@code PostTurnTrigger.class}).
+	 * @param scope
+	 *        The scope to match (e.g. {@link BackgroundConfig.Scope#CHAT}).
+	 * @return A list of agent names with matching background configuration; never null.
+	 */
+	public List<String> getBackgroundAgents(
+			Class<? extends TriggerConfig> triggerType, BackgroundConfig.Scope scope) {
+		List<String> result = new ArrayList<>();
+		for (Map.Entry<String, AgentConfig> entry : getConfig().getAgents().entrySet()) {
+			BackgroundConfig bg = entry.getValue().getBackground();
+			if (bg == null) continue;
+			if (bg.getScope() != scope) continue;
+			PolymorphicConfiguration<? extends TriggerConfig> triggerCfg = bg.getTrigger();
+			if (triggerCfg != null && triggerType.isAssignableFrom(triggerCfg.getImplementationClass())) {
+				result.add(entry.getKey());
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Checks whether the named agent has a background configuration.
+	 *
+	 * @param agentName
+	 *        The agent name to check.
+	 * @return {@code true} if the agent exists and has a background configuration.
+	 */
+	public boolean isBackgroundAgent(String agentName) {
+		AgentConfig config = getAgentConfig(agentName);
+		return config != null && config.getBackground() != null;
 	}
 
 	/**

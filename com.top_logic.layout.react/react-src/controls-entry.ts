@@ -49,6 +49,7 @@ import TLFormGroup from './controls/TLFormGroup';
 import TLFormField from './controls/TLFormField';
 import TLResourceCell from './controls/TLResourceCell';
 import TLTreeView from './controls/TLTreeView';
+import TLDropdownSelect from './controls/TLDropdownSelect';
 
 register('TLButton', TLButton);
 register('TLToggleButton', TLToggleButton);
@@ -90,3 +91,4 @@ register('TLFormGroup', TLFormGroup);
 register('TLFormField', TLFormField);
 register('TLResourceCell', TLResourceCell);
 register('TLTreeView', TLTreeView);
+register('TLDropdownSelect', TLDropdownSelect);

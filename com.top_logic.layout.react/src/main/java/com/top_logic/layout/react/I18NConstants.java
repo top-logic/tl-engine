@@ -376,6 +376,55 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey JS_TABLE_UNFREEZE_ALL = ResKey.internalCreate("js.table.unfreezeAll");
 
+	/**
+	 * @en Selection changed.
+	 */
+	public static ResKey REACT_DROPDOWN_SELECT_VALUE_CHANGED;
+
+	// -- Dropdown select client-side i18n keys --
+
+	/**
+	 * @en Select\u2026
+	 * @de Ausw\u00e4hlen\u2026
+	 */
+	public static ResKey JS_DROPDOWN_SELECT_EMPTY = ResKey.internalCreate("js.dropdownSelect.empty");
+
+	/**
+	 * @en Nothing found
+	 * @de Keine Treffer
+	 */
+	public static ResKey JS_DROPDOWN_SELECT_NOTHING_FOUND = ResKey.internalCreate("js.dropdownSelect.nothingFound");
+
+	/**
+	 * @en Filter\u2026
+	 * @de Filtern\u2026
+	 */
+	public static ResKey JS_DROPDOWN_SELECT_FILTER_PLACEHOLDER = ResKey.internalCreate("js.dropdownSelect.filterPlaceholder");
+
+	/**
+	 * @en Remove {0}
+	 * @de {0} entfernen
+	 */
+	public static ResKey JS_DROPDOWN_SELECT_REMOVE_CHIP = ResKey.internalCreate("js.dropdownSelect.removeChip");
+
+	/**
+	 * @en Clear selection
+	 * @de Auswahl l\u00f6schen
+	 */
+	public static ResKey JS_DROPDOWN_SELECT_CLEAR = ResKey.internalCreate("js.dropdownSelect.clear");
+
+	/**
+	 * @en Loading\u2026
+	 * @de Laden\u2026
+	 */
+	public static ResKey JS_DROPDOWN_SELECT_LOADING = ResKey.internalCreate("js.dropdownSelect.loading");
+
+	/**
+	 * @en Failed to load options. Retry
+	 * @de Optionen konnten nicht geladen werden. Erneut versuchen
+	 */
+	public static ResKey JS_DROPDOWN_SELECT_ERROR = ResKey.internalCreate("js.dropdownSelect.error");
+
 	static {
 		initConstants(I18NConstants.class);
 	}

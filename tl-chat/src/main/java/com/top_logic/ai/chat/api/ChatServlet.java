@@ -25,6 +25,8 @@ import com.top_logic.ai.chat.api.messages.CreateSessionRequest;
 import com.top_logic.ai.chat.api.messages.PersistedChatEntry;
 import com.top_logic.ai.chat.api.messages.SaveMessagesRequest;
 import com.top_logic.ai.chat.api.messages.UpdateTitleRequest;
+import com.top_logic.ai.chat.background.ChatContextAdapter;
+import com.top_logic.ai.chat.background.NotificationOutputHandler;
 import com.top_logic.ai.chat.layout.Chat;
 import com.top_logic.ai.chat.layout.ChatEntry;
 import com.top_logic.ai.chat.layout.ConversationSerializer;
@@ -35,6 +37,8 @@ import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.ai.service.approval.UserInteractionStore;
 import com.top_logic.ai.service.agents.AgentRegistry;
+import com.top_logic.ai.service.agents.background.BackgroundAgentExecutor;
+import com.top_logic.ai.service.agents.background.input.ChatContextInput;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.basic.Logger;
@@ -84,6 +88,20 @@ public class ChatServlet extends HttpServlet {
 
 	private static final int MAX_ATTACHMENTS = 5;
 	private static final long MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024; // 10 MB
+
+	@Override
+	public void init() throws ServletException {
+		super.init();
+
+		// Register chat-specific adapters with BackgroundAgentExecutor
+		BackgroundAgentExecutor.registerInputAdapterFactory(
+			ChatContextInput.class, cfg -> new ChatContextAdapter((ChatContextInput) cfg));
+
+		BackgroundAgentExecutor.registerOutputHandlerFactory(
+			NotificationOutputHandler.class,
+			(handler, ctx) -> NotificationOutputHandler.handle(
+				(NotificationOutputHandler) handler, ctx.result(), ctx.context()));
+	}
 
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {

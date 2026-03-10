@@ -1,0 +1,265 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.ai.service.agents.background;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
+
+import com.top_logic.ai.service.agents.AgentConfig;
+import com.top_logic.ai.service.agents.AgentRegistry;
+import com.top_logic.ai.service.agents.background.context.BackgroundContext;
+import com.top_logic.ai.service.agents.background.input.AutonomousInput;
+import com.top_logic.ai.service.agents.background.input.AutonomousInputAdapter;
+import com.top_logic.ai.service.agents.background.input.InputAdapter;
+import com.top_logic.ai.service.agents.background.input.InputConfig;
+import com.top_logic.ai.service.agents.background.input.ProviderInput;
+import com.top_logic.ai.service.agents.background.input.ProviderInputAdapter;
+import com.top_logic.ai.service.agents.background.input.ScriptInput;
+import com.top_logic.ai.service.agents.background.input.ScriptInputAdapter;
+import com.top_logic.ai.service.agents.background.output.AuditLogHandler;
+import com.top_logic.ai.service.agents.background.output.OutputHandler;
+import com.top_logic.ai.service.agents.background.trigger.PreTurnTrigger;
+import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.SimpleInstantiationContext;
+import com.top_logic.basic.thread.ThreadContextManager;
+
+import dev.langchain4j.agentic.UntypedAgent;
+
+/**
+ * Central execution pipeline for background agents.
+ *
+ * <p>
+ * Orchestrates the full lifecycle: resolve config, gather input via {@link InputAdapter}, invoke the
+ * LLM agent, parse the result via {@link ResultParser}, and run output handlers.
+ * </p>
+ *
+ * <p>
+ * External modules (e.g. {@code tl-chat}) can register additional input adapter factories and
+ * output handler factories via {@link #registerInputAdapterFactory} and
+ * {@link #registerOutputHandlerFactory} to avoid circular dependencies.
+ * </p>
+ */
+public class BackgroundAgentExecutor {
+
+	private final AgentRegistry _registry;
+
+	private static final Map<Class<?>, Function<Object, InputAdapter>> EXTERNAL_ADAPTERS =
+		new ConcurrentHashMap<>();
+
+	private static final Map<Class<?>, BiConsumer<Object, OutputHandlerContext>> EXTERNAL_HANDLERS =
+		new ConcurrentHashMap<>();
+
+	/**
+	 * Creates a new {@link BackgroundAgentExecutor}.
+	 *
+	 * @param registry
+	 *        The agent registry for resolving agent configurations.
+	 */
+	public BackgroundAgentExecutor(AgentRegistry registry) {
+		_registry = registry;
+	}
+
+	/**
+	 * Executes the background agent pipeline synchronously.
+	 *
+	 * <p>
+	 * The pipeline consists of four steps:
+	 * </p>
+	 * <ol>
+	 * <li>Resolve the {@link InputAdapter} and gather input</li>
+	 * <li>Build and invoke the LLM agent</li>
+	 * <li>Parse the result based on authority</li>
+	 * <li>Run output handlers</li>
+	 * </ol>
+	 *
+	 * @param agentName
+	 *        The name of the background agent to execute.
+	 * @param context
+	 *        The execution context providing access to chat history and session data.
+	 * @return The structured result of the agent execution.
+	 * @throws IllegalArgumentException
+	 *         if the agent has no background configuration.
+	 */
+	public AgentResult execute(String agentName, BackgroundContext context) {
+		AgentConfig agentConfig = _registry.getAgentConfig(agentName);
+		BackgroundConfig bgConfig = agentConfig.getBackground();
+		if (bgConfig == null) {
+			throw new IllegalArgumentException("Agent '" + agentName + "' has no background config");
+		}
+
+		// 1. Resolve input adapter and gather input
+		InputConfig inputConfig = resolveInputConfig(bgConfig);
+		InputAdapter adapter = resolveInputAdapter(inputConfig);
+		String input = adapter.gatherInput(context);
+
+		// 2. Build and invoke the agent
+		String response = invokeAgent(agentName, input);
+
+		// 3. Parse the result based on authority
+		AgentResult result = parseResult(bgConfig, response);
+
+		// 4. Run output handlers
+		runOutputHandlers(bgConfig, result, context);
+
+		return result;
+	}
+
+	/**
+	 * Registers an input adapter factory for a config type defined in another module.
+	 *
+	 * <p>
+	 * This allows modules like {@code tl-chat} to register adapters for their own
+	 * {@link InputConfig} sub-types without creating a compile-time dependency from
+	 * {@code tl-ai-service} to {@code tl-chat}.
+	 * </p>
+	 *
+	 * @param <T>
+	 *        The config type.
+	 * @param configType
+	 *        The class of the config type.
+	 * @param factory
+	 *        The factory that creates an {@link InputAdapter} from the config.
+	 */
+	@SuppressWarnings("unchecked")
+	public static <T> void registerInputAdapterFactory(
+			Class<T> configType, Function<T, InputAdapter> factory) {
+		EXTERNAL_ADAPTERS.put(configType, cfg -> factory.apply((T) cfg));
+	}
+
+	/**
+	 * Registers an output handler factory for a handler type defined in another module.
+	 *
+	 * <p>
+	 * This allows modules like {@code tl-chat} to register handlers for their own
+	 * {@link OutputHandler} sub-types without creating a compile-time dependency from
+	 * {@code tl-ai-service} to {@code tl-chat}.
+	 * </p>
+	 *
+	 * @param <T>
+	 *        The handler type.
+	 * @param handlerType
+	 *        The class of the handler type.
+	 * @param handler
+	 *        The handler that processes the output.
+	 */
+	@SuppressWarnings("unchecked")
+	public static <T> void registerOutputHandlerFactory(
+			Class<T> handlerType, BiConsumer<T, OutputHandlerContext> handler) {
+		EXTERNAL_HANDLERS.put(handlerType, (cfg, ctx) -> handler.accept((T) cfg, ctx));
+	}
+
+	/**
+	 * Resolves the appropriate {@link InputAdapter} for the given {@link InputConfig}.
+	 *
+	 * <p>
+	 * Built-in config types ({@link AutonomousInput}, {@link ScriptInput}, {@link ProviderInput})
+	 * are handled directly. Additional types registered via
+	 * {@link #registerInputAdapterFactory(Class, Function)} are checked as a fallback.
+	 * </p>
+	 *
+	 * @param inputConfig
+	 *        The input configuration.
+	 * @return The resolved adapter.
+	 * @throws IllegalArgumentException
+	 *         if no adapter can be found for the config type.
+	 */
+	InputAdapter resolveInputAdapter(InputConfig inputConfig) {
+		if (inputConfig instanceof AutonomousInput cfg) {
+			return new AutonomousInputAdapter(cfg);
+		} else if (inputConfig instanceof ScriptInput cfg) {
+			return new ScriptInputAdapter(cfg);
+		} else if (inputConfig instanceof ProviderInput cfg) {
+			return new ProviderInputAdapter(cfg);
+		}
+		// Check external adapters (e.g. ChatContextInput -> ChatContextAdapter from tl-chat)
+		for (Map.Entry<Class<?>, Function<Object, InputAdapter>> entry : EXTERNAL_ADAPTERS.entrySet()) {
+			if (entry.getKey().isInstance(inputConfig)) {
+				return entry.getValue().apply(inputConfig);
+			}
+		}
+		throw new IllegalArgumentException("No adapter for input config: " + inputConfig.getClass().getName());
+	}
+
+	private void runOutputHandlers(BackgroundConfig bgConfig, AgentResult result,
+			BackgroundContext context) {
+		for (PolymorphicConfiguration<? extends OutputHandler> handlerCfg : bgConfig.getOutputHandlers()) {
+			try {
+				OutputHandler handler = SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY
+					.getInstance(handlerCfg);
+				dispatchOutputHandler(handler, result, context);
+			} catch (Exception ex) {
+				Logger.error("Output handler failed for agent '" + context.getAgentName() + "'",
+					ex, BackgroundAgentExecutor.class);
+			}
+		}
+	}
+
+	private void dispatchOutputHandler(OutputHandler handler, AgentResult result,
+			BackgroundContext context) {
+		if (handler instanceof AuditLogHandler) {
+			Logger.info("Background agent '" + context.getAgentName() + "': "
+				+ result.status() + " - " + result.message(), BackgroundAgentExecutor.class);
+			return;
+		}
+		// Check external handlers
+		for (Map.Entry<Class<?>, BiConsumer<Object, OutputHandlerContext>> entry : EXTERNAL_HANDLERS.entrySet()) {
+			if (entry.getKey().isInstance(handler)) {
+				entry.getValue().accept(handler, new OutputHandlerContext(result, context));
+				return;
+			}
+		}
+		Logger.warn("No handler dispatcher for: " + handler.getClass().getName(),
+			BackgroundAgentExecutor.class);
+	}
+
+	private InputConfig resolveInputConfig(BackgroundConfig bgConfig) {
+		return SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY
+			.getInstance(bgConfig.getInput());
+	}
+
+	private String invokeAgent(String agentName, String input) {
+		try {
+			UntypedAgent agent = _registry.buildUntypedAgent(agentName);
+			Object response = ThreadContextManager.inSystemInteraction(
+				BackgroundAgentExecutor.class,
+				() -> agent.invoke(Map.of("message", input)));
+			return response != null ? response.toString() : null;
+		} catch (Exception ex) {
+			Logger.error("Agent invocation failed for '" + agentName + "'",
+				ex, BackgroundAgentExecutor.class);
+			return null;
+		}
+	}
+
+	private AgentResult parseResult(BackgroundConfig bgConfig, String response) {
+		AgentResult result;
+		if (bgConfig.getAuthority() == BackgroundConfig.Authority.AUTHORITATIVE) {
+			PreTurnTrigger.FailPolicy policy = PreTurnTrigger.FailPolicy.OPEN;
+			// Check if trigger is a PreTurnTrigger to get its fail policy
+			if (bgConfig.getTrigger() != null) {
+				Object trigger = SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY
+					.getInstance(bgConfig.getTrigger());
+				if (trigger instanceof PreTurnTrigger pt) {
+					policy = pt.getFailPolicy();
+				}
+			}
+			result = ResultParser.parseAuthoritative(response, policy);
+			if (result.status() == AgentResult.Status.BLOCK
+					&& bgConfig.getBlockMessage() != null
+					&& !bgConfig.getBlockMessage().isEmpty()) {
+				result = result.withBlockMessage(
+					bgConfig.getBlockMessage().replace("{reason}",
+						result.reason() != null ? result.reason() : ""));
+			}
+		} else {
+			result = ResultParser.parseAdvisory(response);
+		}
+		return result;
+	}
+}

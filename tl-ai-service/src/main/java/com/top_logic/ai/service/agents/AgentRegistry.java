@@ -35,7 +35,6 @@ import com.top_logic.ai.service.tools.registry.ToolRegistry;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Key;
@@ -342,8 +341,8 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 			BackgroundConfig bg = entry.getValue().getBackground();
 			if (bg == null) continue;
 			if (bg.getScope() != scope) continue;
-			PolymorphicConfiguration<? extends TriggerConfig> triggerCfg = bg.getTrigger();
-			if (triggerCfg != null && triggerType.isAssignableFrom(triggerCfg.getImplementationClass())) {
+			TriggerConfig triggerCfg = bg.getTrigger();
+			if (triggerCfg != null && triggerType.isInstance(triggerCfg)) {
 				result.add(entry.getKey());
 			}
 		}

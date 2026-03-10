@@ -11,7 +11,6 @@ import com.top_logic.ai.service.agents.background.input.InputConfig;
 import com.top_logic.ai.service.agents.background.output.OutputHandler;
 import com.top_logic.ai.service.agents.background.trigger.TriggerConfig;
 import com.top_logic.basic.config.ConfigurationItem;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
@@ -149,7 +148,7 @@ public interface BackgroundConfig extends ConfigurationItem {
 	 */
 	@Name(TRIGGER)
 	@Mandatory
-	PolymorphicConfiguration<? extends TriggerConfig> getTrigger();
+	TriggerConfig getTrigger();
 
 	/**
 	 * The input configuration that determines what data this background agent processes.
@@ -158,7 +157,7 @@ public interface BackgroundConfig extends ConfigurationItem {
 	 */
 	@Name(INPUT)
 	@Mandatory
-	PolymorphicConfiguration<? extends InputConfig> getInput();
+	InputConfig getInput();
 
 	/**
 	 * The output handlers that process the results of this background agent.
@@ -171,5 +170,5 @@ public interface BackgroundConfig extends ConfigurationItem {
 	 * @return The list of output handler configurations, may be empty.
 	 */
 	@Name(OUTPUT_HANDLERS)
-	List<PolymorphicConfiguration<? extends OutputHandler>> getOutputHandlers();
+	List<OutputHandler> getOutputHandlers();
 }

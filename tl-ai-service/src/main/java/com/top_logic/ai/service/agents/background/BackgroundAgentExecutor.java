@@ -24,9 +24,8 @@ import com.top_logic.ai.service.agents.background.input.ScriptInputAdapter;
 import com.top_logic.ai.service.agents.background.output.AuditLogHandler;
 import com.top_logic.ai.service.agents.background.output.OutputHandler;
 import com.top_logic.ai.service.agents.background.trigger.PreTurnTrigger;
+import com.top_logic.ai.service.agents.background.trigger.TriggerConfig;
 import com.top_logic.basic.Logger;
-import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 
 import dev.langchain4j.agentic.UntypedAgent;
@@ -94,8 +93,7 @@ public class BackgroundAgentExecutor {
 		}
 
 		// 1. Resolve input adapter and gather input
-		InputConfig inputConfig = resolveInputConfig(bgConfig);
-		InputAdapter adapter = resolveInputAdapter(inputConfig);
+		InputAdapter adapter = resolveInputAdapter(bgConfig.getInput());
 		String input = adapter.gatherInput(context);
 
 		// 2. Build and invoke the agent
@@ -188,10 +186,8 @@ public class BackgroundAgentExecutor {
 
 	private void runOutputHandlers(BackgroundConfig bgConfig, AgentResult result,
 			BackgroundContext context) {
-		for (PolymorphicConfiguration<? extends OutputHandler> handlerCfg : bgConfig.getOutputHandlers()) {
+		for (OutputHandler handler : bgConfig.getOutputHandlers()) {
 			try {
-				OutputHandler handler = SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY
-					.getInstance(handlerCfg);
 				dispatchOutputHandler(handler, result, context);
 			} catch (Exception ex) {
 				Logger.error("Output handler failed for agent '" + context.getAgentName() + "'",
@@ -218,11 +214,6 @@ public class BackgroundAgentExecutor {
 			BackgroundAgentExecutor.class);
 	}
 
-	private InputConfig resolveInputConfig(BackgroundConfig bgConfig) {
-		return SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY
-			.getInstance(bgConfig.getInput());
-	}
-
 	private String invokeAgent(String agentName, String input) {
 		try {
 			UntypedAgent agent = _registry.buildUntypedAgent(agentName);
@@ -242,12 +233,9 @@ public class BackgroundAgentExecutor {
 		if (bgConfig.getAuthority() == BackgroundConfig.Authority.AUTHORITATIVE) {
 			PreTurnTrigger.FailPolicy policy = PreTurnTrigger.FailPolicy.OPEN;
 			// Check if trigger is a PreTurnTrigger to get its fail policy
-			if (bgConfig.getTrigger() != null) {
-				Object trigger = SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY
-					.getInstance(bgConfig.getTrigger());
-				if (trigger instanceof PreTurnTrigger pt) {
-					policy = pt.getFailPolicy();
-				}
+			TriggerConfig trigger = bgConfig.getTrigger();
+			if (trigger instanceof PreTurnTrigger pt) {
+				policy = pt.getFailPolicy();
 			}
 			result = ResultParser.parseAuthoritative(response, policy);
 			if (result.status() == AgentResult.Status.BLOCK

@@ -8,6 +8,7 @@ package com.top_logic.ai.chat.api;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
@@ -24,7 +25,10 @@ import com.top_logic.ai.chat.api.messages.PersistedChatEntry;
 import com.top_logic.ai.chat.api.messages.SaveMessagesRequest;
 import com.top_logic.ai.chat.api.messages.UpdateTitleRequest;
 import com.top_logic.ai.chat.background.ChatContextAdapter;
-import com.top_logic.ai.chat.background.NotificationOutputHandler;
+import com.top_logic.ai.chat.background.BackgroundAgentNotification;
+import com.top_logic.ai.chat.background.GlobalNotificationStore;
+import com.top_logic.ai.service.agents.background.AgentResult;
+import com.top_logic.ai.service.agents.background.output.NotificationOutputHandler;
 import com.top_logic.ai.chat.layout.Chat;
 import com.top_logic.ai.chat.layout.ChatEntry;
 import com.top_logic.ai.chat.history.ChatHistoryService;
@@ -95,7 +99,7 @@ public class ChatServlet extends HttpServlet {
 
 		BackgroundAgentExecutor.registerOutputHandlerFactory(
 			NotificationOutputHandler.class,
-			(handler, ctx) -> NotificationOutputHandler.handle(
+			(handler, ctx) -> handleNotification(
 				(NotificationOutputHandler) handler, ctx.result(), ctx.context()));
 	}
 
@@ -666,6 +670,30 @@ public class ChatServlet extends HttpServlet {
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 		sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
 		return sdf.format(date);
+	}
+
+	private static void handleNotification(
+			NotificationOutputHandler config, AgentResult result,
+			com.top_logic.ai.service.agents.background.context.BackgroundContext context) {
+		if (result.status() == AgentResult.Status.PASS) {
+			return;
+		}
+
+		String title = result.message();
+		if (title != null && title.length() > 200) {
+			title = title.substring(0, 197) + "...";
+		}
+
+		String category = result.status() == AgentResult.Status.BLOCK ? "block" : "review";
+
+		BackgroundAgentNotification notification = new BackgroundAgentNotification(
+			title,
+			context.getAgentName(),
+			category,
+			config.getSeverity(),
+			Instant.now());
+
+		GlobalNotificationStore.getInstance().add(notification);
 	}
 
 }

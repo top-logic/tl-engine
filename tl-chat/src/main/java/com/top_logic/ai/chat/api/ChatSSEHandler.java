@@ -25,16 +25,17 @@ import jakarta.servlet.AsyncListener;
 import com.top_logic.ai.chat.api.messages.ConnectedEvent;
 import com.top_logic.ai.chat.api.messages.HeartbeatEvent;
 import com.top_logic.ai.chat.api.messages.MessageDto;
-import com.top_logic.ai.chat.api.messages.ReviewAlertEvent;
+import com.top_logic.ai.chat.api.messages.BackgroundAlertEvent;
 import com.top_logic.ai.chat.api.messages.TaskStatusEvent;
 import com.top_logic.ai.chat.api.messages.TimelineEventDto;
+import com.top_logic.ai.chat.background.BackgroundAgentNotification;
+import com.top_logic.ai.chat.background.GlobalNotificationStore;
 import com.top_logic.ai.chat.layout.Chat;
 import com.top_logic.ai.chat.layout.ChatEntry;
 import com.top_logic.ai.chat.layout.ChatMessage;
 import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.ChatTask;
 import com.top_logic.ai.chat.layout.ChatTimelineEvent;
-import com.top_logic.ai.chat.layout.ReviewNotification;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.ai.service.approval.UserInteractionRequest;
 import com.top_logic.ai.service.approval.UserInteractionStore;
@@ -58,7 +59,7 @@ import com.top_logic.basic.thread.ThreadContextManager;
  * <li>{@code tool_call} - Tool call start or completion</li>
  * <li>{@code agent_call} - Agent handoff event</li>
  * <li>{@code task_status} - Task status change (completed/error)</li>
- * <li>{@code review_alert} - Review agent notification</li>
+ * <li>{@code background_alert} - Background agent notification</li>
  * <li>{@code heartbeat} - Keep-alive ping</li>
  * </ul>
  */
@@ -367,10 +368,17 @@ public class ChatSSEHandler {
 
 		// Emit agent task events (from TaskStore)
 		emitAgentTaskDeltas();
-		// Emit review alerts
-		List<ReviewNotification> alerts = _tracker.getReviewNotifications().drain();
-		for (ReviewNotification alert : alerts) {
-			sendEvent("review_alert", ReviewAlertEvent.toJson(alert));
+
+		// Emit background agent alerts (session-scoped)
+		List<BackgroundAgentNotification> sessionAlerts = _tracker.getBackgroundNotifications().drain();
+		for (BackgroundAgentNotification alert : sessionAlerts) {
+			sendEvent("background_alert", BackgroundAlertEvent.toJson(alert));
+		}
+
+		// Emit global background agent alerts (application-scoped)
+		List<BackgroundAgentNotification> globalAlerts = GlobalNotificationStore.getInstance().drain();
+		for (BackgroundAgentNotification alert : globalAlerts) {
+			sendEvent("background_alert", BackgroundAlertEvent.toJson(alert));
 		}
 	}
 

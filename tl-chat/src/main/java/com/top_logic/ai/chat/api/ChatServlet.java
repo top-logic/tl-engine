@@ -8,10 +8,8 @@ package com.top_logic.ai.chat.api;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
-import java.time.Instant;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.TimeZone;
 
 import com.top_logic.ai.chat.api.messages.AttachmentDto;
@@ -29,8 +27,6 @@ import com.top_logic.ai.chat.background.ChatContextAdapter;
 import com.top_logic.ai.chat.background.NotificationOutputHandler;
 import com.top_logic.ai.chat.layout.Chat;
 import com.top_logic.ai.chat.layout.ChatEntry;
-import com.top_logic.ai.chat.layout.ConversationSerializer;
-import com.top_logic.ai.chat.layout.ReviewNotification;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
@@ -38,6 +34,7 @@ import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.ai.service.approval.UserInteractionStore;
 import com.top_logic.ai.service.agents.AgentRegistry;
 import com.top_logic.ai.service.agents.background.BackgroundAgentExecutor;
+import com.top_logic.ai.service.agents.background.context.ApplicationContext;
 import com.top_logic.ai.service.agents.background.input.ChatContextInput;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSessionContext;
@@ -46,8 +43,6 @@ import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
-
-import dev.langchain4j.agentic.UntypedAgent;
 
 import de.haumacher.msgbuf.io.StringR;
 import de.haumacher.msgbuf.json.JsonReader;
@@ -83,6 +78,7 @@ public class ChatServlet extends HttpServlet {
 	private static final String PATH_EVENTS = "/events";
 	private static final String PATH_SESSIONS = "/sessions";
 	private static final String PATH_REVIEW = "/review";
+	private static final String PATH_BACKGROUND = "/background";
 	private static final String CONTENT_TYPE_JSON = "application/json; charset=UTF-8";
 	private static final String CONTENT_TYPE_SSE = "text/event-stream";
 
@@ -126,8 +122,16 @@ public class ChatServlet extends HttpServlet {
 			handleCreateSession(req, resp);
 			return;
 		}
+		if (pathInfo.startsWith(PATH_BACKGROUND + "/")) {
+			String agentName = pathInfo.substring(PATH_BACKGROUND.length() + 1);
+			if (agentName.endsWith("/")) {
+				agentName = agentName.substring(0, agentName.length() - 1);
+			}
+			handleBackgroundTrigger(req, resp, agentName);
+			return;
+		}
 		if (pathInfo.equals(PATH_REVIEW) || pathInfo.equals(PATH_REVIEW + "/")) {
-			handleReview(req, resp);
+			handleBackgroundTrigger(req, resp, "ReviewAgent");
 			return;
 		}
 		resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Unknown path: " + pathInfo);
@@ -253,6 +257,7 @@ public class ChatServlet extends HttpServlet {
 		resp.getWriter().write(DtoMapper.toJson(sendResponse));
 	}
 
+<<<<<<< HEAD
 	private void handleRespond(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		String jsonBody = new String(req.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
 
@@ -326,53 +331,41 @@ public class ChatServlet extends HttpServlet {
 		resp.setContentType("application/json");
 		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
 		resp.getWriter().write("{\"status\":\"ok\",\"mode\":\"" + approvalMode.name() + "\"}");
-	private void handleReview(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-		TaskProgressTracker tracker = ChatSessionRegistry.getOrCreate(req.getSession(false));
-		if (tracker == null) {
-			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "No active session");
+	}
+
+	/**
+	 * Handles an on-demand background agent trigger via REST API.
+	 */
+	private void handleBackgroundTrigger(HttpServletRequest req, HttpServletResponse resp,
+			String agentName) throws IOException {
+		AgentRegistry registry = AgentRegistry.getInstance();
+		if (registry == null || !registry.hasAgent(agentName)) {
+			resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Agent not found: " + agentName);
+			return;
+		}
+		if (!registry.isBackgroundAgent(agentName)) {
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Not a background agent: " + agentName);
 			return;
 		}
 
-		Chat chat = tracker.getChat();
-		if (chat == null || chat.getEntries().isEmpty()) {
-			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "No conversation to review");
-			return;
-		}
-
-		String xml = ConversationSerializer.serializeFullChat(chat);
+		// TODO: Security checks for on-demand triggers (allowed-roles)
 
 		ChatProcessor.submitBackground(() -> {
 			try {
-				AgentRegistry agentRegistry = AgentRegistry.getInstance();
-				if (agentRegistry == null || !agentRegistry.hasAgent("ReviewAgent")) {
-					Logger.warn("Review endpoint: ReviewAgent not available", ChatServlet.class);
-					return;
-				}
-
-				String result = ThreadContextManager.inSystemInteraction(ChatServlet.class, () -> {
-					UntypedAgent reviewAgent =
-						agentRegistry.buildUntypedAgent("ReviewAgent", null, null, new java.util.HashMap<>());
-					return (String) reviewAgent.invoke(Map.of("message", xml));
-				});
-
-				if (result != null && !result.contains("No issues found")) {
-					String title = result.length() <= 200 ? result : result.substring(0, 197) + "...";
-					ReviewNotification notification = new ReviewNotification(
-						title,
-						"manual-review",
-						"info",
-						Instant.now());
-					tracker.getReviewNotifications().add(notification);
-				}
+				BackgroundAgentExecutor executor = new BackgroundAgentExecutor(registry);
+				ApplicationContext context = ApplicationContext.manual(agentName,
+					"rest-api");
+				executor.execute(agentName, context);
 			} catch (Exception ex) {
-				Logger.error("Manual review failed: " + ex.getMessage(), ex, ChatServlet.class);
+				Logger.error("On-demand background agent '" + agentName + "' failed",
+					ex, ChatServlet.class);
 			}
 		});
 
-		resp.setStatus(HttpServletResponse.SC_OK);
-		resp.setContentType(CONTENT_TYPE_JSON);
-		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
-		resp.getWriter().write("{\"status\":\"review_started\"}");
+		// Return 202 Accepted
+		resp.setStatus(HttpServletResponse.SC_ACCEPTED);
+		resp.setContentType("application/json");
+		resp.getWriter().write("{\"agentName\":\"" + agentName + "\",\"status\":\"submitted\"}");
 	}
 
 	private void handleUpdates(HttpServletRequest req, HttpServletResponse resp) throws IOException {

@@ -107,8 +107,6 @@ public class SSEUpdateQueue implements HttpSessionBindingListener {
 	 * looked up by ID for command dispatch.
 	 */
 	public void registerControl(ReactCommandTarget control) {
-		Logger.info("SSEUpdateQueue@" + System.identityHashCode(this) + " registerControl: "
-			+ control.getID(), SSEUpdateQueue.class);
 		_controls.put(control.getID(), control);
 	}
 

@@ -329,12 +329,16 @@ export function useTLDataUrl(): string {
 export function useTLFieldValue(): [unknown, (newValue: unknown) => void] {
   const state = useTLState();
   const sendCommand = useTLCommand();
+  const ctx = useContext(TLControlContext);
 
   const setValue = useCallback(
     (newValue: unknown) => {
+      // Optimistically update the local store so the controlled input reflects the
+      // new value immediately, without waiting for a server round-trip.
+      ctx?.store.applyPatch({ value: newValue });
       sendCommand('valueChanged', { value: newValue });
     },
-    [sendCommand]
+    [sendCommand, ctx]
   );
 
   return [state.value, setValue];

@@ -24,12 +24,14 @@ public interface LoginHook {
 	 * When the hook is executed, the {@link MainLayout} is already initialized.
 	 * </p>
 	 * 
+	 * @param mainLayout
+	 *        The {@link MainLayout} in which the user was logged in.
 	 * @param callback
 	 *        The callback to call when the login hook was processed. The callback must be executed
 	 *        when this login hook was completely processed to ensure that the remaining
 	 *        {@link LoginHook} are executed.
 	 */
-	void handleLogin(DisplayContext context, Runnable callback);
+	void handleLogin(DisplayContext context, MainLayout mainLayout, Runnable callback);
 
 }
 

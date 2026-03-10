@@ -2001,7 +2001,7 @@ function In(l) {
 function me(l, t, o) {
   return De(...Dn(l, t, o));
 }
-const { useState: An, useCallback: q, useRef: Le, useEffect: Vn } = e, Mn = ({ color: l, onColorChange: t }) => {
+const { useCallback: q, useRef: Le } = e, Mn = ({ color: l, onColorChange: t }) => {
   const [o, n, r] = In(l), s = Le(null), a = Le(null), d = q(
     (f, m) => {
       var M;

@@ -1,7 +1,7 @@
 import { React } from 'tl-react-bridge';
 import { hsvToHex, hexToHsv } from './colorUtils';
 
-const { useState, useCallback, useRef, useEffect } = React;
+const { useCallback, useRef } = React;
 
 interface ColorMixerProps {
   /** Current color as '#RRGGBB'. */

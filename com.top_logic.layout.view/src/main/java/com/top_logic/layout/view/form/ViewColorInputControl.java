@@ -108,7 +108,7 @@ public class ViewColorInputControl extends ReactControl {
 		String newValue = rawValue != null ? rawValue.toString() : null;
 		putState(VALUE, newValue);
 		if (_valueCallback != null) {
-			_valueCallback.valueChanged(newValue);
+			_valueCallback.valueChanged(hexToColor(newValue));
 		}
 	}
 

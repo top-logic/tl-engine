@@ -27,7 +27,7 @@ export function hexToRgb(hex: string): [number, number, number] {
   return [(n >> 16) & 0xff, (n >> 8) & 0xff, n & 0xff];
 }
 
-/** Formats [r, g, b] integers into a '#RRGGBB' string (uppercase). */
+/** Formats [r, g, b] integers into a '#rrggbb' string (lowercase). */
 export function rgbToHex(r: number, g: number, b: number): string {
   const toHex = (v: number) => clampByte(v).toString(16).padStart(2, '0');
   return '#' + toHex(r) + toHex(g) + toHex(b);

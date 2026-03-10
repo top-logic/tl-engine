@@ -467,9 +467,9 @@ message AnnotationInfo {
 	string definedIn;
 
 	/**
-	 * Annotation configuration as XML string.
+	 * Annotation configuration as JSON (serialized via {@code JsonConfigurationWriter} with schema references).
 	 */
-	string configXml;
+	string configJson;
 }
 
 /**
@@ -622,6 +622,38 @@ message AnnotationDefinitionResponse {
 	 * List of property definitions.
 	 */
 	repeated PropertyDefinition properties;
+}
+
+// ===== ModelAnnotationEditorTool Messages =====
+
+/**
+ * Response for annotation set/remove operations.
+ */
+message AnnotationEditorResponse {
+	/**
+	 * Whether the operation succeeded.
+	 */
+	bool success;
+
+	/**
+	 * Target reference (module, type, or part).
+	 */
+	string target;
+
+	/**
+	 * Kind of target: module, type, enumeration, part, or classifier.
+	 */
+	string kind;
+
+	/**
+	 * Configuration interface class name.
+	 */
+	string configInterface;
+
+	/**
+	 * Human-readable result message.
+	 */
+	string detail;
 }
 
 // ===== TypeAnalysisTool Messages =====

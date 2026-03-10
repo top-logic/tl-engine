@@ -86,8 +86,9 @@ If the question spans multiple specialties, delegate to each relevant sub-agent 
 				<agent name="ModelExplorer"
 					description="Delegate to the Model Explorer for read-only model inspection. Call to explore, inspect, or verify the TopLogic application model: modules, types, parts, annotations, search. Provide goal (short intent), task (concrete question), context (module/type/part names if known). Do NOT paste the full user message; distill a clear exploration request."
 					send-thinking="true"
+					skills="annotation-discovery"
 					thinking-type=""
-					tools="model-browser.listClassifiers,model-browser.listModules,model-browser.listTypeParts,model-browser.listTypes,model-annotation-browser.listAnnotations,model-annotation-definitions.describeAnnotation,model-analysis.findPartUsages,model-analysis.findTypeUsages,model-instances.getInstance,model-instances.listInstances,model-search.searchModel"
+					tools="model-browser.listClassifiers,model-browser.listModules,model-browser.listTypeParts,model-browser.listTypes,model-annotation-browser.listAnnotations,model-annotation-definitions.describeAnnotation,config-schema.getConfigSchema,model-analysis.findPartUsages,model-analysis.findTypeUsages,model-instances.getInstance,model-instances.listInstances,model-search.searchModel"
 				>
 					<system-prompt><![CDATA[# Preamble
 
@@ -296,10 +297,11 @@ B) Choosing '.' vs '..':
 }]]></system-prompt>
 				</agent>
 				<agent name="ModelEditor"
-					delegations=""
-					description="Delegate to the Model Editor for model modification. Call when the user wants to create or modify the TopLogic model: add types, properties, references, enumerations. Provide goal (short intent), task (concrete instructions or requirements), context (module/type names if relevant). Do NOT paste the full user message; distill the creation request."
+					delegations="ModelExplorer,TLScriptAgent"
+					description="Delegate to the Model Editor for model modification. Call when the user wants to create or modify the TopLogic model: add types, properties, references, enumerations, or set/remove annotations. Provide goal (short intent), task (concrete instructions or requirements), context (module/type names if relevant). Do NOT paste the full user message; distill the creation request."
+					skills="annotation-discovery,annotation-editing"
 					thinking-type=""
-					tools="model-modification.createBackwardReference,model-modification.createClass,model-modification.createEnumeration,model-modification.createModule,model-modification.createProperty,model-modification.createReference,model-modification.updateClass,model-modification.updateEnumeration,model-modification.updateModule,model-modification.updateProperty"
+					tools="model-modification.createBackwardReference,model-modification.createClass,model-modification.createEnumeration,model-modification.createModule,model-modification.createProperty,model-modification.createReference,model-modification.updateClass,model-modification.updateEnumeration,model-modification.updateModule,model-modification.updateProperty,model-annotation-browser.listAnnotations,model-annotation-definitions.describeAnnotation,config-schema.getConfigSchema,model-annotation-editor.setAnnotation,model-annotation-editor.removeAnnotation"
 				>
 					<system-prompt><![CDATA[# Preamble
 
@@ -537,6 +539,161 @@ Then immediately re-delegate with a stricter extraction order:
 * **Guessing qualified names:** Don't invent identifiers if you haven't confirmed them — let the sub-agent search first.
 * **Asking ModelExplorer to explain TLScript:** Any “explain/interpret” wording increases summarization risk.
 * **Single-call annotation + meaning:** Don’t combine “retrieve annotation text” with “what does it mean?” in one call.
+]]></content>
+					</skill>
+					<skill name="annotation-discovery"
+						description="How to discover annotations and navigate nested/polymorphic configuration schemas. Load this skill when you need to understand annotation structures, find the right annotation for a goal, or explore configuration properties."
+					>
+						<content><![CDATA[# Annotation Discovery
+
+## Finding the Right Annotation
+
+When the user describes a goal (e.g., "make this attribute computed", "hide this type"),
+you must find the correct annotation class. Use this approach:
+
+1. Call `listAnnotations(targetRef, true)` on a similar element that already has
+   the desired behavior — inspect what annotations it carries.
+2. Call `describeAnnotation(configInterfaceName)` on candidate annotations to
+   understand their properties and purpose.
+3. If unsure, browse common annotation categories:
+   - **Visibility/Display**: `com.top_logic.model.annotate.TLVisibility`,
+     `com.top_logic.model.annotate.DisplayAnnotations`
+   - **Storage/Computation**: `com.top_logic.element.config.annotation.TLStorage`
+   - **Constraints/Validation**: `com.top_logic.model.annotate.TLConstraints`
+   - **Search/Fulltext**: `com.top_logic.element.config.annotation.TLFullTextRelevant`
+
+## Navigating Configuration Schemas
+
+After identifying the annotation, understand its structure before building JSON.
+
+### Decision Tree
+
+Given a property from `describeAnnotation()`:
+
+```
+Is property kind "plain"?
+  → Use the value directly (string, number, boolean, enum).
+  → If enumValues is present, pick from those values.
+
+Is property kind "item" (single nested config)?
+  → This is a POLYMORPHIC property. You must:
+    1. Call getConfigSchema(configInterface) to get the JSON Schema.
+    2. Look for "$ref" entries or "oneOf"/"anyOf" — these list the
+       concrete implementation types available.
+    3. Pick the right $type for the user's goal.
+    4. Call getConfigSchema() on THAT type to see its properties.
+    5. In the JSON, include "$type": "fully.qualified.ClassName" in the
+       nested object.
+
+Is property kind "list" or "array"?
+  → Wrap values in a JSON array [].
+  → If element type is a ConfigurationItem, each element needs "$type".
+
+Is property kind "map"?
+  → Use a JSON object {} with string keys.
+
+Is property kind "ref"?
+  → Use a string reference (typically a qualified name like "module:Type").
+```
+
+### Resolving Nested Types Step by Step
+
+For deeply nested configs (e.g., TLStorage → implementation → expr):
+
+1. `describeAnnotation("...TLStorage")` → see `implementation` is kind "item"
+2. `getConfigSchema("toplogic://schema/config/...TLStorage")` → find what
+   types `implementation` accepts
+3. Pick the right type (e.g., `AttributeByExpression` for computed attributes)
+4. `getConfigSchema("toplogic://schema/config/...AttributeByExpression")`
+   → see its properties (e.g., `expr`)
+5. Now you can build the full JSON
+
+### Key Rules
+
+- The root `$type` in configJson is OPTIONAL — the `configInterfaceName`
+  parameter already identifies the type.
+- Nested polymorphic objects REQUIRE `$type` — without it, the reader
+  cannot determine the concrete class.
+- Always call `getConfigSchema()` before guessing property names or values.
+- `$schema` URIs in responses (like `toplogic://schema/config/...`) can be
+  passed directly to `getConfigSchema()` for resolution.
+]]></content>
+					</skill>
+					<skill name="annotation-editing"
+						description="How to set and remove annotations on model elements using JSON configuration. Load this skill when you need to modify annotation metadata on modules, types, parts, or classifiers."
+					>
+						<content><![CDATA[# Annotation Editing
+
+## Prerequisites
+
+Before modifying annotations, you MUST understand the target annotation's schema.
+Load the "annotation-discovery" skill first if you haven't already.
+
+## Setting an Annotation
+
+### Workflow
+
+1. **Identify the target**: Use format `module`, `module:Type`, or `module:Type#part`.
+2. **Check current state**: Call `listAnnotations(targetRef, false)` to see what
+   already exists. If the annotation is already set, `setAnnotation` will REPLACE it.
+3. **Understand the schema**: Follow the annotation-discovery decision tree to
+   explore the annotation's properties via `describeAnnotation()` and
+   `getConfigSchema()`.
+4. **Build the JSON config**:
+   - Start with `{}` — the root `$type` is optional (configInterfaceName handles it).
+   - Add only the properties you want to set. Omitted properties use defaults.
+   - For polymorphic nested objects, ALWAYS include `"$type": "fully.qualified.Class"`.
+5. **Call setAnnotation**:
+   ```
+   setAnnotation(targetRef, configInterfaceName, configJson)
+   ```
+6. **Verify the response**: The response includes `configJson` with the re-read
+   annotation values. Compare against your intent to confirm correctness.
+
+### Common Patterns
+
+**Simple enum annotation** (e.g., visibility):
+```json
+setAnnotation("module:Type",
+  "com.top_logic.model.annotate.TLVisibility",
+  "{\"value\": \"hidden\"}")
+```
+
+**Nested polymorphic annotation** (e.g., computed storage):
+```json
+setAnnotation("module:Type#attr",
+  "com.top_logic.element.config.annotation.TLStorage",
+  "{\"implementation\": {\"$type\": \"com.top_logic.model.search.providers.AttributeByExpression\", \"expr\": \"x -> $x.get(`module:Type#other`)\"}}")
+```
+
+### Error Recovery
+
+- **"Annotation class not found"**: Verify the configInterfaceName is correct.
+  Use `describeAnnotation()` to confirm it exists.
+- **JSON parse errors**: Your JSON doesn't match the schema. Call
+  `getConfigSchema()` again and compare carefully. Check for missing `$type`
+  on nested polymorphic objects.
+- **"Class is not a TLAnnotation"**: The class exists but is not an annotation
+  interface. Use `listAnnotations()` on a similar element to find the correct
+  interface name.
+
+## Removing an Annotation
+
+1. Call `listAnnotations(targetRef, false)` to confirm the annotation exists
+   and get the exact `configInterface` name.
+2. Call `removeAnnotation(targetRef, configInterfaceName)`.
+3. Verify success in the response.
+
+**Note**: Removing an inherited annotation has no effect — you can only remove
+annotations that are directly set on the target (where `inherited` is `false`).
+
+## Safety Rules
+
+- NEVER set an annotation without first understanding its schema.
+- ALWAYS verify the response after setAnnotation to confirm the write.
+- When replacing an existing annotation, call listAnnotations first to
+  understand the current state — you may want to preserve some values.
+- If unsure about the effect of an annotation, ask the user before writing.
 ]]></content>
 					</skill>
 				</skills>

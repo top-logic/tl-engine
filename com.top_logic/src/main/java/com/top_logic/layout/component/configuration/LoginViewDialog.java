@@ -12,6 +12,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 import com.top_logic.base.accesscontrol.Login;
 import com.top_logic.base.accesscontrol.Login.InMaintenanceModeException;
 import com.top_logic.base.accesscontrol.Login.LoginHookFailedException;
@@ -167,7 +169,11 @@ public class LoginViewDialog extends AbstractTemplateDialog {
 	}
 
 	private HandlerResult loginAndReload(DisplayContext context, Person user) {
-		SessionService.getInstance().loginUser(context.asRequest(), context.asResponse(), user);
+		HttpServletRequest request = context.asRequest();
+		SessionService service = SessionService.getInstance();
+		// Remove session for anonymous
+		service.invalidateSession(request.getSession());
+		service.loginUser(request, context.asResponse(), user);
 		MainLayout.addFullReload(context);
 		getDiscardClosure().executeCommand(context);
 		return HandlerResult.DEFAULT_RESULT;

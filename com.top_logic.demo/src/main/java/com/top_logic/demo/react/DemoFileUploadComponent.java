@@ -20,6 +20,7 @@ import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.form.control.DataItemControl;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.form.model.DataField;
+import com.top_logic.layout.form.model.DataFieldAdapter;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.react.control.download.ReactDownloadControl;
@@ -76,7 +77,7 @@ public class DemoFileUploadComponent extends LayoutComponent {
 			// DataField IS a BinaryDataValue - all controls share it.
 			_downloadControl = new ReactDownloadControl(ctx, _fileField);
 			_downloadControl.setClearable(true);
-			_uploadControl = new ReactFileUploadControl(ctx, _fileField);
+			_uploadControl = new ReactFileUploadControl(ctx, new DataFieldAdapter(_fileField));
 		}
 
 		out.beginTag(HTMLConstants.H2);

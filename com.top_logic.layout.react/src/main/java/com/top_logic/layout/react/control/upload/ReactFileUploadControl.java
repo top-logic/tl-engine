@@ -13,28 +13,26 @@ import jakarta.servlet.http.Part;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
-import com.top_logic.basic.io.binary.BinaryDataValue;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.form.model.DataFieldModel;
+import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.UploadHandler;
-import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
- * A React control that provides a file upload UI and delivers the uploaded file to the server.
+ * A {@link ReactFormFieldControl} that provides a file upload UI via the {@code TLFileUpload} React
+ * component.
  *
  * <p>
- * On the client side, this control renders a {@code TLFileUpload} React component with a file
- * picker (including drag-and-drop support). The selected file is uploaded via the
- * {@code /react-api/upload} multipart endpoint.
- * </p>
- *
- * <p>
- * The uploaded file is written to a shared {@link BinaryDataValue} model, allowing all controls
- * observing the same model to update automatically.
+ * The selected file is uploaded via the {@code /react-api/upload} multipart endpoint. The uploaded
+ * {@link BinaryData} is stored as the {@link FieldModel} value. When the model is a
+ * {@link DataFieldModel}, the accepted types and max upload size are sent to the client
+ * automatically.
  * </p>
  */
-public class ReactFileUploadControl extends ReactControl implements UploadHandler {
+public class ReactFileUploadControl extends ReactFormFieldControl implements UploadHandler {
 
 	/** State key for the current status. */
 	private static final String STATUS = "status";
@@ -45,29 +43,33 @@ public class ReactFileUploadControl extends ReactControl implements UploadHandle
 	/** State key for the accepted MIME type filter. */
 	private static final String ACCEPT = "accept";
 
-	private final BinaryDataValue _model;
+	/** State key for the maximum upload size. */
+	private static final String MAX_SIZE = "maxSize";
 
 	/**
 	 * Creates a new {@link ReactFileUploadControl}.
 	 *
+	 * @param context
+	 *        The {@link ReactContext} for ID allocation and SSE registration.
 	 * @param model
-	 *        The shared data model to write uploaded files to.
+	 *        The field model. Value type is {@link BinaryData}. If the model is a
+	 *        {@link DataFieldModel}, accepted types and max upload size are sent to the client.
 	 */
-	public ReactFileUploadControl(ReactContext context, BinaryDataValue model) {
-		super(context, null, "TLFileUpload");
-		_model = model;
+	public ReactFileUploadControl(ReactContext context, FieldModel model) {
+		super(context, model, "TLFileUpload");
 		putState(STATUS, "idle");
+		initDataFieldState();
 	}
 
-	/**
-	 * Sets the accepted file types filter.
-	 *
-	 * @param accept
-	 *        A comma-separated list of MIME types or file extensions (e.g. {@code "image/*,.pdf"}).
-	 *        Pass {@code null} to accept all file types.
-	 */
-	public void setAccept(String accept) {
-		putState(ACCEPT, accept);
+	private void initDataFieldState() {
+		if (getFieldModel() instanceof DataFieldModel) {
+			DataFieldModel dataModel = (DataFieldModel) getFieldModel();
+			putState(ACCEPT, dataModel.getAcceptedTypes());
+			long maxSize = dataModel.getMaxUploadSize();
+			if (maxSize > 0) {
+				putState(MAX_SIZE, maxSize);
+			}
+		}
 	}
 
 	@Override
@@ -97,7 +99,7 @@ public class ReactFileUploadControl extends ReactControl implements UploadHandle
 			}
 
 			BinaryData data = BinaryDataFactory.createBinaryData(fileData, contentType, fileName);
-			_model.setData(data);
+			getFieldModel().setValue(data);
 
 			putState(ERROR, null);
 			putState(STATUS, "idle");

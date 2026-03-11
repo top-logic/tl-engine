@@ -12,6 +12,7 @@ const I18N_KEYS = {
   'js.colorInput.green': 'Green',
   'js.colorInput.blue': 'Blue',
   'js.colorInput.hex': 'Hex',
+  'js.colorInput.noColor': 'No color',
   'js.colorInput.reset': 'Reset',
   'js.colorInput.cancel': 'Cancel',
   'js.colorInput.ok': 'OK',
@@ -22,16 +23,16 @@ const { useState, useCallback, useEffect, useRef, useLayoutEffect } = React;
 interface ColorPopupProps {
   /** Ref to the anchor element for positioning. */
   anchorRef: React.RefObject<HTMLButtonElement>;
-  /** The confirmed (original) color. */
-  currentColor: string;
+  /** The confirmed (original) color, or null if no color is set. */
+  currentColor: string | null;
   /** Palette colors (flat array, row-major). */
   palette: (string | null)[];
   /** Number of palette columns. */
   paletteColumns: number;
   /** Default palette for reset. */
   defaultPalette: (string | null)[];
-  /** Called when user confirms a color (OK or double-click). */
-  onConfirm: (hex: string) => void;
+  /** Called when user confirms a color (OK or double-click), null means clear. */
+  onConfirm: (hex: string | null) => void;
   /** Called when user cancels. */
   onCancel: () => void;
   /** Called when palette changes (swap or reset). */
@@ -54,7 +55,7 @@ const ColorPopup: React.FC<ColorPopupProps> = ({
   onPaletteChange,
 }) => {
   const [tab, setTab] = useState<Tab>('palette');
-  const [draft, setDraft] = useState(currentColor);
+  const [draft, setDraft] = useState<string | null>(currentColor);
   const popupRef = useRef<HTMLDivElement>(null);
   const i18n = useI18N(I18N_KEYS);
   const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
@@ -74,13 +75,14 @@ const ColorPopup: React.FC<ColorPopupProps> = ({
     setPosition({ top, left });
   }, [anchorRef]);
 
-  // RGB derived from draft
-  const [r, g, b] = hexToRgb(draft);
-  const [hexInput, setHexInput] = useState(draft.toUpperCase());
+  // RGB derived from draft (defaults to [0,0,0] when no color)
+  const hasColor = draft != null;
+  const [r, g, b] = hasColor ? hexToRgb(draft) : [0, 0, 0];
+  const [hexInput, setHexInput] = useState(draft?.toUpperCase() ?? '');
 
   // Keep hex input in sync when draft changes via non-hex-field means
   useEffect(() => {
-    setHexInput(draft.toUpperCase());
+    setHexInput(draft?.toUpperCase() ?? '');
   }, [draft]);
 
   // Close on Escape
@@ -126,6 +128,10 @@ const ColorPopup: React.FC<ColorPopupProps> = ({
     if (isValidHex(val)) {
       setDraft(val);
     }
+  }, []);
+
+  const handleClearDraft = useCallback(() => {
+    setDraft(null);
   }, []);
 
   const handlePaletteSelect = useCallback((hex: string) => {
@@ -194,19 +200,29 @@ const ColorPopup: React.FC<ColorPopupProps> = ({
             onSwap={handleSwap}
           />
         ) : (
-          <ColorMixer color={draft} onColorChange={setDraft} />
+          <ColorMixer color={draft ?? '#000000'} onColorChange={setDraft} />
         )}
 
         {/* Right: control panel */}
         <div className="tlColorInput__controls">
           <div className="tlColorInput__previewRow">
             <span className="tlColorInput__previewLabel">{i18n['js.colorInput.current']}</span>
-            <div className="tlColorInput__previewSwatch" style={{ backgroundColor: currentColor }} />
+            <div
+              className={'tlColorInput__previewSwatch' + (currentColor == null ? ' tlColorInput--noColor' : '')}
+              style={currentColor != null ? { backgroundColor: currentColor } : undefined}
+            />
           </div>
           <div className="tlColorInput__previewRow">
             <span className="tlColorInput__previewLabel">{i18n['js.colorInput.new']}</span>
-            <div className="tlColorInput__previewSwatch" style={{ backgroundColor: draft }} />
+            <div
+              className={'tlColorInput__previewSwatch' + (!hasColor ? ' tlColorInput--noColor' : '')}
+              style={hasColor ? { backgroundColor: draft } : undefined}
+            />
           </div>
+
+          <button className="tlColorInput__clearBtn" onClick={handleClearDraft}>
+            {i18n['js.colorInput.noColor']}
+          </button>
 
           <div className="tlColorInput__divider" />
 
@@ -217,7 +233,7 @@ const ColorPopup: React.FC<ColorPopupProps> = ({
               type="number"
               min={0}
               max={255}
-              value={r}
+              value={hasColor ? r : ''}
               onChange={handleRgbChange('r')}
             />
           </div>
@@ -228,7 +244,7 @@ const ColorPopup: React.FC<ColorPopupProps> = ({
               type="number"
               min={0}
               max={255}
-              value={g}
+              value={hasColor ? g : ''}
               onChange={handleRgbChange('g')}
             />
           </div>
@@ -239,14 +255,14 @@ const ColorPopup: React.FC<ColorPopupProps> = ({
               type="number"
               min={0}
               max={255}
-              value={b}
+              value={hasColor ? b : ''}
               onChange={handleRgbChange('b')}
             />
           </div>
           <div className="tlColorInput__inputRow">
             <span className="tlColorInput__inputLabel">{i18n['js.colorInput.hex']}</span>
             <input
-              className={'tlColorInput__input' + (!isValidHex(hexInput) ? ' tlColorInput__input--error' : '')}
+              className={'tlColorInput__input' + (hexInput !== '' && !isValidHex(hexInput) ? ' tlColorInput__input--error' : '')}
               type="text"
               value={hexInput}
               onChange={handleHexChange}

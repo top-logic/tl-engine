@@ -488,6 +488,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_COLOR_INPUT_CANCEL = ResKey.internalCreate("js.colorInput.cancel");
 
 	/**
+	 * @en No color
+	 * @de Keine Farbe
+	 */
+	public static ResKey JS_COLOR_INPUT_NO_COLOR = ResKey.internalCreate("js.colorInput.noColor");
+
+	/**
 	 * @en OK
 	 * @de OK
 	 */

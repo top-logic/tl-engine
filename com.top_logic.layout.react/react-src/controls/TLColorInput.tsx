@@ -33,7 +33,7 @@ const TLColorInput: React.FC<TLCellProps> = ({ controlId, state }) => {
   }, [editable]);
 
   const handleConfirm = useCallback(
-    (hex: string) => {
+    (hex: string | null) => {
       setOpen(false);
       sendCommand('valueChanged', { value: hex });
     },
@@ -84,7 +84,7 @@ const TLColorInput: React.FC<TLCellProps> = ({ controlId, state }) => {
       {open && (
         <ColorPopup
           anchorRef={swatchRef}
-          currentColor={value ?? '#000000'}
+          currentColor={value}
           palette={palette}
           paletteColumns={paletteColumns}
           defaultPalette={defaultPalette}

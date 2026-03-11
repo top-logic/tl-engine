@@ -503,12 +503,12 @@ public class ModelEditorTool {
 	 *        Whether abstract (default: false).
 	 * @return JSON with property details.
 	 */
-	@Tool("Create a new property on a TopLogic class with primitive types (STRING, INT, BOOLEAN, FLOAT, DATE, TRISTATE, BINARY, CUSTOM), or return an existing one by name")
+	@Tool("Create a new PRIMITIVE property on a TopLogic class (STRING, INT, BOOLEAN, FLOAT, DATE, TRISTATE, BINARY, CUSTOM), or return an existing one by name. NOT for enumerations or references to other types — use createReference for those.")
 	public String createProperty(
 			@P("Name of the module containing the class") String moduleName,
 			@P("Name of the class to add the property to") String className,
 			@P("Name of the property") String propertyName,
-			@P("Primitive type kind (e.g., STRING, INT, BOOLEAN, FLOAT, DATE, TRISTATE, BINARY, CUSTOM). Case-insensitive.") String propertyType,
+			@P("Primitive type kind (STRING, INT, BOOLEAN, FLOAT, DATE, TRISTATE, BINARY, CUSTOM). NOT for enumerations or references — use createReference instead. Case-insensitive.") String propertyType,
 			@P("English label for the property") String labelEn,
 			@P("German label for the property") String labelDe,
 			@P("English description for the property") String descEn,

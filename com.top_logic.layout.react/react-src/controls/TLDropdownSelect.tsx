@@ -164,6 +164,9 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
   const valueRef = useRef(value);
   valueRef.current = value;
 
+  // Index of the last removed chip, used to restore focus after SSE update.
+  const removalIndexRef = useRef(-1);
+
   // Derived: selected value IDs for fast lookup
   const selectedIds = useMemo(
     () => new Set(value.map((v) => v.value)),
@@ -196,6 +199,22 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
       searchRef.current.focus();
     }
   }, [isOpen, optionsLoaded, value]);
+
+  // After a chip is removed, focus the next remove button (or previous, or container).
+  useEffect(() => {
+    if (removalIndexRef.current < 0) return;
+    const idx = removalIndexRef.current;
+    removalIndexRef.current = -1;
+
+    const buttons = containerRef.current?.querySelectorAll<HTMLElement>(
+      '.tlDropdownSelect__chipRemove'
+    );
+    if (buttons && buttons.length > 0) {
+      buttons[Math.min(idx, buttons.length - 1)].focus();
+    } else {
+      containerRef.current?.focus();
+    }
+  }, [value]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -291,6 +310,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
 
   const removeOption = useCallback(
     (optionValue: string) => {
+      removalIndexRef.current = valueRef.current.findIndex((v) => v.value === optionValue);
       const newValue = valueRef.current.filter((v) => v.value !== optionValue);
       valueRef.current = newValue;
       sendCommand('valueChanged', { value: newValue.map((v) => v.value) });

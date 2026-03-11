@@ -2994,7 +2994,14 @@ button.tlMenu__item--disabled:hover {
   border-radius: var(--corner-radius);
 }
 
-.tlColorInput__clearBtn {
+.tlColorInput__paletteArea {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-03);
+  flex-shrink: 0;
+}
+
+.tlColorInput__paletteReset {
   align-self: flex-start;
   padding: 0;
   border: none;
@@ -3006,7 +3013,7 @@ button.tlMenu__item--disabled:hover {
   text-decoration: none;
 }
 
-.tlColorInput__clearBtn:hover {
+.tlColorInput__paletteReset:hover {
   text-decoration: underline;
 }
 

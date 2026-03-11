@@ -96,6 +96,9 @@ public class FieldControl {
 		setupValueCallback();
 
 		boolean mandatory = _resolvedPart.isMandatory();
+		if (_innerControl instanceof ViewColorInputControl) {
+			((ViewColorInputControl) _innerControl).setCanReset(!mandatory);
+		}
 		_chrome = new ReactFormFieldChromeControl(_context, label, mandatory, false, null, null, null,
 			false, true, _innerControl);
 
@@ -134,6 +137,9 @@ public class FieldControl {
 
 			_innerControl = FieldControlFactory.createFieldControl(_context, _resolvedPart, value, editable);
 			setupValueCallback();
+			if (_innerControl instanceof ViewColorInputControl) {
+				((ViewColorInputControl) _innerControl).setCanReset(!_resolvedPart.isMandatory());
+			}
 
 			_chrome.setLabel(label);
 			_chrome.setRequired(_resolvedPart.isMandatory());

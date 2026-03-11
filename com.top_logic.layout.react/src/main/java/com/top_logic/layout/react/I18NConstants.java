@@ -505,6 +505,12 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey JS_COLOR_INPUT_CHOOSE_COLOR = ResKey.internalCreate("js.colorInput.chooseColor");
 
+	/**
+	 * @en Clear
+	 * @de L\u00f6schen
+	 */
+	public static ResKey JS_COLOR_INPUT_CLEAR = ResKey.internalCreate("js.colorInput.clear");
+
 	static {
 		initConstants(I18NConstants.class);
 	}

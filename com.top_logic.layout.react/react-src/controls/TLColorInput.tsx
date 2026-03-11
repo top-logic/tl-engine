@@ -88,6 +88,7 @@ const TLColorInput: React.FC<TLCellProps> = ({ controlId, state }) => {
           palette={palette}
           paletteColumns={paletteColumns}
           defaultPalette={defaultPalette}
+          canReset={state.canReset !== false}
           onConfirm={handleConfirm}
           onCancel={handleCancel}
           onPaletteChange={handlePaletteChange}

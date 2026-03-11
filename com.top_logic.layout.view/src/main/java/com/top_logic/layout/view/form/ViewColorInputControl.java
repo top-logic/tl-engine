@@ -40,6 +40,8 @@ public class ViewColorInputControl extends ReactControl {
 
 	private static final String DEFAULT_PALETTE = "defaultPalette";
 
+	private static final String CAN_RESET = "canReset";
+
 	private static final String COLOR_PALETTE_KEY = "colorPalette";
 
 	private ValueCallback _valueCallback;
@@ -87,6 +89,16 @@ public class ViewColorInputControl extends ReactControl {
 	 */
 	public void setEditable(boolean editable) {
 		putState(EDITABLE, Boolean.valueOf(editable));
+	}
+
+	/**
+	 * Sets whether the user can clear the color (reset to {@code null}).
+	 *
+	 * @param canReset
+	 *        {@code true} to show a "Clear" button, {@code false} to hide it.
+	 */
+	public void setCanReset(boolean canReset) {
+		putState(CAN_RESET, Boolean.valueOf(canReset));
 	}
 
 	/**

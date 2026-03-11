@@ -12,7 +12,7 @@ const I18N_KEYS = {
   'js.colorInput.green': 'Green',
   'js.colorInput.blue': 'Blue',
   'js.colorInput.hex': 'Hex',
-  'js.colorInput.noColor': 'No color',
+  'js.colorInput.clear': 'Clear',
   'js.colorInput.reset': 'Reset',
   'js.colorInput.cancel': 'Cancel',
   'js.colorInput.ok': 'OK',
@@ -31,6 +31,8 @@ interface ColorPopupProps {
   paletteColumns: number;
   /** Default palette for reset. */
   defaultPalette: (string | null)[];
+  /** Whether the user can clear the color to null. */
+  canReset: boolean;
   /** Called when user confirms a color (OK or double-click), null means clear. */
   onConfirm: (hex: string | null) => void;
   /** Called when user cancels. */
@@ -50,6 +52,7 @@ const ColorPopup: React.FC<ColorPopupProps> = ({
   palette,
   paletteColumns,
   defaultPalette,
+  canReset,
   onConfirm,
   onCancel,
   onPaletteChange,
@@ -192,13 +195,18 @@ const ColorPopup: React.FC<ColorPopupProps> = ({
       <div className="tlColorInput__body">
         {/* Left: tab content */}
         {tab === 'palette' ? (
-          <ColorPalette
-            colors={palette}
-            columns={paletteColumns}
-            onSelect={handlePaletteSelect}
-            onConfirm={handlePaletteConfirm}
-            onSwap={handleSwap}
-          />
+          <div className="tlColorInput__paletteArea">
+            <ColorPalette
+              colors={palette}
+              columns={paletteColumns}
+              onSelect={handlePaletteSelect}
+              onConfirm={handlePaletteConfirm}
+              onSwap={handleSwap}
+            />
+            <button className="tlColorInput__paletteReset" onClick={handleReset}>
+              {i18n['js.colorInput.reset']}
+            </button>
+          </div>
         ) : (
           <ColorMixer color={draft ?? '#000000'} onColorChange={setDraft} />
         )}
@@ -219,10 +227,6 @@ const ColorPopup: React.FC<ColorPopupProps> = ({
               style={hasColor ? { backgroundColor: draft } : undefined}
             />
           </div>
-
-          <button className="tlColorInput__clearBtn" onClick={handleClearDraft}>
-            {i18n['js.colorInput.noColor']}
-          </button>
 
           <div className="tlColorInput__divider" />
 
@@ -274,9 +278,9 @@ const ColorPopup: React.FC<ColorPopupProps> = ({
 
       {/* Action buttons */}
       <div className="tlColorInput__actions">
-        {tab === 'palette' && (
-          <button className="tlColorInput__btn tlColorInput__btn--reset" onClick={handleReset}>
-            {i18n['js.colorInput.reset']}
+        {canReset && (
+          <button className="tlColorInput__btn tlColorInput__btn--reset" onClick={handleClearDraft}>
+            {i18n['js.colorInput.clear']}
           </button>
         )}
         <button className="tlColorInput__btn tlColorInput__btn--cancel" onClick={onCancel}>

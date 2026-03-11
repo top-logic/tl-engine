@@ -425,6 +425,80 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey JS_DROPDOWN_SELECT_ERROR = ResKey.internalCreate("js.dropdownSelect.error");
 
+	// -- Color input client-side i18n keys --
+
+	/**
+	 * @en Color Palette
+	 * @de Farbpalette
+	 */
+	public static ResKey JS_COLOR_INPUT_PALETTE_TAB = ResKey.internalCreate("js.colorInput.paletteTab");
+
+	/**
+	 * @en Color Mixer
+	 * @de Farbmischer
+	 */
+	public static ResKey JS_COLOR_INPUT_MIXER_TAB = ResKey.internalCreate("js.colorInput.mixerTab");
+
+	/**
+	 * @en Current
+	 * @de Aktuell
+	 */
+	public static ResKey JS_COLOR_INPUT_CURRENT = ResKey.internalCreate("js.colorInput.current");
+
+	/**
+	 * @en New
+	 * @de Neu
+	 */
+	public static ResKey JS_COLOR_INPUT_NEW = ResKey.internalCreate("js.colorInput.new");
+
+	/**
+	 * @en Red
+	 * @de Rot
+	 */
+	public static ResKey JS_COLOR_INPUT_RED = ResKey.internalCreate("js.colorInput.red");
+
+	/**
+	 * @en Green
+	 * @de Gr\u00fcn
+	 */
+	public static ResKey JS_COLOR_INPUT_GREEN = ResKey.internalCreate("js.colorInput.green");
+
+	/**
+	 * @en Blue
+	 * @de Blau
+	 */
+	public static ResKey JS_COLOR_INPUT_BLUE = ResKey.internalCreate("js.colorInput.blue");
+
+	/**
+	 * @en Hex
+	 * @de Hex
+	 */
+	public static ResKey JS_COLOR_INPUT_HEX = ResKey.internalCreate("js.colorInput.hex");
+
+	/**
+	 * @en Reset
+	 * @de Zur\u00fccksetzen
+	 */
+	public static ResKey JS_COLOR_INPUT_RESET = ResKey.internalCreate("js.colorInput.reset");
+
+	/**
+	 * @en Cancel
+	 * @de Abbrechen
+	 */
+	public static ResKey JS_COLOR_INPUT_CANCEL = ResKey.internalCreate("js.colorInput.cancel");
+
+	/**
+	 * @en OK
+	 * @de OK
+	 */
+	public static ResKey JS_COLOR_INPUT_OK = ResKey.internalCreate("js.colorInput.ok");
+
+	/**
+	 * @en Choose color
+	 * @de Farbe w\u00e4hlen
+	 */
+	public static ResKey JS_COLOR_INPUT_CHOOSE_COLOR = ResKey.internalCreate("js.colorInput.chooseColor");
+
 	static {
 		initConstants(I18NConstants.class);
 	}

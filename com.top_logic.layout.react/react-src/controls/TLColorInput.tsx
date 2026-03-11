@@ -1,6 +1,8 @@
-import { React, useTLCommand } from 'tl-react-bridge';
+import { React, useTLCommand, useI18N } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import ColorPopup from './color/ColorPopup';
+
+const I18N_KEYS = { 'js.colorInput.chooseColor': 'Choose color' };
 
 const { useState, useCallback, useRef } = React;
 
@@ -16,6 +18,7 @@ const { useState, useCallback, useRef } = React;
  */
 const TLColorInput: React.FC<TLCellProps> = ({ controlId, state }) => {
   const sendCommand = useTLCommand();
+  const i18n = useI18N(I18N_KEYS);
   const [open, setOpen] = useState(false);
   const swatchRef = useRef<HTMLButtonElement>(null);
 
@@ -75,11 +78,12 @@ const TLColorInput: React.FC<TLCellProps> = ({ controlId, state }) => {
         onClick={handleClick}
         disabled={state.disabled === true}
         title={value ?? ''}
-        aria-label="Choose color"
+        aria-label={i18n['js.colorInput.chooseColor']}
       />
 
       {open && (
         <ColorPopup
+          anchorRef={swatchRef}
           currentColor={value ?? '#000000'}
           palette={palette}
           paletteColumns={paletteColumns}

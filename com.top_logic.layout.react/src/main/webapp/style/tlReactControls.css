@@ -2819,9 +2819,7 @@ button.tlMenu__item--disabled:hover {
 /* Popup */
 
 .tlColorInput__popup {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
+  position: fixed;
   z-index: 9000;
   background: var(--layer-02, #fff);
   border: 1px solid var(--border-subtle);

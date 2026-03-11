@@ -1,11 +1,27 @@
-import { React } from 'tl-react-bridge';
+import { React, useI18N } from 'tl-react-bridge';
 import ColorPalette from './ColorPalette';
 import ColorMixer from './ColorMixer';
 import { hexToRgb, rgbToHex, isValidHex, clampByte } from './colorUtils';
 
-const { useState, useCallback, useEffect, useRef } = React;
+const I18N_KEYS = {
+  'js.colorInput.paletteTab': 'Color Palette',
+  'js.colorInput.mixerTab': 'Color Mixer',
+  'js.colorInput.current': 'Current',
+  'js.colorInput.new': 'New',
+  'js.colorInput.red': 'Red',
+  'js.colorInput.green': 'Green',
+  'js.colorInput.blue': 'Blue',
+  'js.colorInput.hex': 'Hex',
+  'js.colorInput.reset': 'Reset',
+  'js.colorInput.cancel': 'Cancel',
+  'js.colorInput.ok': 'OK',
+};
+
+const { useState, useCallback, useEffect, useRef, useLayoutEffect } = React;
 
 interface ColorPopupProps {
+  /** Ref to the anchor element for positioning. */
+  anchorRef: React.RefObject<HTMLButtonElement>;
   /** The confirmed (original) color. */
   currentColor: string;
   /** Palette colors (flat array, row-major). */
@@ -28,6 +44,7 @@ type Tab = 'palette' | 'mixer';
  * The color chooser popup with two tabs and a control panel.
  */
 const ColorPopup: React.FC<ColorPopupProps> = ({
+  anchorRef,
   currentColor,
   palette,
   paletteColumns,
@@ -39,6 +56,23 @@ const ColorPopup: React.FC<ColorPopupProps> = ({
   const [tab, setTab] = useState<Tab>('palette');
   const [draft, setDraft] = useState(currentColor);
   const popupRef = useRef<HTMLDivElement>(null);
+  const i18n = useI18N(I18N_KEYS);
+  const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
+
+  useLayoutEffect(() => {
+    if (!anchorRef.current || !popupRef.current) return;
+    const anchorRect = anchorRef.current.getBoundingClientRect();
+    const popupRect = popupRef.current.getBoundingClientRect();
+    let top = anchorRect.bottom + 4;
+    let left = anchorRect.left;
+    if (top + popupRect.height > window.innerHeight) {
+      top = anchorRect.top - popupRect.height - 4;
+    }
+    if (left + popupRect.width > window.innerWidth) {
+      left = Math.max(0, anchorRect.right - popupRect.width);
+    }
+    setPosition({ top, left });
+  }, [anchorRef]);
 
   // RGB derived from draft
   const [r, g, b] = hexToRgb(draft);
@@ -125,20 +159,26 @@ const ColorPopup: React.FC<ColorPopupProps> = ({
   }, [draft, onConfirm]);
 
   return (
-    <div className="tlColorInput__popup" ref={popupRef}>
+    <div
+      className="tlColorInput__popup"
+      ref={popupRef}
+      style={position
+        ? { top: position.top, left: position.left, visibility: 'visible' }
+        : { visibility: 'hidden' }}
+    >
       {/* Tab bar */}
       <div className="tlColorInput__tabs">
         <button
           className={'tlColorInput__tab' + (tab === 'palette' ? ' tlColorInput__tab--active' : '')}
           onClick={() => setTab('palette')}
         >
-          Color Palette
+          {i18n['js.colorInput.paletteTab']}
         </button>
         <button
           className={'tlColorInput__tab' + (tab === 'mixer' ? ' tlColorInput__tab--active' : '')}
           onClick={() => setTab('mixer')}
         >
-          Color Mixer
+          {i18n['js.colorInput.mixerTab']}
         </button>
       </div>
 
@@ -160,18 +200,18 @@ const ColorPopup: React.FC<ColorPopupProps> = ({
         {/* Right: control panel */}
         <div className="tlColorInput__controls">
           <div className="tlColorInput__previewRow">
-            <span className="tlColorInput__previewLabel">Current</span>
+            <span className="tlColorInput__previewLabel">{i18n['js.colorInput.current']}</span>
             <div className="tlColorInput__previewSwatch" style={{ backgroundColor: currentColor }} />
           </div>
           <div className="tlColorInput__previewRow">
-            <span className="tlColorInput__previewLabel">New</span>
+            <span className="tlColorInput__previewLabel">{i18n['js.colorInput.new']}</span>
             <div className="tlColorInput__previewSwatch" style={{ backgroundColor: draft }} />
           </div>
 
           <div className="tlColorInput__divider" />
 
           <div className="tlColorInput__inputRow">
-            <span className="tlColorInput__inputLabel">Red</span>
+            <span className="tlColorInput__inputLabel">{i18n['js.colorInput.red']}</span>
             <input
               className="tlColorInput__input"
               type="number"
@@ -182,7 +222,7 @@ const ColorPopup: React.FC<ColorPopupProps> = ({
             />
           </div>
           <div className="tlColorInput__inputRow">
-            <span className="tlColorInput__inputLabel">Green</span>
+            <span className="tlColorInput__inputLabel">{i18n['js.colorInput.green']}</span>
             <input
               className="tlColorInput__input"
               type="number"
@@ -193,7 +233,7 @@ const ColorPopup: React.FC<ColorPopupProps> = ({
             />
           </div>
           <div className="tlColorInput__inputRow">
-            <span className="tlColorInput__inputLabel">Blue</span>
+            <span className="tlColorInput__inputLabel">{i18n['js.colorInput.blue']}</span>
             <input
               className="tlColorInput__input"
               type="number"
@@ -204,7 +244,7 @@ const ColorPopup: React.FC<ColorPopupProps> = ({
             />
           </div>
           <div className="tlColorInput__inputRow">
-            <span className="tlColorInput__inputLabel">Hex</span>
+            <span className="tlColorInput__inputLabel">{i18n['js.colorInput.hex']}</span>
             <input
               className={'tlColorInput__input' + (!isValidHex(hexInput) ? ' tlColorInput__input--error' : '')}
               type="text"
@@ -216,14 +256,14 @@ const ColorPopup: React.FC<ColorPopupProps> = ({
           <div className="tlColorInput__actions">
             {tab === 'palette' && (
               <button className="tlColorInput__btn tlColorInput__btn--reset" onClick={handleReset}>
-                Reset
+                {i18n['js.colorInput.reset']}
               </button>
             )}
             <button className="tlColorInput__btn tlColorInput__btn--cancel" onClick={onCancel}>
-              Cancel
+              {i18n['js.colorInput.cancel']}
             </button>
             <button className="tlColorInput__btn tlColorInput__btn--ok" onClick={handleOk}>
-              OK
+              {i18n['js.colorInput.ok']}
             </button>
           </div>
         </div>

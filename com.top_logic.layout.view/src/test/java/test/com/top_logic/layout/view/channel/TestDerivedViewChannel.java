@@ -12,7 +12,6 @@ import junit.framework.TestCase;
 
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.DerivedViewChannel;
-import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
 
 /**

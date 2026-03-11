@@ -29,14 +29,13 @@ import com.top_logic.ai.chat.api.messages.TaskStatusEvent;
 import com.top_logic.ai.chat.api.messages.TimelineEventDto;
 import com.top_logic.ai.chat.layout.Chat;
 import com.top_logic.ai.chat.layout.ChatEntry;
-import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.ChatMessage;
+import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.ChatTask;
 import com.top_logic.ai.chat.layout.ChatTimelineEvent;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.ai.service.approval.UserInteractionRequest;
 import com.top_logic.ai.service.approval.UserInteractionStore;
-import com.top_logic.ai.service.scripting.Converters;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.thread.ThreadContextManager;
 

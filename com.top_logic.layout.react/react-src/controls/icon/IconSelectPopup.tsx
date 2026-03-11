@@ -236,6 +236,7 @@ const IconSelectPopup: React.FC<IconSelectPopupProps> = ({
       {/* Icon grid */}
       <div
         className="tlIconSelect__grid"
+        role="listbox"
         style={tab === 'advanced' ? { maxHeight: '160px' } : undefined}
       >
         {!iconsLoaded && !loadError && (
@@ -264,12 +265,23 @@ const IconSelectPopup: React.FC<IconSelectPopupProps> = ({
                     ? ' tlIconSelect__iconCell--selected'
                     : '')
                 }
+                role="option"
+                aria-selected={variant.encoded === currentValue}
+                tabIndex={0}
                 title={icon.label}
                 onClick={() =>
                   tab === 'simple'
                     ? handleSimpleSelect(variant.encoded)
                     : handleAdvancedIconClick(variant.encoded)
                 }
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    tab === 'simple'
+                      ? handleSimpleSelect(variant.encoded)
+                      : handleAdvancedIconClick(variant.encoded);
+                  }
+                }}
               >
                 <IconPreview encoded={variant.encoded} />
               </div>

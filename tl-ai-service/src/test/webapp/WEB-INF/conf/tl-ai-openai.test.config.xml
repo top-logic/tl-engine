@@ -19,6 +19,7 @@
 				<entry value="com.top_logic.ai.service.tools.script.messages" />
 				<entry value="com.top_logic.ai.service.agents.handoff" />
 				<entry value="com.top_logic.ai.service.tools.layout.messages" />
+				<entry value="com.top_logic.ai.service.tools.task.messages" />
 				<entry value="com.top_logic.ai.service.skills" />
 			</ignore>
 		</config>

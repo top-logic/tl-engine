@@ -29,14 +29,13 @@ import com.top_logic.ai.chat.api.messages.TaskStatusEvent;
 import com.top_logic.ai.chat.api.messages.TimelineEventDto;
 import com.top_logic.ai.chat.layout.Chat;
 import com.top_logic.ai.chat.layout.ChatEntry;
-import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.ChatMessage;
+import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.ChatTask;
 import com.top_logic.ai.chat.layout.ChatTimelineEvent;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.ai.service.approval.UserInteractionRequest;
 import com.top_logic.ai.service.approval.UserInteractionStore;
-import com.top_logic.ai.service.scripting.Converters;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.thread.ThreadContextManager;
 
@@ -91,6 +90,13 @@ public class ChatSSEHandler {
 
 	/** Tracks agent call result summaries to detect updates (key = event index "e0", "e1", etc.). */
 	private final Map<String, String> _agentCallResults = new HashMap<>();
+
+	/** Last seen TaskStore version to detect changes. */
+	private int _lastTaskStoreVersion = 0;
+	/** Last emitted state per agent task (key = task ID, value = state fingerprint). */
+	private final Map<String, String> _emittedTaskStates = new HashMap<>();
+	/** Reference to the last seen TaskStore instance to detect new processing rounds. */
+	private com.top_logic.ai.service.tools.task.TaskStore _lastTaskStore = null;
 
 	/** Tracks already-emitted user interaction request IDs to avoid duplicates. */
 	private final Set<String> _emittedInteractionIds = new HashSet<>();
@@ -355,6 +361,9 @@ public class ChatSSEHandler {
 				_emittedInteractionIds.clear();
 			}
 		}
+
+		// Emit agent task events (from TaskStore)
+		emitAgentTaskDeltas();
 	}
 
 	private void emitMessage(ChatMessage msg, String id) {
@@ -386,6 +395,58 @@ public class ChatSSEHandler {
 			sendEvent("task_status", DtoMapper.toJson(status));
 		} catch (Exception e) {
 			Logger.error("Failed to emit task status event", e, ChatSSEHandler.class);
+		}
+	}
+
+	private void emitAgentTaskDeltas() {
+		ChatProcessor.AIProcessingState procState = _tracker.getCurrentProcessingState();
+		if (procState == null) {
+			return;
+		}
+		com.top_logic.ai.service.tools.task.TaskStore taskStore = procState.getTaskStore();
+		if (taskStore == null) {
+			return;
+		}
+
+		// Detect new processing round (new TaskStore instance = new message).
+		// Reset tracking state so tasks from the new round are emitted fresh.
+		if (taskStore != _lastTaskStore) {
+			_lastTaskStore = taskStore;
+			_lastTaskStoreVersion = 0;
+			_emittedTaskStates.clear();
+		}
+
+		int currentVersion = taskStore.getVersion();
+		if (currentVersion == _lastTaskStoreVersion) {
+			return;
+		}
+		_lastTaskStoreVersion = currentVersion;
+
+		for (com.top_logic.ai.service.tools.task.TaskStore.AgentTask task : taskStore.getAllTasks()) {
+			String stateKey = task.getId() + ":" + task.getStatus() + ":"
+				+ task.getSubject() + ":" + task.getActiveForm() + ":" + task.getOwner();
+			String lastState = _emittedTaskStates.get(task.getId());
+			if (!stateKey.equals(lastState)) {
+				String eventType = lastState == null ? "agent_task_created" : "agent_task_updated";
+				emitAgentTaskEvent(task, eventType);
+				_emittedTaskStates.put(task.getId(), stateKey);
+			}
+		}
+	}
+
+	private void emitAgentTaskEvent(
+			com.top_logic.ai.service.tools.task.TaskStore.AgentTask task, String eventType) {
+		try {
+			com.top_logic.ai.chat.api.messages.AgentTaskEvent event =
+				com.top_logic.ai.chat.api.messages.AgentTaskEvent.create()
+					.setTaskId(task.getId())
+					.setSubject(task.getSubject() != null ? task.getSubject() : "")
+					.setActiveForm(task.getActiveForm() != null ? task.getActiveForm() : "")
+					.setStatus(task.getStatus())
+					.setOwner(task.getOwner() != null ? task.getOwner() : "");
+			sendEvent(eventType, DtoMapper.toJson(event));
+		} catch (Exception e) {
+			Logger.error("Failed to emit agent task event", e, ChatSSEHandler.class);
 		}
 	}
 

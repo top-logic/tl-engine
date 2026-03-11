@@ -87,6 +87,11 @@
 							tool-class="com.top_logic.ai.service.tools.model.ModelEditorTool"
 						/>
 					</factory>
+					<factory name="task">
+						<implementation class="com.top_logic.ai.service.tools.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.ai.service.tools.task.TaskTool"
+						/>
+					</factory>
 					<factory name="user-interaction">
 						<implementation class="com.top_logic.ai.service.tools.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.ai.service.tools.AskUserTool"

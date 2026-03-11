@@ -387,6 +387,36 @@ message PersistedChat {
 }
 
 /**
+ * SSE event payload for agent task create/update events.
+ */
+message AgentTaskEvent {
+	/**
+	 * Task ID.
+	 */
+	string taskId;
+
+	/**
+	 * Task subject/title.
+	 */
+	string subject;
+
+	/**
+	 * Present continuous form for UI spinner display.
+	 */
+	string activeForm;
+
+	/**
+	 * Current status: "pending", "in_progress", "completed", "deleted".
+	 */
+	string status;
+
+	/**
+	 * Assigned agent name, or empty.
+	 */
+	string owner;
+}
+
+/**
  * SSE user interaction event payload.
  */
 message UserInteractionEvent {

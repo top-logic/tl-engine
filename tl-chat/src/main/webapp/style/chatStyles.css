@@ -1249,6 +1249,52 @@
 }
 
 /* ========================================
+ * Agent Task Panel
+ * ======================================== */
+
+.chat-agent-tasks {
+  margin: 8px 0;
+  padding: 8px 12px;
+  border-left: 3px solid #6366f1;
+  background: #f8f8fc;
+  border-radius: 4px;
+}
+
+.chat-agent-task {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 13px;
+  color: #333;
+}
+
+.chat-agent-task-icon {
+  width: 16px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.chat-agent-task-done .chat-agent-task-icon {
+  color: #22c55e;
+}
+
+.chat-agent-task-done .chat-agent-task-text {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+@keyframes agent-task-spin {
+  to { transform: rotate(360deg); }
+}
+
+.chat-agent-task:not(.chat-agent-task-done) .chat-agent-task-icon {
+  display: inline-block;
+  animation: agent-task-spin 1s linear infinite;
+  color: #6366f1;
+}
+
+/* ========================================
  * Inline Interaction Banner
  * Sits between .chat-messages and .chat-input-section.
  * ======================================== */
@@ -1370,4 +1416,3 @@
 	border-color: #fff;
 	color: var(--chat-accent);
 }
-

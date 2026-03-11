@@ -29,6 +29,8 @@ import com.top_logic.ai.service.approval.UserInteractionStoreBinding;
 import com.top_logic.ai.service.tools.ToolCallTracker;
 import com.top_logic.ai.service.tools.ToolCallTracking;
 import com.top_logic.ai.service.tools.TraceEntry;
+import com.top_logic.ai.service.tools.task.TaskStore;
+import com.top_logic.ai.service.tools.task.TaskStoreBinding;
 import com.top_logic.basic.Logger;
 import com.top_logic.model.TLObject;
 import com.top_logic.basic.thread.ThreadContextManager;
@@ -113,6 +115,10 @@ public class ChatProcessor {
 		ToolCallTracking.setTracker(tracker);
 		state.setToolCallTracker(tracker);
 
+		TaskStore taskStore = new TaskStore();
+		TaskStoreBinding.setStore(taskStore);
+		state.setTaskStore(taskStore);
+
 		UserInteractionStore interactionStore = new UserInteractionStore(taskTracker.getApprovalMode());
 		UserInteractionStoreBinding.setStore(interactionStore);
 		state.setUserInteractionStore(interactionStore);
@@ -186,6 +192,8 @@ public class ChatProcessor {
 		} finally {
 			ToolCallTracking.setTracker(null);
 			state.setToolCallTracker(null);
+			TaskStoreBinding.setStore(null);
+			state.setTaskStore(null);
 			UserInteractionStoreBinding.setStore(null);
 			state.setUserInteractionStore(null);
 		}
@@ -512,6 +520,7 @@ public class ChatProcessor {
 
 		// Tool call tracking for real-time updates
 		private volatile ToolCallTracker _toolCallTracker = null;
+		private volatile TaskStore _taskStore = null;
 		private final AtomicInteger _lastSeenToolCallCount = new AtomicInteger(0);
 
 		// Session context: captured at creation, never changes.
@@ -645,6 +654,21 @@ public class ChatProcessor {
 		/** The tool call tracker; may be null. */
 		public ToolCallTracker getToolCallTracker() {
 			return _toolCallTracker;
+		}
+
+		/**
+		 * Sets the task store for agent task tracking.
+		 *
+		 * @param store
+		 *        The task store; may be {@code null}.
+		 */
+		public void setTaskStore(TaskStore store) {
+			_taskStore = store;
+		}
+
+		/** The task store; may be {@code null}. */
+		public TaskStore getTaskStore() {
+			return _taskStore;
 		}
 
 		/** The number of tool calls last seen by the polling mechanism. */

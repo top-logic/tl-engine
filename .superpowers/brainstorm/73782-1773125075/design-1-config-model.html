@@ -1,0 +1,165 @@
+<h2>Design Section 1: Configuration Model</h2>
+<p class="subtitle">How background agents are declared in AgentRegistry config</p>
+
+<div class="section">
+  <h3>Core Idea</h3>
+  <p>A background agent is a regular agent with an additional <code>&lt;background&gt;</code> config block. Agents without this block remain conversational agents (unchanged behavior).</p>
+</div>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">Today: ReviewAgent (hardcoded)</div>
+    <div class="mockup-body" style="font-family: monospace; font-size: 11px; white-space: pre; line-height: 1.5;">
+&lt;agent name="ReviewAgent"
+  tools="gitea.create_gitea_issue"&gt;
+  &lt;system-prompt&gt;
+    You are a quality reviewer...
+  &lt;/system-prompt&gt;
+&lt;/agent&gt;
+
+<span style="color:#888">// ChatProcessor.java (hardcoded)
+if (agentRegistry.hasAgent("ReviewAgent")) {
+  // manually trigger, manually serialize,
+  // manually handle notifications...
+}</span></div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">After: ReviewAgent (declarative)</div>
+    <div class="mockup-body" style="font-family: monospace; font-size: 11px; white-space: pre; line-height: 1.5;">
+&lt;agent name="ReviewAgent"
+  tools="gitea.create_gitea_issue"&gt;
+  &lt;system-prompt&gt;
+    You are a quality reviewer...
+  &lt;/system-prompt&gt;
+
+  <span style="color:#4fc3f7">&lt;background
+    scope="chat"
+    authority="advisory"&gt;
+    &lt;trigger type="post-turn" /&gt;
+    &lt;input mode="chat-context"
+           content="last-turn" /&gt;
+    &lt;output-handlers&gt;
+      &lt;notification severity="warning" /&gt;
+    &lt;/output-handlers&gt;
+  &lt;/background&gt;</span>
+&lt;/agent&gt;</div>
+  </div>
+</div>
+
+<div class="section" style="margin-top: 24px;">
+  <h3>More Examples</h3>
+</div>
+
+<div class="mockup" style="margin-top: 12px;">
+  <div class="mockup-header">Example: Pre-turn Security Gate (authoritative, can block)</div>
+  <div class="mockup-body" style="font-family: monospace; font-size: 12px; white-space: pre; line-height: 1.5;">
+&lt;agent name="SecurityGate"
+  tools="tl.executeTLScript"&gt;
+  &lt;system-prompt&gt;
+    You are a security compliance gate. Analyze the user's request
+    and the proposed response. If it violates business rules, return
+    BLOCK: followed by the reason. Otherwise return PASS.
+  &lt;/system-prompt&gt;
+
+  &lt;background
+    scope="chat"
+    authority="authoritative"
+    notify-on-block="true"
+    block-message="This response was filtered by security policy: {reason}"&gt;
+    &lt;trigger type="pre-turn" /&gt;
+    &lt;input mode="chat-context" content="full-chat" /&gt;
+    &lt;output-handlers&gt;
+      &lt;audit-log /&gt;
+    &lt;/output-handlers&gt;
+  &lt;/background&gt;
+&lt;/agent&gt;</div>
+</div>
+
+<div class="mockup" style="margin-top: 12px;">
+  <div class="mockup-header">Example: Scheduled Compliance Agent (application-scoped, autonomous)</div>
+  <div class="mockup-body" style="font-family: monospace; font-size: 12px; white-space: pre; line-height: 1.5;">
+&lt;agent name="ComplianceChecker"
+  tools="tl.listInstances,tl.executeTLScript,gitea.create_gitea_issue"&gt;
+  &lt;system-prompt&gt;
+    You are a compliance agent. Check all SensitiveRecord instances
+    for data retention policy violations...
+  &lt;/system-prompt&gt;
+
+  &lt;background
+    scope="application"
+    authority="advisory"&gt;
+    &lt;trigger type="scheduled"&gt;
+      &lt;schedules&gt;
+        &lt;daily time-of-day="02:00" /&gt;
+      &lt;/schedules&gt;
+    &lt;/trigger&gt;
+    &lt;input mode="autonomous"
+           trigger-message="Run your daily compliance check." /&gt;
+    &lt;output-handlers&gt;
+      &lt;audit-log /&gt;
+      &lt;notification severity="error" /&gt;
+    &lt;/output-handlers&gt;
+  &lt;/background&gt;
+&lt;/agent&gt;</div>
+</div>
+
+<div class="mockup" style="margin-top: 12px;">
+  <div class="mockup-header">Example: Model Quality Agent (TLScript input, on-demand)</div>
+  <div class="mockup-body" style="font-family: monospace; font-size: 12px; white-space: pre; line-height: 1.5;">
+&lt;agent name="ModelQualityChecker"
+  tools="gitea.create_gitea_issue"&gt;
+  &lt;system-prompt&gt;
+    You are a model quality agent. Review the model data provided
+    and identify missing descriptions, naming violations...
+  &lt;/system-prompt&gt;
+
+  &lt;background
+    scope="application"
+    authority="advisory"&gt;
+    &lt;trigger type="on-demand" /&gt;
+    &lt;input mode="script"&gt;
+      &lt;script&gt;
+        all(`myModule:MyType`)
+          .map(t -&gt; t.get(`name`) + ": " + t.get(`description`))
+          .toString("\n")
+      &lt;/script&gt;
+    &lt;/input&gt;
+    &lt;output-handlers&gt;
+      &lt;notification severity="info" /&gt;
+    &lt;/output-handlers&gt;
+  &lt;/background&gt;
+&lt;/agent&gt;</div>
+</div>
+
+<div class="section" style="margin-top: 24px; padding: 16px; background: rgba(255,255,255,0.05); border-radius: 8px;">
+  <h3>Java Config Interface (sketch)</h3>
+  <div class="mockup-body" style="font-family: monospace; font-size: 12px; white-space: pre; line-height: 1.5; margin-top:8px;">
+<span style="color:#888">// On AgentConfig:</span>
+@Name("background")
+BackgroundConfig getBackground();  <span style="color:#888">// null = conversational agent</span>
+
+<span style="color:#888">// BackgroundConfig interface:</span>
+interface BackgroundConfig {
+    Scope getScope();           <span style="color:#888">// CHAT, APPLICATION</span>
+    Authority getAuthority();   <span style="color:#888">// ADVISORY, AUTHORITATIVE</span>
+    boolean getNotifyOnBlock(); <span style="color:#888">// only for AUTHORITATIVE</span>
+    String getBlockMessage();   <span style="color:#888">// template with {reason}</span>
+
+    TriggerConfig getTrigger();
+    InputConfig getInput();
+    List&lt;OutputHandlerConfig&gt; getOutputHandlers();
+}
+
+<span style="color:#888">// TriggerConfig — polymorphic:</span>
+PostTurnTrigger    <span style="color:#888">// fires after each chat turn</span>
+PreTurnTrigger     <span style="color:#888">// fires before agent responds</span>
+ScheduledTrigger   <span style="color:#888">// wraps TopLogic SchedulingAlgorithm</span>
+OnDemandTrigger    <span style="color:#888">// manual via REST API</span>
+
+<span style="color:#888">// InputConfig — polymorphic:</span>
+ChatContextInput   <span style="color:#888">// serializes chat (last-turn or full)</span>
+ScriptInput        <span style="color:#888">// evaluates TLScript</span>
+AutonomousInput    <span style="color:#888">// just a trigger message</span>
+ProviderInput      <span style="color:#888">// Java InputProvider class</span></div>
+</div>

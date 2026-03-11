@@ -512,6 +512,78 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.colorInput.clear")
 	public static ResKey JS_COLOR_INPUT_CLEAR;
 
+	/**
+	 * @en Simple
+	 */
+	@CustomKey("js.iconSelect.simpleTab")
+	public static ResKey JS_ICON_SELECT_SIMPLE_TAB;
+
+	/**
+	 * @en Advanced
+	 */
+	@CustomKey("js.iconSelect.advancedTab")
+	public static ResKey JS_ICON_SELECT_ADVANCED_TAB;
+
+	/**
+	 * @en Filter icons\u2026
+	 */
+	@CustomKey("js.iconSelect.filterPlaceholder")
+	public static ResKey JS_ICON_SELECT_FILTER_PLACEHOLDER;
+
+	/**
+	 * @en No icons found
+	 */
+	@CustomKey("js.iconSelect.noResults")
+	public static ResKey JS_ICON_SELECT_NO_RESULTS;
+
+	/**
+	 * @en Loading\u2026
+	 */
+	@CustomKey("js.iconSelect.loading")
+	public static ResKey JS_ICON_SELECT_LOADING;
+
+	/**
+	 * @en Failed to load. Click to retry.
+	 */
+	@CustomKey("js.iconSelect.loadError")
+	public static ResKey JS_ICON_SELECT_LOAD_ERROR;
+
+	/**
+	 * @en Class
+	 */
+	@CustomKey("js.iconSelect.classLabel")
+	public static ResKey JS_ICON_SELECT_CLASS_LABEL;
+
+	/**
+	 * @en Preview
+	 */
+	@CustomKey("js.iconSelect.previewLabel")
+	public static ResKey JS_ICON_SELECT_PREVIEW_LABEL;
+
+	/**
+	 * @en Cancel
+	 */
+	@CustomKey("js.iconSelect.cancel")
+	public static ResKey JS_ICON_SELECT_CANCEL;
+
+	/**
+	 * @en OK
+	 */
+	@CustomKey("js.iconSelect.ok")
+	public static ResKey JS_ICON_SELECT_OK;
+
+	/**
+	 * @en Clear icon
+	 */
+	@CustomKey("js.iconSelect.clear")
+	public static ResKey JS_ICON_SELECT_CLEAR;
+
+	/**
+	 * @en Choose icon
+	 */
+	@CustomKey("js.iconSelect.chooseIcon")
+	public static ResKey JS_ICON_SELECT_CHOOSE_ICON;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

@@ -8,6 +8,7 @@ const I18N_KEYS = {
   'js.iconSelect.filterPlaceholder': 'Filter icons\u2026',
   'js.iconSelect.noResults': 'No icons found',
   'js.iconSelect.loading': 'Loading\u2026',
+  'js.iconSelect.loadError': 'Failed to load. Click to retry.',
   'js.iconSelect.classLabel': 'Class',
   'js.iconSelect.previewLabel': 'Preview',
   'js.iconSelect.cancel': 'Cancel',
@@ -24,6 +25,7 @@ interface IconVariant {
 export interface IconEntry {
   prefix: string;
   label: string;
+  terms?: string[];
   variants: IconVariant[];
 }
 
@@ -134,7 +136,8 @@ const IconSelectPopup: React.FC<IconSelectPopupProps> = ({
     return icons.filter(
       (icon) =>
         icon.prefix.toLowerCase().includes(lower) ||
-        icon.label.toLowerCase().includes(lower)
+        icon.label.toLowerCase().includes(lower) ||
+        (icon.terms != null && icon.terms.some((t) => t.includes(lower)))
     );
   }, [icons, searchTerm]);
 
@@ -165,7 +168,8 @@ const IconSelectPopup: React.FC<IconSelectPopupProps> = ({
     onSelect(null);
   }, [onSelect]);
 
-  const handleRetry = useCallback(async () => {
+  const handleRetry = useCallback(async (e: React.MouseEvent) => {
+    e.preventDefault();
     setLoadError(false);
     try {
       await onLoadIcons();
@@ -242,7 +246,7 @@ const IconSelectPopup: React.FC<IconSelectPopupProps> = ({
         {loadError && (
           <div className="tlIconSelect__noResults">
             <a href="#" onClick={handleRetry}>
-              {i18n['js.iconSelect.loading']}
+              {i18n['js.iconSelect.loadError']}
             </a>
           </div>
         )}

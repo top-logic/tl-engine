@@ -20,17 +20,13 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.common.json.adapt.ReaderR;
 import com.top_logic.common.json.gstream.JsonReader;
-import com.top_logic.layout.VetoException;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.control.IconBundle;
 import com.top_logic.layout.form.control.IconDescription;
 import com.top_logic.layout.form.control.IconInputControl;
-import com.top_logic.layout.form.model.FormFieldInternals;
-import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
-import com.top_logic.util.error.TopLogicException;
 
 /**
  * Icon select control that renders via the {@code TLIconSelect} React component.
@@ -64,21 +60,6 @@ public class ReactIconSelectControl extends ReactFormFieldControl {
 		putState(ICONS_LOADED, Boolean.FALSE);
 	}
 
-	@Override
-	@ReactCommand("valueChanged")
-	void handleValueChanged(Map<String, Object> arguments) {
-		FormField field = getFieldModel();
-		Object rawValue = arguments.get(VALUE);
-		String encodedIcon = rawValue != null ? rawValue.toString() : null;
-
-		try {
-			FormFieldInternals.updateFieldNoClientUpdate(field, encodedIcon);
-		} catch (VetoException ex) {
-			throw new TopLogicException(
-				I18NConstants.ERROR_COMMAND_FAILED__MSG.fill(ex.getMessage()), ex);
-		}
-	}
-
 	/**
 	 * Lazily loads icon metadata from configured icon libraries and sends it to the client.
 	 */
@@ -106,6 +87,7 @@ public class ReactIconSelectControl extends ReactFormFieldControl {
 					Map<String, Object> entry = new HashMap<>();
 					entry.put("prefix", icon.getPrefix());
 					entry.put("label", icon.getLabel());
+					entry.put("terms", icon.getTerms());
 					entry.put("variants", variants);
 					result.add(entry);
 				}

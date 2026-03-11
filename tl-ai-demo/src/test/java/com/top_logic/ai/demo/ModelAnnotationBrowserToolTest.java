@@ -329,17 +329,18 @@ public class ModelAnnotationBrowserToolTest extends BasicTestCase {
 	}
 
 	/**
-	 * Tests that annotation info includes configXml.
+	 * Tests that annotation info includes configJson as structured JSON.
 	 */
-	public void testAnnotationInfoIncludesConfigXml() {
+	public void testAnnotationInfoIncludesConfigJson() {
 		ModelAnnotationBrowserTool tool = new ModelAnnotationBrowserTool();
 		String targetRef = PIZZASHOP_MODULE + ":" + PRODUCT_CLASS;
 		String result = tool.listAnnotations(targetRef, false);
 
 		assertNotNull("Result should not be null", result);
-		// If there are annotations, they should have a config XML field
-		if (result.contains("\"annotations\":[{")) {
-			assertTrue("Annotations should have configXml field", result.contains("\"configXml\""));
+		// If there are annotations, they should have a configJson field (not configXml)
+		if (result.contains("\"annotations\":[{") || result.contains("\"annotations\": [{")) {
+			assertTrue("Annotations should have configJson field", result.contains("\"configJson\""));
+			assertFalse("Annotations should NOT have configXml field", result.contains("\"configXml\""));
 		}
 	}
 

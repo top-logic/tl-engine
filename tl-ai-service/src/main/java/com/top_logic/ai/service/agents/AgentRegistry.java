@@ -16,9 +16,9 @@ import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.ai.service.AIService;
+import com.top_logic.ai.service.ChatModelFactory;
 import com.top_logic.ai.service.agents.background.BackgroundConfig;
 import com.top_logic.ai.service.agents.background.trigger.TriggerConfig;
-import com.top_logic.ai.service.ChatModelFactory;
 import com.top_logic.ai.service.providers.AnthropicChatModelFactory;
 import com.top_logic.ai.service.providers.MistralChatModelFactory;
 import com.top_logic.ai.service.providers.ModelCapability;
@@ -331,7 +331,8 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	 * @param triggerType
 	 *        The trigger configuration class to match (e.g. {@code PostTurnTrigger.class}).
 	 * @param scope
-	 *        The scope to match (e.g. {@link BackgroundConfig.Scope#CHAT}).
+	 *        The scope to match (e.g.
+	 *        {@link com.top_logic.ai.service.agents.background.BackgroundConfig.Scope#CHAT}).
 	 * @return A list of agent names with matching background configuration; never null.
 	 */
 	public List<String> getBackgroundAgents(

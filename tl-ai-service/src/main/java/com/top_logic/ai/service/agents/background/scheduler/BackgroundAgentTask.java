@@ -31,9 +31,12 @@ import com.top_logic.util.sched.task.result.TaskResult.ResultType;
  * The result of the agent execution is mapped to a scheduler {@link ResultType}:
  * </p>
  * <ul>
- * <li>{@link AgentResult.Status#PASS PASS} results in {@link ResultType#SUCCESS}</li>
- * <li>{@link AgentResult.Status#ISSUE_FOUND ISSUE_FOUND} results in {@link ResultType#WARNING}</li>
- * <li>{@link AgentResult.Status#BLOCK BLOCK} results in {@link ResultType#WARNING}</li>
+ * <li>{@link com.top_logic.ai.service.agents.background.AgentResult.Status#PASS PASS} results in
+ * {@link ResultType#SUCCESS}</li>
+ * <li>{@link com.top_logic.ai.service.agents.background.AgentResult.Status#ISSUE_FOUND ISSUE_FOUND}
+ * results in {@link ResultType#WARNING}</li>
+ * <li>{@link com.top_logic.ai.service.agents.background.AgentResult.Status#BLOCK BLOCK} results in
+ * {@link ResultType#WARNING}</li>
  * </ul>
  */
 public class BackgroundAgentTask extends StateHandlingTask<BackgroundAgentTask.Config> {

@@ -14,6 +14,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
+import jakarta.servlet.AsyncContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+
 import com.top_logic.ai.chat.api.messages.AttachmentDto;
 import com.top_logic.ai.chat.api.messages.ChatSendRequest;
 import com.top_logic.ai.chat.api.messages.ChatSendResponse;
@@ -25,22 +32,21 @@ import com.top_logic.ai.chat.api.messages.CreateSessionRequest;
 import com.top_logic.ai.chat.api.messages.PersistedChatEntry;
 import com.top_logic.ai.chat.api.messages.SaveMessagesRequest;
 import com.top_logic.ai.chat.api.messages.UpdateTitleRequest;
-import com.top_logic.ai.chat.background.ChatContextAdapter;
 import com.top_logic.ai.chat.background.BackgroundAgentNotification;
+import com.top_logic.ai.chat.background.ChatContextAdapter;
 import com.top_logic.ai.chat.background.GlobalNotificationStore;
-import com.top_logic.ai.service.agents.background.AgentResult;
-import com.top_logic.ai.service.agents.background.output.NotificationOutputHandler;
-import com.top_logic.ai.chat.layout.Chat;
-import com.top_logic.ai.chat.layout.ChatEntry;
 import com.top_logic.ai.chat.history.ChatHistoryService;
+import com.top_logic.ai.chat.layout.ChatEntry;
 import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
-import com.top_logic.ai.service.approval.UserInteractionStore;
 import com.top_logic.ai.service.agents.AgentRegistry;
+import com.top_logic.ai.service.agents.background.AgentResult;
 import com.top_logic.ai.service.agents.background.BackgroundAgentExecutor;
 import com.top_logic.ai.service.agents.background.context.ApplicationContext;
 import com.top_logic.ai.service.agents.background.input.ChatContextInput;
+import com.top_logic.ai.service.agents.background.output.NotificationOutputHandler;
+import com.top_logic.ai.service.approval.UserInteractionStore;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.basic.Logger;
@@ -51,13 +57,6 @@ import com.top_logic.model.TLObject;
 
 import de.haumacher.msgbuf.io.StringR;
 import de.haumacher.msgbuf.json.JsonReader;
-
-import jakarta.servlet.AsyncContext;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 
 /**
  * JSON API for the agentic chat: POST /chat/send, GET /chat/updates, GET /chat/events (SSE).

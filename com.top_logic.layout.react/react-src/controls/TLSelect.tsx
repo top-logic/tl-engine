@@ -33,20 +33,21 @@ const TLSelect: React.FC<TLCellProps> = ({ controlId, state, config }) => {
   }
 
   return (
-    <select
-      id={controlId}
-      value={(value as string) ?? ''}
-      onChange={handleChange}
-      disabled={state.disabled === true}
-      className="tlReactSelect"
-    >
-      <option value=""></option>
-      {options.map((opt) => (
-        <option key={opt.value} value={opt.value}>
-          {opt.label}
-        </option>
-      ))}
-    </select>
+    <span id={controlId}>
+      <select
+        value={(value as string) ?? ''}
+        onChange={handleChange}
+        disabled={state.disabled === true}
+        className="tlReactSelect"
+      >
+        <option value=""></option>
+        {options.map((opt) => (
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
+    </span>
   );
 };
 

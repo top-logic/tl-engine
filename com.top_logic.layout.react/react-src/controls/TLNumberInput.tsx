@@ -29,15 +29,16 @@ const TLNumberInput: React.FC<TLCellProps> = ({ controlId, state, config }) => {
   }
 
   return (
-    <input
-      type="number"
-      id={controlId}
-      value={value != null ? String(value) : ''}
-      onChange={handleChange}
-      step={step}
-      disabled={state.disabled === true}
-      className="tlReactNumberInput"
-    />
+    <span id={controlId}>
+      <input
+        type="number"
+        value={value != null ? String(value) : ''}
+        onChange={handleChange}
+        step={step}
+        disabled={state.disabled === true}
+        className="tlReactNumberInput"
+      />
+    </span>
   );
 };
 

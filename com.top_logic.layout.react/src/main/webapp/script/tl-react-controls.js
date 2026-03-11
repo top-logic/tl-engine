@@ -6,17 +6,16 @@ const { useCallback: mt } = e, pt = ({ controlId: n, state: t }) => {
     },
     [l]
   );
-  return t.editable === !1 ? /* @__PURE__ */ e.createElement("span", { id: n, className: "tlReactTextInput tlReactTextInput--immutable" }, r ?? "") : /* @__PURE__ */ e.createElement(
+  return t.editable === !1 ? /* @__PURE__ */ e.createElement("span", { id: n, className: "tlReactTextInput tlReactTextInput--immutable" }, r ?? "") : /* @__PURE__ */ e.createElement("span", { id: n }, /* @__PURE__ */ e.createElement(
     "input",
     {
       type: "text",
-      id: n,
       value: r ?? "",
       onChange: c,
       disabled: t.disabled === !0,
       className: "tlReactTextInput"
     }
-  );
+  ));
 }, { useCallback: ft } = e, ht = ({ controlId: n, state: t, config: r }) => {
   const [l, c] = Ce(), i = ft(
     (d) => {
@@ -25,18 +24,17 @@ const { useCallback: mt } = e, pt = ({ controlId: n, state: t }) => {
     },
     [c]
   ), o = r != null && r.decimal ? "0.01" : "1";
-  return t.editable === !1 ? /* @__PURE__ */ e.createElement("span", { id: n, className: "tlReactNumberInput tlReactNumberInput--immutable" }, l != null ? String(l) : "") : /* @__PURE__ */ e.createElement(
+  return t.editable === !1 ? /* @__PURE__ */ e.createElement("span", { id: n, className: "tlReactNumberInput tlReactNumberInput--immutable" }, l != null ? String(l) : "") : /* @__PURE__ */ e.createElement("span", { id: n }, /* @__PURE__ */ e.createElement(
     "input",
     {
       type: "number",
-      id: n,
       value: l != null ? String(l) : "",
       onChange: i,
       step: o,
       disabled: t.disabled === !0,
       className: "tlReactNumberInput"
     }
-  );
+  ));
 }, { useCallback: _t } = e, bt = ({ controlId: n, state: t }) => {
   const [r, l] = Ce(), c = _t(
     (i) => {
@@ -44,17 +42,16 @@ const { useCallback: mt } = e, pt = ({ controlId: n, state: t }) => {
     },
     [l]
   );
-  return t.editable === !1 ? /* @__PURE__ */ e.createElement("span", { id: n, className: "tlReactDatePicker tlReactDatePicker--immutable" }, r ?? "") : /* @__PURE__ */ e.createElement(
+  return t.editable === !1 ? /* @__PURE__ */ e.createElement("span", { id: n, className: "tlReactDatePicker tlReactDatePicker--immutable" }, r ?? "") : /* @__PURE__ */ e.createElement("span", { id: n }, /* @__PURE__ */ e.createElement(
     "input",
     {
       type: "date",
-      id: n,
       value: r ?? "",
       onChange: c,
       disabled: t.disabled === !0,
       className: "tlReactDatePicker"
     }
-  );
+  ));
 }, { useCallback: vt } = e, Et = ({ controlId: n, state: t, config: r }) => {
   var d;
   const [l, c] = Ce(), i = vt(
@@ -67,10 +64,9 @@ const { useCallback: mt } = e, pt = ({ controlId: n, state: t }) => {
     const s = ((d = o.find((a) => a.value === l)) == null ? void 0 : d.label) ?? "";
     return /* @__PURE__ */ e.createElement("span", { id: n, className: "tlReactSelect tlReactSelect--immutable" }, s);
   }
-  return /* @__PURE__ */ e.createElement(
+  return /* @__PURE__ */ e.createElement("span", { id: n }, /* @__PURE__ */ e.createElement(
     "select",
     {
-      id: n,
       value: l ?? "",
       onChange: i,
       disabled: t.disabled === !0,
@@ -78,7 +74,7 @@ const { useCallback: mt } = e, pt = ({ controlId: n, state: t }) => {
     },
     /* @__PURE__ */ e.createElement("option", { value: "" }),
     o.map((s) => /* @__PURE__ */ e.createElement("option", { key: s.value, value: s.value }, s.label))
-  );
+  ));
 }, { useCallback: gt } = e, Ct = ({ controlId: n, state: t }) => {
   const [r, l] = Ce(), c = gt(
     (i) => {

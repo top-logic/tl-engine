@@ -25,14 +25,15 @@ const TLDatePicker: React.FC<TLCellProps> = ({ controlId, state }) => {
   }
 
   return (
-    <input
-      type="date"
-      id={controlId}
-      value={(value as string) ?? ''}
-      onChange={handleChange}
-      disabled={state.disabled === true}
-      className="tlReactDatePicker"
-    />
+    <span id={controlId}>
+      <input
+        type="date"
+        value={(value as string) ?? ''}
+        onChange={handleChange}
+        disabled={state.disabled === true}
+        className="tlReactDatePicker"
+      />
+    </span>
   );
 };
 

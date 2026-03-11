@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useSyncExternalStore } from 'react';
+import React, { useMemo, useSyncExternalStore } from 'react';
 import { getComponent } from './registry';
-import { createChildContext, destroyChildContext, TLControlContext } from './tl-react-bridge';
+import { createChildContext, TLControlContext } from './tl-react-bridge';
 
 /**
  * Descriptor for a server-defined child control, as sent in the parent's state.
@@ -29,15 +29,6 @@ const TLChild: React.FC<{ control: unknown }> = ({ control }) => {
     () => createChildContext(descriptor.controlId, descriptor.state),
     [descriptor.controlId]
   );
-
-  // Clean up the child context's SSE subscription when this component unmounts.
-  // This is the primary cleanup path for child contexts; the DOM MutationObserver
-  // intentionally skips entries with root === null to avoid interfering with React's
-  // internal element-type changes (e.g. <span> ↔ <input>).
-  useEffect(() => {
-    const id = descriptor.controlId;
-    return () => destroyChildContext(id);
-  }, [descriptor.controlId]);
 
   // Subscribe to the child's ControlStateStore so that SSE patch events (e.g. editable
   // changing from false to true) trigger a re-render with the live state.

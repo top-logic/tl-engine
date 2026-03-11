@@ -25,14 +25,15 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
   }
 
   return (
-    <input
-      type="text"
-      id={controlId}
-      value={(value as string) ?? ''}
-      onChange={handleChange}
-      disabled={state.disabled === true}
-      className="tlReactTextInput"
-    />
+    <span id={controlId}>
+      <input
+        type="text"
+        value={(value as string) ?? ''}
+        onChange={handleChange}
+        disabled={state.disabled === true}
+        className="tlReactTextInput"
+      />
+    </span>
   );
 };
 

@@ -228,24 +228,6 @@ export function createChildContext(
   return { controlId: childControlId, windowName: parentWindowName, store: entry.store };
 }
 
-/**
- * Destroys a child context previously created by {@link createChildContext}.
- *
- * <p>Unsubscribes the SSE listener and removes the entry from the internal
- * mount registry.  This should be called from a React {@code useEffect}
- * cleanup function in {@code TLChild} so that the lifecycle of child contexts
- * is managed by React rather than the DOM {@code MutationObserver}.</p>
- *
- * @param childControlId the control ID passed to {@link createChildContext}
- */
-export function destroyChildContext(childControlId: string): void {
-  const entry = _mounts.get(childControlId);
-  if (entry && entry.root === null) {
-    unsubscribe(childControlId, entry.sseListener);
-    _mounts.delete(childControlId);
-  }
-}
-
 /** Tracks the last windowName used in mount() for child context inheritance. */
 let _lastWindowName = '';
 
@@ -393,15 +375,6 @@ export function discoverAndMount(root: ParentNode = document.body): void {
 /**
  * Combined MutationObserver that auto-mounts newly added React controls
  * and auto-unmounts removed ones.
- *
- * Only independently mounted controls (those with a non-null React root) are
- * auto-unmounted here.  Child contexts created via {@link createChildContext}
- * have {@code root === null} and are cleaned up through React's component
- * lifecycle ({@code useEffect} cleanup in {@code TLChild}).  Unmounting them
- * here would break controls whose React components switch element types
- * (e.g. {@code <span>} ↔ {@code <input>}), because React removes the old
- * element before inserting the new one, and the observer would incorrectly
- * treat the removal as a control teardown.
  */
 function setupDOMObserver(): void {
   const observer = new MutationObserver((mutations) => {
@@ -410,14 +383,11 @@ function setupDOMObserver(): void {
       for (const removed of mutation.removedNodes) {
         if (removed instanceof HTMLElement) {
           const id = removed.id;
-          if (id) {
-            const entry = _mounts.get(id);
-            if (entry && entry.root !== null) {
-              unmount(id);
-            }
+          if (id && _mounts.has(id)) {
+            unmount(id);
           }
-          for (const [mountId, entry] of _mounts) {
-            if (entry.root !== null && removed.querySelector('#' + CSS.escape(mountId))) {
+          for (const mountId of _mounts.keys()) {
+            if (removed.querySelector('#' + CSS.escape(mountId))) {
               unmount(mountId);
             }
           }

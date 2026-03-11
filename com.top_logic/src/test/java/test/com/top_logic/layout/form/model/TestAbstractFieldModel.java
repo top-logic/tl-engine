@@ -12,7 +12,6 @@ import junit.framework.TestCase;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.model.AbstractFieldModel;
-import com.top_logic.layout.form.model.FieldConstraint;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
 

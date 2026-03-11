@@ -5,19 +5,20 @@
  */
 package com.top_logic.layout.view.form;
 
-import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.form.ReactCheckboxControl;
+import com.top_logic.layout.react.control.form.ReactColorInputControl;
+import com.top_logic.layout.react.control.form.ReactDatePickerControl;
+import com.top_logic.layout.react.control.form.ReactNumberInputControl;
+import com.top_logic.layout.react.control.form.ReactTextInputControl;
 import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 
 /**
- * Maps {@link TLStructuredTypePart} types to lean React input controls.
- *
- * <p>
- * Uses only tl-core model APIs. No dependency on {@code com.top_logic.element}.
- * </p>
+ * Maps {@link TLStructuredTypePart} types to React input controls backed by {@link FieldModel}.
  */
 public class FieldControlFactory {
 
@@ -28,77 +29,43 @@ public class FieldControlFactory {
 	 *        The React context for ID allocation and SSE registration.
 	 * @param part
 	 *        The model attribute.
-	 * @param value
-	 *        The current value.
-	 * @param editable
-	 *        Whether the field should be editable.
+	 * @param model
+	 *        The field model providing value, editability, and change notifications.
 	 * @return A React control for the field input widget.
 	 */
-	public static ReactControl createFieldControl(ReactContext context, TLStructuredTypePart part, Object value,
-			boolean editable) {
+	public static ReactControl createFieldControl(ReactContext context, TLStructuredTypePart part, FieldModel model) {
 		TLType type = part.getType();
 
 		if (type instanceof TLPrimitive) {
 			TLPrimitive primitive = (TLPrimitive) type;
 			switch (primitive.getKind()) {
 				case BOOLEAN:
-					return createCheckbox(context, value, editable);
+					return new ReactCheckboxControl(context, model);
 				case INT:
-					return createNumberInput(context, value, editable, 0);
+					return new ReactNumberInputControl(context, model, 0);
 				case FLOAT:
-					return createNumberInput(context, value, editable, 2);
+					return new ReactNumberInputControl(context, model, 2);
 				case DATE:
-					return createDatePicker(context, value, editable);
+					return new ReactDatePickerControl(context, model);
 				case STRING:
 				case TRISTATE:
 				case BINARY:
-					return createTextInput(context, value, editable);
-				case CUSTOM: {
-					if (java.awt.Color.class.getName().equals(primitive.getStorageMapping().getApplicationType().getName())) {
-						return createColorInput(context, value, editable);
+					return new ReactTextInputControl(context, model);
+				case CUSTOM:
+					if (isColorType(primitive)) {
+						return new ReactColorInputControl(context, model);
 					}
-					return createTextInput(context, value, editable);
-				}
+					return new ReactTextInputControl(context, model);
 				default:
-					return createTextInput(context, value, editable);
+					return new ReactTextInputControl(context, model);
 			}
 		}
 
-		// Reference types and unknown: display as text for now.
-		return createTextInput(context, asLabel(value), editable);
+		return new ReactTextInputControl(context, model);
 	}
 
-	private static ReactControl createTextInput(ReactContext context, Object value, boolean editable) {
-		return new ViewTextInputControl(context, value != null ? value.toString() : "", editable);
-	}
-
-	private static ReactControl createCheckbox(ReactContext context, Object value, boolean editable) {
-		return new ViewCheckboxControl(context, Boolean.TRUE.equals(value), editable);
-	}
-
-	private static ReactControl createNumberInput(ReactContext context, Object value, boolean editable, int decimals) {
-		return new ViewNumberInputControl(context, value instanceof Number ? (Number) value : null,
-			editable, decimals);
-	}
-
-	private static ReactControl createDatePicker(ReactContext context, Object value, boolean editable) {
-		return new ViewDatePickerControl(context, value, editable);
-	}
-
-	private static ReactControl createColorInput(ReactContext context, Object value, boolean editable) {
-		String hex = null;
-		if (value instanceof java.awt.Color) {
-			hex = ViewColorInputControl.colorToHex((java.awt.Color) value);
-		} else if (value instanceof String) {
-			hex = (String) value;
-		}
-		return new ViewColorInputControl(context, hex, editable);
-	}
-
-	private static String asLabel(Object value) {
-		if (value == null) {
-			return "";
-		}
-		return MetaLabelProvider.INSTANCE.getLabel(value);
+	private static boolean isColorType(TLPrimitive primitive) {
+		return java.awt.Color.class.getName().equals(
+			primitive.getStorageMapping().getApplicationType().getName());
 	}
 }

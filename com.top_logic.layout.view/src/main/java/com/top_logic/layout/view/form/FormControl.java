@@ -234,7 +234,12 @@ public class FormControl extends ReactControl {
 		putState(EDIT_MODE, Boolean.TRUE);
 		updateEditModeChannel();
 		updateDirtyState();
-		notifyFields();
+
+		for (FieldControl field : _fieldControls) {
+			field.setEditMode(true);
+			field.setOverlay(_overlay);
+		}
+
 		fireFormStateChanged();
 	}
 
@@ -265,7 +270,10 @@ public class FormControl extends ReactControl {
 
 		_overlay.reset();
 		updateDirtyState();
-		notifyFields();
+
+		for (FieldControl field : _fieldControls) {
+			field.setOverlay(_overlay);
+		}
 	}
 
 	/**
@@ -311,15 +319,6 @@ public class FormControl extends ReactControl {
 		updateDirtyState();
 	}
 
-	/**
-	 * Notifies all registered field controls to refresh their display.
-	 */
-	void notifyFields() {
-		for (FieldControl field : _fieldControls) {
-			field.refresh();
-		}
-	}
-
 	private void exitEditMode() {
 		_overlay = null;
 		_editMode = false;
@@ -329,7 +328,11 @@ public class FormControl extends ReactControl {
 		putState(EDIT_MODE, Boolean.FALSE);
 		updateEditModeChannel();
 		updateDirtyState();
-		notifyFields();
+
+		for (FieldControl field : _fieldControls) {
+			field.setEditMode(false);
+		}
+
 		fireFormStateChanged();
 	}
 
@@ -371,7 +374,18 @@ public class FormControl extends ReactControl {
 		}
 		_currentObject = (TLObject) newValue;
 		updateNoModelMessage();
-		notifyFields();
+
+		if (_currentObject != null) {
+			TLObjectOverlay viewOverlay = new TLObjectOverlay(_currentObject);
+			for (FieldControl field : _fieldControls) {
+				field.setOverlay(viewOverlay);
+			}
+		}
+		// For fields that did not have a model yet (null-to-first-object), call refresh.
+		for (FieldControl field : _fieldControls) {
+			field.refresh();
+		}
+
 		fireFormStateChanged();
 	}
 

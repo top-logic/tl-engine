@@ -14,11 +14,6 @@ import com.top_logic.layout.I18NConstantsBase;
 public class I18NConstants extends I18NConstantsBase {
 
 	/**
-	 * @en Field value changed.
-	 */
-	public static ResKey FIELD_VALUE_CHANGED;
-
-	/**
 	 * @en Edit.
 	 */
 	public static ResKey FORM_EDIT;

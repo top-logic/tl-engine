@@ -1,7 +1,13 @@
 import { React, useI18N } from 'tl-react-bridge';
-import ColorPalette from './ColorPalette';
+import ColorPalette, { COLOR_DRAG_TYPE } from './ColorPalette';
 import ColorMixer from './ColorMixer';
 import { hexToRgb, rgbToHex, isValidHex, clampByte } from './colorUtils';
+
+/** Checks if a hex color already exists in the palette (case-insensitive). */
+function paletteContains(palette: (string | null)[], hex: string): boolean {
+  const upper = hex.toUpperCase();
+  return palette.some(c => c != null && c.toUpperCase() === upper);
+}
 
 const I18N_KEYS = {
   'js.colorInput.paletteTab': 'Color Palette',
@@ -125,6 +131,16 @@ const ColorPopup: React.FC<ColorPopupProps> = ({
     [r, g, b]
   );
 
+  const handleNewSwatchDragStart = useCallback(
+    (e: React.DragEvent) => {
+      if (draft != null) {
+        e.dataTransfer.setData(COLOR_DRAG_TYPE, draft.toUpperCase());
+        e.dataTransfer.effectAllowed = 'copy';
+      }
+    },
+    [draft]
+  );
+
   const handleHexChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setHexInput(val);
@@ -159,13 +175,37 @@ const ColorPopup: React.FC<ColorPopupProps> = ({
     [palette, onPaletteChange]
   );
 
+  const handleReplace = useCallback(
+    (index: number, hex: string) => {
+      const newPalette = [...palette];
+      newPalette[index] = hex;
+      onPaletteChange(newPalette);
+    },
+    [palette, onPaletteChange]
+  );
+
   const handleReset = useCallback(() => {
     onPaletteChange([...defaultPalette]);
   }, [defaultPalette, onPaletteChange]);
 
+  const autoAddToPalette = useCallback(
+    (hex: string) => {
+      if (paletteContains(palette, hex)) return;
+      const emptyIndex = palette.indexOf(null);
+      if (emptyIndex < 0) return;
+      const newPalette = [...palette];
+      newPalette[emptyIndex] = hex.toUpperCase();
+      onPaletteChange(newPalette);
+    },
+    [palette, onPaletteChange]
+  );
+
   const handleOk = useCallback(() => {
+    if (draft != null) {
+      autoAddToPalette(draft);
+    }
     onConfirm(draft);
-  }, [draft, onConfirm]);
+  }, [draft, onConfirm, autoAddToPalette]);
 
   return (
     <div
@@ -202,6 +242,7 @@ const ColorPopup: React.FC<ColorPopupProps> = ({
               onSelect={handlePaletteSelect}
               onConfirm={handlePaletteConfirm}
               onSwap={handleSwap}
+              onReplace={handleReplace}
             />
             <button className="tlColorInput__paletteReset" onClick={handleReset}>
               {i18n['js.colorInput.reset']}
@@ -225,6 +266,8 @@ const ColorPopup: React.FC<ColorPopupProps> = ({
             <div
               className={'tlColorInput__previewSwatch' + (!hasColor ? ' tlColorInput--noColor' : '')}
               style={hasColor ? { backgroundColor: draft } : undefined}
+              draggable={hasColor}
+              onDragStart={hasColor ? handleNewSwatchDragStart : undefined}
             />
           </div>
 

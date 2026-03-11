@@ -2,6 +2,9 @@ import { React } from 'tl-react-bridge';
 
 const { useCallback, useRef } = React;
 
+/** MIME type used to identify color drops from the preview swatch. */
+export const COLOR_DRAG_TYPE = 'application/x-tl-color';
+
 interface ColorPaletteProps {
   /** Flat array of hex color strings (row-major). null = empty slot. */
   colors: (string | null)[];
@@ -13,6 +16,8 @@ interface ColorPaletteProps {
   onConfirm: (hex: string) => void;
   /** Called when two cells are swapped via drag-and-drop. */
   onSwap: (fromIndex: number, toIndex: number) => void;
+  /** Called when an external color is dropped onto a cell. */
+  onReplace: (index: number, hex: string) => void;
 }
 
 /**
@@ -27,6 +32,7 @@ const ColorPalette: React.FC<ColorPaletteProps> = ({
   onSelect,
   onConfirm,
   onSwap,
+  onReplace,
 }) => {
   const dragIndex = useRef<number | null>(null);
 
@@ -46,12 +52,15 @@ const ColorPalette: React.FC<ColorPaletteProps> = ({
   const handleDrop = useCallback(
     (index: number) => (e: React.DragEvent) => {
       e.preventDefault();
-      if (dragIndex.current !== null && dragIndex.current !== index) {
+      const externalHex = e.dataTransfer.getData(COLOR_DRAG_TYPE);
+      if (externalHex) {
+        onReplace(index, externalHex);
+      } else if (dragIndex.current !== null && dragIndex.current !== index) {
         onSwap(dragIndex.current, index);
       }
       dragIndex.current = null;
     },
-    [onSwap]
+    [onSwap, onReplace]
   );
 
   return (

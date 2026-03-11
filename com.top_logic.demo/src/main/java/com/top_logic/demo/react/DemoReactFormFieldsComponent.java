@@ -23,7 +23,6 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.Flavor;
-import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.ResourceProvider;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.ThemeImage;
@@ -222,10 +221,19 @@ public class DemoReactFormFieldsComponent extends LayoutComponent {
 		ReactFormFieldChromeControl countryImmutableChrome = new ReactFormFieldChromeControl(ctx,
 			"Country (read-only)", false, false, null, null, null, false, true, countryImmutableInput);
 
+		SelectField countryCustomOrder = FormFactory.newSelectField("customOrderCountries", countryOptions, true, false);
+		countryCustomOrder.setOptionLabelProvider(countryResourceProvider);
+		countryCustomOrder.setCustomOrder(true);
+		countryCustomOrder.setAsSelection(Arrays.asList("Germany", "France", "Italy"));
+		formContext.addMember(countryCustomOrder);
+		ReactDropdownSelectControl countryCustomOrderInput = new ReactDropdownSelectControl(ctx, countryCustomOrder);
+		ReactFormFieldChromeControl countryCustomOrderChrome = new ReactFormFieldChromeControl(ctx,
+			"Countries (custom order)", false, false, null, "Drag chips to reorder", null, false, true, countryCustomOrderInput);
+
 		ReactFormGroupControl dropdownGroup = new ReactFormGroupControl(ctx,
 			"Dropdown Select", true, false, "outlined", true, List.of(),
 			List.of(countrySingleChrome, countryMultiChrome, countryMandatoryChrome,
-				countryDisabledChrome, countryImmutableChrome));
+				countryDisabledChrome, countryImmutableChrome, countryCustomOrderChrome));
 
 		// -- Top-level form layout: 3 columns, auto label position --
 

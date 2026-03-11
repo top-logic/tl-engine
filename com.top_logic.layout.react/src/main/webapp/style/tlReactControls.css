@@ -2837,11 +2837,11 @@ button.tlMenu__item--disabled:hover {
 
 .tlColorInput__tab {
   flex: 1;
-  padding: 0.625rem 1rem;
+  padding: var(--spacing-03) var(--spacing-04);
   border: none;
   background: transparent;
   font-family: var(--font-family);
-  font-size: 0.875rem;
+  font-size: var(--body-compact-01-font-size);
   color: var(--text-secondary);
   cursor: pointer;
   border-bottom: 2px solid transparent;
@@ -2861,8 +2861,8 @@ button.tlMenu__item--disabled:hover {
 
 .tlColorInput__body {
   display: flex;
-  padding: 1rem;
-  gap: 1rem;
+  padding: var(--spacing-04);
+  gap: var(--spacing-04);
 }
 
 /* Palette */
@@ -2977,19 +2977,19 @@ button.tlMenu__item--disabled:hover {
 .tlColorInput__controls {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--spacing-03);
   flex: 1;
   min-width: 170px;
 }
 
 .tlColorInput__previewRow {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--spacing-03);
   align-items: center;
 }
 
 .tlColorInput__previewLabel {
-  font-size: 0.75rem;
+  font-size: var(--label-01-font-size);
   color: var(--text-secondary);
   width: 3.5rem;
   flex-shrink: 0;
@@ -3005,17 +3005,17 @@ button.tlMenu__item--disabled:hover {
 .tlColorInput__divider {
   height: 1px;
   background: var(--border-subtle);
-  margin: 0.25rem 0;
+  margin: var(--spacing-02) 0;
 }
 
 .tlColorInput__inputRow {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--spacing-03);
 }
 
 .tlColorInput__inputLabel {
-  font-size: 0.75rem;
+  font-size: var(--label-01-font-size);
   color: var(--text-secondary);
   width: 3.5rem;
   flex-shrink: 0;
@@ -3029,7 +3029,7 @@ button.tlMenu__item--disabled:hover {
   border: 1px solid var(--border-subtle);
   border-radius: var(--corner-radius);
   font-family: var(--font-family);
-  font-size: 0.875rem;
+  font-size: var(--body-compact-01-font-size);
   color: var(--text-primary);
   background: var(--layer-02, #fff);
   outline: none;
@@ -3047,9 +3047,9 @@ button.tlMenu__item--disabled:hover {
 
 .tlColorInput__actions {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--spacing-03);
   justify-content: flex-end;
-  padding: 0.5rem 1rem 1rem;
+  padding: var(--spacing-03) var(--spacing-04) var(--spacing-04);
 }
 
 .tlColorInput__btn {
@@ -3058,7 +3058,7 @@ button.tlMenu__item--disabled:hover {
   border: none;
   border-radius: var(--corner-radius);
   font-family: var(--font-family);
-  font-size: 0.875rem;
+  font-size: var(--body-compact-01-font-size);
   font-weight: 600;
   cursor: pointer;
   transition: background 0.15s;
@@ -3086,11 +3086,11 @@ button.tlMenu__item--disabled:hover {
 .tlColorInput__btn--reset {
   background: transparent;
   color: var(--text-secondary);
-  font-size: 0.75rem;
+  font-size: var(--label-01-font-size);
   font-weight: normal;
   border: 1px solid var(--border-subtle);
   flex: none;
-  padding: 0 0.75rem;
+  padding: 0 var(--spacing-03);
 }
 
 .tlColorInput__btn--reset:hover {

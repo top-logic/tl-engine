@@ -2484,6 +2484,11 @@ button.tlMenu__item--disabled:hover {
 	align-items: center;
 	gap: var(--spacing-02);
 	flex-wrap: wrap;
+	border: none;
+	background: none;
+	padding: 0;
+	min-height: auto;
+	cursor: default;
 }
 
 /* Chip area */

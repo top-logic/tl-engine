@@ -2,6 +2,9 @@
 <view xmlns:config="http://www.top-logic.com/ns/config/6.0">
 	<channels>
 		<channel name="selectedPerson" />
+		<derived-channel name="selectedContact"
+			inputs="selectedPerson"
+			expr="person -> $person.get(`tl.accounts:Person#contact`)" />
 	</channels>
 	<split-panel orientation="horizontal" resizable="true">
 		<panes>
@@ -13,12 +16,12 @@
 				</panel>
 			</pane>
 			<pane size="60" unit="%">
-				<panel title="Person Details">
-					<form input="selectedPerson">
-						<field attribute="firstName" />
-						<field attribute="lastName" />
-						<field attribute="admin" />
-						<field attribute="restrictedUser" />
+				<panel title="Contact Details">
+					<form input="selectedContact">
+						<field attribute="firstname" />
+						<field attribute="name" />
+						<field attribute="phone" />
+						<field attribute="email" />
 					</form>
 				</panel>
 			</pane>

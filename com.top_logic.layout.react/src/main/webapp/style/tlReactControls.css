@@ -2454,7 +2454,7 @@ button.tlMenu__item--disabled:hover {
 
 .tlDropdownSelect {
 	display: flex;
-	align-items: center;
+	align-items: flex-start;
 	border: 1px solid var(--border-subtle, #e0e0e0);
 	border-radius: var(--border-radius-02, 4px);
 	background-color: var(--field, #fff);

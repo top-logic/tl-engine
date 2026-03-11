@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import com.top_logic.basic.listener.EventType.Bubble;
+
 /**
  * Adapter wrapping a {@link SelectField} as a {@link SelectFieldModel}.
  *
@@ -33,6 +35,22 @@ public class SelectFieldAdapter extends FormFieldAdapter implements SelectFieldM
 	public SelectFieldAdapter(SelectField field) {
 		super(field);
 		_selectField = field;
+		registerOptionsListener();
+	}
+
+	private void registerOptionsListener() {
+		_selectField.addListener(SelectField.OPTIONS_PROPERTY, new OptionsListener() {
+			@Override
+			public Bubble handleOptionsChanged(SelectField sender) {
+				List<?> options = sender.getOptions();
+				SelectOptionsListener[] snapshot =
+					_optionsListeners.toArray(new SelectOptionsListener[0]);
+				for (SelectOptionsListener l : snapshot) {
+					l.onOptionsChanged(SelectFieldAdapter.this, options);
+				}
+				return Bubble.BUBBLE;
+			}
+		});
 	}
 
 	@Override

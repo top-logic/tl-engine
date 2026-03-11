@@ -42,6 +42,8 @@ public class FieldControl {
 
 	private OverlayFieldModel _model;
 
+	private FieldModelListener _modelListener;
+
 	private ReactFormFieldChromeControl _chrome;
 
 	private ReactControl _innerControl;
@@ -196,7 +198,10 @@ public class FieldControl {
 	}
 
 	private void addModelListener() {
-		_model.addListener(new FieldModelListener() {
+		if (_modelListener != null) {
+			_model.removeListener(_modelListener);
+		}
+		_modelListener = new FieldModelListener() {
 			@Override
 			public void onValueChanged(FieldModel source, Object oldValue, Object newValue) {
 				_form.updateDirtyChannel();
@@ -214,7 +219,8 @@ public class FieldControl {
 			public void onValidationChanged(FieldModel source) {
 				// Handled by the ReactFormFieldControl via its own FieldModel listener.
 			}
-		});
+		};
+		_model.addListener(_modelListener);
 	}
 
 	private String resolveLabel() {

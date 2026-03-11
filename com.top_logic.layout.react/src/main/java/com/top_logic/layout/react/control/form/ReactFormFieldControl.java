@@ -57,6 +57,8 @@ public class ReactFormFieldControl extends ReactControl {
 
 	private final FieldModel _fieldModel;
 
+	private FieldModelListener _modelListener;
+
 	/**
 	 * Creates a new {@link ReactFormFieldControl}.
 	 *
@@ -72,6 +74,14 @@ public class ReactFormFieldControl extends ReactControl {
 		_fieldModel = model;
 		initFieldState();
 		registerModelListeners();
+	}
+
+	@Override
+	protected void onCleanup() {
+		if (_modelListener != null) {
+			_fieldModel.removeListener(_modelListener);
+			_modelListener = null;
+		}
 	}
 
 	/**
@@ -104,7 +114,7 @@ public class ReactFormFieldControl extends ReactControl {
 	 * client whenever the model changes.
 	 */
 	private void registerModelListeners() {
-		_fieldModel.addListener(new FieldModelListener() {
+		_modelListener = new FieldModelListener() {
 			@Override
 			public void onValueChanged(FieldModel source, Object oldValue, Object newValue) {
 				handleModelValueChanged(source, oldValue, newValue);
@@ -125,7 +135,8 @@ public class ReactFormFieldControl extends ReactControl {
 				}
 				putState(MANDATORY, source.isMandatory());
 			}
-		});
+		};
+		_fieldModel.addListener(_modelListener);
 	}
 
 	/**

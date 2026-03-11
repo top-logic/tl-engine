@@ -197,7 +197,8 @@ public class AbstractFieldModel implements FieldModel {
 	 * Fires {@link FieldModelListener#onValueChanged(FieldModel, Object, Object)}.
 	 */
 	protected void fireValueChanged(Object oldValue, Object newValue) {
-		for (FieldModelListener listener : _listeners) {
+		FieldModelListener[] snapshot = _listeners.toArray(new FieldModelListener[0]);
+		for (FieldModelListener listener : snapshot) {
 			listener.onValueChanged(this, oldValue, newValue);
 		}
 	}
@@ -206,7 +207,8 @@ public class AbstractFieldModel implements FieldModel {
 	 * Fires {@link FieldModelListener#onEditabilityChanged(FieldModel, boolean)}.
 	 */
 	protected void fireEditabilityChanged(boolean editable) {
-		for (FieldModelListener listener : _listeners) {
+		FieldModelListener[] snapshot = _listeners.toArray(new FieldModelListener[0]);
+		for (FieldModelListener listener : snapshot) {
 			listener.onEditabilityChanged(this, editable);
 		}
 	}
@@ -215,7 +217,8 @@ public class AbstractFieldModel implements FieldModel {
 	 * Fires {@link FieldModelListener#onValidationChanged(FieldModel)}.
 	 */
 	protected void fireValidationChanged() {
-		for (FieldModelListener listener : _listeners) {
+		FieldModelListener[] snapshot = _listeners.toArray(new FieldModelListener[0]);
+		for (FieldModelListener listener : snapshot) {
 			listener.onValidationChanged(this);
 		}
 	}

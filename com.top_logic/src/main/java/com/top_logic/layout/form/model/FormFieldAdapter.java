@@ -161,7 +161,8 @@ public class FormFieldAdapter implements FieldModel {
 		_field.addValueListener(new ValueListener() {
 			@Override
 			public void valueChanged(FormField field, Object oldValue, Object newValue) {
-				for (FieldModelListener listener : _listeners) {
+				FieldModelListener[] snapshot = _listeners.toArray(new FieldModelListener[0]);
+				for (FieldModelListener listener : snapshot) {
 					listener.onValueChanged(FormFieldAdapter.this, oldValue, newValue);
 				}
 			}
@@ -202,13 +203,15 @@ public class FormFieldAdapter implements FieldModel {
 
 	private void fireEditabilityChanged() {
 		boolean editable = isEditable();
-		for (FieldModelListener listener : _listeners) {
+		FieldModelListener[] snapshot = _listeners.toArray(new FieldModelListener[0]);
+		for (FieldModelListener listener : snapshot) {
 			listener.onEditabilityChanged(this, editable);
 		}
 	}
 
 	private void fireValidationChanged() {
-		for (FieldModelListener listener : _listeners) {
+		FieldModelListener[] snapshot = _listeners.toArray(new FieldModelListener[0]);
+		for (FieldModelListener listener : snapshot) {
 			listener.onValidationChanged(this);
 		}
 	}

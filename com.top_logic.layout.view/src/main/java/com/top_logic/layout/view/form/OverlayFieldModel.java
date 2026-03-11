@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.view.form;
 
+import java.util.Objects;
+
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
@@ -51,6 +53,9 @@ public class OverlayFieldModel extends AbstractFieldModel {
 			return;
 		}
 		Object oldValue = _overlay.tValue(_part);
+		if (Objects.equals(oldValue, value)) {
+			return;
+		}
 		_overlay.tUpdate(_part, value);
 		fireValueChanged(oldValue, value);
 	}
@@ -79,7 +84,9 @@ public class OverlayFieldModel extends AbstractFieldModel {
 			setMandatory(_part.isMandatory());
 		}
 		Object newValue = getValue();
-		fireValueChanged(oldValue, newValue);
+		if (!Objects.equals(oldValue, newValue)) {
+			fireValueChanged(oldValue, newValue);
+		}
 	}
 
 	/**

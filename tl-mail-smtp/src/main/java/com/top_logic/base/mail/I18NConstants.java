@@ -5,6 +5,7 @@
  */
 package com.top_logic.base.mail;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.layout.ResPrefix;
@@ -18,23 +19,32 @@ import com.top_logic.layout.ResPrefix;
 @SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
-	public static ResKey ERROR_FORMAT_EXCEPTION = legacyKey("mail.send.failed.formatException");
+	@CustomKey("mail.send.failed.formatException")
+	public static ResKey ERROR_FORMAT_EXCEPTION;
 
-	public static ResKey ERROR_INVALID_ADDRESSES = legacyKey("mail.send.failed.invalidAddresses");
+	@CustomKey("mail.send.failed.invalidAddresses")
+	public static ResKey ERROR_INVALID_ADDRESSES;
 
-	public static ResKey ERROR_MESSAGE_EXCEPTION = legacyKey("mail.send.failed.messageException");
+	@CustomKey("mail.send.failed.messageException")
+	public static ResKey ERROR_MESSAGE_EXCEPTION;
 
-	public static ResKey ERROR_NO_EMAIL_SUPPORT = legacyKey("mail.send.failed.notActive");
+	@CustomKey("mail.send.failed.notActive")
+	public static ResKey ERROR_NO_EMAIL_SUPPORT;
 
-	public static ResKey ERROR_NO_CONTENT = legacyKey("mail.send.failed.noContent");
+	@CustomKey("mail.send.failed.noContent")
+	public static ResKey ERROR_NO_CONTENT;
 
-	public static ResKey ERROR_NO_RECEIVER = legacyKey("mail.send.failed.noReceiver");
+	@CustomKey("mail.send.failed.noReceiver")
+	public static ResKey ERROR_NO_RECEIVER;
 
-	public static ResKey ERROR_NO_SENDER = legacyKey("mail.send.failed.noSender");
+	@CustomKey("mail.send.failed.noSender")
+	public static ResKey ERROR_NO_SENDER;
 
-	public static ResKey ERROR_NO_TITLE = legacyKey("mail.send.failed.noTitle");
+	@CustomKey("mail.send.failed.noTitle")
+	public static ResKey ERROR_NO_TITLE;
 
-	public static ResKey ERROR_UNKNOWN_REASON = legacyKey("mail.send.failed.unknown");
+	@CustomKey("mail.send.failed.unknown")
+	public static ResKey ERROR_UNKNOWN_REASON;
 
 	/**
 	 * @en The SMTP service is not active. Before sending an e-mail activate SMTP or contact your

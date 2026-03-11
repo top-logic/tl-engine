@@ -1734,8 +1734,14 @@ public class TLDoclet implements Doclet {
 					continue;
 				}
 
-				String propertyName = asString(field);
-				String key = "class." + qualifiedName(type) + "." + propertyName;
+				String key;
+				Optional<String> customKey = _wellKnown.getCustomKey(field);
+				if (customKey.isPresent()) {
+					key = customKey.get();
+				} else {
+					String propertyName = asString(field);
+					key = "class." + qualifiedName(type) + "." + propertyName;
+				}
 
 				DocTreePath pathToField = docTreePathForElement(field);
 				if (pathToField == null) {

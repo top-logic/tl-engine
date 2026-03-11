@@ -5,6 +5,7 @@
  */
 package com.top_logic.element.layout.meta;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
@@ -33,9 +34,11 @@ public class I18NConstants extends I18NConstantsBase {
 	/** Configuration has unexpected configuration interface. */
 	public static ResKey2 CONFIGURATION_OF_UNEXPECTED_TYPE__EXPECTED_ACTUAL;
 
-	public static ResKey DELETE_PROTECTED = legacyKey("element.meta.attribute.edit.attRemove.disabled.deleteProtected");
+	@CustomKey("element.meta.attribute.edit.attRemove.disabled.deleteProtected")
+	public static ResKey DELETE_PROTECTED;
 
-	public static ResKey TOOLTIP = legacyKey("tl.type.tooltip");
+	@CustomKey("tl.type.tooltip")
+	public static ResKey TOOLTIP;
 
 	public static ResKey1 I18N_NAME_COLUMN__LOCALE;
 

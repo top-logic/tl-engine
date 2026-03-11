@@ -5,6 +5,7 @@
  */
 package com.top_logic.element.layout.security.handler;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.layout.ResPrefix;
@@ -18,7 +19,8 @@ import com.top_logic.layout.ResPrefix;
 @SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
-	public static ResKey EXPORT_SECURITY_PROFILE = legacyKey("tl.command.export");
+	@CustomKey("tl.command.export")
+	public static ResKey EXPORT_SECURITY_PROFILE;
 
 	static {
 		initConstants(I18NConstants.class);

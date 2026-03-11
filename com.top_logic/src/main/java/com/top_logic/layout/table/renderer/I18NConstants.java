@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.table.renderer;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.I18NConstantsBase;
@@ -47,19 +48,26 @@ public class I18NConstants extends I18NConstantsBase {
 	/** I18N disabled reason key, for commands needed active filters. */
 	public static ResKey NOT_EXECUTABLE_FILTER_NOT_ACTIVE;
 
-	public static ResKey TRUE_LABEL = legacyKey("tl.true");
+	@CustomKey("tl.true")
+	public static ResKey TRUE_LABEL;
 
-	public static ResKey FALSE_LABEL = legacyKey("tl.false");
+	@CustomKey("tl.false")
+	public static ResKey FALSE_LABEL;
 
-	public static ResKey PAGING_MESSAGE_START = legacyKey("tl.table.paging.messageStart");
+	@CustomKey("tl.table.paging.messageStart")
+	public static ResKey PAGING_MESSAGE_START;
 
-	public static ResKey PAGING_MESSAGE_END = legacyKey("tl.table.paging.messageEnd");
+	@CustomKey("tl.table.paging.messageEnd")
+	public static ResKey PAGING_MESSAGE_END;
 
-	public static ResKey PAGING_MESSAGE_START_FULL = legacyKey("tl.table.paging.messageStartFull");
+	@CustomKey("tl.table.paging.messageStartFull")
+	public static ResKey PAGING_MESSAGE_START_FULL;
 
-	public static ResKey PAGING_OPTIONS_START = legacyKey("tl.table.paging.optionsStart");
+	@CustomKey("tl.table.paging.optionsStart")
+	public static ResKey PAGING_OPTIONS_START;
 
-	public static ResKey PAGING_OPTIONS_END = legacyKey("tl.table.paging.optionsEnd");
+	@CustomKey("tl.table.paging.optionsEnd")
+	public static ResKey PAGING_OPTIONS_END;
 
 	public static ResKey EXPORT_EXCEL;
 

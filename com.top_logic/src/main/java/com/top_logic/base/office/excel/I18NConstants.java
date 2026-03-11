@@ -5,6 +5,7 @@
  */
 package com.top_logic.base.office.excel;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.layout.ResPrefix;
@@ -18,23 +19,32 @@ import com.top_logic.layout.ResPrefix;
 @SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
-	public static ResKey ERROR_OPENING_FILE = legacyKey("import.excel.error.open");
+	@CustomKey("import.excel.error.open")
+	public static ResKey ERROR_OPENING_FILE;
 
-	public static ResKey ERROR_READING_FILE = legacyKey("import.excel.error.readIO");
+	@CustomKey("import.excel.error.readIO")
+	public static ResKey ERROR_READING_FILE;
 
-	public static ResKey ERROR_WRITING_FILE = legacyKey("import.excel.error.writeIO");
+	@CustomKey("import.excel.error.writeIO")
+	public static ResKey ERROR_WRITING_FILE;
 
-	public static ResKey ERROR_CELL_AREA_WRONG = legacyKey("import.excel.error.cell.area.wrong");
+	@CustomKey("import.excel.error.cell.area.wrong")
+	public static ResKey ERROR_CELL_AREA_WRONG;
 
-	public static ResKey ERROR_INVALID_INPUT = legacyKey("import.excel.error.invalid.input.wrong");
+	@CustomKey("import.excel.error.invalid.input.wrong")
+	public static ResKey ERROR_INVALID_INPUT;
 
-	public static ResKey ERROR_POSITION_WRONG = legacyKey("import.excel.error.position.wrong");
+	@CustomKey("import.excel.error.position.wrong")
+	public static ResKey ERROR_POSITION_WRONG;
 
-	public static ResKey ERROR_COORDS_WRONG__AREA = legacyKey("import.excel.error.position.coords.wrong");
+	@CustomKey("import.excel.error.position.coords.wrong")
+	public static ResKey ERROR_COORDS_WRONG__AREA;
 
-	public static ResKey ERROR_POSITION_END_WRONG__AREA = legacyKey("import.excel.error.position.end.wrong");
+	@CustomKey("import.excel.error.position.end.wrong")
+	public static ResKey ERROR_POSITION_END_WRONG__AREA;
 
-	public static ResKey ERROR_POSITION_START_WRONG__AREA = legacyKey("import.excel.error.position.start.wrong");
+	@CustomKey("import.excel.error.position.start.wrong")
+	public static ResKey ERROR_POSITION_START_WRONG__AREA;
 
 	static {
 		initConstants(I18NConstants.class);

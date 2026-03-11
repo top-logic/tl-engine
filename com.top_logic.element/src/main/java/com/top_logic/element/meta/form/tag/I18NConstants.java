@@ -5,6 +5,7 @@
  */
 package com.top_logic.element.meta.form.tag;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.layout.ResPrefix;
@@ -18,17 +19,23 @@ import com.top_logic.layout.ResPrefix;
 @SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
-	public static ResKey GROUP_ADDITIONAL_ATTRIBUTES = legacyKey("element.attributes.additional");
+	@CustomKey("element.attributes.additional")
+	public static ResKey GROUP_ADDITIONAL_ATTRIBUTES;
 
-	public static ResKey VALIDITY_DEFAULT = legacyKey("element.meta.validity.tagLabel.default");
+	@CustomKey("element.meta.validity.tagLabel.default")
+	public static ResKey VALIDITY_DEFAULT;
 
-	public static ResKey VALIDITY_EXPIRED = legacyKey("element.meta.validity.tagLabel.expired");
+	@CustomKey("element.meta.validity.tagLabel.expired")
+	public static ResKey VALIDITY_EXPIRED;
 
-	public static ResKey NO_VALIDITY_CHECK = legacyKey("element.meta.validity.tagLabel.none");
+	@CustomKey("element.meta.validity.tagLabel.none")
+	public static ResKey NO_VALIDITY_CHECK;
 
-	public static ResKey VALIDITY_READ_ONLY = legacyKey("element.meta.validity.tagLabel.readOnly");
+	@CustomKey("element.meta.validity.tagLabel.readOnly")
+	public static ResKey VALIDITY_READ_ONLY;
 
-	public static ResKey VALIDITY_UP_TO_DATE = legacyKey("element.meta.validity.tagLabel.upToDate");
+	@CustomKey("element.meta.validity.tagLabel.upToDate")
+	public static ResKey VALIDITY_UP_TO_DATE;
 
 	static {
 		initConstants(I18NConstants.class);

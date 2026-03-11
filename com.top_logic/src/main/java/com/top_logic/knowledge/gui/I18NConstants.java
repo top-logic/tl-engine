@@ -5,6 +5,7 @@
  */
 package com.top_logic.knowledge.gui;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
@@ -23,9 +24,11 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResPrefix ROLE_NAME = legacyPrefix("role.name.");
 
-	public static ResKey3 BOUNDED_ROLE_TOOLTIP = legacyKey3("tl.boundedRole.tooltip");
+	@CustomKey("tl.boundedRole.tooltip")
+	public static ResKey3 BOUNDED_ROLE_TOOLTIP;
 
-	public static ResKey2 WRAPPER_TOOLTIP = legacyKey2("tl.wrapper.tooltip");
+	@CustomKey("tl.wrapper.tooltip")
+	public static ResKey2 WRAPPER_TOOLTIP;
 
 	/** @deprecated Will be removed when all instances of tl.tables are deleted. */
 	@Deprecated

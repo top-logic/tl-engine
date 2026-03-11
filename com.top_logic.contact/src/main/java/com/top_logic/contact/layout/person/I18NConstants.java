@@ -5,6 +5,7 @@
  */
 package com.top_logic.contact.layout.person;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.layout.ResPrefix;
@@ -18,13 +19,17 @@ import com.top_logic.layout.ResPrefix;
 @SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
-	public static ResKey ERROR_USER_EXISTS__LOGIN = legacyKey("tl.import.process.row.exists");
+	@CustomKey("tl.import.process.row.exists")
+	public static ResKey ERROR_USER_EXISTS__LOGIN;
 
-	public static ResKey ERROR_USER_STILL_ALIVE = legacyKey("contact.person.edit.form.personContactDelete.disabled.stillAlive");
+	@CustomKey("contact.person.edit.form.personContactDelete.disabled.stillAlive")
+	public static ResKey ERROR_USER_STILL_ALIVE;
 
-	public static ResKey IMPORT_SUCCESS__ROW_NAME = legacyKey("tl.import.process.row.succeed");
+	@CustomKey("tl.import.process.row.succeed")
+	public static ResKey IMPORT_SUCCESS__ROW_NAME;
 
-	public static ResKey MISSIN_VALUES__SHEET = legacyKey("tl.import.tab.missing.values");
+	@CustomKey("tl.import.tab.missing.values")
+	public static ResKey MISSIN_VALUES__SHEET;
 
 	static {
 		initConstants(I18NConstants.class);

@@ -35,6 +35,8 @@ public class WellKnownTypes {
 
 	private static final String TEMPLATE_VARIABLE_ANNOTATION = "com.top_logic.layout.basic.TemplateVariable";
 
+	private static final String CUSTOM_KEY_ANNOTATION = "com.top_logic.basic.i18n.CustomKey";
+
 	TypeMirror _tlScriptFunctionsType;
 
 	TypeMirror _configType;
@@ -72,6 +74,10 @@ public class WellKnownTypes {
 	TypeMirror _templateVariableAnnotation;
 
 	ExecutableElement _templateVariableName;
+
+	TypeMirror _customKeyAnnotation;
+
+	ExecutableElement _customKeyValue;
 
 	TypeMirror _instantiationContext;
 
@@ -130,6 +136,13 @@ public class WellKnownTypes {
 		} else {
 			// May happen during tests.
 		}
+		TypeElement customKey = typeElement(CUSTOM_KEY_ANNOTATION);
+		if (customKey != null) {
+			_customKeyAnnotation = customKey.asType();
+			_customKeyValue = methodByName(customKey, "value");
+		} else {
+			// May happen during tests.
+		}
 	}
 
 	private ExecutableElement methodByName(Element type, String methodName) {
@@ -159,6 +172,18 @@ public class WellKnownTypes {
 		AnnotationMirror annotation = getAnnotation(element, _templateVariableAnnotation);
 		if (annotation != null) {
 			return Optional.ofNullable((String) annotation.getElementValues().get(_templateVariableName).getValue());
+		}
+
+		return Optional.empty();
+	}
+
+	/**
+	 * Determines the {@value #CUSTOM_KEY_ANNOTATION} annotation.
+	 */
+	public Optional<String> getCustomKey(Element element) {
+		AnnotationMirror annotation = getAnnotation(element, _customKeyAnnotation);
+		if (annotation != null) {
+			return Optional.ofNullable((String) annotation.getElementValues().get(_customKeyValue).getValue());
 		}
 
 		return Optional.empty();

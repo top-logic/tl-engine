@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.progress;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.I18NConstantsBase;
 
@@ -25,7 +26,8 @@ public class I18NConstants extends I18NConstantsBase {
 	
 	public static ResKey PROGRESS_FAILED;
 
-	public static ResKey PROGRESS = legacyKey("tl.common.progress");
+	@CustomKey("tl.common.progress")
+	public static ResKey PROGRESS;
 
 	static {
 		initConstants(I18NConstants.class);

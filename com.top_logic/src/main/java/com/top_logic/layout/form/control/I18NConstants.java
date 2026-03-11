@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.form.control;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
@@ -131,43 +132,57 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey1 TEXT_POPUP_TITLE;
 
-	public static ResKey TOGGLE_EXPAND_TOOLTIP = legacyKey("expandableStringfield.buttonTooltip");
+	@CustomKey("expandableStringfield.buttonTooltip")
+	public static ResKey TOGGLE_EXPAND_TOOLTIP;
 
 	/**
 	 * @en Collapsing the group "{0}" is not possible.
 	 */
 	public static ResKey1 ERROR_CANNOT_COLLAPSE_GROUP;
 
-	public static ResKey ENTER_MAINTENANCE_MODE_0 = legacyKey("tl.maintabbar.message.enterMaintenanceMode.0");
+	@CustomKey("tl.maintabbar.message.enterMaintenanceMode.0")
+	public static ResKey ENTER_MAINTENANCE_MODE_0;
 
-	public static ResKey ENTER_MAINTENANCE_MODE_1 = legacyKey("tl.maintabbar.message.enterMaintenanceMode.1");
+	@CustomKey("tl.maintabbar.message.enterMaintenanceMode.1")
+	public static ResKey ENTER_MAINTENANCE_MODE_1;
 
-	public static ResKey ENTER_MAINTENANCE_MODE_2 = legacyKey("tl.maintabbar.message.enterMaintenanceMode.2");
+	@CustomKey("tl.maintabbar.message.enterMaintenanceMode.2")
+	public static ResKey ENTER_MAINTENANCE_MODE_2;
 
 	/**
 	 * @en File must not be empty ("{0}").
 	 */
 	public static ResKey1 ERROR_UPLOAD_EMPTY_FILE__NAME;
 
-	public static ResKey IN_MAINTENANCE_MODE = legacyKey("tl.maintabbar.message.isMaintenanceMode");
+	@CustomKey("tl.maintabbar.message.isMaintenanceMode")
+	public static ResKey IN_MAINTENANCE_MODE;
 
-	public static ResKey COLLAPSE_TEXT = legacyKey("blockStringfield.less");
+	@CustomKey("blockStringfield.less")
+	public static ResKey COLLAPSE_TEXT;
 
-	public static ResKey EXPAND_TEXT = legacyKey("blockStringfield.more");
+	@CustomKey("blockStringfield.more")
+	public static ResKey EXPAND_TEXT;
 
-	public static ResKey COMPLETIOIN_MORE_ELEMENTS__DISPLAYED = legacyKey("layout.form.popupSelect.moreElements");
+	@CustomKey("layout.form.popupSelect.moreElements")
+	public static ResKey COMPLETIOIN_MORE_ELEMENTS__DISPLAYED;
 
-	public static ResKey COMPLETION_NO_ELEMENTS = legacyKey("layout.form.popupSelect.noElements");
+	@CustomKey("layout.form.popupSelect.noElements")
+	public static ResKey COMPLETION_NO_ELEMENTS;
 
-	public static ResKey PASSWORD_WEAK = legacyKey("tl.pwdvalidation.verdicts.weak");
+	@CustomKey("tl.pwdvalidation.verdicts.weak")
+	public static ResKey PASSWORD_WEAK;
 
-	public static ResKey PASSWORD_NORMAL = legacyKey("tl.pwdvalidation.verdicts.normal");
+	@CustomKey("tl.pwdvalidation.verdicts.normal")
+	public static ResKey PASSWORD_NORMAL;
 	
-	public static ResKey PASSWORD_MEDIUM = legacyKey("tl.pwdvalidation.verdicts.medium");
+	@CustomKey("tl.pwdvalidation.verdicts.medium")
+	public static ResKey PASSWORD_MEDIUM;
 	
-	public static ResKey PASSWORD_STRONG = legacyKey("tl.pwdvalidation.verdicts.strong");
+	@CustomKey("tl.pwdvalidation.verdicts.strong")
+	public static ResKey PASSWORD_STRONG;
 	
-	public static ResKey PASSWORD_VERY_STRONG = legacyKey("tl.pwdvalidation.verdicts.veryStrong");
+	@CustomKey("tl.pwdvalidation.verdicts.veryStrong")
+	public static ResKey PASSWORD_VERY_STRONG;
 	
 	public static ResKey VALUE_CHANGED;
 

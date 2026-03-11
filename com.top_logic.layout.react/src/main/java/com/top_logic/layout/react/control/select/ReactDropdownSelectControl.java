@@ -6,7 +6,9 @@
 package com.top_logic.layout.react.control.select;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -133,7 +135,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	@ReactCommand("loadOptions")
 	HandlerResult handleLoadOptions() {
 		try {
-			List<?> options = SelectFieldUtils.getOptionsListSorted(_selectField);
+			List<?> options = sortedOptions();
 			Map<String, Object> newIndex = new HashMap<>();
 			Map<Object, String> newReverse = new IdentityHashMap<>();
 			List<Map<String, Object>> descriptors = buildOptionDescriptors(options, newIndex, newReverse);
@@ -255,6 +257,22 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 			descriptors.add(descriptor);
 		}
 		return descriptors;
+	}
+
+	/**
+	 * Returns the option list sorted by the field's comparator, regardless of whether the field
+	 * has custom order. Custom order only affects selection order, not option display order.
+	 */
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private List<?> sortedOptions() {
+		List<?> options = _selectField.getOptions();
+		if (options.size() <= 1) {
+			return options;
+		}
+		Object[] array = options.toArray();
+		Comparator comparator = SelectFieldUtils.getOptionComparator(_selectField);
+		Arrays.sort(array, comparator);
+		return Arrays.asList(array);
 	}
 
 	private ResourceProvider toResourceProvider(LabelProvider labelProvider) {

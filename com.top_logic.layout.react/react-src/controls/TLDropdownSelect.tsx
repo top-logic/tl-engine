@@ -317,6 +317,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
       if (!isOpen) {
         if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
+          e.stopPropagation();
           openDropdown();
         }
         return;
@@ -325,24 +326,28 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
       switch (e.key) {
         case 'ArrowDown':
           e.preventDefault();
+          e.stopPropagation();
           setHighlightedIndex((prev) =>
             prev < filteredOptions.length - 1 ? prev + 1 : 0
           );
           break;
         case 'ArrowUp':
           e.preventDefault();
+          e.stopPropagation();
           setHighlightedIndex((prev) =>
             prev > 0 ? prev - 1 : filteredOptions.length - 1
           );
           break;
         case 'Enter':
           e.preventDefault();
+          e.stopPropagation();
           if (highlightedIndex >= 0 && highlightedIndex < filteredOptions.length) {
             selectOption(filteredOptions[highlightedIndex].value);
           }
           break;
         case 'Escape':
           e.preventDefault();
+          e.stopPropagation();
           closeDropdown();
           break;
         case 'Tab':

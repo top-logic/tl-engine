@@ -3100,7 +3100,8 @@ const { useCallback: he, useRef: Ze } = e, tr = ({ color: l, onColorChange: t })
         value: $,
         onChange: g
       }
-    )), /* @__PURE__ */ e.createElement("div", { className: "tlColorInput__actions" }, s === "palette" && /* @__PURE__ */ e.createElement("button", { className: "tlColorInput__btn tlColorInput__btn--reset", onClick: T }, k["js.colorInput.reset"]), /* @__PURE__ */ e.createElement("button", { className: "tlColorInput__btn tlColorInput__btn--cancel", onClick: o }, k["js.colorInput.cancel"]), /* @__PURE__ */ e.createElement("button", { className: "tlColorInput__btn tlColorInput__btn--ok", onClick: j }, k["js.colorInput.ok"]))))
+    )))),
+    /* @__PURE__ */ e.createElement("div", { className: "tlColorInput__actions" }, s === "palette" && /* @__PURE__ */ e.createElement("button", { className: "tlColorInput__btn tlColorInput__btn--reset", onClick: T }, k["js.colorInput.reset"]), /* @__PURE__ */ e.createElement("button", { className: "tlColorInput__btn tlColorInput__btn--cancel", onClick: o }, k["js.colorInput.cancel"]), /* @__PURE__ */ e.createElement("button", { className: "tlColorInput__btn tlColorInput__btn--ok", onClick: j }, k["js.colorInput.ok"]))
   );
 }, or = { "js.colorInput.chooseColor": "Choose color" }, { useState: sr, useCallback: Ce, useRef: cr } = e, ir = ({ controlId: l, state: t }) => {
   const a = ee(), r = oe(or), [c, i] = sr(!1), o = cr(null), d = t.value, s = t.editable !== !1, n = t.palette ?? [], m = t.paletteColumns ?? 6, E = t.defaultPalette ?? n, b = Ce(() => {

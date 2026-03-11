@@ -253,20 +253,22 @@ const ColorPopup: React.FC<ColorPopupProps> = ({
             />
           </div>
 
-          <div className="tlColorInput__actions">
-            {tab === 'palette' && (
-              <button className="tlColorInput__btn tlColorInput__btn--reset" onClick={handleReset}>
-                {i18n['js.colorInput.reset']}
-              </button>
-            )}
-            <button className="tlColorInput__btn tlColorInput__btn--cancel" onClick={onCancel}>
-              {i18n['js.colorInput.cancel']}
-            </button>
-            <button className="tlColorInput__btn tlColorInput__btn--ok" onClick={handleOk}>
-              {i18n['js.colorInput.ok']}
-            </button>
-          </div>
         </div>
+      </div>
+
+      {/* Action buttons */}
+      <div className="tlColorInput__actions">
+        {tab === 'palette' && (
+          <button className="tlColorInput__btn tlColorInput__btn--reset" onClick={handleReset}>
+            {i18n['js.colorInput.reset']}
+          </button>
+        )}
+        <button className="tlColorInput__btn tlColorInput__btn--cancel" onClick={onCancel}>
+          {i18n['js.colorInput.cancel']}
+        </button>
+        <button className="tlColorInput__btn tlColorInput__btn--ok" onClick={handleOk}>
+          {i18n['js.colorInput.ok']}
+        </button>
       </div>
     </div>
   );

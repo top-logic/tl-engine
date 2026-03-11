@@ -3023,6 +3023,7 @@ button.tlMenu__item--disabled:hover {
 
 .tlColorInput__input {
   flex: 1;
+  min-width: 0;
   height: 2rem;
   padding: 0 var(--spacing-03, 0.5rem);
   border: 1px solid var(--border-subtle);
@@ -3047,8 +3048,8 @@ button.tlMenu__item--disabled:hover {
 .tlColorInput__actions {
   display: flex;
   gap: 0.5rem;
-  margin-top: auto;
-  padding-top: 0.25rem;
+  justify-content: flex-end;
+  padding: 0.5rem 1rem 1rem;
 }
 
 .tlColorInput__btn {

@@ -51,6 +51,7 @@ import TLResourceCell from './controls/TLResourceCell';
 import TLTreeView from './controls/TLTreeView';
 import TLDropdownSelect from './controls/TLDropdownSelect';
 import TLColorInput from './controls/TLColorInput';
+import TLIconSelect from './controls/TLIconSelect';
 
 register('TLButton', TLButton);
 register('TLToggleButton', TLToggleButton);
@@ -94,3 +95,4 @@ register('TLResourceCell', TLResourceCell);
 register('TLTreeView', TLTreeView);
 register('TLDropdownSelect', TLDropdownSelect);
 register('TLColorInput', TLColorInput);
+register('TLIconSelect', TLIconSelect);

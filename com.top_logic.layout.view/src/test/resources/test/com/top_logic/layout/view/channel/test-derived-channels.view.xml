@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+  <channels>
+    <channel name="selectedItem" />
+    <derived-channel name="hasSelection"
+        inputs="selectedItem"
+        expr="item -> $item != null" />
+  </channels>
+
+  <stack direction="column" />
+</view>

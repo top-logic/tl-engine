@@ -20,8 +20,8 @@ import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.ResourceProvider;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.model.FieldModel;
-import com.top_logic.layout.form.model.FormFieldAdapter;
 import com.top_logic.layout.form.model.SelectField;
+import com.top_logic.layout.form.model.SelectFieldAdapter;
 import com.top_logic.layout.form.model.SelectFieldUtils;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
@@ -89,12 +89,12 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 *
 	 * @param context
 	 *        The {@link ReactContext} for ID allocation and SSE registration.
-	 * @param selectField
-	 *        The {@link SelectField} model to wrap.
+	 * @param adapter
+	 *        The {@link SelectFieldAdapter} wrapping the {@link SelectField}.
 	 */
-	public ReactDropdownSelectControl(ReactContext context, SelectField selectField) {
-		super(context, new FormFieldAdapter(selectField), "TLDropdownSelect");
-		_selectField = selectField;
+	public ReactDropdownSelectControl(ReactContext context, SelectFieldAdapter adapter) {
+		super(context, adapter, "TLDropdownSelect");
+		_selectField = adapter.getSelectField();
 		initSelectState();
 	}
 

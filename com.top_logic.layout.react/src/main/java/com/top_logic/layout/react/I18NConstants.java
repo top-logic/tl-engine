@@ -393,7 +393,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Nothing found
 	 * @de Keine Treffer
 	 */
-	public static ResKey JS_DROPDOWN_SELECT_NOTHING_FOUND;
+	public static ResKey JS_DROPDOWN_SELECT_NOTHING_FOUND = ResKey.internalCreate("js.dropdownSelect.nothingFound");
 
 	/**
 	 * @en Filter\u2026

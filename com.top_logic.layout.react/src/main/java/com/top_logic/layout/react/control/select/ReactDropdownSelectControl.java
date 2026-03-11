@@ -50,8 +50,6 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 
 	private static final String EMPTY_OPTION_LABEL = "emptyOptionLabel";
 
-	private static final String NOTHING_FOUND_LABEL = "nothingFoundLabel";
-
 	private static final String OPT_VALUE = "value";
 
 	private static final String OPT_LABEL = "label";
@@ -97,7 +95,6 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 		putState(VALUE, toOptionDescriptors(_selectField.getSelection()));
 		putState(MULTI_SELECT, _selectField.isMultiple());
 		putState(EMPTY_OPTION_LABEL, resources.getString(I18NConstants.JS_DROPDOWN_SELECT_EMPTY));
-		putState(NOTHING_FOUND_LABEL, resources.getString(I18NConstants.JS_DROPDOWN_SELECT_NOTHING_FOUND));
 		putState(OPTIONS_LOADED, false);
 	}
 

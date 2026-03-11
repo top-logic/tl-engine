@@ -130,11 +130,6 @@
 		</dependency>
 
 		<dependency>
-			<groupId>org.codehaus.plexus</groupId>
-			<artifactId>plexus-archiver</artifactId>
-			<version>4.8.0</version>
-		</dependency>
-		<dependency>
 		    <groupId>com.github.javaparser</groupId>
 		    <artifactId>javaparser-core</artifactId>
 		    <version>3.28.0</version>

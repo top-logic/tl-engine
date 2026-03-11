@@ -118,7 +118,7 @@
 		<dependency>
 		    <groupId>org.apache.maven.shared</groupId>
 		    <artifactId>maven-invoker</artifactId>
-		    <version>3.2.0</version>
+		    <version>3.3.0</version>
 		</dependency>
 		
 		<!-- Note: Newer versions have an issue with excessive memory consumption causing builds to fail when creating larger WAR artifacts. -->

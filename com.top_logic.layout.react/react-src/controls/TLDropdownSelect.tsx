@@ -160,6 +160,11 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
   const searchRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // Tracks the latest selection to avoid stale closures when the user
+  // selects multiple options faster than the SSE round-trip.
+  const valueRef = useRef(value);
+  valueRef.current = value;
+
   // Derived: selected value IDs for fast lookup
   const selectedIds = useMemo(
     () => new Set(value.map((v) => v.value)),
@@ -254,7 +259,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
       if (multiSelect) {
         const opt = allOptions.find((o) => o.value === optionValue);
         if (opt) {
-          newValue = [...value, opt];
+          newValue = [...valueRef.current, opt];
         } else {
           return;
         }
@@ -267,6 +272,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
         }
       }
 
+      valueRef.current = newValue;
       sendCommand('valueChanged', { value: newValue.map((v) => v.value) });
 
       if (!multiSelect) {
@@ -277,15 +283,16 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
         searchRef.current?.focus();
       }
     },
-    [multiSelect, value, allOptions, sendCommand, closeDropdown]
+    [multiSelect, allOptions, sendCommand, closeDropdown]
   );
 
   const removeOption = useCallback(
     (optionValue: string) => {
-      const newValue = value.filter((v) => v.value !== optionValue);
+      const newValue = valueRef.current.filter((v) => v.value !== optionValue);
+      valueRef.current = newValue;
       sendCommand('valueChanged', { value: newValue.map((v) => v.value) });
     },
-    [value, sendCommand]
+    [sendCommand]
   );
 
   const clearAll = useCallback(

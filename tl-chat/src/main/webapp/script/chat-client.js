@@ -1160,6 +1160,8 @@
         indicator.classList.remove("active");
         indicator.title = "Auto-approve is OFF — click to enable";
       }
+    }
+
     function showReviewAlert(alert) {
       var container = el.reviewAlerts;
       if (!container) {

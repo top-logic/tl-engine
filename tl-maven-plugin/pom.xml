@@ -126,13 +126,18 @@
 		<dependency>
 			<groupId>org.apache.maven</groupId>
 			<artifactId>maven-archiver</artifactId>
-			<version>3.0.2</version>
+			<version>3.6.6</version>
 		</dependency>
 
 		<dependency>
 			<groupId>org.codehaus.plexus</groupId>
 			<artifactId>plexus-archiver</artifactId>
-			<version>4.8.0</version>
+			<version>4.10.4</version>
+		</dependency>
+		<dependency>
+			<groupId>org.codehaus.plexus</groupId>
+			<artifactId>plexus-utils</artifactId>
+			<version>4.0.2</version>
 		</dependency>
 		<dependency>
 		    <groupId>com.github.javaparser</groupId>

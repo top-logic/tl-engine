@@ -47,6 +47,8 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 
 	private static final String OPTIONS_LOADED = "optionsLoaded";
 
+	private static final String CUSTOM_ORDER = "customOrder";
+
 	private static final String MULTI_SELECT = "multiSelect";
 
 	private static final String EMPTY_OPTION_LABEL = "emptyOptionLabel";
@@ -101,6 +103,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 
 		putState(VALUE, toOptionDescriptors(SelectFieldUtils.getSelectionListSorted(_selectField)));
 		putState(MULTI_SELECT, _selectField.isMultiple());
+		putState(CUSTOM_ORDER, _selectField.hasCustomOrder());
 		putState(EMPTY_OPTION_LABEL, resources.getString(I18NConstants.JS_DROPDOWN_SELECT_EMPTY));
 		putState(OPTIONS_LOADED, false);
 	}

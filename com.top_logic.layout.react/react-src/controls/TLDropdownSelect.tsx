@@ -33,11 +33,23 @@ function Chip({
   removable,
   onRemove,
   removeLabel,
+  draggable,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  onDragEnd,
+  dragClassName,
 }: {
   option: OptionDescriptor;
   removable: boolean;
   onRemove: (value: string) => void;
   removeLabel: string;
+  draggable?: boolean;
+  onDragStart?: (e: React.DragEvent) => void;
+  onDragOver?: (e: React.DragEvent) => void;
+  onDrop?: (e: React.DragEvent) => void;
+  onDragEnd?: (e: React.DragEvent) => void;
+  dragClassName?: string;
 }) {
   const handleRemove = useCallback(
     (e: React.MouseEvent) => {
@@ -48,7 +60,17 @@ function Chip({
   );
 
   return (
-    <span className="tlDropdownSelect__chip">
+    <span
+      className={'tlDropdownSelect__chip' + (dragClassName ? ' ' + dragClassName : '')}
+      draggable={draggable || undefined}
+      onDragStart={onDragStart}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
+      onDragEnd={onDragEnd}
+    >
+      {draggable && (
+        <span className="tlDropdownSelect__dragHandle" aria-hidden="true">&#8942;&#8942;</span>
+      )}
       <OptionImage image={option.image} />
       <span className="tlDropdownSelect__chipLabel">{option.label}</span>
       {removable && (
@@ -122,12 +144,16 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
   // Server state
   const value = (state.value ?? []) as OptionDescriptor[];
   const multiSelect = state.multiSelect === true;
+  const customOrder = state.customOrder === true;
   const mandatory = state.mandatory === true;
   const disabled = state.disabled === true;
   const editable = state.editable !== false;
   const optionsLoaded = state.optionsLoaded === true;
   const allOptions = (state.options ?? []) as OptionDescriptor[];
   const emptyOptionLabel = (state.emptyOptionLabel ?? '') as string;
+
+  // Drag-and-drop is enabled only for custom-order multi-select editable fields
+  const dragEnabled = customOrder && multiSelect && !disabled && editable;
 
   // I18N for client-side labels
   const i18n = useI18N({
@@ -153,6 +179,11 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [loadError, setLoadError] = useState(false);
   const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
+
+  // Drag-and-drop state for chip reordering
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
+  const [dropPosition, setDropPosition] = useState<'before' | 'after' | null>(null);
 
   // Refs
   const containerRef = useRef<HTMLDivElement>(null);
@@ -409,6 +440,68 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
     [sendCommand]
   );
 
+  // -- Drag-and-drop handlers for chip reordering --
+
+  const handleChipDragStart = useCallback(
+    (index: number, e: React.DragEvent) => {
+      setDragIndex(index);
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', String(index));
+    },
+    []
+  );
+
+  const handleChipDragOver = useCallback(
+    (index: number, e: React.DragEvent) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      if (dragIndex === null || dragIndex === index) {
+        setDropTargetIndex(null);
+        setDropPosition(null);
+        return;
+      }
+      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+      const midX = rect.left + rect.width / 2;
+      const pos = e.clientX < midX ? 'before' : 'after';
+      setDropTargetIndex(index);
+      setDropPosition(pos);
+    },
+    [dragIndex]
+  );
+
+  const handleChipDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      if (dragIndex === null || dropTargetIndex === null || dropPosition === null) return;
+      if (dragIndex === dropTargetIndex) return;
+
+      const reordered = [...valueRef.current];
+      const [moved] = reordered.splice(dragIndex, 1);
+      let insertAt = dropTargetIndex;
+      // Adjust insertion index since the item was removed first
+      if (dragIndex < dropTargetIndex) {
+        insertAt = dropPosition === 'before' ? insertAt - 1 : insertAt;
+      } else {
+        insertAt = dropPosition === 'before' ? insertAt : insertAt + 1;
+      }
+      reordered.splice(insertAt, 0, moved);
+
+      valueRef.current = reordered;
+      sendCommand('valueChanged', { value: reordered.map((v) => v.value) });
+
+      setDragIndex(null);
+      setDropTargetIndex(null);
+      setDropPosition(null);
+    },
+    [dragIndex, dropTargetIndex, dropPosition, sendCommand]
+  );
+
+  const handleChipDragEnd = useCallback(() => {
+    setDragIndex(null);
+    setDropTargetIndex(null);
+    setDropPosition(null);
+  }, []);
+
   // Scroll highlighted option into view
   useEffect(() => {
     if (highlightedIndex < 0 || !dropdownRef.current) return;
@@ -535,15 +628,31 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
           {value.length === 0 ? (
             <span className="tlDropdownSelect__placeholder">{emptyOptionLabel}</span>
           ) : (
-            value.map((v) => (
-              <Chip
-                key={v.value}
-                option={v}
-                removable={!disabled && (multiSelect || !mandatory)}
-                onRemove={removeOption}
-                removeLabel={removeChipLabel(v.label)}
-              />
-            ))
+            value.map((v, idx) => {
+              let dragClass = '';
+              if (dragIndex === idx) {
+                dragClass = 'tlDropdownSelect__chip--dragging';
+              } else if (dropTargetIndex === idx && dropPosition === 'before') {
+                dragClass = 'tlDropdownSelect__chip--dropBefore';
+              } else if (dropTargetIndex === idx && dropPosition === 'after') {
+                dragClass = 'tlDropdownSelect__chip--dropAfter';
+              }
+              return (
+                <Chip
+                  key={v.value}
+                  option={v}
+                  removable={!disabled && (multiSelect || !mandatory)}
+                  onRemove={removeOption}
+                  removeLabel={removeChipLabel(v.label)}
+                  draggable={dragEnabled}
+                  onDragStart={dragEnabled ? (e) => handleChipDragStart(idx, e) : undefined}
+                  onDragOver={dragEnabled ? (e) => handleChipDragOver(idx, e) : undefined}
+                  onDrop={dragEnabled ? handleChipDrop : undefined}
+                  onDragEnd={dragEnabled ? handleChipDragEnd : undefined}
+                  dragClassName={dragEnabled ? dragClass : undefined}
+                />
+              );
+            })
           )}
         </div>
         <div className="tlDropdownSelect__controls">

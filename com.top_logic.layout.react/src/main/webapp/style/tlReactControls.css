@@ -2705,3 +2705,34 @@ button.tlMenu__item--disabled:hover {
 	color: var(--text-secondary);
 	font-style: italic;
 }
+
+/* Drag handle for reorderable chips */
+.tlDropdownSelect__dragHandle {
+	cursor: grab;
+	color: var(--text-secondary);
+	font-size: 10px;
+	line-height: 1;
+	letter-spacing: -3px;
+	user-select: none;
+	flex-shrink: 0;
+	padding-right: 2px;
+}
+
+.tlDropdownSelect__dragHandle:active {
+	cursor: grabbing;
+}
+
+/* Chip being dragged */
+.tlDropdownSelect__chip--dragging {
+	opacity: 0.4;
+}
+
+/* Drop indicator: left border highlight */
+.tlDropdownSelect__chip--dropBefore {
+	box-shadow: -2px 0 0 0 var(--interactive, #0f62fe);
+}
+
+/* Drop indicator: right border highlight */
+.tlDropdownSelect__chip--dropAfter {
+	box-shadow: 2px 0 0 0 var(--interactive, #0f62fe);
+}

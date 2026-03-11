@@ -6,14 +6,11 @@
 package com.top_logic.ai.service.tools.script;
 
 import java.util.List;
-import java.util.HashMap;
-import java.util.Map;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 
-import com.top_logic.ai.service.tools.ToolCallTracking;
 import com.top_logic.ai.service.tools.help.messages.ErrorResult;
 import com.top_logic.ai.service.tools.script.TLScriptExecutor.ExecutionResult;
 import com.top_logic.ai.service.tools.script.messages.ValidationResult;
@@ -77,30 +74,23 @@ public class TLScriptTool {
 	@Tool("Validate TLScript code syntax, model references, and type compatibility. Returns validation status and error details if invalid.")
 	public String validateTLScript(
 			@P("TLScript code to validate") String script) {
-		Map<String, Object> args = new HashMap<>();
-		args.put("script", script);
-
 		return ThreadContextManager.inSystemInteraction(
 			TLScriptTool.class,
 			() -> {
 				try {
 					// Validate parameter
 					if (script == null || script.trim().isEmpty()) {
-						String result = toJson(ErrorResult.create().setError("Script is required"));
-						return trackResult("validateTLScript", args, result);
+						return toJson(ErrorResult.create().setError("Script is required"));
 					}
 
 					// Perform validation and return JSON directly
 					ValidationResult result = TLScriptExecutor.validate(script);
-					String jsonResult = result.toString();
-
-					return trackResult("validateTLScript", args, jsonResult);
+					return result.toString();
 
 				} catch (Exception ex) {
 					String error = "Validation failed: " + ex.getMessage();
 					Logger.error(error, ex, TLScriptTool.class);
-					String result = toJson(ErrorResult.create().setError(error));
-					return trackResult("validateTLScript", args, result);
+					return toJson(ErrorResult.create().setError(error));
 				}
 			});
 	}
@@ -128,19 +118,13 @@ public class TLScriptTool {
 			@P("TLScript code to execute") String script,
 			@P("If true, execute within transaction and commit changes (default: false)") Boolean withCommit,
 			@P("Optional arguments to pass to the script") List<Object> args) {
-		Map<String, Object> trackingArgs = new HashMap<>();
-		trackingArgs.put("script", script);
-		trackingArgs.put("withCommit", withCommit);
-		trackingArgs.put("args", args);
-
 		return ThreadContextManager.inSystemInteraction(
 			TLScriptTool.class,
 			() -> {
 				try {
 					// Validate parameter
 					if (script == null || script.trim().isEmpty()) {
-						String result = toJson(ErrorResult.create().setError("Script is required"));
-						return trackResult("executeTLScript", trackingArgs, result);
+						return toJson(ErrorResult.create().setError("Script is required"));
 					}
 
 					// Default to false if not specified
@@ -148,23 +132,14 @@ public class TLScriptTool {
 
 					// Execute the script and return JSON directly
 					ExecutionResult execResult = TLScriptExecutor.execute(script, commit, args);
-					String jsonResult = execResult.toJson();
-
-					return trackResult("executeTLScript", trackingArgs, jsonResult);
+					return execResult.toJson();
 
 				} catch (Exception ex) {
 					String error = "Execution failed: " + ex.getMessage();
 					Logger.error(error, ex, TLScriptTool.class);
-					String result = toJson(ErrorResult.create().setError(error));
-					return trackResult("executeTLScript", trackingArgs, result);
+					return toJson(ErrorResult.create().setError(error));
 				}
 			});
-	}
-
-	private static String trackResult(String toolName, Map<String, Object> args, String result) {
-		ToolCallTracking.recordIfTracking(toolName, args, result);
-		Logger.info(ToolCallTracking.formatToolCall(toolName, args, result), TLScriptTool.class);
-		return result;
 	}
 
 	/**

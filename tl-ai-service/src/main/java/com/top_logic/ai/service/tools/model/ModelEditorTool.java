@@ -723,7 +723,8 @@ public class ModelEditorTool {
 	// ===== Reference Operations =====
 
 	/**
-	 * Creates a new reference on a TopLogic class pointing to another class, or returns existing.
+	 * Creates a new reference on a TopLogic class pointing to another class or enumeration, or
+	 * returns existing.
 	 *
 	 * @param moduleName
 	 *        Name of the module containing the source class.
@@ -734,7 +735,7 @@ public class ModelEditorTool {
 	 * @param targetModuleName
 	 *        Name of the module containing the target class.
 	 * @param targetClassName
-	 *        Name of the target class.
+	 *        Name of the target class or enumeration.
 	 * @param labelEn
 	 *        English label (optional).
 	 * @param labelDe
@@ -765,13 +766,13 @@ public class ModelEditorTool {
 	 *        Deletion policy: CLEAR_REFERENCE, DELETE_OBJECT, STABILISE_REFERENCE, or VETO.
 	 * @return JSON with reference details.
 	 */
-	@Tool("Create a new reference on a TopLogic class pointing to another class, or return an existing one by name")
+	@Tool("Create a new reference on a TopLogic class pointing to another class or enumeration, or return an existing one by name")
 	public String createReference(
 			@P("Name of the module containing the source class") String moduleName,
 			@P("Name of the source class to add the reference to") String className,
 			@P("Name of the reference") String referenceName,
-			@P("Name of the module containing the target class") String targetModuleName,
-			@P("Name of the target class the reference points to") String targetClassName,
+			@P("Name of the module containing the target class or enumeration") String targetModuleName,
+			@P("Name of the target class or enumeration the reference points to") String targetClassName,
 			@P("English label for the reference") String labelEn,
 			@P("German label for the reference") String labelDe,
 			@P("English description for the reference") String descEn,
@@ -845,9 +846,9 @@ public class ModelEditorTool {
 			throw new IllegalArgumentException(
 				"Target class '" + targetClassName + "' does not exist in module '" + targetModuleName + "'");
 		}
-		if (!(targetType instanceof TLClass targetClass)) {
+		if (!(targetType instanceof TLClass) && !(targetType instanceof TLEnumeration)) {
 			throw new IllegalArgumentException(
-				"Target type '" + targetClassName + "' is not a class");
+				"Target type '" + targetClassName + "' is not a class or enumeration");
 		}
 
 		// Check if reference already exists
@@ -874,7 +875,7 @@ public class ModelEditorTool {
 			backwardEnd.setMultiple(true);
 
 			// Forward end (Index 1)
-			TLAssociationEnd forwardEnd = TLModelUtil.addEnd(association, "dest", targetClass);
+			TLAssociationEnd forwardEnd = TLModelUtil.addEnd(association, "dest", targetType);
 			forwardEnd.setNavigate(navigateFlag);
 			forwardEnd.setMandatory(mandatoryFlag);
 			forwardEnd.setMultiple(multipleFlag);

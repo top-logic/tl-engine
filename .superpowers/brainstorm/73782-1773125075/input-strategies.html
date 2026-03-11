@@ -1,0 +1,149 @@
+<h2>How should application-scoped background agents get their input?</h2>
+<p class="subtitle">Three approaches with concrete examples — click the one that fits best</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Configurable Input Providers (Java plugin)</h3>
+      <p>Each background agent declares an <code>InputProvider</code> — a Java class that gathers data and returns it as a string for the agent to process.</p>
+
+      <div class="mockup" style="margin-top: 12px;">
+        <div class="mockup-header">Config XML</div>
+        <div class="mockup-body" style="font-family: monospace; font-size: 13px; white-space: pre; line-height: 1.5;">
+&lt;agent name="SecurityAuditor"&gt;
+  &lt;background trigger="scheduled" cron="0 0 * * *"&gt;
+    &lt;input-provider class="com.top_logic.ai.service
+      .bg.input.ModelSnapshotProvider"&gt;
+      &lt;module-filter&gt;myApp&lt;/module-filter&gt;
+      &lt;include-instances&gt;true&lt;/include-instances&gt;
+    &lt;/input-provider&gt;
+  &lt;/background&gt;
+&lt;/agent&gt;</div>
+      </div>
+
+      <div class="pros-cons" style="margin-top: 12px;">
+        <div class="pros"><h4>Pros</h4><ul>
+          <li>Full power of Java — can query KB, call APIs, aggregate complex data</li>
+          <li>Type-safe, testable, reusable across agents</li>
+          <li>Can pre-filter/optimize data before sending to LLM</li>
+        </ul></div>
+        <div class="cons"><h4>Cons</h4><ul>
+          <li>Requires Java code for each new input source</li>
+          <li>Heavier to add — needs compile, deploy</li>
+          <li>More coupling between agent config and Java classes</li>
+        </ul></div>
+      </div>
+
+      <p style="margin-top:8px"><strong>Example agents:</strong></p>
+      <ul>
+        <li><em>SecurityAuditor</em> — <code>ModelSnapshotProvider</code> dumps current model state for compliance review</li>
+        <li><em>DataQualityChecker</em> — <code>InstanceQueryProvider</code> queries all instances of a type and feeds them for validation</li>
+        <li><em>AuditLogReviewer</em> — <code>AuditLogProvider</code> reads last 24h of audit entries</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>TLScript-based Input (no-code)</h3>
+      <p>The agent's input is a TLScript expression defined in XML config. The framework evaluates it and passes the result as the agent's message.</p>
+
+      <div class="mockup" style="margin-top: 12px;">
+        <div class="mockup-header">Config XML</div>
+        <div class="mockup-body" style="font-family: monospace; font-size: 13px; white-space: pre; line-height: 1.5;">
+&lt;agent name="SecurityAuditor"&gt;
+  &lt;background trigger="scheduled" cron="0 0 * * *"&gt;
+    &lt;input-script&gt;
+      all(`myApp:SensitiveRecord`)
+        .filter(r -&gt; r.get(`lastReview`) == null
+          || daysBetween(r.get(`lastReview`), now()) &gt; 30)
+        .map(r -&gt; r.get(`name`) + ": " + r.get(`accessLevel`))
+        .toString("\n")
+    &lt;/input-script&gt;
+  &lt;/background&gt;
+&lt;/agent&gt;</div>
+      </div>
+
+      <div class="pros-cons" style="margin-top: 12px;">
+        <div class="pros"><h4>Pros</h4><ul>
+          <li>No Java code needed — pure configuration</li>
+          <li>Fast iteration — change script, restart, done</li>
+          <li>Leverages existing TLScript ecosystem (model-aware)</li>
+          <li>Very TopLogic-native</li>
+        </ul></div>
+        <div class="cons"><h4>Cons</h4><ul>
+          <li>Limited to what TLScript can express</li>
+          <li>Complex data gathering can get messy in XML</li>
+          <li>Harder to test in isolation</li>
+          <li>Script output is always a string — no structured pre-processing</li>
+        </ul></div>
+      </div>
+
+      <p style="margin-top:8px"><strong>Example agents:</strong></p>
+      <ul>
+        <li><em>SecurityAuditor</em> — TLScript queries unreviewed sensitive records</li>
+        <li><em>ModelConsistencyChecker</em> — TLScript finds types without descriptions</li>
+        <li><em>StaleDataDetector</em> — TLScript finds records not updated in 90 days</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Tool-based Self-Service (autonomous)</h3>
+      <p>The agent is invoked with just a trigger message (e.g. "Run your daily security check"). It uses its own configured tools to gather whatever data it needs — just like the Orchestrator uses tools to answer user questions.</p>
+
+      <div class="mockup" style="margin-top: 12px;">
+        <div class="mockup-header">Config XML</div>
+        <div class="mockup-body" style="font-family: monospace; font-size: 13px; white-space: pre; line-height: 1.5;">
+&lt;agent name="SecurityAuditor"
+       tools="tl.listInstances,tl.listTypeParts,
+              tl.executeTLScript,gitea.create_gitea_issue"&gt;
+  &lt;background trigger="scheduled" cron="0 0 * * *"&gt;
+    &lt;trigger-message&gt;
+      Run your daily security audit. Check all
+      SensitiveRecord instances for compliance.
+    &lt;/trigger-message&gt;
+  &lt;/background&gt;
+&lt;/agent&gt;</div>
+      </div>
+
+      <div class="pros-cons" style="margin-top: 12px;">
+        <div class="pros"><h4>Pros</h4><ul>
+          <li>Simplest framework — agent is just an agent with tools</li>
+          <li>Most flexible — agent decides what to look at</li>
+          <li>No new abstractions (InputProvider, TLScript eval)</li>
+          <li>Agent can adapt its strategy based on what it finds</li>
+          <li>Consistent with how conversational agents already work</li>
+        </ul></div>
+        <div class="cons"><h4>Cons</h4><ul>
+          <li>More LLM calls (agent must tool-call to gather data)</li>
+          <li>Higher token cost per execution</li>
+          <li>Less predictable — agent might not check everything</li>
+          <li>Harder to guarantee completeness of checks</li>
+        </ul></div>
+      </div>
+
+      <p style="margin-top:8px"><strong>Example agents:</strong></p>
+      <ul>
+        <li><em>SecurityAuditor</em> — uses listInstances + executeTLScript tools to find and analyze records</li>
+        <li><em>ModelValidator</em> — uses model browser tools to check naming conventions</li>
+        <li><em>SystemHealthMonitor</em> — uses custom health-check tools to verify services</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top: 24px; padding: 16px; background: rgba(255,255,255,0.05); border-radius: 8px;">
+  <h3>Or combine them?</h3>
+  <p>These aren't mutually exclusive. The framework could support all three as different <code>input-mode</code> values:</p>
+  <ul>
+    <li><code>input-mode="provider"</code> → Java InputProvider class</li>
+    <li><code>input-mode="script"</code> → TLScript expression</li>
+    <li><code>input-mode="autonomous"</code> → Just a trigger message, agent uses tools</li>
+  </ul>
+  <p>Each agent picks what fits its use case. A simple model checker uses TLScript, a complex compliance audit uses a Java provider, and an exploratory agent goes autonomous.</p>
+</div>

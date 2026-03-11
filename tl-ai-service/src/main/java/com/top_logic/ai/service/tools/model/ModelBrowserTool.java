@@ -59,7 +59,7 @@ import dev.langchain4j.agent.tool.Tool;
  * methods return JSON-formatted strings for consumption by AI agents.
  * </p>
  *
- * @see #listModules()
+ * @see #listModules(Boolean)
  * @see #listTypes(String)
  * @see #listTypeParts(String, String, Boolean)
  */
@@ -88,7 +88,7 @@ public class ModelBrowserTool {
 	}
 
 	/**
-	 * Lists all modules in the TopLogic application model.
+	 * Lists modules in the TopLogic application model.
 	 *
 	 * <p>
 	 * Returns a JSON array of modules with their names, type counts, labels, and descriptions.
@@ -96,10 +96,23 @@ public class ModelBrowserTool {
 	 * internal implementation details.
 	 * </p>
 	 *
+	 * <p>
+	 * By default, only application-specific modules are returned. Framework/platform modules
+	 * (tl.*, tl5.*) are excluded unless {@code includeFramework} is set to {@code true}.
+	 * </p>
+	 *
+	 * @param includeFramework
+	 *        Whether to include framework/platform modules. Default: {@code false}.
 	 * @return JSON array of modules.
 	 */
-	@Tool("List all modules in the TopLogic application model with type counts and descriptions")
-	public String listModules() {
+	@Tool("List modules in the TopLogic application model. By default, only application-specific "
+		+ "modules are returned. Framework/platform modules (tl.*, tl5.*) are excluded unless "
+		+ "includeFramework is set to true. Use includeFramework=true only when you need to "
+		+ "discover framework base types for extending or referencing.")
+	public String listModules(
+			@P("Set to true to include framework/platform modules (tl.*, tl5.*). "
+				+ "Default: false (application modules only).")
+			Boolean includeFramework) {
 		try {
 			// System interaction returns data class
 			ModuleListResponse response = ThreadContextManager.inSystemInteraction(
@@ -116,6 +129,11 @@ public class ModelBrowserTool {
 					Resources resources = Resources.getInstance();
 
 					for (TLModule module : tlModules) {
+						// Skip framework modules unless explicitly requested
+						if (!Boolean.TRUE.equals(includeFramework) && isFrameworkModule(module)) {
+							continue;
+						}
+
 						ModuleInfo moduleInfo = ModuleInfo.create();
 						moduleInfo.setName(module.getName());
 
@@ -149,12 +167,14 @@ public class ModelBrowserTool {
 
 			// Serialize to JSON using DataClassSerializer with tracking
 			Map<String, Object> args = new HashMap<>();
+			args.put("includeFramework", includeFramework);
 			return DataClassSerializer.toJson(response, ModelBrowserTool.class, "listModules()", args);
 
 		} catch (Exception ex) {
 			Logger.error("listModules() error: " + ex.getMessage(), ex, ModelBrowserTool.class);
 			System.err.println("ModelBrowserTool.listModules() error: " + ex.getMessage());
 			Map<String, Object> args = new HashMap<>();
+			args.put("includeFramework", includeFramework);
 			return DataClassSerializer.errorToJson(
 				"Error listing modules: " + ex.getMessage(),
 				ModelBrowserTool.class,

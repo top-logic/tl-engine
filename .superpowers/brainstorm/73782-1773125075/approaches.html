@@ -1,0 +1,188 @@
+<h2>Architectural Approaches</h2>
+<p class="subtitle">Three ways to structure the Background Agent Framework — click the one you prefer</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Unified Pipeline Architecture (Recommended)</h3>
+      <p>A single <code>BackgroundAgentPipeline</code> that all background agents flow through: <strong>Input → Agent → Output</strong>. Each stage is pluggable.</p>
+
+      <div class="mockup" style="margin-top: 12px;">
+        <div class="mockup-header">Architecture</div>
+        <div class="mockup-body" style="font-family: monospace; font-size: 12px; white-space: pre; line-height: 1.6;">
+┌─────────────────────────────────────────────────────────┐
+│                    AgentRegistry                         │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
+│  │ Orchestrator  │  │ ModelExplorer│  │ TLScriptAgent│  │
+│  │ (entry-point) │  │ (delegate)   │  │ (delegate)   │  │
+│  └──────────────┘  └──────────────┘  └──────────────┘  │
+│                                                          │
+│  ┌──────────────────────────────────────────────────┐   │
+│  │          BackgroundAgentConfig                     │   │
+│  │  ┌─────────┐  ┌──────────┐  ┌────────────────┐  │   │
+│  │  │ trigger  │  │  input   │  │ output-handler │  │   │
+│  │  │ ──────── │  │ ──────── │  │ ────────────── │  │   │
+│  │  │·post-turn│  │·provider │  │·notification   │  │   │
+│  │  │·pre-turn │  │·script   │  │·audit-log      │  │   │
+│  │  │·scheduled│  │·autonomus│  │·gitea-issue    │  │   │
+│  │  │·on-demand│  │·chat-ctx │  │·email          │  │   │
+│  │  └─────────┘  └──────────┘  └────────────────┘  │   │
+│  │                                                    │   │
+│  │  authority: advisory | authoritative               │   │
+│  │  scope: chat | application                         │   │
+│  │  block-message: "..." (if authoritative)           │   │
+│  │  notify-on-block: true/false                       │   │
+│  └──────────────────────────────────────────────────┘   │
+│                                                          │
+│  ┌──────────────┐  ┌──────────────┐                     │
+│  │ ReviewAgent   │  │SecurityGate  │  ... more bg agents │
+│  │ (background)  │  │ (background) │                     │
+│  └──────────────┘  └──────────────┘                     │
+└─────────────────────────────────────────────────────────┘
+
+          Execution Flow:
+          ┌──────────┐
+          │ Trigger   │  (Scheduler, ChatProcessor, API)
+          └────┬─────┘
+               ▼
+          ┌──────────┐
+          │ Input     │  (Provider / Script / Autonomous / Chat)
+          └────┬─────┘
+               ▼
+          ┌──────────┐
+          │ Agent     │  (LangChain4j UntypedAgent with tools)
+          └────┬─────┘
+               ▼
+          ┌──────────┐
+          │ Output    │  (OutputHandlers process result)
+          └────┬─────┘
+               ▼
+          ┌──────────┐
+          │ Authority │  (Advisory: log only. Authoritative: can block)
+          └──────────┘</div>
+      </div>
+
+      <div class="pros-cons" style="margin-top: 12px;">
+        <div class="pros"><h4>Pros</h4><ul>
+          <li>Single abstraction covers all patterns</li>
+          <li>Each stage is independently pluggable</li>
+          <li>New trigger/input/output types don't require framework changes</li>
+          <li>Clean separation of concerns</li>
+        </ul></div>
+        <div class="cons"><h4>Cons</h4><ul>
+          <li>Pipeline overhead for simple cases (ReviewAgent just needs trigger → agent → log)</li>
+          <li>More interfaces to implement upfront</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Event-Driven Architecture</h3>
+      <p>Background agents subscribe to <strong>events</strong> (turn-completed, turn-starting, timer-fired, manual-trigger). An event bus dispatches to registered agents.</p>
+
+      <div class="mockup" style="margin-top: 12px;">
+        <div class="mockup-header">Architecture</div>
+        <div class="mockup-body" style="font-family: monospace; font-size: 12px; white-space: pre; line-height: 1.6;">
+┌───────────────────────────────────────────┐
+│          BackgroundAgentEventBus           │
+│                                           │
+│  Events:                                  │
+│  ├─ TurnCompletedEvent (chat context)     │
+│  ├─ TurnStartingEvent (chat context)      │
+│  ├─ ScheduledEvent (timer context)        │
+│  ├─ ManualTriggerEvent (API context)      │
+│  └─ ApplicationEvent (custom context)     │
+│                                           │
+│  Subscriptions:                           │
+│  ├─ ReviewAgent → TurnCompletedEvent      │
+│  ├─ SecurityGate → TurnStartingEvent      │
+│  ├─ ComplianceBot → ScheduledEvent        │
+│  └─ AuditAgent → TurnCompleted + Sched.  │
+└───────────────────────────────────────────┘</div>
+      </div>
+
+      <div class="pros-cons" style="margin-top: 12px;">
+        <div class="pros"><h4>Pros</h4><ul>
+          <li>Very flexible — agents can subscribe to multiple events</li>
+          <li>Loosely coupled — agents don't know about each other</li>
+          <li>Easy to add new event types</li>
+        </ul></div>
+        <div class="cons"><h4>Cons</h4><ul>
+          <li>Pre-turn interception is awkward in event model (needs sync blocking)</li>
+          <li>Event bus is a new infrastructure piece to maintain</li>
+          <li>Harder to reason about execution order</li>
+          <li>Doesn't leverage TopLogic Scheduler naturally</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Interceptor Chain (Servlet Filter Pattern)</h3>
+      <p>Background agents are organized as a <strong>chain of interceptors</strong> around the main agent. Pre-turn agents run before, post-turn after. Scheduled agents are separate.</p>
+
+      <div class="mockup" style="margin-top: 12px;">
+        <div class="mockup-header">Architecture</div>
+        <div class="mockup-body" style="font-family: monospace; font-size: 12px; white-space: pre; line-height: 1.6;">
+User Message
+    │
+    ▼
+┌──────────────┐
+│ SecurityGate  │  PRE-TURN (can block)
+└──────┬───────┘
+       ▼
+┌──────────────┐
+│ ContentFilter │  PRE-TURN (can modify)
+└──────┬───────┘
+       ▼
+┌──────────────┐
+│ Orchestrator  │  MAIN AGENT
+└──────┬───────┘
+       ▼
+┌──────────────┐
+│ ReviewAgent   │  POST-TURN (observe)
+└──────┬───────┘
+       ▼
+┌──────────────┐
+│ AuditLogger   │  POST-TURN (observe)
+└──────┬───────┘
+       ▼
+Response to User
+
+(Scheduled agents run separately via Scheduler)</div>
+      </div>
+
+      <div class="pros-cons" style="margin-top: 12px;">
+        <div class="pros"><h4>Pros</h4><ul>
+          <li>Very intuitive mental model (like servlet filters)</li>
+          <li>Clear execution order</li>
+          <li>Pre-turn blocking is natural</li>
+        </ul></div>
+        <div class="cons"><h4>Cons</h4><ul>
+          <li>Only works for chat-scoped agents — scheduled agents need a separate mechanism</li>
+          <li>Tight coupling to conversation flow</li>
+          <li>Two different systems for chat vs application scope</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top: 24px; padding: 16px; background: rgba(255,255,255,0.05); border-radius: 8px;">
+  <h3>My Recommendation: A (Unified Pipeline)</h3>
+  <p>Approach A handles all four lifecycle patterns uniformly. The pipeline stages map cleanly to what we discussed:</p>
+  <ul>
+    <li><strong>Trigger</strong> = lifecycle pattern (post-turn, pre-turn, scheduled, on-demand)</li>
+    <li><strong>Input</strong> = combined input modes (provider, script, autonomous, chat-context)</li>
+    <li><strong>Agent</strong> = standard LangChain4j agent from AgentRegistry (same as today)</li>
+    <li><strong>Output</strong> = OutputHandlers (notification, audit, email, etc.)</li>
+    <li><strong>Authority</strong> = advisory vs authoritative (only meaningful for pre-turn)</li>
+  </ul>
+  <p>Scheduled agents naturally integrate with TopLogic's <code>Scheduler</code> via a <code>BackgroundAgentTask</code> that extends <code>StateHandlingTask</code>. Chat-scoped agents are triggered from <code>ChatProcessor</code> the same way ReviewAgent is today, but generalized.</p>
+</div>

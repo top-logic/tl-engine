@@ -16,6 +16,7 @@ import java.util.function.Consumer;
 import dev.langchain4j.memory.ChatMemory;
 
 import com.top_logic.ai.chat.layout.ChatProcessor.AIProcessingState;
+import com.top_logic.ai.service.approval.ApprovalMode;
 import com.top_logic.layout.WindowScope;
 
 /**
@@ -52,6 +53,9 @@ public class TaskProgressTracker {
 
 	/** User's first name for the welcome screen greeting. */
 	private volatile String _welcomeName = null;
+
+	/** Session-scoped approval mode. Persists across messages/processing states. */
+	private volatile ApprovalMode _approvalMode = ApprovalMode.MANUAL;
 
 	/**
 	 * Returns the chat for this window. Same instance for add and render so task traces persist.
@@ -142,6 +146,23 @@ public class TaskProgressTracker {
 	 */
 	public void setWelcomeName(String welcomeName) {
 		_welcomeName = welcomeName;
+	}
+
+	/** Returns the session-scoped approval mode. */
+	public ApprovalMode getApprovalMode() {
+		return _approvalMode;
+	}
+
+	/** Sets the session-scoped approval mode. Also updates the current processing store if active. */
+	public void setApprovalMode(ApprovalMode mode) {
+		_approvalMode = mode;
+		AIProcessingState state = _currentProcessingState;
+		if (state != null) {
+			var store = state.getUserInteractionStore();
+			if (store != null) {
+				store.setMode(mode);
+			}
+		}
 	}
 
 	/**

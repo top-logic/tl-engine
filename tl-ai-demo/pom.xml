@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>com.top-logic</groupId>
 		<artifactId>tl-parent-app</artifactId>
-		<version>0.0.1-AI</version>	
+		<version>0.0.3-AI</version>
 	</parent>
 	
 	<artifactId>tl-ai-demo</artifactId>
@@ -13,17 +13,6 @@
 	<properties>
 		<project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
 	</properties>
-
-	<dependencyManagement>
-		<dependencies>
-			<!-- Force version required by MCP SDK; engine uses 3.0.0 but only in test scope -->
-			<dependency>
-				<groupId>com.networknt</groupId>
-				<artifactId>json-schema-validator</artifactId>
-				<version>1.5.7</version>
-			</dependency>
-		</dependencies>
-	</dependencyManagement>
 
 	<dependencies>
 		<!-- TopLogic -->

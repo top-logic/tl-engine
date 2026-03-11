@@ -251,6 +251,40 @@
 	padding: 0;
 }
 
+/* Auto-approve toggle indicator */
+.approval-mode-indicator {
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	border: 1px solid var(--chat-border);
+	background-color: var(--chat-bg);
+	color: var(--chat-text-muted);
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	transition: border-color 0.2s, color 0.2s, background-color 0.2s;
+	padding: 0;
+	font-size: 0.85em;
+}
+
+.approval-mode-indicator:hover {
+	border-color: var(--chat-accent);
+	color: var(--chat-accent);
+}
+
+.approval-mode-indicator.active {
+	background-color: var(--chat-accent);
+	border-color: var(--chat-accent);
+	color: #fff;
+}
+
+.approval-mode-indicator.active:hover {
+	background-color: #4f46e5;
+	border-color: #4f46e5;
+}
+
 .chat-attach-button:hover {
 	border-color: var(--chat-accent);
 	color: var(--chat-accent);
@@ -549,6 +583,12 @@
 	max-width: 75%;
 	margin-bottom: 0;
 	padding: 0 4px;
+}
+
+/* In-progress task always stays at the bottom of the chat;
+   once completed, it reverts to DOM order (above the agent answer). */
+.chat-task[data-status="in_progress"] {
+	order: 999999;
 }
 
 /* Reduce gap between task and following agent message */
@@ -1252,4 +1292,127 @@
   display: inline-block;
   animation: agent-task-spin 1s linear infinite;
   color: #6366f1;
+}
+
+/* ========================================
+ * Inline Interaction Banner
+ * Sits between .chat-messages and .chat-input-section.
+ * ======================================== */
+
+.interaction-banner {
+	background: var(--chat-surface);
+	border-top: 1px solid var(--chat-border);
+	padding: 12px 16px;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.interaction-banner-header {
+	font-size: 0.9em;
+	font-weight: 600;
+	color: var(--chat-text-primary);
+}
+
+.interaction-banner-buttons {
+	display: flex;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+.approval-btn {
+	padding: 8px 18px;
+	border: 1px solid var(--chat-border);
+	border-radius: 8px;
+	background: var(--chat-bg);
+	color: var(--chat-text-primary);
+	font-size: 0.9em;
+	cursor: pointer;
+	transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.approval-btn:hover {
+	border-color: var(--chat-accent);
+}
+
+.approval-btn.approve {
+	background: var(--chat-accent);
+	color: #fff;
+	border-color: var(--chat-accent);
+}
+
+.approval-btn.approve:hover {
+	background: #4f46e5;
+	border-color: #4f46e5;
+}
+
+.approval-btn.reject {
+	color: #dc2626;
+	border-color: #dc2626;
+}
+
+.approval-btn.reject:hover {
+	background: #fee2e2;
+}
+
+.approval-btn.approve-all {
+	background: transparent;
+	color: var(--chat-accent);
+	border-color: var(--chat-accent);
+}
+
+.approval-btn.approve-all:hover {
+	background: rgba(99, 102, 241, 0.08);
+}
+
+/* Choice chips */
+.interaction-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.interaction-chip {
+	padding: 6px 14px;
+	border: 1px solid var(--chat-border);
+	border-radius: 20px;
+	background: var(--chat-bg);
+	color: var(--chat-text-primary);
+	font-size: 0.85em;
+	cursor: pointer;
+	transition: border-color 0.15s, background 0.15s;
+	user-select: none;
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.interaction-chip:hover {
+	border-color: var(--chat-accent);
+}
+
+.interaction-chip.selected {
+	background: var(--chat-accent);
+	color: #fff;
+	border-color: var(--chat-accent);
+}
+
+.interaction-chip-checkbox {
+	width: 14px;
+	height: 14px;
+	border: 1.5px solid var(--chat-border);
+	border-radius: 3px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	transition: background 0.15s, border-color 0.15s;
+	font-size: 10px;
+	color: transparent;
+}
+
+.interaction-chip.selected .interaction-chip-checkbox {
+	background: #fff;
+	border-color: #fff;
+	color: var(--chat-accent);
 }

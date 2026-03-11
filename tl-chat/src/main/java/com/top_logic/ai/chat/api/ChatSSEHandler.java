@@ -7,8 +7,10 @@ package com.top_logic.ai.chat.api;
 
 import java.io.PrintWriter;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -32,6 +34,9 @@ import com.top_logic.ai.chat.layout.ChatMessage;
 import com.top_logic.ai.chat.layout.ChatTask;
 import com.top_logic.ai.chat.layout.ChatTimelineEvent;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
+import com.top_logic.ai.service.approval.UserInteractionRequest;
+import com.top_logic.ai.service.approval.UserInteractionStore;
+import com.top_logic.ai.service.scripting.Converters;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.thread.ThreadContextManager;
 
@@ -93,6 +98,9 @@ public class ChatSSEHandler {
 	private final Map<String, String> _emittedTaskStates = new HashMap<>();
 	/** Reference to the last seen TaskStore instance to detect new processing rounds. */
 	private com.top_logic.ai.service.tools.task.TaskStore _lastTaskStore = null;
+
+	/** Tracks already-emitted user interaction request IDs to avoid duplicates. */
+	private final Set<String> _emittedInteractionIds = new HashSet<>();
 
 	private ScheduledFuture<?> _pollTask;
 
@@ -212,6 +220,10 @@ public class ChatSSEHandler {
 		} catch (Exception e) {
 			Logger.error("Failed to send connected event", e, ChatSSEHandler.class);
 		}
+
+		// Emit current approval mode so UI can show indicator on reconnect
+		String mode = _tracker.getApprovalMode().name();
+		sendEvent("approval_mode", "{\"mode\":\"" + mode + "\"}");
 	}
 
 	private void pollAndEmit() {
@@ -317,6 +329,20 @@ public class ChatSSEHandler {
 					_lastTaskDescription = currentDescription;
 				}
 			}
+
+			// Emit pending user interaction requests
+			ChatProcessor.AIProcessingState currentState = _tracker.getCurrentProcessingState();
+			if (currentState != null) {
+				UserInteractionStore interactionStore = currentState.getUserInteractionStore();
+				if (interactionStore != null && interactionStore.hasPending()) {
+					for (UserInteractionRequest req : interactionStore.getPendingRequests()) {
+						if (!_emittedInteractionIds.contains(req.getId())) {
+							emitUserInteraction(req);
+							_emittedInteractionIds.add(req.getId());
+						}
+					}
+				}
+			}
 		} else {
 			// Processing state cleared - but we may still need to emit final status
 			// The task still exists in tracker with COMPLETED/ERROR status
@@ -333,6 +359,7 @@ public class ChatSSEHandler {
 				_lastTaskStatus = null;
 				_lastTaskDescription = null;
 				_agentCallResults.clear();
+				_emittedInteractionIds.clear();
 			}
 		}
 
@@ -424,6 +451,15 @@ public class ChatSSEHandler {
 		}
 	}
 
+	private void emitUserInteraction(UserInteractionRequest req) {
+		try {
+			sendEvent("user_interaction", DtoMapper.toJson(
+				DtoMapper.toUserInteractionEvent(req)));
+		} catch (Exception e) {
+			Logger.error("Failed to emit user interaction event", e, ChatSSEHandler.class);
+		}
+	}
+
 	/** Interval in seconds after which the in-progress placeholder message rotates. */
 	private static final int PLACEHOLDER_ROTATE_SECONDS = 25;
 
@@ -458,6 +494,7 @@ public class ChatSSEHandler {
 			Logger.error("Failed to send heartbeat", e, ChatSSEHandler.class);
 		}
 	}
+
 
 	private void sendEvent(String eventType, String data) {
 		if (_closed.get()) {

@@ -13,13 +13,17 @@ import java.util.Map;
 
 import java.util.LinkedHashMap;
 
+import com.top_logic.ai.service.approval.UserInteractionRequest;
+
 import com.top_logic.ai.chat.api.messages.AttachmentDto;
 import com.top_logic.ai.chat.api.messages.ChatUpdatesResponse;
 import com.top_logic.ai.chat.api.messages.CurrentTaskDto;
+import com.top_logic.ai.chat.api.messages.InteractionOptionDto;
 import com.top_logic.ai.chat.api.messages.MessageDto;
 import com.top_logic.ai.chat.api.messages.PersistedChat;
 import com.top_logic.ai.chat.api.messages.PersistedChatEntry;
 import com.top_logic.ai.chat.api.messages.TimelineEventDto;
+import com.top_logic.ai.chat.api.messages.UserInteractionEvent;
 import com.top_logic.ai.chat.layout.Chat;
 import com.top_logic.ai.chat.layout.ChatEntry;
 import com.top_logic.ai.chat.layout.ChatMessage;
@@ -175,6 +179,62 @@ public final class DtoMapper {
 			dto.setResultSummary(ev.getResultSummary());
 		}
 		return dto;
+	}
+
+	/**
+	 * Converts a {@link UserInteractionRequest} to a {@link UserInteractionEvent}.
+	 *
+	 * @param req
+	 *        The pending interaction request.
+	 * @return The event DTO ready for SSE serialization.
+	 */
+	public static UserInteractionEvent toUserInteractionEvent(UserInteractionRequest req) {
+		UserInteractionEvent event = UserInteractionEvent.create()
+			.setRequestId(req.getId())
+			.setQuestion(req.getQuestion())
+			.setQuestionHtml(Converters.markdownToHtmlString(req.getQuestion()))
+			.setHeader(req.getHeader())
+			.setType(req.getType())
+			.setMultiSelect(req.isMultiSelect());
+		String options = req.getOptions();
+		if (options != null && !options.isEmpty()) {
+			parseInteractionOptions(options, event);
+		}
+		return event;
+	}
+
+	/**
+	 * Parses a JSON array of options (e.g. {@code [{"label":"A","description":"B"}]}) and adds
+	 * them to the event.
+	 */
+	private static void parseInteractionOptions(String optionsJson, UserInteractionEvent event) {
+		try {
+			JsonReader reader = new JsonReader(new StringR(optionsJson));
+			reader.beginArray();
+			while (reader.hasNext()) {
+				InteractionOptionDto option = InteractionOptionDto.create();
+				reader.beginObject();
+				while (reader.hasNext()) {
+					String name = reader.nextName();
+					switch (name) {
+						case "label":
+							option.setLabel(reader.nextString());
+							break;
+						case "description":
+							option.setDescription(reader.nextString());
+							break;
+						default:
+							reader.skipValue();
+							break;
+					}
+				}
+				reader.endObject();
+				event.addOption(option);
+			}
+			reader.endArray();
+		} catch (Exception ex) {
+			// Silently ignore malformed options JSON from LLM output.
+		}
 	}
 
 	/**

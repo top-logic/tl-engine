@@ -5,35 +5,38 @@
  */
 package com.top_logic.ai.service.tools.model;
 
+import java.io.IOException;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-
-import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
-
-import com.top_logic.ai.service.tools.model.messages.AnnotationInfo;
+import com.top_logic.ai.service.tools.ToolCallTracking;
+import com.top_logic.ai.service.tools.config.ConfigSchemaTool;
 import com.top_logic.ai.service.tools.model.messages.AnnotationListResponse;
 import com.top_logic.ai.service.tools.util.DataClassSerializer;
+import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.json.JsonConfigurationWriter;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModelPart;
-import com.top_logic.model.TLModule;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.TLAnnotation;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.model.ModelService;
+
+import de.haumacher.msgbuf.io.StringW;
 
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
@@ -156,8 +159,7 @@ public class ModelAnnotationBrowserTool {
 			@P("Include inherited annotations from supertypes/definitions (default: false)") Boolean includeInherited) {
 
 		try {
-			// System interaction returns data class
-			AnnotationListResponse response = ThreadContextManager.inSystemInteraction(
+			String result = ThreadContextManager.inSystemInteraction(
 				ModelAnnotationBrowserTool.class,
 				() -> {
 					// 1. Validate and default parameters
@@ -174,51 +176,39 @@ public class ModelAnnotationBrowserTool {
 					TLModelPart target = parser.resolve(model);
 
 					// 4. Determine the actual kind based on the resolved target
-					String kind = determineKind(target, parser);
+					String kind = TargetRefParser.determineKind(target, parser);
 
 					// 5. Collect annotations
 					List<InternalAnnotationInfo> annotations =
 						AnnotationCollector.collect(target, includeInheritedAnnotations);
 
-					// 6. Build response using data classes
-					AnnotationListResponse result = AnnotationListResponse.create();
-					result.setTarget(targetRef);
-					result.setKind(kind);
-					result.setModule(parser.getModuleName());
-					result.setType(parser.getTypeName()); // null for module targets
+					// 6. Build response metadata using data classes
+					AnnotationListResponse responseData = AnnotationListResponse.create();
+					responseData.setTarget(targetRef);
+					responseData.setKind(kind);
+					responseData.setModule(parser.getModuleName());
+					responseData.setType(parser.getTypeName());
 
-					// Set part field (null for module/type/enumeration targets, or for classifier targets)
 					if ("part".equals(kind)) {
-						result.setPart(parser.getPartName());
+						responseData.setPart(parser.getPartName());
 					}
-
-					// Set classifier field (only for classifier targets)
 					if ("classifier".equals(kind)) {
-						result.setClassifier(parser.getPartName());
+						responseData.setClassifier(parser.getPartName());
 					}
+					responseData.setIncludeInherited(includeInheritedAnnotations);
 
-					result.setIncludeInherited(includeInheritedAnnotations);
-
-					// Convert internal annotations to message objects
-					for (InternalAnnotationInfo info : annotations) {
-						AnnotationInfo annotationInfo = AnnotationInfo.create();
-						annotationInfo.setTag(getTagName(info.annotation));
-						annotationInfo.setConfigInterface(info.annotation.getConfigurationInterface().getName());
-						annotationInfo.setInherited(info.inherited);
-						annotationInfo.setDefinedIn(info.definedIn); // can be null
-						annotationInfo.setConfigXml(info.annotation.toString());
-
-						result.addAnnotation(annotationInfo);
-					}
-
-					return result;
+					// 7. Build JSON with inline annotation config
+					return buildResponse(responseData, annotations);
 				});
 
-			// Serialize to JSON using DataClassSerializer with tracking
+			// Track and log
 			Map<String, Object> args = new HashMap<>();
 			args.put("targetRef", targetRef);
 			args.put("includeInherited", includeInherited);
-			return DataClassSerializer.toJson(response, ModelAnnotationBrowserTool.class, "listAnnotations()", args);
+			ToolCallTracking.recordIfTracking("listAnnotations", args, result);
+			Logger.info(ToolCallTracking.formatToolCall("listAnnotations", args, result),
+				ModelAnnotationBrowserTool.class);
+			return result;
 
 		} catch (Exception ex) {
 			Logger.error("listAnnotations() error: " + ex.getMessage(), ex, ModelAnnotationBrowserTool.class);
@@ -255,190 +245,99 @@ public class ModelAnnotationBrowserTool {
 	}
 
 	/**
-	 * Determines the kind string based on the resolved model part.
+	 * Serializes a {@link TLAnnotation}'s configuration values to JSON with schema references.
 	 *
-	 * @param target
-	 *        The resolved model part.
-	 * @param parser
-	 *        The parser that was used to resolve the target.
-	 * @return The kind string ("module", "type", "enumeration", "part", or "classifier").
+	 * <p>
+	 * Uses {@link JsonConfigurationWriter} with schema-aware mode to produce JSON that includes
+	 * {@code $schema} URIs pointing to {@code toplogic://schema/config/...}, enabling LLMs to
+	 * resolve the full configuration schema via {@link ConfigSchemaTool}.
+	 * </p>
+	 *
+	 * @param annotation
+	 *        The annotation to serialize.
+	 * @return JSON string representing the annotation's configuration values.
 	 */
-	private static String determineKind(TLModelPart target, TargetRefParser parser) {
-		if (target instanceof TLModule) {
-			return "module";
-		}
-		if (target instanceof TLEnumeration) {
-			return "enumeration";
-		}
-		if (target instanceof TLClassifier) {
-			return "classifier";
-		}
-		if (target instanceof TLStructuredTypePart) {
-			return "part";
-		}
-		if (target instanceof TLType) {
-			return "type";
-		}
-		// Fallback
-		return parser.getTypeName() == null ? "module" : "type";
+	private static String serializeAnnotationConfig(TLAnnotation annotation) throws IOException {
+		StringWriter sw = new StringWriter();
+		new JsonConfigurationWriter(sw).prettyPrint().schemaAware().write(annotation);
+		return sw.toString();
 	}
 
 	/**
-	 * Parser and resolver for target references in format {@code "module"}, {@code "module:Type"},
-	 * or {@code "module:Type#part"}.
+	 * Builds the JSON response string, embedding annotation configurations as inline JSON objects.
+	 *
+	 * <p>
+	 * This method writes the JSON manually (rather than using {@link DataClassSerializer}) so that
+	 * the {@code configJson} field is embedded as a structured JSON object via
+	 * {@link de.haumacher.msgbuf.json.JsonWriter#jsonValue(String)}, not as an escaped string.
+	 * </p>
+	 *
+	 * @param response
+	 *        The response metadata (target, kind, module, etc.).
+	 * @param annotationInfos
+	 *        The internal annotation info list with the original {@link TLAnnotation} references.
+	 * @return The complete JSON response string.
 	 */
-	private static class TargetRefParser {
+	private static String buildResponse(AnnotationListResponse response,
+			List<InternalAnnotationInfo> annotationInfos) throws IOException {
 
-		private final String targetRef;
+		StringW buffer = new StringW();
+		try (de.haumacher.msgbuf.json.JsonWriter json = new de.haumacher.msgbuf.json.JsonWriter(buffer)) {
+			json.beginObject();
 
-		private final String moduleName;
+			json.name("target");
+			json.value(response.getTarget());
+			json.name("kind");
+			json.value(response.getKind());
+			json.name("module");
+			json.value(response.getModule());
 
-		private final String typeName; // null for module references
-
-		private final String partName; // null for module/type/enumeration references
-
-		private final boolean isModule;
-
-		private TargetRefParser(String targetRef, String moduleName, String typeName, String partName, boolean isModule) {
-			this.targetRef = targetRef;
-			this.moduleName = moduleName;
-			this.typeName = typeName;
-			this.partName = partName;
-			this.isModule = isModule;
-		}
-
-		/**
-		 * Parses a target reference string.
-		 *
-		 * @param targetRef
-		 *        The target reference to parse.
-		 * @return The parsed {@link TargetRefParser}.
-		 * @throws IllegalArgumentException
-		 *         If the format is invalid.
-		 */
-		static TargetRefParser parse(String targetRef) throws IllegalArgumentException {
-			if (targetRef == null || targetRef.isEmpty()) {
-				throw new IllegalArgumentException("Target reference cannot be null or empty");
+			if (response.getType() != null && !response.getType().isEmpty()) {
+				json.name("type");
+				json.value(response.getType());
+			}
+			if (response.getPart() != null && !response.getPart().isEmpty()) {
+				json.name("part");
+				json.value(response.getPart());
+			}
+			if (response.getClassifier() != null && !response.getClassifier().isEmpty()) {
+				json.name("classifier");
+				json.value(response.getClassifier());
 			}
 
-			// Split on '#' to detect part or classifier reference
-			String[] refParts = targetRef.split("#", 2);
-			String typeOrModuleRef = refParts[0];
-			String partOrClassifierName = refParts.length > 1 ? refParts[1] : null;
+			json.name("includeInherited");
+			json.value(response.isIncludeInherited());
 
-			// Split on ':' to extract module and type
-			String[] typeParts = typeOrModuleRef.split(":", 2);
+			json.name("annotations");
+			json.beginArray();
 
-			// If no ':' is present, it's a module-only reference
-			if (typeParts.length == 1) {
-				String moduleName = typeParts[0];
-				if (moduleName.isEmpty()) {
-					throw new IllegalArgumentException("Module name cannot be empty in: " + targetRef);
+			for (InternalAnnotationInfo info : annotationInfos) {
+				json.beginObject();
+
+				json.name("tag");
+				json.value(getTagName(info.annotation));
+
+				json.name("configInterface");
+				json.value(info.annotation.getConfigurationInterface().getName());
+
+				json.name("inherited");
+				json.value(info.inherited);
+
+				if (info.definedIn != null) {
+					json.name("definedIn");
+					json.value(info.definedIn);
 				}
-				if (partOrClassifierName != null) {
-					throw new IllegalArgumentException(
-						"Invalid target reference format: cannot have '#' without module:type separator: " + targetRef);
-				}
-				return new TargetRefParser(targetRef, moduleName, null, null, true);
+
+				json.name("configJson");
+				json.jsonValue(serializeAnnotationConfig(info.annotation));
+
+				json.endObject();
 			}
 
-			// Has ':' separator - it's a type or type#part reference
-			if (typeParts.length != 2) {
-				throw new IllegalArgumentException(
-					"Invalid target reference format. Expected 'module', 'module:Type', or 'module:Type#part', got: "
-						+ targetRef);
-			}
-
-			String moduleName = typeParts[0];
-			String typeName = typeParts[1];
-
-			// Validate components
-			if (moduleName.isEmpty()) {
-				throw new IllegalArgumentException("Module name cannot be empty in: " + targetRef);
-			}
-			if (typeName.isEmpty()) {
-				throw new IllegalArgumentException("Type name cannot be empty in: " + targetRef);
-			}
-			if (partOrClassifierName != null && partOrClassifierName.isEmpty()) {
-				throw new IllegalArgumentException("Part/classifier name cannot be empty in: " + targetRef);
-			}
-
-			// At this point we don't know if it's a classifier or part reference
-			// We'll determine that during resolution
-			return new TargetRefParser(targetRef, moduleName, typeName, partOrClassifierName, false);
+			json.endArray();
+			json.endObject();
 		}
-
-		/**
-		 * Resolves the parsed reference to a {@link TLModelPart}.
-		 *
-		 * @param model
-		 *        The model to resolve in.
-		 * @return The resolved {@link TLModelPart}.
-		 * @throws IllegalArgumentException
-		 *         If the reference cannot be resolved.
-		 */
-		TLModelPart resolve(TLModel model) throws IllegalArgumentException {
-			// Module-only reference
-			if (isModule) {
-				TLModule module = model.getModule(moduleName);
-				if (module == null) {
-					throw new IllegalArgumentException("Module not found: " + moduleName);
-				}
-				return module;
-			}
-
-			// Resolve module
-			TLModule module = model.getModule(moduleName);
-			if (module == null) {
-				throw new IllegalArgumentException("Module not found: " + moduleName);
-			}
-
-			// Resolve type
-			TLType type = module.getType(typeName);
-			if (type == null) {
-				throw new IllegalArgumentException("Type not found: " + typeName + " in module " + moduleName);
-			}
-
-			// If no part/classifier reference, return the type
-			if (partName == null) {
-				return type;
-			}
-
-			// Has part or classifier reference
-			// Check if it's an enumeration (classifier) or structured type (part)
-			if (type instanceof TLEnumeration) {
-				TLEnumeration enumeration = (TLEnumeration) type;
-				TLClassifier classifier = enumeration.getClassifier(partName);
-				if (classifier == null) {
-					throw new IllegalArgumentException(
-						"Classifier not found: " + partName + " in enumeration " + TLModelUtil.qualifiedName(type));
-				}
-				return classifier;
-			} else if (type instanceof TLStructuredType) {
-				TLStructuredType structuredType = (TLStructuredType) type;
-				TLStructuredTypePart part = structuredType.getPart(partName);
-				if (part == null) {
-					throw new IllegalArgumentException(
-						"Part not found: " + partName + " in type " + TLModelUtil.qualifiedName(type));
-				}
-				return part;
-			} else {
-				throw new IllegalArgumentException(
-					"Type has no parts or classifiers: " + TLModelUtil.qualifiedName(type));
-			}
-		}
-
-		String getModuleName() {
-			return moduleName;
-		}
-
-		String getTypeName() {
-			return typeName;
-		}
-
-		String getPartName() {
-			return partName;
-		}
+		return buffer.toString();
 	}
 
 	/**

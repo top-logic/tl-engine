@@ -11,7 +11,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.top_logic.ai.service.tools.ToolCallTracking;
 import com.top_logic.ai.service.tools.config.ConfigSchemaTool;
 import com.top_logic.ai.service.tools.layout.messages.LayoutCreateResponse;
 import com.top_logic.ai.service.tools.layout.messages.LayoutTemplateInfo;
@@ -184,11 +183,6 @@ public class LayoutTemplateTool {
 					return buildLayoutResponse(layoutKey, layout);
 				});
 
-			Map<String, Object> args = new HashMap<>();
-			args.put("layoutKey", layoutKey);
-			ToolCallTracking.recordIfTracking("getLayout", args, response);
-			Logger.info(ToolCallTracking.formatToolCall("getLayout", args, response),
-				LayoutTemplateTool.class);
 			return response;
 
 		} catch (Exception ex) {

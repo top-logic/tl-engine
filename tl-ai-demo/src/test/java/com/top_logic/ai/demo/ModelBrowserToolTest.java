@@ -32,15 +32,34 @@ public class ModelBrowserToolTest extends BasicTestCase {
 	private static final String COMPONENT_INTERFACE = "Component";
 
 	/**
-	 * Tests that listModules() returns a valid JSON response containing the luigis.pizzashop module.
+	 * Tests that listModules() returns only application modules by default (framework modules
+	 * excluded).
 	 */
 	public void testListModules() {
 		ModelBrowserTool tool = new ModelBrowserTool();
-		String result = tool.listModules();
+		String result = tool.listModules(null);
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain luigis.pizzashop module",
 			result.contains(PIZZASHOP_MODULE));
+		assertTrue("Result should be valid JSON with modules array",
+			result.contains("\"modules\""));
+		assertFalse("Result should NOT contain framework module tl.model",
+			result.contains("\"tl.model\""));
+	}
+
+	/**
+	 * Tests that listModules(includeFramework=true) returns both application and framework modules.
+	 */
+	public void testListModulesIncludeFramework() {
+		ModelBrowserTool tool = new ModelBrowserTool();
+		String result = tool.listModules(true);
+
+		assertNotNull("Result should not be null", result);
+		assertTrue("Result should contain luigis.pizzashop module",
+			result.contains(PIZZASHOP_MODULE));
+		assertTrue("Result should contain framework module tl.model",
+			result.contains("\"tl.model\""));
 		assertTrue("Result should be valid JSON with modules array",
 			result.contains("\"modules\""));
 	}

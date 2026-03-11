@@ -27,8 +27,8 @@ public class AnnotationInfo extends de.haumacher.msgbuf.data.AbstractDataObject 
 	/** @see #getDefinedIn() */
 	public static final String DEFINED_IN__PROP = "definedIn";
 
-	/** @see #getConfigXml() */
-	public static final String CONFIG_XML__PROP = "configXml";
+	/** @see #getConfigJson() */
+	public static final String CONFIG_JSON__PROP = "configJson";
 
 	private String _tag = "";
 
@@ -38,7 +38,7 @@ public class AnnotationInfo extends de.haumacher.msgbuf.data.AbstractDataObject 
 
 	private String _definedIn = "";
 
-	private String _configXml = "";
+	private String _configJson = "";
 
 	/**
 	 * Creates a {@link AnnotationInfo} instance.
@@ -130,23 +130,23 @@ public class AnnotationInfo extends de.haumacher.msgbuf.data.AbstractDataObject 
 	}
 
 	/**
-	 * Annotation configuration as XML string.
+	 * Annotation configuration as JSON (serialized via {@code JsonConfigurationWriter} with schema references).
 	 */
-	public final String getConfigXml() {
-		return _configXml;
+	public final String getConfigJson() {
+		return _configJson;
 	}
 
 	/**
-	 * @see #getConfigXml()
+	 * @see #getConfigJson()
 	 */
-	public com.top_logic.ai.service.tools.model.messages.AnnotationInfo setConfigXml(String value) {
-		internalSetConfigXml(value);
+	public com.top_logic.ai.service.tools.model.messages.AnnotationInfo setConfigJson(String value) {
+		internalSetConfigJson(value);
 		return this;
 	}
 
-	/** Internal setter for {@link #getConfigXml()} without chain call utility. */
-	protected final void internalSetConfigXml(String value) {
-		_configXml = value;
+	/** Internal setter for {@link #getConfigJson()} without chain call utility. */
+	protected final void internalSetConfigJson(String value) {
+		_configJson = value;
 	}
 
 	@Override
@@ -161,7 +161,7 @@ public class AnnotationInfo extends de.haumacher.msgbuf.data.AbstractDataObject 
 			CONFIG_INTERFACE__PROP, 
 			INHERITED__PROP, 
 			DEFINED_IN__PROP, 
-			CONFIG_XML__PROP);
+			CONFIG_JSON__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -190,7 +190,7 @@ public class AnnotationInfo extends de.haumacher.msgbuf.data.AbstractDataObject 
 			case CONFIG_INTERFACE__PROP: return getConfigInterface();
 			case INHERITED__PROP: return isInherited();
 			case DEFINED_IN__PROP: return getDefinedIn();
-			case CONFIG_XML__PROP: return getConfigXml();
+			case CONFIG_JSON__PROP: return getConfigJson();
 			default: return null;
 		}
 	}
@@ -202,7 +202,7 @@ public class AnnotationInfo extends de.haumacher.msgbuf.data.AbstractDataObject 
 			case CONFIG_INTERFACE__PROP: internalSetConfigInterface((String) value); break;
 			case INHERITED__PROP: internalSetInherited((boolean) value); break;
 			case DEFINED_IN__PROP: internalSetDefinedIn((String) value); break;
-			case CONFIG_XML__PROP: internalSetConfigXml((String) value); break;
+			case CONFIG_JSON__PROP: internalSetConfigJson((String) value); break;
 		}
 	}
 
@@ -229,8 +229,8 @@ public class AnnotationInfo extends de.haumacher.msgbuf.data.AbstractDataObject 
 		out.value(isInherited());
 		out.name(DEFINED_IN__PROP);
 		out.value(getDefinedIn());
-		out.name(CONFIG_XML__PROP);
-		out.value(getConfigXml());
+		out.name(CONFIG_JSON__PROP);
+		out.value(getConfigJson());
 	}
 
 	@Override
@@ -240,7 +240,7 @@ public class AnnotationInfo extends de.haumacher.msgbuf.data.AbstractDataObject 
 			case CONFIG_INTERFACE__PROP: setConfigInterface(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case INHERITED__PROP: setInherited(in.nextBoolean()); break;
 			case DEFINED_IN__PROP: setDefinedIn(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
-			case CONFIG_XML__PROP: setConfigXml(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case CONFIG_JSON__PROP: setConfigJson(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}
 	}

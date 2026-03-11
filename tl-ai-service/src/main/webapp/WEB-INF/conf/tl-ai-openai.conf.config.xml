@@ -52,7 +52,12 @@
 							tool-class="com.top_logic.ai.service.tools.model.ModelAnnotationBrowserTool"
 						/>
 					</factory>
-					<factory name="model-browser">
+					<factory name="model-annotation-editor">
+					<implementation class="com.top_logic.ai.service.tools.registry.ReflectiveToolFactory"
+						tool-class="com.top_logic.ai.service.tools.model.ModelAnnotationEditorTool"
+					/>
+				</factory>
+				<factory name="model-browser">
 						<implementation class="com.top_logic.ai.service.tools.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.ai.service.tools.model.ModelBrowserTool"
 						/>
@@ -85,6 +90,11 @@
 					<factory name="task">
 						<implementation class="com.top_logic.ai.service.tools.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.ai.service.tools.task.TaskTool"
+						/>
+					</factory>
+					<factory name="user-interaction">
+						<implementation class="com.top_logic.ai.service.tools.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.ai.service.tools.AskUserTool"
 						/>
 					</factory>
 
@@ -128,34 +138,28 @@
 
 		<config service-class="com.top_logic.ai.service.AIService">
 			<instance class="com.top_logic.ai.service.AIService"
-				default-model="gpt-4o"
+				default-model="mistral-large-latest"
 			>
 				<factories>
-					<!-- OpenAI models factory -->
-					<factory
-						class="com.top_logic.ai.service.providers.OpenAIChatModelFactory"
-						models="gpt-4o, gpt-4o-mini, gpt-3.5-turbo"
+					<factory class="com.top_logic.ai.service.providers.OpenAIChatModelFactory"
 						api-key="%OPENAI_API_KEY%"
 						base-url="https://api.openai.com/v1"
-						max-pool-size="10"
 						max-idle-models="5"
+						max-pool-size="10"
+						models=""
 					/>
-					<!-- Anthropic Claude models factory -->
-					<factory
-						class="com.top_logic.ai.service.providers.AnthropicChatModelFactory"
-						models="claude-opus-4-6, claude-sonnet-4-6, claude-haiku-4-5-20251001"
+					<factory class="com.top_logic.ai.service.providers.AnthropicChatModelFactory"
 						api-key="%ANTHROPIC_API_KEY%"
 						base-url="https://api.anthropic.com/v1"
-						max-pool-size="10"
 						max-idle-models="5"
+						max-pool-size="10"
+						models=""
 					/>
-					<!-- Mistral AI models factory -->
-					<factory
-						class="com.top_logic.ai.service.providers.MistralChatModelFactory"
+					<factory class="com.top_logic.ai.service.providers.MistralChatModelFactory"
 						api-key="%MISTRAL_API_KEY%"
 						base-url="https://api.mistral.ai/v1"
-						max-pool-size="10"
 						max-idle-models="5"
+						max-pool-size="10"
 					/>
 				</factories>
 			</instance>

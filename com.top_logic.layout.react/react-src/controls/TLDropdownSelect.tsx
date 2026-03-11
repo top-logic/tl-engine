@@ -190,12 +190,13 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
     }
   }, [filteredOptions.length, searchTerm]);
 
-  // Focus search input when dropdown opens and options are loaded
+  // Focus search input when dropdown is open and options are loaded.
+  // Re-runs on value changes to restore focus after SSE state updates.
   useEffect(() => {
     if (isOpen && optionsLoaded && searchRef.current) {
       searchRef.current.focus();
     }
-  }, [isOpen, optionsLoaded]);
+  }, [isOpen, optionsLoaded, value]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -284,8 +285,6 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
       } else {
         setSearchTerm('');
         setHighlightedIndex(-1);
-        // Defer focus to after React re-renders the portal.
-        requestAnimationFrame(() => searchRef.current?.focus());
       }
     },
     [multiSelect, allOptions, sendCommand, closeDropdown]

@@ -1469,14 +1469,14 @@ const ue = ({ icon: a }) => a ? /* @__PURE__ */ e.createElement("i", { className
     });
   }, [t]), _ = e.useCallback((g, L) => {
     L.stopPropagation(), t("select", { rowIndex: g, ctrlKey: !0, shiftKey: !1 });
-  }, [t]), j = e.useCallback(() => {
+  }, [t]), P = e.useCallback(() => {
     const g = c === i && i > 0;
     t("selectAll", { selected: !g });
   }, [t, c, i]), f = e.useCallback((g, L, I) => {
     I.stopPropagation(), t("expand", { rowIndex: g, expanded: L });
   }, [t]), R = e.useCallback((g, L) => {
     L.preventDefault(), N({ x: L.clientX, y: L.clientY, colIdx: g });
-  }, []), P = e.useCallback(() => {
+  }, []), j = e.useCallback(() => {
     k && (t("setFrozenColumnCount", { count: k.colIdx + 1 }), N(null));
   }, [k, t]), z = e.useCallback(() => {
     t("setFrozenColumnCount", { count: 0 }), N(null);
@@ -1527,7 +1527,7 @@ const ue = ({ icon: a }) => a ? /* @__PURE__ */ e.createElement("i", { className
           ref: Ve,
           className: "tlTableView__checkbox",
           checked: Q,
-          onChange: j
+          onChange: P
         }
       )
     ), r.map((g, L) => {
@@ -1656,7 +1656,7 @@ const ue = ({ icon: a }) => a ? /* @__PURE__ */ e.createElement("i", { className
         style: { position: "fixed", top: k.y, left: k.x, zIndex: 1e4 },
         onMouseDown: (g) => g.stopPropagation()
       },
-      k.colIdx + 1 !== n && /* @__PURE__ */ e.createElement("button", { type: "button", className: "tlMenu__item", role: "menuitem", onClick: P }, /* @__PURE__ */ e.createElement("span", { className: "tlMenu__label" }, l["js.table.freezeUpTo"])),
+      k.colIdx + 1 !== n && /* @__PURE__ */ e.createElement("button", { type: "button", className: "tlMenu__item", role: "menuitem", onClick: j }, /* @__PURE__ */ e.createElement("span", { className: "tlMenu__label" }, l["js.table.freezeUpTo"])),
       n > 0 && /* @__PURE__ */ e.createElement("button", { type: "button", className: "tlMenu__item", role: "menuitem", onClick: z }, /* @__PURE__ */ e.createElement("span", { className: "tlMenu__label" }, l["js.table.unfreezeAll"]))
     )
   );
@@ -1951,8 +1951,8 @@ function xn() {
     enqueueSetState: function() {
     }
   }, h = Object.assign, b = {};
-  function T(s, _, j) {
-    this.props = s, this.context = _, this.refs = b, this.updater = j || w;
+  function T(s, _, P) {
+    this.props = s, this.context = _, this.refs = b, this.updater = P || w;
   }
   T.prototype.isReactComponent = {}, T.prototype.setState = function(s, _) {
     if (typeof s != "object" && typeof s != "function" && s != null)
@@ -1966,8 +1966,8 @@ function xn() {
   function S() {
   }
   S.prototype = T.prototype;
-  function B(s, _, j) {
-    this.props = s, this.context = _, this.refs = b, this.updater = j || w;
+  function B(s, _, P) {
+    this.props = s, this.context = _, this.refs = b, this.updater = P || w;
   }
   var F = B.prototype = new S();
   F.constructor = B, h(F, T.prototype), F.isPureReactComponent = !0;
@@ -1975,14 +1975,14 @@ function xn() {
   function v() {
   }
   var y = { H: null, A: null, T: null, S: null }, H = Object.prototype.hasOwnProperty;
-  function k(s, _, j) {
-    var f = j.ref;
+  function k(s, _, P) {
+    var f = P.ref;
     return {
       $$typeof: a,
       type: s,
       key: _,
       ref: f !== void 0 ? f : null,
-      props: j
+      props: P
     };
   }
   function N(s, _) {
@@ -1993,8 +1993,8 @@ function xn() {
   }
   function M(s) {
     var _ = { "=": "=0", ":": "=2" };
-    return "$" + s.replace(/[=:]/g, function(j) {
-      return _[j];
+    return "$" + s.replace(/[=:]/g, function(P) {
+      return _[P];
     });
   }
   var U = /\/+/g;
@@ -2024,13 +2024,13 @@ function xn() {
     }
     throw s;
   }
-  function K(s, _, j, f, R) {
-    var P = typeof s;
-    (P === "undefined" || P === "boolean") && (s = null);
+  function K(s, _, P, f, R) {
+    var j = typeof s;
+    (j === "undefined" || j === "boolean") && (s = null);
     var z = !1;
     if (s === null) z = !0;
     else
-      switch (P) {
+      switch (j) {
         case "bigint":
         case "string":
         case "number":
@@ -2046,18 +2046,18 @@ function xn() {
               return z = s._init, K(
                 z(s._payload),
                 _,
-                j,
+                P,
                 f,
                 R
               );
           }
       }
     if (z)
-      return R = R(s), z = f === "" ? "." + Z(s, 0) : f, m(R) ? (j = "", z != null && (j = z.replace(U, "$&/") + "/"), K(R, _, j, "", function(fe) {
+      return R = R(s), z = f === "" ? "." + Z(s, 0) : f, m(R) ? (P = "", z != null && (P = z.replace(U, "$&/") + "/"), K(R, _, P, "", function(fe) {
         return fe;
       })) : R != null && (D(R) && (R = N(
         R,
-        j + (R.key == null || s && s.key === R.key ? "" : ("" + R.key).replace(
+        P + (R.key == null || s && s.key === R.key ? "" : ("" + R.key).replace(
           U,
           "$&/"
         ) + "/") + z
@@ -2066,28 +2066,28 @@ function xn() {
     var te = f === "" ? "." : f + ":";
     if (m(s))
       for (var Q = 0; Q < s.length; Q++)
-        f = s[Q], P = te + Z(f, Q), z += K(
+        f = s[Q], j = te + Z(f, Q), z += K(
           f,
           _,
-          j,
           P,
+          j,
           R
         );
     else if (Q = x(s), typeof Q == "function")
       for (s = Q.call(s), Q = 0; !(f = s.next()).done; )
-        f = f.value, P = te + Z(f, Q++), z += K(
+        f = f.value, j = te + Z(f, Q++), z += K(
           f,
           _,
-          j,
           P,
+          j,
           R
         );
-    else if (P === "object") {
+    else if (j === "object") {
       if (typeof s.then == "function")
         return K(
           q(s),
           _,
-          j,
+          P,
           f,
           R
         );
@@ -2097,22 +2097,22 @@ function xn() {
     }
     return z;
   }
-  function ne(s, _, j) {
+  function ne(s, _, P) {
     if (s == null) return s;
     var f = [], R = 0;
-    return K(s, f, "", "", function(P) {
-      return _.call(j, P, R++);
+    return K(s, f, "", "", function(j) {
+      return _.call(P, j, R++);
     }), f;
   }
   function ce(s) {
     if (s._status === -1) {
       var _ = s._result;
       _ = _(), _.then(
-        function(j) {
-          (s._status === 0 || s._status === -1) && (s._status = 1, s._result = j);
+        function(P) {
+          (s._status === 0 || s._status === -1) && (s._status = 1, s._result = P);
         },
-        function(j) {
-          (s._status === 0 || s._status === -1) && (s._status = 2, s._result = j);
+        function(P) {
+          (s._status === 0 || s._status === -1) && (s._status = 2, s._result = P);
         }
       ), s._status === -1 && (s._status = 0, s._result = _);
     }
@@ -2135,13 +2135,13 @@ function xn() {
     console.error(s);
   }, ie = {
     map: ne,
-    forEach: function(s, _, j) {
+    forEach: function(s, _, P) {
       ne(
         s,
         function() {
           _.apply(this, arguments);
         },
-        j
+        P
       );
     },
     count: function(s) {
@@ -2174,19 +2174,19 @@ function xn() {
     };
   }, A.cacheSignal = function() {
     return null;
-  }, A.cloneElement = function(s, _, j) {
+  }, A.cloneElement = function(s, _, P) {
     if (s == null)
       throw Error(
         "The argument must be a React element, but you passed " + s + "."
       );
     var f = h({}, s.props), R = s.key;
     if (_ != null)
-      for (P in _.key !== void 0 && (R = "" + _.key), _)
-        !H.call(_, P) || P === "key" || P === "__self" || P === "__source" || P === "ref" && _.ref === void 0 || (f[P] = _[P]);
-    var P = arguments.length - 2;
-    if (P === 1) f.children = j;
-    else if (1 < P) {
-      for (var z = Array(P), te = 0; te < P; te++)
+      for (j in _.key !== void 0 && (R = "" + _.key), _)
+        !H.call(_, j) || j === "key" || j === "__self" || j === "__source" || j === "ref" && _.ref === void 0 || (f[j] = _[j]);
+    var j = arguments.length - 2;
+    if (j === 1) f.children = P;
+    else if (1 < j) {
+      for (var z = Array(j), te = 0; te < j; te++)
         z[te] = arguments[te + 2];
       f.children = z;
     }
@@ -2203,13 +2203,13 @@ function xn() {
       $$typeof: u,
       _context: s
     }, s;
-  }, A.createElement = function(s, _, j) {
-    var f, R = {}, P = null;
+  }, A.createElement = function(s, _, P) {
+    var f, R = {}, j = null;
     if (_ != null)
-      for (f in _.key !== void 0 && (P = "" + _.key), _)
+      for (f in _.key !== void 0 && (j = "" + _.key), _)
         H.call(_, f) && f !== "key" && f !== "__self" && f !== "__source" && (R[f] = _[f]);
     var z = arguments.length - 2;
-    if (z === 1) R.children = j;
+    if (z === 1) R.children = P;
     else if (1 < z) {
       for (var te = Array(z), Q = 0; Q < z; Q++)
         te[Q] = arguments[Q + 2];
@@ -2218,7 +2218,7 @@ function xn() {
     if (s && s.defaultProps)
       for (f in z = s.defaultProps, z)
         R[f] === void 0 && (R[f] = z[f]);
-    return k(s, P, R);
+    return k(s, j, R);
   }, A.createRef = function() {
     return { current: null };
   }, A.forwardRef = function(s) {
@@ -2236,22 +2236,22 @@ function xn() {
       compare: _ === void 0 ? null : _
     };
   }, A.startTransition = function(s) {
-    var _ = y.T, j = {};
-    y.T = j;
+    var _ = y.T, P = {};
+    y.T = P;
     try {
       var f = s(), R = y.S;
-      R !== null && R(j, f), typeof f == "object" && f !== null && typeof f.then == "function" && f.then(v, oe);
-    } catch (P) {
-      oe(P);
+      R !== null && R(P, f), typeof f == "object" && f !== null && typeof f.then == "function" && f.then(v, oe);
+    } catch (j) {
+      oe(j);
     } finally {
-      _ !== null && j.types !== null && (_.types = j.types), y.T = _;
+      _ !== null && P.types !== null && (_.types = P.types), y.T = _;
     }
   }, A.unstable_useCacheRefresh = function() {
     return y.H.useCacheRefresh();
   }, A.use = function(s) {
     return y.H.use(s);
-  }, A.useActionState = function(s, _, j) {
-    return y.H.useActionState(s, _, j);
+  }, A.useActionState = function(s, _, P) {
+    return y.H.useActionState(s, _, P);
   }, A.useCallback = function(s, _) {
     return y.H.useCallback(s, _);
   }, A.useContext = function(s) {
@@ -2265,8 +2265,8 @@ function xn() {
     return y.H.useEffectEvent(s);
   }, A.useId = function() {
     return y.H.useId();
-  }, A.useImperativeHandle = function(s, _, j) {
-    return y.H.useImperativeHandle(s, _, j);
+  }, A.useImperativeHandle = function(s, _, P) {
+    return y.H.useImperativeHandle(s, _, P);
   }, A.useInsertionEffect = function(s, _) {
     return y.H.useInsertionEffect(s, _);
   }, A.useLayoutEffect = function(s, _) {
@@ -2275,17 +2275,17 @@ function xn() {
     return y.H.useMemo(s, _);
   }, A.useOptimistic = function(s, _) {
     return y.H.useOptimistic(s, _);
-  }, A.useReducer = function(s, _, j) {
-    return y.H.useReducer(s, _, j);
+  }, A.useReducer = function(s, _, P) {
+    return y.H.useReducer(s, _, P);
   }, A.useRef = function(s) {
     return y.H.useRef(s);
   }, A.useState = function(s) {
     return y.H.useState(s);
-  }, A.useSyncExternalStore = function(s, _, j) {
+  }, A.useSyncExternalStore = function(s, _, P) {
     return y.H.useSyncExternalStore(
       s,
       _,
-      j
+      P
     );
   }, A.useTransition = function() {
     return y.H.useTransition();
@@ -2531,7 +2531,7 @@ const Bn = ({ controlId: a, state: t }) => {
     let f = n.filter((R) => !M.has(R.value));
     if (b) {
       const R = b.toLowerCase();
-      f = f.filter((P) => P.label.toLowerCase().includes(R));
+      f = f.filter((j) => j.label.toLowerCase().includes(R));
     }
     return f;
   }, [n, M, b]);
@@ -2539,7 +2539,7 @@ const Bn = ({ controlId: a, state: t }) => {
     b && U.length === 1 ? B(0) : B(-1);
   }, [U.length, b]), me(() => {
     w && c && k.current && k.current.focus();
-  }, [w, c]), me(() => {
+  }, [w, c, r]), me(() => {
     if (!w) return;
     const f = (R) => {
       H.current && !H.current.contains(R.target) && N.current && !N.current.contains(R.target) && (h(!1), T(""));
@@ -2568,28 +2568,25 @@ const Bn = ({ controlId: a, state: t }) => {
     (f) => {
       let R;
       if (i) {
-        const P = n.find((z) => z.value === f);
-        if (P)
-          R = [...D.current, P];
+        const j = n.find((z) => z.value === f);
+        if (j)
+          R = [...D.current, j];
         else
           return;
       } else {
-        const P = n.find((z) => z.value === f);
-        if (P)
-          R = [P];
+        const j = n.find((z) => z.value === f);
+        if (j)
+          R = [j];
         else
           return;
       }
-      D.current = R, l("valueChanged", { value: R.map((P) => P.value) }), i ? (T(""), B(-1), requestAnimationFrame(() => {
-        var P;
-        return (P = k.current) == null ? void 0 : P.focus();
-      })) : q();
+      D.current = R, l("valueChanged", { value: R.map((j) => j.value) }), i ? (T(""), B(-1)) : q();
     },
     [i, n, l, q]
   ), ne = se(
     (f) => {
-      const R = D.current.filter((P) => P.value !== f);
-      D.current = R, l("valueChanged", { value: R.map((P) => P.value) });
+      const R = D.current.filter((j) => j.value !== f);
+      D.current = R, l("valueChanged", { value: R.map((j) => j.value) });
     },
     [l]
   ), ce = se(
@@ -2661,7 +2658,7 @@ const Bn = ({ controlId: a, state: t }) => {
     f && f.scrollIntoView({ block: "nearest" });
   }, [S, a]), !d)
     return /* @__PURE__ */ e.createElement("div", { id: a, className: "tlDropdownSelect tlDropdownSelect--immutable" }, r.length === 0 ? /* @__PURE__ */ e.createElement("span", { className: "tlDropdownSelect__empty" }, p) : r.map((f) => /* @__PURE__ */ e.createElement("span", { key: f.value, className: "tlDropdownSelect__readonlyValue" }, /* @__PURE__ */ e.createElement(xe, { image: f.image }), /* @__PURE__ */ e.createElement("span", null, f.label))));
-  const _ = !u && r.length > 0 && !o, j = w ? /* @__PURE__ */ e.createElement(
+  const _ = !u && r.length > 0 && !o, P = w ? /* @__PURE__ */ e.createElement(
     "div",
     {
       ref: N,
@@ -2742,7 +2739,7 @@ const Bn = ({ controlId: a, state: t }) => {
       },
       "×"
     ), /* @__PURE__ */ e.createElement("span", { className: "tlDropdownSelect__arrow", "aria-hidden": "true" }, w ? "▲" : "▼"))
-  ), j && Mn.createPortal(j, document.body));
+  ), P && Mn.createPortal(P, document.body));
 };
 O("TLButton", lt);
 O("TLToggleButton", st);

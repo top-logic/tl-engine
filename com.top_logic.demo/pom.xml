@@ -138,6 +138,10 @@
       <groupId>com.top-logic</groupId>
       <artifactId>tl-kafka</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-model-search-react</artifactId>
+    </dependency>
   </dependencies>
   
 	<build>

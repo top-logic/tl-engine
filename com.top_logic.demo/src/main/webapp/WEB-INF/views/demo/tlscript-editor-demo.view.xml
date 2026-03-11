@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<panel title="TL-Script Editor">
+		<tlscript-editor value="person -> $person.get(`tl.accounts:Person#name`)" />
+	</panel>
+</view>

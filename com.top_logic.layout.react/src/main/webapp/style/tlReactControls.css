@@ -2199,6 +2199,7 @@ button.tlMenu__item--disabled:hover {
 .tlFormField {
 	display: grid;
 	gap: var(--spacing-02, 0.25rem);
+	align-self: start;
 	position: relative;
 	font-family: var(--font-family);
 }

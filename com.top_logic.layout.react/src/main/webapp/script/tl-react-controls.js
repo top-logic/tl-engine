@@ -2531,7 +2531,7 @@ function On({
   );
 }
 const Bn = ({ controlId: a, state: t }) => {
-  const l = ee(), r = t.value ?? [], i = t.multiSelect === !0, u = t.customOrder === !0, s = t.mandatory === !0, d = t.disabled === !0, c = t.editable !== !1, n = t.optionsLoaded === !0, p = t.options ?? [], C = t.emptyOptionLabel ?? "", g = u && i && !d && c, L = ce({
+  const l = ee(), r = t.value ?? [], i = t.multiSelect === !0, u = t.customOrder === !0, s = t.mandatory === !0, d = t.disabled === !0, c = t.editable !== !1, n = t.optionsLoaded === !0, p = t.options ?? [], C = t.emptyOptionLabel ?? "", g = u && i && !d && c && n, L = ce({
     "js.dropdownSelect.nothingFound": "Nothing found",
     "js.dropdownSelect.filterPlaceholder": "Filter…",
     "js.dropdownSelect.clear": "Clear selection",

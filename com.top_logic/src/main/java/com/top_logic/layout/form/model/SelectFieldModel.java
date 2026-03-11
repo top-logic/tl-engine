@@ -13,6 +13,22 @@ import java.util.List;
 public interface SelectFieldModel extends FieldModel {
 
 	/**
+	 * Listener for {@link SelectFieldModel#getOptions() options} changes.
+	 */
+	interface SelectOptionsListener {
+
+		/**
+		 * Called when the available options change.
+		 *
+		 * @param source
+		 *        The model whose options changed.
+		 * @param newOptions
+		 *        The new options list.
+		 */
+		void onOptionsChanged(SelectFieldModel source, List<?> newOptions);
+	}
+
+	/**
 	 * The available options.
 	 */
 	List<?> getOptions();
@@ -26,7 +42,7 @@ public interface SelectFieldModel extends FieldModel {
 	 * Updates the available options.
 	 *
 	 * <p>
-	 * Fires {@link OptionsListener#onOptionsChanged(SelectFieldModel, List)}.
+	 * Fires {@link SelectOptionsListener#onOptionsChanged(SelectFieldModel, List)}.
 	 * </p>
 	 */
 	void setOptions(List<?> options);
@@ -34,10 +50,10 @@ public interface SelectFieldModel extends FieldModel {
 	/**
 	 * Adds a listener for options changes.
 	 */
-	void addOptionsListener(OptionsListener listener);
+	void addOptionsListener(SelectOptionsListener listener);
 
 	/**
 	 * Removes a previously added options listener.
 	 */
-	void removeOptionsListener(OptionsListener listener);
+	void removeOptionsListener(SelectOptionsListener listener);
 }

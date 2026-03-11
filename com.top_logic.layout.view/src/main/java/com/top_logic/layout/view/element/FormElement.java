@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 
 import com.top_logic.base.locking.handler.DefaultLockHandler;
 import com.top_logic.base.locking.handler.LockHandler;
+import com.top_logic.base.locking.handler.NoTokenHandling;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -152,7 +153,16 @@ public class FormElement extends ContainerElement {
 	public FormElement(InstantiationContext context, Config config) {
 		super(context, config);
 		_config = config;
-		_lockHandler = context.getInstance(config.getLockHandler());
+		_lockHandler = createLockHandler(context, config);
+	}
+
+	private LockHandler createLockHandler(InstantiationContext context, Config config) {
+		LockHandler result = context.getInstance(config.getLockHandler());
+		if (result != null) {
+			return result;
+		}
+
+		return NoTokenHandling.INSTANCE;
 	}
 
 	@Override

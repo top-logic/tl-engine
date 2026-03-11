@@ -206,51 +206,51 @@ public class DemoReactFormFieldsComponent extends LayoutComponent {
 		ResourceProvider countryResourceProvider = new DemoCountryResourceProvider();
 
 		SelectField countrySingle = FormFactory.newSelectField("country", countryOptions, false, false);
-		countrySingle.setOptionLabelProvider(countryResourceProvider);
 		formContext.addMember(countrySingle);
-		ReactDropdownSelectControl countrySingleInput = new ReactDropdownSelectControl(ctx, new SelectFieldAdapter(countrySingle));
+		ReactDropdownSelectControl countrySingleInput = new ReactDropdownSelectControl(ctx,
+			new SelectFieldAdapter(countrySingle), countryResourceProvider, null, false);
 		ReactFormFieldChromeControl countrySingleChrome = new ReactFormFieldChromeControl(ctx,
 			"Country (single)", false, false, null, "Pick one country", null, false, true, countrySingleInput);
 
 		SelectField countryMulti = FormFactory.newSelectField("countries", countryOptions, true, false);
-		countryMulti.setOptionLabelProvider(countryResourceProvider);
 		countryMulti.setAsSelection(Arrays.asList("Germany", "France"));
 		formContext.addMember(countryMulti);
-		ReactDropdownSelectControl countryMultiInput = new ReactDropdownSelectControl(ctx, new SelectFieldAdapter(countryMulti));
+		ReactDropdownSelectControl countryMultiInput = new ReactDropdownSelectControl(ctx,
+			new SelectFieldAdapter(countryMulti), countryResourceProvider, null, false);
 		ReactFormFieldChromeControl countryMultiChrome = new ReactFormFieldChromeControl(ctx,
 			"Countries (multi)", false, false, null, "Pick multiple countries", null, false, true, countryMultiInput);
 
 		SelectField countryMandatory = FormFactory.newSelectField("mandatoryCountry", countryOptions, false, true, false, null);
-		countryMandatory.setOptionLabelProvider(countryResourceProvider);
 		countryMandatory.setAsSelection(Collections.singletonList("Italy"));
 		formContext.addMember(countryMandatory);
-		ReactDropdownSelectControl countryMandatoryInput = new ReactDropdownSelectControl(ctx, new SelectFieldAdapter(countryMandatory));
+		ReactDropdownSelectControl countryMandatoryInput = new ReactDropdownSelectControl(ctx,
+			new SelectFieldAdapter(countryMandatory), countryResourceProvider, null, false);
 		ReactFormFieldChromeControl countryMandatoryChrome = new ReactFormFieldChromeControl(ctx,
 			"Country (mandatory)", true, false, null, "Required \u2013 clear button is hidden", null, false, true, countryMandatoryInput);
 
 		SelectField countryDisabled = FormFactory.newSelectField("disabledCountry", countryOptions, false, false);
-		countryDisabled.setOptionLabelProvider(countryResourceProvider);
 		countryDisabled.setAsSelection(Collections.singletonList("Spain"));
 		countryDisabled.setDisabled(true);
 		formContext.addMember(countryDisabled);
-		ReactDropdownSelectControl countryDisabledInput = new ReactDropdownSelectControl(ctx, new SelectFieldAdapter(countryDisabled));
+		ReactDropdownSelectControl countryDisabledInput = new ReactDropdownSelectControl(ctx,
+			new SelectFieldAdapter(countryDisabled), countryResourceProvider, null, false);
 		ReactFormFieldChromeControl countryDisabledChrome = new ReactFormFieldChromeControl(ctx,
 			"Country (disabled)", false, false, null, null, null, false, true, countryDisabledInput);
 
 		SelectField countryImmutable = FormFactory.newSelectField("immutableCountry", countryOptions, false, true);
-		countryImmutable.setOptionLabelProvider(countryResourceProvider);
 		countryImmutable.setAsSelection(Collections.singletonList("Switzerland"));
 		formContext.addMember(countryImmutable);
-		ReactDropdownSelectControl countryImmutableInput = new ReactDropdownSelectControl(ctx, new SelectFieldAdapter(countryImmutable));
+		ReactDropdownSelectControl countryImmutableInput = new ReactDropdownSelectControl(ctx,
+			new SelectFieldAdapter(countryImmutable), countryResourceProvider, null, false);
 		ReactFormFieldChromeControl countryImmutableChrome = new ReactFormFieldChromeControl(ctx,
 			"Country (read-only)", false, false, null, null, null, false, true, countryImmutableInput);
 
 		SelectField countryCustomOrder = FormFactory.newSelectField("customOrderCountries", countryOptions, true, false);
-		countryCustomOrder.setOptionLabelProvider(countryResourceProvider);
 		countryCustomOrder.setCustomOrder(true);
 		countryCustomOrder.setAsSelection(Arrays.asList("Germany", "France", "Italy"));
 		formContext.addMember(countryCustomOrder);
-		ReactDropdownSelectControl countryCustomOrderInput = new ReactDropdownSelectControl(ctx, new SelectFieldAdapter(countryCustomOrder));
+		ReactDropdownSelectControl countryCustomOrderInput = new ReactDropdownSelectControl(ctx,
+			new SelectFieldAdapter(countryCustomOrder), countryResourceProvider, null, true);
 		ReactFormFieldChromeControl countryCustomOrderChrome = new ReactFormFieldChromeControl(ctx,
 			"Countries (custom order)", false, false, null, "Drag chips to reorder", null, false, true, countryCustomOrderInput);
 

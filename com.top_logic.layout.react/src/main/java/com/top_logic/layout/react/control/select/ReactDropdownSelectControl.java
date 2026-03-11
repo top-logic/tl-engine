@@ -20,9 +20,7 @@ import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.ResourceProvider;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.model.FieldModel;
-import com.top_logic.layout.form.model.SelectField;
-import com.top_logic.layout.form.model.SelectFieldAdapter;
-import com.top_logic.layout.form.model.SelectFieldUtils;
+import com.top_logic.layout.form.model.SelectFieldModel;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
@@ -62,7 +60,13 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 
 	private static final String OPT_IMAGE = "image";
 
-	private final SelectField _selectField;
+	private final SelectFieldModel _selectModel;
+
+	private final LabelProvider _labelProvider;
+
+	private final Comparator<?> _optionComparator;
+
+	private final boolean _customOrder;
 
 	/**
 	 * Maps option ID strings to the original option objects. Used by
@@ -89,12 +93,23 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 *
 	 * @param context
 	 *        The {@link ReactContext} for ID allocation and SSE registration.
-	 * @param adapter
-	 *        The {@link SelectFieldAdapter} wrapping the {@link SelectField}.
+	 * @param model
+	 *        The {@link SelectFieldModel} providing value, options, editability, and validation.
+	 * @param labelProvider
+	 *        Provider for option labels. If the provider also implements
+	 *        {@link ResourceProvider}, option images are included.
+	 * @param optionComparator
+	 *        Comparator for sorting options in the dropdown. Pass {@code null} for natural order.
+	 * @param customOrder
+	 *        Whether the user can reorder selected values (drag chips to reorder).
 	 */
-	public ReactDropdownSelectControl(ReactContext context, SelectFieldAdapter adapter) {
-		super(context, adapter, "TLDropdownSelect");
-		_selectField = adapter.getSelectField();
+	public ReactDropdownSelectControl(ReactContext context, SelectFieldModel model,
+			LabelProvider labelProvider, Comparator<?> optionComparator, boolean customOrder) {
+		super(context, model, "TLDropdownSelect");
+		_selectModel = model;
+		_labelProvider = labelProvider;
+		_optionComparator = optionComparator;
+		_customOrder = customOrder;
 		initSelectState();
 	}
 
@@ -105,9 +120,9 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	private void initSelectState() {
 		Resources resources = Resources.getInstance();
 
-		putState(VALUE, toOptionDescriptors(SelectFieldUtils.getSelectionListSorted(_selectField)));
-		putState(MULTI_SELECT, _selectField.isMultiple());
-		putState(CUSTOM_ORDER, _selectField.hasCustomOrder());
+		putState(VALUE, toOptionDescriptors(getSelectionSorted()));
+		putState(MULTI_SELECT, _selectModel.isMultiple());
+		putState(CUSTOM_ORDER, _customOrder);
 		putState(EMPTY_OPTION_LABEL, resources.getString(I18NConstants.JS_DROPDOWN_SELECT_EMPTY));
 		putState(OPTIONS_LOADED, false);
 	}
@@ -119,7 +134,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	@Override
 	protected void handleModelValueChanged(FieldModel source, Object oldValue, Object newValue) {
 		if (!_updatingFromClient) {
-			putState(VALUE, toOptionDescriptors(SelectFieldUtils.getSelectionListSorted(_selectField)));
+			putState(VALUE, toOptionDescriptors(getSelectionSorted()));
 			// Invalidate cached options so the client reloads them on next open.
 			putState(OPTIONS_LOADED, false);
 		}
@@ -147,10 +162,10 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 			patch.put(OPTIONS, descriptors);
 			patch.put(OPTIONS_LOADED, true);
 			// Re-send value with IDs consistent with the new option index.
-			patch.put(VALUE, toOptionDescriptors(SelectFieldUtils.getSelectionListSorted(_selectField)));
+			patch.put(VALUE, toOptionDescriptors(getSelectionSorted()));
 			patchReactState(patch);
 		} catch (Exception ex) {
-			Logger.error("Failed to load options for " + _selectField.getName(), ex, this);
+			Logger.error("Failed to load options for dropdown select control.", ex, this);
 			return HandlerResult.error(I18NConstants.JS_DROPDOWN_SELECT_ERROR);
 		}
 		return HandlerResult.DEFAULT_RESULT;
@@ -173,13 +188,13 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 		List<Object> newSelection = resolveOptions(selectedIds);
 		_updatingFromClient = true;
 		try {
-			_selectField.setAsSelection(newSelection);
+			_selectModel.setValue(newSelection);
 		} finally {
 			_updatingFromClient = false;
 		}
 
 		// Update value state with full descriptors for chip display.
-		putState(VALUE, toOptionDescriptors(SelectFieldUtils.getSelectionListSorted(_selectField)));
+		putState(VALUE, toOptionDescriptors(getSelectionSorted()));
 
 		return HandlerResult.DEFAULT_RESULT;
 	}
@@ -202,8 +217,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	private List<Map<String, Object>> buildOptionDescriptors(List<?> options,
 			Map<String, Object> index, Map<Object, String> reverse) {
 		List<Map<String, Object>> descriptors = new ArrayList<>(options.size());
-		LabelProvider labelProvider = _selectField.getOptionLabelProvider();
-		ResourceProvider resourceProvider = toResourceProvider(labelProvider);
+		ResourceProvider resourceProvider = toResourceProvider(_labelProvider);
 
 		for (Object option : options) {
 			String id = getReactContext().allocateId();
@@ -212,7 +226,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 
 			Map<String, Object> descriptor = new HashMap<>();
 			descriptor.put(OPT_VALUE, id);
-			descriptor.put(OPT_LABEL, labelProvider.getLabel(option));
+			descriptor.put(OPT_LABEL, _labelProvider.getLabel(option));
 
 			if (resourceProvider != null) {
 				ThemeImage image = resourceProvider.getImage(option, Flavor.DEFAULT);
@@ -233,8 +247,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 */
 	private List<Map<String, Object>> toOptionDescriptors(List<?> options) {
 		List<Map<String, Object>> descriptors = new ArrayList<>(options.size());
-		LabelProvider labelProvider = _selectField.getOptionLabelProvider();
-		ResourceProvider resourceProvider = toResourceProvider(labelProvider);
+		ResourceProvider resourceProvider = toResourceProvider(_labelProvider);
 
 		for (Object option : options) {
 			String id = _optionIdByObject.get(option);
@@ -246,7 +259,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 
 			Map<String, Object> descriptor = new HashMap<>();
 			descriptor.put(OPT_VALUE, id);
-			descriptor.put(OPT_LABEL, labelProvider.getLabel(option));
+			descriptor.put(OPT_LABEL, _labelProvider.getLabel(option));
 
 			if (resourceProvider != null) {
 				ThemeImage image = resourceProvider.getImage(option, Flavor.DEFAULT);
@@ -261,18 +274,36 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	}
 
 	/**
-	 * Returns the option list sorted by the field's comparator, regardless of whether the field
-	 * has custom order. Custom order only affects selection order, not option display order.
+	 * Returns the current selection as a sorted list. If {@link #_customOrder} is enabled, the
+	 * selection order is preserved. Otherwise it is sorted by {@link #_optionComparator}.
+	 */
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private List<?> getSelectionSorted() {
+		Object value = _selectModel.getValue();
+		if (!(value instanceof List)) {
+			return value != null ? Collections.singletonList(value) : Collections.emptyList();
+		}
+		List<?> selection = (List<?>) value;
+		if (_customOrder || selection.size() <= 1 || _optionComparator == null) {
+			return selection;
+		}
+		Object[] array = selection.toArray();
+		Arrays.sort(array, (Comparator) _optionComparator);
+		return Arrays.asList(array);
+	}
+
+	/**
+	 * Returns the option list sorted by the comparator. Custom order only affects selection order,
+	 * not option display order.
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private List<?> sortedOptions() {
-		List<?> options = _selectField.getOptions();
-		if (options.size() <= 1) {
+		List<?> options = _selectModel.getOptions();
+		if (options.size() <= 1 || _optionComparator == null) {
 			return options;
 		}
 		Object[] array = options.toArray();
-		Comparator comparator = SelectFieldUtils.getOptionComparator(_selectField);
-		Arrays.sort(array, comparator);
+		Arrays.sort(array, (Comparator) _optionComparator);
 		return Arrays.asList(array);
 	}
 

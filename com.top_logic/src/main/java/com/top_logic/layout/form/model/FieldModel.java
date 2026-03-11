@@ -1,0 +1,104 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.layout.form.model;
+
+import java.util.List;
+
+import com.top_logic.basic.util.ResKey;
+
+/**
+ * Lightweight model for a single form field value.
+ *
+ * <p>
+ * Captures typed value, dirty tracking, validation, and edit lifecycle without the UI mechanics
+ * of {@link com.top_logic.layout.form.FormField} (raw value parsing, FormGroup hierarchy, display state).
+ * </p>
+ */
+public interface FieldModel {
+
+	/**
+	 * The current typed value.
+	 */
+	Object getValue();
+
+	/**
+	 * Sets the typed value.
+	 *
+	 * <p>
+	 * Fires {@link FieldModelListener#onValueChanged(FieldModel, Object, Object)} if the value
+	 * changes.
+	 * </p>
+	 *
+	 * @param value
+	 *        The new value. May be {@code null}.
+	 */
+	void setValue(Object value);
+
+	/**
+	 * Whether the value has been modified from its default/original.
+	 */
+	boolean isDirty();
+
+	/**
+	 * Whether the value is currently editable.
+	 *
+	 * <p>
+	 * Subsumes the legacy {@code immutable}, {@code disabled}, {@code frozen}, and {@code blocked}
+	 * states. Controls render non-editable state uniformly.
+	 * </p>
+	 */
+	boolean isEditable();
+
+	/**
+	 * Whether a value is required.
+	 */
+	boolean isMandatory();
+
+	/**
+	 * Whether the field currently has a validation error.
+	 */
+	boolean hasError();
+
+	/**
+	 * The current validation error, or {@code null} if no error.
+	 */
+	ResKey getError();
+
+	/**
+	 * Whether the field currently has validation warnings.
+	 */
+	boolean hasWarnings();
+
+	/**
+	 * The current validation warnings, or an empty list if none.
+	 */
+	List<ResKey> getWarnings();
+
+	/**
+	 * Triggers constraint validation against the current value.
+	 */
+	void validate();
+
+	/**
+	 * Adds a constraint to this model.
+	 */
+	void addConstraint(FieldConstraint constraint);
+
+	/**
+	 * Removes a previously added constraint.
+	 */
+	void removeConstraint(FieldConstraint constraint);
+
+	/**
+	 * Adds a listener for value, editability, and validation changes.
+	 */
+	void addListener(FieldModelListener listener);
+
+	/**
+	 * Removes a previously added listener.
+	 */
+	void removeListener(FieldModelListener listener);
+}

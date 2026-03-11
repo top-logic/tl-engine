@@ -24,6 +24,7 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.Resources;
 
 /**
  * A {@link ReactFormFieldControl} that renders a dropdown select with search-as-you-type filtering
@@ -46,6 +47,10 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	private static final String OPTIONS_LOADED = "optionsLoaded";
 
 	private static final String MULTI_SELECT = "multiSelect";
+
+	private static final String EMPTY_OPTION_LABEL = "emptyOptionLabel";
+
+	private static final String NOTHING_FOUND_LABEL = "nothingFoundLabel";
 
 	private static final String OPT_VALUE = "value";
 
@@ -87,8 +92,12 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 * {@link ReactFormFieldControl#ReactFormFieldControl(ReactContext, FormField, String)}.
 	 */
 	private void initSelectState() {
+		Resources resources = Resources.getInstance();
+
 		putState(VALUE, toOptionDescriptors(_selectField.getSelection()));
 		putState(MULTI_SELECT, _selectField.isMultiple());
+		putState(EMPTY_OPTION_LABEL, resources.getString(I18NConstants.JS_DROPDOWN_SELECT_EMPTY));
+		putState(NOTHING_FOUND_LABEL, resources.getString(I18NConstants.JS_DROPDOWN_SELECT_NOTHING_FOUND));
 		putState(OPTIONS_LOADED, false);
 	}
 

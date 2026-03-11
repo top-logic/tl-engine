@@ -128,20 +128,17 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
   const editable = state.editable !== false;
   const optionsLoaded = state.optionsLoaded === true;
   const allOptions = (state.options ?? []) as OptionDescriptor[];
+  const emptyOptionLabel = (state.emptyOptionLabel ?? '') as string;
+  const nothingFoundLabel = (state.nothingFoundLabel ?? '') as string;
 
   // I18N for client-side labels
   const i18n = useI18N({
-    'js.dropdownSelect.empty': 'Select\u2026',
-    'js.dropdownSelect.nothingFound': 'Nothing found',
     'js.dropdownSelect.filterPlaceholder': 'Filter\u2026',
     'js.dropdownSelect.clear': 'Clear selection',
     'js.dropdownSelect.removeChip': 'Remove {0}',
     'js.dropdownSelect.loading': 'Loading\u2026',
     'js.dropdownSelect.error': 'Failed to load options. Retry',
   });
-
-  const emptyOptionLabel = i18n['js.dropdownSelect.empty'];
-  const nothingFoundLabel = i18n['js.dropdownSelect.nothingFound'];
 
   /** Format remove-chip label by replacing {0} with the option label. */
   const removeChipLabel = useCallback(

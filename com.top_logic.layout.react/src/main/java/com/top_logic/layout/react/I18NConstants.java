@@ -387,13 +387,13 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Select\u2026
 	 * @de Ausw\u00e4hlen\u2026
 	 */
-	public static ResKey JS_DROPDOWN_SELECT_EMPTY = ResKey.internalCreate("js.dropdownSelect.empty");
+	public static ResKey JS_DROPDOWN_SELECT_EMPTY;
 
 	/**
 	 * @en Nothing found
 	 * @de Keine Treffer
 	 */
-	public static ResKey JS_DROPDOWN_SELECT_NOTHING_FOUND = ResKey.internalCreate("js.dropdownSelect.nothingFound");
+	public static ResKey JS_DROPDOWN_SELECT_NOTHING_FOUND;
 
 	/**
 	 * @en Filter\u2026

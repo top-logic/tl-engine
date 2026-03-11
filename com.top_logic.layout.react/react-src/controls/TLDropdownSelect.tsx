@@ -57,7 +57,6 @@ function Chip({
           className="tlDropdownSelect__chipRemove"
           onClick={handleRemove}
           aria-label={removeLabel}
-          tabIndex={-1}
         >
           &times;
         </button>
@@ -316,6 +315,8 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
     (e: React.KeyboardEvent) => {
       if (!isOpen) {
         if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter' || e.key === ' ') {
+          // Let Enter/Space activate a focused child button (chip remove, clear).
+          if ((e.target as HTMLElement).tagName === 'BUTTON') return;
           e.preventDefault();
           e.stopPropagation();
           openDropdown();
@@ -507,11 +508,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
         aria-haspopup="listbox"
         aria-owns={isOpen ? `${controlId}-listbox` : undefined}
         tabIndex={disabled ? -1 : 0}
-        onClick={!isOpen ? (e: React.MouseEvent) => {
-          // Don't open when a chip-remove or clear button was clicked.
-          if ((e.target as HTMLElement).closest('button')) return;
-          openDropdown();
-        } : undefined}
+        onClick={!isOpen ? openDropdown : undefined}
         onKeyDown={handleKeyDown}
       >
         <div className="tlDropdownSelect__chips">
@@ -536,7 +533,6 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
               className="tlDropdownSelect__clearAll"
               onClick={clearAll}
               aria-label={i18n['js.dropdownSelect.clear']}
-              tabIndex={-1}
             >
               &times;
             </button>

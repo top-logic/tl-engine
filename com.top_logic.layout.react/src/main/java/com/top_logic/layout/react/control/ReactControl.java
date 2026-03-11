@@ -66,6 +66,13 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 
 	private SSEUpdateQueue _sseQueue;
 
+	/**
+	 * Whether this control has been rendered (written to HTML or serialized as a child). Before
+	 * rendering, {@link #putState} writes directly to the pre-render state map. After rendering,
+	 * it sends SSE patch events to the client.
+	 */
+	private boolean _rendered;
+
 	private List<Runnable> _cleanupActions;
 
 	/**
@@ -159,6 +166,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	@Override
 	public void write(TagWriter out) throws IOException {
 		onBeforeWrite();
+		_rendered = true;
 		try {
 			String stateJson = toJsonString(_reactContext, _reactState);
 
@@ -279,7 +287,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	 *        The state value.
 	 */
 	protected void putState(String key, Object value) {
-		if (_sseQueue != null) {
+		if (_rendered) {
 			patchReactState(java.util.Collections.singletonMap(key, value));
 		} else {
 			_reactState.put(key, value);
@@ -388,6 +396,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	 *        The JSON writer to write to.
 	 */
 	protected void writeAsChild(JsonWriter writer) throws IOException {
+		_rendered = true;
 		writer.beginObject();
 		writer.name("controlId");
 		writer.value(getID());

@@ -8,7 +8,7 @@ package com.top_logic.layout.react.control.select;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -59,11 +59,17 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	private final SelectField _selectField;
 
 	/**
-	 * Maps stable option ID strings to the original option objects. Built during
+	 * Maps option ID strings to the original option objects. Built during
 	 * {@link #handleLoadOptions()} and used by {@link #handleValueChanged(Map)} to resolve
 	 * client-sent IDs back to model objects.
 	 */
 	private Map<String, Object> _optionIndex = Collections.emptyMap();
+
+	/**
+	 * Maps option objects to their allocated IDs. Built alongside {@link #_optionIndex} so that
+	 * {@link #toOptionDescriptors(List)} produces IDs consistent with the option index.
+	 */
+	private Map<Object, String> _optionIdByObject = Collections.emptyMap();
 
 	/**
 	 * Guard flag to suppress the {@link #valueChanged} listener when the change originates from
@@ -115,21 +121,25 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 * Handles the {@code loadOptions} command from the React client.
 	 *
 	 * <p>
-	 * Sends the full option list as a state patch via SSE. Builds an internal index mapping stable
-	 * option IDs to model objects for later resolution.
+	 * Sends the full option list as a state patch via SSE. Builds an internal index mapping
+	 * allocated IDs to model objects for later resolution.
 	 * </p>
 	 */
 	@ReactCommand("loadOptions")
 	HandlerResult handleLoadOptions() {
 		try {
 			List<?> options = _selectField.getOptions();
-			Map<String, Object> newIndex = new LinkedHashMap<>();
-			List<Map<String, Object>> descriptors = buildOptionDescriptors(options, newIndex);
+			Map<String, Object> newIndex = new HashMap<>();
+			Map<Object, String> newReverse = new IdentityHashMap<>();
+			List<Map<String, Object>> descriptors = buildOptionDescriptors(options, newIndex, newReverse);
 			_optionIndex = newIndex;
+			_optionIdByObject = newReverse;
 
 			Map<String, Object> patch = new HashMap<>();
 			patch.put(OPTIONS, descriptors);
 			patch.put(OPTIONS_LOADED, true);
+			// Re-send value with IDs consistent with the new option index.
+			patch.put(VALUE, toOptionDescriptors(_selectField.getSelection()));
 			patchReactState(patch);
 		} catch (Exception ex) {
 			Logger.error("Failed to load options for " + _selectField.getName(), ex, this);
@@ -178,18 +188,19 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	}
 
 	/**
-	 * Builds option descriptors and populates the given index map with stable ID to option
-	 * mappings.
+	 * Builds option descriptors and populates the given index and reverse maps. Each option
+	 * receives a unique ID from the {@link ReactContext}.
 	 */
-	private List<Map<String, Object>> buildOptionDescriptors(List<?> options, Map<String, Object> index) {
+	private List<Map<String, Object>> buildOptionDescriptors(List<?> options,
+			Map<String, Object> index, Map<Object, String> reverse) {
 		List<Map<String, Object>> descriptors = new ArrayList<>(options.size());
 		LabelProvider labelProvider = _selectField.getOptionLabelProvider();
 		ResourceProvider resourceProvider = toResourceProvider(labelProvider);
 
-		int counter = 0;
 		for (Object option : options) {
-			String id = stableOptionId(option, labelProvider, counter++);
+			String id = getReactContext().allocateId();
 			index.put(id, option);
+			reverse.put(option, id);
 
 			Map<String, Object> descriptor = new HashMap<>();
 			descriptor.put(OPT_VALUE, id);
@@ -208,18 +219,20 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	}
 
 	/**
-	 * Converts a list of selected options to descriptors. Uses the existing {@link #_optionIndex}
-	 * for stable IDs when available, falling back to index-based IDs for the initial render (before
-	 * loadOptions).
+	 * Converts a list of selected options to descriptors. Uses the existing
+	 * {@link #_optionIdByObject} map for IDs when available (after {@code loadOptions}), falling
+	 * back to freshly allocated IDs for the initial render.
 	 */
 	private List<Map<String, Object>> toOptionDescriptors(List<?> options) {
 		List<Map<String, Object>> descriptors = new ArrayList<>(options.size());
 		LabelProvider labelProvider = _selectField.getOptionLabelProvider();
 		ResourceProvider resourceProvider = toResourceProvider(labelProvider);
 
-		int counter = 0;
 		for (Object option : options) {
-			String id = stableOptionId(option, labelProvider, counter++);
+			String id = _optionIdByObject.get(option);
+			if (id == null) {
+				id = getReactContext().allocateId();
+			}
 
 			Map<String, Object> descriptor = new HashMap<>();
 			descriptor.put(OPT_VALUE, id);
@@ -235,18 +248,6 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 			descriptors.add(descriptor);
 		}
 		return descriptors;
-	}
-
-	/**
-	 * Generates a stable option ID by combining the option's label with its position index. This
-	 * survives server restarts and is unique within the option list.
-	 */
-	private String stableOptionId(Object option, LabelProvider labelProvider, int index) {
-		String label = labelProvider.getLabel(option);
-		if (label == null) {
-			label = "";
-		}
-		return index + ":" + label;
 	}
 
 	private ResourceProvider toResourceProvider(LabelProvider labelProvider) {

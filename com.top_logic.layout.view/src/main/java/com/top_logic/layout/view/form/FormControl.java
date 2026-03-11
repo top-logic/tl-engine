@@ -8,9 +8,7 @@ package com.top_logic.layout.view.form;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.top_logic.base.locking.Lock;
-import com.top_logic.base.locking.LockService;
-import com.top_logic.basic.Logger;
+import com.top_logic.base.locking.handler.LockHandler;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
@@ -28,7 +26,8 @@ import com.top_logic.model.TLObject;
  * <p>
  * The control provides four commands: edit, apply, save, and cancel. In view mode, the current
  * object is presented read-only. Entering edit mode creates a {@link TLObjectOverlay}, acquires a
- * {@link Lock} on the object, and switches all registered field controls to editable state.
+ * lock on the object via the configured {@link LockHandler}, and switches all registered field
+ * controls to editable state.
  * </p>
  *
  * <p>
@@ -53,7 +52,7 @@ public class FormControl extends ReactControl {
 
 	private boolean _editMode;
 
-	private Lock _lock;
+	private final LockHandler _lockHandler;
 
 	private ViewChannel _inputChannel;
 
@@ -69,8 +68,6 @@ public class FormControl extends ReactControl {
 
 	private final String _noModelMessage;
 
-	private final String _lockOperation;
-
 	/**
 	 * Creates a new {@link FormControl}.
 	 *
@@ -80,14 +77,14 @@ public class FormControl extends ReactControl {
 	 *        The initial object to display, may be {@code null}.
 	 * @param noModelMessage
 	 *        The message to display when no object is available.
-	 * @param lockOperation
-	 *        The lock operation name used when acquiring a lock for editing.
+	 * @param lockHandler
+	 *        The {@link LockHandler} for acquiring/releasing locks during editing.
 	 */
-	public FormControl(ReactContext context, TLObject initialObject, String noModelMessage, String lockOperation) {
+	public FormControl(ReactContext context, TLObject initialObject, String noModelMessage, LockHandler lockHandler) {
 		super(context, initialObject, "TLFormLayout");
 		_currentObject = initialObject;
 		_noModelMessage = noModelMessage;
-		_lockOperation = lockOperation;
+		_lockHandler = lockHandler;
 		_editMode = false;
 		putState(EDIT_MODE, Boolean.FALSE);
 		putState(DIRTY, Boolean.FALSE);
@@ -230,7 +227,7 @@ public class FormControl extends ReactControl {
 		}
 
 		// Acquire lock first -- if this fails, no overlay is created.
-		_lock = LockService.getInstance().acquireLock(_lockOperation, _currentObject);
+		_lockHandler.acquireLock(_currentObject);
 		_overlay = new TLObjectOverlay(_currentObject);
 
 		_editMode = true;
@@ -337,14 +334,7 @@ public class FormControl extends ReactControl {
 	}
 
 	private void releaseLock() {
-		if (_lock != null && _lock.isStateAcquired()) {
-			try {
-				_lock.unlock();
-			} catch (IllegalStateException ex) {
-				Logger.warn("Failed to release lock.", ex, FormControl.class);
-			}
-		}
-		_lock = null;
+		_lockHandler.releaseLock();
 	}
 
 	private void fireFormStateChanged() {

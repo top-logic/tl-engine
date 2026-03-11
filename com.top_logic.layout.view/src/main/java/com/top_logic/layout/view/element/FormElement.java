@@ -9,16 +9,22 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.top_logic.base.locking.handler.DefaultLockHandler;
+import com.top_logic.base.locking.handler.LockHandler;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
-import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
+import com.top_logic.layout.form.values.edit.annotation.DisplayMinimized;
+import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.ContainerElement;
@@ -66,8 +72,8 @@ public class FormElement extends ContainerElement {
 		/** Configuration name for {@link #getWithEditMode()}. */
 		String WITH_EDIT_MODE = "withEditMode";
 
-		/** Configuration name for {@link #getLockOperation()}. */
-		String LOCK_OPERATION = "lockOperation";
+		/** Configuration name for {@link #getLockHandler()}. */
+		String LOCK_HANDLER = "lockHandler";
 
 		@Override
 		@ClassDefault(FormElement.class)
@@ -120,19 +126,24 @@ public class FormElement extends ContainerElement {
 		boolean getWithEditMode();
 
 		/**
-		 * The lock operation name used when acquiring a lock for editing.
+		 * Algorithm for edit-mode token handling.
 		 *
 		 * <p>
-		 * Defaults to {@code "edit"}. Different forms can use different operation names to
-		 * participate in separate lock strategies.
+		 * Defaults to {@link DefaultLockHandler} which uses the application-wide
+		 * {@link com.top_logic.base.locking.LockService LockService}. To disable locking, configure
+		 * {@link com.top_logic.base.locking.handler.NoTokenHandling NoTokenHandling}.
 		 * </p>
 		 */
-		@Name(LOCK_OPERATION)
-		@StringDefault("edit")
-		String getLockOperation();
+		@Name(LOCK_HANDLER)
+		@ImplementationClassDefault(DefaultLockHandler.class)
+		@Options(fun = AllInAppImplementations.class)
+		@DisplayMinimized
+		PolymorphicConfiguration<LockHandler> getLockHandler();
 	}
 
 	private final Config _config;
+
+	private final LockHandler _lockHandler;
 
 	/**
 	 * Creates a new {@link FormElement} from configuration.
@@ -141,6 +152,7 @@ public class FormElement extends ContainerElement {
 	public FormElement(InstantiationContext context, Config config) {
 		super(context, config);
 		_config = config;
+		_lockHandler = context.getInstance(config.getLockHandler());
 	}
 
 	@Override
@@ -159,7 +171,7 @@ public class FormElement extends ContainerElement {
 		String noModelMessage = Resources.getInstance().getString(messageKey);
 
 		// 4. Create FormControl with initial object.
-		FormControl formControl = new FormControl(context, initialObject, noModelMessage, _config.getLockOperation());
+		FormControl formControl = new FormControl(context, initialObject, noModelMessage, _lockHandler);
 
 		// 5. Wire channels.
 		formControl.setInputChannel(inputChannel);

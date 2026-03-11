@@ -135,7 +135,19 @@ const ColorPopup: React.FC<ColorPopupProps> = ({
     (e: React.DragEvent) => {
       if (draft != null) {
         e.dataTransfer.setData(COLOR_DRAG_TYPE, draft.toUpperCase());
-        e.dataTransfer.effectAllowed = 'copy';
+        e.dataTransfer.effectAllowed = 'move';
+        // Create a drag image matching palette cell appearance
+        const ghost = document.createElement('div');
+        ghost.style.width = '33px';
+        ghost.style.height = '33px';
+        ghost.style.backgroundColor = draft;
+        ghost.style.borderRadius = '3px';
+        ghost.style.border = '1px solid rgba(0,0,0,0.1)';
+        ghost.style.position = 'absolute';
+        ghost.style.top = '-9999px';
+        document.body.appendChild(ghost);
+        e.dataTransfer.setDragImage(ghost, 16, 16);
+        requestAnimationFrame(() => document.body.removeChild(ghost));
       }
     },
     [draft]

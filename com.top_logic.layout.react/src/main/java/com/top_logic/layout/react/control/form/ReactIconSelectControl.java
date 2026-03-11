@@ -21,10 +21,10 @@ import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.common.json.adapt.ReaderR;
 import com.top_logic.common.json.gstream.JsonReader;
 import com.top_logic.layout.basic.ThemeImage;
-import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.control.IconBundle;
 import com.top_logic.layout.form.control.IconDescription;
 import com.top_logic.layout.form.control.IconInputControl;
+import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
@@ -55,9 +55,9 @@ public class ReactIconSelectControl extends ReactFormFieldControl {
 	 * @param context
 	 *        The React context for ID allocation and SSE registration.
 	 * @param model
-	 *        The form field whose value is an encoded {@link ThemeImage} string.
+	 *        The field model whose value is an encoded {@link ThemeImage} string.
 	 */
-	public ReactIconSelectControl(ReactContext context, FormField model) {
+	public ReactIconSelectControl(ReactContext context, FieldModel model) {
 		super(context, model, "TLIconSelect");
 		putState(ICONS_LOADED, Boolean.FALSE);
 	}

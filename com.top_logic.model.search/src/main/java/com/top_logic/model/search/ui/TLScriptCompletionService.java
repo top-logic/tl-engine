@@ -162,6 +162,9 @@ public class TLScriptCompletionService implements TLScriptConstants {
 	}
 
 	private static Optional<String> getDocHTML(DisplayContext context, String name) {
+		if (context == null) {
+			return Optional.empty();
+		}
 		return SearchBuilder.getInstance().getDocumentation(context, name);
 	}
 

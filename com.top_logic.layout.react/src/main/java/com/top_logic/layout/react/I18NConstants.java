@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.react;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.I18NConstantsBase;
@@ -153,195 +154,195 @@ public class I18NConstants extends I18NConstantsBase {
 
 	/**
 	 * @en Sidebar navigation
-	 * @de Seitenleisten-Navigation
 	 */
-	public static ResKey JS_SIDEBAR_ARIA_LABEL = ResKey.internalCreate("js.sidebar.ariaLabel");
+	@CustomKey("js.sidebar.ariaLabel")
+	public static ResKey JS_SIDEBAR_ARIA_LABEL;
 
 	/**
 	 * @en Expand sidebar
-	 * @de Seitenleiste aufklappen
 	 */
-	public static ResKey JS_SIDEBAR_EXPAND = ResKey.internalCreate("js.sidebar.expand");
+	@CustomKey("js.sidebar.expand")
+	public static ResKey JS_SIDEBAR_EXPAND;
 
 	/**
 	 * @en Collapse sidebar
-	 * @de Seitenleiste zuklappen
 	 */
-	public static ResKey JS_SIDEBAR_COLLAPSE = ResKey.internalCreate("js.sidebar.collapse");
+	@CustomKey("js.sidebar.collapse")
+	public static ResKey JS_SIDEBAR_COLLAPSE;
 
 	// -- Dialog client-side i18n keys --
 
 	/**
 	 * @en Close
-	 * @de Schlie\u00dfen
 	 */
-	public static ResKey JS_DIALOG_CLOSE = ResKey.internalCreate("js.dialog.close");
+	@CustomKey("js.dialog.close")
+	public static ResKey JS_DIALOG_CLOSE;
 
 	// -- Drawer client-side i18n keys --
 
 	/**
 	 * @en Close
-	 * @de Schlie\u00dfen
 	 */
-	public static ResKey JS_DRAWER_CLOSE = ResKey.internalCreate("js.drawer.close");
+	@CustomKey("js.drawer.close")
+	public static ResKey JS_DRAWER_CLOSE;
 
 	// -- Client-side i18n keys (js.* prefix, names match keys used by React controls) --
 
 	/**
 	 * @en Play audio
-	 * @de Audio abspielen
 	 */
-	public static ResKey JS_AUDIO_PLAYER_PLAY = ResKey.internalCreate("js.audioPlayer.play");
+	@CustomKey("js.audioPlayer.play")
+	public static ResKey JS_AUDIO_PLAYER_PLAY;
 
 	/**
 	 * @en Pause audio
-	 * @de Audio pausieren
 	 */
-	public static ResKey JS_AUDIO_PLAYER_PAUSE = ResKey.internalCreate("js.audioPlayer.pause");
+	@CustomKey("js.audioPlayer.pause")
+	public static ResKey JS_AUDIO_PLAYER_PAUSE;
 
 	/**
 	 * @en No audio
-	 * @de Kein Audio
 	 */
-	public static ResKey JS_AUDIO_PLAYER_NO_AUDIO = ResKey.internalCreate("js.audioPlayer.noAudio");
+	@CustomKey("js.audioPlayer.noAudio")
+	public static ResKey JS_AUDIO_PLAYER_NO_AUDIO;
 
 	/**
 	 * @en Loading\u2026
-	 * @de Laden\u2026
 	 */
-	public static ResKey JS_LOADING = ResKey.internalCreate("js.loading");
+	@CustomKey("js.loading")
+	public static ResKey JS_LOADING;
 
 	/**
 	 * @en Uploading\u2026
-	 * @de Hochladen\u2026
 	 */
-	public static ResKey JS_UPLOADING = ResKey.internalCreate("js.uploading");
+	@CustomKey("js.uploading")
+	public static ResKey JS_UPLOADING;
 
 	/**
 	 * @en Record audio
-	 * @de Audio aufnehmen
 	 */
-	public static ResKey JS_AUDIO_RECORDER_RECORD = ResKey.internalCreate("js.audioRecorder.record");
+	@CustomKey("js.audioRecorder.record")
+	public static ResKey JS_AUDIO_RECORDER_RECORD;
 
 	/**
 	 * @en Stop recording
-	 * @de Aufnahme stoppen
 	 */
-	public static ResKey JS_AUDIO_RECORDER_STOP = ResKey.internalCreate("js.audioRecorder.stop");
+	@CustomKey("js.audioRecorder.stop")
+	public static ResKey JS_AUDIO_RECORDER_STOP;
 
 	/**
 	 * @en No file
-	 * @de Keine Datei
 	 */
-	public static ResKey JS_DOWNLOAD_NO_FILE = ResKey.internalCreate("js.download.noFile");
+	@CustomKey("js.download.noFile")
+	public static ResKey JS_DOWNLOAD_NO_FILE;
 
 	/**
 	 * @en Download {0}
-	 * @de {0} herunterladen
 	 */
-	public static ResKey JS_DOWNLOAD_FILE = ResKey.internalCreate("js.download.file");
+	@CustomKey("js.download.file")
+	public static ResKey JS_DOWNLOAD_FILE;
 
 	/**
 	 * @en Downloading\u2026
-	 * @de Herunterladen\u2026
 	 */
-	public static ResKey JS_DOWNLOADING = ResKey.internalCreate("js.downloading");
+	@CustomKey("js.downloading")
+	public static ResKey JS_DOWNLOADING;
 
 	/**
 	 * @en Clear
-	 * @de Entfernen
 	 */
-	public static ResKey JS_DOWNLOAD_CLEAR = ResKey.internalCreate("js.download.clear");
+	@CustomKey("js.download.clear")
+	public static ResKey JS_DOWNLOAD_CLEAR;
 
 	/**
 	 * @en Clear file
-	 * @de Datei entfernen
 	 */
-	public static ResKey JS_DOWNLOAD_CLEAR_FILE = ResKey.internalCreate("js.download.clearFile");
+	@CustomKey("js.download.clearFile")
+	public static ResKey JS_DOWNLOAD_CLEAR_FILE;
 
 	/**
 	 * @en Choose file
-	 * @de Datei ausw\u00e4hlen
 	 */
-	public static ResKey JS_FILE_UPLOAD_CHOOSE = ResKey.internalCreate("js.fileUpload.choose");
+	@CustomKey("js.fileUpload.choose")
+	public static ResKey JS_FILE_UPLOAD_CHOOSE;
 
 	/**
 	 * @en Open camera
-	 * @de Kamera \u00f6ffnen
 	 */
-	public static ResKey JS_PHOTO_CAPTURE_OPEN = ResKey.internalCreate("js.photoCapture.open");
+	@CustomKey("js.photoCapture.open")
+	public static ResKey JS_PHOTO_CAPTURE_OPEN;
 
 	/**
 	 * @en Close camera
-	 * @de Kamera schlie\u00dfen
 	 */
-	public static ResKey JS_PHOTO_CAPTURE_CLOSE = ResKey.internalCreate("js.photoCapture.close");
+	@CustomKey("js.photoCapture.close")
+	public static ResKey JS_PHOTO_CAPTURE_CLOSE;
 
 	/**
 	 * @en Capture photo
-	 * @de Foto aufnehmen
 	 */
-	public static ResKey JS_PHOTO_CAPTURE_CAPTURE = ResKey.internalCreate("js.photoCapture.capture");
+	@CustomKey("js.photoCapture.capture")
+	public static ResKey JS_PHOTO_CAPTURE_CAPTURE;
 
 	/**
 	 * @en Captured photo
-	 * @de Aufgenommenes Foto
 	 */
-	public static ResKey JS_PHOTO_VIEWER_ALT = ResKey.internalCreate("js.photoViewer.alt");
+	@CustomKey("js.photoViewer.alt")
+	public static ResKey JS_PHOTO_VIEWER_ALT;
 
 	/**
 	 * @en Camera requires a secure connection (HTTPS).
-	 * @de Kamera erfordert eine sichere Verbindung (HTTPS).
 	 */
-	public static ResKey JS_PHOTO_CAPTURE_ERROR_INSECURE = ResKey.internalCreate("js.photoCapture.error.insecure");
+	@CustomKey("js.photoCapture.error.insecure")
+	public static ResKey JS_PHOTO_CAPTURE_ERROR_INSECURE;
 
 	/**
 	 * @en Camera access denied or unavailable.
-	 * @de Kamerazugriff verweigert oder nicht verf\u00fcgbar.
 	 */
-	public static ResKey JS_PHOTO_CAPTURE_ERROR_DENIED = ResKey.internalCreate("js.photoCapture.error.denied");
+	@CustomKey("js.photoCapture.error.denied")
+	public static ResKey JS_PHOTO_CAPTURE_ERROR_DENIED;
 
 	/**
 	 * @en Mirror camera
-	 * @de Kamera spiegeln
 	 */
-	public static ResKey JS_PHOTO_CAPTURE_MIRROR = ResKey.internalCreate("js.photoCapture.mirror");
+	@CustomKey("js.photoCapture.mirror")
+	public static ResKey JS_PHOTO_CAPTURE_MIRROR;
 
 	/**
 	 * @en Minimize
-	 * @de Minimieren
 	 */
-	public static ResKey JS_PANEL_MINIMIZE = ResKey.internalCreate("js.panel.minimize");
+	@CustomKey("js.panel.minimize")
+	public static ResKey JS_PANEL_MINIMIZE;
 
 	/**
 	 * @en Maximize
-	 * @de Maximieren
 	 */
-	public static ResKey JS_PANEL_MAXIMIZE = ResKey.internalCreate("js.panel.maximize");
+	@CustomKey("js.panel.maximize")
+	public static ResKey JS_PANEL_MAXIMIZE;
 
 	/**
 	 * @en Restore
-	 * @de Wiederherstellen
 	 */
-	public static ResKey JS_PANEL_RESTORE = ResKey.internalCreate("js.panel.restore");
+	@CustomKey("js.panel.restore")
+	public static ResKey JS_PANEL_RESTORE;
 
 	/**
 	 * @en Pop out
-	 * @de Auskoppeln
 	 */
-	public static ResKey JS_PANEL_POP_OUT = ResKey.internalCreate("js.panel.popOut");
+	@CustomKey("js.panel.popOut")
+	public static ResKey JS_PANEL_POP_OUT;
 
 	/**
 	 * @en Microphone requires a secure connection (HTTPS).
-	 * @de Mikrofon erfordert eine sichere Verbindung (HTTPS).
 	 */
-	public static ResKey JS_AUDIO_RECORDER_ERROR_INSECURE = ResKey.internalCreate("js.audioRecorder.error.insecure");
+	@CustomKey("js.audioRecorder.error.insecure")
+	public static ResKey JS_AUDIO_RECORDER_ERROR_INSECURE;
 
 	/**
 	 * @en Microphone access denied or unavailable.
-	 * @de Mikrofonzugriff verweigert oder nicht verf\u00fcgbar.
 	 */
-	public static ResKey JS_AUDIO_RECORDER_ERROR_DENIED = ResKey.internalCreate("js.audioRecorder.error.denied");
+	@CustomKey("js.audioRecorder.error.denied")
+	public static ResKey JS_AUDIO_RECORDER_ERROR_DENIED;
 
 	/**
 	 * @en Form group collapse toggled.
@@ -352,29 +353,29 @@ public class I18NConstants extends I18NConstantsBase {
 
 	/**
 	 * @en Collapse
-	 * @de Zuklappen
 	 */
-	public static ResKey JS_FORM_GROUP_COLLAPSE = ResKey.internalCreate("js.formGroup.collapse");
+	@CustomKey("js.formGroup.collapse")
+	public static ResKey JS_FORM_GROUP_COLLAPSE;
 
 	/**
 	 * @en Expand
-	 * @de Aufklappen
 	 */
-	public static ResKey JS_FORM_GROUP_EXPAND = ResKey.internalCreate("js.formGroup.expand");
+	@CustomKey("js.formGroup.expand")
+	public static ResKey JS_FORM_GROUP_EXPAND;
 
 	// -- Table client-side i18n keys --
 
 	/**
 	 * @en Freeze up to here
-	 * @de Bis hier fixieren
 	 */
-	public static ResKey JS_TABLE_FREEZE_UP_TO = ResKey.internalCreate("js.table.freezeUpTo");
+	@CustomKey("js.table.freezeUpTo")
+	public static ResKey JS_TABLE_FREEZE_UP_TO;
 
 	/**
 	 * @en Unfreeze all
-	 * @de Alle l\u00f6sen
 	 */
-	public static ResKey JS_TABLE_UNFREEZE_ALL = ResKey.internalCreate("js.table.unfreezeAll");
+	@CustomKey("js.table.unfreezeAll")
+	public static ResKey JS_TABLE_UNFREEZE_ALL;
 
 	/**
 	 * @en Selection changed.
@@ -385,131 +386,131 @@ public class I18NConstants extends I18NConstantsBase {
 
 	/**
 	 * @en Select\u2026
-	 * @de Ausw\u00e4hlen\u2026
 	 */
+	@CustomKey("js.dropdownSelect.empty")
 	public static ResKey JS_DROPDOWN_SELECT_EMPTY;
 
 	/**
 	 * @en Nothing found
-	 * @de Keine Treffer
 	 */
-	public static ResKey JS_DROPDOWN_SELECT_NOTHING_FOUND = ResKey.internalCreate("js.dropdownSelect.nothingFound");
+	@CustomKey("js.dropdownSelect.nothingFound")
+	public static ResKey JS_DROPDOWN_SELECT_NOTHING_FOUND;
 
 	/**
 	 * @en Filter\u2026
-	 * @de Filtern\u2026
 	 */
-	public static ResKey JS_DROPDOWN_SELECT_FILTER_PLACEHOLDER = ResKey.internalCreate("js.dropdownSelect.filterPlaceholder");
+	@CustomKey("js.dropdownSelect.filterPlaceholder")
+	public static ResKey JS_DROPDOWN_SELECT_FILTER_PLACEHOLDER;
 
 	/**
 	 * @en Remove {0}
-	 * @de {0} entfernen
 	 */
-	public static ResKey JS_DROPDOWN_SELECT_REMOVE_CHIP = ResKey.internalCreate("js.dropdownSelect.removeChip");
+	@CustomKey("js.dropdownSelect.removeChip")
+	public static ResKey JS_DROPDOWN_SELECT_REMOVE_CHIP;
 
 	/**
 	 * @en Clear selection
-	 * @de Auswahl l\u00f6schen
 	 */
-	public static ResKey JS_DROPDOWN_SELECT_CLEAR = ResKey.internalCreate("js.dropdownSelect.clear");
+	@CustomKey("js.dropdownSelect.clear")
+	public static ResKey JS_DROPDOWN_SELECT_CLEAR;
 
 	/**
 	 * @en Loading\u2026
-	 * @de Laden\u2026
 	 */
-	public static ResKey JS_DROPDOWN_SELECT_LOADING = ResKey.internalCreate("js.dropdownSelect.loading");
+	@CustomKey("js.dropdownSelect.loading")
+	public static ResKey JS_DROPDOWN_SELECT_LOADING;
 
 	/**
 	 * @en Failed to load options. Retry
-	 * @de Optionen konnten nicht geladen werden. Erneut versuchen
 	 */
-	public static ResKey JS_DROPDOWN_SELECT_ERROR = ResKey.internalCreate("js.dropdownSelect.error");
+	@CustomKey("js.dropdownSelect.error")
+	public static ResKey JS_DROPDOWN_SELECT_ERROR;
 
 	// -- Color input client-side i18n keys --
 
 	/**
 	 * @en Color Palette
-	 * @de Farbpalette
 	 */
-	public static ResKey JS_COLOR_INPUT_PALETTE_TAB = ResKey.internalCreate("js.colorInput.paletteTab");
+	@CustomKey("js.colorInput.paletteTab")
+	public static ResKey JS_COLOR_INPUT_PALETTE_TAB;
 
 	/**
 	 * @en Color Mixer
-	 * @de Farbmischer
 	 */
-	public static ResKey JS_COLOR_INPUT_MIXER_TAB = ResKey.internalCreate("js.colorInput.mixerTab");
+	@CustomKey("js.colorInput.mixerTab")
+	public static ResKey JS_COLOR_INPUT_MIXER_TAB;
 
 	/**
 	 * @en Current
-	 * @de Aktuell
 	 */
-	public static ResKey JS_COLOR_INPUT_CURRENT = ResKey.internalCreate("js.colorInput.current");
+	@CustomKey("js.colorInput.current")
+	public static ResKey JS_COLOR_INPUT_CURRENT;
 
 	/**
 	 * @en New
-	 * @de Neu
 	 */
-	public static ResKey JS_COLOR_INPUT_NEW = ResKey.internalCreate("js.colorInput.new");
+	@CustomKey("js.colorInput.new")
+	public static ResKey JS_COLOR_INPUT_NEW;
 
 	/**
 	 * @en Red
-	 * @de Rot
 	 */
-	public static ResKey JS_COLOR_INPUT_RED = ResKey.internalCreate("js.colorInput.red");
+	@CustomKey("js.colorInput.red")
+	public static ResKey JS_COLOR_INPUT_RED;
 
 	/**
 	 * @en Green
-	 * @de Gr\u00fcn
 	 */
-	public static ResKey JS_COLOR_INPUT_GREEN = ResKey.internalCreate("js.colorInput.green");
+	@CustomKey("js.colorInput.green")
+	public static ResKey JS_COLOR_INPUT_GREEN;
 
 	/**
 	 * @en Blue
-	 * @de Blau
 	 */
-	public static ResKey JS_COLOR_INPUT_BLUE = ResKey.internalCreate("js.colorInput.blue");
+	@CustomKey("js.colorInput.blue")
+	public static ResKey JS_COLOR_INPUT_BLUE;
 
 	/**
 	 * @en Hex
-	 * @de Hex
 	 */
-	public static ResKey JS_COLOR_INPUT_HEX = ResKey.internalCreate("js.colorInput.hex");
+	@CustomKey("js.colorInput.hex")
+	public static ResKey JS_COLOR_INPUT_HEX;
 
 	/**
 	 * @en Reset
-	 * @de Zur\u00fccksetzen
 	 */
-	public static ResKey JS_COLOR_INPUT_RESET = ResKey.internalCreate("js.colorInput.reset");
+	@CustomKey("js.colorInput.reset")
+	public static ResKey JS_COLOR_INPUT_RESET;
 
 	/**
 	 * @en Cancel
-	 * @de Abbrechen
 	 */
-	public static ResKey JS_COLOR_INPUT_CANCEL = ResKey.internalCreate("js.colorInput.cancel");
+	@CustomKey("js.colorInput.cancel")
+	public static ResKey JS_COLOR_INPUT_CANCEL;
 
 	/**
 	 * @en No color
-	 * @de Keine Farbe
 	 */
-	public static ResKey JS_COLOR_INPUT_NO_COLOR = ResKey.internalCreate("js.colorInput.noColor");
+	@CustomKey("js.colorInput.noColor")
+	public static ResKey JS_COLOR_INPUT_NO_COLOR;
 
 	/**
 	 * @en OK
-	 * @de OK
 	 */
-	public static ResKey JS_COLOR_INPUT_OK = ResKey.internalCreate("js.colorInput.ok");
+	@CustomKey("js.colorInput.ok")
+	public static ResKey JS_COLOR_INPUT_OK;
 
 	/**
 	 * @en Choose color
-	 * @de Farbe w\u00e4hlen
 	 */
-	public static ResKey JS_COLOR_INPUT_CHOOSE_COLOR = ResKey.internalCreate("js.colorInput.chooseColor");
+	@CustomKey("js.colorInput.chooseColor")
+	public static ResKey JS_COLOR_INPUT_CHOOSE_COLOR;
 
 	/**
 	 * @en Clear
-	 * @de L\u00f6schen
 	 */
-	public static ResKey JS_COLOR_INPUT_CLEAR = ResKey.internalCreate("js.colorInput.clear");
+	@CustomKey("js.colorInput.clear")
+	public static ResKey JS_COLOR_INPUT_CLEAR;
 
 	static {
 		initConstants(I18NConstants.class);

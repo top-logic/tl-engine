@@ -1,35 +1,25 @@
 /*
- * SPDX-FileCopyrightText: 2016 (c) Business Operation Systems GmbH <info@top-logic.com>
- * 
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
 package com.top_logic.layout.form.model;
 
-
-import com.top_logic.basic.listener.EventType.Bubble;
-import com.top_logic.basic.listener.PropertyListener;
+import java.util.List;
 
 /**
- * {@link PropertyListener} that handles change of the {@link SelectField#getOptions()} in a
- * {@link SelectField}.
- * 
- * @see SelectField#OPTIONS_PROPERTY
- * 
- * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+ * Listener for {@link SelectFieldModel#getOptions() options} changes.
  */
-public interface OptionsListener extends PropertyListener {
+public interface OptionsListener {
 
 	/**
-	 * Handles change of the options of the given {@link SelectField}.
-	 * 
-	 * @param sender
-	 *        {@link SelectField} whose options changed.
-	 * @return Whether this event shall bubble.
-	 * 
-	 * @see SelectField#isOptionsList()
-	 * @see SelectField#isOptionsTree()
+	 * Called when the available options change.
+	 *
+	 * @param source
+	 *        The model whose options changed.
+	 * @param newOptions
+	 *        The new options list.
 	 */
-	Bubble handleOptionsChanged(SelectField sender);
-
+	void onOptionsChanged(SelectFieldModel source, List<?> newOptions);
 }
 

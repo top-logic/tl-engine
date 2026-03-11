@@ -62,17 +62,18 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	private final SelectField _selectField;
 
 	/**
-	 * Maps option ID strings to the original option objects. Built during
-	 * {@link #handleLoadOptions()} and used by {@link #handleValueChanged(Map)} to resolve
-	 * client-sent IDs back to model objects.
+	 * Maps option ID strings to the original option objects. Used by
+	 * {@link #handleValueChanged(Map)} to resolve client-sent IDs back to model objects. Populated
+	 * by {@link #handleLoadOptions()} and incrementally by {@link #toOptionDescriptors(List)} when
+	 * fresh IDs are allocated before the full option list has been loaded.
 	 */
-	private Map<String, Object> _optionIndex = Collections.emptyMap();
+	private Map<String, Object> _optionIndex = new HashMap<>();
 
 	/**
 	 * Maps option objects to their allocated IDs. Built alongside {@link #_optionIndex} so that
 	 * {@link #toOptionDescriptors(List)} produces IDs consistent with the option index.
 	 */
-	private Map<Object, String> _optionIdByObject = Collections.emptyMap();
+	private Map<Object, String> _optionIdByObject = new IdentityHashMap<>();
 
 	/**
 	 * Guard flag to suppress the {@link #valueChanged} listener when the change originates from
@@ -236,6 +237,8 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 			String id = _optionIdByObject.get(option);
 			if (id == null) {
 				id = getReactContext().allocateId();
+				_optionIndex.put(id, option);
+				_optionIdByObject.put(option, id);
 			}
 
 			Map<String, Object> descriptor = new HashMap<>();

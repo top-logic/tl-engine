@@ -153,8 +153,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
   const emptyOptionLabel = (state.emptyOptionLabel ?? '') as string;
 
   // Drag-and-drop is enabled only for custom-order multi-select editable fields
-  // and only after options are loaded (so the server option index can resolve IDs).
-  const dragEnabled = customOrder && multiSelect && !disabled && editable && optionsLoaded;
+  const dragEnabled = customOrder && multiSelect && !disabled && editable;
 
   // I18N for client-side labels
   const i18n = useI18N({

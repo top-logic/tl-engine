@@ -19,6 +19,7 @@ import com.top_logic.layout.ResourceProvider;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.model.SelectField;
+import com.top_logic.layout.form.model.SelectFieldUtils;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
@@ -98,7 +99,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	private void initSelectState() {
 		Resources resources = Resources.getInstance();
 
-		putState(VALUE, toOptionDescriptors(_selectField.getSelection()));
+		putState(VALUE, toOptionDescriptors(SelectFieldUtils.getSelectionListSorted(_selectField)));
 		putState(MULTI_SELECT, _selectField.isMultiple());
 		putState(EMPTY_OPTION_LABEL, resources.getString(I18NConstants.JS_DROPDOWN_SELECT_EMPTY));
 		putState(OPTIONS_LOADED, false);
@@ -111,7 +112,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	@Override
 	public void valueChanged(FormField field, Object oldValue, Object newValue) {
 		if (!skipEvent(field) && !_updatingFromClient) {
-			putState(VALUE, toOptionDescriptors(_selectField.getSelection()));
+			putState(VALUE, toOptionDescriptors(SelectFieldUtils.getSelectionListSorted(_selectField)));
 			// Invalidate cached options so the client reloads them on next open.
 			putState(OPTIONS_LOADED, false);
 		}
@@ -128,7 +129,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	@ReactCommand("loadOptions")
 	HandlerResult handleLoadOptions() {
 		try {
-			List<?> options = _selectField.getOptions();
+			List<?> options = SelectFieldUtils.getOptionsListSorted(_selectField);
 			Map<String, Object> newIndex = new HashMap<>();
 			Map<Object, String> newReverse = new IdentityHashMap<>();
 			List<Map<String, Object>> descriptors = buildOptionDescriptors(options, newIndex, newReverse);
@@ -139,7 +140,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 			patch.put(OPTIONS, descriptors);
 			patch.put(OPTIONS_LOADED, true);
 			// Re-send value with IDs consistent with the new option index.
-			patch.put(VALUE, toOptionDescriptors(_selectField.getSelection()));
+			patch.put(VALUE, toOptionDescriptors(SelectFieldUtils.getSelectionListSorted(_selectField)));
 			patchReactState(patch);
 		} catch (Exception ex) {
 			Logger.error("Failed to load options for " + _selectField.getName(), ex, this);
@@ -171,7 +172,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 		}
 
 		// Update value state with full descriptors for chip display.
-		putState(VALUE, toOptionDescriptors(_selectField.getSelection()));
+		putState(VALUE, toOptionDescriptors(SelectFieldUtils.getSelectionListSorted(_selectField)));
 
 		return HandlerResult.DEFAULT_RESULT;
 	}

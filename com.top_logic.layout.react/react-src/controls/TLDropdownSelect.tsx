@@ -507,7 +507,11 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
         aria-haspopup="listbox"
         aria-owns={isOpen ? `${controlId}-listbox` : undefined}
         tabIndex={disabled ? -1 : 0}
-        onClick={!isOpen ? openDropdown : undefined}
+        onClick={!isOpen ? (e: React.MouseEvent) => {
+          // Don't open when a chip-remove or clear button was clicked.
+          if ((e.target as HTMLElement).closest('button')) return;
+          openDropdown();
+        } : undefined}
         onKeyDown={handleKeyDown}
       >
         <div className="tlDropdownSelect__chips">

@@ -2715,7 +2715,9 @@ const Bn = ({ controlId: a, state: t }) => {
       "aria-haspopup": "listbox",
       "aria-owns": w ? `${a}-listbox` : void 0,
       tabIndex: o ? -1 : 0,
-      onClick: w ? void 0 : Z,
+      onClick: w ? void 0 : (m) => {
+        m.target.closest("button") || Z();
+      },
       onKeyDown: ie
     },
     /* @__PURE__ */ e.createElement("div", { className: "tlDropdownSelect__chips" }, r.length === 0 ? /* @__PURE__ */ e.createElement("span", { className: "tlDropdownSelect__placeholder" }, f) : r.map((m) => /* @__PURE__ */ e.createElement(

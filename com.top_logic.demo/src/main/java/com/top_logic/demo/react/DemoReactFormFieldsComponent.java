@@ -6,12 +6,9 @@
 package com.top_logic.demo.react;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
@@ -23,13 +20,16 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.Flavor;
+import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.ResourceProvider;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
+import com.top_logic.layout.form.model.FormFieldAdapter;
 import com.top_logic.layout.form.model.SelectField;
+import com.top_logic.layout.form.model.SelectFieldAdapter;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.form.ReactCheckboxControl;
@@ -95,38 +95,38 @@ public class DemoReactFormFieldsComponent extends LayoutComponent {
 
 		FormField nameField = FormFactory.newStringField("name", "John Doe", false);
 		formContext.addMember(nameField);
-		ReactTextInputControl nameInput = new ReactTextInputControl(ctx, nameField);
+		ReactTextInputControl nameInput = new ReactTextInputControl(ctx, new FormFieldAdapter(nameField));
 		ReactFormFieldChromeControl nameChrome = new ReactFormFieldChromeControl(ctx,
 			"Full Name", true, false, null, "Enter your full legal name", null, false, true, nameInput);
 
 		FormField emailField = FormFactory.newStringField("email", "john@example.com", false);
 		formContext.addMember(emailField);
-		ReactTextInputControl emailInput = new ReactTextInputControl(ctx, emailField);
+		ReactTextInputControl emailInput = new ReactTextInputControl(ctx, new FormFieldAdapter(emailField));
 		ReactFormFieldChromeControl emailChrome = new ReactFormFieldChromeControl(ctx,
 			"Email", true, true, null, null, null, false, true, emailInput);
 
 		FormField phoneField = FormFactory.newStringField("phone", "", false);
 		formContext.addMember(phoneField);
-		ReactTextInputControl phoneInput = new ReactTextInputControl(ctx, phoneField);
+		ReactTextInputControl phoneInput = new ReactTextInputControl(ctx, new FormFieldAdapter(phoneField));
 		ReactFormFieldChromeControl phoneChrome = new ReactFormFieldChromeControl(ctx,
 			"Phone", false, false, "Please enter a valid phone number", null, null, false, true, phoneInput);
 
 		FormField dobField = FormFactory.newStringField("dob", "1990-06-15", false);
 		formContext.addMember(dobField);
-		ReactDatePickerControl dobInput = new ReactDatePickerControl(ctx, dobField);
+		ReactDatePickerControl dobInput = new ReactDatePickerControl(ctx, new FormFieldAdapter(dobField));
 		ReactFormFieldChromeControl dobChrome = new ReactFormFieldChromeControl(ctx,
 			"Date of Birth", false, false, null, null, null, false, true, dobInput);
 
 		FormField bioField = FormFactory.newStringField("bio", "Software developer with 10 years experience...", false);
 		formContext.addMember(bioField);
-		ReactTextInputControl bioInput = new ReactTextInputControl(ctx, bioField);
+		ReactTextInputControl bioInput = new ReactTextInputControl(ctx, new FormFieldAdapter(bioField));
 		ReactFormFieldChromeControl bioChrome = new ReactFormFieldChromeControl(ctx,
 			"Biography", false, false, null, "A short description of yourself",
 			"top", true, true, bioInput);
 
 		FormField activeField = FormFactory.newBooleanField("active", Boolean.TRUE, false);
 		formContext.addMember(activeField);
-		ReactCheckboxControl activeInput = new ReactCheckboxControl(ctx, activeField);
+		ReactCheckboxControl activeInput = new ReactCheckboxControl(ctx, new FormFieldAdapter(activeField));
 		ReactFormFieldChromeControl activeChrome = new ReactFormFieldChromeControl(ctx,
 			"Active", false, false, null, null, null, false, true, activeInput);
 
@@ -141,28 +141,52 @@ public class DemoReactFormFieldsComponent extends LayoutComponent {
 
 		FormField langField = FormFactory.newStringField("language", "en", false);
 		formContext.addMember(langField);
-		ReactSelectFormFieldControl langInput = new ReactSelectFormFieldControl(ctx, langField,
-			createOptionList(
-				createOption("en", "English"),
-				createOption("de", "Deutsch"),
-				createOption("fr", "Fran\u00e7ais"),
-				createOption("es", "Espa\u00f1ol")));
+
+		LabelProvider langLabelProvider = new LabelProvider() {
+			@Override
+			public String getLabel(Object object) {
+				if ("en".equals(object)) return "English";
+				if ("de".equals(object)) return "Deutsch";
+				if ("fr".equals(object)) return "Fran\u00e7ais";
+				if ("es".equals(object)) return "Espa\u00f1ol";
+				return String.valueOf(object);
+			}
+		};
+		SelectField langSelectField = FormFactory.newSelectField("languageSelect",
+			Arrays.asList("en", "de", "fr", "es"), false, false);
+		langSelectField.setOptionLabelProvider(langLabelProvider);
+		langSelectField.setAsSelection(Collections.singletonList("en"));
+		formContext.addMember(langSelectField);
+		ReactSelectFormFieldControl langInput = new ReactSelectFormFieldControl(ctx,
+			new SelectFieldAdapter(langSelectField), langLabelProvider);
 		ReactFormFieldChromeControl langChrome = new ReactFormFieldChromeControl(ctx,
 			"Language", true, false, null, "Select your preferred language", null, false, true, langInput);
 
 		FormField notifField = FormFactory.newIntField("notificationLimit", Integer.valueOf(5), false);
 		formContext.addMember(notifField);
-		ReactNumberInputControl notifInput = new ReactNumberInputControl(ctx, notifField, 0);
+		ReactNumberInputControl notifInput = new ReactNumberInputControl(ctx, new FormFieldAdapter(notifField), 0);
 		ReactFormFieldChromeControl notifChrome = new ReactFormFieldChromeControl(ctx,
 			"Notification Limit", false, false, null, "Maximum notifications per day", null, false, true, notifInput);
 
 		FormField themeField = FormFactory.newStringField("theme", "light", false);
 		formContext.addMember(themeField);
-		ReactSelectFormFieldControl themeInput = new ReactSelectFormFieldControl(ctx, themeField,
-			createOptionList(
-				createOption("light", "Light"),
-				createOption("dark", "Dark"),
-				createOption("system", "System Default")));
+
+		LabelProvider themeLabelProvider = new LabelProvider() {
+			@Override
+			public String getLabel(Object object) {
+				if ("light".equals(object)) return "Light";
+				if ("dark".equals(object)) return "Dark";
+				if ("system".equals(object)) return "System Default";
+				return String.valueOf(object);
+			}
+		};
+		SelectField themeSelectField = FormFactory.newSelectField("themeSelect",
+			Arrays.asList("light", "dark", "system"), false, false);
+		themeSelectField.setOptionLabelProvider(themeLabelProvider);
+		themeSelectField.setAsSelection(Collections.singletonList("light"));
+		formContext.addMember(themeSelectField);
+		ReactSelectFormFieldControl themeInput = new ReactSelectFormFieldControl(ctx,
+			new SelectFieldAdapter(themeSelectField), themeLabelProvider);
 		ReactFormFieldChromeControl themeChrome = new ReactFormFieldChromeControl(ctx,
 			"Theme", false, false, null, null, null, false, true, themeInput);
 
@@ -276,22 +300,6 @@ public class DemoReactFormFieldsComponent extends LayoutComponent {
 		public String getCssClass(Object object) {
 			return null;
 		}
-	}
-
-	@SafeVarargs
-	private static List<Map<String, Object>> createOptionList(Map<String, Object>... options) {
-		List<Map<String, Object>> list = new ArrayList<>();
-		for (Map<String, Object> option : options) {
-			list.add(option);
-		}
-		return list;
-	}
-
-	private static Map<String, Object> createOption(String value, String label) {
-		Map<String, Object> option = new LinkedHashMap<>();
-		option.put("value", value);
-		option.put("label", label);
-		return option;
 	}
 
 }

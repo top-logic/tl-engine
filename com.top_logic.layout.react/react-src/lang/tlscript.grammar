@@ -1,0 +1,109 @@
+@top Script { expression }
+
+@skip { whitespace | LineComment | BlockComment }
+
+expression {
+  Lambda |
+  TernaryExpr
+}
+
+Lambda { identifier Arrow expression }
+
+TernaryExpr {
+  OrExpr ("?" expression ":" expression)?
+}
+
+OrExpr { AndExpr (orOp AndExpr)* }
+AndExpr { CompareExpr (andOp CompareExpr)* }
+CompareExpr { AdditiveExpr (compareOp AdditiveExpr)? }
+AdditiveExpr { MultiplicativeExpr ((Plus | Minus) MultiplicativeExpr)* }
+MultiplicativeExpr { UnaryExpr (multiplicativeOp UnaryExpr)* }
+
+UnaryExpr {
+  NotOp expression |
+  Minus UnaryExpr |
+  AccessExpr
+}
+
+AccessExpr {
+  AtomicExpr (MethodAccess | DescendAccess | CallArgs | ArrayAccess)*
+}
+
+MethodAccess { "." identifier CallArgs? }
+DescendAccess { ".." identifier CallArgs? }
+CallArgs { "(" commaSep<expression>? ")" }
+ArrayAccess { "[" expression "]" }
+
+AtomicExpr {
+  Number |
+  String |
+  Boolean |
+  Null |
+  Variable |
+  ModelConstant |
+  ResourceKey |
+  I18NLiteral |
+  TupleExpr |
+  SwitchExpr |
+  Block |
+  HtmlExpr |
+  ParenExpr |
+  FunctionCall
+}
+
+FunctionCall { identifier CallArgs }
+ParenExpr { "(" expression ")" }
+Block { "{" BlockContent "}" }
+BlockContent { Statement (";" Statement)* ";"? }
+Statement { (identifier "=" expression) | expression }
+
+SwitchExpr {
+  kw<"switch"> ("(" expression ")")? "{" SwitchCase* SwitchDefault? "}"
+}
+SwitchCase { expression ":" expression ";" }
+SwitchDefault { kw<"default"> ":" expression ";"? }
+
+TupleExpr { kw<"tuple"> "(" commaSep<TupleEntry> ")" }
+TupleEntry { identifier Arrow expression }
+
+I18NLiteral { "#(" commaSep<I18NEntry> ")" }
+I18NEntry { String LanguageTag }
+
+HtmlExpr { "{{{" htmlContent* "}}}" }
+htmlContent { htmlText | HtmlEmbed }
+HtmlEmbed { "{" expression "}" }
+
+@tokens {
+  whitespace { $[ \t\n\r]+ }
+  LineComment { "//" ![\n]* }
+  BlockComment { "/*" blockCommentContent* "*/" }
+  blockCommentContent { ![*] | "*" ![/] }
+
+  Number { ("0" | $[1-9] $[0-9]*) ("." $[0-9]+)? (("e" | "E") ("+" | "-")? $[0-9]+)? }
+  String { "'" (![\\'] | "\\" _)* "'" | "\"" (![\\"] | "\\" _)* "\"" | "\"\"\"" _* "\"\"\"" }
+  Variable { "$" $[a-zA-Z_] $[a-zA-Z0-9_]* }
+  ModelConstant { "`" $[a-zA-Z_] $[a-zA-Z0-9_.]* (":" $[a-zA-Z_] $[a-zA-Z0-9_.]*)? ("#" $[a-zA-Z_] $[a-zA-Z0-9_.]*)? "`" }
+  ResourceKey { "#" ("'" (![\\'] | "\\" _)* "'" | "\"" (![\\"] | "\\" _)* "\"") }
+  LanguageTag { "@" $[a-zA-Z] $[a-zA-Z\-]* }
+  identifier { $[a-zA-Z_] $[a-zA-Z0-9_]* }
+  htmlText { ![{}]+ }
+
+  Arrow { "->" }
+  orOp { "or" | "||" }
+  andOp { "and" | "&&" }
+  compareOp { "==" | "!=" | ">=" | "<=" | ">" | "<" }
+  Plus { "+" }
+  Minus { "-" }
+  multiplicativeOp { "*" | "/" | "%" }
+  NotOp { "!" }
+
+  @precedence { BlockComment, LineComment, Number, Arrow, identifier, orOp, andOp }
+}
+
+kw<term> { @specialize[@name={term}]<identifier, term> }
+commaSep<expr> { expr ("," expr)* }
+
+@external propSource highlighting from "./tlscript-highlight"
+
+Boolean { kw<"true"> | kw<"false"> }
+Null { kw<"null"> }

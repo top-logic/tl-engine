@@ -19,7 +19,8 @@
 | File | Responsibility |
 |------|----------------|
 | `com.top_logic.model.search/src/main/java/com/top_logic/model/search/ui/TLScriptCompletionService.java` | Extracted completion logic (shared by Ace + CM6 controls) |
-| `com.top_logic.layout.react/src/main/java/com/top_logic/layout/react/control/codeedit/TLScriptEditorReactControl.java` | Server-side ReactControl with complete/hover/validate commands |
+| `com.top_logic.model.search.react/pom.xml` | New bridge module POM |
+| `com.top_logic.model.search.react/src/main/java/com/top_logic/model/search/react/TLScriptEditorReactControl.java` | Server-side ReactControl with complete/hover/validate commands |
 | `com.top_logic.layout.react/react-src/controls/TLScriptEditor.tsx` | CM6 React component |
 | `com.top_logic.layout.react/react-src/lang/tlscript.grammar` | Lezer grammar for TL-Script |
 | `com.top_logic.layout.react/react-src/lang/tlscript-highlight.ts` | Lezer highlight style tags |
@@ -33,7 +34,7 @@
 | `com.top_logic.layout.react/react-src/controls-entry.ts` | Register `TLScriptEditor` component |
 | `com.top_logic.layout.react/package.json` | Add CM6 + Lezer dependencies |
 | `com.top_logic.layout.react/vite.config.controls.ts` | Add `@lezer/generator/rollup` plugin for grammar compilation |
-| `com.top_logic.layout.react/pom.xml` | Add dependency on `tl-model-search` |
+| `tl-parent-engine/pom.xml` | Register new `com.top_logic.model.search.react` module |
 
 ### Key Architectural Decisions
 
@@ -45,10 +46,11 @@ command, the server computes completions and pushes them via SSE `PatchEvent` to
 `state.completions`, and the client resolves a pending Promise when the `completions`
 state key changes. A per-request ID ensures correct correlation.
 
-**Module dependency:** `com.top_logic.layout.react` gains a dependency on
-`tl-model-search`. This is acceptable because `tl-model-search` is already a transitive
-dependency via `tl-core` in most applications, and the alternative (a new bridge module)
-adds complexity without benefit for the PoC.
+**Module structure:** The Java-side `TLScriptEditorReactControl` lives in a new bridge
+module `com.top_logic.model.search.react` (artifact `tl-model-search-react`) that depends
+on both `tl-model-search` (for parser, completions) and `tl-layout-react` (for
+`ReactControl` base class). This keeps `com.top_logic.model.search` free of React
+dependencies and `com.top_logic.layout.react` free of TL-Script dependencies.
 
 ---
 
@@ -699,29 +701,28 @@ git commit -m "Ticket #29108: Add completion support via promise-over-SSE patter
 
 ## Chunk 4: Server-Side ReactControl
 
-### Task 6: Create TLScriptEditorReactControl
+### Task 6: Create bridge module and TLScriptEditorReactControl
 
 **Files:**
-- Create: `com.top_logic.layout.react/src/main/java/com/top_logic/layout/react/control/codeedit/TLScriptEditorReactControl.java`
-- Modify: `com.top_logic.layout.react/pom.xml`
+- Create: `com.top_logic.model.search.react/pom.xml`
+- Create: `com.top_logic.model.search.react/src/main/java/com/top_logic/model/search/react/TLScriptEditorReactControl.java`
+- Modify: `tl-parent-engine/pom.xml` (register new module)
 
-- [ ] **Step 1: Add tl-model-search dependency to pom.xml**
+- [ ] **Step 1: Create the bridge module POM**
 
-Add to `com.top_logic.layout.react/pom.xml` in `<dependencies>`:
+Create `com.top_logic.model.search.react/pom.xml` with parent `tl-parent-core-internal`
+and dependencies on `tl-model-search` and `tl-layout-react`.
 
-```xml
-<dependency>
-  <groupId>com.top-logic</groupId>
-  <artifactId>tl-model-search</artifactId>
-</dependency>
-```
+- [ ] **Step 2: Register module in tl-parent-engine/pom.xml**
 
-- [ ] **Step 2: Write the control class**
+Add `<module>../com.top_logic.model.search.react</module>` to the modules list.
 
-The control uses a `java.util.function.Consumer<String>` for value callbacks instead of importing from `com.top_logic.layout.view` (avoids adding that module dependency).
+- [ ] **Step 3: Write the control class**
+
+The control uses a `java.util.function.Consumer<String>` for value callbacks (standard JDK, no extra dependency).
 
 ```java
-package com.top_logic.layout.react.control.codeedit;
+package com.top_logic.model.search.react;
 
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -734,6 +735,8 @@ import java.util.function.Consumer;
 import com.top_logic.layout.react.ReactDisplayContext;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.model.search.expr.parser.ParseException;
+import com.top_logic.model.search.expr.parser.SearchExpressionParser;
 import com.top_logic.model.search.expr.parser.ParseException;
 import com.top_logic.model.search.expr.parser.SearchExpressionParser;
 import com.top_logic.model.search.ui.CodeCompletion;
@@ -872,29 +875,32 @@ public class TLScriptEditorReactControl extends ReactControl {
 }
 ```
 
-Key fixes from review:
-- Uses `Consumer<String>` instead of `ValueCallback` from `com.top_logic.layout.view` (no cross-module dependency)
+Key design points:
+- Uses `Consumer<String>` instead of a module-specific callback interface
 - `handleComplete` accepts `ReactDisplayContext` parameter and passes it to `TLScriptCompletionService.computeCompletions()`
 - Completions pushed via `putState("completionResponse", ...)` with `requestId` for correlation
 
-- [ ] **Step 3: Install model.search and build react module**
+- [ ] **Step 4: Install dependencies and build the new module**
 
 ```bash
 cd /home/bhu/devel/tl-engine/.worktrees/agent-a/com.top_logic.model.search
 mvn install -DskipTests=true
 
 cd /home/bhu/devel/tl-engine/.worktrees/agent-a/com.top_logic.layout.react
+mvn install -DskipTests=true
+
+cd /home/bhu/devel/tl-engine/.worktrees/agent-a/com.top_logic.model.search.react
 mvn compile -DskipTests=true
 ```
 
 Expected: BUILD SUCCESS
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
-git add com.top_logic.layout.react/pom.xml
-git add com.top_logic.layout.react/src/main/java/com/top_logic/layout/react/control/codeedit/TLScriptEditorReactControl.java
-git commit -m "Ticket #29108: Add TLScriptEditorReactControl with complete/validate/hover commands."
+git add com.top_logic.model.search.react/
+git add tl-parent-engine/pom.xml
+git commit -m "Ticket #29108: Add com.top_logic.model.search.react module with TLScriptEditorReactControl."
 ```
 
 ---

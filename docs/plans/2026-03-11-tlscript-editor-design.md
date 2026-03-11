@@ -138,15 +138,23 @@ Receives:
 Updates the form field value via the registered callback. Triggered on blur
 or debounced typing.
 
+### Module Structure
+
+The `TLScriptEditorReactControl` lives in a new bridge module
+`com.top_logic.model.search.react` (artifact `tl-model-search-react`) that depends
+on both `tl-model-search` (for parser, completions) and `tl-layout-react` (for
+`ReactControl` base class). This keeps `com.top_logic.model.search` free of React
+dependencies and `com.top_logic.layout.react` free of TL-Script dependencies.
+
 ### Reuse of Existing Logic
 
 The completion and parsing logic currently lives in `com.top_logic.model.search`,
-coupled to the Ace-based `TLScriptCodeEditorControl`. The relevant logic needs
-to be accessible from the new React control:
+coupled to the Ace-based `TLScriptCodeEditorControl`. The relevant logic is
+extracted into a `TLScriptCompletionService` shared utility:
 
 - **Completions:** `TLScriptAutoCompletionCommand` computes model-aware
-  completions. The core logic (model element lookup, function matching) should
-  be extractable into a shared utility.
+  completions. The core logic (model element lookup, function matching) is
+  extracted into `TLScriptCompletionService`.
 - **Parsing:** `SearchExpressionParser` already produces parse errors with
   line/column information.
 - **CodeCompletion DTO:** The existing `CodeCompletion` class (name, value,

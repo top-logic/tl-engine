@@ -181,10 +181,14 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
     return opts;
   }, [allOptions, selectedIds, searchTerm]);
 
-  // Reset highlight when filtered options change
+  // Auto-highlight single result when filtering, reset otherwise.
   useEffect(() => {
-    setHighlightedIndex(-1);
-  }, [filteredOptions.length]);
+    if (searchTerm && filteredOptions.length === 1) {
+      setHighlightedIndex(0);
+    } else {
+      setHighlightedIndex(-1);
+    }
+  }, [filteredOptions.length, searchTerm]);
 
   // Focus search input when dropdown opens and options are loaded
   useEffect(() => {
@@ -280,7 +284,8 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
       } else {
         setSearchTerm('');
         setHighlightedIndex(-1);
-        searchRef.current?.focus();
+        // Defer focus to after React re-renders the portal.
+        requestAnimationFrame(() => searchRef.current?.focus());
       }
     },
     [multiSelect, allOptions, sendCommand, closeDropdown]

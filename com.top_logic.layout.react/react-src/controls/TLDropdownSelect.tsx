@@ -1,7 +1,6 @@
 import { React, useTLState, useTLCommand, useI18N } from 'tl-react-bridge';
 import { createPortal } from 'react-dom';
 import type { TLCellProps } from 'tl-react-bridge';
-import './TLDropdownSelect.css';
 
 const { useState, useCallback, useRef, useEffect, useMemo } = React;
 

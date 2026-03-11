@@ -22,6 +22,9 @@
 					<nav-item id="form-demo" label="Form Demo" icon="bi bi-pencil-square">
 						<view-ref view="demo/form-demo.view.xml" />
 					</nav-item>
+					<nav-item id="input-controls-demo" label="Input Controls" icon="bi bi-input-cursor">
+						<view-ref view="demo/input-controls-demo.view.xml" />
+					</nav-item>
 					<separator/>
 					<nav-item id="settings" label="Settings" icon="bi bi-gear">
 						<view-ref view="demo/settings.view.xml" />

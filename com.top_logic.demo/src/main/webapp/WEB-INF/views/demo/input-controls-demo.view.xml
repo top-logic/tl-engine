@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<channels>
+		<channel name="selectedObject" />
+	</channels>
+	<split-panel orientation="horizontal" resizable="true">
+		<panes>
+			<pane size="30" unit="%" min-size="200">
+				<panel title="Demo Types">
+					<tree selection="selectedObject">
+						<root>`DemoTypes#ROOT`</root>
+						<children>node -> $node.get(`tl.element:StructuredElementContainer#children`)</children>
+					</tree>
+				</panel>
+			</pane>
+			<pane size="70" unit="%">
+				<panel title="Object Details">
+					<form input="selectedObject">
+						<field attribute="name" />
+						<field attribute="color" />
+						<field attribute="string" />
+						<field attribute="boolean" />
+						<field attribute="date" />
+						<field attribute="float" />
+					</form>
+				</panel>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

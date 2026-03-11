@@ -55,7 +55,7 @@ public class ReactFormLayoutControl extends ReactControl {
 	 * @param readOnly
 	 *        Whether the form is read-only.
 	 * @param children
-	 *        The child controls (TLFormGroup or TLFormField).
+	 *        The child controls ({@code TLFormGroup} or {@code TLFormField}).
 	 */
 	public ReactFormLayoutControl(ReactContext context, int maxColumns, String labelPosition, boolean readOnly,
 			List<? extends ReactControl> children) {

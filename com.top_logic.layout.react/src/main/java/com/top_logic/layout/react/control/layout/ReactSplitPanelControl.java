@@ -97,7 +97,7 @@ public class ReactSplitPanelControl extends ReactControl {
 	 *        Called after a drag-resize with a map of control ID to new pixel size. May be
 	 *        {@code null}.
 	 * @param onChildCollapsed
-	 *        Called when a child collapses or expands, with (childIndex, collapsed). May be
+	 *        Called when a child collapses or expands, with ({@code childIndex}, collapsed). May be
 	 *        {@code null}.
 	 */
 	public ReactSplitPanelControl(ReactContext context, Orientation orientation, boolean resizable,

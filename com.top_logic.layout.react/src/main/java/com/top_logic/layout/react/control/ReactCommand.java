@@ -27,7 +27,7 @@ import com.top_logic.layout.react.ReactContext;
  * <p>
  * No parameters is also valid. The return type must be either
  * {@link com.top_logic.tool.boundsec.HandlerResult} or {@code void}. A {@code void} method
- * implicitly returns {@link com.top_logic.tool.boundsec.HandlerResult#DEFAULT_RESULT}.
+ * implicitly returns {@code HandlerResult.DEFAULT_RESULT}.
  * </p>
  *
  * <p>

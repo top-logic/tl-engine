@@ -111,7 +111,7 @@ public class ReactSidebarControl extends ReactControl {
 	 *        Called when the user toggles the sidebar collapse. Receives the new collapsed state.
 	 *        May be {@code null} if no persistence is desired.
 	 * @param onGroupToggled
-	 *        Called when the user toggles a group's expansion. Receives (groupId, expanded).
+	 *        Called when the user toggles a group's expansion. Receives ({@code groupId}, expanded).
 	 *        May be {@code null} if no persistence is desired.
 	 * @param headerContent
 	 *        Optional header slot control shown when expanded, or {@code null}.

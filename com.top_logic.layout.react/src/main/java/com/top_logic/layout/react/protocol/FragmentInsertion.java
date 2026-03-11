@@ -35,7 +35,7 @@ public interface FragmentInsertion extends SSEEvent {
 	com.top_logic.layout.react.protocol.FragmentInsertion setElementId(String value);
 
 	/**
-	 * The position relative to the element (beforeBegin, afterBegin, beforeEnd, afterEnd).
+	 * The position relative to the element ({@code beforeBegin}, {@code afterBegin}, {@code beforeEnd}, {@code afterEnd}).
 	 */
 	String getPosition();
 

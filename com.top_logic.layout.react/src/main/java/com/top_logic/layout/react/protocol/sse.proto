@@ -75,14 +75,14 @@ message FragmentInsertion extends SSEEvent {
 	/** The ID of the reference element. */
 	string elementId;
 
-	/** The position relative to the element (beforeBegin, afterBegin, beforeEnd, afterEnd). */
+	/** The position relative to the element ({@code beforeBegin}, {@code afterBegin}, {@code beforeEnd}, {@code afterEnd}). */
 	string position;
 
 	/** The HTML to insert. */
 	string html;
 }
 
-/** Replaces a range of elements from startId to stopId. */
+/** Replaces a range of elements from {@code startId} to {@code stopId}. */
 message RangeReplacement extends SSEEvent {
 	/** The ID of the first element in the range. */
 	string startId;

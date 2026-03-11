@@ -1,7 +1,7 @@
 package com.top_logic.layout.react.protocol;
 
 /**
- * Replaces a range of elements from startId to stopId.
+ * Replaces a range of elements from {@code startId} to {@code stopId}.
  */
 public interface RangeReplacement extends SSEEvent {
 

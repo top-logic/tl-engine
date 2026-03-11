@@ -5,10 +5,12 @@
  */
 package com.top_logic.layout.react.control.form;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import com.top_logic.layout.form.FormField;
+import com.top_logic.layout.LabelProvider;
+import com.top_logic.layout.form.model.SelectFieldModel;
 import com.top_logic.layout.react.ReactContext;
 
 /**
@@ -22,36 +24,37 @@ import com.top_logic.layout.react.ReactContext;
  */
 public class ReactSelectFormFieldControl extends ReactFormFieldControl {
 
-	/** State key for the select options list. */
 	private static final String OPTIONS = "options";
 
-	private List<Map<String, Object>> _options;
+	private final LabelProvider _labelProvider;
 
 	/**
-	 * Creates a new {@link ReactSelectFormFieldControl}.
+	 * Creates a new select control.
 	 *
 	 * @param context
-	 *        The React context for ID allocation and SSE registration.
+	 *        The React context.
 	 * @param model
-	 *        The form field.
-	 * @param options
-	 *        The select options, each a map with {@code "value"} and {@code "label"} entries.
+	 *        The select field model providing options.
+	 * @param labelProvider
+	 *        Provider for option labels.
 	 */
-	public ReactSelectFormFieldControl(ReactContext context, FormField model, List<Map<String, Object>> options) {
+	public ReactSelectFormFieldControl(ReactContext context, SelectFieldModel model,
+			LabelProvider labelProvider) {
 		super(context, model, "TLSelect");
-		_options = options;
-		putState(OPTIONS, _options);
+		_labelProvider = labelProvider;
+		putState(OPTIONS, buildOptionsList(model.getOptions()));
+		model.addOptionsListener((source, newOptions) ->
+			putState(OPTIONS, buildOptionsList(newOptions)));
 	}
 
-	/**
-	 * Updates the available options.
-	 *
-	 * @param options
-	 *        The new select options.
-	 */
-	public void setOptions(List<Map<String, Object>> options) {
-		_options = options;
-		putState(OPTIONS, _options);
+	private List<Map<String, Object>> buildOptionsList(List<?> options) {
+		List<Map<String, Object>> result = new ArrayList<>();
+		for (Object option : options) {
+			result.add(Map.of(
+				"value", option != null ? option : "",
+				"label", _labelProvider.getLabel(option)));
+		}
+		return result;
 	}
 
 }

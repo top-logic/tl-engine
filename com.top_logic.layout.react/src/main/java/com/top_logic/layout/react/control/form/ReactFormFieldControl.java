@@ -5,28 +5,15 @@
  */
 package com.top_logic.layout.react.control.form;
 
-import java.io.IOException;
 import java.util.Map;
 
-import com.top_logic.basic.listener.EventType.Bubble;
-import com.top_logic.layout.VetoException;
-import com.top_logic.layout.form.DisabledPropertyListener;
-import com.top_logic.layout.form.FormField;
-import com.top_logic.layout.form.FormMember;
-import com.top_logic.layout.form.HasErrorChanged;
-import com.top_logic.layout.form.ImmutablePropertyListener;
-import com.top_logic.layout.form.MandatoryChangedListener;
-import com.top_logic.layout.form.ValueListener;
-import com.top_logic.layout.form.model.FormFieldInternals;
-import com.top_logic.layout.form.model.VisibilityModel;
-import com.top_logic.layout.react.I18NConstants;
+import com.top_logic.layout.form.model.FieldModel;
+import com.top_logic.layout.form.model.FieldModelListener;
+import com.top_logic.layout.form.model.FormFieldAdapter;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
-import com.top_logic.mig.html.layout.VisibilityListener;
-import com.top_logic.util.error.TopLogicException;
-
-import de.haumacher.msgbuf.json.JsonWriter;
+import com.top_logic.util.Resources;
 
 /**
  * A form field control that renders via a React component.
@@ -34,26 +21,21 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * <p>
  * Extends {@link ReactControl} so it can be composed with other React controls (e.g. as a child of
  * {@link com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl}). Listens to
- * {@link FormField} property changes and delivers incremental patches via SSE.
+ * {@link FieldModel} property changes and delivers incremental patches via SSE.
  * </p>
  *
  * <p>
- * On initial render, the full field state (value, editable, disabled, mandatory, errors, label,
- * tooltip) is sent as JSON. Subsequent field changes are delivered as incremental patches via SSE.
+ * On initial render, the full field state (value, editable, mandatory, errors, label, tooltip) is
+ * sent as JSON. Subsequent field changes are delivered as incremental patches via SSE.
  * </p>
  */
-public class ReactFormFieldControl extends ReactControl
-		implements MandatoryChangedListener, HasErrorChanged, ImmutablePropertyListener,
-		DisabledPropertyListener, VisibilityListener, ValueListener {
+public class ReactFormFieldControl extends ReactControl {
 
 	/** State key for the field value. */
 	protected static final String VALUE = "value";
 
 	/** State key for whether the field is editable. */
 	protected static final String EDITABLE = "editable";
-
-	/** State key for whether the field is disabled. */
-	protected static final String DISABLED = "disabled";
 
 	/** State key for whether the field is mandatory. */
 	protected static final String MANDATORY = "mandatory";
@@ -73,194 +55,99 @@ public class ReactFormFieldControl extends ReactControl
 	/** State key for whether the control is hidden on the client. */
 	protected static final String HIDDEN = "hidden";
 
-	private boolean _hidden;
-
-	private boolean _listenersRegistered;
+	private final FieldModel _fieldModel;
 
 	/**
 	 * Creates a new {@link ReactFormFieldControl}.
 	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
 	 * @param model
-	 *        The form field.
+	 *        The field model.
 	 * @param reactModule
 	 *        The React module identifier (e.g. "TLTextInput").
 	 */
-	protected ReactFormFieldControl(ReactContext context, FormField model, String reactModule) {
+	protected ReactFormFieldControl(ReactContext context, FieldModel model, String reactModule) {
 		super(context, model, reactModule);
-		initFieldState(model);
+		_fieldModel = model;
+		initFieldState();
+		registerModelListeners();
 	}
 
 	/**
-	 * Populates the initial React state from the given {@link FormField}.
+	 * Populates the initial React state from the {@link FieldModel}.
 	 *
 	 * <p>
 	 * Called from the constructor before the control is attached to any SSE queue, so all
 	 * {@link #putState} calls simply store values in the pre-render state map.
 	 * </p>
 	 */
-	private void initFieldState(FormField field) {
-		putState(VALUE, field.hasValue() ? field.getValue() : null);
-		putState(EDITABLE, !field.isImmutable());
-		putState(DISABLED, field.isDisabled());
-		putState(MANDATORY, field.isMandatory());
-		putState(HAS_ERROR, field.hasError());
-		putState(ERROR_MESSAGE, field.hasError() ? field.getError().toString() : null);
-		putState(LABEL, field.hasLabel() ? field.getLabel() : null);
-		putState(TOOLTIP, field.getTooltip() != null ? field.getTooltip().toString() : null);
-		putState(HIDDEN, Boolean.valueOf(isEffectivelyHidden()));
+	private void initFieldState() {
+		putState(VALUE, _fieldModel.getValue());
+		putState(EDITABLE, _fieldModel.isEditable());
+		putState(MANDATORY, _fieldModel.isMandatory());
+		putState(HAS_ERROR, _fieldModel.hasError());
+		if (_fieldModel.hasError()) {
+			putState(ERROR_MESSAGE, Resources.getInstance().getString(_fieldModel.getError()));
+		}
+		// Display properties from FormFieldAdapter.
+		if (_fieldModel instanceof FormFieldAdapter) {
+			FormFieldAdapter adapter = (FormFieldAdapter) _fieldModel;
+			putState(LABEL, adapter.getLabel());
+			putState(TOOLTIP, adapter.getTooltip());
+			putState(HIDDEN, Boolean.valueOf(!adapter.isVisible()));
+		}
 	}
 
 	/**
-	 * Returns the form field model.
+	 * Registers a {@link FieldModelListener} that pushes incremental state patches to the React
+	 * client whenever the model changes.
 	 */
-	public FormField getFieldModel() {
-		return (FormField) getModel();
+	private void registerModelListeners() {
+		_fieldModel.addListener(new FieldModelListener() {
+			@Override
+			public void onValueChanged(FieldModel source, Object oldValue, Object newValue) {
+				handleModelValueChanged(source, oldValue, newValue);
+			}
+
+			@Override
+			public void onEditabilityChanged(FieldModel source, boolean editable) {
+				putState(EDITABLE, editable);
+			}
+
+			@Override
+			public void onValidationChanged(FieldModel source) {
+				putState(HAS_ERROR, source.hasError());
+				if (source.hasError()) {
+					putState(ERROR_MESSAGE, Resources.getInstance().getString(source.getError()));
+				} else {
+					putState(ERROR_MESSAGE, null);
+				}
+				putState(MANDATORY, source.isMandatory());
+			}
+		});
 	}
 
 	/**
-	 * Sets whether this control is hidden on the client.
+	 * Called when the model value changes. Subclasses can override to customize value change
+	 * handling (e.g., to send option descriptors instead of raw values).
 	 *
-	 * <p>
-	 * When hidden, the mount-point element gets {@code display:none} applied by the bridge,
-	 * preserving the React component tree and its local state.
-	 * </p>
-	 *
-	 * @param hidden
-	 *        {@code true} to hide, {@code false} to show.
+	 * @param source
+	 *        The field model whose value changed.
+	 * @param oldValue
+	 *        The previous value.
+	 * @param newValue
+	 *        The new value.
 	 */
-	@Override
-	public void setHidden(boolean hidden) {
-		if (_hidden == hidden) {
-			return;
-		}
-		_hidden = hidden;
-		putState(HIDDEN, Boolean.valueOf(isEffectivelyHidden()));
+	protected void handleModelValueChanged(FieldModel source, Object oldValue, Object newValue) {
+		putState(VALUE, newValue);
 	}
 
 	/**
-	 * Whether this control is currently hidden on the client.
+	 * Returns the field model.
 	 */
-	public boolean isHidden() {
-		return _hidden;
-	}
-
-	/**
-	 * Whether this control is effectively hidden, considering both the explicit hidden flag and the
-	 * field's visibility.
-	 */
-	private boolean isEffectivelyHidden() {
-		return _hidden || !getFieldModel().isVisible();
-	}
-
-	@Override
-	protected void onBeforeWrite() {
-		registerFieldListeners();
-	}
-
-	@Override
-	protected void writeAsChild(JsonWriter writer)
-			throws IOException {
-		registerFieldListeners();
-		super.writeAsChild(writer);
-	}
-
-	@Override
-	protected void cleanupChildren() {
-		deregisterFieldListeners();
-		super.cleanupChildren();
-	}
-
-	/**
-	 * Registers this control as a listener on the {@link FormField} model.
-	 */
-	private void registerFieldListeners() {
-		if (_listenersRegistered) {
-			return;
-		}
-		_listenersRegistered = true;
-
-		FormField field = getFieldModel();
-		field.addListener(FormField.HAS_ERROR_PROPERTY, (HasErrorChanged) this);
-		field.addListener(FormField.IMMUTABLE_PROPERTY, (ImmutablePropertyListener) this);
-		field.addListener(FormField.DISABLED_PROPERTY, (DisabledPropertyListener) this);
-		field.addListener(FormField.MANDATORY_PROPERTY, (MandatoryChangedListener) this);
-		field.addListener(VisibilityModel.VISIBLE_PROPERTY, (VisibilityListener) this);
-		field.addValueListener(this);
-	}
-
-	/**
-	 * Deregisters this control as a listener from the {@link FormField} model.
-	 */
-	private void deregisterFieldListeners() {
-		if (!_listenersRegistered) {
-			return;
-		}
-		_listenersRegistered = false;
-
-		FormField field = getFieldModel();
-		field.removeValueListener(this);
-		field.removeListener(VisibilityModel.VISIBLE_PROPERTY, (VisibilityListener) this);
-		field.removeListener(FormField.MANDATORY_PROPERTY, (MandatoryChangedListener) this);
-		field.removeListener(FormField.DISABLED_PROPERTY, (DisabledPropertyListener) this);
-		field.removeListener(FormField.IMMUTABLE_PROPERTY, (ImmutablePropertyListener) this);
-		field.removeListener(FormField.HAS_ERROR_PROPERTY, (HasErrorChanged) this);
-	}
-
-	/**
-	 * Whether the given sender is not the model of this control.
-	 */
-	protected final boolean skipEvent(Object sender) {
-		return sender != getModel();
-	}
-
-	// -- FormField listener callbacks --
-
-	@Override
-	public void valueChanged(FormField field, Object oldValue, Object newValue) {
-		if (!skipEvent(field)) {
-			putState(VALUE, field.hasValue() ? field.getValue() : null);
-		}
-	}
-
-	@Override
-	public Bubble handleDisabledChanged(FormMember sender, Boolean oldValue, Boolean newValue) {
-		if (!skipEvent(sender)) {
-			putState(DISABLED, newValue);
-		}
-		return Bubble.BUBBLE;
-	}
-
-	@Override
-	public Bubble handleMandatoryChanged(FormField sender, Boolean oldValue, Boolean newValue) {
-		if (!skipEvent(sender)) {
-			putState(MANDATORY, newValue);
-		}
-		return Bubble.BUBBLE;
-	}
-
-	@Override
-	public Bubble hasErrorChanged(FormField sender, Boolean oldError, Boolean newError) {
-		if (!skipEvent(sender)) {
-			putState(HAS_ERROR, newError);
-			putState(ERROR_MESSAGE, Boolean.TRUE.equals(newError) ? sender.getError().toString() : null);
-		}
-		return Bubble.BUBBLE;
-	}
-
-	@Override
-	public Bubble handleImmutableChanged(FormMember sender, Boolean oldValue, Boolean newValue) {
-		if (!skipEvent(sender)) {
-			putState(EDITABLE, !Boolean.TRUE.equals(newValue));
-		}
-		return Bubble.BUBBLE;
-	}
-
-	@Override
-	public Bubble handleVisibilityChange(Object sender, Boolean oldVisibility, Boolean newVisibility) {
-		if (!skipEvent(sender)) {
-			putState(HIDDEN, Boolean.valueOf(isEffectivelyHidden()));
-		}
-		return Bubble.BUBBLE;
+	public FieldModel getFieldModel() {
+		return _fieldModel;
 	}
 
 	/**
@@ -268,18 +155,23 @@ public class ReactFormFieldControl extends ReactControl
 	 */
 	@ReactCommand("valueChanged")
 	void handleValueChanged(Map<String, Object> arguments) {
-		FormField field = getFieldModel();
 		Object newValue = arguments.get(VALUE);
+		_fieldModel.setValue(parseClientValue(newValue));
+	}
 
-		// Form fields expect raw string input (as from HTML forms). The React client sends
-		// JSON-typed values (Integer, Boolean, etc.), so convert to String for parsing.
-		String rawValue = newValue != null ? newValue.toString() : null;
-
-		try {
-			FormFieldInternals.updateFieldNoClientUpdate(field, rawValue);
-		} catch (VetoException ex) {
-			throw new TopLogicException(I18NConstants.ERROR_COMMAND_FAILED__MSG.fill(ex.getMessage()), ex);
-		}
+	/**
+	 * Parses the raw client value into the appropriate typed value.
+	 *
+	 * <p>
+	 * Subclasses override for type-specific parsing. Default returns raw value.
+	 * </p>
+	 *
+	 * @param rawValue
+	 *        The value sent by the React client (typically a JSON-typed value).
+	 * @return The parsed value suitable for the field model.
+	 */
+	protected Object parseClientValue(Object rawValue) {
+		return rawValue;
 	}
 
 }

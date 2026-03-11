@@ -19,7 +19,8 @@ import com.top_logic.layout.Flavor;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.ResourceProvider;
 import com.top_logic.layout.basic.ThemeImage;
-import com.top_logic.layout.form.FormField;
+import com.top_logic.layout.form.model.FieldModel;
+import com.top_logic.layout.form.model.FormFieldAdapter;
 import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.form.model.SelectFieldUtils;
 import com.top_logic.layout.react.I18NConstants;
@@ -39,8 +40,8 @@ import com.top_logic.util.Resources;
  * </p>
  *
  * <p>
- * Extends {@link ReactFormFieldControl} to automatically observe model changes (value, disabled,
- * mandatory, immutable, visibility, errors) and push incremental patches to the client via SSE.
+ * Extends {@link ReactFormFieldControl} to automatically observe model changes (value, editability,
+ * mandatory, visibility, errors) and push incremental patches to the client via SSE.
  * </p>
  */
 public class ReactDropdownSelectControl extends ReactFormFieldControl {
@@ -78,8 +79,8 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	private Map<Object, String> _optionIdByObject = new IdentityHashMap<>();
 
 	/**
-	 * Guard flag to suppress the {@link #valueChanged} listener when the change originates from
-	 * the client via {@link #handleValueChanged(Map)}.
+	 * Guard flag to suppress the value changed listener when the change originates from the client
+	 * via {@link #handleValueChanged(Map)}.
 	 */
 	private boolean _updatingFromClient;
 
@@ -92,14 +93,14 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 *        The {@link SelectField} model to wrap.
 	 */
 	public ReactDropdownSelectControl(ReactContext context, SelectField selectField) {
-		super(context, selectField, "TLDropdownSelect");
+		super(context, new FormFieldAdapter(selectField), "TLDropdownSelect");
 		_selectField = selectField;
 		initSelectState();
 	}
 
 	/**
 	 * Initializes select-specific state that is not covered by
-	 * {@link ReactFormFieldControl#ReactFormFieldControl(ReactContext, FormField, String)}.
+	 * {@link ReactFormFieldControl#ReactFormFieldControl(ReactContext, FieldModel, String)}.
 	 */
 	private void initSelectState() {
 		Resources resources = Resources.getInstance();
@@ -116,8 +117,8 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 * option descriptors (with label and image) instead of raw field values.
 	 */
 	@Override
-	public void valueChanged(FormField field, Object oldValue, Object newValue) {
-		if (!skipEvent(field) && !_updatingFromClient) {
+	protected void handleModelValueChanged(FieldModel source, Object oldValue, Object newValue) {
+		if (!_updatingFromClient) {
 			putState(VALUE, toOptionDescriptors(SelectFieldUtils.getSelectionListSorted(_selectField)));
 			// Invalidate cached options so the client reloads them on next open.
 			putState(OPTIONS_LOADED, false);

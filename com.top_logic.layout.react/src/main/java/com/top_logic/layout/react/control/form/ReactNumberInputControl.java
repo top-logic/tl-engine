@@ -7,7 +7,7 @@ package com.top_logic.layout.react.control.form;
 
 import java.util.Map;
 
-import com.top_logic.layout.form.FormField;
+import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.ReactContext;
 
 /**
@@ -29,16 +29,31 @@ public class ReactNumberInputControl extends ReactFormFieldControl {
 	 * @param context
 	 *        The React context for ID allocation and SSE registration.
 	 * @param model
-	 *        The form field.
+	 *        The field model.
 	 * @param decimalPlaces
 	 *        The number of decimal places. When greater than zero, the React component uses decimal
 	 *        step mode.
 	 */
-	public ReactNumberInputControl(ReactContext context, FormField model, int decimalPlaces) {
+	public ReactNumberInputControl(ReactContext context, FieldModel model, int decimalPlaces) {
 		super(context, model, "TLNumberInput");
 		if (decimalPlaces > 0) {
 			putState(CONFIG, Map.of("decimal", Boolean.TRUE));
 		}
+	}
+
+	@Override
+	protected Object parseClientValue(Object rawValue) {
+		if (rawValue instanceof Number) {
+			return rawValue;
+		}
+		if (rawValue != null) {
+			try {
+				return Double.parseDouble(rawValue.toString());
+			} catch (NumberFormatException ex) {
+				return null;
+			}
+		}
+		return null;
 	}
 
 }

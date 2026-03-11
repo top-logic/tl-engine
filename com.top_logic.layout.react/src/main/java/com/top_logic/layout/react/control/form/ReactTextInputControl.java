@@ -5,7 +5,7 @@
  */
 package com.top_logic.layout.react.control.form;
 
-import com.top_logic.layout.form.FormField;
+import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.ReactContext;
 
 /**
@@ -19,10 +19,15 @@ public class ReactTextInputControl extends ReactFormFieldControl {
 	 * @param context
 	 *        The React context for ID allocation and SSE registration.
 	 * @param model
-	 *        The form field.
+	 *        The field model.
 	 */
-	public ReactTextInputControl(ReactContext context, FormField model) {
+	public ReactTextInputControl(ReactContext context, FieldModel model) {
 		super(context, model, "TLTextInput");
+	}
+
+	@Override
+	protected Object parseClientValue(Object rawValue) {
+		return rawValue != null ? rawValue.toString() : null;
 	}
 
 }

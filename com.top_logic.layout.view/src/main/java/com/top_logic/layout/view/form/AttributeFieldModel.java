@@ -55,6 +55,7 @@ public class AttributeFieldModel extends AbstractFieldModel {
 			return;
 		}
 		_object.tUpdate(_part, value);
+		setValueInternal(value);
 		fireValueChanged(oldValue, value);
 	}
 

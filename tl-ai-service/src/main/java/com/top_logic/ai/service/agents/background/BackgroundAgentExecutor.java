@@ -216,10 +216,12 @@ public class BackgroundAgentExecutor {
 
 	private String invokeAgent(String agentName, String input) {
 		try {
-			UntypedAgent agent = _registry.buildUntypedAgent(agentName);
 			Object response = ThreadContextManager.inSystemInteraction(
 				BackgroundAgentExecutor.class,
-				() -> agent.invoke(Map.of("message", input)));
+				() -> {
+					UntypedAgent agent = _registry.buildUntypedAgent(agentName);
+					return agent.invoke(Map.of("message", input));
+				});
 			return response != null ? response.toString() : null;
 		} catch (Exception ex) {
 			Logger.error("Agent invocation failed for '" + agentName + "'",

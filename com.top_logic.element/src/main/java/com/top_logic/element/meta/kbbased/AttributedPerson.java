@@ -27,7 +27,7 @@ import com.top_logic.util.Utils;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class AttributedPerson extends Person {
+public class AttributedPerson extends Person implements com.top_logic.element.model.accounts.Person {
 
 	/**
 	 * @see KnowledgeItemImpl#createWrapper(KnowledgeItem)
@@ -95,22 +95,22 @@ public class AttributedPerson extends Person {
 
 	@Override
 	public Locale getLanguage() {
-		return (Locale) tValueByName(LANGUAGE_ATTR);
+		return (Locale) tValueByName(Person.LANGUAGE_ATTR);
 	}
 
 	@Override
 	public void setLanguage(Locale newValue) {
-		tUpdateByName(LANGUAGE_ATTR, newValue);
+		tUpdateByName(Person.LANGUAGE_ATTR, newValue);
 	}
 
 	@Override
 	public Country getCountry() {
-		return (Country) tValueByName(COUNTRY_ATTR);
+		return (Country) tValueByName(Person.COUNTRY_ATTR);
 	}
 
 	@Override
 	public void setCountry(Country newValue) {
-		tUpdateByName(COUNTRY_ATTR, newValue);
+		tUpdateByName(Person.COUNTRY_ATTR, newValue);
 	}
 
 }

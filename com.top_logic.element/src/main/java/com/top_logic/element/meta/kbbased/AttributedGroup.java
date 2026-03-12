@@ -23,7 +23,7 @@ import com.top_logic.tool.boundsec.wrap.Group;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class AttributedGroup extends Group {
+public class AttributedGroup extends Group implements com.top_logic.element.model.accounts.Group {
 
 	/**
 	 * @see KnowledgeItemImpl#createWrapper(KnowledgeItem)

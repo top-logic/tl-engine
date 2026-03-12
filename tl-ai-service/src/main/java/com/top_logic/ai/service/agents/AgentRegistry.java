@@ -259,8 +259,7 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 					"Agent '" + name + "' cannot be both entry-point and background agent.");
 			}
 
-			Logger.info("Background agent '" + name + "' registered: scope=" + bg.getScope()
-				+ ", authority=" + bg.getAuthority(),
+			Logger.info("Background agent '" + name + "' registered: scope=" + bg.getScope(),
 				AgentRegistry.class);
 		}
 

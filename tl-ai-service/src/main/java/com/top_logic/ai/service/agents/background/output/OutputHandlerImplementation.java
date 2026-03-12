@@ -9,7 +9,7 @@ import com.top_logic.ai.service.agents.background.context.BackgroundContext;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.config.annotation.Abstract;
+import com.top_logic.basic.config.annotation.Hidden;
 
 /**
  * Base class for custom Java output handler implementations.
@@ -25,7 +25,7 @@ public abstract class OutputHandlerImplementation
 	/**
 	 * Configuration for {@link OutputHandlerImplementation}.
 	 */
-	@Abstract
+	@Hidden
 	public interface Config<I extends OutputHandlerImplementation>
 			extends OutputHandler, PolymorphicConfiguration<I> {
 		// No additional properties — subclasses extend this with their own config.

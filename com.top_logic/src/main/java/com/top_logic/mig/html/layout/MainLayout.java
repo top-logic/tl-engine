@@ -1097,7 +1097,7 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 	 * 
 	 * @see GlobalConfig#getLoginHooks()
 	 */
-	protected void processLoginHooks(DisplayContext context) {
+	protected void processLoginHooks() {
 		if (_loginHooks.isEmpty()) {
 			return;
 		}
@@ -1109,7 +1109,9 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 			@Override
 			public void run() {
 				if (_hooks.hasNext()) {
-					_hooks.next().handleLogin(context, mainLayout, this);
+					/* Note: It is not possible to use same DisplayContext for all all hooks because
+					 * the execution of a hook may require more than one interaction. */
+					_hooks.next().handleLogin(mainLayout, this);
 				}
 
 			}
@@ -1415,7 +1417,7 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 
 				/* Initialize the models. */
 				ml.initialValidateModel(context);
-				ml.processLoginHooks(context);
+				ml.processLoginHooks();
 			}
 		} finally {
 			layoutContext.enableUpdate(before);

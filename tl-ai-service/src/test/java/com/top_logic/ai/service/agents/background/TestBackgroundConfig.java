@@ -5,15 +5,11 @@
  */
 package com.top_logic.ai.service.agents.background;
 
-import com.top_logic.ai.service.agents.background.BackgroundConfig.Authority;
 import com.top_logic.ai.service.agents.background.BackgroundConfig.Scope;
 import com.top_logic.ai.service.agents.background.input.AutonomousInput;
 import com.top_logic.ai.service.agents.background.input.ChatContextInput;
 import com.top_logic.ai.service.agents.background.input.ChatContextInput.Content;
 import com.top_logic.ai.service.agents.background.input.ScriptInput;
-import com.top_logic.ai.service.agents.background.output.AuditLogHandler;
-import com.top_logic.ai.service.agents.background.output.NotificationOutputHandler;
-import com.top_logic.ai.service.agents.background.output.SchedulerLogHandler;
 import com.top_logic.ai.service.agents.background.trigger.OnDemandTrigger;
 import com.top_logic.ai.service.agents.background.trigger.PostTurnTrigger;
 import com.top_logic.ai.service.agents.background.trigger.PreTurnTrigger;
@@ -41,15 +37,6 @@ public class TestBackgroundConfig extends TestCase {
 		assertEquals(2, Scope.values().length);
 		assertNotNull(Scope.CHAT);
 		assertNotNull(Scope.APPLICATION);
-	}
-
-	// --- Authority enum ---
-
-	/** Both authority values exist. */
-	public void testAuthorityValues() {
-		assertEquals(2, Authority.values().length);
-		assertNotNull(Authority.ADVISORY);
-		assertNotNull(Authority.AUTHORITATIVE);
 	}
 
 	// --- PreTurnTrigger ---
@@ -178,28 +165,4 @@ public class TestBackgroundConfig extends TestCase {
 		assertEquals(Content.FULL_CHAT, input.getContent());
 	}
 
-	// --- Output handler configs ---
-
-	/** AuditLogHandler can be instantiated. */
-	public void testAuditLogHandlerInstantiation() {
-		AuditLogHandler handler = TypedConfiguration.newConfigItem(AuditLogHandler.class);
-
-		assertNotNull(handler);
-	}
-
-	/** SchedulerLogHandler can be instantiated. */
-	public void testSchedulerLogHandlerInstantiation() {
-		SchedulerLogHandler handler = TypedConfiguration.newConfigItem(SchedulerLogHandler.class);
-
-		assertNotNull(handler);
-	}
-
-	/** NotificationOutputHandler can be instantiated with default severity. */
-	public void testNotificationOutputHandlerInstantiation() {
-		NotificationOutputHandler handler =
-			TypedConfiguration.newConfigItem(NotificationOutputHandler.class);
-
-		assertNotNull(handler);
-		assertEquals("warning", handler.getSeverity());
-	}
 }

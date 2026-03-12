@@ -26,6 +26,7 @@ import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.service.agents.AgentRegistry;
 import com.top_logic.ai.service.agents.background.BackgroundAgentExecutor;
 import com.top_logic.ai.service.agents.background.BackgroundConfig;
+import com.top_logic.ai.service.agents.background.ExecutionResult;
 import com.top_logic.ai.service.agents.background.context.ChatContext;
 import com.top_logic.ai.service.agents.background.trigger.PostTurnTrigger;
 import com.top_logic.ai.service.agents.background.trigger.PreTurnTrigger;
@@ -186,8 +187,12 @@ public class ChatProcessor {
 				try {
 					BackgroundAgentExecutor bgExecutor = new BackgroundAgentExecutor(agentRegistry);
 					ChatContext bgContext = ChatContext.fullChat(preTurnAgent, taskTracker.getChat());
-					bgExecutor.execute(preTurnAgent, bgContext);
-					// Blocking will be handled by the block_turn tool in a future task
+					ExecutionResult execResult = bgExecutor.execute(preTurnAgent, bgContext);
+					if (execResult.isBlocked()) {
+						state.addPendingMessage(new ChatMessage("System", execResult.blockReason()));
+						taskTracker.completeTask(taskId);
+						return;
+					}
 				} catch (Exception ex) {
 					Logger.error("Pre-turn agent '" + preTurnAgent + "' failed: " + ex.getMessage(),
 						ex, ChatProcessor.class);
@@ -508,7 +513,12 @@ public class ChatProcessor {
 					BackgroundAgentExecutor executor = new BackgroundAgentExecutor(agentRegistry);
 					ChatContext context = ChatContext.lastTurn(name,
 						userMessage, agentResponse, completedTask);
-					executor.execute(name, context);
+					ExecutionResult execResult = executor.execute(name, context);
+					if (execResult.isBlocked()) {
+						// Post-turn block: add system message with block reason
+						Chat chat = taskTracker.getChat();
+						chat.addMessage(new ChatMessage("System", execResult.blockReason()));
+					}
 				} catch (Exception ex) {
 					Logger.error("Background agent '" + name + "' failed: " + ex.getMessage(),
 						ex, ChatProcessor.class);

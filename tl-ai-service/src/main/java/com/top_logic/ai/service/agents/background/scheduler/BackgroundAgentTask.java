@@ -7,6 +7,7 @@ package com.top_logic.ai.service.agents.background.scheduler;
 
 import com.top_logic.ai.service.agents.AgentRegistry;
 import com.top_logic.ai.service.agents.background.BackgroundAgentExecutor;
+import com.top_logic.ai.service.agents.background.ExecutionResult;
 import com.top_logic.ai.service.agents.background.context.ApplicationContext;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
@@ -64,7 +65,8 @@ public class BackgroundAgentTask extends StateHandlingTask<BackgroundAgentTask.C
 
 			BackgroundAgentExecutor executor = new BackgroundAgentExecutor(registry);
 			ApplicationContext context = ApplicationContext.scheduled(agentName);
-			String response = executor.execute(agentName, context);
+			ExecutionResult result = executor.execute(agentName, context);
+			String response = result.response();
 
 			if (response == null || response.isEmpty()) {
 				getLog().taskEnded(ResultType.WARNING,

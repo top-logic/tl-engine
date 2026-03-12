@@ -75,11 +75,11 @@ public class BackgroundAgentExecutor {
 	 *        The name of the background agent to execute.
 	 * @param context
 	 *        The execution context providing access to chat history and session data.
-	 * @return The raw LLM response string; may be null.
+	 * @return The {@link ExecutionResult} containing the LLM response and any block reason.
 	 * @throws IllegalArgumentException
 	 *         if the agent has no background configuration.
 	 */
-	public String execute(String agentName, BackgroundContext context) {
+	public ExecutionResult execute(String agentName, BackgroundContext context) {
 		AgentConfig agentConfig = _registry.getAgentConfig(agentName);
 		BackgroundConfig bgConfig = agentConfig.getBackground();
 		if (bgConfig == null) {
@@ -91,12 +91,16 @@ public class BackgroundAgentExecutor {
 		String input = adapter.gatherInput(context);
 
 		// 2. Build and invoke the agent
+		BlockTurnResult.clear();
 		String response = invokeAgent(agentName, input);
 
-		// 3. Run output handlers
+		// 3. Check if agent called block_turn
+		String blockReason = BlockTurnResult.consumeBlockReason();
+
+		// 4. Run output handlers
 		runOutputHandlers(bgConfig, response, context);
 
-		return response;
+		return new ExecutionResult(response, blockReason);
 	}
 
 	/**

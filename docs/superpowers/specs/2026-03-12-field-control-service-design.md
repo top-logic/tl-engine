@@ -128,6 +128,12 @@ Default XML configuration in `com.top_logic.layout.view`:
 
 Primitive kinds (BOOLEAN, INT, FLOAT, DATE, STRING, etc.) are handled by the built-in fallback and do not need map entries.
 
+The configuration file goes in `src/main/webapp/WEB-INF/conf/` of the `com.top_logic.layout.view` module.
+
+### Fallback behavior
+
+When no provider matches at any level, `TextInputControlProvider` is used as the ultimate default. No exceptions are thrown for unmapped types.
+
 ### Model XML usage
 
 Per-attribute override:

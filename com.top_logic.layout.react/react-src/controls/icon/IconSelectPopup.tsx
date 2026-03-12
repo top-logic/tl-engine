@@ -14,6 +14,7 @@ const I18N_KEYS = {
   'js.iconSelect.cancel': 'Cancel',
   'js.iconSelect.ok': 'OK',
   'js.iconSelect.clear': 'Clear icon',
+  'js.iconSelect.clearFilter': 'Clear filter',
 };
 
 /** One style variant of an icon. */
@@ -222,11 +223,11 @@ const IconSelectPopup: React.FC<IconSelectPopupProps> = ({
           placeholder={i18n['js.iconSelect.filterPlaceholder']}
           aria-label={i18n['js.iconSelect.filterPlaceholder']}
         />
-        {currentValue && (
+        {searchTerm && (
           <button
             className="tlIconSelect__resetBtn"
-            onClick={handleClear}
-            title={i18n['js.iconSelect.clear']}
+            onClick={() => setSearchTerm('')}
+            title={i18n['js.iconSelect.clearFilter']}
           >
             &times;
           </button>
@@ -325,6 +326,9 @@ const IconSelectPopup: React.FC<IconSelectPopupProps> = ({
         <div className="tlIconSelect__actions">
           <button className="tlIconSelect__btn tlIconSelect__btn--cancel" onClick={onCancel}>
             {i18n['js.iconSelect.cancel']}
+          </button>
+          <button className="tlIconSelect__btn tlIconSelect__btn--clear" onClick={handleClear}>
+            {i18n['js.iconSelect.clear']}
           </button>
           <button className="tlIconSelect__btn tlIconSelect__btn--ok" onClick={handleOk}>
             {i18n['js.iconSelect.ok']}

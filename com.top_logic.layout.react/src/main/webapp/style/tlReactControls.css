@@ -3451,3 +3451,15 @@ button.tlMenu__item--disabled:hover {
 .tlIconSelect__btn--cancel:hover {
   background: var(--layer-hover);
 }
+
+.tlIconSelect__btn--clear {
+  background: transparent;
+  color: var(--support-error, #da1e28);
+  border: 1px solid var(--support-error, #da1e28);
+  margin-right: auto;
+}
+
+.tlIconSelect__btn--clear:hover {
+  background: var(--support-error, #da1e28);
+  color: var(--text-on-color, #fff);
+}

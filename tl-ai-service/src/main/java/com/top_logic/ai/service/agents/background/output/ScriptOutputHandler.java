@@ -5,6 +5,7 @@
  */
 package com.top_logic.ai.service.agents.background.output;
 
+import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -36,5 +37,6 @@ public interface ScriptOutputHandler extends OutputHandler {
 	 */
 	@Name(SCRIPT)
 	@Mandatory
+	@DefaultContainer
 	Expr getScript();
 }

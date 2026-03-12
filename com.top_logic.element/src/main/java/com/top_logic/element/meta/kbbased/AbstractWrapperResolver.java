@@ -320,7 +320,7 @@ public abstract class AbstractWrapperResolver extends ModelFactory {
     public List getAllWrappersFor(String aElementType) {
         assert aElementType != null : "aElementType must not be null!";
 		TLClass type = (TLClass) TLModelUtil.findType(getModuleName() + ":" + aElementType);
-		return MetaElementUtil.getAllDirectInstancesOf(type);
+		return MetaElementUtil.getAllDirectInstancesOf(type, TLObject.class);
     }
     
 	public abstract static class WrapperResolverModule<E extends ManagedClass> extends BasicRuntimeModule<E> {

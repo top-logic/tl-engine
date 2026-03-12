@@ -1943,7 +1943,7 @@
 				<plugin>
 					<groupId>org.vafer</groupId>
 					<artifactId>jdeb</artifactId>
-					<version>1.10</version>
+					<version>1.14</version>
 				</plugin>
 				<plugin>
 					<groupId>net.lopht.maven-plugins</groupId>

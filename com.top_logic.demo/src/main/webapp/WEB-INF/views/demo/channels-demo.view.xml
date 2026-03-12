@@ -1,24 +1,38 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+
+<view>
 	<channels>
-		<channel name="selectedCompany" />
+		<channel name="selectedCompany"/>
 	</channels>
-	<split-panel orientation="horizontal" resizable="true">
+	<split-panel
+		orientation="horizontal"
+		resizable="true"
+	>
 		<panes>
-			<pane size="40" unit="%" min-size="200">
+			<pane
+				min-size="200"
+				size="40"
+				unit="%"
+			>
 				<panel title="Companies">
-					<table types="Contacts:CompanyContact" selection="selectedCompany">
+					<table
+						selection="selectedCompany"
+						types="Contacts:CompanyContact"
+					>
 						<rows>all(`Contacts:CompanyContact`)</rows>
 					</table>
 				</panel>
 			</pane>
-			<pane size="60" unit="%">
+			<pane
+				size="60"
+				unit="%"
+			>
 				<panel title="Staff">
 					<table types="Contacts:PersonContact">
 						<inputs>
-							<input channel="selectedCompany" />
+							<input channel="selectedCompany"/>
 						</inputs>
-						<rows>company -> if($company == null, list(), $company.get(`Contacts:Contact.Company#staff`))</rows>
+						<rows>company -&gt; if($company == null, list(), $company.get(`Contacts:Contact.Company#staff`))</rows>
 					</table>
 				</panel>
 			</pane>

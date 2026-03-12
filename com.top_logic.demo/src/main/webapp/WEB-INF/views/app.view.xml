@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+
+<view>
 	<app-shell>
 		<header>
 			<app-bar title="Task Manager"/>
@@ -7,30 +8,54 @@
 		<content>
 			<sidebar active-item="dashboard">
 				<items>
-					<nav-item id="dashboard" label="Dashboard" icon="bi bi-speedometer2">
-						<view-ref view="demo/dashboard.view.xml" />
+					<nav-item id="dashboard"
+						icon="bi bi-speedometer2"
+						label="Dashboard"
+					>
+						<view-ref view="demo/dashboard.view.xml"/>
 					</nav-item>
-					<nav-item id="tabs-demo" label="Tabs Demo" icon="bi bi-layout-text-window-reverse">
-						<view-ref view="demo/tabs-demo.view.xml" />
+					<nav-item id="tabs-demo"
+						icon="bi bi-layout-text-window-reverse"
+						label="Tabs Demo"
+					>
+						<view-ref view="demo/tabs-demo.view.xml"/>
 					</nav-item>
-					<nav-item id="split-demo" label="Split Demo" icon="bi bi-layout-split">
-						<view-ref view="demo/split-demo.view.xml" />
+					<nav-item id="split-demo"
+						icon="bi bi-layout-split"
+						label="Split Demo"
+					>
+						<view-ref view="demo/split-demo.view.xml"/>
 					</nav-item>
-					<nav-item id="channels-demo" label="Channels Demo" icon="bi bi-table">
-						<view-ref view="demo/channels-demo.view.xml" />
+					<nav-item id="channels-demo"
+						icon="bi bi-table"
+						label="Channels Demo"
+					>
+						<view-ref view="demo/channels-demo.view.xml"/>
 					</nav-item>
-					<nav-item id="form-demo" label="Form Demo" icon="bi bi-pencil-square">
-						<view-ref view="demo/form-demo.view.xml" />
+					<nav-item id="form-demo"
+						icon="bi bi-pencil-square"
+						label="Form Demo"
+					>
+						<view-ref view="demo/form-demo.view.xml"/>
 					</nav-item>
-					<nav-item id="input-controls-demo" label="Input Controls" icon="bi bi-input-cursor">
-						<view-ref view="demo/input-controls-demo.view.xml" />
+					<nav-item id="input-controls-demo"
+						icon="bi bi-input-cursor"
+						label="Input Controls"
+					>
+						<view-ref view="demo/input-controls-demo.view.xml"/>
 					</nav-item>
-					<nav-item id="tlscript-editor-demo" label="TL-Script Editor" icon="bi bi-code-square">
-						<view-ref view="demo/tlscript-editor-demo.view.xml" />
+					<nav-item id="tlscript-editor-demo"
+						icon="bi bi-code-square"
+						label="TL-Script Editor"
+					>
+						<view-ref view="demo/tlscript-editor-demo.view.xml"/>
 					</nav-item>
 					<separator/>
-					<nav-item id="settings" label="Settings" icon="bi bi-gear">
-						<view-ref view="demo/settings.view.xml" />
+					<nav-item id="settings"
+						icon="bi bi-gear"
+						label="Settings"
+					>
+						<view-ref view="demo/settings.view.xml"/>
 					</nav-item>
 				</items>
 			</sidebar>
@@ -38,9 +63,18 @@
 		<footer>
 			<bottom-bar active-item="dashboard">
 				<items>
-					<item id="dashboard" label="Dashboard" icon="bi bi-speedometer2"/>
-					<item id="messages" label="Messages" icon="bi bi-chat-dots"/>
-					<item id="settings" label="Settings" icon="bi bi-gear"/>
+					<item id="dashboard"
+						icon="bi bi-speedometer2"
+						label="Dashboard"
+					/>
+					<item id="messages"
+						icon="bi bi-chat-dots"
+						label="Messages"
+					/>
+					<item id="settings"
+						icon="bi bi-gear"
+						label="Settings"
+					/>
 				</items>
 			</bottom-bar>
 		</footer>

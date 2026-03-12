@@ -1,27 +1,42 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+
+<view>
 	<channels>
-		<channel name="selectedPerson" />
+		<channel name="selectedPerson"/>
 		<derived-channel name="selectedContact"
+			expr="person -> $person.get(`tl.accounts:Person#contact`)"
 			inputs="selectedPerson"
-			expr="person -> $person.get(`tl.accounts:Person#contact`)" />
+		/>
 	</channels>
-	<split-panel orientation="horizontal" resizable="true">
+	<split-panel
+		orientation="horizontal"
+		resizable="true"
+	>
 		<panes>
-			<pane size="40" unit="%" min-size="200">
+			<pane
+				min-size="200"
+				size="40"
+				unit="%"
+			>
 				<panel title="Accounts">
-					<table types="tl.accounts:Person" selection="selectedPerson">
+					<table
+						selection="selectedPerson"
+						types="tl.accounts:Person"
+					>
 						<rows>all(`tl.accounts:Person`)</rows>
 					</table>
 				</panel>
 			</pane>
-			<pane size="60" unit="%">
+			<pane
+				size="60"
+				unit="%"
+			>
 				<panel title="Contact Details">
 					<form input="selectedContact">
-						<field attribute="firstname" />
-						<field attribute="name" />
-						<field attribute="phone" />
-						<field attribute="email" />
+						<field attribute="firstname"/>
+						<field attribute="name"/>
+						<field attribute="phone"/>
+						<field attribute="email"/>
 					</form>
 				</panel>
 			</pane>

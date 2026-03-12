@@ -24,18 +24,19 @@ import com.top_logic.model.TLObject;
  * transactions).
  *
  * <p>
- * The control provides four commands: edit, apply, save, and cancel. In view mode, the current
- * object is presented read-only. Entering edit mode creates a {@link TLObjectOverlay}, acquires a
- * lock on the object via the configured {@link LockHandler}, and switches all registered field
- * controls to editable state.
+ * Implements {@link FormModel} so that field controls can observe form state changes via
+ * {@link FormModelListener}. Every state transition (enter/exit edit mode, apply, input change)
+ * follows the same pattern: update internal state, then {@link #fireFormStateChanged()}.
  * </p>
  *
  * <p>
- * Apply commits overlay changes to the knowledge base without leaving edit mode. Save applies and
- * then exits edit mode. Cancel discards the overlay and releases the lock.
+ * The control provides four commands: edit, apply, save, and cancel. In view mode, the current
+ * object is presented read-only. Entering edit mode creates a {@link TLObjectOverlay}, acquires a
+ * lock on the object via the configured {@link LockHandler}, and fires a state change so that
+ * listening field controls can switch to editable state.
  * </p>
  */
-public class FormControl extends ReactControl {
+public class FormControl extends ReactControl implements FormModel {
 
 	/** State key for the current edit mode. */
 	private static final String EDIT_MODE = "editMode";
@@ -60,9 +61,7 @@ public class FormControl extends ReactControl {
 
 	private ViewChannel _dirtyChannel;
 
-	private final List<FieldControl> _fieldControls = new ArrayList<>();
-
-	private final List<Runnable> _formStateListeners = new ArrayList<>();
+	private final List<FormModelListener> _formModelListeners = new ArrayList<>();
 
 	private final ViewChannel.ChannelListener _inputListener = this::handleInputChanged;
 
@@ -91,14 +90,7 @@ public class FormControl extends ReactControl {
 		updateNoModelMessage();
 	}
 
-	/**
-	 * The current object being displayed or edited.
-	 *
-	 * <p>
-	 * In edit mode, returns the {@link TLObjectOverlay}. In view mode, returns the base
-	 * {@link TLObject}.
-	 * </p>
-	 */
+	@Override
 	public TLObject getCurrentObject() {
 		if (_editMode && _overlay != null) {
 			return _overlay;
@@ -113,11 +105,19 @@ public class FormControl extends ReactControl {
 		return _overlay;
 	}
 
-	/**
-	 * Whether the form is currently in edit mode.
-	 */
+	@Override
 	public boolean isEditMode() {
 		return _editMode;
+	}
+
+	@Override
+	public void addFormModelListener(FormModelListener listener) {
+		_formModelListeners.add(listener);
+	}
+
+	@Override
+	public void removeFormModelListener(FormModelListener listener) {
+		_formModelListeners.remove(listener);
 	}
 
 	/**
@@ -174,55 +174,10 @@ public class FormControl extends ReactControl {
 	}
 
 	/**
-	 * Registers a {@link FieldControl} with this form.
-	 *
-	 * <p>
-	 * Registered field controls are notified when the current object changes or edit mode changes,
-	 * so they can update their inner controls' values, editability, and dirty state.
-	 * </p>
-	 *
-	 * @param fieldControl
-	 *        The field control to register.
-	 */
-	public void registerFieldControl(FieldControl fieldControl) {
-		_fieldControls.add(fieldControl);
-	}
-
-	/**
-	 * Registers a listener that is notified when form state changes (edit mode, current object).
-	 *
-	 * @param listener
-	 *        The listener to add.
-	 */
-	public void addFormStateListener(Runnable listener) {
-		_formStateListeners.add(listener);
-	}
-
-	/**
-	 * Removes a previously registered form state listener.
-	 *
-	 * @param listener
-	 *        The listener to remove.
-	 */
-	public void removeFormStateListener(Runnable listener) {
-		_formStateListeners.remove(listener);
-	}
-
-	/**
-	 * Whether there is a current object available.
-	 */
-	public boolean hasCurrentObject() {
-		return _currentObject != null;
-	}
-
-	/**
-	 * Enters edit mode by acquiring a lock, creating an overlay, and switching fields to editable.
+	 * Enters edit mode by acquiring a lock, creating an overlay, and notifying listeners.
 	 */
 	public void enterEditMode() {
-		if (_editMode) {
-			return;
-		}
-		if (_currentObject == null) {
+		if (_editMode || _currentObject == null) {
 			return;
 		}
 
@@ -235,14 +190,6 @@ public class FormControl extends ReactControl {
 		updateEditModeChannel();
 		updateDirtyState();
 
-		// TODO: This must happen the other way around - the fields must listen for their FormModel
-		// to update or to switch mode. See TODO at
-		// com.top_logic.layout.view.ViewContext.getFormControl()
-		for (FieldControl field : _fieldControls) {
-			field.setEditMode(true);
-			field.setOverlay(_overlay);
-		}
-
 		fireFormStateChanged();
 	}
 
@@ -251,14 +198,11 @@ public class FormControl extends ReactControl {
 	 *
 	 * <p>
 	 * Opens a KB transaction, transfers overlay changes to the base object, commits, and resets the
-	 * overlay.
+	 * overlay. Fires state changed so that field controls can re-read the reset overlay.
 	 * </p>
 	 */
 	public void executeApply() {
-		if (!_editMode || _overlay == null) {
-			return;
-		}
-		if (!_overlay.isDirty()) {
+		if (!_editMode || _overlay == null || !_overlay.isDirty()) {
 			return;
 		}
 
@@ -274,9 +218,7 @@ public class FormControl extends ReactControl {
 		_overlay.reset();
 		updateDirtyState();
 
-		for (FieldControl field : _fieldControls) {
-			field.setOverlay(_overlay);
-		}
+		fireFormStateChanged();
 	}
 
 	/**
@@ -312,14 +254,18 @@ public class FormControl extends ReactControl {
 	}
 
 	/**
-	 * Updates the dirty channel based on the current overlay state.
+	 * Recalculates the form-level dirty state.
 	 *
 	 * <p>
-	 * Package-visible so that field controls can trigger a dirty update when values change.
+	 * Called by field controls when a value changes so the form's overall dirty state is updated.
 	 * </p>
 	 */
-	void updateDirtyChannel() {
-		updateDirtyState();
+	public void updateDirtyState() {
+		boolean dirty = _editMode && _overlay != null && _overlay.isDirty();
+		putState(DIRTY, Boolean.valueOf(dirty));
+		if (_dirtyChannel != null) {
+			_dirtyChannel.set(Boolean.valueOf(dirty));
+		}
 	}
 
 	private void exitEditMode() {
@@ -332,10 +278,6 @@ public class FormControl extends ReactControl {
 		updateEditModeChannel();
 		updateDirtyState();
 
-		for (FieldControl field : _fieldControls) {
-			field.setEditMode(false);
-		}
-
 		fireFormStateChanged();
 	}
 
@@ -344,22 +286,14 @@ public class FormControl extends ReactControl {
 	}
 
 	private void fireFormStateChanged() {
-		for (Runnable listener : _formStateListeners) {
-			listener.run();
+		for (FormModelListener listener : _formModelListeners) {
+			listener.onFormStateChanged(this);
 		}
 	}
 
 	private void updateEditModeChannel() {
 		if (_editModeChannel != null) {
 			_editModeChannel.set(Boolean.valueOf(_editMode));
-		}
-	}
-
-	private void updateDirtyState() {
-		boolean dirty = _editMode && _overlay != null && _overlay.isDirty();
-		putState(DIRTY, Boolean.valueOf(dirty));
-		if (_dirtyChannel != null) {
-			_dirtyChannel.set(Boolean.valueOf(dirty));
 		}
 	}
 
@@ -377,17 +311,6 @@ public class FormControl extends ReactControl {
 		}
 		_currentObject = (TLObject) newValue;
 		updateNoModelMessage();
-
-		if (_currentObject != null) {
-			TLObjectOverlay viewOverlay = new TLObjectOverlay(_currentObject);
-			for (FieldControl field : _fieldControls) {
-				field.setOverlay(viewOverlay);
-			}
-		}
-		// For fields that did not have a model yet (null-to-first-object), call refresh.
-		for (FieldControl field : _fieldControls) {
-			field.refresh();
-		}
 
 		fireFormStateChanged();
 	}

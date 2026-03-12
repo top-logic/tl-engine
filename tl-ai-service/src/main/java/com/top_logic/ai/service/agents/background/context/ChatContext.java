@@ -37,8 +37,8 @@ public class ChatContext extends BackgroundContext {
 	 * Creates a context for post-turn execution with the last user/agent exchange.
 	 */
 	public static ChatContext lastTurn(String agentName, String userMessage,
-			String agentResponse, Object completedTask) {
-		return new ChatContext(agentName, "post-turn", userMessage, agentResponse, completedTask, null);
+			String agentResponse, Object completedTask, Object chat) {
+		return new ChatContext(agentName, "post-turn", userMessage, agentResponse, completedTask, chat);
 	}
 
 	/**

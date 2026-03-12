@@ -512,7 +512,7 @@ public class ChatProcessor {
 				try {
 					BackgroundAgentExecutor executor = new BackgroundAgentExecutor(agentRegistry);
 					ChatContext context = ChatContext.lastTurn(name,
-						userMessage, agentResponse, completedTask);
+						userMessage, agentResponse, completedTask, taskTracker.getChat());
 					ExecutionResult execResult = executor.execute(name, context);
 					if (execResult.isBlocked()) {
 						// Post-turn block: add system message with block reason

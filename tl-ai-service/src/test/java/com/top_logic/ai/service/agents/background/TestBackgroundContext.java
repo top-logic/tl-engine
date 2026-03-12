@@ -43,7 +43,7 @@ public class TestBackgroundContext extends TestCase {
 
 	/** lastTurn factory sets trigger type to "post-turn". */
 	public void testChatContextLastTurnTriggerType() {
-		ChatContext ctx = ChatContext.lastTurn("ReviewAgent", "Hello", "Hi there", null);
+		ChatContext ctx = ChatContext.lastTurn("ReviewAgent", "Hello", "Hi there", null, null);
 
 		assertEquals("post-turn", ctx.getTriggerType());
 	}
@@ -51,18 +51,18 @@ public class TestBackgroundContext extends TestCase {
 	/** lastTurn factory stores user message and agent response. */
 	public void testChatContextLastTurnFields() {
 		Object mockTask = new Object();
-		ChatContext ctx = ChatContext.lastTurn("ReviewAgent", "What is X?", "X is Y.", mockTask);
+		ChatContext ctx = ChatContext.lastTurn("ReviewAgent", "What is X?", "X is Y.", mockTask, null);
 
 		assertEquals("ReviewAgent", ctx.getAgentName());
 		assertEquals("What is X?", ctx.getUserMessage());
 		assertEquals("X is Y.", ctx.getAgentResponse());
 		assertSame(mockTask, ctx.getCompletedTask());
-		assertNull("Chat should be null for lastTurn", ctx.getChat());
+		assertNull("Chat should be null when not provided", ctx.getChat());
 	}
 
 	/** lastTurn with null task. */
 	public void testChatContextLastTurnNullTask() {
-		ChatContext ctx = ChatContext.lastTurn("agent", "msg", "resp", null);
+		ChatContext ctx = ChatContext.lastTurn("agent", "msg", "resp", null, null);
 
 		assertNull(ctx.getCompletedTask());
 	}
@@ -121,7 +121,7 @@ public class TestBackgroundContext extends TestCase {
 
 	/** ChatContext is-a BackgroundContext. */
 	public void testChatContextIsBackgroundContext() {
-		ChatContext ctx = ChatContext.lastTurn("agent", "msg", "resp", null);
+		ChatContext ctx = ChatContext.lastTurn("agent", "msg", "resp", null, null);
 
 		assertTrue(ctx instanceof BackgroundContext);
 	}

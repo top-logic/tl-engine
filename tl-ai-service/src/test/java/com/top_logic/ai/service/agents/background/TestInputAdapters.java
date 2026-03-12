@@ -48,7 +48,7 @@ public class TestInputAdapters extends TestCase {
 		AutonomousInputAdapter adapter = new AutonomousInputAdapter(config);
 
 		BackgroundContext base = new BackgroundContext("agent", "test");
-		ChatContext chat = ChatContext.lastTurn("agent", "msg", "resp", null);
+		ChatContext chat = ChatContext.lastTurn("agent", "msg", "resp", null, null);
 		ApplicationContext app = ApplicationContext.scheduled("agent");
 
 		assertEquals("fixed input", adapter.gatherInput(base));
@@ -91,7 +91,7 @@ public class TestInputAdapters extends TestCase {
 		assertEquals("testScript()",
 			adapter.gatherInput(ApplicationContext.manual("agent", "admin")));
 		assertEquals("testScript()",
-			adapter.gatherInput(ChatContext.lastTurn("agent", "m", "r", null)));
+			adapter.gatherInput(ChatContext.lastTurn("agent", "m", "r", null, null)));
 	}
 
 	// --- InputAdapter interface contract ---

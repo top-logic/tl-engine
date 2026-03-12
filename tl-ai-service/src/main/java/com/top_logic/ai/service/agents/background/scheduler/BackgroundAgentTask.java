@@ -6,7 +6,6 @@
 package com.top_logic.ai.service.agents.background.scheduler;
 
 import com.top_logic.ai.service.agents.AgentRegistry;
-import com.top_logic.ai.service.agents.background.AgentResult;
 import com.top_logic.ai.service.agents.background.BackgroundAgentExecutor;
 import com.top_logic.ai.service.agents.background.context.ApplicationContext;
 import com.top_logic.basic.CalledByReflection;
@@ -19,25 +18,12 @@ import com.top_logic.util.sched.task.impl.StateHandlingTask;
 import com.top_logic.util.sched.task.result.TaskResult.ResultType;
 
 /**
- * TopLogic Scheduler task that bridges scheduled background agents to the
- * {@link BackgroundAgentExecutor}.
+ * TopLogic Scheduler task that executes a background agent and logs the result.
  *
  * <p>
  * Configured with an agent name. When the scheduler fires according to the configured schedule,
  * this task creates an {@link ApplicationContext} and executes the background agent pipeline.
  * </p>
- *
- * <p>
- * The result of the agent execution is mapped to a scheduler {@link ResultType}:
- * </p>
- * <ul>
- * <li>{@link com.top_logic.ai.service.agents.background.AgentResult.Status#PASS PASS} results in
- * {@link ResultType#SUCCESS}</li>
- * <li>{@link com.top_logic.ai.service.agents.background.AgentResult.Status#ISSUE_FOUND ISSUE_FOUND}
- * results in {@link ResultType#WARNING}</li>
- * <li>{@link com.top_logic.ai.service.agents.background.AgentResult.Status#BLOCK BLOCK} results in
- * {@link ResultType#WARNING}</li>
- * </ul>
  */
 public class BackgroundAgentTask extends StateHandlingTask<BackgroundAgentTask.Config> {
 
@@ -78,21 +64,15 @@ public class BackgroundAgentTask extends StateHandlingTask<BackgroundAgentTask.C
 
 			BackgroundAgentExecutor executor = new BackgroundAgentExecutor(registry);
 			ApplicationContext context = ApplicationContext.scheduled(agentName);
-			AgentResult result = executor.execute(agentName, context);
+			String response = executor.execute(agentName, context);
 
-			switch (result.status()) {
-				case PASS:
-					getLog().taskEnded(ResultType.SUCCESS,
-						ResKey.text("Background agent '" + agentName + "' completed: no issues found"));
-					break;
-				case ISSUE_FOUND:
-					getLog().taskEnded(ResultType.WARNING,
-						ResKey.text("Background agent '" + agentName + "' found issues: " + result.message()));
-					break;
-				case BLOCK:
-					getLog().taskEnded(ResultType.WARNING,
-						ResKey.text("Background agent '" + agentName + "' blocked: " + result.reason()));
-					break;
+			if (response == null || response.isEmpty()) {
+				getLog().taskEnded(ResultType.WARNING,
+					ResKey.text("Background agent '" + agentName + "' returned empty response"));
+			} else {
+				String summary = response.length() > 200 ? response.substring(0, 197) + "..." : response;
+				getLog().taskEnded(ResultType.SUCCESS,
+					ResKey.text("Background agent '" + agentName + "' completed: " + summary));
 			}
 		} catch (Exception ex) {
 			Logger.error("Scheduled background agent '" + agentName + "' failed",

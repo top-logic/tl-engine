@@ -1,0 +1,2 @@
+tl-ai-demo.test.config.xml
+testVectorIndexIntegrationConf.config.xml

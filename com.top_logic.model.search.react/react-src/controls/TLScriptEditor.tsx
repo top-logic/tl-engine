@@ -1,12 +1,13 @@
 import { React, useTLState, useTLCommand } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import { EditorView, keymap } from '@codemirror/view';
+import { EditorView, keymap, lineNumbers, highlightActiveLine, highlightActiveLineGutter } from '@codemirror/view';
 import { EditorState, Compartment } from '@codemirror/state';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
-import { autocompletion } from '@codemirror/autocomplete';
+import { autocompletion, closeBrackets } from '@codemirror/autocomplete';
 import type { CompletionContext, CompletionResult } from '@codemirror/autocomplete';
 import { setDiagnostics } from '@codemirror/lint';
 import type { Diagnostic } from '@codemirror/lint';
+import { syntaxHighlighting, defaultHighlightStyle, bracketMatching } from '@codemirror/language';
 import { tlscript } from '../lang/tlscript-lang';
 
 const { useRef, useEffect, useCallback } = React;
@@ -97,6 +98,12 @@ const TLScriptEditor: React.FC<TLCellProps> = ({ controlId, state }) => {
         doc: initialValue,
         extensions: [
           tlscript(),
+          syntaxHighlighting(defaultHighlightStyle),
+          lineNumbers(),
+          highlightActiveLine(),
+          highlightActiveLineGutter(),
+          bracketMatching(),
+          closeBrackets(),
           history(),
           keymap.of([...defaultKeymap, ...historyKeymap]),
           editableComp.current.of(EditorView.editable.of(!readOnly)),

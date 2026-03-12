@@ -23,7 +23,7 @@ import com.top_logic.model.config.TLTypeAnnotation;
  * <p>
  * When set on an attribute, it overrides the default control selection. When set on a type, it
  * provides the default control for all attributes of that type (via
- * {@link DefaultStrategy.Strategy#VALUE_TYPE}).
+ * {@link com.top_logic.model.annotate.DefaultStrategy.Strategy#VALUE_TYPE}).
  * </p>
  *
  * @see FieldControlService

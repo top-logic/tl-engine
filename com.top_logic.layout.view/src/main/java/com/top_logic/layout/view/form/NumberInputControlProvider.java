@@ -17,8 +17,9 @@ import com.top_logic.model.TLType;
  * {@link ReactFieldControlProvider} for integer and floating-point attributes.
  *
  * <p>
- * Inspects the attribute's {@link TLPrimitive.Kind} to determine the number of decimal places:
- * {@link TLPrimitive.Kind#INT} uses 0, {@link TLPrimitive.Kind#FLOAT} uses 2.
+ * Inspects the attribute's {@link com.top_logic.model.TLPrimitive.Kind} to determine the number of
+ * decimal places: {@link com.top_logic.model.TLPrimitive.Kind#INT} uses 0,
+ * {@link com.top_logic.model.TLPrimitive.Kind#FLOAT} uses 2.
  * </p>
  */
 public class NumberInputControlProvider implements ReactFieldControlProvider {

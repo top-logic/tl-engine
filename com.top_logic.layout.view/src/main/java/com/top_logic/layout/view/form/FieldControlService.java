@@ -35,7 +35,7 @@ import com.top_logic.model.util.TLModelPartRef;
  * <li>{@link TLInputControl} annotation on the attribute or its type (via
  * {@link com.top_logic.model.annotate.DefaultStrategy.Strategy#VALUE_TYPE}).</li>
  * <li>Global type-to-provider map configured in this service.</li>
- * <li>Built-in fallback based on {@link TLPrimitive.Kind}.</li>
+ * <li>Built-in fallback based on {@link com.top_logic.model.TLPrimitive.Kind}.</li>
  * </ol>
  */
 public class FieldControlService extends ConfiguredManagedClass<FieldControlService.Config> {

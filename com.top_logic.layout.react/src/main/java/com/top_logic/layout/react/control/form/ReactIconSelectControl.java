@@ -126,8 +126,9 @@ public class ReactIconSelectControl extends ReactFormFieldControl {
 	 * Loads icon bundles from the configured icon library resources.
 	 *
 	 * <p>
-	 * Reuses the same {@link IconInputControl.Config} configuration that the legacy icon chooser
-	 * uses, reading JSON metadata files and applying style-to-CSS mappings.
+	 * Reuses the same {@link com.top_logic.layout.form.control.IconInputControl.Config}
+	 * configuration that the legacy icon chooser uses, reading JSON metadata files and applying
+	 * style-to-CSS mappings.
 	 * </p>
 	 */
 	static List<IconBundle> loadIconBundles() {

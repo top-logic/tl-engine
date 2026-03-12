@@ -196,16 +196,18 @@ public class BackgroundAgentExecutor {
 	private void evaluateScript(ScriptOutputHandler scriptHandler, String response,
 			BackgroundContext context) {
 		try {
-			TLModel model = ModelService.getApplicationModel();
-			SearchExpression searchExpr = SearchBuilder.toSearchExpression(model, scriptHandler.getScript());
+			ThreadContextManager.inSystemInteraction(BackgroundAgentExecutor.class, () -> {
+				TLModel model = ModelService.getApplicationModel();
+				SearchExpression searchExpr = SearchBuilder.toSearchExpression(model, scriptHandler.getScript());
 
-			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-			QueryExecutor executor = QueryExecutor.compile(kb, model, searchExpr);
+				KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+				QueryExecutor executor = QueryExecutor.compile(kb, model, searchExpr);
 
-			kb.withoutModifications(() ->
-				executor.executeWith(
-					executor.context(true, null, null),
-					Args.some(response)));
+				return kb.withoutModifications(() ->
+					executor.executeWith(
+						executor.context(true, null, null),
+						Args.some(response)));
+			});
 		} catch (Exception ex) {
 			Logger.error("Script output handler failed for agent '" + context.getAgentName() + "'",
 				ex, BackgroundAgentExecutor.class);

@@ -12,15 +12,6 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 
 /**
  * Output handler that evaluates a TL-Script expression with the agent's response.
- *
- * <p>
- * The script receives the raw LLM response string as its first argument. Use lambda syntax to bind
- * it:
- * </p>
- *
- * <pre>
- * response -&gt; $response.length() &gt; 0
- * </pre>
  */
 public interface ScriptOutputHandler extends OutputHandler {
 
@@ -31,8 +22,8 @@ public interface ScriptOutputHandler extends OutputHandler {
 	 * The TL-Script expression to evaluate.
 	 *
 	 * <p>
-	 * The raw LLM response string is passed as the first argument. Use lambda syntax to access it,
-	 * e.g. {@code response -> $response}.
+	 * The first argument is the raw LLM response string. Use {@code log()} to write to the
+	 * application log.
 	 * </p>
 	 */
 	@Name(SCRIPT)

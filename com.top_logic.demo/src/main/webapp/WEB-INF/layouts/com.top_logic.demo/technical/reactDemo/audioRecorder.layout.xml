@@ -10,8 +10,7 @@
 			<de>Audiorekorder</de>
 		</tabLabel>
 		<components>
-			<component
-				class="com.top_logic.demo.react.DemoAudioRecorderComponent"
+			<component class="com.top_logic.demo.react.DemoAudioRecorderComponent"
 				name="reactAudioRecorderDemo"
 			/>
 		</components>

@@ -10,8 +10,7 @@
 			<de>App</de>
 		</tabLabel>
 		<components>
-			<component
-				class="com.top_logic.demo.react.DemoReactAppComponent"
+			<component class="com.top_logic.demo.react.DemoReactAppComponent"
 				name="reactAppDemo"
 			/>
 		</components>

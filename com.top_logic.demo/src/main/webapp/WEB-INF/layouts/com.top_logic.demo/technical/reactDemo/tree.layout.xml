@@ -10,8 +10,7 @@
 			<de>Baum</de>
 		</tabLabel>
 		<components>
-			<component
-				class="com.top_logic.demo.react.DemoReactTreeComponent"
+			<component class="com.top_logic.demo.react.DemoReactTreeComponent"
 				name="reactTreeDemo"
 			/>
 		</components>

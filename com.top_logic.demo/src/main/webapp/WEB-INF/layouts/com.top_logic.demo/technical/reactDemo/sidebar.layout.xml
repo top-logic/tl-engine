@@ -10,8 +10,7 @@
 			<de>Seitenleiste</de>
 		</tabLabel>
 		<components>
-			<component
-				class="com.top_logic.demo.react.DemoReactSidebarComponent"
+			<component class="com.top_logic.demo.react.DemoReactSidebarComponent"
 				name="reactSidebarDemo"
 			/>
 		</components>

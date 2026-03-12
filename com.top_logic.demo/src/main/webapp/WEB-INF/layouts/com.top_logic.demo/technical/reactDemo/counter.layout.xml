@@ -7,11 +7,10 @@
 	<arguments>
 		<tabLabel key="dynamic.reactDemo.counter.tab">
 			<en>Counter</en>
-			<de>Z&#228;hler</de>
+			<de>Zähler</de>
 		</tabLabel>
 		<components>
-			<component
-				class="com.top_logic.demo.react.DemoReactCounterComponent"
+			<component class="com.top_logic.demo.react.DemoReactCounterComponent"
 				name="reactCounterDemo"
 			/>
 		</components>

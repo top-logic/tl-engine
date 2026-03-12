@@ -10,8 +10,7 @@
 			<de>Tableiste</de>
 		</tabLabel>
 		<components>
-			<component
-				class="com.top_logic.demo.react.DemoReactTabBarComponent"
+			<component class="com.top_logic.demo.react.DemoReactTabBarComponent"
 				name="reactTabBarDemo"
 			/>
 		</components>

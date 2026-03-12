@@ -10,8 +10,7 @@
 			<de>Formularfelder</de>
 		</tabLabel>
 		<components>
-			<component
-				class="com.top_logic.demo.react.DemoReactFormFieldsComponent"
+			<component class="com.top_logic.demo.react.DemoReactFormFieldsComponent"
 				name="reactFormFieldsDemo"
 			/>
 		</components>

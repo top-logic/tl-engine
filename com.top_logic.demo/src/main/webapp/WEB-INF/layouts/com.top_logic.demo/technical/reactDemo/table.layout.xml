@@ -10,8 +10,7 @@
 			<de>Tabelle</de>
 		</tabLabel>
 		<components>
-			<component
-				class="com.top_logic.demo.react.DemoReactTableComponent"
+			<component class="com.top_logic.demo.react.DemoReactTableComponent"
 				name="reactTableDemo"
 			/>
 		</components>

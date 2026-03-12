@@ -9,7 +9,6 @@ import java.util.List;
 
 import com.top_logic.ai.service.agents.background.input.InputConfig;
 import com.top_logic.ai.service.agents.background.output.OutputHandler;
-import com.top_logic.ai.service.agents.background.output.OutputHandlerImplementation;
 import com.top_logic.ai.service.agents.background.output.ScriptOutputHandler;
 import com.top_logic.ai.service.agents.background.trigger.TriggerConfig;
 import com.top_logic.basic.config.ConfigurationItem;
@@ -93,8 +92,9 @@ public interface BackgroundConfig extends ConfigurationItem {
 	 *
 	 * <p>
 	 * Handlers receive the raw LLM response and can perform arbitrary processing. Two handler types
-	 * are available: {@link OutputHandlerImplementation.Config} for custom Java classes and
-	 * {@link ScriptOutputHandler} for inline TL-Script.
+	 * are available:
+	 * {@link com.top_logic.ai.service.agents.background.output.OutputHandlerImplementation.Config}
+	 * for custom Java classes and {@link ScriptOutputHandler} for inline TL-Script.
 	 * </p>
 	 *
 	 * @return The list of output handler configurations, may be empty.

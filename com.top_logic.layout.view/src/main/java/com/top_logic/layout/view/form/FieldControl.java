@@ -27,6 +27,9 @@ import com.top_logic.util.Resources;
  * handles two-way value sync. Edit mode and object switching are driven by
  * {@link #setEditMode(boolean)} and {@link #setOverlay(TLObjectOverlay)}.
  * </p>
+ * 
+ * TODO: Better name AttributeFieldControl - it is just the glue between the edited model object and
+ * the technical React controls for actually displaying and editing the value.
  */
 public class FieldControl {
 

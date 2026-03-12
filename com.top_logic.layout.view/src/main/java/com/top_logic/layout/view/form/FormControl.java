@@ -235,6 +235,9 @@ public class FormControl extends ReactControl {
 		updateEditModeChannel();
 		updateDirtyState();
 
+		// TODO: This must happen the other way around - the fields must listen for their FormModel
+		// to update or to switch mode. See TODO at
+		// com.top_logic.layout.view.ViewContext.getFormControl()
 		for (FieldControl field : _fieldControls) {
 			field.setEditMode(true);
 			field.setOverlay(_overlay);

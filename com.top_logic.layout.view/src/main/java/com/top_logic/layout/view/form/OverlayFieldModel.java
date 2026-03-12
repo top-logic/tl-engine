@@ -14,11 +14,16 @@ import com.top_logic.model.TLStructuredTypePart;
 /**
  * {@link com.top_logic.layout.form.model.FieldModel} that reads/writes a single attribute of a
  * {@link TLObjectOverlay}.
+ * 
+ * TODO: This is not an overlay. It is just a field model storing to a TLObject. Better name
+ * AttributeFieldModel - the value of an object attribute adapted for editing in a form.
  */
 public class OverlayFieldModel extends AbstractFieldModel {
 
+	// TODO: This is not an overlay, it is TLObject
 	private TLObjectOverlay _overlay;
 
+	// TODO: NO need to store separately.
 	private String _attributeName;
 
 	private TLStructuredTypePart _part;
@@ -60,6 +65,8 @@ public class OverlayFieldModel extends AbstractFieldModel {
 		fireValueChanged(oldValue, value);
 	}
 
+	// TODO - no need to override - no need to delegate to someone else - the field model must keep
+	// track of its own dirty state - the super class does this.
 	@Override
 	public boolean isDirty() {
 		if (_overlay == null) {
@@ -75,6 +82,8 @@ public class OverlayFieldModel extends AbstractFieldModel {
 	 * Re-resolves the attribute from the new object's type and fires value changed with the new
 	 * value.
 	 * </p>
+	 * 
+	 * TODO: This is basically setObject(...)
 	 */
 	public void setOverlay(TLObjectOverlay newOverlay) {
 		Object oldValue = getValue();

@@ -56,6 +56,10 @@ public interface ViewContext extends ReactContext {
 	/**
 	 * The {@link FormControl} of the nearest enclosing form element, or {@code null} if no form is
 	 * in scope.
+	 * 
+	 * TODO: This is to concrete: The context should better propagate a FormModel to its content.
+	 * Inner attribute controls must use this interface for communication/information
+	 * retrieving/listening only.
 	 */
 	FormControl getFormControl();
 

@@ -369,12 +369,6 @@ public class ChatSSEHandler {
 		// Emit agent task events (from TaskStore)
 		emitAgentTaskDeltas();
 
-		// Emit background agent alerts (session-scoped)
-		List<BackgroundAgentNotification> sessionAlerts = _tracker.getBackgroundNotifications().drain();
-		for (BackgroundAgentNotification alert : sessionAlerts) {
-			sendEvent("background_alert", BackgroundAlertEvent.toJson(alert));
-		}
-
 		// Emit global background agent alerts (application-scoped)
 		List<BackgroundAgentNotification> globalAlerts = GlobalNotificationStore.getInstance().drain();
 		for (BackgroundAgentNotification alert : globalAlerts) {

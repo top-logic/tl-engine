@@ -22,7 +22,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.top_logic.ai.chat.api.DtoMapper;
 import com.top_logic.ai.chat.api.messages.AttachmentDto;
-import com.top_logic.ai.chat.background.BackgroundAgentNotification;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.service.agents.AgentRegistry;
 import com.top_logic.ai.service.agents.background.AgentResult;
@@ -514,17 +513,7 @@ public class ChatProcessor {
 					BackgroundAgentExecutor executor = new BackgroundAgentExecutor(agentRegistry);
 					ChatContext context = ChatContext.lastTurn(name,
 						userMessage, agentResponse, completedTask);
-					AgentResult bgResult = executor.execute(name, context);
-
-					if (bgResult.status() != AgentResult.Status.PASS) {
-						BackgroundAgentNotification notification = new BackgroundAgentNotification(
-							summarizeText(bgResult.message(), 200),
-							name,
-							bgResult.status() == AgentResult.Status.BLOCK ? "block" : "review",
-							"warning",
-							Instant.now());
-						taskTracker.getBackgroundNotifications().add(notification);
-					}
+					executor.execute(name, context);
 				} catch (Exception ex) {
 					Logger.error("Background agent '" + name + "' failed: " + ex.getMessage(),
 						ex, ChatProcessor.class);
@@ -533,19 +522,6 @@ public class ChatProcessor {
 				}
 			});
 		}
-	}
-
-	/**
-	 * Truncates text to the specified max length for use as a notification title.
-	 */
-	private static String summarizeText(String text, int maxLen) {
-		if (text == null) {
-			return "";
-		}
-		if (text.length() <= maxLen) {
-			return text;
-		}
-		return text.substring(0, maxLen - 3) + "...";
 	}
 
 	/**

@@ -17,7 +17,6 @@ import java.util.function.Consumer;
 
 import dev.langchain4j.memory.ChatMemory;
 
-import com.top_logic.ai.chat.background.BackgroundNotificationStore;
 import com.top_logic.ai.chat.layout.ChatProcessor.AIProcessingState;
 import com.top_logic.ai.service.approval.ApprovalMode;
 import com.top_logic.layout.WindowScope;
@@ -44,8 +43,6 @@ public class TaskProgressTracker {
 	private final LinkedList<ChatTask> _tasks = new LinkedList<>();
 
 	private final ChatSessionManager _sessionManager = new ChatSessionManager();
-
-	private final BackgroundNotificationStore _backgroundNotifications = new BackgroundNotificationStore();
 
 	private final ConcurrentHashMap<String, AtomicBoolean> _backgroundAgentInProgress = new ConcurrentHashMap<>();
 
@@ -170,13 +167,6 @@ public class TaskProgressTracker {
 				store.setMode(mode);
 			}
 		}
-	}
-
-	/**
-	 * Returns the notification store for background agent notifications.
-	 */
-	public BackgroundNotificationStore getBackgroundNotifications() {
-		return _backgroundNotifications;
 	}
 
 	/**

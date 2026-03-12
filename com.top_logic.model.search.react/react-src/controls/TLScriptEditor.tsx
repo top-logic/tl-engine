@@ -30,6 +30,7 @@ interface ServerDiagnostic {
 interface CompletionItem {
   name: string;
   value: string;
+  replacement?: string;
   score?: number;
   docHTML?: string;
 }
@@ -69,14 +70,21 @@ const TLScriptEditor: React.FC<TLCellProps> = ({ controlId, state }) => {
     (context: CompletionContext): Promise<CompletionResult | null> => {
       const pos = context.pos;
       const line = context.state.doc.lineAt(pos);
-      const prefix = context.matchBefore(/[\w$`.:]+/)?.text ?? '';
-      if (!prefix && !context.explicit) return Promise.resolve(null);
+
+      // Broad match for trigger detection (includes dots, backticks, etc.)
+      const triggerMatch = context.matchBefore(/[\w$`.:]+/);
+      if (!triggerMatch && !context.explicit) return Promise.resolve(null);
+
+      // Narrow match for the word being typed — determines replacement range
+      const wordMatch = context.matchBefore(/[\w]+/);
+      const prefix = wordMatch?.text ?? '';
+      const from = wordMatch?.from ?? pos;
 
       const requestId = String(Date.now()) + Math.random();
       sendCommand('complete', { line: line.text, prefix, requestId });
 
       return new Promise((resolve) => {
-        pendingCompletion.current = { requestId, resolve, from: pos - prefix.length };
+        pendingCompletion.current = { requestId, resolve, from };
         setTimeout(() => {
           if (pendingCompletion.current?.requestId === requestId) {
             pendingCompletion.current = null;
@@ -187,6 +195,7 @@ const TLScriptEditor: React.FC<TLCellProps> = ({ controlId, state }) => {
       from: pending.from,
       options: items.map((c) => ({
         label: c.name,
+        apply: c.replacement ?? c.name,
         detail: c.value !== c.name ? c.value : undefined,
         info: c.docHTML ? () => {
           const div = document.createElement('div');

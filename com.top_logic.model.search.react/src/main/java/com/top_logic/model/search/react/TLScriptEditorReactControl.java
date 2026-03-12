@@ -12,6 +12,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
@@ -36,6 +38,11 @@ import com.top_logic.model.search.ui.TLScriptCompletionService;
  * </ul>
  */
 public class TLScriptEditorReactControl extends ReactControl {
+
+	private static final Pattern TOKEN_MGR_ERROR_PATTERN =
+		Pattern.compile("line (\\d+), column (\\d+)");
+
+	private static final Pattern ACE_TAB_STOP_PATTERN = Pattern.compile("\\$\\d+");
 
 	private static final String VALUE = "value";
 
@@ -113,6 +120,10 @@ public class TLScriptEditorReactControl extends ReactControl {
 			entry.put("name", c.getName());
 			entry.put("value", c.getValue());
 			entry.put("score", Integer.valueOf(c.getScore()));
+			String snippet = c.getSnippet();
+			if (snippet != null) {
+				entry.put("replacement", ACE_TAB_STOP_PATTERN.matcher(snippet).replaceAll(""));
+			}
 			String docHTML = c.getDocHTML();
 			if (docHTML != null && !docHTML.isEmpty()) {
 				entry.put("docHTML", docHTML);
@@ -158,8 +169,15 @@ public class TLScriptEditorReactControl extends ReactControl {
 			return Collections.singletonList(diag);
 		} catch (TokenMgrError ex) {
 			Map<String, Object> diag = new HashMap<>();
-			diag.put("line", Integer.valueOf(1));
-			diag.put("col", Integer.valueOf(1));
+			int errorLine = 1;
+			int errorCol = 1;
+			Matcher m = TOKEN_MGR_ERROR_PATTERN.matcher(ex.getMessage());
+			if (m.find()) {
+				errorLine = Integer.parseInt(m.group(1));
+				errorCol = Integer.parseInt(m.group(2));
+			}
+			diag.put("line", Integer.valueOf(errorLine));
+			diag.put("col", Integer.valueOf(errorCol));
 			diag.put("severity", "error");
 			diag.put("message", ex.getMessage());
 			return Collections.singletonList(diag);

@@ -89,8 +89,7 @@ public class TLScriptCompletionService implements TLScriptConstants {
 
 		if (lastIndexOf >= 0) {
 			if (lastIndexOf == 0
-				|| StringServices.BLANK_CHAR == line.charAt(lastIndexOf - 1)
-				|| ',' == line.charAt(lastIndexOf - 1)) {
+				|| !Character.isJavaIdentifierPart(line.charAt(lastIndexOf - 1))) {
 				return Optional.of(createFunctionCompletionsInternal(context, prefix, caseSensitive));
 			}
 		}

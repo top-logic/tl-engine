@@ -26,6 +26,14 @@ import com.top_logic.ai.service.agents.background.output.ScriptOutputHandler;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.knowledge.service.KnowledgeBase;
+import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.model.TLModel;
+import com.top_logic.model.search.expr.SearchExpression;
+import com.top_logic.model.search.expr.config.SearchBuilder;
+import com.top_logic.model.search.expr.query.Args;
+import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.util.model.ModelService;
 
 import dev.langchain4j.agentic.UntypedAgent;
 
@@ -178,13 +186,30 @@ public class BackgroundAgentExecutor {
 			return;
 		}
 		if (handler instanceof ScriptOutputHandler scriptHandler) {
-			// TL-Script evaluation will be implemented later
-			Logger.info("ScriptOutputHandler not yet implemented for agent '" + context.getAgentName() + "'",
-				BackgroundAgentExecutor.class);
+			evaluateScript(scriptHandler, response, context);
 			return;
 		}
 		Logger.warn("No dispatcher for output handler: " + handler.getClass().getName(),
 			BackgroundAgentExecutor.class);
+	}
+
+	private void evaluateScript(ScriptOutputHandler scriptHandler, String response,
+			BackgroundContext context) {
+		try {
+			TLModel model = ModelService.getApplicationModel();
+			SearchExpression searchExpr = SearchBuilder.toSearchExpression(model, scriptHandler.getScript());
+
+			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+			QueryExecutor executor = QueryExecutor.compile(kb, model, searchExpr);
+
+			kb.withoutModifications(() ->
+				executor.executeWith(
+					executor.context(true, null, null),
+					Args.some(response)));
+		} catch (Exception ex) {
+			Logger.error("Script output handler failed for agent '" + context.getAgentName() + "'",
+				ex, BackgroundAgentExecutor.class);
+		}
 	}
 
 	private String invokeAgent(String agentName, String input) {

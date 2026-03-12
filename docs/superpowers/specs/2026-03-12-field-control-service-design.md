@@ -118,7 +118,7 @@ Default XML configuration in `com.top_logic.layout.view`:
       <provider type="tl.core:Icon">
         <impl class="com.top_logic.layout.view.form.IconSelectControlProvider"/>
       </provider>
-      <provider type="tl.core:Color">
+      <provider type="tl.util:Color">
         <impl class="com.top_logic.layout.view.form.ColorInputControlProvider"/>
       </provider>
     </providers>

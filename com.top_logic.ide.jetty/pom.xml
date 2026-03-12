@@ -30,10 +30,6 @@
       <groupId>org.eclipse.jetty.ee10</groupId>
       <artifactId>jetty-ee10-servlet</artifactId>
 	</dependency>
-	<dependency>
-	  <groupId>org.eclipse.jdt</groupId>
-	  <artifactId>ecj</artifactId>
-	</dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-basic-core</artifactId>

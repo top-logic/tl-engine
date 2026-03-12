@@ -1140,11 +1140,6 @@
 				<version>${jetty.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>org.eclipse.jdt</groupId>
-				<artifactId>ecj</artifactId>
-				<version>3.45.0</version>
-			</dependency>
-			<dependency>
 			    <groupId>org.xhtmlrenderer</groupId>
 			    <artifactId>flying-saucer-pdf</artifactId>
 			    <version>9.13.3</version>

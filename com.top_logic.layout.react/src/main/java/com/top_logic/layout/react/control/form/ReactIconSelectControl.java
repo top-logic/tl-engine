@@ -62,6 +62,23 @@ public class ReactIconSelectControl extends ReactFormFieldControl {
 		putState(ICONS_LOADED, Boolean.FALSE);
 	}
 
+	@Override
+	protected void handleModelValueChanged(FieldModel source, Object oldValue, Object newValue) {
+		if (newValue instanceof ThemeImage) {
+			putState(VALUE, ((ThemeImage) newValue).toEncodedForm());
+		} else {
+			putState(VALUE, newValue);
+		}
+	}
+
+	@Override
+	protected Object parseClientValue(Object rawValue) {
+		if (rawValue == null) {
+			return null;
+		}
+		return ThemeImage.internalDecode(rawValue.toString());
+	}
+
 	/**
 	 * Lazily loads icon metadata from configured icon libraries and sends it to the client.
 	 */

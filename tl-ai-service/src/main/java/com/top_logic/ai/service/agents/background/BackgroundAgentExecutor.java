@@ -7,7 +7,6 @@ package com.top_logic.ai.service.agents.background;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import com.top_logic.ai.service.agents.AgentConfig;
@@ -21,11 +20,11 @@ import com.top_logic.ai.service.agents.background.input.ProviderInput;
 import com.top_logic.ai.service.agents.background.input.ProviderInputAdapter;
 import com.top_logic.ai.service.agents.background.input.ScriptInput;
 import com.top_logic.ai.service.agents.background.input.ScriptInputAdapter;
-import com.top_logic.ai.service.agents.background.output.AuditLogHandler;
 import com.top_logic.ai.service.agents.background.output.OutputHandler;
-import com.top_logic.ai.service.agents.background.trigger.PreTurnTrigger;
-import com.top_logic.ai.service.agents.background.trigger.TriggerConfig;
+import com.top_logic.ai.service.agents.background.output.OutputHandlerImplementation;
+import com.top_logic.ai.service.agents.background.output.ScriptOutputHandler;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 
 import dev.langchain4j.agentic.UntypedAgent;
@@ -35,13 +34,12 @@ import dev.langchain4j.agentic.UntypedAgent;
  *
  * <p>
  * Orchestrates the full lifecycle: resolve config, gather input via {@link InputAdapter}, invoke the
- * LLM agent, parse the result via {@link ResultParser}, and run output handlers.
+ * LLM agent, and run output handlers.
  * </p>
  *
  * <p>
- * External modules (e.g. {@code tl-chat}) can register additional input adapter factories and
- * output handler factories via {@link #registerInputAdapterFactory} and
- * {@link #registerOutputHandlerFactory} to avoid circular dependencies.
+ * External modules (e.g. {@code tl-chat}) can register additional input adapter factories via
+ * {@link #registerInputAdapterFactory} to avoid circular dependencies.
  * </p>
  */
 public class BackgroundAgentExecutor {
@@ -49,9 +47,6 @@ public class BackgroundAgentExecutor {
 	private final AgentRegistry _registry;
 
 	private static final Map<Class<?>, Function<Object, InputAdapter>> EXTERNAL_ADAPTERS =
-		new ConcurrentHashMap<>();
-
-	private static final Map<Class<?>, BiConsumer<Object, OutputHandlerContext>> EXTERNAL_HANDLERS =
 		new ConcurrentHashMap<>();
 
 	/**
@@ -68,12 +63,11 @@ public class BackgroundAgentExecutor {
 	 * Executes the background agent pipeline synchronously.
 	 *
 	 * <p>
-	 * The pipeline consists of four steps:
+	 * The pipeline consists of three steps:
 	 * </p>
 	 * <ol>
 	 * <li>Resolve the {@link InputAdapter} and gather input</li>
 	 * <li>Build and invoke the LLM agent</li>
-	 * <li>Parse the result based on authority</li>
 	 * <li>Run output handlers</li>
 	 * </ol>
 	 *
@@ -81,11 +75,11 @@ public class BackgroundAgentExecutor {
 	 *        The name of the background agent to execute.
 	 * @param context
 	 *        The execution context providing access to chat history and session data.
-	 * @return The structured result of the agent execution.
+	 * @return The raw LLM response string; may be null.
 	 * @throws IllegalArgumentException
 	 *         if the agent has no background configuration.
 	 */
-	public AgentResult execute(String agentName, BackgroundContext context) {
+	public String execute(String agentName, BackgroundContext context) {
 		AgentConfig agentConfig = _registry.getAgentConfig(agentName);
 		BackgroundConfig bgConfig = agentConfig.getBackground();
 		if (bgConfig == null) {
@@ -99,13 +93,10 @@ public class BackgroundAgentExecutor {
 		// 2. Build and invoke the agent
 		String response = invokeAgent(agentName, input);
 
-		// 3. Parse the result based on authority
-		AgentResult result = parseResult(bgConfig, response);
+		// 3. Run output handlers
+		runOutputHandlers(bgConfig, response, context);
 
-		// 4. Run output handlers
-		runOutputHandlers(bgConfig, result, context);
-
-		return result;
+		return response;
 	}
 
 	/**
@@ -128,28 +119,6 @@ public class BackgroundAgentExecutor {
 	public static <T> void registerInputAdapterFactory(
 			Class<T> configType, Function<T, InputAdapter> factory) {
 		EXTERNAL_ADAPTERS.put(configType, cfg -> factory.apply((T) cfg));
-	}
-
-	/**
-	 * Registers an output handler factory for a handler type defined in another module.
-	 *
-	 * <p>
-	 * This allows modules like {@code tl-chat} to register handlers for their own
-	 * {@link OutputHandler} sub-types without creating a compile-time dependency from
-	 * {@code tl-ai-service} to {@code tl-chat}.
-	 * </p>
-	 *
-	 * @param <T>
-	 *        The handler type.
-	 * @param handlerType
-	 *        The class of the handler type.
-	 * @param handler
-	 *        The handler that processes the output.
-	 */
-	@SuppressWarnings("unchecked")
-	public static <T> void registerOutputHandlerFactory(
-			Class<T> handlerType, BiConsumer<T, OutputHandlerContext> handler) {
-		EXTERNAL_HANDLERS.put(handlerType, (cfg, ctx) -> handler.accept((T) cfg, ctx));
 	}
 
 	/**
@@ -184,11 +153,11 @@ public class BackgroundAgentExecutor {
 		throw new IllegalArgumentException("No adapter for input config: " + inputConfig.getClass().getName());
 	}
 
-	private void runOutputHandlers(BackgroundConfig bgConfig, AgentResult result,
+	private void runOutputHandlers(BackgroundConfig bgConfig, String response,
 			BackgroundContext context) {
 		for (OutputHandler handler : bgConfig.getOutputHandlers()) {
 			try {
-				dispatchOutputHandler(handler, result, context);
+				dispatchOutputHandler(handler, response, context);
 			} catch (Exception ex) {
 				Logger.error("Output handler failed for agent '" + context.getAgentName() + "'",
 					ex, BackgroundAgentExecutor.class);
@@ -196,21 +165,21 @@ public class BackgroundAgentExecutor {
 		}
 	}
 
-	private void dispatchOutputHandler(OutputHandler handler, AgentResult result,
+	private void dispatchOutputHandler(OutputHandler handler, String response,
 			BackgroundContext context) {
-		if (handler instanceof AuditLogHandler) {
-			Logger.info("Background agent '" + context.getAgentName() + "': "
-				+ result.status() + " - " + result.message(), BackgroundAgentExecutor.class);
+		if (handler instanceof OutputHandlerImplementation.Config<?> javaConfig) {
+			DefaultInstantiationContext instCtx = new DefaultInstantiationContext(BackgroundAgentExecutor.class);
+			OutputHandlerImplementation impl = instCtx.getInstance(javaConfig);
+			impl.handleOutput(response, context);
 			return;
 		}
-		// Check external handlers
-		for (Map.Entry<Class<?>, BiConsumer<Object, OutputHandlerContext>> entry : EXTERNAL_HANDLERS.entrySet()) {
-			if (entry.getKey().isInstance(handler)) {
-				entry.getValue().accept(handler, new OutputHandlerContext(result, context));
-				return;
-			}
+		if (handler instanceof ScriptOutputHandler scriptHandler) {
+			// TL-Script evaluation will be implemented later
+			Logger.info("ScriptOutputHandler not yet implemented for agent '" + context.getAgentName() + "'",
+				BackgroundAgentExecutor.class);
+			return;
 		}
-		Logger.warn("No handler dispatcher for: " + handler.getClass().getName(),
+		Logger.warn("No dispatcher for output handler: " + handler.getClass().getName(),
 			BackgroundAgentExecutor.class);
 	}
 
@@ -228,28 +197,5 @@ public class BackgroundAgentExecutor {
 				ex, BackgroundAgentExecutor.class);
 			return null;
 		}
-	}
-
-	private AgentResult parseResult(BackgroundConfig bgConfig, String response) {
-		AgentResult result;
-		if (bgConfig.getAuthority() == BackgroundConfig.Authority.AUTHORITATIVE) {
-			PreTurnTrigger.FailPolicy policy = PreTurnTrigger.FailPolicy.OPEN;
-			// Check if trigger is a PreTurnTrigger to get its fail policy
-			TriggerConfig trigger = bgConfig.getTrigger();
-			if (trigger instanceof PreTurnTrigger pt) {
-				policy = pt.getFailPolicy();
-			}
-			result = ResultParser.parseAuthoritative(response, policy);
-			if (result.status() == AgentResult.Status.BLOCK
-					&& bgConfig.getBlockMessage() != null
-					&& !bgConfig.getBlockMessage().isEmpty()) {
-				result = result.withBlockMessage(
-					bgConfig.getBlockMessage().replace("{reason}",
-						result.reason() != null ? result.reason() : ""));
-			}
-		} else {
-			result = ResultParser.parseAdvisory(response);
-		}
-		return result;
 	}
 }

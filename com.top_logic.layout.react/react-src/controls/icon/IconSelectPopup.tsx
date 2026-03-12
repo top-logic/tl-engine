@@ -237,7 +237,6 @@ const IconSelectPopup: React.FC<IconSelectPopupProps> = ({
       <div
         className="tlIconSelect__grid"
         role="listbox"
-        style={tab === 'advanced' ? { maxHeight: '160px' } : undefined}
       >
         {!iconsLoaded && !loadError && (
           <div className="tlIconSelect__loading">

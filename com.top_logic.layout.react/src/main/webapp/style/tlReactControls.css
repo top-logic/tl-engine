@@ -3181,7 +3181,13 @@ button.tlMenu__item--disabled:hover {
   border-radius: 8px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
   width: 420px;
+  height: 400px;
+  min-width: 280px;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
+  resize: both;
 }
 
 .tlIconSelect__tabs {
@@ -3265,8 +3271,29 @@ button.tlMenu__item--disabled:hover {
   grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
   gap: 2px;
   padding: var(--spacing-03);
-  max-height: 260px;
-  overflow-y: auto;
+  flex: 1;
+  min-height: 80px;
+  overflow-y: scroll;
+  align-content: start;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong, #8d8d8d) transparent;
+}
+
+.tlIconSelect__grid::-webkit-scrollbar {
+  width: 8px;
+}
+
+.tlIconSelect__grid::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tlIconSelect__grid::-webkit-scrollbar-thumb {
+  background: var(--border-strong, #8d8d8d);
+  border-radius: 4px;
+}
+
+.tlIconSelect__grid::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary, #525252);
 }
 
 .tlIconSelect__iconCell {

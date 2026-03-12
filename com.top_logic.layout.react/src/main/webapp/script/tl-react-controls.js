@@ -3330,8 +3330,7 @@ const Cl = ({
       "div",
       {
         className: "tlIconSelect__grid",
-        role: "listbox",
-        style: s === "advanced" ? { maxHeight: "160px" } : void 0
+        role: "listbox"
       },
       !l && !_ && /* @__PURE__ */ e.createElement("div", { className: "tlIconSelect__loading" }, /* @__PURE__ */ e.createElement("span", { className: "tlIconSelect__spinner" })),
       _ && /* @__PURE__ */ e.createElement("div", { className: "tlIconSelect__noResults" }, /* @__PURE__ */ e.createElement("a", { href: "#", onClick: A }, d["js.iconSelect.loadError"])),

@@ -32,8 +32,6 @@ import com.top_logic.layout.messagebox.MessageBox.ButtonType;
 import com.top_logic.layout.messagebox.MessageBoxShortcuts;
 import com.top_logic.layout.structure.DefaultDialogModel;
 import com.top_logic.layout.structure.DefaultLayoutData;
-import com.top_logic.layout.structure.DialogClosedListener;
-import com.top_logic.layout.structure.DialogModel;
 import com.top_logic.layout.structure.LayoutData;
 import com.top_logic.layout.structure.Scrolling;
 import com.top_logic.layout.wysiwyg.ui.StructuredText;
@@ -41,6 +39,7 @@ import com.top_logic.layout.wysiwyg.ui.StructuredTextControl;
 import com.top_logic.layout.wysiwyg.ui.StructuredTextFieldFactory;
 import com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText;
 import com.top_logic.mig.html.layout.LoginHook;
+import com.top_logic.mig.html.layout.LoginHooks;
 import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.tool.boundsec.HandlerResult;
 
@@ -105,15 +104,9 @@ public class LoginMessagesHook extends AbstractConfiguredInstance<LoginMessagesH
 				&& LoginMessagesUtil.isInTimeInterval(loginMessage)
 				&& LoginMessagesUtil.isConfirmExpired(configuration, loginMessage)) {
 
-				DialogClosedListener continuation;
-				if (callback != null) {
-					continuation = runOnDialogClose(callback);
-					// Run continuation when the first opened dialog was closed.
-					callback = null;
-				} else {
-					continuation = null;
-				}
-				showLoginMessageDialog(aContext, configuration, loginMessage, continuation);
+				showLoginMessageDialog(aContext, configuration, loginMessage, callback);
+				// Run continuation when the first opened dialog was closed.
+				callback = null;
 			}
 		}
 		if (callback != null) {
@@ -122,19 +115,11 @@ public class LoginMessagesHook extends AbstractConfiguredInstance<LoginMessagesH
 		}
 	}
 
-	private static DialogClosedListener runOnDialogClose(Runnable callback) {
-		return (Object sender, Boolean oldValue, Boolean newValue) -> {
-			if (newValue) {
-				callback.run();
-			}
-		};
-	}
-
 	private void showLoginMessageDialog(DisplayContext aContext, final PersonalConfiguration configuration,
-			LoginMessage loginMessage, DialogClosedListener closeListener) {
+			LoginMessage loginMessage, Runnable onClose) {
 		final DefaultDialogModel dialogModel = createLoginMessageDialogModel(loginMessage);
-		if (closeListener != null) {
-			dialogModel.addListener(DialogModel.CLOSED_PROPERTY, closeListener);
+		if (onClose != null) {
+			LoginHooks.runOnClose(dialogModel, onClose);
 		}
 		HTMLFragment dialogContent = createLoginMessageDialogContent(loginMessage);
 		CommandModel dialogButton = createLoginMessageDialogButton(configuration, loginMessage, dialogModel);

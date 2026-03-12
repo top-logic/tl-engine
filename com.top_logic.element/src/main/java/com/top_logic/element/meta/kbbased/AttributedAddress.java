@@ -23,7 +23,7 @@ import com.top_logic.model.TLStructuredTypePart;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class AttributedAddress extends Address {
+public class AttributedAddress extends Address implements com.top_logic.element.model.accounts.Address {
 
 	/**
 	 * @see KnowledgeItemImpl#createWrapper(KnowledgeItem)

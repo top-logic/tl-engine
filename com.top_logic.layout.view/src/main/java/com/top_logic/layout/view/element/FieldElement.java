@@ -16,14 +16,16 @@ import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
-import com.top_logic.layout.view.form.FieldControl;
+import com.top_logic.layout.view.form.AttributeFieldControl;
 import com.top_logic.layout.view.form.FormControl;
+import com.top_logic.layout.view.form.FormModel;
 
 /**
- * Declarative {@link UIElement} that creates a {@link FieldControl} for a single model attribute.
+ * Declarative {@link UIElement} that creates an {@link AttributeFieldControl} for a single model
+ * attribute.
  *
  * <p>
- * Must be nested inside a {@link FormElement}. Resolves the enclosing {@link FormControl} from the
+ * Must be nested inside a {@link FormElement}. Resolves the enclosing {@link FormModel} from the
  * {@link ViewContext} and creates a chrome-wrapped field control for the configured attribute.
  * </p>
  */
@@ -84,17 +86,20 @@ public class FieldElement implements UIElement {
 
 	@Override
 	public IReactControl createControl(ViewContext context) {
-		// 1. Get FormControl from context.
-		FormControl formControl = context.getFormControl();
-		if (formControl == null) {
+		// 1. Get FormModel from context.
+		FormModel formModel = context.getFormModel();
+		if (formModel == null) {
 			throw new IllegalStateException(
-				"FieldElement must be nested inside a FormElement. No FormControl found in ViewContext.");
+				"FieldElement must be nested inside a FormElement. No FormModel found in ViewContext.");
 		}
 
-		// 2. Create FieldControl and register with form.
-		FieldControl fieldControl =
-			new FieldControl(context, formControl, _config.getAttribute(), _config.getLabel(), _config.getReadonly());
-		formControl.registerFieldControl(fieldControl);
+		// FormElement always sets a FormControl as the FormModel.
+		FormControl formControl = (FormControl) formModel;
+
+		// 2. Create AttributeFieldControl (self-registers as FormModelListener).
+		AttributeFieldControl fieldControl =
+			new AttributeFieldControl(context, formModel, formControl, _config.getAttribute(),
+				_config.getLabel(), _config.getReadonly());
 
 		// 3. Create the chrome-wrapped control.
 		ReactFormFieldChromeControl chrome = fieldControl.createChromeControl();

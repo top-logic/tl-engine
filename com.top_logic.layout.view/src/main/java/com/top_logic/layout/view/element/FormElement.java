@@ -204,7 +204,7 @@ public class FormElement extends ContainerElement {
 		// 7. Create a child context with the form control set, so that
 		// nested FieldElements can access it without polluting the parent context.
 		ViewContext formContext = context.childContext("form");
-		formContext.setFormControl(formControl);
+		formContext.setFormModel(formControl);
 
 		// 8. Create child controls in the form-scoped context.
 		List<IReactControl> childControls = createChildControls(formContext);

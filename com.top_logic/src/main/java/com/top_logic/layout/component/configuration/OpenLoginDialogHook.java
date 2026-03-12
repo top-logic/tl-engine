@@ -18,9 +18,8 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.internal.SubsessionHandler;
-import com.top_logic.layout.structure.DialogClosedListener;
-import com.top_logic.layout.structure.DialogModel;
 import com.top_logic.mig.html.layout.LoginHook;
+import com.top_logic.mig.html.layout.LoginHooks;
 import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
@@ -95,21 +94,13 @@ public class OpenLoginDialogHook implements LoginHook {
 		}
 		
 		LoginViewDialog dialog = new LoginViewDialog();
-		dialog.getDialogModel().addListener(DialogModel.CLOSED_PROPERTY, runOnDialogClose(closeCallback));
+		LoginHooks.runOnClose(dialog.getDialogModel(), closeCallback);
 		dialog.open(context);
 		
 	}
 
 	private SubsessionHandler findSubSessionHandler(DisplayContext ctx) {
 		return (SubsessionHandler) ctx.getLayoutContext();
-	}
-
-	private static DialogClosedListener runOnDialogClose(Runnable callback) {
-		return (Object sender, Boolean oldValue, Boolean newValue) -> {
-			if (newValue) {
-				callback.run();
-			}
-		};
 	}
 
 }

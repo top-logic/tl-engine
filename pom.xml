@@ -1015,7 +1015,7 @@
 			<dependency>
 			    <groupId>org.docx4j</groupId>
 			    <artifactId>docx4j-core</artifactId>
-			    <version>11.4.11</version>
+			    <version>11.5.11</version>
 				<exclusions>
 					<!-- Do not include Log4j 1, because this collides with Log4j 2  -->
 					<exclusion>
@@ -1036,7 +1036,7 @@
 			<dependency>
 			    <groupId>org.docx4j</groupId>
 			    <artifactId>docx4j-JAXB-ReferenceImpl</artifactId>
-			    <version>11.4.11</version>
+			    <version>11.5.11</version>
 				<exclusions>
 					<exclusion>
 						<!-- Don't include 'com.sun.activation:jakarta.activation', as it collides with 'jakarta.activation:jakarta.activation-api'. -->

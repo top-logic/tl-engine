@@ -37,7 +37,8 @@ public class OpenLoginDialogHook implements LoginHook {
 	private static final Property<Command> BOOKMARK = TypedAnnotatable.property(Command.class, "bookmark");
 
 	@Override
-	public void handleLogin(DisplayContext context, MainLayout mainLayout, Runnable callback) {
+	public void handleLogin(MainLayout mainLayout, Runnable callback) {
+		DisplayContext context = DefaultDisplayContext.getDisplayContext();
 		TLSessionContext sessionContext = context.getSessionContext();
 
 		// run attached bookmark handler

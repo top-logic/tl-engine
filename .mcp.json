@@ -29,6 +29,11 @@
         "GITEA_KEYRING_SERVICE": "tl-engine-gitea-mcp",
         "GITEA_KEYRING_ACCOUNT_TOKEN": "token"
       }
+    },
+    "playwright": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["@playwright/mcp@latest"]
     }
   }
 }

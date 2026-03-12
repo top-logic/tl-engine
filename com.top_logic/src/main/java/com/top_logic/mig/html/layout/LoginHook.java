@@ -6,8 +6,6 @@
 
 package com.top_logic.mig.html.layout;
 
-import com.top_logic.layout.DisplayContext;
-
 /**
  * Plugin to execute some action when a user logged in.
  * 
@@ -23,7 +21,6 @@ public interface LoginHook {
 	 * <p>
 	 * When the hook is executed, the {@link MainLayout} is already initialized.
 	 * </p>
-	 * 
 	 * @param mainLayout
 	 *        The {@link MainLayout} in which the user was logged in.
 	 * @param callback
@@ -31,7 +28,7 @@ public interface LoginHook {
 	 *        when this login hook was completely processed to ensure that the remaining
 	 *        {@link LoginHook} are executed.
 	 */
-	void handleLogin(DisplayContext context, MainLayout mainLayout, Runnable callback);
+	void handleLogin(MainLayout mainLayout, Runnable callback);
 
 }
 

@@ -25,6 +25,7 @@ import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.CommandModel;
+import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.ResourceText;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.messagebox.MessageBox;
@@ -88,9 +89,9 @@ public class LoginMessagesHook extends AbstractConfiguredInstance<LoginMessagesH
 	}
 
 	@Override
-	public void handleLogin(DisplayContext context, MainLayout mainLayout, Runnable callback) {
+	public void handleLogin(MainLayout mainLayout, Runnable callback) {
 		if (_showLoginMessages) {
-			showLoginMessages(context, callback);
+			showLoginMessages(DefaultDisplayContext.getDisplayContext(), callback);
 		} else {
 			callback.run();
 		}

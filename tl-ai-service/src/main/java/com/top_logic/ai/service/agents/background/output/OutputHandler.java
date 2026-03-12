@@ -19,8 +19,9 @@ import com.top_logic.basic.config.ConfigurationItem;
  * Concrete implementations include:
  * </p>
  * <ul>
- * <li>{@link AuditLogHandler} - logs results to the audit log</li>
- * <li>{@link SchedulerLogHandler} - logs results to the scheduler log</li>
+ * <li>{@link OutputHandlerImplementation.Config} - custom Java output handler via
+ * {@link com.top_logic.basic.config.PolymorphicConfiguration}</li>
+ * <li>{@link ScriptOutputHandler} - inline TL-Script expression handler</li>
  * </ul>
  */
 public interface OutputHandler extends ConfigurationItem {

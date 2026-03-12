@@ -5,7 +5,12 @@
  */
 package com.top_logic.ai.service.agents.background;
 
+import java.util.List;
+
 import com.top_logic.ai.service.agents.background.input.InputConfig;
+import com.top_logic.ai.service.agents.background.output.OutputHandler;
+import com.top_logic.ai.service.agents.background.output.OutputHandlerImplementation;
+import com.top_logic.ai.service.agents.background.output.ScriptOutputHandler;
 import com.top_logic.ai.service.agents.background.trigger.TriggerConfig;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.Mandatory;
@@ -29,6 +34,9 @@ public interface BackgroundConfig extends ConfigurationItem {
 
 	/** @see #getInput() */
 	String INPUT = "input";
+
+	/** @see #getOutputHandlers() */
+	String OUTPUT_HANDLERS = "output-handlers";
 
 	/**
 	 * Defines the operational scope of the background agent.
@@ -79,4 +87,18 @@ public interface BackgroundConfig extends ConfigurationItem {
 	@Name(INPUT)
 	@Mandatory
 	InputConfig getInput();
+
+	/**
+	 * The output handlers that process the results of this background agent.
+	 *
+	 * <p>
+	 * Handlers receive the raw LLM response and can perform arbitrary processing. Two handler types
+	 * are available: {@link OutputHandlerImplementation.Config} for custom Java classes and
+	 * {@link ScriptOutputHandler} for inline TL-Script.
+	 * </p>
+	 *
+	 * @return The list of output handler configurations, may be empty.
+	 */
+	@Name(OUTPUT_HANDLERS)
+	List<OutputHandler> getOutputHandlers();
 }

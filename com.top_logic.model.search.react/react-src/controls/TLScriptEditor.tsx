@@ -80,8 +80,12 @@ const TLScriptEditor: React.FC<TLCellProps> = ({ controlId, state }) => {
       const prefix = wordMatch?.text ?? '';
       const from = wordMatch?.from ?? pos;
 
+      // Send text from line start to cursor (not full line) —
+      // the server uses backtick parity to detect model-part mode.
+      const lineUpToCursor = line.text.substring(0, pos - line.from);
+
       const requestId = String(Date.now()) + Math.random();
-      sendCommand('complete', { line: line.text, prefix, requestId });
+      sendCommand('complete', { line: lineUpToCursor, prefix, requestId });
 
       return new Promise((resolve) => {
         pendingCompletion.current = { requestId, resolve, from };
@@ -207,7 +211,14 @@ const TLScriptEditor: React.FC<TLCellProps> = ({ controlId, state }) => {
     });
   }, [completionResponse]);
 
-  return <div ref={editorRef} id={controlId} className="tlScriptEditor" />;
+  const handleContainerClick = useCallback((e: React.MouseEvent) => {
+    const view = viewRef.current;
+    if (view && !view.dom.contains(e.target as Node)) {
+      view.focus();
+    }
+  }, []);
+
+  return <div ref={editorRef} id={controlId} className="tlScriptEditor" onClick={handleContainerClick} />;
 };
 
 export default TLScriptEditor;

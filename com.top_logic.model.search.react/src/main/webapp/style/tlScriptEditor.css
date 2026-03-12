@@ -1,20 +1,25 @@
 .tlScriptEditor {
 	min-height: 200px;
+	display: flex;
+	flex-direction: column;
 	border: 1px solid var(--border-subtle);
 	border-radius: var(--border-radius, 2px);
 	background: var(--field, #fff);
 }
 
 .tlScriptEditor .cm-editor {
-	height: 100%;
-	min-height: 200px;
+	flex: 1;
 	font-size: var(--body-02-font-size);
 	line-height: var(--body-02-line-height);
 }
 
+.tlScriptEditor:focus-within {
+	border-color: var(--focus, #0f62fe);
+	box-shadow: 0 0 0 1px var(--focus, #0f62fe);
+}
+
 .tlScriptEditor .cm-editor.cm-focused {
-	outline: 2px solid var(--focus, #0f62fe);
-	outline-offset: -2px;
+	outline: none;
 }
 
 .tlScriptEditor .cm-scroller {

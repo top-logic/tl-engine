@@ -5,6 +5,7 @@
  */
 package com.top_logic.model.search.ui;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -141,11 +142,19 @@ public class TLScriptCompletionService implements TLScriptConstants {
 
 	private static List<CodeCompletion> createFunctionCompletionsInternal(DisplayContext context, String prefix,
 			boolean caseSensitive) {
-		return getFunctionNames()
-			.stream()
-			.filter(functionName -> startsWith(functionName, prefix, caseSensitive))
-			.map(functionName -> createCodeCompletion(context, functionName))
-			.collect(Collectors.toList());
+		List<CodeCompletion> prefixMatches = new ArrayList<>();
+		List<CodeCompletion> substringMatches = new ArrayList<>();
+
+		for (String functionName : getFunctionNames()) {
+			if (startsWith(functionName, prefix, caseSensitive)) {
+				prefixMatches.add(createCodeCompletion(context, functionName));
+			} else if (contains(functionName, prefix, caseSensitive)) {
+				substringMatches.add(createCodeCompletion(context, functionName));
+			}
+		}
+
+		prefixMatches.addAll(substringMatches);
+		return prefixMatches;
 	}
 
 	private static CodeCompletion createCodeCompletion(DisplayContext context, String functionName) {
@@ -300,8 +309,20 @@ public class TLScriptCompletionService implements TLScriptConstants {
 
 	private static Collection<TLNamed> getAllPrefixedTLModelParts(Stream<? extends TLNamed> parts, String prefix,
 			boolean caseSensitive) {
-		return parts.filter(tlModelPart -> startsWith(tlModelPart.getName(), prefix, caseSensitive))
-			.collect(Collectors.toSet());
+		List<TLNamed> prefixMatches = new ArrayList<>();
+		List<TLNamed> substringMatches = new ArrayList<>();
+
+		parts.forEach(tlModelPart -> {
+			String name = tlModelPart.getName();
+			if (startsWith(name, prefix, caseSensitive)) {
+				prefixMatches.add(tlModelPart);
+			} else if (contains(name, prefix, caseSensitive)) {
+				substringMatches.add(tlModelPart);
+			}
+		});
+
+		prefixMatches.addAll(substringMatches);
+		return prefixMatches;
 	}
 
 	private static boolean startsWith(String text, String prefix, boolean caseSensitive) {
@@ -310,6 +331,17 @@ public class TLScriptCompletionService implements TLScriptConstants {
 		}
 
 		return text.toUpperCase().startsWith(prefix.toUpperCase());
+	}
+
+	private static boolean contains(String text, String prefix, boolean caseSensitive) {
+		if (prefix.isEmpty()) {
+			return false;
+		}
+		if (caseSensitive) {
+			return text.contains(prefix);
+		}
+
+		return text.toUpperCase().contains(prefix.toUpperCase());
 	}
 
 	private static Optional<TLType> getTLType(String moduleName, String typeName) {

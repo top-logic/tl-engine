@@ -31,7 +31,7 @@
 	<properties>
 		<tl.version>7.11.0-SNAPSHOT</tl.version>
 		<jetty.version>12.0.33</jetty.version>
-		<poi.version>5.4.1</poi.version>
+		<poi.version>5.5.1</poi.version>
 		<kafka.version>3.9.2</kafka.version>
 		<zookeeper.version>3.9.5</zookeeper.version>
 		<slf4j.version>2.0.17</slf4j.version>

@@ -18,6 +18,7 @@ import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.model.search.expr.parser.ParseException;
 import com.top_logic.model.search.expr.parser.SearchExpressionParser;
+import com.top_logic.model.search.expr.parser.TokenMgrError;
 import com.top_logic.model.search.ui.CodeCompletion;
 import com.top_logic.model.search.ui.TLScriptCompletionService;
 
@@ -152,6 +153,13 @@ public class TLScriptEditorReactControl extends ReactControl {
 				diag.put("line", Integer.valueOf(1));
 				diag.put("col", Integer.valueOf(1));
 			}
+			diag.put("severity", "error");
+			diag.put("message", ex.getMessage());
+			return Collections.singletonList(diag);
+		} catch (TokenMgrError ex) {
+			Map<String, Object> diag = new HashMap<>();
+			diag.put("line", Integer.valueOf(1));
+			diag.put("col", Integer.valueOf(1));
 			diag.put("severity", "error");
 			diag.put("message", ex.getMessage());
 			return Collections.singletonList(diag);

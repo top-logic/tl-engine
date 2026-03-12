@@ -1,0 +1,58 @@
+.tlScriptEditor {
+	min-height: 200px;
+	border: 1px solid var(--border-subtle);
+	border-radius: var(--border-radius, 2px);
+	background: var(--field, #fff);
+}
+
+.tlScriptEditor .cm-editor {
+	height: 100%;
+	min-height: 200px;
+	font-size: var(--body-02-font-size);
+	line-height: var(--body-02-line-height);
+}
+
+.tlScriptEditor .cm-editor.cm-focused {
+	outline: 2px solid var(--focus, #0f62fe);
+	outline-offset: -2px;
+}
+
+.tlScriptEditor .cm-scroller {
+	overflow: auto;
+}
+
+.tlScriptEditor .cm-content {
+	font-family: var(--font-family-mono, monospace);
+}
+
+.tlScriptEditor .cm-gutters {
+	background: var(--layer, #f4f4f4);
+	border-right: 1px solid var(--border-subtle);
+	color: var(--text-secondary);
+}
+
+.tlScriptEditor .cm-activeLineGutter {
+	background: var(--layer-accent, #e0e0e0);
+	color: var(--layer-accent-text);
+}
+
+.tlScriptEditor .cm-activeLine {
+	background: var(--background-selected, rgba(0, 0, 0, 0.04));
+}
+
+.tlScriptEditor .cm-selectionBackground {
+	background: var(--script-editor-text-highlight, #d7d4f0) !important;
+}
+
+.tlScriptEditor .cm-tooltip-autocomplete {
+	font-family: var(--font-family-mono, monospace);
+	font-size: var(--body-02-font-size);
+}
+
+.tlScriptEditor .cm-diagnostic-error {
+	border-left-color: var(--support-error, #da1e28);
+}
+
+.tlScriptEditor .cm-diagnostic-warning {
+	border-left-color: var(--support-warning, #f1c21b);
+}

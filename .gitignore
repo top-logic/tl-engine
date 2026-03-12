@@ -10,3 +10,6 @@
 /**/*~
 /.project
 /.venv/
+/.playwright-mcp
+/.worktrees
+/.m2/

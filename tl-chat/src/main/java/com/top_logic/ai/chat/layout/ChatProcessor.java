@@ -24,7 +24,6 @@ import com.top_logic.ai.chat.api.DtoMapper;
 import com.top_logic.ai.chat.api.messages.AttachmentDto;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.service.agents.AgentRegistry;
-import com.top_logic.ai.service.agents.background.AgentResult;
 import com.top_logic.ai.service.agents.background.BackgroundAgentExecutor;
 import com.top_logic.ai.service.agents.background.BackgroundConfig;
 import com.top_logic.ai.service.agents.background.context.ChatContext;
@@ -187,12 +186,8 @@ public class ChatProcessor {
 				try {
 					BackgroundAgentExecutor bgExecutor = new BackgroundAgentExecutor(agentRegistry);
 					ChatContext bgContext = ChatContext.fullChat(preTurnAgent, taskTracker.getChat());
-					AgentResult bgResult = bgExecutor.execute(preTurnAgent, bgContext);
-					if (bgResult.status() == AgentResult.Status.BLOCK) {
-						state.addPendingMessage(new ChatMessage("Agent", bgResult.message()));
-						taskTracker.completeTask(taskId);
-						return;
-					}
+					bgExecutor.execute(preTurnAgent, bgContext);
+					// Blocking will be handled by the block_turn tool in a future task
 				} catch (Exception ex) {
 					Logger.error("Pre-turn agent '" + preTurnAgent + "' failed: " + ex.getMessage(),
 						ex, ChatProcessor.class);

@@ -25,6 +25,15 @@ If the user says "start the app" without specifying which module, infer it from 
 
 If ambiguous, ask the user which module to start.
 
+## Database / `tmp/` directory
+
+The app's `tmp/` directory contains the H2 database with all application data. **Do NOT delete it** unless there is a specific reason:
+- The database is broken or corrupted.
+- The schema was changed and no migration is provided.
+- The user explicitly asks to reset the data.
+
+A normal restart (stop + start) preserves the database. Deleting `tmp/` forces a full re-initialization which is slow and destroys any test data the user has set up.
+
 ## Operations
 
 ### Start

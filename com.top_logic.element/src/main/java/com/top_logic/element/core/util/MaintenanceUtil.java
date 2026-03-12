@@ -15,6 +15,7 @@ import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.list.FastList;
 import com.top_logic.knowledge.wrap.list.FastListElement;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.util.TLModelUtil;
 
@@ -290,7 +291,7 @@ public class MaintenanceUtil {
                 result |= deleteMetaElementValues(me, includeSubMetaElements);
             }
         }
-		for (Wrapper object : MetaElementUtil.getAllDirectInstancesOf(aMetaElement)) {
+		for (TLObject object : MetaElementUtil.getAllDirectInstancesOf(aMetaElement, TLObject.class)) {
 			object.tDelete();
 			result = true;
         }
@@ -381,7 +382,7 @@ public class MaintenanceUtil {
                 // ignore
             }
         }
-        for (Wrapper object : MetaElementUtil.getAllInstancesOf(aMetaElement)) {
+		for (Wrapper object : MetaElementUtil.getAllInstancesOf(aMetaElement, Wrapper.class)) {
             Object value = object.getValue(aAttributeName);
             if (value != null && ( !(value instanceof Collection) || !((Collection)value).isEmpty() )) {
                 object.setValue(aAttributeName, null);

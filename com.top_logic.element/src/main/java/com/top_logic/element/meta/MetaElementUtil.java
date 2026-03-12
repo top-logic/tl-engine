@@ -124,22 +124,6 @@ public class MetaElementUtil {
     }
 
     /**
-	 * Gets all objects which are from the given meta element type or a sub meta element type.
-	 * 
-	 * TODO #6121: Delete TL 5.8.0 deprecation 
-	 * 
-	 * @param aMetaElement
-	 *        the desired super meta element
-	 * @return a set of all objects which are from the given meta element type or a sub meta element
-	 *         type.
-	 * @deprecated Use {@link #getAllInstancesOf(TLClass, Class)}
-	 */
-	@Deprecated
-	public static List<Wrapper> getAllInstancesOf(TLClass aMetaElement) {
-		return getAllInstancesOf(aMetaElement, Wrapper.class);
-    }
-    
-    /**
      * Gets all objects which are from the given meta element type or a sub meta element
      * type.
      * 
@@ -152,21 +136,6 @@ public class MetaElementUtil {
 		return AttributeOperations.allInstances(aMetaElement, expectedType);
     }
 
-	/**
-     * Gets all objects which are from the given meta element type.
-     * 
-     * TODO #6121: Delete TL 5.8.0 deprecation 
-     * 
-     * @param metaElement
-     *        the desired meta element
-     * @return a set of all objects which are from the given meta element type.
-     * @deprecated Use {@link #getAllDirectInstancesOf(TLClass, Class)}.
-     */
-	@Deprecated
-	public static List<Wrapper> getAllDirectInstancesOf(TLClass metaElement) {
-		return getAllDirectInstancesOf(metaElement, Wrapper.class);
-	}
-	
 	/**
 	 * Gets all objects which are from the given meta element type.
 	 * 

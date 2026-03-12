@@ -47,7 +47,7 @@ public class FormCommandModel implements CommandModel {
 
 	private final List<Runnable> _stateChangeListeners = new ArrayList<>();
 
-	private final Runnable _formStateHandler = this::handleFormStateChanged;
+	private final FormModelListener _formModelListener = this::handleFormStateChanged;
 
 	private FormCommandModel(String name, ResKey labelKey, String placement, FormControl form,
 			Consumer<ReactContext> action, Predicate<FormControl> executableWhen) {
@@ -74,7 +74,7 @@ public class FormCommandModel implements CommandModel {
 	public static FormCommandModel editCommand(FormControl form) {
 		return new FormCommandModel("formEdit", I18NConstants.FORM_EDIT, PLACEMENT_TOOLBAR, form,
 			ctx -> form.enterEditMode(),
-			f -> f.hasCurrentObject() && !f.isEditMode());
+			f -> f.getCurrentObject() != null && !f.isEditMode());
 	}
 
 	/**
@@ -115,14 +115,14 @@ public class FormCommandModel implements CommandModel {
 	 * Subscribes to form state changes to track executability.
 	 */
 	public void attach() {
-		_form.addFormStateListener(_formStateHandler);
+		_form.addFormModelListener(_formModelListener);
 	}
 
 	/**
 	 * Unsubscribes from form state changes.
 	 */
 	public void detach() {
-		_form.removeFormStateListener(_formStateHandler);
+		_form.removeFormModelListener(_formModelListener);
 	}
 
 	@Override
@@ -166,7 +166,7 @@ public class FormCommandModel implements CommandModel {
 		_stateChangeListeners.remove(listener);
 	}
 
-	private void handleFormStateChanged() {
+	private void handleFormStateChanged(FormModel source) {
 		boolean newExecutable = _executableWhen.test(_form);
 		if (newExecutable != _executable) {
 			_executable = newExecutable;

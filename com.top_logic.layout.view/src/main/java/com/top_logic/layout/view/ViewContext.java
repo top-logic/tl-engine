@@ -10,7 +10,7 @@ import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.CommandScope;
-import com.top_logic.layout.view.form.FormControl;
+import com.top_logic.layout.view.form.FormModel;
 
 /**
  * Hierarchical context for UIElement control creation.
@@ -54,17 +54,13 @@ public interface ViewContext extends ReactContext {
 	CommandScope getCommandScope();
 
 	/**
-	 * The {@link FormControl} of the nearest enclosing form element, or {@code null} if no form is
-	 * in scope.
-	 * 
-	 * TODO: This is to concrete: The context should better propagate a FormModel to its content.
-	 * Inner attribute controls must use this interface for communication/information
-	 * retrieving/listening only.
+	 * The {@link FormModel} of the nearest enclosing form element, or {@code null} if no form is in
+	 * scope.
 	 */
-	FormControl getFormControl();
+	FormModel getFormModel();
 
 	/**
-	 * Sets the form control for this context.
+	 * Sets the form model for this context.
 	 *
 	 * <p>
 	 * Called by {@link com.top_logic.layout.view.element.FormElement} during
@@ -72,10 +68,10 @@ public interface ViewContext extends ReactContext {
 	 * elements.
 	 * </p>
 	 *
-	 * @param formControl
-	 *        The form control, or {@code null}.
+	 * @param formModel
+	 *        The form model, or {@code null}.
 	 */
-	void setFormControl(FormControl formControl);
+	void setFormModel(FormModel formModel);
 
 	/**
 	 * Creates a derived context with the given {@link CommandScope}.

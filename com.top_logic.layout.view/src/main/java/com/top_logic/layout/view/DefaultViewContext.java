@@ -14,7 +14,7 @@ import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.CommandScope;
-import com.top_logic.layout.view.form.FormControl;
+import com.top_logic.layout.view.form.FormModel;
 
 /**
  * Default implementation of {@link ViewContext}.
@@ -37,7 +37,7 @@ public class DefaultViewContext implements ViewContext {
 
 	private final ErrorSink _errorSink;
 
-	private FormControl _formControl;
+	private FormModel _formModel;
 
 	/**
 	 * Creates a root {@link DefaultViewContext}.
@@ -51,20 +51,20 @@ public class DefaultViewContext implements ViewContext {
 	}
 
 	private DefaultViewContext(ReactContext reactContext, String personalizationPath,
-			Map<String, ViewChannel> channels, CommandScope commandScope, FormControl formControl,
+			Map<String, ViewChannel> channels, CommandScope commandScope, FormModel formModel,
 			ErrorSink errorSink) {
 		_reactContext = reactContext;
 		_personalizationPath = personalizationPath;
 		_channels = channels;
 		_commandScope = commandScope;
-		_formControl = formControl;
+		_formModel = formModel;
 		_errorSink = errorSink;
 	}
 
 	@Override
 	public ViewContext childContext(String segment) {
 		return new DefaultViewContext(_reactContext, _personalizationPath + "." + segment, _channels, _commandScope,
-			_formControl, _errorSink);
+			_formModel, _errorSink);
 	}
 
 	@Override
@@ -78,24 +78,24 @@ public class DefaultViewContext implements ViewContext {
 	}
 
 	@Override
-	public FormControl getFormControl() {
-		return _formControl;
+	public FormModel getFormModel() {
+		return _formModel;
 	}
 
 	@Override
-	public void setFormControl(FormControl formControl) {
-		_formControl = formControl;
+	public void setFormModel(FormModel formModel) {
+		_formModel = formModel;
 	}
 
 	@Override
 	public ViewContext withCommandScope(CommandScope scope) {
-		return new DefaultViewContext(_reactContext, _personalizationPath, _channels, scope, _formControl, _errorSink);
+		return new DefaultViewContext(_reactContext, _personalizationPath, _channels, scope, _formModel, _errorSink);
 	}
 
 	@Override
 	public ViewContext withErrorSink(ErrorSink errorSink) {
 		return new DefaultViewContext(_reactContext, _personalizationPath, _channels,
-			_commandScope, _formControl, errorSink);
+			_commandScope, _formModel, errorSink);
 	}
 
 	@Override

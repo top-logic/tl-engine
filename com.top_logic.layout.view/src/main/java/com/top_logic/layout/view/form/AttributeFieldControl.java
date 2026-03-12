@@ -101,7 +101,7 @@ public class AttributeFieldControl implements FormModelListener {
 
 		addModelListener();
 
-		_innerControl = FieldControlFactory.createFieldControl(_context, part, _model);
+		_innerControl = FieldControlService.getInstance().createFieldControl(_context, part, _model);
 
 		String label = resolveLabel();
 		boolean mandatory = part.isMandatory();
@@ -134,7 +134,7 @@ public class AttributeFieldControl implements FormModelListener {
 
 			addModelListener();
 
-			_innerControl = FieldControlFactory.createFieldControl(_context, part, _model);
+			_innerControl = FieldControlService.getInstance().createFieldControl(_context, part, _model);
 
 			_chrome.setLabel(resolveLabel());
 			_chrome.setRequired(part.isMandatory());

@@ -517,14 +517,10 @@ Do NOT include long explanations. Be concise and factual.]]></system-prompt>
 					description="Background quality reviewer. Analyzes conversation transcripts for quality issues (incorrect answers, bad delegations, tool misuse, unhelpful responses, inefficiency) and creates Gitea tickets for problems found."
 					tools="gitea.create_gitea_issue"
 				>
-					<background scope="CHAT" authority="ADVISORY">
+					<background scope="CHAT">
 						<trigger config:interface="com.top_logic.ai.service.agents.background.trigger.PostTurnTrigger" />
 						<input config:interface="com.top_logic.ai.service.agents.background.input.ChatContextInput"
 							content="LAST_TURN" />
-						<output-handlers>
-							<output-handler config:interface="com.top_logic.ai.service.agents.background.output.NotificationOutputHandler"
-								severity="warning" />
-						</output-handlers>
 					</background>
 					<system-prompt><![CDATA[# Preamble
 

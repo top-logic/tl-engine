@@ -17,15 +17,17 @@ import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
+import com.top_logic.layout.react.control.layout.ReactFormGroupControl;
 
 /**
- * A {@link ReactControl} that renders a form for all PLAIN/REF properties of a
+ * A {@link ReactControl} that renders a form for all PLAIN, REF, and ITEM properties of a
  * {@link ConfigurationItem}.
  *
  * <p>
- * Each supported property is wrapped in a {@link ReactFormFieldChromeControl} with label, mandatory
- * indicator, and help text. ITEM, LIST, MAP, ARRAY, DERIVED, and COMPLEX properties are skipped in
- * this phase.
+ * Each PLAIN/REF property is wrapped in a {@link ReactFormFieldChromeControl} with label, mandatory
+ * indicator, and help text. ITEM properties are rendered as collapsible
+ * {@link ReactFormGroupControl} sections containing a nested {@link ConfigEditorControl}. LIST,
+ * MAP, ARRAY, DERIVED, and COMPLEX properties are skipped.
  * </p>
  */
 public class ConfigEditorControl extends ReactControl {
@@ -36,7 +38,7 @@ public class ConfigEditorControl extends ReactControl {
 
 	private final List<ConfigFieldModel> _fieldModels = new ArrayList<>();
 
-	private final List<ReactControl> _chromeControls = new ArrayList<>();
+	private final List<ReactControl> _childControls = new ArrayList<>();
 
 	/**
 	 * Creates a {@link ConfigEditorControl} for all visible properties.
@@ -72,6 +74,19 @@ public class ConfigEditorControl extends ReactControl {
 				continue;
 			}
 
+			if (property.kind() == PropertyKind.ITEM) {
+				ConfigurationItem nested = (ConfigurationItem) config.value(property);
+				if (nested != null) {
+					ConfigEditorControl nestedEditor = createNestedEditor(context, nested);
+					String label = resolveLabel(property);
+					ReactFormGroupControl group = new ReactFormGroupControl(
+						context, label, true, false, "subtle", true,
+						List.of(), List.of(nestedEditor));
+					_childControls.add(group);
+				}
+				continue;
+			}
+
 			ConfigFieldModel model = new ConfigFieldModel(config, property);
 			_fieldModels.add(model);
 
@@ -85,10 +100,10 @@ public class ConfigEditorControl extends ReactControl {
 			ReactFormFieldChromeControl chrome = new ReactFormFieldChromeControl(
 				context, label, model.isMandatory(), false, null, helpText, labelPosition,
 				false, true, input);
-			_chromeControls.add(chrome);
+			_childControls.add(chrome);
 		}
 
-		putState(CHILDREN, _chromeControls);
+		putState(CHILDREN, _childControls);
 	}
 
 	/**
@@ -113,8 +128,25 @@ public class ConfigEditorControl extends ReactControl {
 		return Labels.propertyLabel(property, "@tooltip", true);
 	}
 
+	/**
+	 * Creates a nested {@link ConfigEditorControl} for an ITEM property value.
+	 *
+	 * <p>
+	 * Subclasses may override this to customize the nested editor (e.g. for testing).
+	 * </p>
+	 *
+	 * @param context
+	 *        The React context.
+	 * @param nested
+	 *        The nested configuration item to edit.
+	 * @return A new editor control for the nested item.
+	 */
+	protected ConfigEditorControl createNestedEditor(ReactContext context, ConfigurationItem nested) {
+		return new ConfigEditorControl(context, nested);
+	}
+
 	private static boolean isSupportedKind(PropertyKind kind) {
-		return kind == PropertyKind.PLAIN || kind == PropertyKind.REF;
+		return kind == PropertyKind.PLAIN || kind == PropertyKind.REF || kind == PropertyKind.ITEM;
 	}
 
 	/**
@@ -126,7 +158,7 @@ public class ConfigEditorControl extends ReactControl {
 
 	@Override
 	protected void cleanupChildren() {
-		for (ReactControl chrome : _chromeControls) {
+		for (ReactControl chrome : _childControls) {
 			chrome.cleanupTree();
 		}
 	}

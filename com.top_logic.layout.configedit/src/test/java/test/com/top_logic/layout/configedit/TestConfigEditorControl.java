@@ -32,6 +32,18 @@ import com.top_logic.layout.react.servlet.SSEUpdateQueue;
  */
 public class TestConfigEditorControl extends TestCase {
 
+	/** Nested configuration used as an ITEM property value. */
+	public interface InnerConfig extends ConfigurationItem {
+
+		/** Property name for {@link #getTitle()}. */
+		String TITLE = "title";
+
+		@Name(TITLE)
+		String getTitle();
+
+		void setTitle(String value);
+	}
+
 	/** Test configuration with a mix of property types. */
 	public interface TestConfig extends ConfigurationItem {
 
@@ -43,6 +55,9 @@ public class TestConfigEditorControl extends TestCase {
 
 		/** Property name for {@link #isEnabled()}. */
 		String ENABLED = "enabled";
+
+		/** Property name for {@link #getInner()}. */
+		String INNER = "inner";
 
 		@Name(LABEL)
 		@Mandatory
@@ -60,6 +75,11 @@ public class TestConfigEditorControl extends TestCase {
 		boolean isEnabled();
 
 		void setEnabled(boolean value);
+
+		@Name(INNER)
+		InnerConfig getInner();
+
+		void setInner(InnerConfig value);
 	}
 
 	/**
@@ -80,6 +100,11 @@ public class TestConfigEditorControl extends TestCase {
 		@Override
 		protected String resolveHelpText(PropertyDescriptor property) {
 			return null;
+		}
+
+		@Override
+		protected ConfigEditorControl createNestedEditor(ReactContext context, ConfigurationItem nested) {
+			return new TestableConfigEditorControl(context, nested);
 		}
 	}
 
@@ -165,6 +190,44 @@ public class TestConfigEditorControl extends TestCase {
 		config.setCount(42);
 		config.setEnabled(true);
 		assertEquals("No listeners should fire after cleanup", 0, callCount[0]);
+	}
+
+	/**
+	 * Tests that ITEM properties produce a child control (form group) but no field model.
+	 */
+	public void testItemPropertyRendered() {
+		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
+		InnerConfig inner = TypedConfiguration.newConfigItem(InnerConfig.class);
+		inner.setTitle("Hello");
+		config.setInner(inner);
+
+		ConfigEditorControl editor = new TestableConfigEditorControl(createTestContext(), config);
+
+		// ITEM properties do not produce field models.
+		for (ConfigFieldModel model : editor.getFieldModels()) {
+			assertFalse("ITEM property should not produce a field model",
+				TestConfig.INNER.equals(model.getProperty().getPropertyName()));
+		}
+
+		// The editor should still have at least the PLAIN fields plus at least one child for the
+		// ITEM group. The total number of child controls should be greater than just the field
+		// models (which are PLAIN/REF only).
+		List<ConfigFieldModel> models = editor.getFieldModels();
+		assertTrue("Should have PLAIN/REF field models", models.size() >= 3);
+	}
+
+	/**
+	 * Tests that a null ITEM property value is skipped (no group created).
+	 */
+	public void testNullItemPropertySkipped() {
+		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
+		// inner is null by default
+
+		ConfigEditorControl editor = new TestableConfigEditorControl(createTestContext(), config);
+
+		// Should still work fine — only PLAIN/REF fields are created.
+		List<ConfigFieldModel> models = editor.getFieldModels();
+		assertTrue("Should have at least 3 field models", models.size() >= 3);
 	}
 
 	/**

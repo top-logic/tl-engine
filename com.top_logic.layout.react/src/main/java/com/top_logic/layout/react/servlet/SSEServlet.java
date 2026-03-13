@@ -17,6 +17,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 
 /**
  * Servlet that establishes an SSE (Server-Sent Events) connection for delivering React state
@@ -24,7 +25,8 @@ import com.top_logic.basic.Logger;
  *
  * <p>
  * The servlet validates the session, sets SSE headers, starts an asynchronous context, and
- * registers the connection with the session's {@link SSEUpdateQueue}.
+ * registers the connection with the window's {@link SSEUpdateQueue} obtained from the
+ * {@link ReactWindowRegistry}.
  * </p>
  */
 public class SSEServlet extends HttpServlet {
@@ -37,6 +39,12 @@ public class SSEServlet extends HttpServlet {
 			return;
 		}
 
+		String windowName = request.getParameter("windowName");
+		if (windowName == null || windowName.isEmpty()) {
+			response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing windowName parameter.");
+			return;
+		}
+
 		response.setContentType("text/event-stream");
 		response.setCharacterEncoding("UTF-8");
 		response.setHeader("Cache-Control", "no-cache");
@@ -45,23 +53,23 @@ public class SSEServlet extends HttpServlet {
 		AsyncContext asyncContext = request.startAsync();
 		asyncContext.setTimeout(0);
 
-		SSEUpdateQueue queue = SSEUpdateQueue.forSession(session);
-		queue.addConnection(asyncContext);
+		SSEUpdateQueue queue = ReactWindowRegistry.forSession(session).getOrCreateQueue(windowName);
+		queue.setConnection(asyncContext);
 
 		asyncContext.addListener(new AsyncListener() {
 			@Override
 			public void onComplete(AsyncEvent event) {
-				queue.removeConnection(asyncContext);
+				queue.clearConnection(asyncContext);
 			}
 
 			@Override
 			public void onTimeout(AsyncEvent event) {
-				queue.removeConnection(asyncContext);
+				queue.clearConnection(asyncContext);
 			}
 
 			@Override
 			public void onError(AsyncEvent event) {
-				queue.removeConnection(asyncContext);
+				queue.clearConnection(asyncContext);
 			}
 
 			@Override
@@ -76,7 +84,7 @@ public class SSEServlet extends HttpServlet {
 			writer.flush();
 		} catch (IOException ex) {
 			Logger.warn("Failed to write SSE connection comment.", ex, SSEServlet.class);
-			queue.removeConnection(asyncContext);
+			queue.clearConnection(asyncContext);
 		}
 	}
 

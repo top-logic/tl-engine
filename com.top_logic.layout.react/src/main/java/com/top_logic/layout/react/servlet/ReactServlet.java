@@ -59,6 +59,7 @@ import com.top_logic.layout.react.protocol.FunctionCall;
 import com.top_logic.layout.react.protocol.JSSnipplet;
 import com.top_logic.layout.react.protocol.Property;
 import com.top_logic.layout.react.protocol.SSEEvent;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.mig.html.layout.RevalidationVisitor;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -231,6 +232,22 @@ public class ReactServlet extends TopLogicServlet {
 		String commandName = (String) commandData.get("command");
 		String windowName = (String) commandData.get("windowName");
 		Map<String, Object> arguments = (Map<String, Object>) commandData.get("arguments");
+
+		// Handle window lifecycle commands (no control target).
+		// Must be checked before the controlId null check since these commands have empty controlId.
+		if ("windowClosed".equals(commandName)) {
+			String closedWindowId = arguments != null ? (String) arguments.get("windowId") : null;
+			ReactWindowRegistry registry = ReactWindowRegistry.forSession(request.getSession());
+			registry.windowClosed(closedWindowId);
+			sendSuccess(response);
+			return;
+		}
+		if ("windowBlocked".equals(commandName)) {
+			// Popup was blocked by the browser. Could enqueue a snackbar event.
+			// For now, just acknowledge.
+			sendSuccess(response);
+			return;
+		}
 
 		if (controlId == null || commandName == null) {
 			sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Missing controlId or command.");

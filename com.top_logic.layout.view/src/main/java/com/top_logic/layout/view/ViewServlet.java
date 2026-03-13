@@ -92,6 +92,7 @@ public class ViewServlet extends TopLogicServlet {
 		ensureSubSession(request, windowName);
 
 		// Check if this is a programmatically opened window with a pre-created control tree.
+		SSEUpdateQueue sseQueue = SSEUpdateQueue.forSession(session);
 		ReactWindowRegistry windowRegistry = ReactWindowRegistry.forSession(session);
 		WindowEntry windowEntry = windowRegistry.getWindow(windowName);
 		if (windowEntry != null) {
@@ -99,7 +100,7 @@ public class ViewServlet extends TopLogicServlet {
 			IReactControl rootControl = windowEntry.getRootControl();
 			if (rootControl != null) {
 				ReactContext displayContext = new DefaultReactContext(
-					request.getContextPath(), windowName, SSEUpdateQueue.forSession(session));
+					request.getContextPath(), windowName, sseQueue, windowRegistry);
 				renderPage(request, response, rootControl, displayContext);
 				return;
 			}
@@ -118,7 +119,7 @@ public class ViewServlet extends TopLogicServlet {
 		}
 
 		ReactContext displayContext = new DefaultReactContext(
-			request.getContextPath(), windowName, SSEUpdateQueue.forSession(session));
+			request.getContextPath(), windowName, sseQueue, windowRegistry);
 		ViewContext viewContext = new DefaultViewContext(displayContext);
 
 		IReactControl rootControl = view.createControl(viewContext);

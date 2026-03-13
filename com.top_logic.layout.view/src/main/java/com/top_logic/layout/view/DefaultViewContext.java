@@ -11,6 +11,7 @@ import java.util.Map;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.CommandScope;
@@ -146,5 +147,10 @@ public class DefaultViewContext implements ViewContext {
 	@Override
 	public SSEUpdateQueue getSSEQueue() {
 		return _reactContext.getSSEQueue();
+	}
+
+	@Override
+	public ReactWindowRegistry getWindowRegistry() {
+		return _reactContext.getWindowRegistry();
 	}
 }

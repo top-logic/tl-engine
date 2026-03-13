@@ -20,6 +20,8 @@ public class WindowEntry {
 
 	private final WindowOptions _options;
 
+	private final Runnable _closeCallback;
+
 	private boolean _connected;
 
 	/**
@@ -33,13 +35,16 @@ public class WindowEntry {
 	 *        The pre-built control tree for this window, or null if not yet created.
 	 * @param options
 	 *        The window display options.
+	 * @param closeCallback
+	 *        Optional callback invoked when the window is closed, or null.
 	 */
 	public WindowEntry(String windowId, String openerWindowId, IReactControl rootControl,
-			WindowOptions options) {
+			WindowOptions options, Runnable closeCallback) {
 		_windowId = windowId;
 		_openerWindowId = openerWindowId;
 		_rootControl = rootControl;
 		_options = options;
+		_closeCallback = closeCallback;
 	}
 
 	/** The unique ID for this window. */
@@ -60,6 +65,11 @@ public class WindowEntry {
 	/** The window display options. */
 	public WindowOptions getOptions() {
 		return _options;
+	}
+
+	/** Optional callback invoked when the window is closed, or null. */
+	public Runnable getCloseCallback() {
+		return _closeCallback;
 	}
 
 	/** Whether the browser window has connected via SSE. */

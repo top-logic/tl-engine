@@ -8,6 +8,7 @@ package com.top_logic.layout.react;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.FrameScope;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 
 /**
  * Adapts an old-world {@link DisplayContext} to the lean {@link ReactContext} contract.
@@ -27,11 +28,14 @@ class DisplayContextAdapter implements ReactContext {
 
 	private final SSEUpdateQueue _sseQueue;
 
+	private final ReactWindowRegistry _windowRegistry;
+
 	DisplayContextAdapter(DisplayContext context) {
 		_frameScope = context.getExecutionScope().getFrameScope();
 		_windowName = context.getLayoutContext().getWindowId().getWindowName();
 		_contextPath = context.getContextPath();
 		_sseQueue = SSEUpdateQueue.forSession(context.asRequest().getSession());
+		_windowRegistry = ReactWindowRegistry.forSession(context.asRequest().getSession());
 	}
 
 	@Override
@@ -52,5 +56,10 @@ class DisplayContextAdapter implements ReactContext {
 	@Override
 	public SSEUpdateQueue getSSEQueue() {
 		return _sseQueue;
+	}
+
+	@Override
+	public ReactWindowRegistry getWindowRegistry() {
+		return _windowRegistry;
 	}
 }

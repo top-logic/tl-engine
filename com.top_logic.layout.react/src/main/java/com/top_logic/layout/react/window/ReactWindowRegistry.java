@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.HttpSessionBindingEvent;
 import jakarta.servlet.http.HttpSessionBindingListener;
 
+import com.top_logic.basic.Logger;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
@@ -75,7 +76,7 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	 * @return The generated window ID.
 	 */
 	public String openWindow(ReactContext openerContext, WindowOptions options) {
-		return openWindow(openerContext, null, options);
+		return openWindow(openerContext, null, options, null);
 	}
 
 	/**
@@ -91,10 +92,28 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	 */
 	public String openWindow(ReactContext openerContext, IReactControl rootControl,
 			WindowOptions options) {
+		return openWindow(openerContext, rootControl, options, null);
+	}
+
+	/**
+	 * Opens a new window with a pre-built control tree and a close callback.
+	 *
+	 * @param openerContext
+	 *        The opener window's {@link ReactContext}.
+	 * @param rootControl
+	 *        The pre-built control tree for the new window, or null.
+	 * @param options
+	 *        Window display options.
+	 * @param closeCallback
+	 *        Optional callback invoked when the window is closed, or null.
+	 * @return The generated window ID.
+	 */
+	public String openWindow(ReactContext openerContext, IReactControl rootControl,
+			WindowOptions options, Runnable closeCallback) {
 		String windowId = generateWindowId();
 		String openerWindowId = openerContext.getWindowName();
 
-		WindowEntry entry = new WindowEntry(windowId, openerWindowId, rootControl, options);
+		WindowEntry entry = new WindowEntry(windowId, openerWindowId, rootControl, options, closeCallback);
 		_windows.put(windowId, entry);
 
 		WindowOpenEvent event = WindowOpenEvent.create()
@@ -120,7 +139,7 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 
 	/**
 	 * Called when a window is closed (either by the user or programmatically).
-	 * Cleans up the control tree and removes the entry.
+	 * Invokes the close callback (if any), then cleans up the control tree and removes the entry.
 	 */
 	public void windowClosed(String windowId) {
 		if (windowId == null) {
@@ -128,6 +147,15 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 		}
 		WindowEntry entry = _windows.remove(windowId);
 		if (entry != null) {
+			Runnable closeCallback = entry.getCloseCallback();
+			if (closeCallback != null) {
+				try {
+					closeCallback.run();
+				} catch (Exception ex) {
+					Logger.error("Error in window close callback for window '" + windowId + "'.",
+						ex, ReactWindowRegistry.class);
+				}
+			}
 			IReactControl rootControl = entry.getRootControl();
 			if (rootControl instanceof ReactControl) {
 				((ReactControl) rootControl).cleanupTree();

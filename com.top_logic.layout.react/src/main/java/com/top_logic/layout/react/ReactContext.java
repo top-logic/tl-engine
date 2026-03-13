@@ -7,6 +7,7 @@ package com.top_logic.layout.react;
 
 import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 
 /**
  * Lean rendering context for the view system.
@@ -40,6 +41,11 @@ public interface ReactContext {
 	 * The SSE queue for pushing state updates and registering controls.
 	 */
 	SSEUpdateQueue getSSEQueue();
+
+	/**
+	 * The {@link ReactWindowRegistry} for managing programmatically opened windows.
+	 */
+	ReactWindowRegistry getWindowRegistry();
 
 	/**
 	 * The {@link ErrorSink} for reporting user-visible errors in the current scope, or {@code null}

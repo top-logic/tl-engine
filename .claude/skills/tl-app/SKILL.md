@@ -6,48 +6,38 @@ allowed-tools: Bash, Read, Glob, Grep, WebFetch
 
 # TopLogic Application Management
 
-## Quick Reference
-
-- **App module**: Maven module with `tl-parent-app` parent (e.g. `com.top_logic.demo`)
-- **Default port**: `8080` (override: `-Dtl.port=<port>`)
-- **Login**: user `root`, password from `tl_initial_password` env var (default: `root1234`)
-- **Stop endpoint**: `GET http://localhost:<port>/admin/stop` → returns `OK`
-- **Ready signal**: stdout line `***** up and running (<time> <date>) *****`
-
 ## Start
 
-1. Check if running: `curl -sf http://localhost:<port>/admin/stop > /dev/null 2>&1` — if success, stop first, wait 3s.
-2. Build if needed: `mvn install -DskipTests=true` in changed modules, then app module. Skip if user says "just start".
-3. Run as background task (`run_in_background: true`):
 ```bash
-export tl_initial_password='root1234' && cd <app-module-path> && mvn 2>&1 | tee /tmp/tl-app.log | grep --line-buffered -E '(ERROR|up and running|BUILD FAILURE|Address already in use)'
+.claude/scripts/tl-start-app.sh <app-module-path>
 ```
-4. Wait: single `TaskOutput` call with `block: true`, `timeout: 40000`. Returns immediately on first grep match.
-   - `up and running` → success, report URL to user.
-   - `ERROR` / `BUILD FAILURE` → failed, report output. Read `/tmp/tl-app.log` for details.
 
-**CRITICAL**: `mvn` MUST run inside the app module directory. Never omit the `cd <app-module-path>`.
+On success, prints two lines:
+```
+url: http://localhost:PORT/context-path/
+log: /tmp/tl-app-PORT.log
+```
+
+Report the URL and credentials (user `root`, password `root1234`) to the user.
+
+Build first if needed: `mvn install -DskipTests=true` in changed modules, then the app module. Skip if user says "just start".
 
 ## Stop
 
-1. `curl -sf http://localhost:<port>/admin/stop` → should return `OK`.
-2. Poll until port stops responding (up to 15s).
+```bash
+.claude/scripts/tl-stop-app.sh <base-url>
+```
+
+Pass the URL that was reported on start.
 
 ## Restart
 
-Stop → wait 3s → Start.
-
-## Database / `tmp/` directory
-
-**Do NOT delete `tmp/`** unless an incompatible model change was made without a data migration (e.g. back-and-forth model changes during development), or the user explicitly asks. Adding new modules does NOT require deletion. Deleting forces slow full re-initialization and destroys test data.
-
-## Arguments
-
-- `start` / `start com.top_logic.demo` — start the app
-- `stop` — stop the running app
-- `restart` — stop and restart
-- No argument: `start` if not running, `restart` if running
+Stop the running app, then start it again.
 
 ## Determining the app module
 
 If not specified: check current directory, check recent git changes, default to `com.top_logic.demo`. Ask if ambiguous.
+
+## Database / `tmp/` directory
+
+**Do NOT delete `tmp/`** unless an incompatible model change was made without a data migration (e.g. back-and-forth model changes during development), or the user explicitly asks. Adding new modules does NOT require deletion. Deleting forces slow full re-initialization and destroys test data.

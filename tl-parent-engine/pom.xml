@@ -80,6 +80,7 @@
 		<module>../com.top_logic.kafka.server</module>
 		<module>../com.top_logic.kafka.sync</module>
 		<module>../com.top_logic.layout.codeedit</module>
+		<module>../com.top_logic.layout.configedit</module>
 		<module>../com.top_logic.layout.formeditor</module>
 		<module>../com.top_logic.layout.icons</module>
 		<module>../com.top_logic.layout.react</module>

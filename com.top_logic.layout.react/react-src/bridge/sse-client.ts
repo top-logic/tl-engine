@@ -11,6 +11,14 @@ import type {
   StateEventData,
 } from './types';
 import { clearI18NCache } from './i18n';
+import {
+  handleWindowOpen,
+  handleWindowClose,
+  handleWindowFocus,
+  type WindowOpenEventData,
+  type WindowCloseEventData,
+  type WindowFocusEventData,
+} from './window-manager';
 
 type StateListener = (state: Record<string, unknown>) => void;
 
@@ -159,6 +167,15 @@ function dispatch(data: unknown): void {
       break;
     case 'I18NCacheInvalidation':
       clearI18NCache();
+      break;
+    case 'WindowOpenEvent':
+      handleWindowOpen(payload as unknown as WindowOpenEventData);
+      break;
+    case 'WindowCloseEvent':
+      handleWindowClose(payload as unknown as WindowCloseEventData);
+      break;
+    case 'WindowFocusEvent':
+      handleWindowFocus(payload as unknown as WindowFocusEventData);
       break;
     default:
       console.warn('[TLReact] Unknown SSE event type:', typeCode);

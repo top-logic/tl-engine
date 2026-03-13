@@ -36,3 +36,7 @@ export { React, ReactDOM };
 // (e.g. TLReact.mount(...) from ReactControl) can call them.
 import { mount, mountField, discoverAndMount } from './bridge/tl-react-bridge';
 (window as any).TLReact = { mount, mountField, discoverAndMount };
+
+// Initialize window self-close notification for multi-window support.
+import { initSelfCloseNotification } from './bridge/window-manager';
+initSelfCloseNotification();

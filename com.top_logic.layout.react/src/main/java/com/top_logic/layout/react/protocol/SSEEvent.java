@@ -40,6 +40,15 @@ public interface SSEEvent extends de.haumacher.msgbuf.data.DataObject, de.haumac
 
 		/** Type literal for {@link com.top_logic.layout.react.protocol.FunctionCall}. */
 		FUNCTION_CALL,
+
+		/** Type literal for {@link com.top_logic.layout.react.protocol.WindowOpenEvent}. */
+		WINDOW_OPEN_EVENT,
+
+		/** Type literal for {@link com.top_logic.layout.react.protocol.WindowCloseEvent}. */
+		WINDOW_CLOSE_EVENT,
+
+		/** Type literal for {@link com.top_logic.layout.react.protocol.WindowFocusEvent}. */
+		WINDOW_FOCUS_EVENT,
 		;
 
 	}
@@ -80,6 +89,15 @@ public interface SSEEvent extends de.haumacher.msgbuf.data.DataObject, de.haumac
 		/** Visit case for {@link com.top_logic.layout.react.protocol.FunctionCall}.*/
 		R visit(com.top_logic.layout.react.protocol.FunctionCall self, A arg) throws E;
 
+		/** Visit case for {@link com.top_logic.layout.react.protocol.WindowOpenEvent}.*/
+		R visit(com.top_logic.layout.react.protocol.WindowOpenEvent self, A arg) throws E;
+
+		/** Visit case for {@link com.top_logic.layout.react.protocol.WindowCloseEvent}.*/
+		R visit(com.top_logic.layout.react.protocol.WindowCloseEvent self, A arg) throws E;
+
+		/** Visit case for {@link com.top_logic.layout.react.protocol.WindowFocusEvent}.*/
+		R visit(com.top_logic.layout.react.protocol.WindowFocusEvent self, A arg) throws E;
+
 	}
 
 	/** The type code of this instance. */
@@ -108,6 +126,9 @@ public interface SSEEvent extends de.haumacher.msgbuf.data.DataObject, de.haumac
 			case JSSnipplet.JSSNIPPLET__TYPE: result = com.top_logic.layout.react.protocol.JSSnipplet.readJSSnipplet(in); break;
 			case I18NCacheInvalidation.I_18_NCACHE_INVALIDATION__TYPE: result = com.top_logic.layout.react.protocol.I18NCacheInvalidation.readI18NCacheInvalidation(in); break;
 			case FunctionCall.FUNCTION_CALL__TYPE: result = com.top_logic.layout.react.protocol.FunctionCall.readFunctionCall(in); break;
+			case WindowOpenEvent.WINDOW_OPEN_EVENT__TYPE: result = com.top_logic.layout.react.protocol.WindowOpenEvent.readWindowOpenEvent(in); break;
+			case WindowCloseEvent.WINDOW_CLOSE_EVENT__TYPE: result = com.top_logic.layout.react.protocol.WindowCloseEvent.readWindowCloseEvent(in); break;
+			case WindowFocusEvent.WINDOW_FOCUS_EVENT__TYPE: result = com.top_logic.layout.react.protocol.WindowFocusEvent.readWindowFocusEvent(in); break;
 			default: in.skipValue(); result = null; break;
 		}
 		in.endArray();

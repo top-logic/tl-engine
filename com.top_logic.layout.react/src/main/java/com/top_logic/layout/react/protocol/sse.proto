@@ -117,3 +117,49 @@ message FunctionCall extends SSEEvent {
 	/** The arguments serialized as a JSON array string. */
 	string arguments;
 }
+
+/**
+ * Instructs the target window to open a new browser window.
+ * Only the window matching targetWindowId should act on this event.
+ */
+message WindowOpenEvent extends SSEEvent {
+	/** The window ID of the opener (for client-side filtering). */
+	string targetWindowId;
+
+	/** The window ID for the new window. */
+	string windowId;
+
+	/** Window width in pixels. */
+	int width;
+
+	/** Window height in pixels. */
+	int height;
+
+	/** Window title. */
+	string title;
+
+	/** Whether the window is resizable. */
+	boolean resizable;
+}
+
+/**
+ * Instructs the target window to close a previously opened window.
+ */
+message WindowCloseEvent extends SSEEvent {
+	/** The window ID of the window that opened the target. */
+	string targetWindowId;
+
+	/** The window ID to close. */
+	string windowId;
+}
+
+/**
+ * Instructs the target window to focus a previously opened window.
+ */
+message WindowFocusEvent extends SSEEvent {
+	/** The window ID of the window that opened the target. */
+	string targetWindowId;
+
+	/** The window ID to focus. */
+	string windowId;
+}

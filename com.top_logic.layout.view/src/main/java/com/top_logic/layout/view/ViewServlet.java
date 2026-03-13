@@ -31,6 +31,8 @@ import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.IReactControl;
+import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.controlprovider.ReactControlProvider;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.react.window.WindowEntry;
@@ -91,16 +93,19 @@ public class ViewServlet extends TopLogicServlet {
 		// MainLayout setup that is specific to the traditional layout engine.
 		ensureSubSession(request, windowName);
 
-		// Check if this is a programmatically opened window with a pre-created control tree.
+		// Check if this is a programmatically opened window with a control provider.
 		ReactWindowRegistry windowRegistry = ReactWindowRegistry.forSession(session);
 		SSEUpdateQueue sseQueue = windowRegistry.getOrCreateQueue(windowName);
 		WindowEntry windowEntry = windowRegistry.getWindow(windowName);
 		if (windowEntry != null) {
 			windowEntry.markConnected();
-			IReactControl rootControl = windowEntry.getRootControl();
-			if (rootControl != null) {
+			ReactControlProvider controlProvider = windowEntry.getControlProvider();
+			if (controlProvider != null) {
 				ReactContext displayContext = new DefaultReactContext(
 					request.getContextPath(), windowName, sseQueue, windowRegistry);
+				ReactControl rootControl = controlProvider.createControl(
+					displayContext, windowEntry.getModel());
+				windowEntry.setRootControl(rootControl);
 				renderPage(request, response, rootControl, displayContext);
 				return;
 			}

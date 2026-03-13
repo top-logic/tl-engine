@@ -6,13 +6,17 @@ allowed-tools: Bash, Read, Glob, Grep, WebFetch
 
 # TopLogic Application Management
 
-## Start
+## Commands
 
 ```bash
-.claude/scripts/tl-start-app.sh <app-module-path>
+.claude/scripts/tl-app.sh start   <app-module-path>
+.claude/scripts/tl-app.sh stop    <app-module-path>
+.claude/scripts/tl-app.sh restart <app-module-path>
 ```
 
-On success, prints two lines:
+The script tracks the port in `<app-module-path>/tmp/app-port.txt` to prevent duplicate starts.
+
+On start success, prints two lines:
 ```
 url: http://localhost:PORT/context-path/
 log: /tmp/tl-app-PORT.log
@@ -21,18 +25,6 @@ log: /tmp/tl-app-PORT.log
 Report the URL and credentials (user `root`, password `root1234`) to the user.
 
 Build first if needed: `mvn install -DskipTests=true` in changed modules, then the app module. Skip if user says "just start".
-
-## Stop
-
-```bash
-.claude/scripts/tl-stop-app.sh <base-url>
-```
-
-Pass the URL that was reported on start.
-
-## Restart
-
-Stop the running app, then start it again.
 
 ## Determining the app module
 

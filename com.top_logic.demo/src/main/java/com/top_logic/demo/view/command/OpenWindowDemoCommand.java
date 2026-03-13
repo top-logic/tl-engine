@@ -52,19 +52,19 @@ public class OpenWindowDemoCommand implements ViewCommand {
 		int windowNumber = WINDOW_COUNTER.incrementAndGet();
 		String windowLabel = "Child Window #" + windowNumber;
 
-		DemoCounterControl counter = new DemoCounterControl(context, windowLabel);
-
 		WindowOptions options = new WindowOptions()
 			.setWidth(600)
 			.setHeight(400)
 			.setTitle(windowLabel)
 			.setResizable(true);
 
-		registry.openWindow(context, counter, options, () -> {
-			if (errorSink != null) {
-				errorSink.showInfo(Fragments.text(windowLabel + " closed."));
-			}
-		});
+		registry.openWindow(context,
+			(ctx, model) -> new DemoCounterControl(ctx, (String) model),
+			windowLabel, options, () -> {
+				if (errorSink != null) {
+					errorSink.showInfo(Fragments.text(windowLabel + " closed."));
+				}
+			});
 
 		return HandlerResult.DEFAULT_RESULT;
 	}

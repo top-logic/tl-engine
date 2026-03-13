@@ -14,6 +14,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.ReentrantLock;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
@@ -109,12 +110,17 @@ public class ReactServlet extends TopLogicServlet {
 	private void handleDataDownload(HttpServletRequest request, HttpServletResponse response, HttpSession session)
 			throws IOException {
 		String controlId = request.getParameter("controlId");
+		String windowName = request.getParameter("windowName");
 		if (controlId == null) {
 			sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Missing controlId parameter.");
 			return;
 		}
 
-		SSEUpdateQueue queue = SSEUpdateQueue.forSession(session);
+		SSEUpdateQueue queue = getWindowQueue(session, windowName);
+		if (queue == null) {
+			sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Unknown window: " + windowName);
+			return;
+		}
 		ReactCommandTarget control = queue.getControl(controlId);
 		if (!(control instanceof DataProvider)) {
 			sendError(response, HttpServletResponse.SC_NOT_FOUND,
@@ -211,6 +217,15 @@ public class ReactServlet extends TopLogicServlet {
 		}
 	}
 
+	private SSEUpdateQueue getWindowQueue(HttpSession session, String windowName) {
+		if (windowName == null || windowName.isEmpty()) {
+			Logger.warn("Missing windowName in request.", ReactServlet.class);
+			return null;
+		}
+		ReactWindowRegistry registry = ReactWindowRegistry.forSession(session);
+		return registry.getQueue(windowName);
+	}
+
 	@SuppressWarnings("unchecked")
 	private void handleCommand(HttpServletRequest request, HttpServletResponse response, HttpSession session)
 			throws IOException {
@@ -258,7 +273,11 @@ public class ReactServlet extends TopLogicServlet {
 			arguments = Map.of();
 		}
 
-		SSEUpdateQueue queue = SSEUpdateQueue.forSession(session);
+		SSEUpdateQueue queue = getWindowQueue(session, windowName);
+		if (queue == null) {
+			sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Unknown window: " + windowName);
+			return;
+		}
 		ReactCommandTarget control = queue.getControl(controlId);
 		if (control == null) {
 			sendError(response, HttpServletResponse.SC_NOT_FOUND, "Control not found: " + controlId);
@@ -271,23 +290,29 @@ public class ReactServlet extends TopLogicServlet {
 		// Install subsession context and enable command phase.
 		SubsessionHandler rootHandler = installSubSession(displayContext, windowName);
 
-		HandlerResult result;
-		boolean updateBefore = rootHandler != null ? rootHandler.enableUpdate(true) : false;
+		ReentrantLock requestLock = ReactWindowRegistry.forSession(session).getRequestLock();
+		requestLock.lock();
 		try {
-			result = control.executeCommand(commandName, arguments);
-		} finally {
-			if (rootHandler != null) {
-				rootHandler.enableUpdate(updateBefore);
+			HandlerResult result;
+			boolean updateBefore = rootHandler != null ? rootHandler.enableUpdate(true) : false;
+			try {
+				result = control.executeCommand(commandName, arguments);
+			} finally {
+				if (rootHandler != null) {
+					rootHandler.enableUpdate(updateBefore);
+				}
 			}
-		}
 
-		// Forward side effects: InfoService messages and legacy control repaints.
-		forwardPendingUpdates(displayContext, rootHandler, queue, control);
+			// Forward side effects: InfoService messages and legacy control repaints.
+			forwardPendingUpdates(displayContext, rootHandler, queue, control);
 
-		if (result.isSuccess()) {
-			sendSuccess(response);
-		} else {
-			sendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Command failed.");
+			if (result.isSuccess()) {
+				sendSuccess(response);
+			} else {
+				sendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Command failed.");
+			}
+		} finally {
+			requestLock.unlock();
 		}
 	}
 
@@ -295,17 +320,22 @@ public class ReactServlet extends TopLogicServlet {
 	private void handleState(HttpServletRequest request, HttpServletResponse response, HttpSession session)
 			throws IOException {
 		String controlId = request.getParameter("controlId");
+		String windowName = request.getParameter("windowName");
 		if (controlId == null) {
 			sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Missing controlId parameter.");
 			return;
 		}
 
-		SSEUpdateQueue queue = SSEUpdateQueue.forSession(session);
+		SSEUpdateQueue queue = getWindowQueue(session, windowName);
+		if (queue == null) {
+			sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Unknown window: " + windowName);
+			return;
+		}
 		ReactCommandTarget control = queue.getControl(controlId);
 		if (control instanceof ReactControl) {
 			ReactControl reactControl = (ReactControl) control;
 			PrintWriter writer = response.getWriter();
-			
+
 			writer.write(reactControl.stateAsJSON());
 			writer.flush();
 		} else {
@@ -322,7 +352,11 @@ public class ReactServlet extends TopLogicServlet {
 			return;
 		}
 
-		SSEUpdateQueue queue = SSEUpdateQueue.forSession(session);
+		SSEUpdateQueue queue = getWindowQueue(session, windowName);
+		if (queue == null) {
+			sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Unknown window: " + windowName);
+			return;
+		}
 		ReactCommandTarget control = queue.getControl(controlId);
 		if (!(control instanceof UploadHandler)) {
 			sendError(response, HttpServletResponse.SC_NOT_FOUND,
@@ -335,24 +369,30 @@ public class ReactServlet extends TopLogicServlet {
 		// Install subsession context and enable command phase.
 		SubsessionHandler rootHandler = installSubSession(displayContext, windowName);
 
-		HandlerResult result;
-		boolean updateBefore = rootHandler != null ? rootHandler.enableUpdate(true) : false;
+		ReentrantLock requestLock = ReactWindowRegistry.forSession(session).getRequestLock();
+		requestLock.lock();
 		try {
-			Collection<Part> parts = request.getParts();
-			result = ((UploadHandler) control).handleUpload(displayContext, parts);
-		} finally {
-			if (rootHandler != null) {
-				rootHandler.enableUpdate(updateBefore);
+			HandlerResult result;
+			boolean updateBefore = rootHandler != null ? rootHandler.enableUpdate(true) : false;
+			try {
+				Collection<Part> parts = request.getParts();
+				result = ((UploadHandler) control).handleUpload(displayContext, parts);
+			} finally {
+				if (rootHandler != null) {
+					rootHandler.enableUpdate(updateBefore);
+				}
 			}
-		}
 
-		// Forward side effects: InfoService messages and legacy control repaints.
-		forwardPendingUpdates(displayContext, rootHandler, queue, control);
+			// Forward side effects: InfoService messages and legacy control repaints.
+			forwardPendingUpdates(displayContext, rootHandler, queue, control);
 
-		if (result.isSuccess()) {
-			sendSuccess(response);
-		} else {
-			sendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Upload handling failed.");
+			if (result.isSuccess()) {
+				sendSuccess(response);
+			} else {
+				sendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Upload handling failed.");
+			}
+		} finally {
+			requestLock.unlock();
 		}
 	}
 

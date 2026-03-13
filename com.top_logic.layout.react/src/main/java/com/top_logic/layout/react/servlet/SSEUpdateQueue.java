@@ -190,6 +190,8 @@ public class SSEUpdateQueue implements HttpSessionBindingListener {
 			if (message == null) {
 				continue;
 			}
+			Logger.info("SSE flush: " + _connections.size() + " connections, event="
+				+ event.getClass().getSimpleName(), SSEUpdateQueue.class);
 			for (AsyncContext ctx : _connections) {
 				writeOrRemove(ctx, message);
 			}

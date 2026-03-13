@@ -145,6 +145,8 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 		if (windowId == null) {
 			return;
 		}
+		Logger.info("windowClosed(" + windowId + "), known windows: " + _windows.keySet(),
+			ReactWindowRegistry.class);
 		WindowEntry entry = _windows.remove(windowId);
 		if (entry != null) {
 			Runnable closeCallback = entry.getCloseCallback();

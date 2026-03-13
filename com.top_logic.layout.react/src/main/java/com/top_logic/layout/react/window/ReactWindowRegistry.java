@@ -15,8 +15,8 @@ import jakarta.servlet.http.HttpSessionBindingListener;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.controlprovider.ReactControlProvider;
 import com.top_logic.layout.react.protocol.WindowOpenEvent;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 
@@ -96,44 +96,67 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	 * @return The generated window ID.
 	 */
 	public String openWindow(ReactContext openerContext, WindowOptions options) {
-		return openWindow(openerContext, null, options, null);
+		String windowId = generateWindowId();
+		String openerWindowId = openerContext.getWindowName();
+
+		WindowEntry entry = new WindowEntry(windowId, openerWindowId, options, null);
+		_windows.put(windowId, entry);
+
+		WindowOpenEvent event = WindowOpenEvent.create()
+			.setTargetWindowId(openerWindowId)
+			.setWindowId(windowId)
+			.setWidth(options.getWidth())
+			.setHeight(options.getHeight())
+			.setTitle(options.getTitle())
+			.setResizable(options.isResizable());
+		SSEUpdateQueue openerQueue = getQueue(openerWindowId);
+		if (openerQueue != null) {
+			openerQueue.enqueue(event);
+		}
+
+		return windowId;
 	}
 
 	/**
-	 * Opens a new window with a pre-built control tree.
+	 * Opens a new window with a control provider and model.
 	 *
 	 * @param openerContext
 	 *        The opener window's {@link ReactContext}.
-	 * @param rootControl
-	 *        The pre-built control tree for the new window, or null.
+	 * @param controlProvider
+	 *        The factory that creates the control tree for the new window.
+	 * @param model
+	 *        The model passed to the factory.
 	 * @param options
 	 *        Window display options.
 	 * @return The generated window ID.
 	 */
-	public String openWindow(ReactContext openerContext, IReactControl rootControl,
-			WindowOptions options) {
-		return openWindow(openerContext, rootControl, options, null);
+	public String openWindow(ReactContext openerContext, ReactControlProvider controlProvider,
+			Object model, WindowOptions options) {
+		return openWindow(openerContext, controlProvider, model, options, null);
 	}
 
 	/**
-	 * Opens a new window with a pre-built control tree and a close callback.
+	 * Opens a new window with a control provider, model, and close callback.
 	 *
 	 * @param openerContext
 	 *        The opener window's {@link ReactContext}.
-	 * @param rootControl
-	 *        The pre-built control tree for the new window, or null.
+	 * @param controlProvider
+	 *        The factory that creates the control tree for the new window.
+	 * @param model
+	 *        The model passed to the factory.
 	 * @param options
 	 *        Window display options.
 	 * @param closeCallback
 	 *        Optional callback invoked when the window is closed, or null.
 	 * @return The generated window ID.
 	 */
-	public String openWindow(ReactContext openerContext, IReactControl rootControl,
-			WindowOptions options, Runnable closeCallback) {
+	public String openWindow(ReactContext openerContext, ReactControlProvider controlProvider,
+			Object model, WindowOptions options, Runnable closeCallback) {
 		String windowId = generateWindowId();
 		String openerWindowId = openerContext.getWindowName();
 
-		WindowEntry entry = new WindowEntry(windowId, openerWindowId, rootControl, options, closeCallback);
+		WindowEntry entry =
+			new WindowEntry(windowId, openerWindowId, controlProvider, model, options, closeCallback);
 		_windows.put(windowId, entry);
 
 		WindowOpenEvent event = WindowOpenEvent.create()
@@ -181,9 +204,9 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 						ex, ReactWindowRegistry.class);
 				}
 			}
-			IReactControl rootControl = entry.getRootControl();
-			if (rootControl instanceof ReactControl) {
-				((ReactControl) rootControl).cleanupTree();
+			ReactControl rootControl = entry.getRootControl();
+			if (rootControl != null) {
+				rootControl.cleanupTree();
 			}
 		}
 		SSEUpdateQueue queue = _windowQueues.remove(windowId);
@@ -204,9 +227,9 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 		}
 		_windowQueues.clear();
 		for (WindowEntry entry : _windows.values()) {
-			IReactControl rootControl = entry.getRootControl();
-			if (rootControl instanceof ReactControl) {
-				((ReactControl) rootControl).cleanupTree();
+			ReactControl rootControl = entry.getRootControl();
+			if (rootControl != null) {
+				rootControl.cleanupTree();
 			}
 		}
 		_windows.clear();

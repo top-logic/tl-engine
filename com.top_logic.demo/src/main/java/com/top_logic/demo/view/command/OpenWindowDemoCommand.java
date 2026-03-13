@@ -8,11 +8,12 @@ package com.top_logic.demo.view.command;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.demo.react.DemoReactCounterComponent.DemoCounterControl;
+import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.react.window.WindowOptions;
 import com.top_logic.layout.view.command.ViewCommand;
@@ -46,6 +47,7 @@ public class OpenWindowDemoCommand implements ViewCommand {
 	@Override
 	public HandlerResult execute(ReactContext context, Object input) {
 		ReactWindowRegistry registry = context.getWindowRegistry();
+		ErrorSink errorSink = context.getErrorSink();
 
 		int windowNumber = WINDOW_COUNTER.incrementAndGet();
 		String windowLabel = "Child Window #" + windowNumber;
@@ -58,8 +60,11 @@ public class OpenWindowDemoCommand implements ViewCommand {
 			.setTitle(windowLabel)
 			.setResizable(true);
 
-		registry.openWindow(context, counter, options,
-			() -> Logger.info(windowLabel + " closed.", OpenWindowDemoCommand.class));
+		registry.openWindow(context, counter, options, () -> {
+			if (errorSink != null) {
+				errorSink.showInfo(Fragments.text(windowLabel + " closed."));
+			}
+		});
 
 		return HandlerResult.DEFAULT_RESULT;
 	}

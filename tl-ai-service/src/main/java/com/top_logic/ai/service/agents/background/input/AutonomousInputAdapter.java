@@ -8,7 +8,7 @@ package com.top_logic.ai.service.agents.background.input;
 import com.top_logic.ai.service.agents.background.context.BackgroundContext;
 
 /**
- * {@link InputAdapter} that returns a fixed trigger message as input.
+ * {@link InputAdapter} that returns a fixed custom message as input.
  *
  * <p>
  * The message is obtained from an {@link AutonomousInput} configuration and returned unchanged.
@@ -25,7 +25,7 @@ public class AutonomousInputAdapter implements InputAdapter {
 	 *        The autonomous input configuration.
 	 */
 	public AutonomousInputAdapter(AutonomousInput config) {
-		_message = config.getTriggerMessage();
+		_message = config.getCustomMessage();
 	}
 
 	@Override

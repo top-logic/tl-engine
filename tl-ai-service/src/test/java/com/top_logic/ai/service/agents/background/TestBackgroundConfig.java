@@ -124,13 +124,13 @@ public class TestBackgroundConfig extends TestCase {
 
 	// --- Input configs ---
 
-	/** AutonomousInput can be instantiated and stores trigger message. */
+	/** AutonomousInput can be instantiated and stores custom message. */
 	public void testAutonomousInputConfig() {
 		AutonomousInput input = TypedConfiguration.newConfigItem(AutonomousInput.class);
-		input.update(input.descriptor().getProperty(AutonomousInput.TRIGGER_MESSAGE),
+		input.update(input.descriptor().getProperty(AutonomousInput.CUSTOM_MESSAGE),
 			"Check for issues");
 
-		assertEquals("Check for issues", input.getTriggerMessage());
+		assertEquals("Check for issues", input.getCustomMessage());
 	}
 
 	/** ScriptInput can be instantiated and stores script. */

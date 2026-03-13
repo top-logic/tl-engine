@@ -38,7 +38,7 @@ public class TestBackgroundAgentExecutor extends TestCase {
 	/** {@link AutonomousInput} resolves to {@link AutonomousInputAdapter}. */
 	public void testResolveAutonomousInput() {
 		AutonomousInput config = TypedConfiguration.newConfigItem(AutonomousInput.class);
-		config.update(config.descriptor().getProperty(AutonomousInput.TRIGGER_MESSAGE), "test message");
+		config.update(config.descriptor().getProperty(AutonomousInput.CUSTOM_MESSAGE), "test message");
 
 		InputAdapter adapter = _executor.resolveInputAdapter(config);
 
@@ -100,10 +100,10 @@ public class TestBackgroundAgentExecutor extends TestCase {
 		}
 	}
 
-	/** {@link AutonomousInputAdapter} returns the configured trigger message. */
+	/** {@link AutonomousInputAdapter} returns the configured custom message. */
 	public void testAutonomousInputAdapterReturnsMessage() {
 		AutonomousInput config = TypedConfiguration.newConfigItem(AutonomousInput.class);
-		config.update(config.descriptor().getProperty(AutonomousInput.TRIGGER_MESSAGE), "Review this content");
+		config.update(config.descriptor().getProperty(AutonomousInput.CUSTOM_MESSAGE), "Review this content");
 
 		InputAdapter adapter = _executor.resolveInputAdapter(config);
 		String input = adapter.gatherInput(new BackgroundContext("test-agent", "post-turn"));

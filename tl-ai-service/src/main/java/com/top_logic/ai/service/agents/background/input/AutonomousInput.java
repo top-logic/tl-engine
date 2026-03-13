@@ -9,7 +9,7 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 
 /**
- * Input configuration that uses a fixed trigger message.
+ * Input configuration that uses a fixed custom message.
  *
  * <p>
  * The background agent is invoked with a static message defined at configuration time. This is
@@ -18,15 +18,15 @@ import com.top_logic.basic.config.annotation.Name;
  */
 public interface AutonomousInput extends InputConfig {
 
-	/** @see #getTriggerMessage() */
-	String TRIGGER_MESSAGE = "trigger-message";
+	/** @see #getCustomMessage() */
+	String CUSTOM_MESSAGE = "custom-message";
 
 	/**
 	 * The fixed message that is passed to the background agent as input.
 	 *
-	 * @return The trigger message, never {@code null}.
+	 * @return The custom message, never {@code null}.
 	 */
-	@Name(TRIGGER_MESSAGE)
+	@Name(CUSTOM_MESSAGE)
 	@Mandatory
-	String getTriggerMessage();
+	String getCustomMessage();
 }

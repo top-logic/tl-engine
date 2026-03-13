@@ -18,7 +18,7 @@ import com.top_logic.basic.config.annotation.Abstract;
  * <ul>
  * <li>{@link ChatContextInput} - uses chat conversation context as input</li>
  * <li>{@link ScriptInput} - uses a TL-Script expression to produce input</li>
- * <li>{@link AutonomousInput} - uses a fixed trigger message as input</li>
+ * <li>{@link AutonomousInput} - uses a fixed custom message as input</li>
  * <li>{@link ProviderInput} - delegates to a pluggable {@link InputProvider}</li>
  * </ul>
  */

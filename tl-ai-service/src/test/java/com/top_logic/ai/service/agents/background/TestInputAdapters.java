@@ -28,10 +28,10 @@ public class TestInputAdapters extends TestCase {
 
 	// --- AutonomousInputAdapter ---
 
-	/** Adapter returns the configured trigger message regardless of context. */
+	/** Adapter returns the configured custom message regardless of context. */
 	public void testAutonomousAdapterReturnsMessage() {
 		AutonomousInput config = TypedConfiguration.newConfigItem(AutonomousInput.class);
-		config.update(config.descriptor().getProperty(AutonomousInput.TRIGGER_MESSAGE),
+		config.update(config.descriptor().getProperty(AutonomousInput.CUSTOM_MESSAGE),
 			"Review all pending changes");
 
 		AutonomousInputAdapter adapter = new AutonomousInputAdapter(config);
@@ -43,7 +43,7 @@ public class TestInputAdapters extends TestCase {
 	/** Adapter returns the same message for different context types. */
 	public void testAutonomousAdapterIgnoresContextType() {
 		AutonomousInput config = TypedConfiguration.newConfigItem(AutonomousInput.class);
-		config.update(config.descriptor().getProperty(AutonomousInput.TRIGGER_MESSAGE), "fixed input");
+		config.update(config.descriptor().getProperty(AutonomousInput.CUSTOM_MESSAGE), "fixed input");
 
 		AutonomousInputAdapter adapter = new AutonomousInputAdapter(config);
 
@@ -56,11 +56,11 @@ public class TestInputAdapters extends TestCase {
 		assertEquals("fixed input", adapter.gatherInput(app));
 	}
 
-	/** Adapter handles multiline trigger messages. */
+	/** Adapter handles multiline custom messages. */
 	public void testAutonomousAdapterMultilineMessage() {
 		AutonomousInput config = TypedConfiguration.newConfigItem(AutonomousInput.class);
 		String multiline = "Line 1\nLine 2\nLine 3";
-		config.update(config.descriptor().getProperty(AutonomousInput.TRIGGER_MESSAGE), multiline);
+		config.update(config.descriptor().getProperty(AutonomousInput.CUSTOM_MESSAGE), multiline);
 
 		AutonomousInputAdapter adapter = new AutonomousInputAdapter(config);
 
@@ -99,7 +99,7 @@ public class TestInputAdapters extends TestCase {
 	/** Both adapters implement InputAdapter. */
 	public void testAdaptersImplementInterface() {
 		AutonomousInput aConfig = TypedConfiguration.newConfigItem(AutonomousInput.class);
-		aConfig.update(aConfig.descriptor().getProperty(AutonomousInput.TRIGGER_MESSAGE), "msg");
+		aConfig.update(aConfig.descriptor().getProperty(AutonomousInput.CUSTOM_MESSAGE), "msg");
 
 		ScriptInput sConfig = TypedConfiguration.newConfigItem(ScriptInput.class);
 		sConfig.update(sConfig.descriptor().getProperty(ScriptInput.SCRIPT), "script");

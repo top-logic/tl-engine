@@ -32,6 +32,13 @@
 					/>
 				</button>
 			</card>
+			<card title="Multi-Window Demo">
+				<button>
+					<action class="com.top_logic.demo.view.command.OpenWindowDemoCommand"
+						label="Open Child Window"
+					/>
+				</button>
+			</card>
 		</grid>
 	</stack>
 </view>

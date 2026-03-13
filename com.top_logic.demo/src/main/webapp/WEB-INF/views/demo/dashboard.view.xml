@@ -20,15 +20,19 @@
 			</card>
 			<card title="Team Notes">
 				<button>
-					<action class="com.top_logic.demo.view.command.DemoCommand"
+					<action class="com.top_logic.demo.view.command.OpenDemoDialogCommand"
 						label="Open Details"
+						dialog-title="Team Notes"
+						dialog-message="Here are the latest team notes and updates."
 					/>
 				</button>
 			</card>
 			<card title="Quick Add">
 				<button>
-					<action class="com.top_logic.demo.view.command.DemoCommand"
+					<action class="com.top_logic.demo.view.command.OpenDemoDialogCommand"
 						label="+ New Task"
+						dialog-title="New Task"
+						dialog-message="Enter your new task details here."
 					/>
 				</button>
 			</card>

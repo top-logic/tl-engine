@@ -56,6 +56,12 @@
 					>
 						<view-ref view="demo/config-editor-demo.view.xml"/>
 					</nav-item>
+					<nav-item id="dialog-demo"
+						icon="bi bi-window-stack"
+						label="Dialog Demo"
+					>
+						<view-ref view="demo/dialog-demo.view.xml"/>
+					</nav-item>
 					<separator/>
 					<nav-item id="settings"
 						icon="bi bi-gear"

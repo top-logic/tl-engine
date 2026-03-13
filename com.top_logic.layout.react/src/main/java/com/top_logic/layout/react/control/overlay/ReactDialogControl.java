@@ -5,28 +5,22 @@
  */
 package com.top_logic.layout.react.control.overlay;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
 
 /**
- * Modal dialog overlay for confirmations and focused tasks.
+ * Pure overlay control providing backdrop, focus trap, Escape key, and backdrop-click handling.
  *
  * <p>
- * Renders a centered modal with a semi-transparent backdrop. The dialog has a title bar, scrollable
- * body, and optional footer with action buttons. Focus is trapped inside.
+ * This control renders only the overlay mechanics (backdrop + child). Visual chrome (title bar,
+ * footer, resize handles) is provided by {@link ReactWindowControl}, which is typically set as the
+ * child of this control.
  * </p>
  */
 public class ReactDialogControl extends ReactControl {
 
 	private static final String REACT_MODULE = "TLDialog";
-
-	private static final String TITLE = "title";
-
-	private static final String SIZE = "size";
 
 	private static final String CLOSE_ON_BACKDROP = "closeOnBackdrop";
 
@@ -34,44 +28,23 @@ public class ReactDialogControl extends ReactControl {
 
 	private static final String CHILD = "child";
 
-	private static final String ACTIONS = "actions";
-
 	private Runnable _closeHandler;
 
 	private ReactControl _child;
 
-	private List<ReactControl> _actions;
-
 	/**
-	 * Creates a dialog control.
+	 * Creates a dialog overlay control.
 	 *
-	 * @param title
-	 *        The dialog title.
-	 * @param closeHandler
-	 *        Called when the dialog is closed (via close button, Escape, or backdrop click).
-	 */
-	public ReactDialogControl(ReactContext context, String title, Runnable closeHandler) {
-		this(context, title, "medium", true, closeHandler);
-	}
-
-	/**
-	 * Creates a dialog control with full configuration.
-	 *
-	 * @param title
-	 *        The dialog title.
-	 * @param size
-	 *        "small", "medium", or "large".
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
 	 * @param closeOnBackdrop
 	 *        Whether clicking the backdrop closes the dialog.
 	 * @param closeHandler
-	 *        Called when the dialog is closed.
+	 *        Called when the dialog is closed (via Escape or backdrop click).
 	 */
-	public ReactDialogControl(ReactContext context, String title, String size, boolean closeOnBackdrop, Runnable closeHandler) {
+	public ReactDialogControl(ReactContext context, boolean closeOnBackdrop, Runnable closeHandler) {
 		super(context, null, REACT_MODULE);
 		_closeHandler = closeHandler;
-		_actions = new ArrayList<>();
-		putState(TITLE, title);
-		putState(SIZE, size);
 		putState(CLOSE_ON_BACKDROP, closeOnBackdrop);
 		putState(OPEN, false);
 	}
@@ -91,35 +64,14 @@ public class ReactDialogControl extends ReactControl {
 	}
 
 	/**
-	 * Sets the dialog title.
-	 *
-	 * @param title
-	 *        The new title.
-	 */
-	public void setTitle(String title) {
-		putState(TITLE, title);
-	}
-
-	/**
 	 * Sets the child content.
 	 *
 	 * @param child
-	 *        The content control to display in the dialog body.
+	 *        The content control to display inside the overlay.
 	 */
 	public void setChild(ReactControl child) {
 		_child = child;
 		putState(CHILD, child);
-	}
-
-	/**
-	 * Sets the footer action buttons.
-	 *
-	 * @param actions
-	 *        The action controls to display in the dialog footer.
-	 */
-	public void setActions(List<? extends ReactControl> actions) {
-		_actions = new ArrayList<>(actions);
-		putState(ACTIONS, _actions);
 	}
 
 	@Override
@@ -127,13 +79,10 @@ public class ReactDialogControl extends ReactControl {
 		if (_child != null) {
 			_child.cleanupTree();
 		}
-		for (ReactControl action : _actions) {
-			action.cleanupTree();
-		}
 	}
 
 	/**
-	 * Handles the close command sent when the dialog is closed.
+	 * Handles the close command sent when the dialog overlay is dismissed.
 	 */
 	@ReactCommand("close")
 	void handleClose() {

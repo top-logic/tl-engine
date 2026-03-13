@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<stack
+		direction="column"
+		gap="default"
+	>
+		<card
+			title="Dialog Demo"
+			variant="elevated"
+		>
+			<stack
+				direction="column"
+				gap="default"
+			>
+				<button>
+					<action class="com.top_logic.demo.view.command.OpenDemoDialogCommand"
+						label="Open Dialog"
+						dialog-title="Greetings"
+						dialog-message="Hello from the dialog manager!"
+					/>
+				</button>
+				<button>
+					<action class="com.top_logic.demo.view.command.OpenDemoDialogCommand"
+						label="Open Another Dialog"
+						dialog-title="Confirmation"
+						dialog-message="Are you sure you want to proceed?"
+					/>
+				</button>
+			</stack>
+		</card>
+	</stack>
+</view>

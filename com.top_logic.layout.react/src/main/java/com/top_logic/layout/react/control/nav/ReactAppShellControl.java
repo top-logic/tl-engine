@@ -10,6 +10,7 @@ import java.util.Map;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.overlay.ReactDialogManagerControl;
 import com.top_logic.layout.react.control.overlay.ReactSnackbarControl;
 
 /**
@@ -35,6 +36,7 @@ import com.top_logic.layout.react.control.overlay.ReactSnackbarControl;
  * <li>{@code content} - the main content control (gets {@code flex:1})</li>
  * <li>{@code footer} - optional footer slot control (e.g. a bottom bar)</li>
  * <li>{@code snackbar} - built-in snackbar child descriptor (managed internally)</li>
+ * <li>{@code dialogManager} - built-in dialog manager child descriptor (managed internally)</li>
  * </ul>
  */
 public class ReactAppShellControl extends ReactControl {
@@ -49,6 +51,8 @@ public class ReactAppShellControl extends ReactControl {
 
 	private static final String SNACKBAR = "snackbar";
 
+	private static final String DIALOG_MANAGER = "dialogManager";
+
 	private final ReactControl _header;
 
 	private final ReactControl _content;
@@ -56,6 +60,8 @@ public class ReactAppShellControl extends ReactControl {
 	private final ReactControl _footer;
 
 	private final ReactSnackbarControl _snackbar;
+
+	private final ReactDialogManagerControl _dialogManager;
 
 	private final ErrorSink _errorSink;
 
@@ -82,6 +88,7 @@ public class ReactAppShellControl extends ReactControl {
 		_content = content;
 		_footer = footer;
 		_snackbar = snackbar;
+		_dialogManager = new ReactDialogManagerControl(context);
 		_errorSink = errorSink;
 
 		if (header != null) {
@@ -92,6 +99,7 @@ public class ReactAppShellControl extends ReactControl {
 			putState(FOOTER, footer);
 		}
 		putState(SNACKBAR, _snackbar);
+		putState(DIALOG_MANAGER, _dialogManager);
 	}
 
 	/**
@@ -133,6 +141,7 @@ public class ReactAppShellControl extends ReactControl {
 			_footer.cleanupTree();
 		}
 		_snackbar.cleanupTree();
+		_dialogManager.cleanupTree();
 	}
 
 }

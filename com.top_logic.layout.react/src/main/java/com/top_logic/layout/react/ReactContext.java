@@ -6,6 +6,7 @@
 package com.top_logic.layout.react;
 
 import com.top_logic.layout.react.control.ErrorSink;
+import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 
@@ -53,6 +54,15 @@ public interface ReactContext {
 	 */
 	default ErrorSink getErrorSink() {
 		return null;
+	}
+
+	/**
+	 * The {@link DialogManager} for opening and managing modal dialogs, or {@code null} if no
+	 * dialog manager is installed.
+	 */
+	default DialogManager getDialogManager() {
+		SSEUpdateQueue queue = getSSEQueue();
+		return queue != null ? queue.getDialogManager() : null;
 	}
 
 	/**

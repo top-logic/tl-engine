@@ -20,6 +20,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.layout.react.control.ReactCommandTarget;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.protocol.SSEEvent;
 import com.top_logic.layout.react.protocol.StateEvent;
 
@@ -64,6 +65,31 @@ public class SSEUpdateQueue {
 
 	private volatile ScheduledFuture<?> _heartbeatTask;
 
+	private DialogManager _dialogManager;
+
+	/**
+	 * Retrieves or creates the {@link SSEUpdateQueue} for the given session.
+	 *
+	 * <p>
+	 * Synchronizes on the session to prevent a race where two concurrent requests both see
+	 * {@code null}, create independent queues, and the second {@code setAttribute} triggers
+	 * {@code valueUnbound} on the first — clearing its registered controls.
+	 * </p>
+	 */
+	public static SSEUpdateQueue forSession(HttpSession session) {
+		SSEUpdateQueue queue = (SSEUpdateQueue) session.getAttribute(SESSION_ATTRIBUTE_KEY);
+		if (queue == null) {
+			synchronized (session) {
+				queue = (SSEUpdateQueue) session.getAttribute(SESSION_ATTRIBUTE_KEY);
+				if (queue == null) {
+					queue = new SSEUpdateQueue();
+					session.setAttribute(SESSION_ATTRIBUTE_KEY, queue);
+				}
+			}
+		}
+		return queue;
+	}
+
 	/**
 	 * Allocates a unique control ID within this session.
 	 *
@@ -73,6 +99,23 @@ public class SSEUpdateQueue {
 	 */
 	public String allocateId() {
 		return "v" + _nextId.getAndIncrement();
+	}
+
+	/**
+	 * The {@link DialogManager} for the current session, or {@code null} if none is installed.
+	 */
+	public DialogManager getDialogManager() {
+		return _dialogManager;
+	}
+
+	/**
+	 * Sets the {@link DialogManager} for the current session.
+	 *
+	 * @param dialogManager
+	 *        The dialog manager to install.
+	 */
+	public void setDialogManager(DialogManager dialogManager) {
+		_dialogManager = dialogManager;
 	}
 
 	/**

@@ -21,6 +21,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.demo.react.DemoReactCounterComponent.DemoCounterControl;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ErrorSink;
@@ -36,10 +37,12 @@ import com.top_logic.layout.react.control.nav.ReactBottomBarControl;
 import com.top_logic.layout.react.control.nav.ReactBottomBarControl.BottomBarEntry;
 import com.top_logic.layout.react.control.nav.ReactBreadcrumbControl;
 import com.top_logic.layout.react.control.nav.ReactBreadcrumbControl.BreadcrumbEntry;
-import com.top_logic.layout.react.control.overlay.ReactDialogControl;
+import com.top_logic.layout.react.control.overlay.DialogManager;
+import com.top_logic.layout.react.control.overlay.DialogResult;
 import com.top_logic.layout.react.control.overlay.ReactDrawerControl;
 import com.top_logic.layout.react.control.overlay.ReactMenuControl;
 import com.top_logic.layout.react.control.overlay.ReactMenuControl.MenuEntry;
+import com.top_logic.layout.react.control.overlay.ReactWindowControl;
 import com.top_logic.layout.react.control.overlay.ReactSnackbarControl;
 import com.top_logic.layout.react.control.sidebar.CommandItem;
 import com.top_logic.layout.react.control.sidebar.NavigationItem;
@@ -84,8 +87,6 @@ public class DemoReactAppComponent extends LayoutComponent {
 	private ReactSidebarControl _sidebar;
 
 	private ReactBottomBarControl _bottomBar;
-
-	private ReactDialogControl _dialog;
 
 	private ReactDrawerControl _drawer;
 
@@ -137,20 +138,6 @@ public class DemoReactAppComponent extends LayoutComponent {
 		// Overlay controls (created first so content factories can reference them).
 		_drawer = new ReactDrawerControl(ctx, "Details", "right", "medium", () -> { /* no-op */ });
 		_drawer.setChild(createDrawerContent());
-
-		_dialog = new ReactDialogControl(ctx, "New Task", () -> { /* no-op */ });
-		_dialog.setChild(createDialogContent());
-		_dialog.setActions(List.of(
-			new ReactButtonControl(ctx, "Cancel", (context) -> {
-				_dialog.close();
-				return HandlerResult.DEFAULT_RESULT;
-			}),
-			new ReactButtonControl(ctx, "Create", (context) -> {
-				_dialog.close();
-				_appShell.showSnackbar("Task created!");
-				return HandlerResult.DEFAULT_RESULT;
-			})
-		));
 
 		List<MenuEntry> menuItems = List.of(
 			MenuEntry.item("refresh", "Refresh", "bi bi-arrow-clockwise"),
@@ -258,18 +245,14 @@ public class DemoReactAppComponent extends LayoutComponent {
 
 		// Card 4: Quick Add (outlined) with "+ New Task" button that opens the dialog.
 		ReactButtonControl newTaskBtn = new ReactButtonControl(ctx, "+ New Task", (context) -> {
-			_dialog.open();
+			openNewTaskDialog();
 			return HandlerResult.DEFAULT_RESULT;
 		});
 		ReactCardControl quickAddCard = new ReactCardControl(ctx, "Quick Add",
 			new ReactFieldListControl(ctx, List.of(newTaskBtn)));
 
-		// Dashboard grid with the dialog as an invisible overlay child.
-		return new ReactStackControl(ctx, List.of(
-			new ReactGridControl(ctx, "16rem", "default",
-				List.of(activeTasksCard, inReviewCard, teamNotesCard, quickAddCard)),
-			_dialog
-		));
+		return new ReactGridControl(ctx, "16rem", "default",
+			List.of(activeTasksCard, inReviewCard, teamNotesCard, quickAddCard));
 	}
 
 	private ReactControl createMessagesPage() {
@@ -314,6 +297,31 @@ public class DemoReactAppComponent extends LayoutComponent {
 	}
 
 	// -- Overlay content --
+
+	private void openNewTaskDialog() {
+		ReactContext ctx = _context;
+		DialogManager mgr = ctx.getDialogManager();
+
+		ReactWindowControl window = new ReactWindowControl(ctx, "New Task",
+			DisplayDimension.px(500), () -> mgr.closeTopDialog(DialogResult.cancelled()));
+		window.setChild(createDialogContent());
+
+		ReactButtonControl cancelBtn = new ReactButtonControl(ctx, "Cancel", (context) -> {
+			mgr.closeTopDialog(DialogResult.cancelled());
+			return HandlerResult.DEFAULT_RESULT;
+		});
+		ReactButtonControl createBtn = new ReactButtonControl(ctx, "Create", (context) -> {
+			mgr.closeTopDialog(DialogResult.ok(null));
+			return HandlerResult.DEFAULT_RESULT;
+		});
+		window.setActions(List.of(cancelBtn, createBtn));
+
+		mgr.openDialog(true, window, result -> {
+			if (result.isOk()) {
+				_appShell.showSnackbar("Task created!");
+			}
+		});
+	}
 
 	private ReactControl createDrawerContent() {
 		ReactContext ctx = _context;

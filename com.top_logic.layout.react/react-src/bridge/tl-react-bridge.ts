@@ -84,6 +84,8 @@ export function mount(
     _contextPath = contextPath;
   }
 
+  const resolvedWindowName = windowName ?? '';
+
   // Connect SSE on first mount, or reconnect on page reload.
   // When contextPath is provided (from internalWrite()), a fresh page render is happening.
   // After an AJAX page reload, the JS module state persists (_sseConnected = true) but the
@@ -92,12 +94,10 @@ export function mount(
   if (!_sseConnected) {
     _sseConnected = true;
     setI18NApiBase(getApiBase());
-    connect(getApiBase() + 'react-api/events');
+    connect(getApiBase() + 'react-api/events?windowName=' + encodeURIComponent(resolvedWindowName));
   } else if (contextPath !== undefined) {
-    connect(getApiBase() + 'react-api/events');
+    connect(getApiBase() + 'react-api/events?windowName=' + encodeURIComponent(resolvedWindowName));
   }
-
-  const resolvedWindowName = windowName ?? '';
 
   // Always update windowName (it may change between mount calls).
   setI18NWindowName(resolvedWindowName);
@@ -320,7 +320,8 @@ export function useTLDataUrl(): string {
   if (!ctx) {
     throw new Error('useTLDataUrl must be used inside a TLReact-mounted component.');
   }
-  return getApiBase() + 'react-api/data?controlId=' + encodeURIComponent(ctx.controlId);
+  return getApiBase() + 'react-api/data?controlId=' + encodeURIComponent(ctx.controlId)
+    + '&windowName=' + encodeURIComponent(ctx.windowName);
 }
 
 /**

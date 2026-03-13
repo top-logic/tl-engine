@@ -12,7 +12,12 @@
 		<components>
 			<component class="com.top_logic.demo.react.DemoReactFormFieldsComponent"
 				name="reactFormFieldsDemo"
-			/>
+			>
+				<titleKey key="dynamic.reactDemo.formFields.component">
+					<en>Form Fields</en>
+					<de>Formularfelder</de>
+				</titleKey>
+			</component>
 		</components>
 	</arguments>
 </config:template-call>

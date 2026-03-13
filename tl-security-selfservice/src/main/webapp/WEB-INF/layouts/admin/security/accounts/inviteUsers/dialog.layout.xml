@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.model.search/create/genericCreateDialog.template.xml"
+>
+	<arguments>
+		<forms>
+			<form type="tl.security.selfservice:Invitation">
+				<formDefinition>
+					<field
+						attribute="email"
+						fullQualifiedName="tl.security.selfservice:Invitation#email"
+						type="tl.core:String"
+					/>
+				</formDefinition>
+			</form>
+		</forms>
+		<title>
+			<title key="dynamic.6eca29bb-26c5-4c61-bdf9-bd3fb0239f65">
+				<en>Invite users</en>
+				<de>Nutzer einladen</de>
+			</title>
+		</title>
+		<open-handler id="ID_f5de683c_0848_441a_bb28_c562c0f6affa"
+			config:interface="com.top_logic.layout.editor.config.CreateDialogOpenHandlerConfig"
+			image="theme:ICONS_ADD_BUTTON"
+			targetComponent="admin/security/accounts/inviteUsers/dialog.layout.xml#Editor"
+		>
+			<resourceKey key="dynamic.6eca29bb-26c5-4c61-bdf9-bd3fb0239f65">
+				<en>Invite users</en>
+				<de>Nutzer einladen</de>
+			</resourceKey>
+		</open-handler>
+		<typeOptions type="tl.security.selfservice:Invitation"/>
+		<create-handler id="ID_0116ecaa_3e8f_49c4_886b_2f16f8a64245">
+			<postCreateActions>
+				<execute-script
+					operation="invitation -> sendInvitation($invitation)"
+					transaction="false"
+				>
+					<postCreateActions>
+						<execute-script transaction="false">
+							<operation>info(#("Die Einladung wurde angelegt und per Mail verschickt."@de, "The invitation was created and sent by email."@en))</operation>
+						</execute-script>
+					</postCreateActions>
+				</execute-script>
+			</postCreateActions>
+		</create-handler>
+	</arguments>
+</config:template-call>

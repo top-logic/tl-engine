@@ -99,6 +99,18 @@ public class ChangePasswordComponent extends FormComponent {
 	}
 
 	/**
+	 * Adds fields to set the password for the given person.
+	 * 
+	 * @param validator
+	 *        The PasswordValidator of the {@link AuthenticationDevice} to create password for.
+	 * 
+	 * @see ApplyPasswordCommand#applyPasswordChange(FormContext, Person)
+	 */
+	public static void addPasswordFields(FormContext formContext, PasswordValidator validator) {
+		addChangePasswordFields(formContext, false, validator, true);
+	}
+
+	/**
 	 * Adds fields to change the password for the given person.
 	 * 
 	 * @param changingOwnPassword
@@ -108,54 +120,57 @@ public class ChangePasswordComponent extends FormComponent {
 	 * @see ApplyPasswordCommand#applyPasswordChange(FormContext, Person)
 	 */
 	public static void addChangePasswordFields(FormContext formContext, Person person, boolean changingOwnPassword) {
+		PasswordValidator validator = getPasswordValidator(person);
+		boolean validationEnabled = isPasswordValiationEnabled(validator, person);
+		addChangePasswordFields(formContext, changingOwnPassword, validator, validationEnabled);
+	}
+
+	private static void addChangePasswordFields(FormContext formContext, boolean changingOwnPassword,
+			PasswordValidator validator, boolean validationEnabled) {
 		if (changingOwnPassword) {
 			// Require authentication for changing the own password.
-			formContext.addMember(createPasswordField(OLD_PASSWORD, person, false));
+			formContext.addMember(createPasswordField(OLD_PASSWORD, null));
 		}
-		formContext.addMember(createNewPasswordField(person));
-		formContext.addMember(createPasswordField(NEW_PASSWORD_2, person, false));
+
+		StringField newPasswordField;
+		if (validationEnabled) {
+			newPasswordField = createPasswordField(NEW_PASSWORD_1, validator);
+			newPasswordField.setTooltip(getPasswordFieldTooltip(validator));
+		} else {
+			newPasswordField = createPasswordField(NEW_PASSWORD_1, null);
+		}
+		formContext.addMember(newPasswordField);
+		formContext.addMember(createPasswordField(NEW_PASSWORD_2, null));
 
 		BooleanField requireChange = FormFactory.newBooleanField(REQUIRE_CHANGE);
 		formContext.addMember(requireChange);
 
-		PasswordValidator validator = getPasswordValidator(person);
-		if (changingOwnPassword || validator.isExcluded(person)) {
+		if (changingOwnPassword || !validationEnabled) {
 			requireChange.setVisible(false);
 		}
 	}
 
-	private static StringField createNewPasswordField(Person person) {
-		StringField newPasswordField = createPasswordField(NEW_PASSWORD_1, person, isPasswordValidationEnabled(person));
-		if (isPasswordValidationEnabled(person)) {
-			newPasswordField.setTooltip(getPasswordFieldTooltip(person));
-		}
-		return newPasswordField;
-	}
-
-	private static StringField createPasswordField(String name, Person person, boolean withValidation) {
+	private static StringField createPasswordField(String name, PasswordValidator validator) {
 		StringField result =
 			FormFactory.newStringField(name, true, false, CONSTRAINT_LENGTH_0_64);
-		result.setControlProvider(getPasswordFieldControlProvider(person, withValidation));
+		result.setControlProvider(getPasswordFieldControlProvider(validator));
 		return result;
 	}
 
-	private static ControlProvider getPasswordFieldControlProvider(Person person, boolean validation) {
-		if (validation) {
-			PasswordValidator passwordValidator = getPasswordValidator(person);
-			return new PasswordInputControlProvider(DEFAULT_COLUMNS, passwordValidator.getMinPwdLength(),
-				passwordValidator.getNumberContentCrit());
+	private static ControlProvider getPasswordFieldControlProvider(PasswordValidator validator) {
+		if (validator != null) {
+			return new PasswordInputControlProvider(DEFAULT_COLUMNS, validator.getMinPwdLength(),
+				validator.getNumberContentCrit());
 		} else {
 			return new PasswordInputControlProvider(DEFAULT_COLUMNS, 0, 0);
 		}
 	}
 
-	private static ResKey getPasswordFieldTooltip(Person person) {
-		PasswordValidator validator = getPasswordValidator(person);
+	private static ResKey getPasswordFieldTooltip(PasswordValidator validator) {
 		return I18NConstants.PASSWORD_FIELD_TOOLTIP.fill(validator.getMinPwdLength(), validator.getNumberContentCrit());
 	}
 
-	private static boolean isPasswordValidationEnabled(Person person) {
-		PasswordValidator validator = getPasswordValidator(person);
+	private static boolean isPasswordValiationEnabled(PasswordValidator validator, Person person) {
 		return !validator.isExcluded(person);
 	}
 

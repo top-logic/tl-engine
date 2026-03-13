@@ -18,6 +18,8 @@ import java.util.Set;
 import com.top_logic.ai.service.AIService;
 import com.top_logic.ai.service.ChatModelFactory;
 import com.top_logic.ai.service.agents.background.BackgroundConfig;
+import com.top_logic.ai.service.agents.background.scheduler.BackgroundAgentTask;
+import com.top_logic.ai.service.agents.background.trigger.ScheduledTrigger;
 import com.top_logic.ai.service.agents.background.trigger.TriggerConfig;
 import com.top_logic.ai.service.providers.AnthropicChatModelFactory;
 import com.top_logic.ai.service.providers.MistralChatModelFactory;
@@ -34,15 +36,20 @@ import com.top_logic.ai.service.tools.registry.ToolImplementation;
 import com.top_logic.ai.service.tools.registry.ToolRegistry;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.util.sched.Scheduler;
+import com.top_logic.util.sched.task.Task;
 
 import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.agent.tool.ToolSpecifications;
@@ -81,6 +88,7 @@ import dev.langchain4j.service.tool.ToolExecutor;
  * @see SkillConfig
  * @see AIService
  */
+@ServiceDependencies(Scheduler.Module.class)
 public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?>> {
 
 	/**
@@ -155,6 +163,8 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	private Map<String, String> _agentNameIndex;
 
 	private String _entryPointAgentName;
+
+	private List<String> _scheduledTaskNames;
 
 	/**
 	 * Creates a new {@link AgentRegistry} from configuration.
@@ -263,6 +273,32 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 				AgentRegistry.class);
 		}
 
+		// Register scheduled background agents with TopLogic Scheduler
+		_scheduledTaskNames = new ArrayList<>();
+		Scheduler scheduler = Scheduler.Module.INSTANCE.getImplementationInstance();
+		for (Map.Entry<String, AgentConfig> entry : getConfig().getAgents().entrySet()) {
+			BackgroundConfig bg = entry.getValue().getBackground();
+			if (bg == null) continue;
+			TriggerConfig trigger = bg.getTrigger();
+			if (!(trigger instanceof ScheduledTrigger scheduled)) continue;
+
+			String taskName = "ai-bg-" + entry.getKey();
+			BackgroundAgentTask.Config taskConfig =
+				TypedConfiguration.newConfigItem(BackgroundAgentTask.Config.class);
+			taskConfig.setName(taskName);
+			taskConfig.setAgentName(entry.getKey());
+			taskConfig.getSchedules().addAll(scheduled.getSchedules());
+
+			DefaultInstantiationContext instCtx = new DefaultInstantiationContext(AgentRegistry.class);
+			BackgroundAgentTask task = instCtx.getInstance(taskConfig);
+			scheduler.addTask(task);
+			_scheduledTaskNames.add(taskName);
+
+			Logger.info("Registered scheduler task '" + taskName + "' for background agent '" +
+				entry.getKey() + "' with " + scheduled.getSchedules().size() + " schedule(s).",
+				AgentRegistry.class);
+		}
+
 		Logger.info("AgentRegistry started with " + getConfig().getAgents().size() + " agent(s) and " +
 			skillConfigs.size() + " skill(s).",
 			AgentRegistry.class);
@@ -271,6 +307,17 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	@Override
 	protected void shutDown() {
 		try {
+			// Unregister scheduled tasks from TopLogic Scheduler
+			if (_scheduledTaskNames != null && !_scheduledTaskNames.isEmpty()) {
+				Scheduler scheduler = Scheduler.Module.INSTANCE.getImplementationInstance();
+				for (String taskName : _scheduledTaskNames) {
+					Task task = scheduler.getTaskByName(taskName);
+					if (task != null) {
+						scheduler.removeTask(task);
+					}
+				}
+			}
+			_scheduledTaskNames = null;
 			_instance = null;
 			_skillRegistry = null;
 			_agentNameIndex = null;

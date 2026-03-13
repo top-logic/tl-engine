@@ -42,6 +42,11 @@ public class BackgroundAgentTask extends StateHandlingTask<BackgroundAgentTask.C
 		@Name(AGENT_NAME)
 		@Mandatory
 		String getAgentName();
+
+		/**
+		 * @see #getAgentName()
+		 */
+		void setAgentName(String value);
 	}
 
 	/**

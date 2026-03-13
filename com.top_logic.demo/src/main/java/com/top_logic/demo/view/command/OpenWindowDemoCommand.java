@@ -8,11 +8,10 @@ package com.top_logic.demo.view.command;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.demo.react.DemoReactCounterComponent.DemoCounterControl;
-import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.react.window.WindowOptions;
@@ -60,7 +59,7 @@ public class OpenWindowDemoCommand implements ViewCommand {
 			.setResizable(true);
 
 		registry.openWindow(context, counter, options,
-			() -> InfoService.showInfo(ResKey.text(windowLabel + " closed.")));
+			() -> Logger.info(windowLabel + " closed.", OpenWindowDemoCommand.class));
 
 		return HandlerResult.DEFAULT_RESULT;
 	}

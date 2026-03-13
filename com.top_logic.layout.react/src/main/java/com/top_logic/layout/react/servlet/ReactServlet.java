@@ -239,18 +239,6 @@ public class ReactServlet extends TopLogicServlet {
 			String closedWindowId = arguments != null ? (String) arguments.get("windowId") : null;
 			ReactWindowRegistry registry = ReactWindowRegistry.forSession(request.getSession());
 			registry.windowClosed(closedWindowId);
-
-			// Flush InfoService messages produced by the close callback.
-			DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
-			if (displayContext.isSet(InfoService.INFO_SERVICE_ENTRIES)) {
-				List<HTMLFragment> entries = displayContext.get(InfoService.INFO_SERVICE_ENTRIES);
-				if (!entries.isEmpty()) {
-					SSEUpdateQueue queue = SSEUpdateQueue.forSession(session);
-					String jsCode = InfoServiceXMLStringConverter.getJSInvocation(displayContext, entries);
-					queue.enqueue(JSSnipplet.create().setCode(jsCode));
-				}
-			}
-
 			sendSuccess(response);
 			return;
 		}

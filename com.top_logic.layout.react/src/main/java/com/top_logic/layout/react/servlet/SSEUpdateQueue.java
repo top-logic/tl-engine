@@ -60,11 +60,13 @@ public class SSEUpdateQueue implements HttpSessionBindingListener {
 
 	private final ConcurrentLinkedQueue<SSEEvent> _pendingEvents = new ConcurrentLinkedQueue<>();
 
-	private final List<AsyncContext> _connections = new CopyOnWriteArrayList<>();
+	private final List<SSEConnection> _connections = new CopyOnWriteArrayList<>();
 
 	private final Map<String, ReactCommandTarget> _controls = new ConcurrentHashMap<>();
 
 	private final AtomicInteger _nextId = new AtomicInteger(1);
+
+	private final AtomicInteger _nextConnectionId = new AtomicInteger(1);
 
 	private volatile ScheduledFuture<?> _heartbeatTask;
 
@@ -135,8 +137,11 @@ public class SSEUpdateQueue implements HttpSessionBindingListener {
 	 * Registers an SSE connection to receive events.
 	 */
 	public void addConnection(AsyncContext asyncContext) {
-		_connections.add(asyncContext);
-		sendFullState(asyncContext);
+		SSEConnection connection = new SSEConnection(_nextConnectionId.getAndIncrement(), asyncContext);
+		_connections.add(connection);
+		Logger.info("SSE connection added: id=" + connection.getId()
+			+ ", total=" + _connections.size(), SSEUpdateQueue.class);
+		sendFullState(connection);
 		ensureHeartbeat();
 	}
 
@@ -149,7 +154,7 @@ public class SSEUpdateQueue implements HttpSessionBindingListener {
 	 * while the connection was down.
 	 * </p>
 	 */
-	private void sendFullState(AsyncContext ctx) {
+	private void sendFullState(SSEConnection connection) {
 		for (ReactCommandTarget control : _controls.values()) {
 			if (control instanceof ReactControl) {
 				ReactControl rc = (ReactControl) control;
@@ -158,7 +163,7 @@ public class SSEUpdateQueue implements HttpSessionBindingListener {
 					.setState(rc.stateAsJSON());
 				String message = toDataMessage(toJson(event));
 				if (message != null) {
-					writeOrRemove(ctx, message);
+					writeOrRemove(connection, message);
 				}
 			}
 		}
@@ -168,7 +173,14 @@ public class SSEUpdateQueue implements HttpSessionBindingListener {
 	 * Removes a previously registered SSE connection.
 	 */
 	public void removeConnection(AsyncContext asyncContext) {
-		_connections.remove(asyncContext);
+		_connections.removeIf(c -> {
+			if (c.getContext() == asyncContext) {
+				Logger.info("SSE connection removed (explicit): id=" + c.getId()
+					+ ", remaining=" + (_connections.size() - 1), SSEUpdateQueue.class);
+				return true;
+			}
+			return false;
+		});
 		cancelHeartbeatIfEmpty();
 	}
 
@@ -192,8 +204,8 @@ public class SSEUpdateQueue implements HttpSessionBindingListener {
 			}
 			Logger.info("SSE flush: " + _connections.size() + " connections, event="
 				+ event.getClass().getSimpleName(), SSEUpdateQueue.class);
-			for (AsyncContext ctx : _connections) {
-				writeOrRemove(ctx, message);
+			for (SSEConnection connection : _connections) {
+				writeOrRemove(connection, message);
 			}
 		}
 	}
@@ -220,9 +232,9 @@ public class SSEUpdateQueue implements HttpSessionBindingListener {
 				_heartbeatTask = null;
 			}
 		}
-		for (AsyncContext ctx : _connections) {
+		for (SSEConnection connection : _connections) {
 			try {
-				ctx.complete();
+				connection.getContext().complete();
 			} catch (Exception ex) {
 				// Connection already closed, ignore.
 			}
@@ -232,8 +244,8 @@ public class SSEUpdateQueue implements HttpSessionBindingListener {
 	}
 
 	private void sendHeartbeat() {
-		for (AsyncContext ctx : _connections) {
-			writeOrRemove(ctx, HEARTBEAT_MESSAGE);
+		for (SSEConnection connection : _connections) {
+			writeOrRemove(connection, HEARTBEAT_MESSAGE);
 		}
 		cancelHeartbeatIfEmpty();
 	}
@@ -241,12 +253,13 @@ public class SSEUpdateQueue implements HttpSessionBindingListener {
 	/**
 	 * Writes a message to the given connection, removing it if the write fails.
 	 */
-	private void writeOrRemove(AsyncContext ctx, String message) {
+	private void writeOrRemove(SSEConnection connection, String message) {
 		try {
-			writeToConnection(ctx, message);
+			writeToConnection(connection.getContext(), message);
 		} catch (IOException ex) {
-			Logger.warn("SSE write failed, removing dead connection.", ex, SSEUpdateQueue.class);
-			_connections.remove(ctx);
+			Logger.info("SSE connection removed (dead): id=" + connection.getId()
+				+ ", remaining=" + (_connections.size() - 1), SSEUpdateQueue.class);
+			_connections.remove(connection);
 		}
 	}
 
@@ -289,6 +302,29 @@ public class SSEUpdateQueue implements HttpSessionBindingListener {
 		} catch (IOException ex) {
 			Logger.error("Failed to serialize SSE event to JSON.", ex, SSEUpdateQueue.class);
 			return null;
+		}
+	}
+
+	/**
+	 * Wraps an {@link AsyncContext} with a numeric ID for debugging.
+	 */
+	static final class SSEConnection {
+
+		private final int _id;
+
+		private final AsyncContext _context;
+
+		SSEConnection(int id, AsyncContext context) {
+			_id = id;
+			_context = context;
+		}
+
+		int getId() {
+			return _id;
+		}
+
+		AsyncContext getContext() {
+			return _context;
 		}
 	}
 

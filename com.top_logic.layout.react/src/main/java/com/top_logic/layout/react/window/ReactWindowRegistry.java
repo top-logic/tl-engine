@@ -7,6 +7,7 @@ package com.top_logic.layout.react.window;
 
 import java.security.SecureRandom;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.HttpSessionBindingEvent;
@@ -20,11 +21,12 @@ import com.top_logic.layout.react.protocol.WindowOpenEvent;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 
 /**
- * Per-session registry that manages programmatically opened React windows.
+ * Per-session registry that manages programmatically opened React windows and per-window SSE
+ * queues.
  *
  * <p>
- * Stored as an HTTP session attribute alongside {@link SSEUpdateQueue}. Tracks open windows, their
- * control trees, and enqueues lifecycle SSE events.
+ * Stored as an HTTP session attribute. Tracks open windows, their control trees, and owns
+ * per-window {@link SSEUpdateQueue} instances.
  * </p>
  */
 public class ReactWindowRegistry implements HttpSessionBindingListener {
@@ -35,16 +37,14 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 
 	private final ConcurrentHashMap<String, WindowEntry> _windows = new ConcurrentHashMap<>();
 
-	private final SSEUpdateQueue _sseQueue;
+	private final ConcurrentHashMap<String, SSEUpdateQueue> _windowQueues = new ConcurrentHashMap<>();
+
+	private final ReentrantLock _requestLock = new ReentrantLock();
 
 	/**
 	 * Creates a new {@link ReactWindowRegistry}.
-	 *
-	 * @param sseQueue
-	 *        The session's SSE queue for enqueuing window events.
 	 */
-	public ReactWindowRegistry(SSEUpdateQueue sseQueue) {
-		_sseQueue = sseQueue;
+	public ReactWindowRegistry() {
 	}
 
 	/**
@@ -57,13 +57,33 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 			synchronized (session) {
 				registry = (ReactWindowRegistry) session.getAttribute(SESSION_ATTRIBUTE_KEY);
 				if (registry == null) {
-					SSEUpdateQueue queue = SSEUpdateQueue.forSession(session);
-					registry = new ReactWindowRegistry(queue);
+					registry = new ReactWindowRegistry();
 					session.setAttribute(SESSION_ATTRIBUTE_KEY, registry);
 				}
 			}
 		}
 		return registry;
+	}
+
+	/**
+	 * Gets or creates the {@link SSEUpdateQueue} for the given window.
+	 */
+	public SSEUpdateQueue getOrCreateQueue(String windowId) {
+		return _windowQueues.computeIfAbsent(windowId, id -> new SSEUpdateQueue());
+	}
+
+	/**
+	 * Gets the {@link SSEUpdateQueue} for the given window, or {@code null} if none exists.
+	 */
+	public SSEUpdateQueue getQueue(String windowId) {
+		return _windowQueues.get(windowId);
+	}
+
+	/**
+	 * The session-wide request lock for serializing command execution.
+	 */
+	public ReentrantLock getRequestLock() {
+		return _requestLock;
 	}
 
 	/**
@@ -123,7 +143,10 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 			.setHeight(options.getHeight())
 			.setTitle(options.getTitle())
 			.setResizable(options.isResizable());
-		_sseQueue.enqueue(event);
+		SSEUpdateQueue openerQueue = getQueue(openerWindowId);
+		if (openerQueue != null) {
+			openerQueue.enqueue(event);
+		}
 
 		return windowId;
 	}
@@ -163,6 +186,10 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 				((ReactControl) rootControl).cleanupTree();
 			}
 		}
+		SSEUpdateQueue queue = _windowQueues.remove(windowId);
+		if (queue != null) {
+			queue.shutdown();
+		}
 	}
 
 	@Override
@@ -172,6 +199,10 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 
 	@Override
 	public void valueUnbound(HttpSessionBindingEvent event) {
+		for (SSEUpdateQueue queue : _windowQueues.values()) {
+			queue.shutdown();
+		}
+		_windowQueues.clear();
 		for (WindowEntry entry : _windows.values()) {
 			IReactControl rootControl = entry.getRootControl();
 			if (rootControl instanceof ReactControl) {

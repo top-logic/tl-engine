@@ -24,8 +24,8 @@ function getContextPath(): string {
 /** Convert WindowOpenEvent options to window.open() features string. */
 function buildFeatureString(event: WindowOpenEventData): string {
   const parts: string[] = [];
-  if (event.width) parts.push(`width=${event.width}`);
-  if (event.height) parts.push(`height=${event.height}`);
+  if (event.width > 0) parts.push(`width=${event.width}`);
+  if (event.height > 0) parts.push(`height=${event.height}`);
   parts.push(`resizable=${event.resizable ? 'yes' : 'no'}`);
   return parts.join(',');
 }

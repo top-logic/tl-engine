@@ -123,6 +123,9 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	 * Cleans up the control tree and removes the entry.
 	 */
 	public void windowClosed(String windowId) {
+		if (windowId == null) {
+			return;
+		}
 		WindowEntry entry = _windows.remove(windowId);
 		if (entry != null) {
 			IReactControl rootControl = entry.getRootControl();

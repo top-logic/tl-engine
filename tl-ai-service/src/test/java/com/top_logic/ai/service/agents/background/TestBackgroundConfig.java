@@ -150,6 +150,14 @@ public class TestBackgroundConfig extends TestCase {
 		// The enum default semantics in the code treat null/unset as LAST_TURN
 	}
 
+	/** Input is nullable (not mandatory) for pre-turn agents. */
+	public void testInputIsNullable() {
+		BackgroundConfig config = TypedConfiguration.newConfigItem(BackgroundConfig.class);
+
+		// Input should be null by default since it is no longer @Mandatory
+		assertNull(config.getInput());
+	}
+
 	/** ChatContextInput Content enum values. */
 	public void testChatContextInputContentValues() {
 		assertEquals(2, Content.values().length);

@@ -12,6 +12,7 @@ import java.util.function.Function;
 import com.top_logic.ai.service.agents.AgentConfig;
 import com.top_logic.ai.service.agents.AgentRegistry;
 import com.top_logic.ai.service.agents.background.context.BackgroundContext;
+import com.top_logic.ai.service.agents.background.context.ChatContext;
 import com.top_logic.ai.service.agents.background.input.AutonomousInput;
 import com.top_logic.ai.service.agents.background.input.AutonomousInputAdapter;
 import com.top_logic.ai.service.agents.background.input.InputAdapter;
@@ -20,6 +21,7 @@ import com.top_logic.ai.service.agents.background.input.ProviderInput;
 import com.top_logic.ai.service.agents.background.input.ProviderInputAdapter;
 import com.top_logic.ai.service.agents.background.input.ScriptInput;
 import com.top_logic.ai.service.agents.background.input.ScriptInputAdapter;
+import com.top_logic.ai.service.agents.background.trigger.PreTurnTrigger;
 import com.top_logic.ai.service.agents.background.output.OutputHandler;
 import com.top_logic.ai.service.agents.background.output.OutputHandlerImplementation;
 import com.top_logic.ai.service.agents.background.output.ScriptOutputHandler;
@@ -94,9 +96,22 @@ public class BackgroundAgentExecutor {
 			throw new IllegalArgumentException("Agent '" + agentName + "' has no background config");
 		}
 
-		// 1. Resolve input adapter and gather input
-		InputAdapter adapter = resolveInputAdapter(bgConfig.getInput());
-		String input = adapter.gatherInput(context);
+		// 1. Resolve input: pre-turn always includes the pending user message
+		String input;
+		if (bgConfig.getTrigger() instanceof PreTurnTrigger && context instanceof ChatContext chatContext) {
+			InputConfig inputConfig = bgConfig.getInput();
+			if (inputConfig != null) {
+				InputAdapter adapter = resolveInputAdapter(inputConfig);
+				String additional = adapter.gatherInput(context);
+				input = "<user-message>\n" + chatContext.getPendingUserMessage() + "\n</user-message>\n\n"
+					+ "<additional-context>\n" + (additional != null ? additional : "") + "\n</additional-context>";
+			} else {
+				input = chatContext.getPendingUserMessage();
+			}
+		} else {
+			InputAdapter adapter = resolveInputAdapter(bgConfig.getInput());
+			input = adapter.gatherInput(context);
+		}
 
 		// 2. Build and invoke the agent
 		BlockTurnResult.clear();

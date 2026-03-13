@@ -67,25 +67,33 @@ public class TestBackgroundContext extends TestCase {
 		assertNull(ctx.getCompletedTask());
 	}
 
-	// --- ChatContext.fullChat() ---
+	// --- ChatContext.preTurn() ---
 
-	/** fullChat factory sets trigger type to "pre-turn". */
-	public void testChatContextFullChatTriggerType() {
-		ChatContext ctx = ChatContext.fullChat("SafetyAgent", new Object());
+	/** preTurn factory sets trigger type to "pre-turn". */
+	public void testChatContextPreTurnTriggerType() {
+		ChatContext ctx = ChatContext.preTurn("SafetyAgent", "Hello", new Object());
 
 		assertEquals("pre-turn", ctx.getTriggerType());
 	}
 
-	/** fullChat factory stores the chat object. */
-	public void testChatContextFullChatFields() {
+	/** preTurn factory stores the pending user message and chat object. */
+	public void testChatContextPreTurnFields() {
 		Object mockChat = new Object();
-		ChatContext ctx = ChatContext.fullChat("SafetyAgent", mockChat);
+		ChatContext ctx = ChatContext.preTurn("SafetyAgent", "Check this", mockChat);
 
 		assertEquals("SafetyAgent", ctx.getAgentName());
+		assertEquals("Check this", ctx.getPendingUserMessage());
 		assertSame(mockChat, ctx.getChat());
-		assertNull("UserMessage should be null for fullChat", ctx.getUserMessage());
-		assertNull("AgentResponse should be null for fullChat", ctx.getAgentResponse());
-		assertNull("CompletedTask should be null for fullChat", ctx.getCompletedTask());
+		assertNull("UserMessage should be null for preTurn", ctx.getUserMessage());
+		assertNull("AgentResponse should be null for preTurn", ctx.getAgentResponse());
+		assertNull("CompletedTask should be null for preTurn", ctx.getCompletedTask());
+	}
+
+	/** lastTurn factory does not set pending user message. */
+	public void testChatContextLastTurnNoPendingMessage() {
+		ChatContext ctx = ChatContext.lastTurn("agent", "msg", "resp", null, null);
+
+		assertNull("PendingUserMessage should be null for lastTurn", ctx.getPendingUserMessage());
 	}
 
 	// --- ApplicationContext.scheduled() ---

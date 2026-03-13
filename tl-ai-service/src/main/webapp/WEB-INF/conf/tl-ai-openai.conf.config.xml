@@ -102,6 +102,11 @@
 							tool-class="com.top_logic.ai.service.tools.gitea.GiteaIssueTool"
 						/>
 					</factory>
+					<factory name="background">
+						<implementation class="com.top_logic.ai.service.tools.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.ai.service.agents.background.BlockTurnTool"
+						/>
+					</factory>
 					<factory name="vector-index-search">
 						<implementation class="com.top_logic.ai.service.tools.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.ai.vector.index.VectorIndexSearchTool"

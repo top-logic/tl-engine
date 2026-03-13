@@ -186,7 +186,7 @@ public class ChatProcessor {
 			for (String preTurnAgent : preTurnAgents) {
 				try {
 					BackgroundAgentExecutor bgExecutor = new BackgroundAgentExecutor(agentRegistry);
-					ChatContext bgContext = ChatContext.fullChat(preTurnAgent, taskTracker.getChat());
+					ChatContext bgContext = ChatContext.preTurn(preTurnAgent, trimmed, taskTracker.getChat());
 					ExecutionResult execResult = bgExecutor.execute(preTurnAgent, bgContext);
 					if (execResult.isBlocked()) {
 						state.addPendingMessage(new ChatMessage("System", execResult.blockReason()));

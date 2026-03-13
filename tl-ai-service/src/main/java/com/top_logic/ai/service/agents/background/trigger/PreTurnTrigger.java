@@ -17,6 +17,26 @@ import com.top_logic.basic.config.annotation.defaults.LongDefault;
  * {@link #getTimeout() timeout} ensures the user is not blocked indefinitely, and a
  * {@link #getFailPolicy() fail policy} determines behavior when the timeout is exceeded.
  * </p>
+ *
+ * <p>
+ * The agent always receives the pending user message. When an additional input configuration is
+ * set, the input is structured with XML tags:
+ * </p>
+ *
+ * <pre>{@code
+ * <user-message>
+ * The pending user message text
+ * </user-message>
+ *
+ * <additional-context>
+ * The result from the configured input source
+ * </additional-context>
+ * }</pre>
+ *
+ * <p>
+ * When no input configuration is set, the agent receives the raw user message without XML tags.
+ * Design the agent's system prompt accordingly.
+ * </p>
  */
 public interface PreTurnTrigger extends TriggerConfig {
 

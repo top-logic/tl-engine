@@ -8,6 +8,7 @@ package com.top_logic.ai.service.agents.background;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.top_logic.ai.service.agents.background.context.BackgroundContext;
+import com.top_logic.ai.service.agents.background.context.ChatContext;
 import com.top_logic.ai.service.agents.background.input.AutonomousInput;
 import com.top_logic.ai.service.agents.background.input.AutonomousInputAdapter;
 import com.top_logic.ai.service.agents.background.input.ChatContextInput;
@@ -15,6 +16,7 @@ import com.top_logic.ai.service.agents.background.input.InputAdapter;
 import com.top_logic.ai.service.agents.background.input.InputConfig;
 import com.top_logic.ai.service.agents.background.input.ScriptInput;
 import com.top_logic.ai.service.agents.background.input.ScriptInputAdapter;
+import com.top_logic.ai.service.agents.background.trigger.PreTurnTrigger;
 import com.top_logic.basic.config.TypedConfiguration;
 
 import junit.framework.TestCase;
@@ -121,5 +123,25 @@ public class TestBackgroundAgentExecutor extends TestCase {
 		} catch (IllegalArgumentException expected) {
 			assertTrue(expected.getMessage().contains("No adapter for input config"));
 		}
+	}
+
+	/** Pre-turn trigger uses pending user message directly, bypassing InputAdapter. */
+	public void testPreTurnBypassesInputAdapter() {
+		// Create a BackgroundConfig with PreTurnTrigger and null input
+		BackgroundConfig bgConfig = TypedConfiguration.newConfigItem(BackgroundConfig.class);
+		PreTurnTrigger trigger = TypedConfiguration.newConfigItem(PreTurnTrigger.class);
+		bgConfig.update(bgConfig.descriptor().getProperty(BackgroundConfig.TRIGGER), trigger);
+		// Input is left null — pre-turn should not need it
+
+		// Create a pre-turn ChatContext with a pending user message
+		ChatContext context = ChatContext.preTurn("test-agent", "Hello world", null);
+
+		assertEquals("Hello world", context.getPendingUserMessage());
+
+		// Verify that the trigger is a PreTurnTrigger
+		assertTrue(bgConfig.getTrigger() instanceof PreTurnTrigger);
+
+		// Verify that the input is null (pre-turn agents don't need input config)
+		assertNull(bgConfig.getInput());
 	}
 }

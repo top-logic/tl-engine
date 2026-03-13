@@ -32,6 +32,8 @@ import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
+import com.top_logic.layout.react.window.WindowEntry;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.util.TLContextManager;
@@ -88,6 +90,20 @@ public class ViewServlet extends TopLogicServlet {
 		// ContentHandlersRegistry.startLogin() but without the SubsessionHandler /
 		// MainLayout setup that is specific to the traditional layout engine.
 		ensureSubSession(request, windowName);
+
+		// Check if this is a programmatically opened window with a pre-created control tree.
+		ReactWindowRegistry windowRegistry = ReactWindowRegistry.forSession(session);
+		WindowEntry windowEntry = windowRegistry.getWindow(windowName);
+		if (windowEntry != null) {
+			windowEntry.markConnected();
+			IReactControl rootControl = windowEntry.getRootControl();
+			if (rootControl != null) {
+				ReactContext displayContext = new DefaultReactContext(
+					request.getContextPath(), windowName, SSEUpdateQueue.forSession(session));
+				renderPage(request, response, rootControl, displayContext);
+				return;
+			}
+		}
 
 		String viewPath = resolveViewPath(pathInfo);
 

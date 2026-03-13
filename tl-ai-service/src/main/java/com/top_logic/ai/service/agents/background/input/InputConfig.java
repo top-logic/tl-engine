@@ -6,6 +6,7 @@
 package com.top_logic.ai.service.agents.background.input;
 
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.annotation.Abstract;
 
 /**
  * Base configuration for background agent input sources.
@@ -21,6 +22,7 @@ import com.top_logic.basic.config.ConfigurationItem;
  * <li>{@link ProviderInput} - delegates to a pluggable {@link InputProvider}</li>
  * </ul>
  */
+@Abstract
 public interface InputConfig extends ConfigurationItem {
 
 	// Marker interface — concrete input types add their own properties.

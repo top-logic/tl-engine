@@ -6,6 +6,7 @@
 package com.top_logic.ai.service.agents.background.trigger;
 
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.annotation.Abstract;
 
 /**
  * Base configuration for background agent triggers.
@@ -20,6 +21,7 @@ import com.top_logic.basic.config.ConfigurationItem;
  * <li>{@link OnDemandTrigger} - fires on explicit user or system request</li>
  * </ul>
  */
+@Abstract
 public interface TriggerConfig extends ConfigurationItem {
 
 	// Marker interface — concrete trigger types add their own properties.

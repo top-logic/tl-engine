@@ -15,6 +15,7 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.view.channel.ChannelBindingConfig;
 import com.top_logic.layout.view.channel.ViewChannel;
@@ -108,8 +109,12 @@ public class ReferenceElement implements UIElement {
 			throw new RuntimeException("Failed to load referenced view: " + fullPath, ex);
 		}
 
-		// Create isolated child context.
+		// Create isolated child context (fresh channel namespace, but inherits error sink).
 		ViewContext childContext = new DefaultViewContext(parentContext);
+		ErrorSink parentErrorSink = parentContext.getErrorSink();
+		if (parentErrorSink != null) {
+			childContext = childContext.withErrorSink(parentErrorSink);
+		}
 
 		// Pre-bind parent channels into the child context.
 		for (ChannelBindingConfig binding : _bindings) {

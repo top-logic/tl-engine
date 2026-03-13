@@ -16,7 +16,7 @@ import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 
 /**
- * A {@link UIElement} that renders a CodeMirror 6-based TL-Script editor.
+ * A {@link UIElement} that renders a <code>CodeMirror</code> 6-based TL-Script editor.
  *
  * <p>
  * Usage in {@code .view.xml}:

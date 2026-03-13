@@ -36,9 +36,11 @@ public interface UIElement {
 		 * Optional override for the auto-derived personalization key.
 		 *
 		 * <p>
-		 * If set, stateful elements use this key instead of the auto-derived path from
-		 * {@link ViewContext#getPersonalizationKey()}.
+		 * If set, stateful elements use this key instead of the auto-derived path from the view
+		 * context.
 		 * </p>
+		 *
+		 * @see ViewContext#getPersonalizationKey()
 		 */
 		@com.top_logic.basic.config.annotation.Name(PERSONALIZATION_KEY)
 		String getPersonalizationKey();

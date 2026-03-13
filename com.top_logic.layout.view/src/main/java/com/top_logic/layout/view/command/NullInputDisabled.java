@@ -15,8 +15,11 @@ import com.top_logic.tool.execution.ExecutableState;
  * {@link ViewExecutabilityRule} that disables the command when the input is {@code null}.
  *
  * <p>
- * Returns {@link ExecutableState#NO_EXEC_NO_MODEL} for {@code null} input and
- * {@link ExecutableState#EXECUTABLE} otherwise.
+ * Returns <code>NO_EXEC_NO_MODEL</code> for {@code null} input and <code>EXECUTABLE</code>
+ * otherwise.
+ *
+ * @see ExecutableState#NO_EXEC_NO_MODEL
+ * @see ExecutableState#EXECUTABLE
  * </p>
  */
 public class NullInputDisabled implements ViewExecutabilityRule {

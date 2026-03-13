@@ -77,11 +77,12 @@ public class PanelElement extends ContainerElement {
 		 * Commands scoped to this panel.
 		 *
 		 * <p>
-		 * These commands are available to child elements via
-		 * {@link CommandScope#resolveCommand(String)}. Commands with
+		 * These commands are available to child elements via the command scope. Commands with
 		 * {@link CommandPlacement#TOOLBAR TOOLBAR} placement are automatically rendered in the
 		 * panel's toolbar.
 		 * </p>
+		 *
+		 * @see CommandScope#resolveCommand(String)
 		 */
 		@Name(COMMANDS)
 		@EntryTag("command")

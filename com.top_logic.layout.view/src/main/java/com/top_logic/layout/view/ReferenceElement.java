@@ -29,9 +29,11 @@ import com.top_logic.layout.view.channel.ViewChannel;
  * </p>
  *
  * <p>
- * The referenced view is loaded lazily at {@link #createControl(ViewContext)} time, not at config
- * parse time. This naturally supports multiple instances and recursive usage.
+ * The referenced view is loaded lazily at control creation time, not at config parse time. This
+ * naturally supports multiple instances and recursive usage.
  * </p>
+ *
+ * @see #createControl(ViewContext)
  *
  * <p>
  * Example:

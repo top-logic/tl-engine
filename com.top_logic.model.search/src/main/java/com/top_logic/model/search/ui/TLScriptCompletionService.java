@@ -35,7 +35,7 @@ import com.top_logic.util.regex.TLRegexBuilder;
  *
  * <p>
  * Extracted from {@link TLScriptAutoCompletionCommand} so that both the legacy Ace editor and the
- * new CodeMirror 6 editor can share the same completion logic.
+ * new <code>CodeMirror</code> 6 editor can share the same completion logic.
  * </p>
  */
 public class TLScriptCompletionService implements TLScriptConstants {

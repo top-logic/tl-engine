@@ -25,7 +25,7 @@ import com.top_logic.model.search.ui.CodeCompletion;
 import com.top_logic.model.search.ui.TLScriptCompletionService;
 
 /**
- * React control for editing TL-Script expressions using CodeMirror 6.
+ * React control for editing TL-Script expressions using <code>CodeMirror</code> 6.
  *
  * <p>
  * Communicates with the {@code TLScriptEditor} React component via:

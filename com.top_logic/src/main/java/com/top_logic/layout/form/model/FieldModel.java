@@ -14,7 +14,7 @@ import com.top_logic.basic.util.ResKey;
  *
  * <p>
  * Captures typed value, dirty tracking, validation, and edit lifecycle without the UI mechanics
- * of {@link com.top_logic.layout.form.FormField} (raw value parsing, FormGroup hierarchy, display state).
+ * of {@link com.top_logic.layout.form.FormField} (raw value parsing, {@link com.top_logic.layout.form.FormGroup} hierarchy, display state).
  * </p>
  */
 public interface FieldModel {

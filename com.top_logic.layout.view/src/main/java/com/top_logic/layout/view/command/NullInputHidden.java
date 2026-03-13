@@ -15,8 +15,11 @@ import com.top_logic.tool.execution.ExecutableState;
  * {@link ViewExecutabilityRule} that hides the command when the input is {@code null}.
  *
  * <p>
- * Returns {@link ExecutableState#NOT_EXEC_HIDDEN} for {@code null} input and
- * {@link ExecutableState#EXECUTABLE} otherwise.
+ * Returns <code>NOT_EXEC_HIDDEN</code> for {@code null} input and <code>EXECUTABLE</code>
+ * otherwise.
+ *
+ * @see ExecutableState#NOT_EXEC_HIDDEN
+ * @see ExecutableState#EXECUTABLE
  * </p>
  */
 public class NullInputHidden implements ViewExecutabilityRule {

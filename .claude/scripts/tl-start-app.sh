@@ -48,7 +48,7 @@ export tl_initial_password='root1234'
 
 # Start Maven in the background. Redirect all output to the log file.
 cd "$APP_MODULE"
-nohup mvn -Dtl.port="$PORT" > "$LOG" 2>&1 &
+nohup mvn -B -Dtl.port="$PORT" > "$LOG" 2>&1 &
 MVN_PID=$!
 disown "$MVN_PID"
 cd - > /dev/null

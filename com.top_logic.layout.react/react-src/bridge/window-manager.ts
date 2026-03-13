@@ -87,8 +87,6 @@ export interface WindowFocusEventData {
 
 /** Handle a WindowOpenEvent from SSE. */
 export function handleWindowOpen(event: WindowOpenEventData): void {
-  if (event.targetWindowId !== getMyWindowId()) return;
-
   const contextPath = getContextPath();
   const url = `${contextPath}/view/${event.windowId}/`;
   const ref = window.open(url, event.windowId, buildFeatureString(event));
@@ -104,8 +102,6 @@ export function handleWindowOpen(event: WindowOpenEventData): void {
 
 /** Handle a WindowCloseEvent from SSE. */
 export function handleWindowClose(event: WindowCloseEventData): void {
-  if (event.targetWindowId !== getMyWindowId()) return;
-
   const ref = openWindows.get(event.windowId);
   if (ref) {
     ref.close();
@@ -115,8 +111,6 @@ export function handleWindowClose(event: WindowCloseEventData): void {
 
 /** Handle a WindowFocusEvent from SSE. */
 export function handleWindowFocus(event: WindowFocusEventData): void {
-  if (event.targetWindowId !== getMyWindowId()) return;
-
   const ref = openWindows.get(event.windowId);
   if (ref && !ref.closed) {
     ref.focus();

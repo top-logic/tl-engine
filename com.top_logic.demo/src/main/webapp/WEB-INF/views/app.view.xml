@@ -50,6 +50,12 @@
 					>
 						<view-ref view="demo/tlscript-editor-demo.view.xml"/>
 					</nav-item>
+					<nav-item id="config-editor-demo"
+						icon="bi bi-sliders"
+						label="Config Editor"
+					>
+						<view-ref view="demo/config-editor-demo.view.xml"/>
+					</nav-item>
 					<separator/>
 					<nav-item id="settings"
 						icon="bi bi-gear"

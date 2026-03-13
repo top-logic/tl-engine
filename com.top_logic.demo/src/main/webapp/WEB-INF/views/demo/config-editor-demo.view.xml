@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<panel title="Config Editor Demo">
+		<config-editor-demo/>
+	</panel>
+</view>

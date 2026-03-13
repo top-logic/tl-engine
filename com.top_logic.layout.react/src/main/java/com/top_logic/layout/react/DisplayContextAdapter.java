@@ -34,8 +34,8 @@ class DisplayContextAdapter implements ReactContext {
 		_frameScope = context.getExecutionScope().getFrameScope();
 		_windowName = context.getLayoutContext().getWindowId().getWindowName();
 		_contextPath = context.getContextPath();
-		_sseQueue = SSEUpdateQueue.forSession(context.asRequest().getSession());
 		_windowRegistry = ReactWindowRegistry.forSession(context.asRequest().getSession());
+		_sseQueue = _windowRegistry.getOrCreateQueue(_windowName);
 	}
 
 	@Override

@@ -92,8 +92,8 @@ public class ViewServlet extends TopLogicServlet {
 		ensureSubSession(request, windowName);
 
 		// Check if this is a programmatically opened window with a pre-created control tree.
-		SSEUpdateQueue sseQueue = SSEUpdateQueue.forSession(session);
 		ReactWindowRegistry windowRegistry = ReactWindowRegistry.forSession(session);
+		SSEUpdateQueue sseQueue = windowRegistry.getOrCreateQueue(windowName);
 		WindowEntry windowEntry = windowRegistry.getWindow(windowName);
 		if (windowEntry != null) {
 			windowEntry.markConnected();

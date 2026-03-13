@@ -60,6 +60,11 @@ public class URLPathBuilder implements URLBuilder {
 	}
 
 	@Override
+	public void appendTo(Appendable out) throws IOException {
+		out.append(url);
+	}
+
+	@Override
 	public void addResource(CharSequence resource) {
 		String pathSegment = String.valueOf(resource);
 		/* Do not allow '/' in resource because URLPathParser can not decide whether '/' is path of

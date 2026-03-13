@@ -13,6 +13,7 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.react.window.WindowEntry;
@@ -21,10 +22,10 @@ import com.top_logic.layout.react.window.WindowOptions;
 public class TestReactWindowRegistry extends TestCase {
 
 	public void testOpenWindowCreatesEntry() {
-		SSEUpdateQueue queue = new SSEUpdateQueue();
-		ReactWindowRegistry registry = new ReactWindowRegistry(queue);
+		ReactWindowRegistry registry = new ReactWindowRegistry();
 
-		ReactContext openerCtx = new DefaultReactContext("", "vOpener", queue);
+		SSEUpdateQueue openerQueue = registry.getOrCreateQueue("vOpener");
+		ReactContext openerCtx = new DefaultReactContext("", "vOpener", openerQueue, registry);
 		WindowOptions options = new WindowOptions().setWidth(1024).setTitle("Test");
 
 		String windowId = registry.openWindow(openerCtx, options);
@@ -41,9 +42,9 @@ public class TestReactWindowRegistry extends TestCase {
 	}
 
 	public void testWindowIdsAreUnique() {
-		SSEUpdateQueue queue = new SSEUpdateQueue();
-		ReactWindowRegistry registry = new ReactWindowRegistry(queue);
-		ReactContext ctx = new DefaultReactContext("", "vOpener", queue);
+		ReactWindowRegistry registry = new ReactWindowRegistry();
+		SSEUpdateQueue openerQueue = registry.getOrCreateQueue("vOpener");
+		ReactContext ctx = new DefaultReactContext("", "vOpener", openerQueue, registry);
 
 		String id1 = registry.openWindow(ctx, new WindowOptions());
 		String id2 = registry.openWindow(ctx, new WindowOptions());
@@ -53,9 +54,9 @@ public class TestReactWindowRegistry extends TestCase {
 	}
 
 	public void testWindowClosed() {
-		SSEUpdateQueue queue = new SSEUpdateQueue();
-		ReactWindowRegistry registry = new ReactWindowRegistry(queue);
-		ReactContext ctx = new DefaultReactContext("", "vOpener", queue);
+		ReactWindowRegistry registry = new ReactWindowRegistry();
+		SSEUpdateQueue openerQueue = registry.getOrCreateQueue("vOpener");
+		ReactContext ctx = new DefaultReactContext("", "vOpener", openerQueue, registry);
 
 		String windowId = registry.openWindow(ctx, new WindowOptions());
 		assertNotNull(registry.getWindow(windowId));
@@ -65,10 +66,43 @@ public class TestReactWindowRegistry extends TestCase {
 	}
 
 	public void testGetNonexistentWindow() {
-		SSEUpdateQueue queue = new SSEUpdateQueue();
-		ReactWindowRegistry registry = new ReactWindowRegistry(queue);
+		ReactWindowRegistry registry = new ReactWindowRegistry();
 
 		assertNull(registry.getWindow("vDoesNotExist"));
+	}
+
+	public void testOpenWindowWithProvider() {
+		ReactWindowRegistry registry = new ReactWindowRegistry();
+		SSEUpdateQueue openerQueue = registry.getOrCreateQueue("vOpener");
+		ReactContext openerCtx = new DefaultReactContext("", "vOpener", openerQueue, registry);
+
+		WindowOptions options = new WindowOptions().setWidth(800).setTitle("Provider Test");
+
+		String windowId = registry.openWindow(openerCtx,
+			(ctx, model) -> new ReactControl(ctx, model, "test-module"),
+			"testModel", options);
+
+		assertNotNull(windowId);
+		WindowEntry entry = registry.getWindow(windowId);
+		assertNotNull(entry);
+		assertNotNull("Provider must be stored", entry.getControlProvider());
+		assertEquals("testModel", entry.getModel());
+		assertNull("Root control must be null before ViewServlet builds it",
+			entry.getRootControl());
+
+		// Simulate what ViewServlet does: build the tree with the child's context.
+		SSEUpdateQueue childQueue = registry.getOrCreateQueue(windowId);
+		ReactContext childCtx = new DefaultReactContext("", windowId, childQueue, registry);
+		ReactControl builtControl = entry.getControlProvider().createControl(
+			childCtx, entry.getModel());
+		entry.setRootControl(builtControl);
+
+		assertNotNull("Root control must be set after building", entry.getRootControl());
+		// Verify the control is registered on the child's queue, not the opener's.
+		assertNotNull("Control must be findable on child queue",
+			childQueue.getControl(builtControl.getID()));
+		assertNull("Control must NOT be on opener queue",
+			openerQueue.getControl(builtControl.getID()));
 	}
 
 	public static Test suite() {

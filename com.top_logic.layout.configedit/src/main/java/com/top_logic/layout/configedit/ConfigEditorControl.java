@@ -5,7 +5,6 @@
  */
 package com.top_logic.layout.configedit;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -15,6 +14,7 @@ import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.ReactCompositeControl;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.layout.ReactFormGroupControl;
@@ -30,15 +30,9 @@ import com.top_logic.layout.react.control.layout.ReactFormGroupControl;
  * MAP, ARRAY, DERIVED, and COMPLEX properties are skipped.
  * </p>
  */
-public class ConfigEditorControl extends ReactControl {
+public class ConfigEditorControl extends ReactCompositeControl {
 
 	private static final String REACT_MODULE = "TLFormLayout";
-
-	private static final String CHILDREN = "children";
-
-	private final List<ConfigFieldModel> _fieldModels = new ArrayList<>();
-
-	private final List<ReactControl> _childControls = new ArrayList<>();
 
 	/**
 	 * Creates a {@link ConfigEditorControl} for all visible properties.
@@ -82,13 +76,13 @@ public class ConfigEditorControl extends ReactControl {
 					ReactFormGroupControl group = new ReactFormGroupControl(
 						context, label, true, false, "subtle", true,
 						List.of(), List.of(nestedEditor));
-					_childControls.add(group);
+					addChild(group);
 				}
 				continue;
 			}
 
 			ConfigFieldModel model = new ConfigFieldModel(config, property);
-			_fieldModels.add(model);
+			addCleanupAction(model::detach);
 
 			ReactControl input = ConfigFieldDispatch.createPlainControl(context, model);
 
@@ -100,10 +94,8 @@ public class ConfigEditorControl extends ReactControl {
 			ReactFormFieldChromeControl chrome = new ReactFormFieldChromeControl(
 				context, label, model.isMandatory(), false, null, helpText, labelPosition,
 				false, true, input);
-			_childControls.add(chrome);
+			addChild(chrome);
 		}
-
-		putState(CHILDREN, _childControls);
 	}
 
 	/**
@@ -149,24 +141,4 @@ public class ConfigEditorControl extends ReactControl {
 		return kind == PropertyKind.PLAIN || kind == PropertyKind.REF || kind == PropertyKind.ITEM;
 	}
 
-	/**
-	 * The field models created for the properties.
-	 */
-	public List<ConfigFieldModel> getFieldModels() {
-		return Collections.unmodifiableList(_fieldModels);
-	}
-
-	@Override
-	protected void cleanupChildren() {
-		for (ReactControl chrome : _childControls) {
-			chrome.cleanupTree();
-		}
-	}
-
-	@Override
-	protected void onCleanup() {
-		for (ConfigFieldModel model : _fieldModels) {
-			model.detach();
-		}
-	}
 }

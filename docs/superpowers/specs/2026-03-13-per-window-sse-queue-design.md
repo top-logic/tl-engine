@@ -151,7 +151,7 @@ Session (HTTP)
 
 **`WindowFocusEvent`:** Enqueued to the **target window's** queue directly (looked up by window ID from the registry).
 
-The `targetWindowId` field on these events becomes informational (routing is implicit from queue ownership).
+The `targetWindowId` field on these events becomes informational (routing is implicit from queue ownership). The client-side `targetWindowId` guard checks in `window-manager.ts` (`handleWindowOpen`, `handleWindowClose`, `handleWindowFocus`) must be removed — they are dead code with per-window queues.
 
 ## Concurrency
 
@@ -175,5 +175,6 @@ Each per-window queue manages its own heartbeat timer. With N open windows, ther
 | `DisplayContextAdapter.java` | `com.top_logic.layout.react` | Get queue from registry by windowName |
 | `ViewServlet.java` | `com.top_logic.layout.view` | Get queue from registry by windowName |
 | `tl-react-bridge.ts` | `com.top_logic.layout.react` | Add windowName to SSE URL and data URL |
+| `window-manager.ts` | `com.top_logic.layout.react` | Remove redundant targetWindowId filtering |
 
 No new classes. No new event types. `DefaultReactContext.java` and `ReactControl.java` are unchanged.

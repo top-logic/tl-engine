@@ -9,6 +9,8 @@ import java.util.List;
 
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
+import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.util.sched.task.schedule.SchedulingAlgorithm;
 
 /**
@@ -34,5 +36,6 @@ public interface ScheduledTrigger extends TriggerConfig {
 	 * @return The list of scheduling algorithm configurations, may be empty.
 	 */
 	@Name(SCHEDULES)
-	List<PolymorphicConfiguration<SchedulingAlgorithm>> getSchedules();
+	@Options(fun = AllInAppImplementations.class)
+	List<PolymorphicConfiguration<? extends SchedulingAlgorithm>> getSchedules();
 }

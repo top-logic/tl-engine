@@ -59,22 +59,20 @@ ELAPSED=0
 APP_URL=""
 
 while (( ELAPSED < TIMEOUT )); do
-    # Check if Maven process is still alive.
-    if ! kill -0 "$MVN_PID" 2>/dev/null; then
-        echo "Error: Maven process exited unexpectedly." >&2
-        echo "Log: $LOG" >&2
-        # Show last 30 lines for diagnostics.
-        tail -30 "$LOG" >&2 2>/dev/null || true
-        exit 1
-    fi
-
-    # Check for BUILD FAILURE.
+    # Check for BUILD FAILURE first (before process liveness, to avoid race).
     if grep -q "BUILD FAILURE" "$LOG" 2>/dev/null; then
         echo "Error: Build failed." >&2
         echo "Log: $LOG" >&2
         grep -A 20 "BUILD FAILURE" "$LOG" >&2 2>/dev/null || true
-        # Kill the Maven process since it failed.
         kill "$MVN_PID" 2>/dev/null || true
+        exit 1
+    fi
+
+    # Check if Maven process is still alive.
+    if ! kill -0 "$MVN_PID" 2>/dev/null; then
+        echo "Error: Maven process exited unexpectedly." >&2
+        echo "Log: $LOG" >&2
+        tail -30 "$LOG" >&2 2>/dev/null || true
         exit 1
     fi
 

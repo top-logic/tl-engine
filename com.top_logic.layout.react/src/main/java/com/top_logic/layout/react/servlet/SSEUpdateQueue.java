@@ -7,19 +7,14 @@ package com.top_logic.layout.react.servlet;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import jakarta.servlet.AsyncContext;
-import jakarta.servlet.http.HttpSession;
-import jakarta.servlet.http.HttpSessionBindingEvent;
-import jakarta.servlet.http.HttpSessionBindingListener;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.sched.SchedulerService;
@@ -32,22 +27,21 @@ import de.haumacher.msgbuf.io.StringW;
 import de.haumacher.msgbuf.json.JsonWriter;
 
 /**
- * Queue for delivering SSE events to connected React clients.
+ * Queue for delivering SSE events to a connected React client in a single browser window.
  *
  * <p>
- * Each HTTP session has one {@link SSEUpdateQueue} stored as a session attribute. SSE connections
- * register with the queue and receive events as they are enqueued.
+ * Each browser window has one {@link SSEUpdateQueue} managed by the
+ * {@link com.top_logic.layout.react.window.ReactWindowRegistry}. A single SSE connection
+ * registers with the queue and receives events as they are enqueued.
  * </p>
  *
  * <p>
- * A periodic heartbeat is sent to all connections to keep them alive and to detect dead connections
+ * A periodic heartbeat is sent to the connection to keep it alive and to detect dead connections
  * early. Without the heartbeat, intermediaries (proxies, load balancers) may silently drop idle
  * connections, leaving half-open connections that neither the server nor the client can detect.
  * </p>
  */
-public class SSEUpdateQueue implements HttpSessionBindingListener {
-
-	private static final String SESSION_ATTRIBUTE_KEY = "tl.react.sseQueue";
+public class SSEUpdateQueue {
 
 	/**
 	 * Heartbeat message sent as a regular SSE data event so the client can track connection
@@ -60,38 +54,15 @@ public class SSEUpdateQueue implements HttpSessionBindingListener {
 
 	private final ConcurrentLinkedQueue<SSEEvent> _pendingEvents = new ConcurrentLinkedQueue<>();
 
-	private final List<SSEConnection> _connections = new CopyOnWriteArrayList<>();
-
 	private final Map<String, ReactCommandTarget> _controls = new ConcurrentHashMap<>();
 
 	private final AtomicInteger _nextId = new AtomicInteger(1);
 
-	private final AtomicInteger _nextConnectionId = new AtomicInteger(1);
+	private volatile SSEConnection _connection;
+
+	private volatile boolean _shutdown;
 
 	private volatile ScheduledFuture<?> _heartbeatTask;
-
-	/**
-	 * Retrieves or creates the {@link SSEUpdateQueue} for the given session.
-	 *
-	 * <p>
-	 * Synchronizes on the session to prevent a race where two concurrent requests both see
-	 * {@code null}, create independent queues, and the second {@code setAttribute} triggers
-	 * {@code valueUnbound} on the first — clearing its registered controls.
-	 * </p>
-	 */
-	public static SSEUpdateQueue forSession(HttpSession session) {
-		SSEUpdateQueue queue = (SSEUpdateQueue) session.getAttribute(SESSION_ATTRIBUTE_KEY);
-		if (queue == null) {
-			synchronized (session) {
-				queue = (SSEUpdateQueue) session.getAttribute(SESSION_ATTRIBUTE_KEY);
-				if (queue == null) {
-					queue = new SSEUpdateQueue();
-					session.setAttribute(SESSION_ATTRIBUTE_KEY, queue);
-				}
-			}
-		}
-		return queue;
-	}
 
 	/**
 	 * Allocates a unique control ID within this session.
@@ -134,15 +105,36 @@ public class SSEUpdateQueue implements HttpSessionBindingListener {
 	}
 
 	/**
-	 * Registers an SSE connection to receive events.
+	 * Sets the SSE connection for this queue, replacing any existing one.
 	 */
-	public void addConnection(AsyncContext asyncContext) {
-		SSEConnection connection = new SSEConnection(_nextConnectionId.getAndIncrement(), asyncContext);
-		_connections.add(connection);
-		Logger.info("SSE connection added: id=" + connection.getId()
-			+ ", total=" + _connections.size(), SSEUpdateQueue.class);
-		sendFullState(connection);
+	public void setConnection(AsyncContext asyncContext) {
+		SSEConnection old = _connection;
+		SSEConnection newConn = new SSEConnection(asyncContext);
+		_connection = newConn;
+		Logger.info("SSE connection set for queue@" + System.identityHashCode(this)
+			+ ", replacing=" + (old != null), SSEUpdateQueue.class);
+		if (old != null) {
+			try {
+				old.getContext().complete();
+			} catch (Exception ex) {
+				// Old connection already closed, ignore.
+			}
+		}
+		sendFullState(newConn);
 		ensureHeartbeat();
+	}
+
+	/**
+	 * Clears the SSE connection if it matches the given async context.
+	 */
+	public void clearConnection(AsyncContext asyncContext) {
+		SSEConnection current = _connection;
+		if (current != null && current.getContext() == asyncContext) {
+			_connection = null;
+			Logger.info("SSE connection cleared for queue@" + System.identityHashCode(this),
+				SSEUpdateQueue.class);
+		}
+		cancelHeartbeatIfEmpty();
 	}
 
 	/**
@@ -163,51 +155,66 @@ public class SSEUpdateQueue implements HttpSessionBindingListener {
 					.setState(rc.stateAsJSON());
 				String message = toDataMessage(toJson(event));
 				if (message != null) {
-					writeOrRemove(connection, message);
+					writeOrDisconnect(connection, message);
 				}
 			}
 		}
 	}
 
 	/**
-	 * Removes a previously registered SSE connection.
-	 */
-	public void removeConnection(AsyncContext asyncContext) {
-		_connections.removeIf(c -> {
-			if (c.getContext() == asyncContext) {
-				Logger.info("SSE connection removed (explicit): id=" + c.getId()
-					+ ", remaining=" + (_connections.size() - 1), SSEUpdateQueue.class);
-				return true;
-			}
-			return false;
-		});
-		cancelHeartbeatIfEmpty();
-	}
-
-	/**
-	 * Enqueues an event and immediately flushes it to all connected SSE clients.
+	 * Enqueues an event and immediately flushes it to the connected SSE client.
 	 */
 	public void enqueue(SSEEvent event) {
+		if (_shutdown) {
+			return;
+		}
 		_pendingEvents.add(event);
 		flush();
 	}
 
 	/**
-	 * Flushes all pending events to all connected SSE clients.
+	 * Flushes all pending events to the connected SSE client.
 	 */
 	public void flush() {
+		SSEConnection conn = _connection;
+		if (conn == null) {
+			return;
+		}
 		SSEEvent event;
 		while ((event = _pendingEvents.poll()) != null) {
 			String message = toDataMessage(toJson(event));
 			if (message == null) {
 				continue;
 			}
-			Logger.info("SSE flush: " + _connections.size() + " connections, event="
-				+ event.getClass().getSimpleName(), SSEUpdateQueue.class);
-			for (SSEConnection connection : _connections) {
-				writeOrRemove(connection, message);
+			if (!writeOrDisconnect(conn, message)) {
+				return;
 			}
 		}
+	}
+
+	/**
+	 * Shuts down this queue, cancelling the heartbeat, closing the connection, and clearing all
+	 * state.
+	 */
+	public void shutdown() {
+		_shutdown = true;
+		synchronized (this) {
+			if (_heartbeatTask != null) {
+				_heartbeatTask.cancel(false);
+				_heartbeatTask = null;
+			}
+		}
+		SSEConnection conn = _connection;
+		_connection = null;
+		if (conn != null) {
+			try {
+				conn.getContext().complete();
+			} catch (Exception ex) {
+				// Connection already closed, ignore.
+			}
+		}
+		_pendingEvents.clear();
+		_controls.clear();
 	}
 
 	private synchronized void ensureHeartbeat() {
@@ -218,48 +225,32 @@ public class SSEUpdateQueue implements HttpSessionBindingListener {
 	}
 
 	private synchronized void cancelHeartbeatIfEmpty() {
-		if (_connections.isEmpty() && _heartbeatTask != null) {
+		if (_connection == null && _heartbeatTask != null) {
 			_heartbeatTask.cancel(false);
 			_heartbeatTask = null;
 		}
 	}
 
-	@Override
-	public void valueUnbound(HttpSessionBindingEvent event) {
-		synchronized (this) {
-			if (_heartbeatTask != null) {
-				_heartbeatTask.cancel(false);
-				_heartbeatTask = null;
-			}
-		}
-		for (SSEConnection connection : _connections) {
-			try {
-				connection.getContext().complete();
-			} catch (Exception ex) {
-				// Connection already closed, ignore.
-			}
-		}
-		_connections.clear();
-		_controls.clear();
-	}
-
 	private void sendHeartbeat() {
-		for (SSEConnection connection : _connections) {
-			writeOrRemove(connection, HEARTBEAT_MESSAGE);
+		SSEConnection conn = _connection;
+		if (conn != null) {
+			writeOrDisconnect(conn, HEARTBEAT_MESSAGE);
 		}
 		cancelHeartbeatIfEmpty();
 	}
 
 	/**
-	 * Writes a message to the given connection, removing it if the write fails.
+	 * Writes a message to the given connection, clearing it if the write fails.
 	 */
-	private void writeOrRemove(SSEConnection connection, String message) {
+	private boolean writeOrDisconnect(SSEConnection connection, String message) {
 		try {
 			writeToConnection(connection.getContext(), message);
+			return true;
 		} catch (IOException ex) {
-			Logger.info("SSE connection removed (dead): id=" + connection.getId()
-				+ ", remaining=" + (_connections.size() - 1), SSEUpdateQueue.class);
-			_connections.remove(connection);
+			Logger.info("SSE connection lost for queue@" + System.identityHashCode(this),
+				SSEUpdateQueue.class);
+			_connection = null;
+			return false;
 		}
 	}
 
@@ -306,21 +297,14 @@ public class SSEUpdateQueue implements HttpSessionBindingListener {
 	}
 
 	/**
-	 * Wraps an {@link AsyncContext} with a numeric ID for debugging.
+	 * Wraps an {@link AsyncContext} for an SSE connection.
 	 */
 	static final class SSEConnection {
 
-		private final int _id;
-
 		private final AsyncContext _context;
 
-		SSEConnection(int id, AsyncContext context) {
-			_id = id;
+		SSEConnection(AsyncContext context) {
 			_context = context;
-		}
-
-		int getId() {
-			return _id;
 		}
 
 		AsyncContext getContext() {

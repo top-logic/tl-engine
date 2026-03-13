@@ -5,8 +5,10 @@
  */
 package com.top_logic.ai.service.agents.background.input;
 
+import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.model.search.expr.config.dom.Expr;
 
 /**
  * Input configuration that uses a TL-Script expression to produce the agent's input.
@@ -33,5 +35,6 @@ public interface ScriptInput extends InputConfig {
 	 */
 	@Name(SCRIPT)
 	@Mandatory
-	String getScript();
+	@DefaultContainer
+	Expr getScript();
 }

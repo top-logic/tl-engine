@@ -15,7 +15,7 @@ import com.top_logic.model.annotate.TargetType;
 /**
  * A {@link DefaultProvider} to create random UUIDs.
  * 
- * @author <a href="mailto:dpa@top-logic.com">dpa</a>
+ * @see SecureStringDefaultProvider
  */
 @TargetType(TLTypeKind.STRING)
 public class UuidDefaultProvider implements DefaultProvider, Supplier<String> {

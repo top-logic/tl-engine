@@ -12,11 +12,11 @@ import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.TagName;
-import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
@@ -113,9 +113,9 @@ public class ScriptExecution extends AbstractConfiguredInstance<ScriptExecution.
 
 		Expr operation = config.getOperation();
 		_operation = QueryExecutor.compileOptional(operation);
-		_actions = TypedConfigUtil.createInstanceList(config.getPostCreateActions());
+		_actions = TypedConfiguration.getInstanceList(context, config.getPostCreateActions());
 
-		_arguments = TypedConfigUtil.createInstanceList(config.getArguments());
+		_arguments = TypedConfiguration.getInstanceList(context, config.getArguments());
 		Collections.reverse(_arguments);
 
 		context.resolveReference(InstantiationContext.OUTER, CommandHandler.class, c -> _command = c);

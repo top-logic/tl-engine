@@ -18,6 +18,7 @@ import java.util.Set;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.dob.DataObjectException;
+import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.search.RevisionQuery;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -253,6 +254,52 @@ public class UserSession extends AbstractWrapper {
 
         return (theSession);
     }
+
+	/**
+	 * Find a user session with the given parameters.
+	 * 
+	 * @param aUser
+	 *        The user name of the session.
+	 * @param anID
+	 *        The ID of the session.
+	 * @return The found session or <code>null</code>, if there is no such session.
+	 */
+	public static UserSession findUserSession(KnowledgeBase aKB, String aUser, String anID) {
+		return findUserSession(aKB, aUser, anID, UserSession.getServerName());
+	}
+
+	/**
+	 * Find a user session with the given parameters.
+	 * 
+	 * @param aUser
+	 *        The user name of the session.
+	 * @param anID
+	 *        The ID of the session.
+	 * @param aServer
+	 *        The server the user session runs.
+	 * @return The found session or <code>null</code>, if there is no such session.
+	 */
+	public static UserSession findUserSession(KnowledgeBase aKB, String aUser, String anID, String aServer) {
+		UserSession result = null;
+		try {
+			Iterator<KnowledgeItem> iter = aKB.getObjectsByAttribute(OBJECT_NAME, SESSION_ID, anID);
+
+			while (iter.hasNext()) {
+				KnowledgeItem theKO = iter.next();
+				if (aUser.equals(theKO.getAttributeValue(UserSession.USER_NAME))
+						&& aServer.equals(theKO.getAttributeValue(UserSession.SERVER))
+						&& null == theKO.getAttributeValue(UserSession.LOGOUT)) {
+					result = UserSession.getInstance((KnowledgeObject) theKO);
+					break;
+				}
+			}
+		} catch (Exception e) {
+			Logger.error("failed to findUserSession(" + aUser + ", [confidential session id] ," + aServer + ")",
+				e, UserSession.class);
+		}
+
+		return result;
+	}
 
     /**
      * Start a session for the given user using default KBase.

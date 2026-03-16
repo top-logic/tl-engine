@@ -14,7 +14,7 @@ public class TestWindowEntry extends TestCase {
 
 	public void testCreation() {
 		WindowOptions options = new WindowOptions().setWidth(1024).setTitle("Test");
-		WindowEntry entry = new WindowEntry("vNewWindow", "vOpener", null, options, null);
+		WindowEntry entry = new WindowEntry("vNewWindow", "vOpener", options, null);
 
 		assertEquals("vNewWindow", entry.getWindowId());
 		assertEquals("vOpener", entry.getOpenerWindowId());
@@ -25,7 +25,7 @@ public class TestWindowEntry extends TestCase {
 	}
 
 	public void testMarkConnected() {
-		WindowEntry entry = new WindowEntry("vW1", "vOpener", null, new WindowOptions(), null);
+		WindowEntry entry = new WindowEntry("vW1", "vOpener", new WindowOptions(), null);
 		assertFalse(entry.isConnected());
 
 		entry.markConnected();

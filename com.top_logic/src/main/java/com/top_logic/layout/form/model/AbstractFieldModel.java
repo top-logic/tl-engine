@@ -138,6 +138,24 @@ public class AbstractFieldModel implements FieldModel {
 		return _warnings;
 	}
 
+	/**
+	 * Sets an error on this model directly (e.g. for parse errors).
+	 *
+	 * <p>
+	 * Fires {@link FieldModelListener#onValidationChanged(FieldModel)}.
+	 * </p>
+	 *
+	 * @param error
+	 *        The error key, or {@code null} to clear.
+	 */
+	public void setError(ResKey error) {
+		if (Objects.equals(_error, error)) {
+			return;
+		}
+		_error = error;
+		fireValidationChanged();
+	}
+
 	@Override
 	public void validate() {
 		ResKey firstError = null;

@@ -7,8 +7,11 @@ package com.top_logic.layout.react.control.form;
 
 import java.util.Map;
 
+import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
+import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.ReactCommand;
 
 /**
  * A {@link ReactFormFieldControl} for number input fields.
@@ -38,6 +41,29 @@ public class ReactNumberInputControl extends ReactFormFieldControl {
 		super(context, model, "TLNumberInput");
 		if (decimalPlaces > 0) {
 			putState(CONFIG, Map.of("decimal", Boolean.TRUE));
+		}
+	}
+
+	@Override
+	@ReactCommand("valueChanged")
+	void handleValueChanged(Map<String, Object> arguments) {
+		Object rawValue = arguments.get(VALUE);
+		FieldModel model = getFieldModel();
+
+		if (rawValue == null || "".equals(rawValue.toString().trim())) {
+			model.setValue(null);
+			return;
+		}
+
+		try {
+			double parsed = Double.parseDouble(rawValue.toString());
+			model.setValue(parsed);
+		} catch (NumberFormatException ex) {
+			// Set error on model so it gets displayed in chrome and as red border on input.
+			if (model instanceof AbstractFieldModel) {
+				((AbstractFieldModel) model).setError(
+					I18NConstants.ERROR_INVALID_NUMBER__VALUE.fill(rawValue.toString()));
+			}
 		}
 	}
 

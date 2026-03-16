@@ -345,6 +345,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_AUDIO_RECORDER_ERROR_DENIED;
 
 	/**
+	 * @en Invalid number: {0}
+	 * @de Ung\u00FCltige Zahl: {0}
+	 */
+	public static ResKey1 ERROR_INVALID_NUMBER__VALUE;
+
+	/**
 	 * @en Form group collapse toggled.
 	 */
 	public static ResKey REACT_FORM_GROUP_TOGGLE_COLLAPSE;

@@ -3,7 +3,7 @@ package com.top_logic.layout.react.protocol;
 /**
  * A single property name-value pair.
  */
-public interface Property extends de.haumacher.msgbuf.data.DataObject, de.haumacher.msgbuf.observer.Observable {
+public interface Property extends de.haumacher.msgbuf.data.DataObject {
 
 	/**
 	 * Creates a {@link com.top_logic.layout.react.protocol.Property} instance.
@@ -40,12 +40,6 @@ public interface Property extends de.haumacher.msgbuf.data.DataObject, de.haumac
 	 * @see #getValue()
 	 */
 	com.top_logic.layout.react.protocol.Property setValue(String value);
-
-	@Override
-	public com.top_logic.layout.react.protocol.Property registerListener(de.haumacher.msgbuf.observer.Listener l);
-
-	@Override
-	public com.top_logic.layout.react.protocol.Property unregisterListener(de.haumacher.msgbuf.observer.Listener l);
 
 	/** Reads a new instance from the given reader. */
 	static com.top_logic.layout.react.protocol.Property readProperty(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {

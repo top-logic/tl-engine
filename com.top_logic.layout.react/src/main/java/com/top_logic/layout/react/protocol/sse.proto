@@ -3,6 +3,7 @@ package com.top_logic.layout.react.protocol;
 option NoReflection;
 option NoBinary;
 option NoXml;
+option NoListener;
 
 /** Base type for all SSE events sent from server to client. */
 abstract message SSEEvent {}
@@ -120,7 +121,7 @@ message FunctionCall extends SSEEvent {
 
 /**
  * Instructs the target window to open a new browser window.
- * Only the window matching targetWindowId should act on this event.
+ * Only the window matching {@code targetWindowId} should act on this event.
  */
 message WindowOpenEvent extends SSEEvent {
 	/** The window ID of the opener (for client-side filtering). */

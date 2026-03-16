@@ -36,9 +36,7 @@ public class PatchEvent_Impl extends com.top_logic.layout.react.protocol.impl.SS
 
 	/** Internal setter for {@link #getControlId()} without chain call utility. */
 	protected final void internalSetControlId(String value) {
-		_listener.beforeSet(this, CONTROL_ID__PROP, value);
 		_controlId = value;
-		_listener.afterChanged(this, CONTROL_ID__PROP);
 	}
 
 	@Override
@@ -54,58 +52,12 @@ public class PatchEvent_Impl extends com.top_logic.layout.react.protocol.impl.SS
 
 	/** Internal setter for {@link #getPatch()} without chain call utility. */
 	protected final void internalSetPatch(String value) {
-		_listener.beforeSet(this, PATCH__PROP, value);
 		_patch = value;
-		_listener.afterChanged(this, PATCH__PROP);
 	}
 
 	@Override
 	public String jsonType() {
 		return PATCH_EVENT__TYPE;
-	}
-
-	static final java.util.List<String> PROPERTIES;
-	static {
-		java.util.List<String> local = java.util.Arrays.asList(
-			CONTROL_ID__PROP, 
-			PATCH__PROP);
-		PROPERTIES = java.util.Collections.unmodifiableList(local);
-	}
-
-	static final java.util.Set<String> TRANSIENT_PROPERTIES;
-	static {
-		java.util.HashSet<String> tmp = new java.util.HashSet<>();
-		tmp.addAll(java.util.Arrays.asList(
-				));
-		TRANSIENT_PROPERTIES = java.util.Collections.unmodifiableSet(tmp);
-	}
-
-	@Override
-	public java.util.List<String> properties() {
-		return PROPERTIES;
-	}
-
-	@Override
-	public java.util.Set<String> transientProperties() {
-		return TRANSIENT_PROPERTIES;
-	}
-
-	@Override
-	public Object get(String field) {
-		switch (field) {
-			case CONTROL_ID__PROP: return getControlId();
-			case PATCH__PROP: return getPatch();
-			default: return super.get(field);
-		}
-	}
-
-	@Override
-	public void set(String field, Object value) {
-		switch (field) {
-			case CONTROL_ID__PROP: internalSetControlId((String) value); break;
-			case PATCH__PROP: internalSetPatch((String) value); break;
-			default: super.set(field, value); break;
-		}
 	}
 
 	@Override

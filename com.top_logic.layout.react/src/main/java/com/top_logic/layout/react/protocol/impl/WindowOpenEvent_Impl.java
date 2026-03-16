@@ -44,9 +44,7 @@ public class WindowOpenEvent_Impl extends com.top_logic.layout.react.protocol.im
 
 	/** Internal setter for {@link #getTargetWindowId()} without chain call utility. */
 	protected final void internalSetTargetWindowId(String value) {
-		_listener.beforeSet(this, TARGET_WINDOW_ID__PROP, value);
 		_targetWindowId = value;
-		_listener.afterChanged(this, TARGET_WINDOW_ID__PROP);
 	}
 
 	@Override
@@ -62,9 +60,7 @@ public class WindowOpenEvent_Impl extends com.top_logic.layout.react.protocol.im
 
 	/** Internal setter for {@link #getWindowId()} without chain call utility. */
 	protected final void internalSetWindowId(String value) {
-		_listener.beforeSet(this, WINDOW_ID__PROP, value);
 		_windowId = value;
-		_listener.afterChanged(this, WINDOW_ID__PROP);
 	}
 
 	@Override
@@ -80,9 +76,7 @@ public class WindowOpenEvent_Impl extends com.top_logic.layout.react.protocol.im
 
 	/** Internal setter for {@link #getWidth()} without chain call utility. */
 	protected final void internalSetWidth(int value) {
-		_listener.beforeSet(this, WIDTH__PROP, value);
 		_width = value;
-		_listener.afterChanged(this, WIDTH__PROP);
 	}
 
 	@Override
@@ -98,9 +92,7 @@ public class WindowOpenEvent_Impl extends com.top_logic.layout.react.protocol.im
 
 	/** Internal setter for {@link #getHeight()} without chain call utility. */
 	protected final void internalSetHeight(int value) {
-		_listener.beforeSet(this, HEIGHT__PROP, value);
 		_height = value;
-		_listener.afterChanged(this, HEIGHT__PROP);
 	}
 
 	@Override
@@ -116,9 +108,7 @@ public class WindowOpenEvent_Impl extends com.top_logic.layout.react.protocol.im
 
 	/** Internal setter for {@link #getTitle()} without chain call utility. */
 	protected final void internalSetTitle(String value) {
-		_listener.beforeSet(this, TITLE__PROP, value);
 		_title = value;
-		_listener.afterChanged(this, TITLE__PROP);
 	}
 
 	@Override
@@ -134,70 +124,12 @@ public class WindowOpenEvent_Impl extends com.top_logic.layout.react.protocol.im
 
 	/** Internal setter for {@link #isResizable()} without chain call utility. */
 	protected final void internalSetResizable(boolean value) {
-		_listener.beforeSet(this, RESIZABLE__PROP, value);
 		_resizable = value;
-		_listener.afterChanged(this, RESIZABLE__PROP);
 	}
 
 	@Override
 	public String jsonType() {
 		return WINDOW_OPEN_EVENT__TYPE;
-	}
-
-	static final java.util.List<String> PROPERTIES;
-	static {
-		java.util.List<String> local = java.util.Arrays.asList(
-			TARGET_WINDOW_ID__PROP, 
-			WINDOW_ID__PROP, 
-			WIDTH__PROP, 
-			HEIGHT__PROP, 
-			TITLE__PROP, 
-			RESIZABLE__PROP);
-		PROPERTIES = java.util.Collections.unmodifiableList(local);
-	}
-
-	static final java.util.Set<String> TRANSIENT_PROPERTIES;
-	static {
-		java.util.HashSet<String> tmp = new java.util.HashSet<>();
-		tmp.addAll(java.util.Arrays.asList(
-				));
-		TRANSIENT_PROPERTIES = java.util.Collections.unmodifiableSet(tmp);
-	}
-
-	@Override
-	public java.util.List<String> properties() {
-		return PROPERTIES;
-	}
-
-	@Override
-	public java.util.Set<String> transientProperties() {
-		return TRANSIENT_PROPERTIES;
-	}
-
-	@Override
-	public Object get(String field) {
-		switch (field) {
-			case TARGET_WINDOW_ID__PROP: return getTargetWindowId();
-			case WINDOW_ID__PROP: return getWindowId();
-			case WIDTH__PROP: return getWidth();
-			case HEIGHT__PROP: return getHeight();
-			case TITLE__PROP: return getTitle();
-			case RESIZABLE__PROP: return isResizable();
-			default: return super.get(field);
-		}
-	}
-
-	@Override
-	public void set(String field, Object value) {
-		switch (field) {
-			case TARGET_WINDOW_ID__PROP: internalSetTargetWindowId((String) value); break;
-			case WINDOW_ID__PROP: internalSetWindowId((String) value); break;
-			case WIDTH__PROP: internalSetWidth((int) value); break;
-			case HEIGHT__PROP: internalSetHeight((int) value); break;
-			case TITLE__PROP: internalSetTitle((String) value); break;
-			case RESIZABLE__PROP: internalSetResizable((boolean) value); break;
-			default: super.set(field, value); break;
-		}
 	}
 
 	@Override

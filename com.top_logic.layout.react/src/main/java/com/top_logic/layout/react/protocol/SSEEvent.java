@@ -3,7 +3,7 @@ package com.top_logic.layout.react.protocol;
 /**
  * Base type for all SSE events sent from server to client.
  */
-public interface SSEEvent extends de.haumacher.msgbuf.data.DataObject, de.haumacher.msgbuf.observer.Observable {
+public interface SSEEvent extends de.haumacher.msgbuf.data.DataObject {
 
 	/** Type codes for the {@link com.top_logic.layout.react.protocol.SSEEvent} hierarchy. */
 	public enum TypeKind {
@@ -103,11 +103,8 @@ public interface SSEEvent extends de.haumacher.msgbuf.data.DataObject, de.haumac
 	/** The type code of this instance. */
 	TypeKind kind();
 
-	@Override
-	public com.top_logic.layout.react.protocol.SSEEvent registerListener(de.haumacher.msgbuf.observer.Listener l);
-
-	@Override
-	public com.top_logic.layout.react.protocol.SSEEvent unregisterListener(de.haumacher.msgbuf.observer.Listener l);
+	/** The type identifier for this concrete subtype. */
+	String jsonType();
 
 	/** Reads a new instance from the given reader. */
 	static com.top_logic.layout.react.protocol.SSEEvent readSSEEvent(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {

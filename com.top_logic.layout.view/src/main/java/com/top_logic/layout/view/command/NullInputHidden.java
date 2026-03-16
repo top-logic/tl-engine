@@ -17,10 +17,10 @@ import com.top_logic.tool.execution.ExecutableState;
  * <p>
  * Returns <code>NOT_EXEC_HIDDEN</code> for {@code null} input and <code>EXECUTABLE</code>
  * otherwise.
+ * </p>
  *
  * @see ExecutableState#NOT_EXEC_HIDDEN
  * @see ExecutableState#EXECUTABLE
- * </p>
  */
 public class NullInputHidden implements ViewExecutabilityRule {
 

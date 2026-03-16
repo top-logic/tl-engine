@@ -2,7 +2,7 @@ package com.top_logic.layout.react.protocol;
 
 /**
  * Instructs the target window to open a new browser window.
- * Only the window matching targetWindowId should act on this event.
+ * Only the window matching {@code targetWindowId} should act on this event.
  */
 public interface WindowOpenEvent extends SSEEvent {
 

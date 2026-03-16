@@ -17,10 +17,10 @@ import com.top_logic.tool.execution.ExecutableState;
  * <p>
  * Returns <code>NO_EXEC_NO_MODEL</code> for {@code null} input and <code>EXECUTABLE</code>
  * otherwise.
+ * </p>
  *
  * @see ExecutableState#NO_EXEC_NO_MODEL
  * @see ExecutableState#EXECUTABLE
- * </p>
  */
 public class NullInputDisabled implements ViewExecutabilityRule {
 

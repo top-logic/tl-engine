@@ -38,9 +38,7 @@ public class FragmentInsertion_Impl extends com.top_logic.layout.react.protocol.
 
 	/** Internal setter for {@link #getElementId()} without chain call utility. */
 	protected final void internalSetElementId(String value) {
-		_listener.beforeSet(this, ELEMENT_ID__PROP, value);
 		_elementId = value;
-		_listener.afterChanged(this, ELEMENT_ID__PROP);
 	}
 
 	@Override
@@ -56,9 +54,7 @@ public class FragmentInsertion_Impl extends com.top_logic.layout.react.protocol.
 
 	/** Internal setter for {@link #getPosition()} without chain call utility. */
 	protected final void internalSetPosition(String value) {
-		_listener.beforeSet(this, POSITION__PROP, value);
 		_position = value;
-		_listener.afterChanged(this, POSITION__PROP);
 	}
 
 	@Override
@@ -74,61 +70,12 @@ public class FragmentInsertion_Impl extends com.top_logic.layout.react.protocol.
 
 	/** Internal setter for {@link #getHtml()} without chain call utility. */
 	protected final void internalSetHtml(String value) {
-		_listener.beforeSet(this, HTML__PROP, value);
 		_html = value;
-		_listener.afterChanged(this, HTML__PROP);
 	}
 
 	@Override
 	public String jsonType() {
 		return FRAGMENT_INSERTION__TYPE;
-	}
-
-	static final java.util.List<String> PROPERTIES;
-	static {
-		java.util.List<String> local = java.util.Arrays.asList(
-			ELEMENT_ID__PROP, 
-			POSITION__PROP, 
-			HTML__PROP);
-		PROPERTIES = java.util.Collections.unmodifiableList(local);
-	}
-
-	static final java.util.Set<String> TRANSIENT_PROPERTIES;
-	static {
-		java.util.HashSet<String> tmp = new java.util.HashSet<>();
-		tmp.addAll(java.util.Arrays.asList(
-				));
-		TRANSIENT_PROPERTIES = java.util.Collections.unmodifiableSet(tmp);
-	}
-
-	@Override
-	public java.util.List<String> properties() {
-		return PROPERTIES;
-	}
-
-	@Override
-	public java.util.Set<String> transientProperties() {
-		return TRANSIENT_PROPERTIES;
-	}
-
-	@Override
-	public Object get(String field) {
-		switch (field) {
-			case ELEMENT_ID__PROP: return getElementId();
-			case POSITION__PROP: return getPosition();
-			case HTML__PROP: return getHtml();
-			default: return super.get(field);
-		}
-	}
-
-	@Override
-	public void set(String field, Object value) {
-		switch (field) {
-			case ELEMENT_ID__PROP: internalSetElementId((String) value); break;
-			case POSITION__PROP: internalSetPosition((String) value); break;
-			case HTML__PROP: internalSetHtml((String) value); break;
-			default: super.set(field, value); break;
-		}
 	}
 
 	@Override

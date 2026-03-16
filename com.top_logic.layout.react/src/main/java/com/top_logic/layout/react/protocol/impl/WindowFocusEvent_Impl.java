@@ -36,9 +36,7 @@ public class WindowFocusEvent_Impl extends com.top_logic.layout.react.protocol.i
 
 	/** Internal setter for {@link #getTargetWindowId()} without chain call utility. */
 	protected final void internalSetTargetWindowId(String value) {
-		_listener.beforeSet(this, TARGET_WINDOW_ID__PROP, value);
 		_targetWindowId = value;
-		_listener.afterChanged(this, TARGET_WINDOW_ID__PROP);
 	}
 
 	@Override
@@ -54,58 +52,12 @@ public class WindowFocusEvent_Impl extends com.top_logic.layout.react.protocol.i
 
 	/** Internal setter for {@link #getWindowId()} without chain call utility. */
 	protected final void internalSetWindowId(String value) {
-		_listener.beforeSet(this, WINDOW_ID__PROP, value);
 		_windowId = value;
-		_listener.afterChanged(this, WINDOW_ID__PROP);
 	}
 
 	@Override
 	public String jsonType() {
 		return WINDOW_FOCUS_EVENT__TYPE;
-	}
-
-	static final java.util.List<String> PROPERTIES;
-	static {
-		java.util.List<String> local = java.util.Arrays.asList(
-			TARGET_WINDOW_ID__PROP, 
-			WINDOW_ID__PROP);
-		PROPERTIES = java.util.Collections.unmodifiableList(local);
-	}
-
-	static final java.util.Set<String> TRANSIENT_PROPERTIES;
-	static {
-		java.util.HashSet<String> tmp = new java.util.HashSet<>();
-		tmp.addAll(java.util.Arrays.asList(
-				));
-		TRANSIENT_PROPERTIES = java.util.Collections.unmodifiableSet(tmp);
-	}
-
-	@Override
-	public java.util.List<String> properties() {
-		return PROPERTIES;
-	}
-
-	@Override
-	public java.util.Set<String> transientProperties() {
-		return TRANSIENT_PROPERTIES;
-	}
-
-	@Override
-	public Object get(String field) {
-		switch (field) {
-			case TARGET_WINDOW_ID__PROP: return getTargetWindowId();
-			case WINDOW_ID__PROP: return getWindowId();
-			default: return super.get(field);
-		}
-	}
-
-	@Override
-	public void set(String field, Object value) {
-		switch (field) {
-			case TARGET_WINDOW_ID__PROP: internalSetTargetWindowId((String) value); break;
-			case WINDOW_ID__PROP: internalSetWindowId((String) value); break;
-			default: super.set(field, value); break;
-		}
 	}
 
 	@Override

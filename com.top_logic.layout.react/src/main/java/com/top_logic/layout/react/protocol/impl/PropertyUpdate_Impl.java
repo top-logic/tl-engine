@@ -7,22 +7,7 @@ public class PropertyUpdate_Impl extends com.top_logic.layout.react.protocol.imp
 
 	private String _elementId = "";
 
-	private final java.util.List<com.top_logic.layout.react.protocol.Property> _properties = new de.haumacher.msgbuf.util.ReferenceList<com.top_logic.layout.react.protocol.Property>() {
-		@Override
-		protected void beforeAdd(int index, com.top_logic.layout.react.protocol.Property element) {
-			_listener.beforeAdd(PropertyUpdate_Impl.this, PROPERTIES__PROP, index, element);
-		}
-
-		@Override
-		protected void afterRemove(int index, com.top_logic.layout.react.protocol.Property element) {
-			_listener.afterRemove(PropertyUpdate_Impl.this, PROPERTIES__PROP, index, element);
-		}
-
-		@Override
-		protected void afterChanged() {
-			_listener.afterChanged(PropertyUpdate_Impl.this, PROPERTIES__PROP);
-		}
-	};
+	private final java.util.List<com.top_logic.layout.react.protocol.Property> _properties = new java.util.ArrayList<>();
 
 	/**
 	 * Creates a {@link PropertyUpdate_Impl} instance.
@@ -51,9 +36,7 @@ public class PropertyUpdate_Impl extends com.top_logic.layout.react.protocol.imp
 
 	/** Internal setter for {@link #getElementId()} without chain call utility. */
 	protected final void internalSetElementId(String value) {
-		_listener.beforeSet(this, ELEMENT_ID__PROP, value);
 		_elementId = value;
-		_listener.afterChanged(this, ELEMENT_ID__PROP);
 	}
 
 	@Override
@@ -93,50 +76,6 @@ public class PropertyUpdate_Impl extends com.top_logic.layout.react.protocol.imp
 	@Override
 	public String jsonType() {
 		return PROPERTY_UPDATE__TYPE;
-	}
-
-	static final java.util.List<String> PROPERTIES;
-	static {
-		java.util.List<String> local = java.util.Arrays.asList(
-			ELEMENT_ID__PROP, 
-			PROPERTIES__PROP);
-		PROPERTIES = java.util.Collections.unmodifiableList(local);
-	}
-
-	static final java.util.Set<String> TRANSIENT_PROPERTIES;
-	static {
-		java.util.HashSet<String> tmp = new java.util.HashSet<>();
-		tmp.addAll(java.util.Arrays.asList(
-				));
-		TRANSIENT_PROPERTIES = java.util.Collections.unmodifiableSet(tmp);
-	}
-
-	@Override
-	public java.util.List<String> properties() {
-		return PROPERTIES;
-	}
-
-	@Override
-	public java.util.Set<String> transientProperties() {
-		return TRANSIENT_PROPERTIES;
-	}
-
-	@Override
-	public Object get(String field) {
-		switch (field) {
-			case ELEMENT_ID__PROP: return getElementId();
-			case PROPERTIES__PROP: return getProperties();
-			default: return super.get(field);
-		}
-	}
-
-	@Override
-	public void set(String field, Object value) {
-		switch (field) {
-			case ELEMENT_ID__PROP: internalSetElementId((String) value); break;
-			case PROPERTIES__PROP: internalSetProperties(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.layout.react.protocol.Property.class, value)); break;
-			default: super.set(field, value); break;
-		}
 	}
 
 	@Override

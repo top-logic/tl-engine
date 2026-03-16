@@ -5,6 +5,11 @@ const { useCallback } = React;
 
 /**
  * A number input field rendered via React.
+ *
+ * Uses type="text" with inputMode="decimal" instead of type="number" so that
+ * invalid input (e.g. "foo") is actually sent to the server for validation.
+ * With type="number", browsers silently discard non-numeric input and return
+ * an empty string, making server-side error reporting impossible.
  */
 const TLNumberInput: React.FC<TLCellProps> = ({ controlId, state, config }) => {
   const [value, setValue] = useTLFieldValue();
@@ -12,13 +17,10 @@ const TLNumberInput: React.FC<TLCellProps> = ({ controlId, state, config }) => {
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const raw = e.target.value;
-      const parsed = raw === '' ? null : Number(raw);
-      setValue(parsed);
+      setValue(raw === '' ? null : raw);
     },
     [setValue]
   );
-
-  const step = config?.decimal ? '0.01' : '1';
 
   if (state.editable === false) {
     return (
@@ -39,10 +41,10 @@ const TLNumberInput: React.FC<TLCellProps> = ({ controlId, state, config }) => {
   return (
     <span id={controlId}>
       <input
-        type="number"
+        type="text"
+        inputMode={config?.decimal ? 'decimal' : 'numeric'}
         value={value != null ? String(value) : ''}
         onChange={handleChange}
-        step={step}
         disabled={state.disabled === true}
         className={cls}
         aria-invalid={hasError || undefined}

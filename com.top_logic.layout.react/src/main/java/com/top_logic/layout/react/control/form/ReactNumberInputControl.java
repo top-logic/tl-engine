@@ -50,18 +50,27 @@ public class ReactNumberInputControl extends ReactFormFieldControl {
 		Object rawValue = arguments.get(VALUE);
 		FieldModel model = getFieldModel();
 
+		AbstractFieldModel abstractModel =
+			model instanceof AbstractFieldModel ? (AbstractFieldModel) model : null;
+
 		if (rawValue == null || "".equals(rawValue.toString().trim())) {
+			if (abstractModel != null) {
+				abstractModel.setError(null);
+			}
 			model.setValue(null);
 			return;
 		}
 
 		try {
 			double parsed = Double.parseDouble(rawValue.toString());
+			if (abstractModel != null) {
+				abstractModel.setError(null);
+			}
 			model.setValue(parsed);
 		} catch (NumberFormatException ex) {
 			// Set error on model so it gets displayed in chrome and as red border on input.
-			if (model instanceof AbstractFieldModel) {
-				((AbstractFieldModel) model).setError(
+			if (abstractModel != null) {
+				abstractModel.setError(
 					I18NConstants.ERROR_INVALID_NUMBER__VALUE.fill(rawValue.toString()));
 			}
 		}

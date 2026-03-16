@@ -2502,6 +2502,95 @@ button.tlMenu__item--disabled:hover {
   cursor: not-allowed;
 }
 
+/* --- Simple input controls --------------------------------------------- */
+
+/* Shared base for text, number, date inputs and native select */
+.tlReactTextInput,
+.tlReactNumberInput,
+.tlReactDatePicker,
+.tlReactSelect {
+	display: block;
+	width: 100%;
+	border: 1px solid var(--border-subtle, #e0e0e0);
+	border-radius: var(--border-radius-02, 4px);
+	background-color: var(--field, #fff);
+	padding: var(--spacing-02) var(--spacing-03);
+	min-height: 2rem;
+	box-sizing: border-box;
+	font-family: var(--font-family);
+	font-size: var(--body-compact-01-font-size);
+	color: var(--text-primary);
+	line-height: 1.4;
+}
+
+.tlReactTextInput:focus,
+.tlReactNumberInput:focus,
+.tlReactDatePicker:focus,
+.tlReactSelect:focus {
+	outline: 2px solid var(--focus);
+	outline-offset: -1px;
+	border-color: var(--focus);
+}
+
+.tlReactTextInput:disabled,
+.tlReactNumberInput:disabled,
+.tlReactDatePicker:disabled,
+.tlReactSelect:disabled {
+	opacity: 0.6;
+	cursor: default;
+	background-color: var(--field-disabled, #f0f0f0);
+}
+
+.tlReactTextInput::placeholder,
+.tlReactNumberInput::placeholder,
+.tlReactDatePicker::placeholder {
+	color: var(--text-secondary);
+	font-style: italic;
+}
+
+/* Immutable (read-only) state for text-like inputs */
+.tlReactTextInput--immutable,
+.tlReactNumberInput--immutable,
+.tlReactDatePicker--immutable,
+.tlReactSelect--immutable {
+	display: inline;
+	border: none;
+	background: none;
+	padding: 0;
+	min-height: auto;
+	color: var(--text-primary);
+	font-family: var(--font-family);
+	font-size: var(--body-compact-01-font-size);
+}
+
+/* Native select arrow spacing */
+.tlReactSelect {
+	appearance: auto;
+	cursor: pointer;
+}
+
+/* --- Checkbox --------------------------------------------------------- */
+
+.tlReactCheckbox {
+	width: 1rem;
+	height: 1rem;
+	accent-color: var(--interactive, #0f62fe);
+	cursor: pointer;
+	margin: 0;
+	vertical-align: middle;
+}
+
+.tlReactCheckbox:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: 1px;
+}
+
+.tlReactCheckbox:disabled,
+.tlReactCheckbox--immutable {
+	opacity: 0.6;
+	cursor: default;
+}
+
 /* --- TLDropdownSelect -------------------------------------------------- */
 
 .tlDropdownSelect {

@@ -131,6 +131,10 @@ function dispatch(data: unknown): void {
   const typeCode = data[0] as string;
   const payload = data[1] as Record<string, unknown>;
 
+  if (typeCode !== 'Heartbeat') {
+    console.log('[SSE] dispatch', typeCode, payload);
+  }
+
   switch (typeCode) {
     case 'Heartbeat':
       // Server keep-alive, no action needed.

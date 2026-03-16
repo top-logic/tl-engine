@@ -53,7 +53,12 @@ public class SSEServlet extends HttpServlet {
 		AsyncContext asyncContext = request.startAsync();
 		asyncContext.setTimeout(0);
 
-		SSEUpdateQueue queue = ReactWindowRegistry.forSession(session).getOrCreateQueue(windowName);
+		ReactWindowRegistry registry = ReactWindowRegistry.forSession(session);
+		Logger.info("SSEServlet: windowName='" + windowName + "', registry@" + System.identityHashCode(registry),
+			SSEServlet.class);
+		SSEUpdateQueue queue = registry.getOrCreateQueue(windowName);
+		Logger.info("SSEServlet: queue@" + System.identityHashCode(queue) + " for windowName='" + windowName + "'",
+			SSEServlet.class);
 		queue.setConnection(asyncContext);
 
 		asyncContext.addListener(new AsyncListener() {

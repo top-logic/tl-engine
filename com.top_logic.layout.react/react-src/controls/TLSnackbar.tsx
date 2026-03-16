@@ -23,16 +23,17 @@ const TLSnackbar: React.FC<TLCellProps> = ({ controlId }) => {
   const action = state.action as { label: string; commandName: string } | null;
   const duration = (state.duration as number) ?? 5000;
   const visible = state.visible === true;
+  const generation = (state.generation as number) ?? 0;
 
   const [exiting, setExiting] = useState(false);
 
   const handleDismiss = useCallback(() => {
     setExiting(true);
     setTimeout(() => {
-      sendCommand('dismiss');
+      sendCommand('dismiss', { generation });
       setExiting(false);
     }, 200); // match fade-out animation
-  }, [sendCommand]);
+  }, [sendCommand, generation]);
 
   const handleAction = useCallback(() => {
     if (action) {
@@ -47,6 +48,8 @@ const TLSnackbar: React.FC<TLCellProps> = ({ controlId }) => {
     const timer = setTimeout(handleDismiss, duration);
     return () => clearTimeout(timer);
   }, [visible, duration, handleDismiss]);
+
+  console.log('[TLSnackbar] render', { visible, exiting, generation, content, message });
 
   if (!visible && !exiting) return null;
 

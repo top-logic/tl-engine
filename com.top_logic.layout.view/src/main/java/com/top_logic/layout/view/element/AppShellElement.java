@@ -8,7 +8,7 @@ package com.top_logic.layout.view.element;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.List;
-import java.util.Map;
+
 import java.util.stream.Collectors;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
@@ -136,8 +136,7 @@ public class AppShellElement implements UIElement {
 			}
 
 			private void showSnackbar(String htmlContent, String variant) {
-				snackbar.patchReactState(
-					Map.of("content", htmlContent, "variant", variant, "visible", Boolean.TRUE));
+				snackbar.showHtml(htmlContent, variant);
 			}
 		};
 	}

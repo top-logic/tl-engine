@@ -45,7 +45,11 @@ public class ReactSnackbarControl extends ReactControl {
 	/** @see #setAction(String, String) */
 	private static final String ACTION_COMMAND_NAME = "commandName";
 
+	private static final String GENERATION = "generation";
+
 	private Runnable _dismissHandler;
+
+	private int _generation;
 
 	/**
 	 * Creates a snackbar control.
@@ -80,12 +84,15 @@ public class ReactSnackbarControl extends ReactControl {
 		putState(VARIANT, variant);
 		putState(DURATION, duration);
 		putState(VISIBLE, false);
+		putState(GENERATION, 0);
 	}
 
 	/**
 	 * Shows the snackbar.
 	 */
 	public void show() {
+		_generation++;
+		putState(GENERATION, _generation);
 		putState(VISIBLE, true);
 	}
 
@@ -97,7 +104,24 @@ public class ReactSnackbarControl extends ReactControl {
 	 */
 	public void show(String message) {
 		putState(MESSAGE, message);
-		putState(VISIBLE, true);
+		show();
+	}
+
+	/**
+	 * Shows the snackbar with HTML content and a variant.
+	 *
+	 * @param htmlContent
+	 *        The HTML content to display.
+	 * @param variant
+	 *        "info", "success", "warning", or "error".
+	 */
+	public void showHtml(String htmlContent, String variant) {
+		_generation++;
+		patchReactState(Map.of(
+			"content", htmlContent,
+			VARIANT, variant,
+			VISIBLE, Boolean.TRUE,
+			GENERATION, _generation));
 	}
 
 	/**
@@ -124,9 +148,18 @@ public class ReactSnackbarControl extends ReactControl {
 
 	/**
 	 * Handles the dismiss command sent when the snackbar is dismissed (by timer or user).
+	 *
+	 * <p>
+	 * The generation parameter prevents a stale dismiss (from a previous snackbar that timed out)
+	 * from hiding a newly shown snackbar.
+	 * </p>
 	 */
 	@ReactCommand("dismiss")
-	void handleDismiss() {
+	void handleDismiss(Map<String, Object> arguments) {
+		int dismissGeneration = ((Number) arguments.getOrDefault(GENERATION, -1)).intValue();
+		if (dismissGeneration != _generation) {
+			return;
+		}
 		hide();
 		_dismissHandler.run();
 	}

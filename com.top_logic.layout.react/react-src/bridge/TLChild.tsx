@@ -1,6 +1,6 @@
-import React, { useMemo, useSyncExternalStore } from 'react';
+import React, { useEffect, useMemo, useSyncExternalStore } from 'react';
 import { getComponent } from './registry';
-import { createChildContext, TLControlContext } from './tl-react-bridge';
+import { createChildContext, unmount, TLControlContext } from './tl-react-bridge';
 
 /**
  * Descriptor for a server-defined child control, as sent in the parent's state.
@@ -29,6 +29,13 @@ const TLChild: React.FC<{ control: unknown }> = ({ control }) => {
     () => createChildContext(descriptor.controlId, descriptor.state),
     [descriptor.controlId]
   );
+
+  // Clean up SSE subscription when this child is replaced (controlId changes) or
+  // when the parent unmounts.  This must NOT fire when the child component merely
+  // returns null (e.g. a hidden snackbar), because TLChild itself stays mounted.
+  useEffect(() => {
+    return () => unmount(descriptor.controlId);
+  }, [descriptor.controlId]);
 
   // Subscribe to the child's ControlStateStore so that SSE patch events (e.g. editable
   // changing from false to true) trigger a re-render with the live state.

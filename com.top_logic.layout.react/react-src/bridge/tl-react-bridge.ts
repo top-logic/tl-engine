@@ -356,14 +356,20 @@ export function useTLFieldValue(): [unknown, (newValue: unknown) => void] {
  * (present in {@code _mounts}) are skipped.</p>
  */
 export function discoverAndMount(root: ParentNode = document.body): void {
+  // Use the body's window name as the authoritative source. Pre-built control trees
+  // from programmatically opened windows may carry the opener's window name on their
+  // elements, but the body always reflects the current document's window identity.
+  const bodyWindowName = document.body.dataset.windowName;
+  const bodyContextPath = document.body.dataset.contextPath;
+
   const elements = root.querySelectorAll<HTMLElement>('[data-react-module]');
   for (const el of elements) {
     if (!el.id || _mounts.has(el.id)) {
       continue;
     }
     const moduleName = el.dataset.reactModule;
-    const windowName = el.dataset.windowName;
-    const contextPath = el.dataset.contextPath;
+    const windowName = bodyWindowName ?? el.dataset.windowName;
+    const contextPath = bodyContextPath ?? el.dataset.contextPath;
     if (!moduleName || windowName === undefined || contextPath === undefined) {
       continue;
     }
@@ -380,15 +386,19 @@ export function discoverAndMount(root: ParentNode = document.body): void {
 function setupDOMObserver(): void {
   const observer = new MutationObserver((mutations) => {
     // Check for removed mounts first.
+    // Only unmount entries that were directly mounted via mount() (root !== null).
+    // Child contexts (root === null) are managed by their parent React tree and must
+    // not be unmounted when their DOM element is temporarily removed (e.g. a snackbar
+    // returning null from render).
     for (const mutation of mutations) {
       for (const removed of mutation.removedNodes) {
         if (removed instanceof HTMLElement) {
           const id = removed.id;
-          if (id && _mounts.has(id)) {
+          if (id && _mounts.has(id) && _mounts.get(id)!.root !== null) {
             unmount(id);
           }
-          for (const mountId of _mounts.keys()) {
-            if (removed.querySelector('#' + CSS.escape(mountId))) {
+          for (const [mountId, entry] of _mounts.entries()) {
+            if (entry.root !== null && removed.querySelector('#' + CSS.escape(mountId))) {
               unmount(mountId);
             }
           }

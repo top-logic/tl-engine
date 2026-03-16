@@ -197,12 +197,19 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 		if (entry != null) {
 			Runnable closeCallback = entry.getCloseCallback();
 			if (closeCallback != null) {
+				Logger.info("Running close callback for '" + windowId + "'.",
+					ReactWindowRegistry.class);
 				try {
 					closeCallback.run();
+					Logger.info("Close callback completed for '" + windowId + "'.",
+						ReactWindowRegistry.class);
 				} catch (Exception ex) {
 					Logger.error("Error in window close callback for window '" + windowId + "'.",
 						ex, ReactWindowRegistry.class);
 				}
+			} else {
+				Logger.info("No close callback for '" + windowId + "'.",
+					ReactWindowRegistry.class);
 			}
 			ReactControl rootControl = entry.getRootControl();
 			if (rootControl != null) {

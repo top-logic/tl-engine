@@ -166,9 +166,14 @@ public class SSEUpdateQueue {
 	 */
 	public void enqueue(SSEEvent event) {
 		if (_shutdown) {
+			Logger.info("enqueue REJECTED (shutdown) on queue@" + System.identityHashCode(this),
+				SSEUpdateQueue.class);
 			return;
 		}
 		_pendingEvents.add(event);
+		Logger.info("enqueue on queue@" + System.identityHashCode(this)
+			+ ", connection=" + (_connection != null),
+			SSEUpdateQueue.class);
 		flush();
 	}
 

@@ -5,10 +5,10 @@
  */
 package com.top_logic.layout.react.control.layout;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.ReactCompositeControl;
 import com.top_logic.layout.react.control.ReactControl;
 
 /**
@@ -31,7 +31,7 @@ import com.top_logic.layout.react.control.ReactControl;
  * <li>{@code children} - child controls (TLFormGroup or TLFormField)</li>
  * </ul>
  */
-public class ReactFormLayoutControl extends ReactControl {
+public class ReactFormLayoutControl extends ReactCompositeControl {
 
 	private static final String REACT_MODULE = "TLFormLayout";
 
@@ -40,10 +40,6 @@ public class ReactFormLayoutControl extends ReactControl {
 	private static final String LABEL_POSITION = "labelPosition";
 
 	private static final String READ_ONLY = "readOnly";
-
-	private static final String CHILDREN = "children";
-
-	private final List<ReactControl> _children;
 
 	/**
 	 * Creates a form layout with full configuration.
@@ -59,12 +55,10 @@ public class ReactFormLayoutControl extends ReactControl {
 	 */
 	public ReactFormLayoutControl(ReactContext context, int maxColumns, String labelPosition, boolean readOnly,
 			List<? extends ReactControl> children) {
-		super(context, null, REACT_MODULE);
-		_children = new ArrayList<>(children);
+		super(context, null, REACT_MODULE, children);
 		putState(MAX_COLUMNS, Integer.valueOf(maxColumns));
 		putState(LABEL_POSITION, labelPosition);
 		putState(READ_ONLY, readOnly);
-		putState(CHILDREN, _children);
 	}
 
 	/**
@@ -78,6 +72,17 @@ public class ReactFormLayoutControl extends ReactControl {
 	}
 
 	/**
+	 * Creates a form layout with default settings and no initial children.
+	 *
+	 * <p>
+	 * Children can be added later via {@link #addChild(ReactControl)}.
+	 * </p>
+	 */
+	public ReactFormLayoutControl(ReactContext context) {
+		this(context, 3, "auto", false, List.of());
+	}
+
+	/**
 	 * Updates the read-only state.
 	 *
 	 * @param readOnly
@@ -85,13 +90,6 @@ public class ReactFormLayoutControl extends ReactControl {
 	 */
 	public void setReadOnly(boolean readOnly) {
 		putState(READ_ONLY, readOnly);
-	}
-
-	@Override
-	protected void cleanupChildren() {
-		for (ReactControl child : _children) {
-			child.cleanupTree();
-		}
 	}
 
 }

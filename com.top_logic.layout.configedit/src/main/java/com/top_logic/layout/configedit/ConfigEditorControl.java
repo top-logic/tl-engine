@@ -16,10 +16,10 @@ import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.ReactCompositeControl;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.layout.ReactFormGroupControl;
+import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
 
 /**
  * A {@link ReactControl} that renders a form for all PLAIN, REF, and ITEM properties of a
@@ -32,9 +32,7 @@ import com.top_logic.layout.react.control.layout.ReactFormGroupControl;
  * MAP, ARRAY, DERIVED, and COMPLEX properties are skipped.
  * </p>
  */
-public class ConfigEditorControl extends ReactCompositeControl {
-
-	private static final String REACT_MODULE = "TLFormLayout";
+public class ConfigEditorControl extends ReactFormLayoutControl {
 
 	/**
 	 * Creates a {@link ConfigEditorControl} for all visible properties.
@@ -60,7 +58,7 @@ public class ConfigEditorControl extends ReactCompositeControl {
 	 */
 	public ConfigEditorControl(ReactContext context, ConfigurationItem config,
 			Set<PropertyDescriptor> hiddenProperties) {
-		super(context, config, REACT_MODULE);
+		super(context);
 
 		for (PropertyDescriptor property : config.descriptor().getProperties()) {
 			if (hiddenProperties.contains(property)) {

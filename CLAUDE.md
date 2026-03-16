@@ -22,25 +22,25 @@ mvn clean install
 # Build without tests (faster, default configuration)
 mvn clean install -DskipTests=true
 
-# Build specific module
-cd com.top_logic.basic
-mvn clean install
+# Build specific module (path-based -pl, from project root)
+mvn install -DskipTests=true -pl com.top_logic.basic
 ```
+
+**IMPORTANT**: Always build from the project root using `-pl <module-dir>`. NEVER `cd` into a module directory and run Maven there. The project uses a relative local repository (`.m2/repository` via `.mvn/maven.config`), so changing directories causes each module to use its own isolated local repo, leading to missing artifact errors.
 
 ### Running Tests
 
 Tests are **skipped by default** (`skipTests=true` in tl-parent-all). To run tests:
 
 ```bash
-# Run tests in specific module
-cd com.top_logic.basic
-mvn test -DskipTests=false
+# Run tests in specific module (from project root)
+mvn test -DskipTests=false -pl com.top_logic.basic
 
 # Run single test class
-mvn test -DskipTests=false -Dtest=ClassName
+mvn test -DskipTests=false -pl com.top_logic.basic -Dtest=ClassName
 
 # Run specific test method
-mvn test -DskipTests=false -Dtest=ClassName#methodName
+mvn test -DskipTests=false -pl com.top_logic.basic -Dtest=ClassName#methodName
 ```
 
 **Important**: Tests require database configuration. Many tests use H2 in-memory databases, but some require specific database drivers (MySQL, Oracle, PostgreSQL, DB2, MS SQL Server).

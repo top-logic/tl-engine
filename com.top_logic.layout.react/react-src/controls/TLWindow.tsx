@@ -33,6 +33,7 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
   const resizable = state.resizable === true;
   const child = state.child;
   const actions = (state.actions as unknown[]) ?? [];
+  const toolbarButtons = (state.toolbarButtons as unknown[]) ?? [];
 
   // Local dimensions during resize (null = use server values).
   const [localWidth, setLocalWidth] = useState<number | null>(null);
@@ -133,6 +134,15 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
     >
       <div className="tlWindow__header">
         <span className="tlWindow__title" id={titleId}>{title}</span>
+        {toolbarButtons.length > 0 && (
+          <div className="tlWindow__toolbar">
+            {toolbarButtons.map((btn, i) => (
+              <span key={i} className="tlWindow__toolbarButton">
+                <TLChild control={btn} />
+              </span>
+            ))}
+          </div>
+        )}
         <button
           type="button"
           className="tlWindow__closeBtn"

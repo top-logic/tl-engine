@@ -15,6 +15,18 @@
 				unit="%"
 			>
 				<panel title="Demo Types">
+					<commands>
+						<command class="com.top_logic.layout.view.command.OpenDialogCommand"
+							label="Show in Dialog"
+							placement="TOOLBAR"
+							dialog-view="demo/object-details-dialog.view.xml"
+							close-on-backdrop="true"
+						>
+							<inputs>
+								<input from="selectedObject" to="model"/>
+							</inputs>
+						</command>
+					</commands>
 					<tree selection="selectedObject">
 						<root>`DemoTypes#ROOT`</root>
 						<children>node -&gt; $node.get(`tl.element:StructuredElementContainer#children`)</children>

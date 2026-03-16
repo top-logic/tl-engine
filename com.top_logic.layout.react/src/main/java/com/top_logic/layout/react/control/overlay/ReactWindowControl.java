@@ -13,6 +13,7 @@ import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.ToolbarControl;
 
 /**
  * Visual window chrome for modal dialogs: title bar, close button, scrollable body, footer actions,
@@ -35,7 +36,7 @@ import com.top_logic.layout.react.control.ReactControl;
  * <li>{@code actions} - list of footer action controls</li>
  * </ul>
  */
-public class ReactWindowControl extends ReactControl {
+public class ReactWindowControl extends ToolbarControl {
 
 	private static final String REACT_MODULE = "TLWindow";
 
@@ -130,6 +131,7 @@ public class ReactWindowControl extends ReactControl {
 		for (ReactControl action : _actions) {
 			action.cleanupTree();
 		}
+		cleanupToolbarButtons();
 	}
 
 	/**

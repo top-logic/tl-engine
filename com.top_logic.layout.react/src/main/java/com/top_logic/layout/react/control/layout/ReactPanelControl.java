@@ -5,12 +5,10 @@
  */
 package com.top_logic.layout.react.control.layout;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.ToolbarControl;
 
 /**
  * A {@link ReactControl} that wraps a single child with a titled toolbar header.
@@ -32,7 +30,7 @@ import com.top_logic.layout.react.control.ReactControl;
  * <li>{@code child} - the content child control descriptor</li>
  * </ul>
  */
-public class ReactPanelControl extends ReactControl {
+public class ReactPanelControl extends ToolbarControl {
 
 	private static final String REACT_MODULE = "TLPanel";
 
@@ -51,9 +49,6 @@ public class ReactPanelControl extends ReactControl {
 	/** @see #ReactPanelControl(ReactContext, String, ReactControl, boolean, boolean, boolean) */
 	private static final String SHOW_POP_OUT = "showPopOut";
 
-	/** @see #addToolbarButton(ReactControl) */
-	private static final String TOOLBAR_BUTTONS = "toolbarButtons";
-
 	/** @see #ReactPanelControl(ReactContext, String, ReactControl, boolean, boolean, boolean) */
 	private static final String CHILD = "child";
 
@@ -61,8 +56,6 @@ public class ReactPanelControl extends ReactControl {
 	private static final float COLLAPSED_SIZE = 36f;
 
 	private final ReactControl _child;
-
-	private final List<ReactControl> _toolbarButtons = new ArrayList<>();
 
 	private ExpansionState _expansionState = ExpansionState.NORMALIZED;
 
@@ -96,7 +89,6 @@ public class ReactPanelControl extends ReactControl {
 		getReactState().put(SHOW_MINIMIZE, Boolean.valueOf(showMinimize));
 		getReactState().put(SHOW_MAXIMIZE, Boolean.valueOf(showMaximize));
 		getReactState().put(SHOW_POP_OUT, Boolean.valueOf(showPopOut));
-		getReactState().put(TOOLBAR_BUTTONS, new ArrayList<>());
 		getReactState().put(CHILD, child);
 	}
 
@@ -113,30 +105,6 @@ public class ReactPanelControl extends ReactControl {
 	 */
 	public void setTitle(String title) {
 		putState(TITLE, title);
-	}
-
-	/**
-	 * Adds a custom toolbar button.
-	 */
-	public void addToolbarButton(ReactControl button) {
-		_toolbarButtons.add(button);
-		toolbarButtonList().add(button);
-	}
-
-	/**
-	 * Removes a custom toolbar button.
-	 *
-	 * @param button
-	 *        The button to remove.
-	 * @return {@code true} if the button was found and removed.
-	 */
-	public boolean removeToolbarButton(ReactControl button) {
-		boolean removed = _toolbarButtons.remove(button);
-		if (removed) {
-			toolbarButtonList().remove(button);
-			button.cleanupTree();
-		}
-		return removed;
 	}
 
 	/**
@@ -157,14 +125,7 @@ public class ReactPanelControl extends ReactControl {
 	@Override
 	protected void cleanupChildren() {
 		_child.cleanupTree();
-		for (ReactControl button : _toolbarButtons) {
-			button.cleanupTree();
-		}
-	}
-
-	@SuppressWarnings("unchecked")
-	private List<Object> toolbarButtonList() {
-		return (List<Object>) getReactState().get(TOOLBAR_BUTTONS);
+		cleanupToolbarButtons();
 	}
 
 	/**

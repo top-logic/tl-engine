@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application config:interface="com.top_logic.basic.config.ApplicationConfig$Config"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<services>
+		<config service-class="com.top_logic.security.selfservice.invitation.InvitationModule">
+			<instance class="com.top_logic.security.selfservice.invitation.InvitationModule"
+				token-resend-delay="30s"
+				token-validity="5min"
+			>
+				<invitation-mail-subject>invitation -&gt; applicationName -&gt; "Invitation to " + $applicationName</invitation-mail-subject>
+				<invitation-mail-body><![CDATA[invitation -> applicationName -> link -> 
+{{{<p>
+Dear Recipient,
+</p>
+<p>
+You have been invited to create an account for the application {$applicationName}.
+</p>
+<p>
+To begin the setup process, please open the link and follow the instructions on the website:<br/>
+<a href="{$link}">{$link}</a>
+</p>
+<p>
+If you did not expect this invitation, you can safely ignore this email.
+</p>
+<p>
+Kind regards,<br/>
+Your {$applicationName} Team
+</p>}}}]]></invitation-mail-body>
+				<verification-mail-subject>invitation -&gt; applicationName -&gt; "Your verification code"</verification-mail-subject>
+				<verification-mail-body><![CDATA[invitation -> applicationName -> token -> 
+{{{<p>
+Dear Recipient,
+</p>
+<p>
+Please enter the following verification code in the application to continue:<br/>
+<b>Verification Code:</b> {$token}
+</p>
+<p>
+This verification code is only valid for a limited time.
+</p>
+<p>
+If you did not expect this invitation, you can safely ignore this email.
+</p>
+<p>
+Kind regards,<br/>
+Your {$applicationName} Team
+</p>}}}]]></verification-mail-body>
+			</instance>
+		</config>
+	</services>
+</application>

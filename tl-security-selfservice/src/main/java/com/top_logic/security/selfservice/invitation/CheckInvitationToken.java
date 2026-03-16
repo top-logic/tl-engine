@@ -8,10 +8,8 @@ package com.top_logic.security.selfservice.invitation;
 
 import static com.top_logic.layout.form.template.model.Templates.*;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import jakarta.mail.Address;
 import jakarta.mail.Message.RecipientType;
@@ -21,13 +19,11 @@ import jakarta.mail.internet.MimeMessage;
 import com.top_logic.base.mail.MailSenderService;
 import com.top_logic.base.mail.script.SendMail;
 import com.top_logic.base.security.util.Password;
-import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.encryption.SecureRandomService;
 import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.version.Version;
-import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.html.template.TagTemplate;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.Transaction;
@@ -45,6 +41,7 @@ import com.top_logic.layout.messagebox.MessageBox;
 import com.top_logic.layout.messagebox.MessageBox.ButtonType;
 import com.top_logic.layout.structure.DialogModel;
 import com.top_logic.mig.html.HTMLConstants;
+import com.top_logic.model.search.expr.ToString;
 import com.top_logic.security.selfservice.model.Invitation;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.error.TopLogicException;
@@ -61,6 +58,8 @@ public class CheckInvitationToken extends AbstractTemplateDialog {
 	private final Invitation _invitation;
 
 	private Command _continuation;
+
+	private InvitationModule _serviceModule = InvitationModule.getInstance();
 
 	/**
 	 * Creates a new {@link CheckInvitationToken} with default title and dimensions.
@@ -164,7 +163,7 @@ public class CheckInvitationToken extends AbstractTemplateDialog {
 	}
 
 	private boolean isTokenExpired() {
-		return now() > _invitation.getTokenCreation() + TimeUnit.MINUTES.toMillis(5);
+		return now() > _invitation.getTokenCreation() + _serviceModule.getConfig().getTokenValidity();
 	}
 
 	private static long now() {
@@ -174,7 +173,7 @@ public class CheckInvitationToken extends AbstractTemplateDialog {
 	private long tokenCreationAllowedAfter() {
 		long tokenCreation = _invitation.getTokenCreation();
 		Integer tokenCounter = _invitation.getTokenCounter();
-		return tokenCreation + tokenCounter * TimeUnit.SECONDS.toMillis(30);
+		return tokenCreation + tokenCounter * _serviceModule.getConfig().getTokenResendDelay();
 	}
 
 	private HandlerResult updateTokenCommand(@SuppressWarnings("unused") DisplayContext ctx) {
@@ -205,12 +204,13 @@ public class CheckInvitationToken extends AbstractTemplateDialog {
 		MailSenderService mailService = MailSenderService.getInstance();
 		MimeMessage message = mailService.createEmptyMessage();
 		try {
-			message.setSubject(getSubject(_invitation), StringServices.UTF8);
+			String applicationName = Version.getApplicationName();
+			message.setSubject(getSubject(_invitation, applicationName), StringServices.UTF8);
 
 			message.addRecipient(RecipientType.TO, to);
 
-			HTMLFragment body = (DisplayContext context, TagWriter out) -> writeMessageBody(out, newTokenString);
-			message.setDataHandler(SendMail.toDataHandler(body, Object::toString));
+			Object body = getBody(_invitation, applicationName, newTokenString);
+			message.setDataHandler(SendMail.toDataHandler(body, ToString::toString));
 
 			mailService.send(message, new ArrayList<>(), false);
 		} catch (MessagingException ex) {
@@ -220,38 +220,12 @@ public class CheckInvitationToken extends AbstractTemplateDialog {
 
 	}
 
-	private String getSubject(Invitation invitation) {
-		return "Your verification code";
+	private String getSubject(Invitation invitation, String applicationName) {
+		return ToString.toString(_serviceModule.getVerificationSubject().execute(invitation, applicationName));
 	}
 
-	private void writeMessageBody(TagWriter out, String token) throws IOException {
-		out.beginTag(HTMLConstants.PARAGRAPH);
-		out.write("Dear Recipient,");
-		out.endTag(HTMLConstants.PARAGRAPH);
-
-		out.beginTag(HTMLConstants.PARAGRAPH);
-		out.write("Please enter the following verification code in the application to continue:");
-		out.emptyTag(HTMLConstants.BR);
-		out.beginTag(HTMLConstants.BOLD);
-		out.write("Verification Code:");
-		out.endTag(HTMLConstants.BOLD);
-		out.write(HTMLConstants.NBSP);
-		out.write(token);
-		out.endTag(HTMLConstants.PARAGRAPH);
-
-		out.beginTag(HTMLConstants.PARAGRAPH);
-		out.write("This verification code is only valid for a limited time.");
-		out.endTag(HTMLConstants.PARAGRAPH);
-
-		out.beginTag(HTMLConstants.PARAGRAPH);
-		out.write("If you did not expect this invitation, you can safely ignore this email.");
-		out.endTag(HTMLConstants.PARAGRAPH);
-
-		out.beginTag(HTMLConstants.PARAGRAPH);
-		out.write("Kind regards,");
-		out.emptyTag(HTMLConstants.BR);
-		out.write("Your Application Team");
-		out.endTag(HTMLConstants.PARAGRAPH);
+	private Object getBody(Invitation invitation, String applicationName, String token) {
+		return _serviceModule.getVerificationBody().execute(invitation, applicationName, token);
 	}
 
 	private String newTokenString() {

@@ -13,10 +13,10 @@ import com.top_logic.basic.util.ResKey;
  */
 public class I18NConstants extends I18NConstantsBase {
 
-	/** @en Chat context input is not available for pre-turn triggers. Use a custom message, script, or provider input instead. */
+	/** @en Chat context input is not available for pre-turn triggers. Use a custom message, TL-Script, or provider input instead. */
 	public static ResKey CHAT_CONTEXT_INPUT_NOT_ALLOWED_FOR_PRE_TURN;
 
-	/** @en Chat context input requires chat scope. Use a custom message, script, or provider input for application-scoped agents. */
+	/** @en Chat context input requires chat scope. Use a custom message, TL-Script, or provider input for application-scoped agents. */
 	public static ResKey CHAT_CONTEXT_INPUT_NOT_ALLOWED_FOR_APPLICATION;
 
 	/** @en Pre-turn and post-turn triggers require chat scope. Use a scheduled trigger for application scope. */

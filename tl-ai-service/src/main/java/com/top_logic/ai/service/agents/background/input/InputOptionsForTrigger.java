@@ -23,8 +23,11 @@ import com.top_logic.layout.form.values.edit.OptionMapping;
 import com.top_logic.layout.form.values.edit.OptionMappingProvider;
 
 /**
- * Option provider for the input property that hides {@link ChatContextInput} when it is not
- * applicable.
+ * Option provider for the input property that controls which input types are shown in the UI.
+ *
+ * <p>
+ * {@link ProviderInput} is always hidden because it is only used programmatically from Java.
+ * </p>
  *
  * <p>
  * {@link ChatContextInput} requires a completed chat turn to read from. It is hidden when the
@@ -59,6 +62,10 @@ public class InputOptionsForTrigger
 	}
 
 	private boolean isAllowed(Class<?> type, TriggerConfig trigger, BackgroundConfig.Scope scope) {
+		if (ProviderInput.class.isAssignableFrom(type)) {
+			// Only used programmatically from Java, not shown in the UI.
+			return false;
+		}
 		if (ChatContextInput.class.isAssignableFrom(type)) {
 			return !(trigger instanceof PreTurnTrigger) && scope != BackgroundConfig.Scope.APPLICATION;
 		}

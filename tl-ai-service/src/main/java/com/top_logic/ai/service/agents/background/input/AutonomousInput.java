@@ -5,6 +5,7 @@
  */
 package com.top_logic.ai.service.agents.background.input;
 
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 
@@ -16,6 +17,7 @@ import com.top_logic.basic.config.annotation.Name;
  * useful for autonomous agents that perform a predefined task without requiring dynamic context.
  * </p>
  */
+@Label("Custom message")
 public interface AutonomousInput extends InputConfig {
 
 	/** @see #getCustomMessage() */
@@ -27,6 +29,7 @@ public interface AutonomousInput extends InputConfig {
 	 * @return The custom message, never {@code null}.
 	 */
 	@Name(CUSTOM_MESSAGE)
+	@Label("Custom message")
 	@Mandatory
 	String getCustomMessage();
 }

@@ -6,6 +6,7 @@
 package com.top_logic.ai.service.agents.background.input;
 
 import com.top_logic.basic.config.annotation.DefaultContainer;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -18,6 +19,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  * that is passed to the background agent.
  * </p>
  */
+@Label("TL-Script")
 public interface ScriptInput extends InputConfig {
 
 	/** @see #getScript() */
@@ -34,6 +36,7 @@ public interface ScriptInput extends InputConfig {
 	 * @return The script expression, never {@code null}.
 	 */
 	@Name(SCRIPT)
+	@Label("Script")
 	@Mandatory
 	@DefaultContainer
 	Expr getScript();

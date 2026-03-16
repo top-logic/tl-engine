@@ -6,6 +6,7 @@
 package com.top_logic.ai.service.agents.background.output;
 
 import com.top_logic.basic.config.annotation.DefaultContainer;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -13,6 +14,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 /**
  * Output handler that evaluates a TL-Script expression with the agent's response.
  */
+@Label("TL-Script output handler")
 public interface ScriptOutputHandler extends OutputHandler {
 
 	/** @see #getScript() */
@@ -27,6 +29,7 @@ public interface ScriptOutputHandler extends OutputHandler {
 	 * </p>
 	 */
 	@Name(SCRIPT)
+	@Label("Script")
 	@Mandatory
 	@DefaultContainer
 	Expr getScript();

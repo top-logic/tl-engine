@@ -5,6 +5,7 @@
  */
 package com.top_logic.ai.service.agents.background.trigger;
 
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
 
@@ -23,21 +24,22 @@ import com.top_logic.basic.config.annotation.defaults.LongDefault;
  * set, the input is structured with XML tags:
  * </p>
  *
- * <pre>{@code
- * <user-message>
+ * <pre>
+ * &lt;user-message&gt;
  * The pending user message text
- * </user-message>
+ * &lt;/user-message&gt;
  *
- * <additional-context>
+ * &lt;additional-context&gt;
  * The result from the configured input source
- * </additional-context>
- * }</pre>
+ * &lt;/additional-context&gt;
+ * </pre>
  *
  * <p>
  * When no input configuration is set, the agent receives the raw user message without XML tags.
  * Design the agent's system prompt accordingly.
  * </p>
  */
+@Label("Pre-turn")
 public interface PreTurnTrigger extends TriggerConfig {
 
 	/** @see #getTimeout() */
@@ -49,6 +51,7 @@ public interface PreTurnTrigger extends TriggerConfig {
 	/**
 	 * Policy for handling pre-turn trigger timeouts.
 	 */
+	@Label("Fail policy")
 	enum FailPolicy {
 
 		/**
@@ -59,6 +62,7 @@ public interface PreTurnTrigger extends TriggerConfig {
 		 * agent failures.
 		 * </p>
 		 */
+		@Label("Open")
 		OPEN,
 
 		/**
@@ -68,6 +72,7 @@ public interface PreTurnTrigger extends TriggerConfig {
 		 * Use this policy for safety-critical checks that must complete before the turn proceeds.
 		 * </p>
 		 */
+		@Label("Closed")
 		CLOSED
 	}
 
@@ -82,6 +87,7 @@ public interface PreTurnTrigger extends TriggerConfig {
 	 * @return The timeout in milliseconds.
 	 */
 	@Name(TIMEOUT)
+	@Label("Timeout")
 	@LongDefault(30000)
 	long getTimeout();
 
@@ -96,5 +102,6 @@ public interface PreTurnTrigger extends TriggerConfig {
 	 * @return The fail policy, never {@code null}.
 	 */
 	@Name(FAIL_POLICY)
+	@Label("Fail policy")
 	FailPolicy getFailPolicy();
 }

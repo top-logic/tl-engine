@@ -7,6 +7,7 @@ package com.top_logic.ai.service.agents.background.input;
 
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Hidden;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 
@@ -18,6 +19,7 @@ import com.top_logic.basic.config.annotation.Name;
  * configured declaratively.
  * </p>
  */
+@Label("Provider")
 @Hidden
 public interface ProviderInput extends InputConfig {
 

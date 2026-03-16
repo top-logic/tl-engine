@@ -5,6 +5,8 @@
  */
 package com.top_logic.ai.service.agents.background.trigger;
 
+import com.top_logic.basic.config.annotation.Label;
+
 /**
  * Trigger that fires after a chat turn completes.
  *
@@ -14,6 +16,7 @@ package com.top_logic.ai.service.agents.background.trigger;
  * user's response.
  * </p>
  */
+@Label("Post-turn")
 public interface PostTurnTrigger extends TriggerConfig {
 
 	// No additional properties — presence of this trigger type is sufficient.

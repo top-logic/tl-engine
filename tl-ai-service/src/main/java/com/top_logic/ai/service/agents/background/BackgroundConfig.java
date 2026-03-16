@@ -17,6 +17,7 @@ import com.top_logic.ai.service.agents.background.trigger.ChatTriggerNotAllowedF
 import com.top_logic.ai.service.agents.background.trigger.TriggerConfig;
 import com.top_logic.ai.service.agents.background.trigger.TriggerOptionsForScope;
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
@@ -39,6 +40,7 @@ import com.top_logic.layout.form.values.edit.annotation.Options;
 	BackgroundConfig.INPUT,
 	BackgroundConfig.OUTPUT_HANDLERS
 })
+@Label("Background configuration")
 public interface BackgroundConfig extends ConfigurationItem {
 
 	/** @see #getScope() */
@@ -56,20 +58,20 @@ public interface BackgroundConfig extends ConfigurationItem {
 	/**
 	 * Defines the operational scope of the background agent.
 	 */
+	@Label("Scope")
 	enum Scope {
 
 		/**
 		 * Agent operates within the context of a specific chat session.
 		 *
-		 * <p>
-		 * This is the default scope.
-		 * </p>
 		 */
+		@Label("Chat")
 		CHAT,
 
 		/**
 		 * Agent operates at the application level, independent of any chat session.
 		 */
+		@Label("Application")
 		APPLICATION
 	}
 
@@ -83,6 +85,7 @@ public interface BackgroundConfig extends ConfigurationItem {
 	 * @return The scope, never {@code null}.
 	 */
 	@Name(SCOPE)
+	@Label("Scope")
 	Scope getScope();
 
 	/**
@@ -92,6 +95,7 @@ public interface BackgroundConfig extends ConfigurationItem {
 	 */
 	@Name(TRIGGER)
 	@Mandatory
+	@Label("Trigger")
 	@Options(fun = TriggerOptionsForScope.class, args = @Ref(SCOPE))
 	@Constraint(value = ChatTriggerNotAllowedForApplicationConstraint.class, args = @Ref(SCOPE))
 	TriggerConfig getTrigger();
@@ -102,14 +106,13 @@ public interface BackgroundConfig extends ConfigurationItem {
 	 * <p>
 	 * For pre-turn triggers, the pending user message is always included. When an additional input
 	 * source is configured here, the agent receives both parts wrapped in XML tags
-	 * ({@code <user-message>} and {@code <additional-context>}). When no input is configured, the
-	 * agent receives the raw user message without tags.
+	 * {@code <user-message> and <additional-context>}. When no input is configured, the agent
+	 * receives the raw user message without tags.
 	 * </p>
 	 *
 	 * <p>
 	 * For other trigger types, the input configuration is the sole data source for the agent.
-	 * {@link com.top_logic.ai.service.agents.background.input.ChatContextInput ChatContextInput}
-	 * is not available for pre-turn triggers or application-scoped agents.
+	 * <i>Chat context</i> is not available for pre-turn triggers or application-scoped agents.
 	 * </p>
 	 *
 	 * @return The input configuration, or {@code null} to use the default for the trigger type.
@@ -134,5 +137,6 @@ public interface BackgroundConfig extends ConfigurationItem {
 	 * @return The list of output handler configurations, may be empty.
 	 */
 	@Name(OUTPUT_HANDLERS)
+	@Label("Output handlers")
 	List<OutputHandler> getOutputHandlers();
 }

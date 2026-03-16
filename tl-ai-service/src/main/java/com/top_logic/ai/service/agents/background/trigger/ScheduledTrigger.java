@@ -8,6 +8,7 @@ package com.top_logic.ai.service.agents.background.trigger;
 import java.util.List;
 
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
@@ -21,6 +22,7 @@ import com.top_logic.util.sched.task.schedule.SchedulingAlgorithm;
  * configurations. This is useful for periodic reviews, report generation, or maintenance tasks.
  * </p>
  */
+@Label("Scheduled")
 public interface ScheduledTrigger extends TriggerConfig {
 
 	/** @see #getSchedules() */
@@ -36,6 +38,7 @@ public interface ScheduledTrigger extends TriggerConfig {
 	 * @return The list of scheduling algorithm configurations, may be empty.
 	 */
 	@Name(SCHEDULES)
+	@Label("Schedules")
 	@Options(fun = AllInAppImplementations.class)
 	List<PolymorphicConfiguration<? extends SchedulingAlgorithm>> getSchedules();
 }

@@ -5,6 +5,7 @@
  */
 package com.top_logic.ai.service.agents.background.input;
 
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 
 /**
@@ -15,6 +16,7 @@ import com.top_logic.basic.config.annotation.Name;
  * depending on the {@link #getContent()} setting.
  * </p>
  */
+@Label("Chat context")
 public interface ChatContextInput extends InputConfig {
 
 	/** @see #getContent() */
@@ -23,6 +25,7 @@ public interface ChatContextInput extends InputConfig {
 	/**
 	 * Defines how much of the chat context to include as input.
 	 */
+	@Label("Content scope")
 	enum Content {
 
 		/**
@@ -32,11 +35,13 @@ public interface ChatContextInput extends InputConfig {
 		 * This is the default.
 		 * </p>
 		 */
+		@Label("Last turn")
 		LAST_TURN,
 
 		/**
 		 * Include the entire chat conversation history.
 		 */
+		@Label("Full chat")
 		FULL_CHAT
 	}
 
@@ -50,5 +55,6 @@ public interface ChatContextInput extends InputConfig {
 	 * @return The content scope, never {@code null}.
 	 */
 	@Name(CONTENT)
+	@Label("Content scope")
 	Content getContent();
 }

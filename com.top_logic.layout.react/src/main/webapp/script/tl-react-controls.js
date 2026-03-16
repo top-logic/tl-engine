@@ -1198,7 +1198,7 @@ const be = ({ icon: n }) => n ? /* @__PURE__ */ e.createElement("i", { className
   const r = K().dialogs ?? [], l = yn(r.length);
   return Cn(() => {
     r.length < l.current && r.length > 0, l.current = r.length;
-  }, [r.length]), r.length === 0 ? null : /* @__PURE__ */ e.createElement("div", { id: n, className: "tlDialogManager" }, r.map((c, i) => /* @__PURE__ */ e.createElement(Y, { key: i, control: c })));
+  }, [r.length]), r.length === 0 ? null : /* @__PURE__ */ e.createElement("div", { id: n, className: "tlDialogManager" }, r.map((c) => /* @__PURE__ */ e.createElement(Y, { key: c.controlId, control: c })));
 }, { useCallback: qe, useRef: ye, useState: Ze } = e, kn = {
   "js.window.close": "Close"
 }, Sn = ["n", "ne", "e", "se", "s", "sw", "w", "nw"], Nn = ({ controlId: n }) => {

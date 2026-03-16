@@ -27,8 +27,8 @@ const TLDialogManager: React.FC<TLCellProps> = ({ controlId }) => {
 
   return (
     <div id={controlId} className="tlDialogManager">
-      {dialogs.map((dialog, i) => (
-        <TLChild key={i} control={dialog} />
+      {dialogs.map((dialog: any) => (
+        <TLChild key={dialog.controlId} control={dialog} />
       ))}
     </div>
   );

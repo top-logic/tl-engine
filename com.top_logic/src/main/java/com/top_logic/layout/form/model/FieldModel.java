@@ -13,8 +13,7 @@ import com.top_logic.basic.util.ResKey;
  * Lightweight model for a single form field value.
  *
  * <p>
- * Captures typed value, dirty tracking, validation, and edit lifecycle without the UI mechanics
- * of {@link com.top_logic.layout.form.FormField} (raw value parsing, {@link com.top_logic.layout.form.FormGroup} hierarchy, display state).
+ * Captures typed value, dirty tracking, validation, and edit lifecycle.
  * </p>
  */
 public interface FieldModel {

@@ -42,12 +42,22 @@ public class ChatContextAdapter implements InputAdapter {
 				"ChatContextAdapter requires a ChatContext, got: " + context.getClass().getName());
 		}
 		if (_content == ChatContextInput.Content.LAST_TURN) {
+			Object task = chatCtx.getCompletedTask();
+			if (task != null && !(task instanceof ChatTask)) {
+				throw new IllegalArgumentException(
+					"Expected ChatTask but got: " + task.getClass().getName());
+			}
 			return ConversationSerializer.serializeLastTurn(
 				chatCtx.getUserMessage(),
 				chatCtx.getAgentResponse(),
-				(ChatTask) chatCtx.getCompletedTask());
+				(ChatTask) task);
 		} else {
-			return ConversationSerializer.serializeFullChat((Chat) chatCtx.getChat());
+			Object chat = chatCtx.getChat();
+			if (!(chat instanceof Chat)) {
+				throw new IllegalArgumentException(
+					"Expected Chat but got: " + (chat != null ? chat.getClass().getName() : "null"));
+			}
+			return ConversationSerializer.serializeFullChat((Chat) chat);
 		}
 	}
 }

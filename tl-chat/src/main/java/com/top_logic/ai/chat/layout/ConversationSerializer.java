@@ -13,8 +13,8 @@ import java.util.Map;
  *
  * <p>
  * Provides two serialization modes: {@link #serializeLastTurn(String, String, ChatTask)} for
- * auto-review after each agent turn, and {@link #serializeFullChat(Chat)} for manual review of the
- * entire conversation.
+ * auto-review after each agent turn (includes tool timeline), and {@link #serializeFullChat(Chat)}
+ * for manual review of the entire conversation (messages only, no tool timelines).
  * </p>
  */
 public class ConversationSerializer {
@@ -63,26 +63,31 @@ public class ConversationSerializer {
 	/**
 	 * Serializes the entire chat conversation into XML for manual review.
 	 *
+	 * <p>
+	 * Only user messages and agent/system responses are included. Tool call timelines are omitted
+	 * to keep the serialized output concise.
+	 * </p>
+	 *
 	 * @param chat
-	 *        The {@link Chat} containing all entries (messages and task snapshots).
+	 *        The {@link Chat} containing all entries.
 	 * @return An XML string wrapped in {@code <review-request>}.
 	 */
 	public static String serializeFullChat(Chat chat) {
 		StringBuilder userMessages = new StringBuilder();
 		StringBuilder agentResponses = new StringBuilder();
-		StringBuilder timelines = new StringBuilder();
 
 		for (ChatEntry entry : chat.getEntries()) {
+			if (userMessages.length() + agentResponses.length() > MAX_TOTAL_LENGTH - 200) {
+				break;
+			}
 			if (entry instanceof ChatEntry.MessageEntry me) {
 				ChatMessage msg = me.message();
 				String user = msg.getUser();
-				if ("Agent".equals(user) || "AI".equals(user)) {
+				if ("Agent".equals(user) || "AI".equals(user) || "System".equals(user)) {
 					agentResponses.append("    ").append(escapeXml(msg.getText())).append("\n");
 				} else {
 					userMessages.append("    ").append(escapeXml(msg.getText())).append("\n");
 				}
-			} else if (entry instanceof ChatEntry.TaskSnapshotEntry tse) {
-				appendTimeline(timelines, tse.task().getTimelineEvents());
 			}
 		}
 
@@ -90,7 +95,6 @@ public class ConversationSerializer {
 		sb.append("<review-request>\n");
 		sb.append("  <user-messages>\n").append(userMessages).append("  </user-messages>\n");
 		sb.append("  <agent-responses>\n").append(agentResponses).append("  </agent-responses>\n");
-		sb.append(timelines);
 		sb.append("</review-request>");
 		return truncateTotal(sb.toString());
 	}
@@ -181,7 +185,12 @@ public class ConversationSerializer {
 		if (xml.length() <= MAX_TOTAL_LENGTH) {
 			return xml;
 		}
-		return xml.substring(0, MAX_TOTAL_LENGTH - 20) + "\n</review-request>";
+		// Find the last complete line boundary before the limit
+		int cutoff = xml.lastIndexOf('\n', MAX_TOTAL_LENGTH - 25);
+		if (cutoff <= 0) {
+			cutoff = MAX_TOTAL_LENGTH - 25;
+		}
+		return xml.substring(0, cutoff) + "\n<!-- truncated -->\n</review-request>";
 	}
 
 	/**

@@ -37,13 +37,6 @@ public class BlockTurnResult {
 	}
 
 	/**
-	 * Whether a block was requested.
-	 */
-	public static boolean isBlocked() {
-		return BLOCK_REASON.get() != null;
-	}
-
-	/**
 	 * Clears any pending block.
 	 */
 	public static void clear() {

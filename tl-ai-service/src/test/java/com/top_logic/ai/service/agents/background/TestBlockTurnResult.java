@@ -26,7 +26,6 @@ public class TestBlockTurnResult extends TestCase {
 
 	/** Initially not blocked. */
 	public void testInitiallyNotBlocked() {
-		assertFalse(BlockTurnResult.isBlocked());
 		assertNull(BlockTurnResult.consumeBlockReason());
 	}
 
@@ -34,7 +33,7 @@ public class TestBlockTurnResult extends TestCase {
 	public void testBlockStoresReason() {
 		BlockTurnResult.block("unsafe");
 
-		assertTrue(BlockTurnResult.isBlocked());
+		assertEquals("unsafe", BlockTurnResult.consumeBlockReason());
 	}
 
 	/** Consume returns reason and clears it. */
@@ -42,7 +41,6 @@ public class TestBlockTurnResult extends TestCase {
 		BlockTurnResult.block("reason");
 
 		assertEquals("reason", BlockTurnResult.consumeBlockReason());
-		assertFalse(BlockTurnResult.isBlocked());
 		assertNull(BlockTurnResult.consumeBlockReason());
 	}
 
@@ -51,7 +49,6 @@ public class TestBlockTurnResult extends TestCase {
 		BlockTurnResult.block("reason");
 		BlockTurnResult.clear();
 
-		assertFalse(BlockTurnResult.isBlocked());
 		assertNull(BlockTurnResult.consumeBlockReason());
 	}
 }

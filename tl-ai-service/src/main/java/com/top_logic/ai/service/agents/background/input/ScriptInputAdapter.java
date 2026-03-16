@@ -58,11 +58,11 @@ public class ScriptInputAdapter implements InputAdapter {
 					_executor.context(true, null, null),
 					Args.none()));
 
-			return result != null ? result.toString() : null;
+			return result != null ? result.toString() : "";
 		} catch (Exception ex) {
 			Logger.error("Script input evaluation failed for agent '" + context.getAgentName() + "'",
 				ex, ScriptInputAdapter.class);
-			return null;
+			return "";
 		}
 	}
 }

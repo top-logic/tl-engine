@@ -5,6 +5,7 @@
  */
 package com.top_logic.ai.service.agents.background;
 
+import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
@@ -56,6 +57,8 @@ public class BackgroundAgentExecutor {
 
 	private final AgentRegistry _registry;
 
+	private final Duration _timeoutOverride;
+
 	private static final Map<Class<?>, Function<Object, InputAdapter>> EXTERNAL_ADAPTERS =
 		new ConcurrentHashMap<>();
 
@@ -66,7 +69,27 @@ public class BackgroundAgentExecutor {
 	 *        The agent registry for resolving agent configurations.
 	 */
 	public BackgroundAgentExecutor(AgentRegistry registry) {
+		this(registry, null);
+	}
+
+	/**
+	 * Creates a new {@link BackgroundAgentExecutor} with a model-level timeout override.
+	 *
+	 * <p>
+	 * When {@code timeoutOverride} is non-null, the LLM HTTP client is configured with this
+	 * timeout so that long-running calls fail cleanly at the network level, avoiding the need
+	 * for {@code Future.cancel()} and the thread-pool poisoning it can cause.
+	 * </p>
+	 *
+	 * @param registry
+	 *        The agent registry for resolving agent configurations.
+	 * @param timeoutOverride
+	 *        Timeout for the underlying HTTP client; may be {@code null} to use the agent's
+	 *        configured timeout.
+	 */
+	public BackgroundAgentExecutor(AgentRegistry registry, Duration timeoutOverride) {
 		_registry = registry;
+		_timeoutOverride = timeoutOverride;
 	}
 
 	/**
@@ -118,7 +141,9 @@ public class BackgroundAgentExecutor {
 		String blockReason = BlockTurnResult.consumeBlockReason();
 
 		// 4. Run output handlers
-		runOutputHandlers(bgConfig, response, context);
+		if (response != null) {
+			runOutputHandlers(bgConfig, response, context);
+		}
 
 		return new ExecutionResult(response, blockReason);
 	}
@@ -143,6 +168,17 @@ public class BackgroundAgentExecutor {
 	public static <T> void registerInputAdapterFactory(
 			Class<T> configType, Function<T, InputAdapter> factory) {
 		EXTERNAL_ADAPTERS.put(configType, cfg -> factory.apply((T) cfg));
+	}
+
+	/**
+	 * Unregisters an input adapter factory previously registered via
+	 * {@link #registerInputAdapterFactory(Class, Function)}.
+	 *
+	 * @param configType
+	 *        The config type to unregister.
+	 */
+	public static void unregisterInputAdapterFactory(Class<?> configType) {
+		EXTERNAL_ADAPTERS.remove(configType);
 	}
 
 	/**
@@ -194,6 +230,9 @@ public class BackgroundAgentExecutor {
 		if (handler instanceof OutputHandlerImplementation.Config<?> javaConfig) {
 			DefaultInstantiationContext instCtx = new DefaultInstantiationContext(BackgroundAgentExecutor.class);
 			OutputHandlerImplementation impl = instCtx.getInstance(javaConfig);
+			if (instCtx.hasErrors()) {
+				throw new RuntimeException("Failed to instantiate output handler: " + javaConfig);
+			}
 			impl.handleOutput(response, context);
 			return;
 		}
@@ -231,7 +270,9 @@ public class BackgroundAgentExecutor {
 			Object response = ThreadContextManager.inSystemInteraction(
 				BackgroundAgentExecutor.class,
 				() -> {
-					UntypedAgent agent = _registry.buildUntypedAgent(agentName);
+					UntypedAgent agent = _timeoutOverride != null
+						? _registry.buildUntypedAgent(agentName, _timeoutOverride)
+						: _registry.buildUntypedAgent(agentName);
 					return agent.invoke(Map.of("message", input));
 				});
 			return response != null ? response.toString() : null;

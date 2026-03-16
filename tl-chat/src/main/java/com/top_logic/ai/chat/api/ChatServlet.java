@@ -90,6 +90,12 @@ public class ChatServlet extends HttpServlet {
 	}
 
 	@Override
+	public void destroy() {
+		BackgroundAgentExecutor.unregisterInputAdapterFactory(ChatContextInput.class);
+		super.destroy();
+	}
+
+	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		String pathInfo = req.getPathInfo();
 		if (pathInfo == null || pathInfo.isEmpty() || pathInfo.equals("/")) {

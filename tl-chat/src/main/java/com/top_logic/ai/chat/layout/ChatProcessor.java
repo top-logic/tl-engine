@@ -5,6 +5,7 @@
  */
 package com.top_logic.ai.chat.layout;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -103,21 +104,6 @@ public class ChatProcessor {
 	}
 
 	/**
-	 * Submits a fire-and-forget task to the shared background executor.
-	 *
-	 * <p>
-	 * Intended for lightweight background operations such as manual review invocations from the
-	 * REST API.
-	 * </p>
-	 *
-	 * @param task
-	 *        The task to execute.
-	 */
-	public static void submitBackground(Runnable task) {
-		BACKGROUND_EXECUTOR.submit(task);
-	}
-
-	/**
 	 * Executes user message through the AgentRegistry entry point agent.
 	 * Sets trace so AgentCall and ToolCall events are visible in the UI timeline.
 	 * Uses state from tracker; {@code taskId} must already be set on state.
@@ -180,12 +166,21 @@ public class ChatProcessor {
 				return;
 			}
 
-			// Execute pre-turn background agents (synchronous, can block)
+			// Execute pre-turn background agents synchronously with model-level timeout.
+			// The timeout is enforced at the LLM HTTP client level (not via Future.cancel())
+			// to avoid thread-pool poisoning from lingering interrupt flags.
 			List<String> preTurnAgents = agentRegistry.getBackgroundAgents(
 				PreTurnTrigger.class, BackgroundAgentConfig.Scope.CHAT);
 			for (String preTurnAgent : preTurnAgents) {
+				BackgroundAgentConfig bgConfig =
+					(BackgroundAgentConfig) agentRegistry.getAgentConfig(preTurnAgent);
+				PreTurnTrigger trigger = (PreTurnTrigger) bgConfig.getTrigger();
+				long timeoutMs = trigger.getTimeout();
+				PreTurnTrigger.FailPolicy failPolicy = trigger.getFailPolicy();
+
+				BackgroundAgentExecutor bgExecutor =
+					new BackgroundAgentExecutor(agentRegistry, Duration.ofMillis(timeoutMs));
 				try {
-					BackgroundAgentExecutor bgExecutor = new BackgroundAgentExecutor(agentRegistry);
 					ChatContext bgContext = ChatContext.preTurn(preTurnAgent, trimmed, taskTracker.getChat());
 					ExecutionResult execResult = bgExecutor.execute(preTurnAgent, bgContext);
 					if (execResult.isBlocked()) {
@@ -196,7 +191,13 @@ public class ChatProcessor {
 				} catch (Exception ex) {
 					Logger.error("Pre-turn agent '" + preTurnAgent + "' failed: " + ex.getMessage(),
 						ex, ChatProcessor.class);
-					// fail-open: continue to Orchestrator
+					if (failPolicy == PreTurnTrigger.FailPolicy.CLOSED) {
+						state.addPendingMessage(new ChatMessage("System",
+							"Message blocked: safety check failed for agent '" + preTurnAgent + "'"));
+						taskTracker.completeTask(taskId);
+						return;
+					}
+					// OPEN: continue to Orchestrator
 				}
 			}
 
@@ -502,6 +503,9 @@ public class ChatProcessor {
 		List<String> postTurnAgents = agentRegistry.getBackgroundAgents(
 			PostTurnTrigger.class, BackgroundAgentConfig.Scope.CHAT);
 
+		Chat capturedChat = taskTracker.getChat();
+		BackgroundAgentExecutor bgExecutor = new BackgroundAgentExecutor(agentRegistry);
+
 		for (String agentName : postTurnAgents) {
 			if (!taskTracker.tryStartBackgroundAgent(agentName)) {
 				continue; // debounce: already running
@@ -510,14 +514,12 @@ public class ChatProcessor {
 			String name = agentName; // effectively final for lambda
 			BACKGROUND_EXECUTOR.submit(() -> {
 				try {
-					BackgroundAgentExecutor executor = new BackgroundAgentExecutor(agentRegistry);
 					ChatContext context = ChatContext.lastTurn(name,
-						userMessage, agentResponse, completedTask, taskTracker.getChat());
-					ExecutionResult execResult = executor.execute(name, context);
+						userMessage, agentResponse, completedTask, capturedChat);
+					ExecutionResult execResult = bgExecutor.execute(name, context);
 					if (execResult.isBlocked()) {
 						// Post-turn block: add system message with block reason
-						Chat chat = taskTracker.getChat();
-						chat.addMessage(new ChatMessage("System", execResult.blockReason()));
+						capturedChat.addMessage(new ChatMessage("System", execResult.blockReason()));
 					}
 				} catch (Exception ex) {
 					Logger.error("Background agent '" + name + "' failed: " + ex.getMessage(),

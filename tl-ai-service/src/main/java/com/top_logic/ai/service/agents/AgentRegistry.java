@@ -194,11 +194,27 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		_instance = this;
 		_agentNameIndex = buildAgentNameIndex(getConfig().getAgents());
 
-		// Validate agent model references against AIService (informational only)
+		// Build a shared SkillRegistry from XML-configured skills
+		_skillRegistry = new SkillRegistry();
+
+		Map<String, SkillConfig> skillConfigs = getConfig().getSkills();
+		if (skillConfigs != null && !skillConfigs.isEmpty()) {
+			_skillRegistry.registerSkillsFromConfig(skillConfigs);
+		}
+
+		// Single pass over all agents: validate models, register skills, collect entry points,
+		// log background agents, and register scheduled tasks.
 		AIService aiService = AIService.getInstance();
+		Scheduler scheduler = Scheduler.Module.INSTANCE.getImplementationInstance();
+		List<String> entryPoints = new ArrayList<>();
+		_scheduledTaskNames = new ArrayList<>();
+
 		for (Map.Entry<String, AgentConfig> entry : getConfig().getAgents().entrySet()) {
 			String agentName = entry.getKey();
-			String model = entry.getValue().getModel();
+			AgentConfig agentConfig = entry.getValue();
+
+			// Validate model reference
+			String model = agentConfig.getModel();
 			if (model == null || model.isEmpty()) {
 				Logger.info(
 					"Agent '" + agentName + "' has no model configured. " +
@@ -210,41 +226,56 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 						"' which is not registered in AIService. Available: " + aiService.getModelNames(),
 					AgentRegistry.class);
 			}
-		}
 
-		// Build a shared SkillRegistry from XML-configured skills
-		_skillRegistry = new SkillRegistry();
-
-		Map<String, SkillConfig> skillConfigs = getConfig().getSkills();
-		if (skillConfigs != null && !skillConfigs.isEmpty()) {
-			_skillRegistry.registerSkillsFromConfig(skillConfigs);
-		}
-
-		// Register agent-to-skill mappings and validate references
-		for (Map.Entry<String, AgentConfig> entry : getConfig().getAgents().entrySet()) {
-			List<String> skillNames = entry.getValue().getSkills();
+			// Register skills and validate references
+			List<String> skillNames = agentConfig.getSkills();
 			if (!skillNames.isEmpty()) {
-				_skillRegistry.registerAgentSkills(entry.getKey(), skillNames);
+				_skillRegistry.registerAgentSkills(agentName, skillNames);
 				for (String skillName : skillNames) {
 					try {
 						_skillRegistry.getSkill(skillName);
 					} catch (IllegalArgumentException ex) {
 						Logger.warn(
-							"Agent '" + entry.getKey() + "' references unknown skill '" + skillName + "': " +
+							"Agent '" + agentName + "' references unknown skill '" + skillName + "': " +
 								ex.getMessage(),
 							AgentRegistry.class);
 					}
 				}
 			}
+
+			// Collect entry points
+			if (agentConfig instanceof ChatAgentConfig chatConfig && chatConfig.isEntryPoint()) {
+				entryPoints.add(agentName);
+			}
+
+			// Handle background agents
+			if (agentConfig instanceof BackgroundAgentConfig bgConfig) {
+				Logger.info("Background agent '" + agentName + "' registered: scope=" + bgConfig.getScope(),
+					AgentRegistry.class);
+
+				// Register scheduled tasks
+				TriggerConfig trigger = bgConfig.getTrigger();
+				if (trigger instanceof ScheduledTrigger scheduled) {
+					String taskName = "ai-bg-" + agentName;
+					BackgroundAgentTask.Config taskConfig =
+						TypedConfiguration.newConfigItem(BackgroundAgentTask.Config.class);
+					taskConfig.setName(taskName);
+					taskConfig.setAgentName(agentName);
+					taskConfig.getSchedules().addAll(scheduled.getSchedules());
+
+					DefaultInstantiationContext instCtx = new DefaultInstantiationContext(AgentRegistry.class);
+					BackgroundAgentTask task = instCtx.getInstance(taskConfig);
+					scheduler.addTask(task);
+					_scheduledTaskNames.add(taskName);
+
+					Logger.info("Registered scheduler task '" + taskName + "' for background agent '" +
+						agentName + "' with " + scheduled.getSchedules().size() + " schedule(s).",
+						AgentRegistry.class);
+				}
+			}
 		}
 
 		// Validate that exactly one agent is marked as entry point
-		List<String> entryPoints = new ArrayList<>();
-		for (Map.Entry<String, AgentConfig> entry : getConfig().getAgents().entrySet()) {
-			if (entry.getValue() instanceof ChatAgentConfig chatConfig && chatConfig.isEntryPoint()) {
-				entryPoints.add(entry.getKey());
-			}
-		}
 		if (entryPoints.isEmpty()) {
 			throw new RuntimeException(
 				"No agent is marked as entry point. Exactly one agent must have entry-point=\"true\". " +
@@ -256,39 +287,6 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 					". Exactly one agent must have entry-point=\"true\".");
 		}
 		_entryPointAgentName = entryPoints.get(0);
-
-		// Log registered background agents
-		for (Map.Entry<String, AgentConfig> entry : getConfig().getAgents().entrySet()) {
-			if (entry.getValue() instanceof BackgroundAgentConfig bgConfig) {
-				Logger.info("Background agent '" + entry.getKey() + "' registered: scope=" + bgConfig.getScope(),
-					AgentRegistry.class);
-			}
-		}
-
-		// Register scheduled background agents with TopLogic Scheduler
-		_scheduledTaskNames = new ArrayList<>();
-		Scheduler scheduler = Scheduler.Module.INSTANCE.getImplementationInstance();
-		for (Map.Entry<String, AgentConfig> entry : getConfig().getAgents().entrySet()) {
-			if (!(entry.getValue() instanceof BackgroundAgentConfig bgConfig)) continue;
-			TriggerConfig trigger = bgConfig.getTrigger();
-			if (!(trigger instanceof ScheduledTrigger scheduled)) continue;
-
-			String taskName = "ai-bg-" + entry.getKey();
-			BackgroundAgentTask.Config taskConfig =
-				TypedConfiguration.newConfigItem(BackgroundAgentTask.Config.class);
-			taskConfig.setName(taskName);
-			taskConfig.setAgentName(entry.getKey());
-			taskConfig.getSchedules().addAll(scheduled.getSchedules());
-
-			DefaultInstantiationContext instCtx = new DefaultInstantiationContext(AgentRegistry.class);
-			BackgroundAgentTask task = instCtx.getInstance(taskConfig);
-			scheduler.addTask(task);
-			_scheduledTaskNames.add(taskName);
-
-			Logger.info("Registered scheduler task '" + taskName + "' for background agent '" +
-				entry.getKey() + "' with " + scheduled.getSchedules().size() + " schedule(s).",
-				AgentRegistry.class);
-		}
 
 		Logger.info("AgentRegistry started with " + getConfig().getAgents().size() + " agent(s) and " +
 			skillConfigs.size() + " skill(s).",
@@ -316,24 +314,6 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		} finally {
 			super.shutDown();
 		}
-	}
-
-	/**
-	 * Checks whether an agent with the given name is configured.
-	 *
-	 * @param name
-	 *        The agent name to check.
-	 * @return {@code true} if an agent with the given name exists, {@code false} otherwise.
-	 */
-	public boolean hasAgent(String name) {
-		if (name == null) {
-			return false;
-		}
-		Map<String, AgentConfig> agents = getConfig().getAgents();
-		if (agents.containsKey(name)) {
-			return true;
-		}
-		return _agentNameIndex.containsKey(name.toLowerCase(Locale.ROOT));
 	}
 
 	/**
@@ -387,18 +367,6 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	}
 
 	/**
-	 * Checks whether the named agent has a background configuration.
-	 *
-	 * @param agentName
-	 *        The agent name to check.
-	 * @return {@code true} if the agent exists and has a background configuration.
-	 */
-	public boolean isBackgroundAgent(String agentName) {
-		AgentConfig config = getAgentConfig(agentName);
-		return config instanceof BackgroundAgentConfig;
-	}
-
-	/**
 	 * Returns the name of the agent marked as the chat entry point.
 	 *
 	 * @return The entry point agent name, never {@code null}.
@@ -435,6 +403,26 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	 * @return A chat model configured per the agent's settings.
 	 */
 	public ChatModel buildChatModel(AgentConfig config) {
+		return buildChatModel(config, null);
+	}
+
+	/**
+	 * Builds a provider-specific {@link ChatModel} from the given agent configuration with an
+	 * optional timeout override.
+	 *
+	 * <p>
+	 * When {@code timeoutOverride} is non-null it takes precedence over the agent's configured
+	 * {@link AgentConfig#getTimeoutSeconds() timeoutSeconds}. This is used by pre-turn agents
+	 * to enforce a model-level HTTP timeout instead of relying on {@code Future.cancel()}.
+	 * </p>
+	 *
+	 * @param config
+	 *        The agent configuration.
+	 * @param timeoutOverride
+	 *        Optional timeout that overrides the agent's configured timeout; may be {@code null}.
+	 * @return A chat model configured per the agent's settings.
+	 */
+	public ChatModel buildChatModel(AgentConfig config, Duration timeoutOverride) {
 		AIService aiService = AIService.getInstance();
 		if (aiService == null) {
 			throw new RuntimeException("AIService is not available.");
@@ -453,13 +441,13 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		}
 
 		if (factory instanceof AnthropicChatModelFactory) {
-			return buildAnthropicModel((AnthropicChatModelFactory) factory, config);
+			return buildAnthropicModel((AnthropicChatModelFactory) factory, config, timeoutOverride);
 		}
 		if (factory instanceof MistralChatModelFactory) {
-			return buildMistralModel((MistralChatModelFactory) factory, config);
+			return buildMistralModel((MistralChatModelFactory) factory, config, timeoutOverride);
 		}
 		if (factory instanceof OpenAIChatModelFactory) {
-			return buildOpenAIModel((OpenAIChatModelFactory) factory, config);
+			return buildOpenAIModel((OpenAIChatModelFactory) factory, config, timeoutOverride);
 		}
 
 		return aiService.getChatModel(modelName);
@@ -682,7 +670,56 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	 * @return A fully configured untyped agent instance.
 	 */
 	public UntypedAgent buildUntypedAgent(String name) {
-		return buildUntypedAgent(name, null);
+		return buildUntypedAgent(name, (ChatMemory) null);
+	}
+
+	/**
+	 * Builds an {@link UntypedAgent} with a model-level timeout override.
+	 *
+	 * <p>
+	 * Used by pre-turn agents where the HTTP client timeout enforces the deadline instead of
+	 * {@code Future.cancel()}, avoiding thread-pool poisoning from lingering interrupt flags.
+	 * </p>
+	 *
+	 * @param name
+	 *        The agent name as declared in the configuration.
+	 * @param timeoutOverride
+	 *        Timeout passed to the underlying HTTP client; may be {@code null} to use the
+	 *        agent's configured timeout.
+	 * @return A fully configured untyped agent instance.
+	 */
+	public UntypedAgent buildUntypedAgent(String name, Duration timeoutOverride) {
+		AgentConfig config = getAgentConfig(name);
+		ChatModel model = buildChatModel(config, timeoutOverride);
+		String systemPrompt = getSystemPrompt(config);
+		List<ToolImplementation> tools = buildTools(config);
+		List<ToolImplementation> delegationTools = buildDelegationTools(config, null);
+
+		Map<ToolSpecification, ToolExecutor> allTools = new LinkedHashMap<>();
+		for (ToolImplementation impl : tools) {
+			allTools.put(impl.getSpecification(), impl.getExecutor());
+		}
+		for (ToolImplementation impl : delegationTools) {
+			allTools.put(impl.getSpecification(), impl.getExecutor());
+		}
+
+		var builder = AgenticServices.agentBuilder()
+			.chatModel(model)
+			.systemMessage(systemPrompt)
+			.userMessage("{{message}}")
+			.inputKey(String.class, "message")
+			.returnType(String.class);
+
+		if (!allTools.isEmpty()) {
+			builder.tools(allTools);
+		}
+
+		ToolCallTracker tracker = ToolCallTracking.getTracker();
+		if (tracker != null) {
+			builder.listener(new TimelineAgentListener(tracker));
+		}
+
+		return builder.build();
 	}
 
 	/**
@@ -937,7 +974,8 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		return _skillRegistry;
 	}
 
-	private ChatModel buildAnthropicModel(AnthropicChatModelFactory factory, AgentConfig config) {
+	private ChatModel buildAnthropicModel(AnthropicChatModelFactory factory, AgentConfig config,
+			Duration timeoutOverride) {
 		AnthropicChatModelFactory.Config fc = factory.getConfig();
 		AnthropicChatModel.AnthropicChatModelBuilder builder = AnthropicChatModel.builder()
 			.apiKey(fc.getApiKey())
@@ -977,8 +1015,9 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		if (config.getDisableParallelToolUse()) {
 			builder.disableParallelToolUse(Boolean.TRUE);
 		}
-		if (config.getTimeoutSeconds() != null) {
-			builder.timeout(toTimeoutDuration(config.getTimeoutSeconds()));
+		Duration timeout = timeoutOverride != null ? timeoutOverride : toTimeoutDuration(config.getTimeoutSeconds());
+		if (timeout != null) {
+			builder.timeout(timeout);
 		}
 		if (config.getMaxRetries() != null) {
 			builder.maxRetries(config.getMaxRetries());
@@ -990,7 +1029,8 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		return builder.build();
 	}
 
-	private ChatModel buildMistralModel(MistralChatModelFactory factory, AgentConfig config) {
+	private ChatModel buildMistralModel(MistralChatModelFactory factory, AgentConfig config,
+			Duration timeoutOverride) {
 		MistralChatModelFactory.Config fc = factory.getConfig();
 		MistralAiChatModel.MistralAiChatModelBuilder builder = MistralAiChatModel.builder()
 			.apiKey(fc.getApiKey())
@@ -1013,8 +1053,9 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		if (responseFormat != null) {
 			builder.responseFormat(responseFormat);
 		}
-		if (config.getTimeoutSeconds() != null) {
-			builder.timeout(toTimeoutDuration(config.getTimeoutSeconds()));
+		Duration mistralTimeout = timeoutOverride != null ? timeoutOverride : toTimeoutDuration(config.getTimeoutSeconds());
+		if (mistralTimeout != null) {
+			builder.timeout(mistralTimeout);
 		}
 		if (config.getMaxRetries() != null) {
 			builder.maxRetries(config.getMaxRetries());
@@ -1022,7 +1063,8 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		return builder.build();
 	}
 
-	private ChatModel buildOpenAIModel(OpenAIChatModelFactory factory, AgentConfig config) {
+	private ChatModel buildOpenAIModel(OpenAIChatModelFactory factory, AgentConfig config,
+			Duration timeoutOverride) {
 		OpenAIChatModelFactory.Config fc = factory.getConfig();
 		OpenAiChatModel.OpenAiChatModelBuilder builder = OpenAiChatModel.builder()
 			.apiKey(fc.getApiKey())
@@ -1058,8 +1100,9 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		if (responseFormat != null) {
 			builder.responseFormat(responseFormat);
 		}
-		if (config.getTimeoutSeconds() != null) {
-			builder.timeout(toTimeoutDuration(config.getTimeoutSeconds()));
+		Duration openAiTimeout = timeoutOverride != null ? timeoutOverride : toTimeoutDuration(config.getTimeoutSeconds());
+		if (openAiTimeout != null) {
+			builder.timeout(openAiTimeout);
 		}
 		if (config.getMaxRetries() != null) {
 			builder.maxRetries(config.getMaxRetries());

@@ -15,6 +15,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import jakarta.servlet.AsyncContext;
+import jakarta.servlet.http.HttpSession;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.sched.SchedulerService;
@@ -43,6 +44,8 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * </p>
  */
 public class SSEUpdateQueue {
+
+	private static final String SESSION_ATTRIBUTE_KEY = "tl.react.sseQueue";
 
 	/**
 	 * Heartbeat message sent as a regular SSE data event so the client can track connection

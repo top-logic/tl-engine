@@ -44,13 +44,20 @@ The dialog view XML is fully self-contained — it defines its own chrome, layou
   <action class="...OpenDialogCommand"
     dialog-view="WEB-INF/views/demo/my-dialog.view.xml"
     close-on-backdrop="true">
-    <input from="selectedItem" to="item" />
-    <output from="confirmedValue" to="result" />
+    <inputs>
+      <input from="selectedItem" to="item" />
+      <input from="currentUser" to="user" />
+    </inputs>
+    <outputs>
+      <output from="confirmedValue" to="result" />
+    </outputs>
   </action>
 </button>
 ```
 
+- `<inputs>` — enclosing tag for input channel mappings (zero or more `<input>` children).
 - `<input from="parentChannel" to="dialogChannel" />` — copies the value of `parentChannel` in the parent view into `dialogChannel` in the dialog at open time.
+- `<outputs>` — enclosing tag for output channel mappings (zero or more `<output>` children).
 - `<output from="dialogChannel" to="parentChannel" />` — defines which dialog channel maps back to which parent channel on close with result (mechanism deferred).
 
 **Channel wiring semantics:**
@@ -76,35 +83,38 @@ A zero-configuration `ViewCommand` that closes the topmost open dialog without p
 
 ### Demo
 
-Add a demo to the existing `DemoTypeA` instance view in `com.top_logic.demo`:
+Add a demo to the existing `DemoTypeA` view in `com.top_logic.demo`. The demo shows the full declarative dialog workflow: a tree displays `DemoTypeA` instances, and selecting one and pressing a button opens a dialog that shows the selected object in a form.
 
-- A new button on the `DemoTypeA` list view uses `OpenDialogCommand` to open a dialog
-- The dialog is defined in a separate `.view.xml` file
-- Dialog content is placeholder for now (demonstrates the mechanism), to be expanded into a full creation form later
+**Scenario:** The existing `DemoTypeA` tree view gets a new "Show Details" button. Clicking it opens a dialog that receives the tree's selection via input channel wiring and displays the selected object in a read-only form. The dialog has a "Close" button using `CancelDialogCommand`.
 
-**Example usage:**
+**Button in the existing demo view:**
 
-Button in the existing demo view:
 ```xml
 <button>
   <action class="com.top_logic.layout.view.command.OpenDialogCommand"
-    dialog-view="WEB-INF/views/demo/create-demo-type-a.view.xml"
-    close-on-backdrop="true"
-  />
+    dialog-view="WEB-INF/views/demo/show-demo-type-a.view.xml"
+    close-on-backdrop="true">
+    <inputs>
+      <input from="selection" to="model" />
+    </inputs>
+  </action>
 </button>
 ```
 
-Dialog view file (`create-demo-type-a.view.xml`):
+The `selection` channel of the parent tree is copied into the `model` channel of the dialog at open time.
+
+**Dialog view file (`show-demo-type-a.view.xml`):**
+
 ```xml
 <view>
   <stack>
-    <card title="Create DemoTypeA">
+    <card title="DemoTypeA Details">
       <stack>
-        <p>Dialog content goes here.</p>
+        <form model="model" />
         <bottom-bar>
           <button>
             <action class="com.top_logic.layout.view.command.CancelDialogCommand"
-              label="Cancel" />
+              label="Close" />
           </button>
         </bottom-bar>
       </stack>
@@ -112,6 +122,8 @@ Dialog view file (`create-demo-type-a.view.xml`):
   </stack>
 </view>
 ```
+
+The `<form model="model" />` binds to the dialog's `model` channel, which received the selected `DemoTypeA` object from the parent view's `selection` channel.
 
 ## Architecture
 

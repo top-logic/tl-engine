@@ -22,23 +22,22 @@ import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
 import com.top_logic.layout.form.model.SimpleSelectFieldModel;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.ReactCompositeControl;
 import com.top_logic.layout.react.control.form.ReactSelectFormFieldControl;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
+import com.top_logic.layout.react.control.layout.ReactFormGroupControl;
 
 /**
  * A control that renders a type selector dropdown and a nested {@link ConfigEditorControl} for
  * polymorphic {@link PolymorphicConfiguration} ITEM properties.
  *
  * <p>
- * Renders as a {@code TLFormGroup} with a type selector as first child and the nested config editor
- * as second child. When the user selects a different configuration type, the control creates a new
- * configuration instance and rebuilds the nested editor.
+ * Extends {@link ReactFormGroupControl} to render as a collapsible form group. The type selector is
+ * the first child, and the nested config editor (if a type is selected) is the second child. When
+ * the user selects a different configuration type, the control creates a new configuration instance
+ * and rebuilds the nested editor.
  * </p>
  */
-public class PolymorphicItemControl extends ReactCompositeControl {
-
-	private static final String REACT_MODULE = "TLFormGroup";
+public class PolymorphicItemControl extends ReactFormGroupControl {
 
 	private final ConfigurationItem _parentConfig;
 
@@ -71,21 +70,11 @@ public class PolymorphicItemControl extends ReactCompositeControl {
 	public PolymorphicItemControl(ReactContext context, String label, ConfigurationItem parentConfig,
 			PropertyDescriptor property,
 			BiFunction<ReactContext, ConfigurationItem, ConfigEditorControl> editorFactory) {
-		super(context, null, REACT_MODULE);
+		super(context, label, true, false, "subtle", true, List.of(), List.of());
 		_context = context;
 		_parentConfig = parentConfig;
 		_property = property;
 		_editorFactory = editorFactory;
-
-		// Set form group state.
-		if (label != null) {
-			putState("header", label);
-		}
-		putState("collapsible", true);
-		putState("collapsed", false);
-		putState("border", "subtle");
-		putState("fullLine", true);
-		putState("headerActions", List.of());
 
 		List<String> typeOptions = resolveTypeOptions(property);
 

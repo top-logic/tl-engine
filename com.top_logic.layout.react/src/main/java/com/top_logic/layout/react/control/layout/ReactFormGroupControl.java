@@ -10,6 +10,7 @@ import java.util.List;
 
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactCompositeControl;
 import com.top_logic.layout.react.control.ReactControl;
 
 /**
@@ -26,10 +27,10 @@ import com.top_logic.layout.react.control.ReactControl;
  * <li>{@code collapsed} - current collapsed state</li>
  * <li>{@code border} - "none", "subtle", or "outlined"</li>
  * <li>{@code fullLine} - whether the group spans the full grid row</li>
- * <li>{@code children} - child controls</li>
+ * <li>{@code children} - child controls (inherited from {@link ReactCompositeControl})</li>
  * </ul>
  */
-public class ReactFormGroupControl extends ReactControl {
+public class ReactFormGroupControl extends ReactCompositeControl {
 
 	private static final String REACT_MODULE = "TLFormGroup";
 
@@ -44,10 +45,6 @@ public class ReactFormGroupControl extends ReactControl {
 	private static final String BORDER = "border";
 
 	private static final String FULL_LINE = "fullLine";
-
-	private static final String CHILDREN = "children";
-
-	private final List<ReactControl> _children;
 
 	private final List<ReactControl> _headerActions;
 
@@ -75,9 +72,8 @@ public class ReactFormGroupControl extends ReactControl {
 			String border, boolean fullLine,
 			List<? extends ReactControl> headerActions,
 			List<? extends ReactControl> children) {
-		super(context, null, REACT_MODULE);
+		super(context, null, REACT_MODULE, children);
 		_collapsed = collapsed;
-		_children = new ArrayList<>(children);
 		_headerActions = new ArrayList<>(headerActions);
 		if (header != null) {
 			putState(HEADER, header);
@@ -87,7 +83,6 @@ public class ReactFormGroupControl extends ReactControl {
 		putState(BORDER, border);
 		putState(FULL_LINE, fullLine);
 		putState(HEADER_ACTIONS, _headerActions);
-		putState(CHILDREN, _children);
 	}
 
 	/**
@@ -129,9 +124,7 @@ public class ReactFormGroupControl extends ReactControl {
 
 	@Override
 	protected void cleanupChildren() {
-		for (ReactControl child : _children) {
-			child.cleanupTree();
-		}
+		super.cleanupChildren();
 		for (ReactControl action : _headerActions) {
 			action.cleanupTree();
 		}

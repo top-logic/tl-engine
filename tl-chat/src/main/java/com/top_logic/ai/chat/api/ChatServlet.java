@@ -32,14 +32,12 @@ import com.top_logic.ai.chat.api.messages.PersistedChatEntry;
 import com.top_logic.ai.chat.api.messages.SaveMessagesRequest;
 import com.top_logic.ai.chat.api.messages.UpdateTitleRequest;
 import com.top_logic.ai.chat.background.ChatContextAdapter;
+import com.top_logic.ai.service.agents.background.BackgroundAgentExecutor;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.chat.layout.ChatEntry;
 import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
-import com.top_logic.ai.service.agents.AgentRegistry;
-import com.top_logic.ai.service.agents.background.BackgroundAgentExecutor;
-import com.top_logic.ai.service.agents.background.context.ApplicationContext;
 import com.top_logic.ai.service.agents.background.input.ChatContextInput;
 import com.top_logic.ai.service.approval.UserInteractionStore;
 import com.top_logic.base.accesscontrol.SessionService;
@@ -76,8 +74,6 @@ public class ChatServlet extends HttpServlet {
 	private static final String PATH_UPDATES = "/updates";
 	private static final String PATH_EVENTS = "/events";
 	private static final String PATH_SESSIONS = "/sessions";
-	private static final String PATH_REVIEW = "/review";
-	private static final String PATH_BACKGROUND = "/background";
 	private static final String CONTENT_TYPE_JSON = "application/json; charset=UTF-8";
 	private static final String CONTENT_TYPE_SSE = "text/event-stream";
 
@@ -114,18 +110,6 @@ public class ChatServlet extends HttpServlet {
 		}
 		if (pathInfo.equals(PATH_SESSIONS) || pathInfo.equals(PATH_SESSIONS + "/")) {
 			handleCreateSession(req, resp);
-			return;
-		}
-		if (pathInfo.startsWith(PATH_BACKGROUND + "/")) {
-			String agentName = pathInfo.substring(PATH_BACKGROUND.length() + 1);
-			if (agentName.endsWith("/")) {
-				agentName = agentName.substring(0, agentName.length() - 1);
-			}
-			handleBackgroundTrigger(req, resp, agentName);
-			return;
-		}
-		if (pathInfo.equals(PATH_REVIEW) || pathInfo.equals(PATH_REVIEW + "/")) {
-			handleBackgroundTrigger(req, resp, "ReviewAgent");
 			return;
 		}
 		resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Unknown path: " + pathInfo);
@@ -324,41 +308,6 @@ public class ChatServlet extends HttpServlet {
 		resp.setContentType("application/json");
 		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
 		resp.getWriter().write("{\"status\":\"ok\",\"mode\":\"" + approvalMode.name() + "\"}");
-	}
-
-	/**
-	 * Handles an on-demand background agent trigger via REST API.
-	 */
-	private void handleBackgroundTrigger(HttpServletRequest req, HttpServletResponse resp,
-			String agentName) throws IOException {
-		AgentRegistry registry = AgentRegistry.getInstance();
-		if (registry == null || !registry.hasAgent(agentName)) {
-			resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Agent not found: " + agentName);
-			return;
-		}
-		if (!registry.isBackgroundAgent(agentName)) {
-			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Not a background agent: " + agentName);
-			return;
-		}
-
-		// TODO: Security checks for on-demand triggers (allowed-roles)
-
-		ChatProcessor.submitBackground(() -> {
-			try {
-				BackgroundAgentExecutor executor = new BackgroundAgentExecutor(registry);
-				ApplicationContext context = ApplicationContext.manual(agentName,
-					"rest-api");
-				executor.execute(agentName, context);
-			} catch (Exception ex) {
-				Logger.error("On-demand background agent '" + agentName + "' failed",
-					ex, ChatServlet.class);
-			}
-		});
-
-		// Return 202 Accepted
-		resp.setStatus(HttpServletResponse.SC_ACCEPTED);
-		resp.setContentType("application/json");
-		resp.getWriter().write("{\"agentName\":\"" + agentName + "\",\"status\":\"submitted\"}");
 	}
 
 	private void handleUpdates(HttpServletRequest req, HttpServletResponse resp) throws IOException {

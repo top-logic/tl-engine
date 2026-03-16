@@ -107,24 +107,6 @@ public class TestBackgroundContext extends TestCase {
 		assertEquals("scheduler", ctx.getTriggerSource());
 	}
 
-	// --- ApplicationContext.manual() ---
-
-	/** manual factory sets trigger type to "on-demand" and source to "user:<name>". */
-	public void testApplicationContextManual() {
-		ApplicationContext ctx = ApplicationContext.manual("AuditAgent", "admin");
-
-		assertEquals("AuditAgent", ctx.getAgentName());
-		assertEquals("on-demand", ctx.getTriggerType());
-		assertEquals("user:admin", ctx.getTriggerSource());
-	}
-
-	/** manual factory with different user. */
-	public void testApplicationContextManualDifferentUser() {
-		ApplicationContext ctx = ApplicationContext.manual("agent", "john.doe");
-
-		assertEquals("user:john.doe", ctx.getTriggerSource());
-	}
-
 	// --- Inheritance ---
 
 	/** ChatContext is-a BackgroundContext. */

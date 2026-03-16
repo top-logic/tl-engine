@@ -6,7 +6,7 @@
 package com.top_logic.ai.service.agents.background.context;
 
 /**
- * Context for application-scoped background agent execution (scheduled, on-demand).
+ * Context for application-scoped background agent execution (scheduled).
  */
 public class ApplicationContext extends BackgroundContext {
 
@@ -24,17 +24,7 @@ public class ApplicationContext extends BackgroundContext {
 		return new ApplicationContext(agentName, "scheduled", "scheduler");
 	}
 
-	/**
-	 * Creates a context for manual/on-demand execution.
-	 *
-	 * @param userName
-	 *        the user who triggered the execution
-	 */
-	public static ApplicationContext manual(String agentName, String userName) {
-		return new ApplicationContext(agentName, "on-demand", "user:" + userName);
-	}
-
-	/** The source that triggered execution (e.g. "scheduler", "user:admin"). */
+	/** The source that triggered execution (e.g. "scheduler"). */
 	public String getTriggerSource() {
 		return _triggerSource;
 	}

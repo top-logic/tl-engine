@@ -19,7 +19,7 @@ public class I18NConstants extends I18NConstantsBase {
 	/** @en Chat context input requires chat scope. Use a custom message, script, or provider input for application-scoped agents. */
 	public static ResKey CHAT_CONTEXT_INPUT_NOT_ALLOWED_FOR_APPLICATION;
 
-	/** @en Pre-turn and post-turn triggers require chat scope. Use a scheduled or on-demand trigger for application scope. */
+	/** @en Pre-turn and post-turn triggers require chat scope. Use a scheduled trigger for application scope. */
 	public static ResKey CHAT_TRIGGER_NOT_ALLOWED_FOR_APPLICATION;
 
 	static {

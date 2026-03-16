@@ -10,7 +10,6 @@ import com.top_logic.ai.service.agents.background.input.AutonomousInput;
 import com.top_logic.ai.service.agents.background.input.ChatContextInput;
 import com.top_logic.ai.service.agents.background.input.ChatContextInput.Content;
 import com.top_logic.ai.service.agents.background.input.ScriptInput;
-import com.top_logic.ai.service.agents.background.trigger.OnDemandTrigger;
 import com.top_logic.ai.service.agents.background.trigger.PostTurnTrigger;
 import com.top_logic.ai.service.agents.background.trigger.PreTurnTrigger;
 import com.top_logic.ai.service.agents.background.trigger.PreTurnTrigger.FailPolicy;
@@ -104,23 +103,6 @@ public class TestBackgroundConfig extends TestCase {
 	// --- ScheduledTrigger ---
 	// Note: ScheduledTrigger uses PolymorphicConfiguration<SchedulingAlgorithm> which
 	// requires TypeIndex. Integration tests cover ScheduledTrigger instantiation.
-
-	// --- OnDemandTrigger ---
-
-	/** OnDemandTrigger has empty allowed-roles by default. */
-	public void testOnDemandTriggerDefaultRoles() {
-		OnDemandTrigger trigger = TypedConfiguration.newConfigItem(OnDemandTrigger.class);
-
-		assertNotNull(trigger.getAllowedRoles());
-		assertTrue(trigger.getAllowedRoles().isEmpty());
-	}
-
-	/** OnDemandTrigger is a TriggerConfig. */
-	public void testOnDemandTriggerIsTriggerConfig() {
-		OnDemandTrigger trigger = TypedConfiguration.newConfigItem(OnDemandTrigger.class);
-
-		assertTrue(trigger instanceof TriggerConfig);
-	}
 
 	// --- Input configs ---
 

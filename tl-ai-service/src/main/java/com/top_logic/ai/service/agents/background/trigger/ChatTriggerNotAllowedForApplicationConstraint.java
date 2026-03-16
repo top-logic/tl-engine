@@ -17,8 +17,7 @@ import com.top_logic.basic.config.constraint.algorithm.PropertyModel;
  *
  * <p>
  * Pre-turn and post-turn triggers operate within the context of a chat session and are not
- * compatible with application-scoped agents. Use a {@link ScheduledTrigger} or
- * {@link OnDemandTrigger} for application scope.
+ * compatible with application-scoped agents. Use a {@link ScheduledTrigger} for application scope.
  * </p>
  */
 public class ChatTriggerNotAllowedForApplicationConstraint

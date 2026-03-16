@@ -89,7 +89,7 @@ public class TestInputAdapters extends TestCase {
 		ScriptInputAdapter adapter = new ScriptInputAdapter(config);
 
 		assertEquals("testScript()",
-			adapter.gatherInput(ApplicationContext.manual("agent", "admin")));
+			adapter.gatherInput(ApplicationContext.scheduled("agent")));
 		assertEquals("testScript()",
 			adapter.gatherInput(ChatContext.lastTurn("agent", "m", "r", null, null)));
 	}

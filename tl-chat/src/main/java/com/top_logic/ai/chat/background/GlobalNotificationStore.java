@@ -9,7 +9,7 @@ package com.top_logic.ai.chat.background;
  * Singleton notification store for application-scoped background agent notifications.
  *
  * <p>
- * Used by scheduled and on-demand agents that run outside chat sessions.
+ * Used by scheduled agents that run outside chat sessions.
  * </p>
  */
 public class GlobalNotificationStore extends BackgroundNotificationStore {

@@ -33,12 +33,34 @@ A configurable `ViewCommand` that opens a modal dialog whose content is defined 
 4. Builds the control tree from the loaded `ViewElement`
 5. Calls `DialogManager.openDialog(closeOnBackdrop, rootControl, resultHandler)`
 
-The dialog view XML is fully self-contained — it defines its own window chrome (title bar, close button, layout, action buttons). `OpenDialogCommand` provides no chrome.
+The dialog view XML is fully self-contained — it defines its own chrome, layout, content, and action buttons. `OpenDialogCommand` provides no chrome. The dialog uses existing view elements for structure (e.g., `<card>` for a titled container, `<bottom-bar>` for action buttons). No dedicated `<dialog-window>` element is needed — standard layout elements compose the dialog appearance.
 
-**Channel wiring:**
+**Dialog sizing:** The dialog dimensions are determined by the content of the view XML. The dialog's root element can use CSS styling to control width/height. No explicit size configuration on `OpenDialogCommand`.
+
+**Channel mapping syntax:**
+
+```xml
+<button>
+  <action class="...OpenDialogCommand"
+    dialog-view="WEB-INF/views/demo/my-dialog.view.xml"
+    close-on-backdrop="true">
+    <input from="selectedItem" to="item" />
+    <output from="confirmedValue" to="result" />
+  </action>
+</button>
+```
+
+- `<input from="parentChannel" to="dialogChannel" />` — copies the value of `parentChannel` in the parent view into `dialogChannel` in the dialog at open time.
+- `<output from="dialogChannel" to="parentChannel" />` — defines which dialog channel maps back to which parent channel on close with result (mechanism deferred).
+
+**Channel wiring semantics:**
 
 - Input channels are a one-shot copy at open time. After the dialog opens, parent and dialog channels are independent — no live binding.
 - Output channels (future): When the dialog closes with a result, values are copied back from dialog channels to parent channels. The exact mechanism for producing a result (beyond cancel) is deferred.
+
+**ViewContext creation:**
+
+The command receives a `ReactContext` at execution time. It obtains the parent `ViewContext` from the `ReactContext` (which holds a reference to it), then creates a new `DefaultViewContext` for the dialog — the same pattern used by `ReferenceElement`. The dialog's `ViewContext` is isolated: it has its own channel registry and command scope.
 
 ### CancelDialogCommand
 
@@ -121,3 +143,10 @@ Cancel button click (inside dialog)
 - Result propagation mechanism (how a dialog produces a result on close)
 - Explicit `CloseDialogCommand` with result collection
 - Live channel binding between parent and dialog
+
+## Error Handling
+
+- **Missing dialog view file**: `ViewLoader` throws `ConfigurationException` — logged as error, dialog not opened.
+- **Parse errors in dialog view XML**: Same as any view XML parse error — `InstantiationContext` collects errors, logged.
+- **Unknown input channel**: If a referenced parent channel does not exist, log a warning and skip that mapping.
+- **CancelDialogCommand with no open dialog**: No-op (no dialog to close).

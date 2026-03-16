@@ -9,6 +9,9 @@ import junit.framework.TestCase;
 
 import com.top_logic.layout.react.window.WindowOptions;
 
+/**
+ * Tests for {@link WindowOptions}.
+ */
 public class TestWindowOptions extends TestCase {
 
 	public void testDefaults() {

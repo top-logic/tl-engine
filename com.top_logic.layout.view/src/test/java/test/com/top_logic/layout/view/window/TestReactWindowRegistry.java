@@ -19,6 +19,9 @@ import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.react.window.WindowEntry;
 import com.top_logic.layout.react.window.WindowOptions;
 
+/**
+ * Tests for {@link ReactWindowRegistry}.
+ */
 public class TestReactWindowRegistry extends TestCase {
 
 	public void testOpenWindowCreatesEntry() {

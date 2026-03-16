@@ -10,6 +10,9 @@ import junit.framework.TestCase;
 import com.top_logic.layout.react.window.WindowEntry;
 import com.top_logic.layout.react.window.WindowOptions;
 
+/**
+ * Tests for {@link WindowEntry}.
+ */
 public class TestWindowEntry extends TestCase {
 
 	public void testCreation() {

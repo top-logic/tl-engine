@@ -18,6 +18,24 @@ public interface InvitationBase extends com.top_logic.model.TLObject {
 	String INVITATION_TYPE = "Invitation";
 
 	/**
+	 * Part <code>contextObjects</code> of <code>Invitation</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.model:TLObject</code> in configuration.
+	 * </p>
+	 */
+	String CONTEXT_OBJECTS_ATTR = "contextObjects";
+
+	/**
+	 * Part <code>createCallback</code> of <code>Invitation</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.model.search:Expr</code> in configuration.
+	 * </p>
+	 */
+	String CREATE_CALLBACK_ATTR = "createCallback";
+
+	/**
 	 * Part <code>email</code> of <code>Invitation</code>
 	 * 
 	 * <p>
@@ -70,6 +88,63 @@ public interface InvitationBase extends com.top_logic.model.TLObject {
 	 * </p>
 	 */
 	String TOKEN_MISMATCH_COUNTER_ATTR = "tokenMismatchCounter";
+
+	/**
+	 * Getter for part {@link #CONTEXT_OBJECTS_ATTR}.
+	 */
+	@SuppressWarnings("unchecked")
+	default java.util.List<? extends com.top_logic.model.TLObject> getContextObjects() {
+		return (java.util.List<? extends com.top_logic.model.TLObject>) tValueByName(CONTEXT_OBJECTS_ATTR);
+	}
+
+	/**
+	 * Live view of the {@link #CONTEXT_OBJECTS_ATTR} part.
+	 * <p>
+	 * Changes to this {@link java.util.Collection} change directly the attribute value.
+	 * The caller has to take care of the transaction handling.
+	 * </p>
+	 */
+	default java.util.List<com.top_logic.model.TLObject> getContextObjectsModifiable() {
+		com.top_logic.model.TLStructuredTypePart attribute = tType().getPart(CONTEXT_OBJECTS_ATTR);
+		@SuppressWarnings("unchecked")
+		java.util.List<com.top_logic.model.TLObject> result = (java.util.List<com.top_logic.model.TLObject>) com.top_logic.element.meta.kbbased.WrapperMetaAttributeUtil.getLiveCollection(this, attribute);
+		return result;
+	}
+
+	/**
+	 * Setter for part {@link #CONTEXT_OBJECTS_ATTR}.
+	 */
+	default void setContextObjects(java.util.List<com.top_logic.model.TLObject> newValue) {
+		tUpdateByName(CONTEXT_OBJECTS_ATTR, newValue);
+	}
+
+	/**
+	 * Adds a value to the {@link #CONTEXT_OBJECTS_ATTR} reference.
+	 */
+	default void addContextObject(com.top_logic.model.TLObject newValue) {
+		tAddByName(CONTEXT_OBJECTS_ATTR, newValue);
+	}
+
+	/**
+	 * Removes the given value from the {@link #CONTEXT_OBJECTS_ATTR} reference.
+	 */
+	default void removeContextObject(com.top_logic.model.TLObject oldValue) {
+		tRemoveByName(CONTEXT_OBJECTS_ATTR, oldValue);
+	}
+
+	/**
+	 * Getter for part {@link #CREATE_CALLBACK_ATTR}.
+	 */
+	default com.top_logic.model.search.expr.SearchExpression getCreateCallback() {
+		return (com.top_logic.model.search.expr.SearchExpression) tValueByName(CREATE_CALLBACK_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #CREATE_CALLBACK_ATTR}.
+	 */
+	default void setCreateCallback(com.top_logic.model.search.expr.SearchExpression newValue) {
+		tUpdateByName(CREATE_CALLBACK_ATTR, newValue);
+	}
 
 	/**
 	 * Getter for part {@link #EMAIL_ATTR}.

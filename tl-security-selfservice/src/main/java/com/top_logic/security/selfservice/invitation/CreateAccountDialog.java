@@ -39,8 +39,11 @@ import com.top_logic.layout.messagebox.MessageBox;
 import com.top_logic.layout.messagebox.MessageBox.ButtonType;
 import com.top_logic.layout.structure.DialogModel;
 import com.top_logic.mig.html.layout.MainLayout;
+import com.top_logic.model.search.expr.SearchExpression;
+import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.security.selfservice.model.Invitation;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.model.ModelService;
 
 /**
  * Dialog to create a new user together with setting the passwords.
@@ -159,6 +162,12 @@ public class CreateAccountDialog extends AbstractTemplateDialog {
 					tx.rollback();
 					return result;
 				}
+			}
+
+			SearchExpression createCallback = _invitation.getCreateCallback();
+			if (createCallback != null) {
+				QueryExecutor callback = QueryExecutor.executor(kb, ModelService.getApplicationModel(), createCallback);
+				callback.execute(person, _invitation.getContextObjects());
 			}
 			tx.commit();
 		}

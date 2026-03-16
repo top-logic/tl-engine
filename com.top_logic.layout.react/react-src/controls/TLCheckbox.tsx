@@ -28,6 +28,14 @@ const TLCheckbox: React.FC<TLCellProps> = ({ controlId, state }) => {
     );
   }
 
+  const hasError = state.hasError === true;
+  const hasWarnings = state.hasWarnings === true;
+  const cls = [
+    'tlReactCheckbox',
+    hasError ? 'tlReactCheckbox--error' : '',
+    !hasError && hasWarnings ? 'tlReactCheckbox--warning' : '',
+  ].filter(Boolean).join(' ');
+
   return (
     <input
       type="checkbox"
@@ -35,7 +43,8 @@ const TLCheckbox: React.FC<TLCellProps> = ({ controlId, state }) => {
       checked={value === true}
       onChange={handleChange}
       disabled={state.disabled === true}
-      className="tlReactCheckbox"
+      className={cls}
+      aria-invalid={hasError || undefined}
     />
   );
 };

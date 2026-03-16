@@ -2373,6 +2373,31 @@ button.tlMenu__item--disabled:hover {
 	margin-top: 1px;
 }
 
+/* Warning area */
+.tlFormField__warnings {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-01, 0.125rem);
+}
+
+.tlFormField__warning {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--spacing-01, 0.125rem);
+	color: var(--support-warning, #f1c21b);
+	font-size: var(--body-compact-01-font-size, 0.875rem);
+	line-height: var(--body-compact-01-line-height, 1.125rem);
+}
+
+.tlFormField__warningIcon {
+	flex-shrink: 0;
+	margin-top: 1px;
+}
+
+.tlFormField--side .tlFormField__warnings {
+	grid-column: 2;
+}
+
 /* Help text */
 .tlFormField__helpText {
 	color: var(--text-helper, #6f6f6f);
@@ -2589,6 +2614,49 @@ button.tlMenu__item--disabled:hover {
 .tlReactCheckbox--immutable {
 	opacity: 0.6;
 	cursor: default;
+}
+
+/* --- Error / Warning states for simple inputs ----------------------------- */
+
+/* Error — red border, persists through focus */
+.tlReactTextInput--error,
+.tlReactNumberInput--error,
+.tlReactDatePicker--error,
+.tlReactSelect--error {
+	border-color: var(--support-error, #da1e28);
+}
+
+.tlReactTextInput--error:focus,
+.tlReactNumberInput--error:focus,
+.tlReactDatePicker--error:focus,
+.tlReactSelect--error:focus {
+	outline-color: var(--support-error, #da1e28);
+	border-color: var(--support-error, #da1e28);
+}
+
+/* Warning — yellow border, only when no error */
+.tlReactTextInput--warning,
+.tlReactNumberInput--warning,
+.tlReactDatePicker--warning,
+.tlReactSelect--warning {
+	border-color: var(--support-warning, #f1c21b);
+}
+
+.tlReactTextInput--warning:focus,
+.tlReactNumberInput--warning:focus,
+.tlReactDatePicker--warning:focus,
+.tlReactSelect--warning:focus {
+	outline-color: var(--support-warning, #f1c21b);
+	border-color: var(--support-warning, #f1c21b);
+}
+
+/* Checkbox error/warning — best-effort via accent-color */
+.tlReactCheckbox--error {
+	accent-color: var(--support-error, #da1e28);
+}
+
+.tlReactCheckbox--warning {
+	accent-color: var(--support-warning, #f1c21b);
 }
 
 /* --- TLDropdownSelect -------------------------------------------------- */

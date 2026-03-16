@@ -28,6 +28,14 @@ const TLNumberInput: React.FC<TLCellProps> = ({ controlId, state, config }) => {
     );
   }
 
+  const hasError = state.hasError === true;
+  const hasWarnings = state.hasWarnings === true;
+  const cls = [
+    'tlReactNumberInput',
+    hasError ? 'tlReactNumberInput--error' : '',
+    !hasError && hasWarnings ? 'tlReactNumberInput--warning' : '',
+  ].filter(Boolean).join(' ');
+
   return (
     <span id={controlId}>
       <input
@@ -36,7 +44,8 @@ const TLNumberInput: React.FC<TLCellProps> = ({ controlId, state, config }) => {
         onChange={handleChange}
         step={step}
         disabled={state.disabled === true}
-        className="tlReactNumberInput"
+        className={cls}
+        aria-invalid={hasError || undefined}
       />
     </span>
   );

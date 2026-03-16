@@ -32,13 +32,22 @@ const TLSelect: React.FC<TLCellProps> = ({ controlId, state, config }) => {
     );
   }
 
+  const hasError = state.hasError === true;
+  const hasWarnings = state.hasWarnings === true;
+  const cls = [
+    'tlReactSelect',
+    hasError ? 'tlReactSelect--error' : '',
+    !hasError && hasWarnings ? 'tlReactSelect--warning' : '',
+  ].filter(Boolean).join(' ');
+
   return (
     <span id={controlId}>
       <select
         value={(value as string) ?? ''}
         onChange={handleChange}
         disabled={state.disabled === true}
-        className="tlReactSelect"
+        className={cls}
+        aria-invalid={hasError || undefined}
       >
         <option value=""></option>
         {options.map((opt) => (

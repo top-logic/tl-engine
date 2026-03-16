@@ -24,6 +24,14 @@ const TLDatePicker: React.FC<TLCellProps> = ({ controlId, state }) => {
     );
   }
 
+  const hasError = state.hasError === true;
+  const hasWarnings = state.hasWarnings === true;
+  const cls = [
+    'tlReactDatePicker',
+    hasError ? 'tlReactDatePicker--error' : '',
+    !hasError && hasWarnings ? 'tlReactDatePicker--warning' : '',
+  ].filter(Boolean).join(' ');
+
   return (
     <span id={controlId}>
       <input
@@ -31,7 +39,8 @@ const TLDatePicker: React.FC<TLCellProps> = ({ controlId, state }) => {
         value={(value as string) ?? ''}
         onChange={handleChange}
         disabled={state.disabled === true}
-        className="tlReactDatePicker"
+        className={cls}
+        aria-invalid={hasError || undefined}
       />
     </span>
   );

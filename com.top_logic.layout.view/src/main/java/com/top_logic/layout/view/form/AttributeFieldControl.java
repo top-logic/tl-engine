@@ -5,6 +5,9 @@
  */
 package com.top_logic.layout.view.form;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
@@ -222,7 +225,23 @@ public class AttributeFieldControl implements FormModelListener {
 
 			@Override
 			public void onValidationChanged(FieldModel source) {
-				// Handled by the ReactFormFieldControl via its own FieldModel listener.
+				if (_chrome == null) {
+					return;
+				}
+				if (source.hasError()) {
+					_chrome.setError(Resources.getInstance().getString(source.getError()));
+				} else {
+					_chrome.setError(null);
+				}
+				if (source.hasWarnings()) {
+					List<String> msgs = source.getWarnings().stream()
+						.map(key -> Resources.getInstance().getString(key))
+						.collect(Collectors.toList());
+					_chrome.setWarnings(msgs);
+				} else {
+					_chrome.setWarnings(null);
+				}
+				_chrome.setRequired(source.isMandatory());
 			}
 		};
 		_model.addListener(_modelListener);

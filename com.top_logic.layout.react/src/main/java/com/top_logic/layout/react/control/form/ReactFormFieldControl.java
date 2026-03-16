@@ -46,6 +46,9 @@ public class ReactFormFieldControl extends ReactControl {
 	/** State key for the error message text. */
 	protected static final String ERROR_MESSAGE = "errorMessage";
 
+	/** State key for whether the field has validation warnings. */
+	protected static final String HAS_WARNINGS = "hasWarnings";
+
 	/** State key for the field label. */
 	protected static final String LABEL = "label";
 
@@ -97,6 +100,7 @@ public class ReactFormFieldControl extends ReactControl {
 		putState(EDITABLE, _fieldModel.isEditable());
 		putState(MANDATORY, _fieldModel.isMandatory());
 		putState(HAS_ERROR, _fieldModel.hasError());
+		putState(HAS_WARNINGS, _fieldModel.hasWarnings());
 		if (_fieldModel.hasError()) {
 			putState(ERROR_MESSAGE, Resources.getInstance().getString(_fieldModel.getError()));
 		}
@@ -128,6 +132,7 @@ public class ReactFormFieldControl extends ReactControl {
 			@Override
 			public void onValidationChanged(FieldModel source) {
 				putState(HAS_ERROR, source.hasError());
+				putState(HAS_WARNINGS, source.hasWarnings());
 				if (source.hasError()) {
 					putState(ERROR_MESSAGE, Resources.getInstance().getString(source.getError()));
 				} else {

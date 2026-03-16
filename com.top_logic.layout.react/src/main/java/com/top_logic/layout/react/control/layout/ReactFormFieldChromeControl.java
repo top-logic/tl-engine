@@ -38,6 +38,8 @@ public class ReactFormFieldChromeControl extends ReactControl {
 
 	private static final String ERROR = "error";
 
+	private static final String WARNINGS = "warnings";
+
 	private static final String HELP_TEXT = "helpText";
 
 	private static final String DIRTY = "dirty";
@@ -136,6 +138,16 @@ public class ReactFormFieldChromeControl extends ReactControl {
 	 */
 	public void setError(String error) {
 		putState(ERROR, error);
+	}
+
+	/**
+	 * Updates the warning messages.
+	 *
+	 * @param warnings
+	 *        The warning messages, or {@code null} to clear.
+	 */
+	public void setWarnings(java.util.List<String> warnings) {
+		putState(WARNINGS, warnings);
 	}
 
 	/**

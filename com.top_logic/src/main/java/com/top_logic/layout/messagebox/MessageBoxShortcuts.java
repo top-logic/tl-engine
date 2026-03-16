@@ -8,6 +8,7 @@ package com.top_logic.layout.messagebox;
 import java.util.List;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayValue;
 import com.top_logic.layout.WindowScope;
@@ -42,6 +43,15 @@ public class MessageBoxShortcuts {
 			LayoutData layout, boolean resizable, final MessageType type, String title, final String message,
 			final CommandModel... buttons) {
 		return MessageBox.confirm(context.getWindowScope(), layout, resizable, type, title, message, buttons);
+	}
+
+	/**
+	 * @see MessageBox#confirm(WindowScope, MessageType, ResKey, CommandModel...)
+	 */
+	public static HandlerResult confirm(DisplayContext context,
+			final MessageType type, final ResKey message,
+			final CommandModel... buttons) {
+		return MessageBox.confirm(context.getWindowScope(), type, message, buttons);
 	}
 
 	/**

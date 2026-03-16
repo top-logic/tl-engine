@@ -22,6 +22,12 @@
       <groupId>de.haumacher.msgbuf</groupId>
       <artifactId>msgbuf-api</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-basic</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>

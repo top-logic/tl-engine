@@ -14,6 +14,8 @@ import com.top_logic.ai.service.agents.background.input.CustomInputAdapter;
 import com.top_logic.ai.service.agents.background.input.ChatContextInput;
 import com.top_logic.ai.service.agents.background.input.InputAdapter;
 import com.top_logic.ai.service.agents.background.input.InputConfig;
+import com.top_logic.ai.service.agents.background.input.ProviderInput;
+import com.top_logic.ai.service.agents.background.input.ProviderInputAdapter;
 import com.top_logic.ai.service.agents.background.input.ScriptInput;
 import com.top_logic.ai.service.agents.background.input.ScriptInputAdapter;
 import com.top_logic.ai.service.agents.background.trigger.PreTurnTrigger;
@@ -143,5 +145,15 @@ public class TestBackgroundAgentExecutor extends TestCase {
 
 		// Verify that the input is null (pre-turn agents don't need input config)
 		assertNull(bgConfig.getInput());
+	}
+
+	/** {@link ProviderInput} resolves to {@link ProviderInputAdapter}. */
+	public void testResolveProviderInput() {
+		ProviderInput config = TypedConfiguration.newConfigItem(ProviderInput.class);
+
+		InputAdapter adapter = _executor.resolveInputAdapter(config);
+
+		assertNotNull(adapter);
+		assertTrue("Expected ProviderInputAdapter", adapter instanceof ProviderInputAdapter);
 	}
 }

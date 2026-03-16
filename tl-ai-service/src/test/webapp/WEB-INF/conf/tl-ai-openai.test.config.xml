@@ -21,7 +21,7 @@
 				<entry value="com.top_logic.ai.service.tools.layout.messages" />
 				<entry value="com.top_logic.ai.service.tools.task.messages" />
 				<entry value="com.top_logic.ai.service.tools.gitea.messages" />
-				<entry value="com.top_logic.ai.service.skills" />
+				<entry value="com.top_logic.ai.service.agents.background.ExecutionResult" />
 			</ignore>
 		</config>
 	</configs>

@@ -18,28 +18,27 @@ import jakarta.mail.internet.MimeMessage;
 
 import com.top_logic.base.mail.MailSenderService;
 import com.top_logic.base.mail.script.SendMail;
-import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.version.Version;
-import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.URLPathBuilder;
 import com.top_logic.layout.basic.DefaultDisplayContext;
-import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.layout.LayoutUtils;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
 import com.top_logic.model.search.expr.SearchExpression;
+import com.top_logic.model.search.expr.ToString;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
 import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.security.selfservice.invitation.CreateLoginHoook;
+import com.top_logic.security.selfservice.invitation.InvitationModule;
 import com.top_logic.security.selfservice.model.Invitation;
 import com.top_logic.security.selfservice.model.TlSecuritySelfserviceFactory;
 import com.top_logic.util.error.TopLogicException;
@@ -82,14 +81,11 @@ public class SendInvitation extends GenericMethod {
 		MailSenderService mailService = MailSenderService.getInstance();
 		MimeMessage message = mailService.createEmptyMessage();
 		try {
-			message.setSubject(getSubject(invitation), StringServices.UTF8);
-
 			message.addRecipient(RecipientType.TO, to);
 
-			/* Fetch link here. When executing the HTMLFragment a DummyDisplayContext is used. */
-			String link = invitationLink(DefaultDisplayContext.getDisplayContext(), invitation);
-			HTMLFragment body = (DisplayContext context, TagWriter out) -> writeMessageBody(out, link);
-			message.setDataHandler(SendMail.toDataHandler(body, Object::toString));
+			String applicationName = Version.getApplicationName();
+			message.setSubject(getSubject(invitation, applicationName), StringServices.UTF8);
+			message.setDataHandler(SendMail.toDataHandler(getBody(invitation, applicationName), ToString::toString));
 
 			return mailService.send(message, new ArrayList<>(), false);
 		} catch (MessagingException ex) {
@@ -98,39 +94,13 @@ public class SendInvitation extends GenericMethod {
 		}
 	}
 
-	private String getSubject(Invitation invitation) {
-		return "Invitation to " + Version.getApplicationName();
+	private String getSubject(Invitation invitation, String applicationName) {
+		return ToString.toString(InvitationModule.getInstance().getInvitationSubject().execute(invitation, applicationName));
 	}
 
-	private void writeMessageBody(TagWriter out, String link) throws IOException {
-		out.beginTag(HTMLConstants.PARAGRAPH);
-		out.write("Dear Recipient,");
-		out.endTag(HTMLConstants.PARAGRAPH);
-
-		out.beginTag(HTMLConstants.PARAGRAPH);
-		out.write(
-			"You have been invited to create an account for the application " + Version.getApplicationName() + ".");
-		out.endTag(HTMLConstants.PARAGRAPH);
-
-		out.beginTag(HTMLConstants.PARAGRAPH);
-		out.write("To begin the setup process, please open the link and follow the instructions on the website:");
-		out.emptyTag(HTMLConstants.BR);
-		out.beginBeginTag(HTMLConstants.ANCHOR);
-		out.writeAttribute(HTMLConstants.HREF_ATTR, link);
-		out.endBeginTag();
-		out.write(link);
-		out.endTag(HTMLConstants.ANCHOR);
-		out.endTag(HTMLConstants.PARAGRAPH);
-
-		out.beginTag(HTMLConstants.PARAGRAPH);
-		out.write("If you did not expect this invitation, you can safely ignore this email.");
-		out.endTag(HTMLConstants.PARAGRAPH);
-
-		out.beginTag(HTMLConstants.PARAGRAPH);
-		out.write("Kind regards,");
-		out.emptyTag(HTMLConstants.BR);
-		out.write("Your Application Team");
-		out.endTag(HTMLConstants.PARAGRAPH);
+	private Object getBody(Invitation invitation, String applicationName) {
+		String link = invitationLink(DefaultDisplayContext.getDisplayContext(), invitation);
+		return InvitationModule.getInstance().getInvitationBody().execute(invitation, applicationName, link);
 	}
 
 	private String invitationLink(DisplayContext context, Invitation invitation) {

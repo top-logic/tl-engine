@@ -178,8 +178,9 @@ public class ChatProcessor {
 				long timeoutMs = trigger.getTimeout();
 				PreTurnTrigger.FailPolicy failPolicy = trigger.getFailPolicy();
 
+				Duration timeoutOverride = timeoutMs > 0 ? Duration.ofMillis(timeoutMs) : null;
 				BackgroundAgentExecutor bgExecutor =
-					new BackgroundAgentExecutor(agentRegistry, Duration.ofMillis(timeoutMs));
+					new BackgroundAgentExecutor(agentRegistry, timeoutOverride);
 				try {
 					ChatContext bgContext = ChatContext.preTurn(preTurnAgent, trimmed, taskTracker.getChat());
 					ExecutionResult execResult = bgExecutor.execute(preTurnAgent, bgContext);

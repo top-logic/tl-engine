@@ -689,37 +689,7 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	 * @return A fully configured untyped agent instance.
 	 */
 	public UntypedAgent buildUntypedAgent(String name, Duration timeoutOverride) {
-		AgentConfig config = getAgentConfig(name);
-		ChatModel model = buildChatModel(config, timeoutOverride);
-		String systemPrompt = getSystemPrompt(config);
-		List<ToolImplementation> tools = buildTools(config);
-		List<ToolImplementation> delegationTools = buildDelegationTools(config, null);
-
-		Map<ToolSpecification, ToolExecutor> allTools = new LinkedHashMap<>();
-		for (ToolImplementation impl : tools) {
-			allTools.put(impl.getSpecification(), impl.getExecutor());
-		}
-		for (ToolImplementation impl : delegationTools) {
-			allTools.put(impl.getSpecification(), impl.getExecutor());
-		}
-
-		var builder = AgenticServices.agentBuilder()
-			.chatModel(model)
-			.systemMessage(systemPrompt)
-			.userMessage("{{message}}")
-			.inputKey(String.class, "message")
-			.returnType(String.class);
-
-		if (!allTools.isEmpty()) {
-			builder.tools(allTools);
-		}
-
-		ToolCallTracker tracker = ToolCallTracking.getTracker();
-		if (tracker != null) {
-			builder.listener(new TimelineAgentListener(tracker));
-		}
-
-		return builder.build();
+		return buildUntypedAgent(name, null, null, null, timeoutOverride);
 	}
 
 	/**
@@ -741,7 +711,7 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	 *
 	 * <p>
 	 * Delegates to
-	 * {@link #buildUntypedAgent(String, ChatMemory, java.util.function.UnaryOperator, Map)} with a
+	 * {@link #buildUntypedAgent(String, ChatMemory, java.util.function.UnaryOperator, Map, Duration)} with a
 	 * fresh (invocation-scoped) sub-agent memory map, so that sub-agents called multiple times
 	 * within the same orchestrator loop retain their conversation context.
 	 * </p>
@@ -757,12 +727,40 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	 */
 	public UntypedAgent buildUntypedAgent(String name, ChatMemory memory,
 			java.util.function.UnaryOperator<ChatModel> chatModelDecorator) {
-		return buildUntypedAgent(name, memory, chatModelDecorator, null);
+		return buildUntypedAgent(name, memory, chatModelDecorator, null, null);
 	}
 
 	/**
 	 * Builds an {@link UntypedAgent} from the named configuration with session-scoped sub-agent
 	 * memory.
+	 *
+	 * <p>
+	 * Convenience overload equivalent to
+	 * {@link #buildUntypedAgent(String, ChatMemory, java.util.function.UnaryOperator, Map, Duration)}
+	 * with {@code null} timeout (uses the agent's configured timeout).
+	 * </p>
+	 *
+	 * @param name
+	 *        The agent name as declared in the configuration.
+	 * @param memory
+	 *        Optional conversation memory, or {@code null} for stateless agents.
+	 * @param chatModelDecorator
+	 *        Optional decorator applied to the {@link ChatModel} before building. May be
+	 *        {@code null}.
+	 * @param subAgentMemories
+	 *        Optional session-scoped map of sub-agent conversation memories, keyed by agent name.
+	 *        If {@code null}, a local map is created for within-invocation memory only.
+	 * @return A fully configured untyped agent instance.
+	 */
+	public UntypedAgent buildUntypedAgent(String name, ChatMemory memory,
+			java.util.function.UnaryOperator<ChatModel> chatModelDecorator,
+			Map<String, ChatMemory> subAgentMemories) {
+		return buildUntypedAgent(name, memory, chatModelDecorator, subAgentMemories, null);
+	}
+
+	/**
+	 * Builds an {@link UntypedAgent} from the named configuration with session-scoped sub-agent
+	 * memory and an optional model-level timeout override.
 	 *
 	 * <p>
 	 * When {@code subAgentMemories} is provided, delegation targets (sub-agents) share their
@@ -787,13 +785,16 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	 * @param subAgentMemories
 	 *        Optional session-scoped map of sub-agent conversation memories, keyed by agent name.
 	 *        If {@code null}, a local map is created for within-invocation memory only.
+	 * @param timeoutOverride
+	 *        Optional timeout passed to the underlying HTTP client; may be {@code null} to use
+	 *        the agent's configured timeout.
 	 * @return A fully configured untyped agent instance.
 	 */
 	public UntypedAgent buildUntypedAgent(String name, ChatMemory memory,
 			java.util.function.UnaryOperator<ChatModel> chatModelDecorator,
-			Map<String, ChatMemory> subAgentMemories) {
+			Map<String, ChatMemory> subAgentMemories, Duration timeoutOverride) {
 		AgentConfig config = getAgentConfig(name);
-		ChatModel model = buildChatModel(config);
+		ChatModel model = buildChatModel(config, timeoutOverride);
 		if (chatModelDecorator != null) {
 			model = chatModelDecorator.apply(model);
 		}

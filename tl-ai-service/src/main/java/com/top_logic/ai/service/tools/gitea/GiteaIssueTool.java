@@ -13,6 +13,8 @@ import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.time.Duration;
 
+import com.top_logic.ai.service.tools.gitea.messages.CreateIssueRequest;
+import com.top_logic.ai.service.tools.util.DataClassSerializer;
 import com.top_logic.basic.Logger;
 
 import dev.langchain4j.agent.tool.P;
@@ -117,8 +119,11 @@ public class GiteaIssueTool {
 		// Build issue body in Markdown format.
 		String issueBody = buildIssueBody(category, severity, description, suggestedFix);
 
-		// Build JSON payload manually (no Jackson).
-		String jsonPayload = buildJsonPayload(title, issueBody);
+		// Build JSON payload using msgbuf.
+		CreateIssueRequest issueRequest = CreateIssueRequest.create();
+		issueRequest.setTitle(title);
+		issueRequest.setBody(issueBody);
+		String jsonPayload = DataClassSerializer.toJson(issueRequest, GiteaIssueTool.class, "createGiteaIssue()");
 
 		// Build API URL.
 		String apiUrl = giteaUrl;
@@ -178,67 +183,6 @@ public class GiteaIssueTool {
 		}
 
 		return body.toString();
-	}
-
-	/**
-	 * Builds a JSON payload string for the Gitea issue creation API.
-	 *
-	 * <p>
-	 * JSON is constructed manually since the project does not use Jackson. Special characters in
-	 * string values are properly escaped.
-	 * </p>
-	 */
-	private String buildJsonPayload(String title, String body) {
-		StringBuilder json = new StringBuilder();
-		json.append("{");
-		json.append("\"title\":\"").append(escapeJson(title)).append("\",");
-		json.append("\"body\":\"").append(escapeJson(body)).append("\"");
-		json.append("}");
-		return json.toString();
-	}
-
-	/**
-	 * Escapes special characters for JSON string values.
-	 */
-	private String escapeJson(String value) {
-		if (value == null) {
-			return "";
-		}
-		StringBuilder escaped = new StringBuilder();
-		for (int i = 0; i < value.length(); i++) {
-			char ch = value.charAt(i);
-			switch (ch) {
-				case '"':
-					escaped.append("\\\"");
-					break;
-				case '\\':
-					escaped.append("\\\\");
-					break;
-				case '\n':
-					escaped.append("\\n");
-					break;
-				case '\r':
-					escaped.append("\\r");
-					break;
-				case '\t':
-					escaped.append("\\t");
-					break;
-				case '\b':
-					escaped.append("\\b");
-					break;
-				case '\f':
-					escaped.append("\\f");
-					break;
-				default:
-					if (ch < 0x20) {
-						escaped.append(String.format("\\u%04x", (int) ch));
-					} else {
-						escaped.append(ch);
-					}
-					break;
-			}
-		}
-		return escaped.toString();
 	}
 
 	/**

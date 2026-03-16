@@ -3,9 +3,10 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.ai.service.agents.background.output;
+package com.top_logic.ai.demo.background;
 
 import com.top_logic.ai.service.agents.background.context.BackgroundContext;
+import com.top_logic.ai.service.agents.background.output.OutputHandlerImplementation;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
@@ -15,13 +16,8 @@ import com.top_logic.basic.config.InstantiationContext;
  *
  * <p>
  * Demonstrates how to implement a custom Java output handler using
- * {@link OutputHandlerImplementation}. Configure via:
+ * {@link OutputHandlerImplementation}.
  * </p>
- *
- * <pre>
- * &lt;output-handler config:interface="...OutputHandlerImplementation$Config"
- *     class="...output.TestOutputHandler"/&gt;
- * </pre>
  */
 public class TestOutputHandler extends OutputHandlerImplementation {
 

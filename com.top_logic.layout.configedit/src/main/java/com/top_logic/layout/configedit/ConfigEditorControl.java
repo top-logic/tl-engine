@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.layout.form.values.edit.Labels;
@@ -69,14 +70,21 @@ public class ConfigEditorControl extends ReactCompositeControl {
 			}
 
 			if (property.kind() == PropertyKind.ITEM) {
-				ConfigurationItem nested = (ConfigurationItem) config.value(property);
-				if (nested != null) {
-					ConfigEditorControl nestedEditor = createNestedEditor(context, nested);
+				if (PolymorphicConfiguration.class.isAssignableFrom(property.getType())) {
 					String label = resolveLabel(property);
-					ReactFormGroupControl group = new ReactFormGroupControl(
-						context, label, true, false, "subtle", true,
-						List.of(), List.of(nestedEditor));
-					addChild(group);
+					PolymorphicItemControl polyGroup =
+						createPolymorphicGroup(context, label, config, property);
+					addChild(polyGroup);
+				} else {
+					ConfigurationItem nested = (ConfigurationItem) config.value(property);
+					if (nested != null) {
+						ConfigEditorControl nestedEditor = createNestedEditor(context, nested);
+						String label = resolveLabel(property);
+						ReactFormGroupControl group = new ReactFormGroupControl(
+							context, label, true, false, "subtle", true,
+							List.of(), List.of(nestedEditor));
+						addChild(group);
+					}
 				}
 				continue;
 			}
@@ -135,6 +143,28 @@ public class ConfigEditorControl extends ReactCompositeControl {
 	 */
 	protected ConfigEditorControl createNestedEditor(ReactContext context, ConfigurationItem nested) {
 		return new ConfigEditorControl(context, nested);
+	}
+
+	/**
+	 * Creates a {@link PolymorphicItemControl} for a polymorphic ITEM property.
+	 *
+	 * <p>
+	 * Subclasses may override this to customize the polymorphic editor (e.g. for testing).
+	 * </p>
+	 *
+	 * @param context
+	 *        The React context.
+	 * @param label
+	 *        The group label.
+	 * @param parentConfig
+	 *        The parent configuration item.
+	 * @param property
+	 *        The polymorphic ITEM property.
+	 * @return A new polymorphic item control.
+	 */
+	protected PolymorphicItemControl createPolymorphicGroup(ReactContext context, String label,
+			ConfigurationItem parentConfig, PropertyDescriptor property) {
+		return new PolymorphicItemControl(context, label, parentConfig, property, this::createNestedEditor);
 	}
 
 	private static boolean isSupportedKind(PropertyKind kind) {

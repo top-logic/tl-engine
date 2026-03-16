@@ -11,6 +11,7 @@ import junit.framework.TestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
@@ -19,10 +20,12 @@ import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.layout.configedit.ConfigEditorControl;
 import com.top_logic.layout.configedit.ConfigFieldModel;
+import com.top_logic.layout.configedit.PolymorphicItemControl;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 
 /**
@@ -80,6 +83,47 @@ public class TestConfigEditorControl extends TestCase {
 		void setInner(InnerConfig value);
 	}
 
+	/** Base polymorphic configuration for testing. */
+	public interface HandlerConfig extends PolymorphicConfiguration<Object> {
+		// Marker interface.
+	}
+
+	/** Concrete handler config A with a string property. */
+	public interface HandlerAConfig extends HandlerConfig {
+
+		/** Property name for {@link #getNameA()}. */
+		String NAME_A = "nameA";
+
+		@Name(NAME_A)
+		String getNameA();
+
+		void setNameA(String value);
+	}
+
+	/** Concrete handler config B with an int property. */
+	public interface HandlerBConfig extends HandlerConfig {
+
+		/** Property name for {@link #getValueB()}. */
+		String VALUE_B = "valueB";
+
+		@Name(VALUE_B)
+		int getValueB();
+
+		void setValueB(int value);
+	}
+
+	/** Test config with a polymorphic ITEM property. */
+	public interface PolymorphicTestConfig extends ConfigurationItem {
+
+		/** Property name for {@link #getHandler()}. */
+		String HANDLER = "handler";
+
+		@Name(HANDLER)
+		HandlerConfig getHandler();
+
+		void setHandler(HandlerConfig value);
+	}
+
 	/**
 	 * Test subclass that bypasses {@link com.top_logic.layout.form.values.edit.Labels} to avoid
 	 * requiring Resources/ThreadContextManager in unit tests.
@@ -105,8 +149,18 @@ public class TestConfigEditorControl extends TestCase {
 			return new TestableConfigEditorControl(context, nested);
 		}
 
+		@Override
+		protected PolymorphicItemControl createPolymorphicGroup(ReactContext context, String label,
+				ConfigurationItem parentConfig, PropertyDescriptor property) {
+			return new PolymorphicItemControl(context, label, parentConfig, property, this::createNestedEditor);
+		}
+
 		int getChildCount() {
 			return getChildren().size();
+		}
+
+		java.util.List<ReactControl> getChildrenList() {
+			return getChildren();
 		}
 	}
 
@@ -222,6 +276,87 @@ public class TestConfigEditorControl extends TestCase {
 			.getChildCount();
 
 		assertEquals("Null ITEM should not add a child", childCountWithItem, childCountWithoutItem + 1);
+	}
+
+	/**
+	 * Tests that a polymorphic ITEM property creates a {@link PolymorphicItemControl}.
+	 */
+	public void testPolymorphicPropertyCreatesTypeSelector() {
+		PolymorphicTestConfig config = TypedConfiguration.newConfigItem(PolymorphicTestConfig.class);
+
+		TestableConfigEditorControl editor = new TestableConfigEditorControl(createTestContext(), config);
+
+		// Should have children for: configuration-interface (PLAIN) + handler (polymorphic ITEM).
+		boolean hasPolymorphicChild = false;
+		for (ReactControl child : editor.getChildrenList()) {
+			if (child instanceof PolymorphicItemControl) {
+				hasPolymorphicChild = true;
+			}
+		}
+		assertTrue("Should have a PolymorphicItemControl child", hasPolymorphicChild);
+	}
+
+	/**
+	 * Tests that changing the type in a polymorphic control rebuilds the nested editor.
+	 */
+	public void testPolymorphicTypeChange() {
+		PolymorphicTestConfig config = TypedConfiguration.newConfigItem(PolymorphicTestConfig.class);
+		HandlerAConfig handlerA = TypedConfiguration.newConfigItem(HandlerAConfig.class);
+		handlerA.setNameA("test");
+		config.setHandler(handlerA);
+
+		TestableConfigEditorControl editor = new TestableConfigEditorControl(createTestContext(), config);
+
+		PolymorphicItemControl polyControl = findPolymorphicControl(editor);
+		assertNotNull("Should have PolymorphicItemControl", polyControl);
+		assertNotNull("Should have nested editor for HandlerAConfig", polyControl.getNestedEditor());
+
+		// Change type to HandlerBConfig.
+		polyControl.getTypeModel().setValue(HandlerBConfig.class.getName());
+
+		// Verify the config was updated.
+		assertNotNull("Handler should be set", config.getHandler());
+		assertEquals("Handler should be HandlerBConfig",
+			HandlerBConfig.class, config.getHandler().descriptor().getConfigurationInterface());
+		assertNotNull("Should have a new nested editor", polyControl.getNestedEditor());
+	}
+
+	/**
+	 * Tests that a null polymorphic value shows only the type selector (no nested editor).
+	 */
+	public void testPolymorphicNullValue() {
+		PolymorphicTestConfig config = TypedConfiguration.newConfigItem(PolymorphicTestConfig.class);
+		// handler is null by default.
+
+		TestableConfigEditorControl editor = new TestableConfigEditorControl(createTestContext(), config);
+
+		PolymorphicItemControl polyControl = findPolymorphicControl(editor);
+		assertNotNull("Should have PolymorphicItemControl", polyControl);
+		assertNull("Should have no nested editor for null value", polyControl.getNestedEditor());
+	}
+
+	/**
+	 * Tests that the type options include all non-abstract specializations.
+	 */
+	public void testPolymorphicTypeOptions() {
+		PolymorphicTestConfig config = TypedConfiguration.newConfigItem(PolymorphicTestConfig.class);
+		PropertyDescriptor handlerProp = config.descriptor().getProperty(PolymorphicTestConfig.HANDLER);
+
+		java.util.List<String> options = PolymorphicItemControl.resolveTypeOptions(handlerProp);
+
+		assertTrue("Options should contain HandlerAConfig",
+			options.contains(HandlerAConfig.class.getName()));
+		assertTrue("Options should contain HandlerBConfig",
+			options.contains(HandlerBConfig.class.getName()));
+	}
+
+	private PolymorphicItemControl findPolymorphicControl(TestableConfigEditorControl editor) {
+		for (ReactControl child : editor.getChildrenList()) {
+			if (child instanceof PolymorphicItemControl) {
+				return (PolymorphicItemControl) child;
+			}
+		}
+		return null;
 	}
 
 	/**

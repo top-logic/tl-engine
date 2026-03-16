@@ -618,6 +618,30 @@ public class MessageBox extends MessageBoxShortcuts {
 	 * @param type
 	 *        The {@link MessageType} of the confirm dialog.
 	 * @param message
+	 *        The {@link ResKey} displayed in the dialog.
+	 * @param buttons
+	 *        The buttons to be shown. Must not be empty. All buttons implicitly close the
+	 *        {@link MessageBox} no matter what the inner {@link Command} does. The first button is
+	 *        used as the {@link DialogModel#getDefaultCommand()}.
+	 * @return The result that must be immediately returned from the invoking command handler that
+	 *         opens the {@link MessageBox}.
+	 * 
+	 * @see #button(ButtonType, Command) Creating simple buttons with predefined type.
+	 */
+	public static HandlerResult confirm(WindowScope windowScope,
+			final MessageType type, final ResKey message,
+			final CommandModel... buttons) {
+		return newBuilder(type).message(message).buttons(buttons).confirm(windowScope);
+	}
+
+	/**
+	 * Opens a confirm dialog that displays the given message and buttons.
+	 * 
+	 * @param windowScope
+	 *        The window to open the message box in.
+	 * @param type
+	 *        The {@link MessageType} of the confirm dialog.
+	 * @param message
 	 *        The message displayed in the dialog.
 	 * @param buttons
 	 *        The buttons to be shown. Must not be empty. All buttons implicitly close the

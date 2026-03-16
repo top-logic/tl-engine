@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<card
+		title="Declarative Dialog"
+		variant="elevated"
+	>
+		<stack
+			direction="column"
+			gap="default"
+		>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					label="Close"
+				/>
+			</button>
+		</stack>
+	</card>
+</view>

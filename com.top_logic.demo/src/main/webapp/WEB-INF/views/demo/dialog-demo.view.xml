@@ -6,7 +6,7 @@
 		gap="default"
 	>
 		<card
-			title="Dialog Demo"
+			title="Dialog Demo (Programmatic)"
 			variant="elevated"
 		>
 			<stack
@@ -25,6 +25,23 @@
 						label="Open Another Dialog"
 						dialog-title="Confirmation"
 						dialog-message="Are you sure you want to proceed?"
+					/>
+				</button>
+			</stack>
+		</card>
+		<card
+			title="Dialog Demo (Declarative)"
+			variant="elevated"
+		>
+			<stack
+				direction="column"
+				gap="default"
+			>
+				<button>
+					<action class="com.top_logic.layout.view.command.OpenDialogCommand"
+						label="Show Details Dialog"
+						dialog-view="demo/show-details-dialog.view.xml"
+						close-on-backdrop="true"
 					/>
 				</button>
 			</stack>

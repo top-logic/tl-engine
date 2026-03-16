@@ -59,7 +59,6 @@
   var CHAT_SESSIONS_URL = BASE + "/chat/sessions";
   var CHAT_RESPOND_URL = BASE + "/chat/respond";
   var CHAT_APPROVAL_MODE_URL = BASE + "/chat/approval-mode";
-  var CHAT_REVIEW_URL = BASE + "/chat/review";
 
   // Track active SSE connections per chat root ID (not DOM reference, which changes on re-render)
   var activeConnections = {};
@@ -178,11 +177,6 @@
       (root.getAttribute("data-chat-preview-id") &&
         doc.getElementById(root.getAttribute("data-chat-preview-id"))) ||
       root.querySelector(".chat-attachment-preview");
-    var reviewBtn =
-      (root.getAttribute("data-chat-review-btn-id") &&
-        doc.getElementById(root.getAttribute("data-chat-review-btn-id"))) ||
-      root.querySelector(".chat-review-button");
-    var reviewAlerts = root.querySelector(".chat-review-alerts");
     return {
       messages: messages,
       input: input,
@@ -190,8 +184,6 @@
       fileInput: fileInput,
       attachBtn: attachBtn,
       preview: preview,
-      reviewBtn: reviewBtn,
-      reviewAlerts: reviewAlerts,
     };
   }
 
@@ -1162,48 +1154,6 @@
       }
     }
 
-    function showReviewAlert(alert) {
-      var container = el.reviewAlerts;
-      if (!container) {
-        container = root.querySelector(".chat-review-alerts");
-      }
-      if (!container) return;
-
-      var banner = document.createElement("div");
-      banner.className = "chat-review-alert";
-      if (alert.severity === "warning" || alert.severity === "high") {
-        banner.classList.add("chat-review-alert-warning");
-      } else if (alert.severity === "error" || alert.severity === "critical") {
-        banner.classList.add("chat-review-alert-error");
-      }
-
-      var textSpan = document.createElement("span");
-      textSpan.className = "chat-review-alert-text";
-      textSpan.textContent = alert.title || "Review alert";
-      banner.appendChild(textSpan);
-
-      if (alert.category) {
-        var catSpan = document.createElement("span");
-        catSpan.className = "chat-review-alert-category";
-        catSpan.textContent = alert.category;
-        banner.appendChild(catSpan);
-      }
-
-      var closeBtn = document.createElement("button");
-      closeBtn.type = "button";
-      closeBtn.className = "chat-review-alert-close";
-      closeBtn.textContent = "\u00D7"; // x
-      closeBtn.addEventListener("click", function () {
-        banner.classList.add("chat-review-alert-dismissed");
-        setTimeout(function () {
-          if (banner.parentNode) banner.parentNode.removeChild(banner);
-        }, 300);
-      });
-      banner.appendChild(closeBtn);
-
-      container.appendChild(banner);
-    }
-
     function connectSSE() {
       log("connectSSE called", { destroyed: state.destroyed });
       if (state.destroyed) return;
@@ -1436,17 +1386,6 @@
           }
         } catch (err) {
           log("SSE approval_mode parse error", err);
-        }
-      });
-
-      eventSource.addEventListener("background_alert", function (e) {
-        log("SSE background_alert event", e.data);
-        if (state.destroyed) return;
-        try {
-          var alert = JSON.parse(e.data);
-          showReviewAlert(alert);
-        } catch (err) {
-          log("SSE background_alert parse error", err);
         }
       });
 
@@ -1705,31 +1644,6 @@
           addFiles(el.fileInput.files);
           el.fileInput.value = "";
         }
-      });
-    }
-
-    // Review button click
-    if (el.reviewBtn) {
-      el.reviewBtn.addEventListener("click", function () {
-        if (el.reviewBtn.disabled) return;
-        el.reviewBtn.disabled = true;
-        el.reviewBtn.classList.add("chat-review-loading");
-        fetchJson(CHAT_REVIEW_URL, { method: "POST", body: {} })
-          .then(function (data) {
-            log("Review started", data);
-            // Show brief indicator on button
-            el.reviewBtn.classList.remove("chat-review-loading");
-            el.reviewBtn.classList.add("chat-review-started");
-            setTimeout(function () {
-              el.reviewBtn.classList.remove("chat-review-started");
-              el.reviewBtn.disabled = false;
-            }, 3000);
-          })
-          .catch(function (err) {
-            log("Review failed", err);
-            el.reviewBtn.classList.remove("chat-review-loading");
-            el.reviewBtn.disabled = false;
-          });
       });
     }
 

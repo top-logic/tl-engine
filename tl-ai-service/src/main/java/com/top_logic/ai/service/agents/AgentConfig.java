@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Set;
 
 import com.top_logic.ai.service.AIService;
-import com.top_logic.ai.service.agents.background.BackgroundConfig;
 import com.top_logic.ai.service.ChatModelFactory;
 import com.top_logic.ai.service.providers.AnthropicChatModelFactory;
 import com.top_logic.ai.service.providers.MistralChatModelFactory;
@@ -21,6 +20,7 @@ import com.top_logic.ai.service.providers.OpenAIChatModelFactory;
 import com.top_logic.ai.service.tools.registry.ToolRegistry;
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.NamedConfigMandatory;
+import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.Derived;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Hidden;
@@ -60,9 +60,9 @@ import com.top_logic.model.annotate.LabelPosition;
  * is selected, {@link #getThinkingBudgetTokens()} and {@link #getMaxTokens()} become mandatory.
  * </p>
  */
+@Abstract
 @DisplayOrder({
 	AgentConfig.NAME_ATTRIBUTE,
-	AgentConfig.ENTRY_POINT,
 	AgentConfig.MODEL,
 	AgentConfig.DESCRIPTION,
 	AgentConfig.SYSTEM_PROMPT,
@@ -84,9 +84,7 @@ import com.top_logic.model.annotate.LabelPosition;
 	AgentConfig.TIMEOUT_SECONDS,
 	AgentConfig.MAX_RETRIES,
 	AgentConfig.TOOLS,
-	AgentConfig.DELEGATIONS,
 	AgentConfig.SKILLS,
-	AgentConfig.BACKGROUND,
 })
 public interface AgentConfig extends NamedConfigMandatory {
 
@@ -150,14 +148,8 @@ public interface AgentConfig extends NamedConfigMandatory {
 	/** @see #getTools() */
 	String TOOLS = "tools";
 
-	/** @see #getDelegations() */
-	String DELEGATIONS = "delegations";
-
 	/** @see #getSkills() */
 	String SKILLS = "skills";
-
-	/** @see #isEntryPoint() */
-	String ENTRY_POINT = "entry-point";
 
 	/** @see #isThinkingCapable() */
 	String IS_THINKING_CAPABLE = "is-thinking-capable";
@@ -179,9 +171,6 @@ public interface AgentConfig extends NamedConfigMandatory {
 
 	/** @see #getReasoningEffort() */
 	String REASONING_EFFORT = "reasoning-effort";
-
-	/** @see #getBackground() */
-	String BACKGROUND = "background";
 
 	/**
 	 * Short description of this agent's purpose.
@@ -511,20 +500,6 @@ public interface AgentConfig extends NamedConfigMandatory {
 	List<String> getTools();
 
 	/**
-	 * Other agents this agent can delegate to, selected by name.
-	 *
-	 * <p>
-	 * For each target agent name listed here, a dedicated {@code delegate_to_<name>} tool with a
-	 * self-describing {@link dev.langchain4j.agent.tool.ToolSpecification} is created at runtime by
-	 * the {@link AgentRegistry}.
-	 * </p>
-	 */
-	@Name(DELEGATIONS)
-	@Format(CommaSeparatedStrings.class)
-	@Options(fun = AllAgentNames.class)
-	List<String> getDelegations();
-
-	/**
 	 * Comma-separated list of skill IDs available to this agent.
 	 *
 	 * <p>
@@ -536,33 +511,6 @@ public interface AgentConfig extends NamedConfigMandatory {
 	@Format(CommaSeparatedStrings.class)
 	@Options(fun = AllSkillNames.class)
 	List<String> getSkills();
-
-	/**
-	 * Whether this agent is the chat entry point.
-	 *
-	 * <p>
-	 * Exactly one agent in the {@link AgentRegistry} must be marked as the entry point. The chat
-	 * system uses this agent to handle incoming user messages.
-	 * </p>
-	 */
-	@Name(ENTRY_POINT)
-	@BooleanDefault(false)
-	boolean isEntryPoint();
-
-	/**
-	 * Optional background agent configuration.
-	 *
-	 * <p>
-	 * When set, this agent becomes a background agent that is triggered by the framework
-	 * rather than by user messages. When {@code null}, the agent is a normal conversational
-	 * agent (unchanged behavior).
-	 * </p>
-	 *
-	 * @see BackgroundConfig
-	 */
-	@Name(BACKGROUND)
-	@Nullable
-	BackgroundConfig getBackground();
 
 	// --- Option provider functions ---
 
@@ -636,7 +584,12 @@ public interface AgentConfig extends NamedConfigMandatory {
 	}
 
 	/**
-	 * Provides all agent names from the {@link AgentRegistry} as delegation targets.
+	 * Provides the names of all {@link ChatAgentConfig} agents as delegation targets.
+	 *
+	 * <p>
+	 * Background agents are excluded because they do not participate in the orchestration chain and
+	 * cannot be delegated to.
+	 * </p>
 	 */
 	class AllAgentNames extends Function0<List<String>> {
 
@@ -646,7 +599,13 @@ public interface AgentConfig extends NamedConfigMandatory {
 			if (registry == null) {
 				return Collections.emptyList();
 			}
-			return new ArrayList<>(registry.getConfig().getAgents().keySet());
+			List<String> result = new ArrayList<>();
+			for (java.util.Map.Entry<String, AgentConfig> entry : registry.getConfig().getAgents().entrySet()) {
+				if (entry.getValue() instanceof ChatAgentConfig) {
+					result.add(entry.getKey());
+				}
+			}
+			return result;
 		}
 	}
 

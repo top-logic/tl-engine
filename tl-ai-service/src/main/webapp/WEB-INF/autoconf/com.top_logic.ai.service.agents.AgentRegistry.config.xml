@@ -7,6 +7,7 @@
 		<config service-class="com.top_logic.ai.service.agents.AgentRegistry">
 			<instance class="com.top_logic.ai.service.agents.AgentRegistry">
 				<agent name="Orchestrator"
+					config:interface="com.top_logic.ai.service.agents.ChatAgentConfig"
 					delegations="ModelExplorer,TLScriptAgent,ModelEditor"
 					entry-point="true"
 					skills="promptModelExplorer,taskManagement"
@@ -141,6 +142,7 @@ Route by the nature of the request:
 - Skipping context gathering for modification/deletion requests → FORBIDDEN (always delegate to read-only specialist first)]]></system-prompt>
 				</agent>
 				<agent name="ModelExplorer"
+					config:interface="com.top_logic.ai.service.agents.ChatAgentConfig"
 					description="Delegate to the Model Explorer for read-only model inspection. Call to explore, inspect, or verify the TopLogic application model: modules, types, parts, annotations, search. Provide goal (short intent), task (concrete question), context (module/type/part names if known). Do NOT paste the full user message; distill a clear exploration request."
 					send-thinking="true"
 					skills="annotation-discovery"
@@ -240,6 +242,7 @@ If you cannot fill the Evidence section → you have not called enough tools →
 - Summarize by grouping; do not dump raw JSON unless the user explicitly asks for raw output.]]></system-prompt>
 				</agent>
 				<agent name="TLScriptAgent"
+					config:interface="com.top_logic.ai.service.agents.ChatAgentConfig"
 					delegations=""
 					description="Delegate to the TLScript specialist for TLScript syntax, function documentation, script validation, or code generation. Provide goal (short intent), task (concrete question or code snippet), context (type/part names, code snippets, model literals if relevant). Do NOT paste the full user message; distill the TLScript question."
 					send-thinking="false"
@@ -354,6 +357,7 @@ B) Choosing '.' vs '..':
 }]]></system-prompt>
 				</agent>
 				<agent name="ModelEditor"
+					config:interface="com.top_logic.ai.service.agents.ChatAgentConfig"
 					delegations="ModelExplorer,TLScriptAgent"
 					description="Delegate to the Model Editor for model modification. Call when the user wants to create or modify the TopLogic model: add types, properties, references, enumerations, or set/remove annotations. Provide goal (short intent), task (concrete instructions or requirements), context (module/type names if relevant). Do NOT paste the full user message; distill the creation request."
 					skills="annotation-discovery,annotation-editing"
@@ -514,14 +518,14 @@ After all steps, respond with a structured summary:
 Do NOT include long explanations. Be concise and factual.]]></system-prompt>
 				</agent>
 				<agent name="ReviewAgent"
+					config:interface="com.top_logic.ai.service.agents.background.BackgroundAgentConfig"
 					description="Background quality reviewer. Analyzes conversation transcripts for quality issues (incorrect answers, bad delegations, tool misuse, unhelpful responses, inefficiency) and creates Gitea tickets for problems found."
 					tools="gitea.create_gitea_issue"
+					scope="CHAT"
 				>
-					<background scope="CHAT">
-						<trigger config:interface="com.top_logic.ai.service.agents.background.trigger.PostTurnTrigger" />
-						<input config:interface="com.top_logic.ai.service.agents.background.input.ChatContextInput"
-							content="LAST_TURN" />
-					</background>
+					<trigger config:interface="com.top_logic.ai.service.agents.background.trigger.PostTurnTrigger" />
+					<input config:interface="com.top_logic.ai.service.agents.background.input.ChatContextInput"
+						content="LAST_TURN" />
 					<system-prompt><![CDATA[# Preamble
 
 You are a **Quality Review Agent** for a TopLogic AI assistant. Your job is to review a conversation transcript (user messages, agent responses, and tool/delegation traces) and identify quality issues.

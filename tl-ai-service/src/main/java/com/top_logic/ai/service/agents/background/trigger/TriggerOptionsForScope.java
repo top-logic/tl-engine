@@ -8,7 +8,7 @@ package com.top_logic.ai.service.agents.background.trigger;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.top_logic.ai.service.agents.background.BackgroundConfig;
+import com.top_logic.ai.service.agents.background.BackgroundAgentConfig;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.func.Function1;
@@ -23,14 +23,14 @@ import com.top_logic.layout.form.values.edit.OptionMappingProvider;
 /**
  * Option provider for the trigger property that hides {@link PreTurnTrigger} and
  * {@link PostTurnTrigger} when the scope is
- * {@link com.top_logic.ai.service.agents.background.BackgroundConfig.Scope#APPLICATION}.
+ * {@link com.top_logic.ai.service.agents.background.BackgroundAgentConfig.Scope#APPLICATION}.
  *
  * <p>
  * Pre-turn and post-turn triggers operate within the context of a chat session and are not
  * compatible with application-scoped agents.
  * </p>
  */
-public class TriggerOptionsForScope extends Function1<ListOptionModel<Class<?>>, BackgroundConfig.Scope>
+public class TriggerOptionsForScope extends Function1<ListOptionModel<Class<?>>, BackgroundAgentConfig.Scope>
 		implements OptionMappingProvider {
 
 	private final Class<?> _type;
@@ -45,7 +45,7 @@ public class TriggerOptionsForScope extends Function1<ListOptionModel<Class<?>>,
 	}
 
 	@Override
-	public ListOptionModel<Class<?>> apply(BackgroundConfig.Scope scope) {
+	public ListOptionModel<Class<?>> apply(BackgroundAgentConfig.Scope scope) {
 		List<? extends Class<?>> options =
 			TypeIndex.getInstance().getSpecializations(_type, true, true, false).stream()
 				.filter(type -> isAllowedForScope(type, scope))
@@ -54,8 +54,8 @@ public class TriggerOptionsForScope extends Function1<ListOptionModel<Class<?>>,
 		return new DefaultListOptionModel<>(options);
 	}
 
-	private boolean isAllowedForScope(Class<?> type, BackgroundConfig.Scope scope) {
-		if (scope == BackgroundConfig.Scope.APPLICATION) {
+	private boolean isAllowedForScope(Class<?> type, BackgroundAgentConfig.Scope scope) {
+		if (scope == BackgroundAgentConfig.Scope.APPLICATION) {
 			return !PreTurnTrigger.class.isAssignableFrom(type)
 				&& !PostTurnTrigger.class.isAssignableFrom(type);
 		}

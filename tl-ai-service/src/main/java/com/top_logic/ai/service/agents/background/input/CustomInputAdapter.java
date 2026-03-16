@@ -11,20 +11,20 @@ import com.top_logic.ai.service.agents.background.context.BackgroundContext;
  * {@link InputAdapter} that returns a fixed custom message as input.
  *
  * <p>
- * The message is obtained from an {@link AutonomousInput} configuration and returned unchanged.
+ * The message is obtained from a {@link CustomInput} configuration and returned unchanged.
  * </p>
  */
-public class AutonomousInputAdapter implements InputAdapter {
+public class CustomInputAdapter implements InputAdapter {
 
 	private final String _message;
 
 	/**
-	 * Creates a new {@link AutonomousInputAdapter} from the given configuration.
+	 * Creates a new {@link CustomInputAdapter} from the given configuration.
 	 *
 	 * @param config
-	 *        The autonomous input configuration.
+	 *        The custom input configuration.
 	 */
-	public AutonomousInputAdapter(AutonomousInput config) {
+	public CustomInputAdapter(CustomInput config) {
 		_message = config.getCustomMessage();
 	}
 

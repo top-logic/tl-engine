@@ -9,8 +9,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.top_logic.ai.service.agents.background.context.BackgroundContext;
 import com.top_logic.ai.service.agents.background.context.ChatContext;
-import com.top_logic.ai.service.agents.background.input.AutonomousInput;
-import com.top_logic.ai.service.agents.background.input.AutonomousInputAdapter;
+import com.top_logic.ai.service.agents.background.input.CustomInput;
+import com.top_logic.ai.service.agents.background.input.CustomInputAdapter;
 import com.top_logic.ai.service.agents.background.input.ChatContextInput;
 import com.top_logic.ai.service.agents.background.input.InputAdapter;
 import com.top_logic.ai.service.agents.background.input.InputConfig;
@@ -37,15 +37,15 @@ public class TestBackgroundAgentExecutor extends TestCase {
 		_executor = new BackgroundAgentExecutor(null);
 	}
 
-	/** {@link AutonomousInput} resolves to {@link AutonomousInputAdapter}. */
-	public void testResolveAutonomousInput() {
-		AutonomousInput config = TypedConfiguration.newConfigItem(AutonomousInput.class);
-		config.update(config.descriptor().getProperty(AutonomousInput.CUSTOM_MESSAGE), "test message");
+	/** {@link CustomInput} resolves to {@link CustomInputAdapter}. */
+	public void testResolveCustomInput() {
+		CustomInput config = TypedConfiguration.newConfigItem(CustomInput.class);
+		config.update(config.descriptor().getProperty(CustomInput.CUSTOM_MESSAGE), "test message");
 
 		InputAdapter adapter = _executor.resolveInputAdapter(config);
 
 		assertNotNull(adapter);
-		assertTrue("Expected AutonomousInputAdapter", adapter instanceof AutonomousInputAdapter);
+		assertTrue("Expected CustomInputAdapter", adapter instanceof CustomInputAdapter);
 	}
 
 	/** {@link ScriptInput} resolves to {@link ScriptInputAdapter}. */
@@ -102,10 +102,10 @@ public class TestBackgroundAgentExecutor extends TestCase {
 		}
 	}
 
-	/** {@link AutonomousInputAdapter} returns the configured custom message. */
-	public void testAutonomousInputAdapterReturnsMessage() {
-		AutonomousInput config = TypedConfiguration.newConfigItem(AutonomousInput.class);
-		config.update(config.descriptor().getProperty(AutonomousInput.CUSTOM_MESSAGE), "Review this content");
+	/** {@link CustomInputAdapter} returns the configured custom message. */
+	public void testCustomInputAdapterReturnsMessage() {
+		CustomInput config = TypedConfiguration.newConfigItem(CustomInput.class);
+		config.update(config.descriptor().getProperty(CustomInput.CUSTOM_MESSAGE), "Review this content");
 
 		InputAdapter adapter = _executor.resolveInputAdapter(config);
 		String input = adapter.gatherInput(new BackgroundContext("test-agent", "post-turn"));
@@ -127,10 +127,10 @@ public class TestBackgroundAgentExecutor extends TestCase {
 
 	/** Pre-turn trigger uses pending user message directly, bypassing InputAdapter. */
 	public void testPreTurnBypassesInputAdapter() {
-		// Create a BackgroundConfig with PreTurnTrigger and null input
-		BackgroundConfig bgConfig = TypedConfiguration.newConfigItem(BackgroundConfig.class);
+		// Create a BackgroundAgentConfig with PreTurnTrigger and null input
+		BackgroundAgentConfig bgConfig = TypedConfiguration.newConfigItem(BackgroundAgentConfig.class);
 		PreTurnTrigger trigger = TypedConfiguration.newConfigItem(PreTurnTrigger.class);
-		bgConfig.update(bgConfig.descriptor().getProperty(BackgroundConfig.TRIGGER), trigger);
+		bgConfig.update(bgConfig.descriptor().getProperty(BackgroundAgentConfig.TRIGGER), trigger);
 		// Input is left null — pre-turn should not need it
 
 		// Create a pre-turn ChatContext with a pending user message

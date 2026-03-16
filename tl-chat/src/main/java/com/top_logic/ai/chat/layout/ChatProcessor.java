@@ -25,7 +25,7 @@ import com.top_logic.ai.chat.api.messages.AttachmentDto;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.service.agents.AgentRegistry;
 import com.top_logic.ai.service.agents.background.BackgroundAgentExecutor;
-import com.top_logic.ai.service.agents.background.BackgroundConfig;
+import com.top_logic.ai.service.agents.background.BackgroundAgentConfig;
 import com.top_logic.ai.service.agents.background.ExecutionResult;
 import com.top_logic.ai.service.agents.background.context.ChatContext;
 import com.top_logic.ai.service.agents.background.trigger.PostTurnTrigger;
@@ -182,7 +182,7 @@ public class ChatProcessor {
 
 			// Execute pre-turn background agents (synchronous, can block)
 			List<String> preTurnAgents = agentRegistry.getBackgroundAgents(
-				PreTurnTrigger.class, BackgroundConfig.Scope.CHAT);
+				PreTurnTrigger.class, BackgroundAgentConfig.Scope.CHAT);
 			for (String preTurnAgent : preTurnAgents) {
 				try {
 					BackgroundAgentExecutor bgExecutor = new BackgroundAgentExecutor(agentRegistry);
@@ -500,7 +500,7 @@ public class ChatProcessor {
 		}
 
 		List<String> postTurnAgents = agentRegistry.getBackgroundAgents(
-			PostTurnTrigger.class, BackgroundConfig.Scope.CHAT);
+			PostTurnTrigger.class, BackgroundAgentConfig.Scope.CHAT);
 
 		for (String agentName : postTurnAgents) {
 			if (!taskTracker.tryStartBackgroundAgent(agentName)) {

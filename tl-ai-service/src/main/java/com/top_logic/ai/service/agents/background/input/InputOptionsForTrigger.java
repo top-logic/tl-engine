@@ -8,7 +8,7 @@ package com.top_logic.ai.service.agents.background.input;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.top_logic.ai.service.agents.background.BackgroundConfig;
+import com.top_logic.ai.service.agents.background.BackgroundAgentConfig;
 import com.top_logic.ai.service.agents.background.trigger.PreTurnTrigger;
 import com.top_logic.ai.service.agents.background.trigger.TriggerConfig;
 import com.top_logic.basic.CalledByReflection;
@@ -32,12 +32,12 @@ import com.top_logic.layout.form.values.edit.OptionMappingProvider;
  * <p>
  * {@link ChatContextInput} requires a completed chat turn to read from. It is hidden when the
  * trigger is a {@link PreTurnTrigger} (no completed turn yet) or when the scope is
- * {@link com.top_logic.ai.service.agents.background.BackgroundConfig.Scope#APPLICATION} (no chat
+ * {@link com.top_logic.ai.service.agents.background.BackgroundAgentConfig.Scope#APPLICATION} (no chat
  * session at all).
  * </p>
  */
 public class InputOptionsForTrigger
-		extends Function2<ListOptionModel<Class<?>>, TriggerConfig, BackgroundConfig.Scope>
+		extends Function2<ListOptionModel<Class<?>>, TriggerConfig, BackgroundAgentConfig.Scope>
 		implements OptionMappingProvider {
 
 	private final Class<?> _type;
@@ -52,7 +52,7 @@ public class InputOptionsForTrigger
 	}
 
 	@Override
-	public ListOptionModel<Class<?>> apply(TriggerConfig trigger, BackgroundConfig.Scope scope) {
+	public ListOptionModel<Class<?>> apply(TriggerConfig trigger, BackgroundAgentConfig.Scope scope) {
 		List<? extends Class<?>> options =
 			TypeIndex.getInstance().getSpecializations(_type, true, true, false).stream()
 				.filter(type -> isAllowed(type, trigger, scope))
@@ -61,13 +61,13 @@ public class InputOptionsForTrigger
 		return new DefaultListOptionModel<>(options);
 	}
 
-	private boolean isAllowed(Class<?> type, TriggerConfig trigger, BackgroundConfig.Scope scope) {
+	private boolean isAllowed(Class<?> type, TriggerConfig trigger, BackgroundAgentConfig.Scope scope) {
 		if (ProviderInput.class.isAssignableFrom(type)) {
 			// Only used programmatically from Java, not shown in the UI.
 			return false;
 		}
 		if (ChatContextInput.class.isAssignableFrom(type)) {
-			return !(trigger instanceof PreTurnTrigger) && scope != BackgroundConfig.Scope.APPLICATION;
+			return !(trigger instanceof PreTurnTrigger) && scope != BackgroundAgentConfig.Scope.APPLICATION;
 		}
 		return true;
 	}

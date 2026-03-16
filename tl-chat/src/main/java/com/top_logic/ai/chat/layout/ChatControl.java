@@ -94,7 +94,6 @@ public class ChatControl extends AbstractControlBase {
 		out.writeAttribute("data-chat-file-input-id", getID() + "-file-input");
 		out.writeAttribute("data-chat-attach-btn-id", getID() + "-attach-btn");
 		out.writeAttribute("data-chat-preview-id", getID() + "-attachment-preview");
-		out.writeAttribute("data-chat-review-btn-id", getID() + "-review-btn");
 		out.writeAttribute("data-chat-user-name",
 			_taskTracker.getUserName() != null ? _taskTracker.getUserName() : "User");
 		out.endBeginTag();
@@ -104,13 +103,6 @@ public class ChatControl extends AbstractControlBase {
 			out.writeAttribute(CLASS_ATTR, "chat-main");
 			out.endBeginTag();
 			{
-				// Review alert banner container (populated by JS on review_alert SSE events)
-				out.beginBeginTag(DIV);
-				out.writeAttribute(CLASS_ATTR, "chat-review-alerts");
-				out.writeAttribute(ID_ATTR, getID() + "-review-alerts");
-				out.endBeginTag();
-				out.endTag(DIV);
-
 				writeWelcomeScreen(out);
 				writeMessages(context, out);
 				writeInputSection(out);
@@ -786,16 +778,6 @@ public class ChatControl extends AbstractControlBase {
 				out.endBeginTag();
 				out.writeText("\u2191");
 				out.endTag(BUTTON);
-
-				// Review button
-				out.beginBeginTag(BUTTON);
-				out.writeAttribute(ID_ATTR, getID() + "-review-btn");
-				out.writeAttribute(TYPE_ATTR, "button");
-				out.writeAttribute(CLASS_ATTR, "chat-review-button");
-				out.writeAttribute("title", "Review conversation");
-				out.endBeginTag();
-				writeReviewSvg(out);
-				out.endTag(BUTTON);
 			}
 			out.endTag(DIV);
 		}
@@ -818,40 +800,6 @@ public class ChatControl extends AbstractControlBase {
 			out.beginBeginTag("path");
 			out.writeAttribute("d",
 				"M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48");
-			out.endEmptyTag();
-		}
-		out.endTag("svg");
-	}
-
-	private void writeReviewSvg(TagWriter out) throws IOException {
-		out.beginBeginTag("svg");
-		out.writeAttribute("xmlns", "http://www.w3.org/2000/svg");
-		out.writeAttribute("width", "18");
-		out.writeAttribute("height", "18");
-		out.writeAttribute("viewBox", "0 0 24 24");
-		out.writeAttribute("fill", "none");
-		out.writeAttribute("stroke", "currentColor");
-		out.writeAttribute("stroke-width", "2");
-		out.writeAttribute("stroke-linecap", "round");
-		out.writeAttribute("stroke-linejoin", "round");
-		out.endBeginTag();
-		{
-			// Magnifying glass circle
-			out.beginBeginTag("circle");
-			out.writeAttribute("cx", "11");
-			out.writeAttribute("cy", "11");
-			out.writeAttribute("r", "8");
-			out.endEmptyTag();
-			// Handle
-			out.beginBeginTag("line");
-			out.writeAttribute("x1", "21");
-			out.writeAttribute("y1", "21");
-			out.writeAttribute("x2", "16.65");
-			out.writeAttribute("y2", "16.65");
-			out.endEmptyTag();
-			// Checkmark inside the magnifying glass
-			out.beginBeginTag("path");
-			out.writeAttribute("d", "M8 11l2 2 4-4");
 			out.endEmptyTag();
 		}
 		out.endTag("svg");

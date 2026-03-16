@@ -5,7 +5,7 @@
  */
 package com.top_logic.ai.service.agents.background.trigger;
 
-import com.top_logic.ai.service.agents.background.BackgroundConfig;
+import com.top_logic.ai.service.agents.background.BackgroundAgentConfig;
 import com.top_logic.ai.service.agents.background.I18NConstants;
 import com.top_logic.basic.config.constraint.algorithm.GenericValueDependency;
 import com.top_logic.basic.config.constraint.algorithm.PropertyModel;
@@ -13,7 +13,7 @@ import com.top_logic.basic.config.constraint.algorithm.PropertyModel;
 /**
  * Constraint that produces an error when a chat-scoped trigger ({@link PreTurnTrigger} or
  * {@link PostTurnTrigger}) is used with
- * {@link com.top_logic.ai.service.agents.background.BackgroundConfig.Scope#APPLICATION}.
+ * {@link com.top_logic.ai.service.agents.background.BackgroundAgentConfig.Scope#APPLICATION}.
  *
  * <p>
  * Pre-turn and post-turn triggers operate within the context of a chat session and are not
@@ -21,19 +21,19 @@ import com.top_logic.basic.config.constraint.algorithm.PropertyModel;
  * </p>
  */
 public class ChatTriggerNotAllowedForApplicationConstraint
-		extends GenericValueDependency<TriggerConfig, BackgroundConfig.Scope> {
+		extends GenericValueDependency<TriggerConfig, BackgroundAgentConfig.Scope> {
 
 	/**
 	 * Creates a new {@link ChatTriggerNotAllowedForApplicationConstraint}.
 	 */
 	public ChatTriggerNotAllowedForApplicationConstraint() {
-		super(TriggerConfig.class, BackgroundConfig.Scope.class);
+		super(TriggerConfig.class, BackgroundAgentConfig.Scope.class);
 	}
 
 	@Override
 	protected void checkValue(PropertyModel<TriggerConfig> trigger,
-			PropertyModel<BackgroundConfig.Scope> scope) {
-		if (scope.getValue() == BackgroundConfig.Scope.APPLICATION
+			PropertyModel<BackgroundAgentConfig.Scope> scope) {
+		if (scope.getValue() == BackgroundAgentConfig.Scope.APPLICATION
 				&& (trigger.getValue() instanceof PreTurnTrigger
 					|| trigger.getValue() instanceof PostTurnTrigger)) {
 			trigger.setProblemDescription(I18NConstants.CHAT_TRIGGER_NOT_ALLOWED_FOR_APPLICATION);

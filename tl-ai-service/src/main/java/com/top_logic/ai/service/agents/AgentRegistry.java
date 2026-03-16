@@ -17,7 +17,7 @@ import java.util.Set;
 
 import com.top_logic.ai.service.AIService;
 import com.top_logic.ai.service.ChatModelFactory;
-import com.top_logic.ai.service.agents.background.BackgroundConfig;
+import com.top_logic.ai.service.agents.background.BackgroundAgentConfig;
 import com.top_logic.ai.service.agents.background.scheduler.BackgroundAgentTask;
 import com.top_logic.ai.service.agents.background.trigger.ScheduledTrigger;
 import com.top_logic.ai.service.agents.background.trigger.TriggerConfig;
@@ -241,7 +241,7 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		// Validate that exactly one agent is marked as entry point
 		List<String> entryPoints = new ArrayList<>();
 		for (Map.Entry<String, AgentConfig> entry : getConfig().getAgents().entrySet()) {
-			if (entry.getValue().isEntryPoint()) {
+			if (entry.getValue() instanceof ChatAgentConfig chatConfig && chatConfig.isEntryPoint()) {
 				entryPoints.add(entry.getKey());
 			}
 		}
@@ -257,29 +257,20 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		}
 		_entryPointAgentName = entryPoints.get(0);
 
-		// Validate background agent configurations
+		// Log registered background agents
 		for (Map.Entry<String, AgentConfig> entry : getConfig().getAgents().entrySet()) {
-			BackgroundConfig bg = entry.getValue().getBackground();
-			if (bg == null) continue;
-			String name = entry.getKey();
-
-			// Background agents must not be entry points
-			if (entry.getValue().isEntryPoint()) {
-				throw new RuntimeException(
-					"Agent '" + name + "' cannot be both entry-point and background agent.");
+			if (entry.getValue() instanceof BackgroundAgentConfig bgConfig) {
+				Logger.info("Background agent '" + entry.getKey() + "' registered: scope=" + bgConfig.getScope(),
+					AgentRegistry.class);
 			}
-
-			Logger.info("Background agent '" + name + "' registered: scope=" + bg.getScope(),
-				AgentRegistry.class);
 		}
 
 		// Register scheduled background agents with TopLogic Scheduler
 		_scheduledTaskNames = new ArrayList<>();
 		Scheduler scheduler = Scheduler.Module.INSTANCE.getImplementationInstance();
 		for (Map.Entry<String, AgentConfig> entry : getConfig().getAgents().entrySet()) {
-			BackgroundConfig bg = entry.getValue().getBackground();
-			if (bg == null) continue;
-			TriggerConfig trigger = bg.getTrigger();
+			if (!(entry.getValue() instanceof BackgroundAgentConfig bgConfig)) continue;
+			TriggerConfig trigger = bgConfig.getTrigger();
 			if (!(trigger instanceof ScheduledTrigger scheduled)) continue;
 
 			String taskName = "ai-bg-" + entry.getKey();
@@ -378,17 +369,16 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	 *        The trigger configuration class to match (e.g. {@code PostTurnTrigger.class}).
 	 * @param scope
 	 *        The scope to match (e.g.
-	 *        {@link com.top_logic.ai.service.agents.background.BackgroundConfig.Scope#CHAT}).
+	 *        {@link com.top_logic.ai.service.agents.background.BackgroundAgentConfig.Scope#CHAT}).
 	 * @return A list of agent names with matching background configuration; never null.
 	 */
 	public List<String> getBackgroundAgents(
-			Class<? extends TriggerConfig> triggerType, BackgroundConfig.Scope scope) {
+			Class<? extends TriggerConfig> triggerType, BackgroundAgentConfig.Scope scope) {
 		List<String> result = new ArrayList<>();
 		for (Map.Entry<String, AgentConfig> entry : getConfig().getAgents().entrySet()) {
-			BackgroundConfig bg = entry.getValue().getBackground();
-			if (bg == null) continue;
-			if (bg.getScope() != scope) continue;
-			TriggerConfig triggerCfg = bg.getTrigger();
+			if (!(entry.getValue() instanceof BackgroundAgentConfig bgConfig)) continue;
+			if (bgConfig.getScope() != scope) continue;
+			TriggerConfig triggerCfg = bgConfig.getTrigger();
 			if (triggerCfg != null && triggerType.isInstance(triggerCfg)) {
 				result.add(entry.getKey());
 			}
@@ -405,7 +395,7 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	 */
 	public boolean isBackgroundAgent(String agentName) {
 		AgentConfig config = getAgentConfig(agentName);
-		return config != null && config.getBackground() != null;
+		return config instanceof BackgroundAgentConfig;
 	}
 
 	/**
@@ -595,7 +585,7 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	 * Builds programmatic delegation tools for the given agent configuration.
 	 *
 	 * <p>
-	 * For each name in {@link AgentConfig#getDelegations()}, a dedicated
+	 * For each name in {@link ChatAgentConfig#getDelegations()}, a dedicated
 	 * {@link ToolSpecification} is created whose description includes the target agent's
 	 * {@link AgentConfig#getDescription() description}. This makes each delegation target
 	 * self-describing in the tool signature — the LLM does not need a system prompt section to
@@ -629,7 +619,10 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	 */
 	public List<ToolImplementation> buildDelegationTools(AgentConfig config,
 			Map<String, ChatMemory> subAgentMemories) {
-		List<String> delegations = config.getDelegations();
+		if (!(config instanceof ChatAgentConfig chatConfig)) {
+			return List.of();
+		}
+		List<String> delegations = chatConfig.getDelegations();
 		if (delegations.isEmpty()) {
 			return List.of();
 		}
@@ -638,7 +631,7 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 			subAgentMemories != null ? subAgentMemories : new HashMap<>();
 
 		List<ToolImplementation> result = new ArrayList<>(delegations.size());
-		String fromAgent = config.getName();
+		String fromAgent = chatConfig.getName();
 
 		JsonObjectSchema parameters = JsonObjectSchema.builder()
 			.addStringProperty("goal", "Short intent")
@@ -1158,7 +1151,10 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	 *         delegations.
 	 */
 	private String buildDelegationSection(AgentConfig config) {
-		List<String> delegations = config.getDelegations();
+		if (!(config instanceof ChatAgentConfig chatConfig)) {
+			return "";
+		}
+		List<String> delegations = chatConfig.getDelegations();
 		if (delegations.isEmpty()) {
 			return "";
 		}

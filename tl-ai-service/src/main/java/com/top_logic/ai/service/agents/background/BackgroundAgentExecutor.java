@@ -13,8 +13,8 @@ import com.top_logic.ai.service.agents.AgentConfig;
 import com.top_logic.ai.service.agents.AgentRegistry;
 import com.top_logic.ai.service.agents.background.context.BackgroundContext;
 import com.top_logic.ai.service.agents.background.context.ChatContext;
-import com.top_logic.ai.service.agents.background.input.AutonomousInput;
-import com.top_logic.ai.service.agents.background.input.AutonomousInputAdapter;
+import com.top_logic.ai.service.agents.background.input.CustomInput;
+import com.top_logic.ai.service.agents.background.input.CustomInputAdapter;
 import com.top_logic.ai.service.agents.background.input.InputAdapter;
 import com.top_logic.ai.service.agents.background.input.InputConfig;
 import com.top_logic.ai.service.agents.background.input.ProviderInput;
@@ -91,22 +91,19 @@ public class BackgroundAgentExecutor {
 	 */
 	public ExecutionResult execute(String agentName, BackgroundContext context) {
 		AgentConfig agentConfig = _registry.getAgentConfig(agentName);
-		BackgroundConfig bgConfig = agentConfig.getBackground();
-		if (bgConfig == null) {
-			throw new IllegalArgumentException("Agent '" + agentName + "' has no background config");
+		if (!(agentConfig instanceof BackgroundAgentConfig bgConfig)) {
+			throw new IllegalArgumentException("Agent '" + agentName + "' is not a BackgroundAgentConfig");
 		}
 
 		// 1. Resolve input: pre-turn always includes the pending user message
 		String input;
 		if (bgConfig.getTrigger() instanceof PreTurnTrigger && context instanceof ChatContext chatContext) {
 			InputConfig inputConfig = bgConfig.getInput();
+			input = "<user-message>\n" + chatContext.getPendingUserMessage() + "\n</user-message>";
 			if (inputConfig != null) {
 				InputAdapter adapter = resolveInputAdapter(inputConfig);
 				String additional = adapter.gatherInput(context);
-				input = "<user-message>\n" + chatContext.getPendingUserMessage() + "\n</user-message>\n\n"
-					+ "<additional-context>\n" + (additional != null ? additional : "") + "\n</additional-context>";
-			} else {
-				input = chatContext.getPendingUserMessage();
+				input += "\n\n<additional-context>\n" + (additional != null ? additional : "") + "\n</additional-context>";
 			}
 		} else {
 			InputAdapter adapter = resolveInputAdapter(bgConfig.getInput());
@@ -152,7 +149,7 @@ public class BackgroundAgentExecutor {
 	 * Resolves the appropriate {@link InputAdapter} for the given {@link InputConfig}.
 	 *
 	 * <p>
-	 * Built-in config types ({@link AutonomousInput}, {@link ScriptInput}, {@link ProviderInput})
+	 * Built-in config types ({@link CustomInput}, {@link ScriptInput}, {@link ProviderInput})
 	 * are handled directly. Additional types registered via
 	 * {@link #registerInputAdapterFactory(Class, Function)} are checked as a fallback.
 	 * </p>
@@ -164,8 +161,8 @@ public class BackgroundAgentExecutor {
 	 *         if no adapter can be found for the config type.
 	 */
 	InputAdapter resolveInputAdapter(InputConfig inputConfig) {
-		if (inputConfig instanceof AutonomousInput cfg) {
-			return new AutonomousInputAdapter(cfg);
+		if (inputConfig instanceof CustomInput cfg) {
+			return new CustomInputAdapter(cfg);
 		} else if (inputConfig instanceof ScriptInput cfg) {
 			return new ScriptInputAdapter(cfg);
 		} else if (inputConfig instanceof ProviderInput cfg) {
@@ -180,7 +177,7 @@ public class BackgroundAgentExecutor {
 		throw new IllegalArgumentException("No adapter for input config: " + inputConfig.getClass().getName());
 	}
 
-	private void runOutputHandlers(BackgroundConfig bgConfig, String response,
+	private void runOutputHandlers(BackgroundAgentConfig bgConfig, String response,
 			BackgroundContext context) {
 		for (OutputHandler handler : bgConfig.getOutputHandlers()) {
 			try {

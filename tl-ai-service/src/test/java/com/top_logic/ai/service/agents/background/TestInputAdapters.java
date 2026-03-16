@@ -8,8 +8,8 @@ package com.top_logic.ai.service.agents.background;
 import com.top_logic.ai.service.agents.background.context.ApplicationContext;
 import com.top_logic.ai.service.agents.background.context.BackgroundContext;
 import com.top_logic.ai.service.agents.background.context.ChatContext;
-import com.top_logic.ai.service.agents.background.input.AutonomousInput;
-import com.top_logic.ai.service.agents.background.input.AutonomousInputAdapter;
+import com.top_logic.ai.service.agents.background.input.CustomInput;
+import com.top_logic.ai.service.agents.background.input.CustomInputAdapter;
 import com.top_logic.ai.service.agents.background.input.InputAdapter;
 import com.top_logic.ai.service.agents.background.input.ScriptInput;
 import com.top_logic.ai.service.agents.background.input.ScriptInputAdapter;
@@ -18,7 +18,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import junit.framework.TestCase;
 
 /**
- * Tests for input adapters: {@link AutonomousInputAdapter} and {@link ScriptInputAdapter}.
+ * Tests for input adapters: {@link CustomInputAdapter} and {@link ScriptInputAdapter}.
  *
  * <p>
  * Tests the adapters directly (not just through executor resolution) with various context types.
@@ -26,26 +26,26 @@ import junit.framework.TestCase;
  */
 public class TestInputAdapters extends TestCase {
 
-	// --- AutonomousInputAdapter ---
+	// --- CustomInputAdapter ---
 
 	/** Adapter returns the configured custom message regardless of context. */
-	public void testAutonomousAdapterReturnsMessage() {
-		AutonomousInput config = TypedConfiguration.newConfigItem(AutonomousInput.class);
-		config.update(config.descriptor().getProperty(AutonomousInput.CUSTOM_MESSAGE),
+	public void testCustomAdapterReturnsMessage() {
+		CustomInput config = TypedConfiguration.newConfigItem(CustomInput.class);
+		config.update(config.descriptor().getProperty(CustomInput.CUSTOM_MESSAGE),
 			"Review all pending changes");
 
-		AutonomousInputAdapter adapter = new AutonomousInputAdapter(config);
+		CustomInputAdapter adapter = new CustomInputAdapter(config);
 
 		assertEquals("Review all pending changes",
 			adapter.gatherInput(new BackgroundContext("agent", "scheduled")));
 	}
 
 	/** Adapter returns the same message for different context types. */
-	public void testAutonomousAdapterIgnoresContextType() {
-		AutonomousInput config = TypedConfiguration.newConfigItem(AutonomousInput.class);
-		config.update(config.descriptor().getProperty(AutonomousInput.CUSTOM_MESSAGE), "fixed input");
+	public void testCustomAdapterIgnoresContextType() {
+		CustomInput config = TypedConfiguration.newConfigItem(CustomInput.class);
+		config.update(config.descriptor().getProperty(CustomInput.CUSTOM_MESSAGE), "fixed input");
 
-		AutonomousInputAdapter adapter = new AutonomousInputAdapter(config);
+		CustomInputAdapter adapter = new CustomInputAdapter(config);
 
 		BackgroundContext base = new BackgroundContext("agent", "test");
 		ChatContext chat = ChatContext.lastTurn("agent", "msg", "resp", null, null);
@@ -57,12 +57,12 @@ public class TestInputAdapters extends TestCase {
 	}
 
 	/** Adapter handles multiline custom messages. */
-	public void testAutonomousAdapterMultilineMessage() {
-		AutonomousInput config = TypedConfiguration.newConfigItem(AutonomousInput.class);
+	public void testCustomAdapterMultilineMessage() {
+		CustomInput config = TypedConfiguration.newConfigItem(CustomInput.class);
 		String multiline = "Line 1\nLine 2\nLine 3";
-		config.update(config.descriptor().getProperty(AutonomousInput.CUSTOM_MESSAGE), multiline);
+		config.update(config.descriptor().getProperty(CustomInput.CUSTOM_MESSAGE), multiline);
 
-		AutonomousInputAdapter adapter = new AutonomousInputAdapter(config);
+		CustomInputAdapter adapter = new CustomInputAdapter(config);
 
 		assertEquals(multiline, adapter.gatherInput(new BackgroundContext("agent", "test")));
 	}
@@ -98,13 +98,13 @@ public class TestInputAdapters extends TestCase {
 
 	/** Both adapters implement InputAdapter. */
 	public void testAdaptersImplementInterface() {
-		AutonomousInput aConfig = TypedConfiguration.newConfigItem(AutonomousInput.class);
-		aConfig.update(aConfig.descriptor().getProperty(AutonomousInput.CUSTOM_MESSAGE), "msg");
+		CustomInput aConfig = TypedConfiguration.newConfigItem(CustomInput.class);
+		aConfig.update(aConfig.descriptor().getProperty(CustomInput.CUSTOM_MESSAGE), "msg");
 
 		ScriptInput sConfig = TypedConfiguration.newConfigItem(ScriptInput.class);
 		sConfig.update(sConfig.descriptor().getProperty(ScriptInput.SCRIPT), "script");
 
-		assertTrue(new AutonomousInputAdapter(aConfig) instanceof InputAdapter);
+		assertTrue(new CustomInputAdapter(aConfig) instanceof InputAdapter);
 		assertTrue(new ScriptInputAdapter(sConfig) instanceof InputAdapter);
 	}
 

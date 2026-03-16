@@ -5,8 +5,8 @@
  */
 package com.top_logic.ai.service.agents.background;
 
-import com.top_logic.ai.service.agents.background.BackgroundConfig.Scope;
-import com.top_logic.ai.service.agents.background.input.AutonomousInput;
+import com.top_logic.ai.service.agents.background.BackgroundAgentConfig.Scope;
+import com.top_logic.ai.service.agents.background.input.CustomInput;
 import com.top_logic.ai.service.agents.background.input.ChatContextInput;
 import com.top_logic.ai.service.agents.background.input.ChatContextInput.Content;
 import com.top_logic.ai.service.agents.background.input.ScriptInput;
@@ -19,7 +19,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import junit.framework.TestCase;
 
 /**
- * Tests for {@link BackgroundConfig} defaults and all trigger/input/output configuration
+ * Tests for {@link BackgroundAgentConfig} defaults and all trigger/input/output configuration
  * interfaces.
  *
  * <p>
@@ -106,10 +106,10 @@ public class TestBackgroundConfig extends TestCase {
 
 	// --- Input configs ---
 
-	/** AutonomousInput can be instantiated and stores custom message. */
-	public void testAutonomousInputConfig() {
-		AutonomousInput input = TypedConfiguration.newConfigItem(AutonomousInput.class);
-		input.update(input.descriptor().getProperty(AutonomousInput.CUSTOM_MESSAGE),
+	/** CustomInput can be instantiated and stores custom message. */
+	public void testCustomInputConfig() {
+		CustomInput input = TypedConfiguration.newConfigItem(CustomInput.class);
+		input.update(input.descriptor().getProperty(CustomInput.CUSTOM_MESSAGE),
 			"Check for issues");
 
 		assertEquals("Check for issues", input.getCustomMessage());
@@ -134,7 +134,7 @@ public class TestBackgroundConfig extends TestCase {
 
 	/** Input is nullable (not mandatory) for pre-turn agents. */
 	public void testInputIsNullable() {
-		BackgroundConfig config = TypedConfiguration.newConfigItem(BackgroundConfig.class);
+		BackgroundAgentConfig config = TypedConfiguration.newConfigItem(BackgroundAgentConfig.class);
 
 		// Input should be null by default since it is no longer @Mandatory
 		assertNull(config.getInput());

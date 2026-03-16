@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import com.top_logic.basic.config.ConfigurationAccess;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
@@ -76,7 +77,8 @@ public class ConfigEditorControl extends ReactCompositeControl {
 						createPolymorphicGroup(context, label, config, property);
 					addChild(polyGroup);
 				} else {
-					ConfigurationItem nested = (ConfigurationItem) config.value(property);
+					ConfigurationAccess configAccess = property.getConfigurationAccess();
+					ConfigurationItem nested = configAccess.getConfig(config.value(property));
 					if (nested != null) {
 						ConfigEditorControl nestedEditor = createNestedEditor(context, nested);
 						String label = resolveLabel(property);

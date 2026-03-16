@@ -96,6 +96,17 @@ public class AttributeFieldControl implements FormModelListener {
 		}
 
 		TLStructuredTypePart part = resolvePart(current);
+		if (part == null) {
+			// Attribute not supported by this object's type - hide the field.
+			_innerControl = new ReactTextInputControl(
+				_context, new AbstractFieldModel(null) {
+					// Placeholder model with default state.
+				});
+			_chrome = new ReactFormFieldChromeControl(_context, _attributeName,
+				false, false, null, null, null, false, false, _innerControl);
+			return _chrome;
+		}
+
 		_model = new AttributeFieldModel(current, part);
 		_model.setEditable(_formModel.isEditMode() && !_forceReadonly);
 
@@ -122,13 +133,26 @@ public class AttributeFieldControl implements FormModelListener {
 		TLObject current = source.getCurrentObject();
 
 		if (current == null) {
-			// Object gone - nothing to display.
+			// Object gone - hide field.
+			_chrome.setVisible(false);
+			clearModel();
 			return;
 		}
 
+		TLStructuredTypePart part = resolvePart(current);
+
+		if (part == null) {
+			// Attribute not supported by this object's type - hide field.
+			_chrome.setVisible(false);
+			clearModel();
+			return;
+		}
+
+		// Attribute exists - ensure field is visible.
+		_chrome.setVisible(true);
+
 		if (_model == null) {
-			// First object arrived - create model and inner control.
-			TLStructuredTypePart part = resolvePart(current);
+			// First compatible object arrived or re-appearing after hide.
 			_model = new AttributeFieldModel(current, part);
 			_model.setEditable(source.isEditMode() && !_forceReadonly);
 
@@ -143,7 +167,7 @@ public class AttributeFieldControl implements FormModelListener {
 			return;
 		}
 
-		// Rebind model to the current object (may be base object or overlay).
+		// Rebind existing model to the current object.
 		_model.setObject(current);
 		_model.setEditable(source.isEditMode() && !_forceReadonly);
 		_chrome.setDirty(_model.isDirty());
@@ -168,6 +192,14 @@ public class AttributeFieldControl implements FormModelListener {
 	 */
 	public ReactControl getInnerControl() {
 		return _innerControl;
+	}
+
+	private void clearModel() {
+		if (_model != null && _modelListener != null) {
+			_model.removeListener(_modelListener);
+			_modelListener = null;
+		}
+		_model = null;
 	}
 
 	private void addModelListener() {
@@ -198,12 +230,7 @@ public class AttributeFieldControl implements FormModelListener {
 
 	private TLStructuredTypePart resolvePart(TLObject obj) {
 		TLStructuredType type = obj.tType();
-		TLStructuredTypePart part = type.getPart(_attributeName);
-		if (part == null) {
-			throw new IllegalArgumentException(
-				"Attribute '" + _attributeName + "' not found in type '" + type + "'.");
-		}
-		return part;
+		return type.getPart(_attributeName);
 	}
 
 	private String resolveLabel() {

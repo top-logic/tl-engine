@@ -9,7 +9,10 @@ package com.top_logic.layout.component.configuration;
 import static com.top_logic.layout.form.template.model.Templates.*;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
+import com.top_logic.base.accesscontrol.LoginFailure;
+import com.top_logic.base.accesscontrol.LoginFailuresModule;
 import com.top_logic.base.security.util.Password;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.event.infoservice.InfoService;
@@ -47,6 +50,8 @@ public class CheckOTPDialog extends AbstractTemplateDialog {
 	private Command _continuation;
 
 	private Password _secret;
+
+	private LoginFailuresModule<?> _loginFailures = LoginFailuresModule.Module.INSTANCE.getImplementationInstance();
 
 	/**
 	 * Creates a new {@link CheckOTPDialog}.
@@ -97,15 +102,26 @@ public class CheckOTPDialog extends AbstractTemplateDialog {
 	}
 
 	private HandlerResult checkOTP(DisplayContext context) {
+		String failureKey = failureKey();
+		LoginFailure failure = _loginFailures.getFailureFor(failureKey);
+		if (failure != null && !failure.allowRetry()) {
+			long retryTimeout = TimeUnit.MILLISECONDS.toSeconds(failure.retryTimeout());
+			InfoService.showError(I18NConstants.CHECK_OTP_TOO_MANY_ATTEMPTS__TIMEOUT.fill(retryTimeout));
+			return HandlerResult.DEFAULT_RESULT;
+		}
+
 		StringField field = (StringField) getFormContext().getField(OTP_FIELD);
 		String code = field.getAsString();
 		TimeProvider timeProvider = new SystemTimeProvider();
 		CodeGenerator codeGenerator = new DefaultCodeGenerator();
 		CodeVerifier verifier = new DefaultCodeVerifier(codeGenerator, timeProvider);
-
+		
 		boolean successful = verifier.isValidCode(_secret.decrypt(), code);
 		if (successful) {
+			_loginFailures.notifyLoginSuccessed(failureKey);
 			return getDiscardClosure().andThen(_continuation).executeCommand(context);
+		} else {
+			_loginFailures.notifyLoginFailed(failureKey);
 		}
 		InfoService.showError(I18NConstants.INVALID_OTP);
 		return HandlerResult.DEFAULT_RESULT;
@@ -114,6 +130,10 @@ public class CheckOTPDialog extends AbstractTemplateDialog {
 	@Override
 	protected void fillButtons(List<CommandModel> buttons) {
 		buttons.add(MessageBox.button(ButtonType.OK, getApplyClosure()));
+	}
+
+	private String failureKey() {
+		return _secret.getCryptedValue() + "@" + "OTP";
 	}
 
 }

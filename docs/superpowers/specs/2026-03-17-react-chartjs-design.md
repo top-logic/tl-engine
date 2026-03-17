@@ -31,9 +31,8 @@ This design introduces a React-based chart control as a new `UIElement` in a ded
 - **Parent:** `tl-parent-core-internal`
 - **Dependencies:**
   - `com.top_logic.layout.react` (ReactControl, Bridge, SSE)
-  - `com.top_logic.layout.view` (UIElement, ViewContext, Channels)
+  - `com.top_logic.layout.view` (UIElement, ViewContext, Channels; transitively provides `tl-model-search`)
   - `com.top_logic` / tl-core (TL-Script, TLObject, Theme)
-  - `tl-model-search` (QueryExecutor, Expr)
 - **No dependency** on `ext.org.chartjs` or `com.top_logic.chart.chartjs` — Chart.js comes as npm package
 
 ### npm Dependencies
@@ -86,9 +85,25 @@ Load order in browser:
 
 Stateless factory, configured in `.view.xml`, creates a `ReactChartJsControl` per session.
 
+**Constructor:**
+
+```java
+@CalledByReflection
+public ChartElement(InstantiationContext context, Config config) {
+    _dataFun = QueryExecutor.compile(config.getData());
+    _handlers = indexByName(config.getHandlers());   // Map<String, OnClickHandler>
+    _tooltips = indexByName(config.getTooltips());   // Map<String, TooltipProvider>
+    // Validate: handler and tooltip names are unique (fail at parse time)
+}
+```
+
 ```java
 @TagName("chart")
 public interface Config extends UIElement.Config {
+
+    @Override
+    @ClassDefault(ChartElement.class)
+    Class<? extends UIElement> getImplementationClass();
 
     /** Input channels for the model objects (arguments to the TL-Script function). */
     @Name("inputs")
@@ -181,6 +196,7 @@ Extends `ReactControl`. Session-scoped, stateful.
 5. Read theme colors and provide as state
 6. Send clean JSON + interaction descriptor to React via SSE
 7. Listen to input channels — re-evaluate TL-Script on change, send SSE patch
+8. Register channel listeners as cleanup actions via `control.addCleanupAction(() -> channel.removeListener(listener))`
 
 **State keys sent to React:**
 
@@ -313,15 +329,17 @@ When `state.chartConfig.data.datasets` is empty or has no data points, and `stat
 
 ### New Theme Variables
 
-Defined with defaults derived from existing base variables:
+Declared as `ThemeVar<String>` constants in `Icons.java` (following existing pattern in `com.top_logic.layout.react`). Default values defined in the module's theme configuration file (`WEB-INF/conf/tl-layout-react-chartjs-theme-defaults.xml`), derived from existing base variables:
 
-| Variable | Default derivation |
-|----------|-------------------|
-| `--chart-color-1` through `--chart-color-10` | Distinct palette |
-| `--chart-grid-color` | `--border-color` |
-| `--chart-text-color` | `--text-color` |
-| `--chart-background-color` | `--surface-color` |
-| `--chart-border-color` | `--border-color` |
+| ThemeVar | CSS Variable | Default derivation |
+|----------|-------------|-------------------|
+| `CHART_COLOR_1` .. `CHART_COLOR_10` | `--chart-color-1` .. `--chart-color-10` | Distinct palette |
+| `CHART_GRID_COLOR` | `--chart-grid-color` | `--border-color` |
+| `CHART_TEXT_COLOR` | `--chart-text-color` | `--text-color` |
+| `CHART_BACKGROUND_COLOR` | `--chart-background-color` | `--surface-color` |
+| `CHART_BORDER_COLOR` | `--chart-border-color` | `--border-color` |
+
+The Java-side `ReactChartJsControl` reads these via `ThemeVar.getValue()` and sends the resolved values as the `themeColors` state key.
 
 ### CSS
 
@@ -359,6 +377,13 @@ Chart fills its container — size determined by surrounding layout element.
 | Empty datasets / no data points | Show `noDataMessage` if configured, otherwise empty chart |
 | Tooltip response slow | Loading indicator in tooltip; discarded if mouse moves |
 | Channel update while tooltip visible | Tooltip closed, metadata table refreshed |
+
+### Implementation Notes
+
+- **Tooltip debouncing:** Client should debounce tooltip requests (~200ms) to avoid flooding the server when the mouse moves rapidly across data points. Cache tooltip content for previously-seen `(datasetIndex, index)` pairs within the same chart state.
+- **Accessibility:** The chart canvas should have an `aria-label` describing the chart type and data summary. Consider rendering a visually hidden data table as alternative for screen readers.
+- **Resize handling:** The container CSS (`width: 100%; height: 100%`) works with Chart.js's `responsive: true` default. `react-chartjs-2` uses `ResizeObserver` internally for automatic resize detection.
+- **Bundle size:** Chart.js with all registerables + plugins is ~200KB gzipped. Acceptable for the initial version; selective registration can be added later if needed.
 
 ## Demo View
 

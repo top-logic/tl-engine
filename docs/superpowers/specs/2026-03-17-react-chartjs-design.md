@@ -91,7 +91,7 @@ Stateless factory, configured in `.view.xml`, creates a `ReactChartJsControl` pe
 @CalledByReflection
 public ChartElement(InstantiationContext context, Config config) {
     _dataFun = QueryExecutor.compile(config.getData());
-    _handlers = indexByName(config.getHandlers());   // Map<String, OnClickHandler>
+    _handlers = indexByName(config.getHandlers());   // Map<String, ClickHandlerConfig>
     _tooltips = indexByName(config.getTooltips());   // Map<String, TooltipProvider>
     // Validate: handler and tooltip names are unique (fail at parse time)
 }
@@ -116,10 +116,10 @@ public interface Config extends UIElement.Config {
     @Name("data")
     Expr getData();
 
-    /** Named click handlers. */
+    /** Named click handlers (name + ViewCommand). */
     @Name("handlers")
     @EntryTag("handler")
-    List<PolymorphicConfiguration<? extends OnClickHandler>> getHandlers();
+    List<ClickHandlerConfig> getHandlers();
 
     /** Named tooltip providers. */
     @Name("tooltips")
@@ -143,29 +143,37 @@ public interface Config extends UIElement.Config {
 }
 ```
 
-### OnClickHandler Configuration
+### Click Handler Configuration
 
-Polymorphic, two variants:
+A click handler is simply a named `ViewCommand`. The name connects the handler to datasets in the TL-Script output (via `onClick` / `onLegendClick` keys).
 
 ```java
-/** Goto: Navigate to the TL object from data point metadata. */
-@TagName("goto")
-public interface GotoAction extends PolymorphicConfiguration<OnClickHandler> {
-    @Mandatory
-    @Name("name")
-    String getName();
-}
-
-/** Command: Execute an arbitrary ViewCommand. */
-@TagName("command")
-public interface CommandAction extends PolymorphicConfiguration<OnClickHandler> {
+public interface ClickHandlerConfig extends ConfigurationItem {
+    /** Name referenced from dataset onClick/onLegendClick keys. */
     @Mandatory
     @Name("name")
     String getName();
 
+    /** The command to execute when a matching click occurs.
+     *  Receives the metadata TL object as command argument. */
     @Mandatory
-    PolymorphicConfiguration<? extends ViewCommand> getCommand();
+    @Name("action")
+    PolymorphicConfiguration<? extends ViewCommand> getAction();
 }
+```
+
+A goto is simply a `ViewCommand` implementation that navigates to the object (e.g., `GotoViewCommand`). Any other `ViewCommand` works equally.
+
+Example:
+```xml
+<handlers>
+  <handler name="detail">
+    <action class="...GotoViewCommand"/>
+  </handler>
+  <handler name="drill">
+    <action class="...OpenViewCommand" view="reports/quarterly.view.xml"/>
+  </handler>
+</handlers>
 ```
 
 ### TooltipProviderConfig
@@ -215,7 +223,7 @@ Extends `ReactControl`. Session-scoped, stateful.
 
 | Command | Arguments | Behavior |
 |---------|-----------|----------|
-| `elementClick` | `{ datasetIndex, index, zone }` | Look up handler by (datasetIndex, zone). Resolve TL object from metadata. Execute goto or ViewCommand. |
+| `elementClick` | `{ datasetIndex, index, zone }` | Look up handler name by (datasetIndex, zone). Resolve TL object from metadata. Execute the associated ViewCommand with the object. |
 | `tooltip` | `{ datasetIndex, index }` | Look up tooltip provider by datasetIndex. Evaluate TL-Script with metadata object. Send HTML via SSE patch as `tooltipContent`. |
 
 ## Data Flow
@@ -432,7 +440,9 @@ New sidebar entry in `app.view.xml` after "Input Controls":
             <input channel="model"/>
           </inputs>
           <handlers>
-            <goto name="detail"/>
+            <handler name="detail">
+              <action class="...GotoViewCommand"/>
+            </handler>
           </handlers>
           <tooltips>
             <tooltip name="default" expr="${obj -> $obj.get(`name`)}"/>
@@ -477,7 +487,7 @@ ReactChartJsControl (ReactControl, session-scoped)
   - validates no TL objects outside metadata
   - sends clean JSON + interactions via SSE
   - listens to channels -> re-evaluate on change
-  - handles elementClick -> resolve handler + object -> goto/command
+  - handles elementClick -> resolve handler + object -> execute ViewCommand
   - handles tooltip -> evaluate TL-Script -> send HTML via SSE
                      |
                      | SSE (state + patches)

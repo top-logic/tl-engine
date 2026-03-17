@@ -46,6 +46,7 @@
 					</postCreateActions>
 				</execute-script>
 			</postCreateActions>
+			<linkOperation>container -&gt; newObject -&gt; $newObject.set(`tl.security.selfservice:Invitation#mfaRequirement`, resolveEnum("com.top_logic.knowledge.wrap.person.MfaRequirement", "optional"))</linkOperation>
 		</create-handler>
 	</arguments>
 </config:template-call>

@@ -6,6 +6,8 @@
 
 package com.top_logic.mig.html.layout;
 
+import com.top_logic.layout.basic.Command;
+import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.structure.DialogClosedListener;
 import com.top_logic.layout.structure.DialogModel;
 
@@ -15,6 +17,13 @@ import com.top_logic.layout.structure.DialogModel;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class LoginHooks {
+
+	/**
+	 * Executes the given callback when the given dialog is closed.
+	 */
+	public static void runOnClose(DialogModel dialogModel, Command closeCallback) {
+		runOnClose(dialogModel, () -> closeCallback.executeCommand(DefaultDisplayContext.getDisplayContext()));
+	}
 
 	/**
 	 * Executes the given callback when the given dialog is closed.

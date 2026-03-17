@@ -98,6 +98,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey CHECK_OTP_FIELD_MESSAGE;
 
 	/**
+	 * @en Too much unsuccessful attempts to confirm one-time password. Please wait {0} seconds for
+	 *     the next attempt.
+	 */
+	public static ResKey1 CHECK_OTP_TOO_MANY_ATTEMPTS__TIMEOUT;
+
+	/**
 	 * @en Multi-factor authentication is required for your account. Please confirm the message to
 	 *     begin setting up multi-factor authentication.
 	 */

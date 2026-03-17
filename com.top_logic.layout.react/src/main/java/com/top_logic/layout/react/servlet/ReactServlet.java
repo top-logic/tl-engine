@@ -314,6 +314,10 @@ public class ReactServlet extends TopLogicServlet {
 			// Forward side effects: InfoService messages and legacy control repaints.
 			forwardPendingUpdates(displayContext, rootHandler, queue, control);
 
+			// Synthesize model events so that observable models receive changes
+			// from this command before the SSE queue is flushed.
+			ReactWindowRegistry.forSession(session).synthesizeModelEvents(windowName);
+
 			if (result.isSuccess()) {
 				sendSuccess(response);
 			} else {

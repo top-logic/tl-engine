@@ -1580,6 +1580,10 @@
           el.input.value = "";
           state.processing = true;
           state.currentTaskId = data.taskId;
+          // Move active session to top of history list
+          if (currentSessionId) {
+            moveSessionToTop(currentSessionId);
+          }
           state.currentTaskBody = null;
           state.currentTaskStartTime = Date.now();
 
@@ -1697,6 +1701,38 @@
       });
     }
 
+    function formatRelativeTime(isoString) {
+      if (!isoString) return "";
+      var date = new Date(isoString);
+      var now = new Date();
+      var diffMs = now - date;
+      var diffMin = Math.floor(diffMs / 60000);
+      var diffHr = Math.floor(diffMs / 3600000);
+      var diffDay = Math.floor(diffMs / 86400000);
+      if (diffMin < 1) return "just now";
+      if (diffMin < 60) return diffMin + "m ago";
+      if (diffHr < 24) return diffHr + "h ago";
+      if (diffDay < 7) return diffDay + "d ago";
+      return date.toLocaleDateString();
+    }
+
+    function moveSessionToTop(sessionId) {
+      if (!historyList) return;
+      var item = historyList.querySelector(
+        '[data-session-id="' + sessionId + '"]',
+      );
+      if (item && item !== historyList.firstChild) {
+        historyList.insertBefore(item, historyList.firstChild);
+      }
+      // Update the timestamp display
+      if (item) {
+        var timeEl = item.querySelector(".chat-history-time");
+        if (timeEl) {
+          timeEl.textContent = "just now";
+        }
+      }
+    }
+
     function createSessionItem(session) {
       var item = document.createElement("div");
       item.className =
@@ -1704,21 +1740,76 @@
         (session.id === currentSessionId ? " active" : "");
       item.setAttribute("data-session-id", session.id);
 
+      var titleRow = document.createElement("div");
+      titleRow.className = "chat-history-title-row";
+
       var title = document.createElement("span");
       title.className = "chat-history-title";
-      title.setAttribute("contenteditable", "true");
       title.textContent = session.title || "Untitled";
-      title.addEventListener("blur", function () {
+
+      var editing = false;
+
+      function startEditing(e) {
+        if (e) e.stopPropagation();
+        editing = true;
+        title.setAttribute("contenteditable", "true");
+        title.classList.add("editing");
+        editBtn.classList.add("editing");
+        title.focus();
+        // Select all text
+        var range = document.createRange();
+        range.selectNodeContents(title);
+        var sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+
+      function stopEditing(e) {
+        if (e) e.stopPropagation();
+        if (!editing) return;
+        editing = false;
+        title.removeAttribute("contenteditable");
+        title.classList.remove("editing");
+        editBtn.classList.remove("editing");
         var newTitle = title.textContent.trim();
         if (newTitle && newTitle !== session.title) {
           session.title = newTitle;
           renameSessionApi(session.id, newTitle);
+        } else if (!newTitle) {
+          title.textContent = session.title || "Untitled";
         }
-      });
+      }
+
       title.addEventListener("keydown", function (e) {
         if (e.key === "Enter") {
           e.preventDefault();
-          title.blur();
+          stopEditing(e);
+        }
+        if (e.key === "Escape") {
+          e.preventDefault();
+          title.textContent = session.title || "Untitled";
+          stopEditing(e);
+        }
+      });
+
+      title.addEventListener("blur", function () {
+        // Delay to allow save button click to register
+        setTimeout(function () {
+          if (editing) stopEditing();
+        }, 150);
+      });
+
+      // Edit/Save toggle button
+      var editBtn = document.createElement("button");
+      editBtn.className = "chat-history-edit-btn";
+      editBtn.title = "Rename";
+      editBtn.innerHTML = "&#9998;"; // Pencil icon
+      editBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        if (editing) {
+          stopEditing(e);
+        } else {
+          startEditing(e);
         }
       });
 
@@ -1743,12 +1834,19 @@
       });
 
       item.addEventListener("click", function (e) {
-        if (e.target === deleteBtn || e.target === title) return;
+        if (e.target === deleteBtn || e.target === editBtn || editing) return;
         switchToSession(session.id);
       });
 
-      item.appendChild(title);
-      item.appendChild(deleteBtn);
+      var timeEl = document.createElement("span");
+      timeEl.className = "chat-history-time";
+      timeEl.textContent = formatRelativeTime(session.lastUpdated);
+
+      titleRow.appendChild(title);
+      titleRow.appendChild(editBtn);
+      titleRow.appendChild(deleteBtn);
+      item.appendChild(titleRow);
+      item.appendChild(timeEl);
       return item;
     }
 

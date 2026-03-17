@@ -8,18 +8,9 @@ package com.top_logic.security.selfservice.invitation;
 
 import static com.top_logic.layout.form.template.model.Templates.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import jakarta.mail.Address;
-import jakarta.mail.Message.RecipientType;
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
-
-import com.top_logic.base.mail.MailSenderService;
-import com.top_logic.base.mail.script.SendMail;
 import com.top_logic.base.security.util.Password;
-import com.top_logic.basic.StringServices;
 import com.top_logic.basic.encryption.SecureRandomService;
 import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.util.ResKey;
@@ -41,10 +32,8 @@ import com.top_logic.layout.messagebox.MessageBox;
 import com.top_logic.layout.messagebox.MessageBox.ButtonType;
 import com.top_logic.layout.structure.DialogModel;
 import com.top_logic.mig.html.HTMLConstants;
-import com.top_logic.model.search.expr.ToString;
 import com.top_logic.security.selfservice.model.Invitation;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.error.TopLogicException;
 
 /**
  * Dialog to check the invitation token.
@@ -200,32 +189,9 @@ public class CheckInvitationToken extends AbstractTemplateDialog {
 	}
 
 	private void sendTokenMail(String newTokenString) {
-		Address to = SendMail.toAddress(_invitation.getEmail());
-		MailSenderService mailService = MailSenderService.getInstance();
-		MimeMessage message = mailService.createEmptyMessage();
-		try {
-			String applicationName = Version.getApplicationName();
-			message.setSubject(getSubject(_invitation, applicationName), StringServices.UTF8);
+		String applicationName = Version.getApplicationName();
+		_serviceModule.getVerificationMail().execute(_invitation, applicationName, newTokenString);
 
-			message.addRecipient(RecipientType.TO, to);
-
-			Object body = getBody(_invitation, applicationName, newTokenString);
-			message.setDataHandler(SendMail.toDataHandler(body, ToString::toString));
-
-			mailService.send(message, new ArrayList<>(), false);
-		} catch (MessagingException ex) {
-			throw new TopLogicException(
-				com.top_logic.base.mail.script.I18NConstants.ERROR_SENDING_MAIL__TO_MSG.fill(to, ex.getMessage()), ex);
-		}
-
-	}
-
-	private String getSubject(Invitation invitation, String applicationName) {
-		return ToString.toString(_serviceModule.getVerificationSubject().execute(invitation, applicationName));
-	}
-
-	private Object getBody(Invitation invitation, String applicationName, String token) {
-		return _serviceModule.getVerificationBody().execute(invitation, applicationName, token);
 	}
 
 	private String newTokenString() {

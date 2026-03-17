@@ -8,17 +8,8 @@ package com.top_logic.security.selfservice.invitation.script;
 
 import java.io.IOError;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
-import jakarta.mail.Address;
-import jakarta.mail.Message.RecipientType;
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
-
-import com.top_logic.base.mail.MailSenderService;
-import com.top_logic.base.mail.script.SendMail;
-import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.version.Version;
@@ -31,7 +22,6 @@ import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
 import com.top_logic.model.search.expr.SearchExpression;
-import com.top_logic.model.search.expr.ToString;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
 import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
@@ -76,31 +66,10 @@ public class SendInvitation extends GenericMethod {
 		}
 
 		Invitation invitation = (Invitation) arg;
-
-		Address to = SendMail.toAddress(invitation.getEmail());
-		MailSenderService mailService = MailSenderService.getInstance();
-		MimeMessage message = mailService.createEmptyMessage();
-		try {
-			message.addRecipient(RecipientType.TO, to);
-
-			String applicationName = Version.getApplicationName();
-			message.setSubject(getSubject(invitation, applicationName), StringServices.UTF8);
-			message.setDataHandler(SendMail.toDataHandler(getBody(invitation, applicationName), ToString::toString));
-
-			return mailService.send(message, new ArrayList<>(), false);
-		} catch (MessagingException ex) {
-			throw new TopLogicException(
-				com.top_logic.base.mail.script.I18NConstants.ERROR_SENDING_MAIL__TO_MSG.fill(to, ex.getMessage()), ex);
-		}
-	}
-
-	private String getSubject(Invitation invitation, String applicationName) {
-		return ToString.toString(InvitationModule.getInstance().getInvitationSubject().execute(invitation, applicationName));
-	}
-
-	private Object getBody(Invitation invitation, String applicationName) {
+		String applicationName = Version.getApplicationName();
 		String link = invitationLink(DefaultDisplayContext.getDisplayContext(), invitation);
-		return InvitationModule.getInstance().getInvitationBody().execute(invitation, applicationName, link);
+		
+		return InvitationModule.getInstance().getInvitationMail().execute(invitation, applicationName, link);
 	}
 
 	private String invitationLink(DisplayContext context, Invitation invitation) {

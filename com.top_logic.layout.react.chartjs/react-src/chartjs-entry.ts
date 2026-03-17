@@ -3,9 +3,6 @@
 // IMPORTANT: All components MUST import React from 'tl-react-bridge' (not 'react').
 
 import { register } from 'tl-react-bridge';
+import TLChart from './controls/TLChart';
 
-// Placeholder - TLChart will be added in a later task.
-// import TLChart from './controls/TLChart';
-// register('TLChart', TLChart);
-
-console.log('tl-react-chartjs loaded');
+register('TLChart', TLChart);

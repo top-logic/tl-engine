@@ -33,7 +33,9 @@ import com.top_logic.layout.table.model.TableConfiguration;
 import com.top_logic.layout.table.model.TableConfigurationFactory;
 import com.top_logic.layout.table.model.TableConfigurationProvider;
 import com.top_logic.layout.table.provider.GenericTableConfigurationProvider;
+import com.top_logic.layout.view.model.ObservableTableModel;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelPartRef;
@@ -83,6 +85,27 @@ public class TableElement implements UIElement {
 
 		/** Configuration name for {@link #getSelection()}. */
 		String SELECTION = "selection";
+
+		/** Configuration name for {@link #getObservedTypes()}. */
+		String OBSERVED_TYPES = "observed-types";
+
+		/**
+		 * Types to observe for object creation events.
+		 *
+		 * <p>
+		 * When configured, the table re-evaluates its row function when objects of these types
+		 * are created. This enables automatic row insertion for tables that use
+		 * {@code all(...).filter(...)} style row queries.
+		 * </p>
+		 *
+		 * <p>
+		 * When empty (default), only updates and deletes of currently displayed rows are
+		 * observed. This is correct for tables whose rows come directly from a channel.
+		 * </p>
+		 */
+		@Name(OBSERVED_TYPES)
+		@Format(TLModelPartRef.CommaSeparatedTLModelPartRefs.class)
+		List<TLModelPartRef> getObservedTypes();
 
 		/**
 		 * References to {@link ViewChannel}s whose current values become positional arguments to
@@ -209,13 +232,23 @@ public class TableElement implements UIElement {
 		ObjectTableModel tableModel =
 			new ObjectTableModel(columnNames, tableConfig, new ArrayList<>(rows));
 
-		// 6. Create cell provider.
+		// 6. Wrap in ObservableTableModel.
+		Set<TLStructuredType> observedTypes = resolveObservedTypes();
+		QueryExecutor rowsExec = _rowsExecutor;
+		ObservableTableModel observableModel = new ObservableTableModel(
+			tableModel,
+			args -> executeRowsQuery(rowsExec, args),
+			observedTypes,
+			inputChannels
+		);
+
+		// 7. Create cell provider.
 		ReactCellControlProvider cellProvider = createCellProvider(context);
 
-		// 7. Create ReactTableControl.
+		// 8. Create ReactTableControl (uses inner model directly).
 		ReactTableControl tableControl = new ReactTableControl(context, tableModel, cellProvider);
 
-		// 8. Wire selection channel.
+		// 9. Wire selection channel.
 		ChannelRef selectionRef = _config.getSelection();
 		if (selectionRef != null) {
 			ViewChannel selectionChannel = context.resolveChannel(selectionRef);
@@ -233,15 +266,11 @@ public class TableElement implements UIElement {
 			});
 		}
 
-		// 9. Wire input channel listeners for re-query on change.
-		ViewChannel.ChannelListener refreshListener = (sender, oldValue, newValue) -> {
-			Object[] newValues = readChannelValues(inputChannels);
-			Collection<?> newRows = executeRowsQuery(_rowsExecutor, newValues);
-			tableModel.setRowObjects(new ArrayList<>(newRows));
-		};
-		for (ViewChannel channel : inputChannels) {
-			channel.addListener(refreshListener);
-		}
+		// 10. Lazy attach on render, cleanup on dispose.
+		tableControl.addBeforeWriteAction(() -> {
+			observableModel.attach(context.getModelScope());
+		});
+		tableControl.addCleanupAction(observableModel::detach);
 
 		return tableControl;
 	}
@@ -281,5 +310,21 @@ public class TableElement implements UIElement {
 		return (ctx, rowObject, columnName, cellValue) -> {
 			return new ReactTextCellControl(ctx, MetaLabelProvider.INSTANCE.getLabel(cellValue));
 		};
+	}
+
+	private Set<TLStructuredType> resolveObservedTypes() {
+		List<TLModelPartRef> refs = _config.getObservedTypes();
+		if (refs == null || refs.isEmpty()) {
+			return Set.of();
+		}
+		Set<TLStructuredType> types = new HashSet<>();
+		for (TLModelPartRef ref : refs) {
+			TLStructuredType type = (TLStructuredType) ref.resolveType();
+			if (type == null) {
+				throw new RuntimeException("Failed to resolve observed type: " + ref.qualifiedName());
+			}
+			types.add(type);
+		}
+		return types;
 	}
 }

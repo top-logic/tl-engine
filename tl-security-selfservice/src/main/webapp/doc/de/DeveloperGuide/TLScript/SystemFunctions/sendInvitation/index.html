@@ -1,0 +1,64 @@
+<h2>Syntax</h2>
+
+<pre>
+<code>sendInvitation($invitation)</code>
+</pre>
+
+<h2>Beschreibung</h2>
+
+<p>Versendet eine Einladungs-E-Mail an den im <code class="hljs inlineCode">invitation</code>-Objekt hinterlegten Empf&#xE4;nger. Die E-Mail enth&#xE4;lt einen Registrierungslink, &#xFC;ber den der Eingeladene sein Konto anlegen kann. Inhalt und Betreff der E-Mail werden durch den im <code class="hljs inlineCode">InvitationModule</code> konfigurierten Ausdruck <code class="hljs inlineCode">invitation-mail</code> bestimmt.</p>
+
+<p>Damit diese Funktion genutzt werden kann, muss das Modul <code class="hljs inlineCode">tl-security-selfservice</code> in der Applikation eingebunden sein und der E-Mail-Versand muss konfiguriert sein.</p>
+
+<h2>Parameter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Typ</th>
+			<th>Beschreibung</th>
+			<th>Pflicht</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>invitation</td>
+			<td>Fachobjekt (<code class="hljs inlineCode">tl.security.selfservice:Invitation</code>)</td>
+			<td>Die Einladung, deren Empf&#xE4;nger die Einladungs-E-Mail erhalten soll. Die Einladung muss eine g&#xFC;ltige E-Mail-Adresse im Attribut <code class="hljs inlineCode">email</code> hinterlegt haben.</td>
+			<td>ja</td>
+			<td> </td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>R&#xFC;ckgabewert</h2>
+
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Wahrheitswert</p>
+
+<p>Ob der Versand der Einladungs-E-Mail erfolgreich war.</p>
+
+<h2>Beispiele</h2>
+
+<h3>Einladung versenden</h3>
+
+<pre><code>sendInvitation($invitation)</code></pre>
+
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> <code class="hljs inlineCode">true</code></p>
+
+<p>Versendet die Einladungs-E-Mail an die im Attribut <code class="hljs inlineCode">email</code> von <code class="hljs inlineCode">$invitation</code> hinterlegte Adresse.</p>
+
+<h3>Einladung erstellen und versenden</h3>
+
+<pre><code>{
+  invitation = new(`tl.security.selfservice:Invitation`);
+  set($invitation, `tl.security.selfservice:Invitation#email`, "new.user@example.com");
+  sendInvitation($invitation);
+}</code></pre>
+
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> <code class="hljs inlineCode">true</code></p>
+
+<p>Erstellt eine neue Einladung f&#xFC;r die angegebene E-Mail-Adresse und versendet die Einladungs-E-Mail direkt im Anschluss.</p>
+
+<p>&#x200B;</p>

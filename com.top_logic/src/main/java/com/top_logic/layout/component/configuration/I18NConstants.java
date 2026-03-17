@@ -103,6 +103,13 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey MFA_REQUIRED_MESSAGE;
 
+	/**
+	 * @en Multi-factor authentication is optional for your account. You can start setting it up now
+	 *     by confirming this message, or you can do it later. You can enable multi-factor
+	 *     authentication at any time in your personal settings.
+	 */
+	public static ResKey MFA_OPTIONAL_MESSAGE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

@@ -36,8 +36,6 @@ import com.top_logic.layout.form.model.PasswordField;
 import com.top_logic.layout.form.model.StringField;
 import com.top_logic.layout.messagebox.AbstractTemplateDialog;
 import com.top_logic.layout.messagebox.MessageBox;
-import com.top_logic.layout.messagebox.MessageBox.ButtonType;
-import com.top_logic.layout.messagebox.MessageBox.MessageType;
 import com.top_logic.layout.structure.DialogModel;
 import com.top_logic.layout.structure.LayoutData;
 import com.top_logic.mig.html.layout.MainLayout;
@@ -149,14 +147,9 @@ public class LoginViewDialog extends AbstractTemplateDialog {
 			Password mfaSecret = user.getMFASecret();
 			if (mfaSecret == null) {
 				if (user.getMFARequirement() == MfaRequirement.REQUIRED) {
-
-					Command enableMFAAuthentication = ctx2 -> {
-						Command loginAndReload = ctx -> loginAndReload(ctx, user, withPasswordChange);
-						return new EnableMultiFactorAuthenticationDialog(user, loginAndReload).open(ctx2);
-					};
-
-					return MessageBox.confirm(context.getWindowScope(), MessageType.CONFIRM,
-						I18NConstants.MFA_REQUIRED_MESSAGE, MessageBox.button(ButtonType.OK, enableMFAAuthentication));
+					Command loginAndReload = ctx -> loginAndReload(ctx, user, withPasswordChange);
+					return EnableMultiFactorAuthenticationDialog.informMFARequired(context, user, Command.DO_NOTHING,
+						loginAndReload);
 				} else {
 					return loginAndReload(context, user, withPasswordChange);
 				}

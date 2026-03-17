@@ -47,10 +47,16 @@ com.top_logic.layout.view                    com.top_logic.layout.react
 |                                   |
 +-----------------------------------+
 
-ModelScope (per session, shared)     ReactWindowRegistry (per session)
-  single GlobalModelEventForwarder     holds shared ModelScope
-  shared across all windows            holds per-window SSEUpdateQueue
+ModelScope (per window)              ReactWindowRegistry (per session)
+  one GlobalModelEventForwarder        holds per-window ModelScope
+  per SSEUpdateQueue                   holds per-window SSEUpdateQueue
   accessed via ReactContext            stored as HTTP session attribute
+
+Each window gets its own GlobalModelEventForwarder with its own UpdateChain
+cursor. KnowledgeBase.getSessionUpdateChain() returns an independent cursor
+per call -- multiple forwarders can read the same event chain without racing.
+Events synthesized on one forwarder are dispatched only to listeners registered
+on that window's ModelScope, ensuring updates go to the correct SSEUpdateQueue.
 
 Note: type-level listeners on ModelScope receive ALL changes (not just creates)
 for objects of that type. The framework deduplicates notifications when a listener
@@ -88,37 +94,40 @@ public interface ReactContext {
 ```java
 @Override
 public ModelScope getModelScope() {
-    return _windowRegistry.getOrCreateModelScope();
+    return _windowRegistry.getOrCreateModelScope(_windowName);
 }
 ```
 
 #### ReactWindowRegistry
 
-Holds a single shared `GlobalModelEventForwarder` per session. The `UpdateChain`
-is a linked-list cursor (`next()` consumes events), so only one forwarder may
-exist per session -- otherwise multiple forwarders would race and miss events.
+Holds a per-window `GlobalModelEventForwarder`. Each window gets its own
+`UpdateChain` cursor via `KnowledgeBase.getSessionUpdateChain()`, which returns
+an independent cursor per call. Multiple forwarders can coexist without racing.
 
-Each window's `ObservableTableModel` registers its own listeners on this shared
-scope. Event synthesis dispatches to all registered listeners regardless of window.
+This ensures that events synthesized on one forwarder only dispatch to listeners
+registered on that window's `ModelScope`, so updates go to the correct
+`SSEUpdateQueue`.
 
 ```java
 public class ReactWindowRegistry {
-    private volatile ModelScope _modelScope;
+    private final ConcurrentHashMap<String, GlobalModelEventForwarder> _windowModelScopes =
+        new ConcurrentHashMap<>();
 
-    public synchronized ModelScope getOrCreateModelScope() {
-        if (_modelScope == null) {
-            _modelScope = GlobalModelEventForwarder.createForSession();
-        }
-        return _modelScope;
+    public ModelScope getOrCreateModelScope(String windowId) {
+        return _windowModelScopes.computeIfAbsent(windowId,
+            id -> GlobalModelEventForwarder.createForWindow());
     }
 
-    public void synthesizeModelEvents() {
-        if (_modelScope instanceof GlobalModelEventForwarder forwarder) {
+    public void synthesizeModelEvents(String windowId) {
+        GlobalModelEventForwarder forwarder = _windowModelScopes.get(windowId);
+        if (forwarder != null) {
             forwarder.synthesizeModelEvents();
         }
     }
 }
 ```
+
+Cleanup on window close removes the scope from the map.
 
 #### GlobalModelEventForwarder -- public factory method
 
@@ -126,7 +135,7 @@ The existing `configuredAssociationRelevance()` method is private. Add a public
 static factory method:
 
 ```java
-public static GlobalModelEventForwarder createForSession() {
+public static GlobalModelEventForwarder createForWindow() {
     KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
     return new GlobalModelEventForwarder(
         kb, kb.getSessionUpdateChain(), configuredAssociationRelevance());
@@ -145,7 +154,7 @@ Model events must be synthesized (polled from the UpdateChain) at two points:
 
    ```java
    ReactWindowRegistry registry = ReactWindowRegistry.forSession(session);
-   registry.synthesizeModelEvents();
+   registry.synthesizeModelEvents(windowName);
    queue.flush();
    ```
 
@@ -174,7 +183,7 @@ Model events must be synthesized (polled from the UpdateChain) at two points:
            TLSubSessionContext subSession = _sessionContext.getSubSession(_windowName);
            if (subSession != null) {
                ThreadContextManager.inContext(subSession, () -> {
-                   _registry.synthesizeModelEvents();
+                   _registry.synthesizeModelEvents(_windowName);
                });
            }
            writeOrDisconnect(conn, HEARTBEAT_MESSAGE);
@@ -421,7 +430,7 @@ KB Commit
   -> UpdateChain
   -> GlobalModelEventForwarder.synthesizeModelEvents()
        (triggered by ReactServlet after command, or SSE heartbeat)
-  -> ModelChangeEvent dispatched to all registered listeners on shared scope
+  -> ModelChangeEvent dispatched to listeners on this window's ModelScope
   -> ObservableTableModel.notifyChange()
        Updates: fire TableModelEvent(UPDATE) per row
        Deletes: coalesce into single TableModelEvent(INVALIDATE)
@@ -448,9 +457,9 @@ KB Commit
 |---|---|---|
 | `ReactContext` | react | Add `getModelScope()` |
 | `DefaultReactContext` | react | Delegate to registry |
-| `ReactWindowRegistry` | react | Hold shared `ModelScope`, add `synthesizeModelEvents()` |
+| `ReactWindowRegistry` | react | Hold per-window `ModelScope`, add `synthesizeModelEvents(windowId)` |
 | `ReactControl` | react | Add `addBeforeWriteAction(Runnable)` |
-| `GlobalModelEventForwarder` | core | Add public `createForSession()` factory |
+| `GlobalModelEventForwarder` | core | Add public `createForWindow()` factory |
 | `ReactServlet` | react | Call `synthesizeModelEvents()` after command |
 | `SSEUpdateQueue` | react | Extend heartbeat to synthesize events (needs window name + session ref) |
 | `ObservableTableModel` | view | **New class** |

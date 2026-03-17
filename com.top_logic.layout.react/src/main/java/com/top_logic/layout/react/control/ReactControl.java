@@ -75,6 +75,8 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 
 	private List<Runnable> _cleanupActions;
 
+	private List<Runnable> _beforeWriteActions;
+
 	/**
 	 * Creates a new {@link ReactControl}.
 	 *
@@ -196,7 +198,10 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	 * @see #onAfterWrite()
 	 */
 	protected void onBeforeWrite() {
-		// Default: no-op.
+		if (_beforeWriteActions != null) {
+			_beforeWriteActions.forEach(Runnable::run);
+			_beforeWriteActions = null;
+		}
 	}
 
 	/**
@@ -240,6 +245,25 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 			_cleanupActions = new ArrayList<>();
 		}
 		_cleanupActions.add(action);
+	}
+
+	/**
+	 * Registers an action to run once before this control is first rendered.
+	 *
+	 * <p>
+	 * Use this to defer resource-intensive setup (e.g. registering model listeners) until the
+	 * control is actually displayed. Actions run during {@link #onBeforeWrite()} and are
+	 * discarded afterwards.
+	 * </p>
+	 *
+	 * @param action
+	 *        The action to run before first render.
+	 */
+	public void addBeforeWriteAction(Runnable action) {
+		if (_beforeWriteActions == null) {
+			_beforeWriteActions = new ArrayList<>();
+		}
+		_beforeWriteActions.add(action);
 	}
 
 	/**

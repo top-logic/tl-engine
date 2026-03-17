@@ -97,6 +97,12 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey CHECK_OTP_FIELD_MESSAGE;
 
+	/**
+	 * @en Multi-factor authentication is required for your account. Please confirm the message to
+	 *     begin setting up multi-factor authentication.
+	 */
+	public static ResKey MFA_REQUIRED_MESSAGE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

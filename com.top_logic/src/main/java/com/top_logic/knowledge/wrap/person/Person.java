@@ -59,7 +59,7 @@ import com.top_logic.util.Utils;
 @Label("account")
 public class Person extends AbstractBoundWrapper implements Author, GroupMember {
 
-    /**
+	/**
      * Type of KO as defined by KBMeta.xml
      */
     public static final String OBJECT_NAME = "Person";
@@ -84,6 +84,9 @@ public class Person extends AbstractBoundWrapper implements Author, GroupMember 
 	/** The attribute "country". */
 	public static final String COUNTRY_ATTR = "country";
 
+	/** The attribute "admin" of type {@link #PERSON_TYPE}. */
+	public static final String ADMIN_ATTR = "admin";
+
 	/**
 	 * The attribute "mfaSecret" of type {@link #PERSON_TYPE}.
 	 * 
@@ -92,6 +95,11 @@ public class Person extends AbstractBoundWrapper implements Author, GroupMember 
 	 * </p>
 	 */
 	public static final String MFA_SECRET_ATTR = "mfaSecret";
+
+	/**
+	 * The attribute "mfaRequirement" of type {@link #PERSON_TYPE}.
+	 */
+	public static final String MFA_REQUIREMENT_ATTR = "mfaRequirement";
 
 	/** Full qualified name of the {@link TLType} of a {@link Person}. */
 	public static final String PERSON_TYPE = "tl.accounts:Person";
@@ -299,6 +307,20 @@ public class Person extends AbstractBoundWrapper implements Author, GroupMember 
 	 */
 	public void setMFASecret(Password secret) {
 		tUpdateByName(MFA_SECRET_ATTR, secret);
+	}
+
+	/**
+	 * Type-safe access to the value of {@link #MFA_REQUIREMENT_ATTR}.
+	 */
+	public MfaRequirement getMFARequirement() {
+		return (MfaRequirement) tValueByName(MFA_REQUIREMENT_ATTR);
+	}
+
+	/**
+	 * Setter for {@link #getMFARequirement()}.
+	 */
+	public void setMFARequirement(MfaRequirement value) {
+		tUpdateByName(MFA_REQUIREMENT_ATTR, value);
 	}
 
     /**
@@ -545,14 +567,14 @@ public class Person extends AbstractBoundWrapper implements Author, GroupMember 
 			return false;
 		}
 
-		return tGetDataBooleanValue("admin");
+		return tGetDataBooleanValue(ADMIN_ATTR);
 	}
 
 	/**
 	 * @see #isAdmin()
 	 */
 	public void setAdmin(boolean value) {
-		tSetDataBoolean("admin", value);
+		tSetDataBoolean(ADMIN_ATTR, value);
 	}
 
 	/**

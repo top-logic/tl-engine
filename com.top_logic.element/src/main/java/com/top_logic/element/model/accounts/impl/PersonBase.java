@@ -99,6 +99,15 @@ public interface PersonBase extends com.top_logic.model.core.Author, com.top_log
 	String LOCALE_ATTR = "locale";
 
 	/**
+	 * Part <code>mfaRequirement</code> of <code>Person</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.accounts:MfaRequirement</code> in configuration.
+	 * </p>
+	 */
+	String MFA_REQUIREMENT_ATTR = "mfaRequirement";
+
+	/**
 	 * Part <code>mfaSecret</code> of <code>Person</code>
 	 * 
 	 * <p>

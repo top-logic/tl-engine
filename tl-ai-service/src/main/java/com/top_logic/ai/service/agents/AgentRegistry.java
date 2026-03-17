@@ -703,7 +703,7 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 				Map<String, Object> parsed = (Map<String, Object>) JSON.fromString(request.arguments());
 				args = parsed;
 			} catch (Exception e) {
-				return "Error parsing delegation arguments: " + e.getMessage();
+				return "Error parsing delegation arguments: " + (e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName());
 			}
 
 			String goal = (String) args.get("goal");
@@ -734,7 +734,7 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 				ToolCallTracking.recordAgentCallCompleteIfTracking(truncate(result));
 				return result;
 			} catch (Exception e) {
-				ToolCallTracking.recordAgentCallCompleteIfTracking("Error: " + e.getMessage());
+				ToolCallTracking.recordAgentCallCompleteIfTracking("Error: " + (e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()));
 				throw e;
 			}
 		};

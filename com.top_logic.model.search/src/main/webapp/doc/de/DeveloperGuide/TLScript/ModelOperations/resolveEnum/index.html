@@ -1,0 +1,46 @@
+<h2>Syntax</h2>
+<pre>	<code>resolveEnum($type, $name)
+</code>
+</pre>
+<h2>Beschreibung</h2>
+<p>L&#xF6;st eine Java-Enum-Konstante anhand des vollst&#xE4;ndig qualifizierten Klassennamens <code class="hljs inlineCode">type</code> des Enums und dessen serialisierten Namens <code class="hljs inlineCode">name</code> auf. Der serialisierte Name ist der Name, der in Konfigurationsdateien (XML, JSON) verwendet wird. Dies ist die Umkehroperation zu <code class="hljs inlineCode">enumName()</code>.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>type</td>
+   <td>Zeichenkette</td>
+   <td>Der vollst&#xE4;ndig qualifizierte Java-Klassenname des Enum-Typs.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>name</td>
+   <td>Zeichenkette</td>
+   <td>Der serialisierte Name der aufzul&#xF6;senden Enum-Konstante.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>R&#xFC;ckgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Enum</p>
+<p>Die Enum-Konstante des Typs <code class="hljs inlineCode">type</code> mit dem serialisierten Namen <code class="hljs inlineCode">name</code>.</p>
+<h2>Beispiele</h2>
+<h3>Enum-Konstante nach Name aufl&#xF6;sen</h3>
+<pre><code>resolveEnum("com.top_logic.basic.config.MapOperation", "add")</code></pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> <code class="hljs inlineCode">MapOperation.ADD</code></p>
+<p>L&#xF6;st die <code class="hljs inlineCode">MapOperation</code>-Enum-Konstante mit dem serialisierten Namen <code class="hljs inlineCode">"add"</code> auf.</p>
+<h3>Hin- und R&#xFC;ckumwandlung mit <code class="hljs inlineCode">enumName()</code></h3>
+<pre><code>enumName(resolveEnum("com.top_logic.basic.config.MapOperation", "add"))</code></pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> <code class="hljs inlineCode">"add"</code></p>
+<p>&#x200B;</p>

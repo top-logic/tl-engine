@@ -15,24 +15,22 @@ import com.top_logic.element.layout.formeditor.implementation.FieldDefinitionTem
 import com.top_logic.knowledge.wrap.person.Person;
 
 /**
- * Whether the edited {@link Person} is an technical administrator.
+ * Whether multi-factor authentication is required for the edited {@link Person}.
  * 
- * @see Person#isAdmin()
- * 
- * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+ * @see Person#getMFARequirement()
  */
 @InApp
-@Label("Is administrator")
-public class IsAdminProvider extends AbstractIsAdminProvider {
+@Label("MFA requirement")
+public class MFARequirementProvider extends AbstractIsAdminProvider {
 
 	private final FieldDefinitionTemplateProvider _delegate;
 
 	/**
-	 * Creates a new {@link IsAdminProvider}.
+	 * Creates a new {@link MFARequirementProvider}.
 	 */
-	public IsAdminProvider() {
+	public MFARequirementProvider() {
 		FieldDefinition definition = TypedConfiguration.newConfigItem(FieldDefinition.class);
-		definition.setAttribute(Person.ADMIN_ATTR);
+		definition.setAttribute(Person.MFA_REQUIREMENT_ATTR);
 		definition.setTypeSpec(Person.PERSON_TYPE);
 		_delegate = TypedConfigUtil.createInstance(definition);
 	}

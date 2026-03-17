@@ -18,6 +18,7 @@ import jakarta.servlet.http.HttpSession;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
+import com.top_logic.util.TLContextManager;
 
 /**
  * Servlet that establishes an SSE (Server-Sent Events) connection for delivering React state
@@ -60,6 +61,7 @@ public class SSEServlet extends HttpServlet {
 		Logger.info("SSEServlet: queue@" + System.identityHashCode(queue) + " for windowName='" + windowName + "'",
 			SSEServlet.class);
 		queue.setConnection(asyncContext);
+		queue.setWindowContext(windowName, TLContextManager.getSession(), registry);
 
 		asyncContext.addListener(new AsyncListener() {
 			@Override

@@ -17,13 +17,17 @@ import java.util.concurrent.atomic.AtomicInteger;
 import jakarta.servlet.AsyncContext;
 import jakarta.servlet.http.HttpSession;
 
+import com.top_logic.base.context.TLSessionContext;
+import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.sched.SchedulerService;
+import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.layout.react.control.ReactCommandTarget;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.protocol.SSEEvent;
 import com.top_logic.layout.react.protocol.StateEvent;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 
 import de.haumacher.msgbuf.io.StringW;
 import de.haumacher.msgbuf.json.JsonWriter;
@@ -67,6 +71,12 @@ public class SSEUpdateQueue {
 	private volatile boolean _shutdown;
 
 	private volatile ScheduledFuture<?> _heartbeatTask;
+
+	private volatile String _windowName;
+
+	private volatile TLSessionContext _sessionContext;
+
+	private volatile ReactWindowRegistry _windowRegistry;
 
 	private DialogManager _dialogManager;
 
@@ -268,6 +278,23 @@ public class SSEUpdateQueue {
 		_controls.clear();
 	}
 
+	/**
+	 * Sets the window context for model event synthesis during heartbeat.
+	 *
+	 * @param windowName
+	 *        The window name this queue serves.
+	 * @param sessionContext
+	 *        The session context for subsession lookup.
+	 * @param registry
+	 *        The window registry for event synthesis.
+	 */
+	public void setWindowContext(String windowName, TLSessionContext sessionContext,
+			ReactWindowRegistry registry) {
+		_windowName = windowName;
+		_sessionContext = sessionContext;
+		_windowRegistry = registry;
+	}
+
 	private synchronized void ensureHeartbeat() {
 		if (_heartbeatTask == null || _heartbeatTask.isDone()) {
 			_heartbeatTask = SchedulerService.getInstance().scheduleAtFixedRate(
@@ -285,9 +312,27 @@ public class SSEUpdateQueue {
 	private void sendHeartbeat() {
 		SSEConnection conn = _connection;
 		if (conn != null) {
+			synthesizeModelEventsIfPossible();
 			writeOrDisconnect(conn, HEARTBEAT_MESSAGE);
+			flush();
 		}
 		cancelHeartbeatIfEmpty();
+	}
+
+	private void synthesizeModelEventsIfPossible() {
+		ReactWindowRegistry registry = _windowRegistry;
+		TLSessionContext sessionCtx = _sessionContext;
+		String windowName = _windowName;
+		if (registry == null || sessionCtx == null || windowName == null) {
+			return;
+		}
+		TLSubSessionContext subSession = sessionCtx.getSubSession(windowName);
+		if (subSession == null) {
+			return;
+		}
+		ThreadContextManager.inContext(subSession, () -> {
+			registry.synthesizeModelEvents(windowName);
+		});
 	}
 
 	/**

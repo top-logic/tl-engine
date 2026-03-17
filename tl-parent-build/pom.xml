@@ -73,7 +73,6 @@
 								<additionalOption>-createBaseline</additionalOption>
 								<additionalOption>false</additionalOption>
 							</additionalOptions> 
-							<protected>true</protected>
 							<failOnError>false</failOnError>
 						</configuration>
 					</execution>

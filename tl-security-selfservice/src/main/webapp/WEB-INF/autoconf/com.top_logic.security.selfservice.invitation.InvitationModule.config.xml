@@ -9,9 +9,8 @@
 				token-resend-delay="30s"
 				token-validity="5min"
 			>
-				<invitation-mail-subject>invitation -&gt; applicationName -&gt; "Invitation to " + $applicationName</invitation-mail-subject>
-				<invitation-mail-body><![CDATA[invitation -> applicationName -> link -> 
-{{{<p>
+				<invitation-mail><![CDATA[invitation -> applicationName -> link -> {
+  emailBody = {{{<p>
 Dear Recipient,
 </p>
 <p>
@@ -27,10 +26,24 @@ If you did not expect this invitation, you can safely ignore this email.
 <p>
 Kind regards,<br/>
 Your {$applicationName} Team
-</p>}}}]]></invitation-mail-body>
-				<verification-mail-subject>invitation -&gt; applicationName -&gt; "Your verification code"</verification-mail-subject>
-				<verification-mail-body><![CDATA[invitation -> applicationName -> token -> 
-{{{<p>
+</p>}}};
+  subject = "Invitation to " + $applicationName;
+  emailAddr = $invitation.get(`tl.security.selfservice:Invitation#email`);
+
+  try(
+    sendMail(
+      subject: $subject,
+      to: $emailAddr,
+      body: $emailBody
+    ),
+    catch: mailError -> {
+      info("Sending mail to " + $emailAddr + " failed. reason: " + $mailError);
+      false
+    }
+  );
+}]]></invitation-mail>
+				<verification-mail><![CDATA[invitation -> applicationName -> token -> {
+  emailBody = {{{<p>
 Dear Recipient,
 </p>
 <p>
@@ -46,7 +59,22 @@ If you did not expect this invitation, you can safely ignore this email.
 <p>
 Kind regards,<br/>
 Your {$applicationName} Team
-</p>}}}]]></verification-mail-body>
+</p>}}};
+  subject = "Your verification code";
+  emailAddr = $invitation.get(`tl.security.selfservice:Invitation#email`);
+
+  try(
+    sendMail(
+      subject: $subject,
+      to: $emailAddr,
+      body: $emailBody
+    ),
+    catch: mailError -> {
+      info("Sending mail to " + $emailAddr + " failed. reason: " + $mailError);
+      false
+    }
+  );
+}]]></verification-mail>
 			</instance>
 		</config>
 	</services>

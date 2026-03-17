@@ -31,25 +31,17 @@ public class InvitationModule extends ConfiguredManagedClass<InvitationModule.Co
 	 * Typed configuration interface definition for {@link InvitationModule}.
 	 */
 	@DisplayOrder({
-		Config.INVITATION_MAIL_SUBJECT,
-		Config.INVITATION_MAIL_BODY,
-		Config.VERIFICATION_MAIL_SUBJECT,
-		Config.VERIFICATION_MAIL_BODY,
+		Config.INVITATION_MAIL,
+		Config.VERIFICATION_MAIL,
 		Config.TOKEN_VALIDITY,
 	})
 	public interface Config extends ConfiguredManagedClass.Config<InvitationModule> {
 
-		/** Configuration name for {@link #getInvitationMailSubject()}. */
-		String INVITATION_MAIL_SUBJECT = "invitation-mail-subject";
+		/** Configuration name for {@link #getInvitationMail()}. */
+		String INVITATION_MAIL = "invitation-mail";
 
-		/** Configuration name for {@link #getInvitationMailBody()}. */
-		String INVITATION_MAIL_BODY = "invitation-mail-body";
-
-		/** Configuration name for {@link #getVerificationMailSubject()}. */
-		String VERIFICATION_MAIL_SUBJECT = "verification-mail-subject";
-
-		/** Configuration name for {@link #getVerificationMailBody()}. */
-		String VERIFICATION_MAIL_BODY = "verification-mail-body";
+		/** Configuration name for {@link #getVerificationMail()}. */
+		String VERIFICATION_MAIL = "verification-mail";
 
 		/** Configuration name for {@link #getTokenValidity()}. */
 		String TOKEN_VALIDITY = "token-validity";
@@ -58,52 +50,28 @@ public class InvitationModule extends ConfiguredManagedClass<InvitationModule.Co
 		String TOKEN_RESEND_DELAY = "token-resend-delay";
 
 		/**
-		 * The TL-Script expression computing the subject for the invitation mail.
-		 *
-		 * <p>
-		 * The expression is called with the {@link Invitation} object as first argument and the
-		 * application name as second argument.
-		 * </p>
-		 */
-		@Name(INVITATION_MAIL_SUBJECT)
-		@Mandatory
-		Expr getInvitationMailSubject();
-
-		/**
-		 * The TL-Script expression computing the body for the invitation mail.
+		 * The TL-Script expression sending the invitation mail.
 		 *
 		 * <p>
 		 * The expression is called with the {@link Invitation} object as first argument, the
 		 * application name as second argument, and the invitation link as third argument.
 		 * </p>
 		 */
-		@Name(INVITATION_MAIL_BODY)
+		@Name(INVITATION_MAIL)
 		@Mandatory
-		Expr getInvitationMailBody();
+		Expr getInvitationMail();
 
 		/**
-		 * The TL-Script expression computing the subject for the verification mail.
-		 *
-		 * <p>
-		 * The expression is called with the {@link Invitation} object as first argument and the
-		 * application name as second argument.
-		 * </p>
-		 */
-		@Name(VERIFICATION_MAIL_SUBJECT)
-		@Mandatory
-		Expr getVerificationMailSubject();
-
-		/**
-		 * The TL-Script expression computing the body for the verification mail.
+		 * The TL-Script expression sending the verification mail.
 		 *
 		 * <p>
 		 * The expression is called with the {@link Invitation} object as first argument, the
 		 * application name as second argument, and the verification token as third argument.
 		 * </p>
 		 */
-		@Name(VERIFICATION_MAIL_BODY)
+		@Name(VERIFICATION_MAIL)
 		@Mandatory
-		Expr getVerificationMailBody();
+		Expr getVerificationMail();
 
 		/**
 		 * How long a verification token remains valid after it was created.
@@ -129,13 +97,9 @@ public class InvitationModule extends ConfiguredManagedClass<InvitationModule.Co
 
 	}
 
-	private QueryExecutor _invitationBody;
+	private QueryExecutor _verificationMail;
 
-	private QueryExecutor _invitationSubject;
-
-	private QueryExecutor _verificationBody;
-
-	private QueryExecutor _verificationSubject;
+	private QueryExecutor _invitationMail;
 
 	/**
 	 * Create a {@link InvitationModule}.
@@ -147,38 +111,22 @@ public class InvitationModule extends ConfiguredManagedClass<InvitationModule.Co
 	 */
 	public InvitationModule(InstantiationContext context, Config config) {
 		super(context, config);
-		_invitationBody = QueryExecutor.compile(config.getInvitationMailBody());
-		_invitationSubject = QueryExecutor.compile(config.getInvitationMailSubject());
-		_verificationBody = QueryExecutor.compile(config.getVerificationMailBody());
-		_verificationSubject = QueryExecutor.compile(config.getVerificationMailSubject());
+		_verificationMail = QueryExecutor.compile(config.getVerificationMail());
+		_invitationMail = QueryExecutor.compile(config.getInvitationMail());
 	}
 
 	/**
-	 * Compiled executor for {@link Config#getInvitationMailBody()}.
+	 * Compiled executor for {@link Config#getInvitationMail()}.
 	 */
-	public QueryExecutor getInvitationBody() {
-		return _invitationBody;
+	public QueryExecutor getInvitationMail() {
+		return _invitationMail;
 	}
 
 	/**
-	 * Compiled executor for {@link Config#getInvitationMailSubject()}.
+	 * Compiled executor for {@link Config#getVerificationMail()}.
 	 */
-	public QueryExecutor getInvitationSubject() {
-		return _invitationSubject;
-	}
-
-	/**
-	 * Compiled executor for {@link Config#getVerificationMailBody()}.
-	 */
-	public QueryExecutor getVerificationBody() {
-		return _verificationBody;
-	}
-
-	/**
-	 * Compiled executor for {@link Config#getVerificationMailSubject()}.
-	 */
-	public QueryExecutor getVerificationSubject() {
-		return _verificationSubject;
+	public QueryExecutor getVerificationMail() {
+		return _verificationMail;
 	}
 
 	/**

@@ -1439,9 +1439,9 @@ public class ModelEditorTool {
 			// Qualified name: "module:TypeName"
 			try {
 				type = TLModelUtil.findType(model, name);
-			} catch (Exception e) {
+			} catch (RuntimeException e) {
 				throw new IllegalArgumentException(
-					"Cannot resolve qualified type '" + name + "': " + e.getMessage());
+					"Cannot resolve qualified type '" + name + "': " + e.getMessage(), e);
 			}
 		} else {
 			// Unqualified name: search current module first, then all modules

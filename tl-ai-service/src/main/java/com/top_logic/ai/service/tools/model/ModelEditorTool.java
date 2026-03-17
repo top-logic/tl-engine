@@ -1509,6 +1509,19 @@ public class ModelEditorTool {
 		return matches.get(0);
 	}
 
+	private static List<TLClass> ensureTLObjectSuperType(TLClass tlClass, List<TLClass> generalizations) {
+		TLClass tlObjectType = TLModelUtil.tlObjectType(tlClass.getModel());
+		switch (generalizations.size()) {
+			case 0:
+				return new ArrayList<>(Collections.singletonList(tlObjectType));
+			case 1:
+				return generalizations;
+			default:
+				generalizations.remove(tlObjectType);
+				return generalizations;
+		}
+	}
+
 	private static TLType resolvePrimitiveType(TLModel model, String typeKind) {
 		try {
 			TLPrimitive.Kind kind = TLPrimitive.Kind.valueOf(typeKind.toUpperCase());

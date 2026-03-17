@@ -80,6 +80,6 @@ public interface ChatAgentConfig extends AgentConfig {
 	 */
 	@Name(DELEGATIONS)
 	@Format(CommaSeparatedStrings.class)
-	@Options(fun = AllAgentNames.class)
+	@Options(fun = AllChatAgentNames.class)
 	List<String> getDelegations();
 }

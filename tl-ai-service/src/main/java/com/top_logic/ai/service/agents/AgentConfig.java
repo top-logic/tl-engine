@@ -591,7 +591,7 @@ public interface AgentConfig extends NamedConfigMandatory {
 	 * cannot be delegated to.
 	 * </p>
 	 */
-	class AllAgentNames extends Function0<List<String>> {
+	class AllChatAgentNames extends Function0<List<String>> {
 
 		@Override
 		public List<String> apply() {

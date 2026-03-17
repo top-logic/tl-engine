@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<stack direction="column" gap="default">
+		<grid gap="default" min-column-width="24rem">
+			<card title="Bar Chart Demo">
+				<chart data="${-> {
+					'type': 'bar',
+					'data': {
+						'labels': ['January', 'February', 'March', 'April', 'May', 'June'],
+						'datasets': [
+							{
+								'label': 'Revenue',
+								'data': [12, 19, 15, 25, 22, 30]
+							},
+							{
+								'label': 'Costs',
+								'data': [8, 14, 10, 18, 16, 22]
+							}
+						]
+					},
+					'options': {
+						'maintainAspectRatio': false,
+						'scales': {
+							'y': { 'beginAtZero': true }
+						}
+					}
+				}}">
+					<inputs/>
+				</chart>
+			</card>
+
+			<card title="Doughnut Chart Demo">
+				<chart data="${-> {
+					'type': 'doughnut',
+					'data': {
+						'labels': ['Electronics', 'Clothing', 'Food', 'Books', 'Other'],
+						'datasets': [{
+							'data': [35, 25, 20, 12, 8]
+						}]
+					},
+					'options': {
+						'maintainAspectRatio': false
+					}
+				}}">
+					<inputs/>
+				</chart>
+			</card>
+		</grid>
+
+		<card title="Line Chart with Zoom">
+			<chart zoomEnabled="true" data="${-> {
+				'type': 'line',
+				'data': {
+					'labels': ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+					'datasets': [
+						{
+							'label': '2025',
+							'data': [12, 19, 15, 25, 22, 30, 28, 35, 32, 40, 38, 45],
+							'fill': true,
+							'tension': 0.3
+						},
+						{
+							'label': '2024',
+							'data': [10, 14, 12, 18, 16, 22, 20, 26, 24, 30, 28, 35],
+							'fill': true,
+							'tension': 0.3,
+							'borderDash': [5, 5]
+						}
+					]
+				},
+				'options': {
+					'maintainAspectRatio': false,
+					'interaction': { 'intersect': false, 'mode': 'index' }
+				}
+			}}">
+				<inputs/>
+			</chart>
+		</card>
+
+		<card title="Combined Bar + Line">
+			<chart data="${-> {
+				'type': 'bar',
+				'data': {
+					'labels': ['Q1', 'Q2', 'Q3', 'Q4'],
+					'datasets': [
+						{
+							'type': 'bar',
+							'label': 'Revenue',
+							'data': [30, 50, 40, 60],
+							'order': 2
+						},
+						{
+							'type': 'line',
+							'label': 'Margin %',
+							'data': [15, 22, 18, 28],
+							'fill': false,
+							'tension': 0.3,
+							'yAxisID': 'y1',
+							'order': 1
+						}
+					]
+				},
+				'options': {
+					'maintainAspectRatio': false,
+					'scales': {
+						'y': { 'beginAtZero': true, 'title': { 'display': true, 'text': 'Revenue' } },
+						'y1': { 'beginAtZero': true, 'position': 'right', 'grid': { 'drawOnChartArea': false }, 'title': { 'display': true, 'text': 'Margin %' } }
+					}
+				}
+			}}">
+				<inputs/>
+			</chart>
+		</card>
+	</stack>
+</view>

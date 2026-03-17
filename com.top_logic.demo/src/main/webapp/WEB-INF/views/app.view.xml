@@ -44,6 +44,12 @@
 					>
 						<view-ref view="demo/input-controls-demo.view.xml"/>
 					</nav-item>
+					<nav-item id="chart-demo"
+						icon="bi bi-bar-chart-line"
+						label="Chart Demo"
+					>
+						<view-ref view="demo/chart-demo.view.xml"/>
+					</nav-item>
 					<nav-item id="tlscript-editor-demo"
 						icon="bi bi-code-square"
 						label="TL-Script Editor"

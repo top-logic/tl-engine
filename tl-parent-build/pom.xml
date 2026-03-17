@@ -90,23 +90,29 @@
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-antrun-plugin</artifactId>
+				<artifactId>maven-clean-plugin</artifactId>
 				<executions>
 					<execution>
 						<phase>compile</phase>
 						<goals>
-							<goal>run</goal>
+							<goal>clean</goal>
 						</goals>
+						<!-- 
+							WORKAROUND: If JavaDoc is generated during the prepare-package phase, 
+							a file	maven-javadoc-plugin-stale-data.txt is saved in the target folder. 
+							If this file does not change during the next run, no new JavaDoc is 
+							generated. As a workaround, this file is deleted during the	compile phase. 
+						-->
 						<configuration>
-							<target>
-								<!-- 
-									WORKAROUND: If JavaDoc is generated during the prepare-package phase, 
-									a file	maven-javadoc-plugin-stale-data.txt is saved in the target folder. 
-									If this file does not change during the next run, no new JavaDoc is 
-									generated. As a workaround, this file is deleted during the	compile phase. 
-								-->
-								<delete file="${project.build.directory}/maven-javadoc-plugin-stale-data.txt"/>
-							</target>
+							<excludeDefaultDirectories>true</excludeDefaultDirectories>
+							<filesets>
+								<fileset>
+    								<directory>${project.build.directory}</directory>
+									<includes>
+										<include>maven-javadoc-plugin-stale-data.txt</include>
+									</includes>
+								</fileset>
+							</filesets>
 						</configuration>
 					</execution>
 				</executions>

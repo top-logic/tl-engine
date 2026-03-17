@@ -6,6 +6,7 @@
 package com.top_logic.ai.service.tools.model;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -15,12 +16,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
-
 import com.top_logic.ai.service.tools.model.messages.BackwardReferenceResponse;
 import com.top_logic.ai.service.tools.model.messages.ClassResponse;
+import com.top_logic.ai.service.tools.model.messages.DeleteResponse;
+import com.top_logic.ai.service.tools.model.messages.DeletionBlocker;
 import com.top_logic.ai.service.tools.model.messages.EnumClassifierInfo;
 import com.top_logic.ai.service.tools.model.messages.EnumResponse;
 import com.top_logic.ai.service.tools.model.messages.ModuleResponse;
@@ -29,13 +28,18 @@ import com.top_logic.ai.service.tools.model.messages.ReferenceResponse;
 import com.top_logic.ai.service.tools.util.DataClassSerializer;
 import com.top_logic.ai.service.tools.util.ToolI18NUtil;
 import com.top_logic.ai.service.tools.util.ToolI18NUtil.LocalizedTexts;
+import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.knowledge.service.PersistencyLayer;
-import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.dob.meta.MOReference.DeletionPolicy;
 import com.top_logic.dob.meta.MOReference.HistoryType;
+import com.top_logic.element.meta.MetaElementUtil;
+import com.top_logic.knowledge.service.KnowledgeBaseException;
+import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.model.TLAssociation;
 import com.top_logic.model.TLAssociationEnd;
 import com.top_logic.model.TLClass;
@@ -43,11 +47,14 @@ import com.top_logic.model.TLClassProperty;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLModel;
+import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLModule;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
+import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.builtin.TLCore;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.model.ModelService;
@@ -1681,6 +1688,388 @@ public class ModelEditorTool {
 			? "Enumeration '" + enumeration.getName() + "' created successfully in module '" + enumeration.getModule().getName() + "'"
 			: "Enumeration '" + enumeration.getName() + "' already existed in module '" + enumeration.getModule().getName() + "'");
 		return response;
+	}
+
+	// ===== Delete Operations =====
+
+	/**
+	 * Deletes a model element from the TopLogic application model.
+	 *
+	 * <p>Performs safety checks before deletion and returns detailed blockers on failure.
+	 * Supported element types: MODULE, CLASS, ENUMERATION, PROPERTY, REFERENCE, CLASSIFIER.</p>
+	 *
+	 * @param elementType
+	 *        Type of element to delete: MODULE, CLASS, ENUMERATION, PROPERTY, REFERENCE, or CLASSIFIER.
+	 * @param qualifiedName
+	 *        Qualified name of the element: {@code 'moduleName'} for modules,
+	 *        {@code 'moduleName:TypeName'} for classes/enums,
+	 *        {@code 'moduleName:TypeName#partName'} for properties/references/classifiers.
+	 * @return JSON with deletion result including any blockers or cascade-deleted parts.
+	 */
+	@Tool("Delete a model element from the TopLogic application model. "
+		+ "Performs safety checks before deletion — returns detailed blockers on failure. "
+		+ "Element types: MODULE, CLASS, ENUMERATION, PROPERTY, REFERENCE, CLASSIFIER. "
+		+ "Qualified name format: 'moduleName' for modules, 'moduleName:TypeName' for classes/enums, "
+		+ "'moduleName:TypeName#partName' for properties/references/classifiers.")
+	public String deleteModelElement(
+			@P("Type of element to delete: MODULE, CLASS, ENUMERATION, PROPERTY, REFERENCE, CLASSIFIER")
+			String elementType,
+			@P("Qualified name of the element")
+			String qualifiedName) {
+
+		try {
+			DeleteResponse response = ThreadContextManager.inSystemInteraction(
+				ModelEditorTool.class,
+				() -> doDeleteModelElement(elementType, qualifiedName));
+
+			return DataClassSerializer.toJson(response, ModelEditorTool.class, "deleteModelElement()",
+				buildArgs("elementType", elementType, "qualifiedName", qualifiedName));
+		} catch (Exception ex) {
+			Logger.error("deleteModelElement() error: " + ex.getMessage(), ex, ModelEditorTool.class);
+			return DataClassSerializer.errorToJson(
+				"Failed to delete element: " + ex.getMessage(),
+				ModelEditorTool.class, "deleteModelElement()",
+				buildArgs("elementType", elementType, "qualifiedName", qualifiedName));
+		}
+	}
+
+	private DeleteResponse doDeleteModelElement(String elementType, String qualifiedName)
+			throws KnowledgeBaseException {
+		requireNonEmpty(elementType, "elementType");
+		requireNonEmpty(qualifiedName, "qualifiedName");
+
+		String type = elementType.trim().toUpperCase();
+		TLModel model = ModelService.getApplicationModel();
+
+		TLModelPart resolved = resolveModelPart(model, type, qualifiedName);
+
+		// Check for deletion blockers
+		List<DeletionBlocker> blockers = checkDeletionBlockers(model, resolved, type);
+		if (!blockers.isEmpty()) {
+			DeleteResponse response = DeleteResponse.create();
+			response.setSuccess(false);
+			response.setName(getPartName(resolved));
+			response.setQualifiedName(qualifiedName);
+			response.setElementType(type);
+			response.setResultMessage(
+				"Cannot delete " + type.toLowerCase() + " '" + qualifiedName + "': blocked by dependencies");
+			for (DeletionBlocker blocker : blockers) {
+				response.addBlocker(blocker);
+			}
+			return response;
+		}
+
+		// Capture name before deletion (object becomes invalid after deleteRecursive)
+		String partName = getPartName(resolved);
+		// Collect parts that will be cascade-deleted BEFORE deletion
+		List<String> deletedParts = collectDeletedParts(resolved, type);
+
+		// Perform deletion
+		try (Transaction tx = PersistencyLayer.getKnowledgeBase()
+				.beginTransaction(ResKey.text("Delete " + type + ": " + qualifiedName))) {
+			TLModelUtil.deleteRecursive(resolved);
+			tx.commit();
+		}
+
+		DeleteResponse response = DeleteResponse.create();
+		response.setSuccess(true);
+		response.setName(partName);
+		response.setQualifiedName(qualifiedName);
+		response.setElementType(type);
+		response.setResultMessage("Successfully deleted " + type.toLowerCase() + " '" + qualifiedName + "'");
+		for (String part : deletedParts) {
+			response.addDeletedPart(part);
+		}
+		return response;
+	}
+
+	private TLModelPart resolveModelPart(TLModel model, String elementType, String qualifiedName) {
+		switch (elementType) {
+			case "MODULE": {
+				TLModule module = model.getModule(qualifiedName);
+				if (module == null) {
+					throw new IllegalArgumentException("Module '" + qualifiedName + "' not found");
+				}
+				return module;
+			}
+			case "CLASS": {
+				String[] parts = qualifiedName.split(":");
+				if (parts.length != 2) {
+					throw new IllegalArgumentException(
+						"Invalid CLASS qualified name '" + qualifiedName + "'. Expected format: 'moduleName:ClassName'");
+				}
+				TLModule module = model.getModule(parts[0]);
+				if (module == null) {
+					throw new IllegalArgumentException("Module '" + parts[0] + "' not found");
+				}
+				TLType tlType = module.getType(parts[1]);
+				if (!(tlType instanceof TLClass)) {
+					throw new IllegalArgumentException(
+						"Class '" + parts[1] + "' not found in module '" + parts[0] + "'"
+							+ (tlType != null ? " (found " + tlType.getClass().getSimpleName() + " instead)" : ""));
+				}
+				return (TLClass) tlType;
+			}
+			case "ENUMERATION": {
+				String[] parts = qualifiedName.split(":");
+				if (parts.length != 2) {
+					throw new IllegalArgumentException(
+						"Invalid ENUMERATION qualified name '" + qualifiedName
+							+ "'. Expected format: 'moduleName:EnumName'");
+				}
+				TLModule module = model.getModule(parts[0]);
+				if (module == null) {
+					throw new IllegalArgumentException("Module '" + parts[0] + "' not found");
+				}
+				TLType tlType = module.getType(parts[1]);
+				if (!(tlType instanceof TLEnumeration)) {
+					throw new IllegalArgumentException(
+						"Enumeration '" + parts[1] + "' not found in module '" + parts[0] + "'"
+							+ (tlType != null ? " (found " + tlType.getClass().getSimpleName() + " instead)" : ""));
+				}
+				return (TLEnumeration) tlType;
+			}
+			case "PROPERTY":
+			case "REFERENCE": {
+				String[] colonParts = qualifiedName.split(":");
+				if (colonParts.length != 2 || !colonParts[1].contains("#")) {
+					throw new IllegalArgumentException(
+						"Invalid " + elementType + " qualified name '" + qualifiedName
+							+ "'. Expected format: 'moduleName:TypeName#partName'");
+				}
+				String[] hashParts = colonParts[1].split("#");
+				if (hashParts.length != 2) {
+					throw new IllegalArgumentException(
+						"Invalid " + elementType + " qualified name '" + qualifiedName
+							+ "'. Expected exactly one '#' separator");
+				}
+				TLModule module = model.getModule(colonParts[0]);
+				if (module == null) {
+					throw new IllegalArgumentException("Module '" + colonParts[0] + "' not found");
+				}
+				TLType tlType = module.getType(hashParts[0]);
+				if (!(tlType instanceof TLClass)) {
+					throw new IllegalArgumentException(
+						"Class '" + hashParts[0] + "' not found in module '" + colonParts[0] + "'");
+				}
+				TLStructuredTypePart part = ((TLClass) tlType).getPart(hashParts[1]);
+				if (part == null) {
+					throw new IllegalArgumentException(
+						elementType + " '" + hashParts[1] + "' not found in class '"
+							+ colonParts[0] + ":" + hashParts[0] + "'");
+				}
+				if ("PROPERTY".equals(elementType) && !(part instanceof TLClassProperty)) {
+					throw new IllegalArgumentException(
+						"'" + hashParts[1] + "' is not a property (it's a "
+							+ part.getClass().getSimpleName() + ")");
+				}
+				if ("REFERENCE".equals(elementType) && !(part instanceof TLReference)) {
+					throw new IllegalArgumentException(
+						"'" + hashParts[1] + "' is not a reference (it's a "
+							+ part.getClass().getSimpleName() + ")");
+				}
+				return part;
+			}
+			case "CLASSIFIER": {
+				String[] colonParts = qualifiedName.split(":");
+				if (colonParts.length != 2 || !colonParts[1].contains("#")) {
+					throw new IllegalArgumentException(
+						"Invalid CLASSIFIER qualified name '" + qualifiedName
+							+ "'. Expected format: 'moduleName:EnumName#classifierName'");
+				}
+				String[] hashParts = colonParts[1].split("#");
+				if (hashParts.length != 2) {
+					throw new IllegalArgumentException(
+						"Invalid CLASSIFIER qualified name '" + qualifiedName
+							+ "'. Expected exactly one '#' separator");
+				}
+				TLModule module = model.getModule(colonParts[0]);
+				if (module == null) {
+					throw new IllegalArgumentException("Module '" + colonParts[0] + "' not found");
+				}
+				TLType tlType = module.getType(hashParts[0]);
+				if (!(tlType instanceof TLEnumeration)) {
+					throw new IllegalArgumentException(
+						"Enumeration '" + hashParts[0] + "' not found in module '" + colonParts[0] + "'");
+				}
+				TLClassifier classifier = ((TLEnumeration) tlType).getClassifier(hashParts[1]);
+				if (classifier == null) {
+					throw new IllegalArgumentException(
+						"Classifier '" + hashParts[1] + "' not found in enumeration '"
+							+ colonParts[0] + ":" + hashParts[0] + "'");
+				}
+				return classifier;
+			}
+			default:
+				throw new IllegalArgumentException(
+					"Unknown element type '" + elementType
+						+ "'. Valid types: MODULE, CLASS, ENUMERATION, PROPERTY, REFERENCE, CLASSIFIER");
+		}
+	}
+
+	private List<DeletionBlocker> checkDeletionBlockers(TLModel model, TLModelPart part, String elementType) {
+		List<DeletionBlocker> blockers = new ArrayList<>();
+
+		// Check delete-protection annotation
+		if (DisplayAnnotations.isDeleteProtected(part)) {
+			DeletionBlocker blocker = DeletionBlocker.create();
+			blocker.setReason("DELETE_PROTECTED");
+			blocker.setDetails("Element is marked as delete-protected");
+			blockers.add(blocker);
+		}
+
+		if (part instanceof TLClass) {
+			TLClass tlClass = (TLClass) part;
+
+			// Check for direct instances
+			if (!MetaElementUtil.getAllDirectInstancesOf(tlClass, TLObject.class).isEmpty()) {
+				DeletionBlocker blocker = DeletionBlocker.create();
+				blocker.setReason("HAS_INSTANCES");
+				blocker.setDetails("Class has direct instances that must be deleted first");
+				blockers.add(blocker);
+			}
+
+			// Check for specializations (subtypes)
+			if (!tlClass.getSpecializations().isEmpty()) {
+				StringBuilder sb = new StringBuilder("Subtypes: ");
+				boolean first = true;
+				for (TLClass spec : tlClass.getSpecializations()) {
+					if (!first) sb.append(", ");
+					sb.append(spec.getModule().getName()).append(":").append(spec.getName());
+					first = false;
+				}
+				DeletionBlocker blocker = DeletionBlocker.create();
+				blocker.setReason("HAS_SPECIALIZATIONS");
+				blocker.setDetails(sb.toString());
+				blockers.add(blocker);
+			}
+
+			// Check for usage by type parts in other types
+			checkTypeUsage(model, tlClass, blockers);
+		}
+
+		if (part instanceof TLEnumeration) {
+			TLEnumeration tlEnum = (TLEnumeration) part;
+			checkTypeUsage(model, tlEnum, blockers);
+		}
+
+		if ("MODULE".equals(elementType) && part instanceof TLModule) {
+			TLModule module = (TLModule) part;
+			for (TLType type : new ArrayList<>(module.getTypes())) {
+				if (type instanceof TLClass) {
+					TLClass tlClass = (TLClass) type;
+					if (!MetaElementUtil.getAllDirectInstancesOf(tlClass, TLObject.class).isEmpty()) {
+						DeletionBlocker blocker = DeletionBlocker.create();
+						blocker.setReason("HAS_INSTANCES");
+						blocker.setDetails("Class '" + module.getName() + ":" + tlClass.getName()
+							+ "' has direct instances");
+						blockers.add(blocker);
+					}
+					for (TLClass spec : tlClass.getSpecializations()) {
+						if (spec.getModule() != module) {
+							DeletionBlocker blocker = DeletionBlocker.create();
+							blocker.setReason("HAS_SPECIALIZATIONS");
+							blocker.setDetails("Class '" + module.getName() + ":" + tlClass.getName()
+								+ "' has subtype in another module: "
+								+ spec.getModule().getName() + ":" + spec.getName());
+							blockers.add(blocker);
+						}
+					}
+					checkTypeUsageExcludingModule(model, tlClass, module, blockers);
+				}
+				if (type instanceof TLEnumeration) {
+					checkTypeUsageExcludingModule(model, (TLEnumeration) type, module, blockers);
+				}
+			}
+		}
+
+		return blockers;
+	}
+
+	private void checkTypeUsage(TLModel model, TLType type, List<DeletionBlocker> blockers) {
+		Collection<TLStructuredTypePart> usages = TLModelUtil.getUsage(model, type);
+		for (TLStructuredTypePart usage : usages) {
+			String ownerQName = usage.getOwner().getModule().getName() + ":" + usage.getOwner().getName();
+			DeletionBlocker blocker = DeletionBlocker.create();
+			blocker.setReason("USED_BY_TYPEPART");
+			blocker.setDetails("Referenced by: " + ownerQName + "#" + usage.getName());
+			blockers.add(blocker);
+		}
+	}
+
+	private void checkTypeUsageExcludingModule(TLModel model, TLType type, TLModule excludeModule,
+			List<DeletionBlocker> blockers) {
+		Collection<TLStructuredTypePart> usages = TLModelUtil.getUsage(model, type);
+		for (TLStructuredTypePart usage : usages) {
+			if (usage.getOwner().getModule() != excludeModule) {
+				String ownerQName = usage.getOwner().getModule().getName() + ":" + usage.getOwner().getName();
+				DeletionBlocker blocker = DeletionBlocker.create();
+				blocker.setReason("USED_BY_TYPEPART");
+				blocker.setDetails("Type '" + type.getModule().getName() + ":" + type.getName()
+					+ "' referenced by: " + ownerQName + "#" + usage.getName());
+				blockers.add(blocker);
+			}
+		}
+	}
+
+	private List<String> collectDeletedParts(TLModelPart part, String elementType) {
+		List<String> deletedParts = new ArrayList<>();
+
+		if (part instanceof TLClass) {
+			TLClass tlClass = (TLClass) part;
+			String prefix = tlClass.getModule().getName() + ":" + tlClass.getName() + "#";
+			for (TLStructuredTypePart localPart : tlClass.getLocalParts()) {
+				String kind = (localPart instanceof TLReference) ? "reference" : "property";
+				deletedParts.add(kind + ": " + prefix + localPart.getName());
+			}
+			for (TLClass spec : tlClass.getSpecializations()) {
+				deletedParts.add("subtype: " + spec.getModule().getName() + ":" + spec.getName());
+			}
+		} else if (part instanceof TLEnumeration) {
+			TLEnumeration tlEnum = (TLEnumeration) part;
+			String prefix = tlEnum.getModule().getName() + ":" + tlEnum.getName() + "#";
+			for (TLClassifier classifier : tlEnum.getClassifiers()) {
+				deletedParts.add("classifier: " + prefix + classifier.getName());
+			}
+		} else if (part instanceof TLModule) {
+			TLModule module = (TLModule) part;
+			for (TLType type : module.getTypes()) {
+				if (type instanceof TLClass) {
+					deletedParts.add("class: " + module.getName() + ":" + type.getName());
+				} else if (type instanceof TLEnumeration) {
+					deletedParts.add("enumeration: " + module.getName() + ":" + type.getName());
+				}
+			}
+		} else if (part instanceof TLReference) {
+			TLReference ref = (TLReference) part;
+			TLAssociationEnd end = ref.getEnd();
+			if (end != null) {
+				TLAssociationEnd otherEnd = TLModelUtil.getOtherEnd(end);
+				if (otherEnd != null) {
+					TLReference inverseRef = otherEnd.getReference();
+					if (inverseRef != null && inverseRef != ref) {
+						String ownerQName = inverseRef.getOwner().getModule().getName()
+							+ ":" + inverseRef.getOwner().getName();
+						deletedParts.add("inverse reference: " + ownerQName + "#" + inverseRef.getName());
+					}
+				}
+			}
+		}
+
+		return deletedParts;
+	}
+
+	private String getPartName(TLModelPart part) {
+		if (part instanceof TLModule) {
+			return ((TLModule) part).getName();
+		} else if (part instanceof TLType) {
+			return ((TLType) part).getName();
+		} else if (part instanceof TLStructuredTypePart) {
+			return ((TLStructuredTypePart) part).getName();
+		} else if (part instanceof TLClassifier) {
+			return ((TLClassifier) part).getName();
+		}
+		return part.toString();
 	}
 
 	private static Map<String, Object> buildArgs(String... keyValues) {

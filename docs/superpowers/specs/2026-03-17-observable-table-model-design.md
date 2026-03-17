@@ -51,6 +51,12 @@ ModelScope (per session, shared)     ReactWindowRegistry (per session)
   single GlobalModelEventForwarder     holds shared ModelScope
   shared across all windows            holds per-window SSEUpdateQueue
   accessed via ReactContext            stored as HTTP session attribute
+
+Note: type-level listeners on ModelScope receive ALL changes (not just creates)
+for objects of that type. The framework deduplicates notifications when a listener
+is registered both per-object and per-type. The ObservableTableModel uses
+type-level listeners primarily for create detection but must handle the fact
+that updates/deletes arrive through both registration paths.
 ```
 
 ### Dependency Direction
@@ -155,16 +161,32 @@ Model events must be synthesized (polled from the UpdateChain) at two points:
    `SchedulerService` thread that has no subsession context.
 
    The heartbeat callback must install the subsession before calling
-   `synthesizeModelEvents()`:
+   `synthesizeModelEvents()`. The `SSEUpdateQueue` needs a reference to the
+   window name and session context (set during `setConnection()`). The
+   `sendHeartbeat()` method is extended to also synthesize events:
 
    ```java
-   // In heartbeat timer callback for window "windowName"
-   TLSubSessionContext subSession = sessionContext.getSubSession(windowName);
-   TLContextManager.inContext(subSession, () -> {
-       registry.synthesizeModelEvents();
-       queue.flush();
-   });
+   // In SSEUpdateQueue.sendHeartbeat()
+   private void sendHeartbeat() {
+       SSEConnection conn = _connection;
+       if (conn != null) {
+           // Synthesize model events if a subsession is available.
+           TLSubSessionContext subSession = _sessionContext.getSubSession(_windowName);
+           if (subSession != null) {
+               ThreadContextManager.inContext(subSession, () -> {
+                   _registry.synthesizeModelEvents();
+               });
+           }
+           writeOrDisconnect(conn, HEARTBEAT_MESSAGE);
+           flush();
+       }
+       cancelHeartbeatIfEmpty();
+   }
    ```
+
+   `ThreadContextManager.inContext(SubSessionContext, InContext)` creates a
+   temporary `InteractionContext` on the scheduler thread and installs the
+   subsession for the duration of the callback.
 
    If the subsession is locked (another request is being processed), the
    `synthesizeModelEvents()` call returns `false` and the heartbeat becomes a
@@ -237,12 +259,19 @@ cleanupTree()                            <- tab closed / navigated away
 ```
 ViewChannel value changes
   -> channelChanged()
-  -> create new inner TableModel from new input
+  -> evaluate row function with new input -> new row objects
   -> deregister object listeners from old rows
+  -> call _inner.setRowObjects(newRows) (preserves sort/column state)
   -> register object listeners for new rows
-  -> fire TableModelEvent(INVALIDATE)
+  -> update _observedKeys
+  -> the inner model fires TableModelEvent(INVALIDATE) from setRowObjects()
   -> ReactTableControl.buildFullState()
 ```
+
+Note: The inner model's `setRowObjects()` already fires `TableModelEvent(INVALIDATE)`,
+so the `ObservableTableModel` does not need to fire it explicitly. The channel
+change path does NOT replace the inner model -- it updates the row data in place
+to preserve table state (sort order, column widths, viewport position).
 
 **Path 2 -- ModelScope event (object changes within current data):**
 
@@ -423,7 +452,7 @@ KB Commit
 | `ReactControl` | react | Add `addBeforeWriteAction(Runnable)` |
 | `GlobalModelEventForwarder` | core | Add public `createForSession()` factory |
 | `ReactServlet` | react | Call `synthesizeModelEvents()` after command |
-| `SSEUpdateQueue` | react | Call `synthesizeModelEvents()` in heartbeat (with subsession) |
+| `SSEUpdateQueue` | react | Extend heartbeat to synthesize events (needs window name + session ref) |
 | `ObservableTableModel` | view | **New class** |
 | `TableElement` | view | Wrap model, replace channel listener wiring |
 

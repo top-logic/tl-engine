@@ -314,15 +314,11 @@ public class ModelEditorTool {
 		boolean abstractFlag = isAbstract != null && isAbstract;
 		boolean finalFlag = isFinal != null && isFinal;
 
-		List<String> generalizationNames = parseStringList(generalizations);
-
 		TLModel model = ModelService.getApplicationModel();
 		TLModule module = model.getModule(moduleName);
 		if (module == null) {
 			throw new IllegalArgumentException("Module '" + moduleName + "' does not exist");
 		}
-
-		List<TLClass> resolved = resolveGeneralizations(generalizationNames, module);
 
 		TLType existingType = module.getType(className);
 		TLClass tlClass;
@@ -340,7 +336,9 @@ public class ModelEditorTool {
 				tlClass = TLModelUtil.addClass(module, className);
 				tlClass.setAbstract(abstractFlag);
 				tlClass.setFinal(finalFlag);
-				tlClass.getGeneralizations().addAll(resolved);
+				List<TLClass> finalGeneralizations =
+					resolveAndEnsureGeneralizations(generalizations, module, model, tlClass);
+				tlClass.getGeneralizations().addAll(finalGeneralizations);
 				created = true;
 				tx.commit();
 			}
@@ -436,9 +434,10 @@ public class ModelEditorTool {
 				"Type '" + className + "' exists in module '" + moduleName + "' but is not a class");
 		}
 
-		List<String> generalizationNames = parseStringList(generalizations);
-		List<TLClass> resolved =
-			generalizationNames != null ? resolveGeneralizations(generalizationNames, module) : null;
+		List<TLClass> resolved = null;
+		if (generalizations != null && !generalizations.trim().isEmpty()) {
+			resolved = resolveAndEnsureGeneralizations(generalizations, module, model, tlClass);
+		}
 
 		try (Transaction tx =
 			PersistencyLayer.getKnowledgeBase().beginTransaction(ResKey.text("Update Class"))) {
@@ -1421,26 +1420,6 @@ public class ModelEditorTool {
 		return tlClass;
 	}
 
-	private static List<TLClass> resolveGeneralizations(List<String> names, TLModule module) {
-		if (names == null) {
-			return Collections.emptyList();
-		}
-		List<TLClass> result = new ArrayList<>();
-		for (String name : names) {
-			TLType type = module.getType(name);
-			if (type == null) {
-				throw new IllegalArgumentException(
-					"Generalization class '" + name + "' does not exist in module '" + module.getName() + "'");
-			}
-			if (!(type instanceof TLClass tlClass)) {
-				throw new IllegalArgumentException(
-					"Type '" + name + "' in module '" + module.getName() + "' is not a class");
-			}
-			result.add(tlClass);
-		}
-		return result;
-	}
-
 	private static List<TLClass> resolveGeneralizations(List<String> names, TLModule module, TLModel model) {
 		if (names == null) {
 			return new ArrayList<>();
@@ -1520,6 +1499,13 @@ public class ModelEditorTool {
 				generalizations.remove(tlObjectType);
 				return generalizations;
 		}
+	}
+
+	private static List<TLClass> resolveAndEnsureGeneralizations(
+			String generalizations, TLModule module, TLModel model, TLClass tlClass) {
+		List<String> names = parseStringList(generalizations);
+		List<TLClass> resolved = resolveGeneralizations(names, module, model);
+		return ensureTLObjectSuperType(tlClass, resolved);
 	}
 
 	private static TLType resolvePrimitiveType(TLModel model, String typeKind) {

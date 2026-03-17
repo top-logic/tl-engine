@@ -63,21 +63,25 @@ public class EnableMultiFactorAuthenticationDialog extends AbstractTemplateDialo
 
 	private final Password _mfaSecret;
 
+	private Command _continuation;
+
 	/**
 	 * Creates a new {@link EnableMultiFactorAuthenticationDialog}.
 	 */
-	public EnableMultiFactorAuthenticationDialog(Person account) {
-		this(account, I18NConstants.ENABLE_MFA_AUTHENTICATION, DisplayDimension.dim(500, DisplayUnit.PIXEL),
+	public EnableMultiFactorAuthenticationDialog(Person account, Command continuation) {
+		this(account, continuation, I18NConstants.ENABLE_MFA_AUTHENTICATION,
+			DisplayDimension.dim(500, DisplayUnit.PIXEL),
 			DisplayDimension.dim(500, DisplayUnit.PIXEL));
 	}
 
 	/**
 	 * Creates a new {@link EnableMultiFactorAuthenticationDialog}.
 	 */
-	public EnableMultiFactorAuthenticationDialog(Person account, ResKey dialogTitle, DisplayDimension width,
-			DisplayDimension height) {
+	public EnableMultiFactorAuthenticationDialog(Person account, Command continuation, ResKey dialogTitle,
+			DisplayDimension width, DisplayDimension height) {
 		super(dialogTitle, width, height);
 		_account = account;
+		_continuation = continuation;
 		SecretGenerator secretGenerator = new DefaultSecretGenerator();
 		_mfaSecret = Password.fromPlainText(secretGenerator.generate());
 	}
@@ -85,9 +89,10 @@ public class EnableMultiFactorAuthenticationDialog extends AbstractTemplateDialo
 	/**
 	 * Creates a new {@link EnableMultiFactorAuthenticationDialog}.
 	 */
-	public EnableMultiFactorAuthenticationDialog(Person account, DialogModel dialogModel) {
+	public EnableMultiFactorAuthenticationDialog(Person account, Command continuation, DialogModel dialogModel) {
 		super(dialogModel);
 		_account = account;
+		_continuation = continuation;
 		SecretGenerator secretGenerator = new DefaultSecretGenerator();
 		_mfaSecret = Password.fromPlainText(secretGenerator.generate());
 	}
@@ -148,7 +153,10 @@ public class EnableMultiFactorAuthenticationDialog extends AbstractTemplateDialo
 			return HandlerResult.DEFAULT_RESULT;
 
 		};
-		return new CheckOTPDialog(updatePassword.andThen(getDiscardClosure()), _mfaSecret).open(context);
+		Command continuation = updatePassword
+			.andThen(getDiscardClosure())
+			.andThen(_continuation);
+		return new CheckOTPDialog(continuation, _mfaSecret).open(context);
 	}
 
 	@Override

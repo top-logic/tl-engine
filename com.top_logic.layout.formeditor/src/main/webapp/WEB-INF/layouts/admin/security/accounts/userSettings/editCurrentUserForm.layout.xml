@@ -94,6 +94,9 @@
 					input="model(self())"
 				/>
 				<executability>
+					<rule-by-expression>
+						<decision>account -&gt; $account.get(`tl.accounts:Person#mfaRequirement`) != resolveEnum("com.top_logic.knowledge.wrap.person.MfaRequirement", "required")</decision>
+					</rule-by-expression>
 					<rule-by-expression decision="account -> $account.get(`tl.accounts:Person#mfaSecret`) != null"/>
 				</executability>
 				<commitMessage key="dynamic.c799c59e-3b1f-4696-bc45-a146136fb627">
@@ -244,6 +247,12 @@
 							<code>
 								<impl class="com.top_logic.model.form.implementation.additional.AutoTranslation"/>
 							</code>
+							<field
+								attribute="mfaRequirement"
+								fullQualifiedName="tl.accounts:Person#mfaRequirement"
+								type="tl.core:Boolean"
+								visibility="read-only"
+							/>
 						</layout>
 					</foreign-objects>
 					<other-attributes/>

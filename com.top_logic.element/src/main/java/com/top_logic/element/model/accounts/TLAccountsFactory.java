@@ -22,6 +22,11 @@ public class TLAccountsFactory extends com.top_logic.element.meta.kbbased.Abstra
 	public static final String TL_ACCOUNTS_STRUCTURE = "tl.accounts";
 
 	/**
+	 * Name of the data type <code>MfaRequirement</code> in module {@value #TL_ACCOUNTS_STRUCTURE}.
+	 */
+	public static final String MFA_REQUIREMENT_TYPE = "MfaRequirement";
+
+	/**
 	 * Lookup {@link Address} type.
 	 */
 	public static com.top_logic.model.TLClass getAddressType() {
@@ -239,6 +244,13 @@ public class TLAccountsFactory extends com.top_logic.element.meta.kbbased.Abstra
 	}
 
 	/**
+	 * Lookup {@link Person#MFA_REQUIREMENT_ATTR} of {@link Person}.
+	 */
+	public static com.top_logic.model.TLProperty getMfaRequirementPersonAttr() {
+		return (com.top_logic.model.TLProperty) getPersonType().getPart(Person.MFA_REQUIREMENT_ATTR);
+	}
+
+	/**
 	 * Lookup {@link Person#MFA_SECRET_ATTR} of {@link Person}.
 	 */
 	public static com.top_logic.model.TLProperty getMfaSecretPersonAttr() {
@@ -348,6 +360,13 @@ public class TLAccountsFactory extends com.top_logic.element.meta.kbbased.Abstra
 	 */
 	public static com.top_logic.model.TLReference getOwnerWithOwnerAttr() {
 		return (com.top_logic.model.TLReference) getWithOwnerType().getPart(WithOwner.OWNER_ATTR);
+	}
+
+	/**
+	 * Lookup {@value #MFA_REQUIREMENT_TYPE} data type.
+	 */
+	public static com.top_logic.model.TLPrimitive getMfaRequirementType() {
+		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_ACCOUNTS_STRUCTURE).getType(MFA_REQUIREMENT_TYPE);
 	}
 
 	/**

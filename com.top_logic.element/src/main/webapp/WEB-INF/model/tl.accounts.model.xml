@@ -9,6 +9,15 @@
 				interface-package="com.top_logic.element.model.accounts"
 			/>
 		</annotations>
+		<datatype name="MfaRequirement"
+			db_type="string"
+			kind="Custom"
+		>
+			<annotations>
+				<config-type value="ENUM"/>
+			</annotations>
+			<enum-storage enum="com.top_logic.knowledge.wrap.person.MfaRequirement"/>
+		</datatype>
 		<class name="Address">
 			<generalizations>
 				<generalization type="tl.model:TLObject"/>
@@ -345,6 +354,9 @@
 						<visibility value="hidden"/>
 					</annotations>
 				</property>
+				<property name="mfaRequirement"
+					type="MfaRequirement"
+				/>
 			</attributes>
 		</class>
 		<class name="Role">

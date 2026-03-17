@@ -65,6 +65,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey2 ERROR_NOT_A_RES_KEY__VALUE__EXPR;
 
 	/**
+	 * @en The value ''{0}'' in ''{1}'' is not an enumeration value.
+	 */
+	public static ResKey2 ERROR_NOT_AN_ENUM__VALUE__EXPR;
+
+	/**
 	 * @en Encoding value of expression {1} failed: {0}
 	 */
 	public static ResKey2 ENCODING_FAILED__MSG_EXPR;

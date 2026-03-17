@@ -23,6 +23,7 @@ import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.security.util.Password;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.html.template.TagTemplate;
+import com.top_logic.knowledge.wrap.person.MfaRequirement;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
@@ -35,6 +36,8 @@ import com.top_logic.layout.form.model.PasswordField;
 import com.top_logic.layout.form.model.StringField;
 import com.top_logic.layout.messagebox.AbstractTemplateDialog;
 import com.top_logic.layout.messagebox.MessageBox;
+import com.top_logic.layout.messagebox.MessageBox.ButtonType;
+import com.top_logic.layout.messagebox.MessageBox.MessageType;
 import com.top_logic.layout.structure.DialogModel;
 import com.top_logic.layout.structure.LayoutData;
 import com.top_logic.mig.html.layout.MainLayout;
@@ -145,7 +148,18 @@ public class LoginViewDialog extends AbstractTemplateDialog {
 
 			Password mfaSecret = user.getMFASecret();
 			if (mfaSecret == null) {
-				return loginAndReload(context, user, withPasswordChange);
+				if (user.getMFARequirement() == MfaRequirement.REQUIRED) {
+
+					Command enableMFAAuthentication = ctx2 -> {
+						Command loginAndReload = ctx -> loginAndReload(ctx, user, withPasswordChange);
+						return new EnableMultiFactorAuthenticationDialog(user, loginAndReload).open(ctx2);
+					};
+
+					return MessageBox.confirm(context.getWindowScope(), MessageType.CONFIRM,
+						I18NConstants.MFA_REQUIRED_MESSAGE, MessageBox.button(ButtonType.OK, enableMFAAuthentication));
+				} else {
+					return loginAndReload(context, user, withPasswordChange);
+				}
 			}
 
 			Command loginAndReload = ctx -> loginAndReload(ctx, user, withPasswordChange);

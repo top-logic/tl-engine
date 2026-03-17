@@ -1441,6 +1441,74 @@ public class ModelEditorTool {
 		return result;
 	}
 
+	private static List<TLClass> resolveGeneralizations(List<String> names, TLModule module, TLModel model) {
+		if (names == null) {
+			return new ArrayList<>();
+		}
+		LinkedHashSet<String> uniqueNames = new LinkedHashSet<>(names);
+		List<TLClass> result = new ArrayList<>();
+		for (String name : uniqueNames) {
+			result.add(resolveType(name, module, model));
+		}
+		return result;
+	}
+
+	private static TLClass resolveType(String name, TLModule module, TLModel model) {
+		TLType type;
+
+		if (name.contains(":")) {
+			// Qualified name: "module:TypeName"
+			try {
+				type = TLModelUtil.findType(model, name);
+			} catch (Exception e) {
+				throw new IllegalArgumentException(
+					"Cannot resolve qualified type '" + name + "': " + e.getMessage());
+			}
+		} else {
+			// Unqualified name: search current module first, then all modules
+			type = module.getType(name);
+			if (type == null) {
+				type = findTypeAcrossModules(name, model);
+			}
+		}
+
+		if (!(type instanceof TLClass tlClass)) {
+			throw new IllegalArgumentException(
+				"Type '" + name + "' is not a class");
+		}
+		if (tlClass.isFinal()) {
+			throw new IllegalArgumentException(
+				"Class '" + name + "' is final and cannot be used as a supertype");
+		}
+		return tlClass;
+	}
+
+	private static TLType findTypeAcrossModules(String name, TLModel model) {
+		List<TLType> matches = new ArrayList<>();
+		for (TLModule mod : model.getModules()) {
+			TLType type = mod.getType(name);
+			if (type != null) {
+				matches.add(type);
+			}
+		}
+		if (matches.isEmpty()) {
+			throw new IllegalArgumentException(
+				"Type '" + name + "' does not exist in any module");
+		}
+		if (matches.size() > 1) {
+			StringBuilder sb = new StringBuilder();
+			sb.append("Ambiguous type '").append(name).append("'. Did you mean: ");
+			for (int i = 0; i < matches.size(); i++) {
+				if (i > 0) sb.append(", ");
+				TLType m = matches.get(i);
+				sb.append(m.getModule().getName()).append(":").append(m.getName());
+			}
+			sb.append("?");
+			throw new IllegalArgumentException(sb.toString());
+		}
+		return matches.get(0);
+	}
+
 	private static TLType resolvePrimitiveType(TLModel model, String typeKind) {
 		try {
 			TLPrimitive.Kind kind = TLPrimitive.Kind.valueOf(typeKind.toUpperCase());

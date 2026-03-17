@@ -1,0 +1,64 @@
+<h2>Syntax</h2>
+
+<pre>
+<code>sendInvitation($invitation)</code>
+</pre>
+
+<h2>Description</h2>
+
+<p>Sends an invitation e-mail to the recipient specified in the <code class="hljs inlineCode">invitation</code> object. The e-mail contains a registration link that the invitee can use to create their account. The content and subject of the e-mail are determined by the <code class="hljs inlineCode">invitation-mail</code> expression configured in the <code class="hljs inlineCode">InvitationModule</code>.</p>
+
+<p>To use this function, the <code class="hljs inlineCode">tl-security-selfservice</code> module must be included in the application and e-mail dispatch must be configured.</p>
+
+<h2>Parameters</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Type</th>
+			<th>Description</th>
+			<th>Mandatory</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>invitation</td>
+			<td>Business object (<code class="hljs inlineCode">tl.security.selfservice:Invitation</code>)</td>
+			<td>The invitation whose recipient should receive the invitation e-mail. The invitation must have a valid e-mail address set in its <code class="hljs inlineCode">email</code> attribute.</td>
+			<td>yes</td>
+			<td> </td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Return value</h2>
+
+<p><span style="color:#3498db"><strong>Type:</strong></span> Truth value</p>
+
+<p>Whether the invitation e-mail was sent successfully.</p>
+
+<h2>Examples</h2>
+
+<h3>Send an invitation</h3>
+
+<pre><code>sendInvitation($invitation)</code></pre>
+
+<p><span style="color:#3498db"><strong>Output:</strong></span> <code class="hljs inlineCode">true</code></p>
+
+<p>Sends the invitation e-mail to the address stored in the <code class="hljs inlineCode">email</code> attribute of <code class="hljs inlineCode">$invitation</code>.</p>
+
+<h3>Create and send an invitation</h3>
+
+<pre><code>{
+  invitation = new(`tl.security.selfservice:Invitation`);
+  set($invitation, `tl.security.selfservice:Invitation#email`, "new.user@example.com");
+  sendInvitation($invitation);
+}</code></pre>
+
+<p><span style="color:#3498db"><strong>Output:</strong></span> <code class="hljs inlineCode">true</code></p>
+
+<p>Creates a new invitation for the given e-mail address and immediately sends the invitation e-mail.</p>
+
+<p> </p>

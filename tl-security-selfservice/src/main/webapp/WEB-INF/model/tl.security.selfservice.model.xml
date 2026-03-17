@@ -99,6 +99,9 @@
 					ordered="true"
 					type="tl.model:TLObject"
 				/>
+				<property name="mfaRequirement"
+					type="tl.accounts:MfaRequirement"
+				/>
 			</attributes>
 		</class>
 	</module>

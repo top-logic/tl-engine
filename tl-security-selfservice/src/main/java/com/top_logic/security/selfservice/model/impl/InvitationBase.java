@@ -54,6 +54,15 @@ public interface InvitationBase extends com.top_logic.model.TLObject {
 	String ID_ATTR = "id";
 
 	/**
+	 * Part <code>mfaRequirement</code> of <code>Invitation</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.accounts:MfaRequirement</code> in configuration.
+	 * </p>
+	 */
+	String MFA_REQUIREMENT_ATTR = "mfaRequirement";
+
+	/**
 	 * Part <code>token</code> of <code>Invitation</code>
 	 * 
 	 * <p>
@@ -172,6 +181,20 @@ public interface InvitationBase extends com.top_logic.model.TLObject {
 	 */
 	default void setId(String newValue) {
 		tUpdateByName(ID_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #MFA_REQUIREMENT_ATTR}.
+	 */
+	default com.top_logic.knowledge.wrap.person.MfaRequirement getMfaRequirement() {
+		return (com.top_logic.knowledge.wrap.person.MfaRequirement) tValueByName(MFA_REQUIREMENT_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #MFA_REQUIREMENT_ATTR}.
+	 */
+	default void setMfaRequirement(com.top_logic.knowledge.wrap.person.MfaRequirement newValue) {
+		tUpdateByName(MFA_REQUIREMENT_ATTR, newValue);
 	}
 
 	/**

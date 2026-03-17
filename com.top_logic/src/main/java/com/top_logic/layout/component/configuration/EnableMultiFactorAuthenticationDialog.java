@@ -34,7 +34,10 @@ import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.layout.messagebox.AbstractTemplateDialog;
 import com.top_logic.layout.messagebox.MessageBox;
 import com.top_logic.layout.messagebox.MessageBox.ButtonType;
+import com.top_logic.layout.messagebox.MessageBox.MessageType;
 import com.top_logic.layout.structure.DialogModel;
+import com.top_logic.layout.structure.DialogWindowControl;
+import com.top_logic.mig.html.layout.LoginHooks;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.error.TopLogicException;
 
@@ -162,6 +165,77 @@ public class EnableMultiFactorAuthenticationDialog extends AbstractTemplateDialo
 	@Override
 	protected void fillButtons(List<CommandModel> buttons) {
 		buttons.add(MessageBox.button(ButtonType.OK, getApplyClosure()));
+	}
+
+	/**
+	 * Service method to open a dialog to inform the user that multi-factor authentication is
+	 * required for his account.
+	 * 
+	 * <p>
+	 * After confirming the setup process starts.
+	 * </p>
+	 * 
+	 * @param user
+	 *        The user for which MFA is required.
+	 * @param continuation
+	 *        Command that is executed when the user does not confirm the message (just closing the
+	 *        dialog) and after MFA was set up successful.
+	 * @param afterMFAEnabled
+	 *        Command that is executed when the user has set up the MFA process successful. After
+	 *        this command is executes, the <code>continuation</code> command is executed.
+	 */
+	public static HandlerResult informMFARequired(DisplayContext context, Person user, Command continuation,
+			Command afterMFAEnabled) {
+		Command[] closeMessageCommand = new Command[1];
+		Command enableMFAAuthentication = ctx -> {
+			Command closeMessageAfterMFAEnabled = afterMFAEnabled.andThen(closeMessageCommand[0]);
+			return new EnableMultiFactorAuthenticationDialog(user, closeMessageAfterMFAEnabled).open(ctx);
+		};
+		DialogWindowControl dialog = MessageBox.newBuilder(MessageType.CONFIRM)
+			.message(I18NConstants.MFA_REQUIRED_MESSAGE)
+			.buttons(MessageBox.button(ButtonType.OK, enableMFAAuthentication))
+			.implicitClose(false)
+			.toDialog();
+		LoginHooks.runOnClose(dialog.getDialogModel(), continuation);
+
+		closeMessageCommand[0] = dialog.getDialogModel().getCloseAction();
+
+		context.getWindowScope().openDialog(dialog);
+		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	/**
+	 * Service method to open a dialog to inform the user that multi-factor authentication is
+	 * optional for his account and allows the user to start the setup process.
+	 * 
+	 * @param user
+	 *        The user for which MFA is required.
+	 * @param continuation
+	 *        Command that is executed either when the user does not start the MFA set up process or
+	 *        when MFA was set up successful.
+	 */
+	public static HandlerResult informMFAOptional(DisplayContext context, Person user, Command continuation) {
+		/* Strange construction: The continuation must be executed in each case, also when the user
+		 * closed the message box by clicking in the background. Therefore it must be wrapped as
+		 * close listener at the dialog. Moreover the continuation must *not* be executed when the
+		 * OK button is pressed, because first the MFA authentication must be set up. */
+		Command[] closeMessageCommand = new Command[1];
+
+		Command cancelCommand = ctx -> closeMessageCommand[0].executeCommand(ctx);
+		DialogWindowControl dialog = MessageBox.newBuilder(MessageType.CONFIRM)
+			.message(I18NConstants.MFA_OPTIONAL_MESSAGE)
+			.buttons(
+				MessageBox.button(ButtonType.CANCEL, cancelCommand),
+				MessageBox.button(ButtonType.OK, ctx -> {
+					return new EnableMultiFactorAuthenticationDialog(user, closeMessageCommand[0]).open(ctx);
+				}))
+			.implicitClose(false)
+			.toDialog();
+		LoginHooks.runOnClose(dialog.getDialogModel(), continuation);
+		closeMessageCommand[0] = dialog.getDialogModel().getCloseAction();
+
+		context.getWindowScope().openDialog(dialog);
+		return HandlerResult.DEFAULT_RESULT;
 	}
 
 }

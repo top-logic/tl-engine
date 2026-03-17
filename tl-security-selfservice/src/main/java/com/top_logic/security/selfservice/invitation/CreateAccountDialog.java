@@ -24,6 +24,7 @@ import com.top_logic.html.template.TagTemplate;
 import com.top_logic.knowledge.gui.layout.person.ChangePasswordComponent;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.knowledge.wrap.person.MfaRequirement;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
@@ -31,6 +32,7 @@ import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.CommandModel;
+import com.top_logic.layout.component.configuration.EnableMultiFactorAuthenticationDialog;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.StringField;
@@ -135,9 +137,7 @@ public class CreateAccountDialog extends AbstractTemplateDialog {
 	@Override
 	public Command getApplyClosure() {
 		return checkContextCommand()
-			.andThen(this::createAccount)
-			.andThen(getDiscardClosure())
-			.andThen(_continuation);
+			.andThen(this::createAccount);
 	}
 
 	private HandlerResult createAccount(DisplayContext context) {
@@ -149,6 +149,8 @@ public class CreateAccountDialog extends AbstractTemplateDialog {
 		KnowledgeBase kb = _invitation.tKnowledgeBase();
 		try (Transaction tx = kb.beginTransaction(I18NConstants.UPDATED_INVITATION_TOKEN)) {
 			person = (Account) Person.create(kb, userName, _authenticationDevice.getDeviceID());
+			person.setMFARequirement(_invitation.getMfaRequirement());
+			
 			UserInterface user = person.getUser();
 			user.setName(surName);
 			if (!givenName.isEmpty()) {
@@ -172,18 +174,45 @@ public class CreateAccountDialog extends AbstractTemplateDialog {
 			tx.commit();
 		}
 
+		MfaRequirement mfaRequirement = person.getMFARequirement();
+		if (mfaRequirement != null) {
+			switch (mfaRequirement) {
+				case DISABLED:
+					break;
+				case OPTIONAL: {
+					Command login = ctx -> loginNewPerson(ctx, person);
+					Command continuation = login.andThen(closeAndContinue());
+					return EnableMultiFactorAuthenticationDialog.informMFAOptional(context, person, continuation);
+				}
+				case REQUIRED: {
+					/* Ensure that the user is just logged in when he has finished the multi-factor
+					 * authentication. */
+					Command login = ctx -> loginNewPerson(ctx, person);
+					Command continuation = closeAndContinue();
+					return EnableMultiFactorAuthenticationDialog.informMFARequired(context, person, continuation,
+						login);
+				}
+				default:
+					break;
+			}
+		}
+			
 		loginNewPerson(context, person);
-
-		return HandlerResult.DEFAULT_RESULT;
+		return closeAndContinue().executeCommand(context);
 	}
 
-	private void loginNewPerson(DisplayContext context, Account person) {
+	private Command closeAndContinue() {
+		return getDiscardClosure().andThen(_continuation);
+	}
+
+	private HandlerResult loginNewPerson(DisplayContext context, Account person) {
 		HttpServletRequest request = context.asRequest();
 		SessionService service = SessionService.getInstance();
 		// Remove session for anonymous
 		service.invalidateSession(request.getSession());
 		service.loginUser(request, context.asResponse(), person);
 		MainLayout.addFullReload(context);
+		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	@Override

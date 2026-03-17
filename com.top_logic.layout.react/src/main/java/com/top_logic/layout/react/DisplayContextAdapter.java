@@ -9,6 +9,7 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.FrameScope;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
+import com.top_logic.model.listen.ModelScope;
 
 /**
  * Adapts an old-world {@link DisplayContext} to the lean {@link ReactContext} contract.
@@ -61,5 +62,10 @@ class DisplayContextAdapter implements ReactContext {
 	@Override
 	public ReactWindowRegistry getWindowRegistry() {
 		return _windowRegistry;
+	}
+
+	@Override
+	public ModelScope getModelScope() {
+		return getWindowRegistry().getOrCreateModelScope(getWindowName());
 	}
 }

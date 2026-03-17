@@ -9,6 +9,7 @@ import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
+import com.top_logic.model.listen.ModelScope;
 
 /**
  * Lean rendering context for the view system.
@@ -64,6 +65,11 @@ public interface ReactContext {
 		SSEUpdateQueue queue = getSSEQueue();
 		return queue != null ? queue.getDialogManager() : null;
 	}
+
+	/**
+	 * The {@link ModelScope} for observing persistent object changes in this window.
+	 */
+	ModelScope getModelScope();
 
 	/**
 	 * Creates a {@link ReactContext} adapter from an old-world

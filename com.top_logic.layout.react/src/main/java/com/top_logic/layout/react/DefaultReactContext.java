@@ -7,6 +7,7 @@ package com.top_logic.layout.react;
 
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
+import com.top_logic.model.listen.ModelScope;
 
 /**
  * Simple implementation of {@link ReactContext} for the view system.
@@ -78,5 +79,10 @@ public class DefaultReactContext implements ReactContext {
 	@Override
 	public ReactWindowRegistry getWindowRegistry() {
 		return _windowRegistry;
+	}
+
+	@Override
+	public ModelScope getModelScope() {
+		return _windowRegistry.getOrCreateModelScope(_windowName);
 	}
 }

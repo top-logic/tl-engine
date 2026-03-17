@@ -19,6 +19,8 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.controlprovider.ReactControlProvider;
 import com.top_logic.layout.react.protocol.WindowOpenEvent;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.mig.html.layout.GlobalModelEventForwarder;
+import com.top_logic.model.listen.ModelScope;
 
 /**
  * Per-session registry that manages programmatically opened React windows and per-window SSE
@@ -38,6 +40,8 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	private final ConcurrentHashMap<String, WindowEntry> _windows = new ConcurrentHashMap<>();
 
 	private final ConcurrentHashMap<String, SSEUpdateQueue> _windowQueues = new ConcurrentHashMap<>();
+
+	private final ConcurrentHashMap<String, GlobalModelEventForwarder> _windowModelScopes = new ConcurrentHashMap<>();
 
 	private final ReentrantLock _requestLock = new ReentrantLock();
 
@@ -77,6 +81,33 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	 */
 	public SSEUpdateQueue getQueue(String windowId) {
 		return _windowQueues.get(windowId);
+	}
+
+	/**
+	 * Gets or creates the {@link ModelScope} for the given window.
+	 *
+	 * <p>
+	 * Each window gets its own {@link GlobalModelEventForwarder} with an independent
+	 * {@link com.top_logic.knowledge.service.UpdateChain} cursor. Events synthesized on one
+	 * scope are dispatched only to listeners registered on that scope.
+	 * </p>
+	 */
+	public ModelScope getOrCreateModelScope(String windowId) {
+		return _windowModelScopes.computeIfAbsent(windowId,
+			id -> GlobalModelEventForwarder.createForWindow());
+	}
+
+	/**
+	 * Synthesizes pending model events for the given window.
+	 *
+	 * @param windowId
+	 *        The window to synthesize events for.
+	 */
+	public void synthesizeModelEvents(String windowId) {
+		GlobalModelEventForwarder forwarder = _windowModelScopes.get(windowId);
+		if (forwarder != null) {
+			forwarder.synthesizeModelEvents();
+		}
 	}
 
 	/**
@@ -220,6 +251,7 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 		if (queue != null) {
 			queue.shutdown();
 		}
+		_windowModelScopes.remove(windowId);
 	}
 
 	@Override

@@ -51,7 +51,7 @@
 			<type-systems>
 				<type-system name="Default">
 					<declarations>
-						<declaration resource="webinf://kbase/tlsecurityselfserviceMeta.xml"/>
+						<declaration resource="webinf://kbase/tl.security.selfservice.Meta.xml"/>
 					</declarations>
 				</type-system>
 			</type-systems>

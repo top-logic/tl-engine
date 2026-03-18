@@ -420,6 +420,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	 *        The JSON writer to write to.
 	 */
 	protected void writeAsChild(JsonWriter writer) throws IOException {
+		onBeforeWrite();
 		_rendered = true;
 		writer.beginObject();
 		writer.name("controlId");

@@ -1334,10 +1334,10 @@ message AnnotationSearchResult {
 	repeated string applicableTo;
 
 	/**
-	 * Polymorphic configuration properties with their available implementation choices.
-	 * Empty if the annotation has no polymorphic properties.
+	 * Concrete implementation options for polymorphic configuration properties.
+	 * Empty if the annotation can be used directly without choosing an implementation.
 	 */
-	repeated AnnotationPropertyInfo properties;
+	repeated AnnotationPropertyInfo implementationOptions;
 }
 
 /**

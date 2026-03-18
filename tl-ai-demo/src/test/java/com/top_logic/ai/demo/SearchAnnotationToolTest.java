@@ -137,7 +137,7 @@ public class SearchAnnotationToolTest extends BasicTestCase {
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain visibility annotation", result.contains("\"visibility\""));
-		assertTrue("Result should contain properties field", result.contains("\"properties\""));
+		assertTrue("Result should contain implementationOptions field", result.contains("\"implementationOptions\""));
 	}
 
 	/**

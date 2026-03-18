@@ -173,7 +173,7 @@ public class SearchAnnotationTool {
 							result.addApplicableTo(applicable);
 						}
 						for (AnnotationPropertyInfo propInfo : getPolymorphicProperties(annotationType, targetTypeKind)) {
-							result.addProperty(propInfo);
+							result.addImplementationOption(propInfo);
 						}
 						results.add(result);
 					}

@@ -20,7 +20,7 @@ public class ModelAnnotationEditorToolTest extends ModelAnnotationBrowserToolTes
 	 */
 	public void testSetAnnotationNullTarget() {
 		ModelAnnotationEditorTool tool = new ModelAnnotationEditorTool();
-		String result = tool.setAnnotation(null, "com.example.Annotation", "{}");
+		String result = tool.addAnnotation(null, "com.example.Annotation", "{}");
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain error", result.contains("\"error\""));
@@ -31,7 +31,7 @@ public class ModelAnnotationEditorToolTest extends ModelAnnotationBrowserToolTes
 	 */
 	public void testSetAnnotationEmptyConfigInterface() {
 		ModelAnnotationEditorTool tool = new ModelAnnotationEditorTool();
-		String result = tool.setAnnotation("tl.core", "", "{}");
+		String result = tool.addAnnotation("tl.core", "", "{}");
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain error", result.contains("\"error\""));
@@ -42,7 +42,7 @@ public class ModelAnnotationEditorToolTest extends ModelAnnotationBrowserToolTes
 	 */
 	public void testSetAnnotationInvalidClass() {
 		ModelAnnotationEditorTool tool = new ModelAnnotationEditorTool();
-		String result = tool.setAnnotation("tl.core", "com.nonexistent.Class", "{}");
+		String result = tool.addAnnotation("tl.core", "com.nonexistent.Class", "{}");
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain error", result.contains("\"error\""));
@@ -55,7 +55,7 @@ public class ModelAnnotationEditorToolTest extends ModelAnnotationBrowserToolTes
 	 */
 	public void testSetAnnotationNullJson() {
 		ModelAnnotationEditorTool tool = new ModelAnnotationEditorTool();
-		String result = tool.setAnnotation("tl.core", "com.top_logic.model.annotate.TLAnnotation", null);
+		String result = tool.addAnnotation("tl.core", "com.top_logic.model.annotate.TLAnnotation", null);
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain error", result.contains("\"error\""));

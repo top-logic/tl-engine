@@ -27,8 +27,8 @@ public class AnnotationSearchResult extends de.haumacher.msgbuf.data.AbstractDat
 	/** @see #getApplicableTo() */
 	public static final String APPLICABLE_TO__PROP = "applicableTo";
 
-	/** @see #getProperties() */
-	public static final String PROPERTIES__PROP = "properties";
+	/** @see #getImplementationOptions() */
+	public static final String IMPLEMENTATION_OPTIONS__PROP = "implementationOptions";
 
 	private String _tagName = "";
 
@@ -38,7 +38,7 @@ public class AnnotationSearchResult extends de.haumacher.msgbuf.data.AbstractDat
 
 	private final java.util.List<String> _applicableTo = new java.util.ArrayList<>();
 
-	private final java.util.List<com.top_logic.ai.service.tools.model.messages.AnnotationPropertyInfo> _properties = new java.util.ArrayList<>();
+	private final java.util.List<com.top_logic.ai.service.tools.model.messages.AnnotationPropertyInfo> _implementationOptions = new java.util.ArrayList<>();
 
 	/**
 	 * Creates a {@link AnnotationSearchResult} instance.
@@ -151,46 +151,46 @@ public class AnnotationSearchResult extends de.haumacher.msgbuf.data.AbstractDat
 	}
 
 	/**
-	 * Polymorphic configuration properties with their available implementation choices.
-	 * Empty if the annotation has no polymorphic properties.
+	 * Concrete implementation options for polymorphic configuration properties.
+	 * Empty if the annotation can be used directly without choosing an implementation.
 	 */
-	public final java.util.List<com.top_logic.ai.service.tools.model.messages.AnnotationPropertyInfo> getProperties() {
-		return _properties;
+	public final java.util.List<com.top_logic.ai.service.tools.model.messages.AnnotationPropertyInfo> getImplementationOptions() {
+		return _implementationOptions;
 	}
 
 	/**
-	 * @see #getProperties()
+	 * @see #getImplementationOptions()
 	 */
-	public com.top_logic.ai.service.tools.model.messages.AnnotationSearchResult setProperties(java.util.List<? extends com.top_logic.ai.service.tools.model.messages.AnnotationPropertyInfo> value) {
-		internalSetProperties(value);
+	public com.top_logic.ai.service.tools.model.messages.AnnotationSearchResult setImplementationOptions(java.util.List<? extends com.top_logic.ai.service.tools.model.messages.AnnotationPropertyInfo> value) {
+		internalSetImplementationOptions(value);
 		return this;
 	}
 
-	/** Internal setter for {@link #getProperties()} without chain call utility. */
-	protected final void internalSetProperties(java.util.List<? extends com.top_logic.ai.service.tools.model.messages.AnnotationPropertyInfo> value) {
-		if (value == null) throw new IllegalArgumentException("Property 'properties' cannot be null.");
-		_properties.clear();
-		_properties.addAll(value);
+	/** Internal setter for {@link #getImplementationOptions()} without chain call utility. */
+	protected final void internalSetImplementationOptions(java.util.List<? extends com.top_logic.ai.service.tools.model.messages.AnnotationPropertyInfo> value) {
+		if (value == null) throw new IllegalArgumentException("Property 'implementationOptions' cannot be null.");
+		_implementationOptions.clear();
+		_implementationOptions.addAll(value);
 	}
 
 	/**
-	 * Adds a value to the {@link #getProperties()} list.
+	 * Adds a value to the {@link #getImplementationOptions()} list.
 	 */
-	public com.top_logic.ai.service.tools.model.messages.AnnotationSearchResult addProperty(com.top_logic.ai.service.tools.model.messages.AnnotationPropertyInfo value) {
-		internalAddProperty(value);
+	public com.top_logic.ai.service.tools.model.messages.AnnotationSearchResult addImplementationOption(com.top_logic.ai.service.tools.model.messages.AnnotationPropertyInfo value) {
+		internalAddImplementationOption(value);
 		return this;
 	}
 
-	/** Implementation of {@link #addProperty(com.top_logic.ai.service.tools.model.messages.AnnotationPropertyInfo)} without chain call utility. */
-	protected final void internalAddProperty(com.top_logic.ai.service.tools.model.messages.AnnotationPropertyInfo value) {
-		_properties.add(value);
+	/** Implementation of {@link #addImplementationOption(com.top_logic.ai.service.tools.model.messages.AnnotationPropertyInfo)} without chain call utility. */
+	protected final void internalAddImplementationOption(com.top_logic.ai.service.tools.model.messages.AnnotationPropertyInfo value) {
+		_implementationOptions.add(value);
 	}
 
 	/**
-	 * Removes a value from the {@link #getProperties()} list.
+	 * Removes a value from the {@link #getImplementationOptions()} list.
 	 */
-	public final void removeProperty(com.top_logic.ai.service.tools.model.messages.AnnotationPropertyInfo value) {
-		_properties.remove(value);
+	public final void removeImplementationOption(com.top_logic.ai.service.tools.model.messages.AnnotationPropertyInfo value) {
+		_implementationOptions.remove(value);
 	}
 
 	@Override
@@ -205,7 +205,7 @@ public class AnnotationSearchResult extends de.haumacher.msgbuf.data.AbstractDat
 			CONFIG_INTERFACE__PROP, 
 			DESCRIPTION__PROP, 
 			APPLICABLE_TO__PROP, 
-			PROPERTIES__PROP);
+			IMPLEMENTATION_OPTIONS__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -234,7 +234,7 @@ public class AnnotationSearchResult extends de.haumacher.msgbuf.data.AbstractDat
 			case CONFIG_INTERFACE__PROP: return getConfigInterface();
 			case DESCRIPTION__PROP: return getDescription();
 			case APPLICABLE_TO__PROP: return getApplicableTo();
-			case PROPERTIES__PROP: return getProperties();
+			case IMPLEMENTATION_OPTIONS__PROP: return getImplementationOptions();
 			default: return null;
 		}
 	}
@@ -246,7 +246,7 @@ public class AnnotationSearchResult extends de.haumacher.msgbuf.data.AbstractDat
 			case CONFIG_INTERFACE__PROP: internalSetConfigInterface((String) value); break;
 			case DESCRIPTION__PROP: internalSetDescription((String) value); break;
 			case APPLICABLE_TO__PROP: internalSetApplicableTo(de.haumacher.msgbuf.util.Conversions.asList(String.class, value)); break;
-			case PROPERTIES__PROP: internalSetProperties(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.ai.service.tools.model.messages.AnnotationPropertyInfo.class, value)); break;
+			case IMPLEMENTATION_OPTIONS__PROP: internalSetImplementationOptions(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.ai.service.tools.model.messages.AnnotationPropertyInfo.class, value)); break;
 		}
 	}
 
@@ -277,9 +277,9 @@ public class AnnotationSearchResult extends de.haumacher.msgbuf.data.AbstractDat
 			out.value(x);
 		}
 		out.endArray();
-		out.name(PROPERTIES__PROP);
+		out.name(IMPLEMENTATION_OPTIONS__PROP);
 		out.beginArray();
-		for (com.top_logic.ai.service.tools.model.messages.AnnotationPropertyInfo x : getProperties()) {
+		for (com.top_logic.ai.service.tools.model.messages.AnnotationPropertyInfo x : getImplementationOptions()) {
 			x.writeTo(out);
 		}
 		out.endArray();
@@ -301,14 +301,14 @@ public class AnnotationSearchResult extends de.haumacher.msgbuf.data.AbstractDat
 				setApplicableTo(newValue);
 			}
 			break;
-			case PROPERTIES__PROP: {
+			case IMPLEMENTATION_OPTIONS__PROP: {
 				java.util.List<com.top_logic.ai.service.tools.model.messages.AnnotationPropertyInfo> newValue = new java.util.ArrayList<>();
 				in.beginArray();
 				while (in.hasNext()) {
 					newValue.add(com.top_logic.ai.service.tools.model.messages.AnnotationPropertyInfo.readAnnotationPropertyInfo(in));
 				}
 				in.endArray();
-				setProperties(newValue);
+				setImplementationOptions(newValue);
 			}
 			break;
 			default: super.readField(in, field);

@@ -113,10 +113,10 @@ public class SearchAnnotationToolTest extends BasicTestCase {
 		assertNotNull("Lower case result should not be null", resultLower);
 		assertNotNull("Upper case result should not be null", resultUpper);
 
-		assertTrue("Lower case search should return results",
-			resultLower.contains("\"totalMatches\"") && !resultLower.contains("\"totalMatches\":0"));
-		assertTrue("Upper case search should return results",
-			resultUpper.contains("\"totalMatches\"") && !resultUpper.contains("\"totalMatches\":0"));
+		assertTrue("Lower case search should find results",
+			resultLower.contains("\"tagName\""));
+		assertTrue("Upper case search should find results",
+			resultUpper.contains("\"tagName\""));
 	}
 
 	/**

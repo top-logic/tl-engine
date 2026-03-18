@@ -10,7 +10,10 @@ import static com.top_logic.layout.form.template.model.Templates.*;
 
 import java.util.List;
 
+import org.bouncycastle.util.encoders.Base32;
+
 import com.top_logic.base.security.util.Password;
+import com.top_logic.basic.encryption.SecureRandomService;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.io.binary.BinaryDataSource;
@@ -46,8 +49,6 @@ import dev.samstevens.totp.exceptions.QrGenerationException;
 import dev.samstevens.totp.qr.QrData;
 import dev.samstevens.totp.qr.QrGenerator;
 import dev.samstevens.totp.qr.ZxingPngQrGenerator;
-import dev.samstevens.totp.secret.DefaultSecretGenerator;
-import dev.samstevens.totp.secret.SecretGenerator;
 
 /**
  * Dialog to enable multi-factor authentication.
@@ -73,8 +74,8 @@ public class EnableMultiFactorAuthenticationDialog extends AbstractTemplateDialo
 	 */
 	public EnableMultiFactorAuthenticationDialog(Person account, Command continuation) {
 		this(account, continuation, I18NConstants.ENABLE_MFA_AUTHENTICATION,
-			DisplayDimension.dim(500, DisplayUnit.PIXEL),
-			DisplayDimension.dim(500, DisplayUnit.PIXEL));
+			DisplayDimension.dim(550, DisplayUnit.PIXEL),
+			DisplayDimension.dim(550, DisplayUnit.PIXEL));
 	}
 
 	/**
@@ -85,10 +86,20 @@ public class EnableMultiFactorAuthenticationDialog extends AbstractTemplateDialo
 		super(dialogTitle, width, height);
 		_account = account;
 		_continuation = continuation;
-		SecretGenerator secretGenerator = new DefaultSecretGenerator();
-		_mfaSecret = Password.fromPlainText(secretGenerator.generate());
+		_mfaSecret = newSecret();
 	}
 
+	private static Password newSecret() {
+		int numCharacters = 32;
+		return Password.fromPlainText(Base32.toBase32String(getRandomBytes(numCharacters)));
+	}
+
+	private static byte[] getRandomBytes(int numCharacters) {
+		// 5 bits per char in base32
+		byte[] bytes = new byte[(numCharacters * 5) / 8];
+		SecureRandomService.getInstance().getRandom().nextBytes(bytes);
+		return bytes;
+	}
 	/**
 	 * Creates a new {@link EnableMultiFactorAuthenticationDialog}.
 	 */
@@ -96,15 +107,17 @@ public class EnableMultiFactorAuthenticationDialog extends AbstractTemplateDialo
 		super(dialogModel);
 		_account = account;
 		_continuation = continuation;
-		SecretGenerator secretGenerator = new DefaultSecretGenerator();
-		_mfaSecret = Password.fromPlainText(secretGenerator.generate());
+		_mfaSecret = newSecret();
 	}
 
 	@Override
 	protected TagTemplate getTemplate() {
 		return div(
 			div(resource(I18NConstants.INIT_AUTHENTICATOR_MESSAGE)),
-			div(style("text-align:center"), member(QR_CODE_FIELD)));
+			div(style("text-align:center"), member(QR_CODE_FIELD)),
+			div(resource(I18NConstants.INIT_AUTHENTICATOR_MESSAGE2)),
+			div(style("text-align:center; font-weight: bold;"), text(_mfaSecret.decrypt()))
+			);
 	}
 
 	@Override

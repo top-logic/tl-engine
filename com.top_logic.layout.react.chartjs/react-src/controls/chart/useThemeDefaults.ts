@@ -24,14 +24,31 @@ export function useThemeDefaults(
 
     // Apply palette to datasets that don't have explicit colors.
     if (themeColors.palette && data.datasets) {
+      const palette = themeColors.palette;
+      const isPieType = merged.type === 'pie' || merged.type === 'doughnut' || merged.type === 'polarArea';
+
       data.datasets = data.datasets.map((ds: any, i: number) => {
-        const color = themeColors.palette![i % themeColors.palette!.length];
         const result = { ...ds };
         if (!result.backgroundColor) {
-          result.backgroundColor = color + 'cc'; // 80% opacity
-        }
-        if (!result.borderColor) {
-          result.borderColor = color;
+          if (isPieType || ds.type === 'pie' || ds.type === 'doughnut' || ds.type === 'polarArea') {
+            // Pie/doughnut/polarArea: one color per data point.
+            const dataLen = Array.isArray(result.data) ? result.data.length : 0;
+            result.backgroundColor = Array.from({ length: dataLen }, (_, j) =>
+              palette[j % palette.length] + 'cc'
+            );
+            if (!result.borderColor) {
+              result.borderColor = Array.from({ length: dataLen }, (_, j) =>
+                palette[j % palette.length]
+              );
+            }
+          } else {
+            // Bar/line/etc.: one color per dataset.
+            const color = palette[i % palette.length];
+            result.backgroundColor = color + 'cc';
+            if (!result.borderColor) {
+              result.borderColor = color;
+            }
+          }
         }
         return result;
       });

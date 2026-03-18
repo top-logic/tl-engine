@@ -30,9 +30,6 @@ public class I18NConstants extends I18NConstantsBase {
 	/** @en Invitation token updated. */
 	public static ResKey UPDATED_INVITATION_TOKEN;
 
-	/** @en Token mismatch counter updated. */
-	public static ResKey UPDATED_MISMATCH_COUNTER;
-
 	/** @en Deleted invitation. */
 	public static ResKey DELETED_INVITATION;
 

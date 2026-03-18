@@ -78,17 +78,6 @@
 						</default-value>
 					</annotations>
 				</property>
-				<property name="tokenMismatchCounter"
-					mandatory="true"
-					type="tl.core:Integer"
-				>
-					<annotations>
-						<default-value>
-							<int value="0"/>
-						</default-value>
-						<visibility value="hidden"/>
-					</annotations>
-				</property>
 				<property name="createCallback"
 					type="tl.model.search:Expr"
 				/>

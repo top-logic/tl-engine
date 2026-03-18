@@ -10,6 +10,8 @@ import static com.top_logic.layout.form.template.model.Templates.*;
 
 import java.util.List;
 
+import com.top_logic.base.accesscontrol.LoginFailure;
+import com.top_logic.base.accesscontrol.LoginFailuresModule;
 import com.top_logic.base.security.util.Password;
 import com.top_logic.basic.encryption.SecureRandomService;
 import com.top_logic.basic.exception.ErrorSeverity;
@@ -49,6 +51,8 @@ public class CheckInvitationToken extends AbstractTemplateDialog {
 	private Command _continuation;
 
 	private InvitationModule _serviceModule = InvitationModule.getInstance();
+
+	private LoginFailuresModule<?> _loginFailures = LoginFailuresModule.Module.INSTANCE.getImplementationInstance();
 
 	/**
 	 * Creates a new {@link CheckInvitationToken} with default title and dimensions.
@@ -119,19 +123,19 @@ public class CheckInvitationToken extends AbstractTemplateDialog {
 	}
 
 	private HandlerResult checkToken(@SuppressWarnings("unused") DisplayContext ctx) {
-		int tokenMismatchCounter = _invitation.getTokenMismatchCounter();
-		if (tokenMismatchCounter > 3) {
+		String failureKey = failureKey();
+		LoginFailure failure = _loginFailures.getFailureFor(failureKey);
+		if (failure != null && !failure.allowRetry()) {
 			return HandlerResult.error(I18NConstants.ERROR_TOKEN_MISMATCH_TOO_MANY_TIMES);
 		}
 		if (isTokenExpired()) {
 			return HandlerResult.error(I18NConstants.ERROR_TOKEN_EXPIRED);
 		}
 		if (!_invitation.getToken().decrypt().equals(getFormContext().getField(TOKEN_FIELD).getValue())) {
-			try (Transaction tx = kb().beginTransaction(I18NConstants.UPDATED_MISMATCH_COUNTER)) {
-				_invitation.setTokenMismatchCounter(tokenMismatchCounter + 1);
-				tx.commit();
-			}
+			_loginFailures.notifyLoginFailed(failureKey);
 			return HandlerResult.error(I18NConstants.ERROR_TOKEN_MISMATCH);
+		} else {
+			_loginFailures.notifyLoginSuccessed(failureKey);
 		}
 		return HandlerResult.DEFAULT_RESULT;
 	}
@@ -161,7 +165,7 @@ public class CheckInvitationToken extends AbstractTemplateDialog {
 
 	private long tokenCreationAllowedAfter() {
 		long tokenCreation = _invitation.getTokenCreation();
-		Integer tokenCounter = _invitation.getTokenCounter();
+		int tokenCounter = _invitation.getTokenCounter();
 		return tokenCreation + tokenCounter * _serviceModule.getConfig().getTokenResendDelay();
 	}
 
@@ -182,20 +186,25 @@ public class CheckInvitationToken extends AbstractTemplateDialog {
 			_invitation.setToken(Password.fromPlainText(newTokenString));
 			_invitation.setTokenCreation(now());
 			_invitation.setTokenCounter(_invitation.getTokenCounter() + 1);
-			_invitation.setTokenMismatchCounter(0);
 			tx.commit();
 		}
+		/* New token was created, reset failures. */
+		_loginFailures.notifyLoginSuccessed(failureKey());
+
 		sendTokenMail(newTokenString);
 	}
 
 	private void sendTokenMail(String newTokenString) {
 		String applicationName = Version.getApplicationName();
 		_serviceModule.getVerificationMail().execute(_invitation, applicationName, newTokenString);
-
 	}
 
 	private String newTokenString() {
 		return String.valueOf(SecureRandomService.getInstance().getRandom().nextInt(100_000, 1_000_000));
+	}
+
+	private String failureKey() {
+		return _invitation.getId() + "@" + "token";
 	}
 }
 

@@ -111,6 +111,48 @@ public class SearchAnnotationToolTest extends BasicTestCase {
 	}
 
 	/**
+	 * Tests that storage-algorithm annotation includes polymorphic implementation choices.
+	 */
+	public void testStorageAlgorithmIncludesImplementations() {
+		SearchAnnotationTool tool = new SearchAnnotationTool();
+		String result = tool.listAvailableAnnotations(TARGET_REF_PRODUCT_NAME);
+
+		assertNotNull("Result should not be null", result);
+		assertTrue("Result should contain storage-algorithm", result.contains("\"storage-algorithm\""));
+		assertTrue("Result should contain implementation property name",
+			result.contains("\"implementation\""));
+		assertTrue("Result should contain implementations list",
+			result.contains("\"implementations\""));
+	}
+
+	/**
+	 * Tests that annotations without polymorphic properties do not include implementation choices.
+	 * <p>
+	 * The {@code visibility} annotation uses a simple enum, not a polymorphic configuration.
+	 * </p>
+	 */
+	public void testNonPolymorphicAnnotationHasNoImplementations() {
+		SearchAnnotationTool tool = new SearchAnnotationTool();
+		String result = tool.listAvailableAnnotations(TARGET_REF_PRODUCT_NAME);
+
+		assertNotNull("Result should not be null", result);
+		assertTrue("Result should contain visibility annotation", result.contains("\"visibility\""));
+		assertTrue("Result should contain properties field", result.contains("\"properties\""));
+	}
+
+	/**
+	 * Tests that polymorphic implementation options include tag names and config interfaces.
+	 */
+	public void testImplementationOptionsHaveTagNames() {
+		SearchAnnotationTool tool = new SearchAnnotationTool();
+		String result = tool.listAvailableAnnotations(TARGET_REF_PRODUCT_NAME);
+
+		assertNotNull("Result should not be null", result);
+		assertTrue("Implementation options should have tagName", result.contains("\"tagName\""));
+		assertTrue("Implementation options should have configInterface", result.contains("\"configInterface\""));
+	}
+
+	/**
 	 * Creates the test suite with required service dependencies.
 	 */
 	public static Test suite() {

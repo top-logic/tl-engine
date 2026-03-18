@@ -11,15 +11,22 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
+import com.top_logic.ai.service.tools.model.messages.AnnotationPropertyInfo;
 import com.top_logic.ai.service.tools.model.messages.AnnotationSearchResponse;
 import com.top_logic.ai.service.tools.model.messages.AnnotationSearchResult;
+import com.top_logic.ai.service.tools.model.messages.ImplementationOption;
 import com.top_logic.ai.service.tools.util.DataClassSerializer;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.PropertyDescriptor;
+import com.top_logic.basic.config.PropertyKind;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.thread.ThreadContextManager;
@@ -165,6 +172,9 @@ public class SearchAnnotationTool {
 						for (String applicable : getApplicableKinds(annotationType)) {
 							result.addApplicableTo(applicable);
 						}
+						for (AnnotationPropertyInfo propInfo : getPolymorphicProperties(annotationType, targetTypeKind)) {
+							result.addProperty(propInfo);
+						}
 						results.add(result);
 					}
 
@@ -214,6 +224,24 @@ public class SearchAnnotationTool {
 	}
 
 	/**
+	 * Looks up a human-readable description for a configuration property from i18n resources.
+	 *
+	 * @param configType
+	 *        The configuration interface class.
+	 * @param property
+	 *        The property descriptor.
+	 * @return The description string, or {@code null} if no resource is available.
+	 */
+	private static String getPropertyDescription(Class<?> configType, PropertyDescriptor property) {
+		ResKey labelKey = ResKey.forClass(configType).suffix(property.getPropertyName());
+		String tooltip = Resources.getInstance().getString(labelKey.tooltip(), null);
+		if (tooltip != null) {
+			return tooltip;
+		}
+		return Resources.getInstance().getString(labelKey, null);
+	}
+
+	/**
 	 * Looks up a human-readable description for the annotation type from i18n resources.
 	 *
 	 * @param annotationType
@@ -254,6 +282,161 @@ public class SearchAnnotationTool {
 			kinds.add("any");
 		}
 		return kinds;
+	}
+
+	/**
+	 * Discovers polymorphic configuration properties and their available implementations.
+	 *
+	 * <p>
+	 * For each property of kind {@link PropertyKind#ITEM} that has a non-null
+	 * {@link PropertyDescriptor#getInstanceType() instance type}, enumerates all
+	 * {@link InApp @InApp} specializations as implementation options.
+	 * </p>
+	 *
+	 * @param annotationType
+	 *        The annotation configuration interface class.
+	 * @param targetTypeKind
+	 *        The target element's type kind for classifier-based filtering. May be {@code null}.
+	 * @return List of {@link AnnotationPropertyInfo} for polymorphic properties, empty if none.
+	 */
+	private static List<AnnotationPropertyInfo> getPolymorphicProperties(Class<?> annotationType,
+			TLTypeKind targetTypeKind) {
+		List<AnnotationPropertyInfo> propertyInfos = new ArrayList<>();
+
+		ConfigurationDescriptor descriptor;
+		try {
+			descriptor = TypedConfiguration.getConfigurationDescriptor(annotationType);
+		} catch (Exception ex) {
+			Logger.warn("Cannot get descriptor for " + annotationType.getName(), ex, SearchAnnotationTool.class);
+			return propertyInfos;
+		}
+
+		for (PropertyDescriptor property : descriptor.getPropertiesOrdered()) {
+			if (property.kind() != PropertyKind.ITEM) {
+				continue;
+			}
+
+			Class<?> instanceType = property.getInstanceType();
+			if (instanceType == null) {
+				continue;
+			}
+
+			List<ImplementationOption> options = findInAppConfigInterfaces(instanceType, targetTypeKind);
+
+			if (options.isEmpty()) {
+				continue;
+			}
+
+			options.sort((o1, o2) -> o1.getTagName().compareToIgnoreCase(o2.getTagName()));
+
+			AnnotationPropertyInfo info = AnnotationPropertyInfo.create();
+			info.setName(property.getPropertyName());
+			info.setRequired(property.isMandatory());
+
+			String propertyDescription = getPropertyDescription(annotationType, property);
+			if (propertyDescription != null) {
+				info.setDescription(propertyDescription);
+			}
+
+			for (ImplementationOption option : options) {
+				info.addImplementation(option);
+			}
+
+			propertyInfos.add(info);
+		}
+
+		return propertyInfos;
+	}
+
+	/**
+	 * Finds configuration interfaces for concrete implementations of the given type.
+	 *
+	 * <p>
+	 * Searches for concrete subclasses of the instance type, then looks for their inner
+	 * configuration interfaces (the standard TopLogic pattern where {@code MyImpl} has an inner
+	 * {@code Config} interface extending {@link PolymorphicConfiguration}). Filters by
+	 * {@link InApp @InApp} on the implementation class and matches classifiers against the target's
+	 * {@link TLTypeKind}.
+	 * </p>
+	 *
+	 * @param instanceType
+	 *        The base implementation type (e.g. {@code StorageImplementation.class}).
+	 * @param targetTypeKind
+	 *        The target element's type kind, used for classifier filtering. May be {@code null}.
+	 * @return Sorted list of {@link ImplementationOption} for each matching config interface found.
+	 */
+	private static List<ImplementationOption> findInAppConfigInterfaces(Class<?> instanceType,
+			TLTypeKind targetTypeKind) {
+		List<ImplementationOption> options = new ArrayList<>();
+
+		Set<String> targetClassifiers = getTargetClassifiers(targetTypeKind);
+
+		Collection<Class<?>> implClasses =
+			TypeIndex.getInstance().getSpecializations(instanceType, true, false, false);
+
+		for (Class<?> implClass : implClasses) {
+			InApp implInApp = implClass.getAnnotation(InApp.class);
+			if (implInApp == null || !implInApp.value()) {
+				continue;
+			}
+
+			String[] classifiers = implInApp.classifiers();
+			if (classifiers.length > 0 && !targetClassifiers.isEmpty()) {
+				boolean matches = false;
+				for (String classifier : classifiers) {
+					if (targetClassifiers.contains(classifier)) {
+						matches = true;
+						break;
+					}
+				}
+				if (!matches) {
+					continue;
+				}
+			}
+
+			for (Class<?> inner : implClass.getDeclaredClasses()) {
+				if (!inner.isInterface()) {
+					continue;
+				}
+				if (!PolymorphicConfiguration.class.isAssignableFrom(inner)) {
+					continue;
+				}
+
+				ImplementationOption option = ImplementationOption.create();
+				option.setTagName(getTagName(inner));
+				option.setConfigInterface(inner.getName());
+
+				String description = getDescription(inner);
+				if (description != null) {
+					option.setDescription(description);
+				}
+
+				options.add(option);
+			}
+		}
+
+		options.sort((o1, o2) -> o1.getTagName().compareToIgnoreCase(o2.getTagName()));
+		return options;
+	}
+
+	/**
+	 * Determines the set of classifiers that match the given target type kind.
+	 *
+	 * @param targetTypeKind
+	 *        The target element's type kind. May be {@code null}.
+	 * @return Set of classifier strings matching the target, empty if no kind is specified.
+	 */
+	private static Set<String> getTargetClassifiers(TLTypeKind targetTypeKind) {
+		if (targetTypeKind == null) {
+			return Set.of();
+		}
+		switch (targetTypeKind) {
+			case REF:
+			case COMPOSITION:
+				return Set.of("reference");
+			default:
+				return Set.of("primitive");
+		}
 	}
 
 }

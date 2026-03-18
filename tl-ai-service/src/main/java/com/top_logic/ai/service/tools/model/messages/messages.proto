@@ -1262,6 +1262,53 @@ message EnumResponse {
 // ===== SearchAnnotationTool Messages =====
 
 /**
+ * A concrete implementation option for a polymorphic configuration property.
+ */
+message ImplementationOption {
+
+	/**
+	 * XML tag name from @TagName annotation.
+	 */
+	string tagName;
+
+	/**
+	 * Fully qualified configuration interface class name.
+	 */
+	string configInterface;
+
+	/**
+	 * Human-readable description from i18n tooltip resources.
+	 */
+	string description;
+}
+
+/**
+ * Information about a polymorphic configuration property that requires choosing an implementation.
+ */
+message AnnotationPropertyInfo {
+
+	/**
+	 * Property name as declared in the configuration interface.
+	 */
+	string name;
+
+	/**
+	 * Human-readable description of the property.
+	 */
+	string description;
+
+	/**
+	 * Whether this property is mandatory.
+	 */
+	bool required;
+
+	/**
+	 * Available concrete implementations the agent can choose from.
+	 */
+	repeated ImplementationOption implementations;
+}
+
+/**
  * A single available annotation type for a model element.
  */
 message AnnotationSearchResult {
@@ -1286,6 +1333,11 @@ message AnnotationSearchResult {
 	 */
 	repeated string applicableTo;
 
+	/**
+	 * Polymorphic configuration properties with their available implementation choices.
+	 * Empty if the annotation has no polymorphic properties.
+	 */
+	repeated AnnotationPropertyInfo properties;
 }
 
 /**

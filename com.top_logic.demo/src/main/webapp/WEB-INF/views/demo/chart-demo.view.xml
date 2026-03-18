@@ -4,7 +4,7 @@
 	<stack direction="column" gap="default">
 		<grid gap="default" min-column-width="24rem">
 			<card title="Bar Chart Demo">
-				<chart data="${-> {
+				<chart data="{
 					'type': 'bar',
 					'data': {
 						'labels': ['January', 'February', 'March', 'April', 'May', 'June'],
@@ -25,13 +25,13 @@
 							'y': { 'beginAtZero': true }
 						}
 					}
-				}}">
+				}">
 					<inputs/>
 				</chart>
 			</card>
 
 			<card title="Doughnut Chart Demo">
-				<chart data="${-> {
+				<chart data="{
 					'type': 'doughnut',
 					'data': {
 						'labels': ['Electronics', 'Clothing', 'Food', 'Books', 'Other'],
@@ -42,14 +42,14 @@
 					'options': {
 						'maintainAspectRatio': false
 					}
-				}}">
+				}">
 					<inputs/>
 				</chart>
 			</card>
 		</grid>
 
 		<card title="Line Chart with Zoom">
-			<chart zoomEnabled="true" data="${-> {
+			<chart zoomEnabled="true" data="{
 				'type': 'line',
 				'data': {
 					'labels': ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
@@ -73,13 +73,13 @@
 					'maintainAspectRatio': false,
 					'interaction': { 'intersect': false, 'mode': 'index' }
 				}
-			}}">
+			}">
 				<inputs/>
 			</chart>
 		</card>
 
 		<card title="Combined Bar + Line">
-			<chart data="${-> {
+			<chart data="{
 				'type': 'bar',
 				'data': {
 					'labels': ['Q1', 'Q2', 'Q3', 'Q4'],
@@ -108,7 +108,7 @@
 						'y1': { 'beginAtZero': true, 'position': 'right', 'grid': { 'drawOnChartArea': false }, 'title': { 'display': true, 'text': 'Margin %' } }
 					}
 				}
-			}}">
+			}">
 				<inputs/>
 			</chart>
 		</card>

@@ -90,15 +90,6 @@ public interface InvitationBase extends com.top_logic.model.TLObject {
 	String TOKEN_CREATION_ATTR = "tokenCreation";
 
 	/**
-	 * Part <code>tokenMismatchCounter</code> of <code>Invitation</code>
-	 * 
-	 * <p>
-	 * Declared as <code>tl.core:Integer</code> in configuration.
-	 * </p>
-	 */
-	String TOKEN_MISMATCH_COUNTER_ATTR = "tokenMismatchCounter";
-
-	/**
 	 * Getter for part {@link #CONTEXT_OBJECTS_ATTR}.
 	 */
 	@SuppressWarnings("unchecked")
@@ -237,20 +228,6 @@ public interface InvitationBase extends com.top_logic.model.TLObject {
 	 */
 	default void setTokenCreation(Long newValue) {
 		tUpdateByName(TOKEN_CREATION_ATTR, newValue);
-	}
-
-	/**
-	 * Getter for part {@link #TOKEN_MISMATCH_COUNTER_ATTR}.
-	 */
-	default int getTokenMismatchCounter() {
-		return (Integer) tValueByName(TOKEN_MISMATCH_COUNTER_ATTR);
-	}
-
-	/**
-	 * Setter for part {@link #TOKEN_MISMATCH_COUNTER_ATTR}.
-	 */
-	default void setTokenMismatchCounter(int newValue) {
-		tUpdateByName(TOKEN_MISMATCH_COUNTER_ATTR, newValue);
 	}
 
 }

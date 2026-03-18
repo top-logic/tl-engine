@@ -77,7 +77,7 @@
 
 		<config service-class="com.top_logic.knowledge.service.migration.MigrationService">
 			<instance
-				minimum-modules="tl, tl-element, tl-contact, tl-model-search, tlservicejms, tlservicejmsibmmq, tlservicejmsactivemq, tl-model-wysiwyg, tl-monitoring, tl-mail, tl-layout-formeditor, tl-search-lucene, tl-doc, tl-demo"
+				minimum-modules="tl, tl-element, tl-contact, tl-model-search, tl-security-selfservice, tlservicejms, tlservicejmsibmmq, tlservicejmsactivemq, tl-model-wysiwyg, tl-monitoring, tl-mail, tl-layout-formeditor, tl-search-lucene, tl-doc, tl-demo"
 			>
 				<modules>
 					<module name="tl-demo" />

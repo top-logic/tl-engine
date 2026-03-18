@@ -6,8 +6,8 @@
 	<services>
 		<config service-class="com.top_logic.security.selfservice.invitation.InvitationModule">
 			<instance class="com.top_logic.security.selfservice.invitation.InvitationModule"
-				token-resend-delay="30s"
-				token-validity="5min"
+				code-resend-delay="30s"
+				code-validity="5min"
 			>
 				<invitation-mail><![CDATA[invitation -> applicationName -> link -> {
   emailBody = {{{<p>
@@ -42,13 +42,13 @@ Your {$applicationName} Team
     }
   );
 }]]></invitation-mail>
-				<verification-mail><![CDATA[invitation -> applicationName -> token -> {
+				<verification-mail><![CDATA[invitation -> applicationName -> code -> {
   emailBody = {{{<p>
 Dear Recipient,
 </p>
 <p>
 Please enter the following verification code in the application to continue:<br/>
-<b>Verification Code:</b> {$token}
+<b>Verification Code:</b> {$code}
 </p>
 <p>
 This verification code is only valid for a limited time.

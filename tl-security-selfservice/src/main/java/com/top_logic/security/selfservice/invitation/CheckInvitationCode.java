@@ -37,13 +37,13 @@ import com.top_logic.security.selfservice.model.Invitation;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
- * Dialog to check the invitation token.
+ * Dialog to check the invitation code.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class CheckInvitationToken extends AbstractTemplateDialog {
+public class CheckInvitationCode extends AbstractTemplateDialog {
 
-	private static final String TOKEN_FIELD = "token";
+	private static final String CODE_FIELD = "code";
 
 	private final Invitation _invitation;
 
@@ -54,24 +54,24 @@ public class CheckInvitationToken extends AbstractTemplateDialog {
 	private LoginFailuresModule<?> _loginFailures = LoginFailuresModule.Module.INSTANCE.getImplementationInstance();
 
 	/**
-	 * Creates a new {@link CheckInvitationToken} with default title and dimensions.
+	 * Creates a new {@link CheckInvitationCode} with default title and dimensions.
 	 * 
 	 * @param continuation
-	 *        Command to execute when the token check was successful.
+	 *        Command to execute when the code check was successful.
 	 */
-	public CheckInvitationToken(Invitation invitation, Command continuation) {
-		this(invitation, continuation, I18NConstants.CHECK_INVITATION_TOKEN_TITLE,
+	public CheckInvitationCode(Invitation invitation, Command continuation) {
+		this(invitation, continuation, I18NConstants.CHECK_INVITATION_CODE_TITLE,
 			DisplayDimension.dim(450, DisplayUnit.PIXEL),
 			DisplayDimension.dim(300, DisplayUnit.PIXEL));
 	}
 
 	/**
-	 * Creates a new {@link CheckInvitationToken}.
+	 * Creates a new {@link CheckInvitationCode}.
 	 * 
 	 * @param continuation
-	 *        Command to execute when the token check was successful.
+	 *        Command to execute when the code check was successful.
 	 */
-	public CheckInvitationToken(Invitation invitation, Command continuation, ResKey dialogTitle, DisplayDimension width,
+	public CheckInvitationCode(Invitation invitation, Command continuation, ResKey dialogTitle, DisplayDimension width,
 			DisplayDimension height) {
 		super(dialogTitle, width, height);
 		_invitation = invitation;
@@ -79,12 +79,12 @@ public class CheckInvitationToken extends AbstractTemplateDialog {
 	}
 
 	/**
-	 * Creates a new {@link CheckInvitationToken}.
+	 * Creates a new {@link CheckInvitationCode}.
 	 * 
 	 * @param continuation
-	 *        Command to execute when the token check was successful.
+	 *        Command to execute when the code check was successful.
 	 */
-	public CheckInvitationToken(Invitation invitation, Command continuation, DialogModel dialogModel) {
+	public CheckInvitationCode(Invitation invitation, Command continuation, DialogModel dialogModel) {
 		super(dialogModel);
 		_invitation = invitation;
 		_continuation = continuation;
@@ -96,43 +96,43 @@ public class CheckInvitationToken extends AbstractTemplateDialog {
 			tag(HTMLConstants.PARAGRAPH,
 				resource(I18NConstants.MESSAGE_WELCOME_TO_APPLICATION__APPLICATION.fill(Version.getApplicationName()))),
 			tag(HTMLConstants.PARAGRAPH,
-				resource(I18NConstants.MESSAGE_TOKEN_SENT__MAIL.fill(_invitation.getEmail()))),
-			fieldBox(TOKEN_FIELD));
+				resource(I18NConstants.MESSAGE_CODE_SENT__MAIL.fill(_invitation.getEmail()))),
+			fieldBox(CODE_FIELD));
 	}
 
 	@Override
 	protected void fillFormContext(FormContext context) {
-		StringField token = FormFactory.newStringField(TOKEN_FIELD);
-		token.setLabel(I18NConstants.TOKEN_FIELD_LABEL);
-		token.setMandatory(true);
+		StringField code = FormFactory.newStringField(CODE_FIELD);
+		code.setLabel(I18NConstants.CODE_FIELD_LABEL);
+		code.setMandatory(true);
 
-		context.addMember(token);
+		context.addMember(code);
 	}
 
 	@Override
 	protected void fillButtons(List<CommandModel> buttons) {
 		buttons.add(MessageBox.button(ButtonType.OK,
 			checkContextCommand()
-			.andThen(this::checkToken)
+			.andThen(this::checkCode)
 			.andThen(getDiscardClosure())
 			.andThen(_continuation)));
 
-		buttons.add(MessageBox.button(I18NConstants.REQUEST_TOKEN,
-			this::updateTokenCommand));
+		buttons.add(MessageBox.button(I18NConstants.REQUEST_CODE,
+			this::updateCodeCommand));
 	}
 
-	private HandlerResult checkToken(@SuppressWarnings("unused") DisplayContext ctx) {
+	private HandlerResult checkCode(@SuppressWarnings("unused") DisplayContext ctx) {
 		String failureKey = failureKey();
 		LoginFailure failure = _loginFailures.getFailureFor(failureKey);
 		if (failure != null && !failure.allowRetry()) {
-			return HandlerResult.error(I18NConstants.ERROR_TOKEN_MISMATCH_TOO_MANY_TIMES);
+			return HandlerResult.error(I18NConstants.ERROR_CODE_MISMATCH_TOO_MANY_TIMES);
 		}
-		if (isTokenExpired()) {
-			return HandlerResult.error(I18NConstants.ERROR_TOKEN_EXPIRED);
+		if (isCodeExpired()) {
+			return HandlerResult.error(I18NConstants.ERROR_CODE_EXPIRED);
 		}
-		if (!String.valueOf(_invitation.getToken()).equals(getFormContext().getField(TOKEN_FIELD).getValue())) {
+		if (!String.valueOf(_invitation.getCode()).equals(getFormContext().getField(CODE_FIELD).getValue())) {
 			_loginFailures.notifyLoginFailed(failureKey);
-			return HandlerResult.error(I18NConstants.ERROR_TOKEN_MISMATCH);
+			return HandlerResult.error(I18NConstants.ERROR_CODE_MISMATCH);
 		} else {
 			_loginFailures.notifyLoginSuccessed(failureKey);
 		}
@@ -145,63 +145,63 @@ public class CheckInvitationToken extends AbstractTemplateDialog {
 
 	@Override
 	public HandlerResult open(WindowScope windowScope) {
-		if (isTokenExpired()) {
-			updateToken();
+		if (isCodeExpired()) {
+			updateCode();
 		}
 
 		return super.open(windowScope);
 	}
 
-	private boolean isTokenExpired() {
-		return now() > _invitation.getTokenCreation() + _serviceModule.getConfig().getTokenValidity();
+	private boolean isCodeExpired() {
+		return now() > _invitation.getCodeCreatedAt() + _serviceModule.getConfig().getCodeValidity();
 	}
 
 	private static long now() {
 		return System.currentTimeMillis();
 	}
 
-	private long tokenCreationAllowedAfter() {
-		long tokenCreation = _invitation.getTokenCreation();
-		int tokenCounter = _invitation.getTokenCounter();
-		return tokenCreation + tokenCounter * _serviceModule.getConfig().getTokenResendDelay();
+	private long codeRequestAllowedAfter() {
+		long createdAt = _invitation.getCodeCreatedAt();
+		int updateCount = _invitation.getCodeUpdateCount();
+		return createdAt + updateCount * _serviceModule.getConfig().getCodeResendDelay();
 	}
 
-	private HandlerResult updateTokenCommand(@SuppressWarnings("unused") DisplayContext ctx) {
-		long waitTime = (tokenCreationAllowedAfter() - now()) / 1000;
+	private HandlerResult updateCodeCommand(@SuppressWarnings("unused") DisplayContext ctx) {
+		long waitTime = (codeRequestAllowedAfter() - now()) / 1000;
 		if (waitTime > 0) {
-			HandlerResult warn = HandlerResult.error(I18NConstants.REQUEST_TOKEN_NOT_ALLOWED__TIMEOUT.fill(waitTime));
+			HandlerResult warn = HandlerResult.error(I18NConstants.REQUEST_CODE_NOT_ALLOWED__TIMEOUT.fill(waitTime));
 			warn.setErrorSeverity(ErrorSeverity.WARNING);
 			return warn;
 		}
-		updateToken();
+		updateCode();
 		return HandlerResult.DEFAULT_RESULT;
 	}
 
-	private void updateToken() {
-		int newToken = newToken();
-		try (Transaction tx = kb().beginTransaction(I18NConstants.UPDATED_INVITATION_TOKEN)) {
-			_invitation.setToken(newToken);
-			_invitation.setTokenCreation(now());
-			_invitation.setTokenCounter(_invitation.getTokenCounter() + 1);
+	private void updateCode() {
+		int newCode = newCode();
+		try (Transaction tx = kb().beginTransaction(I18NConstants.UPDATED_INVITATION_CODE)) {
+			_invitation.setCode(newCode);
+			_invitation.setCodeCreatedAt(now());
+			_invitation.setCodeUpdateCount(_invitation.getCodeUpdateCount() + 1);
 			tx.commit();
 		}
-		/* New token was created, reset failures. */
+		/* New code was created, reset failures. */
 		_loginFailures.notifyLoginSuccessed(failureKey());
 
-		sendTokenMail(String.valueOf(newToken));
+		sendCodeMail(String.valueOf(newCode));
 	}
 
-	private void sendTokenMail(String newTokenString) {
+	private void sendCodeMail(String newCode) {
 		String applicationName = Version.getApplicationName();
-		_serviceModule.getVerificationMail().execute(_invitation, applicationName, newTokenString);
+		_serviceModule.getVerificationMail().execute(_invitation, applicationName, newCode);
 	}
 
-	private int newToken() {
+	private int newCode() {
 		return SecureRandomService.getInstance().getRandom().nextInt(100_000, 1_000_000);
 	}
 
 	private String failureKey() {
-		return _invitation.getId() + "@" + "token";
+		return _invitation.getId() + "@" + "code";
 	}
 }
 

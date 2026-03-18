@@ -27,38 +27,38 @@ public class I18NConstants extends I18NConstantsBase {
 	/** @en Create account */
 	public static ResKey CREATE_LOGIN_DIALOG_TITLE;
 
-	/** @en Invitation token updated. */
-	public static ResKey UPDATED_INVITATION_TOKEN;
+	/** @en Invitation code updated. */
+	public static ResKey UPDATED_INVITATION_CODE;
 
 	/** @en Deleted invitation. */
 	public static ResKey DELETED_INVITATION;
 
-	/** @en A token was sent to {0}. Please check your inbox and enter the sent token here. */
-	public static ResKey1 MESSAGE_TOKEN_SENT__MAIL;
+	/** @en A code was sent to {0}. Please check your inbox and enter the sent code here. */
+	public static ResKey1 MESSAGE_CODE_SENT__MAIL;
 
-	/** @en The token is expired. Please request a new token. */
-	public static ResKey ERROR_TOKEN_EXPIRED;
+	/** @en The code is expired. Please request a new code. */
+	public static ResKey ERROR_CODE_EXPIRED;
 
-	/** @en The token is incorrect. */
-	public static ResKey ERROR_TOKEN_MISMATCH;
+	/** @en The code is incorrect. */
+	public static ResKey ERROR_CODE_MISMATCH;
 
-	/** @en Check token */
-	public static ResKey CHECK_INVITATION_TOKEN_TITLE;
+	/** @en Check code */
+	public static ResKey CHECK_INVITATION_CODE_TITLE;
 
-	/** @en Request token again */
-	public static ResKey REQUEST_TOKEN;
+	/** @en Request code again */
+	public static ResKey REQUEST_CODE;
 
-	/** @en The token cannot be requested at this time. Please wait {0} seconds and try again. */
-	public static ResKey1 REQUEST_TOKEN_NOT_ALLOWED__TIMEOUT;
+	/** @en The code cannot be requested at this time. Please wait {0} seconds and try again. */
+	public static ResKey1 REQUEST_CODE_NOT_ALLOWED__TIMEOUT;
 
-	/** @en The token has been entered incorrectly too many times. Please request a new token. */
-	public static ResKey ERROR_TOKEN_MISMATCH_TOO_MANY_TIMES;
+	/** @en The code has been entered incorrectly too many times. Please request a new code. */
+	public static ResKey ERROR_CODE_MISMATCH_TOO_MANY_TIMES;
 
 	/** @en Welcome to the {0} app. */
 	public static ResKey1 MESSAGE_WELCOME_TO_APPLICATION__APPLICATION;
 
-	/** @en Token */
-	public static ResKey TOKEN_FIELD_LABEL;
+	/** @en Code */
+	public static ResKey CODE_FIELD_LABEL;
 
 	/** Prefix for elements displayed in {@link CreateAccountDialog}. */
 	public static ResPrefix CREATE_ACCOUNT_DIALOG;

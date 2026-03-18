@@ -15,7 +15,6 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.command.ViewCommand;
-import com.top_logic.model.TLObject;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
@@ -65,11 +64,11 @@ public class ReactChartJsControl extends ReactControl {
 		static final ChartDataSnapshot EMPTY = new ChartDataSnapshot(
 			Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
 
-		final List<List<TLObject>> _metadata;
+		final List<List<Object>> _metadata;
 		final List<Map<String, String>> _handlerRefs;
 		final List<String> _tooltipRefs;
 
-		ChartDataSnapshot(List<List<TLObject>> metadata,
+		ChartDataSnapshot(List<List<Object>> metadata,
 				List<Map<String, String>> handlerRefs,
 				List<String> tooltipRefs) {
 			_metadata = metadata;
@@ -187,7 +186,7 @@ public class ReactChartJsControl extends ReactControl {
 			return HandlerResult.DEFAULT_RESULT;
 		}
 
-		TLObject targetObject = resolveMetadata(snapshot, datasetIndex, index);
+		Object targetObject = resolveMetadata(snapshot, datasetIndex, index);
 
 		try {
 			ViewCommand command = SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY
@@ -225,10 +224,7 @@ public class ReactChartJsControl extends ReactControl {
 			return;
 		}
 
-		TLObject targetObject = resolveMetadata(snapshot, datasetIndex, index);
-		if (targetObject == null) {
-			return;
-		}
+		Object targetObject = resolveMetadata(snapshot, datasetIndex, index);
 
 		Object html = tooltipExpr.execute(targetObject);
 		if (html != null) {
@@ -240,11 +236,11 @@ public class ReactChartJsControl extends ReactControl {
 		}
 	}
 
-	private TLObject resolveMetadata(ChartDataSnapshot snapshot, int datasetIndex, int dataIndex) {
+	private Object resolveMetadata(ChartDataSnapshot snapshot, int datasetIndex, int dataIndex) {
 		if (datasetIndex < 0 || datasetIndex >= snapshot._metadata.size()) {
 			return null;
 		}
-		List<TLObject> dsMetadata = snapshot._metadata.get(datasetIndex);
+		List<Object> dsMetadata = snapshot._metadata.get(datasetIndex);
 		if (dataIndex < 0 || dataIndex >= dsMetadata.size()) {
 			return null;
 		}

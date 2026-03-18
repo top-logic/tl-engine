@@ -11,11 +11,15 @@
 						'datasets': [
 							{
 								'label': 'Revenue',
-								'data': [12, 19, 15, 25, 22, 30]
+								'data': [12, 19, 15, 25, 22, 30],
+								'metadata': [12, 19, 15, 25, 22, 30],
+								'onClick': 'showDetails'
 							},
 							{
 								'label': 'Costs',
-								'data': [8, 14, 10, 18, 16, 22]
+								'data': [8, 14, 10, 18, 16, 22],
+								'metadata': [8, 14, 10, 18, 16, 22],
+								'onClick': 'showDetails'
 							}
 						]
 					},
@@ -27,6 +31,11 @@
 					}
 				}">
 					<inputs/>
+					<handlers>
+						<handler name="showDetails">
+							<action class="com.top_logic.demo.view.command.DemoChartClickCommand"/>
+						</handler>
+					</handlers>
 				</chart>
 			</card>
 
@@ -36,7 +45,9 @@
 					'data': {
 						'labels': ['Electronics', 'Clothing', 'Food', 'Books', 'Other'],
 						'datasets': [{
-							'data': [35, 25, 20, 12, 8]
+							'data': [35, 25, 20, 12, 8],
+							'metadata': [35, 25, 20, 12, 8],
+							'tooltip': 'valueTable'
 						}]
 					},
 					'options': {
@@ -44,6 +55,9 @@
 					}
 				}">
 					<inputs/>
+					<tooltips>
+						<tooltip name="valueTable" expr="n -&gt; '&lt;b&gt;' + toString($n) + ' Eintr&#228;ge&lt;/b&gt;'"/>
+					</tooltips>
 				</chart>
 			</card>
 		</grid>
@@ -57,12 +71,12 @@
 						{
 							'label': '2025',
 							'data': [12, 19, 15, 25, 22, 30, 28, 35, 32, 40, 38, 45],
-														'tension': 0.3
+												'tension': 0.3
 						},
 						{
 							'label': '2024',
 							'data': [10, 14, 12, 18, 16, 22, 20, 26, 24, 30, 28, 35],
-														'tension': 0.3,
+												'tension': 0.3,
 							'borderDash': [5, 5]
 						}
 					]

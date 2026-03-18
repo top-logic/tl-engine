@@ -15,21 +15,21 @@ import com.top_logic.model.TLObject;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * Extracts TL objects and handler/tooltip references from a TL-Script-produced
+ * Extracts metadata and handler/tooltip references from a TL-Script-produced
  * Chart.js configuration, producing clean JSON for the client.
  *
  * <p>
  * The TL-Script data function may return datasets containing:
  * </p>
  * <ul>
- *   <li>{@code metadata} — array of {@link TLObject}s parallel to the data array</li>
+ *   <li>{@code metadata} — array of arbitrary objects parallel to the data array</li>
  *   <li>{@code onClick} — string referencing a configured click handler name</li>
  *   <li>{@code onLegendClick} — string referencing a configured click handler name</li>
  *   <li>{@code tooltip} — string referencing a configured tooltip provider name</li>
  * </ul>
  *
  * <p>
- * After extraction, these keys are removed from the config. Any {@link TLObject} found
+ * After extraction, these keys are removed from the config. Any TLObject found
  * outside of {@code datasets[].metadata} causes a {@link TopLogicException}.
  * </p>
  */
@@ -43,8 +43,8 @@ public class ChartConfigExtractor {
 
 	private final Set<String> _configuredTooltips;
 
-	/** Extracted metadata: metadata[datasetIndex][dataIndex] -> TLObject. */
-	private final List<List<TLObject>> _metadata = new ArrayList<>();
+	/** Extracted metadata: metadata[datasetIndex][dataIndex] -> arbitrary object. */
+	private final List<List<Object>> _metadata = new ArrayList<>();
 
 	/** Extracted handler mapping: handlerMap[datasetIndex] -> { onClick, onLegendClick }. */
 	private final List<Map<String, String>> _handlerRefs = new ArrayList<>();
@@ -126,19 +126,11 @@ public class ChartConfigExtractor {
 		Map<String, Object> dsMap = new HashMap<>((Map<String, Object>) dataset);
 
 		// Extract metadata.
-		List<TLObject> metadataList = new ArrayList<>();
+		List<Object> metadataList = new ArrayList<>();
 		Object metadata = dsMap.remove("metadata");
 		if (metadata instanceof List) {
 			for (Object item : (List<?>) metadata) {
-				if (item instanceof TLObject) {
-					metadataList.add((TLObject) item);
-				} else if (item == null) {
-					metadataList.add(null);
-				} else {
-					throw new TopLogicException(
-						I18NConstants.ERROR_OBJECT_OUTSIDE_METADATA__PATH.fill(
-							"datasets[" + index + "].metadata: expected TLObject, got " + item.getClass().getName()));
-				}
+				metadataList.add(item);
 			}
 		}
 		_metadata.add(metadataList);
@@ -202,7 +194,7 @@ public class ChartConfigExtractor {
 	}
 
 	/** Metadata lookup: metadata[datasetIndex][dataIndex]. */
-	public List<List<TLObject>> getMetadata() {
+	public List<List<Object>> getMetadata() {
 		return _metadata;
 	}
 

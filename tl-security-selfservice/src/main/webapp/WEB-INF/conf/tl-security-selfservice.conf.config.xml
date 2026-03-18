@@ -14,7 +14,7 @@
 		<config service-class="com.top_logic.basic.util.ResourcesModule">
 			<instance>
 				<bundles>
-					<bundle name="tlsecurityselfservice.app-messages"/>
+					<bundle name="tl-security-selfservice.app-messages"/>
 				</bundles>
 			</instance>
 		</config>
@@ -22,7 +22,7 @@
 		<config service-class="com.top_logic.knowledge.service.migration.MigrationService">
 			<instance>
 				<modules>
-					<module name="tlsecurityselfservice"/>
+					<module name="tl-security-selfservice"/>
 				</modules>
 			</instance>
 		</config>

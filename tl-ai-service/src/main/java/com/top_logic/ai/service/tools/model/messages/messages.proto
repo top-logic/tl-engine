@@ -1329,11 +1329,6 @@ message AnnotationSearchResult {
 	string description;
 
 	/**
-	 * Element kinds this annotation applies to (e.g. "attribute", "type", "module", "classifier").
-	 */
-	repeated string applicableTo;
-
-	/**
 	 * Concrete implementation options for polymorphic configuration properties.
 	 * Empty if the annotation can be used directly without choosing an implementation.
 	 */

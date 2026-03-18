@@ -36,7 +36,6 @@ public class SearchAnnotationToolTest extends BasicTestCase {
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain tagName", result.contains("\"tagName\""));
 		assertTrue("Result should contain configInterface", result.contains("\"configInterface\""));
-		assertTrue("Result should contain applicableTo", result.contains("\"applicableTo\""));
 		assertTrue("Result should contain totalMatches", result.contains("\"totalMatches\""));
 		assertTrue("Result should contain targetRef", result.contains("\"targetRef\""));
 		assertTrue("Result should contain targetKind", result.contains("\"targetKind\""));
@@ -73,17 +72,6 @@ public class SearchAnnotationToolTest extends BasicTestCase {
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain error", result.contains("\"error\""));
-	}
-
-	/**
-	 * Tests that results contain attribute-applicable annotations for an attribute target.
-	 */
-	public void testListForAttributeContainsApplicableKinds() {
-		SearchAnnotationTool tool = new SearchAnnotationTool();
-		String result = tool.listAvailableAnnotations(TARGET_REF_PRODUCT_NAME);
-
-		assertNotNull("Result should not be null", result);
-		assertTrue("Result should contain attribute applicability", result.contains("\"attribute\""));
 	}
 
 	/**

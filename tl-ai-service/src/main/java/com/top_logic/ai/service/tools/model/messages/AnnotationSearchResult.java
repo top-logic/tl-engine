@@ -24,9 +24,6 @@ public class AnnotationSearchResult extends de.haumacher.msgbuf.data.AbstractDat
 	/** @see #getDescription() */
 	public static final String DESCRIPTION__PROP = "description";
 
-	/** @see #getApplicableTo() */
-	public static final String APPLICABLE_TO__PROP = "applicableTo";
-
 	/** @see #getImplementationOptions() */
 	public static final String IMPLEMENTATION_OPTIONS__PROP = "implementationOptions";
 
@@ -35,8 +32,6 @@ public class AnnotationSearchResult extends de.haumacher.msgbuf.data.AbstractDat
 	private String _configInterface = "";
 
 	private String _description = "";
-
-	private final java.util.List<String> _applicableTo = new java.util.ArrayList<>();
 
 	private final java.util.List<com.top_logic.ai.service.tools.model.messages.AnnotationPropertyInfo> _implementationOptions = new java.util.ArrayList<>();
 
@@ -110,47 +105,6 @@ public class AnnotationSearchResult extends de.haumacher.msgbuf.data.AbstractDat
 	}
 
 	/**
-	 * Element kinds this annotation applies to (e.g. "attribute", "type", "module", "classifier").
-	 */
-	public final java.util.List<String> getApplicableTo() {
-		return _applicableTo;
-	}
-
-	/**
-	 * @see #getApplicableTo()
-	 */
-	public com.top_logic.ai.service.tools.model.messages.AnnotationSearchResult setApplicableTo(java.util.List<? extends String> value) {
-		internalSetApplicableTo(value);
-		return this;
-	}
-
-	/** Internal setter for {@link #getApplicableTo()} without chain call utility. */
-	protected final void internalSetApplicableTo(java.util.List<? extends String> value) {
-		_applicableTo.clear();
-		_applicableTo.addAll(value);
-	}
-
-	/**
-	 * Adds a value to the {@link #getApplicableTo()} list.
-	 */
-	public com.top_logic.ai.service.tools.model.messages.AnnotationSearchResult addApplicableTo(String value) {
-		internalAddApplicableTo(value);
-		return this;
-	}
-
-	/** Implementation of {@link #addApplicableTo(String)} without chain call utility. */
-	protected final void internalAddApplicableTo(String value) {
-		_applicableTo.add(value);
-	}
-
-	/**
-	 * Removes a value from the {@link #getApplicableTo()} list.
-	 */
-	public final void removeApplicableTo(String value) {
-		_applicableTo.remove(value);
-	}
-
-	/**
 	 * Concrete implementation options for polymorphic configuration properties.
 	 * Empty if the annotation can be used directly without choosing an implementation.
 	 */
@@ -204,7 +158,6 @@ public class AnnotationSearchResult extends de.haumacher.msgbuf.data.AbstractDat
 			TAG_NAME__PROP, 
 			CONFIG_INTERFACE__PROP, 
 			DESCRIPTION__PROP, 
-			APPLICABLE_TO__PROP, 
 			IMPLEMENTATION_OPTIONS__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
@@ -233,7 +186,6 @@ public class AnnotationSearchResult extends de.haumacher.msgbuf.data.AbstractDat
 			case TAG_NAME__PROP: return getTagName();
 			case CONFIG_INTERFACE__PROP: return getConfigInterface();
 			case DESCRIPTION__PROP: return getDescription();
-			case APPLICABLE_TO__PROP: return getApplicableTo();
 			case IMPLEMENTATION_OPTIONS__PROP: return getImplementationOptions();
 			default: return null;
 		}
@@ -245,7 +197,6 @@ public class AnnotationSearchResult extends de.haumacher.msgbuf.data.AbstractDat
 			case TAG_NAME__PROP: internalSetTagName((String) value); break;
 			case CONFIG_INTERFACE__PROP: internalSetConfigInterface((String) value); break;
 			case DESCRIPTION__PROP: internalSetDescription((String) value); break;
-			case APPLICABLE_TO__PROP: internalSetApplicableTo(de.haumacher.msgbuf.util.Conversions.asList(String.class, value)); break;
 			case IMPLEMENTATION_OPTIONS__PROP: internalSetImplementationOptions(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.ai.service.tools.model.messages.AnnotationPropertyInfo.class, value)); break;
 		}
 	}
@@ -271,12 +222,6 @@ public class AnnotationSearchResult extends de.haumacher.msgbuf.data.AbstractDat
 		out.value(getConfigInterface());
 		out.name(DESCRIPTION__PROP);
 		out.value(getDescription());
-		out.name(APPLICABLE_TO__PROP);
-		out.beginArray();
-		for (String x : getApplicableTo()) {
-			out.value(x);
-		}
-		out.endArray();
 		out.name(IMPLEMENTATION_OPTIONS__PROP);
 		out.beginArray();
 		for (com.top_logic.ai.service.tools.model.messages.AnnotationPropertyInfo x : getImplementationOptions()) {
@@ -291,16 +236,6 @@ public class AnnotationSearchResult extends de.haumacher.msgbuf.data.AbstractDat
 			case TAG_NAME__PROP: setTagName(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case CONFIG_INTERFACE__PROP: setConfigInterface(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case DESCRIPTION__PROP: setDescription(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
-			case APPLICABLE_TO__PROP: {
-				java.util.List<String> newValue = new java.util.ArrayList<>();
-				in.beginArray();
-				while (in.hasNext()) {
-					newValue.add(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in));
-				}
-				in.endArray();
-				setApplicableTo(newValue);
-			}
-			break;
 			case IMPLEMENTATION_OPTIONS__PROP: {
 				java.util.List<com.top_logic.ai.service.tools.model.messages.AnnotationPropertyInfo> newValue = new java.util.ArrayList<>();
 				in.beginArray();

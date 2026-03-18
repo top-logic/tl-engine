@@ -169,9 +169,6 @@ public class SearchAnnotationTool {
 							result.setDescription(description);
 						}
 
-						for (String applicable : getApplicableKinds(annotationType)) {
-							result.addApplicableTo(applicable);
-						}
 						for (AnnotationPropertyInfo propInfo : getPolymorphicProperties(annotationType, targetTypeKind)) {
 							result.addImplementationOption(propInfo);
 						}
@@ -255,33 +252,6 @@ public class SearchAnnotationTool {
 			return tooltip;
 		}
 		return Resources.getInstance().getString(labelKey, null);
-	}
-
-	/**
-	 * Determines which model element kinds the annotation is applicable to.
-	 *
-	 * @param annotationType
-	 *        The annotation configuration interface class.
-	 * @return List of applicable kind strings (e.g. "attribute", "type", "module", "classifier").
-	 */
-	private static List<String> getApplicableKinds(Class<?> annotationType) {
-		List<String> kinds = new ArrayList<>();
-		if (TLAttributeAnnotation.class.isAssignableFrom(annotationType)) {
-			kinds.add("attribute");
-		}
-		if (TLTypeAnnotation.class.isAssignableFrom(annotationType)) {
-			kinds.add("type");
-		}
-		if (TLModuleAnnotation.class.isAssignableFrom(annotationType)) {
-			kinds.add("module");
-		}
-		if (TLClassifierAnnotation.class.isAssignableFrom(annotationType)) {
-			kinds.add("classifier");
-		}
-		if (kinds.isEmpty()) {
-			kinds.add("any");
-		}
-		return kinds;
 	}
 
 	/**

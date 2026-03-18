@@ -814,7 +814,6 @@ Each result contains:
 - `tagName`: The annotation's XML tag name (e.g., "storage-algorithm").
 - `configInterface`: The fully qualified class name you pass to `addAnnotation`.
 - `description`: What the annotation does.
-- `applicableTo`: Which element kinds it targets (attribute, type, module, classifier).
 - `implementationOptions`: Array of properties that require choosing an implementation.
 
 #### When implementationOptions is empty

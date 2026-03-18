@@ -1258,3 +1258,82 @@ message EnumResponse {
 	 */
 	string description;
 }
+
+// ===== SearchAnnotationTool Messages =====
+
+/**
+ * A single annotation type matching a search query.
+ */
+message AnnotationSearchResult {
+
+	/**
+	 * XML tag name from @TagName annotation.
+	 */
+	string tagName;
+
+	/**
+	 * Fully qualified configuration interface class name.
+	 */
+	string configInterface;
+
+	/**
+	 * Human-readable description from i18n resources.
+	 */
+	string description;
+
+	/**
+	 * Element kinds this annotation applies to (e.g. "attribute", "type", "module", "classifier").
+	 */
+	repeated string applicableTo;
+
+	/**
+	 * TLTypeKind values from @TargetType (e.g. "STRING", "INT", "DATE"). Empty if unrestricted.
+	 */
+	repeated string targetTypes;
+
+	/**
+	 * Keyword relevance score.
+	 */
+	int score;
+
+	/**
+	 * Which field was matched by the query.
+	 */
+	string matchedField;
+}
+
+/**
+ * Response from annotation type search.
+ */
+message AnnotationSearchResponse {
+
+	/**
+	 * The original search query.
+	 */
+	string query;
+
+	/**
+	 * The resolved target reference, if provided.
+	 */
+	string targetRef;
+
+	/**
+	 * Kind of the resolved target (e.g. "property", "type", "module").
+	 */
+	string targetKind;
+
+	/**
+	 * TLTypeKind of the resolved target, if applicable.
+	 */
+	string targetTypeKind;
+
+	/**
+	 * Total number of matches before top-10 limit.
+	 */
+	int totalMatches;
+
+	/**
+	 * Sorted list of matching annotation types.
+	 */
+	repeated AnnotationSearchResult results;
+}

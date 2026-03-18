@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_29092_added_invitation"
+		module="tl-security-selfservice"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29019_Removed_log_entries"
+			module="tl"
+		/>
+		<dependency name="Ticket_29092_multi_factor_authentication"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_28710_Added_TLSearch"
+			module="tl-model-search"
+		/>
+		<dependency name="Ticket_28557_enlarge_contact_attributes"
+			module="tl-contact"
+		/>
+		<dependency name="Ticket_29092_multi_factor_authentication"
+			module="tl-layout-formeditor"
+		/>
+	</dependencies>
+	<processors>
+		<processor class="com.top_logic.knowledge.service.migration.processors.AddApplicationTypesProcessor">
+			<schema>
+				<metaobject
+					db_name="TL_INVITATION"
+					object_name="Invitation"
+					object_type="MOKnowledgeObject"
+					super_class="TLObject"
+					versioned="false"
+				>
+					<mo_attribute
+						att_name="id"
+						att_type="String"
+						db_size="64"
+						mandatory="true"
+					/>
+					<mo_attribute
+						att_name="email"
+						att_type="String"
+						db_size="254"
+						mandatory="true"
+					/>
+					<mo_attribute
+						att_name="code"
+						att_type="Integer"
+						mandatory="true"
+					/>
+					<mo_attribute
+						att_name="codeCreatedAt"
+						att_type="Long"
+						mandatory="true"
+					/>
+					<mo_attribute
+						att_name="codeUpdateCount"
+						att_type="Integer"
+						mandatory="true"
+					/>
+					<mo_attribute
+						att_name="mfaRequirement"
+						att_type="String"
+						db_size="16"
+						mandatory="false"
+					/>
+				</metaobject>
+			</schema>
+		</processor>
+
+		<create-module name="tl.security.selfservice">
+			<annotations>
+				<package-binding
+					implementation-package="com.top_logic.security.selfservice.model.impl"
+					interface-package="com.top_logic.security.selfservice.model"
+				/>
+			</annotations>
+		</create-module>
+
+		<create-class name="tl.security.selfservice:Invitation"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		>
+			<annotations>
+				<table name="Invitation"/>
+			</annotations>
+		</create-class>
+
+		<add-class-generalizations name="tl.security.selfservice:Invitation">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</add-class-generalizations>
+
+		<create-property name="tl.security.selfservice:Invitation#id"
+			mandatory="true"
+			type="tl.core:String"
+		>
+			<annotations>
+				<visibility value="hidden"/>
+				<default-value>
+					<provider class="com.top_logic.model.provider.SecureStringDefaultProvider"/>
+				</default-value>
+			</annotations>
+		</create-property>
+		<create-property name="tl.security.selfservice:Invitation#email"
+			mandatory="true"
+			type="tl.core:String"
+		>
+			<annotations>
+				<constraints>
+					<constraint-by-expression>
+						<check><![CDATA[email ->
+  all(`tl.accounts:Person`)
+    .filter(account -> $account.get(`tl.accounts:Person#name`) == $email)
+    .firstElement() != null ?
+  #("Es gibt bereits einen Zugang für die E-Mail-Adresse {0}."@de, "There is already an account for the email address {0}."@en).fill($email) :
+  null]]></check>
+					</constraint-by-expression>
+					<constraint-by-expression>
+						<check><![CDATA[email -> regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$").regexSearch($email).isEmpty() ?  #("''{0}'' ist keine gültige E-Mail-Adresse."@de, "''{0}'' is not a valid email address."@en).fill($email) :
+  null]]></check>
+					</constraint-by-expression>
+					<constraint-by-expression>
+						<check><![CDATA[email -> self ->
+  all(`tl.security.selfservice:Invitation`)
+    .filter(invitation -> $invitation != $self)
+    .filter(invitation -> $invitation.get(`tl.security.selfservice:Invitation#email`) == $email)
+    .firstElement() != null ?
+  #("Es gibt bereits eine Einladung für die E-Mail-Adresse {0}."@de, "There is already an invitation for the email address {0}."@en).fill($email) :
+  null]]></check>
+					</constraint-by-expression>
+				</constraints>
+			</annotations>
+		</create-property>
+		<create-property name="tl.security.selfservice:Invitation#code"
+			mandatory="true"
+			type="tl.core:Integer"
+		>
+			<annotations>
+				<visibility value="hidden"/>
+				<default-value>
+					<int value="0"/>
+				</default-value>
+			</annotations>
+		</create-property>
+		<create-property name="tl.security.selfservice:Invitation#codeCreatedAt"
+			mandatory="true"
+			type="tl.core:Long"
+		>
+			<annotations>
+				<visibility value="hidden"/>
+				<default-value>
+					<long value="0"/>
+				</default-value>
+			</annotations>
+		</create-property>
+		<create-property name="tl.security.selfservice:Invitation#codeUpdateCount"
+			mandatory="true"
+			type="tl.core:Integer"
+		>
+			<annotations>
+				<visibility value="hidden"/>
+				<default-value>
+					<int value="0"/>
+				</default-value>
+			</annotations>
+		</create-property>
+		<create-property name="tl.security.selfservice:Invitation#mfaRequirement"
+			type="tl.accounts:MfaRequirement"
+		/>
+		<create-property name="tl.security.selfservice:Invitation#createCallback"
+			type="tl.model.search:Expr"
+		>
+			<annotations>
+				<storage-algorithm>
+					<query expr="invitation -> person -> null"/>
+				</storage-algorithm>
+			</annotations>
+		</create-property>
+	</processors>
+	<post-processors/>
+</migration>

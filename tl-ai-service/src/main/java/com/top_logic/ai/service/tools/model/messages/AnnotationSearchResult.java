@@ -27,9 +27,6 @@ public class AnnotationSearchResult extends de.haumacher.msgbuf.data.AbstractDat
 	/** @see #getApplicableTo() */
 	public static final String APPLICABLE_TO__PROP = "applicableTo";
 
-	/** @see #getTargetTypes() */
-	public static final String TARGET_TYPES__PROP = "targetTypes";
-
 	private String _tagName = "";
 
 	private String _configInterface = "";
@@ -37,8 +34,6 @@ public class AnnotationSearchResult extends de.haumacher.msgbuf.data.AbstractDat
 	private String _description = "";
 
 	private final java.util.List<String> _applicableTo = new java.util.ArrayList<>();
-
-	private final java.util.List<String> _targetTypes = new java.util.ArrayList<>();
 
 	/**
 	 * Creates a {@link AnnotationSearchResult} instance.
@@ -150,47 +145,6 @@ public class AnnotationSearchResult extends de.haumacher.msgbuf.data.AbstractDat
 		_applicableTo.remove(value);
 	}
 
-	/**
-	 * TLTypeKind values from @TargetType (e.g. "STRING", "INT", "DATE"). Empty if unrestricted.
-	 */
-	public final java.util.List<String> getTargetTypes() {
-		return _targetTypes;
-	}
-
-	/**
-	 * @see #getTargetTypes()
-	 */
-	public com.top_logic.ai.service.tools.model.messages.AnnotationSearchResult setTargetTypes(java.util.List<? extends String> value) {
-		internalSetTargetTypes(value);
-		return this;
-	}
-
-	/** Internal setter for {@link #getTargetTypes()} without chain call utility. */
-	protected final void internalSetTargetTypes(java.util.List<? extends String> value) {
-		_targetTypes.clear();
-		_targetTypes.addAll(value);
-	}
-
-	/**
-	 * Adds a value to the {@link #getTargetTypes()} list.
-	 */
-	public com.top_logic.ai.service.tools.model.messages.AnnotationSearchResult addTargetType(String value) {
-		internalAddTargetType(value);
-		return this;
-	}
-
-	/** Implementation of {@link #addTargetType(String)} without chain call utility. */
-	protected final void internalAddTargetType(String value) {
-		_targetTypes.add(value);
-	}
-
-	/**
-	 * Removes a value from the {@link #getTargetTypes()} list.
-	 */
-	public final void removeTargetType(String value) {
-		_targetTypes.remove(value);
-	}
-
 	@Override
 	public String jsonType() {
 		return ANNOTATION_SEARCH_RESULT__TYPE;
@@ -202,8 +156,7 @@ public class AnnotationSearchResult extends de.haumacher.msgbuf.data.AbstractDat
 			TAG_NAME__PROP, 
 			CONFIG_INTERFACE__PROP, 
 			DESCRIPTION__PROP, 
-			APPLICABLE_TO__PROP, 
-			TARGET_TYPES__PROP);
+			APPLICABLE_TO__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -232,7 +185,6 @@ public class AnnotationSearchResult extends de.haumacher.msgbuf.data.AbstractDat
 			case CONFIG_INTERFACE__PROP: return getConfigInterface();
 			case DESCRIPTION__PROP: return getDescription();
 			case APPLICABLE_TO__PROP: return getApplicableTo();
-			case TARGET_TYPES__PROP: return getTargetTypes();
 			default: return null;
 		}
 	}
@@ -244,7 +196,6 @@ public class AnnotationSearchResult extends de.haumacher.msgbuf.data.AbstractDat
 			case CONFIG_INTERFACE__PROP: internalSetConfigInterface((String) value); break;
 			case DESCRIPTION__PROP: internalSetDescription((String) value); break;
 			case APPLICABLE_TO__PROP: internalSetApplicableTo(de.haumacher.msgbuf.util.Conversions.asList(String.class, value)); break;
-			case TARGET_TYPES__PROP: internalSetTargetTypes(de.haumacher.msgbuf.util.Conversions.asList(String.class, value)); break;
 		}
 	}
 
@@ -275,12 +226,6 @@ public class AnnotationSearchResult extends de.haumacher.msgbuf.data.AbstractDat
 			out.value(x);
 		}
 		out.endArray();
-		out.name(TARGET_TYPES__PROP);
-		out.beginArray();
-		for (String x : getTargetTypes()) {
-			out.value(x);
-		}
-		out.endArray();
 	}
 
 	@Override
@@ -297,16 +242,6 @@ public class AnnotationSearchResult extends de.haumacher.msgbuf.data.AbstractDat
 				}
 				in.endArray();
 				setApplicableTo(newValue);
-			}
-			break;
-			case TARGET_TYPES__PROP: {
-				java.util.List<String> newValue = new java.util.ArrayList<>();
-				in.beginArray();
-				while (in.hasNext()) {
-					newValue.add(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in));
-				}
-				in.endArray();
-				setTargetTypes(newValue);
 			}
 			break;
 			default: super.readField(in, field);

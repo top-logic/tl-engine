@@ -1286,10 +1286,6 @@ message AnnotationSearchResult {
 	 */
 	repeated string applicableTo;
 
-	/**
-	 * TLTypeKind values from @TargetType (e.g. "STRING", "INT", "DATE"). Empty if unrestricted.
-	 */
-	repeated string targetTypes;
 }
 
 /**
@@ -1306,11 +1302,6 @@ message AnnotationSearchResponse {
 	 * Kind of the resolved target (e.g. "property", "type", "module").
 	 */
 	string targetKind;
-
-	/**
-	 * TLTypeKind of the resolved target, if applicable.
-	 */
-	string targetTypeKind;
 
 	/**
 	 * Total number of available annotations.

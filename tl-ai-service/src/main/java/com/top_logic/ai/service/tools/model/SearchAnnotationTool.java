@@ -7,7 +7,6 @@ package com.top_logic.ai.service.tools.model;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -166,10 +165,6 @@ public class SearchAnnotationTool {
 						for (String applicable : getApplicableKinds(annotationType)) {
 							result.addApplicableTo(applicable);
 						}
-						for (String tt : getTargetTypes(annotationType)) {
-							result.addTargetType(tt);
-						}
-
 						results.add(result);
 					}
 
@@ -179,9 +174,6 @@ public class SearchAnnotationTool {
 					resp.setTotalMatches(results.size());
 					resp.setTargetRef(targetRef);
 					resp.setTargetKind(targetKind);
-					if (targetTypeKind != null) {
-						resp.setTargetTypeKind(targetTypeKind.name());
-					}
 					for (AnnotationSearchResult r : results) {
 						resp.addResult(r);
 					}
@@ -229,7 +221,12 @@ public class SearchAnnotationTool {
 	 * @return The description string, or {@code null} if no resource is available.
 	 */
 	private static String getDescription(Class<?> annotationType) {
-		return Resources.getInstance().getString(ResKey.forClass(annotationType), null);
+		ResKey labelKey = ResKey.forClass(annotationType);
+		String tooltip = Resources.getInstance().getString(labelKey.tooltip(), null);
+		if (tooltip != null) {
+			return tooltip;
+		}
+		return Resources.getInstance().getString(labelKey, null);
 	}
 
 	/**
@@ -259,23 +256,4 @@ public class SearchAnnotationTool {
 		return kinds;
 	}
 
-	/**
-	 * Extracts the target type kind values from the {@link TargetType} annotation, if present.
-	 *
-	 * @param annotationType
-	 *        The annotation configuration interface class.
-	 * @return List of {@link TLTypeKind} name strings, or an empty list if unrestricted.
-	 */
-	private static List<String> getTargetTypes(Class<?> annotationType) {
-		TargetType targetType = annotationType.getAnnotation(TargetType.class);
-		if (targetType == null) {
-			return Collections.emptyList();
-		}
-		TLTypeKind[] kinds = targetType.value();
-		List<String> result = new ArrayList<>(kinds.length);
-		for (TLTypeKind kind : kinds) {
-			result.add(kind.name());
-		}
-		return result;
-	}
 }

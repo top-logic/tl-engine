@@ -21,9 +21,6 @@ public class AnnotationSearchResponse extends de.haumacher.msgbuf.data.AbstractD
 	/** @see #getTargetKind() */
 	public static final String TARGET_KIND__PROP = "targetKind";
 
-	/** @see #getTargetTypeKind() */
-	public static final String TARGET_TYPE_KIND__PROP = "targetTypeKind";
-
 	/** @see #getTotalMatches() */
 	public static final String TOTAL_MATCHES__PROP = "totalMatches";
 
@@ -33,8 +30,6 @@ public class AnnotationSearchResponse extends de.haumacher.msgbuf.data.AbstractD
 	private String _targetRef = "";
 
 	private String _targetKind = "";
-
-	private String _targetTypeKind = "";
 
 	private int _totalMatches = 0;
 
@@ -87,26 +82,6 @@ public class AnnotationSearchResponse extends de.haumacher.msgbuf.data.AbstractD
 	/** Internal setter for {@link #getTargetKind()} without chain call utility. */
 	protected final void internalSetTargetKind(String value) {
 		_targetKind = value;
-	}
-
-	/**
-	 * TLTypeKind of the resolved target, if applicable.
-	 */
-	public final String getTargetTypeKind() {
-		return _targetTypeKind;
-	}
-
-	/**
-	 * @see #getTargetTypeKind()
-	 */
-	public com.top_logic.ai.service.tools.model.messages.AnnotationSearchResponse setTargetTypeKind(String value) {
-		internalSetTargetTypeKind(value);
-		return this;
-	}
-
-	/** Internal setter for {@link #getTargetTypeKind()} without chain call utility. */
-	protected final void internalSetTargetTypeKind(String value) {
-		_targetTypeKind = value;
 	}
 
 	/**
@@ -181,7 +156,6 @@ public class AnnotationSearchResponse extends de.haumacher.msgbuf.data.AbstractD
 		java.util.List<String> local = java.util.Arrays.asList(
 			TARGET_REF__PROP, 
 			TARGET_KIND__PROP, 
-			TARGET_TYPE_KIND__PROP, 
 			TOTAL_MATCHES__PROP, 
 			RESULTS__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
@@ -210,7 +184,6 @@ public class AnnotationSearchResponse extends de.haumacher.msgbuf.data.AbstractD
 		switch (field) {
 			case TARGET_REF__PROP: return getTargetRef();
 			case TARGET_KIND__PROP: return getTargetKind();
-			case TARGET_TYPE_KIND__PROP: return getTargetTypeKind();
 			case TOTAL_MATCHES__PROP: return getTotalMatches();
 			case RESULTS__PROP: return getResults();
 			default: return null;
@@ -222,7 +195,6 @@ public class AnnotationSearchResponse extends de.haumacher.msgbuf.data.AbstractD
 		switch (field) {
 			case TARGET_REF__PROP: internalSetTargetRef((String) value); break;
 			case TARGET_KIND__PROP: internalSetTargetKind((String) value); break;
-			case TARGET_TYPE_KIND__PROP: internalSetTargetTypeKind((String) value); break;
 			case TOTAL_MATCHES__PROP: internalSetTotalMatches((int) value); break;
 			case RESULTS__PROP: internalSetResults(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.ai.service.tools.model.messages.AnnotationSearchResult.class, value)); break;
 		}
@@ -247,8 +219,6 @@ public class AnnotationSearchResponse extends de.haumacher.msgbuf.data.AbstractD
 		out.value(getTargetRef());
 		out.name(TARGET_KIND__PROP);
 		out.value(getTargetKind());
-		out.name(TARGET_TYPE_KIND__PROP);
-		out.value(getTargetTypeKind());
 		out.name(TOTAL_MATCHES__PROP);
 		out.value(getTotalMatches());
 		out.name(RESULTS__PROP);
@@ -264,7 +234,6 @@ public class AnnotationSearchResponse extends de.haumacher.msgbuf.data.AbstractD
 		switch (field) {
 			case TARGET_REF__PROP: setTargetRef(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case TARGET_KIND__PROP: setTargetKind(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
-			case TARGET_TYPE_KIND__PROP: setTargetTypeKind(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case TOTAL_MATCHES__PROP: setTotalMatches(in.nextInt()); break;
 			case RESULTS__PROP: {
 				java.util.List<com.top_logic.ai.service.tools.model.messages.AnnotationSearchResult> newValue = new java.util.ArrayList<>();

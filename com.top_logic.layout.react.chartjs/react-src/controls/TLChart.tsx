@@ -43,7 +43,7 @@ const TLChart: React.FC<TLCellProps> = ({ controlId, state }) => {
   const themedConfig = useThemeDefaults(chartConfig, themeColors);
 
   // Build callbacks from interaction descriptor.
-  const { callbacks, hasAnyTooltip, onTooltip } = useChartCallbacks(interactions);
+  const { callbacks, hasAnyTooltip, onTooltip, onTooltipHide, tooltipPos } = useChartCallbacks(interactions);
 
   // Merge options: config options + callbacks + zoom.
   // Start from config options only; merge callbacks individually to avoid clobbering plugins.
@@ -87,9 +87,12 @@ const TLChart: React.FC<TLCellProps> = ({ controlId, state }) => {
           enabled: false,
           external: (context: any) => {
             const tooltip = context.tooltip;
-            if (tooltip.opacity > 0 && tooltip.dataPoints?.length > 0) {
+            if (tooltip.opacity === 0) {
+              // Mouse left the data point — hide tooltip.
+              onTooltipHide();
+            } else if (tooltip.dataPoints?.length > 0) {
               const point = tooltip.dataPoints[0];
-              onTooltip(point.datasetIndex, point.dataIndex);
+              onTooltip(point.datasetIndex, point.dataIndex, tooltip.caretX, tooltip.caretY);
             }
           },
         },
@@ -138,7 +141,7 @@ const TLChart: React.FC<TLCellProps> = ({ controlId, state }) => {
           Reset Zoom
         </button>
       )}
-      <ChartTooltip content={tooltipContent} chartRef={chartRef} />
+      <ChartTooltip content={tooltipContent} position={tooltipPos} />
     </div>
   );
 };

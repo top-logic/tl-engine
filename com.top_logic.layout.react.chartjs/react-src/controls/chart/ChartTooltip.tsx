@@ -1,5 +1,6 @@
 // react-src/controls/chart/ChartTooltip.tsx
 import { React } from 'tl-react-bridge';
+import type { TooltipPosition } from './useChartCallbacks';
 
 interface TooltipContent {
   html: string;
@@ -9,32 +10,21 @@ interface TooltipContent {
 
 interface ChartTooltipProps {
   content: TooltipContent | null;
-  chartRef: React.RefObject<any>;
+  position: TooltipPosition;
 }
 
 /**
- * Renders server-provided tooltip HTML positioned near the data point.
+ * Renders server-provided tooltip HTML.
+ * Position is tracked locally from Chart.js caret coordinates;
+ * HTML content arrives asynchronously from the server via SSE.
  */
-const ChartTooltip: React.FC<ChartTooltipProps> = ({ content, chartRef }) => {
-  if (!content || !content.html) return null;
-
-  // Position tooltip near the data point.
-  let left = 0;
-  let top = 0;
-  const chart = chartRef.current;
-  if (chart) {
-    const meta = chart.getDatasetMeta(content.datasetIndex);
-    if (meta && meta.data && meta.data[content.index]) {
-      const point = meta.data[content.index];
-      left = point.x;
-      top = point.y - 10;
-    }
-  }
+const ChartTooltip: React.FC<ChartTooltipProps> = ({ content, position }) => {
+  if (!position.visible || !content || !content.html) return null;
 
   return (
     <div
       className="tlReactChart__tooltip"
-      style={{ left: left + 'px', top: top + 'px' }}
+      style={{ left: position.x + 'px', top: (position.y - 10) + 'px' }}
       dangerouslySetInnerHTML={{ __html: content.html }}
     />
   );

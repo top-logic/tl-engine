@@ -11,6 +11,12 @@ interface Interactions {
   datasets: DatasetInteraction[];
 }
 
+export interface TooltipPosition {
+  x: number;
+  y: number;
+  visible: boolean;
+}
+
 /**
  * Creates Chart.js callback options based on the interaction descriptor.
  */
@@ -21,6 +27,9 @@ export function useChartCallbacks(interactions: Interactions | null) {
   const hasAnyLegendClick = interactions?.datasets.some(d => d.legendClickable) ?? false;
   const hasAnyTooltip = interactions?.datasets.some(d => d.hasTooltip) ?? false;
 
+  // Local tooltip position state (updated by Chart.js external tooltip callback).
+  const [tooltipPos, setTooltipPos] = React.useState<TooltipPosition>({ x: 0, y: 0, visible: false });
+
   const onClick = React.useCallback((_event: any, elements: any[]) => {
     if (elements.length > 0) {
       const { datasetIndex, index } = elements[0];
@@ -29,7 +38,6 @@ export function useChartCallbacks(interactions: Interactions | null) {
   }, [sendCommand]);
 
   const onLegendClick = React.useCallback((_event: any, legendItem: any, legend: any) => {
-    // Preserve default toggle behavior.
     const chart = legend.chart;
     const index = legendItem.datasetIndex;
     if (chart.isDatasetVisible(index)) {
@@ -39,13 +47,15 @@ export function useChartCallbacks(interactions: Interactions | null) {
       chart.show(index);
       legendItem.hidden = false;
     }
-    // Additionally send server command.
     sendCommand('elementClick', { datasetIndex: index, index: -1, zone: 'legend' });
   }, [sendCommand]);
 
   // Debounce tooltip requests.
   const tooltipTimer = React.useRef<number | null>(null);
-  const onTooltip = React.useCallback((datasetIndex: number, dataIndex: number) => {
+  const onTooltip = React.useCallback((datasetIndex: number, dataIndex: number, x: number, y: number) => {
+    // Update position immediately (no debounce for position).
+    setTooltipPos({ x, y, visible: true });
+
     if (tooltipTimer.current != null) {
       clearTimeout(tooltipTimer.current);
     }
@@ -54,6 +64,14 @@ export function useChartCallbacks(interactions: Interactions | null) {
       tooltipTimer.current = null;
     }, 200);
   }, [sendCommand]);
+
+  const onTooltipHide = React.useCallback(() => {
+    if (tooltipTimer.current != null) {
+      clearTimeout(tooltipTimer.current);
+      tooltipTimer.current = null;
+    }
+    setTooltipPos(prev => ({ ...prev, visible: false }));
+  }, []);
 
   // Clean up pending tooltip timer when the component unmounts.
   React.useEffect(() => {
@@ -71,13 +89,10 @@ export function useChartCallbacks(interactions: Interactions | null) {
       callbacks.onClick = onClick;
     }
 
-    if (hasAnyLegendClick || hasAnyTooltip) {
-      callbacks.plugins = {};
-      if (hasAnyLegendClick) {
-        callbacks.plugins.legend = { onClick: onLegendClick };
-      }
+    if (hasAnyLegendClick) {
+      callbacks.plugins = { legend: { onClick: onLegendClick } };
     }
 
-    return { callbacks, hasAnyTooltip, onTooltip };
-  }, [hasAnyClick, hasAnyLegendClick, hasAnyTooltip, onClick, onLegendClick, onTooltip]);
+    return { callbacks, hasAnyTooltip, onTooltip, onTooltipHide, tooltipPos };
+  }, [hasAnyClick, hasAnyLegendClick, hasAnyTooltip, onClick, onLegendClick, onTooltip, onTooltipHide, tooltipPos]);
 }

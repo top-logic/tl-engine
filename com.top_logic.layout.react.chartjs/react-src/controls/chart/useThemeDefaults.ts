@@ -44,7 +44,17 @@ export function useThemeDefaults(
           } else {
             // Bar/line/etc.: one color per dataset.
             const color = palette[i % palette.length];
-            result.backgroundColor = color + 'cc';
+            const isLineType = merged.type === 'line' || merged.type === 'radar'
+              || ds.type === 'line' || ds.type === 'radar';
+            if (isLineType) {
+              // Line/radar: no fill by default, use transparent background for points.
+              result.backgroundColor = color + '33';
+              if (result.fill === undefined) {
+                result.fill = false;
+              }
+            } else {
+              result.backgroundColor = color + 'cc';
+            }
             if (!result.borderColor) {
               result.borderColor = color;
             }

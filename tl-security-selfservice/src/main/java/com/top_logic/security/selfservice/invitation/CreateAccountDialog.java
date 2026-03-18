@@ -147,7 +147,7 @@ public class CreateAccountDialog extends AbstractTemplateDialog {
 		String givenName = ((StringField) formContext.getField(GIVEN_NAME_FIELD)).getAsString();
 		Account person;
 		KnowledgeBase kb = _invitation.tKnowledgeBase();
-		try (Transaction tx = kb.beginTransaction(I18NConstants.UPDATED_INVITATION_TOKEN)) {
+		try (Transaction tx = kb.beginTransaction(I18NConstants.UPDATED_INVITATION_CODE)) {
 			person = (Account) Person.create(kb, userName, _authenticationDevice.getDeviceID());
 			person.setMFARequirement(_invitation.getMfaRequirement());
 			

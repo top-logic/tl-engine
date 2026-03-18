@@ -57,7 +57,7 @@
 						</constraints>
 					</annotations>
 				</property>
-				<property name="token"
+				<property name="code"
 					mandatory="true"
 					type="tl.core:Integer"
 				>
@@ -68,7 +68,7 @@
 						</default-value>
 					</annotations>
 				</property>
-				<property name="tokenCreation"
+				<property name="codeCreatedAt"
 					mandatory="true"
 					type="tl.core:Long"
 				>
@@ -79,7 +79,7 @@
 						</default-value>
 					</annotations>
 				</property>
-				<property name="tokenCounter"
+				<property name="codeUpdateCount"
 					mandatory="true"
 					type="tl.core:Integer"
 				>

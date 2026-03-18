@@ -29,6 +29,27 @@ public class TlSecuritySelfserviceFactory extends com.top_logic.element.meta.kbb
 	}
 
 	/**
+	 * Lookup {@link Invitation#CODE_ATTR} of {@link Invitation}.
+	 */
+	public static com.top_logic.model.TLProperty getCodeInvitationAttr() {
+		return (com.top_logic.model.TLProperty) getInvitationType().getPart(Invitation.CODE_ATTR);
+	}
+
+	/**
+	 * Lookup {@link Invitation#CODE_CREATED_AT_ATTR} of {@link Invitation}.
+	 */
+	public static com.top_logic.model.TLProperty getCodeCreatedAtInvitationAttr() {
+		return (com.top_logic.model.TLProperty) getInvitationType().getPart(Invitation.CODE_CREATED_AT_ATTR);
+	}
+
+	/**
+	 * Lookup {@link Invitation#CODE_UPDATE_COUNT_ATTR} of {@link Invitation}.
+	 */
+	public static com.top_logic.model.TLProperty getCodeUpdateCountInvitationAttr() {
+		return (com.top_logic.model.TLProperty) getInvitationType().getPart(Invitation.CODE_UPDATE_COUNT_ATTR);
+	}
+
+	/**
 	 * Lookup {@link Invitation#CONTEXT_OBJECTS_ATTR} of {@link Invitation}.
 	 */
 	public static com.top_logic.model.TLReference getContextObjectsInvitationAttr() {
@@ -61,27 +82,6 @@ public class TlSecuritySelfserviceFactory extends com.top_logic.element.meta.kbb
 	 */
 	public static com.top_logic.model.TLProperty getMfaRequirementInvitationAttr() {
 		return (com.top_logic.model.TLProperty) getInvitationType().getPart(Invitation.MFA_REQUIREMENT_ATTR);
-	}
-
-	/**
-	 * Lookup {@link Invitation#TOKEN_ATTR} of {@link Invitation}.
-	 */
-	public static com.top_logic.model.TLProperty getTokenInvitationAttr() {
-		return (com.top_logic.model.TLProperty) getInvitationType().getPart(Invitation.TOKEN_ATTR);
-	}
-
-	/**
-	 * Lookup {@link Invitation#TOKEN_COUNTER_ATTR} of {@link Invitation}.
-	 */
-	public static com.top_logic.model.TLProperty getTokenCounterInvitationAttr() {
-		return (com.top_logic.model.TLProperty) getInvitationType().getPart(Invitation.TOKEN_COUNTER_ATTR);
-	}
-
-	/**
-	 * Lookup {@link Invitation#TOKEN_CREATION_ATTR} of {@link Invitation}.
-	 */
-	public static com.top_logic.model.TLProperty getTokenCreationInvitationAttr() {
-		return (com.top_logic.model.TLProperty) getInvitationType().getPart(Invitation.TOKEN_CREATION_ATTR);
 	}
 
 	/**

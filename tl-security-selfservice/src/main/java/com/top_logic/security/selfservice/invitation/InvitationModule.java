@@ -33,7 +33,7 @@ public class InvitationModule extends ConfiguredManagedClass<InvitationModule.Co
 	@DisplayOrder({
 		Config.INVITATION_MAIL,
 		Config.VERIFICATION_MAIL,
-		Config.TOKEN_VALIDITY,
+		Config.CODE_VALIDITY,
 	})
 	public interface Config extends ConfiguredManagedClass.Config<InvitationModule> {
 
@@ -43,11 +43,11 @@ public class InvitationModule extends ConfiguredManagedClass<InvitationModule.Co
 		/** Configuration name for {@link #getVerificationMail()}. */
 		String VERIFICATION_MAIL = "verification-mail";
 
-		/** Configuration name for {@link #getTokenValidity()}. */
-		String TOKEN_VALIDITY = "token-validity";
+		/** Configuration name for {@link #getCodeValidity()}. */
+		String CODE_VALIDITY = "code-validity";
 
-		/** Configuration name for {@link #getTokenResendDelay()}. */
-		String TOKEN_RESEND_DELAY = "token-resend-delay";
+		/** Configuration name for {@link #getCodeResendDelay()}. */
+		String CODE_RESEND_DELAY = "code-resend-delay";
 
 		/**
 		 * The TL-Script expression sending the invitation mail.
@@ -66,7 +66,7 @@ public class InvitationModule extends ConfiguredManagedClass<InvitationModule.Co
 		 *
 		 * <p>
 		 * The expression is called with the {@link Invitation} object as first argument, the
-		 * application name as second argument, and the verification token as third argument.
+		 * application name as second argument, and the verification code as third argument.
 		 * </p>
 		 */
 		@Name(VERIFICATION_MAIL)
@@ -74,26 +74,26 @@ public class InvitationModule extends ConfiguredManagedClass<InvitationModule.Co
 		Expr getVerificationMail();
 
 		/**
-		 * How long a verification token remains valid after it was created.
+		 * How long a verification code remains valid after it was created.
 		 */
 		@Format(MillisFormat.class)
-		@Name(TOKEN_VALIDITY)
+		@Name(CODE_VALIDITY)
 		@Mandatory
-		long getTokenValidity();
+		long getCodeValidity();
 
 		/**
-		 * The delay a user must wait before requesting a new verification token is possible.
+		 * The delay a user must wait before requesting a new verification code is possible.
 		 *
 		 * <p>
 		 * The actual minimum wait time grows with each successive attempt: after the N-th request
-		 * the user must wait at least N * {@link #getTokenResendDelay()} since the last token was
+		 * the user must wait at least N * {@link #getCodeResendDelay()} since the last code was
 		 * issued.
 		 * </p>
 		 */
 		@Format(MillisFormat.class)
-		@Name(TOKEN_RESEND_DELAY)
+		@Name(CODE_RESEND_DELAY)
 		@Mandatory
-		long getTokenResendDelay();
+		long getCodeResendDelay();
 
 	}
 

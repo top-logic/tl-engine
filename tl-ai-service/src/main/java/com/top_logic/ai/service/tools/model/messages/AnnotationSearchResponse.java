@@ -1,7 +1,7 @@
 package com.top_logic.ai.service.tools.model.messages;
 
 /**
- * Response from annotation type search.
+ * Response listing available annotation types for a target element.
  */
 public class AnnotationSearchResponse extends de.haumacher.msgbuf.data.AbstractDataObject implements de.haumacher.msgbuf.data.ReflectiveDataObject {
 
@@ -14,9 +14,6 @@ public class AnnotationSearchResponse extends de.haumacher.msgbuf.data.AbstractD
 
 	/** Identifier for the {@link com.top_logic.ai.service.tools.model.messages.AnnotationSearchResponse} type in JSON format. */
 	public static final String ANNOTATION_SEARCH_RESPONSE__TYPE = "AnnotationSearchResponse";
-
-	/** @see #getQuery() */
-	public static final String QUERY__PROP = "query";
 
 	/** @see #getTargetRef() */
 	public static final String TARGET_REF__PROP = "targetRef";
@@ -32,8 +29,6 @@ public class AnnotationSearchResponse extends de.haumacher.msgbuf.data.AbstractD
 
 	/** @see #getResults() */
 	public static final String RESULTS__PROP = "results";
-
-	private String _query = "";
 
 	private String _targetRef = "";
 
@@ -55,27 +50,7 @@ public class AnnotationSearchResponse extends de.haumacher.msgbuf.data.AbstractD
 	}
 
 	/**
-	 * The original search query.
-	 */
-	public final String getQuery() {
-		return _query;
-	}
-
-	/**
-	 * @see #getQuery()
-	 */
-	public com.top_logic.ai.service.tools.model.messages.AnnotationSearchResponse setQuery(String value) {
-		internalSetQuery(value);
-		return this;
-	}
-
-	/** Internal setter for {@link #getQuery()} without chain call utility. */
-	protected final void internalSetQuery(String value) {
-		_query = value;
-	}
-
-	/**
-	 * The resolved target reference, if provided.
+	 * The resolved target reference.
 	 */
 	public final String getTargetRef() {
 		return _targetRef;
@@ -135,7 +110,7 @@ public class AnnotationSearchResponse extends de.haumacher.msgbuf.data.AbstractD
 	}
 
 	/**
-	 * Total number of matches before top-10 limit.
+	 * Total number of available annotations.
 	 */
 	public final int getTotalMatches() {
 		return _totalMatches;
@@ -155,7 +130,7 @@ public class AnnotationSearchResponse extends de.haumacher.msgbuf.data.AbstractD
 	}
 
 	/**
-	 * Sorted list of matching annotation types.
+	 * List of available annotation types, sorted alphabetically.
 	 */
 	public final java.util.List<com.top_logic.ai.service.tools.model.messages.AnnotationSearchResult> getResults() {
 		return _results;
@@ -204,7 +179,6 @@ public class AnnotationSearchResponse extends de.haumacher.msgbuf.data.AbstractD
 	static final java.util.List<String> PROPERTIES;
 	static {
 		java.util.List<String> local = java.util.Arrays.asList(
-			QUERY__PROP, 
 			TARGET_REF__PROP, 
 			TARGET_KIND__PROP, 
 			TARGET_TYPE_KIND__PROP, 
@@ -234,7 +208,6 @@ public class AnnotationSearchResponse extends de.haumacher.msgbuf.data.AbstractD
 	@Override
 	public Object get(String field) {
 		switch (field) {
-			case QUERY__PROP: return getQuery();
 			case TARGET_REF__PROP: return getTargetRef();
 			case TARGET_KIND__PROP: return getTargetKind();
 			case TARGET_TYPE_KIND__PROP: return getTargetTypeKind();
@@ -247,7 +220,6 @@ public class AnnotationSearchResponse extends de.haumacher.msgbuf.data.AbstractD
 	@Override
 	public void set(String field, Object value) {
 		switch (field) {
-			case QUERY__PROP: internalSetQuery((String) value); break;
 			case TARGET_REF__PROP: internalSetTargetRef((String) value); break;
 			case TARGET_KIND__PROP: internalSetTargetKind((String) value); break;
 			case TARGET_TYPE_KIND__PROP: internalSetTargetTypeKind((String) value); break;
@@ -271,8 +243,6 @@ public class AnnotationSearchResponse extends de.haumacher.msgbuf.data.AbstractD
 	@Override
 	protected void writeFields(de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
 		super.writeFields(out);
-		out.name(QUERY__PROP);
-		out.value(getQuery());
 		out.name(TARGET_REF__PROP);
 		out.value(getTargetRef());
 		out.name(TARGET_KIND__PROP);
@@ -292,7 +262,6 @@ public class AnnotationSearchResponse extends de.haumacher.msgbuf.data.AbstractD
 	@Override
 	protected void readField(de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
 		switch (field) {
-			case QUERY__PROP: setQuery(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case TARGET_REF__PROP: setTargetRef(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case TARGET_KIND__PROP: setTargetKind(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case TARGET_TYPE_KIND__PROP: setTargetTypeKind(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;

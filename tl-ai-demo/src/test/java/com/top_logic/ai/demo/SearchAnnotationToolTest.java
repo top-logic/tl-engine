@@ -27,120 +27,87 @@ public class SearchAnnotationToolTest extends BasicTestCase {
 	private static final String TARGET_REF_PRODUCT_NAME = "luigis.pizzashop:Product#name";
 
 	/**
-	 * Tests searching annotations by keyword.
+	 * Tests listing annotations for a target returns results.
 	 */
-	public void testSearchByKeyword() {
+	public void testListAvailableAnnotations() {
 		SearchAnnotationTool tool = new SearchAnnotationTool();
-		String result = tool.searchAnnotations("visibility", null);
-
-		assertNotNull("Result should not be null", result);
-		assertTrue("Result should contain tagName field", result.contains("\"tagName\""));
-		assertTrue("Result should contain configInterface field", result.contains("\"configInterface\""));
-		assertTrue("Result should contain score field", result.contains("\"score\""));
-		assertTrue("Result should contain totalMatches field", result.contains("\"totalMatches\""));
-	}
-
-	/**
-	 * Tests that null query returns error JSON.
-	 */
-	public void testSearchWithNullQuery() {
-		SearchAnnotationTool tool = new SearchAnnotationTool();
-		String result = tool.searchAnnotations(null, null);
-
-		assertNotNull("Result should not be null", result);
-		assertTrue("Result should contain error", result.contains("\"error\""));
-	}
-
-	/**
-	 * Tests that empty query returns error JSON.
-	 */
-	public void testSearchWithEmptyQuery() {
-		SearchAnnotationTool tool = new SearchAnnotationTool();
-		String result = tool.searchAnnotations("", null);
-
-		assertNotNull("Result should not be null", result);
-		assertTrue("Result should contain error", result.contains("\"error\""));
-	}
-
-	/**
-	 * Tests that searching for a non-existent term returns zero matches.
-	 */
-	public void testSearchNoResults() {
-		SearchAnnotationTool tool = new SearchAnnotationTool();
-		String result = tool.searchAnnotations("xyznonexistent123", null);
-
-		assertNotNull("Result should not be null", result);
-		assertTrue("Result should have zero totalMatches",
-			result.contains("\"totalMatches\":0") || result.contains("\"totalMatches\": 0"));
-	}
-
-	/**
-	 * Tests that search results include required metadata fields.
-	 */
-	public void testSearchResultMetadata() {
-		SearchAnnotationTool tool = new SearchAnnotationTool();
-		String result = tool.searchAnnotations("format", null);
+		String result = tool.listAvailableAnnotations(TARGET_REF_PRODUCT_NAME);
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain tagName", result.contains("\"tagName\""));
 		assertTrue("Result should contain configInterface", result.contains("\"configInterface\""));
-		assertTrue("Result should contain score", result.contains("\"score\""));
 		assertTrue("Result should contain applicableTo", result.contains("\"applicableTo\""));
+		assertTrue("Result should contain totalMatches", result.contains("\"totalMatches\""));
+		assertTrue("Result should contain targetRef", result.contains("\"targetRef\""));
+		assertTrue("Result should contain targetKind", result.contains("\"targetKind\""));
 	}
 
 	/**
-	 * Tests filtering annotations by target reference.
+	 * Tests that null target reference returns error.
 	 */
-	public void testSearchWithTargetRef() {
+	public void testListWithNullTargetRef() {
 		SearchAnnotationTool tool = new SearchAnnotationTool();
-		String resultWithoutFilter = tool.searchAnnotations("display", null);
-		String resultWithFilter = tool.searchAnnotations("display", TARGET_REF_PRODUCT_NAME);
-
-		assertNotNull("Result without filter should not be null", resultWithoutFilter);
-		assertNotNull("Result with filter should not be null", resultWithFilter);
-
-		assertTrue("Result with filter should contain targetKind", resultWithFilter.contains("\"targetKind\""));
-	}
-
-	/**
-	 * Tests that search is case-insensitive.
-	 */
-	public void testSearchCaseInsensitive() {
-		SearchAnnotationTool tool = new SearchAnnotationTool();
-		String resultLower = tool.searchAnnotations("format", null);
-		String resultUpper = tool.searchAnnotations("FORMAT", null);
-
-		assertNotNull("Lower case result should not be null", resultLower);
-		assertNotNull("Upper case result should not be null", resultUpper);
-
-		assertTrue("Lower case search should find results",
-			resultLower.contains("\"tagName\""));
-		assertTrue("Upper case search should find results",
-			resultUpper.contains("\"tagName\""));
-	}
-
-	/**
-	 * Tests that visibility annotations are applicable to attributes.
-	 */
-	public void testSearchApplicableKinds() {
-		SearchAnnotationTool tool = new SearchAnnotationTool();
-		String result = tool.searchAnnotations("visibility", null);
+		String result = tool.listAvailableAnnotations(null);
 
 		assertNotNull("Result should not be null", result);
-		assertTrue("Result should contain applicableTo with attribute",
-			result.contains("\"attribute\""));
+		assertTrue("Result should contain error", result.contains("\"error\""));
 	}
 
 	/**
-	 * Tests that searching with an invalid target reference returns an error.
+	 * Tests that empty target reference returns error.
 	 */
-	public void testSearchWithInvalidTargetRef() {
+	public void testListWithEmptyTargetRef() {
 		SearchAnnotationTool tool = new SearchAnnotationTool();
-		String result = tool.searchAnnotations("visibility", "nonexistent.module:FakeType");
+		String result = tool.listAvailableAnnotations("");
 
 		assertNotNull("Result should not be null", result);
-		assertTrue("Result with invalid target ref should contain error",
-			result.contains("\"error\""));
+		assertTrue("Result should contain error", result.contains("\"error\""));
+	}
+
+	/**
+	 * Tests that an invalid target reference returns error.
+	 */
+	public void testListWithInvalidTargetRef() {
+		SearchAnnotationTool tool = new SearchAnnotationTool();
+		String result = tool.listAvailableAnnotations("nonexistent.module:FakeType");
+
+		assertNotNull("Result should not be null", result);
+		assertTrue("Result should contain error", result.contains("\"error\""));
+	}
+
+	/**
+	 * Tests that results contain attribute-applicable annotations for an attribute target.
+	 */
+	public void testListForAttributeContainsApplicableKinds() {
+		SearchAnnotationTool tool = new SearchAnnotationTool();
+		String result = tool.listAvailableAnnotations(TARGET_REF_PRODUCT_NAME);
+
+		assertNotNull("Result should not be null", result);
+		assertTrue("Result should contain attribute applicability", result.contains("\"attribute\""));
+	}
+
+	/**
+	 * Tests listing annotations for a type target.
+	 */
+	public void testListForType() {
+		SearchAnnotationTool tool = new SearchAnnotationTool();
+		String result = tool.listAvailableAnnotations("luigis.pizzashop:Product");
+
+		assertNotNull("Result should not be null", result);
+		assertTrue("Result should contain results", result.contains("\"results\""));
+		assertTrue("Result should contain targetKind", result.contains("\"targetKind\""));
+	}
+
+	/**
+	 * Tests listing annotations for a module target.
+	 */
+	public void testListForModule() {
+		SearchAnnotationTool tool = new SearchAnnotationTool();
+		String result = tool.listAvailableAnnotations("luigis.pizzashop");
+
+		assertNotNull("Result should not be null", result);
+		assertTrue("Result should contain results", result.contains("\"results\""));
+		assertTrue("Result should contain targetKind", result.contains("\"targetKind\""));
 	}
 
 	/**

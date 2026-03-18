@@ -1262,7 +1262,7 @@ message EnumResponse {
 // ===== SearchAnnotationTool Messages =====
 
 /**
- * A single annotation type matching a search query.
+ * A single available annotation type for a model element.
  */
 message AnnotationSearchResult {
 
@@ -1290,30 +1290,15 @@ message AnnotationSearchResult {
 	 * TLTypeKind values from @TargetType (e.g. "STRING", "INT", "DATE"). Empty if unrestricted.
 	 */
 	repeated string targetTypes;
-
-	/**
-	 * Keyword relevance score.
-	 */
-	int score;
-
-	/**
-	 * Which field was matched by the query.
-	 */
-	string matchedField;
 }
 
 /**
- * Response from annotation type search.
+ * Response listing available annotation types for a target element.
  */
 message AnnotationSearchResponse {
 
 	/**
-	 * The original search query.
-	 */
-	string query;
-
-	/**
-	 * The resolved target reference, if provided.
+	 * The resolved target reference.
 	 */
 	string targetRef;
 
@@ -1328,12 +1313,12 @@ message AnnotationSearchResponse {
 	string targetTypeKind;
 
 	/**
-	 * Total number of matches before top-10 limit.
+	 * Total number of available annotations.
 	 */
 	int totalMatches;
 
 	/**
-	 * Sorted list of matching annotation types.
+	 * List of available annotation types, sorted alphabetically.
 	 */
 	repeated AnnotationSearchResult results;
 }

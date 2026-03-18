@@ -1,7 +1,7 @@
 package com.top_logic.ai.service.tools.model.messages;
 
 /**
- * A single annotation type matching a search query.
+ * A single available annotation type for a model element.
  */
 public class AnnotationSearchResult extends de.haumacher.msgbuf.data.AbstractDataObject implements de.haumacher.msgbuf.data.ReflectiveDataObject {
 
@@ -30,12 +30,6 @@ public class AnnotationSearchResult extends de.haumacher.msgbuf.data.AbstractDat
 	/** @see #getTargetTypes() */
 	public static final String TARGET_TYPES__PROP = "targetTypes";
 
-	/** @see #getScore() */
-	public static final String SCORE__PROP = "score";
-
-	/** @see #getMatchedField() */
-	public static final String MATCHED_FIELD__PROP = "matchedField";
-
 	private String _tagName = "";
 
 	private String _configInterface = "";
@@ -45,10 +39,6 @@ public class AnnotationSearchResult extends de.haumacher.msgbuf.data.AbstractDat
 	private final java.util.List<String> _applicableTo = new java.util.ArrayList<>();
 
 	private final java.util.List<String> _targetTypes = new java.util.ArrayList<>();
-
-	private int _score = 0;
-
-	private String _matchedField = "";
 
 	/**
 	 * Creates a {@link AnnotationSearchResult} instance.
@@ -201,46 +191,6 @@ public class AnnotationSearchResult extends de.haumacher.msgbuf.data.AbstractDat
 		_targetTypes.remove(value);
 	}
 
-	/**
-	 * Keyword relevance score.
-	 */
-	public final int getScore() {
-		return _score;
-	}
-
-	/**
-	 * @see #getScore()
-	 */
-	public com.top_logic.ai.service.tools.model.messages.AnnotationSearchResult setScore(int value) {
-		internalSetScore(value);
-		return this;
-	}
-
-	/** Internal setter for {@link #getScore()} without chain call utility. */
-	protected final void internalSetScore(int value) {
-		_score = value;
-	}
-
-	/**
-	 * Which field was matched by the query.
-	 */
-	public final String getMatchedField() {
-		return _matchedField;
-	}
-
-	/**
-	 * @see #getMatchedField()
-	 */
-	public com.top_logic.ai.service.tools.model.messages.AnnotationSearchResult setMatchedField(String value) {
-		internalSetMatchedField(value);
-		return this;
-	}
-
-	/** Internal setter for {@link #getMatchedField()} without chain call utility. */
-	protected final void internalSetMatchedField(String value) {
-		_matchedField = value;
-	}
-
 	@Override
 	public String jsonType() {
 		return ANNOTATION_SEARCH_RESULT__TYPE;
@@ -253,9 +203,7 @@ public class AnnotationSearchResult extends de.haumacher.msgbuf.data.AbstractDat
 			CONFIG_INTERFACE__PROP, 
 			DESCRIPTION__PROP, 
 			APPLICABLE_TO__PROP, 
-			TARGET_TYPES__PROP, 
-			SCORE__PROP, 
-			MATCHED_FIELD__PROP);
+			TARGET_TYPES__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -285,8 +233,6 @@ public class AnnotationSearchResult extends de.haumacher.msgbuf.data.AbstractDat
 			case DESCRIPTION__PROP: return getDescription();
 			case APPLICABLE_TO__PROP: return getApplicableTo();
 			case TARGET_TYPES__PROP: return getTargetTypes();
-			case SCORE__PROP: return getScore();
-			case MATCHED_FIELD__PROP: return getMatchedField();
 			default: return null;
 		}
 	}
@@ -299,8 +245,6 @@ public class AnnotationSearchResult extends de.haumacher.msgbuf.data.AbstractDat
 			case DESCRIPTION__PROP: internalSetDescription((String) value); break;
 			case APPLICABLE_TO__PROP: internalSetApplicableTo(de.haumacher.msgbuf.util.Conversions.asList(String.class, value)); break;
 			case TARGET_TYPES__PROP: internalSetTargetTypes(de.haumacher.msgbuf.util.Conversions.asList(String.class, value)); break;
-			case SCORE__PROP: internalSetScore((int) value); break;
-			case MATCHED_FIELD__PROP: internalSetMatchedField((String) value); break;
 		}
 	}
 
@@ -337,10 +281,6 @@ public class AnnotationSearchResult extends de.haumacher.msgbuf.data.AbstractDat
 			out.value(x);
 		}
 		out.endArray();
-		out.name(SCORE__PROP);
-		out.value(getScore());
-		out.name(MATCHED_FIELD__PROP);
-		out.value(getMatchedField());
 	}
 
 	@Override
@@ -369,8 +309,6 @@ public class AnnotationSearchResult extends de.haumacher.msgbuf.data.AbstractDat
 				setTargetTypes(newValue);
 			}
 			break;
-			case SCORE__PROP: setScore(in.nextInt()); break;
-			case MATCHED_FIELD__PROP: setMatchedField(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}
 	}

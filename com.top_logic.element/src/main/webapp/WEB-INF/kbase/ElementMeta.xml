@@ -779,5 +779,54 @@
 		</specialisations>
 	</alternative>
 	
+		<metaobject
+			db_name="HAS_MIXED_VALUE_UNV"
+			object_name="hasMixedValueUnversioned"
+			super_class="hasMixedValue"
+			versioned="false"
+		/>
+		<metaobject
+			db_name="HAS_HISTORIC_VALUE_UNV"
+			object_name="hasHistoricValueUnversioned"
+			super_class="hasHistoricValue"
+			versioned="false"
+		/>
+		<association
+			db_name="HAS_WRAPPER_DEL_REF_UNV"
+			object_name="hasWrapperDeleteRefererUnversioned"
+			super_class="hasWrapperDeleteReferer"
+			versioned="false"
+		/>
+		<association
+			db_name="HAS_WRAPPER_UNV"
+			object_name="hasWrapperAttValueUnversioned"
+			super_class="hasWrapperAttValue"
+			versioned="false"
+		/>
+		<association
+			db_name="HAS_STRUCT_CHILD_VETO_UNV"
+			object_name="hasStructureChildVetoUnversioned"
+			super_class="hasStructureChildVeto"
+			versioned="false"
+		/>
+		<association
+			db_name="HAS_STRUCT_CHILD_UNV"
+			object_name="hasStructureChildUnversioned"
+			super_class="hasStructureChild"
+			versioned="false"
+		/>
+		<association
+			db_name="HAS_CHILD_DEL_REF_UNV"
+			object_name="hasChildDeleteRefererUnversioned"
+			super_class="hasChildDeleteReferer"
+			versioned="false"
+		/>
+		<association
+			db_name="HAS_WRAPPER_VETO_UNV"
+			object_name="hasWrapperVetoUnversioned"
+			super_class="hasWrapperVeto"
+			versioned="false"
+		/>
+
 </metaobjects>
 </objectlist>

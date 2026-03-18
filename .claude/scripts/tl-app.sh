@@ -7,7 +7,7 @@
 #
 # On start success, prints to stdout:
 #   url: http://localhost:PORT/context-path/
-#   log: /tmp/tl-app-PORT.log
+#   log: <app-module-path>/tmp/tl-app.log
 # On failure, prints diagnostics to stderr and exits 1.
 #
 # The port is recorded in <app-module-path>/tmp/app-port.txt to prevent
@@ -88,8 +88,7 @@ do_stop() {
     while (( elapsed < timeout )); do
         if ! is_port_in_use "$port"; then
             # Clean up log file. Keep port file for reuse on next start.
-            local log="/tmp/tl-app-${port}.log"
-            rm -f "$log"
+            rm -f "$APP_MODULE/tmp/tl-app.log"
             echo "Stopped."
             return 0
         fi
@@ -117,7 +116,8 @@ do_start() {
     else
         port=$(pick_free_port) || exit 1
     fi
-    local log="/tmp/tl-app-${port}.log"
+    local log="$APP_MODULE/tmp/tl-app.log"
+    mkdir -p "$APP_MODULE/tmp"
 
     export tl_initial_password='root1234'
 

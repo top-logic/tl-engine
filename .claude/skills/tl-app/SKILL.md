@@ -19,7 +19,7 @@ The script tracks the port in `<app-module-path>/tmp/app-port.txt` to prevent du
 On start success, prints two lines:
 ```
 url: http://localhost:PORT/context-path/
-log: /tmp/tl-app-PORT.log
+log: <app-module-path>/tmp/tl-app.log
 ```
 
 Report the URL and credentials (user `root`, password `root1234`) to the user.

@@ -85,13 +85,6 @@ public class TlSecuritySelfserviceFactory extends com.top_logic.element.meta.kbb
 	}
 
 	/**
-	 * Lookup {@link Invitation#TOKEN_MISMATCH_COUNTER_ATTR} of {@link Invitation}.
-	 */
-	public static com.top_logic.model.TLProperty getTokenMismatchCounterInvitationAttr() {
-		return (com.top_logic.model.TLProperty) getInvitationType().getPart(Invitation.TOKEN_MISMATCH_COUNTER_ATTR);
-	}
-
-	/**
 	 * Name of type <code>Invitation</code> in structure {@link #TL_SECURITY_SELFSERVICE_STRUCTURE}.
 	 * 
 	 * @deprecated Use {@link Invitation#INVITATION_TYPE}.

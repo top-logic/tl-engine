@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_29092_multi_factor_authentication"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29019_Removed_log_entries"
+			module="tl"
+		/>
+		<dependency name="Ticket_29092_added_unversioned_link_tables"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<remove-annotations name="tl.accounts:Address">
+			<annotation class="com.top_logic.model.config.JavaClass"/>
+		</remove-annotations>
+		<remove-annotations name="tl.accounts:Group">
+			<annotation class="com.top_logic.model.config.JavaClass"/>
+		</remove-annotations>
+		<remove-annotations name="tl.accounts:Person">
+			<annotation class="com.top_logic.model.config.JavaClass"/>
+		</remove-annotations>
+
+		<create-datatype name="tl.accounts:MfaRequirement"
+			db_type="string"
+			kind="Custom"
+		>
+			<annotations>
+				<config-type value="ENUM"/>
+			</annotations>
+			<enum-storage enum="com.top_logic.knowledge.wrap.person.MfaRequirement"/>
+		</create-datatype>
+		<create-property name="tl.accounts:Person#mfaSecret"
+			type="tl.core:Password"
+		>
+			<annotations>
+				<delete-protected/>
+				<visibility value="hidden"/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.accounts:Person#mfaRequirement"
+			type="tl.accounts:MfaRequirement"
+		/>
+		<add-annotations name="tl.accounts">
+			<annotations>
+				<factory value="com.top_logic.element.model.accounts.TLAccountsFactory"/>
+				<package-binding
+					implementation-package="com.top_logic.element.model.accounts.impl"
+					interface-package="com.top_logic.element.model.accounts"
+				/>
+			</annotations>
+		</add-annotations>
+		<add-annotations name="tl.accounts:Address">
+			<annotations>
+				<implementation-binding class-name="com.top_logic.element.meta.kbbased.AttributedAddress"/>
+			</annotations>
+		</add-annotations>
+		<add-annotations name="tl.accounts:Group">
+			<annotations>
+				<implementation-binding class-name="com.top_logic.element.meta.kbbased.AttributedGroup"/>
+			</annotations>
+		</add-annotations>
+
+		<add-annotations name="tl.accounts:Person">
+			<annotations>
+				<implementation-binding class-name="com.top_logic.element.meta.kbbased.AttributedPerson"/>
+			</annotations>
+		</add-annotations>
+
+		<reorder-part name="tl.accounts:Person#mfaSecret"/>
+		<reorder-part name="tl.accounts:Person#mfaRequirement"/>
+	</processors>
+	<post-processors/>
+</migration>

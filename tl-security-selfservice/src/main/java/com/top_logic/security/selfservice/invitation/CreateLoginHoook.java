@@ -54,11 +54,11 @@ public class CreateLoginHoook implements LoginHook {
 			context.getWindowScope().openDialog(dialog);
 			return;
 		}
-		CheckInvitationToken checkToken = new CheckInvitationToken(invitation, ctx -> {
+		CheckInvitationCode checkCode = new CheckInvitationCode(invitation, ctx -> {
 			return new CreateAccountDialog(invitation, deleteInvitation(invitation)).open(ctx);
 		});
-		LoginHooks.runOnClose(checkToken.getDialogModel(), callback);
-		checkToken.open(context);
+		LoginHooks.runOnClose(checkCode.getDialogModel(), callback);
+		checkCode.open(context);
 		return;
 	}
 

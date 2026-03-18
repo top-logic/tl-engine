@@ -1,0 +1,41 @@
+<h2>Syntax</h2>
+<pre>	<code>parseScript($script)</code>
+</pre>
+<h2>Beschreibung</h2>
+<p>Analysiert eine Zeichenkette, die einen TL-Script-Ausdruck enthält, und gibt ein kompiliertes <code class="hljs inlineCode">tl.model.search:Expr</code> Objekt zurück. Das Ergebnis kann in Modellattributen vom Typ <code class="hljs inlineCode">tl.model.search:Expr</code> gespeichert und später ausgewertet werden.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Obligatorisch</th>
+   <th>Standard</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>Skript</td>
+   <td>Zeichenkette</td>
+   <td>Der TL-Script-Ausdruck als String, der in ein <code class="hljs inlineCode">Expr</code> Objekt geparst wird.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong></span> <code class="hljs inlineCode">tl.model.search:Expr</code></p>
+<p>Das kompilierte TL-Script Ausdrucksobjekt, das das geparste Skript darstellt.</p>
+<h2>Beispiele</h2>
+<h3>Parsen eines Lambda-Ausdrucks</h3>
+<pre>	<code>parseScript("x -> $x * 2")</code>
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Ein <code class="hljs inlineCode">tl.model.search:Expr</code> Objekt, das den Lambda-Ausdruck darstellt <code class="hljs inlineCode">x -> $x * 2</code>.</p>
+<h3>Speichern eines geparsten Ausdrucks in einem Model-Attribut</h3>
+<pre>	<code>{
+  expr = parseScript("invitation -> $invitation.get(`tl.security.selfservice:Invitation#email`)");
+  $myObject.set(`my.module:MyType#callback`, $expr);
+}</code>
+</pre>
+<p>Analysiert den Lambda-Ausdruck und speichert ihn in einem Model-Attribut vom Typ <code class="hljs inlineCode">tl.model.search:Expr</code> zur späteren Auswertung.</p>

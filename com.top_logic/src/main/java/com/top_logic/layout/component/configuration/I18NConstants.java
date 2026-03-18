@@ -68,6 +68,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey INIT_AUTHENTICATOR_MESSAGE;
 
 	/**
+	 * @en Alternatively, you can set up your app using the following code:
+	 */
+	public static ResKey INIT_AUTHENTICATOR_MESSAGE2;
+
+	/**
 	 * @en MFA password updated
 	 */
 	public static ResKey MFA_PASSWORD_UPDATED;

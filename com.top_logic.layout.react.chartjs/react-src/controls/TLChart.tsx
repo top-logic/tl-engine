@@ -46,12 +46,26 @@ const TLChart: React.FC<TLCellProps> = ({ controlId, state }) => {
   const { callbacks, hasAnyTooltip, onTooltip } = useChartCallbacks(interactions);
 
   // Merge options: config options + callbacks + zoom.
+  // Start from config options only; merge callbacks individually to avoid clobbering plugins.
   const options = React.useMemo(() => {
     if (!themedConfig) return {};
 
-    const base = { ...themedConfig.options, ...callbacks };
+    const base: any = { ...themedConfig.options };
     base.responsive = true;
     base.maintainAspectRatio = false;
+
+    // Apply onClick callback directly (not via spread to avoid plugin clobbering).
+    if (callbacks.onClick) {
+      base.onClick = callbacks.onClick;
+    }
+
+    // Deep-merge legend callback into plugins.legend.
+    if (callbacks.plugins?.legend) {
+      base.plugins = {
+        ...base.plugins,
+        legend: { ...base.plugins?.legend, ...callbacks.plugins.legend },
+      };
+    }
 
     // Zoom/pan.
     if (zoomEnabled) {
@@ -82,14 +96,6 @@ const TLChart: React.FC<TLCellProps> = ({ controlId, state }) => {
       };
     }
 
-    // Merge legend callbacks if present.
-    if (callbacks.plugins?.legend) {
-      base.plugins = {
-        ...base.plugins,
-        legend: { ...base.plugins?.legend, ...callbacks.plugins.legend },
-      };
-    }
-
     return base;
   }, [themedConfig, callbacks, zoomEnabled, hasAnyTooltip, onTooltip]);
 
@@ -117,7 +123,7 @@ const TLChart: React.FC<TLCellProps> = ({ controlId, state }) => {
   }
 
   return (
-    <div id={controlId} className={'tlReactChart ' + (cssClass || '')}>
+    <div id={controlId} className={'tlReactChart ' + (cssClass || '')} aria-label={`${themedConfig.type} chart`}>
       <Chart
         ref={chartRef}
         type={themedConfig.type}

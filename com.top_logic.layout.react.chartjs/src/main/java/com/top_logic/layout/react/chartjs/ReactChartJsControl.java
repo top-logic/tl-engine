@@ -58,14 +58,25 @@ public class ReactChartJsControl extends ReactControl {
 
 	private final ResKey _noDataMessage;
 
-	/** Current metadata lookup: metadata[datasetIndex][dataIndex]. */
-	private List<List<TLObject>> _metadata = Collections.emptyList();
+	/** Atomic snapshot of per-render metadata, handler and tooltip references. */
+	private volatile ChartDataSnapshot _snapshot = ChartDataSnapshot.EMPTY;
 
-	/** Current handler mapping per dataset. */
-	private List<Map<String, String>> _handlerRefs = Collections.emptyList();
+	private static final class ChartDataSnapshot {
+		static final ChartDataSnapshot EMPTY = new ChartDataSnapshot(
+			Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
 
-	/** Current tooltip name per dataset. */
-	private List<String> _tooltipRefs = Collections.emptyList();
+		final List<List<TLObject>> _metadata;
+		final List<Map<String, String>> _handlerRefs;
+		final List<String> _tooltipRefs;
+
+		ChartDataSnapshot(List<List<TLObject>> metadata,
+				List<Map<String, String>> handlerRefs,
+				List<String> tooltipRefs) {
+			_metadata = metadata;
+			_handlerRefs = handlerRefs;
+			_tooltipRefs = tooltipRefs;
+		}
+	}
 
 	/**
 	 * Creates a new {@link ReactChartJsControl}.
@@ -127,9 +138,10 @@ public class ReactChartJsControl extends ReactControl {
 				new ChartConfigExtractor(_handlers, _tooltips.keySet());
 			extractor.extract(rawConfig);
 
-			_metadata = extractor.getMetadata();
-			_handlerRefs = extractor.getHandlerRefs();
-			_tooltipRefs = extractor.getTooltipRefs();
+			_snapshot = new ChartDataSnapshot(
+				extractor.getMetadata(),
+				extractor.getHandlerRefs(),
+				extractor.getTooltipRefs());
 
 			putState(CHART_CONFIG, extractor.getCleanConfig());
 			putState(INTERACTIONS, extractor.buildInteractions());
@@ -159,11 +171,12 @@ public class ReactChartJsControl extends ReactControl {
 
 		String handlerKey = "legend".equals(zone) ? "onLegendClick" : "onClick";
 
-		if (datasetIndex < 0 || datasetIndex >= _handlerRefs.size()) {
+		ChartDataSnapshot snapshot = _snapshot;
+		if (datasetIndex < 0 || datasetIndex >= snapshot._handlerRefs.size()) {
 			return HandlerResult.DEFAULT_RESULT;
 		}
 
-		Map<String, String> dsHandlers = _handlerRefs.get(datasetIndex);
+		Map<String, String> dsHandlers = snapshot._handlerRefs.get(datasetIndex);
 		String handlerName = dsHandlers.get(handlerKey);
 		if (handlerName == null) {
 			return HandlerResult.DEFAULT_RESULT;
@@ -174,11 +187,16 @@ public class ReactChartJsControl extends ReactControl {
 			return HandlerResult.DEFAULT_RESULT;
 		}
 
-		TLObject targetObject = resolveMetadata(datasetIndex, index);
+		TLObject targetObject = resolveMetadata(snapshot, datasetIndex, index);
 
-		ViewCommand command = SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY
-			.getInstance(handlerConfig.getAction());
-		return command.execute(getReactContext(), targetObject);
+		try {
+			ViewCommand command = SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY
+				.getInstance(handlerConfig.getAction());
+			return command.execute(getReactContext(), targetObject);
+		} catch (RuntimeException ex) {
+			putState(ERROR, ex.getMessage());
+			return HandlerResult.DEFAULT_RESULT;
+		}
 	}
 
 	/**
@@ -192,11 +210,12 @@ public class ReactChartJsControl extends ReactControl {
 		int datasetIndex = ((Number) arguments.get("datasetIndex")).intValue();
 		int index = ((Number) arguments.get("index")).intValue();
 
-		if (datasetIndex < 0 || datasetIndex >= _tooltipRefs.size()) {
+		ChartDataSnapshot snapshot = _snapshot;
+		if (datasetIndex < 0 || datasetIndex >= snapshot._tooltipRefs.size()) {
 			return;
 		}
 
-		String tooltipName = _tooltipRefs.get(datasetIndex);
+		String tooltipName = snapshot._tooltipRefs.get(datasetIndex);
 		if (tooltipName == null) {
 			return;
 		}
@@ -206,7 +225,7 @@ public class ReactChartJsControl extends ReactControl {
 			return;
 		}
 
-		TLObject targetObject = resolveMetadata(datasetIndex, index);
+		TLObject targetObject = resolveMetadata(snapshot, datasetIndex, index);
 		if (targetObject == null) {
 			return;
 		}
@@ -221,11 +240,11 @@ public class ReactChartJsControl extends ReactControl {
 		}
 	}
 
-	private TLObject resolveMetadata(int datasetIndex, int dataIndex) {
-		if (datasetIndex < 0 || datasetIndex >= _metadata.size()) {
+	private TLObject resolveMetadata(ChartDataSnapshot snapshot, int datasetIndex, int dataIndex) {
+		if (datasetIndex < 0 || datasetIndex >= snapshot._metadata.size()) {
 			return null;
 		}
-		List<TLObject> dsMetadata = _metadata.get(datasetIndex);
+		List<TLObject> dsMetadata = snapshot._metadata.get(datasetIndex);
 		if (dataIndex < 0 || dataIndex >= dsMetadata.size()) {
 			return null;
 		}

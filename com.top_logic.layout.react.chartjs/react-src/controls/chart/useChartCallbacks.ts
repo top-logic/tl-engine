@@ -55,6 +55,15 @@ export function useChartCallbacks(interactions: Interactions | null) {
     }, 200);
   }, [sendCommand]);
 
+  // Clean up pending tooltip timer when the component unmounts.
+  React.useEffect(() => {
+    return () => {
+      if (tooltipTimer.current != null) {
+        clearTimeout(tooltipTimer.current);
+      }
+    };
+  }, []);
+
   return React.useMemo(() => {
     const callbacks: any = {};
 

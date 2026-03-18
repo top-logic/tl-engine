@@ -12,7 +12,6 @@ import java.util.List;
 
 import com.top_logic.base.accesscontrol.LoginFailure;
 import com.top_logic.base.accesscontrol.LoginFailuresModule;
-import com.top_logic.base.security.util.Password;
 import com.top_logic.basic.encryption.SecureRandomService;
 import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.util.ResKey;
@@ -131,7 +130,7 @@ public class CheckInvitationToken extends AbstractTemplateDialog {
 		if (isTokenExpired()) {
 			return HandlerResult.error(I18NConstants.ERROR_TOKEN_EXPIRED);
 		}
-		if (!_invitation.getToken().decrypt().equals(getFormContext().getField(TOKEN_FIELD).getValue())) {
+		if (!String.valueOf(_invitation.getToken()).equals(getFormContext().getField(TOKEN_FIELD).getValue())) {
 			_loginFailures.notifyLoginFailed(failureKey);
 			return HandlerResult.error(I18NConstants.ERROR_TOKEN_MISMATCH);
 		} else {
@@ -146,9 +145,7 @@ public class CheckInvitationToken extends AbstractTemplateDialog {
 
 	@Override
 	public HandlerResult open(WindowScope windowScope) {
-		if (_invitation.getToken() == null) {
-			updateToken();
-		} else if (isTokenExpired()) {
+		if (isTokenExpired()) {
 			updateToken();
 		}
 
@@ -181,9 +178,9 @@ public class CheckInvitationToken extends AbstractTemplateDialog {
 	}
 
 	private void updateToken() {
-		String newTokenString = newTokenString();
+		int newToken = newToken();
 		try (Transaction tx = kb().beginTransaction(I18NConstants.UPDATED_INVITATION_TOKEN)) {
-			_invitation.setToken(Password.fromPlainText(newTokenString));
+			_invitation.setToken(newToken);
 			_invitation.setTokenCreation(now());
 			_invitation.setTokenCounter(_invitation.getTokenCounter() + 1);
 			tx.commit();
@@ -191,7 +188,7 @@ public class CheckInvitationToken extends AbstractTemplateDialog {
 		/* New token was created, reset failures. */
 		_loginFailures.notifyLoginSuccessed(failureKey());
 
-		sendTokenMail(newTokenString);
+		sendTokenMail(String.valueOf(newToken));
 	}
 
 	private void sendTokenMail(String newTokenString) {
@@ -199,8 +196,8 @@ public class CheckInvitationToken extends AbstractTemplateDialog {
 		_serviceModule.getVerificationMail().execute(_invitation, applicationName, newTokenString);
 	}
 
-	private String newTokenString() {
-		return String.valueOf(SecureRandomService.getInstance().getRandom().nextInt(100_000, 1_000_000));
+	private int newToken() {
+		return SecureRandomService.getInstance().getRandom().nextInt(100_000, 1_000_000);
 	}
 
 	private String failureKey() {

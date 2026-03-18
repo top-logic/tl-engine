@@ -313,10 +313,12 @@ public class ListStorage<C extends ListStorage.Config<?>> extends LinkStorage<C>
 	 *        The history type of the value of the reference.
 	 * @param deletionPolicy
 	 *        The deletion policy of the reference.
+	 * @param unversioned
+	 *        Whether reference values must be stored unversioned.
 	 * @return The storage configuration.
 	 */
-	public static Config<?> listConfig(boolean composite, HistoryType historyType, DeletionPolicy deletionPolicy) {
-		return defaultConfig(Config.class, composite, historyType, deletionPolicy);
+	public static Config<?> listConfig(boolean composite, HistoryType historyType, DeletionPolicy deletionPolicy, boolean unversioned) {
+		return defaultConfig(Config.class, composite, historyType, deletionPolicy, unversioned);
 	}
 
 }

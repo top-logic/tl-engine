@@ -145,49 +145,106 @@ public abstract class LinkStorage<C extends LinkStorage.Config<?>> extends Colle
 	 *        Whether the reference is a composition.
 	 * @param historyType
 	 *        The history type of the value of the reference.
+	 * @param unversioned
+	 *        Whether reference values must be stored unversioned.
 	 * @return The storage configuration.
 	 */
 	protected static <C extends LinkStorageConfig> C defaultConfig(Class<C> configType, boolean composite,
-			HistoryType historyType, DeletionPolicy deletionPolicy) {
+			HistoryType historyType, DeletionPolicy deletionPolicy, boolean unversioned) {
 		C result = TypedConfiguration.newConfigItem(configType);
 		switch (historyType) {
 			case CURRENT:
 				if (composite) {
 					switch (deletionPolicy) {
 						case CLEAR_REFERENCE:
-							result.setTable(ApplicationObjectUtil.STRUCTURE_CHILD_ASSOCIATION);
+							if (unversioned) {
+								result.setTable(
+									ApplicationObjectUtil.STRUCTURE_CHILD_ASSOCIATION_UNVERSIONED);
+							} else {
+								result.setTable(
+									ApplicationObjectUtil.STRUCTURE_CHILD_ASSOCIATION);
+							}
 							break;
 						case DELETE_REFERER:
-							result.setTable(ApplicationObjectUtil.STRUCTURE_CHILD_DELETE_REFERER_ASSOCIATION);
+							if (unversioned) {
+								result.setTable(
+									ApplicationObjectUtil.STRUCTURE_CHILD_DELETE_REFERER_ASSOCIATION_UNVERSIONED);
+							} else {
+								result.setTable(
+									ApplicationObjectUtil.STRUCTURE_CHILD_DELETE_REFERER_ASSOCIATION);
+							}
 							break;
 						case STABILISE_REFERENCE:
 							// This an unsupported combination of settings.
 							break;
 						case VETO:
-							result.setTable(ApplicationObjectUtil.STRUCTURE_CHILD_VETO_ASSOCIATION);
+							if (unversioned) {
+								result.setTable(
+									ApplicationObjectUtil.STRUCTURE_CHILD_VETO_ASSOCIATION_UNVERSIONED);
+							} else {
+								result.setTable(
+									ApplicationObjectUtil.STRUCTURE_CHILD_VETO_ASSOCIATION);
+							}
 							break;
 					}
 				} else {
 					switch (deletionPolicy) {
 						case CLEAR_REFERENCE:
+							if (unversioned) {
+								result.setTable(
+									ApplicationObjectUtil.WRAPPER_ATTRIBUTE_ASSOCIATION_UNVERSIONED);
+							} else {
+								result.setTable(
+									ApplicationObjectUtil.WRAPPER_ATTRIBUTE_ASSOCIATION);
+							}
 							break;
 						case DELETE_REFERER:
-							result.setTable(ApplicationObjectUtil.WRAPPER_DELETE_REFERER_ASSOCIATION);
+							if (unversioned) {
+								result.setTable(
+									ApplicationObjectUtil.WRAPPER_DELETE_REFERER_ASSOCIATION_UNVERSIONED);
+							} else {
+								result.setTable(
+									ApplicationObjectUtil.WRAPPER_DELETE_REFERER_ASSOCIATION);
+							}
 							break;
 						case STABILISE_REFERENCE:
-							result.setTable(ApplicationObjectUtil.MIXED_WRAPPER_ATTRIBUTE_ASSOCIATION);
+							if (unversioned) {
+								result.setTable(
+									ApplicationObjectUtil.MIXED_WRAPPER_ATTRIBUTE_ASSOCIATION_UNVERSIONED);
+							} else {
+								result.setTable(
+									ApplicationObjectUtil.MIXED_WRAPPER_ATTRIBUTE_ASSOCIATION);
+							}
 							break;
 						case VETO:
-							result.setTable(ApplicationObjectUtil.WRAPPER_VETO_ASSOCIATION);
+							if (unversioned) {
+								result.setTable(
+									ApplicationObjectUtil.WRAPPER_VETO_ASSOCIATION_UNVERSIONED);
+							} else {
+								result.setTable(
+									ApplicationObjectUtil.WRAPPER_VETO_ASSOCIATION);
+							}
 							break;
 					}
 				}
 				break;
 			case HISTORIC:
-				result.setTable(ApplicationObjectUtil.HISTORIC_WRAPPER_ATTRIBUTE_ASSOCIATION);
+				if (unversioned) {
+					result.setTable(
+						ApplicationObjectUtil.HISTORIC_WRAPPER_ATTRIBUTE_ASSOCIATION_UNVERSIONED);
+				} else {
+					result.setTable(
+						ApplicationObjectUtil.HISTORIC_WRAPPER_ATTRIBUTE_ASSOCIATION);
+				}
 				break;
 			case MIXED:
-				result.setTable(ApplicationObjectUtil.MIXED_WRAPPER_ATTRIBUTE_ASSOCIATION);
+				if (unversioned) {
+					result.setTable(
+						ApplicationObjectUtil.MIXED_WRAPPER_ATTRIBUTE_ASSOCIATION_UNVERSIONED);
+				} else {
+					result.setTable(
+						ApplicationObjectUtil.MIXED_WRAPPER_ATTRIBUTE_ASSOCIATION);
+				}
 				break;
 
 		}

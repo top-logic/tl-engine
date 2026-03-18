@@ -267,6 +267,133 @@ public class SearchAnnotationTool {
 	}
 
 	/**
+	 * Lists all available annotation types for a given target model element.
+	 *
+	 * <p>
+	 * Returns all {@link InApp @InApp} annotation types applicable to the target, filtered by
+	 * marker interface and {@link TLTypeKind}. Results are sorted alphabetically by tag name.
+	 * </p>
+	 *
+	 * @param targetRef
+	 *        Target reference (e.g. "module", "module:Type", "module:Type#part").
+	 * @return JSON object listing all applicable annotation types.
+	 */
+	@Tool("List all available annotation types for a given model element. "
+		+ "Returns every applicable annotation that can be set on the target.")
+	public String listAvailableAnnotations(
+			@P("Target reference (e.g. 'module:Type#part')") String targetRef) {
+
+		try {
+			if (targetRef == null || targetRef.trim().isEmpty()) {
+				Map<String, Object> args = new HashMap<>();
+				args.put("targetRef", targetRef);
+				return DataClassSerializer.errorToJson(
+					"Target reference is required.",
+					SearchAnnotationTool.class, "listAvailableAnnotations()", args);
+			}
+
+			AnnotationSearchResponse response = ThreadContextManager.inSystemInteraction(
+				SearchAnnotationTool.class,
+				() -> {
+					TargetRefParser parser = TargetRefParser.parse(targetRef.trim());
+					TLModelPart targetPart = parser.resolve(ModelService.getApplicationModel());
+					String targetKind = TargetRefParser.determineKind(targetPart, parser);
+
+					Class<? extends TLAnnotation> markerInterface = TLAnnotation.class;
+					TLTypeKind targetTypeKind = null;
+
+					if (targetPart instanceof TLStructuredTypePart) {
+						markerInterface = TLAttributeAnnotation.class;
+						targetTypeKind = TLTypeKind.getTLTypeKind((TLStructuredTypePart) targetPart);
+					} else if (targetPart instanceof TLClassifier) {
+						markerInterface = TLClassifierAnnotation.class;
+					} else if (targetPart instanceof TLType) {
+						markerInterface = TLTypeAnnotation.class;
+						targetTypeKind = TLTypeKind.getTLTypeKind((TLType) targetPart);
+					} else if (targetPart instanceof TLModule) {
+						markerInterface = TLModuleAnnotation.class;
+					}
+
+					Collection<Class<?>> annotationTypes =
+						TypeIndex.getInstance().getSpecializations(markerInterface, true, true, false);
+
+					List<AnnotationSearchResult> results = new ArrayList<>();
+					for (Class<?> annotationType : annotationTypes) {
+						InApp inApp = annotationType.getAnnotation(InApp.class);
+						if (inApp == null || !inApp.value()) {
+							continue;
+						}
+
+						if (targetTypeKind != null) {
+							TargetType targetType = annotationType.getAnnotation(TargetType.class);
+							if (targetType != null) {
+								boolean matchesKind = false;
+								for (TLTypeKind kind : targetType.value()) {
+									if (kind == targetTypeKind) {
+										matchesKind = true;
+										break;
+									}
+								}
+								if (!matchesKind) {
+									continue;
+								}
+							}
+						}
+
+						String tagName = getTagName(annotationType);
+						String description = getDescription(annotationType);
+
+						AnnotationSearchResult result = AnnotationSearchResult.create();
+						result.setTagName(tagName);
+						result.setConfigInterface(annotationType.getName());
+						if (description != null) {
+							result.setDescription(description);
+						}
+
+						for (String applicable : getApplicableKinds(annotationType)) {
+							result.addApplicableTo(applicable);
+						}
+						for (String tt : getTargetTypes(annotationType)) {
+							result.addTargetType(tt);
+						}
+
+						results.add(result);
+					}
+
+					results.sort((r1, r2) -> r1.getTagName().compareToIgnoreCase(r2.getTagName()));
+
+					AnnotationSearchResponse resp = AnnotationSearchResponse.create();
+					resp.setQuery("");
+					resp.setTotalMatches(results.size());
+					resp.setTargetRef(targetRef);
+					resp.setTargetKind(targetKind);
+					if (targetTypeKind != null) {
+						resp.setTargetTypeKind(targetTypeKind.name());
+					}
+					for (AnnotationSearchResult r : results) {
+						resp.addResult(r);
+					}
+					return resp;
+				});
+
+			Map<String, Object> args = new HashMap<>();
+			args.put("targetRef", targetRef);
+			return DataClassSerializer.toJson(
+				response, SearchAnnotationTool.class, "listAvailableAnnotations()", args);
+
+		} catch (Exception ex) {
+			Logger.error("listAvailableAnnotations() error: " + ex.getMessage(), ex, SearchAnnotationTool.class);
+			Map<String, Object> args = new HashMap<>();
+			args.put("targetRef", targetRef);
+			return DataClassSerializer.errorToJson(
+				"Error listing annotations: " + ex.getMessage(),
+				SearchAnnotationTool.class,
+				"listAvailableAnnotations()",
+				args);
+		}
+	}
+
+	/**
 	 * Extracts the tag name from a configuration interface's {@link TagName} annotation.
 	 *
 	 * @param annotationType

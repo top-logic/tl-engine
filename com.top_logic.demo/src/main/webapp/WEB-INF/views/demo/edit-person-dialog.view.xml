@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="model"/>
+	</channels>
+	<window
+		title="Edit Person"
+		width="600px"
+	>
+		<form input="model">
+			<field attribute="name"/>
+		</form>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					label="Close"
+				/>
+			</button>
+		</actions>
+	</window>
+</view>

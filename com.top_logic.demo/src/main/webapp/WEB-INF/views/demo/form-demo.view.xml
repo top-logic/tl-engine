@@ -19,6 +19,17 @@
 				unit="%"
 			>
 				<panel title="Accounts">
+					<commands>
+						<command class="com.top_logic.layout.view.command.OpenDialogCommand"
+							label="Edit"
+							placement="TOOLBAR"
+							dialog-view="demo/edit-person-dialog.view.xml"
+						>
+							<inputs>
+								<input from="selectedPerson" to="model"/>
+							</inputs>
+						</command>
+					</commands>
 					<table
 						selection="selectedPerson"
 						types="tl.accounts:Person"

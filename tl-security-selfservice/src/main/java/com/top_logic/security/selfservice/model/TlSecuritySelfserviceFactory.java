@@ -95,7 +95,7 @@ public class TlSecuritySelfserviceFactory extends com.top_logic.element.meta.kbb
 	/**
 	 * Storage table name of {@link #INVITATION_NODE} objects.
 	 */
-	public static final String KO_NAME_INVITATION = "GenericObject";
+	public static final String KO_NAME_INVITATION = "Invitation";
 
 
 	/**

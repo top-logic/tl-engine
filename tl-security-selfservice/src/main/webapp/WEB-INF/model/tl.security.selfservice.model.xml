@@ -12,7 +12,21 @@
 			<generalizations>
 				<generalization type="tl.model:TLObject"/>
 			</generalizations>
+			<annotations>
+				<table name="Invitation"/>
+			</annotations>
 			<attributes>
+				<property name="id"
+					mandatory="true"
+					type="tl.core:String"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+						<default-value>
+							<provider class="com.top_logic.model.provider.SecureStringDefaultProvider"/>
+						</default-value>
+					</annotations>
+				</property>
 				<property name="email"
 					mandatory="true"
 					type="tl.core:String"
@@ -44,17 +58,25 @@
 					</annotations>
 				</property>
 				<property name="token"
-					type="tl.core:Password"
+					mandatory="true"
+					type="tl.core:Integer"
 				>
 					<annotations>
 						<visibility value="hidden"/>
+						<default-value>
+							<int value="0"/>
+						</default-value>
 					</annotations>
 				</property>
 				<property name="tokenCreation"
+					mandatory="true"
 					type="tl.core:Long"
 				>
 					<annotations>
 						<visibility value="hidden"/>
+						<default-value>
+							<long value="0"/>
+						</default-value>
 					</annotations>
 				</property>
 				<property name="tokenCounter"
@@ -68,16 +90,9 @@
 						</default-value>
 					</annotations>
 				</property>
-				<property name="id"
-					type="tl.core:String"
-				>
-					<annotations>
-						<visibility value="hidden"/>
-						<default-value>
-							<provider class="com.top_logic.model.provider.SecureStringDefaultProvider"/>
-						</default-value>
-					</annotations>
-				</property>
+				<property name="mfaRequirement"
+					type="tl.accounts:MfaRequirement"
+				/>
 				<property name="createCallback"
 					type="tl.model.search:Expr"
 				/>
@@ -87,9 +102,6 @@
 					navigate="true"
 					ordered="true"
 					type="tl.model:TLObject"
-				/>
-				<property name="mfaRequirement"
-					type="tl.accounts:MfaRequirement"
 				/>
 			</attributes>
 		</class>

@@ -66,7 +66,7 @@ public interface InvitationBase extends com.top_logic.model.TLObject {
 	 * Part <code>token</code> of <code>Invitation</code>
 	 * 
 	 * <p>
-	 * Declared as <code>tl.core:Password</code> in configuration.
+	 * Declared as <code>tl.core:Integer</code> in configuration.
 	 * </p>
 	 */
 	String TOKEN_ATTR = "token";
@@ -191,14 +191,14 @@ public interface InvitationBase extends com.top_logic.model.TLObject {
 	/**
 	 * Getter for part {@link #TOKEN_ATTR}.
 	 */
-	default com.top_logic.base.security.util.Password getToken() {
-		return (com.top_logic.base.security.util.Password) tValueByName(TOKEN_ATTR);
+	default int getToken() {
+		return (Integer) tValueByName(TOKEN_ATTR);
 	}
 
 	/**
 	 * Setter for part {@link #TOKEN_ATTR}.
 	 */
-	default void setToken(com.top_logic.base.security.util.Password newValue) {
+	default void setToken(int newValue) {
 		tUpdateByName(TOKEN_ATTR, newValue);
 	}
 
@@ -219,14 +219,14 @@ public interface InvitationBase extends com.top_logic.model.TLObject {
 	/**
 	 * Getter for part {@link #TOKEN_CREATION_ATTR}.
 	 */
-	default Long getTokenCreation() {
+	default long getTokenCreation() {
 		return (Long) tValueByName(TOKEN_CREATION_ATTR);
 	}
 
 	/**
 	 * Setter for part {@link #TOKEN_CREATION_ATTR}.
 	 */
-	default void setTokenCreation(Long newValue) {
+	default void setTokenCreation(long newValue) {
 		tUpdateByName(TOKEN_CREATION_ATTR, newValue);
 	}
 

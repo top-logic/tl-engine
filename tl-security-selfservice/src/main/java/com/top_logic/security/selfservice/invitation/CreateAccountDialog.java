@@ -169,7 +169,17 @@ public class CreateAccountDialog extends AbstractTemplateDialog {
 			SearchExpression createCallback = _invitation.getCreateCallback();
 			if (createCallback != null) {
 				QueryExecutor callback = QueryExecutor.executor(kb, ModelService.getApplicationModel(), createCallback);
-				callback.execute(person, _invitation.getContextObjects());
+				Object result = callback.execute(person);
+				if (result != null) {
+					ResKey deniedKey = SearchExpression.asResKey(result);
+					if (deniedKey != null) {
+						HandlerResult error = HandlerResult.error(deniedKey);
+						error.setErrorTitle(I18NConstants.CREATE_ACCOUNT_NOT_POSSIBLE);
+						return error;
+					} else {
+						return HandlerResult.error(I18NConstants.CREATE_ACCOUNT_NOT_POSSIBLE);
+					}
+				}
 			}
 			tx.commit();
 		}

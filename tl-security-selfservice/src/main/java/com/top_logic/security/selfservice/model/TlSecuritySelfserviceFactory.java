@@ -50,13 +50,6 @@ public class TlSecuritySelfserviceFactory extends com.top_logic.element.meta.kbb
 	}
 
 	/**
-	 * Lookup {@link Invitation#CONTEXT_OBJECTS_ATTR} of {@link Invitation}.
-	 */
-	public static com.top_logic.model.TLReference getContextObjectsInvitationAttr() {
-		return (com.top_logic.model.TLReference) getInvitationType().getPart(Invitation.CONTEXT_OBJECTS_ATTR);
-	}
-
-	/**
 	 * Lookup {@link Invitation#CREATE_CALLBACK_ATTR} of {@link Invitation}.
 	 */
 	public static com.top_logic.model.TLProperty getCreateCallbackInvitationAttr() {

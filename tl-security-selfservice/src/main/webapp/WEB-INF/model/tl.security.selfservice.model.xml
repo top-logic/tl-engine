@@ -95,14 +95,13 @@
 				/>
 				<property name="createCallback"
 					type="tl.model.search:Expr"
-				/>
-				<reference name="contextObjects"
-					kind="forwards"
-					multiple="true"
-					navigate="true"
-					ordered="true"
-					type="tl.model:TLObject"
-				/>
+				>
+					<annotations>
+						<storage-algorithm>
+							<query expr="invitation -> person -> null"/>
+						</storage-algorithm>
+					</annotations>
+				</property>
 			</attributes>
 		</class>
 	</module>

@@ -10,14 +10,14 @@ import java.util.Random;
 
 import junit.framework.TestCase;
 
-import com.top_logic.basic.util.Base32;
+import com.top_logic.basic.util.EncodeTypable;
 
 /**
- * Test case for {@link Base32}.
+ * Test case for {@link EncodeTypable}.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class TestBase32 extends TestCase {
+public class TestEncodeTypable extends TestCase {
 	
 	private Random random;
 	
@@ -49,10 +49,10 @@ public class TestBase32 extends TestCase {
 
 	public void testPaddingCheck1() {
 		byte[] orig = new byte[1];
-		char[] encoded = Base32.encodeBase32(orig);
+		char[] encoded = EncodeTypable.encodeBase32(orig);
 		encoded[1] = 'B';
 		try {
-			Base32.decodeBase32(encoded);
+			EncodeTypable.decodeBase32(encoded);
 			fail("Padding check failed.");
 		} catch (IllegalArgumentException ex) {
 			// Expected.
@@ -62,12 +62,12 @@ public class TestBase32 extends TestCase {
 	public void testPaddingCheck2() {
 		byte[] orig = new byte[10];
 		Arrays.fill(orig, (byte)0xFF);
-		char[] encoded = Base32.encodeBase32(orig);
+		char[] encoded = EncodeTypable.encodeBase32(orig);
 		int shortenSize = 2;
 		char[] shortenedEncoded = new char[encoded.length - shortenSize];
 		System.arraycopy(encoded, 0, shortenedEncoded, 0, encoded.length - shortenSize);
 		try {
-			Base32.decodeBase32(shortenedEncoded);
+			EncodeTypable.decodeBase32(shortenedEncoded);
 			fail("Padding check failed.");
 		} catch (IllegalArgumentException ex) {
 			// Expected.
@@ -75,13 +75,13 @@ public class TestBase32 extends TestCase {
 	}
 	
 	private void doTest(byte[] orig) {
-		char[] encoded = Base32.encodeBase32(orig);
+		char[] encoded = EncodeTypable.encodeBase32(orig);
 		doCheck(orig, encoded);
 		doCheck(orig, new String(encoded).toLowerCase().toCharArray());
 	}
 
 	private void doCheck(byte[] orig, char[] encoded) {
-		byte[] recovered = Base32.decodeBase32(encoded);
+		byte[] recovered = EncodeTypable.decodeBase32(encoded);
 		assertTrue(Arrays.equals(orig, recovered));
 	}
 

@@ -63,6 +63,9 @@ public class I18NConstants extends I18NConstantsBase {
 	/** Prefix for elements displayed in {@link CreateAccountDialog}. */
 	public static ResPrefix CREATE_ACCOUNT_DIALOG;
 
+	/** @en Creation of account not possible. */
+	public static ResKey CREATE_ACCOUNT_NOT_POSSIBLE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

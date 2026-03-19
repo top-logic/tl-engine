@@ -8,6 +8,7 @@ package com.top_logic.layout.view.element;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -37,11 +38,14 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.model.ObservableTreeModel;
 import com.top_logic.mig.html.DefaultSingleSelectionModel;
 import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.mig.html.SelectionModelOwner;
+import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.util.TLModelPartRef;
 
 /**
  * Declarative {@link UIElement} that wraps a {@link ReactTreeControl}.
@@ -104,6 +108,9 @@ public class TreeElement implements UIElement {
 
 		/** Configuration name for {@link #getNodeContent()}. */
 		String NODE_CONTENT = "nodeContent";
+
+		/** Configuration name for {@link #getObservedTypes()}. */
+		String OBSERVED_TYPES = "observed-types";
 
 		/**
 		 * References to {@link ViewChannel}s whose current values become positional arguments to
@@ -190,6 +197,24 @@ public class TreeElement implements UIElement {
 		 */
 		@Name(NODES_TO_UPDATE)
 		Expr getNodesToUpdate();
+
+		/**
+		 * Types to observe for object creation events.
+		 *
+		 * <p>
+		 * When configured, the tree re-evaluates its root function when objects of these types
+		 * are created. This enables automatic node insertion for trees that query all instances
+		 * of a type.
+		 * </p>
+		 *
+		 * <p>
+		 * When empty (default), only updates and deletes of currently displayed nodes are
+		 * observed. This is correct for trees whose nodes come directly from a channel.
+		 * </p>
+		 */
+		@Name(OBSERVED_TYPES)
+		@Format(TLModelPartRef.CommaSeparatedTLModelPartRefs.class)
+		List<TLModelPartRef> getObservedTypes();
 
 		/**
 		 * Whether the tree supports expand-all.
@@ -291,17 +316,23 @@ public class TreeElement implements UIElement {
 			});
 		}
 
-		// 7. Wire input channel listeners for re-query on change.
-		ViewChannel.ChannelListener refreshListener = (sender, oldValue, newValue) -> {
-			Object[] newValues = readChannelValues(inputChannels);
-			Object newRoot = _rootExecutor.execute(newValues);
-			DefaultTreeUINodeModel newTreeModel = new DefaultTreeUINodeModel(builder, newRoot);
-			selectionModel.clear();
-			treeControl.setTreeModel(newTreeModel);
-		};
-		for (ViewChannel channel : inputChannels) {
-			channel.addListener(refreshListener);
-		}
+		// 7. Create ObservableTreeModel to forward model changes to the tree control.
+		Set<TLStructuredType> observedTypes = resolveObservedTypes();
+		QueryExecutor rootExec = _rootExecutor;
+		ObservableTreeModel observableModel = new ObservableTreeModel(
+			treeControl,
+			treeModel,
+			args -> rootExec.execute(args),
+			builder,
+			observedTypes,
+			inputChannels
+		);
+
+		// 8. Lazy attach on render, cleanup on dispose.
+		treeControl.addBeforeWriteAction(() -> {
+			observableModel.attach(context.getModelScope());
+		});
+		treeControl.addCleanupAction(observableModel::detach);
 
 		return treeControl;
 	}
@@ -362,6 +393,22 @@ public class TreeElement implements UIElement {
 			return Collections.emptyList();
 		}
 		return Collections.singletonList(result);
+	}
+
+	private Set<TLStructuredType> resolveObservedTypes() {
+		List<TLModelPartRef> refs = _config.getObservedTypes();
+		if (refs == null || refs.isEmpty()) {
+			return Set.of();
+		}
+		Set<TLStructuredType> types = new HashSet<>();
+		for (TLModelPartRef ref : refs) {
+			TLStructuredType type = (TLStructuredType) ref.resolveType();
+			if (type == null) {
+				throw new RuntimeException("Failed to resolve observed type: " + ref.qualifiedName());
+			}
+			types.add(type);
+		}
+		return types;
 	}
 
 }

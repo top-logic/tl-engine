@@ -27,10 +27,12 @@ import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.ValueListener;
 import com.top_logic.mig.html.Media;
+import com.top_logic.model.TLFormObjectBase;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.factory.TLFactory;
+import com.top_logic.model.form.OverlayLookup;
 import com.top_logic.util.Resources;
 
 /**
@@ -40,7 +42,7 @@ import com.top_logic.util.Resources;
  *
  * @author <a href="mailto:kbu@top-logic.com">Karsten Buch</a>
  */
-public class AttributeUpdateContainer {
+public class AttributeUpdateContainer implements OverlayLookup {
 	/** Separates IDs of attribute and object. */
 	public static final String ID_SEPARATOR = "_";
 
@@ -296,13 +298,14 @@ public class AttributeUpdateContainer {
 
 	/**
 	 * Retrieves the existing form overlay for the given object.
-	 * 
+	 *
 	 * @param object
 	 *        The base object to find an overlay for.
-	 * 
+	 *
 	 * @return The object itself if already a form object, otherwise the existing overlay from
 	 *         edits, or {@code null} if no overlay exists.
 	 */
+	@Override
 	public TLFormObject getExistingOverlay(TLObject object) {
 		if (object instanceof TLFormObject) {
 			return (TLFormObject) object;
@@ -557,6 +560,11 @@ public class AttributeUpdateContainer {
 	 */
 	public final Iterable<? extends TLFormObject> getAllOverlays() {
 		return allOverlays();
+	}
+
+	@Override
+	public Iterable<? extends TLFormObjectBase> getOverlays() {
+		return getAllOverlays();
 	}
 
 	private Iterable<FormObjectOverlay> allOverlays() {

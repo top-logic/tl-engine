@@ -75,7 +75,7 @@ public abstract class ModeObserver implements ValueListener, Sink<Pointer> {
 		valueChanged(mode);
 
 		removeListeners();
-		_modeSelector.traceDependencies(_object, _attribute, this, _updateContainer.getFormContext());
+		_modeSelector.traceDependencies(_object, _attribute, this, _updateContainer);
 	}
 
 	/**

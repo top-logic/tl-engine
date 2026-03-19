@@ -223,14 +223,33 @@ public class ReactTreeControl extends ReactControl {
 	}
 
 	/**
-	 * Invalidates the node control cache and rebuilds the full state.
+	 * Invalidates the content control for the given node and rebuilds the full state.
 	 *
 	 * <p>
-	 * Called by external observers (e.g. {@link com.top_logic.layout.view.model.ObservableTreeModel})
-	 * when the underlying data has changed and node content controls need to be recreated.
+	 * Called when a single node's business object has changed. Only the affected node's control
+	 * is recreated; all other cached controls are reused.
+	 * </p>
+	 *
+	 * @param node
+	 *        The tree node whose content has changed.
+	 */
+	public void invalidateNode(Object node) {
+		ReactControl control = _nodeControlCache.remove(node);
+		if (control != null) {
+			unregisterChildControl(control);
+		}
+		buildFullState();
+	}
+
+	/**
+	 * Invalidates all node content controls and rebuilds the full state.
+	 *
+	 * <p>
+	 * Called when the tree structure has changed (nodes added/removed) and the
+	 * entire visible node list needs to be recomputed.
 	 * </p>
 	 */
-	public void refreshState() {
+	public void invalidateAll() {
 		cleanupNodeControls();
 		buildFullState();
 	}

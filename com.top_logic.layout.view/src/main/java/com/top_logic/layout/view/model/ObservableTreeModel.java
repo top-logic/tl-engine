@@ -42,8 +42,9 @@ import com.top_logic.model.listen.ModelScope;
  * {@link ReactTreeControl#setTreeModel(com.top_logic.layout.tree.model.TreeUIModel)} on the control,
  * and re-registers object listeners.</li>
  * <li><b>ModelScope event</b> (object changes): Removes nodes whose business objects were deleted
- * directly from the tree model, calls {@link ReactTreeControl#refreshState()} for updates, and
- * rebuilds the full tree for creates of observed types.</li>
+ * directly from the tree model, invalidates individual node controls for updates via
+ * {@link ReactTreeControl#invalidateNode(Object)}, and rebuilds the full tree for creates of
+ * observed types.</li>
  * </ol>
  *
  * <h3>Lifecycle:</h3>
@@ -176,18 +177,22 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 			}
 		}
 		if (anyRemoved) {
-			_treeControl.refreshState();
+			// Structure changed: node list is different, rebuild visible state.
+			_treeControl.invalidateAll();
 		}
 	}
 
 	private void handleUpdates(ModelChangeEvent event) {
-		boolean anyUpdated = event.getUpdated().anyMatch(obj -> {
+		event.getUpdated().forEach(obj -> {
 			ObjectKey key = key(obj);
-			return key != null && _observedKeys.contains(key);
+			if (key != null && _observedKeys.contains(key)) {
+				// Find the tree node for this business object and invalidate only its control.
+				DefaultTreeUINode node = findNode(_treeModel.getRoot(), obj);
+				if (node != null) {
+					_treeControl.invalidateNode(node);
+				}
+			}
 		});
-		if (anyUpdated) {
-			_treeControl.refreshState();
-		}
 	}
 
 	private void handleCreates(ModelChangeEvent event) {

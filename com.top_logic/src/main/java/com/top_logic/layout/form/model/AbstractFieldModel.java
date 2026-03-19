@@ -35,6 +35,10 @@ public class AbstractFieldModel implements FieldModel {
 
 	private List<ResKey> _warnings = Collections.emptyList();
 
+	private ResKey _modelError;
+
+	private List<ResKey> _modelWarnings = Collections.emptyList();
+
 	private List<FieldConstraint> _constraints = Collections.emptyList();
 
 	private List<FieldModelListener> _listeners = Collections.emptyList();
@@ -120,22 +124,26 @@ public class AbstractFieldModel implements FieldModel {
 
 	@Override
 	public boolean hasError() {
-		return _error != null;
+		return _error != null || _modelError != null;
 	}
 
 	@Override
 	public ResKey getError() {
-		return _error;
+		return _error != null ? _error : _modelError;
 	}
 
 	@Override
 	public boolean hasWarnings() {
-		return !_warnings.isEmpty();
+		return !_warnings.isEmpty() || !_modelWarnings.isEmpty();
 	}
 
 	@Override
 	public List<ResKey> getWarnings() {
-		return _warnings;
+		if (_warnings.isEmpty()) return _modelWarnings;
+		if (_modelWarnings.isEmpty()) return _warnings;
+		List<ResKey> combined = new ArrayList<>(_warnings);
+		combined.addAll(_modelWarnings);
+		return combined;
 	}
 
 	/**
@@ -154,6 +162,23 @@ public class AbstractFieldModel implements FieldModel {
 		}
 		_error = error;
 		fireValidationChanged();
+	}
+
+	@Override
+	public void setModelValidationError(ResKey error) {
+		if (!Objects.equals(_modelError, error)) {
+			_modelError = error;
+			fireValidationChanged();
+		}
+	}
+
+	@Override
+	public void setModelValidationWarnings(List<ResKey> warnings) {
+		List<ResKey> newWarnings = warnings.isEmpty() ? Collections.emptyList() : List.copyOf(warnings);
+		if (!_modelWarnings.equals(newWarnings)) {
+			_modelWarnings = newWarnings;
+			fireValidationChanged();
+		}
 	}
 
 	@Override

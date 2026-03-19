@@ -77,6 +77,31 @@ public interface FieldModel {
 	List<ResKey> getWarnings();
 
 	/**
+	 * Sets a validation error from the {@code FormValidationModel}.
+	 *
+	 * <p>
+	 * This is called by the view's bridging listener to propagate model-level
+	 * validation results. The error is aggregated with local constraints.
+	 * </p>
+	 *
+	 * @param error
+	 *        The error key, or {@code null} to clear.
+	 */
+	default void setModelValidationError(ResKey error) {
+		// Default no-op, overridden in AbstractFieldModel.
+	}
+
+	/**
+	 * Sets validation warnings from the {@code FormValidationModel}.
+	 *
+	 * @param warnings
+	 *        The warning keys, or empty list to clear.
+	 */
+	default void setModelValidationWarnings(List<ResKey> warnings) {
+		// Default no-op, overridden in AbstractFieldModel.
+	}
+
+	/**
 	 * Triggers constraint validation against the current value.
 	 */
 	void validate();

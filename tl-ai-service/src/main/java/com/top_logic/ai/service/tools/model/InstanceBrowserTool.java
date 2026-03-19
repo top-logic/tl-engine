@@ -197,7 +197,6 @@ public class InstanceBrowserTool {
 
 		} catch (Exception ex) {
 			Logger.error("listInstances() error: " + ex.getMessage(), ex, InstanceBrowserTool.class);
-			System.err.println("InstanceBrowserTool.listInstances() error: " + ex.getMessage());
 			Map<String, Object> args = new HashMap<>();
 			args.put("moduleName", moduleName);
 			args.put("typeName", typeName);
@@ -350,7 +349,6 @@ public class InstanceBrowserTool {
 
 		} catch (Exception ex) {
 			Logger.error("getInstance() error: " + ex.getMessage(), ex, InstanceBrowserTool.class);
-			System.err.println("InstanceBrowserTool.getInstance() error: " + ex.getMessage());
 			Map<String, Object> args = new HashMap<>();
 			args.put("tid", tid);
 			return DataClassSerializer.errorToJson(

@@ -158,7 +158,6 @@ public class AnnotationDefinitionExplorerTool {
 		} catch (Exception ex) {
 			Logger.error("describeAnnotation() error: " + ex.getMessage(), ex,
 				AnnotationDefinitionExplorerTool.class);
-			System.err.println("AnnotationDefinitionExplorerTool.describeAnnotation() error: " + ex.getMessage());
 			Map<String, Object> args = new HashMap<>();
 			args.put("configInterfaceName", configInterfaceName);
 			return DataClassSerializer.errorToJson(

@@ -212,7 +212,6 @@ public class ModelAnnotationBrowserTool {
 
 		} catch (Exception ex) {
 			Logger.error("getCurrentAnnotations() error: " + ex.getMessage(), ex, ModelAnnotationBrowserTool.class);
-			System.err.println("ModelAnnotationBrowserTool.getCurrentAnnotations() error: " + ex.getMessage());
 			Map<String, Object> args = new HashMap<>();
 			args.put("targetRef", targetRef);
 			args.put("includeInherited", includeInherited);

@@ -187,7 +187,7 @@ public class ChatProcessor {
 			}
 
 		} catch (Exception ex) {
-			taskTracker.failTask(taskId, ex.getMessage());
+			taskTracker.failTask(taskId, formatErrorMessage(ex));
 			throw ex;
 		} finally {
 			ToolCallTracking.setTracker(null);
@@ -284,7 +284,7 @@ public class ChatProcessor {
 						ChatTask task = taskTracker.getTask(currentTaskId);
 						chat.addTaskSnapshot(task);
 					}
-					String errorMsg = "Error: " + error.getMessage();
+					String errorMsg = "Error: " + formatErrorMessage(error);
 					if (error instanceof InterruptedException) {
 						errorMsg = "Processing was cancelled";
 					}
@@ -447,6 +447,15 @@ public class ChatProcessor {
 	 * types produce a placeholder {@link TextContent}.
 	 * </p>
 	 */
+	/** Returns a human-readable error description, never null. */
+	static String formatErrorMessage(Throwable error) {
+		String msg = error.getMessage();
+		if (msg != null && !msg.isEmpty()) {
+			return msg;
+		}
+		return error.getClass().getSimpleName();
+	}
+
 	private static Content toContent(AttachmentDto att) {
 		String mimeType = att.getMimeType();
 		String base64 = att.getBase64Data();

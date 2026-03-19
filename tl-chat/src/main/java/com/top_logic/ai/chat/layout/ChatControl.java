@@ -491,7 +491,8 @@ public class ChatControl extends AbstractControlBase {
 				out.beginBeginTag(DIV);
 				out.writeAttribute(CLASS_ATTR, "chat-task-error");
 				out.endBeginTag();
-				out.writeText("Error: " + task.getErrorMessage());
+				String errText = task.getErrorMessage();
+				out.writeText("Error: " + (errText != null && !errText.isEmpty() ? errText : "An unexpected error occurred"));
 				out.endTag(DIV);
 			}
 		}

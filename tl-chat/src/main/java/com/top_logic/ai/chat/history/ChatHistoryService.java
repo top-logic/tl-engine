@@ -153,7 +153,6 @@ public class ChatHistoryService {
 			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 			try (Transaction tx = kb.beginTransaction(ResKey.text("Update chat session title"))) {
 				session.tUpdateByName(ATTR_TITLE, newTitle);
-				session.tUpdateByName(ATTR_LAST_UPDATED, new Date());
 				tx.commit();
 			} catch (Exception ex) {
 				Logger.error("Failed to update chat session title: " + ex.getMessage(), ex,
@@ -175,10 +174,32 @@ public class ChatHistoryService {
 			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 			try (Transaction tx = kb.beginTransaction(ResKey.text("Save chat messages"))) {
 				session.tUpdateByName(ATTR_MESSAGES, messagesJson);
-				session.tUpdateByName(ATTR_LAST_UPDATED, new Date());
 				tx.commit();
 			} catch (Exception ex) {
 				Logger.error("Failed to save chat messages: " + ex.getMessage(), ex, ChatHistoryService.class);
+			}
+		});
+	}
+
+	/**
+	 * Updates the <code>lastUpdated</code> timestamp of a chat session to the current time.
+	 *
+	 * <p>
+	 * Call this after new messages have been added to the session (e.g. after AI response or
+	 * explicit user save), but not when merely persisting on session switch.
+	 * </p>
+	 *
+	 * @param session
+	 *        the session object.
+	 */
+	public static void touchLastUpdated(TLObject session) {
+		ThreadContextManager.inSystemInteraction(ChatHistoryService.class, () -> {
+			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+			try (Transaction tx = kb.beginTransaction(ResKey.text("Touch chat session timestamp"))) {
+				session.tUpdateByName(ATTR_LAST_UPDATED, new Date());
+				tx.commit();
+			} catch (Exception ex) {
+				Logger.error("Failed to update lastUpdated: " + ex.getMessage(), ex, ChatHistoryService.class);
 			}
 		});
 	}

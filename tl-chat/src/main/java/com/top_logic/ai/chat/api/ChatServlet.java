@@ -497,6 +497,7 @@ public class ChatServlet extends HttpServlet {
 			TLObject session = ChatHistoryService.findSessionById(sessionId);
 			if (session != null && ChatHistoryService.isOwnedBy(session, person)) {
 				ChatHistoryService.saveMessages(session, messagesJson);
+				ChatHistoryService.touchLastUpdated(session);
 				resp.setStatus(HttpServletResponse.SC_OK);
 			} else {
 				resp.setStatus(HttpServletResponse.SC_NOT_FOUND);

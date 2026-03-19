@@ -430,6 +430,7 @@ public class ChatProcessor {
 				if (session != null) {
 					String json = DtoMapper.serializeEntries(chat.getEntries());
 					ChatHistoryService.saveMessages(session, json);
+					ChatHistoryService.touchLastUpdated(session);
 				}
 				return null;
 			});

@@ -1047,6 +1047,8 @@
 /* History list */
 .chat-history-list {
     flex: 1;
+    min-height: 0;
+    max-height: 75vh;
     overflow-y: auto;
     overflow-x: hidden;
     padding: 0;
@@ -1067,12 +1069,24 @@
 /* History items */
 .chat-history-item {
     display: flex;
-    align-items: center;
-    gap: 4px;
-    padding: 8px 12px;
+    flex-direction: column;
+    padding: 6px 12px;
     cursor: pointer;
     border-left: 3px solid transparent;
     transition: background 0.1s, border-color 0.1s;
+}
+
+.chat-history-title-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.chat-history-time {
+    font-size: 0.65em;
+    color: var(--chat-text-muted);
+    padding-left: 4px;
+    line-height: 1;
 }
 
 .chat-history-item:hover {
@@ -1094,11 +1108,44 @@
     outline: none;
     border-radius: 4px;
     padding: 2px 4px;
+    cursor: default;
 }
 
-.chat-history-title:focus {
+.chat-history-title.editing {
     background: var(--chat-bg);
     box-shadow: 0 0 0 1px var(--chat-accent);
+    cursor: text;
+}
+
+.chat-history-edit-btn {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: transparent;
+    color: var(--chat-text-muted);
+    font-size: 0.85em;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.1s, background 0.1s, color 0.1s;
+}
+
+.chat-history-item:hover .chat-history-edit-btn {
+    opacity: 1;
+}
+
+.chat-history-edit-btn.editing {
+    opacity: 1;
+    color: var(--chat-accent);
+}
+
+.chat-history-edit-btn:hover {
+    background: var(--chat-bg);
+    color: var(--chat-accent);
 }
 
 .chat-history-delete-btn {

@@ -24,7 +24,7 @@ import com.top_logic.basic.module.ModuleException;
 import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.ConnectionPoolRegistry;
 import com.top_logic.basic.sql.PooledConnection;
-import com.top_logic.basic.util.Base32;
+import com.top_logic.basic.util.EncodeTypable;
 import com.top_logic.basic.util.Computation;
 import com.top_logic.basic.util.DBOperation;
 import com.top_logic.basic.version.Version;
@@ -71,7 +71,7 @@ public class ApplicationPasswordUtil {
 	public static boolean checkApplicationKey(String applicationName, String applicationKey) {
 		byte[] keyBytes;
 		try {
-			keyBytes = Base32.decodeBase32(applicationKey.replaceAll("[-\\s]", "").toCharArray());
+			keyBytes = EncodeTypable.decodeBase32(applicationKey.replaceAll("[-\\s]", "").toCharArray());
 		} catch (IllegalArgumentException ex) {
 			return false;
 		}

@@ -116,8 +116,9 @@ do_start() {
     else
         port=$(pick_free_port) || exit 1
     fi
-    local log="$APP_MODULE/tmp/tl-app.log"
     mkdir -p "$APP_MODULE/tmp"
+    local log
+    log="$(cd "$APP_MODULE/tmp" && pwd)/tl-app.log"
 
     export tl_initial_password='root1234'
 
@@ -140,6 +141,20 @@ do_start() {
             echo "Log: $log" >&2
             grep -A 20 "BUILD FAILURE" "$log" >&2 2>/dev/null || true
             kill "$mvn_pid" 2>/dev/null || true
+            exit 1
+        fi
+
+        # Check for application startup failure.
+        if grep -q "System startup failed" "$log" 2>/dev/null; then
+            echo "Error: Application startup failed." >&2
+            echo "Log: $log" >&2
+            # Extract the failure reason block: from "System startup failed." until
+            # the next blank line after the stack trace ends, or until a dated log
+            # line resumes (whichever comes first).
+            sed -n '/^System startup failed/,/^[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}[T ]/{ /^[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}[T ]/!p; }' "$log" >&2 2>/dev/null || true
+            # Stop the server (Jetty is still running).
+            local stop_url="http://localhost:${port}/admin/stop"
+            curl -sf "$stop_url" > /dev/null 2>&1 || true
             exit 1
         fi
 

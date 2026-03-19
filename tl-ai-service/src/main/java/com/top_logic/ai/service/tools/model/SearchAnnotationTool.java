@@ -175,8 +175,6 @@ public class SearchAnnotationTool {
 						results.add(result);
 					}
 
-					results.sort((r1, r2) -> r1.getTagName().compareToIgnoreCase(r2.getTagName()));
-
 					AnnotationSearchResponse resp = AnnotationSearchResponse.create();
 					resp.setTotalMatches(results.size());
 					resp.setTargetRef(targetRef);
@@ -297,8 +295,6 @@ public class SearchAnnotationTool {
 				continue;
 			}
 
-			options.sort((o1, o2) -> o1.getTagName().compareToIgnoreCase(o2.getTagName()));
-
 			AnnotationPropertyInfo info = AnnotationPropertyInfo.create();
 			info.setName(property.getPropertyName());
 			info.setRequired(property.isMandatory());
@@ -385,7 +381,6 @@ public class SearchAnnotationTool {
 			}
 		}
 
-		options.sort((o1, o2) -> o1.getTagName().compareToIgnoreCase(o2.getTagName()));
 		return options;
 	}
 

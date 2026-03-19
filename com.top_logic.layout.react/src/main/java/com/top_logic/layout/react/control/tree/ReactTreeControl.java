@@ -222,6 +222,19 @@ public class ReactTreeControl extends ReactControl {
 		_dropTargets.add(target);
 	}
 
+	/**
+	 * Invalidates the node control cache and rebuilds the full state.
+	 *
+	 * <p>
+	 * Called by external observers (e.g. {@link com.top_logic.layout.view.model.ObservableTreeModel})
+	 * when the underlying data has changed and node content controls need to be recreated.
+	 * </p>
+	 */
+	public void refreshState() {
+		cleanupNodeControls();
+		buildFullState();
+	}
+
 	// -- Rendering --
 
 	@Override

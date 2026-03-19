@@ -46,6 +46,7 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassProperty;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
+import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLModule;
@@ -1989,6 +1990,11 @@ public class ModelEditorTool {
 	private void checkTypeUsage(TLModel model, TLType type, List<DeletionBlocker> blockers) {
 		Collection<TLStructuredTypePart> usages = TLModelUtil.getUsage(model, type);
 		for (TLStructuredTypePart usage : usages) {
+			// Skip internal association types (e.g. Task$priority) — they are
+			// implementation details managed by the framework, not user-visible dependencies.
+			if (usage.getOwner().getModelKind() == ModelKind.ASSOCIATION) {
+				continue;
+			}
 			String ownerQName = usage.getOwner().getModule().getName() + ":" + usage.getOwner().getName();
 			DeletionBlocker blocker = DeletionBlocker.create();
 			blocker.setReason("USED_BY_TYPEPART");
@@ -2001,6 +2007,9 @@ public class ModelEditorTool {
 			List<DeletionBlocker> blockers) {
 		Collection<TLStructuredTypePart> usages = TLModelUtil.getUsage(model, type);
 		for (TLStructuredTypePart usage : usages) {
+			if (usage.getOwner().getModelKind() == ModelKind.ASSOCIATION) {
+				continue;
+			}
 			if (usage.getOwner().getModule() != excludeModule) {
 				String ownerQName = usage.getOwner().getModule().getName() + ":" + usage.getOwner().getName();
 				DeletionBlocker blocker = DeletionBlocker.create();

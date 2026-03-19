@@ -1356,7 +1356,7 @@ message AnnotationSearchResponse {
 	int totalMatches;
 
 	/**
-	 * List of available annotation types, sorted alphabetically.
+	 * List of available annotation types.
 	 */
 	repeated AnnotationSearchResult results;
 }

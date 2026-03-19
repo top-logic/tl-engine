@@ -105,7 +105,7 @@ public class AnnotationSearchResponse extends de.haumacher.msgbuf.data.AbstractD
 	}
 
 	/**
-	 * List of available annotation types, sorted alphabetically.
+	 * List of available annotation types.
 	 */
 	public final java.util.List<com.top_logic.ai.service.tools.model.messages.AnnotationSearchResult> getResults() {
 		return _results;

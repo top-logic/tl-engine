@@ -90,7 +90,7 @@ public class SearchAnnotationTool {
 	 *
 	 * <p>
 	 * Returns all {@link InApp @InApp} annotation types applicable to the target, filtered by
-	 * marker interface and {@link TLTypeKind}. Results are sorted alphabetically by tag name.
+	 * marker interface and {@link TLTypeKind}.
 	 * </p>
 	 *
 	 * @param targetRef

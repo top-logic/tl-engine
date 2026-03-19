@@ -12,13 +12,18 @@ import java.util.Arrays;
  * application license key.
  * 
  * <p>
+ * The encoding is similar to Base32, but uses a different character set than the one defined in RFC
+ * 3548 / RFC 4648. Furthermore, no padding is used.
+ * </p>
+ * 
+ * <p>
  * The generated serialization is case insensitive and does not use letters with ambiguous images
  * (like 'O' and '0', or 'I' and '1').
  * </p>
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class Base32 {
+public class EncodeTypable {
 
 	private static final int BITS_PER_BYTE = 8;
 
@@ -90,7 +95,7 @@ public class Base32 {
 	 * 
 	 * @throws IllegalArgumentException
 	 *         If the input contains invalid characters or is otherwise not well-formed according to
-	 *         the {@link Base32} format.
+	 *         the {@link EncodeTypable} format.
 	 */
 	public static byte[] decodeBase32(char[] encoded) throws IllegalArgumentException {
 		int encodedLength = encoded.length;

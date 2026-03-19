@@ -1267,7 +1267,7 @@ message EnumResponse {
 message ImplementationOption {
 
 	/**
-	 * XML tag name from @TagName annotation.
+	 * XML tag name from {@code @TagName} annotation.
 	 */
 	string tagName;
 
@@ -1314,7 +1314,7 @@ message AnnotationPropertyInfo {
 message AnnotationSearchResult {
 
 	/**
-	 * XML tag name from @TagName annotation.
+	 * XML tag name from {@code @TagName} annotation.
 	 */
 	string tagName;
 

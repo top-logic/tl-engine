@@ -40,7 +40,7 @@ public class ImplementationOption extends de.haumacher.msgbuf.data.AbstractDataO
 	}
 
 	/**
-	 * XML tag name from @TagName annotation.
+	 * XML tag name from {@code @TagName} annotation.
 	 */
 	public final String getTagName() {
 		return _tagName;

@@ -142,19 +142,14 @@ public class ObservableTableModel implements ModelListener, ViewChannel.ChannelL
 	// --- ModelListener ---
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public void notifyChange(ModelChangeEvent event) {
-		boolean hasDeletes = handleDeletes(event);
-		boolean hasUpdates = hasUpdatesForCurrentRows(event);
-		boolean hasCreates = hasRelevantCreates(event);
-
-		if (hasUpdates || hasCreates) {
-			// Re-evaluate row function and update inner model. This fires INVALIDATE
-			// via setRowObjects(), causing ReactTableControl.buildFullState().
-			reEvaluateRows();
-		}
+		handleDeletes(event);
+		handleUpdates(event);
+		handleCreates(event);
 	}
 
-	private boolean handleDeletes(ModelChangeEvent event) {
+	private void handleDeletes(ModelChangeEvent event) {
 		List<TLObject> toRemove = new ArrayList<>();
 		event.getDeleted().forEach(obj -> {
 			ObjectKey key = key(obj);
@@ -167,14 +162,26 @@ public class ObservableTableModel implements ModelListener, ViewChannel.ChannelL
 		for (TLObject obj : toRemove) {
 			_inner.removeRowObject(obj);
 		}
-		return !toRemove.isEmpty();
 	}
 
-	private boolean hasUpdatesForCurrentRows(ModelChangeEvent event) {
-		return event.getUpdated().anyMatch(obj -> {
+	@SuppressWarnings("unchecked")
+	private void handleUpdates(ModelChangeEvent event) {
+		List<?> allRows = new ArrayList<>((Collection<Object>) _inner.getAllRows());
+		event.getUpdated().forEach(obj -> {
 			ObjectKey key = key(obj);
-			return key != null && _observedKeys.contains(key);
+			if (key != null && _observedKeys.contains(key)) {
+				int index = indexOfKey(allRows, key);
+				if (index >= 0) {
+					_inner.updateRows(index, index);
+				}
+			}
 		});
+	}
+
+	private void handleCreates(ModelChangeEvent event) {
+		if (hasRelevantCreates(event)) {
+			reEvaluateRows();
+		}
 	}
 
 	private boolean hasRelevantCreates(ModelChangeEvent event) {
@@ -264,6 +271,16 @@ public class ObservableTableModel implements ModelListener, ViewChannel.ChannelL
 			values[i] = _inputChannels.get(i).get();
 		}
 		return values;
+	}
+
+	private static int indexOfKey(List<?> rows, ObjectKey key) {
+		for (int i = 0; i < rows.size(); i++) {
+			Object row = rows.get(i);
+			if (row instanceof TLObject tlObj && key.equals(key(tlObj))) {
+				return i;
+			}
+		}
+		return -1;
 	}
 
 	private static ObjectKey key(TLObject obj) {

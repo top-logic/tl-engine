@@ -153,4 +153,9 @@ public class DefaultViewContext implements ViewContext {
 	public ReactWindowRegistry getWindowRegistry() {
 		return _reactContext.getWindowRegistry();
 	}
+
+	@Override
+	public com.top_logic.model.listen.ModelScope getModelScope() {
+		return _reactContext.getModelScope();
+	}
 }

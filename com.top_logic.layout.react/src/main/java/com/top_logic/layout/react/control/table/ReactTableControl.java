@@ -321,9 +321,11 @@ public class ReactTableControl extends ReactControl {
 			case TableModelEvent.INSERT:
 			case TableModelEvent.DELETE:
 			case TableModelEvent.INVALIDATE:
+				clearCellCache();
 				buildFullState();
 				break;
 			case TableModelEvent.UPDATE:
+				clearCellCacheForRows(event.getFirstRow(), event.getLastRow());
 				updateViewport(_viewportStart, _viewportCount);
 				break;
 			default:
@@ -522,6 +524,28 @@ public class ReactTableControl extends ReactControl {
 			cells.put(col.getName(), cellControl);
 		}
 		return cells;
+	}
+
+	private void clearCellCache() {
+		for (Map<String, ReactControl> cells : _rowCellCache.values()) {
+			for (ReactControl cell : cells.values()) {
+				unregisterChildControl(cell);
+			}
+		}
+		_rowCellCache.clear();
+	}
+
+	private void clearCellCacheForRows(int firstRow, int lastRow) {
+		List<?> displayedRows = getDisplayedRows();
+		for (int i = firstRow; i <= lastRow && i < displayedRows.size(); i++) {
+			Object rowObject = displayedRows.get(i);
+			Map<String, ReactControl> cells = _rowCellCache.remove(rowObject);
+			if (cells != null) {
+				for (ReactControl cell : cells.values()) {
+					unregisterChildControl(cell);
+				}
+			}
+		}
 	}
 
 	@Override

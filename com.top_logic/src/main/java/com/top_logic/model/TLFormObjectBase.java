@@ -6,6 +6,8 @@
 package com.top_logic.model;
 
 import com.top_logic.layout.form.FormMember;
+import com.top_logic.model.form.ConstraintValidationListener;
+import com.top_logic.model.form.ValidationResult;
 
 /**
  * Transient {@link TLObject} that represents an object being edited or created in a form.
@@ -70,5 +72,43 @@ public interface TLFormObjectBase extends TLObject {
 	 * {@link TLStructuredTypePart} of this {@link TLObject}.
 	 */
 	Object defaultValue(TLStructuredTypePart part);
+
+	/**
+	 * The validation result for the given attribute.
+	 *
+	 * @param attribute
+	 *        The attribute to get validation for.
+	 * @return The validation result, or {@link ValidationResult#VALID} if no validation has been
+	 *         set.
+	 */
+	default ValidationResult getValidation(TLStructuredTypePart attribute) {
+		return ValidationResult.VALID;
+	}
+
+	/**
+	 * Sets the validation result for the given attribute.
+	 *
+	 * @param attribute
+	 *        The attribute whose validation changed.
+	 * @param result
+	 *        The new validation result.
+	 */
+	default void setValidation(TLStructuredTypePart attribute, ValidationResult result) {
+		// Default no-op, overridden in implementations that support validation.
+	}
+
+	/**
+	 * Adds a listener for validation state changes.
+	 */
+	default void addConstraintValidationListener(ConstraintValidationListener listener) {
+		// Default no-op, overridden in implementations that support validation.
+	}
+
+	/**
+	 * Removes a previously added validation listener.
+	 */
+	default void removeConstraintValidationListener(ConstraintValidationListener listener) {
+		// Default no-op, overridden in implementations that support validation.
+	}
 
 }

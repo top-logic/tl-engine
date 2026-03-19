@@ -42,9 +42,11 @@ import com.top_logic.model.listen.ModelScope;
  * {@link ReactTreeControl#setTreeModel(com.top_logic.layout.tree.model.TreeUIModel)} on the control,
  * and re-registers object listeners.</li>
  * <li><b>ModelScope event</b> (object changes): Removes nodes whose business objects were deleted
- * directly from the tree model, invalidates individual node controls for updates via
- * {@link ReactTreeControl#invalidateNode(Object)}, and rebuilds the full tree for creates of
- * observed types.</li>
+ * directly from the tree model, invalidates individual node content controls for updates via
+ * {@link ReactTreeControl#invalidateNodeControl(Object)}, and rebuilds the full tree for creates
+ * of observed types. After cache invalidation, a single
+ * {@link ReactTreeControl#updateVisibleState()} call rebuilds the visible node state, reusing
+ * all unaffected cached controls.</li>
  * </ol>
  *
  * <h3>Lifecycle:</h3>
@@ -177,22 +179,32 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 			}
 		}
 		if (anyRemoved) {
-			// Structure changed: node list is different, rebuild visible state.
-			_treeControl.invalidateAll();
+			// Rebuild visible state. Controls for removed nodes are cleaned up
+			// automatically by buildFullState() since they no longer appear in the tree.
+			_treeControl.updateVisibleState();
 		}
 	}
 
 	private void handleUpdates(ModelChangeEvent event) {
+		boolean anyUpdated = false;
+		List<DefaultTreeUINode> updatedNodes = new ArrayList<>();
 		event.getUpdated().forEach(obj -> {
 			ObjectKey key = key(obj);
 			if (key != null && _observedKeys.contains(key)) {
-				// Find the tree node for this business object and invalidate only its control.
 				DefaultTreeUINode node = findNode(_treeModel.getRoot(), obj);
 				if (node != null) {
-					_treeControl.invalidateNode(node);
+					updatedNodes.add(node);
 				}
 			}
 		});
+		if (updatedNodes.isEmpty()) {
+			return;
+		}
+		// Invalidate only the changed nodes' controls, then rebuild state once.
+		for (DefaultTreeUINode node : updatedNodes) {
+			_treeControl.invalidateNodeControl(node);
+		}
+		_treeControl.updateVisibleState();
 	}
 
 	private void handleCreates(ModelChangeEvent event) {

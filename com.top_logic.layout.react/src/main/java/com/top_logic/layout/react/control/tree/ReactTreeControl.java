@@ -223,34 +223,33 @@ public class ReactTreeControl extends ReactControl {
 	}
 
 	/**
-	 * Invalidates the content control for the given node and rebuilds the full state.
+	 * Removes the cached content control for the given node.
 	 *
 	 * <p>
-	 * Called when a single node's business object has changed. Only the affected node's control
-	 * is recreated; all other cached controls are reused.
+	 * The next {@link #updateVisibleState()} call will recreate the control with current data.
+	 * All other cached controls remain untouched.
 	 * </p>
 	 *
 	 * @param node
-	 *        The tree node whose content has changed.
+	 *        The tree node whose content control should be invalidated.
 	 */
-	public void invalidateNode(Object node) {
+	public void invalidateNodeControl(Object node) {
 		ReactControl control = _nodeControlCache.remove(node);
 		if (control != null) {
 			unregisterChildControl(control);
 		}
-		buildFullState();
 	}
 
 	/**
-	 * Invalidates all node content controls and rebuilds the full state.
+	 * Rebuilds the visible node state from the current tree model.
 	 *
 	 * <p>
-	 * Called when the tree structure has changed (nodes added/removed) and the
-	 * entire visible node list needs to be recomputed.
+	 * Reuses cached content controls where available. Controls for nodes that are no longer
+	 * visible (e.g. deleted or collapsed) are automatically removed from the cache. Controls
+	 * that were previously invalidated via {@link #invalidateNodeControl(Object)} are recreated.
 	 * </p>
 	 */
-	public void invalidateAll() {
-		cleanupNodeControls();
+	public void updateVisibleState() {
 		buildFullState();
 	}
 

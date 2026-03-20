@@ -82,6 +82,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 INVALID_SINGLETON__NAME;
 
+	/**
+	 * @en There are two rules with the same id: {0}
+	 */
+	public static ResKey1 ERROR_DUPLICATE_RULE_ID__ID;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

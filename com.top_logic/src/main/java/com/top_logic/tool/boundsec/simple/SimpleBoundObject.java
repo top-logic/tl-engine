@@ -137,8 +137,7 @@ public class SimpleBoundObject extends TransientObject implements BoundObject {
 			result = rolesForPersons.get(aPerson);
         }
         if (0 != (flags & BoundHelper.INHERIT_ROLES)) {
-			BoundObject myParent = getSecurityParent();
-			if (myParent != null) {
+			for (BoundObject myParent : getSecurityParents()) {
 				result = BoundHelper.merge(result, myParent.getRoles(aPerson));
             }
         }
@@ -167,8 +166,7 @@ public class SimpleBoundObject extends TransientObject implements BoundObject {
 			coll = rolesForPersons.get(aPerson);
 		}
 		if (0 != (flags & BoundHelper.INHERIT_ROLES)) {
-			BoundObject myParent = getSecurityParent();
-			if (myParent != null) {
+			for (BoundObject myParent : getSecurityParents()) {
 				coll = BoundHelper.merge(coll, myParent.getRoles(aPerson));
 			}
 		}
@@ -225,13 +223,14 @@ public class SimpleBoundObject extends TransientObject implements BoundObject {
 				result.addAll(allRoles.next());
             }
         }
-        if (0 != (flags & BoundHelper.INHERIT_ROLES)) {
-			BoundObject myParent = getSecurityParent();
-			if (myParent != null) {
-				return BoundHelper.merge(result, myParent.getRoles());
-            }
+		if (0 == (flags & BoundHelper.INHERIT_ROLES)) {
+			return result;
+		}
+		Set<? extends BoundRole> mergedResult = result;
+		for (BoundObject myParent : getSecurityParents()) {
+			mergedResult = BoundHelper.merge(mergedResult, myParent.getRoles());
         }
-        return result;
+		return mergedResult;
 	}
     
     @Override
@@ -265,8 +264,7 @@ public class SimpleBoundObject extends TransientObject implements BoundObject {
 			result = rolesForPersons.get(aGroup);
         }
         if (0 != (flags & BoundHelper.INHERIT_ROLES)) {
-			BoundObject myParent = getSecurityParent();
-			if (myParent != null) {
+			for (BoundObject myParent : getSecurityParents()) {
 				result = BoundHelper.merge(result, myParent.getRoles(aGroup));
             }
         }

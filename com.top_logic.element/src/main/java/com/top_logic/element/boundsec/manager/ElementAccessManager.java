@@ -557,13 +557,17 @@ public class ElementAccessManager extends AccessManager {
 	public Set<? extends BoundRole> getRoles(Person aPerson, BoundObject context) {
 		Set<BoundRole> result = new HashSet<>(super.getRoles(aPerson, context));
         Collection<Group> theGroups = getGroups(aPerson);
-		while (context != null) {
-			addRoleProviderRoles(getRules((TLClass) context.tType()), theGroups, context, result);
-            
-			context = context.getSecurityParent();
-        }
+		if (context != null) {
+			addRoleProviderRoles(theGroups, context, result);
+			BoundHelper.collectAllSecurityParents(context,
+				secParent -> addRoleProviderRoles(theGroups, secParent, result));
+		}
 		return result;
     }
+
+	private void addRoleProviderRoles(Collection<Group> groups, BoundObject context, Set<BoundRole> result) {
+		addRoleProviderRoles(getRules((TLClass) context.tType()), groups, context, result);
+	}
 
     public Collection<Group> getGroups(BoundObject aBO, BoundRole aRole) {
 		Object getGroupCacheKey;

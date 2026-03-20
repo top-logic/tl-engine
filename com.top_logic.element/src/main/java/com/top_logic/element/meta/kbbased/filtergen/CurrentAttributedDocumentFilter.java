@@ -5,6 +5,8 @@
  */
 package com.top_logic.element.meta.kbbased.filtergen;
 
+import java.util.Collection;
+
 import com.top_logic.basic.Logger;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.knowledge.wrap.Document;
@@ -36,13 +38,13 @@ public class CurrentAttributedDocumentFilter extends AbstractAttributedValueFilt
 		try {
 			WebFolder theFolder = WebFolder.getWebFolder(((Document) anObject));
 			if (theFolder != null) { // nobody knows...
-				BoundObject theSec = theFolder.getSecurityParent();
+				Collection<? extends BoundObject> theSec = theFolder.getSecurityParents();
 				TLObject object = editContext.getObject();
-				if (theSec == null) {
+				if (theSec.isEmpty()) {
 					return object == null;
 				}
 				
-				return theSec.equals(object); // == should do as these should be Wrappers...
+				return theSec.contains(object); // == should do as these should be Wrappers...
 												// Anyway...
 			}
 		}

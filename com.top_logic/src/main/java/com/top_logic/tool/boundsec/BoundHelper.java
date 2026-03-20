@@ -17,6 +17,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
@@ -25,6 +27,7 @@ import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.Location;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.shared.collection.CollectionUtilShared;
@@ -96,6 +99,7 @@ public class BoundHelper extends ManagedClass {
 		 * @see BoundHelper#useDefaultObject()
 		 */
 		@Name("use-default-security-parent")
+		@BooleanDefault(true)
 		boolean getUseDefaultSecurityParent();
 
 	}
@@ -950,6 +954,63 @@ public class BoundHelper extends ManagedClass {
     public boolean isAllowExecuteDisabledButtons() {
         return this.allowExecuteDisabledButtons;
     }
+
+	/**
+	 * Visits all all security parents (recursively) of the given object and consumes them. No
+	 * parent is visited twice. The parents are visited in breadth first order.
+	 * 
+	 * @param object
+	 *        The object whose security parents must be visited.
+	 * @param consumer
+	 *        {@link Consumer} to apply to the security parent.
+	 * 
+	 * @see #visitAllSecurityParents(BoundObject, Function)
+	 */
+	public static void collectAllSecurityParents(BoundObject object, Consumer<BoundObject> consumer) {
+		visitAllSecurityParents(object, secParent -> {
+			consumer.accept(secParent);
+			return true;
+		});
+	}
+
+	/**
+	 * Visits all all security parents (recursively) of the given object and applies the given
+	 * function. No parent is visited twice. The parents are visited in breadth first order.
+	 * 
+	 * @param object
+	 *        The object whose security parents must be visited.
+	 * @param fun
+	 *        {@link Function} to apply to the security parent. The return value decides whether
+	 *        traversing is continued. If <code>true</code> then the function is applied to the next
+	 *        parent, <code>false</code> ends the traversing.
+	 * 
+	 * @see #collectAllSecurityParents(BoundObject, Consumer)
+	 */
+	public static void visitAllSecurityParents(BoundObject object, Function<BoundObject, Boolean> fun) {
+		Collection<? extends BoundObject> securityParents = object.getSecurityParents();
+		if (securityParents.isEmpty()) {
+			return;
+		}
+		HashSet<BoundObject> seen = new HashSet<>();
+		List<BoundObject> toProcess = new ArrayList<>(securityParents);
+		List<BoundObject> parents = new ArrayList<>();
+		mainLoop:
+		while (!toProcess.isEmpty()) {
+			for (BoundObject parent : toProcess) {
+				boolean isNew = seen.add(parent);
+				if (isNew) {
+					if (!fun.apply(parent)) {
+						break mainLoop;
+					}
+					parents.addAll(parent.getSecurityParents());
+				}
+			}
+			List<BoundObject> l = toProcess;
+			toProcess = parents;
+			parents = l;
+			parents.clear();
+		}
+	}
 
 	public static final class Module extends TypedRuntimeModule<BoundHelper> {
 

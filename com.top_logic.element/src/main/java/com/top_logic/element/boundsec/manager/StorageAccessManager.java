@@ -35,6 +35,7 @@ import com.top_logic.knowledge.service.StorageException;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.cs.TLObjectChangeSet;
+import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.wrap.Group;
@@ -264,10 +265,8 @@ public class StorageAccessManager extends ElementAccessManager {
 	protected List<TLID> getSecurityParentIDs(Collection<? extends BoundObject> businessObjects) {
 		List<TLID> resultIdList = new ArrayList<>();
 		for (BoundObject bo : businessObjects) {
-			while (bo != null) {
-				resultIdList.add(bo.getID());
-				bo = bo.getSecurityParent();
-    		}
+			resultIdList.add(bo.getID());
+			BoundHelper.collectAllSecurityParents(bo, parent -> resultIdList.add(parent.getID()));
     	}
 		return resultIdList;
     }

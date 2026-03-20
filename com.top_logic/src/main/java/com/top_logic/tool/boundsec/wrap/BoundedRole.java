@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang3.mutable.MutableBoolean;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.ConfigurationError;
@@ -51,6 +53,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLType;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
 
@@ -580,15 +583,16 @@ public class BoundedRole extends AbstractBoundWrapper implements BoundRole {
 		}
 		if (context instanceof BoundObject) {
 			BoundObject ancestor = (BoundObject) context;
-			while (ancestor != null) {
-				BoundObject parent = ancestor.getSecurityParent();
-				if (parent != null) {
-					if (BoundedRole.hasLocalRole(parent, owner)) {
-						return true;
-					}
+			MutableBoolean result = new MutableBoolean(false);
+			BoundHelper.visitAllSecurityParents(ancestor, secParent -> {
+				if (BoundedRole.hasLocalRole(secParent, owner)) {
+					result.setTrue();
+					return false;
+				} else {
+					return true;
 				}
-				ancestor = parent;
-			}
+			});
+			return result.booleanValue();
 		}
 		return false;
 	}
@@ -601,16 +605,11 @@ public class BoundedRole extends AbstractBoundWrapper implements BoundRole {
 
 	private static void addRoles(Set<BoundRole> result, TLObject context, Group owner) {
 		BoundedRole.addLocalRoles(result, context, owner);
-		if (context instanceof BoundObject) {
-			BoundObject ancestor = (BoundObject) context;
-			while (ancestor != null) {
-				BoundObject parent = ancestor.getSecurityParent();
-				if (parent != null) {
-					BoundedRole.addLocalRoles(result, parent, owner);
-				}
-				ancestor = parent;
-			}
+		if (!(context instanceof BoundObject)) {
+			return;
 		}
+		BoundHelper.collectAllSecurityParents((BoundObject) context,
+			secParent -> BoundedRole.addLocalRoles(result, secParent, owner));
 	}
 
 	private static void addLocalRoles(Collection<BoundRole> result, TLObject context, Group owner) {

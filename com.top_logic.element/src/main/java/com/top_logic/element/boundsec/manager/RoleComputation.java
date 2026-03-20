@@ -15,6 +15,7 @@ import com.top_logic.basic.TLID;
 import com.top_logic.knowledge.security.SecurityStorage;
 import com.top_logic.knowledge.service.StorageException;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
@@ -117,13 +118,17 @@ public abstract class RoleComputation {
 		}
 		Collection<?> checkIDs = CollectionUtil.toContainsChecker(someObjects.size(), allowedObjectIDs);
 		for (T bo : someObjects) {
-			BoundObject potentiallyAllowedObject = bo;
-			while (potentiallyAllowedObject != null) {
-				if (checkIDs.contains(potentiallyAllowedObject.getID())) {
-					theResult.add(bo);
-					break;
-				}
-				potentiallyAllowedObject = potentiallyAllowedObject.getSecurityParent();
+			if (checkIDs.contains(bo.getID())) {
+				theResult.add(bo);
+			} else {
+				// Check securityParents
+				BoundHelper.visitAllSecurityParents(bo, secParent -> {
+					if (checkIDs.contains(secParent.getID())) {
+						theResult.add(bo);
+						return false;
+					}
+					return true;
+				});
 			}
 		}
 		return theResult;

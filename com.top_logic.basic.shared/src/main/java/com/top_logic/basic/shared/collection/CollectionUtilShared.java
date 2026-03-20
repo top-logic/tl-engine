@@ -26,6 +26,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.function.BiPredicate;
 import java.util.function.BinaryOperator;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import com.top_logic.basic.shared.collection.factory.CollectionFactoryShared;
@@ -1451,20 +1452,45 @@ public abstract class CollectionUtilShared extends CollectionFactoryShared {
 	 */
 	public static <T> List<T> topsort(Function<T, ? extends Iterable<? extends T>> dependencies, Collection<T> input,
 			boolean addDependencies) throws CyclicDependencyException {
-		Set<T> inputSet = addDependencies ? null : new HashSet<>(input);
 		List<T> result = new ArrayList<>();
+		processTopsorted(dependencies, input, addDependencies, result::add);
+		return result;
+	}
+
+	/**
+	 * Consumes the given input values topologically.
+	 * 
+	 * <p>
+	 * In topological order, a dependency is consumed before the element that depends on it.
+	 * </p>
+	 * 
+	 * @param <T>
+	 *        The type of input elements.
+	 * @param dependencies
+	 *        A function that reports dependencies for a given element.
+	 * @param input
+	 *        The elements to consume.
+	 * @param consumeDependencies
+	 *        Whether missing dependencies should be consumed.
+	 * @param consumer
+	 *        The executing consumer.
+	 * 
+	 * @throws IllegalArgumentException
+	 *         If the given graph is cyclic.
+	 */
+	public static <T> void processTopsorted(Function<T, ? extends Iterable<? extends T>> dependencies,
+			Collection<T> input, boolean consumeDependencies, Consumer<? super T> consumer) {
+		Set<T> inputSet = consumeDependencies ? null : new HashSet<>(input);
 
 		HashSet<T> seen = new HashSet<>();
 		LinkedHashSet<T> pending = new LinkedHashSet<>();
 		for (T element : input) {
-			addInTopologicalOrder(dependencies, result, seen, pending, element, inputSet, addDependencies);
+			addInTopologicalOrder(dependencies, consumer, seen, pending, element, inputSet, consumeDependencies);
 		}
-
-		return result;
 	}
 
 	private static <T> void addInTopologicalOrder(Function<T, ? extends Iterable<? extends T>> dependencies,
-			List<T> result, Set<T> seen, Set<T> pending, T element, Set<T> input, boolean addDependencies) {
+			Consumer<? super T> result, Set<T> seen, Set<T> pending, T element, Set<T> input, boolean addDependencies) {
 		if (seen.contains(element)) {
 			if (pending.contains(element)) {
 				ArrayList<T> cycle = new ArrayList<>(pending);
@@ -1481,7 +1507,7 @@ public abstract class CollectionUtilShared extends CollectionFactoryShared {
 		}
 		pending.remove(element);
 		if (addDependencies || input.contains(element)) {
-			result.add(element);
+			result.accept(element);
 		}
 	}
 

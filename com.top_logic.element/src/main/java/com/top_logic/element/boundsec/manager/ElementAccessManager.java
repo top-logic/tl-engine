@@ -440,7 +440,7 @@ public class ElementAccessManager extends AccessManager {
 			for (RoleProvider theRule : theRuleColl) {
                 String   theId   = theRule.getId();
                 if (this.ruleIds.containsKey(theId)) {
-                    throw new TopLogicException(this.getClass(), "duplicateKeyId", new String[] { theId });
+					throw new TopLogicException(I18NConstants.ERROR_DUPLICATE_RULE_ID__ID.fill(theId));
                 }
                 this.ruleIds.put(theId, theRule);
             }

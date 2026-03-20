@@ -74,6 +74,11 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("admin.security.import.roleRules.problem.unknownMetaElement")
 	public static ResKey1 UNKNOWN_META_ELEMENT;
 
+	/**
+	 * @en There are two rules with the same id: {0}
+	 */
+	public static ResKey1 ERROR_DUPLICATE_RULE_ID__ID;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

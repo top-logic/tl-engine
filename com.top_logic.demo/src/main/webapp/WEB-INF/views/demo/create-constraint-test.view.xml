@@ -21,6 +21,17 @@
 		</form>
 		<actions>
 			<button>
+				<action class="com.top_logic.layout.view.command.GenericViewCommand"
+					label="Create"
+				>
+					<read-form-object/>
+					<with-transaction>
+						<execute-script function="obj -> $obj.copy(transient: false)"/>
+					</with-transaction>
+					<close-dialog/>
+				</action>
+			</button>
+			<button>
 				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
 					label="Cancel"
 				/>

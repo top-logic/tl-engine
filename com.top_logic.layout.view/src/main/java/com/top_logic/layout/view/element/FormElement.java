@@ -73,6 +73,12 @@ public class FormElement extends ContainerElement {
 		/** Configuration name for {@link #getWithEditMode()}. */
 		String WITH_EDIT_MODE = "withEditMode";
 
+		/** Configuration name for {@link #getInitialEditMode()}. */
+		String INITIAL_EDIT_MODE = "initial-edit-mode";
+
+		/** Configuration name for {@link #getModeSwitch()}. */
+		String MODE_SWITCH = "mode-switch";
+
 		/** Configuration name for {@link #getLockHandler()}. */
 		String LOCK_HANDLER = "lockHandler";
 
@@ -127,6 +133,32 @@ public class FormElement extends ContainerElement {
 		boolean getWithEditMode();
 
 		/**
+		 * Whether the form starts in edit mode immediately.
+		 *
+		 * <p>
+		 * When {@code true}, the form enters edit mode as soon as an object is available, without
+		 * requiring the user to click an Edit button. Useful for create dialogs where the object is
+		 * always editable.
+		 * </p>
+		 */
+		@Name(INITIAL_EDIT_MODE)
+		@BooleanDefault(false)
+		boolean getInitialEditMode();
+
+		/**
+		 * Whether to show edit/save/cancel mode switching buttons.
+		 *
+		 * <p>
+		 * When {@code false}, no command models for edit, save, and cancel are created. The form
+		 * either stays in view mode or edit mode depending on {@link #getInitialEditMode()}. Useful
+		 * for create dialogs where the dialog's own buttons handle submission.
+		 * </p>
+		 */
+		@Name(MODE_SWITCH)
+		@BooleanDefault(true)
+		boolean getModeSwitch();
+
+		/**
 		 * Algorithm for edit-mode token handling.
 		 *
 		 * <p>
@@ -157,6 +189,11 @@ public class FormElement extends ContainerElement {
 	}
 
 	private LockHandler createLockHandler(InstantiationContext context, Config config) {
+		if (config.getInitialEditMode()) {
+			// No locking needed when the form starts in edit mode (e.g. create dialogs).
+			return NoTokenHandling.INSTANCE;
+		}
+
 		LockHandler result = context.getInstance(config.getLockHandler());
 		if (result != null) {
 			return result;
@@ -197,7 +234,7 @@ public class FormElement extends ContainerElement {
 		}
 
 		// 6. Create edit mode command models if configured.
-		if (_config.getWithEditMode()) {
+		if (_config.getWithEditMode() && _config.getModeSwitch()) {
 			contributeEditCommands(context, formControl);
 		}
 
@@ -214,6 +251,12 @@ public class FormElement extends ContainerElement {
 			.map(c -> (ReactControl) c)
 			.collect(Collectors.toList());
 		formControl.setChildren(reactChildren);
+
+		// 10. Auto-enter edit mode if configured (after children are set so listeners receive
+		// the formStateChanged event).
+		if (_config.getInitialEditMode()) {
+			formControl.enterEditMode();
+		}
 
 		return formControl;
 	}

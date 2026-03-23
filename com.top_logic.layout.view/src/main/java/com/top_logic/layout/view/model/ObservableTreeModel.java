@@ -17,6 +17,8 @@ import com.top_logic.layout.react.control.tree.ReactTreeControl;
 import com.top_logic.layout.tree.model.DefaultTreeUINodeModel;
 import com.top_logic.layout.tree.model.DefaultTreeUINodeModel.DefaultTreeUINode;
 import com.top_logic.layout.tree.model.TreeBuilder;
+import com.top_logic.layout.tree.model.TreeModelEvent;
+import com.top_logic.layout.tree.model.TreeModelListener;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
@@ -55,7 +57,7 @@ import com.top_logic.model.listen.ModelScope;
  * <li>{@link #detach()} - removes all listeners (called on cleanup)</li>
  * </ul>
  */
-public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelListener {
+public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelListener, TreeModelListener {
 
 	private final ReactTreeControl _treeControl;
 
@@ -119,6 +121,7 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 		_attached = true;
 		_modelScope = scope;
 
+		_treeModel.addTreeModelListener(this);
 		registerObjectListeners();
 		registerTypeListeners();
 		registerChannelListeners();
@@ -133,12 +136,52 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 		}
 		_attached = false;
 
+		_treeModel.removeTreeModelListener(this);
 		deregisterObjectListeners();
 		deregisterTypeListeners();
 		deregisterChannelListeners();
 
 		_modelScope = null;
 		_observedKeys.clear();
+	}
+
+	// --- TreeModelListener ---
+
+	@Override
+	public void handleTreeUIModelEvent(TreeModelEvent evt) {
+		if (_modelScope == null) {
+			return;
+		}
+		Object node = evt.getNode();
+		if (!(node instanceof DefaultTreeUINode treeNode)) {
+			return;
+		}
+		switch (evt.getType()) {
+			case TreeModelEvent.AFTER_NODE_ADD: {
+				// New node appeared (e.g. expansion loaded children). Register listener.
+				Object bo = treeNode.getBusinessObject();
+				if (bo instanceof TLObject tlObj) {
+					ObjectKey key = key(tlObj);
+					if (key != null && _observedKeys.add(key)) {
+						_modelScope.addModelListener(tlObj, this);
+					}
+				}
+				break;
+			}
+			case TreeModelEvent.BEFORE_NODE_REMOVE: {
+				// Node being removed. Deregister listener.
+				Object bo = treeNode.getBusinessObject();
+				if (bo instanceof TLObject tlObj) {
+					ObjectKey key = key(tlObj);
+					if (key != null && _observedKeys.remove(key)) {
+						_modelScope.removeModelListener(tlObj, this);
+					}
+				}
+				break;
+			}
+			default:
+				break;
+		}
 	}
 
 	// --- ModelListener ---
@@ -235,10 +278,12 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 	// --- Re-evaluation ---
 
 	private void reEvaluateTree() {
+		_treeModel.removeTreeModelListener(this);
 		deregisterObjectListeners();
 		Object[] channelValues = readChannelValues();
 		Object newRoot = _rootFunction.apply(channelValues);
 		_treeModel = new DefaultTreeUINodeModel(_builder, newRoot);
+		_treeModel.addTreeModelListener(this);
 		_treeControl.setTreeModel(_treeModel);
 		registerObjectListeners();
 	}

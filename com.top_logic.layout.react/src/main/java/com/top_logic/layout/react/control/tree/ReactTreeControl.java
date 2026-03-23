@@ -257,6 +257,7 @@ public class ReactTreeControl extends ReactControl {
 
 	@Override
 	protected void onBeforeWrite() {
+		super.onBeforeWrite();
 		if (_nodeControlCache.isEmpty()) {
 			// After a detach/reattach cycle, _nodeControlCache was cleared by cleanupNodeControls()
 			// but _reactState still has stale node references. Rebuild the cache and state from the

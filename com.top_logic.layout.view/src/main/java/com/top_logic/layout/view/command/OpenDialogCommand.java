@@ -8,38 +8,28 @@ package com.top_logic.layout.view.command;
 import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.Logger;
-import com.top_logic.basic.config.annotation.Nullable;
-import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.ErrorSink;
-import com.top_logic.layout.react.control.ReactControl;
-import com.top_logic.layout.react.control.overlay.DialogManager;
-import com.top_logic.layout.view.DefaultViewContext;
-import com.top_logic.layout.view.ViewContext;
-import com.top_logic.layout.view.ViewElement;
-import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.channel.ChannelBindingConfig;
-import com.top_logic.layout.view.channel.DefaultViewChannel;
-import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.tool.boundsec.HandlerResult;
+
+// Note: Outputs config retained for backward compatibility.
 
 /**
  * A {@link ViewCommand} that opens a modal dialog whose content is defined in a separate
  * {@code .view.xml} file.
  *
  * <p>
- * The dialog gets its own isolated {@link ViewContext}. Parent channels are shared with the dialog
- * via live bindings (same mechanism as {@code <view-ref>}). Additionally, the command's input
- * parameter can be injected into a named dialog channel via {@code bind-input-to}.
+ * Delegates to {@link OpenDialogAction} for the core dialog-opening logic. This command adds
+ * the standard {@link ViewCommand.Config} presentation options (label, image, executability).
  * </p>
  *
  * <p>
@@ -115,8 +105,7 @@ public class OpenDialogCommand implements ViewCommand {
 		 * Output channel mappings from the dialog back to the parent view.
 		 *
 		 * <p>
-		 * Reserved for future use. When a result propagation mechanism is implemented, these
-		 * mappings will define which dialog channel values are copied back to the parent on close.
+		 * Reserved for future use.
 		 * </p>
 		 */
 		@Name(OUTPUTS)
@@ -125,89 +114,26 @@ public class OpenDialogCommand implements ViewCommand {
 
 		/**
 		 * Dialog channel name to receive the command's input parameter.
-		 *
-		 * <p>
-		 * When set, the {@code input} argument from {@link ViewCommand#execute} is written into the
-		 * specified dialog channel before the dialog view is created. This allows chart click
-		 * handlers, table row actions, etc. to pass their target object to the dialog.
-		 * </p>
 		 */
 		@Name(BIND_INPUT_TO)
 		@Nullable
 		String getBindInputTo();
 	}
 
-	private final String _dialogViewPath;
-
-	private final boolean _closeOnBackdrop;
-
-	private final List<ChannelBindingConfig> _bindings;
-
-	private final String _bindInputTo;
+	private final OpenDialogAction _action;
 
 	/**
 	 * Creates a new {@link OpenDialogCommand}.
 	 */
 	@CalledByReflection
 	public OpenDialogCommand(InstantiationContext context, Config config) {
-		_dialogViewPath = ViewLoader.VIEW_BASE_PATH + config.getDialogView();
-		_closeOnBackdrop = config.getCloseOnBackdrop();
-		_bindings = config.getBindings();
-		_bindInputTo = config.getBindInputTo();
+		_action = new OpenDialogAction(config.getDialogView(), config.getCloseOnBackdrop(),
+			config.getBindInputTo(), config.getBindings());
 	}
 
 	@Override
 	public HandlerResult execute(ReactContext context, Object input) {
-		DialogManager mgr = context.getDialogManager();
-		if (mgr == null) {
-			return HandlerResult.DEFAULT_RESULT;
-		}
-
-		ViewElement dialogView;
-		try {
-			dialogView = ViewLoader.getOrLoadView(_dialogViewPath);
-		} catch (ConfigurationException ex) {
-			throw new RuntimeException("Failed to load dialog view: " + _dialogViewPath, ex);
-		}
-
-		// Create isolated ViewContext for the dialog.
-		ViewContext dialogContext = new DefaultViewContext(context);
-
-		// Propagate error sink from parent.
-		if (context instanceof ViewContext) {
-			ViewContext parentViewContext = (ViewContext) context;
-			ErrorSink parentErrorSink = parentViewContext.getErrorSink();
-			if (parentErrorSink != null) {
-				dialogContext = dialogContext.withErrorSink(parentErrorSink);
-			}
-
-			// Bind parent channels to dialog channels (same mechanism as ReferenceElement).
-			for (ChannelBindingConfig binding : _bindings) {
-				String parentChannelName = binding.getTo().getChannelName();
-				if (!parentViewContext.hasChannel(parentChannelName)) {
-					Logger.warn("Channel '" + parentChannelName + "' not found in parent context, skipping.",
-						OpenDialogCommand.class);
-					continue;
-				}
-				ViewChannel parentChannel = parentViewContext.resolveChannel(binding.getTo());
-				dialogContext.registerChannel(binding.getChannel(), parentChannel);
-			}
-		}
-
-		// Bind command input to dialog channel.
-		if (_bindInputTo != null) {
-			DefaultViewChannel inputChannel = new DefaultViewChannel(_bindInputTo);
-			inputChannel.set(input);
-			dialogContext.registerChannel(_bindInputTo, inputChannel);
-		}
-
-		// Build the dialog control tree.
-		ReactControl dialogControl = (ReactControl) dialogView.createControl(dialogContext);
-
-		mgr.openDialog(_closeOnBackdrop, dialogControl, result -> {
-			// Output channel propagation: deferred to future implementation.
-		});
-
+		_action.execute(context, input);
 		return HandlerResult.DEFAULT_RESULT;
 	}
 }

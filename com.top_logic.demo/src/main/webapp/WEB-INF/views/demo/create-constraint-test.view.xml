@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="model"/>
+		<channel name="selection"/>
+	</channels>
+	<window
+		title="New Constraint Test Object"
+		width="600px"
+	>
+		<form input="model" initial-edit-mode="true" mode-switch="false">
+			<field attribute="mandatoryString"/>
+			<field attribute="sizedString"/>
+			<field attribute="mandatorySizedString"/>
+			<field attribute="rangedInt"/>
+			<field attribute="rangedDouble"/>
+			<field attribute="uppercaseStart"/>
+			<field attribute="warningField"/>
+			<field attribute="freeText"/>
+		</form>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					label="Cancel"
+				/>
+			</button>
+		</actions>
+	</window>
+</view>

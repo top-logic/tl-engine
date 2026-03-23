@@ -16,12 +16,15 @@
 			>
 				<panel title="Constraint Test Objects">
 					<commands>
-						<command class="com.top_logic.layout.view.command.CreateObjectCommand"
-							label="New"
-							placement="TOOLBAR"
-							type="test.constraints:ConstraintTestType"
-							output="selectedObject"
-						/>
+						<generic-command label="New" placement="TOOLBAR">
+							<execute-script function="x -> new(`test.constraints:ConstraintTestType`, transient: true)"/>
+							<open-dialog
+								dialog-view="demo/create-constraint-test.view.xml"
+								bind-input-to="model"
+							>
+								<bind channel="selection" to="selectedObject"/>
+							</open-dialog>
+						</generic-command>
 					</commands>
 					<table
 						selection="selectedObject"

@@ -14,7 +14,7 @@ import dev.langchain4j.store.embedding.EmbeddingMatch;
 import opennlp.tools.cmdline.ArgumentParser.OptionalParameter;
 
 /**
- * Class defining TLScript functions related to Vector Indexing
+ * Class defining TLScript functions related to Vector Indexing.
  */
 @ScriptPrefix("vectorIndex")
 public class VectorIndexTLScriptFunctions extends TLScriptFunctions {

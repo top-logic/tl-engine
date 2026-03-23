@@ -102,6 +102,8 @@ public class AbstractFieldModel implements FieldModel {
 		}
 		_editable = editable;
 		fireEditabilityChanged(editable);
+		// Validation visibility depends on editable state.
+		fireValidationChanged();
 	}
 
 	@Override
@@ -129,8 +131,8 @@ public class AbstractFieldModel implements FieldModel {
 		if (_error != null) {
 			return true;
 		}
-		// Model-level errors only visible when revealed (e.g., after blur or submit attempt).
-		return _revealed && _modelError != null;
+		// Model-level errors only visible when editable and revealed.
+		return _editable && _revealed && _modelError != null;
 	}
 
 	@Override
@@ -138,7 +140,7 @@ public class AbstractFieldModel implements FieldModel {
 		if (_error != null) {
 			return _error;
 		}
-		return _revealed ? _modelError : null;
+		return (_editable && _revealed) ? _modelError : null;
 	}
 
 	@Override
@@ -146,12 +148,13 @@ public class AbstractFieldModel implements FieldModel {
 		if (!_warnings.isEmpty()) {
 			return true;
 		}
-		return _revealed && !_modelWarnings.isEmpty();
+		// Model-level warnings only visible when editable and revealed.
+		return _editable && _revealed && !_modelWarnings.isEmpty();
 	}
 
 	@Override
 	public List<ResKey> getWarnings() {
-		List<ResKey> visibleModelWarnings = _revealed ? _modelWarnings : Collections.emptyList();
+		List<ResKey> visibleModelWarnings = (_editable && _revealed) ? _modelWarnings : Collections.emptyList();
 		if (_warnings.isEmpty()) return visibleModelWarnings;
 		if (visibleModelWarnings.isEmpty()) return _warnings;
 		List<ResKey> combined = new ArrayList<>(_warnings);

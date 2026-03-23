@@ -177,14 +177,19 @@ When an overlay is removed (e.g., child object deleted): `formModel.removeOverla
  */
 public class FormValidationModel implements OverlayLookup {
 
-    /** Register overlay, derive constraints, validate initially. */
-    void addOverlay(TLFormObject overlay);
+    /** Register overlay, derive constraints, validate initially.
+     *  @param overlay The transient overlay TLObject (e.g. TLObjectOverlay).
+     *  @param editedBase The persistent base object, or null for create overlays. */
+    void addOverlay(TLObject overlay, TLObject editedBase);
 
-    /** Remove overlay, clean up dependency map. */
-    void removeOverlay(TLFormObject overlay);
+    /** Remove overlay, clean up dependency map and validation results. */
+    void removeOverlay(TLObject overlay);
+
+    /** Validation result for a specific attribute of an overlay. */
+    ValidationResult getValidation(TLObject overlay, TLStructuredTypePart attribute);
 
     /** All registered overlays. */
-    Collection<TLFormObject> getOverlays();
+    Collection<TLObject> getOverlays();
 
     /** True if no overlay has ERROR-type validation results. */
     boolean isValid();
@@ -198,7 +203,7 @@ public class FormValidationModel implements OverlayLookup {
 }
 ```
 
-Note: `FormValidationModel` does not have `getError()`/`getWarnings()` accessors — validation results live exclusively on the overlays. `FormValidationModel` writes results there; consumers read them from there.
+Validation results are stored internally in `FormValidationModel` and accessed via `getValidation(overlay, attribute)`. Overlays remain plain `TLObject`s with no validation-related API.
 
 ### OverlayLookup
 
@@ -207,18 +212,17 @@ Note: `FormValidationModel` does not have `getError()`/`getWarnings()` accessors
  * Replaces FormContext for constraint and tracing purposes.
  * Both FormValidationModel and AttributeUpdateContainer can implement this.
  *
- * Uses TLFormObjectBase (in tl-core) instead of TLFormObject (in tl-element)
- * to avoid a dependency from tl-core to tl-element.
+ * Uses plain TLObject — no dependency on TLFormObjectBase or the legacy form hierarchy.
  */
 public interface OverlayLookup {
 
     /** Find the overlay for a persistent object, or null.
      *  If the object is itself an overlay, returns it directly. */
-    TLFormObjectBase getExistingOverlay(TLObject object);
+    TLObject getExistingOverlay(TLObject object);
 
     /** All overlays managed by this lookup (needed for cross-object
      *  constraints that must discover newly created objects). */
-    Iterable<? extends TLFormObjectBase> getOverlays();
+    Iterable<? extends TLObject> getOverlays();
 }
 ```
 
@@ -227,11 +231,11 @@ public interface OverlayLookup {
 ```java
 /**
  * Listener for validation state changes.
- * Uses TLFormObjectBase to stay in tl-core.
+ * Uses plain TLObject — no dependency on TLFormObjectBase.
  */
 public interface ConstraintValidationListener {
 
-    void onValidationChanged(TLFormObjectBase overlay,
+    void onValidationChanged(TLObject overlay,
                              TLStructuredTypePart attribute,
                              ValidationResult result);
 }
@@ -258,14 +262,9 @@ public class ValidationResult {
 }
 ```
 
-### Changes to TLFormObject
+### No Changes to TLFormObject/TLFormObjectBase
 
-```java
-// Additional API for validation state:
-ValidationResult getValidation(TLStructuredTypePart attribute);
-void setValidation(TLStructuredTypePart attribute, ValidationResult result);
-void addConstraintValidationListener(ConstraintValidationListener listener);
-```
+Validation results are stored internally in `FormValidationModel`, NOT on overlays. This decouples the new validation system from the legacy `TLFormObjectBase`/`FormContext` hierarchy. `FormValidationModel` accepts plain `TLObject` overlays.
 
 ### Changes to ConstraintCheck
 
@@ -338,8 +337,8 @@ All validation runs on the session thread (the server thread handling the curren
 
 | Decision | Rationale |
 |----------|-----------|
-| Validation results on overlay, not FieldModel | Overlays are the shared data layer. Multiple FieldModels could observe the same overlay. The view wires overlay events to FieldModels. |
-| FormValidationModel as coordinator, not owner of results | Overlays hold data and validation state. FormValidationModel orchestrates constraint evaluation and dependency tracking. |
+| Validation results on FormValidationModel, not overlays | Keeps overlays as plain TLObjects. Avoids coupling to legacy TLFormObjectBase/FormContext hierarchy. The view queries FormValidationModel.getValidation() and subscribes to ConstraintValidationListener. |
+| FormValidationModel owns results and coordination | FormValidationModel stores validation results internally, orchestrates constraint evaluation and dependency tracking. Overlays are just data carriers. |
 | Dynamic dependency tracking | Dependencies change based on current values (conditional expressions). Static tracking would miss these changes. |
 | Built-in constraints as ConstraintCheck adapters | Uniform internal API — all validation goes through ConstraintCheck. Users see no difference; model annotations work as before. |
 | OverlayLookup replaces FormContext | Minimal interface that both legacy and new systems can implement. Includes `getOverlays()` for cross-object discovery of newly created objects. |

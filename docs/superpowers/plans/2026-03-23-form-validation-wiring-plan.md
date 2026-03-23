@@ -4,7 +4,7 @@
 
 **Goal:** Wire FormValidationModel into the view layer so that model-derived constraints are checked server-side on every value change, errors/warnings display in the UI, and invalid forms block saving. Provide a demo model `test.constraints` exercising all constraint types.
 
-**Architecture:** `TLObjectOverlay` is extended to implement `TLFormObjectBase` (validation state storage). `FormValidationModel` is generalized to accept `TLFormObjectBase` instead of `TLFormObject`. `FormControl` creates and manages the `FormValidationModel` lifecycle. `AttributeFieldControl` bridges value changes to the validation model and validation results to the chrome. A new `test.constraints` model in the demo app provides types with mandatory, size, range, and expression-based constraints for end-to-end testing.
+**Architecture:** `FormValidationModel` accepts plain `TLObject` overlays and stores validation results internally (not on overlays). `FormControl` creates and manages the `FormValidationModel` lifecycle. `AttributeFieldControl` bridges value changes to the validation model and queries validation results to update the chrome. A new `test.constraints` model in the demo app provides types with mandatory, size, range, and expression-based constraints for end-to-end testing. No changes to `TLObjectOverlay` or `TLFormObjectBase` needed.
 
 **Tech Stack:** Java 17, TopLogic framework, Maven, ISO-8859-1
 
@@ -26,177 +26,15 @@
 
 | File | Module | Change |
 |------|--------|--------|
-| `FormValidationModel.java` | tl-element | Generalize from `TLFormObject` to `TLFormObjectBase` |
-| `TLObjectOverlay.java` | layout.view | Implement `TLFormObjectBase`, add validation state |
 | `FormControl.java` | layout.view | Create/manage `FormValidationModel`, block save on invalid |
-| `AttributeFieldControl.java` | layout.view | Call `onValueChanged()` on value change, bridge validation to FieldModel |
+| `AttributeFieldControl.java` | layout.view | Call `onValueChanged()` on value change, query validation results for chrome |
 | `pom.xml` (layout.view) | layout.view | Add `tl-element` dependency |
 
----
-
-## Task 1: Generalize FormValidationModel to TLFormObjectBase
-
-FormValidationModel currently uses `TLFormObject` (tl-element type). It must accept `TLFormObjectBase` (tl-core type) so that `TLObjectOverlay` (layout.view) can be used without TLFormObject.
-
-**Files:**
-- Modify: `com.top_logic.element/src/main/java/com/top_logic/element/meta/form/validation/FormValidationModel.java`
-
-- [ ] **Step 1: Read the current FormValidationModel**
-
-Read `com.top_logic.element/src/main/java/com/top_logic/element/meta/form/validation/FormValidationModel.java`.
-
-- [ ] **Step 2: Change all `TLFormObject` references to `TLFormObjectBase`**
-
-Specifically:
-- Change `_overlaysByEdited` map type from `Map<TLObject, TLFormObject>` to `Map<TLObject, TLFormObjectBase>`
-- Change `_allOverlays` list type from `List<TLFormObject>` to `List<TLFormObjectBase>`
-- Change `addOverlay(TLFormObject overlay)` to `addOverlay(TLFormObjectBase overlay)`
-- Change `removeOverlay(TLFormObject overlay)` to `removeOverlay(TLFormObjectBase overlay)`
-- Change `deriveConstraints(TLFormObject overlay)` to `deriveConstraints(TLFormObjectBase overlay)`
-- Change `validateAllFor(TLFormObject overlay)` to `validateAllFor(TLFormObjectBase overlay)`
-- Change `findAffectedConstraints(TLFormObject overlay)` to `findAffectedConstraints(TLFormObjectBase overlay)`
-- In `getExistingOverlay()`: change `instanceof TLFormObject` to `instanceof TLFormObjectBase`
-- In `isValid()`: iterate `_allOverlays` as `TLFormObjectBase`
-
-Remove the import for `com.top_logic.element.meta.form.overlay.TLFormObject` — it should no longer be needed.
-
-- [ ] **Step 3: Build tl-element**
-
-Run: `mvn install -DskipTests=true -pl com.top_logic.element`
-Expected: BUILD SUCCESS
-
-- [ ] **Step 4: Run existing test**
-
-Run: `mvn test -DskipTests=false -pl com.top_logic.element -Dtest=TestFormValidationModel`
-Expected: PASS
-
-- [ ] **Step 5: Commit**
-
-```
-Ticket #29108: Generalize FormValidationModel to accept TLFormObjectBase.
-```
+Note: `FormValidationModel` was already refactored to accept plain `TLObject` overlays (not `TLFormObject`). `TLObjectOverlay` does NOT need to implement `TLFormObjectBase`.
 
 ---
 
-## Task 2: TLObjectOverlay Implements TLFormObjectBase
-
-`TLObjectOverlay` must implement `TLFormObjectBase` to be registered with `FormValidationModel`. It needs: validation state storage (map + listeners), plus the `TLFormObjectBase` contract methods.
-
-**Files:**
-- Modify: `com.top_logic.layout.view/src/main/java/com/top_logic/layout/view/form/TLObjectOverlay.java`
-
-- [ ] **Step 1: Read the current TLObjectOverlay**
-
-Read `com.top_logic.layout.view/src/main/java/com/top_logic/layout/view/form/TLObjectOverlay.java`.
-
-- [ ] **Step 2: Add `implements TLFormObjectBase`**
-
-Add to class declaration: `extends TransientObject implements TLFormObjectBase`
-
-- [ ] **Step 3: Implement required TLFormObjectBase methods**
-
-```java
-@Override
-public boolean isCreate() {
-    return false; // Edit overlays only for now.
-}
-
-@Override
-public TLObject getEditedObject() {
-    return _base;
-}
-
-@Override
-public String getDomain() {
-    return null;
-}
-
-@Override
-public Object getFieldValue(TLStructuredTypePart attribute) {
-    return tValue(attribute);
-}
-
-@Override
-public FormMember getField(TLStructuredTypePart attribute) {
-    return null; // No legacy FormMember in the new system.
-}
-
-@Override
-public Object getBaseValue(TLStructuredTypePart attribute) {
-    return _base.tValue(attribute);
-}
-
-@Override
-public Object defaultValue(TLStructuredTypePart part) {
-    return _base.tValue(part);
-}
-```
-
-Add import: `import com.top_logic.model.TLFormObjectBase;`, `import com.top_logic.layout.form.FormMember;`
-
-- [ ] **Step 4: Add validation state storage (same pattern as FormObjectOverlay)**
-
-Add fields:
-```java
-private Map<TLStructuredTypePart, ValidationResult> _validations = Collections.emptyMap();
-private List<ConstraintValidationListener> _validationListeners = Collections.emptyList();
-```
-
-Override the default methods:
-```java
-@Override
-public ValidationResult getValidation(TLStructuredTypePart attribute) {
-    ValidationResult result = _validations.get(attribute);
-    return result != null ? result : ValidationResult.VALID;
-}
-
-@Override
-public void setValidation(TLStructuredTypePart attribute, ValidationResult result) {
-    if (_validations.isEmpty()) {
-        _validations = new HashMap<>();
-    }
-    ValidationResult previous = _validations.put(attribute, result);
-    if (!result.equals(previous)) {
-        fireValidationChanged(attribute, result);
-    }
-}
-
-@Override
-public void addConstraintValidationListener(ConstraintValidationListener listener) {
-    if (_validationListeners.isEmpty()) {
-        _validationListeners = new ArrayList<>();
-    }
-    _validationListeners.add(listener);
-}
-
-@Override
-public void removeConstraintValidationListener(ConstraintValidationListener listener) {
-    _validationListeners.remove(listener);
-}
-
-private void fireValidationChanged(TLStructuredTypePart attribute, ValidationResult result) {
-    for (ConstraintValidationListener listener : _validationListeners) {
-        listener.onValidationChanged(this, attribute, result);
-    }
-}
-```
-
-Add imports: `import com.top_logic.model.form.ValidationResult;`, `import com.top_logic.model.form.ConstraintValidationListener;`, `import java.util.HashMap;`, `import java.util.ArrayList;`, `import java.util.Collections;`, `import java.util.List;`
-
-- [ ] **Step 5: Build**
-
-Run: `mvn install -DskipTests=true -pl com.top_logic.layout.view`
-Expected: BUILD SUCCESS
-
-- [ ] **Step 6: Commit**
-
-```
-Ticket #29108: TLObjectOverlay implements TLFormObjectBase with validation state.
-```
-
----
-
-## Task 3: Add tl-element Dependency to layout.view
+## Task 1: Add tl-element Dependency to layout.view
 
 **Files:**
 - Modify: `com.top_logic.layout.view/pom.xml`
@@ -231,7 +69,7 @@ Ticket #29108: Add tl-element dependency to layout.view for validation integrati
 
 ---
 
-## Task 4: Wire FormValidationModel into FormControl
+## Task 2: Wire FormValidationModel into FormControl
 
 FormControl manages the form lifecycle (enter/exit edit, save). It creates the overlay. Now it must also create and manage the FormValidationModel.
 
@@ -266,7 +104,7 @@ Add import: `import com.top_logic.element.meta.form.validation.FormValidationMod
 After `_overlay = new TLObjectOverlay(_currentObject);` (line 186), add:
 ```java
 _validationModel = new FormValidationModel();
-_validationModel.addOverlay(_overlay);
+_validationModel.addOverlay(_overlay, _currentObject);
 ```
 
 - [ ] **Step 4: Add state key for form validity**
@@ -322,7 +160,7 @@ Ticket #29108: Wire FormValidationModel into FormControl lifecycle.
 
 ---
 
-## Task 5: Bridge Value Changes and Validation Results in AttributeFieldControl
+## Task 3: Bridge Value Changes and Validation Results in AttributeFieldControl
 
 AttributeFieldControl must:
 1. Call `FormValidationModel.onValueChanged()` when a value changes
@@ -351,68 +189,70 @@ Add import: `import com.top_logic.element.meta.form.validation.FormValidationMod
 
 - [ ] **Step 3: Register as ConstraintValidationListener on overlay**
 
-When entering edit mode (when `_model` is created and the current object is an overlay), register a listener on the overlay to bridge validation results to the FieldModel.
+When entering edit mode, register a listener on the `FormValidationModel` (not the overlay) to bridge validation results to the FieldModel.
 
 In `addModelListener()`, after creating the `_modelListener` and `_model.addListener(_modelListener)`, add:
 
 ```java
-// Bridge overlay validation to FieldModel.
-TLObject current = _formModel.getCurrentObject();
-if (current instanceof TLFormObjectBase) {
-    TLFormObjectBase overlay = (TLFormObjectBase) current;
+// Bridge FormValidationModel validation to FieldModel.
+FormValidationModel validationModel = _formControl.getValidationModel();
+if (validationModel != null && _model != null) {
     TLStructuredTypePart part = _model.getPart();
+    TLObject overlay = _formModel.getCurrentObject();
 
-    // Read initial validation state.
-    ValidationResult initial = overlay.getValidation(part);
-    if (!initial.isValid()) {
-        _model.setModelValidationError(initial.getErrors().get(0));
-    }
-    if (!initial.getWarnings().isEmpty()) {
-        _model.setModelValidationWarnings(initial.getWarnings());
-    }
-
-    // Store overlay reference for cleanup (getCurrentObject() returns base after exit).
-    _validationOverlay = overlay;
+    // Read initial validation state from FormValidationModel.
+    ValidationResult initial = validationModel.getValidation(overlay, part);
+    applyValidationResult(initial);
 
     // Listen for future changes.
     _validationListener = (o, attr, result) -> {
-        if (attr == part) {
-            if (result.isValid()) {
-                _model.setModelValidationError(null);
-            } else {
-                _model.setModelValidationError(result.getErrors().get(0));
-            }
-            _model.setModelValidationWarnings(result.getWarnings());
+        if (o == overlay && attr == part) {
+            applyValidationResult(result);
         }
     };
-    overlay.addConstraintValidationListener(_validationListener);
+    validationModel.addConstraintValidationListener(_validationListener);
 }
 ```
 
-Add fields:
+Add a helper method:
+```java
+private void applyValidationResult(ValidationResult result) {
+    if (result.isValid()) {
+        _model.setModelValidationError(null);
+    } else {
+        _model.setModelValidationError(result.getErrors().get(0));
+    }
+    _model.setModelValidationWarnings(result.getWarnings());
+}
+```
+
+Add field:
 ```java
 private ConstraintValidationListener _validationListener;
-private TLFormObjectBase _validationOverlay; // Stored separately for cleanup (getCurrentObject() returns base after exit)
 ```
 
 Add imports:
 ```java
-import com.top_logic.model.TLFormObjectBase;
+import com.top_logic.element.meta.form.validation.FormValidationModel;
 import com.top_logic.model.form.ConstraintValidationListener;
 import com.top_logic.model.form.ValidationResult;
 ```
 
 - [ ] **Step 4: Clean up listener in clearModel()**
 
-In `clearModel()`, before clearing `_model`, also remove the validation listener using the stored overlay reference:
+In `clearModel()`, before clearing `_model`, also remove the validation listener from the FormValidationModel:
 
 ```java
-if (_validationListener != null && _validationOverlay != null) {
-    _validationOverlay.removeConstraintValidationListener(_validationListener);
+if (_validationListener != null) {
+    FormValidationModel validationModel = _formControl.getValidationModel();
+    if (validationModel != null) {
+        validationModel.removeConstraintValidationListener(_validationListener);
+    }
     _validationListener = null;
-    _validationOverlay = null;
 }
 ```
+
+Note: We need a `removeConstraintValidationListener()` method on `FormValidationModel`. If it doesn't exist yet, add it (simple `_listeners.remove(listener)`).
 
 - [ ] **Step 5: Build**
 
@@ -427,7 +267,7 @@ Ticket #29108: Bridge value changes and validation results in AttributeFieldCont
 
 ---
 
-## Task 6: Test Model and Layout for Demo App
+## Task 4: Test Model and Layout for Demo App
 
 Create a model `test.constraints` with a type that exercises all constraint types, and a layout to view/edit it.
 
@@ -591,7 +431,7 @@ Ticket #29108: Add test.constraints model and layout for validation demo.
 
 ---
 
-## Task 7: Full Build and Manual Testing
+## Task 5: Full Build and Manual Testing
 
 - [ ] **Step 1: Build all affected modules**
 

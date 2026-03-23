@@ -14,7 +14,7 @@ import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
 import com.top_logic.layout.provider.MetaLabelProvider;
-import com.top_logic.layout.provider.MetaResourceProvider;
+import com.top_logic.model.util.TLModelI18N;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
@@ -345,6 +345,7 @@ public class AttributeFieldControl implements FormModelListener {
 	}
 
 	private String resolveHelpText(TLStructuredTypePart part) {
-		return MetaResourceProvider.INSTANCE.getTooltip(part);
+		ResKey labelKey = TLModelI18N.getI18NKey(part);
+		return Resources.getInstance().getString(labelKey.tooltipOptional());
 	}
 }

@@ -39,10 +39,8 @@ public class SizeConstraintCheck implements ConstraintCheck {
 	 * Checks a value against the length bounds.
 	 */
 	public ResKey checkValue(Object value) {
-		if (value == null) {
-			return null;
-		}
-		String str = value.toString();
+		// Treat null as empty string, consistent with the storage-level StringSizeCheck.
+		String str = value == null ? "" : value.toString();
 		if (str.length() < _minLength) {
 			return I18NConstants.ERROR_STRING_TOO_SHORT__MIN_ACTUAL.fill(_minLength, str.length());
 		}

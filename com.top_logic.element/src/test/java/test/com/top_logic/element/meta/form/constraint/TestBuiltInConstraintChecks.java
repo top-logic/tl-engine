@@ -46,8 +46,13 @@ public class TestBuiltInConstraintChecks extends TestCase {
 		assertNotNull(new SizeConstraintCheck(0, 5).checkValue("toolongstring"));
 	}
 
-	public void testSizeCheckAcceptsNull() {
-		assertNull(new SizeConstraintCheck(3, 10).checkValue(null));
+	public void testSizeCheckRejectsNullWithMinLength() {
+		// Null is treated as empty string, consistent with storage-level StringSizeCheck.
+		assertNotNull(new SizeConstraintCheck(3, 10).checkValue(null));
+	}
+
+	public void testSizeCheckAcceptsNullWithZeroMinLength() {
+		assertNull(new SizeConstraintCheck(0, 10).checkValue(null));
 	}
 
 	public void testRangeCheckAcceptsInRange() {

@@ -79,6 +79,12 @@ public class AttributeFieldModel extends AbstractFieldModel {
 		Object newValue = getValue();
 		setDefaultValue(newValue);
 		setValueInternal(newValue);
+
+		// Reset validation state from previous object.
+		setRevealed(false);
+		setModelValidationError(null);
+		setModelValidationWarnings(java.util.Collections.emptyList());
+
 		if (!Objects.equals(oldValue, newValue)) {
 			fireValueChanged(oldValue, newValue);
 		}

@@ -28,6 +28,7 @@
 					<with-transaction>
 						<execute-script function="obj -> $obj.copy(transient: false)"/>
 					</with-transaction>
+					<write-channel name="selection"/>
 					<close-dialog/>
 				</action>
 			</button>

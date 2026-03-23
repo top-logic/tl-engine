@@ -29,6 +29,7 @@
 					<table
 						selection="selectedObject"
 						types="test.constraints:ConstraintTestType"
+						observed-types="test.constraints:ConstraintTestType"
 					>
 						<rows>all(`test.constraints:ConstraintTestType`)</rows>
 					</table>

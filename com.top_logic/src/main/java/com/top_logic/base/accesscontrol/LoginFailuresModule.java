@@ -9,11 +9,15 @@ package com.top_logic.base.accesscontrol;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import com.top_logic.basic.col.MapUtil;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.sched.SchedulerService;
 
 /**
  * Service module tracking failed login attempts to enforce exponential back-off delays.
@@ -29,6 +33,7 @@ import com.top_logic.basic.module.TypedRuntimeModule;
  *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@ServiceDependencies(SchedulerService.Module.class)
 public class LoginFailuresModule<C extends LoginFailuresModule.Config<?>> extends ConfiguredManagedClass<C> {
 
 	/**
@@ -38,17 +43,33 @@ public class LoginFailuresModule<C extends LoginFailuresModule.Config<?>> extend
 		// configuration interface definition
 	}
 
-	private ConcurrentMap<String, LoginFailure> _failures = new ConcurrentHashMap<>();
+	private final ConcurrentMap<String, LoginFailure> _failures = new ConcurrentHashMap<>();
+
+	private final SchedulerService _scheduler;
+
+	private ScheduledFuture<?> _cleanupTask;
 
 	/**
 	 * Creates a new {@link LoginFailuresModule}.
 	 */
 	public LoginFailuresModule(InstantiationContext context, C config) {
 		super(context, config);
+		_scheduler = SchedulerService.getInstance();
+	}
+
+	/**
+	 * @see com.top_logic.basic.module.ManagedClass#startUp()
+	 */
+	@Override
+	protected void startUp() {
+		super.startUp();
+		_cleanupTask = _scheduler.scheduleAtFixedRate(this::cleanupTimedOut, 1, 1, TimeUnit.HOURS);
 	}
 
 	@Override
 	protected void shutDown() {
+		_cleanupTask.cancel(false);
+		_cleanupTask = null;
 		_failures.clear();
 		super.shutDown();
 	}
@@ -90,6 +111,11 @@ public class LoginFailuresModule<C extends LoginFailuresModule.Config<?>> extend
 		}
 		failure.incFailures();
 
+		cleanupTimedOut();
+		return failure;
+	}
+
+	private void cleanupTimedOut() {
 		// Clean up outdated entries to prevent denial of service attacks by flooding
 		// the server with nonsense authentication failures for random user names.
 		for (Iterator<LoginFailure> it = _failures.values().iterator(); it.hasNext();) {
@@ -97,7 +123,6 @@ public class LoginFailuresModule<C extends LoginFailuresModule.Config<?>> extend
 				it.remove();
 			}
 		}
-		return failure;
 	}
 
 	/**

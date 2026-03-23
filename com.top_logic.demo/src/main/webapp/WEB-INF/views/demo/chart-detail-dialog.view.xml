@@ -2,13 +2,18 @@
 
 <view>
 	<channels>
-		<channel name="clickedValue"/>
+		<channel name="transactions"/>
 	</channels>
 	<window
-		title="Chart Details"
-		width="400px"
+		title="Transaktionen"
+		width="600px"
 	>
-		<demo-value-list input="clickedValue" title="Datenpunkt-Details"/>
+		<table types="demo.charts:Transaktion">
+			<inputs>
+				<input channel="transactions"/>
+			</inputs>
+			<rows>txs -> $txs</rows>
+		</table>
 		<actions>
 			<button>
 				<action class="com.top_logic.layout.view.command.CancelDialogCommand"

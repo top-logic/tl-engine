@@ -15,6 +15,14 @@ import opennlp.tools.cmdline.ArgumentParser.OptionalParameter;
 
 /**
  * Class defining TLScript functions related to Vector Indexing.
+ * 
+ * <p>
+ * This class contains methods which are transformed to TLScript functions. They expose
+ * functionalities related to Vector Indexing, such as search
+ * </p>
+ *
+ * @author <a href=mailto:boris.nikolov@top-mapps.com>Boris Nikolov</a>
+ * 
  */
 @ScriptPrefix("vectorIndex")
 public class VectorIndexTLScriptFunctions extends TLScriptFunctions {

@@ -13,7 +13,9 @@
 			<action class="com.top_logic.layout.view.command.GenericViewCommand"
 				label="Throw KB error (wrapped)"
 			>
-				<execute-script function="x -> new(`test.constraints:ConstraintTestType`)"/>
+				<with-transaction>
+					<execute-script function="x -> new(`test.constraints:ConstraintTestType`)"/>
+				</with-transaction>
 			</action>
 		</button>
 	</panel>

@@ -49,7 +49,7 @@ public class FormValidationModel implements OverlayLookup {
 	private final List<TLObject> _allOverlays = new ArrayList<>();
 
 	/** All constraint entries, grouped by owning (object, attribute). */
-	private final Map<Pointer, List<ConstraintEntry>> _constraintsByOwner = new HashMap<>();
+	private final Map<PointerKey, List<ConstraintEntry>> _constraintsByOwner = new HashMap<>();
 
 	/**
 	 * Reverse dependency map: for each (object, attribute) that is read during
@@ -72,12 +72,15 @@ public class FormValidationModel implements OverlayLookup {
 	 *        The persistent base object being edited, or {@code null} for create overlays.
 	 */
 	public void addOverlay(TLObject overlay, TLObject editedBase) {
+		com.top_logic.basic.Logger.info("addOverlay: overlay=" + overlay + " editedBase=" + editedBase, FormValidationModel.class);
 		_allOverlays.add(overlay);
 		if (editedBase != null) {
 			_overlaysByEdited.put(editedBase, overlay);
 		}
 		deriveConstraints(overlay);
+		com.top_logic.basic.Logger.info("addOverlay: constraints derived, count=" + _constraintsByOwner.size(), FormValidationModel.class);
 		validateAllFor(overlay);
+		com.top_logic.basic.Logger.info("addOverlay: validated, results=" + _validationResults.size(), FormValidationModel.class);
 	}
 
 	/**
@@ -180,7 +183,7 @@ public class FormValidationModel implements OverlayLookup {
 		}
 
 		// Constraints owned by this attribute itself.
-		Pointer ownerKey = Pointer.create(overlay, attribute);
+		PointerKey ownerKey = new PointerKey(overlay, attribute);
 		List<ConstraintEntry> ownConstraints = _constraintsByOwner.get(ownerKey);
 		if (ownConstraints != null) {
 			toValidate.addAll(ownConstraints);
@@ -236,7 +239,7 @@ public class FormValidationModel implements OverlayLookup {
 			}
 
 			if (!entries.isEmpty()) {
-				_constraintsByOwner.put(Pointer.create(overlay, part), entries);
+				_constraintsByOwner.put(new PointerKey(overlay, part), entries);
 			}
 		}
 	}
@@ -247,7 +250,7 @@ public class FormValidationModel implements OverlayLookup {
 
 		Set<ConstraintEntry> all = new HashSet<>();
 		for (TLStructuredTypePart part : type.getAllParts()) {
-			List<ConstraintEntry> entries = _constraintsByOwner.get(Pointer.create(overlay, part));
+			List<ConstraintEntry> entries = _constraintsByOwner.get(new PointerKey(overlay, part));
 			if (entries != null) {
 				all.addAll(entries);
 			}
@@ -410,12 +413,12 @@ public class FormValidationModel implements OverlayLookup {
 		public boolean equals(Object obj) {
 			if (!(obj instanceof PointerKey)) return false;
 			PointerKey other = (PointerKey) obj;
-			return _object == other._object && _attribute == other._attribute;
+			return _object == other._object && _attribute.equals(other._attribute);
 		}
 
 		@Override
 		public int hashCode() {
-			return System.identityHashCode(_object) * 31 + System.identityHashCode(_attribute);
+			return System.identityHashCode(_object) * 31 + _attribute.hashCode();
 		}
 	}
 }

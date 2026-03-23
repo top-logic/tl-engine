@@ -16,6 +16,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
+import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
@@ -734,11 +735,11 @@ public class Document extends AbstractBoundWrapper implements BinaryData {
     /**
 	 * Default security parent is the {@link WebFolder} which contains the document
 	 * 
-	 * @see com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper#getSecurityParent()
+	 * @see com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper#getSecurityParents()
 	 */
     @Override
-	public BoundObject getSecurityParent() {
-		return WebFolder.getWebFolder(this);
+	public Collection<? extends BoundObject> getSecurityParents() {
+		return CollectionUtil.singletonOrEmptyList(WebFolder.getWebFolder(this));
     }
 
 	/**

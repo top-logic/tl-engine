@@ -8,8 +8,6 @@ package com.top_logic.element.boundsec.manager.rule.config;
 import java.util.List;
 
 import com.top_logic.basic.config.CommaSeparatedStrings;
-import com.top_logic.basic.config.ConfigurationItem;
-import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
@@ -24,10 +22,7 @@ import com.top_logic.model.TLClass;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public interface RoleRuleConfig extends ConfigurationItem {
-
-	/** Name of the value of {@link #getMetaElement()} in the configuration. */
-	String XML_ATTRIBUTE_META_ELEMENT = "meta-element";
+public interface RoleRuleConfig extends NavigationRuleConfig {
 
 	/** Name of the value of {@link #getSourceMetaElement()} in the configuration. */
 	String XML_ATTRIBUTE_SOURCE_META_ELEMENT = "source-meta-element";
@@ -38,20 +33,6 @@ public interface RoleRuleConfig extends ConfigurationItem {
 	/** Name of the value of {@link #getSourceRole()} in the configuration. */
 	String XML_ATTRIBUTE_SOURCE_ROLE = "source-role";
 
-	/**
-	 * Name of the value of {@link #getPathElements()} in the configuration.
-	 * 
-	 * @see #XML_TAG_STEP_ELEMENT
-	 */
-	String XML_TAG_PATH_ELEMENT = "path";
-
-	/**
-	 * Name of the entry tags of attribute {@link #getPathElements()}.
-	 * 
-	 * @see #XML_TAG_PATH_ELEMENT
-	 */
-	String XML_TAG_STEP_ELEMENT = "step";
-
 	/** Name of the value of {@link #getResKey()} in the configuration. */
 	String XML_ATTRIBUTE_RESOURCE_KEY = "resource-key";
 
@@ -61,23 +42,17 @@ public interface RoleRuleConfig extends ConfigurationItem {
 	/** Name of the value of {@link #getBase()} in the configuration. */
 	String XML_ATTRIBUTE_BASE = "base";
 
-	/** Name of the value of {@link #isInherit()} in the configuration. */
-	String XML_ATTRIBUTE_INHERIT = "inherit";
-
 	/**
-	 * The configuration of the steps to get from the source object to the target object to apply
-	 * role to.
+	 * The user gets the {@link #getRole()} on the target elements.
 	 */
-	@Name(RoleRuleConfig.XML_TAG_PATH_ELEMENT)
-	@EntryTag(RoleRuleConfig.XML_TAG_STEP_ELEMENT)
+	@Override
 	List<PathElementConfig> getPathElements();
 
 	/**
 	 * Full qualified name of the {@link TLClass} to that an object must have to get the given
 	 * {@link #getRole()}.
 	 */
-	@Name(RoleRuleConfig.XML_ATTRIBUTE_META_ELEMENT)
-	@Nullable
+	@Override
 	String getMetaElement();
 
 	/**
@@ -102,12 +77,6 @@ public interface RoleRuleConfig extends ConfigurationItem {
 	@Format(CommaSeparatedStrings.class)
 	@Name(RoleRuleConfig.XML_ATTRIBUTE_SOURCE_ROLE)
 	List<String> getSourceRole();
-
-	/**
-	 * Whether the Rule should also be applied to all sub types of {@link #getMetaElement()}.
-	 */
-	@Name(RoleRuleConfig.XML_ATTRIBUTE_INHERIT)
-	boolean isInherit();
 
 	/**
 	 * Which kind of rule is this?

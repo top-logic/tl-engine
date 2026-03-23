@@ -41,7 +41,6 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
-import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.util.error.TopLogicException;
 
 
@@ -225,16 +224,6 @@ public class IMAPMail extends AbstractContainerWrapper implements Mail {
     @Override
 	protected boolean _remove(TLObject oldChild) {
         return false;
-    }
-
-    /** 
-     * the MailFolder as security relevant object.
-     */
-    @Override
-	public BoundObject getSecurityParent() {
-    	MailFolder theFolder = this.getFolder();
-
-    	return (theFolder instanceof BoundObject) ? (BoundObject) theFolder : null;
     }
 
 	/**

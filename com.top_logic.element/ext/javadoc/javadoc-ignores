@@ -213,7 +213,6 @@ com.top_logic.element.core.util.MaintenanceUtil.java: Invalid camel case word 'F
 com.top_logic.element.core.util.MaintenanceUtil.java: Invalid camel case word 'FastListElement', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.document.HasDocumentsExecutabilityRule.java: Invalid camel case word 'WebFolder', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.document.HasDocumentsExecutabilityRule.java: Missing documentation: com.top_logic.element.document.HasDocumentsExecutabilityRule.INSTANCE
-com.top_logic.element.document.ResultDocument.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.element.document.ResultDocument
 com.top_logic.element.genericimport.AbstractGenericConverter.java: Invalid camel case word 'GenericConverterFunction', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.genericimport.AbstractGenericConverter.java: Invalid camel case word 'WrappedMapping', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.genericimport.AbstractGenericConverter.java: Invalid camel case word 'convertReferences', this may only be used within JavaDoc links or HTML code tags.
@@ -1057,9 +1056,6 @@ com.top_logic.element.meta.kbbased.PersistentObjectImpl.java: Missing documentat
 com.top_logic.element.meta.kbbased.PersistentObjectImpl.java: Missing documentation: com.top_logic.element.meta.kbbased.PersistentObjectImpl.setValue
 com.top_logic.element.meta.kbbased.PersistentObjectImpl.java: Missing documentation: com.top_logic.element.meta.kbbased.PersistentObjectImpl.tType
 com.top_logic.element.meta.kbbased.PersistentObjectImpl.java: Missing documentation: com.top_logic.element.meta.kbbased.PersistentObjectImpl.touch
-com.top_logic.element.meta.kbbased.WebFolderAsAttribute.java: Invalid camel case word 'WebFolder', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.element.meta.kbbased.WebFolderAsAttribute.java: Invalid camel case word 'WebFolderMetaAttribute', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.element.meta.kbbased.WebFolderAttributeOperations.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.element.meta.kbbased.WebFolderAttributeOperations.ResponsibilityData
 com.top_logic.element.meta.kbbased.WebFolderAttributeOperations.java: Invalid camel case word 'WebFolder', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.meta.kbbased.WebFolderAttributeOperations.java: Invalid camel case word 'WebFolderMetaAttribute', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.meta.kbbased.WebFolderAttributeOperations.java: Missing documentation: com.top_logic.element.meta.kbbased.WebFolderAttributeOperations.ResponsibilityData.getMetaAttribute

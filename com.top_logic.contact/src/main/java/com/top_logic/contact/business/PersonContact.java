@@ -68,11 +68,11 @@ public class PersonContact extends AbstractContact implements UserInterface {
     /** 
      * Use global security
      * 
-     * @see com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper#getSecurityParent()
+     * @see com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper#getSecurityParents()
      */
     @Override
-	public BoundObject getSecurityParent() {
-        return ElementBoundHelper.getSecurityRoot();
+	public Collection<? extends BoundObject> getSecurityParents() {
+		return Collections.singletonList(ElementBoundHelper.getSecurityRoot());
     }
     
     @Override

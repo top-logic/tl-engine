@@ -6,6 +6,7 @@
 package com.top_logic.contact.business;
 
 import java.util.Collection;
+import java.util.Collections;
 
 import com.top_logic.basic.StringServices;
 import com.top_logic.element.boundsec.ElementBoundHelper;
@@ -113,11 +114,11 @@ public class CompanyContact extends AbstractContact {
     /** 
      * Use global security
      * 
-     * @see com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper#getSecurityParent()
+     * @see com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper#getSecurityParents()
      */
     @Override
-	public BoundObject getSecurityParent() {
-        return ElementBoundHelper.getSecurityRoot();
+	public Collection<? extends BoundObject> getSecurityParents() {
+		return Collections.singletonList(ElementBoundHelper.getSecurityRoot());
     }
 
     /** 

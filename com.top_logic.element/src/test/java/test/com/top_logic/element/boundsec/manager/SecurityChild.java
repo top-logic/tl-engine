@@ -5,6 +5,9 @@
  */
 package test.com.top_logic.element.boundsec.manager;
 
+import java.util.Collection;
+
+import com.top_logic.basic.CollectionUtil;
 import com.top_logic.element.model.DynamicModelService;
 import com.top_logic.element.structured.StructuredElement;
 import com.top_logic.element.structured.StructuredElementFactory;
@@ -35,8 +38,8 @@ public class SecurityChild extends AttributedStructuredElementWrapper {
 	}
 
 	@Override
-	public BoundObject getSecurityParent() {
-		return _securityParent;
+	public Collection<? extends BoundObject> getSecurityParents() {
+		return CollectionUtil.singletonOrEmptyList(_securityParent);
 	}
 
 	/**

@@ -31,6 +31,7 @@ import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.col.TupleFactory;
 import com.top_logic.basic.col.map.MultiMaps;
 import com.top_logic.basic.config.ApplicationConfig;
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ConfigurationWriter;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfiguration;
@@ -48,11 +49,13 @@ import com.top_logic.basic.sql.ConnectionPoolRegistry;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.boundsec.ElementBoundHelper;
 import com.top_logic.element.boundsec.manager.rule.IdentityPathElement;
+import com.top_logic.element.boundsec.manager.rule.NavigationRule;
 import com.top_logic.element.boundsec.manager.rule.PathElement;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider.Type;
 import com.top_logic.element.boundsec.manager.rule.RoleRule;
 import com.top_logic.element.boundsec.manager.rule.config.RoleRulesConfig;
+import com.top_logic.element.boundsec.manager.rule.config.SecurityParentsConfig;
 import com.top_logic.element.meta.MetaElementFactory;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
@@ -61,6 +64,7 @@ import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundHelper;
@@ -101,6 +105,9 @@ public class ElementAccessManager extends AccessManager {
 		/** Property name of {@link #getMetaElements()}. */
 		String META_ELEMENTS = "meta-elements";
 
+		/** Property name of {@link #getSecurityParents()}. */
+		String SECURITY_PARENTS = "security-parents";
+
 		@Name(GROUP_MAPPER)
 		@InstanceFormat
 		@InstanceDefault(SimpleGroupMapper.class)
@@ -122,6 +129,18 @@ public class ElementAccessManager extends AccessManager {
 		 */
 		void setRoleRules(RoleRulesConfig roleRules);
 
+		/**
+		 * The security parent rule definitions for the access manager.
+		 */
+		@ItemDefault
+		@Name(SECURITY_PARENTS)
+		SecurityParentsConfig getSecurityParents();
+
+		/**
+		 * Setter for {@link #getSecurityParents()}.
+		 */
+		void setSecurityParents(SecurityParentsConfig roleRules);
+
 	}
 
 	/**
@@ -142,6 +161,9 @@ public class ElementAccessManager extends AccessManager {
 
 	/** Key to store the current version of the role rule definition in the database. */
 	private static final String ROLE_RULES_CONFIG_VERSION_PROPERTY = "roleRules.version";
+
+	/** Key to store the current version of the security parents definition in the database. */
+	private static final String SECURITY_PARENTS_CONFIG_VERSION_PROPERTY = "security-parents.version";
 
 	/**
 	 * Called by the {@link TypedConfiguration} for creating a {@link ElementAccessManager}.
@@ -168,7 +190,7 @@ public class ElementAccessManager extends AccessManager {
 		super.startUp();
 		init();
 		_securityModuleByClass = loadRoleRootForMetaElements();
-		loadInitialRoleRules();
+		loadInitialRules();
 	}
 
 	private Map<TLClass, TLModule> loadRoleRootForMetaElements() {
@@ -225,6 +247,8 @@ public class ElementAccessManager extends AccessManager {
      * The resolved rules declared for the access manager (respecting the inherit flag)
      */
     private Map<TLClass, Collection<RoleProvider>> resolvedMERules;
+
+	private Map<TLClass, Collection<NavigationRule>> _resolvedSecurityParents;
 
 	private Map<TLClass, TLModule> _securityModuleByClass;
 
@@ -346,7 +370,49 @@ public class ElementAccessManager extends AccessManager {
     @Override
 	public boolean reload() {
 		this.init();
-		return loadInitialRoleRules();
+		return loadInitialRules();
+	}
+
+	private boolean loadInitialRules() {
+		boolean securityParentsresult = loadSecurityParentRules();
+		boolean roleRuleResult = loadInitialRoleRules();
+		return roleRuleResult && securityParentsresult;
+	}
+
+	/**
+	 * Loads the security parent rules file if necessary.
+	 */
+	private boolean loadSecurityParentRules() {
+		try {
+			SecurityParentsConfig securityParents = getConfig().getSecurityParents();
+			NavigationRulesImporter rulesImporter = NavigationRulesImporter.loadRules(securityParents.getRules());
+			if (!rulesImporter.getProblems().isEmpty()) {
+				/* Use english resources, because messages are written to log. */
+				Resources resource = Resources.getLogInstance();
+				for (ResKey theProblem : rulesImporter.getProblems()) {
+					Logger.error("Problem while reloading security parents: " + resource.getString(theProblem), this);
+				}
+				return false;
+			}
+			storeConfigVersion(securityParents, SecurityParentsConfig.class, Config.SECURITY_PARENTS,
+				SECURITY_PARENTS_CONFIG_VERSION_PROPERTY);
+
+			HashMap<TLClass, Collection<NavigationRule>> resolved = new HashMap<>();
+			for (Entry<TLClass, Collection<NavigationRule>> entry : rulesImporter.getRules().entrySet()) {
+				TLClass theME = entry.getKey();
+				Collection<NavigationRule> theRules = entry.getValue();
+				for (NavigationRule rule : theRules) {
+					boolean inherit = rule.isInherit();
+					addRuleToSubElements(theME, rule, inherit, resolved);
+				}
+			}
+
+			_resolvedSecurityParents = resolved;
+			return true;
+		} catch (Exception e) {
+			Logger.error("Unable to reload security.", e, this);
+			return false;
+		}
 	}
 
 	/**
@@ -364,7 +430,7 @@ public class ElementAccessManager extends AccessManager {
 				}
 				return false;
             }
-			storeConfigVersion(roleRules);
+			storeConfigVersion(roleRules, RoleRulesConfig.class, "roleRules", ROLE_RULES_CONFIG_VERSION_PROPERTY);
 			this.setRulesInternal(roleRulesImporter.getRules());
             return true;
         }
@@ -374,22 +440,22 @@ public class ElementAccessManager extends AccessManager {
         }
     }
 
-	private void storeConfigVersion(RoleRulesConfig roleRules) {
-		String configVersion = configHash(roleRules);
+	private <T extends ConfigurationItem> void storeConfigVersion(T item, Class<T> staticType, String rootTag,
+			String propertyName) {
+		String configVersion = configHash(item, staticType, rootTag);
 		DBProperties dbProperties = new DBProperties(ConnectionPoolRegistry.getDefaultConnectionPool());
-		boolean versionChanged =
-			dbProperties.setProperty(DBProperties.GLOBAL_PROPERTY, ROLE_RULES_CONFIG_VERSION_PROPERTY, configVersion);
+		boolean versionChanged = dbProperties.setProperty(DBProperties.GLOBAL_PROPERTY, propertyName, configVersion);
 		if (versionChanged) {
 			dirty = true;
 		}
 	}
 
-	private String configHash(RoleRulesConfig roleRules) {
+	private <T extends ConfigurationItem> String configHash(T item, Class<T> staticType, String rootTag) {
 		String configVersion;
 		try {
 			StringWriter out = new StringWriter();
 			try (ConfigurationWriter w = new ConfigurationWriter(out)) {
-				w.write("roleRules", RoleRulesConfig.class, roleRules);
+				w.write(rootTag, staticType, item);
 			}
 			configVersion = String.valueOf(out.toString().hashCode());
 		} catch (XMLStreamException ex) {
@@ -527,7 +593,8 @@ public class ElementAccessManager extends AccessManager {
         return theResult;
     }
 
-    private void addRuleToSubElements(TLClass aME, RoleProvider aRule, boolean isInherit, Map <TLClass, Collection<RoleProvider> > aResult) {
+	private <T> void addRuleToSubElements(TLClass aME, T aRule, boolean isInherit,
+			Map<TLClass, Collection<T>> aResult) {
 		if (!aME.isAbstract()) {
 			MultiMaps.add(aResult, aME, aRule, ArrayList::new);
 		}
@@ -537,6 +604,18 @@ public class ElementAccessManager extends AccessManager {
             }
         }
     }
+
+	@Override
+	public Collection<? extends BoundObject> getSecurityParents(BoundObject object) {
+		Set<TLObject> out = new HashSet<>();
+		_resolvedSecurityParents
+			.getOrDefault(object.tType(), Collections.emptyList())
+			.forEach(rule -> rule.getContent(object, out));
+		return out.stream()
+			.filter(BoundObject.class::isInstance)
+			.map(BoundObject.class::cast)
+			.toList();
+	}
 
     /**
      * Get all meta elements to be presented in the classification administration

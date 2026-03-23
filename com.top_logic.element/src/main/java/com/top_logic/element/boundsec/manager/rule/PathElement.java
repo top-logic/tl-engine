@@ -8,10 +8,12 @@ package com.top_logic.element.boundsec.manager.rule;
 import java.util.Collection;
 import java.util.Collections;
 
+import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
-import com.top_logic.element.meta.AttributeOperations;
-import com.top_logic.knowledge.wrap.Wrapper;
+import com.top_logic.model.TLObject;
+import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * One node in a role rule path
@@ -21,7 +23,7 @@ import com.top_logic.model.TLStructuredTypePart;
 public class PathElement {
 
     /** the meta attribute defining the content */
-    private TLStructuredTypePart metaAttribute;
+	private TLReference metaAttribute;
     
     /** 
      * indicates that the attribute is to be resolved in revers,
@@ -33,14 +35,17 @@ public class PathElement {
      * Constructor
      */
     public PathElement(TLStructuredTypePart aMA, boolean isInvers) {
-        this.metaAttribute = aMA;
 		if (aMA == null) {
 			// Special hack for IdentityPathElement!
 		} else {
-			if (metaAttribute.getDefinition() != metaAttribute) {
-				Logger.error("Only the definition of an TLStructureTypePart must be given: " + metaAttribute, aMA);
+			if (aMA.getDefinition() != aMA) {
+				Logger.error("Only the definition of an TLStructureTypePart must be given: " + aMA, PathElement.class);
+			}
+			if (!(aMA instanceof TLReference)) {
+				throw new TopLogicException(I18NConstants.ERROR_NOT_A_REFERENCE__ATTR.fill(aMA));
 			}
 		}
+		this.metaAttribute = (TLReference) aMA;
         this.inverse       = isInvers;
         // TODO TSA: add consistency checks: type of attribute, ...
     }
@@ -48,7 +53,7 @@ public class PathElement {
     /**
      * Getter
      */
-    public TLStructuredTypePart getMetaAttribute() {
+	public TLReference getMetaAttribute() {
         return (metaAttribute);
     }
     
@@ -66,29 +71,27 @@ public class PathElement {
      * @param aBase   the object to containing the attribute
      * @return the Objects referd to via the attribute, never <code>null</code>
      */
-    public Collection getValues(Wrapper aBase) {
+	public Collection<? extends TLObject> getValues(TLObject aBase) {
         return getValues(aBase, true);
     }
     
-    private Collection getValues(Wrapper aBase, boolean isForward) {
-        Collection theResult;
+	private Collection<? extends TLObject> getValues(TLObject aBase, boolean isForward) {
+        Collection<? extends TLObject> theResult;
         
 		if (this.isInverse() == isForward) {
-			theResult = AttributeOperations.getReferers(aBase, this.metaAttribute);
+			theResult = aBase.tReferers(this.metaAttribute);
 		} else {
-			Object theContent = aBase.getValue(metaAttribute.getName());
+			Object theContent = aBase.tValueByName(metaAttribute.getName());
 			if (theContent instanceof Collection) {
 				theResult = (Collection) theContent;
-			} else if (theContent != null) {
-				theResult = Collections.singleton(theContent);
 			} else {
-				theResult = Collections.EMPTY_LIST;
+				theResult = CollectionUtil.singletonOrEmptySet((TLObject)theContent);
 			}
         }
-        return theResult != null ? theResult : Collections.EMPTY_SET;
+		return theResult != null ? theResult : Collections.emptySet();
     }
     
-    public Collection getSources(Wrapper aDestination) {
+	public Collection<? extends TLObject> getSources(TLObject aDestination) {
         return this.getValues(aDestination, false);
     }
 }

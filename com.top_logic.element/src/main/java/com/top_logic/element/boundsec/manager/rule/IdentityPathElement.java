@@ -8,8 +8,8 @@ package com.top_logic.element.boundsec.manager.rule;
 import java.util.Collection;
 
 import com.top_logic.basic.CollectionUtil;
-import com.top_logic.knowledge.wrap.Wrapper;
-import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.TLObject;
+import com.top_logic.model.TLReference;
 
 /**
  * The IdentityPathElement is used for rules with no path elements to map some roles to
@@ -24,17 +24,17 @@ public class IdentityPathElement extends PathElement {
     }
 
     @Override
-	public Collection getSources(Wrapper aDestination) {
+	public Collection getSources(TLObject aDestination) {
         return CollectionUtil.intoList(aDestination);
     }
 
     @Override
-	public Collection getValues(Wrapper aBase) {
+	public Collection getValues(TLObject aBase) {
         return CollectionUtil.intoList(aBase);
     }
 
 	@Override
-	public TLStructuredTypePart getMetaAttribute() {
+	public TLReference getMetaAttribute() {
 		throw new NullPointerException("No MetaAttribute.");
 	}
 

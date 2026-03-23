@@ -7,6 +7,7 @@ package com.top_logic.element.boundsec.manager.rule;
 
 import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.layout.ResPrefix;
 
@@ -24,6 +25,9 @@ public class I18NConstants extends I18NConstantsBase {
 
 	@CustomKey("tl.roleRule.simple.tooltip")
 	public static ResKey SIMPLE_TOOLTIP;
+
+	/** @en The configured part is not a reference: {0} */
+	public static ResKey1 ERROR_NOT_A_REFERENCE__ATTR;
 
 	static {
 		initConstants(I18NConstants.class);

@@ -6,6 +6,7 @@
 package com.top_logic.element.structured.wrap;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -60,11 +61,11 @@ public abstract class StructuredElementWrapper extends WrapperTLElement {
     /**
      * Do NOT inherit roles from security parents.
      * 
-     * @see com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper#getSecurityParent()
+     * @see com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper#getSecurityParents()
      */
     @Override
-	public BoundObject getSecurityParent() {
-        return null;
+	public Collection<? extends BoundObject> getSecurityParents() {
+		return Collections.emptyList();
     }
 
     /**

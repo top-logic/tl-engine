@@ -230,6 +230,18 @@ public class AccessManager extends ConfiguredManagedClass<AccessManager.Config> 
         return true;
     }
 
+	/**
+	 * Determines the security parents for the given {@link BoundObject}.
+	 * 
+	 * @see BoundObject#getSecurityParents()
+	 * 
+	 * @param object
+	 *        The object to get parents for.
+	 */
+	public Collection<? extends BoundObject> getSecurityParents(BoundObject object) {
+		return Collections.emptyList();
+	}
+
 
     // Subclass hooks
 

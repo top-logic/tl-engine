@@ -10,7 +10,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 
 import com.top_logic.basic.CollectionUtil;
@@ -40,25 +39,15 @@ import com.top_logic.util.Utils;
  *
  * @author <a href="mailto:tsa@top-logic.com">tsa</a>
  */
-public class RoleRule implements RoleProvider {
-
-    /** The meta element type of objects the role applies to */
-    private TLClass metaElement;
+public class RoleRule extends NavigationRule implements RoleProvider {
 
     /** The meta element type of objects an inheritance rule may inherit from */
     private TLClass sourceMetaElement;
 
-    /** Indicates that the role is to be applied to sub types too */
-    private boolean     inherit;
     /** the role to apply by this rule */
     private BoundRole   role;
     /** the role to request in case of an inheritance rule that maps one role to another one */
     private BoundRole   sourceRole;
-    /**
-     * a list {@link com.top_logic.element.boundsec.manager.rule.PathElement}s
-     * determining the groups the role is given to
-     */
-    private List<PathElement>        path;
 
     /** the type of the rule */
     private Type        type;
@@ -77,13 +66,10 @@ public class RoleRule implements RoleProvider {
      * Constructor with all attributes
      */
     private RoleRule(TLClass aME, TLClass aSourceME, boolean isInterit, BoundRole aRole, BoundRole aSourceRole, List<PathElement> aPath, Type aType, String aBase, ResKey aResourceKey) {
-        super();
-		this.metaElement = Objects.requireNonNull(aME);
+		super(aME, isInterit, aPath);
         this.sourceMetaElement = aSourceME;
-        this.inherit           = isInterit;
         this.role              = aRole;
         this.sourceRole        = aSourceRole;
-        this.path              = aPath;
         this.type              = aType;
         this.base              = aBase;
         this.resourceKey       = aResourceKey;
@@ -159,10 +145,10 @@ public class RoleRule implements RoleProvider {
         if (aME == null) {
             return false;
         }
-        if (this.inherit) {
-			return MetaElementUtil.hasGeneralization(aME, metaElement);
+		if (isInherit()) {
+			return MetaElementUtil.hasGeneralization(aME, getMetaElement());
 		} else {
-			return this.metaElement.equals(aME);
+			return getMetaElement().equals(aME);
         }
     }
 
@@ -190,13 +176,6 @@ public class RoleRule implements RoleProvider {
     /**
      * Getter
      */
-    public TLClass getMetaElement() {
-        return (metaElement);
-    }
-
-    /**
-     * Getter
-     */
     public TLClass getSourceMetaElement() {
         return (sourceMetaElement);
     }
@@ -210,26 +189,12 @@ public class RoleRule implements RoleProvider {
     }
 
     /**
-	 * Indicates, that the rule also applies to the sub types (in case of a set {@link TLClass}) 
-	 */
-    public boolean isInherit() {
-        return (inherit);
-    }
-
-    /**
      * This method returns the resourceKey.
      *
      * @return    Returns the resourceKey.
      */
     public ResKey getResourceKey() {
         return (this.resourceKey);
-    }
-
-    /**
-     * Getter
-     */
-    public List<PathElement> getPath() {
-        return (path);
     }
 
 
@@ -276,12 +241,12 @@ public class RoleRule implements RoleProvider {
 
         if (this.getType().equals(Type.reference)) {
             Set theCollector = new HashSet();
-            this.getContent(theBase, this.path, 0, theCollector);
+			this.getContent(theBase, theCollector);
             theResult = new HashSet<>();
             CollectionUtil.mapIgnoreNull(theCollector.iterator(), theResult, theAM.getGroupMapper());
         } else {
             Set theCollector = new HashSet();
-            this.getContent(theBase, this.path, 0, theCollector);
+			this.getContent(theBase, theCollector);
             theResult = new HashSet<>();
             BoundRole theRole = this.getSourceRole();
             if (theRole == null) {
@@ -311,10 +276,10 @@ public class RoleRule implements RoleProvider {
     		return Collections.emptySet();
     	}
     	Wrapper theDestination = (Wrapper) aDestination;
-        Set<BoundObject> theCollector = new HashSet<>();
-        this.getContentBackwards(theDestination, this.path, this.path.size() - 1, theCollector);
+		Set theCollector = new HashSet<>();
+		this.getContentBackwards(theDestination, theCollector);
 
-        Wrapper theBase = this.getBase();
+		Wrapper theBase = this.getBase();
         if (theBase != null) {
             if (theCollector.contains(theBase)) {
                 return ElementAccessHelper.getTargetObjects(this);
@@ -328,36 +293,6 @@ public class RoleRule implements RoleProvider {
                 }
             }
             return theCollector;
-        }
-    }
-
-	private void getContent(Wrapper aNode, List aPath, int aPosition, Set aResult) {
-    	if (aNode == null || !aNode.tValid()) return;
-
-        PathElement thePE = (PathElement) aPath.get(aPosition);
-        Collection theNodeElements = thePE.getValues(aNode);
-        if (aPath.size() == aPosition + 1) {
-        	aResult.addAll(theNodeElements);
-        } else {
-            int theChildPosition = aPosition + 1;
-            for (Iterator theIt = theNodeElements.iterator(); theIt.hasNext();) {
-                Wrapper theElement = (Wrapper) theIt.next();
-                this.getContent(theElement, aPath, theChildPosition, aResult);
-            }
-        }
-    }
-
-    private void getContentBackwards(Wrapper aNode, List aPath, int aPosition, Set aResult) {
-        PathElement thePE = (PathElement) aPath.get(aPosition);
-        Collection theNodeElements = thePE.getSources(aNode);
-        if (aPosition == 0) {
-            aResult.addAll(theNodeElements);
-        } else {
-            int theChildPosition = aPosition - 1;
-            for (Iterator theIt = theNodeElements.iterator(); theIt.hasNext();) {
-                Wrapper theElement = (Wrapper) theIt.next();
-                this.getContentBackwards(theElement, aPath, theChildPosition, aResult);
-            }
         }
     }
 

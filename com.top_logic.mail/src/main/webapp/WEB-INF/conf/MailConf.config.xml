@@ -121,6 +121,25 @@
 			>
 			</instance>
 		</config>
+
+		<config service-class="com.top_logic.tool.boundsec.manager.AccessManager">
+			<instance>
+				<security-parents>
+					<rule
+						inherit="true"
+						meta-element="tl.mail:Mail"
+					>
+						<path>
+							<step
+								attribute="content"
+								inverse="true"
+								meta-element="tl.mail:MailFolder"
+							/>
+						</path>
+					</rule>
+				</security-parents>
+			</instance>
+		</config>
 	</services>
 
 	<configs>

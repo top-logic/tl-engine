@@ -13,6 +13,7 @@ import com.top_logic.base.locking.handler.DefaultLockHandler;
 import com.top_logic.base.locking.handler.LockHandler;
 import com.top_logic.base.locking.handler.NoTokenHandling;
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
@@ -26,8 +27,10 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.DisplayMinimized;
 import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.view.ContainerElement;
 import com.top_logic.layout.view.I18NConstants;
 import com.top_logic.layout.view.UIElement;
@@ -35,10 +38,17 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.command.CombinedViewExecutabilityRule;
 import com.top_logic.layout.view.command.CommandScope;
+import com.top_logic.layout.view.command.ViewCommand;
+import com.top_logic.layout.view.command.ViewCommandConfirmation;
+import com.top_logic.layout.view.command.ViewCommandModel;
+import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.layout.view.form.FormCommandModel;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.model.TLObject;
+import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.Resources;
 
 /**
@@ -81,6 +91,9 @@ public class FormElement extends ContainerElement {
 
 		/** Configuration name for {@link #getLockHandler()}. */
 		String LOCK_HANDLER = "lockHandler";
+
+		/** Configuration name for {@link #getCommands()}. */
+		String COMMANDS = "commands";
 
 		@Override
 		@ClassDefault(FormElement.class)
@@ -172,11 +185,28 @@ public class FormElement extends ContainerElement {
 		@Options(fun = AllInAppImplementations.class)
 		@DisplayMinimized
 		PolymorphicConfiguration<LockHandler> getLockHandler();
+
+		/**
+		 * Commands to contribute to the enclosing command scope.
+		 *
+		 * <p>
+		 * These commands execute in the form's context and have access to the form model via
+		 * {@link com.top_logic.layout.view.command.ReadFormObjectAction ReadFormObjectAction}. They
+		 * are contributed to the parent's {@link CommandScope} and rendered as toolbar buttons by
+		 * the enclosing panel or window.
+		 * </p>
+		 */
+		@Name(COMMANDS)
+		List<PolymorphicConfiguration<? extends ViewCommand>> getCommands();
 	}
 
 	private final Config _config;
 
 	private final LockHandler _lockHandler;
+
+	private final List<ViewCommand> _formCommands;
+
+	private final List<ViewCommand.Config> _formCommandConfigs;
 
 	/**
 	 * Creates a new {@link FormElement} from configuration.
@@ -186,6 +216,18 @@ public class FormElement extends ContainerElement {
 		super(context, config);
 		_config = config;
 		_lockHandler = createLockHandler(context, config);
+
+		_formCommands = new ArrayList<>();
+		_formCommandConfigs = new ArrayList<>();
+		for (PolymorphicConfiguration<? extends ViewCommand> cmdConfig : config.getCommands()) {
+			ViewCommand cmd = context.getInstance(cmdConfig);
+			if (cmd != null) {
+				_formCommands.add(cmd);
+				if (cmdConfig instanceof ViewCommand.Config) {
+					_formCommandConfigs.add((ViewCommand.Config) cmdConfig);
+				}
+			}
+		}
 	}
 
 	private LockHandler createLockHandler(InstantiationContext context, Config config) {
@@ -252,13 +294,169 @@ public class FormElement extends ContainerElement {
 			.collect(Collectors.toList());
 		formControl.setChildren(reactChildren);
 
-		// 10. Auto-enter edit mode if configured (after children are set so listeners receive
+		// 10. Contribute form-level commands to the enclosing command scope.
+		if (!_formCommands.isEmpty()) {
+			contributeFormCommands(context, formContext, formControl);
+		}
+
+		// 11. Auto-enter edit mode if configured (after children are set so listeners receive
 		// the formStateChanged event).
 		if (_config.getInitialEditMode()) {
 			formControl.enterEditMode();
 		}
 
 		return formControl;
+	}
+
+	/**
+	 * Builds {@link ViewCommandModel}s for the configured form commands and contributes them to the
+	 * parent's {@link CommandScope}.
+	 *
+	 * <p>
+	 * The commands are built in the form context (so that actions like
+	 * {@link com.top_logic.layout.view.command.ReadFormObjectAction ReadFormObjectAction} can access
+	 * the {@link com.top_logic.layout.view.form.FormModel FormModel}), but contributed to the
+	 * parent context's command scope (so the enclosing window/panel renders them as toolbar
+	 * buttons).
+	 * </p>
+	 *
+	 * @param parentContext
+	 *        The parent context whose {@link CommandScope} receives the commands.
+	 * @param formContext
+	 *        The form-scoped context with the {@link com.top_logic.layout.view.form.FormModel
+	 *        FormModel} set.
+	 * @param formControl
+	 *        The form control for cleanup registration.
+	 */
+	private void contributeFormCommands(ViewContext parentContext, ViewContext formContext,
+			FormControl formControl) {
+		CommandScope scope = parentContext.getCommandScope();
+		if (scope == null) {
+			return;
+		}
+
+		List<CommandModel> models = new ArrayList<>();
+		for (int i = 0; i < _formCommands.size() && i < _formCommandConfigs.size(); i++) {
+			ViewCommand cmd = _formCommands.get(i);
+			ViewCommand.Config cmdConfig = _formCommandConfigs.get(i);
+
+			ChannelRef inputRef = cmdConfig.getInput();
+			ViewChannel inputChannel = inputRef != null ? formContext.resolveChannel(inputRef) : null;
+
+			ViewExecutabilityRule rule = buildExecutabilityRule(cmdConfig);
+			ViewCommandConfirmation confirmation = buildConfirmation(cmdConfig);
+
+			ViewCommandModel inner =
+				new ViewCommandModel(cmd, cmdConfig, inputChannel, rule, confirmation);
+			inner.attach();
+
+			// Wrap the model so that executeCommand uses the form context (which has the
+			// FormModel) instead of the window context passed by the toolbar button.
+			CommandModel wrapped = new FormScopedCommandModel(inner, formContext);
+
+			models.add(wrapped);
+			scope.addCommand(wrapped);
+		}
+
+		formControl.addCleanupAction(() -> {
+			for (CommandModel model : models) {
+				scope.removeCommand(model);
+				if (model instanceof FormScopedCommandModel) {
+					((FormScopedCommandModel) model).getInner().detach();
+				}
+			}
+		});
+	}
+
+	private ViewExecutabilityRule buildExecutabilityRule(ViewCommand.Config cmdConfig) {
+		List<PolymorphicConfiguration<? extends ViewExecutabilityRule>> ruleConfigs =
+			cmdConfig.getExecutability();
+		if (ruleConfigs.isEmpty()) {
+			return input -> ExecutableState.EXECUTABLE;
+		}
+		DefaultInstantiationContext instantiation =
+			new DefaultInstantiationContext(FormElement.class);
+		List<ViewExecutabilityRule> rules = new ArrayList<>();
+		for (PolymorphicConfiguration<? extends ViewExecutabilityRule> ruleConfig : ruleConfigs) {
+			ViewExecutabilityRule rule = instantiation.getInstance(ruleConfig);
+			if (rule != null) {
+				rules.add(rule);
+			}
+		}
+		return CombinedViewExecutabilityRule.combine(rules);
+	}
+
+	private ViewCommandConfirmation buildConfirmation(ViewCommand.Config cmdConfig) {
+		PolymorphicConfiguration<? extends ViewCommandConfirmation> confirmConfig =
+			cmdConfig.getConfirmation();
+		if (confirmConfig == null) {
+			return null;
+		}
+		DefaultInstantiationContext instantiation =
+			new DefaultInstantiationContext(FormElement.class);
+		return instantiation.getInstance(confirmConfig);
+	}
+
+	/**
+	 * Delegating {@link CommandModel} that overrides the {@link ReactContext} passed to
+	 * {@link #executeCommand(ReactContext)} with the form's {@link ViewContext}.
+	 *
+	 * <p>
+	 * This ensures that form-scoped commands (contributed to a parent panel's toolbar) execute with
+	 * access to the form model, even though the toolbar button's click handler passes the panel's
+	 * context.
+	 * </p>
+	 */
+	private static class FormScopedCommandModel implements CommandModel {
+
+		private final ViewCommandModel _inner;
+
+		private final ViewContext _formContext;
+
+		FormScopedCommandModel(ViewCommandModel inner, ViewContext formContext) {
+			_inner = inner;
+			_formContext = formContext;
+		}
+
+		ViewCommandModel getInner() {
+			return _inner;
+		}
+
+		@Override
+		public String getName() {
+			return _inner.getName();
+		}
+
+		@Override
+		public String getLabel() {
+			return _inner.getLabel();
+		}
+
+		@Override
+		public boolean isExecutable() {
+			return _inner.isExecutable();
+		}
+
+		@Override
+		public HandlerResult executeCommand(ReactContext context) {
+			// Substitute the form context so that actions can access the FormModel.
+			return _inner.executeCommand(_formContext);
+		}
+
+		@Override
+		public String getPlacement() {
+			return _inner.getPlacement();
+		}
+
+		@Override
+		public void addStateChangeListener(Runnable listener) {
+			_inner.addStateChangeListener(listener);
+		}
+
+		@Override
+		public void removeStateChangeListener(Runnable listener) {
+			_inner.removeStateChangeListener(listener);
+		}
 	}
 
 	private void contributeEditCommands(ViewContext context, FormControl formControl) {

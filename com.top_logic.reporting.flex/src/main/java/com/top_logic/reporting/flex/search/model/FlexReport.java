@@ -44,7 +44,7 @@ import com.top_logic.util.Utils;
  * 
  * @author <a href="mailto:tbe@top-logic.com">tbe</a>
  */
-public class FlexReport extends AttributedWrapper implements com.top_logic.element.model.accounts.WithOwner {
+public class FlexReport extends AttributedWrapper {
 
 	public static final String KO_TYPE = "FlexReport";
 

@@ -2,13 +2,6 @@
 
 <model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
 	<module name="tl.accounts">
-		<annotations>
-			<factory value="com.top_logic.element.model.accounts.TLAccountsFactory"/>
-			<package-binding
-				implementation-package="com.top_logic.element.model.accounts.impl"
-				interface-package="com.top_logic.element.model.accounts"
-			/>
-		</annotations>
 		<datatype name="MfaRequirement"
 			db_type="string"
 			kind="Custom"
@@ -23,7 +16,7 @@
 				<generalization type="tl.model:TLObject"/>
 			</generalizations>
 			<annotations>
-				<implementation-binding class-name="com.top_logic.element.meta.kbbased.AttributedAddress"/>
+				<implementation-binding class-name="com.top_logic.knowledge.wrap.Address"/>
 				<main-properties properties="name,zip,city,state,country"/>
 				<table name="Address"/>
 			</annotations>
@@ -125,7 +118,7 @@
 			</generalizations>
 			<annotations>
 				<table name="Group"/>
-				<implementation-binding class-name="com.top_logic.element.meta.kbbased.AttributedGroup"/>
+				<implementation-binding class-name="com.top_logic.tool.boundsec.wrap.Group"/>
 				<instance-presentation
 					icon="theme:mime.tl.accounts.Group"
 					large-icon="theme:mime.tl.accounts.Group.large"
@@ -218,7 +211,7 @@
 				<generalization type="GroupMember"/>
 			</generalizations>
 			<annotations>
-				<implementation-binding class-name="com.top_logic.element.meta.kbbased.AttributedPerson"/>
+				<implementation-binding class-name="com.top_logic.knowledge.wrap.person.Person"/>
 				<instance-presentation
 					icon="theme:mime.tl.accounts.Person"
 					large-icon="theme:mime.tl.accounts.Person.large"

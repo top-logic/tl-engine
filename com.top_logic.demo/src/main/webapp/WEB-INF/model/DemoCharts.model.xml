@@ -8,7 +8,6 @@
 
 		<class name="Kategorie">
 			<annotations>
-				<table name="DemoCharts"/>
 				<main-properties properties="name"/>
 			</annotations>
 			<attributes>
@@ -23,7 +22,6 @@
 			abstract="true"
 		>
 			<annotations>
-				<table name="DemoCharts"/>
 				<main-properties properties="datum, wert, kategorie"/>
 			</annotations>
 			<attributes>
@@ -47,18 +45,12 @@
 		</class>
 
 		<class name="Verkauf">
-			<annotations>
-				<table name="DemoCharts"/>
-			</annotations>
 			<generalizations>
 				<generalization type="Transaktion"/>
 			</generalizations>
 		</class>
 
 		<class name="Einkauf">
-			<annotations>
-				<table name="DemoCharts"/>
-			</annotations>
 			<generalizations>
 				<generalization type="Transaktion"/>
 			</generalizations>

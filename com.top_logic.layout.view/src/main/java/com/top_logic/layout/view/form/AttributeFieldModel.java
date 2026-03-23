@@ -72,7 +72,7 @@ public class AttributeFieldModel extends AbstractFieldModel {
 	 *        The new object to bind to.
 	 */
 	public void setObject(TLObject newObject) {
-		Object oldValue = getValue();
+		Object oldValue = super.getValue();
 		_object = newObject;
 		_part = resolvePart(newObject);
 		setMandatory(_part.isMandatory());

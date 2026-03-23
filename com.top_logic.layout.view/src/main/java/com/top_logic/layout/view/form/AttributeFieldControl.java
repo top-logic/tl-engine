@@ -166,12 +166,14 @@ public class AttributeFieldControl implements FormModelListener {
 			// First compatible object arrived or re-appearing after hide.
 			_model = new AttributeFieldModel(current, part);
 			_model.setEditable(source.isEditMode() && !_forceReadonly);
+			_formControl.registerFieldModel(_model);
 
 			addModelListener();
 
 			_innerControl = FieldControlService.getInstance().createFieldControl(_context, part, _model);
 
 			_chrome.setLabel(resolveLabel());
+			_chrome.setHelpText(resolveHelpText(part));
 			_chrome.setRequired(part.isMandatory());
 			_chrome.setField(_innerControl);
 			_chrome.setDirty(false);

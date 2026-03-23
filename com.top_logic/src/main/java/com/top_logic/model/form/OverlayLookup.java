@@ -5,7 +5,6 @@
  */
 package com.top_logic.model.form;
 
-import com.top_logic.model.TLFormObjectBase;
 import com.top_logic.model.TLObject;
 
 /**
@@ -22,17 +21,17 @@ public interface OverlayLookup {
 	 * Finds the overlay for a persistent object.
 	 *
 	 * <p>
-	 * If the given object is itself a {@link TLFormObjectBase} (overlay), it is returned directly.
-	 * If a persistent object has an overlay registered in this lookup, the overlay is returned.
-	 * Otherwise returns {@code null}, meaning callers should fall back to reading from the
-	 * persistent object directly.
+	 * If the given object is itself an overlay {@link TLObject}, it is returned directly. If a
+	 * persistent object has an overlay registered in this lookup, the overlay is returned. Otherwise
+	 * returns {@code null}, meaning callers should fall back to reading from the persistent object
+	 * directly.
 	 * </p>
 	 *
 	 * @param object
 	 *        The object to find the overlay for.
 	 * @return The overlay, or {@code null} if no overlay exists.
 	 */
-	TLFormObjectBase getExistingOverlay(TLObject object);
+	TLObject getExistingOverlay(TLObject object);
 
 	/**
 	 * All overlays managed by this lookup.
@@ -42,5 +41,5 @@ public interface OverlayLookup {
 	 * cross-object constraints that need to discover all objects in the form.
 	 * </p>
 	 */
-	Iterable<? extends TLFormObjectBase> getOverlays();
+	Iterable<? extends TLObject> getOverlays();
 }

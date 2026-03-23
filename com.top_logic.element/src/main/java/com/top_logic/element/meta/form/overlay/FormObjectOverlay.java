@@ -10,11 +10,9 @@ import static com.top_logic.model.util.TLModelUtil.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -41,8 +39,6 @@ import com.top_logic.model.TLType;
 import com.top_logic.model.TransientObject;
 import com.top_logic.model.access.StorageMapping;
 import com.top_logic.model.annotate.AnnotationLookup;
-import com.top_logic.model.form.ConstraintValidationListener;
-import com.top_logic.model.form.ValidationResult;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
@@ -65,10 +61,6 @@ public abstract class FormObjectOverlay extends TransientObject implements TLFor
 	private FormContainer _formContainer;
 
 	private String _id;
-
-	private Map<TLStructuredTypePart, ValidationResult> _validations = Collections.emptyMap();
-
-	private List<ConstraintValidationListener> _validationListeners = Collections.emptyList();
 
 	/**
 	 * Creates a {@link FormObjectOverlay}.
@@ -398,42 +390,6 @@ public abstract class FormObjectOverlay extends TransientObject implements TLFor
 		AttributeUpdate result = new AttributeUpdate(this, specializedAttribute);
 		addUpdate(result);
 		return result;
-	}
-
-	@Override
-	public ValidationResult getValidation(TLStructuredTypePart attribute) {
-		ValidationResult result = _validations.get(attribute);
-		return result != null ? result : ValidationResult.VALID;
-	}
-
-	@Override
-	public void setValidation(TLStructuredTypePart attribute, ValidationResult result) {
-		if (_validations.isEmpty()) {
-			_validations = new HashMap<>();
-		}
-		ValidationResult previous = _validations.put(attribute, result);
-		if (!result.equals(previous)) {
-			fireValidationChanged(attribute, result);
-		}
-	}
-
-	@Override
-	public void addConstraintValidationListener(ConstraintValidationListener listener) {
-		if (_validationListeners.isEmpty()) {
-			_validationListeners = new ArrayList<>();
-		}
-		_validationListeners.add(listener);
-	}
-
-	@Override
-	public void removeConstraintValidationListener(ConstraintValidationListener listener) {
-		_validationListeners.remove(listener);
-	}
-
-	private void fireValidationChanged(TLStructuredTypePart attribute, ValidationResult result) {
-		for (ConstraintValidationListener listener : _validationListeners) {
-			listener.onValidationChanged(this, attribute, result);
-		}
 	}
 
 	@Override

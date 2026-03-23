@@ -27,7 +27,6 @@ import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.ValueListener;
 import com.top_logic.mig.html.Media;
-import com.top_logic.model.TLFormObjectBase;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
@@ -563,7 +562,7 @@ public class AttributeUpdateContainer implements OverlayLookup {
 	}
 
 	@Override
-	public Iterable<? extends TLFormObjectBase> getOverlays() {
+	public Iterable<? extends TLObject> getOverlays() {
 		return getAllOverlays();
 	}
 

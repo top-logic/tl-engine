@@ -19,8 +19,6 @@ import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.form.constraint.MandatoryConstraintCheck;
 import com.top_logic.element.meta.form.constraint.RangeConstraintCheck;
 import com.top_logic.element.meta.form.constraint.SizeConstraintCheck;
-import com.top_logic.element.meta.form.overlay.TLFormObject;
-import com.top_logic.model.TLFormObjectBase;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
@@ -45,10 +43,10 @@ import com.top_logic.model.util.Pointer;
 public class FormValidationModel implements OverlayLookup {
 
 	/** Map from persistent object to overlay (for edit overlays). */
-	private final Map<TLObject, TLFormObject> _overlaysByEdited = new HashMap<>();
+	private final Map<TLObject, TLObject> _overlaysByEdited = new HashMap<>();
 
 	/** All overlays including create overlays (which have no persistent base). */
-	private final List<TLFormObject> _allOverlays = new ArrayList<>();
+	private final List<TLObject> _allOverlays = new ArrayList<>();
 
 	/** All constraint entries, grouped by owning (object, attribute). */
 	private final Map<Pointer, List<ConstraintEntry>> _constraintsByOwner = new HashMap<>();
@@ -62,14 +60,21 @@ public class FormValidationModel implements OverlayLookup {
 	/** Global listeners. */
 	private final List<ConstraintValidationListener> _listeners = new ArrayList<>();
 
+	/** Validation results per (object, attribute). */
+	private final Map<PointerKey, ValidationResult> _validationResults = new HashMap<>();
+
 	/**
 	 * Registers an overlay and derives constraints from its type.
+	 *
+	 * @param overlay
+	 *        The overlay object to add.
+	 * @param editedBase
+	 *        The persistent base object being edited, or {@code null} for create overlays.
 	 */
-	public void addOverlay(TLFormObject overlay) {
+	public void addOverlay(TLObject overlay, TLObject editedBase) {
 		_allOverlays.add(overlay);
-		TLObject edited = overlay.getEditedObject();
-		if (edited != null) {
-			_overlaysByEdited.put(edited, overlay);
+		if (editedBase != null) {
+			_overlaysByEdited.put(editedBase, overlay);
 		}
 		deriveConstraints(overlay);
 		validateAllFor(overlay);
@@ -78,12 +83,10 @@ public class FormValidationModel implements OverlayLookup {
 	/**
 	 * Removes an overlay and cleans up constraints and dependencies.
 	 */
-	public void removeOverlay(TLFormObject overlay) {
+	public void removeOverlay(TLObject overlay) {
 		_allOverlays.remove(overlay);
-		TLObject edited = overlay.getEditedObject();
-		if (edited != null) {
-			_overlaysByEdited.remove(edited);
-		}
+		_overlaysByEdited.values().remove(overlay);
+
 		// Remove all constraint entries owned by this overlay.
 		List<ConstraintEntry> removed = new ArrayList<>();
 		_constraintsByOwner.entrySet().removeIf(entry -> {
@@ -97,33 +100,45 @@ public class FormValidationModel implements OverlayLookup {
 		for (ConstraintEntry entry : removed) {
 			removeDependencies(entry);
 		}
+
+		// Clean validation results for this overlay.
+		_validationResults.entrySet().removeIf(e -> e.getKey()._object == overlay);
+
 		// Re-validate constraints that depended on this overlay.
 		Set<ConstraintEntry> affected = findAffectedConstraints(overlay);
 		revalidate(affected);
 	}
 
 	@Override
-	public TLFormObjectBase getExistingOverlay(TLObject object) {
-		if (object instanceof TLFormObject) {
-			return (TLFormObjectBase) object;
+	public TLObject getExistingOverlay(TLObject object) {
+		if (_allOverlays.contains(object)) {
+			return object;
 		}
 		return _overlaysByEdited.get(object);
 	}
 
 	@Override
-	public Iterable<? extends TLFormObjectBase> getOverlays() {
+	public Iterable<? extends TLObject> getOverlays() {
 		return _allOverlays;
+	}
+
+	/**
+	 * Returns the validation result for the given overlay and attribute.
+	 */
+	public ValidationResult getValidation(TLObject overlay, TLStructuredTypePart attribute) {
+		ValidationResult result = _validationResults.get(new PointerKey(overlay, attribute));
+		return result != null ? result : ValidationResult.VALID;
 	}
 
 	/**
 	 * Whether all overlays are free of ERROR-type validation results.
 	 */
 	public boolean isValid() {
-		for (TLFormObject overlay : _allOverlays) {
+		for (TLObject overlay : _allOverlays) {
 			TLStructuredType type = (TLStructuredType) overlay.tType();
 			if (type == null) continue;
 			for (TLStructuredTypePart part : type.getAllParts()) {
-				if (!overlay.getValidation(part).isValid()) {
+				if (!getValidation(overlay, part).isValid()) {
 					return false;
 				}
 			}
@@ -147,7 +162,7 @@ public class FormValidationModel implements OverlayLookup {
 	 * @param attribute
 	 *        The attribute whose value changed.
 	 */
-	public void onValueChanged(TLFormObjectBase overlay, TLStructuredTypePart attribute) {
+	public void onValueChanged(TLObject overlay, TLStructuredTypePart attribute) {
 		Set<ConstraintEntry> toValidate = new HashSet<>();
 
 		// Constraints that depend on this attribute (cross-field dependencies).
@@ -158,7 +173,7 @@ public class FormValidationModel implements OverlayLookup {
 		}
 
 		// Constraints owned by this attribute itself.
-		Pointer ownerKey = Pointer.create((TLObject) overlay, attribute);
+		Pointer ownerKey = Pointer.create(overlay, attribute);
 		List<ConstraintEntry> ownConstraints = _constraintsByOwner.get(ownerKey);
 		if (ownConstraints != null) {
 			toValidate.addAll(ownConstraints);
@@ -169,7 +184,7 @@ public class FormValidationModel implements OverlayLookup {
 		}
 	}
 
-	private void deriveConstraints(TLFormObject overlay) {
+	private void deriveConstraints(TLObject overlay) {
 		TLStructuredType type = (TLStructuredType) overlay.tType();
 		if (type == null) return;
 
@@ -219,7 +234,7 @@ public class FormValidationModel implements OverlayLookup {
 		}
 	}
 
-	private void validateAllFor(TLFormObject overlay) {
+	private void validateAllFor(TLObject overlay) {
 		TLStructuredType type = (TLStructuredType) overlay.tType();
 		if (type == null) return;
 
@@ -287,7 +302,7 @@ public class FormValidationModel implements OverlayLookup {
 					}
 				}
 
-				// Store result on overlay.
+				// Store result internally.
 				ValidationResult validationResult;
 				if (errors.isEmpty() && warnings.isEmpty()) {
 					validationResult = ValidationResult.VALID;
@@ -295,25 +310,22 @@ public class FormValidationModel implements OverlayLookup {
 					validationResult = new ValidationResult(errors, warnings);
 				}
 
-				if (object instanceof TLFormObjectBase) {
-					TLFormObjectBase overlay = (TLFormObjectBase) object;
-					ValidationResult previous = overlay.getValidation(attribute);
-					overlay.setValidation(attribute, validationResult);
+				PointerKey resultKey = new PointerKey(object, attribute);
+				ValidationResult previous = _validationResults.put(resultKey, validationResult);
+				if (previous == null) previous = ValidationResult.VALID;
 
-					// Notify global listeners and detect cascading.
-					if (!validationResult.equals(previous)) {
-						for (ConstraintValidationListener listener : _listeners) {
-							listener.onValidationChanged(overlay, attribute, validationResult);
-						}
-						// Cascading: if result changed, check if any other constraints
-						// depend on this (overlay, attribute) and haven't been evaluated yet.
-						PointerKey changedKey = new PointerKey(overlay, attribute);
-						Set<ConstraintEntry> cascaded = _dependencyMap.get(changedKey);
-						if (cascaded != null) {
-							for (ConstraintEntry dep : cascaded) {
-								if (!evaluated.contains(dep)) {
-									next.add(dep);
-								}
+				if (!validationResult.equals(previous)) {
+					for (ConstraintValidationListener listener : _listeners) {
+						listener.onValidationChanged(object, attribute, validationResult);
+					}
+					// Cascading: if result changed, check if any other constraints
+					// depend on this (object, attribute) and haven't been evaluated yet.
+					PointerKey changedKey = new PointerKey(object, attribute);
+					Set<ConstraintEntry> cascaded = _dependencyMap.get(changedKey);
+					if (cascaded != null) {
+						for (ConstraintEntry dep : cascaded) {
+							if (!evaluated.contains(dep)) {
+								next.add(dep);
 							}
 						}
 					}
@@ -359,7 +371,7 @@ public class FormValidationModel implements OverlayLookup {
 		entry.setDependencies(Collections.emptySet());
 	}
 
-	private Set<ConstraintEntry> findAffectedConstraints(TLFormObject overlay) {
+	private Set<ConstraintEntry> findAffectedConstraints(TLObject overlay) {
 		Set<ConstraintEntry> affected = new HashSet<>();
 		TLStructuredType type = (TLStructuredType) overlay.tType();
 		if (type == null) return affected;

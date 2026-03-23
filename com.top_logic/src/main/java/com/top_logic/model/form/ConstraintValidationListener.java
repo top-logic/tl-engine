@@ -5,7 +5,7 @@
  */
 package com.top_logic.model.form;
 
-import com.top_logic.model.TLFormObjectBase;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 
 /**
@@ -23,5 +23,5 @@ public interface ConstraintValidationListener {
 	 * @param result
 	 *        The new validation result.
 	 */
-	void onValidationChanged(TLFormObjectBase overlay, TLStructuredTypePart attribute, ValidationResult result);
+	void onValidationChanged(TLObject overlay, TLStructuredTypePart attribute, ValidationResult result);
 }

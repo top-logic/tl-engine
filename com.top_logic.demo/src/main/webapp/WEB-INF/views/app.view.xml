@@ -68,7 +68,13 @@
 					>
 						<view-ref view="demo/dialog-demo.view.xml"/>
 					</nav-item>
-					<separator/>
+					<nav-item id="constraint-test"
+					icon="bi bi-check-circle"
+					label="Constraint Test"
+				>
+					<view-ref view="demo/constraint-test.view.xml"/>
+				</nav-item>
+				<separator/>
 					<nav-item id="settings"
 						icon="bi bi-gear"
 						label="Settings"

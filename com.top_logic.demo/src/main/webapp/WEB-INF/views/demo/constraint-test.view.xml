@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="selectedObject"/>
+	</channels>
+	<split-panel
+		orientation="horizontal"
+		resizable="true"
+	>
+		<panes>
+			<pane
+				min-size="200"
+				size="30"
+				unit="%"
+			>
+				<panel title="Constraint Test Objects">
+					<table
+						selection="selectedObject"
+						types="test.constraints:ConstraintTestType"
+					>
+						<rows>all(`test.constraints:ConstraintTestType`)</rows>
+					</table>
+				</panel>
+			</pane>
+			<pane
+				size="70"
+				unit="%"
+			>
+				<panel title="Constraint Test Form">
+					<form input="selectedObject">
+						<field attribute="mandatoryString"/>
+						<field attribute="sizedString"/>
+						<field attribute="mandatorySizedString"/>
+						<field attribute="rangedInt"/>
+						<field attribute="rangedDouble"/>
+						<field attribute="uppercaseStart"/>
+						<field attribute="warningField"/>
+						<field attribute="freeText"/>
+					</form>
+				</panel>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

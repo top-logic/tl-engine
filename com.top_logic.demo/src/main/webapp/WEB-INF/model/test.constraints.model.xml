@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="test.constraints">
+		<annotations>
+			<display-group value="demo"/>
+		</annotations>
+
+		<class name="ConstraintTestType">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<table name="GenericObject"/>
+				<instance-presentation>
+					<icon value="css:bi bi-check-circle"/>
+				</instance-presentation>
+			</annotations>
+			<attributes>
+				<!-- Mandatory string: must not be empty -->
+				<property name="mandatoryString"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+
+				<!-- String with size constraint: 3-50 characters -->
+				<property name="sizedString"
+					type="tl.core:String"
+				>
+					<annotations>
+						<size-constraint
+							lower-bound="3"
+							upper-bound="50"
+						/>
+					</annotations>
+				</property>
+
+				<!-- Mandatory string with size constraint -->
+				<property name="mandatorySizedString"
+					mandatory="true"
+					type="tl.core:String"
+				>
+					<annotations>
+						<size-constraint
+							lower-bound="5"
+							upper-bound="100"
+						/>
+					</annotations>
+				</property>
+
+				<!-- Integer with range constraint: 0-100 -->
+				<property name="rangedInt"
+					type="tl.core:Integer"
+				>
+					<annotations>
+						<value-range
+							min="0.0"
+							max="100.0"
+						/>
+					</annotations>
+				</property>
+
+				<!-- Double with range constraint: -10.0 to 10.0 -->
+				<property name="rangedDouble"
+					type="tl.core:Double"
+				>
+					<annotations>
+						<value-range
+							min="-10.0"
+							max="10.0"
+						/>
+					</annotations>
+				</property>
+
+				<!-- Expression-based constraint: must start with uppercase letter -->
+				<property name="uppercaseStart"
+					type="tl.core:String"
+				>
+					<annotations>
+						<constraints>
+							<constraint-by-expression>
+								<check><![CDATA[value -> obj -> {
+	if ($value != null and $value.length() > 0,
+		if ($value.subString(0, 1) == $value.subString(0, 1).toUpperCase(),
+			null,
+			#("Must start with an uppercase letter."@en, "Muss mit einem Grossbuchstaben beginnen."@de)),
+		null)
+}]]></check>
+							</constraint-by-expression>
+						</constraints>
+					</annotations>
+				</property>
+
+				<!-- Warning constraint (non-blocking) -->
+				<property name="warningField"
+					type="tl.core:String"
+				>
+					<annotations>
+						<constraints>
+							<constraint-by-expression type="warning">
+								<check><![CDATA[value -> obj -> {
+	if ($value != null and $value.length() > 20,
+		#("Consider keeping text under 20 characters."@en, "Text sollte unter 20 Zeichen bleiben."@de),
+		null)
+}]]></check>
+							</constraint-by-expression>
+						</constraints>
+					</annotations>
+				</property>
+
+				<!-- Optional plain string (no constraints, for comparison) -->
+				<property name="freeText"
+					type="tl.core:String"
+				/>
+			</attributes>
+		</class>
+	</module>
+</model>

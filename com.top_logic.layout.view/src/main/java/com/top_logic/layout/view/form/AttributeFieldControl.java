@@ -14,6 +14,7 @@ import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
 import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
@@ -124,11 +125,12 @@ public class AttributeFieldControl implements FormModelListener {
 		_innerControl = FieldControlService.getInstance().createFieldControl(_context, part, _model);
 
 		String label = resolveLabel();
+		String helpText = resolveHelpText(part);
 		boolean mandatory = part.isMandatory();
 		boolean dirty = _model.isDirty();
 
 		_chrome = new ReactFormFieldChromeControl(_context, label, mandatory,
-			dirty, null, null, null, false, true, _innerControl);
+			dirty, null, helpText, null, false, true, _innerControl);
 
 		return _chrome;
 	}
@@ -338,5 +340,9 @@ public class AttributeFieldControl implements FormModelListener {
 			return MetaLabelProvider.INSTANCE.getLabel(_model.getPart());
 		}
 		return _attributeName;
+	}
+
+	private String resolveHelpText(TLStructuredTypePart part) {
+		return MetaResourceProvider.INSTANCE.getTooltip(part);
 	}
 }

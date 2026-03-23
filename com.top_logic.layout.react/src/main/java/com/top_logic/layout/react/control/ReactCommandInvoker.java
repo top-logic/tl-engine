@@ -80,11 +80,26 @@ class ReactCommandInvoker {
 		} catch (Throwable ex) {
 			Logger.error("@ReactCommand failed on " + control.getClass().getName(), ex,
 				ReactCommandInvoker.class);
-			if (ex instanceof I18NFailure) {
-				return HandlerResult.error(((I18NFailure) ex).getErrorKey(), ex);
+			I18NFailure i18n = findI18NFailure(ex);
+			if (i18n != null) {
+				return HandlerResult.error(i18n.getErrorKey(), ex);
 			}
 			return HandlerResult.error(ResKey.text(ex.getMessage()), ex);
 		}
+	}
+
+	/**
+	 * Searches the exception cause chain for an {@link I18NFailure}.
+	 */
+	private static I18NFailure findI18NFailure(Throwable ex) {
+		Throwable current = ex;
+		while (current != null) {
+			if (current instanceof I18NFailure) {
+				return (I18NFailure) current;
+			}
+			current = current.getCause();
+		}
+		return null;
 	}
 
 	private HandlerResult castResult(Object result) {

@@ -8,6 +8,7 @@
 		title="Chart Details"
 		width="400px"
 	>
+		<demo-value-list input="clickedValue" title="Datenpunkt-Details"/>
 		<actions>
 			<button>
 				<action class="com.top_logic.layout.view.command.CancelDialogCommand"

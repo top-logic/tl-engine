@@ -224,9 +224,12 @@ public class AttributeFieldControl implements FormModelListener {
 			}
 			_validationListener = null;
 		}
-		if (_model != null && _modelListener != null) {
-			_model.removeListener(_modelListener);
-			_modelListener = null;
+		if (_model != null) {
+			if (_modelListener != null) {
+				_model.removeListener(_modelListener);
+				_modelListener = null;
+			}
+			_formControl.unregisterFieldModel(_model);
 		}
 		_model = null;
 	}

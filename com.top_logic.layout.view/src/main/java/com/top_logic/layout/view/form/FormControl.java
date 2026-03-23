@@ -145,6 +145,13 @@ public class FormControl extends ReactControl implements FormModel {
 	}
 
 	/**
+	 * Unregisters a field model (e.g., when the field is removed dynamically).
+	 */
+	public void unregisterFieldModel(AbstractFieldModel model) {
+		_fieldModels.remove(model);
+	}
+
+	/**
 	 * Sets all registered field models to revealed, making hidden validation errors visible.
 	 */
 	public void revealAllValidation() {
@@ -329,6 +336,7 @@ public class FormControl extends ReactControl implements FormModel {
 		fireFormStateChanged();
 
 		_validationModel = null;
+		_fieldModels.clear();
 		putState(VALID, Boolean.TRUE);
 	}
 

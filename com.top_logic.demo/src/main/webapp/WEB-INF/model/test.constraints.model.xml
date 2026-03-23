@@ -12,9 +12,7 @@
 			</generalizations>
 			<annotations>
 				<table name="GenericObject"/>
-				<instance-presentation>
-					<icon value="css:bi bi-check-circle"/>
-				</instance-presentation>
+				<instance-presentation icon="css:bi bi-check-circle"/>
 			</annotations>
 			<attributes>
 				<!-- Mandatory string: must not be empty -->

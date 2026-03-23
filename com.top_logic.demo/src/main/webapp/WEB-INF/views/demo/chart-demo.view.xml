@@ -12,40 +12,40 @@
 							{
 								'label': 'Verkauf',
 								'data': list(
-									all(`demo.charts:Verkauf`).filter(v -> month($v.get(`datum`)) == 0).map(v -> $v.get(`wert`)).sum(),
-									all(`demo.charts:Verkauf`).filter(v -> month($v.get(`datum`)) == 1).map(v -> $v.get(`wert`)).sum(),
-									all(`demo.charts:Verkauf`).filter(v -> month($v.get(`datum`)) == 2).map(v -> $v.get(`wert`)).sum(),
-									all(`demo.charts:Verkauf`).filter(v -> month($v.get(`datum`)) == 3).map(v -> $v.get(`wert`)).sum(),
-									all(`demo.charts:Verkauf`).filter(v -> month($v.get(`datum`)) == 4).map(v -> $v.get(`wert`)).sum(),
-									all(`demo.charts:Verkauf`).filter(v -> month($v.get(`datum`)) == 5).map(v -> $v.get(`wert`)).sum()
+									all(`demo.charts:Verkauf`).filter(v -> month($v.get(`demo.charts:Transaktion#datum`)) == 0).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum(),
+									all(`demo.charts:Verkauf`).filter(v -> month($v.get(`demo.charts:Transaktion#datum`)) == 1).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum(),
+									all(`demo.charts:Verkauf`).filter(v -> month($v.get(`demo.charts:Transaktion#datum`)) == 2).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum(),
+									all(`demo.charts:Verkauf`).filter(v -> month($v.get(`demo.charts:Transaktion#datum`)) == 3).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum(),
+									all(`demo.charts:Verkauf`).filter(v -> month($v.get(`demo.charts:Transaktion#datum`)) == 4).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum(),
+									all(`demo.charts:Verkauf`).filter(v -> month($v.get(`demo.charts:Transaktion#datum`)) == 5).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum()
 								),
 								'metadata': list(
-									all(`demo.charts:Verkauf`).filter(v -> month($v.get(`datum`)) == 0),
-									all(`demo.charts:Verkauf`).filter(v -> month($v.get(`datum`)) == 1),
-									all(`demo.charts:Verkauf`).filter(v -> month($v.get(`datum`)) == 2),
-									all(`demo.charts:Verkauf`).filter(v -> month($v.get(`datum`)) == 3),
-									all(`demo.charts:Verkauf`).filter(v -> month($v.get(`datum`)) == 4),
-									all(`demo.charts:Verkauf`).filter(v -> month($v.get(`datum`)) == 5)
+									all(`demo.charts:Verkauf`).filter(v -> month($v.get(`demo.charts:Transaktion#datum`)) == 0),
+									all(`demo.charts:Verkauf`).filter(v -> month($v.get(`demo.charts:Transaktion#datum`)) == 1),
+									all(`demo.charts:Verkauf`).filter(v -> month($v.get(`demo.charts:Transaktion#datum`)) == 2),
+									all(`demo.charts:Verkauf`).filter(v -> month($v.get(`demo.charts:Transaktion#datum`)) == 3),
+									all(`demo.charts:Verkauf`).filter(v -> month($v.get(`demo.charts:Transaktion#datum`)) == 4),
+									all(`demo.charts:Verkauf`).filter(v -> month($v.get(`demo.charts:Transaktion#datum`)) == 5)
 								),
 								'onClick': 'showDetails'
 							},
 							{
 								'label': 'Einkauf',
 								'data': list(
-									all(`demo.charts:Einkauf`).filter(v -> month($v.get(`datum`)) == 0).map(v -> $v.get(`wert`)).sum(),
-									all(`demo.charts:Einkauf`).filter(v -> month($v.get(`datum`)) == 1).map(v -> $v.get(`wert`)).sum(),
-									all(`demo.charts:Einkauf`).filter(v -> month($v.get(`datum`)) == 2).map(v -> $v.get(`wert`)).sum(),
-									all(`demo.charts:Einkauf`).filter(v -> month($v.get(`datum`)) == 3).map(v -> $v.get(`wert`)).sum(),
-									all(`demo.charts:Einkauf`).filter(v -> month($v.get(`datum`)) == 4).map(v -> $v.get(`wert`)).sum(),
-									all(`demo.charts:Einkauf`).filter(v -> month($v.get(`datum`)) == 5).map(v -> $v.get(`wert`)).sum()
+									all(`demo.charts:Einkauf`).filter(v -> month($v.get(`demo.charts:Transaktion#datum`)) == 0).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum(),
+									all(`demo.charts:Einkauf`).filter(v -> month($v.get(`demo.charts:Transaktion#datum`)) == 1).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum(),
+									all(`demo.charts:Einkauf`).filter(v -> month($v.get(`demo.charts:Transaktion#datum`)) == 2).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum(),
+									all(`demo.charts:Einkauf`).filter(v -> month($v.get(`demo.charts:Transaktion#datum`)) == 3).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum(),
+									all(`demo.charts:Einkauf`).filter(v -> month($v.get(`demo.charts:Transaktion#datum`)) == 4).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum(),
+									all(`demo.charts:Einkauf`).filter(v -> month($v.get(`demo.charts:Transaktion#datum`)) == 5).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum()
 								),
 								'metadata': list(
-									all(`demo.charts:Einkauf`).filter(v -> month($v.get(`datum`)) == 0),
-									all(`demo.charts:Einkauf`).filter(v -> month($v.get(`datum`)) == 1),
-									all(`demo.charts:Einkauf`).filter(v -> month($v.get(`datum`)) == 2),
-									all(`demo.charts:Einkauf`).filter(v -> month($v.get(`datum`)) == 3),
-									all(`demo.charts:Einkauf`).filter(v -> month($v.get(`datum`)) == 4),
-									all(`demo.charts:Einkauf`).filter(v -> month($v.get(`datum`)) == 5)
+									all(`demo.charts:Einkauf`).filter(v -> month($v.get(`demo.charts:Transaktion#datum`)) == 0),
+									all(`demo.charts:Einkauf`).filter(v -> month($v.get(`demo.charts:Transaktion#datum`)) == 1),
+									all(`demo.charts:Einkauf`).filter(v -> month($v.get(`demo.charts:Transaktion#datum`)) == 2),
+									all(`demo.charts:Einkauf`).filter(v -> month($v.get(`demo.charts:Transaktion#datum`)) == 3),
+									all(`demo.charts:Einkauf`).filter(v -> month($v.get(`demo.charts:Transaktion#datum`)) == 4),
+									all(`demo.charts:Einkauf`).filter(v -> month($v.get(`demo.charts:Transaktion#datum`)) == 5)
 								),
 								'onClick': 'showDetails'
 							}
@@ -75,10 +75,10 @@
 				<chart data="{
 					'type': 'doughnut',
 					'data': {
-						'labels': all(`demo.charts:Kategorie`).map(k -> $k.get(`name`)),
+						'labels': all(`demo.charts:Kategorie`).map(k -> $k.get(`demo.charts:Kategorie#name`)),
 						'datasets': [{
-							'data': all(`demo.charts:Kategorie`).map(k -> all(`demo.charts:Verkauf`).filter(v -> $v.get(`kategorie`) == $k).map(v -> $v.get(`wert`)).sum()),
-							'metadata': all(`demo.charts:Kategorie`).map(k -> all(`demo.charts:Verkauf`).filter(v -> $v.get(`kategorie`) == $k)),
+							'data': all(`demo.charts:Kategorie`).map(k -> all(`demo.charts:Verkauf`).filter(v -> $v.get(`demo.charts:Transaktion#kategorie`) == $k).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum()),
+							'metadata': all(`demo.charts:Kategorie`).map(k -> all(`demo.charts:Verkauf`).filter(v -> $v.get(`demo.charts:Transaktion#kategorie`) == $k)),
 							'tooltip': 'valueTable'
 						}]
 					},

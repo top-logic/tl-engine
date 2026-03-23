@@ -9,8 +9,10 @@ import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
@@ -25,8 +27,7 @@ import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
-import com.top_logic.layout.view.channel.ChannelMappingConfig;
-import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.ChannelBindingConfig;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -36,9 +37,9 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * {@code .view.xml} file.
  *
  * <p>
- * The dialog gets its own isolated {@link ViewContext}. Input channel values from the parent context
- * are copied once at open time (no live binding). The dialog view XML is fully self-contained and
- * defines its own chrome, layout, and action buttons.
+ * The dialog gets its own isolated {@link ViewContext}. Parent channels are shared with the dialog
+ * via live bindings (same mechanism as {@code <view-ref>}). Additionally, the command's input
+ * parameter can be injected into a named dialog channel via {@code bind-input-to}.
  * </p>
  *
  * <p>
@@ -50,9 +51,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  *   &lt;action class="com.top_logic.layout.view.command.OpenDialogCommand"
  *     dialog-view="demo/show-details.view.xml"
  *     close-on-backdrop="true"&gt;
- *     &lt;inputs&gt;
- *       &lt;input from="selection" to="model"/&gt;
- *     &lt;/inputs&gt;
+ *     &lt;bind channel="model" to="selection"/&gt;
  *   &lt;/action&gt;
  * &lt;/button&gt;
  * </pre>
@@ -75,11 +74,14 @@ public class OpenDialogCommand implements ViewCommand {
 		/** Configuration name for {@link #getCloseOnBackdrop()}. */
 		String CLOSE_ON_BACKDROP = "close-on-backdrop";
 
-		/** Configuration name for {@link #getInputs()}. */
-		String INPUTS = "inputs";
+		/** Configuration name for {@link #getBindings()}. */
+		String BINDINGS = "bindings";
 
 		/** Configuration name for {@link #getOutputs()}. */
 		String OUTPUTS = "outputs";
+
+		/** Configuration name for {@link #getBindInputTo()}. */
+		String BIND_INPUT_TO = "bind-input-to";
 
 		/**
 		 * Path to the {@code .view.xml} file defining the dialog content, relative to
@@ -97,16 +99,17 @@ public class OpenDialogCommand implements ViewCommand {
 		boolean getCloseOnBackdrop();
 
 		/**
-		 * Input channel mappings from the parent view to the dialog.
+		 * Channel bindings from the parent scope to the dialog view's channels.
 		 *
 		 * <p>
-		 * Each mapping copies the current value of a parent channel into a dialog channel at open
-		 * time. This is a one-shot copy, not a live binding.
+		 * Each binding shares the parent's channel instance with the dialog - both sides read and
+		 * write the same object (live binding), identical to the mechanism used by
+		 * {@code <view-ref>}.
 		 * </p>
 		 */
-		@Name(INPUTS)
-		@EntryTag("input")
-		List<ChannelMappingConfig> getInputs();
+		@Name(BINDINGS)
+		@DefaultContainer
+		List<ChannelBindingConfig> getBindings();
 
 		/**
 		 * Output channel mappings from the dialog back to the parent view.
@@ -118,14 +121,29 @@ public class OpenDialogCommand implements ViewCommand {
 		 */
 		@Name(OUTPUTS)
 		@EntryTag("output")
-		List<ChannelMappingConfig> getOutputs();
+		List<ChannelBindingConfig> getOutputs();
+
+		/**
+		 * Dialog channel name to receive the command's input parameter.
+		 *
+		 * <p>
+		 * When set, the {@code input} argument from {@link ViewCommand#execute} is written into the
+		 * specified dialog channel before the dialog view is created. This allows chart click
+		 * handlers, table row actions, etc. to pass their target object to the dialog.
+		 * </p>
+		 */
+		@Name(BIND_INPUT_TO)
+		@Nullable
+		String getBindInputTo();
 	}
 
 	private final String _dialogViewPath;
 
 	private final boolean _closeOnBackdrop;
 
-	private final List<ChannelMappingConfig> _inputs;
+	private final List<ChannelBindingConfig> _bindings;
+
+	private final String _bindInputTo;
 
 	/**
 	 * Creates a new {@link OpenDialogCommand}.
@@ -134,7 +152,8 @@ public class OpenDialogCommand implements ViewCommand {
 	public OpenDialogCommand(InstantiationContext context, Config config) {
 		_dialogViewPath = ViewLoader.VIEW_BASE_PATH + config.getDialogView();
 		_closeOnBackdrop = config.getCloseOnBackdrop();
-		_inputs = config.getInputs();
+		_bindings = config.getBindings();
+		_bindInputTo = config.getBindInputTo();
 	}
 
 	@Override
@@ -154,7 +173,7 @@ public class OpenDialogCommand implements ViewCommand {
 		// Create isolated ViewContext for the dialog.
 		ViewContext dialogContext = new DefaultViewContext(context);
 
-		// Propagate error sink from parent (same pattern as ReferenceElement).
+		// Propagate error sink from parent.
 		if (context instanceof ViewContext) {
 			ViewContext parentViewContext = (ViewContext) context;
 			ErrorSink parentErrorSink = parentViewContext.getErrorSink();
@@ -162,19 +181,24 @@ public class OpenDialogCommand implements ViewCommand {
 				dialogContext = dialogContext.withErrorSink(parentErrorSink);
 			}
 
-			// One-shot copy of input channel values.
-			for (ChannelMappingConfig mapping : _inputs) {
-				String fromName = mapping.getFrom();
-				if (!parentViewContext.hasChannel(fromName)) {
-					Logger.warn("Input channel '" + fromName + "' not found in parent context, skipping.",
+			// Bind parent channels to dialog channels (same mechanism as ReferenceElement).
+			for (ChannelBindingConfig binding : _bindings) {
+				String parentChannelName = binding.getTo().getChannelName();
+				if (!parentViewContext.hasChannel(parentChannelName)) {
+					Logger.warn("Channel '" + parentChannelName + "' not found in parent context, skipping.",
 						OpenDialogCommand.class);
 					continue;
 				}
-				ViewChannel parentChannel = parentViewContext.resolveChannel(new ChannelRef(fromName));
-				DefaultViewChannel dialogChannel = new DefaultViewChannel(mapping.getTo());
-				dialogChannel.set(parentChannel.get());
-				dialogContext.registerChannel(mapping.getTo(), dialogChannel);
+				ViewChannel parentChannel = parentViewContext.resolveChannel(binding.getTo());
+				dialogContext.registerChannel(binding.getChannel(), parentChannel);
 			}
+		}
+
+		// Bind command input to dialog channel.
+		if (_bindInputTo != null) {
+			DefaultViewChannel inputChannel = new DefaultViewChannel(_bindInputTo);
+			inputChannel.set(input);
+			dialogContext.registerChannel(_bindInputTo, inputChannel);
 		}
 
 		// Build the dialog control tree.

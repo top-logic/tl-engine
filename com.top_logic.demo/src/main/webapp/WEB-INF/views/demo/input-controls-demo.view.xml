@@ -22,9 +22,7 @@
 							dialog-view="demo/object-details-dialog.view.xml"
 							close-on-backdrop="true"
 						>
-							<inputs>
-								<input from="selectedObject" to="model"/>
-							</inputs>
+							<bind channel="model" to="selectedObject"/>
 						</command>
 					</commands>
 					<tree selection="selectedObject">

@@ -33,7 +33,11 @@
 					<inputs/>
 					<handlers>
 						<handler name="showDetails">
-							<action class="com.top_logic.demo.view.command.DemoChartClickCommand"/>
+							<action class="com.top_logic.layout.view.command.OpenDialogCommand"
+								dialog-view="demo/chart-detail-dialog.view.xml"
+								bind-input-to="clickedValue"
+								close-on-backdrop="true"
+							/>
 						</handler>
 					</handlers>
 				</chart>

@@ -9,7 +9,6 @@ import java.util.Collections;
 
 import junit.framework.TestCase;
 
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.meta.form.constraint.MandatoryConstraintCheck;
 import com.top_logic.element.meta.form.constraint.RangeConstraintCheck;
 import com.top_logic.element.meta.form.constraint.SizeConstraintCheck;

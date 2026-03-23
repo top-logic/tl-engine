@@ -817,15 +817,23 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		return UUID.nameUUIDFromBytes(documentId.getBytes(StandardCharsets.UTF_8));
 	}
 
+	/** Default maximum number of results returned by {@link #searchVectorIndex(String)}. */
+	private static final int DEFAULT_MAX_RESULTS = 10;
+
 	/**
 	 * Searches the vector index for documents similar to the query.
-	 * 
+	 *
+	 * <p>
+	 * Returns at most {@value #DEFAULT_MAX_RESULTS} results. Use
+	 * {@link #searchVectorIndex(String, int)} to control the limit explicitly.
+	 * </p>
+	 *
 	 * @param query
 	 *              Search query text
 	 * @return List of matching documents with similarity scores
 	 */
 	public List<EmbeddingMatch<TextSegment>> searchVectorIndex(String query) {
-		return this.searchVectorIndex(query, 10, 0.8);
+		return this.searchVectorIndex(query, DEFAULT_MAX_RESULTS, 0.8);
 	}
 
 	/**
@@ -836,7 +844,7 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 	 * @return List of matching documents with similarity scores
 	 */
 	public List<EmbeddingMatch<TextSegment>> searchVectorIndex(String query, Double scoreThreshhold) {
-		return this.searchVectorIndex(query, 10, scoreThreshhold);
+		return this.searchVectorIndex(query, DEFAULT_MAX_RESULTS, scoreThreshhold);
 	}
 
 	/**
@@ -965,4 +973,5 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 			return Response.from(embeddings);
 		}
 	}
+
 }

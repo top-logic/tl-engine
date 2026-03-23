@@ -98,7 +98,7 @@
 						</handler>
 					</handlers>
 					<tooltips>
-						<tooltip name="valueTable" expr="n -> toString($n.size()) + ' Transaktionen'"/>
+						<tooltip name="valueTable" expr="txs -> toString($txs.size()) + ' Transaktionen, Gesamt: ' + toString($txs.map(t -> $t.get(`demo.charts:Transaktion#wert`)).sum()) + ' EUR'"/>
 					</tooltips>
 				</chart>
 			</card>

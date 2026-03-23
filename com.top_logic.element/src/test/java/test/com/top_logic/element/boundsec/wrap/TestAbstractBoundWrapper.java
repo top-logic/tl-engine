@@ -152,8 +152,8 @@ public class TestAbstractBoundWrapper extends BasicTestCase {
 
         /** We don't want to test object hierarchy right now */
         @Override
-		public BoundObject getSecurityParent() {
-            return null;
+		public Collection<? extends BoundObject> getSecurityParents() {
+			return Collections.emptyList();
         }
     }
     

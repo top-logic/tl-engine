@@ -12,40 +12,40 @@
 							{
 								'label': 'Verkauf',
 								'data': list(
-									all(`demo.charts:Verkauf`).filter(v -> month($v.get(`demo.charts:Transaktion#datum`)) == 0).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum(),
-									all(`demo.charts:Verkauf`).filter(v -> month($v.get(`demo.charts:Transaktion#datum`)) == 1).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum(),
-									all(`demo.charts:Verkauf`).filter(v -> month($v.get(`demo.charts:Transaktion#datum`)) == 2).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum(),
-									all(`demo.charts:Verkauf`).filter(v -> month($v.get(`demo.charts:Transaktion#datum`)) == 3).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum(),
-									all(`demo.charts:Verkauf`).filter(v -> month($v.get(`demo.charts:Transaktion#datum`)) == 4).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum(),
-									all(`demo.charts:Verkauf`).filter(v -> month($v.get(`demo.charts:Transaktion#datum`)) == 5).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum()
+									all(`demo.charts:Verkauf`).filter(v -> month(toSystemCalendar($v.get(`demo.charts:Transaktion#datum`))) == 0).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum(),
+									all(`demo.charts:Verkauf`).filter(v -> month(toSystemCalendar($v.get(`demo.charts:Transaktion#datum`))) == 1).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum(),
+									all(`demo.charts:Verkauf`).filter(v -> month(toSystemCalendar($v.get(`demo.charts:Transaktion#datum`))) == 2).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum(),
+									all(`demo.charts:Verkauf`).filter(v -> month(toSystemCalendar($v.get(`demo.charts:Transaktion#datum`))) == 3).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum(),
+									all(`demo.charts:Verkauf`).filter(v -> month(toSystemCalendar($v.get(`demo.charts:Transaktion#datum`))) == 4).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum(),
+									all(`demo.charts:Verkauf`).filter(v -> month(toSystemCalendar($v.get(`demo.charts:Transaktion#datum`))) == 5).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum()
 								),
 								'metadata': list(
-									all(`demo.charts:Verkauf`).filter(v -> month($v.get(`demo.charts:Transaktion#datum`)) == 0),
-									all(`demo.charts:Verkauf`).filter(v -> month($v.get(`demo.charts:Transaktion#datum`)) == 1),
-									all(`demo.charts:Verkauf`).filter(v -> month($v.get(`demo.charts:Transaktion#datum`)) == 2),
-									all(`demo.charts:Verkauf`).filter(v -> month($v.get(`demo.charts:Transaktion#datum`)) == 3),
-									all(`demo.charts:Verkauf`).filter(v -> month($v.get(`demo.charts:Transaktion#datum`)) == 4),
-									all(`demo.charts:Verkauf`).filter(v -> month($v.get(`demo.charts:Transaktion#datum`)) == 5)
+									all(`demo.charts:Verkauf`).filter(v -> month(toSystemCalendar($v.get(`demo.charts:Transaktion#datum`))) == 0),
+									all(`demo.charts:Verkauf`).filter(v -> month(toSystemCalendar($v.get(`demo.charts:Transaktion#datum`))) == 1),
+									all(`demo.charts:Verkauf`).filter(v -> month(toSystemCalendar($v.get(`demo.charts:Transaktion#datum`))) == 2),
+									all(`demo.charts:Verkauf`).filter(v -> month(toSystemCalendar($v.get(`demo.charts:Transaktion#datum`))) == 3),
+									all(`demo.charts:Verkauf`).filter(v -> month(toSystemCalendar($v.get(`demo.charts:Transaktion#datum`))) == 4),
+									all(`demo.charts:Verkauf`).filter(v -> month(toSystemCalendar($v.get(`demo.charts:Transaktion#datum`))) == 5)
 								),
 								'onClick': 'showDetails'
 							},
 							{
 								'label': 'Einkauf',
 								'data': list(
-									all(`demo.charts:Einkauf`).filter(v -> month($v.get(`demo.charts:Transaktion#datum`)) == 0).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum(),
-									all(`demo.charts:Einkauf`).filter(v -> month($v.get(`demo.charts:Transaktion#datum`)) == 1).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum(),
-									all(`demo.charts:Einkauf`).filter(v -> month($v.get(`demo.charts:Transaktion#datum`)) == 2).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum(),
-									all(`demo.charts:Einkauf`).filter(v -> month($v.get(`demo.charts:Transaktion#datum`)) == 3).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum(),
-									all(`demo.charts:Einkauf`).filter(v -> month($v.get(`demo.charts:Transaktion#datum`)) == 4).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum(),
-									all(`demo.charts:Einkauf`).filter(v -> month($v.get(`demo.charts:Transaktion#datum`)) == 5).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum()
+									all(`demo.charts:Einkauf`).filter(v -> month(toSystemCalendar($v.get(`demo.charts:Transaktion#datum`))) == 0).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum(),
+									all(`demo.charts:Einkauf`).filter(v -> month(toSystemCalendar($v.get(`demo.charts:Transaktion#datum`))) == 1).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum(),
+									all(`demo.charts:Einkauf`).filter(v -> month(toSystemCalendar($v.get(`demo.charts:Transaktion#datum`))) == 2).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum(),
+									all(`demo.charts:Einkauf`).filter(v -> month(toSystemCalendar($v.get(`demo.charts:Transaktion#datum`))) == 3).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum(),
+									all(`demo.charts:Einkauf`).filter(v -> month(toSystemCalendar($v.get(`demo.charts:Transaktion#datum`))) == 4).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum(),
+									all(`demo.charts:Einkauf`).filter(v -> month(toSystemCalendar($v.get(`demo.charts:Transaktion#datum`))) == 5).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum()
 								),
 								'metadata': list(
-									all(`demo.charts:Einkauf`).filter(v -> month($v.get(`demo.charts:Transaktion#datum`)) == 0),
-									all(`demo.charts:Einkauf`).filter(v -> month($v.get(`demo.charts:Transaktion#datum`)) == 1),
-									all(`demo.charts:Einkauf`).filter(v -> month($v.get(`demo.charts:Transaktion#datum`)) == 2),
-									all(`demo.charts:Einkauf`).filter(v -> month($v.get(`demo.charts:Transaktion#datum`)) == 3),
-									all(`demo.charts:Einkauf`).filter(v -> month($v.get(`demo.charts:Transaktion#datum`)) == 4),
-									all(`demo.charts:Einkauf`).filter(v -> month($v.get(`demo.charts:Transaktion#datum`)) == 5)
+									all(`demo.charts:Einkauf`).filter(v -> month(toSystemCalendar($v.get(`demo.charts:Transaktion#datum`))) == 0),
+									all(`demo.charts:Einkauf`).filter(v -> month(toSystemCalendar($v.get(`demo.charts:Transaktion#datum`))) == 1),
+									all(`demo.charts:Einkauf`).filter(v -> month(toSystemCalendar($v.get(`demo.charts:Transaktion#datum`))) == 2),
+									all(`demo.charts:Einkauf`).filter(v -> month(toSystemCalendar($v.get(`demo.charts:Transaktion#datum`))) == 3),
+									all(`demo.charts:Einkauf`).filter(v -> month(toSystemCalendar($v.get(`demo.charts:Transaktion#datum`))) == 4),
+									all(`demo.charts:Einkauf`).filter(v -> month(toSystemCalendar($v.get(`demo.charts:Transaktion#datum`))) == 5)
 								),
 								'onClick': 'showDetails'
 							}
@@ -79,7 +79,8 @@
 						'datasets': [{
 							'data': all(`demo.charts:Kategorie`).map(k -> all(`demo.charts:Verkauf`).filter(v -> $v.get(`demo.charts:Transaktion#kategorie`) == $k).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum()),
 							'metadata': all(`demo.charts:Kategorie`).map(k -> all(`demo.charts:Verkauf`).filter(v -> $v.get(`demo.charts:Transaktion#kategorie`) == $k)),
-							'tooltip': 'valueTable'
+							'tooltip': 'valueTable',
+							'onClick': 'showDetails'
 						}]
 					},
 					'options': {
@@ -87,6 +88,15 @@
 					}
 				}">
 					<inputs/>
+					<handlers>
+						<handler name="showDetails">
+							<action class="com.top_logic.layout.view.command.OpenDialogCommand"
+								dialog-view="demo/chart-detail-dialog.view.xml"
+								bind-input-to="transactions"
+								close-on-backdrop="true"
+							/>
+						</handler>
+					</handlers>
 					<tooltips>
 						<tooltip name="valueTable" expr="n -> toString($n.size()) + ' Transaktionen'"/>
 					</tooltips>

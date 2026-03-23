@@ -15,6 +15,8 @@ export interface TooltipPosition {
   x: number;
   y: number;
   visible: boolean;
+  datasetIndex: number;
+  index: number;
 }
 
 /**
@@ -28,7 +30,7 @@ export function useChartCallbacks(interactions: Interactions | null) {
   const hasAnyTooltip = interactions?.datasets.some(d => d.hasTooltip) ?? false;
 
   // Local tooltip position state (updated by Chart.js external tooltip callback).
-  const [tooltipPos, setTooltipPos] = React.useState<TooltipPosition>({ x: 0, y: 0, visible: false });
+  const [tooltipPos, setTooltipPos] = React.useState<TooltipPosition>({ x: 0, y: 0, visible: false, datasetIndex: -1, index: -1 });
 
   const onClick = React.useCallback((_event: any, elements: any[]) => {
     if (elements.length > 0) {
@@ -53,8 +55,8 @@ export function useChartCallbacks(interactions: Interactions | null) {
   // Debounce tooltip requests.
   const tooltipTimer = React.useRef<number | null>(null);
   const onTooltip = React.useCallback((datasetIndex: number, dataIndex: number, x: number, y: number) => {
-    // Update position immediately (no debounce for position).
-    setTooltipPos({ x, y, visible: true });
+    // Update position and current data point immediately (no debounce for position).
+    setTooltipPos({ x, y, visible: true, datasetIndex, index: dataIndex });
 
     if (tooltipTimer.current != null) {
       clearTimeout(tooltipTimer.current);
@@ -82,7 +84,7 @@ export function useChartCallbacks(interactions: Interactions | null) {
     };
   }, []);
 
-  return React.useMemo(() => {
+  const result = React.useMemo(() => {
     const callbacks: any = {};
 
     if (hasAnyClick) {
@@ -93,6 +95,10 @@ export function useChartCallbacks(interactions: Interactions | null) {
       callbacks.plugins = { legend: { onClick: onLegendClick } };
     }
 
-    return { callbacks, hasAnyTooltip, onTooltip, onTooltipHide, tooltipPos };
-  }, [hasAnyClick, hasAnyLegendClick, hasAnyTooltip, onClick, onLegendClick, onTooltip, onTooltipHide, tooltipPos]);
+    return { callbacks, hasAnyTooltip, onTooltip, onTooltipHide };
+  }, [hasAnyClick, hasAnyLegendClick, hasAnyTooltip, onClick, onLegendClick, onTooltip, onTooltipHide]);
+
+  // tooltipPos is returned separately so position changes don't
+  // trigger re-creation of callbacks (which would re-render the chart).
+  return { ...result, tooltipPos };
 }

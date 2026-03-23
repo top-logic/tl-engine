@@ -21,6 +21,9 @@ interface ChartTooltipProps {
 const ChartTooltip: React.FC<ChartTooltipProps> = ({ content, position }) => {
   if (!position.visible || !content || !content.html) return null;
 
+  // Hide tooltip while waiting for server data for the new data point.
+  if (content.datasetIndex !== position.datasetIndex || content.index !== position.index) return null;
+
   return (
     <div
       className="tlReactChart__tooltip"

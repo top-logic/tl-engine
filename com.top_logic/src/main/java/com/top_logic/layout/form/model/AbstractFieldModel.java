@@ -41,6 +41,8 @@ public class AbstractFieldModel implements FieldModel {
 
 	private List<FieldConstraint> _constraints = Collections.emptyList();
 
+	private boolean _revealed;
+
 	private List<FieldModelListener> _listeners = Collections.emptyList();
 
 	/**
@@ -124,26 +126,59 @@ public class AbstractFieldModel implements FieldModel {
 
 	@Override
 	public boolean hasError() {
-		return _error != null || _modelError != null;
+		if (_error != null) {
+			return true;
+		}
+		// Model-level errors only visible when revealed (e.g., after blur or submit attempt).
+		return _revealed && _modelError != null;
 	}
 
 	@Override
 	public ResKey getError() {
-		return _error != null ? _error : _modelError;
+		if (_error != null) {
+			return _error;
+		}
+		return _revealed ? _modelError : null;
 	}
 
 	@Override
 	public boolean hasWarnings() {
-		return !_warnings.isEmpty() || !_modelWarnings.isEmpty();
+		if (!_warnings.isEmpty()) {
+			return true;
+		}
+		return _revealed && !_modelWarnings.isEmpty();
 	}
 
 	@Override
 	public List<ResKey> getWarnings() {
-		if (_warnings.isEmpty()) return _modelWarnings;
-		if (_modelWarnings.isEmpty()) return _warnings;
+		List<ResKey> visibleModelWarnings = _revealed ? _modelWarnings : Collections.emptyList();
+		if (_warnings.isEmpty()) return visibleModelWarnings;
+		if (visibleModelWarnings.isEmpty()) return _warnings;
 		List<ResKey> combined = new ArrayList<>(_warnings);
-		combined.addAll(_modelWarnings);
+		combined.addAll(visibleModelWarnings);
 		return combined;
+	}
+
+	/**
+	 * Whether model-level validation errors are visible.
+	 *
+	 * <p>
+	 * Initially {@code false} for create forms. Set to {@code true} when the user interacts with
+	 * the field (blur) or attempts to submit.
+	 * </p>
+	 */
+	public boolean isRevealed() {
+		return _revealed;
+	}
+
+	/**
+	 * Makes model-level validation errors visible and fires validation changed.
+	 */
+	public void setRevealed(boolean revealed) {
+		if (_revealed != revealed) {
+			_revealed = revealed;
+			fireValidationChanged();
+		}
 	}
 
 	/**

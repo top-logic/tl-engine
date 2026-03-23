@@ -10,21 +10,32 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.element.meta.form.validation.FormValidationModel;
+import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.form.AttributeFieldControl;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.form.FormModel;
+import com.top_logic.layout.view.form.FormModelListener;
 import com.top_logic.layout.view.form.TLObjectOverlay;
 import com.top_logic.model.TLObject;
+import com.top_logic.util.error.TopLogicException;
 
 /**
- * {@link ViewAction} that applies the form overlay's edits back to the base object.
+ * {@link ViewAction} that validates the form, reveals all errors, and applies edits to the base
+ * object.
  *
  * <p>
- * Reads the current object from the form model (the overlay in edit mode), applies its changes to
- * the underlying base object, and returns the base object. This is needed before copying a transient
- * object to persistent storage, so that user edits are transferred to the base object first.
+ * On execution:
  * </p>
+ * <ol>
+ * <li>Reveals all field validation errors (sets {@code revealed = true} on all fields).</li>
+ * <li>If the form has validation errors, throws a {@link TopLogicException} to abort the action
+ * chain and display the error in the snackbar.</li>
+ * <li>Otherwise, applies overlay edits to the base object and returns it.</li>
+ * </ol>
  */
 public class StoreFormStateAction implements ViewAction {
 
@@ -59,6 +70,17 @@ public class StoreFormStateAction implements ViewAction {
 		}
 
 		FormControl formControl = (FormControl) formModel;
+
+		// Reveal all validation errors.
+		revealAllFields(formControl);
+
+		// Check if form is valid.
+		FormValidationModel validationModel = formControl.getValidationModel();
+		if (validationModel != null && !validationModel.isValid()) {
+			throw new TopLogicException(
+				ResKey.text("Please fix the validation errors before saving."));
+		}
+
 		TLObjectOverlay overlay = formControl.getOverlay();
 		if (overlay == null) {
 			return input;
@@ -68,5 +90,11 @@ public class StoreFormStateAction implements ViewAction {
 		TLObject base = overlay.getBase();
 		overlay.applyTo(base);
 		return base;
+	}
+
+	private void revealAllFields(FormControl formControl) {
+		// Fire a form state change to trigger all AttributeFieldControls to reveal.
+		// Each field's model gets revealed, making hidden validation errors visible.
+		formControl.revealAllValidation();
 	}
 }

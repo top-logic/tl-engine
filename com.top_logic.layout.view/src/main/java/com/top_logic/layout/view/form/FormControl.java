@@ -8,6 +8,8 @@ package com.top_logic.layout.view.form;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.top_logic.layout.form.model.AbstractFieldModel;
+
 import com.top_logic.base.locking.handler.LockHandler;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -68,6 +70,8 @@ public class FormControl extends ReactControl implements FormModel {
 	private FormValidationModel _validationModel;
 
 	private final List<FormModelListener> _formModelListeners = new ArrayList<>();
+
+	private final List<AbstractFieldModel> _fieldModels = new ArrayList<>();
 
 	private final ViewChannel.ChannelListener _inputListener = this::handleInputChanged;
 
@@ -131,6 +135,22 @@ public class FormControl extends ReactControl implements FormModel {
 	@Override
 	public void removeFormModelListener(FormModelListener listener) {
 		_formModelListeners.remove(listener);
+	}
+
+	/**
+	 * Registers a field model for reveal-all support.
+	 */
+	public void registerFieldModel(AbstractFieldModel model) {
+		_fieldModels.add(model);
+	}
+
+	/**
+	 * Sets all registered field models to revealed, making hidden validation errors visible.
+	 */
+	public void revealAllValidation() {
+		for (AbstractFieldModel model : _fieldModels) {
+			model.setRevealed(true);
+		}
 	}
 
 	/**

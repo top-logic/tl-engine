@@ -117,6 +117,7 @@ public class AttributeFieldControl implements FormModelListener {
 
 		_model = new AttributeFieldModel(current, part);
 		_model.setEditable(_formModel.isEditMode() && !_forceReadonly);
+		_formControl.registerFieldModel(_model);
 
 		addModelListener();
 
@@ -241,6 +242,9 @@ public class AttributeFieldControl implements FormModelListener {
 				if (_chrome != null) {
 					_chrome.setDirty(_model.isDirty());
 				}
+
+				// Reveal validation errors after user interaction.
+				_model.setRevealed(true);
 
 				// Trigger constraint validation.
 				FormValidationModel validationModel = _formControl.getValidationModel();

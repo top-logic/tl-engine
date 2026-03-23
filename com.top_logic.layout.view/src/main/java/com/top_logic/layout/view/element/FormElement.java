@@ -9,8 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.top_logic.element.meta.form.validation.FormValidationModel;
-
 import com.top_logic.base.locking.handler.DefaultLockHandler;
 import com.top_logic.base.locking.handler.LockHandler;
 import com.top_logic.base.locking.handler.NoTokenHandling;
@@ -354,31 +352,12 @@ public class FormElement extends ContainerElement {
 
 			// Wrap the model so that executeCommand uses the form context (which has the
 			// FormModel) instead of the window context passed by the toolbar button.
-			FormScopedCommandModel wrapped = new FormScopedCommandModel(inner, formContext, formControl);
+			FormScopedCommandModel wrapped = new FormScopedCommandModel(inner, formContext);
 
 			models.add(wrapped);
 			scope.addCommand(wrapped);
 		}
 
-		// Re-evaluate command executability when form validation state changes.
-		// The validation model is created in enterEditMode() which runs after this method.
-		// We use a one-shot FormModelListener to wire the validation listener once.
-		boolean[] wired = { false };
-		formControl.addFormModelListener(source -> {
-			if (!wired[0]) {
-				FormValidationModel vm = formControl.getValidationModel();
-				if (vm != null) {
-					wired[0] = true;
-					vm.addConstraintValidationListener((overlay, attr, result) -> {
-						for (CommandModel model : models) {
-							if (model instanceof FormScopedCommandModel fsm) {
-								fsm.revalidateExecutability();
-							}
-						}
-					});
-				}
-			}
-		});
 
 		formControl.addCleanupAction(() -> {
 			for (CommandModel model : models) {
@@ -435,12 +414,9 @@ public class FormElement extends ContainerElement {
 
 		private final ViewContext _formContext;
 
-		private final FormControl _formControl;
-
-		FormScopedCommandModel(ViewCommandModel inner, ViewContext formContext, FormControl formControl) {
+		FormScopedCommandModel(ViewCommandModel inner, ViewContext formContext) {
 			_inner = inner;
 			_formContext = formContext;
-			_formControl = formControl;
 		}
 
 		ViewCommandModel getInner() {
@@ -459,15 +435,7 @@ public class FormElement extends ContainerElement {
 
 		@Override
 		public boolean isExecutable() {
-			if (!_inner.isExecutable()) {
-				return false;
-			}
-			// Block execution when form has validation errors.
-			FormValidationModel validationModel = _formControl.getValidationModel();
-			if (validationModel != null && !validationModel.isValid()) {
-				return false;
-			}
-			return true;
+			return _inner.isExecutable();
 		}
 
 		@Override
@@ -481,27 +449,14 @@ public class FormElement extends ContainerElement {
 			return _inner.getPlacement();
 		}
 
-		private List<Runnable> _stateListeners = new ArrayList<>();
-
 		@Override
 		public void addStateChangeListener(Runnable listener) {
-			_stateListeners.add(listener);
 			_inner.addStateChangeListener(listener);
 		}
 
 		@Override
 		public void removeStateChangeListener(Runnable listener) {
-			_stateListeners.remove(listener);
 			_inner.removeStateChangeListener(listener);
-		}
-
-		/**
-		 * Re-evaluates executability and notifies listeners if changed.
-		 */
-		void revalidateExecutability() {
-			for (Runnable listener : _stateListeners) {
-				listener.run();
-			}
 		}
 	}
 

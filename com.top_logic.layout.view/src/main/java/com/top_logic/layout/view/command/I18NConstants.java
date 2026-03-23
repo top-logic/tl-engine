@@ -39,6 +39,12 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey ERROR_NO_COMMAND_CONFIGURED;
 
+	/**
+	 * @en Please fix the validation errors before saving.
+	 * @de Bitte beheben Sie die Validierungsfehler vor dem Speichern.
+	 */
+	public static ResKey ERROR_FORM_HAS_VALIDATION_ERRORS;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

@@ -10,7 +10,6 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.meta.form.validation.FormValidationModel;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.react.ReactContext;
@@ -77,8 +76,7 @@ public class StoreFormStateAction implements ViewAction {
 		// Check if form is valid.
 		FormValidationModel validationModel = formControl.getValidationModel();
 		if (validationModel != null && !validationModel.isValid()) {
-			throw new TopLogicException(
-				ResKey.text("Please fix the validation errors before saving."));
+			throw new TopLogicException(I18NConstants.ERROR_FORM_HAS_VALIDATION_ERRORS);
 		}
 
 		TLObjectOverlay overlay = formControl.getOverlay();

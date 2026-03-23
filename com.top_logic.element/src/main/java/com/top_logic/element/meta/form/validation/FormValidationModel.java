@@ -154,6 +154,13 @@ public class FormValidationModel implements OverlayLookup {
 	}
 
 	/**
+	 * Removes a previously added global validation listener.
+	 */
+	public void removeConstraintValidationListener(ConstraintValidationListener listener) {
+		_listeners.remove(listener);
+	}
+
+	/**
 	 * Called when a value changes on an overlay. Triggers re-validation of
 	 * all constraints that depend on the changed attribute.
 	 *

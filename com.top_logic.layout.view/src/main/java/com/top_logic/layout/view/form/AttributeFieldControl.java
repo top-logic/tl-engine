@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.element.meta.form.validation.FormValidationModel;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
@@ -20,6 +21,8 @@ import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.form.ConstraintValidationListener;
+import com.top_logic.model.form.ValidationResult;
 import com.top_logic.util.Resources;
 
 /**
@@ -49,6 +52,8 @@ public class AttributeFieldControl implements FormModelListener {
 	private AttributeFieldModel _model;
 
 	private FieldModelListener _modelListener;
+
+	private ConstraintValidationListener _validationListener;
 
 	private ReactFormFieldChromeControl _chrome;
 
@@ -197,7 +202,24 @@ public class AttributeFieldControl implements FormModelListener {
 		return _innerControl;
 	}
 
+	private void applyValidationResult(ValidationResult result) {
+		if (_model == null) return;
+		if (result.isValid()) {
+			_model.setModelValidationError(null);
+		} else {
+			_model.setModelValidationError(result.getErrors().get(0));
+		}
+		_model.setModelValidationWarnings(result.getWarnings());
+	}
+
 	private void clearModel() {
+		if (_validationListener != null) {
+			FormValidationModel validationModel = _formControl.getValidationModel();
+			if (validationModel != null) {
+				validationModel.removeConstraintValidationListener(_validationListener);
+			}
+			_validationListener = null;
+		}
 		if (_model != null && _modelListener != null) {
 			_model.removeListener(_modelListener);
 			_modelListener = null;
@@ -215,6 +237,12 @@ public class AttributeFieldControl implements FormModelListener {
 				_formControl.updateDirtyState();
 				if (_chrome != null) {
 					_chrome.setDirty(_model.isDirty());
+				}
+
+				// Trigger constraint validation.
+				FormValidationModel validationModel = _formControl.getValidationModel();
+				if (validationModel != null && _model != null) {
+					validationModel.onValueChanged(_formControl.getOverlay(), _model.getPart());
 				}
 			}
 
@@ -245,6 +273,24 @@ public class AttributeFieldControl implements FormModelListener {
 			}
 		};
 		_model.addListener(_modelListener);
+
+		// Bridge FormValidationModel validation to FieldModel.
+		FormValidationModel validationModel = _formControl.getValidationModel();
+		if (validationModel != null && _model != null) {
+			TLStructuredTypePart part = _model.getPart();
+			TLObject overlay = _formModel.getCurrentObject();
+
+			// Read initial validation state.
+			applyValidationResult(validationModel.getValidation(overlay, part));
+
+			// Listen for future changes.
+			_validationListener = (o, attr, result) -> {
+				if (o == overlay && attr == part) {
+					applyValidationResult(result);
+				}
+			};
+			validationModel.addConstraintValidationListener(_validationListener);
+		}
 	}
 
 	private TLStructuredTypePart resolvePart(TLObject obj) {

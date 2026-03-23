@@ -15,6 +15,14 @@
 				unit="%"
 			>
 				<panel title="Constraint Test Objects">
+					<commands>
+						<command class="com.top_logic.layout.view.command.CreateObjectCommand"
+							label="New"
+							placement="TOOLBAR"
+							type="test.constraints:ConstraintTestType"
+							output="selectedObject"
+						/>
+					</commands>
 					<table
 						selection="selectedObject"
 						types="test.constraints:ConstraintTestType"

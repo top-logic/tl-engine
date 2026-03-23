@@ -181,7 +181,9 @@ public class AttributeFieldControl implements FormModelListener {
 		_model.setEditable(source.isEditMode() && !_forceReadonly);
 		_chrome.setDirty(_model.isDirty());
 
-		// Wire validation if FormValidationModel became available (e.g. after enterEditMode).
+		// Re-wire validation: the overlay changed, so the old listener (bound to the
+		// previous overlay by identity) won't match anymore. Remove it and re-create.
+		unwireValidation();
 		wireValidation();
 	}
 
@@ -217,13 +219,7 @@ public class AttributeFieldControl implements FormModelListener {
 	}
 
 	private void clearModel() {
-		if (_validationListener != null) {
-			FormValidationModel validationModel = _formControl.getValidationModel();
-			if (validationModel != null) {
-				validationModel.removeConstraintValidationListener(_validationListener);
-			}
-			_validationListener = null;
-		}
+		unwireValidation();
 		if (_model != null) {
 			if (_modelListener != null) {
 				_model.removeListener(_modelListener);
@@ -232,6 +228,19 @@ public class AttributeFieldControl implements FormModelListener {
 			_formControl.unregisterFieldModel(_model);
 		}
 		_model = null;
+	}
+
+	/**
+	 * Removes the validation listener from the FormValidationModel.
+	 */
+	private void unwireValidation() {
+		if (_validationListener != null) {
+			FormValidationModel validationModel = _formControl.getValidationModel();
+			if (validationModel != null) {
+				validationModel.removeConstraintValidationListener(_validationListener);
+			}
+			_validationListener = null;
+		}
 	}
 
 	private void addModelListener() {

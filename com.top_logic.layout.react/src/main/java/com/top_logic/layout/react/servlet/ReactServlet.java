@@ -321,7 +321,9 @@ public class ReactServlet extends TopLogicServlet {
 			if (result.isSuccess()) {
 				sendSuccess(response);
 			} else {
-				sendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Command failed.");
+				// Show error in snackbar instead of returning HTTP 500.
+				showCommandError(result, queue, control);
+				sendSuccess(response);
 			}
 		} finally {
 			requestLock.unlock();
@@ -471,6 +473,30 @@ public class ReactServlet extends TopLogicServlet {
 
 		// Collect and forward pending legacy control repaints.
 		forwardLegacyControlUpdates(displayContext, rootHandler, queue);
+	}
+
+	/**
+	 * Shows a command error in the snackbar via {@link ErrorSink}.
+	 *
+	 * <p>
+	 * Instead of returning HTTP 500, the error message from the {@link HandlerResult} is forwarded
+	 * to the snackbar so the user sees what went wrong.
+	 * </p>
+	 */
+	private void showCommandError(HandlerResult result, SSEUpdateQueue queue, ReactCommandTarget control) {
+		ErrorSink errorSink = control instanceof ReactControl rc ? rc.getReactContext().getErrorSink() : null;
+		if (errorSink != null) {
+			ResKey errorKey = result.getErrorMessage();
+			if (errorKey != null) {
+				String message = Resources.getInstance().getString(errorKey);
+				errorSink.showError(com.top_logic.layout.basic.fragments.Fragments.text(message));
+			} else {
+				errorSink.showError(com.top_logic.layout.basic.fragments.Fragments.text("Command failed."));
+			}
+		} else {
+			Logger.warn("No ErrorSink available to show command error: " + result.getErrorMessage(),
+				ReactServlet.class);
+		}
 	}
 
 	private void forwardToErrorSink(List<HTMLFragment> entries, ErrorSink errorSink) {

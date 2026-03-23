@@ -11,9 +11,9 @@
 		</button>
 		<button>
 			<action class="com.top_logic.layout.view.command.GenericViewCommand"
-				label="Throw wrapped exception"
+				label="Throw KB error (wrapped)"
 			>
-				<execute-script function="x -> { error('Script error: something went wrong'); }"/>
+				<execute-script function="x -> new(`test.constraints:ConstraintTestType`)"/>
 			</action>
 		</button>
 	</panel>

@@ -64,6 +64,7 @@ public class GenericViewCommand implements ViewCommand {
 	public GenericViewCommand(InstantiationContext context, Config config) {
 		_actions = config.getActions().stream()
 			.map(c -> context.getInstance(c))
+			.filter(a -> a != null)
 			.toList();
 	}
 

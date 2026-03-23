@@ -15,16 +15,6 @@
 		/>
 	</dependencies>
 	<processors>
-		<remove-annotations name="tl.accounts:Address">
-			<annotation class="com.top_logic.model.config.JavaClass"/>
-		</remove-annotations>
-		<remove-annotations name="tl.accounts:Group">
-			<annotation class="com.top_logic.model.config.JavaClass"/>
-		</remove-annotations>
-		<remove-annotations name="tl.accounts:Person">
-			<annotation class="com.top_logic.model.config.JavaClass"/>
-		</remove-annotations>
-
 		<create-datatype name="tl.accounts:MfaRequirement"
 			db_type="string"
 			kind="Custom"
@@ -45,31 +35,6 @@
 		<create-property name="tl.accounts:Person#mfaRequirement"
 			type="tl.accounts:MfaRequirement"
 		/>
-		<add-annotations name="tl.accounts">
-			<annotations>
-				<factory value="com.top_logic.element.model.accounts.TLAccountsFactory"/>
-				<package-binding
-					implementation-package="com.top_logic.element.model.accounts.impl"
-					interface-package="com.top_logic.element.model.accounts"
-				/>
-			</annotations>
-		</add-annotations>
-		<add-annotations name="tl.accounts:Address">
-			<annotations>
-				<implementation-binding class-name="com.top_logic.element.meta.kbbased.AttributedAddress"/>
-			</annotations>
-		</add-annotations>
-		<add-annotations name="tl.accounts:Group">
-			<annotations>
-				<implementation-binding class-name="com.top_logic.element.meta.kbbased.AttributedGroup"/>
-			</annotations>
-		</add-annotations>
-
-		<add-annotations name="tl.accounts:Person">
-			<annotations>
-				<implementation-binding class-name="com.top_logic.element.meta.kbbased.AttributedPerson"/>
-			</annotations>
-		</add-annotations>
 
 		<reorder-part name="tl.accounts:Person#mfaSecret"/>
 		<reorder-part name="tl.accounts:Person#mfaRequirement"/>

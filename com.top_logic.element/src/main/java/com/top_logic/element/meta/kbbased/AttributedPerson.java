@@ -27,7 +27,7 @@ import com.top_logic.util.Utils;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class AttributedPerson extends Person implements com.top_logic.element.model.accounts.Person {
+public class AttributedPerson extends Person {
 
 	/**
 	 * @see KnowledgeItemImpl#createWrapper(KnowledgeItem)

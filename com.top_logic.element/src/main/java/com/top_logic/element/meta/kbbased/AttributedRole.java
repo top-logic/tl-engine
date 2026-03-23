@@ -24,7 +24,7 @@ import com.top_logic.tool.boundsec.wrap.BoundedRole;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class AttributedRole extends BoundedRole implements com.top_logic.element.model.accounts.Role {
+public class AttributedRole extends BoundedRole {
 
 	/**
 	 * @see KnowledgeItemImpl#createWrapper(KnowledgeItem)

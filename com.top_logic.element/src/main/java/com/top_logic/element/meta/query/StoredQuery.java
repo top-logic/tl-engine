@@ -50,7 +50,7 @@ import com.top_logic.util.Utils;
  *
  * @author    <a href="mailto:kbu@top-logic.com">Karsten Buch</a>
  */
-public class StoredQuery extends AttributedWrapper implements com.top_logic.element.model.accounts.WithOwner {
+public class StoredQuery extends AttributedWrapper {
 
     /** KO ID separator. */
     public static final char SEPARATOR = ',';

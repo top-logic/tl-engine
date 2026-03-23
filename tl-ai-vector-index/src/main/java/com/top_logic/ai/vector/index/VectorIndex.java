@@ -29,9 +29,11 @@ import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.convert.FormatConverterFactory;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.dsa.util.MimeTypes;
+import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.knowledge.indexing.ContentObject;
 import com.top_logic.knowledge.indexing.IndexException;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
@@ -41,9 +43,7 @@ import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.db2.FlexData;
-import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.knowledge.wrap.person.PersonManager;
-import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.layout.provider.LabelProviderService;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
@@ -825,11 +825,34 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 	 * @return List of matching documents with similarity scores
 	 */
 	public List<EmbeddingMatch<TextSegment>> searchVectorIndex(String query) {
+		return this.searchVectorIndex(query, 10, 0.8);
+	}
+
+	/**
+	 * Searches the vector index for documents similar to the query.
+	 * 
+	 * @param query
+	 *        Search query text
+	 * @return List of matching documents with similarity scores
+	 */
+	public List<EmbeddingMatch<TextSegment>> searchVectorIndex(String query, Double scoreThreshhold) {
+		return this.searchVectorIndex(query, 10, scoreThreshhold);
+	}
+
+	/**
+	 * Searches the vector index for documents similar to the query.
+	 * 
+	 * @param query
+	 *        Search query text
+	 * @return List of matching documents with similarity scores
+	 */
+	public List<EmbeddingMatch<TextSegment>> searchVectorIndex(String query, Integer limit, Double scoreThreshhold) {
 		Embedding queryEmbedding = this.getDocumentEmbedding(query);
 
 		EmbeddingSearchRequest embeddingSearchRequest = EmbeddingSearchRequest.builder()
 			.queryEmbedding(queryEmbedding)
-			.maxResults(10)
+			.maxResults(limit)
+			.minScore(scoreThreshhold)
 			.build();
 
 		return this.vectorStore.search(embeddingSearchRequest).matches();
@@ -942,5 +965,4 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 			return Response.from(embeddings);
 		}
 	}
-
 }

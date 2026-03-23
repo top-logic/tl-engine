@@ -30,6 +30,10 @@
 	    </dependencies>
 	</dependencyManagement>
   <dependencies>
+  	<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-contact</artifactId>
+		</dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-basic</artifactId>

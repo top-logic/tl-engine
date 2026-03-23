@@ -6,6 +6,7 @@
 package com.top_logic.element.comment.wrap;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 
 import com.top_logic.basic.CollectionUtil;
@@ -83,9 +84,10 @@ public class Comment extends AttributedWrapper {
     }
 
     @Override
-    public BoundObject getSecurityParent() {
+	public Collection<? extends BoundObject> getSecurityParents() {
         Wrapper context = getContext();
-        return context instanceof BoundObject ? (BoundObject)context : super.getSecurityParent();
+		return context instanceof BoundObject ? Collections.singletonList((BoundObject) context)
+			: super.getSecurityParents();
     }
 
 

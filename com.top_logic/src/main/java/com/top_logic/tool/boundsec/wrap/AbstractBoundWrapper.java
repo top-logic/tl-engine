@@ -5,10 +5,13 @@
  */
 package com.top_logic.tool.boundsec.wrap;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
+import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.TLID;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KBUtils;
@@ -17,6 +20,7 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
+import com.top_logic.tool.boundsec.manager.AccessManager;
 
 /**
  * Persistent {@link com.top_logic.tool.boundsec.BoundObject}.
@@ -75,7 +79,11 @@ public abstract class AbstractBoundWrapper extends AbstractWrapper implements Bo
     }
 
     @Override
-	public BoundObject getSecurityParent() {
+	public final BoundObject getSecurityParent() {
+		throw new UnsupportedOperationException("Call getSecurityParents()");
+	}
+
+	private BoundObject securityRoot() {
 		BoundHelper boundHelper = BoundHelper.getInstance();
 		if (boundHelper.useDefaultObject()) {
 			BoundObject securityRoot = boundHelper.getDefaultObject();
@@ -86,5 +94,19 @@ public abstract class AbstractBoundWrapper extends AbstractWrapper implements Bo
 
         return null;
     }
+
+	@Override
+	public Collection<? extends BoundObject> getSecurityParents() {
+		Collection<? extends BoundObject> securityParents = AccessManager.getInstance().getSecurityParents(this);
+		BoundObject securityRoot = securityRoot();
+		if (securityParents.isEmpty()) {
+			return CollectionUtil.singletonOrEmptyList(securityRoot);
+		} else if (securityRoot == null) {
+			return securityParents;
+		}
+		List<BoundObject> merged = new ArrayList<>(securityParents);
+		merged.add(securityRoot);
+		return merged;
+	}
 
 }

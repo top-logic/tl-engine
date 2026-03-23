@@ -68,7 +68,13 @@
 					>
 						<view-ref view="demo/dialog-demo.view.xml"/>
 					</nav-item>
-					<nav-item id="constraint-test"
+					<nav-item id="error-handling-demo"
+					icon="bi bi-exclamation-triangle"
+					label="Error Handling"
+				>
+					<view-ref view="demo/error-handling-demo.view.xml"/>
+				</nav-item>
+				<nav-item id="constraint-test"
 					icon="bi bi-check-circle"
 					label="Constraint Test"
 				>

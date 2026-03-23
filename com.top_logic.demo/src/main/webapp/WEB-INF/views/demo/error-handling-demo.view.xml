@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<panel title="Error Handling Demo">
+		<button>
+			<action class="com.top_logic.layout.view.command.GenericViewCommand"
+				label="Throw TopLogicException"
+			>
+				<throw-error message="This is a test error from a TopLogicException."/>
+			</action>
+		</button>
+		<button>
+			<action class="com.top_logic.layout.view.command.GenericViewCommand"
+				label="Throw wrapped exception"
+			>
+				<execute-script function="x -> { error('Script error: something went wrong'); }"/>
+			</action>
+		</button>
+	</panel>
+</view>

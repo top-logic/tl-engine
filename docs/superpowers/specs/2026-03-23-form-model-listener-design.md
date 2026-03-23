@@ -23,7 +23,11 @@ Tables and trees in the View/React system already react to persistent object cha
 
 ### ModelScope Access
 
-`FormControl` receives a `ModelScope` via an `attach(ModelScope)`/`detach()` pair, called by `FormElement` during control creation and cleanup. This follows the same pattern as `ObservableTableModel`.
+`FormControl` receives a `ModelScope` via an `attach(ModelScope)`/`detach()` pair. `FormElement` calls `attach()` lazily via `addBeforeWriteAction()` (not eagerly during control creation) and `detach()` via `addCleanupAction()`. This matches the `TableElement`/`TreeElement` pattern and avoids processing model events before the control is fully wired.
+
+### Threading
+
+`ModelChangeEvent` notifications are delivered on the session thread (same thread that processes user actions), so there are no concurrency issues. This is consistent with `ObservableTableModel`.
 
 ### Listener Registration
 
@@ -41,6 +45,9 @@ On `detach()` or `onCleanup()`: deregister from current object.
 ```java
 @Override
 public void notifyChange(ModelChangeEvent event) {
+    if (_currentObject == null) {
+        return; // Guard against null (e.g., input channel sent null).
+    }
     handleObjectDeleted(event);
     handleObjectUpdated(event);
 }
@@ -81,5 +88,7 @@ Object matching uses `ObjectKey` comparison (via `KnowledgeItem.tId()`), consist
 ## Edge Cases
 
 - **Transient object becomes persistent** (e.g., after first save): The object switch after save goes through `handleInputChanged`, which re-evaluates `tTransient()` and registers a listener if appropriate.
-- **Object deleted while in edit mode**: Lock release may warn, but `exitEditMode()` handles this gracefully.
+- **Object deleted while in edit mode**: `exitEditMode()` calls `releaseLock()`. The `LockHandler` must tolerate deleted objects gracefully.
+- **Self-triggered update after save/apply**: When `executeSave()`/`executeApply()` commits a KB transaction, `ModelScope` fires a `ModelChangeEvent` containing the just-committed object. After `executeSave()`, the form is no longer in edit mode, so `fireFormStateChanged()` is called — this is harmless (idempotent, fields re-read the same values). After `executeApply()`, the form is still in edit mode, so the event is ignored.
 - **Rapid successive updates**: Each `notifyChange` call triggers `fireFormStateChanged`, which is idempotent — field controls simply re-read the current value.
+- **Null current object**: `notifyChange` returns immediately if `_currentObject == null`.

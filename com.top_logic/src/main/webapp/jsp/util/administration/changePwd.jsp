@@ -204,19 +204,19 @@ String paramType = StringServices.nonEmpty(request.getParameter(GotoHandler.COMM
 					<%if (!StringServices.isEmpty(paramId)) {%>
 						<input name="<%=GotoHandler.COMMAND_PARAM_ID%>"
 							type="hidden"
-							value="<%=paramId%>"
+							value="<%=TagUtil.encodeXMLAttribute(paramId)%>"
 						/>
 					<%}%>
 					<%if (!StringServices.isEmpty(paramType)) {%>
 						<input name="<%=GotoHandler.COMMAND_PARAM_TYPE%>"
 							type="hidden"
-							value="<%=paramType%>"
+							value="<%=TagUtil.encodeXMLAttribute(paramType)%>"
 						/>
 					<%}%>
 					<%if (!StringServices.isEmpty(paramComponent)) {%>
 						<input name="<%=GotoHandler.COMMAND_PARAM_COMPONENT%>"
 							type="hidden"
-							value="<%=paramComponent%>"
+							value="<%=TagUtil.encodeXMLAttribute(paramComponent)%>"
 						/>
 					<%}%>
 					<input name="changePwd"

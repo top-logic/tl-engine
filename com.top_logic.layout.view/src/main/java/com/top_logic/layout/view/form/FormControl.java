@@ -21,6 +21,9 @@ import com.top_logic.layout.view.I18NConstants;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.element.meta.form.validation.FormValidationModel;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.listen.ModelChangeEvent;
+import com.top_logic.model.listen.ModelListener;
+import com.top_logic.model.listen.ModelScope;
 
 /**
  * Session-scoped form control managing the editing lifecycle (view/edit mode, locking, KB
@@ -39,7 +42,7 @@ import com.top_logic.model.TLObject;
  * listening field controls can switch to editable state.
  * </p>
  */
-public class FormControl extends ReactControl implements FormModel {
+public class FormControl extends ReactControl implements FormModel, ModelListener {
 
 	/** State key for the current edit mode. */
 	private static final String EDIT_MODE = "editMode";
@@ -76,6 +79,8 @@ public class FormControl extends ReactControl implements FormModel {
 	private final ViewChannel.ChannelListener _inputListener = this::handleInputChanged;
 
 	private final String _noModelMessage;
+
+	private ModelScope _modelScope;
 
 	/**
 	 * Creates a new {@link FormControl}.
@@ -196,6 +201,72 @@ public class FormControl extends ReactControl implements FormModel {
 	 */
 	public void setDirtyChannel(ViewChannel channel) {
 		_dirtyChannel = channel;
+	}
+
+	/**
+	 * Registers this control as a {@link ModelListener} on the given scope for the current object.
+	 *
+	 * <p>
+	 * Called lazily on first render via {@code addBeforeWriteAction}, matching the
+	 * {@link com.top_logic.layout.view.model.ObservableTableModel} pattern.
+	 * </p>
+	 *
+	 * @param scope
+	 *        The model scope to observe.
+	 */
+	public void attach(ModelScope scope) {
+		if (_modelScope != null) {
+			return; // Already attached.
+		}
+		_modelScope = scope;
+		registerModelListener();
+	}
+
+	/**
+	 * Removes all model listeners and releases the scope reference.
+	 */
+	public void detach() {
+		deregisterModelListener();
+		_modelScope = null;
+	}
+
+	private void registerModelListener() {
+		if (_modelScope == null || _currentObject == null || _currentObject.tTransient()) {
+			return;
+		}
+		_modelScope.addModelListener(_currentObject, this);
+	}
+
+	private void deregisterModelListener() {
+		if (_modelScope == null || _currentObject == null || _currentObject.tTransient()) {
+			return;
+		}
+		_modelScope.removeModelListener(_currentObject, this);
+	}
+
+	@Override
+	public void notifyChange(ModelChangeEvent event) {
+		if (_currentObject == null) {
+			return;
+		}
+		ModelChangeEvent.ChangeType change = event.getChange(_currentObject);
+		if (change == ModelChangeEvent.ChangeType.DELETED) {
+			onCurrentObjectDeleted();
+		} else if (change == ModelChangeEvent.ChangeType.UPDATED && !_editMode) {
+			// In view mode: refresh field values. In edit mode: overlay buffers changes,
+			// base values become visible after save/cancel.
+			fireFormStateChanged();
+		}
+	}
+
+	private void onCurrentObjectDeleted() {
+		if (_editMode) {
+			exitEditMode();
+		}
+		deregisterModelListener();
+		_currentObject = null;
+		updateNoModelMessage();
+		fireFormStateChanged();
 	}
 
 	/**
@@ -368,7 +439,9 @@ public class FormControl extends ReactControl implements FormModel {
 		if (_editMode) {
 			exitEditMode();
 		}
+		deregisterModelListener();
 		_currentObject = (TLObject) newValue;
+		registerModelListener();
 		updateNoModelMessage();
 
 		fireFormStateChanged();
@@ -384,6 +457,7 @@ public class FormControl extends ReactControl implements FormModel {
 		if (_editMode) {
 			exitEditMode();
 		}
+		deregisterModelListener();
 		if (_inputChannel != null) {
 			_inputChannel.removeListener(_inputListener);
 		}

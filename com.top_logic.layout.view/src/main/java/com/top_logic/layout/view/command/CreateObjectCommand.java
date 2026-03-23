@@ -11,10 +11,6 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
-import com.top_logic.element.model.DynamicModelService;
-import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.PersistencyLayer;
-import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
@@ -22,16 +18,19 @@ import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLType;
+import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.model.ModelService;
 
 /**
- * Command that creates a new persistent object of a configured type.
+ * Command that creates a new transient object of a configured type.
  *
  * <p>
- * Creates an empty instance of the configured {@link TLClass} in a KB transaction and writes it to
- * the configured output channel. Intended for "New" buttons in list/table views.
+ * Creates a {@link TransientTLObjectImpl} with the configured {@link TLClass} type and writes it to
+ * the configured output channel. The transient object can be edited in a form without database
+ * interaction. Persistence happens later when the form saves (copying the transient to a persistent
+ * object).
  * </p>
  */
 public class CreateObjectCommand implements ViewCommand {
@@ -61,7 +60,7 @@ public class CreateObjectCommand implements ViewCommand {
 		String getTypeName();
 
 		/**
-		 * Name of the channel to write the newly created object to.
+		 * Name of the channel to write the newly created transient object to.
 		 */
 		@Name(OUTPUT)
 		@Mandatory
@@ -88,15 +87,8 @@ public class CreateObjectCommand implements ViewCommand {
 			throw new IllegalArgumentException("Type '" + _typeName + "' is not a TLClass.");
 		}
 
-		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		TLObject newObject;
-		Transaction tx = kb.beginTransaction();
-		try {
-			newObject = DynamicModelService.getInstance().createObject((TLClass) type);
-			tx.commit();
-		} finally {
-			tx.rollback();
-		}
+		// Create a transient object -- no DB transaction, no storage validation.
+		TLObject newObject = TransientObjectFactory.INSTANCE.createObject((TLClass) type, null);
 
 		// Write to output channel.
 		if (context instanceof ViewContext) {

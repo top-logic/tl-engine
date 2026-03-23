@@ -17,6 +17,7 @@ import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.I18NConstants;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.element.meta.form.validation.FormValidationModel;
 import com.top_logic.model.TLObject;
 
 /**
@@ -44,6 +45,9 @@ public class FormControl extends ReactControl implements FormModel {
 	/** State key for the dirty flag. */
 	private static final String DIRTY = "dirty";
 
+	/** State key for the overall form validity. */
+	private static final String VALID = "valid";
+
 	/** State key for the no-model placeholder message. */
 	private static final String NO_MODEL_MESSAGE = "noModelMessage";
 
@@ -60,6 +64,8 @@ public class FormControl extends ReactControl implements FormModel {
 	private ViewChannel _editModeChannel;
 
 	private ViewChannel _dirtyChannel;
+
+	private FormValidationModel _validationModel;
 
 	private final List<FormModelListener> _formModelListeners = new ArrayList<>();
 
@@ -103,6 +109,13 @@ public class FormControl extends ReactControl implements FormModel {
 	 */
 	public TLObjectOverlay getOverlay() {
 		return _overlay;
+	}
+
+	/**
+	 * The current validation model, or {@code null} if not in edit mode.
+	 */
+	public FormValidationModel getValidationModel() {
+		return _validationModel;
 	}
 
 	@Override
@@ -185,6 +198,13 @@ public class FormControl extends ReactControl implements FormModel {
 		_lockHandler.acquireLock(_currentObject);
 		_overlay = new TLObjectOverlay(_currentObject);
 
+		_validationModel = new FormValidationModel();
+		_validationModel.addOverlay(_overlay, _currentObject);
+		_validationModel.addConstraintValidationListener((overlay, attribute, result) -> {
+			putState(VALID, Boolean.valueOf(_validationModel.isValid()));
+		});
+		putState(VALID, Boolean.valueOf(_validationModel.isValid()));
+
 		_editMode = true;
 		putState(EDIT_MODE, Boolean.TRUE);
 		updateEditModeChannel();
@@ -204,6 +224,10 @@ public class FormControl extends ReactControl implements FormModel {
 	public void executeApply() {
 		if (!_editMode || _overlay == null || !_overlay.isDirty()) {
 			return;
+		}
+
+		if (_validationModel != null && !_validationModel.isValid()) {
+			return; // Block apply when validation errors exist.
 		}
 
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
@@ -227,6 +251,10 @@ public class FormControl extends ReactControl implements FormModel {
 	public void executeSave() {
 		if (!_editMode || _overlay == null) {
 			return;
+		}
+
+		if (_validationModel != null && !_validationModel.isValid()) {
+			return; // Block save when validation errors exist.
 		}
 
 		if (_overlay.isDirty()) {
@@ -279,6 +307,9 @@ public class FormControl extends ReactControl implements FormModel {
 		updateDirtyState();
 
 		fireFormStateChanged();
+
+		_validationModel = null;
+		putState(VALID, Boolean.TRUE);
 	}
 
 	private void releaseLock() {

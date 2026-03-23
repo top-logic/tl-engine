@@ -18,20 +18,18 @@
 			<field attribute="uppercaseStart"/>
 			<field attribute="warningField"/>
 			<field attribute="freeText"/>
-		</form>
-		<actions>
-			<button>
-				<action class="com.top_logic.layout.view.command.GenericViewCommand"
-					label="Create"
-				>
-					<read-form-object/>
+			<commands>
+				<generic-command label="Create" placement="TOOLBAR">
+					<store-form-state/>
 					<with-transaction>
 						<execute-script function="obj -> $obj.copy(transient: false)"/>
 					</with-transaction>
 					<write-channel name="selection"/>
 					<close-dialog/>
-				</action>
-			</button>
+				</generic-command>
+			</commands>
+		</form>
+		<actions>
 			<button>
 				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
 					label="Cancel"

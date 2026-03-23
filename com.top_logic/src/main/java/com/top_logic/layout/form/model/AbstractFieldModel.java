@@ -78,6 +78,20 @@ public class AbstractFieldModel implements FieldModel {
 		_value = value;
 	}
 
+	/**
+	 * The last value stored via {@link #setValueInternal(Object)} or on construction.
+	 *
+	 * <p>
+	 * Unlike {@link #getValue()}, which subclasses may override to read live from an external
+	 * source, this method always returns the internally cached value. Use this to detect changes
+	 * when the external source has already been updated (e.g., after a KB commit) but the cached
+	 * state has not yet been synchronized.
+	 * </p>
+	 */
+	protected final Object getCachedValue() {
+		return _value;
+	}
+
 	@Override
 	public boolean isDirty() {
 		return !Objects.equals(_value, _defaultValue);

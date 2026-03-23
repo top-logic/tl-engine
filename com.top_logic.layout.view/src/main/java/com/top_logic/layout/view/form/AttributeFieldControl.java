@@ -179,6 +179,9 @@ public class AttributeFieldControl implements FormModelListener {
 		_model.setObject(current);
 		_model.setEditable(source.isEditMode() && !_forceReadonly);
 		_chrome.setDirty(_model.isDirty());
+
+		// Wire validation if FormValidationModel became available (e.g. after enterEditMode).
+		wireValidation();
 	}
 
 	/**
@@ -275,23 +278,35 @@ public class AttributeFieldControl implements FormModelListener {
 		};
 		_model.addListener(_modelListener);
 
-		// Bridge FormValidationModel validation to FieldModel.
-		FormValidationModel validationModel = _formControl.getValidationModel();
-		if (validationModel != null && _model != null) {
-			TLStructuredTypePart part = _model.getPart();
-			TLObject overlay = _formModel.getCurrentObject();
+		wireValidation();
+	}
 
-			// Read initial validation state.
-			applyValidationResult(validationModel.getValidation(overlay, part));
-
-			// Listen for future changes.
-			_validationListener = (o, attr, result) -> {
-				if (o == overlay && attr == part) {
-					applyValidationResult(result);
-				}
-			};
-			validationModel.addConstraintValidationListener(_validationListener);
+	/**
+	 * Registers the validation listener on the {@link FormValidationModel} if available and not
+	 * yet registered. Reads initial validation state.
+	 */
+	private void wireValidation() {
+		if (_validationListener != null || _model == null) {
+			return; // Already wired or no model.
 		}
+		FormValidationModel validationModel = _formControl.getValidationModel();
+		if (validationModel == null) {
+			return; // Not in edit mode yet.
+		}
+
+		TLStructuredTypePart part = _model.getPart();
+		TLObject overlay = _formModel.getCurrentObject();
+
+		// Read initial validation state.
+		applyValidationResult(validationModel.getValidation(overlay, part));
+
+		// Listen for future changes.
+		_validationListener = (o, attr, result) -> {
+			if (attr.equals(part)) {
+				applyValidationResult(result);
+			}
+		};
+		validationModel.addConstraintValidationListener(_validationListener);
 	}
 
 	private TLStructuredTypePart resolvePart(TLObject obj) {

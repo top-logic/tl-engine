@@ -72,15 +72,12 @@ public class FormValidationModel implements OverlayLookup {
 	 *        The persistent base object being edited, or {@code null} for create overlays.
 	 */
 	public void addOverlay(TLObject overlay, TLObject editedBase) {
-		com.top_logic.basic.Logger.info("addOverlay: overlay=" + overlay + " editedBase=" + editedBase, FormValidationModel.class);
 		_allOverlays.add(overlay);
 		if (editedBase != null) {
 			_overlaysByEdited.put(editedBase, overlay);
 		}
 		deriveConstraints(overlay);
-		com.top_logic.basic.Logger.info("addOverlay: constraints derived, count=" + _constraintsByOwner.size(), FormValidationModel.class);
 		validateAllFor(overlay);
-		com.top_logic.basic.Logger.info("addOverlay: validated, results=" + _validationResults.size(), FormValidationModel.class);
 	}
 
 	/**

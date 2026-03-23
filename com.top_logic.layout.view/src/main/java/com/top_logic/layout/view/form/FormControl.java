@@ -190,9 +190,7 @@ public class FormControl extends ReactControl implements FormModel {
 	 * Enters edit mode by acquiring a lock, creating an overlay, and notifying listeners.
 	 */
 	public void enterEditMode() {
-		com.top_logic.basic.Logger.info("enterEditMode: _currentObject=" + _currentObject + " _editMode=" + _editMode, FormControl.class);
 		if (_editMode || _currentObject == null) {
-			com.top_logic.basic.Logger.info("enterEditMode: skipping (editMode=" + _editMode + ", currentObject=" + _currentObject + ")", FormControl.class);
 			return;
 		}
 

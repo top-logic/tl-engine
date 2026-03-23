@@ -486,15 +486,23 @@ public class ReactServlet extends TopLogicServlet {
 	private void showCommandError(HandlerResult result, SSEUpdateQueue queue, ReactCommandTarget control) {
 		ErrorSink errorSink = control instanceof ReactControl rc ? rc.getReactContext().getErrorSink() : null;
 		if (errorSink != null) {
-			ResKey errorKey = result.getErrorMessage();
-			if (errorKey != null) {
-				String message = Resources.getInstance().getString(errorKey);
-				errorSink.showError(com.top_logic.layout.basic.fragments.Fragments.text(message));
+			Resources resources = Resources.getInstance();
+
+			ResKey titleKey = result.getErrorTitle();
+			String title = titleKey != null ? resources.getString(titleKey) : "Command failed.";
+
+			ResKey messageKey = result.getErrorMessage();
+			String details = messageKey != null ? resources.getString(messageKey) : null;
+
+			String text;
+			if (details != null && !details.isEmpty() && !details.equals("null")) {
+				text = title + " " + details;
 			} else {
-				errorSink.showError(com.top_logic.layout.basic.fragments.Fragments.text("Command failed."));
+				text = title;
 			}
+			errorSink.showError(com.top_logic.layout.basic.fragments.Fragments.text(text));
 		} else {
-			Logger.warn("No ErrorSink available to show command error: " + result.getErrorMessage(),
+			Logger.warn("No ErrorSink available to show command error: " + result.getErrorTitle(),
 				ReactServlet.class);
 		}
 	}

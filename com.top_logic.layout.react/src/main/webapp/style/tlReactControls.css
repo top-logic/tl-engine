@@ -2040,7 +2040,11 @@ button.tlMenu__item--disabled:hover {
 .tlTableView__cell .tlReactTextInput,
 .tlTableView__cell .tlReactNumberInput,
 .tlTableView__cell .tlReactDatePicker,
-.tlTableView__cell .tlReactSelect {
+.tlTableView__cell .tlReactSelect,
+.tlTableView__cell .tlReactTextInput:focus,
+.tlTableView__cell .tlReactNumberInput:focus,
+.tlTableView__cell .tlReactDatePicker:focus,
+.tlTableView__cell .tlReactSelect:focus {
 	border: none;
 	border-radius: 0;
 	background: transparent;
@@ -2050,10 +2054,11 @@ button.tlMenu__item--disabled:hover {
 	outline: none;
 }
 
-/* Excel-style focus: highlight the entire cell, not the inner input */
-.tlTableView__cell:focus-within {
-	box-shadow: inset 0 0 0 2px var(--focus);
-	background: var(--field, #fff);
+/* Excel-style focus: highlight the entire cell only when an input is focused */
+.tlTableView__cell:has(.tlReactTextInput:focus, .tlReactNumberInput:focus, .tlReactDatePicker:focus, .tlReactSelect:focus) {
+	outline: 2px solid var(--focus);
+	outline-offset: -1px;
+	z-index: 1;
 }
 
 .tlTableView__cell:last-child {

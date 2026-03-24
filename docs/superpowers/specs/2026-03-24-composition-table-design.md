@@ -48,6 +48,25 @@ This is not a special case. The dialog is a normal form whose input happens to b
 
 **Locking:** Since the dialog's input is a transient overlay (not a persistent object), the dialog's `FormElement` must not attempt to acquire a lock. Configure the dialog form with `initial-edit-mode="true"` and `mode-switch="false"` to bypass locking.
 
+**Dialog save/cancel actions:** The dialog form uses configurable `ViewAction` chains (see [Configurable Save/Cancel Actions](#configurable-savecancel-actions-on-formelement)) to apply changes and close the dialog:
+
+```xml
+<!-- Detail dialog layout fragment -->
+<form input="channel(editedObject)" initial-edit-mode="true" mode-switch="false">
+    <save-action>
+        <store-form-state/>
+        <close-dialog/>
+    </save-action>
+    <cancel-action>
+        <close-dialog/>
+    </cancel-action>
+    <field attribute="name"/>
+    <field attribute="description"/>
+</form>
+```
+
+`<store-form-state/>` validates, reveals errors, and applies the dialog overlay onto the row overlay. `<close-dialog/>` then closes the dialog window. If validation fails, `<store-form-state/>` throws a `TopLogicException` which aborts the chain — the dialog stays open with errors visible.
+
 ### Two-Layer Overlay Model
 
 **Layer 1 — Composition reference in the main overlay:**
@@ -125,6 +144,31 @@ Lightweight per-row model holding a reference to the row overlay (or transient o
 **`com.top_logic.layout.view.form.FormParticipant`:**
 Interface for uniform form lifecycle participation (validate, apply, cancel, revealAll, isDirty).
 
+**`com.top_logic.layout.view.command.DiscardFormStateAction`:**
+New `ViewAction` (tag `<discard-form-state/>`) that discards the form overlay without applying changes. Used in cancel-action chains for detail dialogs.
+
+### Configurable Save/Cancel Actions on FormElement
+
+`FormElement` currently hard-codes save/cancel behavior in `FormCommandModel` (calling `FormControl.executeSave()` / `executeCancel()` directly). To support the detail dialog use case — and any future customization — `FormElement` gets optional `save-action` and `cancel-action` configuration as `ViewAction` chains.
+
+```xml
+<form input="..." save-action="..." cancel-action="...">
+```
+
+When configured, the save/cancel buttons execute the configured `ViewAction` chain (via `GenericViewCommand`) instead of the default behavior.
+
+**Default behavior** (when not configured): The existing hard-coded `FormControl.executeSave()` / `executeCancel()` logic remains unchanged. No migration needed for existing forms.
+
+**Available actions for composition:**
+- `<store-form-state/>` — validates, reveals errors, applies overlay to base object (already exists)
+- `<close-dialog/>` — closes the topmost dialog (already exists)
+- `<with-transaction>...</with-transaction>` — wraps inner actions in a KB transaction (already exists)
+
+**New action needed:**
+- `<discard-form-state/>` — discards the form overlay without applying (equivalent of cancel). This is a new `ViewAction` that calls the cancel logic on `FormControl`.
+
+This keeps `FormElement` simple: it either uses the default behavior or delegates entirely to a configured action chain. No hybrid.
+
 ### Validation
 
 **Two levels:**
@@ -176,6 +220,8 @@ All changes are transient until save. The composition table is fully integrated 
 - Optional detail dialog via referenced layout
 - Two-layer overlay model with recursive overlay stacking for detail dialog
 - `FormParticipant` abstraction for uniform form lifecycle
+- Configurable save/cancel action chains on `FormElement` (using existing `ViewAction` infrastructure)
+- `DiscardFormStateAction` for cancel-action chains
 - Add/delete commands with type selection for polymorphic compositions
 - Field-level and reference-level validation
 - Dirty tracking integrated with main form

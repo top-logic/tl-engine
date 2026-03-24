@@ -7,6 +7,7 @@ package com.top_logic.layout.view.form;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -20,9 +21,11 @@ import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.table.ReactCellControlProvider;
 import com.top_logic.layout.react.control.table.ReactTableControl;
 import com.top_logic.layout.react.control.table.ReactTextCellControl;
+import com.top_logic.layout.table.model.ColumnConfiguration;
 import com.top_logic.layout.table.model.ObjectTableModel;
 import com.top_logic.layout.table.model.TableConfiguration;
 import com.top_logic.layout.table.model.TableConfigurationFactory;
@@ -33,6 +36,7 @@ import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.impl.TransientObjectFactory;
+import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * Orchestrator for inline composition table editing within a form.
@@ -45,12 +49,24 @@ import com.top_logic.model.impl.TransientObjectFactory;
  * </p>
  *
  * <p>
+ * Renders as a {@code TLPanel} React component with the composition attribute's label as title, the
+ * table as content, and an Add button in the toolbar (visible only in edit mode). Action columns for
+ * detail-open (always visible) and delete (edit mode only) are appended to the table columns.
+ * </p>
+ *
+ * <p>
  * On entering edit mode, the control creates {@link TLObjectOverlay}s for existing composed objects
  * and stores the overlay list in the main form overlay. On save, it persists new transient objects,
  * applies overlay changes, and removes orphaned objects.
  * </p>
  */
 public class CompositionTableControl extends ReactControl implements FormModelListener, FormParticipant {
+
+	/** Column name for the detail-open action column. */
+	static final String COLUMN_DETAIL = "_detail";
+
+	/** Column name for the delete action column. */
+	static final String COLUMN_DELETE = "_delete";
 
 	/**
 	 * Configuration for a single column in the composition table.
@@ -110,6 +126,9 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 
 	private ObjectTableModel _tableModel;
 
+	/** The Add button in the toolbar, or {@code null} if not in edit mode. */
+	private ReactButtonControl _addButton;
+
 	/**
 	 * Creates a new {@link CompositionTableControl}.
 	 *
@@ -124,7 +143,7 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 	 */
 	public CompositionTableControl(ReactContext context, FormControl formControl,
 			String compositionAttributeName, List<ColumnConfig> columnConfigs) {
-		super(context, null, "TLFieldList");
+		super(context, null, "TLPanel");
 		_context = context;
 		_formControl = formControl;
 		_compositionAttributeName = compositionAttributeName;
@@ -151,6 +170,10 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 		if (_compositionPart == null) {
 			return;
 		}
+
+		// Set panel title from the composition attribute's display label.
+		String label = MetaLabelProvider.INSTANCE.getLabel(_compositionPart);
+		putState("title", label != null ? label : _compositionAttributeName);
 
 		List<TLObject> composedObjects = readCompositionValue(currentObject);
 		boolean editMode = _formControl.isEditMode();
@@ -370,6 +393,18 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 	}
 
 	/**
+	 * Placeholder for opening the detail dialog for a row.
+	 *
+	 * <p>
+	 * Currently a no-op. The actual dialog opening will be implemented in Task 12.
+	 * </p>
+	 */
+	@ReactCommand("openDetail")
+	void handleOpenDetail(Map<String, Object> arguments) {
+		// Placeholder: detail dialog opening will be implemented in Task 12.
+	}
+
+	/**
 	 * Adds a new transient row to the table.
 	 */
 	public void addRow() {
@@ -443,16 +478,18 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 			columnNames.add(col.getAttributeName());
 		}
 
-		// Build table configuration from the target type.
-		TableConfiguration tableConfig = buildTableConfiguration();
-
-		// Create or replace the table model.
-		List<Object> rows = new ArrayList<>(rowObjects);
-		if (_tableModel == null) {
-			_tableModel = new ObjectTableModel(columnNames, tableConfig, rows);
-		} else {
-			_tableModel.setRowObjects(rows);
+		// Append action columns: detail is always present, delete only in edit mode.
+		columnNames.add(COLUMN_DETAIL);
+		if (editMode) {
+			columnNames.add(COLUMN_DELETE);
 		}
+
+		// Build table configuration from the target type.
+		TableConfiguration tableConfig = buildTableConfiguration(editMode);
+
+		// Create or replace the table model (column set may change between edit/view mode).
+		List<Object> rows = new ArrayList<>(rowObjects);
+		_tableModel = new ObjectTableModel(columnNames, tableConfig, rows);
 
 		// Create cell provider.
 		ReactCellControlProvider cellProvider = createCellProvider(editMode);
@@ -460,10 +497,35 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 		// Create or replace the table control.
 		if (_tableControl != null) {
 			unregisterChildControl(_tableControl);
+			_tableControl.cleanupTree();
 		}
 		_tableControl = new ReactTableControl(_context, _tableModel, cellProvider);
 		registerChildControl(_tableControl);
-		putState("fields", java.util.Collections.singletonList(_tableControl));
+
+		// Set panel child to the table.
+		putState("child", _tableControl);
+
+		// Update toolbar: Add button only in edit mode.
+		updateToolbar(editMode);
+	}
+
+	private void updateToolbar(boolean editMode) {
+		if (_addButton != null) {
+			unregisterChildControl(_addButton);
+			_addButton.cleanupTree();
+			_addButton = null;
+		}
+
+		if (editMode) {
+			_addButton = new ReactButtonControl(_context, "Add", ctx -> {
+				addRow();
+				return HandlerResult.DEFAULT_RESULT;
+			});
+			registerChildControl(_addButton);
+			putState("toolbarButtons", Collections.singletonList(_addButton));
+		} else {
+			putState("toolbarButtons", Collections.emptyList());
+		}
 	}
 
 	private void rebuildTableRows() {
@@ -474,16 +536,33 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 		_tableModel.setRowObjects(new ArrayList<>(currentList));
 	}
 
-	private TableConfiguration buildTableConfiguration() {
+	private TableConfiguration buildTableConfiguration(boolean editMode) {
+		TableConfiguration tableConfig;
 		if (_compositionPart instanceof TLReference) {
 			TLClass targetType = resolveTargetType();
 			if (targetType != null) {
 				Set<TLClass> types = new HashSet<>();
 				types.add(targetType);
-				return TableConfigurationFactory.build(new GenericTableConfigurationProvider(types));
+				tableConfig = TableConfigurationFactory.build(new GenericTableConfigurationProvider(types));
+			} else {
+				tableConfig = TableConfigurationFactory.table();
 			}
+		} else {
+			tableConfig = TableConfigurationFactory.table();
 		}
-		return TableConfigurationFactory.table();
+
+		// Configure action columns.
+		ColumnConfiguration detailCol = tableConfig.declareColumn(COLUMN_DETAIL);
+		detailCol.setColumnLabel("Detail");
+		detailCol.setSortable(false);
+
+		if (editMode) {
+			ColumnConfiguration deleteCol = tableConfig.declareColumn(COLUMN_DELETE);
+			deleteCol.setColumnLabel("Delete");
+			deleteCol.setSortable(false);
+		}
+
+		return tableConfig;
 	}
 
 	private ReactCellControlProvider createCellProvider(boolean editMode) {
@@ -494,6 +573,14 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 		}
 
 		return (ctx, rowObject, columnName, cellValue) -> {
+			// Handle action columns.
+			if (COLUMN_DETAIL.equals(columnName)) {
+				return createDetailButton(ctx, rowObject);
+			}
+			if (COLUMN_DELETE.equals(columnName)) {
+				return createDeleteButton(ctx, rowObject);
+			}
+
 			ColumnConfig colConfig = configByName.get(columnName);
 
 			if (!editMode || (colConfig != null && colConfig.isReadonly())) {
@@ -533,6 +620,30 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 			String text = MetaLabelProvider.INSTANCE.getLabel(cellValue);
 			return new ReactTextCellControl(ctx, text);
 		};
+	}
+
+	private ReactButtonControl createDetailButton(ReactContext ctx, Object rowObject) {
+		return new ReactButtonControl(ctx, "Detail", context -> {
+			// Placeholder: detail dialog will be implemented in Task 12.
+			return HandlerResult.DEFAULT_RESULT;
+		});
+	}
+
+	private ReactButtonControl createDeleteButton(ReactContext ctx, Object rowObject) {
+		return new ReactButtonControl(ctx, "Delete", context -> {
+			if (_fieldModel == null) {
+				return HandlerResult.DEFAULT_RESULT;
+			}
+			if (rowObject instanceof TLObject) {
+				TLObject tlObj = (TLObject) rowObject;
+				List<TLObject> currentList = _fieldModel.getCurrentList();
+				int idx = currentList.indexOf(tlObj);
+				if (idx >= 0) {
+					deleteRow(tlObj, idx);
+				}
+			}
+			return HandlerResult.DEFAULT_RESULT;
+		});
 	}
 
 	private void addCellDirtyListener(AttributeFieldModel cellFieldModel) {
@@ -630,6 +741,10 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 	protected void cleanupChildren() {
 		_formControl.removeFormModelListener(this);
 		cleanupEditState();
+		if (_addButton != null) {
+			_addButton.cleanupTree();
+			_addButton = null;
+		}
 		if (_tableControl != null) {
 			_tableControl.cleanupTree();
 			_tableControl = null;

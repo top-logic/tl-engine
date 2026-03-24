@@ -32,6 +32,7 @@ const TLNumberInput: React.FC<TLCellProps> = ({ controlId, state, config }) => {
 
   const hasError = state.hasError === true;
   const hasWarnings = state.hasWarnings === true;
+  const errorMessage = state.errorMessage as string | undefined;
   const cls = [
     'tlReactNumberInput',
     hasError ? 'tlReactNumberInput--error' : '',
@@ -48,6 +49,7 @@ const TLNumberInput: React.FC<TLCellProps> = ({ controlId, state, config }) => {
         disabled={state.disabled === true}
         className={cls}
         aria-invalid={hasError || undefined}
+        title={hasError && errorMessage ? errorMessage : undefined}
       />
     </span>
   );

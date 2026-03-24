@@ -2061,6 +2061,20 @@ button.tlMenu__item--disabled:hover {
 	z-index: 1;
 }
 
+/* Error state: red cell border */
+.tlTableView__cell:has(.tlReactTextInput--error, .tlReactNumberInput--error, .tlReactDatePicker--error, .tlReactSelect--error) {
+	outline: 2px solid var(--support-error, #da1e28);
+	outline-offset: -1px;
+	z-index: 1;
+}
+
+/* Warning state: yellow cell border (only when no error) */
+.tlTableView__cell:has(.tlReactTextInput--warning, .tlReactNumberInput--warning, .tlReactDatePicker--warning, .tlReactSelect--warning) {
+	outline: 2px solid var(--support-warning, #f1c21b);
+	outline-offset: -1px;
+	z-index: 1;
+}
+
 .tlTableView__cell:last-child {
 	border-right: none;
 }

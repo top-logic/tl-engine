@@ -26,6 +26,7 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
 
   const hasError = state.hasError === true;
   const hasWarnings = state.hasWarnings === true;
+  const errorMessage = state.errorMessage as string | undefined;
   const cls = [
     'tlReactTextInput',
     hasError ? 'tlReactTextInput--error' : '',
@@ -41,6 +42,7 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
         disabled={state.disabled === true}
         className={cls}
         aria-invalid={hasError || undefined}
+        title={hasError && errorMessage ? errorMessage : undefined}
       />
     </span>
   );

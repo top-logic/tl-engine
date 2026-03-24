@@ -367,16 +367,19 @@ This is not a permanent test suite but a hands-on verification loop during devel
 | Cross-level constraint (item total exceeds rangedInt) | OK — blocks save when violated, allows when fixed |
 | Detail dialog in view mode | OK — read-only fields, Close button |
 | Detail dialog in edit mode | OK — editable textboxes, OK + Close buttons |
+| Field-level mandatory constraint in table cells | OK — clearing Name field blocks save with "Der Wert darf nicht leer sein" |
+| Field-level range constraint (lower bound) in table cells | OK — Menge=0 blocked with "Der Wert 0 ist zu klein, es muss mindestens 1 gesetzt werden" |
+| Field-level range constraint (upper bound) in table cells | OK — Menge=1001 blocked with "Der Wert 1.001 ist zu groß, es darf höchstens 1.000 gesetzt werden" |
+| Detail dialog Cancel (Close without OK) | OK — changes made in dialog are discarded, table cell retains original value |
+| Detail dialog OK syncs changes back to table cells | OK — name changed in dialog appears in table cell after OK (fix: cf5e932) |
 
 ### Known Bugs
 
-1. **Detail dialog OK does not sync changes back to table cells.** The dialog's `store-form-state` applies changes to the dialog overlay which is stacked on the row overlay. The row overlay gets updated, but the table cell's `AttributeFieldModel` does not re-read its value after dialog close. A refresh mechanism in `CompositionTableControl` after dialog close is needed.
+None — all previously known bugs have been fixed.
 
 ### Not Yet Tested
 
-1. **Field-level constraints in table cells** (mandatory, range validation displayed inline in cells)
-2. **Detail dialog Cancel** (discard dialog overlay changes — the Close button currently just closes without applying, which is equivalent to cancel)
-3. **Polymorphic type selection** for Add (demo model has no subtypes)
+1. **Polymorphic type selection** for Add (demo model has no subtypes, so this cannot be tested with current setup)
 
 ## Scope
 

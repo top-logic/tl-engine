@@ -5,7 +5,7 @@
 		<channel name="editedItem"/>
 		<channel name="editMode"/>
 	</channels>
-	<window title="Edit Item" width="500px" height="300px">
+	<window title="Edit Item" width="500px">
 		<form input="editedItem" editMode="editMode" mode-switch="false">
 			<save-action>
 				<store-form-state/>

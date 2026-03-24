@@ -2,7 +2,7 @@
 
 **Date**: 2026-03-24
 **Ticket**: #29108
-**Status**: Draft
+**Status**: Implemented (2026-03-24)
 
 ## Problem
 
@@ -350,6 +350,33 @@ Use Playwright (browser automation) to verify the implementation against the run
 - Cancel the form after edits — verify everything reverts
 
 This is not a permanent test suite but a hands-on verification loop during development.
+
+## Implementation Status (2026-03-24)
+
+### Verified (Playwright)
+
+| Scenario | Status |
+|----------|--------|
+| Composition table renders in view mode (columns, title, detail button) | OK |
+| Edit mode UI (Add button, Delete column, editable cells) | OK |
+| Add row + enter values + Save | OK — new object persisted to KB |
+| Modify values + Cancel | OK — changes discarded |
+| Delete row + Cancel | OK — deletion reverted |
+| Delete all items + Save | OK — correctly blocked by min-count constraint |
+| Reference-level constraint re-evaluation after add/delete | OK |
+| Cross-level constraint (item total exceeds rangedInt) | OK — blocks save when violated, allows when fixed |
+| Detail dialog in view mode | OK — read-only fields, Close button |
+| Detail dialog in edit mode | OK — editable textboxes, OK + Close buttons |
+
+### Known Bugs
+
+1. **Detail dialog OK does not sync changes back to table cells.** The dialog's `store-form-state` applies changes to the dialog overlay which is stacked on the row overlay. The row overlay gets updated, but the table cell's `AttributeFieldModel` does not re-read its value after dialog close. A refresh mechanism in `CompositionTableControl` after dialog close is needed.
+
+### Not Yet Tested
+
+1. **Field-level constraints in table cells** (mandatory, range validation displayed inline in cells)
+2. **Detail dialog Cancel** (discard dialog overlay changes — the Close button currently just closes without applying, which is equivalent to cancel)
+3. **Polymorphic type selection** for Add (demo model has no subtypes)
 
 ## Scope
 

@@ -23,6 +23,7 @@ A new `CompositionTableElement` alongside `FieldElement`, placed inside a `<form
     </columns>
     <detail-dialog layout="path/to/detail-layout.xml"
                    input-channel="editedObject"
+                   edit-mode-channel="editMode"
                    width="600" height="400"/>
 </composition-table>
 ```
@@ -30,42 +31,73 @@ A new `CompositionTableElement` alongside `FieldElement`, placed inside a `<form
 **Configuration:**
 - `attribute` (mandatory): Name of the composition reference on the base object.
 - `columns`: Which attributes of the composed type appear as table columns. Each column can be marked `readonly`.
-- `detail-dialog` (optional): Reference to a separate layout fragment that defines the detail editing form. `input-channel` names the channel in the dialog layout that receives the row overlay. Width/height configure the dialog window.
+- `detail-dialog` (optional): Reference to a separate layout fragment that defines the detail editing form. `input-channel` names the channel receiving the row overlay. `edit-mode-channel` names the channel receiving the edit mode state (boolean). Width/height configure the dialog window.
 
 Without `detail-dialog`, only inline table editing is available.
 
+### Panel Wrapper and UI Layout
+
+The composition table is wrapped in a `TLPanel` (existing component) that provides:
+- **Title**: The attribute's display label (e.g., "Items")
+- **Toolbar**: Contains the Add button (only visible in edit mode)
+
+**Table columns** (in addition to the configured data columns):
+- **Detail-Open column**: Always visible (view and edit mode). A button per row that opens the detail dialog (if configured).
+- **Delete column**: Only visible in edit mode. A button per row that removes the row from the composition.
+
+These action columns are injected by `CompositionTableControl` — not configured in XML.
+
+**Add button**: Appears in the panel toolbar, only in edit mode. Creates a new transient object and adds it as a row.
+
 ### Detail Dialog as Separate Layout
 
-The detail dialog is defined as a standalone layout fragment containing a `FormElement` with `FieldElement`s (and potentially nested `composition-table`s). It receives the row object via an input channel.
+The detail dialog is defined as a standalone layout fragment containing a `FormElement` with `FieldElement`s (and potentially nested `composition-table`s). It receives the row object and edit mode state via channels.
+
+**Configuration:**
+```xml
+<detail-dialog layout="demo/edit-constraint-test-item.view.xml"
+               input-channel="editedItem"
+               edit-mode-channel="editMode"
+               width="500" height="300"/>
+```
 
 When a user opens the detail dialog for a row:
-1. `CompositionTableControl` pushes the row's overlay onto the dialog's input channel (identified by the `input-channel` configuration).
-2. The dialog's `FormElement` creates its own overlay on top of the row overlay (recursive overlay pattern).
-3. Dialog Save applies the dialog overlay onto the row overlay — table cells see the changes immediately.
-4. Dialog Cancel discards the dialog overlay — the row overlay remains unchanged.
+1. `CompositionTableControl` pushes the row's overlay onto `input-channel` and the current edit mode (boolean) onto `edit-mode-channel`.
+2. In edit mode: The dialog's `FormElement` creates its own overlay on top of the row overlay (recursive overlay pattern). Save/cancel buttons are visible.
+3. In view mode: The dialog shows the row's data read-only. Only a close button is visible.
+4. Dialog Save applies the dialog overlay onto the row overlay — table cells see the changes immediately.
+5. Dialog Cancel discards the dialog overlay — the row overlay remains unchanged.
 
 This is not a special case. The dialog is a normal form whose input happens to be an overlay instead of a persistent object. `TLObjectOverlay extends TransientObject` implements `TLObject`, so overlays stack naturally.
 
-**Locking:** Since the dialog's input is a transient overlay (not a persistent object), the dialog's `FormElement` must not attempt to acquire a lock. Configure the dialog form with `initial-edit-mode="true"` and `mode-switch="false"` to bypass locking.
+**Edit mode propagation:** `FormElement.editMode` becomes bidirectional — it receives the initial state from the channel AND publishes changes back. The dialog form does NOT use `initial-edit-mode`; it receives the edit mode from the parent form via the channel.
 
-**Dialog save/cancel actions:** The dialog form uses configurable `ViewAction` chains (see [Configurable Save/Cancel Actions](#configurable-savecancel-actions-on-formelement)) to apply changes and close the dialog:
+**Locking:** Since the dialog's input is a transient overlay (not a persistent object), the dialog's `FormElement` must not attempt to acquire a lock. Configure the dialog form with `mode-switch="false"` to bypass locking.
+
+**Dialog layout example:**
 
 ```xml
-<!-- Detail dialog layout fragment -->
-<form input="channel(editedObject)" initial-edit-mode="true" mode-switch="false">
-    <save-action>
-        <store-form-state/>
-        <close-dialog/>
-    </save-action>
-    <cancel-action>
-        <close-dialog/>
-    </cancel-action>
-    <field attribute="name"/>
-    <field attribute="description"/>
-</form>
+<channels>
+    <channel name="editedItem"/>
+    <channel name="editMode"/>
+</channels>
+<window title="Edit Item" width="500px" height="300px">
+    <form input="editedItem" editMode="editMode" mode-switch="false">
+        <save-action>
+            <store-form-state/>
+            <close-dialog/>
+        </save-action>
+        <cancel-action>
+            <close-dialog/>
+        </cancel-action>
+        <field attribute="name"/>
+        <field attribute="quantity"/>
+        <field attribute="unitPrice"/>
+    </form>
+</window>
 ```
 
-`<store-form-state/>` validates, reveals errors, and applies the dialog overlay onto the row overlay. `<close-dialog/>` then closes the dialog window. If validation fails, `<store-form-state/>` throws a `TopLogicException` which aborts the chain — the dialog stays open with errors visible.
+`<store-form-state/>` validates, reveals errors, and applies the dialog overlay onto the row overlay. `<close-dialog/>` then closes the dialog window. If validation fails, `<store-form-state/>` throws a `TopLogicException` which aborts the chain — the dialog stays open with errors visible. Save/cancel actions are only visible in edit mode; in view mode only a close button is shown.
 
 ### Two-Layer Overlay Model
 
@@ -265,6 +297,7 @@ Added to `test.constraints.model.xml` as a composed child of `ConstraintTestType
     </columns>
     <detail-dialog layout="demo/edit-constraint-test-item.view.xml"
                    input-channel="editedItem"
+                   edit-mode-channel="editMode"
                    width="500" height="300"/>
 </composition-table>
 ```
@@ -272,18 +305,24 @@ Added to `test.constraints.model.xml` as a composed child of `ConstraintTestType
 **New `edit-constraint-test-item.view.xml`:** Detail dialog layout for item editing:
 
 ```xml
-<form input="channel(editedItem)" initial-edit-mode="true" mode-switch="false">
-    <save-action>
-        <store-form-state/>
-        <close-dialog/>
-    </save-action>
-    <cancel-action>
-        <close-dialog/>
-    </cancel-action>
-    <field attribute="name"/>
-    <field attribute="quantity"/>
-    <field attribute="unitPrice"/>
-</form>
+<channels>
+    <channel name="editedItem"/>
+    <channel name="editMode"/>
+</channels>
+<window title="Edit Item" width="500px" height="300px">
+    <form input="editedItem" editMode="editMode" mode-switch="false">
+        <save-action>
+            <store-form-state/>
+            <close-dialog/>
+        </save-action>
+        <cancel-action>
+            <close-dialog/>
+        </cancel-action>
+        <field attribute="name"/>
+        <field attribute="quantity"/>
+        <field attribute="unitPrice"/>
+    </form>
+</window>
 ```
 
 **`create-constraint-test.view.xml`:** Also extended with the same `<composition-table>` for the create dialog.
@@ -316,8 +355,12 @@ This is not a permanent test suite but a hands-on verification loop during devel
 
 **In scope:**
 - `CompositionTableElement` with column configuration
+- Panel wrapper with attribute label as title and toolbar for Add button
 - Inline editing in table cells
-- Optional detail dialog via referenced layout
+- Action columns: detail-open (always visible) and delete (edit mode only)
+- Add button in toolbar (edit mode only)
+- Optional detail dialog via referenced layout with edit-mode propagation via channel
+- Bidirectional `editMode` channel on `FormElement` (receives and publishes edit mode state)
 - Two-layer overlay model with recursive overlay stacking for detail dialog
 - `FormParticipant` abstraction for uniform form lifecycle
 - Configurable save/cancel action chains on `FormElement` (using existing `ViewAction` infrastructure)

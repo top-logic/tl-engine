@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
@@ -22,6 +24,7 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
+import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.control.table.ReactCellControlProvider;
 import com.top_logic.layout.react.control.table.ReactTableControl;
 import com.top_logic.layout.react.control.table.ReactTextCellControl;
@@ -30,6 +33,12 @@ import com.top_logic.layout.table.model.ObjectTableModel;
 import com.top_logic.layout.table.model.TableConfiguration;
 import com.top_logic.layout.table.model.TableConfigurationFactory;
 import com.top_logic.layout.table.provider.GenericTableConfigurationProvider;
+import com.top_logic.layout.view.DefaultViewContext;
+import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.ViewElement;
+import com.top_logic.layout.view.ViewLoader;
+import com.top_logic.layout.view.channel.DefaultViewChannel;
+import com.top_logic.layout.view.element.CompositionTableElement;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
@@ -113,6 +122,8 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 
 	private final List<ColumnConfig> _columnConfigs;
 
+	private final CompositionTableElement.DetailDialogConfig _detailDialogConfig;
+
 	private TLStructuredTypePart _compositionPart;
 
 	private CompositionFieldModel _fieldModel;
@@ -140,14 +151,19 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 	 *        The name of the composition reference attribute on the parent object.
 	 * @param columnConfigs
 	 *        The column configurations defining which attributes to display and edit.
+	 * @param detailDialogConfig
+	 *        Optional configuration for the detail dialog, or {@code null} if no detail dialog is
+	 *        configured.
 	 */
 	public CompositionTableControl(ReactContext context, FormControl formControl,
-			String compositionAttributeName, List<ColumnConfig> columnConfigs) {
+			String compositionAttributeName, List<ColumnConfig> columnConfigs,
+			CompositionTableElement.DetailDialogConfig detailDialogConfig) {
 		super(context, null, "TLPanel");
 		_context = context;
 		_formControl = formControl;
 		_compositionAttributeName = compositionAttributeName;
 		_columnConfigs = columnConfigs;
+		_detailDialogConfig = detailDialogConfig;
 
 		formControl.addFormModelListener(this);
 	}
@@ -393,15 +409,26 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 	}
 
 	/**
-	 * Placeholder for opening the detail dialog for a row.
+	 * Opens the detail dialog for a row.
 	 *
 	 * <p>
-	 * Currently a no-op. The actual dialog opening will be implemented in Task 12.
+	 * Loads the configured dialog view, creates a fresh {@link ViewContext} with channels for the
+	 * row object and edit mode, and opens the dialog via {@link DialogManager}.
 	 * </p>
 	 */
 	@ReactCommand("openDetail")
 	void handleOpenDetail(Map<String, Object> arguments) {
-		// Placeholder: detail dialog opening will be implemented in Task 12.
+		int rowIndex = ((Number) arguments.get("rowIndex")).intValue();
+		if (_tableModel == null) {
+			return;
+		}
+		Collection<?> allRows = _tableModel.getAllRows();
+		List<?> rows = new ArrayList<>(allRows);
+		if (rowIndex < 0 || rowIndex >= rows.size()) {
+			return;
+		}
+		Object rowObject = rows.get(rowIndex);
+		openDetailDialog(rowObject);
 	}
 
 	/**
@@ -624,8 +651,69 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 
 	private ReactButtonControl createDetailButton(ReactContext ctx, Object rowObject) {
 		return new ReactButtonControl(ctx, "Detail", context -> {
-			// Placeholder: detail dialog will be implemented in Task 12.
+			openDetailDialog(rowObject);
 			return HandlerResult.DEFAULT_RESULT;
+		});
+	}
+
+	/**
+	 * Opens the detail dialog for the given row object.
+	 *
+	 * <p>
+	 * Follows the {@link com.top_logic.layout.view.command.OpenDialogAction} pattern: loads the
+	 * configured view XML, creates a fresh {@link ViewContext}, injects channels for the row object
+	 * and edit mode, and opens the dialog via {@link DialogManager}.
+	 * </p>
+	 *
+	 * @param rowObject
+	 *        The row object (overlay or transient) to display in the dialog.
+	 */
+	private void openDetailDialog(Object rowObject) {
+		if (_detailDialogConfig == null) {
+			Logger.info("No detail dialog configured for composition table.", CompositionTableControl.class);
+			return;
+		}
+
+		DialogManager mgr = _context.getDialogManager();
+		if (mgr == null) {
+			Logger.warn("No DialogManager available, cannot open detail dialog.", CompositionTableControl.class);
+			return;
+		}
+
+		// Load the dialog view from the configured layout path.
+		String viewPath = ViewLoader.VIEW_BASE_PATH + _detailDialogConfig.getLayout();
+		ViewElement dialogView;
+		try {
+			dialogView = ViewLoader.getOrLoadView(viewPath);
+		} catch (ConfigurationException ex) {
+			throw new RuntimeException("Failed to load detail dialog view: " + viewPath, ex);
+		}
+
+		// Create a fresh ViewContext for the dialog scope.
+		ViewContext dialogContext = new DefaultViewContext(_context);
+
+		// Inject the row object into the configured input channel.
+		String inputChannelName = _detailDialogConfig.getInputChannel();
+		if (inputChannelName != null && rowObject != null) {
+			DefaultViewChannel inputChannel = new DefaultViewChannel(inputChannelName);
+			inputChannel.set(rowObject);
+			dialogContext.registerChannel(inputChannelName, inputChannel);
+		}
+
+		// Inject the edit mode state into the configured edit-mode channel.
+		String editModeChannelName = _detailDialogConfig.getEditModeChannel();
+		if (editModeChannelName != null && !editModeChannelName.isEmpty()) {
+			DefaultViewChannel editModeChannel = new DefaultViewChannel(editModeChannelName);
+			editModeChannel.set(Boolean.valueOf(_formControl.isEditMode()));
+			dialogContext.registerChannel(editModeChannelName, editModeChannel);
+		}
+
+		// Create the dialog control tree from the view definition.
+		ReactControl dialogControl = (ReactControl) dialogView.createControl(dialogContext);
+
+		// Open the dialog.
+		mgr.openDialog(false, dialogControl, result -> {
+			// Dialog closed -- no special handling needed.
 		});
 	}
 

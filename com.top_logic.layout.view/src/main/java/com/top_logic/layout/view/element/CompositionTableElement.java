@@ -65,6 +65,9 @@ public class CompositionTableElement implements UIElement {
 		/** Configuration name for {@link #getColumns()}. */
 		String COLUMNS = "columns";
 
+		/** Configuration name for {@link #getDetailDialog()}. */
+		String DETAIL_DIALOG = "detail-dialog";
+
 		/**
 		 * The name of the composition reference attribute on the parent object.
 		 */
@@ -77,6 +80,60 @@ public class CompositionTableElement implements UIElement {
 		 */
 		@Name(COLUMNS)
 		ColumnsConfig getColumns();
+
+		/**
+		 * Optional detail dialog configuration.
+		 *
+		 * <p>
+		 * When set, each table row gets a "Detail" button that opens the configured dialog view with
+		 * the row object injected into the specified channel.
+		 * </p>
+		 */
+		@Name(DETAIL_DIALOG)
+		DetailDialogConfig getDetailDialog();
+	}
+
+	/**
+	 * Configuration for the detail dialog opened from a composition table row.
+	 */
+	@TagName("detail-dialog")
+	public interface DetailDialogConfig extends ConfigurationItem {
+
+		/**
+		 * Path to the dialog view file, relative to {@code /WEB-INF/views/}.
+		 */
+		@Name("layout")
+		@Mandatory
+		String getLayout();
+
+		/**
+		 * Dialog channel name to receive the row object.
+		 */
+		@Name("input-channel")
+		@Mandatory
+		String getInputChannel();
+
+		/**
+		 * Dialog channel name to receive the current edit mode state.
+		 *
+		 * <p>
+		 * If not set, no edit-mode channel is injected into the dialog.
+		 * </p>
+		 */
+		@Name("edit-mode-channel")
+		String getEditModeChannel();
+
+		/**
+		 * Dialog width in pixels. Zero means use the default width.
+		 */
+		@Name("width")
+		int getWidth();
+
+		/**
+		 * Dialog height in pixels. Zero means use the default height.
+		 */
+		@Name("height")
+		int getHeight();
 	}
 
 	/**
@@ -148,7 +205,7 @@ public class CompositionTableElement implements UIElement {
 		}
 
 		CompositionTableControl control = new CompositionTableControl(
-			context, formControl, _config.getAttribute(), columnConfigs);
+			context, formControl, _config.getAttribute(), columnConfigs, _config.getDetailDialog());
 		control.initTable();
 		return control;
 	}

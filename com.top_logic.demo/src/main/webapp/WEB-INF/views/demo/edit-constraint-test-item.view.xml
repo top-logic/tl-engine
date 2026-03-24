@@ -7,16 +7,15 @@
 	</channels>
 	<window title="Edit Item" width="500px">
 		<form input="editedItem" editMode="editMode" mode-switch="false">
-			<save-action>
-				<store-form-state/>
-				<close-dialog/>
-			</save-action>
-			<cancel-action>
-				<close-dialog/>
-			</cancel-action>
 			<field attribute="name"/>
 			<field attribute="quantity"/>
 			<field attribute="unitPrice"/>
+			<commands>
+				<generic-command label="OK" placement="TOOLBAR">
+					<store-form-state/>
+					<close-dialog/>
+				</generic-command>
+			</commands>
 		</form>
 		<actions>
 			<button>

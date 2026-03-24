@@ -57,15 +57,15 @@
 						/>
 						<constraints>
 							<constraint-by-expression>
-								<check><\![CDATA[value -> obj -> {
+								<check><![CDATA[value -> obj -> {
 	total = $obj.get(`test.constraints:ConstraintTestType#items`)
 		.map(item -> {
 			q = $item.get(`test.constraints:ConstraintTestItem#quantity`);
 			p = $item.get(`test.constraints:ConstraintTestItem#unitPrice`);
-			if ($q \!= null and $p \!= null, $q * $p, 0)
+			if ($q != null and $p != null, $q * $p, 0)
 		})
 		.sum();
-	if ($value \!= null and $total > $value,
+	if ($value != null and $total > $value,
 		#("Item total ({0}) exceeds the limit ({1})."@en, "Summe der Eintraege ({0}) uebersteigt das Limit ({1})."@de).fill($total, $value),
 		null)
 }]]></check>
@@ -127,7 +127,7 @@
 					type="tl.core:String"
 				/>
 
-				<\!-- Composition reference: items owned by this object -->
+				<!-- Composition reference: items owned by this object -->
 				<reference name="items"
 					composite="true"
 					multiple="true"
@@ -136,7 +136,7 @@
 					<annotations>
 						<constraints>
 							<constraint-by-expression>
-								<check><\![CDATA[value -> obj -> {
+								<check><![CDATA[value -> obj -> {
 	if ($value == null or $value.size() == 0,
 		#("At least one item is required."@en, "Mindestens ein Eintrag ist erforderlich."@de),
 		null)

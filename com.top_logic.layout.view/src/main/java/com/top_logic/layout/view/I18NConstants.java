@@ -38,6 +38,21 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey FORM_NO_MODEL;
 
+	/**
+	 * @en Detail
+	 */
+	public static ResKey COMPOSITION_TABLE_DETAIL;
+
+	/**
+	 * @en Delete
+	 */
+	public static ResKey COMPOSITION_TABLE_DELETE;
+
+	/**
+	 * @en Add
+	 */
+	public static ResKey COMPOSITION_TABLE_ADD;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

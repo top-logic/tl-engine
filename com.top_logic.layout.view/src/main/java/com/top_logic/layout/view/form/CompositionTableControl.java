@@ -16,6 +16,8 @@ import java.util.Set;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.layout.view.I18NConstants;
+import com.top_logic.util.Resources;
 import com.top_logic.element.meta.form.validation.FormValidationModel;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.form.model.FieldModel;
@@ -165,6 +167,9 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 		_compositionAttributeName = compositionAttributeName;
 		_columnConfigs = columnConfigs;
 		_detailDialogConfig = detailDialogConfig;
+
+		// Composition tables should span the full form row.
+		putState("fullLine", Boolean.TRUE);
 
 		formControl.addFormModelListener(this);
 	}
@@ -523,14 +528,18 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 	// -- Table Building --
 
 	private void buildTable(List<? extends TLObject> rowObjects, boolean editMode) {
-		// Build column names from column configs.
+		// Build column names: detail first, then data columns, then delete last.
 		List<String> columnNames = new ArrayList<>();
+
+		// Detail column is always first.
+		columnNames.add(COLUMN_DETAIL);
+
+		// Data columns from configuration.
 		for (ColumnConfig col : _columnConfigs) {
 			columnNames.add(col.getAttributeName());
 		}
 
-		// Append action columns: detail is always present, delete only in edit mode.
-		columnNames.add(COLUMN_DETAIL);
+		// Delete column is last (only in edit mode).
 		if (editMode) {
 			columnNames.add(COLUMN_DELETE);
 		}
@@ -568,7 +577,8 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 		}
 
 		if (editMode) {
-			_addButton = new ReactButtonControl(_context, "Add", ctx -> {
+			String addLabel = Resources.getInstance().getString(I18NConstants.COMPOSITION_TABLE_ADD);
+			_addButton = new ReactButtonControl(_context, addLabel, ctx -> {
 				addRow();
 				return HandlerResult.DEFAULT_RESULT;
 			});
@@ -603,13 +613,14 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 		}
 
 		// Configure action columns.
+		Resources res = Resources.getInstance();
 		ColumnConfiguration detailCol = tableConfig.declareColumn(COLUMN_DETAIL);
-		detailCol.setColumnLabel("Detail");
+		detailCol.setColumnLabel(res.getString(I18NConstants.COMPOSITION_TABLE_DETAIL));
 		detailCol.setSortable(false);
 
 		if (editMode) {
 			ColumnConfiguration deleteCol = tableConfig.declareColumn(COLUMN_DELETE);
-			deleteCol.setColumnLabel("Delete");
+			deleteCol.setColumnLabel(res.getString(I18NConstants.COMPOSITION_TABLE_DELETE));
 			deleteCol.setSortable(false);
 		}
 
@@ -674,10 +685,13 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 	}
 
 	private ReactButtonControl createDetailButton(ReactContext ctx, Object rowObject) {
-		return new ReactButtonControl(ctx, "Detail", context -> {
+		String label = Resources.getInstance().getString(I18NConstants.COMPOSITION_TABLE_DETAIL);
+		ReactButtonControl button = new ReactButtonControl(ctx, label, context -> {
 			openDetailDialog(rowObject);
 			return HandlerResult.DEFAULT_RESULT;
 		});
+		button.setIcon("detail");
+		return button;
 	}
 
 	/**
@@ -751,7 +765,8 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 	}
 
 	private ReactButtonControl createDeleteButton(ReactContext ctx, Object rowObject) {
-		return new ReactButtonControl(ctx, "Delete", context -> {
+		String label = Resources.getInstance().getString(I18NConstants.COMPOSITION_TABLE_DELETE);
+		ReactButtonControl button = new ReactButtonControl(ctx, label, context -> {
 			if (_fieldModel == null) {
 				return HandlerResult.DEFAULT_RESULT;
 			}
@@ -765,6 +780,8 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 			}
 			return HandlerResult.DEFAULT_RESULT;
 		});
+		button.setIcon("delete");
+		return button;
 	}
 
 	private void addCellDirtyListener(AttributeFieldModel cellFieldModel) {

@@ -32,6 +32,9 @@ public class ReactButtonControl extends ReactControl {
 	/** State key for the disabled flag. */
 	private static final String DISABLED = "disabled";
 
+	/** State key for the icon name (renders as icon-only button when set). */
+	private static final String ICON = "icon";
+
 	private final ButtonAction _action;
 
 	private CommandModel _model;
@@ -93,6 +96,21 @@ public class ReactButtonControl extends ReactControl {
 	 */
 	public void setDisabled(boolean disabled) {
 		putState(DISABLED, disabled);
+	}
+
+	/**
+	 * Sets the icon name for this button.
+	 *
+	 * <p>
+	 * When set, the button renders as an icon-only button using the named SVG icon on the client.
+	 * The label is used as accessible title/tooltip.
+	 * </p>
+	 *
+	 * @param icon
+	 *        The icon name (e.g. "detail", "delete"), or {@code null} to remove the icon.
+	 */
+	public void setIcon(String icon) {
+		putState(ICON, icon);
 	}
 
 	/**

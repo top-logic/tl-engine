@@ -56,6 +56,27 @@ button.tlReactButton:disabled {
 	color: var(--text-disabled);
 }
 
+/* --- TLButton icon-only variant ----------------------------------------- */
+
+.tlReactButton--icon {
+	box-shadow: none;
+	background: none;
+	padding: var(--spacing-01);
+	min-height: 0;
+	line-height: 1;
+	color: var(--icon-primary);
+}
+
+button.tlReactButton--icon:not(:disabled):hover {
+	background: var(--layer-hover);
+	color: var(--icon-primary);
+}
+
+button.tlReactButton--icon:disabled {
+	box-shadow: none;
+	color: var(--icon-disabled, var(--text-disabled));
+}
+
 /* --- TLToggleButton (active state) -------------------------------------- */
 
 .tlReactButton.tlReactButtonActive {
@@ -914,6 +935,10 @@ button.tlPanel__actionButton:focus-visible {
 	flex: 1;
 	overflow: auto;
 	position: relative;
+}
+
+.tlPanel--fullLine {
+	grid-column: 1 / -1;
 }
 
 .tlPanel--maximized {

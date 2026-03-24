@@ -69,6 +69,7 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
   const showMinimize = state.showMinimize === true;
   const showMaximize = state.showMaximize === true;
   const showPopOut = state.showPopOut === true;
+  const fullLine = state.fullLine === true;
   const toolbarButtons = (state.toolbarButtons as unknown[]) ?? [];
 
   const isMinimized = expansionState === 'MINIMIZED';
@@ -98,7 +99,7 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
   return (
     <div
       id={controlId}
-      className={`tlPanel tlPanel--${expansionState.toLowerCase()}`}
+      className={`tlPanel tlPanel--${expansionState.toLowerCase()}${fullLine ? ' tlPanel--fullLine' : ''}`}
       style={panelStyle}
     >
       <div className="tlPanel__header">

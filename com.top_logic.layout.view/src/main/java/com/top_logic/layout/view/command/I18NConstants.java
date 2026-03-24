@@ -41,7 +41,6 @@ public class I18NConstants extends I18NConstantsBase {
 
 	/**
 	 * @en Please fix the validation errors before saving.
-	 * @de Bitte beheben Sie die Validierungsfehler vor dem Speichern.
 	 */
 	public static ResKey ERROR_FORM_HAS_VALIDATION_ERRORS;
 

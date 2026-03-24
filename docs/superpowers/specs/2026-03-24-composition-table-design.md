@@ -21,14 +21,16 @@ A new `CompositionTableElement` alongside `FieldElement`, placed inside a `<form
         <column attribute="date"/>
         <column attribute="amount" readonly="true"/>
     </columns>
-    <detail-dialog layout="path/to/detail-layout.xml" width="600" height="400"/>
+    <detail-dialog layout="path/to/detail-layout.xml"
+                   input-channel="editedObject"
+                   width="600" height="400"/>
 </composition-table>
 ```
 
 **Configuration:**
 - `attribute` (mandatory): Name of the composition reference on the base object.
 - `columns`: Which attributes of the composed type appear as table columns. Each column can be marked `readonly`.
-- `detail-dialog` (optional): Reference to a separate layout fragment that defines the detail editing form. Width/height configure the dialog window.
+- `detail-dialog` (optional): Reference to a separate layout fragment that defines the detail editing form. `input-channel` names the channel in the dialog layout that receives the row overlay. Width/height configure the dialog window.
 
 Without `detail-dialog`, only inline table editing is available.
 
@@ -37,7 +39,7 @@ Without `detail-dialog`, only inline table editing is available.
 The detail dialog is defined as a standalone layout fragment containing a `FormElement` with `FieldElement`s (and potentially nested `composition-table`s). It receives the row object via an input channel.
 
 When a user opens the detail dialog for a row:
-1. `CompositionTableControl` pushes the row's overlay onto the dialog's input channel.
+1. `CompositionTableControl` pushes the row's overlay onto the dialog's input channel (identified by the `input-channel` configuration).
 2. The dialog's `FormElement` creates its own overlay on top of the row overlay (recursive overlay pattern).
 3. Dialog Save applies the dialog overlay onto the row overlay — table cells see the changes immediately.
 4. Dialog Cancel discards the dialog overlay — the row overlay remains unchanged.

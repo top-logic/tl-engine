@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.meta.form.validation.FormValidationModel;
+import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
@@ -36,7 +37,7 @@ import com.top_logic.util.Resources;
  * from the {@link FormModel} and updates the inner control and chrome accordingly.
  * </p>
  */
-public class AttributeFieldControl implements FormModelListener {
+public class AttributeFieldControl implements FormModelListener, FormParticipant {
 
 	private final ReactContext _context;
 
@@ -119,6 +120,7 @@ public class AttributeFieldControl implements FormModelListener {
 		_model = new AttributeFieldModel(current, part);
 		_model.setEditable(_formModel.isEditMode() && !_forceReadonly);
 		_formControl.registerFieldModel(_model);
+		_formControl.registerParticipant(this);
 
 		addModelListener();
 
@@ -167,6 +169,7 @@ public class AttributeFieldControl implements FormModelListener {
 			_model = new AttributeFieldModel(current, part);
 			_model.setEditable(source.isEditMode() && !_forceReadonly);
 			_formControl.registerFieldModel(_model);
+			_formControl.registerParticipant(this);
 
 			addModelListener();
 
@@ -212,6 +215,37 @@ public class AttributeFieldControl implements FormModelListener {
 		return _innerControl;
 	}
 
+	@Override
+	public boolean validate() {
+		if (_model == null) {
+			return true;
+		}
+		_model.validate();
+		return !_model.hasError();
+	}
+
+	@Override
+	public void apply(Transaction tx) {
+		// No-op: the main overlay's applyTo() handles primitive attribute changes.
+	}
+
+	@Override
+	public void cancel() {
+		// No-op: FormControl discards the overlay, model rebinds on form state change.
+	}
+
+	@Override
+	public void revealAll() {
+		if (_model != null) {
+			_model.setRevealed(true);
+		}
+	}
+
+	@Override
+	public boolean isDirty() {
+		return _model != null && _model.isDirty();
+	}
+
 	private void applyValidationResult(ValidationResult result) {
 		if (_model == null) return;
 		if (result.isValid()) {
@@ -230,6 +264,7 @@ public class AttributeFieldControl implements FormModelListener {
 				_modelListener = null;
 			}
 			_formControl.unregisterFieldModel(_model);
+			_formControl.unregisterParticipant(this);
 		}
 		_model = null;
 	}

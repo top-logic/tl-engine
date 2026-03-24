@@ -76,6 +76,8 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 
 	private final List<AbstractFieldModel> _fieldModels = new ArrayList<>();
 
+	private final List<FormParticipant> _participants = new ArrayList<>();
+
 	private final ViewChannel.ChannelListener _inputListener = this::handleInputChanged;
 
 	private final String _noModelMessage;
@@ -157,11 +159,34 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	}
 
 	/**
+	 * Registers a {@link FormParticipant} to participate in the form's editing lifecycle.
+	 *
+	 * @param participant
+	 *        The participant to register.
+	 */
+	public void registerParticipant(FormParticipant participant) {
+		_participants.add(participant);
+	}
+
+	/**
+	 * Unregisters a {@link FormParticipant}.
+	 *
+	 * @param participant
+	 *        The participant to unregister.
+	 */
+	public void unregisterParticipant(FormParticipant participant) {
+		_participants.remove(participant);
+	}
+
+	/**
 	 * Sets all registered field models to revealed, making hidden validation errors visible.
 	 */
 	public void revealAllValidation() {
 		for (AbstractFieldModel model : _fieldModels) {
 			model.setRevealed(true);
+		}
+		for (FormParticipant participant : _participants) {
+			participant.revealAll();
 		}
 	}
 
@@ -320,7 +345,7 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 * </p>
 	 */
 	public void executeApply() {
-		if (!_editMode || _overlay == null || !_overlay.isDirty()) {
+		if (!_editMode || _overlay == null || (!_overlay.isDirty() && !hasParticipantChanges())) {
 			return;
 		}
 
@@ -328,9 +353,20 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 			return; // Block apply when validation errors exist.
 		}
 
+		// Validate all participants; abort if any fail.
+		for (FormParticipant participant : _participants) {
+			if (!participant.validate()) {
+				revealAllValidation();
+				return;
+			}
+		}
+
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		Transaction tx = kb.beginTransaction(I18NConstants.FORM_APPLY);
 		try {
+			for (FormParticipant participant : _participants) {
+				participant.apply(tx);
+			}
 			_overlay.applyTo(_currentObject);
 			tx.commit();
 		} finally {
@@ -355,10 +391,24 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 			return; // Block save when validation errors exist.
 		}
 
-		if (_overlay.isDirty()) {
+		// Validate all participants; abort if any fail.
+		for (FormParticipant participant : _participants) {
+			if (!participant.validate()) {
+				revealAllValidation();
+				return;
+			}
+		}
+
+		if (_overlay.isDirty() || hasParticipantChanges()) {
 			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 			Transaction tx = kb.beginTransaction(I18NConstants.FORM_SAVE);
 			try {
+				// Participants apply first (e.g. composition tables persist new objects and
+				// update reference lists in the overlay), then the overlay transfers all
+				// changes to the KB.
+				for (FormParticipant participant : _participants) {
+					participant.apply(tx);
+				}
 				_overlay.applyTo(_currentObject);
 				tx.commit();
 			} finally {
@@ -369,12 +419,24 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 		exitEditMode();
 	}
 
+	private boolean hasParticipantChanges() {
+		for (FormParticipant participant : _participants) {
+			if (participant.isDirty()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	/**
 	 * Cancels editing, discarding overlay changes and releasing the lock.
 	 */
 	public void executeCancel() {
 		if (!_editMode) {
 			return;
+		}
+		for (FormParticipant participant : _participants) {
+			participant.cancel();
 		}
 		exitEditMode();
 	}
@@ -387,7 +449,7 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 * </p>
 	 */
 	public void updateDirtyState() {
-		boolean dirty = _editMode && _overlay != null && _overlay.isDirty();
+		boolean dirty = _editMode && _overlay != null && (_overlay.isDirty() || hasParticipantChanges());
 		putState(DIRTY, Boolean.valueOf(dirty));
 		if (_dirtyChannel != null) {
 			_dirtyChannel.set(Boolean.valueOf(dirty));
@@ -408,6 +470,7 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 
 		_validationModel = null;
 		_fieldModels.clear();
+		_participants.clear();
 		putState(VALID, Boolean.TRUE);
 	}
 

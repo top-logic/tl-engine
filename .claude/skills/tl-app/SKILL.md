@@ -14,6 +14,8 @@ allowed-tools: Bash, Read, Glob, Grep, WebFetch
 .claude/scripts/tl-app.sh restart <app-module-path>
 ```
 
+**IMPORTANT: The script MUST be called with `dangerouslyDisableSandbox: true`.** The sandbox (bubblewrap) kills all child processes on exit — the background JVM would die immediately. Running unsandboxed lets the `nohup`'d Maven process survive.
+
 The script tracks the port in `<app-module-path>/tmp/app-port.txt` to prevent duplicate starts.
 
 On start success, prints two lines:

@@ -120,6 +120,9 @@ do_start() {
     local log
     log="$(cd "$APP_MODULE/tmp" && pwd)/tl-app.log"
 
+    # Clear old log so grep doesn't match stale markers from a previous run.
+    : > "$log"
+
     export tl_initial_password='root1234'
 
     # Use the app module's own tmp/debug as java.io.tmpdir to avoid

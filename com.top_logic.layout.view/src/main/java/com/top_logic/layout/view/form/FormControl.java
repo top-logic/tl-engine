@@ -80,6 +80,14 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 
 	private final ViewChannel.ChannelListener _inputListener = this::handleInputChanged;
 
+	private final ViewChannel.ChannelListener _editModeListener = this::handleEditModeChannelChanged;
+
+	/**
+	 * Guard flag to prevent re-entrant loops when publishing to and reacting from the edit mode
+	 * channel.
+	 */
+	private boolean _updatingEditMode;
+
 	private final String _noModelMessage;
 
 	private ModelScope _modelScope;
@@ -207,14 +215,29 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	}
 
 	/**
-	 * Sets the optional edit mode channel. When set, the form publishes edit mode changes to this
-	 * channel.
+	 * Sets the optional edit mode channel. When set, the form both publishes edit mode changes to
+	 * this channel and reacts to external changes from it.
+	 *
+	 * <p>
+	 * When the channel value changes from outside (i.e., not triggered by this control):
+	 * <ul>
+	 * <li>If the channel becomes {@code true} and the form is not in edit mode, it enters edit
+	 * mode.</li>
+	 * <li>If the channel becomes {@code false} and the form is in edit mode, it cancels editing.</li>
+	 * </ul>
+	 * </p>
 	 *
 	 * @param channel
 	 *        The edit mode channel, may be {@code null}.
 	 */
 	public void setEditModeChannel(ViewChannel channel) {
+		if (_editModeChannel != null) {
+			_editModeChannel.removeListener(_editModeListener);
+		}
 		_editModeChannel = channel;
+		if (_editModeChannel != null) {
+			_editModeChannel.addListener(_editModeListener);
+		}
 	}
 
 	/**
@@ -486,7 +509,25 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 
 	private void updateEditModeChannel() {
 		if (_editModeChannel != null) {
-			_editModeChannel.set(Boolean.valueOf(_editMode));
+			_updatingEditMode = true;
+			try {
+				_editModeChannel.set(Boolean.valueOf(_editMode));
+			} finally {
+				_updatingEditMode = false;
+			}
+		}
+	}
+
+	private void handleEditModeChannelChanged(ViewChannel sender, Object oldValue, Object newValue) {
+		if (_updatingEditMode) {
+			// Ignore changes that we ourselves triggered to prevent infinite loops.
+			return;
+		}
+		boolean channelEditMode = Boolean.TRUE.equals(newValue);
+		if (channelEditMode && !_editMode) {
+			enterEditMode();
+		} else if (!channelEditMode && _editMode) {
+			executeCancel();
 		}
 	}
 
@@ -523,6 +564,9 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 		deregisterModelListener();
 		if (_inputChannel != null) {
 			_inputChannel.removeListener(_inputListener);
+		}
+		if (_editModeChannel != null) {
+			_editModeChannel.removeListener(_editModeListener);
 		}
 	}
 

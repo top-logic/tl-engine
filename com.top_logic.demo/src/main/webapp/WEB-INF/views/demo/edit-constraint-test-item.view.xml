@@ -3,22 +3,24 @@
 <view>
 	<channels>
 		<channel name="editedItem"/>
+		<channel name="editMode"/>
 	</channels>
 	<window title="Edit Item" width="500px" height="300px">
-		<form input="editedItem" initial-edit-mode="true" mode-switch="false">
+		<form input="editedItem" editMode="editMode" mode-switch="false">
+			<save-action>
+				<store-form-state/>
+				<close-dialog/>
+			</save-action>
+			<cancel-action>
+				<close-dialog/>
+			</cancel-action>
 			<field attribute="name"/>
 			<field attribute="quantity"/>
 			<field attribute="unitPrice"/>
-			<commands>
-				<generic-command label="OK" placement="TOOLBAR">
-					<store-form-state/>
-					<close-dialog/>
-				</generic-command>
-			</commands>
 		</form>
 		<actions>
 			<button>
-				<action class="com.top_logic.layout.view.command.CancelDialogCommand" label="Cancel"/>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand" label="Close"/>
 			</button>
 		</actions>
 	</window>

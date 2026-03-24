@@ -49,13 +49,20 @@
 						<field attribute="uppercaseStart"/>
 						<field attribute="warningField"/>
 						<field attribute="freeText"/>
-					<composition-table attribute="items">
-						<columns>
-							<column attribute="name"/>
-							<column attribute="quantity"/>
-							<column attribute="unitPrice"/>
-						</columns>
-					</composition-table>
+						<composition-table attribute="items">
+							<columns>
+								<column attribute="name"/>
+								<column attribute="quantity"/>
+								<column attribute="unitPrice"/>
+							</columns>
+							<detail-dialog
+								layout="demo/edit-constraint-test-item.view.xml"
+								input-channel="editedItem"
+								edit-mode-channel="editMode"
+								width="500"
+								height="300"
+							/>
+						</composition-table>
 					</form>
 				</panel>
 			</pane>

@@ -103,8 +103,16 @@ const TLTableView: React.FC<TLCellProps> = () => {
     event.stopPropagation();
     resizeRef.current = { column: columnName, startX: event.clientX, startWidth: colWidth };
 
-    // Track latest mouse position for auto-scroll animation frame.
+    // Track latest mouse position and cumulative auto-scroll offset.
     let lastClientX = event.clientX;
+    let autoScrollOffset = 0;
+
+    const updateWidth = () => {
+      const info = resizeRef.current;
+      if (!info) return;
+      const newWidth = Math.max(MIN_COL_WIDTH, info.startWidth + (lastClientX - info.startX) + autoScrollOffset);
+      setColumnWidthOverrides((prev) => ({ ...prev, [info.column]: newWidth }));
+    };
 
     const autoScroll = () => {
       const body = scrollContainerRef.current;
@@ -113,27 +121,27 @@ const TLTableView: React.FC<TLCellProps> = () => {
       const rect = body.getBoundingClientRect();
       const threshold = 40;
       const speed = 8;
-      let scrolled = false;
+      const prevScrollLeft = body.scrollLeft;
       if (lastClientX > rect.right - threshold) {
         body.scrollLeft += speed;
-        scrolled = true;
       } else if (lastClientX < rect.left + threshold) {
         body.scrollLeft = Math.max(0, body.scrollLeft - speed);
-        scrolled = true;
       }
-      if (scrolled && header) {
-        header.scrollLeft = body.scrollLeft;
+      const actualDelta = body.scrollLeft - prevScrollLeft;
+      if (actualDelta !== 0) {
+        if (header) header.scrollLeft = body.scrollLeft;
+        // Widen/narrow the column by the scroll amount so the resize
+        // continues even when the mouse is stuck at the screen edge.
+        autoScrollOffset += actualDelta;
+        updateWidth();
       }
       resizeAutoScrollRef.current = requestAnimationFrame(autoScroll);
     };
     resizeAutoScrollRef.current = requestAnimationFrame(autoScroll);
 
     const onMouseMove = (e: MouseEvent) => {
-      const info = resizeRef.current;
-      if (!info) return;
       lastClientX = e.clientX;
-      const newWidth = Math.max(MIN_COL_WIDTH, info.startWidth + (e.clientX - info.startX));
-      setColumnWidthOverrides((prev) => ({ ...prev, [info.column]: newWidth }));
+      updateWidth();
     };
 
     const onMouseUp = (e: MouseEvent) => {
@@ -145,10 +153,8 @@ const TLTableView: React.FC<TLCellProps> = () => {
       }
       const info = resizeRef.current;
       if (info) {
-        const finalWidth = Math.max(MIN_COL_WIDTH, info.startWidth + (e.clientX - info.startX));
+        const finalWidth = Math.max(MIN_COL_WIDTH, info.startWidth + (e.clientX - info.startX) + autoScrollOffset);
         sendCommand('columnResize', { column: info.column, width: finalWidth });
-        // Keep the override in place — it will be naturally superseded
-        // when the server pushes the updated column width via SSE.
         resizeRef.current = null;
         justResizedRef.current = true;
         requestAnimationFrame(() => { justResizedRef.current = false; });

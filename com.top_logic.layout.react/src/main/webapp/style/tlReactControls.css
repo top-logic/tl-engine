@@ -2031,32 +2031,30 @@ button.tlMenu__item--disabled:hover {
 	min-width: 0;
 }
 
-/* Inline-edit inputs inside table cells: borderless, blending into the cell */
+/* Remove cell padding when it contains an editable input — the input provides its own */
+.tlTableView__cell:has(.tlReactTextInput, .tlReactNumberInput, .tlReactDatePicker, .tlReactSelect) {
+	padding: 0;
+}
+
+/* Inline-edit inputs inside table cells: Excel-style, cell = input */
 .tlTableView__cell .tlReactTextInput,
 .tlTableView__cell .tlReactNumberInput,
 .tlTableView__cell .tlReactDatePicker,
 .tlTableView__cell .tlReactSelect {
-	border: 1px solid transparent;
+	border: none;
 	border-radius: 0;
 	background: transparent;
-	padding: 0 var(--spacing-02);
+	padding: 0 var(--spacing-03, 0.5rem);
 	min-height: 0;
 	height: 100%;
-}
-
-.tlTableView__cell .tlReactTextInput:hover,
-.tlTableView__cell .tlReactNumberInput:hover,
-.tlTableView__cell .tlReactDatePicker:hover,
-.tlTableView__cell .tlReactSelect:hover {
-	border-color: var(--border-subtle, #e0e0e0);
 }
 
 .tlTableView__cell .tlReactTextInput:focus,
 .tlTableView__cell .tlReactNumberInput:focus,
 .tlTableView__cell .tlReactDatePicker:focus,
 .tlTableView__cell .tlReactSelect:focus {
-	border-color: var(--focus);
-	outline: none;
+	outline: 2px solid var(--focus);
+	outline-offset: -2px;
 	background: var(--field, #fff);
 }
 

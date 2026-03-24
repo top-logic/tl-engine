@@ -2031,6 +2031,35 @@ button.tlMenu__item--disabled:hover {
 	min-width: 0;
 }
 
+/* Inline-edit inputs inside table cells: borderless, blending into the cell */
+.tlTableView__cell .tlReactTextInput,
+.tlTableView__cell .tlReactNumberInput,
+.tlTableView__cell .tlReactDatePicker,
+.tlTableView__cell .tlReactSelect {
+	border: 1px solid transparent;
+	border-radius: 0;
+	background: transparent;
+	padding: 0 var(--spacing-02);
+	min-height: 0;
+	height: 100%;
+}
+
+.tlTableView__cell .tlReactTextInput:hover,
+.tlTableView__cell .tlReactNumberInput:hover,
+.tlTableView__cell .tlReactDatePicker:hover,
+.tlTableView__cell .tlReactSelect:hover {
+	border-color: var(--border-subtle, #e0e0e0);
+}
+
+.tlTableView__cell .tlReactTextInput:focus,
+.tlTableView__cell .tlReactNumberInput:focus,
+.tlTableView__cell .tlReactDatePicker:focus,
+.tlTableView__cell .tlReactSelect:focus {
+	border-color: var(--focus);
+	outline: none;
+	background: var(--field, #fff);
+}
+
 .tlTableView__cell:last-child {
 	border-right: none;
 }

@@ -325,15 +325,16 @@ public class FormElement extends ContainerElement {
 			formControl.setDirtyChannel(context.resolveChannel(dirtyRef));
 		}
 
-		// 6. Create edit mode command models if configured.
-		if (_config.getWithEditMode() && _config.getModeSwitch()) {
-			contributeEditCommands(context, formControl);
-		}
-
-		// 7. Create a child context with the form control set, so that
+		// 6. Create a child context with the form control set, so that
 		// nested FieldElements can access it without polluting the parent context.
 		ViewContext formContext = context.childContext("form");
 		formContext.setFormModel(formControl);
+
+		// 7. Create edit mode command models if configured.
+		// Uses parent context for command scope contribution, form context for action chains.
+		if (_config.getWithEditMode() && _config.getModeSwitch()) {
+			contributeEditCommands(context, formContext, formControl);
+		}
 
 		// 8. Create child controls in the form-scoped context.
 		List<IReactControl> childControls = createChildControls(formContext);
@@ -516,8 +517,9 @@ public class FormElement extends ContainerElement {
 		}
 	}
 
-	private void contributeEditCommands(ViewContext context, FormControl formControl) {
-		CommandScope scope = context.getCommandScope();
+	private void contributeEditCommands(ViewContext parentContext, ViewContext formContext,
+			FormControl formControl) {
+		CommandScope scope = parentContext.getCommandScope();
 		if (scope == null) {
 			return;
 		}
@@ -526,14 +528,14 @@ public class FormElement extends ContainerElement {
 		models.add(FormCommandModel.editCommand(formControl));
 
 		if (!_saveActions.isEmpty()) {
-			Consumer<ReactContext> saveAction = createActionChain(context, _saveActions);
+			Consumer<ReactContext> saveAction = createActionChain(formContext, _saveActions);
 			models.add(FormCommandModel.saveCommand(formControl, saveAction));
 		} else {
 			models.add(FormCommandModel.saveCommand(formControl));
 		}
 
 		if (!_cancelActions.isEmpty()) {
-			Consumer<ReactContext> cancelAction = createActionChain(context, _cancelActions);
+			Consumer<ReactContext> cancelAction = createActionChain(formContext, _cancelActions);
 			models.add(FormCommandModel.cancelCommand(formControl, cancelAction));
 		} else {
 			models.add(FormCommandModel.cancelCommand(formControl));

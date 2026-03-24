@@ -311,7 +311,7 @@ const TLTableView: React.FC<TLCellProps> = () => {
     >
       {/* Header */}
       <div className="tlTableView__header" ref={headerRef}>
-        <div className="tlTableView__headerRow" style={{ minWidth: tableWidth }}>
+        <div className="tlTableView__headerRow" style={{ width: tableWidth }}>
           {isMulti && (
             <div className={'tlTableView__headerCell tlTableView__checkboxCell'
                 + (frozenColumnCount > 0 ? ' tlTableView__headerCell--frozen' : '')}
@@ -408,7 +408,7 @@ const TLTableView: React.FC<TLCellProps> = () => {
         onScroll={handleScroll}
       >
         {/* Spacer for virtual scrolling */}
-        <div style={{ height: totalHeight, position: 'relative', minWidth: tableWidth }}>
+        <div style={{ height: totalHeight, position: 'relative', width: tableWidth }}>
           {rows.map((row) => (
             <div
               key={row.id}
@@ -420,8 +420,7 @@ const TLTableView: React.FC<TLCellProps> = () => {
                 position: 'absolute',
                 top: row.index * rowHeight,
                 height: rowHeight,
-                minWidth: tableWidth,
-                width: '100%',
+                width: tableWidth,
               }}
               onClick={(e) => handleRowClick(row.index, e)}
             >

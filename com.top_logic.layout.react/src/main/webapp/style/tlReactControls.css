@@ -1939,6 +1939,8 @@ button.tlMenu__item--disabled:hover {
 	font-weight: 600;
 	color: var(--text-primary, #161616);
 	user-select: none;
+	overflow: hidden;
+	min-width: 0;
 	box-sizing: border-box;
 	border-right: 1px solid var(--border-subtle, #e0e0e0);
 }
@@ -1995,6 +1997,7 @@ button.tlMenu__item--disabled:hover {
 	display: flex;
 	border-bottom: 1px solid var(--border-subtle, #e0e0e0);
 	box-sizing: border-box;
+	overflow: hidden;
 	cursor: pointer;
 	user-select: none;
 }
@@ -2016,6 +2019,7 @@ button.tlMenu__item--disabled:hover {
 	align-items: center;
 	padding: 0 var(--spacing-03, 0.5rem);
 	overflow: hidden;
+	min-width: 0;
 	box-sizing: border-box;
 	border-right: 1px solid var(--border-subtle, #e0e0e0);
 }

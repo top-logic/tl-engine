@@ -16,6 +16,7 @@ import java.util.Set;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.element.meta.form.validation.FormValidationModel;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
@@ -465,6 +466,9 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 		// Update main overlay.
 		_formControl.getOverlay().tUpdate(_compositionPart, currentList);
 
+		// Notify validation model that the composition reference changed.
+		notifyValidationModelChanged();
+
 		_formControl.updateDirtyState();
 
 		// Rebuild table.
@@ -495,10 +499,25 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 		// Update main overlay.
 		_formControl.getOverlay().tUpdate(_compositionPart, currentList);
 
+		// Notify validation model that the composition reference changed.
+		notifyValidationModelChanged();
+
 		_formControl.updateDirtyState();
 
 		// Rebuild table.
 		rebuildTableRows();
+	}
+
+	/**
+	 * Notifies the {@link FormValidationModel} that the composition reference value has changed,
+	 * so that constraints on the reference (e.g. min count) are re-evaluated.
+	 */
+	private void notifyValidationModelChanged() {
+		FormValidationModel validationModel = _formControl.getValidationModel();
+		TLObjectOverlay overlay = _formControl.getOverlay();
+		if (validationModel != null && overlay != null && _compositionPart != null) {
+			validationModel.onValueChanged(overlay, _compositionPart);
+		}
 	}
 
 	// -- Table Building --

@@ -29,27 +29,6 @@ public class TlSecuritySelfserviceFactory extends com.top_logic.element.meta.kbb
 	}
 
 	/**
-	 * Lookup {@link Invitation#CODE_ATTR} of {@link Invitation}.
-	 */
-	public static com.top_logic.model.TLProperty getCodeInvitationAttr() {
-		return (com.top_logic.model.TLProperty) getInvitationType().getPart(Invitation.CODE_ATTR);
-	}
-
-	/**
-	 * Lookup {@link Invitation#CODE_CREATED_AT_ATTR} of {@link Invitation}.
-	 */
-	public static com.top_logic.model.TLProperty getCodeCreatedAtInvitationAttr() {
-		return (com.top_logic.model.TLProperty) getInvitationType().getPart(Invitation.CODE_CREATED_AT_ATTR);
-	}
-
-	/**
-	 * Lookup {@link Invitation#CODE_UPDATE_COUNT_ATTR} of {@link Invitation}.
-	 */
-	public static com.top_logic.model.TLProperty getCodeUpdateCountInvitationAttr() {
-		return (com.top_logic.model.TLProperty) getInvitationType().getPart(Invitation.CODE_UPDATE_COUNT_ATTR);
-	}
-
-	/**
 	 * Lookup {@link Invitation#CREATE_CALLBACK_ATTR} of {@link Invitation}.
 	 */
 	public static com.top_logic.model.TLProperty getCreateCallbackInvitationAttr() {

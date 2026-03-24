@@ -46,21 +46,6 @@
 						mandatory="true"
 					/>
 					<mo_attribute
-						att_name="code"
-						att_type="Integer"
-						mandatory="true"
-					/>
-					<mo_attribute
-						att_name="codeCreatedAt"
-						att_type="Long"
-						mandatory="true"
-					/>
-					<mo_attribute
-						att_name="codeUpdateCount"
-						att_type="Integer"
-						mandatory="true"
-					/>
-					<mo_attribute
 						att_name="mfaRequirement"
 						att_type="String"
 						db_size="16"
@@ -134,39 +119,6 @@
   null]]></check>
 					</constraint-by-expression>
 				</constraints>
-			</annotations>
-		</create-property>
-		<create-property name="tl.security.selfservice:Invitation#code"
-			mandatory="true"
-			type="tl.core:Integer"
-		>
-			<annotations>
-				<visibility value="hidden"/>
-				<default-value>
-					<int value="0"/>
-				</default-value>
-			</annotations>
-		</create-property>
-		<create-property name="tl.security.selfservice:Invitation#codeCreatedAt"
-			mandatory="true"
-			type="tl.core:Long"
-		>
-			<annotations>
-				<visibility value="hidden"/>
-				<default-value>
-					<long value="0"/>
-				</default-value>
-			</annotations>
-		</create-property>
-		<create-property name="tl.security.selfservice:Invitation#codeUpdateCount"
-			mandatory="true"
-			type="tl.core:Integer"
-		>
-			<annotations>
-				<visibility value="hidden"/>
-				<default-value>
-					<int value="0"/>
-				</default-value>
 			</annotations>
 		</create-property>
 		<create-property name="tl.security.selfservice:Invitation#mfaRequirement"

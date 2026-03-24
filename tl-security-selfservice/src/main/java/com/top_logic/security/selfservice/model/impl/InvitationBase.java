@@ -18,33 +18,6 @@ public interface InvitationBase extends com.top_logic.model.TLObject {
 	String INVITATION_TYPE = "Invitation";
 
 	/**
-	 * Part <code>code</code> of <code>Invitation</code>
-	 * 
-	 * <p>
-	 * Declared as <code>tl.core:Integer</code> in configuration.
-	 * </p>
-	 */
-	String CODE_ATTR = "code";
-
-	/**
-	 * Part <code>codeCreatedAt</code> of <code>Invitation</code>
-	 * 
-	 * <p>
-	 * Declared as <code>tl.core:Long</code> in configuration.
-	 * </p>
-	 */
-	String CODE_CREATED_AT_ATTR = "codeCreatedAt";
-
-	/**
-	 * Part <code>codeUpdateCount</code> of <code>Invitation</code>
-	 * 
-	 * <p>
-	 * Declared as <code>tl.core:Integer</code> in configuration.
-	 * </p>
-	 */
-	String CODE_UPDATE_COUNT_ATTR = "codeUpdateCount";
-
-	/**
 	 * Part <code>createCallback</code> of <code>Invitation</code>
 	 * 
 	 * <p>
@@ -79,48 +52,6 @@ public interface InvitationBase extends com.top_logic.model.TLObject {
 	 * </p>
 	 */
 	String MFA_REQUIREMENT_ATTR = "mfaRequirement";
-
-	/**
-	 * Getter for part {@link #CODE_ATTR}.
-	 */
-	default int getCode() {
-		return (Integer) tValueByName(CODE_ATTR);
-	}
-
-	/**
-	 * Setter for part {@link #CODE_ATTR}.
-	 */
-	default void setCode(int newValue) {
-		tUpdateByName(CODE_ATTR, newValue);
-	}
-
-	/**
-	 * Getter for part {@link #CODE_CREATED_AT_ATTR}.
-	 */
-	default long getCodeCreatedAt() {
-		return (Long) tValueByName(CODE_CREATED_AT_ATTR);
-	}
-
-	/**
-	 * Setter for part {@link #CODE_CREATED_AT_ATTR}.
-	 */
-	default void setCodeCreatedAt(long newValue) {
-		tUpdateByName(CODE_CREATED_AT_ATTR, newValue);
-	}
-
-	/**
-	 * Getter for part {@link #CODE_UPDATE_COUNT_ATTR}.
-	 */
-	default int getCodeUpdateCount() {
-		return (Integer) tValueByName(CODE_UPDATE_COUNT_ATTR);
-	}
-
-	/**
-	 * Setter for part {@link #CODE_UPDATE_COUNT_ATTR}.
-	 */
-	default void setCodeUpdateCount(int newValue) {
-		tUpdateByName(CODE_UPDATE_COUNT_ATTR, newValue);
-	}
 
 	/**
 	 * Getter for part {@link #CREATE_CALLBACK_ATTR}.

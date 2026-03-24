@@ -16,13 +16,11 @@ import com.top_logic.basic.encryption.SecureRandomService;
 import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.version.Version;
+import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.html.template.TagTemplate;
-import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.DisplayUnit;
-import com.top_logic.layout.WindowScope;
 import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.form.model.FormContext;
@@ -52,6 +50,12 @@ public class CheckInvitationCode extends AbstractTemplateDialog {
 	private InvitationModule _serviceModule = InvitationModule.getInstance();
 
 	private LoginFailuresModule<?> _loginFailures = LoginFailuresModule.Module.INSTANCE.getImplementationInstance();
+
+	private String _code;
+
+	private long _codeCreatedAt;
+
+	private int _retryCount;
 
 	/**
 	 * Creates a new {@link CheckInvitationCode} with default title and dimensions.
@@ -96,7 +100,7 @@ public class CheckInvitationCode extends AbstractTemplateDialog {
 			tag(HTMLConstants.PARAGRAPH,
 				resource(I18NConstants.MESSAGE_WELCOME_TO_APPLICATION__APPLICATION.fill(Version.getApplicationName()))),
 			tag(HTMLConstants.PARAGRAPH,
-				resource(I18NConstants.MESSAGE_CODE_SENT__MAIL.fill(_invitation.getEmail()))),
+				resource(I18NConstants.MESSAGE_REQUEST_VERIFICATION_CODE)),
 			fieldBox(CODE_FIELD));
 	}
 
@@ -117,87 +121,78 @@ public class CheckInvitationCode extends AbstractTemplateDialog {
 			.andThen(getDiscardClosure())
 			.andThen(_continuation)));
 
-		buttons.add(MessageBox.button(I18NConstants.REQUEST_CODE,
-			this::updateCodeCommand));
+		buttons.add(MessageBox.button(I18NConstants.REQUEST_CODE, this::updateCodeCommand));
 	}
 
 	private HandlerResult checkCode(@SuppressWarnings("unused") DisplayContext ctx) {
-		String failureKey = failureKey();
-		LoginFailure failure = _loginFailures.getFailureFor(failureKey);
-		if (failure != null && !failure.allowRetry()) {
-			return HandlerResult.error(I18NConstants.ERROR_CODE_MISMATCH_TOO_MANY_TIMES);
+		if (_code == null) {
+			return HandlerResult.error(I18NConstants.ERROR_NO_VALID_CODE);
 		}
 		if (isCodeExpired()) {
-			return HandlerResult.error(I18NConstants.ERROR_CODE_EXPIRED);
+			return HandlerResult.error(I18NConstants.ERROR_NO_VALID_CODE);
 		}
-		if (!String.valueOf(_invitation.getCode()).equals(getFormContext().getField(CODE_FIELD).getValue())) {
-			_loginFailures.notifyLoginFailed(failureKey);
+		if (_retryCount >= 3) {
+			_code = null;
+			return HandlerResult.error(I18NConstants.ERROR_CODE_MISMATCH_TOO_MANY_TIMES);
+		}
+		if (!_code.equals(getFormContext().getField(CODE_FIELD).getValue())) {
+			_retryCount++;
 			return HandlerResult.error(I18NConstants.ERROR_CODE_MISMATCH);
 		} else {
-			_loginFailures.notifyLoginSuccessed(failureKey);
+			_loginFailures.notifyLoginSuccessed(failureKey());
 		}
 		return HandlerResult.DEFAULT_RESULT;
 	}
 
-	private KnowledgeBase kb() {
-		return _invitation.tKnowledgeBase();
-	}
-
-	@Override
-	public HandlerResult open(WindowScope windowScope) {
-		if (isCodeExpired()) {
-			updateCode();
-		}
-
-		return super.open(windowScope);
-	}
-
 	private boolean isCodeExpired() {
-		return now() > _invitation.getCodeCreatedAt() + _serviceModule.getConfig().getCodeValidity();
+		return now() > _codeCreatedAt + _serviceModule.getConfig().getCodeValidity();
 	}
 
 	private static long now() {
 		return System.currentTimeMillis();
 	}
 
-	private long codeRequestAllowedAfter() {
-		long createdAt = _invitation.getCodeCreatedAt();
-		int updateCount = _invitation.getCodeUpdateCount();
-		return createdAt + updateCount * _serviceModule.getConfig().getCodeResendDelay();
-	}
-
 	private HandlerResult updateCodeCommand(@SuppressWarnings("unused") DisplayContext ctx) {
-		long waitTime = (codeRequestAllowedAfter() - now()) / 1000;
-		if (waitTime > 0) {
-			HandlerResult warn = HandlerResult.error(I18NConstants.REQUEST_CODE_NOT_ALLOWED__TIMEOUT.fill(waitTime));
-			warn.setErrorSeverity(ErrorSeverity.WARNING);
-			return warn;
+		String failureKey = failureKey();
+		LoginFailure existingFailure = _loginFailures.getFailureFor(failureKey);
+		if (existingFailure != null) {
+			if (existingFailure.allowRetry()) {
+				existingFailure.incFailures();
+			} else {
+				HandlerResult warn =
+					HandlerResult.error(
+						I18NConstants.REQUEST_CODE_NOT_ALLOWED__TIMEOUT.fill(existingFailure.retryDelay() / 1000));
+				warn.setErrorSeverity(ErrorSeverity.WARNING);
+				return warn;
+			}
+		} else {
+			// Fake multiple retries to avoid directly multiple code requests.
+			LoginFailure failure = _loginFailures.notifyLoginFailed(failureKey);
+			failure.incFailures();
+			failure.incFailures();
+			failure.incFailures();
 		}
+
 		updateCode();
 		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	private void updateCode() {
-		int newCode = newCode();
-		try (Transaction tx = kb().beginTransaction(I18NConstants.UPDATED_INVITATION_CODE)) {
-			_invitation.setCode(newCode);
-			_invitation.setCodeCreatedAt(now());
-			_invitation.setCodeUpdateCount(_invitation.getCodeUpdateCount() + 1);
-			tx.commit();
-		}
-		/* New code was created, reset failures. */
-		_loginFailures.notifyLoginSuccessed(failureKey());
+		_code = newCode();
+		_codeCreatedAt = now();
+		_retryCount = 0;
 
-		sendCodeMail(String.valueOf(newCode));
+		sendCodeMail();
+		InfoService.showInfo(I18NConstants.MESSAGE_VERIFICATION_CODE_SENT);
 	}
 
-	private void sendCodeMail(String newCode) {
+	private void sendCodeMail() {
 		String applicationName = Version.getApplicationName();
-		_serviceModule.getVerificationMail().execute(_invitation, applicationName, newCode);
+		_serviceModule.getVerificationMail().execute(_invitation, applicationName, _code);
 	}
 
-	private int newCode() {
-		return SecureRandomService.getInstance().getRandom().nextInt(100_000, 1_000_000);
+	private String newCode() {
+		return String.valueOf(SecureRandomService.getInstance().getRandom().nextInt(100_000, 1_000_000));
 	}
 
 	private String failureKey() {

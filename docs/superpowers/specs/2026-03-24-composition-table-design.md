@@ -297,6 +297,21 @@ Added to `test.constraints.model.xml` as a composed child of `ConstraintTestType
 - Dirty tracking propagation from items to main form
 - Save/cancel semantics across all layers
 
+## Verification
+
+Use Playwright (browser automation) to verify the implementation against the running demo application. Start the app, navigate to the constraint demo, and interactively test until all scenarios work:
+
+- Create a `ConstraintTestType` with items via the composition table
+- Inline-edit item fields, verify field-level constraints fire in cells
+- Open detail dialog, edit, save — verify values sync back to table
+- Open detail dialog, edit, cancel — verify changes are discarded
+- Delete an item, verify reference list updates and dirty state
+- Trigger the cross-level constraint (sum exceeds `rangedInt`) — verify error appears
+- Save the form — verify all layers persist correctly
+- Cancel the form after edits — verify everything reverts
+
+This is not a permanent test suite but a hands-on verification loop during development.
+
 ## Scope
 
 **In scope:**

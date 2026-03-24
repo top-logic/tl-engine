@@ -96,7 +96,7 @@ public class LoginFailure {
 	 * The absolute time in milliseconds since epoch when the next login retry can be performed.
 	 */
 	private synchronized long noRetryBefore() {
-		return _lastFailure + retryDelay();
+		return lastFailure() + retryDelay();
 	}
 
 	/**
@@ -120,5 +120,12 @@ public class LoginFailure {
 	 */
 	public synchronized int getFailureCnt() {
 		return _cntFailures;
+	}
+
+	/**
+	 * The time when the last failure was recorded.
+	 */
+	public long lastFailure() {
+		return _lastFailure;
 	}
 }

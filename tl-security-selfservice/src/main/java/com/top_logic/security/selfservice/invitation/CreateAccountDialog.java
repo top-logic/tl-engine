@@ -11,9 +11,6 @@ import static com.top_logic.layout.form.template.model.Templates.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import jakarta.servlet.http.HttpServletRequest;
-
-import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.base.user.UserInterface;
@@ -33,6 +30,7 @@ import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.component.configuration.EnableMultiFactorAuthenticationDialog;
+import com.top_logic.layout.component.configuration.LoginViewDialog;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.StringField;
@@ -40,7 +38,6 @@ import com.top_logic.layout.messagebox.AbstractTemplateDialog;
 import com.top_logic.layout.messagebox.MessageBox;
 import com.top_logic.layout.messagebox.MessageBox.ButtonType;
 import com.top_logic.layout.structure.DialogModel;
-import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.security.selfservice.model.Invitation;
@@ -216,12 +213,7 @@ public class CreateAccountDialog extends AbstractTemplateDialog {
 	}
 
 	private HandlerResult loginNewPerson(DisplayContext context, Account person) {
-		HttpServletRequest request = context.asRequest();
-		SessionService service = SessionService.getInstance();
-		// Remove session for anonymous
-		service.invalidateSession(request.getSession());
-		service.loginUser(request, context.asResponse(), person);
-		MainLayout.addFullReload(context);
+		LoginViewDialog.loginUserAndReload(context, person);
 		return HandlerResult.DEFAULT_RESULT;
 	}
 

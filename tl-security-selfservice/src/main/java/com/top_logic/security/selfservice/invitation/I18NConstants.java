@@ -74,6 +74,28 @@ public class I18NConstants extends I18NConstantsBase {
 	/** @en Creation of account not possible. */
 	public static ResKey CREATE_ACCOUNT_NOT_POSSIBLE;
 
+	/** @en Forgot password? */
+	public static ResKey FORGOT_PASSWORD_DIALOG_TITLE;
+
+	/**
+	 * @en Please enter your username and request a reset password code. A message containing the
+	 *     requested code is send to your email account. Enter the code here to update your
+	 *     password.
+	 */
+	public static ResKey FORGOT_PASSWORD_USERNAME_MESSAGE;
+
+	/** @en Username */
+	public static ResKey FORGOT_PASSWORD_USERNAME_FIELD;
+
+	/** @en Reset password. */
+	public static ResKey RESET_PASSWORD_COMMAND;
+
+	/**
+	 * @en A link to reset your password has been sent to the email address listed in your account.
+	 *     For security reasons, this link is only valid for a limited time.
+	 */
+	public static ResKey PASSWORD_RESET_MAIL_SENT_MESSAGE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

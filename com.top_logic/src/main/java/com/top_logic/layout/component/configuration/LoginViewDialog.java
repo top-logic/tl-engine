@@ -21,6 +21,11 @@ import com.top_logic.base.accesscontrol.LoginFailure;
 import com.top_logic.base.accesscontrol.LoginFailuresModule;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.security.util.Password;
+import com.top_logic.basic.config.ApplicationConfig;
+import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.html.template.TagTemplate;
 import com.top_logic.knowledge.wrap.person.MfaRequirement;
@@ -37,8 +42,9 @@ import com.top_logic.layout.form.model.StringField;
 import com.top_logic.layout.messagebox.AbstractTemplateDialog;
 import com.top_logic.layout.messagebox.MessageBox;
 import com.top_logic.layout.structure.DialogModel;
-import com.top_logic.layout.structure.LayoutData;
+import com.top_logic.layout.toolbar.ToolBar;
 import com.top_logic.mig.html.layout.MainLayout;
+import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -51,6 +57,18 @@ public class LoginViewDialog extends AbstractTemplateDialog {
 	private static final String USERNAME_FIELD = "username";
 
 	private static final String PASSWORD_FIELD = "password";
+
+	/**
+	 * Static configuration for {@link LoginViewDialog}.
+	 */
+	@Label("Login view configuration")
+	public interface Config extends ConfigurationItem {
+
+		/**
+		 * The commands to display in the toolbar of the login dialog.
+		 */
+		List<PolymorphicConfiguration<? extends CommandModel>> getToolbarCommands();
+	}
 
 	/**
 	 * Creates a new {@link LoginViewDialog} with default values.
@@ -66,6 +84,7 @@ public class LoginViewDialog extends AbstractTemplateDialog {
 	 */
 	public LoginViewDialog(DialogModel dialogModel) {
 		super(dialogModel);
+		initToolbarCommands();
 	}
 
 	/**
@@ -73,6 +92,18 @@ public class LoginViewDialog extends AbstractTemplateDialog {
 	 */
 	public LoginViewDialog(ResKey dialogTitle, DisplayDimension width, DisplayDimension height) {
 		super(dialogTitle, width, height);
+		initToolbarCommands();
+	}
+
+	private void initToolbarCommands() {
+		Config config = ApplicationConfig.getInstance().getConfig(Config.class);
+		List<CommandModel> commands = TypedConfigUtil.createInstanceList(config.getToolbarCommands());
+		if (commands.isEmpty()) {
+			return;
+		}
+		DialogModel dialogModel = getDialogModel();
+		ToolBar toolbar = dialogModel.getToolbar();
+		toolbar.defineGroup(CommandHandlerFactory.ADDITIONAL_GROUP).addButtons(commands);
 	}
 
 	@Override
@@ -168,22 +199,26 @@ public class LoginViewDialog extends AbstractTemplateDialog {
 		}
 
 		// Force password change
-		LayoutData ownLayout = getDialogModel().getLayoutData();
 		Command loginAndReload = ctx -> loginAndReload(ctx, user);
-		DisplayDimension width = ownLayout.getWidthDimension();
-		DisplayDimension height = ownLayout.getHeightDimension();
-		return new ChangePasswordDialog(user, loginAndReload, width, height).open(context);
+		return new ChangePasswordDialog(user, loginAndReload).open(context);
 	}
 
 	private HandlerResult loginAndReload(DisplayContext context, Person user) {
+		loginUserAndReload(context, user);
+		getDiscardClosure().executeCommand(context);
+		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	/**
+	 * Logs in the given user in a new session and reloads the application.
+	 */
+	public static void loginUserAndReload(DisplayContext context, Person user) {
 		HttpServletRequest request = context.asRequest();
 		SessionService service = SessionService.getInstance();
 		// Remove session for anonymous
 		service.invalidateSession(request.getSession());
 		service.loginUser(request, context.asResponse(), user);
 		MainLayout.addFullReload(context);
-		getDiscardClosure().executeCommand(context);
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	private HandlerResult loginDenied(String user, ResKey detail) {

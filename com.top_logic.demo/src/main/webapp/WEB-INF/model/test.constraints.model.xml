@@ -55,6 +55,22 @@
 							min="0.0"
 							max="100.0"
 						/>
+						<constraints>
+							<constraint-by-expression>
+								<check><\![CDATA[value -> obj -> {
+	total = $obj.get(`test.constraints:ConstraintTestType#items`)
+		.map(item -> {
+			q = $item.get(`test.constraints:ConstraintTestItem#quantity`);
+			p = $item.get(`test.constraints:ConstraintTestItem#unitPrice`);
+			if ($q \!= null and $p \!= null, $q * $p, 0)
+		})
+		.sum();
+	if ($value \!= null and $total > $value,
+		#("Item total ({0}) exceeds the limit ({1})."@en, "Summe der Eintraege ({0}) uebersteigt das Limit ({1})."@de).fill($total, $value),
+		null)
+}]]></check>
+							</constraint-by-expression>
+						</constraints>
 					</annotations>
 				</property>
 
@@ -110,6 +126,47 @@
 				<property name="freeText"
 					type="tl.core:String"
 				/>
+
+				<\!-- Composition reference: items owned by this object -->
+				<reference name="items"
+					composite="true"
+					multiple="true"
+					type="ConstraintTestItem"
+				>
+					<annotations>
+						<constraints>
+							<constraint-by-expression>
+								<check><\![CDATA[value -> obj -> {
+	if ($value == null or $value.size() == 0,
+		#("At least one item is required."@en, "Mindestens ein Eintrag ist erforderlich."@de),
+		null)
+}]]></check>
+							</constraint-by-expression>
+						</constraints>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+
+		<class name="ConstraintTestItem">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<table name="GenericObject"/>
+			</annotations>
+			<attributes>
+				<property name="name" mandatory="true" type="tl.core:String"/>
+				<property name="quantity" type="tl.core:Integer">
+					<annotations>
+						<value-range min="1.0" max="1000.0"/>
+					</annotations>
+				</property>
+				<property name="unitPrice" type="tl.core:Double">
+					<annotations>
+						<value-range min="0.01" max="99999.0"/>
+					</annotations>
+				</property>
 			</attributes>
 		</class>
 	</module>

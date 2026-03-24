@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="editedItem"/>
+	</channels>
+	<window title="Edit Item" width="500px" height="300px">
+		<form input="editedItem" initial-edit-mode="true" mode-switch="false">
+			<field attribute="name"/>
+			<field attribute="quantity"/>
+			<field attribute="unitPrice"/>
+			<commands>
+				<generic-command label="OK" placement="TOOLBAR">
+					<store-form-state/>
+					<close-dialog/>
+				</generic-command>
+			</commands>
+		</form>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand" label="Cancel"/>
+			</button>
+		</actions>
+	</window>
+</view>

@@ -18,6 +18,13 @@
 			<field attribute="uppercaseStart"/>
 			<field attribute="warningField"/>
 			<field attribute="freeText"/>
+			<composition-table attribute="items">
+				<columns>
+					<column attribute="name"/>
+					<column attribute="quantity"/>
+					<column attribute="unitPrice"/>
+				</columns>
+			</composition-table>
 			<commands>
 				<generic-command label="Create" placement="TOOLBAR">
 					<store-form-state/>

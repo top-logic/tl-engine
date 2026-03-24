@@ -115,7 +115,7 @@ public class DBAuthenticationAccessDevice extends AbstractConfiguredInstance<Sec
 
 		String hash = (String) row.getAttributeValue(PASSWORD_ATTR);
 		if (hash == null || hash.isBlank()) {
-			Logger.info("Log-in attempt for account without empty password hash denied: " + account.getName(),
+			Logger.info("Log-in attempt for account with empty password hash denied: " + account.getName(),
 				DBAuthenticationAccessDevice.class);
 			return VerificationResult.FAILED;
 		}
@@ -131,7 +131,7 @@ public class DBAuthenticationAccessDevice extends AbstractConfiguredInstance<Sec
 				}
 			}
 		} else {
-			Logger.info("Log-in attempt for account without wrong password denied: " + account.getName(),
+			Logger.info("Log-in attempt for account with wrong password denied: " + account.getName(),
 				DBAuthenticationAccessDevice.class);
 		}
 

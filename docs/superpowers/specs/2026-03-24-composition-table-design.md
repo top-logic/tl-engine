@@ -44,6 +44,8 @@ When a user opens the detail dialog for a row:
 
 This is not a special case. The dialog is a normal form whose input happens to be an overlay instead of a persistent object. `TLObjectOverlay extends TransientObject` implements `TLObject`, so overlays stack naturally.
 
+**Locking:** Since the dialog's input is a transient overlay (not a persistent object), the dialog's `FormElement` must not attempt to acquire a lock. Configure the dialog form with `initial-edit-mode="true"` and `mode-switch="false"` to bypass locking.
+
 ### Two-Layer Overlay Model
 
 **Layer 1 — Composition reference in the main overlay:**
@@ -58,6 +60,8 @@ This is not a special case. The dialog is a normal form whose input happens to b
 - New (transient) objects need no overlay — fields work directly on the transient object.
 
 **Deletion semantics:** An object is deleted when it is no longer present in the overlay's reference list. On save, objects that existed in the persistent state but are absent from the overlay value are deleted. This follows naturally from composition semantics.
+
+**Important:** `TLObjectOverlay.applyTo()` only copies attribute values — it does not delete orphaned composed objects. `CompositionTableControl.apply()` must explicitly compute the set difference (objects in the persistent reference but absent from the overlay list) and delete them within the same transaction.
 
 ### No New React Components
 
@@ -93,6 +97,8 @@ interface FormParticipant {
 
 `AttributeFieldControl` and `CompositionTableControl` both implement `FormParticipant`. Future participants (inline sub-forms, etc.) plug in identically without changing `FormControl`.
 
+**Migration note:** `FormControl` must be refactored to delegate save/cancel/validate to `FormParticipant` instances instead of directly managing overlays and field models. `AttributeFieldControl`'s `apply()` is a no-op — the main overlay's `applyTo()` already handles primitive attribute changes. Its `validate()`, `cancel()`, `revealAll()`, and `isDirty()` delegate to the existing `AttributeFieldModel` logic.
+
 ### New Java Classes
 
 **`com.top_logic.layout.view.element.CompositionTableElement`:**
@@ -121,7 +127,7 @@ Interface for uniform form lifecycle participation (validate, apply, cancel, rev
 
 **Two levels:**
 
-1. **Field-level:** Constraints on individual attributes of composed objects. Each `AttributeFieldModel` validates as usual (mandatory, format, model constraints). Errors shown in table cells and detail dialog fields.
+1. **Field-level:** Constraints on individual attributes of composed objects. Each `AttributeFieldModel` validates as usual (mandatory, format, model constraints). Errors shown in table cells and detail dialog fields. `CompositionTableControl` manages its own per-row validation (encapsulated, not registered with the main `FormValidationModel`).
 
 2. **Reference-level:** Constraints on the composition reference itself (e.g., minimum/maximum count, no duplicates). These run against the reference value in the main overlay. Errors shown at the composition table control level (e.g., below the table).
 
@@ -131,16 +137,19 @@ Reveal semantics follow the main form: validation errors are hidden until submit
 
 - Row overlay changes (attribute edits) and reference list changes (add/delete) both propagate via `FormParticipant.isDirty()` to the main form's dirty channel.
 - The main form's dirty indicator reflects changes across all participants uniformly.
+- `CompositionFieldModel.isDirty()` must check both the reference list (added/removed objects) and whether any row overlay is dirty (attribute changes within composed objects). Simple list equality is not sufficient.
 
 ### Save Flow (single KB transaction)
 
 1. All `FormParticipant`s validate — abort on any error.
-2. All `FormParticipant`s apply:
+2. All `FormParticipant`s apply, within a single KB transaction:
    - Row overlays apply attribute changes to existing objects.
-   - Transient new objects are persisted.
+   - Transient new objects are persisted (must happen before reference update, since KB expects persistent objects in reference values).
    - Composition reference on base object is updated.
-   - Objects no longer in the reference list are deleted.
+   - Objects no longer in the reference list are explicitly deleted (must happen after reference update, to avoid dangling reference errors).
 3. Transaction commit.
+
+**The ordering within apply is a hard constraint**, not a convention. New objects must exist before they can be referenced; orphaned objects must be unreferenced before they can be deleted.
 
 ### Cancel Flow
 

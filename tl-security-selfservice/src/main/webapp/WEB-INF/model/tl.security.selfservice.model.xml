@@ -57,39 +57,6 @@
 						</constraints>
 					</annotations>
 				</property>
-				<property name="code"
-					mandatory="true"
-					type="tl.core:Integer"
-				>
-					<annotations>
-						<visibility value="hidden"/>
-						<default-value>
-							<int value="0"/>
-						</default-value>
-					</annotations>
-				</property>
-				<property name="codeCreatedAt"
-					mandatory="true"
-					type="tl.core:Long"
-				>
-					<annotations>
-						<visibility value="hidden"/>
-						<default-value>
-							<long value="0"/>
-						</default-value>
-					</annotations>
-				</property>
-				<property name="codeUpdateCount"
-					mandatory="true"
-					type="tl.core:Integer"
-				>
-					<annotations>
-						<visibility value="hidden"/>
-						<default-value>
-							<int value="0"/>
-						</default-value>
-					</annotations>
-				</property>
 				<property name="mfaRequirement"
 					type="tl.accounts:MfaRequirement"
 				/>

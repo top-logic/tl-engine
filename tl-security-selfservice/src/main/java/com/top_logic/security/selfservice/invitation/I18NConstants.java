@@ -33,11 +33,8 @@ public class I18NConstants extends I18NConstantsBase {
 	/** @en Deleted invitation. */
 	public static ResKey DELETED_INVITATION;
 
-	/** @en A code was sent to {0}. Please check your inbox and enter the sent code here. */
-	public static ResKey1 MESSAGE_CODE_SENT__MAIL;
-
-	/** @en The code is expired. Please request a new code. */
-	public static ResKey ERROR_CODE_EXPIRED;
+	/** @en No valid code available. Please request a new code. */
+	public static ResKey ERROR_NO_VALID_CODE;
 
 	/** @en The code is incorrect. */
 	public static ResKey ERROR_CODE_MISMATCH;
@@ -45,7 +42,7 @@ public class I18NConstants extends I18NConstantsBase {
 	/** @en Check code */
 	public static ResKey CHECK_INVITATION_CODE_TITLE;
 
-	/** @en Request code again */
+	/** @en Request verification code */
 	public static ResKey REQUEST_CODE;
 
 	/** @en The code cannot be requested at this time. Please wait {0} seconds and try again. */
@@ -56,6 +53,17 @@ public class I18NConstants extends I18NConstantsBase {
 
 	/** @en Welcome to the {0} app. */
 	public static ResKey1 MESSAGE_WELCOME_TO_APPLICATION__APPLICATION;
+
+	/**
+	 * @en Please request a verification code. It will be sent to you by email. Enter the code here
+	 *     to begin setting up your access to the application.
+	 */
+	public static ResKey MESSAGE_REQUEST_VERIFICATION_CODE;
+
+	/**
+	 * @en The verification code has been sent by email.
+	 */
+	public static ResKey MESSAGE_VERIFICATION_CODE_SENT;
 
 	/** @en Code */
 	public static ResKey CODE_FIELD_LABEL;

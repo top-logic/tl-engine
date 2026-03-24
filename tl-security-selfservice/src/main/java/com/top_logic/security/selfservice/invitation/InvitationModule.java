@@ -46,9 +46,6 @@ public class InvitationModule extends ConfiguredManagedClass<InvitationModule.Co
 		/** Configuration name for {@link #getCodeValidity()}. */
 		String CODE_VALIDITY = "code-validity";
 
-		/** Configuration name for {@link #getCodeResendDelay()}. */
-		String CODE_RESEND_DELAY = "code-resend-delay";
-
 		/**
 		 * The TL-Script expression sending the invitation mail.
 		 *
@@ -80,20 +77,6 @@ public class InvitationModule extends ConfiguredManagedClass<InvitationModule.Co
 		@Name(CODE_VALIDITY)
 		@Mandatory
 		long getCodeValidity();
-
-		/**
-		 * The delay a user must wait before requesting a new verification code is possible.
-		 *
-		 * <p>
-		 * The actual minimum wait time grows with each successive attempt: after the N-th request
-		 * the user must wait at least N * {@link #getCodeResendDelay()} since the last code was
-		 * issued.
-		 * </p>
-		 */
-		@Format(MillisFormat.class)
-		@Name(CODE_RESEND_DELAY)
-		@Mandatory
-		long getCodeResendDelay();
 
 	}
 

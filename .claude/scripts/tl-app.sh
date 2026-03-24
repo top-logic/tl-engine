@@ -122,9 +122,15 @@ do_start() {
 
     export tl_initial_password='root1234'
 
+    # Use the app module's own tmp/debug as java.io.tmpdir to avoid
+    # writing to /tmp (which may be blocked by the sandbox).
+    local java_tmpdir
+    java_tmpdir="$(cd "$APP_MODULE" && pwd)/tmp/debug"
+    mkdir -p "$java_tmpdir"
+
     # Start Maven in the background.
     cd "$APP_MODULE"
-    nohup mvn -B -Dtl.port="$port" > "$log" 2>&1 &
+    nohup mvn -B -Dtl.port="$port" -Djava.io.tmpdir="$java_tmpdir" > "$log" 2>&1 &
     local mvn_pid=$!
     disown "$mvn_pid"
     cd - > /dev/null
@@ -133,6 +139,7 @@ do_start() {
     write_port "$port"
 
     local timeout=120 interval=1 elapsed=0 app_url=""
+    local server_started_at=""
 
     while (( elapsed < timeout )); do
         # Check for BUILD FAILURE first (before process liveness, to avoid race).
@@ -141,20 +148,6 @@ do_start() {
             echo "Log: $log" >&2
             grep -A 20 "BUILD FAILURE" "$log" >&2 2>/dev/null || true
             kill "$mvn_pid" 2>/dev/null || true
-            exit 1
-        fi
-
-        # Check for application startup failure.
-        if grep -q "System startup failed" "$log" 2>/dev/null; then
-            echo "Error: Application startup failed." >&2
-            echo "Log: $log" >&2
-            # Extract the failure reason block: from "System startup failed." until
-            # the next blank line after the stack trace ends, or until a dated log
-            # line resumes (whichever comes first).
-            sed -n '/^System startup failed/,/^[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}[T ]/{ /^[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}[T ]/!p; }' "$log" >&2 2>/dev/null || true
-            # Stop the server (Jetty is still running).
-            local stop_url="http://localhost:${port}/admin/stop"
-            curl -sf "$stop_url" > /dev/null 2>&1 || true
             exit 1
         fi
 
@@ -169,6 +162,9 @@ do_start() {
         # Extract URL from "Server started:" line if we haven't yet.
         if [[ -z "$app_url" ]]; then
             app_url=$(grep -oP 'Server started: \K\S+' "$log" 2>/dev/null || true)
+            if [[ -n "$app_url" ]]; then
+                server_started_at="$elapsed"
+            fi
         fi
 
         # Check for the fully-ready signal.
@@ -179,6 +175,17 @@ do_start() {
             echo "url: $app_url"
             echo "log: $log"
             exit 0
+        fi
+
+        # If "Server started:" appeared but "up and running" hasn't followed
+        # within 15 seconds, the application failed during initialization.
+        if [[ -n "$server_started_at" ]] && (( elapsed - server_started_at > 15 )); then
+            echo "Error: Application startup failed (server started but app did not become ready)." >&2
+            echo "Log: $log" >&2
+            grep "ERROR" "$log" >&2 2>/dev/null || true
+            # Stop Jetty (still running despite failed app init).
+            curl -sf "http://localhost:${port}/admin/stop" > /dev/null 2>&1 || true
+            exit 1
         fi
 
         sleep "$interval"

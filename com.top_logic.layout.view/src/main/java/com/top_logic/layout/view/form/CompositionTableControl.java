@@ -124,7 +124,7 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 	 */
 	public CompositionTableControl(ReactContext context, FormControl formControl,
 			String compositionAttributeName, List<ColumnConfig> columnConfigs) {
-		super(context, null, "TLCompositionTable");
+		super(context, null, "TLFieldList");
 		_context = context;
 		_formControl = formControl;
 		_compositionAttributeName = compositionAttributeName;
@@ -463,7 +463,7 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 		}
 		_tableControl = new ReactTableControl(_context, _tableModel, cellProvider);
 		registerChildControl(_tableControl);
-		putState("table", _tableControl);
+		putState("fields", java.util.Collections.singletonList(_tableControl));
 	}
 
 	private void rebuildTableRows() {

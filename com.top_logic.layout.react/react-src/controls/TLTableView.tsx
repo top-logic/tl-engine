@@ -354,9 +354,7 @@ const TLTableView: React.FC<TLCellProps> = () => {
                 key={col.name}
                 className={cellClass}
                 style={{
-                  ...(isLast && !isFrozen
-                    ? { flex: '1 0 auto', minWidth: w }
-                    : { width: w, minWidth: w }),
+                  width: w, minWidth: w,
                   position: isFrozen ? 'sticky' as const : 'relative' as const,
                   ...(isFrozen ? { left: frozenOffsets[colIdx], zIndex: 2 } : {}),
                 }}

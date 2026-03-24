@@ -70,15 +70,16 @@ This is not a special case. The dialog is a normal form whose input happens to b
 ### Two-Layer Overlay Model
 
 **Layer 1 — Composition reference in the main overlay:**
-- On entering edit mode, the current value of the composition reference is copied into the base object's `TLObjectOverlay` as a modifiable list.
-- Any access to the reference (e.g., from constraints) returns this transient list.
-- Add/delete operations modify this list directly.
+- On entering edit mode, `CompositionTableControl` creates a row overlay (`TLObjectOverlay`) for each existing composed object, plus keeps transient objects for new entries.
+- The composition reference value in the main overlay is set to the list of **row overlays and transient objects** (not the original persistent objects). This ensures navigational consistency: `overlay.tValue(compositionRef)` returns overlays, and `rowOverlay.tValue(attribute)` returns the transient value.
+- Constraints navigating from the base overlay through the composition reference automatically see the current transient state at every level.
+- Add/delete operations modify this list directly (adding transient objects, removing overlays).
 - The main overlay becomes dirty.
 
 **Layer 2 — Row overlays for existing composed objects:**
-- Each already-persistent composed object gets its own `TLObjectOverlay`.
+- Each already-persistent composed object gets its own `TLObjectOverlay`, which is stored in the Layer 1 list.
 - `AttributeFieldModel` instances in table cells and detail dialog work on these row overlays.
-- New (transient) objects need no overlay — fields work directly on the transient object.
+- New (transient) objects are stored directly in the Layer 1 list (no overlay needed since there is no persistent state to buffer against).
 
 **Deletion semantics:** An object is deleted when it is no longer present in the overlay's reference list. On save, objects that existed in the persistent state but are absent from the overlay value are deleted. This follows naturally from composition semantics.
 

@@ -2047,14 +2047,12 @@ button.tlMenu__item--disabled:hover {
 	padding: 0 var(--spacing-03, 0.5rem);
 	min-height: 0;
 	height: 100%;
+	outline: none;
 }
 
-.tlTableView__cell .tlReactTextInput:focus,
-.tlTableView__cell .tlReactNumberInput:focus,
-.tlTableView__cell .tlReactDatePicker:focus,
-.tlTableView__cell .tlReactSelect:focus {
-	outline: 2px solid var(--focus);
-	outline-offset: -2px;
+/* Excel-style focus: highlight the entire cell, not the inner input */
+.tlTableView__cell:focus-within {
+	box-shadow: inset 0 0 0 2px var(--focus);
 	background: var(--field, #fff);
 }
 

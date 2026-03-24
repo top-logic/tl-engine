@@ -142,7 +142,7 @@ Add a `List<FormParticipant> _participants` field. Add `registerParticipant(Form
 
 Refactor `executeSave()`:
 - Before applying overlay, call `participant.validate()` on all participants. If any returns false, call `revealAllValidation()` and return.
-- Within the transaction, after `_overlay.applyTo(_currentObject)`, call `participant.apply(tx)` on all participants.
+- **CRITICAL ordering:** Within the transaction, call `participant.apply(tx)` on all participants FIRST (they prepare the main overlay, e.g. composition tables persist new objects and update the reference list in the overlay), THEN call `_overlay.applyTo(_currentObject)` to transfer all changes to the KB. Participants update the overlay; the overlay applies last.
 
 Refactor `executeCancel()`:
 - Call `participant.cancel()` on all participants before `exitEditMode()`.
@@ -151,8 +151,8 @@ Refactor `updateDirtyState()`:
 - Dirty = overlay.isDirty() OR any participant.isDirty().
 
 Refactor `revealAllValidation()`:
-- Keep existing field model reveal logic.
-- Also call `participant.revealAll()` on all participants.
+- Delegate entirely to `participant.revealAll()` on all participants.
+- Note: The `_fieldModels` list becomes redundant once all reveal/dirty operations go through `FormParticipant`. Keep `_fieldModels` for now to avoid breaking changes, but all new reveal/dirty paths go through participants. A follow-up cleanup can remove `_fieldModels`.
 
 Refactor `exitEditMode()`:
 - Clear `_participants` list alongside `_fieldModels`.
@@ -190,10 +190,10 @@ Ticket #29108: Introduce FormParticipant abstraction in FormControl.
 Add two new configuration properties:
 
 ```java
-/** Configuration name for {@link #getSaveAction()}. */
+/** Configuration name for {@link #getSaveActions()}. */
 String SAVE_ACTION = "save-action";
 
-/** Configuration name for {@link #getCancelAction()}. */
+/** Configuration name for {@link #getCancelActions()}. */
 String CANCEL_ACTION = "cancel-action";
 
 /**
@@ -203,7 +203,7 @@ String CANCEL_ACTION = "cancel-action";
  * (via GenericViewCommand) instead of calling FormControl.executeSave().</p>
  */
 @Name(SAVE_ACTION)
-List<PolymorphicConfiguration<ViewAction>> getSaveAction();
+List<PolymorphicConfiguration<ViewAction>> getSaveActions();
 
 /**
  * Optional action chain to execute on cancel instead of the default behavior.
@@ -212,7 +212,7 @@ List<PolymorphicConfiguration<ViewAction>> getSaveAction();
  * instead of calling FormControl.executeCancel().</p>
  */
 @Name(CANCEL_ACTION)
-List<PolymorphicConfiguration<ViewAction>> getCancelAction();
+List<PolymorphicConfiguration<ViewAction>> getCancelActions();
 ```
 
 - [ ] **Step 2: Create DiscardFormStateAction**
@@ -253,11 +253,11 @@ public class DiscardFormStateAction implements ViewAction {
 
 - [ ] **Step 3: Wire action chains into FormElement.contributeEditCommands()**
 
-When `_config.getSaveAction()` is non-empty, the save `FormCommandModel` should execute the action chain instead of `form.executeSave()`. Similarly for cancel.
+When `_config.getSaveActions()` is non-empty, the save `FormCommandModel` should execute the action chain instead of `form.executeSave()`. Similarly for cancel.
 
 Modify `FormCommandModel` to accept an optional `Consumer<ReactContext>` override, or modify `FormElement.contributeEditCommands()` to create a `GenericViewCommand` wrapper when action chains are configured.
 
-The simplest approach: in `contributeEditCommands()`, if `_config.getSaveAction()` is non-empty, instantiate the ViewActions and create a save command that chains them instead of calling `form.executeSave()`. Same for cancel.
+The simplest approach: in `contributeEditCommands()`, if `_config.getSaveActions()` is non-empty, instantiate the ViewActions and create a save command that chains them instead of calling `form.executeSave()`. Same for cancel.
 
 - [ ] **Step 4: Build and verify**
 
@@ -306,30 +306,27 @@ import com.top_logic.model.TLObject;
  */
 public class CompositionFieldModel extends AbstractFieldModel {
 
-    private List<TLObject> _currentList;
-    private final List<TLObject> _originalList;
-    private final List<TLObjectOverlay> _rowOverlays;
+    // Note: AbstractFieldModel tracks _defaultValue and _value internally.
+    // We use _value (via getValue/setValue) as the current list and _defaultValue as the
+    // original list for dirty tracking. We override isDirty() to also check row overlays.
+    // No separate _currentList/_originalList fields to avoid state duplication.
+
+    private final List<TLObjectOverlay> _rowOverlays = new ArrayList<>();
 
     public CompositionFieldModel(List<TLObject> initialList) {
-        super(initialList);
-        _originalList = new ArrayList<>(initialList);
-        _currentList = new ArrayList<>(initialList);
-        _rowOverlays = new ArrayList<>();
+        super(new ArrayList<>(initialList)); // defaultValue = initial snapshot
     }
 
     @Override
     public Object getValue() {
-        return _currentList;
+        return getCachedValue(); // Returns the internally stored list
     }
 
     @Override
     public void setValue(Object value) {
-        @SuppressWarnings("unchecked")
-        List<TLObject> newList = (List<TLObject>) value;
-        Object oldValue = _currentList;
-        _currentList = new ArrayList<>(newList);
-        setValueInternal(_currentList);
-        fireValueChanged(oldValue, _currentList);
+        Object oldValue = getCachedValue();
+        setValueInternal(value);
+        fireValueChanged(oldValue, value);
     }
 
     /**
@@ -348,8 +345,8 @@ public class CompositionFieldModel extends AbstractFieldModel {
 
     @Override
     public boolean isDirty() {
-        // Check list membership changes.
-        if (!_currentList.equals(_originalList)) {
+        // Check list membership changes (uses AbstractFieldModel's default comparison).
+        if (super.isDirty()) {
             return true;
         }
         // Check row overlay changes.
@@ -362,17 +359,11 @@ public class CompositionFieldModel extends AbstractFieldModel {
     }
 
     /**
-     * The original list at the time editing started (for computing deletions on save).
+     * The current transient list (typed accessor).
      */
-    public List<TLObject> getOriginalList() {
-        return _originalList;
-    }
-
-    /**
-     * The current transient list.
-     */
+    @SuppressWarnings("unchecked")
     public List<TLObject> getCurrentList() {
-        return _currentList;
+        return (List<TLObject>) getCachedValue();
     }
 }
 ```
@@ -422,26 +413,20 @@ public class CompositionRowModel {
     private final boolean _isNew;
     private final Map<String, AttributeFieldModel> _columnModels = new LinkedHashMap<>();
 
-    /**
-     * Creates a row model for an existing persistent object.
-     *
-     * @param rowOverlay The overlay wrapping the persistent composed object.
-     */
-    public CompositionRowModel(TLObjectOverlay rowOverlay) {
+    private CompositionRowModel(TLObjectOverlay rowOverlay, TLObject rowObject, boolean isNew) {
         _rowOverlay = rowOverlay;
-        _rowObject = rowOverlay;
-        _isNew = false;
+        _rowObject = rowObject;
+        _isNew = isNew;
     }
 
-    /**
-     * Creates a row model for a new transient object.
-     *
-     * @param transientObject The new transient object.
-     */
-    public CompositionRowModel(TLObject transientObject) {
-        _rowOverlay = null;
-        _rowObject = transientObject;
-        _isNew = true;
+    /** Factory for existing persistent objects (wrapped in overlay). */
+    public static CompositionRowModel forExisting(TLObjectOverlay rowOverlay) {
+        return new CompositionRowModel(rowOverlay, rowOverlay, false);
+    }
+
+    /** Factory for new transient objects. */
+    public static CompositionRowModel forNew(TLObject transientObject) {
+        return new CompositionRowModel(null, transientObject, true);
     }
 
     /** The object to read/write attribute values from (overlay or transient). */
@@ -589,12 +574,9 @@ public void apply(Transaction tx) {
         }
     }
 
-    // 3. Update composition reference on base object.
-    TLObject baseObject = _formControl.getCurrentObject();
-    // Note: getCurrentObject() returns overlay in edit mode.
-    // We need the actual persistent object for KB update.
-    // The main overlay applyTo() will handle this,
-    // but we need to set the persisted list in the overlay.
+    // 3. Update composition reference IN THE MAIN OVERLAY (not the base object).
+    // FormControl.executeSave() calls participant.apply() BEFORE overlay.applyTo(),
+    // so we prepare the overlay with the correct persisted list.
     _formControl.getOverlay().tUpdate(_compositionPart, persistedList);
 
     // 4. Delete orphaned objects.
@@ -657,6 +639,7 @@ Create an inner class or separate class that implements `ReactCellControlProvide
 - For each cell: if edit mode and column is not readonly, create an `AttributeFieldModel` on the row's overlay/transient object, then use `FieldControlService.getInstance().createFieldControl()` to get the appropriate React control.
 - If view mode or readonly column: create a `ReactTextCellControl` with the formatted value.
 - Store the `AttributeFieldModel` in the `CompositionRowModel` for validation/reveal access.
+- **Critical:** Add a `FieldModelListener` to each cell's `AttributeFieldModel` that calls `_formControl.updateDirtyState()` on value change (same pattern as `AttributeFieldControl`'s listener at line 257). Without this, row-level edits do not propagate dirty state to the main form.
 
 - [ ] **Step 5: Implement add/delete row commands**
 
@@ -1022,3 +1005,13 @@ Enter edit mode, add items, edit attributes. Cancel. Verify everything reverts t
 - [ ] **Step 12: Fix any issues found, re-test, commit fixes**
 
 Iterate until all scenarios pass. Each fix gets its own commit.
+
+---
+
+## Known Limitations
+
+1. **StoreFormStateAction does not use FormParticipant protocol.** It directly applies the overlay without calling `participant.validate()` / `participant.apply()`. This means detail dialog forms with nested composition tables would bypass participant lifecycle. For the current scope (detail dialogs have only FieldElements), this is not a problem. A future enhancement should update `StoreFormStateAction` to delegate through participants.
+
+2. **Polymorphic type selection for "Add" is not implemented.** When the composition reference's target type has multiple subtypes, the add command should show a type selection dialog. The demo model has no subtypes, so this is deferred.
+
+3. **`_fieldModels` list in FormControl is redundant** once all operations go through `FormParticipant`. A follow-up cleanup can remove it and have `revealAllValidation()` delegate entirely through participants.

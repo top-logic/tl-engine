@@ -51,30 +51,29 @@ public class VectorIndexTLScriptFunctions extends TLScriptFunctions {
 	 * $a.get(`test.indexingVector:Vacation#id`).equals($x["embedded"]["text"].parseJson()["internalId"]))
 	 * }) } }</pre>
 	 * 
-	 * @param query
-	 *              String containing the string to search the vector database @param limit Integer -
-	 *              number of records to return (limit, defaults to 5) @param scoreThreshhold Double -
-	 *              minimum score to return. Must be a number between 0 and 1, defaults to 0.8 @return A
-	 *              list of records from the vector database, matching the search string and
-	 *              params. @throws Exception Exception when parameters are incorrect.
+	 * @param query The string query to search inside the vector database.
+	 * @param limit Optional parameter for number of expected records to return (defaults to 5).
+	 * @param scoreThreshold Minimum score threshold. Must be between 0 and 1 (defaults to 0.8).
+	 * @return A list of record dictionaries matching the query and parameters.
+	 * @throws Exception When parameters are incorrect (e.g., negative threshold).
 	 */
 	@Label("Search for a string")
 	@SideEffectFree
 	public static List<Map<String, Object>> search(@Mandatory String query,
-			@OptionalParameter Integer limit, @OptionalParameter Double scoreThreshhold) throws Exception {
+			@OptionalParameter Integer limit, @OptionalParameter Double scoreThreshold) throws Exception {
 		if (limit == null) {
 			limit = 5;
 		}
 
-		if (scoreThreshhold == null) {
-			scoreThreshhold = 0.8;
+		if (scoreThreshold == null) {
+			scoreThreshold = 0.8;
 		}
-		if (scoreThreshhold < 0 || scoreThreshhold > 1) {
-			throw new Exception("scoreThreshhold must be a number between 0 and 1.");
+		if (scoreThreshold < 0 || scoreThreshold > 1) {
+			throw new Exception("scoreThreshold must be a number between 0 and 1.");
 		}
 
 		List<EmbeddingMatch<TextSegment>> matches =
-			VectorIndex.getInstance().searchVectorIndex(query, limit, scoreThreshhold);
+			VectorIndex.getInstance().searchVectorIndex(query, limit, scoreThreshold);
 		List<Map<String, Object>> results = new ArrayList<>();
 
 		for (EmbeddingMatch<TextSegment> match : matches) {

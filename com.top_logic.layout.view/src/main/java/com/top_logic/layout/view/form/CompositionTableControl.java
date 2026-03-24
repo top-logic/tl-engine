@@ -179,11 +179,16 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 	public void initTable() {
 		TLObject currentObject = _formControl.getCurrentObject();
 		if (currentObject == null) {
+			// No object yet — build an empty table so TLPanel always has a valid child.
+			putState("title", _compositionAttributeName);
+			buildTable(Collections.emptyList(), false);
 			return;
 		}
 
 		_compositionPart = resolveCompositionPart(currentObject);
 		if (_compositionPart == null) {
+			putState("title", _compositionAttributeName);
+			buildTable(Collections.emptyList(), false);
 			return;
 		}
 

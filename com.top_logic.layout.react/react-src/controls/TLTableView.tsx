@@ -96,14 +96,42 @@ const TLTableView: React.FC<TLCellProps> = () => {
   const totalHeight = totalRowCount * rowHeight;
 
   // -- Resize handlers --
+  const resizeAutoScrollRef = React.useRef<number | null>(null);
+
   const handleResizeStart = React.useCallback((columnName: string, colWidth: number, event: React.MouseEvent) => {
     event.preventDefault();
     event.stopPropagation();
     resizeRef.current = { column: columnName, startX: event.clientX, startWidth: colWidth };
 
+    // Track latest mouse position for auto-scroll animation frame.
+    let lastClientX = event.clientX;
+
+    const autoScroll = () => {
+      const body = scrollContainerRef.current;
+      const header = headerRef.current;
+      if (!body || !resizeRef.current) return;
+      const rect = body.getBoundingClientRect();
+      const threshold = 40;
+      const speed = 8;
+      let scrolled = false;
+      if (lastClientX > rect.right - threshold) {
+        body.scrollLeft += speed;
+        scrolled = true;
+      } else if (lastClientX < rect.left + threshold) {
+        body.scrollLeft = Math.max(0, body.scrollLeft - speed);
+        scrolled = true;
+      }
+      if (scrolled && header) {
+        header.scrollLeft = body.scrollLeft;
+      }
+      resizeAutoScrollRef.current = requestAnimationFrame(autoScroll);
+    };
+    resizeAutoScrollRef.current = requestAnimationFrame(autoScroll);
+
     const onMouseMove = (e: MouseEvent) => {
       const info = resizeRef.current;
       if (!info) return;
+      lastClientX = e.clientX;
       const newWidth = Math.max(MIN_COL_WIDTH, info.startWidth + (e.clientX - info.startX));
       setColumnWidthOverrides((prev) => ({ ...prev, [info.column]: newWidth }));
     };
@@ -111,6 +139,10 @@ const TLTableView: React.FC<TLCellProps> = () => {
     const onMouseUp = (e: MouseEvent) => {
       document.removeEventListener('mousemove', onMouseMove);
       document.removeEventListener('mouseup', onMouseUp);
+      if (resizeAutoScrollRef.current !== null) {
+        cancelAnimationFrame(resizeAutoScrollRef.current);
+        resizeAutoScrollRef.current = null;
+      }
       const info = resizeRef.current;
       if (info) {
         const finalWidth = Math.max(MIN_COL_WIDTH, info.startWidth + (e.clientX - info.startX));

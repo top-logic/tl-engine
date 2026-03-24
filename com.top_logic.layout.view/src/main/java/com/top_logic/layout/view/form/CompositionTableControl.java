@@ -737,7 +737,16 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 
 		// Open the dialog.
 		mgr.openDialog(false, dialogControl, result -> {
-			// Dialog closed -- no special handling needed.
+			// After dialog close, refresh the row's cell models.
+			// The dialog's store-form-state may have applied changes to the row overlay
+			// without going through the cell's AttributeFieldModel.setValue(), so the
+			// cached values in the cell models may be stale.
+			if (rowObject instanceof TLObject) {
+				CompositionRowModel rowModel = findRowModel((TLObject) rowObject);
+				if (rowModel != null) {
+					rowModel.refreshColumnModels();
+				}
+			}
 		});
 	}
 

@@ -90,4 +90,18 @@ public class CompositionRowModel {
 		return _columnModels;
 	}
 
+	/**
+	 * Re-reads all column model values from the underlying row object.
+	 *
+	 * <p>
+	 * Call this after external code has modified the row overlay (e.g. a detail dialog applying its
+	 * overlay) to synchronize the cached field model values with the live object state.
+	 * </p>
+	 */
+	public void refreshColumnModels() {
+		for (AttributeFieldModel model : _columnModels.values()) {
+			model.refreshFromObject();
+		}
+	}
+
 }

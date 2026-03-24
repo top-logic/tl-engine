@@ -97,6 +97,24 @@ public class AttributeFieldModel extends AbstractFieldModel {
 		return _part;
 	}
 
+	/**
+	 * Re-reads the current value from the underlying object and fires a value change if the cached
+	 * value differs.
+	 *
+	 * <p>
+	 * Call this after external code has modified the object (e.g. a detail dialog applying its
+	 * overlay onto a row overlay) without going through {@link #setValue(Object)}.
+	 * </p>
+	 */
+	public void refreshFromObject() {
+		Object cachedValue = getCachedValue();
+		Object liveValue = _object.tValue(_part);
+		if (!Objects.equals(cachedValue, liveValue)) {
+			setValueInternal(liveValue);
+			fireValueChanged(cachedValue, liveValue);
+		}
+	}
+
 	private TLStructuredTypePart resolvePart(TLObject obj) {
 		TLStructuredType type = obj.tType();
 		TLStructuredTypePart part = type.getPart(_part.getName());

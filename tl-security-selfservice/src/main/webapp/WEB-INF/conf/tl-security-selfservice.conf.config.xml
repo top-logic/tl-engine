@@ -56,5 +56,11 @@
 				</type-system>
 			</type-systems>
 		</config>
+
+		<config config:interface="com.top_logic.layout.component.configuration.LoginViewDialog$Config">
+			<toolbar-commands>
+				<toolbar-command class="com.top_logic.security.selfservice.invitation.ForgotPasswordDialog$Opener"/>
+			</toolbar-commands>
+		</config>
 	</configs>
 </application>

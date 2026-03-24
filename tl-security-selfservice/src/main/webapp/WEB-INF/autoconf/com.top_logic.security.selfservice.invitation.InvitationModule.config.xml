@@ -7,6 +7,8 @@
 		<config service-class="com.top_logic.security.selfservice.invitation.InvitationModule">
 			<instance class="com.top_logic.security.selfservice.invitation.InvitationModule"
 				code-validity="5min"
+				password-reset-timeout="15min"
+				verification-code-size="6"
 			>
 				<invitation-mail><![CDATA[invitation -> applicationName -> link -> {
   emailBody = {{{<p>
@@ -74,6 +76,46 @@ Your {$applicationName} Team
     }
   );
 }]]></verification-mail>
+				<reset-password-mail><![CDATA[email -> applicationName -> code -> {
+  emailBody = {{{<p>
+Dear Recipient,
+</p>
+<p>
+A request has been made to reset the password for your {$applicationName} account.
+</p>
+<p>
+If you made this request, you can set a new password using the following code.<br/>
+<b>Verficationcode:</b> {$code}</p>
+<p>
+For security reasons, this code is only valid for a limited time and can be used once.
+</p>
+<p>
+If you did <b>not</b> request a password reset, you can safely ignore this email. Your password will remain unchanged.
+</p>
+<p>
+For your security, we recommend using a strong and unique password and updating it regularly.
+</p>
+<p>
+If you have any questions or need assistance, please contact our support team.
+</p>
+<p>
+Kind regards,<br/>
+Your {$applicationName} Team
+</p>}}};
+  subject = "Password Reset Request in " + $applicationName;
+
+  try(
+    sendMail(
+      subject: $subject,
+      to: $email,
+      body: $emailBody
+    ),
+    catch: mailError -> {
+      info("Sending mail to " + $email + " failed. reason: " + $mailError);
+      false
+    }
+  );
+}]]></reset-password-mail>
 			</instance>
 		</config>
 	</services>

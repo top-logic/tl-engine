@@ -10,11 +10,13 @@ import static com.top_logic.layout.form.template.model.Templates.*;
 
 import java.util.List;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.html.template.TagTemplate;
 import com.top_logic.knowledge.gui.layout.person.ChangePasswordComponent;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
+import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.CommandModel;
@@ -36,6 +38,20 @@ public class ChangePasswordDialog extends AbstractTemplateDialog {
 	private Command _continuation;
 
 	/**
+	 * Creates a new {@link ChangePasswordDialog} with default values.
+	 * 
+	 * @param person
+	 *        The {@link Person} to change password for.
+	 * @param continuation
+	 *        {@link Command} to execute after successful password change.
+	 */
+	public ChangePasswordDialog(Person person, Command continuation) {
+		this(person, continuation, I18NConstants.CHANGE_PASSWORD,
+			DisplayDimension.dim(400, DisplayUnit.PIXEL),
+			DisplayDimension.dim(300, DisplayUnit.PIXEL));
+	}
+
+	/**
 	 * Creates a new {@link ChangePasswordDialog}.
 	 * 
 	 * @param person
@@ -43,9 +59,9 @@ public class ChangePasswordDialog extends AbstractTemplateDialog {
 	 * @param continuation
 	 *        {@link Command} to execute after successful password change.
 	 */
-	public ChangePasswordDialog(Person person, Command continuation, DisplayDimension width,
+	public ChangePasswordDialog(Person person, Command continuation, ResKey dialogTitle, DisplayDimension width,
 			DisplayDimension height) {
-		super(I18NConstants.CHANGE_PASSWORD, width, height);
+		super(dialogTitle, width, height);
 		_person = person;
 		_continuation = continuation;
 	}

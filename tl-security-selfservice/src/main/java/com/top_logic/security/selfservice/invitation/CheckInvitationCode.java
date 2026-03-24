@@ -10,52 +10,31 @@ import static com.top_logic.layout.form.template.model.Templates.*;
 
 import java.util.List;
 
-import com.top_logic.base.accesscontrol.LoginFailure;
-import com.top_logic.base.accesscontrol.LoginFailuresModule;
-import com.top_logic.basic.encryption.SecureRandomService;
-import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.version.Version;
 import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.html.template.TagTemplate;
-import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.form.model.FormContext;
-import com.top_logic.layout.form.model.FormFactory;
-import com.top_logic.layout.form.model.StringField;
-import com.top_logic.layout.messagebox.AbstractTemplateDialog;
 import com.top_logic.layout.messagebox.MessageBox;
 import com.top_logic.layout.messagebox.MessageBox.ButtonType;
 import com.top_logic.layout.structure.DialogModel;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.security.selfservice.model.Invitation;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * Dialog to check the invitation code.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class CheckInvitationCode extends AbstractTemplateDialog {
-
-	private static final String CODE_FIELD = "code";
+public class CheckInvitationCode extends AbstractVerificationCodeDialog {
 
 	private final Invitation _invitation;
 
 	private Command _continuation;
-
-	private InvitationModule _serviceModule = InvitationModule.getInstance();
-
-	private LoginFailuresModule<?> _loginFailures = LoginFailuresModule.Module.INSTANCE.getImplementationInstance();
-
-	private String _code;
-
-	private long _codeCreatedAt;
-
-	private int _retryCount;
 
 	/**
 	 * Creates a new {@link CheckInvitationCode} with default title and dimensions.
@@ -106,93 +85,29 @@ public class CheckInvitationCode extends AbstractTemplateDialog {
 
 	@Override
 	protected void fillFormContext(FormContext context) {
-		StringField code = FormFactory.newStringField(CODE_FIELD);
-		code.setLabel(I18NConstants.CODE_FIELD_LABEL);
-		code.setMandatory(true);
-
-		context.addMember(code);
+		context.addMember(createCodeField());
 	}
 
 	@Override
 	protected void fillButtons(List<CommandModel> buttons) {
 		buttons.add(MessageBox.button(ButtonType.OK,
 			checkContextCommand()
-			.andThen(this::checkCode)
-			.andThen(getDiscardClosure())
-			.andThen(_continuation)));
+				.andThen(ctx -> checkCode(this::failureKey))
+				.andThen(getDiscardClosure())
+				.andThen(_continuation)));
 
-		buttons.add(MessageBox.button(I18NConstants.REQUEST_CODE, this::updateCodeCommand));
+		buttons.add(MessageBox.button(I18NConstants.REQUEST_CODE,
+			ctx -> updateCode(this::handleNewCode, this::failureKey)));
 	}
 
-	private HandlerResult checkCode(@SuppressWarnings("unused") DisplayContext ctx) {
-		if (_code == null) {
-			return HandlerResult.error(I18NConstants.ERROR_NO_VALID_CODE);
-		}
-		if (isCodeExpired()) {
-			return HandlerResult.error(I18NConstants.ERROR_NO_VALID_CODE);
-		}
-		if (_retryCount >= 3) {
-			_code = null;
-			return HandlerResult.error(I18NConstants.ERROR_CODE_MISMATCH_TOO_MANY_TIMES);
-		}
-		if (!_code.equals(getFormContext().getField(CODE_FIELD).getValue())) {
-			_retryCount++;
-			return HandlerResult.error(I18NConstants.ERROR_CODE_MISMATCH);
-		} else {
-			_loginFailures.notifyLoginSuccessed(failureKey());
-		}
-		return HandlerResult.DEFAULT_RESULT;
-	}
-
-	private boolean isCodeExpired() {
-		return now() > _codeCreatedAt + _serviceModule.getConfig().getCodeValidity();
-	}
-
-	private static long now() {
-		return System.currentTimeMillis();
-	}
-
-	private HandlerResult updateCodeCommand(@SuppressWarnings("unused") DisplayContext ctx) {
-		String failureKey = failureKey();
-		LoginFailure existingFailure = _loginFailures.getFailureFor(failureKey);
-		if (existingFailure != null) {
-			if (existingFailure.allowRetry()) {
-				existingFailure.incFailures();
-			} else {
-				HandlerResult warn =
-					HandlerResult.error(
-						I18NConstants.REQUEST_CODE_NOT_ALLOWED__TIMEOUT.fill(existingFailure.retryDelay() / 1000));
-				warn.setErrorSeverity(ErrorSeverity.WARNING);
-				return warn;
-			}
-		} else {
-			// Fake multiple retries to avoid directly multiple code requests.
-			LoginFailure failure = _loginFailures.notifyLoginFailed(failureKey);
-			failure.incFailures();
-			failure.incFailures();
-			failure.incFailures();
-		}
-
-		updateCode();
-		return HandlerResult.DEFAULT_RESULT;
-	}
-
-	private void updateCode() {
-		_code = newCode();
-		_codeCreatedAt = now();
-		_retryCount = 0;
-
-		sendCodeMail();
+	private void handleNewCode(String code) {
+		sendCodeMail(code);
 		InfoService.showInfo(I18NConstants.MESSAGE_VERIFICATION_CODE_SENT);
 	}
 
-	private void sendCodeMail() {
+	private void sendCodeMail(String code) {
 		String applicationName = Version.getApplicationName();
-		_serviceModule.getVerificationMail().execute(_invitation, applicationName, _code);
-	}
-
-	private String newCode() {
-		return String.valueOf(SecureRandomService.getInstance().getRandom().nextInt(100_000, 1_000_000));
+		InvitationModule.getInstance().getVerificationMail().execute(_invitation, applicationName, code);
 	}
 
 	private String failureKey() {

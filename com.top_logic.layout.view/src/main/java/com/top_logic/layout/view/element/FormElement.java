@@ -7,6 +7,7 @@ package com.top_logic.layout.view.element;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import com.top_logic.base.locking.handler.DefaultLockHandler;
@@ -40,6 +41,7 @@ import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.CombinedViewExecutabilityRule;
 import com.top_logic.layout.view.command.CommandScope;
+import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandConfirmation;
 import com.top_logic.layout.view.command.ViewCommandModel;
@@ -94,6 +96,12 @@ public class FormElement extends ContainerElement {
 
 		/** Configuration name for {@link #getCommands()}. */
 		String COMMANDS = "commands";
+
+		/** Configuration name for {@link #getSaveActions()}. */
+		String SAVE_ACTIONS = "save-action";
+
+		/** Configuration name for {@link #getCancelActions()}. */
+		String CANCEL_ACTIONS = "cancel-action";
 
 		@Override
 		@ClassDefault(FormElement.class)
@@ -198,6 +206,29 @@ public class FormElement extends ContainerElement {
 		 */
 		@Name(COMMANDS)
 		List<PolymorphicConfiguration<? extends ViewCommand>> getCommands();
+
+		/**
+		 * Optional action chain to execute on save instead of the default behavior.
+		 *
+		 * <p>
+		 * When configured, the save button executes this {@link ViewAction} chain (similar to
+		 * {@link com.top_logic.layout.view.command.GenericViewCommand GenericViewCommand}) instead of
+		 * calling {@link FormControl#executeSave()}.
+		 * </p>
+		 */
+		@Name(SAVE_ACTIONS)
+		List<PolymorphicConfiguration<ViewAction>> getSaveActions();
+
+		/**
+		 * Optional action chain to execute on cancel instead of the default behavior.
+		 *
+		 * <p>
+		 * When configured, the cancel button executes this {@link ViewAction} chain instead of
+		 * calling {@link FormControl#executeCancel()}.
+		 * </p>
+		 */
+		@Name(CANCEL_ACTIONS)
+		List<PolymorphicConfiguration<ViewAction>> getCancelActions();
 	}
 
 	private final Config _config;
@@ -207,6 +238,10 @@ public class FormElement extends ContainerElement {
 	private final List<ViewCommand> _formCommands;
 
 	private final List<ViewCommand.Config> _formCommandConfigs;
+
+	private final List<ViewAction> _saveActions;
+
+	private final List<ViewAction> _cancelActions;
 
 	/**
 	 * Creates a new {@link FormElement} from configuration.
@@ -228,6 +263,21 @@ public class FormElement extends ContainerElement {
 				}
 			}
 		}
+
+		_saveActions = instantiateActions(context, config.getSaveActions());
+		_cancelActions = instantiateActions(context, config.getCancelActions());
+	}
+
+	private List<ViewAction> instantiateActions(InstantiationContext context,
+			List<PolymorphicConfiguration<ViewAction>> configs) {
+		List<ViewAction> result = new ArrayList<>();
+		for (PolymorphicConfiguration<ViewAction> actionConfig : configs) {
+			ViewAction action = context.getInstance(actionConfig);
+			if (action != null) {
+				result.add(action);
+			}
+		}
+		return result;
 	}
 
 	private LockHandler createLockHandler(InstantiationContext context, Config config) {
@@ -474,8 +524,20 @@ public class FormElement extends ContainerElement {
 
 		List<FormCommandModel> models = new ArrayList<>();
 		models.add(FormCommandModel.editCommand(formControl));
-		models.add(FormCommandModel.saveCommand(formControl));
-		models.add(FormCommandModel.cancelCommand(formControl));
+
+		if (!_saveActions.isEmpty()) {
+			Consumer<ReactContext> saveAction = createActionChain(context, _saveActions);
+			models.add(FormCommandModel.saveCommand(formControl, saveAction));
+		} else {
+			models.add(FormCommandModel.saveCommand(formControl));
+		}
+
+		if (!_cancelActions.isEmpty()) {
+			Consumer<ReactContext> cancelAction = createActionChain(context, _cancelActions);
+			models.add(FormCommandModel.cancelCommand(formControl, cancelAction));
+		} else {
+			models.add(FormCommandModel.cancelCommand(formControl));
+		}
 
 		for (FormCommandModel model : models) {
 			model.attach();
@@ -488,5 +550,27 @@ public class FormElement extends ContainerElement {
 				model.detach();
 			}
 		});
+	}
+
+	/**
+	 * Creates a {@link Consumer} that chains the given {@link ViewAction}s, executing them
+	 * sequentially with each action's output becoming the next action's input.
+	 *
+	 * <p>
+	 * The actions execute in the form's {@link ViewContext} so that they can access the
+	 * {@link com.top_logic.layout.view.form.FormModel FormModel}.
+	 * </p>
+	 */
+	private Consumer<ReactContext> createActionChain(ViewContext formContext,
+			List<ViewAction> actions) {
+		return ctx -> {
+			// Use the form context so that actions like StoreFormStateAction can access
+			// the FormModel, regardless of the context passed by the toolbar button.
+			ReactContext effectiveContext = formContext;
+			Object current = null;
+			for (ViewAction action : actions) {
+				current = action.execute(effectiveContext, current);
+			}
+		};
 	}
 }

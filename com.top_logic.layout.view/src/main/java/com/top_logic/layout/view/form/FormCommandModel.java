@@ -78,10 +78,10 @@ public class FormCommandModel implements CommandModel {
 	}
 
 	/**
-	 * Creates the "Save" command model.
+	 * Creates the "Save" command model with default behavior.
 	 *
 	 * <p>
-	 * Executable when the form is in edit mode.
+	 * Executable when the form is in edit mode. Calls {@link FormControl#executeSave()}.
 	 * </p>
 	 *
 	 * @param form
@@ -95,10 +95,30 @@ public class FormCommandModel implements CommandModel {
 	}
 
 	/**
-	 * Creates the "Cancel" command model.
+	 * Creates the "Save" command model with a custom action chain.
 	 *
 	 * <p>
-	 * Executable when the form is in edit mode.
+	 * Executable when the form is in edit mode. Executes the given action instead of calling
+	 * {@link FormControl#executeSave()}.
+	 * </p>
+	 *
+	 * @param form
+	 *        The form control for executability tracking.
+	 * @param action
+	 *        The custom action to execute on save.
+	 * @return The save command model.
+	 */
+	public static FormCommandModel saveCommand(FormControl form, Consumer<ReactContext> action) {
+		return new FormCommandModel("formSave", I18NConstants.FORM_SAVE, PLACEMENT_TOOLBAR, form,
+			action,
+			FormControl::isEditMode);
+	}
+
+	/**
+	 * Creates the "Cancel" command model with default behavior.
+	 *
+	 * <p>
+	 * Executable when the form is in edit mode. Calls {@link FormControl#executeCancel()}.
 	 * </p>
 	 *
 	 * @param form
@@ -108,6 +128,26 @@ public class FormCommandModel implements CommandModel {
 	public static FormCommandModel cancelCommand(FormControl form) {
 		return new FormCommandModel("formCancel", I18NConstants.FORM_CANCEL, PLACEMENT_TOOLBAR, form,
 			ctx -> form.executeCancel(),
+			FormControl::isEditMode);
+	}
+
+	/**
+	 * Creates the "Cancel" command model with a custom action chain.
+	 *
+	 * <p>
+	 * Executable when the form is in edit mode. Executes the given action instead of calling
+	 * {@link FormControl#executeCancel()}.
+	 * </p>
+	 *
+	 * @param form
+	 *        The form control for executability tracking.
+	 * @param action
+	 *        The custom action to execute on cancel.
+	 * @return The cancel command model.
+	 */
+	public static FormCommandModel cancelCommand(FormControl form, Consumer<ReactContext> action) {
+		return new FormCommandModel("formCancel", I18NConstants.FORM_CANCEL, PLACEMENT_TOOLBAR, form,
+			action,
 			FormControl::isEditMode);
 	}
 

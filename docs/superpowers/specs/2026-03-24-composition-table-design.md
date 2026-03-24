@@ -213,6 +213,90 @@ All changes are transient until save. The composition table is fully integrated 
 - One Cancel discards everything.
 - No intermediate persistence of composed objects.
 
+## Demo
+
+Extend the existing constraint demo (`test.constraints` module in `com.top_logic.demo`) with composition editing to validate the implementation end-to-end.
+
+### New Model Type: `ConstraintTestItem`
+
+Added to `test.constraints.model.xml` as a composed child of `ConstraintTestType`:
+
+```xml
+<class name="ConstraintTestItem">
+    <attributes>
+        <property name="name" type="tl.core:String" mandatory="true"/>
+        <property name="quantity" type="tl.core:Integer">
+            <annotations><value-range min="1.0" max="1000.0"/></annotations>
+        </property>
+        <property name="unitPrice" type="tl.core:Double">
+            <annotations><value-range min="0.01" max="99999.0"/></annotations>
+        </property>
+    </attributes>
+</class>
+```
+
+### New Composition Reference on `ConstraintTestType`
+
+```xml
+<reference name="items"
+    composite="true"
+    multiple="true"
+    type="ConstraintTestItem"/>
+```
+
+### Constraints Demonstrating Three Levels
+
+1. **Field-level (on item attributes):** `name` is mandatory, `quantity` has range 1-1000, `unitPrice` has range 0.01-99999. Validates that field-level constraints work in table cells and detail dialog.
+
+2. **Reference-level (on `items` reference):** Minimum 1 item required. Validates that reference-level constraints on the composition work.
+
+3. **Cross-level (on `ConstraintTestType`, navigating through composition):** Expression-based constraint: *"The sum of `quantity * unitPrice` across all items must not exceed `rangedInt`."* This constraint navigates from the base overlay through the composition reference into item overlays — the key scenario that validates overlay navigational consistency.
+
+### UI Changes
+
+**`constraint-test.view.xml`:** Add `<composition-table attribute="items">` below the existing fields:
+
+```xml
+<composition-table attribute="items">
+    <columns>
+        <column attribute="name"/>
+        <column attribute="quantity"/>
+        <column attribute="unitPrice"/>
+    </columns>
+    <detail-dialog layout="demo/edit-constraint-test-item.view.xml"
+                   input-channel="editedItem"
+                   width="500" height="300"/>
+</composition-table>
+```
+
+**New `edit-constraint-test-item.view.xml`:** Detail dialog layout for item editing:
+
+```xml
+<form input="channel(editedItem)" initial-edit-mode="true" mode-switch="false">
+    <save-action>
+        <store-form-state/>
+        <close-dialog/>
+    </save-action>
+    <cancel-action>
+        <close-dialog/>
+    </cancel-action>
+    <field attribute="name"/>
+    <field attribute="quantity"/>
+    <field attribute="unitPrice"/>
+</form>
+```
+
+**`create-constraint-test.view.xml`:** Also extended with the same `<composition-table>` for the create dialog.
+
+### What the Demo Validates
+
+- Inline editing in composition table cells with field-level constraints
+- Detail dialog with overlay stacking (dialog overlay on top of row overlay)
+- Reference-level constraint (min count) on the composition
+- Cross-level expression constraint navigating base overlay → composition reference → row overlays (proves overlay navigational consistency)
+- Dirty tracking propagation from items to main form
+- Save/cancel semantics across all layers
+
 ## Scope
 
 **In scope:**

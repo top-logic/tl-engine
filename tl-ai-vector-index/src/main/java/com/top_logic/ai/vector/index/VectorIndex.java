@@ -823,11 +823,6 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 	/**
 	 * Searches the vector index for documents similar to the query.
 	 *
-	 * <p>
-	 * Returns at most {@value #DEFAULT_MAX_RESULTS} results. Use
-	 * {@link #searchVectorIndex(String, int)} to control the limit explicitly.
-	 * </p>
-	 *
 	 * @param query
 	 *              Search query text
 	 * @return List of matching documents with similarity scores
@@ -849,6 +844,11 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 
 	/**
 	 * Searches the vector index for documents similar to the query.
+	 * 
+	 * <p>
+	 * Returns at most {@value #DEFAULT_MAX_RESULTS} results. Use
+	 * {@link #searchVectorIndex(String, Integer, Double)} to control the limit explicitly.
+	 * </p>
 	 * 
 	 * @param query
 	 *        Search query text

@@ -62,5 +62,11 @@
 				<toolbar-command class="com.top_logic.security.selfservice.invitation.ForgotPasswordDialog$Opener"/>
 			</toolbar-commands>
 		</config>
+
+		<config config:interface="com.top_logic.layout.component.configuration.CheckOTPDialog$Config">
+			<toolbar-commands>
+				<toolbar-command class="com.top_logic.security.selfservice.invitation.ResetMFADialog$Opener"/>
+			</toolbar-commands>
+		</config>
 	</configs>
 </application>

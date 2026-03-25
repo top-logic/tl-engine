@@ -172,7 +172,7 @@ public class EnableMultiFactorAuthenticationDialog extends AbstractTemplateDialo
 		Command continuation = updatePassword
 			.andThen(getDiscardClosure())
 			.andThen(_continuation);
-		return new CheckOTPDialog(continuation, _mfaSecret).open(context);
+		return new CheckOTPDialog(continuation, _account, _mfaSecret).open(context);
 	}
 
 	@Override

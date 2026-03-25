@@ -96,6 +96,34 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey PASSWORD_RESET_MAIL_SENT_MESSAGE;
 
+	/** @en Reset multi-factor authentication */
+	public static ResKey RESET_MFA_COMMAND;
+
+	/** @en Reset multi-factor authentication */
+	public static ResKey RESET_MFA_DIALOG_TITLE;
+
+	/**
+	 * @en If you would like to reset your multi-factor authentication, please request a reset code.
+	 *     This will be sent to you via email. For security reasons, this code is only valid for
+	 *     this session and for a limited time.
+	 * 
+	 *     Enter the code here and then click 'Ok'. For security reasons, you will then be logged
+	 *     out. After logging in again, you can set up multi-factor authentication.
+	 */
+	public static ResKey RESET_MFA_MESSAGE;
+
+	/** @en Code */
+	public static ResKey RESET_MFA_CODE_FIELD;
+
+	/** @en Multi-factor authentication code reset */
+	public static ResKey RESET_MFA_CODE;
+
+	/**
+	 * @en Your multi-factor authentication code has been successfully reset. You will now be logged
+	 *     out.
+	 */
+	public static ResKey RESET_MFA_SUCCESS_MESSAGE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

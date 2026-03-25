@@ -116,6 +116,41 @@ Your {$applicationName} Team
     }
   );
 }]]></reset-password-mail>
+				<reset-mfa-mail><![CDATA[email -> applicationName -> code -> {
+  emailBody = {{{<p>
+Dear Recipient,
+</p>
+<p>
+A request has been made to reset the multi-factor authentication for your {$applicationName} account.
+</p>
+<p>
+If you made this request, you can reset the multi-factor authentication using the following code.<br/>
+<b>Verficationcode:</b> {$code}
+</p>
+<p>
+For security reasons, this code is only valid for a limited time and can be used once.
+</p>
+<p>
+If you have any questions or need assistance, please contact our support team.
+</p>
+<p>
+Kind regards,<br/>
+Your {$applicationName} Team
+</p>}}};
+  subject = "Verification code for multi-factor authentication reset in " + $applicationName;
+
+  try(
+    sendMail(
+      subject: $subject,
+      to: $email,
+      body: $emailBody
+    ),
+    catch: mailError -> {
+      info("Sending mail to " + $email + " failed. reason: " + $mailError);
+      false
+    }
+  );
+}]]></reset-mfa-mail>
 			</instance>
 		</config>
 	</services>

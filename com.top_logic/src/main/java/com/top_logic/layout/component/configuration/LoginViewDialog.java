@@ -187,7 +187,7 @@ public class LoginViewDialog extends AbstractTemplateDialog {
 			}
 
 			Command loginAndReload = ctx -> loginAndReload(ctx, user, withPasswordChange);
-			return new CheckOTPDialog(loginAndReload, mfaSecret).open(context);
+			return new CheckOTPDialog(loginAndReload, user, mfaSecret).open(context);
 		} finally {
 			Arrays.fill(decryptedPassword, (char) 0);
 		}

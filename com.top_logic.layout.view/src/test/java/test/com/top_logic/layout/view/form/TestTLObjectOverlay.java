@@ -100,9 +100,9 @@ public class TestTLObjectOverlay extends TestCase {
 	}
 
 	/**
-	 * Tests that {@link TLObjectOverlay#applyTo(TLObject)} transfers changes to a target.
+	 * Tests that {@link TLObjectOverlay#apply()} transfers changes to the base object.
 	 */
-	public void testApplyTo() {
+	public void testApply() {
 		TLStructuredTypePart namePart = mockPart("name");
 		TLStructuredTypePart agePart = mockPart("age");
 		MockTLObject base = new MockTLObject();
@@ -113,11 +113,10 @@ public class TestTLObjectOverlay extends TestCase {
 		overlay.tUpdate(namePart, "Bob");
 		overlay.tUpdate(agePart, Integer.valueOf(25));
 
-		MockTLObject target = new MockTLObject();
-		overlay.applyTo(target);
+		overlay.apply();
 
-		assertEquals("Bob", target.tValue(namePart));
-		assertEquals(Integer.valueOf(25), target.tValue(agePart));
+		assertEquals("Bob", base.tValue(namePart));
+		assertEquals(Integer.valueOf(25), base.tValue(agePart));
 	}
 
 	/**

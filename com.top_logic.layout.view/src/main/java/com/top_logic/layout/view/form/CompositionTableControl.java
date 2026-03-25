@@ -363,8 +363,7 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 		for (CompositionRowModel row : _rowModels) {
 			TLObjectOverlay overlay = row.getRowOverlay();
 			if (overlay != null && overlay.isDirty()) {
-				TLObject base = overlay.getBase();
-				overlay.applyTo(base);
+				overlay.apply();
 			}
 		}
 

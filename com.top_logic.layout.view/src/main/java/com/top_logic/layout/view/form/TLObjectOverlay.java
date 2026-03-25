@@ -70,15 +70,11 @@ public class TLObjectOverlay extends TransientObject {
 	}
 
 	/**
-	 * Transfers all accumulated changes to the given target object.
-	 *
-	 * @param target
-	 *        The object to apply changes to. Typically the original base object within a KB
-	 *        transaction.
+	 * Transfers all accumulated changes to the base object.
 	 */
-	public void applyTo(TLObject target) {
+	public void apply() {
 		for (Map.Entry<TLStructuredTypePart, Object> entry : _changes.entrySet()) {
-			target.tUpdate(entry.getKey(), entry.getValue());
+			_base.tUpdate(entry.getKey(), entry.getValue());
 		}
 	}
 

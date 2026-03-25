@@ -368,7 +368,7 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 			return null;
 		}
 
-		_overlay.applyTo(_overlay.getBase());
+		_overlay.apply();
 		return _overlay.getBase();
 	}
 

@@ -416,14 +416,16 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 * Validates all participants and throws if any are invalid.
 	 *
 	 * <p>
-	 * Iterates all participants (not short-circuiting) so every field gets its error state set,
-	 * then reveals all hidden validation errors before throwing.
+	 * Reveals all hidden validation errors first (so model-level errors become visible via
+	 * {@code hasError()}), then iterates all participants without short-circuiting.
 	 * </p>
 	 *
 	 * @throws TopLogicException
 	 *         If any participant reports a validation error.
 	 */
 	public void validateOrThrow() {
+		revealAllValidation();
+
 		boolean valid = true;
 		for (FormParticipant participant : _participants) {
 			if (!participant.validate()) {
@@ -431,7 +433,6 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 			}
 		}
 		if (!valid) {
-			revealAllValidation();
 			throw new TopLogicException(
 				com.top_logic.layout.view.command.I18NConstants.ERROR_FORM_HAS_VALIDATION_ERRORS);
 		}

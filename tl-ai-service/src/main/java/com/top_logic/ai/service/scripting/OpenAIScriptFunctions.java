@@ -16,6 +16,7 @@ import jakarta.activation.MimeType;
 import jakarta.activation.MimeTypeParseException;
 
 import com.top_logic.ai.service.AIService;
+import com.top_logic.ai.service.agents.AgentRegistry;
 import com.top_logic.ai.service.tools.registry.ToolRegistry;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.io.StreamUtilities;
@@ -24,6 +25,7 @@ import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
 
 import dev.langchain4j.agent.tool.ToolSpecification;
+import dev.langchain4j.agentic.UntypedAgent;
 import dev.langchain4j.data.audio.Audio;
 import dev.langchain4j.data.image.Image;
 import dev.langchain4j.data.message.AiMessage;
@@ -336,6 +338,25 @@ public class OpenAIScriptFunctions extends TLScriptFunctions {
 
 		ChatResponse response = chatModel.chat(requestBuilder.build());
 		return response.aiMessage().text();
+	}
+
+	/**
+	 * Call an AI Agent from the Registry
+	 * 
+	 * @param agentName
+	 *        String - the agent name from the Agent Registry
+	 * 
+	 * @param userMessage
+	 *        String - the user message to prompt the Agent with
+	 * @return String - the response from the AI Agent
+	 */
+	public static String agentChat(String agentName, String userMessage) {
+		AgentRegistry registry = AgentRegistry.getInstance();
+		if (registry == null) {
+			throw new RuntimeException("AgentRegistry is not available");
+		}
+		UntypedAgent explorer = registry.buildUntypedAgent(agentName);
+		return (String) explorer.invoke(Map.of("message", userMessage));
 	}
 
 	/**

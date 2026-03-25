@@ -844,25 +844,16 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 		}
 
 		// Apply initial validation state.
-		applyValidationToCell(model, validationModel.getValidation(rowObject, part));
+		model.applyValidationResult(validationModel.getValidation(rowObject, part));
 
 		// Listen for future changes on this specific (object, attribute).
 		ConstraintValidationListener listener = (overlay, attr, result) -> {
 			if (overlay == rowObject && attr.equals(part)) {
-				applyValidationToCell(model, result);
+				model.applyValidationResult(result);
 			}
 		};
 		validationModel.addConstraintValidationListener(listener);
 		_cellValidationListeners.add(listener);
-	}
-
-	private void applyValidationToCell(AttributeFieldModel model, ValidationResult result) {
-		if (result.isValid()) {
-			model.setModelValidationError(null);
-		} else {
-			model.setModelValidationError(result.getErrors().get(0));
-		}
-		model.setModelValidationWarnings(result.getWarnings());
 	}
 
 	/**

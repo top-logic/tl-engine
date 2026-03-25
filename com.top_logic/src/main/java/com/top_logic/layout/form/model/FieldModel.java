@@ -8,6 +8,7 @@ package com.top_logic.layout.form.model;
 import java.util.List;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.model.form.ValidationResult;
 
 /**
  * Lightweight model for a single form field value.
@@ -99,6 +100,21 @@ public interface FieldModel {
 	 */
 	default void setModelValidationWarnings(List<ResKey> warnings) {
 		// Default no-op, overridden in AbstractFieldModel.
+	}
+
+	/**
+	 * Applies a {@link ValidationResult} from the {@code FormValidationModel} to this field.
+	 *
+	 * @param result
+	 *        The validation result to apply.
+	 */
+	default void applyValidationResult(ValidationResult result) {
+		if (result.isValid()) {
+			setModelValidationError(null);
+		} else {
+			setModelValidationError(result.getErrors().get(0));
+		}
+		setModelValidationWarnings(result.getWarnings());
 	}
 
 	/**

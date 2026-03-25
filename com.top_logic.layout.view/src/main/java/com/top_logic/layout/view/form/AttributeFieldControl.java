@@ -240,16 +240,6 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 		return _model != null && _model.isDirty();
 	}
 
-	private void applyValidationResult(ValidationResult result) {
-		if (_model == null) return;
-		if (result.isValid()) {
-			_model.setModelValidationError(null);
-		} else {
-			_model.setModelValidationError(result.getErrors().get(0));
-		}
-		_model.setModelValidationWarnings(result.getWarnings());
-	}
-
 	private void clearModel() {
 		unwireValidation();
 		if (_model != null) {
@@ -346,12 +336,12 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 		TLObject overlay = _formModel.getCurrentObject();
 
 		// Read initial validation state.
-		applyValidationResult(validationModel.getValidation(overlay, part));
+		_model.applyValidationResult(validationModel.getValidation(overlay, part));
 
 		// Listen for future changes.
 		_validationListener = (o, attr, result) -> {
 			if (attr.equals(part)) {
-				applyValidationResult(result);
+				_model.applyValidationResult(result);
 			}
 		};
 		validationModel.addConstraintValidationListener(_validationListener);

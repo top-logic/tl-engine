@@ -47,6 +47,8 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.form.ConstraintValidationListener;
+import com.top_logic.model.form.ValidationResult;
 import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.tool.boundsec.HandlerResult;
 
@@ -139,6 +141,9 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 	private ReactTableControl _tableControl;
 
 	private ObjectTableModel _tableModel;
+
+	/** Validation listeners registered per cell, for cleanup on exit edit mode. */
+	private final List<ConstraintValidationListener> _cellValidationListeners = new ArrayList<>();
 
 	/** The Add button in the toolbar, or {@code null} if not in edit mode. */
 	private ReactButtonControl _addButton;
@@ -273,6 +278,18 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 			}
 		}
 
+		// Register row overlays with the validation model so field-level
+		// constraints (mandatory, range) are evaluated for composition items.
+		FormValidationModel validationModel = _formControl.getValidationModel();
+		if (validationModel != null) {
+			for (CompositionRowModel rowModel : _rowModels) {
+				TLObjectOverlay rowOverlay = rowModel.getRowOverlay();
+				if (rowOverlay != null) {
+					validationModel.addOverlay(rowOverlay, rowOverlay.getBase());
+				}
+			}
+		}
+
 		// Register as participant.
 		_formControl.registerParticipant(this);
 
@@ -289,6 +306,21 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 	}
 
 	private void cleanupEditState() {
+		// Remove cell validation listeners and row overlays from validation model.
+		FormValidationModel validationModel = _formControl.getValidationModel();
+		if (validationModel != null) {
+			for (ConstraintValidationListener listener : _cellValidationListeners) {
+				validationModel.removeConstraintValidationListener(listener);
+			}
+			for (CompositionRowModel row : _rowModels) {
+				TLObjectOverlay overlay = row.getRowOverlay();
+				if (overlay != null) {
+					validationModel.removeOverlay(overlay);
+				}
+			}
+		}
+		_cellValidationListeners.clear();
+
 		if (_fieldModel != null) {
 			_formControl.unregisterParticipant(this);
 			_fieldModel = null;
@@ -463,6 +495,12 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 		// Create transient object.
 		TLObject transientObject = TransientObjectFactory.INSTANCE.createObject(targetType);
 
+		// Register with validation model so constraints are evaluated.
+		FormValidationModel validationModel = _formControl.getValidationModel();
+		if (validationModel != null) {
+			validationModel.addOverlay(transientObject, null);
+		}
+
 		// Create row model.
 		CompositionRowModel rowModel = CompositionRowModel.forNew(transientObject);
 		_rowModels.add(rowModel);
@@ -496,12 +534,20 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 		currentList.remove(rowObject);
 		_fieldModel.setValue(currentList);
 
-		// Remove row model.
+		// Remove row model and unregister from validation model.
 		if (rowIndex >= 0 && rowIndex < _rowModels.size()) {
 			CompositionRowModel removedRow = _rowModels.remove(rowIndex);
 			TLObjectOverlay removedOverlay = removedRow.getRowOverlay();
 			if (removedOverlay != null) {
 				_fieldModel.removeRowOverlay(removedOverlay);
+			}
+			FormValidationModel validationModel = _formControl.getValidationModel();
+			if (validationModel != null) {
+				if (removedOverlay != null) {
+					validationModel.removeOverlay(removedOverlay);
+				} else if (rowObject.tTransient()) {
+					validationModel.removeOverlay(rowObject);
+				}
 			}
 		}
 
@@ -672,8 +718,11 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 							cellFieldModel.setEditable(true);
 							rowModel.putColumnModel(columnName, cellFieldModel);
 
-							// Add dirty propagation listener.
-							addCellDirtyListener(cellFieldModel);
+							// Wire validation from FormValidationModel to this cell.
+							wireCellValidation(cellFieldModel, tlObject, part);
+
+							// Add dirty propagation and live validation trigger.
+							addCellListener(cellFieldModel, tlObject);
 						}
 
 						// Create the field input control.
@@ -788,11 +837,57 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 		return button;
 	}
 
-	private void addCellDirtyListener(AttributeFieldModel cellFieldModel) {
+	/**
+	 * Wires a {@link ConstraintValidationListener} that propagates validation results from the
+	 * {@link FormValidationModel} to the cell's {@link AttributeFieldModel}.
+	 */
+	private void wireCellValidation(AttributeFieldModel model, TLObject rowObject, TLStructuredTypePart part) {
+		FormValidationModel validationModel = _formControl.getValidationModel();
+		if (validationModel == null) {
+			return;
+		}
+
+		// Apply initial validation state.
+		applyValidationToCell(model, validationModel.getValidation(rowObject, part));
+
+		// Listen for future changes on this specific (object, attribute).
+		ConstraintValidationListener listener = (overlay, attr, result) -> {
+			if (overlay == rowObject && attr.equals(part)) {
+				applyValidationToCell(model, result);
+			}
+		};
+		validationModel.addConstraintValidationListener(listener);
+		_cellValidationListeners.add(listener);
+	}
+
+	private void applyValidationToCell(AttributeFieldModel model, ValidationResult result) {
+		if (result.isValid()) {
+			model.setModelValidationError(null);
+		} else {
+			model.setModelValidationError(result.getErrors().get(0));
+		}
+		model.setModelValidationWarnings(result.getWarnings());
+	}
+
+	/**
+	 * Adds a listener to a cell field model that propagates dirty state, reveals the field after
+	 * user interaction, and triggers live constraint re-evaluation via the
+	 * {@link FormValidationModel}.
+	 */
+	private void addCellListener(AttributeFieldModel cellFieldModel, TLObject rowObject) {
 		cellFieldModel.addListener(new FieldModelListener() {
 			@Override
 			public void onValueChanged(FieldModel source, Object oldValue, Object newValue) {
 				_formControl.updateDirtyState();
+
+				// Reveal validation errors after user interaction.
+				cellFieldModel.setRevealed(true);
+
+				// Trigger live constraint re-evaluation.
+				FormValidationModel validationModel = _formControl.getValidationModel();
+				if (validationModel != null) {
+					validationModel.onValueChanged(rowObject, cellFieldModel.getPart());
+				}
 			}
 
 			@Override

@@ -48,7 +48,6 @@ import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.form.ConstraintValidationListener;
-import com.top_logic.model.form.ValidationResult;
 import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.tool.boundsec.HandlerResult;
 

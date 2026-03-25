@@ -14,6 +14,7 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.form.FormModel;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * {@link ViewAction} that validates the form, reveals all errors, and applies edits to the base

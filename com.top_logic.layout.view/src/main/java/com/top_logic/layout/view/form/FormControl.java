@@ -352,24 +352,7 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 			return;
 		}
 
-		if (_validationModel != null && !_validationModel.isValid()) {
-			revealAllValidation();
-			throw new TopLogicException(
-				com.top_logic.layout.view.command.I18NConstants.ERROR_FORM_HAS_VALIDATION_ERRORS);
-		}
-
-		// Validate ALL participants so every field gets its error state set.
-		boolean participantsValid = true;
-		for (FormParticipant participant : _participants) {
-			if (!participant.validate()) {
-				participantsValid = false;
-			}
-		}
-		if (!participantsValid) {
-			revealAllValidation();
-			throw new TopLogicException(
-				com.top_logic.layout.view.command.I18NConstants.ERROR_FORM_HAS_VALIDATION_ERRORS);
-		}
+		validateOrThrow();
 
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		Transaction tx = kb.beginTransaction(I18NConstants.FORM_APPLY);
@@ -397,24 +380,7 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 			return;
 		}
 
-		if (_validationModel != null && !_validationModel.isValid()) {
-			revealAllValidation();
-			throw new TopLogicException(
-				com.top_logic.layout.view.command.I18NConstants.ERROR_FORM_HAS_VALIDATION_ERRORS);
-		}
-
-		// Validate ALL participants so every field gets its error state set.
-		boolean participantsValid = true;
-		for (FormParticipant participant : _participants) {
-			if (!participant.validate()) {
-				participantsValid = false;
-			}
-		}
-		if (!participantsValid) {
-			revealAllValidation();
-			throw new TopLogicException(
-				com.top_logic.layout.view.command.I18NConstants.ERROR_FORM_HAS_VALIDATION_ERRORS);
-		}
+		validateOrThrow();
 
 		if (_overlay.isDirty() || hasParticipantChanges()) {
 			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
@@ -456,6 +422,28 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 			participant.cancel();
 		}
 		exitEditMode();
+	}
+
+	/**
+	 * Validates all participants and throws if any are invalid.
+	 *
+	 * <p>
+	 * Iterates all participants (not short-circuiting) so every field gets its error state set,
+	 * then reveals all hidden validation errors before throwing.
+	 * </p>
+	 */
+	private void validateOrThrow() {
+		boolean valid = true;
+		for (FormParticipant participant : _participants) {
+			if (!participant.validate()) {
+				valid = false;
+			}
+		}
+		if (!valid) {
+			revealAllValidation();
+			throw new TopLogicException(
+				com.top_logic.layout.view.command.I18NConstants.ERROR_FORM_HAS_VALIDATION_ERRORS);
+		}
 	}
 
 	/**

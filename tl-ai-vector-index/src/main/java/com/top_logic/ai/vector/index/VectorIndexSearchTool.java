@@ -92,7 +92,7 @@ public class VectorIndexSearchTool {
 			if (maxResults == null || maxResults <= 0) {
 				matches = vectorIndex.searchVectorIndex(query);
 			} else {
-				matches = vectorIndex.searchVectorIndex(query, maxResults);
+				matches = vectorIndex.searchVectorIndex(query, maxResults, 0.8);
 			}
 		} catch (IllegalStateException ex) {
 			Logger.error("VectorIndexSearchTool: " + ex.getMessage(), ex, VectorIndexSearchTool.class);

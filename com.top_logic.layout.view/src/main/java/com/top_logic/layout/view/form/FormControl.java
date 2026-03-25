@@ -322,29 +322,20 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 
 		// Acquire lock first -- if this fails, no overlay is created.
 		_lockHandler.acquireLock(_currentObject);
-		_overlay = new TLObjectOverlay(_currentObject);
-
-		_validationModel = new FormValidationModel();
-		_validationModel.addOverlay(_overlay, _currentObject);
-		_validationModel.addConstraintValidationListener((overlay, attribute, result) -> {
-			putState(VALID, Boolean.valueOf(_validationModel.isValid()));
-		});
-		putState(VALID, Boolean.valueOf(_validationModel.isValid()));
 
 		_editMode = true;
 		putState(EDIT_MODE, Boolean.TRUE);
 		updateEditModeChannel();
-		updateDirtyState();
 
-		fireFormStateChanged();
+		setupEditSession();
 	}
 
 	/**
 	 * Applies overlay changes to the knowledge base without leaving edit mode.
 	 *
 	 * <p>
-	 * Opens a KB transaction, transfers overlay changes to the base object, commits, and resets the
-	 * overlay. Fires state changed so that field controls can re-read the reset overlay.
+	 * Persists changes, then sets up a fresh edit session (new overlay, new validation model).
+	 * Participants re-register via {@link FormModelListener#onFormStateChanged(FormModel)}.
 	 * </p>
 	 */
 	public void executeApply() {
@@ -354,10 +345,7 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 
 		persistChanges();
 
-		_overlay.reset();
-		updateDirtyState();
-
-		fireFormStateChanged();
+		setupEditSession();
 	}
 
 	/**
@@ -444,6 +432,26 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 			throw new TopLogicException(
 				com.top_logic.layout.view.command.I18NConstants.ERROR_FORM_HAS_VALIDATION_ERRORS);
 		}
+	}
+
+	/**
+	 * Sets up a fresh edit session: creates a new overlay and validation model, clears participants
+	 * (they re-register via {@link #fireFormStateChanged()}), and fires state changed.
+	 */
+	private void setupEditSession() {
+		_participants.clear();
+
+		_overlay = new TLObjectOverlay(_currentObject);
+
+		_validationModel = new FormValidationModel();
+		_validationModel.addOverlay(_overlay, _currentObject);
+		_validationModel.addConstraintValidationListener((overlay, attribute, result) -> {
+			putState(VALID, Boolean.valueOf(_validationModel.isValid()));
+		});
+		putState(VALID, Boolean.valueOf(_validationModel.isValid()));
+
+		updateDirtyState();
+		fireFormStateChanged();
 	}
 
 	/**

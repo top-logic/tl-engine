@@ -379,13 +379,17 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 				com.top_logic.layout.view.command.I18NConstants.ERROR_FORM_HAS_VALIDATION_ERRORS);
 		}
 
-		// Validate all participants; abort if any fail.
+		// Validate ALL participants so every field gets its error state set.
+		boolean participantsValid = true;
 		for (FormParticipant participant : _participants) {
 			if (!participant.validate()) {
-				revealAllValidation();
-				throw new TopLogicException(
-					com.top_logic.layout.view.command.I18NConstants.ERROR_FORM_HAS_VALIDATION_ERRORS);
+				participantsValid = false;
 			}
+		}
+		if (!participantsValid) {
+			revealAllValidation();
+			throw new TopLogicException(
+				com.top_logic.layout.view.command.I18NConstants.ERROR_FORM_HAS_VALIDATION_ERRORS);
 		}
 
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
@@ -420,13 +424,17 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 				com.top_logic.layout.view.command.I18NConstants.ERROR_FORM_HAS_VALIDATION_ERRORS);
 		}
 
-		// Validate all participants; abort if any fail.
+		// Validate ALL participants so every field gets its error state set.
+		boolean participantsValid = true;
 		for (FormParticipant participant : _participants) {
 			if (!participant.validate()) {
-				revealAllValidation();
-				throw new TopLogicException(
-					com.top_logic.layout.view.command.I18NConstants.ERROR_FORM_HAS_VALIDATION_ERRORS);
+				participantsValid = false;
 			}
+		}
+		if (!participantsValid) {
+			revealAllValidation();
+			throw new TopLogicException(
+				com.top_logic.layout.view.command.I18NConstants.ERROR_FORM_HAS_VALIDATION_ERRORS);
 		}
 
 		if (_overlay.isDirty() || hasParticipantChanges()) {

@@ -368,6 +368,9 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 			return null;
 		}
 
+		for (FormParticipant participant : _participants) {
+			participant.applyState();
+		}
 		_overlay.apply();
 		return _overlay.getBase();
 	}
@@ -483,7 +486,7 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 		Transaction tx = kb.beginTransaction(I18NConstants.FORM_SAVE);
 		try {
 			for (FormParticipant participant : _participants) {
-				participant.apply(tx);
+				participant.persist(tx);
 			}
 			executeStoreState();
 			tx.commit();

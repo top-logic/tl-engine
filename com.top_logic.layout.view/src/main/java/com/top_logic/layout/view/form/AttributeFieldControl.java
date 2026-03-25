@@ -219,8 +219,8 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 	}
 
 	@Override
-	public void apply(Transaction tx) {
-		// No-op: the main overlay's applyTo() handles primitive attribute changes.
+	public void persist(Transaction tx) {
+		// No-op: the main overlay handles primitive attribute changes.
 	}
 
 	@Override

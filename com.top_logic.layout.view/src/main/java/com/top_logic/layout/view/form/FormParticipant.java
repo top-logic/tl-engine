@@ -26,17 +26,30 @@ public interface FormParticipant {
 	boolean validate();
 
 	/**
-	 * Applies this participant's changes within the given transaction.
+	 * Applies buffered overlay changes to the underlying base objects.
 	 *
 	 * <p>
-	 * Called within an open transaction before the overlay is applied to the base object.
-	 * Participants may persist new objects and update the overlay's reference lists here.
+	 * Called by {@link FormControl#executeStoreState()} for all participants. Does not require a KB
+	 * transaction. For example, a composition table applies its row overlays here.
+	 * </p>
+	 */
+	default void applyState() {
+		// Default no-op for participants whose state is fully managed by the main overlay.
+	}
+
+	/**
+	 * Performs KB-specific operations within the given transaction.
+	 *
+	 * <p>
+	 * Called within an open transaction before {@link #applyState()} and the main overlay
+	 * application. Participants persist new transient objects, update overlay reference lists, and
+	 * delete orphaned objects here.
 	 * </p>
 	 *
 	 * @param tx
 	 *        The current transaction.
 	 */
-	void apply(Transaction tx);
+	void persist(Transaction tx);
 
 	/**
 	 * Cancels this participant's editing state, discarding any uncommitted changes.

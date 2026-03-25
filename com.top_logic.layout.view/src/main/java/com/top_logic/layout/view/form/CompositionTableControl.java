@@ -353,27 +353,31 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 	}
 
 	@Override
-	public void apply(Transaction tx) {
+	public void applyState() {
 		if (_fieldModel == null) {
 			return;
 		}
-		List<TLObject> currentList = _fieldModel.getCurrentList();
-
-		// 1. Apply row overlays (attribute changes on existing objects).
 		for (CompositionRowModel row : _rowModels) {
 			TLObjectOverlay overlay = row.getRowOverlay();
 			if (overlay != null && overlay.isDirty()) {
 				overlay.apply();
 			}
 		}
+	}
 
-		// 2. Persist new transient objects and build the persisted reference list.
+	@Override
+	public void persist(Transaction tx) {
+		if (_fieldModel == null) {
+			return;
+		}
+		List<TLObject> currentList = _fieldModel.getCurrentList();
+
+		// Persist new transient objects and build the persisted reference list.
 		List<TLObject> persistedList = new ArrayList<>();
 		for (TLObject obj : currentList) {
 			if (obj instanceof TLObjectOverlay) {
 				persistedList.add(((TLObjectOverlay) obj).getBase());
 			} else if (obj.tTransient()) {
-				// New transient object -- persist it by creating a KB object and copying values.
 				TLObject persisted = persistTransientObject(obj);
 				persistedList.add(persisted);
 			} else {
@@ -381,12 +385,11 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 			}
 		}
 
-		// 3. Update composition reference in the main overlay.
-		// FormControl.executeSave() calls participant.apply() BEFORE overlay.applyTo(),
-		// so we prepare the overlay with the correct persisted list.
+		// Update composition reference in the main overlay so the main overlay.apply()
+		// writes the correct persisted list to the base object.
 		_formControl.getOverlay().tUpdate(_compositionPart, persistedList);
 
-		// 4. Delete orphaned objects (present in original but absent from current).
+		// Delete orphaned objects (present in original but absent from current).
 		Set<TLObject> currentBases = new HashSet<>(persistedList);
 		for (TLObject original : _originalPersistentObjects) {
 			if (!currentBases.contains(original)) {

@@ -486,19 +486,6 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 		}
 	}
 
-	/**
-	 * Unregisters a dynamically created child {@link ReactControl} from this control's SSE queue.
-	 *
-	 * @param child
-	 *        The child control to unregister.
-	 */
-	protected void unregisterChildControl(ReactControl child) {
-		SSEUpdateQueue queue = _sseQueue;
-		if (queue != null) {
-			queue.unregisterControl(child);
-			child._sseQueue = null;
-		}
-	}
 
 	// -- Context-aware serialization methods --
 

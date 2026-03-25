@@ -611,7 +611,6 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 
 		// Create or replace the table control.
 		if (_tableControl != null) {
-			unregisterChildControl(_tableControl);
 			_tableControl.cleanupTree();
 		}
 		_tableControl = new ReactTableControl(_context, _tableModel, cellProvider);
@@ -626,7 +625,6 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 
 	private void updateToolbar(boolean editMode) {
 		if (_addButton != null) {
-			unregisterChildControl(_addButton);
 			_addButton.cleanupTree();
 			_addButton = null;
 		}

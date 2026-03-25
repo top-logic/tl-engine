@@ -470,7 +470,7 @@ public class ReactTableControl extends ReactControl {
 				Map<String, ReactControl> cells = _rowCellCache.remove(oldRow);
 				if (cells != null) {
 					for (ReactControl cell : cells.values()) {
-						unregisterChildControl(cell);
+						cell.cleanupTree();
 					}
 				}
 			}

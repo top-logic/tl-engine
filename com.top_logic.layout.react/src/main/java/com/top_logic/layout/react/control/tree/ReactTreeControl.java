@@ -236,7 +236,7 @@ public class ReactTreeControl extends ReactControl {
 	public void invalidateNodeControl(Object node) {
 		ReactControl control = _nodeControlCache.remove(node);
 		if (control != null) {
-			unregisterChildControl(control);
+			control.cleanupTree();
 		}
 	}
 
@@ -292,7 +292,7 @@ public class ReactTreeControl extends ReactControl {
 		for (Object node : toRemove) {
 			ReactControl control = _nodeControlCache.remove(node);
 			if (control != null) {
-				unregisterChildControl(control);
+				control.cleanupTree();
 			}
 		}
 

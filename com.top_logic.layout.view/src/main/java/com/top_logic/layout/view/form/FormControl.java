@@ -352,8 +352,7 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 			return;
 		}
 
-		validateOrThrow();
-		commitChanges();
+		persistChanges();
 
 		_overlay.reset();
 		updateDirtyState();
@@ -362,11 +361,12 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	}
 
 	/**
-	 * Validates the form, applies overlay edits to the base object and returns it.
+	 * Validates the form and applies overlay edits to the base object.
 	 *
 	 * <p>
-	 * Used in create/edit dialogs where changes are applied to a (typically transient) base object
-	 * without a KB transaction. The caller is responsible for persisting the result.
+	 * This is the core form-state application. All paths that commit form changes
+	 * ({@link #executeApply()}, {@link #executeSave()}, and external callers like
+	 * {@code StoreFormStateAction}) go through this method.
 	 * </p>
 	 *
 	 * @return The base object with overlay changes applied, or {@code null} if no overlay exists.
@@ -380,9 +380,8 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 			return null;
 		}
 
-		TLObject base = _overlay.getBase();
-		_overlay.applyTo(base);
-		return base;
+		_overlay.applyTo(_overlay.getBase());
+		return _overlay.getBase();
 	}
 
 	/**
@@ -393,10 +392,8 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 			return;
 		}
 
-		validateOrThrow();
-
 		if (_overlay.isDirty() || hasParticipantChanges()) {
-			commitChanges();
+			persistChanges();
 		}
 
 		exitEditMode();
@@ -465,21 +462,22 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	}
 
 	/**
-	 * Commits overlay and participant changes in a KB transaction.
+	 * Validates, lets participants apply, and commits form state in a KB transaction.
 	 *
 	 * <p>
 	 * Participants apply first (e.g. composition tables persist new objects and update reference
-	 * lists in the overlay), then the overlay transfers all changes to the KB.
+	 * lists in the overlay), then {@link #executeStoreState()} validates and transfers overlay
+	 * changes to the base object.
 	 * </p>
 	 */
-	private void commitChanges() {
+	private void persistChanges() {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		Transaction tx = kb.beginTransaction(I18NConstants.FORM_SAVE);
 		try {
 			for (FormParticipant participant : _participants) {
 				participant.apply(tx);
 			}
-			_overlay.applyTo(_currentObject);
+			executeStoreState();
 			tx.commit();
 		} finally {
 			tx.rollback();

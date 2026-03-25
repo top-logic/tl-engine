@@ -37,25 +37,33 @@ import opennlp.tools.cmdline.ArgumentParser.OptionalParameter;
 public class VectorIndexTLScriptFunctions extends TLScriptFunctions {
 
 	/**
-	 * Returns a list of results from the
+	 * Returns a list of results from the Vector database
 	 *
 	 * <p>
-	 * Example usage in TL-Script:
+	 * Example usage in TL-Script to resolve objects, contained in the Vector Index result:
 	 * </p>
 	 * 
-	 * <pre>{@code { franceVacations = vectorIndexSearch("all
-	 * vacations in France", 2); $franceVacations.map(x -> { "internalId":
-	 * $x["embedded"]["text"].parseJson()["internalId"], "TopLogic-type":
-	 * $x["embedded"]["text"].parseJson()["TopLogic-type"], "Instance":
-	 * (`test.indexingVector:Vacation`).filter(a ->
-	 * $a.get(`test.indexingVector:Vacation#id`).equals($x["embedded"]["text"].parseJson()["internalId"]))
-	 * }) } }</pre>
+	 * <pre>{@code 
+	 * {
+	 *   franceVacations = vectorIndexSearch("all vacations in France", 2); 
+	 *   $franceVacations.map(x -> { 
+	 *   	"internalId": $x["embedded"]["text"].parseJson()["internalId"], 
+	 *      "TopLogic-type": $x["embedded"]["text"].parseJson()["TopLogic-type"], 
+	 *      "Instance": (`test.indexingVector:Vacation`).filter(a ->
+	 *            $a.get(`test.indexingVector:Vacation#id`).equals($x["embedded"]["text"].parseJson()["internalId"]))
+	 *   })
+	 * }
+	 * }</pre>
 	 * 
-	 * @param query The string query to search inside the vector database.
-	 * @param limit Optional parameter for number of expected records to return (defaults to 5).
-	 * @param scoreThreshold Minimum score threshold. Must be between 0 and 1 (defaults to 0.8).
+	 * @param query
+	 *        The string query to search inside the vector database.
+	 * @param limit
+	 *        Optional parameter for number of expected records to return (defaults to 5).
+	 * @param scoreThreshold
+	 *        Minimum score threshold. Must be between 0 and 1 (defaults to 0.8).
 	 * @return A list of record dictionaries matching the query and parameters.
-	 * @throws Exception When parameters are incorrect (e.g., negative threshold).
+	 * @throws Exception
+	 *         When parameters are incorrect (e.g., negative threshold).
 	 */
 	@Label("Search for a string")
 	@SideEffectFree
@@ -68,6 +76,7 @@ public class VectorIndexTLScriptFunctions extends TLScriptFunctions {
 		if (scoreThreshold == null) {
 			scoreThreshold = 0.8;
 		}
+
 		if (scoreThreshold < 0 || scoreThreshold > 1) {
 			throw new Exception("scoreThreshold must be a number between 0 and 1.");
 		}

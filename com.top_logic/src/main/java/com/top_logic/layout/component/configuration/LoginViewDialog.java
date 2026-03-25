@@ -228,8 +228,8 @@ public class LoginViewDialog extends AbstractTemplateDialog {
 			error = HandlerResult.error(message);
 		} else {
 			error = HandlerResult.error(detail);
-			error.setErrorTitle(message);
 		}
+		error.setErrorTitle(message);
 		return error;
 	}
 

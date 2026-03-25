@@ -353,18 +353,7 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 		}
 
 		validateOrThrow();
-
-		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		Transaction tx = kb.beginTransaction(I18NConstants.FORM_APPLY);
-		try {
-			for (FormParticipant participant : _participants) {
-				participant.apply(tx);
-			}
-			_overlay.applyTo(_currentObject);
-			tx.commit();
-		} finally {
-			tx.rollback();
-		}
+		commitChanges();
 
 		_overlay.reset();
 		updateDirtyState();
@@ -383,20 +372,7 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 		validateOrThrow();
 
 		if (_overlay.isDirty() || hasParticipantChanges()) {
-			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-			Transaction tx = kb.beginTransaction(I18NConstants.FORM_SAVE);
-			try {
-				// Participants apply first (e.g. composition tables persist new objects and
-				// update reference lists in the overlay), then the overlay transfers all
-				// changes to the KB.
-				for (FormParticipant participant : _participants) {
-					participant.apply(tx);
-				}
-				_overlay.applyTo(_currentObject);
-				tx.commit();
-			} finally {
-				tx.rollback();
-			}
+			commitChanges();
 		}
 
 		exitEditMode();
@@ -431,8 +407,11 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 * Iterates all participants (not short-circuiting) so every field gets its error state set,
 	 * then reveals all hidden validation errors before throwing.
 	 * </p>
+	 *
+	 * @throws TopLogicException
+	 *         If any participant reports a validation error.
 	 */
-	private void validateOrThrow() {
+	public void validateOrThrow() {
 		boolean valid = true;
 		for (FormParticipant participant : _participants) {
 			if (!participant.validate()) {
@@ -458,6 +437,28 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 		putState(DIRTY, Boolean.valueOf(dirty));
 		if (_dirtyChannel != null) {
 			_dirtyChannel.set(Boolean.valueOf(dirty));
+		}
+	}
+
+	/**
+	 * Commits overlay and participant changes in a KB transaction.
+	 *
+	 * <p>
+	 * Participants apply first (e.g. composition tables persist new objects and update reference
+	 * lists in the overlay), then the overlay transfers all changes to the KB.
+	 * </p>
+	 */
+	private void commitChanges() {
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+		Transaction tx = kb.beginTransaction(I18NConstants.FORM_SAVE);
+		try {
+			for (FormParticipant participant : _participants) {
+				participant.apply(tx);
+			}
+			_overlay.applyTo(_currentObject);
+			tx.commit();
+		} finally {
+			tx.rollback();
 		}
 	}
 

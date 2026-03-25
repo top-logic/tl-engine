@@ -10,14 +10,12 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
-import com.top_logic.element.meta.form.validation.FormValidationModel;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.form.FormModel;
 import com.top_logic.layout.view.form.TLObjectOverlay;
 import com.top_logic.model.TLObject;
-import com.top_logic.util.error.TopLogicException;
 
 /**
  * {@link ViewAction} that validates the form, reveals all errors, and applies edits to the base
@@ -66,15 +64,7 @@ public class StoreFormStateAction implements ViewAction {
 		}
 
 		FormControl formControl = (FormControl) formModel;
-
-		// Reveal all validation errors.
-		revealAllFields(formControl);
-
-		// Check if form is valid.
-		FormValidationModel validationModel = formControl.getValidationModel();
-		if (validationModel != null && !validationModel.isValid()) {
-			throw new TopLogicException(I18NConstants.ERROR_FORM_HAS_VALIDATION_ERRORS);
-		}
+		formControl.validateOrThrow();
 
 		TLObjectOverlay overlay = formControl.getOverlay();
 		if (overlay == null) {
@@ -85,11 +75,5 @@ public class StoreFormStateAction implements ViewAction {
 		TLObject base = overlay.getBase();
 		overlay.applyTo(base);
 		return base;
-	}
-
-	private void revealAllFields(FormControl formControl) {
-		// Fire a form state change to trigger all AttributeFieldControls to reveal.
-		// Each field's model gets revealed, making hidden validation errors visible.
-		formControl.revealAllValidation();
 	}
 }

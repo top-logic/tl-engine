@@ -39,10 +39,11 @@ public class InvitationModule extends KBBasedManagedClass<InvitationModule.Confi
 	@DisplayOrder({
 		Config.INVITATION_MAIL,
 		Config.VERIFICATION_MAIL,
-		Config.CODE_VALIDITY,
 		Config.RESET_PASSWORD_MAIL,
-		Config.PASSWORD_RESET_TIMEOUT,
+		Config.RESET_MFA_MAIL,
+		Config.CODE_VALIDITY,
 		Config.VERIFICATION_CODE_SIZE,
+		Config.PASSWORD_RESET_TIMEOUT,
 	})
 	public interface Config extends KBBasedManagedClass.Config<InvitationModule> {
 
@@ -54,6 +55,9 @@ public class InvitationModule extends KBBasedManagedClass<InvitationModule.Confi
 
 		/** Configuration name for {@link #getResetPasswordMail()}. */
 		String RESET_PASSWORD_MAIL = "reset-password-mail";
+
+		/** Configuration name for {@link #getResetMFAMail()}. */
+		String RESET_MFA_MAIL = "reset-mfa-mail";
 
 		/** Configuration name for {@link #getCodeValidity()}. */
 		String CODE_VALIDITY = "code-validity";
@@ -101,6 +105,20 @@ public class InvitationModule extends KBBasedManagedClass<InvitationModule.Confi
 		Expr getResetPasswordMail();
 
 		/**
+		 * The TL-Script expression that sends an email when reset of the multi-factor
+		 * authentication is requested.
+		 *
+		 * <p>
+		 * The expression is called with the email as first argument, the application name as second
+		 * argument, and the reset code as third argument.
+		 * </p>
+		 */
+		@Name(RESET_MFA_MAIL)
+		@Mandatory
+		@Label("Reset multi-factor-authentication mail")
+		Expr getResetMFAMail();
+
+		/**
 		 * How long a verification code remains valid after it was created.
 		 */
 		@Format(MillisFormat.class)
@@ -134,6 +152,8 @@ public class InvitationModule extends KBBasedManagedClass<InvitationModule.Confi
 
 	private final QueryExecutor _resetPasswordMail;
 
+	private final QueryExecutor _resetMFAMail;
+
 	/**
 	 * Create a {@link InvitationModule}.
 	 * 
@@ -147,6 +167,7 @@ public class InvitationModule extends KBBasedManagedClass<InvitationModule.Confi
 		_verificationMail = QueryExecutor.compile(config.getVerificationMail());
 		_invitationMail = QueryExecutor.compile(config.getInvitationMail());
 		_resetPasswordMail = QueryExecutor.compile(config.getResetPasswordMail());
+		_resetMFAMail = QueryExecutor.compile(config.getResetMFAMail());
 	}
 
 	/**
@@ -168,6 +189,13 @@ public class InvitationModule extends KBBasedManagedClass<InvitationModule.Confi
 	 */
 	public QueryExecutor getResetPasswordMail() {
 		return _resetPasswordMail;
+	}
+
+	/**
+	 * Compiled executor for {@link Config#getResetMFAMail()}.
+	 */
+	public QueryExecutor getResetMFAMail() {
+		return _resetMFAMail;
 	}
 
 	/**

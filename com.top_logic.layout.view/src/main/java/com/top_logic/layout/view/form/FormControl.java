@@ -156,7 +156,9 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 *        The participant to register.
 	 */
 	public void registerParticipant(FormParticipant participant) {
-		_participants.add(participant);
+		if (!_participants.contains(participant)) {
+			_participants.add(participant);
+		}
 	}
 
 	/**

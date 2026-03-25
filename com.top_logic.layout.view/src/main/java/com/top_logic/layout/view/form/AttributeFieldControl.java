@@ -184,6 +184,7 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 		// Rebind existing model to the current object.
 		_model.setObject(current);
 		_model.setEditable(source.isEditMode() && !_forceReadonly);
+		_formControl.registerParticipant(this);
 		_chrome.setDirty(_model.isDirty());
 
 		// Re-wire validation: the overlay changed, so the old listener (bound to the

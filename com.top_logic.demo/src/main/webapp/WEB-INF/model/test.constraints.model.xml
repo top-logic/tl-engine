@@ -46,14 +46,14 @@
 					</annotations>
 				</property>
 
-				<!-- Integer with range constraint: 0-100 -->
+				<!-- Integer with range constraint and composition total check -->
 				<property name="rangedInt"
 					type="tl.core:Integer"
 				>
 					<annotations>
 						<value-range
 							min="0.0"
-							max="100.0"
+							max="10000.0"
 						/>
 						<constraints>
 							<constraint-by-expression>

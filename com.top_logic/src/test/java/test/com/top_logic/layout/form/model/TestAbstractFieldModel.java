@@ -10,7 +10,6 @@ import java.util.List;
 
 import junit.framework.TestCase;
 
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
@@ -77,34 +76,6 @@ public class TestAbstractFieldModel extends TestCase {
 		assertFalse(model.isEditable());
 		assertEquals(1, listener._editabilityChanges.size());
 		assertFalse(listener._editabilityChanges.get(0).booleanValue());
-	}
-
-	/**
-	 * Test constraint validation.
-	 */
-	public void testValidation() {
-		AbstractFieldModel model = createModel(null);
-		model.setMandatory(true);
-		model.addConstraint(value -> value == null ? ResKey.text("Required") : null);
-
-		model.validate();
-
-		assertTrue(model.hasError());
-		assertNotNull(model.getError());
-	}
-
-	/**
-	 * Test validation clears error when value is valid.
-	 */
-	public void testValidationClears() {
-		AbstractFieldModel model = createModel(null);
-		model.addConstraint(value -> value == null ? ResKey.text("Required") : null);
-		model.validate();
-		assertTrue(model.hasError());
-
-		model.setValue("valid");
-		model.validate();
-		assertFalse(model.hasError());
 	}
 
 	/**

@@ -8,8 +8,6 @@ package com.top_logic.layout.view.form;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.top_logic.layout.form.model.AbstractFieldModel;
-
 import com.top_logic.base.locking.handler.LockHandler;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -74,8 +72,6 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	private FormValidationModel _validationModel;
 
 	private final List<FormModelListener> _formModelListeners = new ArrayList<>();
-
-	private final List<AbstractFieldModel> _fieldModels = new ArrayList<>();
 
 	private final List<FormParticipant> _participants = new ArrayList<>();
 
@@ -154,20 +150,6 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	}
 
 	/**
-	 * Registers a field model for reveal-all support.
-	 */
-	public void registerFieldModel(AbstractFieldModel model) {
-		_fieldModels.add(model);
-	}
-
-	/**
-	 * Unregisters a field model (e.g., when the field is removed dynamically).
-	 */
-	public void unregisterFieldModel(AbstractFieldModel model) {
-		_fieldModels.remove(model);
-	}
-
-	/**
 	 * Registers a {@link FormParticipant} to participate in the form's editing lifecycle.
 	 *
 	 * @param participant
@@ -188,12 +170,9 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	}
 
 	/**
-	 * Sets all registered field models to revealed, making hidden validation errors visible.
+	 * Makes hidden validation errors visible on all registered participants.
 	 */
 	public void revealAllValidation() {
-		for (AbstractFieldModel model : _fieldModels) {
-			model.setRevealed(true);
-		}
 		for (FormParticipant participant : _participants) {
 			participant.revealAll();
 		}
@@ -507,7 +486,6 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 		fireFormStateChanged();
 
 		_validationModel = null;
-		_fieldModels.clear();
 		_participants.clear();
 		putState(VALID, Boolean.TRUE);
 	}

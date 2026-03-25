@@ -98,23 +98,6 @@ public class FormFieldAdapter implements FieldModel {
 	}
 
 	@Override
-	public void validate() {
-		_field.check();
-	}
-
-	@Override
-	public void addConstraint(FieldConstraint constraint) {
-		throw new UnsupportedOperationException(
-			"Add constraints directly to the wrapped FormField.");
-	}
-
-	@Override
-	public void removeConstraint(FieldConstraint constraint) {
-		throw new UnsupportedOperationException(
-			"Remove constraints directly from the wrapped FormField.");
-	}
-
-	@Override
 	public void addListener(FieldModelListener listener) {
 		if (_listeners.isEmpty()) {
 			_listeners = new ArrayList<>();

@@ -119,7 +119,6 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 
 		_model = new AttributeFieldModel(current, part);
 		_model.setEditable(_formModel.isEditMode() && !_forceReadonly);
-		_formControl.registerFieldModel(_model);
 		_formControl.registerParticipant(this);
 
 		addModelListener();
@@ -168,7 +167,6 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 			// First compatible object arrived or re-appearing after hide.
 			_model = new AttributeFieldModel(current, part);
 			_model.setEditable(source.isEditMode() && !_forceReadonly);
-			_formControl.registerFieldModel(_model);
 			_formControl.registerParticipant(this);
 
 			addModelListener();
@@ -217,11 +215,7 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 
 	@Override
 	public boolean validate() {
-		if (_model == null) {
-			return true;
-		}
-		_model.validate();
-		return !_model.hasError();
+		return _model == null || !_model.hasError();
 	}
 
 	@Override
@@ -263,7 +257,6 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 				_model.removeListener(_modelListener);
 				_modelListener = null;
 			}
-			_formControl.unregisterFieldModel(_model);
 			_formControl.unregisterParticipant(this);
 		}
 		_model = null;

@@ -341,13 +341,9 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 		// from FormValidationModel) become visible via hasError().
 		revealAll();
 
-		_fieldModel.validate();
-
-		// Validate all row field models (checks local constraints).
 		boolean valid = !_fieldModel.hasError();
 		for (CompositionRowModel row : _rowModels) {
 			for (AttributeFieldModel colModel : row.getColumnModels().values()) {
-				colModel.validate();
 				if (colModel.hasError()) {
 					valid = false;
 				}

@@ -13,7 +13,7 @@ import com.top_logic.basic.util.ResKey;
  * Lightweight model for a single form field value.
  *
  * <p>
- * Captures typed value, dirty tracking, validation, and edit lifecycle.
+ * Captures typed value, dirty tracking, and edit lifecycle.
  * </p>
  */
 public interface FieldModel {
@@ -81,7 +81,7 @@ public interface FieldModel {
 	 *
 	 * <p>
 	 * This is called by the view's bridging listener to propagate model-level
-	 * validation results. The error is aggregated with local constraints.
+	 * validation results.
 	 * </p>
 	 *
 	 * @param error
@@ -100,21 +100,6 @@ public interface FieldModel {
 	default void setModelValidationWarnings(List<ResKey> warnings) {
 		// Default no-op, overridden in AbstractFieldModel.
 	}
-
-	/**
-	 * Triggers constraint validation against the current value.
-	 */
-	void validate();
-
-	/**
-	 * Adds a constraint to this model.
-	 */
-	void addConstraint(FieldConstraint constraint);
-
-	/**
-	 * Removes a previously added constraint.
-	 */
-	void removeConstraint(FieldConstraint constraint);
 
 	/**
 	 * Adds a listener for value, editability, and validation changes.

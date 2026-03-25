@@ -13,8 +13,7 @@ import java.util.Objects;
 import com.top_logic.basic.util.ResKey;
 
 /**
- * Base implementation of {@link FieldModel} with listener management, dirty tracking, and
- * constraint validation.
+ * Base implementation of {@link FieldModel} with listener management and dirty tracking.
  *
  * <p>
  * Subclasses can override value storage by overriding {@link #getValue()} and
@@ -38,8 +37,6 @@ public class AbstractFieldModel implements FieldModel {
 	private ResKey _modelError;
 
 	private List<ResKey> _modelWarnings = Collections.emptyList();
-
-	private List<FieldConstraint> _constraints = Collections.emptyList();
 
 	private boolean _revealed;
 
@@ -231,41 +228,6 @@ public class AbstractFieldModel implements FieldModel {
 			_modelWarnings = newWarnings;
 			fireValidationChanged();
 		}
-	}
-
-	@Override
-	public void validate() {
-		ResKey firstError = null;
-		List<ResKey> warnings = Collections.emptyList();
-
-		for (FieldConstraint constraint : _constraints) {
-			ResKey result = constraint.check(_value);
-			if (result != null) {
-				if (firstError == null) {
-					firstError = result;
-				}
-			}
-		}
-
-		boolean changed = !Objects.equals(_error, firstError) || !_warnings.equals(warnings);
-		_error = firstError;
-		_warnings = warnings;
-		if (changed) {
-			fireValidationChanged();
-		}
-	}
-
-	@Override
-	public void addConstraint(FieldConstraint constraint) {
-		if (_constraints.isEmpty()) {
-			_constraints = new ArrayList<>();
-		}
-		_constraints.add(constraint);
-	}
-
-	@Override
-	public void removeConstraint(FieldConstraint constraint) {
-		_constraints.remove(constraint);
 	}
 
 	@Override

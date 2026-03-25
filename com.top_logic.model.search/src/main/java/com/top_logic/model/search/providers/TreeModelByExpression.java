@@ -67,44 +67,28 @@ public class TreeModelByExpression<C extends TreeModelByExpression.Config<?>> ex
 	})
 	public interface Config<I extends TreeModelByExpression<?>> extends TreeModelBuilderBase.Config<I> {
 
-		/**
-		 * Configuration property label for {@link #getParents()}
-		 */
+		/** Property name of {@link #getParents()}. */
 		String PARENTS = "parents";
 
-		/**
-		 * Configuration property label for {@link #getModelQuery()}
-		 */
+		/** Property name of {@link #getModelQuery()}. */
 		String MODEL_QUERY = "modelQuery";
 
-		/**
-		 * Configuration property label for {@link #getModelPredicate()}
-		 */
+		/** Property name of {@link #getModelPredicate()}. */
 		String MODEL_PREDICATE = "modelPredicate";
 
-		/**
-		 * Configuration property label for {@link #getRootNode()}
-		 */
+		/** Property name of {@link #getRootNode()}. */
 		String ROOT_NODE = "rootNode";
 
-		/**
-		 * Configuration property label for {@link #getChildren()}
-		 */
+		/** Property name of {@link #getChildren()}. */
 		String CHILDREN = "children";
 
-		/**
-		 * Configuration property label for {@link #getLeafPredicate()}
-		 */
+		/** Property name of {@link #getLeafPredicate()}. */
 		String LEAF_PREDICATE = "leafPredicate";
 
-		/**
-		 * Configuration property label for {@link #getNodePredicate()}
-		 */
+		/** Property name of {@link #getNodePredicate()}. */
 		String NODE_PREDICATE = "nodePredicate";
 
-		/**
-		 * Configuration property label for {@link #getNodesToUpdate()}
-		 */
+		/** Property name of {@link #getNodesToUpdate()}. */
 		String NODES_TO_UPDATE = "nodesToUpdate";
 
 		/** Property name of {@link #getTypesToObserve()}. */
@@ -120,6 +104,11 @@ public class TreeModelByExpression<C extends TreeModelByExpression.Config<?>> ex
 		 * {@link #getParents()} on the newly created object.
 		 * </p>
 		 * 
+		 * <p>
+		 * The function receives a potential tree node as the first argument and the component model
+		 * as the second. It is expected to return a Boolean result.
+		 * </p>
+		 * 
 		 * @see TreeModelByExpression#supportsNode(LayoutComponent, Object)
 		 */
 		@Name(NODE_PREDICATE)
@@ -133,6 +122,12 @@ public class TreeModelByExpression<C extends TreeModelByExpression.Config<?>> ex
 		 * <p>
 		 * A leaf node is not further queried for {@link #getChildren()}. Visually there is no
 		 * difference between a leaf node and a non leaf node that has no {@link #getChildren()}.
+		 * </p>
+		 * 
+		 * <p>
+		 * The function receives a tree node as the first argument and the component model as the
+		 * second. It is expected to return a Boolean result indicating whether the given node is a
+		 * leaf.
 		 * </p>
 		 * 
 		 * @see TreeModelByExpression#isLeaf(LayoutComponent, Object)
@@ -159,12 +154,18 @@ public class TreeModelByExpression<C extends TreeModelByExpression.Config<?>> ex
 		Expr getChildren();
 
 		/**
-		 * Mapping function that receives the component model returns the root node of this tree.
-		 * 
+		 * Mapping function that receives the component model and returns the root node of this
+		 * tree.
+		 *
 		 * <p>
 		 * The input component model was accepted by {@link #getModelPredicate()} before.
 		 * </p>
 		 * 
+		 * <p>
+		 * The function receives the component model as its sole argument. The default identity
+		 * function <code>model -> $model</code> uses the component model directly as the tree root.
+		 * </p>
+		 *
 		 * @see TreeModelByExpression#getModel(Object, LayoutComponent)
 		 */
 		@Name(ROOT_NODE)
@@ -173,9 +174,15 @@ public class TreeModelByExpression<C extends TreeModelByExpression.Config<?>> ex
 		Expr getRootNode();
 
 		/**
-		 * Predicate that decides whether a given object is a valid input for
-		 * {@link #getRootNode()}.
-		 * 
+		 * Predicate that decides whether a given object is a valid component model for this tree.
+		 *
+		 * <p>
+		 * The function receives the candidate component model as its sole argument and is expected
+		 * to return a boolean result. Only objects for which this predicate returns
+		 * <code>true</code> are passed to {@link #getRootNode()} to compute the tree root. The
+		 * default value <code>true</code> accepts every object as a valid model.
+		 * </p>
+		 *
 		 * @see TreeModelByExpression#supportsModel(Object, LayoutComponent)
 		 */
 		@Name(MODEL_PREDICATE)
@@ -243,8 +250,16 @@ public class TreeModelByExpression<C extends TreeModelByExpression.Config<?>> ex
 		Expr getNodesToUpdate();
 
 		/**
-		 * The types whose instances have to be observed for {@link #getNodesToUpdate()} to be
-		 * triggered.
+		 * Types whose instances are observed for changes.
+		 *
+		 * <p>
+		 * When an instance of one of these types is created, modified, or deleted, the tree
+		 * evaluates {@link #getNodesToUpdate()} for the changed object to determine which tree
+		 * nodes must be refreshed. If left empty, no additional change-triggered updates are
+		 * performed beyond the default parent/child refresh.
+		 * </p>
+		 *
+		 * @see TreeModelByExpression#getTypesToObserve()
 		 */
 		@Name(TYPES_TO_OBSERVE)
 		@Format(TLModelPartRefsFormat.class)
@@ -317,12 +332,12 @@ public class TreeModelByExpression<C extends TreeModelByExpression.Config<?>> ex
 
 	@Override
 	public boolean supportsNode(LayoutComponent contextComponent, Object node) {
-		return asBoolean(_supportsNode.execute(node));
+		return asBoolean(_supportsNode.execute(node, contextComponent.getModel()));
 	}
 
 	@Override
 	public boolean isLeaf(LayoutComponent contextComponent, Object node) {
-		return asBoolean(_isLeaf.execute(node));
+		return asBoolean(_isLeaf.execute(node, contextComponent.getModel()));
 	}
 
 	@Override

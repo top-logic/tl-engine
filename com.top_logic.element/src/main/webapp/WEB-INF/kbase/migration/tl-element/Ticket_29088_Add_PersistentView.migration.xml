@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_29088_Add_PersistentView"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29019_Removed_log_entries"
+			module="tl"
+		/>
+		<dependency name="Ticket_29092_multi_factor_authentication"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<processor class="com.top_logic.knowledge.service.db2.migration.processor.XsltTableDefinitionBaselineProcessor"
+			transform="/WEB-INF/kbase/migration/tl-element/Ticket_29088_Add_PersistentView.transform.db.xslt"
+		/>
+
+		<create-class name="tl.accounts:PersistentView"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		>
+			<annotations>
+				<table name="PersBoundComp"/>
+			</annotations>
+		</create-class>
+		<add-class-generalizations name="tl.accounts:PersistentView">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</add-class-generalizations>
+		<create-property name="tl.accounts:PersistentView#name"
+			mandatory="true"
+			type="tl.core:String"
+		>
+			<annotations>
+				<storage-algorithm>
+					<primitive-storage storage-attribute="ID"/>
+				</storage-algorithm>
+				<size-constraint upper-bound="254"/>
+				<delete-protected/>
+			</annotations>
+		</create-property>
+	</processors>
+	<migration>
+		<type-mapping class=""/>
+	</migration>
+	<post-processors/>
+</migration>

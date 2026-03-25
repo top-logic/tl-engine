@@ -352,6 +352,28 @@
 				/>
 			</attributes>
 		</class>
+		<class name="PersistentView">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<table name="PersBoundComp"/>
+			</annotations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				>
+					<annotations>
+						<storage-algorithm>
+							<primitive-storage storage-attribute="ID"/>
+						</storage-algorithm>
+						<size-constraint upper-bound="254"/>
+						<delete-protected/>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
 		<class name="Role">
 			<generalizations>
 				<generalization type="tl.model:TLObject"/>

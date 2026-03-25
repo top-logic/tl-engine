@@ -24,6 +24,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.listen.ModelChangeEvent;
 import com.top_logic.model.listen.ModelListener;
 import com.top_logic.model.listen.ModelScope;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Session-scoped form control managing the editing lifecycle (view/edit mode, locking, KB
@@ -373,14 +374,17 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 		}
 
 		if (_validationModel != null && !_validationModel.isValid()) {
-			return; // Block apply when validation errors exist.
+			revealAllValidation();
+			throw new TopLogicException(
+				com.top_logic.layout.view.command.I18NConstants.ERROR_FORM_HAS_VALIDATION_ERRORS);
 		}
 
 		// Validate all participants; abort if any fail.
 		for (FormParticipant participant : _participants) {
 			if (!participant.validate()) {
 				revealAllValidation();
-				return;
+				throw new TopLogicException(
+					com.top_logic.layout.view.command.I18NConstants.ERROR_FORM_HAS_VALIDATION_ERRORS);
 			}
 		}
 
@@ -411,14 +415,17 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 		}
 
 		if (_validationModel != null && !_validationModel.isValid()) {
-			return; // Block save when validation errors exist.
+			revealAllValidation();
+			throw new TopLogicException(
+				com.top_logic.layout.view.command.I18NConstants.ERROR_FORM_HAS_VALIDATION_ERRORS);
 		}
 
 		// Validate all participants; abort if any fail.
 		for (FormParticipant participant : _participants) {
 			if (!participant.validate()) {
 				revealAllValidation();
-				return;
+				throw new TopLogicException(
+					com.top_logic.layout.view.command.I18NConstants.ERROR_FORM_HAS_VALIDATION_ERRORS);
 			}
 		}
 

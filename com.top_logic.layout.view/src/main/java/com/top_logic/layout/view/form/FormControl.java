@@ -362,6 +362,30 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	}
 
 	/**
+	 * Validates the form, applies overlay edits to the base object and returns it.
+	 *
+	 * <p>
+	 * Used in create/edit dialogs where changes are applied to a (typically transient) base object
+	 * without a KB transaction. The caller is responsible for persisting the result.
+	 * </p>
+	 *
+	 * @return The base object with overlay changes applied, or {@code null} if no overlay exists.
+	 * @throws TopLogicException
+	 *         If any participant reports a validation error.
+	 */
+	public TLObject executeStoreState() {
+		validateOrThrow();
+
+		if (_overlay == null) {
+			return null;
+		}
+
+		TLObject base = _overlay.getBase();
+		_overlay.applyTo(base);
+		return base;
+	}
+
+	/**
 	 * Saves changes (applies and exits edit mode).
 	 */
 	public void executeSave() {

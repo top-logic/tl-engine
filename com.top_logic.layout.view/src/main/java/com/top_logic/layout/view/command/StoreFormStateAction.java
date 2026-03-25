@@ -14,8 +14,6 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.form.FormModel;
-import com.top_logic.layout.view.form.TLObjectOverlay;
-import com.top_logic.model.TLObject;
 
 /**
  * {@link ViewAction} that validates the form, reveals all errors, and applies edits to the base
@@ -64,16 +62,7 @@ public class StoreFormStateAction implements ViewAction {
 		}
 
 		FormControl formControl = (FormControl) formModel;
-		formControl.validateOrThrow();
-
-		TLObjectOverlay overlay = formControl.getOverlay();
-		if (overlay == null) {
-			return input;
-		}
-
-		// Apply overlay edits to the base object (transient -> transient, no DB involved).
-		TLObject base = overlay.getBase();
-		overlay.applyTo(base);
-		return base;
+		Object result = formControl.executeStoreState();
+		return result != null ? result : input;
 	}
 }

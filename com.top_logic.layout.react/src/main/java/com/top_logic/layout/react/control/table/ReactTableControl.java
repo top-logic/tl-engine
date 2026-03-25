@@ -529,7 +529,7 @@ public class ReactTableControl extends ReactControl {
 	private void clearCellCache() {
 		for (Map<String, ReactControl> cells : _rowCellCache.values()) {
 			for (ReactControl cell : cells.values()) {
-				unregisterChildControl(cell);
+				cell.cleanupTree();
 			}
 		}
 		_rowCellCache.clear();
@@ -542,7 +542,7 @@ public class ReactTableControl extends ReactControl {
 			Map<String, ReactControl> cells = _rowCellCache.remove(rowObject);
 			if (cells != null) {
 				for (ReactControl cell : cells.values()) {
-					unregisterChildControl(cell);
+					cell.cleanupTree();
 				}
 			}
 		}

@@ -145,6 +145,9 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 	/** Validation listeners registered per cell, for cleanup on exit edit mode. */
 	private final List<ConstraintValidationListener> _cellValidationListeners = new ArrayList<>();
 
+	/** The validation model on which cell listeners were registered, for correct cleanup. */
+	private FormValidationModel _registeredValidationModel;
+
 	/** The Add button in the toolbar, or {@code null} if not in edit mode. */
 	private ReactButtonControl _addButton;
 
@@ -245,6 +248,9 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 	}
 
 	private void enterEditMode(TLObject currentObject) {
+		// Clean up previous edit state (e.g. after executeApply resets the session).
+		cleanupEditState();
+
 		// currentObject is the overlay in edit mode.
 		TLObject baseObject = currentObject;
 		if (currentObject instanceof TLObjectOverlay) {
@@ -280,12 +286,12 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 
 		// Register row overlays with the validation model so field-level
 		// constraints (mandatory, range) are evaluated for composition items.
-		FormValidationModel validationModel = _formControl.getValidationModel();
-		if (validationModel != null) {
+		_registeredValidationModel = _formControl.getValidationModel();
+		if (_registeredValidationModel != null) {
 			for (CompositionRowModel rowModel : _rowModels) {
 				TLObjectOverlay rowOverlay = rowModel.getRowOverlay();
 				if (rowOverlay != null) {
-					validationModel.addOverlay(rowOverlay, rowOverlay.getBase());
+					_registeredValidationModel.addOverlay(rowOverlay, rowOverlay.getBase());
 				}
 			}
 		}
@@ -306,18 +312,19 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 	}
 
 	private void cleanupEditState() {
-		// Remove cell validation listeners and row overlays from validation model.
-		FormValidationModel validationModel = _formControl.getValidationModel();
-		if (validationModel != null) {
+		// Remove cell validation listeners and row overlays from the model they were
+		// registered on (which may differ from the current model after setupEditSession).
+		if (_registeredValidationModel != null) {
 			for (ConstraintValidationListener listener : _cellValidationListeners) {
-				validationModel.removeConstraintValidationListener(listener);
+				_registeredValidationModel.removeConstraintValidationListener(listener);
 			}
 			for (CompositionRowModel row : _rowModels) {
 				TLObjectOverlay overlay = row.getRowOverlay();
 				if (overlay != null) {
-					validationModel.removeOverlay(overlay);
+					_registeredValidationModel.removeOverlay(overlay);
 				}
 			}
+			_registeredValidationModel = null;
 		}
 		_cellValidationListeners.clear();
 
@@ -494,7 +501,7 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 		TLObject transientObject = TransientObjectFactory.INSTANCE.createObject(targetType);
 
 		// Register with validation model so constraints are evaluated.
-		FormValidationModel validationModel = _formControl.getValidationModel();
+		FormValidationModel validationModel = _registeredValidationModel;
 		if (validationModel != null) {
 			validationModel.addOverlay(transientObject, null);
 		}
@@ -539,7 +546,7 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 			if (removedOverlay != null) {
 				_fieldModel.removeRowOverlay(removedOverlay);
 			}
-			FormValidationModel validationModel = _formControl.getValidationModel();
+			FormValidationModel validationModel = _registeredValidationModel;
 			if (validationModel != null) {
 				if (removedOverlay != null) {
 					validationModel.removeOverlay(removedOverlay);
@@ -566,7 +573,7 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 	 * so that constraints on the reference (e.g. min count) are re-evaluated.
 	 */
 	private void notifyValidationModelChanged() {
-		FormValidationModel validationModel = _formControl.getValidationModel();
+		FormValidationModel validationModel = _registeredValidationModel;
 		TLObjectOverlay overlay = _formControl.getOverlay();
 		if (validationModel != null && overlay != null && _compositionPart != null) {
 			validationModel.onValueChanged(overlay, _compositionPart);
@@ -840,7 +847,7 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 	 * {@link FormValidationModel} to the cell's {@link AttributeFieldModel}.
 	 */
 	private void wireCellValidation(AttributeFieldModel model, TLObject rowObject, TLStructuredTypePart part) {
-		FormValidationModel validationModel = _formControl.getValidationModel();
+		FormValidationModel validationModel = _registeredValidationModel;
 		if (validationModel == null) {
 			return;
 		}
@@ -873,7 +880,7 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 				cellFieldModel.setRevealed(true);
 
 				// Trigger live constraint re-evaluation.
-				FormValidationModel validationModel = _formControl.getValidationModel();
+				FormValidationModel validationModel = _registeredValidationModel;
 				if (validationModel != null) {
 					validationModel.onValueChanged(rowObject, cellFieldModel.getPart());
 				}

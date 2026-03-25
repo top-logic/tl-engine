@@ -19,6 +19,7 @@ import com.top_logic.layout.view.I18NConstants;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.element.meta.form.validation.FormValidationModel;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.form.ConstraintValidationListener;
 import com.top_logic.model.listen.ModelChangeEvent;
 import com.top_logic.model.listen.ModelListener;
 import com.top_logic.model.listen.ModelScope;
@@ -70,6 +71,8 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	private ViewChannel _dirtyChannel;
 
 	private FormValidationModel _validationModel;
+
+	private ConstraintValidationListener _validityListener;
 
 	private final List<FormModelListener> _formModelListeners = new ArrayList<>();
 
@@ -445,15 +448,21 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 * (they re-register via {@link #fireFormStateChanged()}), and fires state changed.
 	 */
 	private void setupEditSession() {
+		// Clean up old validation model before replacing it.
+		if (_validationModel != null && _validityListener != null) {
+			_validationModel.removeConstraintValidationListener(_validityListener);
+		}
+
 		_participants.clear();
 
 		_overlay = new TLObjectOverlay(_currentObject);
 
+		_validityListener = (overlay, attribute, result) -> {
+			putState(VALID, Boolean.valueOf(_validationModel.isValid()));
+		};
 		_validationModel = new FormValidationModel();
 		_validationModel.addOverlay(_overlay, _currentObject);
-		_validationModel.addConstraintValidationListener((overlay, attribute, result) -> {
-			putState(VALID, Boolean.valueOf(_validationModel.isValid()));
-		});
+		_validationModel.addConstraintValidationListener(_validityListener);
 		putState(VALID, Boolean.valueOf(_validationModel.isValid()));
 
 		updateDirtyState();
@@ -510,6 +519,10 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 
 		fireFormStateChanged();
 
+		if (_validationModel != null && _validityListener != null) {
+			_validationModel.removeConstraintValidationListener(_validityListener);
+			_validityListener = null;
+		}
 		_validationModel = null;
 		_participants.clear();
 		putState(VALID, Boolean.TRUE);

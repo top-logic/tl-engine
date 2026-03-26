@@ -5,13 +5,12 @@
  */
 package com.top_logic.layout.react.control.nav;
 
-import java.util.Map;
-
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.overlay.ReactDialogManagerControl;
 import com.top_logic.layout.react.control.overlay.ReactSnackbarControl;
+import com.top_logic.layout.react.control.overlay.ReactSnackbarControl.Variant;
 
 /**
  * Application shell that provides the standard page layout (header, content, footer) and a built-in
@@ -20,7 +19,7 @@ import com.top_logic.layout.react.control.overlay.ReactSnackbarControl;
  * <p>
  * The shell renders a full-height flex column with the header at the top, the content filling the
  * remaining space, and the footer at the bottom. A singleton {@link ReactSnackbarControl} is
- * embedded and accessible to any code via {@link #showSnackbar(String, String)}.
+ * embedded and accessible to any code via {@link #showSnackbar(String, Variant)}.
  * </p>
  *
  * <p>

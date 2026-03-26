@@ -20,7 +20,6 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.FloatDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
-import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.react.control.ReactControl;

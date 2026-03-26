@@ -52,7 +52,7 @@ mvn test -DskipTests=false -pl com.top_logic.basic -Dtest=ClassName#methodName
 - **To force recompilation without clean**: `touch` the changed `.java` files, then run `mvn compile -DskipTests=true`.
 - **Library modules** (e.g. `com.top_logic.layout.react`) can safely use `mvn clean install` — the `tl-maven-plugin:app` goal only runs in app modules.
 - **Piping Maven output**: Always use `mvn -B` (batch mode) when piping output to `grep`, `tail`, etc. Without `-B`, Maven emits ANSI color codes that prevent text matching (e.g. `grep 'BUILD'` fails because the actual string is `[1;32mBUILD SUCCESS[m`).
-- **Capture full output first**: Always redirect Maven output to a log file and then grep/tail it: `mvn -B ... &> /tmp/claude-1000/mvn-out.log; grep -E 'Tests run|BUILD|ERROR' /tmp/claude-1000/mvn-out.log`. Never pipe directly (`mvn ... | grep`) — if the filter misses something, the full output is lost and you have to re-run the entire build.
+- **Capture full output first**: Always redirect Maven output to a log file and then grep/tail it: `mvn -B ... &> $TMPDIR/mvn-out.log; grep -E 'Tests run|BUILD|ERROR' $TMPDIR/mvn-out.log`. Never pipe directly (`mvn ... | grep`) — if the filter misses something, the full output is lost and you have to re-run the entire build.
 
 ### Other Useful Commands
 

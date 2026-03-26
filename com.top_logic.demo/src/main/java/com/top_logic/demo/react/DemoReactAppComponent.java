@@ -31,6 +31,9 @@ import com.top_logic.layout.react.control.common.ReactFieldListControl;
 import com.top_logic.layout.react.control.layout.ReactCardControl;
 import com.top_logic.layout.react.control.layout.ReactCardControl.CardPadding;
 import com.top_logic.layout.react.control.layout.ReactCardControl.CardVariant;
+import com.top_logic.layout.react.control.layout.ReactStackControl.StackAlign;
+import com.top_logic.layout.react.control.layout.ReactStackControl.StackDirection;
+import com.top_logic.layout.react.control.layout.ReactStackControl.StackGap;
 import com.top_logic.layout.react.control.layout.ReactGridControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.react.control.nav.ReactAppBarControl;
@@ -165,7 +168,7 @@ public class DemoReactAppComponent extends LayoutComponent {
 		_breadcrumb = new ReactBreadcrumbControl(ctx,
 			breadcrumbItems(PAGE_DASHBOARD), this::handleBreadcrumbNavigate);
 
-		ReactControl header = new ReactStackControl(ctx, "column", "compact", "stretch", false,
+		ReactControl header = new ReactStackControl(ctx, StackDirection.COLUMN, StackGap.COMPACT, StackAlign.STRETCH, false,
 			List.of(appBar, _breadcrumb, _menu, _drawer));
 
 		// Content: Sidebar.

@@ -13,10 +13,12 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
-import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
+import com.top_logic.layout.react.control.layout.ReactStackControl.StackAlign;
+import com.top_logic.layout.react.control.layout.ReactStackControl.StackDirection;
+import com.top_logic.layout.react.control.layout.ReactStackControl.StackGap;
 import com.top_logic.layout.view.ContainerElement;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
@@ -51,32 +53,29 @@ public class StackElement extends ContainerElement {
 		String ALIGN = "align";
 
 		/**
-		 * The flex direction: "column" or "row".
+		 * The flex direction.
 		 */
 		@Name(DIRECTION)
-		@StringDefault("column")
-		String getDirection();
+		StackDirection getDirection();
 
 		/**
-		 * The gap between children: "compact", "default", or "loose".
+		 * The gap between children.
 		 */
 		@Name(GAP)
-		@StringDefault("default")
-		String getGap();
+		StackGap getGap();
 
 		/**
-		 * The cross-axis alignment: "start", "center", "end", or "stretch".
+		 * The cross-axis alignment.
 		 */
 		@Name(ALIGN)
-		@StringDefault("stretch")
-		String getAlign();
+		StackAlign getAlign();
 	}
 
-	private final String _direction;
+	private final StackDirection _direction;
 
-	private final String _gap;
+	private final StackGap _gap;
 
-	private final String _align;
+	private final StackAlign _align;
 
 	/**
 	 * Creates a new {@link StackElement} from configuration.

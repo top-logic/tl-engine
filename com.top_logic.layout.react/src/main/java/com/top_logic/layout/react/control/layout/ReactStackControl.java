@@ -8,22 +8,12 @@ package com.top_logic.layout.react.control.layout;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.top_logic.basic.config.ExternallyNamed;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 
 /**
  * A {@link ReactControl} that renders a flexbox container via the {@code TLStack} React component.
- *
- * <p>
- * State:
- * </p>
- * <ul>
- * <li>{@code direction} - "column" or "row"</li>
- * <li>{@code gap} - "compact", "default", or "loose"</li>
- * <li>{@code align} - "start", "center", "end", or "stretch"</li>
- * <li>{@code wrap} - boolean</li>
- * <li>{@code children} - list of child control descriptors</li>
- * </ul>
  */
 public class ReactStackControl extends ReactControl {
 
@@ -39,6 +29,84 @@ public class ReactStackControl extends ReactControl {
 
 	private static final String CHILDREN = "children";
 
+	/**
+	 * Flex direction.
+	 */
+	public enum StackDirection implements ExternallyNamed {
+
+		/** Vertical layout. */
+		COLUMN("column"),
+
+		/** Horizontal layout. */
+		ROW("row");
+
+		private final String _externalName;
+
+		StackDirection(String externalName) {
+			_externalName = externalName;
+		}
+
+		@Override
+		public String getExternalName() {
+			return _externalName;
+		}
+	}
+
+	/**
+	 * Gap between children.
+	 */
+	public enum StackGap implements ExternallyNamed {
+
+		/** Small gap. */
+		COMPACT("compact"),
+
+		/** Standard gap. */
+		DEFAULT("default"),
+
+		/** Large gap. */
+		LOOSE("loose");
+
+		private final String _externalName;
+
+		StackGap(String externalName) {
+			_externalName = externalName;
+		}
+
+		@Override
+		public String getExternalName() {
+			return _externalName;
+		}
+	}
+
+	/**
+	 * Cross-axis alignment.
+	 */
+	public enum StackAlign implements ExternallyNamed {
+
+		/** Align to start. */
+		START("start"),
+
+		/** Center alignment. */
+		CENTER("center"),
+
+		/** Align to end. */
+		END("end"),
+
+		/** Stretch to fill. */
+		STRETCH("stretch");
+
+		private final String _externalName;
+
+		StackAlign(String externalName) {
+			_externalName = externalName;
+		}
+
+		@Override
+		public String getExternalName() {
+			return _externalName;
+		}
+	}
+
 	private final List<ReactControl> _children;
 
 	/**
@@ -48,30 +116,30 @@ public class ReactStackControl extends ReactControl {
 	 *        The child controls to arrange.
 	 */
 	public ReactStackControl(ReactContext context, List<? extends ReactControl> children) {
-		this(context, "column", "default", "stretch", false, children);
+		this(context, StackDirection.COLUMN, StackGap.DEFAULT, StackAlign.STRETCH, false, children);
 	}
 
 	/**
 	 * Creates a stack with full configuration.
 	 *
 	 * @param direction
-	 *        "column" or "row".
+	 *        The flex direction.
 	 * @param gap
-	 *        "compact", "default", or "loose".
+	 *        The gap between children.
 	 * @param align
-	 *        "start", "center", "end", or "stretch".
+	 *        The cross-axis alignment.
 	 * @param wrap
 	 *        Whether to wrap children.
 	 * @param children
 	 *        The child controls to arrange.
 	 */
-	public ReactStackControl(ReactContext context, String direction, String gap, String align, boolean wrap,
-			List<? extends ReactControl> children) {
+	public ReactStackControl(ReactContext context, StackDirection direction, StackGap gap, StackAlign align,
+			boolean wrap, List<? extends ReactControl> children) {
 		super(context, null, REACT_MODULE);
 		_children = new ArrayList<>(children);
-		putState(DIRECTION, direction);
-		putState(GAP, gap);
-		putState(ALIGN, align);
+		putState(DIRECTION, direction.getExternalName());
+		putState(GAP, gap.getExternalName());
+		putState(ALIGN, align.getExternalName());
 		putState(WRAP, Boolean.valueOf(wrap));
 		putState(CHILDREN, _children);
 	}

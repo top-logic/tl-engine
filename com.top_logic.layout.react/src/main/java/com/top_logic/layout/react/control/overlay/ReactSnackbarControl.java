@@ -5,7 +5,6 @@
  */
 package com.top_logic.layout.react.control.overlay;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import com.top_logic.layout.react.ReactContext;
@@ -33,12 +32,6 @@ public class ReactSnackbarControl extends ReactControl {
 	private static final String DURATION = "duration";
 
 	private static final String VISIBLE = "visible";
-
-	private static final String ACTION = "action";
-
-	private static final String ACTION_LABEL = "label";
-
-	private static final String ACTION_COMMAND_NAME = "commandName";
 
 	private static final String GENERATION = "generation";
 
@@ -170,21 +163,6 @@ public class ReactSnackbarControl extends ReactControl {
 	 */
 	public void hide() {
 		putState(VISIBLE, false);
-	}
-
-	/**
-	 * Sets an action button on the snackbar.
-	 *
-	 * @param label
-	 *        The button label.
-	 * @param commandName
-	 *        The command to send when clicked.
-	 */
-	public void setAction(String label, String commandName) {
-		Map<String, String> action = new HashMap<>();
-		action.put(ACTION_LABEL, label);
-		action.put(ACTION_COMMAND_NAME, commandName);
-		putState(ACTION, action);
 	}
 
 	/**

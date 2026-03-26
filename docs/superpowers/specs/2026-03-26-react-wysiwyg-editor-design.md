@@ -103,6 +103,66 @@ com.top_logic.layout.react.wysiwyg/
           tl-react-wysiwyg.js           # Build output (generated)
 ```
 
+## DataProvider: Key-Based Image Download
+
+The existing `DataProvider` interface serves a single `BinaryData` per control. The WYSIWYG editor needs to serve multiple images by key. This requires changing `DataProvider` and the `/react-api/data` endpoint.
+
+### DataProvider Interface Change
+
+```java
+public interface DataProvider {
+    /**
+     * Returns the binary data for the given key, or {@code null} if not available.
+     *
+     * @param key
+     *        Identifies the requested data item. Controls with a single item ignore this.
+     */
+    BinaryData getDownloadData(String key);
+}
+```
+
+The old `getDownloadData()` (no-arg) is removed. The three existing implementations (`ReactAudioPlayerControl`, `ReactPhotoViewerControl`, `ReactDownloadControl`) are updated to accept and ignore the `key` parameter.
+
+### ReactServlet Change
+
+The `handleDataDownload` method passes the optional `key` query parameter:
+
+```java
+String key = request.getParameter("key");
+BinaryData data = ((DataProvider) control).getDownloadData(key);
+```
+
+### Client-Side: useTLDataUrl
+
+`useTLDataUrl()` stays unchanged — it returns the base URL. The WYSIWYG component appends `&key=<imageKey>` when building `<img src>` URLs:
+
+```typescript
+const dataUrl = useTLDataUrl();
+const imageUrl = `${dataUrl}&key=${encodeURIComponent(imageKey)}`;
+```
+
+### ReactWysiwygControl as DataProvider
+
+```java
+public class ReactWysiwygControl extends ReactFormFieldControl
+        implements UploadHandler, DataProvider {
+
+    @Override
+    public BinaryData getDownloadData(String key) {
+        if (_currentValue == null || key == null) {
+            return null;
+        }
+        return _currentValue.getImages().get(key);
+    }
+}
+```
+
+### Image URL Flow (Server → Client)
+
+When sending `value` to the client, the control rewrites `<img src="filename.png">` in the HTML to `<img src="/react-api/data?controlId=...&windowName=...&key=filename.png">`. This is done server-side in `handleModelValueChanged` before calling `putState(VALUE, rewrittenHtml)`.
+
+When receiving HTML back from the client (`valueChanged` command), the control strips the URL prefix back to just the image key, so that the `StructuredText` stores clean `<img src="filename.png">` references.
+
 ## React Component: TLWysiwygEditor
 
 ### State (from server)
@@ -178,10 +238,11 @@ The `|` separator renders a visual divider in the toolbar.
 
 ## Java Control: ReactWysiwygControl
 
-Extends `ReactFormFieldControl` and implements `UploadHandler` for image uploads. Inherits field value sync, editability tracking, and validation state.
+Extends `ReactFormFieldControl`, implements `UploadHandler` for image uploads and `DataProvider` for image downloads. Inherits field value sync, editability tracking, and validation state.
 
 ```java
-public class ReactWysiwygControl extends ReactFormFieldControl implements UploadHandler {
+public class ReactWysiwygControl extends ReactFormFieldControl
+        implements UploadHandler, DataProvider {
 
     private static final String TOOLBAR = "toolbar";
     private static final String IMAGE_URL = "imageUrl";
@@ -217,17 +278,13 @@ Override `handleModelValueChanged` and `parseClientValue` for this conversion. T
 
 ### StructuredText Image Handling
 
-`StructuredText` holds both HTML source code and a `Map<String, BinaryData>` of embedded images. The HTML references images by key name in `<img src="...">` tags. The existing CKEditor integration serves these images through a dedicated servlet.
+`StructuredText` holds both HTML source code and a `Map<String, BinaryData>` of embedded images. The HTML references images by key name in `<img src="...">` tags.
 
-**Existing images (loading):**
-- On `initFieldState`, extract image keys from `StructuredText.getImages()`
-- Send image keys to client as part of state, with URLs pointing to a servlet that serves images from the `StructuredText` image map
-- The exact URL scheme depends on the existing `StructuredTextControl` servlet — reuse that pattern
+**Image download (existing images):** The control implements `DataProvider` and serves images via `/react-api/data?key=<imageKey>`. See "DataProvider: Key-Based Image Download" section above for details.
 
-**New images (uploading):**
-- Uploaded images are added to the `StructuredText.getImages()` map via `addImage(key, binaryData)`
-- The image key (filename) is used as the `<img src>` value
-- On save, the updated `StructuredText` (with new images in its map) is written back to the model
+**Image upload (new images):** Uploaded images are added to `StructuredText.getImages()` via `addImage(key, binaryData)`. The upload response pushes the image key to the client, which builds the download URL and inserts `<img src="...">` at the cursor position.
+
+**HTML rewriting:** The control rewrites image `src` attributes between the internal format (`src="filename.png"`) and the download URL format (`src="/react-api/data?...&key=filename.png"`) when sending to / receiving from the client.
 
 ### Image Upload (UploadHandler)
 

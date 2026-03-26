@@ -7,6 +7,7 @@ package com.top_logic.layout.react.control.overlay;
 
 import java.util.Map;
 
+import com.top_logic.basic.config.ExternallyNamed;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
@@ -16,7 +17,7 @@ import com.top_logic.layout.react.control.ReactControl;
  *
  * <p>
  * Auto-dismisses after a configurable duration. Supports four {@link Variant variants} (info,
- * success, warning, error) and an optional action button.
+ * success, warning, error).
  * </p>
  */
 public class ReactSnackbarControl extends ReactControl {
@@ -38,7 +39,7 @@ public class ReactSnackbarControl extends ReactControl {
 	/**
 	 * The visual variant of a snackbar notification.
 	 */
-	public enum Variant {
+	public enum Variant implements ExternallyNamed {
 
 		/** Informational notification. */
 		INFO("info"),
@@ -58,9 +59,7 @@ public class ReactSnackbarControl extends ReactControl {
 			_externalName = externalName;
 		}
 
-		/**
-		 * The name sent to the React component.
-		 */
+		@Override
 		public String getExternalName() {
 			return _externalName;
 		}

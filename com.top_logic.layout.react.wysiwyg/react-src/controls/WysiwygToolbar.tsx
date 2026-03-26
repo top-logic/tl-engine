@@ -114,7 +114,12 @@ const WysiwygToolbar: React.FC<ToolbarProps> = ({ editor, items, onImageUpload }
             key={item}
             type="button"
             className={'tlWysiwygToolbar__button' + (active ? ' tlWysiwygToolbar__button--active' : '')}
-            onMouseDown={(e) => { e.preventDefault(); onClick(); }}
+            onMouseDown={(e) => {
+              if (item !== 'image') {
+                e.preventDefault();
+              }
+              onClick();
+            }}
             title={item}
           >
             {def.label}

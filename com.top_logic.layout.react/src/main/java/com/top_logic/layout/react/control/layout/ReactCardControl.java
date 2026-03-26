@@ -63,14 +63,14 @@ public class ReactCardControl extends ReactControl {
 	 */
 	public enum CardPadding implements ExternallyNamed {
 
-		/** No padding. */
-		NONE("none"),
+		/** Standard padding. */
+		DEFAULT("default"),
 
 		/** Reduced padding. */
 		COMPACT("compact"),
 
-		/** Standard padding. */
-		DEFAULT("default");
+		/** No padding. */
+		NONE("none");
 
 		private final String _externalName;
 

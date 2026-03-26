@@ -57,11 +57,11 @@ public class ReactStackControl extends ReactControl {
 	 */
 	public enum StackGap implements ExternallyNamed {
 
-		/** Small gap. */
-		COMPACT("compact"),
-
 		/** Standard gap. */
 		DEFAULT("default"),
+
+		/** Small gap. */
+		COMPACT("compact"),
 
 		/** Large gap. */
 		LOOSE("loose");
@@ -83,6 +83,9 @@ public class ReactStackControl extends ReactControl {
 	 */
 	public enum StackAlign implements ExternallyNamed {
 
+		/** Stretch to fill. */
+		STRETCH("stretch"),
+
 		/** Align to start. */
 		START("start"),
 
@@ -90,10 +93,7 @@ public class ReactStackControl extends ReactControl {
 		CENTER("center"),
 
 		/** Align to end. */
-		END("end"),
-
-		/** Stretch to fill. */
-		STRETCH("stretch");
+		END("end");
 
 		private final String _externalName;
 

@@ -27,14 +27,13 @@
 						<command class="com.top_logic.layout.view.command.OpenDialogCommand"
 							placement="TOOLBAR"
 							dialog-view="demo/edit-person-dialog.view.xml"
+							input="selectedPerson"
+							bind-input-to="model"
 						>
 							<label>
 								<en>Edit</en>
 								<de>Bearbeiten</de>
 							</label>
-							<inputs>
-								<input from="selectedPerson" to="model"/>
-							</inputs>
 						</command>
 					</commands>
 					<table

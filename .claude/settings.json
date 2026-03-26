@@ -9,8 +9,14 @@
     "enabled": true,                                                                                                                                                                                                                               
     "autoAllowBashIfSandboxed": true,                                                                                                                                                                                                              
     "filesystem": {                                                                                                                                                                                                                                
-      "allowWrite": ["~/.npm"]                                                                                                                                                                                                                     
-    }                                                                                                                                                                                                                                              
+      "allowWrite": [
+        "~/.npm",
+        "/tmp"
+      ]
+    },                                                                                                                                                                                                                                     
+    "network": {                                                                                                                                                                                                                                 
+      "allowedHosts": ["registry.npmjs.org", "api-free.deepl.com"]
+    }                                                                                                                                                                                                                                            
   }
 }
 

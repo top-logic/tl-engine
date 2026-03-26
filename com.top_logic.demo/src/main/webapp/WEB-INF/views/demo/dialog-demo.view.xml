@@ -17,9 +17,7 @@
 				gap="default"
 			>
 				<button>
-					<action class="com.top_logic.demo.view.command.OpenDemoDialogCommand"
-						dialog-message="Hello from the dialog manager!"
-					>
+					<action class="com.top_logic.demo.view.command.OpenDemoDialogCommand">
 						<label>
 							<en>Open Dialog</en>
 							<de>Dialog &#xF6;ffnen</de>
@@ -28,12 +26,14 @@
 							<en>Greetings</en>
 							<de>Begr&#xFC;&#xDF;ung</de>
 						</dialog-title>
+						<dialog-message>
+							<en>Hello from the dialog manager!</en>
+							<de>Hallo vom Dialog-Manager!</de>
+						</dialog-message>
 					</action>
 				</button>
 				<button>
-					<action class="com.top_logic.demo.view.command.OpenDemoDialogCommand"
-						dialog-message="Are you sure you want to proceed?"
-					>
+					<action class="com.top_logic.demo.view.command.OpenDemoDialogCommand">
 						<label>
 							<en>Open Another Dialog</en>
 							<de>Weiteren Dialog &#xF6;ffnen</de>
@@ -42,6 +42,10 @@
 							<en>Confirmation</en>
 							<de>Best&#xE4;tigung</de>
 						</dialog-title>
+						<dialog-message>
+							<en>Are you sure you want to proceed?</en>
+							<de>Sind Sie sicher, dass Sie fortfahren m&#xF6;chten?</de>
+						</dialog-message>
 					</action>
 				</button>
 			</stack>

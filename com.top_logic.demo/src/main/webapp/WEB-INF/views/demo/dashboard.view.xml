@@ -57,9 +57,11 @@
 					<de>Schnellerfassung</de>
 				</title>
 				<button>
-					<action class="com.top_logic.demo.view.command.OpenDemoDialogCommand"
-						dialog-message="Enter your new task details here."
-					>
+					<action class="com.top_logic.demo.view.command.OpenDemoDialogCommand">
+						<dialog-message>
+							<en>Enter your new task details here.</en>
+							<de>Geben Sie hier die Details der neuen Aufgabe ein.</de>
+						</dialog-message>
 						<label>
 							<en>+ New Task</en>
 							<de>+ Neue Aufgabe</de>

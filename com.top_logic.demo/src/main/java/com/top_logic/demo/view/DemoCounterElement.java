@@ -9,7 +9,9 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.demo.react.DemoReactCounterComponent.DemoCounterControl;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.view.UIElement;
@@ -42,10 +44,11 @@ public class DemoCounterElement implements UIElement {
 		 * The display label for the counter, or empty for the default.
 		 */
 		@Name(LABEL)
-		String getLabel();
+		@Nullable
+		ResKey getLabel();
 	}
 
-	private final String _label;
+	private final ResKey _label;
 
 	/**
 	 * Creates a new {@link DemoCounterElement} from configuration.
@@ -57,6 +60,7 @@ public class DemoCounterElement implements UIElement {
 
 	@Override
 	public IReactControl createControl(ViewContext context) {
-		return new DemoCounterControl(context, _label);
+		String label = _label != null ? com.top_logic.util.Resources.getInstance().getString(_label) : null;
+		return new DemoCounterControl(context, label);
 	}
 }

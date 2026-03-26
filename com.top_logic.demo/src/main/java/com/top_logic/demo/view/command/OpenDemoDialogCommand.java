@@ -13,6 +13,8 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.util.Resources;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
@@ -54,14 +56,14 @@ public class OpenDemoDialogCommand implements ViewCommand {
 		 */
 		@Name(DIALOG_TITLE)
 		@Nullable
-		String getDialogTitle();
+		ResKey getDialogTitle();
 
 		/**
 		 * The message to display inside the dialog body.
 		 */
 		@Name(DIALOG_MESSAGE)
 		@Nullable
-		String getDialogMessage();
+		ResKey getDialogMessage();
 	}
 
 	private final String _dialogTitle;
@@ -73,8 +75,9 @@ public class OpenDemoDialogCommand implements ViewCommand {
 	 */
 	@CalledByReflection
 	public OpenDemoDialogCommand(InstantiationContext context, Config config) {
-		_dialogTitle = config.getDialogTitle() != null ? config.getDialogTitle() : "Dialog";
-		_dialogMessage = config.getDialogMessage() != null ? config.getDialogMessage() : "Hello from the dialog!";
+		Resources res = Resources.getInstance();
+		_dialogTitle = config.getDialogTitle() != null ? res.getString(config.getDialogTitle()) : "Dialog";
+		_dialogMessage = config.getDialogMessage() != null ? res.getString(config.getDialogMessage()) : "Hello from the dialog!";
 	}
 
 	@Override

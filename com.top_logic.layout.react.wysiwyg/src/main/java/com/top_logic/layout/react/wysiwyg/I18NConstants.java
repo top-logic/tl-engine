@@ -18,6 +18,81 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey ERROR_IMAGE_UPLOAD_FAILED;
 
+	/**
+	 * @en Bold
+	 */
+	public static ResKey TOOLBAR_BOLD;
+
+	/**
+	 * @en Italic
+	 */
+	public static ResKey TOOLBAR_ITALIC;
+
+	/**
+	 * @en Underline
+	 */
+	public static ResKey TOOLBAR_UNDERLINE;
+
+	/**
+	 * @en Strikethrough
+	 */
+	public static ResKey TOOLBAR_STRIKETHROUGH;
+
+	/**
+	 * @en Heading
+	 */
+	public static ResKey TOOLBAR_HEADING;
+
+	/**
+	 * @en Bullet list
+	 */
+	public static ResKey TOOLBAR_BULLET_LIST;
+
+	/**
+	 * @en Numbered list
+	 */
+	public static ResKey TOOLBAR_ORDERED_LIST;
+
+	/**
+	 * @en Blockquote
+	 */
+	public static ResKey TOOLBAR_BLOCKQUOTE;
+
+	/**
+	 * @en Link
+	 */
+	public static ResKey TOOLBAR_LINK;
+
+	/**
+	 * @en Image
+	 */
+	public static ResKey TOOLBAR_IMAGE;
+
+	/**
+	 * @en Table
+	 */
+	public static ResKey TOOLBAR_TABLE;
+
+	/**
+	 * @en Code block
+	 */
+	public static ResKey TOOLBAR_CODE_BLOCK;
+
+	/**
+	 * @en Text color
+	 */
+	public static ResKey TOOLBAR_COLOR;
+
+	/**
+	 * @en Undo
+	 */
+	public static ResKey TOOLBAR_UNDO;
+
+	/**
+	 * @en Redo
+	 */
+	public static ResKey TOOLBAR_REDO;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

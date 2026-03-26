@@ -34,6 +34,12 @@
     </dependency>
 
     <dependency>
+      <groupId>org.webjars.npm</groupId>
+      <artifactId>remixicon</artifactId>
+      <version>4.7.0</version>
+    </dependency>
+
+    <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-basic</artifactId>
       <type>test-jar</type>

@@ -81,27 +81,27 @@ button.tlReactButton--icon:disabled {
 /* --- TLButton inside toolbar (inverse colors for dark header) ---------- */
 
 .tlPanel__toolbar .tlReactButton {
-	box-shadow: inset 0px 0px 0px 2px var(--text-inverse);
-	color: var(--text-inverse);
+	box-shadow: inset 0px 0px 0px 2px var(--layer-accent-icon, var(--text-inverse));
+	color: var(--layer-accent-icon, var(--text-inverse));
 }
 
 .tlPanel__toolbar button.tlReactButton:not(:disabled):hover {
-	background: rgba(255, 255, 255, 0.15);
+	background: var(--layer-accent-hover);
 }
 
 .tlPanel__toolbar button.tlReactButton:not(:disabled):active {
-	background: rgba(255, 255, 255, 0.25);
-	box-shadow: inset 0px 0px 0px 2px var(--text-inverse);
-	color: var(--text-inverse);
+	background: var(--layer-accent-active, var(--layer-accent-hover));
+	box-shadow: inset 0px 0px 0px 2px var(--layer-accent-icon, var(--text-inverse));
+	color: var(--layer-accent-icon, var(--text-inverse));
 }
 
 .tlPanel__toolbar .tlReactButton--icon {
 	box-shadow: none;
-	color: var(--text-inverse);
+	color: var(--layer-accent-icon, var(--text-inverse));
 }
 
 .tlPanel__toolbar button.tlReactButton--icon:not(:disabled):hover {
-	color: var(--text-inverse);
+	color: var(--layer-accent-icon, var(--text-inverse));
 }
 
 /* --- TLToggleButton (active state) -------------------------------------- */

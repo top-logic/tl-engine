@@ -3,4 +3,6 @@
 // IMPORTANT: All components MUST import React from 'tl-react-bridge' (not 'react').
 
 import { register } from 'tl-react-bridge';
-// Component will be added in Task 4.
+import TLWysiwygEditor from './controls/TLWysiwygEditor';
+
+register('TLWysiwygEditor', TLWysiwygEditor);

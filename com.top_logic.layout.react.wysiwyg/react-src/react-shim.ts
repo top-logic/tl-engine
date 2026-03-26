@@ -5,5 +5,6 @@ export const {
   useState, useRef, useEffect, useCallback, useMemo,
   forwardRef, createRef, createElement, createContext,
   useContext, useReducer, useImperativeHandle, useLayoutEffect,
-  memo, Fragment, Children, isValidElement, cloneElement
-} = React;
+  memo, Fragment, Children, isValidElement, cloneElement,
+  useDebugValue, version,
+} = React as any;

@@ -30,6 +30,11 @@
 
     <dependency>
       <groupId>com.top-logic</groupId>
+      <artifactId>tl-layout-view</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.top-logic</groupId>
       <artifactId>tl-basic</artifactId>
       <type>test-jar</type>
       <scope>test</scope>

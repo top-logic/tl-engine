@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="model"/>
+		<channel name="selection"/>
+	</channels>
+	<window
+		title="New DemoType A"
+		width="700px"
+	>
+		<form input="model" initial-edit-mode="true" mode-switch="false">
+			<field attribute="name"/>
+			<field attribute="htmlDescription"/>
+			<commands>
+				<generic-command label="Create" placement="TOOLBAR">
+					<store-form-state/>
+					<with-transaction>
+						<execute-script function="obj -> $obj.copy(transient: false)"/>
+					</with-transaction>
+					<write-channel name="selection"/>
+					<close-dialog/>
+				</generic-command>
+			</commands>
+		</form>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					label="Cancel"
+				/>
+			</button>
+		</actions>
+	</window>
+</view>

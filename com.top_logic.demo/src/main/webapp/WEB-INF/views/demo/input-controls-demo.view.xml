@@ -16,6 +16,15 @@
 			>
 				<panel title="Demo Types">
 					<commands>
+						<generic-command label="New" placement="TOOLBAR">
+							<execute-script function="x -> { obj = new(`DemoTypes:A`, transient: true); $obj.set(`DemoTypes:DemoTypes.A#booleanMandatory`, true); $obj.set(`DemoTypes:DemoTypes.A#booleanRadioMandatory`, true); $obj.set(`DemoTypes:DemoTypes.A#booleanSelectMandatory`, true); $obj; }"/>
+							<open-dialog
+								dialog-view="demo/create-demo-type-a.view.xml"
+								bind-input-to="model"
+							>
+								<bind channel="selection" to="selectedObject"/>
+							</open-dialog>
+						</generic-command>
 						<command class="com.top_logic.layout.view.command.OpenDialogCommand"
 							label="Show in Dialog"
 							placement="TOOLBAR"
@@ -25,10 +34,13 @@
 							<bind channel="model" to="selectedObject"/>
 						</command>
 					</commands>
-					<tree selection="selectedObject">
-						<root>`DemoTypes#ROOT`</root>
-						<children>node -&gt; $node.get(`tl.element:StructuredElementContainer#children`)</children>
-					</tree>
+					<table
+						selection="selectedObject"
+						types="DemoTypes:DemoTypes.A"
+						observed-types="DemoTypes:A"
+					>
+						<rows>all(`DemoTypes:A`)</rows>
+					</table>
 				</panel>
 			</pane>
 			<pane
@@ -44,6 +56,7 @@
 						<field attribute="date"/>
 						<field attribute="float"/>
 						<field attribute="icon"/>
+						<field attribute="htmlDescription"/>
 					</form>
 				</panel>
 			</pane>

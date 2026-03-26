@@ -33,9 +33,6 @@ public class ReactButtonControl extends ReactControl {
 	/** State key for the disabled flag. */
 	private static final String DISABLED = "disabled";
 
-	/** State key for the hidden flag. */
-	private static final String HIDDEN = "hidden";
-
 	/** State key for the ThemeImage encoded form (e.g. "css:fas fa-edit", "/icons/foo.png"). */
 	private static final String IMAGE = "image";
 
@@ -82,7 +79,7 @@ public class ReactButtonControl extends ReactControl {
 
 		putState(LABEL, model.getLabel());
 		putState(DISABLED, Boolean.valueOf(!model.isExecutable()));
-		putState(HIDDEN, Boolean.valueOf(!model.isVisible()));
+		setHidden(!model.isVisible());
 		putImageState(model.getImage());
 		model.addStateChangeListener(_modelChangeHandler);
 	}
@@ -105,16 +102,6 @@ public class ReactButtonControl extends ReactControl {
 	 */
 	public void setDisabled(boolean disabled) {
 		putState(DISABLED, disabled);
-	}
-
-	/**
-	 * Sets the hidden state of the button.
-	 *
-	 * @param hidden
-	 *        Whether the button should be hidden ({@code display: none}).
-	 */
-	public void setHidden(boolean hidden) {
-		putState(HIDDEN, hidden);
 	}
 
 	/**

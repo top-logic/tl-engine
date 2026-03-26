@@ -176,7 +176,7 @@ public abstract class CommandScopeElement extends ContainerElement {
 	private ViewExecutabilityRule buildExecutabilityRule(ViewCommand.Config cmdConfig) {
 		List<PolymorphicConfiguration<? extends ViewExecutabilityRule>> ruleConfigs = cmdConfig.getExecutability();
 		if (ruleConfigs.isEmpty()) {
-			return input -> ExecutableState.EXECUTABLE;
+			return ViewExecutabilityRule.ALWAYS_EXECUTABLE;
 		}
 		DefaultInstantiationContext instantiation = new DefaultInstantiationContext(CommandScopeElement.class);
 		List<ViewExecutabilityRule> rules = new ArrayList<>();

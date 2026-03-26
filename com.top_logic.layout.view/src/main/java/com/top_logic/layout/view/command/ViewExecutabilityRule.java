@@ -19,6 +19,11 @@ import com.top_logic.tool.execution.ExecutableState;
 public interface ViewExecutabilityRule {
 
 	/**
+	 * A rule that always returns {@link ExecutableState#EXECUTABLE}.
+	 */
+	ViewExecutabilityRule ALWAYS_EXECUTABLE = input -> ExecutableState.EXECUTABLE;
+
+	/**
 	 * Configuration for {@link ViewExecutabilityRule}.
 	 */
 	interface Config extends PolymorphicConfiguration<ViewExecutabilityRule> {

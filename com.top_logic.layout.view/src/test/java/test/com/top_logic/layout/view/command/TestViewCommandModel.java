@@ -17,6 +17,7 @@ import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.NullInputDisabled;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
+import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
 
@@ -59,7 +60,7 @@ public class TestViewCommandModel extends TestCase {
 		ViewCommandModel model = new ViewCommandModel(
 			(context, input) -> HandlerResult.DEFAULT_RESULT,
 			createMinimalConfig(), null,
-			input -> ExecutableState.EXECUTABLE, null);
+			ViewExecutabilityRule.ALWAYS_EXECUTABLE, null);
 		model.attach();
 
 		assertNull("Should resolve null without channel", model.resolveInput());

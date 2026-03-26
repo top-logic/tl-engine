@@ -46,7 +46,7 @@ public class CombinedViewExecutabilityRule implements ViewExecutabilityRule {
 	 */
 	public static ViewExecutabilityRule combine(List<ViewExecutabilityRule> rules) {
 		if (rules.isEmpty()) {
-			return input -> ExecutableState.EXECUTABLE;
+			return ViewExecutabilityRule.ALWAYS_EXECUTABLE;
 		}
 		if (rules.size() == 1) {
 			return rules.get(0);

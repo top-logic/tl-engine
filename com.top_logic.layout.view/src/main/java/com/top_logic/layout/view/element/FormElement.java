@@ -435,7 +435,7 @@ public class FormElement extends ContainerElement {
 		List<PolymorphicConfiguration<? extends ViewExecutabilityRule>> ruleConfigs =
 			cmdConfig.getExecutability();
 		if (ruleConfigs.isEmpty()) {
-			return input -> ExecutableState.EXECUTABLE;
+			return ViewExecutabilityRule.ALWAYS_EXECUTABLE;
 		}
 		DefaultInstantiationContext instantiation =
 			new DefaultInstantiationContext(FormElement.class);

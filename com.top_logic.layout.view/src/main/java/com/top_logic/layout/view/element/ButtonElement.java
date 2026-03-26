@@ -135,7 +135,7 @@ public class ButtonElement implements UIElement {
 		List<PolymorphicConfiguration<? extends ViewExecutabilityRule>> ruleConfigs =
 			_commandConfig.getExecutability();
 		if (ruleConfigs.isEmpty()) {
-			return input -> ExecutableState.EXECUTABLE;
+			return ViewExecutabilityRule.ALWAYS_EXECUTABLE;
 		}
 		DefaultInstantiationContext instantiation =
 			new DefaultInstantiationContext(ButtonElement.class);

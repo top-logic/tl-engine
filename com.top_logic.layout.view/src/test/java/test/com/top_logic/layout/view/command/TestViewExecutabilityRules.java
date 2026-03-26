@@ -83,7 +83,7 @@ public class TestViewExecutabilityRules extends TestCase {
 	 * {@link ExecutableState#EXECUTABLE}.
 	 */
 	public void testCombineAllExecutable() {
-		ViewExecutabilityRule alwaysOk = input -> ExecutableState.EXECUTABLE;
+		ViewExecutabilityRule alwaysOk = ViewExecutabilityRule.ALWAYS_EXECUTABLE;
 		ViewExecutabilityRule combined =
 			CombinedViewExecutabilityRule.combine(Arrays.asList(alwaysOk, alwaysOk));
 

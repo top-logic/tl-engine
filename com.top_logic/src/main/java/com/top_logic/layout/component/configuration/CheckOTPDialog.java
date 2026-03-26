@@ -40,10 +40,9 @@ import com.top_logic.layout.toolbar.ToolBarGroup;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.HandlerResult;
 
-import dev.samstevens.totp.code.CodeGenerator;
-import dev.samstevens.totp.code.CodeVerifier;
 import dev.samstevens.totp.code.DefaultCodeGenerator;
 import dev.samstevens.totp.code.DefaultCodeVerifier;
+import dev.samstevens.totp.code.HashingAlgorithm;
 import dev.samstevens.totp.time.SystemTimeProvider;
 import dev.samstevens.totp.time.TimeProvider;
 
@@ -157,9 +156,13 @@ public class CheckOTPDialog extends AbstractTemplateDialog {
 
 		StringField field = (StringField) getFormContext().getField(OTP_FIELD);
 		String code = field.getAsString();
+
+		MFAConfig mfaConfig = ApplicationConfig.getInstance().getConfig(MFAConfig.class);
 		TimeProvider timeProvider = new SystemTimeProvider();
-		CodeGenerator codeGenerator = new DefaultCodeGenerator();
-		CodeVerifier verifier = new DefaultCodeVerifier(codeGenerator, timeProvider);
+		DefaultCodeGenerator codeGenerator = new DefaultCodeGenerator(HashingAlgorithm.SHA1, mfaConfig.getDigits());
+		DefaultCodeVerifier verifier = new DefaultCodeVerifier(codeGenerator, timeProvider);
+		verifier.setTimePeriod(mfaConfig.getPeriod());
+		verifier.setAllowedTimePeriodDiscrepancy(mfaConfig.getAllowedTimePeriodDiscrepancy());
 		
 		boolean successful = verifier.isValidCode(_secret.decrypt(), code);
 		if (successful) {

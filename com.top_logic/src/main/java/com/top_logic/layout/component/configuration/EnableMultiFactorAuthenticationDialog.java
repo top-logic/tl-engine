@@ -13,6 +13,7 @@ import java.util.List;
 import org.bouncycastle.util.encoders.Base32;
 
 import com.top_logic.base.security.util.Password;
+import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.encryption.SecureRandomService;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
@@ -137,13 +138,14 @@ public class EnableMultiFactorAuthenticationDialog extends AbstractTemplateDialo
 
 	private BinaryData createQRCode() {
 		QrGenerator generator = new ZxingPngQrGenerator();
+		MFAConfig mfaConfig = ApplicationConfig.getInstance().getConfig(MFAConfig.class);
 		QrData qrData = new QrData.Builder()
 			.label(_account.getName())
 			.secret(_mfaSecret.decrypt())
 			.issuer(Resources.getInstance().getString(com.top_logic.layout.I18NConstants.APPLICATION_TITLE))
 			.algorithm(HashingAlgorithm.SHA1)
-			.digits(6)
-			.period(30)
+			.digits(mfaConfig.getDigits())
+			.period(mfaConfig.getPeriod())
 			.build();
 		byte[] imageData;
 		try {

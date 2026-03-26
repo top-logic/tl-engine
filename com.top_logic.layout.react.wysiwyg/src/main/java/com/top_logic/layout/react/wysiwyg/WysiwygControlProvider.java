@@ -18,7 +18,7 @@ public class WysiwygControlProvider implements ReactFieldControlProvider {
 
 	@Override
 	public ReactControl createControl(ReactContext context, TLStructuredTypePart part, FieldModel model) {
-		return new ReactWysiwygControl(context, model, true);
+		return new ReactWysiwygControl(context, model);
 	}
 
 }

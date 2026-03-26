@@ -23,6 +23,7 @@ import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.annotate.RenderWholeLineAnnotation;
 import com.top_logic.model.form.ConstraintValidationListener;
 import com.top_logic.util.Resources;
 
@@ -128,9 +129,10 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 		String helpText = resolveHelpText(part);
 		boolean mandatory = part.isMandatory();
 		boolean dirty = _model.isDirty();
+		boolean fullLine = resolveFullLine(part);
 
 		_chrome = new ReactFormFieldChromeControl(_context, label, mandatory,
-			dirty, null, helpText, null, false, true, _innerControl);
+			dirty, null, helpText, null, fullLine, true, _innerControl);
 
 		return _chrome;
 	}
@@ -365,5 +367,13 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 	private String resolveHelpText(TLStructuredTypePart part) {
 		ResKey labelKey = TLModelI18N.getI18NKey(part);
 		return Resources.getInstance().getString(labelKey.tooltipOptional());
+	}
+
+	private boolean resolveFullLine(TLStructuredTypePart part) {
+		RenderWholeLineAnnotation annotation = part.getAnnotation(RenderWholeLineAnnotation.class);
+		if (annotation != null) {
+			return annotation.getValue();
+		}
+		return false;
 	}
 }

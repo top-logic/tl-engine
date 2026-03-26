@@ -200,7 +200,7 @@ public class FormCommandModel implements CommandModel {
 
 	@Override
 	public String getImage() {
-		return _image != null ? _image.toEncodedForm() : null;
+		return _image != null ? _image.resolve().toEncodedForm() : null;
 	}
 
 	@Override

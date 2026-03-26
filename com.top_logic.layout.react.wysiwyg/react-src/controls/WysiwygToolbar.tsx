@@ -18,42 +18,40 @@ interface ToolbarProps {
 // I18N key prefix
 // ---------------------------------------------------------------------------
 
-const I18N = 'class.com.top_logic.layout.react.wysiwyg.I18NConstants.TOOLBAR_';
-
 const ALL_I18N_KEYS: Record<string, string> = {
-  [I18N + 'BOLD']: 'Bold',
-  [I18N + 'ITALIC']: 'Italic',
-  [I18N + 'UNDERLINE']: 'Underline',
-  [I18N + 'STRIKETHROUGH']: 'Strikethrough',
-  [I18N + 'HEADING']: 'Heading',
-  [I18N + 'PARAGRAPH']: 'Paragraph',
-  [I18N + 'HEADING_1']: 'Heading 1',
-  [I18N + 'HEADING_2']: 'Heading 2',
-  [I18N + 'HEADING_3']: 'Heading 3',
-  [I18N + 'HEADING_4']: 'Heading 4',
-  [I18N + 'HEADING_5']: 'Heading 5',
-  [I18N + 'HEADING_6']: 'Heading 6',
-  [I18N + 'BULLET_LIST']: 'Bullet List',
-  [I18N + 'ORDERED_LIST']: 'Numbered List',
-  [I18N + 'LISTS']: 'Lists',
-  [I18N + 'BLOCKQUOTE']: 'Blockquote',
-  [I18N + 'LINK']: 'Link',
-  [I18N + 'LINK_URL']: 'URL',
-  [I18N + 'LINK_APPLY']: 'Apply',
-  [I18N + 'LINK_REMOVE']: 'Remove link',
-  [I18N + 'IMAGE']: 'Image',
-  [I18N + 'TABLE']: 'Table',
-  [I18N + 'CODE_BLOCK']: 'Code Block',
-  [I18N + 'UNDO']: 'Undo',
-  [I18N + 'REDO']: 'Redo',
+  'js.wysiwyg.bold': 'Bold',
+  'js.wysiwyg.italic': 'Italic',
+  'js.wysiwyg.underline': 'Underline',
+  'js.wysiwyg.strikethrough': 'Strikethrough',
+  'js.wysiwyg.heading': 'Heading',
+  'js.wysiwyg.paragraph': 'Paragraph',
+  'js.wysiwyg.heading1': 'Heading 1',
+  'js.wysiwyg.heading2': 'Heading 2',
+  'js.wysiwyg.heading3': 'Heading 3',
+  'js.wysiwyg.heading4': 'Heading 4',
+  'js.wysiwyg.heading5': 'Heading 5',
+  'js.wysiwyg.heading6': 'Heading 6',
+  'js.wysiwyg.bulletList': 'Bullet List',
+  'js.wysiwyg.orderedList': 'Numbered List',
+  'js.wysiwyg.lists': 'Lists',
+  'js.wysiwyg.blockquote': 'Blockquote',
+  'js.wysiwyg.link': 'Link',
+  'js.wysiwyg.linkUrl': 'URL',
+  'js.wysiwyg.linkApply': 'Apply',
+  'js.wysiwyg.linkRemove': 'Remove link',
+  'js.wysiwyg.image': 'Image',
+  'js.wysiwyg.table': 'Table',
+  'js.wysiwyg.codeBlock': 'Code Block',
+  'js.wysiwyg.undo': 'Undo',
+  'js.wysiwyg.redo': 'Redo',
 };
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-function t(labels: Record<string, string>, suffix: string): string {
-  return labels[I18N + suffix] || ALL_I18N_KEYS[I18N + suffix] || suffix;
+function t(labels: Record<string, string>, key: string): string {
+  return labels['js.wysiwyg.' + key] || ALL_I18N_KEYS['js.wysiwyg.' + key] || key;
 }
 
 // ---------------------------------------------------------------------------
@@ -107,18 +105,18 @@ interface HeadingLevel {
 
 const HeadingDropdown: React.FC<{ editor: Editor; labels: Record<string, string> }> = ({ editor, labels }) => {
   const levels: HeadingLevel[] = [
-    { label: t(labels, 'PARAGRAPH'), level: null, icon: 'ri-paragraph' },
-    { label: t(labels, 'HEADING_1'), level: 1, icon: 'ri-h-1' },
-    { label: t(labels, 'HEADING_2'), level: 2, icon: 'ri-h-2' },
-    { label: t(labels, 'HEADING_3'), level: 3, icon: 'ri-h-3' },
-    { label: t(labels, 'HEADING_4'), level: 4, icon: 'ri-h-4' },
-    { label: t(labels, 'HEADING_5'), level: 5, icon: 'ri-h-5' },
-    { label: t(labels, 'HEADING_6'), level: 6, icon: 'ri-h-6' },
+    { label: t(labels, 'paragraph'), level: null, icon: 'ri-paragraph' },
+    { label: t(labels, 'heading1'), level: 1, icon: 'ri-h-1' },
+    { label: t(labels, 'heading2'), level: 2, icon: 'ri-h-2' },
+    { label: t(labels, 'heading3'), level: 3, icon: 'ri-h-3' },
+    { label: t(labels, 'heading4'), level: 4, icon: 'ri-h-4' },
+    { label: t(labels, 'heading5'), level: 5, icon: 'ri-h-5' },
+    { label: t(labels, 'heading6'), level: 6, icon: 'ri-h-6' },
   ];
 
   // Determine current heading level
   let currentIcon = 'ri-paragraph';
-  let currentLabel = t(labels, 'PARAGRAPH');
+  let currentLabel = t(labels, 'paragraph');
   for (let lvl = 1; lvl <= 6; lvl++) {
     if (editor.isActive('heading', { level: lvl })) {
       currentIcon = 'ri-h-' + lvl;
@@ -132,7 +130,7 @@ const HeadingDropdown: React.FC<{ editor: Editor; labels: Record<string, string>
       <Tooltip.Root delayDuration={400}>
         <Tooltip.Trigger asChild>
           <DropdownMenu.Trigger asChild>
-            <button type="button" className="tlToolbar__btn tlToolbar__btn--dropdown" aria-label={t(labels, 'HEADING')}>
+            <button type="button" className="tlToolbar__btn tlToolbar__btn--dropdown" aria-label={t(labels, 'heading')}>
               <i className={currentIcon} />
               <i className="ri-arrow-down-s-line tlToolbar__chevron" />
             </button>
@@ -191,7 +189,7 @@ const ListDropdown: React.FC<{ editor: Editor; labels: Record<string, string> }>
             <button
               type="button"
               className={'tlToolbar__btn tlToolbar__btn--dropdown' + ((isBullet || isOrdered) ? ' tlToolbar__btn--active' : '')}
-              aria-label={t(labels, 'LISTS')}
+              aria-label={t(labels, 'lists')}
             >
               <i className={currentIcon} />
               <i className="ri-arrow-down-s-line tlToolbar__chevron" />
@@ -200,7 +198,7 @@ const ListDropdown: React.FC<{ editor: Editor; labels: Record<string, string> }>
         </Tooltip.Trigger>
         <Tooltip.Portal>
           <Tooltip.Content className="tlToolbar__tooltip" sideOffset={6}>
-            {t(labels, 'LISTS')}
+            {t(labels, 'lists')}
             <Tooltip.Arrow className="tlToolbar__tooltipArrow" />
           </Tooltip.Content>
         </Tooltip.Portal>
@@ -212,14 +210,14 @@ const ListDropdown: React.FC<{ editor: Editor; labels: Record<string, string> }>
             onSelect={() => editor.chain().focus().toggleBulletList().run()}
           >
             <i className="ri-list-unordered tlToolbar__dropdownIcon" />
-            <span>{t(labels, 'BULLET_LIST')}</span>
+            <span>{t(labels, 'bulletList')}</span>
           </DropdownMenu.Item>
           <DropdownMenu.Item
             className={'tlToolbar__dropdownItem' + (isOrdered ? ' tlToolbar__dropdownItem--active' : '')}
             onSelect={() => editor.chain().focus().toggleOrderedList().run()}
           >
             <i className="ri-list-ordered tlToolbar__dropdownIcon" />
-            <span>{t(labels, 'ORDERED_LIST')}</span>
+            <span>{t(labels, 'orderedList')}</span>
           </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
@@ -274,7 +272,7 @@ const LinkPopover: React.FC<{ editor: Editor; labels: Record<string, string> }> 
             <button
               type="button"
               className={'tlToolbar__btn' + (isActive ? ' tlToolbar__btn--active' : '')}
-              aria-label={t(labels, 'LINK')}
+              aria-label={t(labels, 'link')}
             >
               <i className="ri-link" />
             </button>
@@ -282,7 +280,7 @@ const LinkPopover: React.FC<{ editor: Editor; labels: Record<string, string> }> 
         </Tooltip.Trigger>
         <Tooltip.Portal>
           <Tooltip.Content className="tlToolbar__tooltip" sideOffset={6}>
-            {t(labels, 'LINK')}
+            {t(labels, 'link')}
             <Tooltip.Arrow className="tlToolbar__tooltipArrow" />
           </Tooltip.Content>
         </Tooltip.Portal>
@@ -290,7 +288,7 @@ const LinkPopover: React.FC<{ editor: Editor; labels: Record<string, string> }> 
       <Popover.Portal>
         <Popover.Content className="tlToolbar__linkPopover" sideOffset={6} align="start">
           <div className="tlToolbar__linkForm">
-            <label className="tlToolbar__linkLabel">{t(labels, 'LINK_URL')}</label>
+            <label className="tlToolbar__linkLabel">{t(labels, 'linkUrl')}</label>
             <input
               ref={inputRef}
               type="url"
@@ -308,7 +306,7 @@ const LinkPopover: React.FC<{ editor: Editor; labels: Record<string, string> }> 
                 onClick={applyLink}
                 disabled={!url.trim()}
               >
-                {t(labels, 'LINK_APPLY')}
+                {t(labels, 'linkApply')}
               </button>
               {isActive && (
                 <button
@@ -316,7 +314,7 @@ const LinkPopover: React.FC<{ editor: Editor; labels: Record<string, string> }> 
                   className="tlToolbar__linkRemove"
                   onClick={removeLink}
                 >
-                  {t(labels, 'LINK_REMOVE')}
+                  {t(labels, 'linkRemove')}
                 </button>
               )}
             </div>
@@ -343,25 +341,25 @@ const WysiwygToolbar: React.FC<ToolbarProps> = ({ editor, onImageUpload }) => {
         {/* Text formatting */}
         <ToolbarButton
           icon="ri-bold"
-          tooltip={t(labels, 'BOLD')}
+          tooltip={t(labels, 'bold')}
           active={editor.isActive('bold')}
           onClick={() => editor.chain().focus().toggleBold().run()}
         />
         <ToolbarButton
           icon="ri-italic"
-          tooltip={t(labels, 'ITALIC')}
+          tooltip={t(labels, 'italic')}
           active={editor.isActive('italic')}
           onClick={() => editor.chain().focus().toggleItalic().run()}
         />
         <ToolbarButton
           icon="ri-underline"
-          tooltip={t(labels, 'UNDERLINE')}
+          tooltip={t(labels, 'underline')}
           active={editor.isActive('underline')}
           onClick={() => editor.chain().focus().toggleUnderline().run()}
         />
         <ToolbarButton
           icon="ri-strikethrough"
-          tooltip={t(labels, 'STRIKETHROUGH')}
+          tooltip={t(labels, 'strikethrough')}
           active={editor.isActive('strike')}
           onClick={() => editor.chain().focus().toggleStrike().run()}
         />
@@ -379,13 +377,13 @@ const WysiwygToolbar: React.FC<ToolbarProps> = ({ editor, onImageUpload }) => {
         {/* Block elements */}
         <ToolbarButton
           icon="ri-double-quotes-l"
-          tooltip={t(labels, 'BLOCKQUOTE')}
+          tooltip={t(labels, 'blockquote')}
           active={editor.isActive('blockquote')}
           onClick={() => editor.chain().focus().toggleBlockquote().run()}
         />
         <ToolbarButton
           icon="ri-code-s-slash-line"
-          tooltip={t(labels, 'CODE_BLOCK')}
+          tooltip={t(labels, 'codeBlock')}
           active={editor.isActive('codeBlock')}
           onClick={() => editor.chain().focus().toggleCodeBlock().run()}
         />
@@ -396,12 +394,12 @@ const WysiwygToolbar: React.FC<ToolbarProps> = ({ editor, onImageUpload }) => {
         <LinkPopover editor={editor} labels={labels} />
         <ToolbarButton
           icon="ri-image-line"
-          tooltip={t(labels, 'IMAGE')}
+          tooltip={t(labels, 'image')}
           onClick={onImageUpload}
         />
         <ToolbarButton
           icon="ri-table-line"
-          tooltip={t(labels, 'TABLE')}
+          tooltip={t(labels, 'table')}
           onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
         />
 
@@ -410,13 +408,13 @@ const WysiwygToolbar: React.FC<ToolbarProps> = ({ editor, onImageUpload }) => {
         {/* History */}
         <ToolbarButton
           icon="ri-arrow-go-back-line"
-          tooltip={t(labels, 'UNDO')}
+          tooltip={t(labels, 'undo')}
           disabled={!editor.can().undo()}
           onClick={() => editor.chain().focus().undo().run()}
         />
         <ToolbarButton
           icon="ri-arrow-go-forward-line"
-          tooltip={t(labels, 'REDO')}
+          tooltip={t(labels, 'redo')}
           disabled={!editor.can().redo()}
           onClick={() => editor.chain().focus().redo().run()}
         />

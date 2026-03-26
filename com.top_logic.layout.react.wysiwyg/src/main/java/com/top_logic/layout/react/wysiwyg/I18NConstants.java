@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.react.wysiwyg;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.I18NConstantsBase;
 
@@ -18,80 +19,105 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey ERROR_IMAGE_UPLOAD_FAILED;
 
-	/**
-	 * @en Bold
-	 */
-	public static ResKey TOOLBAR_BOLD;
+	/** @en Bold */
+	@CustomKey("js.wysiwyg.bold")
+	public static ResKey JS_WYSIWYG_BOLD;
 
-	/**
-	 * @en Italic
-	 */
-	public static ResKey TOOLBAR_ITALIC;
+	/** @en Italic */
+	@CustomKey("js.wysiwyg.italic")
+	public static ResKey JS_WYSIWYG_ITALIC;
 
-	/**
-	 * @en Underline
-	 */
-	public static ResKey TOOLBAR_UNDERLINE;
+	/** @en Underline */
+	@CustomKey("js.wysiwyg.underline")
+	public static ResKey JS_WYSIWYG_UNDERLINE;
 
-	/**
-	 * @en Strikethrough
-	 */
-	public static ResKey TOOLBAR_STRIKETHROUGH;
+	/** @en Strikethrough */
+	@CustomKey("js.wysiwyg.strikethrough")
+	public static ResKey JS_WYSIWYG_STRIKETHROUGH;
 
-	/**
-	 * @en Heading
-	 */
-	public static ResKey TOOLBAR_HEADING;
+	/** @en Heading */
+	@CustomKey("js.wysiwyg.heading")
+	public static ResKey JS_WYSIWYG_HEADING;
 
-	/**
-	 * @en Bullet list
-	 */
-	public static ResKey TOOLBAR_BULLET_LIST;
+	/** @en Paragraph */
+	@CustomKey("js.wysiwyg.paragraph")
+	public static ResKey JS_WYSIWYG_PARAGRAPH;
 
-	/**
-	 * @en Numbered list
-	 */
-	public static ResKey TOOLBAR_ORDERED_LIST;
+	/** @en Heading 1 */
+	@CustomKey("js.wysiwyg.heading1")
+	public static ResKey JS_WYSIWYG_HEADING1;
 
-	/**
-	 * @en Blockquote
-	 */
-	public static ResKey TOOLBAR_BLOCKQUOTE;
+	/** @en Heading 2 */
+	@CustomKey("js.wysiwyg.heading2")
+	public static ResKey JS_WYSIWYG_HEADING2;
 
-	/**
-	 * @en Link
-	 */
-	public static ResKey TOOLBAR_LINK;
+	/** @en Heading 3 */
+	@CustomKey("js.wysiwyg.heading3")
+	public static ResKey JS_WYSIWYG_HEADING3;
 
-	/**
-	 * @en Image
-	 */
-	public static ResKey TOOLBAR_IMAGE;
+	/** @en Heading 4 */
+	@CustomKey("js.wysiwyg.heading4")
+	public static ResKey JS_WYSIWYG_HEADING4;
 
-	/**
-	 * @en Table
-	 */
-	public static ResKey TOOLBAR_TABLE;
+	/** @en Heading 5 */
+	@CustomKey("js.wysiwyg.heading5")
+	public static ResKey JS_WYSIWYG_HEADING5;
 
-	/**
-	 * @en Code block
-	 */
-	public static ResKey TOOLBAR_CODE_BLOCK;
+	/** @en Heading 6 */
+	@CustomKey("js.wysiwyg.heading6")
+	public static ResKey JS_WYSIWYG_HEADING6;
 
-	/**
-	 * @en Text color
-	 */
-	public static ResKey TOOLBAR_COLOR;
+	/** @en Bullet list */
+	@CustomKey("js.wysiwyg.bulletList")
+	public static ResKey JS_WYSIWYG_BULLET_LIST;
 
-	/**
-	 * @en Undo
-	 */
-	public static ResKey TOOLBAR_UNDO;
+	/** @en Numbered list */
+	@CustomKey("js.wysiwyg.orderedList")
+	public static ResKey JS_WYSIWYG_ORDERED_LIST;
 
-	/**
-	 * @en Redo
-	 */
-	public static ResKey TOOLBAR_REDO;
+	/** @en Lists */
+	@CustomKey("js.wysiwyg.lists")
+	public static ResKey JS_WYSIWYG_LISTS;
+
+	/** @en Blockquote */
+	@CustomKey("js.wysiwyg.blockquote")
+	public static ResKey JS_WYSIWYG_BLOCKQUOTE;
+
+	/** @en Link */
+	@CustomKey("js.wysiwyg.link")
+	public static ResKey JS_WYSIWYG_LINK;
+
+	/** @en URL */
+	@CustomKey("js.wysiwyg.linkUrl")
+	public static ResKey JS_WYSIWYG_LINK_URL;
+
+	/** @en Apply */
+	@CustomKey("js.wysiwyg.linkApply")
+	public static ResKey JS_WYSIWYG_LINK_APPLY;
+
+	/** @en Remove link */
+	@CustomKey("js.wysiwyg.linkRemove")
+	public static ResKey JS_WYSIWYG_LINK_REMOVE;
+
+	/** @en Image */
+	@CustomKey("js.wysiwyg.image")
+	public static ResKey JS_WYSIWYG_IMAGE;
+
+	/** @en Table */
+	@CustomKey("js.wysiwyg.table")
+	public static ResKey JS_WYSIWYG_TABLE;
+
+	/** @en Code block */
+	@CustomKey("js.wysiwyg.codeBlock")
+	public static ResKey JS_WYSIWYG_CODE_BLOCK;
+
+	/** @en Undo */
+	@CustomKey("js.wysiwyg.undo")
+	public static ResKey JS_WYSIWYG_UNDO;
+
+	/** @en Redo */
+	@CustomKey("js.wysiwyg.redo")
+	public static ResKey JS_WYSIWYG_REDO;
 
 	static {
 		initConstants(I18NConstants.class);

@@ -2,6 +2,8 @@
 
 <theme>
 	<styles>
-		<style name="webjar:org.webjars.npm/remixicon:/webjars/remixicon:fonts/remixicon.css"/>
+		<style name="webjar:org.webjars.npm/remixicon:/webjars/remixicon:fonts/remixicon.css"
+			separate="true"
+		/>
 	</styles>
 </theme>

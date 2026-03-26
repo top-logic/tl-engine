@@ -98,11 +98,12 @@
 
 .tlToolbar {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 2px;
   padding: 6px 8px;
   border-bottom: 1px solid var(--tl-border-color, #d1d5db);
+  overflow-x: auto;
   background: var(--tl-toolbar-bg, #f9fafb);
 }
 

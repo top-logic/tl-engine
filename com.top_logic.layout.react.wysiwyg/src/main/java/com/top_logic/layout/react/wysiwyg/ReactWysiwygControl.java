@@ -55,8 +55,6 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 
 	private static final String IMAGE_URL = "imageUrl";
 
-	private static final String DATA_URL_PREFIX = "react-api/data?controlId=";
-
 	private static final String KEY_PARAM = "&key=";
 
 	private static final List<String> DEFAULT_TOOLBAR = Arrays.asList(
@@ -88,7 +86,8 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	public ReactWysiwygControl(ReactContext context, FieldModel model) {
 		super(context, model, "TLWysiwygEditor");
 
-		_imageUrlPrefix = context.getContextPath() + "/" + DATA_URL_PREFIX + getID() + KEY_PARAM;
+		_imageUrlPrefix = context.getContextPath() + "/react-api/data?controlId=" + getID()
+			+ "&windowName=" + context.getWindowName() + KEY_PARAM;
 
 		initShadowCopy();
 		putState(VALUE, rewriteImageUrls(extractHtml(_shadowCopy)));
@@ -162,7 +161,7 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 		Elements imgs = doc.select("img[src]");
 		for (Element img : imgs) {
 			String src = img.attr("src");
-			if (!src.contains(DATA_URL_PREFIX) && _shadowCopy.getImages().containsKey(src)) {
+			if (!src.contains("react-api/data") && _shadowCopy.getImages().containsKey(src)) {
 				img.attr("src", _imageUrlPrefix + URLEncoder.encode(src, StandardCharsets.UTF_8));
 			}
 		}

@@ -12,7 +12,6 @@ import java.util.List;
 
 import com.top_logic.base.mail.MailSenderService;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.basic.version.Version;
 import com.top_logic.contact.business.Account;
 import com.top_logic.html.template.TagTemplate;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -133,7 +132,9 @@ public class ForgotPasswordDialog extends AbstractVerificationCodeDialog {
 		if (eMail != null) {
 			InvitationModule module = InvitationModule.getInstance();
 			_account = person;
-			module.getResetPasswordMail().execute(eMail, Version.getApplicationName(), code);
+			String application =
+				Resources.getInstance().getString(com.top_logic.layout.I18NConstants.APPLICATION_TITLE);
+			module.getResetPasswordMail().execute(eMail, application, code);
 		}
 
 		displayMailSent();

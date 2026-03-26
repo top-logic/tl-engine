@@ -14,7 +14,6 @@ import java.util.function.Function;
 import com.top_logic.base.mail.MailSenderService;
 import com.top_logic.base.security.util.Password;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.basic.version.Version;
 import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.html.template.TagTemplate;
 import com.top_logic.knowledge.service.Transaction;
@@ -105,8 +104,9 @@ public class ResetMFADialog extends AbstractVerificationCodeDialog {
 
 	private void sendCodeMail(String code) {
 		String email = email(_account);
-		String applicationName = Version.getApplicationName();
-		InvitationModule.getInstance().getResetMFAMail().execute(email, applicationName, code);
+		String application =
+			Resources.getInstance().getString(com.top_logic.layout.I18NConstants.APPLICATION_TITLE);
+		InvitationModule.getInstance().getResetMFAMail().execute(email, application, code);
 	}
 
 	static String email(Person p) {

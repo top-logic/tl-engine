@@ -18,7 +18,6 @@ import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.basic.version.Version;
 import com.top_logic.html.template.TagTemplate;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -42,6 +41,7 @@ import com.top_logic.layout.structure.DialogModel;
 import com.top_logic.layout.structure.DialogWindowControl;
 import com.top_logic.mig.html.layout.LoginHooks;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 
 import dev.samstevens.totp.code.HashingAlgorithm;
@@ -140,7 +140,7 @@ public class EnableMultiFactorAuthenticationDialog extends AbstractTemplateDialo
 		QrData qrData = new QrData.Builder()
 			.label(_account.getName())
 			.secret(_mfaSecret.decrypt())
-			.issuer(Version.getApplicationName())
+			.issuer(Resources.getInstance().getString(com.top_logic.layout.I18NConstants.APPLICATION_TITLE))
 			.algorithm(HashingAlgorithm.SHA1)
 			.digits(6)
 			.period(30)

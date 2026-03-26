@@ -11,7 +11,6 @@ import static com.top_logic.layout.form.template.model.Templates.*;
 import java.util.List;
 
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.basic.version.Version;
 import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.html.template.TagTemplate;
 import com.top_logic.layout.DisplayDimension;
@@ -24,6 +23,7 @@ import com.top_logic.layout.messagebox.MessageBox.ButtonType;
 import com.top_logic.layout.structure.DialogModel;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.security.selfservice.model.Invitation;
+import com.top_logic.util.Resources;
 
 /**
  * Dialog to check the invitation code.
@@ -77,7 +77,8 @@ public class CheckInvitationCode extends AbstractVerificationCodeDialog {
 	protected TagTemplate getTemplate() {
 		return div(
 			tag(HTMLConstants.PARAGRAPH,
-				resource(I18NConstants.MESSAGE_WELCOME_TO_APPLICATION__APPLICATION.fill(Version.getApplicationName()))),
+				resource(I18NConstants.MESSAGE_WELCOME_TO_APPLICATION__APPLICATION
+					.fill(Resources.getInstance().getString(com.top_logic.layout.I18NConstants.APPLICATION_TITLE)))),
 			tag(HTMLConstants.PARAGRAPH,
 				resource(I18NConstants.MESSAGE_REQUEST_VERIFICATION_CODE)),
 			fieldBox(CODE_FIELD));
@@ -106,8 +107,9 @@ public class CheckInvitationCode extends AbstractVerificationCodeDialog {
 	}
 
 	private void sendCodeMail(String code) {
-		String applicationName = Version.getApplicationName();
-		InvitationModule.getInstance().getVerificationMail().execute(_invitation, applicationName, code);
+		String application =
+			Resources.getInstance().getString(com.top_logic.layout.I18NConstants.APPLICATION_TITLE);
+		InvitationModule.getInstance().getVerificationMail().execute(_invitation, application, code);
 	}
 
 	private String failureKey() {

@@ -12,7 +12,6 @@ import java.util.List;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.version.Version;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.URLPathBuilder;
 import com.top_logic.layout.basic.DefaultDisplayContext;
@@ -31,6 +30,7 @@ import com.top_logic.security.selfservice.invitation.CreateLoginHoook;
 import com.top_logic.security.selfservice.invitation.InvitationModule;
 import com.top_logic.security.selfservice.model.Invitation;
 import com.top_logic.security.selfservice.model.TlSecuritySelfserviceFactory;
+import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -66,10 +66,10 @@ public class SendInvitation extends GenericMethod {
 		}
 
 		Invitation invitation = (Invitation) arg;
-		String applicationName = Version.getApplicationName();
+		String application = Resources.getInstance().getString(com.top_logic.layout.I18NConstants.APPLICATION_TITLE);
 		String link = invitationLink(DefaultDisplayContext.getDisplayContext(), invitation);
 		
-		return InvitationModule.getInstance().getInvitationMail().execute(invitation, applicationName, link);
+		return InvitationModule.getInstance().getInvitationMail().execute(invitation, application, link);
 	}
 
 	private String invitationLink(DisplayContext context, Invitation invitation) {

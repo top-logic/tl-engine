@@ -73,7 +73,7 @@ public class InvitationModule extends KBBasedManagedClass<InvitationModule.Confi
 		 *
 		 * <p>
 		 * The expression is called with the {@link Invitation} object as first argument, the
-		 * application name as second argument, and the invitation link as third argument.
+		 * application title as second argument, and the invitation link as third argument.
 		 * </p>
 		 */
 		@Name(INVITATION_MAIL)
@@ -85,7 +85,7 @@ public class InvitationModule extends KBBasedManagedClass<InvitationModule.Confi
 		 *
 		 * <p>
 		 * The expression is called with the {@link Invitation} object as first argument, the
-		 * application name as second argument, and the verification code as third argument.
+		 * application title as second argument, and the verification code as third argument.
 		 * </p>
 		 */
 		@Name(VERIFICATION_MAIL)
@@ -96,8 +96,8 @@ public class InvitationModule extends KBBasedManagedClass<InvitationModule.Confi
 		 * The TL-Script expression that sends an email when a password reset is requested.
 		 *
 		 * <p>
-		 * The expression is called with the email as first argument, the application name as second
-		 * argument, and the reset code as third argument.
+		 * The expression is called with the email as first argument, the application title as
+		 * second argument, and the reset code as third argument.
 		 * </p>
 		 */
 		@Name(RESET_PASSWORD_MAIL)
@@ -109,8 +109,8 @@ public class InvitationModule extends KBBasedManagedClass<InvitationModule.Confi
 		 * authentication is requested.
 		 *
 		 * <p>
-		 * The expression is called with the email as first argument, the application name as second
-		 * argument, and the reset code as third argument.
+		 * The expression is called with the email as first argument, the application title as
+		 * second argument, and the reset code as third argument.
 		 * </p>
 		 */
 		@Name(RESET_MFA_MAIL)

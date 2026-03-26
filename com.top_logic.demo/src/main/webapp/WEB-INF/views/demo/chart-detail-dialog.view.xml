@@ -1,13 +1,16 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="iso-8859-1" ?>
 
 <view>
 	<channels>
 		<channel name="transactions"/>
 	</channels>
 	<window
-		title="Transaktionen"
 		width="600px"
 	>
+		<title>
+			<en>Transactions</en>
+			<de>Transaktionen</de>
+		</title>
 		<table types="demo.charts:Transaktion">
 			<inputs>
 				<input channel="transactions"/>
@@ -16,9 +19,12 @@
 		</table>
 		<actions>
 			<button>
-				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
-					label="Close"
-				/>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand">
+					<label>
+						<en>Close</en>
+						<de>Schlie&#xDF;en</de>
+					</label>
+				</action>
 			</button>
 		</actions>
 	</window>

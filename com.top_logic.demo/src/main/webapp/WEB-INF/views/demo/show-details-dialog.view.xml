@@ -1,15 +1,21 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="iso-8859-1" ?>
 
 <view>
 	<window
-		title="Declarative Dialog"
 		width="400px"
 	>
+		<title>
+			<en>Declarative Dialog</en>
+			<de>Deklarativer Dialog</de>
+		</title>
 		<actions>
 			<button>
-				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
-					label="Close"
-				/>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand">
+					<label>
+						<en>Close</en>
+						<de>Schlie&#xDF;en</de>
+					</label>
+				</action>
 			</button>
 		</actions>
 	</window>

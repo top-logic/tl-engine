@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="iso-8859-1" ?>
 
 <view>
 	<stack
@@ -6,43 +6,67 @@
 		gap="default"
 	>
 		<card
-			title="Dialog Demo (Programmatic)"
 			variant="elevated"
 		>
+			<title>
+				<en>Dialog Demo (Programmatic)</en>
+				<de>Dialog-Demo (Programmatisch)</de>
+			</title>
 			<stack
 				direction="column"
 				gap="default"
 			>
 				<button>
 					<action class="com.top_logic.demo.view.command.OpenDemoDialogCommand"
-						label="Open Dialog"
-						dialog-title="Greetings"
 						dialog-message="Hello from the dialog manager!"
-					/>
+					>
+						<label>
+							<en>Open Dialog</en>
+							<de>Dialog &#xF6;ffnen</de>
+						</label>
+						<dialog-title>
+							<en>Greetings</en>
+							<de>Begr&#xFC;&#xDF;ung</de>
+						</dialog-title>
+					</action>
 				</button>
 				<button>
 					<action class="com.top_logic.demo.view.command.OpenDemoDialogCommand"
-						label="Open Another Dialog"
-						dialog-title="Confirmation"
 						dialog-message="Are you sure you want to proceed?"
-					/>
+					>
+						<label>
+							<en>Open Another Dialog</en>
+							<de>Weiteren Dialog &#xF6;ffnen</de>
+						</label>
+						<dialog-title>
+							<en>Confirmation</en>
+							<de>Best&#xE4;tigung</de>
+						</dialog-title>
+					</action>
 				</button>
 			</stack>
 		</card>
 		<card
-			title="Dialog Demo (Declarative)"
 			variant="elevated"
 		>
+			<title>
+				<en>Dialog Demo (Declarative)</en>
+				<de>Dialog-Demo (Deklarativ)</de>
+			</title>
 			<stack
 				direction="column"
 				gap="default"
 			>
 				<button>
 					<action class="com.top_logic.layout.view.command.OpenDialogCommand"
-						label="Show Details Dialog"
 						dialog-view="demo/show-details-dialog.view.xml"
 						close-on-backdrop="true"
-					/>
+					>
+						<label>
+							<en>Show Details Dialog</en>
+							<de>Details-Dialog anzeigen</de>
+						</label>
+					</action>
 				</button>
 			</stack>
 		</card>

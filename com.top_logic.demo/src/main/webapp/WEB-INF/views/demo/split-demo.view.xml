@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="iso-8859-1" ?>
 
 <view>
 	<split-panel
@@ -12,13 +12,19 @@
 				unit="%"
 			>
 				<card
-					title="Navigation"
 					variant="elevated"
 				>
+					<title>
+						<en>Navigation</en>
+						<de>Navigation</de>
+					</title>
 					<button>
-						<action class="com.top_logic.demo.view.command.DemoCommand"
-							label="Item 1"
-						/>
+						<action class="com.top_logic.demo.view.command.DemoCommand">
+							<label>
+								<en>Item 1</en>
+								<de>Element 1</de>
+							</label>
+						</action>
 					</button>
 				</card>
 			</pane>
@@ -26,8 +32,17 @@
 				size="70"
 				unit="%"
 			>
-				<card title="Content Area">
-					<demo-counter label="Content"/>
+				<card>
+					<title>
+						<en>Content Area</en>
+						<de>Inhaltsbereich</de>
+					</title>
+					<demo-counter>
+						<label>
+							<en>Content</en>
+							<de>Inhalt</de>
+						</label>
+					</demo-counter>
 				</card>
 			</pane>
 		</panes>

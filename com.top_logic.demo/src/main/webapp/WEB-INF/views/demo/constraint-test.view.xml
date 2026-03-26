@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="iso-8859-1" ?>
 
 <view>
 	<channels>
@@ -14,9 +14,17 @@
 				size="30"
 				unit="%"
 			>
-				<panel title="Constraint Test Objects">
+				<panel>
+					<title>
+						<en>Constraint Test Objects</en>
+						<de>Constraint-Test-Objekte</de>
+					</title>
 					<commands>
-						<generic-command label="New" placement="TOOLBAR">
+						<generic-command placement="TOOLBAR">
+							<label>
+								<en>New</en>
+								<de>Neu</de>
+							</label>
 							<execute-script function="x -> new(`test.constraints:ConstraintTestType`, transient: true)"/>
 							<open-dialog
 								dialog-view="demo/create-constraint-test.view.xml"
@@ -39,7 +47,11 @@
 				size="70"
 				unit="%"
 			>
-				<panel title="Constraint Test Form">
+				<panel>
+					<title>
+						<en>Constraint Test Form</en>
+						<de>Constraint-Test-Formular</de>
+					</title>
 					<form input="selectedObject">
 						<field attribute="mandatoryString"/>
 						<field attribute="sizedString"/>

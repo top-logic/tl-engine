@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="iso-8859-1" ?>
 
 <view>
 	<channels>
@@ -14,7 +14,11 @@
 				size="40"
 				unit="%"
 			>
-				<panel title="Companies">
+				<panel>
+					<title>
+						<en>Companies</en>
+						<de>Unternehmen</de>
+					</title>
 					<table
 						selection="selectedCompany"
 						types="Contacts:CompanyContact"
@@ -27,7 +31,11 @@
 				size="60"
 				unit="%"
 			>
-				<panel title="Staff">
+				<panel>
+					<title>
+						<en>Staff</en>
+						<de>Mitarbeiter</de>
+					</title>
 					<table types="Contacts:PersonContact">
 						<inputs>
 							<input channel="selectedCompany"/>

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="iso-8859-1" ?>
 
 <view>
 	<stack
@@ -10,36 +10,79 @@
 			min-column-width="16rem"
 		>
 			<card
-				title="Active Tasks"
 				variant="elevated"
 			>
-				<demo-counter label="Tasks"/>
+				<title>
+					<en>Active Tasks</en>
+					<de>Aktive Aufgaben</de>
+				</title>
+				<demo-counter>
+					<label>
+						<en>Tasks</en>
+						<de>Aufgaben</de>
+					</label>
+				</demo-counter>
 			</card>
-			<card title="In Review">
-				<demo-counter label="Reviews"/>
+			<card>
+				<title>
+					<en>In Review</en>
+					<de>In Pr&#xFC;fung</de>
+				</title>
+				<demo-counter>
+					<label>
+						<en>Reviews</en>
+						<de>Reviews</de>
+					</label>
+				</demo-counter>
 			</card>
-			<card title="Team Notes">
+			<card>
+				<title>
+					<en>Team Notes</en>
+					<de>Teamnotizen</de>
+				</title>
 				<button>
 					<action class="com.top_logic.layout.view.command.OpenDialogCommand"
-						label="Open Details"
 						dialog-view="demo/team-notes-dialog.view.xml"
-					/>
+					>
+						<label>
+							<en>Open Details</en>
+							<de>Details &#xF6;ffnen</de>
+						</label>
+					</action>
 				</button>
 			</card>
-			<card title="Quick Add">
+			<card>
+				<title>
+					<en>Quick Add</en>
+					<de>Schnellerfassung</de>
+				</title>
 				<button>
 					<action class="com.top_logic.demo.view.command.OpenDemoDialogCommand"
-						label="+ New Task"
-						dialog-title="New Task"
 						dialog-message="Enter your new task details here."
-					/>
+					>
+						<label>
+							<en>+ New Task</en>
+							<de>+ Neue Aufgabe</de>
+						</label>
+						<dialog-title>
+							<en>New Task</en>
+							<de>Neue Aufgabe</de>
+						</dialog-title>
+					</action>
 				</button>
 			</card>
-			<card title="Multi-Window Demo">
+			<card>
+				<title>
+					<en>Multi-Window Demo</en>
+					<de>Multi-Fenster-Demo</de>
+				</title>
 				<button>
-					<action class="com.top_logic.demo.view.command.OpenWindowDemoCommand"
-						label="Open Child Window"
-					/>
+					<action class="com.top_logic.demo.view.command.OpenWindowDemoCommand">
+						<label>
+							<en>Open Child Window</en>
+							<de>Kinderfenster &#xF6;ffnen</de>
+						</label>
+					</action>
 				</button>
 			</card>
 		</grid>

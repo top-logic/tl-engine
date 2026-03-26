@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="iso-8859-1" ?>
 
 <view>
 	<channels>
@@ -14,7 +14,11 @@
 				size="30"
 				unit="%"
 			>
-				<panel title="Demo Types">
+				<panel>
+					<title>
+						<en>Demo Types</en>
+						<de>Demo-Typen</de>
+					</title>
 					<commands>
 						<generic-command label="New" placement="TOOLBAR">
 							<execute-script function="x -> { obj = new(`DemoTypes:A`, transient: true); $obj.set(`DemoTypes:DemoTypes.A#booleanMandatory`, true); $obj.set(`DemoTypes:DemoTypes.A#booleanRadioMandatory`, true); $obj.set(`DemoTypes:DemoTypes.A#booleanSelectMandatory`, true); $obj; }"/>
@@ -26,11 +30,14 @@
 							</open-dialog>
 						</generic-command>
 						<command class="com.top_logic.layout.view.command.OpenDialogCommand"
-							label="Show in Dialog"
 							placement="TOOLBAR"
 							dialog-view="demo/object-details-dialog.view.xml"
 							close-on-backdrop="true"
 						>
+							<label>
+								<en>Show in Dialog</en>
+								<de>Im Dialog anzeigen</de>
+							</label>
 							<bind channel="model" to="selectedObject"/>
 						</command>
 					</commands>
@@ -47,7 +54,11 @@
 				size="70"
 				unit="%"
 			>
-				<panel title="Object Details">
+				<panel>
+					<title>
+						<en>Object Details</en>
+						<de>Objektdetails</de>
+					</title>
 					<form input="selectedObject">
 						<field attribute="name"/>
 						<field attribute="color"/>

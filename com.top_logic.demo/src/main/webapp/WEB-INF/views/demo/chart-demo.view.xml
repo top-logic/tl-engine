@@ -1,9 +1,13 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="iso-8859-1" ?>
 
 <view>
 	<stack direction="column" gap="default">
 		<grid gap="default" min-column-width="24rem">
-			<card title="Bar Chart Demo">
+			<card>
+				<title>
+					<en>Bar Chart Demo</en>
+					<de>Balkendiagramm-Demo</de>
+				</title>
 				<chart data="{
 					'type': 'bar',
 					'data': {
@@ -71,7 +75,11 @@
 				</chart>
 			</card>
 
-			<card title="Doughnut Chart Demo">
+			<card>
+				<title>
+					<en>Doughnut Chart Demo</en>
+					<de>Ringdiagramm-Demo</de>
+				</title>
 				<chart data="{
 					'type': 'doughnut',
 					'data': {
@@ -104,7 +112,11 @@
 			</card>
 		</grid>
 
-		<card title="Line Chart with Zoom">
+		<card>
+			<title>
+				<en>Line Chart with Zoom</en>
+				<de>Liniendiagramm mit Zoom</de>
+			</title>
 			<chart zoomEnabled="true" data="{
 				'type': 'line',
 				'data': {
@@ -132,7 +144,11 @@
 			</chart>
 		</card>
 
-		<card title="Combined Bar + Line">
+		<card>
+			<title>
+				<en>Combined Bar + Line</en>
+				<de>Kombiniert Balken + Linie</de>
+			</title>
 			<chart data="{
 				'type': 'bar',
 				'data': {

@@ -1,90 +1,134 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="iso-8859-1" ?>
 
 <view>
 	<app-shell>
 		<header>
-			<app-bar title="Task Manager"/>
+			<app-bar>
+				<title>
+					<en>Task Manager</en>
+					<de>Aufgabenverwaltung</de>
+				</title>
+			</app-bar>
 		</header>
 		<content>
 			<sidebar active-item="dashboard">
 				<items>
 					<nav-item id="dashboard"
 						icon="bi bi-speedometer2"
-						label="Dashboard"
 					>
+						<label>
+							<en>Dashboard</en>
+							<de>Dashboard</de>
+						</label>
 						<view-ref view="demo/dashboard.view.xml"/>
 					</nav-item>
 					<nav-item id="tabs-demo"
 						icon="bi bi-layout-text-window-reverse"
-						label="Tabs Demo"
 					>
+						<label>
+							<en>Tabs Demo</en>
+							<de>Tabs-Demo</de>
+						</label>
 						<view-ref view="demo/tabs-demo.view.xml"/>
 					</nav-item>
 					<nav-item id="split-demo"
 						icon="bi bi-layout-split"
-						label="Split Demo"
 					>
+						<label>
+							<en>Split Demo</en>
+							<de>Split-Demo</de>
+						</label>
 						<view-ref view="demo/split-demo.view.xml"/>
 					</nav-item>
 					<nav-item id="channels-demo"
 						icon="bi bi-table"
-						label="Channels Demo"
 					>
+						<label>
+							<en>Channels Demo</en>
+							<de>Channels-Demo</de>
+						</label>
 						<view-ref view="demo/channels-demo.view.xml"/>
 					</nav-item>
 					<nav-item id="form-demo"
 						icon="bi bi-pencil-square"
-						label="Form Demo"
 					>
+						<label>
+							<en>Form Demo</en>
+							<de>Formular-Demo</de>
+						</label>
 						<view-ref view="demo/form-demo.view.xml"/>
 					</nav-item>
 					<nav-item id="input-controls-demo"
 						icon="bi bi-input-cursor"
-						label="Input Controls"
 					>
+						<label>
+							<en>Input Controls</en>
+							<de>Eingabesteuerungen</de>
+						</label>
 						<view-ref view="demo/input-controls-demo.view.xml"/>
 					</nav-item>
 					<nav-item id="chart-demo"
 						icon="bi bi-bar-chart-line"
-						label="Chart Demo"
 					>
+						<label>
+							<en>Chart Demo</en>
+							<de>Diagramm-Demo</de>
+						</label>
 						<view-ref view="demo/chart-demo.view.xml"/>
 					</nav-item>
 					<nav-item id="tlscript-editor-demo"
 						icon="bi bi-code-square"
-						label="TL-Script Editor"
 					>
+						<label>
+							<en>TL-Script Editor</en>
+							<de>TL-Script-Editor</de>
+						</label>
 						<view-ref view="demo/tlscript-editor-demo.view.xml"/>
 					</nav-item>
 					<nav-item id="config-editor-demo"
 						icon="bi bi-sliders"
-						label="Config Editor"
 					>
+						<label>
+							<en>Config Editor</en>
+							<de>Konfigurationseditor</de>
+						</label>
 						<view-ref view="demo/config-editor-demo.view.xml"/>
 					</nav-item>
 					<nav-item id="dialog-demo"
 						icon="bi bi-window-stack"
-						label="Dialog Demo"
 					>
+						<label>
+							<en>Dialog Demo</en>
+							<de>Dialog-Demo</de>
+						</label>
 						<view-ref view="demo/dialog-demo.view.xml"/>
 					</nav-item>
 					<nav-item id="error-handling-demo"
 					icon="bi bi-exclamation-triangle"
-					label="Error Handling"
 				>
+					<label>
+						<en>Error Handling</en>
+						<de>Fehlerbehandlung</de>
+					</label>
 					<view-ref view="demo/error-handling-demo.view.xml"/>
 				</nav-item>
 				<nav-item id="constraint-test"
 					icon="bi bi-check-circle"
-					label="Constraint Test"
 				>
+					<label>
+						<en>Constraint Test</en>
+						<de>Constraint-Test</de>
+					</label>
 					<view-ref view="demo/constraint-test.view.xml"/>
 				</nav-item>
 				<separator/>
 					<nav-item id="settings"
 						icon="bi bi-gear"
-						label="Settings"
 					>
+						<label>
+							<en>Settings</en>
+							<de>Einstellungen</de>
+						</label>
 						<view-ref view="demo/settings.view.xml"/>
 					</nav-item>
 				</items>
@@ -95,16 +139,28 @@
 				<items>
 					<item id="dashboard"
 						icon="bi bi-speedometer2"
-						label="Dashboard"
-					/>
+					>
+						<label>
+							<en>Dashboard</en>
+							<de>Dashboard</de>
+						</label>
+					</item>
 					<item id="messages"
 						icon="bi bi-chat-dots"
-						label="Messages"
-					/>
+					>
+						<label>
+							<en>Messages</en>
+							<de>Nachrichten</de>
+						</label>
+					</item>
 					<item id="settings"
 						icon="bi bi-gear"
-						label="Settings"
-					/>
+					>
+						<label>
+							<en>Settings</en>
+							<de>Einstellungen</de>
+						</label>
+					</item>
 				</items>
 			</bottom-bar>
 		</footer>

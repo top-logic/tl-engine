@@ -1,7 +1,11 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="iso-8859-1" ?>
 
 <view>
-	<panel title="TL-Script Editor">
+	<panel>
+		<title>
+			<en>TL-Script Editor</en>
+			<de>TL-Script-Editor</de>
+		</title>
 		<tlscript-editor value="person -> $person.get(`tl.accounts:Person#name`)"/>
 	</panel>
 </view>

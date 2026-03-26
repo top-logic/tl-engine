@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="iso-8859-1" ?>
 
 <view>
 	<channels>
@@ -18,13 +18,20 @@
 				size="40"
 				unit="%"
 			>
-				<panel title="Accounts">
+				<panel>
+					<title>
+						<en>Accounts</en>
+						<de>Konten</de>
+					</title>
 					<commands>
 						<command class="com.top_logic.layout.view.command.OpenDialogCommand"
-							label="Edit"
 							placement="TOOLBAR"
 							dialog-view="demo/edit-person-dialog.view.xml"
 						>
+							<label>
+								<en>Edit</en>
+								<de>Bearbeiten</de>
+							</label>
 							<inputs>
 								<input from="selectedPerson" to="model"/>
 							</inputs>
@@ -42,7 +49,11 @@
 				size="60"
 				unit="%"
 			>
-				<panel title="Contact Details">
+				<panel>
+					<title>
+						<en>Contact Details</en>
+						<de>Kontaktdetails</de>
+					</title>
 					<form input="selectedContact">
 						<field attribute="firstname"/>
 						<field attribute="name"/>

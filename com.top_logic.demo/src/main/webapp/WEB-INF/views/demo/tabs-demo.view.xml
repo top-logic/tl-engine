@@ -1,34 +1,64 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="iso-8859-1" ?>
 
 <view>
 	<tab-bar active-tab="overview">
 		<tabs>
-			<tab id="overview"
-				label="Overview"
-			>
+			<tab id="overview">
+				<label>
+					<en>Overview</en>
+					<de>&#xDC;bersicht</de>
+				</label>
 				<card
-					title="Overview Content"
 					variant="elevated"
 				>
-					<demo-counter label="Items"/>
+					<title>
+						<en>Overview Content</en>
+						<de>&#xDC;bersichtsinhalt</de>
+					</title>
+					<demo-counter>
+						<label>
+							<en>Items</en>
+							<de>Elemente</de>
+						</label>
+					</demo-counter>
 				</card>
 			</tab>
-			<tab id="details"
-				label="Details"
-			>
-				<card title="Detail Content">
+			<tab id="details">
+				<label>
+					<en>Details</en>
+					<de>Details</de>
+				</label>
+				<card>
+					<title>
+						<en>Detail Content</en>
+						<de>Detailinhalt</de>
+					</title>
 					<button>
-						<action class="com.top_logic.demo.view.command.DemoCommand"
-							label="Load Details"
-						/>
+						<action class="com.top_logic.demo.view.command.DemoCommand">
+							<label>
+								<en>Load Details</en>
+								<de>Details laden</de>
+							</label>
+						</action>
 					</button>
 				</card>
 			</tab>
-			<tab id="history"
-				label="History"
-			>
-				<card title="History Content">
-					<demo-counter label="Events"/>
+			<tab id="history">
+				<label>
+					<en>History</en>
+					<de>Verlauf</de>
+				</label>
+				<card>
+					<title>
+						<en>History Content</en>
+						<de>Verlaufsinhalt</de>
+					</title>
+					<demo-counter>
+						<label>
+							<en>Events</en>
+							<de>Ereignisse</de>
+						</label>
+					</demo-counter>
 				</card>
 			</tab>
 		</tabs>

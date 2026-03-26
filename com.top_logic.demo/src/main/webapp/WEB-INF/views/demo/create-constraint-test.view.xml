@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="iso-8859-1" ?>
 
 <view>
 	<channels>
@@ -6,9 +6,12 @@
 		<channel name="selection"/>
 	</channels>
 	<window
-		title="New Constraint Test Object"
 		width="600px"
 	>
+		<title>
+			<en>New Constraint Test Object</en>
+			<de>Neues Constraint-Test-Objekt</de>
+		</title>
 		<form input="model" initial-edit-mode="true" mode-switch="false">
 			<field attribute="mandatoryString"/>
 			<field attribute="sizedString"/>
@@ -26,7 +29,11 @@
 				</columns>
 			</composition-table>
 			<commands>
-				<generic-command label="Create" placement="TOOLBAR">
+				<generic-command placement="TOOLBAR">
+					<label>
+						<en>Create</en>
+						<de>Erstellen</de>
+					</label>
 					<store-form-state/>
 					<with-transaction>
 						<execute-script function="obj -> $obj.copy(transient: false)"/>
@@ -38,9 +45,12 @@
 		</form>
 		<actions>
 			<button>
-				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
-					label="Cancel"
-				/>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand">
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
 			</button>
 		</actions>
 	</window>

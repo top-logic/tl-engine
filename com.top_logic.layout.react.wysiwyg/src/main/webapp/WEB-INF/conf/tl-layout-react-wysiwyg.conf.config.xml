@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+  <services>
+    <config service-class="com.top_logic.layout.react.ReactComponentRegistry">
+      <instance>
+        <type-mappings>
+          <type-mapping type="tl.model.wysiwyg:Html" module="TLWysiwygEditor"/>
+        </type-mappings>
+      </instance>
+    </config>
+
+    <config service-class="com.top_logic.gui.JSFileCompiler">
+      <instance>
+        <additional-files>
+          <file resource="tl-react-wysiwyg.js" type="module" />
+        </additional-files>
+      </instance>
+    </config>
+  </services>
+</application>

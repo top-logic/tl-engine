@@ -96,7 +96,7 @@
    Toolbar
    =================================================================== */
 
-.tlToolbar {
+.tlWysiwygToolbar {
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
@@ -109,7 +109,7 @@
 
 /* ---- Separator ---- */
 
-.tlToolbar__sep {
+.tlWysiwygToolbar__sep {
   width: 1px;
   height: 20px;
   margin: 0 6px;
@@ -118,7 +118,7 @@
 
 /* ---- Buttons ---- */
 
-.tlToolbar__btn {
+.tlWysiwygToolbar__btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -135,39 +135,39 @@
   outline: none;
 }
 
-.tlToolbar__btn:hover {
+.tlWysiwygToolbar__btn:hover {
   background: var(--tl-hover-bg, #e5e7eb);
 }
 
-.tlToolbar__btn:focus-visible {
+.tlWysiwygToolbar__btn:focus-visible {
   box-shadow: 0 0 0 2px var(--tl-primary-color, #2563eb);
 }
 
-.tlToolbar__btn--active {
+.tlWysiwygToolbar__btn--active {
   background: var(--tl-selected-bg, #dbeafe);
   color: var(--tl-primary-color, #2563eb);
 }
 
-.tlToolbar__btn--active:hover {
+.tlWysiwygToolbar__btn--active:hover {
   background: var(--tl-selected-hover-bg, #bfdbfe);
 }
 
-.tlToolbar__btn:disabled {
+.tlWysiwygToolbar__btn:disabled {
   opacity: 0.35;
   cursor: default;
 }
 
-.tlToolbar__btn:disabled:hover {
+.tlWysiwygToolbar__btn:disabled:hover {
   background: transparent;
 }
 
 /* Dropdown trigger has a chevron icon */
-.tlToolbar__btn--dropdown {
+.tlWysiwygToolbar__btn--dropdown {
   gap: 1px;
   padding-right: 2px;
 }
 
-.tlToolbar__chevron {
+.tlWysiwygToolbar__chevron {
   font-size: 12px;
   opacity: 0.6;
 }
@@ -176,7 +176,7 @@
    Tooltip
    =================================================================== */
 
-.tlToolbar__tooltip {
+.tlWysiwygToolbar__tooltip {
   padding: 4px 10px;
   font-size: 12px;
   line-height: 1.4;
@@ -189,7 +189,7 @@
   user-select: none;
 }
 
-.tlToolbar__tooltipArrow {
+.tlWysiwygToolbar__tooltipArrow {
   fill: #1f2937;
 }
 
@@ -202,7 +202,7 @@
    Dropdown Menu (Radix)
    =================================================================== */
 
-.tlToolbar__dropdown {
+.tlWysiwygToolbar__dropdown {
   min-width: 160px;
   padding: 4px;
   background: #fff;
@@ -213,7 +213,7 @@
   animation: tlDropdownSlideIn 0.12s ease;
 }
 
-.tlToolbar__dropdownItem {
+.tlWysiwygToolbar__dropdownItem {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -227,16 +227,16 @@
   transition: background 0.1s ease;
 }
 
-.tlToolbar__dropdownItem[data-highlighted] {
+.tlWysiwygToolbar__dropdownItem[data-highlighted] {
   background: var(--tl-hover-bg, #f3f4f6);
 }
 
-.tlToolbar__dropdownItem--active {
+.tlWysiwygToolbar__dropdownItem--active {
   color: var(--tl-primary-color, #2563eb);
   font-weight: 500;
 }
 
-.tlToolbar__dropdownIcon {
+.tlWysiwygToolbar__dropdownIcon {
   font-size: 16px;
   width: 20px;
   text-align: center;
@@ -251,7 +251,7 @@
    Link Popover (Radix)
    =================================================================== */
 
-.tlToolbar__linkPopover {
+.tlWysiwygToolbar__linkPopover {
   width: 300px;
   padding: 12px;
   background: #fff;
@@ -262,17 +262,17 @@
   animation: tlPopoverFadeIn 0.15s ease;
 }
 
-.tlToolbar__popoverArrow {
+.tlWysiwygToolbar__popoverArrow {
   fill: #fff;
 }
 
-.tlToolbar__linkForm {
+.tlWysiwygToolbar__linkForm {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.tlToolbar__linkLabel {
+.tlWysiwygToolbar__linkLabel {
   font-size: 12px;
   font-weight: 500;
   color: var(--tl-text-secondary, #6b7280);
@@ -280,7 +280,7 @@
   letter-spacing: 0.03em;
 }
 
-.tlToolbar__linkInput {
+.tlWysiwygToolbar__linkInput {
   width: 100%;
   padding: 7px 10px;
   font-size: 13px;
@@ -293,19 +293,19 @@
   box-sizing: border-box;
 }
 
-.tlToolbar__linkInput:focus {
+.tlWysiwygToolbar__linkInput:focus {
   border-color: var(--tl-primary-color, #2563eb);
   box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
 }
 
-.tlToolbar__linkActions {
+.tlWysiwygToolbar__linkActions {
   display: flex;
   gap: 6px;
   justify-content: flex-end;
 }
 
-.tlToolbar__linkApply,
-.tlToolbar__linkRemove {
+.tlWysiwygToolbar__linkApply,
+.tlWysiwygToolbar__linkRemove {
   padding: 5px 14px;
   font-size: 12px;
   font-weight: 500;
@@ -315,27 +315,27 @@
   transition: background 0.15s ease, opacity 0.15s ease;
 }
 
-.tlToolbar__linkApply {
+.tlWysiwygToolbar__linkApply {
   background: var(--tl-primary-color, #2563eb);
   color: #fff;
 }
 
-.tlToolbar__linkApply:hover {
+.tlWysiwygToolbar__linkApply:hover {
   background: #1d4ed8;
 }
 
-.tlToolbar__linkApply:disabled {
+.tlWysiwygToolbar__linkApply:disabled {
   opacity: 0.4;
   cursor: default;
 }
 
-.tlToolbar__linkRemove {
+.tlWysiwygToolbar__linkRemove {
   background: transparent;
   color: var(--tl-error-color, #dc2626);
   border: 1px solid var(--tl-error-color, #dc2626);
 }
 
-.tlToolbar__linkRemove:hover {
+.tlWysiwygToolbar__linkRemove:hover {
   background: #fef2f2;
 }
 

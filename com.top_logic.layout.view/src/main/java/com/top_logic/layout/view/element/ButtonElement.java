@@ -28,7 +28,6 @@ import com.top_logic.layout.view.command.ViewCommandConfirmation;
 import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.tool.execution.ExecutableState;
 
 /**
  * A {@link UIElement} that renders a button executing a {@link ViewCommand}.

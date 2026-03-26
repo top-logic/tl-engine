@@ -51,7 +51,6 @@ import com.top_logic.layout.view.form.FormCommandModel;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.model.TLObject;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.Resources;
 
 /**

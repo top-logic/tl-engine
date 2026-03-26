@@ -34,7 +34,6 @@ import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandConfirmation;
 import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.command.ViewExecutabilityRule;
-import com.top_logic.tool.execution.ExecutableState;
 
 /**
  * Base class for {@link UIElement}s that establish a {@link CommandScope} and synchronize toolbar

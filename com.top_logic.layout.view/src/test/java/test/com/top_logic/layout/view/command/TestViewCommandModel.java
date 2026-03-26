@@ -19,7 +19,6 @@ import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.tool.execution.ExecutableState;
 
 /**
  * Tests for {@link ViewCommandModel}.

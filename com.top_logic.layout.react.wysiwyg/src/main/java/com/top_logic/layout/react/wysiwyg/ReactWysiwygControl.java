@@ -137,8 +137,13 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	@Override
 	public HandlerResult handleUpload(DisplayContext context, Collection<Part> parts) {
 		for (Part part : parts) {
+			String submittedFileName = part.getSubmittedFileName();
+			if (submittedFileName == null || submittedFileName.isEmpty()) {
+				// Skip non-file parts (controlId, windowName).
+				continue;
+			}
 			try {
-				String fileName = uniqueImageKey(part.getSubmittedFileName());
+				String fileName = uniqueImageKey(submittedFileName);
 				BinaryData imageData = BinaryDataFactory.createUploadData(part);
 				_shadowCopy.addImage(fileName, imageData);
 				putState(IMAGE_URL, fileName);

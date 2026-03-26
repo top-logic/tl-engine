@@ -922,6 +922,7 @@ button.tlPhotoCapture__overlayCaptureBtn:active .tlPhotoCapture__overlayCaptureI
 	align-items: center;
 	gap: var(--spacing-01);
 	flex-shrink: 0;
+	margin-left: auto;
 }
 
 .tlPanel__actionButton {

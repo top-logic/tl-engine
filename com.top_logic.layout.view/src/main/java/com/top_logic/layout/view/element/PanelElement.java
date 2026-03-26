@@ -8,13 +8,16 @@ package com.top_logic.layout.view.element;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.ToolbarControl;
 import com.top_logic.layout.react.control.layout.ReactPanelControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.util.Resources;
 
 /**
  * UIElement that wraps {@link ReactPanelControl}.
@@ -44,10 +47,11 @@ public class PanelElement extends CommandScopeElement {
 		 * The panel title displayed in the toolbar header.
 		 */
 		@Name(TITLE)
-		String getTitle();
+		@Nullable
+		ResKey getTitle();
 	}
 
-	private final String _title;
+	private final ResKey _title;
 
 	/**
 	 * Creates a new {@link PanelElement} from configuration.
@@ -60,6 +64,7 @@ public class PanelElement extends CommandScopeElement {
 
 	@Override
 	protected ToolbarControl createChromeControl(ViewContext context, ReactControl content) {
-		return new ReactPanelControl(context, _title, content, false, false, false);
+		String title = _title != null ? Resources.getInstance().getString(_title) : "";
+		return new ReactPanelControl(context, title, content, false, false, false);
 	}
 }

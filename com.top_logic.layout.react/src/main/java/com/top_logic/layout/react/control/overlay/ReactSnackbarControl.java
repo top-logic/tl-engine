@@ -124,10 +124,7 @@ public class ReactSnackbarControl extends ReactControl {
 	 * Shows the snackbar with the current message.
 	 */
 	public void show() {
-		_generation++;
-		beginUpdate();
-		putState(VISIBLE, true);
-		putState(GENERATION, _generation);
+		beginShow();
 		commitUpdate();
 	}
 
@@ -138,11 +135,8 @@ public class ReactSnackbarControl extends ReactControl {
 	 *        The new notification message.
 	 */
 	public void show(String message) {
-		_generation++;
-		beginUpdate();
+		beginShow();
 		setMessage(message);
-		putState(VISIBLE, true);
-		putState(GENERATION, _generation);
 		commitUpdate();
 	}
 
@@ -155,20 +149,28 @@ public class ReactSnackbarControl extends ReactControl {
 	 *        The visual variant.
 	 */
 	public void showHtml(String htmlContent, Variant variant) {
-		_generation++;
-		beginUpdate();
+		beginShow();
 		putState(CONTENT, htmlContent);
 		setVariant(variant);
-		putState(VISIBLE, true);
-		putState(GENERATION, _generation);
 		commitUpdate();
+	}
+
+	private void beginShow() {
+		_generation++;
+		beginUpdate();
+		setVisible(true);
+		putState(GENERATION, _generation);
+	}
+
+	private void setVisible(boolean visible) {
+		putState(VISIBLE, visible);
 	}
 
 	/**
 	 * Hides the snackbar.
 	 */
 	public void hide() {
-		putState(VISIBLE, false);
+		setVisible(false);
 	}
 
 	/**

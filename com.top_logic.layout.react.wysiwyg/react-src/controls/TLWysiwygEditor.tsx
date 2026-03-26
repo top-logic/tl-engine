@@ -108,7 +108,7 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
     return (
       <div className="tlWysiwygEditor tlWysiwygEditor--immutable">
         <div
-          className="tlWysiwygEditor__immutableContent"
+          className="tlWysiwygEditor__immutableContent ProseMirror"
           dangerouslySetInnerHTML={{ __html: value }}
         />
       </div>

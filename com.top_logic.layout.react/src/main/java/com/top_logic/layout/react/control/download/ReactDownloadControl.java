@@ -61,10 +61,7 @@ public class ReactDownloadControl extends ReactControl implements DataProvider {
 	public ReactDownloadControl(ReactContext context, BinaryDataValue model) {
 		super(context, null, "TLDownload");
 		_model = model;
-		BinaryData data = model.getData();
-		putState(HAS_DATA, data != null);
-		putState(DATA_REVISION, _dataRevision);
-		putState(FILE_NAME, data != null ? data.getName() : null);
+		updateDataState(model.getData());
 		setClearable(false);
 		model.addListener(_modelListener);
 	}
@@ -91,6 +88,10 @@ public class ReactDownloadControl extends ReactControl implements DataProvider {
 
 	private void handleModelChanged(BinaryData data) {
 		_dataRevision++;
+		updateDataState(data);
+	}
+
+	private void updateDataState(BinaryData data) {
 		putState(HAS_DATA, data != null);
 		putState(DATA_REVISION, _dataRevision);
 		putState(FILE_NAME, data != null ? data.getName() : null);

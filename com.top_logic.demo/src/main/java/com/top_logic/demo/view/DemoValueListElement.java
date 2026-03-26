@@ -91,7 +91,7 @@ public class DemoValueListElement implements UIElement {
 		// Update when channel changes.
 		ViewChannel.ChannelListener listener = (sender, oldVal, newVal) -> {
 			int newCount = newVal instanceof Number ? ((Number) newVal).intValue() : 0;
-			control.patchReactState(java.util.Collections.singletonMap("count", newCount));
+			control.setCount(newCount);
 		};
 		channel.addListener(listener);
 		control.addCleanupAction(() -> channel.removeListener(listener));
@@ -104,12 +104,18 @@ public class DemoValueListElement implements UIElement {
 	 */
 	private static class ValueListControl extends ReactControl {
 
+		private static final String COUNT = "count";
+
 		ValueListControl(ViewContext context, int count, String title) {
 			super(context, null, "TLValueList");
-			putState("count", count);
+			setCount(count);
 			if (title != null) {
 				putState("title", title);
 			}
+		}
+
+		void setCount(int count) {
+			putState(COUNT, count);
 		}
 	}
 }

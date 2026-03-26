@@ -104,7 +104,8 @@ public class AppShellElement implements UIElement {
 	@Override
 	public IReactControl createControl(ViewContext context) {
 		// Create snackbar and error sink first.
-		ReactSnackbarControl snackbar = new ReactSnackbarControl(context, "", "success", () -> { /* no-op */ });
+		ReactSnackbarControl snackbar = new ReactSnackbarControl(context, "",
+			ReactSnackbarControl.Variant.SUCCESS, () -> { /* no-op */ });
 		ErrorSink errorSink = createErrorSink(snackbar);
 
 		// Derive context with error sink for children.
@@ -122,21 +123,17 @@ public class AppShellElement implements UIElement {
 		return new ErrorSink() {
 			@Override
 			public void showError(HTMLFragment content) {
-				showSnackbar(renderToHtml(content), "error");
+				snackbar.showHtml(renderToHtml(content), ReactSnackbarControl.Variant.ERROR);
 			}
 
 			@Override
 			public void showWarning(HTMLFragment content) {
-				showSnackbar(renderToHtml(content), "warning");
+				snackbar.showHtml(renderToHtml(content), ReactSnackbarControl.Variant.WARNING);
 			}
 
 			@Override
 			public void showInfo(HTMLFragment content) {
-				showSnackbar(renderToHtml(content), "info");
-			}
-
-			private void showSnackbar(String htmlContent, String variant) {
-				snackbar.showHtml(htmlContent, variant);
+				snackbar.showHtml(renderToHtml(content), ReactSnackbarControl.Variant.INFO);
 			}
 		};
 	}

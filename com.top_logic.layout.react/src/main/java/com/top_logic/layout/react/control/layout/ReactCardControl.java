@@ -68,9 +68,7 @@ public class ReactCardControl extends ReactControl {
 		super(context, null, REACT_MODULE);
 		_child = child;
 		_headerActions = new ArrayList<>(headerActions);
-		if (title != null) {
-			putState(TITLE, title);
-		}
+		setTitle(title);
 		putState(VARIANT, variant);
 		putState(PADDING, padding);
 		putState(HEADER_ACTIONS, _headerActions);

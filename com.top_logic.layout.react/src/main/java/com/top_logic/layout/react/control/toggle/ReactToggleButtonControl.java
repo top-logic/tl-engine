@@ -5,8 +5,6 @@
  */
 package com.top_logic.layout.react.control.toggle;
 
-import java.util.Map;
-
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
@@ -78,8 +76,7 @@ public class ReactToggleButtonControl extends ReactControl {
 	@ReactCommand("click")
 	HandlerResult handleClick(ReactContext context) {
 		boolean newActive = _action.toggle(context, _active);
-		_active = newActive;
-		patchReactState(Map.of(ACTIVE, Boolean.valueOf(newActive)));
+		setActive(newActive);
 		return HandlerResult.DEFAULT_RESULT;
 	}
 

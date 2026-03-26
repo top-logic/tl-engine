@@ -43,9 +43,7 @@ public class ReactFieldListControl extends ReactControl {
 	 */
 	public ReactFieldListControl(ReactContext context, String title, List<? extends ReactControl> children) {
 		super(context, null, REACT_MODULE);
-		if (title != null) {
-			putState(TITLE, title);
-		}
+		setTitle(title);
 		putState(FIELDS, new ArrayList<>(children));
 	}
 

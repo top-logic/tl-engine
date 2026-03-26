@@ -116,7 +116,7 @@ public class ReactAppShellControl extends ReactControl {
 	 *        The notification message.
 	 */
 	public void showSnackbar(String message) {
-		showSnackbar(message, "success");
+		showSnackbar(message, ReactSnackbarControl.Variant.SUCCESS);
 	}
 
 	/**
@@ -125,10 +125,10 @@ public class ReactAppShellControl extends ReactControl {
 	 * @param htmlContent
 	 *        The notification content as rendered HTML.
 	 * @param variant
-	 *        "info", "success", "warning", or "error".
+	 *        The visual variant.
 	 */
-	public void showSnackbar(String htmlContent, String variant) {
-		_snackbar.patchReactState(Map.of("content", htmlContent, "variant", variant, "visible", Boolean.TRUE));
+	public void showSnackbar(String htmlContent, ReactSnackbarControl.Variant variant) {
+		_snackbar.showHtml(htmlContent, variant);
 	}
 
 	@Override

@@ -54,12 +54,20 @@ public class ReactAudioRecorderControl extends ReactControl implements UploadHan
 	public ReactAudioRecorderControl(ReactContext context, BinaryDataValue model) {
 		super(context, null, "TLAudioRecorder");
 		_model = model;
-		putState(STATUS, "idle");
+		setStatus("idle");
+	}
+
+	private void setStatus(String status) {
+		putState(STATUS, status);
+	}
+
+	private void setError(String error) {
+		putState(ERROR, error);
 	}
 
 	@Override
 	public HandlerResult handleUpload(DisplayContext context, Collection<Part> parts) {
-		putState(STATUS, "received");
+		setStatus("received");
 		try {
 			Part audioPart = parts.stream()
 				.filter(p -> "audio".equals(p.getName()))
@@ -67,8 +75,8 @@ public class ReactAudioRecorderControl extends ReactControl implements UploadHan
 				.orElse(null);
 
 			if (audioPart == null) {
-				putState(ERROR, "No audio data received.");
-				putState(STATUS, "idle");
+				setError("No audio data received.");
+				setStatus("idle");
 				return HandlerResult.DEFAULT_RESULT;
 			}
 
@@ -86,12 +94,12 @@ public class ReactAudioRecorderControl extends ReactControl implements UploadHan
 			BinaryData data = BinaryDataFactory.createBinaryData(audioData, contentType, fileName);
 			_model.setData(data);
 
-			putState(ERROR, null);
-			putState(STATUS, "idle");
+			setError(null);
+			setStatus("idle");
 		} catch (IOException ex) {
 			Logger.error("Failed to process audio upload.", ex, ReactAudioRecorderControl.class);
-			putState(ERROR, ex.getMessage());
-			putState(STATUS, "idle");
+			setError(ex.getMessage());
+			setStatus("idle");
 		}
 		return HandlerResult.DEFAULT_RESULT;
 	}

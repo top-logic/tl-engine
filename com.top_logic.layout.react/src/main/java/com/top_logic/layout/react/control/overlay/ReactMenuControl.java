@@ -76,8 +76,8 @@ public class ReactMenuControl extends ReactControl {
 		super(context, null, REACT_MODULE);
 		_selectHandler = selectHandler;
 		_closeHandler = closeHandler;
-		putState(ANCHOR_ID, anchorId);
-		putState(OPEN, false);
+		setAnchorId(anchorId);
+		close();
 		updateItems(items);
 	}
 
@@ -102,6 +102,13 @@ public class ReactMenuControl extends ReactControl {
 			itemList.add(map);
 		}
 		putState(ITEMS, itemList);
+	}
+
+	/**
+	 * Sets the anchor element ID for positioning.
+	 */
+	public void setAnchorId(String anchorId) {
+		putState(ANCHOR_ID, anchorId);
 	}
 
 	/**

@@ -348,7 +348,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	 * @throws IllegalStateException
 	 *         if no {@link SSEUpdateQueue} has been configured.
 	 */
-	public void setReactState(Map<String, Object> newState) {
+	protected void setReactState(Map<String, Object> newState) {
 		setReactState(requireSSEQueue(), newState);
 	}
 
@@ -361,7 +361,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	 * @throws IllegalStateException
 	 *         if no {@link SSEUpdateQueue} has been configured.
 	 */
-	public void patchReactState(Map<String, Object> patch) {
+	protected void patchReactState(Map<String, Object> patch) {
 		patchReactState(requireSSEQueue(), patch);
 	}
 
@@ -380,7 +380,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	 * @param newState
 	 *        The new state.
 	 */
-	public void setReactState(SSEUpdateQueue queue, Map<String, Object> newState) {
+	protected void setReactState(SSEUpdateQueue queue, Map<String, Object> newState) {
 		_reactState = new HashMap<>(newState);
 
 		StateEvent event = StateEvent.create()
@@ -402,7 +402,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	 * @param patch
 	 *        The partial state update.
 	 */
-	public void patchReactState(SSEUpdateQueue queue, Map<String, Object> patch) {
+	protected void patchReactState(SSEUpdateQueue queue, Map<String, Object> patch) {
 		_reactState.putAll(patch);
 
 		PatchEvent event = PatchEvent.create()

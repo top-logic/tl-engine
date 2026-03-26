@@ -16,36 +16,62 @@ import com.top_logic.layout.react.control.ReactControl;
  * Transient notification message displayed at the bottom of the screen.
  *
  * <p>
- * Auto-dismisses after a configurable duration. Supports four variants (info, success, warning,
- * error) and an optional action button.
+ * Auto-dismisses after a configurable duration. Supports four {@link Variant variants} (info,
+ * success, warning, error) and an optional action button.
  * </p>
  */
 public class ReactSnackbarControl extends ReactControl {
 
 	private static final String REACT_MODULE = "TLSnackbar";
 
-	/** @see #show(String) */
 	private static final String MESSAGE = "message";
 
-	/** @see #ReactSnackbarControl(ReactContext, String, String, int, Runnable) */
+	private static final String CONTENT = "content";
+
 	private static final String VARIANT = "variant";
 
-	/** @see #ReactSnackbarControl(ReactContext, String, String, int, Runnable) */
 	private static final String DURATION = "duration";
 
-	/** @see #show() */
 	private static final String VISIBLE = "visible";
 
-	/** @see #setAction(String, String) */
 	private static final String ACTION = "action";
 
-	/** @see #setAction(String, String) */
 	private static final String ACTION_LABEL = "label";
 
-	/** @see #setAction(String, String) */
 	private static final String ACTION_COMMAND_NAME = "commandName";
 
 	private static final String GENERATION = "generation";
+
+	/**
+	 * The visual variant of a snackbar notification.
+	 */
+	public enum Variant {
+
+		/** Informational notification. */
+		INFO("info"),
+
+		/** Success notification. */
+		SUCCESS("success"),
+
+		/** Warning notification. */
+		WARNING("warning"),
+
+		/** Error notification. */
+		ERROR("error");
+
+		private final String _externalName;
+
+		Variant(String externalName) {
+			_externalName = externalName;
+		}
+
+		/**
+		 * The name sent to the React component.
+		 */
+		public String getExternalName() {
+			return _externalName;
+		}
+	}
 
 	private Runnable _dismissHandler;
 
@@ -57,11 +83,11 @@ public class ReactSnackbarControl extends ReactControl {
 	 * @param message
 	 *        The notification message.
 	 * @param variant
-	 *        "info", "success", "warning", or "error".
+	 *        The visual variant.
 	 * @param dismissHandler
 	 *        Called when the snackbar is dismissed.
 	 */
-	public ReactSnackbarControl(ReactContext context, String message, String variant, Runnable dismissHandler) {
+	public ReactSnackbarControl(ReactContext context, String message, Variant variant, Runnable dismissHandler) {
 		this(context, message, variant, 5000, dismissHandler);
 	}
 
@@ -71,20 +97,35 @@ public class ReactSnackbarControl extends ReactControl {
 	 * @param message
 	 *        The notification message.
 	 * @param variant
-	 *        "info", "success", "warning", or "error".
+	 *        The visual variant.
 	 * @param duration
 	 *        Auto-dismiss delay in ms (0 = sticky).
 	 * @param dismissHandler
 	 *        Called when the snackbar is dismissed.
 	 */
-	public ReactSnackbarControl(ReactContext context, String message, String variant, int duration, Runnable dismissHandler) {
+	public ReactSnackbarControl(ReactContext context, String message, Variant variant, int duration,
+			Runnable dismissHandler) {
 		super(context, null, REACT_MODULE);
 		_dismissHandler = dismissHandler;
-		putState(MESSAGE, message);
-		putState(VARIANT, variant);
+		setMessage(message);
+		setVariant(variant);
 		putState(DURATION, duration);
-		putState(VISIBLE, false);
+		hide();
 		putState(GENERATION, 0);
+	}
+
+	/**
+	 * Sets the notification message.
+	 */
+	public void setMessage(String message) {
+		putState(MESSAGE, message);
+	}
+
+	/**
+	 * Sets the visual variant.
+	 */
+	public void setVariant(Variant variant) {
+		putState(VARIANT, variant.getExternalName());
 	}
 
 	/**
@@ -103,7 +144,7 @@ public class ReactSnackbarControl extends ReactControl {
 	 *        The new notification message.
 	 */
 	public void show(String message) {
-		putState(MESSAGE, message);
+		setMessage(message);
 		show();
 	}
 
@@ -113,13 +154,13 @@ public class ReactSnackbarControl extends ReactControl {
 	 * @param htmlContent
 	 *        The HTML content to display.
 	 * @param variant
-	 *        "info", "success", "warning", or "error".
+	 *        The visual variant.
 	 */
-	public void showHtml(String htmlContent, String variant) {
+	public void showHtml(String htmlContent, Variant variant) {
 		_generation++;
 		patchReactState(Map.of(
-			"content", htmlContent,
-			VARIANT, variant,
+			CONTENT, htmlContent,
+			VARIANT, variant.getExternalName(),
 			VISIBLE, Boolean.TRUE,
 			GENERATION, _generation));
 	}

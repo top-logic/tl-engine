@@ -6,8 +6,6 @@
 package com.top_logic.demo.react;
 
 import java.io.IOException;
-import java.util.Collections;
-
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -93,22 +91,28 @@ public class DemoReactCounterComponent extends LayoutComponent {
 		 */
 		public DemoCounterControl(ReactContext context, String label) {
 			super(context, null, "TLCounter");
-			putState(COUNT, 0);
+			setCount(0);
 			if (label != null) {
 				putState(LABEL, label);
 			}
 		}
 
+		private int getCount() {
+			return ((Number) getState(COUNT)).intValue();
+		}
+
+		private void setCount(int count) {
+			putState(COUNT, count);
+		}
+
 		@ReactCommand("increment")
 		void handleIncrement() {
-			int count = ((Number) getState(COUNT)).intValue();
-			patchReactState(Collections.singletonMap(COUNT, count + 1));
+			setCount(getCount() + 1);
 		}
 
 		@ReactCommand("decrement")
 		void handleDecrement() {
-			int count = ((Number) getState(COUNT)).intValue();
-			patchReactState(Collections.singletonMap(COUNT, count - 1));
+			setCount(getCount() - 1);
 		}
 	}
 

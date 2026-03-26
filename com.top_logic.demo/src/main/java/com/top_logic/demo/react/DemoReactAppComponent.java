@@ -117,7 +117,8 @@ public class DemoReactAppComponent extends LayoutComponent {
 		_context = ctx;
 
 		// Snackbar and error sink for the app shell.
-		ReactSnackbarControl snackbar = new ReactSnackbarControl(ctx, "", "success", () -> { /* no-op */ });
+		ReactSnackbarControl snackbar = new ReactSnackbarControl(ctx, "",
+			ReactSnackbarControl.Variant.SUCCESS, () -> { /* no-op */ });
 		ErrorSink errorSink = new ErrorSink() {
 			@Override
 			public void showError(HTMLFragment content) {
@@ -153,7 +154,7 @@ public class DemoReactAppComponent extends LayoutComponent {
 			return HandlerResult.DEFAULT_RESULT;
 		});
 		_moreButton = new ReactButtonControl(ctx, "More", (context) -> {
-			_menu.patchReactState(Map.of("anchorId", _moreButton.getID()));
+			_menu.setAnchorId(_moreButton.getID());
 			_menu.open();
 			return HandlerResult.DEFAULT_RESULT;
 		});

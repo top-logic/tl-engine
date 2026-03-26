@@ -49,9 +49,7 @@ public class ReactAudioPlayerControl extends ReactControl implements DataProvide
 	public ReactAudioPlayerControl(ReactContext context, BinaryDataValue model) {
 		super(context, null, "TLAudioPlayer");
 		_model = model;
-		BinaryData data = model.getData();
-		putState(HAS_AUDIO, data != null);
-		putState(DATA_REVISION, _dataRevision);
+		updateDataState(model.getData());
 		model.addListener(_modelListener);
 	}
 
@@ -67,6 +65,10 @@ public class ReactAudioPlayerControl extends ReactControl implements DataProvide
 
 	private void handleModelChanged(BinaryData data) {
 		_dataRevision++;
+		updateDataState(data);
+	}
+
+	private void updateDataState(BinaryData data) {
 		putState(HAS_AUDIO, data != null);
 		putState(DATA_REVISION, _dataRevision);
 	}

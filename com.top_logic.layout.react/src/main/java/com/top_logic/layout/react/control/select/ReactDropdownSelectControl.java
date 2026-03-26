@@ -120,11 +120,19 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	private void initSelectState() {
 		Resources resources = Resources.getInstance();
 
-		putState(VALUE, toOptionDescriptors(getSelectionSorted()));
+		updateValueState();
 		putState(MULTI_SELECT, _selectModel.isMultiple());
 		putState(CUSTOM_ORDER, _customOrder);
 		putState(EMPTY_OPTION_LABEL, resources.getString(I18NConstants.JS_DROPDOWN_SELECT_EMPTY));
-		putState(OPTIONS_LOADED, false);
+		setOptionsLoaded(false);
+	}
+
+	private void updateValueState() {
+		putState(VALUE, toOptionDescriptors(getSelectionSorted()));
+	}
+
+	private void setOptionsLoaded(boolean loaded) {
+		putState(OPTIONS_LOADED, loaded);
 	}
 
 	/**
@@ -134,9 +142,9 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	@Override
 	protected void handleModelValueChanged(FieldModel source, Object oldValue, Object newValue) {
 		if (!_updatingFromClient) {
-			putState(VALUE, toOptionDescriptors(getSelectionSorted()));
+			updateValueState();
 			// Invalidate cached options so the client reloads them on next open.
-			putState(OPTIONS_LOADED, false);
+			setOptionsLoaded(false);
 		}
 	}
 
@@ -160,9 +168,10 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 
 			Map<String, Object> patch = new HashMap<>();
 			patch.put(OPTIONS, descriptors);
-			patch.put(OPTIONS_LOADED, true);
+			patch.put(OPTIONS_LOADED, Boolean.TRUE);
 			// Re-send value with IDs consistent with the new option index.
 			patch.put(VALUE, toOptionDescriptors(getSelectionSorted()));
+			// Note: compound patch - these keys must be sent atomically.
 			patchReactState(patch);
 		} catch (Exception ex) {
 			Logger.error("Failed to load options for dropdown select control.", ex, this);
@@ -194,7 +203,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 		}
 
 		// Update value state with full descriptors for chip display.
-		putState(VALUE, toOptionDescriptors(getSelectionSorted()));
+		updateValueState();
 
 		return HandlerResult.DEFAULT_RESULT;
 	}

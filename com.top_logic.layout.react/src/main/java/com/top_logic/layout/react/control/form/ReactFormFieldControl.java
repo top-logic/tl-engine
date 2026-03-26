@@ -97,12 +97,12 @@ public class ReactFormFieldControl extends ReactControl {
 	 */
 	private void initFieldState() {
 		putState(VALUE, _fieldModel.getValue());
-		putState(EDITABLE, _fieldModel.isEditable());
-		putState(MANDATORY, _fieldModel.isMandatory());
-		putState(HAS_ERROR, _fieldModel.hasError());
-		putState(HAS_WARNINGS, _fieldModel.hasWarnings());
+		setEditable(_fieldModel.isEditable());
+		setMandatory(_fieldModel.isMandatory());
+		setHasError(_fieldModel.hasError());
+		setHasWarnings(_fieldModel.hasWarnings());
 		if (_fieldModel.hasError()) {
-			putState(ERROR_MESSAGE, Resources.getInstance().getString(_fieldModel.getError()));
+			setErrorMessage(Resources.getInstance().getString(_fieldModel.getError()));
 		}
 		// Display properties from FormFieldAdapter.
 		if (_fieldModel instanceof FormFieldAdapter) {
@@ -126,19 +126,19 @@ public class ReactFormFieldControl extends ReactControl {
 
 			@Override
 			public void onEditabilityChanged(FieldModel source, boolean editable) {
-				putState(EDITABLE, editable);
+				setEditable(editable);
 			}
 
 			@Override
 			public void onValidationChanged(FieldModel source) {
-				putState(HAS_ERROR, source.hasError());
-				putState(HAS_WARNINGS, source.hasWarnings());
+				setHasError(source.hasError());
+				setHasWarnings(source.hasWarnings());
 				if (source.hasError()) {
-					putState(ERROR_MESSAGE, Resources.getInstance().getString(source.getError()));
+					setErrorMessage(Resources.getInstance().getString(source.getError()));
 				} else {
-					putState(ERROR_MESSAGE, null);
+					setErrorMessage(null);
 				}
-				putState(MANDATORY, source.isMandatory());
+				setMandatory(source.isMandatory());
 			}
 		};
 		_fieldModel.addListener(_modelListener);
@@ -164,6 +164,41 @@ public class ReactFormFieldControl extends ReactControl {
 	 */
 	public FieldModel getFieldModel() {
 		return _fieldModel;
+	}
+
+	/**
+	 * Updates the editable state.
+	 */
+	protected void setEditable(boolean editable) {
+		putState(EDITABLE, editable);
+	}
+
+	/**
+	 * Updates the mandatory state.
+	 */
+	protected void setMandatory(boolean mandatory) {
+		putState(MANDATORY, mandatory);
+	}
+
+	/**
+	 * Updates the error flag.
+	 */
+	protected void setHasError(boolean hasError) {
+		putState(HAS_ERROR, hasError);
+	}
+
+	/**
+	 * Updates the warnings flag.
+	 */
+	protected void setHasWarnings(boolean hasWarnings) {
+		putState(HAS_WARNINGS, hasWarnings);
+	}
+
+	/**
+	 * Updates the error message.
+	 */
+	protected void setErrorMessage(String message) {
+		putState(ERROR_MESSAGE, message);
 	}
 
 	/**

@@ -1612,13 +1612,14 @@ button.tlBottomBar__item:hover {
 .tlWindow__header {
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
+	gap: var(--spacing-03);
 	padding: var(--spacing-04);
 	border-bottom: 1px solid var(--border-subtle);
 	flex-shrink: 0;
 }
 
 .tlWindow__title {
+	flex: 1;
 	font-weight: bold;
 	font-size: var(--heading-compact-02-font-size);
 	line-height: var(--heading-compact-02-line-height);
@@ -1626,6 +1627,30 @@ button.tlBottomBar__item:hover {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+}
+
+.tlWindow__toolbar {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-02);
+}
+
+.tlWindow__toolbar .tlReactButton {
+	box-shadow: none;
+	background: none;
+	color: var(--text-secondary);
+	font-weight: normal;
+}
+
+.tlWindow__toolbar button.tlReactButton:not(:disabled):hover {
+	background: var(--layer-hover);
+	color: var(--text-primary);
+}
+
+.tlWindow__toolbar button.tlReactButton:not(:disabled):active {
+	background: var(--layer-active, var(--layer-hover));
+	box-shadow: none;
+	color: var(--text-primary);
 }
 
 .tlWindow__closeBtn {

@@ -97,6 +97,7 @@ com.top_logic.layout.react.wysiwyg/
       webapp/
         WEB-INF/
           conf/
+            metaConf.txt                            # Lists config files for module discovery
             tl-layout-react-wysiwyg.conf.config.xml
         script/
           tl-react-wysiwyg.js           # Build output (generated)

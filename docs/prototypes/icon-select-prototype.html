@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TLIconSelect - React Icon Select Prototype</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+  :root {
+    --focus: #0f62fe;
+    --border-subtle: #e0e0e0;
+    --border-strong: #8d8d8d;
+    --text-primary: #161616;
+    --text-secondary: #525252;
+    --text-placeholder: #a8a8a8;
+    --layer-01: #f4f4f4;
+    --layer-02: #fff;
+    --layer-hover: #e8e8e8;
+    --button-primary: #0f62fe;
+    --button-primary-hover: #0353e9;
+    --text-on-color: #fff;
+    --support-error: #da1e28;
+    --corner-radius: 4px;
+    --spacing-02: 4px;
+    --spacing-03: 8px;
+    --spacing-04: 12px;
+    --spacing-05: 16px;
+    --label-01-font-size: 12px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 14px;
+    color: var(--text-primary);
+    background: #f0f0f0;
+    padding: 32px;
+  }
+
+  h1 { font-size: 20px; margin-bottom: 8px; }
+  h2 { font-size: 16px; margin-bottom: 8px; color: var(--text-secondary); font-weight: 400; }
+  .section { margin-bottom: 32px; }
+  .demo-row { display: flex; gap: 24px; align-items: flex-start; flex-wrap: wrap; }
+  .demo-card {
+    background: #fff;
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 20px;
+    min-width: 200px;
+  }
+  .demo-card h3 { font-size: 13px; color: var(--text-secondary); margin-bottom: 12px; }
+
+  /* ============================================================
+     TLIconSelect - Trigger Button
+     ============================================================ */
+
+  .tlIconSelect {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .tlIconSelect__swatch {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--corner-radius);
+    background: var(--layer-02);
+    cursor: pointer;
+    font-size: 18px;
+    color: var(--text-primary);
+    transition: box-shadow 0.15s, border-color 0.15s;
+  }
+
+  .tlIconSelect__swatch:hover {
+    box-shadow: 0 0 0 2px var(--focus);
+    border-color: var(--focus);
+  }
+
+  .tlIconSelect__swatch:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  .tlIconSelect__swatch--empty {
+    color: var(--text-placeholder);
+    font-size: 14px;
+  }
+
+  .tlIconSelect__swatch:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  .tlIconSelect__swatch:disabled:hover {
+    box-shadow: none;
+    border-color: var(--border-subtle);
+  }
+
+  .tlIconSelect--immutable .tlIconSelect__swatch {
+    cursor: default;
+    border-color: transparent;
+    background: transparent;
+  }
+
+  .tlIconSelect--immutable .tlIconSelect__swatch:hover {
+    box-shadow: none;
+  }
+
+  /* ============================================================
+     Popup
+     ============================================================ */
+
+  .tlIconSelect__popup {
+    position: fixed;
+    z-index: 9000;
+    background: var(--layer-02);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    width: 420px;
+    overflow: hidden;
+  }
+
+  /* Tabs */
+  .tlIconSelect__tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border-subtle);
+    background: var(--layer-01);
+  }
+
+  .tlIconSelect__tab {
+    flex: 1;
+    padding: var(--spacing-03) var(--spacing-04);
+    border: none;
+    border-bottom: 2px solid transparent;
+    background: none;
+    font-size: 13px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+  }
+
+  .tlIconSelect__tab:hover {
+    color: var(--text-primary);
+    background: var(--layer-hover);
+  }
+
+  .tlIconSelect__tab--active {
+    color: var(--text-primary);
+    font-weight: 600;
+    border-bottom-color: var(--focus);
+  }
+
+  /* Search */
+  .tlIconSelect__searchWrapper {
+    display: flex;
+    align-items: center;
+    padding: var(--spacing-03);
+    border-bottom: 1px solid var(--border-subtle);
+    gap: var(--spacing-03);
+  }
+
+  .tlIconSelect__searchIcon {
+    color: var(--text-placeholder);
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .tlIconSelect__search {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 14px;
+    background: transparent;
+    color: var(--text-primary);
+  }
+
+  .tlIconSelect__search::placeholder {
+    color: var(--text-placeholder);
+  }
+
+  /* Reset button in search area */
+  .tlIconSelect__resetBtn {
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-size: 16px;
+    padding: 2px 4px;
+    border-radius: 3px;
+    line-height: 1;
+  }
+
+  .tlIconSelect__resetBtn:hover {
+    color: var(--support-error);
+    background: var(--layer-hover);
+  }
+
+  /* Icon grid */
+  .tlIconSelect__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+    gap: 2px;
+    padding: var(--spacing-03);
+    max-height: 260px;
+    overflow-y: auto;
+  }
+
+  .tlIconSelect__iconCell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--corner-radius);
+    cursor: pointer;
+    font-size: 18px;
+    color: var(--text-primary);
+    transition: background 0.1s;
+    position: relative;
+  }
+
+  .tlIconSelect__iconCell:hover {
+    background: var(--layer-hover);
+  }
+
+  .tlIconSelect__iconCell--selected {
+    background: #d0e2ff;
+    outline: 2px solid var(--focus);
+    outline-offset: -2px;
+  }
+
+  .tlIconSelect__noResults {
+    padding: 24px;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 13px;
+  }
+
+  /* Loading spinner */
+  .tlIconSelect__loading {
+    padding: 32px;
+    text-align: center;
+  }
+
+  .tlIconSelect__spinner {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    border: 3px solid var(--border-subtle);
+    border-top-color: var(--focus);
+    border-radius: 50%;
+    animation: iconSelectSpin 0.8s linear infinite;
+  }
+
+  @keyframes iconSelectSpin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* Advanced tab: edit area */
+  .tlIconSelect__advancedArea {
+    padding: var(--spacing-03);
+    border-top: 1px solid var(--border-subtle);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-03);
+  }
+
+  .tlIconSelect__editRow {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-03);
+  }
+
+  .tlIconSelect__editLabel {
+    font-size: var(--label-01-font-size);
+    color: var(--text-secondary);
+    flex-shrink: 0;
+    min-width: 50px;
+  }
+
+  .tlIconSelect__editInput {
+    flex: 1;
+    min-width: 0;
+    height: 28px;
+    padding: 0 var(--spacing-03);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--corner-radius);
+    font-size: 13px;
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    color: var(--text-primary);
+    background: var(--layer-02);
+    transition: border-color 0.15s;
+  }
+
+  .tlIconSelect__editInput:focus {
+    border-color: var(--focus);
+    box-shadow: 0 0 0 1px var(--focus);
+    outline: none;
+  }
+
+  .tlIconSelect__previewArea {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-04);
+  }
+
+  .tlIconSelect__previewIcon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--corner-radius);
+    font-size: 24px;
+    background: var(--layer-01);
+  }
+
+  .tlIconSelect__previewLabel {
+    font-size: var(--label-01-font-size);
+    color: var(--text-secondary);
+  }
+
+  /* Actions */
+  .tlIconSelect__actions {
+    display: flex;
+    gap: var(--spacing-03);
+    justify-content: flex-end;
+    padding: var(--spacing-03) var(--spacing-04) var(--spacing-04);
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .tlIconSelect__btn {
+    height: 28px;
+    padding: 0 var(--spacing-04);
+    border: none;
+    border-radius: var(--corner-radius);
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .tlIconSelect__btn--ok {
+    background: var(--button-primary);
+    color: var(--text-on-color);
+  }
+
+  .tlIconSelect__btn--ok:hover {
+    background: var(--button-primary-hover);
+  }
+
+  .tlIconSelect__btn--cancel {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-subtle);
+  }
+
+  .tlIconSelect__btn--cancel:hover {
+    background: var(--layer-hover);
+  }
+
+  /* Tooltip */
+  .tlIconSelect__tooltip {
+    position: absolute;
+    bottom: calc(100% + 4px);
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 3px 8px;
+    background: #333;
+    color: #fff;
+    font-size: 11px;
+    border-radius: 3px;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 10;
+  }
+</style>
+</head>
+<body>
+
+<h1>TLIconSelect - Icon Select Control Prototype</h1>
+<p style="color: var(--text-secondary); margin-bottom: 24px;">
+  Visual prototype for the React-based icon select control. Click the swatch buttons to see the popup.
+</p>
+
+<!-- ============================================================
+     Section 1: Trigger Button States
+     ============================================================ -->
+<div class="section">
+  <h2>Trigger Button States</h2>
+  <div class="demo-row">
+
+    <div class="demo-card">
+      <h3>With icon selected</h3>
+      <div class="tlIconSelect">
+        <button class="tlIconSelect__swatch" onclick="openPopup(this, 'simple')" title="fa-solid fa-home">
+          <i class="fa-solid fa-home"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="demo-card">
+      <h3>No icon (empty)</h3>
+      <div class="tlIconSelect">
+        <button class="tlIconSelect__swatch tlIconSelect__swatch--empty" onclick="openPopup(this, 'simple')" title="Choose icon">
+          <i class="fa-solid fa-icons"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="demo-card">
+      <h3>Disabled</h3>
+      <div class="tlIconSelect">
+        <button class="tlIconSelect__swatch" disabled title="fa-solid fa-star">
+          <i class="fa-solid fa-star"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="demo-card">
+      <h3>Immutable (read-only)</h3>
+      <div class="tlIconSelect tlIconSelect--immutable">
+        <button class="tlIconSelect__swatch" title="fa-solid fa-bell">
+          <i class="fa-solid fa-bell"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="demo-card">
+      <h3>With custom class (tl-danger)</h3>
+      <div class="tlIconSelect">
+        <button class="tlIconSelect__swatch" onclick="openPopup(this, 'advanced')" title="css:fa-solid fa-triangle-exclamation tl-danger" style="color: #da1e28;">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============================================================
+     Section 2: Simple Tab (static mockup)
+     ============================================================ -->
+<div class="section">
+  <h2>Popup - Simple Tab (click an icon to select, popup closes immediately)</h2>
+  <div class="demo-row">
+    <div class="demo-card" style="padding: 0; min-width: 420px; max-width: 420px;">
+      <div class="tlIconSelect__popup" style="position: relative; box-shadow: none; border: none;">
+        <!-- Tabs -->
+        <div class="tlIconSelect__tabs">
+          <button class="tlIconSelect__tab tlIconSelect__tab--active">Simple</button>
+          <button class="tlIconSelect__tab">Advanced</button>
+        </div>
+
+        <!-- Search -->
+        <div class="tlIconSelect__searchWrapper">
+          <span class="tlIconSelect__searchIcon"><i class="fa-solid fa-magnifying-glass"></i></span>
+          <input class="tlIconSelect__search" type="text" placeholder="Filter icons..." id="simpleSearch" oninput="filterIcons()">
+          <button class="tlIconSelect__resetBtn" title="Clear icon">&times;</button>
+        </div>
+
+        <!-- Icon grid -->
+        <div class="tlIconSelect__grid" id="simpleGrid">
+          <!-- Icons populated by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     Section 3: Advanced Tab (static mockup)
+     ============================================================ -->
+<div class="section">
+  <h2>Popup - Advanced Tab (select icon, edit encoded form, preview result)</h2>
+  <div class="demo-row">
+    <div class="demo-card" style="padding: 0; min-width: 420px; max-width: 420px;">
+      <div class="tlIconSelect__popup" style="position: relative; box-shadow: none; border: none;">
+        <!-- Tabs -->
+        <div class="tlIconSelect__tabs">
+          <button class="tlIconSelect__tab">Simple</button>
+          <button class="tlIconSelect__tab tlIconSelect__tab--active">Advanced</button>
+        </div>
+
+        <!-- Search -->
+        <div class="tlIconSelect__searchWrapper">
+          <span class="tlIconSelect__searchIcon"><i class="fa-solid fa-magnifying-glass"></i></span>
+          <input class="tlIconSelect__search" type="text" placeholder="Filter icons..." id="advancedSearch" oninput="filterAdvancedIcons()">
+          <button class="tlIconSelect__resetBtn" title="Clear icon">&times;</button>
+        </div>
+
+        <!-- Icon grid (shorter in advanced mode) -->
+        <div class="tlIconSelect__grid" id="advancedGrid" style="max-height: 160px;">
+          <!-- Icons populated by JS -->
+        </div>
+
+        <!-- Edit area -->
+        <div class="tlIconSelect__advancedArea">
+          <div class="tlIconSelect__editRow">
+            <span class="tlIconSelect__editLabel">Class</span>
+            <input class="tlIconSelect__editInput" type="text" value="css:fa-solid fa-home tl-danger" id="advancedInput" oninput="updatePreview()">
+          </div>
+          <div class="tlIconSelect__previewArea">
+            <span class="tlIconSelect__editLabel">Preview</span>
+            <div class="tlIconSelect__previewIcon" id="advancedPreview">
+              <i class="fa-solid fa-home" style="color: #da1e28;"></i>
+            </div>
+            <span class="tlIconSelect__previewLabel" id="advancedPreviewLabel">fa-solid fa-home tl-danger</span>
+          </div>
+        </div>
+
+        <!-- Actions (only in advanced mode) -->
+        <div class="tlIconSelect__actions">
+          <button class="tlIconSelect__btn tlIconSelect__btn--cancel">Cancel</button>
+          <button class="tlIconSelect__btn tlIconSelect__btn--ok">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     Section 4: Loading and empty states
+     ============================================================ -->
+<div class="section">
+  <h2>Other States</h2>
+  <div class="demo-row">
+
+    <div class="demo-card" style="padding: 0; min-width: 300px;">
+      <h3 style="padding: 12px 12px 0;">Loading icons</h3>
+      <div class="tlIconSelect__popup" style="position: relative; box-shadow: none; border: none; width: 100%;">
+        <div class="tlIconSelect__tabs">
+          <button class="tlIconSelect__tab tlIconSelect__tab--active">Simple</button>
+          <button class="tlIconSelect__tab">Advanced</button>
+        </div>
+        <div class="tlIconSelect__searchWrapper">
+          <span class="tlIconSelect__searchIcon"><i class="fa-solid fa-magnifying-glass"></i></span>
+          <input class="tlIconSelect__search" type="text" placeholder="Filter icons..." disabled>
+        </div>
+        <div class="tlIconSelect__loading">
+          <span class="tlIconSelect__spinner"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="demo-card" style="padding: 0; min-width: 300px;">
+      <h3 style="padding: 12px 12px 0;">No results</h3>
+      <div class="tlIconSelect__popup" style="position: relative; box-shadow: none; border: none; width: 100%;">
+        <div class="tlIconSelect__tabs">
+          <button class="tlIconSelect__tab tlIconSelect__tab--active">Simple</button>
+          <button class="tlIconSelect__tab">Advanced</button>
+        </div>
+        <div class="tlIconSelect__searchWrapper">
+          <span class="tlIconSelect__searchIcon"><i class="fa-solid fa-magnifying-glass"></i></span>
+          <input class="tlIconSelect__search" type="text" value="xyznonexistent">
+        </div>
+        <div class="tlIconSelect__noResults">No icons found</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // Sample icons for the prototype grid
+  const ICONS = [
+    { name: 'home', label: 'Home', class: 'fa-solid fa-home' },
+    { name: 'user', label: 'User', class: 'fa-solid fa-user' },
+    { name: 'star', label: 'Star', class: 'fa-solid fa-star' },
+    { name: 'heart', label: 'Heart', class: 'fa-solid fa-heart' },
+    { name: 'bell', label: 'Bell', class: 'fa-solid fa-bell' },
+    { name: 'envelope', label: 'Envelope', class: 'fa-solid fa-envelope' },
+    { name: 'gear', label: 'Gear', class: 'fa-solid fa-gear' },
+    { name: 'trash', label: 'Trash', class: 'fa-solid fa-trash' },
+    { name: 'pen', label: 'Pen', class: 'fa-solid fa-pen' },
+    { name: 'plus', label: 'Plus', class: 'fa-solid fa-plus' },
+    { name: 'minus', label: 'Minus', class: 'fa-solid fa-minus' },
+    { name: 'check', label: 'Check', class: 'fa-solid fa-check' },
+    { name: 'xmark', label: 'X Mark', class: 'fa-solid fa-xmark' },
+    { name: 'magnifying-glass', label: 'Search', class: 'fa-solid fa-magnifying-glass' },
+    { name: 'download', label: 'Download', class: 'fa-solid fa-download' },
+    { name: 'upload', label: 'Upload', class: 'fa-solid fa-upload' },
+    { name: 'file', label: 'File', class: 'fa-solid fa-file' },
+    { name: 'folder', label: 'Folder', class: 'fa-solid fa-folder' },
+    { name: 'image', label: 'Image', class: 'fa-solid fa-image' },
+    { name: 'camera', label: 'Camera', class: 'fa-solid fa-camera' },
+    { name: 'calendar', label: 'Calendar', class: 'fa-solid fa-calendar' },
+    { name: 'clock', label: 'Clock', class: 'fa-solid fa-clock' },
+    { name: 'lock', label: 'Lock', class: 'fa-solid fa-lock' },
+    { name: 'unlock', label: 'Unlock', class: 'fa-solid fa-unlock' },
+    { name: 'shield', label: 'Shield', class: 'fa-solid fa-shield' },
+    { name: 'bolt', label: 'Bolt', class: 'fa-solid fa-bolt' },
+    { name: 'fire', label: 'Fire', class: 'fa-solid fa-fire' },
+    { name: 'cloud', label: 'Cloud', class: 'fa-solid fa-cloud' },
+    { name: 'sun', label: 'Sun', class: 'fa-solid fa-sun' },
+    { name: 'moon', label: 'Moon', class: 'fa-solid fa-moon' },
+    { name: 'circle-info', label: 'Info', class: 'fa-solid fa-circle-info' },
+    { name: 'circle-exclamation', label: 'Warning', class: 'fa-solid fa-circle-exclamation' },
+    { name: 'circle-check', label: 'Success', class: 'fa-solid fa-circle-check' },
+    { name: 'circle-xmark', label: 'Error', class: 'fa-solid fa-circle-xmark' },
+    { name: 'triangle-exclamation', label: 'Alert', class: 'fa-solid fa-triangle-exclamation' },
+    { name: 'chart-bar', label: 'Chart', class: 'fa-solid fa-chart-bar' },
+    { name: 'table', label: 'Table', class: 'fa-solid fa-table' },
+    { name: 'list', label: 'List', class: 'fa-solid fa-list' },
+    { name: 'grip', label: 'Grip', class: 'fa-solid fa-grip' },
+    { name: 'arrows-rotate', label: 'Refresh', class: 'fa-solid fa-arrows-rotate' },
+    { name: 'right-from-bracket', label: 'Logout', class: 'fa-solid fa-right-from-bracket' },
+    { name: 'code', label: 'Code', class: 'fa-solid fa-code' },
+    { name: 'database', label: 'Database', class: 'fa-solid fa-database' },
+    { name: 'server', label: 'Server', class: 'fa-solid fa-server' },
+    { name: 'globe', label: 'Globe', class: 'fa-solid fa-globe' },
+    { name: 'link', label: 'Link', class: 'fa-solid fa-link' },
+    { name: 'paperclip', label: 'Attachment', class: 'fa-solid fa-paperclip' },
+    { name: 'palette', label: 'Palette', class: 'fa-solid fa-palette' },
+    { name: 'wand-magic-sparkles', label: 'Magic', class: 'fa-solid fa-wand-magic-sparkles' },
+    { name: 'flag', label: 'Flag', class: 'fa-solid fa-flag' },
+    { name: 'bookmark', label: 'Bookmark', class: 'fa-solid fa-bookmark' },
+    { name: 'tag', label: 'Tag', class: 'fa-solid fa-tag' },
+    { name: 'comment', label: 'Comment', class: 'fa-solid fa-comment' },
+    { name: 'share', label: 'Share', class: 'fa-solid fa-share' },
+    { name: 'print', label: 'Print', class: 'fa-solid fa-print' },
+    { name: 'building', label: 'Building', class: 'fa-solid fa-building' },
+    { name: 'users', label: 'Users', class: 'fa-solid fa-users' },
+    { name: 'key', label: 'Key', class: 'fa-solid fa-key' },
+    { name: 'wrench', label: 'Wrench', class: 'fa-solid fa-wrench' },
+    { name: 'screwdriver', label: 'Screwdriver', class: 'fa-solid fa-screwdriver' },
+  ];
+
+  const selectedIcon = 'home';
+
+  function renderGrid(containerId, icons, showTooltip) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+    icons.forEach(icon => {
+      const cell = document.createElement('div');
+      cell.className = 'tlIconSelect__iconCell' +
+        (icon.name === selectedIcon ? ' tlIconSelect__iconCell--selected' : '');
+      cell.title = icon.label;
+      cell.innerHTML = '<i class="' + icon.class + '"></i>';
+      cell.onclick = () => {
+        if (containerId === 'advancedGrid') {
+          document.getElementById('advancedInput').value = 'css:' + icon.class;
+          document.getElementById('advancedPreview').innerHTML = '<i class="' + icon.class + '"></i>';
+          document.getElementById('advancedPreviewLabel').textContent = icon.class;
+        }
+      };
+      container.appendChild(cell);
+    });
+  }
+
+  function filterIcons() {
+    const term = document.getElementById('simpleSearch').value.toLowerCase();
+    const filtered = ICONS.filter(i =>
+      i.name.includes(term) || i.label.toLowerCase().includes(term)
+    );
+    renderGrid('simpleGrid', filtered);
+  }
+
+  function filterAdvancedIcons() {
+    const term = document.getElementById('advancedSearch').value.toLowerCase();
+    const filtered = ICONS.filter(i =>
+      i.name.includes(term) || i.label.toLowerCase().includes(term)
+    );
+    renderGrid('advancedGrid', filtered);
+  }
+
+  function updatePreview() {
+    const val = document.getElementById('advancedInput').value;
+    const cssClass = val.startsWith('css:') ? val.substring(4) : val;
+    document.getElementById('advancedPreview').innerHTML = '<i class="' + cssClass + '"></i>';
+    document.getElementById('advancedPreviewLabel').textContent = cssClass;
+  }
+
+  // Initial render
+  renderGrid('simpleGrid', ICONS);
+  renderGrid('advancedGrid', ICONS);
+</script>
+
+</body>
+</html>

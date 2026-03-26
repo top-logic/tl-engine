@@ -8,7 +8,6 @@ package com.top_logic.demo.react;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
@@ -31,11 +30,11 @@ import com.top_logic.layout.react.control.common.ReactFieldListControl;
 import com.top_logic.layout.react.control.layout.ReactCardControl;
 import com.top_logic.layout.react.control.layout.ReactCardControl.CardPadding;
 import com.top_logic.layout.react.control.layout.ReactCardControl.CardVariant;
+import com.top_logic.layout.react.control.layout.ReactGridControl;
+import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl.StackAlign;
 import com.top_logic.layout.react.control.layout.ReactStackControl.StackDirection;
 import com.top_logic.layout.react.control.layout.ReactStackControl.StackGap;
-import com.top_logic.layout.react.control.layout.ReactGridControl;
-import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.react.control.nav.ReactAppBarControl;
 import com.top_logic.layout.react.control.nav.ReactAppShellControl;
 import com.top_logic.layout.react.control.nav.ReactBottomBarControl;
@@ -47,8 +46,8 @@ import com.top_logic.layout.react.control.overlay.DialogResult;
 import com.top_logic.layout.react.control.overlay.ReactDrawerControl;
 import com.top_logic.layout.react.control.overlay.ReactMenuControl;
 import com.top_logic.layout.react.control.overlay.ReactMenuControl.MenuEntry;
-import com.top_logic.layout.react.control.overlay.ReactWindowControl;
 import com.top_logic.layout.react.control.overlay.ReactSnackbarControl;
+import com.top_logic.layout.react.control.overlay.ReactWindowControl;
 import com.top_logic.layout.react.control.sidebar.CommandItem;
 import com.top_logic.layout.react.control.sidebar.NavigationItem;
 import com.top_logic.layout.react.control.sidebar.ReactSidebarControl;
@@ -257,7 +256,7 @@ public class DemoReactAppComponent extends LayoutComponent {
 		ReactCardControl quickAddCard = new ReactCardControl(ctx, "Quick Add",
 			new ReactFieldListControl(ctx, List.of(newTaskBtn)));
 
-		return new ReactGridControl(ctx, "16rem", "default",
+		return new ReactGridControl(ctx, "16rem", StackGap.DEFAULT,
 			List.of(activeTasksCard, inReviewCard, teamNotesCard, quickAddCard));
 	}
 

@@ -1,9 +1,10 @@
 import { React, useTLState, useTLCommand } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
+import { ThemeIcon } from './icon/ThemeIcon';
 
 const { useCallback } = React;
 
-/** Built-in SVG icons keyed by name. */
+/** Built-in SVG icons keyed by name (used by CompositionTable detail/delete buttons). */
 const ICONS: Record<string, React.FC> = {
   detail: () => (
     <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor"
@@ -43,15 +44,17 @@ export interface TLButtonProps {
 /**
  * A button rendered via React that sends a command to the server.
  *
- * <p>When mounted standalone (via {@code ReactButtonControl}), it reads its label
- * and disabled state from the control state and sends the {@code "click"} command.</p>
+ * <p>When mounted standalone (via {@code ReactButtonControl}), it reads its label,
+ * disabled/hidden state, and image from the control state.</p>
  *
- * <p>When composed inside another React component, the parent passes {@code command},
- * {@code label}, and {@code disabled} as props to customise behaviour.</p>
- *
- * <p>When an {@code icon} state is set (e.g. "detail", "delete"), the button renders
- * the corresponding SVG icon.  If no label is provided alongside the icon, the button
- * renders as an icon-only button with the label used as accessible title.</p>
+ * <p>Supports three icon modes:</p>
+ * <ul>
+ *   <li>{@code state.image} — ThemeImage encoded form (e.g. "css:fas fa-edit"), rendered
+ *       alongside the label via {@link ThemeIcon}.</li>
+ *   <li>{@code state.icon} — Built-in SVG icon name ("detail", "delete"), rendered as
+ *       icon-only button with the label as accessible title.</li>
+ *   <li>Neither — plain text button with label only.</li>
+ * </ul>
  */
 const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, label, disabled }) => {
   const state = useTLState();
@@ -62,15 +65,16 @@ const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, l
   const resolvedDisabled = disabled ?? state.disabled === true;
   const resolvedHidden = state.hidden === true;
   const icon = state.icon as string | undefined;
+  const image = state.image as string | undefined;
   const hiddenStyle = resolvedHidden ? { display: 'none' as const } : undefined;
 
   const handleClick = useCallback(() => {
     sendCommand(resolvedCommand);
   }, [sendCommand, resolvedCommand]);
 
-  const IconComponent = icon ? ICONS[icon] : undefined;
-
-  if (IconComponent) {
+  // Built-in SVG icon (icon-only button, used by CompositionTable).
+  const BuiltInIcon = icon ? ICONS[icon] : undefined;
+  if (BuiltInIcon) {
     return (
       <button
         type="button"
@@ -82,11 +86,29 @@ const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, l
         title={resolvedLabel}
         aria-label={resolvedLabel}
       >
-        <IconComponent />
+        <BuiltInIcon />
       </button>
     );
   }
 
+  // ThemeImage + label button.
+  if (image) {
+    return (
+      <button
+        type="button"
+        id={controlId}
+        onClick={handleClick}
+        disabled={resolvedDisabled}
+        style={hiddenStyle}
+        className="tlReactButton"
+      >
+        <ThemeIcon encoded={image} className="tlReactButton__image" />
+        <span className="tlReactButton__label">{resolvedLabel}</span>
+      </button>
+    );
+  }
+
+  // Plain label-only button.
   return (
     <button
       type="button"

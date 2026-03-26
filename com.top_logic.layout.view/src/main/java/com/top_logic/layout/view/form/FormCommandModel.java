@@ -37,6 +37,8 @@ public class FormCommandModel implements CommandModel {
 
 	private final String _placement;
 
+	private final String _image;
+
 	private final Consumer<ReactContext> _action;
 
 	private final Predicate<FormControl> _executableWhen;
@@ -53,11 +55,12 @@ public class FormCommandModel implements CommandModel {
 
 	private final FormModelListener _formModelListener = this::handleFormStateChanged;
 
-	private FormCommandModel(String name, ResKey labelKey, String placement, FormControl form,
-			Consumer<ReactContext> action, Predicate<FormControl> executableWhen,
+	private FormCommandModel(String name, ResKey labelKey, String image, String placement,
+			FormControl form, Consumer<ReactContext> action, Predicate<FormControl> executableWhen,
 			Predicate<FormControl> visibleWhen) {
 		_name = name;
 		_labelKey = labelKey;
+		_image = image;
 		_placement = placement;
 		_form = form;
 		_action = action;
@@ -79,7 +82,8 @@ public class FormCommandModel implements CommandModel {
 	 * @return The edit command model.
 	 */
 	public static FormCommandModel editCommand(FormControl form) {
-		return new FormCommandModel("formEdit", I18NConstants.FORM_EDIT, PLACEMENT_TOOLBAR, form,
+		return new FormCommandModel("formEdit", I18NConstants.FORM_EDIT, "css:fas fa-edit",
+			PLACEMENT_TOOLBAR, form,
 			ctx -> form.enterEditMode(),
 			f -> f.getCurrentObject() != null && !f.isEditMode(),
 			f -> f.getCurrentObject() != null && !f.isEditMode());
@@ -97,7 +101,8 @@ public class FormCommandModel implements CommandModel {
 	 * @return The save command model.
 	 */
 	public static FormCommandModel saveCommand(FormControl form) {
-		return new FormCommandModel("formSave", I18NConstants.FORM_SAVE, PLACEMENT_TOOLBAR, form,
+		return new FormCommandModel("formSave", I18NConstants.FORM_SAVE, "css:fas fa-save",
+			PLACEMENT_TOOLBAR, form,
 			ctx -> form.executeSave(),
 			FormControl::isEditMode,
 			FormControl::isEditMode);
@@ -118,7 +123,8 @@ public class FormCommandModel implements CommandModel {
 	 * @return The save command model.
 	 */
 	public static FormCommandModel saveCommand(FormControl form, Consumer<ReactContext> action) {
-		return new FormCommandModel("formSave", I18NConstants.FORM_SAVE, PLACEMENT_TOOLBAR, form,
+		return new FormCommandModel("formSave", I18NConstants.FORM_SAVE, "css:fas fa-save",
+			PLACEMENT_TOOLBAR, form,
 			action,
 			FormControl::isEditMode,
 			FormControl::isEditMode);
@@ -136,7 +142,8 @@ public class FormCommandModel implements CommandModel {
 	 * @return The cancel command model.
 	 */
 	public static FormCommandModel cancelCommand(FormControl form) {
-		return new FormCommandModel("formCancel", I18NConstants.FORM_CANCEL, PLACEMENT_TOOLBAR, form,
+		return new FormCommandModel("formCancel", I18NConstants.FORM_CANCEL, "css:fas fa-times",
+			PLACEMENT_TOOLBAR, form,
 			ctx -> form.executeCancel(),
 			FormControl::isEditMode,
 			FormControl::isEditMode);
@@ -157,7 +164,8 @@ public class FormCommandModel implements CommandModel {
 	 * @return The cancel command model.
 	 */
 	public static FormCommandModel cancelCommand(FormControl form, Consumer<ReactContext> action) {
-		return new FormCommandModel("formCancel", I18NConstants.FORM_CANCEL, PLACEMENT_TOOLBAR, form,
+		return new FormCommandModel("formCancel", I18NConstants.FORM_CANCEL, "css:fas fa-times",
+			PLACEMENT_TOOLBAR, form,
 			action,
 			FormControl::isEditMode,
 			FormControl::isEditMode);
@@ -187,6 +195,11 @@ public class FormCommandModel implements CommandModel {
 		return ResourcesModule.getInstance()
 			.getBundle(Locale.getDefault())
 			.getString(_labelKey);
+	}
+
+	@Override
+	public String getImage() {
+		return _image;
 	}
 
 	@Override

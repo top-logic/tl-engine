@@ -42,22 +42,9 @@ interface IconSelectPopupProps {
   onLoadIcons: () => Promise<void>;
 }
 
-/** Renders a single icon from its encoded form as an <i> or <img> element. */
-function IconPreview({ encoded, className }: { encoded: string; className?: string }) {
-  if (encoded.startsWith('css:')) {
-    const cssClass = encoded.substring(4);
-    return <i className={cssClass + (className ? ' ' + className : '')} />;
-  }
-  if (encoded.startsWith('colored:')) {
-    const cssClass = encoded.substring(8);
-    return <i className={cssClass + (className ? ' ' + className : '')} />;
-  }
-  if (encoded.startsWith('/') || encoded.startsWith('theme:')) {
-    return <img src={encoded} alt="" className={className} style={{ width: '1em', height: '1em' }} />;
-  }
-  // Fallback: try as CSS class
-  return <i className={encoded + (className ? ' ' + className : '')} />;
-}
+// Re-export ThemeIcon as IconPreview for backwards compatibility.
+import { ThemeIcon as IconPreview } from './ThemeIcon';
+export { IconPreview };
 
 const IconSelectPopup: React.FC<IconSelectPopupProps> = ({
   anchorRef,
@@ -340,4 +327,3 @@ const IconSelectPopup: React.FC<IconSelectPopupProps> = ({
 };
 
 export default IconSelectPopup;
-export { IconPreview };

@@ -52,6 +52,17 @@ public interface CommandModel {
 	String getLabel();
 
 	/**
+	 * The encoded image for the command button, or {@code null} if no image is set.
+	 *
+	 * <p>
+	 * Returns the {@link com.top_logic.layout.basic.ThemeImage#toEncodedForm() encoded form} of
+	 * the theme image (e.g. {@code "css:fa-solid fa-edit"} for icon fonts, or
+	 * {@code "/icons/edit.png"} for image references).
+	 * </p>
+	 */
+	String getImage();
+
+	/**
 	 * Whether the command is currently executable.
 	 */
 	boolean isExecutable();

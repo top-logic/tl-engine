@@ -35,8 +35,11 @@ public class ReactButtonControl extends ReactControl {
 	/** State key for the hidden flag. */
 	private static final String HIDDEN = "hidden";
 
-	/** State key for the icon name (renders as icon-only button when set). */
+	/** State key for the icon name (built-in SVG icons like "detail", "delete"). */
 	private static final String ICON = "icon";
+
+	/** State key for the ThemeImage encoded form (e.g. "css:fas fa-edit", "/icons/foo.png"). */
+	private static final String IMAGE = "image";
 
 	private final ButtonAction _action;
 
@@ -79,6 +82,10 @@ public class ReactButtonControl extends ReactControl {
 		putState(LABEL, model.getLabel());
 		putState(DISABLED, Boolean.valueOf(!model.isExecutable()));
 		putState(HIDDEN, Boolean.valueOf(!model.isVisible()));
+		String image = model.getImage();
+		if (image != null) {
+			putState(IMAGE, image);
+		}
 		model.addStateChangeListener(_modelChangeHandler);
 	}
 

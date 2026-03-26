@@ -92,10 +92,16 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 	}
 
 	/**
-	 * The command's image.
+	 * The command's theme image.
 	 */
-	public ThemeImage getImage() {
+	public ThemeImage getThemeImage() {
 		return _config.getImage();
+	}
+
+	@Override
+	public String getImage() {
+		ThemeImage image = _config.getImage();
+		return image != null ? image.toEncodedForm() : null;
 	}
 
 	/**

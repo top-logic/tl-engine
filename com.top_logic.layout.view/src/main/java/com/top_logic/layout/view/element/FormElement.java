@@ -501,6 +501,11 @@ public class FormElement extends ContainerElement {
 		}
 
 		@Override
+		public String getImage() {
+			return _inner.getImage();
+		}
+
+		@Override
 		public boolean isExecutable() {
 			return _inner.isExecutable();
 		}

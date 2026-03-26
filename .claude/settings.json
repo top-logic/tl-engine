@@ -1,0 +1,16 @@
+{                                                                                                                                                                                                                                                  
+  "permissions": {                                                                                                                                                                                                                                 
+    "allow": [                                                                                                                                                                                                                                     
+      "Bash(npm *)",                                                                                                                                                                                                                               
+      "Bash(mvn *)"
+    ]                                                                                                                                                                                                                                              
+  },                                                      
+  "sandbox": {                                                                                                                                                                                                                                     
+    "enabled": true,                                                                                                                                                                                                                               
+    "autoAllowBashIfSandboxed": true,                                                                                                                                                                                                              
+    "filesystem": {                                                                                                                                                                                                                                
+      "allowWrite": ["~/.npm"]                                                                                                                                                                                                                     
+    }                                                                                                                                                                                                                                              
+  }
+}
+

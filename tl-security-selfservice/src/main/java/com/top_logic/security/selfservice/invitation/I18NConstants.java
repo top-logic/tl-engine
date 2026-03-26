@@ -91,10 +91,16 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey RESET_PASSWORD_COMMAND;
 
 	/**
-	 * @en A link to reset your password has been sent to the email address listed in your account.
-	 *     For security reasons, this link is only valid for a limited time.
+	 * @en A code to reset your password has been sent to the email address listed in your account.
+	 *     For security reasons, this code is only valid for a limited time.
 	 */
 	public static ResKey PASSWORD_RESET_MAIL_SENT_MESSAGE;
+
+	/**
+	 * @en Your password has been successfully changed. You will now be logged out for security
+	 *     reasons.
+	 */
+	public static ResKey PASSWORD_RESET_SUCCESS_MESSAGE;
 
 	/** @en Reset multi-factor authentication */
 	public static ResKey RESET_MFA_COMMAND;

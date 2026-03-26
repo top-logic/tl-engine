@@ -23,7 +23,7 @@ import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.component.configuration.ChangePasswordDialog;
-import com.top_logic.layout.component.configuration.LoginViewDialog;
+import com.top_logic.layout.component.configuration.LogoutView;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.StringField;
@@ -31,6 +31,8 @@ import com.top_logic.layout.messagebox.MessageBox;
 import com.top_logic.layout.messagebox.MessageBox.ButtonType;
 import com.top_logic.layout.messagebox.MessageBox.MessageType;
 import com.top_logic.layout.structure.DialogModel;
+import com.top_logic.layout.structure.DialogWindowControl;
+import com.top_logic.mig.html.layout.LoginHooks;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 
@@ -106,12 +108,23 @@ public class ForgotPasswordDialog extends AbstractVerificationCodeDialog {
 	private HandlerResult openChangePasswordDialog(DisplayContext context) {
 		Person account = _account;
 
-		Command continuation = getDiscardClosure().andThen(ctx -> {
-			LoginViewDialog.loginUserAndReload(ctx, account);
-			return HandlerResult.DEFAULT_RESULT;
-		});
+		Command continuation = getDiscardClosure().andThen(this::logoutUserAfterPasswordChange);
 		ChangePasswordDialog changePassword = new ChangePasswordDialog(account, continuation);
 		return changePassword.open(context);
+	}
+
+	private HandlerResult logoutUserAfterPasswordChange(DisplayContext context) {
+		DialogWindowControl dialog =
+			MessageBox.newBuilder(MessageType.INFO)
+				.message(I18NConstants.PASSWORD_RESET_SUCCESS_MESSAGE)
+				.buttons(MessageBox.button(ButtonType.OK)).toDialog();
+		LoginHooks.runOnClose(dialog.getDialogModel(), ctx -> {
+			LogoutView.logout(ctx.getWindowScope());
+			return HandlerResult.DEFAULT_RESULT;
+		});
+		context.getWindowScope().openDialog(dialog);
+		return HandlerResult.DEFAULT_RESULT;
+
 	}
 
 	private void handleNewCode(String code) {

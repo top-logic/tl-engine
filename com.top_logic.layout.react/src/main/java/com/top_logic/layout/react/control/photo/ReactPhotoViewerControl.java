@@ -55,7 +55,7 @@ public class ReactPhotoViewerControl extends ReactControl implements DataProvide
 	}
 
 	@Override
-	public BinaryData getDownloadData() {
+	public BinaryData getDownloadData(String key) {
 		return _model.getData();
 	}
 

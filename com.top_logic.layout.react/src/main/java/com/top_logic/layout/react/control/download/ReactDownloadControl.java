@@ -77,7 +77,7 @@ public class ReactDownloadControl extends ReactControl implements DataProvider {
 	}
 
 	@Override
-	public BinaryData getDownloadData() {
+	public BinaryData getDownloadData(String key) {
 		return _model.getData();
 	}
 

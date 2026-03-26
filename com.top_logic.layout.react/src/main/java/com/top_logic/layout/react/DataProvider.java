@@ -20,10 +20,13 @@ import com.top_logic.layout.react.servlet.ReactServlet;
 public interface DataProvider {
 
 	/**
-	 * Returns the binary data to serve to the client, or {@code null} if no data is available.
+	 * Returns the binary data for the given key, or {@code null} if no data is available.
 	 *
+	 * @param key
+	 *        Identifies the requested data item. May be {@code null} for controls that serve a
+	 *        single item.
 	 * @return The binary data, or {@code null}.
 	 */
-	BinaryData getDownloadData();
+	BinaryData getDownloadData(String key);
 
 }

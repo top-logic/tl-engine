@@ -128,7 +128,8 @@ public class ReactServlet extends TopLogicServlet {
 			return;
 		}
 
-		BinaryData data = ((DataProvider) control).getDownloadData();
+		String key = request.getParameter("key");
+		BinaryData data = ((DataProvider) control).getDownloadData(key);
 		if (data == null) {
 			response.setStatus(HttpServletResponse.SC_NOT_FOUND);
 			return;

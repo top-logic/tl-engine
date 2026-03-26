@@ -313,10 +313,8 @@ public class ReactSplitPanelControl extends ReactControl {
 		}
 	}
 
-private void patchChildren() {
-		Map<String, Object> patch = new HashMap<>();
-		patch.put(CHILDREN, _childDescriptors);
-		patchReactState(patch);
+	private void patchChildren() {
+		putState(CHILDREN, _childDescriptors);
 	}
 
 	private boolean wasAllCollapsed() {

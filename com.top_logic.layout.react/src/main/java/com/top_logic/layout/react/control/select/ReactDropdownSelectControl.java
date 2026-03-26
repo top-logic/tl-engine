@@ -166,13 +166,12 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 			_optionIndex = newIndex;
 			_optionIdByObject = newReverse;
 
-			Map<String, Object> patch = new HashMap<>();
-			patch.put(OPTIONS, descriptors);
-			patch.put(OPTIONS_LOADED, Boolean.TRUE);
+			beginUpdate();
+			putState(OPTIONS, descriptors);
+			setOptionsLoaded(true);
 			// Re-send value with IDs consistent with the new option index.
-			patch.put(VALUE, toOptionDescriptors(getSelectionSorted()));
-			// Note: compound patch - these keys must be sent atomically.
-			patchReactState(patch);
+			updateValueState();
+			commitUpdate();
 		} catch (Exception ex) {
 			Logger.error("Failed to load options for dropdown select control.", ex, this);
 			return HandlerResult.error(I18NConstants.JS_DROPDOWN_SELECT_ERROR);

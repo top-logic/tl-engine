@@ -7,7 +7,6 @@ package com.top_logic.layout.react.control.layout;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -112,10 +111,10 @@ public class ReactDeckPaneControl extends ReactControl {
 
 		ReactControl content = getOrCreateChild(index);
 
-		Map<String, Object> patch = new HashMap<>();
-		patch.put(ACTIVE_INDEX, Integer.valueOf(index));
-		patch.put(ACTIVE_CHILD, content);
-		patchReactState(patch);
+		beginUpdate();
+		putState(ACTIVE_INDEX, Integer.valueOf(index));
+		putState(ACTIVE_CHILD, content);
+		commitUpdate();
 	}
 
 	/**

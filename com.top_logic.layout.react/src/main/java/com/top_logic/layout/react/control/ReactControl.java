@@ -17,7 +17,6 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.protocol.PatchEvent;
-import com.top_logic.layout.react.protocol.StateEvent;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -72,6 +71,12 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	 * it sends SSE patch events to the client.
 	 */
 	private boolean _rendered;
+
+	/**
+	 * Pending batch of state changes accumulated between {@link #beginUpdate()} and
+	 * {@link #commitUpdate()}. {@code null} when not batching.
+	 */
+	private Map<String, Object> _pendingPatch;
 
 	private List<Runnable> _cleanupActions;
 
@@ -333,36 +338,53 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	 *        The state value.
 	 */
 	protected void putState(String key, Object value) {
+		_reactState.put(key, value);
 		if (_rendered) {
-			patchReactState(java.util.Collections.singletonMap(key, value));
-		} else {
-			_reactState.put(key, value);
+			if (_pendingPatch != null) {
+				_pendingPatch.put(key, value);
+			} else {
+				sendPatch(java.util.Collections.singletonMap(key, value));
+			}
 		}
 	}
 
 	/**
-	 * Replaces the full React state and sends a {@link StateEvent} via the configured SSE queue.
+	 * Begins a batched state update.
 	 *
-	 * @param newState
-	 *        The new state.
-	 * @throws IllegalStateException
-	 *         if no {@link SSEUpdateQueue} has been configured.
+	 * <p>
+	 * All {@link #putState} calls between {@code beginUpdate()} and {@link #commitUpdate()} are
+	 * collected and sent as a single SSE {@link PatchEvent}. This avoids sending multiple events
+	 * when several state properties need to change atomically.
+	 * </p>
+	 *
+	 * @see #commitUpdate()
 	 */
-	protected void setReactState(Map<String, Object> newState) {
-		setReactState(requireSSEQueue(), newState);
+	protected void beginUpdate() {
+		_pendingPatch = new HashMap<>();
 	}
 
 	/**
-	 * Applies a partial patch to the React state and sends a {@link PatchEvent} via the configured
-	 * SSE queue.
+	 * Commits a batched state update started by {@link #beginUpdate()}.
 	 *
-	 * @param patch
-	 *        The partial state update.
-	 * @throws IllegalStateException
-	 *         if no {@link SSEUpdateQueue} has been configured.
+	 * <p>
+	 * Sends all accumulated state changes as a single {@link PatchEvent} to the client.
+	 * </p>
+	 *
+	 * @see #beginUpdate()
 	 */
-	protected void patchReactState(Map<String, Object> patch) {
-		patchReactState(requireSSEQueue(), patch);
+	protected void commitUpdate() {
+		Map<String, Object> patch = _pendingPatch;
+		_pendingPatch = null;
+		if (patch != null && !patch.isEmpty() && _rendered) {
+			sendPatch(patch);
+		}
+	}
+
+	private void sendPatch(Map<String, Object> patch) {
+		PatchEvent event = PatchEvent.create()
+			.setControlId(getID())
+			.setPatch(toJsonString(_reactContext, patch));
+		requireSSEQueue().enqueue(event);
 	}
 
 	private SSEUpdateQueue requireSSEQueue() {
@@ -370,45 +392,6 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 			throw new IllegalStateException("No SSEUpdateQueue configured on this ReactControl.");
 		}
 		return _sseQueue;
-	}
-
-	/**
-	 * Replaces the full React state and sends a {@link StateEvent} via SSE.
-	 *
-	 * @param queue
-	 *        The SSE queue to deliver the update to.
-	 * @param newState
-	 *        The new state.
-	 */
-	protected void setReactState(SSEUpdateQueue queue, Map<String, Object> newState) {
-		_reactState = new HashMap<>(newState);
-
-		StateEvent event = StateEvent.create()
-			.setControlId(getID())
-			.setState(stateAsJSON());
-		queue.enqueue(event);
-	}
-
-	/**
-	 * Applies a partial patch to the React state and sends a {@link PatchEvent} via SSE.
-	 *
-	 * <p>
-	 * Any child {@link ReactControl}s in the patch are automatically serialized during JSON
-	 * conversion.
-	 * </p>
-	 *
-	 * @param queue
-	 *        The SSE queue to deliver the update to.
-	 * @param patch
-	 *        The partial state update.
-	 */
-	protected void patchReactState(SSEUpdateQueue queue, Map<String, Object> patch) {
-		_reactState.putAll(patch);
-
-		PatchEvent event = PatchEvent.create()
-			.setControlId(getID())
-			.setPatch(toJsonString(_reactContext, patch));
-		queue.enqueue(event);
 	}
 
 	/**

@@ -230,10 +230,10 @@ public class ReactSidebarControl extends ReactControl {
 
 		ReactControl content = getOrCreateContent(itemId);
 
-		Map<String, Object> patch = new HashMap<>();
-		patch.put(ACTIVE_ITEM_ID, itemId);
-		patch.put(ACTIVE_CONTENT, content);
-		patchReactState(patch);
+		beginUpdate();
+		putState(ACTIVE_ITEM_ID, itemId);
+		putState(ACTIVE_CONTENT, content);
+		commitUpdate();
 	}
 
 	/**
@@ -267,7 +267,7 @@ public class ReactSidebarControl extends ReactControl {
 		}
 
 		if (isSSEAttached()) {
-			patchReactState(Map.of(ITEMS, itemList));
+			putState(ITEMS, itemList);
 		} else {
 			putStateSilent(ITEMS, itemList);
 		}
@@ -389,7 +389,7 @@ public class ReactSidebarControl extends ReactControl {
 		if (_onCollapseChanged != null) {
 			_onCollapseChanged.accept(Boolean.valueOf(_collapsed));
 		}
-		patchReactState(Map.of(COLLAPSED, Boolean.valueOf(_collapsed)));
+		putState(COLLAPSED, Boolean.valueOf(_collapsed));
 	}
 
 	/**

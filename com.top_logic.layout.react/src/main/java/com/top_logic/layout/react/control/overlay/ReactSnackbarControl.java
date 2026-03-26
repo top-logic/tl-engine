@@ -121,12 +121,14 @@ public class ReactSnackbarControl extends ReactControl {
 	}
 
 	/**
-	 * Shows the snackbar.
+	 * Shows the snackbar with the current message.
 	 */
 	public void show() {
 		_generation++;
-		putState(GENERATION, _generation);
+		beginUpdate();
 		putState(VISIBLE, true);
+		putState(GENERATION, _generation);
+		commitUpdate();
 	}
 
 	/**
@@ -136,8 +138,12 @@ public class ReactSnackbarControl extends ReactControl {
 	 *        The new notification message.
 	 */
 	public void show(String message) {
+		_generation++;
+		beginUpdate();
 		setMessage(message);
-		show();
+		putState(VISIBLE, true);
+		putState(GENERATION, _generation);
+		commitUpdate();
 	}
 
 	/**
@@ -150,11 +156,12 @@ public class ReactSnackbarControl extends ReactControl {
 	 */
 	public void showHtml(String htmlContent, Variant variant) {
 		_generation++;
-		patchReactState(Map.of(
-			CONTENT, htmlContent,
-			VARIANT, variant.getExternalName(),
-			VISIBLE, Boolean.TRUE,
-			GENERATION, _generation));
+		beginUpdate();
+		putState(CONTENT, htmlContent);
+		setVariant(variant);
+		putState(VISIBLE, true);
+		putState(GENERATION, _generation);
+		commitUpdate();
 	}
 
 	/**

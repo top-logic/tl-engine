@@ -138,10 +138,10 @@ public class ReactTabBarControl extends ReactControl {
 
 		ReactControl content = getOrCreateContent(tabId);
 
-		Map<String, Object> patch = new HashMap<>();
-		patch.put(ACTIVE_TAB_ID, tabId);
-		patch.put(ACTIVE_CONTENT, content);
-		patchReactState(patch);
+		beginUpdate();
+		putState(ACTIVE_TAB_ID, tabId);
+		putState(ACTIVE_CONTENT, content);
+		commitUpdate();
 	}
 
 	private ReactControl getOrCreateContent(String tabId) {

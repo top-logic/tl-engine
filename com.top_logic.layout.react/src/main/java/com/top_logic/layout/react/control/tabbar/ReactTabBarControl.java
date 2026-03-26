@@ -84,8 +84,8 @@ public class ReactTabBarControl extends ReactControl {
 			tabInfo.put(TAB_LABEL, tab.getLabel());
 			tabList.add(tabInfo);
 		}
-		getReactState().put(TABS, tabList);
-		getReactState().put(ACTIVE_TAB_ID, _activeTabId);
+		putState(TABS, tabList);
+		putState(ACTIVE_TAB_ID, _activeTabId);
 		// activeContent is null until writeAsChild creates it.
 	}
 

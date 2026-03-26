@@ -47,8 +47,8 @@ public class ReactToggleButtonControl extends ReactControl {
 		super(context, null, "TLToggleButton");
 		_action = action;
 		_active = initialActive;
-		putState(LABEL, label);
-		putState(ACTIVE, Boolean.valueOf(initialActive));
+		setLabel(label);
+		setActive(initialActive);
 	}
 
 	/**

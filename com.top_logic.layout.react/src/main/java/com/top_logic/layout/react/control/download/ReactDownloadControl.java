@@ -65,7 +65,7 @@ public class ReactDownloadControl extends ReactControl implements DataProvider {
 		putState(HAS_DATA, data != null);
 		putState(DATA_REVISION, _dataRevision);
 		putState(FILE_NAME, data != null ? data.getName() : null);
-		putState(CLEARABLE, false);
+		setClearable(false);
 		model.addListener(_modelListener);
 	}
 

@@ -151,9 +151,9 @@ public class ReactTreeControl extends ReactControl {
 		_selectionModel = selectionModel;
 		_contentProvider = contentProvider;
 
-		putState(SELECTION_MODE, _selectionMode);
-		putState(DRAG_ENABLED, Boolean.FALSE);
-		putState(DROP_ENABLED, Boolean.FALSE);
+		setSelectionMode(_selectionMode);
+		setDragEnabled(false);
+		setDropEnabled(false);
 		buildFullState();
 	}
 

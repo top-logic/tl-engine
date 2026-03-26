@@ -68,7 +68,7 @@ public class ReactAppBarControl extends ReactControl {
 		super(context, null, REACT_MODULE);
 		_leading = leading;
 		_actions = new ArrayList<>(actions);
-		putState(TITLE, title);
+		setTitle(title);
 		putState(VARIANT, variant);
 		putState(COLOR, color);
 		if (leading != null) {

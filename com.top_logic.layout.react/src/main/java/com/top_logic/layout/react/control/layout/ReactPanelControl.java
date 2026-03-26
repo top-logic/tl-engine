@@ -84,12 +84,12 @@ public class ReactPanelControl extends ToolbarControl {
 		super(context, null, REACT_MODULE);
 		_child = child;
 
-		getReactState().put(TITLE, title);
-		getReactState().put(EXPANSION_STATE, _expansionState.name());
-		getReactState().put(SHOW_MINIMIZE, Boolean.valueOf(showMinimize));
-		getReactState().put(SHOW_MAXIMIZE, Boolean.valueOf(showMaximize));
-		getReactState().put(SHOW_POP_OUT, Boolean.valueOf(showPopOut));
-		getReactState().put(CHILD, child);
+		setTitle(title);
+		setExpansionState(_expansionState);
+		putState(SHOW_MINIMIZE, Boolean.valueOf(showMinimize));
+		putState(SHOW_MAXIMIZE, Boolean.valueOf(showMaximize));
+		putState(SHOW_POP_OUT, Boolean.valueOf(showPopOut));
+		putState(CHILD, child);
 	}
 
 	/**

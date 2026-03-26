@@ -78,8 +78,8 @@ public class ReactDeckPaneControl extends ReactControl {
 		_childFactories.addAll(childFactories);
 		_activeIndex = initialActiveIndex;
 
-		getReactState().put(ACTIVE_INDEX, Integer.valueOf(_activeIndex));
-		getReactState().put(CHILD_COUNT, Integer.valueOf(_childFactories.size()));
+		putState(ACTIVE_INDEX, Integer.valueOf(_activeIndex));
+		putState(CHILD_COUNT, Integer.valueOf(_childFactories.size()));
 		// activeChild is null until writeAsChild creates it.
 	}
 

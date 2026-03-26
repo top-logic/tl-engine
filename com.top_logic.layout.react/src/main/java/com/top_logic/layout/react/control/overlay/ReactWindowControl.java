@@ -73,10 +73,10 @@ public class ReactWindowControl extends ToolbarControl {
 	public ReactWindowControl(ReactContext context, String title, DisplayDimension width, Runnable closeHandler) {
 		super(context, null, REACT_MODULE);
 		_closeHandler = closeHandler;
-		putState(TITLE, title);
-		putState(WIDTH, width.toString());
-		putState(RESIZABLE, false);
-		putState(ACTIONS, List.of());
+		setTitle(title);
+		setWidth(width);
+		setResizable(false);
+		setActions(List.of());
 	}
 
 	/**

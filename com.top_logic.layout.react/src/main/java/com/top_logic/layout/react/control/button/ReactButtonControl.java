@@ -56,7 +56,7 @@ public class ReactButtonControl extends ReactControl {
 	public ReactButtonControl(ReactContext context, String label, ButtonAction action) {
 		super(context, null, "TLButton");
 		_action = action;
-		putState(LABEL, label);
+		setLabel(label);
 	}
 
 	/**
@@ -77,10 +77,10 @@ public class ReactButtonControl extends ReactControl {
 		_action = model::executeCommand;
 		_modelChangeHandler = this::handleModelChange;
 
-		putState(LABEL, model.getLabel());
-		putState(DISABLED, Boolean.valueOf(!model.isExecutable()));
+		setLabel(model.getLabel());
+		setDisabled(!model.isExecutable());
 		setHidden(!model.isVisible());
-		putImageState(model.getImage());
+		setImage(model.getImage());
 		model.addStateChangeListener(_modelChangeHandler);
 	}
 

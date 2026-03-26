@@ -93,20 +93,16 @@ public class ReactFormFieldChromeControl extends ReactControl {
 			boolean fullLine, boolean visible, ReactControl field) {
 		super(context, null, REACT_MODULE);
 		_field = field;
-		putState(LABEL, label);
-		putState(REQUIRED, required);
-		putState(DIRTY, dirty);
-		if (error != null) {
-			putState(ERROR, error);
-		}
-		if (helpText != null) {
-			putState(HELP_TEXT, helpText);
-		}
+		setLabel(label);
+		setRequired(required);
+		setDirty(dirty);
+		setError(error);
+		setHelpText(helpText);
 		if (labelPosition != null) {
 			putState(LABEL_POSITION, labelPosition);
 		}
 		putState(FULL_LINE, fullLine);
-		putState(VISIBLE, visible);
+		setVisible(visible);
 		putState(FIELD, field);
 	}
 

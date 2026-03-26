@@ -55,6 +55,8 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 
 	private static final String IMAGE_URL = "imageUrl";
 
+	private static final String FULL_LINE = "fullLine";
+
 	private static final String KEY_PARAM = "&key=";
 
 	private static final List<String> DEFAULT_TOOLBAR = Arrays.asList(
@@ -82,8 +84,10 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	 *        The React context for ID allocation and SSE registration.
 	 * @param model
 	 *        The field model holding the {@link StructuredText} value.
+	 * @param fullLine
+	 *        Whether the editor should span the full form row.
 	 */
-	public ReactWysiwygControl(ReactContext context, FieldModel model) {
+	public ReactWysiwygControl(ReactContext context, FieldModel model, boolean fullLine) {
 		super(context, model, "TLWysiwygEditor");
 
 		_imageUrlPrefix = context.getContextPath() + "/react-api/data?controlId=" + getID()
@@ -92,6 +96,7 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 		initShadowCopy();
 		putState(VALUE, rewriteImageUrls(extractHtml(_shadowCopy)));
 		putState(TOOLBAR, DEFAULT_TOOLBAR);
+		putState(FULL_LINE, Boolean.valueOf(fullLine));
 	}
 
 	private void initShadowCopy() {

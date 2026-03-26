@@ -10,19 +10,10 @@ import java.util.List;
 
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.layout.ReactStackControl.StackGap;
 
 /**
  * A {@link ReactControl} that renders a CSS Grid container via the {@code TLGrid} React component.
- *
- * <p>
- * State:
- * </p>
- * <ul>
- * <li>{@code columns} - fixed column count</li>
- * <li>{@code minColumnWidth} - minimum column width for responsive auto-fit</li>
- * <li>{@code gap} - "compact", "default", or "loose"</li>
- * <li>{@code children} - list of child control descriptors</li>
- * </ul>
  */
 public class ReactGridControl extends ReactControl {
 
@@ -44,15 +35,16 @@ public class ReactGridControl extends ReactControl {
 	 * @param minColumnWidth
 	 *        Minimum column width (e.g. "16rem"). Columns reflow responsively.
 	 * @param gap
-	 *        "compact", "default", or "loose".
+	 *        The gap between grid items.
 	 * @param children
 	 *        The child controls to arrange in the grid.
 	 */
-	public ReactGridControl(ReactContext context, String minColumnWidth, String gap, List<? extends ReactControl> children) {
+	public ReactGridControl(ReactContext context, String minColumnWidth, StackGap gap,
+			List<? extends ReactControl> children) {
 		super(context, null, REACT_MODULE);
 		_children = new ArrayList<>(children);
 		putState(MIN_COLUMN_WIDTH, minColumnWidth);
-		putState(GAP, gap);
+		putState(GAP, gap.getExternalName());
 		putState(CHILDREN, _children);
 	}
 
@@ -62,15 +54,16 @@ public class ReactGridControl extends ReactControl {
 	 * @param columns
 	 *        The number of columns.
 	 * @param gap
-	 *        "compact", "default", or "loose".
+	 *        The gap between grid items.
 	 * @param children
 	 *        The child controls to arrange in the grid.
 	 */
-	public ReactGridControl(ReactContext context, int columns, String gap, List<? extends ReactControl> children) {
+	public ReactGridControl(ReactContext context, int columns, StackGap gap,
+			List<? extends ReactControl> children) {
 		super(context, null, REACT_MODULE);
 		_children = new ArrayList<>(children);
 		putState(COLUMNS, Integer.valueOf(columns));
-		putState(GAP, gap);
+		putState(GAP, gap.getExternalName());
 		putState(CHILDREN, _children);
 	}
 

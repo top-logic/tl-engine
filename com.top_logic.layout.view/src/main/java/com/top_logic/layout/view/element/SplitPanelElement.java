@@ -63,11 +63,10 @@ public class SplitPanelElement implements UIElement {
 		String PANES = "panes";
 
 		/**
-		 * The layout orientation: "horizontal" or "vertical".
+		 * The layout orientation.
 		 */
 		@Name(ORIENTATION)
-		@StringDefault("horizontal")
-		String getOrientation();
+		Orientation getOrientation();
 
 		/**
 		 * Whether draggable splitters are shown between panes.
@@ -109,11 +108,10 @@ public class SplitPanelElement implements UIElement {
 		float getSize();
 
 		/**
-		 * The size unit: "%" or "px".
+		 * The size unit.
 		 */
 		@Name(UNIT)
-		@StringDefault("%")
-		String getUnit();
+		DisplayUnit getUnit();
 
 		/**
 		 * The minimum size in pixels (0 for no minimum).
@@ -130,7 +128,7 @@ public class SplitPanelElement implements UIElement {
 		List<PolymorphicConfiguration<? extends UIElement>> getChildren();
 	}
 
-	private final String _orientation;
+	private final Orientation _orientation;
 
 	private final boolean _resizable;
 
@@ -161,8 +159,7 @@ public class SplitPanelElement implements UIElement {
 		Map<Integer, Float> persistedSizes = loadPaneSizes(key);
 		Map<Integer, Boolean> persistedCollapse = loadCollapseStates(key);
 
-		Orientation orientation = "vertical".equals(_orientation) ? Orientation.VERTICAL : Orientation.HORIZONTAL;
-		ReactSplitPanelControl splitPanel = new ReactSplitPanelControl(context, orientation, _resizable,
+		ReactSplitPanelControl splitPanel = new ReactSplitPanelControl(context, _orientation, _resizable,
 			sizes -> savePaneSizes(key, sizes),
 			(idx, collapsed) -> saveCollapseState(key, idx, collapsed));
 
@@ -174,14 +171,14 @@ public class SplitPanelElement implements UIElement {
 			float size = persistedSizes.containsKey(idx)
 				? persistedSizes.get(idx).floatValue() : pane._size;
 			DisplayUnit unit = persistedSizes.containsKey(idx)
-				? DisplayUnit.PIXEL : ("%".equals(pane._unit) ? DisplayUnit.PERCENT : DisplayUnit.PIXEL);
+				? DisplayUnit.PIXEL : pane._unit;
 			ChildConstraint constraint = new ChildConstraint(size, unit, pane._minSize, Scrolling.AUTO);
 			ReactControl content = createContent(pane._children, context);
 
 			if (collapsed) {
 				// Restore collapsed state. The constraint holds the current (collapsed) size.
 				// Pass the config default as the saved (expand-to) size.
-				DisplayUnit defaultUnit = "%".equals(pane._unit) ? DisplayUnit.PERCENT : DisplayUnit.PIXEL;
+				DisplayUnit defaultUnit = pane._unit;
 				splitPanel.addChild(content, constraint, true, pane._size, defaultUnit);
 			} else {
 				splitPanel.addChild(content, constraint);
@@ -291,6 +288,6 @@ public class SplitPanelElement implements UIElement {
 		return new ReactStackControl(context, children);
 	}
 
-	private record PaneEntry(float _size, String _unit, int _minSize, List<UIElement> _children) {
+	private record PaneEntry(float _size, DisplayUnit _unit, int _minSize, List<UIElement> _children) {
 	}
 }

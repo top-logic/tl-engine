@@ -17,6 +17,7 @@ import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.layout.ReactGridControl;
+import com.top_logic.layout.react.control.layout.ReactStackControl.StackGap;
 import com.top_logic.layout.view.ContainerElement;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
@@ -54,16 +55,15 @@ public class GridElement extends ContainerElement {
 		String getMinColumnWidth();
 
 		/**
-		 * The gap between grid items: "compact", "default", or "loose".
+		 * The gap between grid items.
 		 */
 		@Name(GAP)
-		@StringDefault("default")
-		String getGap();
+		StackGap getGap();
 	}
 
 	private final String _minColumnWidth;
 
-	private final String _gap;
+	private final StackGap _gap;
 
 	/**
 	 * Creates a new {@link GridElement} from configuration.

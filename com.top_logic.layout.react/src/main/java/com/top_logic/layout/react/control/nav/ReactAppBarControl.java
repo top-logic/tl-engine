@@ -8,28 +8,13 @@ package com.top_logic.layout.react.control.nav;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.top_logic.basic.config.ExternallyNamed;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 
 /**
  * A {@link ReactControl} that renders a top-level application bar via the {@code TLAppBar} React
  * component.
- *
- * <p>
- * The app bar provides a Material Design top app bar pattern with a leading slot (back/menu
- * button), a title, and trailing action icons.
- * </p>
- *
- * <p>
- * State:
- * </p>
- * <ul>
- * <li>{@code title} - the bar title</li>
- * <li>{@code leading} - optional leading control (e.g. hamburger button)</li>
- * <li>{@code actions} - trailing action controls</li>
- * <li>{@code variant} - "flat" or "elevated"</li>
- * <li>{@code color} - "primary" or "surface"</li>
- * </ul>
  */
 public class ReactAppBarControl extends ReactControl {
 
@@ -43,7 +28,28 @@ public class ReactAppBarControl extends ReactControl {
 
 	private static final String VARIANT = "variant";
 
-	private static final String COLOR = "color";
+	/**
+	 * Visual variant of the app bar.
+	 */
+	public enum AppBarVariant implements ExternallyNamed {
+
+		/** Flat bar without elevation. */
+		FLAT("flat"),
+
+		/** Elevated bar with shadow. */
+		ELEVATED("elevated");
+
+		private final String _externalName;
+
+		AppBarVariant(String externalName) {
+			_externalName = externalName;
+		}
+
+		@Override
+		public String getExternalName() {
+			return _externalName;
+		}
+	}
 
 	private ReactControl _leading;
 
@@ -55,22 +61,19 @@ public class ReactAppBarControl extends ReactControl {
 	 * @param title
 	 *        The bar title.
 	 * @param variant
-	 *        "flat" or "elevated".
-	 * @param color
-	 *        "primary" or "surface".
+	 *        The visual variant.
 	 * @param leading
 	 *        Optional leading control, or {@code null}.
 	 * @param actions
 	 *        Trailing action controls.
 	 */
-	public ReactAppBarControl(ReactContext context, String title, String variant, String color,
+	public ReactAppBarControl(ReactContext context, String title, AppBarVariant variant,
 			ReactControl leading, List<? extends ReactControl> actions) {
 		super(context, null, REACT_MODULE);
 		_leading = leading;
 		_actions = new ArrayList<>(actions);
 		setTitle(title);
-		putState(VARIANT, variant);
-		putState(COLOR, color);
+		putState(VARIANT, variant.getExternalName());
 		if (leading != null) {
 			putState(LEADING, leading);
 		}
@@ -78,7 +81,7 @@ public class ReactAppBarControl extends ReactControl {
 	}
 
 	/**
-	 * Creates a primary flat app bar with no leading control.
+	 * Creates a flat app bar with no leading control.
 	 *
 	 * @param title
 	 *        The bar title.
@@ -86,14 +89,11 @@ public class ReactAppBarControl extends ReactControl {
 	 *        Trailing action controls.
 	 */
 	public ReactAppBarControl(ReactContext context, String title, List<? extends ReactControl> actions) {
-		this(context, title, "flat", "primary", null, actions);
+		this(context, title, AppBarVariant.FLAT, null, actions);
 	}
 
 	/**
 	 * Updates the bar title.
-	 *
-	 * @param title
-	 *        The new title.
 	 */
 	public void setTitle(String title) {
 		putState(TITLE, title);

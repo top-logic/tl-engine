@@ -16,6 +16,7 @@ import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
@@ -23,6 +24,7 @@ import com.top_logic.layout.react.control.tabbar.ReactTabBarControl;
 import com.top_logic.layout.react.control.tabbar.TabDefinition;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.util.Resources;
 
 /**
  * UIElement that wraps {@link ReactTabBarControl}.
@@ -89,7 +91,7 @@ public class TabBarElement implements UIElement {
 		 * The tab display label.
 		 */
 		@Name(LABEL)
-		String getLabel();
+		ResKey getLabel();
 
 		/**
 		 * The content elements shown when this tab is active.
@@ -113,7 +115,8 @@ public class TabBarElement implements UIElement {
 			List<UIElement> children = tabConfig.getChildren().stream()
 				.map(context::getInstance)
 				.collect(Collectors.toList());
-			_tabs.add(new TabEntry(tabConfig.getId(), tabConfig.getLabel(), children));
+			String label = Resources.getInstance().getString(tabConfig.getLabel());
+			_tabs.add(new TabEntry(tabConfig.getId(), label, children));
 		}
 		_activeTab = config.getActiveTab();
 	}

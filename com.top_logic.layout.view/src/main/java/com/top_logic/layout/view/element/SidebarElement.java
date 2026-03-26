@@ -19,10 +19,12 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
+import com.top_logic.util.Resources;
 import com.top_logic.layout.react.control.sidebar.NavigationItem;
 import com.top_logic.layout.react.control.sidebar.ReactSidebarControl;
 import com.top_logic.layout.react.control.sidebar.SeparatorItem;
@@ -123,7 +125,7 @@ public class SidebarElement implements UIElement {
 		 * The display label.
 		 */
 		@Name(LABEL)
-		String getLabel();
+		ResKey getLabel();
 
 		/**
 		 * The CSS icon class (e.g. "bi bi-speedometer2").
@@ -157,7 +159,7 @@ public class SidebarElement implements UIElement {
 
 		private final String _id;
 
-		private final String _label;
+		private final ResKey _label;
 
 		private final String _icon;
 
@@ -178,7 +180,8 @@ public class SidebarElement implements UIElement {
 
 		@Override
 		public SidebarItem createSidebarItem(ViewContext context) {
-			return new NavigationItem(_id, _label, _icon, () -> createContent(_children, context));
+			String label = Resources.getInstance().getString(_label);
+			return new NavigationItem(_id, label, _icon, () -> createContent(_children, context));
 		}
 	}
 

@@ -13,9 +13,11 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.nav.ReactBottomBarControl;
 import com.top_logic.layout.react.control.nav.ReactBottomBarControl.BottomBarEntry;
+import com.top_logic.util.Resources;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 
@@ -83,7 +85,7 @@ public class BottomBarElement implements UIElement {
 		 * The display label.
 		 */
 		@Name(LABEL)
-		String getLabel();
+		ResKey getLabel();
 
 		/**
 		 * The CSS icon class (e.g. "bi bi-speedometer2").
@@ -103,7 +105,8 @@ public class BottomBarElement implements UIElement {
 	public BottomBarElement(InstantiationContext context, Config config) {
 		_items = new ArrayList<>();
 		for (ItemConfig item : config.getItems()) {
-			_items.add(new BottomBarEntry(item.getId(), item.getLabel(), item.getIcon()));
+			String label = Resources.getInstance().getString(item.getLabel());
+			_items.add(new BottomBarEntry(item.getId(), label, item.getIcon()));
 		}
 		_activeItem = config.getActiveItem();
 	}

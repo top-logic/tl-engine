@@ -16,6 +16,7 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.ToolbarControl;
@@ -24,6 +25,7 @@ import com.top_logic.layout.react.control.overlay.DialogResult;
 import com.top_logic.layout.react.control.overlay.ReactWindowControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.util.Resources;
 
 /**
  * A {@link UIElement} that provides dialog window chrome using {@link ReactWindowControl}.
@@ -82,7 +84,7 @@ public class WindowElement extends CommandScopeElement {
 		 */
 		@Name(TITLE)
 		@Nullable
-		String getTitle();
+		ResKey getTitle();
 
 		/**
 		 * The window width as a CSS pixel value (e.g. "500px").
@@ -106,7 +108,7 @@ public class WindowElement extends CommandScopeElement {
 		List<PolymorphicConfiguration<? extends UIElement>> getActions();
 	}
 
-	private final String _title;
+	private final ResKey _title;
 
 	private final String _width;
 
@@ -135,7 +137,7 @@ public class WindowElement extends CommandScopeElement {
 		};
 
 		DisplayDimension width = parseWidth(_width);
-		String title = _title != null ? _title : "";
+		String title = _title != null ? Resources.getInstance().getString(_title) : "";
 
 		ReactWindowControl window = new ReactWindowControl(context, title, width, closeHandler);
 		window.setChild(content);

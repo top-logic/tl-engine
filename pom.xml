@@ -412,7 +412,17 @@
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
+				<artifactId>tl-layout-react</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
 				<artifactId>tl-layout-react-chartjs</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-layout-react-wysiwyg</artifactId>
 				<version>${tl.version}</version>
 			</dependency>
 			<dependency>
@@ -566,11 +576,6 @@
 			<dependency>
 				<groupId>com.top-logic</groupId>
 				<artifactId>tl-layout-icons</artifactId>
-				<version>${tl.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>com.top-logic</groupId>
-				<artifactId>tl-layout-react</artifactId>
 				<version>${tl.version}</version>
 			</dependency>
 			<dependency>

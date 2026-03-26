@@ -96,19 +96,24 @@ public class TreeModelByExpression<C extends TreeModelByExpression.Config<?>> ex
 
 		/**
 		 * Function checking whether a given object is part of this tree.
-		 * 
+		 *
 		 * <p>
 		 * When e.g. an object creation is observed, the new object is inserted into this tree, if
 		 * the following holds: The {@link #getNodePredicate()} returns <code>true</code> for the
 		 * new object. The root node of this tree can be reached by recursively calling
 		 * {@link #getParents()} on the newly created object.
 		 * </p>
-		 * 
+		 *
 		 * <p>
 		 * The function receives a potential tree node as the first argument and the component model
 		 * as the second. It is expected to return a Boolean result.
 		 * </p>
-		 * 
+		 *
+		 * <p>
+		 * Example: Accept only instances of a specific type as tree nodes:<br/>
+		 * <code>node -&gt; model -&gt; $node.instanceOf(`my.module:MyType`)</code>
+		 * </p>
+		 *
 		 * @see TreeModelByExpression#supportsNode(LayoutComponent, Object)
 		 */
 		@Name(NODE_PREDICATE)
@@ -118,18 +123,23 @@ public class TreeModelByExpression<C extends TreeModelByExpression.Config<?>> ex
 
 		/**
 		 * Function checking whether a given node is a leaf node.
-		 * 
+		 *
 		 * <p>
 		 * A leaf node is not further queried for {@link #getChildren()}. Visually there is no
 		 * difference between a leaf node and a non leaf node that has no {@link #getChildren()}.
 		 * </p>
-		 * 
+		 *
 		 * <p>
 		 * The function receives a tree node as the first argument and the component model as the
 		 * second. It is expected to return a Boolean result indicating whether the given node is a
 		 * leaf.
 		 * </p>
-		 * 
+		 *
+		 * <p>
+		 * Example: Treat nodes with special type as leaves:<br/>
+		 * <code>node -&gt; model -&gt; $node.instanceOf(`my.module:MyLeafType`)</code>
+		 * </p>
+		 *
 		 * @see TreeModelByExpression#isLeaf(LayoutComponent, Object)
 		 */
 		@Name(LEAF_PREDICATE)
@@ -139,13 +149,18 @@ public class TreeModelByExpression<C extends TreeModelByExpression.Config<?>> ex
 
 		/**
 		 * Function resolving the children of a given object in this tree.
-		 * 
+		 *
 		 * <p>
 		 * The function receives a tree node as first argument and the component model as second
 		 * argument. As result, a list of children nodes of the given tree node is expected. A
 		 * result of <code>null</code> or the empty list means that the given node is a leaf node.
 		 * </p>
-		 * 
+		 *
+		 * <p>
+		 * Example: Return the value of the <code>children</code> reference:<br/>
+		 * <code>node -&gt; model -&gt; $node.get(`my.module:MyType#children`)</code>
+		 * </p>
+		 *
 		 * @see TreeModelByExpression#getChildIterator(LayoutComponent, Object)
 		 */
 		@Name(CHILDREN)
@@ -160,10 +175,11 @@ public class TreeModelByExpression<C extends TreeModelByExpression.Config<?>> ex
 		 * <p>
 		 * The input component model was accepted by {@link #getModelPredicate()} before.
 		 * </p>
-		 * 
+		 *
 		 * <p>
 		 * The function receives the component model as its sole argument. The default identity
-		 * function <code>model -> $model</code> uses the component model directly as the tree root.
+		 * function <code>model -&gt; $model</code> uses the component model directly as the tree
+		 * root.
 		 * </p>
 		 *
 		 * @see TreeModelByExpression#getModel(Object, LayoutComponent)
@@ -181,6 +197,11 @@ public class TreeModelByExpression<C extends TreeModelByExpression.Config<?>> ex
 		 * to return a boolean result. Only objects for which this predicate returns
 		 * <code>true</code> are passed to {@link #getRootNode()} to compute the tree root. The
 		 * default value <code>true</code> accepts every object as a valid model.
+		 * </p>
+		 *
+		 * <p>
+		 * Example: Accept only instances of a specific root type as component model:<br/>
+		 * <code>model -&gt; $model.instanceof(`my.module:MyRootType`)</code>
 		 * </p>
 		 *
 		 * @see TreeModelByExpression#supportsModel(Object, LayoutComponent)
@@ -214,7 +235,7 @@ public class TreeModelByExpression<C extends TreeModelByExpression.Config<?>> ex
 
 		/**
 		 * Function resolving the parent node(s) in this tree.
-		 * 
+		 *
 		 * <p>
 		 * As first argument the function takes an object for which {@link #getNodePredicate()}
 		 * yields <code>true</code>. The component model is passed as second argument. The function
@@ -222,7 +243,12 @@ public class TreeModelByExpression<C extends TreeModelByExpression.Config<?>> ex
 		 * collection computed by {@link #getChildren()}. A single result is not required to be
 		 * wrapped into a list. A result of <code>null</code> is interpreted as empty list.
 		 * </p>
-		 * 
+		 *
+		 * <p>
+		 * Example: Return the referrers of the <code>children</code> reference:<br/>
+		 * <code>node -&gt; model -&gt; $node.referers(`my.module:MyType#children`)</code>
+		 * </p>
+		 *
 		 * @see TreeModelByExpression#getParents(LayoutComponent, Object)
 		 */
 		@Name(PARENTS)
@@ -232,17 +258,22 @@ public class TreeModelByExpression<C extends TreeModelByExpression.Config<?>> ex
 
 		/**
 		 * Function computing the additional nodes to update if a given object changes.
-		 * 
+		 *
 		 * <p>
 		 * In a tree, the direct parents and children of the corresponding nodes are updated by
 		 * default.
 		 * </p>
-		 * 
+		 *
 		 * <p>
 		 * The function receives the changed business object as first argument and the current
 		 * component model as second argument.
 		 * </p>
-		 * 
+		 *
+		 * <p>
+		 * Example: Also refresh all dependents when a node changes:<br/>
+		 * <code>obj -&gt; model -&gt; $obj.get(`my.module:MyType#dependents`)</code>
+		 * </p>
+		 *
 		 * @see TreeModelByExpression#getNodesToUpdate(LayoutComponent, Object)
 		 */
 		@Name(NODES_TO_UPDATE)

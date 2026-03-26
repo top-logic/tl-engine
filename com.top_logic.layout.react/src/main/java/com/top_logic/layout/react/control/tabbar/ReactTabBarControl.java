@@ -138,10 +138,10 @@ public class ReactTabBarControl extends ReactControl {
 
 		ReactControl content = getOrCreateContent(tabId);
 
-		beginUpdate();
+		Object tx = beginUpdate();
 		putState(ACTIVE_TAB_ID, tabId);
 		putState(ACTIVE_CONTENT, content);
-		commitUpdate();
+		commitUpdate(tx);
 	}
 
 	private ReactControl getOrCreateContent(String tabId) {

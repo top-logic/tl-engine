@@ -111,10 +111,10 @@ public class ReactDeckPaneControl extends ReactControl {
 
 		ReactControl content = getOrCreateChild(index);
 
-		beginUpdate();
+		Object tx = beginUpdate();
 		putState(ACTIVE_INDEX, Integer.valueOf(index));
 		putState(ACTIVE_CHILD, content);
-		commitUpdate();
+		commitUpdate(tx);
 	}
 
 	/**

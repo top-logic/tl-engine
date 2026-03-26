@@ -124,8 +124,8 @@ public class ReactSnackbarControl extends ReactControl {
 	 * Shows the snackbar with the current message.
 	 */
 	public void show() {
-		beginShow();
-		commitUpdate();
+		Object tx = beginShow();
+		commitUpdate(tx);
 	}
 
 	/**
@@ -135,9 +135,9 @@ public class ReactSnackbarControl extends ReactControl {
 	 *        The new notification message.
 	 */
 	public void show(String message) {
-		beginShow();
+		Object tx = beginShow();
 		setMessage(message);
-		commitUpdate();
+		commitUpdate(tx);
 	}
 
 	/**
@@ -149,17 +149,18 @@ public class ReactSnackbarControl extends ReactControl {
 	 *        The visual variant.
 	 */
 	public void showHtml(String htmlContent, Variant variant) {
-		beginShow();
+		Object tx = beginShow();
 		putState(CONTENT, htmlContent);
 		setVariant(variant);
-		commitUpdate();
+		commitUpdate(tx);
 	}
 
-	private void beginShow() {
+	private Object beginShow() {
 		_generation++;
-		beginUpdate();
+		Object tx = beginUpdate();
 		setVisible(true);
 		putState(GENERATION, _generation);
+		return tx;
 	}
 
 	private void setVisible(boolean visible) {

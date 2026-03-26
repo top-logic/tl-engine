@@ -230,10 +230,10 @@ public class ReactSidebarControl extends ReactControl {
 
 		ReactControl content = getOrCreateContent(itemId);
 
-		beginUpdate();
+		Object tx = beginUpdate();
 		putState(ACTIVE_ITEM_ID, itemId);
 		putState(ACTIVE_CONTENT, content);
-		commitUpdate();
+		commitUpdate(tx);
 	}
 
 	/**

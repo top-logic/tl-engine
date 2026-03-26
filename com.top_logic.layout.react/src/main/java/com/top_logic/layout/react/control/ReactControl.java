@@ -74,7 +74,8 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 
 	/**
 	 * Pending batch of state changes accumulated between {@link #beginUpdate()} and
-	 * {@link #commitUpdate()}. {@code null} when not batching.
+	 * {@link #commitUpdate(Object)}. {@code null} when not batching. Also serves as the opaque
+	 * token returned by {@link #beginUpdate()} for the outermost transaction.
 	 */
 	private Map<String, Object> _pendingPatch;
 
@@ -352,30 +353,52 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	 * Begins a batched state update.
 	 *
 	 * <p>
-	 * All {@link #putState} calls between {@code beginUpdate()} and {@link #commitUpdate()} are
-	 * collected and sent as a single SSE {@link PatchEvent}. This avoids sending multiple events
-	 * when several state properties need to change atomically.
+	 * All {@link #putState} calls between {@code beginUpdate()} and {@link #commitUpdate(Object)}
+	 * are collected and sent as a single SSE {@link PatchEvent}. This avoids sending multiple
+	 * events when several state properties need to change atomically.
 	 * </p>
 	 *
-	 * @see #commitUpdate()
+	 * <p>
+	 * Calls may be nested: only the outermost {@code beginUpdate}/{@code commitUpdate} pair
+	 * triggers the SSE event. Inner pairs are no-ops, so methods that batch internally can be
+	 * called from within an outer batch without double-sending.
+	 * </p>
+	 *
+	 * @return An opaque token that must be passed to {@link #commitUpdate(Object)}.
+	 *
+	 * @see #commitUpdate(Object)
 	 */
-	protected void beginUpdate() {
+	protected Object beginUpdate() {
+		if (_pendingPatch != null) {
+			// Nested: return null so commitUpdate knows this is an inner call.
+			return null;
+		}
 		_pendingPatch = new HashMap<>();
+		return _pendingPatch;
 	}
 
 	/**
 	 * Commits a batched state update started by {@link #beginUpdate()}.
 	 *
 	 * <p>
-	 * Sends all accumulated state changes as a single {@link PatchEvent} to the client.
+	 * Sends all accumulated state changes as a single {@link PatchEvent} to the client. Only the
+	 * outermost commit (matching the outermost {@link #beginUpdate()}) actually sends; inner
+	 * commits are no-ops.
 	 * </p>
+	 *
+	 * @param token
+	 *        The token returned by the corresponding {@link #beginUpdate()} call.
 	 *
 	 * @see #beginUpdate()
 	 */
-	protected void commitUpdate() {
+	protected void commitUpdate(Object token) {
+		if (token != _pendingPatch) {
+			// Inner (nested) commit: nothing to do.
+			return;
+		}
 		Map<String, Object> patch = _pendingPatch;
 		_pendingPatch = null;
-		if (patch != null && !patch.isEmpty() && _rendered) {
+		if (!patch.isEmpty() && _rendered) {
 			sendPatch(patch);
 		}
 	}

@@ -124,9 +124,9 @@ public class ButtonElement implements UIElement {
 
 		// Create model and button. The button reads label/disabled from the model internally.
 		ViewCommandModel model = new ViewCommandModel(_command, _commandConfig, inputChannel, rule, confirmation);
-		model.attach();
 
 		ReactButtonControl control = new ReactButtonControl(context, model);
+		control.addBeforeWriteAction(model::attach);
 		control.addCleanupAction(model::detach);
 		return control;
 	}

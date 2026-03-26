@@ -51,6 +51,7 @@ mvn test -DskipTests=false -pl com.top_logic.basic -Dtest=ClassName#methodName
 - **NEVER use `mvn clean` on app modules** (e.g. `com.top_logic.demo`) that use the `tl-maven-plugin:app` goal. It causes a `PluginContainerException` / missing `com.top_logic.basic.core.log.Log` error. Use incremental compilation instead.
 - **To force recompilation without clean**: `touch` the changed `.java` files, then run `mvn compile -DskipTests=true`.
 - **Library modules** (e.g. `com.top_logic.layout.react`) can safely use `mvn clean install` — the `tl-maven-plugin:app` goal only runs in app modules.
+- **Piping Maven output**: Always use `mvn -B` (batch mode) when piping output to `grep`, `tail`, etc. Without `-B`, Maven emits ANSI color codes that prevent text matching (e.g. `grep 'BUILD'` fails because the actual string is `[1;32mBUILD SUCCESS[m`).
 
 ### Other Useful Commands
 

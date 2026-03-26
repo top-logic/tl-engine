@@ -119,7 +119,12 @@ public abstract class CommandScopeElement extends ContainerElement {
 		syncToolbarButtons(chrome, context, scope, toolbarButtons);
 		scope.addListener(() -> syncToolbarButtons(chrome, context, scope, toolbarButtons));
 
-		// Phase 6: Register cleanup for model lifecycle.
+		// Phase 6: Lazy attach on render, cleanup on dispose.
+		chrome.addBeforeWriteAction(() -> {
+			for (ViewCommandModel model : commandModels) {
+				model.attach();
+			}
+		});
 		chrome.addCleanupAction(() -> {
 			for (ViewCommandModel model : commandModels) {
 				model.detach();
@@ -167,7 +172,6 @@ public abstract class CommandScopeElement extends ContainerElement {
 			ViewCommandConfirmation confirmation = buildConfirmation(cmdConfig);
 
 			ViewCommandModel model = new ViewCommandModel(cmd, cmdConfig, inputChannel, rule, confirmation);
-			model.attach();
 			models.add(model);
 		}
 		return models;

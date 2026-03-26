@@ -410,7 +410,6 @@ public class FormElement extends ContainerElement {
 
 			ViewCommandModel inner =
 				new ViewCommandModel(cmd, cmdConfig, inputChannel, rule, confirmation);
-			inner.attach();
 
 			// Wrap the model so that executeCommand uses the form context (which has the
 			// FormModel) instead of the window context passed by the toolbar button.
@@ -420,7 +419,13 @@ public class FormElement extends ContainerElement {
 			scope.addCommand(wrapped);
 		}
 
-
+		formControl.addBeforeWriteAction(() -> {
+			for (CommandModel model : models) {
+				if (model instanceof FormScopedCommandModel) {
+					((FormScopedCommandModel) model).getInner().attach();
+				}
+			}
+		});
 		formControl.addCleanupAction(() -> {
 			for (CommandModel model : models) {
 				scope.removeCommand(model);
@@ -547,10 +552,14 @@ public class FormElement extends ContainerElement {
 		}
 
 		for (FormCommandModel model : models) {
-			model.attach();
 			scope.addCommand(model);
 		}
 
+		formControl.addBeforeWriteAction(() -> {
+			for (FormCommandModel model : models) {
+				model.attach();
+			}
+		});
 		formControl.addCleanupAction(() -> {
 			for (FormCommandModel model : models) {
 				scope.removeCommand(model);

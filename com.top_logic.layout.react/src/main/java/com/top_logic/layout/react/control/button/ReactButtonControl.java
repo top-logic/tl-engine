@@ -35,9 +35,6 @@ public class ReactButtonControl extends ReactControl {
 	/** State key for the hidden flag. */
 	private static final String HIDDEN = "hidden";
 
-	/** State key for the icon name (built-in SVG icons like "detail", "delete"). */
-	private static final String ICON = "icon";
-
 	/** State key for the ThemeImage encoded form (e.g. "css:fas fa-edit", "/icons/foo.png"). */
 	private static final String IMAGE = "image";
 
@@ -120,18 +117,13 @@ public class ReactButtonControl extends ReactControl {
 	}
 
 	/**
-	 * Sets the icon name for this button.
+	 * Sets the image for this button using the ThemeImage encoded form.
 	 *
-	 * <p>
-	 * When set, the button renders as an icon-only button using the named SVG icon on the client.
-	 * The label is used as accessible title/tooltip.
-	 * </p>
-	 *
-	 * @param icon
-	 *        The icon name (e.g. "detail", "delete"), or {@code null} to remove the icon.
+	 * @param encodedImage
+	 *        The encoded image (e.g. "css:fas fa-edit"), or {@code null} to remove.
 	 */
-	public void setIcon(String icon) {
-		putState(ICON, icon);
+	public void setImage(String encodedImage) {
+		putState(IMAGE, encodedImage);
 	}
 
 	/**

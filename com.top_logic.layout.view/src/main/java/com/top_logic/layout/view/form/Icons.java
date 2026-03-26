@@ -26,4 +26,13 @@ public class Icons extends IconsBase {
 	@DefaultValue("css:fas fa-times")
 	public static ThemeImage FORM_CANCEL;
 
+	@DefaultValue("css:fas fa-info-circle")
+	public static ThemeImage COMPOSITION_TABLE_DETAIL;
+
+	@DefaultValue("css:fas fa-trash")
+	public static ThemeImage COMPOSITION_TABLE_DELETE;
+
+	@DefaultValue("css:fas fa-plus")
+	public static ThemeImage COMPOSITION_TABLE_ADD;
+
 }

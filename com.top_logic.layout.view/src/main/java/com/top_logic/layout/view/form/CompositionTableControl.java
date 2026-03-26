@@ -634,6 +634,7 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 				addRow();
 				return HandlerResult.DEFAULT_RESULT;
 			});
+			_addButton.setImage(Icons.COMPOSITION_TABLE_ADD.toEncodedForm());
 			registerChildControl(_addButton);
 			putState("toolbarButtons", Collections.singletonList(_addButton));
 		} else {
@@ -745,7 +746,7 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 			openDetailDialog(rowObject);
 			return HandlerResult.DEFAULT_RESULT;
 		});
-		button.setIcon("detail");
+		button.setImage(Icons.COMPOSITION_TABLE_DETAIL.toEncodedForm());
 		return button;
 	}
 
@@ -835,7 +836,7 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 			}
 			return HandlerResult.DEFAULT_RESULT;
 		});
-		button.setIcon("delete");
+		button.setImage(Icons.COMPOSITION_TABLE_DELETE.toEncodedForm());
 		return button;
 	}
 

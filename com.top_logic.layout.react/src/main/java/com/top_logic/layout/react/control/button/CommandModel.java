@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.react.control.button;
 
+import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.tool.boundsec.HandlerResult;
 
@@ -52,15 +53,9 @@ public interface CommandModel {
 	String getLabel();
 
 	/**
-	 * The encoded image for the command button, or {@code null} if no image is set.
-	 *
-	 * <p>
-	 * Returns the {@link com.top_logic.layout.basic.ThemeImage#toEncodedForm() encoded form} of
-	 * the theme image (e.g. {@code "css:fa-solid fa-edit"} for icon fonts, or
-	 * {@code "/icons/edit.png"} for image references).
-	 * </p>
+	 * The image for the command button, or {@code null} if no image is set.
 	 */
-	String getImage();
+	ThemeImage getImage();
 
 	/**
 	 * Whether the command is currently executable.

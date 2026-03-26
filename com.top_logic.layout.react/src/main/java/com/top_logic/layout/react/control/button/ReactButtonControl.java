@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.react.control.button;
 
+import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
@@ -79,10 +80,7 @@ public class ReactButtonControl extends ReactControl {
 		putState(LABEL, model.getLabel());
 		putState(DISABLED, Boolean.valueOf(!model.isExecutable()));
 		putState(HIDDEN, Boolean.valueOf(!model.isVisible()));
-		String image = model.getImage();
-		if (image != null) {
-			putState(IMAGE, image);
-		}
+		putImageState(model.getImage());
 		model.addStateChangeListener(_modelChangeHandler);
 	}
 
@@ -117,13 +115,21 @@ public class ReactButtonControl extends ReactControl {
 	}
 
 	/**
-	 * Sets the image for this button using the ThemeImage encoded form.
+	 * Sets the image for this button.
 	 *
-	 * @param encodedImage
-	 *        The encoded image (e.g. "css:fas fa-edit"), or {@code null} to remove.
+	 * @param image
+	 *        The theme image, or {@code null} to remove.
 	 */
-	public void setImage(String encodedImage) {
-		putState(IMAGE, encodedImage);
+	public void setImage(ThemeImage image) {
+		putImageState(image);
+	}
+
+	private void putImageState(ThemeImage image) {
+		if (image != null) {
+			putState(IMAGE, image.resolve().toEncodedForm());
+		} else {
+			putState(IMAGE, null);
+		}
 	}
 
 	/**

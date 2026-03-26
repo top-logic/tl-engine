@@ -199,8 +199,8 @@ public class FormCommandModel implements CommandModel {
 	}
 
 	@Override
-	public String getImage() {
-		return _image != null ? _image.resolve().toEncodedForm() : null;
+	public ThemeImage getImage() {
+		return _image;
 	}
 
 	@Override

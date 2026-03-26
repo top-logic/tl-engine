@@ -25,6 +25,7 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.DisplayMinimized;
 import com.top_logic.layout.form.values.edit.annotation.Options;
@@ -501,7 +502,7 @@ public class FormElement extends ContainerElement {
 		}
 
 		@Override
-		public String getImage() {
+		public ThemeImage getImage() {
 			return _inner.getImage();
 		}
 

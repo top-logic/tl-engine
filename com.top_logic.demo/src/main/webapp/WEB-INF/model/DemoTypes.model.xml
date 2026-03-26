@@ -1175,6 +1175,13 @@
 					navigate="true"
 					type="Contacts:PersonContact"
 				/>
+				<property name="htmlDescription"
+					type="tl.model.wysiwyg:Html"
+				>
+					<annotations>
+						<sort-order value="500.0"/>
+					</annotations>
+				</property>
 			</attributes>
 		</interface>
 		<class name="A">

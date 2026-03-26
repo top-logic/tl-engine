@@ -158,7 +158,7 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 			return html;
 		}
 		Document doc = Jsoup.parse(html);
-		doc.outputSettings().indentAmount(0).outline(true);
+		doc.outputSettings().prettyPrint(false);
 		Elements imgs = doc.select("img[src]");
 		for (Element img : imgs) {
 			String src = img.attr("src");
@@ -177,7 +177,7 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 			return html;
 		}
 		Document doc = Jsoup.parse(html);
-		doc.outputSettings().indentAmount(0).outline(true);
+		doc.outputSettings().prettyPrint(false);
 		Elements imgs = doc.select("img[src]");
 		for (Element img : imgs) {
 			String src = img.attr("src");

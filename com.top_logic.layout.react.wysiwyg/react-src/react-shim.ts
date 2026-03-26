@@ -6,5 +6,6 @@ export const {
   forwardRef, createRef, createElement, createContext,
   useContext, useReducer, useImperativeHandle, useLayoutEffect,
   memo, Fragment, Children, isValidElement, cloneElement,
-  useDebugValue, version,
+  useDebugValue, version, useId, useSyncExternalStore,
+  useDeferredValue, useTransition, startTransition,
 } = React as any;

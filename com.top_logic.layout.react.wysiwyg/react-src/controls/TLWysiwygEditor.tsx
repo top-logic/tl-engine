@@ -14,15 +14,6 @@ import TextStyle from '@tiptap/extension-text-style';
 import WysiwygToolbar from './WysiwygToolbar';
 import './TLWysiwygEditor.css';
 
-const DEFAULT_TOOLBAR = [
-  'bold', 'italic', 'underline', 'strike', '|',
-  'heading', '|',
-  'bulletList', 'orderedList', 'blockquote', '|',
-  'link', 'image', 'table', 'codeBlock', '|',
-  'color', '|',
-  'undo', 'redo',
-];
-
 const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
@@ -31,7 +22,6 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
 
   const value: string = (state.value as string) || '';
   const editable: boolean = state.editable !== false;
-  const toolbar: string[] = (state.toolbar as string[]) || DEFAULT_TOOLBAR;
   const hasError: boolean = !!state.hasError;
   const imageUrl: string | null = (state.imageUrl as string) || null;
 
@@ -129,7 +119,7 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
 
   return (
     <div className={cssClass}>
-      <WysiwygToolbar editor={editor} items={toolbar} onImageUpload={handleImageUpload} />
+      <WysiwygToolbar editor={editor} onImageUpload={handleImageUpload} />
       <div className="tlWysiwygEditor__content">
         <EditorContent editor={editor} />
       </div>

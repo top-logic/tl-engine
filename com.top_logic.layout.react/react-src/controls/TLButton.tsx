@@ -60,7 +60,9 @@ const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, l
   const resolvedCommand = command ?? 'click';
   const resolvedLabel = label ?? (state.label as string);
   const resolvedDisabled = disabled ?? state.disabled === true;
+  const resolvedHidden = state.hidden === true;
   const icon = state.icon as string | undefined;
+  const hiddenStyle = resolvedHidden ? { display: 'none' as const } : undefined;
 
   const handleClick = useCallback(() => {
     sendCommand(resolvedCommand);
@@ -75,6 +77,7 @@ const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, l
         id={controlId}
         onClick={handleClick}
         disabled={resolvedDisabled}
+        style={hiddenStyle}
         className="tlReactButton tlReactButton--icon"
         title={resolvedLabel}
         aria-label={resolvedLabel}
@@ -90,6 +93,7 @@ const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, l
       id={controlId}
       onClick={handleClick}
       disabled={resolvedDisabled}
+      style={hiddenStyle}
       className="tlReactButton"
     >
       {resolvedLabel}

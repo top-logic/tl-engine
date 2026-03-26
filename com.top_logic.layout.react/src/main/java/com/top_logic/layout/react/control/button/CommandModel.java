@@ -57,6 +57,19 @@ public interface CommandModel {
 	boolean isExecutable();
 
 	/**
+	 * Whether the command button should be visible.
+	 *
+	 * <p>
+	 * A hidden command is not displayed to the user at all (e.g. "Apply" when the form is in view
+	 * mode). A visible but non-executable command is shown in disabled state.
+	 * </p>
+	 *
+	 * @return {@code true} if the button should be rendered visibly, {@code false} if it should be
+	 *         hidden.
+	 */
+	boolean isVisible();
+
+	/**
 	 * Executes the command.
 	 *
 	 * @param context

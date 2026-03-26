@@ -506,6 +506,11 @@ public class FormElement extends ContainerElement {
 		}
 
 		@Override
+		public boolean isVisible() {
+			return _inner.isVisible();
+		}
+
+		@Override
 		public HandlerResult executeCommand(ReactContext context) {
 			// Substitute the form context so that actions can access the FormModel.
 			return _inner.executeCommand(_formContext);

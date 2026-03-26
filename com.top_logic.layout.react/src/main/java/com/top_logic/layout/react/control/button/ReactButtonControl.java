@@ -32,6 +32,9 @@ public class ReactButtonControl extends ReactControl {
 	/** State key for the disabled flag. */
 	private static final String DISABLED = "disabled";
 
+	/** State key for the hidden flag. */
+	private static final String HIDDEN = "hidden";
+
 	/** State key for the icon name (renders as icon-only button when set). */
 	private static final String ICON = "icon";
 
@@ -75,6 +78,7 @@ public class ReactButtonControl extends ReactControl {
 
 		putState(LABEL, model.getLabel());
 		putState(DISABLED, Boolean.valueOf(!model.isExecutable()));
+		putState(HIDDEN, Boolean.valueOf(!model.isVisible()));
 		model.addStateChangeListener(_modelChangeHandler);
 	}
 
@@ -96,6 +100,16 @@ public class ReactButtonControl extends ReactControl {
 	 */
 	public void setDisabled(boolean disabled) {
 		putState(DISABLED, disabled);
+	}
+
+	/**
+	 * Sets the hidden state of the button.
+	 *
+	 * @param hidden
+	 *        Whether the button should be hidden ({@code display: none}).
+	 */
+	public void setHidden(boolean hidden) {
+		putState(HIDDEN, hidden);
 	}
 
 	/**
@@ -131,6 +145,7 @@ public class ReactButtonControl extends ReactControl {
 	private void handleModelChange() {
 		setLabel(_model.getLabel());
 		setDisabled(!_model.isExecutable());
+		setHidden(!_model.isVisible());
 	}
 
 }

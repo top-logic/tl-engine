@@ -148,6 +148,11 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 	}
 
 	@Override
+	public boolean isVisible() {
+		return _executableState.isVisible();
+	}
+
+	@Override
 	public HandlerResult executeCommand(ReactContext context) {
 		Object input = resolveInput();
 

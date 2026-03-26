@@ -17053,7 +17053,7 @@ const Hn = ({ editor: n }) => {
       type: "button",
       className: "tlWysiwygToolbar__button" + (o ? " tlWysiwygToolbar__button--active" : ""),
       onMouseDown: (a) => {
-        a.preventDefault(), l();
+        r !== "image" && a.preventDefault(), l();
       },
       title: r
     },
@@ -17086,7 +17086,7 @@ const Hn = ({ editor: n }) => {
       wg,
       xg,
       Jg.configure({ openOnClick: !1 }),
-      Yg,
+      Yg.configure({ allowBase64: !0, inline: !0 }),
       Zy.configure({ resizable: !0 }),
       e0,
       t0,

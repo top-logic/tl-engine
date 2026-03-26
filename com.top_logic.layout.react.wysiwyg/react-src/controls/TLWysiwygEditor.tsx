@@ -43,7 +43,7 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
       StarterKit,
       Underline,
       Link.configure({ openOnClick: false }),
-      Image,
+      Image.configure({ allowBase64: true, inline: true }),
       Table.configure({ resizable: true }),
       TableRow,
       TableCell,

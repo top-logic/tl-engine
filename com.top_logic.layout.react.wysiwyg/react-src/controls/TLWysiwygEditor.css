@@ -50,6 +50,11 @@
 .tlWysiwygEditor__content .ProseMirror img {
   max-width: 100%;
   height: auto;
+  cursor: pointer;
+}
+
+.tlWysiwygEditor__content .ProseMirror img.ProseMirror-selectednode {
+  outline: 2px solid var(--tl-primary-color, #1a73e8);
 }
 
 .tlWysiwygEditor__content .ProseMirror code {

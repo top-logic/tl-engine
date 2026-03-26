@@ -11,10 +11,8 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import jakarta.servlet.http.Part;
 
@@ -122,7 +120,6 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 		String html = rawValue != null ? rawValue.toString() : "";
 		String cleanHtml = stripImageUrls(html);
 		_shadowCopy.setSourceCode(cleanHtml);
-		removeUnusedImages(_shadowCopy);
 		return _shadowCopy.copy();
 	}
 
@@ -223,13 +220,4 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 		return candidate;
 	}
 
-	private static void removeUnusedImages(StructuredText text) {
-		Document doc = Jsoup.parse(text.getSourceCode());
-		Elements imgs = doc.select("img[src]");
-		Set<String> usedKeys = new HashSet<>();
-		for (Element img : imgs) {
-			usedKeys.add(img.attr("src"));
-		}
-		text.getImages().keySet().retainAll(usedKeys);
-	}
 }

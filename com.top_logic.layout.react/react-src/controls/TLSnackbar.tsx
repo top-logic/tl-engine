@@ -8,10 +8,11 @@ const { useCallback, useEffect, useState } = React;
  *
  * State:
  * - message: string
+ * - content: string (HTML)
  * - variant: "info" | "success" | "warning" | "error"
- * - action: { label, commandName } | null
  * - duration: number  (ms, 0 = sticky)
  * - visible: boolean
+ * - generation: number
  */
 const TLSnackbar: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
@@ -20,7 +21,6 @@ const TLSnackbar: React.FC<TLCellProps> = ({ controlId }) => {
   const message = (state.message as string) ?? '';
   const content = (state.content as string) ?? '';
   const variant = (state.variant as string) ?? 'info';
-  const action = state.action as { label: string; commandName: string } | null;
   const duration = (state.duration as number) ?? 5000;
   const visible = state.visible === true;
   const generation = (state.generation as number) ?? 0;
@@ -35,21 +35,12 @@ const TLSnackbar: React.FC<TLCellProps> = ({ controlId }) => {
     }, 200); // match fade-out animation
   }, [sendCommand, generation]);
 
-  const handleAction = useCallback(() => {
-    if (action) {
-      sendCommand(action.commandName);
-    }
-    handleDismiss();
-  }, [sendCommand, action, handleDismiss]);
-
   // Auto-dismiss timer.
   useEffect(() => {
     if (!visible || duration === 0) return;
     const timer = setTimeout(handleDismiss, duration);
     return () => clearTimeout(timer);
   }, [visible, duration, handleDismiss]);
-
-  console.log('[TLSnackbar] render', { visible, exiting, generation, content, message });
 
   if (!visible && !exiting) return null;
 
@@ -60,11 +51,6 @@ const TLSnackbar: React.FC<TLCellProps> = ({ controlId }) => {
         ? <span className="tlSnackbar__message" dangerouslySetInnerHTML={{ __html: content }} />
         : <span className="tlSnackbar__message">{message}</span>
       }
-      {action && (
-        <button type="button" className="tlSnackbar__action" onClick={handleAction}>
-          {action.label}
-        </button>
-      )}
     </div>
   );
 };

@@ -46,7 +46,10 @@ public class TestViewReload extends TestCase {
 		File v1 = toFile("reload-v1.view.xml");
 		File v2 = toFile("reload-v2.view.xml");
 
-		File tempFile = File.createTempFile("view-reload-test-", ".view.xml");
+		// Use the module's target directory for temp files to avoid /tmp access issues.
+		File targetDir = new File("target");
+		targetDir.mkdirs();
+		File tempFile = File.createTempFile("view-reload-test-", ".view.xml", targetDir);
 		try {
 			// Copy v1 to temp file and parse.
 			Files.copy(v1.toPath(), tempFile.toPath(), StandardCopyOption.REPLACE_EXISTING);

@@ -30,43 +30,43 @@
   overflow-y: auto;
 }
 
-.tlWysiwygEditor__content .ProseMirror {
+.tlWysiwygEditor .ProseMirror {
   outline: none;
   min-height: 120px;
 }
 
-.tlWysiwygEditor__content .ProseMirror p {
+.tlWysiwygEditor .ProseMirror p {
   margin: 0.4em 0;
 }
 
-.tlWysiwygEditor__content .ProseMirror table {
+.tlWysiwygEditor .ProseMirror table {
   border-collapse: collapse;
   width: 100%;
 }
 
-.tlWysiwygEditor__content .ProseMirror td,
-.tlWysiwygEditor__content .ProseMirror th {
+.tlWysiwygEditor .ProseMirror td,
+.tlWysiwygEditor .ProseMirror th {
   border: 1px solid var(--tl-border-color, #d1d5db);
   padding: 6px 10px;
   min-width: 60px;
 }
 
-.tlWysiwygEditor__content .ProseMirror th {
+.tlWysiwygEditor .ProseMirror th {
   background: var(--tl-header-bg, #f3f4f6);
   font-weight: 600;
 }
 
-.tlWysiwygEditor__content .ProseMirror img {
+.tlWysiwygEditor .ProseMirror img {
   max-width: 100%;
   height: auto;
   cursor: pointer;
 }
 
-.tlWysiwygEditor__content .ProseMirror img.ProseMirror-selectednode {
+.tlWysiwygEditor .ProseMirror img.ProseMirror-selectednode {
   outline: 2px solid var(--tl-primary-color, #2563eb);
 }
 
-.tlWysiwygEditor__content .ProseMirror code {
+.tlWysiwygEditor .ProseMirror code {
   background: var(--tl-code-bg, #f3f4f6);
   padding: 2px 5px;
   border-radius: 3px;
@@ -74,14 +74,14 @@
   font-size: 0.9em;
 }
 
-.tlWysiwygEditor__content .ProseMirror pre {
+.tlWysiwygEditor .ProseMirror pre {
   background: var(--tl-code-bg, #f3f4f6);
   padding: 12px 16px;
   border-radius: 6px;
   overflow-x: auto;
 }
 
-.tlWysiwygEditor__content .ProseMirror blockquote {
+.tlWysiwygEditor .ProseMirror blockquote {
   border-left: 3px solid var(--tl-primary-color, #2563eb);
   padding-left: 14px;
   margin-left: 0;

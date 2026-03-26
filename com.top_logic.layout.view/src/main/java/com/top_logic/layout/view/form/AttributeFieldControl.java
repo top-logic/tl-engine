@@ -177,6 +177,7 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 			_chrome.setLabel(resolveLabel());
 			_chrome.setHelpText(resolveHelpText(part));
 			_chrome.setRequired(part.isMandatory());
+			_chrome.setFullLine(resolveFullLine(part));
 			_chrome.setField(_innerControl);
 			_chrome.setDirty(false);
 			return;

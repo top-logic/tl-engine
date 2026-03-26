@@ -117,6 +117,13 @@ public class ReactFormFieldChromeControl extends ReactControl {
 	}
 
 	/**
+	 * Updates whether this field spans the full grid row.
+	 */
+	public void setFullLine(boolean fullLine) {
+		putState(FULL_LINE, fullLine);
+	}
+
+	/**
 	 * Updates the help text.
 	 *
 	 * @param helpText

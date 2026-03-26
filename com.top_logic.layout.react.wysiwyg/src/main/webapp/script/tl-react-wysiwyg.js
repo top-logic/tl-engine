@@ -17100,6 +17100,9 @@ const Hn = ({ editor: n }) => {
       u.current && clearTimeout(u.current), u.current = setTimeout(() => {
         t("valueChanged", { value: g.getHTML() });
       }, 300);
+    },
+    onBlur: ({ editor: g }) => {
+      u.current && (clearTimeout(u.current), u.current = null), t("valueChanged", { value: g.getHTML() });
     }
   }, [o]);
   P.useEffect(() => {

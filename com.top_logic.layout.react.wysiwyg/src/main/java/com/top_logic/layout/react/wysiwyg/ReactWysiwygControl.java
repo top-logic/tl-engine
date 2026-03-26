@@ -88,7 +88,7 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	public ReactWysiwygControl(ReactContext context, FieldModel model) {
 		super(context, model, "TLWysiwygEditor");
 
-		_imageUrlPrefix = DATA_URL_PREFIX + getID() + KEY_PARAM;
+		_imageUrlPrefix = context.getContextPath() + "/" + DATA_URL_PREFIX + getID() + KEY_PARAM;
 
 		initShadowCopy();
 		putState(VALUE, rewriteImageUrls(extractHtml(_shadowCopy)));

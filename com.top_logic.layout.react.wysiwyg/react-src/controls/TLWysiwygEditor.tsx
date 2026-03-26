@@ -61,6 +61,15 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
         sendCommand('valueChanged', { value: ed.getHTML() });
       }, 300);
     },
+    onBlur: ({ editor: ed }) => {
+      // Flush pending debounced value immediately on blur so the server has
+      // the latest content before any save command executes.
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+        debounceRef.current = null;
+      }
+      sendCommand('valueChanged', { value: ed.getHTML() });
+    },
   }, [editable]);
 
   // Sync external value changes into the editor.

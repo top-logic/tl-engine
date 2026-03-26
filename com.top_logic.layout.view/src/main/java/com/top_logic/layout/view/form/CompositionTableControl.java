@@ -747,6 +747,7 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 			return HandlerResult.DEFAULT_RESULT;
 		});
 		button.setImage(Icons.COMPOSITION_TABLE_DETAIL);
+		button.setIconOnly(true);
 		return button;
 	}
 
@@ -837,6 +838,7 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 			return HandlerResult.DEFAULT_RESULT;
 		});
 		button.setImage(Icons.COMPOSITION_TABLE_DELETE);
+		button.setIconOnly(true);
 		return button;
 	}
 

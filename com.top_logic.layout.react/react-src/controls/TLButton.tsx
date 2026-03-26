@@ -22,12 +22,12 @@ export interface TLButtonProps {
 /**
  * A button rendered via React that sends a command to the server.
  *
- * <p>When mounted standalone (via {@code ReactButtonControl}), it reads its label,
- * disabled/hidden state, and image from the control state.</p>
- *
- * <p>When {@code state.image} is set (a ThemeImage encoded form like "css:fas fa-edit"
- * or "/icons/foo.png"), the button renders the icon alongside the label. Without an
- * image, a plain text button is rendered.</p>
+ * <p>Supports three rendering modes based on state:</p>
+ * <ul>
+ *   <li>{@code image} + {@code iconOnly} — icon-only button (label as tooltip).</li>
+ *   <li>{@code image} — icon + label side by side.</li>
+ *   <li>Neither — plain text button.</li>
+ * </ul>
  */
 const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, label, disabled }) => {
   const state = useTLState();
@@ -38,12 +38,32 @@ const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, l
   const resolvedDisabled = disabled ?? state.disabled === true;
   const resolvedHidden = state.hidden === true;
   const image = state.image as string | undefined;
+  const iconOnly = state.iconOnly === true;
   const hiddenStyle = resolvedHidden ? { display: 'none' as const } : undefined;
 
   const handleClick = useCallback(() => {
     sendCommand(resolvedCommand);
   }, [sendCommand, resolvedCommand]);
 
+  // Icon-only: image visible, label as tooltip.
+  if (image && iconOnly) {
+    return (
+      <button
+        type="button"
+        id={controlId}
+        onClick={handleClick}
+        disabled={resolvedDisabled}
+        style={hiddenStyle}
+        className="tlReactButton tlReactButton--icon"
+        title={resolvedLabel}
+        aria-label={resolvedLabel}
+      >
+        <ThemeIcon encoded={image} />
+      </button>
+    );
+  }
+
+  // Image + label.
   if (image) {
     return (
       <button
@@ -60,6 +80,7 @@ const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, l
     );
   }
 
+  // Plain label-only.
   return (
     <button
       type="button"

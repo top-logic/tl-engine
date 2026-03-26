@@ -18,6 +18,7 @@
 	display: inline-flex;
 	justify-content: center;
 	align-items: center;
+	gap: var(--spacing-02);
 	height: 2rem;
 	padding: 0 var(--spacing-03);
 	border: none;
@@ -75,6 +76,32 @@ button.tlReactButton--icon:not(:disabled):hover {
 button.tlReactButton--icon:disabled {
 	box-shadow: none;
 	color: var(--icon-disabled, var(--text-disabled));
+}
+
+/* --- TLButton inside toolbar (inverse colors for dark header) ---------- */
+
+.tlPanel__toolbar .tlReactButton {
+	box-shadow: inset 0px 0px 0px 2px var(--text-inverse);
+	color: var(--text-inverse);
+}
+
+.tlPanel__toolbar button.tlReactButton:not(:disabled):hover {
+	background: rgba(255, 255, 255, 0.15);
+}
+
+.tlPanel__toolbar button.tlReactButton:not(:disabled):active {
+	background: rgba(255, 255, 255, 0.25);
+	box-shadow: inset 0px 0px 0px 2px var(--text-inverse);
+	color: var(--text-inverse);
+}
+
+.tlPanel__toolbar .tlReactButton--icon {
+	box-shadow: none;
+	color: var(--text-inverse);
+}
+
+.tlPanel__toolbar button.tlReactButton--icon:not(:disabled):hover {
+	color: var(--text-inverse);
 }
 
 /* --- TLToggleButton (active state) -------------------------------------- */

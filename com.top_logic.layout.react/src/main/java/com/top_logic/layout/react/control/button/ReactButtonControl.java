@@ -39,6 +39,9 @@ public class ReactButtonControl extends ReactControl {
 	/** State key for the ThemeImage encoded form (e.g. "css:fas fa-edit", "/icons/foo.png"). */
 	private static final String IMAGE = "image";
 
+	/** State key for icon-only mode (image shown, label used as tooltip). */
+	private static final String ICON_ONLY = "iconOnly";
+
 	private final ButtonAction _action;
 
 	private CommandModel _model;
@@ -122,6 +125,13 @@ public class ReactButtonControl extends ReactControl {
 	 */
 	public void setImage(ThemeImage image) {
 		putImageState(image);
+	}
+
+	/**
+	 * Sets icon-only mode: only the image is shown, the label is used as tooltip.
+	 */
+	public void setIconOnly(boolean iconOnly) {
+		putState(ICON_ONLY, iconOnly);
 	}
 
 	private void putImageState(ThemeImage image) {

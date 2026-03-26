@@ -32,22 +32,22 @@ public class DemoFieldTogglesControl extends ReactControl {
 	public DemoFieldTogglesControl(ReactContext context, FormField field) {
 		super(context, field, "TLFieldToggles");
 
-		getReactState().put("disabledButton", new ReactToggleButtonControl(context, "Disabled", field.isDisabled(), (ctx, active) -> {
+		putState("disabledButton", new ReactToggleButtonControl(context, "Disabled", field.isDisabled(), (ctx, active) -> {
 			field.setDisabled(!active);
 			return !active;
 		}));
 
-		getReactState().put("immutableButton", new ReactToggleButtonControl(context, "Immutable", field.isImmutable(), (ctx, active) -> {
+		putState("immutableButton", new ReactToggleButtonControl(context, "Immutable", field.isImmutable(), (ctx, active) -> {
 			field.setImmutable(!active);
 			return !active;
 		}));
 
-		getReactState().put("mandatoryButton", new ReactToggleButtonControl(context, "Mandatory", field.isMandatory(), (ctx, active) -> {
+		putState("mandatoryButton", new ReactToggleButtonControl(context, "Mandatory", field.isMandatory(), (ctx, active) -> {
 			field.setMandatory(!active);
 			return !active;
 		}));
 
-		getReactState().put("hiddenButton", new ReactToggleButtonControl(context, "Hidden", !field.isVisible(), (ctx, active) -> {
+		putState("hiddenButton", new ReactToggleButtonControl(context, "Hidden", !field.isVisible(), (ctx, active) -> {
 			field.setVisible(active);
 			return !active;
 		}));

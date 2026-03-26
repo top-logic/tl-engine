@@ -47,8 +47,8 @@ public class ReactMaximizeRootControl extends ReactControl {
 		super(context, null, REACT_MODULE);
 		_child = child;
 
-		getReactState().put(CHILD, child);
-		getReactState().put(MAXIMIZED, Boolean.FALSE);
+		putState(CHILD, child);
+		putState(MAXIMIZED, Boolean.FALSE);
 	}
 
 	/**

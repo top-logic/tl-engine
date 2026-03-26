@@ -99,9 +99,9 @@ public class ReactTabBarControl extends ReactControl {
 	@Override
 	protected void writeAsChild(JsonWriter writer)
 			throws IOException {
-		if (getReactState().get(ACTIVE_CONTENT) == null) {
+		if (getState(ACTIVE_CONTENT) == null) {
 			ReactControl activeContent = getOrCreateContent(_activeTabId);
-			getReactState().put(ACTIVE_CONTENT, activeContent);
+			putStateSilent(ACTIVE_CONTENT, activeContent);
 		}
 		super.writeAsChild(writer);
 	}
@@ -132,7 +132,7 @@ public class ReactTabBarControl extends ReactControl {
 
 		if (!isSSEAttached()) {
 			// Not yet rendered; just update state for deferred rendering.
-			getReactState().put(ACTIVE_TAB_ID, _activeTabId);
+			putStateSilent(ACTIVE_TAB_ID, _activeTabId);
 			return;
 		}
 

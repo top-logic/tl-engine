@@ -158,20 +158,20 @@ public class ReactSidebarControl extends ReactControl {
 			itemList.add(itemMap);
 		}
 
-		getReactState().put(ITEMS, itemList);
-		getReactState().put(ACTIVE_ITEM_ID, _activeItemId);
-		getReactState().put(COLLAPSED, Boolean.valueOf(_collapsed));
+		putState(ITEMS, itemList);
+		putState(ACTIVE_ITEM_ID, _activeItemId);
+		putState(COLLAPSED, Boolean.valueOf(_collapsed));
 		if (_headerContent != null) {
-			getReactState().put(HEADER_CONTENT, _headerContent);
+			putState(HEADER_CONTENT, _headerContent);
 		}
 		if (_headerCollapsedContent != null) {
-			getReactState().put(HEADER_COLLAPSED_CONTENT, _headerCollapsedContent);
+			putState(HEADER_COLLAPSED_CONTENT, _headerCollapsedContent);
 		}
 		if (_footerContent != null) {
-			getReactState().put(FOOTER_CONTENT, _footerContent);
+			putState(FOOTER_CONTENT, _footerContent);
 		}
 		if (_footerCollapsedContent != null) {
-			getReactState().put(FOOTER_COLLAPSED_CONTENT, _footerCollapsedContent);
+			putState(FOOTER_COLLAPSED_CONTENT, _footerCollapsedContent);
 		}
 	}
 
@@ -187,9 +187,9 @@ public class ReactSidebarControl extends ReactControl {
 	@Override
 	protected void writeAsChild(JsonWriter writer)
 			throws IOException {
-		if (getReactState().get(ACTIVE_CONTENT) == null && _activeItemId != null) {
+		if (getState(ACTIVE_CONTENT) == null && _activeItemId != null) {
 			ReactControl activeContent = getOrCreateContent(_activeItemId);
-			getReactState().put(ACTIVE_CONTENT, activeContent);
+			putStateSilent(ACTIVE_CONTENT, activeContent);
 		}
 		super.writeAsChild(writer);
 	}
@@ -224,7 +224,7 @@ public class ReactSidebarControl extends ReactControl {
 		_activeItemId = itemId;
 
 		if (!isSSEAttached()) {
-			getReactState().put(ACTIVE_ITEM_ID, _activeItemId);
+			putStateSilent(ACTIVE_ITEM_ID, _activeItemId);
 			return;
 		}
 
@@ -269,7 +269,7 @@ public class ReactSidebarControl extends ReactControl {
 		if (isSSEAttached()) {
 			patchReactState(Map.of(ITEMS, itemList));
 		} else {
-			getReactState().put(ITEMS, itemList);
+			putStateSilent(ITEMS, itemList);
 		}
 	}
 

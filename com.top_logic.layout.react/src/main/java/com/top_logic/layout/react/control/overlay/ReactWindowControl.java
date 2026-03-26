@@ -150,10 +150,10 @@ public class ReactWindowControl extends ToolbarControl {
 		Object w = args.get("width");
 		Object h = args.get("height");
 		if (w != null) {
-			getReactState().put(WIDTH, w.toString());
+			putStateSilent(WIDTH, w.toString());
 		}
 		if (h != null) {
-			getReactState().put(HEIGHT, h.toString());
+			putStateSilent(HEIGHT, h.toString());
 		}
 	}
 

@@ -124,10 +124,32 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	}
 
 	/**
-	 * The current React state.
+	 * Returns the value of a single state key.
+	 *
+	 * @param key
+	 *        The state key.
+	 * @return The current value, or {@code null} if the key is not set.
 	 */
-	protected final Map<String, Object> getReactState() {
-		return _reactState;
+	protected Object getState(String key) {
+		return _reactState.get(key);
+	}
+
+	/**
+	 * Updates a state key on the server without sending an SSE event.
+	 *
+	 * <p>
+	 * Use this for updates where the client already knows the new value (e.g. in command handlers
+	 * that process client-initiated changes), or for deferred pre-render state updates that will be
+	 * included in the initial render.
+	 * </p>
+	 *
+	 * @param key
+	 *        The state key.
+	 * @param value
+	 *        The new value.
+	 */
+	protected void putStateSilent(String key, Object value) {
+		_reactState.put(key, value);
 	}
 
 	/**
@@ -433,7 +455,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	}
 
 	private void writeState(JsonWriter writer) throws IOException {
-		writeJsonMap(_reactContext, writer, getReactState());
+		writeJsonMap(_reactContext, writer, _reactState);
 	}
 
 	/**

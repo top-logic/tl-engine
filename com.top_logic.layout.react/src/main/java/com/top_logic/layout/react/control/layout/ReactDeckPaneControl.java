@@ -106,7 +106,7 @@ public class ReactDeckPaneControl extends ReactControl {
 		_activeIndex = index;
 
 		if (!isSSEAttached()) {
-			getReactState().put(ACTIVE_INDEX, Integer.valueOf(_activeIndex));
+			putStateSilent(ACTIVE_INDEX, Integer.valueOf(_activeIndex));
 			return;
 		}
 
@@ -128,9 +128,9 @@ public class ReactDeckPaneControl extends ReactControl {
 	@Override
 	protected void writeAsChild(JsonWriter writer)
 			throws IOException {
-		if (getReactState().get(ACTIVE_CHILD) == null) {
+		if (getState(ACTIVE_CHILD) == null) {
 			ReactControl activeChild = getOrCreateChild(_activeIndex);
-			getReactState().put(ACTIVE_CHILD, activeChild);
+			putStateSilent(ACTIVE_CHILD, activeChild);
 		}
 		super.writeAsChild(writer);
 	}

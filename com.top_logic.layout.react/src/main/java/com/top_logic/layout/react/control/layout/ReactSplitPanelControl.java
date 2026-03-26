@@ -76,6 +76,8 @@ public class ReactSplitPanelControl extends ReactControl {
 
 	private final List<ChildEntry> _children = new ArrayList<>();
 
+	private final List<Map<String, Object>> _childDescriptors = new ArrayList<>();
+
 	private final boolean _resizable;
 
 	private ReactSplitPanelControl _parentSplitPanel;
@@ -108,9 +110,9 @@ public class ReactSplitPanelControl extends ReactControl {
 		_onSizesChanged = onSizesChanged;
 		_onChildCollapsed = onChildCollapsed;
 
-		getReactState().put(ORIENTATION, orientation == Orientation.HORIZONTAL ? "horizontal" : "vertical");
-		getReactState().put(RESIZABLE, Boolean.valueOf(resizable));
-		getReactState().put(CHILDREN, new ArrayList<>());
+		putState(ORIENTATION, orientation == Orientation.HORIZONTAL ? "horizontal" : "vertical");
+		putState(RESIZABLE, Boolean.valueOf(resizable));
+		putState(CHILDREN, _childDescriptors);
 	}
 
 	/**
@@ -166,7 +168,7 @@ public class ReactSplitPanelControl extends ReactControl {
 		}
 		_children.add(entry);
 
-		childList().add(entry.toDescriptor());
+		_childDescriptors.add(entry.toDescriptor());
 
 		// If child is a panel, set up parent tracking.
 		if (child instanceof ReactPanelControl) {
@@ -186,7 +188,7 @@ public class ReactSplitPanelControl extends ReactControl {
 	 */
 	public void removeChild(int index) {
 		ChildEntry removed = _children.remove(index);
-		childList().remove(index);
+		_childDescriptors.remove(index);
 
 		// Unregister removed child and its subtree from SSE.
 		removed._control.cleanupTree();
@@ -238,7 +240,7 @@ public class ReactSplitPanelControl extends ReactControl {
 		}
 
 		// Update the serialized child list.
-		childList().set(childIndex, entry.toDescriptor());
+		_childDescriptors.set(childIndex, entry.toDescriptor());
 
 		// Patch the client.
 		patchChildren();
@@ -311,14 +313,9 @@ public class ReactSplitPanelControl extends ReactControl {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
-	private List<Map<String, Object>> childList() {
-		return (List<Map<String, Object>>) getReactState().get(CHILDREN);
-	}
-
-	private void patchChildren() {
+private void patchChildren() {
 		Map<String, Object> patch = new HashMap<>();
-		patch.put(CHILDREN, childList());
+		patch.put(CHILDREN, _childDescriptors);
 		patchReactState(patch);
 	}
 
@@ -442,7 +439,7 @@ public class ReactSplitPanelControl extends ReactControl {
 					entry._constraint._unit = DisplayUnit.PIXEL;
 				}
 			}
-			List<Map<String, Object>> list = childList();
+			List<Map<String, Object>> list = _childDescriptors;
 			list.clear();
 			for (ChildEntry entry : _children) {
 				list.add(entry.toDescriptor());

@@ -36,7 +36,7 @@ public abstract class ToolbarControl extends ReactControl {
 	 */
 	protected ToolbarControl(com.top_logic.layout.react.ReactContext context, String controlId, String reactModule) {
 		super(context, controlId, reactModule);
-		getReactState().put(TOOLBAR_BUTTONS, new ArrayList<>());
+		putState(TOOLBAR_BUTTONS, _toolbarButtons);
 	}
 
 	/**
@@ -44,7 +44,7 @@ public abstract class ToolbarControl extends ReactControl {
 	 */
 	public void addToolbarButton(ReactControl button) {
 		_toolbarButtons.add(button);
-		toolbarButtonList().add(button);
+		putState(TOOLBAR_BUTTONS, _toolbarButtons);
 	}
 
 	/**
@@ -55,7 +55,7 @@ public abstract class ToolbarControl extends ReactControl {
 	public boolean removeToolbarButton(ReactControl button) {
 		boolean removed = _toolbarButtons.remove(button);
 		if (removed) {
-			toolbarButtonList().remove(button);
+			putState(TOOLBAR_BUTTONS, _toolbarButtons);
 			button.cleanupTree();
 		}
 		return removed;
@@ -68,10 +68,5 @@ public abstract class ToolbarControl extends ReactControl {
 		for (ReactControl button : _toolbarButtons) {
 			button.cleanupTree();
 		}
-	}
-
-	@SuppressWarnings("unchecked")
-	private List<Object> toolbarButtonList() {
-		return (List<Object>) getReactState().get(TOOLBAR_BUTTONS);
 	}
 }

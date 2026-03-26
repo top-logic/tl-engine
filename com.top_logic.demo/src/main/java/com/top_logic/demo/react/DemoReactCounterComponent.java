@@ -101,13 +101,13 @@ public class DemoReactCounterComponent extends LayoutComponent {
 
 		@ReactCommand("increment")
 		void handleIncrement() {
-			int count = ((Number) getReactState().get(COUNT)).intValue();
+			int count = ((Number) getState(COUNT)).intValue();
 			patchReactState(Collections.singletonMap(COUNT, count + 1));
 		}
 
 		@ReactCommand("decrement")
 		void handleDecrement() {
-			int count = ((Number) getReactState().get(COUNT)).intValue();
+			int count = ((Number) getState(COUNT)).intValue();
 			patchReactState(Collections.singletonMap(COUNT, count - 1));
 		}
 	}

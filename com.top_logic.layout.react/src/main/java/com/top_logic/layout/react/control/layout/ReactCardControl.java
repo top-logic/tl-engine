@@ -8,6 +8,7 @@ package com.top_logic.layout.react.control.layout;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.top_logic.basic.config.ExternallyNamed;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 
@@ -19,17 +20,6 @@ import com.top_logic.layout.react.control.ReactControl;
  * A card is lighter than {@link ReactPanelControl} - it provides visual grouping with an optional
  * header but no minimize/maximize/pop-out behavior.
  * </p>
- *
- * <p>
- * State:
- * </p>
- * <ul>
- * <li>{@code title} - optional header text</li>
- * <li>{@code variant} - "outlined" or "elevated"</li>
- * <li>{@code padding} - "none", "compact", or "default"</li>
- * <li>{@code headerActions} - optional buttons in the header</li>
- * <li>{@code child} - the content child</li>
- * </ul>
  */
 public class ReactCardControl extends ReactControl {
 
@@ -45,6 +35,55 @@ public class ReactCardControl extends ReactControl {
 
 	private static final String CHILD = "child";
 
+	/**
+	 * Visual variant of a card.
+	 */
+	public enum CardVariant implements ExternallyNamed {
+
+		/** Card with a thin border. */
+		OUTLINED("outlined"),
+
+		/** Card with a drop shadow. */
+		ELEVATED("elevated");
+
+		private final String _externalName;
+
+		CardVariant(String externalName) {
+			_externalName = externalName;
+		}
+
+		@Override
+		public String getExternalName() {
+			return _externalName;
+		}
+	}
+
+	/**
+	 * Content padding of a card.
+	 */
+	public enum CardPadding implements ExternallyNamed {
+
+		/** No padding. */
+		NONE("none"),
+
+		/** Reduced padding. */
+		COMPACT("compact"),
+
+		/** Standard padding. */
+		DEFAULT("default");
+
+		private final String _externalName;
+
+		CardPadding(String externalName) {
+			_externalName = externalName;
+		}
+
+		@Override
+		public String getExternalName() {
+			return _externalName;
+		}
+	}
+
 	private final ReactControl _child;
 
 	private final List<ReactControl> _headerActions;
@@ -55,22 +94,22 @@ public class ReactCardControl extends ReactControl {
 	 * @param title
 	 *        The header text, or {@code null} for no header.
 	 * @param variant
-	 *        "outlined" or "elevated".
+	 *        The visual variant.
 	 * @param padding
-	 *        "none", "compact", or "default".
+	 *        The content padding.
 	 * @param headerActions
 	 *        Optional action buttons in the header.
 	 * @param child
 	 *        The content child control.
 	 */
-	public ReactCardControl(ReactContext context, String title, String variant, String padding,
+	public ReactCardControl(ReactContext context, String title, CardVariant variant, CardPadding padding,
 			List<? extends ReactControl> headerActions, ReactControl child) {
 		super(context, null, REACT_MODULE);
 		_child = child;
 		_headerActions = new ArrayList<>(headerActions);
 		setTitle(title);
-		putState(VARIANT, variant);
-		putState(PADDING, padding);
+		setVariant(variant);
+		setPadding(padding);
 		putState(HEADER_ACTIONS, _headerActions);
 		putState(CHILD, child);
 	}
@@ -84,7 +123,7 @@ public class ReactCardControl extends ReactControl {
 	 *        The content child control.
 	 */
 	public ReactCardControl(ReactContext context, String title, ReactControl child) {
-		this(context, title, "outlined", "default", List.of(), child);
+		this(context, title, CardVariant.OUTLINED, CardPadding.DEFAULT, List.of(), child);
 	}
 
 	/**
@@ -95,6 +134,20 @@ public class ReactCardControl extends ReactControl {
 	 */
 	public void setTitle(String title) {
 		putState(TITLE, title);
+	}
+
+	/**
+	 * Sets the visual variant.
+	 */
+	public void setVariant(CardVariant variant) {
+		putState(VARIANT, variant.getExternalName());
+	}
+
+	/**
+	 * Sets the content padding.
+	 */
+	public void setPadding(CardPadding padding) {
+		putState(PADDING, padding.getExternalName());
 	}
 
 	@Override

@@ -11,16 +11,20 @@ import java.util.stream.Collectors;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
-import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.layout.ReactCardControl;
+import com.top_logic.layout.react.control.layout.ReactCardControl.CardPadding;
+import com.top_logic.layout.react.control.layout.ReactCardControl.CardVariant;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.view.ContainerElement;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.util.Resources;
 
 /**
  * UIElement that wraps {@link ReactCardControl}.
@@ -51,31 +55,30 @@ public class CardElement extends ContainerElement {
 		String PADDING = "padding";
 
 		/**
-		 * The card title, or empty for no header.
+		 * The card title, or {@code null} for no header.
 		 */
 		@Name(TITLE)
-		String getTitle();
+		@Nullable
+		ResKey getTitle();
 
 		/**
-		 * The visual variant: "outlined" or "elevated".
+		 * The visual variant.
 		 */
 		@Name(VARIANT)
-		@StringDefault("outlined")
-		String getVariant();
+		CardVariant getVariant();
 
 		/**
-		 * The content padding: "none", "compact", or "default".
+		 * The content padding.
 		 */
 		@Name(PADDING)
-		@StringDefault("default")
-		String getPadding();
+		CardPadding getPadding();
 	}
 
-	private final String _title;
+	private final ResKey _title;
 
-	private final String _variant;
+	private final CardVariant _variant;
 
-	private final String _padding;
+	private final CardPadding _padding;
 
 	/**
 	 * Creates a new {@link CardElement} from configuration.
@@ -102,7 +105,7 @@ public class CardElement extends ContainerElement {
 			content = new ReactStackControl(context, reactChildren);
 		}
 
-		String title = _title != null && !_title.isEmpty() ? _title : null;
+		String title = _title != null ? Resources.getInstance().getString(_title) : null;
 		return new ReactCardControl(context, title, _variant, _padding, List.of(), content);
 	}
 }

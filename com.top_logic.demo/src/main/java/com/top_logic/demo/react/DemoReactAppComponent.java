@@ -29,6 +29,8 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.common.ReactFieldListControl;
 import com.top_logic.layout.react.control.layout.ReactCardControl;
+import com.top_logic.layout.react.control.layout.ReactCardControl.CardPadding;
+import com.top_logic.layout.react.control.layout.ReactCardControl.CardVariant;
 import com.top_logic.layout.react.control.layout.ReactGridControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.react.control.nav.ReactAppBarControl;
@@ -227,12 +229,12 @@ public class DemoReactAppComponent extends LayoutComponent {
 			return HandlerResult.DEFAULT_RESULT;
 		});
 		ReactCardControl activeTasksCard = new ReactCardControl(ctx,
-			"Active Tasks", "elevated", "none", List.of(completeBtn),
+			"Active Tasks", CardVariant.ELEVATED, CardPadding.NONE, List.of(completeBtn),
 			new DemoCounterControl(ctx, "Tasks"));
 
 		// Card 2: In Review (outlined) with counter.
 		ReactCardControl inReviewCard = new ReactCardControl(ctx,
-			"In Review", "outlined", "none", List.of(),
+			"In Review", CardVariant.OUTLINED, CardPadding.NONE, List.of(),
 			new DemoCounterControl(ctx, "Reviews"));
 
 		// Card 3: Team Notes (outlined) with "Open Details" button.

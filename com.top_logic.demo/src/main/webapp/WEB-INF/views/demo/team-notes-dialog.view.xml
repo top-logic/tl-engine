@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<window
+		title="Team Notes"
+		width="500px"
+	>
+		<commands>
+			<generic-command label="Bookmark" placement="TOOLBAR"
+				image="css:fas fa-bookmark"
+			>
+				<close-dialog/>
+			</generic-command>
+			<generic-command label="Share" placement="TOOLBAR"
+				image="css:fas fa-share-alt"
+			>
+				<close-dialog/>
+			</generic-command>
+		</commands>
+		<stack direction="column" gap="default">
+		</stack>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					label="Close"
+				/>
+			</button>
+		</actions>
+	</window>
+</view>

@@ -20,10 +20,9 @@
 			</card>
 			<card title="Team Notes">
 				<button>
-					<action class="com.top_logic.demo.view.command.OpenDemoDialogCommand"
+					<action class="com.top_logic.layout.view.command.OpenDialogCommand"
 						label="Open Details"
-						dialog-title="Team Notes"
-						dialog-message="Here are the latest team notes and updates."
+						dialog-view="demo/team-notes-dialog.view.xml"
 					/>
 				</button>
 			</card>

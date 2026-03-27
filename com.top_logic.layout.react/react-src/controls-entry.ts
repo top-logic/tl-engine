@@ -54,6 +54,7 @@ import TLTreeView from './controls/TLTreeView';
 import TLDropdownSelect from './controls/TLDropdownSelect';
 import TLColorInput from './controls/TLColorInput';
 import TLIconSelect from './controls/TLIconSelect';
+import TLDirtyConfirmDialog from './controls/TLDirtyConfirmDialog';
 
 register('TLButton', TLButton);
 register('TLToggleButton', TLToggleButton);
@@ -100,3 +101,4 @@ register('TLTreeView', TLTreeView);
 register('TLDropdownSelect', TLDropdownSelect);
 register('TLColorInput', TLColorInput);
 register('TLIconSelect', TLIconSelect);
+register('TLDirtyConfirmDialog', TLDirtyConfirmDialog);

@@ -8,6 +8,14 @@
     <inherits name="com.top_logic.common.json.TLCommonJson"/>
     <inherits name="de.haumacher.msgbuf.MsgBuf"/>
 
+	<source path="../data" />
+	<source path="../operations" />
+	<source path="../callback" />
+	<source path="../control" />
+	<source path="../svg" />
+	<source path="../math" />
+	<source path="../model" />
+
 	<!-- allow Super Dev Mode -->
 	<add-linker name="xsiframe"/>
 </module>

@@ -13,6 +13,7 @@
     <inherits name="org.vectomatic.libgwtsvg"/>
 
 	<!-- Specify the paths for translatable code -->
+	<source path='bridge'/>
 	<source path='control'/>
 
 	<!-- allow Super Dev Mode -->

@@ -79,6 +79,16 @@ public class DerivedViewChannel implements ViewChannel {
 		_listeners.remove(listener);
 	}
 
+	@Override
+	public void addVetoListener(VetoListener listener) {
+		// DerivedViewChannel is read-only; veto listeners are not applicable.
+	}
+
+	@Override
+	public void removeVetoListener(VetoListener listener) {
+		// DerivedViewChannel is read-only; veto listeners are not applicable.
+	}
+
 	private void recompute(Function<Object[], Object> evaluator, List<ViewChannel> inputs) {
 		Object newValue = evaluate(evaluator, inputs);
 		Object oldValue = _value;

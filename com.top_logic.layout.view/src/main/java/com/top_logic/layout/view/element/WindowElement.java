@@ -15,6 +15,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayDimension;
@@ -79,6 +80,9 @@ public class WindowElement extends CommandScopeElement {
 		/** Configuration name for {@link #getActions()}. */
 		String ACTIONS = "actions";
 
+		/** Configuration name for {@link #getResizable()}. */
+		String RESIZABLE = "resizable";
+
 		/**
 		 * The window title displayed in the title bar.
 		 */
@@ -98,6 +102,17 @@ public class WindowElement extends CommandScopeElement {
 		String getWidth();
 
 		/**
+		 * Whether the window can be resized by the user.
+		 *
+		 * <p>
+		 * Defaults to {@code true}. When enabled, resize handles are shown at all edges and corners.
+		 * </p>
+		 */
+		@Name(RESIZABLE)
+		@BooleanDefault(true)
+		boolean getResizable();
+
+		/**
 		 * Footer action elements (typically buttons).
 		 *
 		 * <p>
@@ -112,6 +127,8 @@ public class WindowElement extends CommandScopeElement {
 
 	private final String _width;
 
+	private final boolean _resizable;
+
 	private final List<UIElement> _actions;
 
 	/**
@@ -122,6 +139,7 @@ public class WindowElement extends CommandScopeElement {
 		super(context, config);
 		_title = config.getTitle();
 		_width = config.getWidth();
+		_resizable = config.getResizable();
 		_actions = config.getActions().stream()
 			.map(context::getInstance)
 			.collect(Collectors.toList());
@@ -140,6 +158,7 @@ public class WindowElement extends CommandScopeElement {
 		String title = _title != null ? Resources.getInstance().getString(_title) : "";
 
 		ReactWindowControl window = new ReactWindowControl(context, title, width, closeHandler);
+		window.setResizable(_resizable);
 		window.setChild(content);
 
 		if (!_actions.isEmpty()) {

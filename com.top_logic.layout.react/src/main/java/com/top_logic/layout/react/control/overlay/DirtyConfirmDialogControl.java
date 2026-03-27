@@ -8,101 +8,104 @@ package com.top_logic.layout.react.control.overlay;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.button.ReactButtonControl;
+import com.top_logic.layout.react.control.layout.ReactStackControl;
+import com.top_logic.layout.react.control.layout.ReactStackControl.StackDirection;
+import com.top_logic.layout.react.control.table.ReactTextCellControl;
 import com.top_logic.layout.react.dirty.StateHandler;
+import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.Resources;
 
 /**
- * Content control for the dirty-check confirmation dialog.
+ * Builds and opens a dirty-check confirmation dialog composed of standard React controls.
  *
  * <p>
- * Renders a dialog asking the user whether to save, discard, or cancel when navigating away from
+ * Uses {@link ReactWindowControl} for the visual frame with {@link ReactButtonControl}s in the
+ * footer. The dialog asks the user whether to save, discard, or cancel when navigating away from
  * dirty forms. The "save" option is hidden when any handler has validation errors.
  * </p>
- *
- * <p>
- * State sent to React:
- * </p>
- * <ul>
- * <li>{@code descriptions} - list of handler descriptions (strings)</li>
- * <li>{@code canSave} - whether save is available (no validation errors)</li>
- * </ul>
  */
-public class DirtyConfirmDialogControl extends ReactControl {
-
-	private static final String REACT_MODULE = "TLDirtyConfirmDialog";
-
-	private static final String DESCRIPTIONS = "descriptions";
-
-	private static final String CAN_SAVE = "canSave";
-
-	private final List<StateHandler> _dirtyHandlers;
-
-	private final Runnable _continuation;
-
-	private final DialogManager _dialogManager;
+public class DirtyConfirmDialogControl {
 
 	/**
-	 * Creates a new {@link DirtyConfirmDialogControl}.
+	 * Opens a dirty-check confirmation dialog.
 	 *
 	 * @param context
 	 *        The React context.
+	 * @param dialogManager
+	 *        The dialog manager for opening/closing the dialog.
 	 * @param dirtyHandlers
 	 *        The dirty state handlers.
 	 * @param continuation
 	 *        The action to execute after save/discard.
-	 * @param dialogManager
-	 *        The dialog manager for closing this dialog.
 	 */
-	public DirtyConfirmDialogControl(ReactContext context, List<StateHandler> dirtyHandlers,
-			Runnable continuation, DialogManager dialogManager) {
-		super(context, null, REACT_MODULE);
-		_dirtyHandlers = dirtyHandlers;
-		_continuation = continuation;
-		_dialogManager = dialogManager;
+	public static void openDialog(ReactContext context, DialogManager dialogManager,
+			List<StateHandler> dirtyHandlers, Runnable continuation) {
+		Resources resources = Resources.getInstance();
 
-		List<String> descriptions = new ArrayList<>();
-		boolean canSave = true;
+		String title = resources.getString(I18NConstants.DIRTY_CONFIRM_TITLE);
+		String message = resources.getString(I18NConstants.DIRTY_CONFIRM_MESSAGE);
+		String saveLabel = resources.getString(I18NConstants.DIRTY_CONFIRM_SAVE);
+		String discardLabel = resources.getString(I18NConstants.DIRTY_CONFIRM_DISCARD);
+		String cancelLabel = resources.getString(I18NConstants.DIRTY_CONFIRM_CANCEL);
+
+		boolean canSave = dirtyHandlers.stream().noneMatch(StateHandler::hasErrors);
+
+		// Body: message text + list of dirty handler descriptions.
+		List<ReactControl> bodyChildren = new ArrayList<>();
+		bodyChildren.add(new ReactTextCellControl(context, message));
 		for (StateHandler handler : dirtyHandlers) {
-			descriptions.add(handler.getDescription());
-			if (handler.hasErrors()) {
-				canSave = false;
+			bodyChildren.add(new ReactTextCellControl(context, "\u2022 " + handler.getDescription()));
+		}
+		ReactStackControl body = new ReactStackControl(context, bodyChildren);
+
+		// Close handler (cancel).
+		Runnable closeHandler = () -> dialogManager.closeTopDialog(DialogResult.cancelled());
+
+		// Window chrome.
+		ReactWindowControl window = new ReactWindowControl(context, title,
+			DisplayDimension.px(420), closeHandler);
+		window.setChild(body);
+
+		// Footer action buttons.
+		List<ReactControl> actions = new ArrayList<>();
+
+		ReactButtonControl cancelBtn = new ReactButtonControl(context, cancelLabel, ctx -> {
+			dialogManager.closeTopDialog(DialogResult.cancelled());
+			return HandlerResult.DEFAULT_RESULT;
+		});
+		actions.add(cancelBtn);
+
+		ReactButtonControl discardBtn = new ReactButtonControl(context, discardLabel, ctx -> {
+			for (StateHandler handler : dirtyHandlers) {
+				handler.executeDiscard();
 			}
-		}
-		putState(DESCRIPTIONS, descriptions);
-		putState(CAN_SAVE, Boolean.valueOf(canSave));
-	}
+			dialogManager.closeTopDialog(DialogResult.ok(null));
+			continuation.run();
+			return HandlerResult.DEFAULT_RESULT;
+		});
+		actions.add(discardBtn);
 
-	/**
-	 * Saves all dirty handlers, closes the dialog, and continues.
-	 */
-	@ReactCommand("save")
-	void handleSave() {
-		for (StateHandler handler : _dirtyHandlers) {
-			handler.executeSave();
+		if (canSave) {
+			ReactButtonControl saveBtn = new ReactButtonControl(context, saveLabel, ctx -> {
+				for (StateHandler handler : dirtyHandlers) {
+					handler.executeSave();
+				}
+				dialogManager.closeTopDialog(DialogResult.ok(null));
+				continuation.run();
+				return HandlerResult.DEFAULT_RESULT;
+			});
+			actions.add(saveBtn);
 		}
-		_dialogManager.closeTopDialog(DialogResult.ok(null));
-		_continuation.run();
-	}
 
-	/**
-	 * Discards all dirty handlers, closes the dialog, and continues.
-	 */
-	@ReactCommand("discard")
-	void handleDiscard() {
-		for (StateHandler handler : _dirtyHandlers) {
-			handler.executeDiscard();
-		}
-		_dialogManager.closeTopDialog(DialogResult.ok(null));
-		_continuation.run();
-	}
+		window.setActions(actions);
 
-	/**
-	 * Cancels the navigation, keeping dirty state intact.
-	 */
-	@ReactCommand("cancel")
-	void handleCancel() {
-		_dialogManager.closeTopDialog(DialogResult.cancelled());
+		// Open via DialogManager.
+		dialogManager.openDialog(false, window, result -> {
+			// Result handling done by button actions.
+		});
 	}
 }

@@ -172,7 +172,6 @@ public class ModelBrowserTool {
 
 		} catch (Exception ex) {
 			Logger.error("listModules() error: " + ex.getMessage(), ex, ModelBrowserTool.class);
-			System.err.println("ModelBrowserTool.listModules() error: " + ex.getMessage());
 			Map<String, Object> args = new HashMap<>();
 			args.put("includeFramework", includeFramework);
 			return DataClassSerializer.errorToJson(
@@ -289,7 +288,6 @@ public class ModelBrowserTool {
 
 		} catch (Exception ex) {
 			Logger.error("listTypes() error: " + ex.getMessage(), ex, ModelBrowserTool.class);
-			System.err.println("ModelBrowserTool.listTypes() error: " + ex.getMessage());
 			Map<String, Object> args = new HashMap<>();
 			args.put("moduleName", moduleName);
 			return DataClassSerializer.errorToJson(
@@ -434,7 +432,6 @@ public class ModelBrowserTool {
 
 		} catch (Exception ex) {
 			Logger.error("listTypeParts() error: " + ex.getMessage(), ex, ModelBrowserTool.class);
-			System.err.println("ModelBrowserTool.listTypeParts() error: " + ex.getMessage());
 			Map<String, Object> args = new HashMap<>();
 			args.put("moduleName", moduleName);
 			args.put("typeName", typeName);
@@ -557,7 +554,6 @@ public class ModelBrowserTool {
 
 		} catch (Exception ex) {
 			Logger.error("listClassifiers() error: " + ex.getMessage(), ex, ModelBrowserTool.class);
-			System.err.println("ModelBrowserTool.listClassifiers() error: " + ex.getMessage());
 			Map<String, Object> args = new HashMap<>();
 			args.put("moduleName", moduleName);
 			args.put("enumName", enumName);

@@ -146,7 +146,6 @@ public class TypeAnalysisTool {
 
 		} catch (Exception ex) {
 			Logger.error("findTypeUsages() error: " + ex.getMessage(), ex, TypeAnalysisTool.class);
-			System.err.println("TypeAnalysisTool.findTypeUsages() error: " + ex.getMessage());
 			Map<String, Object> args = new HashMap<>();
 			args.put("qualifiedTypeName", qualifiedTypeName);
 			return DataClassSerializer.errorToJson(
@@ -247,7 +246,6 @@ public class TypeAnalysisTool {
 
 		} catch (Exception ex) {
 			Logger.error("findPartUsages() error: " + ex.getMessage(), ex, TypeAnalysisTool.class);
-			System.err.println("TypeAnalysisTool.findPartUsages() error: " + ex.getMessage());
 			Map<String, Object> args = new HashMap<>();
 			args.put("ownerTypeQualifiedName", ownerTypeQualifiedName);
 			args.put("partName", partName);

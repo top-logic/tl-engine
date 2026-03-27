@@ -55,22 +55,22 @@ import dev.langchain4j.agent.tool.Tool;
  *
  * <pre>
  * // List local annotations on a module
- * listAnnotations("tl.core", false)
+ * getCurrentAnnotations("tl.core", false)
  *
  * // List local annotations on a type
- * listAnnotations("tl.core:TLObject", false)
+ * getCurrentAnnotations("tl.core:TLObject", false)
  *
  * // List all annotations including inherited
- * listAnnotations("tl.core:TLObject", true)
+ * getCurrentAnnotations("tl.core:TLObject", true)
  *
  * // List annotations on an enumeration
- * listAnnotations("tl.core:TLScope", false)
+ * getCurrentAnnotations("tl.core:TLScope", false)
  *
  * // List annotations on a type part
- * listAnnotations("tl.core:TLObject#name", false)
+ * getCurrentAnnotations("tl.core:TLObject#name", false)
  *
  * // List annotations on a classifier (enum literal)
- * listAnnotations("tl.core:TLScope#global", false)
+ * getCurrentAnnotations("tl.core:TLScope#global", false)
  * </pre>
  *
  * <h3>Integration:</h3>
@@ -153,8 +153,8 @@ public class ModelAnnotationBrowserTool {
 	 *        {@code false}.
 	 * @return JSON string containing annotation information, or error JSON if the operation fails.
 	 */
-	@Tool("List all annotations on a model element (module, type, enumeration, part, classifier) with optional inheritance")
-	public String listAnnotations(
+	@Tool("Get all annotations currently set on a model element (module, type, enumeration, part, classifier) with optional inheritance")
+	public String getCurrentAnnotations(
 			@P("Target reference in format 'module', 'module:Type', or 'module:Type#part'") String targetRef,
 			@P("Include inherited annotations from supertypes/definitions (default: false)") Boolean includeInherited) {
 
@@ -205,21 +205,20 @@ public class ModelAnnotationBrowserTool {
 			Map<String, Object> args = new HashMap<>();
 			args.put("targetRef", targetRef);
 			args.put("includeInherited", includeInherited);
-			ToolCallTracking.recordIfTracking("listAnnotations", args, result);
-			Logger.info(ToolCallTracking.formatToolCall("listAnnotations", args, result),
+			ToolCallTracking.recordIfTracking("getCurrentAnnotations", args, result);
+			Logger.info(ToolCallTracking.formatToolCall("getCurrentAnnotations", args, result),
 				ModelAnnotationBrowserTool.class);
 			return result;
 
 		} catch (Exception ex) {
-			Logger.error("listAnnotations() error: " + ex.getMessage(), ex, ModelAnnotationBrowserTool.class);
-			System.err.println("ModelAnnotationBrowserTool.listAnnotations() error: " + ex.getMessage());
+			Logger.error("getCurrentAnnotations() error: " + ex.getMessage(), ex, ModelAnnotationBrowserTool.class);
 			Map<String, Object> args = new HashMap<>();
 			args.put("targetRef", targetRef);
 			args.put("includeInherited", includeInherited);
 			return DataClassSerializer.errorToJson(
 				"Error accessing annotations: " + ex.getMessage(),
 				ModelAnnotationBrowserTool.class,
-				"listAnnotations()",
+				"getCurrentAnnotations()",
 				args);
 		}
 	}

@@ -90,8 +90,8 @@ public class ModelAnnotationEditorTool {
 	 *        Annotation configuration as JSON matching the schema.
 	 * @return JSON with operation result and the annotation's canonical JSON representation.
 	 */
-	@Tool("Set or replace an annotation on a model element (module, type, part, classifier). Accepts annotation config as JSON. Use describeAnnotation and getConfigSchema to understand the annotation structure first.")
-	public String setAnnotation(
+	@Tool("Add or replace an annotation on a model element (module, type, part, classifier). Accepts annotation config as JSON. Use listAvailableAnnotations to discover options and getConfigSchema to understand the structure first.")
+	public String addAnnotation(
 			@P("Target: 'module', 'module:Type', or 'module:Type#part'") String targetRef,
 			@P("Fully-qualified annotation config interface class name") String configInterfaceName,
 			@P("Annotation configuration as JSON matching the schema from getConfigSchema") String configJson) {
@@ -102,16 +102,16 @@ public class ModelAnnotationEditorTool {
 				() -> doSetAnnotation(targetRef, configInterfaceName, configJson));
 
 			Map<String, Object> args = buildArgs(targetRef, configInterfaceName);
-			ToolCallTracking.recordIfTracking("setAnnotation", args, result);
-			Logger.info(ToolCallTracking.formatToolCall("setAnnotation", args, result),
+			ToolCallTracking.recordIfTracking("addAnnotation", args, result);
+			Logger.info(ToolCallTracking.formatToolCall("addAnnotation", args, result),
 				ModelAnnotationEditorTool.class);
 			return result;
 
 		} catch (Exception ex) {
-			Logger.error("setAnnotation() error: " + ex.getMessage(), ex, ModelAnnotationEditorTool.class);
+			Logger.error("addAnnotation() error: " + ex.getMessage(), ex, ModelAnnotationEditorTool.class);
 			return DataClassSerializer.errorToJson(
 				"Error setting annotation: " + ex.getMessage(),
-				ModelAnnotationEditorTool.class, "setAnnotation()",
+				ModelAnnotationEditorTool.class, "addAnnotation()",
 				buildArgs(targetRef, configInterfaceName));
 		}
 	}
@@ -172,7 +172,7 @@ public class ModelAnnotationEditorTool {
 	 *        Fully-qualified annotation configuration interface class name to remove.
 	 * @return JSON with operation result.
 	 */
-	@Tool("Remove an annotation from a model element. Use listAnnotations to see which annotations exist on a target.")
+	@Tool("Remove an annotation from a model element. Use getCurrentAnnotations to see which annotations exist on a target.")
 	public String removeAnnotation(
 			@P("Target: 'module', 'module:Type', or 'module:Type#part'") String targetRef,
 			@P("Fully-qualified annotation config interface class name to remove") String configInterfaceName) {
@@ -263,7 +263,7 @@ public class ModelAnnotationEditorTool {
 	}
 
 	/**
-	 * Builds the setAnnotation response JSON with inline annotation config.
+	 * Builds the addAnnotation response JSON with inline annotation config.
 	 */
 	private static String buildSetResponse(String targetRef, String kind,
 			String configInterfaceName, String annotationJson) throws IOException {

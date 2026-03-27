@@ -1258,3 +1258,105 @@ message EnumResponse {
 	 */
 	string description;
 }
+
+// ===== SearchAnnotationTool Messages =====
+
+/**
+ * A concrete implementation option for a polymorphic configuration property.
+ */
+message ImplementationOption {
+
+	/**
+	 * XML tag name from {@code @TagName} annotation.
+	 */
+	string tagName;
+
+	/**
+	 * Fully qualified configuration interface class name.
+	 */
+	string configInterface;
+
+	/**
+	 * Human-readable description from i18n tooltip resources.
+	 */
+	string description;
+}
+
+/**
+ * Information about a polymorphic configuration property that requires choosing an implementation.
+ */
+message AnnotationPropertyInfo {
+
+	/**
+	 * Property name as declared in the configuration interface.
+	 */
+	string name;
+
+	/**
+	 * Human-readable description of the property.
+	 */
+	string description;
+
+	/**
+	 * Whether this property is mandatory.
+	 */
+	bool required;
+
+	/**
+	 * Available concrete implementations the agent can choose from.
+	 */
+	repeated ImplementationOption implementations;
+}
+
+/**
+ * A single available annotation type for a model element.
+ */
+message AnnotationSearchResult {
+
+	/**
+	 * XML tag name from {@code @TagName} annotation.
+	 */
+	string tagName;
+
+	/**
+	 * Fully qualified configuration interface class name.
+	 */
+	string configInterface;
+
+	/**
+	 * Human-readable description from i18n resources.
+	 */
+	string description;
+
+	/**
+	 * Concrete implementation options for polymorphic configuration properties.
+	 * Empty if the annotation can be used directly without choosing an implementation.
+	 */
+	repeated AnnotationPropertyInfo implementationOptions;
+}
+
+/**
+ * Response listing available annotation types for a target element.
+ */
+message AnnotationSearchResponse {
+
+	/**
+	 * The resolved target reference.
+	 */
+	string targetRef;
+
+	/**
+	 * Kind of the resolved target (e.g. "property", "type", "module").
+	 */
+	string targetKind;
+
+	/**
+	 * Total number of available annotations.
+	 */
+	int totalMatches;
+
+	/**
+	 * List of available annotation types.
+	 */
+	repeated AnnotationSearchResult results;
+}

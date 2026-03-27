@@ -141,7 +141,6 @@ public class ModelSearchTool {
 
 		} catch (Exception ex) {
 			Logger.error("searchModel() error: " + ex.getMessage(), ex, ModelSearchTool.class);
-			System.err.println("ModelSearchTool.searchModel() error: " + ex.getMessage());
 
 			// Return error as SearchResponse with success=false
 			SearchResponse errorResponse = SearchResponse.create();

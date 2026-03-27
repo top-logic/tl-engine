@@ -464,6 +464,8 @@ public class ModelEditorTool {
 		response.setTid(tlClass.tId().asString());
 		response.setModule(tlClass.getModule().getName());
 		response.setPartCount(tlClass.getLocalClassParts().size());
+		response.setLabel(ToolI18NUtil.getLabel(tlClass));
+		response.setDescription(ToolI18NUtil.getDescription(tlClass));
 		response.setCreated(false);
 		response.setResultMessage("Class '" + tlClass.getName() + "' updated successfully");
 		return response;

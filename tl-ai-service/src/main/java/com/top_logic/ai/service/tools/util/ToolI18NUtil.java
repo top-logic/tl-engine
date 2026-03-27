@@ -13,7 +13,12 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourceTransaction;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.element.layout.meta.TLMetaModelUtil;
+import com.top_logic.model.TLModule;
 import com.top_logic.model.TLNamedPart;
+import com.top_logic.model.TLType;
+import com.top_logic.model.TLTypePart;
+import com.top_logic.model.util.TLModelNamingConvention;
+import com.top_logic.util.Resources;
 
 /**
  * Utility class for handling internationalization (I18N) in <code>LangChain4j</code> tools.
@@ -114,36 +119,78 @@ public class ToolI18NUtil {
 			return;
 		}
 
+		ResKey partKey = getResKey(part);
 		Internationalized i18N = TypedConfiguration.newConfigItem(Internationalized.class);
 
-		// Label
-		if (texts.hasLabel()) {
-			ResKey.Builder labelBuilder = ResKey.builder();
-			if (texts.labelEn() != null) {
-				labelBuilder.add(Locale.ENGLISH, texts.labelEn());
-			}
-			if (texts.labelDe() != null) {
-				labelBuilder.add(Locale.GERMAN, texts.labelDe());
-			}
-			i18N.setLabel(labelBuilder.build());
-		}
+		// Label: use new values if provided, otherwise preserve existing
+		i18N.setLabel(texts.hasLabel()
+			? buildResKey(texts.labelEn(), texts.labelDe())
+			: readExisting(partKey));
 
-		// Description
-		if (texts.hasDescription()) {
-			ResKey.Builder descBuilder = ResKey.builder();
-			if (texts.descEn() != null) {
-				descBuilder.add(Locale.ENGLISH, texts.descEn());
-			}
-			if (texts.descDe() != null) {
-				descBuilder.add(Locale.GERMAN, texts.descDe());
-			}
-			i18N.setDescription(descBuilder.build());
-		}
+		// Description: use new values if provided, otherwise preserve existing
+		i18N.setDescription(texts.hasDescription()
+			? buildResKey(texts.descEn(), texts.descDe())
+			: readExisting(partKey.tooltip()));
 
 		try (ResourceTransaction tx = ResourcesModule.getInstance().startResourceTransaction()) {
 			TLMetaModelUtil.saveI18NForPart(part, i18N, tx);
 			tx.commit();
 		}
+	}
+
+	private static ResKey buildResKey(String en, String de) {
+		ResKey.Builder builder = ResKey.builder();
+		if (en != null) {
+			builder.add(Locale.ENGLISH, en);
+		}
+		if (de != null) {
+			builder.add(Locale.GERMAN, de);
+		}
+		return builder.build();
+	}
+
+	private static ResKey readExisting(ResKey key) {
+		ResKey.Builder builder = ResKey.builder();
+		for (Locale locale : ResourcesModule.getInstance().getSupportedLocales()) {
+			String value = Resources.getInstance(locale).getString(key, null);
+			if (value != null) {
+				builder.add(locale, value);
+			}
+		}
+		return builder.build();
+	}
+
+	/**
+	 * Returns the current label of the given model element in the session locale.
+	 *
+	 * @param part
+	 *        The model element.
+	 * @return The label, or {@code null} if none is set.
+	 */
+	public static String getLabel(TLNamedPart part) {
+		return Resources.getInstance().getString(getResKey(part), null);
+	}
+
+	/**
+	 * Returns the current description of the given model element in the session locale.
+	 *
+	 * @param part
+	 *        The model element.
+	 * @return The description, or {@code null} if none is set.
+	 */
+	public static String getDescription(TLNamedPart part) {
+		return Resources.getInstance().getString(getResKey(part).tooltip(), null);
+	}
+
+	private static ResKey getResKey(TLNamedPart part) {
+		if (part instanceof TLType) {
+			return TLModelNamingConvention.getTypeLabelKey((TLType) part);
+		} else if (part instanceof TLModule) {
+			return TLModelNamingConvention.getModuleLabelKey((TLModule) part);
+		} else if (part instanceof TLTypePart) {
+			return TLModelNamingConvention.resourceKey((TLTypePart) part);
+		}
+		return ResKey.NONE;
 	}
 
 	private static String trimToNull(String value) {

@@ -1,8 +1,20 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <view xmlns:config="http://www.top-logic.com/ns/config/6.0">
-  <panel title="Flow Diagram Test">
-    <flow-diagram>
-      <builder class="com.top_logic.react.flow.server.ui.TestFlowChartBuilder" />
-    </flow-diagram>
-  </panel>
+  <channels>
+    <channel name="selected" />
+  </channels>
+  <split-panel>
+    <start>
+      <panel title="Flow Diagram">
+        <flow-diagram selection="selected">
+          <builder class="com.top_logic.react.flow.server.ui.TestFlowChartBuilder" />
+        </flow-diagram>
+      </panel>
+    </start>
+    <end>
+      <panel title="Selection">
+        <!-- The selected channel value would be displayed here when connected to a form or table. -->
+      </panel>
+    </end>
+  </split-panel>
 </view>

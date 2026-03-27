@@ -23,6 +23,7 @@ import com.top_logic.layout.basic.contextmenu.menu.Menu;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.react.flow.callback.ClickHandler;
 import com.top_logic.react.flow.data.ClickTarget;
 import com.top_logic.react.flow.data.ContextMenu;
@@ -61,6 +62,8 @@ public class FlowDiagramControl extends ReactControl {
 	private DefaultScope _graphScope;
 
 	private ContextMenuProvider _contextMenuProvider = NoContextMenuProvider.INSTANCE;
+
+	private ViewChannel _selectionChannel;
 
 	/**
 	 * Creates a {@link FlowDiagramControl}.
@@ -118,6 +121,17 @@ public class FlowDiagramControl extends ReactControl {
 	 */
 	public void setContextMenuProvider(ContextMenuProvider contextMenuProvider) {
 		_contextMenuProvider = contextMenuProvider;
+	}
+
+	/**
+	 * Sets the {@link ViewChannel} to write the selected node's user object to when the diagram
+	 * selection changes.
+	 *
+	 * @param channel
+	 *        The channel to write selections to, or {@code null} to disable selection publishing.
+	 */
+	public void setSelectionChannel(ViewChannel channel) {
+		_selectionChannel = channel;
 	}
 
 	@Override
@@ -222,6 +236,46 @@ public class FlowDiagramControl extends ReactControl {
 		if (menu != null) {
 			// TODO: Send context menu to client via SSE state update.
 		}
+		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	/**
+	 * Handles selection changes sent from the client.
+	 *
+	 * <p>
+	 * The client sends the IDs of the currently selected nodes. The server resolves each ID to its
+	 * {@link Widget} and extracts the user object from the {@link SelectableBox}. The result is
+	 * written to the configured selection channel.
+	 * </p>
+	 */
+	@ReactCommand("selection")
+	public HandlerResult handleSelection(ReactContext context, Map<String, Object> args) {
+		if (_selectionChannel == null || _graphScope == null) {
+			return HandlerResult.DEFAULT_RESULT;
+		}
+
+		@SuppressWarnings("unchecked")
+		List<Number> nodeIds = (List<Number>) args.get("nodeIds");
+		if (nodeIds == null || nodeIds.isEmpty()) {
+			_selectionChannel.set(null);
+			return HandlerResult.DEFAULT_RESULT;
+		}
+
+		List<Object> selectedUserObjects = nodeIds.stream()
+			.map(id -> _graphScope.resolveOrFail(id.intValue()))
+			.filter(node -> node instanceof Widget)
+			.map(node -> ((Widget) node).getUserObject())
+			.filter(Objects::nonNull)
+			.toList();
+
+		if (selectedUserObjects.isEmpty()) {
+			_selectionChannel.set(null);
+		} else if (selectedUserObjects.size() == 1) {
+			_selectionChannel.set(selectedUserObjects.get(0));
+		} else {
+			_selectionChannel.set(selectedUserObjects);
+		}
+
 		return HandlerResult.DEFAULT_RESULT;
 	}
 

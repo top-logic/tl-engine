@@ -8,6 +8,7 @@ package com.top_logic.react.flow.server.ui;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
@@ -15,6 +16,9 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.ChannelRefFormat;
+import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.react.flow.data.Diagram;
 import com.top_logic.react.flow.server.control.FlowDiagramControl;
 
@@ -56,6 +60,9 @@ public class FlowDiagramElement implements UIElement {
 		/** Configuration name for {@link #getBuilder()}. */
 		String BUILDER = "builder";
 
+		/** Configuration name for {@link #getSelection()}. */
+		String SELECTION = "selection";
+
 		/**
 		 * The builder that creates the diagram model from the business object.
 		 *
@@ -66,7 +73,22 @@ public class FlowDiagramElement implements UIElement {
 		@Name(BUILDER)
 		@Mandatory
 		PolymorphicConfiguration<FlowChartBuilder> getBuilder();
+
+		/**
+		 * Optional reference to a {@link ViewChannel} to write the selected node's user object to.
+		 *
+		 * <p>
+		 * When a node is selected in the diagram, its user object is written to the referenced
+		 * channel. Other view elements (forms, tables) can observe this channel to react to
+		 * selection changes.
+		 * </p>
+		 */
+		@Name(SELECTION)
+		@Format(ChannelRefFormat.class)
+		ChannelRef getSelection();
 	}
+
+	private final Config _config;
 
 	private final FlowChartBuilder _builder;
 
@@ -80,6 +102,7 @@ public class FlowDiagramElement implements UIElement {
 	 */
 	@CalledByReflection
 	public FlowDiagramElement(InstantiationContext context, Config config) {
+		_config = config;
 		_builder = context.getInstance(config.getBuilder());
 	}
 
@@ -94,7 +117,16 @@ public class FlowDiagramElement implements UIElement {
 		} else {
 			diagram = Diagram.create();
 		}
-		return new FlowDiagramControl(context, diagram);
+		FlowDiagramControl control = new FlowDiagramControl(context, diagram);
+
+		// Bind selection channel if configured.
+		ChannelRef selectionRef = _config.getSelection();
+		if (selectionRef != null) {
+			ViewChannel selectionChannel = context.resolveChannel(selectionRef);
+			control.setSelectionChannel(selectionChannel);
+		}
+
+		return control;
 	}
 
 }

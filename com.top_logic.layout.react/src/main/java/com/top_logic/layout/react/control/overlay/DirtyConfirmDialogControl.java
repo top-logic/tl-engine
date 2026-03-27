@@ -41,9 +41,12 @@ public class DirtyConfirmDialogControl {
 	 *        The dirty state handlers.
 	 * @param continuation
 	 *        The action to execute after save/discard.
+	 * @param rollback
+	 *        Optional action to revert optimistic UI changes on cancel (e.g. table selection
+	 *        rollback), or {@code null}.
 	 */
 	public static void openDialog(ReactContext context, DialogManager dialogManager,
-			List<StateHandler> dirtyHandlers, Runnable continuation) {
+			List<StateHandler> dirtyHandlers, Runnable continuation, Runnable rollback) {
 		Resources resources = Resources.getInstance();
 
 		String title = resources.getString(I18NConstants.DIRTY_CONFIRM_TITLE);
@@ -62,8 +65,13 @@ public class DirtyConfirmDialogControl {
 		}
 		ReactStackControl body = new ReactStackControl(context, bodyChildren);
 
-		// Close handler (cancel).
-		Runnable closeHandler = () -> dialogManager.closeTopDialog(DialogResult.cancelled());
+		// Close handler (cancel + rollback).
+		Runnable closeHandler = () -> {
+			dialogManager.closeTopDialog(DialogResult.cancelled());
+			if (rollback != null) {
+				rollback.run();
+			}
+		};
 
 		// Window chrome.
 		ReactWindowControl window = new ReactWindowControl(context, title,
@@ -75,6 +83,9 @@ public class DirtyConfirmDialogControl {
 
 		ReactButtonControl cancelBtn = new ReactButtonControl(context, cancelLabel, ctx -> {
 			dialogManager.closeTopDialog(DialogResult.cancelled());
+			if (rollback != null) {
+				rollback.run();
+			}
 			return HandlerResult.DEFAULT_RESULT;
 		});
 		actions.add(cancelBtn);

@@ -26,6 +26,8 @@ public class ChannelVetoException extends RuntimeException {
 
 	private final Runnable _continuation;
 
+	private Runnable _rollback;
+
 	/**
 	 * Creates a new {@link ChannelVetoException}.
 	 *
@@ -57,5 +59,30 @@ public class ChannelVetoException extends RuntimeException {
 	 */
 	public Runnable getContinuation() {
 		return _continuation;
+	}
+
+	/**
+	 * Optional rollback action that reverts optimistic UI changes made before the veto was thrown.
+	 *
+	 * <p>
+	 * Called when the user cancels the confirmation dialog. For example, a table that has already
+	 * updated its visual selection before the channel veto was raised uses this to restore the
+	 * previous selection.
+	 * </p>
+	 *
+	 * @return The rollback action, or {@code null} if no rollback is needed.
+	 */
+	public Runnable getRollback() {
+		return _rollback;
+	}
+
+	/**
+	 * Sets the rollback action.
+	 *
+	 * @param rollback
+	 *        The action to revert optimistic UI changes on cancel.
+	 */
+	public void setRollback(Runnable rollback) {
+		_rollback = rollback;
 	}
 }

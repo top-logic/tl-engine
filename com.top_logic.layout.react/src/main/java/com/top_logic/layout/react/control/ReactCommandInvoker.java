@@ -83,7 +83,8 @@ class ReactCommandInvoker {
 		} catch (ChannelVetoException ex) {
 			DialogManager dm = context.getDialogManager();
 			if (dm != null) {
-				DirtyConfirmDialogControl.openDialog(context, dm, ex.getDirtyHandlers(), ex.getContinuation());
+				DirtyConfirmDialogControl.openDialog(context, dm, ex.getDirtyHandlers(),
+					ex.getContinuation(), ex.getRollback());
 				return HandlerResult.DEFAULT_RESULT;
 			}
 			Logger.warn("No DialogManager available for dirty-check dialog.", ReactCommandInvoker.class);

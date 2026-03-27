@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.dirty.ChannelVetoException;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.table.TableModel;
@@ -683,20 +684,24 @@ public class ReactTableControl extends ReactControl {
 			}
 		}
 
-		// Notify listener before updating the viewport. If a ChannelVetoException is thrown
-		// (e.g. because a dependent form has unsaved changes), roll back the selection and
-		// push the old state to the client so the UI stays consistent.
+		updateViewport(_viewportStart, _viewportCount);
+
+		// Notify listener after updating the viewport. If a ChannelVetoException is thrown
+		// (e.g. because a dependent form has unsaved changes), attach a rollback that restores
+		// the previous selection. The rollback is executed only when the user cancels the
+		// confirmation dialog; on save/discard the new selection is kept.
 		if (_selectionListener != null) {
 			try {
 				_selectionListener.selectionChanged(Collections.unmodifiableSet(_selectedRows));
-			} catch (RuntimeException ex) {
-				_selectedRows.clear();
-				_selectedRows.addAll(previousSelection);
-				updateViewport(_viewportStart, _viewportCount);
+			} catch (ChannelVetoException ex) {
+				ex.setRollback(() -> {
+					_selectedRows.clear();
+					_selectedRows.addAll(previousSelection);
+					updateViewport(_viewportStart, _viewportCount);
+				});
 				throw ex;
 			}
 		}
-		updateViewport(_viewportStart, _viewportCount);
 	}
 
 	/**

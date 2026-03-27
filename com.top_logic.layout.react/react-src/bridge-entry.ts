@@ -33,9 +33,11 @@ import ReactDOM from 'react-dom';
 export { React, ReactDOM };
 
 // Expose bridge functions on window so that server-generated inline scripts
-// (e.g. TLReact.mount(...) from ReactControl) can call them.
+// (e.g. TLReact.mount(...) from ReactControl) and GWT-compiled code
+// (e.g. ReactBridge.subscribe()) can call them.
 import { mount, mountField, discoverAndMount } from './bridge/tl-react-bridge';
-(window as any).TLReact = { mount, mountField, discoverAndMount };
+import { subscribe as sseSubscribe, unsubscribe as sseUnsubscribe } from './bridge/sse-client';
+(window as any).TLReact = { mount, mountField, discoverAndMount, subscribe: sseSubscribe, unsubscribe: sseUnsubscribe };
 
 // Initialize window self-close notification for multi-window support.
 import { initSelfCloseNotification } from './bridge/window-manager';

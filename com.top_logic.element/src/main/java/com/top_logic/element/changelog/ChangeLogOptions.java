@@ -12,7 +12,6 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.format.MillisFormat;
-import com.top_logic.element.layout.meta.TLStructuredTypeFormBuilder;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.util.TLModelPartRef;
 
@@ -72,7 +71,7 @@ public interface ChangeLogOptions extends ConfigurationItem {
 	 * type is part of one of this module.
 	 */
 	@Format(TLModelPartRef.CommaSeparatedTLModelPartRefs.class)
-	@Options(fun = TLStructuredTypeFormBuilder.EditModel.AllModules.class, mapping = TLModelPartRef.PartMapping.class)
+	@Options(fun = TLModelPartRef.AllModules.class, mapping = TLModelPartRef.PartMapping.class)
 	@Name(EXCLUDED_MODULES)
 	List<TLModelPartRef> getExcludedModules();
 

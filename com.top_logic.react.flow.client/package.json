@@ -1,0 +1,14 @@
+{
+  "name": "tl-react-flow-controls",
+  "version": "7.11.0",
+  "private": true,
+  "scripts": {
+    "build": "vite build"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.0",
+    "typescript": "^5.7.0",
+    "vite": "^6.0.0"
+  }
+}

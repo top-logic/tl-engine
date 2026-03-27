@@ -39,6 +39,10 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
   const [localWidth, setLocalWidth] = useState<number | null>(null);
   const [localHeight, setLocalHeight] = useState<number | null>(null);
 
+  // Position state: null = centered by flexbox, set = absolute positioning.
+  const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
+  const positionRef = useRef<{ x: number; y: number } | null>(null);
+
   // Refs to track latest local dimensions inside event handlers (avoids stale closures).
   const localWidthRef = useRef<number | null>(null);
   const localHeightRef = useRef<number | null>(null);
@@ -110,6 +114,48 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
     document.addEventListener('mouseup', handleMouseUp);
   }, [sendCommand]);
 
+  const handleTitleMouseDown = useCallback((e: React.MouseEvent) => {
+    // Only left mouse button; ignore clicks on buttons inside the header.
+    if (e.button !== 0 || (e.target as HTMLElement).closest('button')) return;
+    e.preventDefault();
+
+    const el = windowRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+
+    // If first drag, initialize position from current rendered position.
+    const startPos = positionRef.current ?? { x: rect.left, y: rect.top };
+    const offsetX = e.clientX - startPos.x;
+    const offsetY = e.clientY - startPos.y;
+
+    const handleMouseMove = (ev: MouseEvent) => {
+      const viewW = window.innerWidth;
+      const viewH = window.innerHeight;
+      let newX = ev.clientX - offsetX;
+      let newY = ev.clientY - offsetY;
+
+      // Constrain to viewport.
+      const elW = el.offsetWidth;
+      const elH = el.offsetHeight;
+      if (newX + elW > viewW) newX = viewW - elW;
+      if (newY + elH > viewH) newY = viewH - elH;
+      if (newX < 0) newX = 0;
+      if (newY < 0) newY = 0;
+
+      const pos = { x: newX, y: newY };
+      positionRef.current = pos;
+      setPosition(pos);
+    };
+
+    const handleMouseUp = () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  }, []);
+
   const style: React.CSSProperties = {
     width: localWidth != null ? localWidth + 'px' : serverWidth,
     ...(localHeight != null
@@ -117,7 +163,10 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
       : serverHeight != null
         ? { height: serverHeight }
         : {}),
-    maxHeight: '80vh',
+    maxHeight: position ? '100vh' : '80vh',
+    ...(position
+      ? { position: 'absolute' as const, left: position.x + 'px', top: position.y + 'px' }
+      : {}),
   };
 
   const titleId = controlId + '-title';
@@ -132,7 +181,7 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
       aria-modal="true"
       aria-labelledby={titleId}
     >
-      <div className="tlWindow__header">
+      <div className="tlWindow__header" onMouseDown={handleTitleMouseDown}>
         <span className="tlWindow__title" id={titleId}>{title}</span>
         {toolbarButtons.length > 0 && (
           <div className="tlWindow__toolbar">

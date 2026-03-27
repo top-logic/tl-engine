@@ -1616,6 +1616,12 @@ button.tlBottomBar__item:hover {
 	padding: var(--spacing-04);
 	border-bottom: 1px solid var(--border-subtle);
 	flex-shrink: 0;
+	cursor: grab;
+	user-select: none;
+}
+
+.tlWindow__header:active {
+	cursor: grabbing;
 }
 
 .tlWindow__title {

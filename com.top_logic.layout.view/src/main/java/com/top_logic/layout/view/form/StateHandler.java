@@ -23,5 +23,4 @@ package com.top_logic.layout.view.form;
  */
 public interface StateHandler extends com.top_logic.layout.react.dirty.StateHandler {
 	// Pure marker extension for backward compatibility.
-	// All methods inherited from com.top_logic.layout.react.dirty.StateHandler.
 }

@@ -6,11 +6,13 @@
 package com.top_logic.layout.react.control.tree;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
@@ -50,6 +52,15 @@ public class ReactTreeControl extends ReactControl {
 
 	/** @see #handleDragOver(Map) */
 	private static final String DROP_INDICATOR_POSITION = "dropIndicatorPosition";
+
+	/** @see #openContextMenu(List, Consumer, int, int) */
+	private static final String CONTEXT_MENU = "contextMenu";
+
+	/** @see #openContextMenu(List, Consumer, int, int) */
+	private static final String CONTEXT_MENU_X = "contextMenuX";
+
+	/** @see #openContextMenu(List, Consumer, int, int) */
+	private static final String CONTEXT_MENU_Y = "contextMenuY";
 
 	// -- Node state keys (used in {@link #addNodeState}) --
 
@@ -123,6 +134,9 @@ public class ReactTreeControl extends ReactControl {
 
 	/** The current drop position indicator. */
 	private String _dropIndicatorPosition;
+
+	/** The handler for the currently open context menu, or {@code null}. */
+	private Consumer<String> _contextMenuActionHandler;
 
 	/** Index into the flat visible node list of the last anchor-setting click, or -1. */
 	private int _selectionAnchor = -1;
@@ -213,6 +227,41 @@ public class ReactTreeControl extends ReactControl {
 	 */
 	public void setContextMenuProvider(ContextMenuProvider provider) {
 		_contextMenuProvider = provider;
+	}
+
+	/**
+	 * Opens a coordinate-positioned context menu on the tree.
+	 *
+	 * <p>
+	 * Pushes the menu items, position, and open flag as state so that the client-side tree
+	 * component renders the context menu. When the user selects an item, the
+	 * {@code contextMenuAction} command is dispatched and the given {@code actionHandler} is
+	 * called with the selected item ID.
+	 * </p>
+	 *
+	 * @param items
+	 *        The menu items as list of maps. Each map should have at least {@code "id"} and
+	 *        {@code "label"}. Optional keys: {@code "icon"}, {@code "disabled"}.
+	 * @param actionHandler
+	 *        Called with the selected item ID.
+	 * @param x
+	 *        The client X coordinate.
+	 * @param y
+	 *        The client Y coordinate.
+	 */
+	public void openContextMenu(List<Map<String, Object>> items, Consumer<String> actionHandler, int x, int y) {
+		_contextMenuActionHandler = actionHandler;
+		putState(CONTEXT_MENU, items);
+		putState(CONTEXT_MENU_X, Integer.valueOf(x));
+		putState(CONTEXT_MENU_Y, Integer.valueOf(y));
+	}
+
+	/**
+	 * Closes the context menu.
+	 */
+	public void closeContextMenu() {
+		_contextMenuActionHandler = null;
+		putState(CONTEXT_MENU, null);
 	}
 
 	/**
@@ -591,5 +640,26 @@ public class ReactTreeControl extends ReactControl {
 		_dropIndicatorPosition = null;
 		putState(DROP_INDICATOR_NODE_ID, null);
 		putState(DROP_INDICATOR_POSITION, null);
+	}
+
+	/**
+	 * Handles the selection of a context menu item.
+	 */
+	@ReactCommand("contextMenuAction")
+	void handleContextMenuAction(Map<String, Object> arguments) {
+		String itemId = (String) arguments.get("itemId");
+		Consumer<String> handler = _contextMenuActionHandler;
+		closeContextMenu();
+		if (handler != null && itemId != null) {
+			handler.accept(itemId);
+		}
+	}
+
+	/**
+	 * Handles the context menu being closed without selection.
+	 */
+	@ReactCommand("contextMenuClose")
+	void handleContextMenuClose() {
+		closeContextMenu();
 	}
 }

@@ -7,7 +7,9 @@ package com.top_logic.layout.view.designer;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
@@ -130,7 +132,14 @@ public class DesignerTreeElement implements UIElement {
 			});
 		}
 
-		// 6. Listen on the input channel for root changes (e.g. after Revert) and rebuild tree.
+		// 6. Wire context menu for structural editing commands.
+		ChannelRef selRefForMenu = _config.getSelection();
+		ViewChannel selChannelForMenu = selRefForMenu != null ? context.resolveChannel(selRefForMenu) : null;
+		treeControl.setContextMenuProvider(
+			(tree, node, x, y) -> openDesignContextMenu(tree, node, x, y, builder, selectionModel,
+				selChannelForMenu, inputChannel));
+
+		// 7. Listen on the input channel for root changes (e.g. after Revert) and rebuild tree.
 		inputChannel.addListener((sender, oldValue, newValue) -> {
 			if (newValue instanceof DesignTreeNode newRoot) {
 				DefaultTreeUINodeModel newTreeModel = new DefaultTreeUINodeModel(builder, newRoot);
@@ -139,6 +148,106 @@ public class DesignerTreeElement implements UIElement {
 		});
 
 		return treeControl;
+	}
+
+	private static final String CMD_ADD_CHILD = "addChild";
+
+	private static final String CMD_REMOVE = "remove";
+
+	private static final String CMD_MOVE_UP = "moveUp";
+
+	private static final String CMD_MOVE_DOWN = "moveDown";
+
+	/**
+	 * Opens a context menu with structural editing commands for the given tree node.
+	 */
+	private void openDesignContextMenu(ReactTreeControl tree, Object node, int x, int y,
+			TreeBuilder<DefaultTreeUINode> builder,
+			DefaultSingleSelectionModel<Object> selectionModel,
+			ViewChannel selectionChannel, ViewChannel inputChannel) {
+
+		DesignTreeNode designNode;
+		if (node instanceof DefaultTreeUINode treeNode) {
+			Object bo = treeNode.getBusinessObject();
+			if (bo instanceof DesignTreeNode dn) {
+				designNode = dn;
+			} else {
+				return;
+			}
+		} else {
+			return;
+		}
+
+		// Build menu items based on what operations are possible.
+		List<Map<String, Object>> items = new ArrayList<>();
+
+		if (AddChildCommand.canExecute(designNode)) {
+			items.add(menuItem(CMD_ADD_CHILD, "Add Child"));
+		}
+
+		if (RemoveElementCommand.canExecute(designNode)) {
+			items.add(menuItem(CMD_REMOVE, "Remove"));
+		}
+
+		if (MoveElementCommand.canExecute(designNode, MoveElementCommand.Direction.UP)) {
+			items.add(menuItem(CMD_MOVE_UP, "Move Up"));
+		}
+
+		if (MoveElementCommand.canExecute(designNode, MoveElementCommand.Direction.DOWN)) {
+			items.add(menuItem(CMD_MOVE_DOWN, "Move Down"));
+		}
+
+		if (items.isEmpty()) {
+			return;
+		}
+
+		tree.openContextMenu(items, itemId -> {
+			handleContextMenuAction(itemId, designNode, tree, builder, selectionModel, selectionChannel,
+				inputChannel);
+		}, x, y);
+	}
+
+	/**
+	 * Handles the selection of a context menu item.
+	 */
+	private void handleContextMenuAction(String itemId, DesignTreeNode designNode, ReactTreeControl tree,
+			TreeBuilder<DefaultTreeUINode> builder,
+			DefaultSingleSelectionModel<Object> selectionModel,
+			ViewChannel selectionChannel, ViewChannel inputChannel) {
+
+		switch (itemId) {
+			case CMD_ADD_CHILD:
+				AddChildCommand.execute(designNode);
+				break;
+			case CMD_REMOVE:
+				RemoveElementCommand.execute(designNode);
+				// Clear selection since the removed node is no longer valid.
+				selectionModel.clear();
+				if (selectionChannel != null) {
+					selectionChannel.set(null);
+				}
+				break;
+			case CMD_MOVE_UP:
+				MoveElementCommand.execute(designNode, MoveElementCommand.Direction.UP);
+				break;
+			case CMD_MOVE_DOWN:
+				MoveElementCommand.execute(designNode, MoveElementCommand.Direction.DOWN);
+				break;
+			default:
+				return;
+		}
+
+		// Rebuild the tree model from the (modified) root DesignTreeNode.
+		DesignTreeNode root = (DesignTreeNode) inputChannel.get();
+		DefaultTreeUINodeModel newTreeModel = new DefaultTreeUINodeModel(builder, root);
+		tree.setTreeModel(newTreeModel);
+	}
+
+	private static Map<String, Object> menuItem(String id, String label) {
+		Map<String, Object> item = new HashMap<>();
+		item.put("id", id);
+		item.put("label", label);
+		return item;
 	}
 
 	private TreeBuilder<DefaultTreeUINode> createTreeBuilder() {

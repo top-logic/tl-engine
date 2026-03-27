@@ -77,7 +77,7 @@ import com.top_logic.react.flow.data.TreeConnector;
 import com.top_logic.react.flow.data.TreeLayout;
 import com.top_logic.react.flow.data.VerticalLayout;
 import com.top_logic.react.flow.server.ui.AWTContext;
-import com.top_logic.react.flow.server.ui.handler.ServerDropHandler;
+import com.top_logic.react.flow.server.handler.ServerDropHandler;
 import com.top_logic.model.search.expr.ToString;
 import com.top_logic.model.search.expr.config.operations.ScriptConversion;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;

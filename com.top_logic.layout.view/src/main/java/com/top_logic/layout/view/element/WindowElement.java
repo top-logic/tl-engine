@@ -24,6 +24,7 @@ import com.top_logic.layout.react.control.ToolbarControl;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.control.overlay.DialogResult;
 import com.top_logic.layout.react.control.overlay.ReactWindowControl;
+import com.top_logic.layout.table.ConfigKey;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.util.Resources;
@@ -157,7 +158,8 @@ public class WindowElement extends CommandScopeElement {
 		DisplayDimension width = parseWidth(_width);
 		String title = _title != null ? Resources.getInstance().getString(_title) : "";
 
-		ReactWindowControl window = new ReactWindowControl(context, title, width, closeHandler);
+		ConfigKey configKey = ConfigKey.named(context.getPersonalizationKey());
+		ReactWindowControl window = new ReactWindowControl(context, title, width, closeHandler, configKey);
 		window.setResizable(_resizable);
 		window.setChild(content);
 

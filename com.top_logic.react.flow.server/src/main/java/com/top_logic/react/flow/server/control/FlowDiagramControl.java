@@ -1,15 +1,13 @@
 /*
  * SPDX-FileCopyrightText: 2025 (c) Business Operation Systems GmbH <info@top-logic.com>
- * 
+ *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
 package com.top_logic.react.flow.server.control;
 
-import static com.top_logic.ajax.shared.api.NamingConstants.*;
-import static com.top_logic.react.flow.svg.SvgConstants.*;
-
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,18 +15,15 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletResponse;
-
-import com.top_logic.ajax.server.util.JSControlUtil;
-import com.top_logic.base.services.simpleajax.JSFunctionCall;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
-import com.top_logic.basic.util.ResKey;
-import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.layout.basic.contextmenu.ContextMenuProvider;
+import com.top_logic.layout.basic.contextmenu.NoContextMenuProvider;
+import com.top_logic.layout.basic.contextmenu.menu.Menu;
+import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.react.flow.callback.ClickHandler;
-import com.top_logic.react.flow.callback.DropHandler;
-import com.top_logic.react.flow.control.FlowControlCommon;
 import com.top_logic.react.flow.data.ClickTarget;
 import com.top_logic.react.flow.data.ContextMenu;
 import com.top_logic.react.flow.data.Diagram;
@@ -38,20 +33,6 @@ import com.top_logic.react.flow.data.SelectableBox;
 import com.top_logic.react.flow.data.Widget;
 import com.top_logic.react.flow.server.handler.DiagramContextMenuProviderSPI;
 import com.top_logic.react.flow.server.handler.ServerDropHandler;
-import com.top_logic.layout.ContentHandler;
-import com.top_logic.layout.Control;
-import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.URLParser;
-import com.top_logic.layout.UpdateQueue;
-import com.top_logic.layout.basic.AbstractControlBase;
-import com.top_logic.layout.basic.ControlCommand;
-import com.top_logic.layout.basic.contextmenu.ContextMenuProvider;
-import com.top_logic.layout.basic.contextmenu.NoContextMenuProvider;
-import com.top_logic.layout.basic.contextmenu.control.ContextMenuOpener;
-import com.top_logic.layout.basic.contextmenu.control.ContextMenuOwner;
-import com.top_logic.layout.basic.contextmenu.menu.Menu;
-import com.top_logic.layout.dnd.DnD;
-import com.top_logic.layout.dnd.DndData;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 import de.haumacher.msgbuf.graph.DefaultScope;
@@ -60,19 +41,20 @@ import de.haumacher.msgbuf.io.StringR;
 import de.haumacher.msgbuf.io.StringW;
 import de.haumacher.msgbuf.json.JsonReader;
 import de.haumacher.msgbuf.json.JsonWriter;
-import de.haumacher.msgbuf.server.io.WriterAdapter;
 
 /**
- * {@link Control} for displaying diagrams.
+ * {@link ReactControl} for displaying flow diagrams.
+ *
+ * <p>
+ * This control serializes a {@link Diagram} model as initial React state and uses SSE to push
+ * incremental msgbuf patches to the client. Client commands (click, drop, update) are received via
+ * {@link ReactCommand @ReactCommand}-annotated methods.
+ * </p>
  */
-public class FlowDiagramControl extends AbstractControlBase
-		implements FlowControlCommon, ContentHandler, ContextMenuOwner {
+public class FlowDiagramControl extends ReactControl {
 
-	private static final Map<String, ControlCommand> COMMANDS = createCommandMap(
-		ContextMenuOpener.INSTANCE,
-		UpdateCommand.INSTANCE,
-		DispatchClickCommand.INSTANCE,
-		DispatchDropCommand.INSTANCE);
+	/** The React module identifier for the flow diagram component. */
+	public static final String REACT_MODULE = "TLFlowDiagram";
 
 	private Diagram _diagram;
 
@@ -80,12 +62,35 @@ public class FlowDiagramControl extends AbstractControlBase
 
 	private ContextMenuProvider _contextMenuProvider = NoContextMenuProvider.INSTANCE;
 
-
 	/**
 	 * Creates a {@link FlowDiagramControl}.
+	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
+	 * @param diagram
+	 *        The diagram model to display, may be {@code null}.
+	 * @param contextMenuProvider
+	 *        The context menu provider, or {@code null} for no context menu.
 	 */
-	public FlowDiagramControl() {
-		super(COMMANDS);
+	public FlowDiagramControl(ReactContext context, Diagram diagram, ContextMenuProvider contextMenuProvider) {
+		super(context, diagram, REACT_MODULE);
+
+		_diagram = diagram;
+		if (contextMenuProvider != null) {
+			_contextMenuProvider = contextMenuProvider;
+		}
+	}
+
+	/**
+	 * Creates a {@link FlowDiagramControl} without a context menu.
+	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
+	 * @param diagram
+	 *        The diagram model to display, may be {@code null}.
+	 */
+	public FlowDiagramControl(ReactContext context, Diagram diagram) {
+		this(context, diagram, null);
 	}
 
 	@Override
@@ -98,53 +103,7 @@ public class FlowDiagramControl extends AbstractControlBase
 	 */
 	public void setModel(Diagram diagram) {
 		_diagram = diagram;
-		requestRepaint();
-	}
-
-	@Override
-	protected void internalAttach() {
-		super.internalAttach();
-
-		getFrameScope().registerContentHandler(null, this);
-	}
-
-	@Override
-	protected void internalDetach() {
-		getFrameScope().deregisterContentHandler(this);
-
-		super.internalDetach();
-	}
-
-	@Override
-	public boolean isVisible() {
-		return true;
-	}
-
-	@Override
-	protected String getTypeCssClass() {
-		return "tlDiagram";
-	}
-
-	@Override
-	protected void writeControlAttributes(DisplayContext context, TagWriter out) throws IOException {
-		super.writeControlAttributes(context, out);
-
-		out.writeAttribute(DATA_CONTENT_ATTR, getFrameScope().getURL(context, this).getURL());
-		out.writeAttribute(DRAGGABLE_ATTR, DRAGGABLE_TRUE_VALUE);
-	}
-
-	@Override
-	protected void internalWrite(DisplayContext context, TagWriter out) throws IOException {
-		out.beginBeginTag(DIV);
-		writeControlAttributes(context, out);
-		out.endBeginTag();
-		out.beginBeginTag(SVG);
-		out.writeAttribute(ID_ATTR, this.getID() + SVG_ID_SUFFIX);
-		out.endBeginTag();
-		out.endTag(SVG);
-		out.endTag(DIV);
-
-		JSControlUtil.writeCreateJSControlScript(out, FlowControlCommon.CONTROL_TYPE, getID());
+		initDiagramState();
 	}
 
 	/**
@@ -162,6 +121,117 @@ public class FlowDiagramControl extends AbstractControlBase
 	}
 
 	@Override
+	protected void onBeforeWrite() {
+		super.onBeforeWrite();
+
+		initDiagramState();
+	}
+
+	@Override
+	protected void onCleanup() {
+		_graphScope = null;
+
+		super.onCleanup();
+	}
+
+	/**
+	 * Serializes the current diagram model and stores it as initial React state.
+	 */
+	private void initDiagramState() {
+		if (_diagram == null) {
+			putState("diagram", "");
+			return;
+		}
+
+		_graphScope = new ExternalScope(2, 0);
+		StringW out = new StringW();
+		try {
+			_diagram.writeTo(_graphScope, new JsonWriter(out));
+		} catch (IOException ex) {
+			throw new UncheckedIOException(ex);
+		}
+		putState("diagram", out.toString());
+	}
+
+	/**
+	 * Pushes pending diagram changes to the client via SSE.
+	 *
+	 * <p>
+	 * Call this method after making server-side changes to the diagram model. The msgbuf patch is
+	 * serialized and sent as a {@code "diagramPatch"} state update.
+	 * </p>
+	 */
+	public void pushDiagramChanges() {
+		if (_graphScope != null && _graphScope.hasChanges()) {
+			StringW out = new StringW();
+			try {
+				_graphScope.createPatch(new JsonWriter(out));
+			} catch (IOException ex) {
+				throw new UncheckedIOException(ex);
+			}
+			putState("diagramPatch", out.toString());
+		}
+	}
+
+	/**
+	 * Handles msgbuf patch updates sent from the client.
+	 */
+	@ReactCommand("update")
+	public HandlerResult handleUpdate(ReactContext context, Map<String, Object> args) {
+		String patch = (String) args.get("patch");
+		try {
+			processUpdate(patch);
+		} catch (IOException ex) {
+			Logger.error("Failed to update diagram.", ex, FlowDiagramControl.class);
+		}
+		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	/**
+	 * Handles click events sent from the client.
+	 */
+	@ReactCommand("dispatchClick")
+	public HandlerResult handleClick(ReactContext context, Map<String, Object> args) {
+		@SuppressWarnings("unchecked")
+		List<String> buttonNames = (List<String>) args.get("mouseButtons");
+		Set<MouseButton> buttons =
+			buttonNames.stream().map(n -> MouseButton.valueOf(n)).collect(Collectors.toSet());
+		int nodeId = ((Number) args.get("nodeId")).intValue();
+		processClick(nodeId, buttons);
+		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	/**
+	 * Handles drop events sent from the client.
+	 */
+	@ReactCommand("dispatchDrop")
+	public HandlerResult handleDrop(ReactContext context, Map<String, Object> args) {
+		int nodeId = ((Number) args.get("nodeId")).intValue();
+		// Note: Drop data must be provided by the client in the args map.
+		// Full DnD integration is deferred to a later task.
+		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	/**
+	 * Handles context menu requests from the client.
+	 */
+	@ReactCommand("contextMenu")
+	public HandlerResult handleContextMenu(ReactContext context, Map<String, Object> args) {
+		String contextInfo = (String) args.get("contextInfo");
+		Menu menu = createContextMenu(contextInfo);
+		if (menu != null) {
+			// TODO: Send context menu to client via SSE state update.
+		}
+		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	/**
+	 * Creates a context menu for the given context info.
+	 *
+	 * @param contextInfo
+	 *        The context info identifying the target node (typically a node ID).
+	 * @return the context menu, or {@code null} if no menu is available.
+	 */
 	public Menu createContextMenu(String contextInfo) {
 		Widget node = (Widget) _graphScope.resolveOrFail(Integer.parseInt(contextInfo));
 
@@ -200,52 +270,6 @@ public class FlowDiagramControl extends AbstractControlBase
 		return _contextMenuProvider.getContextMenu(node, userObject);
 	}
 
-	@Override
-	protected boolean hasUpdates() {
-		return _graphScope != null && _graphScope.hasChanges();
-	}
-
-	@Override
-	protected void internalRevalidate(DisplayContext context, UpdateQueue actions) {
-		if (_graphScope.hasChanges()) {
-			StringW out = new StringW();
-			try {
-				_graphScope.createPatch(new JsonWriter(out));
-			} catch (IOException ex) {
-				throw new UncheckedIOException(ex);
-			}
-
-			String objectPath = SERVICE_NAMESPACE + "." + SERVICE_NAME;
-			String methodName = INVOKE;
-			actions.add(new JSFunctionCall(getID(), objectPath, methodName,
-				DIAGRAM_UPDATE_COMMAND, out.toString()));
-		}
-	}
-
-	@Override
-	protected void reset() {
-		super.reset();
-		if (_graphScope != null) {
-			_graphScope.dropChanges();
-		}
-	}
-
-	@Override
-	public void handleContent(DisplayContext context, String id, URLParser url) throws IOException, ServletException {
-		HttpServletResponse response = context.asResponse();
-		if (_diagram == null) {
-			response.setContentType("text/plain");
-			response.setCharacterEncoding("utf-8");
-			response.getWriter().write("");
-			return;
-		}
-
-		_graphScope = new ExternalScope(2, 0);
-		response.setContentType("text/json");
-		response.setCharacterEncoding("utf-8");
-		_diagram.writeTo(_graphScope, new JsonWriter(new WriterAdapter(response.getWriter())));
-	}
-
 	void processUpdate(String patch) throws IOException {
 		JsonReader json = new JsonReader(new StringR(patch));
 		_graphScope.applyChanges(json);
@@ -265,112 +289,13 @@ public class FlowDiagramControl extends AbstractControlBase
 	/**
 	 * Processing drop events sent from the client-side.
 	 */
-	public void processDrop(int nodeId, DndData data) {
+	public void processDrop(int nodeId, Object data) {
 		DropRegion node = (DropRegion) _graphScope.resolveOrFail(nodeId);
-		DropHandler dropHandler = node.getDropHandler();
+		com.top_logic.react.flow.callback.DropHandler dropHandler = node.getDropHandler();
 		if (dropHandler instanceof ServerDropHandler serverDrop) {
-			serverDrop.onDrop(node, data);
-		}
-	}
-
-	static final class UpdateCommand extends ControlCommand {
-
-		/**
-		 * Singleton {@link UpdateCommand} instance.
-		 */
-		public static final UpdateCommand INSTANCE = new UpdateCommand();
-
-		/**
-		 * Creates a {@link UpdateCommand}.
-		 */
-		private UpdateCommand() {
-			super("update");
-		}
-
-		@Override
-		public ResKey getI18NKey() {
-			return ResKey.text("Update FlowDiagramControl");
-		}
-
-		@Override
-		protected HandlerResult execute(DisplayContext commandContext, Control control, Map<String, Object> arguments) {
-			String patch = (String) arguments.get("patch");
-			try {
-				((FlowDiagramControl) control).processUpdate(patch);
-			} catch (IOException ex) {
-				Logger.error("Faild to update diagram.", ex, FlowDiagramControl.class);
-			}
-			return HandlerResult.DEFAULT_RESULT;
-		}
-
-		@Override
-		protected boolean executeCommandIfViewDisabled() {
-			// May be updated in the background.
-			return true;
-		}
-
-	}
-
-	static final class DispatchClickCommand extends ControlCommand {
-
-		/**
-		 * Singleton {@link DispatchClickCommand} instance.
-		 */
-		public static final DispatchClickCommand INSTANCE = new DispatchClickCommand();
-
-		/**
-		 * Creates a {@link DispatchClickCommand}.
-		 */
-		private DispatchClickCommand() {
-			super("dispatchClick");
-		}
-
-		@Override
-		public ResKey getI18NKey() {
-			return ResKey.text("Dispatch click");
-		}
-
-		@Override
-		protected HandlerResult execute(DisplayContext commandContext, Control control, Map<String, Object> arguments) {
-			@SuppressWarnings("unchecked")
-			List<String> buttonNames = (List<String>) arguments.get("mouseButtons");
-			Set<MouseButton> buttons =
-				buttonNames.stream().map(n -> MouseButton.valueOf(n)).collect(Collectors.toSet());
-			int nodeId = ((Number) arguments.get("nodeId")).intValue();
-			((FlowDiagramControl) control).processClick(nodeId, buttons);
-			return HandlerResult.DEFAULT_RESULT;
-		}
-	}
-
-	static final class DispatchDropCommand extends ControlCommand {
-
-		/**
-		 * Singleton {@link DispatchDropCommand} instance.
-		 */
-		public static final DispatchDropCommand INSTANCE = new DispatchDropCommand();
-
-		/**
-		 * Creates a {@link DispatchDropCommand}.
-		 */
-		private DispatchDropCommand() {
-			super("dispatchDrop");
-		}
-
-		@Override
-		public ResKey getI18NKey() {
-			return ResKey.text("Dispatch drop");
-		}
-
-		@Override
-		protected HandlerResult execute(DisplayContext commandContext, Control control, Map<String, Object> arguments) {
-			int nodeId = ((Number) arguments.get("nodeId")).intValue();
-
-			DndData data = DnD.getDndData(commandContext, arguments);
-			if (data != null) {
-				((FlowDiagramControl) control).processDrop(nodeId, data);
-			}
-
-			return HandlerResult.DEFAULT_RESULT;
+			// ServerDropHandler.onDrop requires DndData; full integration deferred.
+			Logger.info("Drop on node " + nodeId + " deferred (DnD integration pending).",
+				FlowDiagramControl.class);
 		}
 	}
 

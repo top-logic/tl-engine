@@ -30,13 +30,13 @@ import com.top_logic.react.flow.data.Diagram;
 import com.top_logic.react.flow.data.SelectableBox;
 import com.top_logic.react.flow.data.Widget;
 import com.top_logic.react.flow.server.control.FlowDiagramControl;
-import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.ModelSpec;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.DirtyHandling;
 import com.top_logic.layout.basic.check.ChangeHandler;
 import com.top_logic.layout.basic.check.MasterSlaveCheckProvider;
+import com.top_logic.layout.basic.contextmenu.ContextMenuProvider;
 import com.top_logic.layout.basic.contextmenu.component.ContextMenuFactory;
 import com.top_logic.layout.basic.contextmenu.component.factory.SelectableContextMenuFactory;
 import com.top_logic.layout.channel.ChannelSPI;
@@ -47,9 +47,9 @@ import com.top_logic.layout.component.Selectable;
 import com.top_logic.layout.component.SelectableWithSelectionModel;
 import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.scripting.action.SelectAction.SelectionChangeKind;
 import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
-import com.top_logic.layout.structure.ControlRepresentable;
 import com.top_logic.layout.structure.DialogWindowControl;
 import com.top_logic.layout.table.component.BuilderComponent;
 import com.top_logic.mig.html.SelectionModel;
@@ -66,7 +66,7 @@ import de.haumacher.msgbuf.observer.Observable;
  * {@link LayoutComponent} displaying a flow chart.
  */
 public class FlowChartComponent extends BuilderComponent
-		implements SelectableWithSelectionModel, ControlRepresentable {
+		implements SelectableWithSelectionModel {
 
 	/**
 	 * Channels provided by {@link FlowChartComponent}.
@@ -76,7 +76,9 @@ public class FlowChartComponent extends BuilderComponent
 			Selectable.MODEL_AND_SELECTION_CHANNEL,
 			DiagramChannel.INSTANCE);
 
-	private FlowDiagramControl _control = new FlowDiagramControl();
+	private FlowDiagramControl _control;
+
+	private ContextMenuProvider _contextMenuProvider;
 
 	/**
 	 * User object of {@link SelectableBox} nodes mapped the box for updating the UI selection, if
@@ -286,7 +288,7 @@ public class FlowChartComponent extends BuilderComponent
 		_selectionModel = createSelectionModel(config);
 
 		ContextMenuFactory contextMenuFactory = context.getInstance(config.getContextMenuFactory());
-		_control.setContextMenuProvider(contextMenuFactory.createContextMenuProvider(this));
+		_contextMenuProvider = contextMenuFactory.createContextMenuProvider(this);
 	}
 
 	private SelectionModel createSelectionModel(Config config) {
@@ -323,7 +325,7 @@ public class FlowChartComponent extends BuilderComponent
 	protected void handleNewModel(Object newModel) {
 		super.handleNewModel(newModel);
 
-		Diagram before = _control.getModel();
+		Diagram before = _control != null ? _control.getModel() : null;
 		if (before != null) {
 			before.unregisterListener(_processUISelection);
 		}
@@ -372,14 +374,31 @@ public class FlowChartComponent extends BuilderComponent
 			_selectionModel.clear();
 		}
 
-		_control.setModel(diagram);
+		if (_control != null) {
+			_control.setModel(diagram);
+		}
 
 		// Update the diagram channel
 		diagramChannel().set(diagram);
 	}
 
-	@Override
-	public Control getRenderingControl() {
+	/**
+	 * Creates the {@link FlowDiagramControl} for the given {@link ReactContext}.
+	 *
+	 * @param context
+	 *        The React context for control creation.
+	 * @return The control, never {@code null}.
+	 */
+	public FlowDiagramControl createControl(ReactContext context) {
+		Diagram diagram = _control != null ? _control.getModel() : null;
+		_control = new FlowDiagramControl(context, diagram, _contextMenuProvider);
+		return _control;
+	}
+
+	/**
+	 * The current {@link FlowDiagramControl}, or {@code null} if not yet created.
+	 */
+	public FlowDiagramControl getControl() {
 		return _control;
 	}
 
@@ -481,6 +500,9 @@ public class FlowChartComponent extends BuilderComponent
 	}
 
 	void updateUISelection(Set<?> newSelection) {
+		if (_control == null || _control.getModel() == null) {
+			return;
+		}
 		HashSet<Object> newlySelected = new HashSet<>(newSelection);
 		List<SelectableBox> uiSelection = _control.getModel().getSelection();
 		for (int n = uiSelection.size() - 1; n >= 0; n--) {

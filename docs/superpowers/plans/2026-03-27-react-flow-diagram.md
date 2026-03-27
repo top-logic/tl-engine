@@ -43,8 +43,9 @@ com.top_logic.react.flow.common/
       FlowControlCommon.java                        — shared command constants (NEW)
     com/top_logic/react/flow/svg/
       SvgWriter.java, RenderContext.java, etc.      — SVG infrastructure (copied)
-    META-INF/
-      web-fragment.xml
+  src/main/webapp/WEB-INF/conf/
+    metaConf.txt                                    — references tl-react-flow-common.conf.xml
+    tl-react-flow-common.conf.xml                   — module configuration (if needed)
 ```
 
 ### Module: com.top_logic.react.flow.server
@@ -75,9 +76,8 @@ com.top_logic.react.flow.server/
       ServerDropHandler.java                        — drop base class (copied)
     com/top_logic/react/flow/server/svg/
       SvgTagWriter.java                             — server SVG rendering (copied)
-    META-INF/
-      web-fragment.xml
   src/main/webapp/WEB-INF/conf/
+    metaConf.txt                                    — references tl-react-flow-server.config.xml
     tl-react-flow-server.config.xml                 — module configuration
 ```
 
@@ -105,8 +105,6 @@ com.top_logic.react.flow.client/
       StateListener.java                            — callback interface (NEW)
     com/top_logic/react/flow/client/dom/
       DOMUtil.java                                  — DOM helpers (copied)
-    META-INF/
-      web-fragment.xml
   src/main/typescript/
     TLFlowDiagram.tsx                               — minimal React lifecycle wrapper (NEW)
     vite.config.ts                                  — Vite build config (NEW)
@@ -219,11 +217,17 @@ Add to the `<modules>` section:
 <module>../com.top_logic.react.flow.client</module>
 ```
 
-- [ ] **Step 5: Create version.properties and web-fragment.xml for each module**
+- [ ] **Step 5: Create version.properties and metaConf.txt for each module**
 
-Follow the pattern from existing modules. Each module needs:
+Each module needs:
 - `src/main/java/com/top_logic/react/flow/[common|server|client]/version.properties`
-- `src/main/java/META-INF/web-fragment.xml` (in .server and .client)
+
+Modules with webapp configuration need:
+- `src/main/webapp/WEB-INF/conf/metaConf.txt` — listing the `.conf.xml` files
+- `src/main/webapp/WEB-INF/conf/tl-react-flow-<module>.conf.xml` — module configuration
+
+No `web-fragment.xml` is needed — there are no new servlets. The React infrastructure
+(`/react-api/command`, `/react-api/events`) already provides all endpoints.
 
 - [ ] **Step 6: Verify build**
 

@@ -60,6 +60,7 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
     startY: number;
     startW: number;
     startH: number;
+    startPos: { x: number; y: number };
   } | null>(null);
 
   const handleClose = useCallback(() => {
@@ -77,6 +78,7 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
       startY: e.clientY,
       startW: rect.width,
       startH: rect.height,
+      startPos: positionRef.current ? { ...positionRef.current } : { x: rect.left, y: rect.top },
     };
 
     const handleMouseMove = (ev: MouseEvent) => {
@@ -86,16 +88,37 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
       const dy = ev.clientY - ds.startY;
       let w = ds.startW;
       let h = ds.startH;
+
+      // Calculate position deltas for N/W handles.
+      let posXDelta = 0;
+      let posYDelta = 0;
+
       if (ds.dir.includes('e')) w = ds.startW + dx;
-      if (ds.dir.includes('w')) w = ds.startW - dx;
+      if (ds.dir.includes('w')) { w = ds.startW - dx; posXDelta = dx; }
       if (ds.dir.includes('s')) h = ds.startH + dy;
-      if (ds.dir.includes('n')) h = ds.startH - dy;
+      if (ds.dir.includes('n')) { h = ds.startH - dy; posYDelta = dy; }
+
       const newW = Math.max(200, w);
       const newH = Math.max(100, h);
+
+      // Clamp position deltas if size hit minimum.
+      if (ds.dir.includes('w') && newW === 200) posXDelta = ds.startW - 200;
+      if (ds.dir.includes('n') && newH === 100) posYDelta = ds.startH - 100;
+
       localWidthRef.current = newW;
       localHeightRef.current = newH;
       setLocalWidth(newW);
       setLocalHeight(newH);
+
+      // Update position when resizing from N/W edge.
+      if (posXDelta !== 0 || posYDelta !== 0) {
+        const newPos = {
+          x: ds.startPos.x + posXDelta,
+          y: ds.startPos.y + posYDelta,
+        };
+        positionRef.current = newPos;
+        setPosition(newPos);
+      }
     };
 
     const handleMouseUp = () => {

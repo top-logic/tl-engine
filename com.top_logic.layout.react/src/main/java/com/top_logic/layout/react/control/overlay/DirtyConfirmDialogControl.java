@@ -9,11 +9,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.top_logic.layout.DisplayDimension;
-import com.top_logic.layout.messagebox.MessageBox.ButtonType;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.MessageButtons;
-import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.react.control.table.ReactTextCellControl;
 import com.top_logic.layout.react.dirty.StateHandler;
@@ -71,42 +69,32 @@ public class DirtyConfirmDialogControl {
 			DisplayDimension.px(420), closeHandler);
 		window.setChild(body);
 
-		String saveLabel = resources.getString(I18NConstants.DIRTY_CONFIRM_SAVE);
-		String discardLabel = resources.getString(I18NConstants.DIRTY_CONFIRM_DISCARD);
-		String cancelLabel = resources.getString(I18NConstants.DIRTY_CONFIRM_CANCEL);
-
 		// Footer action buttons using MessageButtons for consistent icons.
 		List<ReactControl> actions = new ArrayList<>();
 
-		ReactButtonControl cancelBtn = MessageButtons.button(context, ButtonType.CANCEL, ctx -> {
+		actions.add(MessageButtons.cancel(context, ctx -> {
 			dialogManager.closeTopDialog(DialogResult.cancelled());
 			return HandlerResult.DEFAULT_RESULT;
-		});
-		cancelBtn.setLabel(cancelLabel);
-		actions.add(cancelBtn);
+		}));
 
-		ReactButtonControl discardBtn = MessageButtons.button(context, ButtonType.NO, ctx -> {
+		actions.add(MessageButtons.discard(context, ctx -> {
 			for (StateHandler handler : dirtyHandlers) {
 				handler.executeDiscard();
 			}
 			dialogManager.closeTopDialog(DialogResult.ok(null));
 			continuation.run();
 			return HandlerResult.DEFAULT_RESULT;
-		});
-		discardBtn.setLabel(discardLabel);
-		actions.add(discardBtn);
+		}));
 
 		if (canSave) {
-			ReactButtonControl saveBtn = MessageButtons.button(context, ButtonType.OK, ctx -> {
+			actions.add(MessageButtons.save(context, ctx -> {
 				for (StateHandler handler : dirtyHandlers) {
 					handler.executeSave();
 				}
 				dialogManager.closeTopDialog(DialogResult.ok(null));
 				continuation.run();
 				return HandlerResult.DEFAULT_RESULT;
-			});
-			saveBtn.setLabel(saveLabel);
-			actions.add(saveBtn);
+			}));
 		}
 
 		window.setActions(actions);

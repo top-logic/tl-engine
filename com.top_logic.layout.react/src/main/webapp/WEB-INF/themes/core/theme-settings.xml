@@ -2,4 +2,12 @@
 
 <settings>
 	<!-- React bridge script is loaded via the theme system. -->
+
+	<!-- Icons for MessageButtons save/discard actions. -->
+	<icon name="com.top_logic.layout.react.control.button.Icons.BUTTON_SAVE"
+		expr="%ICONS_BUTTON_SAVE%"
+	/>
+	<icon name="com.top_logic.layout.react.control.button.Icons.BUTTON_DISCARD"
+		value="css:fa-solid fa-trash"
+	/>
 </settings>

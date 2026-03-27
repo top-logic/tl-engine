@@ -119,4 +119,36 @@ public class MessageButtons {
 	public static ReactButtonControl continueButton(ReactContext context, ButtonAction action) {
 		return button(context, ButtonType.CONTINUE, action);
 	}
+
+	/**
+	 * Creates a Save button (floppy disk icon).
+	 *
+	 * @param context
+	 *        The React context.
+	 * @param action
+	 *        The save action.
+	 * @return A new save button with standard label and icon.
+	 */
+	public static ReactButtonControl save(ReactContext context, ButtonAction action) {
+		String label = Resources.getInstance().getString(I18NConstants.BUTTON_SAVE);
+		ReactButtonControl button = new ReactButtonControl(context, label, action);
+		button.setImage(Icons.BUTTON_SAVE);
+		return button;
+	}
+
+	/**
+	 * Creates a Discard button (trash icon).
+	 *
+	 * @param context
+	 *        The React context.
+	 * @param action
+	 *        The discard action.
+	 * @return A new discard button with standard label and icon.
+	 */
+	public static ReactButtonControl discard(ReactContext context, ButtonAction action) {
+		String label = Resources.getInstance().getString(I18NConstants.BUTTON_DISCARD);
+		ReactButtonControl button = new ReactButtonControl(context, label, action);
+		button.setImage(Icons.BUTTON_DISCARD);
+		return button;
+	}
 }

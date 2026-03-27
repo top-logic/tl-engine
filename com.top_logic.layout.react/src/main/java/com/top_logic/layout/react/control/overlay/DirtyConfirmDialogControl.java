@@ -65,13 +65,8 @@ public class DirtyConfirmDialogControl {
 		}
 		ReactStackControl body = new ReactStackControl(context, bodyChildren);
 
-		// Close handler (cancel + rollback).
-		Runnable closeHandler = () -> {
-			dialogManager.closeTopDialog(DialogResult.cancelled());
-			if (rollback != null) {
-				rollback.run();
-			}
-		};
+		// Close handler for window X button — delegates to DialogManager (result handler does rollback).
+		Runnable closeHandler = () -> dialogManager.closeTopDialog(DialogResult.cancelled());
 
 		// Window chrome.
 		ReactWindowControl window = new ReactWindowControl(context, title,
@@ -83,9 +78,6 @@ public class DirtyConfirmDialogControl {
 
 		ReactButtonControl cancelBtn = new ReactButtonControl(context, cancelLabel, ctx -> {
 			dialogManager.closeTopDialog(DialogResult.cancelled());
-			if (rollback != null) {
-				rollback.run();
-			}
 			return HandlerResult.DEFAULT_RESULT;
 		});
 		actions.add(cancelBtn);
@@ -114,9 +106,12 @@ public class DirtyConfirmDialogControl {
 
 		window.setActions(actions);
 
-		// Open via DialogManager.
+		// Open via DialogManager. The result handler runs rollback on cancel — this covers ALL
+		// cancel paths: Cancel button, X button, Escape key, and backdrop click.
 		dialogManager.openDialog(false, window, result -> {
-			// Result handling done by button actions.
+			if (result.isCancelled() && rollback != null) {
+				rollback.run();
+			}
 		});
 	}
 }

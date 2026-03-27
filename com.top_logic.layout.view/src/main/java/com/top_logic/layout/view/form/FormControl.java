@@ -16,7 +16,9 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.I18NConstants;
+import com.top_logic.layout.view.channel.DirtyChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.channel.ViewChannel.VetoListener;
 import com.top_logic.element.meta.form.validation.FormValidationModel;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.form.ConstraintValidationListener;
@@ -42,7 +44,7 @@ import com.top_logic.util.error.TopLogicException;
  * listening field controls can switch to editable state.
  * </p>
  */
-public class FormControl extends ReactControl implements FormModel, ModelListener {
+public class FormControl extends ReactControl implements FormModel, ModelListener, StateHandler {
 
 	/** State key for the current edit mode. */
 	private static final String EDIT_MODE = "editMode";
@@ -81,6 +83,10 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	private final ViewChannel.ChannelListener _inputListener = this::handleInputChanged;
 
 	private final ViewChannel.ChannelListener _editModeListener = this::handleEditModeChannelChanged;
+
+	private VetoListener _inputVeto;
+
+	private DirtyChannel _scopeDirtyChannel;
 
 	/**
 	 * Guard flag to prevent re-entrant loops when publishing to and reacting from the edit mode
@@ -332,6 +338,11 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 		putState(EDIT_MODE, Boolean.TRUE);
 		updateEditModeChannel();
 
+		if (_inputChannel != null && _inputVeto == null) {
+			_inputVeto = (sender, oldVal, newVal) -> isDirty() ? this : null;
+			_inputChannel.addVetoListener(_inputVeto);
+		}
+
 		setupEditSession();
 	}
 
@@ -383,6 +394,7 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	/**
 	 * Saves changes (applies and exits edit mode).
 	 */
+	@Override
 	public void executeSave() {
 		if (!_editMode || _overlay == null) {
 			return;
@@ -482,6 +494,44 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 		if (_dirtyChannel != null) {
 			_dirtyChannel.set(Boolean.valueOf(dirty));
 		}
+		if (_scopeDirtyChannel != null) {
+			_scopeDirtyChannel.updateState(this, dirty);
+		}
+	}
+
+	// -- StateHandler --
+
+	@Override
+	public boolean isDirty() {
+		return _editMode && _overlay != null && (_overlay.isDirty() || hasParticipantChanges());
+	}
+
+	@Override
+	public boolean hasErrors() {
+		return _validationModel != null && !_validationModel.isValid();
+	}
+
+	@Override
+	public void executeDiscard() {
+		executeCancel();
+	}
+
+	@Override
+	public String getDescription() {
+		if (_currentObject != null) {
+			return String.valueOf(_currentObject);
+		}
+		return "Form";
+	}
+
+	/**
+	 * Sets the scope-level {@link DirtyChannel} that this form publishes its dirty state to.
+	 *
+	 * @param dirtyChannel
+	 *        The dirty channel of the enclosing scope (e.g. tab).
+	 */
+	public void setScopeDirtyChannel(DirtyChannel dirtyChannel) {
+		_scopeDirtyChannel = dirtyChannel;
 	}
 
 	/**
@@ -508,6 +558,10 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	}
 
 	private void exitEditMode() {
+		if (_inputVeto != null && _inputChannel != null) {
+			_inputChannel.removeVetoListener(_inputVeto);
+			_inputVeto = null;
+		}
 		_overlay = null;
 		_editMode = false;
 
@@ -589,6 +643,9 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 
 	@Override
 	protected void onCleanup() {
+		if (_scopeDirtyChannel != null) {
+			_scopeDirtyChannel.removeHandler(this);
+		}
 		if (_editMode) {
 			exitEditMode();
 		}

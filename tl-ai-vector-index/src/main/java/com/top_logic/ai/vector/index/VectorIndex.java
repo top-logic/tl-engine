@@ -890,7 +890,7 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 	 * @param query
 	 *        Search query text
 	 * @param objectType
-	 *        Vector search objectType
+	 *        Filter Vector index search results by provided object type in the TopLogic-type key
 	 * @param scoreThreshold
 	 *        Score threshold for the search - number between 0 and 1
 	 * @param limit

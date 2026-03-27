@@ -73,13 +73,22 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
     const el = windowRef.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
+
+    // Switch to absolute positioning immediately so the element resizes from its
+    // edge rather than growing symmetrically from the flexbox center.
+    const startPos = positionRef.current ?? { x: rect.left, y: rect.top };
+    if (!positionRef.current) {
+      positionRef.current = startPos;
+      setPosition(startPos);
+    }
+
     dragState.current = {
       dir,
       startX: e.clientX,
       startY: e.clientY,
       startW: rect.width,
       startH: rect.height,
-      startPos: positionRef.current ? { ...positionRef.current } : { x: rect.left, y: rect.top },
+      startPos: { ...startPos },
     };
 
     const handleMouseMove = (ev: MouseEvent) => {
@@ -111,15 +120,13 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
       setLocalWidth(newW);
       setLocalHeight(newH);
 
-      // Update position when resizing from N/W edge.
-      if (posXDelta !== 0 || posYDelta !== 0) {
-        const newPos = {
-          x: ds.startPos.x + posXDelta,
-          y: ds.startPos.y + posYDelta,
-        };
-        positionRef.current = newPos;
-        setPosition(newPos);
-      }
+      // Always update position (N/W edges shift, S/E edges stay anchored).
+      const newPos = {
+        x: ds.startPos.x + posXDelta,
+        y: ds.startPos.y + posYDelta,
+      };
+      positionRef.current = newPos;
+      setPosition(newPos);
     };
 
     const handleMouseUp = () => {

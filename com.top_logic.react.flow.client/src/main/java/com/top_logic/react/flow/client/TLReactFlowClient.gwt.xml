@@ -8,13 +8,17 @@
     <inherits name="com.top_logic.ajax.shared.TLAjaxShared"/>
     <inherits name="com.top_logic.ajax.client.TLAjaxClient"/>
 
-    <inherits name="com.top_logic.react.flow.common.TLReactFlowCommon"/>
+    <inherits name="com.top_logic.react.flow.TLReactFlow"/>
 
     <inherits name="org.vectomatic.libgwtsvg"/>
 
 	<!-- Specify the paths for translatable code -->
+	<source path='boot'/>
 	<source path='bridge'/>
 	<source path='control'/>
+	<source path='dom'/>
+
+    <entry-point class='com.top_logic.react.flow.client.boot.ModuleEntry' />
 
 	<!-- allow Super Dev Mode -->
 	<add-linker name="xsiframe"/>

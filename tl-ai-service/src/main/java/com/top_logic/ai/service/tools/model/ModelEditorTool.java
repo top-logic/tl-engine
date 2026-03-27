@@ -6,6 +6,7 @@
 package com.top_logic.ai.service.tools.model;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -15,12 +16,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
-
 import com.top_logic.ai.service.tools.model.messages.BackwardReferenceResponse;
 import com.top_logic.ai.service.tools.model.messages.ClassResponse;
+import com.top_logic.ai.service.tools.model.messages.DeleteResponse;
+import com.top_logic.ai.service.tools.model.messages.DeletionBlocker;
 import com.top_logic.ai.service.tools.model.messages.EnumClassifierInfo;
 import com.top_logic.ai.service.tools.model.messages.EnumResponse;
 import com.top_logic.ai.service.tools.model.messages.ModuleResponse;
@@ -29,25 +28,34 @@ import com.top_logic.ai.service.tools.model.messages.ReferenceResponse;
 import com.top_logic.ai.service.tools.util.DataClassSerializer;
 import com.top_logic.ai.service.tools.util.ToolI18NUtil;
 import com.top_logic.ai.service.tools.util.ToolI18NUtil.LocalizedTexts;
+import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.knowledge.service.PersistencyLayer;
-import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.dob.meta.MOReference.DeletionPolicy;
 import com.top_logic.dob.meta.MOReference.HistoryType;
+import com.top_logic.element.meta.MetaElementUtil;
+import com.top_logic.knowledge.service.KnowledgeBaseException;
+import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.model.TLAssociation;
 import com.top_logic.model.TLAssociationEnd;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassProperty;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
+import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLModel;
+import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLModule;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
+import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.builtin.TLCore;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.model.ModelService;
@@ -1681,6 +1689,268 @@ public class ModelEditorTool {
 			? "Enumeration '" + enumeration.getName() + "' created successfully in module '" + enumeration.getModule().getName() + "'"
 			: "Enumeration '" + enumeration.getName() + "' already existed in module '" + enumeration.getModule().getName() + "'");
 		return response;
+	}
+
+	// ===== Delete Operations =====
+
+	/**
+	 * Deletes a model element from the TopLogic application model.
+	 *
+	 * <p>
+	 * Performs safety checks before deletion and returns detailed blockers on failure. The element
+	 * type is automatically inferred from the resolved model part.
+	 * </p>
+	 *
+	 * @param qualifiedName
+	 *        Qualified name of the element: {@code 'moduleName'} for modules,
+	 *        {@code 'moduleName:TypeName'} for classes/enums,
+	 *        {@code 'moduleName:TypeName#partName'} for properties/references/classifiers.
+	 * @return JSON with deletion result including any blockers or cascade-deleted parts.
+	 */
+	@Tool("Delete a model element from the TopLogic application model. "
+		+ "Performs safety checks before deletion — returns detailed blockers on failure. "
+		+ "Qualified name format: 'moduleName' for modules, 'moduleName:TypeName' for classes/enums, "
+		+ "'moduleName:TypeName#partName' for properties/references/classifiers.")
+	public String deleteModelElement(
+			@P("Qualified name of the element to delete")
+			String qualifiedName) {
+
+		try {
+			DeleteResponse response = ThreadContextManager.inSystemInteraction(
+				ModelEditorTool.class,
+				() -> doDeleteModelElement(qualifiedName));
+
+			return DataClassSerializer.toJson(response, ModelEditorTool.class, "deleteModelElement()",
+				buildArgs("qualifiedName", qualifiedName));
+		} catch (Exception ex) {
+			Logger.error("deleteModelElement() error: " + ex.getMessage(), ex, ModelEditorTool.class);
+			return DataClassSerializer.errorToJson(
+				"Failed to delete element: " + ex.getMessage(),
+				ModelEditorTool.class, "deleteModelElement()",
+				buildArgs("qualifiedName", qualifiedName));
+		}
+	}
+
+	private DeleteResponse doDeleteModelElement(String qualifiedName)
+			throws KnowledgeBaseException {
+		requireNonEmpty(qualifiedName, "qualifiedName");
+
+		TLModelPart resolved = TLModelUtil.resolveModelPart(qualifiedName);
+		ModelKind kind = resolved.getModelKind();
+		String kindName = kind.name().toLowerCase();
+
+		// Check for deletion blockers
+		List<DeletionBlocker> blockers = checkDeletionBlockers(resolved);
+		if (!blockers.isEmpty()) {
+			DeleteResponse response = DeleteResponse.create();
+			response.setSuccess(false);
+			response.setName(getPartName(resolved));
+			response.setQualifiedName(qualifiedName);
+			response.setElementType(kind.name());
+			response.setResultMessage(
+				"Cannot delete " + kindName + " '" + qualifiedName + "': blocked by dependencies");
+			for (DeletionBlocker blocker : blockers) {
+				response.addBlocker(blocker);
+			}
+			return response;
+		}
+
+		// Capture name before deletion (object becomes invalid after deleteRecursive)
+		String partName = getPartName(resolved);
+		// Collect parts that will be cascade-deleted BEFORE deletion
+		List<String> deletedParts = collectDeletedParts(resolved);
+
+		// Perform deletion
+		try (Transaction tx = PersistencyLayer.getKnowledgeBase()
+				.beginTransaction(ResKey.text("Delete " + kind.name() + ": " + qualifiedName))) {
+			TLModelUtil.deleteRecursive(resolved);
+			tx.commit();
+		}
+
+		DeleteResponse response = DeleteResponse.create();
+		response.setSuccess(true);
+		response.setName(partName);
+		response.setQualifiedName(qualifiedName);
+		response.setElementType(kind.name());
+		response.setResultMessage("Successfully deleted " + kindName + " '" + qualifiedName + "'");
+		for (String part : deletedParts) {
+			response.addDeletedPart(part);
+		}
+		return response;
+	}
+
+	private List<DeletionBlocker> checkDeletionBlockers(TLModelPart part) {
+		TLModel model = ModelService.getApplicationModel();
+		List<DeletionBlocker> blockers = new ArrayList<>();
+
+		// Check delete-protection annotation
+		if (DisplayAnnotations.isDeleteProtected(part)) {
+			DeletionBlocker blocker = DeletionBlocker.create();
+			blocker.setReason("DELETE_PROTECTED");
+			blocker.setDetails("Element is marked as delete-protected");
+			blockers.add(blocker);
+		}
+
+		if (part instanceof TLClass) {
+			TLClass tlClass = (TLClass) part;
+
+			// Check for direct instances
+			if (!MetaElementUtil.getAllDirectInstancesOf(tlClass, TLObject.class).isEmpty()) {
+				DeletionBlocker blocker = DeletionBlocker.create();
+				blocker.setReason("HAS_INSTANCES");
+				blocker.setDetails("Class has direct instances that must be deleted first");
+				blockers.add(blocker);
+			}
+
+			// Check for specializations (subtypes)
+			if (!tlClass.getSpecializations().isEmpty()) {
+				StringBuilder sb = new StringBuilder("Subtypes: ");
+				boolean first = true;
+				for (TLClass spec : tlClass.getSpecializations()) {
+					if (!first) sb.append(", ");
+					sb.append(spec.getModule().getName()).append(":").append(spec.getName());
+					first = false;
+				}
+				DeletionBlocker blocker = DeletionBlocker.create();
+				blocker.setReason("HAS_SPECIALIZATIONS");
+				blocker.setDetails(sb.toString());
+				blockers.add(blocker);
+			}
+
+			// Check for usage by type parts in other types
+			checkTypeUsage(model, tlClass, blockers);
+		}
+
+		if (part instanceof TLEnumeration) {
+			TLEnumeration tlEnum = (TLEnumeration) part;
+			checkTypeUsage(model, tlEnum, blockers);
+		}
+
+		if (part instanceof TLModule) {
+			TLModule module = (TLModule) part;
+			for (TLType type : new ArrayList<>(module.getTypes())) {
+				if (type instanceof TLClass) {
+					TLClass tlClass = (TLClass) type;
+					if (!MetaElementUtil.getAllDirectInstancesOf(tlClass, TLObject.class).isEmpty()) {
+						DeletionBlocker blocker = DeletionBlocker.create();
+						blocker.setReason("HAS_INSTANCES");
+						blocker.setDetails("Class '" + module.getName() + ":" + tlClass.getName()
+							+ "' has direct instances");
+						blockers.add(blocker);
+					}
+					for (TLClass spec : tlClass.getSpecializations()) {
+						if (spec.getModule() != module) {
+							DeletionBlocker blocker = DeletionBlocker.create();
+							blocker.setReason("HAS_SPECIALIZATIONS");
+							blocker.setDetails("Class '" + module.getName() + ":" + tlClass.getName()
+								+ "' has subtype in another module: "
+								+ spec.getModule().getName() + ":" + spec.getName());
+							blockers.add(blocker);
+						}
+					}
+					checkTypeUsageExcludingModule(model, tlClass, module, blockers);
+				}
+				if (type instanceof TLEnumeration) {
+					checkTypeUsageExcludingModule(model, (TLEnumeration) type, module, blockers);
+				}
+			}
+		}
+
+		return blockers;
+	}
+
+	private void checkTypeUsage(TLModel model, TLType type, List<DeletionBlocker> blockers) {
+		Collection<TLStructuredTypePart> usages = TLModelUtil.getUsage(model, type);
+		for (TLStructuredTypePart usage : usages) {
+			// Skip internal association types (e.g. Task$priority) — they are
+			// implementation details managed by the framework, not user-visible dependencies.
+			if (usage.getOwner().getModelKind() == ModelKind.ASSOCIATION) {
+				continue;
+			}
+			String ownerQName = usage.getOwner().getModule().getName() + ":" + usage.getOwner().getName();
+			DeletionBlocker blocker = DeletionBlocker.create();
+			blocker.setReason("USED_BY_TYPEPART");
+			blocker.setDetails("Referenced by: " + ownerQName + "#" + usage.getName());
+			blockers.add(blocker);
+		}
+	}
+
+	private void checkTypeUsageExcludingModule(TLModel model, TLType type, TLModule excludeModule,
+			List<DeletionBlocker> blockers) {
+		Collection<TLStructuredTypePart> usages = TLModelUtil.getUsage(model, type);
+		for (TLStructuredTypePart usage : usages) {
+			if (usage.getOwner().getModelKind() == ModelKind.ASSOCIATION) {
+				continue;
+			}
+			if (usage.getOwner().getModule() != excludeModule) {
+				String ownerQName = usage.getOwner().getModule().getName() + ":" + usage.getOwner().getName();
+				DeletionBlocker blocker = DeletionBlocker.create();
+				blocker.setReason("USED_BY_TYPEPART");
+				blocker.setDetails("Type '" + type.getModule().getName() + ":" + type.getName()
+					+ "' referenced by: " + ownerQName + "#" + usage.getName());
+				blockers.add(blocker);
+			}
+		}
+	}
+
+	private List<String> collectDeletedParts(TLModelPart part) {
+		List<String> deletedParts = new ArrayList<>();
+
+		if (part instanceof TLClass) {
+			TLClass tlClass = (TLClass) part;
+			String prefix = tlClass.getModule().getName() + ":" + tlClass.getName() + "#";
+			for (TLStructuredTypePart localPart : tlClass.getLocalParts()) {
+				String kind = (localPart instanceof TLReference) ? "reference" : "property";
+				deletedParts.add(kind + ": " + prefix + localPart.getName());
+			}
+			for (TLClass spec : tlClass.getSpecializations()) {
+				deletedParts.add("subtype: " + spec.getModule().getName() + ":" + spec.getName());
+			}
+		} else if (part instanceof TLEnumeration) {
+			TLEnumeration tlEnum = (TLEnumeration) part;
+			String prefix = tlEnum.getModule().getName() + ":" + tlEnum.getName() + "#";
+			for (TLClassifier classifier : tlEnum.getClassifiers()) {
+				deletedParts.add("classifier: " + prefix + classifier.getName());
+			}
+		} else if (part instanceof TLModule) {
+			TLModule module = (TLModule) part;
+			for (TLType type : module.getTypes()) {
+				if (type instanceof TLClass) {
+					deletedParts.add("class: " + module.getName() + ":" + type.getName());
+				} else if (type instanceof TLEnumeration) {
+					deletedParts.add("enumeration: " + module.getName() + ":" + type.getName());
+				}
+			}
+		} else if (part instanceof TLReference) {
+			TLReference ref = (TLReference) part;
+			TLAssociationEnd end = ref.getEnd();
+			if (end != null) {
+				TLAssociationEnd otherEnd = TLModelUtil.getOtherEnd(end);
+				if (otherEnd != null) {
+					TLReference inverseRef = otherEnd.getReference();
+					if (inverseRef != null && inverseRef != ref) {
+						String ownerQName = inverseRef.getOwner().getModule().getName()
+							+ ":" + inverseRef.getOwner().getName();
+						deletedParts.add("inverse reference: " + ownerQName + "#" + inverseRef.getName());
+					}
+				}
+			}
+		}
+
+		return deletedParts;
+	}
+
+	private String getPartName(TLModelPart part) {
+		if (part instanceof TLModule) {
+			return ((TLModule) part).getName();
+		} else if (part instanceof TLType) {
+			return ((TLType) part).getName();
+		} else if (part instanceof TLStructuredTypePart) {
+			return ((TLStructuredTypePart) part).getName();
+		} else if (part instanceof TLClassifier) {
+			return ((TLClassifier) part).getName();
+		}
+		return part.toString();
 	}
 
 	private static Map<String, Object> buildArgs(String... keyValues) {

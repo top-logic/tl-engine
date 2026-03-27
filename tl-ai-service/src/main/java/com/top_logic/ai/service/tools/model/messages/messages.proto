@@ -1259,6 +1259,63 @@ message EnumResponse {
 	string description;
 }
 
+// ===== ModelEditorTool Delete Messages =====
+
+/**
+ * Information about a blocker preventing deletion.
+ */
+message DeletionBlocker {
+	/**
+	 * Reason for blocking: HAS_INSTANCES, HAS_SPECIALIZATIONS, USED_BY_TYPEPART, DELETE_PROTECTED.
+	 */
+	string reason;
+
+	/**
+	 * Human-readable details about the blocker.
+	 */
+	string details;
+}
+
+/**
+ * Response for model element deletion operations.
+ */
+message DeleteResponse {
+	/**
+	 * Whether the deletion succeeded.
+	 */
+	bool success;
+
+	/**
+	 * Element name.
+	 */
+	string name;
+
+	/**
+	 * Qualified name of the element.
+	 */
+	string qualifiedName;
+
+	/**
+	 * Type of element: MODULE, CLASS, ENUMERATION, PROPERTY, REFERENCE, CLASSIFIER.
+	 */
+	string elementType;
+
+	/**
+	 * Human-readable result message.
+	 */
+	string resultMessage;
+
+	/**
+	 * List of parts that were cascade-deleted (on success).
+	 */
+	repeated string deletedParts;
+
+	/**
+	 * List of blockers preventing deletion (on failure).
+	 */
+	repeated DeletionBlocker blockers;
+}
+
 // ===== SearchAnnotationTool Messages =====
 
 /**

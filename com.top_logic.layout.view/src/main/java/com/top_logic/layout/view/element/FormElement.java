@@ -38,6 +38,7 @@ import com.top_logic.layout.view.I18NConstants;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.DirtyChannel;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.CombinedViewExecutabilityRule;
@@ -323,6 +324,12 @@ public class FormElement extends ContainerElement {
 		ChannelRef dirtyRef = _config.getDirty();
 		if (dirtyRef != null) {
 			formControl.setDirtyChannel(context.resolveChannel(dirtyRef));
+		}
+
+		// Bind to scope-level DirtyChannel if one is available (e.g. inside a tab).
+		DirtyChannel scopeDirtyChannel = context.getDirtyChannel();
+		if (scopeDirtyChannel != null) {
+			formControl.setScopeDirtyChannel(scopeDirtyChannel);
 		}
 
 		// 6. Create a child context with the form control set, so that

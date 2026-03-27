@@ -25,6 +25,7 @@ import com.top_logic.model.form.ConstraintValidationListener;
 import com.top_logic.model.listen.ModelChangeEvent;
 import com.top_logic.model.listen.ModelListener;
 import com.top_logic.model.listen.ModelScope;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -519,7 +520,7 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	@Override
 	public String getDescription() {
 		if (_currentObject != null) {
-			return String.valueOf(_currentObject);
+			return MetaLabelProvider.INSTANCE.getLabel(_currentObject);
 		}
 		return "Form";
 	}

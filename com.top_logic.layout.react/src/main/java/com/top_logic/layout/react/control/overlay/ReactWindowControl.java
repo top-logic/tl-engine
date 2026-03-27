@@ -9,11 +9,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.ToolbarControl;
+import com.top_logic.layout.table.ConfigKey;
 
 /**
  * Visual window chrome for modal dialogs: title bar, close button, scrollable body, footer actions,
@@ -52,11 +54,17 @@ public class ReactWindowControl extends ToolbarControl {
 
 	private static final String ACTIONS = "actions";
 
+	private static final String CONFIG_KEY_SIZE_SUFFIX = "reactDialogSize";
+
+	private static final String MIN_HEIGHT = "minHeight";
+
 	private ReactControl _child;
 
 	private List<ReactControl> _actions = new ArrayList<>();
 
 	private Runnable _closeHandler;
+
+	private ConfigKey _configKey;
 
 	/**
 	 * Creates a window control.
@@ -73,10 +81,32 @@ public class ReactWindowControl extends ToolbarControl {
 	public ReactWindowControl(ReactContext context, String title, DisplayDimension width, Runnable closeHandler) {
 		super(context, null, REACT_MODULE);
 		_closeHandler = closeHandler;
+		_configKey = ConfigKey.none();
 		setTitle(title);
 		setWidth(width);
 		setResizable(false);
 		setActions(List.of());
+	}
+
+	/**
+	 * Creates a window control with size persistence.
+	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
+	 * @param title
+	 *        The window title.
+	 * @param width
+	 *        The default window width.
+	 * @param closeHandler
+	 *        Called when the close button is clicked.
+	 * @param configKey
+	 *        Key for storing personalized size in {@link PersonalConfiguration}.
+	 */
+	public ReactWindowControl(ReactContext context, String title, DisplayDimension width,
+			Runnable closeHandler, ConfigKey configKey) {
+		this(context, title, width, closeHandler);
+		_configKey = ConfigKey.derived(configKey, CONFIG_KEY_SIZE_SUFFIX);
+		applyCustomizedSize();
 	}
 
 	/**
@@ -154,6 +184,70 @@ public class ReactWindowControl extends ToolbarControl {
 		}
 		if (h != null) {
 			putStateSilent(HEIGHT, h.toString());
+		}
+		saveCustomizedSize(w, h);
+	}
+
+	private void applyCustomizedSize() {
+		String key = _configKey.get();
+		if (key == null) {
+			return;
+		}
+		PersonalConfiguration config = PersonalConfiguration.getPersonalConfiguration();
+		if (config == null) {
+			return;
+		}
+		Object jsonValue = config.getJSONValue(key);
+		if (!(jsonValue instanceof List<?> list) || list.size() != 2) {
+			return;
+		}
+		int width = ((Number) list.get(0)).intValue();
+		int height = ((Number) list.get(1)).intValue();
+		putState(WIDTH, width + "px");
+		putState(MIN_HEIGHT, height + "px");
+	}
+
+	private void saveCustomizedSize(Object widthValue, Object heightValue) {
+		String key = _configKey.get();
+		if (key == null) {
+			return;
+		}
+		int width = parsePx(widthValue, -1);
+		int height = parsePx(heightValue, -1);
+		if (width < 0 && height < 0) {
+			return;
+		}
+
+		PersonalConfiguration config = PersonalConfiguration.getPersonalConfiguration();
+		if (config == null) {
+			return;
+		}
+
+		// Merge with existing values if only one dimension changed.
+		Object existing = config.getJSONValue(key);
+		if (existing instanceof List<?> list && list.size() == 2) {
+			if (width < 0) width = ((Number) list.get(0)).intValue();
+			if (height < 0) height = ((Number) list.get(1)).intValue();
+		}
+
+		if (width > 0 && height > 0) {
+			List<Integer> parameters = new ArrayList<>();
+			parameters.add(width);
+			parameters.add(height);
+			config.setJSONValue(key, parameters);
+		}
+	}
+
+	private static int parsePx(Object value, int fallback) {
+		if (value == null) return fallback;
+		String s = value.toString().trim();
+		if (s.endsWith("px")) {
+			s = s.substring(0, s.length() - 2);
+		}
+		try {
+			return Integer.parseInt(s);
+		} catch (NumberFormatException e) {
+			return fallback;
 		}
 	}
 

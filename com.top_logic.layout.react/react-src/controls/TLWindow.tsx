@@ -32,6 +32,7 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
   const title = (state.title as string) ?? '';
   const serverWidth = (state.width as string) ?? '32rem';
   const serverHeight = (state.height as string | null) ?? null;
+  const serverMinHeight = (state.minHeight as string | null) ?? null;
   const resizable = state.resizable === true;
   const child = state.child;
   const actions = (state.actions as unknown[]) ?? [];
@@ -221,6 +222,9 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
           : serverHeight != null
             ? { height: serverHeight }
             : {}),
+        ...(serverMinHeight != null && localHeight == null
+          ? { minHeight: serverMinHeight }
+          : {}),
         maxHeight: position ? '100vh' : '80vh',
         ...(position
           ? { position: 'absolute' as const, left: position.x + 'px', top: position.y + 'px' }

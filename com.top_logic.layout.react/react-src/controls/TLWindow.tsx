@@ -5,6 +5,8 @@ const { useCallback, useRef, useState } = React;
 
 const I18N_KEYS = {
   'js.window.close': 'Close',
+  'js.window.maximize': 'Maximize',
+  'js.window.restore': 'Restore',
 };
 
 type ResizeDir = 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | 'nw';
@@ -42,6 +44,10 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
   // Position state: null = centered by flexbox, set = absolute positioning.
   const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
   const positionRef = useRef<{ x: number; y: number } | null>(null);
+
+  // Maximize state.
+  const [maximized, setMaximized] = useState(false);
+  const regularBoundsRef = useRef<{ x: number; y: number; w: string; h: string | null } | null>(null);
 
   // Refs to track latest local dimensions inside event handlers (avoids stale closures).
   const localWidthRef = useRef<number | null>(null);
@@ -156,18 +162,47 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
     document.addEventListener('mouseup', handleMouseUp);
   }, []);
 
-  const style: React.CSSProperties = {
-    width: localWidth != null ? localWidth + 'px' : serverWidth,
-    ...(localHeight != null
-      ? { height: localHeight + 'px' }
-      : serverHeight != null
-        ? { height: serverHeight }
-        : {}),
-    maxHeight: position ? '100vh' : '80vh',
-    ...(position
-      ? { position: 'absolute' as const, left: position.x + 'px', top: position.y + 'px' }
-      : {}),
-  };
+  const handleToggleMaximize = useCallback(() => {
+    if (maximized) {
+      // Restore.
+      const rb = regularBoundsRef.current;
+      if (rb) {
+        setPosition(rb.x !== -1 ? { x: rb.x, y: rb.y } : null);
+        setLocalWidth(null);
+        setLocalHeight(null);
+      }
+      setMaximized(false);
+    } else {
+      // Save current bounds.
+      const el = windowRef.current;
+      const rect = el?.getBoundingClientRect();
+      regularBoundsRef.current = {
+        x: positionRef.current?.x ?? (rect?.left ?? -1),
+        y: positionRef.current?.y ?? (rect?.top ?? -1),
+        w: localWidth != null ? localWidth + 'px' : serverWidth,
+        h: localHeight != null ? localHeight + 'px' : serverHeight,
+      };
+      setMaximized(true);
+      setPosition({ x: 0, y: 0 });
+      setLocalWidth(null);
+      setLocalHeight(null);
+    }
+  }, [maximized, serverWidth, serverHeight, localWidth, localHeight]);
+
+  const style: React.CSSProperties = maximized
+    ? { position: 'absolute' as const, top: 0, left: 0, width: '100vw', height: '100vh', maxHeight: '100vh', borderRadius: 0 }
+    : {
+        width: localWidth != null ? localWidth + 'px' : serverWidth,
+        ...(localHeight != null
+          ? { height: localHeight + 'px' }
+          : serverHeight != null
+            ? { height: serverHeight }
+            : {}),
+        maxHeight: position ? '100vh' : '80vh',
+        ...(position
+          ? { position: 'absolute' as const, left: position.x + 'px', top: position.y + 'px' }
+          : {}),
+      };
 
   const titleId = controlId + '-title';
 
@@ -181,7 +216,11 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
       aria-modal="true"
       aria-labelledby={titleId}
     >
-      <div className="tlWindow__header" onMouseDown={handleTitleMouseDown}>
+      <div
+        className={`tlWindow__header${maximized ? ' tlWindow__header--maximized' : ''}`}
+        onMouseDown={maximized ? undefined : handleTitleMouseDown}
+        onDoubleClick={handleToggleMaximize}
+      >
         <span className="tlWindow__title" id={titleId}>{title}</span>
         {toolbarButtons.length > 0 && (
           <div className="tlWindow__toolbar">
@@ -192,6 +231,25 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
             ))}
           </div>
         )}
+        <button
+          type="button"
+          className="tlWindow__maximizeBtn"
+          onClick={handleToggleMaximize}
+          title={maximized ? i18n['js.window.restore'] : i18n['js.window.maximize']}
+        >
+          {maximized ? (
+            // Restore icon: two overlapping squares.
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+              <rect x="4" y="8" width="12" height="12" rx="1.5" fill="none" stroke="currentColor" strokeWidth="2" />
+              <path d="M8 8V5.5A1.5 1.5 0 0 1 9.5 4H18.5A1.5 1.5 0 0 1 20 5.5V14.5A1.5 1.5 0 0 1 18.5 16H16" fill="none" stroke="currentColor" strokeWidth="2" />
+            </svg>
+          ) : (
+            // Maximize icon: single square.
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+              <rect x="4" y="4" width="16" height="16" rx="1.5" fill="none" stroke="currentColor" strokeWidth="2" />
+            </svg>
+          )}
+        </button>
         <button
           type="button"
           className="tlWindow__closeBtn"
@@ -216,7 +274,7 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
           ))}
         </div>
       )}
-      {resizable && RESIZE_HANDLES.map(dir => (
+      {resizable && !maximized && RESIZE_HANDLES.map(dir => (
         <div
           key={dir}
           className={`tlWindow__resizeHandle tlWindow__resizeHandle--${dir}`}

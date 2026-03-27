@@ -1684,6 +1684,35 @@ button.tlWindow__closeBtn:focus-visible {
 	outline-offset: -2px;
 }
 
+.tlWindow__maximizeBtn {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	width: 2rem;
+	height: 2rem;
+	border: none;
+	border-radius: var(--corner-radius);
+	background: transparent;
+	color: var(--text-secondary);
+	cursor: pointer;
+	padding: 0;
+	flex-shrink: 0;
+}
+
+button.tlWindow__maximizeBtn:hover {
+	background: var(--layer-hover);
+	color: var(--text-primary);
+}
+
+button.tlWindow__maximizeBtn:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: -2px;
+}
+
+.tlWindow__header--maximized {
+	cursor: default;
+}
+
 .tlWindow__body {
 	flex: 1;
 	overflow-y: auto;

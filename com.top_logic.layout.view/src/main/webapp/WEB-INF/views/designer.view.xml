@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<view xmlns="http://www.top-logic.com/ns/view/1.0">
+	<channels>
+		<channel name="designTree"/>
+		<channel name="selectedNode"/>
+	</channels>
+
+	<content>
+		<panel>
+			<title>View Designer</title>
+			<commands>
+				<save-design design-tree="designTree" placement="TOOLBAR">
+					<label>
+						<en>Apply</en>
+						<de>Anwenden</de>
+					</label>
+				</save-design>
+				<revert-design design-tree="designTree" selection="selectedNode" placement="TOOLBAR">
+					<label>
+						<en>Revert</en>
+						<de>Verwerfen</de>
+					</label>
+				</revert-design>
+			</commands>
+
+			<split-panel orientation="horizontal" resizable="true">
+				<panes>
+					<pane size="40" unit="%" min-size="200">
+						<design-tree input="designTree" selection="selectedNode"/>
+					</pane>
+					<pane size="60" unit="%">
+						<config-editor input="selectedNode"/>
+					</pane>
+				</panes>
+			</split-panel>
+		</panel>
+	</content>
+</view>

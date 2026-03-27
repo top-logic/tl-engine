@@ -523,15 +523,73 @@ valuable for the broader platform but do not block the diagram library developme
 3. **Native JSON value type** — `json` field type that embeds structured data without
    string-wrapping
 
+## Implementation Phases
+
+### Phase 1: Flow Diagram in React (Validation)
+
+Port the existing Graphic Blocks flow diagram into a React-compatible new module group.
+This is a **1:1 copy with minimal changes** to validate the GWT ↔ React communication
+layer. No new features, no UML — just the existing flow/tree diagram functionality
+working in the React View framework.
+
+**Goal**: Prove that GWT-rendered SVG diagrams work within the React UI, communicating
+via SSE + Commands instead of legacy AJAX.
+
+**New modules:**
+
+```
+com.top_logic.react.flow.common    — msgbuf model, layout, SVG rendering (GWT-compatible)
+com.top_logic.react.flow.server    — ReactControl, @ReactCommand handlers
+com.top_logic.react.flow.client    — GWT client: SVGBuilder, event handling, SSE/Command bridge
+```
+
+**What this validates:**
+- [ ] GWT code mounting into React via `TLFlowDiagram.tsx` lifecycle wrapper
+- [ ] Server → Client: SSE events received by GWT `subscribe()` callback
+- [ ] Client → Server: GWT `fetch()` to `/react-api/command` endpoint
+- [ ] `@ReactCommand` handlers dispatching to diagram operations
+- [ ] SVG rendering via `SVGBuilder` in the React-managed `<div>`
+- [ ] Existing interactions working: selection, click, drop, context menu
+- [ ] `<flow-diagram>` UIElement with channel bindings (input, selection)
+- [ ] FlowChartBuilder API preserved for application-defined visualizations
+
+**What changes from `graphic.blocks`:**
+- Communication layer: AJAX → React SSE/Commands (JsInterop bridge)
+- Server control: `FlowChartComponent` → `FlowDiagramControl` (extends `ReactControl`)
+- Client control: `JSDiagramControl` → adapted for React mount/unmount lifecycle
+- UIElement integration: new `FlowDiagramElement` with `@TagName("flow-diagram")`
+
+**What stays identical:**
+- msgbuf data model (`data.proto` — copied or shared)
+- Widget primitives (Border, Fill, Padding, Text, Image, layouts)
+- SVGBuilder rendering pipeline
+- Layout algorithms (Tree, HBox, VBox, Grid, Floating)
+- Text metrics (JSTextMetrics client-side, AWTContext server-side)
+- Event handling logic (click, drop, selection, context menu)
+
+### Phase 2: UML Model Editor
+
+Extend the validated flow diagram module with UML-specific functionality. This adds
+the Sugiyama layout, edge-drawing interaction, UML node composition, and the full
+model editor experience.
+
+**Additions:**
+- Sugiyama layout algorithm (from `tl-graph-layouter`)
+- UML class node composition from widget primitives
+- Edge types: inheritance, composition, aggregation, association
+- Edge labels: cardinality, role names
+- Interactive edge-drawing (SVG polyline + mouse tracking)
+- Context-menu-based node creation (class, enumeration)
+- TLModule → diagram model builder (from `DiagramJSGraphBuilder`)
+- Business logic: cyclic inheritance validation, cascade delete
+- `<model-graph>` UIElement with module/selection channels
+- Complete model editor as `.view.xml` compositions
+- Detail editor views (TypeEditor, AttributeEditor, etc.)
+
 ## Open Items
 
-- [ ] Prototype: UML class node composed from widget primitives (verify rendering)
-- [ ] Prototype: GWT ↔ React SSE bridge (subscribe/command via JsInterop)
-- [ ] Prototype: interactive edge-drawing in GWT/SVG
-- [ ] Define the `.proto` model for UML diagram elements
-- [ ] Integrate Sugiyama layout from `tl-graph-layouter` into new module
-- [ ] Design `@ReactCommand` handlers for all diagram operations
-- [ ] Channel bindings (module, selection) between diagram and View framework
-- [ ] Toolbar and context menu integration
-- [ ] Detail editor views (TypeEditor, AttributeEditor, etc.) as `.view.xml`
-- [ ] Test strategy
+- [ ] Phase 1: Define exact scope of `data.proto` sharing vs. copying
+- [ ] Phase 1: Design JsInterop bridge API for SSE subscribe + Command fetch
+- [ ] Phase 1: Identify minimal changes needed in GWT client code
+- [ ] Phase 1: Create demo view.xml with `<flow-diagram>` element
+- [ ] Phase 2: detailed planning (after Phase 1 validation)

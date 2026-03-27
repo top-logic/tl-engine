@@ -12,6 +12,9 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.exception.I18NFailure;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.overlay.DialogManager;
+import com.top_logic.layout.react.control.overlay.DirtyConfirmDialogControl;
+import com.top_logic.layout.react.dirty.ChannelVetoException;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -77,6 +80,18 @@ class ReactCommandInvoker {
 			} else {
 				return castResult(_handle.invoke(control));
 			}
+		} catch (ChannelVetoException ex) {
+			DialogManager dm = context.getDialogManager();
+			if (dm != null) {
+				DirtyConfirmDialogControl dialogContent =
+					new DirtyConfirmDialogControl(context, ex.getDirtyHandlers(), ex.getContinuation(), dm);
+				dm.openDialog(false, dialogContent, result -> {
+					// Dialog closed. Save/discard/cancel handled by dialog's own commands.
+				});
+				return HandlerResult.DEFAULT_RESULT;
+			}
+			Logger.warn("No DialogManager available for dirty-check dialog.", ReactCommandInvoker.class);
+			return HandlerResult.DEFAULT_RESULT;
 		} catch (Throwable ex) {
 			Logger.error("@ReactCommand failed on " + control.getClass().getName(), ex,
 				ReactCommandInvoker.class);

@@ -109,11 +109,16 @@ public class ReferenceElement implements UIElement {
 			throw new RuntimeException("Failed to load referenced view: " + fullPath, ex);
 		}
 
-		// Create isolated child context (fresh channel namespace, but inherits error sink).
+		// Create isolated child context (fresh channel namespace, but inherits error sink
+		// and dirty channel from parent scope).
 		ViewContext childContext = new DefaultViewContext(parentContext);
 		ErrorSink parentErrorSink = parentContext.getErrorSink();
 		if (parentErrorSink != null) {
 			childContext = childContext.withErrorSink(parentErrorSink);
+		}
+		com.top_logic.layout.view.channel.DirtyChannel parentDirtyChannel = parentContext.getDirtyChannel();
+		if (parentDirtyChannel != null) {
+			childContext.setDirtyChannel(parentDirtyChannel);
 		}
 
 		// Pre-bind parent channels into the child context.

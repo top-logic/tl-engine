@@ -12,7 +12,11 @@ The migrated editor must support the full interactive feature set of the current
 
 ## Current Architecture
 
-### Module Structure
+### Existing Diagram Libraries
+
+TopLogic currently has **two separate diagram libraries**, both GWT-based:
+
+#### 1. DiagramJS Library (UML Model Editor)
 
 ```
 com.top_logic.graph.diagramjs          — Shared model (SharedObject-based)
@@ -20,20 +24,35 @@ com.top_logic.graph.diagramjs.server   — Server logic (Sugiyama layout, comman
 com.top_logic.graph.diagramjs.client   — GWT client (compiles Java to JS, diagram-js rendering)
 ```
 
-### Key Components
+Uses the external **diagram-js** library (MIT, bundled in `ext.io.bpmn.bpmn-js`) for SVG
+rendering. Provides full interactive editing of UML class diagrams.
 
-- **DiagramJSGraphComponent** — Main layout component, holds transient `SharedGraph` model
-- **DiagramJSGraphControl** (server) — Server-side control, renders initial state, handles AJAX commands
-- **DiagramJSGraphControl** (client) — GWT client control, manages diagram-js instance and ObjectScope
-- **GraphModelUtil** — Graph construction, Sugiyama layout integration, model manipulation
-- **DiagramJSGraphBuilder** — Creates layouted `SharedGraph` from `TLModule`
-- **ObjectScope / SharedObject** — Client-server synchronization with automatic patch generation
-- **ChangeIO** — JSON serialization of Changes (creates/updates/deletes)
-- **DefaultGraphScopeListener** — Client-side scope listener, maps ObjectScope events to diagram-js operations
-- **DisplayGraphPartCreator** — Converts SharedObjects to diagram-js visual elements (Shapes, Connections, Labels)
-- **diagram-js (UmlJS)** — Client-side SVG rendering library (MIT licensed)
+#### 2. Graphic Blocks Library (Flow/Tree Diagrams)
 
-### Communication Flows (Current)
+```
+com.top_logic.graphic.blocks           — Core: msgbuf data model, SVG rendering, layout
+com.top_logic.graphic.blocks.client    — GWT client: SVG DOM construction (SVGBuilder)
+com.top_logic.graphic.blocks.server    — Server: FlowChartComponent, layout, event handling
+```
+
+A declarative diagram engine with **composable widget primitives** (Border, Fill, Padding,
+Text, Image, layouts) and a **msgbuf-based data model** (`data.proto`). Renders to SVG,
+supports selection, click, drag-drop, and context menus. Currently used for flow charts,
+tree hierarchies, and custom model visualizations.
+
+### Key Differences Between the Two Libraries
+
+| Aspect | DiagramJS | Graphic Blocks |
+|---|---|---|
+| Data model | SharedObject (Java reflection) | msgbuf-generated (`data.proto`) |
+| Rendering | External diagram-js library | Own SVG rendering (SvgWriter) |
+| Layout | Sugiyama (hierarchical graph) | Tree, HBox, VBox, Grid, Floating |
+| Interaction | Full editor (create, delete, move, resize, connect) | Selection, click, drop, context menu |
+| Topology | Arbitrary graphs | Trees / hierarchies |
+| Widget system | Fixed node types (ClassNode, Edge, Label) | Composable primitives (Border, Fill, Text, ...) |
+| Protocol | ObjectScope/ChangeIO (JSON) | msgbuf SharedGraph (JSON) |
+
+### DiagramJS Communication Flows (Current)
 
 The system uses **two distinct communication directions** with different mechanisms:
 
@@ -54,7 +73,7 @@ All server responses use **`UPDATE_CLIENT_GRAPH_COMMAND`**:
 4. `JSFunctionCall` sends JSON to client
 5. Client: `ChangeIO.readChanges()` → `ObjectScope.update()` → `DefaultGraphScopeListener` → diagram-js canvas update
 
-### Detailed Interaction Flows
+### Detailed Interaction Flows (DiagramJS)
 
 #### 1. Click on Node (Selection)
 
@@ -190,27 +209,48 @@ diagram-js: ELEMENTS_VISIBILITY_EVENT
 6. **Replay mechanism** — `ObjectScope.startReplay()` prevents infinite loops when applying
    received updates
 
+### How diagram-js Renders (Pure SVG)
+
+diagram-js is **entirely SVG-based** — no Canvas overlay. Key rendering layers within a
+single `<svg>` element:
+
+- `.djs-visual` — visible representation (rects, paths, text)
+- `.djs-hit` — invisible hit areas for pointer events (larger than visual)
+- `.djs-outline` — dashed outline on selection/hover
+- `.djs-dragger` — temporary element copy during drag operations
+
+**Edge-Drawing Pattern:**
+1. User starts drag from a node
+2. A temporary SVG `<polyline>` is created (dashed, `pointer-events: none`)
+3. On `mousemove`: polyline coordinates update (line follows mouse)
+4. On hover over potential targets: CSS markers `.connect-ok` / `.connect-not-ok`
+5. On `mouseup` on target: polyline removed, real connection created
+
+**Node-Dragging Pattern:**
+1. A "dragger" SVG group is created with a copy of the visual element
+2. Original becomes semi-transparent (`.djs-dragging`, opacity 0.3)
+3. Dragger group follows mouse via SVG transform
+4. On `mouseup`: original moves to new position, dragger removed
+
+Both patterns use the **same technique**: a temporary SVG element follows the mouse. The
+only difference is whether it is a copy of a shape (node drag) or a polyline (edge draw).
+
 ## Decisions Made
 
 ### 1. Full Interactive Editor (not read-only)
 All current features must be supported: create/delete classes, enumerations, references,
 inheritance; drag-drop from element tree; visibility toggles; re-layout; selection linking.
 
-### 2. Keep diagram-js as Rendering Library
-- MIT licensed, no vendor lock-in risk (unlike React Flow Pro)
-- Proven UX for UML diagrams in this exact use case
-- The GWT wrapper is the problem, not diagram-js itself
-
-### 3. Server Holds Authoritative Graph State
+### 2. Server Holds Authoritative Graph State
 - Changes come in as commands, server updates the model and pushes deltas
 - **Exception**: Drag/move operations are client-local, batched to server on mouse-up
   (fire-and-forget, no confirmation needed for positions)
 
-### 4. Auto-Layout (Sugiyama) Remains Server-Side
+### 3. Auto-Layout (Sugiyama) Remains Server-Side
 - Initial layout and explicit re-layout computed on server
 - Client renders calculated positions
 
-### 5. UIElement + Channel Integration
+### 4. UIElement + Channel Integration
 The diagram is a `<model-graph>` UIElement that communicates via View channels:
 
 ```xml
@@ -234,14 +274,7 @@ The diagram is a `<model-graph>` UIElement that communicates via View channels:
 
 The complete model editor is composed from this building block as one or more `.view.xml` files.
 
-### 6. Reuse SharedObject/ObjectScope for Patch Generation
-The existing infrastructure provides exactly what is needed:
-- `ObjectScope.popChanges()` generates `Changes` (creates/updates/deletes — deltas only)
-- `ChangeIO.writeChanges()` serializes to JSON
-- This works bidirectionally: client-to-server (e.g., node moved) and server-to-client
-  (e.g., new class created)
-
-## Integration Strategy — Open Discussion
+## Integration Strategy — Options
 
 ### Option A: GWT Widget Embedded in React (Pragmatic)
 
@@ -274,19 +307,12 @@ React Wrapper (thin)
 - Two JS runtimes in one page (React + GWT)
 - Bridge layer between React and GWT adds complexity
 - Not fully "native" in the View framework
-
-**Module structure:**
-```
-com.top_logic.graph.diagramjs          — Shared model (unchanged)
-com.top_logic.graph.diagramjs.server   — Server logic (extend with UIElement + ReactControl wrapper)
-com.top_logic.graph.diagramjs.client   — GWT client (unchanged, embedded by React wrapper)
-com.top_logic.graph.diagramjs.react    — React wrapper (NEW, thin integration layer)
-```
+- diagram-js remains as external dependency
 
 ### Option B: Pure React/TypeScript Rewrite (Clean, blocked)
 
-Replace the GWT client entirely with TypeScript. Requires msgbuf features for clean
-protocol transport.
+Replace the GWT client entirely with TypeScript, keeping diagram-js for rendering.
+Requires msgbuf features for clean protocol transport.
 
 **Advantages:**
 - Clean, modern tech stack
@@ -297,14 +323,7 @@ protocol transport.
 - Requires rewriting ~2000 lines of client logic in TypeScript
 - Loses single-source-of-truth (Java model on server, TS model on client)
 - Blocked by msgbuf features (cross-file extension, TS codegen, native JSON)
-
-**Module structure:**
-```
-com.top_logic.graph.diagramjs          — Shared model (keep or replace)
-com.top_logic.graph.diagramjs.server   — Server logic (new ReactControl)
-com.top_logic.graph.diagramjs.client   — GWT client (removed)
-com.top_logic.graph.diagramjs.react    — React client (NEW, full implementation)
-```
+- diagram-js remains as external dependency
 
 ### Option C: GWT for Model/Protocol Only (Hybrid)
 
@@ -321,10 +340,192 @@ this library for synchronization.
 - GWT build still required (though smaller)
 - Display logic rewrite (~640 lines DisplayGraphPartCreator + event handlers)
 - Hybrid approach may be confusing
+- diagram-js remains as external dependency
 
-## Blocking Issues for Option B
+### Option D: Extend Graphic Blocks for UML (Replace diagram-js)
 
-### msgbuf Feature Requests
+Extend the existing Graphic Blocks library to support UML class diagrams, replacing
+diagram-js entirely. Add Sugiyama layout and interactive edge-drawing.
+
+**Advantages:**
+- One diagram technology instead of two
+- msgbuf already handles the protocol
+- Sugiyama layout becomes generally available
+
+**Disadvantages:**
+- Significant extension work needed
+- Still GWT-based on the client side
+- Proven diagram-js UX must be rebuilt
+
+### Option E: Unified React Diagram Library (Recommended)
+
+Create a **new, unified diagram library for the React UI** that cherry-picks from both
+existing libraries. When the React UI replaces the old GWT-based UIs, both old libraries
+can be removed.
+
+#### What to take from Graphic Blocks
+
+- **Composable widget primitives**: Border, Fill, Padding, Text, Image, HBox, VBox, Grid
+- **msgbuf-based data model**: `.proto` definitions for type-safe serialization
+- **SVG rendering pipeline**: SvgWriter abstraction
+
+UML class nodes are composed from these primitives — no special UML widget type needed:
+
+```
+ClassNode =
+  Border(stroke: black,
+    VerticalLayout(
+      Fill(bg: header-color,
+        Padding(
+          VerticalLayout(
+            Text(stereotype, italic),     // «enumeration»
+            Text(className, bold),        // MyClass
+            Text(modifiers, small)        // {abstract}
+          )
+        )
+      ),
+      Separator(line),
+      Padding(
+        VerticalLayout(                   // Properties compartment
+          Text("name : String"),
+          Text("age : Integer"),
+        )
+      )
+    )
+  )
+```
+
+#### What to take from DiagramJS
+
+- **Sugiyama layout algorithm** (from `tl-graph-layouter`)
+- **Edge types and rendering**: inheritance arrows, composition diamonds, association lines
+- **Edge labels**: cardinality, role names
+- **Interactive edge-drawing**: SVG polyline following mouse with target highlighting
+
+#### What to build new (React-native)
+
+- **React SVG component** rendering the diagram from msgbuf model
+- **Edge-drawing interaction** directly in React/SVG events:
+
+  ```typescript
+  function DiagramSVG({ model }) {
+      const [drawing, setDrawing] = useState<EdgeDraft | null>(null);
+
+      return (
+          <svg onMouseMove={e => drawing && updateDraft(e)}>
+              {model.nodes.map(n => <ClassNode key={n.id} onConnectStart={...} />)}
+              {model.edges.map(e => <UmlEdge key={e.id} ... />)}
+
+              {/* Temporary line during edge drawing */}
+              {drawing && (
+                  <line x1={drawing.from.x} y1={drawing.from.y}
+                        x2={drawing.to.x} y2={drawing.to.y}
+                        strokeDasharray="4" stroke="#333" pointerEvents="none" />
+              )}
+          </svg>
+      );
+  }
+  ```
+
+- **Context-menu-based node creation**: right-click on canvas → "New Class" / "New Enum"
+  → node appears at click position
+- **Selection, click, drop handlers** via React event system
+- **SSE integration** via msgbuf protocol for server push
+
+#### What to leave out (v1)
+
+- **Node move/resize**: Positions are not persisted, auto-layout determines placement.
+  Re-layout on demand via toolbar button.
+- **Waypoint editing**: Edge routing is computed by the layout algorithm.
+
+#### Interaction design (v1)
+
+| Interaction | Mechanism |
+|---|---|
+| Select node/edge | Click → React onClick → update selection channel |
+| Create class/enum | Context menu on canvas → server command → re-layout at position |
+| Create connection | Drag from node edge → SVG polyline follows mouse → drop on target |
+| Delete element | Context menu or keyboard → server command |
+| Re-layout | Toolbar button → server re-computes Sugiyama → full state push |
+| Toggle visibility | Toolbar toggle → server filters model → state push |
+| Drop from tree | HTML5 drag-drop → server command → node at drop position |
+
+#### Architecture
+
+```
+                        View XML (.view.xml)
+                              │
+                    ┌─────────┴─────────┐
+                    │   <model-graph>    │
+                    │   UIElement        │
+                    └─────────┬─────────┘
+                              │ createControl()
+                    ┌─────────┴──────────────┐
+                    │ DiagramControl          │
+                    │ (ReactControl)          │
+                    │                         │
+                    │ Diagram model (msgbuf)  │
+                    │ Sugiyama layout         │
+                    │ TLModule → Graph logic  │
+                    └────┬──────────────┬────┘
+                   SSE   │              │  HTTP Commands
+             (msgbuf)    │              │  (msgbuf)
+                         ▼              ▲
+                    ┌────────────────────────┐
+                    │  React Component (TS)  │
+                    │                        │
+                    │  Own SVG rendering     │
+                    │  Composed from         │
+                    │  widget primitives     │
+                    │                        │
+                    │  Edge-drawing (React)  │
+                    │  Selection (React)     │
+                    │  Context menus (React) │
+                    └────────────────────────┘
+```
+
+#### Module structure
+
+```
+com.top_logic.layout.diagram              — NEW: unified diagram library
+  src/main/java/                          — Server: msgbuf model, Sugiyama, ReactControl
+  src/main/java/.../protocol/diagram.proto — msgbuf protocol definition
+  src/main/typescript/                    — React SVG component, edge-drawing, interactions
+```
+
+Both old libraries (`graphic.blocks.*` and `graph.diagramjs.*`) remain operational for
+the legacy GWT UI and are removed when the React UI fully replaces it.
+
+#### Lifecycle
+
+```
+Phase 1 (now):
+  graphic.blocks.* + graph.diagramjs.*  →  old GWT UI (unchanged)
+  com.top_logic.layout.diagram          →  new React UI (new development)
+
+Phase 2 (React UI complete):
+  Remove graphic.blocks.client, graph.diagramjs.client  (GWT modules)
+  Remove ext.io.bpmn.bpmn-js dependency (diagram-js)
+
+Phase 3 (cleanup):
+  Evaluate if graphic.blocks server-side code can be consolidated
+```
+
+#### Dependencies on msgbuf
+
+Option E still benefits from the msgbuf feature requests, but is **less blocked** than
+Option B:
+
+- **Cross-file protocol extension**: Needed for clean SSE event types. Can be worked around
+  initially by defining diagram events in the base `sse.proto` (temporary coupling).
+- **TypeScript code generation**: Would eliminate hand-written TS serialization. Can be
+  hand-written initially (the `data.proto` model is well-defined).
+- **Native JSON value type**: Nice-to-have, not blocking.
+
+The msgbuf data model (`data.proto` from Graphic Blocks) already demonstrates that msgbuf
+works well for diagram data. The new library extends this pattern.
+
+## msgbuf Feature Requests
 
 Three feature requests have been prepared (see `msgbuf-feature-requests.md`):
 
@@ -335,93 +536,15 @@ Three feature requests have been prepared (see `msgbuf-feature-requests.md`):
 3. **Native JSON value type** — `json` field type that embeds structured data without
    string-wrapping
 
-### Why Workarounds Are Insufficient
-
-| Workaround | Problem |
-|---|---|
-| Add `GraphPatchEvent` to `sse.proto` | Creates dependency from base module to graph module |
-| Use `PatchEvent` with graph data as state | Semantically wrong — patches are commands, not state |
-| Use `FunctionCall` with string-based function names | Unstructured, fragile, not type-safe |
-| Full state replacement via `StateEvent` | Works but wastes bandwidth, no delta support |
-
-The core issue: every interaction (node move, edge creation, property change) needs a
-corresponding patch to flow in both directions. Hand-coding commands for each operation
-defeats the purpose of the ObjectScope/ChangeIO infrastructure, which already solves this
-generically.
-
-## Architecture Diagram (Target — Option B)
-
-```
-                        View XML (.view.xml)
-                              │
-                    ┌─────────┴─────────┐
-                    │   <model-graph>    │
-                    │   UIElement        │
-                    └─────────┬─────────┘
-                              │ createControl()
-                    ┌─────────┴─────────┐
-                    │ DiagramGraphControl│
-                    │ (ReactControl)     │
-                    │                    │
-                    │ SharedGraph model  │
-                    │ ObjectScope        │
-                    │ Sugiyama layout    │
-                    └────┬─────────┬────┘
-                   SSE   │         │  HTTP Commands
-              (Changes)  │         │  (Changes)
-                         ▼         ▲
-                    ┌─────────────────┐
-                    │  React Client   │
-                    │  (TypeScript)   │
-                    │                 │
-                    │  diagram-js     │
-                    │  UML rendering  │
-                    └─────────────────┘
-```
-
-## Architecture Diagram (Target — Option A)
-
-```
-                        View XML (.view.xml)
-                              │
-                    ┌─────────┴─────────┐
-                    │   <model-graph>    │
-                    │   UIElement        │
-                    └─────────┬─────────┘
-                              │ createControl()
-                    ┌─────────┴──────────────────┐
-                    │ React Wrapper (ReactControl)│
-                    │  - Channel bridging         │
-                    │  - Module/Selection events   │
-                    └─────────┬──────────────────┘
-                              │ mounts
-                    ┌─────────┴──────────────────┐
-                    │ GWT Widget (existing)       │
-                    │  - DiagramJSGraphControl    │
-                    │  - ObjectScope + ChangeIO   │
-                    │  - Event handlers           │
-                    │  - diagram-js canvas        │
-                    │  - AJAX ↔ Server            │
-                    └────┬─────────┬─────────────┘
-                  AJAX   │         │  AJAX
-              (Changes)  │         │  (Commands)
-                         ▼         ▲
-                    ┌─────────────────┐
-                    │ Server          │
-                    │ (unchanged)     │
-                    │ SharedGraph     │
-                    │ ObjectScope     │
-                    │ Sugiyama layout │
-                    └─────────────────┘
-```
-
 ## Open Items
 
-- [ ] Decide on integration strategy (Option A, B, or C)
-- [ ] If Option A: design the React ↔ GWT bridge API
-- [ ] If Option B: implement msgbuf features first
-- [ ] Detail design of UIElement and ReactControl
+- [ ] Decide on integration strategy (Option A through E)
+- [ ] If Option E: define the `.proto` model for UML diagrams (extend `data.proto` patterns)
+- [ ] If Option E: prototype SVG rendering of a UML class node from widget primitives
+- [ ] If Option E: prototype interactive edge-drawing in React/SVG
+- [ ] Design the Sugiyama integration for the new module
 - [ ] Channel bindings (module, selection, editMode)
 - [ ] Toolbar and context menu integration in View framework
 - [ ] Detail editor views (TypeEditor, AttributeEditor, etc.) as `.view.xml`
 - [ ] Test strategy
+- [ ] msgbuf feature request timeline

@@ -587,7 +587,7 @@ public class ModelEditorTool {
 		response.setSuccess(true);
 		response.setName(property.getName());
 		response.setTid(property.tId().asString());
-		response.setOwner(property.getOwner().getModule().getName() + ":" + property.getOwner().getName());
+		response.setOwner(TLModelUtil.qualifiedName(property.getOwner()));
 		response.setType(property.getType().getName());
 		response.setMandatory(property.isMandatory());
 		response.setMultiple(property.isMultiple());
@@ -707,7 +707,7 @@ public class ModelEditorTool {
 		response.setSuccess(true);
 		response.setName(existingPart.getName());
 		response.setTid(existingPart.tId().asString());
-		response.setOwner(existingPart.getOwner().getModule().getName() + ":" + existingPart.getOwner().getName());
+		response.setOwner(TLModelUtil.qualifiedName(existingPart.getOwner()));
 		response.setType(existingPart.getType().getName());
 		response.setMandatory(existingPart.isMandatory());
 		response.setMultiple(existingPart.isMultiple());
@@ -1479,8 +1479,7 @@ public class ModelEditorTool {
 			sb.append("Ambiguous type '").append(name).append("'. Did you mean: ");
 			for (int i = 0; i < matches.size(); i++) {
 				if (i > 0) sb.append(", ");
-				TLType m = matches.get(i);
-				sb.append(m.getModule().getName()).append(":").append(m.getName());
+				sb.append(TLModelUtil.qualifiedName(matches.get(i)));
 			}
 			sb.append("?");
 			throw new IllegalArgumentException(sb.toString());
@@ -1621,8 +1620,8 @@ public class ModelEditorTool {
 		response.setSuccess(true);
 		response.setName(reference.getName());
 		response.setTid(reference.tId().asString());
-		response.setOwner(reference.getOwner().getModule().getName() + ":" + reference.getOwner().getName());
-		response.setTargetType(reference.getType().getModule().getName() + ":" + reference.getType().getName());
+		response.setOwner(TLModelUtil.qualifiedName(reference.getOwner()));
+		response.setTargetType(TLModelUtil.qualifiedName(reference.getType()));
 		response.setMandatory(reference.isMandatory());
 		response.setMultiple(reference.isMultiple());
 		response.setOrdered(reference.isOrdered());
@@ -1646,14 +1645,13 @@ public class ModelEditorTool {
 		response.setSuccess(true);
 		response.setName(backwardRef.getName());
 		response.setTid(backwardRef.tId().asString());
-		response.setOwner(backwardRef.getOwner().getModule().getName() + ":" + backwardRef.getOwner().getName());
-		response.setTargetType(backwardRef.getType().getModule().getName() + ":" + backwardRef.getType().getName());
+		response.setOwner(TLModelUtil.qualifiedName(backwardRef.getOwner()));
+		response.setTargetType(TLModelUtil.qualifiedName(backwardRef.getType()));
 		response.setMandatory(backwardRef.isMandatory());
 		response.setMultiple(backwardRef.isMultiple());
 		response.setNavigate(backwardRef.getEnd().canNavigate());
 		response.setForwardReferenceName(forwardRef.getName());
-		response.setForwardReferenceOwner(
-			forwardRef.getOwner().getModule().getName() + ":" + forwardRef.getOwner().getName());
+		response.setForwardReferenceOwner(TLModelUtil.qualifiedName(forwardRef.getOwner()));
 		response.setCreated(created);
 		response.setResultMessage(created
 			? "Backward reference '" + backwardRef.getName() + "' created successfully in class '" + backwardRef.getOwner().getName() + "'"

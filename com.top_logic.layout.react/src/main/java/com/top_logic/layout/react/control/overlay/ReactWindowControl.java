@@ -84,7 +84,7 @@ public class ReactWindowControl extends ToolbarControl {
 		_configKey = ConfigKey.none();
 		setTitle(title);
 		setWidth(width);
-		setResizable(false);
+		setResizable(true);
 		setActions(List.of());
 	}
 

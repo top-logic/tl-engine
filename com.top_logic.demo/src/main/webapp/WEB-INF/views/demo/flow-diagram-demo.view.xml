@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <view xmlns:config="http://www.top-logic.com/ns/config/6.0">
-  <panel title="Flow Diagram">
-    <flow-diagram>
-      <builder class="com.top_logic.react.flow.server.ui.TestFlowChartBuilder" />
-    </flow-diagram>
-  </panel>
+	<panel>
+		<title>
+			<en>Flow Diagram</en>
+			<de>Flow-Diagramm</de>
+		</title>
+		<flow-diagram>
+			<builder class="com.top_logic.react.flow.server.ui.TestFlowChartBuilder" />
+		</flow-diagram>
+	</panel>
 </view>

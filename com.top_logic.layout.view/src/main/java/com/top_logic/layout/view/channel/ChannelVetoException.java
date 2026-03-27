@@ -5,28 +5,20 @@
  */
 package com.top_logic.layout.view.channel;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.top_logic.layout.view.form.StateHandler;
 
 /**
- * Thrown when a {@link ViewChannel} value change is blocked by one or more
- * {@link ViewChannel.VetoListener}s because dependent forms have unsaved changes.
+ * Thrown when a channel value change is blocked by one or more dirty forms.
  *
  * <p>
- * Carries the list of all dirty {@link StateHandler}s and a {@link Runnable} continuation that
- * retries the blocked value change. The caller (typically
- * {@link com.top_logic.layout.react.control.ReactCommandInvoker}) catches this exception and opens
- * a confirmation dialog. After the user saves or discards, the continuation is executed to retry the
- * original action.
+ * This class extends the base {@link com.top_logic.layout.react.dirty.ChannelVetoException}
+ * defined in the React module and is kept here for backward compatibility in the view module.
  * </p>
  */
-public class ChannelVetoException extends RuntimeException {
-
-	private final List<StateHandler> _dirtyHandlers;
-
-	private final Runnable _continuation;
+public class ChannelVetoException extends com.top_logic.layout.react.dirty.ChannelVetoException {
 
 	/**
 	 * Creates a new {@link ChannelVetoException}.
@@ -37,27 +29,6 @@ public class ChannelVetoException extends RuntimeException {
 	 *        A {@link Runnable} that retries the blocked action after dirty state is resolved.
 	 */
 	public ChannelVetoException(List<StateHandler> dirtyHandlers, Runnable continuation) {
-		super("Channel change vetoed by " + dirtyHandlers.size() + " dirty handler(s).");
-		_dirtyHandlers = Collections.unmodifiableList(dirtyHandlers);
-		_continuation = continuation;
-	}
-
-	/**
-	 * The dirty state handlers that blocked the channel change.
-	 */
-	public List<StateHandler> getDirtyHandlers() {
-		return _dirtyHandlers;
-	}
-
-	/**
-	 * Retries the blocked action.
-	 *
-	 * <p>
-	 * Must only be called after all dirty handlers have been saved or discarded, so that the retry
-	 * does not trigger another veto.
-	 * </p>
-	 */
-	public Runnable getContinuation() {
-		return _continuation;
+		super(new ArrayList<>(dirtyHandlers), continuation);
 	}
 }

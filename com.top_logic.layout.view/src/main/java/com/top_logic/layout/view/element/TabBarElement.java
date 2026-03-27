@@ -24,6 +24,7 @@ import com.top_logic.layout.react.control.tabbar.ReactTabBarControl;
 import com.top_logic.layout.react.control.tabbar.TabDefinition;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.DirtyChannel;
 import com.top_logic.util.Resources;
 
 /**
@@ -125,20 +126,26 @@ public class TabBarElement implements UIElement {
 	public IReactControl createControl(ViewContext context) {
 		List<TabDefinition> tabDefs = new ArrayList<>();
 		for (TabEntry entry : _tabs) {
-			tabDefs.add(new TabDefinition(entry._id, entry._label, () -> createContent(entry._children, context)));
+			DirtyChannel dirtyChannel = new DirtyChannel();
+			tabDefs.add(new TabDefinition(entry._id, entry._label,
+				() -> createContent(entry._children, context, dirtyChannel), dirtyChannel));
 		}
 		String activeTab = _activeTab != null && !_activeTab.isEmpty() ? _activeTab : null;
 		return new ReactTabBarControl(context, null, tabDefs, activeTab);
 	}
 
-	private static ReactControl createContent(List<UIElement> elements, ViewContext context) {
+	private static ReactControl createContent(List<UIElement> elements, ViewContext context,
+			DirtyChannel dirtyChannel) {
+		ViewContext tabContext = context.childContext("tab");
+		tabContext.setDirtyChannel(dirtyChannel);
+
 		if (elements.size() == 1) {
-			return (ReactControl) elements.get(0).createControl(context);
+			return (ReactControl) elements.get(0).createControl(tabContext);
 		}
 		List<ReactControl> children = elements.stream()
-			.map(e -> (ReactControl) e.createControl(context))
+			.map(e -> (ReactControl) e.createControl(tabContext))
 			.collect(Collectors.toList());
-		return new ReactStackControl(context, children);
+		return new ReactStackControl(tabContext, children);
 	}
 
 	private record TabEntry(String _id, String _label, List<UIElement> _children) {

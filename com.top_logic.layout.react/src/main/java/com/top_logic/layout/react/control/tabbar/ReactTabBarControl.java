@@ -15,6 +15,8 @@ import java.util.Map;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.dirty.ChannelVetoException;
+import com.top_logic.layout.react.dirty.DirtyChannel;
 
 import de.haumacher.msgbuf.json.JsonWriter;
 
@@ -173,6 +175,14 @@ public class ReactTabBarControl extends ReactControl {
 	@ReactCommand("selectTab")
 	void handleSelectTab(Map<String, Object> arguments) {
 		String tabId = (String) arguments.get(TAB_ID_ARG);
+
+		// Check for dirty forms in the current tab before switching.
+		TabDefinition currentTab = findTab(_activeTabId);
+		DirtyChannel dirtyChannel = currentTab.getDirtyChannel();
+		if (dirtyChannel != null && dirtyChannel.hasDirtyHandlers()) {
+			throw new ChannelVetoException(dirtyChannel.getDirtyHandlers(), () -> selectTab(tabId));
+		}
+
 		selectTab(tabId);
 	}
 

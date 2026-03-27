@@ -13,41 +13,15 @@ package com.top_logic.layout.view.form;
  * status, saving, and discarding changes.
  * </p>
  *
+ * <p>
+ * This interface extends the base {@link com.top_logic.layout.react.dirty.StateHandler} defined in
+ * the React module and is kept here for backward compatibility.
+ * </p>
+ *
  * @see com.top_logic.layout.view.channel.DirtyChannel
  * @see com.top_logic.layout.view.channel.ChannelVetoException
  */
-public interface StateHandler {
-
-	/**
-	 * Whether this handler has unsaved changes.
-	 */
-	boolean isDirty();
-
-	/**
-	 * Whether this handler currently has validation errors that would prevent saving.
-	 */
-	boolean hasErrors();
-
-	/**
-	 * Persists the current changes.
-	 *
-	 * <p>
-	 * Must only be called when {@link #hasErrors()} returns {@code false}.
-	 * </p>
-	 */
-	void executeSave();
-
-	/**
-	 * Discards all unsaved changes, reverting to the last persisted state.
-	 */
-	void executeDiscard();
-
-	/**
-	 * A human-readable description of this handler for display in the confirmation dialog.
-	 *
-	 * <p>
-	 * Typically the form title or the name of the edited object.
-	 * </p>
-	 */
-	String getDescription();
+public interface StateHandler extends com.top_logic.layout.react.dirty.StateHandler {
+	// Pure marker extension for backward compatibility.
+	// All methods inherited from com.top_logic.layout.react.dirty.StateHandler.
 }

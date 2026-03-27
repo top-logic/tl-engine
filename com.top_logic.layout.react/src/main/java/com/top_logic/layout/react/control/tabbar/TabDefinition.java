@@ -8,6 +8,7 @@ package com.top_logic.layout.react.control.tabbar;
 import java.util.function.Supplier;
 
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.dirty.DirtyChannel;
 
 /**
  * Definition of a single tab in a {@link ReactTabBarControl}.
@@ -25,6 +26,8 @@ public class TabDefinition {
 
 	private final Supplier<ReactControl> _contentFactory;
 
+	private final DirtyChannel _dirtyChannel;
+
 	/**
 	 * Creates a new {@link TabDefinition}.
 	 *
@@ -34,11 +37,14 @@ public class TabDefinition {
 	 *        The display label.
 	 * @param contentFactory
 	 *        Factory to lazily create the tab's content control.
+	 * @param dirtyChannel
+	 *        The dirty channel tracking unsaved changes in this tab's content, or {@code null}.
 	 */
-	public TabDefinition(String id, String label, Supplier<ReactControl> contentFactory) {
+	public TabDefinition(String id, String label, Supplier<ReactControl> contentFactory, DirtyChannel dirtyChannel) {
 		_id = id;
 		_label = label;
 		_contentFactory = contentFactory;
+		_dirtyChannel = dirtyChannel;
 	}
 
 	/**
@@ -60,6 +66,13 @@ public class TabDefinition {
 	 */
 	public Supplier<ReactControl> getContentFactory() {
 		return _contentFactory;
+	}
+
+	/**
+	 * The dirty channel tracking unsaved changes in this tab's content, or {@code null}.
+	 */
+	public DirtyChannel getDirtyChannel() {
+		return _dirtyChannel;
 	}
 
 }

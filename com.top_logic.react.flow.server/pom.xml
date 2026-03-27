@@ -27,5 +27,14 @@
             <groupId>com.top-logic</groupId>
             <artifactId>tl-model-search</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.top-logic</groupId>
+            <artifactId>tl-ajax-server</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.top-logic</groupId>
+            <artifactId>tl-graphic-blocks</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 </project>

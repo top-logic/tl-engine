@@ -77,7 +77,7 @@ import com.top_logic.react.flow.data.TreeConnector;
 import com.top_logic.react.flow.data.TreeLayout;
 import com.top_logic.react.flow.data.VerticalLayout;
 import com.top_logic.react.flow.server.ui.AWTContext;
-import com.top_logic.react.flow.server.handler.ServerDropHandler;
+import com.top_logic.react.flow.server.ui.handler.ServerDropHandler;
 import com.top_logic.model.search.expr.ToString;
 import com.top_logic.model.search.expr.config.operations.ScriptConversion;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
@@ -87,7 +87,7 @@ import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
 /**
  * Factory for flow chart diagram elements.
  */
-@ScriptPrefix("flow")
+@ScriptPrefix("reactFlow")
 public class FlowFactory extends TLScriptFunctions {
 	
 	private static final String FLOW_CORE_CSS = "/style/tl-flow-core.css";

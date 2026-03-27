@@ -53,9 +53,6 @@ public class TaskProgressTracker {
 	 */
 	private final ConcurrentHashMap<String, AIProcessingState> _processingStates = new ConcurrentHashMap<>();
 
-	/** Called when polling has updates to request a repaint of the chat view. */
-	private volatile Runnable _repaintRequester = null;
-
 	/** User display name resolved from TLContext (set where context is available, used as fallback elsewhere). */
 	private volatile String _userName = null;
 
@@ -135,28 +132,6 @@ public class TaskProgressTracker {
 			}
 		}
 		return false;
-	}
-
-	/**
-	 * Sets a runnable to request repaint when polling has updates (e.g. so the chat view
-	 * refreshes even if the user navigated away and back).
-	 */
-	public void setRepaintRequester(Runnable runnable) {
-		_repaintRequester = runnable;
-	}
-
-	/**
-	 * Requests a repaint of the chat view if a requester was set. Called by polling when
-	 * there are updates.
-	 */
-	public void requestRepaintIfNeeded() {
-		Runnable r = _repaintRequester;
-		if (r != null) {
-			try {
-				r.run();
-			} catch (Throwable ignored) {
-			}
-		}
 	}
 
 	/**

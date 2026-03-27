@@ -224,7 +224,7 @@ public class ChatServlet extends HttpServlet {
 			}
 		}
 		final String userName = storedName != null ? storedName : "Anonymous";
-		ChatProcessor.SendResult result = ChatProcessor.sendMessage(tracker, userName, messageText, attachments, null, null);
+		ChatProcessor.SendResult result = ChatProcessor.sendMessage(tracker, userName, messageText, attachments);
 
 		resp.setStatus(HttpServletResponse.SC_OK);
 		resp.setContentType(CONTENT_TYPE_JSON);

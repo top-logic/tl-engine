@@ -841,10 +841,8 @@ public class ChatControl extends AbstractControlBase {
 				if (!trimmedText.isEmpty()) {
 						String storedName = chatControl._taskTracker.getUserName();
 					String userName = storedName != null ? storedName : "Anonymous";
-					// No UIExecutor polling: the client uses SSE for real-time updates.
 					ChatProcessor.SendResult result = ChatProcessor.sendMessage(
-						chatControl._taskTracker, userName, trimmedText, null,
-						() -> chatControl.requestRepaint(), null);
+						chatControl._taskTracker, userName, trimmedText, null);
 					if (result.getTaskId() != null) {
 						chatControl._processingState = chatControl._taskTracker.getAnyActiveProcessingState();
 						chatControl.requestRepaint();

@@ -9,11 +9,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.top_logic.layout.DisplayDimension;
+import com.top_logic.layout.messagebox.MessageBox.ButtonType;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.button.MessageButtons;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
-import com.top_logic.layout.react.control.layout.ReactStackControl.StackDirection;
 import com.top_logic.layout.react.control.table.ReactTextCellControl;
 import com.top_logic.layout.react.dirty.StateHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -51,9 +52,6 @@ public class DirtyConfirmDialogControl {
 
 		String title = resources.getString(I18NConstants.DIRTY_CONFIRM_TITLE);
 		String message = resources.getString(I18NConstants.DIRTY_CONFIRM_MESSAGE);
-		String saveLabel = resources.getString(I18NConstants.DIRTY_CONFIRM_SAVE);
-		String discardLabel = resources.getString(I18NConstants.DIRTY_CONFIRM_DISCARD);
-		String cancelLabel = resources.getString(I18NConstants.DIRTY_CONFIRM_CANCEL);
 
 		boolean canSave = dirtyHandlers.stream().noneMatch(StateHandler::hasErrors);
 
@@ -73,16 +71,21 @@ public class DirtyConfirmDialogControl {
 			DisplayDimension.px(420), closeHandler);
 		window.setChild(body);
 
-		// Footer action buttons.
+		String saveLabel = resources.getString(I18NConstants.DIRTY_CONFIRM_SAVE);
+		String discardLabel = resources.getString(I18NConstants.DIRTY_CONFIRM_DISCARD);
+		String cancelLabel = resources.getString(I18NConstants.DIRTY_CONFIRM_CANCEL);
+
+		// Footer action buttons using MessageButtons for consistent icons.
 		List<ReactControl> actions = new ArrayList<>();
 
-		ReactButtonControl cancelBtn = new ReactButtonControl(context, cancelLabel, ctx -> {
+		ReactButtonControl cancelBtn = MessageButtons.button(context, ButtonType.CANCEL, ctx -> {
 			dialogManager.closeTopDialog(DialogResult.cancelled());
 			return HandlerResult.DEFAULT_RESULT;
 		});
+		cancelBtn.setLabel(cancelLabel);
 		actions.add(cancelBtn);
 
-		ReactButtonControl discardBtn = new ReactButtonControl(context, discardLabel, ctx -> {
+		ReactButtonControl discardBtn = MessageButtons.button(context, ButtonType.NO, ctx -> {
 			for (StateHandler handler : dirtyHandlers) {
 				handler.executeDiscard();
 			}
@@ -90,10 +93,11 @@ public class DirtyConfirmDialogControl {
 			continuation.run();
 			return HandlerResult.DEFAULT_RESULT;
 		});
+		discardBtn.setLabel(discardLabel);
 		actions.add(discardBtn);
 
 		if (canSave) {
-			ReactButtonControl saveBtn = new ReactButtonControl(context, saveLabel, ctx -> {
+			ReactButtonControl saveBtn = MessageButtons.button(context, ButtonType.OK, ctx -> {
 				for (StateHandler handler : dirtyHandlers) {
 					handler.executeSave();
 				}
@@ -101,6 +105,7 @@ public class DirtyConfirmDialogControl {
 				continuation.run();
 				return HandlerResult.DEFAULT_RESULT;
 			});
+			saveBtn.setLabel(saveLabel);
 			actions.add(saveBtn);
 		}
 

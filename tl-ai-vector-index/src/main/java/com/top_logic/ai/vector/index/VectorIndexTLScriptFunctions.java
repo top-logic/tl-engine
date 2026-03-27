@@ -114,7 +114,7 @@ public class VectorIndexTLScriptFunctions extends TLScriptFunctions {
 	 * 
 	 * <pre>{@code 
 	 * {
-	 *   franceVacations = vectorIndexSearch("all vacations in France", 2); 
+	 *   franceVacations = vectorIndexSearchByType("all vacations in France", "test.indexingVector:Vacation", 2); 
 	 *   $franceVacations.map(x -> { 
 	 *   	"internalId": $x["embedded"]["text"].parseJson()["internalId"], 
 	 *      "TopLogic-type": $x["embedded"]["text"].parseJson()["TopLogic-type"], 

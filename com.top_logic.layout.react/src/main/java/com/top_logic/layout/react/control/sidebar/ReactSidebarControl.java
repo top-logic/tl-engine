@@ -18,6 +18,8 @@ import java.util.function.Consumer;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.dirty.ChannelVetoException;
+import com.top_logic.layout.react.dirty.DirtyChannel;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 import de.haumacher.msgbuf.json.JsonWriter;
@@ -364,6 +366,16 @@ public class ReactSidebarControl extends ReactControl {
 	@ReactCommand("selectItem")
 	void handleSelectItem(Map<String, Object> arguments) {
 		String itemId = (String) arguments.get(ITEM_ID_ARG);
+
+		// Check for dirty forms in the current sidebar item before switching.
+		NavigationItem currentItem = findNavItem(_activeItemId, _items);
+		if (currentItem != null) {
+			DirtyChannel dirtyChannel = currentItem.getDirtyChannel();
+			if (dirtyChannel != null && dirtyChannel.hasDirtyHandlers()) {
+				throw new ChannelVetoException(dirtyChannel.getDirtyHandlers(), () -> selectItem(itemId));
+			}
+		}
+
 		selectItem(itemId);
 	}
 

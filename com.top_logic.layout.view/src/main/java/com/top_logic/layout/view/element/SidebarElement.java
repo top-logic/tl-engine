@@ -32,6 +32,7 @@ import com.top_logic.layout.react.control.sidebar.SidebarItem;
 import com.top_logic.layout.structure.PersonalizingExpandable;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.DirtyChannel;
 
 /**
  * UIElement that wraps {@link ReactSidebarControl}.
@@ -181,7 +182,9 @@ public class SidebarElement implements UIElement {
 		@Override
 		public SidebarItem createSidebarItem(ViewContext context) {
 			String label = Resources.getInstance().getString(_label);
-			return new NavigationItem(_id, label, _icon, () -> createContent(_children, context));
+			DirtyChannel dirtyChannel = new DirtyChannel();
+			return new NavigationItem(_id, label, _icon,
+				() -> createContent(_children, context, dirtyChannel), dirtyChannel);
 		}
 	}
 
@@ -285,13 +288,17 @@ public class SidebarElement implements UIElement {
 		}
 	}
 
-	private static ReactControl createContent(List<UIElement> elements, ViewContext context) {
+	private static ReactControl createContent(List<UIElement> elements, ViewContext context,
+			DirtyChannel dirtyChannel) {
+		ViewContext itemContext = context.childContext("sidebar-item");
+		itemContext.setDirtyChannel(dirtyChannel);
+
 		if (elements.size() == 1) {
-			return (ReactControl) elements.get(0).createControl(context);
+			return (ReactControl) elements.get(0).createControl(itemContext);
 		}
 		List<ReactControl> children = elements.stream()
-			.map(e -> (ReactControl) e.createControl(context))
+			.map(e -> (ReactControl) e.createControl(itemContext))
 			.collect(Collectors.toList());
-		return new ReactStackControl(context, children);
+		return new ReactStackControl(itemContext, children);
 	}
 }

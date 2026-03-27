@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.dirty.DirtyChannel;
 
 /**
  * A sidebar item that switches the content area to a lazily created {@link ReactControl}.
@@ -27,6 +28,8 @@ public class NavigationItem extends SidebarItem {
 
 	private final Supplier<ReactControl> _contentFactory;
 
+	private final DirtyChannel _dirtyChannel;
+
 	private String _badge;
 
 	/**
@@ -41,8 +44,19 @@ public class NavigationItem extends SidebarItem {
 	 * @param contentFactory
 	 *        Factory for lazily creating the content control.
 	 */
+	/**
+	 * Creates a new {@link NavigationItem} without a badge or dirty channel.
+	 */
 	public NavigationItem(String id, String label, String icon, Supplier<ReactControl> contentFactory) {
-		this(id, label, icon, contentFactory, null);
+		this(id, label, icon, contentFactory, null, null);
+	}
+
+	/**
+	 * Creates a new {@link NavigationItem} with a dirty channel but no badge.
+	 */
+	public NavigationItem(String id, String label, String icon, Supplier<ReactControl> contentFactory,
+			DirtyChannel dirtyChannel) {
+		this(id, label, icon, contentFactory, dirtyChannel, null);
 	}
 
 	/**
@@ -59,11 +73,13 @@ public class NavigationItem extends SidebarItem {
 	 * @param badge
 	 *        Optional badge text (e.g. "3"), or {@code null} for no badge.
 	 */
-	public NavigationItem(String id, String label, String icon, Supplier<ReactControl> contentFactory, String badge) {
+	public NavigationItem(String id, String label, String icon, Supplier<ReactControl> contentFactory,
+			DirtyChannel dirtyChannel, String badge) {
 		super(id);
 		_label = label;
 		_icon = icon;
 		_contentFactory = contentFactory;
+		_dirtyChannel = dirtyChannel;
 		_badge = badge;
 	}
 
@@ -86,6 +102,13 @@ public class NavigationItem extends SidebarItem {
 	 */
 	public Supplier<ReactControl> getContentFactory() {
 		return _contentFactory;
+	}
+
+	/**
+	 * The dirty channel tracking unsaved changes in this item's content, or {@code null}.
+	 */
+	public DirtyChannel getDirtyChannel() {
+		return _dirtyChannel;
 	}
 
 	/**

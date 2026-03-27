@@ -132,10 +132,7 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
           ...(lw != null ? { width: Math.round(lw) + 'px' } : {}),
           ...(lh != null ? { height: Math.round(lh) + 'px' } : {}),
         });
-        localWidthRef.current = null;
-        localHeightRef.current = null;
-        setLocalWidth(null);
-        setLocalHeight(null);
+        // Keep local dimensions — server uses putStateSilent() which does not push back.
       }
       dragState.current = null;
     };

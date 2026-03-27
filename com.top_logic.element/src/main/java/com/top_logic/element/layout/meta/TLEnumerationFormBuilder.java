@@ -22,17 +22,16 @@ import com.top_logic.basic.config.constraint.annotation.RegexpConstraint;
 import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.element.layout.meta.TLStructuredTypeFormBuilder.EditModel.AllModules;
 import com.top_logic.layout.form.declarative.DeclarativeFormBuilder;
 import com.top_logic.layout.form.values.edit.annotation.CollapseEntries;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
-import com.top_logic.layout.form.values.edit.mode.ActiveIf;
-import com.top_logic.layout.form.values.edit.mode.HideImmutableIf;
 import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.form.values.edit.annotation.TitleProperty;
+import com.top_logic.layout.form.values.edit.mode.ActiveIf;
+import com.top_logic.layout.form.values.edit.mode.HideImmutableIf;
 import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
@@ -46,6 +45,7 @@ import com.top_logic.model.config.FullQualifiedName;
 import com.top_logic.model.config.PartNameConstraints;
 import com.top_logic.model.config.TLTypeAnnotation;
 import com.top_logic.model.util.TLModelNamingConvention;
+import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
@@ -72,6 +72,7 @@ public class TLEnumerationFormBuilder
 	 * Model of the displayed enumeration.
 	 */
 	@DisplayOrder({
+		EditModel.MODULE,
 		EditModel.NAME,
 		EditModel.FULL_QUALIFIED_NAME,
 		EditModel.LABEL,
@@ -125,7 +126,7 @@ public class TLEnumerationFormBuilder
 		@Name(MODULE)
 		@InstanceFormat
 		@ItemDisplay(ItemDisplayType.VALUE)
-		@Options(fun = AllModules.class)
+		@Options(fun = TLModelPartRef.AllModules.class)
 		@OptionLabels(MetaResourceProvider.class)
 		@Mandatory
 		TLModule getModule();

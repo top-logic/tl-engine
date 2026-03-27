@@ -66,7 +66,8 @@ public class DirtyConfirmDialogControl {
 
 		// Window chrome.
 		ReactWindowControl window = new ReactWindowControl(context, title,
-			DisplayDimension.px(420), closeHandler);
+			DisplayDimension.px(550), closeHandler);
+		window.setResizable(true);
 		window.setChild(body);
 
 		// Footer action buttons using MessageButtons for consistent icons.

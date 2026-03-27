@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.top-logic</groupId>
+        <artifactId>tl-parent-core-internal</artifactId>
+        <version>7.11.0-SNAPSHOT</version>
+        <relativePath>../tl-parent-core-internal</relativePath>
+    </parent>
+
+    <artifactId>tl-react-flow-common</artifactId>
+    <description>Shared model, layout, and SVG rendering for React flow diagrams (GWT-compatible).</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.top-logic</groupId>
+            <artifactId>tl-common-json</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>de.haumacher.msgbuf</groupId>
+            <artifactId>msgbuf-api</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>de.haumacher.msgbuf</groupId>
+                <artifactId>msgbuf-generator-maven-plugin</artifactId>
+                <version>${msgbuf.version}</version>
+            </plugin>
+        </plugins>
+    </build>
+</project>

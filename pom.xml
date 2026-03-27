@@ -540,6 +540,35 @@
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
+				<artifactId>tl-react-flow-common</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-react-flow-common</artifactId>
+				<version>${tl.version}</version>
+				<classifier>sources</classifier>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-react-flow-server</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-react-flow-client</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-react-flow-client</artifactId>
+				<version>${tl.version}</version>
+				<classifier>sources</classifier>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
 				<artifactId>tl-ide-jetty</artifactId>
 				<version>${tl.version}</version>
 			</dependency>

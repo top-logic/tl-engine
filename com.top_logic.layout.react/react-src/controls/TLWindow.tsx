@@ -47,7 +47,7 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
 
   // Maximize state.
   const [maximized, setMaximized] = useState(false);
-  const regularBoundsRef = useRef<{ x: number; y: number; w: string; h: string | null } | null>(null);
+  const regularBoundsRef = useRef<{ x: number; y: number; w: number | null; h: number | null } | null>(null);
 
   // Refs to track latest local dimensions inside event handlers (avoids stale closures).
   const localWidthRef = useRef<number | null>(null);
@@ -168,8 +168,8 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
       const rb = regularBoundsRef.current;
       if (rb) {
         setPosition(rb.x !== -1 ? { x: rb.x, y: rb.y } : null);
-        setLocalWidth(null);
-        setLocalHeight(null);
+        setLocalWidth(rb.w);
+        setLocalHeight(rb.h);
       }
       setMaximized(false);
     } else {
@@ -179,15 +179,15 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
       regularBoundsRef.current = {
         x: positionRef.current?.x ?? (rect?.left ?? -1),
         y: positionRef.current?.y ?? (rect?.top ?? -1),
-        w: localWidth != null ? localWidth + 'px' : serverWidth,
-        h: localHeight != null ? localHeight + 'px' : serverHeight,
+        w: localWidth ?? (rect?.width ?? null),
+        h: localHeight ?? null,
       };
       setMaximized(true);
       setPosition({ x: 0, y: 0 });
       setLocalWidth(null);
       setLocalHeight(null);
     }
-  }, [maximized, serverWidth, serverHeight, localWidth, localHeight]);
+  }, [maximized, localWidth, localHeight]);
 
   const style: React.CSSProperties = maximized
     ? { position: 'absolute' as const, top: 0, left: 0, width: '100vw', height: '100vh', maxHeight: '100vh', borderRadius: 0 }

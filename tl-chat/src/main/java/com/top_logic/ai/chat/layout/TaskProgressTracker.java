@@ -46,8 +46,12 @@ public class TaskProgressTracker {
 
 	private final ConcurrentHashMap<String, AtomicBoolean> _backgroundAgentInProgress = new ConcurrentHashMap<>();
 
-	/** Current AI processing state (survives navigation); cleared when processing finishes. */
-	private volatile AIProcessingState _currentProcessingState = null;
+	/**
+	 * Active AI processing states keyed by task ID. Supports concurrent processing (e.g. when two
+	 * users share a session) and eliminates the single-slot overwrite race where a second request
+	 * could overwrite the first request's state before its background task starts.
+	 */
+	private final ConcurrentHashMap<String, AIProcessingState> _processingStates = new ConcurrentHashMap<>();
 
 	/** Called when polling has updates to request a repaint of the chat view. */
 	private volatile Runnable _repaintRequester = null;
@@ -69,26 +73,68 @@ public class TaskProgressTracker {
 	}
 
 	/**
-	 * Returns the current AI processing state, or null if none. Survives navigation so returning
-	 * to the chat view shows in-progress task and tool trace.
+	 * Registers a processing state for the given task ID.
+	 *
+	 * @param taskId
+	 *        The task ID (must not be null).
+	 * @param state
+	 *        The processing state to register.
 	 */
-	public AIProcessingState getCurrentProcessingState() {
-		return _currentProcessingState;
+	public void addProcessingState(String taskId, AIProcessingState state) {
+		_processingStates.put(taskId, state);
 	}
 
 	/**
-	 * Sets the current AI processing state (called when sending a message). Cleared when
-	 * processing completes or fails.
+	 * Removes the processing state for the given task ID (called when processing finishes).
+	 *
+	 * @param taskId
+	 *        The task ID to remove.
 	 */
-	public void setCurrentProcessingState(AIProcessingState state) {
-		_currentProcessingState = state;
+	public void removeProcessingState(String taskId) {
+		if (taskId != null) {
+			_processingStates.remove(taskId);
+		}
 	}
 
 	/**
-	 * Clears the current processing state (called when processing finishes).
+	 * Returns the processing state for the given task ID, or null if not found.
+	 *
+	 * @param taskId
+	 *        The task ID.
+	 * @return The processing state, or null.
 	 */
-	public void clearCurrentProcessingState() {
-		_currentProcessingState = null;
+	public AIProcessingState getProcessingState(String taskId) {
+		return _processingStates.get(taskId);
+	}
+
+	/**
+	 * Returns any active processing state, or null if none. Used by SSE handlers, polling
+	 * endpoints, and UI rendering that need to find "the" current state without knowing the task
+	 * ID.
+	 *
+	 * @return An active processing state, or any remaining state, or null.
+	 */
+	public AIProcessingState getAnyActiveProcessingState() {
+		for (AIProcessingState state : _processingStates.values()) {
+			if (state.isProcessing()) {
+				return state;
+			}
+		}
+		// Fall back to any remaining state (completed but not yet cleaned up)
+		var it = _processingStates.values().iterator();
+		return it.hasNext() ? it.next() : null;
+	}
+
+	/**
+	 * Returns whether any AI task is currently in progress for this tracker.
+	 */
+	public boolean hasActiveProcessingState() {
+		for (AIProcessingState state : _processingStates.values()) {
+			if (state.isProcessing()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -157,11 +203,10 @@ public class TaskProgressTracker {
 		return _approvalMode;
 	}
 
-	/** Sets the session-scoped approval mode. Also updates the current processing store if active. */
+	/** Sets the session-scoped approval mode. Also updates all active processing stores. */
 	public void setApprovalMode(ApprovalMode mode) {
 		_approvalMode = mode;
-		AIProcessingState state = _currentProcessingState;
-		if (state != null) {
+		for (AIProcessingState state : _processingStates.values()) {
 			var store = state.getUserInteractionStore();
 			if (store != null) {
 				store.setMode(mode);

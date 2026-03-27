@@ -337,7 +337,7 @@ public class ChatProcessor {
 					chat.addMessage(new ChatMessage("AI", errorMsg));
 					hasUpdates = true;
 				}
-				taskTracker.clearCurrentProcessingState();
+				taskTracker.removeProcessingState(currentTaskId);
 			}
 			return hasUpdates;
 		}
@@ -393,7 +393,7 @@ public class ChatProcessor {
 		state.startProcessing();
 		String taskId = tracker.startTask(randomChatTaskPlaceholder());
 		state.setCurrentTaskId(taskId);
-		tracker.setCurrentProcessingState(state);
+		tracker.addProcessingState(taskId, state);
 
 		// Capture session context so background task writes to the correct Chat,
 		// even if the user switches sessions before the task completes.
@@ -407,18 +407,18 @@ public class ChatProcessor {
 		}
 
 		ChatMemory chatMemory = tracker.getChatMemory();
-		Future<?> future = BACKGROUND_EXECUTOR.submit(new AIBackgroundTask(tracker, chatMemory, userMessage, attachments));
+		// Pass state directly to background task so it is immune to tracker-level overwrites
+		Future<?> future = BACKGROUND_EXECUTOR.submit(
+			new AIBackgroundTask(tracker, state, chatMemory, userMessage, attachments));
 		state._backgroundTask = future;
 
 		if (uiExecutor != null) {
+			// Capture state for the polling lambda so it polls its own state, not a later one
+			final AIProcessingState capturedState = state;
 			try {
 				ScheduledFuture<?> pollingTask = uiExecutor.scheduleWithFixedDelay(
 					() -> {
-						AIProcessingState s = tracker.getCurrentProcessingState();
-						if (s == null) {
-							return;
-						}
-						boolean hasUpdates = applyPollUpdates(s, s.getChat(), tracker);
+						boolean hasUpdates = applyPollUpdates(capturedState, capturedState.getChat(), tracker);
 						if (hasUpdates) {
 							tracker.requestRepaintIfNeeded();
 						}
@@ -430,7 +430,7 @@ public class ChatProcessor {
 			} catch (Exception ex) {
 				Logger.error("Failed to schedule UI polling: " + ex.getMessage(), ex, ChatProcessor.class);
 				future.cancel(true);
-				tracker.clearCurrentProcessingState();
+				tracker.removeProcessingState(taskId);
 				return SendResult.error();
 			}
 		}
@@ -441,15 +441,14 @@ public class ChatProcessor {
 	 * Returns whether an AI task is currently in progress for the given tracker.
 	 */
 	public static boolean isProcessing(TaskProgressTracker tracker) {
-		AIProcessingState state = tracker.getCurrentProcessingState();
-		return state != null && state.isProcessing();
+		return tracker.hasActiveProcessingState();
 	}
 
 	/**
 	 * Returns the current task ID for the given tracker, or null if none.
 	 */
 	public static String getCurrentTaskId(TaskProgressTracker tracker) {
-		AIProcessingState state = tracker.getCurrentProcessingState();
+		AIProcessingState state = tracker.getAnyActiveProcessingState();
 		return state != null ? state.getCurrentTaskId() : null;
 	}
 
@@ -562,16 +561,24 @@ public class ChatProcessor {
 
 	/**
 	 * Background task for AI processing with detailed progress tracking.
+	 *
+	 * <p>
+	 * The {@link AIProcessingState} is captured at construction time (not read from the tracker at
+	 * execution time) to eliminate the race window where a concurrent request could overwrite the
+	 * tracker's state before this task starts.
+	 * </p>
 	 */
 	static class AIBackgroundTask implements Runnable {
 		private final TaskProgressTracker _taskTracker;
+		private final AIProcessingState _state;
 		private final ChatMemory _chatMemory;
 		private final String _userMessage;
 		private final List<AttachmentDto> _attachments;
 
-		AIBackgroundTask(TaskProgressTracker taskTracker, ChatMemory chatMemory,
-				String userMessage, List<AttachmentDto> attachments) {
+		AIBackgroundTask(TaskProgressTracker taskTracker, AIProcessingState state,
+				ChatMemory chatMemory, String userMessage, List<AttachmentDto> attachments) {
 			_taskTracker = taskTracker;
+			_state = state;
 			_chatMemory = chatMemory;
 			_userMessage = userMessage;
 			_attachments = attachments;
@@ -579,10 +586,7 @@ public class ChatProcessor {
 
 		@Override
 		public void run() {
-			AIProcessingState state = _taskTracker.getCurrentProcessingState();
-			if (state == null) {
-				return;
-			}
+			AIProcessingState state = _state;
 			try {
 				ThreadContextManager.inSystemInteraction(ChatProcessor.class, () -> {
 					try {

@@ -62,6 +62,7 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
     startW: number;
     startH: number;
     startPos: { x: number; y: number };
+    symmetric: boolean;
   } | null>(null);
 
   const handleClose = useCallback(() => {
@@ -74,10 +75,12 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
     if (!el) return;
     const rect = el.getBoundingClientRect();
 
-    // Switch to absolute positioning immediately so the element resizes from its
-    // edge rather than growing symmetrically from the flexbox center.
+    // Remember whether the dialog was centered before resize started.
+    const wasCentered = !positionRef.current;
     const startPos = positionRef.current ?? { x: rect.left, y: rect.top };
-    if (!positionRef.current) {
+
+    // Switch to absolute positioning so the backdrop click doesn't close the dialog.
+    if (wasCentered) {
       positionRef.current = startPos;
       setPosition(startPos);
     }
@@ -89,6 +92,7 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
       startW: rect.width,
       startH: rect.height,
       startPos: { ...startPos },
+      symmetric: wasCentered,
     };
 
     const handleMouseMove = (ev: MouseEvent) => {
@@ -98,29 +102,43 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
       const dy = ev.clientY - ds.startY;
       let w = ds.startW;
       let h = ds.startH;
-
-      // Calculate position deltas for N/W handles.
       let posXDelta = 0;
       let posYDelta = 0;
 
-      if (ds.dir.includes('e')) w = ds.startW + dx;
-      if (ds.dir.includes('w')) { w = ds.startW - dx; posXDelta = dx; }
-      if (ds.dir.includes('s')) h = ds.startH + dy;
-      if (ds.dir.includes('n')) { h = ds.startH - dy; posYDelta = dy; }
+      if (ds.symmetric) {
+        // Symmetric resize: double the size delta, counter-shift position so the
+        // handle stays under the mouse while the dialog grows from center.
+        if (ds.dir.includes('e')) { w = ds.startW + 2 * dx; posXDelta = -dx; }
+        if (ds.dir.includes('w')) { w = ds.startW - 2 * dx; posXDelta = dx; }
+        if (ds.dir.includes('s')) { h = ds.startH + 2 * dy; posYDelta = -dy; }
+        if (ds.dir.includes('n')) { h = ds.startH - 2 * dy; posYDelta = dy; }
+      } else {
+        // Non-symmetric: edge follows mouse, opposite edge stays anchored.
+        if (ds.dir.includes('e')) w = ds.startW + dx;
+        if (ds.dir.includes('w')) { w = ds.startW - dx; posXDelta = dx; }
+        if (ds.dir.includes('s')) h = ds.startH + dy;
+        if (ds.dir.includes('n')) { h = ds.startH - dy; posYDelta = dy; }
+      }
 
       const newW = Math.max(200, w);
       const newH = Math.max(100, h);
 
       // Clamp position deltas if size hit minimum.
-      if (ds.dir.includes('w') && newW === 200) posXDelta = ds.startW - 200;
-      if (ds.dir.includes('n') && newH === 100) posYDelta = ds.startH - 100;
+      if (ds.symmetric) {
+        if (ds.dir.includes('e') && newW === 200) posXDelta = -(ds.startW - 200) / 2;
+        if (ds.dir.includes('w') && newW === 200) posXDelta = (ds.startW - 200) / 2;
+        if (ds.dir.includes('s') && newH === 100) posYDelta = -(ds.startH - 100) / 2;
+        if (ds.dir.includes('n') && newH === 100) posYDelta = (ds.startH - 100) / 2;
+      } else {
+        if (ds.dir.includes('w') && newW === 200) posXDelta = ds.startW - 200;
+        if (ds.dir.includes('n') && newH === 100) posYDelta = ds.startH - 100;
+      }
 
       localWidthRef.current = newW;
       localHeightRef.current = newH;
       setLocalWidth(newW);
       setLocalHeight(newH);
 
-      // Always update position (N/W edges shift, S/E edges stay anchored).
       const newPos = {
         x: ds.startPos.x + posXDelta,
         y: ds.startPos.y + posYDelta,

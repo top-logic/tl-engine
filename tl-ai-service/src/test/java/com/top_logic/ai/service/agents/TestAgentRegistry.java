@@ -130,6 +130,6 @@ public class TestAgentRegistry extends TestCase {
 		// Startup validates: exactly 1 -> stores name in _entryPointAgentName
 
 		// Verify the property name constant matches the expected XML attribute
-		assertEquals("entry-point", AgentConfig.ENTRY_POINT);
+		assertEquals("entry-point", ChatAgentConfig.ENTRY_POINT);
 	}
 }

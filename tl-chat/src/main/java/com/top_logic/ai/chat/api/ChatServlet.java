@@ -13,6 +13,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
+import jakarta.servlet.AsyncContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+
 import com.top_logic.ai.chat.api.messages.AttachmentDto;
 import com.top_logic.ai.chat.api.messages.ChatSendRequest;
 import com.top_logic.ai.chat.api.messages.ChatSendResponse;
@@ -24,11 +31,14 @@ import com.top_logic.ai.chat.api.messages.CreateSessionRequest;
 import com.top_logic.ai.chat.api.messages.PersistedChatEntry;
 import com.top_logic.ai.chat.api.messages.SaveMessagesRequest;
 import com.top_logic.ai.chat.api.messages.UpdateTitleRequest;
-import com.top_logic.ai.chat.layout.ChatEntry;
+import com.top_logic.ai.chat.background.ChatContextAdapter;
+import com.top_logic.ai.service.agents.background.BackgroundAgentExecutor;
 import com.top_logic.ai.chat.history.ChatHistoryService;
+import com.top_logic.ai.chat.layout.ChatEntry;
 import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
+import com.top_logic.ai.service.agents.background.input.ChatContextInput;
 import com.top_logic.ai.service.approval.UserInteractionStore;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSessionContext;
@@ -40,13 +50,6 @@ import com.top_logic.model.TLObject;
 
 import de.haumacher.msgbuf.io.StringR;
 import de.haumacher.msgbuf.json.JsonReader;
-
-import jakarta.servlet.AsyncContext;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 
 /**
  * JSON API for the agentic chat: POST /chat/send, GET /chat/updates, GET /chat/events (SSE).
@@ -76,6 +79,21 @@ public class ChatServlet extends HttpServlet {
 
 	private static final int MAX_ATTACHMENTS = 5;
 	private static final long MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024; // 10 MB
+
+	@Override
+	public void init() throws ServletException {
+		super.init();
+
+		// Register chat-specific adapters with BackgroundAgentExecutor
+		BackgroundAgentExecutor.registerInputAdapterFactory(
+			ChatContextInput.class, cfg -> new ChatContextAdapter((ChatContextInput) cfg));
+	}
+
+	@Override
+	public void destroy() {
+		BackgroundAgentExecutor.unregisterInputAdapterFactory(ChatContextInput.class);
+		super.destroy();
+	}
 
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {

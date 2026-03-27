@@ -43,6 +43,19 @@ export tl_mistral_api_key="..."
 
 Configure AI models in `tl-ai-service/src/main/webapp/WEB-INF/conf/tl-ai-openai.conf.config.xml`.
 
+#### Gitea Integration (optional)
+
+The ReviewAgent uses the `create_gitea_issue` tool to file quality issues. To enable it, set the following environment variables:
+
+```bash
+export tl_gitea_url="https://gitea.example.com"
+export tl_gitea_token="your-api-token"
+export tl_gitea_repo_owner="org-or-user"
+export tl_gitea_repo_name="repository-name"
+```
+
+Without these variables the tool returns an error message and no issues are created.
+
 ### Run Demo
 
 ```bash

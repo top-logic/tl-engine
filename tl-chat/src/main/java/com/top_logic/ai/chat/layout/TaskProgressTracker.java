@@ -11,6 +11,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import dev.langchain4j.memory.ChatMemory;
@@ -41,6 +43,8 @@ public class TaskProgressTracker {
 	private final LinkedList<ChatTask> _tasks = new LinkedList<>();
 
 	private final ChatSessionManager _sessionManager = new ChatSessionManager();
+
+	private final ConcurrentHashMap<String, AtomicBoolean> _backgroundAgentInProgress = new ConcurrentHashMap<>();
 
 	/** Current AI processing state (survives navigation); cleared when processing finishes. */
 	private volatile AIProcessingState _currentProcessingState = null;
@@ -162,6 +166,26 @@ public class TaskProgressTracker {
 			if (store != null) {
 				store.setMode(mode);
 			}
+		}
+	}
+
+	/**
+	 * Attempts to start a background agent. Returns true if the agent was not already running.
+	 * Uses compare-and-set for thread-safe debouncing per agent.
+	 */
+	public boolean tryStartBackgroundAgent(String agentName) {
+		return _backgroundAgentInProgress
+			.computeIfAbsent(agentName, k -> new AtomicBoolean(false))
+			.compareAndSet(false, true);
+	}
+
+	/**
+	 * Marks a background agent as finished, allowing it to be triggered again.
+	 */
+	public void finishBackgroundAgent(String agentName) {
+		AtomicBoolean flag = _backgroundAgentInProgress.get(agentName);
+		if (flag != null) {
+			flag.set(false);
 		}
 	}
 

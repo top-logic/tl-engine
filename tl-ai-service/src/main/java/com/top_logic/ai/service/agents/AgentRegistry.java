@@ -17,6 +17,10 @@ import java.util.Set;
 
 import com.top_logic.ai.service.AIService;
 import com.top_logic.ai.service.ChatModelFactory;
+import com.top_logic.ai.service.agents.background.BackgroundAgentConfig;
+import com.top_logic.ai.service.agents.background.scheduler.BackgroundAgentTask;
+import com.top_logic.ai.service.agents.background.trigger.ScheduledTrigger;
+import com.top_logic.ai.service.agents.background.trigger.TriggerConfig;
 import com.top_logic.ai.service.providers.AnthropicChatModelFactory;
 import com.top_logic.ai.service.providers.MistralChatModelFactory;
 import com.top_logic.ai.service.providers.ModelCapability;
@@ -32,15 +36,20 @@ import com.top_logic.ai.service.tools.registry.ToolImplementation;
 import com.top_logic.ai.service.tools.registry.ToolRegistry;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.util.sched.Scheduler;
+import com.top_logic.util.sched.task.Task;
 
 import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.agent.tool.ToolSpecifications;
@@ -79,6 +88,7 @@ import dev.langchain4j.service.tool.ToolExecutor;
  * @see SkillConfig
  * @see AIService
  */
+@ServiceDependencies(Scheduler.Module.class)
 public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?>> {
 
 	/**
@@ -154,6 +164,8 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 
 	private String _entryPointAgentName;
 
+	private List<String> _scheduledTaskNames;
+
 	/**
 	 * Creates a new {@link AgentRegistry} from configuration.
 	 *
@@ -182,11 +194,27 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		_instance = this;
 		_agentNameIndex = buildAgentNameIndex(getConfig().getAgents());
 
-		// Validate agent model references against AIService (informational only)
+		// Build a shared SkillRegistry from XML-configured skills
+		_skillRegistry = new SkillRegistry();
+
+		Map<String, SkillConfig> skillConfigs = getConfig().getSkills();
+		if (skillConfigs != null && !skillConfigs.isEmpty()) {
+			_skillRegistry.registerSkillsFromConfig(skillConfigs);
+		}
+
+		// Single pass over all agents: validate models, register skills, collect entry points,
+		// log background agents, and register scheduled tasks.
 		AIService aiService = AIService.getInstance();
+		Scheduler scheduler = Scheduler.Module.INSTANCE.getImplementationInstance();
+		List<String> entryPoints = new ArrayList<>();
+		_scheduledTaskNames = new ArrayList<>();
+
 		for (Map.Entry<String, AgentConfig> entry : getConfig().getAgents().entrySet()) {
 			String agentName = entry.getKey();
-			String model = entry.getValue().getModel();
+			AgentConfig agentConfig = entry.getValue();
+
+			// Validate model reference
+			String model = agentConfig.getModel();
 			if (model == null || model.isEmpty()) {
 				Logger.info(
 					"Agent '" + agentName + "' has no model configured. " +
@@ -198,41 +226,56 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 						"' which is not registered in AIService. Available: " + aiService.getModelNames(),
 					AgentRegistry.class);
 			}
-		}
 
-		// Build a shared SkillRegistry from XML-configured skills
-		_skillRegistry = new SkillRegistry();
-
-		Map<String, SkillConfig> skillConfigs = getConfig().getSkills();
-		if (skillConfigs != null && !skillConfigs.isEmpty()) {
-			_skillRegistry.registerSkillsFromConfig(skillConfigs);
-		}
-
-		// Register agent-to-skill mappings and validate references
-		for (Map.Entry<String, AgentConfig> entry : getConfig().getAgents().entrySet()) {
-			List<String> skillNames = entry.getValue().getSkills();
+			// Register skills and validate references
+			List<String> skillNames = agentConfig.getSkills();
 			if (!skillNames.isEmpty()) {
-				_skillRegistry.registerAgentSkills(entry.getKey(), skillNames);
+				_skillRegistry.registerAgentSkills(agentName, skillNames);
 				for (String skillName : skillNames) {
 					try {
 						_skillRegistry.getSkill(skillName);
 					} catch (IllegalArgumentException ex) {
 						Logger.warn(
-							"Agent '" + entry.getKey() + "' references unknown skill '" + skillName + "': " +
+							"Agent '" + agentName + "' references unknown skill '" + skillName + "': " +
 								ex.getMessage(),
 							AgentRegistry.class);
 					}
 				}
 			}
+
+			// Collect entry points
+			if (agentConfig instanceof ChatAgentConfig chatConfig && chatConfig.isEntryPoint()) {
+				entryPoints.add(agentName);
+			}
+
+			// Handle background agents
+			if (agentConfig instanceof BackgroundAgentConfig bgConfig) {
+				Logger.info("Background agent '" + agentName + "' registered: scope=" + bgConfig.getScope(),
+					AgentRegistry.class);
+
+				// Register scheduled tasks
+				TriggerConfig trigger = bgConfig.getTrigger();
+				if (trigger instanceof ScheduledTrigger scheduled) {
+					String taskName = "ai-bg-" + agentName;
+					BackgroundAgentTask.Config taskConfig =
+						TypedConfiguration.newConfigItem(BackgroundAgentTask.Config.class);
+					taskConfig.setName(taskName);
+					taskConfig.setAgentName(agentName);
+					taskConfig.getSchedules().addAll(scheduled.getSchedules());
+
+					DefaultInstantiationContext instCtx = new DefaultInstantiationContext(AgentRegistry.class);
+					BackgroundAgentTask task = instCtx.getInstance(taskConfig);
+					scheduler.addTask(task);
+					_scheduledTaskNames.add(taskName);
+
+					Logger.info("Registered scheduler task '" + taskName + "' for background agent '" +
+						agentName + "' with " + scheduled.getSchedules().size() + " schedule(s).",
+						AgentRegistry.class);
+				}
+			}
 		}
 
 		// Validate that exactly one agent is marked as entry point
-		List<String> entryPoints = new ArrayList<>();
-		for (Map.Entry<String, AgentConfig> entry : getConfig().getAgents().entrySet()) {
-			if (entry.getValue().isEntryPoint()) {
-				entryPoints.add(entry.getKey());
-			}
-		}
 		if (entryPoints.isEmpty()) {
 			throw new RuntimeException(
 				"No agent is marked as entry point. Exactly one agent must have entry-point=\"true\". " +
@@ -253,6 +296,17 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	@Override
 	protected void shutDown() {
 		try {
+			// Unregister scheduled tasks from TopLogic Scheduler
+			if (_scheduledTaskNames != null && !_scheduledTaskNames.isEmpty()) {
+				Scheduler scheduler = Scheduler.Module.INSTANCE.getImplementationInstance();
+				for (String taskName : _scheduledTaskNames) {
+					Task task = scheduler.getTaskByName(taskName);
+					if (task != null) {
+						scheduler.removeTask(task);
+					}
+				}
+			}
+			_scheduledTaskNames = null;
 			_instance = null;
 			_skillRegistry = null;
 			_agentNameIndex = null;
@@ -286,6 +340,30 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 					agents.keySet());
 		}
 		return config;
+	}
+
+	/**
+	 * Returns the names of all background agents matching the given trigger type and scope.
+	 *
+	 * @param triggerType
+	 *        The trigger configuration class to match (e.g. {@code PostTurnTrigger.class}).
+	 * @param scope
+	 *        The scope to match (e.g.
+	 *        {@link com.top_logic.ai.service.agents.background.BackgroundAgentConfig.Scope#CHAT}).
+	 * @return A list of agent names with matching background configuration; never null.
+	 */
+	public List<String> getBackgroundAgents(
+			Class<? extends TriggerConfig> triggerType, BackgroundAgentConfig.Scope scope) {
+		List<String> result = new ArrayList<>();
+		for (Map.Entry<String, AgentConfig> entry : getConfig().getAgents().entrySet()) {
+			if (!(entry.getValue() instanceof BackgroundAgentConfig bgConfig)) continue;
+			if (bgConfig.getScope() != scope) continue;
+			TriggerConfig triggerCfg = bgConfig.getTrigger();
+			if (triggerCfg != null && triggerType.isInstance(triggerCfg)) {
+				result.add(entry.getKey());
+			}
+		}
+		return result;
 	}
 
 	/**
@@ -325,6 +403,26 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	 * @return A chat model configured per the agent's settings.
 	 */
 	public ChatModel buildChatModel(AgentConfig config) {
+		return buildChatModel(config, null);
+	}
+
+	/**
+	 * Builds a provider-specific {@link ChatModel} from the given agent configuration with an
+	 * optional timeout override.
+	 *
+	 * <p>
+	 * When {@code timeoutOverride} is non-null it takes precedence over the agent's configured
+	 * {@link AgentConfig#getTimeoutSeconds() timeoutSeconds}. This is used by pre-turn agents
+	 * to enforce a model-level HTTP timeout instead of relying on {@code Future.cancel()}.
+	 * </p>
+	 *
+	 * @param config
+	 *        The agent configuration.
+	 * @param timeoutOverride
+	 *        Optional timeout that overrides the agent's configured timeout; may be {@code null}.
+	 * @return A chat model configured per the agent's settings.
+	 */
+	public ChatModel buildChatModel(AgentConfig config, Duration timeoutOverride) {
 		AIService aiService = AIService.getInstance();
 		if (aiService == null) {
 			throw new RuntimeException("AIService is not available.");
@@ -343,13 +441,13 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		}
 
 		if (factory instanceof AnthropicChatModelFactory) {
-			return buildAnthropicModel((AnthropicChatModelFactory) factory, config);
+			return buildAnthropicModel((AnthropicChatModelFactory) factory, config, timeoutOverride);
 		}
 		if (factory instanceof MistralChatModelFactory) {
-			return buildMistralModel((MistralChatModelFactory) factory, config);
+			return buildMistralModel((MistralChatModelFactory) factory, config, timeoutOverride);
 		}
 		if (factory instanceof OpenAIChatModelFactory) {
-			return buildOpenAIModel((OpenAIChatModelFactory) factory, config);
+			return buildOpenAIModel((OpenAIChatModelFactory) factory, config, timeoutOverride);
 		}
 
 		return aiService.getChatModel(modelName);
@@ -475,7 +573,7 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	 * Builds programmatic delegation tools for the given agent configuration.
 	 *
 	 * <p>
-	 * For each name in {@link AgentConfig#getDelegations()}, a dedicated
+	 * For each name in {@link ChatAgentConfig#getDelegations()}, a dedicated
 	 * {@link ToolSpecification} is created whose description includes the target agent's
 	 * {@link AgentConfig#getDescription() description}. This makes each delegation target
 	 * self-describing in the tool signature — the LLM does not need a system prompt section to
@@ -509,7 +607,10 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	 */
 	public List<ToolImplementation> buildDelegationTools(AgentConfig config,
 			Map<String, ChatMemory> subAgentMemories) {
-		List<String> delegations = config.getDelegations();
+		if (!(config instanceof ChatAgentConfig chatConfig)) {
+			return List.of();
+		}
+		List<String> delegations = chatConfig.getDelegations();
 		if (delegations.isEmpty()) {
 			return List.of();
 		}
@@ -518,7 +619,7 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 			subAgentMemories != null ? subAgentMemories : new HashMap<>();
 
 		List<ToolImplementation> result = new ArrayList<>(delegations.size());
-		String fromAgent = config.getName();
+		String fromAgent = chatConfig.getName();
 
 		JsonObjectSchema parameters = JsonObjectSchema.builder()
 			.addStringProperty("goal", "Short intent")
@@ -569,7 +670,26 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	 * @return A fully configured untyped agent instance.
 	 */
 	public UntypedAgent buildUntypedAgent(String name) {
-		return buildUntypedAgent(name, null);
+		return buildUntypedAgent(name, (ChatMemory) null);
+	}
+
+	/**
+	 * Builds an {@link UntypedAgent} with a model-level timeout override.
+	 *
+	 * <p>
+	 * Used by pre-turn agents where the HTTP client timeout enforces the deadline instead of
+	 * {@code Future.cancel()}, avoiding thread-pool poisoning from lingering interrupt flags.
+	 * </p>
+	 *
+	 * @param name
+	 *        The agent name as declared in the configuration.
+	 * @param timeoutOverride
+	 *        Timeout passed to the underlying HTTP client; may be {@code null} to use the
+	 *        agent's configured timeout.
+	 * @return A fully configured untyped agent instance.
+	 */
+	public UntypedAgent buildUntypedAgent(String name, Duration timeoutOverride) {
+		return buildUntypedAgent(name, null, null, null, timeoutOverride);
 	}
 
 	/**
@@ -591,7 +711,7 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	 *
 	 * <p>
 	 * Delegates to
-	 * {@link #buildUntypedAgent(String, ChatMemory, java.util.function.UnaryOperator, Map)} with a
+	 * {@link #buildUntypedAgent(String, ChatMemory, java.util.function.UnaryOperator, Map, Duration)} with a
 	 * fresh (invocation-scoped) sub-agent memory map, so that sub-agents called multiple times
 	 * within the same orchestrator loop retain their conversation context.
 	 * </p>
@@ -607,12 +727,40 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	 */
 	public UntypedAgent buildUntypedAgent(String name, ChatMemory memory,
 			java.util.function.UnaryOperator<ChatModel> chatModelDecorator) {
-		return buildUntypedAgent(name, memory, chatModelDecorator, null);
+		return buildUntypedAgent(name, memory, chatModelDecorator, null, null);
 	}
 
 	/**
 	 * Builds an {@link UntypedAgent} from the named configuration with session-scoped sub-agent
 	 * memory.
+	 *
+	 * <p>
+	 * Convenience overload equivalent to
+	 * {@link #buildUntypedAgent(String, ChatMemory, java.util.function.UnaryOperator, Map, Duration)}
+	 * with {@code null} timeout (uses the agent's configured timeout).
+	 * </p>
+	 *
+	 * @param name
+	 *        The agent name as declared in the configuration.
+	 * @param memory
+	 *        Optional conversation memory, or {@code null} for stateless agents.
+	 * @param chatModelDecorator
+	 *        Optional decorator applied to the {@link ChatModel} before building. May be
+	 *        {@code null}.
+	 * @param subAgentMemories
+	 *        Optional session-scoped map of sub-agent conversation memories, keyed by agent name.
+	 *        If {@code null}, a local map is created for within-invocation memory only.
+	 * @return A fully configured untyped agent instance.
+	 */
+	public UntypedAgent buildUntypedAgent(String name, ChatMemory memory,
+			java.util.function.UnaryOperator<ChatModel> chatModelDecorator,
+			Map<String, ChatMemory> subAgentMemories) {
+		return buildUntypedAgent(name, memory, chatModelDecorator, subAgentMemories, null);
+	}
+
+	/**
+	 * Builds an {@link UntypedAgent} from the named configuration with session-scoped sub-agent
+	 * memory and an optional model-level timeout override.
 	 *
 	 * <p>
 	 * When {@code subAgentMemories} is provided, delegation targets (sub-agents) share their
@@ -637,13 +785,16 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	 * @param subAgentMemories
 	 *        Optional session-scoped map of sub-agent conversation memories, keyed by agent name.
 	 *        If {@code null}, a local map is created for within-invocation memory only.
+	 * @param timeoutOverride
+	 *        Optional timeout passed to the underlying HTTP client; may be {@code null} to use
+	 *        the agent's configured timeout.
 	 * @return A fully configured untyped agent instance.
 	 */
 	public UntypedAgent buildUntypedAgent(String name, ChatMemory memory,
 			java.util.function.UnaryOperator<ChatModel> chatModelDecorator,
-			Map<String, ChatMemory> subAgentMemories) {
+			Map<String, ChatMemory> subAgentMemories, Duration timeoutOverride) {
 		AgentConfig config = getAgentConfig(name);
-		ChatModel model = buildChatModel(config);
+		ChatModel model = buildChatModel(config, timeoutOverride);
 		if (chatModelDecorator != null) {
 			model = chatModelDecorator.apply(model);
 		}
@@ -824,7 +975,8 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		return _skillRegistry;
 	}
 
-	private ChatModel buildAnthropicModel(AnthropicChatModelFactory factory, AgentConfig config) {
+	private ChatModel buildAnthropicModel(AnthropicChatModelFactory factory, AgentConfig config,
+			Duration timeoutOverride) {
 		AnthropicChatModelFactory.Config fc = factory.getConfig();
 		AnthropicChatModel.AnthropicChatModelBuilder builder = AnthropicChatModel.builder()
 			.apiKey(fc.getApiKey())
@@ -864,8 +1016,9 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		if (config.getDisableParallelToolUse()) {
 			builder.disableParallelToolUse(Boolean.TRUE);
 		}
-		if (config.getTimeoutSeconds() != null) {
-			builder.timeout(toTimeoutDuration(config.getTimeoutSeconds()));
+		Duration timeout = timeoutOverride != null ? timeoutOverride : toTimeoutDuration(config.getTimeoutSeconds());
+		if (timeout != null) {
+			builder.timeout(timeout);
 		}
 		if (config.getMaxRetries() != null) {
 			builder.maxRetries(config.getMaxRetries());
@@ -877,7 +1030,8 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		return builder.build();
 	}
 
-	private ChatModel buildMistralModel(MistralChatModelFactory factory, AgentConfig config) {
+	private ChatModel buildMistralModel(MistralChatModelFactory factory, AgentConfig config,
+			Duration timeoutOverride) {
 		MistralChatModelFactory.Config fc = factory.getConfig();
 		MistralAiChatModel.MistralAiChatModelBuilder builder = MistralAiChatModel.builder()
 			.apiKey(fc.getApiKey())
@@ -900,8 +1054,9 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		if (responseFormat != null) {
 			builder.responseFormat(responseFormat);
 		}
-		if (config.getTimeoutSeconds() != null) {
-			builder.timeout(toTimeoutDuration(config.getTimeoutSeconds()));
+		Duration mistralTimeout = timeoutOverride != null ? timeoutOverride : toTimeoutDuration(config.getTimeoutSeconds());
+		if (mistralTimeout != null) {
+			builder.timeout(mistralTimeout);
 		}
 		if (config.getMaxRetries() != null) {
 			builder.maxRetries(config.getMaxRetries());
@@ -909,7 +1064,8 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		return builder.build();
 	}
 
-	private ChatModel buildOpenAIModel(OpenAIChatModelFactory factory, AgentConfig config) {
+	private ChatModel buildOpenAIModel(OpenAIChatModelFactory factory, AgentConfig config,
+			Duration timeoutOverride) {
 		OpenAIChatModelFactory.Config fc = factory.getConfig();
 		OpenAiChatModel.OpenAiChatModelBuilder builder = OpenAiChatModel.builder()
 			.apiKey(fc.getApiKey())
@@ -945,8 +1101,9 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		if (responseFormat != null) {
 			builder.responseFormat(responseFormat);
 		}
-		if (config.getTimeoutSeconds() != null) {
-			builder.timeout(toTimeoutDuration(config.getTimeoutSeconds()));
+		Duration openAiTimeout = timeoutOverride != null ? timeoutOverride : toTimeoutDuration(config.getTimeoutSeconds());
+		if (openAiTimeout != null) {
+			builder.timeout(openAiTimeout);
 		}
 		if (config.getMaxRetries() != null) {
 			builder.maxRetries(config.getMaxRetries());
@@ -1038,7 +1195,10 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	 *         delegations.
 	 */
 	private String buildDelegationSection(AgentConfig config) {
-		List<String> delegations = config.getDelegations();
+		if (!(config instanceof ChatAgentConfig chatConfig)) {
+			return "";
+		}
+		List<String> delegations = chatConfig.getDelegations();
 		if (delegations.isEmpty()) {
 			return "";
 		}

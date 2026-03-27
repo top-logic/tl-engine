@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application config:interface="com.top_logic.basic.config.ApplicationConfig$Config"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<services>
+		<config service-class="com.top_logic.ai.service.agents.AgentRegistry">
+			<instance class="com.top_logic.ai.service.agents.AgentRegistry">
+
+				<!-- ==================== Test Background Agents ==================== -->
+				<!-- These agents exist to exercise every background agent configuration option. -->
+
+				<!-- 1. APPLICATION + Scheduled(OnStartup) + ProviderInput (Java) + Java OutputHandler -->
+				<agent name="JavaInputAgent"
+					config:interface="com.top_logic.ai.service.agents.background.BackgroundAgentConfig"
+					description="Test agent: Java InputProvider with scheduled trigger and Java output handler."
+					scope="APPLICATION"
+				>
+					<trigger config:interface="com.top_logic.ai.service.agents.background.trigger.ScheduledTrigger">
+						<schedules>
+							<schedule class="com.top_logic.util.sched.task.schedule.OnStartup" />
+						</schedules>
+					</trigger>
+					<input config:interface="com.top_logic.ai.service.agents.background.input.ProviderInput">
+						<provider class="com.top_logic.ai.demo.background.TestInputProvider" />
+					</input>
+					<output-handlers>
+						<output-handler config:interface="com.top_logic.ai.service.agents.background.output.OutputHandlerImplementation$Config"
+							class="com.top_logic.ai.demo.background.TestOutputHandler" />
+					</output-handlers>
+					<system-prompt><![CDATA[You are a test agent. Echo back the input you received.]]></system-prompt>
+				</agent>
+
+				<!-- 2. CHAT + PreTurn(CLOSED, 5000ms) + ScriptInput + ScriptOutputHandler -->
+				<agent name="ScriptInputAgent"
+					config:interface="com.top_logic.ai.service.agents.background.BackgroundAgentConfig"
+					description="Test agent: TL-Script input with pre-turn trigger (CLOSED policy) and script output handler."
+					scope="CHAT"
+				>
+					<trigger config:interface="com.top_logic.ai.service.agents.background.trigger.PreTurnTrigger"
+						timeout="5000"
+						fail-policy="CLOSED" />
+					<input config:interface="com.top_logic.ai.service.agents.background.input.ScriptInput">
+						<script>today()</script>
+					</input>
+					<output-handlers>
+						<output-handler config:interface="com.top_logic.ai.service.agents.background.output.ScriptOutputHandler">
+							<script>response -> log($response)</script>
+						</output-handler>
+					</output-handlers>
+					<system-prompt><![CDATA[You are a test agent. Echo back the input you received.]]></system-prompt>
+				</agent>
+
+				<!-- 3. APPLICATION + Scheduled(OnStartup) + CustomInput + ScriptOutputHandler -->
+				<agent name="CustomMessageAgent"
+					config:interface="com.top_logic.ai.service.agents.background.BackgroundAgentConfig"
+					description="Test agent: Custom message input with scheduled trigger and script output handler."
+					scope="APPLICATION"
+				>
+					<trigger config:interface="com.top_logic.ai.service.agents.background.trigger.ScheduledTrigger">
+						<schedules>
+							<schedule class="com.top_logic.util.sched.task.schedule.OnStartup" />
+						</schedules>
+					</trigger>
+					<input config:interface="com.top_logic.ai.service.agents.background.input.CustomInput"
+						custom-message="This is a static test message for the CustomMessageAgent." />
+					<output-handlers>
+						<output-handler config:interface="com.top_logic.ai.service.agents.background.output.ScriptOutputHandler">
+							<script>response -> log($response)</script>
+						</output-handler>
+					</output-handlers>
+					<system-prompt><![CDATA[You are a test agent. Echo back the input you received.]]></system-prompt>
+				</agent>
+
+				<!-- 4. CHAT + PostTurn + ChatContextInput(FULL_CHAT) + Java OutputHandler -->
+				<agent name="FullChatAgent"
+					config:interface="com.top_logic.ai.service.agents.background.BackgroundAgentConfig"
+					description="Test agent: Full chat context input with post-turn trigger and Java output handler."
+					scope="CHAT"
+				>
+					<trigger config:interface="com.top_logic.ai.service.agents.background.trigger.PostTurnTrigger" />
+					<input config:interface="com.top_logic.ai.service.agents.background.input.ChatContextInput"
+						content="FULL_CHAT" />
+					<output-handlers>
+						<output-handler config:interface="com.top_logic.ai.service.agents.background.output.OutputHandlerImplementation$Config"
+							class="com.top_logic.ai.demo.background.TestOutputHandler" />
+					</output-handlers>
+					<system-prompt><![CDATA[You are a test agent. Echo back the input you received.]]></system-prompt>
+				</agent>
+
+				<!-- 5. CHAT + PostTurn + ChatContextInput(LAST_TURN) + Java OutputHandler + ScriptOutputHandler (both) -->
+				<agent name="LastTurnAgent"
+					config:interface="com.top_logic.ai.service.agents.background.BackgroundAgentConfig"
+					description="Test agent: Last turn context input with post-turn trigger and both Java and script output handlers."
+					scope="CHAT"
+				>
+					<trigger config:interface="com.top_logic.ai.service.agents.background.trigger.PostTurnTrigger" />
+					<input config:interface="com.top_logic.ai.service.agents.background.input.ChatContextInput"
+						content="LAST_TURN" />
+					<output-handlers>
+						<output-handler config:interface="com.top_logic.ai.service.agents.background.output.OutputHandlerImplementation$Config"
+							class="com.top_logic.ai.demo.background.TestOutputHandler" />
+						<output-handler config:interface="com.top_logic.ai.service.agents.background.output.ScriptOutputHandler">
+							<script>response -> log($response)</script>
+						</output-handler>
+					</output-handlers>
+					<system-prompt><![CDATA[You are a test agent. Echo back the input you received.]]></system-prompt>
+				</agent>
+
+			</instance>
+		</config>
+	</services>
+</application>

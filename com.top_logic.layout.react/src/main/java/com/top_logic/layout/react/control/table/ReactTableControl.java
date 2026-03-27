@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -635,6 +636,9 @@ public class ReactTableControl extends ReactControl {
 
 		Object rowObject = displayedRows.get(rowIndex);
 
+		// Save previous selection for rollback on veto.
+		Set<Object> previousSelection = new LinkedHashSet<>(_selectedRows);
+
 		if ("multi".equals(_selectionMode)) {
 			if (shiftKey && _selectionAnchor >= 0) {
 				// Additive/subtractive range based on what the anchor action did.
@@ -679,10 +683,20 @@ public class ReactTableControl extends ReactControl {
 			}
 		}
 
-		updateViewport(_viewportStart, _viewportCount);
+		// Notify listener before updating the viewport. If a ChannelVetoException is thrown
+		// (e.g. because a dependent form has unsaved changes), roll back the selection and
+		// push the old state to the client so the UI stays consistent.
 		if (_selectionListener != null) {
-			_selectionListener.selectionChanged(Collections.unmodifiableSet(_selectedRows));
+			try {
+				_selectionListener.selectionChanged(Collections.unmodifiableSet(_selectedRows));
+			} catch (RuntimeException ex) {
+				_selectedRows.clear();
+				_selectedRows.addAll(previousSelection);
+				updateViewport(_viewportStart, _viewportCount);
+				throw ex;
+			}
 		}
+		updateViewport(_viewportStart, _viewportCount);
 	}
 
 	/**

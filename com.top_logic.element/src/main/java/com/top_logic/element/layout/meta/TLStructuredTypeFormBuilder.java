@@ -8,7 +8,6 @@ package com.top_logic.element.layout.meta;
 import static com.top_logic.element.meta.MetaElementUtil.*;
 import static com.top_logic.model.util.TLModelUtil.*;
 
-import java.util.Collection;
 import java.util.List;
 
 import com.top_logic.base.config.i18n.Internationalized;
@@ -32,8 +31,6 @@ import com.top_logic.basic.config.constraint.annotation.RegexpConstraint;
 import com.top_logic.basic.config.order.DisplayInherited;
 import com.top_logic.basic.config.order.DisplayInherited.DisplayStrategy;
 import com.top_logic.basic.config.order.DisplayOrder;
-import com.top_logic.basic.func.Function0;
-import com.top_logic.basic.func.GenericFunction;
 import com.top_logic.basic.func.Not;
 import com.top_logic.basic.func.misc.NonEmpty;
 import com.top_logic.basic.util.ResKey;
@@ -48,11 +45,11 @@ import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
+import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
+import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.form.values.edit.mode.ActiveIf;
 import com.top_logic.layout.form.values.edit.mode.HideActiveIf;
 import com.top_logic.layout.form.values.edit.mode.HideImmutableIf;
-import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
-import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModelPart;
@@ -67,8 +64,8 @@ import com.top_logic.model.config.TLTypeAnnotation;
 import com.top_logic.model.config.TypeRef;
 import com.top_logic.model.util.AllClasses;
 import com.top_logic.model.util.TLModelNamingConvention;
+import com.top_logic.model.util.TLModelPartRef.AllModules;
 import com.top_logic.model.util.TLModelUtil;
-import com.top_logic.util.model.ModelService;
 
 /**
  * {@link DeclarativeFormBuilder} for properties of a {@link TLClass}.
@@ -376,16 +373,6 @@ public class TLStructuredTypeFormBuilder
 			}
 		}
 
-		/**
-		 * {@link GenericFunction} retrieving all {@link TLModule}s.
-		 */
-		class AllModules extends Function0<Collection<TLModule>> {
-			@Override
-			public Collection<TLModule> apply() {
-				return ModelService.getApplicationModel().getModules();
-			}
-		}
-		
 		/**
 		 * {@link ValueConstraint} that checks that no {@link TLType} with the configured name
 		 * exists in the given {@link TLModule}.

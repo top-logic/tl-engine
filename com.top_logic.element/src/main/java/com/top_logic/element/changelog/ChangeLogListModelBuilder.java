@@ -20,7 +20,6 @@ import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.format.MillisFormat;
 import com.top_logic.basic.config.order.DisplayOrder;
-import com.top_logic.element.layout.meta.TLStructuredTypeFormBuilder;
 import com.top_logic.knowledge.service.HistoryManager;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.Revision;
@@ -107,7 +106,7 @@ public class ChangeLogListModelBuilder extends AbstractConfiguredInstance<Change
 		 * type is part of one of this module.
 		 */
 		@Format(TLModelPartRef.CommaSeparatedTLModelPartRefs.class)
-		@Options(fun = TLStructuredTypeFormBuilder.EditModel.AllModules.class, mapping = TLModelPartRef.PartMapping.class)
+		@Options(fun = TLModelPartRef.AllModules.class, mapping = TLModelPartRef.PartMapping.class)
 		@Name(EXCLUDED_MODULES)
 		List<TLModelPartRef> getExcludedModules();
 	}

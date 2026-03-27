@@ -106,12 +106,11 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
       let posYDelta = 0;
 
       if (ds.symmetric) {
-        // Symmetric resize: double the size delta, counter-shift position so the
-        // handle stays under the mouse while the dialog grows from center.
-        if (ds.dir.includes('e')) { w = ds.startW + 2 * dx; posXDelta = -dx; }
-        if (ds.dir.includes('w')) { w = ds.startW - 2 * dx; posXDelta = dx; }
-        if (ds.dir.includes('s')) { h = ds.startH + 2 * dy; posYDelta = -dy; }
-        if (ds.dir.includes('n')) { h = ds.startH - 2 * dy; posYDelta = dy; }
+        // Symmetric resize: double the size delta so the handle stays under the mouse.
+        if (ds.dir.includes('e')) w = ds.startW + 2 * dx;
+        if (ds.dir.includes('w')) w = ds.startW - 2 * dx;
+        if (ds.dir.includes('s')) h = ds.startH + 2 * dy;
+        if (ds.dir.includes('n')) h = ds.startH - 2 * dy;
       } else {
         // Non-symmetric: edge follows mouse, opposite edge stays anchored.
         if (ds.dir.includes('e')) w = ds.startW + dx;
@@ -123,13 +122,12 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
       const newW = Math.max(200, w);
       const newH = Math.max(100, h);
 
-      // Clamp position deltas if size hit minimum.
       if (ds.symmetric) {
-        if (ds.dir.includes('e') && newW === 200) posXDelta = -(ds.startW - 200) / 2;
-        if (ds.dir.includes('w') && newW === 200) posXDelta = (ds.startW - 200) / 2;
-        if (ds.dir.includes('s') && newH === 100) posYDelta = -(ds.startH - 100) / 2;
-        if (ds.dir.includes('n') && newH === 100) posYDelta = (ds.startH - 100) / 2;
+        // Keep center fixed: position shifts by half the size change.
+        posXDelta = (ds.startW - newW) / 2;
+        posYDelta = (ds.startH - newH) / 2;
       } else {
+        // Clamp position deltas if size hit minimum.
         if (ds.dir.includes('w') && newW === 200) posXDelta = ds.startW - 200;
         if (ds.dir.includes('n') && newH === 100) posYDelta = ds.startH - 100;
       }

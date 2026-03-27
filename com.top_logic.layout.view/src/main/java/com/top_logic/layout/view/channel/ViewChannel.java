@@ -68,4 +68,53 @@ public interface ViewChannel {
 		 */
 		void handleNewValue(ViewChannel sender, Object oldValue, Object newValue);
 	}
+
+	/**
+	 * Observer that can block a pending value change on a {@link ViewChannel}.
+	 *
+	 * <p>
+	 * Veto listeners are checked <em>before</em> the value is updated and before regular
+	 * {@link ChannelListener}s are notified. If any veto listener returns a non-{@code null}
+	 * {@link com.top_logic.layout.view.form.StateHandler}, the change is blocked and a
+	 * {@link com.top_logic.layout.view.channel.ChannelVetoException} is thrown collecting all dirty
+	 * handlers.
+	 * </p>
+	 *
+	 * @see #addVetoListener(VetoListener)
+	 */
+	interface VetoListener {
+
+		/**
+		 * Checks whether the pending value change should be blocked.
+		 *
+		 * @param sender
+		 *        The channel about to change.
+		 * @param oldValue
+		 *        The current value.
+		 * @param newValue
+		 *        The proposed new value.
+		 * @return A dirty {@link com.top_logic.layout.view.form.StateHandler} if this listener
+		 *         vetoes the change, or {@code null} to allow it.
+		 */
+		com.top_logic.layout.view.form.StateHandler checkVeto(ViewChannel sender, Object oldValue,
+			Object newValue);
+	}
+
+	/**
+	 * Adds a listener that is consulted before value changes.
+	 *
+	 * @param listener
+	 *        The veto listener to add.
+	 *
+	 * @see VetoListener
+	 */
+	void addVetoListener(VetoListener listener);
+
+	/**
+	 * Removes a previously added veto listener.
+	 *
+	 * @param listener
+	 *        The veto listener to remove.
+	 */
+	void removeVetoListener(VetoListener listener);
 }

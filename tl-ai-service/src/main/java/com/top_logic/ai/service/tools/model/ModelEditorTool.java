@@ -1696,11 +1696,11 @@ public class ModelEditorTool {
 	/**
 	 * Deletes a model element from the TopLogic application model.
 	 *
-	 * <p>Performs safety checks before deletion and returns detailed blockers on failure.
-	 * Supported element types: MODULE, CLASS, ENUMERATION, PROPERTY, REFERENCE, CLASSIFIER.</p>
+	 * <p>
+	 * Performs safety checks before deletion and returns detailed blockers on failure. The element
+	 * type is automatically inferred from the resolved model part.
+	 * </p>
 	 *
-	 * @param elementType
-	 *        Type of element to delete: MODULE, CLASS, ENUMERATION, PROPERTY, REFERENCE, or CLASSIFIER.
 	 * @param qualifiedName
 	 *        Qualified name of the element: {@code 'moduleName'} for modules,
 	 *        {@code 'moduleName:TypeName'} for classes/enums,
@@ -1709,51 +1709,46 @@ public class ModelEditorTool {
 	 */
 	@Tool("Delete a model element from the TopLogic application model. "
 		+ "Performs safety checks before deletion — returns detailed blockers on failure. "
-		+ "Element types: MODULE, CLASS, ENUMERATION, PROPERTY, REFERENCE, CLASSIFIER. "
 		+ "Qualified name format: 'moduleName' for modules, 'moduleName:TypeName' for classes/enums, "
 		+ "'moduleName:TypeName#partName' for properties/references/classifiers.")
 	public String deleteModelElement(
-			@P("Type of element to delete: MODULE, CLASS, ENUMERATION, PROPERTY, REFERENCE, CLASSIFIER")
-			String elementType,
-			@P("Qualified name of the element")
+			@P("Qualified name of the element to delete")
 			String qualifiedName) {
 
 		try {
 			DeleteResponse response = ThreadContextManager.inSystemInteraction(
 				ModelEditorTool.class,
-				() -> doDeleteModelElement(elementType, qualifiedName));
+				() -> doDeleteModelElement(qualifiedName));
 
 			return DataClassSerializer.toJson(response, ModelEditorTool.class, "deleteModelElement()",
-				buildArgs("elementType", elementType, "qualifiedName", qualifiedName));
+				buildArgs("qualifiedName", qualifiedName));
 		} catch (Exception ex) {
 			Logger.error("deleteModelElement() error: " + ex.getMessage(), ex, ModelEditorTool.class);
 			return DataClassSerializer.errorToJson(
 				"Failed to delete element: " + ex.getMessage(),
 				ModelEditorTool.class, "deleteModelElement()",
-				buildArgs("elementType", elementType, "qualifiedName", qualifiedName));
+				buildArgs("qualifiedName", qualifiedName));
 		}
 	}
 
-	private DeleteResponse doDeleteModelElement(String elementType, String qualifiedName)
+	private DeleteResponse doDeleteModelElement(String qualifiedName)
 			throws KnowledgeBaseException {
-		requireNonEmpty(elementType, "elementType");
 		requireNonEmpty(qualifiedName, "qualifiedName");
 
-		String type = elementType.trim().toUpperCase();
-		TLModel model = ModelService.getApplicationModel();
-
-		TLModelPart resolved = resolveModelPart(model, type, qualifiedName);
+		TLModelPart resolved = TLModelUtil.resolveModelPart(qualifiedName);
+		ModelKind kind = resolved.getModelKind();
+		String kindName = kind.name().toLowerCase();
 
 		// Check for deletion blockers
-		List<DeletionBlocker> blockers = checkDeletionBlockers(model, resolved, type);
+		List<DeletionBlocker> blockers = checkDeletionBlockers(resolved);
 		if (!blockers.isEmpty()) {
 			DeleteResponse response = DeleteResponse.create();
 			response.setSuccess(false);
 			response.setName(getPartName(resolved));
 			response.setQualifiedName(qualifiedName);
-			response.setElementType(type);
+			response.setElementType(kind.name());
 			response.setResultMessage(
-				"Cannot delete " + type.toLowerCase() + " '" + qualifiedName + "': blocked by dependencies");
+				"Cannot delete " + kindName + " '" + qualifiedName + "': blocked by dependencies");
 			for (DeletionBlocker blocker : blockers) {
 				response.addBlocker(blocker);
 			}
@@ -1763,11 +1758,11 @@ public class ModelEditorTool {
 		// Capture name before deletion (object becomes invalid after deleteRecursive)
 		String partName = getPartName(resolved);
 		// Collect parts that will be cascade-deleted BEFORE deletion
-		List<String> deletedParts = collectDeletedParts(resolved, type);
+		List<String> deletedParts = collectDeletedParts(resolved);
 
 		// Perform deletion
 		try (Transaction tx = PersistencyLayer.getKnowledgeBase()
-				.beginTransaction(ResKey.text("Delete " + type + ": " + qualifiedName))) {
+				.beginTransaction(ResKey.text("Delete " + kind.name() + ": " + qualifiedName))) {
 			TLModelUtil.deleteRecursive(resolved);
 			tx.commit();
 		}
@@ -1776,139 +1771,16 @@ public class ModelEditorTool {
 		response.setSuccess(true);
 		response.setName(partName);
 		response.setQualifiedName(qualifiedName);
-		response.setElementType(type);
-		response.setResultMessage("Successfully deleted " + type.toLowerCase() + " '" + qualifiedName + "'");
+		response.setElementType(kind.name());
+		response.setResultMessage("Successfully deleted " + kindName + " '" + qualifiedName + "'");
 		for (String part : deletedParts) {
 			response.addDeletedPart(part);
 		}
 		return response;
 	}
 
-	private TLModelPart resolveModelPart(TLModel model, String elementType, String qualifiedName) {
-		switch (elementType) {
-			case "MODULE": {
-				TLModule module = model.getModule(qualifiedName);
-				if (module == null) {
-					throw new IllegalArgumentException("Module '" + qualifiedName + "' not found");
-				}
-				return module;
-			}
-			case "CLASS": {
-				String[] parts = qualifiedName.split(":");
-				if (parts.length != 2) {
-					throw new IllegalArgumentException(
-						"Invalid CLASS qualified name '" + qualifiedName + "'. Expected format: 'moduleName:ClassName'");
-				}
-				TLModule module = model.getModule(parts[0]);
-				if (module == null) {
-					throw new IllegalArgumentException("Module '" + parts[0] + "' not found");
-				}
-				TLType tlType = module.getType(parts[1]);
-				if (!(tlType instanceof TLClass)) {
-					throw new IllegalArgumentException(
-						"Class '" + parts[1] + "' not found in module '" + parts[0] + "'"
-							+ (tlType != null ? " (found " + tlType.getClass().getSimpleName() + " instead)" : ""));
-				}
-				return (TLClass) tlType;
-			}
-			case "ENUMERATION": {
-				String[] parts = qualifiedName.split(":");
-				if (parts.length != 2) {
-					throw new IllegalArgumentException(
-						"Invalid ENUMERATION qualified name '" + qualifiedName
-							+ "'. Expected format: 'moduleName:EnumName'");
-				}
-				TLModule module = model.getModule(parts[0]);
-				if (module == null) {
-					throw new IllegalArgumentException("Module '" + parts[0] + "' not found");
-				}
-				TLType tlType = module.getType(parts[1]);
-				if (!(tlType instanceof TLEnumeration)) {
-					throw new IllegalArgumentException(
-						"Enumeration '" + parts[1] + "' not found in module '" + parts[0] + "'"
-							+ (tlType != null ? " (found " + tlType.getClass().getSimpleName() + " instead)" : ""));
-				}
-				return (TLEnumeration) tlType;
-			}
-			case "PROPERTY":
-			case "REFERENCE": {
-				String[] colonParts = qualifiedName.split(":");
-				if (colonParts.length != 2 || !colonParts[1].contains("#")) {
-					throw new IllegalArgumentException(
-						"Invalid " + elementType + " qualified name '" + qualifiedName
-							+ "'. Expected format: 'moduleName:TypeName#partName'");
-				}
-				String[] hashParts = colonParts[1].split("#");
-				if (hashParts.length != 2) {
-					throw new IllegalArgumentException(
-						"Invalid " + elementType + " qualified name '" + qualifiedName
-							+ "'. Expected exactly one '#' separator");
-				}
-				TLModule module = model.getModule(colonParts[0]);
-				if (module == null) {
-					throw new IllegalArgumentException("Module '" + colonParts[0] + "' not found");
-				}
-				TLType tlType = module.getType(hashParts[0]);
-				if (!(tlType instanceof TLClass)) {
-					throw new IllegalArgumentException(
-						"Class '" + hashParts[0] + "' not found in module '" + colonParts[0] + "'");
-				}
-				TLStructuredTypePart part = ((TLClass) tlType).getPart(hashParts[1]);
-				if (part == null) {
-					throw new IllegalArgumentException(
-						elementType + " '" + hashParts[1] + "' not found in class '"
-							+ colonParts[0] + ":" + hashParts[0] + "'");
-				}
-				if ("PROPERTY".equals(elementType) && !(part instanceof TLClassProperty)) {
-					throw new IllegalArgumentException(
-						"'" + hashParts[1] + "' is not a property (it's a "
-							+ part.getClass().getSimpleName() + ")");
-				}
-				if ("REFERENCE".equals(elementType) && !(part instanceof TLReference)) {
-					throw new IllegalArgumentException(
-						"'" + hashParts[1] + "' is not a reference (it's a "
-							+ part.getClass().getSimpleName() + ")");
-				}
-				return part;
-			}
-			case "CLASSIFIER": {
-				String[] colonParts = qualifiedName.split(":");
-				if (colonParts.length != 2 || !colonParts[1].contains("#")) {
-					throw new IllegalArgumentException(
-						"Invalid CLASSIFIER qualified name '" + qualifiedName
-							+ "'. Expected format: 'moduleName:EnumName#classifierName'");
-				}
-				String[] hashParts = colonParts[1].split("#");
-				if (hashParts.length != 2) {
-					throw new IllegalArgumentException(
-						"Invalid CLASSIFIER qualified name '" + qualifiedName
-							+ "'. Expected exactly one '#' separator");
-				}
-				TLModule module = model.getModule(colonParts[0]);
-				if (module == null) {
-					throw new IllegalArgumentException("Module '" + colonParts[0] + "' not found");
-				}
-				TLType tlType = module.getType(hashParts[0]);
-				if (!(tlType instanceof TLEnumeration)) {
-					throw new IllegalArgumentException(
-						"Enumeration '" + hashParts[0] + "' not found in module '" + colonParts[0] + "'");
-				}
-				TLClassifier classifier = ((TLEnumeration) tlType).getClassifier(hashParts[1]);
-				if (classifier == null) {
-					throw new IllegalArgumentException(
-						"Classifier '" + hashParts[1] + "' not found in enumeration '"
-							+ colonParts[0] + ":" + hashParts[0] + "'");
-				}
-				return classifier;
-			}
-			default:
-				throw new IllegalArgumentException(
-					"Unknown element type '" + elementType
-						+ "'. Valid types: MODULE, CLASS, ENUMERATION, PROPERTY, REFERENCE, CLASSIFIER");
-		}
-	}
-
-	private List<DeletionBlocker> checkDeletionBlockers(TLModel model, TLModelPart part, String elementType) {
+	private List<DeletionBlocker> checkDeletionBlockers(TLModelPart part) {
+		TLModel model = ModelService.getApplicationModel();
 		List<DeletionBlocker> blockers = new ArrayList<>();
 
 		// Check delete-protection annotation
@@ -1954,7 +1826,7 @@ public class ModelEditorTool {
 			checkTypeUsage(model, tlEnum, blockers);
 		}
 
-		if ("MODULE".equals(elementType) && part instanceof TLModule) {
+		if (part instanceof TLModule) {
 			TLModule module = (TLModule) part;
 			for (TLType type : new ArrayList<>(module.getTypes())) {
 				if (type instanceof TLClass) {
@@ -2021,7 +1893,7 @@ public class ModelEditorTool {
 		}
 	}
 
-	private List<String> collectDeletedParts(TLModelPart part, String elementType) {
+	private List<String> collectDeletedParts(TLModelPart part) {
 		List<String> deletedParts = new ArrayList<>();
 
 		if (part instanceof TLClass) {

@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view;
 
+import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.I18NConstantsBase;
 
@@ -52,6 +53,16 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Add
 	 */
 	public static ResKey COMPOSITION_TABLE_ADD;
+
+	/**
+	 * @en Cannot save view "{0}": no writable IDE file found.
+	 */
+	public static ResKey1 ERROR_SAVE_VIEW_NO_IDE_FILE__PATH;
+
+	/**
+	 * @en Failed to save view "{0}".
+	 */
+	public static ResKey1 ERROR_SAVE_VIEW_FAILED__PATH;
 
 	static {
 		initConstants(I18NConstants.class);

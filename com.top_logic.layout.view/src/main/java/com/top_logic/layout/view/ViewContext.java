@@ -8,6 +8,7 @@ package com.top_logic.layout.view;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.DirtyChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.CommandScope;
 import com.top_logic.layout.view.form.FormModel;
@@ -72,6 +73,32 @@ public interface ViewContext extends ReactContext {
 	 *        The form model, or {@code null}.
 	 */
 	void setFormModel(FormModel formModel);
+
+	/**
+	 * The {@link DirtyChannel} of the nearest enclosing scope, or {@code null} if no dirty tracking
+	 * is configured.
+	 *
+	 * <p>
+	 * {@link com.top_logic.layout.view.form.StateHandler} implementations use this to register
+	 * their dirty state so that enclosing containers (e.g. tab bars) can check for unsaved changes
+	 * before navigation.
+	 * </p>
+	 *
+	 * @see DirtyChannel
+	 */
+	DirtyChannel getDirtyChannel();
+
+	/**
+	 * Sets the dirty channel for this context scope.
+	 *
+	 * <p>
+	 * Called by container elements (e.g. tab bars) that want to track dirty state of their children.
+	 * </p>
+	 *
+	 * @param dirtyChannel
+	 *        The dirty channel, or {@code null}.
+	 */
+	void setDirtyChannel(DirtyChannel dirtyChannel);
 
 	/**
 	 * Creates a derived context with the given {@link CommandScope}.

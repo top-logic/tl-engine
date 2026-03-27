@@ -13,6 +13,7 @@ import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.DirtyChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.CommandScope;
 import com.top_logic.layout.view.form.FormModel;
@@ -40,6 +41,8 @@ public class DefaultViewContext implements ViewContext {
 
 	private FormModel _formModel;
 
+	private DirtyChannel _dirtyChannel;
+
 	/**
 	 * Creates a root {@link DefaultViewContext}.
 	 *
@@ -48,24 +51,25 @@ public class DefaultViewContext implements ViewContext {
 	 *        infrastructure.
 	 */
 	public DefaultViewContext(ReactContext reactContext) {
-		this(reactContext, "view", new HashMap<>(), null, null, null);
+		this(reactContext, "view", new HashMap<>(), null, null, null, null);
 	}
 
 	private DefaultViewContext(ReactContext reactContext, String personalizationPath,
 			Map<String, ViewChannel> channels, CommandScope commandScope, FormModel formModel,
-			ErrorSink errorSink) {
+			ErrorSink errorSink, DirtyChannel dirtyChannel) {
 		_reactContext = reactContext;
 		_personalizationPath = personalizationPath;
 		_channels = channels;
 		_commandScope = commandScope;
 		_formModel = formModel;
 		_errorSink = errorSink;
+		_dirtyChannel = dirtyChannel;
 	}
 
 	@Override
 	public ViewContext childContext(String segment) {
 		return new DefaultViewContext(_reactContext, _personalizationPath + "." + segment, _channels, _commandScope,
-			_formModel, _errorSink);
+			_formModel, _errorSink, _dirtyChannel);
 	}
 
 	@Override
@@ -89,14 +93,25 @@ public class DefaultViewContext implements ViewContext {
 	}
 
 	@Override
+	public DirtyChannel getDirtyChannel() {
+		return _dirtyChannel;
+	}
+
+	@Override
+	public void setDirtyChannel(DirtyChannel dirtyChannel) {
+		_dirtyChannel = dirtyChannel;
+	}
+
+	@Override
 	public ViewContext withCommandScope(CommandScope scope) {
-		return new DefaultViewContext(_reactContext, _personalizationPath, _channels, scope, _formModel, _errorSink);
+		return new DefaultViewContext(_reactContext, _personalizationPath, _channels, scope, _formModel, _errorSink,
+			_dirtyChannel);
 	}
 
 	@Override
 	public ViewContext withErrorSink(ErrorSink errorSink) {
 		return new DefaultViewContext(_reactContext, _personalizationPath, _channels,
-			_commandScope, _formModel, errorSink);
+			_commandScope, _formModel, errorSink, _dirtyChannel);
 	}
 
 	@Override

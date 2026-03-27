@@ -112,6 +112,7 @@
 					</label>
 					<view-ref view="demo/error-handling-demo.view.xml"/>
 				</nav-item>
+				<!-- Temporarily disabled: constraint-test.view.xml has a broken generic-command tag
 				<nav-item id="constraint-test"
 					icon="bi bi-check-circle"
 				>
@@ -120,6 +121,13 @@
 						<de>Constraint-Test</de>
 					</label>
 					<view-ref view="demo/constraint-test.view.xml"/>
+				</nav-item>
+				-->
+				<nav-item id="flow-diagram-demo"
+					icon="bi bi-diagram-3"
+					label="Flow Diagram"
+				>
+					<view-ref view="demo/flow-diagram-demo.view.xml"/>
 				</nav-item>
 				<separator/>
 					<nav-item id="settings"

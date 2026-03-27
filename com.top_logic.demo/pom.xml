@@ -76,6 +76,14 @@
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
+      <artifactId>tl-react-flow-server</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-react-flow-client</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
       <artifactId>tl-monitoring</artifactId>
     </dependency>
     <dependency>

@@ -1,1 +1,2 @@
-tl-react-flow-server.config.xml
+tl-react-flow-server.conf.xml
+tl-react-flow-server.conf.config.xml

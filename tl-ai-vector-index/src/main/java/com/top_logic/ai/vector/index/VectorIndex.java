@@ -799,10 +799,19 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		String uuid = this.getDocumentUUID(documentId).toString();
 		System.out.println("DEBUG: Storing document to vector store: " + documentId + " (UUID: " + uuid + ")");
 		System.out.println("DEBUG: Content: " + pl);
+
+		TextSegment content;
+
+		try {
+			content = TextSegment.from(pl, metadata("TopLogic-type", payload.get("TopLogic-type").toString()));
+		} catch (Exception e) {
+			content = TextSegment.from(pl);
+		}
+
 		this.vectorStore.addAll(
 			List.of(this.getDocumentUUID(documentId).toString()),
 			List.of(this.getDocumentEmbedding(pl)),
-			List.of(TextSegment.from(pl, metadata("TopLogic-type", payload.get("TopLogic-type").toString()))));
+			List.of(content));
 
 		// Persist to disk if using JVector
 		if (vectorStore instanceof JVectorEmbeddingStore) {

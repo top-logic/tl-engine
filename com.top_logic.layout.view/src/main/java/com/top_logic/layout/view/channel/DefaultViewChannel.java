@@ -5,8 +5,12 @@
  */
 package com.top_logic.layout.view.channel;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
+
+import com.top_logic.layout.view.form.StateHandler;
 
 /**
  * Default {@link ViewChannel} implementation that holds a mutable value.
@@ -24,6 +28,8 @@ public class DefaultViewChannel implements ViewChannel {
 	private Object _value;
 
 	private final CopyOnWriteArrayList<ChannelListener> _listeners = new CopyOnWriteArrayList<>();
+
+	private final CopyOnWriteArrayList<VetoListener> _vetoListeners = new CopyOnWriteArrayList<>();
 
 	/**
 	 * Creates a {@link DefaultViewChannel} programmatically.
@@ -46,6 +52,20 @@ public class DefaultViewChannel implements ViewChannel {
 		if (Objects.equals(oldValue, newValue)) {
 			return false;
 		}
+
+		if (!_vetoListeners.isEmpty()) {
+			List<StateHandler> dirtyHandlers = new ArrayList<>();
+			for (VetoListener vl : _vetoListeners) {
+				StateHandler handler = vl.checkVeto(this, oldValue, newValue);
+				if (handler != null) {
+					dirtyHandlers.add(handler);
+				}
+			}
+			if (!dirtyHandlers.isEmpty()) {
+				throw new ChannelVetoException(dirtyHandlers, () -> this.set(newValue));
+			}
+		}
+
 		_value = newValue;
 		notifyListeners(oldValue, newValue);
 		return true;
@@ -59,6 +79,16 @@ public class DefaultViewChannel implements ViewChannel {
 	@Override
 	public void removeListener(ChannelListener listener) {
 		_listeners.remove(listener);
+	}
+
+	@Override
+	public void addVetoListener(VetoListener listener) {
+		_vetoListeners.add(listener);
+	}
+
+	@Override
+	public void removeVetoListener(VetoListener listener) {
+		_vetoListeners.remove(listener);
 	}
 
 	private void notifyListeners(Object oldValue, Object newValue) {

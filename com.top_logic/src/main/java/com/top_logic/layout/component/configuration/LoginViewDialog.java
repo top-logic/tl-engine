@@ -8,6 +8,8 @@ package com.top_logic.layout.component.configuration;
 
 import static com.top_logic.layout.form.template.model.Templates.*;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -20,6 +22,7 @@ import com.top_logic.base.accesscontrol.Login.LoginHookFailedException;
 import com.top_logic.base.accesscontrol.LoginFailure;
 import com.top_logic.base.accesscontrol.LoginFailuresModule;
 import com.top_logic.base.accesscontrol.SessionService;
+import com.top_logic.base.administration.MaintenanceWindowManager;
 import com.top_logic.base.security.util.Password;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationItem;
@@ -27,6 +30,8 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.html.template.TagTemplate;
 import com.top_logic.knowledge.wrap.person.MfaRequirement;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -43,9 +48,12 @@ import com.top_logic.layout.messagebox.AbstractTemplateDialog;
 import com.top_logic.layout.messagebox.MessageBox;
 import com.top_logic.layout.structure.DialogModel;
 import com.top_logic.layout.toolbar.ToolBar;
+import com.top_logic.mig.html.HTMLConstants;
+import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.license.LicenseTool;
 
 /**
  * Dialog to login a user.
@@ -75,8 +83,8 @@ public class LoginViewDialog extends AbstractTemplateDialog {
 	 */
 	public LoginViewDialog() {
 		this(I18NConstants.LOGIN,
-			DisplayDimension.dim(400, DisplayUnit.PIXEL),
-			DisplayDimension.dim(300, DisplayUnit.PIXEL));
+			DisplayDimension.dim(450, DisplayUnit.PIXEL),
+			DisplayDimension.dim(450, DisplayUnit.PIXEL));
 	}
 
 	/**
@@ -108,9 +116,76 @@ public class LoginViewDialog extends AbstractTemplateDialog {
 
 	@Override
 	protected TagTemplate getTemplate() {
-		return div(fieldBox(USERNAME_FIELD), fieldBox(PASSWORD_FIELD));
+		List<HTMLTemplateFragment> contents = new ArrayList<>();
+		contents.add(css("loginDialog"));
+		contents.add(htmlTemplate(this::writeMessage));
+		contents.add(htmlTemplate(this::writeLogo));
+		contents.add(loginTemplate());
+
+		return div(contents);
 	}
 
+	private HTMLTemplateFragment loginTemplate() {
+		List<HTMLTemplateFragment> contents = new ArrayList<>();
+		contents.add(css("loginContainer"));
+		contents.add(fieldBox(USERNAME_FIELD));
+		contents.add(fieldBox(PASSWORD_FIELD));
+		contents.add(htmlTemplate(this::writeLink));
+		return div(contents);
+	}
+
+	private void writeLink(@SuppressWarnings("unused") DisplayContext context, TagWriter out) throws IOException {
+		HTMLUtil.beginDiv(out, "tlLink");
+		{
+			HTMLUtil.beginA(out, "http://top-logic.com", "tlLink", HTMLConstants.BLANK_VALUE);
+			{
+				out.writeText("Powered by ");
+				out.beginTag(HTMLConstants.EM);
+				out.writeText(LicenseTool.productType());
+				out.endTag(HTMLConstants.EM);
+			}
+			HTMLUtil.endA(out);
+		}
+		HTMLUtil.endDiv(out);
+	}
+
+	private void writeLogo(DisplayContext context, TagWriter out) throws IOException {
+		HTMLUtil.beginDiv(out, "logodiv");
+		com.top_logic.layout.Icons.APP_LOGO.write(context, out);
+
+		if (!com.top_logic.layout.Icons.HIDE_APP_TITLE_ON_LOGIN_PAGE.get()) {
+			out.beginTag(HTMLConstants.DIV);
+			out.writeText(context.getResources().getString(com.top_logic.layout.I18NConstants.APPLICATION_TITLE));
+			out.endTag(HTMLConstants.DIV);
+		}
+		HTMLUtil.endDiv(out);
+	}
+
+	private void writeMessage(DisplayContext context, TagWriter out) throws IOException {
+		HTMLUtil.beginDiv(out, "messageContainer");
+		{
+			ResKey message;
+			switch (MaintenanceWindowManager.getInstance().getMaintenanceModeState()) {
+				case MaintenanceWindowManager.IN_MAINTENANCE_MODE:
+					message = com.top_logic.base.administration.I18NConstants.IN_MAINTENANCE_MODE;
+					break;
+				case MaintenanceWindowManager.ABOUT_TO_ENTER_MAINTENANCE_MODE:
+					message = com.top_logic.base.administration.I18NConstants.ABOUT_TO_ENTER_MAINTENANCE_MODE;
+					break;
+				default:
+					message = null;
+					break;
+			}
+			if (message != null) {
+				out.beginTag(HTMLConstants.DIV);
+				out.writeText(context.getResources().getString(message));
+				out.endTag(HTMLConstants.DIV);
+			}
+
+		}
+		HTMLUtil.endDiv(out);
+
+	}
 	@Override
 	protected void fillFormContext(FormContext context) {
 		StringField userField = FormFactory.newStringField(USERNAME_FIELD, FormFactory.MANDATORY,

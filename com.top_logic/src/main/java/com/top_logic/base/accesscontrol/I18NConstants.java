@@ -19,6 +19,9 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey COMMIT_FAILED;
 
+	@CustomKey("tl.login.message")
+	public static ResKey TL_LOGIN_MESSAGE;
+
 	@CustomKey("logout.messages.errorauthenticate")
 	public static ResKey1 ERROR_AUTHENTICATE;
 

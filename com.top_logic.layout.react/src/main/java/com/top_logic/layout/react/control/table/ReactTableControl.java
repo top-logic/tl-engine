@@ -694,7 +694,7 @@ public class ReactTableControl extends ReactControl {
 			try {
 				_selectionListener.selectionChanged(Collections.unmodifiableSet(_selectedRows));
 			} catch (ChannelVetoException ex) {
-				ex.setRollback(() -> {
+				ex.addRollback(() -> {
 					_selectedRows.clear();
 					_selectedRows.addAll(previousSelection);
 					updateViewport(_viewportStart, _viewportCount);

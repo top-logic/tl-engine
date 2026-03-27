@@ -28,6 +28,8 @@ public class ChannelVetoException extends RuntimeException {
 
 	private Runnable _rollback;
 
+	private static final Runnable NOOP = () -> { };
+
 	/**
 	 * Creates a new {@link ChannelVetoException}.
 	 *
@@ -77,12 +79,21 @@ public class ChannelVetoException extends RuntimeException {
 	}
 
 	/**
-	 * Sets the rollback action.
+	 * Adds a rollback action. Multiple rollbacks are chained and executed in the order they were
+	 * added.
 	 *
 	 * @param rollback
-	 *        The action to revert optimistic UI changes on cancel.
+	 *        An action to revert optimistic UI changes on cancel.
 	 */
-	public void setRollback(Runnable rollback) {
-		_rollback = rollback;
+	public void addRollback(Runnable rollback) {
+		if (_rollback == null) {
+			_rollback = rollback;
+		} else {
+			Runnable previous = _rollback;
+			_rollback = () -> {
+				previous.run();
+				rollback.run();
+			};
+		}
 	}
 }

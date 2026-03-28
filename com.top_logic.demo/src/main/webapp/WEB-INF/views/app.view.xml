@@ -8,6 +8,14 @@
 					<en>Task Manager</en>
 					<de>Aufgabenverwaltung</de>
 				</title>
+				<commands>
+					<open-designer placement="TOOLBAR">
+						<label>
+							<en>Designer</en>
+							<de>Designer</de>
+						</label>
+					</open-designer>
+				</commands>
 			</app-bar>
 		</header>
 		<content>

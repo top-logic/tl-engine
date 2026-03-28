@@ -11,12 +11,20 @@ import java.util.List;
 import com.top_logic.basic.config.ExternallyNamed;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.ToolbarControl;
 
 /**
- * A {@link ReactControl} that renders a top-level application bar via the {@code TLAppBar} React
+ * A {@link ToolbarControl} that renders a top-level application bar via the {@code TLAppBar} React
  * component.
+ *
+ * <p>
+ * Extends {@link ToolbarControl} so that {@link CommandScopeElement} can add toolbar buttons to the
+ * trailing actions area. The {@code TLAppBar} React component reads actions from the {@code actions}
+ * state key — which is aliased to the same list that {@link ToolbarControl} populates via
+ * {@code toolbarButtons}.
+ * </p>
  */
-public class ReactAppBarControl extends ReactControl {
+public class ReactAppBarControl extends ToolbarControl {
 
 	private static final String REACT_MODULE = "TLAppBar";
 
@@ -53,8 +61,6 @@ public class ReactAppBarControl extends ReactControl {
 
 	private ReactControl _leading;
 
-	private final List<ReactControl> _actions;
-
 	/**
 	 * Creates an app bar with full configuration.
 	 *
@@ -65,19 +71,24 @@ public class ReactAppBarControl extends ReactControl {
 	 * @param leading
 	 *        Optional leading control, or {@code null}.
 	 * @param actions
-	 *        Trailing action controls.
+	 *        Initial trailing action controls (may be empty).
 	 */
 	public ReactAppBarControl(ReactContext context, String title, AppBarVariant variant,
 			ReactControl leading, List<? extends ReactControl> actions) {
 		super(context, null, REACT_MODULE);
 		_leading = leading;
-		_actions = new ArrayList<>(actions);
 		setTitle(title);
 		putState(VARIANT, variant.getExternalName());
 		if (leading != null) {
 			putState(LEADING, leading);
 		}
-		putState(ACTIONS, _actions);
+
+		// Alias the toolbarButtons list under "actions" so TLAppBar reads the same list.
+		putState(ACTIONS, getReactState().get(TOOLBAR_BUTTONS));
+
+		for (ReactControl action : actions) {
+			addToolbarButton(action);
+		}
 	}
 
 	/**
@@ -86,7 +97,7 @@ public class ReactAppBarControl extends ReactControl {
 	 * @param title
 	 *        The bar title.
 	 * @param actions
-	 *        Trailing action controls.
+	 *        Initial trailing action controls.
 	 */
 	public ReactAppBarControl(ReactContext context, String title, List<? extends ReactControl> actions) {
 		this(context, title, AppBarVariant.FLAT, null, actions);
@@ -104,9 +115,7 @@ public class ReactAppBarControl extends ReactControl {
 		if (_leading != null) {
 			_leading.cleanupTree();
 		}
-		for (ReactControl action : _actions) {
-			action.cleanupTree();
-		}
+		cleanupToolbarButtons();
 	}
 
 }

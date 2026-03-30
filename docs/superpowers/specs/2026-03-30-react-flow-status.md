@@ -1,6 +1,6 @@
 # React Flow Diagram — Aktueller Stand
 
-**Datum**: 2026-03-30
+**Datum**: 2026-03-30 (Abend-Update)
 **Branch**: `CWS/CWS_29108_flow_diagram_completion`
 **Ticket**: #29108
 
@@ -8,119 +8,122 @@
 
 ### Phase 1: Flow-Diagramm im React View Framework
 
-- **FlowDiagramElement** — Deklaratives `<flow-diagram>` UIElement mit:
-  - `inputs` (Channel-Liste) — Werte werden als positionale Argumente an `createChart` übergeben
-  - `createChart` (TL-Script Expr) — erzeugt ein Diagram aus Channel-Werten
-  - `handlers` (benannte DiagramHandler) — als implizite Variablen im Script verfügbar
-  - `selection` (Output-Channel) — schreibt selektiertes userObject
-  - `observed` (Expr) — vorbereitet für Model Observation (noch nicht verdrahtet)
-  - Channel-Listener rebuildet Diagramm bei Input-Änderung
-
-- **TLFlowDiagram.tsx** — Minimaler React-Wrapper, remountet GWT bei neuem diagramJson
-
-- **FlowDiagramControl** — ReactControl mit:
-  - Scope-basierter Serialisierung (msgbuf SharedGraph)
-  - `@ReactCommand` Handler für click, drop, contextMenu, selection, update
-  - `updateSelectionChannel()` nach Scope-Patch vom Client
-
-- **Selection E2E** — Komplett verifiziert:
-  - Product-Tabelle → Channel → Diagram-Rebuild
-  - Node-Klick → Scope-Patch → Server → Selection-Channel → Detail-Form mit Feldern
-
-- **Construction Plan Demo** — Legacy-FlowChart 1:1 portiert:
-  - `test.flowchart`-Modell (Product → FlowNode → Location → Part)
-  - TL-Script mit `reactFlow*`-Funktionen
-  - Split-Panel: Produkte | Bauplan + Details
+- **FlowDiagramElement** — `<flow-diagram>` UIElement mit TL-Script + Input-Channels
+  - `inputs` → positionale Argumente für `createChart`
+  - `createChart` (Expr) → TL-Script das ein Diagram erzeugt
+  - `handlers` → benannte DiagramHandler als implizite Variablen
+  - `selection` → Output-Channel für selektiertes userObject
+  - ChannelListener rebuildet Diagramm bei Input-Änderung
+- **TLFlowDiagram.tsx** — React-Wrapper, remountet GWT bei neuem diagramJson
+- **FlowDiagramControl** — ReactControl mit Scope-basierter Kommunikation
+  - `updateSelectionChannel()` nach Client Scope-Patch
+- **Selection E2E** verifiziert: Klick → Scope-Patch → Channel → Detail-Form
+- **Construction Plan Demo** — Legacy 1:1 portiert mit echten Business-Daten
 
 ### Phase 2a: GraphLayout (Sugiyama)
 
-- **tl-graph-layouter GWT-kompatibel** gemacht:
-  - UML-spezifischer Code (DefaultNodeSizer, DiagramTextRenderingUtil, TechnicalNamesLabelProvider, JSONDefaultLayoutGraphExporter) nach `com.top_logic.graph.diagramjs.server` verschoben
-  - `LayoutContext` auf `LayoutDirection` reduziert
-  - `Sugiyama.layout()` nimmt pluggable `NodeSizer` + `NodePortAssignAlgorithm`
-  - `ExplicitGraph` nach `com.top_logic.basic.shared.graph` verschoben
-  - Filter/FilterFactory → `java.util.function.Predicate`, MapBuilder → JDK, I18NConstants entfernt
-  - `TLGraphLayouter.gwt.xml` in `com.top_logic.graph`
-  - GWT-Kompilierung verifiziert
+#### tl-graph-layouter GWT-kompatibel
+- UML-spezifischer Code nach `com.top_logic.graph.diagramjs.server` verschoben
+  - DefaultNodeSizer, DiagramTextRenderingUtil, TechnicalNamesLabelProvider,
+    JSONDefaultLayoutGraphExporter, DefaultNodePortCoordinateAssigner
+  - TLModel-Methoden aus LayoutGraphUtil extrahiert → DiagramJSLayoutGraphUtil
+- `LayoutContext` auf `LayoutDirection` reduziert (DiagramJSLayoutContext für Legacy)
+- `Sugiyama.layout()` nimmt pluggable `NodeSizer` + `NodePortAssignAlgorithm`
+- `ExplicitGraph` nach `com.top_logic.basic.shared.graph` verschoben
+- Filter → Predicate, MapBuilder → JDK, I18NConstants entfernt
+- `TLGraphLayouter.gwt.xml` in `com.top_logic.graph`
+- GWT-Kompilierung verifiziert
 
-- **GraphLayout in data.proto**:
-  - `GraphLayout extends FloatingLayout` — mit `repeated GraphEdge edges`, `layerGap`, `nodeGap`
-  - `GraphEdge extends Widget` — `@Ref Box source`, `@Ref Box target`, `repeated GraphWaypoint waypoints`
-  - `GraphWaypoint` — `double x, y`
+#### GraphLayout Proto-Typen
+- `GraphLayout extends FloatingLayout` — `repeated GraphEdge edges`, `layerGap`, `nodeGap`
+- `GraphEdge extends Widget`:
+  - `@Ref Box source`, `@Ref Box target` (non-owning Referenzen)
+  - `int priority` — Kantenpriorität für Zyklenbrechen (3=Vererbung, 2=Komposition, 1=Referenz)
+  - `ConnectorSymbol sourceSymbol`, `ConnectorSymbol targetSymbol` — Pfeilspitzen/Diamonds
+  - `repeated GraphWaypoint waypoints` — orthogonale Pfadsegmente
+  - `repeated EdgeDecoration decorations` — Labels an Kantenenden
+- `GraphWaypoint` — `double x, y`
 
-- **GraphLayoutOperations**:
-  - `computeIntrinsicSize()` — baut LayoutGraph aus Widget-Nodes, ruft Sugiyama auf, mappt Positionen + Waypoints zurück
-  - `distributeSize()` wird auf Nodes aufgerufen nach Layout
-  - `drawContents()` — zeichnet Nodes (via FloatingLayout) + Edges
+#### GraphLayoutOperations
+- `computeIntrinsicSize()`:
+  1. Intrinsische Größen aller Nodes + Decoration-Content berechnen
+  2. Extra-Breite pro Node aus Port-Anzahl + Decoration-Breiten berechnen
+  3. LayoutGraph aufbauen mit Priorities
+  4. `NodeSizer`: `Math.max(intrinsic, portCount × SCALE + maxDecorWidth)`
+  5. Sugiyama mit `DecorationAwarePortCoordinateAssigner` (individuelle Port-Breiten)
+  6. Positionen + Waypoints zurückmappen
+  7. `distributeSize()` mit erweiterter Node-Breite
+- `drawContents()`: Nodes via FloatingLayout + Edges mit Waypoints
 
-- **GraphEdgeOperations** — rendert orthogonale SVG-Polylines aus Waypoints
+#### DecorationAwarePortCoordinateAssigner
+- Verteilt Ports mit individueller Breite basierend auf Decoration-Größe + Symbol-Inset
+- Ports am linken Rand ihrer Allokation (Label erstreckt sich nach rechts)
+- Ports zentriert innerhalb der Node-Breite
 
-- **TL-Script-Funktionen**: `reactFlowGraphLayout()`, `reactFlowGraphEdge()`
+#### GraphEdgeOperations
+- Zeichnet orthogonale SVG-Polylines aus Waypoints
+- Inset-Verkürzung der Linie für ConnectorSymbols
+- `ConnectorSymbolRenderer` — gemeinsame Symbol-Zeichenlogik (ARROW, FILLED_ARROW, DIAMOND, FILLED_DIAMOND)
+- `autoOffsetPosition()` — berechnet Label-Positionierung aus lokaler Kantenrichtung:
+  - Labels immer rechts der Kante
+  - Target-Ende: über dem Knoten (BOTTOM_LEFT)
+  - Source-Ende: unter dem Knoten (TOP_LEFT)
+- `drawDecorations()` mit Polyline-Interpolation via `linePosition`
 
-- **Unit-Test**: `TestGraphLayout` — gleicher Graph wie Demo, 6 Nodes, 5 Edges, 4 Waypoints pro Edge
+#### Text-Metrik
+- `Text.fontSize` ist jetzt `double` (Pixel) mit Default 14, nicht mehr String
+- `RenderContext.measure(text, fontFamily, fontSize)` — Font-Properties durchgereicht
+- `AWTContext` + `JSRenderContext` nutzen die tatsächliche Font-Größe/Familie
+- Kein hardcodiertes "Arial" / 14px mehr in der Breitenberechnung
 
-- **Graph-Layout Demo**: Statischer Graph (Person→Company, Person→Address, Person→Order, Order→Product, Product→Category)
+#### TL-Script-Funktionen
+- `reactFlowGraphLayout(nodes, edges, layerGap, nodeGap, ...)`
+- `reactFlowGraphEdge(source, target, priority, sourceSymbol, targetSymbol, strokeStyle, thickness, dashes, decorations)`
+- `reactFlowDecoration(content, linePosition, offsetPosition)` — offsetPosition optional (auto-computed)
+- `reactFlowText(text, ..., fontSize: 10, ...)` — fontSize jetzt numerisch
 
-- **Client-Error gefixt**: Scope-Changes nach Layout+Draw droppen (`_scope.dropChanges()`)
+#### Demo (graph-layout-demo.view.xml)
+- 6 Nodes: Person, Company, Address, Order, Product, Category
+- Vererbung: Person→Company mit FILLED_ARROW (priority 3)
+- Referenzen: Person→Address, Person→Order mit ARROW (priority 1)
+- Komposition: Order→Product mit FILLED_DIAMOND (priority 2)
+- Zweizeilige Labels an Kantenenden: Name + Kardinalität (fontSize: 10)
+- Label am Source-Ende: "persons / *" bei Person→Company
 
-## Architektur-Überblick
+#### Tests
+- `TestGraphLayout` — gleicher Graph wie Demo, 6 Nodes, 5 Edges mit Decorations
+- Unit-Test verifiziert Node-Positionen, Waypoints (4 pro Edge), Layout-Dimensionen
 
-```
-View XML
-  <flow-diagram createChart="..." inputs="..." selection="...">
-
-FlowDiagramElement (UIElement)
-  - Kompiliert TL-Script einmal, shared über Sessions
-  - createControl(): Channel-Werte → TL-Script → Diagram → FlowDiagramControl
-  - ChannelListener rebuildet bei Input-Änderung
-
-FlowDiagramControl (ReactControl)
-  - Serialisiert Diagram als JSON via msgbuf SharedGraph
-  - Pusht diagram-State via SSE
-  - Empfängt Client-Commands (@ReactCommand)
-  - Selection → ViewChannel
-
-TLFlowDiagram.tsx (React)
-  - Mountet GWT bei diagramJson-Änderung
-  - Cleanup bei Unmount
-
-FlowDiagramClientControl (GWT → JS)
-  - Deserialisiert JSON → Diagram
-  - layout() → computeIntrinsicSize() (inkl. Sugiyama für GraphLayout)
-  - draw() → SVGBuilder → SVG DOM
-  - Click/Drop/Pan/Zoom Event-Handler
-  - Scope-Changes → ReactBridge.sendCommand()
-
-TL-Script Funktionen (FlowFactory)
-  - reactFlowChart(), reactFlowText(), reactFlowBorder(), reactFlowPadding(), ...
-  - reactFlowSelection(), reactFlowTree(), reactFlowConnection()
-  - reactFlowGraphLayout(), reactFlowGraphEdge()
-  - reactFlowFill(), reactFlowAlign(), reactFlowVertical(), reactFlowGrid(), ...
-```
+#### Client-Fixes
+- Scope-Changes nach Layout+Draw droppen (kein spurious onChange)
+- GWT PRETTY-Mode half beim Debugging
 
 ## Module
 
 | Modul | Rolle |
 |-------|-------|
-| `com.top_logic.react.flow.common` | Shared: msgbuf Model, Layout-Ops, SVG-Rendering (GWT-kompatibel) |
+| `com.top_logic.react.flow.common` | Shared: msgbuf Model, Layout-Ops, SVG-Rendering, GraphLayout, Sugiyama-Bridge (GWT-kompatibel) |
 | `com.top_logic.react.flow.server` | Server: FlowDiagramControl, FlowDiagramElement, FlowFactory, AWTContext |
 | `com.top_logic.react.flow.client` | GWT-Client: SVGBuilder, FlowDiagramClientControl, ReactBridge, TLFlowDiagram.tsx |
-| `com.top_logic.graph.layouter` | Sugiyama-Algorithmus (GWT-kompatibel) |
+| `com.top_logic.graph.layouter` | Sugiyama-Algorithmus (GWT-kompatibel, keine TL-Model-Dependencies) |
+| `com.top_logic.basic.shared` | ExplicitGraph (GWT-kompatibel) |
 
 ## Offene Gaps (Phase 1)
 
-| Gap | Priorität | Status |
-|-----|-----------|--------|
-| Context Menu (Gap 4) | Mittel | Offen — Menu-Serialisierung zum Client fehlt |
-| Drag-and-Drop (Gap 3) | Mittel | Offen — Legacy tlDnD API nicht verfügbar |
-| Model Observation (Gap 8) | Mittel | Offen — `_getObserved` nicht verdrahtet |
-| Legacy JSNI (Gap 6) | Mittel | Offen — DnD-Referenzen |
-| Lazy Update (Gap 7) | Niedrig | Offen — einfacher Debounce |
+| Gap | Priorität |
+|-----|-----------|
+| Context Menu (Gap 4) | Mittel |
+| Drag-and-Drop (Gap 3) | Mittel |
+| Model Observation (Gap 8) | Mittel |
+| Legacy JSNI (Gap 6) | Mittel |
+| Lazy Update (Gap 7) | Niedrig |
 
 ## Nächster Schritt: Dynamischer Modul-Graph
 
-Kein neues UIElement (`<model-graph>`). Stattdessen:
-- TL-Script-Funktionen die ein TLModule in einen Graph umrechnen
-- Typen → Nodes (mit Name, optional Stereotyp/Attribute)
-- Referenzen/Vererbung → Edges (mit Dekorationen)
-- Alles über die bestehende `<flow-diagram>`-Konfiguration
+TL-Script das ein echtes TL-Modul in einen Graph umrechnet:
+- Typen → Nodes (mit UML-Klassenkomposition: Stereotyp, Name, Attribute)
+- Vererbung → Edges mit FILLED_ARROW (priority 3)
+- Referenzen → Edges mit ARROW/DIAMOND (priority 1-2)
+- Kardinalitäten + Rollennamen als zweizeilige EdgeDecorations
+
+Kein neues UIElement nötig — alles über `<flow-diagram>` + TL-Script konfigurierbar.

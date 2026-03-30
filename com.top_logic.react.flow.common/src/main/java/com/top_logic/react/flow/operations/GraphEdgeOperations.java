@@ -74,7 +74,7 @@ public interface GraphEdgeOperations extends WidgetOperations {
 		if (sourceSymbol != null && sourceSymbol != ConnectorSymbol.NONE) {
 			GraphWaypoint first = waypoints.get(0);
 			GraphWaypoint second = waypoints.get(1);
-			double[] dir = segmentDirection(second, first); // direction: from edge toward source node
+			double[] dir = segmentDirection(second, first);
 			ConnectorSymbolRenderer.drawSymbol(out,
 				first.getX(), first.getY(), dir[0], dir[1],
 				sourceSymbol, strokeStyle, thickness);
@@ -83,7 +83,7 @@ public interface GraphEdgeOperations extends WidgetOperations {
 		if (targetSymbol != null && targetSymbol != ConnectorSymbol.NONE) {
 			GraphWaypoint last = waypoints.get(waypoints.size() - 1);
 			GraphWaypoint beforeLast = waypoints.get(waypoints.size() - 2);
-			double[] dir = segmentDirection(beforeLast, last); // direction: from edge toward target node
+			double[] dir = segmentDirection(beforeLast, last);
 			ConnectorSymbolRenderer.drawSymbol(out,
 				last.getX(), last.getY(), dir[0], dir[1],
 				targetSymbol, strokeStyle, thickness);

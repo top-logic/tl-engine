@@ -103,9 +103,20 @@ public class TestGraphLayout extends TestCase {
 		System.out.println("Product: " + product.getX() + ", " + product.getY());
 
 		for (GraphEdge edge : layout.getEdges()) {
-			System.out.println("Edge waypoints: " + edge.getWaypoints().size());
+			System.out.println("Edge " + ((com.top_logic.react.flow.data.Text)((com.top_logic.react.flow.data.Padding)((com.top_logic.react.flow.data.Border) edge.getSource()).getContent()).getContent()).getValue()
+				+ " -> " + ((com.top_logic.react.flow.data.Text)((com.top_logic.react.flow.data.Padding)((com.top_logic.react.flow.data.Border) edge.getTarget()).getContent()).getContent()).getValue()
+				+ " waypoints: " + edge.getWaypoints().size());
 			edge.getWaypoints().forEach(wp -> System.out.println("  " + wp.getX() + ", " + wp.getY()));
+			for (com.top_logic.react.flow.data.EdgeDecoration d : edge.getDecorations()) {
+				System.out.println("  Decoration at linePosition=" + d.getLinePosition()
+					+ " contentSize=" + (d.getContent() != null ? d.getContent().getWidth() + "x" + d.getContent().getHeight() : "null"));
+			}
 		}
+
+		// Print node positions and sizes for comparison
+		System.out.println("\nNode positions:");
+		System.out.println("Address: " + address.getX() + ", " + address.getY() + " (" + address.getWidth() + "x" + address.getHeight() + ")");
+		System.out.println("Order: " + order.getX() + ", " + order.getY() + " (" + order.getWidth() + "x" + order.getHeight() + ")");
 	}
 
 	private static Box node(String label) {

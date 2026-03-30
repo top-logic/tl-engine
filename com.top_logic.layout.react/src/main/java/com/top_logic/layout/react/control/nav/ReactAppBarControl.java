@@ -84,7 +84,7 @@ public class ReactAppBarControl extends ToolbarControl {
 		}
 
 		// Alias the toolbarButtons list under "actions" so TLAppBar reads the same list.
-		putState(ACTIONS, getReactState().get(TOOLBAR_BUTTONS));
+		putState(ACTIONS, getState(TOOLBAR_BUTTONS));
 
 		for (ReactControl action : actions) {
 			addToolbarButton(action);

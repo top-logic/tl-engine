@@ -127,7 +127,7 @@ public class TestGraphLayout extends TestCase {
 
 	private static Box label(String text) {
 		return Padding.create().setAll(2).setContent(
-			Text.create().setValue(text).setFontSize("10"));
+			Text.create().setValue(text).setFontSize(10));
 	}
 
 }

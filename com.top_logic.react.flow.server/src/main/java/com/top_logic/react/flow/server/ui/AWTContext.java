@@ -37,8 +37,20 @@ public class AWTContext implements RenderContext {
 
 	@Override
 	public TextMetricsImpl measure(String text) {
-		LineMetrics metrics = _font.getLineMetrics(text, _fontRenderContext);
-		Rectangle2D bounds = _font.getStringBounds(text, _fontRenderContext);
+		return measureWithFont(_font, text);
+	}
+
+	@Override
+	public TextMetricsImpl measure(String text, String fontFamily, double fontSize) {
+		String family = (fontFamily != null && !fontFamily.isEmpty()) ? fontFamily : "Arial";
+		float size = fontSize > 0 ? (float) fontSize : _font.getSize2D();
+		Font font = Font.decode(family).deriveFont(size);
+		return measureWithFont(font, text);
+	}
+
+	private TextMetricsImpl measureWithFont(Font font, String text) {
+		LineMetrics metrics = font.getLineMetrics(text, _fontRenderContext);
+		Rectangle2D bounds = font.getStringBounds(text, _fontRenderContext);
 
 		return new TextMetricsImpl(
 			bounds.getWidth(),

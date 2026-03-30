@@ -380,12 +380,12 @@ public class SVGBuilder implements SvgWriter {
 	}
 
 	@Override
-	public void setTextStyle(String fontFamily, String fontSize, String fontWeight) {
+	public void setTextStyle(String fontFamily, double fontSize, String fontWeight) {
 		if (fontFamily != null) {
 			_current.setAttribute(FONT_FAMILY_ATTR, fontFamily);
 		}
-		if (fontSize != null) {
-			_current.setAttribute(FONT_SIZE_ATTR, fontSize);
+		if (fontSize > 0) {
+			_current.setAttribute(FONT_SIZE_ATTR, String.valueOf(fontSize));
 		}
 		if (fontWeight != null) {
 			_current.setAttribute(FONT_WEIGHT_ATTR, fontWeight);

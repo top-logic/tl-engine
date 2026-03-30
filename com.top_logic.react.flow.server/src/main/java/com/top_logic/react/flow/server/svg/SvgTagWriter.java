@@ -324,9 +324,11 @@ public class SvgTagWriter implements SvgWriter {
 	}
 	
 	@Override
-	public void setTextStyle(String fontFamily, String fontSize, String fontWeight) {
+	public void setTextStyle(String fontFamily, double fontSize, String fontWeight) {
 		writeAttribute(FONT_FAMILY_ATTR, fontFamily);
-		writeAttribute(FONT_SIZE_ATTR, fontSize);
+		if (fontSize > 0) {
+			writeAttribute(FONT_SIZE_ATTR, String.valueOf(fontSize));
+		}
 		writeAttribute(FONT_WEIGHT_ATTR, fontWeight);
 	}
 

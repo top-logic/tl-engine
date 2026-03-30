@@ -9,7 +9,7 @@ public class Text_Impl extends com.top_logic.react.flow.data.impl.Box_Impl imple
 
 	private String _fontWeight = null;
 
-	private String _fontSize = null;
+	private double _fontSize = 14;
 
 	private String _fontFamily = null;
 
@@ -75,26 +75,21 @@ public class Text_Impl extends com.top_logic.react.flow.data.impl.Box_Impl imple
 	}
 
 	@Override
-	public final String getFontSize() {
+	public final double getFontSize() {
 		return _fontSize;
 	}
 
 	@Override
-	public com.top_logic.react.flow.data.Text setFontSize(String value) {
+	public com.top_logic.react.flow.data.Text setFontSize(double value) {
 		internalSetFontSize(value);
 		return this;
 	}
 
 	/** Internal setter for {@link #getFontSize()} without chain call utility. */
-	protected final void internalSetFontSize(String value) {
+	protected final void internalSetFontSize(double value) {
 		_listener.beforeSet(this, FONT_SIZE__PROP, value);
 		_fontSize = value;
 		_listener.afterChanged(this, FONT_SIZE__PROP);
-	}
-
-	@Override
-	public final boolean hasFontSize() {
-		return _fontSize != null;
 	}
 
 	@Override
@@ -293,7 +288,7 @@ public class Text_Impl extends com.top_logic.react.flow.data.impl.Box_Impl imple
 		switch (field) {
 			case VALUE__PROP: internalSetValue((String) value); break;
 			case FONT_WEIGHT__PROP: internalSetFontWeight((String) value); break;
-			case FONT_SIZE__PROP: internalSetFontSize((String) value); break;
+			case FONT_SIZE__PROP: internalSetFontSize((double) value); break;
 			case FONT_FAMILY__PROP: internalSetFontFamily((String) value); break;
 			case STROKE_STYLE__PROP: internalSetStrokeStyle((String) value); break;
 			case FILL_STYLE__PROP: internalSetFillStyle((String) value); break;
@@ -311,10 +306,8 @@ public class Text_Impl extends com.top_logic.react.flow.data.impl.Box_Impl imple
 			out.name(FONT_WEIGHT__PROP);
 			out.value(getFontWeight());
 		}
-		if (hasFontSize()) {
-			out.name(FONT_SIZE__PROP);
-			out.value(getFontSize());
-		}
+		out.name(FONT_SIZE__PROP);
+		out.value(getFontSize());
 		if (hasFontFamily()) {
 			out.name(FONT_FAMILY__PROP);
 			out.value(getFontFamily());
@@ -345,11 +338,7 @@ public class Text_Impl extends com.top_logic.react.flow.data.impl.Box_Impl imple
 				break;
 			}
 			case FONT_SIZE__PROP: {
-				if (hasFontSize()) {
-					out.value(getFontSize());
-				} else {
-					out.nullValue();
-				}
+				out.value(getFontSize());
 				break;
 			}
 			case FONT_FAMILY__PROP: {
@@ -389,7 +378,7 @@ public class Text_Impl extends com.top_logic.react.flow.data.impl.Box_Impl imple
 		switch (field) {
 			case VALUE__PROP: setValue(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case FONT_WEIGHT__PROP: setFontWeight(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
-			case FONT_SIZE__PROP: setFontSize(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case FONT_SIZE__PROP: setFontSize(in.nextDouble()); break;
 			case FONT_FAMILY__PROP: setFontFamily(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case STROKE_STYLE__PROP: setStrokeStyle(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case FILL_STYLE__PROP: setFillStyle(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;

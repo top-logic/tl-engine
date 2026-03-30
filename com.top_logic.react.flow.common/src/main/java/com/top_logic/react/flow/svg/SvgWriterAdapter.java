@@ -210,7 +210,7 @@ public class SvgWriterAdapter implements SvgWriter {
 	}
 
 	@Override
-	public void setTextStyle(String fontFamily, String fontSize, String fontWeight) {
+	public void setTextStyle(String fontFamily, double fontSize, String fontWeight) {
 		_impl.setTextStyle(fontFamily, fontSize, fontWeight);
 	}
 

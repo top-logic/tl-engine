@@ -62,19 +62,14 @@ public interface Text extends Box, com.top_logic.react.flow.operations.TextOpera
 	boolean hasFontWeight();
 
 	/**
-	 * The SVG <code>font-size</code> style.
+	 * The font size in pixels.
 	 */
-	String getFontSize();
+	double getFontSize();
 
 	/**
 	 * @see #getFontSize()
 	 */
-	com.top_logic.react.flow.data.Text setFontSize(String value);
-
-	/**
-	 * Checks, whether {@link #getFontSize()} has a value.
-	 */
-	boolean hasFontSize();
+	com.top_logic.react.flow.data.Text setFontSize(double value);
 
 	/**
 	 * The SVG <code>font-family</code> style.

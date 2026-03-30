@@ -143,13 +143,13 @@ public class FlowFactory extends TLScriptFunctions {
 	@Label("Create text")
 	public static Box text(
 		@Mandatory String text,
-		String strokeStyle, 
-		String fillStyle, 
-		String fontFamily, 
-		String fontSize, 
+		String strokeStyle,
+		String fillStyle,
+		String fontFamily,
+		double fontSize,
 		String fontWeight,
 		String cssClass,
-		Object userObject 
+		Object userObject
 	) {
 		if (text == null) {
 			return Empty.create().setUserObject(userObject);

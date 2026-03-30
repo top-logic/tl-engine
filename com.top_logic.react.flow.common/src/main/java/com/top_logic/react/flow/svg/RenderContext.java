@@ -13,10 +13,26 @@ package com.top_logic.react.flow.svg;
 public interface RenderContext {
 
 	/**
-	 * Measures the given text.
-	 * 
+	 * Measures the given text with the default font size.
+	 *
 	 * @see TextMetrics
 	 */
 	TextMetrics measure(String text);
+
+	/**
+	 * Measures the given text with specific font properties.
+	 *
+	 * @param text
+	 *        The text to measure.
+	 * @param fontFamily
+	 *        The font family, or {@code null} to use the default.
+	 * @param fontSize
+	 *        The font size in pixels, or 0 to use the default.
+	 * @return The text metrics.
+	 */
+	default TextMetrics measure(String text, String fontFamily, double fontSize) {
+		// Default: ignore font properties, use default. Subclasses should override.
+		return measure(text);
+	}
 
 }

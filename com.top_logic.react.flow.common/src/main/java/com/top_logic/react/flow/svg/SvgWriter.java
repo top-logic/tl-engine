@@ -363,7 +363,7 @@ public interface SvgWriter extends AutoCloseable {
 	/**
 	 * Adds text tyle properties to a text element.
 	 */
-	void setTextStyle(String fontFamily, String fontSize, String fontWeight);
+	void setTextStyle(String fontFamily, double fontSize, String fontWeight);
 
 	/**
 	 * Ends a text element.

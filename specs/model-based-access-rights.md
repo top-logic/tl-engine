@@ -219,11 +219,11 @@ Introduce a model-level access rights definition that answers these questions di
 
 ### 2.2 Design Principles
 
-1. **Model-first**: Access rights are defined on model elements (types, attributes), not on views. Views derive their permissions from the model-level definitions.
+1. **Model-first**: Access rights are defined on model elements (types, attributes, singletons), not on views. Views derive their permissions from the model-level definitions.
 
-2. **Single source of truth**: There is one place that defines "Role X can perform operation O on type T." All access paths (UI, AI assistant, REST API, batch jobs) consult the same definition.
+2. **Single source of truth**: There is one place -- the `SecurityConfiguration` ManagedClass -- that defines "Role X can perform operation O on type T (or singleton S)." All access paths (UI, AI assistant, REST API, batch jobs) consult the same definition.
 
-3. **Backward compatible**: The existing view-based configuration continues to work. The model-based definition is an additional layer that can coexist with and eventually replace the view-based configuration.
+3. **Backward compatible**: The existing view-based `PersBoundComp` configuration continues to work during migration. The model-based definition coexists with it and replaces it incrementally (see section 2.8).
 
 4. **Type-level and instance-level**: Type-level definitions say what is generally possible ("Editors can modify Customers"). Instance-level checks determine whether a specific user actually has the required role on a specific instance. The existing role assignment and role rule mechanisms are fully preserved, providing fine-grained instance-level access control: user U may have role R on instance I1 of type T but not on instance I2 of the same type.
 
@@ -325,7 +325,7 @@ Precedence (most specific wins):
 
 The model-based access rules define **which roles are needed** for an operation on a type. The existing role assignment mechanism continues to determine **which users have which roles on which instances**.
 
-This separation is key: the new type-level rules only replace the view-based `PersBoundComp` configuration -- the part that was previously tied to the UI. The instance-level role assignments (direct `hasRole` records, rule-based role derivation via `RoleRule`, and security parent chain inheritance) remain unchanged. This means access control stays fine-grained at the instance level. For example, if user U has the `Editor` role on Customer instance C1 (via a direct assignment or a role rule) but not on Customer instance C2, then U can modify C1 but not C2 -- even though both are of type `Customer` and the type-level rule permits `Editor` to write `Customer` instances.
+This separation is key: the new type-level `SecurityConfiguration` entries replace the view-based `PersBoundComp` configuration -- the part that was previously tied to the UI. The instance-level role assignments (direct `hasRole` records, rule-based role derivation via `RoleRule`, and security parent chain inheritance) remain unchanged. This means access control stays fine-grained at the instance level. For example, if user U has the `Editor` role on Customer instance C1 (via a direct assignment or a role rule) but not on Customer instance C2, then U can modify C1 but not C2 -- even though both are of type `Customer` and the type-level rule permits `Editor` to write `Customer` instances.
 
 ```
 Access check for "Can user U perform command group G on instance I of type T?":
@@ -388,48 +388,7 @@ Both conditions must be satisfied. Full example:
 
 This design preserves context-sensitivity: user U may be permitted to create Milestones in general (condition 1) but only in projects where U holds a sufficient role (condition 2). Attribute-level granularity is also preserved: a user might be allowed to add milestones to a project (`Project#milestones`) but not sub-projects (`Project#subProjects`), controlled by separate attribute-level WRITE rules on the parent.
 
-Configuration:
-```xml
-<class name="Milestone">
-    <annotations>
-        <access-rights>
-            <grant operation="read"   roles="Viewer, Editor, Manager"/>
-            <grant operation="write"  roles="Editor, Manager"/>
-            <grant operation="create" roles="Editor, Manager"/>
-            <grant operation="delete" roles="Manager"/>
-        </access-rights>
-    </annotations>
-</class>
-
-<class name="Project">
-    <annotations>
-        <access-rights>
-            <grant operation="read"  roles="Viewer, Editor, Manager"/>
-            <grant operation="write" roles="Editor, Manager"/>
-        </access-rights>
-    </annotations>
-    <attributes>
-        <reference name="milestones" type="myapp:Milestone" kind="list"
-                   composition="true">
-            <annotations>
-                <access-rights>
-                    <!-- Condition 2: who can add/remove milestones in a project -->
-                    <grant operation="write" roles="Editor, Manager"/>
-                </access-rights>
-            </annotations>
-        </reference>
-        <reference name="subProjects" type="myapp:Project" kind="list"
-                   composition="true">
-            <annotations>
-                <access-rights>
-                    <!-- Only Managers can create/remove sub-projects -->
-                    <grant operation="write" roles="Manager"/>
-                </access-rights>
-            </annotations>
-        </reference>
-    </attributes>
-</class>
-```
+The access rights for `Milestone`, `Project`, and the individual composition references (`Project#milestones`, `Project#subProjects`) are configured via `SecurityConfiguration` entries in the knowledge base (see section 2.4). No XML annotations are used in the model files for role configuration.
 
 #### 2.3.7 Custom Business Operations
 
@@ -463,7 +422,7 @@ The access check:
      (Same instance-level check as for data access operations)
 ```
 
-The difference to the current system is that the `(BoundCommandGroup → roles)` mapping lives on the model type, not on a view. A command group like `Approve` configured in a view's `PersBoundComp` today becomes a grant on the `Order` type in the model-based system.
+The difference to the current system is that the `(BoundCommandGroup → roles)` mapping lives in the `SecurityConfiguration` ManagedClass, keyed by model type, not by view. A command group like `Approve` configured in a view's `PersBoundComp` today becomes a `SecurityConfiguration` entry on the `Order` type in the model-based system.
 
 **Three levels of access rights** emerge:
 
@@ -471,20 +430,7 @@ The difference to the current system is that the `(BoundCommandGroup → roles)`
 2. **Custom business operations** (approve, cancel, finish, ...): Defined on types, covering complex domain-specific actions. Checked against the context instance. The implementation of what the operation actually does remains opaque to the access rights system.
 3. **Attribute-level restrictions**: Refine data access for individual properties and composition references.
 
-Configuration example:
-```xml
-<class name="Order">
-    <annotations>
-        <access-rights>
-            <grant operation="read"    roles="Viewer, Editor, Manager, Approver"/>
-            <grant operation="write"   roles="Editor, Manager"/>
-            <grant operation="delete"  roles="Manager"/>
-            <grant operation="approve" roles="Manager, Approver"/>
-            <grant operation="cancel"  roles="Manager"/>
-        </access-rights>
-    </annotations>
-</class>
-```
+The roles for built-in and custom operations on `Order` are configured via `SecurityConfiguration` entries in the knowledge base (see section 2.4). No XML annotations are used in the model files for role configuration.
 
 The AI assistant or REST API uses the data access operations (READ, WRITE, DELETE) and attribute-level restrictions for general data access. When invoking a specific business operation (e.g., through a tool or endpoint that corresponds to "approve this order"), it checks the custom operation.
 
@@ -581,117 +527,117 @@ Following the model-first principle, security parent rules can also be expressed
 </class>
 ```
 
-Model annotations take precedence over config-file-based rules, consistent with the precedence rule in section 2.4.3.
+Security parent rules defined as model annotations take precedence over config-file-based rules, consistent with the precedence ordering in section 2.4.2.
 
-#### 2.3.9 PersBoundComp as a TL Model Type
+#### 2.3.9 Singleton-Based Security for View-Specific Access Rights
 
 Some UI components have no typed domain model -- navigation menus, dashboards, administration panels, workflow overview screens. Because no `TLClass` is associated with these views, the type-level access rules from section 2.3.2 cannot be used directly.
 
-**One class for all components**
+`PersBoundComp` is removed entirely. The view-based `(commandGroup → roles)` configuration it previously maintained is superseded by model-based access rules combined with **TL singletons** for view-specific cases.
 
-The solution is to introduce a single new `TLClass` -- `tl.accounts:BoundComponent` -- and make every `PersBoundComp` instance in the knowledge base an instance of this class. This integrates `PersBoundComp` into the TL model without requiring one class per component.
+**Singletons as security objects**
 
-`tl.accounts:BoundComponent` is a regular `TLClass` defined once in the `tl.accounts` model module. It carries the attributes that the existing `PersBoundComp` mechanism already maintains per instance:
+A singleton is a named instance of a `TLClass` defined directly in a model module. Singletons are identified by a qualified name (`module:SingletonName`) and persist in the knowledge base as regular `TLObject` instances.
 
-| Attribute | Type | Meaning |
-|-----------|------|---------|
-| `name` | `String` | The component's identity key |
-| `commandGroupRoles` | association | Per-instance mapping of command group → allowed roles (replaces the existing `needsRole` association) |
-| `roleRules` | association | Per-instance role rules (see below) |
-| `securityParent` | `tl.accounts:BoundComponent` | Parent component for role inheritance (section 2.3.8) |
+For each view that needs specialized security, the application developer defines a singleton in an appropriate module and registers it as the security context of that view via the `SecurityObjectProvider`. The singleton acts as the security object on which role assignments and access rules are evaluated.
 
-**Per-instance access rights**
+Access rights for a singleton are not derived from a `TypeAccessRule` on its class. Instead, they are configured as **singleton-level `SecurityConfiguration` entries** (see section 2.4) that target the singleton instance directly. This gives each singleton its own independent `(commandGroup → roles)` mapping, managed centrally in the `SecurityConfiguration` ManagedClass.
 
-For domain types, access rights are defined at the type level via `TypeAccessRule` and shared by all instances. For `BoundComponent`, the access rights are **per-instance**: each component instance carries its own `(commandGroup → roles)` mapping stored in `commandGroupRoles`. This matches the existing `PersBoundComp` semantics exactly -- the `TypeAccessRule` mechanism is not used for `BoundComponent` instances.
-
-The admin UI manages `BoundComponent` instances through the standard TL model tooling, just like any other business object.
-
-**Per-instance role rules**
-
-Role rules for a `BoundComponent` instance are stored as associations on the instance (in `roleRules`) and evaluated by `ElementAccessManager`. Two rule kinds are supported:
-
-| Rule kind | Meaning |
-|-----------|---------|
-| `group-role` | All members of a named group receive a given role on this component instance |
-| `type-role` | Users who hold a given role on any instance of a specified domain type receive a target role on this component instance |
-
-**Security parent chain**
-
-The `securityParent` attribute points from one `BoundComponent` instance to another, enabling role inheritance up the component hierarchy. The DAG traversal from section 2.3.8 applies unchanged.
-
-**Security check**
-
-The `SecurityObjectProvider` for a model-free component returns the `BoundComponent` instance identified by the component's name. The access check then proceeds as:
+**Security check for singleton-based views:**
 
 ```
-1. SecurityObjectProvider returns the BoundComponent instance P
+1. SecurityObjectProvider returns singleton instance S
 
-2. Look up P.commandGroupRoles[commandGroup] → required roles R
-   (per-instance lookup, not a TypeAccessRule)
+2. SecurityConfiguration lookup: getAccessRights(S, commandGroup) → required roles R
+   (singleton-level lookup, not a TypeAccessRule)
 
-3. AccessManager.hasRole(user, P, R)
-   ├─ Checks direct hasRole records on P
-   ├─ Evaluates role rules stored in P.roleRules
-   └─ Walks P.securityParent chain (DAG traversal, section 2.3.8)
+3. AccessManager.hasRole(user, S, R)
+   ├─ Checks direct hasRole records on S
+   ├─ Evaluates role rules on S
+   └─ Walks security parent chain (DAG traversal, section 2.3.8)
 ```
+
+**Security parent chain for singletons**
+
+Singletons participate in the same security parent hierarchy as domain objects. The security parent of a singleton is configured via `SecurityParentRule` (section 2.3.8), enabling role inheritance: granting a user a role on a parent singleton automatically grants it on all child singletons.
+
+**Summary: security can be defined on**
+
+| Target | Mechanism |
+|--------|-----------|
+| `TLClass` | Type-level `SecurityConfiguration` entry (all instances) |
+| `TLStructuredTypePart` | Attribute-level `SecurityConfiguration` entry |
+| `TLModule` | Module-level `SecurityConfiguration` entry (default for all types in the module) |
+| Singleton (`TLObject`) | Singleton-level `SecurityConfiguration` entry (this instance only) |
 
 ### 2.4 Configuration Model
 
-The access rules are stored as part of the TL model, using annotations on model elements.
+Access rights are **not** configured as annotations in `*.model.xml` files. Instead they are stored as managed persistent objects in the knowledge base — in a dedicated `SecurityConfiguration` ManagedClass. This makes the configuration:
 
-#### 2.4.1 Type-Level Configuration
+- Editable at runtime through the administration UI without touching source code
+- Versioned and auditable via the knowledge base journal
+- Exportable and importable as part of the application configuration
+- Applicable to all target kinds (types, attributes, modules, singletons) through a single uniform mechanism
 
-Access rules are configured as annotations on `TLClass` definitions in `*.model.xml` files:
+#### 2.4.1 The `SecurityConfiguration` ManagedClass
+
+A `SecurityConfiguration` instance defines the allowed roles for one *(target element, command group)* pair:
+
+| Attribute | Type | Meaning |
+|-----------|------|---------|
+| `targetElement` | `TLModelElement` | The `TLClass`, `TLModule`, `TLStructuredTypePart`, or singleton (`TLObject`) this rule applies to |
+| `commandGroup` | `BoundCommandGroup` | The operation (Read, Write, Delete, Create, or a custom command group) |
+| `allowedRoles` | `Set<BoundedRole>` | Roles permitted to perform this operation on the target element |
+| `inherit` | `Boolean` | Whether the rule applies to sub-types (relevant for `TLClass` targets only) |
+
+Multiple `SecurityConfiguration` instances exist for the same target element — one per command group.
+
+**Example entries for `myapp:Customer`:**
+
+| targetElement | commandGroup | allowedRoles | inherit |
+|---------------|--------------|--------------|---------|
+| `myapp:Customer` | Read | Viewer, Editor, Manager | true |
+| `myapp:Customer` | Write | Editor, Manager | true |
+| `myapp:Customer` | Delete | Manager | false |
+| `myapp:Customer#salary` | Read | Manager | — |
+| `myapp:Customer#salary` | Write | Manager | — |
+| `myapp:Customer#contacts` | Write | Editor, Manager | — |
+
+**Example entries for a singleton security object:**
+
+| targetElement | commandGroup | allowedRoles |
+|---------------|--------------|--------------|
+| `tl.admin:AdminPanel` (singleton) | Read | Admin |
+| `tl.admin:AdminPanel` (singleton) | Write | Admin |
+
+#### 2.4.2 Precedence
+
+Most specific wins:
+
+1. Attribute-level entries (target = `TLStructuredTypePart`) or singleton-level entries (target = a singleton `TLObject`)
+2. Type-level entries (target = `TLClass`)
+3. Module-level defaults (target = `TLModule`)
+
+#### 2.4.3 Administration UI
+
+The administration UI provides a dedicated screen for managing `SecurityConfiguration` instances, grouped by target element and command group. Entries can be created, modified, and deleted without restarting the application. Changes take effect immediately.
+
+#### 2.4.4 Initial Configuration (Application Bootstrap)
+
+When deploying a new application, access rights can be seeded from an XML configuration file that is imported into the knowledge base on first startup. The XML format mirrors the table structure above:
 
 ```xml
-<class name="Customer">
-    <annotations>
-        <access-rights>
-            <grant operation="read"   roles="Viewer, Editor, Manager"/>
-            <grant operation="write"  roles="Editor, Manager"/>
-            <grant operation="delete" roles="Manager"/>
-        </access-rights>
-    </annotations>
-    <attributes>
-        <property name="name" type="tl.core:String"/>
-        <property name="salary" type="tl.core:Double">
-            <annotations>
-                <access-rights>
-                    <grant operation="read"  roles="Manager"/>
-                    <grant operation="write" roles="Manager"/>
-                </access-rights>
-            </annotations>
-        </property>
-        <reference name="contacts" type="myapp:Contact" kind="list"
-                   composition="true">
-            <annotations>
-                <access-rights>
-                    <!-- Controls who can create/remove contacts for this customer -->
-                    <grant operation="write" roles="Editor, Manager"/>
-                </access-rights>
-            </annotations>
-        </reference>
-    </attributes>
-</class>
+<security-configuration>
+    <entry target="myapp:Customer" command-group="Read"   roles="Viewer, Editor, Manager" inherit="true"/>
+    <entry target="myapp:Customer" command-group="Write"  roles="Editor, Manager"         inherit="true"/>
+    <entry target="myapp:Customer" command-group="Delete" roles="Manager"                 inherit="false"/>
+
+    <entry target="myapp:Customer#salary" command-group="Read"  roles="Manager"/>
+    <entry target="myapp:Customer#salary" command-group="Write" roles="Manager"/>
+</security-configuration>
 ```
 
-#### 2.4.2 Module-Level Configuration
-
-```xml
-<module name="myapp">
-    <annotations>
-        <access-rights>
-            <grant operation="read"   roles="Viewer, Editor, Manager"/>
-            <grant operation="write"  roles="Editor, Manager"/>
-            <grant operation="delete" roles="Manager"/>
-        </access-rights>
-    </annotations>
-</module>
-```
-
-#### 2.4.3 In-App Configuration
-
-Model-based access rights can also be configured through the administration UI, stored persistently in the knowledge base, and exported/imported as part of the application configuration. The in-app configuration takes precedence over the XML-based configuration.
+Subsequent changes are made through the administration UI. The XML file serves as the initial seed only.
 
 ### 2.5 Deriving View Permissions from Model Permissions
 
@@ -714,7 +660,7 @@ View "Order Processing" displays type "myapp:Order"
   → "Approve" commands require: TypeAccessRule(Order, Approve).roles = {Manager, Approver}
 ```
 
-Custom `BoundCommandGroup`s in views are mapped to custom operations on the displayed type. This replaces the per-view `PersBoundComp` configuration for views that follow the standard pattern. Views with special requirements can still override with explicit view-level configuration.
+Custom `BoundCommandGroup`s in views are mapped to custom operations on the displayed type. `PersBoundComp` is no longer used; access rights are read from `SecurityConfiguration` entries in the knowledge base. Views with no domain type (dashboards, navigation menus, etc.) use a singleton as the security object and configure its access rights via a singleton-level `SecurityConfiguration` entry (section 2.3.9).
 
 ### 2.6 API for Programmatic Access
 
@@ -795,7 +741,7 @@ REST endpoints check model-level permissions instead of simulating view access:
 
 #### 2.7.3 Existing UI
 
-The existing UI continues to work unchanged. Views that have explicit `PersBoundComp` configurations use them. Views can optionally switch to derived permissions by configuring their `SecurityObjectProvider` to use model-based access rules.
+During the migration period (phases 1--2), views that still have `PersBoundComp` configurations continue to use them unchanged. Once a view is migrated to `SecurityConfiguration`-based access rules (phase 3), its `PersBoundComp` entry is removed. See section 2.8 for the full migration path.
 
 #### 2.7.4 TL-Script
 
@@ -812,13 +758,13 @@ canExecute($instance, $customOperation)
 
 ### 2.8 Migration Path
 
-1. **Phase 1 -- Introduce model-based access rules**: Add the annotation-based configuration and the `ModelAccessRights` API. Both systems coexist; views continue to use `PersBoundComp`. Also introduce `SecurityParentRule` configuration and the `getSecurityParents()` API; existing Java overrides of `getSecurityParent()` continue to work as a fallback.
+1. **Phase 1 -- Introduce `SecurityConfiguration` ManagedClass and `ModelAccessRights` API**: Introduce the `SecurityConfiguration` ManagedClass as the single store for access rights. Both the new ManagedClass and the existing `PersBoundComp` coexist; views continue to use `PersBoundComp` as before. Also introduce `SecurityParentRule` configuration and the `getSecurityParents()` API; existing Java overrides of `getSecurityParent()` continue to work as a fallback.
 
-2. **Phase 2 -- AI and API integration**: The AI assistant and REST APIs use `ModelAccessRights` for their access checks.
+2. **Phase 2 -- AI and API integration**: The AI assistant and REST APIs use `ModelAccessRights` for their access checks against `SecurityConfiguration` entries.
 
-3. **Phase 3 -- Derived view permissions**: Views can opt in to deriving their permissions from model-based rules. A compatibility mode detects inconsistencies between view-based and model-based configurations.
+3. **Phase 3 -- Views migrate to `SecurityConfiguration`**: Views are migrated from `PersBoundComp` to `SecurityConfiguration`-based access rules. Views that display a typed domain object use type-level or attribute-level entries. Views with no domain type have a singleton created in their module and registered as their security object; their `PersBoundComp` configuration is converted to singleton-level `SecurityConfiguration` entries.
 
-4. **Phase 4 -- Model-based as default**: New views default to derived permissions. Existing view-based configurations are migrated where possible. View-level overrides remain available for exceptional cases.
+4. **Phase 4 -- Remove `PersBoundComp`**: Once all views are migrated, `PersBoundComp` and its `needsRole` association are removed from the system. All access rights live exclusively in the `SecurityConfiguration` ManagedClass.
 
 ### 2.9 Answering the Key Questions
 

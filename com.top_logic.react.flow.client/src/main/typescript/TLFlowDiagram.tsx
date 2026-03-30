@@ -14,6 +14,10 @@ function TLFlowDiagram({ controlId, state }: TLFlowDiagramProps) {
     const ref = React.useRef<HTMLDivElement>(null);
     const controlRef = React.useRef<any>(null);
 
+    const diagramJson = typeof state.diagram === 'string'
+        ? state.diagram
+        : JSON.stringify(state.diagram);
+
     React.useEffect(() => {
         const div = ref.current;
         if (!div) return;
@@ -26,9 +30,6 @@ function TLFlowDiagram({ controlId, state }: TLFlowDiagramProps) {
 
         const windowName = document.body.dataset.windowName || 'main';
         const contextPath = document.body.dataset.contextPath || '';
-        const diagramJson = typeof state.diagram === 'string'
-            ? state.diagram
-            : JSON.stringify(state.diagram);
 
         controlRef.current = gwtApi.mount(
             div, controlId, windowName, contextPath, diagramJson
@@ -40,7 +41,7 @@ function TLFlowDiagram({ controlId, state }: TLFlowDiagramProps) {
                 controlRef.current = null;
             }
         };
-    }, [controlId]);
+    }, [controlId, diagramJson]);
 
     return <div ref={ref} style={{ width: '100%', height: '100%' }} />;
 }

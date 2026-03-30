@@ -205,28 +205,22 @@ public class FlowDiagramElement implements UIElement {
 			inputChannels.add(context.resolveChannel(ref));
 		}
 
-		// 2. Read channel values.
-		Object[] channelValues = readChannelValues(inputChannels);
+		// 2. Build initial diagram from current channel values.
+		Diagram diagram = buildDiagram(inputChannels);
 
-		// 3. Build Args: handlers prepended, then channel values.
-		Args args = Args.some(channelValues);
-		for (DiagramHandler handler : _handlers) {
-			args = Args.cons(handler, args);
-		}
-
-		// 4. Execute createChart expression.
-		Diagram diagram;
-		Object result = _createChart.executeWith(args);
-		if (result instanceof Diagram) {
-			diagram = (Diagram) result;
-		} else {
-			diagram = Diagram.create();
-		}
-
-		// 5. Create FlowDiagramControl.
+		// 3. Create FlowDiagramControl.
 		FlowDiagramControl control = new FlowDiagramControl(context, diagram);
 
-		// 6. Wire selection channel if configured.
+		// 4. Listen for input channel changes and rebuild diagram.
+		ViewChannel.ChannelListener listener = (sender, oldValue, newValue) -> {
+			Diagram newDiagram = buildDiagram(inputChannels);
+			control.setModel(newDiagram);
+		};
+		for (ViewChannel channel : inputChannels) {
+			channel.addListener(listener);
+		}
+
+		// 5. Wire selection channel if configured.
 		ChannelRef selectionRef = _config.getSelection();
 		if (selectionRef != null) {
 			ViewChannel selectionChannel = context.resolveChannel(selectionRef);
@@ -234,6 +228,21 @@ public class FlowDiagramElement implements UIElement {
 		}
 
 		return control;
+	}
+
+	private Diagram buildDiagram(List<ViewChannel> inputChannels) {
+		Object[] channelValues = readChannelValues(inputChannels);
+
+		Args args = Args.some(channelValues);
+		for (DiagramHandler handler : _handlers) {
+			args = Args.cons(handler, args);
+		}
+
+		Object result = _createChart.executeWith(args);
+		if (result instanceof Diagram) {
+			return (Diagram) result;
+		}
+		return Diagram.create();
 	}
 
 	private static Object[] readChannelValues(List<ViewChannel> channels) {

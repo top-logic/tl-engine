@@ -129,6 +129,64 @@ message TreeLayout extends FloatingLayout {
 	repeated TreeConnection connections;
 }
 
+/**
+ * Layout for arbitrary directed graphs using hierarchical (layered) layout.
+ *
+ * <p>Nodes are positioned in layers by the Sugiyama algorithm. Edges are routed
+ * orthogonally between layers. Node sizes are computed from widget intrinsic sizes
+ * before the layout algorithm runs.</p>
+ *
+ * @Operations com.top_logic.react.flow.operations.layout.GraphLayoutOperations
+ */
+@Operations("com.top_logic.react.flow.operations.layout.GraphLayoutOperations")
+message GraphLayout extends FloatingLayout {
+	/** Edges connecting nodes in this graph. */
+	repeated GraphEdge edges;
+
+	/** Gap between layers (perpendicular to layout direction). */
+	double layerGap;
+
+	/** Gap between nodes within the same layer. */
+	double nodeGap;
+}
+
+/**
+ * Edge in a {@link GraphLayout} with orthogonal waypoints.
+ *
+ * @Operations com.top_logic.react.flow.operations.GraphEdgeOperations
+ */
+@Operations("com.top_logic.react.flow.operations.GraphEdgeOperations")
+message GraphEdge extends Widget {
+	/** Source node. */
+	Box source;
+
+	/** Target node. */
+	Box target;
+
+	/** Waypoints computed by the layout algorithm. Forms an orthogonal polyline. */
+	repeated GraphWaypoint waypoints;
+
+	/** Stroke color. */
+	string strokeStyle = "black";
+
+	/** Line thickness. */
+	double thickness = 1.0;
+
+	/** Dash pattern (alternating dash/gap lengths). */
+	repeated double dashes;
+
+	/** Decorations placed on the edge (arrow heads, diamonds, labels). */
+	repeated EdgeDecoration decorations;
+}
+
+/**
+ * A waypoint on an edge path.
+ */
+message GraphWaypoint {
+	double x;
+	double y;
+}
+
 /** A layout direction for a structured diagram. */
 enum DiagramDirection {
 	/** Diagram contents is layouted from left to right. */
@@ -343,22 +401,22 @@ enum ImageOrientation {
 	/** The image is flipped horizontally. */
     flipH;
     
-	/** The image is rotated by 180°. */
+	/** The image is rotated by 180ï¿½. */
     rotate180;
     
 	/** The image is flipped vertically. */
 	flipV;
 	
-	/** The image is flipped horizontally, and rotated by 270° counter-clockwise. */
+	/** The image is flipped horizontally, and rotated by 270ï¿½ counter-clockwise. */
 	flipH_rotate270;
 	
-	/** The image is rotated by 90° counter-clockwise. */
+	/** The image is rotated by 90ï¿½ counter-clockwise. */
 	rotate90;
 
-	/** The image is flipped horizontally and rotated by 90° counter-clockwise. */
+	/** The image is flipped horizontally and rotated by 90ï¿½ counter-clockwise. */
 	flipH_rotate90;
 
-	/** The image is rotated by 270° counter-clockwise. */
+	/** The image is rotated by 270ï¿½ counter-clockwise. */
 	rotate270;
 }
 

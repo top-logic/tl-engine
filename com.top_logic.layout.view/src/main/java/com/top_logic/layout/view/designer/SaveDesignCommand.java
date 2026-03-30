@@ -23,7 +23,9 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewElement;
+import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.command.ViewCommand;
@@ -77,7 +79,10 @@ public class SaveDesignCommand implements ViewCommand {
 
 	@Override
 	public HandlerResult execute(ReactContext context, Object input) {
-		DesignTreeNode root = (DesignTreeNode) input;
+		// Resolve the design tree root from the configured channel.
+		ViewContext viewContext = (ViewContext) context;
+		ViewChannel designTreeChannel = viewContext.resolveChannel(_config.getDesignTree());
+		DesignTreeNode root = (DesignTreeNode) designTreeChannel.get();
 		if (root == null) {
 			return HandlerResult.DEFAULT_RESULT;
 		}

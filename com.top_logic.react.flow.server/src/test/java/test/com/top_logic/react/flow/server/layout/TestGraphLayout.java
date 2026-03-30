@@ -34,8 +34,10 @@ public class TestGraphLayout extends TestCase {
 		Box product = node("Product");
 		Box category = node("Category");
 
-		// Inheritance edge (high priority = 3): never reversed during cycle-breaking
-		GraphEdge e1 = GraphEdge.create().setSource(person).setTarget(company).setPriority(3);
+		// Inheritance edge (high priority = 3, filled arrow at target): never reversed
+		GraphEdge e1 = GraphEdge.create().setSource(person).setTarget(company)
+			.setPriority(3)
+			.setTargetSymbol(com.top_logic.react.flow.data.ConnectorSymbol.FILLED_ARROW);
 		// Reference edges (low priority = 1): may be reversed to break cycles
 		GraphEdge e2 = GraphEdge.create().setSource(person).setTarget(address).setPriority(1);
 		GraphEdge e3 = GraphEdge.create().setSource(person).setTarget(order).setPriority(1);

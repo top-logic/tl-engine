@@ -1480,6 +1480,10 @@ public class FlowFactory extends TLScriptFunctions {
 	 * @param priority
 	 *        Layout priority for cycle-breaking. Higher values prevent edge reversal. Use 3 for
 	 *        inheritance (must always point upward), 2 for composition, 1 for normal references.
+	 * @param sourceSymbol
+	 *        Symbol at the source end (e.g. diamond for composition).
+	 * @param targetSymbol
+	 *        Symbol at the target end (e.g. filled arrow for inheritance).
 	 * @param strokeStyle
 	 *        Stroke color.
 	 * @param thickness
@@ -1496,6 +1500,8 @@ public class FlowFactory extends TLScriptFunctions {
 			@Mandatory Box source,
 			@Mandatory Box target,
 			int priority,
+			ConnectorSymbol sourceSymbol,
+			ConnectorSymbol targetSymbol,
 			@StringDefault("black") String strokeStyle,
 			@DoubleDefault(1) double thickness,
 			List<Double> dashes,
@@ -1506,6 +1512,12 @@ public class FlowFactory extends TLScriptFunctions {
 			.setPriority(priority)
 			.setStrokeStyle(strokeStyle)
 			.setThickness(thickness);
+		if (sourceSymbol != null) {
+			edge.setSourceSymbol(sourceSymbol);
+		}
+		if (targetSymbol != null) {
+			edge.setTargetSymbol(targetSymbol);
+		}
 		if (dashes != null) {
 			edge.setDashes(dashes);
 		}

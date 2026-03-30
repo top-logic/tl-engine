@@ -11,6 +11,10 @@ public class GraphEdge_Impl extends com.top_logic.react.flow.data.impl.Widget_Im
 
 	private int _priority = 0;
 
+	private com.top_logic.react.flow.data.ConnectorSymbol _sourceSymbol = com.top_logic.react.flow.data.ConnectorSymbol.NONE;
+
+	private com.top_logic.react.flow.data.ConnectorSymbol _targetSymbol = com.top_logic.react.flow.data.ConnectorSymbol.NONE;
+
 	private final java.util.List<com.top_logic.react.flow.data.GraphWaypoint> _waypoints = new de.haumacher.msgbuf.util.ReferenceList<com.top_logic.react.flow.data.GraphWaypoint>() {
 		@Override
 		protected void beforeAdd(int index, com.top_logic.react.flow.data.GraphWaypoint element) {
@@ -142,6 +146,44 @@ public class GraphEdge_Impl extends com.top_logic.react.flow.data.impl.Widget_Im
 		_listener.beforeSet(this, PRIORITY__PROP, value);
 		_priority = value;
 		_listener.afterChanged(this, PRIORITY__PROP);
+	}
+
+	@Override
+	public final com.top_logic.react.flow.data.ConnectorSymbol getSourceSymbol() {
+		return _sourceSymbol;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GraphEdge setSourceSymbol(com.top_logic.react.flow.data.ConnectorSymbol value) {
+		internalSetSourceSymbol(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getSourceSymbol()} without chain call utility. */
+	protected final void internalSetSourceSymbol(com.top_logic.react.flow.data.ConnectorSymbol value) {
+		if (value == null) throw new IllegalArgumentException("Property 'sourceSymbol' cannot be null.");
+		_listener.beforeSet(this, SOURCE_SYMBOL__PROP, value);
+		_sourceSymbol = value;
+		_listener.afterChanged(this, SOURCE_SYMBOL__PROP);
+	}
+
+	@Override
+	public final com.top_logic.react.flow.data.ConnectorSymbol getTargetSymbol() {
+		return _targetSymbol;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GraphEdge setTargetSymbol(com.top_logic.react.flow.data.ConnectorSymbol value) {
+		internalSetTargetSymbol(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getTargetSymbol()} without chain call utility. */
+	protected final void internalSetTargetSymbol(com.top_logic.react.flow.data.ConnectorSymbol value) {
+		if (value == null) throw new IllegalArgumentException("Property 'targetSymbol' cannot be null.");
+		_listener.beforeSet(this, TARGET_SYMBOL__PROP, value);
+		_targetSymbol = value;
+		_listener.afterChanged(this, TARGET_SYMBOL__PROP);
 	}
 
 	@Override
@@ -317,6 +359,8 @@ public class GraphEdge_Impl extends com.top_logic.react.flow.data.impl.Widget_Im
 			SOURCE__PROP, 
 			TARGET__PROP, 
 			PRIORITY__PROP, 
+			SOURCE_SYMBOL__PROP, 
+			TARGET_SYMBOL__PROP, 
 			WAYPOINTS__PROP, 
 			STROKE_STYLE__PROP, 
 			THICKNESS__PROP, 
@@ -354,6 +398,8 @@ public class GraphEdge_Impl extends com.top_logic.react.flow.data.impl.Widget_Im
 			case SOURCE__PROP: return getSource();
 			case TARGET__PROP: return getTarget();
 			case PRIORITY__PROP: return getPriority();
+			case SOURCE_SYMBOL__PROP: return getSourceSymbol();
+			case TARGET_SYMBOL__PROP: return getTargetSymbol();
 			case WAYPOINTS__PROP: return getWaypoints();
 			case STROKE_STYLE__PROP: return getStrokeStyle();
 			case THICKNESS__PROP: return getThickness();
@@ -369,6 +415,8 @@ public class GraphEdge_Impl extends com.top_logic.react.flow.data.impl.Widget_Im
 			case SOURCE__PROP: internalSetSource((com.top_logic.react.flow.data.Box) value); break;
 			case TARGET__PROP: internalSetTarget((com.top_logic.react.flow.data.Box) value); break;
 			case PRIORITY__PROP: internalSetPriority((int) value); break;
+			case SOURCE_SYMBOL__PROP: internalSetSourceSymbol((com.top_logic.react.flow.data.ConnectorSymbol) value); break;
+			case TARGET_SYMBOL__PROP: internalSetTargetSymbol((com.top_logic.react.flow.data.ConnectorSymbol) value); break;
 			case WAYPOINTS__PROP: internalSetWaypoints(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.react.flow.data.GraphWaypoint.class, value)); break;
 			case STROKE_STYLE__PROP: internalSetStrokeStyle((String) value); break;
 			case THICKNESS__PROP: internalSetThickness((double) value); break;
@@ -391,6 +439,10 @@ public class GraphEdge_Impl extends com.top_logic.react.flow.data.impl.Widget_Im
 		}
 		out.name(PRIORITY__PROP);
 		out.value(getPriority());
+		out.name(SOURCE_SYMBOL__PROP);
+		getSourceSymbol().writeTo(out);
+		out.name(TARGET_SYMBOL__PROP);
+		getTargetSymbol().writeTo(out);
 		out.name(WAYPOINTS__PROP);
 		out.beginArray();
 		for (com.top_logic.react.flow.data.GraphWaypoint x : getWaypoints()) {
@@ -438,6 +490,14 @@ public class GraphEdge_Impl extends com.top_logic.react.flow.data.impl.Widget_Im
 				out.value(getPriority());
 				break;
 			}
+			case SOURCE_SYMBOL__PROP: {
+				getSourceSymbol().writeTo(out);
+				break;
+			}
+			case TARGET_SYMBOL__PROP: {
+				getTargetSymbol().writeTo(out);
+				break;
+			}
 			case WAYPOINTS__PROP: {
 				out.beginArray();
 				for (com.top_logic.react.flow.data.GraphWaypoint x : getWaypoints()) {
@@ -480,6 +540,8 @@ public class GraphEdge_Impl extends com.top_logic.react.flow.data.impl.Widget_Im
 			case SOURCE__PROP: setSource(com.top_logic.react.flow.data.Box.readBox(scope, in)); break;
 			case TARGET__PROP: setTarget(com.top_logic.react.flow.data.Box.readBox(scope, in)); break;
 			case PRIORITY__PROP: setPriority(in.nextInt()); break;
+			case SOURCE_SYMBOL__PROP: setSourceSymbol(com.top_logic.react.flow.data.ConnectorSymbol.readConnectorSymbol(in)); break;
+			case TARGET_SYMBOL__PROP: setTargetSymbol(com.top_logic.react.flow.data.ConnectorSymbol.readConnectorSymbol(in)); break;
 			case WAYPOINTS__PROP: {
 				java.util.List<com.top_logic.react.flow.data.GraphWaypoint> newValue = new java.util.ArrayList<>();
 				in.beginArray();

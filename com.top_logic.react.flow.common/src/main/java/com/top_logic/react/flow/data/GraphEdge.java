@@ -26,6 +26,12 @@ public interface GraphEdge extends Widget, com.top_logic.react.flow.operations.G
 	/** @see #getPriority() */
 	String PRIORITY__PROP = "priority";
 
+	/** @see #getSourceSymbol() */
+	String SOURCE_SYMBOL__PROP = "sourceSymbol";
+
+	/** @see #getTargetSymbol() */
+	String TARGET_SYMBOL__PROP = "targetSymbol";
+
 	/** @see #getWaypoints() */
 	String WAYPOINTS__PROP = "waypoints";
 
@@ -82,6 +88,26 @@ public interface GraphEdge extends Widget, com.top_logic.react.flow.operations.G
 	 * @see #getPriority()
 	 */
 	com.top_logic.react.flow.data.GraphEdge setPriority(int value);
+
+	/**
+	 * Symbol drawn at the source end of the edge (e.g. diamond for composition).
+	 */
+	com.top_logic.react.flow.data.ConnectorSymbol getSourceSymbol();
+
+	/**
+	 * @see #getSourceSymbol()
+	 */
+	com.top_logic.react.flow.data.GraphEdge setSourceSymbol(com.top_logic.react.flow.data.ConnectorSymbol value);
+
+	/**
+	 * Symbol drawn at the target end of the edge (e.g. filled arrow for inheritance).
+	 */
+	com.top_logic.react.flow.data.ConnectorSymbol getTargetSymbol();
+
+	/**
+	 * @see #getTargetSymbol()
+	 */
+	com.top_logic.react.flow.data.GraphEdge setTargetSymbol(com.top_logic.react.flow.data.ConnectorSymbol value);
 
 	/**
 	 * Waypoints computed by the layout algorithm. Forms an orthogonal polyline.

@@ -7,6 +7,7 @@ package com.top_logic.react.flow.operations;
 
 import java.util.List;
 
+import com.top_logic.react.flow.data.ConnectorSymbol;
 import com.top_logic.react.flow.data.EdgeDecoration;
 import com.top_logic.react.flow.data.GraphEdge;
 import com.top_logic.react.flow.data.GraphWaypoint;
@@ -29,8 +30,15 @@ public interface GraphEdgeOperations extends WidgetOperations {
 			return;
 		}
 
+		ConnectorSymbol sourceSymbol = self().getSourceSymbol();
+		ConnectorSymbol targetSymbol = self().getTargetSymbol();
+		double thickness = self().getThickness();
+		String strokeStyle = self().getStrokeStyle();
+		double scale = thickness / 2;
+
 		out.beginGroup(self());
 
+		// Draw the polyline path, shortened by symbol insets at both ends.
 		out.beginPath();
 		setStroke(out);
 		if (!self().getDashes().isEmpty()) {
@@ -39,19 +47,62 @@ public interface GraphEdgeOperations extends WidgetOperations {
 		out.setFill("none");
 		out.beginData();
 		{
+			// First point, shifted by source symbol inset.
 			GraphWaypoint first = waypoints.get(0);
-			out.moveToAbs(first.getX(), first.getY());
-			for (int n = 1, cnt = waypoints.size(); n < cnt; n++) {
+			GraphWaypoint second = waypoints.get(1);
+			double srcInset = ConnectorSymbolRenderer.inset(sourceSymbol, scale);
+			double[] srcDir = segmentDirection(first, second);
+			out.moveToAbs(first.getX() + srcDir[0] * srcInset, first.getY() + srcDir[1] * srcInset);
+
+			// Middle points.
+			for (int n = 1, cnt = waypoints.size() - 1; n < cnt; n++) {
 				GraphWaypoint wp = waypoints.get(n);
 				out.lineToAbs(wp.getX(), wp.getY());
 			}
+
+			// Last point, shifted by target symbol inset.
+			GraphWaypoint last = waypoints.get(waypoints.size() - 1);
+			GraphWaypoint beforeLast = waypoints.get(waypoints.size() - 2);
+			double tgtInset = ConnectorSymbolRenderer.inset(targetSymbol, scale);
+			double[] tgtDir = segmentDirection(last, beforeLast);
+			out.lineToAbs(last.getX() + tgtDir[0] * tgtInset, last.getY() + tgtDir[1] * tgtInset);
 		}
 		out.endData();
 		out.endPath();
 
+		// Draw symbols at endpoints.
+		if (sourceSymbol != null && sourceSymbol != ConnectorSymbol.NONE) {
+			GraphWaypoint first = waypoints.get(0);
+			GraphWaypoint second = waypoints.get(1);
+			double[] dir = segmentDirection(second, first); // direction: from edge toward source node
+			ConnectorSymbolRenderer.drawSymbol(out,
+				first.getX(), first.getY(), dir[0], dir[1],
+				sourceSymbol, strokeStyle, thickness);
+		}
+
+		if (targetSymbol != null && targetSymbol != ConnectorSymbol.NONE) {
+			GraphWaypoint last = waypoints.get(waypoints.size() - 1);
+			GraphWaypoint beforeLast = waypoints.get(waypoints.size() - 2);
+			double[] dir = segmentDirection(beforeLast, last); // direction: from edge toward target node
+			ConnectorSymbolRenderer.drawSymbol(out,
+				last.getX(), last.getY(), dir[0], dir[1],
+				targetSymbol, strokeStyle, thickness);
+		}
+
 		drawDecorations(out, waypoints);
 
 		out.endGroup();
+	}
+
+	/**
+	 * Normalized direction vector from point a to point b.
+	 *
+	 * @return [dx, dy] where each is -1, 0, or 1.
+	 */
+	default double[] segmentDirection(GraphWaypoint a, GraphWaypoint b) {
+		double dx = b.getX() - a.getX();
+		double dy = b.getY() - a.getY();
+		return new double[] { Math.signum(dx), Math.signum(dy) };
 	}
 
 	/**

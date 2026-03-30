@@ -20,11 +20,37 @@
 			reactFlowGraphLayout(
 				list($person, $company, $address, $order, $product, $category),
 				list(
-					reactFlowGraphEdge($person,  $company),
-					reactFlowGraphEdge($person,  $address),
-					reactFlowGraphEdge($person,  $order),
-					reactFlowGraphEdge($order,   $product),
-					reactFlowGraphEdge($product, $category)
+					reactFlowGraphEdge($person, $company,
+						priority: 3,
+						targetSymbol: "FILLED_ARROW"),
+					reactFlowGraphEdge($person, $address,
+						priority: 1,
+						targetSymbol: "ARROW",
+						decorations: list(
+							reactFlowDecoration(reactFlowText("address", fontSize: "10"), linePosition: 0.5, offsetPosition: "CENTER_LEFT"),
+							reactFlowDecoration(reactFlowText("0..1", fontSize: "10"), linePosition: 1.0, offsetPosition: "CENTER_LEFT")
+						)),
+					reactFlowGraphEdge($person, $order,
+						priority: 1,
+						targetSymbol: "ARROW",
+						decorations: list(
+							reactFlowDecoration(reactFlowText("orders", fontSize: "10"), linePosition: 0.5, offsetPosition: "CENTER_LEFT"),
+							reactFlowDecoration(reactFlowText("*", fontSize: "10"), linePosition: 1.0, offsetPosition: "CENTER_LEFT")
+						)),
+					reactFlowGraphEdge($order, $product,
+						priority: 2,
+						sourceSymbol: "FILLED_DIAMOND",
+						decorations: list(
+							reactFlowDecoration(reactFlowText("items", fontSize: "10"), linePosition: 0.5, offsetPosition: "CENTER_LEFT"),
+							reactFlowDecoration(reactFlowText("1..*", fontSize: "10"), linePosition: 1.0, offsetPosition: "CENTER_LEFT")
+						)),
+					reactFlowGraphEdge($product, $category,
+						priority: 1,
+						targetSymbol: "ARROW",
+						decorations: list(
+							reactFlowDecoration(reactFlowText("category", fontSize: "10"), linePosition: 0.5, offsetPosition: "CENTER_LEFT"),
+							reactFlowDecoration(reactFlowText("1", fontSize: "10"), linePosition: 1.0, offsetPosition: "CENTER_LEFT")
+						))
 				)
 			),
 			all: 20

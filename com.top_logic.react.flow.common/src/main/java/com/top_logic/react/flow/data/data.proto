@@ -172,6 +172,12 @@ message GraphEdge extends Widget {
 	 */
 	int priority;
 
+	/** Symbol drawn at the source end of the edge (e.g. diamond for composition). */
+	ConnectorSymbol sourceSymbol;
+
+	/** Symbol drawn at the target end of the edge (e.g. filled arrow for inheritance). */
+	ConnectorSymbol targetSymbol;
+
 	/** Waypoints computed by the layout algorithm. Forms an orthogonal polyline. */
 	repeated GraphWaypoint waypoints;
 

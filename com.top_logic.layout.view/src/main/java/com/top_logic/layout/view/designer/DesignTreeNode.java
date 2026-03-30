@@ -16,11 +16,13 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.layout.view.UIElement;
 
 /**
- * A node in the design tree representing a single {@link com.top_logic.layout.view.UIElement.Config}.
+ * A node in the design tree representing either a single
+ * {@link com.top_logic.layout.view.UIElement.Config} or a virtual property group.
  *
  * <p>
- * Carries the configuration, source file origin, parent reference, and mutable children list for
- * structural editing in the View Designer.
+ * Config nodes carry the actual configuration and source file origin. Virtual nodes represent a
+ * container property (e.g. "header", "content", "footer") and group the child elements that belong
+ * to that property.
  * </p>
  */
 public class DesignTreeNode {
@@ -31,12 +33,14 @@ public class DesignTreeNode {
 
 	private final String _sourceFile;
 
+	private final String _propertyName;
+
 	private final List<DesignTreeNode> _children;
 
 	private DesignTreeNode _parent;
 
 	/**
-	 * Creates a new {@link DesignTreeNode}.
+	 * Creates a config node.
 	 *
 	 * @param config
 	 *        The UIElement configuration this node represents.
@@ -46,11 +50,41 @@ public class DesignTreeNode {
 	public DesignTreeNode(PolymorphicConfiguration<? extends UIElement> config, String sourceFile) {
 		_config = config;
 		_sourceFile = sourceFile;
+		_propertyName = null;
 		_children = new ArrayList<>();
 	}
 
 	/**
-	 * The UIElement configuration.
+	 * Creates a virtual property group node.
+	 *
+	 * @param propertyName
+	 *        The property name this group represents (e.g. "header", "content").
+	 * @param sourceFile
+	 *        The .view.xml file this group belongs to.
+	 */
+	public DesignTreeNode(String propertyName, String sourceFile) {
+		_config = null;
+		_sourceFile = sourceFile;
+		_propertyName = propertyName;
+		_children = new ArrayList<>();
+	}
+
+	/**
+	 * Whether this is a virtual property group node (no config of its own).
+	 */
+	public boolean isVirtual() {
+		return _config == null;
+	}
+
+	/**
+	 * The property name for virtual group nodes, or {@code null} for config nodes.
+	 */
+	public String getPropertyName() {
+		return _propertyName;
+	}
+
+	/**
+	 * The UIElement configuration, or {@code null} for virtual nodes.
 	 */
 	public PolymorphicConfiguration<? extends UIElement> getConfig() {
 		return _config;
@@ -58,9 +92,11 @@ public class DesignTreeNode {
 
 	/**
 	 * The configuration as {@link ConfigurationItem} for the config editor.
+	 *
+	 * @return The config item, or {@code null} for virtual nodes.
 	 */
 	public ConfigurationItem getConfigItem() {
-		return (ConfigurationItem) _config;
+		return _config != null ? (ConfigurationItem) _config : null;
 	}
 
 	/**
@@ -95,9 +131,13 @@ public class DesignTreeNode {
 
 	/**
 	 * The tag name for display, derived from the {@link TagName} annotation on the config
-	 * interface, or the simple interface name as fallback.
+	 * interface, or the simple interface name as fallback. For virtual nodes, returns the property
+	 * name in brackets.
 	 */
 	public String getTagName() {
+		if (isVirtual()) {
+			return "[" + _propertyName + "]";
+		}
 		Class<?> configInterface = getConfigItem().descriptor().getConfigurationInterface();
 		TagName tagName = configInterface.getAnnotation(TagName.class);
 		if (tagName != null) {
@@ -114,9 +154,13 @@ public class DesignTreeNode {
 	 * An identifying label for display. Checks common identifying properties in order: "name",
 	 * "title-key", "attribute", "view".
 	 *
-	 * @return The first non-null property value found, or {@code null} if none match.
+	 * @return The first non-null property value found, or {@code null} if none match. Always
+	 *         {@code null} for virtual nodes.
 	 */
 	public String getLabel() {
+		if (isVirtual()) {
+			return null;
+		}
 		ConfigurationDescriptor descriptor = getConfigItem().descriptor();
 		for (String propName : LABEL_PROPERTIES) {
 			PropertyDescriptor property = descriptor.getProperty(propName);

@@ -112,14 +112,14 @@ public class ConfigEditorElement implements UIElement {
 
 		// Build initial editor if a node is already selected.
 		Object initialValue = inputChannel.get();
-		if (initialValue instanceof DesignTreeNode node) {
+		if (initialValue instanceof DesignTreeNode node && !node.isVirtual()) {
 			ConfigEditorControl editor = new ConfigEditorControl(context, node.getConfigItem());
 			wrapper.addChild(editor);
 		}
 
 		// Listen for selection changes and rebuild the editor.
 		inputChannel.addListener((sender, oldValue, newValue) -> {
-			if (newValue instanceof DesignTreeNode node) {
+			if (newValue instanceof DesignTreeNode node && !node.isVirtual()) {
 				ConfigEditorControl editor = new ConfigEditorControl(context, node.getConfigItem());
 				wrapper.setChild(editor);
 			} else {
